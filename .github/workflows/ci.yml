@@ -15,10 +15,11 @@ jobs:
   test:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    env:
-      PATENTSAR_WEB_TEST_ROOT: ${{ runner.temp }}/x-patentsar-api-tests
-      PATENTSAR_E2E_OUTPUT_DIR: ${{ runner.temp }}/x-patentsar-browser-tests
     steps:
+      - name: Initialize external verification paths
+        run: |
+          printf 'PATENTSAR_WEB_TEST_ROOT=%s\nPATENTSAR_E2E_OUTPUT_DIR=%s\n' \
+            "$RUNNER_TEMP/x-patentsar-api-tests" "$RUNNER_TEMP/x-patentsar-browser-tests" >> "$GITHUB_ENV"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:

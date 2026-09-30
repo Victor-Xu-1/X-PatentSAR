@@ -5,6 +5,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import yaml
+
 spec = importlib.util.spec_from_file_location(
     "build_frontend",
     Path(__file__).resolve().parents[1] / "tools" / "build_frontend.py",
@@ -77,6 +79,24 @@ class FrontendPackagingTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "inside the repository"):
                 packager.bundle(self.root)
             self.assertEqual(list(Path(external).iterdir()), [])
+
+
+class WorkflowPackagingTests(unittest.TestCase):
+    def test_runner_paths_are_initialized_after_job_scheduling(self) -> None:
+        workflow = yaml.safe_load(
+            (Path(__file__).resolve().parents[1] / ".github/workflows/ci.yml").read_text()
+        )
+        for job in workflow["jobs"].values():
+            for value in job.get("env", {}).values():
+                self.assertNotRegex(
+                    str(value),
+                    r"\$\{\{\s*runner\.",
+                    "GitHub rejects runner context in job-level env before creating a job",
+                )
+        initialization = workflow["jobs"]["test"]["steps"][0]["run"]
+        self.assertIn("$RUNNER_TEMP/x-patentsar-api-tests", initialization)
+        self.assertIn("$RUNNER_TEMP/x-patentsar-browser-tests", initialization)
+        self.assertIn('"$GITHUB_ENV"', initialization)
 
 
 if __name__ == "__main__":
