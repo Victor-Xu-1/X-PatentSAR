@@ -7,7 +7,7 @@ import {
   Hexagon,
   Settings,
   ShieldCheck,
-  Upload,
+  SquarePlus,
 } from 'lucide-react';
 import type { Health, Job, Project } from '../api/types';
 import type { Route, View } from '../model/route';
@@ -50,6 +50,10 @@ export function Sidebar({
           <small>专利结构与活性提取平台</small>
         </span>
       </a>
+      <button className="sidebar-upload" type="button" onClick={onUpload} disabled={disabled}>
+        <SquarePlus size={18} strokeWidth={1.65} />
+        新建专利项目
+      </button>
       <nav aria-label="主导航">
         {links.map(({ view, label, icon: Icon }) => (
           <button
@@ -73,10 +77,6 @@ export function Sidebar({
           智能摘要<span className="small-tag">未接入</span>
         </button>
       </nav>
-      <button className="sidebar-upload" type="button" onClick={onUpload} disabled={disabled}>
-        <Upload size={18} />
-        上传专利 PDF
-      </button>
       <div className="sidebar-project">
         <small>当前项目</small>
         <strong>{project?.title ?? '尚未选择项目'}</strong>

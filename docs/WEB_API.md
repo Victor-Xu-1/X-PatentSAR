@@ -91,8 +91,9 @@ names; changes require controller review, not independent endpoint invention.
 ## Frontend behavior
 
 Chinese UI with X-PatentSAR branding and version from `/health`; reference layout:
-220–235 px left navigation, compact breadcrumb/search toolbar, split original PDF
-and result workspace, blue accent, light borders, real metric cards and dense
+232 px left navigation, compact breadcrumb/search toolbar, split original PDF
+and result workspace, warm ivory canvas, quiet stone surfaces, ink controls,
+terracotta accents, serif display headings, real metric cards and dense
 compound/activity rows. Page navigation, zoom, text/annotation tabs, source jumps,
 search/filter/pagination, selection/export, review dialogs, job status/cancel/retry,
 project/PDF import and runtime settings must work, including empty/error/loading,
@@ -103,10 +104,21 @@ has a clear disabled/informational state. No fictional molecules, assays or coun
 
 1. Complete: implement the API and reference-layout UI in isolated worktrees,
    and integrate CLI entry points, packaging and E-drive launchers.
-2. In progress: verify real PDF/SQLite/job/review/export behavior, frontend state and
-   components, and the complete user workflow in a real Chromium browser.
-3. Pending: build the Web assets and wheel from a clean checkout, verify installed
-   startup and security boundaries, then push the private Apache-2.0 repository.
+2. In progress: unify all pages and dialogs with the Claude-inspired light visual
+   system, preserving X-PatentSAR identity; verify tokens, typography, controls,
+   real data, keyboard interactions and representative viewports in Chromium.
+3. Pending: rebuild the Web assets and wheel from the final clean revision, verify
+   installed startup and security boundaries, then push the private Apache-2.0
+   repository and check its CI.
+
+The single visual authority is `frontend/src/styles/tokens.css`. Component styles
+consume those tokens, not page-specific palettes or layered legacy themes. The
+reference is Claude's public light workspace style; X-PatentSAR is independent
+and uses system/open fonts, not Claude trademarks or proprietary font files.
+Design acceptance covers canvas/sidebar/ink/terracotta colors, neutral active
+navigation, serif headings, compact controls, warm tables/dialogs, focus and
+contrast, desktop/mobile overflow and actual PDF/result workflows. Pixel-perfect
+identity to a particular Claude release requires a user-supplied reference image.
 
 Change-to-validation mapping: PDF upload and rendering require a real PyMuPDF
 parse, bounded invalid-input checks and original-page source jumps; project/job

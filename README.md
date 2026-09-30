@@ -20,7 +20,10 @@ classify -> activity -> locate -> structures -> bind -> smiles -> final -> qa
 
 ## Web 工作台
 
-工作台使用中文界面，提供原始 PDF 页图/文本、结构与活性表、来源定位、
+工作台使用中文界面，视觉参考 Claude 浅色工作台：米白画布、灰米色侧栏、
+深墨控件、陶土色强调与衬线标题。保留独立 X-PatentSAR 品牌，不使用其
+专有字体或商标；统一设计变量位于 `frontend/src/styles/tokens.css`。
+提供原始 PDF 页图/文本、结构与活性表、来源定位、
 筛选分页、人工复核、CSV/JSON 导出及提取任务管理。它调用下方同一条 CLI
 主链；人工批准只记录复核意见，正式验收仍由确定性 QA 决定。历史导入保留
 历史身份，ADMET 和智能摘要当前未接入。

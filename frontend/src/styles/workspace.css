@@ -8,10 +8,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   padding: 12px 13px;
-  border-radius: 9px;
+  border-radius: var(--radius-panel);
   margin-bottom: 11px;
 }
 .stage-strip {
@@ -49,46 +49,45 @@
   width: 23px;
   height: 23px;
   font-size: 10px;
-  border: 1px solid #dbe5f5;
-  color: #7f91b1;
+  border: 1px solid var(--line-strong);
+  color: var(--faint);
   border-radius: 50%;
   flex: 0 0 auto;
 }
 .stage strong {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   display: block;
   white-space: nowrap;
 }
 .stage small {
   font-size: 9px;
-  color: #8492ad;
+  color: var(--faint);
   display: block;
   margin-top: 4px;
   white-space: nowrap;
 }
 .stage.ok .stage-circle {
-  background: #edf4ff;
-  color: #2b66e8;
-  border-color: #afccff;
+  background: var(--success-surface);
+  color: var(--success);
+  border-color: var(--success-line);
 }
 .stage.running .stage-circle {
-  background: #225cff;
-  border-color: #225cff;
-  color: #fff;
-  box-shadow: 0 0 0 3px #edf2ff;
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: var(--on-primary);
 }
 .stage.running small {
-  color: #225cff;
+  color: var(--accent-strong);
 }
 .stage.failed .stage-circle {
-  color: #c64e54;
-  border-color: #efbfc4;
-  background: #fff1f1;
+  color: var(--danger);
+  border-color: var(--danger-line);
+  background: var(--danger-surface);
 }
 .stage.warnings .stage-circle {
-  color: #a77816;
-  background: #fff5e2;
+  color: var(--warning);
+  background: var(--warning-surface);
 }
 .job-actions-wrapper {
   flex: 0 0 auto;
@@ -108,7 +107,7 @@
 }
 .job-error {
   font-size: 10px;
-  color: #ad454d;
+  color: var(--danger);
   margin-top: 6px;
   max-width: 290px;
   overflow-wrap: anywhere;
@@ -139,20 +138,20 @@
   gap: 12px;
   min-height: 44px;
   border-bottom: 1px solid var(--line);
-  background: #fcfdff;
+  background: var(--surface);
 }
 .tab {
   border: 0;
   border-radius: 0;
   background: transparent;
   padding: 12px 9px;
-  color: #8390ae;
+  color: var(--muted);
   position: relative;
   font-size: 12px;
 }
 .tab.active {
-  color: var(--primary);
-  font-weight: 650;
+  color: var(--ink);
+  font-weight: 600;
 }
 .tab.active::after {
   content: '';
@@ -161,5 +160,5 @@
   right: 0;
   bottom: -1px;
   height: 2px;
-  background: var(--primary);
+  background: var(--accent);
 }
