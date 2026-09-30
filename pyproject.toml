@@ -62,6 +62,6 @@ include = ["patent_sar_extractor*"]
 exclude = ["tests*"]
 
 [tool.setuptools.package-data]
-"patent_sar_extractor.defaults" = ["*.yaml"]
+"patent_sar_extractor.defaults" = ["*.yaml", "environments/*.txt", "environments/*.json", "environments/*.yaml"]
 "patent_sar_extractor.core.ocsr" = ["config.yaml"]
 "patent_sar_extractor.web" = ["static/**/*", "static/*"]

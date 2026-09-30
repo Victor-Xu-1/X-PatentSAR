@@ -75,7 +75,7 @@ x-patentsar import-run --run-dir /path/to/existing/run --title "历史专利复�
 
 ADMET-AI 2.0.1 使用 Chemprop/PyTorch，在独立 Linux x86_64 Python 3.12 CPU
 环境安装，不混入主程序或 DECIMER/TensorFlow 环境。完整版本和下载哈希位于
-`examples/config/admet-cpu-requirements.txt`；这是外部模型运行边界，不是主应用
+`src/patent_sar_extractor/defaults/environments/admet-cpu-requirements.txt`；这是外部模型运行边界，不是主应用
 `uv.lock` 的第二套依赖权威。
 
 ```bash
@@ -83,7 +83,7 @@ if [ ! -e /srv/wsl/envs/x-patentsar-admet ]; then
   uv venv /srv/wsl/envs/x-patentsar-admet --python 3.12
 fi
 uv pip sync --python /srv/wsl/envs/x-patentsar-admet/bin/python \
-  --require-hashes --torch-backend cpu examples/config/admet-cpu-requirements.txt
+  --require-hashes --torch-backend cpu src/patent_sar_extractor/defaults/environments/admet-cpu-requirements.txt
 mkdir -p /srv/wsl/cache/patentsar/analysis-wheels
 curl --fail --location --connect-timeout 10 --max-time 300 \
   https://files.pythonhosted.org/packages/12/19/5d83e84207636e6dd655b7cefab95c04eb5a48e7eaa1151424370b1a6ff1/admet_ai-2.0.1-py3-none-any.whl \

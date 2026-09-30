@@ -8,8 +8,19 @@ from pydantic import Field, StrictStr, model_validator
 
 from .models import DTO, Error, JobStatus
 
-ComponentId = Literal["installer", "base", "decimer", "decimer-models", "admet", "admet-models"]
-ComponentStatus = Literal["unchecked", "checking", "missing", "partial", "ready", "unconfigured", "incompatible", "error"]
+ComponentId = Literal[
+    "installer", "base", "decimer", "decimer-models", "admet", "admet-models"
+]
+ComponentStatus = Literal[
+    "unchecked",
+    "checking",
+    "missing",
+    "partial",
+    "ready",
+    "unconfigured",
+    "incompatible",
+    "error",
+]
 
 
 class EnvironmentCheck(DTO):
@@ -61,7 +72,9 @@ class EnvironmentPreset(DTO):
 class EnvironmentOperationRequest(DTO):
     action: Literal["inspect", "install"]
     component_ids: list[ComponentId] = Field(min_length=1, max_length=6)
-    request_id: StrictStr = Field(min_length=16, max_length=64, pattern=r"^[A-Za-z0-9_-]+$")
+    request_id: StrictStr = Field(
+        min_length=16, max_length=64, pattern=r"^[A-Za-z0-9_-]+$"
+    )
     expected_revision: int = Field(ge=0)
 
     @model_validator(mode="after")

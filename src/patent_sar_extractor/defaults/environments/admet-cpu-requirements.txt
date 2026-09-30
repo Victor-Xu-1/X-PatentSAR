@@ -2,7 +2,7 @@
 # This is NOT the Python 3.12 application dependency authority (pyproject/uv.lock).
 # Independently resolved with uv 0.11.31; all transitive versions/hashes are fixed.
 # Install: uv pip sync --python <external-env>/bin/python --require-hashes
-#          --torch-backend cpu examples/config/admet-cpu-requirements.txt
+#          --torch-backend cpu <installed-defaults>/environments/admet-cpu-requirements.txt
 # Offline/local-wheel installation may add --find-links <verified-wheel-directory>.
 # No GPU/CUDA distributions, Web extra or DrugBank comparisons are requested.
 # Sources: https://pypi.org/project/admet-ai/2.0.1/
