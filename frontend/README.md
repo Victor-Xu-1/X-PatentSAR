@@ -1,7 +1,9 @@
 # X-PatentSAR 前端
 
 单一 React / TypeScript 工作台，仅调用控制方维护的 `docs/WEB_API.md` v1 API。
-没有生产演示数据、请求失败回退、第二套提取引擎、ADMET 预测或智能摘要实现。
+没有生产演示数据、请求失败回退或第二套正式提取引擎。
+完整任务输入、结果优先布局、真实原文与分子分析调用同一后端。
+ADMET 来自本地模型接口；证据摘要是确定性统计，明确不是 LLM 摘要。
 页面产品版本来自 `/api/v1/health`；package 版本是前端交付元数据，不能替代 Python 版本权威。
 
 ## 安装与开发
@@ -47,6 +49,8 @@ npm run build
 - `src/hooks`：中止过期读取、错误可见的加载状态、仅活跃任务轮询、搜索防抖。
 - `src/components`：导航、语义化反馈、键盘 tabs、原生 modal dialog、受限同源图片。
 - `src/features`：工作区、PDF 视图、真实结果、项目、任务与只读运行环境。
+- `src/features/tasks`：两阶段真实上传/作业创建，未知写入结果不自动重放。
+- `src/features/analysis`：批量 SMILES、研究用途识别/预测与证据摘要；不回写正式产物。
 - `src/styles`：按布局、PDF、表格、管理页、对话框与视口拆分。
 - `tests`：隔离契约输入和行为测试；不会进入生产打包。
 - `e2e`：真实服务的 Playwright 验收，没有拦截 API 或 seed 路由。
@@ -92,6 +96,12 @@ PATENTSAR_E2E_BASE_URL=http://127.0.0.1:18765 npm run e2e
 - `PATENTSAR_E2E_RUN_JOBS=1`：允许在本次上传的项目中启动、取消真实提取进程。
 - `PATENTSAR_E2E_FAILED_JOB_ID`：真实失败任务，验证失败阶段/错误没有被升级成成功。
 - `PATENTSAR_E2E_OUTPUT_DIR`：默认 `/srv/wsl/tmp/x-patentsar-ui-e2e`，所有 trace/截图留在 E 盘外部产物目录。
+- `PATENTSAR_E2E_SOURCE_PROJECT_ID`：附有真实原文和来源结构的项目，进行只读页图/标注比例验证。
+- `PATENTSAR_E2E_RUN_ANALYSIS=1`：明确允许有界本地 CPU 分子推理；不可用或失败不记为通过。
+- `PATENTSAR_E2E_ANALYSIS_COMPOUND_ID`：专用历史项目中可用的真实结构裁图标识。
+
+桌面布局验收实际测量表格面积、原文宽度、拖动/键盘/刷新/全屏；手机检查
+原文、表格、输入页和弹窗不溢出。布局保持在 hash，不依赖个人浏览器存储。
 
 不并发安装浏览器；共享 Chromium 缓存由主线程管理。
 

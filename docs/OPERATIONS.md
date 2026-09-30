@@ -20,6 +20,32 @@ Historical imports preserve the original generated files. Reviews have separate
 revisioned records and cannot promote formal acceptance. Web exports include the
 acceptance state; review-only output is not a formal chemistry deliverable.
 
+The complete task page is `#/new-task`. Upload/create and enqueue are separate
+verified steps: a start failure retains the project, while uncertain responses
+require a state check before retry. Notes are immutable job records, not executed
+prompts. Include-intermediate/force options become actual CLI flags; safe resume
+preserves original notes/options but disables force checkpoint invalidation.
+
+Local analysis uses `PATENTSAR_ADMET_PYTHON`, `PATENTSAR_ADMET_MODEL_DIR`, the
+existing DECIMER interpreter and `PYSTOW_HOME`. Follow the pinned CPU installation
+and SHA-verified model preparation commands in README; never replace unknown
+model files or move Linux environments between incompatible prefixes. No Java
+PaDEL task, DrugBank comparison or remote molecule submission is performed.
+
+Analysis runs one CPU request at a time with a 180-second lifetime, bounded JSON
+and resident memory. Concurrent work receives `analysis_busy`; client disconnect,
+timeout and shutdown stop only verified owned children. A shutdown that cannot
+verify child termination fails closed and retains workspace ownership while
+still attempting extraction queue cleanup. Do not bypass that lock to recover.
+Research caches are private rebuildable state in `web-state/analysis`, not a
+second extraction/acceptance authority.
+
+This workstation's original WO2026156070 PDF has been recovered to E and attached
+after its SHA-256 matches the historical source exactly. All 1,553 original pages
+are available; old OCR remains marked historical and is not described as the
+original page image. The historic core artifacts still do not constitute current
+formal QA. Original recovery is not permission to rewrite generated artifacts.
+
 Uploaded PDFs, new run outputs, private job logs and workspace.sqlite3 live under
 the Web state root. Preserve that root as a unit after stopping PatentSAR jobs.
 Do not copy a live SQLite/WAL database as a verified cold backup. Restart recovery
@@ -49,5 +75,11 @@ Activity extraction runs in an isolated subprocess with a bounded workload-aware
 Retain the final workbook, SDF, `pipeline_summary.json`, `final_qa_report.*`, optional `llm_qa_report.*`, and any failure marker as one audit unit. Remove OCR caches and intermediate images according to local data-retention policy only after the final audit unit is archived.
 
 ## Rollback
+
+Before a workbench rollback, finish or explicitly cancel jobs created by the new
+task interface. Older code can view retained historical artifacts but cannot be
+assumed to resume specifications containing new task parameters. Preserve the
+private workspace and analysis cache separately; do not strip fields from jobs
+or alter output files to make an older binary accept them.
 
 The restored source is `/srv/wsl/projects/patent-sar-extractor`; the external source archive and pre-optimization snapshot are preserved on E. Stop only PatentSAR jobs before restoring that snapshot or switching its entry point. The historical plugin path is not a verified active deployment in this recovered environment. Outputs are not schema-migrated in place; preserve each run directory before changing versions. Never shut down all WSL distributions merely to roll back this application.

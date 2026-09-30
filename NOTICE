@@ -15,3 +15,17 @@ https://pymupdf.readthedocs.io/en/latest/about.html#license-and-copyright
 Frontend third-party attribution is generated into THIRD_PARTY_LICENSES.md
 and retained in the installed Web bundle. Scientific model weights remain
 operator-installed and subject to their original licenses.
+
+Optional local molecular predictions use ADMET-AI 2.0.1 (MIT) and an independently
+installed CPU Chemprop/PyTorch environment. Upstream libraries and pretrained
+weights retain their original terms; they are not bundled in this repository or
+the application wheel. Model provenance and attribution:
+https://github.com/swansonk14/admet_ai
+https://pypi.org/project/admet-ai/2.0.1/
+
+The external Chemprop dependency graph includes padelpy, whose wheel contains
+PaDEL Java components with AGPL-3.0/LGPL-2.1 notices. This application's graph
+inference does not call that component. Redistribution of an external model
+environment requires a separate review of all retained upstream notices; the
+first-party Apache-2.0 license must not be presented as covering that environment.
+DrugBank comparison data is not copied into the deployed model bundle or used.

@@ -24,9 +24,15 @@ classify -> activity -> locate -> structures -> bind -> smiles -> final -> qa
 深墨控件、陶土色强调与衬线标题。保留独立 X-PatentSAR 品牌，不使用其
 专有字体或商标；统一设计变量位于 `frontend/src/styles/tokens.css`。
 提供原始 PDF 页图/文本、结构与活性表、来源定位、
-筛选分页、人工复核、CSV/JSON 导出及提取任务管理。它调用下方同一条 CLI
+筛选分页、人工复核、CSV/JSON 导出及提取任务管理。
+`#/new-task` 是完整任务输入页，默认建立项目并启动严格提取；可明确选择仅建项目。
+任务备注、包含中间体和强制重算选项会实际保存/执行，备注不是给 LLM 的指令。
+结果区默认占分栏宽度 72%，支持拖动/键盘调整、收起原文和全屏，布局随 URL 保留。
+它调用下方同一条 CLI
 主链；人工批准只记录复核意见，正式验收仍由确定性 QA 决定。历史导入保留
-历史身份，ADMET 和智能摘要当前未接入。
+历史身份。本地分子分析接入 DECIMER 裁图识别、RDKit 校验和 ADMET-AI v2 CPU
+预测，结果标明研究用途，与专利实测活性和正式 QA 分开。证据摘要是基于真实
+记录、单位和删失值的确定性统计，不冒充 LLM 摘要或推测药效。
 
 从源码安装 Web 依赖并构建界面（Node.js 24.21.x）：
 
@@ -60,6 +66,42 @@ x-patentsar import-run --run-dir /path/to/existing/run --title "历史专利复�
 没有原文时保留真实裁图和历史 OCR，界面明确显示原文未提供。
 单个 Web 提取任务默认最长 24 小时，可用 `serve --job-timeout-hours` 设置
 0.1–24 小时范围；超时会明确失败并提供恢复状态，不会自动放宽 QA 门禁。
+
+## 可选本地 ADMET 环境
+
+ADMET-AI 2.0.1 使用 Chemprop/PyTorch，在独立 Linux x86_64 Python 3.12 CPU
+环境安装，不混入主程序或 DECIMER/TensorFlow 环境。完整版本和下载哈希位于
+`examples/config/admet-cpu-requirements.txt`；这是外部模型运行边界，不是主应用
+`uv.lock` 的第二套依赖权威。
+
+```bash
+if [ ! -e /srv/wsl/envs/x-patentsar-admet ]; then
+  uv venv /srv/wsl/envs/x-patentsar-admet --python 3.12
+fi
+uv pip sync --python /srv/wsl/envs/x-patentsar-admet/bin/python \
+  --require-hashes --torch-backend cpu examples/config/admet-cpu-requirements.txt
+mkdir -p /srv/wsl/cache/patentsar/analysis-wheels
+curl --fail --location --connect-timeout 10 --max-time 300 \
+  https://files.pythonhosted.org/packages/12/19/5d83e84207636e6dd655b7cefab95c04eb5a48e7eaa1151424370b1a6ff1/admet_ai-2.0.1-py3-none-any.whl \
+  --output /srv/wsl/cache/patentsar/analysis-wheels/admet_ai-2.0.1-py3-none-any.whl
+uv run python tools/prepare_admet_models.py \
+  --wheel /srv/wsl/cache/patentsar/analysis-wheels/admet_ai-2.0.1-py3-none-any.whl \
+  --model-dir /srv/wsl/models/patentsar/admet-ai/2.0.1
+export PATENTSAR_ADMET_PYTHON=/srv/wsl/envs/x-patentsar-admet/bin/python
+export PATENTSAR_ADMET_MODEL_DIR=/srv/wsl/models/patentsar/admet-ai/2.0.1
+export PYSTOW_HOME=/srv/wsl/models/patentsar
+uv run x-patentsar serve --port 8765
+```
+
+运营方可将 `/srv/wsl` 替换为自己的外部存储根目录。若已缓存官方轮子，可在
+`uv pip sync` 加 `--find-links /path/to/verified-wheels`；仍必须保留哈希校验。
+准备工具验证官方 wheel SHA 与十个模型的内容指纹，不替换未知旧内容，也不
+复制或使用 DrugBank 参考分子。分析子进程禁止网络，CPU 单并发、最长 180 秒，
+收到取消或服务关闭时只清理已核实的本软件进程。
+
+不安装外部模型环境仍可使用 PDF、提取、复核、导出和证据摘要；分子预测会
+明确报告环境缺失，不生成替代值。模型输出不是实验结果，适用域未经过本项目
+验证；大分子/PROTAC 尤其不能直接据此宣称有效、安全或具有某种临床性质。
 
 ## 安装
 
