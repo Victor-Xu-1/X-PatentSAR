@@ -1,0 +1,146 @@
+.dialog {
+  padding: 0;
+  border: 1px solid #d5e0f3;
+  border-radius: 12px;
+  color: #18274d;
+  background: #fff;
+  width: min(530px, calc(100vw - 30px));
+  max-height: calc(100dvh - 40px);
+  box-shadow: 0 22px 90px #1d31593b;
+}
+.dialog::backdrop {
+  background: #1020414f;
+  backdrop-filter: blur(3px);
+}
+.dialog-wide {
+  width: min(780px, calc(100vw - 30px));
+}
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+  background: #fafdff;
+}
+.dialog-header h2 {
+  font-size: 15px;
+}
+.dialog-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  line-height: 1.7;
+}
+.dialog-body > .muted {
+  font-size: 12px;
+}
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #556b93;
+  font-size: 12px;
+}
+.form-field input,
+.form-field select,
+.form-field textarea {
+  color: #21355b;
+}
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  padding-top: 12px;
+  margin-top: 4px;
+  border-top: 1px solid var(--line);
+}
+.upload-drop {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 11px;
+  padding: 27px 12px 19px;
+  border: 1px dashed #c3d6f9;
+  border-radius: 8px;
+  background: #f8fbff;
+  color: #527fb7;
+  text-align: center;
+}
+.upload-drop strong {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.upload-drop span {
+  color: #8a9bb6;
+  font-size: 11px;
+}
+.upload-drop input {
+  width: 100%;
+  margin-top: 7px;
+  color: #6480a4;
+  background: #fff;
+  font-size: 11px;
+}
+.revision-comparison {
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: #fafcff;
+  border-radius: 6px;
+}
+.revision-comparison strong {
+  font-size: 11px;
+}
+.revision-comparison pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  margin: 5px 0;
+}
+.conflict {
+  padding: 11px;
+  border: 1px solid #f0d4a6;
+  background: #fff9ee;
+  border-radius: 6px;
+  color: #94671f;
+  font-size: 12px;
+}
+.conflict button {
+  margin-top: 8px;
+  color: #94671f;
+}
+.crop-large {
+  width: 100%;
+  max-height: 430px;
+  object-fit: contain;
+  min-height: 200px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 14px;
+}
+.crop-detail dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  gap: 9px;
+  font-size: 12px;
+}
+.crop-detail dt {
+  color: #8593ab;
+}
+.crop-detail dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.danger-button {
+  background: #c54854;
+  color: #fff;
+  border-color: #c54854;
+}
+.danger-button:hover:not(:disabled) {
+  background: #ad3240;
+  color: white;
+  border-color: #ad3240;
+}

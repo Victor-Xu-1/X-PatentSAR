@@ -1,0 +1,62 @@
+import type {
+  AcceptanceState,
+  Activity,
+  ConfidenceLevel,
+  Job,
+  ReviewDecision,
+  StageName,
+  StageStatus,
+} from '../api/types';
+export const stageLabels: Record<StageName, string> = {
+  classify: '文档分类',
+  activity: '活性提取',
+  locate: '来源定位',
+  structures: '结构分割',
+  bind: '结构绑定',
+  smiles: 'SMILES 识别',
+  final: '产物导出',
+  qa: '确定性 QA',
+};
+export const stageStatusLabels: Record<StageStatus, string> = {
+  pending: '等待',
+  running: '进行中',
+  ok: '完成',
+  empty: '无数据',
+  failed: '失败',
+  warnings: '有警告',
+};
+export const jobStatusLabels: Record<Job['status'], string> = {
+  queued: '排队中',
+  running: '运行中',
+  complete: '运行完成',
+  failed: '运行失败',
+  cancelled: '已取消',
+  interrupted: '已中断',
+};
+export const acceptanceLabels: Record<AcceptanceState, string> = {
+  not_run: '尚未验收',
+  accepted: '核心 QA 通过',
+  failed: '核心 QA 未通过',
+  historical: '历史结果 · 仅供复核',
+};
+export const confidenceLabels: Record<ConfidenceLevel, string> = {
+  high: '高',
+  medium: '中',
+  review: '待复核',
+  unknown: '未知',
+};
+export const reviewLabels: Record<ReviewDecision, string> = {
+  approved: '复核通过',
+  rejected: '复核不通过',
+  needs_review: '待复核',
+};
+export const activeJob = (job: Job) => job.status === 'running' || job.status === 'queued';
+export function activityText(activity: Activity): string {
+  const value = activity.value === null ? '值未提供' : String(activity.value);
+  return `${activity.name || '活性'} = ${value}${activity.unit ? ` ${activity.unit}` : ''}`;
+}
+export function dateText(value: string | null): string {
+  if (!value) return '—';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString('zh-CN', { hour12: false });
+}

@@ -1,0 +1,232 @@
+@media (min-width: 1600px) {
+  .workspace-split {
+    grid-template-columns: minmax(380px, 0.8fr) minmax(740px, 1.4fr);
+  }
+  .structure-cell {
+    flex-wrap: nowrap;
+  }
+  .crop-button {
+    width: 70px;
+  }
+}
+@media (max-width: 1400px) and (min-width: 1101px) {
+  .app-shell {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+  .topbar {
+    padding: 0 15px;
+  }
+  .global-search {
+    width: 235px;
+  }
+  .breadcrumb strong {
+    max-width: 240px;
+  }
+  main {
+    padding: 10px;
+  }
+  .workspace-split {
+    grid-template-columns: minmax(310px, 0.75fr) minmax(590px, 1.4fr);
+    gap: 10px;
+  }
+  .stage-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .stage::after {
+    display: none;
+  }
+  .workflow-panel {
+    padding: 10px 12px;
+  }
+  .pdf-pane,
+  .results-pane {
+    height: calc(100dvh - 190px);
+    min-height: 570px;
+  }
+  .metric-card {
+    gap: 7px;
+    padding: 10px 7px;
+    min-height: 79px;
+  }
+  .metric-icon {
+    width: 28px;
+    height: 35px;
+    border-radius: 7px;
+  }
+  .metric-icon svg {
+    width: 19px;
+  }
+  .metric-card strong {
+    font-size: 20px;
+  }
+  .metrics {
+    padding: 12px;
+    gap: 6px;
+  }
+  .results-table {
+    font-size: 10px;
+  }
+  .results-table td {
+    padding: 9px 4px;
+  }
+  .result-tabs > div {
+    gap: 13px;
+  }
+  .structure-cell {
+    gap: 3px;
+  }
+  .crop-button {
+    width: 55px;
+    height: 47px;
+  }
+}
+@media (max-width: 1100px) {
+  .app-shell {
+    grid-template-columns: 225px minmax(0, 1fr);
+  }
+  .global-search {
+    width: 220px;
+  }
+  .topbar {
+    padding: 0 13px;
+  }
+  .breadcrumb {
+    gap: 8px;
+  }
+  .breadcrumb strong {
+    max-width: 180px;
+  }
+  .topbar-actions > button > span {
+    display: none;
+  }
+  .workspace-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pdf-pane {
+    height: 570px;
+    min-height: 400px;
+  }
+  .results-pane {
+    height: 700px;
+    min-height: 500px;
+  }
+  .stage-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .stage::after {
+    display: none;
+  }
+  .workflow-panel {
+    align-items: flex-start;
+  }
+  .job-actions {
+    flex-wrap: wrap;
+    max-width: 200px;
+  }
+  .settings-sections {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 760px) {
+  .app-shell {
+    display: block;
+  }
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 225px;
+    transform: translateX(-100%);
+    transition: transform 0.15s ease;
+  }
+  .menu-open .sidebar {
+    transform: translateX(0);
+  }
+  .menu-toggle {
+    display: inline-flex;
+  }
+  .nav-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 19;
+    border: 0;
+    border-radius: 0;
+    background: #172b4b55;
+  }
+  .topbar {
+    height: 60px;
+    padding: 0 12px;
+    gap: 8px;
+  }
+  .breadcrumb strong {
+    max-width: 170px;
+    font-size: 12px;
+  }
+  .breadcrumb > svg,
+  .breadcrumb > a,
+  .breadcrumb > span {
+    display: none;
+  }
+  .topbar-actions {
+    gap: 8px;
+  }
+  .global-search {
+    display: none;
+  }
+  main {
+    padding: 9px;
+  }
+  .workflow-panel {
+    flex-direction: column;
+  }
+  .stage-strip {
+    width: 100%;
+  }
+  .job-actions-wrapper {
+    width: 100%;
+    max-width: none;
+  }
+  .job-actions {
+    max-width: none;
+  }
+  .metrics {
+    padding: 11px;
+    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .result-tabs > div {
+    gap: 13px;
+  }
+  .result-tabs span {
+    font-size: 9px;
+  }
+  .results-table {
+    min-width: 650px;
+  }
+  .pagination {
+    padding: 10px 12px;
+  }
+  .pagination nav {
+    gap: 4px;
+  }
+  .management-page {
+    padding: 17px;
+  }
+  .page-header {
+    flex-wrap: wrap;
+  }
+  .job-card header,
+  .job-card header > div {
+    flex-wrap: wrap;
+  }
+  .selection-bar {
+    align-items: flex-start;
+  }
+}

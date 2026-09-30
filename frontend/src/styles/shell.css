@@ -1,0 +1,243 @@
+.app-shell {
+  display: grid;
+  grid-template-columns: 225px minmax(0, 1fr);
+  min-height: 100dvh;
+}
+.sidebar {
+  background: linear-gradient(170deg, #f8fbff 0%, #f3f7ff 100%);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  padding: 0 13px;
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  z-index: 20;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 66px;
+  color: #14234c;
+  padding: 0 5px;
+  border-bottom: 1px solid var(--line);
+}
+.brand strong {
+  display: block;
+  font-size: 19px;
+  letter-spacing: -0.5px;
+}
+.brand small {
+  display: block;
+  font-size: 10px;
+  color: #7a8ba9;
+  margin-top: 4px;
+  white-space: nowrap;
+}
+.brand-symbol {
+  position: relative;
+  color: #2c68ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.brand-symbol svg + svg {
+  position: absolute;
+}
+.sidebar nav {
+  display: grid;
+  gap: 5px;
+  padding-top: 23px;
+}
+.nav-item {
+  justify-content: flex-start;
+  border: 0;
+  padding: 13px 13px;
+  min-height: 45px;
+  color: #53658e;
+  background: transparent;
+  font-size: 14px;
+  gap: 14px;
+}
+.nav-item.active {
+  color: var(--primary);
+  background: #e7efff;
+  position: relative;
+  font-weight: 650;
+}
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  width: 3px;
+  height: 29px;
+  left: -13px;
+  background: var(--primary);
+}
+.nav-item:disabled {
+  background: transparent;
+  color: #8a98b1;
+}
+.nav-divider {
+  height: 1px;
+  background: var(--line);
+  margin: 11px 10px;
+}
+.small-tag {
+  font-size: 9px;
+  color: #8797b3;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 2px 3px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.sidebar-upload {
+  margin: 24px 7px 20px;
+  background: white;
+  color: var(--primary);
+  padding: 10px;
+}
+.sidebar-project {
+  margin-top: auto;
+  padding: 15px 12px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #ffffff5c;
+  line-height: 1.65;
+}
+.sidebar-project small {
+  color: var(--muted);
+  font-size: 11px;
+}
+.sidebar-project strong {
+  display: block;
+  font-size: 12px;
+  margin: 8px 0;
+  overflow-wrap: anywhere;
+}
+.sidebar-project p {
+  color: var(--muted);
+  font-size: 11px;
+  margin: 5px 0;
+}
+.sidebar-project .badge {
+  margin-top: 5px;
+}
+.sidebar-footer {
+  min-height: 47px;
+  color: #7c8ca7;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.sidebar-footer > span:last-child {
+  margin-left: auto;
+}
+.status-dot {
+  height: 5px;
+  width: 5px;
+  background: #7e92b9;
+  border-radius: 50%;
+}
+.app-main {
+  min-width: 0;
+}
+.topbar {
+  height: 66px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 21px;
+  gap: 16px;
+  background: #fbfdff;
+}
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+}
+.breadcrumb svg {
+  color: #3274ff;
+}
+.breadcrumb a,
+.breadcrumb > span {
+  color: #8290ad;
+  white-space: nowrap;
+}
+.breadcrumb strong {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  max-width: 480px;
+}
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 0 0 auto;
+}
+.search-field {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+  padding-left: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 6px;
+  color: #7788aa;
+}
+.search-field input {
+  border: 0;
+  background: transparent;
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+}
+.search-field:focus-within {
+  outline: 2px solid #acc6ff;
+  outline-offset: 1px;
+}
+.search-field input:focus-visible {
+  outline: 0;
+}
+.search-field input::placeholder {
+  color: #99a6bf;
+}
+.global-search {
+  width: 295px;
+}
+.user-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: white;
+  background: #5c88f7;
+  font-size: 13px;
+}
+main {
+  padding: 12px 14px;
+  outline: none;
+}
+main > .error-notice,
+.runtime-banner,
+.connection-banner {
+  margin-bottom: 10px;
+}
+.connection-banner .feedback {
+  padding: 10px;
+  min-height: 40px;
+  justify-content: flex-start;
+  font-size: 12px;
+}
+.menu-toggle,
+.nav-scrim {
+  display: none;
+}

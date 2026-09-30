@@ -1,0 +1,173 @@
+.pdf-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 11px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #edf1f8;
+}
+.page-navigation,
+.zoom-controls {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.page-navigation form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.page-navigation input {
+  text-align: center;
+  width: 43px;
+  min-height: 28px;
+  padding: 5px 3px;
+  font-size: 11px;
+}
+.page-navigation span {
+  color: #7f90af;
+  font-size: 11px;
+  min-width: 32px;
+}
+.pdf-controls .icon-button {
+  width: 28px;
+  min-height: 28px;
+}
+.zoom-controls output {
+  display: grid;
+  place-items: center;
+  min-width: 40px;
+  font-size: 11px;
+}
+.pdf-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fafcff;
+}
+.pdf-content > .error-notice {
+  margin: 14px;
+}
+.pdf-content > .feedback {
+  flex: 1;
+}
+.pdf-scroll {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+  padding: 12px 9px;
+}
+.page-canvas {
+  position: relative;
+  background: white;
+  margin: 0 auto;
+  box-shadow: 0 1px 4px #182b4d22;
+  min-height: 100px;
+}
+.page-canvas > img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.page-loading {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: #ffffffec;
+  padding: 6px 10px;
+  color: #7587a9;
+}
+.annotation-box {
+  position: absolute;
+  padding: 0;
+  min-height: 0;
+  border-radius: 3px;
+  border: 1.5px solid #6699ff;
+  background: #5b92ff16;
+  color: #2960c5;
+}
+.annotation-box span {
+  position: absolute;
+  top: -20px;
+  left: -1px;
+  font-size: 9px;
+  padding: 2px 4px;
+  min-height: 17px;
+  border-radius: 3px 3px 0 0;
+  background: #edf4ff;
+  border: 1px solid #bbd2ff;
+  white-space: nowrap;
+}
+.annotation-box:hover:not(:disabled),
+.annotation-box.selected {
+  background: #407fff35;
+  border: 2px solid #225cff;
+}
+.annotation-box.verified span {
+  color: #188363;
+}
+.annotation-list {
+  flex: 0 0 auto;
+  max-height: 115px;
+  overflow-y: auto;
+  border-top: 1px solid var(--line);
+  background: #fff;
+  padding: 8px;
+}
+.annotation-list button {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  margin-bottom: 4px;
+  font-size: 10px;
+  padding: 5px 8px;
+  color: #637c9e;
+}
+.annotation-list button.active {
+  border-color: #b5ccff;
+  background: #eef4ff;
+  color: var(--primary);
+}
+.annotation-list button > span {
+  margin-left: auto;
+  font-size: 9px;
+}
+.page-text {
+  flex: 1;
+  padding: 15px 18px;
+  overflow: auto;
+}
+.page-text pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.95;
+  font-size: 12px;
+  font-family: inherit;
+  margin: 15px 0;
+}
+.source-mode {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 10px;
+  color: #7390b8;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
+}
+.pdf-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 11px;
+  min-height: 29px;
+  border-top: 1px solid var(--line);
+  background: #fff;
+  color: #92a0b9;
+  font-size: 9px;
+}
+.pdf-footer span:first-of-type {
+  margin-right: auto;
+}
