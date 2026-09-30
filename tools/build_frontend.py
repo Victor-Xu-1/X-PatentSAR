@@ -35,6 +35,31 @@ def fingerprints(directory: Path, *, managed: bool = False) -> dict[str, str]:
     return files
 
 
+def discard_staged_bundle(root: Path) -> None:
+    staged = root / "build" / "lib" / "patent_sar_extractor" / "web" / "static"
+    if any(
+        path.is_symlink()
+        for path in (staged, *staged.parents)
+        if path.is_relative_to(root)
+    ):
+        raise ValueError("Staged Web build directories must not be symbolic links")
+    if not staged.resolve().is_relative_to(root.resolve()):
+        raise ValueError("Staged Web build must remain inside the repository")
+    if not staged.exists():
+        return
+    marker = staged / MARKER
+    if not marker.is_file() or marker.is_symlink():
+        raise ValueError("Staged Web bundle is unmanaged; preserve it before rebuilding")
+    previous = json.loads(marker.read_text(encoding="utf-8"))
+    if previous.get("generator") != GENERATOR or previous.get("files") != fingerprints(
+        staged, managed=True
+    ):
+        raise ValueError("Staged Web bundle was modified; preserve it before rebuilding")
+    # Setuptools copies changed files but otherwise retains obsolete hashed assets.
+    # Delete only this exact, unmodified generated copy, not the whole build tree.
+    shutil.rmtree(staged)
+
+
 def bundle(root: Path, *, check: bool = False) -> None:
     source = root / "frontend" / "dist"
     destination = root / "src" / "patent_sar_extractor" / "web" / "static"
@@ -73,6 +98,7 @@ def bundle(root: Path, *, check: bool = False) -> None:
             return
     elif check:
         raise ValueError("Packaged Web assets are missing")
+    discard_staged_bundle(root)
     destination.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="x-patentsar-bundle-") as workspace:
         temporary = Path(workspace) / "static"

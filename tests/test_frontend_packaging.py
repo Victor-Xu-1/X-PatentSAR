@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -44,6 +45,37 @@ class FrontendPackagingTests(unittest.TestCase):
         packager.bundle(self.root)
         self.assertFalse((self.destination / "assets" / "app.js").exists())
         self.assertTrue((self.destination / "assets" / "updated.js").exists())
+
+    def test_rebuild_removes_only_verified_setuptools_static_copy(self) -> None:
+        packager.bundle(self.root)
+        staged = self.root / "build" / "lib" / "patent_sar_extractor" / "web" / "static"
+        shutil.copytree(self.destination, staged)
+        unrelated = staged.parent / "keep.py"
+        unrelated.write_text("# unrelated generated module")
+        packager.bundle(self.root, check=True)
+        self.assertTrue(staged.exists(), "Check mode must not mutate build state")
+        (self.dist / "assets" / "app.js").unlink()
+        (self.dist / "assets" / "next.js").write_text("console.info('next');")
+        packager.bundle(self.root)
+        self.assertFalse(staged.exists(), "Setuptools must not retain obsolete hashed JS")
+        self.assertTrue(unrelated.exists())
+
+    def test_unmanaged_staged_assets_are_preserved(self) -> None:
+        packager.bundle(self.root)
+        staged = self.root / "build" / "lib" / "patent_sar_extractor" / "web" / "static"
+        staged.mkdir(parents=True)
+        asset = staged / "user.js"
+        asset.write_text("user change")
+        with self.assertRaisesRegex(ValueError, "unmanaged"):
+            packager.bundle(self.root)
+        self.assertEqual(asset.read_text(), "user change")
+
+    def test_linked_build_directory_is_preserved(self) -> None:
+        with tempfile.TemporaryDirectory() as external:
+            (self.root / "build").symlink_to(external, target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, "symbolic"):
+                packager.bundle(self.root)
+            self.assertEqual(list(Path(external).iterdir()), [])
 
     def test_modified_or_unmanaged_destination_is_preserved(self) -> None:
         packager.bundle(self.root)
