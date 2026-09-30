@@ -113,6 +113,65 @@ has a clear disabled/informational state. No fictional molecules, assays or coun
    start its runner because the account reports failed payments or a spending
    limit; remote CI is not marked passed. No account billing settings are changed.
 
+### Complete task workflow iteration
+
+1. Complete: recover the actual WO2026156070 original from local file storage,
+   copy it to E and attach it only after its recorded SHA-256 matches exactly.
+   The 1,553 pages and source page 361 render through the real parser/API.
+2. In progress: add a full task input page, retained real job parameters,
+   results-first/resizable/fullscreen layouts, local DECIMER crop recognition,
+   ADMET-AI v2 CPU inference and source-grounded deterministic evidence summaries.
+3. Pending: run affected tests and the mandatory packaging/runtime gates against
+   a clean candidate, deploy to E, verify the actual original and data in Chromium,
+   and push the private repository. No global WSL shutdown or user-data cleanup.
+
+Additional API v1 contract (all additive; current product remains v0.1.0):
+
+- POST `/projects` additionally accepts optional `patent_id` query metadata.
+  Empty metadata keeps filename inference; validate a bounded normalized ID.
+- POST `/projects/{id}/jobs` additionally accepts `include_intermediates:false`,
+  `force:false`, `task_note:""` (max 2,000 characters). They are retained in the
+  existing immutable job specification; notes are operator records, not executed
+  instructions. The existing strict QA default and opt-in advisory flag stay.
+  Job responses add the same three fields. Resume preserves original options
+  and notes, never silently re-enables force or paid model calls.
+- POST `/analysis/admet` accepts `{smiles:[string]}` (1–50 bounded, chemically
+  valid canonical molecules) and returns `{engine:{name,version,model_sha256},
+  generated_at,review_only:true,predictions:[{smiles,properties:[{key,label,value,
+  unit,kind:"descriptor" or "prediction"}]}],warnings:[]}`. Values must come from
+  actual RDKit calculations or ADMET-AI v2 model inference, not heuristic ADMET
+  substitutes. Probabilities and endpoint units stay explicit.
+- POST `/projects/{id}/compounds/{compound_id}/recognize` has an empty JSON body
+  and returns `{compound_id,status:"recognized" or "rejected",smiles,engine:
+  {name,version},warnings:[],review_only:true}`. It reads the real bounded crop,
+  reuses DECIMER and RDKit QC and stores analysis separately; it must not overwrite
+  generated bindings, pipeline SMILES, confidence or formal acceptance.
+- GET `/projects/{id}/evidence-summary` returns `{project_id,generated_at,
+  acceptance,counts:{structures,activity_rows,compounds,smiles,source_located,
+  needs_review},activities:[{name,unit,rows,numeric_rows,min,max,censored_rows,
+  target}],targets:[{name,rows}],limitations:[],source_pages:[]}`. Aggregate only
+  original fields, preserve censored/range values and provenance, and do not
+  merge incomparable units/targets. This is deterministic evidence summarization,
+  not an LLM mechanism/efficacy claim.
+- `/health` and `/runtime` expose real `admet`/`summary` capabilities; the analysis
+  integration does not add a second HTTP app or core extraction authority.
+
+Heavy analysis runs in a bounded, one-consumer CPU subprocess boundary using
+operator-selected external environments, models and E-drive caches. Prediction
+and recognition caches are private rebuildable analysis state, independently
+versioned; the authoritative project/job/review SQLite schema stays unchanged.
+Model/environment absence, timeout, invalid molecules, rejection and concurrent
+requests must be visible failures, not silent degradation. No remote molecule
+upload, paid service, proprietary model or credential is introduced by default.
+
+Validation mapping: task form → upload/parse, persistent job options, actual CLI
+arguments and queue/cancellation; original PDF → exact SHA, real page images,
+source jump and annotation coordinates; layout → larger measured result-table
+area, splitter keyboard/pointer, fullscreen and mobile; DECIMER/ADMET → real
+model inference, QC, bounded concurrency/timeout, invalid input and cache
+identity; evidence summary → real rows, units/censoring, limits and historical
+acceptance unchanged. LLM remains opt-in and outside this deterministic summary.
+
 The single visual authority is `frontend/src/styles/tokens.css`. Component styles
 consume those tokens, not page-specific palettes or layered legacy themes. The
 reference is Claude's public light workspace style; X-PatentSAR is independent
