@@ -24,6 +24,7 @@ from .models import (
 from .pdf import crop_image, filename_title, page_info, render_page, stream_upload
 from .reviews import put_review
 from .service import WorkspaceService
+from .task_inputs import patent_identifier
 
 
 def project_routes(service: WorkspaceService, max_upload_bytes: int) -> APIRouter:
@@ -40,16 +41,23 @@ def project_routes(service: WorkspaceService, max_upload_bytes: int) -> APIRoute
 
     @router.post("/projects", status_code=201, response_model=Project)
     async def create_project(
-        request: Request, filename: str, title: str | None = None
+        request: Request,
+        filename: str,
+        title: str | None = None,
+        patent_id: str | None = None,
     ) -> Project:
         filename_title(filename)
         if title is not None:
             service._title(title)
+        if patent_id:
+            patent_id = patent_identifier(patent_id)
         async with uploads:
             uploaded = await stream_upload(
                 request, service.store.root / "uploads", max_bytes=max_upload_bytes
             )
-            return await run_in_threadpool(service.add_pdf, uploaded, filename, title)
+            return await run_in_threadpool(
+                service.add_pdf, uploaded, filename, title, patent_id
+            )
 
     @router.get("/projects/{project_id}", response_model=Project)
     def project(project_id: str) -> Project:

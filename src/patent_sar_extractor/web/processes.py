@@ -32,6 +32,9 @@ class RunSpec:
     sha256: str
     allow_partial: bool = False
     advisory: bool = False
+    include_intermediates: bool = False
+    force: bool = False
+    task_note: str = ""
 
 
 @dataclass
@@ -324,6 +327,10 @@ class CLIProcessRunner(SubprocessRunner):
             command.append("--allow-partial")
         if not spec.advisory:
             command.append("--skip-advisory-qa")
+        if spec.include_intermediates:
+            command.append("--include-intermediates")
+        if spec.force:
+            command.append("--force")
         return command
 
     def environment(self, spec: RunSpec) -> dict[str, str]:

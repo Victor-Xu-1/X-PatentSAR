@@ -119,6 +119,9 @@ class Job(DTO):
     error: Error | None
     stages: list[Stage]
     can_resume: bool
+    include_intermediates: bool = False
+    force: bool = False
+    task_note: str = ""
 
 
 class Project(DTO):
@@ -156,6 +159,13 @@ class JobRequest(DTO):
     allow_partial: bool = False
     advisory: bool = False
     resume_job_id: str | None = Field(default=None, max_length=64)
+    include_intermediates: bool = Field(default=False, strict=True)
+    force: bool = Field(default=False, strict=True)
+    task_note: str = Field(
+        default="",
+        max_length=2000,
+        pattern=r"^[^\x00-\x08\x0b\x0c\x0e-\x1f\x7f]*$",
+    )
 
 
 class ExportRequest(DTO):

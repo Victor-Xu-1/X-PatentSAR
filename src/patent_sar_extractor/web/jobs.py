@@ -54,6 +54,12 @@ def decode_spec(raw: str) -> RunSpec:
         )
         or not isinstance(spec.advisory, bool)
         or not isinstance(spec.allow_partial, bool)
+        or not isinstance(spec.include_intermediates, bool)
+        or not isinstance(spec.force, bool)
+        or not isinstance(spec.task_note, str)
+        or len(spec.task_note) > 2000
+        or any(ord(c) < 32 and c not in "\t\n\r" for c in spec.task_note)
+        or "\x7f" in spec.task_note
     ):
         raise WebError(
             409, "invalid_job_record", "Persisted job specification is invalid."
@@ -125,6 +131,9 @@ class JobQueue:
             )
         job_id = uuid.uuid4().hex
         output = self.store.root / "runs" / project_id / job_id
+        include_intermediates = request.include_intermediates
+        force = request.force
+        task_note = request.task_note.strip()
         if request.resume_job_id:
             previous = self.store.job(request.resume_job_id)
             if (
@@ -147,6 +156,9 @@ class JobQueue:
                     "Resume requires the original job parameters.",
                 )
             output = Path(old.output_dir)
+            include_intermediates = old.include_intermediates
+            force = False  # Resume reuses verified checkpoints; it never invalidates them.
+            task_note = old.task_note
         resolved_output = private_directory(output)
         if not resolved_output.is_relative_to(self.store.root / "runs"):
             raise WebError(
@@ -163,6 +175,9 @@ class JobQueue:
             project["sha256"],
             request.allow_partial,
             request.advisory,
+            include_intermediates,
+            force,
+            task_note,
         )
         payload = {**asdict(spec), "runtime_identity": runtime_identity()}
         try:

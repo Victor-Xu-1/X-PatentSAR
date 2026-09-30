@@ -24,6 +24,7 @@ from .pdf import UploadedPDF, copy_original, filename_title, open_pdf, rendered_
 from .processes import runtime_identity
 from .stages import read_stages
 from .storage import Store, encode, now
+from .task_inputs import patent_identifier
 
 
 class WorkspaceService:
@@ -42,9 +43,14 @@ class WorkspaceService:
         return title
 
     def add_pdf(
-        self, uploaded: UploadedPDF, filename: str, title: str | None
+        self,
+        uploaded: UploadedPDF,
+        filename: str,
+        title: str | None,
+        patent_id: str | None = None,
     ) -> Project:
-        stem, patent_id = filename_title(filename)
+        stem, inferred_id = filename_title(filename)
+        patent_id = patent_identifier(patent_id) if patent_id else inferred_id
         title = self._title(title or stem)
         project_id = uuid.uuid4().hex
         stamp = now()
@@ -297,6 +303,9 @@ class WorkspaceService:
                 else None
             ),
             can_resume=resumable,
+            include_intermediates=spec.get("include_intermediates", False),
+            force=spec.get("force", False),
+            task_note=spec.get("task_note", ""),
         )
 
     def project(self, project_id: str) -> Project:
