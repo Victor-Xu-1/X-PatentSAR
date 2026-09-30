@@ -3,8 +3,9 @@
 Controller-owned implementation contract. `contracts.py` owns product identity
 and `patentsar.web-api` version 1. The local Web app presents the existing CLI
 pipeline, never a second extraction chain. Manual reviews never alter generated
-bindings, SMILES, or deterministic QA. Missing ADMET/LLM-summary capabilities are
-explicitly unavailable, not populated with demonstration values.
+bindings, SMILES, or deterministic QA. Local ADMET and evidence summaries are
+real read-only consumers; missing model environments are explicit failures,
+never populated with demonstration values. Evidence summary is not an LLM claim.
 
 ## Security and storage
 
@@ -118,12 +119,25 @@ has a clear disabled/informational state. No fictional molecules, assays or coun
 1. Complete: recover the actual WO2026156070 original from local file storage,
    copy it to E and attach it only after its recorded SHA-256 matches exactly.
    The 1,553 pages and source page 361 render through the real parser/API.
-2. In progress: add a full task input page, retained real job parameters,
+2. Complete: add a full task input page, retained real job parameters,
    results-first/resizable/fullscreen layouts, local DECIMER crop recognition,
    ADMET-AI v2 CPU inference and source-grounded deterministic evidence summaries.
-3. Pending: run affected tests and the mandatory packaging/runtime gates against
+3. In progress: run affected tests and the mandatory packaging/runtime gates against
    a clean candidate, deploy to E, verify the actual original and data in Chromium,
    and push the private repository. No global WSL shutdown or user-data cleanup.
+
+Current iteration verification: the final source has 185 Python tests (one
+explicit real-model test is separately opt-in), 120 frontend unit tests, actual
+ADMET-AI 2.0.1 CPU inference with 52 properties, and actual original-crop
+DECIMER/RDKit-to-ADMET HTTP verification. The source browser checks cover all
+sixteen workflows, including measured visible result area, real original PDF,
+keyboard/pointer/refresh, research analysis and unchanged formal acceptance.
+Final clean-wheel/production evidence is recorded only after deployment.
+
+Raw model predictions remain raw: upstream declared physical-range violations
+are warnings, not silent clamping or guessed unit transforms. Log-scale negative
+values remain legitimate. The same validation applies to newly inferred and
+cached responses, with adapter/environment/model content included in cache keys.
 
 Additional API v1 contract (all additive; current product remains v0.1.0):
 

@@ -57,6 +57,7 @@ test('same-project deterministic summary uses real evidence and preserves formal
 
 test('actual local batch ADMET accepts typed molecules and shows engine, units and review-only results', async ({
   page,
+  request,
 }) => {
   test.skip(!runAnalysis, 'Set PATENTSAR_E2E_RUN_ANALYSIS=1 for approved bounded CPU inference');
   test.setTimeout(215_000);
@@ -74,10 +75,23 @@ test('actual local batch ADMET accepts typed molecules and shows engine, units a
     received.ok(),
     'No placeholder or unavailable model can satisfy inference acceptance',
   ).toBe(true);
-  const result = decodeAdmet(await received.json());
+  // Chromium can evict a fetch inspector body even though the app has rendered
+  // it. After an acknowledged 200, independently read the same content-addressed
+  // prediction through the real API, without changing the browser's session.
+  const session = await request.get('/api/v1/session');
+  expect(session.ok()).toBe(true);
+  const csrf = ((await session.json()) as { csrf_token: string }).csrf_token;
+  const durable = await request.post(received.url(), {
+    data: received.request().postDataJSON(),
+    headers: { Origin: new URL(received.url()).origin, 'X-CSRF-Token': csrf },
+    timeout: 195_000,
+  });
+  expect(durable.ok()).toBe(true);
+  const result = decodeAdmet(await durable.json());
   expect(result.review_only).toBe(true);
   expect(result.predictions).toHaveLength(2);
   await expect(page.locator('.molecule-result')).toHaveCount(2);
+  for (const prediction of result.predictions) expect(prediction.properties).toHaveLength(52);
   await expect(page.locator('.admet-results')).toContainText(result.engine.name);
   await expect(page.getByText(/不改变正式提取/)).toBeVisible();
 });
