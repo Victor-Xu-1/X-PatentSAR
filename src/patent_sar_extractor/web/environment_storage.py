@@ -7,7 +7,7 @@ import os
 import sqlite3
 import stat
 import uuid
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
@@ -41,7 +41,13 @@ CREATE INDEX IF NOT EXISTS environment_history ON operations(created_at);
 
 
 class EnvironmentStore:
-    def __init__(self, state_root: Path, install_root: Path) -> None:
+    def __init__(
+        self,
+        state_root: Path,
+        install_root: Path,
+        resolver: Callable[[list[str]], list[str]] | None = None,
+    ) -> None:
+        self.resolver = resolver or (lambda identifiers: identifiers)
         self.root = private_directory(state_root / "environments")
         self.path = self.root / "environment.sqlite3"
         try:
@@ -205,8 +211,12 @@ class EnvironmentStore:
             )
         return dict(row)
 
-    @staticmethod
-    def operation(row: dict[str, Any]) -> EnvironmentOperation:
+    def operation(self, row: dict[str, Any]) -> EnvironmentOperation:
+        selected = json.loads(row["component_ids"])
+        executed = self.resolver(selected) if row["action"] == "install" else selected
+        completed = json.loads(row["completed_components"])
+        if row["action"] == "install" and row["status"] == "complete":
+            completed = executed
         return EnvironmentOperation(
             **{
                 key: row[key]
@@ -222,8 +232,8 @@ class EnvironmentStore:
                     "stage",
                 )
             },
-            component_ids=json.loads(row["component_ids"]),
-            completed_components=json.loads(row["completed_components"]),
+            component_ids=executed,
+            completed_components=completed,
             log_tail=json.loads(row["log_tail"]),
             error=json.loads(row["error"]) if row["error"] else None,
             applied=bool(row["applied"]),

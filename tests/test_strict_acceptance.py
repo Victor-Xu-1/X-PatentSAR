@@ -1238,7 +1238,7 @@ class StrictAcceptanceTests(unittest.TestCase):
                 encoding="utf-8",
             )
             buffer = io.StringIO()
-            with patch.dict(env_runner_module.CONDA_ENVS, {"base": sys.executable}), \
+            with patch.dict(os.environ, {"PATENTSAR_BASE_PYTHON": sys.executable}), \
                     contextlib.redirect_stdout(buffer):
                 proc = env_runner_module.run_in_env(
                     "base",
@@ -1261,7 +1261,7 @@ class StrictAcceptanceTests(unittest.TestCase):
                 "import os\nprint(os.environ.get('PYTHONPATH', ''))\n",
                 encoding="utf-8",
             )
-            with patch.dict(env_runner_module.CONDA_ENVS, {"base": sys.executable}), patch.dict(
+            with patch.dict(os.environ, {"PATENTSAR_BASE_PYTHON": sys.executable}), patch.dict(
                 os.environ,
                 {"PYTHONPATH": "/tmp/incompatible-parent-site-packages"},
             ):

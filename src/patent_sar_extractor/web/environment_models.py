@@ -47,6 +47,7 @@ class EnvironmentComponent(DTO):
     source_url: str
     checks: list[EnvironmentCheck]
     problem: str | None
+    dependencies: list[ComponentId] = Field(default_factory=list)
 
 
 class EnvironmentSettings(DTO):
@@ -59,7 +60,7 @@ class EnvironmentSettings(DTO):
 
 class EnvironmentSettingsRequest(DTO):
     install_root: StrictStr = Field(min_length=1, max_length=512)
-    expected_revision: int = Field(ge=0)
+    expected_revision: int = Field(ge=0, strict=True)
 
 
 class EnvironmentPreset(DTO):
@@ -75,7 +76,7 @@ class EnvironmentOperationRequest(DTO):
     request_id: StrictStr = Field(
         min_length=16, max_length=64, pattern=r"^[A-Za-z0-9_-]+$"
     )
-    expected_revision: int = Field(ge=0)
+    expected_revision: int = Field(ge=0, strict=True)
 
     @model_validator(mode="after")
     def unique_components(self) -> EnvironmentOperationRequest:

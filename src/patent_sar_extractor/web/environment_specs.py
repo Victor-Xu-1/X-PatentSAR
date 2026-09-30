@@ -142,6 +142,7 @@ def component_catalog() -> list[dict[str, Any]]:
             source_url=spec.source_url,
             checks=[],
             problem=None,
+            dependencies=list(spec.dependencies),
         ).model_dump(mode="json")
         for spec in _SPECS
     ]

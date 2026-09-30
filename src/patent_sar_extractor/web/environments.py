@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -43,8 +44,10 @@ class EnvironmentManager:
         self.analysis = analysis
         self.storage = storage or ManagedStorage.from_environment(state_root)
         self.config = config or EnvironmentConfig()
-        self.store = EnvironmentStore(state_root, self.storage.default_root)
         self.metadata = catalog
+        self.store = EnvironmentStore(
+            state_root, self.storage.default_root, self.resolve_components
+        )
         self.recipe_identity = recipe_identity or (
             lambda: hashlib.sha256(encode(self.metadata()).encode()).hexdigest()
         )
@@ -53,6 +56,7 @@ class EnvironmentManager:
             runner or EnvironmentProcessRunner(),
             self.storage.operation_timeout_seconds,
             self._completed,
+            self._prepare,
         )
 
     def start(self) -> None:
@@ -98,8 +102,25 @@ class EnvironmentManager:
 
     def catalog(self) -> EnvironmentCatalog:
         reports = self.store.reports(self._source_key())
+        fields = {
+            "status",
+            "location",
+            "checks",
+            "detected_version",
+            "installed_bytes",
+            "problem",
+        }
         components = [
-            EnvironmentComponent.model_validate(reports.get(item["id"], item))
+            EnvironmentComponent.model_validate(
+                {
+                    **item,
+                    **{
+                        key: value
+                        for key, value in reports.get(item["id"], {}).items()
+                        if key in fields
+                    },
+                }
+            )
             for item in self.metadata()
         ]
         operations = [self.store.operation(row) for row in self.store.history()]
@@ -165,13 +186,13 @@ class EnvironmentManager:
                 "Only pinned, supported component recipes may be installed.",
             )
         root = self.storage.validate(selected.install_root)
-        if request.action == "install":
-            self.storage.prepare(str(root))
         payload = {
             "schema_version": 1,
             "requires_owner_ack": True,
             "action": request.action,
-            "component_ids": sorted(ids),
+            "component_ids": self.resolve_components(sorted(ids))
+            if request.action == "install"
+            else sorted(ids),
             "install_root": str(root),
             "bindings": self._bindings(),
             "cache_root": str(self.store.root / "downloads"),
@@ -185,12 +206,53 @@ class EnvironmentManager:
             request.request_id, fingerprint, payload, request.expected_revision
         )
         if created:
-            private_directory(self.store.root / "downloads")
             self.queue.wake.set()
         return operation
 
+    def resolve_components(self, identifiers: list[str]) -> list[str]:
+        known = {item["id"]: item for item in self.metadata()}
+        visiting: set[str] = set()
+        result: list[str] = []
+
+        def visit(identifier: str) -> None:
+            if identifier not in known or identifier in visiting:
+                raise WebError(
+                    409,
+                    "environment_dependencies",
+                    "Component dependencies are unknown or cyclic; installation was not started.",
+                )
+            if identifier in result:
+                return
+            visiting.add(identifier)
+            for dependency in known[identifier].get("dependencies", []):
+                visit(dependency)
+            visiting.remove(identifier)
+            result.append(identifier)
+
+        for identifier in identifiers:
+            visit(identifier)
+        if len(result) > 6:
+            raise WebError(
+                409,
+                "environment_dependencies",
+                "The component dependency plan exceeded its fixed bound.",
+            )
+        return result
+
     def operation(self, identifier: str) -> EnvironmentOperation:
         return self.store.operation(self.store.row(identifier))
+
+    def _prepare(self, plan: dict[str, Any]) -> None:
+        root = self.storage.validate(plan["install_root"])
+        if plan["cache_root"] != str(self.store.root / "downloads"):
+            raise WebError(
+                409,
+                "environment_record",
+                "Environment cache must belong to its private controller.",
+            )
+        if plan["action"] == "install":
+            self.storage.prepare(str(root))
+        private_directory(self.store.root / "downloads")
 
     def cancel(self, identifier: str) -> EnvironmentOperation:
         operation = self.store.request_cancel(identifier)
@@ -201,7 +263,9 @@ class EnvironmentManager:
         self, plan: dict[str, Any], result: dict[str, Any]
     ) -> dict[str, str]:
         bindings = result["bindings"]
-        if not set(bindings) <= set(CONFIG_KEYS):
+        if not set(bindings) <= set(CONFIG_KEYS) or not set(
+            plan["component_ids"]
+        ) <= set(bindings):
             raise WebError(
                 409,
                 "environment_result",
@@ -220,9 +284,21 @@ class EnvironmentManager:
                 )
             location = Path(raw)
             if (
+                not location.exists()
+                or identifier in {"installer", "base", "decimer", "admet"}
+                and not os.access(location, os.X_OK)
+            ):
+                raise WebError(
+                    409,
+                    "environment_result",
+                    "Verified environment paths became unavailable before activation.",
+                )
+            if (
                 reports.get(identifier) is None
                 or reports[identifier].status != "ready"
                 or reports[identifier].location != raw
+                or not reports[identifier].detected_version
+                or not any(check.ok for check in reports[identifier].checks)
             ):
                 raise WebError(
                     409,

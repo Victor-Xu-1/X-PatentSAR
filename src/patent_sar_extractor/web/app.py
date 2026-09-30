@@ -6,7 +6,7 @@ import logging
 import math
 import os
 import sys
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -26,11 +26,14 @@ from patent_sar_extractor.contracts import (
 from .analysis import AnalysisService
 from .analysis_process import BoundedAnalysisRunner
 from .analysis_runtime import AnalysisSettings
+from .environment_paths import ManagedStorage
+from .environments import EnvironmentManager
 from .errors import WebError
 from .jobs import JobQueue
 from .owner import WorkspaceOwner
 from .processes import CLIProcessRunner, ProcessRunner
 from .routes_analysis import analysis_routes
+from .routes_environments import environment_routes
 from .routes_jobs import job_routes
 from .routes_projects import project_routes
 from .security import SecurityMiddleware, Sessions, loopback_host
@@ -54,6 +57,9 @@ def create_app(
     body_idle_seconds: float = 15,
     analysis_settings: AnalysisSettings | None = None,
     analysis_runner: BoundedAnalysisRunner | None = None,
+    environment_storage: ManagedStorage | None = None,
+    environment_runner: ProcessRunner | None = None,
+    environment_catalog: Callable[[], list[dict[str, object]]] | None = None,
 ) -> FastAPI:
     """API-only with frontend_dir=None. Caller chooses the private state root.
 
@@ -92,6 +98,20 @@ def create_app(
         service.store.root, service, settings=analysis_settings, runner=analysis_runner
     )
     queue = JobQueue(service, runner or CLIProcessRunner(), job_timeout_seconds)
+    recipe_identity = None
+    if environment_catalog is None:
+        from .environment_specs import catalog_fingerprint, component_catalog
+
+        environment_catalog = component_catalog
+        recipe_identity = catalog_fingerprint
+    environments = EnvironmentManager(
+        service.store.root,
+        analysis,
+        environment_catalog,
+        storage=environment_storage,
+        runner=environment_runner,
+        recipe_identity=recipe_identity,
+    )
     owner = WorkspaceOwner(service.store.root)
     frontend = Path(frontend_dir) if frontend_dir is not None else None
 
@@ -104,11 +124,16 @@ def create_app(
                 service.import_run(directory)
             queue.start()
             started = True
+            environments.start()
             app.state.ready = True
             yield
         finally:
             app.state.ready = False
             failures: list[Exception] = []
+            try:
+                environments.close()
+            except Exception as error:
+                failures.append(error)
             try:
                 analysis.close()
             except Exception as error:
@@ -134,6 +159,7 @@ def create_app(
     app.state.workspace = service
     app.state.queue = queue
     app.state.analysis = analysis
+    app.state.environments = environments
     app.state.owner = owner
     app.state.ready = False
     app.add_middleware(
@@ -249,6 +275,7 @@ def create_app(
     app.include_router(project_routes(service, max_upload_bytes))
     app.include_router(job_routes(service, queue))
     app.include_router(analysis_routes(service, analysis))
+    app.include_router(environment_routes(environments))
 
     @app.get("/{path:path}")
     def frontend_route(path: str) -> Response:

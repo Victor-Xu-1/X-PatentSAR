@@ -29,6 +29,7 @@ class EnvironmentQueue:
         runner: ProcessRunner,
         timeout: float,
         completed: Callable[[dict[str, Any], dict[str, Any]], None],
+        prepare: Callable[[dict[str, Any]], None] | None = None,
     ) -> None:
         self.store, self.runner, self.timeout, self.completed = (
             store,
@@ -36,6 +37,7 @@ class EnvironmentQueue:
             timeout,
             completed,
         )
+        self.prepare = prepare
         self.stop_requested = threading.Event()
         self.wake = threading.Event()
         self.thread: threading.Thread | None = None
@@ -221,6 +223,8 @@ class EnvironmentQueue:
 
     def _run(self, row: dict[str, Any]) -> None:
         spec, plan = self.spec(row)
+        if self.prepare:
+            self.prepare(plan)
         output = private_directory(Path(spec.output_dir))
         plan_file = output / "environment-plan.json"
         descriptor = os.open(
@@ -231,30 +235,16 @@ class EnvironmentQueue:
             stream.flush()
             os.fsync(stream.fileno())
         identity = self.runner.start(spec)
-        self.store.update(
-            spec.job_id,
-            status="running",
-            started_at=now(),
-            identity=encode(identity.to_dict()),
-            stage="执行环境检测"
-            if plan["action"] == "inspect"
-            else "执行已固定的安装计划",
-        )
-        acknowledgement = {
-            "operation_id": spec.job_id,
-            "pid": identity.pid,
-            "start_ticks": identity.start_ticks,
-            "boot_id": identity.boot_id,
-        }
-        owner_pending = output / "environment-owner.pending.json"
-        descriptor = os.open(
-            owner_pending, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600
-        )
-        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
-            stream.write(encode(acknowledgement))
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(owner_pending, output / "environment-owner.json")
+        try:
+            self._register(spec, plan, identity, output)
+        except BaseException:
+            if not self.runner.stop(identity, spec):
+                raise WebError(
+                    500,
+                    "environment_shutdown",
+                    "Unregistered environment worker shutdown was not verified.",
+                )
+            raise
         deadline = time.monotonic() + self.timeout
         try:
             while True:
@@ -364,3 +354,35 @@ class EnvironmentQueue:
                 if isinstance(error, WebError) and error.code == "environment_shutdown":
                     self.cleanup_failure = error
                     self.stop_requested.set()
+
+    def _register(
+        self,
+        spec: RunSpec,
+        plan: dict[str, Any],
+        identity: ProcessIdentity,
+        output: Path,
+    ) -> None:
+        self.store.update(
+            spec.job_id,
+            status="running",
+            started_at=now(),
+            identity=encode(identity.to_dict()),
+            stage="执行环境检测"
+            if plan["action"] == "inspect"
+            else "执行已固定的安装计划",
+        )
+        acknowledgement = {
+            "operation_id": spec.job_id,
+            "pid": identity.pid,
+            "start_ticks": identity.start_ticks,
+            "boot_id": identity.boot_id,
+        }
+        pending = output / "environment-owner.pending.json"
+        descriptor = os.open(
+            pending, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600
+        )
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            stream.write(encode(acknowledgement))
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(pending, output / "environment-owner.json")
