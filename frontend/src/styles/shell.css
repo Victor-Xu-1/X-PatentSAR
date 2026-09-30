@@ -37,14 +37,10 @@
   white-space: nowrap;
 }
 .brand-symbol {
-  position: relative;
-  color: var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.brand-symbol svg + svg {
-  position: absolute;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  object-fit: contain;
 }
 .sidebar nav {
   display: grid;

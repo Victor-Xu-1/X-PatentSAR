@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Locator } from '@playwright/test';
+import { createHash } from 'node:crypto';
 
 const historyId = process.env.PATENTSAR_E2E_HISTORY_PROJECT_ID;
 const palette = {
@@ -47,7 +48,31 @@ test('warm workspace style is consistent across navigation, management and the a
   await expect(page.locator('.sidebar')).toHaveCSS('background-color', palette.sidebar);
   await expect(page.locator('.sidebar')).toHaveCSS('background-image', 'none');
   await expect(page.locator('.brand strong')).toHaveCSS('font-family', /Georgia/);
-  await expect(page.locator('.brand-symbol')).toHaveCSS('color', palette.accent);
+  const mark = page.locator('img.brand-symbol');
+  await expect(mark).toBeVisible();
+  await expect
+    .poll(() => mark.evaluate((element) => (element as HTMLImageElement).naturalWidth))
+    .toBe(1254);
+  await expect(mark).toHaveCSS('object-fit', 'contain');
+  const original = await page.request.get((await mark.getAttribute('src'))!);
+  expect(original.ok()).toBe(true);
+  expect(
+    createHash('sha256')
+      .update(await original.body())
+      .digest('hex'),
+  ).toBe('1099f1a295921cc9e229995cd84aced5a2e1022e223bf6140f65d585f7b7d591');
+  for (const rel of ['icon', 'apple-touch-icon']) {
+    const icon = page.locator(`link[rel="${rel}"]`);
+    await expect(icon).toHaveCount(1);
+    expect(await icon.getAttribute('href')).toBe(await mark.getAttribute('src'));
+    const response = await page.request.get((await icon.getAttribute('href'))!);
+    expect(response.headers()['content-type']).toContain('image/png');
+    expect(
+      createHash('sha256')
+        .update(await response.body())
+        .digest('hex'),
+    ).toBe('1099f1a295921cc9e229995cd84aced5a2e1022e223bf6140f65d585f7b7d591');
+  }
   const active = page.getByRole('button', { name: '项目', exact: true });
   await expect(active).toHaveAttribute('aria-current', 'page');
   await expect(active).toHaveCSS('background-color', palette.selected);

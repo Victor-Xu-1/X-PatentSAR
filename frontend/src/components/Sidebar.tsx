@@ -1,10 +1,8 @@
 import {
-  Activity,
   Clock3,
   FileText,
   FlaskConical,
   FolderOpen,
-  Hexagon,
   Settings,
   ShieldCheck,
   SquarePlus,
@@ -12,6 +10,7 @@ import {
 import type { Health, Job, Project } from '../api/types';
 import type { ResultTab, Route, View } from '../model/route';
 import { acceptanceLabels, jobStatusLabels } from '../model/presentation';
+import brandMark from '../assets/brand-mark.png';
 
 const links = [
   { view: 'projects', label: '项目', icon: FolderOpen },
@@ -43,10 +42,7 @@ export function Sidebar({
   return (
     <aside className="sidebar" id="primary-sidebar" inert={inert}>
       <a className="brand" href="#/" aria-label="X-PatentSAR 工作台">
-        <span className="brand-symbol">
-          <Hexagon size={31} strokeWidth={2.4} />
-          <Activity size={15} />
-        </span>
+        <img className="brand-symbol" src={brandMark} alt="" width={34} height={34} />
         <span>
           <strong>X-PatentSAR</strong>
           <small>专利结构与活性提取平台</small>
