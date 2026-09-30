@@ -91,7 +91,19 @@ class ModelBoundary(BoundedAnalysisRunner):
         }
 
 
-class AnalysisAPITests(WebFixture, unittest.TestCase):
+class AnalysisFixture(WebFixture):
+    def app(self, **kwargs):
+        app = super().app(
+            analysis_settings=getattr(self, "settings", AnalysisSettings()),
+            analysis_runner=getattr(self, "boundary", None),
+            **kwargs,
+        )
+        self.analysis = app.state.analysis
+        self.addCleanup(self.analysis.close)
+        return app
+
+
+class AnalysisAPITests(AnalysisFixture, unittest.TestCase):
     def test_unverified_analysis_shutdown_still_closes_queue_and_retains_owner(self):
         app = self.app()
         with patch.object(
@@ -113,16 +125,6 @@ class AnalysisAPITests(WebFixture, unittest.TestCase):
             other.release()
             app.state.analysis.close()
             app.state.owner.release()
-
-    def app(self, **kwargs):
-        app = super().app(
-            analysis_settings=getattr(self, "settings", AnalysisSettings()),
-            analysis_runner=getattr(self, "boundary", None),
-            **kwargs,
-        )
-        self.analysis = app.state.analysis
-        self.addCleanup(self.analysis.close)
-        return app
 
     def mock_runtime(self):
         self.boundary = ModelBoundary()
