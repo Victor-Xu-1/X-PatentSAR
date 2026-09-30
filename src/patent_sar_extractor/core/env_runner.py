@@ -101,7 +101,6 @@ def _run_streamed_filtered(
             except Exception:
                 pass
 
-_CONFIG_PATHS = config_files("env_paths.yaml")
 _DEFAULT_PYTHON = os.environ.get("PATENTSAR_PYTHON", sys.executable or "python3")
 
 _ENV_OVERRIDES = {
@@ -116,9 +115,10 @@ _ENV_OVERRIDES = {
 
 def _load_envs() -> dict[str, str]:
     """Load environment paths from config file."""
+    config_paths = config_files("env_paths.yaml")
     if yaml is not None:
         envs: dict[str, str] = {}
-        for config_path in _CONFIG_PATHS:
+        for config_path in config_paths:
             if not config_path.exists():
                 continue
             with open(config_path, encoding="utf-8") as f:
@@ -127,7 +127,7 @@ def _load_envs() -> dict[str, str]:
                 envs.update({str(k): str(v) for k, v in loaded.items() if v is not None})
         return envs
     envs: dict[str, str] = {}
-    for config_path in _CONFIG_PATHS:
+    for config_path in config_paths:
         if not config_path.exists():
             continue
         with open(config_path, encoding="utf-8") as f:
@@ -155,15 +155,8 @@ def _resolve(env_name: str) -> str:
     return _DEFAULT_PYTHON
 
 
-# Conda 环境注册表（从打包默认值和运营方覆盖配置加载，带 fallback）
-CONDA_ENVS = {
-    "base": _resolve("base"),
-    "smiles_engine": _resolve("smiles_engine"),
-    "decimer": _resolve("decimer"),
-    "paddleocr": _resolve("paddleocr"),
-    "pymupdf": _resolve("pymupdf"),
-    "ocrmypdf": _resolve("ocrmypdf"),
-}
+# Role identity is stable; paths are resolved from the single current configuration.
+ENV_ROLES = tuple(_ENV_OVERRIDES)
 
 ENV_REQUIRED_MODULES = {
     "base": [],
@@ -177,9 +170,33 @@ ENV_REQUIRED_MODULES = {
 
 def get_python(env_name: str) -> str:
     """获取指定环境的 Python 路径"""
-    if env_name not in CONDA_ENVS:
-        raise ValueError(f"Unknown conda env: {env_name}. Available: {list(CONDA_ENVS.keys())}")
-    return CONDA_ENVS[env_name]
+    if env_name not in ENV_ROLES:
+        raise ValueError(f"Unknown conda env: {env_name}. Available: {list(ENV_ROLES)}")
+    return _resolve(env_name)
+
+
+def configured_model_environment() -> dict[str, str]:
+    """Model paths share env_paths.local.yaml; explicit operator variables win."""
+    configured = _load_envs()
+    fields = {
+        "PYSTOW_HOME": "decimer_models",
+        "DECIMER_SEGMENTATION_MODEL_DIR": "decimer_segmentation_models",
+        "PATENTSAR_ADMET_PYTHON": "admet",
+        "PATENTSAR_ADMET_MODEL_DIR": "admet_models",
+    }
+    return {
+        variable: value
+        for variable, key in fields.items()
+        if (value := os.environ.get(variable, "").strip() or configured.get(key, ""))
+    }
+
+
+def captured_runtime_environment() -> dict[str, str]:
+    """Freeze interpreter/model selection at CLI start, not between its stages."""
+    result = configured_model_environment()
+    for role, variables in _ENV_OVERRIDES.items():
+        result[variables[0]] = get_python(role)
+    return result
 
 
 def _execution_env(extra: Optional[dict[str, str]] = None) -> dict[str, str]:
@@ -187,6 +204,9 @@ def _execution_env(extra: Optional[dict[str, str]] = None) -> dict[str, str]:
 
     run_env = os.environ.copy()
     run_env.pop("PYTHONPATH", None)
+    for key, value in configured_model_environment().items():
+        if not run_env.get(key):
+            run_env[key] = value
     if extra:
         run_env.update(extra)
     return run_env
@@ -347,4 +367,4 @@ def check_env(env_name: str) -> dict:
 
 def check_all_envs() -> dict[str, dict]:
     """检查所有注册的 conda 环境"""
-    return {name: check_env(name) for name in CONDA_ENVS}
+    return {name: check_env(name) for name in ENV_ROLES}

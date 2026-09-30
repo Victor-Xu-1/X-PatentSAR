@@ -6,7 +6,7 @@ import hashlib
 import tempfile
 import threading
 import time
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
@@ -75,6 +75,12 @@ class AnalysisService:
         """Idempotent cancellation and verified cleanup; never stops extraction/other apps."""
         self._closed.set()
         self.runner.close()
+
+    def configure(self, publish: Callable[[], AnalysisSettings]) -> None:
+        """Publish verified paths only while no inference holds a settings snapshot."""
+        with self._operation(None):
+            self.settings = publish()
+            self._runtime = None
 
     def capabilities(self) -> dict[str, bool]:
         if self._closed.is_set():

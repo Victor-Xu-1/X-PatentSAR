@@ -42,10 +42,15 @@ class AnalysisSettings:
 
     @classmethod
     def from_environment(cls) -> AnalysisSettings:
-        from patent_sar_extractor.core.env_runner import get_python
+        from patent_sar_extractor.core.env_runner import (
+            configured_model_environment,
+            get_python,
+        )
+
+        models = configured_model_environment()
 
         def configured(name: str) -> Path | None:
-            value = os.environ.get(name, "").strip()
+            value = models.get(name, "").strip()
             return Path(value).expanduser() if value else None
 
         return cls(

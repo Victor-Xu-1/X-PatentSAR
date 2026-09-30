@@ -335,8 +335,10 @@ class CLIProcessRunner(SubprocessRunner):
 
     def environment(self, spec: RunSpec) -> dict[str, str]:
         env = super().environment(spec)
+        from patent_sar_extractor.core.env_runner import captured_runtime_environment
+
+        env.update(captured_runtime_environment())
         env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2])
-        env["PATENTSAR_BASE_PYTHON"] = sys.executable
         # Advisory opt-in is explicit. There is no fallback that omits the CLI
         # opt-out flag if an old CLI rejects it; such a job genuinely fails.
         return env

@@ -204,7 +204,7 @@ def create_app(
 
     @app.get("/api/v1/runtime")
     def runtime() -> dict[str, object]:
-        from patent_sar_extractor.core.env_runner import CONDA_ENVS
+        from patent_sar_extractor.core.env_runner import get_python
 
         interpreters = [
             {
@@ -214,7 +214,7 @@ def create_app(
             }
         ]
         for role in ("decimer", "smiles_engine", "paddleocr"):
-            value = CONDA_ENVS.get(role)
+            value = get_python(role)
             interpreters.append(
                 {
                     "role": role,

@@ -136,7 +136,13 @@ def extract_structures_from_pdf(
             # Load and validate the model once.  Repeating a failed lazy load
             # for every page turns one environment error into hours of empty
             # chunks that still exit successfully.
-            get_model()
+            configured_weights = os.environ.get("DECIMER_SEGMENTATION_MODEL_DIR", "").strip()
+            if configured_weights:
+                from patent_sar_extractor.workers.environment_segmentation import configure_segmentation_model
+
+                configure_segmentation_model(configured_weights)
+            else:
+                get_model()
         except Exception as exc:
             raise RuntimeError(f"DECIMER model initialization failed: {exc}") from exc
         for page_num in target_pages:

@@ -42,6 +42,7 @@ classify -> activity -> locate -> structures -> bind -> smiles -> final -> qa
 
 ```bash
 uv sync --frozen --extra web
+uv run python tools/build_environment_resources.py --check
 cd frontend
 npm ci
 npm run build

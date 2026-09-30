@@ -19,6 +19,7 @@ from patent_sar_extractor.core.runtime_env import (
     tensorflow_cuda_caps_support_gpu,
 )
 from patent_sar_extractor.core.env_runner import get_python
+from patent_sar_extractor.paths import PACKAGE_IMPORT_ROOT
 
 
 DECIMER_PYTHON = get_python("decimer")
@@ -134,8 +135,16 @@ def run_checks(require_gpu: bool = True) -> dict:
                 DECIMER_PYTHON,
                 "-c",
                 (
+                    "import os\n"
+                    "import sys\n"
+                    f"sys.path.append({str(PACKAGE_IMPORT_ROOT)!r})\n"
                     "from decimer_segmentation import get_model\n"
-                    "model = get_model()\n"
+                    "configured = os.environ.get('DECIMER_SEGMENTATION_MODEL_DIR', '').strip()\n"
+                    "if configured:\n"
+                    "    from patent_sar_extractor.workers.environment_segmentation import configure_segmentation_model\n"
+                    "    model = configure_segmentation_model(configured)\n"
+                    "else:\n"
+                    "    model = get_model()\n"
                     "print('PATENTSAR_DECIMER_MODEL_OK=' + type(model).__name__)\n"
                 ),
             ],
