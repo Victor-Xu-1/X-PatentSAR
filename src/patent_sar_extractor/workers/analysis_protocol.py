@@ -7,7 +7,7 @@ import os
 import resource
 import socket
 import sys
-from typing import Any, TextIO
+from typing import Any, NoReturn, TextIO
 
 ADMET_VERSION = "2.0.1"
 ADMET_BUNDLE_SHA256 = "4436035bee9294e23ac71d7df329e6d87225d7dbd8d0e7db559f00d8feb117bc"
@@ -15,7 +15,7 @@ ADMET_WHEEL_SHA256 = "fef3527f637abb00d272cf824e8eef0136fe31ebde6c56881f1a8c02c0
 MAX_INPUT = 128 * 1024
 
 
-def _network_denied(*args: object, **kwargs: object) -> None:
+def _network_denied(*args: object, **kwargs: object) -> NoReturn:
     raise OSError("Analysis workers are offline; provision models before use")
 
 
@@ -27,9 +27,9 @@ def prepare() -> TextIO:
     # TensorFlow maps substantially more virtual address space than resident RAM.
     # The parent supervises total owned RSS; a virtual-space cap rejects valid models.
     resource.setrlimit(resource.RLIMIT_CPU, (180, 180))
-    socket.socket.connect = _network_denied  # type: ignore[assignment]
-    socket.socket.connect_ex = _network_denied  # type: ignore[assignment]
-    socket.create_connection = _network_denied  # type: ignore[assignment]
+    socket.socket.connect = _network_denied  # type: ignore[method-assign]
+    socket.socket.connect_ex = _network_denied  # type: ignore[method-assign]
+    socket.create_connection = _network_denied
     return output
 
 

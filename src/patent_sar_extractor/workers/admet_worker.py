@@ -115,7 +115,12 @@ def predict(request: dict[str, object]) -> dict[str, object]:
         if (
             molecule is None
             or not 1 <= molecule.GetNumAtoms() <= 256
-            or any(a.HasQuery() or a.GetAtomicNum() == 0 for a in molecule.GetAtoms())
+            or any(
+                a.HasQuery() or a.GetAtomicNum() == 0
+                for a in (
+                    molecule.GetAtomWithIdx(i) for i in range(molecule.GetNumAtoms())
+                )
+            )
         ):
             raise ValueError("Invalid molecules")
     root = Path(str(request["model_dir"]))

@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 from typing import IO, cast
 
-from .analysis_children import Children, read_child
+from .analysis_children import Children, alive, read_child
 from .errors import WebError
 from .storage import encode
 
@@ -39,6 +39,9 @@ class BoundedAnalysisRunner:
         self._closed = threading.Event()
         self._idle = threading.Event()
         self._idle.set()
+        self._cleanup_pending: (
+            tuple[subprocess.Popen[bytes], Children | None] | None
+        ) = None
 
     def close(self) -> None:
         self._closed.set()
@@ -48,6 +51,8 @@ class BoundedAnalysisRunner:
                 "analysis_shutdown",
                 "Owned analysis is still stopping; shutdown was not verified.",
             )
+        if self._cleanup_pending is not None:
+            self._stop_owned(*self._cleanup_pending)
 
     def run(
         self,
@@ -135,6 +140,7 @@ class BoundedAnalysisRunner:
             ) from exc
         selector = selectors.DefaultSelector()
         owner: Children | None = None
+        self._cleanup_pending = (child, owner)
         buffers = {"stdout": bytearray(), "stderr": bytearray()}
         try:
             raw = read_child(child.pid)
@@ -148,6 +154,7 @@ class BoundedAnalysisRunner:
                     "Analysis exited before process ownership could be verified.",
                 )
             owner = Children(raw, self.max_memory_bytes)
+            self._cleanup_pending = (child, owner)
             assert (
                 child.stdin is not None
                 and child.stdout is not None
@@ -212,14 +219,34 @@ class BoundedAnalysisRunner:
             return _response(bytes(buffers["stdout"]))
         finally:
             selector.close()
+            try:
+                self._stop_owned(child, owner)
+            except WebError:
+                self._closed.set()
+                raise
+            finally:
+                for opened_stream in (child.stdin, child.stdout, child.stderr):
+                    if opened_stream is not None:
+                        opened_stream.close()
+
+    def _stop_owned(
+        self, child: subprocess.Popen[bytes], owner: Children | None
+    ) -> None:
+        try:
             if owner is not None:
                 owner.stop()
             if child.poll() is None:
                 child.kill()
             child.wait(timeout=2)
-            for opened_stream in (child.stdin, child.stdout, child.stderr):
-                if opened_stream is not None:
-                    opened_stream.close()
+            if owner is not None and any(alive(c) for c in owner.observed.values()):
+                raise OSError("An owned descendant is still present")
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise WebError(
+                503,
+                "analysis_cleanup_failed",
+                "Owned analysis cleanup could not be verified; no new analysis can start.",
+            ) from exc
+        self._cleanup_pending = None
 
 
 def _response(data: bytes) -> dict[str, object]:

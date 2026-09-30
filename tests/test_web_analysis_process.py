@@ -9,6 +9,7 @@ import time
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from unittest.mock import patch
 
 from test_web_support import WebFixture
 
@@ -148,3 +149,26 @@ class ProcessTests(WebFixture, unittest.TestCase):
         with self.assertRaises(WebError) as error:
             self.run_code("import time; data=bytearray(80*1024*1024);time.sleep(30)")
         self.assertEqual(error.exception.code, "analysis_memory_limit")
+
+    def test_failed_cleanup_is_reported_and_close_rechecks_actual_child(self):
+        with patch.object(
+            self.runner,
+            "_stop_owned",
+            side_effect=WebError(
+                503, "analysis_cleanup_failed", "Controlled cleanup fault"
+            ),
+        ):
+            future = self.pool.submit(
+                self.run_code,
+                "import pathlib,os,time;pathlib.Path('cleanup.pid').write_text(str(os.getpid()));time.sleep(30)",
+                timeout=0.2,
+            )
+            owned = read_child(int(self.wait_file("cleanup.pid").read_text()))
+            with self.assertRaises(WebError) as error:
+                future.result(timeout=3)
+            self.assertEqual(error.exception.code, "analysis_cleanup_failed")
+            self.assertTrue(alive(owned))
+            with self.assertRaises(WebError):
+                self.runner.close()
+        self.runner.close()
+        self.assertFalse(alive(owned))

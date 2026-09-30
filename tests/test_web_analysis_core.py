@@ -117,6 +117,18 @@ class AnalysisCoreTests(WebFixture, unittest.TestCase):
         with self.assertRaises(WebError):
             AnalysisService(self.root / "other", workspace)
 
+    def test_null_or_scalar_cache_is_not_a_silent_cache_miss(self):
+        _, analysis = self.make_service()
+        for payload in ("null", "42", "[]"):
+            with sqlite3.connect(analysis.cache.path) as connection:
+                connection.execute(
+                    "INSERT OR REPLACE INTO analysis_cache VALUES('admet','corrupt',?,'now')",
+                    (payload,),
+                )
+            with self.assertRaises(WebError) as error:
+                analysis.cache.get("admet", "corrupt")
+            self.assertEqual(error.exception.code, "analysis_cache_error")
+
     def test_independent_units_targets_assays_and_censored_values(self):
         workspace, analysis = self.make_service()
         run = artifact_run(self.root / "run", self.pdf, current=False)

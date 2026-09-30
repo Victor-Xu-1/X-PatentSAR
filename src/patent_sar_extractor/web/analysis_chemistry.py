@@ -55,7 +55,7 @@ def canonical_smiles(value: str) -> str:
         a.HasQuery()
         or a.GetAtomicNum() == 0
         or a.GetSymbol() not in COMMON_FINAL_PRODUCT_ELEMENTS
-        for a in molecule.GetAtoms()
+        for a in (molecule.GetAtomWithIdx(i) for i in range(molecule.GetNumAtoms()))
     ):
         raise WebError(
             422,

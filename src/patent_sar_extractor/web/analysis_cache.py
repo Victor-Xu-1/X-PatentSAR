@@ -8,6 +8,7 @@ import os
 import sqlite3
 import stat
 from pathlib import Path
+from typing import cast
 
 from .errors import WebError
 from .files import private_directory
@@ -87,7 +88,10 @@ class AnalysisCache:
                 return None
             if len(row[0].encode()) > MAX_ENTRY_BYTES:
                 raise ValueError("Oversized cache record")
-            return json.loads(row[0], parse_constant=_reject_constant)
+            payload = json.loads(row[0], parse_constant=_reject_constant)
+            if not isinstance(payload, dict):
+                raise ValueError("Cache payload must be an object")
+            return cast(object, payload)
         except (sqlite3.Error, ValueError, UnicodeError, RecursionError) as exc:
             raise WebError(
                 503,
