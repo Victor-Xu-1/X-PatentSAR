@@ -1,14 +1,11 @@
 # X-PatentSAR Web API v1
 
-## Environment management iteration
+## Environment management
 
-1. Complete: trace actual Python/OCR/DECIMER/RDKit/ADMET consumers and define a
-   single typed, same-origin environment management boundary.
-2. Complete: replace the read-only environment page with installation location,
-   recommended bundles, real component inspection, owned durable install/cancel
-   operations and verified activation. Reuse existing process ownership primitives.
-3. In progress: relevant regression/security tests, real missing-component installation,
-   browser acceptance, clean packaging, E-drive deployment and authorized publication.
+The single environment workspace replaces the read-only page with installation
+location, recommended bundles, actual component checks, durable install/cancel
+operations and verified activation. The existing process ownership primitives,
+interpreter configuration and scientific consumers remain authoritative.
 
 All endpoints below use existing local session/CSRF validation. They do not
 accept arbitrary packages, URLs, commands, interpreter paths or model uploads.
