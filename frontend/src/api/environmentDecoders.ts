@@ -40,6 +40,7 @@ export function matchesEnvironmentRequest(
   return (
     operation.request_id === request.request_id &&
     operation.action === request.action &&
+    operation.component_ids.length === request.component_ids.length &&
     request.component_ids.every((id) => operation.component_ids.includes(id))
   );
 }
@@ -114,6 +115,7 @@ const component = object({
   source_url: string,
   checks: array(object({ name: string, ok: boolean, message: string })),
   problem: nullable(string),
+  dependencies: ids,
 });
 const catalogShape = object({
   settings: decodeEnvironmentSettings,

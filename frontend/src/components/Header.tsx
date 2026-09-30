@@ -1,4 +1,4 @@
-import { FolderOpen, Menu, Search, Upload } from 'lucide-react';
+import { FolderOpen, Menu, Search, Upload, X } from 'lucide-react';
 import type { Project } from '../api/types';
 import type { View } from '../model/route';
 const viewLabels: Record<View, string> = {
@@ -18,6 +18,7 @@ export function Header({
   onMenu,
   disabled,
   menuOpen,
+  contentInert = false,
 }: {
   view: View;
   project: Project | null;
@@ -28,6 +29,7 @@ export function Header({
   onMenu: () => void;
   disabled: boolean;
   menuOpen: boolean;
+  contentInert?: boolean;
 }) {
   return (
     <header className="topbar">
@@ -39,9 +41,9 @@ export function Header({
         aria-controls="primary-sidebar"
         onClick={onMenu}
       >
-        <Menu size={20} />
+        {menuOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
-      <nav className="breadcrumb" aria-label="面包屑">
+      <nav className="breadcrumb" aria-label="面包屑" inert={contentInert}>
         <FolderOpen size={20} />
         <a href="#/projects">项目</a>
         <span>/</span>
@@ -49,7 +51,7 @@ export function Header({
           {view === 'workspace' && project ? project.title : viewLabels[view]}
         </strong>
       </nav>
-      <div className="topbar-actions">
+      <div className="topbar-actions" inert={contentInert}>
         <label className="search-field global-search">
           <Search size={16} />
           <input

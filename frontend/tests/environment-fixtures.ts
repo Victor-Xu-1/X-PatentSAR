@@ -27,6 +27,7 @@ export const environmentCatalog: EnvironmentCatalog = {
       source_url: 'https://example.invalid/installer',
       checks: [{ name: '版本', ok: true, message: '已核对' }],
       problem: null,
+      dependencies: [],
     },
     {
       id: 'base',
@@ -46,6 +47,7 @@ export const environmentCatalog: EnvironmentCatalog = {
       source_url: 'https://example.invalid/base',
       checks: [],
       problem: '解释器缺失',
+      dependencies: ['installer'],
     },
     {
       id: 'decimer',
@@ -65,6 +67,7 @@ export const environmentCatalog: EnvironmentCatalog = {
       source_url: 'https://example.invalid/decimer',
       checks: [],
       problem: null,
+      dependencies: ['installer'],
     },
     {
       id: 'decimer-models',
@@ -84,6 +87,7 @@ export const environmentCatalog: EnvironmentCatalog = {
       source_url: 'https://example.invalid/decimer-models',
       checks: [],
       problem: '指纹未核对',
+      dependencies: ['decimer'],
     },
     {
       id: 'admet',
@@ -103,6 +107,7 @@ export const environmentCatalog: EnvironmentCatalog = {
       source_url: 'https://example.invalid/admet',
       checks: [],
       problem: null,
+      dependencies: ['installer'],
     },
     {
       id: 'admet-models',
@@ -122,6 +127,7 @@ export const environmentCatalog: EnvironmentCatalog = {
       source_url: 'https://example.invalid/admet-models',
       checks: [],
       problem: '需运营方处理',
+      dependencies: ['admet'],
     },
   ],
   presets: [
@@ -136,6 +142,21 @@ export const environmentCatalog: EnvironmentCatalog = {
   active_operation: null,
   operations: [],
 };
+export function prerequisiteCatalog(): EnvironmentCatalog {
+  return {
+    ...environmentCatalog,
+    components: environmentCatalog.components.map((component) => ({
+      ...component,
+      installable: true,
+      download_bytes:
+        component.id === 'admet'
+          ? 1_400_000_000
+          : component.id === 'admet-models'
+            ? 14_000_000
+            : component.download_bytes,
+    })),
+  };
+}
 export const environmentOperation: EnvironmentOperation = {
   id: 'environment-operation-contract',
   request_id: 'request_contract_12345',

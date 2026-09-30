@@ -79,6 +79,14 @@ export function ComponentLibrary({
                     {component.location && (
                       <p className="component-location break-word">位置：{component.location}</p>
                     )}
+                    {component.dependencies.length > 0 && (
+                      <p className="muted">
+                        前置依赖：
+                        {component.dependencies
+                          .map((id) => components.find((item) => item.id === id)?.name ?? id)
+                          .join(' · ')}
+                      </p>
+                    )}
                     {component.problem && <p className="component-problem">{component.problem}</p>}
                     <details>
                       <summary>来源、许可证与检查依据</summary>

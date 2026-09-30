@@ -68,6 +68,7 @@ export default function App() {
       <a
         href="#main-content"
         className="skip-link"
+        inert={narrow && menuOpen}
         onClick={(event) => {
           event.preventDefault();
           document.getElementById('main-content')?.focus();
@@ -97,7 +98,7 @@ export default function App() {
         disabled={!connected}
         inert={narrow && !menuOpen}
       />
-      <div className="app-main" inert={narrow && menuOpen}>
+      <div className="app-main">
         <Header
           view={route.view}
           project={project}
@@ -108,8 +109,9 @@ export default function App() {
           onMenu={() => setMenuOpen((open) => !open)}
           disabled={!connected}
           menuOpen={menuOpen}
+          contentInert={narrow && menuOpen}
         />
-        <main id="main-content" tabIndex={-1}>
+        <main id="main-content" tabIndex={-1} inert={narrow && menuOpen}>
           {connection.loading && !connected && (
             <div className="connection-banner">
               <Loading label="正在建立本地安全会话…" />

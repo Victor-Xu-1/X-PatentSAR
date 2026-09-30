@@ -45,7 +45,16 @@ describe('application bootstrap, routes and failure states', () => {
     const menu = screen.getByLabelText('展开或收起导航');
     await userEvent.click(menu);
     expect(menu).toHaveAttribute('aria-expanded', 'true');
-    expect(document.querySelector('.app-main')).toHaveAttribute('inert');
+    expect(document.querySelector('main')).toHaveAttribute('inert');
+    expect(document.querySelector('.topbar-actions')).toHaveAttribute('inert');
+    expect(document.querySelector('.breadcrumb')).toHaveAttribute('inert');
+    expect(menu.closest('[inert]')).toBeNull();
+    await userEvent.click(menu);
+    expect(menu).toHaveAttribute('aria-expanded', 'false');
+    expect(document.querySelector('main')).not.toHaveAttribute('inert');
+    expect(menu).toHaveFocus();
+    await userEvent.click(menu);
+    expect(menu).toHaveAttribute('aria-expanded', 'true');
     await userEvent.keyboard('{Escape}');
     expect(menu).toHaveAttribute('aria-expanded', 'false');
     expect(menu).toHaveFocus();

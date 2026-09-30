@@ -1,10 +1,15 @@
 import { useState } from 'react';
 import { Dialog } from '../../components/Dialog';
-import type { EnvironmentComponent, EnvironmentSettings } from '../../api/environmentTypes';
+import type {
+  EnvironmentComponent,
+  EnvironmentComponentId,
+  EnvironmentSettings,
+} from '../../api/environmentTypes';
 import { environmentBytes } from '../../model/environment';
 export interface InstallPlan {
   components: EnvironmentComponent[];
   settings: EnvironmentSettings;
+  requested: EnvironmentComponentId[];
 }
 export function InstallConfirmation({
   plan,
@@ -31,14 +36,19 @@ export function InstallConfirmation({
           组件。可能下载较大文件；不安装 GPU / CUDA，不调用付费服务，不覆盖未知已有环境。
         </p>
         <p className="muted">
-          服务端负责固定版本、来源与内容校验，以及验证后的配置应用；已有提取/分析操作保留各自捕获的配置。依赖由同一审核安装计划处理。
+          下方包括所选组件与服务端声明的全部前置依赖，确认后将提交完全相同的组件集合。已可用的前置依赖仍列出核对，由后端验证能否复用；不推测额外组件或隐藏
+          SDK 下载。
+        </p>
+        <p className="muted">
+          下载大小按服务端报告逐项展示，未报告不视为零；实际下载可能因已验证缓存而减少。服务端负责来源校验与验证后配置应用，已有提取/分析操作保留捕获的配置。
         </p>
         <ul className="installation-plan">
           {plan.components.map((component) => (
-            <li key={component.id}>
+            <li key={component.id} data-install-component={component.id}>
               <strong>
                 {component.name} · {component.version}
               </strong>
+              <small>{plan.requested.includes(component.id) ? '所选组件' : '前置依赖'}</small>
               <span>
                 下载：{environmentBytes(component.download_bytes)} · 许可证：
                 {component.license || '未报告'}

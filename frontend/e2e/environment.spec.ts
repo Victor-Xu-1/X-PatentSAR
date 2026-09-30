@@ -4,7 +4,11 @@ import {
   decodeEnvironmentCatalog,
   decodeEnvironmentOperation,
 } from '../src/api/environmentDecoders';
-import { activeEnvironmentOperation, environmentStatusLabels } from '../src/model/environment';
+import {
+  activeEnvironmentOperation,
+  environmentStatusLabels,
+  selectedEnvironmentComponents,
+} from '../src/model/environment';
 
 async function catalogFromServer(page: Page) {
   const response = await page.request.get('/api/v1/environments');
@@ -65,6 +69,14 @@ for (const viewport of [
       await expect(consent).toBeFocused();
       await expect(dialog).toContainText('CPU');
       await expect(dialog).toContainText(component!.license);
+      const execution = selectedEnvironmentComponents(catalog.components, [component!.id]);
+      await expect(dialog.locator('[data-install-component]')).toHaveCount(execution.length);
+      for (const item of execution) {
+        const entry = dialog.locator(`[data-install-component="${item.id}"]`);
+        await expect(entry).toContainText(item.name);
+        await expect(entry).toContainText(item.version);
+        await expect(entry).toContainText(item.license);
+      }
       await expect(dialog.getByRole('button', { name: '确认下载并安装' })).toBeDisabled();
       await consent.check();
       const confirm = dialog.getByRole('button', { name: '确认下载并安装' });
@@ -84,13 +96,51 @@ for (const viewport of [
     } else {
       await expect(page.getByRole('button', { name: '检测缺失组件' })).toBeDisabled();
     }
-    if (viewport.width < 760) await page.getByLabel('展开或收起导航').click();
+    if (viewport.width < 760) {
+      const menu = page.getByLabel('展开或收起导航');
+      await menu.click();
+      await expect(menu).toHaveAttribute('aria-expanded', 'true');
+      expect(await menu.evaluate((element) => element.closest('[inert]'))).toBeNull();
+      const bounds = await menu.boundingBox();
+      expect(bounds!.width).toBeGreaterThanOrEqual(44);
+      expect(bounds!.height).toBeGreaterThanOrEqual(44);
+      expect(
+        await menu.evaluate((element) => {
+          const box = element.getBoundingClientRect();
+          return element.contains(
+            document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2),
+          );
+        }),
+      ).toBe(true);
+      const sidebar = await page.locator('.sidebar').boundingBox();
+      const header = await page.locator('.topbar').boundingBox();
+      expect(sidebar!.y).toBeGreaterThanOrEqual(header!.y + header!.height);
+      await expect.poll(async () => (await page.locator('.sidebar').boundingBox())!.x).toBe(0);
+      await page.screenshot({ path: test.info().outputPath('environment-mobile-navigation.png') });
+    }
     await expect(page.getByRole('button', { name: '环境管理', exact: true })).toHaveAttribute(
       'aria-current',
       'page',
     );
     await expect(page.getByRole('button', { name: '运行环境', exact: true })).toHaveCount(0);
-    if (viewport.width < 760) await page.getByLabel('展开或收起导航').click();
+    if (viewport.width < 760) {
+      const menu = page.getByLabel('展开或收起导航');
+      await menu.click();
+      await expect(menu).toHaveAttribute('aria-expanded', 'false');
+      await expect(menu).toBeFocused();
+      await expect
+        .poll(async () => {
+          const drawer = await page.locator('.sidebar').boundingBox();
+          return drawer!.x + drawer!.width;
+        })
+        .toBeLessThanOrEqual(0);
+      await expect(page.locator('main')).not.toHaveAttribute('inert');
+      await page.keyboard.press('Enter');
+      await expect(menu).toHaveAttribute('aria-expanded', 'true');
+      await page.keyboard.press('Escape');
+      await expect(menu).toHaveAttribute('aria-expanded', 'false');
+      await expect(menu).toBeFocused();
+    }
     await page.screenshot({
       path: test.info().outputPath(`environment-${viewport.width}.png`),
       fullPage: true,

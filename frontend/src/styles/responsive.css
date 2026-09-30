@@ -96,11 +96,14 @@
   }
   .app-shell {
     display: block;
+    --mobile-header-height: 60px;
   }
   .sidebar {
     position: fixed;
     left: 0;
-    top: 0;
+    top: var(--mobile-header-height);
+    height: calc(100dvh - var(--mobile-header-height));
+    overflow-y: auto;
     width: var(--sidebar-width);
     transform: translateX(-100%);
     transition: transform 0.15s ease;
@@ -110,20 +113,25 @@
   }
   .menu-toggle {
     display: inline-flex;
+    width: 44px;
+    min-height: 44px;
   }
   .nav-scrim {
     display: block;
     position: fixed;
-    inset: 0;
+    inset: var(--mobile-header-height) 0 0;
     width: 100%;
-    height: 100%;
+    height: calc(100dvh - var(--mobile-header-height));
     z-index: 19;
     border: 0;
     border-radius: 0;
     background: var(--backdrop);
   }
   .topbar {
-    height: 60px;
+    height: var(--mobile-header-height);
+    position: sticky;
+    top: 0;
+    z-index: 21;
     padding: 0 12px;
     gap: 8px;
   }

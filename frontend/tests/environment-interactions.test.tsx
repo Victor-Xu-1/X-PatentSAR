@@ -98,12 +98,18 @@ it('supports component-only confirmation, focuses consent and locks dismissal du
   await userEvent.click(consent);
   const confirm = within(dialog).getByRole('button', { name: '确认下载并安装' });
   await userEvent.click(confirm);
-  expect(start).toHaveBeenCalledWith(expect.objectContaining({ component_ids: ['base'] }));
+  expect(start).toHaveBeenCalledWith(
+    expect.objectContaining({ component_ids: ['installer', 'base'] }),
+  );
   expect(within(dialog).getByRole('button', { name: '取消' })).toBeDisabled();
   fireEvent(dialog, new Event('cancel', { cancelable: true }));
   expect(dialog).toBeVisible();
   await act(async () =>
-    resolve({ ...environmentOperation, component_ids: ['base'], completed_components: [] }),
+    resolve({
+      ...environmentOperation,
+      component_ids: ['installer', 'base'],
+      completed_components: [],
+    }),
   );
   await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   view.unmount();

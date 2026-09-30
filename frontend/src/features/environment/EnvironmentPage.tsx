@@ -44,7 +44,7 @@ export function EnvironmentPage({
       const components = selectedEnvironmentComponents(data.components, ids);
       if (components.some((item) => !item.installable))
         throw new Error('服务端不允许安装所选组件。');
-      setPlan({ components, settings: data.settings });
+      setPlan({ components, settings: data.settings, requested: [...ids] });
     } catch (e) {
       setSelectionError(e instanceof Error ? e : new Error('安装选择无效。'));
     }

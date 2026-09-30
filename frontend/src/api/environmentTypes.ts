@@ -34,6 +34,7 @@ export interface EnvironmentComponent {
   source_url: string;
   checks: { name: string; ok: boolean; message: string }[];
   problem: string | null;
+  dependencies: EnvironmentComponentId[];
 }
 export interface EnvironmentSettings {
   install_root: string;

@@ -4,6 +4,7 @@ import type {
   EnvironmentComponentId,
   EnvironmentPreset,
 } from '../../api/environmentTypes';
+import { selectedEnvironmentComponents } from '../../model/environment';
 export function RecommendedBundles({
   presets,
   components,
@@ -21,21 +22,23 @@ export function RecommendedBundles({
       <p className="muted">使用服务端审核的组件组合，不添加任意软件包或额外服务。</p>
       {presets.length ? (
         presets.map((preset) => {
-          const complete =
-            preset.component_ids.length > 0 &&
-            preset.component_ids.every((id) =>
-              components.some((item) => item.id === id && item.installable),
-            );
+          let plan: EnvironmentComponent[] = [];
+          let problem: string | null = null;
+          try {
+            plan = selectedEnvironmentComponents(components, preset.component_ids);
+          } catch (error) {
+            problem = error instanceof Error ? error.message : '组件依赖目录无效。';
+          }
+          const complete = problem === null && plan.every((item) => item.installable);
           return (
             <article className="environment-preset" key={preset.id}>
               <div>
                 <h3>{preset.name}</h3>
                 <p className="muted">{preset.description}</p>
                 <p className="preset-components">
-                  {preset.component_ids
-                    .map((id) => components.find((item) => item.id === id)?.name ?? id)
-                    .join(' · ')}
+                  计划组件（含前置依赖）：{plan.map((item) => item.name).join(' · ')}
                 </p>
+                {problem && <p className="component-problem">{problem}</p>}
               </div>
               <button
                 type="button"
