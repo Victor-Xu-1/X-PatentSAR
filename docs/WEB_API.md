@@ -1,5 +1,46 @@
 # X-PatentSAR Web API v1
 
+## Environment management iteration
+
+1. Complete: trace actual Python/OCR/DECIMER/RDKit/ADMET consumers and define a
+   single typed, same-origin environment management boundary.
+2. In progress: replace the read-only environment page with installation location,
+   recommended bundles, real component inspection, owned durable install/cancel
+   operations and verified activation. Reuse existing process ownership primitives.
+3. Pending: relevant regression/security tests, real missing-component installation,
+   browser acceptance, clean packaging, E-drive deployment and authorized publication.
+
+All endpoints below use existing local session/CSRF validation. They do not
+accept arbitrary packages, URLs, commands, interpreter paths or model uploads.
+One component allowlist owns installation; no separate HTTP service is added.
+
+- GET `/api/v1/environments` -> `EnvironmentCatalog` from `environment_models.py`.
+- PUT `/api/v1/environments/settings` -> `EnvironmentSettings`; request
+  `{install_root,expected_revision}`. Only an operator-approved filesystem root is
+  allowed; no C-drive/UNC/network path, symlink escape or existing unknown prefix.
+- POST `/api/v1/environments/operations` -> `EnvironmentOperation` (202); request
+  `{action:"inspect"|"install",component_ids,request_id,expected_revision}`.
+  Request IDs provide persisted idempotency, not blind retry. Component IDs are
+  `installer`, `base`, `decimer`, `decimer-models`, `admet`, `admet-models`.
+- GET `/api/v1/environments/operations/{id}` -> persisted `EnvironmentOperation`.
+- POST `/api/v1/environments/operations/{id}/cancel` -> operation; stop only
+  verified owned processes. Cancellation/restart cannot label partial installs ready.
+
+`base` is one PDF/RapidOCR/RDKit runtime, not three duplicated environments.
+DECIMER uses isolated Python 3.10; ADMET uses isolated Python 3.12 CPU. Installed
+environments are reused only after actual version/module/model checks. New
+prefixes do not overwrite existing environments; configuration is published only
+after verification. Existing extraction and model calls retain their own captured
+configuration. No GPU/CUDA, privileged system install, paid LLM, OpenDDE or DiffSBDD
+installation is implicitly authorized by this reference-layout feature.
+
+Validation mapping: location input -> approved-path and symlink tests; detection ->
+real interpreter/modules/model fingerprints; install -> real pinned packages and
+verified official model content, persistence/idempotency/failure/cancel/recovery;
+activation -> actual extraction/analysis consumers and immutable patent outputs;
+UI -> load/empty/error, selection, keyboard, status/logs, responsive reference layout,
+refresh and real API/browser paths. Mandatory project/CI gates remain unchanged.
+
 Controller-owned implementation contract. `contracts.py` owns product identity
 and `patentsar.web-api` version 1. The local Web app presents the existing CLI
 pipeline, never a second extraction chain. Manual reviews never alter generated
