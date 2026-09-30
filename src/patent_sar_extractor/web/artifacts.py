@@ -1,0 +1,402 @@
+"""Bounded activity-led adaptation of real core artifacts to Web DTOs."""
+
+from __future__ import annotations
+
+import math
+import re
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+from urllib.parse import quote
+
+from patent_sar_extractor.core.pipeline_rules import (
+    _label_key,
+    annotate_binding_accuracy,
+)
+
+from .acceptance import ARTIFACTS, authority, current
+from .errors import WebError
+from .files import MAX_RECORDS, SafeFiles, records
+from .models import Activity, Compound, Confidence, ConfidenceLevel, Source, Summary
+
+
+def text(value: object, *, limit: int = 1000) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, (str, int, float)) or isinstance(value, bool):
+        raise WebError(
+            422, "invalid_artifact", "Artifact contains invalid scalar metadata."
+        )
+    if isinstance(value, float) and not math.isfinite(value):
+        raise WebError(
+            422, "invalid_artifact", "Artifact contains a non-finite number."
+        )
+    return str(value)[:limit]
+
+
+def page_number(value: object) -> int | None:
+    if value in (None, 0, ""):
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, str)):
+        raise WebError(422, "invalid_artifact", "Artifact page number is invalid.")
+    try:
+        page = int(value)
+    except (ValueError, TypeError, OverflowError) as exc:
+        raise WebError(
+            422, "invalid_artifact", "Artifact page number is invalid."
+        ) from exc
+    if not 1 <= page <= 20000:
+        raise WebError(
+            422, "invalid_artifact", "Artifact page number is outside bounds."
+        )
+    return page
+
+
+def box(binding: dict[str, Any], structure: dict[str, Any]) -> list[float] | None:
+    value = structure.get("bbox_pdf")
+    if value is None and all(
+        k in binding for k in ("struct_x0", "struct_y0", "struct_x1", "struct_y1")
+    ):
+        value = [
+            binding[k] for k in ("struct_x0", "struct_y0", "struct_x1", "struct_y1")
+        ]
+    if value is None:
+        return None
+    if not isinstance(value, list) or len(value) != 4:
+        raise WebError(422, "invalid_geometry", "Artifact geometry is invalid.")
+    try:
+        bounds = [float(x) for x in value]
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise WebError(
+            422, "invalid_geometry", "Artifact geometry is invalid."
+        ) from exc
+    if (
+        not all(math.isfinite(x) and abs(x) <= 100000 for x in bounds)
+        or bounds[2] <= bounds[0]
+        or bounds[3] <= bounds[1]
+    ):
+        raise WebError(
+            422, "invalid_geometry", "Artifact geometry is non-finite or inverted."
+        )
+    return bounds
+
+
+def _index(
+    items: list[dict[str, Any]], keys: tuple[str, ...]
+) -> dict[str, list[dict[str, Any]]]:
+    index: dict[str, list[dict[str, Any]]] = {}
+    for item in items:
+        label = next((item.get(k) for k in keys if item.get(k)), "")
+        key = _label_key(text(label) or "")
+        if key:
+            index.setdefault(key, []).append(item)
+    return index
+
+
+def _activities(row: dict[str, Any]) -> list[Activity]:
+    output = []
+    for field in ("activity_values", "cell_line_data"):
+        values = row.get(field) or {}
+        if not isinstance(values, dict) or len(values) > 500:
+            raise WebError(
+                422,
+                "invalid_artifact",
+                "Activity metric collection is invalid or over limit.",
+            )
+        for name, value in values.items():
+            if not isinstance(name, str) or len(name) > 300:
+                raise WebError(
+                    422, "invalid_artifact", "Activity metric name is invalid."
+                )
+            unit_match = re.search(r"\(([^()]+)\)\s*$", name)
+            output.append(
+                Activity(
+                    name=name,
+                    value=text(value),
+                    unit=unit_match.group(1) if unit_match else None,
+                    target=text(row.get("target")),
+                    assay=text(row.get("assay")),
+                    page=page_number(row.get("page_no")),
+                )
+            )
+    return output
+
+
+@dataclass
+class ArtifactView:
+    root: Path
+    payloads: dict[str, Any]
+    ocr: dict[str, Any]
+    expected_sha256: str | None
+    page_count: int
+
+    @classmethod
+    def read(cls, root: Path) -> ArtifactView:
+        files = SafeFiles(root)
+        payloads = {name: files.json(path) for name, (path, _, _) in ARTIFACTS.items()}
+        for name, payload in payloads.items():
+            if (
+                payload is not None
+                and not isinstance(payload, dict)
+                and not (name == "smiles" and isinstance(payload, list))
+            ):
+                raise WebError(
+                    422, "invalid_artifact", "Run artifact must be a supported object."
+                )
+        ocr = files.json("page_classification/page_ocr_cache.json") or {}
+        if not isinstance(ocr, dict):
+            raise WebError(422, "invalid_artifact", "OCR artifact is not an object.")
+        metadata = ocr.get("metadata") or {}
+        if not isinstance(metadata, dict):
+            raise WebError(422, "invalid_artifact", "OCR metadata is not an object.")
+        hashes = set()
+        source_hash = metadata.get("pdf_sha256")
+        if source_hash:
+            hashes.add(source_hash)
+        for name in ("classification", "activity", "bindings"):
+            manifest = files.json(ARTIFACTS[name][0] + ".manifest.json")
+            if isinstance(manifest, dict) and isinstance(
+                manifest.get("fingerprint"), dict
+            ):
+                fingerprint_hash = manifest["fingerprint"].get("pdf_sha256")
+                if fingerprint_hash:
+                    hashes.add(fingerprint_hash)
+        if (
+            any(
+                not isinstance(h, str) or not re.fullmatch(r"[a-fA-F0-9]{64}", h)
+                for h in hashes
+            )
+            or len(hashes) > 1
+        ):
+            raise WebError(
+                422,
+                "source_identity",
+                "Run artifacts have invalid or conflicting source fingerprints.",
+            )
+        count = (
+            metadata.get("page_count")
+            or (payloads.get("classification") or {}).get("page_count")
+            or 0
+        )
+        count = page_number(count) or 0
+        return cls(
+            root, payloads, ocr, next(iter(hashes)).lower() if hashes else None, count
+        )
+
+    def snapshot(
+        self, project_id: str, *, pdf_sha256: str | None
+    ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+        p = self.payloads
+        files = SafeFiles(self.root)
+        verified = bool(pdf_sha256 and pdf_sha256 == self.expected_sha256)
+        accepted, historical = authority(
+            p, pdf_verified=verified, marker=files.json("STRICT_ACCEPTANCE_FAILED.json")
+        )
+        activity = p.get("activity") or {}
+        rows = records(activity, "rows")
+        active = activity.get("active_cpds")
+        if active is None:
+            active = list(
+                dict.fromkeys(
+                    text(row.get("cpd"), limit=200) for row in rows if row.get("cpd")
+                )
+            )
+        if not isinstance(active, list) or len(active) > MAX_RECORDS:
+            raise WebError(
+                422,
+                "artifact_limit",
+                "Activity compound collection exceeds its limits.",
+            )
+        if any(
+            not isinstance(x, str)
+            or not x
+            or len(x) > 200
+            or any(ord(c) < 32 for c in x)
+            for x in active
+        ):
+            raise WebError(
+                422, "invalid_artifact", "Activity compound identifiers are invalid."
+            )
+        if len(set(active)) != len(active):
+            raise WebError(
+                422, "invalid_artifact", "Activity compound identifiers are not unique."
+            )
+        binding_payload = p.get("bindings") or {}
+        binding_key = (
+            "final_bindings" if "final_bindings" in binding_payload else "bindings"
+        )
+        bindings = _index(
+            records(binding_payload, binding_key), ("compound_id", "cpd", "cpd_id")
+        )
+        smiles_payload = p.get("smiles")
+        if isinstance(smiles_payload, list):
+            if len(smiles_payload) > MAX_RECORDS or any(
+                not isinstance(x, dict) for x in smiles_payload
+            ):
+                raise WebError(
+                    422, "artifact_limit", "Historical SMILES collection is invalid."
+                )
+            smiles_rows = smiles_payload
+        else:
+            smiles_rows = records(smiles_payload, "records")
+        smiles = _index(smiles_rows, ("cpd_id", "cpd", "compound_id"))
+        structure_rows = records(p.get("structures"), "structures")
+        structures = {text(s.get("structure_id")): s for s in structure_rows}
+        activity_index = _index(rows, ("cpd",))
+        compounds = []
+        confirmed = 0
+        matched = 0
+        metric_names: set[str] = set()
+        targets: set[str] = set()
+        measurement_count = 0
+        for compound_id in active:
+            key = _label_key(compound_id)
+            candidates = bindings.get(key, [])
+            binding = candidates[0] if len(candidates) == 1 else {}
+            flags = []
+            if len(candidates) > 1:
+                flags.append("ambiguous_binding")
+            structure_id = text(binding.get("structure_id"), limit=200)
+            structure = structures.get(structure_id) or {}
+            geometry = box(binding, structure)
+            image_path = text(
+                binding.get("image_path") or structure.get("image_path"), limit=4096
+            )
+            if image_path:
+                try:
+                    with files.open(image_path, max_bytes=16 * 1024 * 1024):
+                        pass
+                except WebError:
+                    flags.append("image_unavailable")
+                    image_path = None
+            if historical:
+                confidence = Confidence(
+                    level="review",
+                    reason="Historical or incomplete identity; not current confirmation.",
+                )
+                flags.append("historical_identity")
+            elif binding and current(p.get("bindings"), "bindings"):
+                try:
+                    evidence = annotate_binding_accuracy(binding)
+                except (TypeError, ValueError, OverflowError, AttributeError) as exc:
+                    raise WebError(
+                        422,
+                        "invalid_evidence",
+                        "Binding evidence contains invalid values.",
+                    ) from exc
+                high = evidence.get(
+                    "accuracy_status"
+                ) == "confirmed" and not evidence.get("fail_closed")
+                level: ConfidenceLevel = (
+                    "high"
+                    if high
+                    else "medium"
+                    if evidence.get("evidence_tier") == "medium"
+                    else "review"
+                )
+                confidence = Confidence(
+                    level=level,
+                    reason="Current core binding evidence."
+                    if high
+                    else "Core binding requires review.",
+                )
+            else:
+                confidence = Confidence(
+                    reason="No unique current core binding evidence."
+                )
+            activities = [
+                entry
+                for row in activity_index.get(key, [])
+                for entry in _activities(row)
+            ]
+            if len(activities) > 2000:
+                raise WebError(
+                    422,
+                    "artifact_limit",
+                    "A compound has too many activity measurements.",
+                )
+            measurement_count += len(activities)
+            if measurement_count > 100000:
+                raise WebError(
+                    422,
+                    "artifact_limit",
+                    "Run has too many activity measurements for the local workspace.",
+                )
+            metric_names.update(a.name for a in activities)
+            targets.update(a.target for a in activities if a.target)
+            if len(metric_names) > 1000 or len(targets) > 1000:
+                raise WebError(
+                    422,
+                    "artifact_limit",
+                    "Run metric or target vocabulary exceeds its limit.",
+                )
+            if not binding:
+                flags.append("structure_unmatched")
+            else:
+                matched += 1
+            confirmed += int(confidence.level == "high")
+            smile_records = smiles.get(key, [])
+            smile = smile_records[0] if len(smile_records) == 1 else {}
+            if len(smile_records) > 1:
+                flags.append("ambiguous_smiles")
+            source_page = page_number(
+                binding.get("page_no") or structure.get("page_no")
+            )
+            if source_page is None and activities:
+                source_page = activities[0].page
+            dto = Compound(
+                id=compound_id,
+                display_id=compound_id,
+                structure_id=structure_id,
+                structure_image_url=(
+                    f"/api/v1/projects/{project_id}/structures/{quote(compound_id, safe='')}/image"
+                    if image_path or (verified and geometry)
+                    else None
+                ),
+                smiles=text(
+                    smile.get("smiles") or smile.get("canonical_smiles"), limit=10000
+                ),
+                activities=activities,
+                source=Source(
+                    page=source_page,
+                    paragraph=text(binding.get("paragraph")),
+                    bbox=geometry,
+                    source_label=text(
+                        binding.get("authoritative_table_source_label")
+                        or binding.get("authoritative_table_visible_label")
+                        or binding.get("visible_label")
+                    ),
+                    correction_reason=text(
+                        binding.get("authoritative_table_correction_reason")
+                        or binding.get("correction_reason")
+                    ),
+                ),
+                confidence=confidence,
+                flags=flags,
+            )
+            # Core segmentation divides rotated pixmap pixels by its scale.
+            # Its bbox_pdf is already in rendered-page points; do not rotate twice.
+            compounds.append(
+                {
+                    "dto": dto.model_dump(),
+                    "image_path": image_path,
+                    "geometry_space": "rendered"
+                    if structure.get("bbox_pdf")
+                    else "unrotated",
+                }
+            )
+        summary = Summary(
+            structures=len(structure_rows),
+            activity_rows=len(rows),
+            matched_structures=matched,
+            confirmed=confirmed,
+            needs_review=len(compounds) - confirmed,
+        )
+        snapshot = {
+            "is_historical": historical,
+            "acceptance": accepted.model_dump(),
+            "summary": summary.model_dump(),
+            "metrics": sorted(metric_names),
+            "targets": sorted(targets),
+        }
+        return snapshot, compounds
