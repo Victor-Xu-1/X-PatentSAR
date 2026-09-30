@@ -12,6 +12,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from ..workers.environment_errors import MESSAGES
 from .environment_models import EnvironmentComponent
 from .environment_storage import EnvironmentStore
 from .errors import WebError
@@ -221,6 +222,36 @@ class EnvironmentQueue:
             )
         return value
 
+    def _failure(self, spec: RunSpec) -> WebError:
+        path = Path(spec.output_dir) / "environment-failure.json"
+        if not path.exists() and not path.is_symlink():
+            return WebError(
+                500,
+                "environment_install_failed",
+                "Environment operation failed; existing environments were preserved. Check the bounded installation log and retry after correcting the reported cause.",
+            )
+        try:
+            value = json.loads(
+                SafeFiles(Path(spec.output_dir)).read(path.name, max_bytes=4096)
+            )
+            if (
+                not isinstance(value, dict)
+                or set(value) != {"schema_version", "operation_id", "code"}
+                or type(value["schema_version"]) is not int
+                or value["schema_version"] != 1
+                or value["operation_id"] != spec.job_id
+                or not isinstance(value["code"], str)
+                or value["code"] not in MESSAGES
+            ):
+                raise ValueError("Invalid environment failure identity")
+        except (WebError, ValueError, UnicodeError, RecursionError) as error:
+            raise WebError(
+                500,
+                "environment_failure_contract",
+                "Worker failure diagnostics were invalid; existing environments were preserved.",
+            ) from error
+        return WebError(500, "environment_" + value["code"], MESSAGES[value["code"]])
+
     def _run(self, row: dict[str, Any]) -> None:
         spec, plan = self.spec(row)
         if self.prepare:
@@ -282,11 +313,7 @@ class EnvironmentQueue:
                             "Environment worker descendants did not terminate safely.",
                         )
                     if code != 0:
-                        raise WebError(
-                            500,
-                            "environment_install_failed",
-                            "Environment operation failed; existing environments were preserved. Check the bounded installation log and retry after correcting the reported cause.",
-                        )
+                        raise self._failure(spec)
                     result = self._result(spec, plan)
                     self.completed(plan, result)
                     self.store.update(

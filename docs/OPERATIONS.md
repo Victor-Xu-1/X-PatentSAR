@@ -52,6 +52,45 @@ Do not copy a live SQLite/WAL database as a verified cold backup. Restart recove
 marks interrupted jobs explicitly; resume only through the application's job
 controls. A second server must not share an active workspace.
 
+## Managed environment operation
+
+Open **环境管理** (`#/settings`) and inspect components before installing. The
+approved Linux root is configured by `PATENTSAR_ENVIRONMENT_ALLOWED_ROOT`; the
+default new prefix is `PATENTSAR_ENVIRONMENT_ROOT`. Native Linux x86_64 Python 3.12
+is required for this controller. On the E-drive workstation these paths are
+`/srv/wsl/envs` and `/srv/wsl/envs/x-patentsar-managed`, inside `E:\WSL\system`.
+
+The catalog is cheap metadata; actual inspection may take tens of seconds for
+TensorFlow/PyTorch loads. Downloads run as durable owned jobs, limited to two hours
+by default. Logs, hashed download cache, operation plans and environment SQLite
+live in private `web-state/environments`. There is one active operation at a time;
+repeated request IDs reuse the saved result rather than replay downloads blindly.
+
+Only reviewed fixed packages and official model files are accepted. No `sudo`,
+system package changes, global uv/Python replacement, GPU setup or remote molecule
+submission occurs. All new prefixes include operation identity; existing valid
+environments may be reused. Never copy a Python environment to a different prefix.
+
+An install publishes interpreter/model paths atomically to the existing external
+`env_paths.local.yaml` only after actual verification. The old configuration is
+saved under its private `.environment-backups` directory. Startup wrappers should
+not supply implicit `PYSTOW_HOME`/ADMET/installer overrides: persist operator
+defaults in that YAML instead. Intentional explicit variables still take priority;
+the installer reports a conflict instead of pretending they changed.
+
+For network/TLS/hash/disk/permission failures, correct the reported cause and
+explicitly retry. TLS/hash checks are never disabled. Unknown directories,
+symlinks or modified cached content are preserved and refused. An existing
+prefix must be private (0700); its permissions are not changed by the manager.
+On cancellation/restart only verified owned processes are stopped; incomplete
+prefixes are not activated or automatically deleted. Re-inspect before retrying.
+Do not bypass an ownership/cleanup error with global WSL shutdown.
+
+If verification succeeds but activation reports `analysis_busy` or a configuration
+revision conflict, finish the active analysis, re-inspect and install/reuse again.
+Running extraction jobs keep their startup configuration snapshot. Location changes
+apply only to future installations and are not migrations or cleanup requests.
+
 ## Common failures
 
 - `LLM_API_KEY is not set`: deterministic production stages still run normally; optional advisory QA is recorded as `skipped_no_credentials`. Configure a key only when advisory review is wanted.
@@ -75,6 +114,14 @@ Activity extraction runs in an isolated subprocess with a bounded workload-aware
 Retain the final workbook, SDF, `pipeline_summary.json`, `final_qa_report.*`, optional `llm_qa_report.*`, and any failure marker as one audit unit. Remove OCR caches and intermediate images according to local data-retention policy only after the final audit unit is archived.
 
 ## Rollback
+
+Before an environment-manager rollback, finish/cancel its active operation and
+verify owned-child shutdown. Preserve the whole private environment state and the
+current external configuration. If restoring configuration, select the saved
+operation-specific YAML backup deliberately; no generated patent files or other
+software environments need modification. Old application builds do not own or
+resume this new environment database. Keep immutable installed prefixes for
+operator review; rollback is not permission to delete them.
 
 Before a workbench rollback, finish or explicitly cancel jobs created by the new
 task interface. Older code can view retained historical artifacts but cannot be

@@ -59,6 +59,16 @@ def main() -> int:
             try:
                 atomic_json(
                     plan.operation_dir,
+                    "environment-failure.json",
+                    {
+                        "schema_version": 1,
+                        "operation_id": plan.operation_id,
+                        "code": error.code,
+                    },
+                    limit=4096,
+                )
+                atomic_json(
+                    plan.operation_dir,
                     "environment-progress.json",
                     {
                         "stage": f"失败 [{error.code}]: {error.message}",

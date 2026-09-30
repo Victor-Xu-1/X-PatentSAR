@@ -61,6 +61,34 @@ uv run x-patentsar serve --port 8765
 Linux 源码、环境和数据仍位于 E 盘 `E:\WSL\system\ext4.vhdx` 内，
 实际路径通过 `E:\WSL\apps\x-patentsar` 入口统一管理。
 
+### 环境管理
+
+左侧 **环境管理**（`#/settings`）提供安装位置、推荐组合、六项组件库和后台
+操作历史。点击“检测缺失组件”会真正检查解释器、锁定的包版本、PDF/OCR/RDKit
+及 CPU 模型加载，不会触发下载。安装前会展示完整依赖、版本及许可证；确认后
+在后台安装、显示日志并支持取消，刷新页面不会丢失任务。
+
+组件只有受管 uv、基础 PDF/RapidOCR/RDKit 环境、DECIMER 环境及权重、可选
+ADMET CPU 环境及权重。主应用和科学环境隔离；不安装系统级包、不要求管理员，
+不隐式安装 CUDA、其他平台或付费模型。已有环境先验证后复用；新环境使用
+独立前缀，全部验证通过才写入外部 `env_paths.local.yaml` 并供新任务使用。
+失败、取消、重启中断或配置冲突均不会启用半成品，不改变既有专利结果。
+
+本机 E 盘部署将以下配置放在仓库外的启动入口。Linux 路径实际位于 E 盘 WSL
+虚拟磁盘内；浏览器不接受 C 盘、UNC、Windows 挂载目录或任意软件安装命令。
+
+```bash
+export PATENTSAR_ENVIRONMENT_ALLOWED_ROOT=/srv/wsl/envs
+export PATENTSAR_ENVIRONMENT_ROOT=/srv/wsl/envs/x-patentsar-managed
+x-patentsar serve --port 18765
+```
+
+其他部署可选择自己的外部 Linux 存储根目录。所选安装目录应为不存在的新目录，
+或已经由本软件管理、权限为 0700 的私有目录；未知旧内容一律保留并拒绝覆盖。
+显式环境变量优先于保存配置，所以运营入口不应再对模型路径设置固定的隐式
+覆盖。位置调整仅影响后续新安装，不自动迁走、删除或重建已有环境。详细恢复、
+许可证和手动安装边界见 `docs/OPERATIONS.md` 与 `NOTICE`。
+
 只读接入已有运行结果（先停止使用同一状态目录的工作台，再导入并重新启动）：
 
 ```bash

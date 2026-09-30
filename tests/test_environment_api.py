@@ -51,6 +51,14 @@ if mode == 'wait':
 if mode == 'fail':
     print('Controlled dependency verification failure', flush=True)
     sys.exit(1)
+if mode.startswith('diagnostic-'):
+    value = {'schema_version':1, 'operation_id':plan['operation_id'], 'code':'hash_mismatch'}
+    if mode == 'diagnostic-identity':
+        value['operation_id'] = '0' * 32
+    if mode == 'diagnostic-content':
+        value['code'] = 'untrusted private upstream payload'
+    (root / 'environment-failure.json').write_text(json.dumps(value))
+    sys.exit(1)
 card = json.loads(sys.argv[3])
 install = plan['action'] == 'install'
 card.update(status='ready' if install else 'missing', detected_version='3.12' if install else None,
@@ -247,6 +255,23 @@ class EnvironmentAPITests(unittest.TestCase):
                     "cancelled" if mode == "cancel" else "failed",
                     value,
                 )
+                self.assertFalse(value["applied"])
+        self.assertFalse((self.config / "env_paths.local.yaml").exists())
+
+    def test_structured_failure_is_identity_checked_and_uses_only_fixed_messages(self):
+        for mode, code in (
+            ("diagnostic-hash", "environment_hash_mismatch"),
+            ("diagnostic-identity", "environment_failure_contract"),
+            ("diagnostic-content", "environment_failure_contract"),
+        ):
+            with self.subTest(mode=mode), self.client(mode=mode) as client:
+                self.authenticate(client)
+                response = self.start(client, "install", "environment-" + mode)
+                self.assertEqual(response.status_code, 202, response.text)
+                value = self.completed(client, response.json()["id"])
+                self.assertEqual(value["status"], "failed", value)
+                self.assertEqual(value["error"]["code"], code)
+                self.assertNotIn("untrusted private", json.dumps(value))
                 self.assertFalse(value["applied"])
         self.assertFalse((self.config / "env_paths.local.yaml").exists())
 

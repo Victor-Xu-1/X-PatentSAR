@@ -80,6 +80,12 @@ class ManagedStorage:
                         "environment_location",
                         "Installation directories must be operator-owned real directories.",
                     )
+                if current == path and stat.S_IMODE(info.st_mode) & 0o077:
+                    raise WebError(
+                        400,
+                        "environment_location",
+                        "An existing installation prefix must be private (0700); its permissions were not changed.",
+                    )
         if not path.resolve().is_relative_to(allowed.resolve()) or path.is_relative_to(
             Path("/mnt")
         ):
@@ -89,12 +95,16 @@ class ManagedStorage:
                 "Installation must stay on the approved Linux filesystem, not a Windows mount.",
             )
         if path.exists() and any(path.iterdir()):
-            marker = SafeFiles(path).read(MARKER, max_bytes=4096)
-            if json.loads(marker) != {
-                "schema_version": 1,
-                "product": "X-PatentSAR",
-                "uid": os.getuid(),
-            }:
+            try:
+                marker = SafeFiles(path).read(MARKER, max_bytes=4096)
+                verified = json.loads(marker) == {
+                    "schema_version": 1,
+                    "product": "X-PatentSAR",
+                    "uid": os.getuid(),
+                }
+            except (WebError, ValueError, UnicodeError, RecursionError):
+                verified = False
+            if not verified:
                 raise WebError(
                     409,
                     "environment_prefix_unknown",

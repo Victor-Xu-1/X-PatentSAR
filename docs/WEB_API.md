@@ -4,10 +4,10 @@
 
 1. Complete: trace actual Python/OCR/DECIMER/RDKit/ADMET consumers and define a
    single typed, same-origin environment management boundary.
-2. In progress: replace the read-only environment page with installation location,
+2. Complete: replace the read-only environment page with installation location,
    recommended bundles, real component inspection, owned durable install/cancel
    operations and verified activation. Reuse existing process ownership primitives.
-3. Pending: relevant regression/security tests, real missing-component installation,
+3. In progress: relevant regression/security tests, real missing-component installation,
    browser acceptance, clean packaging, E-drive deployment and authorized publication.
 
 All endpoints below use existing local session/CSRF validation. They do not
@@ -22,6 +22,8 @@ One component allowlist owns installation; no separate HTTP service is added.
   `{action:"inspect"|"install",component_ids,request_id,expected_revision}`.
   Request IDs provide persisted idempotency, not blind retry. Component IDs are
   `installer`, `base`, `decimer`, `decimer-models`, `admet`, `admet-models`.
+  Installation responses contain the full prerequisite closure in dependency
+  order; the UI discloses every included version/license before confirmation.
 - GET `/api/v1/environments/operations/{id}` -> persisted `EnvironmentOperation`.
 - POST `/api/v1/environments/operations/{id}/cancel` -> operation; stop only
   verified owned processes. Cancellation/restart cannot label partial installs ready.
@@ -33,6 +35,20 @@ prefixes do not overwrite existing environments; configuration is published only
 after verification. Existing extraction and model calls retain their own captured
 configuration. No GPU/CUDA, privileged system install, paid LLM, OpenDDE or DiffSBDD
 installation is implicitly authorized by this reference-layout feature.
+
+Catalog reads are metadata/cache-only. Explicit inspection invokes isolated real
+module, OCR/PDF and CPU model checks without downloads. Cached checks are keyed by
+recipe/configuration/binding identity. The separate environment SQLite schema v1
+owns settings, idempotent requests, stages and bounded logs, not patent artifacts.
+Only one environment operation runs at a time. Worker ownership is persisted
+before a file handshake permits any provision action. Failures use fixed safe
+codes; invalid/oversized result or diagnostic packets fail closed.
+
+Successful installation verifies all selected dependencies before atomically
+publishing interpreter/model paths in the existing `env_paths.local.yaml` under
+the analysis-use gate. Configuration revisions and explicit environment overrides
+are respected; conflicting operator changes receive 409 and remain untouched.
+Already-started extraction jobs retain a captured configuration snapshot.
 
 Validation mapping: location input -> approved-path and symlink tests; detection ->
 real interpreter/modules/model fingerprints; install -> real pinned packages and

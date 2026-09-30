@@ -6,6 +6,10 @@
 #
 # Supported keys:
 #   base, smiles_engine, decimer, paddleocr, pymupdf, ocrmypdf
+# Optional model/management keys:
+#   admet, admet_models, decimer_models, decimer_segmentation_models,
+#   environment_installer
+# Persisted managed selections use env_paths.local.yaml; explicit variables win.
 
 base: "python3"
 smiles_engine: "python3"

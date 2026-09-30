@@ -92,6 +92,41 @@ flowchart LR
     VIEW --> SUMMARY["Source-grounded evidence statistics"]
 ```
 
+## Local environment control
+
+```mermaid
+flowchart LR
+    ENVUI["Environment manager<br/>location, presets, consent, history"] --> ENVAPI["Existing session/CSRF API"]
+    ENVAPI --> ENVDB["Private environment SQLite v1<br/>revision and idempotent plan"]
+    ENVDB --> OWNED["Same owned subprocess carrier<br/>persisted identity + handshake"]
+    OWNED --> FIXED["Fixed CPU recipes<br/>hash-locked wheels and models"]
+    FIXED --> CHECK["Actual PDF/OCR/module/model probes"]
+    CHECK --> CONF["Atomic external env_paths.local.yaml<br/>config conflict + analysis-use gate"]
+    CONF --> NEXT["New CLI/analysis requests"]
+    FIXED --> LOGS["Bounded stages, safe errors and cancellation"]
+    LOGS --> ENVUI
+```
+
+`web/environment_specs.py` owns the six allowlisted components and dependencies.
+`environment_storage/paths/config/queue` separate persistence, approved storage,
+configuration publication and lifecycle. Dedicated worker modules handle fixed
+downloads/archives/commands and CPU probes. There is no arbitrary package manager
+API or second process-ownership implementation. The metadata GET never imports
+scientific SDKs or downloads. Inspection and installation are explicit durable jobs.
+
+`tools/build_environment_resources.py` derives the base-worker requirements from
+the sole application `uv.lock` using pinned uv 0.11.31; CI enforces parity. DECIMER
+Python 3.10 and ADMET Python 3.12 CPU recipes describe separate scientific runtime
+boundaries. Their locks and model fingerprints are packaged text, never model
+binaries or user patents. All installations, downloads and state stay external.
+
+Interpreter and model consumers read one external configuration. Every extraction
+process captures its configuration at startup, so verified activation cannot
+mix environments mid-run. Analysis publication serializes with the existing busy
+gate and refreshes future runtime/cache identity. Manual changes and explicit
+environment overrides cannot be silently replaced. None of these operations
+changes scientific acceptance, original PDFs or generated results.
+
 ## Formal data flow
 
 Every numbered page remains in original-PDF coordinates. The production chain never switches to a truncated PDF.

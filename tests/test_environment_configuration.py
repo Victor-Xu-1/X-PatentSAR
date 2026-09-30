@@ -34,6 +34,16 @@ class EnvironmentConfigurationTests(unittest.TestCase):
         self.path.write_text(yaml.safe_dump(value))
         self.path.chmod(0o600)
 
+    def test_malformed_and_non_mapping_configuration_fail_with_safe_errors(self):
+        for value in ("[]", "false", "base: ["):
+            self.path.write_text(value)
+            self.path.chmod(0o600)
+            with self.subTest(value=value), self.assertRaises(WebError) as context:
+                self.config.loaded()
+            self.assertEqual(context.exception.code, "environment_configuration")
+            self.assertNotIn(value, context.exception.message)
+            self.assertEqual(self.path.read_text(), value)
+
     def test_changed_configuration_is_visible_and_running_snapshot_stays_frozen(self):
         self.write(
             {

@@ -38,6 +38,8 @@ def audit(wheel: Path) -> dict[str, object]:
                 in {
                     ".pdf",
                     ".h5",
+                    ".pt",
+                    ".ckpt",
                     ".pyc",
                     ".sqlite",
                     ".sqlite3",
@@ -64,6 +66,27 @@ def audit(wheel: Path) -> dict[str, object]:
         for license_name in ("LICENSE", "NOTICE"):
             if not archive.read(dist_info + "licenses/" + license_name).strip():
                 raise ValueError("Wheel is missing license or attribution text")
+        resources = package + "defaults/environments/"
+        for recipe in (
+            "base-requirements.txt",
+            "base-runtime.json",
+            "admet-cpu-requirements.txt",
+            "decimer-inputs.txt",
+            "decimer-requirements.txt",
+            "decimer-models.json",
+        ):
+            if not archive.read(resources + recipe).strip():
+                raise ValueError("Wheel is missing a managed environment recipe")
+        base = json.loads(archive.read(resources + "base-runtime.json"))
+        if (
+            base.get("schema_version") != 1
+            or base.get("generator") != "tools/build_environment_resources.py"
+            or hashlib.sha256(
+                archive.read(resources + "base-requirements.txt")
+            ).hexdigest()
+            != base.get("requirements_sha256")
+        ):
+            raise ValueError("Wheel base environment recipe provenance failed")
         marker = json.loads(archive.read(static + ".bundle.json"))
         if marker.get("generator") != "tools/build_frontend.py" or not isinstance(
             marker.get("files"), dict

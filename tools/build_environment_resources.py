@@ -85,7 +85,16 @@ def build(root: Path, uv: str, *, check: bool = False) -> None:
             "Environment resources must remain within their source package"
         )
     previous_manifest = destination / "base-runtime.json"
+    if (
+        not previous_manifest.exists()
+        and (destination / "base-requirements.txt").exists()
+    ):
+        raise ValueError("Unmanaged environment resources were preserved")
     if previous_manifest.exists():
+        if previous_manifest.is_symlink():
+            raise ValueError(
+                "Environment resource provenance cannot be a symbolic link"
+            )
         previous = json.loads(previous_manifest.read_text())
         current_requirements = destination / "base-requirements.txt"
         if (

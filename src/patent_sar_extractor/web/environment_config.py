@@ -56,7 +56,16 @@ class EnvironmentConfig:
         return hashlib.sha256(self.content()).hexdigest()
 
     def loaded(self) -> dict[str, Any]:
-        value = yaml.safe_load(self.content()) or {}
+        try:
+            value = yaml.safe_load(self.content())
+        except yaml.YAMLError as error:
+            raise WebError(
+                409,
+                "environment_configuration",
+                "Runtime configuration contains invalid YAML; existing content was preserved.",
+            ) from error
+        if value is None:
+            value = {}
         if not isinstance(value, dict):
             raise WebError(
                 409,

@@ -7,6 +7,7 @@ from pathlib import Path
 
 from patent_sar_extractor.web.environment_paths import ManagedStorage
 from patent_sar_extractor.web.environment_storage import EnvironmentStore
+from patent_sar_extractor.web.environments import EnvironmentManager
 from patent_sar_extractor.web.errors import WebError
 
 
@@ -94,11 +95,47 @@ class EnvironmentStateTests(unittest.TestCase):
         ):
             with self.subTest(value=value), self.assertRaises(WebError):
                 self.settings.validate(value)
-        self.prefix.mkdir()
+        self.prefix.mkdir(mode=0o700)
         (self.prefix / "user.txt").write_text("preserve")
         with self.assertRaises(WebError):
             self.settings.prepare(str(self.prefix))
         self.assertEqual((self.prefix / "user.txt").read_text(), "preserve")
+
+    def test_unknown_or_invalid_managed_marker_has_actionable_conflict(self):
+        self.prefix.mkdir(mode=0o700)
+        (self.prefix / "user.txt").write_text("preserve")
+        for value in (None, "not json", '{"schema_version":999}'):
+            marker = self.prefix / ".x-patentsar-environments.json"
+            if value is not None:
+                marker.write_text(value)
+            with self.subTest(value=value), self.assertRaises(WebError) as context:
+                self.settings.validate(str(self.prefix))
+            self.assertEqual(context.exception.code, "environment_prefix_unknown")
+            self.assertEqual((self.prefix / "user.txt").read_text(), "preserve")
+
+    def test_public_existing_directory_is_not_saved_as_installable_or_chmodded(self):
+        self.prefix.mkdir(mode=0o755)
+        with self.assertRaisesRegex(WebError, "0700"):
+            self.settings.validate(str(self.prefix))
+        self.assertEqual(self.prefix.stat().st_mode & 0o777, 0o755)
+
+    def test_dependency_closure_is_ordered_unique_and_rejects_unknown_or_cycles(self):
+        manager = object.__new__(EnvironmentManager)
+        cards = [
+            {"id": "installer", "dependencies": []},
+            {"id": "base", "dependencies": ["installer"]},
+            {"id": "admet", "dependencies": ["installer"]},
+            {"id": "admet-models", "dependencies": ["admet"]},
+        ]
+        manager.metadata = lambda: cards
+        self.assertEqual(
+            manager.resolve_components(["admet-models", "base", "installer"]),
+            ["installer", "admet", "admet-models", "base"],
+        )
+        for dependencies in (["unknown"], ["base"]):
+            cards[0]["dependencies"] = dependencies
+            with self.subTest(dependencies=dependencies), self.assertRaises(WebError):
+                manager.resolve_components(["base"])
 
     def test_owned_prefix_and_symlink_safety(self):
         self.assertEqual(self.settings.prepare(str(self.prefix)), self.prefix)

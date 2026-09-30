@@ -219,3 +219,64 @@ test('owned lightweight inspection persists history and selected operation acros
     operation!.log_tail.slice(-200).join('\n') || '服务端尚未提供日志。',
   );
 });
+
+test('explicit owned QA install confirmation activates a verified tool and persists its receipt', async ({
+  page,
+}) => {
+  test.skip(
+    process.env.PATENTSAR_E2E_ENV_INSTALL !== '1',
+    'Requires an explicitly owned QA configuration; performs real installer reuse/activation',
+  );
+  await page.goto('/#/settings');
+  await expect(page.getByRole('heading', { name: '环境管理', exact: true })).toBeVisible();
+  const before = await catalogFromServer(page);
+  expect(before.settings.enabled).toBe(true);
+  expect(before.active_operation).toBeNull();
+  const component = before.components.find((item) => item.id === 'installer')!;
+  expect(component.status, 'Cold download is verified separately; this checks UI activation').toBe(
+    'ready',
+  );
+  await page.getByRole('button', { name: `安装 ${component.name}`, exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('checkbox').check();
+  const response = page.waitForResponse(
+    (value) =>
+      value.request().method() === 'POST' &&
+      value.url().endsWith('/api/v1/environments/operations'),
+  );
+  await dialog.getByRole('button', { name: '确认下载并安装' }).click();
+  const created = await response;
+  expect(created.status()).toBe(202);
+  const payload = created.request().postDataJSON();
+  expect(payload).toMatchObject({
+    action: 'install',
+    component_ids: ['installer'],
+    expected_revision: before.settings.revision,
+  });
+  await expect(page).toHaveURL(/#\/settings\?operation=[A-Za-z0-9_-]+/);
+  const identifier = new URLSearchParams(page.url().split('?')[1]).get('operation')!;
+  let receipt;
+  await expect
+    .poll(
+      async () => {
+        const response = await page.request.get(`/api/v1/environments/operations/${identifier}`);
+        expect(response.ok()).toBe(true);
+        receipt = decodeEnvironmentOperation(await response.json());
+        return receipt.status;
+      },
+      { timeout: 60_000, intervals: [300, 500, 1000] },
+    )
+    .toBe('complete');
+  expect(receipt!.applied).toBe(true);
+  expect(receipt!.completed_components).toEqual(['installer']);
+  expect(receipt!.error).toBeNull();
+  await page.reload();
+  await expect(page.getByLabel('环境后台操作')).toContainText(identifier);
+  await expect(page.getByLabel('环境后台操作')).toContainText('安装与配置校验完成');
+  const persisted = await catalogFromServer(page);
+  expect(persisted.operations.find((item) => item.id === identifier)?.applied).toBe(true);
+  await page.screenshot({
+    path: test.info().outputPath('verified-install-receipt.png'),
+    fullPage: true,
+  });
+});

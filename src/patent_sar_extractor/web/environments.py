@@ -333,13 +333,39 @@ class EnvironmentManager:
                     "Additional environment configuration is invalid.",
                 )
             for value in additional.values():
-                if not isinstance(value, str) or not Path(value).is_relative_to(
-                    Path(plan["install_root"])
-                ):
+                if not isinstance(value, str):
                     raise WebError(
                         409,
                         "environment_result",
                         "Model adapter paths must remain within their owned prefix.",
+                    )
+                location = Path(value)
+                owned = location.is_relative_to(Path(plan["install_root"]))
+                legacy = (
+                    Path(bindings["decimer"]).parent.parent
+                    / "lib/python3.10/site-packages/decimer_segmentation/mask_rcnn_molecule.h5"
+                    if "decimer" in bindings
+                    else None
+                )
+                if not owned and location != legacy:
+                    raise WebError(
+                        409,
+                        "environment_result",
+                        "Only the selected verified runtime's original segmentation cache may be reused read-only.",
+                    )
+                from patent_sar_extractor.workers.environment_files import file_sha256
+                from patent_sar_extractor.workers.environment_segmentation import (
+                    SEGMENTATION_SHA256,
+                )
+
+                if (
+                    any(path.is_symlink() for path in (location, *location.parents))
+                    or file_sha256(location) != SEGMENTATION_SHA256
+                ):
+                    raise WebError(
+                        409,
+                        "environment_result",
+                        "Segmentation content changed before activation; no model path was published.",
                     )
             self.analysis.configure(
                 lambda: self.config.publish(

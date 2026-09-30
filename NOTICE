@@ -29,3 +29,14 @@ inference does not call that component. Redistribution of an external model
 environment requires a separate review of all retained upstream notices; the
 first-party Apache-2.0 license must not be presented as covering that environment.
 DrugBank comparison data is not copied into the deployed model bundle or used.
+
+The optional local environment manager installs only fixed upstream releases;
+it does not redistribute their environments or weights in this wheel. Its
+dedicated uv tool is MIT OR Apache-2.0. DECIMER OCSR and segmentation source code
+retain their MIT terms; TensorFlow retains Apache-2.0. Reviewed external model
+weights are CC-BY-4.0, with their original Zenodo records preserved as provenance:
+https://zenodo.org/records/8300489
+https://zenodo.org/records/10781330
+https://zenodo.org/records/10663579
+The package recipes retain dependency license boundaries. No CUDA/GPU, Java
+PaDEL execution, paid model service or unrelated product is installed by default.
