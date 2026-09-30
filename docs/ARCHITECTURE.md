@@ -60,6 +60,38 @@ change binding/SMILES/QA files or declare a failed run formally accepted.
 copies it into the wheel's private package static directory. The installed wheel
 serves both UI and API from one origin; Node.js is a build dependency only.
 
+### Task and analysis boundaries
+
+The task page first uploads and validates an original, then explicitly creates a
+durable extraction job. A failed start retains the uploaded project and exposes
+recovery; uncertain writes are not blindly replayed. Operator notes are records,
+not executable prompts. Intermediate/force options become real CLI flags, while
+safe resume retains checkpoints and never repeats force invalidation.
+
+`web/result_queries.py` owns filtering, reviews, pagination and presentation
+coordinates. It validates the original SHA and bounds across filtered rows but
+loads PDF pages only for visible-row coordinate transforms. The service remains
+the workspace use-case boundary; query logic has no competing implementation.
+
+The molecular analysis integration is a separate research-only consumer of the
+same original/crops and validated molecules. DECIMER recognition, RDKit QC and
+ADMET-AI CPU model predictions do not rewrite generated pipeline artifacts or
+promote formal acceptance. Its rebuildable private cache is independent from
+authoritative project/job/review state. Evidence summaries aggregate source
+fields and preserve units/censored values; they do not invent model-generated
+mechanism or efficacy claims.
+
+```mermaid
+flowchart LR
+    TASK["Task input / original PDF"] --> QUEUE["Existing durable CLI queue"]
+    QUEUE --> QA["Deterministic formal QA"]
+    ORIGINAL["Verified original / real crops"] --> VIEW["PDF and result presentation"]
+    ORIGINAL --> OCSR["Research DECIMER + RDKit QC"]
+    OCSR --> ADMET["Isolated ADMET-AI CPU inference"]
+    ADMET --> CACHE["Research-only analysis cache"]
+    VIEW --> SUMMARY["Source-grounded evidence statistics"]
+```
+
 ## Formal data flow
 
 Every numbered page remains in original-PDF coordinates. The production chain never switches to a truncated PDF.

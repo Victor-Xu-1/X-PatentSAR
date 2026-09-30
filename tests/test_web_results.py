@@ -24,7 +24,7 @@ class ResultTests(WebFixture, unittest.TestCase):
         run = artifact_run(self.root / "paged-run", pdf, rows=30, rendered=False)
         imported = import_run(self.state, run, pdf_path=pdf)
         with self.client() as client, patch(
-            "patent_sar_extractor.web.service.rendered_box", wraps=rendered_box
+            "patent_sar_extractor.web.result_queries.rendered_box", wraps=rendered_box
         ) as normalize:
             response = client.get(
                 f"/api/v1/projects/{imported.id}/results?page=2&page_size=3"
