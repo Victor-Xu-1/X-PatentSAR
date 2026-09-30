@@ -30,6 +30,9 @@ export const positive: Decoder<number> = (v, p = '$') => {
 export function nullable<T>(decode: Decoder<T>): Decoder<T | null> {
   return (v, p) => (v == null ? null : decode(v, p));
 }
+export function defaulted<T>(decode: Decoder<T>, fallback: T): Decoder<T> {
+  return (v, p) => (v === undefined ? fallback : decode(v, p));
+}
 export function array<T>(decode: Decoder<T>): Decoder<T[]> {
   return (v, p = '$') => {
     if (!Array.isArray(v) || v.length > 100_000) throw new ContractError(p);

@@ -1,17 +1,18 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { api, client } from './api';
 import type { Project } from './api/types';
 import { emptyRoute } from './model/route';
 import type { View } from './model/route';
 import { useRoute } from './hooks/useRoute';
 import { useResource } from './hooks/useResource';
-import { useMediaQuery } from './hooks/useMediaQuery';
+import { useMobileNavigation } from './hooks/useMobileNavigation';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { ErrorNotice, Loading } from './components/Feedback';
 import { Workspace } from './features/workspace/Workspace';
 import { ProjectsPage } from './features/projects/ProjectsPage';
-import { UploadDialog } from './features/projects/UploadDialog';
+import { AttachPdfDialog } from './features/projects/AttachPdfDialog';
+import { NewTaskPage } from './features/tasks/NewTaskPage';
 import { useJobs } from './features/jobs/useJobs';
 import { JobsPage } from './features/jobs/JobsPage';
 import { SettingsPage } from './features/settings/SettingsPage';
@@ -19,24 +20,9 @@ import { SettingsPage } from './features/settings/SettingsPage';
 export default function App() {
   const { route, navigate } = useRoute();
   const [menuOpen, setMenuOpen] = useState(false);
-  const narrow = useMediaQuery('(max-width: 760px)');
-  useEffect(() => {
-    if (!narrow || !menuOpen) return;
-    const opener = document.querySelector<HTMLElement>('.menu-toggle');
-    document.querySelector<HTMLElement>('#primary-sidebar .nav-item:not(:disabled)')?.focus();
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener('keydown', closeOnEscape);
-    return () => {
-      document.removeEventListener('keydown', closeOnEscape);
-      opener?.focus();
-    };
-  }, [narrow, menuOpen]);
-  const [upload, setUpload] = useState<{ project: Project | null } | null>(null);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
+  const narrow = useMobileNavigation(menuOpen, closeMenu);
+  const [attachment, setAttachment] = useState<Project | null>(null);
   const [query, setQuery] = useState('');
   const loadConnection = useCallback(async (signal: AbortSignal) => {
     const [session, health] = await Promise.all([api.session(), api.health(signal)]);
@@ -58,10 +44,10 @@ export default function App() {
   }
   function navigateView(view: View) {
     setMenuOpen(false);
-    navigate({ ...route, view });
+    navigate({ ...route, view, ...(view === 'workspace' ? { resultTab: 'results' } : {}) });
   }
   function uploaded(next: Project) {
-    setUpload(null);
+    setAttachment(null);
     projects.reload();
     projectResource.reload();
     openProject(next.id);
@@ -73,7 +59,10 @@ export default function App() {
     projectResource.reload();
     jobs.reload();
   }
-  const onUpload = () => setUpload({ project: null });
+  const onUpload = () => {
+    setMenuOpen(false);
+    navigate({ ...emptyRoute, view: 'new-task' });
+  };
   return (
     <div className={`app-shell${menuOpen ? ' menu-open' : ''}`}>
       <a
@@ -101,6 +90,10 @@ export default function App() {
         job={jobs.job}
         health={connection.data?.health ?? null}
         onUpload={onUpload}
+        onAnalysis={(resultTab) => {
+          setMenuOpen(false);
+          navigate({ ...route, view: 'workspace', resultTab });
+        }}
         disabled={!connected}
         inert={narrow && !menuOpen}
       />
@@ -148,11 +141,12 @@ export default function App() {
               query={query}
               onQuery={setQuery}
               ready={connected && connection.data!.health.ready}
+              capabilities={connection.data?.health.capabilities ?? null}
               job={jobs.job}
               onJobChange={jobs.reload}
               onProjectReload={projectResource.reload}
               onUpload={onUpload}
-              onAttach={() => project && setUpload({ project })}
+              onAttach={() => project && setAttachment(project)}
             />
           )}
           {route.view === 'projects' && (
@@ -166,12 +160,20 @@ export default function App() {
             />
           )}
           {route.view === 'settings' && connected && <SettingsPage />}
+          {route.view === 'new-task' && (
+            <NewTaskPage
+              connected={connected}
+              ready={connection.data?.health.ready ?? false}
+              onCreated={uploaded}
+              onOpen={openProject}
+            />
+          )}
         </main>
       </div>
-      {upload && (
-        <UploadDialog
-          project={upload.project}
-          onClose={() => setUpload(null)}
+      {attachment && (
+        <AttachPdfDialog
+          project={attachment}
+          onClose={() => setAttachment(null)}
           onUploaded={uploaded}
         />
       )}

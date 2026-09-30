@@ -46,8 +46,13 @@ describe('application bootstrap, routes and failure states', () => {
     expect(await screen.findByText('v9.8.7-test')).toBeVisible();
     expect(screen.getByText('开始探索专利中的结构与活性')).toBeVisible();
     expect(screen.queryByText('抑制等级 = ++')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /ADMET/ })).toBeDisabled();
-    expect(screen.getByRole('button', { name: /智能摘要/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /ADMET/ })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /证据摘要/ })).toBeEnabled();
+    await userEvent.click(screen.getByRole('button', { name: '上传 PDF' }));
+    expect(await screen.findByRole('heading', { name: '新建提取任务' })).toBeVisible();
+    expect(window.location.hash).toBe('#/new-task');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('项目名称')).toHaveFocus();
   });
   it('bootstraps a fresh deep link and preserves actual source navigation', async () => {
     window.location.hash = `#/projects/${project.id}?page=4&tab=text&compound=I-7`;

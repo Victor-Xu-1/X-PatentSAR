@@ -12,6 +12,37 @@ import { Tabs } from '../src/components/Tabs';
 import { job, page, project } from './fixtures';
 
 describe('original PDF provenance and navigation', () => {
+  it('distinguishes actual attached original images from historical OCR text without upgrading QA', async () => {
+    const original = { ...page, source_mode: 'historical' as const };
+    vi.spyOn(api, 'page').mockResolvedValue(original);
+    const { rerender } = render(
+      <PdfPane
+        project={{ ...project, is_historical: true }}
+        page={4}
+        tab="annotations"
+        selectedId="I-7"
+        onPage={vi.fn()}
+        onTab={vi.fn()}
+        onSelect={vi.fn()}
+        onAttach={vi.fn()}
+      />,
+    );
+    expect(await screen.findByText('原始 PDF · 历史 OCR 待复核')).toBeVisible();
+    expect(screen.queryByText(/非原始页面|原文未附/)).not.toBeInTheDocument();
+    rerender(
+      <PdfPane
+        project={{ ...project, is_historical: true }}
+        page={4}
+        tab="text"
+        selectedId="I-7"
+        onPage={vi.fn()}
+        onTab={vi.fn()}
+        onSelect={vi.fn()}
+        onAttach={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('历史 OCR 文本（非原生文本）')).toBeVisible();
+  });
   it('shows actual scanned PNG even when no text source is available', () => {
     render(
       <PageCanvas

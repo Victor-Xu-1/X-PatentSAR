@@ -5,6 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { ApiClient } from '../src/api/client';
 import { decodeHealth, decodeProject } from '../src/api/decoders';
 import { health, project, session } from './fixtures';
+import { admet } from './analysis-fixtures';
+import { decodeAdmet } from '../src/api/analysisDecoders';
 
 async function withServer(
   handler: RequestListener,
@@ -28,6 +30,33 @@ async function withServer(
 }
 
 describe('native HTTP client protocol (test-only controlled service, not backend acceptance)', () => {
+  it('sends native JSON molecule inputs through CSRF and the actual analysis decoder', async () => {
+    let payload: unknown;
+    let csrf: string | undefined;
+    await withServer(
+      async (request, response) => {
+        response.setHeader('Content-Type', 'application/json');
+        if (request.url === '/api/v1/session') {
+          response.end(JSON.stringify(session));
+          return;
+        }
+        let raw = '';
+        for await (const chunk of request) raw += String(chunk);
+        payload = JSON.parse(raw) as unknown;
+        csrf = request.headers['x-csrf-token'] as string | undefined;
+        response.end(JSON.stringify(admet));
+      },
+      async (client) => {
+        expect(
+          await client.mutate('/analysis/admet', 'POST', { smiles: ['CCO'] }, decodeAdmet, {
+            timeoutMs: 190_000,
+          }),
+        ).toEqual(admet);
+      },
+    );
+    expect(payload).toEqual({ smiles: ['CCO'] });
+    expect(csrf).toBe(session.csrf_token);
+  });
   it('sends actual raw PDF bytes and CSRF over native fetch', async () => {
     let body = '';
     let csrf: string | undefined;

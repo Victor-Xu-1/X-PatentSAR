@@ -67,7 +67,9 @@ export function PageControls({
         >
           <Minus size={15} />
         </button>
-        <output aria-label="文档缩放比例">{Math.round(zoom * 100)}%</output>
+        <output aria-label="文档缩放比例" title="100% 表示适配当前栏宽；拖动栏宽时自动重新适配">
+          {Math.round(zoom * 100)}%
+        </output>
         <button
           type="button"
           className="icon-button"
@@ -81,6 +83,7 @@ export function PageControls({
           type="button"
           className="icon-button"
           aria-label="重置文档缩放"
+          title="恢复适配当前可用宽度（100%）"
           disabled={disabled || zoom === 1}
           onClick={() => onZoom(1)}
         >

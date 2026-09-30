@@ -1,4 +1,4 @@
-import { Download, RefreshCw } from 'lucide-react';
+import { Download } from 'lucide-react';
 import type { Compound, Filters, Project, Results } from '../../api/types';
 import type { Resource } from '../../hooks/useResource';
 import { Empty, ErrorNotice, Loading } from '../../components/Feedback';
@@ -43,23 +43,7 @@ export function ResultsPane({
 }) {
   const result = resource.data;
   return (
-    <section className="panel results-pane" aria-label="结构与活性提取结果">
-      <header className="result-tabs">
-        <div>
-          <strong>结构–活性结果</strong>
-          <span title="未接入 ADMET 预测，不展示虚构数据">ADMET 未接入</span>
-          <span title="未接入智能摘要">智能摘要未接入</span>
-        </div>
-        <button
-          type="button"
-          onClick={resource.reload}
-          className="icon-button"
-          aria-label="刷新真实提取结果"
-          disabled={!project || resource.loading}
-        >
-          <RefreshCw size={15} />
-        </button>
-      </header>
+    <div className="result-data-view">
       <Metrics project={project} />
       {project && (
         <div className={`acceptance-banner ${project.acceptance.state}`}>
@@ -148,6 +132,6 @@ export function ResultsPane({
         disabled={!project || resource.loading}
         onChange={(page, page_size) => onFilters({ page, page_size })}
       />
-    </section>
+    </div>
   );
 }

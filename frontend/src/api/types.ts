@@ -103,6 +103,14 @@ export interface Job {
     duration_seconds: number | null;
   }[];
   can_resume: boolean;
+  include_intermediates: boolean;
+  force: boolean;
+  task_note: string;
+}
+export interface JobOptions {
+  include_intermediates?: boolean;
+  force?: boolean;
+  task_note?: string;
 }
 export interface Results {
   items: Compound[];

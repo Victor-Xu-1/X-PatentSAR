@@ -4,6 +4,7 @@
   min-height: 0;
 }
 .results-table {
+  min-width: 650px;
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
@@ -52,7 +53,7 @@
 }
 .results-table td {
   border-bottom: 1px solid var(--line-soft);
-  padding: 14px 6px;
+  padding: 8px 6px;
   vertical-align: middle;
   overflow-wrap: anywhere;
 }

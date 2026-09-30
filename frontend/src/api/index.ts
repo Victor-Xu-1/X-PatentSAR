@@ -10,7 +10,9 @@ import {
   decodeReview,
   decodeRuntime,
 } from './decoders';
-import type { Filters, ReviewDecision } from './types';
+import type { Filters, JobOptions, ReviewDecision } from './types';
+import { decodeAdmet, decodeEvidenceSummary, decodeRecognition } from './analysisDecoders';
+import { ContractError } from './validation';
 
 export const client = new ApiClient();
 const segment = encodeURIComponent;
@@ -29,11 +31,16 @@ export const api = {
   jobs: (projectId: string | null, signal: AbortSignal) =>
     client.get(`/jobs${projectId ? `?project_id=${segment(projectId)}` : ''}`, decodeJobs, signal),
   job: (id: string, signal: AbortSignal) => client.get(`/jobs/${segment(id)}`, decodeJob, signal),
-  createJob: (id: string, resumeId: string | null = null) =>
+  createJob: (id: string, resumeId: string | null = null, options: JobOptions = {}) =>
     client.mutate(
       `${projectPath(id)}/jobs`,
       'POST',
-      { allow_partial: false, advisory: false, resume_job_id: resumeId },
+      {
+        ...(resumeId ? {} : options),
+        allow_partial: false,
+        advisory: false,
+        resume_job_id: resumeId,
+      },
       decodeJob,
     ),
   cancelJob: (id: string) => client.mutate(`/jobs/${segment(id)}/cancel`, 'POST', {}, decodeJob),
@@ -50,9 +57,9 @@ export const api = {
       { decision, note, expected_revision: revision },
       decodeReview,
     ),
-  upload: (file: File, title: string) =>
+  upload: (file: File, title: string, patentId = '') =>
     client.upload(
-      `/projects?${new URLSearchParams({ filename: file.name, title })}`,
+      `/projects?${new URLSearchParams({ filename: file.name, title, ...(patentId.trim() ? { patent_id: patentId.trim() } : {}) })}`,
       file,
       decodeProject,
     ),
@@ -77,6 +84,33 @@ export const api = {
     });
   },
   runtime: (signal: AbortSignal) => client.get('/runtime', decodeRuntime, signal),
+  admet: (smiles: string[], signal: AbortSignal) =>
+    client.mutate('/analysis/admet', 'POST', { smiles }, decodeAdmet, {
+      signal,
+      timeoutMs: 190_000,
+    }),
+  recognize: (id: string, compoundId: string, signal: AbortSignal) =>
+    client.mutate(
+      `${projectPath(id)}/compounds/${segment(compoundId)}/recognize`,
+      'POST',
+      {},
+      (value) => {
+        const result = decodeRecognition(value);
+        if (result.compound_id !== compoundId) throw new ContractError('$.compound_id');
+        return result;
+      },
+      { signal, timeoutMs: 190_000 },
+    ),
+  evidenceSummary: (id: string, signal: AbortSignal) =>
+    client.get(
+      `${projectPath(id)}/evidence-summary`,
+      (value) => {
+        const summary = decodeEvidenceSummary(value);
+        if (summary.project_id !== id) throw new ContractError('$.project_id');
+        return summary;
+      },
+      signal,
+    ),
 };
 
 export function safeAssetUrl(value: string | null): string | null {

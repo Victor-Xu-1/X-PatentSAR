@@ -3,6 +3,7 @@ import {
   boolean,
   ContractError,
   count,
+  defaulted,
   nullable,
   number,
   object,
@@ -137,6 +138,9 @@ export const decodeJob: Decoder<Job> = object({
   finished_at: nullable(string),
   error: nullable(object({ code: string, message: string })),
   can_resume: boolean,
+  include_intermediates: defaulted(boolean, false),
+  force: defaulted(boolean, false),
+  task_note: defaulted(string, ''),
   stages: array(
     object({
       name: oneOf(stageNames),

@@ -112,6 +112,21 @@ describe('API authentication and writes', () => {
   });
 });
 describe('bounded reads and errors', () => {
+  it('reports malformed successful mutation responses as uncertain without replaying', async () => {
+    const transport = vi.fn<typeof fetch>(async (url) =>
+      String(url).endsWith('/session')
+        ? json(session)
+        : json({ id: 'persisted-but-incomplete' }, 201),
+    );
+    await expect(
+      new ApiClient(transport).upload(
+        '/projects?filename=one.pdf',
+        new File(['%PDF-1.7'], 'one.pdf'),
+        decodeProject,
+      ),
+    ).rejects.toMatchObject({ code: 'invalid_write_response', uncertain: true });
+    expect(transport).toHaveBeenCalledTimes(2);
+  });
   it('retries a transient read once with backoff', async () => {
     vi.useFakeTimers();
     const transport = vi

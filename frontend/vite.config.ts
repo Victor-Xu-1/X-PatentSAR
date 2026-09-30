@@ -16,6 +16,7 @@ if (
 }
 
 export default defineConfig({
+  cacheDir: process.env.PATENTSAR_FRONTEND_CACHE_DIR ?? 'node_modules/.vite',
   plugins: [react()],
   server: {
     port: 5173,

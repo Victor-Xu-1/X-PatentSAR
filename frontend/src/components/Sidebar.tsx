@@ -10,7 +10,7 @@ import {
   SquarePlus,
 } from 'lucide-react';
 import type { Health, Job, Project } from '../api/types';
-import type { Route, View } from '../model/route';
+import type { ResultTab, Route, View } from '../model/route';
 import { acceptanceLabels, jobStatusLabels } from '../model/presentation';
 
 const links = [
@@ -26,6 +26,7 @@ export function Sidebar({
   job,
   health,
   onUpload,
+  onAnalysis,
   disabled,
   inert = false,
 }: {
@@ -35,6 +36,7 @@ export function Sidebar({
   job: Job | null;
   health: Health | null;
   onUpload: () => void;
+  onAnalysis: (tab: ResultTab) => void;
   disabled: boolean;
   inert?: boolean;
 }) {
@@ -59,8 +61,13 @@ export function Sidebar({
           <button
             type="button"
             key={view}
-            className={`nav-item${route.view === view ? ' active' : ''}`}
-            aria-current={route.view === view ? 'page' : undefined}
+            className={`nav-item${route.view === view && (view !== 'workspace' || !route.resultTab || route.resultTab === 'results') ? ' active' : ''}`}
+            aria-current={
+              route.view === view &&
+              (view !== 'workspace' || !route.resultTab || route.resultTab === 'results')
+                ? 'page'
+                : undefined
+            }
             onClick={() => navigate(view)}
           >
             <Icon size={21} />
@@ -68,13 +75,23 @@ export function Sidebar({
           </button>
         ))}
         <div className="nav-divider" />
-        <button type="button" className="nav-item" disabled title="尚未接入 ADMET 预测">
+        <button
+          type="button"
+          className={`nav-item${route.view === 'workspace' && route.resultTab === 'admet' ? ' active' : ''}`}
+          onClick={() => onAnalysis('admet')}
+          disabled={disabled}
+        >
           <ShieldCheck size={21} />
-          ADMET<span className="small-tag">未接入</span>
+          分子分析 · ADMET
         </button>
-        <button type="button" className="nav-item" disabled title="尚未接入智能摘要">
+        <button
+          type="button"
+          className={`nav-item${route.view === 'workspace' && route.resultTab === 'summary' ? ' active' : ''}`}
+          onClick={() => onAnalysis('summary')}
+          disabled={disabled}
+        >
           <FileText size={21} />
-          智能摘要<span className="small-tag">未接入</span>
+          证据摘要<span className="small-tag">确定性</span>
         </button>
       </nav>
       <div className="sidebar-project">

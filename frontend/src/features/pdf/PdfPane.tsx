@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { FileText, MapPin } from 'lucide-react';
-import { api } from '../../api';
+import { api, safeAssetUrl } from '../../api';
 import type { Project } from '../../api/types';
 import type { PdfTab } from '../../model/route';
 import { useResource } from '../../hooks/useResource';
@@ -12,7 +12,7 @@ import { PageCanvas } from './PageCanvas';
 const modeLabels = {
   native: '原生 PDF 文本',
   ocr: '原始 PDF · OCR 文本',
-  historical: '历史 OCR 文本 · 非原始页面',
+  historical: '历史 OCR 文本（非原生文本）',
   unavailable: '此页文本未提供',
 };
 export function PdfPane({
@@ -40,6 +40,21 @@ export function PdfPane({
   const load = useCallback((signal: AbortSignal) => api.page(id ?? '', page, signal), [id, page]);
   const resource = useResource(canRead ? `${id}:${page}` : null, load);
   const data = resource.data;
+  const imageLabel = data
+    ? project?.pdf.available && safeAssetUrl(data.image_url)
+      ? data.source_mode === 'historical'
+        ? '原始 PDF · 历史 OCR 待复核'
+        : data.source_mode === 'native'
+          ? '原始 PDF · 原生文本'
+          : data.source_mode === 'ocr'
+            ? '原始 PDF · OCR 文本'
+            : '原始 PDF · 文本未提供'
+      : '原文未附'
+    : project?.pdf.available
+      ? '原始 PDF · 正在读取来源'
+      : project
+        ? '原文未附'
+        : '仅展示真实原始 PDF';
   return (
     <section className="panel pdf-pane" aria-label="专利原始文档查看器">
       <Tabs
@@ -82,9 +97,9 @@ export function PdfPane({
           <Empty
             title={project.pdf.available ? '页码超出范围' : '尚未提供原始 PDF'}
             description={
-              project.is_historical
-                ? '这是历史导入项目，未附带原始 PDF。历史数据保留来源标记，不生成替代页面。'
-                : '上传原始专利 PDF 后即可逐页查看和来源定位。'
+              project.pdf.available
+                ? '此页超出原始 PDF 页数；可返回第 1 页继续查看。'
+                : '尚未附带原始 PDF。已有提取数据保留来源标记；补充对应原文后即可逐页查看，不生成替代页面。'
             }
             action={
               !project.pdf.available ? (
@@ -151,13 +166,7 @@ export function PdfPane({
       </div>
       <footer className="pdf-footer">
         <FileText size={13} />
-        <span>
-          {data
-            ? modeLabels[data.source_mode]
-            : project?.is_historical
-              ? '历史导入 · 来源待补充'
-              : '仅展示真实原始 PDF'}
-        </span>
+        <span>{imageLabel}</span>
         {project?.patent_id && <span>{project.patent_id}</span>}
       </footer>
     </section>

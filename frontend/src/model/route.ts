@@ -1,4 +1,7 @@
-export type View = 'workspace' | 'projects' | 'jobs' | 'settings';
+import { normalizeLayout } from './layout';
+import type { LayoutState } from './layout';
+export type View = 'workspace' | 'projects' | 'jobs' | 'settings' | 'new-task';
+export type ResultTab = 'results' | 'admet' | 'summary';
 export type PdfTab = 'original' | 'text' | 'annotations';
 export interface Route {
   view: View;
@@ -6,6 +9,8 @@ export interface Route {
   page: number;
   tab: PdfTab;
   compoundId: string | null;
+  layout?: LayoutState;
+  resultTab?: ResultTab;
 }
 export const emptyRoute: Route = {
   view: 'workspace',
@@ -28,21 +33,36 @@ export function parseRoute(hash: string): Route {
       return emptyRoute;
     }
   }
-  const view: View = projectId
-    ? 'workspace'
-    : parts[0] === 'projects'
-      ? 'projects'
-      : parts[0] === 'jobs'
-        ? 'jobs'
-        : parts[0] === 'settings'
-          ? 'settings'
-          : 'workspace';
+  const view: View =
+    parts[0] === 'new-task'
+      ? 'new-task'
+      : projectId
+        ? 'workspace'
+        : parts[0] === 'projects'
+          ? 'projects'
+          : parts[0] === 'jobs'
+            ? 'jobs'
+            : parts[0] === 'settings'
+              ? 'settings'
+              : 'workspace';
   return {
     view,
     projectId,
     page: Number.isSafeInteger(page) && page > 0 ? page : 1,
     tab: tab === 'text' || tab === 'annotations' ? tab : 'original',
     compoundId: params.get('compound'),
+    ...(['pdfWidth', 'pdf', 'fullscreen'].some((key) => params.has(key))
+      ? {
+          layout: normalizeLayout({
+            pdfWidth: params.has('pdfWidth') ? Number(params.get('pdfWidth')) : 28,
+            pdfVisible: params.get('pdf') !== '0',
+            fullscreen: params.get('fullscreen') === '1',
+          }),
+        }
+      : {}),
+    ...(params.get('result') === 'admet' || params.get('result') === 'summary'
+      ? { resultTab: params.get('result') as ResultTab }
+      : {}),
   };
 }
 export function routeHash(route: Route): string {
@@ -57,6 +77,15 @@ export function routeHash(route: Route): string {
     params.set('page', String(route.page));
     params.set('tab', route.tab);
     if (route.compoundId) params.set('compound', route.compoundId);
+  }
+  if (route.view === 'workspace') {
+    if (route.layout) {
+      const layout = normalizeLayout(route.layout);
+      params.set('pdfWidth', String(layout.pdfWidth));
+      params.set('pdf', layout.pdfVisible ? '1' : '0');
+      params.set('fullscreen', layout.fullscreen ? '1' : '0');
+    }
+    if (route.resultTab && route.resultTab !== 'results') params.set('result', route.resultTab);
   }
   return `#${path}${params.size ? `?${params}` : ''}`;
 }

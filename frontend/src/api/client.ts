@@ -1,4 +1,5 @@
 import type { Decoder } from './validation';
+import { ContractError } from './validation';
 import { decodeSession } from './decoders';
 import type { Session } from './types';
 import { boundedResponse } from './response';
@@ -53,6 +54,7 @@ export class ApiClient {
     path: string,
     init: RequestInit,
     signal: AbortSignal | undefined,
+    timeoutMs = this.timeout,
   ): Promise<Response> {
     const write = init.method !== 'GET';
     const attempts = write ? 1 : 2;
@@ -63,7 +65,7 @@ export class ApiClient {
       signal?.addEventListener('abort', relay, { once: true });
       const timer = setTimeout(
         () => controller.abort(new DOMException('Timeout', 'TimeoutError')),
-        this.timeout,
+        timeoutMs,
       );
       try {
         const response = await this.transport(`/api/v1${path}`, {
@@ -136,6 +138,7 @@ export class ApiClient {
     method: 'POST' | 'PUT',
     body: BodyInit,
     contentType: string,
+    options: { signal?: AbortSignal; timeoutMs?: number } = {},
   ): Promise<Response> {
     const session = await this.bootstrap();
     return this.send(
@@ -145,7 +148,8 @@ export class ApiClient {
         body,
         headers: { 'Content-Type': contentType, 'X-CSRF-Token': session.csrf_token },
       },
-      undefined,
+      options.signal,
+      options.timeoutMs,
     );
   }
   async mutate<T>(
@@ -153,13 +157,31 @@ export class ApiClient {
     method: 'POST' | 'PUT',
     payload: unknown,
     decode: Decoder<T>,
+    options: { signal?: AbortSignal; timeoutMs?: number } = {},
   ): Promise<T> {
-    return decode(
-      await readJson(await this.write(path, method, JSON.stringify(payload), 'application/json')),
+    const response = await this.write(
+      path,
+      method,
+      JSON.stringify(payload),
+      'application/json',
+      options,
     );
+    return this.decodeMutation(response, decode);
   }
   async upload<T>(path: string, file: File, decode: Decoder<T>): Promise<T> {
-    return decode(await readJson(await this.write(path, 'POST', file, 'application/pdf')));
+    return this.decodeMutation(await this.write(path, 'POST', file, 'application/pdf'), decode);
+  }
+  private async decodeMutation<T>(response: Response, decode: Decoder<T>): Promise<T> {
+    try {
+      return decode(await readJson(response));
+    } catch (error) {
+      throw new ApiError(
+        response.status,
+        'invalid_write_response',
+        `服务已响应，但无法确认写入结果。请先检查已保存状态，不要盲目重新提交。${error instanceof ContractError ? error.message : '响应格式无效。'}`,
+        true,
+      );
+    }
   }
   async download(path: string, payload: unknown): Promise<Blob> {
     const response = await this.write(path, 'POST', JSON.stringify(payload), 'application/json');

@@ -88,6 +88,9 @@ export const job: Job = {
     duration_seconds: null,
   })),
   can_resume: false,
+  include_intermediates: false,
+  force: false,
+  task_note: '',
 };
 export function json(input: unknown, status = 200) {
   return new Response(JSON.stringify(input), {

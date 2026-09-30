@@ -81,6 +81,19 @@ export function JobActions({
           {job.error.code}：{job.error.message}
         </output>
       )}
+      {job && (
+        <details className="job-options-record">
+          <summary>已保存的任务参数</summary>
+          <p>
+            包含中间体：{job.include_intermediates ? '是' : '否'} · 强制重算：
+            {job.force ? '是' : '否'}
+          </p>
+          <p>运营备注（不执行）：{job.task_note || '无'}</p>
+          {job.can_resume && (
+            <p>恢复保留原备注与中间体选项，服务端关闭强制重算以保护 checkpoint。</p>
+          )}
+        </details>
+      )}
       {cancelConfirm && (
         <Dialog title="取消当前提取任务？" onClose={() => setCancelConfirm(false)} busy={busy}>
           <div className="dialog-body">

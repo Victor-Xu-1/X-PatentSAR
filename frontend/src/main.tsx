@@ -10,6 +10,8 @@ import './styles/table.css';
 import './styles/pdf.css';
 import './styles/dialogs.css';
 import './styles/management.css';
+import './styles/tasks.css';
+import './styles/analysis.css';
 import './styles/responsive.css';
 
 const root = document.getElementById('root');

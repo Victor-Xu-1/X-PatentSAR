@@ -38,7 +38,7 @@ async function expectReadableText(locator: Locator) {
   );
 }
 
-test('warm workspace style is consistent across navigation, management and upload dialogs', async ({
+test('warm workspace style is consistent across navigation, management and the actual task page', async ({
   page,
 }) => {
   await page.goto('/#/projects');
@@ -62,16 +62,17 @@ test('warm workspace style is consistent across navigation, management and uploa
     palette.subtle,
   );
   await page.getByRole('button', { name: '上传 PDF', exact: true }).click();
-  const dialog = page.getByRole('dialog');
-  await expect(dialog).toBeVisible();
-  await expect(dialog).toHaveCSS('background-color', palette.surface);
-  await expect(dialog).toHaveCSS('border-radius', '16px');
-  await expect(dialog.locator('.upload-drop')).toHaveCSS('background-color', palette.subtle);
+  await expect(page).toHaveURL(/#\/new-task$/);
+  await expect(page.getByRole('heading', { name: '新建提取任务' })).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.locator('.new-task-page')).toHaveCSS('background-color', palette.surface);
+  await expect(page.locator('.upload-drop')).toHaveCSS('background-color', palette.subtle);
+  await expect(page.getByLabel('完整提取（默认）')).toBeChecked();
+  await expect(page.getByLabel('项目名称')).toBeFocused();
   await page.getByLabel('项目名称').focus();
   await expect(page.getByLabel('项目名称')).toHaveCSS('outline-color', palette.focus);
-  await page.keyboard.press('Escape');
-  await expect(dialog).toHaveCount(0);
-  await expect(page.getByRole('button', { name: '上传 PDF', exact: true })).toBeFocused();
+  await page.getByRole('button', { name: '项目', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '专利项目', exact: true })).toBeVisible();
 });
 
 test('actual result tables, metrics and review controls use the same quiet palette', async ({
@@ -141,4 +142,16 @@ test('populated mobile workspace contains its table and keeps dialogs and naviga
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2),
   ).toBe(true);
   await page.screenshot({ path: test.info().outputPath('warm-mobile-runtime.png') });
+  await page.getByRole('button', { name: '上传 PDF', exact: true }).click();
+  await expect(page).toHaveURL(/#\/new-task$/);
+  await expect(page.getByLabel('项目名称')).toBeFocused();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2)).toBe(
+    true,
+  );
+  await page.getByLabel('任务说明（运营记录）').fill('手机运营记录');
+  await page.getByLabel('仅建立项目（不启动提取）').check();
+  await expect(page.getByLabel('任务说明（运营记录）')).toBeDisabled();
+  await page.getByLabel('完整提取（默认）').check();
+  await expect(page.getByLabel('任务说明（运营记录）')).toHaveValue('手机运营记录');
+  await expect(page.getByLabel('任务说明（运营记录）')).toBeEnabled();
 });

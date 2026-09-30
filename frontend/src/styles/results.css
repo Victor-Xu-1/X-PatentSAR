@@ -1,50 +1,33 @@
-.result-tabs {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 15px;
-  border-bottom: 1px solid var(--line);
-}
-.result-tabs > div {
-  display: flex;
-  gap: 23px;
-  align-items: center;
-}
-.result-tabs strong {
-  color: var(--ink);
-  border-bottom: 2px solid var(--accent);
-  padding: 14px 0 11px;
-  font-size: 12px;
-}
-.result-tabs span {
-  font-size: 11px;
-  color: var(--faint);
-}
 .metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  padding: 15px;
+  gap: 6px;
+  padding: 5px 8px;
 }
 .metric-card {
   display: flex;
-  gap: 10px;
+  gap: 6px;
   align-items: center;
   border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 13px 10px;
-  min-height: 87px;
+  border-radius: var(--radius-control);
+  padding: 3px 7px;
   background: var(--surface);
+  min-width: 0;
 }
 .metric-icon {
-  width: 34px;
-  height: 38px;
-  border-radius: var(--radius-control);
   display: grid;
   place-items: center;
-  background: var(--surface-subtle);
   color: var(--muted);
+}
+.metric-icon svg {
+  width: 15px;
+  height: 15px;
+}
+.metric-card > div {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  min-width: 0;
 }
 .metric-card div > span {
   font-size: 10px;
@@ -53,25 +36,21 @@
 }
 .metric-card strong {
   font-family: var(--font-heading);
-  font-size: 25px;
+  font-size: 19px;
   line-height: 1.25;
-  display: block;
-  margin: 3px 0;
-  letter-spacing: -0.4px;
   font-weight: 400;
   font-variant-numeric: tabular-nums;
 }
 .metric-card small {
-  font-size: 10px;
-  color: var(--faint);
+  display: none;
 }
 .acceptance-banner {
-  margin: 0 15px 11px;
+  margin: 0 8px 4px;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 9px;
-  padding: 8px 10px;
+  gap: 6px;
+  padding: 3px 6px;
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
   background: var(--surface-subtle);
@@ -95,23 +74,28 @@
 .acceptance-banner details {
   width: 100%;
 }
+.acceptance-banner details ul {
+  max-height: 84px;
+  overflow-y: auto;
+  margin: 4px 0;
+}
 .acceptance-banner summary {
   cursor: pointer;
   color: var(--danger);
 }
 .result-filters {
-  padding: 5px 15px 10px;
+  padding: 2px 8px 5px;
 }
 .results-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 11px;
+  gap: 6px;
+  margin-bottom: 4px;
 }
 .results-heading h2 {
   font-family: var(--font-heading);
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 400;
 }
 .results-heading > span {
@@ -122,76 +106,80 @@
 }
 .filter-controls {
   display: flex;
-  gap: 6px;
+  gap: 5px;
   align-items: center;
   flex-wrap: wrap;
 }
 .filter-controls .search-field {
-  flex: 1 1 180px;
+  flex: 1 1 150px;
+}
+.filter-controls .search-field input {
+  min-height: 28px;
+  padding: 5px 7px;
 }
 .filter-controls select {
   font-size: 10px;
-  min-width: 91px;
-  max-width: 135px;
-  min-height: 31px;
-  padding: 5px 5px;
+  min-width: 88px;
+  max-width: 130px;
+  min-height: 28px;
+  padding: 4px;
 }
 .selection-bar {
-  margin: 0 15px 8px;
+  margin: 0 8px 4px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  min-height: 27px;
+  gap: 6px;
+  min-height: 24px;
   font-size: 10px;
   color: var(--faint);
 }
 .selection-bar button {
-  min-height: 27px;
+  min-height: 24px;
   font-size: 10px;
-  padding: 4px 8px;
+  padding: 3px 7px;
   color: var(--primary);
 }
 .results-content {
   flex: 1;
-  min-height: 0;
+  min-height: 55dvh;
   display: flex;
   flex-direction: column;
-  padding: 0 12px;
+  padding: 0 8px;
 }
 .results-content > .feedback {
   flex: 1;
 }
 .results-content > .error-notice {
-  margin: 15px 0;
+  margin: 10px 0;
 }
 .pagination {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  padding: 12px 15px;
+  padding: 6px 8px;
   border-top: 1px solid var(--line);
   font-size: 10px;
   flex-wrap: wrap;
 }
 .pagination nav {
   display: flex;
-  gap: 5px;
+  gap: 4px;
   align-items: center;
 }
 .pagination select {
-  min-height: 29px;
+  min-height: 26px;
   font-size: 10px;
-  padding: 5px 4px;
+  padding: 4px;
 }
 .pagination .icon-button {
-  width: 27px;
-  min-height: 27px;
+  width: 26px;
+  min-height: 26px;
 }
 .page-button {
-  min-height: 27px;
-  min-width: 27px;
+  min-height: 26px;
+  min-width: 26px;
   padding: 4px;
   font-size: 10px;
 }

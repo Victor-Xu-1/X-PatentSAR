@@ -6,7 +6,7 @@ import { api } from '../src/api';
 import { ApiError } from '../src/api/errors';
 import { ReviewDialog } from '../src/features/results/ReviewDialog';
 import { ExportDialog } from '../src/features/results/ExportDialog';
-import { UploadDialog } from '../src/features/projects/UploadDialog';
+import { AttachPdfDialog } from '../src/features/projects/AttachPdfDialog';
 import { Dialog } from '../src/components/Dialog';
 import { compound, project, results } from './fixtures';
 
@@ -145,15 +145,14 @@ describe('accessible dialogs and explicit mutations', () => {
     expect(await screen.findByText('文件已从服务端生成并交给浏览器下载。')).toBeVisible();
   });
   it('rejects invalid PDFs before any upload write', async () => {
-    const upload = vi.spyOn(api, 'upload');
-    render(<UploadDialog project={null} onClose={vi.fn()} onUploaded={vi.fn()} />);
+    const upload = vi.spyOn(api, 'attachPdf');
+    render(<AttachPdfDialog project={project} onClose={vi.fn()} onUploaded={vi.fn()} />);
     const user = userEvent.setup();
-    await user.type(screen.getByLabelText('项目名称'), '测试');
     await user.upload(
       screen.getByLabelText('原始专利 PDF 文件'),
       new File(['not-pdf'], 'renamed.pdf', { type: 'application/pdf' }),
     );
-    await user.click(screen.getByText('上传并创建项目'));
+    await user.click(screen.getByText('上传并核对原始 PDF'));
     expect(await screen.findByRole('alert')).toHaveTextContent('文件头');
     expect(upload).not.toHaveBeenCalled();
   });

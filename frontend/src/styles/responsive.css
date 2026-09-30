@@ -1,93 +1,42 @@
-@media (min-width: 1600px) {
-  .workspace-split {
-    grid-template-columns: minmax(380px, 0.8fr) minmax(740px, 1.4fr);
-  }
-  .structure-cell {
-    flex-wrap: nowrap;
-  }
-  .crop-button {
-    width: 70px;
-  }
-}
 @media (max-width: 1400px) and (min-width: 1101px) {
-  .app-shell {
-    grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
-  }
   .topbar {
     padding: 0 15px;
   }
   .global-search {
-    width: 235px;
+    width: 220px;
   }
   .breadcrumb strong {
-    max-width: 240px;
+    max-width: 220px;
   }
   main {
     padding: 10px;
   }
-  .workspace-split {
-    grid-template-columns: minmax(310px, 0.75fr) minmax(590px, 1.4fr);
-    gap: 10px;
+  .stage strong {
+    font-size: 9px;
   }
-  .stage-strip {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 10px;
-  }
-  .stage::after {
-    display: none;
-  }
-  .workflow-panel {
-    padding: 10px 12px;
-  }
-  .pdf-pane,
-  .results-pane {
-    height: calc(100dvh - 190px);
-    min-height: 570px;
-  }
-  .metric-card {
-    gap: 7px;
-    padding: 10px 7px;
-    min-height: 79px;
+  .stage-circle {
+    width: 17px;
+    height: 17px;
   }
   .metric-icon {
-    width: 28px;
-    height: 35px;
-    border-radius: 7px;
+    display: none;
   }
-  .metric-icon svg {
-    width: 19px;
+  .metric-card {
+    padding: 4px;
   }
-  .metric-card strong {
-    font-size: 20px;
+  .metric-card > div {
+    gap: 4px;
   }
-  .metrics {
-    padding: 12px;
-    gap: 6px;
+  .metric-card div > span {
+    font-size: 9px;
   }
-  .results-table {
-    font-size: 10px;
-  }
-  .results-table td {
-    padding: 9px 4px;
-  }
-  .result-tabs > div {
-    gap: 13px;
-  }
-  .structure-cell {
-    gap: 3px;
-  }
-  .crop-button {
-    width: 55px;
-    height: 47px;
+  .acceptance-banner > small {
+    font-size: 9px;
   }
 }
 @media (max-width: 1100px) {
-  .app-shell {
-    grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
-  }
   .global-search {
-    width: 220px;
+    width: 210px;
   }
   .topbar {
     padding: 0 13px;
@@ -102,23 +51,29 @@
     display: none;
   }
   .workspace-split {
-    grid-template-columns: minmax(0, 1fr);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .workspace-results {
+    order: 0;
+  }
+  .workspace-source {
+    order: 1;
+  }
+  .workspace-divider {
+    display: none;
   }
   .pdf-pane {
-    height: 570px;
-    min-height: 400px;
+    height: 580px;
   }
   .results-pane {
-    height: 700px;
-    min-height: 500px;
+    height: max(760px, calc(100dvh - 120px));
   }
   .stage-strip {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 10px;
-  }
-  .stage::after {
-    display: none;
+    gap: 6px;
   }
   .workflow-panel {
     align-items: flex-start;
@@ -130,8 +85,15 @@
   .settings-sections {
     grid-template-columns: minmax(0, 1fr);
   }
+  .is-fullscreen .workspace-split {
+    overflow: auto;
+    flex-shrink: 1;
+  }
 }
 @media (max-width: 760px) {
+  .results-pane {
+    height: max(800px, calc(55dvh + 330px));
+  }
   .app-shell {
     display: block;
   }
@@ -166,7 +128,7 @@
     gap: 8px;
   }
   .breadcrumb strong {
-    max-width: 170px;
+    max-width: 160px;
     font-size: 12px;
   }
   .breadcrumb > svg,
@@ -196,37 +158,49 @@
   .job-actions {
     max-width: none;
   }
+  .layout-toolbar > span {
+    display: none;
+  }
   .metrics {
-    padding: 11px;
-    gap: 8px;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .result-tabs > div {
-    gap: 13px;
+  .results-heading > span {
+    display: none;
   }
-  .result-tabs span {
-    font-size: 9px;
-  }
-  .results-table {
-    min-width: 650px;
+  .acceptance-banner small {
+    width: 100%;
   }
   .pagination {
-    padding: 10px 12px;
+    padding: 6px;
   }
   .pagination nav {
-    gap: 4px;
+    gap: 3px;
   }
   .management-page {
     padding: 17px;
   }
-  .page-header {
-    flex-wrap: wrap;
-  }
+  .page-header,
   .job-card header,
   .job-card header > div {
     flex-wrap: wrap;
   }
   .selection-bar {
     align-items: flex-start;
+  }
+  .task-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .task-submit,
+  .task-status {
+    grid-column: auto;
+  }
+  .task-form fieldset {
+    padding: 12px;
+  }
+  .evidence-counts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .analysis-panel {
+    padding: 12px;
   }
 }

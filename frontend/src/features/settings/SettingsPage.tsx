@@ -71,12 +71,25 @@ export function SettingsPage() {
           <section>
             <h2>能力边界</h2>
             <p>
-              ADMET 预测：<span className="badge unknown">未接入</span>
+              本地 ADMET：
+              <span className={`badge ${runtime.capabilities.admet ? 'high' : 'review'}`}>
+                {runtime.capabilities.admet ? '服务报告可用' : '环境不可用'}
+              </span>
             </p>
             <p>
-              智能摘要：<span className="badge unknown">未接入</span>
+              确定性证据摘要：
+              <span className={`badge ${runtime.capabilities.summary ? 'high' : 'review'}`}>
+                {runtime.capabilities.summary ? '服务报告可用' : '环境不可用'}
+              </span>
             </p>
-            <p className="muted">本前端没有预测或摘要实现，不展示推测的活性、ADMET 或模型结论。</p>
+            <p className="muted">
+              分析由本地后端执行；DECIMER + QC 识别真实裁图，ADMET
+              使用真实模型与描述符。模型、解释器、CPU
+              与缓存由运营方配置，网页不改环境。能力报告不代替实际推理验收。
+            </p>
+            <p className="muted">
+              证据摘要是确定性统计，不是 LLM；这些复核能力不改变核心提取与正式 QA。
+            </p>
           </section>
         </div>
       ) : (

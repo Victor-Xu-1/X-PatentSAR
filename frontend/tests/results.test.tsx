@@ -126,6 +126,6 @@ describe('real-value presentation and selection', () => {
     expect(screen.getByText('原始专利文档')).toBeVisible();
     expect(screen.getByText('开始探索专利中的结构与活性')).toBeVisible();
     expect(screen.getByRole('button', { name: '运行提取' })).toBeDisabled();
-    expect(screen.getByText('ADMET 未接入')).toBeVisible();
+    expect(screen.getByRole('tab', { name: '分子分析 · ADMET' })).toBeEnabled();
   });
 });
