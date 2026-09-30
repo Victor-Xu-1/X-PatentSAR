@@ -7,16 +7,55 @@ import json
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from unittest.mock import patch
 
-from test_web_support import WebFixture, artifact_run
+from test_web_support import WebFixture, artifact_run, make_pdf
 
 from patent_sar_extractor.web.errors import WebError
 from patent_sar_extractor.web.models import ReviewRequest
+from patent_sar_extractor.web.pdf import rendered_box
 from patent_sar_extractor.web.reviews import put_review
 from patent_sar_extractor.web.service import WorkspaceService, import_run
 
 
 class ResultTests(WebFixture, unittest.TestCase):
+    def test_paged_results_only_transform_visible_boxes_and_preserve_rotation(self):
+        pdf = make_pdf(self.root / "rotated.pdf", rotation=90)
+        run = artifact_run(self.root / "paged-run", pdf, rows=30, rendered=False)
+        imported = import_run(self.state, run, pdf_path=pdf)
+        with self.client() as client, patch(
+            "patent_sar_extractor.web.service.rendered_box", wraps=rendered_box
+        ) as normalize:
+            response = client.get(
+                f"/api/v1/projects/{imported.id}/results?page=2&page_size=3"
+            )
+            self.assertEqual(response.status_code, 200, response.text)
+            data = response.json()
+            self.assertEqual(data["total"], 30)
+            self.assertEqual(len(data["items"]), 3)
+            self.assertEqual(data["items"][0]["id"], "Compound 27")
+            self.assertEqual(data["items"][0]["source"]["bbox"], [60, 20, 160, 120])
+            self.assertEqual(normalize.call_count, 3)
+
+    def test_pagination_does_not_hide_out_of_document_source_pages(self):
+        run = artifact_run(self.root / "invalid-page-run", self.pdf, rows=30)
+        imported = import_run(self.state, run, pdf_path=self.pdf)
+        service = WorkspaceService(self.state)
+        row = service.store.compound(imported.id, "Compound 1")
+        payload = json.loads(row["payload"])
+        payload["source"]["page"] = 999
+        with service.store.connect(write=True) as connection:
+            connection.execute(
+                "UPDATE compounds SET payload=? WHERE project_id=? AND id=?",
+                (json.dumps(payload), imported.id, "Compound 1"),
+            )
+        with self.client() as client:
+            response = client.get(
+                f"/api/v1/projects/{imported.id}/results?page=1&page_size=1"
+            )
+            self.assertEqual(response.status_code, 422, response.text)
+            self.assertEqual(response.json()["error"]["code"], "invalid_geometry")
+
     def test_activity_order_search_filters_pagination_and_downloads(self):
         run = artifact_run(self.root / "run", self.pdf, current=False, rows=12)
         imported = import_run(self.state, run)

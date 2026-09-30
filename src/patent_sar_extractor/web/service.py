@@ -380,7 +380,7 @@ class WorkspaceService:
                 )
             ]
 
-    def compounds(
+    def _filtered_compounds(
         self,
         project_id: str,
         *,
@@ -388,7 +388,7 @@ class WorkspaceService:
         confidence: str = "",
         review: str = "",
         target: str = "",
-    ) -> list[Compound]:
+    ) -> tuple[list[Compound], dict[str, str]]:
         if len(q) > 500 or len(target) > 300:
             raise WebError(422, "filter_limit", "Search filter is too long.")
         if confidence not in {
@@ -400,7 +400,7 @@ class WorkspaceService:
         } or review not in {"", "approved", "rejected", "needs_review", "unreviewed"}:
             raise WebError(422, "invalid_filter", "Result filter is not supported.")
         output = []
-        source_spaces = {}
+        source_spaces: dict[str, str] = {}
         for row in self.result_rows(project_id):
             dto = Compound.model_validate_json(row["payload"])
             if row["decision"]:
@@ -434,10 +434,23 @@ class WorkspaceService:
                 continue
             output.append(dto)
             source_spaces[dto.id] = row["geometry_space"]
+        return output, source_spaces
+
+    def _normalize_source_boxes(
+        self,
+        project_id: str,
+        items: list[Compound],
+        source_spaces: dict[str, str],
+        *,
+        checked: list[Compound] | None = None,
+    ) -> list[Compound]:
+        checked = checked if checked is not None else items
         project = self.store.project(project_id)
-        if project["pdf_rel"] and output:
+        if project["pdf_rel"] and checked:
             with open_pdf(self.store.root, project) as document:
-                for dto in output:
+                # Preserve global bounds and source-fingerprint validation, but
+                # materialize PDF pages only for rows actually returned.
+                for dto in checked:
                     if dto.source.page and dto.source.bbox:
                         if dto.source.page > document.page_count:
                             raise WebError(
@@ -445,12 +458,28 @@ class WorkspaceService:
                                 "invalid_geometry",
                                 "Compound source page is outside the original PDF.",
                             )
+                for dto in items:
+                    if dto.source.page and dto.source.bbox:
                         dto.source.bbox = rendered_box(
                             document[dto.source.page - 1],
                             dto.source.bbox,
                             source_spaces[dto.id],
                         )
-        return output
+        return items
+
+    def compounds(
+        self,
+        project_id: str,
+        *,
+        q: str = "",
+        confidence: str = "",
+        review: str = "",
+        target: str = "",
+    ) -> list[Compound]:
+        items, source_spaces = self._filtered_compounds(
+            project_id, q=q, confidence=confidence, review=review, target=target
+        )
+        return self._normalize_source_boxes(project_id, items, source_spaces)
 
     def results(
         self, project_id: str, *, page: int = 1, page_size: int = 10, **filters: str
@@ -461,11 +490,16 @@ class WorkspaceService:
                 "pagination",
                 "Page must be positive and page_size must be at most 100.",
             )
-        compounds = self.compounds(project_id, **filters)
+        compounds, source_spaces = self._filtered_compounds(project_id, **filters)
         snapshot = json.loads(self.store.project(project_id)["snapshot"])
         offset = (page - 1) * page_size
         return Results(
-            items=compounds[offset : offset + page_size],
+            items=self._normalize_source_boxes(
+                project_id,
+                compounds[offset : offset + page_size],
+                source_spaces,
+                checked=compounds,
+            ),
             total=len(compounds),
             page=page,
             page_size=page_size,
