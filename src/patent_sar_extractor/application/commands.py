@@ -1603,7 +1603,7 @@ def cmd_run(args):
         patent_id=patent_id,
         ignore_previous_failure_marker=True,
     )
-    llm_qa = run_advisory_qa(base_dir)
+    llm_qa = run_advisory_qa(base_dir, enabled=not getattr(args, "skip_advisory_qa", False))
     qa_decision = compose_qa_decision(deterministic_qa, llm_qa)
     combined_warnings = qa_decision["warnings"]
     qa_ok = bool(qa_decision["ok"])

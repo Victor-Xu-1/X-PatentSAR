@@ -34,3 +34,13 @@ health_check.json
 *.zip
 *.tar
 *.tar.gz
+
+# Reproducible Web assets and local JavaScript/test state.
+frontend/node_modules/
+frontend/dist/
+frontend/test-results/
+frontend/playwright-report/
+frontend/coverage/
+src/patent_sar_extractor/web/static/
+*.sqlite3
+*.sqlite3-*

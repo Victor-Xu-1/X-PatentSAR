@@ -152,7 +152,7 @@ def _write_reports(base: Path, result: dict[str, Any]) -> None:
     (base / "llm_qa_report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def run_advisory_qa(output_dir: str) -> dict[str, Any]:
+def run_advisory_qa(output_dir: str, *, enabled: bool = True) -> dict[str, Any]:
     """Run optional LLM review and persist a separate advisory report."""
 
     base = Path(output_dir)
@@ -168,6 +168,11 @@ def run_advisory_qa(output_dir: str) -> dict[str, Any]:
         "suggestions": [],
         "details": details,
     }
+    if not enabled:
+        result["status"] = "skipped_by_operator"
+        _write_reports(base, result)
+        logger.info("LLM advisory QA skipped by explicit operator policy")
+        return result
     if not has_llm_key():
         _write_reports(base, result)
         logger.info("LLM advisory QA skipped: no configured credentials")

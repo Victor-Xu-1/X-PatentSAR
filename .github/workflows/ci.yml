@@ -4,27 +4,73 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    env:
+      PATENTSAR_WEB_TEST_ROOT: ${{ runner.temp }}/x-patentsar-api-tests
+      PATENTSAR_E2E_OUTPUT_DIR: ${{ runner.temp }}/x-patentsar-browser-tests
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
           cache: pip
-      - run: python -m pip install --upgrade pip
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24.21.0"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
       - run: python -m pip install uv==0.11.31
-      - run: uv sync --frozen
-      - run: uv run python -m compileall -q src tests
+      - run: uv sync --frozen --extra web
+      - run: uv run python -m compileall -q src tests tools
       - run: uv run python -m unittest discover -s tests -v
       - run: uv pip check --python .venv/bin/python
       - run: bash -n run_patent_sar.sh
+      - name: Web Python checks
+        run: |
+          uv run ruff check --isolated --select E4,E7,E9,F,I src/patent_sar_extractor/web src/patent_sar_extractor/application/web_commands.py src/patent_sar_extractor/cli.py tools tests/test_cli_web.py tests/test_frontend_packaging.py
+          MYPYPATH=src uv run mypy --strict --follow-imports=silent tools/build_frontend.py tools/audit_wheel.py src/patent_sar_extractor/application/web_commands.py
+      - name: Frontend checks and build
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run typecheck
+          npm run lint
+          npm run format:check
+          npm run test
+          npm run build
+      - run: uv run python tools/build_frontend.py
+      - run: uv run python tools/build_frontend.py --check
       - run: uv build --wheel
       - name: Audit and install wheel
         run: |
-          ! unzip -Z1 dist/*.whl | grep -Eq '^(engine|pipeline|scripts|config)/'
-          test "$(unzip -p dist/*.whl '*/top_level.txt')" = "patent_sar_extractor"
+          uv run python tools/audit_wheel.py dist/*.whl
           uv pip install --python .venv/bin/python --reinstall --no-deps dist/*.whl
-          (cd /tmp && "$GITHUB_WORKSPACE/.venv/bin/patent-sar-extractor" --version)
+          (cd /tmp && "$GITHUB_WORKSPACE/.venv/bin/x-patentsar" --version)
+          (cd /tmp && "$GITHUB_WORKSPACE/.venv/bin/x-patentsar" serve --help)
+      - name: Prepare controlled browser data and real CLI failure
+        env:
+          PATENTSAR_PADDLEX_OCR_URL: "off"
+          PATENTSAR_BASE_PYTHON: ${{ github.workspace }}/.venv/bin/python
+          CUDA_VISIBLE_DEVICES: "-1"
+        run: .venv/bin/python tools/prepare_browser_fixture.py "$RUNNER_TEMP/browser-fixture" --github-env
+      - name: Real browser workflow against installed wheel
+        env:
+          PATENTSAR_E2E_BASE_URL: http://127.0.0.1:18765
+          PATENTSAR_PADDLEX_OCR_URL: "off"
+          CUDA_VISIBLE_DEVICES: "-1"
+        run: |
+          (cd frontend && npx playwright install --with-deps chromium)
+          .venv/bin/x-patentsar serve --port 18765 --state-dir "$PATENTSAR_WEB_STATE_DIR" > "$RUNNER_TEMP/x-patentsar-web.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"; wait "$server_pid" || true' EXIT
+          (cd frontend && npm run e2e)

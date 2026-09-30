@@ -2,9 +2,29 @@
 
 ## Preflight
 
-Run `patent-sar-extractor check-envs` and then `patent-sar-extractor health --no-gpu --output /tmp/patentsar-health.json`. The health command performs a real DECIMER model-load probe in addition to importing the package, so it catches an interpreter that can import the module but cannot load its H5 weights. Use the GPU health path only after TensorFlow/CUDA compatibility is established.
+Run `x-patentsar check-envs` and then `x-patentsar health --no-gpu --output /tmp/patentsar-health.json`. The health command performs a real DECIMER model-load probe in addition to importing the package, so it catches an interpreter that can import the module but cannot load its H5 weights. Use the GPU health path only after TensorFlow/CUDA compatibility is established.
 
-The recovered E-drive deployment has an operator-owned entry point at `/srv/wsl/envs/patentsar/bin/patent-sar-extractor` (Windows: `E:\WSL\apps\patentsar\PatentSAR.cmd`). It loads external interpreter configuration and selects E-drive state/cache/model paths, with CPU inference by default. `PYSTOW_HOME=/srv/wsl/models/patentsar` points DECIMER OCSR to the restored weights. Segmentation health is not proof that OCSR inference succeeds; verify a real crop separately. Do not change `HOME` to find old model weights.
+The recovered E-drive deployment has an operator-owned entry point at `/srv/wsl/envs/patentsar/bin/x-patentsar` (Windows: `E:\WSL\apps\x-patentsar\X-PatentSAR.cmd`). It loads external interpreter configuration and selects E-drive state/cache/model paths, with CPU inference by default. `PYSTOW_HOME=/srv/wsl/models/patentsar` points DECIMER OCSR to the restored weights. Segmentation health is not proof that OCSR inference succeeds; verify a real crop separately. Do not change `HOME` to find old model weights.
+
+## Web operation
+
+Run `x-patentsar serve --port 8765` with a built frontend or installed Web wheel.
+The local E-drive deployment uses port 18765 because the portable default is
+occupied by existing applications. `--api-only` is explicit frontend-development
+mode; production startup requires the built UI. Bind hosts are limited to
+loopback and Uvicorn uses one worker. The service enforces same-origin sessions,
+CSRF, upload limits and private operator-owned SQLite state.
+
+Use `x-patentsar import-run --run-dir ...` to attach existing results read-only.
+Historical imports preserve the original generated files. Reviews have separate
+revisioned records and cannot promote formal acceptance. Web exports include the
+acceptance state; review-only output is not a formal chemistry deliverable.
+
+Uploaded PDFs, new run outputs, private job logs and workspace.sqlite3 live under
+the Web state root. Preserve that root as a unit after stopping PatentSAR jobs.
+Do not copy a live SQLite/WAL database as a verified cold backup. Restart recovery
+marks interrupted jobs explicitly; resume only through the application's job
+controls. A second server must not share an active workspace.
 
 ## Common failures
 

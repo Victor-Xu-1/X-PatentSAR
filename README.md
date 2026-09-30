@@ -18,6 +18,46 @@ classify -> activity -> locate -> structures -> bind -> smiles -> final -> qa
 
 独立版不依赖 Synon 后端、插件 manifest 或 `.synon` 目录。
 
+## Web 工作台
+
+工作台使用中文界面，提供原始 PDF 页图/文本、结构与活性表、来源定位、
+筛选分页、人工复核、CSV/JSON 导出及提取任务管理。它调用下方同一条 CLI
+主链；人工批准只记录复核意见，正式验收仍由确定性 QA 决定。历史导入保留
+历史身份，ADMET 和智能摘要当前未接入。
+
+从源码安装 Web 依赖并构建界面（Node.js 24.21.x）：
+
+```bash
+uv sync --frozen --extra web
+cd frontend
+npm ci
+npm run build
+cd ..
+uv run python tools/build_frontend.py
+uv run python tools/build_frontend.py --check
+uv run x-patentsar serve --port 8765
+```
+
+打开 `http://127.0.0.1:8765/`。默认只监听本机，首次同源访问建立本机会话，
+写入请求必须通过 CSRF 校验。Web 状态默认写入主状态目录的 `web` 子目录，
+可使用 `PATENTSAR_WEB_STATE_DIR` 或 `serve --state-dir` 指定独立目录。
+
+本机 E 盘部署使用 `http://127.0.0.1:18765/`，Windows 入口是
+`E:\WSL\apps\x-patentsar\X-PatentSAR.cmd`；8765、8766 留给现有应用。
+Linux 源码、环境和数据仍位于 E 盘 `E:\WSL\system\ext4.vhdx` 内，
+实际路径通过 `E:\WSL\apps\x-patentsar` 入口统一管理。
+
+只读接入已有运行结果（先停止使用同一状态目录的工作台，再导入并重新启动）：
+
+```bash
+x-patentsar import-run --run-dir /path/to/existing/run --title "历史专利复核"
+```
+
+可加 `--pdf /path/to/original.pdf`；历史产物记录了原文 SHA-256 时必须一致。
+没有原文时保留真实裁图和历史 OCR，界面明确显示原文未提供。
+单个 Web 提取任务默认最长 24 小时，可用 `serve --job-timeout-hours` 设置
+0.1–24 小时范围；超时会明确失败并提供恢复状态，不会自动放宽 QA 门禁。
+
 ## 安装
 
 ```bash
@@ -71,7 +111,7 @@ cp examples/config/llm.local.example.yaml \
 
 常用变量包括 `LLM_API_KEY`、`LLM_ENDPOINT`、`PATENTSAR_BASE_PYTHON`、`SMILES_ENGINE_PYTHON`、`DECIMER_PYTHON` 和 `PATENTSAR_PADDLEX_OCR_URL`。完整列表见 `.env.example`。未使用的解释器变量保持空值，避免覆盖已经配置好的 `env_paths.local.yaml`。
 
-本机 E 盘部署入口为 `E:\WSL\apps\patentsar\PatentSAR.cmd`，Linux 入口为 `/srv/wsl/envs/patentsar/bin/patent-sar-extractor`。本机配置、状态、模型、缓存分别位于 `/srv/wsl/data/patentsar/config`、`/srv/wsl/data/patentsar/state`、`/srv/wsl/models/patentsar`、`/srv/wsl/cache/patentsar`。DECIMER 恢复环境保留原 Linux 路径以免破坏 Conda 前缀，但其物理存储同样在 E 盘 VHDX 中。入口默认使用 CPU，GPU 未经过兼容性验收不能默认启用。
+本机 E 盘部署入口为 `E:\WSL\apps\x-patentsar\X-PatentSAR.cmd`，Linux 运营入口为 `/srv/wsl/envs/patentsar/bin/x-patentsar`。本机配置、状态、模型、缓存分别位于 `/srv/wsl/data/patentsar/config`、`/srv/wsl/data/patentsar/state`、`/srv/wsl/models/patentsar`、`/srv/wsl/cache/patentsar`。DECIMER 恢复环境保留原 Linux 路径以免破坏 Conda 前缀，但其物理存储同样在 E 盘 VHDX 中。入口默认使用 CPU，GPU 未经过兼容性验收不能默认启用。
 
 先检查命令与环境：
 
@@ -110,10 +150,32 @@ x-patentsar run \
 ## 测试与打包
 
 ```bash
-python -m compileall -q src tests
-python -m unittest discover -s tests -v
+uv sync --frozen --extra web
+uv run python -m compileall -q src tests tools
+uv run python -m unittest discover -s tests -v
+cd frontend
+npm ci
+npm run typecheck
+npm run lint
+npm run test
+npm run build
+cd ..
+uv run python tools/build_frontend.py
 uv build --wheel --out-dir dist
 ```
+
+真实浏览器测试在已启动的本机服务上运行：
+
+```bash
+cd frontend
+npx playwright install chromium
+PATENTSAR_E2E_BASE_URL=http://127.0.0.1:8765 npm run e2e
+```
+
+WSL 本机设置 `PLAYWRIGHT_BROWSERS_PATH=/srv/wsl/cache/ms-playwright`，避免把
+浏览器下载和测试记录放在 C 盘。安装已构建的独立 wheel 使用
+`python -m pip install 'x_patentsar-0.1.0-py3-none-any.whl[web]'`；wheel 含界面，
+运行时无需 Node.js。源码构建和测试需要 Node.js。
 
 ## 代码结构
 
@@ -123,6 +185,9 @@ uv build --wheel --out-dir dist
 - `src/patent_sar_extractor/workers/`：隔离 Python 环境执行的子进程入口。
 - `src/patent_sar_extractor/defaults/`：只读、安全、可移植的打包默认配置。
 - `src/patent_sar_extractor/cli.py`：仅负责参数解析和命令分发。
+- `src/patent_sar_extractor/web/`：本机 API、持久化、进程生命周期与只读产物适配。
+- `frontend/`：React/TypeScript 界面、API 契约检查与交互测试。
+- `tools/`：可复现的 Web 构建与打包检查。
 - `examples/config/`：运营方覆盖配置模板。
 
 详细说明见 [架构文档](docs/ARCHITECTURE.md) 和 [运维文档](docs/OPERATIONS.md)。
@@ -138,6 +203,6 @@ uv build --wheel --out-dir dist
 
 当前独立源码位于 E 盘 WSL 的 `/srv/wsl/projects/patent-sar-extractor`。恢复前的原始源码归档仍在 `E:\WSL\archives\projects`；历史运行数据保留在恢复时的原路径 `/home/victor_1/.local/state/patent-sar-extractor`，新任务使用独立状态目录，不覆盖历史结果。回滚需停止本软件任务并恢复已保留的源码/入口，不必停止 C 盘 Ubuntu；不要把运行产物复制回源码树。
 
-产品名称、Python distribution 和对外命令统一为 X-PatentSAR / `x-patentsar`；版本保持 `v0.1.0`。内部 Python 包 `patent_sar_extractor`、`PATENTSAR_*` 配置和既有数据路径是稳定技术命名，保留以避免破坏历史运行数据与环境前缀。前端与 API 正在实现，当前已验收的是 CLI 提取环境，不应将启动脚本描述成已完成的 Web 工作台。
+产品名称、Python distribution 和对外命令统一为 X-PatentSAR / `x-patentsar`；版本保持 `v0.1.0`。内部 Python 包 `patent_sar_extractor`、`PATENTSAR_*` 配置和既有数据路径是稳定技术命名，保留以避免破坏历史运行数据与环境前缀。Web 集成和验收进度记录在 `docs/WEB_API.md`，任何历史诊断数据都不能作为当前正式提取已经验收的证明。
 
 许可证：[Apache-2.0](LICENSE)。第一方源码受该许可证约束；专利、用户数据、外部模型和第三方库不因此改许可，见 [NOTICE](NOTICE)。

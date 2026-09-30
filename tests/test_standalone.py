@@ -15,15 +15,15 @@ if str(SOURCE_ROOT) not in sys.path:
 
 from patent_sar_extractor import cli
 from patent_sar_extractor.contracts import (
-    COMMAND_NAME,
     BINDINGS_SCHEMA_VERSION,
+    COMMAND_NAME,
     DISTRIBUTION_NAME,
-    PIPELINE_CONTRACT_VERSION,
     PAGE_CLASSIFICATION_SCHEMA_VERSION,
+    PIPELINE_CONTRACT_VERSION,
     PRODUCT_NAME,
+    QA_REPORT_SCHEMA_VERSION,
     RULESET_VERSION,
     RUN_SUMMARY_SCHEMA_VERSION,
-    QA_REPORT_SCHEMA_VERSION,
     SMILES_SCHEMA_VERSION,
     __version__,
 )
@@ -67,17 +67,27 @@ class StandalonePackagingTests(unittest.TestCase):
 
     def test_run_parser_is_strict_by_default(self) -> None:
         captured = []
-        with patch.object(cli, "cmd_run", side_effect=lambda args: captured.append(args)), patch.object(
-            sys, "argv", [COMMAND_NAME, "run", "--pdf", "/tmp/example.pdf"]
+        with (
+            patch.object(
+                cli, "cmd_run", side_effect=lambda args: captured.append(args)
+            ),
+            patch.object(
+                sys, "argv", [COMMAND_NAME, "run", "--pdf", "/tmp/example.pdf"]
+            ),
         ):
             cli.main()
         self.assertTrue(captured[0].strict_gates)
 
         captured.clear()
-        with patch.object(cli, "cmd_run", side_effect=lambda args: captured.append(args)), patch.object(
-            sys,
-            "argv",
-            [COMMAND_NAME, "run", "--pdf", "/tmp/example.pdf", "--allow-partial"],
+        with (
+            patch.object(
+                cli, "cmd_run", side_effect=lambda args: captured.append(args)
+            ),
+            patch.object(
+                sys,
+                "argv",
+                [COMMAND_NAME, "run", "--pdf", "/tmp/example.pdf", "--allow-partial"],
+            ),
         ):
             cli.main()
         self.assertFalse(captured[0].strict_gates)
@@ -168,7 +178,20 @@ class StandalonePackagingTests(unittest.TestCase):
         commands = set(cli.build_parser()._subparsers._group_actions[0].choices)
         self.assertEqual(
             commands,
-            {"run", "classify", "excerpt", "activity", "smiles", "validate", "score", "health", "check-envs", "qa"},
+            {
+                "run",
+                "classify",
+                "excerpt",
+                "activity",
+                "smiles",
+                "validate",
+                "score",
+                "health",
+                "check-envs",
+                "qa",
+                "serve",
+                "import-run",
+            },
         )
 
 

@@ -98,3 +98,26 @@ search/filter/pagination, selection/export, review dialogs, job status/cancel/re
 project/PDF import and runtime settings must work, including empty/error/loading,
 keyboard/focus, refresh/deep-link and smaller viewport states. Unavailable ADMET
 has a clear disabled/informational state. No fictional molecules, assays or counts.
+
+## Implementation and validation plan
+
+1. In progress: implement the API and reference-layout UI in isolated worktrees,
+   and integrate CLI entry points, packaging and E-drive launchers.
+2. Pending: verify real PDF/SQLite/job/review/export behavior, frontend state and
+   components, and the complete user workflow in a real Chromium browser.
+3. Pending: build the Web assets and wheel from a clean checkout, verify installed
+   startup and security boundaries, then push the private Apache-2.0 repository.
+
+Change-to-validation mapping: PDF upload and rendering require a real PyMuPDF
+parse, bounded invalid-input checks and original-page source jumps; project/job
+storage requires real SQLite persistence, cancellation and restart recovery;
+manual review requires revision-conflict tests and unchanged generated artifacts;
+exports require selection, acceptance labeling and CSV formula checks; session
+and static serving require Host/Origin/CSRF, path and secret-disclosure checks;
+UI requires loading/empty/error states, keyboard interactions, navigation/refresh
+and representative desktop/mobile layouts. Existing core unit, wheel and real-PDF
+gates remain required. No new LLM feature is introduced by this presentation work.
+
+The portable CLI defaults to 8765. This workstation uses 18765 because 8765 and
+8766 are already occupied by other applications. Source, environments, models,
+state, build evidence and development caches remain on the E-drive WSL system.

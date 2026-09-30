@@ -37,6 +37,29 @@ src/patent_sar_extractor/
   smiles_artifact.py       canonical SMILES artifact envelope
 ```
 
+## Web presentation and state
+
+```mermaid
+flowchart LR
+    UI["React workbench<br/>PDF, activity, review, tasks"] --> API["Loopback API<br/>session, CSRF, validated DTOs"]
+    API --> DB["Private SQLite<br/>projects, jobs, reviews"]
+    API --> READ["Read-only artifact view<br/>original PDF and generated results"]
+    API --> JOB["Owned bounded job runner"]
+    JOB --> CLI["Existing x-patentsar run"]
+    CLI --> CORE["Activity-led extraction and deterministic QA"]
+    CORE --> READ
+```
+
+The UI never reads local paths directly or runs extraction code. The API validates
+uploaded originals, renders bounded pages and reads canonical artifact identity
+envelopes. Jobs invoke the existing CLI in one owned process group. SQLite review
+annotations are separate from extraction artifacts; there is no manual path to
+change binding/SMILES/QA files or declare a failed run formally accepted.
+
+`frontend/dist` is build output. The controller-owned packaging tool verifies and
+copies it into the wheel's private package static directory. The installed wheel
+serves both UI and API from one origin; Node.js is a build dependency only.
+
 ## Formal data flow
 
 Every numbered page remains in original-PDF coordinates. The production chain never switches to a truncated PDF.

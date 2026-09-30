@@ -9,7 +9,7 @@ description = "Fail-closed patent chemical-structure and activity extraction sof
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 license = "Apache-2.0"
-license-files = ["LICENSE"]
+license-files = ["LICENSE", "NOTICE"]
 authors = [{name = "Victor"}]
 keywords = ["patent", "chemistry", "OCSR", "DECIMER", "WIPO", "SMILES"]
 classifiers = [
@@ -39,6 +39,12 @@ dependencies = [
 [project.scripts]
 x-patentsar = "patent_sar_extractor.cli:main"
 
+[project.optional-dependencies]
+web = ["fastapi==0.142.2", "uvicorn==0.54.0"]
+
+[dependency-groups]
+dev = ["httpx==0.28.1", "ruff==0.16.9", "mypy==2.3.1"]
+
 [tool.uv]
 environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]
 
@@ -53,3 +59,4 @@ exclude = ["tests*"]
 [tool.setuptools.package-data]
 "patent_sar_extractor.defaults" = ["*.yaml"]
 "patent_sar_extractor.core.ocsr" = ["config.yaml"]
+"patent_sar_extractor.web" = ["static/**/*", "static/*"]
