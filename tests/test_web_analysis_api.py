@@ -27,6 +27,7 @@ from patent_sar_extractor.web.analysis_runtime import (
     child_environment,
 )
 from patent_sar_extractor.web.errors import WebError
+from patent_sar_extractor.web.owner import WorkspaceOwner
 from patent_sar_extractor.web.routes_analysis import _cancellable
 
 VERSIONS = {
@@ -91,6 +92,28 @@ class ModelBoundary(BoundedAnalysisRunner):
 
 
 class AnalysisAPITests(WebFixture, unittest.TestCase):
+    def test_unverified_analysis_shutdown_still_closes_queue_and_retains_owner(self):
+        app = self.app()
+        with patch.object(
+            app.state.analysis,
+            "close",
+            side_effect=WebError(503, "analysis_shutdown", "Shutdown is unverified."),
+        ), patch.object(app.state.queue, "close", wraps=app.state.queue.close) as stopped:
+            with self.assertRaises(ExceptionGroup):
+                with TestClient(app, base_url=BASE_URL):
+                    self.assertTrue(app.state.ready)
+            stopped.assert_called_once()
+        self.assertFalse(app.state.ready)
+        self.assertFalse(app.state.queue.thread.is_alive())
+        other = WorkspaceOwner(self.state)
+        try:
+            with self.assertRaises(WebError):
+                other.acquire()
+        finally:
+            other.release()
+            app.state.analysis.close()
+            app.state.owner.release()
+
     def app(self, **kwargs):
         app = super().app(
             analysis_settings=getattr(self, "settings", AnalysisSettings()),

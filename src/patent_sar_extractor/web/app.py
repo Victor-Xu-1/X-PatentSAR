@@ -108,12 +108,21 @@ def create_app(
             yield
         finally:
             app.state.ready = False
+            failures: list[Exception] = []
             try:
                 analysis.close()
-                if started:
+            except Exception as error:
+                failures.append(error)
+            if started:
+                try:
                     queue.close()
-            finally:
-                owner.release()
+                except Exception as error:
+                    failures.append(error)
+            if failures:
+                # Do not allow recovery by another server while an owned worker's
+                # shutdown remains unverified. Process exit releases the lock.
+                raise ExceptionGroup("Workspace shutdown was not verified", failures)
+            owner.release()
 
     app = FastAPI(
         title="X-PatentSAR local Web API",
@@ -125,6 +134,7 @@ def create_app(
     app.state.workspace = service
     app.state.queue = queue
     app.state.analysis = analysis
+    app.state.owner = owner
     app.state.ready = False
     app.add_middleware(
         SecurityMiddleware,

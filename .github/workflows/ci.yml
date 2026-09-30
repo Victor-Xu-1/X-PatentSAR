@@ -38,7 +38,7 @@ jobs:
       - run: bash -n run_patent_sar.sh
       - name: Web Python checks
         run: |
-          uv run ruff check --isolated --select E4,E7,E9,F,I src/patent_sar_extractor/web src/patent_sar_extractor/application/web_commands.py src/patent_sar_extractor/cli.py tools tests/test_cli_web.py tests/test_frontend_packaging.py
+          uv run ruff check --isolated --target-version=py312 --select E4,E7,E9,F,I src/patent_sar_extractor/web src/patent_sar_extractor/application/web_commands.py src/patent_sar_extractor/cli.py tools tests/test_cli_web.py tests/test_frontend_packaging.py
           MYPYPATH=src uv run mypy --strict --follow-imports=silent tools/build_frontend.py tools/audit_wheel.py src/patent_sar_extractor/application/web_commands.py
       - name: Frontend checks and build
         working-directory: frontend
