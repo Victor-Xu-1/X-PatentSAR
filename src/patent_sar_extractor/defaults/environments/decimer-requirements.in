@@ -1,0 +1,6 @@
+# External Linux x86_64 CPython 3.10.20 CPU runtime; not the application lock.
+# Resolve with owned uv 0.11.31 --python-version 3.10 --generate-hashes.
+DECIMER==2.8.0
+DECIMER-Segmentation==1.5.0
+tensorflow==2.15.1
+numpy==1.26.4

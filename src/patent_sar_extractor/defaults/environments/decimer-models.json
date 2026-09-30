@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "ocsrc": [
+    {
+      "directory": "DECIMER_model",
+      "url": "https://zenodo.org/record/8300489/files/models.zip",
+      "download_bytes": 298662033,
+      "md5": "de78c966b0d63b290cd3f70bb81a91e7",
+      "files": [
+        {
+          "path": "DECIMER_model/assets/max_length.pkl",
+          "size": 15,
+          "sha256": "e9b21b8f7e5bee625ee3d5dfc1cca40c7d6f9791c54dc5901441cee0a8f3e520"
+        },
+        {
+          "path": "DECIMER_model/assets/tokenizer_SMILES.pkl",
+          "size": 4670,
+          "sha256": "c1d579f958146bb1a948320dad92f0eecf4a51001ec9dec1f48767c7b681b43c"
+        },
+        {
+          "path": "DECIMER_model/saved_model.pb",
+          "size": 28080309,
+          "sha256": "d1a6e61de631e09cb347ddb47d4519732e2d000365b4f2318e5e8a1d403f9055"
+        },
+        {
+          "path": "DECIMER_model/variables/variables.data-00000-of-00001",
+          "size": 319860349,
+          "sha256": "fa16b7e712c18af64a5930240a75ca34c8dec163f5407376b9a5300ebbda38eb"
+        },
+        {
+          "path": "DECIMER_model/variables/variables.index",
+          "size": 65628,
+          "sha256": "1793a178fe88af3f49bb2683f84560d5bfb79c871402fdc93b08c741051dfede"
+        }
+      ],
+      "license": "CC-BY-4.0"
+    },
+    {
+      "directory": "DECIMER_HandDrawn_model",
+      "url": "https://zenodo.org/records/10781330/files/DECIMER_HandDrawn_model.zip",
+      "download_bytes": 298515112,
+      "md5": "1fece9813549417440f7c45d0c51603a",
+      "files": [
+        {
+          "path": "DECIMER_HandDrawn_model/assets/tokenizer_pubchem.pkl",
+          "size": 4670,
+          "sha256": "c1d579f958146bb1a948320dad92f0eecf4a51001ec9dec1f48767c7b681b43c"
+        },
+        {
+          "path": "DECIMER_HandDrawn_model/saved_model.pb",
+          "size": 28080328,
+          "sha256": "d3b124e3ad4b0ed57ff834e2c8cb8b2e3d4aee4b0546b138634d26e58979e6e5"
+        },
+        {
+          "path": "DECIMER_HandDrawn_model/variables/variables.data-00000-of-00001",
+          "size": 319860349,
+          "sha256": "7c2c678eea80be1ce42bca1029f63ca3322cc6f9649ef70da21e5c37ad18a376"
+        },
+        {
+          "path": "DECIMER_HandDrawn_model/variables/variables.index",
+          "size": 65628,
+          "sha256": "98938e8df526dcd638e6c71c3d73aa48cd36d0ebbcee8128f8c0f3f0d6aa786e"
+        }
+      ],
+      "license": "CC-BY-4.0"
+    }
+  ],
+  "segmentation": {
+    "url": "https://zenodo.org/record/10663579/files/mask_rcnn_molecule.h5?download=1",
+    "download_bytes": 272650600,
+    "sha256": "329120facb69e88add819a3216db0fbfef57e9a37d6b6db0f6149819a11d46a5",
+    "md5": "edd1e6e469cfff7efa6bf8c38441a529",
+    "license": "CC-BY-4.0"
+  }
+}
