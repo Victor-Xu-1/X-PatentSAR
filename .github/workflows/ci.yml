@@ -18,6 +18,7 @@ jobs:
     steps:
       - name: Initialize external verification paths
         run: |
+          mkdir -m 700 -p "$RUNNER_TEMP/x-patentsar-api-tests" "$RUNNER_TEMP/x-patentsar-browser-tests"
           printf 'PATENTSAR_WEB_TEST_ROOT=%s\nPATENTSAR_E2E_OUTPUT_DIR=%s\n' \
             "$RUNNER_TEMP/x-patentsar-api-tests" "$RUNNER_TEMP/x-patentsar-browser-tests" >> "$GITHUB_ENV"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

@@ -11,6 +11,7 @@ import unittest
 import uuid
 import zipfile
 from pathlib import Path
+from unittest.mock import patch
 
 from patent_sar_extractor.web.environment_models import EnvironmentComponent
 from patent_sar_extractor.web.environment_specs import (
@@ -40,6 +41,8 @@ from patent_sar_extractor.workers.environment_recipes import (
 
 class RecipeFixture(unittest.TestCase):
     def setUp(self):
+        if selected := os.environ.get("PATENTSAR_WEB_TEST_ROOT"):
+            Path(selected).mkdir(parents=True, exist_ok=True, mode=0o700)
         self.temporary = tempfile.TemporaryDirectory(
             dir=os.environ.get("PATENTSAR_WEB_TEST_ROOT")
         )
@@ -86,6 +89,17 @@ class RecipeFixture(unittest.TestCase):
 
 
 class CatalogTests(RecipeFixture):
+    def test_fixture_initializes_a_fresh_external_parent_without_other_test_order(self):
+        selected = self.root / "fresh-parent"
+        with patch.dict(os.environ, {"PATENTSAR_WEB_TEST_ROOT": str(selected)}):
+            fixture = RecipeFixture()
+            try:
+                fixture.setUp()
+                self.assertTrue(fixture.root.is_relative_to(selected))
+                self.assertEqual(selected.stat().st_mode & 0o777, 0o700)
+            finally:
+                fixture.doCleanups()
+
     def test_exact_dto_metadata_is_unchecked_without_side_effects(self):
         catalog = component_catalog()
         self.assertEqual({c["id"] for c in catalog}, COMPONENT_IDS)
