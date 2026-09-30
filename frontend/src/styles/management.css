@@ -1,39 +1,54 @@
 .management-page {
-  padding: 24px;
+  padding: 32px;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
   min-height: calc(100dvh - 95px);
+  border: 0;
+  background: none;
+  font-family: var(--font-ui);
 }
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 15px;
-  padding-bottom: 22px;
-  margin-bottom: 12px;
+  gap: 20px;
+  padding-bottom: 24px;
+  margin-bottom: 20px;
   border-bottom: 1px solid var(--line);
 }
+.page-header > div {
+  min-width: 0;
+}
 .page-header h1 {
-  margin: 8px 0;
+  margin: 10px 0;
+  color: var(--ink);
+  font-family: var(--font-heading);
+  font-size: clamp(28px, 2.2vw, 30px);
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
 }
 .page-header p {
   line-height: 1.75;
-  font-size: 12px;
+  font-size: 13px;
 }
 .eyebrow {
-  font-size: 10px;
-  color: #85a1c9;
-  letter-spacing: 1.6px;
+  font-size: 11px;
+  color: var(--faint);
+  letter-spacing: 1.2px;
 }
 .project-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-  gap: 15px;
-  padding-top: 9px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr));
+  gap: 18px;
+  padding-top: 4px;
 }
 .project-card {
   border: 1px solid var(--line);
-  border-radius: 9px;
-  padding: 18px;
-  background: linear-gradient(130deg, #fff, #fbfdff);
+  border-radius: var(--radius-panel);
+  padding: 20px;
+  background: var(--surface);
 }
 .project-card-top {
   display: flex;
@@ -42,22 +57,26 @@
   gap: 10px;
 }
 .project-icon {
-  width: 41px;
-  height: 41px;
-  border-radius: 9px;
-  background: #edf4ff;
-  color: #4d80e7;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-control);
+  background: var(--surface-subtle);
+  color: var(--muted);
   display: grid;
   place-items: center;
 }
 .project-card h2 {
-  font-size: 15px;
-  margin: 15px 0 8px;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 600;
+  margin: 18px 0 8px;
   overflow-wrap: anywhere;
 }
 .project-card p {
-  color: #8b9bbb;
-  font-size: 11px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
 }
 .project-card dl,
 .settings-sections dl {
@@ -69,47 +88,51 @@
 }
 .project-card dt,
 .settings-sections dt {
-  color: #8294b1;
+  color: var(--muted);
 }
 .project-card dd,
 .settings-sections dd {
   margin: 0;
+  color: var(--primary);
   overflow-wrap: anywhere;
 }
 .project-card > button {
   width: 100%;
-  margin-top: 5px;
-  color: #396ac4;
+  margin-top: 8px;
 }
 .inline-actions {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
+  max-width: 100%;
 }
 .job-history {
   display: grid;
-  gap: 13px;
+  gap: 16px;
 }
 .job-card {
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 15px;
+  border-radius: var(--radius-panel);
+  padding: 20px;
+  background: var(--surface);
 }
 .job-card > header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   gap: 12px;
 }
 .job-card header > div {
   display: flex;
   gap: 12px;
   align-items: center;
+  min-width: 0;
 }
 .job-card header small {
-  color: #8f9fba;
-  font-size: 10px;
+  color: var(--muted);
+  font-size: 11px;
 }
 .job-card .job-actions-wrapper {
   max-width: none;
@@ -118,13 +141,13 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  font-size: 10px;
-  color: #657e9e;
+  font-size: 11px;
+  color: var(--primary);
   margin: 20px 0 12px;
   flex-wrap: wrap;
 }
 .job-dates dt {
-  color: #8a9bb6;
+  color: var(--muted);
 }
 .job-dates dd {
   margin: 0 20px 0 0;
@@ -132,13 +155,14 @@
 .settings-sections {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 20px;
   padding-top: 12px;
 }
 .settings-sections > section {
-  padding: 18px;
+  padding: 22px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-panel);
+  background: var(--surface);
 }
 .settings-sections p {
   margin-top: 13px;
@@ -153,12 +177,12 @@
 }
 .runtime-table td,
 .runtime-table th {
-  padding: 10px 8px;
+  padding: 12px 8px;
   text-align: left;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--line-soft);
 }
 .runtime-table th {
-  color: #8596b4;
-  font-weight: 500;
-  background: #f8faff;
+  color: var(--muted);
+  font-weight: 600;
+  background: var(--surface-subtle);
 }
