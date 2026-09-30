@@ -24,7 +24,8 @@ def prepare() -> TextIO:
     output = os.fdopen(os.dup(sys.stdout.fileno()), "w", encoding="utf-8")
     os.dup2(sys.stderr.fileno(), sys.stdout.fileno())
     resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
-    resource.setrlimit(resource.RLIMIT_AS, (5 * 1024**3, 5 * 1024**3))
+    # TensorFlow maps substantially more virtual address space than resident RAM.
+    # The parent supervises total owned RSS; a virtual-space cap rejects valid models.
     resource.setrlimit(resource.RLIMIT_CPU, (180, 180))
     socket.socket.connect = _network_denied  # type: ignore[assignment]
     socket.socket.connect_ex = _network_denied  # type: ignore[assignment]

@@ -24,7 +24,17 @@ MAX_STDERR = 256 * 1024
 
 
 class BoundedAnalysisRunner:
-    def __init__(self) -> None:
+    def __init__(self, *, max_memory_bytes: int = 4608 * 1024 * 1024) -> None:
+        if (
+            isinstance(max_memory_bytes, bool)
+            or not 1024 * 1024 <= max_memory_bytes <= 5 * 1024**3
+        ):
+            raise WebError(
+                400,
+                "analysis_memory_limit",
+                "Analysis resident-memory limit must be between 1 MiB and 5 GiB.",
+            )
+        self.max_memory_bytes = max_memory_bytes
         self._lock = threading.Lock()
         self._closed = threading.Event()
         self._idle = threading.Event()
@@ -137,7 +147,7 @@ class BoundedAnalysisRunner:
                     "analysis_start_failed",
                     "Analysis exited before process ownership could be verified.",
                 )
-            owner = Children(raw)
+            owner = Children(raw, self.max_memory_bytes)
             assert (
                 child.stdin is not None
                 and child.stdout is not None
@@ -221,7 +231,7 @@ def _response(data: bytes) -> dict[str, object]:
             "analysis_protocol",
             "Local model returned malformed or non-finite JSON.",
         ) from exc
-    if not isinstance(value, dict) or value.get("ok") not in (True, False):
+    if not isinstance(value, dict) or type(value.get("ok")) is not bool:
         raise WebError(
             502,
             "analysis_protocol",

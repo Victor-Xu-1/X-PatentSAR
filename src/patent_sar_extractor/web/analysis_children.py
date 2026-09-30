@@ -16,6 +16,7 @@ class Child:
     pid: int
     parent: int
     start_ticks: int
+    rss_bytes: int
 
 
 def read_child(pid: int) -> Child | None:
@@ -26,7 +27,12 @@ def read_child(pid: int) -> Child | None:
         fields = (root / "stat").read_text().rsplit(")", 1)[1].split()
         if fields[0] == "Z":
             return None
-        return Child(pid, int(fields[1]), int(fields[19]))
+        return Child(
+            pid,
+            int(fields[1]),
+            int(fields[19]),
+            int(fields[21]) * os.sysconf("SC_PAGE_SIZE"),
+        )
     except (OSError, ValueError, IndexError):
         return None  # A kernel process can disappear during the read.
 
@@ -52,10 +58,11 @@ def send(child: Child, signum: signal.Signals) -> None:
 
 
 class Children:
-    def __init__(self, root: Child) -> None:
+    def __init__(self, root: Child, max_memory_bytes: int) -> None:
         self.root = root
         self.observed: dict[int, Child] = {root.pid: root}
         self.next_observation = 0.0
+        self.max_memory_bytes = max_memory_bytes
 
     def observe(self, *, force: bool = False) -> None:
         stamp = time.monotonic()
@@ -90,6 +97,18 @@ class Children:
                     "analysis_process_limit",
                     "Analysis exceeded its owned-child limit.",
                 )
+        resident = sum(
+            current.rss_bytes
+            for child in self.observed.values()
+            if (current := read_child(child.pid)) is not None
+            and current.start_ticks == child.start_ticks
+        )
+        if resident > self.max_memory_bytes:
+            raise WebError(
+                503,
+                "analysis_memory_limit",
+                "Owned analysis exceeded its resident-memory limit and was stopped.",
+            )
 
     def stop(self) -> None:
         targets = list(reversed(list(self.observed.values())))

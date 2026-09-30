@@ -140,3 +140,11 @@ class ProcessTests(WebFixture, unittest.TestCase):
         with self.assertRaises(WebError) as error:
             self.run_code("raise SystemExit(99)", {"oversized": "x" * 140000})
         self.assertEqual(error.exception.code, "analysis_input_limit")
+
+    def test_actual_resident_memory_limit_stops_owned_allocation(self):
+        self.runner.close()
+        self.runner = BoundedAnalysisRunner(max_memory_bytes=32 * 1024 * 1024)
+        self.addCleanup(self.runner.close)
+        with self.assertRaises(WebError) as error:
+            self.run_code("import time; data=bytearray(80*1024*1024);time.sleep(30)")
+        self.assertEqual(error.exception.code, "analysis_memory_limit")
