@@ -18,6 +18,21 @@ from patent_sar_extractor.web.storage import encode
 
 
 class TaskInputTests(WebFixture, unittest.TestCase):
+    def test_duplicate_submission_does_not_create_an_unused_job_directory(self):
+        with self.client(runner=SleepRunner()) as client:
+            project = self.upload(client)
+            endpoint = f"/api/v1/projects/{project['id']}/jobs"
+            first_response = client.post(endpoint, json={})
+            self.assertEqual(first_response.status_code, 202, first_response.text)
+            first = first_response.json()
+            root = self.state / "runs" / project["id"]
+            before = {path.name for path in root.iterdir()}
+            rejected = client.post(endpoint, json={})
+            self.assertEqual(rejected.status_code, 409, rejected.text)
+            self.assertEqual({path.name for path in root.iterdir()}, before)
+            client.post(f"/api/v1/jobs/{first['id']}/cancel")
+            wait_job(client, first["id"], "cancelled")
+
     def test_declared_patent_metadata_is_validated_before_upload(self):
         with self.client(runner=SleepRunner()) as client:
             for value in ("../../private", "--force", "WO123\n--output", "X" * 65):

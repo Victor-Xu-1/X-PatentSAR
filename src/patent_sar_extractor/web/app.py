@@ -23,10 +23,12 @@ from patent_sar_extractor.contracts import (
     schema_ref,
 )
 
+from .analysis import AnalysisService
 from .errors import WebError
 from .jobs import JobQueue
 from .owner import WorkspaceOwner
 from .processes import CLIProcessRunner, ProcessRunner
+from .routes_analysis import analysis_routes
 from .routes_jobs import job_routes
 from .routes_projects import project_routes
 from .security import SecurityMiddleware, Sessions, loopback_host
@@ -34,7 +36,6 @@ from .service import WorkspaceService
 from .static_files import serve_frontend, ui_ready
 
 logger = logging.getLogger(__name__)
-CAPABILITIES = {"admet": False, "summary": False}
 
 
 def create_app(
@@ -83,6 +84,7 @@ def create_app(
             "Body receive timeouts must be bounded by 120 seconds.",
         )
     service = WorkspaceService(state_root)
+    analysis = AnalysisService(service.store.root, service)
     queue = JobQueue(service, runner or CLIProcessRunner(), job_timeout_seconds)
     owner = WorkspaceOwner(service.store.root)
     frontend = Path(frontend_dir) if frontend_dir is not None else None
@@ -100,9 +102,12 @@ def create_app(
             yield
         finally:
             app.state.ready = False
-            if started:
-                queue.close()
-            owner.release()
+            try:
+                analysis.close()
+                if started:
+                    queue.close()
+            finally:
+                owner.release()
 
     app = FastAPI(
         title="X-PatentSAR local Web API",
@@ -113,6 +118,7 @@ def create_app(
     )
     app.state.workspace = service
     app.state.queue = queue
+    app.state.analysis = analysis
     app.state.ready = False
     app.add_middleware(
         SecurityMiddleware,
@@ -173,7 +179,7 @@ def create_app(
             "ready": app.state.ready
             and bool(queue.thread and queue.thread.is_alive())
             and (frontend is None or ui_ready(frontend)),
-            "capabilities": CAPABILITIES,
+            "capabilities": analysis.capabilities(),
         }
 
     @app.get("/api/v1/session")
@@ -202,6 +208,18 @@ def create_app(
                     ),
                 }
             )
+        admet_python = analysis.settings.admet_python
+        interpreters.append(
+            {
+                "role": "admet",
+                "configured": admet_python is not None,
+                "available": bool(
+                    admet_python
+                    and admet_python.is_file()
+                    and os.access(admet_python, os.X_OK)
+                ),
+            }
+        )
         return {
             "product": product_ref(),
             "storage": {
@@ -209,11 +227,12 @@ def create_app(
                 "platform": sys.platform,
             },
             "interpreters": interpreters,
-            "capabilities": CAPABILITIES,
+            "capabilities": analysis.capabilities(),
         }
 
     app.include_router(project_routes(service, max_upload_bytes))
     app.include_router(job_routes(service, queue))
+    app.include_router(analysis_routes(service, analysis))
 
     @app.get("/{path:path}")
     def frontend_route(path: str) -> Response:

@@ -157,10 +157,13 @@ class JobQueue:
                 )
             output = Path(old.output_dir)
             include_intermediates = old.include_intermediates
-            force = False  # Resume reuses verified checkpoints; it never invalidates them.
+            force = (
+                False  # Resume reuses verified checkpoints; it never invalidates them.
+            )
             task_note = old.task_note
-        resolved_output = private_directory(output)
-        if not resolved_output.is_relative_to(self.store.root / "runs"):
+        if output.is_symlink() or not output.resolve().is_relative_to(
+            self.store.root / "runs"
+        ):
             raise WebError(
                 400,
                 "unsafe_workspace",
@@ -190,6 +193,22 @@ class JobQueue:
                 ):
                     raise WebError(
                         413, "queue_limit", "Extraction queue has reached its limit."
+                    )
+                if connection.execute(
+                    "SELECT 1 FROM jobs WHERE project_id=? AND status IN ('queued','running')",
+                    (project_id,),
+                ).fetchone():
+                    raise WebError(
+                        409,
+                        "job_active",
+                        "Project already has a queued or running extraction.",
+                    )
+                resolved_output = private_directory(output)
+                if not resolved_output.is_relative_to(self.store.root / "runs"):
+                    raise WebError(
+                        400,
+                        "unsafe_workspace",
+                        "Job output must remain inside its private workspace.",
                     )
                 connection.execute(
                     "INSERT INTO jobs(id,project_id,status,created_at,spec) VALUES(?,?,'queued',?,?)",
