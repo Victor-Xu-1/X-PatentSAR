@@ -131,6 +131,12 @@ test('populated mobile workspace contains its table and keeps dialogs and naviga
   await expect(page.locator('.sidebar')).toHaveCSS('background-color', palette.sidebar);
   await page.getByRole('button', { name: '运行环境', exact: true }).click();
   await expect(page.getByRole('heading', { name: '运行环境' })).toBeVisible();
+  await expect(page.getByLabel('展开或收起导航')).toHaveAttribute('aria-expanded', 'false');
+  await expect
+    .poll(() =>
+      page.locator('.sidebar').evaluate((element) => element.getBoundingClientRect().right),
+    )
+    .toBeLessThanOrEqual(0);
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2),
   ).toBe(true);

@@ -107,9 +107,11 @@ has a clear disabled/informational state. No fictional molecules, assays or coun
 2. Complete: unify all pages and dialogs with the Claude-inspired light visual
    system, preserving X-PatentSAR identity; verify tokens, typography, controls,
    real data, keyboard interactions and representative viewports in Chromium.
-3. In progress: rebuild the Web assets and wheel from the final clean revision, verify
-   installed startup and security boundaries, then push the private Apache-2.0
-   repository and check its CI.
+3. Locally complete: build the Web assets and wheel from a clean revision, verify
+   independent installed startup, security boundaries and all ten browser checks,
+   and push the authorized private Apache-2.0 repository. GitHub Actions cannot
+   start its runner because the account reports failed payments or a spending
+   limit; remote CI is not marked passed. No account billing settings are changed.
 
 The single visual authority is `frontend/src/styles/tokens.css`. Component styles
 consume those tokens, not page-specific palettes or layered legacy themes. The
@@ -134,9 +136,12 @@ The portable CLI defaults to 8765. This workstation uses 18765 because 8765 and
 8766 are already occupied by other applications. Source, environments, models,
 state, build evidence and development caches remain on the E-drive WSL system.
 
-Current integration evidence: 141 Python tests and 80 frontend tests passed;
+Current integration evidence: 142 Python tests and 80 frontend tests passed;
 all ten real Chromium workflow/style checks passed against the local stack. The separate
 real WO2026156070 history workflow also passed with immutable source artifacts.
 Its 1,189 structures, 1,157 activity rows and 1,156 compounds remain historical;
-the original PDF is absent and no formal acceptance is claimed. Deployment and
-clean-checkout evidence must still be bound to the final candidate revision.
+the original PDF is absent and no formal acceptance is claimed. The independent
+installed E-drive deployment also passed all ten workflow/style checks and three
+additional read-only checks with the actual WO2026156070 historical dataset.
+Deployment evidence, screenshots and wheel/revision checksums live outside Git
+under the operator's E-drive evidence directory.
