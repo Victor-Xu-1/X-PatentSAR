@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=75,<82", "wheel>=0.44,<1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "x-patentsar"
+dynamic = ["version"]
+description = "Fail-closed patent chemical-structure and activity extraction software"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{name = "Victor"}]
+keywords = ["patent", "chemistry", "OCSR", "DECIMER", "WIPO", "SMILES"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Chemistry",
+]
+dependencies = [
+  "PyYAML==6.0.3",
+  "requests==2.33.1",
+  "Pillow==12.2.0",
+  "numpy==2.2.6",
+  "pandas==3.0.2",
+  "openpyxl==3.1.5",
+  "PyMuPDF==1.27.2.3",
+  "opencv-python==4.13.0.92",
+  "pytesseract==0.3.13",
+  "rapidocr-onnxruntime==1.4.4",
+  "rdkit==2026.3.1",
+  "scipy==1.17.1",
+  "python-Levenshtein==0.27.3",
+  "numba==0.65.1",
+]
+
+[project.scripts]
+x-patentsar = "patent_sar_extractor.cli:main"
+
+[tool.uv]
+environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]
+
+[tool.setuptools.dynamic]
+version = {attr = "patent_sar_extractor.contracts.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["patent_sar_extractor*"]
+exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+"patent_sar_extractor.defaults" = ["*.yaml"]
+"patent_sar_extractor.core.ocsr" = ["config.yaml"]

@@ -1,0 +1,11 @@
+shared:
+  endpoint: "https://ark.cn-beijing.volces.com/api/coding/v3"
+  api_key: ""
+  model: "ark-code-latest"
+  timeout: 180
+
+llm:
+  max_workers: 4
+  cache_path: ""
+
+vlm: {}

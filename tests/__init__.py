@@ -1,0 +1,1 @@
+"""PatentSAR Extractor regression tests."""

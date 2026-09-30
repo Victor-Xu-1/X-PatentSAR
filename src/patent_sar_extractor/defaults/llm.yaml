@@ -1,0 +1,13 @@
+shared:
+  endpoint: "https://ark.cn-beijing.volces.com/api/coding/v3"
+  # Keep secrets out of the repository. Set LLM_API_KEY/VLM_API_KEY in the
+  # runtime environment or in a local, uncommitted config overlay.
+  api_key: ""
+  model: "ark-code-latest"
+  timeout: 180
+
+llm:
+  max_workers: 4
+  cache_path: ""
+
+vlm: {}

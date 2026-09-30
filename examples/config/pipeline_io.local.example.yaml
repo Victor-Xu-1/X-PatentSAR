@@ -1,0 +1,4 @@
+# Copy to $PATENTSAR_CONFIG_DIR/pipeline_io.local.yaml and replace with
+# operator-owned locations.
+input_dir: "/srv/patentsar/input"
+output_dir: "/srv/patentsar/output"

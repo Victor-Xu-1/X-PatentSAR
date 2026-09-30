@@ -1,0 +1,7 @@
+X-PatentSAR
+Copyright 2026 Victor and contributors.
+
+This project's first-party source code is licensed under Apache-2.0.
+Third-party libraries retain their respective licenses. Patent documents,
+user datasets, credentials and externally installed model weights are not
+distributed with this repository and are not relicensed by this project.

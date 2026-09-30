@@ -1,0 +1,15 @@
+# Conda / Python environment path defaults.
+#
+# Keep this file portable for GitHub. Local machines should set environment
+# variables (PATENTSAR_BASE_PYTHON, DECIMER_PYTHON, etc.) or edit an uncommitted
+# copy before running production jobs.
+#
+# Supported keys:
+#   base, smiles_engine, decimer, paddleocr, pymupdf, ocrmypdf
+
+base: "python3"
+smiles_engine: "python3"
+decimer: "python3"
+paddleocr: "python3"
+pymupdf: "python3"
+ocrmypdf: "python3"

@@ -1,0 +1,6 @@
+include LICENSE README.md run_patent_sar.sh .env.example
+recursive-include docs *.md
+recursive-include src/patent_sar_extractor/defaults *.yaml
+recursive-include src/patent_sar_extractor/core/ocsr *.yaml
+recursive-include examples *.yaml
+recursive-include tests *.py

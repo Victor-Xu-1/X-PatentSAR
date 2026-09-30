@@ -1,0 +1,7 @@
+# PatentSAR Extractor input/output defaults.
+#
+# Leave these blank in the repository. Prefer explicit CLI arguments:
+#   ./run_patent_sar.sh /path/to/patent.pdf /path/to/output PATENT_ID --force
+# or set local paths in an uncommitted copy.
+input_dir: ""
+output_dir: ""

@@ -1,0 +1,30 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install uv==0.11.31
+      - run: uv sync --frozen
+      - run: uv run python -m compileall -q src tests
+      - run: uv run python -m unittest discover -s tests -v
+      - run: uv pip check --python .venv/bin/python
+      - run: bash -n run_patent_sar.sh
+      - run: uv build --wheel
+      - name: Audit and install wheel
+        run: |
+          ! unzip -Z1 dist/*.whl | grep -Eq '^(engine|pipeline|scripts|config)/'
+          test "$(unzip -p dist/*.whl '*/top_level.txt')" = "patent_sar_extractor"
+          uv pip install --python .venv/bin/python --reinstall --no-deps dist/*.whl
+          (cd /tmp && "$GITHUB_WORKSPACE/.venv/bin/patent-sar-extractor" --version)

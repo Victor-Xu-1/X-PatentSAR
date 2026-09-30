@@ -1,0 +1,7 @@
+# Copy to $PATENTSAR_CONFIG_DIR/env_paths.local.yaml.
+base: "/opt/conda/envs/patentsar/bin/python"
+smiles_engine: "/opt/conda/envs/patentsar/bin/python"
+decimer: "/opt/conda/envs/decimer/bin/python"
+paddleocr: "/opt/conda/envs/patentsar/bin/python"
+pymupdf: "/opt/conda/envs/patentsar/bin/python"
+ocrmypdf: "/opt/conda/envs/patentsar/bin/python"

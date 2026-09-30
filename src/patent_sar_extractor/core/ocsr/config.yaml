@@ -1,0 +1,22 @@
+# PatentSAR SMILES engine configuration
+# Production OCSR is DECIMER-only.
+
+# Engine chain: primary only. Fallbacks are intentionally disabled so mixed
+# OCSR engines cannot produce conflicting molecule graphs for the same label.
+default_engine: decimer
+fallback_engines: []
+
+# Timeout per engine prediction (seconds)
+timeout_sec: 180
+
+preprocess: true
+preprocess_long_edge: 1024
+preprocess_padding: 20
+
+cache_path: outputs/cache/smiles_cache.sqlite
+
+# Engine-specific configurations
+decimer:
+  # DECIMER runs in isolated `decimer` conda env via subprocess
+  python_bin: ""
+  wrapper_script: ""
