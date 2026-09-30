@@ -1,4 +1,5 @@
 # External Linux x86_64 CPython 3.10.20 CPU runtime; not the application lock.
+# Source input only; installation uses the complete decimer-requirements.txt lock.
 # Resolve with owned uv 0.11.31 --python-version 3.10 --generate-hashes.
 DECIMER==2.8.0
 DECIMER-Segmentation==1.5.0

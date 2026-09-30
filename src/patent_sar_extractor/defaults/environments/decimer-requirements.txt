@@ -1,7 +1,7 @@
 # Locked with owned uv 0.11.31, Linux x86_64, Python 3.10.20; official PyPI only.
-# Input: packaged decimer-requirements.in. Full transitive versions and SHA-256.
+# Input: packaged decimer-inputs.txt. Full transitive versions and SHA-256.
 # Reproduce with uv pip compile --python <Python-3.10.20> --generate-hashes
-# --no-build --no-header --output-file decimer-requirements.txt decimer-requirements.in
+# --no-build --no-header --output-file decimer-requirements.txt decimer-inputs.txt
 absl-py==2.5.0 \
     --hash=sha256:0c996f25c0490700fadabe6351630f6111534fa0ae252cc6d2014ea3b141135f \
     --hash=sha256:0f17b89f2a4eaaedc4f28c622998aa690564b3012a396a4ffad0821007fe03ba
