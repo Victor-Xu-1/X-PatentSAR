@@ -1,10 +1,30 @@
 import { expect, test } from '@playwright/test';
+import type { APIRequestContext, Response } from '@playwright/test';
 import { decodeAdmet, decodeEvidenceSummary, decodeRecognition } from '../src/api/analysisDecoders';
 import type { Project } from '../src/api/types';
 
 const projectId = process.env.PATENTSAR_E2E_HISTORY_PROJECT_ID;
 const runAnalysis = process.env.PATENTSAR_E2E_RUN_ANALYSIS === '1';
 const cropId = process.env.PATENTSAR_E2E_ANALYSIS_COMPOUND_ID;
+
+async function acknowledgedAnalysis(
+  request: APIRequestContext,
+  response: Response,
+): Promise<unknown> {
+  // Do not replay an unknown write: this checks an already acknowledged 200 and
+  // the same content-addressed cache in a separate authenticated session.
+  expect(response.status()).toBe(200);
+  const session = await request.get('/api/v1/session');
+  expect(session.ok()).toBe(true);
+  const csrf = ((await session.json()) as { csrf_token: string }).csrf_token;
+  const durable = await request.post(response.url(), {
+    data: response.request().postDataJSON(),
+    headers: { Origin: new URL(response.url()).origin, 'X-CSRF-Token': csrf },
+    timeout: 195_000,
+  });
+  expect(durable.ok()).toBe(true);
+  return durable.json() as Promise<unknown>;
+}
 
 test('same-project deterministic summary uses real evidence and preserves formal acceptance', async ({
   page,
@@ -78,16 +98,7 @@ test('actual local batch ADMET accepts typed molecules and shows engine, units a
   // Chromium can evict a fetch inspector body even though the app has rendered
   // it. After an acknowledged 200, independently read the same content-addressed
   // prediction through the real API, without changing the browser's session.
-  const session = await request.get('/api/v1/session');
-  expect(session.ok()).toBe(true);
-  const csrf = ((await session.json()) as { csrf_token: string }).csrf_token;
-  const durable = await request.post(received.url(), {
-    data: received.request().postDataJSON(),
-    headers: { Origin: new URL(received.url()).origin, 'X-CSRF-Token': csrf },
-    timeout: 195_000,
-  });
-  expect(durable.ok()).toBe(true);
-  const result = decodeAdmet(await durable.json());
+  const result = decodeAdmet(await acknowledgedAnalysis(request, received));
   expect(result.review_only).toBe(true);
   expect(result.predictions).toHaveLength(2);
   await expect(page.locator('.molecule-result')).toHaveCount(2);
@@ -98,6 +109,7 @@ test('actual local batch ADMET accepts typed molecules and shows engine, units a
 
 test('approved real crop DECIMER recognition feeds analysis without altering extracted SMILES or QA', async ({
   page,
+  request,
 }) => {
   test.skip(
     !runAnalysis || !projectId || !cropId,
@@ -127,7 +139,7 @@ test('approved real crop DECIMER recognition feeds analysis without altering ext
   await page.getByRole('button', { name: '识别真实裁图（DECIMER + QC）' }).click();
   const recognizedResponse = await recognition;
   expect(recognizedResponse.ok()).toBe(true);
-  const result = decodeRecognition(await recognizedResponse.json());
+  const result = decodeRecognition(await acknowledgedAnalysis(request, recognizedResponse));
   expect(result.status, 'The approved representative crop must pass actual QC').toBe('recognized');
   expect(result.compound_id).toBe(cropId);
   expect(result.review_only).toBe(true);
@@ -139,7 +151,7 @@ test('approved real crop DECIMER recognition feeds analysis without altering ext
   await page.getByRole('button', { name: '运行本地 ADMET' }).click();
   const admetResponse = await prediction;
   expect(admetResponse.ok()).toBe(true);
-  expect(decodeAdmet(await admetResponse.json()).review_only).toBe(true);
+  expect(decodeAdmet(await acknowledgedAnalysis(request, admetResponse)).review_only).toBe(true);
   const after = (await (
     await page.request.get(
       `/api/v1/projects/${projectId}/results?q=${encodeURIComponent(cropId!)}&page_size=100`,
