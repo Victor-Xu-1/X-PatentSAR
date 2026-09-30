@@ -1,0 +1,12 @@
+{
+  "plugins": ["typescript", "react", "jsx-a11y", "import"],
+  "categories": { "correctness": "error" },
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "error",
+    "typescript/no-explicit-any": "error",
+    "jsx-a11y/alt-text": "error",
+    "jsx-a11y/label-has-associated-control": "error"
+  },
+  "ignorePatterns": ["dist/**", "node_modules/**", "test-results/**", "playwright-report/**"]
+}
