@@ -10,9 +10,9 @@
   gap: 12px;
   background: var(--surface);
   border: 1px solid var(--line);
-  padding: 7px 10px;
+  padding: 3px 10px;
   border-radius: var(--radius-control);
-  margin-bottom: 6px;
+  margin-bottom: 3px;
 }
 .stage-strip {
   display: flex;
@@ -106,14 +106,15 @@
 }
 .workspace-layout {
   min-width: 0;
-  --pane-height: max(calc(100dvh - 174px), calc(55dvh + 215px));
+  --results-min-height: 56dvh;
+  --pane-height: max(calc(100dvh - 135px), calc(var(--results-min-height) + 226px));
 }
 .layout-toolbar {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 3px;
   min-height: 28px;
 }
 .layout-toolbar > span {
@@ -232,7 +233,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  min-height: 34px;
+  min-height: 31px;
   padding-right: 8px;
   border-bottom: 1px solid var(--line);
 }
@@ -240,6 +241,11 @@
   border: 0;
   min-width: 0;
   flex-wrap: wrap;
+  min-height: 30px;
+}
+.result-tabs .tab {
+  min-height: 30px;
+  padding: 6px 4px;
 }
 .result-view {
   flex: 1;
@@ -256,4 +262,26 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: auto;
+}
+@media (min-width: 1101px) {
+  .workspace {
+    position: relative;
+  }
+  .workflow-panel {
+    padding-right: 166px;
+  }
+  .layout-toolbar {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    margin-bottom: 0;
+  }
+  .layout-toolbar > span {
+    display: none;
+  }
+  .is-fullscreen .layout-toolbar {
+    position: static;
+    margin-bottom: 3px;
+  }
 }

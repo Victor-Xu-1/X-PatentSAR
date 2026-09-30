@@ -22,7 +22,7 @@
     display: none;
   }
   .metric-card {
-    padding: 4px;
+    padding: 2px 5px;
   }
   .metric-card > div {
     gap: 4px;
@@ -92,7 +92,7 @@
 }
 @media (max-width: 760px) {
   .results-pane {
-    height: max(800px, calc(55dvh + 330px));
+    height: max(800px, calc(var(--results-min-height) + 330px));
   }
   .app-shell {
     display: block;

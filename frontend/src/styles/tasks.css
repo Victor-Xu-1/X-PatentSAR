@@ -1,6 +1,8 @@
 .new-task-page {
   max-width: 1180px;
   margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
 }
 .task-form {
   display: grid;

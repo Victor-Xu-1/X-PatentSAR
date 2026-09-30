@@ -38,6 +38,25 @@ for (const viewport of [
     const source = await page.locator('.workspace-source').boundingBox();
     const result = await page.locator('.workspace-results').boundingBox();
     expect(table!.height / viewport.height).toBeGreaterThanOrEqual(0.55);
+    const pane = await page.locator('.results-pane').boundingBox();
+    const pagination = await page.locator('.pagination').boundingBox();
+    expect(pane).not.toBeNull();
+    expect(pagination).not.toBeNull();
+    expect(
+      pagination!.y + pagination!.height,
+      'Pagination must not be clipped by the results pane',
+    ).toBeLessThanOrEqual(pane!.y + pane!.height);
+    expect(
+      pane!.y + pane!.height,
+      'The desktop results pane must fit the viewport',
+    ).toBeLessThanOrEqual(viewport.height);
+    const visibleHeight =
+      Math.min(table!.y + table!.height, pane!.y + pane!.height, viewport.height) -
+      Math.max(table!.y, pane!.y, 0);
+    expect(
+      visibleHeight / viewport.height,
+      'The measured table area must actually be visible',
+    ).toBeGreaterThanOrEqual(0.55);
     expect(source!.width / (source!.width + result!.width)).toBeGreaterThanOrEqual(0.25);
     expect(source!.width / (source!.width + result!.width)).toBeLessThanOrEqual(0.3);
     const separator = page.getByRole('slider', { name: '调整原文与结果宽度' });

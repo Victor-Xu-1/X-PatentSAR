@@ -71,6 +71,10 @@ test('warm workspace style is consistent across navigation, management and the a
   await expect(page.getByLabel('项目名称')).toBeFocused();
   await page.getByLabel('项目名称').focus();
   await expect(page.getByLabel('项目名称')).toHaveCSS('outline-color', palette.focus);
+  await page.keyboard.press('Tab');
+  await expect(page.getByLabel('专利标识（可选）')).toBeFocused();
+  await expect(page.getByLabel('专利标识（可选）')).toHaveCSS('outline-color', palette.focus);
+  await expect(page.getByLabel('专利标识（可选）')).toHaveCSS('outline-style', 'solid');
   await page.getByRole('button', { name: '项目', exact: true }).click();
   await expect(page.getByRole('heading', { name: '专利项目', exact: true })).toBeVisible();
 });

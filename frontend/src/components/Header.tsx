@@ -60,7 +60,7 @@ export function Header({
             disabled={disabled || view !== 'workspace' || !project}
           />
         </label>
-        <button type="button" onClick={onUpload} disabled={disabled}>
+        <button type="button" aria-label="上传 PDF" onClick={onUpload} disabled={disabled}>
           <Upload size={16} />
           <span>上传 PDF</span>
         </button>

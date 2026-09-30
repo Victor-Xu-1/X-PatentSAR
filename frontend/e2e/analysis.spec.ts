@@ -21,13 +21,35 @@ test('same-project deterministic summary uses real evidence and preserves formal
   expect(received.ok(), 'The complete iteration requires the deterministic summary endpoint').toBe(
     true,
   );
-  const summary = decodeEvidenceSummary(await received.json());
+  const stableResponse = await page.request.get(received.url());
+  expect(stableResponse.ok(), 'Authenticated stable summary retrieval must also succeed').toBe(
+    true,
+  );
+  expect(new URL(stableResponse.url()).pathname).toBe(
+    `/api/v1/projects/${projectId}/evidence-summary`,
+  );
+  const summary = decodeEvidenceSummary(await stableResponse.json());
   expect(summary.project_id).toBe(projectId);
   expect(summary.acceptance).toEqual(before.acceptance);
   await expect(page.locator('.evidence-counts > div').filter({ hasText: '化合物' })).toContainText(
     String(summary.counts.compounds),
   );
   await expect(page.getByText(/不是 LLM 摘要/)).toBeVisible();
+  for (const [label, count] of Object.entries({
+    结构: summary.counts.structures,
+    活性行: summary.counts.activity_rows,
+    化合物: summary.counts.compounds,
+    已有SMILES: summary.counts.smiles,
+    来源已定位: summary.counts.source_located,
+    待复核: summary.counts.needs_review,
+  })) {
+    await expect(
+      page
+        .locator('.evidence-counts > div')
+        .filter({ has: page.getByText(label, { exact: true }) })
+        .locator('dd'),
+    ).toHaveText(String(count));
+  }
   const after = (await (await page.request.get(`/api/v1/projects/${projectId}`)).json()) as Project;
   expect(after.acceptance).toEqual(before.acceptance);
   expect(after.summary).toEqual(before.summary);

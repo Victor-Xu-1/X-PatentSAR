@@ -21,6 +21,17 @@ function contractTransport() {
   });
 }
 describe('application bootstrap, routes and failure states', () => {
+  it('keeps the upload action named and usable when its visual text is hidden on mobile', async () => {
+    vi.stubGlobal('fetch', contractTransport());
+    render(<App />);
+    await screen.findByText('v9.8.7-test');
+    const caption = document.querySelector<HTMLElement>('.topbar-actions > button > span');
+    expect(caption).not.toBeNull();
+    caption!.style.display = 'none';
+    await userEvent.click(screen.getByRole('button', { name: '上传 PDF' }));
+    expect(await screen.findByRole('heading', { name: '新建提取任务' })).toBeVisible();
+    expect(screen.getByLabelText('项目名称')).toHaveFocus();
+  });
   it('mobile drawer keeps hidden navigation inert and restores the menu focus', async () => {
     vi.stubGlobal('matchMedia', () => ({
       matches: true,
