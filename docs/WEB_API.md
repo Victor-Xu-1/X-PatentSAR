@@ -104,10 +104,10 @@ has a clear disabled/informational state. No fictional molecules, assays or coun
 
 1. Complete: implement the API and reference-layout UI in isolated worktrees,
    and integrate CLI entry points, packaging and E-drive launchers.
-2. In progress: unify all pages and dialogs with the Claude-inspired light visual
+2. Complete: unify all pages and dialogs with the Claude-inspired light visual
    system, preserving X-PatentSAR identity; verify tokens, typography, controls,
    real data, keyboard interactions and representative viewports in Chromium.
-3. Pending: rebuild the Web assets and wheel from the final clean revision, verify
+3. In progress: rebuild the Web assets and wheel from the final clean revision, verify
    installed startup and security boundaries, then push the private Apache-2.0
    repository and check its CI.
 
@@ -135,7 +135,7 @@ The portable CLI defaults to 8765. This workstation uses 18765 because 8765 and
 state, build evidence and development caches remain on the E-drive WSL system.
 
 Current integration evidence: 141 Python tests and 80 frontend tests passed;
-all seven real Chromium workflows passed against the local stack. The separate
+all ten real Chromium workflow/style checks passed against the local stack. The separate
 real WO2026156070 history workflow also passed with immutable source artifacts.
 Its 1,189 structures, 1,157 activity rows and 1,156 compounds remain historical;
 the original PDF is absent and no formal acceptance is claimed. Deployment and
