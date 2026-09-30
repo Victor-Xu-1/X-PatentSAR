@@ -1,5 +1,9 @@
 # X-PatentSAR
 
+开源仓库：[Victor-Xu-1/X-PatentSAR](https://github.com/Victor-Xu-1/X-PatentSAR)。
+软件与仓库的对外名称统一为 **X-PatentSAR**；Python 发行包与 CLI 使用规范化技术标识
+`x-patentsar`。第一方源码采用 Apache-2.0，第三方许可和模型边界见 `NOTICE`。
+
 独立运行的专利化学结构、活性数据与结构—活性关系（SAR）提取软件。当前生产适配器面向 WIPO 专利 PDF，主链为：
 
 ```text

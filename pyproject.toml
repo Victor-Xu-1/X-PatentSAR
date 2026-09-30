@@ -39,6 +39,11 @@ dependencies = [
 [project.scripts]
 x-patentsar = "patent_sar_extractor.cli:main"
 
+[project.urls]
+Homepage = "https://github.com/Victor-Xu-1/X-PatentSAR"
+Repository = "https://github.com/Victor-Xu-1/X-PatentSAR"
+Issues = "https://github.com/Victor-Xu-1/X-PatentSAR/issues"
+
 [project.optional-dependencies]
 web = ["fastapi==0.142.2", "uvicorn==0.54.0"]
 

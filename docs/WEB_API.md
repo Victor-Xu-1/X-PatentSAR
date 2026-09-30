@@ -110,7 +110,7 @@ has a clear disabled/informational state. No fictional molecules, assays or coun
    real data, keyboard interactions and representative viewports in Chromium.
 3. Locally complete: build the Web assets and wheel from a clean revision, verify
    independent installed startup, security boundaries and all ten browser checks,
-   and push the authorized private Apache-2.0 repository. GitHub Actions cannot
+   and push the authorized Apache-2.0 repository. GitHub Actions cannot
    start its runner because the account reports failed payments or a spending
    limit; remote CI is not marked passed. No account billing settings are changed.
 
@@ -124,7 +124,7 @@ has a clear disabled/informational state. No fictional molecules, assays or coun
    ADMET-AI v2 CPU inference and source-grounded deterministic evidence summaries.
 3. Release gate: run affected tests and the mandatory packaging/runtime gates against
    a clean candidate, deploy to E, verify the actual original and data in Chromium,
-   and push the private repository. No global WSL shutdown or user-data cleanup.
+   and push the public X-PatentSAR repository. No global WSL shutdown or user-data cleanup.
 
 Verification uses the full Python suite and frontend unit tests, actual
 ADMET-AI 2.0.1 CPU inference with 52 properties, and actual original-crop
