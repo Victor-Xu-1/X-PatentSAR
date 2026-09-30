@@ -66,7 +66,7 @@ export function Workspace({
     results.locateCompound(compoundId);
   }
   return (
-    <div className="workspace">
+    <div className="workspace" data-dialog-focus-scope>
       <section className="workflow-panel">
         <StageStrip job={job} />
         <JobActions project={project} job={job} ready={ready} onChange={onJobChange} />

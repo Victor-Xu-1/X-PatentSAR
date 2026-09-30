@@ -68,7 +68,7 @@ No swallowed failures or success-shaped error responses.
 
 | Method / path | Request and response |
 |---|---|
-| GET `/health` | `{product,schema,ruleset,ready,capabilities:{admet:false,summary:false}}` |
+| GET `/health` | `{product,schema,ruleset,ready,capabilities:{admet:boolean,summary:boolean}}`; actual configured availability |
 | GET `/session` | Same-origin bootstrap, CSRF token and session cookie |
 | GET `/projects` | `{items:Project[]}` |
 | POST `/projects?filename=&title=` | Raw `application/pdf` body -> Project (201) |
@@ -78,7 +78,7 @@ No swallowed failures or success-shaped error responses.
 | GET `/projects/{id}/pages/{page}/image?scale=1.5` | Actual PNG, bounded scale/pixels/concurrency |
 | GET `/projects/{id}/structures/{compound_id}/image` | Actual safe crop PNG; missing image is 404 |
 | GET `/projects/{id}/results?q=&confidence=&review=&target=&page=1&page_size=10` | `{items:Compound[],total,page,page_size,metrics:string[],targets:string[]}`; max page_size 100 |
-| POST `/projects/{id}/jobs` | `{allow_partial:false,advisory:false,resume_job_id:null}` -> Job (202); default no paid advisory requests |
+| POST `/projects/{id}/jobs` | `{allow_partial:false,advisory:false,resume_job_id:null,include_intermediates:false,force:false,task_note:""}` -> Job (202); strict QA and no paid advisory requests by default |
 | GET `/jobs?project_id=` | `{items:Job[]}` |
 | GET `/jobs/{id}` | Persisted Job and current real stage states |
 | POST `/jobs/{id}/cancel` | Idempotent owned-job cancellation -> Job |
@@ -101,7 +101,7 @@ project/PDF import and runtime settings must work, including empty/error/loading
 keyboard/focus, refresh/deep-link and smaller viewport states. Unavailable ADMET
 has a clear disabled/informational state. No fictional molecules, assays or counts.
 
-## Implementation and validation plan
+## Initial Web delivery
 
 1. Complete: implement the API and reference-layout UI in isolated worktrees,
    and integrate CLI entry points, packaging and E-drive launchers.
@@ -122,17 +122,19 @@ has a clear disabled/informational state. No fictional molecules, assays or coun
 2. Complete: add a full task input page, retained real job parameters,
    results-first/resizable/fullscreen layouts, local DECIMER crop recognition,
    ADMET-AI v2 CPU inference and source-grounded deterministic evidence summaries.
-3. In progress: run affected tests and the mandatory packaging/runtime gates against
+3. Release gate: run affected tests and the mandatory packaging/runtime gates against
    a clean candidate, deploy to E, verify the actual original and data in Chromium,
    and push the private repository. No global WSL shutdown or user-data cleanup.
 
-Current iteration verification: the final source has 185 Python tests (one
-explicit real-model test is separately opt-in), 120 frontend unit tests, actual
+Verification uses the full Python suite and frontend unit tests, actual
 ADMET-AI 2.0.1 CPU inference with 52 properties, and actual original-crop
-DECIMER/RDKit-to-ADMET HTTP verification. The source browser checks cover all
-sixteen workflows, including measured visible result area, real original PDF,
-keyboard/pointer/refresh, research analysis and unchanged formal acceptance.
-Final clean-wheel/production evidence is recorded only after deployment.
+DECIMER/RDKit-to-ADMET HTTP checks. The sixteen browser workflows cover measured
+visible result area, the real original PDF, keyboard/pointer/refresh, research
+analysis and unchanged formal acceptance. Real-model checks are opt-in for
+portable CI, but must actually run with the configured models before claiming
+this workstation's analysis deployment is verified. Final candidate revision,
+installed wheel identity and measured outcomes are operator deployment evidence,
+recorded outside Git only after the checks have run.
 
 Raw model predictions remain raw: upstream declared physical-range violations
 are warnings, not silent clamping or guessed unit transforms. Log-scale negative
@@ -209,12 +211,10 @@ The portable CLI defaults to 8765. This workstation uses 18765 because 8765 and
 8766 are already occupied by other applications. Source, environments, models,
 state, build evidence and development caches remain on the E-drive WSL system.
 
-Current integration evidence: 142 Python tests and 80 frontend tests passed;
-all ten real Chromium workflow/style checks passed against the local stack. The separate
-real WO2026156070 history workflow also passed with immutable source artifacts.
-Its 1,189 structures, 1,157 activity rows and 1,156 compounds remain historical;
-the original PDF is absent and no formal acceptance is claimed. The independent
-installed E-drive deployment also passed all ten workflow/style checks and three
-additional read-only checks with the actual WO2026156070 historical dataset.
-Deployment evidence, screenshots and wheel/revision checksums live outside Git
-under the operator's E-drive evidence directory.
+WO2026156070 has 1,189 structures, 1,157 activity rows and 1,156 compounds in
+its preserved historical artifacts. Its actual 1,553-page original PDF was
+recovered and attached after the recorded SHA-256 matched, so original images
+and source jumps are now available. This recovery does not promote the existing
+historical extraction to current formal QA acceptance. Screenshots, test logs,
+wheel/revision checksums and any remote CI blocker live outside Git under the
+operator's E-drive evidence directory; private PDFs and datasets are not shipped.

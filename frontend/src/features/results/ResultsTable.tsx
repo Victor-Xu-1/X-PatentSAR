@@ -91,6 +91,7 @@ export function ResultsTable({
                     <button
                       type="button"
                       className="crop-button"
+                      data-focus-key={`crop:${row.id}`}
                       aria-label={`放大 ${row.display_id} 结构裁图`}
                       disabled={!row.structure_image_url}
                       onClick={() => onCrop(row)}
@@ -172,6 +173,7 @@ export function ResultsTable({
                   <button
                     type="button"
                     className="review-button"
+                    data-focus-key={`review:${row.id}`}
                     aria-label={`复核 ${row.display_id}`}
                     onClick={() => onReview(row)}
                   >

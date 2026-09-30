@@ -63,6 +63,44 @@ describe('accessible dialogs and explicit mutations', () => {
     fireEvent(screen.getByRole('dialog'), new Event('cancel', { bubbles: true, cancelable: true }));
     expect(close).toHaveBeenCalledOnce();
   });
+  it.each([true, false])(
+    'restores a refreshed opener or its scoped fallback (%s)',
+    async (replace) => {
+      function Parent() {
+        const [open, setOpen] = useState(false);
+        const [refreshed, setRefreshed] = useState(false);
+        return (
+          <section data-dialog-focus-scope>
+            <input data-dialog-focus-fallback aria-label="表格搜索" />
+            {(!refreshed || replace) && (
+              <button
+                key={refreshed ? 'new' : 'old'}
+                data-focus-key="crop:I-7"
+                onClick={() => setOpen(true)}
+              >
+                打开结构
+              </button>
+            )}
+            {open && (
+              <Dialog title="刷新焦点测试" onClose={() => setOpen(false)}>
+                <button onClick={() => setRefreshed(true)}>刷新原始表格</button>
+              </Dialog>
+            )}
+          </section>
+        );
+      }
+      render(<Parent />);
+      const user = userEvent.setup();
+      const old = screen.getByText('打开结构');
+      await user.click(old);
+      await user.click(screen.getByText('刷新原始表格'));
+      expect(old.isConnected).toBe(false);
+      await user.click(screen.getByLabelText('关闭对话框'));
+      expect(
+        replace ? screen.getByText('打开结构') : screen.getByLabelText('表格搜索'),
+      ).toHaveFocus();
+    },
+  );
   it('does not allow closing an uncertain in-flight write', () => {
     const close = vi.fn();
     render(

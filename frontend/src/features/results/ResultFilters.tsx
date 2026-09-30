@@ -34,6 +34,7 @@ export function ResultFilters({
           <Search size={15} />
           <input
             aria-label="搜索结果"
+            data-dialog-focus-fallback
             value={filters.q}
             placeholder="搜索编号、靶点或关键词…"
             disabled={disabled}
