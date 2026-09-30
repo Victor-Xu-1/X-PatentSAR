@@ -18,7 +18,6 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 from test_web_support import BASE_URL, WebFixture, artifact_run
 
-from patent_sar_extractor.web.analysis import AnalysisService
 from patent_sar_extractor.web.analysis_children import alive, read_child
 from patent_sar_extractor.web.analysis_process import BoundedAnalysisRunner
 from patent_sar_extractor.web.analysis_runtime import (
@@ -28,7 +27,7 @@ from patent_sar_extractor.web.analysis_runtime import (
     child_environment,
 )
 from patent_sar_extractor.web.errors import WebError
-from patent_sar_extractor.web.routes_analysis import _cancellable, analysis_routes
+from patent_sar_extractor.web.routes_analysis import _cancellable
 
 VERSIONS = {
     "admet-ai": "2.0.1",
@@ -93,22 +92,13 @@ class ModelBoundary(BoundedAnalysisRunner):
 
 class AnalysisAPITests(WebFixture, unittest.TestCase):
     def app(self, **kwargs):
-        app = super().app(**kwargs)
-        service = app.state.workspace
-        self.analysis = AnalysisService(
-            service.store.root,
-            service,
-            settings=getattr(self, "settings", AnalysisSettings()),
-            runner=getattr(self, "boundary", None),
+        app = super().app(
+            analysis_settings=getattr(self, "settings", AnalysisSettings()),
+            analysis_runner=getattr(self, "boundary", None),
+            **kwargs,
         )
+        self.analysis = app.state.analysis
         self.addCleanup(self.analysis.close)
-        # Test the controller's documented integration order without changing app.py.
-        index = next(
-            i
-            for i, route in enumerate(app.router.routes)
-            if getattr(route, "path", None) == "/{path:path}"
-        )
-        app.router.routes[index:index] = analysis_routes(service, self.analysis).routes
         return app
 
     def mock_runtime(self):

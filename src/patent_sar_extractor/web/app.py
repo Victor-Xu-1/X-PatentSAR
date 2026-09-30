@@ -24,6 +24,8 @@ from patent_sar_extractor.contracts import (
 )
 
 from .analysis import AnalysisService
+from .analysis_process import BoundedAnalysisRunner
+from .analysis_runtime import AnalysisSettings
 from .errors import WebError
 from .jobs import JobQueue
 from .owner import WorkspaceOwner
@@ -50,6 +52,8 @@ def create_app(
     max_upload_bytes: int = 128 * 1024 * 1024,
     body_timeout_seconds: float = 120,
     body_idle_seconds: float = 15,
+    analysis_settings: AnalysisSettings | None = None,
+    analysis_runner: BoundedAnalysisRunner | None = None,
 ) -> FastAPI:
     """API-only with frontend_dir=None. Caller chooses the private state root.
 
@@ -84,7 +88,9 @@ def create_app(
             "Body receive timeouts must be bounded by 120 seconds.",
         )
     service = WorkspaceService(state_root)
-    analysis = AnalysisService(service.store.root, service)
+    analysis = AnalysisService(
+        service.store.root, service, settings=analysis_settings, runner=analysis_runner
+    )
     queue = JobQueue(service, runner or CLIProcessRunner(), job_timeout_seconds)
     owner = WorkspaceOwner(service.store.root)
     frontend = Path(frontend_dir) if frontend_dir is not None else None
