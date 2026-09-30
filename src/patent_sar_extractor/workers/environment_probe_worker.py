@@ -3,20 +3,32 @@
 from __future__ import annotations
 
 import importlib.metadata
+import importlib.util
 import pickle
 import subprocess
 import sys
 from pathlib import Path
 
-# Prefer this operation's first-party probe helpers, not an older installed
-# X-PatentSAR. Third-party packages remain exclusively in the child interpreter.
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from patent_sar_extractor.workers.analysis_protocol import (
+# Select only our first-party package, never the orchestrator's site-packages.
+# Adding a Python 3.12 site-packages ahead of the scientific interpreter would
+# import its NumPy/native extensions into Python 3.10 and break isolation.
+package_root = Path(__file__).resolve().parents[1]
+package_spec = importlib.util.spec_from_file_location(
+    "patent_sar_extractor",
+    package_root / "__init__.py",
+    submodule_search_locations=[str(package_root)],
+)
+if package_spec is None or package_spec.loader is None:
+    raise ImportError("First-party probe package is unavailable")
+package = importlib.util.module_from_spec(package_spec)
+sys.modules[package_spec.name] = package
+package_spec.loader.exec_module(package)
+from patent_sar_extractor.workers.analysis_protocol import (  # noqa: E402 - select the first-party package before imports
     emit,
     prepare,
     read_request,
 )
-from patent_sar_extractor.workers.environment_files import (
+from patent_sar_extractor.workers.environment_files import (  # noqa: E402 - native SDK imports keep their own site-packages
     load_json,
     read_regular,
     verify_decimer_models,

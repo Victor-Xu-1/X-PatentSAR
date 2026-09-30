@@ -187,7 +187,10 @@ class SubprocessRunner:
         try:
             with os.fdopen(fd, "ab", buffering=0) as log:
                 remaining = max(0, 8 * 1024 * 1024 - os.fstat(log.fileno()).st_size)
-                while chunk := child.stdout.read(65536):
+                # Buffered read(n) can wait for n bytes or EOF, hiding short
+                # live installation/job logs for minutes. Drain each available
+                # pipe chunk immediately while retaining the same size bound.
+                while chunk := os.read(child.stdout.fileno(), 65536):
                     if remaining:
                         log.write(chunk[:remaining])
                         remaining = max(0, remaining - len(chunk))

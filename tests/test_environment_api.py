@@ -47,6 +47,7 @@ plan = json.loads((root / 'environment-plan.json').read_text())
 while not (root / 'environment-owner.json').exists():
     time.sleep(.01)
 if mode == 'wait':
+    print('Owned operation began; live progress must not wait for EOF', flush=True)
     time.sleep(30)
 if mode == 'fail':
     print('Controlled dependency verification failure', flush=True)
@@ -274,6 +275,28 @@ class EnvironmentAPITests(unittest.TestCase):
                 self.assertNotIn("untrusted private", json.dumps(value))
                 self.assertFalse(value["applied"])
         self.assertFalse((self.config / "env_paths.local.yaml").exists())
+
+    def test_short_live_logs_are_visible_while_the_owned_worker_is_still_running(self):
+        with self.client(mode="wait") as client:
+            self.authenticate(client)
+            started = self.start(client)
+            self.assertEqual(started.status_code, 202, started.text)
+            identifier = started.json()["id"]
+            deadline = time.monotonic() + 5
+            while time.monotonic() < deadline:
+                current = client.get(
+                    "/api/v1/environments/operations/" + identifier
+                ).json()
+                if current["log_tail"]:
+                    break
+                time.sleep(0.03)
+            self.assertEqual(current["status"], "running", current)
+            self.assertIn("live progress", " ".join(current["log_tail"]))
+            cancelled = client.post(
+                "/api/v1/environments/operations/" + identifier + "/cancel", json={}
+            )
+            self.assertEqual(cancelled.status_code, 200)
+            self.assertEqual(self.completed(client, identifier)["status"], "cancelled")
 
 
 if __name__ == "__main__":

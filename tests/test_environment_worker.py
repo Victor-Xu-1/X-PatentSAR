@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 import threading
@@ -13,6 +14,7 @@ from test_environment_recipes import RecipeFixture
 
 from patent_sar_extractor.web.analysis_children import alive, read_child
 from patent_sar_extractor.web.environment_models import EnvironmentComponent
+from patent_sar_extractor.web.environment_specs import recipe_path
 from patent_sar_extractor.workers.environment_commands import (
     install_environment,
     run_command,
@@ -133,6 +135,42 @@ class WorkerProtocolTests(RecipeFixture):
         self.assertNotIn(str(operator_file).encode(), stderr)
         self.assertEqual(operator_file.read_text(), "preserve operator content")
         self.assertFalse((self.operation / "environment-result.json").exists())
+
+    def test_installed_layout_probe_never_imports_host_scientific_packages(self):
+        package_root = WORKER.parent.parent
+        host_site = self.root / "host-python312/site-packages"
+        own_package = host_site / "patent_sar_extractor"
+        (own_package / "workers").mkdir(parents=True)
+        for relative in (
+            "__init__.py",
+            "contracts.py",
+            "workers/__init__.py",
+            "workers/analysis_protocol.py",
+            "workers/environment_files.py",
+            "workers/environment_probe_worker.py",
+        ):
+            shutil.copyfile(package_root / relative, own_package / relative)
+        (host_site / "numpy.py").write_text(
+            "raise RuntimeError('foreign host native-extension environment imported')\n"
+        )
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-I",
+                str(own_package / "workers/environment_probe_worker.py"),
+            ],
+            input=json.dumps(
+                {"role": "base", "base_recipe": str(recipe_path("base-runtime.json"))}
+            ).encode(),
+            capture_output=True,
+            cwd=self.operation,
+            timeout=30,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr.decode())
+        value = json.loads(completed.stdout)
+        self.assertTrue(value["ok"], (value, completed.stderr.decode()))
+        self.assertTrue(all(check["ok"] for check in value["result"]["checks"]), value)
+        self.assertNotIn(b"foreign host", completed.stderr)
 
 
 class OwnedCommandTests(RecipeFixture):
