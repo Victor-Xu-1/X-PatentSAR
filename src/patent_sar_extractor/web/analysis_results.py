@@ -25,7 +25,8 @@ def admet_response(
             or [p.smiles for p in result.predictions] != values
         ):
             raise ValueError("Model identity or molecule order differs")
-        for prediction in result.predictions:
+        physical: dict[str, list[str]] = {}
+        for index, prediction in enumerate(result.predictions, start=1):
             if canonical_smiles(prediction.smiles) != prediction.smiles:
                 raise ValueError("Prediction molecule is not canonical")
             if {p.key for p in prediction.properties} != set(bundle.endpoints):
@@ -39,6 +40,31 @@ def admet_response(
                     or (endpoint.probability and not 0 <= prop.value <= 1)
                 ):
                     raise ValueError("Endpoint semantics differ")
+                # Explicit upstream physical bounds are warnings, not clamping or
+                # guessed inverse transforms. Log-scale negative values are valid.
+                if (
+                    prop.kind == "prediction"
+                    and not endpoint.probability
+                    and "log" not in endpoint.unit.casefold()
+                ):
+                    outside = (
+                        endpoint.minimum is not None and prop.value < endpoint.minimum
+                    ) or (
+                        endpoint.maximum is not None and prop.value > endpoint.maximum
+                    )
+                    if outside:
+                        physical.setdefault(prop.key, []).append(
+                            f"第{index}项={prop.value:.8g}"
+                        )
+        for key, observations in physical.items():
+            endpoint = bundle.endpoints[key]
+            warning = (
+                f"{key} ({endpoint.label}) 的原始模型预测（{', '.join(observations)}）{endpoint.unit} "
+                "超出上游元数据声明的物理范围，物理不合理，不得作为有效参数。"
+                "保留原值，不做 clamp/裁剪，不猜测逆变换；需核查模型适用性和端点单位。"
+            )
+            if warning not in result.warnings:
+                result.warnings.append(warning)
         return result
     except (ValidationError, ValueError, WebError) as exc:
         raise WebError(

@@ -63,6 +63,8 @@ class Endpoint:
     unit: str
     kind: str
     probability: bool
+    minimum: float | None = None
+    maximum: float | None = None
 
 
 @dataclass(frozen=True)
@@ -191,7 +193,16 @@ def _endpoints(data: bytes) -> dict[str, Endpoint]:
         unit = "probability [0,1]" if probability else row["units"]
         unit = "dimensionless" if unit == "-" else unit
         kind = "descriptor" if row["category"] == "Physicochemical" else "prediction"
-        result[key] = Endpoint(key, label, unit, kind, probability)
+        minimum, maximum = float(row["minimum"]), float(row["maximum"])
+        result[key] = Endpoint(
+            key,
+            label,
+            unit,
+            kind,
+            probability,
+            minimum if math.isfinite(minimum) else None,
+            maximum if math.isfinite(maximum) else None,
+        )
     if len(result) != 52:
         raise ValueError("ADMET-AI 2.0.1 endpoint inventory differs")
     return result
