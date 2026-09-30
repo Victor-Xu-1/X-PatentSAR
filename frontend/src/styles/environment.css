@@ -1,0 +1,224 @@
+.environment-page {
+  max-width: 1280px;
+}
+.environment-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 18px;
+}
+.environment-card {
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+.environment-card h2 {
+  font-size: 16px;
+  margin: 0 0 10px;
+  font-weight: 600;
+}
+.environment-card p {
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 8px 0;
+  overflow-wrap: anywhere;
+}
+.environment-card summary {
+  cursor: pointer;
+  color: var(--primary);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.environment-card a {
+  color: var(--accent-strong);
+  font-size: 12px;
+}
+.environment-card ul {
+  padding-left: 20px;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.location-card form {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+.location-card form > button {
+  justify-self: start;
+}
+.environment-preset {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  padding: 16px 0;
+  border-top: 1px solid var(--line-soft);
+}
+.environment-preset:last-child {
+  padding-bottom: 0;
+}
+.environment-preset > div {
+  min-width: 0;
+}
+.environment-preset h3 {
+  margin: 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.environment-preset button {
+  flex-shrink: 0;
+}
+.environment-preset .preset-components {
+  color: var(--accent-strong);
+  font-size: 11px;
+}
+.environment-detection,
+.environment-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.environment-detection {
+  margin: 22px 0 14px;
+  font-size: 12px;
+}
+.environment-section-header > div {
+  min-width: 0;
+}
+.component-library {
+  margin-bottom: 20px;
+}
+.component-group > h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 22px 0 0;
+  padding: 11px 12px;
+  border-radius: var(--radius-control);
+  color: var(--primary);
+  background: var(--surface-subtle);
+}
+.component-group > h3 small {
+  color: var(--muted);
+  font-weight: 400;
+}
+.environment-component {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.environment-component:last-child {
+  border-bottom: 0;
+}
+.environment-component-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  background: var(--surface-subtle);
+  color: var(--muted);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-control);
+}
+.environment-component-body {
+  min-width: 0;
+}
+.component-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.component-title h4 {
+  font-size: 14px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.component-title small {
+  font-size: 11px;
+}
+.component-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+  margin: 10px 0;
+  font-size: 11px;
+}
+.component-metadata > div {
+  min-width: 0;
+}
+.component-metadata dt {
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.component-metadata dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.component-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 3px;
+}
+.environment-card .component-problem {
+  color: var(--danger);
+}
+.environment-status-ready {
+  color: var(--success);
+  background: var(--success-surface);
+}
+.environment-status-missing,
+.environment-status-partial,
+.environment-status-unconfigured,
+.environment-status-checking {
+  color: var(--warning);
+  background: var(--warning-surface);
+}
+.environment-status-incompatible,
+.environment-status-error {
+  color: var(--danger);
+  background: var(--danger-surface);
+}
+.environment-status-unchecked {
+  color: var(--muted);
+  background: var(--surface-subtle);
+}
+@media (max-width: 1100px) {
+  .environment-overview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .component-actions {
+    flex-direction: column;
+  }
+}
+@media (max-width: 600px) {
+  .environment-card {
+    padding: 16px;
+  }
+  .environment-preset,
+  .environment-detection,
+  .environment-section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .environment-component {
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 10px;
+  }
+  .environment-component-icon {
+    width: 28px;
+    height: 32px;
+  }
+  .component-actions {
+    grid-column: 2;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}

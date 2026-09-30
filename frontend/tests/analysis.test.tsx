@@ -73,7 +73,7 @@ describe('bounded molecule inputs and real analysis request presentation', () =>
     await userEvent.click(screen.getByRole('button', { name: '运行本地 ADMET' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('模型环境不可用');
     expect(screen.queryByText('46.069')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '检查运行环境' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '检查环境管理' })).toHaveAttribute(
       'href',
       '#/settings',
     );

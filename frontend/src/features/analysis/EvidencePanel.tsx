@@ -30,7 +30,7 @@ export function EvidencePanel({
       </p>
       {available === false && (
         <p className="info-banner">
-          服务报告摘要能力当前不可用，以下请求会保留真实错误。<a href="#/settings">检查运行环境</a>
+          服务报告摘要能力当前不可用，以下请求会保留真实错误。<a href="#/settings">检查环境管理</a>
         </p>
       )}
       {!project ? (

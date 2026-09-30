@@ -130,7 +130,7 @@ export function NewTaskPage({
           {task.error && <ErrorNotice error={task.error} />}
           {!ready && extract && (
             <p className="info-banner">
-              提取环境尚未就绪。查看<a href="#/settings">运行环境</a>
+              提取环境尚未就绪。查看<a href="#/settings">环境管理</a>
               ，或明确选择“仅建立项目”；不会自动降级执行。
             </p>
           )}

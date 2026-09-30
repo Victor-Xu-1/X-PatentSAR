@@ -11,6 +11,7 @@ export interface Route {
   compoundId: string | null;
   layout?: LayoutState;
   resultTab?: ResultTab;
+  operationId?: string;
 }
 export const emptyRoute: Route = {
   view: 'workspace',
@@ -51,6 +52,9 @@ export function parseRoute(hash: string): Route {
     page: Number.isSafeInteger(page) && page > 0 ? page : 1,
     tab: tab === 'text' || tab === 'annotations' ? tab : 'original',
     compoundId: params.get('compound'),
+    ...(view === 'settings' && /^[A-Za-z0-9_-]{1,200}$/.test(params.get('operation') ?? '')
+      ? { operationId: params.get('operation')! }
+      : {}),
     ...(['pdfWidth', 'pdf', 'fullscreen'].some((key) => params.has(key))
       ? {
           layout: normalizeLayout({
@@ -73,6 +77,7 @@ export function routeHash(route: Route): string {
         ? '/'
         : `/${route.view}`;
   const params = new URLSearchParams();
+  if (route.view === 'settings' && route.operationId) params.set('operation', route.operationId);
   if (route.projectId && route.view === 'workspace') {
     params.set('page', String(route.page));
     params.set('tab', route.tab);

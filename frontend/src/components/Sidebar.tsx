@@ -16,7 +16,7 @@ const links = [
   { view: 'projects', label: '项目', icon: FolderOpen },
   { view: 'workspace', label: '结构与活性', icon: FlaskConical },
   { view: 'jobs', label: '任务记录', icon: Clock3 },
-  { view: 'settings', label: '运行环境', icon: Settings },
+  { view: 'settings', label: '环境管理', icon: Settings },
 ] as const;
 export function Sidebar({
   route,

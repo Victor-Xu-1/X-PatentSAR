@@ -1,29 +1,16 @@
-import { useCallback } from 'react';
-import { RefreshCw } from 'lucide-react';
-import { api } from '../../api';
-import { useResource } from '../../hooks/useResource';
-import { Empty, ErrorNotice, Loading } from '../../components/Feedback';
-export function SettingsPage() {
-  const load = useCallback((signal: AbortSignal) => api.runtime(signal), []);
-  const resource = useResource('runtime', load);
+import type { Runtime } from '../../api/types';
+import type { Resource } from '../../hooks/useResource';
+import { ErrorNotice, Loading } from '../../components/Feedback';
+export function RuntimeDiagnostics({ resource }: { resource: Resource<Runtime> }) {
   const runtime = resource.data;
   return (
-    <section className="panel management-page">
-      <header className="page-header">
-        <div>
-          <span className="eyebrow">LOCAL RUNTIME</span>
-          <h1>运行环境</h1>
-          <p className="muted">只读运行信息。配置与凭据由运营方管理，网页不写入环境路径或密钥。</p>
-        </div>
-        <button type="button" onClick={resource.reload}>
-          <RefreshCw size={16} />
-          刷新
-        </button>
-      </header>
+    <details className="panel environment-card runtime-diagnostics">
+      <summary>运行诊断</summary>
+      <p className="muted">保留本地运行信息；检测报告与配置应用不代替实际提取或模型推理验收。</p>
       {resource.error ? (
         <ErrorNotice error={resource.error} onRetry={resource.reload} />
       ) : resource.loading && !runtime ? (
-        <Loading />
+        <Loading label="正在读取运行诊断…" />
       ) : runtime ? (
         <div className="settings-sections">
           <section>
@@ -70,31 +57,16 @@ export function SettingsPage() {
           </section>
           <section>
             <h2>能力边界</h2>
-            <p>
-              本地 ADMET：
-              <span className={`badge ${runtime.capabilities.admet ? 'high' : 'review'}`}>
-                {runtime.capabilities.admet ? '服务报告可用' : '环境不可用'}
-              </span>
-            </p>
-            <p>
-              确定性证据摘要：
-              <span className={`badge ${runtime.capabilities.summary ? 'high' : 'review'}`}>
-                {runtime.capabilities.summary ? '服务报告可用' : '环境不可用'}
-              </span>
-            </p>
+            <p>本地 ADMET：{runtime.capabilities.admet ? '服务报告可用' : '环境不可用'}</p>
+            <p>确定性证据摘要：{runtime.capabilities.summary ? '服务报告可用' : '环境不可用'}</p>
             <p className="muted">
-              分析由本地后端执行；DECIMER + QC 识别真实裁图，ADMET
-              使用真实模型与描述符。模型、解释器、CPU
-              与缓存由运营方配置，网页不改环境。能力报告不代替实际推理验收。
-            </p>
-            <p className="muted">
-              证据摘要是确定性统计，不是 LLM；这些复核能力不改变核心提取与正式 QA。
+              组件安装不会修改专利产物、绑定、人工复核或正式 QA。证据摘要是确定性统计，不是 LLM。
             </p>
           </section>
         </div>
       ) : (
-        <Empty title="运行信息尚未提供" description="连接本地 API 后重新加载。" />
+        <p className="info-banner">运行信息尚未提供。</p>
       )}
-    </section>
+    </details>
   );
 }

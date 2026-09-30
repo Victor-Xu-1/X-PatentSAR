@@ -5,7 +5,7 @@ const viewLabels: Record<View, string> = {
   workspace: '结构与活性工作台',
   projects: '项目管理',
   jobs: '任务记录',
-  settings: '运行环境',
+  settings: '环境管理',
   'new-task': '新建提取任务',
 };
 export function Header({

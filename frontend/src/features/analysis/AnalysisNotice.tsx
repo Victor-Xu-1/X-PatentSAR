@@ -11,7 +11,7 @@ export function AnalysisNotice({ available }: { available?: boolean | null }) {
         </p>
       )}
       <a className="link-button" href="#/settings">
-        检查运行环境
+        检查环境管理
       </a>
     </div>
   );

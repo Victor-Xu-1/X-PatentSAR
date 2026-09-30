@@ -80,8 +80,9 @@ test('warm workspace style is consistent across navigation, management and the a
   const create = page.getByRole('button', { name: '新建项目', exact: true });
   await expect(create).toHaveCSS('background-color', palette.primary);
   await expectReadableText(create);
-  await page.getByRole('button', { name: '运行环境', exact: true }).click();
-  await expect(page.getByRole('heading', { name: '运行环境' })).toHaveCSS('font-family', /Georgia/);
+  await page.getByRole('button', { name: '环境管理', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '环境管理' })).toHaveCSS('font-family', /Georgia/);
+  await page.getByText('运行诊断', { exact: true }).click();
   await expect(page.locator('.runtime-table th').first()).toHaveCSS(
     'background-color',
     palette.subtle,
@@ -159,8 +160,8 @@ test('populated mobile workspace contains its table and keeps dialogs and naviga
   await page.keyboard.press('Escape');
   await page.getByLabel('展开或收起导航').click();
   await expect(page.locator('.sidebar')).toHaveCSS('background-color', palette.sidebar);
-  await page.getByRole('button', { name: '运行环境', exact: true }).click();
-  await expect(page.getByRole('heading', { name: '运行环境' })).toBeVisible();
+  await page.getByRole('button', { name: '环境管理', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '环境管理' })).toBeVisible();
   await expect(page.getByLabel('展开或收起导航')).toHaveAttribute('aria-expanded', 'false');
   await expect
     .poll(() =>

@@ -13,11 +13,13 @@ import {
 import type { Filters, JobOptions, ReviewDecision } from './types';
 import { decodeAdmet, decodeEvidenceSummary, decodeRecognition } from './analysisDecoders';
 import { ContractError } from './validation';
+import { environmentApi } from './environmentApi';
 
 export const client = new ApiClient();
 const segment = encodeURIComponent;
 const projectPath = (id: string) => `/projects/${segment(id)}`;
 export const api = {
+  ...environmentApi(client),
   session: () => client.bootstrap(),
   health: (signal: AbortSignal) => client.get('/health', decodeHealth, signal),
   projects: (signal: AbortSignal) => client.get('/projects', decodeProjects, signal),

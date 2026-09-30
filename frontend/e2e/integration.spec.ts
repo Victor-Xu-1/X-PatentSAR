@@ -56,8 +56,9 @@ test.describe('real local backend integration', () => {
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2),
       ).toBe(true);
       if (viewport.width < 760) await page.getByLabel('展开或收起导航').click();
-      await page.getByRole('button', { name: '运行环境', exact: true }).click();
-      await expect(page.getByRole('heading', { name: '运行环境' })).toBeVisible();
+      await page.getByRole('button', { name: '环境管理', exact: true }).click();
+      await expect(page.getByRole('heading', { name: '环境管理' })).toBeVisible();
+      await page.getByText('运行诊断', { exact: true }).click();
       await expect(page.getByText('产品与存储')).toBeVisible();
       expect(errors).toEqual([]);
     });

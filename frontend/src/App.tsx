@@ -15,7 +15,7 @@ import { AttachPdfDialog } from './features/projects/AttachPdfDialog';
 import { NewTaskPage } from './features/tasks/NewTaskPage';
 import { useJobs } from './features/jobs/useJobs';
 import { JobsPage } from './features/jobs/JobsPage';
-import { SettingsPage } from './features/settings/SettingsPage';
+import { EnvironmentPage } from './features/environment/EnvironmentPage';
 
 export default function App() {
   const { route, navigate } = useRoute();
@@ -118,7 +118,7 @@ export default function App() {
           {connection.error && <ErrorNotice error={connection.error} onRetry={reconnect} />}
           {connected && !connection.data?.health.ready && (
             <output className="info-banner runtime-banner">
-              API 已连接，本地服务尚未就绪。已有项目可查看，运行按钮保持禁用；详情请查看运行环境。
+              API 已连接，本地服务尚未就绪。已有项目可查看，运行按钮保持禁用；详情请查看环境管理。
             </output>
           )}
           {projectResource.error && (
@@ -159,7 +159,13 @@ export default function App() {
               onOpen={openProject}
             />
           )}
-          {route.view === 'settings' && connected && <SettingsPage />}
+          {route.view === 'settings' && connected && (
+            <EnvironmentPage
+              operationId={route.operationId ?? null}
+              onOperation={(operationId) => navigate({ ...route, operationId })}
+              product={connection.data!.health.product}
+            />
+          )}
           {route.view === 'new-task' && (
             <NewTaskPage
               connected={connected}
