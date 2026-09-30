@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 
 from fastapi.testclient import TestClient
+
 from patent_sar_extractor.web.app import create_app
 from patent_sar_extractor.web.service import import_run
 

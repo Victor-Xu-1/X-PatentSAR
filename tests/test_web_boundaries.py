@@ -7,7 +7,7 @@ import time
 import unittest
 from pathlib import Path
 
-import httpx
+import httpx2 as httpx
 import uvicorn
 from test_web_support import BASE_URL, WebFixture
 

@@ -5,8 +5,8 @@ recursive-include src/patent_sar_extractor/core/ocsr *.yaml
 recursive-include examples *.yaml
 recursive-include tests *.py
 recursive-include tools *.py
-include frontend/*.json frontend/*.ts frontend/index.html frontend/.nvmrc
+include frontend/*.json frontend/*.ts frontend/index.html
+include frontend/.oxlintrc.json frontend/.prettierrc.json frontend/.prettierignore frontend/.gitignore
 recursive-include frontend/src *.ts *.tsx *.css *.svg
-recursive-include frontend/public *.svg *.png *.ico
 recursive-include frontend/tests *.ts *.tsx
 recursive-include src/patent_sar_extractor/web/static *

@@ -101,9 +101,9 @@ has a clear disabled/informational state. No fictional molecules, assays or coun
 
 ## Implementation and validation plan
 
-1. In progress: implement the API and reference-layout UI in isolated worktrees,
+1. Complete: implement the API and reference-layout UI in isolated worktrees,
    and integrate CLI entry points, packaging and E-drive launchers.
-2. Pending: verify real PDF/SQLite/job/review/export behavior, frontend state and
+2. In progress: verify real PDF/SQLite/job/review/export behavior, frontend state and
    components, and the complete user workflow in a real Chromium browser.
 3. Pending: build the Web assets and wheel from a clean checkout, verify installed
    startup and security boundaries, then push the private Apache-2.0 repository.
@@ -121,3 +121,10 @@ gates remain required. No new LLM feature is introduced by this presentation wor
 The portable CLI defaults to 8765. This workstation uses 18765 because 8765 and
 8766 are already occupied by other applications. Source, environments, models,
 state, build evidence and development caches remain on the E-drive WSL system.
+
+Current integration evidence: 141 Python tests and 80 frontend tests passed;
+all seven real Chromium workflows passed against the local stack. The separate
+real WO2026156070 history workflow also passed with immutable source artifacts.
+Its 1,189 structures, 1,157 activity rows and 1,156 compounds remain historical;
+the original PDF is absent and no formal acceptance is claimed. Deployment and
+clean-checkout evidence must still be bound to the final candidate revision.

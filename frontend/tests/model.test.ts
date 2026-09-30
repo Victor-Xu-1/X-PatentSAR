@@ -13,6 +13,21 @@ import { safeAssetUrl } from '../src/api';
 import { compound, health, job, page, project } from './fixtures';
 
 describe('routes and presentation', () => {
+  it('preserves measured ranges without appending a duplicate unit', () => {
+    const activity = {
+      name: 'DC50 (nM)',
+      value: '10 - 100 nM',
+      unit: 'nM',
+      target: null,
+      assay: null,
+      page: null,
+    };
+    expect(activityText(activity)).toBe('DC50 (nM) = 10 - 100 nM');
+    expect(activityText({ ...activity, value: '<1 nM' })).toBe('DC50 (nM) = <1 nM');
+    expect(activityText({ ...activity, value: 0 })).toBe('DC50 (nM) = 0 nM');
+    expect(activityText({ ...activity, value: '1 nM', unit: 'M' })).toBe('DC50 (nM) = 1 nM M');
+    expect(activity.value).toBe('10 - 100 nM');
+  });
   it('preserves workspace, page, tab and source selection in refreshable links', () => {
     const route = {
       view: 'workspace' as const,

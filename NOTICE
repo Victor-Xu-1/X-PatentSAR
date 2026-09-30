@@ -5,3 +5,13 @@ This project's first-party source code is licensed under Apache-2.0.
 Third-party libraries retain their respective licenses. Patent documents,
 user datasets, credentials and externally installed model weights are not
 distributed with this repository and are not relicensed by this project.
+
+The PDF engine PyMuPDF/MuPDF is offered by Artifex under AGPL and commercial
+license agreements. It is an external runtime dependency, not Apache-2.0 code.
+Use and redistribution must follow the selected upstream license; this project's
+Apache-2.0 license does not replace those terms. See:
+https://pymupdf.readthedocs.io/en/latest/about.html#license-and-copyright
+
+Frontend third-party attribution is generated into THIRD_PARTY_LICENSES.md
+and retained in the installed Web bundle. Scientific model weights remain
+operator-installed and subject to their original licenses.

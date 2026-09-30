@@ -11,7 +11,7 @@ export default defineConfig({
   retries: 0,
   timeout: 90_000,
   expect: { timeout: 15_000 },
-  outputDir: process.env.PATENTSAR_E2E_OUTPUT_DIR ?? '/srv/wsl/tmp/x-patentsar-ui-e2e',
+  outputDir: process.env.PATENTSAR_E2E_OUTPUT_DIR ?? 'test-results',
   reporter: [['list']],
   use: {
     baseURL,

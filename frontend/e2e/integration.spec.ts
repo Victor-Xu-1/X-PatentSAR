@@ -11,6 +11,32 @@ let uploadedId = '';
 
 test.describe('real local backend integration', () => {
   test.describe.configure({ mode: 'serial' });
+  test.beforeAll(async ({ request }) => {
+    await expect
+      .poll(
+        async () => {
+          try {
+            const response = await request.get('/api/v1/health', { timeout: 2500 });
+            return response.ok() && (await response.json()).ready === true;
+          } catch {
+            return false;
+          }
+        },
+        { timeout: 45000, intervals: [250, 500, 1000] },
+      )
+      .toBe(true);
+    if (
+      process.env.CI &&
+      (!existsSync(pdfPath) ||
+        !historyId ||
+        !failureId ||
+        process.env.PATENTSAR_E2E_RUN_JOBS !== '1')
+    ) {
+      throw new Error(
+        'CI requires PDF, history, failed-job and owned-job fixtures; integration cases must not be skipped',
+      );
+    }
+  });
   for (const viewport of [
     { width: 1672, height: 942 },
     { width: 1280, height: 800 },
@@ -53,9 +79,17 @@ test.describe('real local backend integration', () => {
     const request = response.request();
     expect(request.headers()['content-type']).toBe('application/pdf');
     expect(request.headers()['x-csrf-token']).toBeTruthy();
-    const project = (await response.json()) as { id: string; pdf: { page_count: number } };
-    uploadedId = project.id;
-    await expect(page).toHaveURL(new RegExp(encodeURIComponent(uploadedId)));
+    // Chromium may evict an upload's inspector body when the app navigates.
+    // Verify the durable result through its authenticated API after navigation.
+    await expect(page).toHaveURL(/#\/projects\/[a-f0-9]{32}/);
+    const projectId = page.url().match(/#\/projects\/([a-f0-9]{32})/)?.[1];
+    expect(projectId).toBeTruthy();
+    uploadedId = projectId!;
+    const persisted = await page.request.get(`/api/v1/projects/${uploadedId}`);
+    expect(persisted.ok()).toBe(true);
+    const project = (await persisted.json()) as { id: string; pdf: { page_count: number } };
+    expect(project.id).toBe(uploadedId);
+    expect(project.pdf.page_count).toBeGreaterThan(0);
     await expect(page.getByRole('img', { name: '原始专利 PDF 第 1 页' })).toBeVisible();
     const pageInput = page.getByLabel('原始文档页码');
     await pageInput.fill(String(Math.min(2, project.pdf.page_count)));
@@ -81,7 +115,9 @@ test.describe('real local backend integration', () => {
     const loaded = page.waitForResponse((value) => value.url().includes('/results?') && value.ok());
     await page.goto(`/#/projects/${encodeURIComponent(historyId!)}?page=1&tab=original`);
     const response = await loaded;
-    const result = (await response.json()) as Results;
+    const persistedResults = await page.request.get(response.url());
+    expect(persistedResults.ok()).toBe(true);
+    const result = (await persistedResults.json()) as Results;
     expect(result.items.length).toBeGreaterThan(0);
     await expect(page.getByText(/尚未提供原始 PDF|原始 PDF 页面不可用/)).toBeVisible();
     if (result.total > result.page_size) {
@@ -110,7 +146,7 @@ test.describe('real local backend integration', () => {
       await expect(page.getByRole('dialog').getByRole('img')).toBeVisible();
       await page.getByLabel('关闭对话框').click();
     }
-    await page.getByLabel(`选择化合物 ${compound.display_id}`).check();
+    await page.getByLabel(`选择化合物 ${compound.display_id}`, { exact: true }).check();
     await page.getByLabel(`复核 ${compound.display_id}`, { exact: true }).click();
     const note = `真实浏览器复核 ${new Date().toISOString()}`;
     await page.getByLabel('复核注记').fill(note);
@@ -120,7 +156,7 @@ test.describe('real local backend integration', () => {
     await page.getByLabel(`复核 ${compound.display_id}`, { exact: true }).click();
     await expect(page.getByLabel('复核注记')).toHaveValue(note);
     await page.getByRole('button', { name: '取消', exact: true }).click();
-    await page.getByLabel(`选择化合物 ${compound.display_id}`).check();
+    await page.getByLabel(`选择化合物 ${compound.display_id}`, { exact: true }).check();
     await page.getByRole('button', { name: /导出所选/ }).click();
     const downloaded = page.waitForEvent('download');
     await page.getByRole('button', { name: '生成并下载' }).click();
@@ -129,12 +165,20 @@ test.describe('real local backend integration', () => {
     expect(await download.failure()).toBeNull();
     await page.getByRole('button', { name: '关闭', exact: true }).click();
     const filtered = page.waitForResponse(
-      (value) => value.url().includes('/results?') && value.ok(),
+      (value) =>
+        value.url().includes('/results?') &&
+        value.ok() &&
+        new URL(value.url()).searchParams.get('q') === compound.display_id,
     );
     await page.getByLabel('搜索结果', { exact: true }).fill(compound.display_id);
-    expect(((await (await filtered).json()) as Results).total).toBeGreaterThan(0);
+    const filteredResponse = await filtered;
+    const durableFiltered = await page.request.get(filteredResponse.url());
+    const filteredResults = (await durableFiltered.json()) as Results;
+    expect(filteredResults.total).toBeGreaterThan(0);
+    await expect(page.locator('.pagination')).toContainText(`共 ${filteredResults.total} 个化合物`);
     await page.getByRole('button', { name: '导出结果', exact: true }).click();
     await page.getByLabel('导出范围').selectOption('filtered');
+    await page.getByLabel('文件格式').selectOption('json');
     const exported = page.waitForResponse(
       (value) => value.request().method() === 'POST' && value.url().includes('/export?'),
     );
@@ -145,7 +189,18 @@ test.describe('real local backend integration', () => {
     expect(exportUrl.searchParams.get('q')).toBe(compound.display_id);
     expect(exportUrl.searchParams.has('page')).toBe(false);
     expect(exportResponse.request().postDataJSON()).toMatchObject({ compound_ids: [] });
-    expect(await (await filteredDownload).failure()).toBeNull();
+    const actualDownload = await filteredDownload;
+    expect(await actualDownload.failure()).toBeNull();
+    const stream = await actualDownload.createReadStream();
+    expect(stream).not.toBeNull();
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream!) chunks.push(Buffer.from(chunk));
+    const downloadedJson = JSON.parse(Buffer.concat(chunks).toString('utf8')) as {
+      items: unknown[];
+      review_only: boolean;
+    };
+    expect(downloadedJson.items).toHaveLength(filteredResults.total);
+    expect(downloadedJson.review_only).toBe(true);
   });
   test('owned real job can be started, cancelled and refreshed', async ({ page }) => {
     test.skip(
@@ -180,7 +235,7 @@ test.describe('real local backend integration', () => {
     await page.goto('/#/jobs');
     const card = page.locator('.job-card').filter({ hasText: job.id });
     await expect(card).toBeVisible();
-    await expect(card.getByText('运行失败', { exact: true })).toBeVisible();
+    await expect(card.locator('.job-actions .badge')).toHaveText('运行失败');
     await expect(card.locator('.job-error')).toContainText(job.error!.message);
   });
 });

@@ -43,7 +43,7 @@ x-patentsar = "patent_sar_extractor.cli:main"
 web = ["fastapi==0.142.2", "uvicorn==0.54.0"]
 
 [dependency-groups]
-dev = ["httpx==0.28.1", "ruff==0.16.9", "mypy==2.3.1"]
+dev = ["httpx2==2.13.1", "ruff==0.16.9", "mypy==2.3.1"]
 
 [tool.uv]
 environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]

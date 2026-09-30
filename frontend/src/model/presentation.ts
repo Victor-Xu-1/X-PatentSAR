@@ -53,7 +53,12 @@ export const reviewLabels: Record<ReviewDecision, string> = {
 export const activeJob = (job: Job) => job.status === 'running' || job.status === 'queued';
 export function activityText(activity: Activity): string {
   const value = activity.value === null ? '值未提供' : String(activity.value);
-  return `${activity.name || '活性'} = ${value}${activity.unit ? ` ${activity.unit}` : ''}`;
+  const unit = activity.unit?.trim() ?? '';
+  const escaped = unit.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const alreadyPresent =
+    unit !== '' && new RegExp(`(?:^|[^\\p{L}])${escaped}\\s*$`, 'u').test(value);
+  const suffix = unit && activity.value !== null && !alreadyPresent ? ` ${unit}` : '';
+  return `${activity.name || '活性'} = ${value}${suffix}`;
 }
 export function dateText(value: string | null): string {
   if (!value) return '—';
