@@ -158,6 +158,7 @@ def component_spec(component_id: str) -> ComponentSpec:
 def recipe_path(name: str) -> Path:
     if name not in {
         "base-requirements.txt",
+        "base-runtime.json",
         "admet-cpu-requirements.txt",
         "decimer-requirements.txt",
         "decimer-models.json",
@@ -171,7 +172,8 @@ def recipe_path(name: str) -> Path:
 def catalog_fingerprint() -> str:
     recipes = {}
     for name in sorted(
-        {s.requirements for s in _SPECS if s.requirements} | {"decimer-models.json"}
+        {s.requirements for s in _SPECS if s.requirements}
+        | {"decimer-models.json", "base-runtime.json"}
     ):
         path = recipe_path(name)
         recipes[name] = (

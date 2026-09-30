@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import platform
 import signal
 import sys
@@ -10,6 +11,7 @@ import threading
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from patent_sar_extractor.workers.environment_errors import failure_from_exception
 from patent_sar_extractor.workers.environment_files import atomic_json
 from patent_sar_extractor.workers.environment_plan import (
     read_plan,
@@ -24,6 +26,7 @@ def main() -> int:
     cancel = threading.Event()
     signal.signal(signal.SIGTERM, lambda _sig, _frame: cancel.set())
     signal.signal(signal.SIGINT, lambda _sig, _frame: cancel.set())
+    provisioner = None
     try:
         if (
             sys.version_info[:2] != (3, 12)
@@ -41,7 +44,8 @@ def main() -> int:
             EnvironmentProvisioner,
         )
 
-        result = EnvironmentProvisioner(plan, cancel, inspect_components).execute()
+        provisioner = EnvironmentProvisioner(plan, cancel, inspect_components)
+        result = provisioner.execute()
         if cancel.is_set():
             raise InterruptedError("Operation cancelled before result publication")
         atomic_json(
@@ -50,8 +54,32 @@ def main() -> int:
         return 0
     except Exception as exc:  # noqa: BLE001 - fail-closed process boundary; never expose upstream payloads
         # Paths, upstream errors, raw command output and tracebacks are private.
+        error = failure_from_exception(exc)
+        if provisioner is not None:
+            try:
+                atomic_json(
+                    plan.operation_dir,
+                    "environment-progress.json",
+                    {
+                        "stage": f"失败 [{error.code}]: {error.message}",
+                        "completed_components": provisioner.completed,
+                    },
+                    limit=64 * 1024,
+                )
+            except (OSError, ValueError):
+                print(
+                    "Environment failure progress could not be persisted.",
+                    file=sys.stderr,
+                )
         print(
-            f"Environment operation failed type={type(exc).__name__}; no success result published.",
+            json.dumps(
+                {
+                    "environment_error": error.code,
+                    "message": error.message,
+                    "tail": error.tail,
+                },
+                ensure_ascii=True,
+            ),
             file=sys.stderr,
             flush=True,
         )

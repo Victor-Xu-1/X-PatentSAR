@@ -15,12 +15,14 @@ from pathlib import Path
 from patent_sar_extractor.web.environment_models import EnvironmentComponent
 from patent_sar_extractor.web.environment_specs import (
     component_catalog,
+    recipe_path,
     resolved_components,
 )
 from patent_sar_extractor.workers.environment_assets import (
     download,
     extract_model_group,
 )
+from patent_sar_extractor.workers.environment_errors import EnvironmentFailure
 from patent_sar_extractor.workers.environment_files import (
     atomic_json,
     checked_directory,
@@ -29,6 +31,10 @@ from patent_sar_extractor.workers.environment_plan import (
     COMPONENT_IDS,
     read_plan,
     wait_for_owner,
+)
+from patent_sar_extractor.workers.environment_recipes import (
+    EnvironmentProvisioner,
+    segmentation_config,
 )
 
 
@@ -96,6 +102,34 @@ class CatalogTests(RecipeFixture):
         with self.assertRaises(ValueError):
             resolved_components(["arbitrary-package"])
 
+    def test_canonical_base_manifest_is_packaged_and_fingerprinted(self):
+        manifest = json.loads(recipe_path("base-runtime.json").read_bytes())
+        self.assertEqual(manifest["schema_version"], 1)
+        self.assertEqual(manifest["python"], "3.12")
+        self.assertEqual(
+            manifest["requirements_sha256"],
+            hashlib.sha256(
+                recipe_path("base-requirements.txt").read_bytes()
+            ).hexdigest(),
+        )
+
+    def test_install_prefix_collision_and_precancel_preserve_operator_files(self):
+        plan = self.plan(action="install")
+        prefix = self.install / f"installer-0.11.31-{self.identifier}"
+        prefix.mkdir()
+        marker = prefix / "operator.txt"
+        marker.write_text("preserve")
+        provisioner = EnvironmentProvisioner(
+            plan, threading.Event(), lambda *_args, **_kwargs: []
+        )
+        with self.assertRaises(FileExistsError):
+            provisioner.install("installer")
+        self.assertEqual(marker.read_text(), "preserve")
+        provisioner.cancel.set()
+        with self.assertRaises(InterruptedError):
+            provisioner.install("admet")
+        self.assertFalse((self.install / f"admet-2.0.1-cpu-{self.identifier}").exists())
+
     def test_plan_rejects_arbitrary_fields_paths_schema_and_duplicate_ids(self):
         for changes in (
             {"url": "https://example.org/"},
@@ -155,11 +189,20 @@ class CatalogTests(RecipeFixture):
 
 
 class ModelAssetTests(RecipeFixture):
+    def test_segmentation_metadata_refuses_tampered_asset_without_an_sdk_import(self):
+        self.assertEqual(segmentation_config(self.root), {})
+        asset = self.root / "segmentation/mask_rcnn_molecule.h5"
+        asset.parent.mkdir()
+        asset.write_bytes(b"tampered")
+        with self.assertRaises(ValueError):
+            segmentation_config(self.root)
+        self.assertEqual(asset.read_bytes(), b"tampered")
+
     def test_cached_tamper_refuses_without_network_or_overwrite(self):
         digest = hashlib.sha256(b"reviewed").hexdigest()
         cached = self.cache / (digest + ".asset")
         cached.write_bytes(b"tampered")
-        with self.assertRaises(ValueError):
+        with self.assertRaises(EnvironmentFailure):
             download(
                 "https://files.pythonhosted.org/reviewed.whl",
                 self.cache,
@@ -204,7 +247,7 @@ class ModelAssetTests(RecipeFixture):
         with self.assertRaises(FileExistsError):
             extract_model_group(archive, destination, group, threading.Event())
         group["files"][0]["sha256"] = "0" * 64
-        with self.assertRaises(ValueError):
+        with self.assertRaises(EnvironmentFailure):
             extract_model_group(
                 archive, self.root / "tampered", group, threading.Event()
             )

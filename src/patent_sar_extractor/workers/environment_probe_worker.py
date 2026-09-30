@@ -51,15 +51,16 @@ def probe(request: dict[str, object]) -> dict[str, object]:
             "Actual owned uv --version",
         )
     elif role == "base":
-        found = versions(["PyMuPDF", "rapidocr-onnxruntime", "rdkit"])
-        expected = {
-            "PyMuPDF": "1.27.2.3",
-            "rapidocr-onnxruntime": "1.4.4",
-            "rdkit": "2026.3.1",
-        }
+        recipe = load_json(Path(str(request["base_recipe"])))
+        if recipe.get("schema_version") != 1 or recipe.get("python") != "3.12":
+            raise ValueError("Canonical base-runtime manifest differs")
+        expected = recipe["distributions"]
+        found = versions(list(expected))
         check("python", sys.version_info[:2] == (3, 12), "Requires native Python 3.12")
         check(
-            "versions", found == expected, "Pinned PDF/RapidOCR/RDKit versions checked"
+            "versions",
+            found == expected,
+            "All canonical uv.lock runtime distributions checked",
         )
         import fitz
         from PIL import Image, ImageDraw, ImageFont
@@ -210,6 +211,13 @@ def probe(request: dict[str, object]) -> dict[str, object]:
                     else Path(str(result["segmentation_path"]))
                 )
                 model = configure_segmentation_model(chosen)
+                check(
+                    "segmentation_source",
+                    True,
+                    "Verified bundle-external segmentation weights"
+                    if external.is_file()
+                    else "Verified legacy package-local segmentation weights reused read-only",
+                )
                 check(
                     "segmentation_loaded",
                     len(model.keras_model.weights) > 0,

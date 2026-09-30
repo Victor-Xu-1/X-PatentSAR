@@ -29,6 +29,7 @@ from patent_sar_extractor.web.environment_specs import (
 from .admet_models import prepare
 from .environment_assets import download, extract_model_group
 from .environment_commands import install_environment, run_command
+from .environment_errors import EnvironmentFailure
 from .environment_files import atomic_json, checked_directory, file_sha256, load_json
 from .environment_plan import EnvironmentPlan
 
@@ -68,6 +69,7 @@ class EnvironmentProvisioner:
         )
         reports = []
         verified = {}
+        additional = {}
         for identifier in ids:
             self.progress(f"检查组件 {identifier}")
             card = self.inspect(
@@ -87,21 +89,36 @@ class EnvironmentProvisioner:
                     cancel=self.cancel,
                 )[0]
                 if card.status != "ready":
-                    raise RuntimeError(
-                        "New component failed real verification; it was not activated"
+                    raise EnvironmentFailure(
+                        "verification_failed",
+                        [
+                            f"error: check={c.name}: {c.message}"
+                            for c in card.checks
+                            if not c.ok
+                        ],
                     )
             if card.status == "ready":
                 assert card.location is not None
                 verified[identifier] = card.location
+                if identifier == "decimer-models":
+                    python = self.bindings["decimer"]
+                    additional.update(
+                        segmentation_config(
+                            Path(card.location), Path(python) if python else None
+                        )
+                    )
             reports.append(card.model_dump(mode="json"))
             self.completed.append(identifier)
         self.progress("实际组件验证完成；等待主进程决定是否启用")
-        return {
+        result: dict[str, object] = {
             "schema_version": 1,
             "operation_id": self.plan.operation_id,
             "components": reports,
             "bindings": verified,
         }
+        if additional:
+            result["additional_config"] = additional
+        return result
 
     def install(self, identifier: ComponentId) -> Path:
         if self.cancel.is_set():
@@ -130,6 +147,7 @@ class EnvironmentProvisioner:
                 size=14311533,
                 sha256=ADMET_WHEEL_SHA256,
                 cancel=self.cancel,
+                progress=self.download_progress,
             )
             binding = prefix / "models"
             prepare(wheel, binding)
@@ -157,6 +175,7 @@ class EnvironmentProvisioner:
             size=26894006,
             sha256=UV_WHEEL_SHA256,
             cancel=self.cancel,
+            progress=self.download_progress,
         )
         with zipfile.ZipFile(wheel) as source:
             members = [
@@ -255,6 +274,7 @@ class EnvironmentProvisioner:
                 size=group["download_bytes"],
                 md5=group["md5"],
                 cancel=self.cancel,
+                progress=self.download_progress,
             )
             extract_model_group(archive, root, group, self.cancel)
         segment = recipe["segmentation"]
@@ -266,9 +286,38 @@ class EnvironmentProvisioner:
             sha256=segment["sha256"],
             md5=segment["md5"],
             cancel=self.cancel,
+            progress=self.download_progress,
         )
         target = root / "segmentation/mask_rcnn_molecule.h5"
         target.parent.mkdir(mode=0o700)
         with asset.open("rb") as source, target.open("xb") as output:
             shutil.copyfileobj(source, output, 1024 * 1024)
         return root
+
+    def download_progress(self, received: int, total: int) -> None:
+        self.progress(f"官方资源下载：{received} / {total} bytes（完成后仍须核验内容）")
+
+
+def segmentation_config(
+    model_root: Path, decimer_python: Path | None = None
+) -> dict[str, str]:
+    """Called after readiness; select verified bundled or read-only legacy H5."""
+    from .environment_segmentation import SEGMENTATION_SHA256
+
+    weights = model_root / "segmentation/mask_rcnn_molecule.h5"
+    if not weights.exists():
+        if decimer_python is None:
+            return {}
+        # The selected, actually checked Python 3.10 environment's package-local
+        # official cache is read-only. Never relocate or write into that env.
+        weights = (
+            decimer_python.parent.parent
+            / "lib/python3.10/site-packages/decimer_segmentation/mask_rcnn_molecule.h5"
+        )
+        if not weights.exists():
+            raise ValueError(
+                "Loaded legacy segmentation path could not be derived safely"
+            )
+    if file_sha256(weights) != SEGMENTATION_SHA256:
+        raise ValueError("Segmentation binding changed before publication")
+    return {"decimer_segmentation_models": str(weights)}

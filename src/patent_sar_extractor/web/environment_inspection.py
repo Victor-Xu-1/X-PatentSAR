@@ -123,6 +123,8 @@ def inspect_components(
         key = role + (model_name or "")
         if key not in results:
             payload: dict[str, object] = {"role": role}
+            if role == "base":
+                payload["base_recipe"] = str(recipe_path("base-runtime.json"))
             if role in {"decimer-ocsrc", "decimer-segmentation"}:
                 payload.update(
                     model_root=str(context.decimer_models),

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import os
 import selectors
 import subprocess
@@ -11,6 +12,8 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from patent_sar_extractor.web.analysis_children import Children, alive, read_child
+
+from .environment_errors import DiagnosticTail, EnvironmentFailure
 
 
 def install_environment(cache_root: Path, operation_dir: Path) -> dict[str, str]:
@@ -28,6 +31,9 @@ def install_environment(cache_root: Path, operation_dir: Path) -> dict[str, str]
         "UV_CACHE_DIR": str(cache_root / "uv"),
         "UV_HTTP_RETRIES": "1",
         "UV_HTTP_TIMEOUT": "30",
+        "UV_CONCURRENT_DOWNLOADS": "2",
+        "UV_CONCURRENT_INSTALLS": "1",
+        "UV_CONCURRENT_BUILDS": "1",
         "UV_NO_CONFIG": "1",
         "UV_NO_PROGRESS": "1",
         "UV_PYTHON_INSTALL_DIR": str(operation_dir / "python-downloads"),
@@ -56,6 +62,8 @@ def run_command(
     cancel: threading.Event,
     timeout: float = 3600,
 ) -> None:
+    if not math.isfinite(timeout) or not 0.05 <= timeout <= 3600:
+        raise ValueError("Installer stage must be finite and bounded by 3600 seconds")
     if cancel.is_set():
         raise InterruptedError("Operation cancelled")
     child = subprocess.Popen(
@@ -69,11 +77,12 @@ def run_command(
     owner = None
     selector = selectors.DefaultSelector()
     total = 0
-    deadline = time.monotonic() + min(timeout, 3600)
+    diagnostics = DiagnosticTail()
+    deadline = time.monotonic() + timeout
     try:
         identity = read_child(child.pid)
         if identity is None:
-            raise RuntimeError("Installer child ownership could not be established")
+            raise EnvironmentFailure("ownership_failed")
         owner = Children(identity, 4608 * 1024 * 1024)
         assert child.stdout is not None
         os.set_blocking(child.stdout.fileno(), False)
@@ -89,10 +98,11 @@ def run_command(
                 if not chunk:
                     selector.unregister(key.fileobj)
                 total += len(chunk)
+                diagnostics.feed(chunk)
                 if total > 8 * 1024 * 1024:
-                    raise RuntimeError("Installer output exceeded its bound")
+                    raise EnvironmentFailure("output_limit")
         if child.wait(timeout=2) != 0:
-            raise RuntimeError("Pinned installer command failed")
+            raise diagnostics.failure()
     finally:
         selector.close()
         if owner is not None:
@@ -103,4 +113,4 @@ def run_command(
         if child.stdout:
             child.stdout.close()
         if owner is not None and any(alive(c) for c in owner.observed.values()):
-            raise RuntimeError("Owned installer child cleanup was not verified")
+            raise EnvironmentFailure("cleanup_failed")
