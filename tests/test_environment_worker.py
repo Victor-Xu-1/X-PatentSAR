@@ -111,6 +111,29 @@ class WorkerProtocolTests(RecipeFixture):
         self.assertEqual(result["bindings"], {})
         self.assertFalse(touched.exists())
 
+    def test_real_worker_publishes_only_fixed_identity_bound_failure_after_ack(self):
+        self.plan(requires_owner_ack=True)
+        operator_file = self.root / "operator.txt"
+        operator_file.write_text("preserve operator content")
+        (self.operation / "environment-progress.json").symlink_to(operator_file)
+        child = self.start()
+        self.acknowledge(child)
+        _, stderr = child.communicate(timeout=15)
+        self.assertNotEqual(child.returncode, 0)
+        value = json.loads((self.operation / "environment-failure.json").read_bytes())
+        self.assertEqual(
+            value,
+            {
+                "schema_version": 1,
+                "operation_id": self.identifier,
+                "code": "invalid_content",
+            },
+        )
+        self.assertNotIn(b"Traceback", stderr)
+        self.assertNotIn(str(operator_file).encode(), stderr)
+        self.assertEqual(operator_file.read_text(), "preserve operator content")
+        self.assertFalse((self.operation / "environment-result.json").exists())
+
 
 class OwnedCommandTests(RecipeFixture):
     def test_timeout_and_cancel_stop_owned_detached_child_not_unrelated_process(self):

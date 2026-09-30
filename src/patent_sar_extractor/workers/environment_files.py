@@ -64,6 +64,7 @@ def atomic_json(directory: Path, name: str, payload: object, *, limit: int) -> N
     if name not in {
         "environment-progress.json",
         "environment-result.json",
+        "environment-failure.json",
         "receipt.json",
     }:
         raise ValueError("Unknown worker artifact")
