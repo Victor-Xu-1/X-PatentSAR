@@ -20,6 +20,7 @@ from .errors import WebError
 from .files import MAX_RECORDS, SafeFiles, records
 from .models import Activity, Compound, Confidence, ConfidenceLevel, Source, Summary
 from .molecule_drawing import drawing_url
+from .processes import runtime_identity
 from .recognition import recognition_status
 
 
@@ -562,6 +563,7 @@ class ArtifactView:
             needs_review=len(compounds) - confirmed,
         )
         snapshot = {
+            "read_model_identity": runtime_identity(),
             "is_historical": historical,
             "acceptance": accepted.model_dump(),
             "summary": summary.model_dump(),

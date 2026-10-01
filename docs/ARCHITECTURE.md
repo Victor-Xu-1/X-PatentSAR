@@ -268,6 +268,11 @@ worker errors or unchanged files cannot stamp a new manifest. The read model
 projects only core-confirmed stages; failed-stage materials require an explicit
 fresh-output fact. Copied pending artifacts are never current chemistry. Earlier
 derived artifacts remain read-only history, not new formal acceptance.
+SQLite projections record the same product/pipeline/rules identity. The service
+rebuilds a stale projection from its original read-only artifacts on first access
+after an identity change; project details and result queries share this one
+invalidation path. It never retags original outputs or carries old acceptance
+forward merely because the previous projection was cached.
 
 Ruleset 2.0.2 previously invalidated derived artifacts. Raw OCR has an independent observation
 contract: unchanged, PDF-SHA-verified 2.0.1 observations may seed a new run, but

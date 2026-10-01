@@ -4,14 +4,46 @@ from __future__ import annotations
 
 import hashlib
 import unittest
+from unittest.mock import patch
+
+from test_web_support import WebFixture, artifact_run
 
 from patent_sar_extractor import contracts as core
 from patent_sar_extractor.artifact_io import write_json_atomic
 from patent_sar_extractor.web.artifacts import ArtifactView
-from test_web_support import WebFixture, artifact_run
+from patent_sar_extractor.web.service import WorkspaceService
+from patent_sar_extractor.web.storage import encode
 
 
 class CheckpointPublicationTests(WebFixture, unittest.TestCase):
+    def test_rule_change_invalidates_cached_acceptance_and_refreshes_once(self):
+        root = artifact_run(self.root / "historical-source", self.pdf, current=False)
+        service = WorkspaceService(self.state)
+        project = service.import_run(root, pdf_path=self.pdf)
+        source_before = {path: path.read_bytes() for path in root.rglob("*.json")}
+        with service.store.connect(write=True) as connection:
+            connection.execute(
+                "UPDATE projects SET snapshot=?,historical=0 WHERE id=?",
+                (
+                    encode(
+                        {
+                            "acceptance": {"state": "accepted", "errors": []},
+                            "summary": {},
+                            "read_model_identity": {"old_rules": True},
+                        }
+                    ),
+                    project.id,
+                ),
+            )
+        with patch.object(service, "refresh", wraps=service.refresh) as refresh:
+            self.assertEqual(service.project(project.id).acceptance.state, "historical")
+            self.assertEqual(service.results(project.id).total, 2)
+            self.assertEqual(service.project(project.id).summary.confirmed, 0)
+            self.assertEqual(refresh.call_count, 1)
+        self.assertEqual(
+            {path: path.read_bytes() for path in source_before}, source_before
+        )
+
     def test_current_pending_or_failed_smiles_never_publish_copied_old_chemistry(self):
         root = artifact_run(self.root / "previous-checkpoints", self.pdf)
         for status, stage_status in (("running", "running"), ("failed", "failed")):

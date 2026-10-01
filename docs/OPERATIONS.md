@@ -164,6 +164,10 @@ The original PDF can remain available during a failed extraction. A current fail
 or incomplete run is not classified as a historical import simply because its
 downstream artifacts do not yet exist. Each activity metric's source page may differ
 from the bound structure page.
+After a software/rules update, the first project/result access rebuilds an outdated
+SQLite projection once from the retained source artifacts. Old-rule acceptance is
+then historical, not current. This changes only rebuildable presentation data;
+original artifacts and manual-review decisions are retained.
 
 Structure details distinguish original crops from RDKit SMILES redraws. Compare
 both for recognition errors; a syntactically valid SMILES does not prove atom,

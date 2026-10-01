@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from typing import Any
 
 from .errors import WebError
@@ -13,11 +14,14 @@ from .storage import Store
 
 
 class ResultQueries:
-    def __init__(self, store: Store) -> None:
+    def __init__(
+        self, store: Store, current_project: Callable[[str], dict[str, Any]]
+    ) -> None:
         self.store = store
+        self.current_project = current_project
 
     def rows(self, project_id: str) -> list[dict[str, Any]]:
-        self.store.project(project_id)
+        self.current_project(project_id)
         with self.store.connect() as connection:
             return [
                 dict(row)

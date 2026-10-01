@@ -31,7 +31,20 @@ class WorkspaceService:
     def __init__(self, state_root: str | Path) -> None:
         self.store = Store(state_root)
         self.attempts = AttemptHistory(self.store)
-        self.result_queries = ResultQueries(self.store)
+        self.result_queries = ResultQueries(self.store, self._current_project)
+
+    def _current_project(self, project_id: str) -> dict[str, Any]:
+        row = self.store.project(project_id)
+        snapshot = json.loads(row["snapshot"])
+        if (
+            row["run_root"]
+            and snapshot.get("read_model_identity") != runtime_identity()
+        ):
+            # Projection data is rebuildable. Old cached acceptance must not
+            # become current authority after a rules/software upgrade.
+            self.refresh(project_id)
+            row = self.store.project(project_id)
+        return row
 
     @staticmethod
     def _title(title: str) -> str:
@@ -311,7 +324,7 @@ class WorkspaceService:
         )
 
     def project(self, project_id: str) -> Project:
-        row = self.store.project(project_id)
+        row = self._current_project(project_id)
         snapshot = json.loads(row["snapshot"])
         with self.store.connect() as connection:
             latest = connection.execute(
