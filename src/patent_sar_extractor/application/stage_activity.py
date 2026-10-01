@@ -23,6 +23,7 @@ from .activity_policy import (
 from .pipeline_context import PipelineContext
 from .pipeline_io import (
     _elapsed_since,
+    _owned_worker_outputs,
     _save_log,
     _write_accuracy_failure_marker,
 )
@@ -59,13 +60,16 @@ def execute_activity(state: PipelineContext) -> None:
         state.progress.mark_checkpoint_reused()
     else:
         os.makedirs(act_dir, exist_ok=True)
-        _run_activity_rules(
-            state.args.pdf,
-            state.classification,
-            act_dir,
-            include_intermediates=getattr(state.args, "include_intermediates", False),
-            patent_id=state.patent_id,
-        )
+        with _owned_worker_outputs(state.pipeline_log["steps"][step], [state.act_json]):
+            _run_activity_rules(
+                state.args.pdf,
+                state.classification,
+                act_dir,
+                include_intermediates=getattr(
+                    state.args, "include_intermediates", False
+                ),
+                patent_id=state.patent_id,
+            )
         _write_step_manifest(state.act_json, activity_fp)
     state.active_cpds = (
         _annotate_activity_payload(state.act_json)
@@ -77,6 +81,7 @@ def execute_activity(state: PipelineContext) -> None:
     )
     act_rows = len((state.activity_payload or {}).get("rows", []))
     state.pipeline_log["steps"][step] = {
+        **state.pipeline_log["steps"].get(step, {}),
         "from_cache": state.progress.checkpoint_reused,
         "status": "ok" if act_rows else "empty",
         "elapsed_s": _elapsed_since(t0),

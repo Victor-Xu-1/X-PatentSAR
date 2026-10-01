@@ -113,9 +113,11 @@ test('actual result tables, metrics and review controls use the same quiet palet
   const rows = page.locator('.results-table tbody tr');
   await expect(rows.first()).toBeVisible();
   const cards = page.locator('.metric-card');
-  await expect(cards).toHaveCount(4);
+  await expect(cards).toHaveCount(6);
+  const statistics = await page.getByLabel('项目真实统计').boundingBox();
+  expect(statistics!.height, 'Six statistics share one compact strip').toBeLessThanOrEqual(36);
   for (const card of await cards.all()) {
-    await expect(card).toHaveCSS('background-color', palette.surface);
+    await expect(card).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     await expect(card).toHaveCSS('background-image', 'none');
     await expect(card.locator('strong')).toHaveCSS('font-family', /Georgia/);
   }

@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import logging
 import os
+import stat
 import time
+from collections.abc import Iterator, Sequence
+from contextlib import contextmanager
 from pathlib import Path
 
 from patent_sar_extractor.artifact_io import write_json_atomic as _write_json
@@ -13,6 +16,50 @@ from patent_sar_extractor.paths import config_files
 
 logger = logging.getLogger("patent_sar_extractor")
 WORKING_ROOT = Path.cwd()
+
+
+def _worker_output_state(path: str) -> tuple[int, int, int] | None:
+    """Freshness evidence for an owned producer, not a cache/QA authority."""
+    try:
+        info = Path(path).lstat()
+    except FileNotFoundError:
+        return None
+    if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid():
+        raise RuntimeError("Worker output is not a regular operator-owned file")
+    return info.st_ino, info.st_mtime_ns, info.st_size
+
+
+def _require_updated_worker_output(
+    path: str, previous: tuple[int, int, int] | None
+) -> None:
+    current = _worker_output_state(path)
+    if current is None or current == previous:
+        raise RuntimeError(
+            "Worker did not publish a current output; previous data is not accepted"
+        )
+
+
+@contextmanager
+def _owned_worker_outputs(record: dict, paths: Sequence[str]) -> Iterator[None]:
+    record["output_updated"] = False
+    previous = [_worker_output_state(path) for path in paths]
+    try:
+        yield
+    except BaseException:
+        try:
+            record["output_updated"] = all(
+                (current := _worker_output_state(path)) is not None and current != prior
+                for path, prior in zip(paths, previous, strict=True)
+            )
+        except (OSError, RuntimeError) as exc:
+            logger.warning(
+                "Failed worker output freshness unavailable (%s)", type(exc).__name__
+            )
+        raise
+    else:
+        for path, prior in zip(paths, previous, strict=True):
+            _require_updated_worker_output(path, prior)
+        record["output_updated"] = True
 
 
 def _elapsed_since(start_time: float) -> float:

@@ -27,6 +27,8 @@ from patent_sar_extractor.paths import PACKAGE_ROOT
 from .pipeline_context import PipelineContext
 from .pipeline_io import (
     _elapsed_since,
+    _require_updated_worker_output,
+    _worker_output_state,
 )
 from .structure_cache import (
     _load_reusable_structure_chunk,
@@ -153,6 +155,8 @@ def execute_structures(state: PipelineContext) -> None:
                     f"{len(chunk_pages)} pages",
                     flush=True,
                 )
+                chunk_metadata_path = os.path.join(chunk_output, "metadata.json")
+                previous_output = _worker_output_state(chunk_metadata_path)
                 proc = run_in_env(
                     "decimer",
                     structure_worker_script,
@@ -169,7 +173,8 @@ def execute_structures(state: PipelineContext) -> None:
                         f"structure extraction failed in chunk {chunk_index + 1} "
                         f"(pages={[p + 1 for p in chunk_pages]})"
                     )
-                chunk_meta = _load_json(os.path.join(chunk_output, "metadata.json"), {})
+                _require_updated_worker_output(chunk_metadata_path, previous_output)
+                chunk_meta = _load_json(chunk_metadata_path, {})
                 _write_step_manifest(
                     os.path.join(chunk_output, "metadata.json"), chunk_fingerprint
                 )
@@ -194,6 +199,7 @@ def execute_structures(state: PipelineContext) -> None:
                 structure_worker_args.extend(
                     ["--crop-regions", state.crop_regions_json]
                 )
+            previous_output = _worker_output_state(state.structures_json)
             proc = run_in_env(
                 "decimer",
                 structure_worker_script,
@@ -207,6 +213,7 @@ def execute_structures(state: PipelineContext) -> None:
             )
             if proc.returncode != 0:
                 raise RuntimeError("structure extraction failed")
+            _require_updated_worker_output(state.structures_json, previous_output)
         structures_meta = _load_json(state.structures_json, {})
         state.n_structures = int(structures_meta.get("total_structures", 0))
         if state.structure_pages and state.n_structures == 0:

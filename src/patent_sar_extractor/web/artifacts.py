@@ -319,7 +319,9 @@ class ArtifactView:
     def snapshot(
         self, project_id: str, *, pdf_sha256: str | None
     ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
-        p = self.payloads
+        from .stages import completed_stage_payloads
+
+        p = completed_stage_payloads(self.payloads)
         files = SafeFiles(self.root)
         verified = bool(pdf_sha256 and pdf_sha256 == self.expected_sha256)
         marker = files.json("STRICT_ACCEPTANCE_FAILED.json")

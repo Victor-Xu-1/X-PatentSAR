@@ -17,7 +17,7 @@ PIPELINE_CONTRACT_NAME: Final = "patentsar.activity-led"
 PIPELINE_CONTRACT_VERSION: Final = "2.0.0"
 
 RULESET_NAME: Final = "patentsar.accuracy-first"
-RULESET_VERSION: Final = "2.0.2"
+RULESET_VERSION: Final = "2.0.3"
 
 RUN_SUMMARY_SCHEMA: Final = "patentsar.run-summary"
 RUN_SUMMARY_SCHEMA_VERSION: Final = 1
@@ -59,7 +59,7 @@ PAGE_OCR_OBSERVATION_SCHEMA: Final = "patentsar.page-ocr-observation"
 PAGE_OCR_OBSERVATION_VERSION: Final = 1
 # This compatibility is for raw observations only, never derived/accepted data.
 # 2.0.0 lacks coherent scanned-page coordinates and is intentionally excluded.
-PAGE_OCR_COMPATIBLE_RULESETS: Final = ((RULESET_NAME, "2.0.1"), (RULESET_NAME, RULESET_VERSION))
+PAGE_OCR_COMPATIBLE_RULESETS: Final = ((RULESET_NAME, "2.0.1"), (RULESET_NAME, "2.0.2"), (RULESET_NAME, RULESET_VERSION))
 VISIBLE_LABEL_CACHE_SCHEMA: Final = "patentsar.visible-label-cache"
 VISIBLE_LABEL_CACHE_SCHEMA_VERSION: Final = 1
 

@@ -29,6 +29,7 @@ from patent_sar_extractor.smiles_artifact import (
 from .pipeline_context import PipelineContext
 from .pipeline_io import (
     _elapsed_since,
+    _owned_worker_outputs,
     _save_log,
     _write_accuracy_failure_marker,
 )
@@ -140,17 +141,20 @@ def execute_smiles(state: PipelineContext) -> None:
             "--jobs",
             str(getattr(state.args, "smiles_workers", 1) or 1),
         ]
-        proc = run_in_env(
-            "smiles_engine",
-            smiles_worker_script,
-            args=smiles_args,
-            timeout=7200,
-            env_extra=worker_environment,
-            stream_output=True,
-        )
-        if proc.returncode != 0 and not os.path.isfile(state.smiles_json):
-            err = (proc.stderr or proc.stdout or "").strip()[:1200]
-            raise RuntimeError(f"smiles failed: {err}")
+        with _owned_worker_outputs(
+            state.pipeline_log["steps"][step], [state.smiles_json]
+        ):
+            proc = run_in_env(
+                "smiles_engine",
+                smiles_worker_script,
+                args=smiles_args,
+                timeout=7200,
+                env_extra=worker_environment,
+                stream_output=True,
+            )
+            if proc.returncode != 0:
+                err = (proc.stderr or proc.stdout or "").strip()[:1200]
+                raise RuntimeError(f"smiles failed: {err}")
         smiles_payload = _load_json(state.smiles_json, {})
         if not smiles_artifact_is_current(smiles_payload):
             raise RuntimeError(
@@ -161,6 +165,7 @@ def execute_smiles(state: PipelineContext) -> None:
         n_valid = sum(1 for r in smiles_results if r.get("rdkit_valid"))
         _write_step_manifest(state.smiles_json, smiles_fp)
     state.pipeline_log["steps"][step] = {
+        **state.pipeline_log["steps"].get(step, {}),
         "from_cache": state.progress.checkpoint_reused,
         "status": "ok" if n_valid or n_smiles == 0 else "warnings",
         "elapsed_s": _elapsed_since(t0),

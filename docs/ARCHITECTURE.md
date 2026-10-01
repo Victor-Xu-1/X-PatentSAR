@@ -204,7 +204,7 @@ Formal JSON artifacts carry the same identity envelope:
   "schema": {"name": "patentsar.bindings", "version": 2},
   "product": {"name": "X-PatentSAR", "version": "0.1.0"},
   "pipeline_contract": {"name": "patentsar.activity-led", "version": "2.0.0"},
-  "ruleset": {"name": "patentsar.accuracy-first", "version": "2.0.2"}
+  "ruleset": {"name": "patentsar.accuracy-first", "version": "2.0.3"}
 }
 ```
 
@@ -218,7 +218,7 @@ All fail-closed stages use one marker name and one writer: `STRICT_ACCEPTANCE_FA
 |---|---:|---|
 | Product | `0.1.0` | User-visible software release |
 | Pipeline contract | `patentsar.activity-led` `2.0.0` | Stage order or cross-stage semantics |
-| Ruleset | `patentsar.accuracy-first` `2.0.2` | Acceptance or binding behavior |
+| Ruleset | `patentsar.accuracy-first` `2.0.3` | Acceptance or binding behavior |
 | Artifact/cache schema | Namespaced integer versions | Serialized shape or cache compatibility |
 
 Current non-default schema revisions are page classification v2 (`candidate_pages` replaces the ambiguous `core_pages` field), bindings v2 and formal QA v2. The diagnostic review-excerpt metadata starts at v1. All other current artifact/cache schemas are v1.
@@ -263,12 +263,19 @@ with both image hashes, source variants and unmodified strings retained. No seco
 engine or string repair becomes an acceptance authority. Normalization uses bounded
 dimensions and atomic private output with explicit error reporting.
 
-Ruleset 2.0.2 invalidates derived artifacts. Raw OCR has an independent observation
+Ruleset 2.0.3 requires successful owned producers and newly published outputs:
+worker errors or unchanged files cannot stamp a new manifest. The read model
+projects only core-confirmed stages; failed-stage materials require an explicit
+fresh-output fact. Copied pending artifacts are never current chemistry. Earlier
+derived artifacts remain read-only history, not new formal acceptance.
+
+Ruleset 2.0.2 previously invalidated derived artifacts. Raw OCR has an independent observation
 contract: unchanged, PDF-SHA-verified 2.0.1 observations may seed a new run, but
 2.0.0 text-only observations and old activity/binding/SMILES/QA cannot. The job
 controller accepts reusable caches only inside the same private project. It
 starts the same CLI with `--reuse-ocr-cache`; there is no second recovery pipeline.
 Original failed runs are immutable inputs to this reuse step, not rewritten jobs.
+Verified 2.0.1/2.0.2 raw observations may also seed 2.0.3; no old derived QA is promoted.
 The pipeline persists actual stage starts and exception failures for the UI.
 The queue projects completed current checkpoints into the existing SQLite
 read model while a job runs. The UI refreshes on job/stage revisions, not on

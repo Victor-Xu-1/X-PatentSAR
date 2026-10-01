@@ -30,6 +30,34 @@ SUMMARY_STATUSES = {
 }
 
 
+def completed_stage_payloads(payloads: dict[str, Any]) -> dict[str, Any]:
+    """Only the sole CLI's completed stages can publish current chemistry."""
+    summary = payloads.get("summary")
+    if not core.artifact_identity_matches(
+        summary, core.RUN_SUMMARY_SCHEMA, core.RUN_SUMMARY_SCHEMA_VERSION
+    ) or summary.get("status") in {"complete", "review"}:
+        return payloads
+    result = dict(payloads)
+    steps = summary.get("steps", {})
+    for artifact, stage in (
+        ("activity", "activity"),
+        ("locator", "locate"),
+        ("structures", "structures"),
+        ("bindings", "bind"),
+        ("smiles", "smiles"),
+        ("qa", "qa"),
+    ):
+        fact = steps.get(stage, {}) if isinstance(steps, dict) else {}
+        if not isinstance(fact, dict) or (
+            fact.get("status") not in {"ok", "empty", "warnings"}
+            and not (
+                fact.get("status") == "failed" and fact.get("output_updated") is True
+            )
+        ):
+            result[artifact] = None
+    return result
+
+
 def read_summary(run_root: Path) -> dict[str, Any] | None:
     """An absent/corrupt summary is unavailable evidence, never success."""
     try:

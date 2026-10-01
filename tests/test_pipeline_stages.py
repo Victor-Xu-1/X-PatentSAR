@@ -11,9 +11,74 @@ from patent_sar_extractor.application.pipeline_context import PipelineContext
 from patent_sar_extractor.application.progress import PipelineProgress
 from patent_sar_extractor.application.stage_cache import _bindings_ocsr_digest
 from patent_sar_extractor.application.stage_structures import execute_structures
+from patent_sar_extractor.application.stage_smiles import execute_smiles
+from patent_sar_extractor.smiles_artifact import build_smiles_artifact
 
 
 class PipelineStageTests(unittest.TestCase):
+    def test_old_output_cannot_hide_nonzero_worker_exit_or_missing_current_output(self):
+        from subprocess import CompletedProcess
+
+        for returncode in (1, 0):
+            with (
+                self.subTest(returncode=returncode),
+                tempfile.TemporaryDirectory() as temporary,
+            ):
+                root = Path(temporary)
+                pdf = root / "original.pdf"
+                pdf.write_bytes(b"controlled original hash input")
+                binding = root / "bindings.json"
+                binding.write_text(json.dumps({"final_bindings": []}))
+                smiles = root / "smiles_results.json"
+                smiles.write_text(
+                    json.dumps(
+                        build_smiles_artifact(
+                            [
+                                {
+                                    "cpd_id": "Compound 1",
+                                    "rdkit_valid": True,
+                                    "canonical_smiles": "CCO",
+                                }
+                            ]
+                        )
+                    )
+                )
+                old = smiles.read_bytes()
+                progress = PipelineProgress()
+                log = {"steps": {}, "main_chain": ["smiles"], "status": "running"}
+                progress.bind(str(root), log)
+                context = PipelineContext(
+                    args=Namespace(pdf=str(pdf), gpu_mode="off"),
+                    progress=progress,
+                    base_dir=str(root),
+                    patent_id="TEST",
+                    step_dirs={"smiles": str(root)},
+                    pipeline_log=log,
+                    active_cpds=["Compound 1"],
+                    n_bound=1,
+                    bind_json=str(binding),
+                )
+                with (
+                    patch(
+                        "patent_sar_extractor.application.stage_smiles.DECIMEREngine.runtime_identity",
+                        return_value={"fingerprint": "a" * 64},
+                    ),
+                    patch(
+                        "patent_sar_extractor.application.stage_smiles.run_in_env",
+                        return_value=CompletedProcess(
+                            [], returncode, stdout="controlled worker", stderr=""
+                        ),
+                    ),
+                    patch(
+                        "patent_sar_extractor.application.stage_smiles._smiles_acceptance_errors",
+                        return_value=[],
+                    ),
+                ):
+                    with self.assertRaises(RuntimeError):
+                        execute_smiles(context)
+                self.assertEqual(smiles.read_bytes(), old)
+                self.assertFalse(Path(str(smiles) + ".manifest.json").exists())
+
     def test_empty_locator_never_invokes_segmentation_or_unbound_fingerprint(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

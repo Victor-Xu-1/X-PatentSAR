@@ -17,7 +17,9 @@ from patent_sar_extractor.paths import PACKAGE_ROOT
 from .pipeline_context import PipelineContext
 from .pipeline_io import (
     _elapsed_since,
+    _require_updated_worker_output,
     _save_log,
+    _worker_output_state,
     _write_accuracy_failure_marker,
 )
 
@@ -31,6 +33,7 @@ def execute_final(state: PipelineContext) -> None:
     t0 = time.time()
     final_dir = state.step_dirs[step]
     excel_path = os.path.join(final_dir, f"{state.patent_id}_final.xlsx")
+    sdf_path = os.path.join(final_dir, f"{state.patent_id}_final.sdf")
     final_fp = _step_fingerprint(
         step,
         pdf_path=state.args.pdf,
@@ -57,6 +60,8 @@ def execute_final(state: PipelineContext) -> None:
             final_args.extend(["--activity", state.act_json])
         if not state.strict_gates:
             final_args.append("--allow-partial")
+        previous_excel = _worker_output_state(excel_path)
+        previous_sdf = _worker_output_state(sdf_path)
         proc = run_in_env("base", final_worker_script, args=final_args, timeout=600)
         if proc.returncode != 0:
             err = (proc.stderr or proc.stdout or "").strip()[:1200]
@@ -74,6 +79,8 @@ def execute_final(state: PipelineContext) -> None:
             _save_log(state.pipeline_log, state.base_dir)
             _write_accuracy_failure_marker(state.base_dir, "final_export", final_errors)
             raise RuntimeError(f"final results failed: {err}")
+        _require_updated_worker_output(excel_path, previous_excel)
+        _require_updated_worker_output(sdf_path, previous_sdf)
         _write_step_manifest(excel_path, final_fp)
     state.pipeline_log["steps"][step] = {
         "from_cache": state.progress.checkpoint_reused,

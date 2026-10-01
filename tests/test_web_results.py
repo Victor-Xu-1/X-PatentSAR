@@ -31,8 +31,10 @@ class ResultTests(WebFixture, unittest.TestCase):
             status="failed_accuracy_gate",
             steps={
                 "classify": {"status": "ok"},
+                "activity": {"status": "ok"},
                 failed_stage: {
                     "status": "failed",
+                    "output_updated": True,
                     "acceptance_errors": ["Unresolved rows."],
                 },
             },

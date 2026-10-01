@@ -2,7 +2,7 @@
 
 - Product/repository identity: `x-patentsar` / X-PatentSAR; current stable E-drive WSL source path `/srv/wsl/projects/patent-sar-extractor` (preserved through branding). Internal Python namespace remains `patent_sar_extractor`; it is not a competing product identity.
 - Product version authority: `src/patent_sar_extractor/contracts.py`; current release `v0.1.0`; Semantic Versioning; release tags use `vMAJOR.MINOR.PATCH`.
-- Internal contract authority: the same `contracts.py` file separately owns pipeline contract `2.0.0`, ruleset `2.0.2`, stage implementation epochs and artifact/cache/observation schema identities.
+- Internal contract authority: the same `contracts.py` file separately owns pipeline contract `2.0.0`, ruleset `2.0.3`, stage implementation epochs and artifact/cache/observation schema identities.
 - Supported source roots: `src/patent_sar_extractor`, `frontend`, `tools`, `examples`, `docs`, `tests`, `.github` and documented root metadata/launch files, including Apache-2.0 `LICENSE` and attribution `NOTICE`. `tools` owns reproducible build/packaging checks, not extraction logic.
 - Dependency authority: `pyproject.toml` plus generated `uv.lock`; uv 0.11.31 is the verified lock/sync tool, matching CI. The `web` extra adds FastAPI/Uvicorn; test and static-analysis dependencies are in the `dev` group. Frontend dependencies use npm and `frontend/package-lock.json` as their only lock authority. DECIMER is an external Python 3.10 runtime boundary and is not part of the Python 3.12 application lock.
 - Public contract: the `x-patentsar` CLI, `PATENTSAR_*` configuration variables and documented output files; Web API uses an independently versioned `patentsar.web-api` v1 contract. A Web result/review never overrides deterministic QA.

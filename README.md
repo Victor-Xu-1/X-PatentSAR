@@ -225,7 +225,7 @@ x-patentsar run \
 
 - 产品版本：`0.1.0`，遵循 Semantic Versioning。
 - 流水线契约：`patentsar.activity-led` `2.0.0`。
-- 准确性规则集：`patentsar.accuracy-first` `2.0.2`。
+- 准确性规则集：`patentsar.accuracy-first` `2.0.3`。
 - 产物/缓存 Schema 各自独立递增：页面分类、绑定和正式 QA 当前为 `2`；其余当前产物与缓存为 `1`。
 
 唯一权威来源是 `src/patent_sar_extractor/contracts.py`。所有可复用缓存和正式 JSON 产物均使用 `schema`、`product`、`pipeline_contract`、`ruleset` 身份信封；旧插件缓存不会被当前版本误复用。

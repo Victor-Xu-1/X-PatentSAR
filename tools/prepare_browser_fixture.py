@@ -34,6 +34,7 @@ def prepare(workspace: Path) -> dict[str, str]:
     historical = import_run(
         state,
         run,
+        pdf_path=pdf,
         title="CI controlled historical adapter fixture (not extraction evidence)",
     )
     origin = "http://127.0.0.1:18765"
