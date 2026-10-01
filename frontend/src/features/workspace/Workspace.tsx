@@ -68,8 +68,8 @@ export function Workspace({
   return (
     <div className="workspace" data-dialog-focus-scope>
       <section className="workflow-panel">
-        <StageStrip job={job} />
-        <JobActions project={project} job={job} ready={ready} onChange={onJobChange} />
+        <StageStrip job={job} compact />
+        <JobActions project={project} job={job} ready={ready} onChange={onJobChange} compact />
       </section>
       <WorkspaceLayout
         layout={layout}

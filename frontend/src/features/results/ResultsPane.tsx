@@ -1,16 +1,12 @@
-import { Download } from 'lucide-react';
 import { useState } from 'react';
 import type { Activity, Compound, Filters, Job, Project, Results } from '../../api/types';
 import { availableMetrics } from '../../model/results';
 import type { ResultDensity } from '../../model/results';
 import type { Resource } from '../../hooks/useResource';
 import { Empty, ErrorNotice, Loading } from '../../components/Feedback';
-import { Metrics } from './Metrics';
-import { ResultFilters } from './ResultFilters';
 import { ResultsTable } from './ResultsTable';
 import { Pagination } from './Pagination';
-import { ExtractionNotice } from './ExtractionNotice';
-import { ResultDisplayControls } from './ResultDisplayControls';
+import { ResultToolbar } from './ResultToolbar';
 
 export function ResultsPane({
   project,
@@ -53,34 +49,29 @@ export function ResultsPane({
     selection === null ? metrics : metrics.filter((name) => selection.includes(name));
   return (
     <div className="result-data-view">
-      <Metrics project={project} />
-      {project && <ExtractionNotice project={project} job={job} />}
-      <ResultFilters
-        filters={filters}
-        targets={result?.targets ?? []}
-        onChange={onFilters}
-        total={result?.total ?? null}
-        disabled={!project}
+      <ResultToolbar
+        project={project}
+        job={job}
+        filters={{
+          filters,
+          targets: result?.targets ?? [],
+          onChange: onFilters,
+          disabled: !project,
+        }}
+        display={{
+          metrics,
+          visibleMetrics,
+          density,
+          onDensity: setDensity,
+          onMetrics: setSelection,
+          disabled: !project,
+        }}
+        selectedCount={selected.size}
+        loading={resource.loading}
+        canExport={Boolean(project && result?.total)}
+        onReload={resource.reload}
+        onExport={onExport}
       />
-      <ResultDisplayControls
-        metrics={metrics}
-        visibleMetrics={visibleMetrics}
-        density={density}
-        onDensity={setDensity}
-        onMetrics={setSelection}
-        disabled={!project}
-      />
-      <div className="selection-bar">
-        <span>
-          {selected.size
-            ? `已选择 ${selected.size} 个化合物（跨页保留）`
-            : '点击编号对照原图与重绘 · 活性页码返回独立来源'}
-        </span>
-        <button type="button" onClick={onExport} disabled={!project || !result?.total}>
-          <Download size={14} />
-          {selected.size ? `导出所选 (${selected.size})` : '导出结果'}
-        </button>
-      </div>
       <div className="results-content" aria-busy={resource.loading}>
         {resource.error ? (
           <ErrorNotice error={resource.error} onRetry={resource.reload} />

@@ -54,6 +54,19 @@ function props() {
 }
 
 describe('dense evidence-led result workspace', () => {
+  it('keeps statistics and explanations off the primary table and opens them on demand', async () => {
+    render(<ResultsPane {...props()} />);
+    expect(screen.queryByLabelText('项目真实统计')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('点击编号对照原图与重绘 · 活性页码返回独立来源'),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('实验上下文去重 · 每个值保留独立来源')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('textbox', { name: '搜索结果' })).toHaveLength(1);
+    await userEvent.setup().click(screen.getByRole('button', { name: '结果信息' }));
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByLabelText('项目真实统计')).toBeVisible();
+    expect(within(dialog).getByLabelText('提取验收与阻塞状态')).toBeVisible();
+  });
   it('uses compact columns, deduplicates assay context and preserves every activity source', () => {
     render(<ResultsPane {...props()} />);
     expect(screen.getByRole('table')).toHaveAttribute('data-density', 'compact');
@@ -76,17 +89,18 @@ describe('dense evidence-led result workspace', () => {
     const original = props();
     render(<ResultsPane {...original} selected={new Set([row.id])} />);
     const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: '显示选项' }));
     await user.click(screen.getByRole('button', { name: '舒适视图' }));
     expect(screen.getByRole('table')).toHaveAttribute('data-density', 'comfortable');
-    await user.click(screen.getByText(/指标列/));
     await user.click(screen.getByLabelText('显示指标 DC50'));
     expect(screen.queryByRole('columnheader', { name: 'DC50' })).not.toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'IC50' })).toBeVisible();
     expect(screen.getByLabelText('选择化合物 I-7')).toBeChecked();
-    expect(screen.getByText('已选择 1 个化合物（跨页保留）')).toBeVisible();
+    expect(screen.getByText('已选 1')).toBeVisible();
     expect(original.onFilters).not.toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: '显示全部指标' }));
     expect(screen.getByRole('columnheader', { name: 'DC50' })).toBeVisible();
+    await user.click(screen.getByRole('button', { name: '关闭对话框' }));
     await user.click(screen.getByRole('button', { name: '导出所选 (1)' }));
     expect(original.onExport).toHaveBeenCalledOnce();
   });
@@ -171,6 +185,7 @@ describe('dense evidence-led result workspace', () => {
     expect(within(table).getByText('RDKit 可解析')).toBeVisible();
     expect(within(table).getByText('待复核')).toBeVisible();
     expect(within(table).queryByText('复核通过')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '结果信息' }));
     expect(
       within(screen.getByText('人工已复核').closest('.metric-card')!).getByText('0'),
     ).toBeVisible();

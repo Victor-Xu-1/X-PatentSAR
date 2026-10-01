@@ -112,15 +112,19 @@ test('actual result tables, metrics and review controls use the same quiet palet
   await page.goto(`/#/projects/${historyId}`);
   const rows = page.locator('.results-table tbody tr');
   await expect(rows.first()).toBeVisible();
+  await expect(page.getByLabel('项目真实统计')).toHaveCount(0);
+  const toolbar = await page.getByLabel('结构列表工具栏').boundingBox();
+  expect(toolbar!.height, 'Primary results have one compact toolbar').toBeLessThanOrEqual(38);
+  await page.getByRole('button', { name: '结果信息' }).click();
   const cards = page.locator('.metric-card');
   await expect(cards).toHaveCount(6);
-  const statistics = await page.getByLabel('项目真实统计').boundingBox();
-  expect(statistics!.height, 'Six statistics share one compact strip').toBeLessThanOrEqual(36);
   for (const card of await cards.all()) {
     await expect(card).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     await expect(card).toHaveCSS('background-image', 'none');
     await expect(card.locator('strong')).toHaveCSS('font-family', /Georgia/);
   }
+  await page.keyboard.press('Escape');
+  await expect(page.getByLabel('项目真实统计')).toHaveCount(0);
   await expect(page.locator('.results-table th').first()).toHaveCSS(
     'background-color',
     palette.subtle,

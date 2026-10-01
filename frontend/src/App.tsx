@@ -103,8 +103,6 @@ export default function App() {
           view={route.view}
           project={project}
           user={connection.data?.session.user.name ?? null}
-          query={query}
-          onQuery={setQuery}
           onUpload={onUpload}
           onMenu={() => setMenuOpen((open) => !open)}
           disabled={!connected}

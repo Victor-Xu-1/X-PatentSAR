@@ -207,8 +207,13 @@ names; changes require controller review, not independent endpoint invention.
 Chinese UI with X-PatentSAR branding and version from `/health`; reference layout:
 232 px left navigation, compact breadcrumb/search toolbar, split original PDF
 and result workspace, warm ivory canvas, quiet stone surfaces, ink controls,
-terracotta accents, serif display headings, real metric cards and dense
-compound/activity rows. Page navigation, zoom, text/annotation tabs, source jumps,
+terracotta accents, serif display headings and dense compound/activity rows.
+The primary workspace contains only the original patent and result list, with a
+thin stage strip and one result toolbar. Statistics, full acceptance evidence,
+filters, density/columns, task parameters and document zoom are available on
+request, not stacked above the table. Analysis uses the existing sidebar entries,
+and no second search box or duplicate result tab bar remains.
+Page navigation, zoom, text/annotation tabs, source jumps,
 search/filter/pagination, selection/export, review dialogs, job status/cancel/retry,
 project/PDF import and runtime settings must work, including empty/error/loading,
 keyboard/focus, refresh/deep-link and smaller viewport states. Unavailable ADMET

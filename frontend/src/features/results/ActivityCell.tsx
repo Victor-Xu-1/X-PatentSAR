@@ -43,7 +43,9 @@ export function ActivityCell({
             </div>
           ))
         ) : (
-          <span className="muted">该指标无数据</span>
+          <span className="muted" title="该指标无数据" aria-label="该指标无数据">
+            —
+          </span>
         )}
       </div>
     </td>

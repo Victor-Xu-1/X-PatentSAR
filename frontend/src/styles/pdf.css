@@ -1,30 +1,49 @@
+.pdf-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0 6px;
+  padding: 2px 6px;
+  border-bottom: 1px solid var(--line);
+  flex: 0 0 auto;
+}
+.pdf-toolbar .tabs {
+  border: 0;
+  padding: 0;
+  gap: 5px;
+  min-height: 28px;
+}
+.pdf-toolbar .tab {
+  min-height: 28px;
+  padding: 4px 2px;
+  font-size: 10px;
+}
 .pdf-controls {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 7px 8px;
-  flex-wrap: wrap;
-  border-bottom: 1px solid var(--line-soft);
-  background: var(--surface);
+  gap: 4px;
+  padding: 0;
+  margin-left: auto;
 }
 .page-navigation,
 .zoom-controls {
   display: flex;
-  gap: 6px;
+  gap: 3px;
   align-items: center;
 }
 .page-navigation form {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 3px;
 }
 .page-navigation input {
   text-align: center;
-  width: 48px;
-  min-height: 32px;
-  padding: 5px 3px;
-  font-size: 12px;
+  width: 36px;
+  min-height: 26px;
+  padding: 3px 2px;
+  font-size: 11px;
 }
 .page-navigation span {
   color: var(--muted);
@@ -32,8 +51,9 @@
   min-width: 32px;
 }
 .pdf-controls .icon-button {
-  width: 32px;
-  min-height: 32px;
+  width: 24px;
+  min-height: 26px;
+  padding: 3px;
 }
 .zoom-controls output {
   display: grid;
@@ -171,19 +191,4 @@
   color: var(--muted);
   border-bottom: 1px solid var(--line-soft);
   padding-bottom: 12px;
-}
-.pdf-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  min-height: 29px;
-  border-top: 1px solid var(--line-soft);
-  background: var(--surface);
-  color: var(--muted);
-  font-size: 10px;
-}
-.pdf-footer span:first-of-type {
-  margin-right: auto;
 }

@@ -4,14 +4,23 @@ import { stageNames } from '../../api/types';
 import { stageLabels } from '../../model/presentation';
 import { observedStages, stageStatusText, stoppedJob } from '../../model/extraction';
 import { StageObservation } from './StageObservation';
-export function StageStrip({ job }: { job: Job | null }) {
+export function StageStrip({ job, compact = false }: { job: Job | null; compact?: boolean }) {
   const stages = observedStages(job);
   return (
     <div className="stage-overview">
       {job && job.history_available !== true && (
-        <output className="stage-history-notice">
+        <output
+          className="stage-history-notice"
+          title={
+            job.history_available === false
+              ? '历史阶段不可用：旧任务使用共享目录，无法可靠还原本次阶段历史。'
+              : '历史阶段可用性未知'
+          }
+        >
           {job.history_available === false
-            ? '历史阶段不可用：旧任务使用共享目录，无法可靠还原本次阶段历史。'
+            ? compact
+              ? '历史不可用'
+              : '历史阶段不可用：旧任务使用共享目录，无法可靠还原本次阶段历史。'
             : '历史阶段可用性未知'}
         </output>
       )}
@@ -21,7 +30,11 @@ export function StageStrip({ job }: { job: Job | null }) {
           const status =
             job && job.history_available !== true ? 'unknown' : (stage?.status ?? 'pending');
           return (
-            <li className={`stage ${status}`} key={name}>
+            <li
+              className={`stage ${status}`}
+              key={name}
+              title={`${stageLabels[name]}：${stageStatusText(job, stage)}`}
+            >
               <span className="stage-circle">
                 {status === 'ok' ? (
                   <Check size={13} />
@@ -34,11 +47,13 @@ export function StageStrip({ job }: { job: Job | null }) {
                 )}
               </span>
               {job?.history_available === true ? (
-                <StageObservation job={job} stage={stage} name={name} />
+                <StageObservation job={job} stage={stage} name={name} compact={compact} />
               ) : (
                 <div>
                   <strong>{stageLabels[name]}</strong>
-                  <small>{stageStatusText(job, stage)}</small>
+                  <small className={compact ? 'sr-only' : undefined}>
+                    {stageStatusText(job, stage)}
+                  </small>
                 </div>
               )}
             </li>

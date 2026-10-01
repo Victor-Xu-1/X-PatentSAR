@@ -38,7 +38,10 @@ for (const viewport of [
     const table = await page.locator('.table-scroll').boundingBox();
     const source = await page.locator('.workspace-source').boundingBox();
     const result = await page.locator('.workspace-results').boundingBox();
-    expect(table!.height / viewport.height).toBeGreaterThanOrEqual(0.55);
+    expect(table!.height / viewport.height).toBeGreaterThanOrEqual(0.72);
+    await expect(page.locator('.workspace-source')).toHaveCount(1);
+    await expect(page.locator('.workspace-results')).toHaveCount(1);
+    await expect(page.getByLabel('项目真实统计')).toHaveCount(0);
     const pane = await page.locator('.results-pane').boundingBox();
     const pagination = await page.locator('.pagination').boundingBox();
     expect(pane).not.toBeNull();
@@ -57,7 +60,7 @@ for (const viewport of [
     expect(
       visibleHeight / viewport.height,
       'The measured table area must actually be visible',
-    ).toBeGreaterThanOrEqual(0.55);
+    ).toBeGreaterThanOrEqual(0.72);
     expect(source!.width / (source!.width + result!.width)).toBeGreaterThanOrEqual(0.25);
     expect(source!.width / (source!.width + result!.width)).toBeLessThanOrEqual(0.3);
     const separator = page.getByRole('slider', { name: '调整原文与结果宽度' });
@@ -100,6 +103,7 @@ test('actual job parameters can expand without pushing desktop panes below the v
   const job = (await response.json()) as Job;
   expect(job.status).toBe('failed');
   await page.goto(`/#/projects/${job.project_id}`);
+  await page.getByRole('button', { name: '任务详情' }).click();
   const options = page.locator('.job-options-record');
   await expect(options).toBeVisible();
   for (const viewport of [
@@ -107,7 +111,6 @@ test('actual job parameters can expand without pushing desktop panes below the v
     { width: 1280, height: 800 },
   ]) {
     await page.setViewportSize(viewport);
-    await options.locator('summary').click();
     await expect(options).toHaveAttribute('open', '');
     for (const selector of ['.results-pane', '.pdf-pane']) {
       const pane = await page.locator(selector).boundingBox();
@@ -118,8 +121,6 @@ test('actual job parameters can expand without pushing desktop panes below the v
         `${selector} must include actual expanded job height`,
       ).toBeLessThanOrEqual(viewport.height);
     }
-    await options.locator('summary').click();
-    await expect(options).not.toHaveAttribute('open', '');
   }
 });
 
@@ -145,9 +146,11 @@ test('actual original fit-width, resizing, source jump and exact annotation geom
   await separator.press('ArrowRight');
   const after = await fittedPage(page);
   expect(after.width).toBeGreaterThan(before.width);
+  await page.getByRole('button', { name: '文档工具' }).click();
   await page.getByLabel('放大原始文档').click();
   await expect(page.getByLabel('文档缩放比例')).toHaveText('125%');
   await page.getByLabel('重置文档缩放').click();
+  await page.keyboard.press('Escape');
   await fittedPage(page);
   const response = await page.request.get(
     `/api/v1/projects/${sourceId}/results?page=1&page_size=25`,

@@ -63,13 +63,15 @@ export function ResultRow({
         >
           {confidenceLabels[row.confidence.level]}
         </span>
-        <small className="confidence-score" title="仅为绑定证据分数，不是识别准确率">
-          {row.confidence.score === null ? '无数值分数' : String(row.confidence.score)}
-        </small>
+        {row.confidence.score !== null && (
+          <small className="confidence-score" title="仅为绑定证据分数，不是识别准确率">
+            {String(row.confidence.score)}
+          </small>
+        )}
       </td>
       <td>
         <RecognitionStatus recognition={row.recognition} />
-        {row.recognition?.quality_flag && (
+        {row.recognition?.quality_flag && row.recognition.quality_flag !== 'ok' && (
           <small className="recognition-flag" title={row.recognition.quality_flag}>
             {row.recognition.quality_flag}
           </small>

@@ -44,11 +44,9 @@ for (const viewport of [
     ).toBeGreaterThan(0);
     const table = page.getByRole('table');
     await expect(table).toHaveAttribute('data-density', 'compact');
-    const statistics = await page.getByLabel('项目真实统计').boundingBox();
-    expect(
-      statistics!.height,
-      'All six statistics must stay in one compact strip',
-    ).toBeLessThanOrEqual(36);
+    await expect(page.getByLabel('项目真实统计')).toHaveCount(0);
+    await expect(page.locator('.acceptance-banner')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: '结果信息' })).toBeVisible();
     const row = results.items.find((item) =>
       item.activities.some((activity) => activity.page !== null),
     )!;
@@ -66,21 +64,23 @@ for (const viewport of [
         'A three-context result must not regress to a 247px row',
       ).toBeLessThanOrEqual(160);
     }
+    await page.getByRole('button', { name: '显示选项' }).click();
     await page.getByRole('button', { name: '舒适视图' }).click();
+    await page.keyboard.press('Escape');
     await expect(table).toHaveAttribute('data-density', 'comfortable');
     const comfortable = await rendered.boundingBox();
     expect(comfortable!.height).toBeGreaterThan(compact!.height);
+    await page.getByRole('button', { name: '显示选项' }).click();
     await page.getByRole('button', { name: '紧凑视图' }).click();
     const metric = results.metrics[0]!;
     expect(metric).toBeTruthy();
-    await page.getByText(/指标列/).click();
     await page.getByLabel(`显示指标 ${metric}`, { exact: true }).uncheck();
     await expect(table.getByRole('columnheader', { name: metric, exact: true })).toHaveCount(0);
     await expect(page.getByLabel(`选择化合物 ${row.display_id}`, { exact: true })).toBeChecked();
     await page.getByRole('button', { name: '显示全部指标' }).click();
+    await page.keyboard.press('Escape');
     for (const name of results.metrics)
       await expect(table.getByRole('columnheader', { name, exact: true })).toBeVisible();
-    await page.getByText(/指标列/).click();
     const measurement = row.activities.find((activity) => activity.page !== null)!;
     await rendered
       .getByRole('button', {
@@ -179,6 +179,7 @@ test('real additive manual counts are not inferred from binding evidence', async
   await expect(page.getByText(/^v\d/)).toBeVisible();
   const response = await page.request.get(`/api/v1/projects/${encodeURIComponent(projectId!)}`);
   const project = decodeProject(await response.json());
+  await page.getByRole('button', { name: '结果信息' }).click();
   for (const [label, value] of [
     ['绑定待核验', project.summary.needs_review],
     ['人工已复核', project.summary.manually_reviewed],

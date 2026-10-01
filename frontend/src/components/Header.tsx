@@ -1,4 +1,4 @@
-import { FolderOpen, Menu, Search, Upload, X } from 'lucide-react';
+import { FolderOpen, Menu, Upload, X } from 'lucide-react';
 import type { Project } from '../api/types';
 import type { View } from '../model/route';
 const viewLabels: Record<View, string> = {
@@ -12,8 +12,6 @@ export function Header({
   view,
   project,
   user,
-  query,
-  onQuery,
   onUpload,
   onMenu,
   disabled,
@@ -23,8 +21,6 @@ export function Header({
   view: View;
   project: Project | null;
   user: string | null;
-  query: string;
-  onQuery: (value: string) => void;
   onUpload: () => void;
   onMenu: () => void;
   disabled: boolean;
@@ -52,16 +48,6 @@ export function Header({
         </strong>
       </nav>
       <div className="topbar-actions" inert={contentInert}>
-        <label className="search-field global-search">
-          <Search size={16} />
-          <input
-            aria-label="搜索关键词、化合物编号或靶点"
-            placeholder="搜索关键词、化合物编号或靶点…"
-            value={query}
-            onChange={(e) => onQuery(e.target.value)}
-            disabled={disabled || view !== 'workspace' || !project}
-          />
-        </label>
         <button type="button" aria-label="上传 PDF" onClick={onUpload} disabled={disabled}>
           <Upload size={16} />
           <span>上传 PDF</span>

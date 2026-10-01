@@ -6,29 +6,47 @@ export function StageObservation({
   job,
   stage,
   name,
+  compact = false,
 }: {
   job: Job;
   stage: Job['stages'][number] | undefined;
   name: StageName;
+  compact?: boolean;
 }) {
   const progress = stage?.progress;
   return (
     <details className="stage-observation" name={`stage-observations-${job.id}`}>
-      <summary>
+      <summary
+        title={`${stageLabels[name]}：${stageStatusText(job, stage)}${stage?.count == null ? '' : ` · ${stage.count}`}`}
+      >
         <strong>{stageLabels[name]}</strong>
-        <small>
-          <span>{stageStatusText(job, stage)}</span>
-          {stage?.count != null && ` · ${stage.count}`}
-          {progress && (
-            <span className="stage-progress">
-              {' · '}
+        {compact ? (
+          progress && stage?.status === 'running' ? (
+            <small className="stage-progress">
               {progress.completed} / {progress.total}
-            </span>
-          )}
-          {stage?.reused_checkpoint === true && <span> · 复用检查点</span>}
-        </small>
+            </small>
+          ) : null
+        ) : (
+          <small>
+            <span>{stageStatusText(job, stage)}</span>
+            {stage?.count != null && ` · ${stage.count}`}
+            {progress && (
+              <span className="stage-progress">
+                {' · '}
+                {progress.completed} / {progress.total}
+              </span>
+            )}
+            {stage?.reused_checkpoint === true && <span> · 复用检查点</span>}
+          </small>
+        )}
       </summary>
       <div className="stage-observation-detail">
+        {compact && (
+          <p>
+            {stageStatusText(job, stage)}
+            {stage?.count == null ? '' : ` · ${stage.count}`}
+          </p>
+        )}
         {!progress ? (
           <p>进度未提供</p>
         ) : (

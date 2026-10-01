@@ -7,10 +7,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
   background: var(--surface);
   border: 1px solid var(--line);
-  padding: 3px 10px;
+  padding: 2px 6px;
   border-radius: var(--radius-control);
   margin-bottom: 3px;
 }
@@ -40,6 +40,11 @@
 .stage-observation summary {
   cursor: pointer;
   list-style: none;
+}
+.workflow-panel .stage-observation summary {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 .stage-observation summary::-webkit-details-marker {
   display: none;
@@ -77,8 +82,8 @@
 .stage-circle {
   display: grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
+  width: 15px;
+  height: 15px;
   font-size: 9px;
   border: 1px solid var(--line-strong);
   color: var(--faint);
@@ -90,6 +95,10 @@
   font-weight: 600;
   display: block;
   white-space: nowrap;
+}
+.workflow-panel .stage strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .stage small {
   font-size: 9px;
@@ -131,8 +140,8 @@
 }
 .job-actions button {
   font-size: 11px;
-  min-height: 28px;
-  padding: 4px 8px;
+  min-height: 24px;
+  padding: 3px 6px;
 }
 .job-actions .badge {
   font-size: 10px;
@@ -278,23 +287,18 @@
   height: 2px;
   background: var(--accent);
 }
-.result-tabs {
+.analysis-view-heading {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  min-height: 31px;
-  padding-right: 8px;
+  min-height: 32px;
+  padding: 3px 6px;
   border-bottom: 1px solid var(--line);
 }
-.result-tabs .tabs {
-  border: 0;
-  min-width: 0;
-  flex-wrap: wrap;
-  min-height: 30px;
-}
-.result-tabs .tab {
-  min-height: 30px;
-  padding: 6px 4px;
+.analysis-view-heading button {
+  min-height: 26px;
+  padding: 3px 6px;
+  font-size: 11px;
 }
 .result-view {
   flex: 1;
@@ -322,12 +326,15 @@
   }
   .app-main:has(.workspace) > .topbar {
     flex-shrink: 0;
+    height: 38px;
+    padding: 0 10px;
   }
   .app-main:has(.workspace) > main {
     display: flex;
     flex-direction: column;
     flex: 1;
     min-height: 0;
+    padding: 5px 10px;
   }
   .workspace {
     position: relative;

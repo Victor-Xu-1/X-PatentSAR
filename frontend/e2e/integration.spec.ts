@@ -120,6 +120,7 @@ test.describe('real local backend integration', () => {
     );
     await expect(pageInput).toHaveValue(String(Math.min(2, project.pdf.page_count)));
     await page.getByRole('tab', { name: '原文视图' }).click();
+    await page.getByRole('button', { name: '文档工具' }).click();
     await page.getByLabel('放大原始文档').click();
     await expect(page.getByLabel('文档缩放比例')).toHaveText('125%');
   });
@@ -275,7 +276,7 @@ test.describe('real local backend integration', () => {
     await expect(page.locator('.job-actions .badge')).toHaveText('已取消');
     await page.reload();
     await expect(page.locator('.job-actions .badge')).toHaveText('已取消');
-    await page.locator('.job-options-record summary').click();
+    await page.getByRole('button', { name: '任务详情' }).click();
     await expect(page.locator('.job-options-record')).toContainText(note);
   });
   test('an actual failed job remains a failure and exposes its real stage/error', async ({

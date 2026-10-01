@@ -207,9 +207,6 @@
 .search-field input::placeholder {
   color: var(--faint);
 }
-.global-search {
-  width: 295px;
-}
 .user-avatar {
   width: 30px;
   height: 30px;

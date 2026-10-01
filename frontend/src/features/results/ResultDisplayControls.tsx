@@ -31,36 +31,32 @@ export function ResultDisplayControls({
           </button>
         ))}
       </fieldset>
-      <details className="metric-selector">
-        <summary>
+      <fieldset className="metric-options" disabled={disabled}>
+        <legend>
           指标列（{visibleMetrics.length} / {metrics.length}）
-        </summary>
-        <fieldset disabled={disabled}>
-          <legend>仅改变展示，不改筛选、选择或导出</legend>
-          <button type="button" onClick={() => onMetrics(null)}>
-            显示全部指标
-          </button>
-          {metrics.map((metric) => (
-            <label key={metric}>
-              <input
-                type="checkbox"
-                aria-label={`显示指标 ${metric}`}
-                checked={visibleMetrics.includes(metric)}
-                onChange={(event) =>
-                  onMetrics(
-                    event.target.checked
-                      ? [...visibleMetrics, metric]
-                      : visibleMetrics.filter((name) => name !== metric),
-                  )
-                }
-              />
-              <span>{metric || '未命名指标'}</span>
-            </label>
-          ))}
-          {!metrics.length && <span className="muted">尚无可用指标</span>}
-        </fieldset>
-      </details>
-      <span className="muted">实验上下文去重 · 每个值保留独立来源</span>
+        </legend>
+        <button type="button" onClick={() => onMetrics(null)}>
+          显示全部指标
+        </button>
+        {metrics.map((metric) => (
+          <label key={metric}>
+            <input
+              type="checkbox"
+              aria-label={`显示指标 ${metric}`}
+              checked={visibleMetrics.includes(metric)}
+              onChange={(event) =>
+                onMetrics(
+                  event.target.checked
+                    ? [...visibleMetrics, metric]
+                    : visibleMetrics.filter((name) => name !== metric),
+                )
+              }
+            />
+            <span>{metric || '未命名指标'}</span>
+          </label>
+        ))}
+        {!metrics.length && <span className="muted">尚无可用指标</span>}
+      </fieldset>
     </div>
   );
 }

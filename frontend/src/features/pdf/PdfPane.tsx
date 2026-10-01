@@ -57,25 +57,27 @@ export function PdfPane({
         : '仅展示真实原始 PDF';
   return (
     <section className="panel pdf-pane" aria-label="专利原始文档查看器">
-      <Tabs
-        label="专利文档视图"
-        value={tab}
-        onChange={onTab}
-        tabs={[
-          { value: 'original', label: '原文视图' },
-          { value: 'text', label: '文本视图' },
-          { value: 'annotations', label: '结构标注' },
-        ]}
-      />
-      <PageControls
-        key={page}
-        page={page}
-        total={project?.pdf.page_count ?? 0}
-        zoom={zoom}
-        disabled={!project || !project.pdf.page_count}
-        onPage={onPage}
-        onZoom={setZoom}
-      />
+      <header className="pdf-toolbar">
+        <Tabs
+          label="专利文档视图"
+          value={tab}
+          onChange={onTab}
+          tabs={[
+            { value: 'original', label: '原文视图' },
+            { value: 'text', label: '文本视图' },
+            { value: 'annotations', label: '结构标注' },
+          ]}
+        />
+        <PageControls
+          key={page}
+          page={page}
+          total={project?.pdf.page_count ?? 0}
+          zoom={zoom}
+          disabled={!project || !project.pdf.page_count}
+          onPage={onPage}
+          onZoom={setZoom}
+        />
+      </header>
       <div
         className="pdf-content"
         role="tabpanel"
@@ -164,7 +166,7 @@ export function PdfPane({
           </>
         ) : null}
       </div>
-      <footer className="pdf-footer">
+      <footer className="sr-only">
         <FileText size={13} />
         <span>{imageLabel}</span>
         {project?.patent_id && <span>{project.patent_id}</span>}

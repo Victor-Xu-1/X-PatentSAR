@@ -33,8 +33,8 @@
   width: 24px;
 }
 .results-table .structure-column {
-  min-width: 104px;
-  width: 114px;
+  min-width: 142px;
+  width: 142px;
 }
 .results-table .context-column {
   min-width: 160px;
@@ -88,6 +88,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
+  min-width: 130px;
 }
 .structure-detail-button {
   font-size: 11px;
@@ -96,6 +97,10 @@
   min-height: 28px;
   background: transparent;
   border: 0;
+  white-space: nowrap;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .crop-button {
   padding: 2px;

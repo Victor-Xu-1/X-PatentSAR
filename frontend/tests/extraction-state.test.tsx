@@ -110,6 +110,7 @@ describe('current extraction failure presentation', () => {
         onUpload={vi.fn()}
       />,
     );
+    fireEvent.click(screen.getByRole('button', { name: '提取验收详情' }));
     const notice = screen.getByRole('alert', { name: '提取验收与阻塞状态' });
     expect(within(notice).getByText('提取在活性提取阶段停止。')).toBeVisible();
     expect(
