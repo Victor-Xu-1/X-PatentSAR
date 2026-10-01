@@ -125,11 +125,22 @@ class Acceptance(DTO):
     errors: list[str] = Field(default_factory=list)
 
 
+class StageProgress(DTO):
+    completed: int = Field(ge=0, le=1_000_000, strict=True)
+    total: int = Field(ge=0, le=1_000_000, strict=True)
+    cache_hits: int = Field(ge=0, le=1_000_000, strict=True)
+    failures: int = Field(ge=0, le=1_000_000, strict=True)
+    device: Literal["cpu", "gpu"] | None
+    peak_rss_mb: float | None = Field(ge=0, le=1_000_000_000)
+
+
 class Stage(DTO):
     name: str
     status: StageStatus = "pending"
-    count: int | None = None
-    duration_seconds: float | None = None
+    count: int | None = Field(default=None, ge=0, le=1_000_000, strict=True)
+    duration_seconds: float | None = Field(default=None, ge=0)
+    reused_checkpoint: bool = Field(default=False, strict=True)
+    progress: StageProgress | None = None
 
 
 class Job(DTO):
@@ -142,6 +153,7 @@ class Job(DTO):
     error: Error | None
     stages: list[Stage]
     can_resume: bool
+    history_available: bool = False
     include_intermediates: bool = False
     force: bool = False
     task_note: str = ""

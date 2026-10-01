@@ -9,6 +9,13 @@ from dataclasses import replace
 from pathlib import Path
 
 from fastapi.testclient import TestClient
+from patent_sar_extractor.web.errors import WebError
+from patent_sar_extractor.web.jobs import JobQueue, decode_spec
+from patent_sar_extractor.web.models import STAGES, JobRequest
+from patent_sar_extractor.web.pdf import copy_original
+from patent_sar_extractor.web.processes import CLIProcessRunner
+from patent_sar_extractor.web.service import WorkspaceService, import_run
+from patent_sar_extractor.web.storage import encode, now
 from test_web_support import (
     BASE_URL,
     DetachedRunner,
@@ -18,14 +25,6 @@ from test_web_support import (
     artifact_run,
     wait_job,
 )
-
-from patent_sar_extractor.web.errors import WebError
-from patent_sar_extractor.web.jobs import JobQueue, decode_spec
-from patent_sar_extractor.web.models import JobRequest
-from patent_sar_extractor.web.pdf import copy_original
-from patent_sar_extractor.web.processes import CLIProcessRunner
-from patent_sar_extractor.web.service import WorkspaceService, import_run
-from patent_sar_extractor.web.storage import encode, now
 
 
 def live(pid):
@@ -116,10 +115,49 @@ class JobTests(WebFixture, unittest.TestCase):
             self.assertEqual(resumed.status_code, 202, resumed.text)
             wait_job(client, resumed.json()["id"], "failed")
             service = WorkspaceService(self.state)
-            self.assertEqual(
+            self.assertNotEqual(
                 decode_spec(service.store.job(first["id"])["spec"]).output_dir,
                 decode_spec(service.store.job(resumed.json()["id"])["spec"]).output_dir,
             )
+
+    def test_resume_does_not_promote_the_old_cancelled_stage_history(self):
+        from patent_sar_extractor import contracts
+        from patent_sar_extractor.artifact_io import write_json_atomic
+
+        with self.client(runner=SleepRunner()) as client:
+            project = self.upload(client)
+            endpoint = f"/api/v1/projects/{project['id']}/jobs"
+            first = client.post(endpoint, json={}).json()
+            wait_job(client, first["id"], "running")
+            old_root = Path(client.app.state.queue._spec(first["id"]).output_dir)
+            summary = {
+                **contracts.artifact_identity(
+                    contracts.RUN_SUMMARY_SCHEMA, contracts.RUN_SUMMARY_SCHEMA_VERSION
+                ),
+                "status": "running",
+                "steps": {
+                    "classify": {"status": "ok", "page_count": 1},
+                    "activity": {"status": "running"},
+                },
+            }
+            write_json_atomic(old_root / "pipeline_summary.json", summary)
+            client.post(f"/api/v1/jobs/{first['id']}/cancel")
+            old = wait_job(client, first["id"], "cancelled")
+            original = (old_root / "pipeline_summary.json").read_bytes()
+            resumed = client.post(endpoint, json={"resume_job_id": first["id"]}).json()
+            new_root = Path(client.app.state.queue._spec(resumed["id"]).output_dir)
+            write_json_atomic(
+                new_root / "pipeline_summary.json",
+                {**summary, "steps": {name: {"status": "ok"} for name in STAGES}},
+            )
+            persisted = client.get(f"/api/v1/jobs/{first['id']}").json()
+            self.assertEqual(persisted["status"], "cancelled")
+            self.assertEqual(persisted["stages"], old["stages"])
+            self.assertEqual(
+                (old_root / "pipeline_summary.json").read_bytes(), original
+            )
+            client.post(f"/api/v1/jobs/{resumed['id']}/cancel")
+            wait_job(client, resumed["id"], "cancelled")
 
     def test_live_state_owner_prevents_second_recovery_or_cli_import(self):
         runner = SleepRunner()

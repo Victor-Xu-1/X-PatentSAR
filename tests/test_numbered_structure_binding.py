@@ -211,7 +211,7 @@ class NumberedStructureBindingTests(unittest.TestCase):
         self.assertEqual(self._pair([wrong], [structure(wrong)]).bindings, ())
 
     def test_empty_recognized_grid_does_not_fall_back_to_global_zip(self):
-        from patent_sar_extractor.core.structure_binder import (
+        from patent_sar_extractor.core.binding_spatial import (
             _extract_authoritative_structure_table_sequence_bindings,
         )
 
@@ -228,7 +228,7 @@ class NumberedStructureBindingTests(unittest.TestCase):
         self.assertEqual(bindings, [])
 
     def test_strict_accuracy_accepts_validated_cell_evidence_only(self):
-        from patent_sar_extractor.core.structure_binder import (
+        from patent_sar_extractor.core.binding_spatial import (
             _extract_authoritative_structure_table_sequence_bindings,
         )
 
@@ -272,7 +272,7 @@ class NumberedStructureBindingTests(unittest.TestCase):
                 self.assertTrue(invalid["fail_closed"])
 
     def test_strict_visible_conflict_is_not_waived_by_cell_binding(self):
-        from patent_sar_extractor.core.structure_binder import (
+        from patent_sar_extractor.core.binding_spatial import (
             _extract_authoritative_structure_table_sequence_bindings,
         )
 

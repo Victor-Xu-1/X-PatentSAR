@@ -64,9 +64,13 @@ from patent_sar_extractor.contracts import (
     ruleset_ref,
 )
 from patent_sar_extractor.core import activity_extractor as activity_extractor_module
+from patent_sar_extractor.core import (
+    binding_observations,
+    binding_ocr,
+    binding_spatial,
+)
 from patent_sar_extractor.core import env_runner as env_runner_module
 from patent_sar_extractor.core import page_ocr_cache as page_ocr_cache_module
-from patent_sar_extractor.core import structure_binder as structure_binder_module
 from patent_sar_extractor.core.activity_extractor import (
     ActivityRow,
     _activity_row_has_usable_values,
@@ -79,6 +83,15 @@ from patent_sar_extractor.core.activity_extractor import (
     _prefer_specific_activity_rows,
     _split_joined_dc50_dmax_cell,
 )
+from patent_sar_extractor.core.binding_arbitration import _drop_fail_closed_bindings
+from patent_sar_extractor.core.binding_candidates import _merge_binding_candidates
+from patent_sar_extractor.core.binding_products import (
+    _extract_cpd_letter_pair_product_bindings,
+)
+from patent_sar_extractor.core.binding_spatial import (
+    _enforce_authoritative_structure_table_source,
+)
+from patent_sar_extractor.core.binding_tables import _extract_structure_table_bindings
 from patent_sar_extractor.core.health_check import (
     _parse_tensorflow_gpu_probe,
     _tensorflow_gpu_probe_is_compatible,
@@ -108,13 +121,6 @@ from patent_sar_extractor.core.qa_report import (
 )
 from patent_sar_extractor.core.review_excerpt import create_review_excerpt_pdf
 from patent_sar_extractor.core.runtime_env import tensorflow_cuda_caps_support_gpu
-from patent_sar_extractor.core.structure_binder import (
-    _drop_fail_closed_bindings,
-    _enforce_authoritative_structure_table_source,
-    _extract_cpd_letter_pair_product_bindings,
-    _extract_structure_table_bindings,
-    _merge_binding_candidates,
-)
 from patent_sar_extractor.core.structure_page_locator import (
     _covered_active_cpds,
     _is_structure_table_page,
@@ -1055,12 +1061,14 @@ class StrictAcceptanceTests(unittest.TestCase):
             ]
         }
 
-        bindings = structure_binder_module._extract_authoritative_structure_table_sequence_bindings(
-            structures,
-            {},
-            ["Compound 1", "Compound 3"],
-            {"authoritative_structure_table_pages": [9]},
-            ocr_line_map=ocr_line_map,
+        bindings = (
+            binding_spatial._extract_authoritative_structure_table_sequence_bindings(
+                structures,
+                {},
+                ["Compound 1", "Compound 3"],
+                {"authoritative_structure_table_pages": [9]},
+                ocr_line_map=ocr_line_map,
+            )
         )
 
         self.assertEqual(
@@ -1096,20 +1104,22 @@ class StrictAcceptanceTests(unittest.TestCase):
             )
             lines.append({"y0": y0 + 50.0, "text": f"I-{source_label}"})
 
-        bindings = structure_binder_module._extract_authoritative_structure_table_sequence_bindings(
-            structures,
-            {},
-            [
-                "Compound 1254",
-                "Compound 1255",
-                "Compound 1256",
-                "Compound 1257",
-                "Compound 1265",
-                "Compound 1266",
-                "Compound 1267",
-            ],
-            {"authoritative_structure_table_pages": [9]},
-            ocr_line_map={9: lines},
+        bindings = (
+            binding_spatial._extract_authoritative_structure_table_sequence_bindings(
+                structures,
+                {},
+                [
+                    "Compound 1254",
+                    "Compound 1255",
+                    "Compound 1256",
+                    "Compound 1257",
+                    "Compound 1265",
+                    "Compound 1266",
+                    "Compound 1267",
+                ],
+                {"authoritative_structure_table_pages": [9]},
+                ocr_line_map={9: lines},
+            )
         )
 
         self.assertEqual(
@@ -1217,8 +1227,8 @@ class StrictAcceptanceTests(unittest.TestCase):
                 }
             }
 
-            with patch.object(structure_binder_module, "_PADDLEX_OCR_AVAILABLE", False):
-                cache = structure_binder_module._precompute_visible_label_cache(
+            with patch.object(binding_ocr, "_PADDLEX_OCR_AVAILABLE", False):
+                cache = binding_observations._precompute_visible_label_cache(
                     [struct],
                     str(base / "structure_bindings"),
                     {},
@@ -1228,7 +1238,7 @@ class StrictAcceptanceTests(unittest.TestCase):
 
             self.assertNotIn("S0001", cache)
             self.assertEqual(
-                structure_binder_module._visible_label_candidates_for_structure(
+                binding_observations._visible_label_candidates_for_structure(
                     struct, cache
                 ),
                 [],
@@ -1249,13 +1259,13 @@ class StrictAcceptanceTests(unittest.TestCase):
             legacy = {
                 "cache_version": 7,
                 "cache_complete": True,
-                "structure_signature": structure_binder_module._structure_cache_signature(
+                "structure_signature": binding_observations._structure_cache_signature(
                     struct
                 ),
             }
 
             self.assertFalse(
-                structure_binder_module._visible_cache_item_matches_structure(
+                binding_observations._visible_cache_item_matches_structure(
                     legacy, struct
                 )
             )

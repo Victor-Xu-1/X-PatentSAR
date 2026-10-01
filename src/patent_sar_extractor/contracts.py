@@ -21,6 +21,8 @@ RULESET_VERSION: Final = "2.0.2"
 
 RUN_SUMMARY_SCHEMA: Final = "patentsar.run-summary"
 RUN_SUMMARY_SCHEMA_VERSION: Final = 1
+STAGE_PROGRESS_SCHEMA: Final = "patentsar.stage-progress"
+STAGE_PROGRESS_SCHEMA_VERSION: Final = 1
 STEP_MANIFEST_SCHEMA: Final = "patentsar.step-manifest"
 STEP_MANIFEST_SCHEMA_VERSION: Final = 1
 PAGE_CLASSIFICATION_SCHEMA: Final = "patentsar.page-classification"
@@ -35,8 +37,6 @@ STRUCTURE_WORKER_VERSION: Final = "3"
 STRUCTURE_BINDER_VERSION: Final = "4"
 OCSR_OBSERVATION_VERSION: Final = "2"
 DECIMER_ADAPTER_VERSION: Final = "1"
-STAGE_PROGRESS_SCHEMA: Final = "patentsar.stage-progress"
-STAGE_PROGRESS_SCHEMA_VERSION: Final = 1
 STRUCTURE_LOCATION_SCHEMA: Final = "patentsar.structure-location"
 STRUCTURE_LOCATION_SCHEMA_VERSION: Final = 1
 STRUCTURES_SCHEMA: Final = "patentsar.structures"

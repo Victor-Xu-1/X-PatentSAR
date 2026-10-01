@@ -11,7 +11,9 @@ import time
 import uuid
 from dataclasses import asdict
 from pathlib import Path
+from typing import Any
 
+from .attempts import ATTEMPT_VERSION, seed_checkpoints, spec_record
 from .checkpoints import LiveCheckpoints
 from .errors import WebError
 from .files import SafeFiles, private_directory
@@ -24,8 +26,16 @@ logger = logging.getLogger(__name__)
 
 
 def decode_spec(raw: str) -> RunSpec:
-    value = json.loads(raw)
-    if not isinstance(value, dict):
+    value = spec_record(raw)
+    attempt_version = value.pop("attempt_version", None)
+    parent_job = value.pop("resume_job_id", None)
+    if (
+        attempt_version is not None
+        and (type(attempt_version) is not int or attempt_version != ATTEMPT_VERSION)
+    ) or (
+        parent_job is not None
+        and (not isinstance(parent_job, str) or len(parent_job) > 64)
+    ):
         raise WebError(
             409, "invalid_job_record", "Persisted job specification is invalid."
         )
@@ -41,33 +51,6 @@ def decode_spec(raw: str) -> RunSpec:
         raise WebError(
             409, "invalid_job_record", "Persisted job specification is invalid."
         ) from exc
-    if (
-        any(
-            not isinstance(value, str)
-            for value in (
-                spec.job_id,
-                spec.project_id,
-                spec.pdf_path,
-                spec.output_dir,
-                spec.patent_id,
-                spec.sha256,
-            )
-        )
-        or not isinstance(spec.advisory, bool)
-        or not isinstance(spec.allow_partial, bool)
-        or not isinstance(spec.include_intermediates, bool)
-        or not isinstance(spec.force, bool)
-        or not isinstance(spec.task_note, str)
-        or not isinstance(spec.source_ocr_cache, str)
-        or len(spec.source_ocr_cache) > 4096
-        or any(ord(c) < 32 for c in spec.source_ocr_cache)
-        or len(spec.task_note) > 2000
-        or any(ord(c) < 32 and c not in "\t\n\r" for c in spec.task_note)
-        or "\x7f" in spec.task_note
-    ):
-        raise WebError(
-            409, "invalid_job_record", "Persisted job specification is invalid."
-        )
     return spec
 
 
@@ -111,10 +94,7 @@ class JobQueue:
         if (
             spec.job_id != row["id"]
             or spec.project_id != row["project_id"]
-            or output.is_symlink()
-            or not output.resolve().is_relative_to(
-                self.store.root / "runs" / row["project_id"]
-            )
+            or self.service.attempts.output(row) != output
             or Path(spec.pdf_path) != expected_pdf
             or spec.sha256 != project["sha256"]
         ):
@@ -125,7 +105,9 @@ class JobQueue:
             )
         if spec.source_ocr_cache:
             source = Path(spec.source_ocr_cache)
-            if source.is_symlink() or not source.resolve().is_relative_to(
+            if any(
+                parent.is_symlink() for parent in (source, *source.parents)
+            ) or not source.resolve().is_relative_to(
                 self.store.root / "runs" / row["project_id"]
             ):
                 raise WebError(
@@ -149,12 +131,16 @@ class JobQueue:
         force = request.force
         task_note = request.task_note.strip()
         source_ocr_cache = ""
+        old = None
         if project["run_root"] and not request.force and not request.resume_job_id:
             previous_root = Path(project["run_root"])
             candidate = previous_root / "page_classification" / "page_ocr_cache.json"
             project_runs = self.store.root / "runs" / project_id
             if (
-                not previous_root.is_symlink()
+                not any(
+                    parent.is_symlink()
+                    for parent in (previous_root, *previous_root.parents)
+                )
                 and previous_root.resolve().is_relative_to(project_runs)
                 and candidate.is_file()
                 and not candidate.is_symlink()
@@ -195,15 +181,14 @@ class JobQueue:
                     "resume_parameters",
                     "Resume requires the original job parameters.",
                 )
-            output = Path(old.output_dir)
             include_intermediates = old.include_intermediates
             force = (
                 False  # Resume reuses verified checkpoints; it never invalidates them.
             )
             task_note = old.task_note
-        if output.is_symlink() or not output.resolve().is_relative_to(
-            self.store.root / "runs"
-        ):
+        if any(
+            parent.is_symlink() for parent in (output, *output.parents)
+        ) or not output.resolve().is_relative_to(self.store.root / "runs"):
             raise WebError(
                 400,
                 "unsafe_workspace",
@@ -223,7 +208,12 @@ class JobQueue:
             task_note,
             source_ocr_cache,
         )
-        payload = {**asdict(spec), "runtime_identity": runtime_identity()}
+        payload = {
+            **asdict(spec),
+            "runtime_identity": runtime_identity(),
+            "attempt_version": ATTEMPT_VERSION,
+            "resume_job_id": request.resume_job_id,
+        }
         try:
             with self.store.connect(write=True) as connection:
                 if (
@@ -244,6 +234,12 @@ class JobQueue:
                         "job_active",
                         "Project already has a queued or running extraction.",
                     )
+                if output.exists():
+                    raise WebError(
+                        409,
+                        "attempt_exists",
+                        "New attempt output directory already exists; no files were changed.",
+                    )
                 resolved_output = private_directory(output)
                 if not resolved_output.is_relative_to(self.store.root / "runs"):
                     raise WebError(
@@ -251,51 +247,86 @@ class JobQueue:
                         "unsafe_workspace",
                         "Job output must remain inside its private workspace.",
                     )
+                preparation_error = None
+                if old is not None:
+                    try:
+                        seed_checkpoints(old, output)
+                    except (WebError, OSError, ValueError, RecursionError) as exc:
+                        logger.warning(
+                            "Checkpoint preparation failed for attempt %s (%s)",
+                            job_id,
+                            type(exc).__name__,
+                        )
+                        preparation_error = Error(
+                            code=(
+                                exc.code
+                                if isinstance(exc, WebError)
+                                else "checkpoint_copy_failed"
+                            ),
+                            message="Checkpoint preparation failed; this attempt and the previous run are preserved.",
+                        )
+                # Keep the transaction until seeding finishes so the single
+                # consumer cannot start against a partially prepared attempt.
+                stamp = now()
                 connection.execute(
-                    "INSERT INTO jobs(id,project_id,status,created_at,spec) VALUES(?,?,'queued',?,?)",
-                    (job_id, project_id, now(), encode(payload)),
+                    "INSERT INTO jobs(id,project_id,status,created_at,finished_at,error,spec) VALUES(?,?,?,?,?,?,?)",
+                    (
+                        job_id,
+                        project_id,
+                        "failed" if preparation_error else "queued",
+                        stamp,
+                        stamp if preparation_error else None,
+                        preparation_error.model_dump_json()
+                        if preparation_error
+                        else None,
+                        encode(payload),
+                    ),
                 )
                 connection.execute(
                     "UPDATE projects SET run_root=?,updated_at=? WHERE id=?",
                     (str(output), now(), project_id),
                 )
-                if not request.resume_job_id:
-                    connection.execute(
-                        "DELETE FROM compounds WHERE project_id=?", (project_id,)
-                    )
-                    connection.execute(
-                        "UPDATE projects SET snapshot=?,historical=0 WHERE id=?",
-                        (
-                            encode(
-                                {
-                                    "acceptance": {"state": "not_run", "errors": []},
-                                    "summary": {},
-                                    "metrics": [],
-                                    "targets": [],
-                                    "is_historical": False,
-                                }
-                            ),
-                            project_id,
+                connection.execute(
+                    "DELETE FROM compounds WHERE project_id=?", (project_id,)
+                )
+                connection.execute(
+                    "UPDATE projects SET snapshot=?,historical=0 WHERE id=?",
+                    (
+                        encode(
+                            {
+                                "acceptance": {"state": "not_run", "errors": []},
+                                "summary": {},
+                                "metrics": [],
+                                "targets": [],
+                                "is_historical": False,
+                            }
                         ),
-                    )
+                        project_id,
+                    ),
+                )
         except sqlite3.IntegrityError as exc:
             raise WebError(
                 409, "job_active", "Project already has a queued or running extraction."
             ) from exc
         self.wake.set()
+        if preparation_error:
+            row = self.store.job(job_id)
+            self._seal(row, "failed", row["finished_at"])
         return self.service.job(job_id)
 
     def cancel(self, job_id: str) -> Job:
         with self.store.connect(write=True) as connection:
             row = connection.execute(
-                "SELECT status FROM jobs WHERE id=?", (job_id,)
+                "SELECT * FROM jobs WHERE id=?", (job_id,)
             ).fetchone()
             if row is None:
                 raise WebError(404, "job_not_found", "Job does not exist.")
             if row["status"] == "queued":
+                stamp = now()
+                self._seal(dict(row), "cancelled", stamp)
                 connection.execute(
                     "UPDATE jobs SET status='cancelled',cancel_requested=1,finished_at=? WHERE id=?",
-                    (now(), job_id),
+                    (stamp, job_id),
                 )
             elif row["status"] == "running":
                 connection.execute(
@@ -314,16 +345,34 @@ class JobQueue:
         *,
         clear_identity: bool = True,
     ) -> None:
+        row = self.store.job(job_id)
+        if (
+            row["status"] in {"complete", "failed", "cancelled", "interrupted"}
+            and row["finished_at"]
+        ):
+            return
+        stamp = now()
+        self._seal(row, status, stamp)
         with self.store.connect(write=True) as connection:
             connection.execute(
                 "UPDATE jobs SET status=?,finished_at=?,error=?,identity=CASE WHEN ? THEN NULL ELSE identity END WHERE id=?",
                 (
                     status,
-                    now(),
+                    stamp,
                     error.model_dump_json() if error else None,
                     clear_identity,
                     job_id,
                 ),
+            )
+
+    def _seal(self, row: dict[str, Any], status: str, stamp: str) -> None:
+        try:
+            self.service.attempts.seal(row, status, stamp)
+        except (WebError, OSError) as exc:
+            # A history failure is explicit unavailable evidence, never a live
+            # terminal read from mutable output. Process cleanup still completes.
+            logger.warning(
+                "Attempt history unavailable for %s (%s)", row["id"], type(exc).__name__
             )
 
     def reconcile(self) -> None:
@@ -360,11 +409,18 @@ class JobQueue:
                         message="Server stopped during extraction; verified source and checkpoints may be resumed.",
                     ),
                 )
-            except WebError as exc:
+            except (WebError, ValueError, TypeError, KeyError) as exc:
                 self._finish(
                     row["id"],
                     "interrupted",
-                    Error(code=exc.code, message=exc.message),
+                    (
+                        Error(code=exc.code, message=exc.message)
+                        if isinstance(exc, WebError)
+                        else Error(
+                            code="invalid_process_record",
+                            message="Previous process identity is invalid; no process was touched and resume is disabled.",
+                        )
+                    ),
                     clear_identity=False,
                 )
 

@@ -8,7 +8,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 import fitz
-
 from patent_sar_extractor.core.structure_binder import bind
 
 
@@ -47,11 +46,11 @@ class SpatialBindingAuthorityTests(unittest.TestCase):
             )
             with (
                 patch(
-                    "patent_sar_extractor.core.structure_binder._precompute_visible_label_cache",
+                    "patent_sar_extractor.core.binding_selection._precompute_visible_label_cache",
                     side_effect=AssertionError("redundant crop OCR"),
                 ),
                 patch(
-                    "patent_sar_extractor.core.structure_binder._repair_fallback_bindings_with_visual_modules",
+                    "patent_sar_extractor.core.binding_recovery._repair_fallback_bindings_with_visual_modules",
                     side_effect=AssertionError("competing repair"),
                 ),
             ):
@@ -71,7 +70,9 @@ class SpatialBindingAuthorityTests(unittest.TestCase):
                 )
             self.assertEqual(result["bound"], 2)
             self.assertEqual(result["patent_id"], "controlled")
-            self.assertTrue(all(b["patent_id"] == "controlled" for b in result["bindings"]))
+            self.assertTrue(
+                all(b["patent_id"] == "controlled" for b in result["bindings"])
+            )
             self.assertEqual(result["detected_style"], "original_cell_and_caption")
             self.assertEqual(
                 [b["cpd"] for b in result["bindings"]], ["Compound 1", "Compound 2"]

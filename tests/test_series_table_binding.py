@@ -133,7 +133,7 @@ class SeriesTableBindingTests(unittest.TestCase):
         self.assertEqual(result.bindings, ())
 
     def test_discontinuous_table_pages_still_use_independent_geometry(self):
-        from patent_sar_extractor.core.structure_binder import (
+        from patent_sar_extractor.core.binding_spatial import (
             _extract_authoritative_structure_table_sequence_bindings,
         )
 
@@ -180,7 +180,7 @@ class SeriesTableBindingTests(unittest.TestCase):
         )
 
     def test_recognized_ambiguous_series_cannot_fall_back_to_numeric_zip(self):
-        from patent_sar_extractor.core.structure_binder import (
+        from patent_sar_extractor.core.binding_spatial import (
             _extract_authoritative_structure_table_sequence_bindings,
         )
 
