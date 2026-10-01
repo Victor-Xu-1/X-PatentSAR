@@ -6,21 +6,25 @@ export function AssetImage({
   alt,
   className = '',
   onLoad,
+  unavailableLabel = '未提供结构裁图',
 }: {
   url: string | null;
   alt: string;
   className?: string;
   onLoad?: () => void;
+  unavailableLabel?: string;
 }) {
   const safe = safeAssetUrl(url);
   const [failed, setFailed] = useState<string | null>(null);
-  if (!safe || failed === safe)
+  if (!safe || failed === safe) {
+    const message = !url ? unavailableLabel : !safe ? '裁图地址无效' : '裁图加载失败';
     return (
-      <span className={`image-unavailable ${className}`} aria-label={`${alt}不可用`}>
+      <span className={`image-unavailable ${className}`} aria-label={`${alt}：${message}`}>
         <ImageOff size={20} />
-        <span>裁图不可用</span>
+        <span>{message}</span>
       </span>
     );
+  }
   return (
     <img
       className={className}

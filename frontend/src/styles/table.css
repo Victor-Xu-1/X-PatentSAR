@@ -91,6 +91,10 @@
   border-color: var(--line-strong);
   background: var(--image-paper);
 }
+.crop-button:disabled {
+  height: auto;
+  min-height: 60px;
+}
 .crop-button img {
   max-width: 100%;
   max-height: 100%;

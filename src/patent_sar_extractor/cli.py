@@ -62,6 +62,7 @@ def build_parser() -> argparse.ArgumentParser:
     command.add_argument("--output", default="")
     command.add_argument("--patent-id", default="")
     command.add_argument("--force", action="store_true")
+    command.add_argument("--reuse-ocr-cache", default="", help="复用经原文 SHA 和观察契约校验的 OCR 缓存；派生结果仍重新计算")
     command.add_argument("--include-intermediates", action="store_true")
     command.add_argument(
         "--skip-advisory-qa",

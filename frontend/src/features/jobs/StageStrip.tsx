@@ -1,7 +1,8 @@
 import { Check, CircleAlert, LoaderCircle } from 'lucide-react';
 import type { Job } from '../../api/types';
 import { stageNames } from '../../api/types';
-import { stageLabels, stageStatusLabels } from '../../model/presentation';
+import { stageLabels } from '../../model/presentation';
+import { stageStatusText, stoppedJob } from '../../model/extraction';
 export function StageStrip({ job }: { job: Job | null }) {
   return (
     <ol className="stage-strip" aria-label="真实提取流水线阶段">
@@ -13,7 +14,7 @@ export function StageStrip({ job }: { job: Job | null }) {
             <span className="stage-circle">
               {status === 'ok' ? (
                 <Check size={13} />
-              ) : status === 'running' ? (
+              ) : status === 'running' && !stoppedJob(job) ? (
                 <LoaderCircle size={13} className="spin" />
               ) : status === 'failed' ? (
                 <CircleAlert size={13} />
@@ -24,7 +25,7 @@ export function StageStrip({ job }: { job: Job | null }) {
             <div>
               <strong>{stageLabels[name]}</strong>
               <small>
-                {stage ? stageStatusLabels[status] : job ? '状态未提供' : '尚未启动'}
+                {stageStatusText(job, stage)}
                 {stage?.count !== null && stage?.count !== undefined ? ` · ${stage.count}` : ''}
               </small>
             </div>

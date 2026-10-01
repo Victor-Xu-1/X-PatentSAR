@@ -16,25 +16,17 @@ import subprocess
 import time
 from pathlib import Path
 
-from patent_sar_extractor.core.env_runner import get_python, run_in_env, run_snippet
-from patent_sar_extractor.core.activity_values import has_usable_activity_values
-from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy, summarise_binding_accuracy
-from patent_sar_extractor.core.runtime_env import (
-    build_gpu_env,
-    host_gpu_compute_capability as _host_gpu_compute_capability,
-    tensorflow_cuda_caps_support_gpu as _tf_cuda_caps_support_gpu,
-)
+from patent_sar_extractor.application.progress import PipelineProgress
 from patent_sar_extractor.application.qa_policy import compose_qa_decision
 from patent_sar_extractor.artifact_io import load_json as _load_json
 from patent_sar_extractor.artifact_io import write_json_atomic as _write_json
-from patent_sar_extractor.core.page_classifier import classify_pdf
-from patent_sar_extractor.core.structure_page_locator import locate_structure_pages
-from patent_sar_extractor.integrations.llm.advisory_qa import run_advisory_qa
 from patent_sar_extractor.contracts import (
+    ACTIVITY_EXTRACTOR_VERSION,
     ACTIVITY_SCHEMA,
     ACTIVITY_SCHEMA_VERSION,
     BINDINGS_SCHEMA,
     BINDINGS_SCHEMA_VERSION,
+    OCSR_OBSERVATION_VERSION,
     PAGE_OCR_CACHE_SCHEMA,
     PAGE_OCR_CACHE_SCHEMA_VERSION,
     PRODUCT_NAME,
@@ -42,6 +34,7 @@ from patent_sar_extractor.contracts import (
     RUN_SUMMARY_SCHEMA_VERSION,
     STEP_MANIFEST_SCHEMA,
     STEP_MANIFEST_SCHEMA_VERSION,
+    STRUCTURE_BINDER_VERSION,
     STRUCTURES_SCHEMA,
     STRUCTURES_SCHEMA_VERSION,
     __version__,
@@ -52,8 +45,32 @@ from patent_sar_extractor.contracts import (
     ruleset_ref,
     schema_ref,
 )
-from patent_sar_extractor.paths import PACKAGE_ROOT, config_files, state_dir
+from patent_sar_extractor.contracts import (
+    STRUCTURE_LOCATOR_VERSION as _STRUCTURE_LOCATOR_CONTRACT_VERSION,
+)
+from patent_sar_extractor.contracts import (
+    STRUCTURE_WORKER_VERSION as _STRUCTURE_WORKER_CONTRACT_VERSION,
+)
+from patent_sar_extractor.core.activity_values import has_usable_activity_values
+from patent_sar_extractor.core.env_runner import get_python, run_in_env, run_snippet
+from patent_sar_extractor.core.page_classifier import classify_pdf
+from patent_sar_extractor.core.pipeline_rules import (
+    annotate_binding_accuracy,
+    summarise_binding_accuracy,
+)
+from patent_sar_extractor.core.runtime_env import (
+    build_gpu_env,
+)
+from patent_sar_extractor.core.runtime_env import (
+    host_gpu_compute_capability as _host_gpu_compute_capability,
+)
+from patent_sar_extractor.core.runtime_env import (
+    tensorflow_cuda_caps_support_gpu as _tf_cuda_caps_support_gpu,
+)
+from patent_sar_extractor.core.structure_page_locator import locate_structure_pages
 from patent_sar_extractor.failures import clear_failure_marker, write_failure_marker
+from patent_sar_extractor.integrations.llm.advisory_qa import run_advisory_qa
+from patent_sar_extractor.paths import PACKAGE_ROOT, config_files, state_dir
 from patent_sar_extractor.smiles_artifact import (
     build_smiles_artifact,
     smiles_artifact_is_current,
@@ -68,8 +85,6 @@ _DECIMER_TF_GPU_SAFE: bool | None = None
 _ACTIVITY_TIMEOUT_BASE_SECONDS = 1800
 _ACTIVITY_TIMEOUT_PER_PAGE_SECONDS = 10
 _ACTIVITY_TIMEOUT_MAX_SECONDS = 10800
-_STRUCTURE_WORKER_CONTRACT_VERSION = "2"
-_STRUCTURE_LOCATOR_CONTRACT_VERSION = "2"
 
 
 def _elapsed_since(start_time: float) -> float:
@@ -804,8 +819,9 @@ def _activity_timeout_seconds(classification: dict) -> int:
     )
 
 
-def _run_activity_rules(pdf_path: str, classification: dict, output_dir: str, include_intermediates: bool = False) -> None:
+def _run_activity_rules(pdf_path: str, classification: dict, output_dir: str, include_intermediates: bool = False, patent_id: str = "") -> None:
     profile = {
+        "patent_id": patent_id,
         "synthesis_pages": classification.get("synthesis_pages", []),
         "activity_pages": classification.get("activity_pages", []),
         "cpd_pattern": classification.get("cpd_pattern", r"Cpd[-\s]?(\d+)"),
@@ -1035,6 +1051,15 @@ def cmd_qa(args):
 
 
 def cmd_run(args):
+    progress = PipelineProgress()
+    try:
+        return _execute_pipeline(args, progress)
+    except BaseException:
+        progress.fail_current()
+        raise
+
+
+def _execute_pipeline(args, progress: PipelineProgress):
     patent_id = getattr(args, "patent_id", None) or (re.search(r"(WO\d{6,})", args.pdf).group(1) if re.search(r"(WO\d{6,})", args.pdf) else os.path.splitext(os.path.basename(args.pdf))[0])
     io_cfg = _load_io_config()
     base_dir = args.output or (
@@ -1084,15 +1109,27 @@ def cmd_run(args):
         "runtime": {
             "locate_workers": int(getattr(args, "locate_workers", 1) or 1),
             "bind_workers": int(getattr(args, "bind_workers", 1) or 1),
+            "structure_binder_version": STRUCTURE_BINDER_VERSION,
             "smiles_workers": int(getattr(args, "smiles_workers", 1) or 1),
             "gpu_mode": getattr(args, "gpu_mode", "auto"),
             "acceptance_mode": "strict_fail_closed" if strict_gates else "review_only_partial",
         },
     }
 
+    progress.bind(base_dir, pipeline_log)
+
     # Stage: deterministic classification in original-PDF page coordinates.
     step = "classify"
+    progress.start(step)
     t0 = time.time()
+    source_cache = getattr(args, "reuse_ocr_cache", "")
+    if source_cache:
+        from patent_sar_extractor.core.page_ocr_cache import inherit_page_ocr_cache
+
+        if force:
+            raise ValueError("Force recomputation and OCR observation reuse cannot be combined")
+        inherited = inherit_page_ocr_cache(source_cache, os.path.join(step_dirs[step], "page_ocr_cache.json"), args.pdf)
+        pipeline_log["runtime"]["ocr_observations_inherited"] = inherited
     classify_json = os.path.join(step_dirs[step], "page_classification.json")
     classify_fp = _step_fingerprint(
         step,
@@ -1114,6 +1151,7 @@ def cmd_run(args):
         "elapsed_s": _elapsed_since(t0),
         "output": classify_json,
         "ocr_cache_path": ocr_cache_path,
+        "page_count": classification.get("page_count", 0),
         "synthesis_pages": len(classification.get("synthesis_pages", [])),
         "activity_pages": len(classification.get("activity_pages", [])),
         "candidate_pages": len(classification.get("candidate_pages", [])),
@@ -1122,6 +1160,7 @@ def cmd_run(args):
 
     # Stage: activity
     step = "activity"
+    progress.start(step)
     t0 = time.time()
     act_dir = step_dirs[step]
     act_json = os.path.join(act_dir, "activity_data.json")
@@ -1133,13 +1172,15 @@ def cmd_run(args):
             "include_intermediates": bool(getattr(args, "include_intermediates", False)),
             "activity_pages": classification.get("activity_pages", []),
             "ocr_cache_path": ocr_cache_path,
+            "activity_extractor_version": ACTIVITY_EXTRACTOR_VERSION,
+            "patent_id": patent_id,
         },
     )
     if not force and _fingerprint_matches(act_json, activity_fp):
         print(f"  ⏭ [{step}] 已存在，跳过")
     else:
         os.makedirs(act_dir, exist_ok=True)
-        _run_activity_rules(args.pdf, classification, act_dir, include_intermediates=getattr(args, "include_intermediates", False))
+        _run_activity_rules(args.pdf, classification, act_dir, include_intermediates=getattr(args, "include_intermediates", False), patent_id=patent_id)
         _write_step_manifest(act_json, activity_fp)
     active_cpds = _annotate_activity_payload(act_json) if os.path.isfile(act_json) else []
     activity_payload = _load_json(act_json, {}) if os.path.isfile(act_json) else {}
@@ -1165,6 +1206,7 @@ def cmd_run(args):
 
     # Stage: locate structure pages
     step = "locate"
+    progress.start(step)
     t0 = time.time()
     locate_json = os.path.join(step_dirs[step], "locator.json")
     locate_fp = _step_fingerprint(
@@ -1206,6 +1248,7 @@ def cmd_run(args):
 
     # Stage: structures
     step = "structures"
+    progress.start(step)
     t0 = time.time()
     structures_dir = step_dirs[step]
     structures_json = os.path.join(structures_dir, "metadata.json")
@@ -1276,7 +1319,7 @@ def cmd_run(args):
                     )
                     chunk_payloads.append(reusable_chunk)
                     continue
-                chunk_args = ["--pdf", args.pdf, "--output", chunk_output, "--pages", *[str(p) for p in chunk_pages]]
+                chunk_args = ["--pdf", args.pdf, "--output", chunk_output, "--patent-id", patent_id, "--pages", *[str(p) for p in chunk_pages]]
                 if locator.get("crop_regions"):
                     chunk_args.extend(["--crop-regions", crop_regions_json])
                 print(
@@ -1302,13 +1345,8 @@ def cmd_run(args):
                 chunk_meta = _load_json(os.path.join(chunk_output, "metadata.json"), {})
                 _write_step_manifest(os.path.join(chunk_output, "metadata.json"), chunk_fingerprint)
                 chunk_payloads.append(chunk_meta)
-            chunk_patent_id = ""
-            for payload in chunk_payloads:
-                if isinstance(payload, dict) and payload.get("patent_number"):
-                    chunk_patent_id = str(payload["patent_number"])
-                    break
             structures_meta = _merge_structure_chunk_metadata(
-                chunk_patent_id or (args.patent_id or Path(args.pdf).stem),
+                patent_id,
                 chunk_payloads,
             )
             _write_json(structures_json, structures_meta)
@@ -1318,6 +1356,8 @@ def cmd_run(args):
                 args.pdf,
                 "--output",
                 structures_dir,
+                "--patent-id",
+                patent_id,
                 "--pages",
                 *[str(p) for p in structure_pages],
             ]
@@ -1352,6 +1392,7 @@ def cmd_run(args):
 
     # Stage: bind
     step = "bind"
+    progress.start(step)
     t0 = time.time()
     bind_dir = step_dirs[step]
     bind_json = os.path.join(bind_dir, "bindings.json")
@@ -1390,6 +1431,7 @@ def cmd_run(args):
             dependencies=[structures_json, act_json, locate_json, ocr_cache_path],
             params={
                 **bind_profile,
+                "structure_binder_version": STRUCTURE_BINDER_VERSION,
                 "include_intermediates": bool(getattr(args, "include_intermediates", False)),
             },
         )
@@ -1440,6 +1482,7 @@ def cmd_run(args):
 
     # Stage: smiles
     step = "smiles"
+    progress.start(step)
     t0 = time.time()
     smiles_dir = step_dirs[step]
     smiles_json = os.path.join(smiles_dir, "smiles_results.json")
@@ -1453,6 +1496,8 @@ def cmd_run(args):
         pdf_path=args.pdf,
         params={
             **_production_smiles_ocr_options(),
+            "ocsr_observation_version": OCSR_OBSERVATION_VERSION,
+            "retry_normalization": True,
             "timeout": 300,
             "no_preprocess": True,
             "smiles_workers": int(getattr(args, "smiles_workers", 1) or 1),
@@ -1498,6 +1543,7 @@ def cmd_run(args):
             "--timeout", "300",
             "--cache", smiles_cache,
             "--no-preprocess",
+            "--retry-normalization",
             "--jobs", str(getattr(args, "smiles_workers", 1) or 1),
         ]
         proc = run_in_env(
@@ -1541,6 +1587,7 @@ def cmd_run(args):
 
     # Stage: final
     step = "final"
+    progress.start(step)
     t0 = time.time()
     final_dir = step_dirs[step]
     excel_path = os.path.join(final_dir, f"{patent_id}_final.xlsx")
@@ -1591,6 +1638,7 @@ def cmd_run(args):
 
     # Stage: QA
     step = "qa"
+    progress.start(step)
     t0 = time.time()
     from patent_sar_extractor.core.qa_report import write_qa_report
 

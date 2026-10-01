@@ -3,6 +3,7 @@ import { FileText, MapPin, MessageSquareText } from 'lucide-react';
 import type { Compound } from '../../api/types';
 import { activityText, confidenceLabels, reviewLabels } from '../../model/presentation';
 import { AssetImage } from '../../components/AssetImage';
+import { cropPlaceholder } from '../../model/extraction';
 
 export function ResultsTable({
   rows,
@@ -99,6 +100,7 @@ export function ResultsTable({
                       <AssetImage
                         url={row.structure_image_url}
                         alt={`${row.display_id} 结构裁图`}
+                        unavailableLabel={cropPlaceholder(row)}
                       />
                     </button>
                     <strong title={row.id}>{row.display_id}</strong>

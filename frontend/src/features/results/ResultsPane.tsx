@@ -1,15 +1,16 @@
 import { Download } from 'lucide-react';
-import type { Compound, Filters, Project, Results } from '../../api/types';
+import type { Compound, Filters, Job, Project, Results } from '../../api/types';
 import type { Resource } from '../../hooks/useResource';
 import { Empty, ErrorNotice, Loading } from '../../components/Feedback';
 import { Metrics } from './Metrics';
 import { ResultFilters } from './ResultFilters';
 import { ResultsTable } from './ResultsTable';
 import { Pagination } from './Pagination';
-import { acceptanceLabels } from '../../model/presentation';
+import { ExtractionNotice } from './ExtractionNotice';
 
 export function ResultsPane({
   project,
+  job = null,
   resource,
   filters,
   metric,
@@ -26,6 +27,7 @@ export function ResultsPane({
   onUpload,
 }: {
   project: Project | null;
+  job?: Job | null;
   resource: Resource<Results>;
   filters: Filters;
   metric: string;
@@ -45,26 +47,7 @@ export function ResultsPane({
   return (
     <div className="result-data-view">
       <Metrics project={project} />
-      {project && (
-        <div className={`acceptance-banner ${project.acceptance.state}`}>
-          <span>{acceptanceLabels[project.acceptance.state]}</span>
-          <small>
-            {project.is_historical
-              ? '来源：历史运行导入；旧契约证据不视为当前高置信结果。'
-              : '正式验收仅由确定性 QA 决定，人工注记不改变验收。'}
-          </small>
-          {project.acceptance.errors.length > 0 && (
-            <details>
-              <summary>查看核心验收问题（{project.acceptance.errors.length}）</summary>
-              <ul>
-                {project.acceptance.errors.map((error, index) => (
-                  <li key={index}>{error}</li>
-                ))}
-              </ul>
-            </details>
-          )}
-        </div>
-      )}
+      {project && <ExtractionNotice project={project} job={job} />}
       <ResultFilters
         filters={filters}
         metrics={result?.metrics ?? []}

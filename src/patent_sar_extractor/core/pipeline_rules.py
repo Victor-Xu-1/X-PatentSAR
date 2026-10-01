@@ -11,12 +11,14 @@ from __future__ import annotations
 from typing import Any
 
 from patent_sar_extractor.contracts import ruleset_ref
+from patent_sar_extractor.core.numbered_structure_binding import valid_cell_binding_evidence
 
 
 STRICT_VISIBLE_SOURCES = {"page_strict", "direct", "pdf_clip"}
 VISUAL_LABEL_SOURCES = STRICT_VISIBLE_SOURCES | {"page_wide"}
 
 STRONG_BINDING_RULES = {
+    "numbered_structure_table_cell",
     "direct_structure_label",
     "direct_structure_label_merged_fragment",
     "direct_structure_label_right_product_crop",
@@ -323,6 +325,13 @@ def annotate_binding_accuracy(binding: dict[str, Any]) -> dict[str, Any]:
 
     exact_strict_visual = bool(target_key and target_key in strict_labels)
     exact_any_visual = bool(target_key and target_key in all_labels)
+    exact_numbered_cell = rule == "numbered_structure_table_cell" and valid_cell_binding_evidence(item)
+    if rule == "numbered_structure_table_cell" and not exact_numbered_cell:
+        item["accuracy_status"] = "review_required"
+        item["evidence_tier"] = "weak"
+        item["evidence_reasons"] = ["invalid or incomplete original structure-table cell evidence"]
+        item["fail_closed"] = True
+        return item
 
     if exact_strict_visual:
         reasons.append("exact strict visual label")
@@ -331,7 +340,9 @@ def annotate_binding_accuracy(binding: dict[str, Any]) -> dict[str, Any]:
     elif exact_any_visual:
         reasons.append("exact weak visual label")
 
-    if rule in {"structure_table_row_order", "structure_table_row_order_inferred", "structure_table_row_order_corrected", "cmpd_overview_table_order"}:
+    if exact_numbered_cell:
+        reasons.append("independently observed ID and unique segment in adjacent original-PDF cell")
+    elif rule in {"structure_table_row_order", "structure_table_row_order_inferred", "structure_table_row_order_corrected", "cmpd_overview_table_order"}:
         reasons.append("left-column structure table row order")
     elif rule == "singleton_claim_formula_structure":
         reasons.append("claim/formula singleton structure")
@@ -386,7 +397,8 @@ def annotate_binding_accuracy(binding: dict[str, Any]) -> dict[str, Any]:
         return item
 
     if rule in STRONG_BINDING_RULES and (
-        exact_strict_visual
+        exact_numbered_cell
+        or exact_strict_visual
         or exact_nearby_product_visual
         or rule.startswith("structure_table_row_order")
         or (rule == "visual_grid_label" and exact_any_visual)

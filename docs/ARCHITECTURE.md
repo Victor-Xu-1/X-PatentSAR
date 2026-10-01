@@ -172,7 +172,7 @@ Formal JSON artifacts carry the same identity envelope:
   "schema": {"name": "patentsar.bindings", "version": 2},
   "product": {"name": "X-PatentSAR", "version": "0.1.0"},
   "pipeline_contract": {"name": "patentsar.activity-led", "version": "2.0.0"},
-  "ruleset": {"name": "patentsar.accuracy-first", "version": "2.0.1"}
+  "ruleset": {"name": "patentsar.accuracy-first", "version": "2.0.2"}
 }
 ```
 
@@ -186,12 +186,62 @@ All fail-closed stages use one marker name and one writer: `STRICT_ACCEPTANCE_FA
 |---|---:|---|
 | Product | `0.1.0` | User-visible software release |
 | Pipeline contract | `patentsar.activity-led` `2.0.0` | Stage order or cross-stage semantics |
-| Ruleset | `patentsar.accuracy-first` `2.0.1` | Acceptance or binding behavior |
+| Ruleset | `patentsar.accuracy-first` `2.0.2` | Acceptance or binding behavior |
 | Artifact/cache schema | Namespaced integer versions | Serialized shape or cache compatibility |
 
 Current non-default schema revisions are page classification v2 (`candidate_pages` replaces the ambiguous `core_pages` field), bindings v2 and formal QA v2. The diagnostic review-excerpt metadata starts at v1. All other current artifact/cache schemas are v1.
 
 `contracts.py` is the only authority. Pipeline contract 2.0 removes the unused core-PDF branch and hidden worker profiling. Ruleset 2.0 makes deterministic QA the sole acceptance authority and explicitly separates diagnostic output. Ruleset 2.0.1 fixes spatial duplicate handling and strengthens ambiguity rejection; it invalidates old rule-dependent stage fingerprints without changing the product version or serialized schemas.
+
+### Shared original-table observations and numbered cells
+
+`core/table_geometry.py` is the single grid/coordinate OCR authority;
+`core/table_cells.py` owns bounded cell observations and printed-cross counting.
+`core/biology_tables.py` maps actual assay headers to cell values, while
+`core/numbered_structure_binding.py` matches printed IDs to unique contained
+DECIMER segments. Neither consumer imports the other or reconstructs flattened
+page text into a competing row sequence. Tall structure rows require complete
+vertical grid connections, rather than a fixed activity-row-height assumption.
+
+Recognized pages leave generic OCR and repair paths, including when evidence is
+withheld. A valid serialized cell proof is rechecked by the shared strict binding
+rules; missing segments, ambiguous ownership and exact suffix conflicts fail.
+`activity_sources` retains per-metric original pages/cells and observed assay
+context. The Web adapter validates and reads this evidence without running OCR.
+
+`core/structure_catalogs.py` scopes numbered cells to explicit catalog captions.
+A catalog labelled selected/subset is ignored as a reprint only when all its
+observed IDs exist in a non-subset catalog. Two full catalogs and selected tables
+with novel IDs still compete and cannot silently erase conflicting evidence.
+`core/visible_structure_binding.py` owns complete prefixed diagram captions on
+non-table pages. Exact suffixes, original geometry and independently agreeing
+cell observations are required; a parent number never supplies an isomer suffix.
+When these spatial sources cover the entire active set with confirmed unique
+images, generic crop OCR and multi-pass repair are bypassed. All source layouts
+publish through `core/binding_artifacts.py` and the same downstream strict gate.
+The writer also carries the input patent identity into each row; uploaded-file
+names are never substituted as patent identifiers downstream.
+
+Production OCSR has one raw-observation path. It does not rewrite atom symbols,
+ring digits, disconnected components, isotope labels or stereochemistry. The
+independent OCSR observation epoch namespaces exact-image cache entries; old
+postprocessed entries remain on disk but are not promotable. A non-clean raw
+prediction permits at most one explicitly enabled same-image normalization retry,
+with both image hashes, source variants and unmodified strings retained. No second
+engine or string repair becomes an acceptance authority. Normalization uses bounded
+dimensions and atomic private output with explicit error reporting.
+
+Ruleset 2.0.2 invalidates derived artifacts. Raw OCR has an independent observation
+contract: unchanged, PDF-SHA-verified 2.0.1 observations may seed a new run, but
+2.0.0 text-only observations and old activity/binding/SMILES/QA cannot. The job
+controller accepts reusable caches only inside the same private project. It
+starts the same CLI with `--reuse-ocr-cache`; there is no second recovery pipeline.
+Original failed runs are immutable inputs to this reuse step, not rewritten jobs.
+The pipeline persists actual stage starts and exception failures for the UI.
+The queue projects completed current checkpoints into the existing SQLite
+read model while a job runs. The UI refreshes on job/stage revisions, not on
+every duration tick. This is presentation of provisional output, never another
+extraction or acceptance path. A new job ID cannot retain previous-run rows.
 
 ### I-series structure-table evidence
 

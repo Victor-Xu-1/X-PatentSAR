@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import re
+from functools import lru_cache
 from pathlib import Path
 
 from patent_sar_extractor.contracts import (
@@ -95,6 +96,7 @@ def _singleton_structure_patterns() -> list[re.Pattern]:
     return [re.compile(pattern, re.IGNORECASE | re.DOTALL) for pattern in patterns]
 
 
+@lru_cache(maxsize=2048)
 def _cpd_patterns(cpd: str) -> list[re.Pattern]:
     norm = _normalize_cpd_label(cpd)
     if _is_singleton_main_compound_label(norm):
@@ -150,6 +152,7 @@ def _cpd_ocr_confusable_patterns(cpd: str) -> list[re.Pattern]:
     return [re.compile(p, re.IGNORECASE) for p in patterns]
 
 
+@lru_cache(maxsize=2048)
 def _cpd_table_row_pattern(cpd: str) -> re.Pattern | None:
     norm = _normalize_cpd_label(cpd)
     m = re.search(r"Compound\s+(\d+(?:-\d+)?[A-Z]?)", norm, re.IGNORECASE)
@@ -171,6 +174,7 @@ def _cpd_table_row_pattern(cpd: str) -> re.Pattern | None:
     return re.compile("|".join(patterns), re.IGNORECASE | re.DOTALL)
 
 
+@lru_cache(maxsize=512)
 def _is_structure_table_page(text: str) -> bool:
     value = str(text or "")
     if not value.strip():
@@ -241,18 +245,39 @@ def _contiguous_page_blocks(pages: set[int]) -> list[list[int]]:
     return blocks
 
 
+def _explicit_table_row_ids(text: str) -> set[str]:
+    """Read punctuated ID cells only under an explicit structure-table header.
+
+    Ordinary numbered Tables A/B/C are not I-series tables. Decimal masses,
+    chemical locants and prose enumeration must not become row evidence.
+    """
+    if not STRUCTURE_TABLE_HEADER_RE.search(text):
+        return set()
+    return {
+        match.group(1).upper()
+        for match in re.finditer(r"(?<![\w.])([1-9]\d{0,3}[A-Z]?)\.(?=\s|$)", text, re.I)
+    }
+
+
+def _has_table_row_evidence(text: str) -> bool:
+    return bool(STRUCTURE_TABLE_SERIES_ID_RE.search(text) or _explicit_table_row_ids(text))
+
+
 def _covered_active_cpds(pages: list[int], page_text_lookup: dict[int, str], active_cpds: list[str]) -> dict[str, list[int]]:
     matched: dict[str, list[int]] = {}
+    printed_ids = {page: _explicit_table_row_ids(page_text_lookup.get(page, "")) for page in pages}
     for raw_cpd in active_cpds:
         cpd = _normalize_cpd_label(raw_cpd)
         if not cpd:
             continue
         patterns = _cpd_patterns(cpd)
         table_row_pattern = _cpd_table_row_pattern(cpd)
+        label = cpd.removeprefix("Compound ")
         hits = [
             page_idx for page_idx in pages
             if (
-                any(pattern.search(page_text_lookup.get(page_idx, "")) for pattern in patterns)
+                label in printed_ids[page_idx]
+                or any(pattern.search(page_text_lookup.get(page_idx, "")) for pattern in patterns)
                 or (
                     table_row_pattern is not None
                     and table_row_pattern.search(page_text_lookup.get(page_idx, ""))
@@ -390,11 +415,11 @@ def locate_structure_pages(
         # broad table heuristics.  Trim only the block edges that contain no
         # series-number rows; never remove an interior continuation page.
         authoritative_table_pages = list(authoritative_table_pages)
-        while authoritative_table_pages and not STRUCTURE_TABLE_SERIES_ID_RE.search(
+        while authoritative_table_pages and not _has_table_row_evidence(
             table_text_lookup.get(authoritative_table_pages[-1], "")
         ):
             authoritative_table_pages.pop()
-        while authoritative_table_pages and not STRUCTURE_TABLE_SERIES_ID_RE.search(
+        while authoritative_table_pages and not _has_table_row_evidence(
             table_text_lookup.get(authoritative_table_pages[0], "")
         ):
             authoritative_table_pages.pop(0)

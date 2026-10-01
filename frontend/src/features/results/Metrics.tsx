@@ -9,7 +9,7 @@ export function Metrics({ project }: { project: Project | null }) {
       unit: '个结构',
     },
     {
-      label: '已提取活性',
+      label: project && project.acceptance.state !== 'accepted' ? '候选活性记录' : '已提取活性',
       value: project?.summary.activity_rows,
       icon: FlaskConical,
       unit: '条数据',

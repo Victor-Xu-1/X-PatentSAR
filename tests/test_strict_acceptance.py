@@ -357,7 +357,7 @@ class StrictAcceptanceTests(unittest.TestCase):
         self.assertEqual(clean["quality_flag"], "ok")
         self.assertTrue(smiles_converter_module._is_clean_rdkit_result(clean))
 
-    def test_ocsr_qc_repairs_cf_halogen_and_detached_text_noise(self) -> None:
+    def test_ocsr_qc_preserves_cf_and_detached_text_noise_for_review(self) -> None:
         raw = (
             "CC.C[CH3+].N#Cc1ccc(OCCNC(=O)c2ccc(N3CCC(CC3)Cc3ccc4c(c3)noc4C3CCC(=O)NC3=O)nn2)"
             "cc1[Cf].[CH3+].[CH3+]"
@@ -365,13 +365,13 @@ class StrictAcceptanceTests(unittest.TestCase):
 
         cleaned, checked, _dummy_cleanup = smiles_converter_module._qc_ocr_smiles(raw)
 
-        self.assertNotIn("[Cf]", cleaned or "")
-        self.assertNotIn(".", cleaned or "")
-        self.assertIn("Cl", checked["canonical_smiles"])
-        self.assertEqual(checked["quality_flag"], "ok")
-        self.assertTrue(smiles_converter_module._is_clean_rdkit_result(checked))
+        self.assertEqual(cleaned, raw)
+        self.assertIn("[Cf]", cleaned or "")
+        self.assertIn(".", cleaned or "")
+        self.assertNotEqual(checked["quality_flag"], "ok")
+        self.assertFalse(smiles_converter_module._is_clean_rdkit_result(checked))
 
-    def test_ocsr_qc_repairs_single_decimer_ring_digit_mismatch(self) -> None:
+    def test_ocsr_qc_refuses_to_invent_a_ring_digit_repair(self) -> None:
         raw = (
             r"C1=CC2=C(CCN(C1)C3CC(C3)N4CCC(CC4)N5C=CC(=NC5)C(=O)"
             r"N[C@@H]6CC[C@H](CC6)OC7=CC=C(C#N)C(=C7)Cl)C8=C1C"
@@ -380,10 +380,10 @@ class StrictAcceptanceTests(unittest.TestCase):
 
         cleaned, checked, _dummy_cleanup = smiles_converter_module._qc_ocr_smiles(raw)
 
-        self.assertIn("C8=C2C", cleaned or "")
-        self.assertEqual(checked["quality_flag"], "ok")
-        self.assertEqual(checked.get("ocr_repair"), "single_ring_digit_mismatch")
-        self.assertTrue(smiles_converter_module._is_clean_rdkit_result(checked))
+        self.assertEqual(cleaned, raw)
+        self.assertEqual(checked["quality_flag"], "invalid_smiles")
+        self.assertNotIn("ocr_repair", checked)
+        self.assertFalse(smiles_converter_module._is_clean_rdkit_result(checked))
 
     def test_activity_merge_preserves_source_order_and_flags_conflicts(self) -> None:
         rows = [

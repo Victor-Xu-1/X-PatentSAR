@@ -61,7 +61,7 @@ describe('real-value presentation and selection', () => {
   it('never exposes a made-up crop for missing assets', () => {
     render(<ResultsTable {...tableProps()} rows={[{ ...compound, structure_image_url: null }]} />);
     expect(screen.getByLabelText('放大 I-7 结构裁图')).toBeDisabled();
-    expect(screen.getByText('裁图不可用')).toBeVisible();
+    expect(screen.getByText('未提供结构裁图')).toBeVisible();
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
   it('filters displayed metrics without inventing activities', () => {

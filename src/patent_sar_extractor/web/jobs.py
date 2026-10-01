@@ -12,6 +12,7 @@ import uuid
 from dataclasses import asdict
 from pathlib import Path
 
+from .checkpoints import LiveCheckpoints
 from .errors import WebError
 from .files import SafeFiles, private_directory
 from .models import Error, Job, JobRequest
@@ -57,6 +58,9 @@ def decode_spec(raw: str) -> RunSpec:
         or not isinstance(spec.include_intermediates, bool)
         or not isinstance(spec.force, bool)
         or not isinstance(spec.task_note, str)
+        or not isinstance(spec.source_ocr_cache, str)
+        or len(spec.source_ocr_cache) > 4096
+        or any(ord(c) < 32 for c in spec.source_ocr_cache)
         or len(spec.task_note) > 2000
         or any(ord(c) < 32 and c not in "\t\n\r" for c in spec.task_note)
         or "\x7f" in spec.task_note
@@ -119,6 +123,16 @@ class JobQueue:
                 "unsafe_job_workspace",
                 "Persisted job does not belong to this private workspace; no process was touched.",
             )
+        if spec.source_ocr_cache:
+            source = Path(spec.source_ocr_cache)
+            if source.is_symlink() or not source.resolve().is_relative_to(
+                self.store.root / "runs" / row["project_id"]
+            ):
+                raise WebError(
+                    409,
+                    "unsafe_job_workspace",
+                    "OCR observations must belong to the same private project.",
+                )
         return spec
 
     def enqueue(self, project_id: str, request: JobRequest) -> Job:
@@ -134,6 +148,32 @@ class JobQueue:
         include_intermediates = request.include_intermediates
         force = request.force
         task_note = request.task_note.strip()
+        source_ocr_cache = ""
+        if project["run_root"] and not request.force and not request.resume_job_id:
+            previous_root = Path(project["run_root"])
+            candidate = previous_root / "page_classification" / "page_ocr_cache.json"
+            project_runs = self.store.root / "runs" / project_id
+            if (
+                not previous_root.is_symlink()
+                and previous_root.resolve().is_relative_to(project_runs)
+                and candidate.is_file()
+                and not candidate.is_symlink()
+                and candidate.resolve().is_relative_to(project_runs)
+            ):
+                # Only raw, original-SHA-verified observations are reusable.
+                # Current rules regenerate every derived result in a new run.
+                from patent_sar_extractor.core.page_ocr_cache import (
+                    cache_matches_pdf,
+                )
+
+                cache = (
+                    SafeFiles(previous_root).json(
+                        "page_classification/page_ocr_cache.json"
+                    )
+                    or {}
+                )
+                if cache_matches_pdf(cache, str(self.store.root / project["pdf_rel"])):
+                    source_ocr_cache = str(candidate)
         if request.resume_job_id:
             previous = self.store.job(request.resume_job_id)
             if (
@@ -181,6 +221,7 @@ class JobQueue:
             include_intermediates,
             force,
             task_note,
+            source_ocr_cache,
         )
         payload = {**asdict(spec), "runtime_identity": runtime_identity()}
         try:
@@ -364,6 +405,9 @@ class JobQueue:
             started = time.monotonic()
             status = "failed"
             error = None
+            checkpoints = LiveCheckpoints(
+                Path(spec.output_dir), spec.project_id, self.service.refresh
+            )
             while True:
                 code = self.runner.poll(identity, spec)
                 with self.store.connect(write=True) as connection:
@@ -400,6 +444,7 @@ class JobQueue:
                             message=f"Core CLI exited with status {code}; inspect private run logs.",
                         )
                     break
+                checkpoints.update()
                 self.shutdown.wait(timeout=0.1)
             cleaned = self.runner.stop(identity, spec)
             if not cleaned:

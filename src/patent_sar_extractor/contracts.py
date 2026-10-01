@@ -17,7 +17,7 @@ PIPELINE_CONTRACT_NAME: Final = "patentsar.activity-led"
 PIPELINE_CONTRACT_VERSION: Final = "2.0.0"
 
 RULESET_NAME: Final = "patentsar.accuracy-first"
-RULESET_VERSION: Final = "2.0.1"
+RULESET_VERSION: Final = "2.0.2"
 
 RUN_SUMMARY_SCHEMA: Final = "patentsar.run-summary"
 RUN_SUMMARY_SCHEMA_VERSION: Final = 1
@@ -29,6 +29,11 @@ REVIEW_EXCERPT_METADATA_SCHEMA: Final = "patentsar.review-excerpt-metadata"
 REVIEW_EXCERPT_METADATA_SCHEMA_VERSION: Final = 1
 ACTIVITY_SCHEMA: Final = "patentsar.activity"
 ACTIVITY_SCHEMA_VERSION: Final = 1
+ACTIVITY_EXTRACTOR_VERSION: Final = "2"
+STRUCTURE_LOCATOR_VERSION: Final = "3"
+STRUCTURE_WORKER_VERSION: Final = "3"
+STRUCTURE_BINDER_VERSION: Final = "3"
+OCSR_OBSERVATION_VERSION: Final = "2"
 STRUCTURE_LOCATION_SCHEMA: Final = "patentsar.structure-location"
 STRUCTURE_LOCATION_SCHEMA_VERSION: Final = 1
 STRUCTURES_SCHEMA: Final = "patentsar.structures"
@@ -47,6 +52,11 @@ FAILURE_MARKER_SCHEMA: Final = "patentsar.failure-marker"
 FAILURE_MARKER_SCHEMA_VERSION: Final = 1
 PAGE_OCR_CACHE_SCHEMA: Final = "patentsar.page-ocr-cache"
 PAGE_OCR_CACHE_SCHEMA_VERSION: Final = 1
+PAGE_OCR_OBSERVATION_SCHEMA: Final = "patentsar.page-ocr-observation"
+PAGE_OCR_OBSERVATION_VERSION: Final = 1
+# This compatibility is for raw observations only, never derived/accepted data.
+# 2.0.0 lacks coherent scanned-page coordinates and is intentionally excluded.
+PAGE_OCR_COMPATIBLE_RULESETS: Final = ((RULESET_NAME, "2.0.1"), (RULESET_NAME, RULESET_VERSION))
 VISIBLE_LABEL_CACHE_SCHEMA: Final = "patentsar.visible-label-cache"
 VISIBLE_LABEL_CACHE_SCHEMA_VERSION: Final = 1
 

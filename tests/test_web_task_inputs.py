@@ -7,6 +7,8 @@ import unittest
 
 from test_web_support import SleepRunner, WebFixture, wait_job
 
+from patent_sar_extractor.artifact_io import write_json_atomic
+from patent_sar_extractor.core.page_ocr_cache import build_cache_metadata
 from patent_sar_extractor.web.errors import WebError
 from patent_sar_extractor.web.jobs import decode_spec
 from patent_sar_extractor.web.processes import (
@@ -18,6 +20,44 @@ from patent_sar_extractor.web.storage import encode
 
 
 class TaskInputTests(WebFixture, unittest.TestCase):
+    def test_new_run_inherits_only_original_verified_observations_and_keeps_prior_results(
+        self,
+    ):
+        with self.client(runner=SleepRunner()) as client:
+            project = self.upload(client)
+            endpoint = f"/api/v1/projects/{project['id']}/jobs"
+            old = client.post(endpoint, json={}).json()
+            client.post(f"/api/v1/jobs/{old['id']}/cancel")
+            wait_job(client, old["id"], "cancelled")
+            service = client.app.state.workspace
+            old_spec = client.app.state.queue._spec(old["id"])
+            from pathlib import Path
+
+            root = Path(old_spec.output_dir)
+            source = root / "page_classification/page_ocr_cache.json"
+            metadata = build_cache_metadata(old_spec.pdf_path)
+            metadata["ruleset"]["version"] = "2.0.1"
+            metadata.pop("observation_contract")
+            write_json_atomic(
+                source,
+                {
+                    "metadata": metadata,
+                    "page_texts": {"0": "Original observation"},
+                    "ocr_line_map": {},
+                },
+            )
+            before = source.read_bytes()
+            response = client.post(endpoint, json={})
+            self.assertEqual(response.status_code, 202, response.text)
+            fresh = response.json()
+            fresh_spec = client.app.state.queue._spec(fresh["id"])
+            self.assertNotEqual(fresh_spec.output_dir, old_spec.output_dir)
+            self.assertEqual(fresh_spec.source_ocr_cache, str(source))
+            self.assertIn("--reuse-ocr-cache", CLIProcessRunner().command(fresh_spec))
+            self.assertEqual(source.read_bytes(), before)
+            client.post(f"/api/v1/jobs/{fresh['id']}/cancel")
+            wait_job(client, fresh["id"], "cancelled")
+
     def test_duplicate_submission_does_not_create_an_unused_job_directory(self):
         with self.client(runner=SleepRunner()) as client:
             project = self.upload(client)

@@ -87,17 +87,47 @@ never populated with demonstration values. Evidence summary is not an LLM claim.
 is_historical,summary:{structures,activity_rows,matched_structures,confirmed,
 needs_review},acceptance:{state,errors},last_job}`.
 Acceptance states: `not_run`, `accepted`, `failed`, `historical`.
-`accepted` requires current core identity and deterministic `acceptance.ok=true`;
-old or incomplete artifacts must remain review/historical.
+`historical` means a present artifact has absent/non-current identity, not that
+downstream artifacts are missing. A current checkpoint without failure remains
+`not_run`; a current strict marker, failed stage or failed summary produces
+`failed`, with bounded, path-redacted core errors. Missing current artifacts
+cannot become accepted; a run claiming completion without them is failed.
+`accepted` still requires every current artifact identity/shape, verified original,
+production binding/SMILES modes, a completed summary, both deterministic QA `ok`
+checks, no hard errors and no strict failure marker. Current diagnostic modes,
+unverified originals or malformed evidence fail rather than masquerading as
+historical results; they never promote binding confidence.
 
 `Compound`:
 `{id,display_id,structure_id,structure_image_url,smiles,activities,source,
 confidence,review,flags}`. IDs preserve the authoritative activity compound ID.
 `activities`: `[{name,value,unit,target,assay,page}]` (nullable optional metadata).
+For additive `activity_sources` evidence in activity schema v1, presentation
+matches each cell by its exact field name and original scalar value before
+display truncation. Each matched metric receives that source's page, target and
+assay, not the merged compound row's first table. Absent/unmatched evidence keeps
+existing row metadata; omitted source metadata keys also retain existing fields,
+while explicit nulls remain unknown (e.g. no target for anti-proliferation).
+Duplicate observations of one source context do not duplicate measurements;
+distinct exact-matching page/target/assay contexts remain separate records rather
+than silently choosing one assay. No metric or unit is inferred from evidence.
+Source/cell/observation counts, scalar sizes, page bounds, metadata and supplied
+cell geometry are validated as untrusted input. Results, target filters, exports
+and evidence summaries use these same typed Activity records.
 `source`: `{page,paragraph,bbox,source_label,correction_reason}`.
 `confidence`: `{level,score,reason}`; levels `high`, `medium`, `review`, `unknown`.
 Do not invent numerical confidence; score may be null. Old identity is not current
 high confidence. `review`: `{decision,note,revision,updated_at}` or null.
+
+The existing `flags` array distinguishes crop absence without inventing images:
+`structure_not_generated` means current segmentation artifacts have not yet been
+generated; `structure_generation_failed` means segmentation stopped with failure;
+`structure_unmatched` means there is no unique bound structure. `image_unavailable`
+means expected generated evidence is missing/unsafe/inaccessible. A verified
+original-PDF geometry crop remains a valid read-only fallback, not a synthetic
+molecule. The frontend separately reports invalid URLs and actual image-load
+failures. A null image URL keeps enlargement/recognition disabled; original PDF
+pages and activity provenance remain independently available.
 
 `Page`:
 `{page,page_count,width,height,image_url,text,source_mode,annotations}`.
@@ -114,6 +144,12 @@ Statuses: `queued`, `running`, `complete`, `failed`, `cancelled`, `interrupted`.
 `classify,activity,locate,structures,bind,smiles,final,qa`.
 Stage statuses: `pending,running,ok,empty,failed,warnings`.
 Job completion is not necessarily formal QA acceptance. No guessed 100% progress.
+For terminal jobs the frontend labels persisted `pending` stages as "未执行",
+not "等待", and stops animations for an interrupted `running` stage. No backend
+stage status is fabricated or promoted. Failed result views expose the blocking
+stage/error and unexecuted stages; unaccepted activity counts are candidate
+records, not validated structure–activity deliverables. Manual review cannot
+change this distinction or formal acceptance.
 
 Errors: `{error:{code,message}}`, with appropriate 400/401/403/404/409/413/422/500.
 No swallowed failures or success-shaped error responses.

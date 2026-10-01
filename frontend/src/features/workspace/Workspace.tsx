@@ -103,6 +103,7 @@ export function Workspace({
             }
             resultProps={{
               project,
+              job,
               resource: results.resource,
               filters: { ...results.filters, q: query },
               metric: results.metric,

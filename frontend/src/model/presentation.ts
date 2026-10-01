@@ -36,7 +36,7 @@ export const jobStatusLabels: Record<Job['status'], string> = {
 export const acceptanceLabels: Record<AcceptanceState, string> = {
   not_run: '尚未验收',
   accepted: '核心 QA 通过',
-  failed: '核心 QA 未通过',
+  failed: '提取未通过验收',
   historical: '历史结果 · 仅供复核',
 };
 export const confidenceLabels: Record<ConfidenceLevel, string> = {

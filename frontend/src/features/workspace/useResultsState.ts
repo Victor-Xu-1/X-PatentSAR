@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../../api';
 import type { Filters, Job } from '../../api/types';
-import { activeJob } from '../../model/presentation';
 import { useDebounced } from '../../hooks/useDebounced';
 import { useResource } from '../../hooks/useResource';
 
@@ -34,16 +33,23 @@ export function useResultsState(
     (signal: AbortSignal) => api.results(id ?? '', JSON.parse(key) as Filters, signal),
     [id, key],
   );
-  const resource = useResource(id ? `results:${id}:${key}` : null, load);
+  const resource = useResource(id ? `results:${id}:${job?.id ?? 'none'}:${key}` : null, load);
   const reload = resource.reload;
   const refreshed = useRef<string | null>(null);
+  const snapshot = job
+    ? JSON.stringify([
+        job.id,
+        job.status,
+        job.stages.map(({ name, status, count }) => [name, status, count]),
+      ])
+    : null;
   useEffect(() => {
-    if (job && !activeJob(job) && refreshed.current !== `${job.id}:${job.status}`) {
-      refreshed.current = `${job.id}:${job.status}`;
+    if (snapshot && refreshed.current !== snapshot) {
+      refreshed.current = snapshot;
       reload();
       onProjectReload();
     }
-  }, [job, reload, onProjectReload]);
+  }, [snapshot, reload, onProjectReload]);
   function changeFilters(patch: Partial<Filters>) {
     if (patch.q !== undefined) onQuery(patch.q);
     const { q: _query, ...rest } = patch;

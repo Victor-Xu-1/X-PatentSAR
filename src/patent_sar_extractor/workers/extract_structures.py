@@ -114,8 +114,11 @@ def extract_structures_from_pdf(
     target_pages: list[int],
     output_dir: str,
     crop_regions_path: str = "",
+    patent_id: str = "",
 ) -> dict:
     """Extract chemical structures from specified pages of a PDF."""
+    if not DECIMER_AVAILABLE:
+        raise RuntimeError("DECIMER segmentation is unavailable; configure the verified scientific environment")
     os.makedirs(output_dir, exist_ok=True)
     crop_regions = _load_crop_regions(crop_regions_path)
 
@@ -125,97 +128,94 @@ def extract_structures_from_pdf(
     failed_pages: list[tuple[int, str]] = []
 
     # Extract patent number from filename
-    patent_id = Path(pdf_path).stem
-    m = re.search(r"(WO\d{6,}|CN\d+)", patent_id)
-    if m:
-        patent_id = m.group(1)
+    if not patent_id:
+        patent_id = Path(pdf_path).stem
+        m = re.search(r"(WO\d{6,}|CN\d+)", patent_id)
+        if m:
+            patent_id = m.group(1)
 
-    if DECIMER_AVAILABLE:
-        logger.info(f"Using DECIMER segmentation for {len(target_pages)} pages")
+    logger.info(f"Using DECIMER segmentation for {len(target_pages)} pages")
+    try:
+        # Load and validate the model once.  Repeating a failed lazy load
+        # for every page turns one environment error into hours of empty
+        # chunks that still exit successfully.
+        configured_weights = os.environ.get("DECIMER_SEGMENTATION_MODEL_DIR", "").strip()
+        if configured_weights:
+            from patent_sar_extractor.workers.environment_segmentation import configure_segmentation_model
+
+            configure_segmentation_model(configured_weights)
+        else:
+            get_model()
+    except Exception as exc:
+        raise RuntimeError(f"DECIMER model initialization failed: {exc}") from exc
+    for page_num in target_pages:
+        if page_num >= doc.page_count:
+            continue
+        # Render page as image at 150dpi
+        page = doc[page_num]
+        dpi = 150
+        mat = fitz.Matrix(dpi/72, dpi/72)
+        pix = page.get_pixmap(matrix=mat)
+        img_path = os.path.join(output_dir, f"page_{page_num+1:03d}.png")
+        pix.save(img_path)
+
         try:
-            # Load and validate the model once.  Repeating a failed lazy load
-            # for every page turns one environment error into hours of empty
-            # chunks that still exit successfully.
-            configured_weights = os.environ.get("DECIMER_SEGMENTATION_MODEL_DIR", "").strip()
-            if configured_weights:
-                from patent_sar_extractor.workers.environment_segmentation import configure_segmentation_model
+            from PIL import Image
+            img = Image.open(img_path).convert("RGB")
+            crop = crop_regions.get(str(page_num), crop_regions.get(str(page_num + 1), {}))
+            crop_x0, crop_y0, crop_x1, crop_y1 = _resolve_crop_pixels(crop, page, dpi, img.width, img.height)
+            if crop_x0 or crop_y0 or crop_x1 != img.width or crop_y1 != img.height:
+                img = img.crop((crop_x0, crop_y0, crop_x1, crop_y1))
+                img_path = os.path.join(output_dir, f"page_{page_num+1:03d}_synthesis_crop.png")
+                img.save(img_path)
+                logger.info(f"  Page {page_num+1}: crop ({crop_x0},{crop_y0})-({crop_x1},{crop_y1})")
+            segments, bboxes = segment_chemical_structures(
+                np.array(img),
+                return_bboxes=True,
+            )
+            logger.info(f"  Page {page_num+1}: found {len(segments)} structures")
 
-                configure_segmentation_model(configured_weights)
-            else:
-                get_model()
-        except Exception as exc:
-            raise RuntimeError(f"DECIMER model initialization failed: {exc}") from exc
-        for page_num in target_pages:
-            if page_num >= doc.page_count:
-                continue
-            # Render page as image at 150dpi
-            page = doc[page_num]
-            dpi = 150
-            mat = fitz.Matrix(dpi/72, dpi/72)
-            pix = page.get_pixmap(matrix=mat)
-            img_path = os.path.join(output_dir, f"page_{page_num+1:03d}.png")
-            pix.save(img_path)
+            for box_idx, (y0, x0, y1, x1) in enumerate(bboxes):
+                x0_abs = x0 + crop_x0
+                y0_abs = y0 + crop_y0
+                x1_abs = x1 + crop_x0
+                y1_abs = y1 + crop_y0
+                # Convert bbox from image coords back to PDF coords
+                scale = 72 / 150  # reverse the 150dpi scaling
+                pdf_x0 = x0_abs * scale
+                pdf_y0 = y0_abs * scale
+                pdf_x1 = x1_abs * scale
+                pdf_y1 = y1_abs * scale
 
-            try:
-                from PIL import Image
-                img = Image.open(img_path).convert("RGB")
-                crop = crop_regions.get(str(page_num), crop_regions.get(str(page_num + 1), {}))
-                crop_x0, crop_y0, crop_x1, crop_y1 = _resolve_crop_pixels(crop, page, dpi, img.width, img.height)
-                if crop_x0 or crop_y0 or crop_x1 != img.width or crop_y1 != img.height:
-                    img = img.crop((crop_x0, crop_y0, crop_x1, crop_y1))
-                    img_path = os.path.join(output_dir, f"page_{page_num+1:03d}_synthesis_crop.png")
-                    img.save(img_path)
-                    logger.info(f"  Page {page_num+1}: crop ({crop_x0},{crop_y0})-({crop_x1},{crop_y1})")
-                segments, bboxes = segment_chemical_structures(
-                    np.array(img),
-                    return_bboxes=True,
-                )
-                logger.info(f"  Page {page_num+1}: found {len(segments)} structures")
+                # Crop and save structure image
+                struct_img_path = os.path.join(output_dir, f"structure_{idx:04d}.png")
+                try:
+                    segment = segments[box_idx]
+                    if segment.ndim == 3 and segment.shape[2] == 4:
+                        Image.fromarray(segment.astype(np.uint8), mode="RGBA").save(struct_img_path)
+                    else:
+                        Image.fromarray(segment.astype(np.uint8)).save(struct_img_path)
+                except Exception as e:
+                    logger.warning(f"  Failed to crop structure {idx}: {e}")
+                    struct_img_path = img_path
 
-                for box_idx, (y0, x0, y1, x1) in enumerate(bboxes):
-                    x0_abs = x0 + crop_x0
-                    y0_abs = y0 + crop_y0
-                    x1_abs = x1 + crop_x0
-                    y1_abs = y1 + crop_y0
-                    # Convert bbox from image coords back to PDF coords
-                    scale = 72 / 150  # reverse the 150dpi scaling
-                    pdf_x0 = x0_abs * scale
-                    pdf_y0 = y0_abs * scale
-                    pdf_x1 = x1_abs * scale
-                    pdf_y1 = y1_abs * scale
-
-                    # Crop and save structure image
-                    struct_img_path = os.path.join(output_dir, f"structure_{idx:04d}.png")
-                    try:
-                        segment = segments[box_idx]
-                        if segment.ndim == 3 and segment.shape[2] == 4:
-                            Image.fromarray(segment.astype(np.uint8), mode="RGBA").save(struct_img_path)
-                        else:
-                            Image.fromarray(segment.astype(np.uint8)).save(struct_img_path)
-                    except Exception as e:
-                        logger.warning(f"  Failed to crop structure {idx}: {e}")
-                        struct_img_path = img_path
-
-                    structures.append({
-                        "structure_index": idx,
-                        "structure_id": f"S{idx:04d}",
-                        "page_no": page_num + 1,
-                        "page_idx": page_num,
-                        "bbox_pdf": [pdf_x0, pdf_y0, pdf_x1, pdf_y1],
-                        "bbox": [int(x0_abs), int(y0_abs), int(x1_abs), int(y1_abs)],
-                        "crop_region": crop,
-                        "image_path": struct_img_path,
-                    })
-                    idx += 1
-            except Exception as e:
-                err = str(e).replace("\n", " ")
-                if "Got a model or layer" in err:
-                    err = err.split("Got a model or layer", 1)[0].strip()
-                logger.warning(f"  Page {page_num+1}: DECIMER failed: {err[:500]}")
-                failed_pages.append((page_num + 1, err[:500]))
-    else:
-        # Fallback: use image analysis to detect structure regions
-        logger.warning("DECIMER not available, using basic image-based extraction")
+                structures.append({
+                    "structure_index": idx,
+                    "structure_id": f"S{idx:04d}",
+                    "page_no": page_num + 1,
+                    "page_idx": page_num,
+                    "bbox_pdf": [pdf_x0, pdf_y0, pdf_x1, pdf_y1],
+                    "bbox": [int(x0_abs), int(y0_abs), int(x1_abs), int(y1_abs)],
+                    "crop_region": crop,
+                    "image_path": struct_img_path,
+                })
+                idx += 1
+        except Exception as e:
+            err = str(e).replace("\n", " ")
+            if "Got a model or layer" in err:
+                err = err.split("Got a model or layer", 1)[0].strip()
+            logger.warning(f"  Page {page_num+1}: DECIMER failed: {err[:500]}")
+            failed_pages.append((page_num + 1, err[:500]))
 
     doc.close()
     logger.info(f"Extracted {len(structures)} structures total")
@@ -256,9 +256,10 @@ def main():
         help="Authoritative page numbers from the locator (0-indexed)",
     )
     parser.add_argument("--crop-regions", default="", help="Optional JSON page crop regions in rendered-image pixels")
+    parser.add_argument("--patent-id", default="", help="Explicit pipeline patent identity; uploaded filenames are not patent identifiers")
     args = parser.parse_args()
 
-    extract_structures_from_pdf(args.pdf, args.pages, args.output, args.crop_regions)
+    extract_structures_from_pdf(args.pdf, args.pages, args.output, args.crop_regions, patent_id=args.patent_id)
 
 
 if __name__ == "__main__":

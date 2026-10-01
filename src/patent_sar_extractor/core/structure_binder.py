@@ -14,8 +14,6 @@ table geometry and the authoritative activity set. Ambiguous rows fail closed.
     )
 """
 
-import csv
-import base64
 import hashlib
 import json
 import logging
@@ -25,22 +23,11 @@ import shutil
 import subprocess
 import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Set
+from typing import Any, Dict, List, Optional, Tuple
 
-from patent_sar_extractor.core.pipeline_rules import (
-    annotate_binding_accuracy,
-    summarise_binding_accuracy,
-)
-from patent_sar_extractor.core.series_table_binding import pair_series_table
-from patent_sar_extractor.core.page_ocr_cache import (
-    _paddlex_ocr_url as _shared_paddlex_ocr_url,
-    _paddlex_payload_from_image as _shared_paddlex_payload_from_image,
-    _paddlex_pruned_result,
-    _paddlex_request_payload_from_png,
-)
 from patent_sar_extractor.artifact_io import write_json_atomic
 from patent_sar_extractor.contracts import (
     VISIBLE_LABEL_CACHE_SCHEMA,
@@ -48,6 +35,26 @@ from patent_sar_extractor.contracts import (
     artifact_identity,
     artifact_identity_matches,
 )
+from patent_sar_extractor.core.binding_artifacts import write_binding_result
+from patent_sar_extractor.core.numbered_structure_binding import (
+    NumberedTableResult,
+    bind_numbered_tables,
+)
+from patent_sar_extractor.core.page_ocr_cache import (
+    _paddlex_ocr_url as _shared_paddlex_ocr_url,
+)
+from patent_sar_extractor.core.page_ocr_cache import (
+    _paddlex_payload_from_image as _shared_paddlex_payload_from_image,
+)
+from patent_sar_extractor.core.page_ocr_cache import (
+    _paddlex_pruned_result,
+    _paddlex_request_payload_from_png,
+)
+from patent_sar_extractor.core.pipeline_rules import (
+    annotate_binding_accuracy,
+    summarise_binding_accuracy,
+)
+from patent_sar_extractor.core.series_table_binding import pair_series_table
 
 try:
     import fitz
@@ -449,7 +456,10 @@ def _get_ocr_line_coords(page) -> Optional[List[Tuple[float, str]]]:
     Prefer the configured PaddleX service; RapidOCR remains a local fallback.
     """
     try:
-        from patent_sar_extractor.core.page_ocr_cache import get_ocr_engine, page_ocr_lines
+        from patent_sar_extractor.core.page_ocr_cache import (
+            get_ocr_engine,
+            page_ocr_lines,
+        )
 
         engine = get_ocr_engine()
         lines = page_ocr_lines(page, ocr_engine=engine)
@@ -459,8 +469,8 @@ def _get_ocr_line_coords(page) -> Optional[List[Tuple[float, str]]]:
         pass
 
     try:
-        import numpy as np
         import cv2
+        import numpy as np
         from rapidocr_onnxruntime import RapidOCR
 
         engine = RapidOCR()
@@ -555,8 +565,9 @@ def _get_ocr_word_coords(page, cache: Optional[Dict[int, List[Dict]]] = None) ->
     if cache is not None and page_idx in cache:
         return cache[page_idx]
     try:
-        from PIL import Image
         from io import BytesIO
+
+        from PIL import Image
 
         dpi = 150
         scale = 72.0 / dpi
@@ -606,8 +617,8 @@ def _get_ocr_word_coords(page, cache: Optional[Dict[int, List[Dict]]] = None) ->
         pass
 
     try:
-        import numpy as np
         import cv2
+        import numpy as np
         from rapidocr_onnxruntime import RapidOCR
 
         dpi = 150
@@ -1517,9 +1528,6 @@ def _nearby_exact_product_label(
     if not label_key or not lines_by_page:
         return ""
     page_idx = int(struct.get("page_no") or 0) - 1
-    x0 = float(struct.get("x0") or 0)
-    x1 = float(struct.get("x1") or x0)
-    center_x = (x0 + x1) / 2.0
     y0 = float(struct.get("y0") or 0)
     y1 = float(struct.get("y1") or y0)
     labels: List[Tuple[float, float, str]] = []
@@ -2091,8 +2099,9 @@ def _ocr_visible_label_band(doc, struct: Dict, dpi: int = 450) -> List[str]:
             import pytesseract  # type: ignore
         else:
             pytesseract = None
-        from PIL import Image
         from io import BytesIO
+
+        from PIL import Image
     except Exception:
         return []
 
@@ -3228,13 +3237,14 @@ def _extract_authoritative_structure_table_sequence_bindings(
     active_cpds: List[str],
     profile: Optional[Dict],
     ocr_line_map: Optional[Dict[int, List[Any]]] = None,
+    *,
+    numbered_result: Optional[NumberedTableResult] = None,
 ) -> List[Dict]:
-    """Bind a complete, paginated structure table as one global cell sequence.
+    """Resolve authoritative cells before series or legacy sequence evidence.
 
-    Regular patent grids often print the next cell's compound label below the
-    preceding structure; at a page break, that label can even be on the prior
-    page while its structure starts the next page. This rule only fires when
-    the full table independently proves a one-to-one continuous mapping.
+    Recognized numbered grids never enter global sequence inference. Existing
+    I-series geometry remains independent; the older complete-sequence rule is
+    restricted to tables not recognized by either spatial authority.
     """
     raw_pages = (profile or {}).get("authoritative_structure_table_pages", []) or []
     try:
@@ -3243,6 +3253,25 @@ def _extract_authoritative_structure_table_sequence_bindings(
         return []
     if not page_indices or page_indices[0] < 0:
         return []
+
+    if numbered_result is not None and numbered_result.recognized:
+        bindings = []
+        for pair in numbered_result.bindings:
+            binding = _build_binding_from_structure(pair.structure, pair.label)
+            binding["binding_rule"] = "numbered_structure_table_cell"
+            binding["numbered_table_cell_evidence"] = pair.evidence()
+            binding["authoritative_table_source_label"] = pair.label
+            binding["authoritative_table_pages"] = list(numbered_result.recognized_pages)
+            bindings.append(binding)
+        if numbered_result.issues:
+            logger.warning(
+                "   编号结构表保留未确认单元格: %d (%s)",
+                len(numbered_result.issues),
+                ", ".join(sorted({issue.reason for issue in numbered_result.issues})),
+            )
+        # Recognition is authoritative even when every cell is unresolved.
+        # A numeric global zip cannot resolve missing/ambiguous cell evidence.
+        return bindings
 
     lines_by_page = _normalise_ocr_line_map(ocr_line_map)
     active_keys = _active_label_keys(active_cpds)
@@ -6060,7 +6089,7 @@ def _extract_split_reaction_bare_bindings(
 
 def _labels_near_structure(words: List[Dict], struct: Dict) -> List[str]:
     x0, x1 = float(struct["x0"]), float(struct.get("x1", struct["x0"]))
-    y0, y1 = float(struct["y0"]), float(struct.get("y1", struct["y0"]))
+    y1 = float(struct.get("y1", struct["y0"]))
     cx = (x0 + x1) / 2
     width = max(25.0, x1 - x0)
     labels: List[str] = []
@@ -7944,7 +7973,6 @@ def bind(
         except Exception as exc:
             logger.debug("Page OCR cache load failed %s: %s", page_ocr_cache_path, exc)
 
-    profile_text_map = profile.get("ocr_text_map", {}) or {}
     profile_line_map = profile.get("ocr_line_map", {}) or {}
     cached_page_texts = page_ocr_cache_payload.get("page_texts", {}) if isinstance(page_ocr_cache_payload, dict) else {}
     cached_page_lines = page_ocr_cache_payload.get("ocr_line_map", {}) if isinstance(page_ocr_cache_payload, dict) else {}
@@ -7997,7 +8025,9 @@ def bind(
             text = page.get_text("text")
             if not text.strip():
                 try:
-                    from patent_sar_extractor.core.patent_profiler import _ocr_page_fallback
+                    from patent_sar_extractor.core.patent_profiler import (
+                        _ocr_page_fallback,
+                    )
                     text = _ocr_page_fallback(page)
                 except Exception:
                     pass
@@ -8154,18 +8184,83 @@ def bind(
     logger.info(f"   结构分布在 {len(struct_pages)} 个页面上")
 
     active_cpds = profile.get("active_cpds", []) or []
+    numbered_result = bind_numbered_tables(
+        doc,
+        processed_structures,
+        sorted(authoritative_table_page_indices),
+        _active_label_keys(active_cpds),
+    )
     authoritative_table_bindings = _extract_authoritative_structure_table_sequence_bindings(
         processed_structures,
         pages_text,
         active_cpds,
         profile,
         ocr_line_map=cached_line_map,
+        numbered_result=numbered_result,
     )
+    if numbered_result.recognized:
+        # Recognized original grid cells have one ownership path. Legacy
+        # headings, row-sequence recovery and crop OCR must not compete for
+        # structures on those pages, including withheld ambiguous cells.
+        numbered_pages = set(numbered_result.recognized_pages)
+        processed_structures = [
+            struct for struct in processed_structures
+            if int(struct["page_no"]) - 1 not in numbered_pages
+        ]
+        all_blocks = [
+            block for block in all_blocks
+            if int(block["page_no"]) - 1 not in numbered_pages
+        ]
+        pages_text = {page: text for page, text in pages_text.items() if page not in numbered_pages}
+        cached_line_map = {page: lines for page, lines in cached_line_map.items() if page not in numbered_pages}
+    from patent_sar_extractor.core.visible_structure_binding import (
+        bind_visible_captions,
+    )
+
+    caption_pairs = bind_visible_captions(
+        doc, processed_structures, _active_label_keys(active_cpds) - set(numbered_result.observed_keys),
+    )
+    caption_ids = set()
+    for pair in caption_pairs:
+        binding = _build_binding_from_structure(pair.structure, pair.label)
+        binding.update({
+            "binding_rule": "direct_structure_label", "visible_label": pair.label,
+            "visible_label_candidates": [{"label": pair.label, "source": "pdf_clip"}],
+            "visible_label_crop_source": "pdf_clip", "product_context_nearby": True,
+            "product_context_distance": 0,
+            "exact_caption_evidence": {"bbox": list(pair.label_bbox), "observations": pair.observations},
+        })
+        authoritative_table_bindings.append(binding)
+        caption_ids.add(str(pair.structure["id"]))
+    processed_structures = [s for s in processed_structures if str(s["id"]) not in caption_ids]
+    spatial_bindings = [
+        annotate_binding_accuracy(binding)
+        for binding in _active_ordered_bindings(authoritative_table_bindings, active_cpds)
+    ]
+    if (
+        active_cpds and len(spatial_bindings) == len(set(active_cpds))
+        and len({b["structure_id"] for b in spatial_bindings}) == len(spatial_bindings)
+        and all(b.get("accuracy_status") == "confirmed" and not b.get("fail_closed") for b in spatial_bindings)
+    ):
+        # Complete original-cell/caption evidence is final: generic repair has
+        # no missing compound to resolve and must not compete with it.
+        logger.info("   原文空间证据完整覆盖 %d 个活性化合物，跳过通用补漏链路", len(spatial_bindings))
+        doc.close()
+        return write_binding_result(
+            out, patent_id=patent_id, bindings=spatial_bindings,
+            detected_style="original_cell_and_caption", include_intermediates=include_intermediates,
+            total_structures=len(structures), total_compound_blocks=len(all_blocks),
+            table_pages=profile.get("authoritative_structure_table_pages", []) or [],
+            table_covered_count=len(profile.get("authoritative_structure_table_cpds", []) or []),
+            no_binding=[], unbound_pages=[],
+        )
     all_blocks = _insert_missing_active_heading_blocks(all_blocks, active_cpds, pages_text=pages_text)
     active_focus_windows = _build_active_focus_windows(all_blocks, active_cpds)
     compound_sequence = _extract_chinese_compound_sequence(pages_text)
     product_structures = _product_structures_from_triplets(processed_structures)
-    if authoritative_table_bindings:
+    if (authoritative_table_bindings and not numbered_result.recognized) or (
+        numbered_result.recognized and not processed_structures
+    ):
         # A complete per-page I-NNN coordinate map is stronger than repeated
         # OCR of thousands of enlarged structure crops. Avoid the expensive
         # generic visual-candidate path and seed the proven table bindings.
@@ -8208,17 +8303,20 @@ def bind(
             visible_label_cache,
         )
         seeded_bindings = _seed_singleton_active_compound_binding(
-            [],
+            list(authoritative_table_bindings),
             processed_structures,
             active_cpds,
             pages_text,
         )
     if visual_grid_bindings:
         seeded_bindings = _merge_binding_candidates(visual_grid_bindings, seeded_bindings, active_cpds=active_cpds)
+    if labeled_bindings:
+        # Numbered cells may cover only part of the activity set. Proven
+        # labels from non-table pages still need to reach the same output.
+        seeded_bindings = _merge_binding_candidates(seeded_bindings, labeled_bindings, active_cpds=active_cpds)
     if authoritative_table_bindings:
         goto_save = False
     elif labeled_bindings:
-        seeded_bindings = _merge_binding_candidates(seeded_bindings, labeled_bindings, active_cpds=active_cpds)
         logger.info(
             f"   ✅ OCR结构标签绑定完成: {len(seeded_bindings)} 个产物，继续用标题区间补漏"
         )
@@ -8769,6 +8867,17 @@ def bind(
             len(final_bindings),
         )
     final_bindings = _enforce_authoritative_structure_table_source(final_bindings, profile)
+    if numbered_result.recognized:
+        # Do not let late generic repair promote a competing cell or a
+        # different source for an observed (even unsegmented/ambiguous) ID.
+        final_bindings = [
+            binding for binding in final_bindings
+            if int(binding.get("page_no") or 0) - 1 not in numbered_result.recognized_pages
+            and _binding_label_key(binding) not in numbered_result.observed_keys
+        ]
+        final_bindings = _active_ordered_bindings(
+            [*authoritative_table_bindings, *final_bindings], active_cpds,
+        )
     final_bindings = _annotate_bindings_with_visible_labels(final_bindings, visible_label_cache)
     final_bindings = _annotate_isotope_label_evidence(final_bindings, cached_line_map)
     final_bindings = [annotate_binding_accuracy(binding) for binding in final_bindings]
@@ -8779,63 +8888,13 @@ def bind(
         keep_review_bindings=keep_review_bindings,
     )
     final_bindings = [annotate_binding_accuracy(binding) for binding in final_bindings]
-    accuracy_summary = summarise_binding_accuracy(final_bindings)
-    
-    # ── 8. 保存结果 ───────────────────────────────────────────
-    logger.info("💾 保存结果...")
-    
-    output_json = out / "bindings.json"
-    result_data = {
-        "patent_id": patent_id,
-        "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
-        "detected_style": detected_style,
-        "include_intermediates": include_intermediates,
-        "total_structures": len(structures),
-        "total_compound_blocks": len(all_blocks),
-        "final_bindings_count": len(final_bindings),
-        "accuracy_summary": accuracy_summary,
-        "authoritative_structure_table_pages": profile.get("authoritative_structure_table_pages", []) or [],
-        "authoritative_structure_table_covered_count": len(profile.get("authoritative_structure_table_cpds", []) or []),
-        "no_binding": no_binding,
-        "final_bindings": final_bindings,
-    }
-    
-    with open(output_json, "w", encoding="utf-8") as f:
-        json.dump(result_data, f, ensure_ascii=False, indent=2)
-    
-    output_csv = out / "bindings.csv"
-    with open(output_csv, "w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=[
-            "cpd", "example_id", "example_num", "compound_id", "compound_num",
-            "cpd_num", "prefix", "structure_id", "page_no",
-            "structure_index", "struct_x0", "struct_y0", "struct_x1", "struct_y1",
-            "image_path", "candidates",
-            "binding_rule", "visible_label", "visual_label_source", "visible_label_crop_source",
-            "visible_label_multi_candidate", "product_context_nearby",
-            "product_context_distance", "struct_width", "struct_height", "struct_area", "struct_aspect",
-            "accuracy_status", "evidence_tier", "evidence_reasons", "fail_closed",
-            "visible_labels",
-            "source_structure_id", "merged_fragment_sources", "expanded_from_fragment",
-            "isotope_label_evidence", "isotope_label_ocr_lines",
-        ], extrasaction="ignore")
-        writer.writeheader()
-        for binding in final_bindings:
-            writer.writerow(binding)
-    
-    logger.info(f"   JSON: {output_json}")
-    logger.info(f"   CSV: {output_csv}")
-    
+    # All layouts publish through the same writer and strict downstream gate.
     doc.close()
-    
-    return {
-        "bindings": final_bindings,
-        "total": len(all_blocks),
-        "bound": len(final_bindings),
-        "detected_style": detected_style,
-        "structure_fallback": detected_style == "structure_sequence_fallback",
-        "unbound_pages": unbound_pages,
-        "output_files": {
-            "json": str(output_json),
-            "csv": str(output_csv),
-        },
-    }
+    return write_binding_result(
+        out, patent_id=patent_id, bindings=final_bindings,
+        detected_style=detected_style, include_intermediates=include_intermediates,
+        total_structures=len(structures), total_compound_blocks=len(all_blocks),
+        table_pages=profile.get("authoritative_structure_table_pages", []) or [],
+        table_covered_count=len(profile.get("authoritative_structure_table_cpds", []) or []),
+        no_binding=no_binding, unbound_pages=unbound_pages,
+    )

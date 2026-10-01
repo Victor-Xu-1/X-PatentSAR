@@ -159,7 +159,7 @@ class StandalonePackagingTests(unittest.TestCase):
         self.assertEqual(COMMAND_NAME, "x-patentsar")
         self.assertEqual(__version__, "0.1.0")
         self.assertEqual(PIPELINE_CONTRACT_VERSION, "2.0.0")
-        self.assertEqual(RULESET_VERSION, "2.0.1")
+        self.assertEqual(RULESET_VERSION, "2.0.2")
         self.assertEqual(RUN_SUMMARY_SCHEMA_VERSION, 1)
         self.assertEqual(PAGE_CLASSIFICATION_SCHEMA_VERSION, 2)
         self.assertEqual(BINDINGS_SCHEMA_VERSION, 2)

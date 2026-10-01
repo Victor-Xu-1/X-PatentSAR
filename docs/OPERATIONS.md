@@ -103,6 +103,50 @@ apply only to future installations and are not migrations or cleanup requests.
 
 ## Concurrency and recovery
 
+After an accuracy-ruleset change, use **运行提取** to establish a new run. A job
+from a different runtime identity is not relabelled or resumed. The queue retains
+the old run and automatically reuses supported, exact-original-SHA OCR observations
+from that same private project. All derived stages run with the current rules.
+For standalone use, `run --reuse-ocr-cache /path/to/page_ocr_cache.json` provides
+the same checked input boundary; it cannot be combined with `--force` and never
+overwrites an existing target cache. Unknown/incorrect observation contracts are
+refused. Do not edit old metadata or generated activity/binding/QA to force reuse.
+
+Current CPU OCR uses two intra-operation threads and one inter-operation thread
+per engine; the configured engine is shared by page, table and cell consumers.
+DECIMER remains isolated and CPU-stable where the TensorFlow/GPU pair is unsupported.
+Model/resource limits and actual stage counts are not evidence of chemical QA:
+inspect final deterministic acceptance after the full run completes.
+
+Within the current runtime identity, resume keeps compatible upstream checkpoints.
+Binding fingerprints also include the implementation epoch from `contracts.py`;
+changing catalog/caption ownership rebuilds binding without discarding unchanged
+segmentation. Complete confirmed spatial coverage skips generic repair. Do not
+edit failed binding files, OCR labels or final QA to make a checkpoint reusable.
+
+The raw OCSR epoch also participates in stage fingerprints and exact-image cache
+keys. Old corrected model strings cannot seed it. The production worker explicitly
+enables one normalization retry on the same source image; standalone workers retain
+no retry unless `--retry-normalization` is set. This is independent of initial
+`--preprocess`/`--no-preprocess`. Inspect `engine_attempts` for every original raw
+prediction and input image hash. Do not manually replace wildcards, element letters,
+ring numbers or chiral tags to bypass a failure.
+
+The extraction-repair verification scope follows the affected chain: cell ownership
+and suffix/ambiguity unit regressions; real original-PDF binding and raw DECIMER
+inference; SQLite/API live-checkpoint and failure states; frontend run-switch,
+crop/source navigation and installed-wheel browser checks. Pass criteria are exact
+active-ID order, unique existing images, per-metric provenance, strict SMILES QC,
+and final deterministic acceptance. Optional research/ADMET analysis is not an
+alternative acceptance path and is outside this repair's scientific validation.
+
+For missing crop messages, distinguish unexecuted/unfinished segmentation,
+unmatched structures, unavailable generated assets and browser load errors.
+The original PDF can remain available during a failed extraction. A current failed
+or incomplete run is not classified as a historical import simply because its
+downstream artifacts do not yet exist. Each activity metric's source page may differ
+from the bound structure page.
+
 Use a separate output directory per patent and avoid running two processes against the same output directory. A stopped run can normally be resumed without `--force`; matching stage fingerprints are reused. Use `--force` only when the underlying PDF, rules or intended parameters changed materially.
 
 Large scanned patents can spend several minutes in the first full-page OCR pass. The page cache is atomically checkpointed every ten completed pages, so after an interruption rerun without `--force` to resume it. A 146-page image-only WIPO sample exceeded a 10-minute verification window on this workstation; a three-page structure-table subset completed in 25 seconds, and its cached rerun completed in under one second. Treat first-pass OCR throughput as workload-dependent rather than a fixed service-level guarantee.

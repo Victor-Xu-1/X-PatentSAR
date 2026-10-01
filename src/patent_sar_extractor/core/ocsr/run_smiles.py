@@ -29,27 +29,26 @@ import sys
 import time
 from pathlib import Path
 
-PACKAGE_IMPORT_ROOT = Path(__file__).resolve().parents[3]
-if str(PACKAGE_IMPORT_ROOT) not in sys.path:
-    sys.path.append(str(PACKAGE_IMPORT_ROOT))
-WORKING_ROOT = str(Path.cwd())
+if str(Path(__file__).resolve().parents[3]) not in sys.path:
+    sys.path.append(str(Path(__file__).resolve().parents[3]))
 
+from patent_sar_extractor.artifact_io import write_json_atomic
 from patent_sar_extractor.contracts import (
     BINDINGS_SCHEMA,
     BINDINGS_SCHEMA_VERSION,
     artifact_identity_matches,
 )
+from patent_sar_extractor.core.cpd_filter import filter_examples_only
+from patent_sar_extractor.core.ocsr.smiles_converter import SmilesConverter
+from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
 from patent_sar_extractor.failures import write_failure_marker
-from patent_sar_extractor.artifact_io import write_json_atomic
 from patent_sar_extractor.smiles_artifact import (
     DIAGNOSTIC_SMILES_MODE,
     PRODUCTION_SMILES_MODE,
     build_smiles_artifact,
 )
-from patent_sar_extractor.core.ocsr.smiles_converter import SmilesConverter
-from patent_sar_extractor.core.ocsr.smiles_cache import SmilesCache
-from patent_sar_extractor.core.cpd_filter import filter_examples_only
-from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
+
+WORKING_ROOT = str(Path.cwd())
 
 
 def load_bindings(input_path: str) -> list:
@@ -63,6 +62,7 @@ def load_bindings(input_path: str) -> list:
     """
     if input_path.endswith(".csv"):
         import pandas as pd
+
         df = pd.read_csv(input_path)
         return df.to_dict("records")
 
@@ -107,22 +107,38 @@ def validate_strict_binding_input(input_path: str, bindings: list) -> list[str]:
     if not artifact_identity_matches(payload, BINDINGS_SCHEMA, BINDINGS_SCHEMA_VERSION):
         return ["Binding input does not match the current bindings schema and ruleset."]
     if payload.get("execution_mode") != "production_activity_led":
-        return ["Binding input was not produced by the production activity-led pipeline."]
+        return [
+            "Binding input was not produced by the production activity-led pipeline."
+        ]
     final_bindings = payload.get("final_bindings", [])
-    if not isinstance(final_bindings, list) or final_bindings != bindings or not final_bindings:
-        return ["Strict OCSR processes only the complete final_bindings list without substitution."]
+    if (
+        not isinstance(final_bindings, list)
+        or final_bindings != bindings
+        or not final_bindings
+    ):
+        return [
+            "Strict OCSR processes only the complete final_bindings list without substitution."
+        ]
     errors = []
     seen_structures = set()
     for binding in final_bindings:
-        checked = annotate_binding_accuracy(dict(binding)) if isinstance(binding, dict) else {}
+        checked = (
+            annotate_binding_accuracy(dict(binding))
+            if isinstance(binding, dict)
+            else {}
+        )
         cpd = _normalize_cpd(checked.get("cpd", "")) or "unknown compound"
         sid = str(checked.get("structure_id") or "")
         if checked.get("accuracy_status") != "confirmed" or checked.get("fail_closed"):
-            errors.append(f"{cpd}: binding does not pass fresh current-rule confirmation.")
+            errors.append(
+                f"{cpd}: binding does not pass fresh current-rule confirmation."
+            )
         if not sid:
             errors.append(f"{cpd}: binding has no structure_id.")
         elif sid in seen_structures:
-            errors.append(f"{cpd}: structure_id {sid} is already assigned to another final compound.")
+            errors.append(
+                f"{cpd}: structure_id {sid} is already assigned to another final compound."
+            )
         seen_structures.add(sid)
     return errors
 
@@ -130,18 +146,26 @@ def validate_strict_binding_input(input_path: str, bindings: list) -> list[str]:
 def validate_strict_smiles_results(bindings: list, results: list) -> list[str]:
     """Require exactly one clean result for each confirmed structure in binding order."""
     expected = [
-        (_normalize_cpd(binding.get("cpd", binding.get("cpd_id", ""))), str(binding.get("structure_id") or ""))
+        (
+            _normalize_cpd(binding.get("cpd", binding.get("cpd_id", ""))),
+            str(binding.get("structure_id") or ""),
+        )
         for binding in bindings
         if isinstance(binding, dict)
     ]
     actual = [
-        (_normalize_cpd(result.get("cpd_id", "")), str(result.get("structure_id") or ""))
+        (
+            _normalize_cpd(result.get("cpd_id", "")),
+            str(result.get("structure_id") or ""),
+        )
         for result in results
         if isinstance(result, dict)
     ]
     errors = []
     if len(actual) != len(results) or actual != expected:
-        errors.append("OCSR result records are not a one-to-one ordered match for confirmed structure bindings.")
+        errors.append(
+            "OCSR result records are not a one-to-one ordered match for confirmed structure bindings."
+        )
     for result in results:
         if not isinstance(result, dict):
             errors.append("OCSR produced a malformed output record.")
@@ -202,13 +226,17 @@ def _is_clean_segmented_structure(rec: dict) -> bool:
     return area >= 4200 and width >= 100 and height >= 28 and aspect <= 5.5
 
 
-def _choose_ocsr_image_path(item: dict, structure_lookup: dict[str, dict] | None = None) -> str:
+def _choose_ocsr_image_path(
+    item: dict, structure_lookup: dict[str, dict] | None = None
+) -> str:
     """Choose the cleanest available image for OCSR."""
     ocsr_path = str(item.get("ocsr_image_path") or "").strip()
     if ocsr_path and os.path.isfile(ocsr_path):
         return ocsr_path
 
-    image_path = str(item.get("image_path") or item.get("structure_image") or "").strip()
+    image_path = str(
+        item.get("image_path") or item.get("structure_image") or ""
+    ).strip()
     rule = str(item.get("binding_rule") or "")
     source_sid = str(item.get("source_structure_id") or "").strip()
     if structure_lookup and source_sid:
@@ -216,11 +244,16 @@ def _choose_ocsr_image_path(item: dict, structure_lookup: dict[str, dict] | None
         # segmented structure for OCSR when it is available.
         if (
             "expanded_strict_labels" in image_path
-            or "merged_fragment" not in rule and str(item.get("expanded_from_fragment") or "")
+            or "merged_fragment" not in rule
+            and str(item.get("expanded_from_fragment") or "")
         ):
             source_rec = structure_lookup.get(source_sid) or {}
             src_img = str(source_rec.get("image_path") or "").strip()
-            if _is_clean_segmented_structure(source_rec) and src_img and os.path.isfile(src_img):
+            if (
+                _is_clean_segmented_structure(source_rec)
+                and src_img
+                and os.path.isfile(src_img)
+            ):
                 return src_img
 
     source_path = str(item.get("source_image_path") or "").strip()
@@ -298,9 +331,7 @@ def print_summary(results: list, output_json: str, output_csv: str, elapsed: flo
         1 for r in results if r.get("OCSR_status") == "engine_unavailable"
     )
     timeout = sum(1 for r in results if r.get("OCSR_status") == "engine_timeout")
-    all_failed = sum(
-        1 for r in results if r.get("OCSR_status") == "all_engines_failed"
-    )
+    all_failed = sum(1 for r in results if r.get("OCSR_status") == "all_engines_failed")
     markush = sum(
         1 for r in results if r.get("OCSR_quality_flag") == "markush_or_query"
     )
@@ -382,6 +413,11 @@ def main():
         "--no-preprocess",
         action="store_true",
         help="Disable image preprocessing",
+    )
+    parser.add_argument(
+        "--retry-normalization",
+        action="store_true",
+        help="Allow one same-image normalization retry after a non-clean raw prediction",
     )
     parser.add_argument(
         "--timeout",
@@ -473,7 +509,9 @@ def main():
     if not args.diagnostic_unvalidated_input:
         input_errors = validate_strict_binding_input(args.input, bindings)
         if input_errors:
-            raise RuntimeError("Strict OCSR input gate failed: " + "; ".join(input_errors[:12]))
+            raise RuntimeError(
+                "Strict OCSR input gate failed: " + "; ".join(input_errors[:12])
+            )
 
     # Filter out Intermediate (中间体), keep only Example (实施例)
     if not args.include_intermediates:
@@ -484,7 +522,15 @@ def main():
     bindings = resolve_image_paths(bindings, base_dir)
 
     # Check how many images are accessible
-    images_found = sum(1 for b in bindings if os.path.isfile(b.get("ocsr_image_path") or b.get("source_image_path") or b.get("image_path", "")))
+    images_found = sum(
+        1
+        for b in bindings
+        if os.path.isfile(
+            b.get("ocsr_image_path")
+            or b.get("source_image_path")
+            or b.get("image_path", "")
+        )
+    )
     print(f"Images accessible: {images_found}/{len(bindings)}")
 
     # Preprocessing directory
@@ -515,6 +561,7 @@ def main():
         preprocess_long_edge=args.preprocess_long_edge,
         preprocess_padding=args.preprocess_padding,
         engine_configs=engine_configs,
+        retry_normalization=args.retry_normalization,
     )
 
     # Check engine availability
@@ -528,12 +575,12 @@ def main():
             print(f"  {name}: ✗ not registered")
 
     # Run conversion
-    print(f"\nProcessing...")
+    print("\nProcessing...")
     start_time = time.time()
 
     results = converter.convert_batch(
         bindings,
-        preprocess_dir=preprocess_dir if preprocess else "",
+        preprocess_dir=preprocess_dir,
         only_bound=only_bound,
         limit=args.limit,
         jobs=args.jobs,
@@ -556,6 +603,7 @@ def main():
     # Save CSV output
     try:
         import pandas as pd
+
         df = pd.DataFrame(results)
         # Convert engine_attempts list to JSON string for CSV
         if "engine_attempts" in df.columns:
@@ -570,8 +618,10 @@ def main():
     # Cache stats
     if converter.cache:
         stats = converter.cache.get_stats()
-        print(f"\nCache stats: {stats['total_entries']} entries, "
-              f"{stats['valid_entries']} valid")
+        print(
+            f"\nCache stats: {stats['total_entries']} entries, "
+            f"{stats['valid_entries']} valid"
+        )
     if not args.diagnostic_unvalidated_input:
         result_errors = validate_strict_smiles_results(bindings, results)
         if result_errors:
@@ -580,7 +630,9 @@ def main():
                 "smiles_output",
                 result_errors,
             )
-            raise RuntimeError("Strict OCSR output gate failed: " + "; ".join(result_errors[:12]))
+            raise RuntimeError(
+                "Strict OCSR output gate failed: " + "; ".join(result_errors[:12])
+            )
 
 
 if __name__ == "__main__":

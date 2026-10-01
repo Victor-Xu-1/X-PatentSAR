@@ -8,6 +8,7 @@ import { useAnalysis } from '../analysis/useAnalysis';
 import type { RecognitionResult } from '../../api/analysisTypes';
 import { AdmetPanel } from '../analysis/AdmetPanel';
 import { AnalysisFeedback } from '../analysis/AnalysisFeedback';
+import { cropPlaceholder } from '../../model/extraction';
 export function CropDialog({
   compound,
   projectId,
@@ -35,6 +36,7 @@ export function CropDialog({
           url={compound.structure_image_url}
           alt={`${compound.display_id} 的原始结构裁图`}
           className="crop-large"
+          unavailableLabel={cropPlaceholder(compound)}
         />
         <dl>
           <dt>来源页码</dt>
