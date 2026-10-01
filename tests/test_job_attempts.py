@@ -10,6 +10,8 @@ import uuid
 from pathlib import Path
 from unittest.mock import patch
 
+from test_web_support import ExitRunner, WebFixture, wait_job
+
 from patent_sar_extractor import contracts as core
 from patent_sar_extractor.application.stage_cache import (
     _step_fingerprint,
@@ -25,7 +27,6 @@ from patent_sar_extractor.web.pdf import copy_original
 from patent_sar_extractor.web.processes import CLIProcessRunner
 from patent_sar_extractor.web.service import WorkspaceService
 from patent_sar_extractor.web.storage import encode, now
-from test_web_support import ExitRunner, WebFixture, wait_job
 
 
 class AttemptTests(WebFixture, unittest.TestCase):
@@ -302,6 +303,124 @@ class AttemptTests(WebFixture, unittest.TestCase):
             decode_spec(service.store.job(fresh.id)["spec"]).source_ocr_cache, ""
         )
 
+    def test_resume_uses_compatible_raw_ocr_without_promoting_old_derived_rules(self):
+        service, project, queue, job, spec = self.draft()
+        self.classification(spec)
+        root = Path(spec.output_dir)
+        ocr_file = root / OCR_PATH
+        cache = json.loads(ocr_file.read_text())
+        cache["metadata"]["ruleset"]["version"] = "2.0.1"
+        cache["metadata"].pop("observation_contract")
+        write_json_atomic(ocr_file, cache)
+        for stage, collection in (("activity", "rows"), ("locate", "selected_pages")):
+            relative, schema, version = ARTIFACTS[stage]
+            write_json_atomic(
+                root / relative,
+                {
+                    **core.artifact_identity(schema, version),
+                    collection: [0] if stage == "locate" else [],
+                },
+            )
+            _write_step_manifest(
+                str(root / relative),
+                _step_fingerprint(
+                    stage,
+                    pdf_path=spec.pdf_path,
+                    dependencies=[str(root / ARTIFACTS["classify"][0]), str(ocr_file)],
+                ),
+            )
+        write_json_atomic(root / "structure_pages/crop_regions.json", {})
+        self.summary(
+            spec,
+            steps={
+                "classify": {"status": "ok"},
+                "activity": {"status": "ok"},
+                "locate": {"status": "ok"},
+                "structures": {"status": "failed"},
+            },
+        )
+        original = ocr_file.read_bytes()
+        self.finish(service, queue, job)
+        resumed = queue.enqueue(project.id, JobRequest(resume_job_id=job.id))
+        target = Path(decode_spec(service.store.job(resumed.id)["spec"]).output_dir)
+        self.assertEqual((target / OCR_PATH).read_bytes(), original)
+        self.assertTrue((target / ARTIFACTS["locate"][0]).is_file())
+        self.assertEqual(ocr_file.read_bytes(), original)
+        self.assertEqual(service.job(job.id).status, "failed")
+
+    def test_failed_smiles_resume_transports_raw_cache_not_failed_output_or_qa(self):
+        import sqlite3
+
+        from patent_sar_extractor.core.ocsr.smiles_cache import SmilesCache
+
+        service, project, queue, job, spec = self.draft()
+        self.classification(spec)
+        root = Path(spec.output_dir)
+        previous = ARTIFACTS["classify"][0]
+        for stage, collection in (
+            ("activity", "rows"),
+            ("locate", "selected_pages"),
+            ("structures", "structures"),
+            ("bind", "final_bindings"),
+        ):
+            relative, schema, version = ARTIFACTS[stage]
+            payload = {
+                **core.artifact_identity(schema, version),
+                collection: [0] if stage == "locate" else [],
+            }
+            if stage == "bind":
+                payload["execution_mode"] = "production_activity_led"
+            write_json_atomic(root / relative, payload)
+            _write_step_manifest(
+                str(root / relative),
+                _step_fingerprint(
+                    stage, pdf_path=spec.pdf_path, dependencies=[str(root / previous)]
+                ),
+            )
+            if stage == "locate":
+                write_json_atomic(root / "structure_pages/crop_regions.json", {})
+            previous = relative
+        cache_file = root / "smiles/smiles_cache.sqlite"
+        cache = SmilesCache(str(cache_file))
+        identity = "c" * 64
+        engine = f"decimer:raw-v{core.OCSR_OBSERVATION_VERSION}:{identity}"
+        cache.save_result(
+            "a" * 64,
+            engine,
+            {"status": "success", "model_fingerprint": identity, "raw_smiles": "CCO"},
+        )
+        cache.save_result("b" * 64, engine, {"status": "timeout", "raw_smiles": None})
+        with sqlite3.connect(cache_file) as connection:
+            observation = connection.execute(
+                "SELECT * FROM smiles_observations WHERE image_hash=?", ("a" * 64,)
+            ).fetchone()
+        source = cache_file.read_bytes()
+        write_json_atomic(root / ARTIFACTS["smiles"][0], {"records": ["failed output"]})
+        write_json_atomic(root / "final_qa_report.json", {"ok": False})
+        self.summary(
+            spec,
+            steps={
+                name: {"status": "failed" if name == "smiles" else "ok"}
+                for name in ARTIFACTS
+            },
+        )
+        self.finish(service, queue, job)
+        resumed = queue.enqueue(project.id, JobRequest(resume_job_id=job.id))
+        target = Path(decode_spec(service.store.job(resumed.id)["spec"]).output_dir)
+        copied = target / "smiles/smiles_cache.sqlite"
+        with sqlite3.connect(copied) as connection:
+            self.assertEqual(
+                connection.execute("SELECT * FROM smiles_observations").fetchall(),
+                [observation],
+            )
+        self.assertNotEqual(copied.stat().st_ino, cache_file.stat().st_ino)
+        self.assertEqual(copied.stat().st_nlink, 1)
+        self.assertEqual(copied.stat().st_mode & 0o777, 0o600)
+        self.assertEqual(cache_file.read_bytes(), source)
+        self.assertFalse((target / ARTIFACTS["smiles"][0]).exists())
+        self.assertFalse((target / "final_qa_report.json").exists())
+        self.assertEqual(service.job(job.id).status, "failed")
+
     def test_changed_dependency_or_old_contract_is_not_copied(self):
         service, project, queue, job, spec = self.draft()
         self.classification(spec)
@@ -491,6 +610,24 @@ class AttemptTests(WebFixture, unittest.TestCase):
             with self.subTest(value=value), self.assertRaises(WebError):
                 transport.images({"engine_attempts": [{"input_image": value}]})
         self.assertEqual(transport.content, {})
+
+    def test_nested_first_crop_creates_every_target_ancestor_privately(self):
+        source = self.root / "nested-source"
+        source.mkdir(mode=0o700)
+        relative = "structures/.chunks/chunk_001/structure_0050.png"
+        image = source / relative
+        image.parent.mkdir(parents=True)
+        image.write_bytes(b"unchanged structure crop")
+        transport = CheckpointCopy(source, self.root / "nested-target")
+        transport.images({"structure_image": str(image)})
+        for ancestor in (
+            transport.target,
+            transport.target / "structures",
+            transport.target / "structures/.chunks",
+            transport.target / "structures/.chunks/chunk_001",
+        ):
+            self.assertEqual(ancestor.stat().st_mode & 0o777, 0o700)
+        self.assertEqual((transport.target / relative).read_bytes(), image.read_bytes())
 
     def test_real_cli_failure_resume_reuses_classification_and_preserves_old_attempt(
         self,

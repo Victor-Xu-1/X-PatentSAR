@@ -10,6 +10,12 @@ from pathlib import Path
 
 from .smiles_qc import qc_smiles
 
+OBSERVATIONS_SQL = (
+    "CREATE TABLE IF NOT EXISTS smiles_observations "
+    "(image_hash TEXT NOT NULL,engine TEXT NOT NULL,payload TEXT NOT NULL,"
+    "created_at TEXT NOT NULL,PRIMARY KEY(image_hash,engine))"
+)
+
 
 def compute_image_sha256(image_path: str) -> str:
     digest = hashlib.sha256()
@@ -26,11 +32,7 @@ class SmilesCache:
         self.cache_path = cache_path
         Path(cache_path).parent.mkdir(parents=True, exist_ok=True)
         with sqlite3.connect(cache_path) as connection:
-            connection.execute(
-                "CREATE TABLE IF NOT EXISTS smiles_observations "
-                "(image_hash TEXT NOT NULL,engine TEXT NOT NULL,payload TEXT NOT NULL,"
-                "created_at TEXT NOT NULL,PRIMARY KEY(image_hash,engine))"
-            )
+            connection.execute(OBSERVATIONS_SQL)
 
     def get_cached_result(self, image_hash: str, engine: str) -> dict | None:
         with sqlite3.connect(self.cache_path) as connection:

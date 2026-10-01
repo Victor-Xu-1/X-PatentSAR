@@ -11,6 +11,7 @@ import json
 import logging
 import os
 import re
+import sqlite3
 import stat
 from dataclasses import dataclass
 from pathlib import Path
@@ -360,7 +361,11 @@ class CheckpointCopy:
                 413, "checkpoint_limit", "Verified checkpoints exceed the copy budget."
             )
         destination = self.target / relative
-        private_directory(destination.parent)
+        parent = self.target
+        # mkdir(parents=True, mode=0o700) applies mode only to the leaf; create
+        # each transport-owned ancestor privately before any nested crop copy.
+        for part in Path(relative).parts[:-1]:
+            parent = private_directory(parent / part)
         fd = os.open(
             destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600
         )
@@ -543,6 +548,26 @@ class CheckpointCopy:
         fp["params_digest"] = _stable_digest(fp["params"])
         self.put(verified.path + ".manifest.json", checkpoint_json(manifest))
 
+    def observations(self) -> None:
+        from patent_sar_extractor.core.ocsr.cache_snapshot import snapshot_observations
+
+        relative = "smiles/smiles_cache.sqlite"
+        try:
+            content = self.raw(relative)
+        except WebError as exc:
+            if exc.code == "asset_unavailable":
+                return
+            raise
+        try:
+            snapshot = snapshot_observations(
+                content, max_bytes=MAX_ARTIFACT_BYTES, max_records=MAX_RECORDS
+            )
+        except (ValueError, RecursionError, UnicodeError, sqlite3.Error) as exc:
+            raise WebError(
+                422, "invalid_checkpoint_cache", "Raw recognition cache is invalid."
+            ) from exc
+        self.put(relative, snapshot)
+
 
 def checkpoint_json(payload: Any) -> bytes:
     # Use the canonical writer's serialization: the CLI hashes dependency bytes
@@ -555,15 +580,10 @@ def seed_checkpoints(old: RunSpec, target: Path) -> None:
 
     copy = CheckpointCopy(Path(old.output_dir), target)
     cache = copy.files.json(OCR_PATH)
-    if (
-        isinstance(cache, dict)
-        and core.artifact_identity_matches(
-            cache.get("metadata"),
-            core.PAGE_OCR_CACHE_SCHEMA,
-            core.PAGE_OCR_CACHE_SCHEMA_VERSION,
-        )
-        and cache_matches_pdf(cache, old.pdf_path)
-    ):
+    # Raw page observations have their own compatibility contract. Applying
+    # derived-artifact rules here rejects valid older OCR and needlessly forces
+    # a full rescan; the core predicate still checks PDF SHA and observation ID.
+    if isinstance(cache, dict) and cache_matches_pdf(cache, old.pdf_path):
         copy.put(OCR_PATH, checkpoint_json(copy.relocate(cache)))
     summary = read_summary(Path(old.output_dir))
     if not core.artifact_identity_matches(
@@ -585,3 +605,8 @@ def seed_checkpoints(old: RunSpec, target: Path) -> None:
                 "structure_pages/crop_regions.json",
                 checkpoint_json(copy.relocate(regions)),
             )
+    if ARTIFACTS["bind"][0] in copy.content:
+        # A failed SMILES stage can still contain useful raw observations. They
+        # never become a stage checkpoint or acceptance report; the sole worker
+        # rechecks their exact image/runtime identity and re-runs failed entries.
+        copy.observations()

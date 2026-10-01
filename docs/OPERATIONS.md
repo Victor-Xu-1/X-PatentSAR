@@ -132,6 +132,8 @@ An ordinary non-force rerun uses the same bounded transport when the current
 original observations and latest stopped job's private output can be verified.
 New task options remain new; no old history, failure marker or final acceptance is
 copied. Compatible older OCR remains a raw input rather than a derived checkpoint.
+Resume uses the core PDF-SHA/observation predicate for this raw OCR boundary, not
+the newer derived-artifact ruleset; unknown observation contracts still fail.
 Web resume now creates a new job-ID directory and copies only verified bounded
 checkpoints; it never aliases the old output directory or hardlinks images. The CLI
 remains the final cache/acceptance authority. Old jobs sharing an output root show
@@ -143,7 +145,14 @@ segmentation. Complete confirmed spatial coverage skips generic repair. Do not
 edit failed binding files, OCR labels or final QA to make a checkpoint reusable.
 
 The raw OCSR epoch also participates in stage fingerprints and exact-image cache
-keys. Old corrected model strings cannot seed it. The production worker explicitly
+keys. Old corrected model strings cannot seed it.
+Resume transports a bounded, sanitized snapshot of successful current-epoch raw
+observations only after the bindings checkpoint is independently verified. Exact
+payloads, image hashes, model fingerprints and timestamps stay unchanged. Foreign
+SQLite schema/triggers, repaired legacy entries, failures and final QA are not
+copied. The sole converter rechecks image/runtime identity and current RDKit QC;
+failed or changed inputs execute normally, without promoting cached acceptance.
+The production worker explicitly
 enables one normalization retry on the same source image; standalone workers retain
 no retry unless `--retry-normalization` is set. This is independent of initial
 `--preprocess`/`--no-preprocess`. Inspect `engine_attempts` for every original raw
