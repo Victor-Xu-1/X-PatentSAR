@@ -7,8 +7,13 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from patent_sar_extractor.application.commands import _run_activity_rules, cmd_run
+from patent_sar_extractor.application.commands import (
+    cmd_run,
+)
 from patent_sar_extractor.application.progress import PipelineProgress
+from patent_sar_extractor.application.worker_policy import (
+    _run_activity_rules,
+)
 
 
 class ExtractionProgressTests(unittest.TestCase):
@@ -45,7 +50,7 @@ class ExtractionProgressTests(unittest.TestCase):
                 pdf=str(pdf), output=temporary, patent_id="TEST-PATENT"
             )
             with patch(
-                "patent_sar_extractor.application.commands.classify_pdf",
+                "patent_sar_extractor.application.stage_classify.classify_pdf",
                 side_effect=RuntimeError("OCR failure"),
             ):
                 with self.assertRaisesRegex(RuntimeError, "OCR failure"):
@@ -57,7 +62,7 @@ class ExtractionProgressTests(unittest.TestCase):
 
     def test_patent_identity_is_passed_to_activity_worker(self):
         with patch(
-            "patent_sar_extractor.application.commands.run_snippet",
+            "patent_sar_extractor.application.worker_policy.run_snippet",
             return_value=SimpleNamespace(returncode=0),
         ) as run:
             _run_activity_rules("original.pdf", {}, "output", patent_id="TEST-PATENT")

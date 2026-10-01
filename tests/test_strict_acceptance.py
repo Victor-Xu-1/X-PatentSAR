@@ -12,12 +12,40 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = ROOT / "src"
 if str(SOURCE_ROOT) not in sys.path:
     sys.path.insert(0, str(SOURCE_ROOT))
 
+from patent_sar_extractor.application.activity_policy import (
+    _activity_acceptance_errors,
+    _extract_active_cpds,
+)
+from patent_sar_extractor.application.binding_policy import (
+    _binding_acceptance_errors,
+    _load_reusable_bindings,
+)
+from patent_sar_extractor.application.pipeline_io import (
+    _elapsed_since,
+    _strict_gates_enabled,
+)
+from patent_sar_extractor.application.smiles_policy import (
+    _smiles_acceptance_errors,
+    _smiles_results_can_be_reused,
+)
+from patent_sar_extractor.application.stage_cache import (
+    _write_step_manifest,
+)
+from patent_sar_extractor.application.structure_cache import (
+    _load_reusable_structure_chunk,
+    _merge_structure_chunk_metadata,
+    _structure_chunk_fingerprint,
+)
+from patent_sar_extractor.application.worker_policy import (
+    _activity_timeout_seconds,
+    _gpu_env_extra,
+    _production_smiles_ocr_options,
+)
 from patent_sar_extractor.contracts import (
     ACTIVITY_SCHEMA,
     ACTIVITY_SCHEMA_VERSION,
@@ -35,7 +63,10 @@ from patent_sar_extractor.contracts import (
     artifact_identity_matches,
     ruleset_ref,
 )
-
+from patent_sar_extractor.core import activity_extractor as activity_extractor_module
+from patent_sar_extractor.core import env_runner as env_runner_module
+from patent_sar_extractor.core import page_ocr_cache as page_ocr_cache_module
+from patent_sar_extractor.core import structure_binder as structure_binder_module
 from patent_sar_extractor.core.activity_extractor import (
     ActivityRow,
     _activity_row_has_usable_values,
@@ -48,54 +79,50 @@ from patent_sar_extractor.core.activity_extractor import (
     _prefer_specific_activity_rows,
     _split_joined_dc50_dmax_cell,
 )
-from patent_sar_extractor.core import activity_extractor as activity_extractor_module
-from patent_sar_extractor.core.page_ocr_cache import build_cache_metadata, load_page_ocr_cache, update_page_ocr_cache
-from patent_sar_extractor.core import page_ocr_cache as page_ocr_cache_module
-from patent_sar_extractor.core import env_runner as env_runner_module
-from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
-from patent_sar_extractor.core.runtime_env import tensorflow_cuda_caps_support_gpu
 from patent_sar_extractor.core.health_check import (
     _parse_tensorflow_gpu_probe,
     _tensorflow_gpu_probe_is_compatible,
 )
-from patent_sar_extractor.core.qa_report import _read_xlsx_values, build_qa_report, write_qa_report
-from patent_sar_extractor.core.ocsr.smiles_qc import qc_smiles
-from patent_sar_extractor.core.ocsr.run_smiles import validate_strict_binding_input, validate_strict_smiles_results
 from patent_sar_extractor.core.ocsr import run_smiles as run_smiles_module
-from patent_sar_extractor.core.ocsr.smiles_cache import SmilesCache, compute_image_sha256
 from patent_sar_extractor.core.ocsr import smiles_converter as smiles_converter_module
-from patent_sar_extractor.core import structure_binder as structure_binder_module
-from patent_sar_extractor.core.structure_binder import _enforce_authoritative_structure_table_source
-from patent_sar_extractor.core.structure_binder import _extract_structure_table_bindings
-from patent_sar_extractor.core.structure_binder import _drop_fail_closed_bindings
-from patent_sar_extractor.core.structure_binder import _extract_cpd_letter_pair_product_bindings
-from patent_sar_extractor.core.structure_binder import _merge_binding_candidates
-from patent_sar_extractor.application.commands import (
-    _activity_acceptance_errors,
-    _activity_timeout_seconds,
-    _binding_acceptance_errors,
-    _elapsed_since,
-    _extract_active_cpds,
-    _gpu_env_extra,
-    _load_reusable_bindings,
-    _load_reusable_structure_chunk,
-    _merge_structure_chunk_metadata,
-    _production_smiles_ocr_options,
-    _smiles_results_can_be_reused,
-    _smiles_acceptance_errors,
-    _strict_gates_enabled,
-    _structure_chunk_fingerprint,
-    _write_step_manifest,
+from patent_sar_extractor.core.ocsr.run_smiles import (
+    validate_strict_binding_input,
+    validate_strict_smiles_results,
 )
+from patent_sar_extractor.core.ocsr.smiles_cache import (
+    SmilesCache,
+    compute_image_sha256,
+)
+from patent_sar_extractor.core.ocsr.smiles_qc import qc_smiles
 from patent_sar_extractor.core.page_classifier import classify_pdf
+from patent_sar_extractor.core.page_ocr_cache import (
+    build_cache_metadata,
+    load_page_ocr_cache,
+    update_page_ocr_cache,
+)
+from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
+from patent_sar_extractor.core.qa_report import (
+    _read_xlsx_values,
+    build_qa_report,
+    write_qa_report,
+)
 from patent_sar_extractor.core.review_excerpt import create_review_excerpt_pdf
+from patent_sar_extractor.core.runtime_env import tensorflow_cuda_caps_support_gpu
+from patent_sar_extractor.core.structure_binder import (
+    _drop_fail_closed_bindings,
+    _enforce_authoritative_structure_table_source,
+    _extract_cpd_letter_pair_product_bindings,
+    _extract_structure_table_bindings,
+    _merge_binding_candidates,
+)
 from patent_sar_extractor.core.structure_page_locator import (
     _covered_active_cpds,
     _is_structure_table_page,
 )
-from patent_sar_extractor.workers.gen_final_results import _validate_smiles_source_for_export
 from patent_sar_extractor.smiles_artifact import build_smiles_artifact
-
+from patent_sar_extractor.workers.gen_final_results import (
+    _validate_smiles_source_for_export,
+)
 
 _TINY_PNG = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk"
@@ -106,7 +133,9 @@ _TINY_PNG = base64.b64decode(
 class StrictAcceptanceTests(unittest.TestCase):
     def _write_json(self, path: Path, value) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(value, indent=2, ensure_ascii=False), encoding="utf-8")
+        path.write_text(
+            json.dumps(value, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
 
     def _image(self, directory: Path, name: str) -> str:
         path = directory / name
@@ -126,7 +155,9 @@ class StrictAcceptanceTests(unittest.TestCase):
         finally:
             doc.close()
 
-    def _labeled_structure_image(self, directory: Path, name: str, label: str = "110") -> str:
+    def _labeled_structure_image(
+        self, directory: Path, name: str, label: str = "110"
+    ) -> str:
         from PIL import Image, ImageDraw
 
         path = directory / name
@@ -135,7 +166,9 @@ class StrictAcceptanceTests(unittest.TestCase):
         draw = ImageDraw.Draw(img)
         # A simple molecule-like trace in the upper band plus a printed
         # compound number below it.  The number must not be sent to OCSR.
-        draw.line([(20, 30), (70, 18), (120, 30), (170, 18), (220, 30)], fill="black", width=3)
+        draw.line(
+            [(20, 30), (70, 18), (120, 30), (170, 18), (220, 30)], fill="black", width=3
+        )
         draw.text((108, 70), label, fill="black")
         img.save(path)
         return str(path)
@@ -156,7 +189,9 @@ class StrictAcceptanceTests(unittest.TestCase):
             "fail_closed": False,
         }
 
-    def test_merge_direct_visual_label_prefers_upper_final_product_over_lower_route_crop(self):
+    def test_merge_direct_visual_label_prefers_upper_final_product_over_lower_route_crop(
+        self,
+    ):
         top_product = {
             "cpd": "Compound 81",
             "cpd_id": "Compound 81",
@@ -200,11 +235,15 @@ class StrictAcceptanceTests(unittest.TestCase):
             "fail_closed": False,
         }
 
-        merged = _merge_binding_candidates([lower_route_crop], [top_product], active_cpds=["Compound 81"])
+        merged = _merge_binding_candidates(
+            [lower_route_crop], [top_product], active_cpds=["Compound 81"]
+        )
 
         self.assertEqual("S0348", merged[0]["structure_id"])
 
-    def test_pair_heading_order_binding_is_confirmed_when_strict_ocr_reads_suffix_only(self):
+    def test_pair_heading_order_binding_is_confirmed_when_strict_ocr_reads_suffix_only(
+        self,
+    ):
         binding = {
             "cpd": "Compound 5-1",
             "compound_id": "Compound 5-1",
@@ -229,11 +268,56 @@ class StrictAcceptanceTests(unittest.TestCase):
 
     def test_cpd_letter_pair_row_order_recovers_left_non_a_product(self):
         structures = [
-            {"id": "S1", "idx": 1, "page_no": 1, "x0": 100, "y0": 120, "x1": 200, "y1": 220, "image_path": "s1.png"},
-            {"id": "S2", "idx": 2, "page_no": 1, "x0": 320, "y0": 120, "x1": 420, "y1": 220, "image_path": "s2.png"},
-            {"id": "S6_precursor", "idx": 3, "page_no": 1, "x0": 80, "y0": 320, "x1": 210, "y1": 500, "image_path": "precursor.png"},
-            {"id": "S6", "idx": 4, "page_no": 1, "x0": 300, "y0": 320, "x1": 455, "y1": 510, "image_path": "cpd6.png"},
-            {"id": "S6A", "idx": 5, "page_no": 1, "x0": 520, "y0": 320, "x1": 675, "y1": 510, "image_path": "cpd6a.png"},
+            {
+                "id": "S1",
+                "idx": 1,
+                "page_no": 1,
+                "x0": 100,
+                "y0": 120,
+                "x1": 200,
+                "y1": 220,
+                "image_path": "s1.png",
+            },
+            {
+                "id": "S2",
+                "idx": 2,
+                "page_no": 1,
+                "x0": 320,
+                "y0": 120,
+                "x1": 420,
+                "y1": 220,
+                "image_path": "s2.png",
+            },
+            {
+                "id": "S6_precursor",
+                "idx": 3,
+                "page_no": 1,
+                "x0": 80,
+                "y0": 320,
+                "x1": 210,
+                "y1": 500,
+                "image_path": "precursor.png",
+            },
+            {
+                "id": "S6",
+                "idx": 4,
+                "page_no": 1,
+                "x0": 300,
+                "y0": 320,
+                "x1": 455,
+                "y1": 510,
+                "image_path": "cpd6.png",
+            },
+            {
+                "id": "S6A",
+                "idx": 5,
+                "page_no": 1,
+                "x0": 520,
+                "y0": 320,
+                "x1": 675,
+                "y1": 510,
+                "image_path": "cpd6a.png",
+            },
         ]
         pages_text = {0: "实施例6 化合物 Cpd-6 和 Cpd-6A 制备"}
 
@@ -250,11 +334,56 @@ class StrictAcceptanceTests(unittest.TestCase):
 
     def test_cpd_letter_pair_row_order_searches_next_page_for_final_pair(self):
         structures = [
-            {"id": "route_left", "idx": 1, "page_no": 1, "x0": 120, "y0": 300, "x1": 210, "y1": 385, "image_path": "route_left.png"},
-            {"id": "route_right", "idx": 2, "page_no": 1, "x0": 340, "y0": 300, "x1": 430, "y1": 385, "image_path": "route_right.png"},
-            {"id": "precursor", "idx": 3, "page_no": 2, "x0": 100, "y0": 260, "x1": 170, "y1": 358, "image_path": "precursor.png"},
-            {"id": "S7", "idx": 4, "page_no": 2, "x0": 220, "y0": 260, "x1": 290, "y1": 358, "image_path": "cpd7.png"},
-            {"id": "S7A", "idx": 5, "page_no": 2, "x0": 315, "y0": 260, "x1": 385, "y1": 358, "image_path": "cpd7a.png"},
+            {
+                "id": "route_left",
+                "idx": 1,
+                "page_no": 1,
+                "x0": 120,
+                "y0": 300,
+                "x1": 210,
+                "y1": 385,
+                "image_path": "route_left.png",
+            },
+            {
+                "id": "route_right",
+                "idx": 2,
+                "page_no": 1,
+                "x0": 340,
+                "y0": 300,
+                "x1": 430,
+                "y1": 385,
+                "image_path": "route_right.png",
+            },
+            {
+                "id": "precursor",
+                "idx": 3,
+                "page_no": 2,
+                "x0": 100,
+                "y0": 260,
+                "x1": 170,
+                "y1": 358,
+                "image_path": "precursor.png",
+            },
+            {
+                "id": "S7",
+                "idx": 4,
+                "page_no": 2,
+                "x0": 220,
+                "y0": 260,
+                "x1": 290,
+                "y1": 358,
+                "image_path": "cpd7.png",
+            },
+            {
+                "id": "S7A",
+                "idx": 5,
+                "page_no": 2,
+                "x0": 315,
+                "y0": 260,
+                "x1": 385,
+                "y1": 358,
+                "image_path": "cpd7a.png",
+            },
         ]
         pages_text = {
             0: "实施例7 化合物 Cpd-7 和 Cpd-7A 制备",
@@ -272,12 +401,66 @@ class StrictAcceptanceTests(unittest.TestCase):
 
     def test_cpd_letter_pair_row_order_uses_split_label_lines_on_next_page(self):
         structures = [
-            {"id": "route_precursor", "idx": 1, "page_no": 1, "x0": 90, "y0": 640, "x1": 165, "y1": 720, "image_path": "route_precursor.png"},
-            {"id": "route_left", "idx": 2, "page_no": 1, "x0": 230, "y0": 640, "x1": 320, "y1": 720, "image_path": "route_left.png"},
-            {"id": "route_right", "idx": 3, "page_no": 1, "x0": 365, "y0": 640, "x1": 455, "y1": 720, "image_path": "route_right.png"},
-            {"id": "precursor", "idx": 4, "page_no": 2, "x0": 100, "y0": 260, "x1": 170, "y1": 358, "image_path": "precursor.png"},
-            {"id": "S7", "idx": 5, "page_no": 2, "x0": 220, "y0": 260, "x1": 290, "y1": 358, "image_path": "cpd7.png"},
-            {"id": "S7A", "idx": 6, "page_no": 2, "x0": 315, "y0": 260, "x1": 385, "y1": 358, "image_path": "cpd7a.png"},
+            {
+                "id": "route_precursor",
+                "idx": 1,
+                "page_no": 1,
+                "x0": 90,
+                "y0": 640,
+                "x1": 165,
+                "y1": 720,
+                "image_path": "route_precursor.png",
+            },
+            {
+                "id": "route_left",
+                "idx": 2,
+                "page_no": 1,
+                "x0": 230,
+                "y0": 640,
+                "x1": 320,
+                "y1": 720,
+                "image_path": "route_left.png",
+            },
+            {
+                "id": "route_right",
+                "idx": 3,
+                "page_no": 1,
+                "x0": 365,
+                "y0": 640,
+                "x1": 455,
+                "y1": 720,
+                "image_path": "route_right.png",
+            },
+            {
+                "id": "precursor",
+                "idx": 4,
+                "page_no": 2,
+                "x0": 100,
+                "y0": 260,
+                "x1": 170,
+                "y1": 358,
+                "image_path": "precursor.png",
+            },
+            {
+                "id": "S7",
+                "idx": 5,
+                "page_no": 2,
+                "x0": 220,
+                "y0": 260,
+                "x1": 290,
+                "y1": 358,
+                "image_path": "cpd7.png",
+            },
+            {
+                "id": "S7A",
+                "idx": 6,
+                "page_no": 2,
+                "x0": 315,
+                "y0": 260,
+                "x1": 385,
+                "y1": 358,
+                "image_path": "cpd7a.png",
+            },
         ]
         pages_text = {
             0: "实施例7 化合物 Cpd-7 和 Cpd-7A 制备",
@@ -387,9 +570,21 @@ class StrictAcceptanceTests(unittest.TestCase):
 
     def test_activity_merge_preserves_source_order_and_flags_conflicts(self) -> None:
         rows = [
-            ActivityRow(cpd="Compound 8", activity_values={"IC50": "A"}, cell_line_data={"Dmax": "60"}, confidence=0.95),
-            ActivityRow(cpd="Compound 2", activity_values={"IC50": "B"}, confidence=0.95),
-            ActivityRow(cpd="Compound 8", activity_values={"IC50": "C"}, cell_line_data={"Dmax": "61"}, confidence=0.75),
+            ActivityRow(
+                cpd="Compound 8",
+                activity_values={"IC50": "A"},
+                cell_line_data={"Dmax": "60"},
+                confidence=0.95,
+            ),
+            ActivityRow(
+                cpd="Compound 2", activity_values={"IC50": "B"}, confidence=0.95
+            ),
+            ActivityRow(
+                cpd="Compound 8",
+                activity_values={"IC50": "C"},
+                cell_line_data={"Dmax": "61"},
+                confidence=0.75,
+            ),
         ]
         merged = _merge_activity_rows(rows)
         self.assertEqual([row.cpd for row in merged], ["Compound 8", "Compound 2"])
@@ -412,7 +607,9 @@ class StrictAcceptanceTests(unittest.TestCase):
         self.assertEqual(_split_joined_dc50_dmax_cell("<20 > 80%"), ("<20", ">80%"))
         self.assertIsNone(_split_joined_dc50_dmax_cell("<2080%"))
 
-    def test_prefixed_letter_grade_activity_table_decodes_legend_and_continuation(self) -> None:
+    def test_prefixed_letter_grade_activity_table_decodes_legend_and_continuation(
+        self,
+    ) -> None:
         page_texts = {
             "0": (
                 "The IRF5 HiBiT degradation results are shown in the table below. "
@@ -425,15 +622,25 @@ class StrictAcceptanceTests(unittest.TestCase):
 
         rows = _extract_prefixed_letter_grade_activity_rows_from_ocr([0, 1], page_texts)
 
-        self.assertEqual([row.cpd for row in rows], ["Compound 1", "Compound 2", "Compound 3"])
-        self.assertEqual(rows[0].activity_values["IRF5 HiBiT degradation DC50 (nM)"], "<1 nM")
-        self.assertEqual(rows[1].activity_values["IRF5 HiBiT degradation DC50 (nM)"], "not tested")
-        self.assertEqual(rows[2].activity_values["IRF5 HiBiT degradation DC50 (nM)"], "1 - 10 nM")
+        self.assertEqual(
+            [row.cpd for row in rows], ["Compound 1", "Compound 2", "Compound 3"]
+        )
+        self.assertEqual(
+            rows[0].activity_values["IRF5 HiBiT degradation DC50 (nM)"], "<1 nM"
+        )
+        self.assertEqual(
+            rows[1].activity_values["IRF5 HiBiT degradation DC50 (nM)"], "not tested"
+        )
+        self.assertEqual(
+            rows[2].activity_values["IRF5 HiBiT degradation DC50 (nM)"], "1 - 10 nM"
+        )
         self.assertTrue(_activity_row_has_usable_values(rows[0]))
         self.assertFalse(_activity_row_has_usable_values(rows[1]))
         self.assertIn("source label I-2", rows[1].notes)
 
-    def test_explicit_not_tested_activity_is_excluded_across_command_annotation(self) -> None:
+    def test_explicit_not_tested_activity_is_excluded_across_command_annotation(
+        self,
+    ) -> None:
         payload = {
             "rows": [
                 {"cpd": "Compound 1", "activity_values": {"DC50": "not tested"}},
@@ -457,14 +664,19 @@ class StrictAcceptanceTests(unittest.TestCase):
         )
 
     def test_ruled_activity_detection_precedes_coordinate_ocr(self) -> None:
-        with patch.object(
-            activity_extractor_module,
-            "_detect_ruled_table_regions",
-            return_value=[],
-        ), patch.object(
-            activity_extractor_module,
-            "_activity_tokens_for_page",
-            side_effect=AssertionError("coordinate OCR must not run without a detected grid"),
+        with (
+            patch.object(
+                activity_extractor_module,
+                "_detect_ruled_table_regions",
+                return_value=[],
+            ),
+            patch.object(
+                activity_extractor_module,
+                "_activity_tokens_for_page",
+                side_effect=AssertionError(
+                    "coordinate OCR must not run without a detected grid"
+                ),
+            ),
         ):
             self.assertEqual(_extract_ruled_activity_rows([object()], [0]), [])
 
@@ -473,11 +685,16 @@ class StrictAcceptanceTests(unittest.TestCase):
             root = Path(tmp)
             pdf_path = root / "WO2026041143.pdf"
             cache_path = root / "page_ocr_cache.json"
-            self._text_pdf(pdf_path, [
-                "WO2026041143 current patent activity IC50 table",
-                "WO2026041143 current patent synthesis examples",
-            ])
-            stale_pages = {str(i): "WO 2024/037616 stale cache text" for i in range(220)}
+            self._text_pdf(
+                pdf_path,
+                [
+                    "WO2026041143 current patent activity IC50 table",
+                    "WO2026041143 current patent synthesis examples",
+                ],
+            )
+            stale_pages = {
+                str(i): "WO 2024/037616 stale cache text" for i in range(220)
+            }
             current_metadata = build_cache_metadata(str(pdf_path), total_pages=2)
             legacy_metadata = {
                 "cache_version": "pdf_identity_v1",
@@ -487,7 +704,11 @@ class StrictAcceptanceTests(unittest.TestCase):
             }
             cache_path.write_text(
                 json.dumps(
-                    {"metadata": legacy_metadata, "page_texts": stale_pages, "ocr_line_map": {}},
+                    {
+                        "metadata": legacy_metadata,
+                        "page_texts": stale_pages,
+                        "ocr_line_map": {},
+                    },
                     ensure_ascii=False,
                 ),
                 encoding="utf-8",
@@ -521,7 +742,9 @@ class StrictAcceptanceTests(unittest.TestCase):
                 min_native_chars=5,
             )
             cache["page_texts"]["0"] = ""
-            cache_path.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+            cache_path.write_text(
+                json.dumps(cache, ensure_ascii=False), encoding="utf-8"
+            )
 
             refilled = update_page_ocr_cache(
                 str(pdf_path),
@@ -549,7 +772,9 @@ class StrictAcceptanceTests(unittest.TestCase):
             with patch.object(
                 page_ocr_cache_module,
                 "_build_ocr_engine",
-                side_effect=AssertionError("OCR engine must not load for native-text pages"),
+                side_effect=AssertionError(
+                    "OCR engine must not load for native-text pages"
+                ),
             ):
                 cache = update_page_ocr_cache(
                     str(pdf_path),
@@ -583,7 +808,10 @@ class StrictAcceptanceTests(unittest.TestCase):
             },
         )
 
-        self.assertEqual([row.cpd for row in rows], ["Compound 1", "Compound 6", "Compound 65", "Compound 70"])
+        self.assertEqual(
+            [row.cpd for row in rows],
+            ["Compound 1", "Compound 6", "Compound 65", "Compound 70"],
+        )
         self.assertTrue(all(not row.needs_review for row in rows))
         self.assertTrue(all(row.confidence >= 0.88 for row in rows))
 
@@ -713,7 +941,9 @@ class StrictAcceptanceTests(unittest.TestCase):
 
         self.assertTrue(_is_structure_table_page(flattened))
 
-    def test_locator_accepts_prefixed_series_structure_table_and_continuations(self) -> None:
+    def test_locator_accepts_prefixed_series_structure_table_and_continuations(
+        self,
+    ) -> None:
         header = "Table 1. Exemplary Compounds I-# Structure I-1 I-2"
         continuation = "WO2026/156070 PCT/US2026/011254 1-3 I-4 1-5 I-6 361"
         prose = (
@@ -789,7 +1019,9 @@ class StrictAcceptanceTests(unittest.TestCase):
             [("Compound 65", "S0111"), ("Compound 70", "S0115")],
         )
 
-    def test_authoritative_series_table_pairs_noncontiguous_labels_by_page_geometry(self) -> None:
+    def test_authoritative_series_table_pairs_noncontiguous_labels_by_page_geometry(
+        self,
+    ) -> None:
         structures = [
             {
                 "id": "S0001",
@@ -835,42 +1067,72 @@ class StrictAcceptanceTests(unittest.TestCase):
             [(binding["cpd"], binding["structure_id"]) for binding in bindings],
             [("Compound 1", "S0001"), ("Compound 3", "S0003")],
         )
-        self.assertTrue(all(binding["authoritative_table_sequence_confirmed"] for binding in bindings))
+        self.assertTrue(
+            all(
+                binding["authoritative_table_sequence_confirmed"]
+                for binding in bindings
+            )
+        )
 
-    def test_authoritative_series_table_resolves_duplicated_out_of_sequence_source_label(self) -> None:
+    def test_authoritative_series_table_resolves_duplicated_out_of_sequence_source_label(
+        self,
+    ) -> None:
         structures = []
         lines = []
         source_labels = [1254, 1255, 1266, 1257, 1265, 1266, 1267]
         for idx, source_label in enumerate(source_labels):
             y0 = 100.0 + idx * 120.0
-            structures.append({
-                "id": f"S{idx:04d}",
-                "idx": idx,
-                "page_no": 10,
-                "x0": 150.0,
-                "y0": y0,
-                "x1": 360.0,
-                "y1": y0 + 100.0,
-                "image_path": f"/tmp/s{idx:04d}.png",
-            })
+            structures.append(
+                {
+                    "id": f"S{idx:04d}",
+                    "idx": idx,
+                    "page_no": 10,
+                    "x0": 150.0,
+                    "y0": y0,
+                    "x1": 360.0,
+                    "y1": y0 + 100.0,
+                    "image_path": f"/tmp/s{idx:04d}.png",
+                }
+            )
             lines.append({"y0": y0 + 50.0, "text": f"I-{source_label}"})
 
         bindings = structure_binder_module._extract_authoritative_structure_table_sequence_bindings(
             structures,
             {},
-            ["Compound 1254", "Compound 1255", "Compound 1256", "Compound 1257", "Compound 1265", "Compound 1266", "Compound 1267"],
+            [
+                "Compound 1254",
+                "Compound 1255",
+                "Compound 1256",
+                "Compound 1257",
+                "Compound 1265",
+                "Compound 1266",
+                "Compound 1267",
+            ],
             {"authoritative_structure_table_pages": [9]},
             ocr_line_map={9: lines},
         )
 
         self.assertEqual(
             [binding["cpd"] for binding in bindings],
-            ["Compound 1254", "Compound 1255", "Compound 1256", "Compound 1257", "Compound 1265", "Compound 1266", "Compound 1267"],
+            [
+                "Compound 1254",
+                "Compound 1255",
+                "Compound 1256",
+                "Compound 1257",
+                "Compound 1265",
+                "Compound 1266",
+                "Compound 1267",
+            ],
         )
-        corrected = next(binding for binding in bindings if binding["cpd"] == "Compound 1256")
+        corrected = next(
+            binding for binding in bindings if binding["cpd"] == "Compound 1256"
+        )
         self.assertEqual(corrected["authoritative_table_source_label"], "I-1266")
         self.assertTrue(corrected["authoritative_table_label_corrected"])
-        self.assertIn("duplicated and out of sequence", corrected["authoritative_table_label_correction_reason"])
+        self.assertIn(
+            "duplicated and out of sequence",
+            corrected["authoritative_table_label_correction_reason"],
+        )
 
     def test_binder_does_not_treat_synthesis_routes_as_flattened_tables(self) -> None:
         structures = [
@@ -920,7 +1182,9 @@ class StrictAcceptanceTests(unittest.TestCase):
 
         self.assertEqual(bindings, [])
 
-    def test_visible_label_cache_drops_signature_mismatches_when_ocr_is_unavailable(self) -> None:
+    def test_visible_label_cache_drops_signature_mismatches_when_ocr_is_unavailable(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
             image_path = self._image(base, "structure.png")
@@ -935,7 +1199,9 @@ class StrictAcceptanceTests(unittest.TestCase):
             }
             stale_cache = {
                 "S0001": {
-                    **artifact_identity(VISIBLE_LABEL_CACHE_SCHEMA, VISIBLE_LABEL_CACHE_SCHEMA_VERSION),
+                    **artifact_identity(
+                        VISIBLE_LABEL_CACHE_SCHEMA, VISIBLE_LABEL_CACHE_SCHEMA_VERSION
+                    ),
                     "structure_id": "S0001",
                     "page_no": 99,
                     "structure_signature": {
@@ -944,7 +1210,9 @@ class StrictAcceptanceTests(unittest.TestCase):
                         "image_sha1": "stale",
                     },
                     "visible_labels": ["6"],
-                    "visible_label_candidates": [{"label": "6", "source": "page_strict"}],
+                    "visible_label_candidates": [
+                        {"label": "6", "source": "page_strict"}
+                    ],
                     "cache_complete": True,
                 }
             }
@@ -960,7 +1228,9 @@ class StrictAcceptanceTests(unittest.TestCase):
 
             self.assertNotIn("S0001", cache)
             self.assertEqual(
-                structure_binder_module._visible_label_candidates_for_structure(struct, cache),
+                structure_binder_module._visible_label_candidates_for_structure(
+                    struct, cache
+                ),
                 [],
             )
 
@@ -979,25 +1249,35 @@ class StrictAcceptanceTests(unittest.TestCase):
             legacy = {
                 "cache_version": 7,
                 "cache_complete": True,
-                "structure_signature": structure_binder_module._structure_cache_signature(struct),
+                "structure_signature": structure_binder_module._structure_cache_signature(
+                    struct
+                ),
             }
 
-            self.assertFalse(structure_binder_module._visible_cache_item_matches_structure(legacy, struct))
+            self.assertFalse(
+                structure_binder_module._visible_cache_item_matches_structure(
+                    legacy, struct
+                )
+            )
 
-    def test_strict_visual_label_allows_short_internal_numeric_annotations(self) -> None:
+    def test_strict_visual_label_allows_short_internal_numeric_annotations(
+        self,
+    ) -> None:
         binding = self._binding("Compound 121", "S121", "/tmp/structure_121.png")
-        binding.update({
-            "visible_label_candidates": [
-                {"label": "121", "source": "page_strict"},
-                {"label": "2", "source": "page_strict"},
-            ],
-            "visible_labels": ["2", "121"],
-            "struct_area": 8984,
-            "struct_width": 193,
-            "struct_height": 47,
-            "product_context_nearby": True,
-            "product_context_distance": 0,
-        })
+        binding.update(
+            {
+                "visible_label_candidates": [
+                    {"label": "121", "source": "page_strict"},
+                    {"label": "2", "source": "page_strict"},
+                ],
+                "visible_labels": ["2", "121"],
+                "struct_area": 8984,
+                "struct_width": 193,
+                "struct_height": 47,
+                "product_context_nearby": True,
+                "product_context_distance": 0,
+            }
+        )
 
         checked = annotate_binding_accuracy(binding)
 
@@ -1011,7 +1291,9 @@ class StrictAcceptanceTests(unittest.TestCase):
         self.assertFalse(checked_merged["fail_closed"])
 
         two_digit_target = dict(binding)
-        two_digit_target["cpd"] = two_digit_target["cpd_id"] = two_digit_target["compound_id"] = "Compound 18"
+        two_digit_target["cpd"] = two_digit_target["cpd_id"] = two_digit_target[
+            "compound_id"
+        ] = "Compound 18"
         two_digit_target["visible_label_candidates"] = [
             {"label": "18", "source": "page_strict"},
             {"label": "10", "source": "page_strict"},
@@ -1022,7 +1304,9 @@ class StrictAcceptanceTests(unittest.TestCase):
         self.assertFalse(checked_two_digit["fail_closed"])
 
         competing_suffix = dict(binding)
-        competing_suffix["cpd"] = competing_suffix["cpd_id"] = competing_suffix["compound_id"] = "Compound 128"
+        competing_suffix["cpd"] = competing_suffix["cpd_id"] = competing_suffix[
+            "compound_id"
+        ] = "Compound 128"
         competing_suffix["visible_label_candidates"] = [
             {"label": "128", "source": "page_strict"},
             {"label": "128A", "source": "page_strict"},
@@ -1032,17 +1316,21 @@ class StrictAcceptanceTests(unittest.TestCase):
         self.assertEqual(checked_suffix["accuracy_status"], "review_required")
         self.assertTrue(checked_suffix["fail_closed"])
 
-    def test_structure_table_row_evidence_ignores_lower_internal_alphanumeric_labels(self) -> None:
+    def test_structure_table_row_evidence_ignores_lower_internal_alphanumeric_labels(
+        self,
+    ) -> None:
         table_binding = self._binding("Compound 70", "S70", "/tmp/structure_70.png")
-        table_binding.update({
-            "binding_rule": "structure_table_row_order",
-            "visible_label": "35A",
-            "visible_labels": ["35A"],
-            "visible_label_candidates": [{"label": "35A", "source": "page_strict"}],
-            "struct_area": 17046,
-            "struct_width": 168,
-            "struct_height": 102,
-        })
+        table_binding.update(
+            {
+                "binding_rule": "structure_table_row_order",
+                "visible_label": "35A",
+                "visible_labels": ["35A"],
+                "visible_label_candidates": [{"label": "35A", "source": "page_strict"}],
+                "struct_area": 17046,
+                "struct_width": 168,
+                "struct_height": 102,
+            }
+        )
 
         checked_table = annotate_binding_accuracy(table_binding)
 
@@ -1055,7 +1343,9 @@ class StrictAcceptanceTests(unittest.TestCase):
         self.assertEqual(checked_direct["accuracy_status"], "review_required")
         self.assertTrue(checked_direct["fail_closed"])
 
-    def test_partial_authoritative_structure_table_does_not_delete_visual_fallbacks(self) -> None:
+    def test_partial_authoritative_structure_table_does_not_delete_visual_fallbacks(
+        self,
+    ) -> None:
         binding = self._binding("Compound 128", "S128", "/tmp/structure_128.png")
         binding.update({"page_no": 199})
         profile = {
@@ -1068,31 +1358,55 @@ class StrictAcceptanceTests(unittest.TestCase):
 
         self.assertEqual([row["cpd"] for row in kept], ["Compound 128"])
 
-    def test_structure_chunk_metadata_merge_reindexes_without_losing_image_paths(self) -> None:
+    def test_structure_chunk_metadata_merge_reindexes_without_losing_image_paths(
+        self,
+    ) -> None:
         merged = _merge_structure_chunk_metadata(
             "WO1234567890",
             [
                 {
                     "structures": [
-                        {"structure_index": 0, "structure_id": "S0000", "page_no": 1, "image_path": "/tmp/c0/s0.png"},
-                        {"structure_index": 1, "structure_id": "S0001", "page_no": 2, "image_path": "/tmp/c0/s1.png"},
+                        {
+                            "structure_index": 0,
+                            "structure_id": "S0000",
+                            "page_no": 1,
+                            "image_path": "/tmp/c0/s0.png",
+                        },
+                        {
+                            "structure_index": 1,
+                            "structure_id": "S0001",
+                            "page_no": 2,
+                            "image_path": "/tmp/c0/s1.png",
+                        },
                     ],
                 },
                 {
                     "structures": [
-                        {"structure_index": 0, "structure_id": "S0000", "page_no": 3, "image_path": "/tmp/c1/s0.png"},
+                        {
+                            "structure_index": 0,
+                            "structure_id": "S0000",
+                            "page_no": 3,
+                            "image_path": "/tmp/c1/s0.png",
+                        },
                     ],
                 },
             ],
         )
 
         self.assertEqual(merged["total_structures"], 3)
-        self.assertEqual([row["structure_id"] for row in merged["structures"]], ["S0000", "S0001", "S0002"])
-        self.assertEqual([row["structure_index"] for row in merged["structures"]], [0, 1, 2])
+        self.assertEqual(
+            [row["structure_id"] for row in merged["structures"]],
+            ["S0000", "S0001", "S0002"],
+        )
+        self.assertEqual(
+            [row["structure_index"] for row in merged["structures"]], [0, 1, 2]
+        )
         self.assertEqual(merged["structures"][2]["source_structure_id"], "S0000")
         self.assertEqual(merged["structures"][2]["image_path"], "/tmp/c1/s0.png")
 
-    def test_structure_chunk_cache_reuses_only_matching_pdf_pages_and_rules(self) -> None:
+    def test_structure_chunk_cache_reuses_only_matching_pdf_pages_and_rules(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
             pdf = base / "WO123.pdf"
@@ -1107,7 +1421,9 @@ class StrictAcceptanceTests(unittest.TestCase):
                 **artifact_identity(STRUCTURES_SCHEMA, STRUCTURES_SCHEMA_VERSION),
                 "patent_number": "WO123",
                 "total_structures": 1,
-                "structures": [{"structure_id": "S0000", "page_no": 1, "image_path": "s0.png"}],
+                "structures": [
+                    {"structure_id": "S0000", "page_no": 1, "image_path": "s0.png"}
+                ],
             }
             self._write_json(chunk_meta_path, payload)
             fingerprint = _structure_chunk_fingerprint(
@@ -1133,9 +1449,13 @@ class StrictAcceptanceTests(unittest.TestCase):
                 crop_regions={"1": [0, 0, 100, 100]},
                 gpu_mode="auto",
             )
-            self.assertIsNone(_load_reusable_structure_chunk(str(chunk_output), changed_pages))
+            self.assertIsNone(
+                _load_reusable_structure_chunk(str(chunk_output), changed_pages)
+            )
 
-    def test_binding_cache_with_matching_manifest_is_rejected_when_strict_gate_fails(self) -> None:
+    def test_binding_cache_with_matching_manifest_is_rejected_when_strict_gate_fails(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
             pdf = base / "WO123.pdf"
@@ -1167,7 +1487,9 @@ class StrictAcceptanceTests(unittest.TestCase):
             _write_step_manifest(str(bind_json), fingerprint)
 
             self.assertIsNone(
-                _load_reusable_bindings(str(bind_json), fingerprint, ["Compound 1", "Compound 2"], {})
+                _load_reusable_bindings(
+                    str(bind_json), fingerprint, ["Compound 1", "Compound 2"], {}
+                )
             )
 
             valid_payload = {
@@ -1179,14 +1501,18 @@ class StrictAcceptanceTests(unittest.TestCase):
                 ],
             }
             self._write_json(bind_json, valid_payload)
-            reusable = _load_reusable_bindings(str(bind_json), fingerprint, ["Compound 1", "Compound 2"], {})
+            reusable = _load_reusable_bindings(
+                str(bind_json), fingerprint, ["Compound 1", "Compound 2"], {}
+            )
             self.assertIsNotNone(reusable)
             self.assertEqual(
                 [row["cpd"] for row in reusable.get("final_bindings", [])],
                 ["Compound 1", "Compound 2"],
             )
 
-    def test_decimer_auto_gpu_fails_closed_for_unsupported_tensorflow_cuda_caps(self) -> None:
+    def test_decimer_auto_gpu_fails_closed_for_unsupported_tensorflow_cuda_caps(
+        self,
+    ) -> None:
         caps = ["sm_50", "sm_60", "sm_70", "sm_75", "compute_80"]
         self.assertTrue(tensorflow_cuda_caps_support_gpu(caps, "8.6"))
         self.assertTrue(tensorflow_cuda_caps_support_gpu(caps, "sm_75"))
@@ -1194,20 +1520,33 @@ class StrictAcceptanceTests(unittest.TestCase):
 
         output = (
             "TensorFlow startup log\n"
-            "PATENTSAR_GPU_PROBE={\"devices\":[\"/physical_device:GPU:0\"],"
-            "\"cuda_compute_capabilities\":[\"sm_75\",\"compute_80\"]}\n"
+            'PATENTSAR_GPU_PROBE={"devices":["/physical_device:GPU:0"],'
+            '"cuda_compute_capabilities":["sm_75","compute_80"]}\n'
         )
         probe = _parse_tensorflow_gpu_probe(output)
         self.assertTrue(_tensorflow_gpu_probe_is_compatible(probe, "8.6"))
         self.assertFalse(_tensorflow_gpu_probe_is_compatible(probe, "12.0"))
-        self.assertFalse(_tensorflow_gpu_probe_is_compatible({**probe, "devices": []}, "8.6"))
+        self.assertFalse(
+            _tensorflow_gpu_probe_is_compatible({**probe, "devices": []}, "8.6")
+        )
 
         def fake_build_gpu_env(*, python_path: str = "", base_env=None, extra_env=None):
             return dict(extra_env or {})
 
-        with patch("patent_sar_extractor.application.commands._decimer_tensorflow_gpu_safe", return_value=False), \
-                patch("patent_sar_extractor.application.commands.get_python", return_value="/tmp/python"), \
-                patch("patent_sar_extractor.application.commands.build_gpu_env", side_effect=fake_build_gpu_env):
+        with (
+            patch(
+                "patent_sar_extractor.application.worker_policy._decimer_tensorflow_gpu_safe",
+                return_value=False,
+            ),
+            patch(
+                "patent_sar_extractor.application.worker_policy.get_python",
+                return_value="/tmp/python",
+            ),
+            patch(
+                "patent_sar_extractor.application.worker_policy.build_gpu_env",
+                side_effect=fake_build_gpu_env,
+            ),
+        ):
             env = _gpu_env_extra("decimer", gpu_mode="auto")
 
         self.assertEqual(env["CUDA_VISIBLE_DEVICES"], "-1")
@@ -1215,9 +1554,20 @@ class StrictAcceptanceTests(unittest.TestCase):
         self.assertEqual(env["LD_PRELOAD"], "")
         self.assertEqual(env["LD_LIBRARY_PATH"], "")
 
-        with patch("patent_sar_extractor.application.commands._decimer_tensorflow_gpu_safe", return_value=False), \
-                patch("patent_sar_extractor.application.commands.get_python", return_value="/tmp/python"), \
-                patch("patent_sar_extractor.application.commands.build_gpu_env", side_effect=fake_build_gpu_env):
+        with (
+            patch(
+                "patent_sar_extractor.application.worker_policy._decimer_tensorflow_gpu_safe",
+                return_value=False,
+            ),
+            patch(
+                "patent_sar_extractor.application.worker_policy.get_python",
+                return_value="/tmp/python",
+            ),
+            patch(
+                "patent_sar_extractor.application.worker_policy.build_gpu_env",
+                side_effect=fake_build_gpu_env,
+            ),
+        ):
             smiles_env = _gpu_env_extra("smiles_engine", gpu_mode="auto")
 
         self.assertEqual(smiles_env["CUDA_VISIBLE_DEVICES"], "-1")
@@ -1228,18 +1578,22 @@ class StrictAcceptanceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             script = Path(temp) / "emit_logs.py"
             script.write_text(
-                "\n".join([
-                    "import sys",
-                    "print('Error in PredictCost() noisy tensor line')",
-                    "print('2026 [INFO] structure_extraction: useful progress')",
-                    "sys.stderr.write('Unable to register cuDNN factory\\n')",
-                    "sys.stderr.write('normal stderr progress\\n')",
-                ]),
+                "\n".join(
+                    [
+                        "import sys",
+                        "print('Error in PredictCost() noisy tensor line')",
+                        "print('2026 [INFO] structure_extraction: useful progress')",
+                        "sys.stderr.write('Unable to register cuDNN factory\\n')",
+                        "sys.stderr.write('normal stderr progress\\n')",
+                    ]
+                ),
                 encoding="utf-8",
             )
             buffer = io.StringIO()
-            with patch.dict(os.environ, {"PATENTSAR_BASE_PYTHON": sys.executable}), \
-                    contextlib.redirect_stdout(buffer):
+            with (
+                patch.dict(os.environ, {"PATENTSAR_BASE_PYTHON": sys.executable}),
+                contextlib.redirect_stdout(buffer),
+            ):
                 proc = env_runner_module.run_in_env(
                     "base",
                     str(script),
@@ -1261,9 +1615,12 @@ class StrictAcceptanceTests(unittest.TestCase):
                 "import os\nprint(os.environ.get('PYTHONPATH', ''))\n",
                 encoding="utf-8",
             )
-            with patch.dict(os.environ, {"PATENTSAR_BASE_PYTHON": sys.executable}), patch.dict(
-                os.environ,
-                {"PYTHONPATH": "/tmp/incompatible-parent-site-packages"},
+            with (
+                patch.dict(os.environ, {"PATENTSAR_BASE_PYTHON": sys.executable}),
+                patch.dict(
+                    os.environ,
+                    {"PYTHONPATH": "/tmp/incompatible-parent-site-packages"},
+                ),
             ):
                 proc = env_runner_module.run_in_env("base", str(script), timeout=30)
 
@@ -1276,16 +1633,28 @@ class StrictAcceptanceTests(unittest.TestCase):
             ["decimer_segmentation"],
         )
 
-    def test_pipeline_elapsed_times_do_not_go_negative_on_fast_cache_reuse(self) -> None:
-        with patch("patent_sar_extractor.application.commands.time.time", return_value=100.0):
+    def test_pipeline_elapsed_times_do_not_go_negative_on_fast_cache_reuse(
+        self,
+    ) -> None:
+        with patch(
+            "patent_sar_extractor.application.pipeline_io.time.time", return_value=100.0
+        ):
             self.assertEqual(_elapsed_since(100.2), 0.0)
             self.assertEqual(_elapsed_since(99.94), 0.1)
 
-    def test_activity_timeout_scales_for_large_scanned_patents_and_stays_bounded(self) -> None:
+    def test_activity_timeout_scales_for_large_scanned_patents_and_stays_bounded(
+        self,
+    ) -> None:
         self.assertEqual(_activity_timeout_seconds({"activity_pages": []}), 1800)
-        self.assertEqual(_activity_timeout_seconds({"activity_pages": list(range(180))}), 1800)
-        self.assertEqual(_activity_timeout_seconds({"activity_pages": list(range(361))}), 3610)
-        self.assertEqual(_activity_timeout_seconds({"activity_pages": list(range(5000))}), 10800)
+        self.assertEqual(
+            _activity_timeout_seconds({"activity_pages": list(range(180))}), 1800
+        )
+        self.assertEqual(
+            _activity_timeout_seconds({"activity_pages": list(range(361))}), 3610
+        )
+        self.assertEqual(
+            _activity_timeout_seconds({"activity_pages": list(range(5000))}), 10800
+        )
         self.assertEqual(_activity_timeout_seconds({"activity_pages": "invalid"}), 1800)
 
     def test_smiles_cache_empty_result_does_not_block_retry(self) -> None:
@@ -1327,11 +1696,13 @@ class StrictAcceptanceTests(unittest.TestCase):
                     cache_path=str(cache_path),
                     preprocess=False,
                 )
-                result = converter.convert_one({
-                    "cpd": "Compound 1",
-                    "structure_id": "S0001",
-                    "image_path": image_path,
-                })
+                result = converter.convert_one(
+                    {
+                        "cpd": "Compound 1",
+                        "structure_id": "S0001",
+                        "image_path": image_path,
+                    }
+                )
 
         self.assertEqual(result["OCSR_status"], "success")
         self.assertEqual(result["canonical_smiles"], "CCO")
@@ -1370,18 +1741,22 @@ class StrictAcceptanceTests(unittest.TestCase):
                 },
             )
 
-            with patch.dict(smiles_converter_module.ENGINE_MAP, {"decimer": FakeEngine}):
+            with patch.dict(
+                smiles_converter_module.ENGINE_MAP, {"decimer": FakeEngine}
+            ):
                 converter = smiles_converter_module.SmilesConverter(
                     engines=["decimer"],
                     fallback_engines=[],
                     cache_path=str(cache_path),
                     preprocess=False,
                 )
-                result = converter.convert_one({
-                    "cpd": "Compound 1",
-                    "structure_id": "S0001",
-                    "image_path": image_path,
-                })
+                result = converter.convert_one(
+                    {
+                        "cpd": "Compound 1",
+                        "structure_id": "S0001",
+                        "image_path": image_path,
+                    }
+                )
 
         self.assertEqual(result["OCSR_status"], "success")
         self.assertEqual(result["canonical_smiles"], "CCO")
@@ -1412,14 +1787,18 @@ class StrictAcceptanceTests(unittest.TestCase):
             binding = self._binding("Compound 110", "S0110", image_path)
             binding["visible_label"] = "110"
 
-            with patch.dict(smiles_converter_module.ENGINE_MAP, {"decimer": InspectingEngine}):
+            with patch.dict(
+                smiles_converter_module.ENGINE_MAP, {"decimer": InspectingEngine}
+            ):
                 converter = smiles_converter_module.SmilesConverter(
                     engines=["decimer"],
                     fallback_engines=[],
                     cache_path="",
                     preprocess=False,
                 )
-                result = converter.convert_one(binding, preprocess_dir=str(base / "ocsr_inputs"))
+                result = converter.convert_one(
+                    binding, preprocess_dir=str(base / "ocsr_inputs")
+                )
 
             self.assertEqual(result["OCSR_status"], "success")
             self.assertTrue(result.get("ocsr_label_masked"))
@@ -1431,11 +1810,19 @@ class StrictAcceptanceTests(unittest.TestCase):
             original = Image.open(image_path).convert("L")
             cleaned = Image.open(observed_paths[0]).convert("L")
             # The upper molecule trace is preserved.
-            self.assertLess(min(original.crop((10, 10, 230, 45)).get_flattened_data()), 80)
-            self.assertLess(min(cleaned.crop((10, 10, 230, 45)).get_flattened_data()), 80)
+            self.assertLess(
+                min(original.crop((10, 10, 230, 45)).get_flattened_data()), 80
+            )
+            self.assertLess(
+                min(cleaned.crop((10, 10, 230, 45)).get_flattened_data()), 80
+            )
             # The label band has been blanked before OCSR.
-            self.assertLess(min(original.crop((100, 64, 150, 90)).get_flattened_data()), 80)
-            self.assertGreater(min(cleaned.crop((100, 64, 150, 90)).get_flattened_data()), 240)
+            self.assertLess(
+                min(original.crop((100, 64, 150, 90)).get_flattened_data()), 80
+            )
+            self.assertGreater(
+                min(cleaned.crop((100, 64, 150, 90)).get_flattened_data()), 240
+            )
 
     def test_ocsr_label_mask_does_not_erase_wide_lower_structure_fragment(self) -> None:
         from PIL import Image, ImageDraw
@@ -1445,8 +1832,14 @@ class StrictAcceptanceTests(unittest.TestCase):
             image_path = base / "structure_without_visible_label.png"
             img = Image.new("RGB", (260, 120), "white")
             draw = ImageDraw.Draw(img)
-            draw.line([(10, 30), (70, 18), (130, 30), (190, 18), (250, 30)], fill="black", width=3)
-            draw.line([(95, 86), (132, 96), (170, 84), (210, 94)], fill="black", width=3)
+            draw.line(
+                [(10, 30), (70, 18), (130, 30), (190, 18), (250, 30)],
+                fill="black",
+                width=3,
+            )
+            draw.line(
+                [(95, 86), (132, 96), (170, 84), (210, 94)], fill="black", width=3
+            )
             draw.text((116, 76), "N", fill="black")
             img.save(image_path)
 
@@ -1503,11 +1896,13 @@ class StrictAcceptanceTests(unittest.TestCase):
                     cache_path="",
                     preprocess=False,
                 )
-                result = converter.convert_one({
-                    "cpd": "Compound 1",
-                    "structure_id": "S0001",
-                    "image_path": image_path,
-                })
+                result = converter.convert_one(
+                    {
+                        "cpd": "Compound 1",
+                        "structure_id": "S0001",
+                        "image_path": image_path,
+                    }
+                )
 
         self.assertEqual(result["OCSR_status"], "success")
         self.assertEqual(result["OCSR_quality_flag"], "ok")
@@ -1517,30 +1912,46 @@ class StrictAcceptanceTests(unittest.TestCase):
     def test_smiles_cache_purge_keeps_only_clean_successes(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             cache = SmilesCache(str(Path(temp) / "smiles.sqlite"))
-            cache.save_result("clean", "fake", {
-                "status": "success",
-                "raw_smiles": "CCO",
-                "rdkit_valid": True,
-                "quality_flag": "ok",
-            })
-            cache.save_result("empty", "fake", {
-                "status": "failed",
-                "raw_smiles": None,
-                "rdkit_valid": False,
-                "quality_flag": "empty_prediction",
-            })
-            cache.save_result("suspicious", "fake", {
-                "status": "success",
-                "raw_smiles": "CC[Cu]",
-                "rdkit_valid": True,
-                "quality_flag": "suspicious_element",
-            })
-            cache.save_result("legacy_suspicious", "fake", {
-                "status": "success",
-                "raw_smiles": "CC[Cu]",
-                "rdkit_valid": True,
-                "quality_flag": "ok",
-            })
+            cache.save_result(
+                "clean",
+                "fake",
+                {
+                    "status": "success",
+                    "raw_smiles": "CCO",
+                    "rdkit_valid": True,
+                    "quality_flag": "ok",
+                },
+            )
+            cache.save_result(
+                "empty",
+                "fake",
+                {
+                    "status": "failed",
+                    "raw_smiles": None,
+                    "rdkit_valid": False,
+                    "quality_flag": "empty_prediction",
+                },
+            )
+            cache.save_result(
+                "suspicious",
+                "fake",
+                {
+                    "status": "success",
+                    "raw_smiles": "CC[Cu]",
+                    "rdkit_valid": True,
+                    "quality_flag": "suspicious_element",
+                },
+            )
+            cache.save_result(
+                "legacy_suspicious",
+                "fake",
+                {
+                    "status": "success",
+                    "raw_smiles": "CC[Cu]",
+                    "rdkit_valid": True,
+                    "quality_flag": "ok",
+                },
+            )
 
             purged = cache.purge_non_clean()
 
@@ -1550,7 +1961,9 @@ class StrictAcceptanceTests(unittest.TestCase):
             self.assertIsNone(cache.get_cached_result("suspicious", "fake"))
             self.assertIsNone(cache.get_cached_result("legacy_suspicious", "fake"))
 
-    def test_strict_gates_reject_old_activity_duplicate_structure_and_extra_smiles(self) -> None:
+    def test_strict_gates_reject_old_activity_duplicate_structure_and_extra_smiles(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
             image_path = self._image(base, "structure.png")
@@ -1568,8 +1981,13 @@ class StrictAcceptanceTests(unittest.TestCase):
                 self._binding("Compound 2", "S1", image_path),
             ]
             binding_payload = {"final_bindings": bindings}
-            binding_errors = _binding_acceptance_errors(binding_payload, active_cpds, {})
-            self.assertIn("Multiple active compounds compete for the same structure image.", binding_errors)
+            binding_errors = _binding_acceptance_errors(
+                binding_payload, active_cpds, {}
+            )
+            self.assertIn(
+                "Multiple active compounds compete for the same structure image.",
+                binding_errors,
+            )
             smiles = [
                 self._smiles("Compound 1", "S1", "CCCl"),
                 self._smiles("Compound 2", "S1", "CCO"),
@@ -1584,7 +2002,9 @@ class StrictAcceptanceTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 _validate_smiles_source_for_export(str(smiles_path), bindings)
 
-    def test_direct_smiles_runner_reapplies_strict_binding_and_result_gates(self) -> None:
+    def test_direct_smiles_runner_reapplies_strict_binding_and_result_gates(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
             image_path = self._image(base, "structure.png")
@@ -1596,13 +2016,17 @@ class StrictAcceptanceTests(unittest.TestCase):
             }
             bindings_path = base / "bindings.json"
             self._write_json(bindings_path, payload)
-            self.assertEqual(validate_strict_binding_input(str(bindings_path), [binding]), [])
+            self.assertEqual(
+                validate_strict_binding_input(str(bindings_path), [binding]), []
+            )
             clean = self._smiles("Compound 1", "S1", "CCCl")
             self.assertEqual(validate_strict_smiles_results([binding], [clean]), [])
             suspicious = self._smiles("Compound 1", "S1", "CC[Cu]")
             self.assertTrue(validate_strict_smiles_results([binding], [suspicious]))
 
-    def test_pipeline_does_not_reuse_existing_smiles_that_fail_strict_gate(self) -> None:
+    def test_pipeline_does_not_reuse_existing_smiles_that_fail_strict_gate(
+        self,
+    ) -> None:
         binding = self._binding("Compound 1", "S1", "/tmp/structure.png")
         payload = {
             **artifact_identity(BINDINGS_SCHEMA, BINDINGS_SCHEMA_VERSION),
@@ -1649,29 +2073,43 @@ class StrictAcceptanceTests(unittest.TestCase):
             bindings_path = base / "bindings.json"
             output_path = base / "smiles.json"
             csv_path = base / "smiles.csv"
-            self._write_json(bindings_path, [self._binding("Compound 1", "S1", image_path)])
+            self._write_json(
+                bindings_path, [self._binding("Compound 1", "S1", image_path)]
+            )
 
             argv = [
                 "run_smiles.py",
-                "--input", str(bindings_path),
-                "--output", str(output_path),
-                "--csv-output", str(csv_path),
+                "--input",
+                str(bindings_path),
+                "--output",
+                str(output_path),
+                "--csv-output",
+                str(csv_path),
                 "--include-intermediates",
                 "--diagnostic-unvalidated-input",
             ]
-            with patch.object(sys, "argv", argv), patch.object(run_smiles_module, "SmilesConverter", FakeConverter):
+            with (
+                patch.object(sys, "argv", argv),
+                patch.object(run_smiles_module, "SmilesConverter", FakeConverter),
+            ):
                 run_smiles_module.main()
 
-        self.assertEqual(FakeConverter.created_with, {
-            "engines": ["decimer"],
-            "fallback_engines": [],
-        })
+        self.assertEqual(
+            FakeConverter.created_with,
+            {
+                "engines": ["decimer"],
+                "fallback_engines": [],
+            },
+        )
 
     def test_production_pipeline_uses_decimer_only_ocsr_options(self) -> None:
-        self.assertEqual(_production_smiles_ocr_options(), {
-            "engine": "decimer",
-            "fallback": "",
-        })
+        self.assertEqual(
+            _production_smiles_ocr_options(),
+            {
+                "engine": "decimer",
+                "fallback": "",
+            },
+        )
 
     def test_production_ocsr_surface_has_no_legacy_engine_chain(self) -> None:
         from patent_sar_extractor.core.ocsr.smiles_converter import ENGINE_MAP
@@ -1686,7 +2124,9 @@ class StrictAcceptanceTests(unittest.TestCase):
         ):
             self.assertFalse((ocsr_root / relative).exists(), relative)
 
-    def test_clean_minimal_export_and_qa_preserve_activity_order_and_cells(self) -> None:
+    def test_clean_minimal_export_and_qa_preserve_activity_order_and_cells(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
             image_2 = self._image(base, "images/structure_2.png")
@@ -1732,12 +2172,18 @@ class StrictAcceptanceTests(unittest.TestCase):
             )
             self._write_json(base / "structures/metadata.json", {"total_structures": 2})
             self._write_json(base / "structure_pages/locator.json", {})
-            self._write_json(base / "pipeline_summary.json", {"status": "complete", "patent_id": "TEST"})
+            self._write_json(
+                base / "pipeline_summary.json",
+                {"status": "complete", "patent_id": "TEST"},
+            )
 
             result = subprocess.run(
                 [
                     sys.executable,
-                    str(SOURCE_ROOT / "patent_sar_extractor/workers/gen_final_results.py"),
+                    str(
+                        SOURCE_ROOT
+                        / "patent_sar_extractor/workers/gen_final_results.py"
+                    ),
                     "--bindings",
                     str(base / "structure_bindings/bindings.json"),
                     "--smiles",
@@ -1767,21 +2213,34 @@ class StrictAcceptanceTests(unittest.TestCase):
             wrong_activity.append(["Cpd ID", "IC50 (nM)"])
             wrong_activity.append(["Compound 999", "Z"])
             wrong.save(base / "final_results/AAA_STALE_final.xlsx")
-            (base / "final_results/AAA_STALE_final.sdf").write_text("$$$$\n" * 99, encoding="utf-8")
+            (base / "final_results/AAA_STALE_final.sdf").write_text(
+                "$$$$\n" * 99, encoding="utf-8"
+            )
 
             qa = write_qa_report(str(base), patent_id="TEST")
             self.assertTrue(qa["acceptance"]["ok"], msg=qa["acceptance"]["hard_errors"])
-            self.assertEqual(qa["acceptance"]["excel"]["path"], str(base / "final_results/TEST_final.xlsx"))
+            self.assertEqual(
+                qa["acceptance"]["excel"]["path"],
+                str(base / "final_results/TEST_final.xlsx"),
+            )
             self.assertEqual(qa["acceptance"]["sdf_record_count"], 2)
-            self.assertTrue((base / "final_results/TEST_final_qa_report.json").is_file())
+            self.assertTrue(
+                (base / "final_results/TEST_final_qa_report.json").is_file()
+            )
             self.assertTrue((base / "final_results/TEST_final_qa_report.md").is_file())
             workbook = _read_xlsx_values(base / "final_results/TEST_final.xlsx")
             activity_rows = workbook["sheets"]["Activity Results"]["rows"]
-            self.assertEqual([row[0] for row in activity_rows[1:]], ["Compound 2", "Compound 1"])
+            self.assertEqual(
+                [row[0] for row in activity_rows[1:]], ["Compound 2", "Compound 1"]
+            )
             self.assertEqual(activity_rows[1][1:3], ["A", "61"])
             self.assertEqual(activity_rows[2][1:3], ["B", "42"])
             stale_payload = dict(binding_payload)
-            stale_payload["accuracy_summary"] = {"total": 2, "confirmed": 1, "review_required": 0}
+            stale_payload["accuracy_summary"] = {
+                "total": 2,
+                "confirmed": 1,
+                "review_required": 0,
+            }
             self._write_json(base / "structure_bindings/bindings.json", stale_payload)
             stale_qa = build_qa_report(str(base), patent_id="TEST")
             self.assertIn(
@@ -1799,8 +2258,16 @@ class StrictAcceptanceTests(unittest.TestCase):
                 "metadata": {},
                 "active_cpds": ["Compound 1", "Compound 2"],
                 "rows": [
-                    {"cpd": "Compound 1", "activity_values": {"IC50 (nM)": "A"}, "needs_review": False},
-                    {"cpd": "Compound 2", "activity_values": {"IC50 (nM)": "B"}, "needs_review": False},
+                    {
+                        "cpd": "Compound 1",
+                        "activity_values": {"IC50 (nM)": "A"},
+                        "needs_review": False,
+                    },
+                    {
+                        "cpd": "Compound 2",
+                        "activity_values": {"IC50 (nM)": "B"},
+                        "needs_review": False,
+                    },
                 ],
             }
             binding_payload = {
@@ -1828,7 +2295,10 @@ class StrictAcceptanceTests(unittest.TestCase):
             result = subprocess.run(
                 [
                     sys.executable,
-                    str(SOURCE_ROOT / "patent_sar_extractor/workers/gen_final_results.py"),
+                    str(
+                        SOURCE_ROOT
+                        / "patent_sar_extractor/workers/gen_final_results.py"
+                    ),
                     "--bindings",
                     str(base / "structure_bindings/bindings.json"),
                     "--smiles",
@@ -1852,7 +2322,9 @@ class StrictAcceptanceTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
             workbook = _read_xlsx_values(base / "final_results/TESTPARTIAL_final.xlsx")
             final_rows = workbook["sheets"]["Final Results"]["rows"]
-            self.assertEqual([row[0] for row in final_rows[1:3]], ["Compound 1", "Compound 2"])
+            self.assertEqual(
+                [row[0] for row in final_rows[1:3]], ["Compound 1", "Compound 2"]
+            )
             self.assertIn("IC50", " ".join(str(cell) for cell in final_rows[0]))
             from openpyxl import load_workbook
 
@@ -1867,7 +2339,9 @@ class StrictAcceptanceTests(unittest.TestCase):
             "fail_closed": True,
         }
 
-        strict = _drop_fail_closed_bindings([confirmed, review], ["Compound 1", "Compound 2"])
+        strict = _drop_fail_closed_bindings(
+            [confirmed, review], ["Compound 1", "Compound 2"]
+        )
         partial = _drop_fail_closed_bindings(
             [confirmed, review],
             ["Compound 1", "Compound 2"],
@@ -1878,7 +2352,9 @@ class StrictAcceptanceTests(unittest.TestCase):
         self.assertEqual([row["cpd"] for row in partial], ["Compound 1", "Compound 2"])
         self.assertTrue(partial[1]["partial_review_candidate"])
 
-    def test_pipeline_defaults_to_review_only_partial_gates_unless_strict_requested(self) -> None:
+    def test_pipeline_defaults_to_review_only_partial_gates_unless_strict_requested(
+        self,
+    ) -> None:
         class Args:
             strict_gates = False
 

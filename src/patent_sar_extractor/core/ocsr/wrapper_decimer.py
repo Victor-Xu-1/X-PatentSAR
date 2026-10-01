@@ -27,12 +27,18 @@ os.environ.update(build_gpu_env(python_path=sys.executable))
 
 def main():
     if len(sys.argv) < 2:
-        print(json.dumps({"status": "error", "error": "Usage: wrapper_decimer.py <image_path>"}))
+        print(
+            json.dumps(
+                {"status": "error", "error": "Usage: wrapper_decimer.py <image_path>"}
+            )
+        )
         sys.exit(1)
 
     image_path = sys.argv[1]
     if not os.path.isfile(image_path):
-        print(json.dumps({"status": "error", "error": f"Image not found: {image_path}"}))
+        print(
+            json.dumps({"status": "error", "error": f"Image not found: {image_path}"})
+        )
         sys.exit(1)
 
     try:
@@ -43,17 +49,25 @@ def main():
         elapsed = time.time() - start
 
         if smiles and isinstance(smiles, str) and smiles.strip():
-            print(json.dumps({
-                "status": "success",
-                "smiles": smiles.strip(),
-                "elapsed_sec": round(elapsed, 3),
-            }))
+            print(
+                json.dumps(
+                    {
+                        "status": "success",
+                        "smiles": smiles.strip(),
+                        "elapsed_sec": round(elapsed, 3),
+                    }
+                )
+            )
         else:
-            print(json.dumps({
-                "status": "error",
-                "error": "DECIMER returned empty SMILES",
-                "elapsed_sec": round(elapsed, 3),
-            }))
+            print(
+                json.dumps(
+                    {
+                        "status": "error",
+                        "error": "DECIMER returned empty SMILES",
+                        "elapsed_sec": round(elapsed, 3),
+                    }
+                )
+            )
 
     except Exception as e:
         print(json.dumps({"status": "error", "error": f"DECIMER exception: {str(e)}"}))

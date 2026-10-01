@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
 
 Decision = Literal["approved", "rejected", "needs_review"]
 ConfidenceLevel = Literal["high", "medium", "review", "unknown"]
@@ -70,12 +70,33 @@ class Confidence(DTO):
     reason: str
 
 
+class TokenConfidence(DTO):
+    minimum: float = Field(ge=0, le=1, strict=True)
+    mean: float = Field(ge=0, le=1, strict=True)
+
+    @field_validator("mean")
+    @classmethod
+    def check_order(cls, value: float, info: ValidationInfo) -> float:
+        if value < info.data.get("minimum", 0):
+            raise ValueError("Mean token confidence cannot be below the minimum")
+        return value
+
+
+class Recognition(DTO):
+    status: Literal["not_run", "valid", "invalid", "unavailable"] = "not_run"
+    quality_flag: str | None = None
+    model_fingerprint: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
+    token_confidence: TokenConfidence | None = None
+
+
 class Compound(DTO):
     id: str
     display_id: str
     structure_id: str | None = None
     structure_image_url: str | None = None
     smiles: str | None = None
+    recognition: Recognition = Field(default_factory=Recognition)
+    redraw_image_url: str | None = None
     activities: list[Activity]
     source: Source
     confidence: Confidence
@@ -95,6 +116,8 @@ class Summary(DTO):
     matched_structures: int = 0
     confirmed: int = 0
     needs_review: int = 0
+    manually_reviewed: int = 0
+    manual_review_pending: int = 0
 
 
 class Acceptance(DTO):

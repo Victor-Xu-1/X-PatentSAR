@@ -29,13 +29,17 @@ class RawOCSRObservationTests(unittest.TestCase):
 
         class BoundaryEngine:
             def __init__(self, **kwargs):
-                pass
+                self.fingerprint = "a" * 64
+
+            def runtime_identity(self):
+                return {"fingerprint": self.fingerprint}
 
             def predict(self, image, timeout=60):
                 calls.append(image)
                 return {
                     "status": "success",
                     "raw_smiles": outputs[min(len(calls) - 1, len(outputs) - 1)],
+                    "model_fingerprint": self.fingerprint,
                 }
 
         with patch.dict(converter_module.ENGINE_MAP, {"decimer": BoundaryEngine}):
@@ -94,6 +98,21 @@ class RawOCSRObservationTests(unittest.TestCase):
             )
             self.assertEqual(result["raw_smiles"], result["engine_raw_smiles"])
             self.assertEqual(result["OCSR_status"], "success")
+
+    def test_model_fingerprint_change_invalidates_exact_image_cache(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            converter, calls = self.converter(["CCO", "CCN"], cache=str(root / "cache.sqlite"))
+            item = self.fixture(root)
+            first = converter.convert_one(item)
+            converter.engines["decimer"].fingerprint = "b" * 64
+            second = converter.convert_one(item)
+            third = converter.convert_one(item)
+            self.assertEqual(len(calls), 2)
+            self.assertEqual(first["raw_smiles"], "CCO")
+            self.assertEqual(second["raw_smiles"], "CCN")
+            self.assertEqual(third["model_fingerprint"], "b" * 64)
+            self.assertTrue(third["engine_attempts"][0]["from_cache"])
 
     def test_two_invalid_observations_stop_without_string_repair_or_unbounded_retry(
         self,

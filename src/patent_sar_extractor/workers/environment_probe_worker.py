@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import importlib.metadata
 import importlib.util
-import pickle
 import subprocess
 import sys
 from pathlib import Path
@@ -30,7 +29,6 @@ from patent_sar_extractor.workers.analysis_protocol import (  # noqa: E402 - sel
 )
 from patent_sar_extractor.workers.environment_files import (  # noqa: E402 - native SDK imports keep their own site-packages
     load_json,
-    read_regular,
     verify_decimer_models,
 )
 
@@ -181,34 +179,30 @@ def probe(request: dict[str, object]) -> dict[str, object]:
             check(
                 "ocsrc_fingerprint",
                 True,
-                "Two SavedModel/tokenizer contents verified before deserialization",
+                "Selected printed SavedModel/tokenizer contents verified before deserialization",
             )
             if role == "decimer-ocsrc":
                 name = str(request.get("model_name"))
-                if name not in {"DECIMER_model", "DECIMER_HandDrawn_model"}:
+                if name != "DECIMER_model":
                     raise ValueError("Unknown fixed OCSR model")
-                # DECIMER imports both SavedModels eagerly. Load each identical
-                # verified artifact in its own process to keep the RSS bound.
-                model = tf.saved_model.load(str(root / "DECIMER-V2" / name))
+                from patent_sar_extractor.core.ocsr.model_identity import (
+                    printed_model_identity,
+                )
+                from patent_sar_extractor.core.ocsr.printed_model import (
+                    PrintedDecimerModel,
+                )
+
+                # Inspection uses the same adapter as actual recognition, not
+                # an alternative model loader or upstream eager initializer.
+                model = PrintedDecimerModel(printed_model_identity(root))
                 check(
                     "ocsrc_loaded",
-                    callable(model),
+                    callable(model.model),
                     f"Actual {name} TensorFlow load; not accuracy acceptance",
-                )
-                tokenizer_name = (
-                    "tokenizer_SMILES.pkl"
-                    if name == "DECIMER_model"
-                    else "tokenizer_pubchem.pkl"
-                )
-                tokenizer = pickle.loads(
-                    read_regular(
-                        root / "DECIMER-V2" / name / "assets" / tokenizer_name,
-                        16 * 1024,
-                    )
                 )
                 check(
                     "tokenizer_loaded",
-                    bool(getattr(tokenizer, "word_index", None)),
+                    bool(getattr(model.tokenizer, "word_index", None)),
                     "Official hash-verified tokenizer loaded",
                 )
             else:

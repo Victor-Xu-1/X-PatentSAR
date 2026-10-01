@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 from pathlib import Path
 
 from fastapi import APIRouter, Request
@@ -21,6 +22,7 @@ from .models import (
     Review,
     ReviewRequest,
 )
+from .molecule_drawing import draw_smiles
 from .pdf import crop_image, filename_title, page_info, render_page, stream_upload
 from .reviews import put_review
 from .service import WorkspaceService
@@ -132,6 +134,33 @@ def project_routes(service: WorkspaceService, max_upload_bytes: int) -> APIRoute
                 404, "crop_unavailable", "No safe structure crop is available."
             )
         return Response(data, media_type="image/png")
+
+    @router.get("/projects/{project_id}/structures/{compound_id}/redraw")
+    def structure_redraw(
+        project_id: str, compound_id: str, fingerprint: str | None = None
+    ) -> Response:
+        row = service.store.compound(project_id, compound_id)
+        dto = Compound.model_validate_json(row["payload"])
+        if not dto.smiles:
+            raise WebError(
+                404,
+                "smiles_unavailable",
+                "No recorded SMILES is available for a derived drawing.",
+            )
+        if (
+            fingerprint is not None
+            and fingerprint != hashlib.sha256(dto.smiles.encode()).hexdigest()
+        ):
+            raise WebError(
+                409,
+                "molecule_changed",
+                "Recorded molecule changed; refresh the result view.",
+            )
+        return Response(
+            draw_smiles(dto.smiles),
+            media_type="image/png",
+            headers={"Cache-Control": "no-store"},
+        )
 
     @router.get("/projects/{project_id}/results", response_model=Results)
     def results(

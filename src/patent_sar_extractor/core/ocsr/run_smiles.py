@@ -435,7 +435,7 @@ def main():
         "--jobs",
         type=int,
         default=1,
-        help="Parallel DECIMER OCSR workers.",
+        help="Bounded parallel image-preparation workers; DECIMER inference uses one owned model.",
     )
     parser.add_argument(
         "--only-bound",
@@ -543,8 +543,8 @@ def main():
         if name == "decimer":
             if os.environ.get("DECIMER_PYTHON"):
                 config["python_bin"] = os.environ["DECIMER_PYTHON"]
-            if os.environ.get("DECIMER_WRAPPER"):
-                config["wrapper_script"] = os.environ["DECIMER_WRAPPER"]
+            if os.environ.get("DECIMER_BATCH_WRAPPER"):
+                config["batch_wrapper_script"] = os.environ["DECIMER_BATCH_WRAPPER"]
         if config:
             engine_configs[name] = config
 
@@ -584,6 +584,7 @@ def main():
         only_bound=only_bound,
         limit=args.limit,
         jobs=args.jobs,
+        progress_path=str(Path(args.output).parent / "progress.json"),
     )
 
     elapsed = time.time() - start_time

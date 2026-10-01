@@ -12,6 +12,7 @@ class PipelineProgress:
         self._root: Path | None = None
         self._log: dict | None = None
         self._stage: str | None = None
+        self._reused = False
 
     def bind(self, root: str, log: dict) -> None:
         self._root = Path(root)
@@ -23,8 +24,16 @@ class PipelineProgress:
         if stage not in self._log["main_chain"]:
             raise ValueError("Unknown extraction stage")
         self._stage = stage
+        self._reused = False
         self._log["steps"][stage] = {"status": "running"}
         write_json_atomic(self._root / "pipeline_summary.json", self._log)
+
+    @property
+    def checkpoint_reused(self) -> bool:
+        return self._reused
+
+    def mark_checkpoint_reused(self) -> None:
+        self._reused = True
 
     def fail_current(self) -> None:
         if self._root is None or self._log is None or self._stage is None:

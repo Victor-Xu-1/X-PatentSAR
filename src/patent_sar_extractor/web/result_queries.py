@@ -7,6 +7,7 @@ from typing import Any
 
 from .errors import WebError
 from .models import Compound, Results, Review
+from .molecule_drawing import drawing_url
 from .pdf import open_pdf, rendered_box
 from .storage import Store
 
@@ -51,6 +52,12 @@ class ResultQueries:
         source_spaces: dict[str, str] = {}
         for row in self.rows(project_id):
             dto = Compound.model_validate_json(row["payload"])
+            if dto.smiles and dto.redraw_image_url is None:
+                # Rendering is derived presentation; old recognition metadata
+                # remains unknown instead of being promoted to fresh validation.
+                dto.redraw_image_url = drawing_url(project_id, dto.id, dto.smiles)
+                if dto.recognition.status == "not_run":
+                    dto.recognition.status = "unavailable"
             if row["decision"]:
                 dto.review = Review(
                     decision=row["decision"],

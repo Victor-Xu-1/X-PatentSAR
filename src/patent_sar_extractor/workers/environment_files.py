@@ -119,4 +119,4 @@ def verify_decimer_models(root: Path, recipe: dict[str, Any]) -> dict[str, Any]:
             raise ValueError(
                 "DECIMER source marker differs; inspection must not download"
             )
-    return {"ocsrc_models": 2, "files": sum(len(g["files"]) for g in recipe["ocsrc"])}
+    return {"ocsrc_models": len(recipe["ocsrc"]), "files": sum(len(g["files"]) for g in recipe["ocsrc"])}

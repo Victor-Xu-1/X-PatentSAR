@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import math
 import re
 from dataclasses import dataclass
@@ -18,6 +19,8 @@ from .acceptance import ARTIFACTS, authority, current
 from .errors import WebError
 from .files import MAX_RECORDS, SafeFiles, records
 from .models import Activity, Compound, Confidence, ConfidenceLevel, Source, Summary
+from .molecule_drawing import drawing_url
+from .recognition import recognition_status
 
 
 def text(value: object, *, limit: int = 1000) -> str | None:
@@ -382,6 +385,7 @@ class ArtifactView:
         confirmed = 0
         matched = 0
         metric_names: set[str] = set()
+        crop_revision = hashlib.sha256(str(self.root).encode()).hexdigest()[:16]
         targets: set[str] = set()
         measurement_count = 0
         for compound_id in active:
@@ -497,12 +501,27 @@ class ArtifactView:
                 display_id=compound_id,
                 structure_id=structure_id,
                 structure_image_url=(
-                    f"/api/v1/projects/{project_id}/structures/{quote(compound_id, safe='')}/image"
+                    f"/api/v1/projects/{project_id}/structures/{quote(compound_id, safe='')}/image?revision={crop_revision}"
                     if has_crop
                     else None
                 ),
                 smiles=text(
                     smile.get("smiles") or smile.get("canonical_smiles"), limit=10000
+                ),
+                recognition=recognition_status(
+                    smile, current=current(p.get("smiles"), "smiles")
+                ),
+                redraw_image_url=(
+                    drawing_url(
+                        project_id,
+                        compound_id,
+                        text(
+                            smile.get("smiles") or smile.get("canonical_smiles"),
+                            limit=10000,
+                        ),
+                    )
+                    if smile.get("smiles") or smile.get("canonical_smiles")
+                    else None
                 ),
                 activities=activities,
                 source=Source(

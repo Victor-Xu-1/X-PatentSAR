@@ -208,7 +208,7 @@ def inspect_components(
                             raise ValueError(
                                 "DECIMER runtime must be checked before model load"
                             )
-                        for model_name in ("DECIMER_model", "DECIMER_HandDrawn_model"):
+                        for model_name in ("DECIMER_model",):
                             result = run(
                                 "decimer-ocsrc", context.decimer, model_name=model_name
                             )

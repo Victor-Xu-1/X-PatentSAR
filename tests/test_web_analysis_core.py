@@ -203,4 +203,5 @@ class AnalysisCoreTests(WebFixture, unittest.TestCase):
         self.assertNotIn("HOME", env)
         self.assertNotIn("HTTP_PROXY", env)
         self.assertNotIn("PYTHONPATH", env)
-        self.assertEqual(env["PATENTSAR_DECIMER_PERSISTENT"], "0")
+        self.assertEqual(env["PATENTSAR_DECIMER_ENABLE_GPU"], "0")
+        self.assertEqual(env["PATENTSAR_DECIMER_CPU_THREADS"], "1")

@@ -9,7 +9,7 @@ import hashlib
 import os
 import re
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import List, Optional
 
@@ -488,14 +488,32 @@ class SmilesConverter:
     def _prediction(self, engine_name: str, engine, image: str) -> tuple[dict, dict]:
         """Cache only exact unmodified observations under the current epoch."""
         image_hash = compute_image_sha256(image)
-        cache_key = f"{engine_name}:raw-v{OCSR_OBSERVATION_VERSION}"
         notes: dict = {"input_image_sha256": image_hash}
+        identity = None
+        if callable(getattr(engine, "runtime_identity", None)):
+            try:
+                identity = engine.runtime_identity()["fingerprint"]
+            except (OSError, RuntimeError, ValueError) as exc:
+                return {
+                    "status": "unavailable",
+                    "raw_smiles": None,
+                    "error": str(exc),
+                }, notes
+        cache_key = f"{engine_name}:raw-v{OCSR_OBSERVATION_VERSION}:{identity}"
+        if identity is None:
+            notes["cache_disabled_unversioned_runtime"] = True
         cached = (
-            self.cache.get_cached_result(image_hash, cache_key) if self.cache else None
+            self.cache.get_cached_result(image_hash, cache_key)
+            if self.cache and identity
+            else None
         )
         if cached is not None:
             checked = qc_smiles(cached.get("raw_smiles"))
-            if cached.get("status") == "success" and _is_clean_rdkit_result(checked):
+            if (
+                cached.get("status") == "success"
+                and cached.get("model_fingerprint") == identity
+                and _is_clean_rdkit_result(checked)
+            ):
                 notes["from_cache"] = True
                 return cached, notes
             notes[
@@ -530,7 +548,7 @@ class SmilesConverter:
                 "raw_smiles": None,
                 "error": "Invalid SMILES response type",
             }
-        if self.cache:
+        if self.cache and identity:
             checked = qc_smiles(prediction.get("raw_smiles"))
             self.cache.save_result(
                 image_hash,
@@ -582,6 +600,10 @@ class SmilesConverter:
                     "quality_flag": checked["quality_flag"],
                     "error": prediction.get("error"),
                     "elapsed_sec": prediction.get("elapsed_sec", 0),
+                    "model_fingerprint": prediction.get("model_fingerprint"),
+                    "token_confidence": prediction.get("token_confidence"),
+                    "device": prediction.get("device"),
+                    "peak_rss_mb": prediction.get("peak_rss_mb"),
                     "device_used": prediction.get("device_used"),
                     "device_warning": prediction.get("device_warning"),
                     "input_source": source,
@@ -624,6 +646,10 @@ class SmilesConverter:
                         OCSR_engine=engine_name,
                         OCSR_quality_flag=checked["quality_flag"],
                         ocsr_structure_image=image,
+                        model_fingerprint=prediction.get("model_fingerprint"),
+                        token_confidence=prediction.get("token_confidence"),
+                        device=prediction.get("device"),
+                        peak_rss_mb=prediction.get("peak_rss_mb"),
                     )
                     if checked.get("suspicious_elements"):
                         result["suspicious_elements"] = checked["suspicious_elements"]
@@ -688,6 +714,12 @@ class SmilesConverter:
         result["engine_attempts"] = attempts
         return result
 
+    def close(self) -> None:
+        for engine in self.engines.values():
+            closer = getattr(engine, "close", None)
+            if callable(closer):
+                closer()
+
     def convert_batch(
         self,
         items: List[dict],
@@ -695,94 +727,42 @@ class SmilesConverter:
         only_bound: bool = True,
         limit: int = 0,
         jobs: int = 1,
+        progress_path: str = "",
     ) -> List[dict]:
-        """Batch-convert binding items to SMILES results.
+        """Bounded parallel image preparation feeding one owned model queue."""
+        from .conversion_progress import ConversionProgress
 
-        Args:
-            items: List of binding dictionaries.
-            preprocess_dir: Directory for preprocessed images.
-            only_bound: If True, only process items with bind_status=bound
-                       (or items without bind_status field, which are assumed bound).
-            limit: If > 0, only process this many items (for testing).
-
-        Returns:
-            List of SMILES result dicts.
-        """
-        # Filter items
-        filtered = []
-        for item in items:
-            # Check bind_status
-            bind_status = item.get("bind_status", "bound")  # Default to bound
-            if only_bound and bind_status != "bound":
-                continue
-            filtered.append(item)
-
+        filtered = [
+            item
+            for item in items
+            if not only_bound or item.get("bind_status", "bound") == "bound"
+        ]
         if limit > 0:
             filtered = filtered[:limit]
-
-        jobs = max(1, int(jobs or 1))
+        jobs = max(1, min(int(jobs or 1), 8))
+        progress = ConversionProgress(progress_path, len(filtered))
         results = []
-        t_batch_start = time.time()
-        if jobs > 1:
-            print(f"  Parallel OCSR workers: {jobs}")
+        started = time.monotonic()
+        try:
             with ThreadPoolExecutor(max_workers=jobs) as executor:
-                future_map = {
-                    executor.submit(self.convert_one, item, preprocess_dir): (i, item)
-                    for i, item in enumerate(filtered)
-                }
-                ordered = [None] * len(filtered)
-                completed = 0
-                for future in as_completed(future_map):
-                    i, item = future_map[future]
-                    cpd_id = item.get("cpd", f"item_{i}")
-                    try:
-                        result = future.result()
-                    except Exception as e:
-                        result = {
-                            "patent_id": item.get("patent_id", ""),
-                            "page_no": item.get("page_no", 0),
-                            "cpd_id": cpd_id,
-                            "structure_id": item.get("structure_id", ""),
-                            "structure_image": item.get("image_path", ""),
-                            "raw_smiles": None,
-                            "canonical_smiles": None,
-                            "rdkit_valid": False,
-                            "OCSR_engine": None,
-                            "OCSR_status": "failed",
-                            "OCSR_quality_flag": "exception",
-                            "OCSR_failure_reason": str(e),
-                            "engine_attempts": [],
-                        }
-                    ordered[i] = result
-                    completed += 1
-                    status = result.get("OCSR_status", "?")
-                    engine = result.get("OCSR_engine", "-")
-                    total_elapsed = time.time() - t_batch_start
-                    print(
-                        f"  [{completed}/{len(filtered)}] {cpd_id}: {status} "
-                        f"engine={engine} (total {total_elapsed:.0f}s)"
+                # Only one small window is prepared ahead; inference is never duplicated.
+                for offset in range(0, len(filtered), jobs):
+                    window = filtered[offset : offset + jobs]
+                    prepared = executor.map(
+                        lambda item: self._prepare_input(item, preprocess_dir), window
                     )
-                return [r for r in ordered if r is not None]
-
-        for i, item in enumerate(filtered):
-            cpd_id = item.get("cpd", f"item_{i}")
-            t0 = time.time()
-            result = self.convert_one(item, preprocess_dir=preprocess_dir)
-            dt = time.time() - t0
-            results.append(result)
-
-            # Progress logging — helps diagnose which image hangs
-            status = result.get("OCSR_status", "?")
-            engine = result.get("OCSR_engine", "-")
-            if (
-                (i + 1) % 10 == 0
-                or dt > 30
-                or status not in ("success", "not_processed")
-            ):
-                total_elapsed = time.time() - t_batch_start
-                print(
-                    f"  [{i + 1}/{len(filtered)}] {cpd_id}: {status} "
-                    f"engine={engine} {dt:.1f}s (total {total_elapsed:.0f}s)"
-                )
-
-        return results
+                    for item, observation in zip(window, prepared):
+                        result = self.convert_one(
+                            item, preprocess_dir, prepared=observation
+                        )
+                        results.append(result)
+                        progress.record(result)
+                        print(
+                            f"  [{len(results)}/{len(filtered)}] {result.get('cpd_id')}: "
+                            f"{result.get('OCSR_status')} engine={result.get('OCSR_engine')} "
+                            f"(total {time.monotonic() - started:.0f}s)",
+                            flush=True,
+                        )
+            return results
+        finally:
+            self.close()

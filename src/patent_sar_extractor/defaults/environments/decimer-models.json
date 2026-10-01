@@ -34,35 +34,6 @@
         }
       ],
       "license": "CC-BY-4.0"
-    },
-    {
-      "directory": "DECIMER_HandDrawn_model",
-      "url": "https://zenodo.org/records/10781330/files/DECIMER_HandDrawn_model.zip",
-      "download_bytes": 298515112,
-      "md5": "1fece9813549417440f7c45d0c51603a",
-      "files": [
-        {
-          "path": "DECIMER_HandDrawn_model/assets/tokenizer_pubchem.pkl",
-          "size": 4670,
-          "sha256": "c1d579f958146bb1a948320dad92f0eecf4a51001ec9dec1f48767c7b681b43c"
-        },
-        {
-          "path": "DECIMER_HandDrawn_model/saved_model.pb",
-          "size": 28080328,
-          "sha256": "d3b124e3ad4b0ed57ff834e2c8cb8b2e3d4aee4b0546b138634d26e58979e6e5"
-        },
-        {
-          "path": "DECIMER_HandDrawn_model/variables/variables.data-00000-of-00001",
-          "size": 319860349,
-          "sha256": "7c2c678eea80be1ce42bca1029f63ca3322cc6f9649ef70da21e5c37ad18a376"
-        },
-        {
-          "path": "DECIMER_HandDrawn_model/variables/variables.index",
-          "size": 65628,
-          "sha256": "98938e8df526dcd638e6c71c3d73aa48cd36d0ebbcee8128f8c0f3f0d6aa786e"
-        }
-      ],
-      "license": "CC-BY-4.0"
     }
   ],
   "segmentation": {

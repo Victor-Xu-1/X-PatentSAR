@@ -44,7 +44,7 @@ from .service import WorkspaceService
 from .storage import now
 
 _WORKERS = Path(__file__).resolve().parents[1] / "workers"
-_WRAPPER = Path(__file__).resolve().parents[1] / "core/ocsr/wrapper_decimer.py"
+_OCSR_MODULES = Path(__file__).resolve().parents[1] / "core/ocsr"
 _RESEARCH_WARNING = "Local model predictions are research estimates, not experimental results or formal pipeline acceptance. Model applicability has not been independently validated."
 
 
@@ -315,7 +315,10 @@ class AnalysisService:
                     model,
                     chemistry_identity(),
                     self._adapter_key("analysis_decimer_worker.py"),
-                    hashlib.sha256(_WRAPPER.read_bytes()).hexdigest(),
+                    *(
+                        hashlib.sha256((_OCSR_MODULES / name).read_bytes()).hexdigest()
+                        for name in ("printed_model.py", "model_identity.py")
+                    ),
                 ]
             )
             cached = self.cache.get("recognize", key)
