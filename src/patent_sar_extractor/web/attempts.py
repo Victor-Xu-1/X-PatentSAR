@@ -96,9 +96,12 @@ def spec_record(raw: str) -> dict[str, Any]:
             "sha256",
         ):
             value = payload.get(name)
+            # An original can lack a readable patent identifier. Preserve the
+            # unknown value; PDF ownership remains anchored by its exact SHA.
+            minimum_length = 0 if name == "patent_id" else 1
             if (
                 not isinstance(value, str)
-                or not 1 <= len(value) <= 4096
+                or not minimum_length <= len(value) <= 4096
                 or any(
                     ord(character) < 32 or ord(character) == 127 for character in value
                 )

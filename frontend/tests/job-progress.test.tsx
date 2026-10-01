@@ -31,7 +31,9 @@ describe('actual task progress and unavailable historic stages', () => {
     fireEvent.click(within(stage).getByText('文档分类').closest('summary')!);
     expect(within(stage).getByText('缓存命中 3 · 失败 1')).toBeVisible();
     expect(within(stage).getByText('CPU · 峰值 RSS 256.5 MB')).toBeVisible();
-    expect(within(screen.getByText('活性提取').closest('li')!).getByText(/复用检查点/)).toBeVisible();
+    expect(
+      within(screen.getByText('活性提取').closest('li')!).getByText(/复用检查点/),
+    ).toBeVisible();
     expect(screen.queryByText(/\d+%|预计|准确率\s*\d/)).not.toBeInTheDocument();
   });
   it('labels absent progress and checkpoint facts unknown', () => {

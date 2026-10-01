@@ -144,6 +144,7 @@ class WorkerProtocolTests(RecipeFixture):
         for relative in (
             "__init__.py",
             "contracts.py",
+            "worker_bootstrap.py",
             "workers/__init__.py",
             "workers/analysis_protocol.py",
             "workers/environment_files.py",

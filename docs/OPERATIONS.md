@@ -4,6 +4,15 @@
 
 Run `x-patentsar check-envs` and then `x-patentsar health --no-gpu --output /tmp/patentsar-health.json`. The health command performs a real DECIMER model-load probe in addition to importing the package, so it catches an interpreter that can import the module but cannot load its H5 weights. Use the GPU health path only after TensorFlow/CUDA compatibility is established.
 
+Recognition uses the verified official printed DECIMER model only. The environment
+catalog downloads printed recognition and segmentation weights, not unused
+hand-drawn weights; existing operator-installed files are preserved. CPU inference
+defaults to `PATENTSAR_DECIMER_CPU_THREADS=2` (1–16) and
+`PATENTSAR_DECIMER_MAX_RSS_MB=4096` (2048–16384 MiB). A worker exceeding its own RSS
+budget fails explicitly; the application never terminates other workloads to make
+room. Low model headroom fails before TensorFlow load. Do not raise limits to hide
+an environment fault. GPU execution must match the cache's actual execution policy.
+
 The recovered E-drive deployment has an operator-owned entry point at `/srv/wsl/envs/patentsar/bin/x-patentsar` (Windows: `E:\WSL\apps\x-patentsar\X-PatentSAR.cmd`). It loads external interpreter configuration and selects E-drive state/cache/model paths, with CPU inference by default. `PYSTOW_HOME=/srv/wsl/models/patentsar` points DECIMER OCSR to the restored weights. Segmentation health is not proof that OCSR inference succeeds; verify a real crop separately. Do not change `HOME` to find old model weights.
 
 ## Web operation
@@ -119,6 +128,15 @@ Model/resource limits and actual stage counts are not evidence of chemical QA:
 inspect final deterministic acceptance after the full run completes.
 
 Within the current runtime identity, resume keeps compatible upstream checkpoints.
+An ordinary non-force rerun uses the same bounded transport when the current
+original observations and latest stopped job's private output can be verified.
+New task options remain new; no old history, failure marker or final acceptance is
+copied. Compatible older OCR remains a raw input rather than a derived checkpoint.
+Web resume now creates a new job-ID directory and copies only verified bounded
+checkpoints; it never aliases the old output directory or hardlinks images. The CLI
+remains the final cache/acceptance authority. Old jobs sharing an output root show
+history unavailable, not a fabricated stage snapshot. Terminal new-job history is
+write-once under private `job-history/`; preserve it together with workspace state.
 Binding fingerprints also include the implementation epoch from `contracts.py`;
 changing catalog/caption ownership rebuilds binding without discarding unchanged
 segmentation. Complete confirmed spatial coverage skips generic repair. Do not
@@ -146,6 +164,29 @@ The original PDF can remain available during a failed extraction. A current fail
 or incomplete run is not classified as a historical import simply because its
 downstream artifacts do not yet exist. Each activity metric's source page may differ
 from the bound structure page.
+
+Structure details distinguish original crops from RDKit SMILES redraws. Compare
+both for recognition errors; a syntactically valid SMILES does not prove atom,
+bond or stereochemistry fidelity to the patent. Token probabilities are explicitly
+uncalibrated. Actual progress/cache/device/RSS counters are observations, not final
+acceptance. Use density/metric-column controls for large result tables; hiding a
+column does not drop its underlying measurement or change export content.
+
+The architecture-optimization validation scope includes stage-cache invalidation,
+recognized-but-withheld source ownership, immutable attempt history/checkpoint
+transport, bounded model protocol and memory, additive DTOs and manual counts,
+real original-PDF inference, installed-wheel/browser source/redraw navigation and
+table density. Exact-model raw-string regression and controlled graph/stereo
+oracles answer different questions; neither alone proves all-patent accuracy.
+
+The current official printed recognizer has a known exact-graph failure on the
+controlled 700×500 ethanol depiction in `tests/test_ocsr_gold.py`: it returns an
+extra carbon despite valid RDKit syntax. Simple scaling/normalization is not a
+verified fix; another official weight set instead miscounts a ring on this corpus.
+Do not switch weights, splice model outputs, repair strings or advertise chemical
+accuracy from syntax/token probabilities. Keep the explicit real-model oracle
+failure separate from passing engineering/strict-export gates until a model or
+independent original-graph verification improvement actually resolves it.
 
 Use a separate output directory per patent and avoid running two processes against the same output directory. A stopped run can normally be resumed without `--force`; matching stage fingerprints are reused. Use `--force` only when the underlying PDF, rules or intended parameters changed materially.
 

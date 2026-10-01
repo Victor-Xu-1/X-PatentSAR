@@ -3,11 +3,15 @@
 
 import json
 import os
+import runpy
 import sys
 import time
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parents[3]))
+runpy.run_path(
+    str(Path(__file__).resolve().parents[2] / "worker_bootstrap.py"),
+    run_name="__main__",
+)
 from patent_sar_extractor.core.ocsr.model_identity import (
     printed_model_identity,  # noqa: E402
 )

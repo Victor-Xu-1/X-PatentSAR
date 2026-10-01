@@ -7,6 +7,7 @@ is never patched, copied or downloaded.
 
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import math
 import os
@@ -54,7 +55,14 @@ class PrintedDecimerModel:
         root = Path(identity["model_directory"])
         # The identity verifies official tokenizer bytes before deserialization.
         with (root / "assets/tokenizer_SMILES.pkl").open("rb") as stream:
-            self.tokenizer = pickle.load(stream)
+            tokenizer_bytes = stream.read(8193)
+        if (
+            len(tokenizer_bytes) > 8192
+            or hashlib.sha256(tokenizer_bytes).hexdigest()
+            != identity["tokenizer_sha256"]
+        ):
+            raise ValueError("DECIMER tokenizer changed after identity verification")
+        self.tokenizer = pickle.loads(tokenizer_bytes)
         self.model = tf.saved_model.load(str(root))
 
     @property

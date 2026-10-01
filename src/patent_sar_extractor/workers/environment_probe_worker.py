@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.metadata
 import importlib.util
+import runpy
 import subprocess
 import sys
 from pathlib import Path
@@ -11,17 +12,10 @@ from pathlib import Path
 # Select only our first-party package, never the orchestrator's site-packages.
 # Adding a Python 3.12 site-packages ahead of the scientific interpreter would
 # import its NumPy/native extensions into Python 3.10 and break isolation.
-package_root = Path(__file__).resolve().parents[1]
-package_spec = importlib.util.spec_from_file_location(
-    "patent_sar_extractor",
-    package_root / "__init__.py",
-    submodule_search_locations=[str(package_root)],
+runpy.run_path(
+    str(Path(__file__).resolve().parents[1] / "worker_bootstrap.py"),
+    run_name="__main__",
 )
-if package_spec is None or package_spec.loader is None:
-    raise ImportError("First-party probe package is unavailable")
-package = importlib.util.module_from_spec(package_spec)
-sys.modules[package_spec.name] = package
-package_spec.loader.exec_module(package)
 from patent_sar_extractor.workers.analysis_protocol import (  # noqa: E402 - select the first-party package before imports
     emit,
     prepare,

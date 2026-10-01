@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import importlib.metadata
+import runpy
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parents[2]))
+runpy.run_path(
+    str(Path(__file__).resolve().parents[1] / "worker_bootstrap.py"),
+    run_name="__main__",
+)
 from patent_sar_extractor.core.ocsr.model_identity import (
     printed_model_identity,  # noqa: E402
 )

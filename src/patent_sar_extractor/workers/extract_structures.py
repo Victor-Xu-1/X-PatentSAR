@@ -7,24 +7,26 @@ Usage:
     python extract_structures.py --pdf PATH --output DIR --pages 0 1 2 3
 """
 
-import os
-
 import argparse
 import json
 import logging
+import os
 import re
-import sys
+import runpy
 from pathlib import Path
 
 import fitz
 import numpy as np
 
 PACKAGE_IMPORT_ROOT = Path(__file__).resolve().parents[2]
-if str(PACKAGE_IMPORT_ROOT) not in sys.path:
-    sys.path.append(str(PACKAGE_IMPORT_ROOT))
+runpy.run_path(str(PACKAGE_IMPORT_ROOT / "patent_sar_extractor/worker_bootstrap.py"), run_name="__main__")
 
-from patent_sar_extractor.contracts import STRUCTURES_SCHEMA, STRUCTURES_SCHEMA_VERSION, artifact_identity
 from patent_sar_extractor.artifact_io import write_json_atomic
+from patent_sar_extractor.contracts import (
+    STRUCTURES_SCHEMA,
+    STRUCTURES_SCHEMA_VERSION,
+    artifact_identity,
+)
 
 logger = logging.getLogger("patent_sar_extractor.structure_extraction")
 
@@ -141,7 +143,9 @@ def extract_structures_from_pdf(
         # chunks that still exit successfully.
         configured_weights = os.environ.get("DECIMER_SEGMENTATION_MODEL_DIR", "").strip()
         if configured_weights:
-            from patent_sar_extractor.workers.environment_segmentation import configure_segmentation_model
+            from patent_sar_extractor.workers.environment_segmentation import (
+                configure_segmentation_model,
+            )
 
             configure_segmentation_model(configured_weights)
         else:

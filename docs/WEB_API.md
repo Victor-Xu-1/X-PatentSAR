@@ -86,6 +86,10 @@ never populated with demonstration values. Evidence summary is not an LLM claim.
 `{id,title,patent_id,created_at,updated_at,pdf:{available,page_count,sha256},
 is_historical,summary:{structures,activity_rows,matched_structures,confirmed,
 needs_review},acceptance:{state,errors},last_job}`.
+The additive summary fields `manually_reviewed` and `manual_review_pending` come
+from actual persisted SQLite review decisions. Approved/rejected rows count as
+reviewed; absent/needs-review decisions count as pending. Binding confidence and
+formal acceptance are independent and cannot supply manual decisions.
 Acceptance states: `not_run`, `accepted`, `failed`, `historical`.
 `historical` means a present artifact has absent/non-current identity, not that
 downstream artifacts are missing. A current checkpoint without failure remains
@@ -99,8 +103,17 @@ unverified originals or malformed evidence fail rather than masquerading as
 historical results; they never promote binding confidence.
 
 `Compound`:
-`{id,display_id,structure_id,structure_image_url,smiles,activities,source,
+`{id,display_id,structure_id,structure_image_url,redraw_image_url,smiles,recognition,activities,source,
 confidence,review,flags}`. IDs preserve the authoritative activity compound ID.
+`recognition`: `{status,quality_flag,model_fingerprint,token_confidence}`. Status
+is `not_run`, `valid`, `invalid` or `unavailable`; absent historical metadata is
+unavailable rather than reconstructed as model confidence. `token_confidence`
+is null or finite `{minimum,mean}` in [0,1] with minimum <= mean. It is an
+uncalibrated token observation, not correctness probability. A model fingerprint
+is null or the exact 64-character content SHA; binding scores remain separate.
+`redraw_image_url` is null or an authenticated derived RDKit PNG URL anchored to
+the current SMILES SHA. It is not an original crop, never updates artifacts and
+fails 404 without a bounded valid molecule or 409 for an outdated fingerprint.
 `activities`: `[{name,value,unit,target,assay,page}]` (nullable optional metadata).
 For additive `activity_sources` evidence in activity schema v1, presentation
 matches each cell by its exact field name and original scalar value before
@@ -137,13 +150,22 @@ points and must account for rotation. Missing original PDF has null image_url;
 historical OCR remains explicitly historical, never a fabricated original page.
 
 `Job`:
-`{id,project_id,status,created_at,started_at,finished_at,error,stages,can_resume}`.
+`{id,project_id,status,created_at,started_at,finished_at,error,stages,can_resume,history_available}`.
 Statuses: `queued`, `running`, `complete`, `failed`, `cancelled`, `interrupted`.
 `error`: `{code,message}` or null. `stages`:
-`[{name,status,count,duration_seconds}]` for the real stages
+`[{name,status,count,duration_seconds,reused_checkpoint,progress}]` for the real stages
 `classify,activity,locate,structures,bind,smiles,final,qa`.
 Stage statuses: `pending,running,ok,empty,failed,warnings`.
 Job completion is not necessarily formal QA acceptance. No guessed 100% progress.
+`progress` is null or the actual OCSR observation
+`{completed,total,cache_hits,failures,device,peak_rss_mb}`. Bounded integer counters
+are cross-validated; device/RSS stay null without a current measured observation.
+`reused_checkpoint` records an explicit core fact, not inferred duration. Every
+new/resumed job owns an independent output directory. Terminal history is sealed
+separately from mutable outputs; unreliable legacy shared-directory history
+reports `history_available=false` with empty stages instead of borrowing a later
+job's success. Resume transports only verified bounded upstream checkpoints and
+leaves old output and job status unchanged. API v1 and workspace SQLite v1 remain.
 For terminal jobs the frontend labels persisted `pending` stages as "未执行",
 not "等待", and stops animations for an interrupted `running` stage. No backend
 stage status is fabricated or promoted. Failed result views expose the blocking
@@ -167,6 +189,7 @@ No swallowed failures or success-shaped error responses.
 | GET `/projects/{id}/pages/{page}` | Page, one-based bounded page number |
 | GET `/projects/{id}/pages/{page}/image?scale=1.5` | Actual PNG, bounded scale/pixels/concurrency |
 | GET `/projects/{id}/structures/{compound_id}/image` | Actual safe crop PNG; missing image is 404 |
+| GET `/projects/{id}/structures/{compound_id}/redraw?fingerprint=` | Bounded RDKit PNG derived from current SMILES; not original evidence; stale fingerprint 409 |
 | GET `/projects/{id}/results?q=&confidence=&review=&target=&page=1&page_size=10` | `{items:Compound[],total,page,page_size,metrics:string[],targets:string[]}`; max page_size 100 |
 | POST `/projects/{id}/jobs` | `{allow_partial:false,advisory:false,resume_job_id:null,include_intermediates:false,force:false,task_note:""}` -> Job (202); strict QA and no paid advisory requests by default |
 | GET `/jobs?project_id=` | `{items:Job[]}` |

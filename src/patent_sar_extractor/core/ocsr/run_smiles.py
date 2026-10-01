@@ -25,12 +25,15 @@ Usage:
 import argparse
 import json
 import os
+import runpy
 import sys
 import time
 from pathlib import Path
 
-if str(Path(__file__).resolve().parents[3]) not in sys.path:
-    sys.path.append(str(Path(__file__).resolve().parents[3]))
+runpy.run_path(
+    str(Path(__file__).resolve().parents[2] / "worker_bootstrap.py"),
+    run_name="__main__",
+)
 
 from patent_sar_extractor.artifact_io import write_json_atomic
 from patent_sar_extractor.contracts import (

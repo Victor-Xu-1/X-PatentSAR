@@ -27,19 +27,88 @@ from patent_sar_extractor.core.structure_binder import bind
 
 
 class BindingModuleTests(unittest.TestCase):
+    def test_unlabelled_generic_segments_never_invent_compound_ids(self):
+        from patent_sar_extractor.core.binding_selection import select_generic_bindings
+        from patent_sar_extractor.core.binding_types import BinderConfig
+
+        segments = [
+            {
+                "id": "S1",
+                "idx": 1,
+                "page_no": 1,
+                "x0": 100.0,
+                "y0": 100.0,
+                "x1": 240.0,
+                "y1": 200.0,
+                "image_path": "missing.png",
+            }
+        ]
+        with fitz.open() as document:
+            document.new_page()
+            with (
+                patch(
+                    "patent_sar_extractor.core.binding_selection._precompute_visible_label_cache",
+                    return_value={},
+                ),
+                patch(
+                    "patent_sar_extractor.core.binding_selection._load_visible_label_cache",
+                    return_value={},
+                ),
+                patch(
+                    "patent_sar_extractor.core.binding_selection._refine_visible_label_cache_with_page_ocr",
+                    return_value={},
+                ),
+            ):
+                selection = select_generic_bindings(
+                    document,
+                    segments,
+                    {0: ""},
+                    {},
+                    ["Compound 1", "Compound 2"],
+                    [],
+                    "unknown",
+                    "unused",
+                    {},
+                    1,
+                    False,
+                    BinderConfig(),
+                )
+        self.assertEqual(selection.bindings, [])
+        self.assertNotEqual(selection.detected_style, "structure_sequence_fallback")
+
     def test_recognized_series_with_zero_pairings_reserves_its_sources(self):
         # Real series parser, no segmented molecules: withholding cannot give
         # a generic strategy ownership of these printed labels or pages.
         lines = {0: [(float(n * 80), f"I-{n}") for n in range(1, 7)]}
         with fitz.open() as document:
             document.new_page()
-            spatial = collect_spatial_bindings(document, [], {0: ""}, lines,
+            spatial = collect_spatial_bindings(
+                document,
+                [],
+                {0: ""},
+                lines,
                 [f"Compound {n}" for n in range(1, 7)],
-                {"authoritative_structure_table_pages": [0]}, frozenset({0}))
+                {"authoritative_structure_table_pages": [0]},
+                frozenset({0}),
+            )
         self.assertEqual(spatial.candidates, ())
         self.assertEqual(spatial.ownership.page_indices, frozenset({0}))
-        self.assertEqual(spatial.ownership.label_keys, frozenset(str(n) for n in range(1, 7)))
-        self.assertEqual(spatial.restore([{"cpd": "Compound 1", "structure_id": "synthetic-fallback", "page_no": 2}], ["Compound 1"]), [])
+        self.assertEqual(
+            spatial.ownership.label_keys, frozenset(str(n) for n in range(1, 7))
+        )
+        self.assertEqual(
+            spatial.restore(
+                [
+                    {
+                        "cpd": "Compound 1",
+                        "structure_id": "synthetic-fallback",
+                        "page_no": 2,
+                    }
+                ],
+                ["Compound 1"],
+            ),
+            [],
+        )
 
     def test_module_imports_are_explicit_acyclic_and_have_one_bind_and_writer(self):
         core = Path(__file__).resolve().parents[1] / "src/patent_sar_extractor/core"
@@ -190,6 +259,7 @@ class BindingModuleTests(unittest.TestCase):
                 structures.append(
                     {
                         "structure_id": f"S{number}",
+                        "structure_index": number,
                         "page_no": 1,
                         "bbox_pdf": bounds,
                         "image_path": str(image),
@@ -204,6 +274,7 @@ class BindingModuleTests(unittest.TestCase):
                 structures.append(
                     {
                         "structure_id": "S3A",
+                        "structure_index": 3,
                         "page_no": 2,
                         "bbox_pdf": bounds,
                         "image_path": str(image),
@@ -295,6 +366,7 @@ class BindingModuleTests(unittest.TestCase):
             payload["structures"].append(
                 {
                     "structure_id": "S3",
+                    "structure_index": 3,
                     "page_no": 2,
                     "bbox_pdf": [110, 125, 265, 205],
                     "image_path": payload["structures"][0]["image_path"],

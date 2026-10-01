@@ -86,12 +86,6 @@ def read_progress(files: SafeFiles) -> StageProgress | None:
         ) not in {int, float}:
             return None
         progress = StageProgress.model_validate(payload)
-        if (
-            progress.completed > progress.total
-            or progress.cache_hits > progress.completed
-            or progress.failures > progress.completed
-        ):
-            return None
         return progress
     except (WebError, ValueError, RecursionError, UnicodeError, ValidationError):
         # Progress is optional observation, not an execution or acceptance gate.

@@ -283,8 +283,8 @@ def run_snippet(
     python = get_python(env_name)
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-        f.write("import sys\n")
-        f.write(f"sys.path.append({str(PACKAGE_IMPORT_ROOT)!r})\n")
+        f.write("import runpy\n")
+        f.write(f"runpy.run_path({str(PACKAGE_IMPORT_ROOT / 'patent_sar_extractor' / 'worker_bootstrap.py')!r}, run_name='__main__')\n")
         f.write(code)
         script_path = f.name
 

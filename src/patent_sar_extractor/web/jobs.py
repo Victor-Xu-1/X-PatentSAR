@@ -13,6 +13,8 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
+from patent_sar_extractor import contracts as core
+
 from .attempts import ATTEMPT_VERSION, seed_checkpoints, spec_record
 from .checkpoints import LiveCheckpoints
 from .errors import WebError
@@ -146,8 +148,8 @@ class JobQueue:
                 and not candidate.is_symlink()
                 and candidate.resolve().is_relative_to(project_runs)
             ):
-                # Only raw, original-SHA-verified observations are reusable.
-                # Current rules regenerate every derived result in a new run.
+                # Compatible old observations survive independently of rules.
+                # Derived reuse below requires exact current identity as well.
                 from patent_sar_extractor.core.page_ocr_cache import (
                     cache_matches_pdf,
                 )
@@ -160,6 +162,37 @@ class JobQueue:
                 )
                 if cache_matches_pdf(cache, str(self.store.root / project["pdf_rel"])):
                     source_ocr_cache = str(candidate)
+                    with self.store.connect() as connection:
+                        row = connection.execute(
+                            "SELECT * FROM jobs WHERE project_id=? ORDER BY created_at DESC,rowid DESC LIMIT 1",
+                            (project_id,),
+                        ).fetchone()
+                    previous = dict(row) if row else None
+                    if (
+                        previous
+                        and previous["status"]
+                        in {"complete", "failed", "cancelled", "interrupted"}
+                        and not previous["identity"]
+                        and self.service.attempts.output(previous) == previous_root
+                        and core.artifact_identity_matches(
+                            cache.get("metadata"),
+                            core.PAGE_OCR_CACHE_SCHEMA,
+                            core.PAGE_OCR_CACHE_SCHEMA_VERSION,
+                        )
+                    ):
+                        try:
+                            old = self._spec(previous["id"])
+                        except WebError as exc:
+                            if exc.code != "resume_identity":
+                                raise
+                            logger.info(
+                                "Derived checkpoint reuse skipped for changed runtime identity"
+                            )
+                        else:
+                            # The same bounded transport as explicit resume.
+                            # This copies observations/checkpoints, not history,
+                            # acceptance or old task parameters. CLI gates remain.
+                            source_ocr_cache = ""
         if request.resume_job_id:
             previous = self.store.job(request.resume_job_id)
             if (

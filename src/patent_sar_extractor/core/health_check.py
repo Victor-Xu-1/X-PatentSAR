@@ -136,8 +136,8 @@ def run_checks(require_gpu: bool = True) -> dict:
                 "-c",
                 (
                     "import os\n"
-                    "import sys\n"
-                    f"sys.path.append({str(PACKAGE_IMPORT_ROOT)!r})\n"
+                    "import runpy\n"
+                    f"runpy.run_path({str(PACKAGE_IMPORT_ROOT / 'patent_sar_extractor/worker_bootstrap.py')!r}, run_name='__main__')\n"
                     "from decimer_segmentation import get_model\n"
                     "configured = os.environ.get('DECIMER_SEGMENTATION_MODEL_DIR', '').strip()\n"
                     "if configured:\n"

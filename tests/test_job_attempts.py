@@ -120,6 +120,37 @@ class AttemptTests(WebFixture, unittest.TestCase):
         with service.store.connect() as connection:
             self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 1)
 
+    def test_unidentified_original_keeps_empty_patent_id_but_requires_pdf_identity(
+        self,
+    ):
+        service, _, _, job, spec = self.draft()
+        self.assertEqual(spec.patent_id, "")
+        payload = json.loads(service.store.job(job.id)["spec"])
+        self.assertEqual(decode_spec(encode(payload)).sha256, spec.sha256)
+        for field in ("job_id", "project_id", "pdf_path", "output_dir", "sha256"):
+            with self.subTest(field=field), self.assertRaises(WebError):
+                decode_spec(encode({**payload, field: ""}))
+
+    def test_corrupt_terminal_progress_is_unavailable_not_promoted(self):
+        service, _, queue, job, spec = self.draft()
+        self.summary(spec)
+        self.finish(service, queue, job)
+        path = self.state / "job-history" / f"{job.id}.json"
+        payload = json.loads(path.read_text())
+        stage = next(value for value in payload["stages"] if value["name"] == "smiles")
+        stage["progress"] = {
+            "completed": 2,
+            "total": 1,
+            "cache_hits": 0,
+            "failures": 0,
+            "device": "cpu",
+            "peak_rss_mb": 10.0,
+        }
+        write_json_atomic(path, payload)
+        result = service.job(job.id)
+        self.assertFalse(result.history_available)
+        self.assertEqual(result.stages, [])
+
     def test_existing_attempt_directory_is_never_reused_or_overwritten(self):
         service, project, queue, job, spec = self.draft()
         self.summary(spec)
@@ -247,6 +278,29 @@ class AttemptTests(WebFixture, unittest.TestCase):
         copied.write_text("New attempt overwrite")
         self.assertEqual({path: path.read_bytes() for path in original}, original)
         self.assertEqual(service.job(job.id).status, "failed")
+
+    def test_normal_rerun_uses_same_verified_transport_but_force_is_fresh(self):
+        service, project, queue, job, spec = self.draft()
+        self.classification(spec)
+        self.summary(spec)
+        self.finish(service, queue, job)
+        before = service.job(job.id).model_dump()
+        first = queue.enqueue(project.id, JobRequest())
+        target = Path(decode_spec(service.store.job(first.id)["spec"]).output_dir)
+        self.assertNotEqual(str(target), spec.output_dir)
+        self.assertTrue((target / ARTIFACTS["classify"][0]).is_file())
+        self.assertEqual(
+            decode_spec(service.store.job(first.id)["spec"]).source_ocr_cache, ""
+        )
+        self.assertFalse((target / "pipeline_summary.json").exists())
+        self.assertEqual(service.job(job.id).model_dump(), before)
+        queue.cancel(first.id)
+        fresh = queue.enqueue(project.id, JobRequest(force=True))
+        fresh_root = Path(decode_spec(service.store.job(fresh.id)["spec"]).output_dir)
+        self.assertFalse((fresh_root / ARTIFACTS["classify"][0]).exists())
+        self.assertEqual(
+            decode_spec(service.store.job(fresh.id)["spec"]).source_ocr_cache, ""
+        )
 
     def test_changed_dependency_or_old_contract_is_not_copied(self):
         service, project, queue, job, spec = self.draft()

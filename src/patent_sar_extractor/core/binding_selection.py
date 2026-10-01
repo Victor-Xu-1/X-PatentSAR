@@ -166,45 +166,6 @@ def select_generic_bindings(
         detected_style = "heading_cn_reaction_triplet"
         logger.info(f"   ✅ 中文序列绑定完成: {len(final_bindings)} 个产物")
         goto_save = True
-    elif not all_blocks and processed_structures:
-        logger.warning("   未识别到化合物标题；按结构图页序生成 Structure-* 兜底绑定")
-        final_bindings = []
-        for idx, best_p in enumerate(
-            sorted(
-                processed_structures, key=lambda p: (p["page_no"], p["y0"], p["x0"])
-            ),
-            start=1,
-        ):
-            cpd = f"Structure-{idx:04d}"
-            final_bindings.append(
-                _attach_structure_geometry(
-                    {
-                        "cpd": cpd,
-                        "example_id": cpd,
-                        "example_num": idx,
-                        "cpd_num": idx,
-                        "prefix": "Structure",
-                        "structure_id": best_p["id"],
-                        "page_no": best_p["page_no"],
-                        "structure_index": best_p["idx"],
-                        "struct_x0": best_p["x0"],
-                        "struct_y0": best_p["y0"],
-                        "image_path": best_p["image_path"],
-                        "candidates": 1,
-                        "binding_rule": "scanned_pdf_structure_sequence_fallback",
-                    },
-                    best_p,
-                )
-            )
-        no_binding = []
-        unbound_pages = []
-        all_blocks = [
-            {"cpd": b["cpd"], "cpd_num": b["cpd_num"], "prefix": b["prefix"]}
-            for b in final_bindings
-        ]
-        detected_style = "structure_sequence_fallback"
-        logger.info(f"   ✅ 结构序列兜底绑定完成: {len(final_bindings)} 个结构")
-        goto_save = True
     else:
         goto_save = False
 
@@ -380,32 +341,6 @@ def select_generic_bindings(
         )
         logger.info(
             f"   🔗 OCR强绑定 + heading补漏合并: {before_merge} → {len(final_bindings)} 个化合物"
-        )
-
-    cpd_counts: Dict[str, int] = {}
-
-    for binding in final_bindings:
-        cpd = binding["cpd"]
-        cpd_counts[cpd] = cpd_counts.get(cpd, 0) + 1
-
-    cpd_suffix: Dict[str, int] = {}
-
-    for binding in final_bindings:
-        cpd = binding["cpd"]
-        if cpd_counts[cpd] > 1:
-            cpd_suffix[cpd] = cpd_suffix.get(cpd, 0) + 1
-            suffix = cpd_suffix[cpd]
-            # Update all name fields
-            binding["cpd"] = f"{cpd}-{suffix}"
-
-            binding["example_id"] = f"{binding.get('example_id', cpd)}-{suffix}"
-
-    renamed = sum(1 for v in cpd_counts.values() if v > 1)
-
-    if renamed:
-        logger.info(
-            f"   🏷 对 {renamed} 个重复化合物名添加后缀: "
-            f"{[f'{k}({v}x)' for k, v in cpd_counts.items() if v > 1]}"
         )
 
     if not include_intermediates:

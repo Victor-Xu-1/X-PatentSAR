@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import base64
+import csv
 import hashlib
 import importlib.metadata
+import io
 import json
 import os
 from pathlib import Path
@@ -17,6 +20,33 @@ def _digest(path: Path) -> str:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             result.update(chunk)
     return result.hexdigest()
+
+
+def _verified_sdk_sources(distribution) -> tuple[Path, list[tuple[str, str]]]:
+    sdk = Path(distribution.locate_file("DECIMER"))
+    records = {
+        row[0]: (row[1], row[2])
+        for row in csv.reader(io.StringIO(distribution.read_text("RECORD") or ""))
+        if len(row) == 3
+    }
+    inventory = []
+    for name in ("pre_process.py", "utils.py"):
+        path = sdk / name
+        if (
+            any(part.is_symlink() for part in (path, *path.parents))
+            or not path.is_file()
+        ):
+            raise ValueError("DECIMER support code is missing or unsafe")
+        digest = _digest(path)
+        expected_hash = "sha256=" + base64.urlsafe_b64encode(
+            bytes.fromhex(digest)
+        ).decode().rstrip("=")
+        if records.get(f"DECIMER/{name}") != (expected_hash, str(path.stat().st_size)):
+            raise ValueError(
+                "DECIMER support code differs from the hash-locked installed SDK"
+            )
+        inventory.append((name, digest))
+    return sdk, inventory
 
 
 def printed_model_identity(model_home: Path | None = None) -> dict:
@@ -51,10 +81,7 @@ def printed_model_identity(model_home: Path | None = None) -> dict:
     distribution = importlib.metadata.distribution("DECIMER")
     if distribution.version != "2.8.0":
         raise ValueError("This reviewed DECIMER adapter requires SDK 2.8.0")
-    sdk = Path(distribution.locate_file("DECIMER"))
-    sdk_inventory = [
-        (name, _digest(sdk / name)) for name in ("pre_process.py", "utils.py")
-    ]
+    sdk, sdk_inventory = _verified_sdk_sources(distribution)
     versions = {
         name: importlib.metadata.version(name)
         for name in ("DECIMER", "tensorflow", "numpy", "Pillow", "efficientnet")
@@ -64,6 +91,12 @@ def printed_model_identity(model_home: Path | None = None) -> dict:
         "adapter": [
             (name, _digest(Path(__file__).parent / name))
             for name in ("printed_model.py", "model_identity.py")
+        ]
+        + [
+            (
+                "worker_bootstrap.py",
+                _digest(Path(__file__).resolve().parents[2] / "worker_bootstrap.py"),
+            )
         ],
         "model": inventory,
         "sdk": sdk_inventory,
@@ -82,4 +115,9 @@ def printed_model_identity(model_home: Path | None = None) -> dict:
         "model_directory": str(root / "DECIMER_model"),
         "sdk_directory": str(sdk),
         "adapter_version": DECIMER_ADAPTER_VERSION,
+        "tokenizer_sha256": next(
+            digest
+            for name, digest in inventory
+            if name.endswith("/tokenizer_SMILES.pkl")
+        ),
     }

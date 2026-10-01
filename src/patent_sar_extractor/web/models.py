@@ -4,7 +4,14 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 
 Decision = Literal["approved", "rejected", "needs_review"]
 ConfidenceLevel = Literal["high", "medium", "review", "unknown"]
@@ -131,14 +138,24 @@ class StageProgress(DTO):
     cache_hits: int = Field(ge=0, le=1_000_000, strict=True)
     failures: int = Field(ge=0, le=1_000_000, strict=True)
     device: Literal["cpu", "gpu"] | None
-    peak_rss_mb: float | None = Field(ge=0, le=1_000_000_000)
+    peak_rss_mb: float | None = Field(ge=0, le=1_000_000_000, strict=True)
+
+    @model_validator(mode="after")
+    def check_counters(self) -> StageProgress:
+        if (
+            self.completed > self.total
+            or self.cache_hits > self.completed
+            or self.failures > self.completed
+        ):
+            raise ValueError("Stage progress counters are inconsistent")
+        return self
 
 
 class Stage(DTO):
     name: str
     status: StageStatus = "pending"
     count: int | None = Field(default=None, ge=0, le=1_000_000, strict=True)
-    duration_seconds: float | None = Field(default=None, ge=0)
+    duration_seconds: float | None = Field(default=None, ge=0, strict=True)
     reused_checkpoint: bool = Field(default=False, strict=True)
     progress: StageProgress | None = None
 
