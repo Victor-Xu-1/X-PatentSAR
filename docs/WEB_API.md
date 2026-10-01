@@ -213,6 +213,10 @@ search/filter/pagination, selection/export, review dialogs, job status/cancel/re
 project/PDF import and runtime settings must work, including empty/error/loading,
 keyboard/focus, refresh/deep-link and smaller viewport states. Unavailable ADMET
 has a clear disabled/informational state. No fictional molecules, assays or counts.
+Desktop pane heights use the actual flex layout, including expanded task parameters
+and connection/acceptance notices, rather than fixed viewport offsets. Only the
+table body scrolls; pagination remains inside the pane. Mobile keeps its stacked,
+vertically scrollable source/result layout.
 
 ## Initial Web delivery
 
@@ -221,11 +225,13 @@ has a clear disabled/informational state. No fictional molecules, assays or coun
 2. Complete: unify all pages and dialogs with the Claude-inspired light visual
    system, preserving X-PatentSAR identity; verify tokens, typography, controls,
    real data, keyboard interactions and representative viewports in Chromium.
-3. Locally complete: build the Web assets and wheel from a clean revision, verify
-   independent installed startup, security boundaries and all ten browser checks,
-   and push the authorized Apache-2.0 repository. GitHub Actions cannot
-   start its runner because the account reports failed payments or a spending
-   limit; remote CI is not marked passed. No account billing settings are changed.
+3. Complete for the initial Web delivery: build the Web assets and wheel from a
+   clean revision, verify independent installed startup, security boundaries and
+   the original browser checks, and push the authorized Apache-2.0 repository.
+   The earlier account-level runner blockage is resolved: subsequent task-branch
+   CI runs execute the current workflow. Each later candidate still requires its
+   own passing CI and local scientific/installed-browser evidence; past passes
+   are not a waiver. No account billing settings are changed.
 
 ### Complete task workflow iteration
 

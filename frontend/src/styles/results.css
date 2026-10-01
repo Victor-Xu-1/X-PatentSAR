@@ -216,7 +216,8 @@
 }
 .results-content {
   flex: 1;
-  min-height: var(--results-min-height);
+  /* The pane owns the viewport budget; a vh floor must not push out its footer. */
+  min-height: 0;
   display: flex;
   flex-direction: column;
   padding: 0 8px;
@@ -229,6 +230,7 @@
 }
 .pagination {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
   gap: 6px;

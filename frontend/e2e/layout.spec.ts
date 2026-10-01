@@ -1,9 +1,10 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import type { Project, Results } from '../src/api/types';
+import type { Job, Project, Results } from '../src/api/types';
 
 const historyId = process.env.PATENTSAR_E2E_HISTORY_PROJECT_ID;
 const sourceId = process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID;
+const failedJobId = process.env.PATENTSAR_E2E_FAILED_JOB_ID;
 async function fittedPage(page: Page) {
   const image = page.locator('.page-canvas > img');
   await expect(image).toBeVisible();
@@ -88,6 +89,40 @@ for (const viewport of [
     });
   });
 }
+test('actual job parameters can expand without pushing desktop panes below the viewport', async ({
+  page,
+}) => {
+  test.skip(!failedJobId, 'Requires the existing controlled real CLI failure');
+  await page.goto('/#/jobs');
+  await expect(page.getByText(/^v\d/)).toBeVisible();
+  const response = await page.request.get(`/api/v1/jobs/${encodeURIComponent(failedJobId!)}`);
+  expect(response.ok()).toBe(true);
+  const job = (await response.json()) as Job;
+  expect(job.status).toBe('failed');
+  await page.goto(`/#/projects/${job.project_id}`);
+  const options = page.locator('.job-options-record');
+  await expect(options).toBeVisible();
+  for (const viewport of [
+    { width: 1672, height: 942 },
+    { width: 1280, height: 800 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await options.locator('summary').click();
+    await expect(options).toHaveAttribute('open', '');
+    for (const selector of ['.results-pane', '.pdf-pane']) {
+      const pane = await page.locator(selector).boundingBox();
+      expect(pane).not.toBeNull();
+      expect(pane!.height).toBeGreaterThan(300);
+      expect(
+        pane!.y + pane!.height,
+        `${selector} must include actual expanded job height`,
+      ).toBeLessThanOrEqual(viewport.height);
+    }
+    await options.locator('summary').click();
+    await expect(options).not.toHaveAttribute('open', '');
+  }
+});
+
 test('actual original fit-width, resizing, source jump and exact annotation geometry', async ({
   page,
 }) => {
