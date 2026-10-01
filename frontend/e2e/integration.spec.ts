@@ -166,7 +166,11 @@ test.describe('real local backend integration', () => {
     }
     if (compound.structure_image_url) {
       await page.getByLabel(`放大 ${compound.display_id} 结构裁图`).click();
-      await expect(page.getByRole('dialog').getByRole('img')).toBeVisible();
+      await expect(
+        page
+          .getByRole('dialog')
+          .getByRole('img', { name: `${compound.display_id} 的原始结构裁图`, exact: true }),
+      ).toBeVisible();
       await page.getByLabel('关闭对话框').click();
     }
     await page.getByLabel(`选择化合物 ${compound.display_id}`, { exact: true }).check();

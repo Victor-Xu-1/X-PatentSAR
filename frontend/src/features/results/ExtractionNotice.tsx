@@ -1,12 +1,13 @@
 import type { Job, Project } from '../../api/types';
 import { acceptanceLabels, stageLabels } from '../../model/presentation';
-import { stoppedJob } from '../../model/extraction';
+import { observedStages, stoppedJob } from '../../model/extraction';
 
 export function ExtractionNotice({ project, job }: { project: Project; job: Job | null }) {
   const failed = project.acceptance.state === 'failed' || job?.status === 'failed';
-  const failedStage = job?.stages.find((stage) => stage.status === 'failed');
+  const trustedStages = observedStages(job);
+  const failedStage = trustedStages.find((stage) => stage.status === 'failed');
   const unexecuted = stoppedJob(job)
-    ? (job?.stages.filter((stage) => stage.status === 'pending') ?? [])
+    ? trustedStages.filter((stage) => stage.status === 'pending')
     : [];
   const errors = project.acceptance.errors.length
     ? project.acceptance.errors

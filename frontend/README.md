@@ -45,7 +45,7 @@ npm run build
 ## 模块边界
 
 - `src/api`：契约类型、运行时数据校验、会话 bootstrap、cookie / CSRF、请求期限和响应大小边界。
-- `src/model`：刷新可复现的 hash 路由、来源展示与 PDF 上传校验。
+- `src/model`：刷新可复现的 hash 路由、来源展示与 PDF 上传校验；`results.ts` 只做指标目录、实验上下文分组与独立状态投影。
 - `src/hooks`：中止过期读取、错误可见的加载状态、仅活跃任务轮询、搜索防抖。
 - `src/components`：导航、语义化反馈、键盘 tabs、原生 modal dialog、受限同源图片。
 - `src/features`：工作区、PDF 视图、真实结果、项目、任务与环境管理。
@@ -59,14 +59,41 @@ npm run build
 ## 数据与操作边界
 
 页面原图、裁图、文本、标注、统计和任务阶段都来自 API。历史结果保留来源提示，缺失原始
-PDF 时不制造页面。活性值原样展示，等级值不会强行改成 IC50。置信度缺少数值时显示未知/无数值。
+PDF 时不制造页面。活性值原样展示，等级值不会强行改成 IC50。绑定证据缺少数值时显示未知/无数值。
 人工复核使用 `expected_revision`，409 后保留草稿，要求显式读取最新版本再保存；永不改变核心 QA。
 
 服务端支持关键词、靶点、置信度、复核状态和分页。现有 API 未提供 metric 查询参数，
-“显示活性指标”只控制每个化合物行内的指标展示，不改变服务端化合物总数。
+“指标列”提供多选与“显示全部指标”，只控制显示，不改变服务端化合物总数、分页、选择或导出。
+目录合并服务器 metrics 与当前页实际 Activity 名称，避免遗漏目录未列出的真实指标。
+默认紧凑视图，舒适视图展示完整实验描述。相同 target/assay 上下文只显示一次，以实验编号
+对应各指标值；每个观察仍保留自己的单位、值、页码与来源按钮，不借用结构页或同实验其他指标页。
+同名指标的多个观察不会合并或删除。活性来源跳转打开原文并清除结构标注选择；结构来源仍走原有标注定位。
+密度与指标选择是当前结果视图的展示状态，刷新后回到默认紧凑/全部指标，不写个人浏览器存储。
 选择跨结果页保留，修改搜索/筛选会清空选择。导出选择明确发送真实 IDs；“全部结果”发送空 IDs，
 明确不受当前表格筛选限制。“当前筛选结果”通过既有 export 端点的 q/confidence/review/target
 查询参数导出所有匹配页，不发送分页参数，不把当前页当作全部匹配结果。未接受的项目始终提示仅供复核。
+
+绑定证据（confidence）、识别校验（recognition）、人工复核（review）是三种独立状态。
+RDKit 的 valid 仅标为“可解析”，不代表识别与原图一致，更不是人工通过。模型 token confidence
+保留服务端最小值/均值，并明确“未校准，不是结构正确率”。未提供识别字段时显示“识别状态未知”，
+不根据已有 SMILES 或高绑定证据推断识别结论。
+顶部 needs_review 明示为“绑定待核验”；manually_reviewed 只计 approved/rejected 的已判定记录，
+manual_review_pending 计 review=null 或 needs_review。两个计数直接来自控制方真实 SQL 聚合，
+未提供时显示“未知”，不从当前页、活动行数或绑定统计估算。
+因此统计条使用“人工待复核”，包括已有注记但仍需复核的化合物；六项统计保持单行紧凑条，
+窄屏仅在条内横向滚动，不叠成多排卡片挤占结果表高度。DECIMER 负责识别，RDKit 负责校验与重绘。
+
+点击编号即可打开结构详情，即使原始裁图尚未生成。原始 PDF crop 与规范化 SMILES 的 RDKit
+PNG 重绘始终并排，标明原文证据与派生图的区别；无 SMILES、无图、无效 URL、图片加载失败
+均有独立状态，不把原图当重绘。redraw_image_url 由服务端提供，只接受同源
+`/api/v1/projects/{project_id}/structures/{compound_id}/redraw`，完整保留 content digest 查询参数，
+从而随新运行内容更新图片。独立 DECIMER/ADMET 分析不会改写这里的核心 canonical SMILES 或任何产物。
+
+Stage 的 progress 与 reused_checkpoint 仅展示服务端观察：completed/total、缓存命中、失败数、
+CPU/GPU、峰值 RSS（MB）及检查点复用；没有进度、设备、RSS 或复用字段时明确未知/未提供。
+资源与缓存详情由可键盘打开的阶段控件展示，不估计百分比或 ETA。history_available=false 时
+明确旧共享目录无法可靠还原本次历史，不展示该目录的成功阶段、计数或进度；字段缺失同样不推断成功。
+继续使用现有 job 读取/轮询链路，未增加进度 poller；仅进度/耗时变化不会重新查询整张结果表。
 
 读取只对网络故障/502/503/504 有一次有界退避重试；写入不自动重试。
 不确定写入先刷新检查状态，不应直接再次提交。身份过期可通过重新加载建立会话。
@@ -98,6 +125,8 @@ PATENTSAR_E2E_BASE_URL=http://127.0.0.1:18765 npm run e2e
 - `PATENTSAR_E2E_FAILED_JOB_ID`：真实失败任务，验证失败阶段/错误没有被升级成成功。
 - `PATENTSAR_E2E_OUTPUT_DIR`：默认 `/srv/wsl/tmp/x-patentsar-ui-e2e`，所有 trace/截图留在 E 盘外部产物目录。
 - `PATENTSAR_E2E_SOURCE_PROJECT_ID`：附有真实原文和来源结构的项目，进行只读页图/标注比例验证。
+- `PATENTSAR_E2E_UNAVAILABLE_HISTORY_JOB_ID`：真实 history_available=false 的旧任务；只读检查不会把共享目录阶段显示为本次成功。
+- `PATENTSAR_E2E_PROGRESS_JOB_ID`：带真实 progress 的已结束任务；只读检查阶段观察与设备/缓存/RSS，不伪造进度。
 - `PATENTSAR_E2E_RUN_ANALYSIS=1`：明确允许有界本地 CPU 分子推理；不可用或失败不记为通过。
 - `PATENTSAR_E2E_ANALYSIS_COMPOUND_ID`：专用历史项目中可用的真实结构裁图标识。
 - `PATENTSAR_E2E_ENV_OPERATIONS=1`：在独占 QA 环境状态中进行安装工具的真实轻量检测，验证持久化历史与刷新；不安装软件或下载模型。
@@ -119,6 +148,13 @@ PATENTSAR_E2E_BASE_URL=http://127.0.0.1:18765 npm run e2e
 原文、表格、输入页和弹窗不溢出。布局保持在 hash，不依赖个人浏览器存储。
 
 不并发安装浏览器；共享 Chromium 缓存由主线程管理。
+
+`results-workspace.spec.ts` 是本次结果复核路径的只读真实服务回归：三个视口实际测量紧凑/舒适行高，
+核对指标隐藏/恢复与选择保留、独立活性来源和原文刷新、原 crop/重绘 PNG 并排及人工统计。
+重绘用例需要当前第一页有服务端实际提供 crop、canonical SMILES 和 redraw_image_url 的化合物；
+没有这些真实前提会失败或按未提供项目参数显式跳过，不借用样例图片/API 拦截。
+任务历史与进度用例需以上真实任务参数，未指定时显式跳过。测试与生成证据必须绑定本次实际部署版本。
+Linux 门禁、格式归一化和构建在原生 Node 环境运行；Windows Node 或源码审阅不能替代这些证据。
 
 ## 依赖与许可证
 

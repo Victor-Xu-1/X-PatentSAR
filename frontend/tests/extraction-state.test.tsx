@@ -33,12 +33,12 @@ const failedProject = {
 function tableProps() {
   return {
     offset: 0,
-    metric: '',
     selected: new Set<string>(),
     focusedId: null,
     onSelect: vi.fn(),
     onSelectPage: vi.fn(),
     onJump: vi.fn(),
+    onActivitySource: vi.fn(),
     onCrop: vi.fn(),
     onReview: vi.fn(),
   };
@@ -83,7 +83,7 @@ describe('current extraction failure presentation', () => {
       />,
     );
     for (const page of [344, 345, 352])
-      expect(screen.getByText(`活性来源第 ${page} 页`)).toBeVisible();
+      expect(screen.getByTitle(`活性来源第 ${page} 页`)).toBeVisible();
     for (const label of [
       'Cereblon',
       'HTRF',
@@ -93,9 +93,9 @@ describe('current extraction failure presentation', () => {
       '靶点未提供',
     ])
       expect(screen.getByText(label)).toBeVisible();
-    expect(screen.queryByText('活性来源第 4 页')).not.toBeInTheDocument();
-    expect(screen.getByText('Cereblon HTRF grade = +++')).toBeVisible();
-    expect(screen.getByText('Anti-proliferation activity grade = +++')).toBeVisible();
+    expect(screen.queryByTitle('活性来源第 4 页')).not.toBeInTheDocument();
+    expect(screen.getByTitle('Cereblon HTRF grade = +++')).toHaveTextContent('+++');
+    expect(screen.getByTitle('Anti-proliferation activity grade = +++')).toHaveTextContent('+++');
   });
   it('exposes the actual blocking stage and raw-candidate warning without a historical claim', () => {
     render(
@@ -105,7 +105,6 @@ describe('current extraction failure presentation', () => {
         job={failedJob}
         resource={{ data: results, loading: false, error: null, reload: vi.fn() }}
         filters={{ q: '', confidence: '', review: '', target: '', page: 1, page_size: 10 }}
-        onMetric={vi.fn()}
         onFilters={vi.fn()}
         onExport={vi.fn()}
         onUpload={vi.fn()}

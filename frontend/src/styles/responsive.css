@@ -18,12 +18,6 @@
     width: 17px;
     height: 17px;
   }
-  .metric-icon {
-    display: none;
-  }
-  .metric-card {
-    padding: 2px 5px;
-  }
   .metric-card > div {
     gap: 4px;
   }
@@ -74,6 +68,18 @@
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
+  }
+  .stage-overview {
+    position: relative;
+  }
+  .stage-observation {
+    position: static;
+  }
+  .stage-observation-detail,
+  .stage:nth-last-child(-n + 3) .stage-observation-detail {
+    left: 0;
+    right: auto;
+    top: 100%;
   }
   .workflow-panel {
     align-items: flex-start;
@@ -168,9 +174,6 @@
   }
   .layout-toolbar > span {
     display: none;
-  }
-  .metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .results-heading > span {
     display: none;

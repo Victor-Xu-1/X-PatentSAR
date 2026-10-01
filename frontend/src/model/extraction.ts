@@ -5,7 +5,13 @@ export function stoppedJob(job: Job | null): boolean {
   return Boolean(job && job.status !== 'running' && job.status !== 'queued');
 }
 
+export function observedStages(job: Job | null): Job['stages'] {
+  return job?.history_available === true ? job.stages : [];
+}
+
 export function stageStatusText(job: Job | null, stage: Job['stages'][number] | undefined): string {
+  if (job && job.history_available !== true)
+    return job.history_available === false ? '历史阶段不可用' : '阶段状态未知';
   if (!stage) return job ? '状态未提供' : '尚未启动';
   if (stoppedJob(job)) {
     if (stage.status === 'pending') return '未执行';

@@ -3,19 +3,13 @@ import type { Filters } from '../../api/types';
 import { confidenceLabels, reviewLabels } from '../../model/presentation';
 export function ResultFilters({
   filters,
-  metrics,
   targets,
-  metric,
-  onMetric,
   onChange,
   total,
   disabled,
 }: {
   filters: Filters;
-  metrics: string[];
   targets: string[];
-  metric: string;
-  onMetric: (metric: string) => void;
   onChange: (patch: Partial<Filters>) => void;
   total: number | null;
   disabled: boolean;
@@ -53,12 +47,12 @@ export function ResultFilters({
           ))}
         </select>
         <select
-          aria-label="筛选置信度"
+          aria-label="筛选绑定证据"
           value={filters.confidence}
           disabled={disabled}
           onChange={(e) => onChange({ confidence: e.target.value, page: 1 })}
         >
-          <option value="">全部置信度</option>
+          <option value="">全部绑定证据</option>
           {Object.entries(confidenceLabels).map(([value, label]) => (
             <option key={value} value={value}>
               {label}
@@ -76,18 +70,6 @@ export function ResultFilters({
             <option key={value} value={value}>
               {label}
             </option>
-          ))}
-        </select>
-        <select
-          aria-label="显示活性指标"
-          title="仅控制行内指标显示，不改变化合物总数"
-          value={metric}
-          disabled={disabled}
-          onChange={(e) => onMetric(e.target.value)}
-        >
-          <option value="">全部活性指标</option>
-          {metrics.map((name) => (
-            <option key={name}>{name}</option>
           ))}
         </select>
       </div>

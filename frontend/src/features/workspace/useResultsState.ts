@@ -3,6 +3,7 @@ import { api } from '../../api';
 import type { Filters, Job } from '../../api/types';
 import { useDebounced } from '../../hooks/useDebounced';
 import { useResource } from '../../hooks/useResource';
+import { observedStages } from '../../model/extraction';
 
 export function useResultsState(
   id: string | null,
@@ -18,7 +19,6 @@ export function useResultsState(
     page: 1,
     page_size: 25,
   });
-  const [metric, setMetric] = useState('');
   const [selected, setSelected] = useState(new Set<string>());
   const [previousQuery, setPreviousQuery] = useState(query);
   if (previousQuery !== query) {
@@ -40,7 +40,8 @@ export function useResultsState(
     ? JSON.stringify([
         job.id,
         job.status,
-        job.stages.map(({ name, status, count }) => [name, status, count]),
+        job.history_available,
+        observedStages(job).map(({ name, status, count }) => [name, status, count]),
       ])
     : null;
   useEffect(() => {
@@ -90,8 +91,6 @@ export function useResultsState(
   return {
     resource,
     filters,
-    metric,
-    setMetric,
     selected,
     changeFilters,
     toggle,

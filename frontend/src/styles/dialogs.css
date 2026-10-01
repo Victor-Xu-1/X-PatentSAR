@@ -172,6 +172,40 @@
   margin: 0;
   overflow-wrap: anywhere;
 }
+.crop-comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.crop-comparison figure {
+  margin: 0;
+  min-width: 0;
+}
+.crop-comparison figcaption {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.crop-comparison p {
+  font-size: 11px;
+  line-height: 1.55;
+  margin-top: 6px;
+}
+.recognition-details {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface-subtle);
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+}
+.recognition-details h3 {
+  font-size: 13px;
+}
+.recognition-details > .badge {
+  justify-self: start;
+}
 .danger-button {
   background: var(--danger);
   color: var(--on-primary);

@@ -79,7 +79,7 @@ describe('application bootstrap, routes and failure states', () => {
     const transport = contractTransport();
     vi.stubGlobal('fetch', transport);
     render(<App />);
-    expect(await screen.findByText('抑制等级 = ++')).toBeVisible();
+    expect(await screen.findByTitle('抑制等级 = ++')).toBeVisible();
     expect(await screen.findByText('<script>untrusted OCR</script>')).toBeVisible();
     expect(screen.getByLabelText('原始文档页码')).toHaveValue('4');
     expect(transport.mock.calls.every(([, init]) => init?.credentials === 'same-origin')).toBe(
@@ -94,7 +94,7 @@ describe('application bootstrap, routes and failure states', () => {
     vi.stubGlobal('fetch', contractTransport());
     render(<App />);
     await userEvent.click(await screen.findByText('打开工作台'));
-    expect(await screen.findByText('抑制等级 = ++')).toBeVisible();
+    expect(await screen.findByTitle('抑制等级 = ++')).toBeVisible();
     await waitFor(() => expect(window.location.hash).toContain(project.id));
   });
   it('shows a connection failure with an explicit reconnect path and no fallback data', async () => {

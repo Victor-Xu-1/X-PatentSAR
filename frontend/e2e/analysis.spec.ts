@@ -132,7 +132,9 @@ test('approved real crop DECIMER recognition feeds analysis without altering ext
     await page.request.get(`/api/v1/projects/${projectId}`)
   ).json()) as Project;
   await row.locator('.crop-button').click();
-  await expect(page.getByRole('dialog').getByRole('img')).toBeVisible();
+  await expect(
+    page.getByRole('dialog').getByRole('img', { name: /的原始结构裁图$/, exact: true }),
+  ).toBeVisible();
   const recognition = page.waitForResponse((response) => response.url().endsWith('/recognize'), {
     timeout: 195_000,
   });

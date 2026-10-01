@@ -13,12 +13,12 @@ function tableProps() {
   return {
     rows: [compound],
     offset: 0,
-    metric: '',
     selected: new Set<string>(),
     focusedId: null,
     onSelect: vi.fn(),
     onSelectPage: vi.fn(),
     onJump: vi.fn(),
+    onActivitySource: vi.fn(),
     onCrop: vi.fn(),
     onReview: vi.fn(),
   };
@@ -26,7 +26,7 @@ function tableProps() {
 describe('real-value presentation and selection', () => {
   it('shows grade values, unknown confidence and real source, with no fake predictions', () => {
     render(<ResultsTable {...tableProps()} />);
-    expect(screen.getByText('抑制等级 = ++')).toBeVisible();
+    expect(screen.getByTitle('抑制等级 = ++')).toHaveTextContent('++');
     expect(screen.getByText('未知')).toBeVisible();
     expect(screen.getByText('无数值分数')).toBeVisible();
     expect(screen.getByText('第 4 页')).toBeVisible();
@@ -65,20 +65,16 @@ describe('real-value presentation and selection', () => {
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
   it('filters displayed metrics without inventing activities', () => {
-    render(<ResultsTable {...tableProps()} metric="IC50" />);
+    render(<ResultsTable {...tableProps()} metrics={['IC50']} />);
     expect(screen.getByText('该指标无数据')).toBeVisible();
-    expect(screen.queryByText('抑制等级 = ++')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('抑制等级 = ++')).not.toBeInTheDocument();
   });
   it('maps target/confidence/review filters to the contract', () => {
     const onChange = vi.fn();
-    const onMetric = vi.fn();
     render(
       <ResultFilters
         filters={{ q: '', confidence: '', review: '', target: '', page: 3, page_size: 10 }}
-        metrics={results.metrics}
         targets={results.targets}
-        metric=""
-        onMetric={onMetric}
         onChange={onChange}
         total={1}
         disabled={false}
@@ -86,12 +82,10 @@ describe('real-value presentation and selection', () => {
     );
     fireEvent.change(screen.getByLabelText('筛选靶点'), { target: { value: '测试靶点' } });
     expect(onChange).toHaveBeenLastCalledWith({ target: '测试靶点', page: 1 });
-    fireEvent.change(screen.getByLabelText('筛选置信度'), { target: { value: 'unknown' } });
+    fireEvent.change(screen.getByLabelText('筛选绑定证据'), { target: { value: 'unknown' } });
     expect(onChange).toHaveBeenLastCalledWith({ confidence: 'unknown', page: 1 });
     fireEvent.change(screen.getByLabelText('筛选复核状态'), { target: { value: 'needs_review' } });
     expect(onChange).toHaveBeenLastCalledWith({ review: 'needs_review', page: 1 });
-    fireEvent.change(screen.getByLabelText('显示活性指标'), { target: { value: '抑制等级' } });
-    expect(onMetric).toHaveBeenCalledWith('抑制等级');
   });
   it('disables pagination boundaries and resets size changes to page one', () => {
     const onChange = vi.fn();
@@ -104,8 +98,8 @@ describe('real-value presentation and selection', () => {
   });
   it('empty metrics contain no invented counts', () => {
     render(<Metrics project={null} />);
-    expect(screen.getAllByText('—')).toHaveLength(4);
-    expect(screen.getAllByText('等待项目数据')).toHaveLength(4);
+    expect(screen.getAllByText('—')).toHaveLength(6);
+    expect(screen.getAllByText('等待项目数据')).toHaveLength(6);
   });
   it('first empty workspace is complete and extraction is disabled', () => {
     render(

@@ -23,6 +23,50 @@
   flex: 1;
   min-width: 0;
 }
+.stage-overview {
+  flex: 1;
+  min-width: 0;
+}
+.stage-history-notice {
+  font-size: 10px;
+  color: var(--muted);
+  margin-bottom: 4px;
+  overflow-wrap: anywhere;
+}
+.stage-observation {
+  position: relative;
+  min-width: 0;
+}
+.stage-observation summary {
+  cursor: pointer;
+  list-style: none;
+}
+.stage-observation summary::-webkit-details-marker {
+  display: none;
+}
+.stage-observation summary small {
+  white-space: normal;
+  line-height: 1.4;
+}
+.stage-observation-detail {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  z-index: 8;
+  width: min(270px, 70vw);
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  box-shadow: var(--shadow-paper);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.stage:nth-last-child(-n + 3) .stage-observation-detail {
+  right: 0;
+  left: auto;
+}
 .stage {
   display: flex;
   align-items: center;

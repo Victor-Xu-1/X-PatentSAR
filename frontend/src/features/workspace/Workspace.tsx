@@ -106,14 +106,22 @@ export function Workspace({
               job,
               resource: results.resource,
               filters: { ...results.filters, q: query },
-              metric: results.metric,
               selected: results.selected,
               focusedId: route.compoundId,
-              onMetric: results.setMetric,
               onFilters: results.changeFilters,
               onSelect: results.toggle,
               onSelectPage: results.selectPage,
               onJump: jump,
+              onActivitySource: (activity) => {
+                if (activity.page !== null)
+                  navigate({
+                    ...route,
+                    page: activity.page,
+                    tab: 'original',
+                    compoundId: null,
+                    layout: { ...layout, pdfVisible: true },
+                  });
+              },
               onCrop: setCrop,
               onReview: setReview,
               onExport: () => setExporting(true),

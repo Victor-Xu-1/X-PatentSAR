@@ -1,5 +1,8 @@
 import { Download } from 'lucide-react';
-import type { Compound, Filters, Job, Project, Results } from '../../api/types';
+import { useState } from 'react';
+import type { Activity, Compound, Filters, Job, Project, Results } from '../../api/types';
+import { availableMetrics } from '../../model/results';
+import type { ResultDensity } from '../../model/results';
 import type { Resource } from '../../hooks/useResource';
 import { Empty, ErrorNotice, Loading } from '../../components/Feedback';
 import { Metrics } from './Metrics';
@@ -7,20 +10,20 @@ import { ResultFilters } from './ResultFilters';
 import { ResultsTable } from './ResultsTable';
 import { Pagination } from './Pagination';
 import { ExtractionNotice } from './ExtractionNotice';
+import { ResultDisplayControls } from './ResultDisplayControls';
 
 export function ResultsPane({
   project,
   job = null,
   resource,
   filters,
-  metric,
   selected,
   focusedId,
-  onMetric,
   onFilters,
   onSelect,
   onSelectPage,
   onJump,
+  onActivitySource,
   onCrop,
   onReview,
   onExport,
@@ -30,39 +33,48 @@ export function ResultsPane({
   job?: Job | null;
   resource: Resource<Results>;
   filters: Filters;
-  metric: string;
   selected: Set<string>;
   focusedId: string | null;
-  onMetric: (metric: string) => void;
   onFilters: (patch: Partial<Filters>) => void;
   onSelect: (id: string) => void;
   onSelectPage: (checked: boolean) => void;
   onJump: (row: Compound) => void;
+  onActivitySource: (activity: Activity) => void;
   onCrop: (row: Compound) => void;
   onReview: (row: Compound) => void;
   onExport: () => void;
   onUpload: () => void;
 }) {
   const result = resource.data;
+  const [density, setDensity] = useState<ResultDensity>('compact');
+  const [selection, setSelection] = useState<string[] | null>(null);
+  const metrics = availableMetrics(result?.metrics ?? [], result?.items ?? []);
+  const visibleMetrics =
+    selection === null ? metrics : metrics.filter((name) => selection.includes(name));
   return (
     <div className="result-data-view">
       <Metrics project={project} />
       {project && <ExtractionNotice project={project} job={job} />}
       <ResultFilters
         filters={filters}
-        metrics={result?.metrics ?? []}
         targets={result?.targets ?? []}
-        metric={metric}
-        onMetric={onMetric}
         onChange={onFilters}
         total={result?.total ?? null}
+        disabled={!project}
+      />
+      <ResultDisplayControls
+        metrics={metrics}
+        visibleMetrics={visibleMetrics}
+        density={density}
+        onDensity={setDensity}
+        onMetrics={setSelection}
         disabled={!project}
       />
       <div className="selection-bar">
         <span>
           {selected.size
             ? `已选择 ${selected.size} 个化合物（跨页保留）`
-            : '点击结构查看裁图 · 点击来源返回原文'}
+            : '点击编号对照原图与重绘 · 活性页码返回独立来源'}
         </span>
         <button type="button" onClick={onExport} disabled={!project || !result?.total}>
           <Download size={14} />
@@ -88,12 +100,14 @@ export function ResultsPane({
           <ResultsTable
             rows={result.items}
             offset={(result.page - 1) * result.page_size}
-            metric={metric}
+            metrics={visibleMetrics}
+            density={density}
             selected={selected}
             focusedId={focusedId}
             onSelect={onSelect}
             onSelectPage={onSelectPage}
             onJump={onJump}
+            onActivitySource={onActivitySource}
             onCrop={onCrop}
             onReview={onReview}
           />
