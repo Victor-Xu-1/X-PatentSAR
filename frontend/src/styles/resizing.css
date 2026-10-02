@@ -1,0 +1,70 @@
+.resize-handle {
+  appearance: none;
+  cursor: col-resize;
+  touch-action: none;
+  min-width: 8px;
+  width: 100%;
+  height: 100%;
+  outline-offset: -2px;
+  border: 0;
+  border-radius: 0;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+.resize-handle::-webkit-slider-thumb {
+  appearance: none;
+  width: 2px;
+  height: 36px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--line-strong);
+}
+.resize-handle::-moz-range-thumb {
+  width: 2px;
+  height: 36px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--line-strong);
+}
+.resize-handle:hover,
+.resize-handle.dragging {
+  background: var(--surface-hover);
+}
+.resize-handle:focus-visible {
+  outline: 2px solid var(--accent-strong);
+}
+.resize-handle:hover::-webkit-slider-thumb,
+.resize-handle.dragging::-webkit-slider-thumb,
+.resize-handle:focus-visible::-webkit-slider-thumb {
+  background: var(--accent-strong);
+}
+.resize-handle:hover::-moz-range-thumb,
+.resize-handle.dragging::-moz-range-thumb,
+.resize-handle:focus-visible::-moz-range-thumb {
+  background: var(--accent-strong);
+}
+body:has(.resize-handle.dragging) {
+  cursor: col-resize;
+  user-select: none;
+}
+.sidebar-divider {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  z-index: 20;
+}
+.column-resizer {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 8px;
+  z-index: 3;
+}
+.column-resizer::-webkit-slider-thumb {
+  height: 100%;
+  background: var(--line);
+}
+.column-resizer::-moz-range-thumb {
+  height: 100%;
+  background: var(--line);
+}

@@ -1,4 +1,4 @@
-import { FolderOpen, Menu, Upload, X } from 'lucide-react';
+import { FolderOpen, Menu, PanelLeftClose, PanelLeftOpen, Upload, X } from 'lucide-react';
 import type { Project } from '../api/types';
 import type { View } from '../model/route';
 const viewLabels: Record<View, string> = {
@@ -17,6 +17,8 @@ export function Header({
   disabled,
   menuOpen,
   contentInert = false,
+  mobile = false,
+  navigationCollapsed = false,
 }: {
   view: View;
   project: Project | null;
@@ -26,18 +28,30 @@ export function Header({
   disabled: boolean;
   menuOpen: boolean;
   contentInert?: boolean;
+  mobile?: boolean;
+  navigationCollapsed?: boolean;
 }) {
   return (
     <header className="topbar">
       <button
         type="button"
         className="icon-button menu-toggle"
-        aria-label="展开或收起导航"
-        aria-expanded={menuOpen}
+        aria-label={mobile ? '展开或收起导航' : navigationCollapsed ? '展开导航栏' : '收起导航栏'}
+        aria-expanded={mobile ? menuOpen : !navigationCollapsed}
         aria-controls="primary-sidebar"
         onClick={onMenu}
       >
-        {menuOpen ? <X size={20} /> : <Menu size={20} />}
+        {mobile ? (
+          menuOpen ? (
+            <X size={20} />
+          ) : (
+            <Menu size={20} />
+          )
+        ) : navigationCollapsed ? (
+          <PanelLeftOpen size={17} />
+        ) : (
+          <PanelLeftClose size={17} />
+        )}
       </button>
       <nav className="breadcrumb" aria-label="面包屑" inert={contentInert}>
         <FolderOpen size={20} />

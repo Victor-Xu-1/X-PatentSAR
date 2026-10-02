@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { defaultLayout, normalizeLayout, resizeFromPointer } from '../src/model/layout';
+import { defaultLayout, normalizeLayout } from '../src/model/layout';
 import { parseRoute, routeHash, emptyRoute } from '../src/model/route';
 import { WorkspaceLayout } from '../src/features/workspace/WorkspaceLayout';
 import { Workspace } from '../src/features/workspace/Workspace';
@@ -16,8 +16,6 @@ describe('results-first layout with one safe, refreshable state', () => {
     expect(normalizeLayout({ pdfWidth: Infinity }).pdfWidth).toBe(28);
     expect(normalizeLayout({ pdfWidth: -50 }).pdfWidth).toBe(20);
     expect(normalizeLayout({ pdfWidth: 99 }).pdfWidth).toBe(55);
-    expect(resizeFromPointer(280, { left: 0, width: 1000 })).toBe(28);
-    expect(resizeFromPointer(20, { left: 0, width: 0 })).toBeNull();
   });
   it('roundtrips source width, collapse, fullscreen and result view across refresh', () => {
     const route = {
@@ -77,11 +75,27 @@ describe('results-first layout with one safe, refreshable state', () => {
     const split = document.querySelector('.workspace-split')!;
     vi.spyOn(split, 'getBoundingClientRect').mockReturnValue({ left: 100, width: 1000 } as DOMRect);
     const separator = screen.getByRole('slider');
-    fireEvent.pointerDown(separator, { pointerId: 1, clientX: 380, button: 0 });
+    fireEvent.pointerDown(separator, { pointerId: 1, clientX: 380, button: 0, isPrimary: true });
     fireEvent.pointerMove(separator, { pointerId: 1, clientX: 450 });
     expect(change).not.toHaveBeenCalled();
     fireEvent.pointerUp(separator, { pointerId: 1, clientX: 450 });
     expect(change).toHaveBeenCalledWith({ ...defaultLayout, pdfWidth: 35 });
+  });
+  it('ignores pointer resize when pane geometry is not measurable', () => {
+    const change = vi.fn();
+    render(
+      <WorkspaceLayout
+        layout={defaultLayout}
+        onChange={change}
+        source={<div />}
+        results={<div />}
+      />,
+    );
+    const separator = screen.getByRole('slider');
+    fireEvent.pointerDown(separator, { pointerId: 1, button: 0, clientX: 100, isPrimary: true });
+    fireEvent.pointerMove(separator, { pointerId: 1, clientX: 500 });
+    fireEvent.pointerUp(separator, { pointerId: 1 });
+    expect(change).not.toHaveBeenCalled();
   });
   it('source navigation unfolds collapsed original and selects actual annotation', async () => {
     vi.spyOn(api, 'results').mockResolvedValue(results);

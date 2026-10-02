@@ -2,7 +2,10 @@ import { useEffect, useRef } from 'react';
 import type { Activity, Compound } from '../../api/types';
 import { availableMetrics } from '../../model/results';
 import type { ResultDensity } from '../../model/results';
+import { resultColumns } from '../../model/resultColumns';
+import { ResizeHandle } from '../../components/ResizeHandle';
 import { ResultRow } from './ResultRow';
+import { useColumnResize } from './useColumnResize';
 
 export function ResultsTable({
   rows,
@@ -33,7 +36,10 @@ export function ResultsTable({
 }) {
   const selectAll = useRef<HTMLInputElement>(null);
   const container = useRef<HTMLDivElement>(null);
+  const table = useRef<HTMLTableElement>(null);
   const columns = metrics ?? availableMetrics([], rows);
+  const headers = resultColumns(columns);
+  const resize = useColumnResize(headers, table);
   const all = rows.length > 0 && rows.every((row) => selected.has(row.id));
   const some = rows.some((row) => selected.has(row.id));
   useEffect(() => {
@@ -55,35 +61,67 @@ export function ResultsTable({
       tabIndex={0}
       aria-label="可横向滚动的化合物结果表格"
     >
-      <table className="results-table" data-density={density}>
+      <table
+        ref={table}
+        className={`results-table${resize.resized ? ' columns-resized' : ''}`}
+        data-density={density}
+        style={
+          resize.resized
+            ? { width: resize.totalWidth, minWidth: 0, tableLayout: 'fixed' }
+            : undefined
+        }
+      >
         <caption className="sr-only">
           真实指标独立成列；实验编号对应去重上下文，每个活性值保留自己的来源页。
           绑定证据、识别校验和人工复核是独立状态。
         </caption>
+        <colgroup>
+          {headers.map((header) => (
+            <col
+              key={header.id}
+              style={
+                resize.resized ? { width: resize.widths[header.id] ?? header.width } : undefined
+              }
+            />
+          ))}
+        </colgroup>
         <thead>
           <tr>
-            <th className="check-col">
-              <input
-                ref={selectAll}
-                type="checkbox"
-                aria-label="选择当前页全部化合物"
-                checked={all}
-                onChange={(event) => onSelectPage(event.target.checked)}
-                disabled={!rows.length}
-              />
-            </th>
-            <th className="number-column">#</th>
-            <th className="structure-column">原始结构 / 编号</th>
-            <th className="context-column">靶点 / 实验</th>
-            {columns.map((metric) => (
-              <th className="activity-column" key={metric} scope="col">
-                {metric || '未命名指标'}
+            {headers.map((header) => (
+              <th
+                className={header.className}
+                scope="col"
+                key={header.id}
+                data-column={header.id}
+                aria-label={header.id === 'number' ? '#' : header.label}
+              >
+                {header.id === 'select' ? (
+                  <input
+                    ref={selectAll}
+                    type="checkbox"
+                    aria-label="选择当前页全部化合物"
+                    checked={all}
+                    onChange={(event) => onSelectPage(event.target.checked)}
+                    disabled={!rows.length}
+                  />
+                ) : header.id === 'number' ? (
+                  '#'
+                ) : (
+                  header.label
+                )}
+                <ResizeHandle
+                  className="column-resizer"
+                  label={`调整${header.label}列宽`}
+                  value={resize.widths[header.id] ?? header.width}
+                  min={header.min}
+                  max={header.max}
+                  resetValue={header.width}
+                  onBegin={() => resize.begin(header.id)}
+                  onPreview={(next) => resize.preview(header.id, next)}
+                  onCommit={(next) => resize.commit(header.id, next)}
+                />
               </th>
             ))}
-            <th className="evidence-column">绑定证据</th>
-            <th className="recognition-column">识别校验</th>
-            <th className="source-column">结构来源</th>
-            <th className="review-column">人工复核</th>
           </tr>
         </thead>
         <tbody>

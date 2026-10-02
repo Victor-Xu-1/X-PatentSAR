@@ -7,6 +7,8 @@ import { useRoute } from './hooks/useRoute';
 import { useResource } from './hooks/useResource';
 import { useMobileNavigation } from './hooks/useMobileNavigation';
 import { Sidebar } from './components/Sidebar';
+import { AppFrame } from './components/AppFrame';
+import { normalizeSidebarLayout } from './model/sidebarLayout';
 import { Header } from './components/Header';
 import { ErrorNotice, Loading } from './components/Feedback';
 import { Workspace } from './features/workspace/Workspace';
@@ -63,48 +65,70 @@ export default function App() {
     setMenuOpen(false);
     navigate({ ...emptyRoute, view: 'new-task' });
   };
+  const sidebarLayout = normalizeSidebarLayout(route.sidebar);
   return (
-    <div className={`app-shell${menuOpen ? ' menu-open' : ''}`}>
-      <a
-        href="#main-content"
-        className="skip-link"
-        inert={narrow && menuOpen}
-        onClick={(event) => {
-          event.preventDefault();
-          document.getElementById('main-content')?.focus();
-        }}
-      >
-        跳转到主要内容
-      </a>
-      {menuOpen && (
-        <button
-          className="nav-scrim"
-          type="button"
-          aria-label="关闭导航"
-          onClick={() => setMenuOpen(false)}
+    <AppFrame
+      layout={route.sidebar}
+      narrow={narrow}
+      menuOpen={menuOpen}
+      onChange={(sidebar) => navigate({ ...route, sidebar }, true)}
+      leading={
+        <>
+          <a
+            href="#main-content"
+            className="skip-link"
+            inert={narrow && menuOpen}
+            onClick={(event) => {
+              event.preventDefault();
+              document.getElementById('main-content')?.focus();
+            }}
+          >
+            跳转到主要内容
+          </a>
+          {menuOpen && (
+            <button
+              className="nav-scrim"
+              type="button"
+              aria-label="关闭导航"
+              onClick={() => setMenuOpen(false)}
+            />
+          )}
+        </>
+      }
+      sidebar={(collapsed) => (
+        <Sidebar
+          collapsed={collapsed}
+          route={route}
+          navigate={navigateView}
+          project={project}
+          job={jobs.job}
+          health={connection.data?.health ?? null}
+          onUpload={onUpload}
+          onAnalysis={(resultTab) => {
+            setMenuOpen(false);
+            navigate({ ...route, view: 'workspace', resultTab });
+          }}
+          disabled={!connected}
+          inert={narrow && !menuOpen}
         />
       )}
-      <Sidebar
-        route={route}
-        navigate={navigateView}
-        project={project}
-        job={jobs.job}
-        health={connection.data?.health ?? null}
-        onUpload={onUpload}
-        onAnalysis={(resultTab) => {
-          setMenuOpen(false);
-          navigate({ ...route, view: 'workspace', resultTab });
-        }}
-        disabled={!connected}
-        inert={narrow && !menuOpen}
-      />
-      <div className="app-main">
+    >
+      <div className="app-main" id="application-content">
         <Header
           view={route.view}
           project={project}
           user={connection.data?.session.user.name ?? null}
           onUpload={onUpload}
-          onMenu={() => setMenuOpen((open) => !open)}
+          onMenu={() =>
+            narrow
+              ? setMenuOpen((open) => !open)
+              : navigate(
+                  { ...route, sidebar: { ...sidebarLayout, collapsed: !sidebarLayout.collapsed } },
+                  true,
+                )
+          }
+          mobile={narrow}
+          navigationCollapsed={sidebarLayout.collapsed}
           disabled={!connected}
           menuOpen={menuOpen}
           contentInert={narrow && menuOpen}
@@ -183,6 +207,6 @@ export default function App() {
           onUploaded={uploaded}
         />
       )}
-    </div>
+    </AppFrame>
   );
 }

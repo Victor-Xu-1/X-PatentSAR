@@ -140,7 +140,7 @@ test('actual original fit-width, resizing, source jump and exact annotation geom
     'Source acceptance requires the actual original, not historical OCR',
   ).toBe(true);
   const before = await fittedPage(page);
-  const separator = page.getByRole('slider');
+  const separator = page.getByRole('slider', { name: '调整原文与结果宽度' });
   await separator.focus();
   await separator.press('ArrowRight');
   await separator.press('ArrowRight');
