@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-import math
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -16,6 +15,7 @@ from patent_sar_extractor.core.pipeline_rules import (
 )
 
 from .acceptance import ARTIFACTS, authority, current
+from .activity_provenance import activity_contexts, metric_unit, provenance_error
 from .artifact_values import box, page_number, text
 from .errors import WebError
 from .files import MAX_RECORDS, SafeFiles, records
@@ -51,118 +51,6 @@ def _index(
     return index
 
 
-_ActivityContext = tuple[int | None, str | None, str | None]
-
-
-def _provenance_error() -> WebError:
-    return WebError(
-        422,
-        "invalid_artifact",
-        "Activity provenance contains invalid or over-limit data.",
-    )
-
-
-def _provenance_text(value: object, *, limit: int = 1000) -> str | None:
-    if value is None:
-        return None
-    if not isinstance(value, str) or len(value) > limit or "\x00" in value:
-        raise _provenance_error()
-    return value
-
-
-def _provenance_cell(cell: object) -> tuple[str, str | None]:
-    if not isinstance(cell, dict):
-        raise _provenance_error()
-    name = _provenance_text(cell.get("field"), limit=300)
-    value = text(cell.get("value"), limit=1001)
-    if not name or (value is not None and len(value) > 1000):
-        raise _provenance_error()
-    bounds = cell.get("bbox")
-    if bounds is not None and (
-        not isinstance(bounds, list)
-        or len(bounds) != 4
-        or not all(
-            isinstance(x, (int, float))
-            and not isinstance(x, bool)
-            and 0 <= x <= 100000
-            and math.isfinite(x)
-            for x in bounds
-        )
-        or bounds[2] <= bounds[0]
-        or bounds[3] <= bounds[1]
-    ):
-        raise _provenance_error()
-    observations = cell.get("observations", [])
-    if not isinstance(observations, list) or len(observations) > 20:
-        raise _provenance_error()
-    for observation in observations:
-        if not isinstance(observation, dict) or len(observation) > 16:
-            raise _provenance_error()
-        _provenance_text(observation.get("method"), limit=300)
-        _provenance_text(observation.get("text"), limit=10000)
-        confidence = observation.get("confidence")
-        if confidence is not None and (
-            not isinstance(confidence, (int, float))
-            or isinstance(confidence, bool)
-            or not 0 <= confidence <= 1
-        ):
-            raise _provenance_error()
-    return name, value
-
-
-def _activity_sources(
-    row: dict[str, Any], fallback: _ActivityContext, *, page_count: int
-) -> dict[tuple[str, str | None], list[_ActivityContext]]:
-    sources = row.get("activity_sources")
-    if sources is None:
-        return {}
-    if not isinstance(sources, list) or len(sources) > 500:
-        raise _provenance_error()
-    index: dict[tuple[str, str | None], dict[_ActivityContext, None]] = {}
-    cell_count = 0
-    for source in sources:
-        if not isinstance(source, dict) or len(source) > 32:
-            raise _provenance_error()
-        raw_page = source.get("page_no", fallback[0])
-        if raw_page is not None and (
-            not isinstance(raw_page, (int, str))
-            or isinstance(raw_page, bool)
-            or raw_page == 0
-        ):
-            raise _provenance_error()
-        page = page_number(raw_page)
-        if page and page_count and page > page_count:
-            raise _provenance_error()
-        context = (
-            page,
-            _provenance_text(source["target"], limit=300)
-            if "target" in source
-            else fallback[1],
-            _provenance_text(source["assay"]) if "assay" in source else fallback[2],
-        )
-        _provenance_text(source.get("cell_line"), limit=300)
-        _provenance_text(source.get("table_id"), limit=300)
-        for field in ("row", "pair"):
-            number = source.get(field)
-            if number is not None and (
-                not isinstance(number, int)
-                or isinstance(number, bool)
-                or not 0 <= number <= 1000000
-            ):
-                raise _provenance_error()
-        cells = source.get("cells", [])
-        if not isinstance(cells, list) or len(cells) > 500:
-            raise _provenance_error()
-        cell_count += len(cells)
-        if cell_count > 2000:
-            raise _provenance_error()
-        for cell in cells:
-            # OCR attempts are observations of one cell, not new measurements.
-            # Preserve distinct observed assay contexts, deduplicating repeats.
-            index.setdefault(_provenance_cell(cell), {})[context] = None
-    return {key: list(contexts) for key, contexts in index.items()}
-
-
 def _activities(row: dict[str, Any], *, page_count: int = 0) -> list[Activity]:
     fallback = (
         page_number(row.get("page_no")),
@@ -170,8 +58,8 @@ def _activities(row: dict[str, Any], *, page_count: int = 0) -> list[Activity]:
         text(row.get("assay")),
     )
     if fallback[0] and page_count and fallback[0] > page_count:
-        raise _provenance_error()
-    sources = _activity_sources(row, fallback, page_count=page_count)
+        raise provenance_error()
+    sources = activity_contexts(row, fallback, page_count=page_count)
     output = []
     for field in ("activity_values", "cell_line_data"):
         values = row.get(field) or {}
@@ -186,7 +74,6 @@ def _activities(row: dict[str, Any], *, page_count: int = 0) -> list[Activity]:
                 raise WebError(
                     422, "invalid_artifact", "Activity metric name is invalid."
                 )
-            unit_match = re.search(r"\(([^()]+)\)\s*$", name)
             # Match exact field/value before presentation truncation; equal
             # grades in different tables must not borrow each other's sources.
             contexts = sources.get((name, text(value, limit=1001)), [fallback])
@@ -195,7 +82,7 @@ def _activities(row: dict[str, Any], *, page_count: int = 0) -> list[Activity]:
                     Activity(
                         name=name,
                         value=text(value),
-                        unit=unit_match.group(1) if unit_match else None,
+                        unit=metric_unit(name),
                         target=target,
                         assay=assay,
                         page=page,

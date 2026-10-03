@@ -6,6 +6,7 @@ from collections.abc import Callable
 from typing import Any
 
 from .activity_columns import ActivityColumnCatalog
+from .activity_focus import activity_source_keys
 from .correction_storage import (
     CORRECTION_COLUMNS,
     CORRECTION_JOIN,
@@ -255,12 +256,17 @@ class ResultQueries:
             self._filtered_compounds(project_id, **filters)
         )
         offset = (page - 1) * page_size
+        visible = compounds[offset : offset + page_size]
+        for item in visible:
+            item.activity_source_keys = activity_source_keys(
+                context[0], context[1][item.id], item.activities
+            )
         return Results(
             items=self._predictions(
                 project_id,
                 self._normalize_source_boxes(
                     project_id,
-                    compounds[offset : offset + page_size],
+                    visible,
                     source_spaces,
                     checked=compounds,
                 ),

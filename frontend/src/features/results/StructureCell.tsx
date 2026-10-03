@@ -7,6 +7,12 @@ export function StructureCell({ row, onCrop }: { row: Compound; onCrop: (row: Co
   const corrected = Boolean(row.correction?.has_changes && !row.correction.stale && row.smiles);
   const image = corrected ? row.redraw_image_url : row.structure_image_url;
   const label = corrected ? '修正重绘' : '结构裁图';
+  const displayLabel =
+    row.record_kind === 'structure_only' &&
+    row.display_id.startsWith('未关联结构 ') &&
+    (!row.correction?.has_changes || row.correction.stale)
+      ? row.display_id.replace(/ · p\.\d+$/, '')
+      : row.display_id;
   return (
     <td className="frozen-column frozen-structure">
       <div className="structure-cell">
@@ -33,7 +39,7 @@ export function StructureCell({ row, onCrop }: { row: Compound; onCrop: (row: Co
             title={row.id}
             onClick={() => onCrop(row)}
           >
-            {row.display_id}
+            {displayLabel}
           </button>
           {row.correction?.stale ? (
             <small className="correction">待重核</small>

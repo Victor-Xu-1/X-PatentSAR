@@ -19,6 +19,7 @@ import fitz
 from PIL import Image, UnidentifiedImageError
 from starlette.requests import Request
 
+from .activity_focus import FocusEvidence, rendered_focus
 from .errors import WebError
 from .files import SafeFiles, private_directory
 from .models import Annotation, Compound, Page, SourceMode
@@ -206,6 +207,7 @@ def page_info(
     compounds: list[dict[str, Any]],
     *,
     historical_text: str = "",
+    activity_focus: FocusEvidence | None = None,
 ) -> Page:
     if not 1 <= number <= project["page_count"]:
         raise WebError(
@@ -264,6 +266,9 @@ def page_info(
             text=text if text.strip() else historical_text,
             source_mode=source_mode,
             annotations=annotations,
+            activity_focus=rendered_focus(page, activity_focus)
+            if activity_focus
+            else None,
         )
 
 

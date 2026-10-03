@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import type { Compound, Health, Job, Project } from '../../api/types';
 import type { Route } from '../../model/route';
+import { withoutActivityFocus } from '../../model/route';
+import { validActivityFocus } from '../../api/activitySourceDecoders';
 import { normalizeLayout } from '../../model/layout';
 import { PdfPane } from '../pdf/PdfPane';
 import { CropDialog } from '../results/CropDialog';
@@ -44,13 +46,17 @@ export function Workspace({
   const [review, setReview] = useState<Compound | null>(null);
   const [editing, setEditing] = useState<Compound | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [legacyActivityPage, setLegacyActivityPage] = useState<number | null>(null);
   const id = project?.id ?? null;
   const results = useResultsState(id, query, onQuery, job, onProjectReload);
   const layout = normalizeLayout(route.layout);
+  function navigateSource(patch: Partial<Route>) {
+    setLegacyActivityPage(null);
+    navigate({ ...withoutActivityFocus(route), ...patch });
+  }
   function jump(row: Compound) {
     if (row.source.page !== null)
-      navigate({
-        ...route,
+      navigateSource({
         page: row.source.page,
         tab: 'annotations',
         compoundId: row.id,
@@ -58,8 +64,7 @@ export function Workspace({
       });
   }
   function selectAnnotation(compoundId: string) {
-    navigate({
-      ...route,
+    navigateSource({
       tab: 'annotations',
       compoundId,
       resultTab: 'results',
@@ -83,8 +88,10 @@ export function Workspace({
             page={route.page ?? project?.first_structure_page ?? null}
             tab={route.tab}
             selectedId={route.compoundId}
-            onPage={(page) => navigate({ ...route, page, compoundId: null })}
-            onTab={(tab) => navigate({ ...route, tab })}
+            activityFocus={route.activityFocus}
+            activityPageOnly={legacyActivityPage !== null && route.page === legacyActivityPage}
+            onPage={(page) => navigateSource({ page, compoundId: null })}
+            onTab={(tab) => navigateSource({ tab })}
             onSelect={selectAnnotation}
             onAttach={onAttach}
           />
@@ -92,11 +99,10 @@ export function Workspace({
         results={
           <ResultViews
             tab={route.resultTab ?? 'results'}
-            onTab={(resultTab) => navigate({ ...route, resultTab })}
+            onTab={(resultTab) => navigateSource({ resultTab })}
             capabilities={capabilities}
             onSource={(page) =>
-              navigate({
-                ...route,
+              navigateSource({
                 page,
                 tab: 'annotations',
                 compoundId: null,
@@ -114,15 +120,19 @@ export function Workspace({
               onSelect: results.toggle,
               onSelectPage: results.selectPage,
               onJump: jump,
-              onActivitySource: (activity) => {
-                if (activity.page !== null)
+              onActivitySource: (row, activity, key) => {
+                if (activity.page !== null) {
+                  const focus = { compoundId: row.id, key: key ?? '' };
+                  setLegacyActivityPage(validActivityFocus(focus) ? null : activity.page);
                   navigate({
-                    ...route,
+                    ...withoutActivityFocus(route),
                     page: activity.page,
                     tab: 'original',
                     compoundId: null,
+                    ...(validActivityFocus(focus) ? { activityFocus: focus } : {}),
                     layout: { ...layout, pdfVisible: true },
                   });
+                }
               },
               onCrop: setCrop,
               onReview: setEditing,
@@ -165,6 +175,7 @@ export function Workspace({
           }}
           onSaved={() => {
             setEditing(null);
+            navigateSource({});
             results.resource.reload();
             onProjectReload();
             onJobChange();

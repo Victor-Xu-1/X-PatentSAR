@@ -35,13 +35,8 @@ describe('one observation context per independently resizable activity column', 
       { ...compound.activities[0]!, ...columns[1]!, value: 20, page: 8 },
       { ...compound.activities[0]!, ...columns[2]!, value: '+++', page: 9 },
     ];
-    render(
-      <ResultsTable
-        {...props}
-        rows={[{ ...compound, activities: values }]}
-        activityColumns={columns}
-      />,
-    );
+    const row = { ...compound, activities: values };
+    render(<ResultsTable {...props} rows={[row]} activityColumns={columns} />);
     expect(screen.queryByRole('columnheader', { name: /^专利活性$/ })).not.toBeInTheDocument();
     const cells = document.querySelectorAll('td.activity-value-column');
     expect(cells).toHaveLength(3);
@@ -49,7 +44,7 @@ describe('one observation context per independently resizable activity column', 
     expect(cells[1]).toHaveTextContent('20 µM');
     expect(cells[2]).toHaveTextContent('+++');
     await userEvent.click(within(cells[1] as HTMLElement).getByRole('button'));
-    expect(props.onActivitySource).toHaveBeenCalledExactlyOnceWith(values[1]);
+    expect(props.onActivitySource).toHaveBeenCalledExactlyOnceWith(row, values[1], undefined);
     expect(screen.getAllByRole('slider')).toHaveLength(14);
     expect(screen.getByRole('table')).toHaveStyle({ tableLayout: 'fixed' });
   });
@@ -64,7 +59,7 @@ describe('one observation context per independently resizable activity column', 
     const props = callbacks();
     const { rerender } = render(<ResultsTable {...props} rows={[row]} activityColumns={columns} />);
     expect(document.querySelectorAll('td.activity-value-column')[0]).toHaveTextContent(
-      '12 nMp.318 nMp.4',
+      '12 nM18 nM',
     );
     rerender(
       <ResultsTable

@@ -1,36 +1,39 @@
-import type { Activity } from '../../api/types';
-import type { TableActivityColumn } from '../../model/activityColumns';
+import type { Compound } from '../../api/types';
+import type {
+  ActivityObservation,
+  ActivitySourceCallback,
+  TableActivityColumn,
+} from '../../model/activityColumns';
 import { activityText, activityValueText } from '../../model/presentation';
 
 export function ActivityValueCell({
-  displayId,
+  row,
   column,
-  activities,
+  observations,
   onSource,
 }: {
-  displayId: string;
+  row: Compound;
   column: TableActivityColumn;
-  activities: Activity[];
-  onSource: (activity: Activity) => void;
+  observations: ActivityObservation[];
+  onSource: ActivitySourceCallback;
 }) {
   return (
     <td className="activity-value-column" data-activity-column={column.id}>
-      {activities.length ? (
+      {observations.length ? (
         <div className="activity-list">
-          {activities.map((activity, index) => (
+          {observations.map(({ activity, index, sourceKey }) => (
             <div className="activity-observation" key={index}>
-              <span className="activity-value" title={activityText(activity)}>
-                {activityValueText(activity)}
-              </span>
               <button
                 type="button"
-                className="activity-source"
+                className="activity-value activity-source"
+                data-activity-index={index}
+                data-activity-source-key={sourceKey}
                 disabled={activity.page === null}
-                aria-label={`${displayId} ${activity.name} 活性来源${activity.page === null ? '页码未知' : `第 ${activity.page} 页`}`}
-                title={`${activity.target ?? '靶点未知'} · ${activity.assay ?? '实验未知'}`}
-                onClick={() => onSource(activity)}
+                aria-label={`${row.display_id} ${activity.name} 活性来源${activity.page === null ? '页码未知' : `第 ${activity.page} 页`}`}
+                title={activityText(activity)}
+                onClick={() => onSource(row, activity, sourceKey)}
               >
-                {activity.page === null ? '来源未知' : `p.${activity.page}`}
+                {activityValueText(activity)}
               </button>
             </div>
           ))}

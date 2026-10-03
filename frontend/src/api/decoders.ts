@@ -13,13 +13,11 @@ import {
   string,
 } from './validation';
 import type {
-  BBox,
   Activity,
   Compound,
   CompoundRecognition,
   Health,
   Job,
-  PageData,
   Project,
   Results,
   Review,
@@ -32,16 +30,12 @@ import { recordKinds, stageNames } from './types';
 import type { Decoder } from './validation';
 import { decodePredictionSummary } from './predictionDecoders';
 import { activityContextKey, decodeActivityColumns } from './activityColumnDecoders';
+import { decodeBBox as bbox } from './geometryDecoders';
+import { decodeActivitySourceKeys } from './activitySourceDecoders';
+export { decodePage } from './pageDecoders';
 
 const identity = object({ name: string, version: scalar });
 const capabilities = object({ admet: boolean, summary: boolean });
-const bbox: Decoder<BBox> = (v, p = '$') => {
-  const a = array(number)(v, p);
-  if (a.length !== 4) throw new ContractError(p);
-  const [x1, y1, x2, y2] = a as BBox;
-  if (x1 < 0 || y1 < 0 || x2 <= x1 || y2 <= y1) throw new ContractError(p);
-  return [x1, y1, x2, y2];
-};
 const score: Decoder<number> = (v, p) => {
   const n = number(v, p);
   if (n < 0 || n > 1) throw new ContractError(p ?? '$');
@@ -200,6 +194,15 @@ export const decodeCompound: Decoder<Compound> = (input, path = '$') => {
   const fields = input as Record<string, unknown>;
   return {
     ...compound,
+    ...(Object.hasOwn(fields, 'activity_source_keys')
+      ? {
+          activity_source_keys: decodeActivitySourceKeys(
+            fields.activity_source_keys,
+            compound.activities.length,
+            path + '.activity_source_keys',
+          ),
+        }
+      : {}),
     ...(Object.hasOwn(fields, 'record_kind')
       ? { record_kind: nullable(oneOf(recordKinds))(fields.record_kind, path + '.record_kind') }
       : {}),
@@ -211,16 +214,6 @@ export const decodeCompound: Decoder<Compound> = (input, path = '$') => {
       : {}),
   };
 };
-export const decodePage: Decoder<PageData> = object({
-  page: positive,
-  page_count: positive,
-  width: nullable(number),
-  height: nullable(number),
-  image_url: nullable(string),
-  text: string,
-  source_mode: oneOf(['native', 'ocr', 'historical', 'unavailable']),
-  annotations: array(object({ compound_id: string, bbox, kind: string, verified: boolean })),
-});
 const stageStatus = oneOf(['pending', 'running', 'ok', 'empty', 'failed', 'warnings']);
 const stageFields = {
   status: stageStatus,

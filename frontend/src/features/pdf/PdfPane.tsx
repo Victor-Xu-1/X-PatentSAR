@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { FileText, MapPin } from 'lucide-react';
 import { api, safeAssetUrl } from '../../api';
-import type { Project } from '../../api/types';
+import type { ActivityFocusSelection, Project } from '../../api/types';
 import type { PdfTab } from '../../model/route';
 import { useResource } from '../../hooks/useResource';
 import { Tabs } from '../../components/Tabs';
@@ -24,6 +24,8 @@ export function PdfPane({
   onTab,
   onSelect,
   onAttach,
+  activityFocus,
+  activityPageOnly = false,
 }: {
   project: Project | null;
   page: number | null;
@@ -33,9 +35,13 @@ export function PdfPane({
   onTab: (tab: PdfTab) => void;
   onSelect: (id: string) => void;
   onAttach: () => void;
+  activityFocus?: ActivityFocusSelection | undefined;
+  activityPageOnly?: boolean;
 }) {
   const [zoom, setZoom] = useState(1);
   const id = project?.id ?? null;
+  const focusCompound = activityFocus?.compoundId;
+  const focusKey = activityFocus?.key;
   const canRead = Boolean(
     id &&
     project &&
@@ -48,11 +54,27 @@ export function PdfPane({
     (signal: AbortSignal) =>
       page === null
         ? Promise.reject(new Error('结构来源页尚未确定。'))
-        : api.page(id ?? '', page, signal),
-    [id, page],
+        : focusCompound && focusKey
+          ? api.page(id ?? '', page, signal, { compoundId: focusCompound, key: focusKey })
+          : api.page(id ?? '', page, signal),
+    [id, page, focusCompound, focusKey],
   );
-  const resource = useResource(canRead ? `${id}:${page}` : null, load);
-  const data = resource.data;
+  const resource = useResource(
+    canRead
+      ? JSON.stringify([
+          id,
+          page,
+          activityFocus?.compoundId,
+          activityFocus?.key,
+          project?.updated_at,
+        ])
+      : null,
+    load,
+  );
+  const data = resource.loading ? null : resource.data;
+  const pageOnly = Boolean(
+    data && (activityPageOnly || (activityFocus && data.activity_focus?.status !== 'located')),
+  );
   const imageLabel = data
     ? project?.pdf.available && safeAssetUrl(data.image_url)
       ? data.source_mode === 'historical'
@@ -142,6 +164,11 @@ export function PdfPane({
           />
         ) : data ? (
           <>
+            {pageOnly && (
+              <output className="activity-focus-notice">
+                该活性仅有来源页，缺少可核验的原文坐标
+              </output>
+            )}
             {tab === 'text' ? (
               <div className="page-text">
                 <div className="source-mode">
@@ -164,6 +191,7 @@ export function PdfPane({
                 annotations={tab === 'annotations' || selectedId !== null}
                 selectedId={selectedId}
                 onSelect={onSelect}
+                activityFocus={activityFocus}
               />
             )}
             {tab === 'annotations' && (

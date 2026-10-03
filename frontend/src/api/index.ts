@@ -10,11 +10,12 @@ import {
   decodeReview,
   decodeRuntime,
 } from './decoders';
-import type { Filters, JobOptions, ReviewDecision } from './types';
+import type { ActivityFocusSelection, Filters, JobOptions, ReviewDecision } from './types';
 import { decodeAdmet, decodeEvidenceSummary, decodeRecognition } from './analysisDecoders';
 import { ContractError } from './validation';
 import { environmentApi } from './environmentApi';
 import { correctionApi } from './correctionApi';
+import { validActivityFocus } from './activitySourceDecoders';
 
 export const client = new ApiClient();
 const segment = encodeURIComponent;
@@ -30,8 +31,29 @@ export const api = {
     const query = new URLSearchParams(Object.entries(filters).map(([k, v]) => [k, String(v)]));
     return client.get(`${projectPath(id)}/results?${query}`, decodeResults, signal);
   },
-  page: (id: string, page: number, signal: AbortSignal) =>
-    client.get(`${projectPath(id)}/pages/${page}`, decodePage, signal),
+  page: (id: string, page: number, signal: AbortSignal, focus?: ActivityFocusSelection) => {
+    if (focus !== undefined && !validActivityFocus(focus))
+      throw new ContractError('$.activity_focus');
+    const query = focus
+      ? new URLSearchParams({ focus_compound: focus.compoundId, focus_activity: focus.key })
+      : null;
+    return client.get(
+      `${projectPath(id)}/pages/${page}${query ? `?${query}` : ''}`,
+      (input) => {
+        const result = decodePage(input);
+        if (
+          result.page !== page ||
+          (result.activity_focus &&
+            (!focus ||
+              result.activity_focus.compound_id !== focus.compoundId ||
+              result.activity_focus.activity_key !== focus.key))
+        )
+          throw new ContractError('$.activity_focus');
+        return result;
+      },
+      signal,
+    );
+  },
   jobs: (projectId: string | null, signal: AbortSignal) =>
     client.get(`/jobs${projectId ? `?project_id=${segment(projectId)}` : ''}`, decodeJobs, signal),
   job: (id: string, signal: AbortSignal) => client.get(`/jobs/${segment(id)}`, decodeJob, signal),

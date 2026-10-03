@@ -11,6 +11,7 @@ from pydantic import (
     model_validator,
 )
 
+from .activity_focus_models import ActivityFocus, ActivitySourceKey
 from .dto import DTO, Error
 from .prediction_models import PredictionSummary
 
@@ -114,6 +115,9 @@ class Compound(DTO):
     recognition: Recognition = Field(default_factory=Recognition)
     redraw_image_url: str | None = None
     activities: list[Activity]
+    activity_source_keys: list[ActivitySourceKey] = Field(
+        default_factory=list, max_length=2000, exclude_if=lambda value: not value
+    )
     source: Source
     confidence: Confidence
     review: Review | None = None
@@ -226,6 +230,9 @@ class Page(DTO):
     text: str
     source_mode: SourceMode
     annotations: list[Annotation]
+    activity_focus: ActivityFocus | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
 
 
 class JobRequest(DTO):
