@@ -60,19 +60,16 @@ describe('result column width changes preserve real row behavior', () => {
   it('retains widths across pages and metric hiding without changing source navigation', async () => {
     const props = tableProps();
     const { rerender } = render(<ResultsTable {...props} />);
-    const resize = screen.getByRole('slider', { name: '调整专利活性列宽' });
+    const resize = screen.getByRole('slider', { name: '调整抑制等级列宽' });
     resize.focus();
     await userEvent.keyboard('{ArrowRight}');
-    expect(resize).toHaveAttribute('aria-valuenow', '278');
+    expect(resize).toHaveAttribute('aria-valuenow', '168');
     rerender(<ResultsTable {...props} metrics={[]} />);
-    expect(screen.getByRole('slider', { name: '调整专利活性列宽' })).toHaveAttribute(
-      'aria-valuenow',
-      '278',
-    );
+    expect(screen.queryByRole('slider', { name: '调整抑制等级列宽' })).not.toBeInTheDocument();
     rerender(<ResultsTable {...props} offset={25} />);
-    expect(screen.getByRole('slider', { name: '调整专利活性列宽' })).toHaveAttribute(
+    expect(screen.getByRole('slider', { name: '调整抑制等级列宽' })).toHaveAttribute(
       'aria-valuenow',
-      '278',
+      '168',
     );
     await userEvent.click(screen.getByRole('button', { name: 'I-7 结构来源第 4 页' }));
     expect(props.onJump).toHaveBeenCalledExactlyOnceWith(compound);

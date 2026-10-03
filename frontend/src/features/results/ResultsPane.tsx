@@ -98,6 +98,9 @@ export function ResultsPane({
             rows={result.items}
             offset={(result.page - 1) * result.page_size}
             metrics={visibleMetrics}
+            {...(result.activity_columns === undefined
+              ? {}
+              : { activityColumns: result.activity_columns })}
             density={density}
             selected={selected}
             focusedId={focusedId}

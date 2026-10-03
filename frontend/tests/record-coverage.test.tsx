@@ -80,7 +80,7 @@ describe('complete information table presentation', () => {
       <ResultsTable {...callbacks()} rows={[compound]} metrics={['IC50']} />,
     );
     expect(screen.queryByText('未关联活性')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('该指标无数据')).toBeVisible();
+    expect(screen.getByLabelText('IC50 该指标无数据')).toBeVisible();
     rerender(<ResultsTable {...callbacks()} rows={[{ ...compound, activities: [] }]} />);
     expect(screen.queryByText('未关联活性')).not.toBeInTheDocument();
     expect(screen.queryByText('结构待定位')).not.toBeInTheDocument();

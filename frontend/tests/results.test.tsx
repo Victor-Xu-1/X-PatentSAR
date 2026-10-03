@@ -66,7 +66,7 @@ describe('real-value presentation and selection', () => {
   });
   it('filters displayed metrics without inventing activities', () => {
     render(<ResultsTable {...tableProps()} metrics={['IC50']} />);
-    expect(screen.getByLabelText('该指标无数据')).toHaveTextContent('—');
+    expect(screen.getByLabelText('IC50 该指标无数据')).toHaveTextContent('—');
     expect(screen.queryByTitle('抑制等级 = ++')).not.toBeInTheDocument();
   });
   it('maps target/confidence/review filters to the contract', () => {

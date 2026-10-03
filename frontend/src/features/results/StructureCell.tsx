@@ -8,7 +8,7 @@ export function StructureCell({ row, onCrop }: { row: Compound; onCrop: (row: Co
   const image = corrected ? row.redraw_image_url : row.structure_image_url;
   const label = corrected ? '修正重绘' : '结构裁图';
   return (
-    <td>
+    <td className="frozen-column frozen-structure">
       <div className="structure-cell">
         <button
           type="button"
@@ -41,6 +41,9 @@ export function StructureCell({ row, onCrop }: { row: Compound; onCrop: (row: Co
             <small className="correction">{corrected ? '已修正 · 重绘' : '已修正'}</small>
           ) : null}
           {row.record_kind === 'activity_only' && <small className="muted">结构待定位</small>}
+          {row.record_kind === 'structure_only' && !row.activities.length && (
+            <small className="muted">未关联活性</small>
+          )}
         </div>
       </div>
     </td>

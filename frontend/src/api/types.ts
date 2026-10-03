@@ -55,6 +55,13 @@ export interface Activity {
   assay: string | null;
   page: number | null;
 }
+export interface ActivityColumn {
+  id: string;
+  name: string;
+  unit: string | null;
+  target: string | null;
+  assay: string | null;
+}
 export const recordKinds = ['structure_activity', 'structure_only', 'activity_only'] as const;
 export type RecordKind = (typeof recordKinds)[number];
 export interface Compound {
@@ -164,6 +171,7 @@ export interface Results {
   page_size: number;
   metrics: string[];
   targets: string[];
+  activity_columns?: ActivityColumn[];
 }
 export interface Filters {
   q: string;
