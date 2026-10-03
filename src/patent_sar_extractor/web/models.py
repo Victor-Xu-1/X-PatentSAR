@@ -5,13 +5,14 @@ from __future__ import annotations
 from typing import Literal
 
 from pydantic import (
-    BaseModel,
-    ConfigDict,
     Field,
     ValidationInfo,
     field_validator,
     model_validator,
 )
+
+from .dto import DTO, Error
+from .prediction_models import PredictionSummary
 
 Decision = Literal["approved", "rejected", "needs_review"]
 ConfidenceLevel = Literal["high", "medium", "review", "unknown"]
@@ -30,15 +31,6 @@ STAGES = (
     "final",
     "qa",
 )
-
-
-class DTO(BaseModel):
-    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
-
-
-class Error(DTO):
-    code: str
-    message: str
 
 
 class Review(DTO):
@@ -96,6 +88,13 @@ class Recognition(DTO):
     token_confidence: TokenConfidence | None = None
 
 
+class CorrectionMetadata(DTO):
+    revision: int = Field(ge=1, strict=True)
+    stale: bool
+    has_changes: bool
+    updated_at: str
+
+
 class Compound(DTO):
     id: str
     display_id: str
@@ -109,6 +108,11 @@ class Compound(DTO):
     confidence: Confidence
     review: Review | None = None
     flags: list[str] = Field(default_factory=list)
+    admet: PredictionSummary | None = None
+    correction: CorrectionMetadata | None = None
+    record_kind: (
+        Literal["structure_activity", "structure_only", "activity_only"] | None
+    ) = None
 
 
 class PDFInfo(DTO):
@@ -125,6 +129,8 @@ class Summary(DTO):
     needs_review: int = 0
     manually_reviewed: int = 0
     manual_review_pending: int = 0
+    structure_only: int = 0
+    activity_only: int = 0
 
 
 class Acceptance(DTO):
@@ -158,6 +164,7 @@ class Stage(DTO):
     duration_seconds: float | None = Field(default=None, ge=0, strict=True)
     reused_checkpoint: bool = Field(default=False, strict=True)
     progress: StageProgress | None = None
+    skipped: int = Field(default=0, ge=0, le=1_000_000, strict=True)
 
 
 class Job(DTO):
@@ -174,6 +181,9 @@ class Job(DTO):
     include_intermediates: bool = False
     force: bool = False
     task_note: str = ""
+    include_admet: bool = False
+    admet_only: bool = False
+    admet_stage: Stage | None = None
 
 
 class Project(DTO):
@@ -187,6 +197,7 @@ class Project(DTO):
     summary: Summary
     acceptance: Acceptance
     last_job: Job | None
+    first_structure_page: int | None = Field(default=None, ge=1, strict=True)
 
 
 class Annotation(DTO):
@@ -218,6 +229,8 @@ class JobRequest(DTO):
         max_length=2000,
         pattern=r"^[^\x00-\x08\x0b\x0c\x0e-\x1f\x7f]*$",
     )
+    include_admet: bool = Field(default=False, strict=True)
+    admet_only: bool = Field(default=False, strict=True)
 
 
 class ExportRequest(DTO):

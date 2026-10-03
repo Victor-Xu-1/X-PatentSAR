@@ -2,7 +2,6 @@ import { expect, test } from '@playwright/test';
 import type { Compound } from '../src/api/types';
 import { decodeJob, decodeProject, decodeResults } from '../src/api/decoders';
 import { activityText, stageLabels } from '../src/model/presentation';
-import { groupActivities } from '../src/model/results';
 
 const projectId =
   process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID ?? process.env.PATENTSAR_E2E_HISTORY_PROJECT_ID;
@@ -25,7 +24,7 @@ for (const viewport of [
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto(`/#/projects/${encodeURIComponent(projectId!)}`);
-    await expect(page.getByText(/^v\d/)).toBeVisible();
+    await expect(page.getByRole('button', { name: '更多', exact: true })).toBeVisible();
     const response = await page.request.get(
       `/api/v1/projects/${encodeURIComponent(projectId!)}/results?page=1&page_size=25`,
     );
@@ -46,7 +45,7 @@ for (const viewport of [
     await expect(table).toHaveAttribute('data-density', 'compact');
     await expect(page.getByLabel('项目真实统计')).toHaveCount(0);
     await expect(page.locator('.acceptance-banner')).toHaveCount(0);
-    await expect(page.getByRole('button', { name: '结果信息' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '列表选项' })).toBeVisible();
     const row = results.items.find((item) =>
       item.activities.some((activity) => activity.page !== null),
     )!;
@@ -57,30 +56,37 @@ for (const viewport of [
     await expect(rendered).toBeVisible();
     await page.getByLabel(`选择化合物 ${row.display_id}`, { exact: true }).check();
     const compact = await rendered.boundingBox();
-    const contexts = groupActivities(row.activities, results.metrics);
-    if (contexts.length <= 3 && row.activities.every((item) => String(item.value).length <= 80)) {
+    if (
+      row.activities.length <= 6 &&
+      row.activities.every((item) => String(item.value).length <= 80)
+    ) {
       expect(
         compact!.height,
         'A three-context result must not regress to a 247px row',
       ).toBeLessThanOrEqual(160);
     }
-    await page.getByRole('button', { name: '显示选项' }).click();
+    await page.getByRole('button', { name: '列表选项' }).click();
+    await page.getByText('显示选项', { exact: true }).click();
     await page.getByRole('button', { name: '舒适视图' }).click();
     await page.keyboard.press('Escape');
     await expect(table).toHaveAttribute('data-density', 'comfortable');
     const comfortable = await rendered.boundingBox();
     expect(comfortable!.height).toBeGreaterThan(compact!.height);
-    await page.getByRole('button', { name: '显示选项' }).click();
+    await page.getByRole('button', { name: '列表选项' }).click();
+    await page.getByText('显示选项', { exact: true }).click();
     await page.getByRole('button', { name: '紧凑视图' }).click();
     const metric = results.metrics[0]!;
     expect(metric).toBeTruthy();
     await page.getByLabel(`显示指标 ${metric}`, { exact: true }).uncheck();
-    await expect(table.getByRole('columnheader', { name: metric, exact: true })).toHaveCount(0);
+    await expect(
+      rendered
+        .locator('.activity-observation')
+        .filter({ has: page.getByText(metric, { exact: true }) }),
+    ).toHaveCount(0);
     await expect(page.getByLabel(`选择化合物 ${row.display_id}`, { exact: true })).toBeChecked();
     await page.getByRole('button', { name: '显示全部指标' }).click();
     await page.keyboard.press('Escape');
-    for (const name of results.metrics)
-      await expect(table.getByRole('columnheader', { name, exact: true })).toBeVisible();
+    await expect(table.getByRole('columnheader', { name: '专利活性', exact: true })).toBeVisible();
     const measurement = row.activities.find((activity) => activity.page !== null)!;
     await rendered
       .getByRole('button', {
@@ -130,7 +136,7 @@ for (const viewport of [
 test('real source crop and RDKit redraw have separate provenance and images', async ({ page }) => {
   test.skip(!projectId, 'Requires an approved real results project');
   await page.goto(`/#/projects/${encodeURIComponent(projectId!)}`);
-  await expect(page.getByText(/^v\d/)).toBeVisible();
+  await expect(page.getByRole('button', { name: '更多', exact: true })).toBeVisible();
   const response = await page.request.get(
     `/api/v1/projects/${encodeURIComponent(projectId!)}/results?page=1&page_size=25`,
   );
@@ -162,13 +168,14 @@ test('real source crop and RDKit redraw have separate provenance and images', as
   const left = await original.boundingBox();
   const right = await redraw.boundingBox();
   expect(left!.x + left!.width).toBeLessThanOrEqual(right!.x);
-  await expect(page.getByLabel('规范化 SMILES（服务端）')).toHaveValue(compound!.smiles!);
+  await expect(page.getByLabel('当前 SMILES')).toHaveValue(compound!.smiles!);
   for (const url of [compound!.structure_image_url!, compound!.redraw_image_url!]) {
     const image = await page.request.get(url);
     expect(image.ok()).toBe(true);
     expect(image.headers()['content-type']).toMatch(/^image\/png/);
   }
-  await expect(page.getByRole('dialog')).toContainText('不是原文结构证据');
+  await expect(page.getByRole('dialog')).toContainText('不证明与原图一致');
+  await page.getByText('原始提取证据 / 校验', { exact: true }).click();
   if (compound!.recognition?.token_confidence)
     await expect(page.getByRole('dialog')).toContainText('未校准');
 });
@@ -176,10 +183,11 @@ test('real source crop and RDKit redraw have separate provenance and images', as
 test('real additive manual counts are not inferred from binding evidence', async ({ page }) => {
   test.skip(!projectId, 'Requires an approved real project on the integrated additive API');
   await page.goto(`/#/projects/${encodeURIComponent(projectId!)}`);
-  await expect(page.getByText(/^v\d/)).toBeVisible();
+  await expect(page.getByRole('button', { name: '更多', exact: true })).toBeVisible();
   const response = await page.request.get(`/api/v1/projects/${encodeURIComponent(projectId!)}`);
   const project = decodeProject(await response.json());
-  await page.getByRole('button', { name: '结果信息' }).click();
+  await page.getByRole('button', { name: '列表选项' }).click();
+  await page.getByText('结果与验收详情', { exact: true }).click();
   for (const [label, value] of [
     ['绑定待核验', project.summary.needs_review],
     ['人工已复核', project.summary.manually_reviewed],
@@ -199,7 +207,7 @@ test('a real shared-directory job never inherits a new successful stage history'
     'Requires an actual history-unavailable job, not an intercepted response',
   );
   await page.goto('/#/jobs');
-  await expect(page.getByText(/^v\d/)).toBeVisible();
+  await expect(page.getByRole('button', { name: '更多', exact: true })).toBeVisible();
   const response = await page.request.get(`/api/v1/jobs/${encodeURIComponent(unavailableJobId!)}`);
   expect(response.ok()).toBe(true);
   const job = decodeJob(await response.json());
@@ -215,7 +223,7 @@ test('actual persisted stage progress, cache and resources use the existing job 
 }) => {
   test.skip(!progressJobId, 'Requires an ended real job with actual progress observations');
   await page.goto('/#/jobs');
-  await expect(page.getByText(/^v\d/)).toBeVisible();
+  await expect(page.getByRole('button', { name: '更多', exact: true })).toBeVisible();
   const response = await page.request.get(`/api/v1/jobs/${encodeURIComponent(progressJobId!)}`);
   expect(response.ok()).toBe(true);
   const job = decodeJob(await response.json());

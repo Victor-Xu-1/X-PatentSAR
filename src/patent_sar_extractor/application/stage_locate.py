@@ -16,7 +16,10 @@ from patent_sar_extractor.artifact_io import write_json_atomic as _write_json
 from patent_sar_extractor.contracts import (
     STRUCTURE_LOCATOR_VERSION as _STRUCTURE_LOCATOR_CONTRACT_VERSION,
 )
-from patent_sar_extractor.core.structure_page_locator import locate_structure_pages
+from patent_sar_extractor.core.structure_page_locator import (
+    STRUCTURE_COVERAGE_POLICY,
+    locate_structure_pages,
+)
 
 from .pipeline_context import PipelineContext
 from .pipeline_io import (
@@ -40,6 +43,7 @@ def execute_locate(state: PipelineContext) -> None:
             "active_cpds": state.active_cpds,
             "locate_workers": int(getattr(state.args, "locate_workers", 1) or 1),
             "structure_locator_contract_version": _STRUCTURE_LOCATOR_CONTRACT_VERSION,
+            "structure_coverage_policy": STRUCTURE_COVERAGE_POLICY,
         },
     )
     if not state.force and _fingerprint_matches(state.locate_json, locate_fp):
@@ -68,5 +72,6 @@ def execute_locate(state: PipelineContext) -> None:
         "candidate_pages": len(state.locator.get("candidate_pool", [])),
         "selected_pages": len(state.structure_pages),
         "unmatched_cpds": len(state.locator.get("unmatched_cpds", [])),
+        "coverage_policy": state.locator.get("coverage_policy"),
     }
     print(f"     ✅ selected_pages={len(state.structure_pages)}")

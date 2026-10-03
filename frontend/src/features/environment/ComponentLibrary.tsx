@@ -22,7 +22,6 @@ export function ComponentLibrary({
       <header className="environment-section-header">
         <div>
           <h2>组件库</h2>
-          <p className="muted">版本、状态与检查来自服务端；安装完成不能代替真实验证。</p>
         </div>
       </header>
       {!components.length ? (
@@ -55,41 +54,43 @@ export function ComponentLibrary({
                       <span className={`badge environment-status-${component.status}`}>
                         {environmentStatusLabels[component.status]}
                       </span>
-                      {component.required && <small className="muted">核心组件</small>}
+                      <small className="muted">
+                        {component.detected_version ?? component.version}
+                      </small>
                     </div>
-                    <p className="muted">{component.description}</p>
-                    <dl className="component-metadata">
-                      <div>
-                        <dt>目标版本</dt>
-                        <dd>{component.version}</dd>
-                      </div>
-                      <div>
-                        <dt>检测版本</dt>
-                        <dd>{component.detected_version ?? '未报告'}</dd>
-                      </div>
-                      <div>
-                        <dt>下载</dt>
-                        <dd>{environmentBytes(component.download_bytes)}</dd>
-                      </div>
-                      <div>
-                        <dt>已占用</dt>
-                        <dd>{environmentBytes(component.installed_bytes)}</dd>
-                      </div>
-                    </dl>
-                    {component.location && (
-                      <p className="component-location break-word">位置：{component.location}</p>
-                    )}
-                    {component.dependencies.length > 0 && (
-                      <p className="muted">
-                        前置依赖：
-                        {component.dependencies
-                          .map((id) => components.find((item) => item.id === id)?.name ?? id)
-                          .join(' · ')}
-                      </p>
-                    )}
                     {component.problem && <p className="component-problem">{component.problem}</p>}
                     <details>
-                      <summary>来源、许可证与检查依据</summary>
+                      <summary>版本、来源与检查</summary>
+                      <p className="muted">{component.description}</p>
+                      <dl className="component-metadata">
+                        <div>
+                          <dt>目标版本</dt>
+                          <dd>{component.version}</dd>
+                        </div>
+                        <div>
+                          <dt>检测版本</dt>
+                          <dd>{component.detected_version ?? '未报告'}</dd>
+                        </div>
+                        <div>
+                          <dt>下载</dt>
+                          <dd>{environmentBytes(component.download_bytes)}</dd>
+                        </div>
+                        <div>
+                          <dt>已占用</dt>
+                          <dd>{environmentBytes(component.installed_bytes)}</dd>
+                        </div>
+                      </dl>
+                      {component.location && (
+                        <p className="component-location break-word">位置：{component.location}</p>
+                      )}
+                      {component.dependencies.length > 0 && (
+                        <p className="muted">
+                          前置依赖：
+                          {component.dependencies
+                            .map((id) => components.find((item) => item.id === id)?.name ?? id)
+                            .join(' · ')}
+                        </p>
+                      )}
                       <p className="break-word">许可证：{component.license || '未报告'}</p>
                       {safeEnvironmentSource(component.source_url) ? (
                         <a

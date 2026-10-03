@@ -1,9 +1,10 @@
 .environment-operations {
   margin-bottom: 20px;
+  border-top: 1px solid var(--line);
 }
 .environment-operation-detail {
-  margin-top: 20px;
-  padding-top: 20px;
+  margin-top: 14px;
+  padding-top: 14px;
   border-top: 1px solid var(--line);
 }
 .environment-operation-detail .badge {
@@ -126,10 +127,17 @@
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  padding: 20px 0 0;
+  padding: 16px 0 0;
   color: var(--muted);
   font-size: 11px;
   line-height: 1.8;
+}
+.environment-safety-note > summary {
+  cursor: pointer;
+}
+.environment-safety-note p {
+  max-width: 650px;
+  margin-top: 8px;
 }
 @media (max-width: 600px) {
   .environment-page .page-header {

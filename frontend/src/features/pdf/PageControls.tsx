@@ -9,14 +9,14 @@ export function PageControls({
   onPage,
   onZoom,
 }: {
-  page: number;
+  page: number | null;
   total: number;
   zoom: number;
   disabled: boolean;
   onPage: (page: number) => void;
   onZoom: (zoom: number) => void;
 }) {
-  const [input, setInput] = useState(String(page));
+  const [input, setInput] = useState(page === null ? '' : String(page));
   const [toolsOpen, setToolsOpen] = useState(false);
   const valid = /^\d+$/.test(input) && Number(input) >= 1 && Number(input) <= total;
   return (
@@ -26,8 +26,8 @@ export function PageControls({
           type="button"
           className="icon-button"
           aria-label="上一页原始文档"
-          disabled={disabled || page <= 1}
-          onClick={() => onPage(page - 1)}
+          disabled={disabled || page === null || page <= 1}
+          onClick={() => page !== null && onPage(page - 1)}
         >
           <ChevronLeft size={16} />
         </button>
@@ -41,8 +41,9 @@ export function PageControls({
             type="text"
             inputMode="numeric"
             aria-label="原始文档页码"
-            aria-invalid={!valid && !disabled}
+            aria-invalid={input !== '' && !valid && !disabled}
             value={input}
+            placeholder="—"
             onChange={(event) => setInput(event.target.value)}
             disabled={disabled}
             title={`输入 1–${total}，回车跳页`}
@@ -53,8 +54,8 @@ export function PageControls({
           type="button"
           className="icon-button"
           aria-label="下一页原始文档"
-          disabled={disabled || page >= total}
-          onClick={() => onPage(page + 1)}
+          disabled={disabled || page === null || page >= total}
+          onClick={() => page !== null && onPage(page + 1)}
         >
           <ChevronRight size={16} />
         </button>
@@ -64,7 +65,7 @@ export function PageControls({
         className="toolbar-button"
         aria-label="文档工具"
         title="文档工具"
-        disabled={disabled}
+        disabled={disabled || page === null}
         onClick={() => setToolsOpen(true)}
       >
         <Settings2 size={14} />

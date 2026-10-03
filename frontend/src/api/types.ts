@@ -1,3 +1,5 @@
+import type { PredictionSummary } from './predictionTypes';
+
 export interface Identity {
   name: string;
   version: string | number;
@@ -22,6 +24,7 @@ export interface Project {
   updated_at: string;
   pdf: { available: boolean; page_count: number; sha256: string | null };
   is_historical: boolean;
+  first_structure_page?: number | null;
   summary: {
     structures: number;
     activity_rows: number;
@@ -30,6 +33,8 @@ export interface Project {
     needs_review: number;
     manually_reviewed: number | null;
     manual_review_pending: number | null;
+    structure_only?: number | null;
+    activity_only?: number | null;
   };
   acceptance: { state: AcceptanceState; errors: string[] };
 }
@@ -50,6 +55,8 @@ export interface Activity {
   assay: string | null;
   page: number | null;
 }
+export const recordKinds = ['structure_activity', 'structure_only', 'activity_only'] as const;
+export type RecordKind = (typeof recordKinds)[number];
 export interface Compound {
   id: string;
   display_id: string;
@@ -59,6 +66,7 @@ export interface Compound {
   smiles: string | null;
   recognition: CompoundRecognition | null;
   activities: Activity[];
+  record_kind?: RecordKind | null;
   source: {
     page: number | null;
     paragraph: string | number | null;
@@ -69,6 +77,14 @@ export interface Compound {
   confidence: { level: ConfidenceLevel; score: number | null; reason: string | null };
   review: Review | null;
   flags: string[];
+  admet?: PredictionSummary | null;
+  correction?: CorrectionMetadata | null;
+}
+export interface CorrectionMetadata {
+  revision: number;
+  stale: boolean;
+  has_changes: boolean;
+  updated_at: string;
 }
 export interface CompoundRecognition {
   status: 'not_run' | 'valid' | 'invalid' | 'unavailable';
@@ -96,7 +112,8 @@ export const stageNames = [
   'final',
   'qa',
 ] as const;
-export type StageName = (typeof stageNames)[number];
+export type CoreStageName = (typeof stageNames)[number];
+export type StageName = CoreStageName | 'admet';
 export type StageStatus = 'pending' | 'running' | 'ok' | 'empty' | 'failed' | 'warnings';
 export interface StageProgress {
   completed: number;
@@ -106,6 +123,15 @@ export interface StageProgress {
   device: 'cpu' | 'gpu' | null;
   peak_rss_mb: number | null;
 }
+export interface Stage {
+  name: StageName;
+  status: StageStatus;
+  count: number | null;
+  duration_seconds: number | null;
+  progress: StageProgress | null;
+  reused_checkpoint: boolean | null;
+  skipped?: number;
+}
 export interface Job {
   id: string;
   project_id: string;
@@ -114,24 +140,22 @@ export interface Job {
   started_at: string | null;
   finished_at: string | null;
   error: { code: string; message: string } | null;
-  stages: {
-    name: StageName;
-    status: StageStatus;
-    count: number | null;
-    duration_seconds: number | null;
-    progress: StageProgress | null;
-    reused_checkpoint: boolean | null;
-  }[];
+  stages: Stage[];
   history_available: boolean | null;
   can_resume: boolean;
   include_intermediates: boolean;
   force: boolean;
   task_note: string;
+  include_admet?: boolean;
+  admet_only?: boolean;
+  admet_stage?: (Stage & { name: 'admet' }) | null;
 }
 export interface JobOptions {
   include_intermediates?: boolean;
   force?: boolean;
   task_note?: string;
+  include_admet?: boolean;
+  admet_only?: boolean;
 }
 export interface Results {
   items: Compound[];

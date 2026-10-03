@@ -27,10 +27,10 @@ describe('real-value presentation and selection', () => {
   it('shows grade values, unknown confidence and real source, with no fake predictions', () => {
     render(<ResultsTable {...tableProps()} />);
     expect(screen.getByTitle('抑制等级 = ++')).toHaveTextContent('++');
-    expect(screen.getByText('未知')).toBeVisible();
+    expect(screen.getByLabelText('MW 未计算')).toHaveTextContent('—');
     expect(screen.queryByText('无数值分数')).not.toBeInTheDocument();
-    expect(screen.getByText('第 4 页')).toBeVisible();
-    expect(screen.queryByText(/IC50|LogP|ADMET/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText('I-7 结构来源第 4 页')).toBeVisible();
+    expect(screen.queryByTitle('IC50 = 722 nM')).not.toBeInTheDocument();
   });
   it('selects authoritative IDs and positions the source row', async () => {
     const props = tableProps();
@@ -38,9 +38,9 @@ describe('real-value presentation and selection', () => {
     const user = userEvent.setup();
     await user.click(screen.getByLabelText('选择化合物 I-7'));
     expect(props.onSelect).toHaveBeenCalledWith('I-7');
-    await user.click(screen.getByText('来源定位'));
+    await user.click(screen.getByLabelText('I-7 结构来源第 4 页'));
     expect(props.onJump).toHaveBeenCalledWith(compound);
-    await user.click(screen.getByLabelText('复核 I-7'));
+    await user.click(screen.getByLabelText('修正 I-7'));
     expect(props.onReview).toHaveBeenCalledWith(compound);
   });
   it('marks partial page selection and allows crop enlargement', async () => {

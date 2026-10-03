@@ -1,4 +1,4 @@
-import { FileText, FolderOpen, Upload } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import type { Project } from '../../api/types';
 import type { Resource } from '../../hooks/useResource';
 import { dateText, acceptanceLabels } from '../../model/presentation';
@@ -12,66 +12,52 @@ export function ProjectsPage({
   onOpen: (id: string) => void;
   onUpload: () => void;
 }) {
+  const items = [...(resource.data?.items ?? [])].sort((a, b) =>
+    b.updated_at.localeCompare(a.updated_at),
+  );
   return (
-    <section className="panel management-page">
+    <section className="management-page recent-files-page">
       <header className="page-header">
-        <div>
-          <span className="eyebrow">PATENT WORKSPACE</span>
-          <h1>专利项目</h1>
-          <p className="muted">从原始文档到可溯源的结构–活性证据</p>
-        </div>
-        <button type="button" className="primary" onClick={onUpload}>
-          <Upload size={16} />
-          新建项目
-        </button>
+        <h1>最近文件</h1>
       </header>
       {resource.error ? (
         <ErrorNotice error={resource.error} onRetry={resource.reload} />
       ) : resource.loading && !resource.data ? (
-        <Loading />
-      ) : !resource.data?.items.length ? (
+        <Loading label="正在读取最近文件…" />
+      ) : !items.length ? (
         <Empty
-          title="还没有专利项目"
-          description="上传原始 PDF 后开始提取。历史结果可由运营人员通过既有 CLI 导入，不在网页中接受任意服务器路径。"
+          title="还没有文件"
+          description="上传一份 PDF 开始。"
           action={
             <button type="button" onClick={onUpload}>
-              上传第一份专利 PDF
+              上传 PDF
             </button>
           }
         />
       ) : (
-        <div className="project-grid">
-          {resource.data.items.map((project) => (
-            <article className="project-card" key={project.id}>
-              <div className="project-card-top">
-                <span className="project-icon">
-                  <FileText size={23} />
+        <ul className="recent-files" aria-label="最近专利文件">
+          {items.map((project) => (
+            <li key={project.id}>
+              <button
+                type="button"
+                className="recent-file"
+                aria-label={`打开 ${project.title}`}
+                onClick={() => onOpen(project.id)}
+              >
+                <FileText size={19} />
+                <span className="recent-file-name">
+                  <strong title={project.title}>{project.title}</strong>
+                  <small>
+                    {project.pdf.available ? `${project.pdf.page_count} 页` : '原文未提供'}
+                    {' · '}
+                    {acceptanceLabels[project.acceptance.state]}
+                  </small>
                 </span>
-                <span className={`badge ${project.acceptance.state}`}>
-                  {acceptanceLabels[project.acceptance.state]}
-                </span>
-              </div>
-              <h2>{project.title}</h2>
-              <p>{project.patent_id ?? '专利标识未提供'}</p>
-              <dl>
-                <dt>结构 / 活性</dt>
-                <dd>
-                  {project.summary.structures} / {project.summary.activity_rows}
-                </dd>
-                <dt>原始 PDF</dt>
-                <dd>{project.pdf.available ? `${project.pdf.page_count} 页` : '未提供'}</dd>
-                <dt>来源</dt>
-                <dd>{project.is_historical ? '历史运行导入' : '原始 PDF 上传'}</dd>
-                <dt>更新时间</dt>
-                <dd>{dateText(project.updated_at)}</dd>
-              </dl>
-              <button type="button" onClick={() => onOpen(project.id)}>
-                <FolderOpen size={15} />
-                打开工作台
+                <time dateTime={project.updated_at}>{dateText(project.updated_at)}</time>
               </button>
-            </article>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </section>
   );

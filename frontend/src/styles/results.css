@@ -35,7 +35,7 @@
   font-family: var(--font-heading);
   font-size: 16px;
   line-height: 1.25;
-  font-weight: 400;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
 .metric-card small {
@@ -212,6 +212,11 @@
   border: 0;
   margin: 0;
   padding: 0;
+}
+.result-options-info > small[aria-label='记录覆盖数量'] {
+  display: block;
+  margin-bottom: 14px;
+  font-size: 11px;
 }
 .results-content {
   flex: 1;

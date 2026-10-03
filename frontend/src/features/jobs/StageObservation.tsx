@@ -21,7 +21,7 @@ export function StageObservation({
       >
         <strong>{stageLabels[name]}</strong>
         {compact ? (
-          progress && stage?.status === 'running' ? (
+          progress && progress.total > 0 && stage?.status === 'running' ? (
             <small className="stage-progress">
               {progress.completed} / {progress.total}
             </small>
@@ -64,6 +64,9 @@ export function StageObservation({
           </>
         )}
         {stage?.reused_checkpoint == null && <p>检查点复用未知</p>}
+        {name === 'admet' && stage?.skipped != null && stage.skipped > 0 && (
+          <p>未计算 {stage.skipped}（缺少有效SMILES）</p>
+        )}
         {stage?.reused_checkpoint === false && <p>本次执行，未复用检查点</p>}
         <p className="muted">只展示服务端观察，不推算准确率、百分比或剩余时间。</p>
       </div>

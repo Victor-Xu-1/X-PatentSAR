@@ -26,7 +26,7 @@ export function PdfPane({
   onAttach,
 }: {
   project: Project | null;
-  page: number;
+  page: number | null;
   tab: PdfTab;
   selectedId: string | null;
   onPage: (page: number) => void;
@@ -36,8 +36,21 @@ export function PdfPane({
 }) {
   const [zoom, setZoom] = useState(1);
   const id = project?.id ?? null;
-  const canRead = Boolean(id && project && project.pdf.page_count >= page);
-  const load = useCallback((signal: AbortSignal) => api.page(id ?? '', page, signal), [id, page]);
+  const canRead = Boolean(
+    id &&
+    project &&
+    page !== null &&
+    Number.isSafeInteger(page) &&
+    page >= 1 &&
+    project.pdf.page_count >= page,
+  );
+  const load = useCallback(
+    (signal: AbortSignal) =>
+      page === null
+        ? Promise.reject(new Error('结构来源页尚未确定。'))
+        : api.page(id ?? '', page, signal),
+    [id, page],
+  );
   const resource = useResource(canRead ? `${id}:${page}` : null, load);
   const data = resource.data;
   const imageLabel = data
@@ -50,11 +63,13 @@ export function PdfPane({
             ? '原始 PDF · OCR 文本'
             : '原始 PDF · 文本未提供'
       : '原文未附'
-    : project?.pdf.available
-      ? '原始 PDF · 正在读取来源'
-      : project
-        ? '原文未附'
-        : '仅展示真实原始 PDF';
+    : project?.pdf.available && page === null
+      ? '等待结构来源页'
+      : project?.pdf.available
+        ? '原始 PDF · 正在读取来源'
+        : project
+          ? '原文未附'
+          : '仅展示真实原始 PDF';
   return (
     <section className="panel pdf-pane" aria-label="专利原始文档查看器">
       <header className="pdf-toolbar">
@@ -94,6 +109,16 @@ export function PdfPane({
           <Empty
             title="原始专利文档"
             description="选择已有项目，或上传专利 PDF。原文、提取文本与结构证据将在这里同步展示。"
+          />
+        ) : page === null && project.pdf.available ? (
+          <Empty
+            title="等待结构来源页"
+            description="结构定位后自动显示首个来源页，也可以先浏览原文。"
+            action={
+              <button type="button" onClick={() => onPage(1)}>
+                浏览原文
+              </button>
+            }
           />
         ) : !canRead ? (
           <Empty

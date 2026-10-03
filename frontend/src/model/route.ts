@@ -1,25 +1,22 @@
 import { normalizeLayout } from './layout';
 import type { LayoutState } from './layout';
-import { normalizeSidebarLayout } from './sidebarLayout';
-import type { SidebarLayout } from './sidebarLayout';
 export type View = 'workspace' | 'projects' | 'jobs' | 'settings' | 'new-task';
-export type ResultTab = 'results' | 'admet' | 'summary';
+export type ResultTab = 'results' | 'summary';
 export type PdfTab = 'original' | 'text' | 'annotations';
 export interface Route {
   view: View;
   projectId: string | null;
-  page: number;
+  page: number | null;
   tab: PdfTab;
   compoundId: string | null;
   layout?: LayoutState;
-  sidebar?: SidebarLayout;
   resultTab?: ResultTab;
   operationId?: string;
 }
 export const emptyRoute: Route = {
   view: 'workspace',
   projectId: null,
-  page: 1,
+  page: null,
   tab: 'original',
   compoundId: null,
 };
@@ -27,14 +24,14 @@ export function parseRoute(hash: string): Route {
   const [path = '', search = ''] = hash.replace(/^#/, '').split('?');
   const parts = path.split('/').filter(Boolean);
   const params = new URLSearchParams(search);
-  const page = Number(params.get('page') ?? 1);
+  const page = params.has('page') ? Number(params.get('page')) : null;
   const tab = params.get('tab');
   let projectId: string | null = null;
   if (parts[0] === 'projects' && parts[1]) {
     try {
       projectId = decodeURIComponent(parts[1]);
     } catch {
-      return emptyRoute;
+      return { ...emptyRoute, view: 'new-task' };
     }
   }
   const view: View =
@@ -48,21 +45,13 @@ export function parseRoute(hash: string): Route {
             ? 'jobs'
             : parts[0] === 'settings'
               ? 'settings'
-              : 'workspace';
+              : 'new-task';
   return {
     view,
     projectId,
-    page: Number.isSafeInteger(page) && page > 0 ? page : 1,
+    page: page !== null && Number.isSafeInteger(page) && page > 0 ? page : null,
     tab: tab === 'text' || tab === 'annotations' ? tab : 'original',
     compoundId: params.get('compound'),
-    ...(['navWidth', 'nav'].some((key) => params.has(key))
-      ? {
-          sidebar: normalizeSidebarLayout({
-            width: params.has('navWidth') ? Number(params.get('navWidth')) : 232,
-            collapsed: params.get('nav') === '0',
-          }),
-        }
-      : {}),
     ...(view === 'settings' && /^[A-Za-z0-9_-]{1,200}$/.test(params.get('operation') ?? '')
       ? { operationId: params.get('operation')! }
       : {}),
@@ -75,9 +64,11 @@ export function parseRoute(hash: string): Route {
           }),
         }
       : {}),
-    ...(params.get('result') === 'admet' || params.get('result') === 'summary'
-      ? { resultTab: params.get('result') as ResultTab }
-      : {}),
+    ...(params.get('result') === 'summary'
+      ? { resultTab: 'summary' as const }
+      : params.get('result') === 'admet'
+        ? { resultTab: 'results' as const }
+        : {}),
   };
 }
 export function routeHash(route: Route): string {
@@ -88,14 +79,9 @@ export function routeHash(route: Route): string {
         ? '/'
         : `/${route.view}`;
   const params = new URLSearchParams();
-  if (route.sidebar) {
-    const sidebar = normalizeSidebarLayout(route.sidebar);
-    params.set('navWidth', String(sidebar.width));
-    params.set('nav', sidebar.collapsed ? '0' : '1');
-  }
   if (route.view === 'settings' && route.operationId) params.set('operation', route.operationId);
   if (route.projectId && route.view === 'workspace') {
-    params.set('page', String(route.page));
+    if (route.page !== null) params.set('page', String(route.page));
     params.set('tab', route.tab);
     if (route.compoundId) params.set('compound', route.compoundId);
   }

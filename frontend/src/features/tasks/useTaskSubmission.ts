@@ -24,7 +24,6 @@ export function useTaskSubmission(onCreated: (project: Project) => void) {
     file: File | null;
     title: string;
     patentId: string;
-    extract: boolean;
     options: JobOptions;
   }) {
     if (lock.current || uncertain) return;
@@ -32,23 +31,27 @@ export function useTaskSubmission(onCreated: (project: Project) => void) {
     setError(null);
     let next = created;
     try {
+      if ((input.options.task_note?.length ?? 0) > 2000)
+        throw new Error('任务说明最多 2000 个字符。');
       if (!next) {
         if (!input.file) throw new Error('请选择原始专利 PDF。');
-        if (!input.title.trim()) throw new Error('请输入项目名称。');
-        if (input.title.trim().length > 200) throw new Error('项目名称最多 200 个字符。');
+        const title =
+          input.title.trim() ||
+          input.file.name
+            .replace(/\.pdf$/i, '')
+            .trim()
+            .slice(0, 200) ||
+          '专利 PDF';
+        if (title.length > 200) throw new Error('项目名称最多 200 个字符。');
         const patentId = normalizePatentId(input.patentId);
         setBusy('upload');
         await validatePdf(input.file);
-        next = await api.upload(input.file, input.title.trim(), patentId);
+        next = await api.upload(input.file, title, patentId);
         if (!mounted.current) return;
         setCreated(next);
       }
-      if (input.extract) {
-        if ((input.options.task_note?.length ?? 0) > 2000)
-          throw new Error('任务说明最多 2000 个字符。');
-        setBusy('start');
-        await api.createJob(next.id, null, input.options);
-      }
+      setBusy('start');
+      await api.createJob(next.id, null, input.options);
       if (mounted.current) onCreated(next);
     } catch (e) {
       if (mounted.current) {

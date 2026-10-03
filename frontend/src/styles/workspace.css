@@ -9,9 +9,9 @@
   justify-content: space-between;
   gap: 8px;
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
   padding: 2px 6px;
-  border-radius: var(--radius-control);
   margin-bottom: 3px;
 }
 .stage-strip {
@@ -184,7 +184,7 @@
 }
 .workspace-split {
   display: grid;
-  grid-template-columns: minmax(0, var(--pdf-width)) 10px minmax(0, var(--result-width));
+  grid-template-columns: minmax(0, var(--pdf-width)) 8px minmax(0, var(--result-width));
   grid-template-rows: minmax(0, 1fr);
   flex: 1;
   min-height: 0;

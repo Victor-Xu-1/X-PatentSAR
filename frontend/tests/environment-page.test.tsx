@@ -28,7 +28,14 @@ describe('one environment workspace and explicit installation authority', () => 
     expect(await screen.findByRole('heading', { name: '安装位置' })).toBeVisible();
     expect(screen.getByRole('heading', { name: '推荐组合' })).toBeVisible();
     expect(screen.getByRole('heading', { name: '组件库' })).toBeVisible();
-    expect(screen.getByText('locked-base')).toBeVisible();
+    expect(document.querySelector('[data-component="base"] .component-title')).toHaveTextContent(
+      'locked-base',
+    );
+    const details = document.querySelector('[data-component="base"] details')!;
+    expect(details).not.toHaveAttribute('open');
+    expect(details.querySelector('.component-metadata')).not.toBeVisible();
+    await userEvent.click(details.querySelector('summary')!);
+    expect(details.querySelector('.component-metadata')).toBeVisible();
     expect(screen.getByText('解释器缺失')).toBeVisible();
     expect(start).not.toHaveBeenCalled();
   });

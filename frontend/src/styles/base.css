@@ -113,9 +113,9 @@ p {
 }
 h1 {
   font-family: var(--font-heading);
-  font-size: 28px;
-  font-weight: 400;
-  letter-spacing: -0.6px;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
 }
 h2 {
   font-size: 16px;
@@ -217,16 +217,14 @@ svg {
 .empty-icon {
   display: grid;
   place-items: center;
-  width: 58px;
-  height: 58px;
-  border-radius: 16px;
-  color: var(--accent);
-  background: var(--accent-surface);
+  width: 40px;
+  height: 40px;
+  color: var(--muted);
 }
 .feedback:not(.loading) h3 {
   font-family: var(--font-heading);
   font-size: 19px;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.55;
 }
 .error-notice {

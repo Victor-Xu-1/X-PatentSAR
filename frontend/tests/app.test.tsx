@@ -11,7 +11,11 @@ function contractTransport() {
     const url = String(input);
     if (url.endsWith('/session')) return json(session);
     if (url.endsWith('/health'))
-      return json({ ...health, product: { ...health.product, version: '9.8.7-test' } });
+      return json({
+        ...health,
+        product: { ...health.product, version: '9.8.7-test' },
+        capabilities: { admet: true, summary: true },
+      });
     if (url.endsWith('/projects')) return json({ items: [project] });
     if (url.endsWith(`/projects/${project.id}`)) return json(project);
     if (url.includes('/results?')) return json(results);
@@ -20,102 +24,90 @@ function contractTransport() {
     throw new Error(`Unexpected isolated contract request: ${url}`);
   });
 }
-describe('application bootstrap, routes and failure states', () => {
-  it('desktop navigation collapses, expands and preserves width across routes', async () => {
-    vi.stubGlobal('fetch', contractTransport());
-    render(<App />);
-    await screen.findByText('v9.8.7-test');
-    await userEvent.click(screen.getByRole('button', { name: '收起导航栏' }));
-    expect(document.querySelector('.app-shell')).toHaveClass('navigation-collapsed');
-    expect(window.location.hash).toContain('nav=0');
-    await userEvent.click(screen.getByRole('button', { name: '项目' }));
-    expect(window.location.hash).toContain('nav=0');
-    expect(await screen.findByText('打开工作台')).toBeVisible();
-    await userEvent.click(screen.getByRole('button', { name: '展开导航栏' }));
-    const resize = screen.getByRole('slider', { name: '调整导航栏宽度' });
-    resize.focus();
-    await userEvent.keyboard('{ArrowRight}');
-    expect(resize).toHaveAttribute('aria-valuenow', '240');
-    await userEvent.click(screen.getByRole('button', { name: '上传 PDF' }));
-    expect(window.location.hash).toContain('navWidth=240');
-  });
-  it('keeps the upload action named and usable when its visual text is hidden on mobile', async () => {
-    vi.stubGlobal('fetch', contractTransport());
-    render(<App />);
-    await screen.findByText('v9.8.7-test');
-    const caption = document.querySelector<HTMLElement>('.topbar-actions > button > span');
-    expect(caption).not.toBeNull();
-    caption!.style.display = 'none';
-    await userEvent.click(screen.getByRole('button', { name: '上传 PDF' }));
-    expect(await screen.findByRole('heading', { name: '新建提取任务' })).toBeVisible();
-    expect(screen.getByLabelText('项目名称')).toHaveFocus();
-  });
-  it('mobile drawer keeps hidden navigation inert and restores the menu focus', async () => {
-    vi.stubGlobal('matchMedia', () => ({
-      matches: true,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    }));
-    vi.stubGlobal('fetch', contractTransport());
-    render(<App />);
-    await screen.findByText('v9.8.7-test');
-    expect(document.querySelector('#primary-sidebar')).toHaveAttribute('inert');
-    const menu = screen.getByLabelText('展开或收起导航');
-    await userEvent.click(menu);
-    expect(menu).toHaveAttribute('aria-expanded', 'true');
-    expect(document.querySelector('main')).toHaveAttribute('inert');
-    expect(document.querySelector('.topbar-actions')).toHaveAttribute('inert');
-    expect(document.querySelector('.breadcrumb')).toHaveAttribute('inert');
-    expect(menu.closest('[inert]')).toBeNull();
-    await userEvent.click(menu);
-    expect(menu).toHaveAttribute('aria-expanded', 'false');
-    expect(document.querySelector('main')).not.toHaveAttribute('inert');
-    expect(menu).toHaveFocus();
-    await userEvent.click(menu);
-    expect(menu).toHaveAttribute('aria-expanded', 'true');
-    await userEvent.keyboard('{Escape}');
-    expect(menu).toHaveAttribute('aria-expanded', 'false');
-    expect(menu).toHaveFocus();
-  });
-  it('shows the API version and a clean workspace without fabricated first-screen results', async () => {
+async function connected() {
+  await waitFor(() => expect(screen.getByRole('button', { name: '上传 PDF' })).toBeEnabled());
+}
+
+describe('minimal application shell, routes and failure states', () => {
+  it('opens the upload page by default without sidebar, avatar or fabricated results', async () => {
     const transport = contractTransport();
     vi.stubGlobal('fetch', transport);
     render(<App />);
-    expect(await screen.findByText('v9.8.7-test')).toBeVisible();
-    expect(screen.getByText('开始探索专利中的结构与活性')).toBeVisible();
+    await connected();
+    expect(screen.getByRole('heading', { name: '上传专利 PDF' })).toBeVisible();
+    expect(screen.getByLabelText('原始专利 PDF 文件')).toHaveFocus();
+    expect(document.querySelector('.sidebar')).toBeNull();
+    expect(document.querySelector('.user-avatar')).toBeNull();
+    expect(document.querySelector('.breadcrumb')).toBeNull();
+    expect(screen.queryByRole('button', { name: /ADMET/ })).not.toBeInTheDocument();
     expect(screen.queryByText('抑制等级 = ++')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /ADMET/ })).toBeEnabled();
-    expect(screen.getByRole('button', { name: /证据摘要/ })).toBeEnabled();
-    await userEvent.click(screen.getByRole('button', { name: '上传 PDF' }));
-    expect(await screen.findByRole('heading', { name: '新建提取任务' })).toBeVisible();
-    expect(window.location.hash).toBe('#/new-task');
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('项目名称')).toHaveFocus();
+    expect(transport.mock.calls.filter(([url]) => String(url).endsWith('/projects'))).toHaveLength(
+      0,
+    );
+    await userEvent.click(screen.getByLabelText('更多'));
+    expect(await screen.findByText('v9.8.7-test')).toBeVisible();
   });
-  it('bootstraps a fresh deep link and preserves actual source navigation', async () => {
-    window.location.hash = `#/projects/${project.id}?page=4&tab=text&compound=I-7`;
+
+  it('keeps upload and recent-file controls named when their text is hidden on mobile', async () => {
+    vi.stubGlobal('fetch', contractTransport());
+    render(<App />);
+    await connected();
+    document.querySelectorAll<HTMLElement>('.topbar-actions > button > span').forEach((caption) => {
+      caption.style.display = 'none';
+    });
+    await userEvent.click(screen.getByRole('button', { name: '最近文件' }));
+    await userEvent.click(await screen.findByRole('button', { name: `打开 ${project.title}` }));
+    expect(await screen.findByTitle('抑制等级 = ++')).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: '上传 PDF' }));
+    expect(await screen.findByRole('heading', { name: '上传专利 PDF' })).toBeVisible();
+    expect(screen.getByLabelText('原始专利 PDF 文件')).toHaveFocus();
+  });
+
+  it('retains the deep-linked original and table without restoring obsolete navigation', async () => {
+    window.location.hash = `#/projects/${project.id}?page=4&tab=text&compound=I-7&navWidth=288&nav=0`;
     const transport = contractTransport();
     vi.stubGlobal('fetch', transport);
     render(<App />);
     expect(await screen.findByTitle('抑制等级 = ++')).toBeVisible();
     expect(await screen.findByText('<script>untrusted OCR</script>')).toBeVisible();
     expect(screen.getByLabelText('原始文档页码')).toHaveValue('4');
+    expect(screen.getByText(project.title)).toBeVisible();
+    expect(document.querySelector('#primary-sidebar')).toBeNull();
     expect(transport.mock.calls.every(([, init]) => init?.credentials === 'same-origin')).toBe(
       true,
     );
     expect(transport.mock.calls.filter(([url]) => String(url).endsWith('/session'))).toHaveLength(
       1,
     );
+    await userEvent.click(screen.getByRole('link', { name: 'X-PatentSAR · 上传 PDF' }));
+    expect(window.location.hash).toBe('#/new-task');
+    expect(screen.getByLabelText('原始专利 PDF 文件')).toHaveFocus();
   });
-  it('opens a real project through the project list, using the same API path', async () => {
+
+  it('opens a recent file through the existing project API, not a dashboard', async () => {
     window.location.hash = '#/projects';
     vi.stubGlobal('fetch', contractTransport());
     render(<App />);
-    await userEvent.click(await screen.findByText('打开工作台'));
+    expect(await screen.findByRole('list', { name: '最近专利文件' })).toBeVisible();
+    expect(document.querySelector('.project-grid')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: `打开 ${project.title}` }));
     expect(await screen.findByTitle('抑制等级 = ++')).toBeVisible();
     await waitFor(() => expect(window.location.hash).toContain(project.id));
   });
-  it('shows a connection failure with an explicit reconnect path and no fallback data', async () => {
+
+  it('places job history behind More and closes the popover after navigation', async () => {
+    vi.stubGlobal('fetch', contractTransport());
+    render(<App />);
+    await connected();
+    expect(screen.getByRole('button', { name: '任务记录', hidden: true })).not.toBeVisible();
+    await userEvent.click(screen.getByLabelText('更多'));
+    await userEvent.click(screen.getByRole('button', { name: '任务记录' }));
+    await waitFor(() => expect(window.location.hash).toBe('#/jobs'));
+    expect(document.querySelector('.shell-menu')).not.toHaveAttribute('open');
+    expect(await screen.findByRole('heading', { name: '任务记录' })).toBeVisible();
+  });
+
+  it('shows a connection failure and disables writes without fallback data', async () => {
     const transport = vi.fn<typeof fetch>(async () =>
       json({ error: { code: 'unavailable', message: '服务尚未启动' } }, 500),
     );
@@ -124,6 +116,22 @@ describe('application bootstrap, routes and failure states', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('服务尚未启动');
     expect(screen.getByText('重新加载')).toBeVisible();
     expect(screen.queryByText('抑制等级 = ++')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '运行提取' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '开始提取' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '上传 PDF' })).toBeDisabled();
+  });
+
+  it('does not allow the complete PDF task when the ADMET capability is missing', async () => {
+    const transport = contractTransport();
+    vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) =>
+      String(input).endsWith('/health') ? json(health) : transport(input, init),
+    );
+    render(<App />);
+    await connected();
+    await userEvent.upload(
+      screen.getByLabelText('原始专利 PDF 文件'),
+      new File(['%PDF-1.7\ncontract'], 'source.pdf', { type: 'application/pdf' }),
+    );
+    expect(screen.getByRole('button', { name: '开始提取' })).toBeDisabled();
+    expect(screen.getByText(/提取或 ADMET 环境尚未就绪/)).toBeVisible();
   });
 });

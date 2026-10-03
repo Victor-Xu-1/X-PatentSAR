@@ -5,10 +5,6 @@ import { emptyRoute } from './model/route';
 import type { View } from './model/route';
 import { useRoute } from './hooks/useRoute';
 import { useResource } from './hooks/useResource';
-import { useMobileNavigation } from './hooks/useMobileNavigation';
-import { Sidebar } from './components/Sidebar';
-import { AppFrame } from './components/AppFrame';
-import { normalizeSidebarLayout } from './model/sidebarLayout';
 import { Header } from './components/Header';
 import { ErrorNotice, Loading } from './components/Feedback';
 import { Workspace } from './features/workspace/Workspace';
@@ -21,9 +17,6 @@ import { EnvironmentPage } from './features/environment/EnvironmentPage';
 
 export default function App() {
   const { route, navigate } = useRoute();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const closeMenu = useCallback(() => setMenuOpen(false), []);
-  const narrow = useMobileNavigation(menuOpen, closeMenu);
   const [attachment, setAttachment] = useState<Project | null>(null);
   const [query, setQuery] = useState('');
   const loadConnection = useCallback(async (signal: AbortSignal) => {
@@ -33,20 +26,24 @@ export default function App() {
   const connection = useResource('connection', loadConnection);
   const connected = connection.data !== null;
   const loadProjects = useCallback((signal: AbortSignal) => api.projects(signal), []);
-  const projects = useResource(connected ? 'projects' : null, loadProjects);
+  const projects = useResource(
+    connected && (route.view === 'projects' || route.view === 'jobs') ? 'projects' : null,
+    loadProjects,
+  );
   const id = route.projectId;
   const loadProject = useCallback((signal: AbortSignal) => api.project(id ?? '', signal), [id]);
-  const projectResource = useResource(connected && id ? `project:${id}` : null, loadProject);
+  const projectResource = useResource(
+    connected && id && route.view === 'workspace' ? `project:${id}` : null,
+    loadProject,
+  );
   const project = projectResource.data;
-  const jobs = useJobs(id, connected && Boolean(id));
+  const jobs = useJobs(id, connected && Boolean(id) && route.view === 'workspace');
   function openProject(projectId: string) {
     setQuery('');
-    setMenuOpen(false);
-    navigate({ ...emptyRoute, projectId });
+    navigate({ ...emptyRoute, view: 'workspace', projectId });
   }
   function navigateView(view: View) {
-    setMenuOpen(false);
-    navigate({ ...route, view, ...(view === 'workspace' ? { resultTab: 'results' } : {}) });
+    navigate({ ...emptyRoute, view });
   }
   function uploaded(next: Project) {
     setAttachment(null);
@@ -62,78 +59,32 @@ export default function App() {
     jobs.reload();
   }
   const onUpload = () => {
-    setMenuOpen(false);
     navigate({ ...emptyRoute, view: 'new-task' });
   };
-  const sidebarLayout = normalizeSidebarLayout(route.sidebar);
   return (
-    <AppFrame
-      layout={route.sidebar}
-      narrow={narrow}
-      menuOpen={menuOpen}
-      onChange={(sidebar) => navigate({ ...route, sidebar }, true)}
-      leading={
-        <>
-          <a
-            href="#main-content"
-            className="skip-link"
-            inert={narrow && menuOpen}
-            onClick={(event) => {
-              event.preventDefault();
-              document.getElementById('main-content')?.focus();
-            }}
-          >
-            跳转到主要内容
-          </a>
-          {menuOpen && (
-            <button
-              className="nav-scrim"
-              type="button"
-              aria-label="关闭导航"
-              onClick={() => setMenuOpen(false)}
-            />
-          )}
-        </>
-      }
-      sidebar={(collapsed) => (
-        <Sidebar
-          collapsed={collapsed}
-          route={route}
-          navigate={navigateView}
-          project={project}
-          job={jobs.job}
-          health={connection.data?.health ?? null}
-          onUpload={onUpload}
-          onAnalysis={(resultTab) => {
-            setMenuOpen(false);
-            navigate({ ...route, view: 'workspace', resultTab });
-          }}
-          disabled={!connected}
-          inert={narrow && !menuOpen}
-        />
-      )}
-    >
+    <div className="app-shell">
+      <a
+        href="#main-content"
+        className="skip-link"
+        onClick={(event) => {
+          event.preventDefault();
+          document.getElementById('main-content')?.focus();
+        }}
+      >
+        跳转到主要内容
+      </a>
       <div className="app-main" id="application-content">
         <Header
           view={route.view}
           project={project}
-          user={connection.data?.session.user.name ?? null}
+          version={connection.data?.health.product.version ?? null}
           onUpload={onUpload}
-          onMenu={() =>
-            narrow
-              ? setMenuOpen((open) => !open)
-              : navigate(
-                  { ...route, sidebar: { ...sidebarLayout, collapsed: !sidebarLayout.collapsed } },
-                  true,
-                )
-          }
-          mobile={narrow}
-          navigationCollapsed={sidebarLayout.collapsed}
+          onRecent={() => navigateView('projects')}
+          onNavigate={navigateView}
+          onAnalysis={(resultTab) => navigate({ ...route, view: 'workspace', resultTab })}
           disabled={!connected}
-          menuOpen={menuOpen}
-          contentInert={narrow && menuOpen}
         />
-        <main id="main-content" tabIndex={-1} inert={narrow && menuOpen}>
+        <main id="main-content" tabIndex={-1}>
           {connection.loading && !connected && (
             <div className="connection-banner">
               <Loading label="正在建立本地安全会话…" />
@@ -142,7 +93,7 @@ export default function App() {
           {connection.error && <ErrorNotice error={connection.error} onRetry={reconnect} />}
           {connected && !connection.data?.health.ready && (
             <output className="info-banner runtime-banner">
-              API 已连接，本地服务尚未就绪。已有项目可查看，运行按钮保持禁用；详情请查看环境管理。
+              运行环境尚未就绪。已有文件仍可查看；请在“更多 → 环境管理”中检测。
             </output>
           )}
           {projectResource.error && (
@@ -193,7 +144,9 @@ export default function App() {
           {route.view === 'new-task' && (
             <NewTaskPage
               connected={connected}
-              ready={connection.data?.health.ready ?? false}
+              ready={Boolean(
+                connection.data?.health.ready && connection.data?.health.capabilities?.admet,
+              )}
               onCreated={uploaded}
               onOpen={openProject}
             />
@@ -207,6 +160,6 @@ export default function App() {
           onUploaded={uploaded}
         />
       )}
-    </AppFrame>
+    </div>
   );
 }

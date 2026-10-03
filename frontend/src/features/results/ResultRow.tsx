@@ -1,11 +1,8 @@
-import { FileText, MapPin, MessageSquareText } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import type { Activity, Compound } from '../../api/types';
-import { confidenceLabels, reviewLabels } from '../../model/presentation';
-import { groupActivities } from '../../model/results';
-import { ActivityCell } from './ActivityCell';
-import { RecognitionStatus } from './RecognitionDetails';
+import { ActivitySummary } from './ActivitySummary';
+import { PredictionCells } from './PredictionCells';
 import { StructureCell } from './StructureCell';
-import { AssayContexts } from './AssayContexts';
 
 export function ResultRow({
   row,
@@ -30,9 +27,8 @@ export function ResultRow({
   onCrop: (row: Compound) => void;
   onReview: (row: Compound) => void;
 }) {
-  const contexts = groupActivities(row.activities, metrics);
   return (
-    <tr key={row.id} data-compound={row.id} className={focused ? 'source-focused' : ''}>
+    <tr data-compound={row.id} className={focused ? 'source-focused' : ''}>
       <td>
         <input
           type="checkbox"
@@ -43,77 +39,31 @@ export function ResultRow({
       </td>
       <td className="row-number">{number}</td>
       <StructureCell row={row} onCrop={onCrop} />
-      <AssayContexts
-        contexts={contexts}
-        emptyLabel={metrics.length ? '无活性数据' : '未选择指标'}
-      />
-      {metrics.map((metric) => (
-        <ActivityCell
-          key={metric}
-          compound={row}
-          metric={metric}
-          contexts={contexts}
-          onSource={onActivitySource}
-        />
-      ))}
-      <td>
-        <span
-          className={`badge ${row.confidence.level}`}
-          title={row.confidence.reason ?? '绑定证据依据未提供'}
-        >
-          {confidenceLabels[row.confidence.level]}
-        </span>
-        {row.confidence.score !== null && (
-          <small className="confidence-score" title="仅为绑定证据分数，不是识别准确率">
-            {String(row.confidence.score)}
-          </small>
-        )}
-      </td>
-      <td>
-        <RecognitionStatus recognition={row.recognition} />
-        {row.recognition?.quality_flag && row.recognition.quality_flag !== 'ok' && (
-          <small className="recognition-flag" title={row.recognition.quality_flag}>
-            {row.recognition.quality_flag}
-          </small>
-        )}
-      </td>
-      <td>
-        <div className="source-cell">
-          <FileText size={13} />
-          <div>
-            <span>{row.source.page === null ? '页码未知' : `第 ${row.source.page} 页`}</span>
-            {row.source.paragraph !== null && <small>段落 {row.source.paragraph}</small>}
-          </div>
-        </div>
+      <ActivitySummary row={row} metrics={metrics} onSource={onActivitySource} />
+      <PredictionCells row={row} />
+      <td className="source-column">
         <button
           type="button"
           className="link-button"
-          onClick={() => onJump(row)}
+          aria-label={`${row.display_id} 结构来源${row.source.page === null ? '未知' : `第 ${row.source.page} 页`}`}
+          title={String(row.source.paragraph ?? '结构来源定位')}
           disabled={row.source.page === null}
+          onClick={() => onJump(row)}
         >
-          <MapPin size={12} />
-          来源定位
+          {row.source.page === null ? '—' : `p.${row.source.page}`}
         </button>
-        {row.source.correction_reason && (
-          <small className="correction" title={row.source.correction_reason}>
-            含编号修正证据
-          </small>
-        )}
       </td>
-      <td>
+      <td className="edit-column">
         <button
           type="button"
-          className="review-button"
-          data-focus-key={`review:${row.id}`}
-          aria-label={`复核 ${row.display_id}`}
+          className="toolbar-button"
+          data-focus-key={`edit:${row.id}`}
+          aria-label={`修正 ${row.display_id}`}
+          title="在线修正"
           onClick={() => onReview(row)}
         >
-          <MessageSquareText size={14} />
-          复核
+          <Pencil size={14} />
         </button>
-        <small className="review-state">
-          {row.review ? reviewLabels[row.review.decision] : '未复核'}
-        </small>
       </td>
     </tr>
   );

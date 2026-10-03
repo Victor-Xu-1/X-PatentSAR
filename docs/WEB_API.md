@@ -82,6 +82,66 @@ never populated with demonstration values. Evidence summary is not an LLM claim.
 
 ## Response models (snake_case)
 
+### Minimal PDF/table additions
+
+API v1 and workspace SQLite v1 are retained. Additive fields are absent/null for
+legacy callers, never a synthesized successful observation.
+
+- `Project.first_structure_page`: nullable positive original PDF page; minimum
+  validated raw structure source. Default UI routing waits for it unless a page
+  was explicitly requested; activity pages and manual activity edits do not
+  select it.
+- `Compound.record_kind`: structure_activity, structure_only or activity_only;
+  absent/null for legacy clients. This is raw association, not manual approval or
+  chemical uniqueness. Structure-only rows retain original crops/sources and
+  empty activities; missing activity is not inactivity. Unknown printed IDs use
+  explicit internal source references, never guessed patent numbers. Activity
+  observations outside the declared active set remain visible without inventing
+  a binding. Summary structure_only/activity_only are actual raw counts.
+- `Compound.correction`: null or `{revision,stale,has_changes,updated_at}`.
+  Current effective values are presented only for a non-stale source-bound
+  correction. Original extraction files/payloads, confidence/QC and source
+  geometry remain unchanged.
+- GET `/api/v1/projects/{id}/structures/{compound}/correction` returns
+  `{source_fingerprint,revision,basis_fingerprint,stale,has_changes,original,values,updated_at}`.
+  Original/values each contain `{display_id,smiles,activities}`. Source fingerprint
+  identifies the exact raw projection; max 100 measurements for row editing.
+- PUT to the same correction endpoint requires session/CSRF and
+  `{expected_revision,expected_source_fingerprint,fields}`. Bounded finite values,
+  positive original pages and valid bounded SMILES are checked. Concurrent source
+  changes, active project jobs and revision mismatches fail 409 without overwrite.
+  Save/reset appends audited revisions; restoring original fields is not deletion.
+  Effective SMILES changes atomically enqueue a targeted ADMET-only attempt.
+- Job request adds `include_admet` and `admet_only` strict booleans. The Web input
+  defaults include_admet=true. An ADMET-only request must enable include_admet and
+  cannot include core force/advisory/partial/resume options. It consumes existing
+  effective structures without replacing the extraction root/projection.
+- `Job.admet_stage` is a nullable actual/sealed research-stage DTO with name
+  `admet`; `stages` remains the eight formal core stages (empty for ADMET-only).
+  Full-job completion requires accepted core QA, verified core cleanup and every
+  eligible current source-bound prediction. Model failure/cancel/recovery cannot borrow old
+  values or completed stage history.
+- `Stage.skipped` counts missing-SMILES sources separately from eligible
+  progress.total. An empty ADMET stage has zero counters and no inference;
+  unavailable source rows retain no numeric properties. A failed or invalid
+  eligible input is not silently converted into a skip.
+- `Compound.admet`: `{status,properties,source_fingerprint,smiles_sha256,engine,
+  generated_at,job_id,warnings,error,review_only:true}`. Status is not_run, pending,
+  running, complete, failed, stale or unavailable. Only complete carries exact
+  ordered six properties and pinned producer provenance; other states carry no
+  old numeric values. Storage and query joins are indexed and bounded, not one
+  full-PDF read or full-history scan per row.
+
+The fixed property catalog is MW (molecular_weight, Dalton), LogP (logP,
+log-ratio), TPSA (tpsa, Å^2), HBD (hydrogen_bond_donors, #), HBA
+(hydrogen_bond_acceptors, #), and LogS (Solubility_AqSolDB, log(mol/L)).
+The first five are descriptors; only LogS is a model prediction. None is a patent
+measurement or clinical safety/efficacy result. JSON/CSV exports preserve effective
+values, original core acceptance and correction/model provenance. Any manual
+correction, research prediction or unassociated source keeps export review_only=true.
+JSON formal_acceptance_scope is original_activity_association_only; complete
+source coverage does not enlarge the original strict QA acceptance scope.
+
 `Project`:
 `{id,title,patent_id,created_at,updated_at,pdf:{available,page_count,sha256},
 is_historical,summary:{structures,activity_rows,matched_structures,confirmed,
@@ -204,15 +264,19 @@ names; changes require controller review, not independent endpoint invention.
 
 ## Frontend behavior
 
-Chinese UI with X-PatentSAR branding and version from `/health`; reference layout:
-232 px left navigation, compact breadcrumb/search toolbar, split original PDF
-and result workspace, warm ivory canvas, quiet stone surfaces, ink controls,
-terracotta accents, serif display headings and dense compound/activity rows.
+Chinese UI with X-PatentSAR branding and version from `/health`: a minimal
+upload page, compact file actions, split original PDF and result workspace,
+neutral white/light-gray/near-black surfaces and system sans-serif typography.
+No permanent navigation sidebar, decorative cards, avatar or breadcrumb is used.
 The primary workspace contains only the original patent and result list, with a
 thin stage strip and one result toolbar. Statistics, full acceptance evidence,
 filters, density/columns, task parameters and document zoom are available on
-request, not stacked above the table. Analysis uses the existing sidebar entries,
-and no second search box or duplicate result tab bar remains.
+request, not stacked above the table. Six properties live in the same table;
+there is no standalone analysis page, second search box or duplicate result tab
+bar. Recent files and More expose history, environment management and evidence
+summary; all pages and dialogs consume the same visual tokens. Environment
+component details are collapsed by default; installation always exposes the
+full dependency/license plan and requires explicit consent.
 Page navigation, zoom, text/annotation tabs, source jumps,
 search/filter/pagination, selection/export, review dialogs, job status/cancel/retry,
 project/PDF import and runtime settings must work, including empty/error/loading,
@@ -223,7 +287,11 @@ and connection/acceptance notices, rather than fixed viewport offsets. Only the
 table body scrolls; pagination remains inside the pane. Mobile keeps its stacked,
 vertically scrollable source/result layout.
 
-## Initial Web delivery
+## Historical initial Web delivery
+
+These are earlier delivery records, not the current UI contract above. The old
+Claude-inspired palette and navigation were superseded by the neutral single-flow
+workbench; historical checks do not prove the latest build.
 
 1. Complete: implement the API and reference-layout UI in isolated worktrees,
    and integrate CLI entry points, packaging and E-drive launchers.

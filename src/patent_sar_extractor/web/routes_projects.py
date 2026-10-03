@@ -10,6 +10,7 @@ from fastapi import APIRouter, Request
 from starlette.concurrency import run_in_threadpool
 from starlette.responses import Response, StreamingResponse
 
+from .correction_models import CorrectionDocument, CorrectionRequest
 from .errors import WebError
 from .exports import export_csv, export_json, selected
 from .files import SafeFiles
@@ -139,8 +140,7 @@ def project_routes(service: WorkspaceService, max_upload_bytes: int) -> APIRoute
     def structure_redraw(
         project_id: str, compound_id: str, fingerprint: str | None = None
     ) -> Response:
-        row = service.store.compound(project_id, compound_id)
-        dto = Compound.model_validate_json(row["payload"])
+        dto = service.effective_compound(project_id, compound_id)
         if not dto.smiles:
             raise WebError(
                 404,
@@ -185,6 +185,22 @@ def project_routes(service: WorkspaceService, max_upload_bytes: int) -> APIRoute
     @router.put("/projects/{project_id}/reviews/{compound_id}", response_model=Review)
     def review(project_id: str, compound_id: str, body: ReviewRequest) -> Review:
         return put_review(service.store, project_id, compound_id, body)
+
+    @router.get(
+        "/projects/{project_id}/structures/{compound_id}/correction",
+        response_model=CorrectionDocument,
+    )
+    def correction(project_id: str, compound_id: str) -> CorrectionDocument:
+        return service.get_correction(project_id, compound_id)
+
+    @router.put(
+        "/projects/{project_id}/structures/{compound_id}/correction",
+        response_model=CorrectionDocument,
+    )
+    def save_correction(
+        project_id: str, compound_id: str, body: CorrectionRequest
+    ) -> CorrectionDocument:
+        return service.put_correction(project_id, compound_id, body)
 
     @router.post("/projects/{project_id}/export")
     def export(

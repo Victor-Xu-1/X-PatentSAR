@@ -30,7 +30,7 @@ export function ExtractionNotice({ project, job }: { project: Project; job: Job 
           ? '来源：历史身份产物；旧契约证据不视为当前高置信结果。'
           : failed
             ? '当前表格为待复核候选记录，不是完整结构–活性结果。'
-            : '正式验收仅由确定性 QA 决定，人工注记不改变验收。'}
+            : '原始提取验收由确定性 QA 决定；补充记录与人工修正不改变验收。'}
       </small>
       {errors.length > 0 && (
         <details open={failed}>

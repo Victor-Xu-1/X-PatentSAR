@@ -5,6 +5,7 @@ import { normalizeLayout } from '../../model/layout';
 import { PdfPane } from '../pdf/PdfPane';
 import { CropDialog } from '../results/CropDialog';
 import { ReviewDialog } from '../results/ReviewDialog';
+import { CorrectionDialog } from '../results/CorrectionDialog';
 import { ExportDialog } from '../results/ExportDialog';
 import { JobActions } from '../jobs/JobActions';
 import { StageStrip } from '../jobs/StageStrip';
@@ -41,6 +42,7 @@ export function Workspace({
 }) {
   const [crop, setCrop] = useState<Compound | null>(null);
   const [review, setReview] = useState<Compound | null>(null);
+  const [editing, setEditing] = useState<Compound | null>(null);
   const [exporting, setExporting] = useState(false);
   const id = project?.id ?? null;
   const results = useResultsState(id, query, onQuery, job, onProjectReload);
@@ -78,7 +80,7 @@ export function Workspace({
           <PdfPane
             key={id}
             project={project}
-            page={route.page}
+            page={route.page ?? project?.first_structure_page ?? null}
             tab={route.tab}
             selectedId={route.compoundId}
             onPage={(page) => navigate({ ...route, page, compoundId: null })}
@@ -123,9 +125,11 @@ export function Workspace({
                   });
               },
               onCrop: setCrop,
-              onReview: setReview,
+              onReview: setEditing,
               onExport: () => setExporting(true),
               onUpload,
+              canPredict: Boolean(capabilities?.admet),
+              onPredictionQueued: onJobChange,
             }}
           />
         }
@@ -147,6 +151,23 @@ export function Workspace({
             setReview(null);
             results.resource.reload();
             onProjectReload();
+          }}
+        />
+      )}
+      {editing && id && (
+        <CorrectionDialog
+          projectId={id}
+          compound={editing}
+          onClose={() => setEditing(null)}
+          onReview={() => {
+            setReview(editing);
+            setEditing(null);
+          }}
+          onSaved={() => {
+            setEditing(null);
+            results.resource.reload();
+            onProjectReload();
+            onJobChange();
           }}
         />
       )}

@@ -97,7 +97,7 @@ test('actual job parameters can expand without pushing desktop panes below the v
 }) => {
   test.skip(!failedJobId, 'Requires the existing controlled real CLI failure');
   await page.goto('/#/jobs');
-  await expect(page.getByText(/^v\d/)).toBeVisible();
+  await expect(page.getByRole('button', { name: '上传 PDF', exact: true })).toBeEnabled();
   const response = await page.request.get(`/api/v1/jobs/${encodeURIComponent(failedJobId!)}`);
   expect(response.ok()).toBe(true);
   const job = (await response.json()) as Job;
@@ -132,13 +132,18 @@ test('actual original fit-width, resizing, source jump and exact annotation geom
     'Set PATENTSAR_E2E_SOURCE_PROJECT_ID to an approved project with its actual original PDF',
   );
   await page.goto(`/#/projects/${sourceId}`);
-  await expect(page.getByText(/^v\d/)).toBeVisible();
+  await expect(page.getByRole('button', { name: '上传 PDF', exact: true })).toBeEnabled();
   const projectResponse = await page.request.get(`/api/v1/projects/${sourceId}`);
   const project = (await projectResponse.json()) as Project;
   expect(
     project.pdf.available,
     'Source acceptance requires the actual original, not historical OCR',
   ).toBe(true);
+  expect(
+    project.first_structure_page,
+    'The source fixture must provide a genuine structure page',
+  ).toBeGreaterThan(0);
+  await expect(page.getByLabel('原始文档页码')).toHaveValue(String(project.first_structure_page));
   const before = await fittedPage(page);
   const separator = page.getByRole('slider', { name: '调整原文与结果宽度' });
   await separator.focus();
@@ -164,7 +169,7 @@ test('actual original fit-width, resizing, source jump and exact annotation geom
   await page
     .locator('.results-table tbody tr')
     .filter({ has: page.getByLabel(`选择化合物 ${row!.display_id}`, { exact: true }) })
-    .getByRole('button', { name: '来源定位' })
+    .getByRole('button', { name: /结构来源第 \d+ 页$/ })
     .click();
   await expect(page.getByRole('tab', { name: '结构标注' })).toHaveAttribute(
     'aria-selected',

@@ -2,9 +2,6 @@
   .topbar {
     padding: 0 15px;
   }
-  .breadcrumb strong {
-    max-width: 220px;
-  }
   main {
     padding: 10px;
   }
@@ -28,15 +25,6 @@
 @media (max-width: 1100px) {
   .topbar {
     padding: 0 13px;
-  }
-  .breadcrumb {
-    gap: 8px;
-  }
-  .breadcrumb strong {
-    max-width: 180px;
-  }
-  .topbar-actions > button > span {
-    display: none;
   }
   .workspace-split {
     display: flex;
@@ -94,58 +82,32 @@
   .results-pane {
     height: max(800px, calc(var(--results-min-height) + 330px));
   }
-  .app-shell {
-    display: block;
-    --mobile-header-height: 60px;
-  }
-  .sidebar {
-    position: fixed;
-    left: 0;
-    top: var(--mobile-header-height);
-    height: calc(100dvh - var(--mobile-header-height));
-    overflow-y: auto;
-    width: var(--sidebar-width);
-    transform: translateX(-100%);
-    transition: transform 0.15s ease;
-  }
-  .menu-open .sidebar {
-    transform: translateX(0);
-  }
-  .menu-toggle {
-    display: inline-flex;
-    width: 44px;
-    min-height: 44px;
-  }
-  .nav-scrim {
-    display: block;
-    position: fixed;
-    inset: var(--mobile-header-height) 0 0;
-    width: 100%;
-    height: calc(100dvh - var(--mobile-header-height));
-    z-index: 19;
-    border: 0;
-    border-radius: 0;
-    background: var(--backdrop);
-  }
   .topbar {
-    height: var(--mobile-header-height);
+    height: 48px;
     position: sticky;
     top: 0;
     z-index: 21;
-    padding: 0 12px;
+    padding: 0 9px;
     gap: 8px;
   }
-  .breadcrumb strong {
-    max-width: 160px;
-    font-size: 12px;
+  .brand strong {
+    font-size: 16px;
   }
-  .breadcrumb > svg,
-  .breadcrumb > a,
-  .breadcrumb > span {
-    display: none;
+  .brand-symbol {
+    width: 24px;
+    height: 24px;
   }
   .topbar-actions {
-    gap: 8px;
+    gap: 0;
+  }
+  .topbar-actions > button,
+  .shell-menu > summary {
+    width: 44px;
+    min-height: 44px;
+    padding: 6px;
+  }
+  .topbar-actions > button > span {
+    display: none;
   }
   main {
     padding: 9px;
@@ -183,20 +145,22 @@
   .job-card header > div {
     flex-wrap: wrap;
   }
-  .task-form {
-    grid-template-columns: minmax(0, 1fr);
+  .new-task-page {
+    margin-top: 40px;
+    padding: 0 9px;
   }
-  .task-submit,
-  .task-status {
-    grid-column: auto;
-  }
-  .task-form fieldset {
-    padding: 12px;
+  .recent-file time {
+    display: none;
   }
   .evidence-counts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .analysis-panel {
     padding: 12px;
+  }
+}
+@media (max-width: 560px) {
+  .document-title {
+    display: none;
   }
 }

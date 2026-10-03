@@ -24,6 +24,8 @@ export function ResultsPane({
   onReview,
   onExport,
   onUpload,
+  onPredictionQueued = () => {},
+  canPredict = false,
 }: {
   project: Project | null;
   job?: Job | null;
@@ -40,6 +42,8 @@ export function ResultsPane({
   onReview: (row: Compound) => void;
   onExport: () => void;
   onUpload: () => void;
+  onPredictionQueued?: () => void;
+  canPredict?: boolean;
 }) {
   const result = resource.data;
   const [density, setDensity] = useState<ResultDensity>('compact');
@@ -71,6 +75,8 @@ export function ResultsPane({
         canExport={Boolean(project && result?.total)}
         onReload={resource.reload}
         onExport={onExport}
+        canPredict={canPredict}
+        onPredictionQueued={onPredictionQueued}
       />
       <div className="results-content" aria-busy={resource.loading}>
         {resource.error ? (

@@ -1,7 +1,7 @@
 .management-page {
-  padding: 32px;
+  padding: 24px;
   width: 100%;
-  max-width: 1120px;
+  max-width: 1040px;
   margin: 0 auto;
   min-height: calc(100dvh - 95px);
   border: 0;
@@ -13,19 +13,18 @@
   justify-content: space-between;
   align-items: center;
   gap: 20px;
-  padding-bottom: 24px;
-  margin-bottom: 20px;
-  border-bottom: 1px solid var(--line);
+  padding-bottom: 16px;
+  margin-bottom: 16px;
 }
 .page-header > div {
   min-width: 0;
 }
 .page-header h1 {
-  margin: 10px 0;
+  margin: 0;
   color: var(--ink);
   font-family: var(--font-heading);
-  font-size: clamp(28px, 2.2vw, 30px);
-  font-weight: 400;
+  font-size: clamp(23px, 2.2vw, 26px);
+  font-weight: 600;
   line-height: 1.25;
   letter-spacing: -0.03em;
 }
@@ -33,52 +32,6 @@
   line-height: 1.75;
   font-size: 13px;
 }
-.eyebrow {
-  font-size: 11px;
-  color: var(--faint);
-  letter-spacing: 1.2px;
-}
-.project-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr));
-  gap: 18px;
-  padding-top: 4px;
-}
-.project-card {
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel);
-  padding: 20px;
-  background: var(--surface);
-}
-.project-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-.project-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-control);
-  background: var(--surface-subtle);
-  color: var(--muted);
-  display: grid;
-  place-items: center;
-}
-.project-card h2 {
-  font-family: var(--font-ui);
-  font-size: 16px;
-  font-weight: 600;
-  margin: 18px 0 8px;
-  overflow-wrap: anywhere;
-}
-.project-card p {
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.7;
-  overflow-wrap: anywhere;
-}
-.project-card dl,
 .settings-sections dl {
   display: grid;
   grid-template-columns: 85px minmax(0, 1fr);
@@ -86,19 +39,13 @@
   font-size: 11px;
   margin: 17px 0;
 }
-.project-card dt,
 .settings-sections dt {
   color: var(--muted);
 }
-.project-card dd,
 .settings-sections dd {
   margin: 0;
   color: var(--primary);
   overflow-wrap: anywhere;
-}
-.project-card > button {
-  width: 100%;
-  margin-top: 8px;
 }
 .inline-actions {
   display: flex;
@@ -109,19 +56,18 @@
 }
 .job-history {
   display: grid;
-  gap: 16px;
+  gap: 0;
 }
 .job-card {
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel);
-  padding: 20px;
+  border-bottom: 1px solid var(--line);
+  padding: 18px 0;
   background: var(--surface);
 }
 .job-card > header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   gap: 12px;
 }
 .job-card header > div {
@@ -133,6 +79,10 @@
 .job-card header small {
   color: var(--muted);
   font-size: 11px;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .job-card .job-actions-wrapper {
   max-width: none;
@@ -143,7 +93,7 @@
   gap: 9px;
   font-size: 11px;
   color: var(--primary);
-  margin: 20px 0 12px;
+  margin: 12px 0;
   flex-wrap: wrap;
 }
 .job-dates dt {

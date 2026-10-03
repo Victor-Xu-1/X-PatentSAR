@@ -87,7 +87,7 @@ def spec_record(raw: str) -> dict[str, Any]:
             raise ValueError("oversized specification")
         payload = json.loads(raw)
         if not isinstance(payload, dict):
-            raise ValueError("invalid specification")
+            raise TypeError("invalid specification")
         for name in (
             "job_id",
             "project_id",
@@ -108,9 +108,30 @@ def spec_record(raw: str) -> dict[str, Any]:
                 )
             ):
                 raise ValueError("invalid specification field")
-        for name in ("advisory", "allow_partial", "include_intermediates", "force"):
+        for name in (
+            "advisory",
+            "allow_partial",
+            "include_intermediates",
+            "force",
+            "include_admet",
+            "admet_only",
+        ):
             if name in payload and type(payload[name]) is not bool:
                 raise ValueError("invalid specification option")
+        compounds = payload.get("admet_compounds", [])
+        if (
+            not isinstance(compounds, list)
+            or len(compounds) > 100
+            or any(
+                not isinstance(value, str)
+                or not 1 <= len(value) <= 200
+                or any(ord(c) < 32 for c in value)
+                for value in compounds
+            )
+            or len(set(compounds)) != len(compounds)
+            or (payload.get("admet_only") and not payload.get("include_admet"))
+        ):
+            raise ValueError("invalid prediction specification")
         note = payload.get("task_note", "")
         source = payload.get("source_ocr_cache", "")
         if (
@@ -126,7 +147,7 @@ def spec_record(raw: str) -> dict[str, Any]:
         ):
             raise ValueError("invalid specification metadata")
         return payload
-    except (ValueError, RecursionError, UnicodeError) as exc:
+    except (TypeError, ValueError, RecursionError, UnicodeError) as exc:
         raise WebError(
             409, "invalid_job_record", "Persisted job specification is invalid."
         ) from exc
@@ -191,6 +212,8 @@ class AttemptHistory:
             record = spec_record(row["spec"])
             output = record.get("output_dir")
         except WebError:
+            return False
+        if not isinstance(output, str):
             return False
         with self.store.connect() as connection:
             # Non-canonical paths never pass output(); malformed peers cannot
@@ -303,7 +326,18 @@ class AttemptHistory:
             )
         if spec_record(row["spec"]).get("attempt_version") != ATTEMPT_VERSION:
             return  # Never invent a recoverable snapshot for old shared attempts.
-        history = self.observe(row, status)
+        from .admet_history import read_admet_stage
+
+        root = self.output(row)
+        _, core_completed = read_admet_stage(row, root)
+        # The CLI's completed facts remain genuine when its subsequent research
+        # phase fails. Overall job failure is retained in the immutable envelope.
+        history = self.observe(
+            row,
+            "complete"
+            if core_completed and spec_record(row["spec"]).get("include_admet")
+            else status,
+        )
         directory = private_directory(self.store.root / "job-history")
         payload = encode(
             {
@@ -586,7 +620,7 @@ def seed_checkpoints(old: RunSpec, target: Path) -> None:
     if isinstance(cache, dict) and cache_matches_pdf(cache, old.pdf_path):
         copy.put(OCR_PATH, checkpoint_json(copy.relocate(cache)))
     summary = read_summary(Path(old.output_dir))
-    if not core.artifact_identity_matches(
+    if not isinstance(summary, dict) or not core.artifact_identity_matches(
         summary, core.RUN_SUMMARY_SCHEMA, core.RUN_SUMMARY_SCHEMA_VERSION
     ):
         return

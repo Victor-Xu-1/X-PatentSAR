@@ -39,7 +39,7 @@ describe('routes and presentation', () => {
     expect(parseRoute(routeHash(route))).toEqual(route);
   });
   it.each(['0', '-5', 'NaN', 'Infinity', '1.2'])('bounds invalid page %s', (value) =>
-    expect(parseRoute(`#/projects/id?page=${value}`).page).toBe(1),
+    expect(parseRoute(`#/projects/id?page=${value}`).page).toBeNull(),
   );
   it('handles malformed URL encoding and management pages', () => {
     expect(parseRoute('#/projects/%ZZ').projectId).toBeNull();

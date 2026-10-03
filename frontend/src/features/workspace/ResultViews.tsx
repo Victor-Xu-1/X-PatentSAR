@@ -2,7 +2,6 @@ import type { ComponentProps } from 'react';
 import type { Health } from '../../api/types';
 import type { ResultTab } from '../../model/route';
 import { ResultsPane } from '../results/ResultsPane';
-import { AdmetPanel } from '../analysis/AdmetPanel';
 import { EvidencePanel } from '../analysis/EvidencePanel';
 
 export function ResultViews({
@@ -25,19 +24,15 @@ export function ResultViews({
           <button type="button" onClick={() => onTab('results')}>
             返回结构列表
           </button>
-          <span>{tab === 'admet' ? '分子分析' : '证据摘要'}</span>
+          <span>证据摘要</span>
         </header>
       )}
       <section
         className={`result-view result-view-${tab}`}
-        aria-label={
-          tab === 'results' ? '结构与活性数据' : tab === 'admet' ? '分子分析' : '项目证据摘要'
-        }
+        aria-label={tab === 'results' ? '结构与活性数据' : '项目证据摘要'}
       >
         {tab === 'results' ? (
           <ResultsPane {...resultProps} />
-        ) : tab === 'admet' ? (
-          <AdmetPanel available={capabilities?.admet ?? null} />
         ) : (
           <EvidencePanel
             project={resultProps.project}

@@ -9,17 +9,20 @@ import sqlite3
 import threading
 import time
 import uuid
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Any
 
 from patent_sar_extractor import contracts as core
 
+from .admet_history import read_admet_stage, seal_admet_stage, write_admet_stage
 from .attempts import ATTEMPT_VERSION, seed_checkpoints, spec_record
 from .checkpoints import LiveCheckpoints
 from .errors import WebError
 from .files import SafeFiles, private_directory
-from .models import Error, Job, JobRequest
+from .job_phases import OwnedPhase, PhaseResult
+from .models import Error, Job, JobRequest, Stage
+from .prediction_jobs import correction_prediction, enqueue_prediction
 from .processes import ProcessIdentity, ProcessRunner, RunSpec, runtime_identity
 from .service import WorkspaceService
 from .storage import encode, now
@@ -48,6 +51,7 @@ def decode_spec(raw: str) -> RunSpec:
             "Job runtime identity has changed; start a new job instead.",
         )
     try:
+        value["admet_compounds"] = tuple(value.get("admet_compounds", ()))
         spec = RunSpec(**value)
     except TypeError as exc:
         raise WebError(
@@ -67,6 +71,7 @@ class JobQueue:
         self.shutdown = threading.Event()
         self.wake = threading.Event()
         self.thread: threading.Thread | None = None
+        self.phases = OwnedPhase(self.store, self.runner, self.shutdown)
 
     def start(self) -> None:
         self.reconcile()
@@ -120,6 +125,45 @@ class JobQueue:
         return spec
 
     def enqueue(self, project_id: str, request: JobRequest) -> Job:
+        if request.admet_only:
+            self.service._current_project(project_id)
+            if (
+                request.resume_job_id
+                or request.force
+                or request.advisory
+                or request.allow_partial
+                or not request.include_admet
+            ):
+                raise WebError(
+                    422,
+                    "admet_parameters",
+                    "Prediction-only jobs cannot change extraction parameters.",
+                )
+            with self.store.connect(write=True) as connection:
+                job_id = enqueue_prediction(self.store, connection, project_id)
+            self.wake.set()
+            return self.service.job(job_id)
+        if request.resume_job_id:
+            old_prediction = self._spec(request.resume_job_id)
+            if old_prediction.admet_only:
+                if (
+                    old_prediction.project_id != project_id
+                    or not self.service.job(request.resume_job_id).can_resume
+                ):
+                    raise WebError(
+                        409,
+                        "resume_unavailable",
+                        "This prediction job cannot be resumed.",
+                    )
+                with self.store.connect(write=True) as connection:
+                    job_id = enqueue_prediction(
+                        self.store,
+                        connection,
+                        project_id,
+                        compound_ids=old_prediction.admet_compounds,
+                    )
+                self.wake.set()
+                return self.service.job(job_id)
         project = self.store.project(project_id)
         if not project["pdf_rel"]:
             raise WebError(
@@ -130,6 +174,7 @@ class JobQueue:
         job_id = uuid.uuid4().hex
         output = self.store.root / "runs" / project_id / job_id
         include_intermediates = request.include_intermediates
+        include_admet = request.include_admet
         force = request.force
         task_note = request.task_note.strip()
         source_ocr_cache = ""
@@ -219,6 +264,7 @@ class JobQueue:
                 False  # Resume reuses verified checkpoints; it never invalidates them.
             )
             task_note = old.task_note
+            include_admet = old.include_admet
         if any(
             parent.is_symlink() for parent in (output, *output.parents)
         ) or not output.resolve().is_relative_to(self.store.root / "runs"):
@@ -240,6 +286,7 @@ class JobQueue:
             force,
             task_note,
             source_ocr_cache,
+            include_admet,
         )
         payload = {
             **asdict(spec),
@@ -361,6 +408,9 @@ class JobQueue:
                     "UPDATE jobs SET status='cancelled',cancel_requested=1,finished_at=? WHERE id=?",
                     (stamp, job_id),
                 )
+                self.service.predictions.finish_job(
+                    connection, job_id, "cancelled", None
+                )
             elif row["status"] == "running":
                 connection.execute(
                     "UPDATE jobs SET cancel_requested=1 WHERE id=?", (job_id,)
@@ -397,15 +447,26 @@ class JobQueue:
                     job_id,
                 ),
             )
+            self.service.predictions.finish_job(connection, job_id, status, error)
 
     def _seal(self, row: dict[str, Any], status: str, stamp: str) -> None:
+        # Core facts must be sealed independently: an unavailable research
+        # envelope must never skip or overwrite the immutable eight-stage log.
         try:
             self.service.attempts.seal(row, status, stamp)
-        except (WebError, OSError) as exc:
+        except (WebError, OSError, ValueError) as exc:
             # A history failure is explicit unavailable evidence, never a live
             # terminal read from mutable output. Process cleanup still completes.
             logger.warning(
                 "Attempt history unavailable for %s (%s)", row["id"], type(exc).__name__
+            )
+        try:
+            root = self.service.attempts.output(row)
+            if root is not None and spec_record(row["spec"]).get("include_admet"):
+                seal_admet_stage(self.store.root, root, row, status, stamp)
+        except (WebError, OSError, ValueError) as exc:
+            logger.warning(
+                "ADMET history unavailable for %s (%s)", row["id"], type(exc).__name__
             )
 
     def reconcile(self) -> None:
@@ -422,7 +483,9 @@ class JobQueue:
                 spec = self._spec(row["id"])
                 if row["identity"]:
                     identity = ProcessIdentity(**json.loads(row["identity"]))
-                    cleaned = self.runner.stop(identity, spec)
+                    cleaned = self.runner.stop(
+                        identity, self._phase_spec(spec, identity)
+                    )
                     if not cleaned:
                         self._finish(
                             row["id"],
@@ -475,8 +538,8 @@ class JobQueue:
                 self.wake.clear()
 
     def _execute(self, job_id: str) -> None:
-        identity = None
-        spec = None
+        spec: RunSpec | None = None
+        outcome: PhaseResult | None = None
         try:
             spec = self._spec(job_id)
             relative = Path(spec.pdf_path).relative_to(self.store.root)
@@ -487,74 +550,154 @@ class JobQueue:
                 raise WebError(
                     409,
                     "source_changed",
-                    "Original PDF fingerprint changed; extraction was not started.",
+                    "Original PDF fingerprint changed; task was not started.",
                 )
             del content
-            identity = self.runner.start(spec)
-            started = time.monotonic()
-            status = "failed"
-            error = None
-            checkpoints = LiveCheckpoints(
-                Path(spec.output_dir), spec.project_id, self.service.refresh
-            )
-            while True:
-                code = self.runner.poll(identity, spec)
-                with self.store.connect(write=True) as connection:
-                    connection.execute(
-                        "UPDATE jobs SET identity=? WHERE id=?",
-                        (encode(identity.to_dict()), job_id),
-                    )
-                    cancel = connection.execute(
-                        "SELECT cancel_requested FROM jobs WHERE id=?", (job_id,)
-                    ).fetchone()[0]
-                if self.shutdown.is_set():
-                    status, error = (
-                        "interrupted",
-                        Error(
-                            code="server_interrupted",
-                            message="Server stopped; job checkpoints are preserved.",
-                        ),
-                    )
-                    break
-                if cancel:
-                    status = "cancelled"
-                    break
-                if time.monotonic() - started >= self.timeout:
-                    error = Error(
-                        code="job_timeout",
-                        message="Extraction exceeded its configured lifetime.",
-                    )
-                    break
-                if code is not None:
-                    status = "complete" if code == 0 else "failed"
-                    if code != 0:
-                        error = Error(
-                            code="extraction_failed",
-                            message=f"Core CLI exited with status {code}; inspect private run logs.",
-                        )
-                    break
-                checkpoints.update()
-                self.shutdown.wait(timeout=0.1)
-            cleaned = self.runner.stop(identity, spec)
-            if not cleaned:
-                status = "interrupted"
-                error = Error(
-                    code="ownership_unverified",
-                    message="Process cleanup could not be verified; resume is disabled.",
+            deadline = time.monotonic() + self.timeout
+            core_completed = False
+            if not spec.admet_only:
+                checkpoints = LiveCheckpoints(
+                    Path(spec.output_dir), spec.project_id, self.service.refresh
                 )
-            self._finish(job_id, status, error, clear_identity=cleaned)
-            self.service.refresh(spec.project_id)
+                outcome = self.phases.run(spec, deadline, checkpoint=checkpoints.update)
+                # This is the sole terminal core projection. Never re-project
+                # after ADMET: doing so would invalidate its immutable source key.
+                self.service.refresh(spec.project_id)
+                if outcome.status != "complete" or not outcome.cleaned:
+                    self._finish(
+                        job_id,
+                        outcome.status,
+                        outcome.error,
+                        clear_identity=outcome.cleaned,
+                    )
+                    return
+                if not spec.include_admet:
+                    self._finish(job_id, "complete", None)
+                    return
+                project = self.store.project(spec.project_id)
+                snapshot = json.loads(project["snapshot"])
+                if (
+                    project["run_root"] != spec.output_dir
+                    or snapshot.get("acceptance", {}).get("state") != "accepted"
+                ):
+                    raise WebError(
+                        409,
+                        "core_not_accepted",
+                        "Core extraction did not pass formal QA; ADMET was not started.",
+                    )
+                core_completed = True
+            write_admet_stage(
+                Path(spec.output_dir),
+                self.store.job(job_id),
+                Stage(name="admet"),
+                core_completed=core_completed,
+            )
+            phase_spec = replace(spec, admet_only=True)
+            outcome = self.phases.run(phase_spec, deadline)
+            if outcome.status == "complete" and outcome.cleaned:
+                self._confirm_predictions(job_id, spec)
+            self._finish(
+                job_id, outcome.status, outcome.error, clear_identity=outcome.cleaned
+            )
         except Exception as exc:
             logger.exception("Job %s failed at server boundary", job_id)
-            cleaned = identity is None
-            if identity is not None and spec is not None:
-                cleaned = self.runner.stop(identity, spec)
             error = (
                 Error(code=exc.code, message=exc.message)
                 if isinstance(exc, WebError)
                 else Error(
                     code="job_internal",
-                    message="Extraction failed at the local process boundary; inspect private run logs.",
+                    message="Task failed at the local process boundary; inspect private run logs.",
                 )
             )
-            self._finish(job_id, "failed", error, clear_identity=cleaned)
+            self._finish(
+                job_id,
+                "failed",
+                error,
+                clear_identity=outcome is None or outcome.cleaned,
+            )
+
+    @staticmethod
+    def _phase_spec(spec: RunSpec, identity: ProcessIdentity) -> RunSpec:
+        if (
+            identity.phase not in {"extract", "admet"}
+            or (identity.phase == "admet" and not spec.include_admet)
+            or (identity.phase == "extract" and spec.admet_only)
+        ):
+            raise WebError(
+                409, "invalid_process_record", "Persisted phase ownership is invalid."
+            )
+        return replace(spec, admet_only=True) if identity.phase == "admet" else spec
+
+    def corrected(
+        self,
+        connection: sqlite3.Connection,
+        project_id: str,
+        compound_id: str,
+        compound,
+    ) -> None:
+        correction_prediction(self.store, connection, project_id, compound_id, compound)
+        self.wake.set()
+
+    def _confirm_predictions(self, job_id: str, spec: RunSpec) -> None:
+        from .correction_storage import correction_source_fingerprint
+
+        stage, core_completed = read_admet_stage(
+            self.store.job(job_id), Path(spec.output_dir)
+        )
+        if (
+            stage is None
+            or stage.status not in {"ok", "empty"}
+            or stage.progress is None
+            or stage.progress.completed != stage.progress.total
+            or (stage.status == "ok" and stage.progress.total < 1)
+            or (stage.status == "empty" and stage.progress.total != 0)
+            or stage.progress.failures
+            or stage.count != stage.progress.completed
+            or core_completed != (not spec.admet_only)
+        ):
+            raise WebError(
+                502,
+                "admet_incomplete",
+                "The ADMET producer did not publish complete current stage evidence.",
+            )
+        project = self.store.project(spec.project_id)
+        raw = {row["id"]: row for row in self.service.result_rows(spec.project_id)}
+        selected = [
+            compound
+            for compound in self.service.effective_compounds(spec.project_id)
+            if not spec.admet_compounds or compound.id in spec.admet_compounds
+        ]
+        if spec.admet_compounds and {compound.id for compound in selected} != set(
+            spec.admet_compounds
+        ):
+            raise WebError(
+                502,
+                "admet_incomplete",
+                "The selected source observations are no longer present.",
+            )
+        skipped = sum(not compound.smiles for compound in selected)
+        selected = [compound for compound in selected if compound.smiles]
+        results = self.service.predictions.summaries(
+            spec.project_id,
+            [
+                (
+                    compound.id,
+                    correction_source_fingerprint(project, raw[compound.id]),
+                    compound.smiles,
+                )
+                for compound in selected
+            ],
+        )
+        if (
+            len(selected) != stage.progress.total
+            or stage.skipped != skipped
+            or len(results) != len(selected)
+            or any(result.status != "complete" for result in results.values())
+            or sum(result.job_id != job_id for result in results.values())
+            != stage.progress.cache_hits
+        ):
+            raise WebError(
+                502,
+                "admet_incomplete",
+                "Source-bound predictions are missing or stale; task completion was withheld.",
+            )

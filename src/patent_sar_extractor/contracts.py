@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Final
 
-
 PRODUCT_NAME: Final = "X-PatentSAR"
 DISTRIBUTION_NAME: Final = "x-patentsar"
 COMMAND_NAME: Final = "x-patentsar"
@@ -32,8 +31,8 @@ REVIEW_EXCERPT_METADATA_SCHEMA_VERSION: Final = 1
 ACTIVITY_SCHEMA: Final = "patentsar.activity"
 ACTIVITY_SCHEMA_VERSION: Final = 1
 ACTIVITY_EXTRACTOR_VERSION: Final = "2"
-STRUCTURE_LOCATOR_VERSION: Final = "3"
-STRUCTURE_WORKER_VERSION: Final = "3"
+STRUCTURE_LOCATOR_VERSION: Final = "4"
+STRUCTURE_WORKER_VERSION: Final = "4"
 STRUCTURE_BINDER_VERSION: Final = "4"
 OCSR_OBSERVATION_VERSION: Final = "2"
 DECIMER_ADAPTER_VERSION: Final = "1"
@@ -59,7 +58,11 @@ PAGE_OCR_OBSERVATION_SCHEMA: Final = "patentsar.page-ocr-observation"
 PAGE_OCR_OBSERVATION_VERSION: Final = 1
 # This compatibility is for raw observations only, never derived/accepted data.
 # 2.0.0 lacks coherent scanned-page coordinates and is intentionally excluded.
-PAGE_OCR_COMPATIBLE_RULESETS: Final = ((RULESET_NAME, "2.0.1"), (RULESET_NAME, "2.0.2"), (RULESET_NAME, RULESET_VERSION))
+PAGE_OCR_COMPATIBLE_RULESETS: Final = (
+    (RULESET_NAME, "2.0.1"),
+    (RULESET_NAME, "2.0.2"),
+    (RULESET_NAME, RULESET_VERSION),
+)
 VISIBLE_LABEL_CACHE_SCHEMA: Final = "patentsar.visible-label-cache"
 VISIBLE_LABEL_CACHE_SCHEMA_VERSION: Final = 1
 
@@ -91,7 +94,9 @@ def artifact_identity(schema_name: str, schema_version: int) -> dict[str, object
     }
 
 
-def artifact_identity_matches(payload: object, schema_name: str, schema_version: int) -> bool:
+def artifact_identity_matches(
+    payload: object, schema_name: str, schema_version: int
+) -> bool:
     """Return whether a payload has the exact current identity envelope."""
 
     if not isinstance(payload, dict):

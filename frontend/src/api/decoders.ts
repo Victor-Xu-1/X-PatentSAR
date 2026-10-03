@@ -14,6 +14,7 @@ import {
 } from './validation';
 import type {
   BBox,
+  Activity,
   Compound,
   CompoundRecognition,
   Health,
@@ -25,9 +26,11 @@ import type {
   Runtime,
   Session,
   StageProgress,
+  StageName,
 } from './types';
-import { stageNames } from './types';
+import { recordKinds, stageNames } from './types';
 import type { Decoder } from './validation';
+import { decodePredictionSummary } from './predictionDecoders';
 
 const identity = object({ name: string, version: scalar });
 const capabilities = object({ admet: boolean, summary: boolean });
@@ -70,7 +73,12 @@ const progressShape = object({
 });
 const progress: Decoder<StageProgress> = (input, path) => {
   const value = progressShape(input, path);
-  if (value.completed > value.total) throw new ContractError(path ?? '$');
+  if (
+    value.completed > value.total ||
+    value.cache_hits > value.completed ||
+    value.failures > value.completed
+  )
+    throw new ContractError(path ?? '$');
   return value;
 };
 const healthShape = object({
@@ -94,7 +102,7 @@ export const decodeSession: Decoder<Session> = object({
   csrf_token: string,
   user: object({ name: string }),
 });
-export const decodeProject: Decoder<Project> = object({
+const projectShape = object({
   id: string,
   title: string,
   patent_id: nullable(string),
@@ -116,13 +124,53 @@ export const decodeProject: Decoder<Project> = object({
     errors: array(string),
   }),
 });
+export const decodeProject: Decoder<Project> = (input, path = '$') => {
+  const project = projectShape(input, path);
+  const fields = input as Record<string, unknown>;
+  const rawSummary = fields.summary as Record<string, unknown>;
+  const summary = {
+    ...project.summary,
+    ...(Object.hasOwn(rawSummary, 'structure_only')
+      ? {
+          structure_only: nullable(count)(
+            rawSummary.structure_only,
+            path + '.summary.structure_only',
+          ),
+        }
+      : {}),
+    ...(Object.hasOwn(rawSummary, 'activity_only')
+      ? {
+          activity_only: nullable(count)(rawSummary.activity_only, path + '.summary.activity_only'),
+        }
+      : {}),
+  };
+  if (!Object.hasOwn(fields, 'first_structure_page')) return { ...project, summary };
+  const first = nullable(positive)(fields.first_structure_page, `${path}.first_structure_page`);
+  if (first !== null && project.pdf.page_count > 0 && first > project.pdf.page_count)
+    throw new ContractError(`${path}.first_structure_page`);
+  return { ...project, summary, first_structure_page: first };
+};
 export const decodeReview: Decoder<Review> = object({
   decision: oneOf(['approved', 'rejected', 'needs_review']),
   note: string,
   revision: count,
   updated_at: string,
 });
-export const decodeCompound: Decoder<Compound> = object({
+export const activityDecoder: Decoder<Activity> = object({
+  name: string,
+  value: nullable(scalar),
+  unit: nullable(string),
+  target: nullable(string),
+  assay: nullable(string),
+  page: nullable(positive),
+});
+const correctionMetadata = object({
+  revision: positive,
+  stale: boolean,
+  has_changes: boolean,
+  updated_at: string,
+});
+const compoundShape = object({
   id: string,
   display_id: string,
   structure_id: nullable(string),
@@ -130,16 +178,7 @@ export const decodeCompound: Decoder<Compound> = object({
   redraw_image_url: nullable(string),
   smiles: nullable(string),
   recognition: nullable(recognition),
-  activities: array(
-    object({
-      name: string,
-      value: nullable(scalar),
-      unit: nullable(string),
-      target: nullable(string),
-      assay: nullable(string),
-      page: nullable(positive),
-    }),
-  ),
+  activities: array(activityDecoder),
   source: object({
     page: nullable(positive),
     paragraph: nullable(scalar),
@@ -155,6 +194,22 @@ export const decodeCompound: Decoder<Compound> = object({
   review: nullable(decodeReview),
   flags: array(string),
 });
+export const decodeCompound: Decoder<Compound> = (input, path = '$') => {
+  const compound = compoundShape(input, path);
+  const fields = input as Record<string, unknown>;
+  return {
+    ...compound,
+    ...(Object.hasOwn(fields, 'record_kind')
+      ? { record_kind: nullable(oneOf(recordKinds))(fields.record_kind, path + '.record_kind') }
+      : {}),
+    ...(Object.hasOwn(fields, 'admet')
+      ? { admet: nullable(decodePredictionSummary)(fields.admet, `${path}.admet`) }
+      : {}),
+    ...(Object.hasOwn(fields, 'correction')
+      ? { correction: nullable(correctionMetadata)(fields.correction, `${path}.correction`) }
+      : {}),
+  };
+};
 export const decodePage: Decoder<PageData> = object({
   page: positive,
   page_count: positive,
@@ -165,7 +220,27 @@ export const decodePage: Decoder<PageData> = object({
   source_mode: oneOf(['native', 'ocr', 'historical', 'unavailable']),
   annotations: array(object({ compound_id: string, bbox, kind: string, verified: boolean })),
 });
-export const decodeJob: Decoder<Job> = object({
+const stageStatus = oneOf(['pending', 'running', 'ok', 'empty', 'failed', 'warnings']);
+const stageFields = {
+  status: stageStatus,
+  count: nullable(count),
+  duration_seconds: nullable(nonnegative),
+  progress: nullable(progress),
+  reused_checkpoint: nullable(boolean),
+};
+function stageDecoder<const T extends readonly StageName[]>(names: T) {
+  const shape = object({ name: oneOf(names), ...stageFields });
+  return (input: unknown, path = '$') => {
+    const stage = shape(input, path);
+    const fields = input as Record<string, unknown>;
+    if (!Object.hasOwn(fields, 'skipped')) return stage;
+    const skipped = count(fields.skipped, path + '.skipped');
+    if (skipped > 1_000_000) throw new ContractError(path + '.skipped');
+    return { ...stage, skipped };
+  };
+}
+const admetStage = stageDecoder(['admet']);
+const jobShape = object({
   id: string,
   project_id: string,
   status: oneOf(['queued', 'running', 'complete', 'failed', 'cancelled', 'interrupted']),
@@ -178,17 +253,30 @@ export const decodeJob: Decoder<Job> = object({
   include_intermediates: defaulted(boolean, false),
   force: defaulted(boolean, false),
   task_note: defaulted(string, ''),
-  stages: array(
-    object({
-      name: oneOf(stageNames),
-      status: oneOf(['pending', 'running', 'ok', 'empty', 'failed', 'warnings']),
-      count: nullable(count),
-      duration_seconds: nullable(number),
-      progress: nullable(progress),
-      reused_checkpoint: nullable(boolean),
-    }),
-  ),
+  stages: array(stageDecoder(stageNames)),
 });
+export const decodeJob: Decoder<Job> = (input, path = '$') => {
+  const job = jobShape(input, path);
+  const fields = input as Record<string, unknown>;
+  const result: Job = {
+    ...job,
+    ...(Object.hasOwn(fields, 'include_admet')
+      ? { include_admet: boolean(fields.include_admet, `${path}.include_admet`) }
+      : {}),
+    ...(Object.hasOwn(fields, 'admet_only')
+      ? { admet_only: boolean(fields.admet_only, `${path}.admet_only`) }
+      : {}),
+    ...(Object.hasOwn(fields, 'admet_stage')
+      ? { admet_stage: nullable(admetStage)(fields.admet_stage, `${path}.admet_stage`) }
+      : {}),
+  };
+  if (
+    (result.admet_stage != null && result.include_admet !== true) ||
+    (result.admet_only === true && (result.include_admet !== true || result.stages.length > 0))
+  )
+    throw new ContractError(path);
+  return result;
+};
 export const decodeResults: Decoder<Results> = object({
   items: array(decodeCompound),
   total: count,

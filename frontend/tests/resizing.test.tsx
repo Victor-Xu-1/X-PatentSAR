@@ -1,11 +1,7 @@
-import { useState } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { ResizeHandle } from '../src/components/ResizeHandle';
-import { AppFrame } from '../src/components/AppFrame';
-import { defaultSidebarLayout, normalizeSidebarLayout } from '../src/model/sidebarLayout';
-import { emptyRoute, parseRoute, routeHash } from '../src/model/route';
 
 describe('one bounded resize interaction', () => {
   it('previews only the owning pointer and commits once on release', () => {
@@ -90,85 +86,5 @@ describe('one bounded resize interaction', () => {
     fireEvent.pointerMove(handle, { pointerId: 1, clientX: 300 });
     fireEvent.pointerUp(handle, { pointerId: 1 });
     expect(commit).not.toHaveBeenCalled();
-  });
-});
-
-describe('refreshable sidebar layout', () => {
-  it('validates URL values and roundtrips on workspace and management routes', () => {
-    expect(normalizeSidebarLayout({ width: NaN })).toEqual(defaultSidebarLayout);
-    expect(normalizeSidebarLayout({ width: -50 }).width).toBe(184);
-    expect(normalizeSidebarLayout({ width: Infinity }).width).toBe(232);
-    expect(normalizeSidebarLayout({ width: 10000 }).width).toBe(360);
-    for (const view of ['workspace', 'projects', 'jobs', 'settings', 'new-task'] as const) {
-      const route = { ...emptyRoute, view, sidebar: { width: 288, collapsed: true } };
-      expect(parseRoute(routeHash(route))).toEqual(route);
-    }
-  });
-  it('snaps drag-to-collapse while retaining the previous expanded width', () => {
-    function Frame() {
-      const [layout, setLayout] = useState({ width: 288, collapsed: false });
-      return (
-        <AppFrame
-          layout={layout}
-          onChange={setLayout}
-          narrow={false}
-          menuOpen={false}
-          leading={null}
-          sidebar={(collapsed) => <aside>{collapsed ? '收起' : '展开'}</aside>}
-        >
-          <div>结果</div>
-        </AppFrame>
-      );
-    }
-    render(<Frame />);
-    const handle = screen.getByRole('slider');
-    fireEvent.pointerDown(handle, { pointerId: 1, button: 0, clientX: 288, isPrimary: true });
-    fireEvent.pointerMove(handle, { pointerId: 1, clientX: 80 });
-    expect(screen.getByText('收起')).toBeVisible();
-    fireEvent.pointerUp(handle, { pointerId: 1 });
-    expect(handle).toHaveAttribute('aria-valuenow', '56');
-    fireEvent.pointerDown(handle, { pointerId: 2, button: 0, clientX: 56, isPrimary: true });
-    fireEvent.pointerMove(handle, { pointerId: 2, clientX: 256 });
-    fireEvent.pointerCancel(handle, { pointerId: 2 });
-    expect(handle).toHaveAttribute('aria-valuenow', '56');
-    fireEvent.doubleClick(handle);
-    expect(handle).toHaveAttribute('aria-valuenow', '232');
-    expect(screen.getByText('展开')).toBeVisible();
-  });
-  it('keeps mobile navigation expanded and excludes desktop-only drag controls', () => {
-    render(
-      <AppFrame
-        layout={{ width: 288, collapsed: true }}
-        onChange={vi.fn()}
-        narrow
-        menuOpen
-        leading={null}
-        sidebar={(collapsed) => <aside>{String(collapsed)}</aside>}
-      >
-        <div>结果</div>
-      </AppFrame>,
-    );
-    expect(screen.getByText('false')).toBeVisible();
-    expect(screen.queryByRole('slider')).not.toBeInTheDocument();
-    expect(document.querySelector('.app-shell')).toHaveStyle({ '--sidebar-width': '288px' });
-  });
-  it('cancels a drag when switching to mobile instead of restoring a stale preview', () => {
-    const props = {
-      layout: defaultSidebarLayout,
-      onChange: vi.fn(),
-      menuOpen: false,
-      leading: null,
-      sidebar: () => <aside>导航</aside>,
-      children: <div>结果</div>,
-    };
-    const { rerender } = render(<AppFrame {...props} narrow={false} />);
-    const handle = screen.getByRole('slider');
-    fireEvent.pointerDown(handle, { pointerId: 1, button: 0, clientX: 232, isPrimary: true });
-    fireEvent.pointerMove(handle, { pointerId: 1, clientX: 300 });
-    expect(document.querySelector('.app-shell')).toHaveStyle({ '--sidebar-width': '300px' });
-    rerender(<AppFrame {...props} narrow />);
-    rerender(<AppFrame {...props} narrow={false} />);
-    expect(document.querySelector('.app-shell')).toHaveStyle({ '--sidebar-width': '232px' });
-    expect(props.onChange).not.toHaveBeenCalled();
   });
 });

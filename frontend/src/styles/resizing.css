@@ -48,12 +48,6 @@ body:has(.resize-handle.dragging) {
   cursor: col-resize;
   user-select: none;
 }
-.sidebar-divider {
-  position: sticky;
-  top: 0;
-  height: 100dvh;
-  z-index: 20;
-}
 .column-resizer {
   position: absolute;
   inset: 0 0 0 auto;

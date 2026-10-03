@@ -16,6 +16,7 @@ export const stageLabels: Record<StageName, string> = {
   smiles: 'SMILES 识别',
   final: '产物导出',
   qa: '确定性 QA',
+  admet: 'ADMET',
 };
 export const stageStatusLabels: Record<StageStatus, string> = {
   pending: '等待',

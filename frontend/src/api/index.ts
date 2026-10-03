@@ -14,12 +14,14 @@ import type { Filters, JobOptions, ReviewDecision } from './types';
 import { decodeAdmet, decodeEvidenceSummary, decodeRecognition } from './analysisDecoders';
 import { ContractError } from './validation';
 import { environmentApi } from './environmentApi';
+import { correctionApi } from './correctionApi';
 
 export const client = new ApiClient();
 const segment = encodeURIComponent;
 const projectPath = (id: string) => `/projects/${segment(id)}`;
 export const api = {
   ...environmentApi(client),
+  ...correctionApi(client),
   session: () => client.bootstrap(),
   health: (signal: AbortSignal) => client.get('/health', decodeHealth, signal),
   projects: (signal: AbortSignal) => client.get('/projects', decodeProjects, signal),
@@ -38,7 +40,7 @@ export const api = {
       `${projectPath(id)}/jobs`,
       'POST',
       {
-        ...(resumeId ? {} : options),
+        ...(resumeId ? {} : { include_admet: true, ...options }),
         allow_partial: false,
         advisory: false,
         resume_job_id: resumeId,

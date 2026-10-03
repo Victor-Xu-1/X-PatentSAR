@@ -53,7 +53,7 @@ export function ExportDialog({
       >
         <div className="info-banner">
           {project.acceptance.state === 'accepted'
-            ? '核心 QA 已通过。导出来自服务端真实结果，人工复核注记独立保留。'
+            ? '原始提取核心 QA 已通过。人工修正与计算指标单独记录，含这些内容的导出仅供复核 / 研究。'
             : '当前项目未通过当前核心 QA，下载仅为复核材料，不代表正式交付验收通过。'}
         </div>
         <label className="form-field">

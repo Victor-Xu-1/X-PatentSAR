@@ -22,7 +22,7 @@ describe('results-first layout with one safe, refreshable state', () => {
       ...emptyRoute,
       projectId: 'p',
       layout: { pdfWidth: 31, pdfVisible: false, fullscreen: true },
-      resultTab: 'admet' as const,
+      resultTab: 'summary' as const,
     };
     expect(parseRoute(routeHash(route))).toEqual(route);
     const invalid = parseRoute('#/projects/p?pdfWidth=Infinity&pdf=bad&fullscreen=bad');
@@ -120,7 +120,7 @@ describe('results-first layout with one safe, refreshable state', () => {
         onAttach={vi.fn()}
       />,
     );
-    await userEvent.click(await screen.findByRole('button', { name: '来源定位' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'I-7 结构来源第 4 页' }));
     expect(navigate).toHaveBeenCalledWith(
       expect.objectContaining({
         page: compound.source.page,

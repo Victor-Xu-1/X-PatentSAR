@@ -21,9 +21,7 @@ export function JobsPage({
     <section className="panel management-page">
       <header className="page-header">
         <div>
-          <span className="eyebrow">PIPELINE HISTORY</span>
           <h1>任务记录</h1>
-          <p className="muted">显示实际阶段状态，不推算百分比；任务完成不等同于核心验收通过。</p>
         </div>
         <div className="inline-actions">
           <select
@@ -69,9 +67,9 @@ export function JobsPage({
                     </button>
                     <span className={`badge job-${job.status}`}>{jobStatusLabels[job.status]}</span>
                   </div>
-                  <small>任务 {job.id}</small>
+                  <small title={job.id}>任务 {job.id}</small>
                 </header>
-                <StageStrip job={job} />
+                <StageStrip job={job} compact />
                 <dl className="job-dates">
                   <dt>创建</dt>
                   <dd>{dateText(job.created_at)}</dd>

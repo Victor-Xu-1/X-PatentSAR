@@ -36,6 +36,9 @@ class RunSpec:
     force: bool = False
     task_note: str = ""
     source_ocr_cache: str = ""
+    include_admet: bool = False
+    admet_only: bool = False
+    admet_compounds: tuple[str, ...] = ()
 
 
 @dataclass
@@ -48,6 +51,7 @@ class ProcessIdentity:
     cwd: str
     executable: str
     descendants: list[dict[str, Any]] = field(default_factory=list)
+    phase: str = "extract"
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -307,6 +311,16 @@ class SubprocessRunner:
 
 class CLIProcessRunner(SubprocessRunner):
     def command(self, spec: RunSpec) -> list[str]:
+        if spec.admet_only:
+            return [
+                sys.executable,
+                "-m",
+                "patent_sar_extractor.web.prediction_worker",
+                "--state-dir",
+                str(Path(spec.output_dir).parents[2]),
+                "--job-id",
+                spec.job_id,
+            ]
         command = [
             sys.executable,
             "-m",
