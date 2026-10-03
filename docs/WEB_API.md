@@ -234,9 +234,11 @@ vertically scrollable source/result layout.
    clean revision, verify independent installed startup, security boundaries and
    the original browser checks, and push the authorized Apache-2.0 repository.
    The earlier account-level runner blockage is resolved: subsequent task-branch
-   CI runs execute the current workflow. Each later candidate still requires its
-   own passing CI and local scientific/installed-browser evidence; past passes
-   are not a waiver. No account billing settings are changed.
+   CI runs execute the current workflow. Later candidates follow the current
+   focused verification and mainline deployment policy in `docs/OPERATIONS.md`;
+   past passes are not a waiver, skipped checks are not passing checks, and
+   global suites require explicit user authorization. Required checks cannot be
+   bypassed. No account billing settings are changed.
 
 ### Complete task workflow iteration
 
@@ -248,10 +250,12 @@ vertically scrollable source/result layout.
    ADMET-AI v2 CPU inference and source-grounded deterministic evidence summaries.
 3. Release gate: run affected tests and the mandatory packaging/runtime gates against
    a clean candidate, deploy to E, verify the actual original and data in Chromium,
-   and push the public X-PatentSAR repository. No global WSL shutdown or user-data cleanup.
+   merge all task-related PRs into the public X-PatentSAR `main`, build/deploy that
+   exact clean revision and verify the installed affected paths. A branch push
+   alone is not completion. No global WSL shutdown or user-data cleanup.
 
-Verification uses the full Python suite and frontend unit tests, actual
-ADMET-AI 2.0.1 CPU inference with 52 properties, and actual original-crop
+The original iteration's historical verification used the full Python suite and
+frontend unit tests, actual ADMET-AI 2.0.1 CPU inference with 52 properties, and actual original-crop
 DECIMER/RDKit-to-ADMET HTTP checks. The sixteen browser workflows cover measured
 visible result area, the real original PDF, keyboard/pointer/refresh, research
 analysis and unchanged formal acceptance. Real-model checks are opt-in for

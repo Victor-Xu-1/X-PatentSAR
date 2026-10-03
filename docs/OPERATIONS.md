@@ -213,6 +213,35 @@ Retain the final workbook, SDF, `pipeline_summary.json`, `final_qa_report.*`, op
 
 ## Rollback
 
+### Mainline deployment gate
+
+A task is not complete at branch push or PR creation. Review and merge every
+task-related PR into `main`, fetch the exact remote merge revision, and build the
+frontend/wheel from that clean source. Do not replace unrelated dirty work or
+merge unknown PRs merely to empty the queue. Keep product version `v0.1.0` unless
+the user explicitly requests a version change.
+
+Select verification from the exact integrated diff and its affected consumers;
+global suites require explicit user authorization. Do not disable required CI
+checks or branch protection. If an authorized focused run cannot satisfy a
+required gate, report the conflict instead of claiming success. Skipped CI is not
+passing CI, and a known scientific limitation is not resolved by a Git merge.
+
+Before replacing the installed wheel, confirm this application's extraction,
+environment-install and research-analysis operations are idle. Preserve the
+previous wheel, its checksum, and the current external configuration. Stop only
+the verified owned service, install the mainline wheel without changing unrelated
+environments, and restart through the existing operator entry point. Never
+restart all WSL distributions or migrate user state as a deployment shortcut.
+
+Record the PR/merge SHA, clean source tree, wheel and served asset checksums,
+installed product version, focused test commands/results, startup/health and real
+browser evidence in the external E-drive evidence store. Confirm there are no
+remaining task-related open PRs. The Windows management entry must reference this
+current deployment, not an older branch or historical CI run. Rollback reinstalls
+the preserved wheel through the same idle/ownership checks; patent artifacts and
+manual-review records are never edited or deleted.
+
 Before an environment-manager rollback, finish/cancel its active operation and
 verify owned-child shutdown. Preserve the whole private environment state and the
 current external configuration. If restoring configuration, select the saved
