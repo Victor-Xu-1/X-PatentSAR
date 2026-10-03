@@ -9,13 +9,57 @@ from unittest.mock import patch
 
 from patent_sar_extractor.application.pipeline_context import PipelineContext
 from patent_sar_extractor.application.progress import PipelineProgress
+from patent_sar_extractor.application.stage_bind import execute_bind
 from patent_sar_extractor.application.stage_cache import _bindings_ocsr_digest
-from patent_sar_extractor.application.stage_structures import execute_structures
 from patent_sar_extractor.application.stage_smiles import execute_smiles
+from patent_sar_extractor.application.stage_structures import execute_structures
 from patent_sar_extractor.smiles_artifact import build_smiles_artifact
 
 
 class PipelineStageTests(unittest.TestCase):
+    def test_printed_catalog_stage_runs_even_without_activity_targets(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pdf = root / "original.pdf"
+            pdf.write_bytes(b"controlled fingerprint input, not patent evidence")
+            dependency = root / "observations.json"
+            dependency.write_text("{}")
+            progress = PipelineProgress()
+            log = {"steps": {}, "main_chain": ["bind"], "status": "running"}
+            progress.bind(str(root), log)
+            context = PipelineContext(
+                args=Namespace(pdf=str(pdf), bind_workers=1),
+                progress=progress,
+                patent_id="TEST",
+                base_dir=str(root),
+                step_dirs={"bind": str(root / "bindings")},
+                pipeline_log=log,
+                active_cpds=[],
+                n_structures=1,
+                structures_json=str(dependency),
+                act_json=str(dependency),
+                locate_json=str(dependency),
+                ocr_cache_path=str(dependency),
+            )
+            catalog = {"entries": [{"cpd": "Compound 1"}]}
+            with (
+                patch(
+                    "patent_sar_extractor.core.structure_binder.bind",
+                    return_value={"bindings": [], "compound_catalog": catalog},
+                ) as binder,
+                self.assertRaisesRegex(
+                    RuntimeError, "No compound with extracted activity"
+                ),
+            ):
+                execute_bind(context)
+            binder.assert_called_once()
+            serialized = json.loads(Path(context.bind_json).read_text())
+            self.assertEqual(serialized["compound_catalog"], catalog)
+            self.assertEqual(serialized["final_bindings"], [])
+            self.assertEqual(context.n_bound, 0)
+            self.assertEqual(log["steps"]["bind"]["status"], "failed")
+            self.assertTrue(log["steps"]["bind"]["output_updated"])
+
     def test_old_output_cannot_hide_nonzero_worker_exit_or_missing_current_output(self):
         from subprocess import CompletedProcess
 
@@ -73,9 +117,9 @@ class PipelineStageTests(unittest.TestCase):
                         "patent_sar_extractor.application.stage_smiles._smiles_acceptance_errors",
                         return_value=[],
                     ),
+                    self.assertRaises(RuntimeError),
                 ):
-                    with self.assertRaises(RuntimeError):
-                        execute_smiles(context)
+                    execute_smiles(context)
                 self.assertEqual(smiles.read_bytes(), old)
                 self.assertFalse(Path(str(smiles) + ".manifest.json").exists())
 

@@ -6,8 +6,10 @@ import hashlib
 import json
 from collections.abc import Iterable
 
+from .activity_ranking import RankBudget, RankDistribution
+from .column_choices import ColumnChoices
 from .errors import WebError
-from .models import Activity, ActivityColumn
+from .models import Activity, ActivityColumn, FilterChoice
 
 ActivityContext = tuple[str, str | None, str | None, str | None]
 MAX_ACTIVITY_COLUMNS = 1000
@@ -35,10 +37,16 @@ class ActivityColumnCatalog:
 
     def __init__(self) -> None:
         self._columns: dict[ActivityContext, ActivityColumn] = {}
+        self._rank_budget = RankBudget()
+        self._ranks: dict[ActivityContext, RankDistribution] = {}
+        self._choices: dict[ActivityContext, ColumnChoices] = {}
 
     def observe(self, activities: Iterable[Activity]) -> None:
         for activity in activities:
             context = activity_context(activity)
+            if context in self._ranks:
+                self._ranks[context].observe(activity.value)
+                self._choices[context].observe(activity.value)
             if context in self._columns:
                 continue
             if len(self._columns) >= MAX_ACTIVITY_COLUMNS:
@@ -55,6 +63,10 @@ class ActivityColumnCatalog:
                 target=target,
                 assay=assay,
             )
+            distribution = self._ranks[context] = RankDistribution(self._rank_budget)
+            distribution.observe(activity.value)
+            choices = self._choices[context] = ColumnChoices()
+            choices.observe(activity.value)
 
     def columns(self) -> list[ActivityColumn]:
         contexts = sorted(
@@ -63,4 +75,18 @@ class ActivityColumnCatalog:
                 (value is not None, value or "") for value in context
             ),
         )
-        return [self._columns[context] for context in contexts]
+        return [
+            self._columns[context].model_copy(
+                update={
+                    "strength_scale": self._ranks[context].profile(
+                        context[0], context[1], context[3]
+                    ),
+                    "filter_values": [
+                        FilterChoice.model_validate(value)
+                        for value in self._choices[context].values()
+                    ],
+                    "filter_values_truncated": self._choices[context].truncated,
+                }
+            )
+            for context in contexts
+        ]

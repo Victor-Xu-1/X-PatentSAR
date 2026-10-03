@@ -1,4 +1,4 @@
-import { Download, MoreHorizontal, Search } from 'lucide-react';
+import { Columns3, Download, MoreHorizontal, Search } from 'lucide-react';
 import { useState } from 'react';
 import type { ComponentProps } from 'react';
 import type { Job, Project } from '../../api/types';
@@ -9,12 +9,16 @@ import { Metrics } from './Metrics';
 import { ResultDisplayControls } from './ResultDisplayControls';
 import { ResultFilters } from './ResultFilters';
 import { PredictionAction } from './PredictionAction';
+import { ColumnChooser } from './ColumnChooser';
+import { TableCopyButton } from './TableCopyButton';
 
 export function ResultToolbar({
   project,
   job,
   filters,
   display,
+  columns,
+  copy,
   selectedCount,
   loading,
   canExport,
@@ -27,6 +31,8 @@ export function ResultToolbar({
   job: Job | null;
   filters: ComponentProps<typeof ResultFilters>;
   display: ComponentProps<typeof ResultDisplayControls>;
+  columns: ComponentProps<typeof ColumnChooser>;
+  copy: ComponentProps<typeof TableCopyButton>;
   selectedCount: number;
   loading: boolean;
   canExport: boolean;
@@ -36,6 +42,9 @@ export function ResultToolbar({
   onPredictionQueued: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [choosing, setChoosing] = useState(false);
+  const columnFilterCount = new Set(filters.filters.column_filters?.map((filter) => filter.column))
+    .size;
   return (
     <>
       <header className="result-toolbar" aria-label="结构列表工具栏">
@@ -52,6 +61,41 @@ export function ResultToolbar({
           />
         </label>
         {selectedCount > 0 && <span className="selection-count">已选 {selectedCount}</span>}
+        {columnFilterCount > 0 && (
+          <button
+            type="button"
+            className="toolbar-button"
+            disabled={filters.disabled || loading}
+            aria-label="清除列筛选"
+            title={`${columnFilterCount} 列已筛选（包括隐藏列）`}
+            onClick={() => filters.onChange({ column_filters: [], page: 1 })}
+          >
+            筛选 {columnFilterCount} ×
+          </button>
+        )}
+        {filters.filters.sort_column && (
+          <button
+            type="button"
+            className="toolbar-button"
+            disabled={filters.disabled || loading}
+            aria-label="取消列排序"
+            onClick={() => filters.onChange({ sort_column: '', sort_direction: 'asc', page: 1 })}
+          >
+            排序 ×
+          </button>
+        )}
+        <TableCopyButton {...copy} />
+        <button
+          type="button"
+          className="toolbar-button"
+          disabled={!project}
+          aria-label="显示列"
+          data-column-chooser
+          title={`显示 / 隐藏列（${columns.columns.length - columns.columns.filter((column) => columns.hidden.includes(column.id)).length} / ${columns.columns.length}）`}
+          onClick={() => setChoosing(true)}
+        >
+          <Columns3 size={14} />
+        </button>
         <button
           type="button"
           className="toolbar-button"
@@ -73,6 +117,11 @@ export function ResultToolbar({
           <MoreHorizontal size={14} />
         </button>
       </header>
+      {choosing && (
+        <Dialog title="显示列" onClose={() => setChoosing(false)}>
+          <ColumnChooser {...columns} />
+        </Dialog>
+      )}
       {open && (
         <Dialog title="列表选项" onClose={() => setOpen(false)}>
           <div className="dialog-body result-options">

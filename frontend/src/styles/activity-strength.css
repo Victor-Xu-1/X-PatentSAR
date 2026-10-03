@@ -1,0 +1,33 @@
+/* Data colors remain visible during row hover/focus; not acceptance-status colors. */
+.activity-observation {
+  /* Keep absolutely positioned screen-reader text inside the table scrollport. */
+  position: relative;
+}
+.results-table tbody tr td[data-activity-strength='strong'],
+.activity-observation[data-activity-strength='strong'],
+.activity-strength-legend [data-activity-strength='strong'] {
+  background: var(--activity-strong-surface);
+}
+.results-table tbody tr td[data-activity-strength='medium'],
+.activity-observation[data-activity-strength='medium'],
+.activity-strength-legend [data-activity-strength='medium'] {
+  background: var(--activity-medium-surface);
+}
+.activity-strength-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.activity-strength-legend span {
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--primary);
+}
+.activity-observation[data-activity-strength='strong'] .activity-source:disabled,
+.activity-observation[data-activity-strength='medium'] .activity-source:disabled {
+  color: var(--primary);
+}

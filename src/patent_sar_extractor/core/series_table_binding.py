@@ -9,8 +9,9 @@ from __future__ import annotations
 import math
 import re
 from collections import Counter
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 _LABEL_RE = re.compile(
     r"(?<![A-Za-z0-9])(?:I|1|l)\s*[-\u2013\u2014]\s*([1-9]\d{0,4})(?!\d)",
@@ -164,7 +165,7 @@ def _pair_page(
 def _resolve_labels(
     pairs: Sequence[SeriesTableBinding],
     observed: Counter[int],
-    active_keys: set[str],
+    active_keys: set[str] | None,
 ) -> tuple[SeriesTableBinding, ...]:
     ordered = sorted(pairs, key=lambda pair: pair.evidence_position)
     proposals: dict[int, int] = {}
@@ -180,6 +181,7 @@ def _resolve_labels(
             and following.page_index - current.page_index in (0, 1)
             and following.source_label == expected + 1
             and expected not in observed
+            and active_keys is not None
             and str(expected) in active_keys
         ):
             proposals[index] = expected
@@ -204,7 +206,8 @@ def _resolve_labels(
     return tuple(
         pair
         for pair in resolved
-        if remaining[pair.label] == 1 and str(pair.label) in active_keys
+        if remaining[pair.label] == 1
+        and (active_keys is None or str(pair.label) in active_keys)
     )
 
 
@@ -212,7 +215,7 @@ def pair_series_table(
     structures: Sequence[Mapping[str, Any]],
     page_indices: Sequence[int],
     lines_by_page: Mapping[int, Sequence[tuple[float, str]]],
-    active_keys: set[str],
+    active_keys: set[str] | None,
 ) -> SeriesTableResult:
     """Pair rows without inventing absent activity IDs or resolving ambiguity.
 
@@ -248,7 +251,11 @@ def pair_series_table(
         if label_count >= _MIN_TABLE_LABELS
         else ()
     )
-    return SeriesTableResult(label_count, bindings, rejected, ambiguous,
+    return SeriesTableResult(
+        label_count,
+        bindings,
+        rejected,
+        ambiguous,
         frozenset(str(number) for number in observed),
         frozenset(observed_pages) if label_count >= _MIN_TABLE_LABELS else frozenset(),
     )

@@ -11,12 +11,20 @@ const statusLabels = {
   unavailable: '无有效结构',
 } as const;
 
-export function PredictionCells({ row }: { row: Compound }) {
+export function PredictionCells({
+  row,
+  visibleColumns,
+}: {
+  row: Compound;
+  visibleColumns?: ReadonlySet<string> | undefined;
+}) {
   const prediction = row.admet;
   const status = prediction?.status ?? 'not_run';
   return (
     <>
-      {METRIC_SPECS.map((spec) => {
+      {METRIC_SPECS.filter(
+        (spec) => !visibleColumns || visibleColumns.has(`property:${spec.key}`),
+      ).map((spec) => {
         const metric =
           status === 'complete'
             ? prediction?.properties.find((item) => item.key === spec.key)

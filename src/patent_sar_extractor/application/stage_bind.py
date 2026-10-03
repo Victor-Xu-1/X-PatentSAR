@@ -37,12 +37,7 @@ def execute_bind(state: PipelineContext) -> None:
     t0 = time.time()
     bind_dir = state.step_dirs[step]
     state.bind_json = os.path.join(bind_dir, "bindings.json")
-    if not state.active_cpds:
-        print(f"  ⏭ [{step}] 无活性化合物，跳过")
-        state.bind_payload = {"final_bindings": []}
-        _save_bindings_payload(state.bind_json, state.bind_payload)
-        state.n_bound = 0
-    elif state.n_structures == 0:
+    if state.n_structures == 0:
         print(f"  ⏭ [{step}] 无结构，跳过")
         state.bind_payload = {"final_bindings": []}
         _save_bindings_payload(state.bind_json, state.bind_payload)
@@ -91,7 +86,7 @@ def execute_bind(state: PipelineContext) -> None:
         _load_reusable_bindings(
             state.bind_json, bind_fp, state.active_cpds, state.locator
         )
-        if state.active_cpds and state.n_structures and not state.force
+        if state.n_structures and not state.force
         else None
     )
     if reusable_bindings is not None:
@@ -100,7 +95,7 @@ def execute_bind(state: PipelineContext) -> None:
         state.n_bound = len(state.bind_payload.get("final_bindings", []))
         print(f"  ⏭ [{step}] 已存在，跳过")
         state.progress.mark_checkpoint_reused()
-    elif state.active_cpds and state.n_structures:
+    elif state.n_structures:
         from patent_sar_extractor.core.structure_binder import bind as binder_bind
 
         os.makedirs(bind_dir, exist_ok=True)
@@ -135,6 +130,11 @@ def execute_bind(state: PipelineContext) -> None:
             "failed" if state.strict_gates else "warnings"
         )
         state.pipeline_log["steps"][step]["acceptance_errors"] = binding_errors
+        # A newly written printed-ID catalog is valid source evidence even
+        # when the original activity-association acceptance scope fails. The
+        # read model can retain those rows without accepting their chemistry.
+        if (state.bind_payload.get("compound_catalog") or {}).get("entries"):
+            state.pipeline_log["steps"][step]["output_updated"] = True
         if state.strict_gates:
             state.pipeline_log["status"] = "failed_accuracy_gate"
             _save_log(state.pipeline_log, state.base_dir)

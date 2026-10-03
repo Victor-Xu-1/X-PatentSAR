@@ -7,6 +7,7 @@ from typing import Any
 
 from .activity_columns import ActivityColumnCatalog
 from .activity_focus import activity_source_keys
+from .activity_rank_values import rank_value
 from .correction_storage import (
     CORRECTION_COLUMNS,
     CORRECTION_JOIN,
@@ -20,6 +21,8 @@ from .molecule_drawing import drawing_url
 from .pdf import open_pdf, rendered_box
 from .prediction_storage import PredictionStore
 from .storage import Store
+from .table_queries import validate_columns, workbook_rows
+from .table_query_models import column_filters as parse_column_filters
 
 
 class ResultQueries:
@@ -70,6 +73,9 @@ class ResultQueries:
         confidence: str = "",
         review: str = "",
         target: str = "",
+        column_filters: str = "",
+        sort_column: str = "",
+        sort_direction: str = "asc",
     ) -> tuple[
         list[Compound],
         dict[str, str],
@@ -88,6 +94,8 @@ class ResultQueries:
             "unknown",
         } or review not in {"", "approved", "rejected", "needs_review", "unreviewed"}:
             raise WebError(422, "invalid_filter", "Result filter is not supported.")
+        # Reject oversized/malformed input before the full effective-row scan.
+        criteria = parse_column_filters(column_filters)
         output = []
         source_spaces: dict[str, str] = {}
         metrics: set[str] = set()
@@ -154,13 +162,21 @@ class ResultQueries:
                 continue
             output.append(dto)
             source_spaces[dto.id] = row["geometry_space"]
+        catalog = activity_columns.columns()
+        validate_columns(criteria, sort_column, sort_direction, catalog)
+        context = (project, {row["id"]: row for row in rows})
+        if sort_column.startswith("property:") or any(
+            item.column.startswith("property:") for item in criteria
+        ):
+            output = self._predictions(project_id, output, context)
+        output = workbook_rows(output, criteria, sort_column, sort_direction)
         return (
             output,
             source_spaces,
             sorted(metrics),
             sorted(targets),
-            (project, {row["id"]: row for row in rows}),
-            activity_columns.columns(),
+            context,
+            catalog,
         )
 
     def _predictions(
@@ -169,7 +185,11 @@ class ResultQueries:
         items: list[Compound],
         context: tuple[dict[str, Any], dict[str, dict[str, Any]]],
     ) -> list[Compound]:
-        if self.predictions is not None and items:
+        if (
+            self.predictions is not None
+            and items
+            and any(item.admet is None for item in items)
+        ):
             project, by_id = context
             values = self.predictions.summaries(
                 project_id,
@@ -233,9 +253,19 @@ class ResultQueries:
         confidence: str = "",
         review: str = "",
         target: str = "",
+        column_filters: str = "",
+        sort_column: str = "",
+        sort_direction: str = "asc",
     ) -> list[Compound]:
         items, source_spaces, _, _, context, _ = self._filtered_compounds(
-            project_id, q=q, confidence=confidence, review=review, target=target
+            project_id,
+            q=q,
+            confidence=confidence,
+            review=review,
+            target=target,
+            column_filters=column_filters,
+            sort_column=sort_column,
+            sort_direction=sort_direction,
         )
         return self._predictions(
             project_id,
@@ -258,6 +288,12 @@ class ResultQueries:
         offset = (page - 1) * page_size
         visible = compounds[offset : offset + page_size]
         for item in visible:
+            item.activity_rank_values = [
+                parsed[1]
+                if (parsed := rank_value(activity.value)) is not None
+                else None
+                for activity in item.activities
+            ]
             item.activity_source_keys = activity_source_keys(
                 context[0], context[1][item.id], item.activities
             )

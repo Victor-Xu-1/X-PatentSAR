@@ -61,6 +61,19 @@ export interface ActivityColumn {
   unit: string | null;
   target: string | null;
   assay: string | null;
+  strength_scale?: ActivityStrengthScale | null;
+  filter_values?: { value: string; count: number }[];
+  filter_values_truncated?: boolean;
+}
+export interface ActivityStrengthScale {
+  kind: 'numeric' | 'plus' | 'letter' | 'unknown';
+  direction: 'lower' | 'higher' | 'unknown';
+  rule: string;
+  eligible: number;
+  excluded: number;
+  distinct: number;
+  strong_boundary: number | null;
+  medium_boundary: number | null;
 }
 export interface ActivityFocusSelection {
   compoundId: string;
@@ -85,6 +98,7 @@ export interface Compound {
   recognition: CompoundRecognition | null;
   activities: Activity[];
   activity_source_keys?: string[];
+  activity_rank_values?: (number | null)[];
   record_kind?: RecordKind | null;
   source: {
     page: number | null;
@@ -93,6 +107,13 @@ export interface Compound {
     source_label: string | null;
     correction_reason: string | null;
   };
+  additional_sources?: {
+    page: number | null;
+    paragraph: string | number | null;
+    bbox: BBox | null;
+    source_label: string | null;
+    correction_reason: string | null;
+  }[];
   confidence: { level: ConfidenceLevel; score: number | null; reason: string | null };
   review: Review | null;
   flags: string[];
@@ -193,6 +214,15 @@ export interface Filters {
   target: string;
   page: number;
   page_size: number;
+  column_filters?: ColumnFilter[];
+  sort_column?: string;
+  sort_direction?: 'asc' | 'desc';
+}
+export interface ColumnFilter {
+  column: string;
+  op: 'contains' | 'eq' | 'gt' | 'gte' | 'lt' | 'lte' | 'in' | 'empty' | 'not_empty';
+  value?: string;
+  values?: string[];
 }
 export interface Runtime {
   product: Identity;

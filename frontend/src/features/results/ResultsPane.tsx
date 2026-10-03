@@ -8,6 +8,8 @@ import { Empty, ErrorNotice, Loading } from '../../components/Feedback';
 import { ResultsTable } from './ResultsTable';
 import { Pagination } from './Pagination';
 import { ResultToolbar } from './ResultToolbar';
+import { tableActivityColumns } from '../../model/activityColumns';
+import { resultColumns } from '../../model/resultColumns';
 
 export function ResultsPane({
   project,
@@ -48,10 +50,22 @@ export function ResultsPane({
 }) {
   const result = resource.data;
   const [density, setDensity] = useState<ResultDensity>('compact');
-  const [selection, setSelection] = useState<string[] | null>(null);
-  const metrics = availableMetrics(result?.metrics ?? [], result?.items ?? []);
-  const visibleMetrics =
-    selection === null ? metrics : metrics.filter((name) => selection.includes(name));
+  const [columnState, setColumnState] = useState<{ project: string | null; hidden: string[] }>({
+    project: project?.id ?? null,
+    hidden: [],
+  });
+  if (columnState.project !== (project?.id ?? null))
+    setColumnState({ project: project?.id ?? null, hidden: [] });
+  const hidden = columnState.project === (project?.id ?? null) ? columnState.hidden : [];
+  const setHidden = (next: string[]) =>
+    setColumnState({ project: project?.id ?? null, hidden: next });
+  const metrics = availableMetrics(
+    result?.activity_columns?.map((column) => column.name) ?? result?.metrics ?? [],
+    result?.items ?? [],
+  );
+  const activities = tableActivityColumns(result?.activity_columns, metrics);
+  const columns = resultColumns(activities);
+  const visibleColumns = columns.filter((column) => !hidden.includes(column.id));
   return (
     <div className="result-data-view">
       <ResultToolbar
@@ -64,12 +78,17 @@ export function ResultsPane({
           disabled: !project,
         }}
         display={{
-          metrics,
-          visibleMetrics,
           density,
           onDensity: setDensity,
-          onMetrics: setSelection,
           disabled: !project,
+        }}
+        columns={{ columns, hidden, onHidden: setHidden }}
+        copy={{
+          rows: result?.items ?? [],
+          selected,
+          columns: visibleColumns,
+          activities,
+          disabled: !project || resource.loading || Boolean(resource.error),
         }}
         selectedCount={selected.size}
         loading={resource.loading}
@@ -80,6 +99,34 @@ export function ResultsPane({
         onPredictionQueued={onPredictionQueued}
       />
       <div className="results-content" aria-busy={resource.loading}>
+        {project && (
+          <ResultsTable
+            key={project.id}
+            hidden={Boolean(
+              resource.error || (resource.loading && !result) || !visibleColumns.length,
+            )}
+            emptyMessage={result?.total ? '当前页暂无结果' : '暂无匹配的提取结果'}
+            rows={result?.items ?? []}
+            metrics={metrics}
+            hiddenColumns={hidden}
+            filters={filters}
+            queryLoading={resource.loading}
+            onFilters={onFilters}
+            onHideColumn={(id) => setHidden([...hidden, id])}
+            {...(result?.activity_columns === undefined
+              ? {}
+              : { activityColumns: result.activity_columns })}
+            density={density}
+            selected={selected}
+            focusedId={focusedId}
+            onSelect={onSelect}
+            onSelectPage={onSelectPage}
+            onJump={onJump}
+            onActivitySource={onActivitySource}
+            onCrop={onCrop}
+            onReview={onReview}
+          />
+        )}
         {resource.error ? (
           <ErrorNotice error={resource.error} onRetry={resource.reload} />
         ) : resource.loading && !result ? (
@@ -94,33 +141,17 @@ export function ResultsPane({
               </button>
             }
           />
-        ) : result && result.items.length ? (
-          <ResultsTable
-            rows={result.items}
-            metrics={visibleMetrics}
-            {...(result.activity_columns === undefined
-              ? {}
-              : { activityColumns: result.activity_columns })}
-            density={density}
-            selected={selected}
-            focusedId={focusedId}
-            onSelect={onSelect}
-            onSelectPage={onSelectPage}
-            onJump={onJump}
-            onActivitySource={onActivitySource}
-            onCrop={onCrop}
-            onReview={onReview}
-          />
-        ) : (
+        ) : !visibleColumns.length ? (
           <Empty
-            title={result?.total ? '当前页暂无结果' : '暂无匹配的提取结果'}
-            description={
-              filters.q || filters.target || filters.review || filters.confidence
-                ? '调整搜索或筛选条件；筛选不会修改原始提取数据。'
-                : '可在上方运行提取，或等待当前任务生成真实结果。历史数据只展示实际已有内容。'
+            title="所有列已隐藏"
+            description="数据仍然保留，可恢复全部列或在“显示列”中选择。"
+            action={
+              <button type="button" onClick={() => setHidden([])}>
+                显示全部列
+              </button>
             }
           />
-        )}
+        ) : null}
       </div>
       <Pagination
         page={result?.page ?? filters.page}

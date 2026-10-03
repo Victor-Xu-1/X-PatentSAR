@@ -36,6 +36,8 @@
   --backdrop: #00000055;
   --annotation-fill: #2121210d;
   --annotation-selected: #21212126;
+  --activity-strong-surface: #c9e8d5;
+  --activity-medium-surface: #edf7f0;
   --floating-surface: #fffffff5;
   --shadow-paper: 0 2px 10px #0000000a;
   --shadow-dialog: 0 12px 40px #0000001a;

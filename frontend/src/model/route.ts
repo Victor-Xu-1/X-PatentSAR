@@ -2,6 +2,8 @@ import { normalizeLayout } from './layout';
 import type { LayoutState } from './layout';
 import type { ActivityFocusSelection } from '../api/types';
 import { validActivityFocus } from '../api/activitySourceDecoders';
+import { readTableQuery, writeTableQuery } from './tableQueryRoute';
+import type { TableQuery } from './tableQueryRoute';
 export type View = 'workspace' | 'projects' | 'jobs' | 'settings' | 'new-task';
 export type ResultTab = 'results' | 'summary';
 export type PdfTab = 'original' | 'text' | 'annotations';
@@ -15,6 +17,7 @@ export interface Route {
   layout?: LayoutState;
   resultTab?: ResultTab;
   operationId?: string;
+  tableQuery?: TableQuery;
 }
 export const emptyRoute: Route = {
   view: 'workspace',
@@ -59,12 +62,14 @@ export function parseRoute(hash: string): Route {
     key: params.get('focusActivity') ?? '',
   };
   const validPage = page !== null && Number.isSafeInteger(page) && page > 0 ? page : null;
+  const tableQuery = view === 'workspace' && projectId ? readTableQuery(params) : undefined;
   return {
     view,
     projectId,
     page: validPage,
     tab: tab === 'text' || tab === 'annotations' ? tab : 'original',
     compoundId: params.get('compound'),
+    ...(tableQuery ? { tableQuery } : {}),
     ...(view === 'workspace' && projectId && validPage !== null && validActivityFocus(focus)
       ? { activityFocus: focus }
       : {}),
@@ -97,6 +102,7 @@ export function routeHash(route: Route): string {
   const params = new URLSearchParams();
   if (route.view === 'settings' && route.operationId) params.set('operation', route.operationId);
   if (route.projectId && route.view === 'workspace') {
+    writeTableQuery(params, route.tableQuery);
     if (route.page !== null) params.set('page', String(route.page));
     params.set('tab', route.tab);
     if (route.compoundId) params.set('compound', route.compoundId);

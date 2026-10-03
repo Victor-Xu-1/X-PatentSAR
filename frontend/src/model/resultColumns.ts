@@ -1,6 +1,7 @@
 import { METRIC_SPECS } from '../api/predictionTypes';
 import { activityColumnContext, activityColumnLabel } from './activityColumns';
 import type { TableActivityColumn } from './activityColumns';
+import { strengthScaleText } from './activityStrength';
 
 export interface ResultColumn {
   id: string;
@@ -11,6 +12,7 @@ export interface ResultColumn {
   max: number;
   context?: string;
   details?: string;
+  hint?: string;
 }
 
 const column = (
@@ -40,6 +42,7 @@ export function resultColumns(activities: TableActivityColumn[] = []): ResultCol
         640,
       ),
       context: activityColumnContext(activity),
+      ...(activity.strength_scale ? { hint: strengthScaleText(activity.strength_scale) } : {}),
       details: [activity.target, activity.assay]
         .filter(
           (value): value is string =>

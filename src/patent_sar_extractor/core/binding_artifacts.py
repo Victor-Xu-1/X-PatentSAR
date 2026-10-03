@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import csv
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from patent_sar_extractor.artifact_io import write_json_atomic
 
+from .binding_catalog import compound_catalog
 from .pipeline_rules import summarise_binding_accuracy
 
 _CSV_FIELDS = (
@@ -66,8 +67,14 @@ def write_binding_result(
     table_covered_count: int,
     no_binding: Sequence[str],
     unbound_pages: Sequence[Any],
+    catalog_bindings: Sequence[dict[str, Any]] = (),
+    catalog_sources: Sequence[dict[str, Any]] = (),
 ) -> dict[str, Any]:
     bindings = [{**binding, "patent_id": patent_id} for binding in bindings]
+    catalog = compound_catalog(
+        [{**binding, "patent_id": patent_id} for binding in catalog_bindings],
+        [{**binding, "patent_id": patent_id} for binding in catalog_sources],
+    )
     directory.mkdir(parents=True, exist_ok=True)
     output_json = directory / "bindings.json"
     output_csv = directory / "bindings.csv"
@@ -75,7 +82,7 @@ def write_binding_result(
         output_json,
         {
             "patent_id": patent_id,
-            "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
+            "timestamp": datetime.now(UTC).strftime("%Y%m%d_%H%M%S"),
             "detected_style": detected_style,
             "include_intermediates": include_intermediates,
             "total_structures": total_structures,
@@ -86,6 +93,7 @@ def write_binding_result(
             "authoritative_structure_table_covered_count": table_covered_count,
             "no_binding": list(no_binding),
             "final_bindings": bindings,
+            "compound_catalog": catalog,
         },
     )
     with output_csv.open("w", encoding="utf-8", newline="") as stream:
@@ -101,4 +109,5 @@ def write_binding_result(
         "structure_fallback": detected_style == "structure_sequence_fallback",
         "unbound_pages": list(unbound_pages),
         "output_files": {"json": str(output_json), "csv": str(output_csv)},
+        "compound_catalog": catalog,
     }

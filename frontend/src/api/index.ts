@@ -20,6 +20,25 @@ import { validActivityFocus } from './activitySourceDecoders';
 export const client = new ApiClient();
 const segment = encodeURIComponent;
 const projectPath = (id: string) => `/projects/${segment(id)}`;
+function resultQuery(filters: Filters, pagination = true): URLSearchParams {
+  const query = new URLSearchParams({
+    q: filters.q,
+    confidence: filters.confidence,
+    review: filters.review,
+    target: filters.target,
+  });
+  if (pagination) {
+    query.set('page', String(filters.page));
+    query.set('page_size', String(filters.page_size));
+  }
+  if (filters.column_filters !== undefined)
+    query.set('column_filters', JSON.stringify(filters.column_filters));
+  if (filters.sort_column) {
+    query.set('sort_column', filters.sort_column);
+    query.set('sort_direction', filters.sort_direction ?? 'asc');
+  }
+  return query;
+}
 export const api = {
   ...environmentApi(client),
   ...correctionApi(client),
@@ -28,7 +47,7 @@ export const api = {
   projects: (signal: AbortSignal) => client.get('/projects', decodeProjects, signal),
   project: (id: string, signal: AbortSignal) => client.get(projectPath(id), decodeProject, signal),
   results: (id: string, filters: Filters, signal: AbortSignal) => {
-    const query = new URLSearchParams(Object.entries(filters).map(([k, v]) => [k, String(v)]));
+    const query = resultQuery(filters);
     return client.get(`${projectPath(id)}/results?${query}`, decodeResults, signal);
   },
   page: (id: string, page: number, signal: AbortSignal, focus?: ActivityFocusSelection) => {
@@ -96,14 +115,7 @@ export const api = {
       decodeProject,
     ),
   export: (id: string, format: 'csv' | 'json', ids: string[], filters?: Filters) => {
-    const query = filters
-      ? new URLSearchParams({
-          q: filters.q,
-          confidence: filters.confidence,
-          review: filters.review,
-          target: filters.target,
-        })
-      : null;
+    const query = filters ? resultQuery(filters, false) : null;
     return client.download(`${projectPath(id)}/export${query ? `?${query}` : ''}`, {
       format,
       compound_ids: ids,

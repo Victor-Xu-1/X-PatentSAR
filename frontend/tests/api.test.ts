@@ -7,6 +7,65 @@ import { api, client } from '../src/api';
 import { health, json, project, session } from './fixtures';
 
 describe('API authentication and writes', () => {
+  it('serializes column filters as JSON and uses the identical contract for results and unpaginated export', async () => {
+    const read = vi.spyOn(client, 'get').mockResolvedValue({});
+    const download = vi.spyOn(client, 'download').mockResolvedValue(new Blob(['contract']));
+    const filters = {
+      q: 'I & 7',
+      confidence: '',
+      review: '',
+      target: '',
+      page: 4,
+      page_size: 25,
+      column_filters: [
+        { column: 'compound', op: 'contains' as const, value: 'A+B' },
+        { column: `activity:${'a'.repeat(64)}`, op: 'in' as const, values: ['+++', '< 10'] },
+      ],
+      sort_column: 'property:logP',
+      sort_direction: 'desc' as const,
+    };
+    await api.results('project-contract', filters, new AbortController().signal);
+    await api.export('project-contract', 'csv', [], filters);
+    const resultsUrl = new URL(read.mock.calls[0]![0], 'http://localhost');
+    const exportUrl = new URL(download.mock.calls[0]![0], 'http://localhost');
+    expect(JSON.parse(resultsUrl.searchParams.get('column_filters')!)).toEqual(
+      filters.column_filters,
+    );
+    expect(exportUrl.searchParams.get('column_filters')).toEqual(
+      resultsUrl.searchParams.get('column_filters'),
+    );
+    expect(resultsUrl.searchParams.get('page')).toBe('4');
+    expect(exportUrl.searchParams.has('page')).toBe(false);
+    expect(exportUrl.searchParams.has('page_size')).toBe(false);
+    expect(exportUrl.searchParams.get('sort_column')).toBe('property:logP');
+    expect(exportUrl.searchParams.get('sort_direction')).toBe('desc');
+    read.mockRestore();
+    download.mockRestore();
+  });
+  it('clears column filtering and sorting without sending undefined or object string representations', async () => {
+    const read = vi.spyOn(client, 'get').mockResolvedValue({});
+    await api.results(
+      'project-contract',
+      {
+        q: '',
+        confidence: '',
+        review: '',
+        target: '',
+        page: 1,
+        page_size: 10,
+        column_filters: [],
+        sort_column: '',
+        sort_direction: 'asc',
+      },
+      new AbortController().signal,
+    );
+    const url = new URL(read.mock.calls[0]![0], 'http://localhost');
+    expect(url.searchParams.get('column_filters')).toBe('[]');
+    expect(url.searchParams.has('sort_column')).toBe(false);
+    expect(url.searchParams.has('sort_direction')).toBe(false);
+    expect(url.href).not.toMatch(/undefined|object/);
+    read.mockRestore();
+  });
   it('filtered export passes all matching filters but never table pagination', async () => {
     const download = vi.spyOn(client, 'download').mockResolvedValue(new Blob(['contract']));
     await api.export('project-contract', 'json', [], {

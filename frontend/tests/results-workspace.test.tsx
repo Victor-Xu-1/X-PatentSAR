@@ -92,13 +92,15 @@ describe('dense evidence-led result workspace', () => {
     await user.click(screen.getByText('显示选项'));
     await user.click(screen.getByRole('button', { name: '舒适视图' }));
     expect(screen.getByRole('table')).toHaveAttribute('data-density', 'comfortable');
-    await user.click(screen.getByLabelText('显示指标 DC50'));
+    await user.click(screen.getByRole('button', { name: '关闭对话框' }));
+    await user.click(screen.getByRole('button', { name: '显示列' }));
+    await user.click(screen.getByLabelText('显示列 DC50'));
     expect(screen.queryByTitle('DC50 = 10 - 100 nM')).not.toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /抑制等级/ })).toBeVisible();
     expect(screen.getByLabelText('选择化合物 I-7')).toBeChecked();
     expect(screen.getByText('已选 1')).toBeVisible();
     expect(original.onFilters).not.toHaveBeenCalled();
-    await user.click(screen.getByRole('button', { name: '显示全部指标' }));
+    await user.click(screen.getByRole('button', { name: '显示全部列' }));
     expect(screen.getByTitle('DC50 = 10 - 100 nM')).toBeVisible();
     await user.click(screen.getByRole('button', { name: '关闭对话框' }));
     await user.click(screen.getByRole('button', { name: '导出所选 (1)' }));

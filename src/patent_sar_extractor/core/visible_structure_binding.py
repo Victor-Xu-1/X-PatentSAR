@@ -13,8 +13,10 @@ from .table_cells import prefixed_label, read_cell
 from .table_geometry import page_tokens
 
 Box = tuple[float, float, float, float]
-_PREFIX = re.compile(r"(?:Example|Compound|Cmpd|Cpd|实施例|化合物)[-:.]?", re.I)
-_ID = re.compile(r"[1-9]\d{0,3}[A-Z]?", re.I)
+_PREFIX = re.compile(
+    r"(?:Example|Compound|Cmpd|Cpd|实施例|化合物)[-:.]?", re.IGNORECASE
+)
+_ID = re.compile(r"[1-9]\d{0,3}[A-Z]?", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -73,7 +75,11 @@ def _caption_tokens(tokens: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def bind_visible_captions(
-    doc: Any, structures: Sequence[Mapping[str, Any]], active: set[str]
+    doc: Any,
+    structures: Sequence[Mapping[str, Any]],
+    active: set[str] | None,
+    *,
+    excluded: set[str] | frozenset[str] = frozenset(),
 ) -> list[CaptionBinding]:
     by_page: dict[int, list[Mapping[str, Any]]] = {}
     for structure in structures:
@@ -96,7 +102,12 @@ def bind_visible_captions(
         for token in _caption_tokens(tokens):
             label = prefixed_label(str(token["text"]))
             bounds = _box(token.get("bbox", []))
-            if not label or label not in active or bounds is None:
+            if (
+                not label
+                or label in excluded
+                or (active is not None and label not in active)
+                or bounds is None
+            ):
                 continue
             x, y = (bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2
             owners = [

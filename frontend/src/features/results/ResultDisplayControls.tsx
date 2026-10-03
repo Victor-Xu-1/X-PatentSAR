@@ -1,18 +1,12 @@
 import type { ResultDensity } from '../../model/results';
 
 export function ResultDisplayControls({
-  metrics,
-  visibleMetrics,
   density,
   onDensity,
-  onMetrics,
   disabled,
 }: {
-  metrics: string[];
-  visibleMetrics: string[];
   density: ResultDensity;
   onDensity: (value: ResultDensity) => void;
-  onMetrics: (value: string[] | null) => void;
   disabled: boolean;
 }) {
   return (
@@ -31,32 +25,12 @@ export function ResultDisplayControls({
           </button>
         ))}
       </fieldset>
-      <fieldset className="metric-options" disabled={disabled}>
-        <legend>
-          活性指标（{visibleMetrics.length} / {metrics.length}）
-        </legend>
-        <button type="button" onClick={() => onMetrics(null)}>
-          显示全部指标
-        </button>
-        {metrics.map((metric) => (
-          <label key={metric}>
-            <input
-              type="checkbox"
-              aria-label={`显示指标 ${metric}`}
-              checked={visibleMetrics.includes(metric)}
-              onChange={(event) =>
-                onMetrics(
-                  event.target.checked
-                    ? [...visibleMetrics, metric]
-                    : visibleMetrics.filter((name) => name !== metric),
-                )
-              }
-            />
-            <span>{metric || '未命名指标'}</span>
-          </label>
-        ))}
-        {!metrics.length && <span className="muted">尚无可用指标</span>}
-      </fieldset>
+      <p className="activity-strength-legend" aria-label="活性颜色说明">
+        <span data-activity-strength="strong">相对强</span>
+        <span data-activity-strength="medium">中档</span>
+        <span>其余 / 未分档</span>
+        同列全项目排名，并列同色；不跨实验比较，不代表绝对活性。
+      </p>
     </div>
   );
 }

@@ -37,7 +37,7 @@ class StructureCorpusTests(PredictionFixture, unittest.TestCase):
         self.assertEqual(row.activities, [])
         self.assertIsNone(row.smiles)
         self.assertEqual(row.recognition.status, "not_run")
-        self.assertIn("未关联结构", row.display_id)
+        self.assertIn("编号待确认", row.display_id)
         self.assertNotIn("Compound", row.display_id)
         self.assertEqual(row.confidence.level, "review")
         self.assertIsNone(row.confidence.score)

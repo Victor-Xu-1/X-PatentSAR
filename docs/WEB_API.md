@@ -82,6 +82,35 @@ never populated with demonstration values. Evidence summary is not an LLM claim.
 
 ## Response models (snake_case)
 
+### Workbook queries and activity bands
+
+GET `/api/v1/projects/{id}/results` and POST `/api/v1/projects/{id}/export`
+share optional query parameters `column_filters` (JSON list), `sort_column`,
+and `sort_direction` (`asc` or `desc`). The same effective full-project read is
+filtered/sorted before pagination or export selection. Column IDs are `compound`,
+`structure`, `source`, `edit`, `activity:<exact-context-SHA64>`, or
+`property:<fixed-property-key>`; unknown columns/operators fail 422, even for an
+empty result. These are selectors, never SQL or executable spreadsheet formulas.
+
+Each condition is `{column,op,value?,values?}`. Operators are `contains`, `eq`,
+`gt`, `gte`, `lt`, `lte`, `in`, `empty`, `not_empty`. Conditions AND together;
+`in` ORs its values, and an empty checklist matches nothing. Limits are 20
+conditions, 16 KiB JSON, 200 checklist entries, 1000 characters per operand.
+Numeric comparisons require finite exact scalars; intervals/censored values are
+not invented numbers. Activity filtering matches any observation in that context;
+sort uses the first observation, never a mean/best value. Missing values sort last
+in either direction. Compound sorting is natural (8, 8A, 8B, 10). Property filters
+use only current completed stored records, and do not enqueue analysis.
+
+`ActivityColumn.filter_values` optionally carries up to 200 lexicographically
+ordered `{value,count}` full-project choices, with `filter_values_truncated=true`
+when additional choices exist. Counts and rank profiles do not change with
+filters/pages. `strength_scale` adds bounded kind/direction/rule/counts and
+strong/medium boundaries. `Compound.activity_rank_values` is optional aligned
+read-only presentation metadata, excluded from raw records/exports. Tied weighted
+thirds preserve equal values; unsupported direction/mixed/censored/missing scores
+are uncolored. Conventions are browsing aids, not proof of potency or correctness.
+
 ### Minimal PDF/table additions
 
 API v1 and workspace SQLite v1 are retained. Additive fields are absent/null for
@@ -98,6 +127,10 @@ legacy callers, never a synthesized successful observation.
   explicit internal source references, never guessed patent numbers. Activity
   observations outside the declared active set remain visible without inventing
   a binding. Summary structure_only/activity_only are actual raw counts.
+- `Compound.additional_sources`: optional bounded list of original `Source`
+  references for proved selected-catalog reprints belonging to the same printed
+  identifier. The source catalog is produced by the sole core binder, not by the
+  Web/UI. Unproved sources remain distinct numbered-pending observations.
 - `Compound.correction`: null or `{revision,stale,has_changes,updated_at}`.
   Current effective values are presented only for a non-stale source-bound
   correction. Original extraction files/payloads, confidence/QC and source
@@ -178,7 +211,9 @@ historical results; they never promote binding confidence.
 
 `Compound`:
 `{id,display_id,structure_id,structure_image_url,redraw_image_url,smiles,recognition,activities,source,
-confidence,review,flags}`. IDs preserve the authoritative activity compound ID.
+confidence,review,flags}`. IDs preserve confirmed printed identifiers in the
+produced source catalog, with activity observations left-joined by canonical ID.
+An activity-only identifier remains visible when no source binding is confirmed.
 `recognition`: `{status,quality_flag,model_fingerprint,token_confidence}`. Status
 is `not_run`, `valid`, `invalid` or `unavailable`; absent historical metadata is
 unavailable rather than reconstructed as model confidence. `token_confidence`

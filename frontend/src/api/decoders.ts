@@ -32,6 +32,7 @@ import { decodePredictionSummary } from './predictionDecoders';
 import { activityContextKey, decodeActivityColumns } from './activityColumnDecoders';
 import { decodeBBox as bbox } from './geometryDecoders';
 import { decodeActivitySourceKeys } from './activitySourceDecoders';
+import { decodeActivityRankValues } from './activityRankDecoders';
 export { decodePage } from './pageDecoders';
 
 const identity = object({ name: string, version: scalar });
@@ -194,6 +195,28 @@ export const decodeCompound: Decoder<Compound> = (input, path = '$') => {
   const fields = input as Record<string, unknown>;
   return {
     ...compound,
+    ...(Object.hasOwn(fields, 'additional_sources')
+      ? {
+          additional_sources: array(
+            object({
+              page: nullable(positive),
+              paragraph: nullable(scalar),
+              bbox: nullable(bbox),
+              source_label: nullable(string),
+              correction_reason: nullable(string),
+            }),
+          )(fields.additional_sources, `${path}.additional_sources`),
+        }
+      : {}),
+    ...(Object.hasOwn(fields, 'activity_rank_values')
+      ? {
+          activity_rank_values: decodeActivityRankValues(
+            fields.activity_rank_values,
+            compound.activities.length,
+            `${path}.activity_rank_values`,
+          ),
+        }
+      : {}),
     ...(Object.hasOwn(fields, 'activity_source_keys')
       ? {
           activity_source_keys: decodeActivitySourceKeys(
