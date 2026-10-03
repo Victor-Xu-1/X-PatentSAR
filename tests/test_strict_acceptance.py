@@ -121,10 +121,8 @@ from patent_sar_extractor.core.qa_report import (
 )
 from patent_sar_extractor.core.review_excerpt import create_review_excerpt_pdf
 from patent_sar_extractor.core.runtime_env import tensorflow_cuda_caps_support_gpu
-from patent_sar_extractor.core.structure_page_locator import (
-    _covered_active_cpds,
-    _is_structure_table_page,
-)
+from patent_sar_extractor.core.structure_page_evidence import _is_structure_table_page
+from patent_sar_extractor.core.structure_page_locator import _covered_active_cpds
 from patent_sar_extractor.smiles_artifact import build_smiles_artifact
 from patent_sar_extractor.workers.gen_final_results import (
     _validate_smiles_source_for_export,
@@ -866,8 +864,10 @@ class StrictAcceptanceTests(unittest.TestCase):
                 pdf_path,
                 [
                     "Compound No Structure Chemical Name LC-MS 7 phenyl dione 399.1 8 pyridine dione 300.1",
-                    "63 phenyl dione 387.1 64 pyridine dione 449.1 "
-                    "65 thienyl dione 467.0 70 oxazole dione 459.1",
+                    (
+                        "63 phenyl dione 387.1 64 pyridine dione 449.1 "
+                        "65 thienyl dione 467.0 70 oxazole dione 459.1"
+                    ),
                     "测试例1 化合物对Jurkat细胞VAV1蛋白的降解活性 DC50 Dmax 化合物65 A 97.7",
                 ],
             )
@@ -1588,15 +1588,11 @@ class StrictAcceptanceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             script = Path(temp) / "emit_logs.py"
             script.write_text(
-                "\n".join(
-                    [
-                        "import sys",
-                        "print('Error in PredictCost() noisy tensor line')",
-                        "print('2026 [INFO] structure_extraction: useful progress')",
-                        "sys.stderr.write('Unable to register cuDNN factory\\n')",
-                        "sys.stderr.write('normal stderr progress\\n')",
-                    ]
-                ),
+                "import sys\n"
+                "print('Error in PredictCost() noisy tensor line')\n"
+                "print('2026 [INFO] structure_extraction: useful progress')\n"
+                "sys.stderr.write('Unable to register cuDNN factory\\n')\n"
+                "sys.stderr.write('normal stderr progress\\n')",
                 encoding="utf-8",
             )
             buffer = io.StringIO()
@@ -2210,6 +2206,7 @@ class StrictAcceptanceTests(unittest.TestCase):
                 cwd=ROOT,
                 text=True,
                 capture_output=True,
+                check=False,
             )
             self.assertEqual(result.returncode, 0, msg=result.stderr + result.stdout)
 
@@ -2327,6 +2324,7 @@ class StrictAcceptanceTests(unittest.TestCase):
                 text=True,
                 capture_output=True,
                 timeout=120,
+                check=False,
             )
 
             self.assertEqual(result.returncode, 0, result.stderr + result.stdout)

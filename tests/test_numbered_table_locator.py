@@ -52,7 +52,9 @@ class NumberedTableLocatorTests(unittest.TestCase):
                 ocr_cache_path=str(cache),
             )
             self.assertEqual(result["structure_table_pages"], [0, 1])
-            self.assertEqual(result["selected_pages"], [0, 1])
+            # Primary binding evidence stays the catalog; segmentation also
+            # retains the independently evidenced numbered synthesis page.
+            self.assertEqual(result["selected_pages"], [0, 1, 2])
             self.assertEqual(result["structure_table_coverage_count"], 6)
 
 

@@ -50,19 +50,7 @@ def execute_structures(state: PipelineContext) -> None:
     t0 = time.time()
     structures_dir = state.step_dirs[step]
     state.structures_json = os.path.join(structures_dir, "metadata.json")
-    if not state.active_cpds:
-        print(f"  ⏭ [{step}] 无活性化合物，跳过")
-        _write_json(
-            state.structures_json,
-            {
-                **artifact_identity(STRUCTURES_SCHEMA, STRUCTURES_SCHEMA_VERSION),
-                "patent_number": state.patent_id,
-                "total_structures": 0,
-                "structures": [],
-            },
-        )
-        state.n_structures = 0
-    elif not state.structure_pages:
+    if not state.structure_pages:
         print(f"  ⏭ [{step}] 定位器未确认任何结构页，保持空结果并交由验收闸门处理")
         _write_json(
             state.structures_json,
@@ -90,8 +78,7 @@ def execute_structures(state: PipelineContext) -> None:
             },
         )
     if (
-        state.active_cpds
-        and state.structure_pages
+        state.structure_pages
         and not state.force
         and _fingerprint_matches(state.structures_json, structures_fp)
     ):
@@ -99,7 +86,7 @@ def execute_structures(state: PipelineContext) -> None:
         state.n_structures = int(structures_meta.get("total_structures", 0))
         print(f"  ⏭ [{step}] 已存在，跳过")
         state.progress.mark_checkpoint_reused()
-    elif state.active_cpds and state.structure_pages:
+    elif state.structure_pages:
         os.makedirs(structures_dir, exist_ok=True)
         structure_worker_script = str(
             PACKAGE_ROOT / "workers" / "extract_structures.py"
