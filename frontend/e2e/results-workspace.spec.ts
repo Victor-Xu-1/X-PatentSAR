@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test';
 import type { Compound } from '../src/api/types';
 import { decodeJob, decodeProject, decodeResults } from '../src/api/decoders';
-import { activityText, stageLabels } from '../src/model/presentation';
+import { stageLabels } from '../src/model/presentation';
+import { activityColumnContext, activityColumnLabel } from '../src/model/activityColumns';
 
 const projectId =
   process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID ?? process.env.PATENTSAR_E2E_HISTORY_PROJECT_ID;
@@ -77,15 +78,20 @@ for (const viewport of [
     await page.getByRole('button', { name: '列表选项' }).click();
     await page.getByText('显示选项', { exact: true }).click();
     await page.getByRole('button', { name: '紧凑视图' }).click();
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: '显示列', exact: true }).click();
     const metric = results.metrics[0]!;
     expect(metric).toBeTruthy();
-    await page.getByLabel(`显示指标 ${metric}`, { exact: true }).uncheck();
     for (const column of results.activity_columns!.filter((item) => item.name === metric)) {
+      const label = [activityColumnLabel(column), activityColumnContext(column)]
+        .filter(Boolean)
+        .join(' · ');
+      await page.getByLabel(`显示列 ${label}`, { exact: true }).uncheck();
       await expect(table.locator(`th[data-column="activity:${column.id}"]`)).toHaveCount(0);
       await expect(rendered.locator(`td[data-activity-column="${column.id}"]`)).toHaveCount(0);
     }
     await expect(page.getByLabel(`选择化合物 ${row.display_id}`, { exact: true })).toBeChecked();
-    await page.getByRole('button', { name: '显示全部指标' }).click();
+    await page.getByRole('button', { name: '显示全部列' }).click();
     await page.keyboard.press('Escape');
     await expect(table.locator('th.activity-value-column').first()).toBeVisible();
     const measurement = row.activities.find((activity) => activity.page !== null)!;
@@ -111,7 +117,10 @@ for (const viewport of [
       .poll(() => original.evaluate((element) => (element as HTMLImageElement).naturalWidth))
       .toBeGreaterThan(0);
     await expect(
-      rendered.getByTitle(activityText(measurement), { exact: true }).first(),
+      rendered
+        .locator('button.activity-source')
+        .filter({ hasText: String(measurement.value ?? '') })
+        .first(),
     ).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2)).toBe(
       true,
@@ -137,7 +146,7 @@ for (const viewport of [
 test('real source crop and RDKit redraw have separate provenance and images', async ({ page }) => {
   test.skip(!projectId, 'Requires an approved real results project');
   await page.goto(`/#/projects/${encodeURIComponent(projectId!)}`);
-  await expect(page.getByRole('button', { name: '更多', exact: true })).toBeVisible();
+  await expect(page.getByRole('table')).toBeVisible();
   const response = await page.request.get(
     `/api/v1/projects/${encodeURIComponent(projectId!)}/results?page=1&page_size=25`,
   );

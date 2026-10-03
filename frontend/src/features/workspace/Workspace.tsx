@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import type { Compound, Health, Job, Project } from '../../api/types';
+import type { Compound, Filters, Health, Job, Project } from '../../api/types';
 import type { Route } from '../../model/route';
 import { withoutActivityFocus } from '../../model/route';
+import { withTableQuery } from '../../model/tableQueryRoute';
 import { validActivityFocus } from '../../api/activitySourceDecoders';
 import { normalizeLayout } from '../../model/layout';
 import { PdfPane } from '../pdf/PdfPane';
@@ -48,11 +49,22 @@ export function Workspace({
   const [exporting, setExporting] = useState(false);
   const [legacyActivityPage, setLegacyActivityPage] = useState<number | null>(null);
   const id = project?.id ?? null;
-  const results = useResultsState(id, query, onQuery, job, onProjectReload);
+  const results = useResultsState(id, query, onQuery, job, onProjectReload, route.tableQuery);
   const layout = normalizeLayout(route.layout);
-  function navigateSource(patch: Partial<Route>) {
+  function navigateSource(patch: Partial<Route>, clearTableQuery = false) {
     setLegacyActivityPage(null);
-    navigate({ ...withoutActivityFocus(route), ...patch });
+    const next = { ...withoutActivityFocus(route), ...patch };
+    if (clearTableQuery) delete next.tableQuery;
+    navigate(next);
+  }
+  function changeFilters(patch: Partial<Filters>) {
+    results.changeFilters(patch);
+    if (
+      patch.column_filters !== undefined ||
+      patch.sort_column !== undefined ||
+      patch.sort_direction !== undefined
+    )
+      navigate(withTableQuery(route, { ...results.filters, ...patch }));
   }
   function jump(row: Compound) {
     if (row.source.page !== null)
@@ -64,13 +76,16 @@ export function Workspace({
       });
   }
   function selectAnnotation(compoundId: string) {
-    navigateSource({
-      tab: 'annotations',
-      compoundId,
-      resultTab: 'results',
-      layout: { ...layout, pdfVisible: true },
-    });
-    results.locateCompound(compoundId);
+    const locating = results.locateCompound(compoundId);
+    navigateSource(
+      {
+        tab: 'annotations',
+        compoundId,
+        resultTab: 'results',
+        layout: { ...layout, pdfVisible: true },
+      },
+      locating,
+    );
   }
   return (
     <div className="workspace" data-dialog-focus-scope>
@@ -116,7 +131,7 @@ export function Workspace({
               filters: { ...results.filters, q: query },
               selected: results.selected,
               focusedId: route.compoundId,
-              onFilters: results.changeFilters,
+              onFilters: changeFilters,
               onSelect: results.toggle,
               onSelectPage: results.selectPage,
               onJump: jump,

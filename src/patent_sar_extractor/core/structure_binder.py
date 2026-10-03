@@ -26,9 +26,9 @@ def bind(
     pdf_path: str,
     profile: dict,
     output_dir: str,
-    structures_path: str = None,
+    structures_path: str | None = None,
     include_intermediates: bool = False,
-    cpd_prefix_pattern: str = None,
+    cpd_prefix_pattern: str | None = None,
 ) -> dict:
     """Bind original segmented structures in authoritative activity order.
 
@@ -88,7 +88,7 @@ def bind(
                 for page, lines in observations.line_map.items()
                 if page not in spatial.ownership.page_indices
             }
-            if generic_structures and (generic_active or not active_cpds):
+            if generic_structures and generic_active:
                 blocks, style = find_binding_blocks(
                     doc,
                     pages_text,
@@ -167,4 +167,6 @@ def bind(
             ),
             no_binding=selection.no_binding,
             unbound_pages=selection.unbound_pages,
+            catalog_bindings=[*spatial.catalogue(), *final_bindings],
+            catalog_sources=spatial.reprints,
         )

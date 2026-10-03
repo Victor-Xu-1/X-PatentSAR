@@ -9,6 +9,7 @@ import { PredictionEvidence } from './PredictionCells';
 
 export function CropDialog({
   compound,
+  projectId,
   onClose,
 }: {
   compound: Compound;
@@ -48,6 +49,26 @@ export function CropDialog({
           </figure>
         </div>
         <p className="muted">原始裁图保留证据；重绘来自当前 SMILES，不证明与原图一致。</p>
+        {compound.additional_sources?.length ? (
+          <details>
+            <summary>同一编号的其他原文出处（{compound.additional_sources.length}）</summary>
+            <p className="muted">
+              这些是经过编号与空间证据确认的重复出处，不作为另一个未关联化合物。
+            </p>
+            {compound.additional_sources.map(
+              (source, index) =>
+                source.page !== null && (
+                  <a
+                    key={index}
+                    href={`#/projects/${encodeURIComponent(projectId)}?page=${source.page}&tab=original&compound=${encodeURIComponent(compound.id)}`}
+                    onClick={onClose}
+                  >
+                    原文第 {source.page} 页
+                  </a>
+                ),
+            )}
+          </details>
+        ) : null}
         {compound.smiles && (
           <label className="form-field">
             当前 SMILES

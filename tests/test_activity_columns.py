@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import tempfile
 import unittest
 from contextlib import contextmanager
@@ -130,6 +131,163 @@ class ActivityColumnTests(unittest.TestCase):
         self.assertEqual(
             reference["id"], hashlib.sha256(b'["IC50","nM","JAK1","cell"]').hexdigest()
         )
+
+    def test_color_scale_uses_all_effective_rows_before_pagination_and_filters(self):
+        self.insert(
+            *(
+                compound(f"r-{index}", [measurement(value=index)])
+                for index in range(1, 10)
+            )
+        )
+        full = self.query.results(self.project_id)
+        scale = full.activity_columns[0].strength_scale
+        assert scale is not None
+        self.assertEqual((scale.strong_boundary, scale.medium_boundary), (3, 6))
+        for packet in (
+            self.query.results(self.project_id, page=2, page_size=2),
+            self.query.results(self.project_id, q="r-8"),
+            self.query.results(self.project_id, q="no such observation"),
+        ):
+            self.assertEqual(packet.activity_columns[0].strength_scale, scale)
+        self.assertEqual(full.items[0].activity_rank_values, [1.0])
+
+    def test_workbook_filters_and_sort_apply_to_the_whole_project_before_pagination(
+        self,
+    ):
+        self.insert(
+            *(
+                compound(f"Compound {index}", [measurement(value=index)])
+                for index in range(1, 10)
+            )
+        )
+        catalog = self.query.results(self.project_id).activity_columns
+        key = f"activity:{catalog[0].id}"
+        specification = json.dumps([{"column": key, "op": "gte", "value": "5"}])
+        packet = self.query.results(
+            self.project_id,
+            page_size=2,
+            column_filters=specification,
+            sort_column=key,
+            sort_direction="desc",
+        )
+        self.assertEqual(packet.total, 5)
+        self.assertEqual([row.id for row in packet.items], ["Compound 9", "Compound 8"])
+        self.assertEqual(packet.activity_columns, catalog)
+        exported = self.query.compounds(
+            self.project_id,
+            column_filters=specification,
+            sort_column=key,
+            sort_direction="desc",
+        )
+        self.assertEqual(
+            [row.id for row in exported],
+            [f"Compound {index}" for index in range(9, 4, -1)],
+        )
+
+    def test_workbook_value_checklist_empty_and_multivalue_observations(self):
+        self.insert(
+            compound("multiple", [measurement(value="A"), measurement(value="B")]),
+            compound("other", [measurement(value="C")]),
+            compound("missing", []),
+        )
+        column = self.query.results(self.project_id).activity_columns[0]
+        self.assertEqual(
+            [(item.value, item.count) for item in column.filter_values],
+            [("A", 1), ("B", 1), ("C", 1)],
+        )
+        for op, values, expected in (("in", ["B"], ["multiple"]), ("in", [], [])):
+            packet = self.query.results(
+                self.project_id,
+                column_filters=json.dumps(
+                    [{"column": f"activity:{column.id}", "op": op, "values": values}]
+                ),
+            )
+            self.assertEqual([row.id for row in packet.items], expected)
+        missing = self.query.results(
+            self.project_id,
+            column_filters=json.dumps(
+                [{"column": f"activity:{column.id}", "op": "empty"}]
+            ),
+        )
+        self.assertEqual([row.id for row in missing.items], ["missing"])
+
+    def test_workbook_uses_natural_identity_order_and_rejects_unknown_columns(self):
+        self.insert(
+            *(
+                compound(label, [])
+                for label in ["Compound 10", "Compound 8B", "Compound 8", "Compound 2"]
+            )
+        )
+        packet = self.query.results(self.project_id, sort_column="compound")
+        self.assertEqual(
+            [row.id for row in packet.items],
+            ["Compound 2", "Compound 8", "Compound 8B", "Compound 10"],
+        )
+        for arguments in (
+            {"sort_column": "payload"},
+            {"column_filters": '[{"column":"SQL()","op":"empty"}]'},
+            {"column_filters": "not JSON"},
+            {
+                "column_filters": json.dumps(
+                    [{"column": "compound", "op": "in", "values": ["x"] * 201}]
+                )
+            },
+        ):
+            with self.subTest(arguments=arguments), self.assertRaises(WebError):
+                self.query.results(self.project_id, **arguments)
+
+    def test_color_scale_updates_for_edits_outside_filter_without_rewriting_raw_values(
+        self,
+    ):
+        self.insert(
+            *(
+                compound(f"r-{index}", [measurement(value=index)])
+                for index in range(1, 10)
+            )
+        )
+        raw = self.store.compound(self.project_id, "r-2")["payload"]
+        document = self.corrections.get(self.project_id, "r-2")
+        self.corrections.put(
+            self.project_id,
+            "r-2",
+            CorrectionRequest(
+                expected_revision=document.revision,
+                expected_source_fingerprint=document.source_fingerprint,
+                fields=document.values.model_copy(
+                    update={"activities": [measurement(value=90)]}
+                ),
+            ),
+        )
+        packet = self.query.results(self.project_id, q="r-1")
+        scale = packet.activity_columns[0].strength_scale
+        assert scale is not None
+        self.assertEqual((scale.strong_boundary, scale.medium_boundary), (4, 7))
+        self.assertEqual(self.store.compound(self.project_id, "r-2")["payload"], raw)
+        self.assertNotIn("activity_rank_values", raw)
+        unfiltered, *_ = self.query._filtered_compounds(self.project_id)
+        self.assertTrue(
+            all("activity_rank_values" not in item.model_dump() for item in unfiltered)
+        )
+
+    def test_censored_unknown_and_context_separated_colors_remain_source_faithful(self):
+        self.insert(
+            compound(
+                "first",
+                [
+                    measurement(value="<10"),
+                    measurement(value=2, unit="uM"),
+                    measurement(value=3, name="Unspecified signal"),
+                ],
+            )
+        )
+        result = self.query.results(self.project_id)
+        self.assertEqual(result.items[0].activity_rank_values, [None, 2.0, 3.0])
+        self.assertEqual(len(result.activity_columns), 3)
+        scales = [column.strength_scale for column in result.activity_columns]
+        self.assertEqual(
+            sum(scale.direction == "unknown" for scale in scales if scale), 2
+        )
+        self.assertEqual(result.items[0].activities[0].value, "<10")
 
     def test_repeated_context_has_one_header_but_retains_every_value_and_source(self):
         values = [

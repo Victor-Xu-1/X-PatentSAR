@@ -34,7 +34,9 @@ export function CompoundCell({
         ) : null}
         {row.record_kind === 'activity_only' && <small className="muted">结构待定位</small>}
         {row.record_kind === 'structure_only' && !row.activities.length && (
-          <small className="muted">未关联活性</small>
+          <small className="muted">
+            {row.flags.includes('structure_number_unconfirmed') ? '编号待确认' : '暂无活性数据'}
+          </small>
         )}
       </div>
     </td>

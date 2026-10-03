@@ -17,6 +17,7 @@ from patent_sar_extractor.core.pipeline_rules import (
 from .acceptance import ARTIFACTS, authority, current
 from .activity_provenance import activity_contexts, metric_unit, provenance_error
 from .artifact_values import box, page_number, text
+from .compound_catalog import read_compound_catalog
 from .errors import WebError
 from .files import MAX_RECORDS, SafeFiles, records
 from .models import (
@@ -33,7 +34,7 @@ from .processes import runtime_identity
 from .recognition import recognition_status
 from .structure_corpus import unassociated_structures
 
-RAW_PROJECTION_LAYOUT = "structure-corpus-v1"
+RAW_PROJECTION_LAYOUT = "compound-catalog-v1"
 
 
 def _index(
@@ -223,6 +224,17 @@ class ArtifactView:
             smiles_rows = records(smiles_payload, "records")
         smiles = _index(smiles_rows, ("cpd_id", "cpd", "compound_id"))
         structure_rows = records(p.get("structures"), "structures")
+        catalog_rows, alias_ids = read_compound_catalog(binding_payload, structure_rows)
+        if catalog_rows is not None:
+            bindings = _index(catalog_rows, ("compound_id", "cpd", "cpd_id"))
+            catalog_ids = [
+                str(row.get("compound_id") or row.get("cpd")) for row in catalog_rows
+            ]
+            labels = {_label_key(value) for value in catalog_ids}
+            active = [
+                *catalog_ids,
+                *(value for value in active if _label_key(value) not in labels),
+            ]
         structures = {text(s.get("structure_id")): s for s in structure_rows}
         activity_index = _index(rows, ("cpd",), allow_named=True)
         # The formal target list is not the information-table universe.
@@ -404,6 +416,13 @@ class ArtifactView:
                     ),
                 ),
                 confidence=confidence,
+                additional_sources=[
+                    Source(
+                        page=page_number(source.get("page_no")),
+                        source_label=text(source.get("cpd")),
+                    )
+                    for source in binding.get("additional_sources", [])
+                ],
                 flags=flags,
                 record_kind="structure_activity"
                 if has_crop and activities
@@ -427,6 +446,7 @@ class ArtifactView:
             for row in compounds
             if row["dto"]["structure_id"]
         }
+        represented.update(alias_ids)
         supplemental, supplemental_pages = unassociated_structures(
             project_id,
             structure_rows,

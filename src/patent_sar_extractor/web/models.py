@@ -12,6 +12,7 @@ from pydantic import (
 )
 
 from .activity_focus_models import ActivityFocus, ActivitySourceKey
+from .activity_rank_models import ActivityStrengthScale, RankValue
 from .dto import DTO, Error
 from .prediction_models import PredictionSummary
 
@@ -56,6 +57,11 @@ class Activity(DTO):
     page: int | None = None
 
 
+class FilterChoice(DTO):
+    value: str = Field(max_length=1000)
+    count: int = Field(ge=0, le=50_000_000, strict=True)
+
+
 class ActivityColumn(DTO):
     id: str = Field(
         min_length=64, max_length=64, pattern=r"^[a-f0-9]{64}$", strict=True
@@ -64,6 +70,13 @@ class ActivityColumn(DTO):
     unit: str | None = None
     target: str | None = None
     assay: str | None = None
+    strength_scale: ActivityStrengthScale | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
+    filter_values: list[FilterChoice] = Field(
+        default_factory=list, max_length=200, exclude_if=lambda value: not value
+    )
+    filter_values_truncated: bool = False
 
 
 class Source(DTO):
@@ -118,7 +131,13 @@ class Compound(DTO):
     activity_source_keys: list[ActivitySourceKey] = Field(
         default_factory=list, max_length=2000, exclude_if=lambda value: not value
     )
+    activity_rank_values: list[RankValue | None] = Field(
+        default_factory=list, max_length=2000, exclude_if=lambda value: not value
+    )
     source: Source
+    additional_sources: list[Source] = Field(
+        default_factory=list, max_length=1000, exclude_if=lambda value: not value
+    )
     confidence: Confidence
     review: Review | None = None
     flags: list[str] = Field(default_factory=list)
@@ -127,6 +146,14 @@ class Compound(DTO):
     record_kind: (
         Literal["structure_activity", "structure_only", "activity_only"] | None
     ) = None
+
+    @model_validator(mode="after")
+    def check_rank_alignment(self) -> Compound:
+        if self.activity_rank_values and len(self.activity_rank_values) != len(
+            self.activities
+        ):
+            raise ValueError("Activity ranking values must align with observations")
+        return self
 
 
 class PDFInfo(DTO):

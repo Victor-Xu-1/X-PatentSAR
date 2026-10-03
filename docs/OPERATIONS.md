@@ -99,12 +99,22 @@ no numeric values; zero eligible inputs produce an empty stage, not fake success
 The complete-workflow environment preset includes both DECIMER and ADMET CPU
 components; reading existing results still does not require installing models.
 
-Locator/segmentation epochs 4 rebuild activity-filtered page coverage. Use a new
-software job, preserving the old run and its original QA. The raw Web corpus
-layout changes to structure-corpus-v1; a one-time projection rebuild stales old
+Locator/segmentation epochs 4 rebuild activity-filtered page coverage; binder
+epoch 5 establishes the printed-ID catalog without activity filtering. Use a new
+software job, preserving the old run and its original QA. Confirmed selected
+reprints become additional sources, while unproved IDs remain numbered-pending.
+The raw Web corpus layout changes to compound-catalog-v1; a projection rebuild stales old
 source-bound overlays/predictions but preserves their audit. Review before
 explicitly reapplying an edit. Rollback must restore the pre-deployment database
 together with its wheel, retaining newer state separately for forward recovery.
+
+Per-column menus provide project-wide filter/sort; toolbar **列** restores hidden
+columns, including all-hidden recovery. Query parameters survive refresh. TSV
+copy is limited to current-page selected/all rows and visible fields; use the
+normal CSV/JSON export for all filtered rows. Numeric filters never force censored
+measurements into scalars, and stored-property filtering never starts a model.
+The activity-band legend is on demand in display options; bands use the complete
+effective project and preserve ties, not current-page extrema.
 
 Open topbar **更多 → 环境管理** (`#/settings`) and inspect components before installing. The
 approved Linux root is configured by `PATENTSAR_ENVIRONMENT_ALLOWED_ROOT`; the

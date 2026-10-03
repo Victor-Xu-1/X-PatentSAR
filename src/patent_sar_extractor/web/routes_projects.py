@@ -190,6 +190,9 @@ def project_routes(service: WorkspaceService, max_upload_bytes: int) -> APIRoute
         target: str = "",
         page: int = 1,
         page_size: int = 10,
+        column_filters: str = "",
+        sort_column: str = "",
+        sort_direction: str = "asc",
     ) -> Results:
         return service.results(
             project_id,
@@ -199,6 +202,9 @@ def project_routes(service: WorkspaceService, max_upload_bytes: int) -> APIRoute
             target=target,
             page=page,
             page_size=page_size,
+            column_filters=column_filters,
+            sort_column=sort_column,
+            sort_direction=sort_direction,
         )
 
     @router.put("/projects/{project_id}/reviews/{compound_id}", response_model=Review)
@@ -229,11 +235,21 @@ def project_routes(service: WorkspaceService, max_upload_bytes: int) -> APIRoute
         confidence: str = "",
         review: str = "",
         target: str = "",
+        column_filters: str = "",
+        sort_column: str = "",
+        sort_direction: str = "asc",
     ) -> StreamingResponse:
         project = service.project(project_id)
         rows = selected(
             service.compounds(
-                project_id, q=q, confidence=confidence, review=review, target=target
+                project_id,
+                q=q,
+                confidence=confidence,
+                review=review,
+                target=target,
+                column_filters=column_filters,
+                sort_column=sort_column,
+                sort_direction=sort_direction,
             ),
             body,
         )

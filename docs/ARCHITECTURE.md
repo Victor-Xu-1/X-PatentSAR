@@ -79,6 +79,33 @@ observation to that exact context, preserves repeated values and independent
 sources, and renders one column per context instead of a stacked activity summary.
 Headers, structure identity and the correction control remain fixed during native
 horizontal scrolling; explicit column widths share the existing resize handler.
+Every column can be hidden/restored, with sticky offsets recalculated from visible
+identity columns. Header menus submit bounded column IDs/operators to the same
+`ResultQueries` path. `table_query_models.py` validates at most 20 conditions in
+16 KiB, `table_query_values.py` is the single accessor, and `table_queries.py`
+filters/sorts the complete effective project before pagination. Multivalued
+activity filters match any original observation; sort uses the first, never a
+best value/average. Stored current property predictions are read only when needed;
+querying never invokes inference. Up to 200 stable full-project activity choices
+and counts are collected in the existing scan; an excessive vocabulary exposes
+its truncation and still supports textual filters. Export uses the same selectors.
+The URL owns valid query state; the UI can recover empty/error/all-hidden states.
+Plain TSV copies current-page selected/all rows and visible columns only, with
+spreadsheet formula protection. There is no competing page-local sort/filter,
+formula engine, second grid library or direct edit of source/QA fields.
+The same bounded catalog scan owns project-wide activity rank histograms before
+any filter or pagination. `activity_rank_values.py` parses only exact finite scalars
+and supported ordinal/convention directions; `activity_ranking.py` selects tied
+value boundaries nearest cumulative thirds. A shared 50,000-distinct-score budget
+bounds extra memory; mixed/unknown/over-limit scales remain explicitly uncolored,
+never dropping measurements. `activity_rank_models.py` adds API-v1 presentation
+metadata. Only visible results receive aligned rank values; empty raw fields are
+excluded from serialization, preserving artifacts, exports and source fingerprints.
+The frontend consumes those scores/cutoffs, not current-page quantiles. Repeated
+observations remain separate; online corrections update the same full-project scan.
+No SQL/PDF/model calls, database migration, scientific acceptance change, persistent
+ranking store or competing frontend calculation is introduced. Green/light-green
+are within-column browsing aids, not absolute potency or confidence statements.
 `web/activity_provenance.py` is the shared bounded source-cell/context parser for
 artifact projection and value focus. The previous inline parser is removed.
 Visible results add opaque `activity_source_keys`, bound to raw source fingerprint,
@@ -112,9 +139,26 @@ Formula/claim prose alone cannot establish a numbered structural table.
 Locator and segmentation epochs 4 invalidate old activity-filtered checkpoints;
 compatible original OCR stays reusable. The formal eight-stage order is unchanged.
 
-`web/artifacts.py` projects the union of activity observations and every retained
-structure observation. `web/structure_corpus.py` appends structures not already
-represented by a bound source; `record_kind` describes original association as
+`core/binding_catalog.py` builds one printed-ID catalog from confirmed original
+cells/captions, without filtering IDs by activity membership. Its nested schema
+is governed by `contracts.py`; `binding_artifacts.py` writes and returns it in the
+same binding artifact. The original formal activity subset is a consumer view,
+not the catalog universe. Proved selected-subset reprints become additional
+sources of their primary printed owner. Ambiguous labels, conflicting complete
+catalogs and cross-boundary/unproved crops remain withheld. The pairing and proof
+code is factored into `numbered_structure_models/pairs`, not duplicated.
+Binder epoch 5 invalidates old binding checkpoints while compatible upstream OCR,
+segmentation and exact-content OCSR observations remain independently reusable.
+Even a zero-activity run builds a source catalog; failure of its original formal
+activity scope remains explicit, with only the newly written source projection
+available for review. It cannot satisfy QA or create guessed SMILES.
+
+`web/compound_catalog.py` rechecks the produced catalog and unique ID/crop owner
+proofs; it does not perform binding. `web/artifacts.py` uses its IDs as primary rows
+and left-joins activity observations by canonical ID. Activity-only IDs remain
+visible. Proved additional sources are not anonymous duplicate rows.
+`web/structure_corpus.py` appends still-unassigned observations with an explicit
+`编号待确认` source reference; `record_kind` describes original association as
 structure_activity, structure_only or activity_only. Unknown source identifiers
 are explicitly internal, not invented printed compound numbers. Counts represent
 records/observations, not chemically deduplicated compounds. A missing activity
@@ -122,7 +166,7 @@ association is not evidence of inactivity. No unassociated source receives guess
 SMILES, accepted confidence or model values. Missing images are retained as explicit
 unavailable evidence rather than silently dropping their rows.
 
-The raw projection epoch is `structure-corpus-v1`. Rebuilding it once establishes
+The raw projection epoch is `compound-catalog-v1`. Rebuilding it once establishes
 a new source nonce; old correction/prediction audit is preserved but becomes stale,
 never silently reapplied. Formal binding, OCSR and deterministic QA still verify
 the activity-associated subset; a full-corpus export declares that scope and remains

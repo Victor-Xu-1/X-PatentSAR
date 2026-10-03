@@ -76,11 +76,7 @@ def unassociated_structures(
             flags.append("image_unavailable")
         # Internal source ID is not a guessed printed compound/example number.
         reference = record_id.rsplit(":", 1)[-1][-8:]
-        display_id = (
-            f"未关联结构 {reference} · p.{page}"
-            if page
-            else f"未关联结构 {reference} · 页码未知"
-        )
+        display_id = f"编号待确认 {structure_id or reference}"
         dto = Compound(
             id=record_id,
             display_id=display_id,
@@ -93,7 +89,8 @@ def unassociated_structures(
             activities=[],
             source=Source(page=page, bbox=geometry),
             confidence=Confidence(
-                level="review", reason="已保留结构原图；尚未证实化合物编号与活性关联。"
+                level="review",
+                reason="已保留结构原图；尚未证实原文编号，不能猜测或按活性集合分配编号。",
             ),
             recognition=Recognition(status="not_run"),
             flags=flags,
