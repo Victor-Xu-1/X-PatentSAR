@@ -189,6 +189,26 @@ is null or the exact 64-character content SHA; binding scores remain separate.
 the current SMILES SHA. It is not an original crop, never updates artifacts and
 fails 404 without a bounded valid molecule or 409 for an outdated fingerprint.
 `activities`: `[{name,value,unit,target,assay,page}]` (nullable optional metadata).
+Visible result rows optionally include `activity_source_keys`, a one-to-one list
+of lowercase SHA64 selectors in the activities' original order. These are read-only
+presentation metadata: exact raw source fingerprint, effective observation index
+and full scalar/context determine the key. They are not editable source geometry,
+not exported observations, and not persisted in original compound payloads.
+
+GET `/api/v1/projects/{id}/pages/{page}` accepts paired optional query parameters
+`focus_compound` (bounded original row ID) and `focus_activity` (SHA64 selector).
+The normal original image/text/annotations response is retained, with optional
+`activity_focus:{compound_id,activity_key,status,boxes,message}`. `located` requires
+1–80 genuine matched metric-cell boxes; `page_only` carries no boxes and explains
+missing proof. Boxes use rendered original-PDF points and page dimensions; explicit
+unrotated coordinates transform once. Unknown rotated orientation is not guessed.
+Source page, exact field/value/unit/target/assay and printed compound-cell ownership
+must agree. Repeated real cells are retained; no numeric search or whole-table box
+is substituted. Missing/malformed paired arguments fail 422; changed source/value
+or wrong page fails 409; unknown row fails 404; out-of-page geometry fails 422.
+No focus parameters leaves the original page contract unchanged. Source keys/focus
+do not alter product v0.1.0, API v1, raw projection identity, formal QA or predictions.
+
 For additive `activity_sources` evidence in activity schema v1, presentation
 matches each cell by its exact field name and original scalar value before
 display truncation. Each matched metric receives that source's page, target and

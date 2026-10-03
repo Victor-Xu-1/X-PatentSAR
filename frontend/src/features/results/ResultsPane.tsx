@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { Activity, Compound, Filters, Job, Project, Results } from '../../api/types';
+import type { Compound, Filters, Job, Project, Results } from '../../api/types';
+import type { ActivitySourceCallback } from '../../model/activityColumns';
 import { availableMetrics } from '../../model/results';
 import type { ResultDensity } from '../../model/results';
 import type { Resource } from '../../hooks/useResource';
@@ -37,7 +38,7 @@ export function ResultsPane({
   onSelect: (id: string) => void;
   onSelectPage: (checked: boolean) => void;
   onJump: (row: Compound) => void;
-  onActivitySource: (activity: Activity) => void;
+  onActivitySource: ActivitySourceCallback;
   onCrop: (row: Compound) => void;
   onReview: (row: Compound) => void;
   onExport: () => void;

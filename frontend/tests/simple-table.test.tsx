@@ -44,7 +44,11 @@ describe('one simple source-bound table', () => {
     };
     render(<ResultsTable {...props} rows={[row]} />);
     await userEvent.click(screen.getByLabelText('I-7 IC50 活性来源第 9 页'));
-    expect(props.onActivitySource).toHaveBeenCalledExactlyOnceWith(row.activities[1]);
+    expect(props.onActivitySource).toHaveBeenCalledExactlyOnceWith(
+      row,
+      row.activities[1],
+      undefined,
+    );
     await userEvent.click(screen.getByLabelText('修正 I-7'));
     expect(props.onReview).toHaveBeenCalledExactlyOnceWith(row);
   });

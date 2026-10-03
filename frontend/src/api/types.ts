@@ -62,6 +62,17 @@ export interface ActivityColumn {
   target: string | null;
   assay: string | null;
 }
+export interface ActivityFocusSelection {
+  compoundId: string;
+  key: string;
+}
+export interface ActivityFocus {
+  compound_id: string;
+  activity_key: string;
+  status: 'located' | 'page_only';
+  boxes: BBox[];
+  message: string | null;
+}
 export const recordKinds = ['structure_activity', 'structure_only', 'activity_only'] as const;
 export type RecordKind = (typeof recordKinds)[number];
 export interface Compound {
@@ -73,6 +84,7 @@ export interface Compound {
   smiles: string | null;
   recognition: CompoundRecognition | null;
   activities: Activity[];
+  activity_source_keys?: string[];
   record_kind?: RecordKind | null;
   source: {
     page: number | null;
@@ -108,6 +120,7 @@ export interface PageData {
   text: string;
   source_mode: 'native' | 'ocr' | 'historical' | 'unavailable';
   annotations: { compound_id: string; bbox: BBox; kind: string; verified: boolean }[];
+  activity_focus?: ActivityFocus | null;
 }
 export const stageNames = [
   'classify',

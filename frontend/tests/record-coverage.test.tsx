@@ -38,6 +38,29 @@ const callbacks = () => ({
 });
 
 describe('complete information table presentation', () => {
+  it('hides generated structure-only page suffixes without changing source identity or callbacks', async () => {
+    const props = callbacks();
+    const original = { ...structure, display_id: '未关联结构 S1 · p.4' };
+    render(<ResultsTable {...props} rows={[original]} />);
+    const identity = screen.getByLabelText('查看 未关联结构 S1 · p.4 结构详情');
+    expect(identity).toHaveTextContent('未关联结构 S1');
+    expect(identity).not.toHaveTextContent('p.4');
+    await userEvent.click(identity);
+    expect(props.onCrop).toHaveBeenCalledWith(original);
+  });
+
+  it('does not strip an intentionally edited compound identifier', () => {
+    const edited = {
+      ...structure,
+      display_id: '未关联结构 User label · p.4',
+      correction: { revision: 1, stale: false, has_changes: true, updated_at: '2026-10-04' },
+    };
+    render(<ResultsTable {...callbacks()} rows={[edited]} />);
+    expect(screen.getByLabelText('查看 未关联结构 User label · p.4 结构详情')).toHaveTextContent(
+      edited.display_id,
+    );
+  });
+
   it('keeps structures without activity and labels the gap without a biological conclusion', () => {
     render(<ResultsTable {...callbacks()} rows={[structure]} />);
     expect(screen.getByText('Compound 2')).toBeVisible();
@@ -72,7 +95,11 @@ describe('complete information table presentation', () => {
     await userEvent.click(screen.getByLabelText('Compound 2 结构来源第 4 页'));
     expect(props.onJump).toHaveBeenCalledExactlyOnceWith(structure);
     await userEvent.click(screen.getByLabelText('Compound 3 抑制等级 活性来源第 5 页'));
-    expect(props.onActivitySource).toHaveBeenCalledExactlyOnceWith(activity.activities[0]);
+    expect(props.onActivitySource).toHaveBeenCalledExactlyOnceWith(
+      activity,
+      activity.activities[0],
+      undefined,
+    );
   });
 
   it('does not label a hidden metric or a legacy empty record as structure-only', () => {

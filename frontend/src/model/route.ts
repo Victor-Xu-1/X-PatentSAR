@@ -1,5 +1,7 @@
 import { normalizeLayout } from './layout';
 import type { LayoutState } from './layout';
+import type { ActivityFocusSelection } from '../api/types';
+import { validActivityFocus } from '../api/activitySourceDecoders';
 export type View = 'workspace' | 'projects' | 'jobs' | 'settings' | 'new-task';
 export type ResultTab = 'results' | 'summary';
 export type PdfTab = 'original' | 'text' | 'annotations';
@@ -9,6 +11,7 @@ export interface Route {
   page: number | null;
   tab: PdfTab;
   compoundId: string | null;
+  activityFocus?: ActivityFocusSelection;
   layout?: LayoutState;
   resultTab?: ResultTab;
   operationId?: string;
@@ -20,6 +23,11 @@ export const emptyRoute: Route = {
   tab: 'original',
   compoundId: null,
 };
+export function withoutActivityFocus(route: Route): Route {
+  const next = { ...route };
+  delete next.activityFocus;
+  return next;
+}
 export function parseRoute(hash: string): Route {
   const [path = '', search = ''] = hash.replace(/^#/, '').split('?');
   const parts = path.split('/').filter(Boolean);
@@ -46,12 +54,20 @@ export function parseRoute(hash: string): Route {
             : parts[0] === 'settings'
               ? 'settings'
               : 'new-task';
+  const focus = {
+    compoundId: params.get('focusCompound') ?? '',
+    key: params.get('focusActivity') ?? '',
+  };
+  const validPage = page !== null && Number.isSafeInteger(page) && page > 0 ? page : null;
   return {
     view,
     projectId,
-    page: page !== null && Number.isSafeInteger(page) && page > 0 ? page : null,
+    page: validPage,
     tab: tab === 'text' || tab === 'annotations' ? tab : 'original',
     compoundId: params.get('compound'),
+    ...(view === 'workspace' && projectId && validPage !== null && validActivityFocus(focus)
+      ? { activityFocus: focus }
+      : {}),
     ...(view === 'settings' && /^[A-Za-z0-9_-]{1,200}$/.test(params.get('operation') ?? '')
       ? { operationId: params.get('operation')! }
       : {}),
@@ -84,6 +100,15 @@ export function routeHash(route: Route): string {
     if (route.page !== null) params.set('page', String(route.page));
     params.set('tab', route.tab);
     if (route.compoundId) params.set('compound', route.compoundId);
+    if (
+      route.page !== null &&
+      Number.isSafeInteger(route.page) &&
+      route.page > 0 &&
+      validActivityFocus(route.activityFocus)
+    ) {
+      params.set('focusCompound', route.activityFocus.compoundId);
+      params.set('focusActivity', route.activityFocus.key);
+    }
   }
   if (route.view === 'workspace') {
     if (route.layout) {

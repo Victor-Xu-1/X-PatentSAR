@@ -6,10 +6,11 @@ import asyncio
 import hashlib
 from pathlib import Path
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Query, Request
 from starlette.concurrency import run_in_threadpool
 from starlette.responses import Response, StreamingResponse
 
+from .activity_focus import resolve_focus
 from .correction_models import CorrectionDocument, CorrectionRequest
 from .errors import WebError
 from .exports import export_csv, export_json, selected
@@ -77,8 +78,25 @@ def project_routes(service: WorkspaceService, max_upload_bytes: int) -> APIRoute
             return await run_in_threadpool(service.attach_pdf, project_id, uploaded)
 
     @router.get("/projects/{project_id}/pages/{page}", response_model=Page)
-    def pdf_page(project_id: str, page: int) -> Page:
+    def pdf_page(
+        project_id: str,
+        page: int,
+        focus_compound: str | None = Query(default=None, min_length=1, max_length=200),
+        focus_activity: str | None = Query(default=None, pattern=r"^[a-f0-9]{64}$"),
+    ) -> Page:
         row = service.store.project(project_id)
+        focus = None
+        if (focus_compound is None) != (focus_activity is None):
+            raise WebError(
+                422,
+                "activity_focus_parameters",
+                "Provide both activity focus parameters.",
+            )
+        if focus_compound is not None and focus_activity is not None:
+            service._current_project(project_id)
+            row, focus = resolve_focus(
+                service.store, project_id, focus_compound, focus_activity, page
+            )
         historical_text = ""
         if row["run_root"]:
             ocr = (
@@ -103,6 +121,7 @@ def project_routes(service: WorkspaceService, max_upload_bytes: int) -> APIRoute
             page,
             service.result_rows(project_id),
             historical_text=historical_text,
+            activity_focus=focus,
         )
 
     @router.get("/projects/{project_id}/pages/{page}/image")

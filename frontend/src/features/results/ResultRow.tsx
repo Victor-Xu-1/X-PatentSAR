@@ -1,8 +1,8 @@
-import { Pencil } from 'lucide-react';
-import type { Activity, Compound } from '../../api/types';
+import { MapPin, Pencil } from 'lucide-react';
+import type { Compound } from '../../api/types';
 import { ActivityValueCell } from './ActivityValueCell';
-import { activityColumnValues } from '../../model/activityColumns';
-import type { TableActivityColumn } from '../../model/activityColumns';
+import { activityColumnObservations } from '../../model/activityColumns';
+import type { ActivitySourceCallback, TableActivityColumn } from '../../model/activityColumns';
 import { PredictionCells } from './PredictionCells';
 import { StructureCell } from './StructureCell';
 
@@ -25,11 +25,11 @@ export function ResultRow({
   focused: boolean;
   onSelect: () => void;
   onJump: (row: Compound) => void;
-  onActivitySource: (activity: Activity) => void;
+  onActivitySource: ActivitySourceCallback;
   onCrop: (row: Compound) => void;
   onReview: (row: Compound) => void;
 }) {
-  const values = activityColumnValues(row.activities, columns);
+  const observations = activityColumnObservations(row, columns);
   return (
     <tr data-compound={row.id} className={focused ? 'source-focused' : ''}>
       <td className="frozen-column frozen-select">
@@ -45,9 +45,9 @@ export function ResultRow({
       {columns.map((column, index) => (
         <ActivityValueCell
           key={column.id}
-          displayId={row.display_id}
+          row={row}
           column={column}
-          activities={values[index]!}
+          observations={observations[index]!}
           onSource={onActivitySource}
         />
       ))}
@@ -61,7 +61,7 @@ export function ResultRow({
           disabled={row.source.page === null}
           onClick={() => onJump(row)}
         >
-          {row.source.page === null ? '—' : `p.${row.source.page}`}
+          <MapPin size={14} aria-hidden="true" />
         </button>
       </td>
       <td className="edit-column frozen-column frozen-edit">

@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
-import type { Activity, ActivityColumn, Compound } from '../../api/types';
+import type { ActivityColumn, Compound } from '../../api/types';
 import type { CSSProperties } from 'react';
 import { availableMetrics } from '../../model/results';
 import type { ResultDensity } from '../../model/results';
 import { resultColumns } from '../../model/resultColumns';
 import { tableActivityColumns } from '../../model/activityColumns';
+import type { ActivitySourceCallback } from '../../model/activityColumns';
 import { ResizeHandle } from '../../components/ResizeHandle';
 import { ResultRow } from './ResultRow';
 import { useColumnResize } from './useColumnResize';
@@ -34,7 +35,7 @@ export function ResultsTable({
   onSelect: (id: string) => void;
   onSelectPage: (checked: boolean) => void;
   onJump: (compound: Compound) => void;
-  onActivitySource: (activity: Activity) => void;
+  onActivitySource: ActivitySourceCallback;
   onCrop: (compound: Compound) => void;
   onReview: (compound: Compound) => void;
 }) {

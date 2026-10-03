@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { safeAssetUrl } from '../../api';
-import type { PageData } from '../../api/types';
+import type { ActivityFocusSelection, PageData } from '../../api/types';
 import { Empty } from '../../components/Feedback';
+import { ActivityFocusMarks, pageBoxStyle } from './ActivityFocusMarks';
 
 export function PageCanvas({
   page,
@@ -9,12 +10,14 @@ export function PageCanvas({
   annotations,
   selectedId,
   onSelect,
+  activityFocus,
 }: {
   page: PageData;
   zoom: number;
   annotations: boolean;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  activityFocus?: ActivityFocusSelection | undefined;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState<string | null>(null);
@@ -23,13 +26,24 @@ export function PageCanvas({
   const width = page.width ?? 0;
   const height = page.height ?? 0;
   const url = original ? `${original.split('?')[0]}?scale=${Math.max(1, zoom)}` : null;
+  const focus =
+    activityFocus &&
+    page.activity_focus?.compound_id === activityFocus.compoundId &&
+    page.activity_focus.activity_key === activityFocus.key
+      ? page.activity_focus
+      : null;
   useEffect(() => {
-    if (selectedId && loaded === url) {
+    if (loaded !== url) return;
+    if (focus?.status === 'located') {
+      ref.current
+        ?.querySelector<HTMLElement>('[data-activity-focus]')
+        ?.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+    } else if (!activityFocus && selectedId) {
       Array.from(ref.current?.querySelectorAll<HTMLElement>('[data-annotation]') ?? [])
         .find((element) => element.dataset.annotation === selectedId)
         ?.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
     }
-  }, [selectedId, loaded, url]);
+  }, [selectedId, loaded, url, activityFocus, focus]);
   if (!url)
     return (
       <Empty
@@ -67,10 +81,17 @@ export function PageCanvas({
           src={url}
           alt={`原始专利 PDF 第 ${page.page} 页`}
           onLoad={() => setLoaded(url)}
-          onError={() => setFailed(url)}
+          onError={() => {
+            setLoaded(null);
+            setFailed(url);
+          }}
         />
         {loaded !== url && <output className="page-loading">正在加载原始 PNG…</output>}
+        {loaded === url && width > 0 && height > 0 && focus?.status === 'located' && (
+          <ActivityFocusMarks focus={focus} width={width} height={height} />
+        )}
         {annotations &&
+          loaded === url &&
           width > 0 &&
           height > 0 &&
           page.annotations.map((annotation, index) => {
@@ -83,12 +104,7 @@ export function PageCanvas({
                 data-annotation={annotation.compound_id}
                 key={`${annotation.compound_id}-${index}`}
                 aria-label={`定位化合物 ${annotation.compound_id}，${annotation.verified ? '证据已确认' : '证据未确认'}`}
-                style={{
-                  left: `${(100 * x1) / width}%`,
-                  top: `${(100 * y1) / height}%`,
-                  width: `${(100 * (x2 - x1)) / width}%`,
-                  height: `${(100 * (y2 - y1)) / height}%`,
-                }}
+                style={pageBoxStyle([x1, y1, x2, y2], width, height)}
                 onClick={() => onSelect(annotation.compound_id)}
               >
                 <span>{annotation.compound_id}</span>

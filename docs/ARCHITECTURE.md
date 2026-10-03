@@ -79,6 +79,19 @@ observation to that exact context, preserves repeated values and independent
 sources, and renders one column per context instead of a stacked activity summary.
 Headers, structure identity and the correction control remain fixed during native
 horizontal scrolling; explicit column widths share the existing resize handler.
+`web/activity_provenance.py` is the shared bounded source-cell/context parser for
+artifact projection and value focus. The previous inline parser is removed.
+Visible results add opaque `activity_source_keys`, bound to raw source fingerprint,
+current correction and observation index/scalar. Empty raw keys are excluded from
+serialization, so original payloads, correction fingerprints and exports do not change.
+The existing page GET accepts a selected compound/key; `web/activity_focus.py`
+checks current ownership/context/value and projects only actual matching metric
+cells into the original rendered page coordinates. No new OCR/model, text-search
+heuristic, whole-table highlight, result projection epoch or SQLite schema is added.
+Unknown rotated orientation or missing cell/printed-ID proof is explicit page-only
+navigation. Malformed, foreign, stale or out-of-page selections fail, never draw a
+plausible box. The same frontend page resource renders the outline and restores it
+from a deep link; page/tab/structure changes clear a previous activity selection.
 Statistics, binding/QC and manual decisions are available only on demand.
 Original crops and bounded RDKit PNGs appear side by side; a redraw is explicitly
 not original evidence. Token probabilities are uncalibrated observations, never

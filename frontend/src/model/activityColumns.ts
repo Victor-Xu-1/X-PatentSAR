@@ -1,4 +1,4 @@
-import type { Activity, ActivityColumn } from '../api/types';
+import type { Activity, ActivityColumn, Compound } from '../api/types';
 import { activityContextKey } from '../api/activityColumnDecoders';
 
 export interface TableActivityColumn extends ActivityColumn {
@@ -32,18 +32,26 @@ export function activityColumnContext(column: TableActivityColumn): string {
     .filter((value): value is string => Boolean(value))
     .join(' · ');
 }
-export function activityColumnValues(
-  activities: Activity[],
+export interface ActivityObservation {
+  activity: Activity;
+  index: number;
+  sourceKey: string | undefined;
+}
+export type ActivitySourceCallback = (row: Compound, activity: Activity, key?: string) => void;
+export function activityColumnObservations(
+  row: Compound,
   columns: TableActivityColumn[],
-): Activity[][] {
-  const exact = new Map<string, Activity[]>(),
-    byName = new Map<string, Activity[]>();
-  for (const activity of activities) {
+): ActivityObservation[][] {
+  const exact = new Map<string, ActivityObservation[]>(),
+    byName = new Map<string, ActivityObservation[]>();
+  for (const [index, activity] of row.activities.entries()) {
+    // Preserve the original observation index before grouping columns.
+    const observation = { activity, index, sourceKey: row.activity_source_keys?.[index] };
     const key = activityContextKey(activity);
     if (!exact.has(key)) exact.set(key, []);
-    exact.get(key)!.push(activity);
+    exact.get(key)!.push(observation);
     if (!byName.has(activity.name)) byName.set(activity.name, []);
-    byName.get(activity.name)!.push(activity);
+    byName.get(activity.name)!.push(observation);
   }
   return columns.map(
     (column) =>

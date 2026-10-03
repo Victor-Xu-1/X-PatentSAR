@@ -106,6 +106,24 @@
   padding: 7px 11px;
   color: var(--primary);
 }
+.activity-focus-box {
+  position: absolute;
+  border: 2px solid var(--warning);
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px var(--image-paper);
+  background: transparent;
+  pointer-events: none;
+  z-index: 3;
+}
+.activity-focus-notice {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 11px;
+}
 .annotation-box {
   position: absolute;
   padding: 0;

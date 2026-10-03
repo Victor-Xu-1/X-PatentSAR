@@ -82,18 +82,14 @@ describe('current extraction failure presentation', () => {
         ]}
       />,
     );
-    for (const page of [344, 345, 352])
-      expect(screen.getByTitle(`活性来源第 ${page} 页`)).toBeVisible();
     for (const label of [
-      'Cereblon',
-      'HTRF',
-      'HuR',
-      'Western blot',
-      'Anti-proliferation',
-      '靶点未提供',
+      'I-7 Cereblon HTRF grade 活性来源第 344 页',
+      'I-7 KP4 HuR degradation grade 活性来源第 345 页',
+      'I-7 Anti-proliferation activity grade 活性来源第 352 页',
     ])
-      expect(screen.getByText(label)).toBeVisible();
-    expect(screen.queryByTitle('活性来源第 4 页')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: label })).toBeVisible();
+    expect(screen.getByRole('table').textContent).not.toMatch(/p\.\d+/);
+    expect(screen.queryByRole('button', { name: /活性来源第 4 页/ })).not.toBeInTheDocument();
     expect(screen.getByTitle('Cereblon HTRF grade = +++')).toHaveTextContent('+++');
     expect(screen.getByTitle('Anti-proliferation activity grade = +++')).toHaveTextContent('+++');
   });
