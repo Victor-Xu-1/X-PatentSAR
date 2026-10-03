@@ -2,36 +2,63 @@
 
 from __future__ import annotations
 
-import json
 from collections.abc import Callable
 from typing import Any
 
+from .correction_storage import (
+    CORRECTION_COLUMNS,
+    CORRECTION_JOIN,
+    correction_source_fingerprint,
+    joined_correction,
+)
+from .corrections import apply_correction
 from .errors import WebError
 from .models import Compound, Results, Review
 from .molecule_drawing import drawing_url
 from .pdf import open_pdf, rendered_box
+from .prediction_storage import PredictionStore
 from .storage import Store
 
 
 class ResultQueries:
     def __init__(
-        self, store: Store, current_project: Callable[[str], dict[str, Any]]
+        self,
+        store: Store,
+        current_project: Callable[[str], dict[str, Any]],
+        predictions: PredictionStore | None = None,
     ) -> None:
         self.store = store
         self.current_project = current_project
+        self.predictions = predictions
 
-    def rows(self, project_id: str) -> list[dict[str, Any]]:
+    def _rows_and_project(
+        self, project_id: str
+    ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
         self.current_project(project_id)
         with self.store.connect() as connection:
-            return [
+            connection.execute("BEGIN")
+            project = dict(
+                connection.execute(
+                    "SELECT * FROM projects WHERE id=?", (project_id,)
+                ).fetchone()
+            )
+            rows = [
                 dict(row)
                 for row in connection.execute(
-                    "SELECT c.*,r.decision,r.note,r.revision,r.updated_at AS review_updated_at FROM compounds c "
+                    "SELECT c.*,r.decision,r.note,r.revision,r.updated_at AS review_updated_at "
+                    + CORRECTION_COLUMNS
+                    + "FROM compounds c "
                     "LEFT JOIN reviews r ON c.project_id=r.project_id AND c.id=r.compound_id "
-                    "WHERE c.project_id=? ORDER BY c.ordinal LIMIT 25000",
+                    + CORRECTION_JOIN
+                    + "WHERE c.project_id=? ORDER BY c.ordinal LIMIT 25000",
                     (project_id,),
                 )
             ]
+        return rows, project
+
+    def rows(self, project_id: str) -> list[dict[str, Any]]:
+        rows, _ = self._rows_and_project(project_id)
+        return rows
 
     def _filtered_compounds(
         self,
@@ -41,7 +68,13 @@ class ResultQueries:
         confidence: str = "",
         review: str = "",
         target: str = "",
-    ) -> tuple[list[Compound], dict[str, str]]:
+    ) -> tuple[
+        list[Compound],
+        dict[str, str],
+        list[str],
+        list[str],
+        tuple[dict[str, Any], dict[str, dict[str, Any]]],
+    ]:
         if len(q) > 500 or len(target) > 300:
             raise WebError(422, "filter_limit", "Search filter is too long.")
         if confidence not in {
@@ -54,8 +87,24 @@ class ResultQueries:
             raise WebError(422, "invalid_filter", "Result filter is not supported.")
         output = []
         source_spaces: dict[str, str] = {}
-        for row in self.rows(project_id):
-            dto = Compound.model_validate_json(row["payload"])
+        metrics: set[str] = set()
+        targets: set[str] = set()
+        rows, project = self._rows_and_project(project_id)
+        for row in rows:
+            dto = apply_correction(
+                project,
+                row,
+                joined_correction(row),
+                Compound.model_validate_json(row["payload"]),
+            )
+            metrics.update(a.name for a in dto.activities)
+            targets.update(a.target for a in dto.activities if a.target)
+            if len(metrics) > 1000 or len(targets) > 1000:
+                raise WebError(
+                    422,
+                    "result_vocabulary_limit",
+                    "Result metrics or targets exceed their limit.",
+                )
             if dto.smiles and dto.redraw_image_url is None:
                 # Rendering is derived presentation; old recognition metadata
                 # remains unknown instead of being promoted to fresh validation.
@@ -72,9 +121,16 @@ class ResultQueries:
             haystack = " ".join(
                 [
                     dto.id,
+                    dto.display_id,
                     dto.smiles or "",
                     *(a.name for a in dto.activities),
                     *(a.target or "" for a in dto.activities),
+                    *(a.assay or "" for a in dto.activities),
+                    *(a.unit or "" for a in dto.activities),
+                    *(
+                        str(a.value) if a.value is not None else ""
+                        for a in dto.activities
+                    ),
                 ]
             )
             if q and q.casefold() not in haystack.casefold():
@@ -93,7 +149,36 @@ class ResultQueries:
                 continue
             output.append(dto)
             source_spaces[dto.id] = row["geometry_space"]
-        return output, source_spaces
+        return (
+            output,
+            source_spaces,
+            sorted(metrics),
+            sorted(targets),
+            (project, {row["id"]: row for row in rows}),
+        )
+
+    def _predictions(
+        self,
+        project_id: str,
+        items: list[Compound],
+        context: tuple[dict[str, Any], dict[str, dict[str, Any]]],
+    ) -> list[Compound]:
+        if self.predictions is not None and items:
+            project, by_id = context
+            values = self.predictions.summaries(
+                project_id,
+                [
+                    (
+                        item.id,
+                        correction_source_fingerprint(project, by_id[item.id]),
+                        item.smiles,
+                    )
+                    for item in items
+                ],
+            )
+            for item in items:
+                item.admet = values[item.id]
+        return items
 
     def _normalize_source_boxes(
         self,
@@ -110,13 +195,16 @@ class ResultQueries:
                 # Preserve global bounds and source-fingerprint validation, but
                 # materialize PDF pages only for rows actually returned.
                 for dto in checked:
-                    if dto.source.page and dto.source.bbox:
-                        if dto.source.page > document.page_count:
-                            raise WebError(
-                                422,
-                                "invalid_geometry",
-                                "Compound source page is outside the original PDF.",
-                            )
+                    if (
+                        dto.source.page
+                        and dto.source.bbox
+                        and dto.source.page > document.page_count
+                    ):
+                        raise WebError(
+                            422,
+                            "invalid_geometry",
+                            "Compound source page is outside the original PDF.",
+                        )
                 for dto in items:
                     if dto.source.page and dto.source.bbox:
                         dto.source.bbox = rendered_box(
@@ -124,6 +212,11 @@ class ResultQueries:
                             dto.source.bbox,
                             source_spaces[dto.id],
                         )
+        return items
+
+    def effective_compounds(self, project_id: str) -> list[Compound]:
+        """Corrected molecules for downstream consumers, without opening PDF pages."""
+        items, _, _, _, _ = self._filtered_compounds(project_id)
         return items
 
     def compounds(
@@ -135,10 +228,14 @@ class ResultQueries:
         review: str = "",
         target: str = "",
     ) -> list[Compound]:
-        items, source_spaces = self._filtered_compounds(
+        items, source_spaces, _, _, context = self._filtered_compounds(
             project_id, q=q, confidence=confidence, review=review, target=target
         )
-        return self._normalize_source_boxes(project_id, items, source_spaces)
+        return self._predictions(
+            project_id,
+            self._normalize_source_boxes(project_id, items, source_spaces),
+            context,
+        )
 
     def results(
         self, project_id: str, *, page: int = 1, page_size: int = 10, **filters: str
@@ -149,19 +246,24 @@ class ResultQueries:
                 "pagination",
                 "Page must be positive and page_size must be at most 100.",
             )
-        compounds, source_spaces = self._filtered_compounds(project_id, **filters)
-        snapshot = json.loads(self.store.project(project_id)["snapshot"])
+        compounds, source_spaces, metrics, targets, context = self._filtered_compounds(
+            project_id, **filters
+        )
         offset = (page - 1) * page_size
         return Results(
-            items=self._normalize_source_boxes(
+            items=self._predictions(
                 project_id,
-                compounds[offset : offset + page_size],
-                source_spaces,
-                checked=compounds,
+                self._normalize_source_boxes(
+                    project_id,
+                    compounds[offset : offset + page_size],
+                    source_spaces,
+                    checked=compounds,
+                ),
+                context,
             ),
             total=len(compounds),
             page=page,
             page_size=page_size,
-            metrics=snapshot.get("metrics", []),
-            targets=snapshot.get("targets", []),
+            metrics=metrics,
+            targets=targets,
         )

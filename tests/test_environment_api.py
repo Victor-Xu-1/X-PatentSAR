@@ -146,6 +146,20 @@ class EnvironmentAPITests(unittest.TestCase):
             time.sleep(0.03)
         self.fail("Controlled owned worker did not finish within its test bound")
 
+    def test_default_workflow_preset_includes_automatic_metrics_without_installing(
+        self,
+    ):
+        with self.client() as client:
+            self.authenticate(client)
+            catalog = client.get("/api/v1/environments").json()
+            preset = next(p for p in catalog["presets"] if p["id"] == "extraction")
+            self.assertEqual(
+                preset["component_ids"],
+                ["base", "decimer", "decimer-models", "admet", "admet-models"],
+            )
+            self.assertEqual(catalog["operations"], [])
+            self.assertIsNone(catalog["active_operation"])
+
     def test_auth_csrf_input_and_location_never_start_an_install(self):
         with self.client() as client:
             self.assertEqual(client.get("/api/v1/environments").status_code, 401)

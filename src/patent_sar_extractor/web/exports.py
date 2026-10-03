@@ -5,13 +5,18 @@ from __future__ import annotations
 import csv
 import io
 import json
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 
 from .errors import WebError
 from .models import Compound, ExportRequest, Project
+from .prediction_models import METRIC_KEYS
 
 
 def formula_safe(value: object) -> str:
+    if type(value) in {int, float}:
+        # Typed finite numerical observations cannot contain spreadsheet code.
+        # Retain negative LogP/LogS as numbers, not apostrophe-prefixed text.
+        return str(value)
     text = "" if value is None else str(value)
     # Spreadsheet importers may discard leading whitespace/control characters.
     stripped = text.lstrip(" \t\r\n\v\f\ufeff")
@@ -33,9 +38,69 @@ def selected(rows: list[Compound], request: ExportRequest) -> list[Compound]:
         raise WebError(
             404,
             "compound_not_found",
-            "Export selection contains compounds outside the filtered activity-led results.",
+            "Export selection contains records outside the filtered structure/activity table.",
         )
     return [r for r in rows if r.id in ids]
+
+
+def _manual_change(row: Compound) -> bool:
+    return bool(
+        row.correction and row.correction.has_changes and not row.correction.stale
+    )
+
+
+def _research_prediction(row: Compound) -> bool:
+    return bool(row.admet and row.admet.status == "complete")
+
+
+def _unassociated(row: Compound) -> bool:
+    return row.record_kind in {"structure_only", "activity_only"}
+
+
+ADMET_COLUMNS = [
+    "admet_status",
+    "MW_Dalton",
+    "LogP",
+    "TPSA_A2",
+    "HBD",
+    "HBA",
+    "LogS_log_mol_L",
+    "admet_engine",
+    "admet_engine_version",
+    "admet_model_sha256",
+    "admet_generated_at",
+    "admet_source_fingerprint",
+    "admet_smiles_sha256",
+    "admet_job_id",
+    "admet_error_code",
+    "admet_error_message",
+    "admet_warnings",
+    "admet_review_only",
+]
+
+
+def _admet_values(row: Compound) -> list[object]:
+    observation = row.admet
+    if observation is None:
+        return ["not_run", *([None] * 16), True]
+    properties = {metric.key: metric.value for metric in observation.properties}
+    engine = observation.engine
+    error = observation.error
+    return [
+        observation.status,
+        *(properties.get(key) for key in METRIC_KEYS),
+        engine.name if engine else None,
+        engine.version if engine else None,
+        engine.model_sha256 if engine else None,
+        observation.generated_at,
+        observation.source_fingerprint,
+        observation.smiles_sha256,
+        observation.job_id,
+        error.code if error else None,
+        error.message if error else None,
+        "; ".join(observation.warnings),
+        True,
+    ]
 
 
 def export_json(project: Project, rows: list[Compound]) -> Iterator[bytes]:
@@ -43,7 +108,16 @@ def export_json(project: Project, rows: list[Compound]) -> Iterator[bytes]:
         "project_id": project.id,
         "patent_id": project.patent_id,
         "acceptance": project.acceptance.model_dump(),
-        "review_only": project.acceptance.state != "accepted",
+        "review_only": project.acceptance.state != "accepted"
+        or any(
+            _manual_change(row) or _research_prediction(row) or _unassociated(row)
+            for row in rows
+        ),
+        "manual_corrections": sum(_manual_change(row) for row in rows),
+        "admet_observations": sum(_research_prediction(row) for row in rows),
+        "formal_acceptance_scope": "original_activity_association_only",
+        "structure_only": sum(row.record_kind == "structure_only" for row in rows),
+        "activity_only": sum(row.record_kind == "activity_only" for row in rows),
     }
     yield (
         json.dumps(header, ensure_ascii=False, allow_nan=False)[:-1] + ',"items":['
@@ -59,7 +133,7 @@ def export_csv(project: Project, rows: list[Compound]) -> Iterator[bytes]:
     buffer = io.StringIO(newline="")
     writer = csv.writer(buffer)
 
-    def line(values: list[object]) -> bytes:
+    def line(values: Sequence[object]) -> bytes:
         buffer.seek(0)
         buffer.truncate()
         writer.writerow([formula_safe(value) for value in values])
@@ -84,11 +158,22 @@ def export_csv(project: Project, rows: list[Compound]) -> Iterator[bytes]:
             "target",
             "assay",
             "activity_page",
+            "display_id",
+            "manual_correction",
+            "correction_revision",
+            "correction_stale",
+            "correction_updated_at",
+            "record_kind",
         ]
+        + ADMET_COLUMNS
+    )
+    review_only = project.acceptance.state != "accepted" or any(
+        _manual_change(row) or _research_prediction(row) or _unassociated(row)
+        for row in rows
     )
     for row in rows:
         prefix: list[object] = [
-            project.acceptance.state != "accepted",
+            review_only,
             project.acceptance.state,
             row.id,
             row.structure_id,
@@ -99,8 +184,16 @@ def export_csv(project: Project, rows: list[Compound]) -> Iterator[bytes]:
             row.review.note if row.review else None,
             row.review.revision if row.review else None,
         ]
+        provenance: list[object] = [
+            row.display_id,
+            _manual_change(row),
+            row.correction.revision if row.correction else None,
+            row.correction.stale if row.correction else None,
+            row.correction.updated_at if row.correction else None,
+            row.record_kind,
+        ] + _admet_values(row)
         if not row.activities:
-            yield line(prefix + [None] * 6)
+            yield line(prefix + [None] * 6 + provenance)
         for activity in row.activities:
             yield line(
                 prefix
@@ -112,4 +205,5 @@ def export_csv(project: Project, rows: list[Compound]) -> Iterator[bytes]:
                     activity.assay,
                     activity.page,
                 ]
+                + provenance
             )

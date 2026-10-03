@@ -145,9 +145,15 @@ class EnvironmentManager:
                 ),
                 EnvironmentPreset(
                     id="extraction",
-                    name="完整专利结构与活性提取",
-                    description="基础环境 + DECIMER 识别/分割环境与模型；保持同一正式提取主链。",
-                    component_ids=["base", "decimer", "decimer-models"],
+                    name="PDF 提取与六项指标",
+                    description="PDF/OCR、DECIMER 与 ADMET CPU 环境和模型；支持一次完成默认任务。",
+                    component_ids=[
+                        "base",
+                        "decimer",
+                        "decimer-models",
+                        "admet",
+                        "admet-models",
+                    ],
                 ),
                 EnvironmentPreset(
                     id="admet",

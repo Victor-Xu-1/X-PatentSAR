@@ -98,6 +98,7 @@ def create_app(
         service.store.root, service, settings=analysis_settings, runner=analysis_runner
     )
     queue = JobQueue(service, runner or CLIProcessRunner(), job_timeout_seconds)
+    service.corrections.on_save = queue.corrected
     recipe_identity = None
     if environment_catalog is None:
         from .environment_specs import catalog_fingerprint, component_catalog
@@ -133,15 +134,20 @@ def create_app(
             try:
                 environments.close()
             except Exception as error:
+                logger.exception(
+                    "Environment cleanup failed (%s)", type(error).__name__
+                )
                 failures.append(error)
             try:
                 analysis.close()
             except Exception as error:
+                logger.exception("Analysis cleanup failed (%s)", type(error).__name__)
                 failures.append(error)
             if started:
                 try:
                     queue.close()
                 except Exception as error:
+                    logger.exception("Queue cleanup failed (%s)", type(error).__name__)
                     failures.append(error)
             if failures:
                 # Do not allow recovery by another server while an owned worker's

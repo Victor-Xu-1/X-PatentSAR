@@ -1,4 +1,4 @@
-"""Bounded activity-led adaptation of real core artifacts to Web DTOs."""
+"""Full source-observation corpus; original formal activity QA remains separate."""
 
 from __future__ import annotations
 
@@ -16,82 +16,36 @@ from patent_sar_extractor.core.pipeline_rules import (
 )
 
 from .acceptance import ARTIFACTS, authority, current
+from .artifact_values import box, page_number, text
 from .errors import WebError
 from .files import MAX_RECORDS, SafeFiles, records
-from .models import Activity, Compound, Confidence, ConfidenceLevel, Source, Summary
+from .models import (
+    Activity,
+    Compound,
+    Confidence,
+    ConfidenceLevel,
+    Recognition,
+    Source,
+    Summary,
+)
 from .molecule_drawing import drawing_url
 from .processes import runtime_identity
 from .recognition import recognition_status
+from .structure_corpus import unassociated_structures
 
-
-def text(value: object, *, limit: int = 1000) -> str | None:
-    if value is None:
-        return None
-    if not isinstance(value, (str, int, float)) or isinstance(value, bool):
-        raise WebError(
-            422, "invalid_artifact", "Artifact contains invalid scalar metadata."
-        )
-    if isinstance(value, float) and not math.isfinite(value):
-        raise WebError(
-            422, "invalid_artifact", "Artifact contains a non-finite number."
-        )
-    return str(value)[:limit]
-
-
-def page_number(value: object) -> int | None:
-    if value in (None, 0, ""):
-        return None
-    if isinstance(value, bool) or not isinstance(value, (int, str)):
-        raise WebError(422, "invalid_artifact", "Artifact page number is invalid.")
-    try:
-        page = int(value)
-    except (ValueError, TypeError, OverflowError) as exc:
-        raise WebError(
-            422, "invalid_artifact", "Artifact page number is invalid."
-        ) from exc
-    if not 1 <= page <= 20000:
-        raise WebError(
-            422, "invalid_artifact", "Artifact page number is outside bounds."
-        )
-    return page
-
-
-def box(binding: dict[str, Any], structure: dict[str, Any]) -> list[float] | None:
-    value = structure.get("bbox_pdf")
-    if value is None and all(
-        k in binding for k in ("struct_x0", "struct_y0", "struct_x1", "struct_y1")
-    ):
-        value = [
-            binding[k] for k in ("struct_x0", "struct_y0", "struct_x1", "struct_y1")
-        ]
-    if value is None:
-        return None
-    if not isinstance(value, list) or len(value) != 4:
-        raise WebError(422, "invalid_geometry", "Artifact geometry is invalid.")
-    try:
-        bounds = [float(x) for x in value]
-    except (TypeError, ValueError, OverflowError) as exc:
-        raise WebError(
-            422, "invalid_geometry", "Artifact geometry is invalid."
-        ) from exc
-    if (
-        not all(math.isfinite(x) and abs(x) <= 100000 for x in bounds)
-        or bounds[2] <= bounds[0]
-        or bounds[3] <= bounds[1]
-    ):
-        raise WebError(
-            422, "invalid_geometry", "Artifact geometry is non-finite or inverted."
-        )
-    return bounds
+RAW_PROJECTION_LAYOUT = "structure-corpus-v1"
 
 
 def _index(
-    items: list[dict[str, Any]], keys: tuple[str, ...]
+    items: list[dict[str, Any]], keys: tuple[str, ...], *, allow_named: bool = False
 ) -> dict[str, list[dict[str, Any]]]:
     index: dict[str, list[dict[str, Any]]] = {}
     for item in items:
         label = next((item.get(k) for k in keys if item.get(k)), "")
-        key = _label_key(text(label) or "")
+        raw_label = text(label) or ""
+        key = _label_key(raw_label) or (
+            f"named:{raw_label}" if allow_named and raw_label else ""
+        )
         if key:
             index.setdefault(key, []).append(item)
     return index
@@ -383,16 +337,33 @@ class ArtifactView:
         smiles = _index(smiles_rows, ("cpd_id", "cpd", "compound_id"))
         structure_rows = records(p.get("structures"), "structures")
         structures = {text(s.get("structure_id")): s for s in structure_rows}
-        activity_index = _index(rows, ("cpd",))
-        compounds = []
+        activity_index = _index(rows, ("cpd",), allow_named=True)
+        # The formal target list is not the information-table universe.
+        # Preserve measured rows outside that list as activity-only observations.
+        active = list(active)
+        known_labels = {_label_key(value) or f"named:{value}" for value in active}
+        for row in rows:
+            label = text(row.get("cpd"), limit=200)
+            label_key = _label_key(label) or f"named:{label}" if label else ""
+            if label and label_key not in known_labels:
+                active.append(label)
+                known_labels.add(label_key)
+        if len(active) > MAX_RECORDS:
+            raise WebError(
+                422,
+                "artifact_limit",
+                "Combined activity identifiers exceed their bound.",
+            )
+        compounds: list[dict[str, Any]] = []
         confirmed = 0
         matched = 0
         metric_names: set[str] = set()
         crop_revision = hashlib.sha256(str(self.root).encode()).hexdigest()[:16]
         targets: set[str] = set()
+        structure_pages: set[int] = set()
         measurement_count = 0
         for compound_id in active:
-            key = _label_key(compound_id)
+            key = _label_key(compound_id) or f"named:{compound_id}"
             candidates = bindings.get(key, [])
             binding = candidates[0] if len(candidates) == 1 else {}
             flags = []
@@ -497,8 +468,19 @@ class ArtifactView:
             source_page = page_number(
                 binding.get("page_no") or structure.get("page_no")
             )
+            # Record only an explicit structure observation with a real crop.
+            # The activity-page fallback below is not a structure-page fact.
+            if (
+                has_crop
+                and source_page
+                and (not self.page_count or source_page <= self.page_count)
+            ):
+                structure_pages.add(source_page)
             if source_page is None and activities:
                 source_page = activities[0].page
+            smiles_text = text(
+                smile.get("smiles") or smile.get("canonical_smiles"), limit=10000
+            )
             dto = Compound(
                 id=compound_id,
                 display_id=compound_id,
@@ -508,22 +490,15 @@ class ArtifactView:
                     if has_crop
                     else None
                 ),
-                smiles=text(
-                    smile.get("smiles") or smile.get("canonical_smiles"), limit=10000
-                ),
-                recognition=recognition_status(
-                    smile, current=current(p.get("smiles"), "smiles")
+                smiles=smiles_text,
+                recognition=Recognition.model_validate(
+                    recognition_status(
+                        smile, current=current(p.get("smiles"), "smiles")
+                    )
                 ),
                 redraw_image_url=(
-                    drawing_url(
-                        project_id,
-                        compound_id,
-                        text(
-                            smile.get("smiles") or smile.get("canonical_smiles"),
-                            limit=10000,
-                        ),
-                    )
-                    if smile.get("smiles") or smile.get("canonical_smiles")
+                    drawing_url(project_id, compound_id, smiles_text)
+                    if smiles_text
                     else None
                 ),
                 activities=activities,
@@ -543,17 +518,43 @@ class ArtifactView:
                 ),
                 confidence=confidence,
                 flags=flags,
+                record_kind="structure_activity"
+                if has_crop and activities
+                else "structure_only"
+                if has_crop
+                else "activity_only",
             )
             # Core segmentation divides rotated pixmap pixels by its scale.
             # Its bbox_pdf is already in rendered-page points; do not rotate twice.
             compounds.append(
                 {
-                    "dto": dto.model_dump(),
+                    "dto": dto.model_dump(exclude={"admet", "correction"}),
                     "image_path": image_path,
                     "geometry_space": "rendered"
                     if structure.get("bbox_pdf")
                     else "unrotated",
                 }
+            )
+        represented = {
+            row["dto"]["structure_id"]
+            for row in compounds
+            if row["dto"]["structure_id"]
+        }
+        supplemental, supplemental_pages = unassociated_structures(
+            project_id,
+            structure_rows,
+            represented,
+            {row["dto"]["id"] for row in compounds},
+            files,
+            verified_original=verified,
+            page_count=self.page_count,
+            crop_revision=crop_revision,
+        )
+        compounds.extend(supplemental)
+        structure_pages.update(supplemental_pages)
+        if len(compounds) > MAX_RECORDS:
+            raise WebError(
+                422, "artifact_limit", "Combined information table exceeds its bound."
             )
         summary = Summary(
             structures=len(structure_rows),
@@ -561,13 +562,21 @@ class ArtifactView:
             matched_structures=matched,
             confirmed=confirmed,
             needs_review=len(compounds) - confirmed,
+            structure_only=sum(
+                row["dto"]["record_kind"] == "structure_only" for row in compounds
+            ),
+            activity_only=sum(
+                row["dto"]["record_kind"] == "activity_only" for row in compounds
+            ),
         )
         snapshot = {
+            "raw_projection_layout": RAW_PROJECTION_LAYOUT,
             "read_model_identity": runtime_identity(),
             "is_historical": historical,
             "acceptance": accepted.model_dump(),
             "summary": summary.model_dump(),
             "metrics": sorted(metric_names),
             "targets": sorted(targets),
+            "first_structure_page": min(structure_pages) if structure_pages else None,
         }
         return snapshot, compounds

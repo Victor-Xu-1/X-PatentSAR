@@ -7,8 +7,11 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from .artifacts import ArtifactView
+from .admet_history import read_admet_stage
+from .artifacts import RAW_PROJECTION_LAYOUT, ArtifactView
 from .attempts import AttemptHistory, spec_record
+from .correction_models import CorrectionDocument, CorrectionRequest
+from .corrections import Corrections, CorrectionSaved
 from .errors import WebError
 from .models import (
     Acceptance,
@@ -21,6 +24,7 @@ from .models import (
     Summary,
 )
 from .pdf import UploadedPDF, copy_original, filename_title
+from .prediction_storage import PredictionStore
 from .processes import runtime_identity
 from .result_queries import ResultQueries
 from .storage import Store, encode, now
@@ -28,17 +32,29 @@ from .task_inputs import patent_identifier
 
 
 class WorkspaceService:
-    def __init__(self, state_root: str | Path) -> None:
+    def __init__(
+        self,
+        state_root: str | Path,
+        *,
+        correction_on_save: CorrectionSaved | None = None,
+    ) -> None:
         self.store = Store(state_root)
         self.attempts = AttemptHistory(self.store)
-        self.result_queries = ResultQueries(self.store, self._current_project)
+        self.corrections = Corrections(
+            self.store, self._current_project, on_save=correction_on_save
+        )
+        self.predictions = PredictionStore(self.store)
+        self.result_queries = ResultQueries(
+            self.store, self._current_project, self.predictions
+        )
 
     def _current_project(self, project_id: str) -> dict[str, Any]:
         row = self.store.project(project_id)
         snapshot = json.loads(row["snapshot"])
-        if (
-            row["run_root"]
-            and snapshot.get("read_model_identity") != runtime_identity()
+        if row["run_root"] and (
+            snapshot.get("read_model_identity") != runtime_identity()
+            or "first_structure_page" not in snapshot
+            or snapshot.get("raw_projection_layout") != RAW_PROJECTION_LAYOUT
         ):
             # Projection data is rebuildable. Old cached acceptance must not
             # become current authority after a rules/software upgrade.
@@ -207,6 +223,7 @@ class WorkspaceService:
             snapshot, compounds = view.snapshot(
                 project_id, pdf_sha256=uploaded.sha256 if uploaded else attached_sha
             )
+            snapshot["correction_projection_id"] = uuid.uuid4().hex
             with self.store.connect(write=True) as connection:
                 if (
                     not existing
@@ -286,6 +303,7 @@ class WorkspaceService:
             return
         view = view or ArtifactView.read(Path(project["run_root"]))
         snapshot, compounds = view.snapshot(project_id, pdf_sha256=project["sha256"])
+        snapshot["correction_projection_id"] = uuid.uuid4().hex
         self.store.snapshot(project_id, snapshot, compounds)
 
     def job(self, job_id: str) -> Job:
@@ -307,6 +325,12 @@ class WorkspaceService:
             and self.attempts.unique(row)
         )
         history = self.attempts.read(row) if spec else None
+        admet_stage, _ = (
+            read_admet_stage(row, output, state_root=self.store.root)
+            if spec.get("include_admet")
+            else (None, False)
+        )
+        admet_only = spec.get("admet_only", False)
         return Job(
             id=row["id"],
             project_id=row["project_id"],
@@ -315,12 +339,17 @@ class WorkspaceService:
             started_at=row["started_at"],
             finished_at=row["finished_at"],
             error=error,
-            stages=history.stages if history else [],
+            stages=[] if admet_only else (history.stages if history else []),
             can_resume=resumable,
-            history_available=history.available if history else False,
+            history_available=(admet_stage is not None)
+            if admet_only
+            else (history.available if history else False),
             include_intermediates=spec.get("include_intermediates", False),
             force=spec.get("force", False),
             task_note=spec.get("task_note", ""),
+            include_admet=spec.get("include_admet", False),
+            admet_only=admet_only,
+            admet_stage=admet_stage,
         )
 
     def project(self, project_id: str) -> Project:
@@ -328,7 +357,7 @@ class WorkspaceService:
         snapshot = json.loads(row["snapshot"])
         with self.store.connect() as connection:
             latest = connection.execute(
-                "SELECT id FROM jobs WHERE project_id=? ORDER BY created_at DESC,rowid DESC LIMIT 1",
+                "SELECT * FROM jobs WHERE project_id=? ORDER BY created_at DESC,rowid DESC LIMIT 1",
                 (project_id,),
             ).fetchone()
             review_counts = connection.execute(
@@ -340,12 +369,26 @@ class WorkspaceService:
                 "WHERE c.project_id=?",
                 (project_id,),
             ).fetchone()
+        first_structure = snapshot.get("first_structure_page")
+        if type(first_structure) is not int or not 1 <= first_structure <= min(
+            row["page_count"] or 20000, 20000
+        ):
+            first_structure = None
         last_job = self.job(latest["id"]) if latest else None
         acceptance = Acceptance.model_validate(
             snapshot.get("acceptance", {"state": "historical"})
         )
+        core_completed = False
+        if latest and last_job and last_job.include_admet and not last_job.admet_only:
+            _, core_completed = read_admet_stage(
+                dict(latest),
+                self.attempts.output(dict(latest)),
+                state_root=self.store.root,
+            )
         if (
             last_job
+            and not last_job.admet_only
+            and not core_completed
             and last_job.status != "complete"
             and acceptance.state == "accepted"
         ):
@@ -375,6 +418,7 @@ class WorkspaceService:
             ),
             acceptance=acceptance,
             last_job=last_job,
+            first_structure_page=first_structure,
         )
 
     def project_ids(self) -> list[str]:
@@ -400,6 +444,20 @@ class WorkspaceService:
 
     def result_rows(self, project_id: str) -> list[dict[str, Any]]:
         return self.result_queries.rows(project_id)
+
+    def get_correction(self, project_id: str, compound_id: str) -> CorrectionDocument:
+        return self.corrections.get(project_id, compound_id)
+
+    def put_correction(
+        self, project_id: str, compound_id: str, request: CorrectionRequest
+    ) -> CorrectionDocument:
+        return self.corrections.put(project_id, compound_id, request)
+
+    def effective_compound(self, project_id: str, compound_id: str) -> Compound:
+        return self.corrections.compound(project_id, compound_id)
+
+    def effective_compounds(self, project_id: str) -> list[Compound]:
+        return self.result_queries.effective_compounds(project_id)
 
     def compounds(self, project_id: str, **filters: str) -> list[Compound]:
         return self.result_queries.compounds(project_id, **filters)
