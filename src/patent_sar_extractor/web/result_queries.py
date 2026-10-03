@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
+from .activity_columns import ActivityColumnCatalog
 from .correction_storage import (
     CORRECTION_COLUMNS,
     CORRECTION_JOIN,
@@ -13,7 +14,7 @@ from .correction_storage import (
 )
 from .corrections import apply_correction
 from .errors import WebError
-from .models import Compound, Results, Review
+from .models import ActivityColumn, Compound, Results, Review
 from .molecule_drawing import drawing_url
 from .pdf import open_pdf, rendered_box
 from .prediction_storage import PredictionStore
@@ -74,6 +75,7 @@ class ResultQueries:
         list[str],
         list[str],
         tuple[dict[str, Any], dict[str, dict[str, Any]]],
+        list[ActivityColumn],
     ]:
         if len(q) > 500 or len(target) > 300:
             raise WebError(422, "filter_limit", "Search filter is too long.")
@@ -89,6 +91,7 @@ class ResultQueries:
         source_spaces: dict[str, str] = {}
         metrics: set[str] = set()
         targets: set[str] = set()
+        activity_columns = ActivityColumnCatalog()
         rows, project = self._rows_and_project(project_id)
         for row in rows:
             dto = apply_correction(
@@ -97,6 +100,7 @@ class ResultQueries:
                 joined_correction(row),
                 Compound.model_validate_json(row["payload"]),
             )
+            activity_columns.observe(dto.activities)
             metrics.update(a.name for a in dto.activities)
             targets.update(a.target for a in dto.activities if a.target)
             if len(metrics) > 1000 or len(targets) > 1000:
@@ -155,6 +159,7 @@ class ResultQueries:
             sorted(metrics),
             sorted(targets),
             (project, {row["id"]: row for row in rows}),
+            activity_columns.columns(),
         )
 
     def _predictions(
@@ -216,7 +221,7 @@ class ResultQueries:
 
     def effective_compounds(self, project_id: str) -> list[Compound]:
         """Corrected molecules for downstream consumers, without opening PDF pages."""
-        items, _, _, _, _ = self._filtered_compounds(project_id)
+        items, _, _, _, _, _ = self._filtered_compounds(project_id)
         return items
 
     def compounds(
@@ -228,7 +233,7 @@ class ResultQueries:
         review: str = "",
         target: str = "",
     ) -> list[Compound]:
-        items, source_spaces, _, _, context = self._filtered_compounds(
+        items, source_spaces, _, _, context, _ = self._filtered_compounds(
             project_id, q=q, confidence=confidence, review=review, target=target
         )
         return self._predictions(
@@ -246,8 +251,8 @@ class ResultQueries:
                 "pagination",
                 "Page must be positive and page_size must be at most 100.",
             )
-        compounds, source_spaces, metrics, targets, context = self._filtered_compounds(
-            project_id, **filters
+        compounds, source_spaces, metrics, targets, context, activity_columns = (
+            self._filtered_compounds(project_id, **filters)
         )
         offset = (page - 1) * page_size
         return Results(
@@ -266,4 +271,5 @@ class ResultQueries:
             page_size=page_size,
             metrics=metrics,
             targets=targets,
+            activity_columns=activity_columns,
         )

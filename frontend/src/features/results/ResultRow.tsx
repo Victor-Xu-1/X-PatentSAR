@@ -1,13 +1,15 @@
 import { Pencil } from 'lucide-react';
 import type { Activity, Compound } from '../../api/types';
-import { ActivitySummary } from './ActivitySummary';
+import { ActivityValueCell } from './ActivityValueCell';
+import { activityColumnValues } from '../../model/activityColumns';
+import type { TableActivityColumn } from '../../model/activityColumns';
 import { PredictionCells } from './PredictionCells';
 import { StructureCell } from './StructureCell';
 
 export function ResultRow({
   row,
   number,
-  metrics,
+  columns,
   selected,
   focused,
   onSelect,
@@ -18,7 +20,7 @@ export function ResultRow({
 }: {
   row: Compound;
   number: number;
-  metrics: string[];
+  columns: TableActivityColumn[];
   selected: boolean;
   focused: boolean;
   onSelect: () => void;
@@ -27,9 +29,10 @@ export function ResultRow({
   onCrop: (row: Compound) => void;
   onReview: (row: Compound) => void;
 }) {
+  const values = activityColumnValues(row.activities, columns);
   return (
     <tr data-compound={row.id} className={focused ? 'source-focused' : ''}>
-      <td>
+      <td className="frozen-column frozen-select">
         <input
           type="checkbox"
           aria-label={`选择化合物 ${row.display_id}`}
@@ -37,9 +40,17 @@ export function ResultRow({
           onChange={onSelect}
         />
       </td>
-      <td className="row-number">{number}</td>
+      <td className="row-number frozen-column frozen-number">{number}</td>
       <StructureCell row={row} onCrop={onCrop} />
-      <ActivitySummary row={row} metrics={metrics} onSource={onActivitySource} />
+      {columns.map((column, index) => (
+        <ActivityValueCell
+          key={column.id}
+          displayId={row.display_id}
+          column={column}
+          activities={values[index]!}
+          onSource={onActivitySource}
+        />
+      ))}
       <PredictionCells row={row} />
       <td className="source-column">
         <button
@@ -53,7 +64,7 @@ export function ResultRow({
           {row.source.page === null ? '—' : `p.${row.source.page}`}
         </button>
       </td>
-      <td className="edit-column">
+      <td className="edit-column frozen-column frozen-edit">
         <button
           type="button"
           className="toolbar-button"

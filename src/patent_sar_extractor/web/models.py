@@ -55,6 +55,16 @@ class Activity(DTO):
     page: int | None = None
 
 
+class ActivityColumn(DTO):
+    id: str = Field(
+        min_length=64, max_length=64, pattern=r"^[a-f0-9]{64}$", strict=True
+    )
+    name: str
+    unit: str | None = None
+    target: str | None = None
+    assay: str | None = None
+
+
 class Source(DTO):
     page: int | None = None
     paragraph: str | None = None
@@ -245,3 +255,6 @@ class Results(DTO):
     page_size: int
     metrics: list[str]
     targets: list[str]
+    activity_columns: list[ActivityColumn] = Field(
+        default_factory=list, max_length=1000
+    )

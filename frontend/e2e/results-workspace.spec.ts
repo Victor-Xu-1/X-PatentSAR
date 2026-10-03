@@ -24,7 +24,9 @@ for (const viewport of [
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto(`/#/projects/${encodeURIComponent(projectId!)}`);
-    await expect(page.getByRole('button', { name: '更多', exact: true })).toBeVisible();
+    await expect(page.locator('.shell-menu > summary[aria-label="更多"]')).toBeVisible();
+    // The static shell appears before the real API session/data have finished loading.
+    await expect(page.getByRole('table')).toBeVisible();
     const response = await page.request.get(
       `/api/v1/projects/${encodeURIComponent(projectId!)}/results?page=1&page_size=25`,
     );
@@ -78,15 +80,14 @@ for (const viewport of [
     const metric = results.metrics[0]!;
     expect(metric).toBeTruthy();
     await page.getByLabel(`显示指标 ${metric}`, { exact: true }).uncheck();
-    await expect(
-      rendered
-        .locator('.activity-observation')
-        .filter({ has: page.getByText(metric, { exact: true }) }),
-    ).toHaveCount(0);
+    for (const column of results.activity_columns!.filter((item) => item.name === metric)) {
+      await expect(table.locator(`th[data-column="activity:${column.id}"]`)).toHaveCount(0);
+      await expect(rendered.locator(`td[data-activity-column="${column.id}"]`)).toHaveCount(0);
+    }
     await expect(page.getByLabel(`选择化合物 ${row.display_id}`, { exact: true })).toBeChecked();
     await page.getByRole('button', { name: '显示全部指标' }).click();
     await page.keyboard.press('Escape');
-    await expect(table.getByRole('columnheader', { name: '专利活性', exact: true })).toBeVisible();
+    await expect(table.locator('th.activity-value-column').first()).toBeVisible();
     const measurement = row.activities.find((activity) => activity.page !== null)!;
     await rendered
       .getByRole('button', {

@@ -71,6 +71,14 @@ original activity observations with six compact source-bound properties: MW, Log
 TPSA, HBD, HBA and predicted LogS. The first five are computed descriptors, not
 patent measurements. Missing/failed/stale values are never filled with guesses.
 Each activity retains its assay, unit and independent original source navigation.
+`web/activity_columns.py` collects one bounded project-wide column catalog during
+the existing effective-row scan, before filtering or pagination. Exact
+name/unit/target/assay tuples receive stable content IDs; no unit normalization,
+assay merging or extra database/PDF reads are introduced. The frontend maps every
+observation to that exact context, preserves repeated values and independent
+sources, and renders one column per context instead of a stacked activity summary.
+Headers, structure identity and the correction control remain fixed during native
+horizontal scrolling; explicit column widths share the existing resize handler.
 Statistics, binding/QC and manual decisions are available only on demand.
 Original crops and bounded RDKit PNGs appear side by side; a redraw is explicitly
 not original evidence. Token probabilities are uncalibrated observations, never

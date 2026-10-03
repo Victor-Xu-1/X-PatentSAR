@@ -71,8 +71,8 @@ describe('dense evidence-led result workspace', () => {
   it('uses compact columns, deduplicates assay context and preserves every activity source', () => {
     render(<ResultsPane {...props()} />);
     expect(screen.getByRole('table')).toHaveAttribute('data-density', 'compact');
-    expect(screen.getByRole('columnheader', { name: '专利活性' })).toBeVisible();
-    expect(screen.getAllByText('IC50')).toHaveLength(2);
+    expect(screen.getByRole('columnheader', { name: /抑制等级/ })).toBeVisible();
+    expect(screen.getAllByText('IC50')).toHaveLength(1);
     for (const text of ['IC50 = <10 nM', 'DC50 = 10 - 100 nM', '抑制等级 = ++', 'IC50 = 30 nM']) {
       expect(screen.getByTitle(text)).toBeVisible();
     }
@@ -94,7 +94,7 @@ describe('dense evidence-led result workspace', () => {
     expect(screen.getByRole('table')).toHaveAttribute('data-density', 'comfortable');
     await user.click(screen.getByLabelText('显示指标 DC50'));
     expect(screen.queryByTitle('DC50 = 10 - 100 nM')).not.toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: '专利活性' })).toBeVisible();
+    expect(screen.getByRole('columnheader', { name: /抑制等级/ })).toBeVisible();
     expect(screen.getByLabelText('选择化合物 I-7')).toBeChecked();
     expect(screen.getByText('已选 1')).toBeVisible();
     expect(original.onFilters).not.toHaveBeenCalled();

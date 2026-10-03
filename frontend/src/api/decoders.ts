@@ -31,6 +31,7 @@ import type {
 import { recordKinds, stageNames } from './types';
 import type { Decoder } from './validation';
 import { decodePredictionSummary } from './predictionDecoders';
+import { activityContextKey, decodeActivityColumns } from './activityColumnDecoders';
 
 const identity = object({ name: string, version: scalar });
 const capabilities = object({ admet: boolean, summary: boolean });
@@ -277,7 +278,7 @@ export const decodeJob: Decoder<Job> = (input, path = '$') => {
     throw new ContractError(path);
   return result;
 };
-export const decodeResults: Decoder<Results> = object({
+const resultsShape = object({
   items: array(decodeCompound),
   total: count,
   page: positive,
@@ -285,6 +286,24 @@ export const decodeResults: Decoder<Results> = object({
   metrics: array(string),
   targets: array(string),
 });
+export const decodeResults: Decoder<Results> = (input, path = '$') => {
+  const result = resultsShape(input, path);
+  if (input === null || typeof input !== 'object') throw new ContractError(path);
+  const fields = input as Record<string, unknown>;
+  if (!Object.hasOwn(fields, 'activity_columns')) return result;
+  const activity_columns = decodeActivityColumns(
+    fields.activity_columns,
+    `${path}.activity_columns`,
+  );
+  const contexts = new Set(activity_columns.map(activityContextKey));
+  if (
+    result.items.some((item) =>
+      item.activities.some((value) => !contexts.has(activityContextKey(value))),
+    )
+  )
+    throw new ContractError(`${path}.activity_columns`);
+  return { ...result, activity_columns };
+};
 export const decodeRuntime: Decoder<Runtime> = object({
   product: identity,
   storage: object({ state_root: string, platform: string }),

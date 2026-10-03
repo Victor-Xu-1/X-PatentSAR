@@ -2,13 +2,13 @@
   overflow: auto;
   flex: 1;
   min-height: 0;
+  scroll-padding-inline-start: var(--frozen-leading-width);
+  scroll-padding-inline-end: var(--frozen-trailing-width);
 }
 .results-table {
-  min-width: 900px;
-  width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  table-layout: auto;
+  table-layout: fixed;
   font-family: var(--font-ui);
   font-size: 12px;
   color: var(--primary);
@@ -23,39 +23,56 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  vertical-align: middle;
 }
-.results-table .check-col {
-  width: 30px;
+.column-heading {
+  display: block;
+  padding-right: 5px;
+  line-height: 1.45;
 }
-.results-table .number-column {
-  width: 26px;
-}
-.results-table .structure-column {
-  width: 164px;
-  min-width: 120px;
-}
-.results-table .activity-summary-column {
-  width: 270px;
-  min-width: 180px;
+.column-heading small {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  margin-top: 3px;
+  color: var(--faint);
 }
 .results-table .prediction-column {
-  width: 64px;
-  min-width: 48px;
   text-align: right;
-}
-.results-table .source-column {
-  width: 64px;
-  min-width: 48px;
-}
-.results-table .edit-column {
-  width: 48px;
-  min-width: 40px;
 }
 .results-table td {
   border-bottom: 1px solid var(--line-soft);
   padding: 6px;
   vertical-align: middle;
+  background: var(--surface);
+}
+.results-table th:not(:last-child),
+.results-table td:not(:last-child) {
+  border-right: 1px solid var(--line-soft);
+}
+.results-table .frozen-column {
+  position: sticky;
+  z-index: 1;
+}
+.results-table th.frozen-column {
+  z-index: 4;
+}
+.frozen-select {
+  left: 0;
+}
+.frozen-number {
+  left: var(--frozen-select-width);
+}
+.frozen-structure {
+  left: calc(var(--frozen-select-width) + var(--frozen-number-width));
+  box-shadow: 1px 0 0 var(--line);
+}
+.frozen-edit {
+  right: 0;
+  box-shadow: -1px 0 0 var(--line);
+  text-align: center;
 }
 .results-table tr:hover td {
   background: var(--surface-subtle);
@@ -138,19 +155,11 @@
   gap: 5px;
   min-width: 0;
 }
-.activity-name {
-  color: var(--muted);
-  font-size: 10px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 155px;
-  flex: 1;
-}
 .activity-value {
   font-weight: 500;
   font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .activity-source {
   font-size: 10px;

@@ -17,13 +17,13 @@ const callbacks = () => ({
   onReview: vi.fn(),
 });
 describe('one simple source-bound table', () => {
-  it('shows exactly six properties and one activity column, without promoting unknown values', () => {
+  it('shows exactly six properties and independent activity columns, without promoting unknown values', () => {
     render(<ResultsTable {...callbacks()} rows={[compound]} />);
     expect(screen.getAllByRole('columnheader').map((header) => header.textContent)).toEqual([
       '',
       '#',
       '结构 / 编号',
-      '专利活性',
+      '抑制等级',
       ...METRIC_SPECS.map((spec) => spec.label),
       '原文',
       '修正',

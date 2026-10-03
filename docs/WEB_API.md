@@ -142,6 +142,20 @@ correction, research prediction or unassociated source keeps export review_only=
 JSON formal_acceptance_scope is original_activity_association_only; complete
 source coverage does not enlarge the original strict QA acceptance scope.
 
+`Results.activity_columns` is an additive API-v1 list of
+`{id,name,unit,target,assay}`, at most 1000 distinct exact contexts. It is collected
+from every effective source-bound compound before search, target/review filtering
+or pagination, so an empty filtered page still carries the same complete catalog.
+Current corrections participate; stale corrections do not. ID is the lowercase
+SHA256 of UTF-8 JSON `[name,unit,target,assay]` with compact separators, no ASCII
+escaping and no field normalization. Null and empty strings remain distinct.
+Columns sort lexicographically by the four original fields, with null before empty
+strings. Exceeding the limit fails 422 `activity_column_limit`, never truncates.
+Invalid UTF-8 fails 422 `invalid_activity_column`. Older clients may ignore this
+additive field; a legacy response omitting it cannot establish a full context
+catalog. Activity arrays and scalar values are unchanged: repeated observations
+remain separate values with their own original pages, not averages or merged assays.
+
 `Project`:
 `{id,title,patent_id,created_at,updated_at,pdf:{available,page_count,sha256},
 is_historical,summary:{structures,activity_rows,matched_structures,confirmed,

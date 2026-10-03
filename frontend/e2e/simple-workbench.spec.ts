@@ -41,15 +41,17 @@ for (const viewport of [
     });
     await expect(page.locator('.primary-sidebar')).toHaveCount(0);
     const table = page.getByRole('table');
-    await expect(table.getByRole('columnheader')).toHaveCount(12);
+    const data = decodeResults(
+      await (await page.request.get(`${path()}/results?page=1&page_size=25`)).json(),
+    );
+    await expect(table.getByRole('columnheader')).toHaveCount(
+      11 + (data.activity_columns?.length ?? 0),
+    );
     for (const spec of METRIC_SPECS)
       await expect(
         table.getByRole('columnheader', { name: spec.label, exact: true }),
       ).toBeVisible();
     await expect(page.getByRole('columnheader', { name: '绑定证据' })).toHaveCount(0);
-    const data = decodeResults(
-      await (await page.request.get(`${path()}/results?page=1&page_size=25`)).json(),
-    );
     expect(data.items.length).toBeGreaterThan(0);
     const row = data.items[0]!;
     const activity = row.activities.find((item) => item.page !== null);
