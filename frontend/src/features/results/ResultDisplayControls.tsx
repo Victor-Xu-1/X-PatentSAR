@@ -33,7 +33,7 @@ export function ResultDisplayControls({
       </fieldset>
       <fieldset className="metric-options" disabled={disabled}>
         <legend>
-          指标列（{visibleMetrics.length} / {metrics.length}）
+          活性指标（{visibleMetrics.length} / {metrics.length}）
         </legend>
         <button type="button" onClick={() => onMetrics(null)}>
           显示全部指标

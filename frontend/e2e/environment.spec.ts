@@ -52,6 +52,10 @@ for (const viewport of [
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2)).toBe(
       true,
     );
+    await page.screenshot({
+      path: test.info().outputPath(`environment-default-${viewport.width}.png`),
+      fullPage: true,
+    });
     await page.getByText('运行诊断', { exact: true }).click();
     await expect(page.getByRole('heading', { name: '产品与存储' })).toBeVisible();
     if (catalog.settings.enabled && !activeEnvironmentOperation(catalog.active_operation)) {
@@ -96,14 +100,16 @@ for (const viewport of [
     } else {
       await expect(page.getByRole('button', { name: '检测缺失组件' })).toBeDisabled();
     }
-    if (viewport.width < 760) {
-      const menu = page.getByLabel('展开或收起导航');
+    {
+      const menu = page.getByLabel('更多', { exact: true });
       await menu.click();
       await expect(menu).toHaveAttribute('aria-expanded', 'true');
       expect(await menu.evaluate((element) => element.closest('[inert]'))).toBeNull();
       const bounds = await menu.boundingBox();
-      expect(bounds!.width).toBeGreaterThanOrEqual(44);
-      expect(bounds!.height).toBeGreaterThanOrEqual(44);
+      if (viewport.width < 760) {
+        expect(bounds!.width).toBeGreaterThanOrEqual(44);
+        expect(bounds!.height).toBeGreaterThanOrEqual(44);
+      }
       expect(
         await menu.evaluate((element) => {
           const box = element.getBoundingClientRect();
@@ -112,35 +118,15 @@ for (const viewport of [
           );
         }),
       ).toBe(true);
-      const sidebar = await page.locator('.sidebar').boundingBox();
-      const header = await page.locator('.topbar').boundingBox();
-      expect(sidebar!.y).toBeGreaterThanOrEqual(header!.y + header!.height);
-      await expect.poll(async () => (await page.locator('.sidebar').boundingBox())!.x).toBe(0);
-      await page.screenshot({ path: test.info().outputPath('environment-mobile-navigation.png') });
-    }
-    await expect(page.getByRole('button', { name: '环境管理', exact: true })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
-    await expect(page.getByRole('button', { name: '运行环境', exact: true })).toHaveCount(0);
-    if (viewport.width < 760) {
-      const menu = page.getByLabel('展开或收起导航');
-      await menu.click();
-      await expect(menu).toHaveAttribute('aria-expanded', 'false');
-      await expect(menu).toBeFocused();
-      await expect
-        .poll(async () => {
-          const drawer = await page.locator('.sidebar').boundingBox();
-          return drawer!.x + drawer!.width;
-        })
-        .toBeLessThanOrEqual(0);
+      await expect(page.getByRole('button', { name: '环境管理', exact: true })).toBeVisible();
+      await expect(page.locator('.shell-menu-content small')).toHaveText('v0.1.0');
+      await expect(page.locator('.sidebar')).toHaveCount(0);
       await expect(page.locator('main')).not.toHaveAttribute('inert');
-      await page.keyboard.press('Enter');
-      await expect(menu).toHaveAttribute('aria-expanded', 'true');
       await page.keyboard.press('Escape');
       await expect(menu).toHaveAttribute('aria-expanded', 'false');
       await expect(menu).toBeFocused();
     }
+    await expect(page.getByRole('button', { name: '运行环境', exact: true })).toHaveCount(0);
     await page.screenshot({
       path: test.info().outputPath(`environment-${viewport.width}.png`),
       fullPage: true,

@@ -1,3 +1,5 @@
+import { METRIC_SPECS } from '../api/predictionTypes';
+
 export interface ResultColumn {
   id: string;
   label: string;
@@ -16,18 +18,16 @@ const column = (
   max: number,
 ): ResultColumn => ({ id, label, className, width, min, max });
 
-export function resultColumns(metrics: string[]): ResultColumn[] {
+export function resultColumns(): ResultColumn[] {
   return [
     column('select', '选择', 'check-col', 38, 38, 100),
     column('number', '序号', 'number-column', 32, 28, 150),
-    column('structure', '原始结构 / 编号', 'structure-column', 142, 142, 480),
-    column('context', '靶点 / 实验', 'context-column', 190, 120, 720),
-    ...metrics.map((metric) =>
-      column(`metric:${metric}`, metric || '未命名指标', 'activity-column', 128, 80, 640),
+    column('structure', '结构 / 编号', 'structure-column', 164, 120, 480),
+    column('activities', '专利活性', 'activity-summary-column', 270, 180, 720),
+    ...METRIC_SPECS.map((spec) =>
+      column(`property:${spec.key}`, spec.label, 'prediction-column', 64, 48, 180),
     ),
-    column('evidence', '绑定证据', 'evidence-column', 82, 60, 300),
-    column('recognition', '识别校验', 'recognition-column', 114, 96, 420),
-    column('source', '结构来源', 'source-column', 104, 104, 380),
-    column('review', '人工复核', 'review-column', 82, 64, 300),
+    column('source', '原文', 'source-column', 64, 48, 180),
+    column('edit', '修正', 'edit-column', 48, 40, 120),
   ];
 }

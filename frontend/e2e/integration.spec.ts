@@ -1,13 +1,12 @@
 import { existsSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
-import type { Job, Project, Results } from '../src/api/types';
+import type { Health, Job, Project, Results } from '../src/api/types';
 
 const pdfPath =
   process.env.PATENTSAR_E2E_PDF ??
   '/srv/wsl/data/patentsar/inputs/WO2025264818-PAMPH-20251226-0041.pdf';
 const historyId = process.env.PATENTSAR_E2E_HISTORY_PROJECT_ID;
 const failureId = process.env.PATENTSAR_E2E_FAILED_JOB_ID;
-let uploadedId = '';
 
 test.describe('real local backend integration', () => {
   test.describe.configure({ mode: 'serial' });
@@ -49,13 +48,15 @@ test.describe('real local backend integration', () => {
       page.on('pageerror', (error) => errors.push(error.message));
       await page.setViewportSize(viewport);
       await page.goto('/#/');
-      await expect(page.getByText('开始探索专利中的结构与活性')).toBeVisible();
-      await expect(page.getByText(/^v\d/)).toBeVisible();
-      await expect(page.getByRole('button', { name: '运行提取' })).toBeDisabled();
+      await expect(page.getByRole('heading', { name: 'PDF → 结构与活性表格' })).toBeVisible();
+      await expect(page.getByRole('button', { name: '上传 PDF', exact: true })).toBeEnabled();
+      await expect(page.getByRole('button', { name: '开始提取' })).toBeDisabled();
+      await expect(page.locator('.sidebar')).toHaveCount(0);
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2),
       ).toBe(true);
-      if (viewport.width < 760) await page.getByLabel('展开或收起导航').click();
+      await page.getByLabel('更多', { exact: true }).click();
+      await expect(page.locator('.shell-menu-content small')).toHaveText('v0.1.0');
       await page.getByRole('button', { name: '环境管理', exact: true }).click();
       await expect(page.getByRole('heading', { name: '环境管理' })).toBeVisible();
       await page.getByText('运行诊断', { exact: true }).click();
@@ -65,40 +66,79 @@ test.describe('real local backend integration', () => {
   }
   test('raw real PDF upload, cookie/CSRF, page navigation and refresh', async ({ page }) => {
     test.skip(!existsSync(pdfPath), 'Set PATENTSAR_E2E_PDF to an approved real PDF outside source');
+    test.skip(
+      process.env.PATENTSAR_E2E_RUN_JOBS !== '1',
+      'Uploading now starts the complete task; real job execution requires explicit opt-in',
+    );
     await page.goto('/#/');
-    await expect(page.getByText(/^v\d/)).toBeVisible();
+    await expect(page.getByRole('button', { name: '上传 PDF', exact: true })).toBeEnabled();
+    const health = (await (await page.request.get('/api/v1/health')).json()) as Health;
+    expect(
+      health.capabilities.admet,
+      'The complete upload workflow requires a configured real ADMET runtime',
+    ).toBe(true);
     await page.getByRole('button', { name: '上传 PDF', exact: true }).click();
-    await page.getByLabel('项目名称').fill(`浏览器验收 ${new Date().toISOString()}`);
+    await page.getByText('高级选项', { exact: true }).click();
+    await page.getByLabel('项目名称（可选）').fill(`浏览器验收 ${new Date().toISOString()}`);
     await page.getByLabel('原始专利 PDF 文件').setInputFiles(pdfPath);
-    await expect(page.getByLabel('完整提取（默认）')).toBeChecked();
-    await page.getByLabel('仅建立项目（不启动提取）').check();
-    await expect(page.getByLabel('包含中间体')).toBeDisabled();
-    await expect(page.getByLabel('强制重算')).toBeDisabled();
-    await expect(page.getByLabel('任务说明（运营记录）')).toBeDisabled();
+    await expect(page.getByRole('radio')).toHaveCount(0);
+    await page.getByLabel('包含中间体').check();
+    const note = `运营记录，不作为模型指令 ${new Date().toISOString()}`;
+    await page.getByLabel('任务说明', { exact: true }).fill(note);
     const uploaded = page.waitForResponse(
       (response) =>
         response.request().method() === 'POST' && /\/api\/v1\/projects\?/.test(response.url()),
     );
-    await page.getByRole('button', { name: '仅上传并建立项目' }).click();
+    const started = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'POST' &&
+        /\/projects\/[^/]+\/jobs$/.test(new URL(response.url()).pathname),
+    );
+    await page.getByRole('button', { name: '开始提取' }).click();
     const response = await uploaded;
     expect(response.status()).toBe(201);
     const request = response.request();
     expect(request.headers()['content-type']).toBe('application/pdf');
     expect(request.headers()['x-csrf-token']).toBeTruthy();
+    const startResponse = await started;
+    expect(startResponse.status()).toBe(202);
+    expect(startResponse.request().postDataJSON()).toEqual({
+      include_admet: true,
+      include_intermediates: true,
+      force: false,
+      task_note: note,
+      allow_partial: false,
+      advisory: false,
+      resume_job_id: null,
+    });
+    const createdJob = (await startResponse.json()) as Job;
     // Chromium may evict an upload's inspector body when the app navigates.
     // Verify the durable result through its authenticated API after navigation.
     await expect(page).toHaveURL(/#\/projects\/[a-f0-9]{32}/);
     const projectId = page.url().match(/#\/projects\/([a-f0-9]{32})/)?.[1];
     expect(projectId).toBeTruthy();
-    uploadedId = projectId!;
+    const uploadedId = projectId!;
     const jobsResponse = await page.request.get(`/api/v1/jobs?project_id=${uploadedId}`);
     expect(jobsResponse.ok()).toBe(true);
-    expect(((await jobsResponse.json()) as { items: Job[] }).items).toEqual([]);
+    expect(
+      ((await jobsResponse.json()) as { items: Job[] }).items.find(
+        (job) => job.id === createdJob.id,
+      ),
+    ).toMatchObject({
+      include_admet: true,
+      include_intermediates: true,
+      force: false,
+      task_note: note,
+    });
     const persisted = await page.request.get(`/api/v1/projects/${uploadedId}`);
     expect(persisted.ok()).toBe(true);
-    const project = (await persisted.json()) as { id: string; pdf: { page_count: number } };
+    const project = (await persisted.json()) as Project;
     expect(project.id).toBe(uploadedId);
     expect(project.pdf.page_count).toBeGreaterThan(0);
+    // Deliberate cover browsing is not the initial automatic structure-page selection.
+    const pageInput = page.getByLabel('原始文档页码');
+    await pageInput.fill('1');
+    await pageInput.press('Enter');
     await expect(page.getByRole('img', { name: '原始专利 PDF 第 1 页' })).toBeVisible();
     const image = page.getByRole('img', { name: '原始专利 PDF 第 1 页' });
     await expect
@@ -109,7 +149,6 @@ test.describe('real local backend integration', () => {
     expect(bounds!.width).toBeLessThanOrEqual(frame!.width);
     expect(bounds!.x).toBeGreaterThanOrEqual(frame!.x);
     expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(frame!.x + frame!.width);
-    const pageInput = page.getByLabel('原始文档页码');
     await pageInput.fill(String(Math.min(2, project.pdf.page_count)));
     await pageInput.press('Enter');
     await page.getByRole('tab', { name: '文本视图' }).click();
@@ -123,6 +162,20 @@ test.describe('real local backend integration', () => {
     await page.getByRole('button', { name: '文档工具' }).click();
     await page.getByLabel('放大原始文档').click();
     await expect(page.getByLabel('文档缩放比例')).toHaveText('125%');
+    await page.keyboard.press('Escape');
+    const observed = (await (
+      await page.request.get(`/api/v1/jobs/${createdJob.id}`)
+    ).json()) as Job;
+    if (observed.status === 'queued' || observed.status === 'running') {
+      await page.getByRole('button', { name: '取消任务', exact: true }).click();
+      await page.getByRole('button', { name: '确认取消此任务' }).click();
+      await expect(page.locator('.job-actions .badge')).toHaveText('已取消');
+    }
+    await page.reload();
+    const stopped = (await (await page.request.get(`/api/v1/jobs/${createdJob.id}`)).json()) as Job;
+    expect(['complete', 'failed', 'cancelled', 'interrupted']).toContain(stopped.status);
+    await page.getByRole('button', { name: '任务详情' }).click();
+    await expect(page.locator('.job-options-record')).toContainText(note);
   });
   test('real historical results, pagination, actual source availability, review persistence and export', async ({
     page,
@@ -157,7 +210,7 @@ test.describe('real local backend integration', () => {
       await page
         .locator('.results-table tbody tr')
         .first()
-        .getByRole('button', { name: '来源定位' })
+        .getByRole('button', { name: /结构来源第 \d+ 页$/ })
         .click();
       await expect(page.getByRole('tab', { name: '结构标注' })).toHaveAttribute(
         'aria-selected',
@@ -175,13 +228,15 @@ test.describe('real local backend integration', () => {
       await page.getByLabel('关闭对话框').click();
     }
     await page.getByLabel(`选择化合物 ${compound.display_id}`, { exact: true }).check();
-    await page.getByLabel(`复核 ${compound.display_id}`, { exact: true }).click();
+    await page.getByLabel(`修正 ${compound.display_id}`, { exact: true }).click();
+    await page.getByRole('button', { name: '复核注记', exact: true }).click();
     const note = `真实浏览器复核 ${new Date().toISOString()}`;
     await page.getByLabel('复核注记').fill(note);
     await page.getByRole('button', { name: '保存复核注记' }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await page.reload();
-    await page.getByLabel(`复核 ${compound.display_id}`, { exact: true }).click();
+    await page.getByLabel(`修正 ${compound.display_id}`, { exact: true }).click();
+    await page.getByRole('button', { name: '复核注记', exact: true }).click();
     await expect(page.getByLabel('复核注记')).toHaveValue(note);
     await page.getByRole('button', { name: '取消', exact: true }).click();
     await page.getByLabel(`选择化合物 ${compound.display_id}`, { exact: true }).check();
@@ -230,55 +285,6 @@ test.describe('real local backend integration', () => {
     expect(downloadedJson.items).toHaveLength(filteredResults.total);
     expect(downloadedJson.review_only).toBe(true);
   });
-  test('owned real job can be started, cancelled and refreshed', async ({ page }) => {
-    test.skip(
-      process.env.PATENTSAR_E2E_RUN_JOBS !== '1',
-      'Explicit opt-in required for a real extraction process',
-    );
-    expect(
-      uploadedId,
-      'Create-only gate must have created its separate owned project',
-    ).toBeTruthy();
-    await page.goto('/#/new-task');
-    await expect(page.getByRole('heading', { name: '新建提取任务' })).toBeVisible();
-    await page.getByLabel('项目名称').fill(`完整任务验收 ${new Date().toISOString()}`);
-    await page.getByLabel('原始专利 PDF 文件').setInputFiles(pdfPath);
-    await page.getByLabel('包含中间体').check();
-    const note = `运营记录，不作为模型指令 ${new Date().toISOString()}`;
-    await page.getByLabel('任务说明（运营记录）').fill(note);
-    const created = page.waitForResponse(
-      (response) =>
-        response.request().method() === 'POST' &&
-        /\/projects\/[^/]+\/jobs$/.test(new URL(response.url()).pathname),
-    );
-    await page.getByRole('button', { name: '创建项目并启动完整提取' }).click();
-    const response = await created;
-    expect(response.status()).toBe(202);
-    expect(response.request().postDataJSON()).toEqual({
-      allow_partial: false,
-      advisory: false,
-      resume_job_id: null,
-      include_intermediates: true,
-      force: false,
-      task_note: note,
-    });
-    await expect(page).toHaveURL(/#\/projects\/[a-f0-9]{32}/);
-    const id = page.url().match(/#\/projects\/([a-f0-9]{32})/)![1]!;
-    const persisted = await page.request.get(`/api/v1/jobs?project_id=${id}`);
-    const data = (await persisted.json()) as { items: Job[] };
-    expect(data.items[0]).toMatchObject({
-      include_intermediates: true,
-      force: false,
-      task_note: note,
-    });
-    await page.getByRole('button', { name: '取消任务', exact: true }).click();
-    await page.getByRole('button', { name: '确认取消此任务' }).click();
-    await expect(page.locator('.job-actions .badge')).toHaveText('已取消');
-    await page.reload();
-    await expect(page.locator('.job-actions .badge')).toHaveText('已取消');
-    await page.getByRole('button', { name: '任务详情' }).click();
-    await expect(page.locator('.job-options-record')).toContainText(note);
-  });
   test('an actual failed job remains a failure and exposes its real stage/error', async ({
     page,
   }) => {
@@ -287,7 +293,7 @@ test.describe('real local backend integration', () => {
       'Set PATENTSAR_E2E_FAILED_JOB_ID to a real failed job from the controller acceptance run',
     );
     await page.goto('/#/');
-    await expect(page.getByText(/^v\d/)).toBeVisible();
+    await expect(page.getByRole('button', { name: '上传 PDF', exact: true })).toBeEnabled();
     const response = await page.request.get(`/api/v1/jobs/${encodeURIComponent(failureId!)}`);
     expect(response.ok()).toBe(true);
     const job = (await response.json()) as Job;

@@ -4,17 +4,11 @@ import { Dialog } from '../../components/Dialog';
 import { confidenceLabels, reviewLabels } from '../../model/presentation';
 import { redrawPlaceholder } from '../../model/results';
 import { RecognitionDetails } from './RecognitionDetails';
-import { useState } from 'react';
-import { api, safeAssetUrl } from '../../api';
-import { useAnalysis } from '../analysis/useAnalysis';
-import type { RecognitionResult } from '../../api/analysisTypes';
-import { AdmetPanel } from '../analysis/AdmetPanel';
-import { AnalysisFeedback } from '../analysis/AnalysisFeedback';
 import { cropPlaceholder } from '../../model/extraction';
+import { PredictionEvidence } from './PredictionCells';
+
 export function CropDialog({
   compound,
-  projectId,
-  available = null,
   onClose,
 }: {
   compound: Compound;
@@ -22,17 +16,8 @@ export function CropDialog({
   available?: boolean | null;
   onClose: () => void;
 }) {
-  const recognize = useAnalysis<RecognitionResult>();
-  const [admetBusy, setAdmetBusy] = useState(false);
-  const recognizedSmiles =
-    recognize.result?.status === 'recognized' ? recognize.result.smiles : null;
   return (
-    <Dialog
-      title={`结构复核 · ${compound.display_id}`}
-      onClose={onClose}
-      wide
-      busy={recognize.busy || admetBusy}
-    >
+    <Dialog title={`结构详情 · ${compound.display_id}`} onClose={onClose} wide>
       <div className="dialog-body crop-detail">
         <div className="crop-comparison" aria-label="原始裁图与 SMILES 重绘对照">
           <figure>
@@ -43,13 +28,14 @@ export function CropDialog({
               className="crop-large"
               unavailableLabel={cropPlaceholder(compound)}
             />
-            <p className="muted">来源证据：保留原文截图，供人工对照。</p>
           </figure>
           <figure>
             <figcaption>SMILES 重绘（非原图）</figcaption>
             <AssetImage
               url={
-                compound.smiles?.trim() && compound.recognition?.status !== 'invalid'
+                compound.smiles?.trim() &&
+                (compound.recognition?.status !== 'invalid' ||
+                  (compound.correction?.has_changes && !compound.correction.stale))
                   ? compound.redraw_image_url
                   : null
               }
@@ -59,82 +45,34 @@ export function CropDialog({
               invalidLabel="重绘地址无效"
               errorLabel="重绘加载失败"
             />
-            <p className="muted">由服务端 RDKit 绘制，不是原文结构证据，不证明与原图一致。</p>
           </figure>
         </div>
-        <dl>
-          <dt>来源页码</dt>
-          <dd>{compound.source.page ?? '未知'}</dd>
-          <dt>来源标签</dt>
-          <dd>{compound.source.source_label ?? '未提供'}</dd>
-          <dt>绑定证据</dt>
-          <dd>
-            {confidenceLabels[compound.confidence.level]}
-            {compound.confidence.score !== null
-              ? ` · ${compound.confidence.score}`
-              : ' · 无数值分数'}
-          </dd>
-          <dt>依据</dt>
-          <dd>{compound.confidence.reason ?? '未提供'}</dd>
-          <dt>人工复核</dt>
-          <dd>{compound.review ? reviewLabels[compound.review.decision] : '未复核'}</dd>
-          {compound.source.correction_reason && (
-            <>
-              <dt>编号修正</dt>
-              <dd>{compound.source.correction_reason}</dd>
-            </>
-          )}
-        </dl>
-        <RecognitionDetails recognition={compound.recognition} />
+        <p className="muted">原始裁图保留证据；重绘来自当前 SMILES，不证明与原图一致。</p>
         {compound.smiles && (
           <label className="form-field">
-            规范化 SMILES（服务端）
+            当前 SMILES
             <textarea value={compound.smiles} readOnly rows={3} />
           </label>
         )}
-        {!compound.smiles && <p className="muted">规范化 SMILES 未提供</p>}
-        {compound.flags.length > 0 && <p className="muted">标记：{compound.flags.join('；')}</p>}
-        <section className="crop-recognition">
-          <button
-            type="button"
-            disabled={
-              recognize.busy ||
-              recognize.uncertain ||
-              admetBusy ||
-              !safeAssetUrl(compound.structure_image_url)
-            }
-            onClick={() =>
-              void recognize.run((signal) => api.recognize(projectId, compound.id, signal))
-            }
-          >
-            识别真实裁图（DECIMER + QC）
-          </button>
-          <p className="muted">
-            仅调用此项目的真实裁图，不用生成图片或修改正式提取结果；也可在下方直接输入 SMILES。
-          </p>
-          <AnalysisFeedback {...recognize} pendingLabel="正在识别真实裁图并执行 RDKit QC…" />
-          {recognize.result && (
-            <output
-              className={
-                recognize.result.status === 'recognized' ? 'success-banner' : 'error-notice'
-              }
-            >
-              {recognize.result.engine.name} · {recognize.result.engine.version} ·{' '}
-              {recognize.result.status === 'recognized'
-                ? '独立识别通过 QC，仅供分析'
-                : '识别被 QC 拒绝，不会当作有效 SMILES'}
-              {recognize.result.warnings.map((warning, i) => (
-                <p key={i}>{warning}</p>
-              ))}
-            </output>
-          )}
-        </section>
-        <AdmetPanel
-          available={available}
-          initialSmiles={recognizedSmiles ?? compound.smiles ?? ''}
-          blocked={recognize.busy || recognize.uncertain}
-          onBusy={setAdmetBusy}
-        />
+        <PredictionEvidence row={compound} />
+        <details>
+          <summary>原始提取证据 / 校验</summary>
+          <dl>
+            <dt>来源页</dt>
+            <dd>{compound.source.page ?? '未知'}</dd>
+            <dt>来源标签</dt>
+            <dd>{compound.source.source_label ?? '未提供'}</dd>
+            <dt>绑定证据</dt>
+            <dd>
+              {confidenceLabels[compound.confidence.level]} ·{' '}
+              {compound.confidence.reason ?? '依据未提供'}
+            </dd>
+            <dt>人工复核</dt>
+            <dd>{compound.review ? reviewLabels[compound.review.decision] : '未复核'}</dd>
+          </dl>
+          <RecognitionDetails recognition={compound.recognition} />
+          {compound.flags.length > 0 && <p className="muted">标记：{compound.flags.join('；')}</p>}
+        </details>
       </div>
     </Dialog>
   );

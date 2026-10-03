@@ -4,7 +4,7 @@
 
 X-PatentSAR is a standalone Linux/WSL application. Its command-line boundary is `x-patentsar` plus documented filesystem inputs, configuration and outputs. It has no runtime dependency on Synon processes, APIs, plugin registries or user workspaces. The new Web presentation layer uses the same application/CLI pipeline; it does not add another extraction engine.
 
-Only `x-patentsar run` produces a formal activity-led result. Commands labelled as diagnostic may inspect or generate intermediate material, but their outputs cannot satisfy formal binding, SMILES or QA gates. Manual Web reviews are separately persisted annotations and cannot change generated extraction artifacts or acceptance.
+Only `x-patentsar run` produces a formal activity-led result. Commands labelled as diagnostic may inspect or generate intermediate material, but their outputs cannot satisfy formal binding, SMILES or QA gates. Manual Web reviews and corrections are separately persisted annotations/overlays and cannot change generated extraction artifacts or formal acceptance.
 
 ## Layer ownership
 
@@ -65,13 +65,47 @@ change binding/SMILES/QA files or declare a failed run formally accepted.
 copies it into the wheel's private package static directory. The installed wheel
 serves both UI and API from one origin; Node.js is a build dependency only.
 
-Results use compact/comfortable density and independently selected metric columns.
-Each measurement retains its assay, unit and original source navigation, including
-multiple measurements of the same metric. The six statistics share one compact
-strip: binding evidence and actual SQLite manual decisions are distinct counters.
+The default workspace is PDF on the left and one table on the right. It has no
+permanent sidebar or standalone molecule-analysis workspace. The table combines
+original activity observations with six compact source-bound properties: MW, LogP,
+TPSA, HBD, HBA and predicted LogS. The first five are computed descriptors, not
+patent measurements. Missing/failed/stale values are never filled with guesses.
+Each activity retains its assay, unit and independent original source navigation.
+Statistics, binding/QC and manual decisions are available only on demand.
 Original crops and bounded RDKit PNGs appear side by side; a redraw is explicitly
 not original evidence. Token probabilities are uncalibrated observations, never
 chemical-accuracy percentages or manual approvals.
+
+All pages share a neutral white/light-gray/near-black token set and system sans
+typography. Upload, recent files, jobs, environment management and dialogs follow
+the same minimal interaction hierarchy; details and dangerous-action consent
+remain available on demand rather than occupying permanent panels.
+
+### Complete source corpus, not an activity-filtered table
+
+The locator selects evidenced numbered tables and synthesis/caption pages across
+the shared original OCR cache, independent of activity membership. Segmentation
+uses these complete pages, including a project with zero extracted activities.
+There is no active-ID crop region, neighbor padding or unbounded fallback scan.
+Formula/claim prose alone cannot establish a numbered structural table.
+Locator and segmentation epochs 4 invalidate old activity-filtered checkpoints;
+compatible original OCR stays reusable. The formal eight-stage order is unchanged.
+
+`web/artifacts.py` projects the union of activity observations and every retained
+structure observation. `web/structure_corpus.py` appends structures not already
+represented by a bound source; `record_kind` describes original association as
+structure_activity, structure_only or activity_only. Unknown source identifiers
+are explicitly internal, not invented printed compound numbers. Counts represent
+records/observations, not chemically deduplicated compounds. A missing activity
+association is not evidence of inactivity. No unassociated source receives guessed
+SMILES, accepted confidence or model values. Missing images are retained as explicit
+unavailable evidence rather than silently dropping their rows.
+
+The raw projection epoch is `structure-corpus-v1`. Rebuilding it once establishes
+a new source nonce; old correction/prediction audit is preserved but becomes stale,
+never silently reapplied. Formal binding, OCSR and deterministic QA still verify
+the activity-associated subset; a full-corpus export declares that scope and remains
+review-only when it includes unassociated sources.
 
 ### Task and analysis boundaries
 
@@ -115,14 +149,49 @@ mechanism or efficacy claims.
 
 ```mermaid
 flowchart LR
-    TASK["Task input / original PDF"] --> QUEUE["Existing durable CLI queue"]
-    QUEUE --> QA["Deterministic formal QA"]
-    ORIGINAL["Verified original / real crops"] --> VIEW["PDF and result presentation"]
-    ORIGINAL --> OCSR["Research DECIMER + RDKit QC"]
-    OCSR --> ADMET["Isolated ADMET-AI CPU inference"]
-    ADMET --> CACHE["Research-only analysis cache"]
-    VIEW --> SUMMARY["Source-grounded evidence statistics"]
+    TASK["PDF input"] --> QUEUE["Single durable job queue"]
+    QUEUE --> QA["Existing eight-stage extraction + strict QA"]
+    QA --> CLEAN["Verify owned recognition process cleanup"]
+    CLEAN --> ADMET["Same ADMET-AI CPU service, batches of at most 50"]
+    ADMET --> CACHE["Verified model/input analysis cache"]
+    ADMET --> PRED["Source-bound six-property records"]
+    PRED --> VIEW["One PDF + result table"]
+    VIEW --> EDIT["Revisioned correction overlay"]
+    EDIT --> TARGET["SMILES changes enqueue only the affected compound"]
+    TARGET --> ADMET
 ```
+
+### Default page, edits and automatic predictions
+
+`Project.first_structure_page` is the minimum validated original-page source of
+an actual structure in the raw result projection. It does not use the first
+activity page, current search filter, manual activity edits or a browser default
+of page 1. An absent URL page waits for this source; explicit page navigation wins.
+
+Correction documents use a source fingerprint and compare-and-set revision.
+Separate additive SQLite-v1 tables store overlays plus append-only audit; source
+PDF/geometry, original compound payloads, output roots and core acceptance remain
+unchanged. Filtering, redraw and export consume the same effective overlay.
+Restoring original fields is another audited revision, not deletion of history.
+
+SMILES changes atomically enqueue an ADMET-only attempt in the existing queue.
+That attempt must not replace the extraction root, refresh the source projection
+or change its nonce. Six-property records are keyed by original source fingerprint,
+effective SMILES digest and reviewed prediction epoch. Only an exact current,
+verified pinned producer can supply completed values. Cancelled/interrupted/missing
+or corrupt results remain explicit failures, never successful progress.
+
+Only actual eligible SMILES enter inference. The ADMET stage records skipped
+missing-SMILES sources separately from progress.total; those rows remain visible
+with unavailable properties. Zero eligible inputs seal an empty stage with zero
+completed/total and no model call, never fabricated predictions. Invalid supplied
+SMILES and failed model results still fail; skips cannot hide a failed producer.
+
+ADMET is a separately sealed job-stage fact, not a ninth formal extraction stage.
+Core and model processes are sequential and use the same owned carrier and cleanup
+rules. Cross-process analysis-use locking prevents competing inference or
+environment publication; the SDK remains CPU/bounded/offline. The frontend reuses
+the existing job-read polling path, with no extra result-prediction poller.
 
 ## Local environment control
 
@@ -167,7 +236,7 @@ Every numbered page remains in original-PDF coordinates. The production chain ne
 flowchart LR
     PDF["Original patent PDF"] --> C["1. Deterministic classify<br/>OCR cache + page classes"]
     C --> A["2. Activity extraction<br/>authoritative compounds and order"]
-    A --> L["3. Structure-page locator<br/>active compounds only"]
+    A --> L["3. Structure-page locator<br/>all evidenced structural pages"]
     C --> L
     L --> S["4. DECIMER segmentation<br/>confirmed locator pages only"]
     S --> B["5. Structure binding<br/>visual evidence + activity order"]
@@ -334,7 +403,7 @@ Packaged defaults are immutable. Operator configuration belongs under `PATENTSAR
 
 ## Invariants
 
-- Activity rows define the authoritative final-compound set and order.
+- Activity rows define the authoritative formal-association set and order; the Web corpus additionally retains all unassociated structural and activity observations.
 - Production structure segmentation uses only locator-confirmed original-PDF pages.
 - Final bindings are unique, current-version, strongly confirmed and production-tagged.
 - Production OCSR is DECIMER-only; every accepted SMILES passes RDKit, query-atom and suspicious-element checks.

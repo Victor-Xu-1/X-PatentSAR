@@ -53,12 +53,7 @@ export function EnvironmentPage({
     <section className="management-page environment-page">
       <header className="page-header">
         <div>
-          <span className="eyebrow">LOCAL ENVIRONMENT MANAGER</span>
           <h1>环境管理</h1>
-          <p className="muted">
-            在批准的 E 盘目录管理审核的 CPU
-            运行时与模型。组件、检查和进度均从本机服务读取；只有明确确认后才会安装。
-          </p>
         </div>
         <button type="button" onClick={workspace.refresh} disabled={catalog.loading}>
           <RefreshCw size={15} />
@@ -160,7 +155,14 @@ export function EnvironmentPage({
         <span>
           {product.name} · v{product.version}
         </span>
-        <span>本地 CPU · 无 GPU / 付费资源 · 正式 QA 保持独立</span>
+        <details className="environment-safety-note">
+          <summary>运行与安装说明</summary>
+          <p>
+            在批准的 E 盘目录管理审核的 CPU
+            运行时与模型。组件、检查和进度均从本机服务读取；只有明确确认后才会安装。
+          </p>
+          <p>本地 CPU · 无 GPU / 付费资源 · 正式 QA 保持独立</p>
+        </details>
       </footer>
       {plan && data && (
         <InstallConfirmation

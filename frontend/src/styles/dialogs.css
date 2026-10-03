@@ -21,9 +21,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 20px 24px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--line-soft);
-  background: var(--surface-subtle);
+  background: var(--surface);
 }
 .dialog-header h2 {
   font-size: 18px;
@@ -32,10 +32,10 @@
   overflow-wrap: anywhere;
 }
 .dialog-body {
-  padding: 24px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
   line-height: 1.7;
 }
 .dialog-body > .muted {

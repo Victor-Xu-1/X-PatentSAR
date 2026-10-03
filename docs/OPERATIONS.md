@@ -29,7 +29,7 @@ Historical imports preserve the original generated files. Reviews have separate
 revisioned records and cannot promote formal acceptance. Web exports include the
 acceptance state; review-only output is not a formal chemistry deliverable.
 
-The complete task page is `#/new-task`. Upload/create and enqueue are separate
+The minimal default task page is `#/new-task`. Upload/create and enqueue are separate
 verified steps: a start failure retains the project, while uncertain responses
 require a state check before retry. Notes are immutable job records, not executed
 prompts. Include-intermediate/force options become actual CLI flags; safe resume
@@ -63,7 +63,50 @@ controls. A second server must not share an active workspace.
 
 ## Managed environment operation
 
-Open **环境管理** (`#/settings`) and inspect components before installing. The
+### Automatic six-property workbench
+
+New Web jobs request `include_admet=true`. Extraction must satisfy strict core
+QA and release its owned model process before the queue starts research prediction.
+The external pinned ADMET runtime is required for this complete Web workflow.
+Core CLI behavior stays separate and unchanged. Do not relabel an ADMET failure
+as full-job success just because core artifacts were already accepted.
+
+For existing completed projects, **列表选项 → 补齐六项指标** queues an ADMET-only job,
+without rerunning PDF extraction. Online SMILES corrections automatically queue
+only their affected compound. Source/SMILES changes invalidate obsolete properties;
+reset uses a new correction revision. Incomplete model outputs are never shown
+as numeric placeholders. Large molecules/PROTAC predictions remain unvalidated
+research observations, not an efficacy/safety or exact-graph guarantee.
+
+Back up the workspace SQLite together with its private `job-history` facts and
+uploaded originals. The additive `corrections`, `correction_audit` and
+`admet_predictions` tables remain workspace schema v1; generated core files are
+unchanged. Before rollback, preserve the upgraded database, new job facts and
+audited edits as a separate verified backup, then restore the pre-deployment
+workspace backup together with the old wheel. Old wheels do not understand new
+ADMET job specs or present correction overlays; swapping only the wheel is not
+an equivalent rollback. Preserve new records for forward recovery rather than
+deleting them to make an older view appear equivalent.
+
+An unspecified document page uses `first_structure_page`; explicit deep links
+and source jumps retain their chosen page after refresh. With no extracted
+structure source yet, use **浏览原文** only when deliberately opening page 1.
+
+The full table retains unassociated structure observations and activity-only
+records. It is not a unique-compound count or proof of inactivity. Source rows
+without validated SMILES are explicitly skipped by automatic metrics and retain
+no numeric values; zero eligible inputs produce an empty stage, not fake success.
+The complete-workflow environment preset includes both DECIMER and ADMET CPU
+components; reading existing results still does not require installing models.
+
+Locator/segmentation epochs 4 rebuild activity-filtered page coverage. Use a new
+software job, preserving the old run and its original QA. The raw Web corpus
+layout changes to structure-corpus-v1; a one-time projection rebuild stales old
+source-bound overlays/predictions but preserves their audit. Review before
+explicitly reapplying an edit. Rollback must restore the pre-deployment database
+together with its wheel, retaining newer state separately for forward recovery.
+
+Open topbar **更多 → 环境管理** (`#/settings`) and inspect components before installing. The
 approved Linux root is configured by `PATENTSAR_ENVIRONMENT_ALLOWED_ROOT`; the
 default new prefix is `PATENTSAR_ENVIRONMENT_ROOT`. Native Linux x86_64 Python 3.12
 is required for this controller. On the E-drive workstation these paths are

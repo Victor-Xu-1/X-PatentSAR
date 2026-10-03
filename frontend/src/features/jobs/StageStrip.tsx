@@ -1,65 +1,105 @@
 import { Check, CircleAlert, LoaderCircle } from 'lucide-react';
-import type { Job } from '../../api/types';
+import type { Job, StageName } from '../../api/types';
 import { stageNames } from '../../api/types';
-import { stageLabels } from '../../model/presentation';
+import { jobStatusLabels, stageLabels } from '../../model/presentation';
 import { observedStages, stageStatusText, stoppedJob } from '../../model/extraction';
 import { StageObservation } from './StageObservation';
+
 export function StageStrip({ job, compact = false }: { job: Job | null; compact?: boolean }) {
   const stages = observedStages(job);
-  return (
-    <div className="stage-overview">
-      {job && job.history_available !== true && (
-        <output
-          className="stage-history-notice"
-          title={
-            job.history_available === false
-              ? '历史阶段不可用：旧任务使用共享目录，无法可靠还原本次阶段历史。'
-              : '历史阶段可用性未知'
-          }
-        >
-          {job.history_available === false
-            ? compact
-              ? '历史不可用'
-              : '历史阶段不可用：旧任务使用共享目录，无法可靠还原本次阶段历史。'
-            : '历史阶段可用性未知'}
-        </output>
-      )}
-      <ol className="stage-strip" aria-label="真实提取流水线阶段">
-        {stageNames.map((name, i) => {
-          const stage = stages.find((item) => item.name === name);
-          const status =
-            job && job.history_available !== true ? 'unknown' : (stage?.status ?? 'pending');
-          return (
-            <li
-              className={`stage ${status}`}
-              key={name}
-              title={`${stageLabels[name]}：${stageStatusText(job, stage)}`}
-            >
-              <span className="stage-circle">
-                {status === 'ok' ? (
-                  <Check size={13} />
-                ) : status === 'running' && !stoppedJob(job) ? (
-                  <LoaderCircle size={13} className="spin" />
-                ) : status === 'failed' ? (
-                  <CircleAlert size={13} />
-                ) : (
-                  i + 1
-                )}
-              </span>
-              {job?.history_available === true ? (
-                <StageObservation job={job} stage={stage} name={name} compact={compact} />
+  const names: StageName[] =
+    job?.admet_only === true
+      ? stages.map((stage) => stage.name)
+      : [
+          ...stageNames,
+          ...(stages.some((stage) => stage.name === 'admet') ? ['admet' as const] : []),
+        ];
+  const historyNotice =
+    job && job.history_available !== true ? (
+      <output className="stage-history-notice">
+        {job.history_available === false
+          ? '历史阶段不可用：旧任务使用共享目录，无法可靠还原本次阶段历史。'
+          : '历史阶段可用性未知'}
+      </output>
+    ) : null;
+  const list = (
+    <ol className="stage-strip" aria-label="真实提取流水线阶段">
+      {names.map((name, index) => {
+        const stage = stages.find((item) => item.name === name);
+        const status =
+          job && job.history_available !== true ? 'unknown' : (stage?.status ?? 'pending');
+        return (
+          <li
+            className={`stage ${status}`}
+            key={name}
+            title={`${stageLabels[name]}：${stageStatusText(job, stage)}`}
+          >
+            <span className="stage-circle">
+              {status === 'ok' ? (
+                <Check size={13} />
+              ) : status === 'running' && !stoppedJob(job) ? (
+                <LoaderCircle size={13} className="spin" />
+              ) : status === 'failed' ? (
+                <CircleAlert size={13} />
               ) : (
-                <div>
-                  <strong>{stageLabels[name]}</strong>
-                  <small className={compact ? 'sr-only' : undefined}>
-                    {stageStatusText(job, stage)}
-                  </small>
-                </div>
+                index + 1
               )}
-            </li>
-          );
-        })}
-      </ol>
-    </div>
+            </span>
+            {job?.history_available === true ? (
+              <StageObservation job={job} stage={stage} name={name} />
+            ) : (
+              <div>
+                <strong>{stageLabels[name]}</strong>
+                <small>{stageStatusText(job, stage)}</small>
+              </div>
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  );
+  if (!compact)
+    return (
+      <div className="stage-overview">
+        {historyNotice}
+        {list}
+      </div>
+    );
+
+  const current =
+    stages.find((stage) => stage.status === 'failed') ??
+    stages.find((stage) => stage.status === 'running') ??
+    stages.find((stage) => stage.status === 'pending') ??
+    stages.at(-1);
+  const label = !job
+    ? '尚未启动'
+    : job.history_available !== true
+      ? job.history_available === false
+        ? '历史阶段不可用'
+        : '阶段状态未知'
+      : job.status === 'complete'
+        ? current?.name === 'admet' && current.status === 'empty'
+          ? 'ADMET · 未计算'
+          : jobStatusLabels[job.status]
+        : current
+          ? `${stageLabels[current.name]} · ${stageStatusText(job, current)}`
+          : jobStatusLabels[job.status];
+  const progress = current?.progress;
+  return (
+    <details className="stage-overview stage-disclosure">
+      <summary className="stage-current-line" aria-label="提取阶段详情">
+        <output className="stage-current" aria-live="polite" style={{ display: 'inline' }}>
+          {label}
+          {progress && progress.total > 0 && (
+            <span className="stage-progress">
+              {' '}
+              · {progress.completed} / {progress.total}
+            </span>
+          )}
+        </output>
+      </summary>
+      {historyNotice}
+      {list}
+    </details>
   );
 }

@@ -1,14 +1,23 @@
 import type { JobOptions } from '../../api/types';
 
-export const defaultJobOptions = { include_intermediates: false, force: false, task_note: '' };
+type EditableJobOptions = Pick<
+  Required<JobOptions>,
+  'include_intermediates' | 'force' | 'task_note'
+>;
+
+export const defaultJobOptions: EditableJobOptions = {
+  include_intermediates: false,
+  force: false,
+  task_note: '',
+};
 
 export function JobOptionsFields({
   options,
   onChange,
   disabled,
 }: {
-  options: Required<JobOptions>;
-  onChange: (options: Required<JobOptions>) => void;
+  options: EditableJobOptions;
+  onChange: (options: EditableJobOptions) => void;
   disabled: boolean;
 }) {
   return (
@@ -30,11 +39,8 @@ export function JobOptionsFields({
         />
         强制重算
       </label>
-      <p className="muted">
-        强制重算会重新计算现有阶段；恢复任务由服务端关闭该选项以保护 checkpoint。
-      </p>
       <label className="form-field">
-        任务说明（运营记录）
+        任务说明
         <textarea
           rows={3}
           maxLength={2000}
@@ -44,7 +50,7 @@ export function JobOptionsFields({
         />
       </label>
       <small id="task-note-help" className="muted">
-        {options.task_note.length}/2000 · 随提取任务持久化，仅作运营记录，不由 LLM 执行。
+        {options.task_note.length}/2000 · 仅作任务记录。
       </small>
     </fieldset>
   );

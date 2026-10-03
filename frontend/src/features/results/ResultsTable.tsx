@@ -38,7 +38,7 @@ export function ResultsTable({
   const container = useRef<HTMLDivElement>(null);
   const table = useRef<HTMLTableElement>(null);
   const columns = metrics ?? availableMetrics([], rows);
-  const headers = resultColumns(columns);
+  const headers = resultColumns();
   const resize = useColumnResize(headers, table);
   const all = rows.length > 0 && rows.every((row) => selected.has(row.id));
   const some = rows.some((row) => selected.has(row.id));
@@ -72,8 +72,8 @@ export function ResultsTable({
         }
       >
         <caption className="sr-only">
-          真实指标独立成列；实验编号对应去重上下文，每个活性值保留自己的来源页。
-          绑定证据、识别校验和人工复核是独立状态。
+          结构、专利活性与六项计算指标。每个活性值保留独立来源；
+          计算指标不等于专利实测。点击修正可编辑并保存。
         </caption>
         <colgroup>
           {headers.map((header) => (

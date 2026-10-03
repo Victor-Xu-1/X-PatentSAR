@@ -1,17 +1,17 @@
 .environment-page {
-  max-width: 1280px;
+  max-width: 1120px;
 }
 .environment-overview {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-  gap: 18px;
+  gap: 24px;
 }
 .environment-card {
   min-width: 0;
-  padding: 22px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel);
-  background: var(--surface);
+  padding: 16px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 .environment-card h2 {
   font-size: 16px;
@@ -21,7 +21,7 @@
 .environment-card p {
   font-size: 12px;
   line-height: 1.7;
-  margin: 8px 0;
+  margin: 6px 0;
   overflow-wrap: anywhere;
 }
 .environment-card summary {
@@ -42,7 +42,7 @@
 .location-card form {
   display: grid;
   gap: 12px;
-  margin-top: 20px;
+  margin-top: 14px;
 }
 .location-card form > button {
   justify-self: start;
@@ -52,7 +52,7 @@
   justify-content: space-between;
   gap: 14px;
   align-items: center;
-  padding: 16px 0;
+  padding: 12px 0;
   border-top: 1px solid var(--line-soft);
 }
 .environment-preset:last-child {
@@ -81,7 +81,7 @@
   gap: 14px;
 }
 .environment-detection {
-  margin: 22px 0 14px;
+  margin: 16px 0 10px;
   font-size: 12px;
 }
 .environment-section-header > div {
@@ -96,11 +96,10 @@
   gap: 10px;
   font-size: 13px;
   font-weight: 600;
-  margin: 22px 0 0;
-  padding: 11px 12px;
-  border-radius: var(--radius-control);
+  margin: 16px 0 0;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
   color: var(--primary);
-  background: var(--surface-subtle);
 }
 .component-group > h3 small {
   color: var(--muted);
@@ -108,10 +107,10 @@
 }
 .environment-component {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) auto;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
   align-items: start;
-  gap: 12px;
-  padding: 18px 0;
+  gap: 10px;
+  padding: 12px 0;
   border-bottom: 1px solid var(--line-soft);
 }
 .environment-component:last-child {
@@ -120,12 +119,9 @@
 .environment-component-icon {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
-  background: var(--surface-subtle);
+  width: 28px;
+  height: 28px;
   color: var(--muted);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-control);
 }
 .environment-component-body {
   min-width: 0;
@@ -147,8 +143,8 @@
 .component-metadata {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 24px;
-  margin: 10px 0;
+  gap: 8px 20px;
+  margin: 6px 0;
   font-size: 11px;
 }
 .component-metadata > div {
@@ -200,7 +196,7 @@
 }
 @media (max-width: 600px) {
   .environment-card {
-    padding: 16px;
+    padding: 12px 0;
   }
   .environment-preset,
   .environment-detection,

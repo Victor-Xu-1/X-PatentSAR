@@ -62,7 +62,8 @@ describe('dense evidence-led result workspace', () => {
     ).not.toBeInTheDocument();
     expect(screen.queryByText('实验上下文去重 · 每个值保留独立来源')).not.toBeInTheDocument();
     expect(screen.getAllByRole('textbox', { name: '搜索结果' })).toHaveLength(1);
-    await userEvent.setup().click(screen.getByRole('button', { name: '结果信息' }));
+    await userEvent.setup().click(screen.getByRole('button', { name: '列表选项' }));
+    await userEvent.click(screen.getByText('结果与验收详情'));
     const dialog = screen.getByRole('dialog');
     expect(within(dialog).getByLabelText('项目真实统计')).toBeVisible();
     expect(within(dialog).getByLabelText('提取验收与阻塞状态')).toBeVisible();
@@ -70,10 +71,8 @@ describe('dense evidence-led result workspace', () => {
   it('uses compact columns, deduplicates assay context and preserves every activity source', () => {
     render(<ResultsPane {...props()} />);
     expect(screen.getByRole('table')).toHaveAttribute('data-density', 'compact');
-    for (const metric of data.metrics)
-      expect(screen.getByRole('columnheader', { name: metric })).toBeVisible();
-    expect(screen.getAllByText('靶点甲')).toHaveLength(1);
-    expect(screen.getAllByText('酶活实验')).toHaveLength(1);
+    expect(screen.getByRole('columnheader', { name: '专利活性' })).toBeVisible();
+    expect(screen.getAllByText('IC50')).toHaveLength(2);
     for (const text of ['IC50 = <10 nM', 'DC50 = 10 - 100 nM', '抑制等级 = ++', 'IC50 = 30 nM']) {
       expect(screen.getByTitle(text)).toBeVisible();
     }
@@ -89,29 +88,29 @@ describe('dense evidence-led result workspace', () => {
     const original = props();
     render(<ResultsPane {...original} selected={new Set([row.id])} />);
     const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: '显示选项' }));
+    await user.click(screen.getByRole('button', { name: '列表选项' }));
+    await user.click(screen.getByText('显示选项'));
     await user.click(screen.getByRole('button', { name: '舒适视图' }));
     expect(screen.getByRole('table')).toHaveAttribute('data-density', 'comfortable');
     await user.click(screen.getByLabelText('显示指标 DC50'));
-    expect(screen.queryByRole('columnheader', { name: 'DC50' })).not.toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: 'IC50' })).toBeVisible();
+    expect(screen.queryByTitle('DC50 = 10 - 100 nM')).not.toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: '专利活性' })).toBeVisible();
     expect(screen.getByLabelText('选择化合物 I-7')).toBeChecked();
     expect(screen.getByText('已选 1')).toBeVisible();
     expect(original.onFilters).not.toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: '显示全部指标' }));
-    expect(screen.getByRole('columnheader', { name: 'DC50' })).toBeVisible();
+    expect(screen.getByTitle('DC50 = 10 - 100 nM')).toBeVisible();
     await user.click(screen.getByRole('button', { name: '关闭对话框' }));
     await user.click(screen.getByRole('button', { name: '导出所选 (1)' }));
     expect(original.onExport).toHaveBeenCalledOnce();
   });
-  it('keeps binding, RDKit recognition and manual decisions independently visible', () => {
-    render(<ResultsPane {...props()} />);
-    for (const name of ['绑定证据', '识别校验', '人工复核']) {
-      expect(screen.getByRole('columnheader', { name })).toBeVisible();
-    }
+  it('keeps binding, recognition and manual decisions in on-demand source details', () => {
+    render(<CropDialog compound={row} projectId={project.id} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByText('原始提取证据 / 校验'));
+    expect(screen.getByText('绑定证据')).toBeVisible();
     expect(screen.getByText('RDKit 可解析')).toBeVisible();
     expect(screen.getByText('未复核')).toBeVisible();
-    expect(within(screen.getByRole('table')).queryByText('复核通过')).not.toBeInTheDocument();
+    expect(screen.queryByText('复核通过')).not.toBeInTheDocument();
   });
   it('uses explicit unknown recognition even when a legacy row has SMILES', () => {
     render(
@@ -123,7 +122,7 @@ describe('dense evidence-led result workspace', () => {
         }}
       />,
     );
-    expect(screen.getByText('识别状态未知')).toBeVisible();
+    expect(screen.getByLabelText('MW 未计算')).toBeVisible();
     expect(screen.queryByText('RDKit 可解析')).not.toBeInTheDocument();
   });
   it('does not conflate binding pending zero with genuine manual pending counts', () => {
@@ -182,10 +181,11 @@ describe('dense evidence-led result workspace', () => {
       />,
     );
     const table = screen.getByRole('table');
-    expect(within(table).getByText('RDKit 可解析')).toBeVisible();
-    expect(within(table).getByText('待复核')).toBeVisible();
+    expect(within(table).queryByText('RDKit 可解析')).not.toBeInTheDocument();
+    expect(within(table).queryByText('待复核')).not.toBeInTheDocument();
     expect(within(table).queryByText('复核通过')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '结果信息' }));
+    fireEvent.click(screen.getByRole('button', { name: '列表选项' }));
+    fireEvent.click(screen.getByText('结果与验收详情'));
     expect(
       within(screen.getByText('人工已复核').closest('.metric-card')!).getByText('0'),
     ).toBeVisible();
@@ -251,9 +251,10 @@ describe('source crop and derived SMILES are separate facts', () => {
     expect(
       within(comparison).getByRole('img', { name: 'I-7 的 SMILES 重绘（非原图）' }),
     ).toHaveAttribute('src', row.redraw_image_url);
+    fireEvent.click(screen.getByText('原始提取证据 / 校验'));
     expect(screen.getByText(/模型 token confidence（未校准）/)).toBeVisible();
     expect(screen.getByText(/不是结构正确率/)).toBeVisible();
-    expect(screen.getByLabelText('规范化 SMILES（服务端）')).toHaveValue('CCO');
+    expect(screen.getByLabelText('当前 SMILES')).toHaveValue('CCO');
   });
   it('shows no-SMILES and missing-crop reasons without fake pictures or disabled details access', () => {
     const missing = { ...compound, structure_image_url: null, flags: ['structure_not_generated'] };
@@ -263,6 +264,7 @@ describe('source crop and derived SMILES are separate facts', () => {
     expect(screen.getByText('尚未生成结构裁图')).toBeVisible();
     expect(screen.getByText('未提供 SMILES，无法重绘')).toBeVisible();
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('原始提取证据 / 校验'));
     expect(screen.getByText('识别状态未知')).toBeVisible();
     rerender(
       <ResultsPane

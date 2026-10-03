@@ -20,7 +20,7 @@ export function Pagination({
   return (
     <footer className="pagination">
       <span className="muted">
-        共 {total} 个化合物
+        共 {total} 条结构/活性记录
         {total > 0 && ` · ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)}`}
       </span>
       <nav aria-label="结果分页">

@@ -6,7 +6,9 @@ export function stoppedJob(job: Job | null): boolean {
 }
 
 export function observedStages(job: Job | null): Job['stages'] {
-  return job?.history_available === true ? job.stages : [];
+  if (job?.history_available !== true) return [];
+  const stages = job.admet_only === true ? [] : job.stages;
+  return job.include_admet === true && job.admet_stage ? [...stages, job.admet_stage] : stages;
 }
 
 export function stageStatusText(job: Job | null, stage: Job['stages'][number] | undefined): string {
