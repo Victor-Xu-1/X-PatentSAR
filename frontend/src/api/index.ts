@@ -123,7 +123,9 @@ export function safeAssetUrl(value: string | null): string | null {
       url.origin !== window.location.origin ||
       url.username ||
       url.password ||
-      !/^\/api\/v1\/projects\/[^/]+\/(pages\/\d+|structures\/[^/]+)\/image$/.test(url.pathname)
+      !/^\/api\/v1\/projects\/[^/]+\/(pages\/\d+\/image|structures\/[^/]+\/(image|redraw))$/.test(
+        url.pathname,
+      )
     )
       return null;
     return `${url.pathname}${url.search}`;

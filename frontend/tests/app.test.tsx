@@ -21,6 +21,24 @@ function contractTransport() {
   });
 }
 describe('application bootstrap, routes and failure states', () => {
+  it('desktop navigation collapses, expands and preserves width across routes', async () => {
+    vi.stubGlobal('fetch', contractTransport());
+    render(<App />);
+    await screen.findByText('v9.8.7-test');
+    await userEvent.click(screen.getByRole('button', { name: '收起导航栏' }));
+    expect(document.querySelector('.app-shell')).toHaveClass('navigation-collapsed');
+    expect(window.location.hash).toContain('nav=0');
+    await userEvent.click(screen.getByRole('button', { name: '项目' }));
+    expect(window.location.hash).toContain('nav=0');
+    expect(await screen.findByText('打开工作台')).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: '展开导航栏' }));
+    const resize = screen.getByRole('slider', { name: '调整导航栏宽度' });
+    resize.focus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(resize).toHaveAttribute('aria-valuenow', '240');
+    await userEvent.click(screen.getByRole('button', { name: '上传 PDF' }));
+    expect(window.location.hash).toContain('navWidth=240');
+  });
   it('keeps the upload action named and usable when its visual text is hidden on mobile', async () => {
     vi.stubGlobal('fetch', contractTransport());
     render(<App />);
@@ -79,7 +97,7 @@ describe('application bootstrap, routes and failure states', () => {
     const transport = contractTransport();
     vi.stubGlobal('fetch', transport);
     render(<App />);
-    expect(await screen.findByText('抑制等级 = ++')).toBeVisible();
+    expect(await screen.findByTitle('抑制等级 = ++')).toBeVisible();
     expect(await screen.findByText('<script>untrusted OCR</script>')).toBeVisible();
     expect(screen.getByLabelText('原始文档页码')).toHaveValue('4');
     expect(transport.mock.calls.every(([, init]) => init?.credentials === 'same-origin')).toBe(
@@ -94,7 +112,7 @@ describe('application bootstrap, routes and failure states', () => {
     vi.stubGlobal('fetch', contractTransport());
     render(<App />);
     await userEvent.click(await screen.findByText('打开工作台'));
-    expect(await screen.findByText('抑制等级 = ++')).toBeVisible();
+    expect(await screen.findByTitle('抑制等级 = ++')).toBeVisible();
     await waitFor(() => expect(window.location.hash).toContain(project.id));
   });
   it('shows a connection failure with an explicit reconnect path and no fallback data', async () => {

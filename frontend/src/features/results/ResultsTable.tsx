@@ -1,34 +1,45 @@
 import { useEffect, useRef } from 'react';
-import { FileText, MapPin, MessageSquareText } from 'lucide-react';
-import type { Compound } from '../../api/types';
-import { activityText, confidenceLabels, reviewLabels } from '../../model/presentation';
-import { AssetImage } from '../../components/AssetImage';
+import type { Activity, Compound } from '../../api/types';
+import { availableMetrics } from '../../model/results';
+import type { ResultDensity } from '../../model/results';
+import { resultColumns } from '../../model/resultColumns';
+import { ResizeHandle } from '../../components/ResizeHandle';
+import { ResultRow } from './ResultRow';
+import { useColumnResize } from './useColumnResize';
 
 export function ResultsTable({
   rows,
   offset,
-  metric,
+  metrics,
+  density = 'compact',
   selected,
   focusedId,
   onSelect,
   onSelectPage,
   onJump,
+  onActivitySource,
   onCrop,
   onReview,
 }: {
   rows: Compound[];
   offset: number;
-  metric: string;
+  metrics?: string[];
+  density?: ResultDensity;
   selected: Set<string>;
   focusedId: string | null;
   onSelect: (id: string) => void;
   onSelectPage: (checked: boolean) => void;
   onJump: (compound: Compound) => void;
+  onActivitySource: (activity: Activity) => void;
   onCrop: (compound: Compound) => void;
   onReview: (compound: Compound) => void;
 }) {
   const selectAll = useRef<HTMLInputElement>(null);
   const container = useRef<HTMLDivElement>(null);
+  const table = useRef<HTMLTableElement>(null);
+  const columns = metrics ?? availableMetrics([], rows);
+  const headers = resultColumns(columns);
+  const resize = useColumnResize(headers, table);
   const all = rows.length > 0 && rows.every((row) => selected.has(row.id));
   const some = rows.some((row) => selected.has(row.id));
   useEffect(() => {
@@ -42,153 +53,95 @@ export function ResultsTable({
     element?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, [focusedId, rows]);
   return (
-    <div className="table-scroll" ref={container}>
-      <table className="results-table">
-        <caption className="sr-only">来自当前项目 API 的化合物、真实活性、来源与复核记录</caption>
+    <section
+      className="table-scroll"
+      ref={container}
+      // A scrollable table region needs a keyboard focus target for native scrolling.
+      // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+      tabIndex={0}
+      aria-label="可横向滚动的化合物结果表格"
+    >
+      <table
+        ref={table}
+        className={`results-table${resize.resized ? ' columns-resized' : ''}`}
+        data-density={density}
+        style={
+          resize.resized
+            ? { width: resize.totalWidth, minWidth: 0, tableLayout: 'fixed' }
+            : undefined
+        }
+      >
+        <caption className="sr-only">
+          真实指标独立成列；实验编号对应去重上下文，每个活性值保留自己的来源页。
+          绑定证据、识别校验和人工复核是独立状态。
+        </caption>
+        <colgroup>
+          {headers.map((header) => (
+            <col
+              key={header.id}
+              style={
+                resize.resized ? { width: resize.widths[header.id] ?? header.width } : undefined
+              }
+            />
+          ))}
+        </colgroup>
         <thead>
           <tr>
-            <th className="check-col">
-              <input
-                ref={selectAll}
-                type="checkbox"
-                aria-label="选择当前页全部化合物"
-                checked={all}
-                onChange={(e) => onSelectPage(e.target.checked)}
-                disabled={!rows.length}
-              />
-            </th>
-            <th>#</th>
-            <th>结构 / 编号</th>
-            <th>活性数据</th>
-            <th>靶点 / 实验</th>
-            <th>可信度</th>
-            <th>来源位置</th>
-            <th>复核</th>
+            {headers.map((header) => (
+              <th
+                className={header.className}
+                scope="col"
+                key={header.id}
+                data-column={header.id}
+                aria-label={header.id === 'number' ? '#' : header.label}
+              >
+                {header.id === 'select' ? (
+                  <input
+                    ref={selectAll}
+                    type="checkbox"
+                    aria-label="选择当前页全部化合物"
+                    checked={all}
+                    onChange={(event) => onSelectPage(event.target.checked)}
+                    disabled={!rows.length}
+                  />
+                ) : header.id === 'number' ? (
+                  '#'
+                ) : (
+                  header.label
+                )}
+                <ResizeHandle
+                  className="column-resizer"
+                  label={`调整${header.label}列宽`}
+                  value={resize.widths[header.id] ?? header.width}
+                  min={header.min}
+                  max={header.max}
+                  resetValue={header.width}
+                  onBegin={() => resize.begin(header.id)}
+                  onPreview={(next) => resize.preview(header.id, next)}
+                  onCommit={(next) => resize.commit(header.id, next)}
+                />
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, index) => {
-            const activities = row.activities.filter(
-              (activity) => !metric || activity.name === metric,
-            );
-            return (
-              <tr
-                key={row.id}
-                data-compound={row.id}
-                className={focusedId === row.id ? 'source-focused' : ''}
-              >
-                <td>
-                  <input
-                    type="checkbox"
-                    aria-label={`选择化合物 ${row.display_id}`}
-                    checked={selected.has(row.id)}
-                    onChange={() => onSelect(row.id)}
-                  />
-                </td>
-                <td className="row-number">{offset + index + 1}</td>
-                <td>
-                  <div className="structure-cell">
-                    <button
-                      type="button"
-                      className="crop-button"
-                      data-focus-key={`crop:${row.id}`}
-                      aria-label={`放大 ${row.display_id} 结构裁图`}
-                      disabled={!row.structure_image_url}
-                      onClick={() => onCrop(row)}
-                    >
-                      <AssetImage
-                        url={row.structure_image_url}
-                        alt={`${row.display_id} 结构裁图`}
-                      />
-                    </button>
-                    <strong title={row.id}>{row.display_id}</strong>
-                  </div>
-                </td>
-                <td>
-                  <div className="activity-list">
-                    {activities.length ? (
-                      activities.map((activity, i) => (
-                        <span className="activity-value" key={i}>
-                          {activityText(activity)}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="muted">{metric ? '该指标无数据' : '无活性数据'}</span>
-                    )}
-                  </div>
-                </td>
-                <td>
-                  <div className="assay-list">
-                    {activities.length ? (
-                      activities.map((activity, i) => (
-                        <div key={i}>
-                          <strong>{activity.target ?? '靶点未提供'}</strong>
-                          <span>{activity.assay ?? '实验未提供'}</span>
-                          {activity.page !== null && <small>活性来源第 {activity.page} 页</small>}
-                        </div>
-                      ))
-                    ) : (
-                      <span className="muted">—</span>
-                    )}
-                  </div>
-                </td>
-                <td>
-                  <span
-                    className={`badge ${row.confidence.level}`}
-                    title={row.confidence.reason ?? '置信度依据未提供'}
-                  >
-                    {confidenceLabels[row.confidence.level]}
-                  </span>
-                  <small className="confidence-score">
-                    {row.confidence.score === null ? '无数值分数' : String(row.confidence.score)}
-                  </small>
-                </td>
-                <td>
-                  <div className="source-cell">
-                    <FileText size={15} />
-                    <div>
-                      <span>
-                        {row.source.page === null ? '页码未知' : `第 ${row.source.page} 页`}
-                      </span>
-                      {row.source.paragraph !== null && <small>段落 {row.source.paragraph}</small>}
-                      {row.source.source_label && <small>{row.source.source_label}</small>}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="link-button"
-                    onClick={() => onJump(row)}
-                    disabled={row.source.page === null}
-                  >
-                    <MapPin size={13} />
-                    来源定位
-                  </button>
-                  {row.source.correction_reason && (
-                    <small className="correction" title={row.source.correction_reason}>
-                      含编号修正证据
-                    </small>
-                  )}
-                </td>
-                <td>
-                  <button
-                    type="button"
-                    className="review-button"
-                    data-focus-key={`review:${row.id}`}
-                    aria-label={`复核 ${row.display_id}`}
-                    onClick={() => onReview(row)}
-                  >
-                    <MessageSquareText size={15} />
-                    复核
-                  </button>
-                  <small className="review-state">
-                    {row.review ? reviewLabels[row.review.decision] : '尚未复核'}
-                  </small>
-                </td>
-              </tr>
-            );
-          })}
+          {rows.map((row, index) => (
+            <ResultRow
+              key={row.id}
+              row={row}
+              number={offset + index + 1}
+              metrics={columns}
+              selected={selected.has(row.id)}
+              focused={focusedId === row.id}
+              onSelect={() => onSelect(row.id)}
+              onJump={onJump}
+              onActivitySource={onActivitySource}
+              onCrop={onCrop}
+              onReview={onReview}
+            />
+          ))}
         </tbody>
       </table>
-    </div>
+    </section>
   );
 }

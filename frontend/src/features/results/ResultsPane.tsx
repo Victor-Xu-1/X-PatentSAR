@@ -1,91 +1,77 @@
-import { Download } from 'lucide-react';
-import type { Compound, Filters, Project, Results } from '../../api/types';
+import { useState } from 'react';
+import type { Activity, Compound, Filters, Job, Project, Results } from '../../api/types';
+import { availableMetrics } from '../../model/results';
+import type { ResultDensity } from '../../model/results';
 import type { Resource } from '../../hooks/useResource';
 import { Empty, ErrorNotice, Loading } from '../../components/Feedback';
-import { Metrics } from './Metrics';
-import { ResultFilters } from './ResultFilters';
 import { ResultsTable } from './ResultsTable';
 import { Pagination } from './Pagination';
-import { acceptanceLabels } from '../../model/presentation';
+import { ResultToolbar } from './ResultToolbar';
 
 export function ResultsPane({
   project,
+  job = null,
   resource,
   filters,
-  metric,
   selected,
   focusedId,
-  onMetric,
   onFilters,
   onSelect,
   onSelectPage,
   onJump,
+  onActivitySource,
   onCrop,
   onReview,
   onExport,
   onUpload,
 }: {
   project: Project | null;
+  job?: Job | null;
   resource: Resource<Results>;
   filters: Filters;
-  metric: string;
   selected: Set<string>;
   focusedId: string | null;
-  onMetric: (metric: string) => void;
   onFilters: (patch: Partial<Filters>) => void;
   onSelect: (id: string) => void;
   onSelectPage: (checked: boolean) => void;
   onJump: (row: Compound) => void;
+  onActivitySource: (activity: Activity) => void;
   onCrop: (row: Compound) => void;
   onReview: (row: Compound) => void;
   onExport: () => void;
   onUpload: () => void;
 }) {
   const result = resource.data;
+  const [density, setDensity] = useState<ResultDensity>('compact');
+  const [selection, setSelection] = useState<string[] | null>(null);
+  const metrics = availableMetrics(result?.metrics ?? [], result?.items ?? []);
+  const visibleMetrics =
+    selection === null ? metrics : metrics.filter((name) => selection.includes(name));
   return (
     <div className="result-data-view">
-      <Metrics project={project} />
-      {project && (
-        <div className={`acceptance-banner ${project.acceptance.state}`}>
-          <span>{acceptanceLabels[project.acceptance.state]}</span>
-          <small>
-            {project.is_historical
-              ? '来源：历史运行导入；旧契约证据不视为当前高置信结果。'
-              : '正式验收仅由确定性 QA 决定，人工注记不改变验收。'}
-          </small>
-          {project.acceptance.errors.length > 0 && (
-            <details>
-              <summary>查看核心验收问题（{project.acceptance.errors.length}）</summary>
-              <ul>
-                {project.acceptance.errors.map((error, index) => (
-                  <li key={index}>{error}</li>
-                ))}
-              </ul>
-            </details>
-          )}
-        </div>
-      )}
-      <ResultFilters
-        filters={filters}
-        metrics={result?.metrics ?? []}
-        targets={result?.targets ?? []}
-        metric={metric}
-        onMetric={onMetric}
-        onChange={onFilters}
-        total={result?.total ?? null}
-        disabled={!project}
+      <ResultToolbar
+        project={project}
+        job={job}
+        filters={{
+          filters,
+          targets: result?.targets ?? [],
+          onChange: onFilters,
+          disabled: !project,
+        }}
+        display={{
+          metrics,
+          visibleMetrics,
+          density,
+          onDensity: setDensity,
+          onMetrics: setSelection,
+          disabled: !project,
+        }}
+        selectedCount={selected.size}
+        loading={resource.loading}
+        canExport={Boolean(project && result?.total)}
+        onReload={resource.reload}
+        onExport={onExport}
       />
-      <div className="selection-bar">
-        <span>
-          {selected.size
-            ? `已选择 ${selected.size} 个化合物（跨页保留）`
-            : '点击结构查看裁图 · 点击来源返回原文'}
-        </span>
-        <button type="button" onClick={onExport} disabled={!project || !result?.total}>
-          <Download size={14} />
-          {selected.size ? `导出所选 (${selected.size})` : '导出结果'}
-        </button>
-      </div>
       <div className="results-content" aria-busy={resource.loading}>
         {resource.error ? (
           <ErrorNotice error={resource.error} onRetry={resource.reload} />
@@ -105,12 +91,14 @@ export function ResultsPane({
           <ResultsTable
             rows={result.items}
             offset={(result.page - 1) * result.page_size}
-            metric={metric}
+            metrics={visibleMetrics}
+            density={density}
             selected={selected}
             focusedId={focusedId}
             onSelect={onSelect}
             onSelectPage={onSelectPage}
             onJump={onJump}
+            onActivitySource={onActivitySource}
             onCrop={onCrop}
             onReview={onReview}
           />

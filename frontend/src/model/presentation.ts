@@ -36,13 +36,13 @@ export const jobStatusLabels: Record<Job['status'], string> = {
 export const acceptanceLabels: Record<AcceptanceState, string> = {
   not_run: '尚未验收',
   accepted: '核心 QA 通过',
-  failed: '核心 QA 未通过',
+  failed: '提取未通过验收',
   historical: '历史结果 · 仅供复核',
 };
 export const confidenceLabels: Record<ConfidenceLevel, string> = {
   high: '高',
   medium: '中',
-  review: '待复核',
+  review: '待核验',
   unknown: '未知',
 };
 export const reviewLabels: Record<ReviewDecision, string> = {
@@ -51,14 +51,17 @@ export const reviewLabels: Record<ReviewDecision, string> = {
   needs_review: '待复核',
 };
 export const activeJob = (job: Job) => job.status === 'running' || job.status === 'queued';
-export function activityText(activity: Activity): string {
+export function activityValueText(activity: Activity): string {
   const value = activity.value === null ? '值未提供' : String(activity.value);
   const unit = activity.unit?.trim() ?? '';
   const escaped = unit.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const alreadyPresent =
     unit !== '' && new RegExp(`(?:^|[^\\p{L}])${escaped}\\s*$`, 'u').test(value);
   const suffix = unit && activity.value !== null && !alreadyPresent ? ` ${unit}` : '';
-  return `${activity.name || '活性'} = ${value}${suffix}`;
+  return `${value}${suffix}`;
+}
+export function activityText(activity: Activity): string {
+  return `${activity.name || '活性'} = ${activityValueText(activity)}`;
 }
 export function dateText(value: string | null): string {
   if (!value) return '—';

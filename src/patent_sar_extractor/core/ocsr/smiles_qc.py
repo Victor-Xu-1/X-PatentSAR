@@ -8,10 +8,23 @@ Preserves ALL raw predictions even if RDKit validation fails.
 import re
 from typing import Optional
 
-
 COMMON_FINAL_PRODUCT_ELEMENTS = {
-    "H", "B", "C", "N", "O", "F", "Na", "Mg", "Si", "P", "S",
-    "Cl", "K", "Ca", "Br", "I",
+    "H",
+    "B",
+    "C",
+    "N",
+    "O",
+    "F",
+    "Na",
+    "Mg",
+    "Si",
+    "P",
+    "S",
+    "Cl",
+    "K",
+    "Ca",
+    "Br",
+    "I",
 }
 
 
@@ -72,7 +85,7 @@ def qc_smiles(raw_smiles: Optional[str]) -> dict:
     # If has dummy or query atoms, still try RDKit but flag accordingly
     try:
         from rdkit import Chem
-        from rdkit.Chem import Descriptors, rdMolDescriptors, Lipinski
+        from rdkit.Chem import Descriptors, Lipinski, rdMolDescriptors
     except ImportError:
         result["quality_flag"] = "rdkit_not_available"
         return result
@@ -95,11 +108,13 @@ def qc_smiles(raw_smiles: Optional[str]) -> dict:
 
     # RDKit successfully parsed
     result["rdkit_valid"] = True
-    result["suspicious_elements"] = sorted({
-        atom.GetSymbol()
-        for atom in mol.GetAtoms()
-        if atom.GetSymbol() not in COMMON_FINAL_PRODUCT_ELEMENTS
-    })
+    result["suspicious_elements"] = sorted(
+        {
+            atom.GetSymbol()
+            for atom in mol.GetAtoms()
+            if atom.GetSymbol() not in COMMON_FINAL_PRODUCT_ELEMENTS
+        }
+    )
 
     try:
         result["canonical_smiles"] = Chem.MolToSmiles(mol)
@@ -138,6 +153,7 @@ def qc_smiles(raw_smiles: Optional[str]) -> dict:
 
     try:
         from rdkit.Chem import FindMolChiralCenters
+
         chiral_centers = FindMolChiralCenters(mol, includeUnassigned=True)
         result["chiral_centers"] = len(chiral_centers)
     except Exception:

@@ -9,9 +9,11 @@ import hashlib
 import os
 import re
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Optional
+
+from patent_sar_extractor.contracts import OCSR_OBSERVATION_VERSION
 
 from .engines.base_engine import BaseOCSREngine
 from .engines.decimer_engine import DECIMEREngine
@@ -20,18 +22,14 @@ from .smiles_cache import SmilesCache, compute_image_sha256
 from .smiles_qc import COMMON_FINAL_PRODUCT_ELEMENTS, qc_smiles
 
 
-_DETACHED_DUMMY_COMPONENTS = {"*", "[*]"}
-_DETACHED_CARBON_NOISE_COMPONENTS = {
-    "C",
-    "CC",
-    "[CH3+]",
-    "C[CH3+]",
-}
-
-
 def _resolve_ocsr_image_path(item: dict) -> str:
     """Prefer a clean OCSR input image over the display/visual crop."""
-    for key in ("ocsr_image_path", "source_image_path", "image_path", "structure_image"):
+    for key in (
+        "ocsr_image_path",
+        "source_image_path",
+        "image_path",
+        "structure_image",
+    ):
         path = str(item.get(key) or "").strip()
         if path and os.path.isfile(path):
             return path
@@ -41,11 +39,17 @@ def _resolve_ocsr_image_path(item: dict) -> str:
         display_dir = Path(display_path).resolve().parent if display_path else None
         candidate_roots = []
         if display_dir is not None:
-            candidate_roots.extend([display_dir, display_dir.parent, display_dir.parent.parent])
+            candidate_roots.extend(
+                [display_dir, display_dir.parent, display_dir.parent.parent]
+            )
         for root in candidate_roots:
             if not root:
                 continue
-            candidate = root / "structures" / f"structure_{int(source_sid[1:]):04d}.png" if re.fullmatch(r"S\d{4}", source_sid) else None
+            candidate = (
+                root / "structures" / f"structure_{int(source_sid[1:]):04d}.png"
+                if re.fullmatch(r"S\d{4}", source_sid)
+                else None
+            )
             if candidate and candidate.is_file():
                 return str(candidate)
     return str(item.get("image_path") or item.get("structure_image") or "")
@@ -65,7 +69,11 @@ def _compound_label_for_ocsr_mask(item: dict) -> str:
                 labels.append(value)
     for key in ("cpd", "cpd_id", "compound_id", "example_id"):
         value = str(item.get(key) or "").strip()
-        match = re.search(r"(?:compound|cpd|example|实施例|化合物)?\s*[-:]?\s*(\d{1,4}[A-Z]?)", value, re.I)
+        match = re.search(
+            r"(?:compound|cpd|example|实施例|化合物)?\s*[-:]?\s*(\d{1,4}[A-Z]?)",
+            value,
+            re.I,
+        )
         if match:
             labels.append(match.group(1).upper())
     for label in labels:
@@ -75,14 +83,18 @@ def _compound_label_for_ocsr_mask(item: dict) -> str:
     return ""
 
 
-def _component_overlap(a: tuple[int, int, int, int], b: tuple[int, int, int, int]) -> float:
+def _component_overlap(
+    a: tuple[int, int, int, int], b: tuple[int, int, int, int]
+) -> float:
     ax0, ay0, ax1, ay1 = a
     bx0, by0, bx1, by1 = b
     overlap = max(0, min(ay1, by1) - max(ay0, by0))
     return overlap / max(1, min(ay1 - ay0, by1 - by0))
 
 
-def _detect_visible_label_bbox(image_path: str, label: str) -> tuple[int, int, int, int] | None:
+def _detect_visible_label_bbox(
+    image_path: str, label: str
+) -> tuple[int, int, int, int] | None:
     """Locate a printed compound number inside a structure crop.
 
     The detector is intentionally conservative: it only masks compact, isolated
@@ -127,12 +139,14 @@ def _detect_visible_label_bbox(image_path: str, label: str) -> tuple[int, int, i
         fill = area / max(1, w * h)
         if fill < 0.08:
             continue
-        components.append({
-            "bbox": (x, y, x1, y1),
-            "center_x": float(center_x),
-            "center_y": float(center_y),
-            "area": area,
-        })
+        components.append(
+            {
+                "bbox": (x, y, x1, y1),
+                "center_x": float(center_x),
+                "center_y": float(center_y),
+                "area": area,
+            }
+        )
 
     if not components:
         return None
@@ -170,7 +184,9 @@ def _detect_visible_label_bbox(image_path: str, label: str) -> tuple[int, int, i
         center_x = (sx0 + sx1) / 2
         center_y = (sy0 + sy1) / 2
         score = center_y / height
-        score += 0.35 * (1.0 - min(1.0, abs(center_x - width / 2) / max(1.0, width / 2)))
+        score += 0.35 * (
+            1.0 - min(1.0, abs(center_x - width / 2) / max(1.0, width / 2))
+        )
         score += 0.15 * min(1.0, len(cluster) / max(1, len(label)))
         if best is None or score > best[0]:
             best = (score, bbox)
@@ -178,7 +194,9 @@ def _detect_visible_label_bbox(image_path: str, label: str) -> tuple[int, int, i
     return best[1] if best else None
 
 
-def _mask_visible_label_for_ocsr(image_path: str, item: dict, output_dir: str = "") -> tuple[str, dict]:
+def _mask_visible_label_for_ocsr(
+    image_path: str, item: dict, output_dir: str = ""
+) -> tuple[str, dict]:
     """Create a cached OCSR-only image with the visible compound number removed."""
     label = _compound_label_for_ocsr_mask(item)
     bbox = _detect_visible_label_bbox(image_path, label)
@@ -211,7 +229,9 @@ def _mask_visible_label_for_ocsr(image_path: str, item: dict, output_dir: str = 
     else:
         clean_dir = Path(image_path).resolve().parent / ".ocsr_label_masked"
     clean_dir.mkdir(parents=True, exist_ok=True)
-    name_key = hashlib.sha1(f"{image_path}|{source_hash}|{safe_label}|{x0},{y0},{x1},{y1}".encode("utf-8")).hexdigest()[:12]
+    name_key = hashlib.sha1(
+        f"{image_path}|{source_hash}|{safe_label}|{x0},{y0},{x1},{y1}".encode("utf-8")
+    ).hexdigest()[:12]
     output_path = clean_dir / f"{Path(image_path).stem}_{safe_label}_{name_key}.png"
 
     draw = ImageDraw.Draw(image)
@@ -225,178 +245,9 @@ def _mask_visible_label_for_ocsr(image_path: str, item: dict, output_dir: str = 
     }
 
 
-def _drop_detached_dummy_components(smiles: Optional[str]) -> tuple[Optional[str], bool]:
-    """Drop OCSR-only wildcard specks that are disconnected from the molecule.
-
-    A clipped label edge or a stereochemistry note can be read as one or more
-    standalone ``*`` components.  Those isolated stars are never connected to
-    the chemical graph.  Keep attached dummy/query atoms untouched so real
-    Markush structures still fail closed and reach fallback/review.
-    """
-    if not smiles or "." not in smiles:
-        return smiles, False
-    parts = [part.strip() for part in str(smiles).split(".")]
-    kept = [part for part in parts if part and part not in _DETACHED_DUMMY_COMPONENTS]
-    if len(kept) == len(parts) or not kept:
-        return smiles, False
-    return ".".join(kept), True
-
-
-def _correct_cf_ocr_halogen(smiles: Optional[str]) -> tuple[Optional[str], bool]:
-    """Correct a common OCSR ``Cl`` -> ``[Cf]`` hallucination.
-
-    Californium is not a plausible final-product atom in these medicinal
-    chemistry patent tables. Some OCSR models emit ``[Cf]`` where the drawing
-    visibly contains ``Cl``. Only apply the replacement when the corrected
-    string is RDKit-parseable; strict QC still runs afterwards.
-    """
-    if not smiles or "[Cf]" not in str(smiles):
-        return smiles, False
-    candidate = str(smiles).replace("[Cf]", "Cl")
-    # Detached OCR specks can make the complete dot-separated prediction
-    # invalid even when the medicinal-chemistry product graph is valid. Check
-    # individual components here; final strict QC still validates the cleaned
-    # complete result after noise removal.
-    try:
-        from rdkit import Chem
-    except ImportError:
-        return smiles, False
-    for component in candidate.split("."):
-        mol = Chem.MolFromSmiles(component)
-        if mol is not None and mol.GetNumHeavyAtoms() >= 20:
-            return candidate, True
-    return smiles, False
-
-
-def _strip_detached_carbon_noise_fragments(smiles: Optional[str]) -> tuple[Optional[str], bool]:
-    """Drop tiny disconnected carbon fragments caused by text/label OCR.
-
-    Expanded visual crops can include headings or compound labels. OCSR engines
-    sometimes convert those glyphs into disconnected ``CC``/``[CH3+]`` specks.
-    Keep salts and heteroatom fragments fail-closed; strip only carbon-only
-    fragments with at most two heavy atoms when there is one clear large product.
-    """
-    if not smiles or "." not in str(smiles):
-        return smiles, False
-    try:
-        from rdkit import Chem
-    except ImportError:
-        return smiles, False
-    parts = [part.strip() for part in str(smiles).split(".") if part.strip()]
-    if len(parts) < 3:
-        return smiles, False
-    frags = []
-    dropped_invalid_noise = False
-    for part in parts:
-        mol = Chem.MolFromSmiles(part)
-        if mol is None:
-            if part in _DETACHED_CARBON_NOISE_COMPONENTS:
-                dropped_invalid_noise = True
-                continue
-            return smiles, False
-        frags.append(mol)
-    if not frags:
-        return smiles, False
-    indexed = sorted(
-        enumerate(frags),
-        key=lambda item: item[1].GetNumHeavyAtoms(),
-        reverse=True,
-    )
-    largest_idx, largest = indexed[0]
-    largest_heavy = largest.GetNumHeavyAtoms()
-    if largest_heavy < 20:
-        return smiles, False
-    dropped = []
-    for idx, frag in indexed[1:]:
-        heavy = frag.GetNumHeavyAtoms()
-        symbols = {atom.GetSymbol() for atom in frag.GetAtoms() if atom.GetAtomicNum() > 1}
-        if heavy <= 2 and symbols <= {"C"}:
-            dropped.append(idx)
-            continue
-        return smiles, False
-    if not dropped and not dropped_invalid_noise:
-        return smiles, False
-    return Chem.MolToSmiles(largest, isomericSmiles=True), True
-
-
-def _ring_digit_positions(smiles: str) -> list[tuple[str, int]]:
-    """Return single-character ring digit positions outside brackets."""
-    positions: list[tuple[str, int]] = []
-    in_bracket = False
-    for idx, char in enumerate(smiles):
-        if char == "[":
-            in_bracket = True
-            continue
-        if char == "]":
-            in_bracket = False
-            continue
-        if in_bracket or not char.isdigit():
-            continue
-        if idx > 0 and smiles[idx - 1] == "%":
-            continue
-        positions.append((char, idx))
-    return positions
-
-
-def _repair_single_ring_digit_mismatch(smiles: Optional[str]) -> tuple[Optional[str], bool]:
-    """Repair one DECIMER ring digit swap when the evidence is unambiguous.
-
-    Some DECIMER predictions contain one overused ring digit and one unclosed
-    ring digit, e.g. ``...CC2...C8=C1...`` where the final ``1`` should close
-    the early ``2``.  This changes exactly one single-character ring index and
-    only accepts the repair if RDKit parses the candidate cleanly afterwards.
-    """
-    if not smiles:
-        return smiles, False
-    text = str(smiles)
-    try:
-        from rdkit import Chem
-    except ImportError:
-        return smiles, False
-    if Chem.MolFromSmiles(text) is not None:
-        return smiles, False
-
-    positions = _ring_digit_positions(text)
-    by_digit: dict[str, list[int]] = {}
-    for digit, idx in positions:
-        by_digit.setdefault(digit, []).append(idx)
-    odd = {digit: idxs for digit, idxs in by_digit.items() if len(idxs) % 2 == 1}
-    if len(odd) != 2:
-        return smiles, False
-    missing = [digit for digit, idxs in odd.items() if len(idxs) == 1]
-    overused = [digit for digit, idxs in odd.items() if len(idxs) == 3]
-    if len(missing) != 1 or len(overused) != 1:
-        return smiles, False
-
-    missing_digit = missing[0]
-    overused_digit = overused[0]
-    for replace_idx in sorted(odd[overused_digit], reverse=True):
-        candidate = text[:replace_idx] + missing_digit + text[replace_idx + 1:]
-        # Guard against introducing another mismatch.
-        repaired_counts: dict[str, int] = {}
-        for digit, _idx in _ring_digit_positions(candidate):
-            repaired_counts[digit] = repaired_counts.get(digit, 0) + 1
-        if any(count % 2 for count in repaired_counts.values()):
-            continue
-        if Chem.MolFromSmiles(candidate) is not None:
-            return candidate, True
-    return smiles, False
-
-
 def _qc_ocr_smiles(raw_smiles: Optional[str]) -> tuple[Optional[str], dict, bool]:
-    cleaned_smiles, dropped_dummy_components = _drop_detached_dummy_components(raw_smiles)
-    cleaned_smiles, _fixed_cf = _correct_cf_ocr_halogen(cleaned_smiles)
-    cleaned_smiles, _stripped_noise = _strip_detached_carbon_noise_fragments(cleaned_smiles)
-    checked = qc_smiles(cleaned_smiles)
-    if checked.get("quality_flag") == "invalid_smiles":
-        repaired_smiles, repaired_ring = _repair_single_ring_digit_mismatch(cleaned_smiles)
-        if repaired_ring:
-            repaired_checked = qc_smiles(repaired_smiles)
-            if _is_clean_rdkit_result(repaired_checked):
-                repaired_checked["ocr_repair"] = "single_ring_digit_mismatch"
-                repaired_checked["engine_raw_smiles"] = cleaned_smiles
-                return repaired_smiles, repaired_checked, dropped_dummy_components
-    return cleaned_smiles, checked, dropped_dummy_components
+    """Observe the exact engine string; syntactic/chemical edits are forbidden."""
+    return raw_smiles, qc_smiles(raw_smiles), False
 
 
 def _is_clean_rdkit_result(qc_result: dict) -> bool:
@@ -424,7 +275,9 @@ def _largest_fragment_mol(smiles: Optional[str]):
     return max(frags or [mol], key=lambda frag: frag.GetNumHeavyAtoms())
 
 
-def _review_fallback_is_graph_compatible(review_smiles: Optional[str], fallback_smiles: Optional[str]) -> bool:
+def _review_fallback_is_graph_compatible(
+    review_smiles: Optional[str], fallback_smiles: Optional[str]
+) -> bool:
     """Guard against a clean fallback replacing the wrong review candidate.
 
     OCR sometimes emits a wildcard or a syntactically valid but improbable atom
@@ -444,7 +297,8 @@ def _review_fallback_is_graph_compatible(review_smiles: Optional[str], fallback_
     review_indices = [
         atom.GetIdx()
         for atom in editable.GetAtoms()
-        if atom.GetAtomicNum() == 0 or atom.GetSymbol() not in COMMON_FINAL_PRODUCT_ELEMENTS
+        if atom.GetAtomicNum() == 0
+        or atom.GetSymbol() not in COMMON_FINAL_PRODUCT_ELEMENTS
     ]
     if not review_indices:
         return True
@@ -466,178 +320,6 @@ def _review_fallback_is_graph_compatible(review_smiles: Optional[str], fallback_
         return fallback_mol.HasSubstructMatch(core)
     except Exception:
         return False
-
-
-def _restore_cd3_wildcard(smiles: Optional[str], item: dict) -> Optional[str]:
-    """Use visual OCR CD3 evidence to restore one wildcard isotope methyl."""
-    if not smiles or str(item.get("isotope_label_evidence") or "").upper() != "CD3":
-        return None
-    try:
-        from rdkit import Chem
-    except ImportError:
-        return None
-    mol = Chem.MolFromSmiles(str(smiles))
-    if mol is None:
-        return None
-    dummy_atoms = [atom for atom in mol.GetAtoms() if atom.GetAtomicNum() == 0]
-    if len(dummy_atoms) != 1 or dummy_atoms[0].GetDegree() != 1:
-        return None
-    editable = Chem.RWMol(mol)
-    carbon = editable.GetAtomWithIdx(dummy_atoms[0].GetIdx())
-    carbon.SetAtomicNum(6)
-    carbon.SetNoImplicit(True)
-    for _ in range(3):
-        deuterium = Chem.Atom(1)
-        deuterium.SetIsotope(2)
-        d_idx = editable.AddAtom(deuterium)
-        editable.AddBond(carbon.GetIdx(), d_idx, Chem.BondType.SINGLE)
-    restored = editable.GetMol()
-    try:
-        Chem.SanitizeMol(restored)
-        return Chem.MolToSmiles(restored, isomericSmiles=True)
-    except Exception:
-        return None
-
-
-def _restore_singleton_terminal_amine_wildcard(smiles: Optional[str], item: dict) -> Optional[str]:
-    """Restore a terminal amino group when singleton-claim evidence proves it.
-
-    OCSR can read a terminal ``NH2`` label as an attached wildcard
-    atom. Only apply this correction for claim/formula singleton bindings whose
-    OCR chemical name explicitly contains amino/amine evidence, and only when
-    there is exactly one terminal dummy atom.
-    """
-    if not smiles:
-        return None
-    if str(item.get("binding_rule") or "") != "singleton_claim_formula_structure":
-        return None
-    evidence = " ".join(
-        str(item.get(key) or "")
-        for key in ("singleton_chemical_name", "chemical_name", "notes", "evidence_reasons")
-    )
-    if not re.search(r"amino|amine|NH2", evidence, re.IGNORECASE):
-        return None
-    try:
-        from rdkit import Chem
-    except ImportError:
-        return None
-    mol = Chem.MolFromSmiles(str(smiles))
-    if mol is None:
-        return None
-    dummy_atoms = [atom for atom in mol.GetAtoms() if atom.GetAtomicNum() == 0]
-    if len(dummy_atoms) != 1 or dummy_atoms[0].GetDegree() != 1:
-        return None
-    editable = Chem.RWMol(mol)
-    nitrogen = editable.GetAtomWithIdx(dummy_atoms[0].GetIdx())
-    nitrogen.SetAtomicNum(7)
-    nitrogen.SetFormalCharge(0)
-    nitrogen.SetNoImplicit(False)
-    restored = editable.GetMol()
-    try:
-        Chem.SanitizeMol(restored)
-        return Chem.MolToSmiles(restored, isomericSmiles=True)
-    except Exception:
-        return None
-
-
-def _invert_chiral_tags(smiles: str) -> Optional[str]:
-    """Return the enantiomeric SMILES by flipping all assigned chiral atoms."""
-    if not smiles:
-        return None
-    try:
-        from rdkit import Chem
-    except ImportError:
-        return None
-
-    mol = Chem.MolFromSmiles(smiles)
-    if mol is None:
-        return None
-
-    flipped = 0
-    for atom in mol.GetAtoms():
-        tag = atom.GetChiralTag()
-        if tag == Chem.ChiralType.CHI_TETRAHEDRAL_CW:
-            atom.SetChiralTag(Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
-            flipped += 1
-        elif tag == Chem.ChiralType.CHI_TETRAHEDRAL_CCW:
-            atom.SetChiralTag(Chem.ChiralType.CHI_TETRAHEDRAL_CW)
-            flipped += 1
-
-    if flipped == 0:
-        return None
-    return Chem.MolToSmiles(mol, isomericSmiles=True)
-
-
-def _same_stereoless_smiles(a: str, b: str) -> bool:
-    try:
-        from rdkit import Chem
-    except ImportError:
-        return False
-    ma = Chem.MolFromSmiles(a or "")
-    mb = Chem.MolFromSmiles(b or "")
-    if ma is None or mb is None:
-        return False
-    return Chem.MolToSmiles(ma, isomericSmiles=False) == Chem.MolToSmiles(mb, isomericSmiles=False)
-
-
-def _apply_qc_to_result(result: dict, smiles: str, note: str) -> None:
-    qc_result = qc_smiles(smiles)
-    if not qc_result.get("rdkit_valid"):
-        return
-    result["raw_smiles"] = smiles
-    result["canonical_smiles"] = qc_result["canonical_smiles"]
-    result["inchikey"] = qc_result["inchikey"]
-    result["mol_formula"] = qc_result["mol_formula"]
-    result["mol_weight"] = qc_result["mol_weight"]
-    result["heavy_atom_count"] = qc_result["heavy_atom_count"]
-    result["ring_count"] = qc_result["ring_count"]
-    result["chiral_centers"] = qc_result["chiral_centers"]
-    result["rdkit_valid"] = True
-    result["OCSR_quality_flag"] = note
-    result["stereo_correction"] = note
-    if qc_result.get("suspicious_elements"):
-        result["suspicious_elements"] = qc_result["suspicious_elements"]
-    else:
-        result.pop("suspicious_elements", None)
-
-
-def _normalise_enantiomer_pairs(results: List[dict]) -> List[dict]:
-    """Ensure N-1/N-2 pairs are not emitted as identical stereoisomers.
-
-    OCSR engines often read both enantiomer drawings as the same wedge
-    direction. When a pair has the same formula and same stereoless graph, keep
-    N-1 as read and flip assigned chiral tags in N-2 if the pair is identical.
-    """
-    by_id = {r.get("cpd_id"): r for r in results}
-    bases = sorted({
-        m.group(1)
-        for r in results
-        for m in [re.match(r"^Compound\s+([1-9]\d*)-[12]$", str(r.get("cpd_id", "")))]
-        if m
-    }, key=int)
-
-    for base in bases:
-        left = by_id.get(f"Compound {base}-1")
-        right = by_id.get(f"Compound {base}-2")
-        if not left or not right:
-            continue
-        ls = left.get("canonical_smiles") or left.get("raw_smiles") or ""
-        rs = right.get("canonical_smiles") or right.get("raw_smiles") or ""
-        if not ls or not rs:
-            continue
-        if left.get("mol_formula") and right.get("mol_formula") and left["mol_formula"] != right["mol_formula"]:
-            continue
-        if not _same_stereoless_smiles(ls, rs):
-            continue
-        if ls == rs or left.get("inchikey") == right.get("inchikey"):
-            flipped = _invert_chiral_tags(rs)
-            if flipped and flipped != rs:
-                _apply_qc_to_result(
-                    right,
-                    flipped,
-                    "stereo_pair_inverted_from_compound_%s-1" % base,
-                )
-    return results
 
 
 # Engine registry: production OCSR is DECIMER-only.
@@ -682,6 +364,7 @@ class SmilesConverter:
         preprocess_long_edge: int = 1024,
         preprocess_padding: int = 20,
         engine_configs: Optional[dict] = None,
+        retry_normalization: bool = False,
     ):
         """Initialize SmilesConverter.
 
@@ -704,6 +387,7 @@ class SmilesConverter:
         self.preprocess_long_edge = preprocess_long_edge
         self.preprocess_padding = preprocess_padding
         self.engine_configs = engine_configs or {}
+        self.retry_normalization = retry_normalization
 
         # Initialize cache
         self.cache = None
@@ -764,7 +448,9 @@ class SmilesConverter:
         if not ocsr_image_path or not os.path.isfile(ocsr_image_path):
             result["OCSR_status"] = "image_missing"
             result["OCSR_failure_reason"] = (
-                f"Image file not found: {ocsr_image_path}" if ocsr_image_path else "No image_path"
+                f"Image file not found: {ocsr_image_path}"
+                if ocsr_image_path
+                else "No image_path"
             )
             return {"item": item, "result": result, "ready": False}
 
@@ -777,8 +463,10 @@ class SmilesConverter:
                     padding=self.preprocess_padding,
                     long_edge=self.preprocess_long_edge,
                 )
-            except Exception:
-                working_image = ocsr_image_path
+            except (OSError, ValueError) as exc:
+                result["OCSR_status"] = "preprocessing_failed"
+                result["OCSR_failure_reason"] = str(exc)
+                return {"item": item, "result": result, "ready": False}
 
         try:
             image_hash = compute_image_sha256(ocsr_image_path)
@@ -797,343 +485,240 @@ class SmilesConverter:
             "ocsr_image_path": ocsr_image_path,
         }
 
-    def convert_one(self, item: dict, preprocess_dir: str = "", prepared: Optional[dict] = None) -> dict:
-        """Convert one binding item to a SMILES result.
+    def _prediction(self, engine_name: str, engine, image: str) -> tuple[dict, dict]:
+        """Cache only exact unmodified observations under the current epoch."""
+        image_hash = compute_image_sha256(image)
+        notes: dict = {"input_image_sha256": image_hash}
+        identity = None
+        if callable(getattr(engine, "runtime_identity", None)):
+            try:
+                identity = engine.runtime_identity()["fingerprint"]
+            except (OSError, RuntimeError, ValueError) as exc:
+                return {
+                    "status": "unavailable",
+                    "raw_smiles": None,
+                    "error": str(exc),
+                }, notes
+        cache_key = f"{engine_name}:raw-v{OCSR_OBSERVATION_VERSION}:{identity}"
+        if identity is None:
+            notes["cache_disabled_unversioned_runtime"] = True
+        cached = (
+            self.cache.get_cached_result(image_hash, cache_key)
+            if self.cache and identity
+            else None
+        )
+        if cached is not None:
+            checked = qc_smiles(cached.get("raw_smiles"))
+            if (
+                cached.get("status") == "success"
+                and cached.get("model_fingerprint") == identity
+                and _is_clean_rdkit_result(checked)
+            ):
+                notes["from_cache"] = True
+                return cached, notes
+            notes[
+                "ignored_cached_empty"
+                if not cached.get("raw_smiles")
+                else "ignored_cached_non_clean"
+            ] = True
+        elif self.cache:
+            legacy = self.cache.get_cached_result(image_hash, engine_name)
+            if legacy is not None:
+                notes["ignored_cached_precontract"] = True
+                notes[
+                    "ignored_cached_empty"
+                    if not legacy.get("raw_smiles")
+                    else "ignored_cached_non_clean"
+                ] = True
+        try:
+            prediction = engine.predict(image, timeout=self.timeout)
+        except Exception as exc:
+            prediction = {"status": "failed", "raw_smiles": None, "error": str(exc)}
+        if not isinstance(prediction, dict):
+            prediction = {
+                "status": "failed",
+                "raw_smiles": None,
+                "error": "Invalid engine response",
+            }
+        raw = prediction.get("raw_smiles")
+        if raw is not None and not isinstance(raw, str):
+            prediction = {
+                **prediction,
+                "status": "failed",
+                "raw_smiles": None,
+                "error": "Invalid SMILES response type",
+            }
+        if self.cache and identity:
+            checked = qc_smiles(prediction.get("raw_smiles"))
+            self.cache.save_result(
+                image_hash,
+                cache_key,
+                {
+                    **prediction,
+                    **checked,
+                    "model_version": prediction.get("model_version"),
+                },
+            )
+        return prediction, notes
 
-        Args:
-            item: A binding dict with at least:
-                - cpd (str): Compound ID
-                - image_path (str): Path to structure image
-                - page_no (int): Page number
-                - structure_id (str): Structure identifier
-                - structure_index (int): Structure index on page
-            preprocess_dir: Directory for preprocessed images.
+    def convert_one(
+        self, item: dict, preprocess_dir: str = "", prepared: Optional[dict] = None
+    ) -> dict:
+        """One evidence-preserving path: image -> raw prediction -> RDKit QC.
 
-        Returns:
-            Comprehensive result dict with SMILES, QC, and OCSR metadata.
+        A single bounded normalization retry changes image presentation, never
+        atoms, bonds, ring digits, suffixes or stereochemistry in a prediction.
         """
-        structure_index = item.get("structure_index", 0)
         prepared = prepared or self._prepare_input(item, preprocess_dir=preprocess_dir)
         result = dict(prepared.get("result", {}))
         if not prepared.get("ready"):
             return result
-        image_hash = prepared["image_hash"]
-        working_image = prepared["working_image"]
-
-        # Try engines in order
-        engine_attempts = []
-        best_result = None
-
+        attempts = []
         for engine_name in self.all_engine_names:
             engine = self.engines.get(engine_name)
             if engine is None:
+                attempts.append(
+                    {
+                        "engine": engine_name,
+                        "status": "unavailable",
+                        "quality_flag": "empty_prediction",
+                        "error": "Engine is not registered",
+                    }
+                )
+                continue
+            images = [(prepared["working_image"], "segmented_image")]
+            for attempt_index in range(2):
+                if attempt_index >= len(images):
+                    break
+                image, source = images[attempt_index]
+                prediction, notes = self._prediction(engine_name, engine, image)
+                raw, checked, _unused = _qc_ocr_smiles(prediction.get("raw_smiles"))
                 attempt = {
                     "engine": engine_name,
-                    "status": "unavailable",
-                    "quality_flag": "empty_prediction",
-                    "error": f"Engine '{engine_name}' not registered",
+                    "status": prediction.get("status", "failed"),
+                    "raw_smiles": raw,
+                    "quality_flag": checked["quality_flag"],
+                    "error": prediction.get("error"),
+                    "elapsed_sec": prediction.get("elapsed_sec", 0),
+                    "model_fingerprint": prediction.get("model_fingerprint"),
+                    "token_confidence": prediction.get("token_confidence"),
+                    "device": prediction.get("device"),
+                    "peak_rss_mb": prediction.get("peak_rss_mb"),
+                    "device_used": prediction.get("device_used"),
+                    "device_warning": prediction.get("device_warning"),
+                    "input_source": source,
+                    "input_image": image,
+                    **notes,
                 }
-                engine_attempts.append(attempt)
-                continue
-
-            # Check cache first
-            if self.cache:
-                cached = self.cache.get_cached_result(image_hash, engine_name)
-                if cached is not None:
-                    if not str(cached.get("raw_smiles") or "").strip():
-                        engine_attempts.append({
-                            "engine": engine_name,
-                            "status": cached.get("status", "cached_empty"),
-                            "quality_flag": cached.get("quality_flag", "empty_prediction"),
-                            "error": cached.get("error"),
-                            "from_cache": True,
-                            "ignored_cached_empty": True,
-                        })
-                        cached = None
-                if cached is not None:
-                    cached_raw_smiles, cached_qc, cached_dummy_cleanup = _qc_ocr_smiles(
-                        cached.get("raw_smiles")
+                if checked.get("suspicious_elements"):
+                    attempt["suspicious_elements"] = checked["suspicious_elements"]
+                attempts.append(attempt)
+                clean = prediction.get(
+                    "status"
+                ) == "success" and _is_clean_rdkit_result(checked)
+                if (
+                    clean
+                    and result.get("OCSR_quality_flag")
+                    in {"markush_or_query", "suspicious_element"}
+                    and not _review_fallback_is_graph_compatible(
+                        result.get("raw_smiles"), raw
                     )
-                    cached_restored_cd3 = None
-                    if cached_qc.get("quality_flag") == "markush_or_query":
-                        cached_restored_cd3 = _restore_cd3_wildcard(cached_raw_smiles, item)
-                        if cached_restored_cd3:
-                            cached_raw_smiles, cached_qc, _unused_cleanup = _qc_ocr_smiles(
-                                cached_restored_cd3
-                            )
-                        if cached_qc.get("quality_flag") == "markush_or_query":
-                            cached_restored_amine = _restore_singleton_terminal_amine_wildcard(cached_raw_smiles, item)
-                            if cached_restored_amine:
-                                cached_raw_smiles, cached_qc, _unused_cleanup = _qc_ocr_smiles(
-                                    cached_restored_amine
-                                )
-                                cached["restored_terminal_amine"] = True
-                    if cached_dummy_cleanup and _is_clean_rdkit_result(cached_qc):
-                        cached = {
-                            **cached,
-                            "raw_smiles": cached_raw_smiles,
-                            "rdkit_valid": cached_qc.get("rdkit_valid"),
-                            "canonical_smiles": cached_qc.get("canonical_smiles"),
-                            "inchikey": cached_qc.get("inchikey"),
-                            "mol_formula": cached_qc.get("mol_formula"),
-                            "mol_weight": cached_qc.get("mol_weight"),
-                            "heavy_atom_count": cached_qc.get("heavy_atom_count", 0),
-                            "ring_count": cached_qc.get("ring_count", 0),
-                            "chiral_centers": cached_qc.get("chiral_centers", 0),
-                            "quality_flag": cached_qc.get("quality_flag"),
-                            "detached_dummy_cleanup": True,
-                        }
-                    if cached_restored_cd3 and _is_clean_rdkit_result(cached_qc):
-                        cached = {
-                            **cached,
-                            "raw_smiles": cached_raw_smiles,
-                            "rdkit_valid": cached_qc.get("rdkit_valid"),
-                            "canonical_smiles": cached_qc.get("canonical_smiles"),
-                            "inchikey": cached_qc.get("inchikey"),
-                            "mol_formula": cached_qc.get("mol_formula"),
-                            "mol_weight": cached_qc.get("mol_weight"),
-                            "heavy_atom_count": cached_qc.get("heavy_atom_count", 0),
-                            "ring_count": cached_qc.get("ring_count", 0),
-                            "chiral_centers": cached_qc.get("chiral_centers", 0),
-                            "quality_flag": cached_qc.get("quality_flag"),
-                            "restored_isotope_label": "CD3",
-                        }
-                    # Re-evaluate every historical cache entry with current QC
-                    # rules so a previously accepted plausible-looking OCR
-                    # error cannot bypass stricter releases.
-                    cached = {
-                        **cached,
-                        "raw_smiles": cached_raw_smiles,
-                        "rdkit_valid": cached_qc.get("rdkit_valid"),
-                        "canonical_smiles": cached_qc.get("canonical_smiles"),
-                        "inchikey": cached_qc.get("inchikey"),
-                        "mol_formula": cached_qc.get("mol_formula"),
-                        "mol_weight": cached_qc.get("mol_weight"),
-                        "heavy_atom_count": cached_qc.get("heavy_atom_count", 0),
-                        "ring_count": cached_qc.get("ring_count", 0),
-                        "chiral_centers": cached_qc.get("chiral_centers", 0),
-                        "quality_flag": cached_qc.get("quality_flag"),
-                        "suspicious_elements": cached_qc.get("suspicious_elements", []),
-                    }
-                    attempt = {
-                        "engine": engine_name,
-                        "status": cached.get("status", "cached"),
-                        "quality_flag": cached.get("quality_flag", ""),
-                        "error": cached.get("error"),
-                        "from_cache": True,
-                    }
-                    if cached.get("suspicious_elements"):
-                        attempt["suspicious_elements"] = cached.get("suspicious_elements")
-                    if cached_qc.get("ocr_repair"):
-                        attempt["ocr_repair"] = cached_qc.get("ocr_repair")
-                        attempt["engine_raw_smiles"] = cached_qc.get("engine_raw_smiles")
-                    if cached.get("detached_dummy_cleanup"):
-                        attempt["detached_dummy_cleanup"] = True
-                    if cached.get("restored_isotope_label"):
-                        attempt["restored_isotope_label"] = cached.get("restored_isotope_label")
-                    if cached.get("restored_terminal_amine"):
-                        attempt["restored_terminal_amine"] = True
-                    engine_attempts.append(attempt)
-
-                    cached_clean = (
-                        cached.get("rdkit_valid")
-                        and cached.get("quality_flag") == "ok"
+                ):
+                    attempt["rejected_review_fallback"] = (
+                        "product core differs from review candidate"
                     )
-                    cached_query_baseline = (
-                        result.get("raw_smiles")
-                        if best_result == "partial_query"
-                        and result.get("OCSR_quality_flag") in {"markush_or_query", "suspicious_element"}
-                        else None
-                    )
-                    if (
-                        cached_clean
-                        and cached_query_baseline
-                        and not _review_fallback_is_graph_compatible(
-                            cached_query_baseline,
-                            cached.get("raw_smiles"),
-                        )
+                    continue
+                if raw:
+                    for key in (
+                        "canonical_smiles",
+                        "inchikey",
+                        "mol_formula",
+                        "mol_weight",
+                        "heavy_atom_count",
+                        "ring_count",
+                        "chiral_centers",
+                        "rdkit_valid",
                     ):
-                        attempt["rejected_query_fallback"] = "product graph differs from query candidate"
-                        continue
-                    if cached_clean:
-                        # Cache hit with a clean valid SMILES - use it.
-                        best_result = cached
-                        result["raw_smiles"] = cached.get("raw_smiles")
-                        result["canonical_smiles"] = cached.get("canonical_smiles")
-                        result["inchikey"] = cached.get("inchikey")
-                        result["mol_formula"] = cached.get("mol_formula")
-                        result["mol_weight"] = cached.get("mol_weight")
-                        result["heavy_atom_count"] = cached.get("heavy_atom_count", 0)
-                        result["ring_count"] = cached.get("ring_count", 0)
-                        result["chiral_centers"] = cached.get("chiral_centers", 0)
-                        result["rdkit_valid"] = True
-                        result["OCSR_engine"] = engine_name
-                        result["OCSR_status"] = "success"
-                        result["OCSR_quality_flag"] = cached.get("quality_flag", "ok")
-                        result["OCSR_failure_reason"] = None
-                        if cached_qc.get("ocr_repair"):
-                            result["OCSR_repair_note"] = cached_qc.get("ocr_repair")
-                            result["engine_raw_smiles"] = cached_qc.get("engine_raw_smiles")
-                        result.pop("suspicious_elements", None)
-                        break
-                    else:
-                        # Accuracy first: cached non-clean outputs are only
-                        # diagnostics.  They must never block a fresh DECIMER
-                        # attempt because engine config, GPU/CPU mode, QC
-                        # rules, or crop selection may have changed.
-                        attempt["ignored_cached_non_clean"] = True
-
-            # Run engine prediction
-            try:
-                pred_result = engine.predict(working_image, timeout=self.timeout)
-            except Exception as e:
-                pred_result = {
-                    "engine": engine_name,
-                    "status": "failed",
-                    "raw_smiles": None,
-                    "molblock": None,
-                    "confidence": None,
-                    "error": str(e),
-                    "elapsed_sec": 0.0,
-                }
-
-            # Apply RDKit QC
-            engine_raw_smiles = pred_result.get("raw_smiles")
-            raw_smiles, qc_result, detached_dummy_cleanup = _qc_ocr_smiles(engine_raw_smiles)
-            restored_cd3_smiles = None
-            restored_terminal_amine_smiles = None
-            if qc_result.get("quality_flag") == "markush_or_query":
-                restored_cd3_smiles = _restore_cd3_wildcard(raw_smiles, item)
-                if restored_cd3_smiles:
-                    raw_smiles, qc_result, _unused_cleanup = _qc_ocr_smiles(restored_cd3_smiles)
-                if qc_result.get("quality_flag") == "markush_or_query":
-                    restored_terminal_amine_smiles = _restore_singleton_terminal_amine_wildcard(raw_smiles, item)
-                    if restored_terminal_amine_smiles:
-                        raw_smiles, qc_result, _unused_cleanup = _qc_ocr_smiles(restored_terminal_amine_smiles)
-
-            attempt = {
-                "engine": engine_name,
-                "status": pred_result.get("status", "unknown"),
-                "quality_flag": qc_result["quality_flag"],
-                "error": pred_result.get("error"),
-                "raw_smiles": raw_smiles,
-                "elapsed_sec": pred_result.get("elapsed_sec", 0.0),
-                "device_used": pred_result.get("device_used"),
-                "device_warning": pred_result.get("device_warning"),
-            }
-            if qc_result.get("suspicious_elements"):
-                attempt["suspicious_elements"] = qc_result["suspicious_elements"]
-            if qc_result.get("ocr_repair"):
-                attempt["ocr_repair"] = qc_result.get("ocr_repair")
-                attempt["engine_raw_smiles"] = qc_result.get("engine_raw_smiles") or engine_raw_smiles
-            if detached_dummy_cleanup:
-                attempt["engine_raw_smiles"] = engine_raw_smiles
-                attempt["detached_dummy_cleanup"] = True
-            if restored_cd3_smiles:
-                attempt["restored_isotope_label"] = "CD3"
-                attempt["engine_raw_smiles"] = engine_raw_smiles
-            if restored_terminal_amine_smiles:
-                attempt["restored_terminal_amine"] = True
-                attempt["engine_raw_smiles"] = engine_raw_smiles
-            engine_attempts.append(attempt)
-
-            # Save to cache
-            if self.cache:
-                cache_data = {
-                    "raw_smiles": raw_smiles,
-                    "molblock": pred_result.get("molblock"),
-                    "rdkit_valid": qc_result["rdkit_valid"],
-                    "canonical_smiles": qc_result["canonical_smiles"],
-                    "inchikey": qc_result["inchikey"],
-                    "mol_formula": qc_result["mol_formula"],
-                    "mol_weight": qc_result["mol_weight"],
-                    "quality_flag": qc_result["quality_flag"],
-                    "status": pred_result.get("status", "unknown"),
-                    "error": pred_result.get("error"),
-                    "model_version": pred_result.get("device_used"),
-                }
-                self.cache.save_result(image_hash, engine_name, cache_data)
-
-            # Check if this result is usable
-            if pred_result.get("status") == "success" and raw_smiles:
-                review_baseline = (
-                    result.get("raw_smiles")
-                    if best_result == "partial_query"
-                    and result.get("OCSR_quality_flag") in {"markush_or_query", "suspicious_element"}
-                    else None
-                )
-                incompatible_review_fallback = bool(
-                    review_baseline
-                    and _is_clean_rdkit_result(qc_result)
-                    and not _review_fallback_is_graph_compatible(review_baseline, raw_smiles)
-                )
-                if incompatible_review_fallback:
-                    attempt["rejected_review_fallback"] = "product core differs from review candidate"
-                    continue
-                result["raw_smiles"] = raw_smiles
-                result["canonical_smiles"] = qc_result["canonical_smiles"]
-                result["inchikey"] = qc_result["inchikey"]
-                result["mol_formula"] = qc_result["mol_formula"]
-                result["mol_weight"] = qc_result["mol_weight"]
-                result["heavy_atom_count"] = qc_result["heavy_atom_count"]
-                result["ring_count"] = qc_result["ring_count"]
-                result["chiral_centers"] = qc_result["chiral_centers"]
-                result["rdkit_valid"] = qc_result["rdkit_valid"]
-                result["OCSR_engine"] = engine_name
-                result["OCSR_quality_flag"] = qc_result["quality_flag"]
-                if qc_result.get("suspicious_elements"):
-                    result["suspicious_elements"] = qc_result["suspicious_elements"]
-                else:
-                    result.pop("suspicious_elements", None)
-                if qc_result.get("ocr_repair"):
-                    result["OCSR_repair_note"] = qc_result.get("ocr_repair")
-                    result["engine_raw_smiles"] = qc_result.get("engine_raw_smiles") or engine_raw_smiles
-
-                if _is_clean_rdkit_result(qc_result):
-                    # Best possible outcome - stop here.
-                    result["OCSR_status"] = "success"
-                    result["OCSR_failure_reason"] = None
-                    best_result = True
-                    break
-                elif qc_result["quality_flag"] in {"markush_or_query", "suspicious_element"}:
-                    # Query atoms and improbable element reads are not a
-                    # deliverable final-product SMILES. Keep the candidate for
-                    # review while trying fallback engines.
-                    result["OCSR_status"] = "success"
-                    best_result = "partial_query"
-                    continue
-                else:
-                    # Got SMILES but RDKit invalid - record but try fallback
-                    result["OCSR_status"] = "invalid_smiles"
-                    result["OCSR_failure_reason"] = (
-                        f"Engine {engine_name} produced SMILES but RDKit validation failed: "
-                        f"{qc_result['quality_flag']}"
+                        result[key] = checked[key]
+                    result.update(
+                        raw_smiles=raw,
+                        engine_raw_smiles=raw,
+                        OCSR_engine=engine_name,
+                        OCSR_quality_flag=checked["quality_flag"],
+                        ocsr_structure_image=image,
+                        model_fingerprint=prediction.get("model_fingerprint"),
+                        token_confidence=prediction.get("token_confidence"),
+                        device=prediction.get("device"),
+                        peak_rss_mb=prediction.get("peak_rss_mb"),
                     )
-                    best_result = "partial"
-            elif pred_result.get("status") == "timeout":
-                if result["OCSR_status"] in ("not_processed", "engine_unavailable"):
+                    if checked.get("suspicious_elements"):
+                        result["suspicious_elements"] = checked["suspicious_elements"]
+                    else:
+                        result.pop("suspicious_elements", None)
+                if clean:
+                    result.update(
+                        OCSR_status="success",
+                        OCSR_failure_reason=None,
+                        engine_attempts=attempts,
+                    )
+                    return result
+                status = prediction.get("status")
+                if status == "success" and raw:
+                    result["OCSR_status"] = (
+                        "review_required"
+                        if checked["rdkit_valid"]
+                        else "invalid_smiles"
+                    )
+                    result["OCSR_failure_reason"] = (
+                        f"Raw prediction requires review: {checked['quality_flag']}"
+                    )
+                elif status == "timeout":
                     result["OCSR_status"] = "engine_timeout"
                     result["OCSR_failure_reason"] = (
-                        f"Engine {engine_name} timed out after {self.timeout}s"
+                        f"Engine timed out after {self.timeout}s"
                     )
-            elif pred_result.get("status") == "unavailable":
-                if result["OCSR_status"] == "not_processed":
-                    result["OCSR_status"] = "engine_unavailable"
+                else:
+                    result["OCSR_status"] = (
+                        "engine_unavailable"
+                        if status == "unavailable"
+                        else "all_engines_failed"
+                    )
                     result["OCSR_failure_reason"] = (
-                        f"Engine {engine_name} unavailable: {pred_result.get('error', '')}"
+                        prediction.get("error") or "Engine failed"
                     )
+                if (
+                    self.retry_normalization
+                    and attempt_index == 0
+                    and status == "success"
+                    and raw
+                    and preprocess_dir
+                    and len(self.all_engine_names) == 1
+                ):
+                    from .retry_inputs import normalized_retry_image
 
-        # If no engine succeeded
-        if best_result is None:
-            if result["OCSR_status"] == "not_processed":
-                result["OCSR_status"] = "all_engines_failed"
-                result["OCSR_failure_reason"] = "All engines failed or unavailable"
-        elif best_result == "partial":
-            # We have a SMILES but it's not RDKit valid
-            pass  # status already set to "invalid_smiles"
-
-        result["engine_attempts"] = engine_attempts
+                    try:
+                        alternate = normalized_retry_image(
+                            prepared["ocsr_image_path"], preprocess_dir
+                        )
+                        if alternate is not None:
+                            images.append((alternate, "normalized_image"))
+                    except (OSError, ValueError) as exc:
+                        attempts.append(
+                            {
+                                "engine": engine_name,
+                                "status": "preprocessing_failed",
+                                "quality_flag": "retry_input_unavailable",
+                                "error": str(exc),
+                            }
+                        )
+        result["engine_attempts"] = attempts
         return result
+
+    def close(self) -> None:
+        for engine in self.engines.values():
+            closer = getattr(engine, "close", None)
+            if callable(closer):
+                closer()
 
     def convert_batch(
         self,
@@ -1142,86 +727,42 @@ class SmilesConverter:
         only_bound: bool = True,
         limit: int = 0,
         jobs: int = 1,
+        progress_path: str = "",
     ) -> List[dict]:
-        """Batch-convert binding items to SMILES results.
+        """Bounded parallel image preparation feeding one owned model queue."""
+        from .conversion_progress import ConversionProgress
 
-        Args:
-            items: List of binding dictionaries.
-            preprocess_dir: Directory for preprocessed images.
-            only_bound: If True, only process items with bind_status=bound
-                       (or items without bind_status field, which are assumed bound).
-            limit: If > 0, only process this many items (for testing).
-
-        Returns:
-            List of SMILES result dicts.
-        """
-        # Filter items
-        filtered = []
-        for item in items:
-            # Check bind_status
-            bind_status = item.get("bind_status", "bound")  # Default to bound
-            if only_bound and bind_status != "bound":
-                continue
-            filtered.append(item)
-
+        filtered = [
+            item
+            for item in items
+            if not only_bound or item.get("bind_status", "bound") == "bound"
+        ]
         if limit > 0:
             filtered = filtered[:limit]
-
-        jobs = max(1, int(jobs or 1))
+        jobs = max(1, min(int(jobs or 1), 8))
+        progress = ConversionProgress(progress_path, len(filtered))
         results = []
-        t_batch_start = time.time()
-        if jobs > 1:
-            print(f"  Parallel OCSR workers: {jobs}")
+        started = time.monotonic()
+        try:
             with ThreadPoolExecutor(max_workers=jobs) as executor:
-                future_map = {
-                    executor.submit(self.convert_one, item, preprocess_dir): (i, item)
-                    for i, item in enumerate(filtered)
-                }
-                ordered = [None] * len(filtered)
-                completed = 0
-                for future in as_completed(future_map):
-                    i, item = future_map[future]
-                    cpd_id = item.get("cpd", f"item_{i}")
-                    try:
-                        result = future.result()
-                    except Exception as e:
-                        result = {
-                            "patent_id": item.get("patent_id", "WO2026067249"),
-                            "page_no": item.get("page_no", 0),
-                            "cpd_id": cpd_id,
-                            "structure_id": item.get("structure_id", ""),
-                            "structure_image": item.get("image_path", ""),
-                            "raw_smiles": None,
-                            "canonical_smiles": None,
-                            "rdkit_valid": False,
-                            "OCSR_engine": None,
-                            "OCSR_status": "failed",
-                            "OCSR_quality_flag": "exception",
-                            "OCSR_failure_reason": str(e),
-                            "engine_attempts": [],
-                        }
-                    ordered[i] = result
-                    completed += 1
-                    status = result.get("OCSR_status", "?")
-                    engine = result.get("OCSR_engine", "-")
-                    total_elapsed = time.time() - t_batch_start
-                    print(f"  [{completed}/{len(filtered)}] {cpd_id}: {status} "
-                          f"engine={engine} (total {total_elapsed:.0f}s)")
-                return _normalise_enantiomer_pairs([r for r in ordered if r is not None])
-
-        for i, item in enumerate(filtered):
-            cpd_id = item.get("cpd", f"item_{i}")
-            t0 = time.time()
-            result = self.convert_one(item, preprocess_dir=preprocess_dir)
-            dt = time.time() - t0
-            results.append(result)
-
-            # Progress logging — helps diagnose which image hangs
-            status = result.get("OCSR_status", "?")
-            engine = result.get("OCSR_engine", "-")
-            if (i + 1) % 10 == 0 or dt > 30 or status not in ("success", "not_processed"):
-                total_elapsed = time.time() - t_batch_start
-                print(f"  [{i+1}/{len(filtered)}] {cpd_id}: {status} "
-                      f"engine={engine} {dt:.1f}s (total {total_elapsed:.0f}s)")
-
-        return _normalise_enantiomer_pairs(results)
+                # Only one small window is prepared ahead; inference is never duplicated.
+                for offset in range(0, len(filtered), jobs):
+                    window = filtered[offset : offset + jobs]
+                    prepared = executor.map(
+                        lambda item: self._prepare_input(item, preprocess_dir), window
+                    )
+                    for item, observation in zip(window, prepared):
+                        result = self.convert_one(
+                            item, preprocess_dir, prepared=observation
+                        )
+                        results.append(result)
+                        progress.record(result)
+                        print(
+                            f"  [{len(results)}/{len(filtered)}] {result.get('cpd_id')}: "
+                            f"{result.get('OCSR_status')} engine={result.get('OCSR_engine')} "
+                            f"(total {time.monotonic() - started:.0f}s)",
+                            flush=True,
+                        )
+            return results
+        finally:
+            self.close()

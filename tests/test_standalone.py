@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
@@ -7,11 +8,6 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
-
-ROOT = Path(__file__).resolve().parents[1]
-SOURCE_ROOT = ROOT / "src"
-if str(SOURCE_ROOT) not in sys.path:
-    sys.path.insert(0, str(SOURCE_ROOT))
 
 from patent_sar_extractor import cli
 from patent_sar_extractor.contracts import (
@@ -28,6 +24,9 @@ from patent_sar_extractor.contracts import (
     __version__,
 )
 from patent_sar_extractor.paths import config_files
+
+ROOT = Path(__file__).resolve().parents[1]
+SOURCE_ROOT = ROOT / "src"
 
 
 class StandalonePackagingTests(unittest.TestCase):
@@ -48,9 +47,15 @@ class StandalonePackagingTests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(proc.returncode, 0, proc.stderr)
-        self.assertIn(PRODUCT_NAME, proc.stdout)
-        self.assertIn(f"v{__version__}", proc.stdout)
-        self.assertIn(__version__, proc.stdout)
+        self.assertEqual(proc.stdout.strip(), f"{PRODUCT_NAME} v{__version__}")
+
+    def test_frontend_product_versions_match_the_single_authority(self) -> None:
+        frontend = ROOT / "frontend"
+        package = json.loads((frontend / "package.json").read_text(encoding="utf-8"))
+        lock = json.loads((frontend / "package-lock.json").read_text(encoding="utf-8"))
+        self.assertEqual(package["version"], __version__)
+        self.assertEqual(lock["version"], __version__)
+        self.assertEqual(lock["packages"][""]["version"], __version__)
 
     def test_run_help_documents_strict_default_and_partial_override(self) -> None:
         proc = subprocess.run(
@@ -159,7 +164,7 @@ class StandalonePackagingTests(unittest.TestCase):
         self.assertEqual(COMMAND_NAME, "x-patentsar")
         self.assertEqual(__version__, "0.1.0")
         self.assertEqual(PIPELINE_CONTRACT_VERSION, "2.0.0")
-        self.assertEqual(RULESET_VERSION, "2.0.1")
+        self.assertEqual(RULESET_VERSION, "2.0.3")
         self.assertEqual(RUN_SUMMARY_SCHEMA_VERSION, 1)
         self.assertEqual(PAGE_CLASSIFICATION_SCHEMA_VERSION, 2)
         self.assertEqual(BINDINGS_SCHEMA_VERSION, 2)

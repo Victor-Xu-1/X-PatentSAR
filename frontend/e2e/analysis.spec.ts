@@ -36,7 +36,7 @@ test('same-project deterministic summary uses real evidence and preserves formal
     await page.request.get(`/api/v1/projects/${projectId}`)
   ).json()) as Project;
   const response = page.waitForResponse((response) => response.url().endsWith('/evidence-summary'));
-  await page.getByRole('tab', { name: '证据摘要' }).click();
+  await page.getByRole('button', { name: /^证据摘要/ }).click();
   const received = await response;
   expect(received.ok(), 'The complete iteration requires the deterministic summary endpoint').toBe(
     true,
@@ -83,7 +83,7 @@ test('actual local batch ADMET accepts typed molecules and shows engine, units a
   test.setTimeout(215_000);
   await page.goto('/#/');
   await expect(page.getByText(/^v\d/)).toBeVisible();
-  await page.getByRole('tab', { name: '分子分析 · ADMET' }).click();
+  await page.getByRole('button', { name: '分子分析 · ADMET' }).click();
   await page.getByLabel('SMILES（每行一个，最多 50 个）').fill('CCO\nCCN');
   const response = page.waitForResponse((response) => response.url().endsWith('/analysis/admet'), {
     timeout: 195_000,
@@ -132,7 +132,9 @@ test('approved real crop DECIMER recognition feeds analysis without altering ext
     await page.request.get(`/api/v1/projects/${projectId}`)
   ).json()) as Project;
   await row.locator('.crop-button').click();
-  await expect(page.getByRole('dialog').getByRole('img')).toBeVisible();
+  await expect(
+    page.getByRole('dialog').getByRole('img', { name: /的原始结构裁图$/, exact: true }),
+  ).toBeVisible();
   const recognition = page.waitForResponse((response) => response.url().endsWith('/recognize'), {
     timeout: 195_000,
   });

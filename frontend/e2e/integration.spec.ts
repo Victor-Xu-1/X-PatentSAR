@@ -120,6 +120,7 @@ test.describe('real local backend integration', () => {
     );
     await expect(pageInput).toHaveValue(String(Math.min(2, project.pdf.page_count)));
     await page.getByRole('tab', { name: '原文视图' }).click();
+    await page.getByRole('button', { name: '文档工具' }).click();
     await page.getByLabel('放大原始文档').click();
     await expect(page.getByLabel('文档缩放比例')).toHaveText('125%');
   });
@@ -166,7 +167,11 @@ test.describe('real local backend integration', () => {
     }
     if (compound.structure_image_url) {
       await page.getByLabel(`放大 ${compound.display_id} 结构裁图`).click();
-      await expect(page.getByRole('dialog').getByRole('img')).toBeVisible();
+      await expect(
+        page
+          .getByRole('dialog')
+          .getByRole('img', { name: `${compound.display_id} 的原始结构裁图`, exact: true }),
+      ).toBeVisible();
       await page.getByLabel('关闭对话框').click();
     }
     await page.getByLabel(`选择化合物 ${compound.display_id}`, { exact: true }).check();
@@ -271,7 +276,7 @@ test.describe('real local backend integration', () => {
     await expect(page.locator('.job-actions .badge')).toHaveText('已取消');
     await page.reload();
     await expect(page.locator('.job-actions .badge')).toHaveText('已取消');
-    await page.locator('.job-options-record summary').click();
+    await page.getByRole('button', { name: '任务详情' }).click();
     await expect(page.locator('.job-options-record')).toContainText(note);
   });
   test('an actual failed job remains a failure and exposes its real stage/error', async ({

@@ -1,6 +1,6 @@
 .app-shell {
   display: grid;
-  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  grid-template-columns: var(--sidebar-width) 8px minmax(0, 1fr);
   min-height: 100dvh;
 }
 .sidebar {
@@ -46,6 +46,46 @@
   display: grid;
   gap: 3px;
   padding-top: 5px;
+}
+.navigation-collapsed .sidebar {
+  padding: 0 4px;
+}
+.navigation-collapsed .brand {
+  justify-content: center;
+  padding: 0;
+}
+.navigation-collapsed .brand > span,
+.navigation-collapsed .nav-label,
+.navigation-collapsed .small-tag,
+.navigation-collapsed .sidebar-project {
+  display: none;
+}
+.navigation-collapsed .nav-item,
+.navigation-collapsed .sidebar-upload {
+  justify-content: center;
+  padding: 10px;
+  gap: 0;
+  margin-left: 0;
+  margin-right: 0;
+}
+.navigation-collapsed .nav-divider {
+  margin-left: 5px;
+  margin-right: 5px;
+}
+.navigation-collapsed .sidebar-footer {
+  margin-top: auto;
+  font-size: 9px;
+  gap: 3px;
+}
+.brand > span,
+.nav-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.brand strong,
+.nav-label {
+  white-space: nowrap;
 }
 .nav-item {
   justify-content: flex-start;
@@ -207,9 +247,6 @@
 .search-field input::placeholder {
   color: var(--faint);
 }
-.global-search {
-  width: 295px;
-}
 .user-avatar {
   width: 30px;
   height: 30px;
@@ -235,7 +272,18 @@ main > .error-notice,
   justify-content: flex-start;
   font-size: 12px;
 }
-.menu-toggle,
+.menu-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  min-height: 28px;
+  width: 28px;
+  padding: 4px;
+  border: 0;
+  background: transparent;
+}
+.topbar .breadcrumb {
+  margin-right: auto;
+}
 .nav-scrim {
   display: none;
 }

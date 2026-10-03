@@ -165,7 +165,9 @@ def _build_ocr_engine():
     try:
         from rapidocr_onnxruntime import RapidOCR
 
-        return ("rapidocr", RapidOCR())
+        # ONNX defaults to a large per-session pool on many-core hosts. Four
+        # page workers then multiply three SDK pools, wasting CPU and memory.
+        return ("rapidocr", RapidOCR(intra_op_num_threads=2, inter_op_num_threads=1))
     except Exception:
         if not _allow_tesseract_fallback():
             return False
@@ -314,6 +316,7 @@ def _pdf_sha256(pdf_path: str) -> str:
 
 
 def build_cache_metadata(pdf_path: str, total_pages: int | None = None) -> dict:
+    from patent_sar_extractor.contracts import PAGE_OCR_OBSERVATION_SCHEMA, PAGE_OCR_OBSERVATION_VERSION
     if total_pages is None:
         doc = fitz.open(pdf_path)
         try:
@@ -323,6 +326,7 @@ def build_cache_metadata(pdf_path: str, total_pages: int | None = None) -> dict:
     stat = os.stat(pdf_path)
     return {
         **artifact_identity(PAGE_OCR_CACHE_SCHEMA, PAGE_OCR_CACHE_SCHEMA_VERSION),
+        "observation_contract": {"name": PAGE_OCR_OBSERVATION_SCHEMA, "version": PAGE_OCR_OBSERVATION_VERSION},
         "pdf_sha256": _pdf_sha256(pdf_path),
         "pdf_size": int(stat.st_size),
         "page_count": int(total_pages),
@@ -330,10 +334,13 @@ def build_cache_metadata(pdf_path: str, total_pages: int | None = None) -> dict:
 
 
 def cache_matches_pdf(cache: dict, pdf_path: str, total_pages: int | None = None) -> bool:
+    from patent_sar_extractor.contracts import PAGE_OCR_COMPATIBLE_RULESETS
     if not isinstance(cache, dict):
         return False
     metadata = cache.get("metadata")
     if not isinstance(metadata, dict):
+        return False
+    if not isinstance(metadata.get("page_count"), int) or isinstance(metadata.get("page_count"), bool):
         return False
     try:
         expected = build_cache_metadata(pdf_path, total_pages)
@@ -341,13 +348,38 @@ def cache_matches_pdf(cache: dict, pdf_path: str, total_pages: int | None = None
         return False
     identity_matches = all(
         metadata.get(key) == expected[key]
-        for key in ("schema", "product", "pipeline_contract", "ruleset")
+        for key in ("schema", "product", "pipeline_contract")
+    )
+    raw_rule = metadata.get("ruleset") or {}
+    compatible_rule = isinstance(raw_rule, dict) and (raw_rule.get("name"), raw_rule.get("version")) in PAGE_OCR_COMPATIBLE_RULESETS
+    observation = metadata.get("observation_contract")
+    compatible_observation = observation == expected["observation_contract"] or (
+        observation is None and isinstance(raw_rule, dict) and raw_rule.get("version") == "2.0.1"
     )
     return (
         identity_matches
+        and compatible_rule and compatible_observation
         and metadata.get("pdf_sha256") == expected["pdf_sha256"]
         and int(metadata.get("page_count", -1)) == expected["page_count"]
     )
+
+
+def inherit_page_ocr_cache(source: str, destination: str, pdf_path: str) -> bool:
+    """Seed only absent raw-cache state after exact PDF/observation checks.
+
+    Derived classifications, activities, bindings and QA are never inherited
+    here. The source file is immutable and the pipeline reclassifies with the
+    current rules, preserving the original failed run as an audit unit.
+    """
+    if Path(destination).exists():
+        return False
+    cache = load_page_ocr_cache(source)
+    if not cache_matches_pdf(cache, pdf_path):
+        raise ValueError("OCR observation cache does not match this PDF or supported observation contract")
+    if not isinstance(cache.get("page_texts"), dict) or not isinstance(cache.get("ocr_line_map"), dict):
+        raise ValueError("OCR observation cache collections are malformed")
+    save_page_ocr_cache(destination, cache)
+    return True
 
 
 def build_page_ocr_cache(pdf_path: str, page_indices: list[int], workers: int = 1, min_native_chars: int = 40) -> dict:

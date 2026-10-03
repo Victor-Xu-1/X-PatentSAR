@@ -1,13 +1,16 @@
 import type { Compound } from '../../api/types';
 import { AssetImage } from '../../components/AssetImage';
 import { Dialog } from '../../components/Dialog';
-import { confidenceLabels } from '../../model/presentation';
+import { confidenceLabels, reviewLabels } from '../../model/presentation';
+import { redrawPlaceholder } from '../../model/results';
+import { RecognitionDetails } from './RecognitionDetails';
 import { useState } from 'react';
 import { api, safeAssetUrl } from '../../api';
 import { useAnalysis } from '../analysis/useAnalysis';
 import type { RecognitionResult } from '../../api/analysisTypes';
 import { AdmetPanel } from '../analysis/AdmetPanel';
 import { AnalysisFeedback } from '../analysis/AnalysisFeedback';
+import { cropPlaceholder } from '../../model/extraction';
 export function CropDialog({
   compound,
   projectId,
@@ -25,23 +28,46 @@ export function CropDialog({
     recognize.result?.status === 'recognized' ? recognize.result.smiles : null;
   return (
     <Dialog
-      title={`结构原始裁图 · ${compound.display_id}`}
+      title={`结构复核 · ${compound.display_id}`}
       onClose={onClose}
       wide
       busy={recognize.busy || admetBusy}
     >
       <div className="dialog-body crop-detail">
-        <AssetImage
-          url={compound.structure_image_url}
-          alt={`${compound.display_id} 的原始结构裁图`}
-          className="crop-large"
-        />
+        <div className="crop-comparison" aria-label="原始裁图与 SMILES 重绘对照">
+          <figure>
+            <figcaption>原始 PDF 裁图</figcaption>
+            <AssetImage
+              url={compound.structure_image_url}
+              alt={`${compound.display_id} 的原始结构裁图`}
+              className="crop-large"
+              unavailableLabel={cropPlaceholder(compound)}
+            />
+            <p className="muted">来源证据：保留原文截图，供人工对照。</p>
+          </figure>
+          <figure>
+            <figcaption>SMILES 重绘（非原图）</figcaption>
+            <AssetImage
+              url={
+                compound.smiles?.trim() && compound.recognition?.status !== 'invalid'
+                  ? compound.redraw_image_url
+                  : null
+              }
+              alt={`${compound.display_id} 的 SMILES 重绘（非原图）`}
+              className="crop-large"
+              unavailableLabel={redrawPlaceholder(compound)}
+              invalidLabel="重绘地址无效"
+              errorLabel="重绘加载失败"
+            />
+            <p className="muted">由服务端 RDKit 绘制，不是原文结构证据，不证明与原图一致。</p>
+          </figure>
+        </div>
         <dl>
           <dt>来源页码</dt>
           <dd>{compound.source.page ?? '未知'}</dd>
           <dt>来源标签</dt>
           <dd>{compound.source.source_label ?? '未提供'}</dd>
-          <dt>置信度</dt>
+          <dt>绑定证据</dt>
           <dd>
             {confidenceLabels[compound.confidence.level]}
             {compound.confidence.score !== null
@@ -50,13 +76,23 @@ export function CropDialog({
           </dd>
           <dt>依据</dt>
           <dd>{compound.confidence.reason ?? '未提供'}</dd>
+          <dt>人工复核</dt>
+          <dd>{compound.review ? reviewLabels[compound.review.decision] : '未复核'}</dd>
+          {compound.source.correction_reason && (
+            <>
+              <dt>编号修正</dt>
+              <dd>{compound.source.correction_reason}</dd>
+            </>
+          )}
         </dl>
+        <RecognitionDetails recognition={compound.recognition} />
         {compound.smiles && (
           <label className="form-field">
-            服务端 SMILES
+            规范化 SMILES（服务端）
             <textarea value={compound.smiles} readOnly rows={3} />
           </label>
         )}
+        {!compound.smiles && <p className="muted">规范化 SMILES 未提供</p>}
         {compound.flags.length > 0 && <p className="muted">标记：{compound.flags.join('；')}</p>}
         <section className="crop-recognition">
           <button

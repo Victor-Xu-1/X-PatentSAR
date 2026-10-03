@@ -28,6 +28,7 @@ export function Sidebar({
   onAnalysis,
   disabled,
   inert = false,
+  collapsed = false,
 }: {
   route: Route;
   navigate: (view: View) => void;
@@ -38,6 +39,7 @@ export function Sidebar({
   onAnalysis: (tab: ResultTab) => void;
   disabled: boolean;
   inert?: boolean;
+  collapsed?: boolean;
 }) {
   return (
     <aside className="sidebar" id="primary-sidebar" inert={inert}>
@@ -48,9 +50,16 @@ export function Sidebar({
           <small>专利结构与活性提取平台</small>
         </span>
       </a>
-      <button className="sidebar-upload" type="button" onClick={onUpload} disabled={disabled}>
+      <button
+        className="sidebar-upload"
+        type="button"
+        onClick={onUpload}
+        disabled={disabled}
+        aria-label="新建专利项目"
+        title={collapsed ? '新建专利项目' : undefined}
+      >
         <SquarePlus size={18} strokeWidth={1.65} />
-        新建专利项目
+        <span className="nav-label">新建专利项目</span>
       </button>
       <nav aria-label="主导航">
         {links.map(({ view, label, icon: Icon }) => (
@@ -58,6 +67,8 @@ export function Sidebar({
             type="button"
             key={view}
             className={`nav-item${route.view === view && (view !== 'workspace' || !route.resultTab || route.resultTab === 'results') ? ' active' : ''}`}
+            aria-label={label}
+            title={collapsed ? label : undefined}
             aria-current={
               route.view === view &&
               (view !== 'workspace' || !route.resultTab || route.resultTab === 'results')
@@ -67,7 +78,7 @@ export function Sidebar({
             onClick={() => navigate(view)}
           >
             <Icon size={21} />
-            {label}
+            <span className="nav-label">{label}</span>
           </button>
         ))}
         <div className="nav-divider" />
@@ -76,18 +87,23 @@ export function Sidebar({
           className={`nav-item${route.view === 'workspace' && route.resultTab === 'admet' ? ' active' : ''}`}
           onClick={() => onAnalysis('admet')}
           disabled={disabled}
+          aria-label="分子分析 · ADMET"
+          title={collapsed ? '分子分析 · ADMET' : undefined}
         >
           <ShieldCheck size={21} />
-          分子分析 · ADMET
+          <span className="nav-label">分子分析 · ADMET</span>
         </button>
         <button
           type="button"
           className={`nav-item${route.view === 'workspace' && route.resultTab === 'summary' ? ' active' : ''}`}
           onClick={() => onAnalysis('summary')}
           disabled={disabled}
+          aria-label="证据摘要"
+          title={collapsed ? '证据摘要' : undefined}
         >
           <FileText size={21} />
-          证据摘要<span className="small-tag">确定性</span>
+          <span className="nav-label">证据摘要</span>
+          <span className="small-tag">确定性</span>
         </button>
       </nav>
       <div className="sidebar-project">
@@ -109,7 +125,8 @@ export function Sidebar({
       </div>
       <footer className="sidebar-footer">
         <span className="status-dot" />
-        本地工作台<span>{health ? `v${health.product.version}` : '版本待连接'}</span>
+        <span className="nav-label">本地工作台</span>
+        <span>{health ? `v${health.product.version}` : '版本待连接'}</span>
       </footer>
     </aside>
   );

@@ -28,24 +28,31 @@
 
 也兼容旧格式（无assays字段，直接{CpdID: {target: grade}}）
 """
-import json, os, sys, argparse, shutil, re, tempfile
+import argparse
+import json
+import os
+import re
+import runpy
+import shutil
+import sys
+import tempfile
 from pathlib import Path
+
 from openpyxl import Workbook
-from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
-from openpyxl.utils import get_column_letter
 from openpyxl.drawing.image import Image as XlImage
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter
 
 try:
     from rdkit import Chem
-    from rdkit.Chem import rdFingerprintGenerator, Descriptors, DataStructs
+    from rdkit.Chem import DataStructs, Descriptors, rdFingerprintGenerator
     RDKIT_AVAILABLE = True
 except ImportError:
     RDKIT_AVAILABLE = False
 
 # ===== 配置 =====
 PACKAGE_IMPORT_ROOT = Path(__file__).resolve().parents[2]
-if str(PACKAGE_IMPORT_ROOT) not in sys.path:
-    sys.path.append(str(PACKAGE_IMPORT_ROOT))
+runpy.run_path(str(PACKAGE_IMPORT_ROOT / "patent_sar_extractor/worker_bootstrap.py"), run_name="__main__")
 
 WORKING_ROOT = str(Path.cwd())
 
@@ -56,10 +63,16 @@ from patent_sar_extractor.contracts import (
     BINDINGS_SCHEMA_VERSION,
     artifact_identity_matches,
 )
-from patent_sar_extractor.failures import clear_failure_marker, write_failure_marker
-from patent_sar_extractor.smiles_artifact import smiles_artifact_is_current, smiles_records
-from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy, summarise_binding_accuracy
 from patent_sar_extractor.core.activity_values import has_usable_activity_values
+from patent_sar_extractor.core.pipeline_rules import (
+    annotate_binding_accuracy,
+    summarise_binding_accuracy,
+)
+from patent_sar_extractor.failures import clear_failure_marker, write_failure_marker
+from patent_sar_extractor.smiles_artifact import (
+    smiles_artifact_is_current,
+    smiles_records,
+)
 
 # 活性分级填充色
 GRADE_FILLS = {
@@ -362,7 +375,7 @@ def load_data(bindings_path, smiles_path, activity_data=None, activity_path=None
                         "grades": {}
                     })
             else:
-                print(f"⚠️ 活性数据格式无法识别，跳过")
+                print("⚠️ 活性数据格式无法识别，跳过")
     elif activity_data:
         act_data = activity_data
         activity_order = [
@@ -1104,7 +1117,6 @@ def main():
         # 严格活性驱动主链要求活性化合物保留到最终表，因此这里只做
         # 同名重复绑定去重，不对活性命中条目做结构相似度裁剪。
         examples, removed_dup = _dedupe_bindings_exact_cpd(examples, smiles_map, smiles_by_binding_key, smiles_by_structure_id)
-        removed = list(removed_dup)
         if not args.allow_partial:
             _validate_strict_export(examples, smiles_map, smiles_by_binding_key, smiles_by_structure_id, act_data)
     except RuntimeError as exc:
@@ -1113,9 +1125,6 @@ def main():
 
     # 活性分级说明
     grade_note = build_grade_note(assays)
-
-    # 活性列信息
-    assay_cols = build_assay_columns(assays)
 
     print(f"专利: {patent}")
     print(f"Example数: {len(examples)}")
@@ -1137,7 +1146,7 @@ def main():
         if sdf_result["success"] == 0 or size == 0:
             if os.path.exists(sdf_path) and size == 0:
                 os.remove(sdf_path)
-            print(f"⚠️ SDF skipped: no valid molecules for export")
+            print("⚠️ SDF skipped: no valid molecules for export")
         else:
             print(f"✅ SDF: {sdf_path} ({size/1024:.1f} KB, {sdf_result['success']} molecules)")
 

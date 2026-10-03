@@ -13,12 +13,12 @@ function tableProps() {
   return {
     rows: [compound],
     offset: 0,
-    metric: '',
     selected: new Set<string>(),
     focusedId: null,
     onSelect: vi.fn(),
     onSelectPage: vi.fn(),
     onJump: vi.fn(),
+    onActivitySource: vi.fn(),
     onCrop: vi.fn(),
     onReview: vi.fn(),
   };
@@ -26,9 +26,9 @@ function tableProps() {
 describe('real-value presentation and selection', () => {
   it('shows grade values, unknown confidence and real source, with no fake predictions', () => {
     render(<ResultsTable {...tableProps()} />);
-    expect(screen.getByText('抑制等级 = ++')).toBeVisible();
+    expect(screen.getByTitle('抑制等级 = ++')).toHaveTextContent('++');
     expect(screen.getByText('未知')).toBeVisible();
-    expect(screen.getByText('无数值分数')).toBeVisible();
+    expect(screen.queryByText('无数值分数')).not.toBeInTheDocument();
     expect(screen.getByText('第 4 页')).toBeVisible();
     expect(screen.queryByText(/IC50|LogP|ADMET/)).not.toBeInTheDocument();
   });
@@ -61,37 +61,30 @@ describe('real-value presentation and selection', () => {
   it('never exposes a made-up crop for missing assets', () => {
     render(<ResultsTable {...tableProps()} rows={[{ ...compound, structure_image_url: null }]} />);
     expect(screen.getByLabelText('放大 I-7 结构裁图')).toBeDisabled();
-    expect(screen.getByText('裁图不可用')).toBeVisible();
+    expect(screen.getByText('未提供结构裁图')).toBeVisible();
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
   it('filters displayed metrics without inventing activities', () => {
-    render(<ResultsTable {...tableProps()} metric="IC50" />);
-    expect(screen.getByText('该指标无数据')).toBeVisible();
-    expect(screen.queryByText('抑制等级 = ++')).not.toBeInTheDocument();
+    render(<ResultsTable {...tableProps()} metrics={['IC50']} />);
+    expect(screen.getByLabelText('该指标无数据')).toHaveTextContent('—');
+    expect(screen.queryByTitle('抑制等级 = ++')).not.toBeInTheDocument();
   });
   it('maps target/confidence/review filters to the contract', () => {
     const onChange = vi.fn();
-    const onMetric = vi.fn();
     render(
       <ResultFilters
         filters={{ q: '', confidence: '', review: '', target: '', page: 3, page_size: 10 }}
-        metrics={results.metrics}
         targets={results.targets}
-        metric=""
-        onMetric={onMetric}
         onChange={onChange}
-        total={1}
         disabled={false}
       />,
     );
     fireEvent.change(screen.getByLabelText('筛选靶点'), { target: { value: '测试靶点' } });
     expect(onChange).toHaveBeenLastCalledWith({ target: '测试靶点', page: 1 });
-    fireEvent.change(screen.getByLabelText('筛选置信度'), { target: { value: 'unknown' } });
+    fireEvent.change(screen.getByLabelText('筛选绑定证据'), { target: { value: 'unknown' } });
     expect(onChange).toHaveBeenLastCalledWith({ confidence: 'unknown', page: 1 });
     fireEvent.change(screen.getByLabelText('筛选复核状态'), { target: { value: 'needs_review' } });
     expect(onChange).toHaveBeenLastCalledWith({ review: 'needs_review', page: 1 });
-    fireEvent.change(screen.getByLabelText('显示活性指标'), { target: { value: '抑制等级' } });
-    expect(onMetric).toHaveBeenCalledWith('抑制等级');
   });
   it('disables pagination boundaries and resets size changes to page one', () => {
     const onChange = vi.fn();
@@ -104,8 +97,8 @@ describe('real-value presentation and selection', () => {
   });
   it('empty metrics contain no invented counts', () => {
     render(<Metrics project={null} />);
-    expect(screen.getAllByText('—')).toHaveLength(4);
-    expect(screen.getAllByText('等待项目数据')).toHaveLength(4);
+    expect(screen.getAllByText('—')).toHaveLength(6);
+    expect(screen.getAllByText('等待项目数据')).toHaveLength(6);
   });
   it('first empty workspace is complete and extraction is disabled', () => {
     render(
@@ -126,6 +119,7 @@ describe('real-value presentation and selection', () => {
     expect(screen.getByText('原始专利文档')).toBeVisible();
     expect(screen.getByText('开始探索专利中的结构与活性')).toBeVisible();
     expect(screen.getByRole('button', { name: '运行提取' })).toBeDisabled();
-    expect(screen.getByRole('tab', { name: '分子分析 · ADMET' })).toBeEnabled();
+    expect(screen.queryByRole('tab', { name: '分子分析 · ADMET' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '导出结果' })).toBeDisabled();
   });
 });

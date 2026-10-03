@@ -7,10 +7,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
   background: var(--surface);
   border: 1px solid var(--line);
-  padding: 3px 10px;
+  padding: 2px 6px;
   border-radius: var(--radius-control);
   margin-bottom: 3px;
 }
@@ -23,6 +23,55 @@
   flex: 1;
   min-width: 0;
 }
+.stage-overview {
+  flex: 1;
+  min-width: 0;
+}
+.stage-history-notice {
+  font-size: 10px;
+  color: var(--muted);
+  margin-bottom: 4px;
+  overflow-wrap: anywhere;
+}
+.stage-observation {
+  position: relative;
+  min-width: 0;
+}
+.stage-observation summary {
+  cursor: pointer;
+  list-style: none;
+}
+.workflow-panel .stage-observation summary {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.stage-observation summary::-webkit-details-marker {
+  display: none;
+}
+.stage-observation summary small {
+  white-space: normal;
+  line-height: 1.4;
+}
+.stage-observation-detail {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  z-index: 8;
+  width: min(270px, 70vw);
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  box-shadow: var(--shadow-paper);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.stage:nth-last-child(-n + 3) .stage-observation-detail {
+  right: 0;
+  left: auto;
+}
 .stage {
   display: flex;
   align-items: center;
@@ -33,8 +82,8 @@
 .stage-circle {
   display: grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
+  width: 15px;
+  height: 15px;
   font-size: 9px;
   border: 1px solid var(--line-strong);
   color: var(--faint);
@@ -46,6 +95,10 @@
   font-weight: 600;
   display: block;
   white-space: nowrap;
+}
+.workflow-panel .stage strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .stage small {
   font-size: 9px;
@@ -87,8 +140,8 @@
 }
 .job-actions button {
   font-size: 11px;
-  min-height: 28px;
-  padding: 4px 8px;
+  min-height: 24px;
+  padding: 3px 6px;
 }
 .job-actions .badge {
   font-size: 10px;
@@ -106,8 +159,11 @@
 }
 .workspace-layout {
   min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   --results-min-height: 56dvh;
-  --pane-height: max(calc(100dvh - 135px), calc(var(--results-min-height) + 226px));
 }
 .layout-toolbar {
   display: flex;
@@ -129,6 +185,9 @@
 .workspace-split {
   display: grid;
   grid-template-columns: minmax(0, var(--pdf-width)) 10px minmax(0, var(--result-width));
+  grid-template-rows: minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
   gap: 0;
   min-width: 0;
 }
@@ -139,48 +198,11 @@
 .source-collapsed .workspace-split {
   grid-template-columns: minmax(0, 1fr);
 }
-.workspace-divider {
-  appearance: none;
-  cursor: col-resize;
-  touch-action: none;
-  min-width: 10px;
-  width: 100%;
-  height: 100%;
-  outline-offset: -2px;
-  border: 0;
-  margin: 0;
-  padding: 0;
-  background: transparent;
-}
-.workspace-divider::-webkit-slider-thumb {
-  appearance: none;
-  width: 3px;
-  height: 40px;
-  background: var(--line-strong);
-  border-radius: 3px;
-}
-.workspace-divider::-moz-range-thumb {
-  width: 3px;
-  height: 40px;
-  background: var(--line-strong);
-  border-radius: 3px;
-  border: 0;
-}
-.workspace-divider:hover::-webkit-slider-thumb,
-.workspace-divider:focus-visible::-webkit-slider-thumb,
-.workspace-divider.dragging::-webkit-slider-thumb {
-  background: var(--accent);
-}
-.workspace-divider:hover::-moz-range-thumb,
-.workspace-divider:focus-visible::-moz-range-thumb,
-.workspace-divider.dragging::-moz-range-thumb {
-  background: var(--accent);
-}
 .pdf-pane,
 .results-pane {
   display: flex;
   flex-direction: column;
-  height: var(--pane-height);
+  height: 100%;
   overflow: hidden;
   min-width: 0;
 }
@@ -192,7 +214,6 @@
   padding: 10px;
   display: flex;
   flex-direction: column;
-  --pane-height: calc(100dvh - 54px);
 }
 .is-fullscreen .workspace-split {
   flex: 1;
@@ -229,23 +250,18 @@
   height: 2px;
   background: var(--accent);
 }
-.result-tabs {
+.analysis-view-heading {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  min-height: 31px;
-  padding-right: 8px;
+  min-height: 32px;
+  padding: 3px 6px;
   border-bottom: 1px solid var(--line);
 }
-.result-tabs .tabs {
-  border: 0;
-  min-width: 0;
-  flex-wrap: wrap;
-  min-height: 30px;
-}
-.result-tabs .tab {
-  min-height: 30px;
-  padding: 6px 4px;
+.analysis-view-heading button {
+  min-height: 26px;
+  padding: 3px 6px;
+  font-size: 11px;
 }
 .result-view {
   flex: 1;
@@ -265,10 +281,36 @@
   overflow: auto;
 }
 @media (min-width: 1101px) {
+  /* Flex sizing includes actual workflow/banner height instead of a fixed offset. */
+  .app-main:has(.workspace) {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+  }
+  .app-main:has(.workspace) > .topbar {
+    flex-shrink: 0;
+    height: 38px;
+    padding: 0 10px;
+  }
+  .app-main:has(.workspace) > main {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    padding: 5px 10px;
+  }
   .workspace {
     position: relative;
+    flex: 1;
+    min-height: 0;
+  }
+  .workspace-source,
+  .workspace-results {
+    height: 100%;
+    min-height: 0;
   }
   .workflow-panel {
+    flex-shrink: 0;
     padding-right: 166px;
   }
   .layout-toolbar {

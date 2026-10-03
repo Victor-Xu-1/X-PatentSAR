@@ -3,8 +3,8 @@ import { createServer } from 'node:http';
 import type { RequestListener } from 'node:http';
 import { describe, expect, it } from 'vitest';
 import { ApiClient } from '../src/api/client';
-import { decodeHealth, decodeProject } from '../src/api/decoders';
-import { health, project, session } from './fixtures';
+import { decodeHealth, decodeProject, decodeResults } from '../src/api/decoders';
+import { health, project, results, session } from './fixtures';
 import { admet } from './analysis-fixtures';
 import { decodeAdmet } from '../src/api/analysisDecoders';
 
@@ -30,6 +30,34 @@ async function withServer(
 }
 
 describe('native HTTP client protocol (test-only controlled service, not backend acceptance)', () => {
+  it('reads additive recognition and digest-addressed redraw through native HTTP and the production decoder', async () => {
+    const payload = {
+      ...results,
+      items: results.items.map((item) => ({
+        ...item,
+        smiles: 'CCO',
+        redraw_image_url:
+          '/api/v1/projects/project-contract/structures/I-7/redraw?digest=protocol-only',
+        recognition: {
+          status: 'valid',
+          quality_flag: null,
+          model_fingerprint: 'protocol-only-model',
+          token_confidence: { minimum: 0.4, mean: 0.8 },
+        },
+      })),
+    };
+    await withServer(
+      (request, response) => {
+        response.setHeader('Content-Type', 'application/json');
+        response.end(JSON.stringify(request.url === '/api/v1/session' ? session : payload));
+      },
+      async (client) => {
+        expect(await client.get('/projects/project-contract/results', decodeResults)).toEqual(
+          payload,
+        );
+      },
+    );
+  });
   it('sends native JSON molecule inputs through CSRF and the actual analysis decoder', async () => {
     let payload: unknown;
     let csrf: string | undefined;

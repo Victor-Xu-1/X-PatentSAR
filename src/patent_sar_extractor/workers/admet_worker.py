@@ -9,10 +9,14 @@ import io
 import json
 import math
 import os
+import runpy
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parents[2]))
+runpy.run_path(
+    str(Path(__file__).resolve().parents[1] / "worker_bootstrap.py"),
+    run_name="__main__",
+)
 from patent_sar_extractor.workers.analysis_protocol import (  # noqa: E402
     ADMET_BUNDLE_SHA256,
     ADMET_VERSION,

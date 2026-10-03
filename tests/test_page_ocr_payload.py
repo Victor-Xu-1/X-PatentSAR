@@ -12,6 +12,14 @@ from patent_sar_extractor.core import page_ocr_cache as cache_module
 
 
 class PageOCRPayloadTests(unittest.TestCase):
+    def test_rapidocr_sessions_use_bounded_cpu_pools(self):
+        with (
+            patch.dict("os.environ", {"PATENTSAR_PADDLEX_OCR_URL": "off"}),
+            patch("rapidocr_onnxruntime.RapidOCR") as factory,
+        ):
+            cache_module._build_ocr_engine()
+        factory.assert_called_once_with(intra_op_num_threads=2, inter_op_num_threads=1)
+
     def _pdf(self, path: Path, text: str = "") -> None:
         with fitz.open() as document:
             for _ in range(2):

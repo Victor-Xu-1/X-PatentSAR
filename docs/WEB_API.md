@@ -86,18 +86,61 @@ never populated with demonstration values. Evidence summary is not an LLM claim.
 `{id,title,patent_id,created_at,updated_at,pdf:{available,page_count,sha256},
 is_historical,summary:{structures,activity_rows,matched_structures,confirmed,
 needs_review},acceptance:{state,errors},last_job}`.
+The additive summary fields `manually_reviewed` and `manual_review_pending` come
+from actual persisted SQLite review decisions. Approved/rejected rows count as
+reviewed; absent/needs-review decisions count as pending. Binding confidence and
+formal acceptance are independent and cannot supply manual decisions.
 Acceptance states: `not_run`, `accepted`, `failed`, `historical`.
-`accepted` requires current core identity and deterministic `acceptance.ok=true`;
-old or incomplete artifacts must remain review/historical.
+`historical` means a present artifact has absent/non-current identity, not that
+downstream artifacts are missing. A current checkpoint without failure remains
+`not_run`; a current strict marker, failed stage or failed summary produces
+`failed`, with bounded, path-redacted core errors. Missing current artifacts
+cannot become accepted; a run claiming completion without them is failed.
+`accepted` still requires every current artifact identity/shape, verified original,
+production binding/SMILES modes, a completed summary, both deterministic QA `ok`
+checks, no hard errors and no strict failure marker. Current diagnostic modes,
+unverified originals or malformed evidence fail rather than masquerading as
+historical results; they never promote binding confidence.
 
 `Compound`:
-`{id,display_id,structure_id,structure_image_url,smiles,activities,source,
+`{id,display_id,structure_id,structure_image_url,redraw_image_url,smiles,recognition,activities,source,
 confidence,review,flags}`. IDs preserve the authoritative activity compound ID.
+`recognition`: `{status,quality_flag,model_fingerprint,token_confidence}`. Status
+is `not_run`, `valid`, `invalid` or `unavailable`; absent historical metadata is
+unavailable rather than reconstructed as model confidence. `token_confidence`
+is null or finite `{minimum,mean}` in [0,1] with minimum <= mean. It is an
+uncalibrated token observation, not correctness probability. A model fingerprint
+is null or the exact 64-character content SHA; binding scores remain separate.
+`redraw_image_url` is null or an authenticated derived RDKit PNG URL anchored to
+the current SMILES SHA. It is not an original crop, never updates artifacts and
+fails 404 without a bounded valid molecule or 409 for an outdated fingerprint.
 `activities`: `[{name,value,unit,target,assay,page}]` (nullable optional metadata).
+For additive `activity_sources` evidence in activity schema v1, presentation
+matches each cell by its exact field name and original scalar value before
+display truncation. Each matched metric receives that source's page, target and
+assay, not the merged compound row's first table. Absent/unmatched evidence keeps
+existing row metadata; omitted source metadata keys also retain existing fields,
+while explicit nulls remain unknown (e.g. no target for anti-proliferation).
+Duplicate observations of one source context do not duplicate measurements;
+distinct exact-matching page/target/assay contexts remain separate records rather
+than silently choosing one assay. No metric or unit is inferred from evidence.
+Source/cell/observation counts, scalar sizes, page bounds, metadata and supplied
+cell geometry are validated as untrusted input. Results, target filters, exports
+and evidence summaries use these same typed Activity records.
 `source`: `{page,paragraph,bbox,source_label,correction_reason}`.
 `confidence`: `{level,score,reason}`; levels `high`, `medium`, `review`, `unknown`.
 Do not invent numerical confidence; score may be null. Old identity is not current
 high confidence. `review`: `{decision,note,revision,updated_at}` or null.
+
+The existing `flags` array distinguishes crop absence without inventing images:
+`structure_not_generated` means current segmentation artifacts have not yet been
+generated; `structure_generation_failed` means segmentation stopped with failure;
+`structure_unmatched` means there is no unique bound structure. `image_unavailable`
+means expected generated evidence is missing/unsafe/inaccessible. A verified
+original-PDF geometry crop remains a valid read-only fallback, not a synthetic
+molecule. The frontend separately reports invalid URLs and actual image-load
+failures. A null image URL keeps enlargement/recognition disabled; original PDF
+pages and activity provenance remain independently available.
 
 `Page`:
 `{page,page_count,width,height,image_url,text,source_mode,annotations}`.
@@ -107,13 +150,28 @@ points and must account for rotation. Missing original PDF has null image_url;
 historical OCR remains explicitly historical, never a fabricated original page.
 
 `Job`:
-`{id,project_id,status,created_at,started_at,finished_at,error,stages,can_resume}`.
+`{id,project_id,status,created_at,started_at,finished_at,error,stages,can_resume,history_available}`.
 Statuses: `queued`, `running`, `complete`, `failed`, `cancelled`, `interrupted`.
 `error`: `{code,message}` or null. `stages`:
-`[{name,status,count,duration_seconds}]` for the real stages
+`[{name,status,count,duration_seconds,reused_checkpoint,progress}]` for the real stages
 `classify,activity,locate,structures,bind,smiles,final,qa`.
 Stage statuses: `pending,running,ok,empty,failed,warnings`.
 Job completion is not necessarily formal QA acceptance. No guessed 100% progress.
+`progress` is null or the actual OCSR observation
+`{completed,total,cache_hits,failures,device,peak_rss_mb}`. Bounded integer counters
+are cross-validated; device/RSS stay null without a current measured observation.
+`reused_checkpoint` records an explicit core fact, not inferred duration. Every
+new/resumed job owns an independent output directory. Terminal history is sealed
+separately from mutable outputs; unreliable legacy shared-directory history
+reports `history_available=false` with empty stages instead of borrowing a later
+job's success. Resume transports only verified bounded upstream checkpoints and
+leaves old output and job status unchanged. API v1 and workspace SQLite v1 remain.
+For terminal jobs the frontend labels persisted `pending` stages as "未执行",
+not "等待", and stops animations for an interrupted `running` stage. No backend
+stage status is fabricated or promoted. Failed result views expose the blocking
+stage/error and unexecuted stages; unaccepted activity counts are candidate
+records, not validated structure–activity deliverables. Manual review cannot
+change this distinction or formal acceptance.
 
 Errors: `{error:{code,message}}`, with appropriate 400/401/403/404/409/413/422/500.
 No swallowed failures or success-shaped error responses.
@@ -131,6 +189,7 @@ No swallowed failures or success-shaped error responses.
 | GET `/projects/{id}/pages/{page}` | Page, one-based bounded page number |
 | GET `/projects/{id}/pages/{page}/image?scale=1.5` | Actual PNG, bounded scale/pixels/concurrency |
 | GET `/projects/{id}/structures/{compound_id}/image` | Actual safe crop PNG; missing image is 404 |
+| GET `/projects/{id}/structures/{compound_id}/redraw?fingerprint=` | Bounded RDKit PNG derived from current SMILES; not original evidence; stale fingerprint 409 |
 | GET `/projects/{id}/results?q=&confidence=&review=&target=&page=1&page_size=10` | `{items:Compound[],total,page,page_size,metrics:string[],targets:string[]}`; max page_size 100 |
 | POST `/projects/{id}/jobs` | `{allow_partial:false,advisory:false,resume_job_id:null,include_intermediates:false,force:false,task_note:""}` -> Job (202); strict QA and no paid advisory requests by default |
 | GET `/jobs?project_id=` | `{items:Job[]}` |
@@ -148,12 +207,21 @@ names; changes require controller review, not independent endpoint invention.
 Chinese UI with X-PatentSAR branding and version from `/health`; reference layout:
 232 px left navigation, compact breadcrumb/search toolbar, split original PDF
 and result workspace, warm ivory canvas, quiet stone surfaces, ink controls,
-terracotta accents, serif display headings, real metric cards and dense
-compound/activity rows. Page navigation, zoom, text/annotation tabs, source jumps,
+terracotta accents, serif display headings and dense compound/activity rows.
+The primary workspace contains only the original patent and result list, with a
+thin stage strip and one result toolbar. Statistics, full acceptance evidence,
+filters, density/columns, task parameters and document zoom are available on
+request, not stacked above the table. Analysis uses the existing sidebar entries,
+and no second search box or duplicate result tab bar remains.
+Page navigation, zoom, text/annotation tabs, source jumps,
 search/filter/pagination, selection/export, review dialogs, job status/cancel/retry,
 project/PDF import and runtime settings must work, including empty/error/loading,
 keyboard/focus, refresh/deep-link and smaller viewport states. Unavailable ADMET
 has a clear disabled/informational state. No fictional molecules, assays or counts.
+Desktop pane heights use the actual flex layout, including expanded task parameters
+and connection/acceptance notices, rather than fixed viewport offsets. Only the
+table body scrolls; pagination remains inside the pane. Mobile keeps its stacked,
+vertically scrollable source/result layout.
 
 ## Initial Web delivery
 
@@ -162,11 +230,15 @@ has a clear disabled/informational state. No fictional molecules, assays or coun
 2. Complete: unify all pages and dialogs with the Claude-inspired light visual
    system, preserving X-PatentSAR identity; verify tokens, typography, controls,
    real data, keyboard interactions and representative viewports in Chromium.
-3. Locally complete: build the Web assets and wheel from a clean revision, verify
-   independent installed startup, security boundaries and all ten browser checks,
-   and push the authorized Apache-2.0 repository. GitHub Actions cannot
-   start its runner because the account reports failed payments or a spending
-   limit; remote CI is not marked passed. No account billing settings are changed.
+3. Complete for the initial Web delivery: build the Web assets and wheel from a
+   clean revision, verify independent installed startup, security boundaries and
+   the original browser checks, and push the authorized Apache-2.0 repository.
+   The earlier account-level runner blockage is resolved: subsequent task-branch
+   CI runs execute the current workflow. Later candidates follow the current
+   focused verification and mainline deployment policy in `docs/OPERATIONS.md`;
+   past passes are not a waiver, skipped checks are not passing checks, and
+   global suites require explicit user authorization. Required checks cannot be
+   bypassed. No account billing settings are changed.
 
 ### Complete task workflow iteration
 
@@ -178,10 +250,12 @@ has a clear disabled/informational state. No fictional molecules, assays or coun
    ADMET-AI v2 CPU inference and source-grounded deterministic evidence summaries.
 3. Release gate: run affected tests and the mandatory packaging/runtime gates against
    a clean candidate, deploy to E, verify the actual original and data in Chromium,
-   and push the public X-PatentSAR repository. No global WSL shutdown or user-data cleanup.
+   merge all task-related PRs into the public X-PatentSAR `main`, build/deploy that
+   exact clean revision and verify the installed affected paths. A branch push
+   alone is not completion. No global WSL shutdown or user-data cleanup.
 
-Verification uses the full Python suite and frontend unit tests, actual
-ADMET-AI 2.0.1 CPU inference with 52 properties, and actual original-crop
+The original iteration's historical verification used the full Python suite and
+frontend unit tests, actual ADMET-AI 2.0.1 CPU inference with 52 properties, and actual original-crop
 DECIMER/RDKit-to-ADMET HTTP checks. The sixteen browser workflows cover measured
 visible result area, the real original PDF, keyboard/pointer/refresh, research
 analysis and unchanged formal acceptance. Real-model checks are opt-in for

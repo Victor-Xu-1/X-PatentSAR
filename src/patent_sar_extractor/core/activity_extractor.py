@@ -30,6 +30,11 @@ import fitz
 from patent_sar_extractor.artifact_io import write_json_atomic
 
 from patent_sar_extractor.core.page_ocr_cache import get_ocr_engine, load_page_ocr_cache, page_text, save_page_ocr_cache
+from patent_sar_extractor.core.table_geometry import (
+    detect_ruled_table_regions as _detect_ruled_table_regions,
+    ocr_tokens_with_positions as _ocr_tokens_with_positions,
+    page_tokens as _biology_tokens_for_page,
+)
 from patent_sar_extractor.core.activity_values import (
     is_explicit_missing_activity_value as _shared_is_explicit_missing_activity_value,
 )
@@ -144,6 +149,7 @@ class ActivityRow:
     confidence: float = 0.85
     needs_review: bool = False
     notes: str = ""
+    activity_sources: list[dict] = field(default_factory=list)
 
 
 @dataclass
@@ -844,6 +850,23 @@ def extract(
         save_page_ocr_cache(ocr_cache_path, shared_ocr_cache)
         logger.info("Updated shared page OCR cache for activity extraction: %s", ocr_cache_path)
     
+    # A cell-proven schema owns its original pages. General text/grade parsers
+    # must not run a competing interpretation or a second OCR pass on them.
+    english_rows = _extract_english_biology_activity_rows_from_ocr(
+        doc, profile.get("activity_pages", activity_pages),
+        page_text_map=shared_ocr_cache.get("page_texts", {}),
+    )
+    owned_pages = {
+        source["page_no"] - 1
+        for row in english_rows for source in row.activity_sources
+    }
+    supplemental_pages = [
+        page for page in profile.get("activity_pages", activity_pages)
+        if page not in owned_pages
+    ]
+    activity_pages = [page for page in activity_pages if page not in owned_pages]
+    logger.info("Cell schema owns %s pages; %s unclaimed pages remain", len(owned_pages), len(supplemental_pages))
+
     # ── 3. Detect column layout ──
     cpd_pattern = (
         profile.get("cpd_prefix_pattern")
@@ -957,7 +980,7 @@ def extract(
         ]
     
     # ── 6. Extract data from each table ──
-    all_rows: list[ActivityRow] = []
+    all_rows: list[ActivityRow] = list(english_rows)
     header_y = best_header_y
     
     for table_info in tables:
@@ -1002,18 +1025,9 @@ def extract(
             logger.info(f"  p{page_no}: {len(page_rows)} rows")
             all_rows.extend(page_rows)
 
-    english_rows = _extract_english_biology_activity_rows_from_ocr(
-        doc,
-        profile.get("activity_pages", activity_pages),
-        page_text_map=shared_ocr_cache.get("page_texts", {}),
-    )
-    if english_rows:
-        logger.info(f"  英文生物活性表OCR结构化提取: {len(english_rows)} rows")
-        all_rows = _merge_activity_rows([*all_rows, *english_rows])
-
     bare_no_rows = _extract_english_bare_no_activity_rows_from_ocr(
         doc,
-        profile.get("activity_pages", activity_pages),
+        supplemental_pages,
         page_text_map=shared_ocr_cache.get("page_texts", {}),
     )
     if bare_no_rows:
@@ -1022,7 +1036,7 @@ def extract(
 
     text_table_rows = _extract_generic_text_table_activity_rows_from_ocr(
         doc,
-        profile.get("activity_pages", activity_pages),
+        supplemental_pages,
         page_text_map=shared_ocr_cache.get("page_texts", {}),
     )
     if text_table_rows:
@@ -1030,7 +1044,7 @@ def extract(
         all_rows = _merge_activity_rows([*all_rows, *text_table_rows])
 
     prefixed_grade_rows = _extract_prefixed_letter_grade_activity_rows_from_ocr(
-        profile.get("activity_pages", activity_pages),
+        supplemental_pages,
         page_text_map=shared_ocr_cache.get("page_texts", {}),
     )
     if prefixed_grade_rows:
@@ -1039,7 +1053,7 @@ def extract(
 
     text_grade_pages = {row.page_no - 1 for row in prefixed_grade_rows if row.page_no > 0}
     coordinate_activity_pages = _coordinate_activity_page_candidates(
-        profile.get("activity_pages", activity_pages),
+        supplemental_pages,
         page_text_map=shared_ocr_cache.get("page_texts", {}),
     )
     ruled_activity_pages = [
@@ -1063,7 +1077,7 @@ def extract(
 
     multi_table_rows = _extract_chinese_adme_pk_activity_rows_from_ocr(
         doc,
-        profile.get("activity_pages", activity_pages),
+        supplemental_pages,
         page_text_map=shared_ocr_cache.get("page_texts", {}),
     )
     if multi_table_rows:
@@ -1072,7 +1086,7 @@ def extract(
 
     dc50_rows = _extract_chinese_dc50_dmax_rows_from_ocr(
         doc,
-        profile.get("activity_pages", activity_pages),
+        supplemental_pages,
         page_text_map=shared_ocr_cache.get("page_texts", {}),
     )
     if dc50_rows:
@@ -1081,7 +1095,7 @@ def extract(
 
     ocr_rows = _extract_chinese_activity_rows_from_ocr(
         doc,
-        profile.get("activity_pages", activity_pages),
+        supplemental_pages,
         page_text_map=shared_ocr_cache.get("page_texts", {}),
     )
     if ocr_rows:
@@ -1099,7 +1113,7 @@ def extract(
 
     multi_rows = _extract_chinese_multi_numeric_activity_rows_from_ocr(
         doc,
-        profile.get("activity_pages", activity_pages),
+        supplemental_pages,
         page_text_map=shared_ocr_cache.get("page_texts", {}),
     )
     if multi_rows:
@@ -1806,52 +1820,6 @@ def _english_activity_pages_for_scan(doc, activity_pages: list[int], page_text_m
     return list(range(start, min(end, len(doc) - 1) + 1))
 
 
-def _table_segment_between(text: str, table_no: int) -> str:
-    marker = re.search(rf"Table\s+{table_no}\b", text, re.I)
-    if not marker:
-        return ""
-    start = marker.start()
-    page_prefix = ""
-    prev_page_markers = list(re.finditer(r"\[\[PAGE\s+\d+\]\]", text[:marker.start()]))
-    if prev_page_markers:
-        page_prefix = text[prev_page_markers[-1].start():prev_page_markers[-1].end()] + "\n"
-    next_marker = re.search(rf"Table\s+{table_no + 1}\b|(?:\n|\s)\d+[a-z]?\.\s+Target|(?:\n|\s)3\.\s+Anti-proliferation|\bEQUIVALENTS\b", text[marker.end():], re.I)
-    if next_marker:
-        return page_prefix + text[start:marker.end() + next_marker.start()]
-    return page_prefix + text[start:]
-
-
-def _extract_pairs_until_legend(segment: str, value_pattern: str) -> list[tuple[str, str, str]]:
-    segment = re.split(r"\+\+\+\s*represents|A\s+represents|Arepresents|\+\s+represents", segment, maxsplit=1, flags=re.I)[0]
-    token_re = re.compile(rf"(?<![A-Za-z0-9])(\d{{1,3}}[A-Z]?)(?![A-Za-z0-9])\s+({value_pattern})(?![A-Za-z0-9])", re.I)
-    pairs: list[tuple[str, str, str]] = []
-    seen: set[str] = set()
-    for m in token_re.finditer(segment):
-        cpd = m.group(1).upper()
-        value = m.group(2).upper()
-        if cpd in seen:
-            continue
-        seen.add(cpd)
-        pairs.append((cpd, value, segment[:m.start()].count("[[PAGE ")))
-    return pairs
-
-
-def _english_table_page_chunks(segment: str) -> list[tuple[int, str]]:
-    """Split a stitched table segment into per-page text chunks."""
-    chunks: list[tuple[int, str]] = []
-    markers = list(re.finditer(r"\[\[PAGE\s+(\d+)\]\]", segment))
-    if not markers:
-        return [(0, segment)]
-    if markers[0].start() > 0:
-        chunks.append((int(markers[0].group(1)), segment[:markers[0].start()]))
-    for idx, marker in enumerate(markers):
-        page_no = int(marker.group(1))
-        start = marker.end()
-        end = markers[idx + 1].start() if idx + 1 < len(markers) else len(segment)
-        chunks.append((page_no, segment[start:end]))
-    return chunks
-
-
 def _english_numeric_example_keys(header: str, value_count: int) -> list[str]:
     """Infer value columns for English Example # activity tables.
 
@@ -1968,102 +1936,31 @@ def _extract_english_numeric_example_activity_rows_from_ocr(
     return _merge_activity_rows(rows)
 
 
-def _extract_english_biology_activity_rows_from_ocr(doc, activity_pages: list[int], page_text_map: Optional[dict[str, str]] = None) -> list[ActivityRow]:
-    """Extract English Table 13/14/15/16 biology activity tables.
+def _extract_english_biology_activity_rows_from_ocr(
+    doc, activity_pages: list[int], page_text_map: Optional[dict[str, str]] = None,
+) -> list[ActivityRow]:
+    """Use observed biology headers and ruled cells, never flattened row regexes."""
+    from patent_sar_extractor.core.biology_tables import extract_tables
 
-    These tables are often flattened by OCR into long text streams, not rows.
-    Parse the table segments directly and preserve lettered examples such as
-    8A/8B.
-    """
-    page_text_map = page_text_map or {}
-    numeric_rows = _extract_english_numeric_example_activity_rows_from_ocr(
-        doc,
-        activity_pages,
-        page_text_map,
+    text_map = page_text_map or {}
+    rows = _extract_english_numeric_example_activity_rows_from_ocr(
+        doc, activity_pages, text_map,
     )
-    scan_pages = _english_activity_pages_for_scan(doc, activity_pages, page_text_map)
-    if not scan_pages:
-        return numeric_rows
-
-    full_parts = []
-    page_markers: list[int] = []
-    for page_idx in scan_pages:
-        text = str(page_text_map.get(str(page_idx), "") or "")
-        if not text.strip():
-            text = doc[page_idx].get_text("text")
-        if text.strip():
-            page_markers.append(page_idx + 1)
-            full_parts.append(f"\n[[PAGE {page_idx + 1}]]\n{text}")
-    full_text = "\n".join(full_parts)
-    if not full_text.strip():
-        return numeric_rows
-
-    rows: list[ActivityRow] = list(numeric_rows)
-
-    table13 = _table_segment_between(full_text, 13)
-    if table13:
-        for page_no, chunk in _english_table_page_chunks(table13):
-            clean = re.sub(r"\s+", " ", chunk)
-            clean = re.split(r"\+\+\+\s*represents|\+\+\s*represents|\+\s+represents", clean, maxsplit=1, flags=re.I)[0]
-            for m in re.finditer(r"(?<![A-Za-z0-9])(\d{1,3}[A-Z]?)(?![A-Za-z0-9])\s+(\d+(?:\.\d+)?)\s+(\+{1,3})(?!\+)", clean, re.I):
-                cpd, ratio, grade = m.group(1).upper(), m.group(2), m.group(3)
-                rows.append(ActivityRow(
-                    cpd=f"Example {cpd}",
-                    activity_values={
-                        "Cereblon HTRF ratio": ratio,
-                        "Cereblon HTRF grade": grade,
-                    },
-                    page_no=page_no,
-                    table_id="Table 13",
-                    source="ocr_english_biology_table",
-                    confidence=0.9,
-                    needs_review=False,
-                ))
-
-    for table_no, key, source_name in [
-        (14, "KP4 HuR degradation grade", "Western blot KP4 HuR degradation"),
-        (15, "JHH7 HuR degradation grade", "Western blot JHH7 HuR degradation"),
-    ]:
-        segment = _table_segment_between(full_text, table_no)
-        if not segment:
-            continue
-        for page_no, chunk in _english_table_page_chunks(segment):
-            clean = re.sub(r"\s+", " ", chunk)
-            clean = re.split(r"A\s+represents|Arepresents", clean, maxsplit=1, flags=re.I)[0]
-            for m in re.finditer(r"(?<![A-Za-z0-9])(\d{1,3}[A-Z]?)(?![A-Za-z0-9])\s+([A-Da-d])(?=\s|$)", clean):
-                cpd = m.group(1).upper()
-                grade = m.group(2).upper()
-                if cpd.upper() in {"ID"}:
-                    continue
-                rows.append(ActivityRow(
-                    cpd=f"Example {cpd}",
-                    activity_values={key: grade},
-                    page_no=page_no,
-                    table_id=f"Table {table_no}",
-                    source="ocr_english_biology_table",
-                    confidence=0.88,
-                    needs_review=False,
-                    notes=source_name,
-                ))
-
-    table16 = _table_segment_between(full_text, 16)
-    if table16:
-        for page_no, chunk in _english_table_page_chunks(table16):
-            clean = re.sub(r"\s+", " ", chunk)
-            clean = re.split(r"\+\+\+\s*represents|\+\+\s*represents|\+\s+represents|EQUIVALENTS", clean, maxsplit=1, flags=re.I)[0]
-            for m in re.finditer(r"(?<![A-Za-z0-9])(\d{1,3}[A-Z]?)(?![A-Za-z0-9])\s+(\+{1,3})(?!\+)", clean, re.I):
-                cpd = m.group(1).upper()
-                grade = m.group(2)
-                rows.append(ActivityRow(
-                    cpd=f"Example {cpd}",
-                    activity_values={"Anti-proliferation activity grade": grade},
-                    page_no=page_no,
-                    table_id="Table 16",
-                    source="ocr_english_biology_table",
-                    confidence=0.9,
-                    needs_review=False,
-                ))
-
+    scan_pages = _english_activity_pages_for_scan(doc, activity_pages, text_map)
+    records = extract_tables(
+        doc, scan_pages, tokens_for_page=_biology_tokens_for_page,
+        grids_for_page=lambda page: _detect_ruled_table_regions(page, dpi=240),
+    )
+    rows.extend(
+        ActivityRow(
+            cpd=record.compound, activity_values=record.values,
+            page_no=record.page_no, table_id=record.table_id,
+            source="ocr_biology_cells", confidence=0.5 if record.needs_review else 0.95,
+            needs_review=record.needs_review, notes=record.notes,
+            activity_sources=[record.evidence],
+        )
+        for record in records
+    )
     return _merge_activity_rows(rows)
 
 
@@ -2722,124 +2619,6 @@ def _activity_value_near(
     return ""
 
 
-def _cluster_positions(values: list[float], tolerance: float = 2.0) -> list[float]:
-    if not values:
-        return []
-    groups: list[list[float]] = []
-    for value in sorted(values):
-        if not groups or abs(value - groups[-1][-1]) > tolerance:
-            groups.append([value])
-        else:
-            groups[-1].append(value)
-    return [sum(group) / len(group) for group in groups]
-
-
-def _detect_ruled_table_regions(page, dpi: int = 300) -> list[dict]:
-    """Detect line-ruled table grids on a scanned page.
-
-    The extractor intentionally works from the table lines first, then assigns
-    OCR tokens to cells. This is much safer than flattening a multi-column
-    activity table into plain text and trying to regex the result back apart.
-    """
-    try:
-        import cv2  # type: ignore
-        import numpy as np
-        from PIL import Image
-        from io import BytesIO
-    except Exception as e:
-        logger.warning(f"Ruled table detection unavailable: {e}")
-        return []
-
-    pix = page.get_pixmap(matrix=fitz.Matrix(dpi / 72, dpi / 72))
-    img = np.array(Image.open(BytesIO(pix.tobytes("png"))).convert("L"))
-    bw = cv2.threshold(img, 200, 255, cv2.THRESH_BINARY_INV)[1]
-    scale = 72.0 / dpi
-
-    h_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (max(35, int(img.shape[1] * 0.06)), 1))
-    v_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, max(35, int(img.shape[0] * 0.035))))
-    h_mask = cv2.morphologyEx(bw, cv2.MORPH_OPEN, h_kernel)
-    v_mask = cv2.morphologyEx(bw, cv2.MORPH_OPEN, v_kernel)
-
-    h_segments = []
-    contours = cv2.findContours(h_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
-    for contour in contours:
-        x, y, w, h = cv2.boundingRect(contour)
-        if w * scale >= 80:
-            h_segments.append({
-                "x0": x * scale,
-                "y": (y + h / 2.0) * scale,
-                "x1": (x + w) * scale,
-            })
-
-    v_segments = []
-    contours = cv2.findContours(v_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
-    for contour in contours:
-        x, y, w, h = cv2.boundingRect(contour)
-        if h * scale >= 25:
-            v_segments.append({
-                "x": (x + w / 2.0) * scale,
-                "y0": y * scale,
-                "y1": (y + h) * scale,
-            })
-
-    if not h_segments or not v_segments:
-        return []
-
-    # Group horizontal rules by their x-span first. Multi-panel patent tables
-    # often have left/middle/right grids at the same y positions; grouping by
-    # y first makes the panels interrupt each other and drops every region.
-    span_groups: list[list[dict]] = []
-    for seg in sorted(h_segments, key=lambda s: (s["x0"], s["x1"], s["y"])):
-        matched = None
-        for group in span_groups:
-            ref_x0 = sum(item["x0"] for item in group) / len(group)
-            ref_x1 = sum(item["x1"] for item in group) / len(group)
-            if abs(seg["x0"] - ref_x0) <= 8 and abs(seg["x1"] - ref_x1) <= 8:
-                matched = group
-                break
-        if matched is None:
-            span_groups.append([seg])
-        else:
-            matched.append(seg)
-
-    regions: list[dict] = []
-    for group in span_groups:
-        current: list[dict] = []
-        for seg in sorted(group, key=lambda s: s["y"]):
-            if not current or seg["y"] - current[-1]["y"] <= 45:
-                current.append(seg)
-                continue
-            if len(current) >= 3:
-                regions.append({"h": current})
-            current = [seg]
-        if len(current) >= 3:
-            regions.append({"h": current})
-
-    tables: list[dict] = []
-    for region in regions:
-        ys = _cluster_positions([seg["y"] for seg in region["h"]], tolerance=2.0)
-        x0 = min(seg["x0"] for seg in region["h"])
-        x1 = max(seg["x1"] for seg in region["h"])
-        y0, y1 = min(ys), max(ys)
-        xs = _cluster_positions([
-            seg["x"] for seg in v_segments
-            if seg["y0"] <= y0 + 4 and seg["y1"] >= y1 - 4
-            and x0 - 8 <= seg["x"] <= x1 + 8
-        ], tolerance=2.0)
-        if len(xs) < 3 or len(ys) < 3:
-            continue
-        if xs[0] > x0 + 8:
-            xs = [x0, *xs]
-        if xs[-1] < x1 - 8:
-            xs = [*xs, x1]
-        tables.append({
-            "xs": xs,
-            "ys": ys,
-            "bbox": (min(xs), y0, max(xs), y1),
-        })
-    return tables
-
-
 def _cell_text_from_tokens(tokens: list[dict], x0: float, x1: float, y0: float, y1: float) -> str:
     parts = [
         t for t in tokens
@@ -3407,6 +3186,9 @@ def _merge_activity_rows(rows: list[ActivityRow]) -> list[ActivityRow]:
                 notes=row.notes,
             )
         target = merged[norm_cpd]
+        for evidence in row.activity_sources:
+            if evidence not in target.activity_sources:
+                target.activity_sources.append(evidence)
         if row.page_no and (not target.page_no or target.page_no <= 0 or row.page_no < target.page_no):
             target.page_no = row.page_no
         for bucket_name in ("activity_values", "cell_line_data"):
@@ -3831,80 +3613,6 @@ def _extract_singleton_named_compound_activity_rows_from_ocr(
             ),
         )
     ]
-
-
-def _ocr_tokens_with_positions(page, dpi: int = 150, allow_tesseract: bool | None = None) -> list[dict]:
-    try:
-        import numpy as np
-        from PIL import Image
-        from io import BytesIO
-    except Exception as e:
-        logger.warning(f"Letter-grade activity OCR unavailable: {e}")
-        return []
-
-    pix = page.get_pixmap(matrix=fitz.Matrix(dpi / 72, dpi / 72))
-    img = Image.open(BytesIO(pix.tobytes("png"))).convert("RGB")
-
-    tokens = []
-    try:
-        from rapidocr_onnxruntime import RapidOCR
-        if not hasattr(_ocr_tokens_with_positions, "_rapid_engine"):
-            _ocr_tokens_with_positions._rapid_engine = RapidOCR()
-        result, _ = _ocr_tokens_with_positions._rapid_engine(np.array(img))
-        for item in result or []:
-            text = str(item[1]).strip()
-            if not text:
-                continue
-            box = item[0]
-            xs = [p[0] for p in box]
-            ys = [p[1] for p in box]
-            tokens.append({
-                "text": text,
-                "x": sum(xs) / len(xs) * 72.0 / dpi,
-                "y": sum(ys) / len(ys) * 72.0 / dpi,
-            })
-        if tokens:
-            return tokens
-    except Exception:
-        pass
-
-    if allow_tesseract is None:
-        allow_tesseract = _allow_tesseract_fallback()
-    if not allow_tesseract:
-        return tokens
-
-    try:
-        import pytesseract  # type: ignore
-        data = pytesseract.image_to_data(
-            img,
-            lang="chi_sim+eng",
-            config="--psm 11 preserve_interword_spaces=1",
-            output_type=pytesseract.Output.DICT,
-        )
-        scale = 72.0 / dpi
-        for idx, text in enumerate(data.get("text", [])):
-            text = str(text or "").strip()
-            if not text:
-                continue
-            conf_raw = str(data.get("conf", ["-1"])[idx])
-            try:
-                conf = float(conf_raw)
-            except Exception:
-                conf = -1.0
-            if conf < 15:
-                continue
-            left = float(data["left"][idx])
-            top = float(data["top"][idx])
-            width = float(data["width"][idx])
-            height = float(data["height"][idx])
-            tokens.append({
-                "text": text,
-                "x": (left + width / 2.0) * scale,
-                "y": (top + height / 2.0) * scale,
-            })
-    except Exception as e:
-        logger.warning(f"Tesseract TSV activity OCR unavailable: {e}")
-    return tokens
 
 
 def _group_ocr_tokens_by_y(tokens: list[dict], tolerance: float = 18.0) -> list[list[dict]]:
@@ -4344,6 +4052,7 @@ def _save_results(
                 "confidence": r.confidence,
                 "needs_review": r.needs_review,
                 "notes": r.notes,
+                "activity_sources": r.activity_sources,
             }
             for r in rows
         ],

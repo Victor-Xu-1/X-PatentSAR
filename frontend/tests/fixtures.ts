@@ -23,6 +23,8 @@ export const project: Project = {
     matched_structures: 1,
     confirmed: 1,
     needs_review: 1,
+    manually_reviewed: null,
+    manual_review_pending: null,
   },
   acceptance: { state: 'not_run', errors: [] },
 };
@@ -31,7 +33,9 @@ export const compound: Compound = {
   display_id: 'I-7',
   structure_id: 'structure-contract',
   structure_image_url: '/api/v1/projects/project-contract/structures/I-7/image',
+  redraw_image_url: null,
   smiles: null,
+  recognition: null,
   activities: [
     {
       name: '抑制等级',
@@ -86,7 +90,10 @@ export const job: Job = {
     status: name === 'classify' ? 'running' : 'pending',
     count: null,
     duration_seconds: null,
+    progress: null,
+    reused_checkpoint: null,
   })),
+  history_available: true,
   can_resume: false,
   include_intermediates: false,
   force: false,

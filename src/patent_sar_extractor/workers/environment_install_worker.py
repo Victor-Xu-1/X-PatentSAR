@@ -5,12 +5,16 @@ from __future__ import annotations
 import argparse
 import json
 import platform
+import runpy
 import signal
 import sys
 import threading
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+runpy.run_path(
+    str(Path(__file__).resolve().parents[1] / "worker_bootstrap.py"),
+    run_name="__main__",
+)
 from patent_sar_extractor.workers.environment_errors import failure_from_exception
 from patent_sar_extractor.workers.environment_files import atomic_json
 from patent_sar_extractor.workers.environment_plan import (

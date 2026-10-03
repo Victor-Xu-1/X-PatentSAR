@@ -138,6 +138,7 @@ describe('original PDF provenance and navigation', () => {
       />,
     );
     expect(screen.getByLabelText('上一页原始文档')).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: '文档工具' }));
     expect(screen.getByLabelText('缩小原始文档')).toBeDisabled();
     const input = screen.getByLabelText('原始文档页码');
     fireEvent.change(input, { target: { value: '13' } });

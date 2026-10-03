@@ -1,80 +1,86 @@
 #!/usr/bin/env python3
-"""Persistent DECIMER JSONL worker.
-
-The single-image wrapper is reliable but reloads TensorFlow/DECIMER for every
-structure.  This worker keeps DECIMER loaded and processes one JSON request per
-line on stdin:
-
-    {"id": "1", "image_path": "/path/to/structure.png"}
-
-It returns one JSON object per line on stdout and keeps stderr available for
-TensorFlow diagnostics.
-"""
+"""Bounded offline printed-model JSONL worker in the Python 3.10 boundary."""
 
 import json
 import os
+import runpy
 import sys
 import time
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parents[3]))
-from patent_sar_extractor.core.runtime_env import build_gpu_env  # noqa: E402
-
-os.environ.update(build_gpu_env(python_path=sys.executable))
+runpy.run_path(
+    str(Path(__file__).resolve().parents[2] / "worker_bootstrap.py"),
+    run_name="__main__",
+)
+from patent_sar_extractor.core.ocsr.model_identity import (
+    printed_model_identity,  # noqa: E402
+)
 
 
 def _emit(payload: dict) -> None:
-    print(json.dumps(payload, ensure_ascii=False), flush=True)
+    print(json.dumps(payload, ensure_ascii=False, allow_nan=False), flush=True)
 
 
 def main() -> None:
     try:
-        from DECIMER import predict_SMILES
-    except Exception as exc:
-        _emit({"status": "error", "error": f"DECIMER import failed: {exc}"})
-        sys.exit(1)
+        identity = printed_model_identity()
+        if "--identity" in sys.argv:
+            _emit(identity)
+            return
+        from patent_sar_extractor.core.ocsr.printed_model import PrintedDecimerModel
 
-    _emit({"status": "ready"})
-    for line in sys.stdin:
-        line = line.strip()
+        model = PrintedDecimerModel(identity)
+        _emit(
+            {
+                "status": "ready",
+                "identity": identity,
+                "device": model.device,
+                "peak_rss_mb": model.peak_rss_mb,
+            }
+        )
+    except Exception as exc:
+        _emit({"status": "error", "error": f"DECIMER startup failed: {exc}"})
+        raise SystemExit(1) from exc
+    while True:
+        line = sys.stdin.buffer.readline(4097)
         if not line:
-            continue
-        if line == "__quit__":
-            break
+            return
+        if len(line) > 4096 or not line.endswith(b"\n"):
+            _emit({"status": "error", "error": "Invalid bounded OCSR request"})
+            raise SystemExit(1)
+        request_id = None
         try:
             request = json.loads(line)
-            request_id = request.get("id")
-            image_path = str(request.get("image_path") or "")
-            if not os.path.isfile(image_path):
-                _emit({
-                    "id": request_id,
-                    "status": "error",
-                    "error": f"Image not found: {image_path}",
-                })
-                continue
-            start = time.time()
-            smiles = predict_SMILES(image_path)
-            elapsed = round(time.time() - start, 3)
-            if smiles and isinstance(smiles, str) and smiles.strip():
-                _emit({
+            if not isinstance(request, dict) or set(request) != {"id", "image_path"}:
+                raise ValueError("OCSR request fields are invalid")
+            request_id = request["id"]
+            if not isinstance(request_id, str) or len(request_id) != 32:
+                raise ValueError("OCSR request ID is invalid")
+            image = request["image_path"]
+            if (
+                not isinstance(image, str)
+                or len(image) > 2048
+                or not os.path.isfile(image)
+            ):
+                raise ValueError("OCSR input image is missing or invalid")
+            started = time.monotonic()
+            prediction = model.predict(image)
+            _emit(
+                {
                     "id": request_id,
                     "status": "success",
-                    "smiles": smiles.strip(),
-                    "elapsed_sec": elapsed,
-                })
-            else:
-                _emit({
+                    **prediction,
+                    "elapsed_sec": round(time.monotonic() - started, 3),
+                }
+            )
+        except Exception as exc:
+            _emit(
+                {
                     "id": request_id,
                     "status": "error",
-                    "error": "DECIMER returned empty SMILES",
-                    "elapsed_sec": elapsed,
-                })
-        except Exception as exc:
-            _emit({
-                "id": request.get("id") if isinstance(locals().get("request"), dict) else None,
-                "status": "error",
-                "error": f"DECIMER exception: {exc}",
-            })
+                    "error": f"DECIMER prediction failed: {exc}",
+                }
+            )
 
 
 if __name__ == "__main__":

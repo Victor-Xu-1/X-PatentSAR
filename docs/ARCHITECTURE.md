@@ -24,9 +24,14 @@ Dependency direction is enforced by tests: `core/` does not import `application/
 ```text
 src/patent_sar_extractor/
   cli.py                   command-line presentation
-  application/             application use cases and QA policy
+  application/             typed stage registry, use cases and acceptance policies
+    pipeline.py             sole ordered extraction coordinator
+    pipeline_context.py     explicit data exchanged by the eight stage handlers
+    stage_*.py              one handler per stage; stage_cache owns fingerprints
   core/                    deterministic domain and extraction engines
     series_table_binding.py typed I-series geometry/evidence resolution
+    structure_binder.py     source-ownership coordinator and one artifact writer
+    binding_*.py            geometry, observations, candidates and strict arbitration
     ocsr/                   DECIMER-only recognition, cache and RDKit QC
   integrations/llm/        optional LLM advisory QA and VLM adapter
   workers/                 isolated Python-process entry points
@@ -60,6 +65,14 @@ change binding/SMILES/QA files or declare a failed run formally accepted.
 copies it into the wheel's private package static directory. The installed wheel
 serves both UI and API from one origin; Node.js is a build dependency only.
 
+Results use compact/comfortable density and independently selected metric columns.
+Each measurement retains its assay, unit and original source navigation, including
+multiple measurements of the same metric. The six statistics share one compact
+strip: binding evidence and actual SQLite manual decisions are distinct counters.
+Original crops and bounded RDKit PNGs appear side by side; a redraw is explicitly
+not original evidence. Token probabilities are uncalibrated observations, never
+chemical-accuracy percentages or manual approvals.
+
 ### Task and analysis boundaries
 
 The task page first uploads and validates an original, then explicitly creates a
@@ -67,6 +80,25 @@ durable extraction job. A failed start retains the uploaded project and exposes
 recovery; uncertain writes are not blindly replayed. Operator notes are records,
 not executable prompts. Intermediate/force options become real CLI flags, while
 safe resume retains checkpoints and never repeats force invalidation.
+
+Each new attempt, including resume, receives an independent job-ID output root.
+Resume copies only bounded, content-verified upstream checkpoints, relocates
+declared image/path fields and preserves raw chemistry/provenance exactly. The
+CLI rechecks current fingerprints and strict acceptance; transport is not a second
+cache authority. Terminal attempts seal private write-once stage snapshots.
+An ordinary rerun also uses this same transport when the latest stopped job's
+current-runtime private output and exact PDF observations are verified. It retains
+the new request's options and never inherits old history or acceptance. Changed
+rules/runtime retain only independently compatible raw OCR; `force` starts fresh.
+Legacy jobs sharing a mutable output root report `history_available=false` rather
+than inheriting a later run's successful stages. No SQLite migration or in-place
+rewrite of old generated artifacts is required.
+
+`smiles/progress.json` atomically publishes actual completed/total, cache hits,
+failures, execution device and measured peak RSS. The existing job read path
+validates its version and bounded counters; no extra poller, predicted ETA or
+guessed success percentage is introduced. Reused checkpoint facts are recorded
+explicitly, and cached observations do not pretend to measure current resources.
 
 `web/result_queries.py` owns filtering, reviews, pagination and presentation
 coordinates. It validates the original SHA and bounds across filtered rows but
@@ -172,7 +204,7 @@ Formal JSON artifacts carry the same identity envelope:
   "schema": {"name": "patentsar.bindings", "version": 2},
   "product": {"name": "X-PatentSAR", "version": "0.1.0"},
   "pipeline_contract": {"name": "patentsar.activity-led", "version": "2.0.0"},
-  "ruleset": {"name": "patentsar.accuracy-first", "version": "2.0.1"}
+  "ruleset": {"name": "patentsar.accuracy-first", "version": "2.0.3"}
 }
 ```
 
@@ -186,12 +218,74 @@ All fail-closed stages use one marker name and one writer: `STRICT_ACCEPTANCE_FA
 |---|---:|---|
 | Product | `0.1.0` | User-visible software release |
 | Pipeline contract | `patentsar.activity-led` `2.0.0` | Stage order or cross-stage semantics |
-| Ruleset | `patentsar.accuracy-first` `2.0.1` | Acceptance or binding behavior |
+| Ruleset | `patentsar.accuracy-first` `2.0.3` | Acceptance or binding behavior |
 | Artifact/cache schema | Namespaced integer versions | Serialized shape or cache compatibility |
 
 Current non-default schema revisions are page classification v2 (`candidate_pages` replaces the ambiguous `core_pages` field), bindings v2 and formal QA v2. The diagnostic review-excerpt metadata starts at v1. All other current artifact/cache schemas are v1.
 
 `contracts.py` is the only authority. Pipeline contract 2.0 removes the unused core-PDF branch and hidden worker profiling. Ruleset 2.0 makes deterministic QA the sole acceptance authority and explicitly separates diagnostic output. Ruleset 2.0.1 fixes spatial duplicate handling and strengthens ambiguity rejection; it invalidates old rule-dependent stage fingerprints without changing the product version or serialized schemas.
+
+### Shared original-table observations and numbered cells
+
+`core/table_geometry.py` is the single grid/coordinate OCR authority;
+`core/table_cells.py` owns bounded cell observations and printed-cross counting.
+`core/biology_tables.py` maps actual assay headers to cell values, while
+`core/numbered_structure_binding.py` matches printed IDs to unique contained
+DECIMER segments. Neither consumer imports the other or reconstructs flattened
+page text into a competing row sequence. Tall structure rows require complete
+vertical grid connections, rather than a fixed activity-row-height assumption.
+
+Recognized pages leave generic OCR and repair paths, including when evidence is
+withheld. A valid serialized cell proof is rechecked by the shared strict binding
+rules; missing segments, ambiguous ownership and exact suffix conflicts fail.
+`activity_sources` retains per-metric original pages/cells and observed assay
+context. The Web adapter validates and reads this evidence without running OCR.
+
+`core/structure_catalogs.py` scopes numbered cells to explicit catalog captions.
+A catalog labelled selected/subset is ignored as a reprint only when all its
+observed IDs exist in a non-subset catalog. Two full catalogs and selected tables
+with novel IDs still compete and cannot silently erase conflicting evidence.
+`core/visible_structure_binding.py` owns complete prefixed diagram captions on
+non-table pages. Exact suffixes, original geometry and independently agreeing
+cell observations are required; a parent number never supplies an isomer suffix.
+When these spatial sources cover the entire active set with confirmed unique
+images, generic crop OCR and multi-pass repair are bypassed. All source layouts
+publish through `core/binding_artifacts.py` and the same downstream strict gate.
+The writer also carries the input patent identity into each row; uploaded-file
+names are never substituted as patent identifiers downstream.
+
+Production OCSR has one raw-observation path. It does not rewrite atom symbols,
+ring digits, disconnected components, isotope labels or stereochemistry. The
+independent OCSR observation epoch namespaces exact-image cache entries; old
+postprocessed entries remain on disk but are not promotable. A non-clean raw
+prediction permits at most one explicitly enabled same-image normalization retry,
+with both image hashes, source variants and unmodified strings retained. No second
+engine or string repair becomes an acceptance authority. Normalization uses bounded
+dimensions and atomic private output with explicit error reporting.
+
+Ruleset 2.0.3 requires successful owned producers and newly published outputs:
+worker errors or unchanged files cannot stamp a new manifest. The read model
+projects only core-confirmed stages; failed-stage materials require an explicit
+fresh-output fact. Copied pending artifacts are never current chemistry. Earlier
+derived artifacts remain read-only history, not new formal acceptance.
+SQLite projections record the same product/pipeline/rules identity. The service
+rebuilds a stale projection from its original read-only artifacts on first access
+after an identity change; project details and result queries share this one
+invalidation path. It never retags original outputs or carries old acceptance
+forward merely because the previous projection was cached.
+
+Ruleset 2.0.2 previously invalidated derived artifacts. Raw OCR has an independent observation
+contract: unchanged, PDF-SHA-verified 2.0.1 observations may seed a new run, but
+2.0.0 text-only observations and old activity/binding/SMILES/QA cannot. The job
+controller accepts reusable caches only inside the same private project. It
+starts the same CLI with `--reuse-ocr-cache`; there is no second recovery pipeline.
+Original failed runs are immutable inputs to this reuse step, not rewritten jobs.
+Verified 2.0.1/2.0.2 raw observations may also seed 2.0.3; no old derived QA is promoted.
+The pipeline persists actual stage starts and exception failures for the UI.
+The queue projects completed current checkpoints into the existing SQLite
+read model while a job runs. The UI refreshes on job/stage revisions, not on
+every duration tick. This is presentation of provisional output, never another
+extraction or acceptance path. A new job ID cannot retain previous-run rows.
 
 ### I-series structure-table evidence
 
@@ -213,10 +307,28 @@ A printed-number correction requires a duplicated source ID, unique immediately 
 - Automatic repair recursion: removed because strict default gates aborted before most repair triggers and output invalidation was not a trustworthy recovery protocol.
 - MolNexTR/MolVec fallback adapters: removed; production and stage-level OCSR are DECIMER-only.
 - Bare SMILES JSON and `SMILES_ACCEPTANCE_FAILED.json`: replaced by the canonical SMILES envelope and single strict-failure marker.
+- Unreferenced single-image DECIMER subprocess: removed; one bounded printed-model JSONL carrier owns recognition.
+- Unlabelled `Structure-*` sequence generation and duplicate-name suffix fabrication: removed; missing/conflicting original IDs remain evidence gaps for strict arbitration.
 
 ## Runtime boundaries
 
-The application uses locked CPython 3.12 dependencies. DECIMER runs as an isolated CPython 3.10 subprocess because its TensorFlow constraints do not support the application runtime. Child processes discard the parent's `PYTHONPATH` and append only the PatentSAR source/package root after the child environment's own site-packages.
+The application uses locked CPython 3.12 dependencies. DECIMER runs as an isolated CPython 3.10 subprocess because its TensorFlow constraints do not support the application runtime. Child processes discard the parent's `PYTHONPATH`. `worker_bootstrap.py` loads only the calling first-party package by its exact location, so a stale installed copy cannot override it and the application's whole Python 3.12 site-packages never replaces native scientific dependencies. Conflicting already-imported packages fail explicitly.
+
+`core/ocsr/printed_model.py` is the single recognition adapter for production,
+research and environment probes. It verifies the pinned SDK sources, package
+versions, official printed-model inventory and tokenizer digest before unpickling
+or loading TensorFlow. It retains the SDK's original transforms and decoder without
+eagerly loading the unused hand-drawn model. Segmentation remains separate; model
+files already installed by an operator are not deleted.
+
+One owned JSONL process serializes model inference. Image preparation has a bounded
+window; `--smiles-workers` does not create additional TensorFlow models. CPU defaults
+to two intra-operation/one inter-operation threads, with explicit compatible GPU
+opt-in. Requests, response bytes, diagnostics, load/prediction deadlines and one
+process restart are bounded. The 4096-MiB default resident budget monitors only this
+worker, and insufficient model headroom fails before loading rather than stopping
+other applications. Exact-image cache entries include model/SDK/adapter content and
+execution-policy identity. Old repaired-string entries remain non-promotable.
 
 Packaged defaults are immutable. Operator configuration belongs under `PATENTSAR_CONFIG_DIR` or the XDG config directory; run data belongs under an explicit output path, `PATENTSAR_STATE_DIR`, or the XDG state directory. No installed wheel writes into `site-packages`.
 

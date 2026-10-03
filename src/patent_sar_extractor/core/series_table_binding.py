@@ -6,12 +6,11 @@ It returns evidence; the binder owns serialization and the final accuracy gate.
 
 from __future__ import annotations
 
-from collections import Counter
-from dataclasses import dataclass, replace
 import math
 import re
+from collections import Counter
+from dataclasses import dataclass, replace
 from typing import Any, Mapping, Sequence
-
 
 _LABEL_RE = re.compile(
     r"(?<![A-Za-z0-9])(?:I|1|l)\s*[-\u2013\u2014]\s*([1-9]\d{0,4})(?!\d)",
@@ -47,6 +46,8 @@ class SeriesTableResult:
     bindings: tuple[SeriesTableBinding, ...]
     rejected_geometry: int = 0
     ambiguous_pairings: int = 0
+    observed_keys: frozenset[str] = frozenset()
+    recognized_pages: frozenset[int] = frozenset()
 
     @property
     def recognized(self) -> bool:
@@ -231,8 +232,11 @@ def pair_series_table(
     observed: Counter[int] = Counter()
     candidates: list[SeriesTableBinding] = []
     label_count = rejected = ambiguous = 0
+    observed_pages: set[int] = set()
     for page in sorted(by_page):
         labels = _page_labels(lines_by_page.get(page, ()), label_count)
+        if labels:
+            observed_pages.add(page)
         label_count += len(labels)
         observed.update(label.number for label in labels)
         pairs, invalid, uncertain = _pair_page(page, by_page[page], labels)
@@ -244,4 +248,7 @@ def pair_series_table(
         if label_count >= _MIN_TABLE_LABELS
         else ()
     )
-    return SeriesTableResult(label_count, bindings, rejected, ambiguous)
+    return SeriesTableResult(label_count, bindings, rejected, ambiguous,
+        frozenset(str(number) for number in observed),
+        frozenset(observed_pages) if label_count >= _MIN_TABLE_LABELS else frozenset(),
+    )

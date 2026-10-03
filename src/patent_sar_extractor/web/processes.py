@@ -35,6 +35,7 @@ class RunSpec:
     include_intermediates: bool = False
     force: bool = False
     task_note: str = ""
+    source_ocr_cache: str = ""
 
 
 @dataclass
@@ -334,6 +335,8 @@ class CLIProcessRunner(SubprocessRunner):
             command.append("--include-intermediates")
         if spec.force:
             command.append("--force")
+        elif spec.source_ocr_cache:
+            command.extend(["--reuse-ocr-cache", spec.source_ocr_cache])
         return command
 
     def environment(self, spec: RunSpec) -> dict[str, str]:

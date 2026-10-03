@@ -68,8 +68,8 @@ export function Workspace({
   return (
     <div className="workspace" data-dialog-focus-scope>
       <section className="workflow-panel">
-        <StageStrip job={job} />
-        <JobActions project={project} job={job} ready={ready} onChange={onJobChange} />
+        <StageStrip job={job} compact />
+        <JobActions project={project} job={job} ready={ready} onChange={onJobChange} compact />
       </section>
       <WorkspaceLayout
         layout={layout}
@@ -103,16 +103,25 @@ export function Workspace({
             }
             resultProps={{
               project,
+              job,
               resource: results.resource,
               filters: { ...results.filters, q: query },
-              metric: results.metric,
               selected: results.selected,
               focusedId: route.compoundId,
-              onMetric: results.setMetric,
               onFilters: results.changeFilters,
               onSelect: results.toggle,
               onSelectPage: results.selectPage,
               onJump: jump,
+              onActivitySource: (activity) => {
+                if (activity.page !== null)
+                  navigate({
+                    ...route,
+                    page: activity.page,
+                    tab: 'original',
+                    compoundId: null,
+                    layout: { ...layout, pdfVisible: true },
+                  });
+              },
               onCrop: setCrop,
               onReview: setReview,
               onExport: () => setExporting(true),

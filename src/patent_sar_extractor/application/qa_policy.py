@@ -5,7 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 
-def compose_qa_decision(deterministic: dict[str, Any], advisory: dict[str, Any]) -> dict[str, Any]:
+def compose_qa_decision(
+    deterministic: dict[str, Any], advisory: dict[str, Any]
+) -> dict[str, Any]:
     """Combine reports without granting an LLM formal acceptance authority.
 
     The deterministic report is the sole fail-closed gate.  The advisory
@@ -13,7 +15,9 @@ def compose_qa_decision(deterministic: dict[str, Any], advisory: dict[str, Any])
     veto a formal result.
     """
 
-    acceptance = deterministic.get("acceptance", {}) if isinstance(deterministic, dict) else {}
+    acceptance = (
+        deterministic.get("acceptance", {}) if isinstance(deterministic, dict) else {}
+    )
     formal_ok = bool(deterministic.get("ok")) and bool(acceptance.get("ok"))
     deterministic_warnings = [
         str(item).strip()

@@ -77,7 +77,7 @@ _SPECS = (
     ComponentSpec(
         "decimer-models",
         "DECIMER 模型权重",
-        "真实 OCSR、手绘 OCSR 和分割权重；加载检查不能替代识别准确性验收。",
+        "专利印刷 OCSR 和分割权重；按需安装，不下载未使用的手绘模型。加载检查不是识别准确性验收。",
         "OCSR V2 + segmentation 1.5.0",
         "models",
         "structure",
@@ -85,7 +85,7 @@ _SPECS = (
         "CC-BY-4.0",
         "https://zenodo.org/records/8300489",
         ("decimer",),
-        download_bytes=869827745,
+        download_bytes=571312633,
     ),
     ComponentSpec(
         "admet",

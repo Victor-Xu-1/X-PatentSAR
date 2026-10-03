@@ -11,6 +11,8 @@ from unittest.mock import patch
 
 from test_web_support import WebFixture, artifact_run, make_pdf
 
+from patent_sar_extractor import contracts
+from patent_sar_extractor.web.acceptance import ARTIFACTS
 from patent_sar_extractor.web.errors import WebError
 from patent_sar_extractor.web.models import ReviewRequest
 from patent_sar_extractor.web.pdf import rendered_box
@@ -19,13 +21,152 @@ from patent_sar_extractor.web.service import WorkspaceService, import_run
 
 
 class ResultTests(WebFixture, unittest.TestCase):
+    def partial_run(self, name, *, failed_stage="activity"):
+        run = artifact_run(self.root / name, self.pdf)
+        for artifact in ("locator", "structures", "bindings", "smiles", "qa"):
+            (run / ARTIFACTS[artifact][0]).unlink()
+        path = run / "pipeline_summary.json"
+        summary = json.loads(path.read_text())
+        summary.update(
+            status="failed_accuracy_gate",
+            steps={
+                "classify": {"status": "ok"},
+                "activity": {"status": "ok"},
+                failed_stage: {
+                    "status": "failed",
+                    "output_updated": True,
+                    "acceptance_errors": ["Unresolved rows."],
+                },
+            },
+        )
+        path.write_text(json.dumps(summary))
+        (run / "STRICT_ACCEPTANCE_FAILED.json").write_text(
+            json.dumps(
+                {
+                    **contracts.artifact_identity(
+                        contracts.FAILURE_MARKER_SCHEMA,
+                        contracts.FAILURE_MARKER_SCHEMA_VERSION,
+                    ),
+                    "stage": failed_stage,
+                    "errors": ["Unresolved rows."],
+                }
+            )
+        )
+        return run
+
+    def test_current_failed_partial_run_preserves_original_and_explains_ungenerated_crops(
+        self,
+    ):
+        run = self.partial_run("failed-current")
+        before = {
+            p: hashlib.sha256(p.read_bytes()).hexdigest() for p in run.rglob("*.json")
+        }
+        imported = import_run(self.state, run, pdf_path=self.pdf)
+        self.assertEqual(imported.acceptance.state, "failed")
+        self.assertFalse(imported.is_historical)
+        self.assertEqual(imported.summary.structures, 0)
+        self.assertEqual(imported.summary.activity_rows, 2)
+        self.assertIn("Unresolved rows.", imported.acceptance.errors)
+        with self.client() as client:
+            prefix = f"/api/v1/projects/{imported.id}"
+            result = client.get(prefix + "/results")
+            self.assertEqual(result.status_code, 200, result.text)
+            self.assertEqual(result.json()["total"], 2)
+            for row in result.json()["items"]:
+                self.assertIsNone(row["structure_image_url"])
+                self.assertIn("structure_not_generated", row["flags"])
+                self.assertNotIn("image_unavailable", row["flags"])
+                self.assertNotIn("historical_identity", row["flags"])
+                self.assertNotEqual(row["confidence"]["level"], "high")
+            original = client.get(prefix + "/pages/1/image")
+            self.assertEqual(original.status_code, 200)
+            self.assertTrue(original.content.startswith(b"\x89PNG\r\n\x1a\n"))
+            self.assertEqual(
+                client.get(prefix + "/structures/Compound%201/image").status_code, 404
+            )
+            exported = client.post(
+                prefix + "/export", json={"format": "json", "compound_ids": []}
+            )
+            self.assertTrue(exported.json()["review_only"])
+            self.assertEqual(exported.json()["acceptance"]["state"], "failed")
+        self.assertEqual(
+            before, {p: hashlib.sha256(p.read_bytes()).hexdigest() for p in before}
+        )
+
+    def test_failed_segmentation_is_not_reported_as_missing_generated_file(self):
+        run = self.partial_run("failed-segmentation", failed_stage="structures")
+        imported = import_run(self.state, run, pdf_path=self.pdf)
+        with self.client() as client:
+            rows = client.get(f"/api/v1/projects/{imported.id}/results").json()["items"]
+            self.assertTrue(
+                all("structure_generation_failed" in row["flags"] for row in rows)
+            )
+            self.assertTrue(
+                all("image_unavailable" not in row["flags"] for row in rows)
+            )
+
+    def test_generated_crop_without_file_or_pdf_geometry_is_explicitly_unavailable(
+        self,
+    ):
+        run = artifact_run(self.root / "missing-generated-crop", self.pdf)
+        (run / "crop.png").unlink()
+        path = run / "structure_bindings/bindings.json"
+        bindings = json.loads(path.read_text())
+        for row in bindings["final_bindings"]:
+            for field in ("struct_x0", "struct_y0", "struct_x1", "struct_y1"):
+                row.pop(field)
+        path.write_text(json.dumps(bindings))
+        path = run / "structures/metadata.json"
+        structures = json.loads(path.read_text())
+        for row in structures["structures"]:
+            row.pop("bbox_pdf")
+        path.write_text(json.dumps(structures))
+        imported = import_run(self.state, run, pdf_path=self.pdf)
+        with self.client() as client:
+            rows = client.get(f"/api/v1/projects/{imported.id}/results").json()["items"]
+            self.assertTrue(all("image_unavailable" in row["flags"] for row in rows))
+            self.assertTrue(
+                all("structure_not_generated" not in row["flags"] for row in rows)
+            )
+            self.assertTrue(all(row["structure_image_url"] is None for row in rows))
+
+    def test_current_diagnostic_or_unverified_bindings_never_receive_high_confidence(
+        self,
+    ):
+        for mode in ("diagnostic", "unverified_original"):
+            run = artifact_run(self.root / mode, self.pdf)
+            if mode == "diagnostic":
+                path = run / "structure_bindings/bindings.json"
+                payload = json.loads(path.read_text())
+                payload["execution_mode"] = "diagnostic_unvalidated"
+                path.write_text(json.dumps(payload))
+            imported = import_run(
+                self.state,
+                run,
+                pdf_path=None if mode == "unverified_original" else self.pdf,
+            )
+            self.assertEqual(imported.acceptance.state, "failed")
+            self.assertFalse(imported.is_historical)
+            self.assertEqual(imported.summary.confirmed, 0)
+            with self.client() as client:
+                rows = client.get(f"/api/v1/projects/{imported.id}/results").json()[
+                    "items"
+                ]
+                self.assertTrue(
+                    all(row["confidence"]["level"] != "high" for row in rows)
+                )
+
     def test_paged_results_only_transform_visible_boxes_and_preserve_rotation(self):
         pdf = make_pdf(self.root / "rotated.pdf", rotation=90)
         run = artifact_run(self.root / "paged-run", pdf, rows=30, rendered=False)
         imported = import_run(self.state, run, pdf_path=pdf)
-        with self.client() as client, patch(
-            "patent_sar_extractor.web.result_queries.rendered_box", wraps=rendered_box
-        ) as normalize:
+        with (
+            self.client() as client,
+            patch(
+                "patent_sar_extractor.web.result_queries.rendered_box",
+                wraps=rendered_box,
+            ) as normalize,
+        ):
             response = client.get(
                 f"/api/v1/projects/{imported.id}/results?page=2&page_size=3"
             )
@@ -134,7 +275,7 @@ class ResultTests(WebFixture, unittest.TestCase):
                 "accepted"
                 if mode == "accepted"
                 else "failed"
-                if mode in {"bad_qa", "marker"}
+                if mode in {"bad_qa", "marker", "missing_qa", "bad_mode"}
                 else "historical"
             )
             self.assertEqual(project.acceptance.state, expected, mode)

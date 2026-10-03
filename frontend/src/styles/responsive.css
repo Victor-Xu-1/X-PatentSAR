@@ -2,9 +2,6 @@
   .topbar {
     padding: 0 15px;
   }
-  .global-search {
-    width: 220px;
-  }
   .breadcrumb strong {
     max-width: 220px;
   }
@@ -18,12 +15,6 @@
     width: 17px;
     height: 17px;
   }
-  .metric-icon {
-    display: none;
-  }
-  .metric-card {
-    padding: 2px 5px;
-  }
   .metric-card > div {
     gap: 4px;
   }
@@ -35,9 +26,6 @@
   }
 }
 @media (max-width: 1100px) {
-  .global-search {
-    width: 210px;
-  }
   .topbar {
     padding: 0 13px;
   }
@@ -74,6 +62,18 @@
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
+  }
+  .stage-overview {
+    position: relative;
+  }
+  .stage-observation {
+    position: static;
+  }
+  .stage-observation-detail,
+  .stage:nth-last-child(-n + 3) .stage-observation-detail {
+    left: 0;
+    right: auto;
+    top: 100%;
   }
   .workflow-panel {
     align-items: flex-start;
@@ -147,9 +147,6 @@
   .topbar-actions {
     gap: 8px;
   }
-  .global-search {
-    display: none;
-  }
   main {
     padding: 9px;
   }
@@ -169,12 +166,6 @@
   .layout-toolbar > span {
     display: none;
   }
-  .metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .results-heading > span {
-    display: none;
-  }
   .acceptance-banner small {
     width: 100%;
   }
@@ -191,9 +182,6 @@
   .job-card header,
   .job-card header > div {
     flex-wrap: wrap;
-  }
-  .selection-bar {
-    align-items: flex-start;
   }
   .task-form {
     grid-template-columns: minmax(0, 1fr);

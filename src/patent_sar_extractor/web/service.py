@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .artifacts import ArtifactView
+from .attempts import AttemptHistory, spec_record
 from .errors import WebError
 from .models import (
     Acceptance,
@@ -22,7 +23,6 @@ from .models import (
 from .pdf import UploadedPDF, copy_original, filename_title
 from .processes import runtime_identity
 from .result_queries import ResultQueries
-from .stages import read_stages
 from .storage import Store, encode, now
 from .task_inputs import patent_identifier
 
@@ -30,7 +30,21 @@ from .task_inputs import patent_identifier
 class WorkspaceService:
     def __init__(self, state_root: str | Path) -> None:
         self.store = Store(state_root)
-        self.result_queries = ResultQueries(self.store)
+        self.attempts = AttemptHistory(self.store)
+        self.result_queries = ResultQueries(self.store, self._current_project)
+
+    def _current_project(self, project_id: str) -> dict[str, Any]:
+        row = self.store.project(project_id)
+        snapshot = json.loads(row["snapshot"])
+        if (
+            row["run_root"]
+            and snapshot.get("read_model_identity") != runtime_identity()
+        ):
+            # Projection data is rebuildable. Old cached acceptance must not
+            # become current authority after a rules/software upgrade.
+            self.refresh(project_id)
+            row = self.store.project(project_id)
+        return row
 
     @staticmethod
     def _title(title: str) -> str:
@@ -276,18 +290,23 @@ class WorkspaceService:
 
     def job(self, job_id: str) -> Job:
         row = self.store.job(job_id)
-        spec = json.loads(row["spec"])
-        output = Path(spec["output_dir"])
+        try:
+            spec = spec_record(row["spec"])
+        except WebError:
+            spec = {}
+        output = self.attempts.output(row)
         project = self.store.project(row["project_id"])
         error = Error.model_validate_json(row["error"]) if row["error"] else None
         resumable = (
             row["status"] in {"failed", "cancelled", "interrupted"}
             and not row["identity"]
             and bool(project["pdf_rel"])
-            and project["sha256"] == spec["sha256"]
+            and project["sha256"] == spec.get("sha256")
             and spec.get("runtime_identity") == runtime_identity()
-            and output.is_relative_to(self.store.root / "runs")
+            and output is not None
+            and self.attempts.unique(row)
         )
+        history = self.attempts.read(row) if spec else None
         return Job(
             id=row["id"],
             project_id=row["project_id"],
@@ -296,25 +315,29 @@ class WorkspaceService:
             started_at=row["started_at"],
             finished_at=row["finished_at"],
             error=error,
-            stages=read_stages(
-                output
-                if output.resolve().is_relative_to(
-                    self.store.root / "runs" / row["project_id"]
-                )
-                else None
-            ),
+            stages=history.stages if history else [],
             can_resume=resumable,
+            history_available=history.available if history else False,
             include_intermediates=spec.get("include_intermediates", False),
             force=spec.get("force", False),
             task_note=spec.get("task_note", ""),
         )
 
     def project(self, project_id: str) -> Project:
-        row = self.store.project(project_id)
+        row = self._current_project(project_id)
         snapshot = json.loads(row["snapshot"])
         with self.store.connect() as connection:
             latest = connection.execute(
                 "SELECT id FROM jobs WHERE project_id=? ORDER BY created_at DESC,rowid DESC LIMIT 1",
+                (project_id,),
+            ).fetchone()
+            review_counts = connection.execute(
+                "SELECT COUNT(c.id) AS total, "
+                "COALESCE(SUM(CASE WHEN r.decision IN ('approved','rejected') "
+                "THEN 1 ELSE 0 END),0) AS decided "
+                "FROM compounds c LEFT JOIN reviews r "
+                "ON r.project_id=c.project_id AND r.compound_id=c.id "
+                "WHERE c.project_id=?",
                 (project_id,),
             ).fetchone()
         last_job = self.job(latest["id"]) if latest else None
@@ -342,7 +365,14 @@ class WorkspaceService:
                 sha256=row["sha256"] or row["expected_sha256"],
             ),
             is_historical=bool(row["historical"]),
-            summary=Summary.model_validate(snapshot.get("summary", {})),
+            summary=Summary.model_validate(
+                {
+                    **snapshot.get("summary", {}),
+                    "manually_reviewed": review_counts["decided"],
+                    "manual_review_pending": review_counts["total"]
+                    - review_counts["decided"],
+                }
+            ),
             acceptance=acceptance,
             last_job=last_job,
         )

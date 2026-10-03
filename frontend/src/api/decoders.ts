@@ -15,6 +15,7 @@ import {
 import type {
   BBox,
   Compound,
+  CompoundRecognition,
   Health,
   Job,
   PageData,
@@ -23,6 +24,7 @@ import type {
   Review,
   Runtime,
   Session,
+  StageProgress,
 } from './types';
 import { stageNames } from './types';
 import type { Decoder } from './validation';
@@ -40,6 +42,36 @@ const score: Decoder<number> = (v, p) => {
   const n = number(v, p);
   if (n < 0 || n > 1) throw new ContractError(p ?? '$');
   return n;
+};
+const tokenConfidenceShape = object({ minimum: score, mean: score });
+const tokenConfidence: Decoder<{ minimum: number; mean: number }> = (input, path) => {
+  const value = tokenConfidenceShape(input, path);
+  if (value.minimum > value.mean) throw new ContractError(path ?? '$');
+  return value;
+};
+const recognition: Decoder<CompoundRecognition> = object({
+  status: oneOf(['not_run', 'valid', 'invalid', 'unavailable']),
+  quality_flag: nullable(string),
+  model_fingerprint: nullable(string),
+  token_confidence: nullable(tokenConfidence),
+});
+const nonnegative: Decoder<number> = (input, path) => {
+  const value = number(input, path);
+  if (value < 0) throw new ContractError(path ?? '$');
+  return value;
+};
+const progressShape = object({
+  completed: count,
+  total: count,
+  cache_hits: count,
+  failures: count,
+  device: nullable(oneOf(['cpu', 'gpu'])),
+  peak_rss_mb: nullable(nonnegative),
+});
+const progress: Decoder<StageProgress> = (input, path) => {
+  const value = progressShape(input, path);
+  if (value.completed > value.total) throw new ContractError(path ?? '$');
+  return value;
 };
 const healthShape = object({
   product: identity,
@@ -76,6 +108,8 @@ export const decodeProject: Decoder<Project> = object({
     matched_structures: count,
     confirmed: count,
     needs_review: count,
+    manually_reviewed: nullable(count),
+    manual_review_pending: nullable(count),
   }),
   acceptance: object({
     state: oneOf(['not_run', 'accepted', 'failed', 'historical']),
@@ -93,7 +127,9 @@ export const decodeCompound: Decoder<Compound> = object({
   display_id: string,
   structure_id: nullable(string),
   structure_image_url: nullable(string),
+  redraw_image_url: nullable(string),
   smiles: nullable(string),
+  recognition: nullable(recognition),
   activities: array(
     object({
       name: string,
@@ -138,6 +174,7 @@ export const decodeJob: Decoder<Job> = object({
   finished_at: nullable(string),
   error: nullable(object({ code: string, message: string })),
   can_resume: boolean,
+  history_available: nullable(boolean),
   include_intermediates: defaulted(boolean, false),
   force: defaulted(boolean, false),
   task_note: defaulted(string, ''),
@@ -147,6 +184,8 @@ export const decodeJob: Decoder<Job> = object({
       status: oneOf(['pending', 'running', 'ok', 'empty', 'failed', 'warnings']),
       count: nullable(count),
       duration_seconds: nullable(number),
+      progress: nullable(progress),
+      reused_checkpoint: nullable(boolean),
     }),
   ),
 });

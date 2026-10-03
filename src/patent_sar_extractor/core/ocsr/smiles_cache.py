@@ -1,156 +1,82 @@
-"""
-SMILES Cache module using SQLite.
+"""Private exact-observation cache; legacy tables are retained but never promoted."""
 
-Caches OCSR engine results by image SHA-256 hash + engine name
-to avoid redundant inference on repeated runs.
-"""
+from __future__ import annotations
 
 import hashlib
 import json
-import os
 import sqlite3
 from datetime import datetime, timezone
-from typing import Optional
+from pathlib import Path
 
 from .smiles_qc import qc_smiles
 
+OBSERVATIONS_SQL = (
+    "CREATE TABLE IF NOT EXISTS smiles_observations "
+    "(image_hash TEXT NOT NULL,engine TEXT NOT NULL,payload TEXT NOT NULL,"
+    "created_at TEXT NOT NULL,PRIMARY KEY(image_hash,engine))"
+)
+
 
 def compute_image_sha256(image_path: str) -> str:
-    """Compute SHA-256 hash of an image file.
-
-    Args:
-        image_path: Path to image file.
-
-    Returns:
-        Hex-encoded SHA-256 hash string.
-    """
-    sha256 = hashlib.sha256()
-    with open(image_path, "rb") as f:
-        for chunk in iter(lambda: f.read(8192), b""):
-            sha256.update(chunk)
-    return sha256.hexdigest()
+    digest = hashlib.sha256()
+    with open(image_path, "rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 class SmilesCache:
-    """SQLite-based cache for OCSR engine results."""
+    MAX_OBSERVATION_BYTES = 65536
 
     def __init__(self, cache_path: str):
-        """Initialize cache.
-
-        Args:
-            cache_path: Path to SQLite database file.
-                       Parent directories will be created automatically.
-        """
         self.cache_path = cache_path
-        os.makedirs(os.path.dirname(cache_path), exist_ok=True)
-        self._init_db()
+        Path(cache_path).parent.mkdir(parents=True, exist_ok=True)
+        with sqlite3.connect(cache_path) as connection:
+            connection.execute(OBSERVATIONS_SQL)
 
-    def _init_db(self):
-        """Create cache table if not exists."""
-        with sqlite3.connect(self.cache_path) as conn:
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS smiles_cache (
-                    image_hash TEXT NOT NULL,
-                    engine TEXT NOT NULL,
-                    raw_smiles TEXT,
-                    molblock TEXT,
-                    rdkit_valid INTEGER,
-                    canonical_smiles TEXT,
-                    inchikey TEXT,
-                    mol_formula TEXT,
-                    mol_weight REAL,
-                    quality_flag TEXT,
-                    status TEXT,
-                    error TEXT,
-                    model_version TEXT,
-                    created_at TEXT,
-                    PRIMARY KEY (image_hash, engine)
-                )
-            """)
-            conn.commit()
-
-    def get_cached_result(self, image_hash: str, engine: str) -> Optional[dict]:
-        """Look up cached result for an image + engine combination.
-
-        Args:
-            image_hash: SHA-256 hash of the image file.
-            engine: Engine name (production uses 'decimer').
-
-        Returns:
-            Cached result dict or None if not found.
-        """
-        with sqlite3.connect(self.cache_path) as conn:
-            conn.row_factory = sqlite3.Row
-            cursor = conn.execute(
-                "SELECT * FROM smiles_cache WHERE image_hash = ? AND engine = ?",
+    def get_cached_result(self, image_hash: str, engine: str) -> dict | None:
+        with sqlite3.connect(self.cache_path) as connection:
+            row = connection.execute(
+                "SELECT payload FROM smiles_observations WHERE image_hash=? AND engine=?",
                 (image_hash, engine),
+            ).fetchone()
+        if row is None:
+            return None
+        if len(row[0].encode("utf-8")) > self.MAX_OBSERVATION_BYTES:
+            raise ValueError("OCSR cache observation exceeds its limit")
+        payload = json.loads(row[0])
+        if not isinstance(payload, dict):
+            raise ValueError("OCSR cache observation is not an object")
+        return payload
+
+    def save_result(self, image_hash: str, engine: str, result: dict) -> None:
+        payload = json.dumps(result, ensure_ascii=False, allow_nan=False)
+        if len(payload.encode("utf-8")) > self.MAX_OBSERVATION_BYTES:
+            raise ValueError("OCSR cache observation exceeds its limit")
+        with sqlite3.connect(self.cache_path) as connection:
+            connection.execute(
+                "INSERT OR REPLACE INTO smiles_observations VALUES (?,?,?,?)",
+                (image_hash, engine, payload, datetime.now(timezone.utc).isoformat()),
             )
-            row = cursor.fetchone()
-            if row is None:
-                return None
-
-            result = dict(row)
-            # Convert INTEGER back to bool
-            if "rdkit_valid" in result and result["rdkit_valid"] is not None:
-                result["rdkit_valid"] = bool(result["rdkit_valid"])
-            return result
-
-    def save_result(self, image_hash: str, engine: str, result: dict):
-        """Save an engine result to cache.
-
-        Args:
-            image_hash: SHA-256 hash of the image file.
-            engine: Engine name.
-            result: Result dict from engine + QC.
-        """
-        now = datetime.now(timezone.utc).isoformat()
-
-        with sqlite3.connect(self.cache_path) as conn:
-            conn.execute(
-                """
-                INSERT OR REPLACE INTO smiles_cache
-                    (image_hash, engine, raw_smiles, molblock, rdkit_valid,
-                     canonical_smiles, inchikey, mol_formula, mol_weight,
-                     quality_flag, status, error, model_version, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    image_hash,
-                    engine,
-                    result.get("raw_smiles"),
-                    result.get("molblock"),
-                    int(result.get("rdkit_valid", False)),
-                    result.get("canonical_smiles"),
-                    result.get("inchikey"),
-                    result.get("mol_formula"),
-                    result.get("mol_weight"),
-                    result.get("quality_flag"),
-                    result.get("status"),
-                    result.get("error"),
-                    result.get("model_version"),
-                    now,
-                ),
-            )
-            conn.commit()
 
     def get_stats(self) -> dict:
-        """Get cache statistics."""
-        with sqlite3.connect(self.cache_path) as conn:
-            total = conn.execute("SELECT COUNT(*) FROM smiles_cache").fetchone()[0]
+        with sqlite3.connect(self.cache_path) as connection:
+            total = connection.execute(
+                "SELECT COUNT(*) FROM smiles_observations"
+            ).fetchone()[0]
             by_engine = dict(
-                conn.execute(
-                    "SELECT engine, COUNT(*) FROM smiles_cache GROUP BY engine"
-                ).fetchall()
+                connection.execute(
+                    "SELECT engine,COUNT(*) FROM smiles_observations GROUP BY engine"
+                )
             )
             by_status = dict(
-                conn.execute(
-                    "SELECT status, COUNT(*) FROM smiles_cache GROUP BY status"
-                ).fetchall()
+                connection.execute(
+                    "SELECT json_extract(payload,'$.status'),COUNT(*) FROM smiles_observations GROUP BY json_extract(payload,'$.status')"
+                )
             )
-            valid = conn.execute(
-                "SELECT COUNT(*) FROM smiles_cache WHERE rdkit_valid = 1"
+            valid = connection.execute(
+                "SELECT COUNT(*) FROM smiles_observations WHERE json_extract(payload,'$.rdkit_valid')=1"
             ).fetchone()[0]
-
         return {
             "total_entries": total,
             "valid_entries": valid,
@@ -159,42 +85,17 @@ class SmilesCache:
         }
 
     def purge_non_clean(self) -> int:
-        """Delete cache entries that cannot be reused as strict clean results.
-
-        The database can contain rows created by older plugin releases whose
-        stored quality fields were too permissive. Re-run current QC on the raw
-        SMILES before trusting any row, so legacy/cache-seeded suspicious atoms
-        cannot bypass the strict export gate.
-        """
-        with sqlite3.connect(self.cache_path) as conn:
-            conn.row_factory = sqlite3.Row
-            before = conn.execute("SELECT COUNT(*) FROM smiles_cache").fetchone()[0]
-            conn.execute(
-                """
-                DELETE FROM smiles_cache
-                WHERE raw_smiles IS NULL
-                   OR TRIM(raw_smiles) = ''
-                   OR rdkit_valid != 1
-                   OR quality_flag != 'ok'
-                   OR status != 'success'
-                """
+        """Only evict this rebuildable cache's non-clean observations, not history."""
+        stale = []
+        with sqlite3.connect(self.cache_path) as connection:
+            for image_hash, engine, payload in connection.execute(
+                "SELECT image_hash,engine,payload FROM smiles_observations"
+            ):
+                result = json.loads(payload)
+                checked = qc_smiles(result.get("raw_smiles"))
+                if result.get("status") != "success" or checked["quality_flag"] != "ok":
+                    stale.append((image_hash, engine))
+            connection.executemany(
+                "DELETE FROM smiles_observations WHERE image_hash=? AND engine=?", stale
             )
-            stale_keys = []
-            for row in conn.execute("SELECT image_hash, engine, raw_smiles FROM smiles_cache"):
-                qc = qc_smiles(row["raw_smiles"])
-                if not (
-                    qc.get("rdkit_valid")
-                    and qc.get("quality_flag") == "ok"
-                    and not qc.get("suspicious_elements")
-                    and not qc.get("has_dummy_atom")
-                    and not qc.get("has_query_atom")
-                ):
-                    stale_keys.append((row["image_hash"], row["engine"]))
-            if stale_keys:
-                conn.executemany(
-                    "DELETE FROM smiles_cache WHERE image_hash = ? AND engine = ?",
-                    stale_keys,
-                )
-            conn.commit()
-            after = conn.execute("SELECT COUNT(*) FROM smiles_cache").fetchone()[0]
-        return int(before - after)
+        return len(stale)

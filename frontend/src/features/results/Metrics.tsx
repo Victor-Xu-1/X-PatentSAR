@@ -1,46 +1,52 @@
-import { FileCheck2, FlaskConical, Network, ShieldCheck } from 'lucide-react';
 import type { Project } from '../../api/types';
 export function Metrics({ project }: { project: Project | null }) {
   const metrics = [
     {
-      label: '已识别结构',
+      label: '已提取结构',
       value: project?.summary.structures,
-      icon: Network,
       unit: '个结构',
     },
     {
-      label: '已提取活性',
+      label: project && project.acceptance.state !== 'accepted' ? '候选活性记录' : '已提取活性',
       value: project?.summary.activity_rows,
-      icon: FlaskConical,
       unit: '条数据',
     },
     {
-      label: '证据已确认',
+      label: '绑定已确认',
       value: project?.summary.confirmed,
-      icon: ShieldCheck,
       unit: '个化合物',
     },
     {
-      label: '待人工复核',
+      label: '绑定待核验',
       value: project?.summary.needs_review,
-      icon: FileCheck2,
       unit: '个化合物',
+    },
+    {
+      label: '人工已复核',
+      value: project?.summary.manually_reviewed,
+      unit: '个化合物',
+      description: '仅计人工已作通过或不通过判定的记录；仍需复核不计完成。',
+    },
+    {
+      label: '人工待复核',
+      value: project?.summary.manual_review_pending,
+      unit: '个化合物',
+      description: '包括尚无人工注记及仍需复核的记录；不使用绑定待核验数量。',
     },
   ];
   return (
-    <div className="metrics" aria-label="项目真实统计">
-      {metrics.map(({ label, value, icon: Icon, unit }) => (
-        <div className="metric-card" key={label}>
-          <span className="metric-icon">
-            <Icon size={21} strokeWidth={1.65} />
-          </span>
+    // A horizontally scrollable statistics region must remain keyboard reachable.
+    // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+    <section className="metrics" aria-label="项目真实统计" tabIndex={0}>
+      {metrics.map(({ label, value, unit, description }) => (
+        <div className="metric-card" key={label} title={description}>
           <div>
             <span>{label}</span>
-            <strong>{value ?? '—'}</strong>
-            <small>{value === undefined ? '等待项目数据' : unit}</small>
+            <strong>{value ?? (project ? '未知' : '—')}</strong>
+            <small>{!project ? '等待项目数据' : value == null ? '统计未提供' : unit}</small>
           </div>
         </div>
       ))}
-    </div>
+    </section>
   );
 }

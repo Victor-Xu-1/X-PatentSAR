@@ -4,6 +4,15 @@
 
 Run `x-patentsar check-envs` and then `x-patentsar health --no-gpu --output /tmp/patentsar-health.json`. The health command performs a real DECIMER model-load probe in addition to importing the package, so it catches an interpreter that can import the module but cannot load its H5 weights. Use the GPU health path only after TensorFlow/CUDA compatibility is established.
 
+Recognition uses the verified official printed DECIMER model only. The environment
+catalog downloads printed recognition and segmentation weights, not unused
+hand-drawn weights; existing operator-installed files are preserved. CPU inference
+defaults to `PATENTSAR_DECIMER_CPU_THREADS=2` (1–16) and
+`PATENTSAR_DECIMER_MAX_RSS_MB=4096` (2048–16384 MiB). A worker exceeding its own RSS
+budget fails explicitly; the application never terminates other workloads to make
+room. Low model headroom fails before TensorFlow load. Do not raise limits to hide
+an environment fault. GPU execution must match the cache's actual execution policy.
+
 The recovered E-drive deployment has an operator-owned entry point at `/srv/wsl/envs/patentsar/bin/x-patentsar` (Windows: `E:\WSL\apps\x-patentsar\X-PatentSAR.cmd`). It loads external interpreter configuration and selects E-drive state/cache/model paths, with CPU inference by default. `PYSTOW_HOME=/srv/wsl/models/patentsar` points DECIMER OCSR to the restored weights. Segmentation health is not proof that OCSR inference succeeds; verify a real crop separately. Do not change `HOME` to find old model weights.
 
 ## Web operation
@@ -103,6 +112,95 @@ apply only to future installations and are not migrations or cleanup requests.
 
 ## Concurrency and recovery
 
+After an accuracy-ruleset change, use **运行提取** to establish a new run. A job
+from a different runtime identity is not relabelled or resumed. The queue retains
+the old run and automatically reuses supported, exact-original-SHA OCR observations
+from that same private project. All derived stages run with the current rules.
+For standalone use, `run --reuse-ocr-cache /path/to/page_ocr_cache.json` provides
+the same checked input boundary; it cannot be combined with `--force` and never
+overwrites an existing target cache. Unknown/incorrect observation contracts are
+refused. Do not edit old metadata or generated activity/binding/QA to force reuse.
+
+Current CPU OCR uses two intra-operation threads and one inter-operation thread
+per engine; the configured engine is shared by page, table and cell consumers.
+DECIMER remains isolated and CPU-stable where the TensorFlow/GPU pair is unsupported.
+Model/resource limits and actual stage counts are not evidence of chemical QA:
+inspect final deterministic acceptance after the full run completes.
+
+Within the current runtime identity, resume keeps compatible upstream checkpoints.
+An ordinary non-force rerun uses the same bounded transport when the current
+original observations and latest stopped job's private output can be verified.
+New task options remain new; no old history, failure marker or final acceptance is
+copied. Compatible older OCR remains a raw input rather than a derived checkpoint.
+Resume uses the core PDF-SHA/observation predicate for this raw OCR boundary, not
+the newer derived-artifact ruleset; unknown observation contracts still fail.
+Web resume now creates a new job-ID directory and copies only verified bounded
+checkpoints; it never aliases the old output directory or hardlinks images. The CLI
+remains the final cache/acceptance authority. Old jobs sharing an output root show
+history unavailable, not a fabricated stage snapshot. Terminal new-job history is
+write-once under private `job-history/`; preserve it together with workspace state.
+Binding fingerprints also include the implementation epoch from `contracts.py`;
+changing catalog/caption ownership rebuilds binding without discarding unchanged
+segmentation. Complete confirmed spatial coverage skips generic repair. Do not
+edit failed binding files, OCR labels or final QA to make a checkpoint reusable.
+
+The raw OCSR epoch also participates in stage fingerprints and exact-image cache
+keys. Old corrected model strings cannot seed it.
+Resume transports a bounded, sanitized snapshot of successful current-epoch raw
+observations only after the bindings checkpoint is independently verified. Exact
+payloads, image hashes, model fingerprints and timestamps stay unchanged. Foreign
+SQLite schema/triggers, repaired legacy entries, failures and final QA are not
+copied. The sole converter rechecks image/runtime identity and current RDKit QC;
+failed or changed inputs execute normally, without promoting cached acceptance.
+The production worker explicitly
+enables one normalization retry on the same source image; standalone workers retain
+no retry unless `--retry-normalization` is set. This is independent of initial
+`--preprocess`/`--no-preprocess`. Inspect `engine_attempts` for every original raw
+prediction and input image hash. Do not manually replace wildcards, element letters,
+ring numbers or chiral tags to bypass a failure.
+
+The extraction-repair verification scope follows the affected chain: cell ownership
+and suffix/ambiguity unit regressions; real original-PDF binding and raw DECIMER
+inference; SQLite/API live-checkpoint and failure states; frontend run-switch,
+crop/source navigation and installed-wheel browser checks. Pass criteria are exact
+active-ID order, unique existing images, per-metric provenance, strict SMILES QC,
+and final deterministic acceptance. Optional research/ADMET analysis is not an
+alternative acceptance path and is outside this repair's scientific validation.
+
+For missing crop messages, distinguish unexecuted/unfinished segmentation,
+unmatched structures, unavailable generated assets and browser load errors.
+The original PDF can remain available during a failed extraction. A current failed
+or incomplete run is not classified as a historical import simply because its
+downstream artifacts do not yet exist. Each activity metric's source page may differ
+from the bound structure page.
+After a software/rules update, the first project/result access rebuilds an outdated
+SQLite projection once from the retained source artifacts. Old-rule acceptance is
+then historical, not current. This changes only rebuildable presentation data;
+original artifacts and manual-review decisions are retained.
+
+Structure details distinguish original crops from RDKit SMILES redraws. Compare
+both for recognition errors; a syntactically valid SMILES does not prove atom,
+bond or stereochemistry fidelity to the patent. Token probabilities are explicitly
+uncalibrated. Actual progress/cache/device/RSS counters are observations, not final
+acceptance. Use density/metric-column controls for large result tables; hiding a
+column does not drop its underlying measurement or change export content.
+
+The architecture-optimization validation scope includes stage-cache invalidation,
+recognized-but-withheld source ownership, immutable attempt history/checkpoint
+transport, bounded model protocol and memory, additive DTOs and manual counts,
+real original-PDF inference, installed-wheel/browser source/redraw navigation and
+table density. Exact-model raw-string regression and controlled graph/stereo
+oracles answer different questions; neither alone proves all-patent accuracy.
+
+The current official printed recognizer has a known exact-graph failure on the
+controlled 700×500 ethanol depiction in `tests/test_ocsr_gold.py`: it returns an
+extra carbon despite valid RDKit syntax. Simple scaling/normalization is not a
+verified fix; another official weight set instead miscounts a ring on this corpus.
+Do not switch weights, splice model outputs, repair strings or advertise chemical
+accuracy from syntax/token probabilities. Keep the explicit real-model oracle
+failure separate from passing engineering/strict-export gates until a model or
+independent original-graph verification improvement actually resolves it.
+
 Use a separate output directory per patent and avoid running two processes against the same output directory. A stopped run can normally be resumed without `--force`; matching stage fingerprints are reused. Use `--force` only when the underlying PDF, rules or intended parameters changed materially.
 
 Large scanned patents can spend several minutes in the first full-page OCR pass. The page cache is atomically checkpointed every ten completed pages, so after an interruption rerun without `--force` to resume it. A 146-page image-only WIPO sample exceeded a 10-minute verification window on this workstation; a three-page structure-table subset completed in 25 seconds, and its cached rerun completed in under one second. Treat first-pass OCR throughput as workload-dependent rather than a fixed service-level guarantee.
@@ -114,6 +212,35 @@ Activity extraction runs in an isolated subprocess with a bounded workload-aware
 Retain the final workbook, SDF, `pipeline_summary.json`, `final_qa_report.*`, optional `llm_qa_report.*`, and any failure marker as one audit unit. Remove OCR caches and intermediate images according to local data-retention policy only after the final audit unit is archived.
 
 ## Rollback
+
+### Mainline deployment gate
+
+A task is not complete at branch push or PR creation. Review and merge every
+task-related PR into `main`, fetch the exact remote merge revision, and build the
+frontend/wheel from that clean source. Do not replace unrelated dirty work or
+merge unknown PRs merely to empty the queue. Keep product version `v0.1.0` unless
+the user explicitly requests a version change.
+
+Select verification from the exact integrated diff and its affected consumers;
+global suites require explicit user authorization. Do not disable required CI
+checks or branch protection. If an authorized focused run cannot satisfy a
+required gate, report the conflict instead of claiming success. Skipped CI is not
+passing CI, and a known scientific limitation is not resolved by a Git merge.
+
+Before replacing the installed wheel, confirm this application's extraction,
+environment-install and research-analysis operations are idle. Preserve the
+previous wheel, its checksum, and the current external configuration. Stop only
+the verified owned service, install the mainline wheel without changing unrelated
+environments, and restart through the existing operator entry point. Never
+restart all WSL distributions or migrate user state as a deployment shortcut.
+
+Record the PR/merge SHA, clean source tree, wheel and served asset checksums,
+installed product version, focused test commands/results, startup/health and real
+browser evidence in the external E-drive evidence store. Confirm there are no
+remaining task-related open PRs. The Windows management entry must reference this
+current deployment, not an older branch or historical CI run. Rollback reinstalls
+the preserved wheel through the same idle/ownership checks; patent artifacts and
+manual-review records are never edited or deleted.
 
 Before an environment-manager rollback, finish/cancel its active operation and
 verify owned-child shutdown. Preserve the whole private environment state and the

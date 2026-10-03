@@ -1,25 +1,29 @@
 import { useState } from 'react';
-import { Play, RotateCcw, Square } from 'lucide-react';
+import { MoreHorizontal, Play, RotateCcw, Square } from 'lucide-react';
 import { api } from '../../api';
 import type { Job, Project } from '../../api/types';
 import { activeJob, jobStatusLabels } from '../../model/presentation';
 import { ErrorNotice } from '../../components/Feedback';
 import { Dialog } from '../../components/Dialog';
+import { JobRecord } from './JobRecord';
 
 export function JobActions({
   project,
   job,
   ready,
   onChange,
+  compact = false,
 }: {
   project: Project | null;
   job: Job | null;
   ready: boolean;
   onChange: () => void;
+  compact?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [cancelConfirm, setCancelConfirm] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const running = job !== null && activeJob(job);
   const canStart = ready && project?.pdf.available && !running && !busy;
   async function operate(action: 'run' | 'resume' | 'cancel') {
@@ -49,50 +53,58 @@ export function JobActions({
         ) : (
           <>
             {job?.can_resume && (
-              <button type="button" disabled={!canStart} onClick={() => void operate('resume')}>
+              <button
+                type="button"
+                className={compact ? 'primary' : undefined}
+                disabled={!canStart}
+                onClick={() => void operate('resume')}
+              >
                 <RotateCcw size={14} />
                 恢复任务
               </button>
             )}
-            <button
-              className="primary"
-              type="button"
-              disabled={!canStart}
-              title={
-                !project
-                  ? '请先选择项目'
-                  : !project.pdf.available
-                    ? '请先补充原始 PDF'
-                    : !ready
-                      ? '运行环境未就绪'
-                      : '运行现有核心提取链，不调用付费建议模型'
-              }
-              onClick={() => void operate('run')}
-            >
-              <Play size={14} />
-              {busy ? '正在提交…' : '运行提取'}
-            </button>
+            {!(compact && job?.can_resume) && (
+              <button
+                className="primary"
+                type="button"
+                disabled={!canStart}
+                title={
+                  !project
+                    ? '请先选择项目'
+                    : !project.pdf.available
+                      ? '请先补充原始 PDF'
+                      : !ready
+                        ? '运行环境未就绪'
+                        : '运行现有核心提取链，不调用付费建议模型'
+                }
+                onClick={() => void operate('run')}
+              >
+                <Play size={14} />
+                {busy ? '正在提交…' : '运行提取'}
+              </button>
+            )}
           </>
+        )}
+        {compact && job && (
+          <button
+            type="button"
+            className="toolbar-button"
+            aria-label="任务详情"
+            title="任务详情"
+            onClick={() => setDetailsOpen(true)}
+          >
+            <MoreHorizontal size={14} />
+          </button>
         )}
       </div>
       {error && <ErrorNotice error={error} onRetry={onChange} />}
-      {job?.error && (
-        <output className="job-error">
-          {job.error.code}：{job.error.message}
-        </output>
-      )}
-      {job && (
-        <details className="job-options-record">
-          <summary>已保存的任务参数</summary>
-          <p>
-            包含中间体：{job.include_intermediates ? '是' : '否'} · 强制重算：
-            {job.force ? '是' : '否'}
-          </p>
-          <p>运营备注（不执行）：{job.task_note || '无'}</p>
-          {job.can_resume && (
-            <p>恢复保留原备注与中间体选项，服务端关闭强制重算以保护 checkpoint。</p>
-          )}
-        </details>
+      {job && !compact && <JobRecord job={job} />}
+      {job && detailsOpen && (
+        <Dialog title="任务详情" onClose={() => setDetailsOpen(false)}>
+          <div className="dialog-body">
+            <JobRecord job={job} expanded />
+          </div>
+        </Dialog>
       )}
       {cancelConfirm && (
         <Dialog title="取消当前提取任务？" onClose={() => setCancelConfirm(false)} busy={busy}>

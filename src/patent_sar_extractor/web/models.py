@@ -4,7 +4,14 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 
 Decision = Literal["approved", "rejected", "needs_review"]
 ConfidenceLevel = Literal["high", "medium", "review", "unknown"]
@@ -70,12 +77,33 @@ class Confidence(DTO):
     reason: str
 
 
+class TokenConfidence(DTO):
+    minimum: float = Field(ge=0, le=1, strict=True)
+    mean: float = Field(ge=0, le=1, strict=True)
+
+    @field_validator("mean")
+    @classmethod
+    def check_order(cls, value: float, info: ValidationInfo) -> float:
+        if value < info.data.get("minimum", 0):
+            raise ValueError("Mean token confidence cannot be below the minimum")
+        return value
+
+
+class Recognition(DTO):
+    status: Literal["not_run", "valid", "invalid", "unavailable"] = "not_run"
+    quality_flag: str | None = None
+    model_fingerprint: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
+    token_confidence: TokenConfidence | None = None
+
+
 class Compound(DTO):
     id: str
     display_id: str
     structure_id: str | None = None
     structure_image_url: str | None = None
     smiles: str | None = None
+    recognition: Recognition = Field(default_factory=Recognition)
+    redraw_image_url: str | None = None
     activities: list[Activity]
     source: Source
     confidence: Confidence
@@ -95,6 +123,8 @@ class Summary(DTO):
     matched_structures: int = 0
     confirmed: int = 0
     needs_review: int = 0
+    manually_reviewed: int = 0
+    manual_review_pending: int = 0
 
 
 class Acceptance(DTO):
@@ -102,11 +132,32 @@ class Acceptance(DTO):
     errors: list[str] = Field(default_factory=list)
 
 
+class StageProgress(DTO):
+    completed: int = Field(ge=0, le=1_000_000, strict=True)
+    total: int = Field(ge=0, le=1_000_000, strict=True)
+    cache_hits: int = Field(ge=0, le=1_000_000, strict=True)
+    failures: int = Field(ge=0, le=1_000_000, strict=True)
+    device: Literal["cpu", "gpu"] | None
+    peak_rss_mb: float | None = Field(ge=0, le=1_000_000_000, strict=True)
+
+    @model_validator(mode="after")
+    def check_counters(self) -> StageProgress:
+        if (
+            self.completed > self.total
+            or self.cache_hits > self.completed
+            or self.failures > self.completed
+        ):
+            raise ValueError("Stage progress counters are inconsistent")
+        return self
+
+
 class Stage(DTO):
     name: str
     status: StageStatus = "pending"
-    count: int | None = None
-    duration_seconds: float | None = None
+    count: int | None = Field(default=None, ge=0, le=1_000_000, strict=True)
+    duration_seconds: float | None = Field(default=None, ge=0, strict=True)
+    reused_checkpoint: bool = Field(default=False, strict=True)
+    progress: StageProgress | None = None
 
 
 class Job(DTO):
@@ -119,6 +170,7 @@ class Job(DTO):
     error: Error | None
     stages: list[Stage]
     can_resume: bool
+    history_available: bool = False
     include_intermediates: bool = False
     force: bool = False
     task_note: str = ""

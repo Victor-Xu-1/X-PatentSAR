@@ -28,6 +28,8 @@ export interface Project {
     matched_structures: number;
     confirmed: number;
     needs_review: number;
+    manually_reviewed: number | null;
+    manual_review_pending: number | null;
   };
   acceptance: { state: AcceptanceState; errors: string[] };
 }
@@ -53,7 +55,9 @@ export interface Compound {
   display_id: string;
   structure_id: string | null;
   structure_image_url: string | null;
+  redraw_image_url: string | null;
   smiles: string | null;
+  recognition: CompoundRecognition | null;
   activities: Activity[];
   source: {
     page: number | null;
@@ -65,6 +69,12 @@ export interface Compound {
   confidence: { level: ConfidenceLevel; score: number | null; reason: string | null };
   review: Review | null;
   flags: string[];
+}
+export interface CompoundRecognition {
+  status: 'not_run' | 'valid' | 'invalid' | 'unavailable';
+  quality_flag: string | null;
+  model_fingerprint: string | null;
+  token_confidence: { minimum: number; mean: number } | null;
 }
 export interface PageData {
   page: number;
@@ -88,6 +98,14 @@ export const stageNames = [
 ] as const;
 export type StageName = (typeof stageNames)[number];
 export type StageStatus = 'pending' | 'running' | 'ok' | 'empty' | 'failed' | 'warnings';
+export interface StageProgress {
+  completed: number;
+  total: number;
+  cache_hits: number;
+  failures: number;
+  device: 'cpu' | 'gpu' | null;
+  peak_rss_mb: number | null;
+}
 export interface Job {
   id: string;
   project_id: string;
@@ -101,7 +119,10 @@ export interface Job {
     status: StageStatus;
     count: number | null;
     duration_seconds: number | null;
+    progress: StageProgress | null;
+    reused_checkpoint: boolean | null;
   }[];
+  history_available: boolean | null;
   can_resume: boolean;
   include_intermediates: boolean;
   force: boolean;

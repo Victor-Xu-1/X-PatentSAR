@@ -15,7 +15,3 @@ export function normalizeLayout(value: Partial<LayoutState> = {}): LayoutState {
     fullscreen: typeof value.fullscreen === 'boolean' ? value.fullscreen : false,
   };
 }
-export function resizeFromPointer(x: number, rect: { left: number; width: number }): number | null {
-  if (!Number.isFinite(x) || !Number.isFinite(rect.width) || rect.width <= 0) return null;
-  return normalizeLayout({ pdfWidth: ((x - rect.left) / rect.width) * 100 }).pdfWidth;
-}

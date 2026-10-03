@@ -3,7 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { Maximize2, Minimize2, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { normalizeLayout } from '../../model/layout';
 import type { LayoutState } from '../../model/layout';
-import { Splitter } from './Splitter';
+import { ResizeHandle } from '../../components/ResizeHandle';
 
 export function WorkspaceLayout({
   layout: input,
@@ -102,9 +102,20 @@ export function WorkspaceLayout({
             <div id="workspace-source" className="workspace-source">
               {source}
             </div>
-            <Splitter
-              container={split}
-              width={preview ?? layout.pdfWidth}
+            <ResizeHandle
+              className="workspace-divider"
+              label="调整原文与结果宽度"
+              controls="workspace-source workspace-results"
+              value={preview ?? layout.pdfWidth}
+              min={20}
+              max={55}
+              keyStep={2}
+              resetValue={28}
+              valueText={`原文 ${preview ?? layout.pdfWidth}%，结果 ${100 - (preview ?? layout.pdfWidth)}%`}
+              fromPointer={(delta, initial) => {
+                const width = split.current?.getBoundingClientRect().width ?? 0;
+                return width > 10 ? initial + (delta / (width - 10)) * 100 : NaN;
+              }}
               onPreview={setPreview}
               onCommit={(pdfWidth) => onChange({ ...layout, pdfWidth })}
             />
