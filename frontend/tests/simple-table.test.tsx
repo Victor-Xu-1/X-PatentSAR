@@ -6,7 +6,6 @@ import { METRIC_SPECS } from '../src/api/predictionTypes';
 import type { Compound } from '../src/api/types';
 import { compound } from './fixtures';
 const callbacks = () => ({
-  offset: 0,
   selected: new Set<string>(),
   focusedId: null,
   onSelect: vi.fn(),
@@ -21,8 +20,8 @@ describe('one simple source-bound table', () => {
     render(<ResultsTable {...callbacks()} rows={[compound]} />);
     expect(screen.getAllByRole('columnheader').map((header) => header.textContent)).toEqual([
       '',
-      '#',
-      '结构 / 编号',
+      'Compound',
+      '结构',
       '抑制等级',
       ...METRIC_SPECS.map((spec) => spec.label),
       '原文',

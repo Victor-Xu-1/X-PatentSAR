@@ -26,7 +26,6 @@ const activity: Compound = {
   flags: ['structure_unmatched'],
 };
 const callbacks = () => ({
-  offset: 0,
   selected: new Set<string>(),
   focusedId: null,
   onSelect: vi.fn(),

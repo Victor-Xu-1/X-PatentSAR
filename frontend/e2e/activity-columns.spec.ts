@@ -23,6 +23,14 @@ for (const width of [1672, 390]) {
     expect(columns.length).toBeGreaterThan(1);
     expect(next.activity_columns).toEqual(columns);
     await expect(table.getByRole('columnheader')).toHaveCount(11 + columns.length);
+    expect(
+      await table
+        .locator('th')
+        .evaluateAll((headers) =>
+          headers.slice(0, 3).map((header) => (header as HTMLElement).dataset.column),
+        ),
+    ).toEqual(['select', 'compound', 'structure']);
+    await expect(table.getByRole('columnheader', { name: '#', exact: true })).toHaveCount(0);
     await expect(table.getByRole('columnheader', { name: '专利活性', exact: true })).toHaveCount(0);
     for (const column of columns)
       await expect(table.locator(`th[data-column="activity:${column.id}"]`)).toContainText(
@@ -32,15 +40,18 @@ for (const width of [1672, 390]) {
     expect(await scroller.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(
       true,
     );
-    const identity = table.locator('tbody .frozen-structure').first();
+    const identity = table.locator('tbody .frozen-compound').first();
+    const structure = table.locator('tbody .frozen-structure').first();
     const editor = table.locator('tbody .frozen-edit').first();
     const before = await identity.boundingBox();
+    const structureBefore = await structure.boundingBox();
     await scroller.focus();
     for (let step = 0; step < 15; step++) await page.keyboard.press('ArrowRight');
     await expect
       .poll(() => scroller.evaluate((element) => element.scrollLeft))
       .toBeGreaterThan(100);
     expect((await identity.boundingBox())!.x).toBeCloseTo(before!.x, 0);
+    expect((await structure.boundingBox())!.x).toBeCloseTo(structureBefore!.x, 0);
     const outer = await scroller.boundingBox(),
       editBox = await editor.boundingBox();
     expect(editBox!.x + editBox!.width).toBeLessThanOrEqual(outer!.x + outer!.width + 1);

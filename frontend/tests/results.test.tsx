@@ -12,7 +12,6 @@ import { Workspace } from '../src/features/workspace/Workspace';
 function tableProps() {
   return {
     rows: [compound],
-    offset: 0,
     selected: new Set<string>(),
     focusedId: null,
     onSelect: vi.fn(),

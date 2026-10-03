@@ -5,10 +5,10 @@ import { activityColumnObservations } from '../../model/activityColumns';
 import type { ActivitySourceCallback, TableActivityColumn } from '../../model/activityColumns';
 import { PredictionCells } from './PredictionCells';
 import { StructureCell } from './StructureCell';
+import { CompoundCell } from './CompoundCell';
 
 export function ResultRow({
   row,
-  number,
   columns,
   selected,
   focused,
@@ -19,7 +19,6 @@ export function ResultRow({
   onReview,
 }: {
   row: Compound;
-  number: number;
   columns: TableActivityColumn[];
   selected: boolean;
   focused: boolean;
@@ -40,7 +39,7 @@ export function ResultRow({
           onChange={onSelect}
         />
       </td>
-      <td className="row-number frozen-column frozen-number">{number}</td>
+      <CompoundCell row={row} onDetails={onCrop} />
       <StructureCell row={row} onCrop={onCrop} />
       {columns.map((column, index) => (
         <ActivityValueCell
