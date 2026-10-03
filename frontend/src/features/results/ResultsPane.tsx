@@ -97,7 +97,6 @@ export function ResultsPane({
         ) : result && result.items.length ? (
           <ResultsTable
             rows={result.items}
-            offset={(result.page - 1) * result.page_size}
             metrics={visibleMetrics}
             {...(result.activity_columns === undefined
               ? {}

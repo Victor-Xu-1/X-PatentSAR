@@ -12,7 +12,6 @@ import { useColumnResize } from './useColumnResize';
 
 export function ResultsTable({
   rows,
-  offset,
   metrics,
   activityColumns,
   density = 'compact',
@@ -26,7 +25,6 @@ export function ResultsTable({
   onReview,
 }: {
   rows: Compound[];
-  offset: number;
   metrics?: string[];
   activityColumns?: ActivityColumn[];
   density?: ResultDensity;
@@ -47,6 +45,8 @@ export function ResultsTable({
   const columns = tableActivityColumns(activityColumns, names);
   const headers = resultColumns(columns);
   const resize = useColumnResize(headers, table);
+  const widthFor = (id: string) =>
+    resize.widths[id] ?? headers.find((header) => header.id === id)!.width;
   const all = rows.length > 0 && rows.every((row) => selected.has(row.id));
   const some = rows.some((row) => selected.has(row.id));
   useEffect(() => {
@@ -69,10 +69,10 @@ export function ResultsTable({
       aria-label="可横向滚动的化合物结果表格"
       style={
         {
-          '--frozen-select-width': `${resize.widths.select ?? 38}px`,
-          '--frozen-number-width': `${resize.widths.number ?? 32}px`,
-          '--frozen-leading-width': `${(resize.widths.select ?? 38) + (resize.widths.number ?? 32) + (resize.widths.structure ?? 164)}px`,
-          '--frozen-trailing-width': `${resize.widths.edit ?? 48}px`,
+          '--frozen-select-width': `${widthFor('select')}px`,
+          '--frozen-compound-width': `${widthFor('compound')}px`,
+          '--frozen-leading-width': `${widthFor('select') + widthFor('compound') + widthFor('structure')}px`,
+          '--frozen-trailing-width': `${widthFor('edit')}px`,
         } as CSSProperties
       }
     >
@@ -89,7 +89,8 @@ export function ResultsTable({
         }
       >
         <caption className="sr-only">
-          每种活性与实验独立成列，六项计算指标独立成列。每个活性值保留独立来源；
+          Compound
+          编号与结构独立成列。每种活性与实验独立成列，六项计算指标独立成列。每个活性值保留独立来源；
           计算指标不等于专利实测。点击修正可编辑并保存。
         </caption>
         <colgroup>
@@ -105,11 +106,7 @@ export function ResultsTable({
                 scope="col"
                 key={header.id}
                 data-column={header.id}
-                aria-label={
-                  header.id === 'number'
-                    ? '#'
-                    : [header.label, header.context].filter(Boolean).join(' · ')
-                }
+                aria-label={[header.label, header.context].filter(Boolean).join(' · ')}
                 title={[header.label, header.context].filter(Boolean).join(' · ')}
               >
                 {header.id === 'select' ? (
@@ -121,8 +118,6 @@ export function ResultsTable({
                     onChange={(event) => onSelectPage(event.target.checked)}
                     disabled={!rows.length}
                   />
-                ) : header.id === 'number' ? (
-                  '#'
                 ) : (
                   <span className="column-heading">
                     <span>{header.label}</span>
@@ -145,11 +140,10 @@ export function ResultsTable({
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, index) => (
+          {rows.map((row) => (
             <ResultRow
               key={row.id}
               row={row}
-              number={offset + index + 1}
               columns={columns}
               selected={selected.has(row.id)}
               focused={focusedId === row.id}

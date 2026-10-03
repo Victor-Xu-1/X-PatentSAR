@@ -62,11 +62,11 @@
 .frozen-select {
   left: 0;
 }
-.frozen-number {
+.frozen-compound {
   left: var(--frozen-select-width);
 }
 .frozen-structure {
-  left: calc(var(--frozen-select-width) + var(--frozen-number-width));
+  left: calc(var(--frozen-select-width) + var(--frozen-compound-width));
   box-shadow: 1px 0 0 var(--line);
 }
 .frozen-edit {
@@ -81,31 +81,29 @@
   background: var(--accent-surface);
   border-bottom-color: var(--accent-line);
 }
-.row-number {
-  color: var(--faint);
-  font-size: 11px;
-}
 .structure-cell {
   display: flex;
   align-items: center;
-  gap: 6px;
-  min-width: 105px;
-}
-.structure-identity {
+  justify-content: center;
   min-width: 0;
 }
-.structure-identity > small {
+.compound-identity {
+  min-width: 0;
+}
+.compound-identity > small {
   display: block;
   font-size: 10px;
 }
-.structure-detail-button {
+.compound-detail-button {
   font-size: 11px;
   font-weight: 500;
   padding: 2px;
   min-height: 26px;
   background: transparent;
   border: 0;
-  max-width: 90px;
+  width: 100%;
+  max-width: 100%;
+  text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

@@ -20,7 +20,6 @@ const row = {
   activity_source_keys: keys,
 };
 const callbacks = {
-  offset: 0,
   selected: new Set<string>(),
   focusedId: null,
   onSelect: vi.fn(),

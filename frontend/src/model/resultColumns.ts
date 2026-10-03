@@ -28,15 +28,8 @@ export function resultColumns(activities: TableActivityColumn[] = []): ResultCol
     counts.set(activity.name, (counts.get(activity.name) ?? 0) + 1);
   return [
     column('select', '选择', 'check-col frozen-column frozen-select', 38, 38, 100),
-    column('number', '序号', 'number-column frozen-column frozen-number', 32, 28, 150),
-    column(
-      'structure',
-      '结构 / 编号',
-      'structure-column frozen-column frozen-structure',
-      164,
-      120,
-      480,
-    ),
+    column('compound', 'Compound', 'compound-column frozen-column frozen-compound', 100, 88, 480),
+    column('structure', '结构', 'structure-column frozen-column frozen-structure', 96, 88, 480),
     ...activities.map((activity) => ({
       ...column(
         `activity:${activity.id}`,

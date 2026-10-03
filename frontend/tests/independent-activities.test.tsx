@@ -6,7 +6,6 @@ import { ResultsTable } from '../src/features/results/ResultsTable';
 import { compound } from './fixtures';
 
 const callbacks = () => ({
-  offset: 0,
   selected: new Set<string>(),
   focusedId: null,
   onSelect: vi.fn(),
@@ -66,7 +65,6 @@ describe('one observation context per independently resizable activity column', 
         {...props}
         rows={[{ ...compound, id: 'page-two', activities: [] }]}
         activityColumns={columns}
-        offset={25}
       />,
     );
     expect(document.querySelectorAll('th.activity-value-column')).toHaveLength(3);
@@ -113,8 +111,12 @@ describe('one observation context per independently resizable activity column', 
     const scroller = screen.getByRole('region', { name: '可横向滚动的化合物结果表格' });
     expect(scroller.style.getPropertyValue('--frozen-leading-width')).toBe('234px');
     expect(scroller.style.getPropertyValue('--frozen-trailing-width')).toBe('48px');
-    screen.getByRole('slider', { name: '调整结构 / 编号列宽' }).focus();
+    screen.getByRole('slider', { name: '调整Compound列宽' }).focus();
     await userEvent.keyboard('{Home}');
-    expect(scroller.style.getPropertyValue('--frozen-leading-width')).toBe('190px');
+    expect(scroller.style.getPropertyValue('--frozen-compound-width')).toBe('88px');
+    expect(scroller.style.getPropertyValue('--frozen-leading-width')).toBe('222px');
+    screen.getByRole('slider', { name: '调整结构列宽' }).focus();
+    await userEvent.keyboard('{Home}');
+    expect(scroller.style.getPropertyValue('--frozen-leading-width')).toBe('214px');
   });
 });
