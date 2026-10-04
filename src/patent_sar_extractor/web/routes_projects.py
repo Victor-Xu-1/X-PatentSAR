@@ -27,6 +27,7 @@ from .molecule_drawing import draw_smiles, drawing_fingerprint
 from .pdf import crop_image, filename_title, page_info, render_page, stream_upload
 from .reviews import put_review
 from .service import WorkspaceService
+from .table_filter_choices import ColumnFilterValues
 from .task_inputs import patent_identifier
 
 
@@ -197,6 +198,7 @@ def project_routes(service: WorkspaceService, max_upload_bytes: int) -> APIRoute
         column_filters: str = "",
         sort_column: str = "",
         sort_direction: str = "asc",
+        sort_band: str = "",
     ) -> Results:
         return service.results(
             project_id,
@@ -209,6 +211,33 @@ def project_routes(service: WorkspaceService, max_upload_bytes: int) -> APIRoute
             column_filters=column_filters,
             sort_column=sort_column,
             sort_direction=sort_direction,
+            sort_band=sort_band,
+        )
+
+    @router.get("/projects/{project_id}/filter-values", response_model=ColumnFilterValues)
+    def filter_values(
+        project_id: str,
+        column: str,
+        search: str = "",
+        page: int = 1,
+        page_size: int = 200,
+        q: str = "",
+        confidence: str = "",
+        review: str = "",
+        target: str = "",
+        column_filters: str = "",
+    ) -> ColumnFilterValues:
+        return service.filter_values(
+            project_id,
+            column=column,
+            search=search,
+            page=page,
+            page_size=page_size,
+            q=q,
+            confidence=confidence,
+            review=review,
+            target=target,
+            column_filters=column_filters,
         )
 
     @router.put("/projects/{project_id}/reviews/{compound_id}", response_model=Review)
@@ -242,6 +271,7 @@ def project_routes(service: WorkspaceService, max_upload_bytes: int) -> APIRoute
         column_filters: str = "",
         sort_column: str = "",
         sort_direction: str = "asc",
+        sort_band: str = "",
     ) -> StreamingResponse:
         project = service.project(project_id)
         rows = selected(
@@ -254,6 +284,7 @@ def project_routes(service: WorkspaceService, max_upload_bytes: int) -> APIRoute
                 column_filters=column_filters,
                 sort_column=sort_column,
                 sort_direction=sort_direction,
+                sort_band=sort_band,
             ),
             body,
         )

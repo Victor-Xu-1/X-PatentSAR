@@ -1,7 +1,8 @@
 import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { filterValuesFixture } from './filter-value-fixtures';
 import { api } from '../src/api';
 import type { ColumnFilter } from '../src/api/types';
 import { Workspace } from '../src/features/workspace/Workspace';
@@ -23,8 +24,39 @@ const data = {
   activity_columns: catalog,
   items: [{ ...compound, activity_source_keys: ['a'.repeat(64)] }],
 };
+beforeEach(() => {
+  vi.spyOn(api, 'filterValues').mockImplementation(async (_id, column) =>
+    filterValuesFixture(column),
+  );
+});
 
 describe('the existing route is the sole source of global column queries', () => {
+  it('restores color sort from the route, resets pagination on band changes, and never retains a competing local band', async () => {
+    const read = vi.spyOn(api, 'results').mockResolvedValue(data);
+    const initial: TableQuery = {
+      ...routed,
+      sort_column: `activity:${catalog[0]!.id}`,
+      sort_band: 'strong',
+    };
+    const { result, rerender } = renderHook(
+      ({ query }: { query: TableQuery | undefined }) =>
+        useResultsState(project.id, '', vi.fn(), null, vi.fn(), query),
+      { initialProps: { query: initial as TableQuery | undefined } },
+    );
+    await waitFor(() => expect(result.current.resource.data).toBe(data));
+    act(() => result.current.changeFilters({ page: 3, sort_band: 'none' }));
+    expect(result.current.filters.sort_band).toBe('strong');
+    rerender({ query: { ...initial, sort_band: 'none' } });
+    await waitFor(() =>
+      expect(read).toHaveBeenLastCalledWith(
+        project.id,
+        expect.objectContaining({ page: 1, sort_band: 'none' }),
+        expect.any(AbortSignal),
+      ),
+    );
+    rerender({ query: undefined });
+    expect(result.current.filters.sort_band).toBe('');
+  });
   it('clears obstructing column queries when a PDF annotation selects a row outside the current result page', async () => {
     const other = { ...compound, id: 'I-9', display_id: 'I-9' };
     const read = vi.spyOn(api, 'results').mockImplementation(async (_id, filters) => ({

@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ResultsTable } from '../src/features/results/ResultsTable';
+import { api } from '../src/api';
+import { filterValuesFixture } from './filter-value-fixtures';
 import type { ActivityColumn } from '../src/api/types';
 import { compound } from './fixtures';
 
@@ -22,10 +24,6 @@ const styles = [
 const column: ActivityColumn = {
   id: 'a'.repeat(64),
   ...compound.activities[0]!,
-  filter_values: [
-    { value: '++', count: 5 },
-    { value: '+', count: 3 },
-  ],
   strength_scale: {
     kind: 'plus',
     direction: 'higher',
@@ -38,6 +36,7 @@ const column: ActivityColumn = {
   },
 };
 const props = () => ({
+  projectId: 'controlled-project',
   rows: [compound],
   activityColumns: [column],
   selected: new Set<string>(),
@@ -67,6 +66,9 @@ describe('one centered result-table style authority', () => {
   });
   let stylesheet: HTMLStyleElement;
   beforeEach(() => {
+    vi.spyOn(api, 'filterValues').mockImplementation(async (_id, column) =>
+      filterValuesFixture(column, ['++', '+']),
+    );
     stylesheet = document.createElement('style');
     stylesheet.textContent = styles;
     document.head.append(stylesheet);
@@ -169,14 +171,18 @@ describe('one centered result-table style authority', () => {
     expect(callbacks.onFilters).toHaveBeenLastCalledWith({
       sort_column: `activity:${column.id}`,
       sort_direction: 'desc',
+      sort_band: '',
       page: 1,
     });
     await userEvent.click(trigger);
-    await userEvent.selectOptions(screen.getByLabelText('筛选方式'), 'in');
+    await screen.findByLabelText('筛选值 +');
+    await userEvent.click(screen.getByLabelText('全选筛选取值'));
     await userEvent.click(screen.getByLabelText('筛选值 +'));
-    await userEvent.click(screen.getByRole('button', { name: '应用筛选' }));
+    await userEvent.click(screen.getByRole('button', { name: '确定' }));
     expect(callbacks.onFilters).toHaveBeenLastCalledWith({
-      column_filters: [{ column: `activity:${column.id}`, op: 'in', values: ['+'] }],
+      column_filters: [
+        { column: `activity:${column.id}`, op: 'in', values: ['+'], include_empty: false },
+      ],
       page: 1,
     });
     expect(trigger).toHaveFocus();

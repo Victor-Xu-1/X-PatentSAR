@@ -6,10 +6,12 @@ import re
 from collections.abc import Sequence
 from typing import Any
 
+from .activity_rank_models import ActivityStrengthScale
 from .activity_rank_values import rank_value
 from .errors import WebError
 from .models import ActivityColumn, Compound
 from .prediction_models import METRIC_KEYS
+from .table_query_bands import BANDS, row_bands
 from .table_query_models import ColumnFilter
 from .table_query_values import column_values
 
@@ -19,6 +21,7 @@ def validate_columns(
     sort: str,
     direction: str,
     catalog: Sequence[ActivityColumn],
+    sort_band: str = "",
 ) -> None:
     allowed = (
         {"compound", "structure", "source", "edit"}
@@ -29,6 +32,11 @@ def validate_columns(
         direction not in {"asc", "desc"}
         or (sort and sort not in allowed)
         or any(item.column not in allowed for item in filters)
+        or (sort_band and (sort_band not in BANDS or not sort.startswith("activity:")))
+        or any(
+            item.op == "band" and not item.column.startswith("activity:")
+            for item in filters
+        )
     ):
         raise WebError(
             422,
@@ -36,7 +44,8 @@ def validate_columns(
             "Sort/filter column or direction is not supported by this project.",
         )
     if any(
-        item.op in {"gt", "gte", "lt", "lte"} and rank_value(item.value) is None
+        item.op in {"gt", "gte", "lt", "lte"}
+        and ((parsed := rank_value(item.value)) is None or parsed[0] != "numeric")
         for item in filters
     ):
         raise WebError(
@@ -53,7 +62,11 @@ def _equal(actual: Any, expected: str) -> bool:
     return str(actual).strip().casefold() == expected.strip().casefold()
 
 
-def matches(row: Compound, criterion: ColumnFilter) -> bool:
+def matches(
+    row: Compound,
+    criterion: ColumnFilter,
+    scale: ActivityStrengthScale | None = None,
+) -> bool:
     values = [
         value for value in column_values(row, criterion.column) if str(value).strip()
     ]
@@ -61,17 +74,36 @@ def matches(row: Compound, criterion: ColumnFilter) -> bool:
         return not values
     if criterion.op == "not_empty":
         return bool(values)
-    if criterion.op == "in":
-        return any(
-            _equal(actual, expected)
-            for actual in values
-            for expected in criterion.values or []
-        )
+    if criterion.op == "band":
+        return criterion.value in row_bands(row, criterion.column, scale)
+    if criterion.op in {"in", "not_in"}:
+        if not values:
+            return (
+                criterion.include_empty
+                if criterion.include_empty is not None
+                else criterion.op == "not_in"
+            )
+        chosen = set(criterion.values or [])
+        # Checkboxes identify actual distinct raw values, not fuzzy text matches.
+        found = any(str(actual).strip() in chosen for actual in values)
+        return found if criterion.op == "in" else not found
     operand = criterion.value or ""
     if criterion.op == "contains":
         return any(operand.casefold() in str(value).casefold() for value in values)
+    if criterion.op == "not_contains":
+        return all(operand.casefold() not in str(value).casefold() for value in values)
+    if criterion.op == "starts_with":
+        return any(
+            str(value).casefold().startswith(operand.casefold()) for value in values
+        )
+    if criterion.op == "ends_with":
+        return any(
+            str(value).casefold().endswith(operand.casefold()) for value in values
+        )
     if criterion.op == "eq":
         return any(_equal(value, operand) for value in values)
+    if criterion.op == "ne":
+        return all(not _equal(value, operand) for value in values)
     expected = rank_value(operand)
     if expected is None:
         raise WebError(
@@ -94,7 +126,7 @@ def matches(row: Compound, criterion: ColumnFilter) -> bool:
     return False
 
 
-def _sort_key(value: Any, column: str) -> tuple[Any, ...]:
+def column_sort_key(value: Any, column: str) -> tuple[Any, ...]:
     parsed = rank_value(value)
     if column == "compound":
         # Printed IDs stay natural (8, 8A, 8B, 10), not lexical 1,10,100,2.
@@ -111,9 +143,19 @@ def _sort_key(value: Any, column: str) -> tuple[Any, ...]:
 
 
 def workbook_rows(
-    rows: Sequence[Compound], filters: Sequence[ColumnFilter], sort: str, direction: str
+    rows: Sequence[Compound],
+    filters: Sequence[ColumnFilter],
+    sort: str,
+    direction: str,
+    catalog: Sequence[ActivityColumn] = (),
+    sort_band: str = "",
 ) -> list[Compound]:
-    output = [row for row in rows if all(matches(row, item) for item in filters)]
+    scales = {f"activity:{column.id}": column.strength_scale for column in catalog}
+    output = [
+        row
+        for row in rows
+        if all(matches(row, item, scales.get(item.column)) for item in filters)
+    ]
     if not sort:
         return output
     known: list[Compound] = []
@@ -127,7 +169,14 @@ def workbook_rows(
         ).append(row)
     # Multivalued cells use the first observed value, never an average/best value.
     known.sort(
-        key=lambda row: _sort_key(column_values(row, sort)[0], sort),
+        key=lambda row: column_sort_key(column_values(row, sort)[0], sort),
         reverse=direction == "desc",
     )
-    return [*known, *missing]
+    ordered = [*known, *missing]
+    if sort_band:
+        # Stable partition: chosen color first, retain normal sort within groups.
+        # As with scalar ordering, repeated observations use the first, not best.
+        ordered.sort(
+            key=lambda row: row_bands(row, sort, scales.get(sort))[0] != sort_band
+        )
+    return ordered

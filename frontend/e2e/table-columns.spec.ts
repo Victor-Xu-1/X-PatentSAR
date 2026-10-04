@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Filters } from '../src/api/types';
 import { decodeResults } from '../src/api/decoders';
+import { decodeFilterValues } from '../src/api/filterValueDecoders';
 import { activityColumnContext, activityColumnLabel } from '../src/model/activityColumns';
 
 const projectId = process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID;
@@ -25,11 +26,17 @@ test('real Excel-like column controls, project-wide query and safe current-page 
     await (await page.request.get(`${endpoint}?page=1&page_size=25`)).json(),
   );
   expect(original.activity_columns?.length).toBeGreaterThan(0);
-  const activity = original.activity_columns!.find((column) => column.filter_values?.length)!;
-  expect(
-    activity,
-    'Must expose full-project filter metadata, not current-page values',
-  ).toBeTruthy();
+  const activity = original.activity_columns![0]!;
+  const choiceEndpoint = `/api/v1/projects/${projectId}/filter-values`;
+  const choiceResponse = await page.request.get(
+    `${choiceEndpoint}?${new URLSearchParams({ column: `activity:${activity.id}`, page: '1', page_size: '200' })}`,
+  );
+  expect(choiceResponse.ok()).toBe(true);
+  const choices = decodeFilterValues(await choiceResponse.json());
+  expect(choices.items.length, 'Dedicated full-project choices must be available').toBeGreaterThan(
+    0,
+  );
+  const value = choices.items[0]!.value;
   const name = [activityColumnLabel(activity), activityColumnContext(activity)]
     .filter(Boolean)
     .join(' · ');
@@ -37,7 +44,7 @@ test('real Excel-like column controls, project-wide query and safe current-page 
     sort_column: 'compound',
     sort_direction: 'desc',
     column_filters: [
-      { column: `activity:${activity.id}`, op: 'in', values: [activity.filter_values![0]!.value] },
+      { column: `activity:${activity.id}`, op: 'in', values: [value], include_empty: false },
     ],
   };
   await page.getByRole('button', { name: 'Compound 列选项', exact: true }).click();
@@ -48,8 +55,9 @@ test('real Excel-like column controls, project-wide query and safe current-page 
   );
   await expect(page.locator('.results-content')).toHaveAttribute('aria-busy', 'false');
   await page.getByRole('button', { name: `${name} 列选项`, exact: true }).click();
-  await page.getByLabel('筛选方式', { exact: true }).selectOption('in');
-  await page.getByLabel(`筛选值 ${activity.filter_values![0]!.value}`, { exact: true }).check();
+  await expect(page.getByLabel('全选筛选取值', { exact: true })).toBeEnabled();
+  await page.getByLabel('全选筛选取值', { exact: true }).uncheck();
+  await page.getByLabel(`筛选值 ${value}`, { exact: true }).check();
   const applied = page.waitForResponse((response) => {
     const url = new URL(response.url());
     return (
@@ -57,7 +65,7 @@ test('real Excel-like column controls, project-wide query and safe current-page 
       url.searchParams.get('column_filters') === JSON.stringify(filters.column_filters)
     );
   });
-  await page.getByRole('button', { name: '应用筛选', exact: true }).click();
+  await page.getByRole('button', { name: '确定', exact: true }).click();
   expect((await applied).ok()).toBe(true);
   await expect(page.locator('.results-content')).toHaveAttribute('aria-busy', 'false');
   const query = new URLSearchParams({

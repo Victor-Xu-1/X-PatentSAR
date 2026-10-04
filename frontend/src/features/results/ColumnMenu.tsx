@@ -3,10 +3,11 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { ActivityColumn, Filters } from '../../api/types';
 import type { ResultColumn } from '../../model/resultColumns';
-import { columnCanSort, replaceColumnFilters } from '../../model/columnFilters';
+import { columnCanFilter, columnCanSort, replaceColumnFilters } from '../../model/columnFilters';
 import { ColumnFilterForm } from './ColumnFilterForm';
 
 export function ColumnMenu({
+  projectId,
   column,
   activity,
   filters,
@@ -14,6 +15,7 @@ export function ColumnMenu({
   onFilters,
   onHide,
 }: {
+  projectId?: string | undefined;
   column: ResultColumn;
   activity?: ActivityColumn | undefined;
   filters?: Filters | undefined;
@@ -44,8 +46,10 @@ export function ColumnMenu({
         event.target instanceof Node &&
         !panel.current?.contains(event.target) &&
         !button.current?.contains(event.target)
-      )
+      ) {
         setPosition(null);
+        button.current?.focus();
+      }
     }
     function escape(event: KeyboardEvent) {
       if (event.key === 'Escape') {
@@ -56,6 +60,7 @@ export function ColumnMenu({
     }
     function resize() {
       setPosition(null);
+      button.current?.focus();
     }
     document.addEventListener('pointerdown', outside);
     document.addEventListener('keydown', escape);
@@ -112,16 +117,39 @@ export function ColumnMenu({
           >
             <strong>{column.label}</strong>
             {column.context && <small className="muted">{column.context}</small>}
+            {onFilters && columnCanFilter(column) && (
+              <button
+                type="button"
+                className="column-detail-toggle"
+                disabled={disabled || !filtered}
+                onClick={() => {
+                  onFilters({
+                    column_filters: ownFilters.filter((filter) => filter.column !== column.id),
+                    page: 1,
+                  });
+                  close();
+                }}
+              >
+                清除此列筛选
+              </button>
+            )}
             {sortable && (
               <div className="column-sort-actions" aria-label="全项目排序">
                 {(['asc', 'desc'] as const).map((direction) => (
                   <button
                     key={direction}
                     type="button"
-                    aria-pressed={sorted && filters?.sort_direction === direction}
+                    aria-pressed={
+                      sorted && !filters?.sort_band && filters?.sort_direction === direction
+                    }
                     disabled={disabled}
                     onClick={() => {
-                      onFilters({ sort_column: column.id, sort_direction: direction, page: 1 });
+                      onFilters({
+                        sort_column: column.id,
+                        sort_direction: direction,
+                        sort_band: '',
+                        page: 1,
+                      });
                       close();
                     }}
                   >
@@ -134,7 +162,7 @@ export function ColumnMenu({
                     type="button"
                     disabled={disabled}
                     onClick={() => {
-                      onFilters({ sort_column: '', sort_direction: 'asc', page: 1 });
+                      onFilters({ sort_column: '', sort_direction: 'asc', sort_band: '', page: 1 });
                       close();
                     }}
                   >
@@ -143,15 +171,32 @@ export function ColumnMenu({
                 )}
               </div>
             )}
-            {column.id.startsWith('activity:') && sortable && (
-              <small className="muted">排序按首条观察，不平均、不选最强值。</small>
-            )}
-            {onFilters && (
+            {onFilters && columnCanFilter(column) && (
               <ColumnFilterForm
+                projectId={projectId}
                 column={column}
                 activity={activity}
-                filters={ownFilters}
+                filters={
+                  filters ?? {
+                    q: '',
+                    confidence: '',
+                    review: '',
+                    target: '',
+                    page: 1,
+                    page_size: 25,
+                  }
+                }
                 disabled={disabled}
+                onCancel={close}
+                onSortBand={(band) => {
+                  onFilters({
+                    sort_column: column.id,
+                    sort_direction: filters?.sort_direction ?? 'asc',
+                    sort_band: band,
+                    page: 1,
+                  });
+                  close();
+                }}
                 onApply={(replacement) => {
                   onFilters({
                     column_filters: replaceColumnFilters(ownFilters, column.id, replacement),

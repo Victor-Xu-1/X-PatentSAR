@@ -26,8 +26,9 @@ export function useResultsState(
   const columnFilters = tableQuery?.column_filters ?? [];
   const sortColumn = tableQuery?.sort_column ?? '';
   const sortDirection = sortColumn ? (tableQuery?.sort_direction ?? 'asc') : 'asc';
+  const sortBand = sortColumn ? (tableQuery?.sort_band ?? '') : '';
   const columnKey = JSON.stringify(columnFilters);
-  const tableKey = JSON.stringify([columnKey, sortColumn, sortDirection]);
+  const tableKey = JSON.stringify([columnKey, sortColumn, sortDirection, sortBand]);
   const [previousTable, setPreviousTable] = useState({ key: tableKey, columns: columnKey });
   if (previousTable.key !== tableKey) {
     setPreviousTable({ key: tableKey, columns: columnKey });
@@ -46,6 +47,7 @@ export function useResultsState(
     column_filters: columnFilters,
     sort_column: sortColumn,
     sort_direction: sortDirection,
+    sort_band: sortBand,
   };
   const key = JSON.stringify(filters);
   const load = useCallback(
@@ -85,6 +87,7 @@ export function useResultsState(
       column_filters: _columns,
       sort_column: _sort,
       sort_direction: _direction,
+      sort_band: _band,
       ...rest
     } = patch;
     setBaseFilters((old) => ({ ...old, ...rest }));

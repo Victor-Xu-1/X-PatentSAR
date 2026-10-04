@@ -127,7 +127,16 @@ describe('accessible dialogs and explicit mutations', () => {
     );
     expect(screen.getByText(/下载仅为复核材料/)).toBeVisible();
     await userEvent.click(screen.getByText('生成并下载'));
-    await waitFor(() => expect(download).toHaveBeenCalledWith(project.id, 'csv', ['I-7', 'I-8']));
+    await waitFor(() =>
+      expect(download).toHaveBeenCalledWith(project.id, 'csv', ['I-7', 'I-8'], {
+        q: '',
+        confidence: '',
+        review: '',
+        target: '',
+        page: 1,
+        page_size: 10,
+      }),
+    );
     expect(await screen.findByText('文件已从服务端生成并交给浏览器下载。')).toBeVisible();
   });
   it('rejects invalid PDFs before any upload write', async () => {

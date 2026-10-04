@@ -124,17 +124,25 @@ describe('URL bounds match the published backend query schema', () => {
       expect(readTableQuery(new URLSearchParams({ sort_column: column }))).toBeUndefined();
     },
   );
-  it.each(['contains', 'eq', 'gt', 'gte', 'lt', 'lte'])(
-    'requires a scalar operand for %s and accepts the 1000-character boundary',
-    (op) => {
-      for (const operand of [undefined, null, 1, 'x'.repeat(1001)])
-        expect(queryFor([{ column: 'compound', op, value: operand }])).toBeUndefined();
-      for (const operand of ['', 'x'.repeat(1000), '😀'.repeat(1000)]) {
-        const criteria = [{ column: 'compound', op, value: operand }];
-        expect(queryFor(criteria)?.column_filters).toEqual(criteria);
-      }
-    },
-  );
+  it.each([
+    'contains',
+    'not_contains',
+    'starts_with',
+    'ends_with',
+    'eq',
+    'ne',
+    'gt',
+    'gte',
+    'lt',
+    'lte',
+  ])('requires a scalar operand for %s and accepts the 1000-character boundary', (op) => {
+    for (const operand of [undefined, null, 1, 'x'.repeat(1001)])
+      expect(queryFor([{ column: 'compound', op, value: operand }])).toBeUndefined();
+    for (const operand of ['', 'x'.repeat(1000), '😀'.repeat(1000)]) {
+      const criteria = [{ column: 'compound', op, value: operand }];
+      expect(queryFor(criteria)?.column_filters).toEqual(criteria);
+    }
+  });
   it('requires an in checklist, accepts zero/200 choices and rejects 201 or oversized operands', () => {
     for (const values of [[], Array.from({ length: 200 }, (_, index) => String(index))]) {
       const criteria = [{ column: 'compound', op: 'in', values }];
@@ -156,5 +164,43 @@ describe('URL bounds match the published backend query schema', () => {
       { ...filters, column_filters: columns },
     );
     expect(parseRoute(routeHash(route)).tableQuery?.column_filters).toEqual(columns);
+  });
+  it('round-trips explicit blank exclusion and activity band sort without stale normal-sort state', () => {
+    const columns = [
+      { column: 'compound', op: 'not_in' as const, values: ['8A'], include_empty: false },
+      { column: `activity:${'a'.repeat(64)}`, op: 'band' as const, value: 'medium' },
+    ];
+    const route = withTableQuery(
+      { ...emptyRoute, projectId: 'id' },
+      {
+        ...filters,
+        column_filters: columns,
+        sort_column: `activity:${'a'.repeat(64)}`,
+        sort_band: 'none',
+      },
+    );
+    expect(parseRoute(routeHash(route)).tableQuery).toEqual({
+      column_filters: columns,
+      sort_column: `activity:${'a'.repeat(64)}`,
+      sort_direction: 'desc',
+      sort_band: 'none',
+    });
+    const normal = withTableQuery(route, { ...filters, sort_band: '' });
+    expect(routeHash(normal)).not.toContain('sort_band');
+    expect(
+      readTableQuery(new URLSearchParams({ sort_column: 'compound', sort_band: 'strong' }))
+        ?.sort_band,
+    ).toBeUndefined();
+    expect(
+      queryFor([{ column: 'compound', op: 'not_in', values: [], include_empty: true }])
+        ?.column_filters,
+    ).toHaveLength(1);
+    expect(
+      queryFor([{ column: 'compound', op: 'not_in', values: [], include_empty: 'true' }]),
+    ).toBeUndefined();
+    expect(
+      queryFor([{ column: 'compound', op: 'eq', value: '8', include_empty: true }]),
+    ).toBeUndefined();
+    expect(queryFor([{ column: 'activity:x', op: 'band', value: 'best' }])).toBeUndefined();
   });
 });

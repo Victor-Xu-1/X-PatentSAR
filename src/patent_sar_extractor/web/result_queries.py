@@ -29,6 +29,7 @@ from .recognition_storage import (
     apply_recognition,
 )
 from .storage import Store
+from .table_filter_choices import ColumnFilterValues, choice_parameters, filter_choices
 from .table_queries import validate_columns, workbook_rows
 from .table_query_models import column_filters as parse_column_filters
 
@@ -86,6 +87,8 @@ class ResultQueries:
         column_filters: str = "",
         sort_column: str = "",
         sort_direction: str = "asc",
+        sort_band: str = "",
+        choice_column: str = "",
     ) -> tuple[
         list[Compound],
         dict[str, str],
@@ -177,13 +180,20 @@ class ResultQueries:
             output.append(dto)
             source_spaces[dto.id] = row["geometry_space"]
         catalog = activity_columns.columns()
-        validate_columns(criteria, sort_column, sort_direction, catalog)
+        validate_columns(criteria, sort_column, sort_direction, catalog, sort_band)
+        if choice_column:
+            validate_columns([], choice_column, "asc", catalog)
+            criteria = [item for item in criteria if item.column != choice_column]
         context = (project, {row["id"]: row for row in rows})
-        if sort_column.startswith("property:") or any(
-            item.column.startswith("property:") for item in criteria
+        if (
+            choice_column.startswith("property:")
+            or sort_column.startswith("property:")
+            or any(item.column.startswith("property:") for item in criteria)
         ):
             output = self._predictions(project_id, output, context)
-        output = workbook_rows(output, criteria, sort_column, sort_direction)
+        output = workbook_rows(
+            output, criteria, sort_column, sort_direction, catalog, sort_band
+        )
         return (
             output,
             source_spaces,
@@ -291,6 +301,7 @@ class ResultQueries:
         column_filters: str = "",
         sort_column: str = "",
         sort_direction: str = "asc",
+        sort_band: str = "",
     ) -> list[Compound]:
         items, source_spaces, _, _, context, _ = self._filtered_compounds(
             project_id,
@@ -301,11 +312,30 @@ class ResultQueries:
             column_filters=column_filters,
             sort_column=sort_column,
             sort_direction=sort_direction,
+            sort_band=sort_band,
         )
         return self._predictions(
             project_id,
             self._normalize_source_boxes(project_id, items, source_spaces),
             context,
+        )
+
+    def filter_values(
+        self,
+        project_id: str,
+        *,
+        column: str,
+        search: str = "",
+        page: int = 1,
+        page_size: int = 200,
+        **filters: str,
+    ) -> ColumnFilterValues:
+        choice_parameters(column, search, page, page_size)
+        compounds, _, _, _, _, catalog = self._filtered_compounds(
+            project_id, choice_column=column, **filters
+        )
+        return filter_choices(
+            compounds, column, catalog, search=search, page=page, page_size=page_size
         )
 
     def results(

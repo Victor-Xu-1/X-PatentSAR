@@ -161,7 +161,20 @@ source-bound overlays/predictions but preserves their audit. Review before
 explicitly reapplying an edit. Rollback must restore the pre-deployment database
 together with its wheel, retaining newer state separately for forward recovery.
 
-Per-column menus provide project-wide filter/sort; toolbar **列** restores hidden
+Per-column menus provide project-wide filter/sort with searchable value checklists,
+select-all/blank and explicit OK/Cancel drafts. Choice search only narrows the menu;
+it never automatically unchecks unseen rows. Inclusive/exclusive selection supports
+all-minus-exceptions without serializing every project value. Each selection has
+at most 200 exceptions/explicit values, under the existing 16 KiB query budget;
+excess fails visibly, not by dropping choices. Conditions and color selection
+replace the same column's checklist; other columns remain in conjunction.
+Only an opened menu loads choices, obeying other column/global filters but ignoring
+its own applied filter. At most 200 distinct values per choice page; use search and
+choice-page controls for larger lists. The full vocabulary is capped at 25,000
+distinct values/four million characters; overflow is explicit. No PDF/model work
+is performed for this query. Color filter/sort uses the same full-project bands,
+not a new ranking after filtering. Missing/unknown values are in the uncolored band.
+Toolbar **列** restores hidden
 columns, including all-hidden recovery. Query parameters survive refresh. TSV
 copy is limited to current-page selected/all rows and visible fields; use the
 normal CSV/JSON export for all filtered rows. Numeric filters never force censored

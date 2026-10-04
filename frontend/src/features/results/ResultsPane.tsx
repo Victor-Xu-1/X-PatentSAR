@@ -102,6 +102,7 @@ export function ResultsPane({
         {project && (
           <ResultsTable
             key={project.id}
+            projectId={project.id}
             hidden={Boolean(
               resource.error || (resource.loading && !result) || !visibleColumns.length,
             )}

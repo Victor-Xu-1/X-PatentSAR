@@ -79,7 +79,9 @@ export function ResultToolbar({
             className="toolbar-button"
             disabled={filters.disabled || loading}
             aria-label="取消列排序"
-            onClick={() => filters.onChange({ sort_column: '', sort_direction: 'asc', page: 1 })}
+            onClick={() =>
+              filters.onChange({ sort_column: '', sort_direction: 'asc', sort_band: '', page: 1 })
+            }
           >
             排序 ×
           </button>
