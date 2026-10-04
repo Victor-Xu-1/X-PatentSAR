@@ -84,6 +84,23 @@ reset uses a new correction revision. Incomplete model outputs are never shown
 as numeric placeholders. Large molecules/PROTAC predictions remain unvalidated
 research observations, not an efficacy/safety or exact-graph guarantee.
 
+Completion retains only sanitized raw model observations per original SHA in
+`analysis/ocsr-observations`; old acceptance and properties are not transported.
+The core converter still checks exact current image/model keys and source QC.
+To recover a software-produced raw cache from another preserved workspace:
+
+```bash
+x-patentsar import-ocsr-cache --state-dir /path/to/private/web-state \
+  --project-id CURRENT_PROJECT_ID --cache /path/to/raw-observations.sqlite
+```
+
+This operator-only command validates the uploaded original and bounded first-party
+cache, requires the same idle analysis lease, and reports counts without loading
+a model or changing compound/audit/QA data. Conflicting strings under one exact
+image/model key fail rather than overwrite. Then run the normal frontend
+completion action. Missing cache entries still require the configured model and
+the unchanged resource guard; this is not a fallback after failed inference.
+
 Ketcher is local Standalone 3.18.0, not an additional Linux service. Build and
 package both `index.html` and `ketcher.html`, the Indigo worker and .wasm asset,
 plus generated licenses. The editor is loaded only by row correction.

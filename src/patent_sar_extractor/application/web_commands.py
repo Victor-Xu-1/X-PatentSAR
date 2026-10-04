@@ -103,3 +103,18 @@ def cmd_import_run(args: argparse.Namespace) -> None:
     except (ValueError, WebError) as error:
         raise SystemExit(str(error)) from None
     print(project.model_dump_json(indent=2))
+
+
+def cmd_import_ocsr_cache(args: argparse.Namespace) -> None:
+    import json
+
+    from patent_sar_extractor.web.errors import WebError
+    from patent_sar_extractor.web.observation_cache import import_observations
+    from patent_sar_extractor.web.service import WorkspaceService
+
+    try:
+        service = WorkspaceService(web_state_path(args.state_dir))
+        result = import_observations(service, args.project_id, Path(args.cache))
+    except (ValueError, WebError) as error:
+        raise SystemExit(str(error)) from None
+    print(json.dumps(result))
