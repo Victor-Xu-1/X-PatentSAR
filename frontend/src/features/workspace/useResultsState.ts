@@ -60,7 +60,13 @@ export function useResultsState(
         job.id,
         job.status,
         job.history_available,
-        observedStages(job).map(({ name, status, count }) => [name, status, count]),
+        // Recognition publishes rows before properties, without another poller.
+        observedStages(job).map(({ name, status, count, progress }) => [
+          name,
+          status,
+          count,
+          progress?.phase ?? null,
+        ]),
       ])
     : null;
   useEffect(() => {

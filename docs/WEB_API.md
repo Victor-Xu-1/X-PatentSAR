@@ -194,7 +194,17 @@ legacy callers, never a synthesized successful observation.
 - Job request adds `include_admet` and `admet_only` strict booleans. The Web input
   defaults include_admet=true. An ADMET-only request must enable include_admet and
   cannot include core force/advisory/partial/resume options. It consumes existing
-  effective structures without replacing the extraction root/projection.
+  effective structures without replacing the extraction root/projection. Before
+  properties, it also completes missing/current-unavailable recognition for
+  independently proved printed-ID crops, regardless of activity presence. New
+  source-bound observations live separately from unchanged extraction artifacts.
+  Current table/detail/correction/export and prediction writes use one effective
+  base; explicit user graph/blank edits keep priority.
+  When a completed recognition is present, the correction document's opaque
+  edit-CAS fingerprint also includes that current chemistry. A form opened
+  before completion fails 409 instead of accidentally clearing newly saved
+  SMILES. The persisted raw correction/prediction basis is unchanged; existing
+  non-graph overlays and append-only audit are not relabeled.
 - `Job.admet_stage` is a nullable actual/sealed research-stage DTO with name
   `admet`; `stages` remains the eight formal core stages (empty for ADMET-only).
   Full-job completion requires accepted core QA, verified core cleanup and every
@@ -340,7 +350,10 @@ Statuses: `queued`, `running`, `complete`, `failed`, `cancelled`, `interrupted`.
 Stage statuses: `pending,running,ok,empty,failed,warnings`.
 Job completion is not necessarily formal QA acceptance. No guessed 100% progress.
 `progress` is null or the actual OCSR observation
-`{completed,total,cache_hits,failures,device,peak_rss_mb}`. Bounded integer counters
+`{completed,total,cache_hits,failures,device,peak_rss_mb,phase?}`. Optional phase is
+`recognition`, `properties` or null; old observations may omit it. Counters reset
+between sequential research phases, not fabricated combined percentages.
+Bounded integer counters
 are cross-validated; device/RSS stay null without a current measured observation.
 `reused_checkpoint` records an explicit core fact, not inferred duration. Every
 new/resumed job owns an independent output directory. Terminal history is sealed

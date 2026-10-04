@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { api } from '../src/api';
 import type { Job } from '../src/api/types';
 import { useResultsState } from '../src/features/workspace/useResultsState';
-import { job, project, results } from './fixtures';
+import { compound, job, project, results } from './fixtures';
 
 describe('current-run result ownership and stage synchronization', () => {
   it('does not refresh current results from an unavailable shared-directory stage history', async () => {
@@ -79,5 +79,77 @@ describe('current-run result ownership and stage synchronization', () => {
       },
     });
     await waitFor(() => expect(reloadProject).toHaveBeenCalledTimes(1));
+  });
+
+  it('refreshes existing rows on a phase transition and terminal state, not recognition counter ticks', async () => {
+    let data = results;
+    const read = vi.spyOn(api, 'results').mockImplementation(async () => data);
+    const reloadProject = vi.fn();
+    const current: Job = {
+      ...job,
+      include_admet: true,
+      admet_only: true,
+      stages: [],
+      admet_stage: {
+        name: 'admet',
+        status: 'running',
+        count: 0,
+        duration_seconds: 1,
+        reused_checkpoint: false,
+        progress: {
+          phase: 'recognition',
+          completed: 1,
+          total: 7,
+          cache_hits: 1,
+          failures: 0,
+          device: 'cpu',
+          peak_rss_mb: null,
+        },
+      },
+    };
+    const { result, rerender } = renderHook(
+      ({ current }) => useResultsState(project.id, '', vi.fn(), current, reloadProject),
+      { initialProps: { current } },
+    );
+    await waitFor(() => expect(result.current.resource.data).toBe(results));
+    read.mockClear();
+    reloadProject.mockClear();
+    rerender({
+      current: {
+        ...current,
+        admet_stage: {
+          ...current.admet_stage!,
+          duration_seconds: 12,
+          progress: { ...current.admet_stage!.progress!, completed: 2 },
+        },
+      },
+    });
+    expect(read).not.toHaveBeenCalled();
+    expect(reloadProject).not.toHaveBeenCalled();
+
+    data = { ...results, items: [{ ...compound, smiles: 'CCO' }] };
+    const properties: Job = {
+      ...current,
+      admet_stage: {
+        ...current.admet_stage!,
+        progress: {
+          ...current.admet_stage!.progress!,
+          phase: 'properties',
+          completed: 0,
+          total: 1,
+          cache_hits: 0,
+        },
+      },
+    };
+    rerender({ current: properties });
+    await waitFor(() => expect(result.current.resource.data?.items[0]?.smiles).toBe('CCO'));
+    expect(read).toHaveBeenCalledOnce();
+    expect(reloadProject).toHaveBeenCalledOnce();
+    read.mockClear();
+    reloadProject.mockClear();
+
+    rerender({ current: { ...properties, status: 'complete' } });
+    await waitFor(() => expect(read).toHaveBeenCalledOnce());
+    expect(reloadProject).toHaveBeenCalledOnce();
   });
 });

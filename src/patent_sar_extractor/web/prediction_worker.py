@@ -69,6 +69,9 @@ def run_predictions(
     spec = decode_spec(row["spec"])
     root = Path(spec.output_dir)
     _, core_completed = read_admet_stage(row, root)
+    from .completion_worker import complete_structures
+
+    complete_structures(service, analysis, row, spec, core_completed, cancel)
     raw_rows = {value["id"]: value for value in service.result_rows(spec.project_id)}
     project = service.store.project(spec.project_id)
     compounds = service.result_queries.effective_compounds(spec.project_id)
@@ -115,6 +118,7 @@ def run_predictions(
                     failures=failures,
                     device=None,
                     peak_rss_mb=None,
+                    phase="properties",
                 ),
             ),
             core_completed=core_completed,

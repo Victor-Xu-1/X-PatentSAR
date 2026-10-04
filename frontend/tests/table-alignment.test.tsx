@@ -161,11 +161,11 @@ describe('one centered result-table style authority', () => {
     render(<ResultsTable {...callbacks} rows={[]} />);
     expect(getComputedStyle(screen.getByRole('cell')).textAlign).toBe('center');
     const name = '抑制等级 · 测试靶点 · 契约隔离实验 列选项';
-    const trigger = screen.getByRole('button', { name, exact: true });
+    const trigger = screen.getByRole('button', { name });
     await userEvent.click(trigger);
-    const menu = screen.getByRole('dialog', { name, exact: true });
+    const menu = screen.getByRole('dialog', { name });
     expect(trigger).toHaveAttribute('aria-controls', menu.id);
-    await userEvent.click(within(menu).getByRole('button', { name: '降序', exact: true }));
+    await userEvent.click(within(menu).getByRole('button', { name: '降序' }));
     expect(callbacks.onFilters).toHaveBeenLastCalledWith({
       sort_column: `activity:${column.id}`,
       sort_direction: 'desc',
@@ -174,7 +174,7 @@ describe('one centered result-table style authority', () => {
     await userEvent.click(trigger);
     await userEvent.selectOptions(screen.getByLabelText('筛选方式'), 'in');
     await userEvent.click(screen.getByLabelText('筛选值 +'));
-    await userEvent.click(screen.getByRole('button', { name: '应用筛选', exact: true }));
+    await userEvent.click(screen.getByRole('button', { name: '应用筛选' }));
     expect(callbacks.onFilters).toHaveBeenLastCalledWith({
       column_filters: [{ column: `activity:${column.id}`, op: 'in', values: ['+'] }],
       page: 1,

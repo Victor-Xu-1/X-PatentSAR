@@ -258,6 +258,7 @@ class PredictionStore:
         from .correction_storage import CorrectionStorage, correction_source_fingerprint
         from .corrections import apply_correction
         from .models import Compound
+        from .recognition_storage import apply_recognition
 
         summary = PredictionSummary.model_validate_json(summary.model_dump_json())
         if (
@@ -275,7 +276,12 @@ class PredictionStore:
                 connection, project_id, compound_id
             )
             effective = apply_correction(
-                project, row, correction, Compound.model_validate_json(row["payload"])
+                project,
+                row,
+                correction,
+                apply_recognition(
+                    project, row, Compound.model_validate_json(row["payload"])
+                ),
             )
             if source_stereo_blocked(effective):
                 raise WebError(

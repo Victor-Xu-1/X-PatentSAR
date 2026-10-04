@@ -21,10 +21,10 @@ export function PredictionAction({
     setError(null);
     try {
       await api.createJob(projectId, null, { include_admet: true, admet_only: true });
-      setMessage('已提交六项指标任务；复用已有结果，不重新提取 PDF。');
+      setMessage('已提交结构与指标补齐任务；复用已有结果，不重新提取 PDF。');
       onQueued();
     } catch (failure) {
-      setError(failure instanceof Error ? failure : new Error('指标任务提交失败。'));
+      setError(failure instanceof Error ? failure : new Error('结构与指标补齐任务提交失败。'));
       if (failure instanceof ApiError && failure.uncertain) setUncertain(true);
     } finally {
       setBusy(false);
@@ -52,7 +52,7 @@ export function PredictionAction({
   return (
     <div className="prediction-action">
       <button type="button" disabled={disabled || busy || uncertain} onClick={() => void submit()}>
-        补齐六项指标
+        补齐结构与指标
       </button>
       {uncertain && (
         <button type="button" disabled={busy} onClick={() => void check()}>

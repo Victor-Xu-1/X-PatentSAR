@@ -173,6 +173,7 @@ export type CoreStageName = (typeof stageNames)[number];
 export type StageName = CoreStageName | 'admet';
 export type StageStatus = 'pending' | 'running' | 'ok' | 'empty' | 'failed' | 'warnings';
 export interface StageProgress {
+  phase?: 'recognition' | 'properties' | null;
   completed: number;
   total: number;
   cache_hits: number;

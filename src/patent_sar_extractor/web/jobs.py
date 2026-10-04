@@ -639,6 +639,7 @@ class JobQueue:
         self.wake.set()
 
     def _confirm_predictions(self, job_id: str, spec: RunSpec) -> None:
+        from .completion_inputs import completion_inputs
         from .correction_storage import correction_source_fingerprint
         from .prediction_identity import compound_prediction_eligible
 
@@ -675,6 +676,12 @@ class JobQueue:
                 502,
                 "admet_incomplete",
                 "The selected source observations are no longer present.",
+            )
+        if completion_inputs(project, raw, selected):
+            raise WebError(
+                502,
+                "admet_incomplete",
+                "Proved numbered structures are still missing source-checked recognition.",
             )
         eligible = [
             compound for compound in selected if compound_prediction_eligible(compound)

@@ -18,7 +18,11 @@ from .correction_recovery import (
     reset_needs_prediction,
     saved_fields,
 )
-from .correction_storage import CorrectionStorage, correction_source_fingerprint
+from .correction_storage import (
+    CorrectionStorage,
+    correction_source_fingerprint,
+    correction_view_fingerprint,
+)
 from .errors import WebError
 from .models import Compound, CorrectionMetadata, Recognition
 from .molecule_drawing import drawing_url
@@ -27,6 +31,7 @@ from .prediction_identity import (
     prediction_eligible,
     source_stereo_blocked,
 )
+from .recognition_storage import apply_recognition
 from .storage import Store, now
 
 CorrectionSaved = Callable[[sqlite3.Connection, str, str, Compound], None]
@@ -70,13 +75,24 @@ def apply_correction(
     original_molfile = compound.structure_molfile
     blocked_original = source_stereo_blocked(compound)
     compound.display_id = values.display_id
-    compound.smiles = values.smiles
     compound.activities = values.activities
-    compound.structure_molfile = values.structure_molfile
+    graph_edited = (
+        values.smiles != baseline.smiles
+        or values.structure_molfile != baseline.structure_molfile
+    )
+    if graph_edited:
+        compound.smiles = values.smiles
+        compound.structure_molfile = values.structure_molfile
     compound.property_overrides = dict(values.property_overrides)
     compound.property_basis_smiles = values.property_basis_smiles
+    if not graph_edited and not same_graph(values.smiles, compound.smiles):
+        # A new model graph cannot silently reassociate old graph-less overrides.
+        compound.property_overrides = {}
+        compound.property_basis_smiles = None
     compound.flags = [*compound.flags, "manual_correction"]
-    if values.smiles != original_smiles or values.structure_molfile != original_molfile:
+    if graph_edited and (
+        values.smiles != original_smiles or values.structure_molfile != original_molfile
+    ):
         # A view-level producer record must be rechecked against the current
         # representation; original persisted observations remain untouched.
         compound.admet = None
@@ -125,15 +141,35 @@ class Corrections:
     def _document(
         project: dict[str, Any], row: dict[str, Any], saved: dict[str, Any] | None
     ) -> CorrectionDocument:
-        original = original_fields(Compound.model_validate_json(row["payload"]))
+        compound = apply_recognition(
+            project, row, Compound.model_validate_json(row["payload"])
+        )
+        original = original_fields(compound)
         fingerprint = correction_source_fingerprint(project, row)
         baseline, values = saved_fields(saved) if saved else (original, original)
+        changed = values != baseline
+        if saved and saved["basis_fingerprint"] == fingerprint:
+            values = (
+                original_fields(apply_correction(project, row, saved, compound))
+                if values == baseline
+                else values
+            )
+            if (
+                values.smiles == baseline.smiles
+                and values.structure_molfile == baseline.structure_molfile
+            ):
+                updates = {"smiles": original.smiles}
+                if not same_graph(values.smiles, original.smiles):
+                    updates.update(property_overrides={}, property_basis_smiles=None)
+                values = EditableFields.model_validate(
+                    {**values.model_dump(), **updates}
+                )
         return CorrectionDocument(
-            source_fingerprint=fingerprint,
+            source_fingerprint=correction_view_fingerprint(project, row, compound),
             revision=saved["revision"] if saved else 0,
             basis_fingerprint=saved["basis_fingerprint"] if saved else None,
             stale=bool(saved and saved["basis_fingerprint"] != fingerprint),
-            has_changes=values != baseline,
+            has_changes=changed,
             original=original,
             values=values,
             updated_at=saved["updated_at"] if saved else None,
@@ -155,7 +191,12 @@ class Corrections:
                 connection, project_id, compound_id
             )
             return apply_correction(
-                project, row, saved, Compound.model_validate_json(row["payload"])
+                project,
+                row,
+                saved,
+                apply_recognition(
+                    project, row, Compound.model_validate_json(row["payload"])
+                ),
             )
 
     def put(
@@ -177,13 +218,17 @@ class Corrections:
                 )
             revision = saved["revision"] if saved else 0
             fingerprint = correction_source_fingerprint(project, row)
+            base = apply_recognition(
+                project, row, Compound.model_validate_json(row["payload"])
+            )
+            edit_fingerprint = correction_view_fingerprint(project, row, base)
             if request.expected_revision != revision:
                 raise WebError(
                     409,
                     "correction_conflict",
                     "Correction changed; refresh before saving.",
                 )
-            if request.expected_source_fingerprint != fingerprint:
+            if request.expected_source_fingerprint != edit_fingerprint:
                 raise WebError(
                     409,
                     "correction_source_conflict",
@@ -193,7 +238,11 @@ class Corrections:
                 document = self._document(project, row, saved)
             except CorruptCorrectionAddons:
                 assert saved is not None
-                original = original_fields(Compound.model_validate_json(row["payload"]))
+                original = original_fields(
+                    apply_recognition(
+                        project, row, Compound.model_validate_json(row["payload"])
+                    )
+                )
                 fields = exact_original_reset(request.fields, original)
                 needs_prediction = reset_needs_prediction(
                     saved, fingerprint, fields.smiles
@@ -239,7 +288,7 @@ class Corrections:
                 # raw model string, without promoting it to manual validation.
                 canonical_smiles(fields.smiles)
             result = CorrectionDocument(
-                source_fingerprint=fingerprint,
+                source_fingerprint=edit_fingerprint,
                 revision=revision + 1,
                 basis_fingerprint=fingerprint,
                 stale=False,
@@ -251,7 +300,12 @@ class Corrections:
             self.storage.write(connection, project_id, compound_id, result)
             _, _, updated = self.storage.context(connection, project_id, compound_id)
             effective = apply_correction(
-                project, row, updated, Compound.model_validate_json(row["payload"])
+                project,
+                row,
+                updated,
+                apply_recognition(
+                    project, row, Compound.model_validate_json(row["payload"])
+                ),
             )
             if (
                 self.on_save is not None

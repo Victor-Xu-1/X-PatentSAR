@@ -70,4 +70,80 @@ describe('one slim observed job state with disclosed detail', () => {
     expect(container.querySelector('.spin')).toBeNull();
     expect(document.querySelector('.stage-current')).toHaveTextContent('12 / 100');
   });
+  it('labels the same ADMET stage by phase and uses the new observed workload after transition', () => {
+    const recognition: Job = {
+      ...withAdmet,
+      admet_only: true,
+      stages: [],
+      admet_stage: {
+        ...phase,
+        progress: { ...phase.progress!, phase: 'recognition' },
+      },
+    };
+    const { rerender } = render(<StageStrip job={recognition} compact />);
+    expect(document.querySelector('.stage-current')).toHaveTextContent(
+      '结构识别 · 进行中 · 12 / 100',
+    );
+    expect(screen.getByText('缓存命中 2 · 失败 1')).not.toBeVisible();
+    fireEvent.click(screen.getByLabelText('提取阶段详情'));
+    fireEvent.click(screen.getByText('结构识别').closest('summary')!);
+    expect(screen.getByText('缓存命中 2 · 失败 1')).toBeVisible();
+    expect(screen.getAllByRole('listitem')).toHaveLength(1);
+
+    const properties: Job = {
+      ...recognition,
+      admet_stage: {
+        ...phase,
+        progress: {
+          ...phase.progress!,
+          phase: 'properties',
+          completed: 0,
+          total: 7,
+          cache_hits: 0,
+          failures: 0,
+        },
+      },
+    };
+    rerender(<StageStrip job={properties} compact />);
+    expect(document.querySelector('.stage-current')).toHaveTextContent('指标计算 · 进行中 · 0 / 7');
+    expect(screen.getByText('缓存命中 0 · 失败 0')).toBeVisible();
+    expect(screen.queryByText('结构识别')).not.toBeInTheDocument();
+    expect(screen.queryByText(/12 \/ 100/)).not.toBeInTheDocument();
+    expect(screen.getAllByRole('listitem')).toHaveLength(1);
+  });
+  it.each([null, undefined])('keeps the legacy ADMET label when phase is %s', (value) => {
+    render(
+      <StageStrip
+        job={{
+          ...withAdmet,
+          admet_stage: {
+            ...phase,
+            progress: { ...phase.progress!, ...(value === null ? { phase: null } : {}) },
+          },
+        }}
+        compact
+      />,
+    );
+    expect(document.querySelector('.stage-current')).toHaveTextContent('ADMET · 进行中 · 12 / 100');
+  });
+  it('keeps a failed recognition phase explicit without a running animation', () => {
+    const { container } = render(
+      <StageStrip
+        job={{
+          ...withAdmet,
+          status: 'failed',
+          admet_stage: {
+            ...phase,
+            status: 'failed',
+            progress: { ...phase.progress!, phase: 'recognition' },
+          },
+        }}
+        compact
+      />,
+    );
+    expect(document.querySelector('.stage-current')).toHaveTextContent(
+      '结构识别 · 失败 · 12 / 100',
+    );
+    expect(container.querySelector('.spin')).toBeNull();
+  });
 });

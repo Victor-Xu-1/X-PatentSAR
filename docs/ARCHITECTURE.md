@@ -299,6 +299,24 @@ Only an exact current,
 verified pinned producer can supply completed values. Cancelled/interrupted/missing
 or corrupt results remain explicit failures, never successful progress.
 
+Existing projects use the same owned ADMET-only carrier to complete proved
+numbered source recognition before properties. `completion_inputs.py` validates
+the shared printed-ID catalog and the verified original/crop owner; activity
+membership is not an input condition. `completion_worker.py` holds the same
+analysis-use lease and uses one core `SmilesConverter`/DECIMER process, closing it
+before ADMET. A bounded sanitized copy of raw observations can avoid inference,
+but current chemistry/source-stereo QC always runs again. Original artifacts,
+raw compound payloads, correction fingerprints and formal QA remain unchanged.
+
+The additive SQLite-v1 `compound_recognitions` table is a rebuildable observation
+cache, bound to source fingerprint, crop content SHA, runtime and owned job.
+`recognition_storage.py` supplies the same base to table/detail/correction/export
+and prediction publication before manual overlays. Explicit manual graphs/blanks
+win; value/ID-only edits do not suppress new recognition. Original audit is not
+rewritten. Source changes invalidate old completion instead of reusing its values.
+The existing progress strip exposes optional `recognition`/`properties` phase;
+no new job type, endpoint, engine, poller or dependency is added.
+
 Only actual eligible SMILES enter inference. The ADMET stage records skipped
 missing-SMILES sources separately from progress.total; those rows remain visible
 with unavailable properties. Zero eligible inputs seal an empty stage with zero

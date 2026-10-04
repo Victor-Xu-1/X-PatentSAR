@@ -1,6 +1,5 @@
 import type { Job, StageName } from '../../api/types';
-import { stageLabels } from '../../model/presentation';
-import { stageStatusText } from '../../model/extraction';
+import { stageLabel, stageStatusText } from '../../model/extraction';
 
 export function StageObservation({
   job,
@@ -14,12 +13,13 @@ export function StageObservation({
   compact?: boolean;
 }) {
   const progress = stage?.progress;
+  const label = stageLabel(name, stage);
   return (
     <details className="stage-observation" name={`stage-observations-${job.id}`}>
       <summary
-        title={`${stageLabels[name]}：${stageStatusText(job, stage)}${stage?.count == null ? '' : ` · ${stage.count}`}`}
+        title={`${label}：${stageStatusText(job, stage)}${stage?.count == null ? '' : ` · ${stage.count}`}`}
       >
-        <strong>{stageLabels[name]}</strong>
+        <strong>{label}</strong>
         {compact ? (
           progress && progress.total > 0 && stage?.status === 'running' ? (
             <small className="stage-progress">
