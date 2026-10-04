@@ -6,7 +6,8 @@ from typing import Literal
 
 from pydantic import Field, StrictStr, model_validator
 
-from .models import DTO, Error, JobStatus
+from .dto import DTO, Error
+from .models import JobStatus
 
 ComponentId = Literal[
     "installer", "base", "decimer", "decimer-models", "admet", "admet-models"
@@ -29,6 +30,16 @@ class EnvironmentCheck(DTO):
     message: str
 
 
+class EnvironmentLastCheck(DTO):
+    """A historical observation of the same path, never current readiness."""
+
+    status: ComponentStatus
+    detected_version: str | None
+    checked_at: str | None
+    checks: list[EnvironmentCheck]
+    problem: str | None
+
+
 class EnvironmentComponent(DTO):
     id: ComponentId
     name: str
@@ -48,6 +59,10 @@ class EnvironmentComponent(DTO):
     checks: list[EnvironmentCheck]
     problem: str | None
     dependencies: list[ComponentId] = Field(default_factory=list)
+    presence: Literal["present", "missing", "unconfigured", "unknown"] = "unknown"
+    verification: Literal["current", "stale", "unchecked"] = "unchecked"
+    checked_at: str | None = None
+    last_check: EnvironmentLastCheck | None = None
 
 
 class EnvironmentSettings(DTO):

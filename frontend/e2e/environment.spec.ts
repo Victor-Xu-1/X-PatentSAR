@@ -6,9 +6,14 @@ import {
 } from '../src/api/environmentDecoders';
 import {
   activeEnvironmentOperation,
-  environmentStatusLabels,
   selectedEnvironmentComponents,
 } from '../src/model/environment';
+import {
+  canInstallEnvironmentPlan,
+  environmentComponentAction,
+  environmentComponentBadge,
+  isEnvironmentComponentReady,
+} from '../src/model/environmentStatus';
 
 async function catalogFromServer(page: Page) {
   const response = await page.request.get('/api/v1/environments');
@@ -39,12 +44,21 @@ for (const viewport of [
       const row = page.locator(`[data-component="${component.id}"]`);
       await expect(row.getByRole('heading', { name: component.name, exact: true })).toBeVisible();
       await expect(row.locator('.component-title .badge')).toHaveText(
-        environmentStatusLabels[component.status],
+        environmentComponentBadge(component).label,
       );
       await expect(row.locator('.component-metadata')).toContainText(component.version);
       await expect(row.locator('.component-metadata')).toContainText(
-        component.detected_version ?? '未报告',
+        component.verification === 'current'
+          ? (component.detected_version ?? '未报告')
+          : '尚无当前检测',
       );
+      await expect(row.locator('.component-location')).toHaveText(
+        `位置：${component.location ?? '未配置'}`,
+      );
+      if (isEnvironmentComponentReady(component))
+        await expect(
+          row.getByRole('button', { name: `已安装 ${component.name}`, exact: true }),
+        ).toBeDisabled();
     }
     await expect(page.getByRole('heading', { name: '安装位置', exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: '推荐组合', exact: true })).toBeVisible();
@@ -59,46 +73,52 @@ for (const viewport of [
     await page.getByText('运行诊断', { exact: true }).click();
     await expect(page.getByRole('heading', { name: '产品与存储' })).toBeVisible();
     if (catalog.settings.enabled && !activeEnvironmentOperation(catalog.active_operation)) {
-      const component = catalog.components.find((item) => item.installable && item.license.trim());
-      expect(
-        component,
-        'Enabled catalog must expose an approved installable component',
-      ).toBeTruthy();
-      const opener = page
-        .locator(`[data-component="${component!.id}"]`)
-        .getByRole('button', { name: `安装 ${component!.name}`, exact: true });
-      await opener.click();
-      const dialog = page.getByRole('dialog');
-      const consent = dialog.getByRole('checkbox');
-      await expect(consent).toBeFocused();
-      await expect(dialog).toContainText('CPU');
-      await expect(dialog).toContainText(component!.license);
-      const execution = selectedEnvironmentComponents(catalog.components, [component!.id]);
-      await expect(dialog.locator('[data-install-component]')).toHaveCount(execution.length);
-      for (const item of execution) {
-        const entry = dialog.locator(`[data-install-component="${item.id}"]`);
-        await expect(entry).toContainText(item.name);
-        await expect(entry).toContainText(item.version);
-        await expect(entry).toContainText(item.license);
-      }
-      await expect(dialog.getByRole('button', { name: '确认下载并安装' })).toBeDisabled();
-      await consent.check();
-      const confirm = dialog.getByRole('button', { name: '确认下载并安装' });
-      await expect(confirm).toBeEnabled();
-      await confirm.focus();
-      await page.keyboard.press('Tab');
-      await page.keyboard.press('Tab');
-      expect(await dialog.evaluate((element) => element.contains(document.activeElement))).toBe(
-        true,
+      const component = catalog.components.find(
+        (item) =>
+          item.license.trim() &&
+          canInstallEnvironmentPlan(selectedEnvironmentComponents(catalog.components, [item.id])),
       );
-      const bounds = await dialog.boundingBox();
-      expect(bounds!.x).toBeGreaterThanOrEqual(0);
-      expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(viewport.width);
-      await page.keyboard.press('Escape');
-      await expect(dialog).toHaveCount(0);
-      await expect(opener).toBeFocused();
+      if (component) {
+        const action = environmentComponentAction(component) === 'repair' ? '修复' : '安装';
+        const opener = page
+          .locator(`[data-component="${component.id}"]`)
+          .getByRole('button', { name: `${action} ${component.name}`, exact: true });
+        await opener.click();
+        const dialog = page.getByRole('dialog');
+        const consent = dialog.getByRole('checkbox');
+        await expect(consent).toBeFocused();
+        await expect(dialog).toContainText('CPU');
+        await expect(dialog).toContainText(component!.license);
+        const execution = selectedEnvironmentComponents(catalog.components, [component!.id]);
+        await expect(dialog.locator('[data-install-component]')).toHaveCount(execution.length);
+        for (const item of execution) {
+          const entry = dialog.locator(`[data-install-component="${item.id}"]`);
+          await expect(entry).toContainText(item.name);
+          await expect(entry).toContainText(item.version);
+          await expect(entry).toContainText(item.license);
+        }
+        await expect(dialog.getByRole('button', { name: '确认下载并安装' })).toBeDisabled();
+        await consent.check();
+        const confirm = dialog.getByRole('button', { name: '确认下载并安装' });
+        await expect(confirm).toBeEnabled();
+        await confirm.focus();
+        await page.keyboard.press('Tab');
+        await page.keyboard.press('Tab');
+        expect(await dialog.evaluate((element) => element.contains(document.activeElement))).toBe(
+          true,
+        );
+        const bounds = await dialog.boundingBox();
+        expect(bounds!.x).toBeGreaterThanOrEqual(0);
+        expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(viewport.width);
+        await page.keyboard.press('Escape');
+        await expect(dialog).toHaveCount(0);
+        await expect(opener).toBeFocused();
+      } else {
+        await expect(page.getByRole('button', { name: '检测全部组件', exact: true })).toBeEnabled();
+        await expect(page.getByRole('button', { name: /^(安装|修复) / })).toHaveCount(0);
+      }
     } else {
-      await expect(page.getByRole('button', { name: '检测缺失组件' })).toBeDisabled();
+      await expect(page.getByRole('button', { name: '检测全部组件' })).toBeDisabled();
     }
     {
       const menu = page.getByLabel('更多', { exact: true });
@@ -206,12 +226,10 @@ test('owned lightweight inspection persists history and selected operation acros
   );
 });
 
-test('explicit owned QA install confirmation activates a verified tool and persists its receipt', async ({
-  page,
-}) => {
+test('verified existing tool cannot be redundantly installed through the UI', async ({ page }) => {
   test.skip(
     process.env.PATENTSAR_E2E_ENV_INSTALL !== '1',
-    'Requires an explicitly owned QA configuration; performs real installer reuse/activation',
+    'Requires an explicitly owned QA configuration with verified installer; performs no writes',
   );
   await page.goto('/#/settings');
   await expect(page.getByRole('heading', { name: '环境管理', exact: true })).toBeVisible();
@@ -219,50 +237,22 @@ test('explicit owned QA install confirmation activates a verified tool and persi
   expect(before.settings.enabled).toBe(true);
   expect(before.active_operation).toBeNull();
   const component = before.components.find((item) => item.id === 'installer')!;
-  expect(component.status, 'Cold download is verified separately; this checks UI activation').toBe(
-    'ready',
-  );
-  await page.getByRole('button', { name: `安装 ${component.name}`, exact: true }).click();
-  const dialog = page.getByRole('dialog');
-  await dialog.getByRole('checkbox').check();
-  const response = page.waitForResponse(
-    (value) =>
-      value.request().method() === 'POST' &&
-      value.url().endsWith('/api/v1/environments/operations'),
-  );
-  await dialog.getByRole('button', { name: '确认下载并安装' }).click();
-  const created = await response;
-  expect(created.status()).toBe(202);
-  const payload = created.request().postDataJSON();
-  expect(payload).toMatchObject({
-    action: 'install',
-    component_ids: ['installer'],
-    expected_revision: before.settings.revision,
+  expect(isEnvironmentComponentReady(component)).toBe(true);
+  const writes: string[] = [];
+  page.on('request', (request) => {
+    if (request.method() !== 'GET' && request.url().includes('/api/v1/environments'))
+      writes.push(request.url());
   });
-  await expect(page).toHaveURL(/#\/settings\?operation=[A-Za-z0-9_-]+/);
-  const identifier = new URLSearchParams(page.url().split('?')[1]).get('operation')!;
-  let receipt;
-  await expect
-    .poll(
-      async () => {
-        const response = await page.request.get(`/api/v1/environments/operations/${identifier}`);
-        expect(response.ok()).toBe(true);
-        receipt = decodeEnvironmentOperation(await response.json());
-        return receipt.status;
-      },
-      { timeout: 60_000, intervals: [300, 500, 1000] },
-    )
-    .toBe('complete');
-  expect(receipt!.applied).toBe(true);
-  expect(receipt!.completed_components).toEqual(['installer']);
-  expect(receipt!.error).toBeNull();
+  const row = page.locator(`[data-component="${component.id}"]`);
+  await expect(
+    row.getByRole('button', { name: `已安装 ${component.name}`, exact: true }),
+  ).toBeDisabled();
+  await expect(
+    row.getByRole('button', { name: `安装 ${component.name}`, exact: true }),
+  ).toHaveCount(0);
   await page.reload();
-  await expect(page.getByLabel('环境后台操作')).toContainText(identifier);
-  await expect(page.getByLabel('环境后台操作')).toContainText('安装与配置校验完成');
   const persisted = await catalogFromServer(page);
-  expect(persisted.operations.find((item) => item.id === identifier)?.applied).toBe(true);
-  await page.screenshot({
-    path: test.info().outputPath('verified-install-receipt.png'),
-    fullPage: true,
-  });
+  expect(persisted.components.find((item) => item.id === component.id)).toEqual(component);
+  expect(persisted.operations).toEqual(before.operations);
+  expect(writes).toEqual([]);
 });

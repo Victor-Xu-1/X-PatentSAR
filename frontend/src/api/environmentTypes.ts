@@ -16,6 +16,15 @@ export type EnvironmentComponentStatus =
   | 'unconfigured'
   | 'incompatible'
   | 'error';
+export type EnvironmentComponentPresence = 'present' | 'missing' | 'unconfigured' | 'unknown';
+export type EnvironmentComponentVerification = 'current' | 'stale' | 'unchecked';
+export interface EnvironmentComponentLastCheck {
+  status: EnvironmentComponentStatus;
+  detected_version: string | null;
+  checked_at: string | null;
+  checks: { name: string; ok: boolean; message: string }[];
+  problem: string | null;
+}
 export interface EnvironmentComponent {
   id: EnvironmentComponentId;
   name: string;
@@ -23,6 +32,10 @@ export interface EnvironmentComponent {
   version: string;
   detected_version: string | null;
   status: EnvironmentComponentStatus;
+  presence: EnvironmentComponentPresence;
+  verification: EnvironmentComponentVerification;
+  checked_at: string | null;
+  last_check: EnvironmentComponentLastCheck | null;
   location: string | null;
   kind: 'tool' | 'runtime' | 'models';
   group: 'tools' | 'base' | 'structure' | 'admet';

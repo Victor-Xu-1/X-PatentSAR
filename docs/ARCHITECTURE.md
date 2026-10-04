@@ -367,6 +367,20 @@ downloads/archives/commands and CPU probes. There is no arbitrary package manage
 API or second process-ownership implementation. The metadata GET never imports
 scientific SDKs or downloads. Inspection and installation are explicit durable jobs.
 
+`environment_catalog.py` is the sole cheap component-status projection. It checks
+only configured path presence/type/access and joins at most six saved reports.
+Presence, current verification and same-path historical checks are separate
+additive DTO facts; path existence never implies module/model readiness. Report
+identity changes retain history without promoting it. New paths cannot inherit
+old measured versions; removed/inaccessible paths cannot remain cached-ready.
+Per-component check times live in the existing JSON report, not a new schema or
+global timestamp copied to unrelated components. Legacy individual times remain
+unknown. Inspection captures one stable binding/config/recipe snapshot and
+publishes under that exact identity only; a changed snapshot fails visibly.
+Metadata refresh does not launch another worker or installation. The component
+and bundle UI reuse the same explicit durable inspection and consented installer;
+already verified components do not offer a redundant install action.
+
 `tools/build_environment_resources.py` derives the base-worker requirements from
 the sole application `uv.lock` using pinned uv 0.11.31; CI enforces parity. DECIMER
 Python 3.10 and ADMET Python 3.12 CPU recipes describe separate scientific runtime

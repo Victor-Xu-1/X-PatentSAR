@@ -33,7 +33,7 @@ it('shows loading, empty inventory and failed reads without substituting catalog
   expect(await screen.findByText('正在读取真实环境组件目录…')).toBeVisible();
   await act(async () => resolve({ ...environmentCatalog, components: [], presets: [] }));
   expect(await screen.findByText(/服务端尚未提供组件目录/)).toBeVisible();
-  expect(screen.getByRole('button', { name: '检测缺失组件' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: '检测全部组件' })).toBeDisabled();
   vi.spyOn(api, 'environments').mockRejectedValue(
     new ApiError(503, 'unavailable', '目录服务尚未就绪'),
   );

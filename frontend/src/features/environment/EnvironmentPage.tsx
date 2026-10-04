@@ -4,6 +4,10 @@ import type { Identity } from '../../api/types';
 import type { EnvironmentComponentId } from '../../api/environmentTypes';
 import { ApiError } from '../../api/errors';
 import { activeEnvironmentOperation, selectedEnvironmentComponents } from '../../model/environment';
+import {
+  canInstallEnvironmentPlan,
+  isEnvironmentInstallPlanCurrent,
+} from '../../model/environmentStatus';
 import { dateText } from '../../model/presentation';
 import { ErrorNotice, Loading } from '../../components/Feedback';
 import { useEnvironmentWorkspace } from './useEnvironmentWorkspace';
@@ -37,13 +41,20 @@ export function EnvironmentPage({
     activeEnvironmentOperation(data?.active_operation ?? null) ||
     activeEnvironmentOperation(workspace.selected);
   const disabled = blocked || !data?.settings.enabled || catalog.loading;
+  const planCurrent = Boolean(
+    plan &&
+    data &&
+    !blocked &&
+    data.settings.enabled &&
+    isEnvironmentInstallPlanCurrent(plan.components, plan.requested, data.components),
+  );
   function install(ids: EnvironmentComponentId[]) {
     if (!data || disabled) return;
     setSelectionError(null);
     try {
       const components = selectedEnvironmentComponents(data.components, ids);
-      if (components.some((item) => !item.installable))
-        throw new Error('服务端不允许安装所选组件。');
+      if (!canInstallEnvironmentPlan(components))
+        throw new Error('所选组件已安装、需先检测或不支持安装，请刷新并核对；不重复安装已有组件。');
       setPlan({ components, settings: data.settings, requested: [...ids] });
     } catch (e) {
       setSelectionError(e instanceof Error ? e : new Error('安装选择无效。'));
@@ -103,6 +114,7 @@ export function EnvironmentPage({
                 presets={data.presets}
                 components={data.components}
                 disabled={disabled}
+                onInspect={(ids) => void mutations.start('inspect', ids, data.settings.revision)}
                 onInstall={install}
               />
             </div>
@@ -123,7 +135,7 @@ export function EnvironmentPage({
                 }
               >
                 <ScanLine size={15} />
-                检测缺失组件
+                检测全部组件
               </button>
             </div>
             <ComponentLibrary
@@ -168,9 +180,11 @@ export function EnvironmentPage({
         <InstallConfirmation
           plan={plan}
           currentRevision={data.settings.revision}
-          busy={mutations.busy}
+          planCurrent={planCurrent}
+          busy={mutations.busy || catalog.loading}
           onClose={() => setPlan(null)}
           onConfirm={async () => {
+            if (disabled || !planCurrent) return;
             await mutations.start(
               'install',
               plan.components.map((item) => item.id),

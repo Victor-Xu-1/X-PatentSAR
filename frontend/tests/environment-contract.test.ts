@@ -14,6 +14,91 @@ describe('environment management exact contract', () => {
     expect(decodeEnvironmentCatalog(environmentCatalog)).toEqual(environmentCatalog);
     expect(decodeEnvironmentOperation(environmentOperation)).toEqual(environmentOperation);
   });
+  it('defaults legacy evidence to unknown/unchecked without inferring installation from ready or a path', () => {
+    const legacy = environmentCatalog.components.map((component) => {
+      const value: Record<string, unknown> = { ...component };
+      for (const field of ['presence', 'verification', 'checked_at', 'last_check'])
+        delete value[field];
+      return value;
+    });
+    const decoded = decodeEnvironmentCatalog({ ...environmentCatalog, components: legacy });
+    for (const component of decoded.components) {
+      expect(component).toMatchObject({
+        presence: 'unknown',
+        verification: 'unchecked',
+        checked_at: null,
+        last_check: null,
+      });
+    }
+    expect(decoded.components[0]?.status).toBe('ready');
+    expect(decoded.components[0]?.location).toBe(environmentCatalog.components[0]?.location);
+  });
+  it('retains stale evidence only in the separately supplied last check without inventing a timestamp', () => {
+    const last_check = {
+      status: 'ready',
+      detected_version: 'previous-measured-version',
+      checked_at: null,
+      checks: [{ name: '旧检测', ok: true, message: '历史观察' }],
+      problem: null,
+    };
+    const decoded = decodeEnvironmentCatalog({
+      ...environmentCatalog,
+      components: [
+        {
+          ...environmentCatalog.components[0],
+          presence: 'present',
+          verification: 'stale',
+          checked_at: null,
+          detected_version: null,
+          checks: [],
+          last_check,
+        },
+      ],
+    });
+    expect(decoded.components[0]).toMatchObject({
+      verification: 'stale',
+      checked_at: null,
+      detected_version: null,
+      checks: [],
+      last_check,
+    });
+  });
+  it('independently defaults omitted time/history while retaining valid supplied presence and verification', () => {
+    const value: Record<string, unknown> = { ...environmentCatalog.components[0] };
+    delete value.checked_at;
+    delete value.last_check;
+    expect(
+      decodeEnvironmentCatalog({
+        ...environmentCatalog,
+        components: [value],
+      }).components[0],
+    ).toMatchObject({
+      presence: 'present',
+      verification: 'current',
+      checked_at: null,
+      last_check: null,
+    });
+  });
+  it.each([
+    { presence: 'installed' },
+    { presence: null },
+    { verification: 'verified' },
+    { verification: null },
+    { checked_at: 42 },
+    { last_check: [] },
+    { last_check: { status: 'installed', checks: [] } },
+    { last_check: { status: 'ready', detected_version: 42, checks: [] } },
+    { last_check: { status: 'ready', checked_at: false, checks: [] } },
+    { last_check: { status: 'ready', checks: [{ name: '版本', ok: 'yes', message: '无效' }] } },
+    { last_check: { status: 'ready', checks: [], problem: {} } },
+  ])('rejects invalid supplied additive evidence: %j', (fields) => {
+    expect(() =>
+      decodeEnvironmentCatalog({
+        ...environmentCatalog,
+        components: [{ ...environmentCatalog.components[0], ...fields }],
+      }),
+    ).toThrow('契约');
+  });
   it('rejects unapproved component IDs, duplicate inventory, invalid counters and invented progress', () => {
     expect(() =>
       decodeEnvironmentCatalog({

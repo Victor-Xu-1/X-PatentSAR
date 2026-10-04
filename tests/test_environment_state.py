@@ -78,10 +78,12 @@ class EnvironmentStateTests(unittest.TestCase):
             results = list(pool.map(enqueue, range(4)))
         self.assertEqual(sum(value is not None for value in results), 1)
 
-    def test_reports_require_current_source_identity(self):
+    def test_reports_preserve_source_identity_for_current_or_historical_projection(self):
         self.store.publish_reports("identity-1", [{"id": "base", "status": "ready"}])
-        self.assertEqual(self.store.reports("identity-1")["base"]["status"], "ready")
-        self.assertEqual(self.store.reports("identity-2"), {})
+        saved = self.store.report_records()["base"]
+        self.assertEqual(saved["report"]["status"], "ready")
+        self.assertEqual(saved["source_key"], "identity-1")
+        self.assertNotEqual(saved["source_key"], "identity-2")
         self.assertIsNotNone(self.store.settings()["checked_at"])
 
     def test_location_cannot_escape_or_replace_unknown_content(self):

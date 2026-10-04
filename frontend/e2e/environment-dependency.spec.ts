@@ -1,13 +1,17 @@
 import { expect, test } from '@playwright/test';
 import { decodeEnvironmentCatalog } from '../src/api/environmentDecoders';
 import { environmentBytes, selectedEnvironmentComponents } from '../src/model/environment';
+import {
+  canInstallEnvironmentPlan,
+  environmentComponentAction,
+} from '../src/model/environmentStatus';
 
 for (const viewport of [
   { width: 1672, height: 942 },
   { width: 1280, height: 800 },
   { width: 390, height: 844 },
 ]) {
-  test(`real base and ADMET model consent includes every server prerequisite without starting installation at ${viewport.width}×${viewport.height}`, async ({
+  test(`real dependency plans preserve install consent or inspection-first state at ${viewport.width}×${viewport.height}`, async ({
     page,
   }) => {
     const writes: string[] = [];
@@ -30,9 +34,22 @@ for (const viewport of [
       const execution = selectedEnvironmentComponents(catalog.components, [id]);
       expect(execution.length).toBeGreaterThan(1);
       const selected = catalog.components.find((item) => item.id === id)!;
+      const action = environmentComponentAction(selected);
+      if (!canInstallEnvironmentPlan(execution)) {
+        const label = { installed: '已安装', inspect: '先检测', install: '安装', repair: '修复' }[
+          action
+        ];
+        const button = page
+          .locator(`[data-component="${id}"]`)
+          .getByRole('button', { name: `${label} ${selected.name}`, exact: true });
+        if (action === 'installed' || action === 'inspect') await expect(button).toBeDisabled();
+        await expect(page.getByRole('dialog')).toHaveCount(0);
+        continue;
+      }
+      const label = action === 'repair' ? '修复' : '安装';
       const opener = page
         .locator(`[data-component="${id}"]`)
-        .getByRole('button', { name: `安装 ${selected.name}`, exact: true });
+        .getByRole('button', { name: `${label} ${selected.name}`, exact: true });
       await opener.click();
       const dialog = page.getByRole('dialog');
       const box = await dialog.boundingBox();

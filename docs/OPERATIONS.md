@@ -194,6 +194,20 @@ by default. Logs, hashed download cache, operation plans and environment SQLite
 live in private `web-state/environments`. There is one active operation at a time;
 repeated request IDs reuse the saved result rather than replay downloads blindly.
 
+The catalog always shows configured component locations and lightweight presence.
+An existing path is **not** a verified environment. Current successful checks show
+installed/verified; existing unchecked or stale paths ask for inspection, not a
+duplicate install. Failed/incompatible probes remain failures even when files exist.
+Measured and target versions are separate. Same-path previous checks remain
+historical after a recipe/config change; a new path never inherits those checks.
+Per-component times refer to actual publication for that component; legacy times
+may be unknown. Refresh only rereads metadata. Use **检测全部组件** or a component/
+bundle inspection for a fresh module/model check, without downloads.
+`environment_inspection_changed` means the configuration/recipe snapshot changed
+during a check. Its operation files/history are retained, no configuration is
+changed and no report is promoted. Refresh and explicitly inspect again after
+the operator change has settled. No database edits or file relocation are needed.
+
 Only reviewed fixed packages and official model files are accepted. No `sudo`,
 system package changes, global uv/Python replacement, GPU setup or remote molecule
 submission occurs. All new prefixes include operation identity; existing valid

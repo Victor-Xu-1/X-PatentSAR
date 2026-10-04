@@ -1,5 +1,7 @@
 # Project governance manifest
 
+- Environment-status ownership: `environment_catalog.py` projects configured path presence, exact-identity current checks and same-path history from at most six existing JSON reports. Per-component timestamps are additive; product v0.1.0, API v1 and environment SQLite v1 stay unchanged. The manager captures a stable snapshot and rejects changed inspection publication. Metadata GET never loads SDKs, downloads or installs; UI ready/pending/repair actions reuse the existing durable operation and consent boundary.
+
 - Activity-rank presentation: the same `ActivityColumnCatalog` owns full-project histograms before filtering/pagination. `activity_rank_values.py`, `activity_ranking.py` and `activity_rank_models.py` separate exact values/conventions, bounded tied-tercile selection and additive API-v1 presentation DTOs. Only visible rows receive aligned read-only scores; empty raw fields are excluded, preserving fingerprints/exports. The frontend only consumes scores/cutoffs. No extra query, PDF/model, persisted ranking, schema/product bump or formal acceptance path is introduced.
 
 - Product/repository identity: `x-patentsar` / X-PatentSAR; current stable E-drive WSL source path `/srv/wsl/projects/patent-sar-extractor` (preserved through branding). Internal Python namespace remains `patent_sar_extractor`; it is not a competing product identity.

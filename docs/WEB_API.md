@@ -33,13 +33,27 @@ after verification. Existing extraction and model calls retain their own capture
 configuration. No GPU/CUDA, privileged system install, paid LLM, OpenDDE or DiffSBDD
 installation is implicitly authorized by this reference-layout feature.
 
-Catalog reads are metadata/cache-only. Explicit inspection invokes isolated real
+Catalog reads are bounded metadata/cache/path-presence-only. Explicit inspection invokes isolated real
 module, OCR/PDF and CPU model checks without downloads. Cached checks are keyed by
 recipe/configuration/binding identity. The separate environment SQLite schema v1
 owns settings, idempotent requests, stages and bounded logs, not patent artifacts.
 Only one environment operation runs at a time. Worker ownership is persisted
 before a file handshake permits any provision action. Failures use fixed safe
 codes; invalid/oversized result or diagnostic packets fail closed.
+
+Component DTOs add `presence` (`present`, `missing`, `unconfigured`, `unknown`),
+`verification` (`current`, `stale`, `unchecked`), `checked_at` and nullable
+`last_check` (`status`, `detected_version`, `checked_at`, `checks`, `problem`).
+Existing status/observed fields describe only current reports. Historical checks
+are exposed only for the exact same configured path, never as ready or a current
+measured version. Presence alone is not SDK/package/model proof; path removal or
+access errors invalidate cached readiness. Every published report has its own
+time; legacy individual times stay null. Catalog `checked_at` is the last published
+operation time, including history, not proof that all components were just tested.
+The product stays v0.1.0, Web API v1 and environment SQLite v1. Missing additive
+fields in older responses decode conservatively, without inventing installation.
+Inspection publication rejects a changed captured binding/config/recipe identity
+with `environment_inspection_changed`; it never stamps old checks with a new key.
 
 Successful installation verifies all selected dependencies before atomically
 publishing interpreter/model paths in the existing `env_paths.local.yaml` under
