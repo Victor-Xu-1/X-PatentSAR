@@ -77,6 +77,25 @@ for (const width of [1830, 390]) {
       for (const offsets of icons)
         for (const offset of offsets) expect(offset).toBeLessThanOrEqual(1);
       const trigger = table.getByRole('button', { name: 'Compound 列选项', exact: true });
+      const labelFits = await table.locator('th.frozen-compound').evaluate((header) => {
+        const heading = header.querySelector('.column-heading') as HTMLElement;
+        const button = header.querySelector('.column-menu-button')!;
+        const style = getComputedStyle(heading);
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d')!;
+        context.font = style.font;
+        const textWidth = context.measureText('Compound').width;
+        const bounds = heading.getBoundingClientRect();
+        const menu = button.getBoundingClientRect();
+        const available =
+          bounds.width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        return {
+          fits: textWidth <= available + 0.5,
+          gap: menu.left - (bounds.left + bounds.width / 2 + textWidth / 2),
+        };
+      });
+      expect(labelFits.fits).toBe(true);
+      expect(labelFits.gap).toBeGreaterThanOrEqual(1);
       await trigger.click();
       const menu = page.getByRole('dialog', { name: 'Compound 列选项', exact: true });
       await expect(menu).toBeVisible();

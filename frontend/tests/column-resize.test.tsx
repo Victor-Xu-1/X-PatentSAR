@@ -21,7 +21,7 @@ function tableProps() {
 
 describe('result column width changes preserve real row behavior', () => {
   it.each([
-    ['Compound', 100, 88],
+    ['Compound', 120, 88],
     ['结构', 112, 88],
   ])(
     'resizes the %s column independently without changing selection',
@@ -61,7 +61,7 @@ describe('result column width changes preserve real row behavior', () => {
     fireEvent.keyDown(resize, { key: 'Escape' });
     fireEvent.pointerUp(resize, { pointerId: 1 });
     expect(screen.getByRole('table')).not.toHaveClass('columns-resized');
-    expect(resize).toHaveAttribute('aria-valuenow', '100');
+    expect(resize).toHaveAttribute('aria-valuenow', '120');
     expect(props.onSelect).not.toHaveBeenCalled();
   });
   it('retains widths across pages and metric hiding without changing source navigation', async () => {
