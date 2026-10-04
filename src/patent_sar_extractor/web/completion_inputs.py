@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
-
-from patent_sar_extractor.core.ocsr.cache_snapshot import snapshot_observations
 
 from .artifacts import ArtifactView
 from .compound_catalog import read_compound_catalog
@@ -13,6 +10,7 @@ from .correction_recovery import saved_fields
 from .correction_storage import joined_correction
 from .errors import WebError
 from .files import SafeFiles, records
+from .observation_cache import seed_job_cache
 from .recognition_storage import crop_digest
 
 
@@ -80,29 +78,11 @@ def completion_inputs(project: dict, rows: dict, compounds: list) -> list[tuple]
     return output
 
 
-def seed_observations(project: dict, destination: Path) -> None:
+def seed_observations(project: dict, destination: Path, *, state: Path) -> None:
     """Copy only raw model observations; old acceptance is never transported."""
-    if destination.exists():
-        return
-    files = SafeFiles(Path(project["run_root"]))
-    try:
-        content = files.read("smiles/smiles_cache.sqlite", max_bytes=64 * 1024 * 1024)
-    except WebError as exc:
-        if exc.code == "asset_unavailable":
-            return
-        raise
-    try:
-        snapshot = snapshot_observations(
-            content, max_bytes=64 * 1024 * 1024, max_records=25000
-        )
-    except ValueError as exc:
-        raise WebError(
-            422, "recognition_cache", "Original raw-observation cache is invalid."
-        ) from exc
-    fd = os.open(
-        destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600
+    seed_job_cache(
+        state,
+        project,
+        destination,
+        Path(project["run_root"]) / "smiles/smiles_cache.sqlite",
     )
-    with os.fdopen(fd, "wb") as stream:
-        stream.write(snapshot)
-        stream.flush()
-        os.fsync(stream.fileno())

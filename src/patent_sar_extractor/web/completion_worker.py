@@ -13,6 +13,7 @@ from .completion_inputs import completion_inputs, seed_observations
 from .correction_storage import correction_source_fingerprint
 from .errors import WebError
 from .models import Stage, StageProgress
+from .observation_cache import publish_job_cache
 from .recognition_storage import RecognitionStore, checked_observation
 
 
@@ -45,7 +46,6 @@ def complete_structures(
     output = root / "recognition"
     output.mkdir(mode=0o700, exist_ok=True)
     cache = output / "raw-observations.sqlite"
-    seed_observations(project, cache)
     completed = hits = rejected = 0
     started = time.monotonic()
 
@@ -79,6 +79,7 @@ def complete_structures(
         # Do not change AnalysisService's source/content cache epoch just to add
         # a wrapper: the ADMET algorithm/model inputs have not changed.
         with analysis._operation(cancel):
+            seed_observations(project, cache, state=service.store.root)
             converter = SmilesConverter(
                 ["decimer"],
                 [],
@@ -147,6 +148,7 @@ def complete_structures(
                     publish()
             finally:
                 converter.close()
+                publish_job_cache(service.store.root, project, cache)
     except Exception:
         publish("failed", int(completed < len(inputs)))
         raise

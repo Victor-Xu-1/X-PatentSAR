@@ -316,6 +316,13 @@ win; value/ID-only edits do not suppress new recognition. Original audit is not
 rewritten. Source changes invalidate old completion instead of reusing its values.
 The existing progress strip exposes optional `recognition`/`properties` phase;
 no new job type, endpoint, engine, poller or dependency is added.
+Raw observations are additionally retained per exact original SHA in private
+`analysis/ocsr-observations/<sha>.sqlite`. Seeding and publication hold the same
+analysis lease; one bounded sanitized merge preserves raw image/model keys.
+Conflicting raw strings fail without overwrite. Current source ownership,
+chemistry/stereo QC and downstream prediction provenance still run again.
+Operator `import-ocsr-cache` recovers raw observations into this cache only;
+no compound table, manual audit, properties or acceptance can be imported.
 
 Only actual eligible SMILES enter inference. The ADMET stage records skipped
 missing-SMILES sources separately from progress.total; those rows remain visible

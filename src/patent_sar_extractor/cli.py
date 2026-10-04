@@ -62,7 +62,11 @@ def build_parser() -> argparse.ArgumentParser:
     command.add_argument("--output", default="")
     command.add_argument("--patent-id", default="")
     command.add_argument("--force", action="store_true")
-    command.add_argument("--reuse-ocr-cache", default="", help="复用经原文 SHA 和观察契约校验的 OCR 缓存；派生结果仍重新计算")
+    command.add_argument(
+        "--reuse-ocr-cache",
+        default="",
+        help="复用经原文 SHA 和观察契约校验的 OCR 缓存；派生结果仍重新计算",
+    )
     command.add_argument("--include-intermediates", action="store_true")
     command.add_argument(
         "--skip-advisory-qa",
@@ -158,6 +162,12 @@ def build_parser() -> argparse.ArgumentParser:
     command.add_argument("--pdf", default="")
     command.add_argument("--title", default="")
     command.add_argument("--state-dir", default="")
+    command = sub.add_parser(
+        "import-ocsr-cache", help="恢复同一原文的原始识别缓存；不导入分子表、指标或 QA"
+    )
+    command.add_argument("--cache", required=True)
+    command.add_argument("--project-id", required=True)
+    command.add_argument("--state-dir", default="")
     return parser
 
 
@@ -172,13 +182,18 @@ def main() -> None:
     if not args.command:
         parser.print_help()
         return
-    if args.command in {"serve", "import-run"}:
+    if args.command in {"serve", "import-run", "import-ocsr-cache"}:
         from patent_sar_extractor.application.web_commands import (
+            cmd_import_ocsr_cache,
             cmd_import_run,
             cmd_serve,
         )
 
-        {"serve": cmd_serve, "import-run": cmd_import_run}[args.command](args)
+        {
+            "serve": cmd_serve,
+            "import-run": cmd_import_run,
+            "import-ocsr-cache": cmd_import_ocsr_cache,
+        }[args.command](args)
         return
     commands = {
         "run": cmd_run,
