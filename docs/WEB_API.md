@@ -82,6 +82,33 @@ never populated with demonstration values. Evidence summary is not an LLM claim.
 
 ## Response models (snake_case)
 
+### Local structure conversion and source stereo
+
+POST `/api/v1/chemistry/structure` accepts `{molfile}` and returns
+`{smiles:string|null}` through the existing session/CSRF boundary. It uses the
+same strict V2000/V3000 parser as correction validation; no model, file path,
+external conversion host, queue or persistence is involved. The single-document
+input is at most 128 KiB/256 atoms; the exact route's JSON transport is bounded
+by 1 MiB to allow JSON escaping, without changing other route limits. Empty,
+strictly parsed zero-atom/bond drawings return null. Unsupported/query/malformed
+semantics fail 422; excessive transport fails 413.
+
+Ketcher exports only V3000 for edits. Backend Molfile interpretation derives
+the SMILES; the vendor SMILES getter is not a stereo authority. Explicit
+unknown single/double bonds remain unknown, including native writers' redundant
+atom parity/STEABS membership on a wavy center. Exact raw Molfile text is retained
+for save/reopen/redraw and reversible `structure_molfile_json` CSV export.
+Determinate stereo, isotopes, charges and fragments cannot be erased/guessed.
+OR/AND and special unsupported stereo are not flattened into plain SMILES.
+
+`Recognition.stereochemistry` is optional additive source evidence v1: exact
+source hash/size, bounded unknown-bond risk boxes, parsed counts and status
+`no_unknown_detected`, `unknown_preserved`, `conflict` or `ambiguous`. Absolute
+configuration is never certified by this risk screen. Missing old observations
+remain unavailable, not fresh validation. A manual overlay does not change core
+QA, and explicit unresolved/source-conflicting inputs do not reuse determinate
+prediction records. Ordinary coordinate edits preserve existing graph identity.
+
 ### Workbook queries and activity bands
 
 GET `/api/v1/projects/{id}/results` and POST `/api/v1/projects/{id}/export`

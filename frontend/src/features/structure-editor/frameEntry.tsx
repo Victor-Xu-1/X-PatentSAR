@@ -5,7 +5,9 @@ import { StandaloneStructServiceProvider } from 'ketcher-standalone/dist/binaryW
 import type { Ketcher } from 'ketcher-core';
 import { EDITOR_CHANNEL, readEditorLoad } from './protocol';
 import type { EditorPayload } from './protocol';
-import { subscribeDrawing } from './subscribeDrawing';
+import { captureDrawing, subscribeDrawing } from './subscribeDrawing';
+import { boundedEditorOperation } from './structureConversion';
+import { ApiError } from '../../api/errors';
 import 'ketcher-react/dist/index.css';
 import './frame.css';
 
@@ -40,6 +42,7 @@ function KetcherFrame() {
     if (!instance) return;
     let disposed = false,
       loading = false;
+    const lifetime = new AbortController();
     const receive = async (event: MessageEvent) => {
       if (event.source !== window.parent || event.origin !== window.location.origin || loading)
         return;
@@ -51,22 +54,32 @@ function KetcherFrame() {
       try {
         const request = readEditorLoad(event.data);
         if (request.molfile || request.smiles)
-          await instance.setMolecule(request.molfile ?? request.smiles);
-        const original = (await instance.getSmiles()).trim();
+          await boundedEditorOperation(
+            () => instance.setMolecule(request.molfile ?? request.smiles),
+            lifetime.signal,
+          );
+        // Canonicalize the loaded graph through the same MDL authority used for edits.
+        // Supplied noncanonical SMILES must not make a coordinate-only edit look new.
+        const original =
+          request.molfile || request.smiles
+            ? (await captureDrawing(instance, lifetime.signal)).graphKey
+            : request.smiles;
         if (disposed) return;
         cleanup.current = subscribeDrawing(instance, original, send);
         setError('');
-      } catch {
+        send({ kind: 'loaded' });
+      } catch (failure) {
         if (disposed) return;
-        // Preserve parent data. Only subsequent intentional drawing replaces it.
-        cleanup.current = subscribeDrawing(instance, '', send);
-        setError('当前结构无法加载，可清空后重画。原值不会自动清除。');
-        send({ kind: 'error', message: '当前结构无法加载，可清空后重画。', recoverable: true });
+        const canRedraw = failure instanceof ApiError && failure.status === 422;
+        if (canRedraw) cleanup.current = subscribeDrawing(instance, '', send);
+        const message =
+          failure instanceof Error
+            ? failure.message.slice(0, 1000)
+            : '当前结构无法加载或转换，请重新加载编辑器。原值不会自动清除。';
+        setError(message);
+        send({ kind: 'error', message, recoverable: canRedraw });
       } finally {
-        if (!disposed) {
-          setBlocked(false);
-          send({ kind: 'loaded' });
-        }
+        if (!disposed) setBlocked(false);
         loading = false;
       }
     };
@@ -85,6 +98,7 @@ function KetcherFrame() {
     send({ kind: 'ready' });
     return () => {
       disposed = true;
+      lifetime.abort();
       window.removeEventListener('message', handler);
       document.removeEventListener('keydown', save, true);
       cleanup.current?.();
@@ -100,7 +114,9 @@ function KetcherFrame() {
         buttons={buttons}
         onInit={setInstance}
         errorHandler={() => {
-          setError('绘图操作失败，请检查结构后重试。');
+          const message = '绘图操作失败，请重新加载编辑器。';
+          setError(message);
+          send({ kind: 'error', message, recoverable: false });
         }}
       />
       {error && (

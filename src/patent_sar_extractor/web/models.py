@@ -16,6 +16,7 @@ from .activity_rank_models import ActivityStrengthScale, RankValue
 from .dto import DTO, Error
 from .prediction_models import PredictionSummary
 from .property_values import PropertyOverrides, validate_overrides
+from .stereochemistry_models import StereoEvidence
 
 Decision = Literal["approved", "rejected", "needs_review"]
 ConfidenceLevel = Literal["high", "medium", "review", "unknown"]
@@ -111,6 +112,7 @@ class Recognition(DTO):
     quality_flag: str | None = None
     model_fingerprint: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
     token_confidence: TokenConfidence | None = None
+    stereochemistry: StereoEvidence | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class CorrectionMetadata(DTO):

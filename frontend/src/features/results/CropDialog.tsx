@@ -31,7 +31,9 @@ export function CropDialog({
             />
           </figure>
           <figure>
-            <figcaption>SMILES 重绘（非原图）</figcaption>
+            <figcaption>
+              {compound.structure_molfile ? '结构重绘（非原图）' : 'SMILES 重绘（非原图）'}
+            </figcaption>
             <AssetImage
               url={
                 compound.smiles?.trim() &&
@@ -48,7 +50,7 @@ export function CropDialog({
             />
           </figure>
         </div>
-        <p className="muted">原始裁图保留证据；重绘来自当前 SMILES，不证明与原图一致。</p>
+        <p className="muted">原始裁图保留证据；重绘来自当前结构，不证明与原图一致。</p>
         {compound.additional_sources?.length ? (
           <details>
             <summary>同一编号的其他原文出处（{compound.additional_sources.length}）</summary>

@@ -16,6 +16,11 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from patent_sar_extractor.core.ocsr.smiles_qc import qc_smiles
+from patent_sar_extractor.core.ocsr.stereo_evidence import (
+    observe_stereo_symbols,
+    source_checked_qc,
+)
 from patent_sar_extractor.workers.analysis_protocol import ADMET_VERSION
 
 from .analysis_cache import AnalysisCache, cache_key
@@ -326,6 +331,10 @@ class AnalysisService:
                 raise WebError(
                     413, "image_limit", "Decoded structure crop exceeds its byte limit."
                 )
+            try:
+                source_evidence = observe_stereo_symbols(data)
+            except (OSError, ValueError) as exc:
+                raise WebError(422, "stereo_source_unavailable", "Source bond-symbol inspection failed; no model was loaded.") from exc
             python = executable(self.settings.decimer_python)
             identity = interpreter_key(python)
             model = decimer_model_key(self.settings.pystow_home)
@@ -343,7 +352,7 @@ class AnalysisService:
                     self._adapter_key("analysis_decimer_worker.py"),
                     *(
                         hashlib.sha256((_OCSR_MODULES / name).read_bytes()).hexdigest()
-                        for name in ("printed_model.py", "model_identity.py")
+                        for name in ("printed_model.py", "model_identity.py", "stereo_evidence.py", "bond_strokes.py", "smiles_qc.py")
                     ),
                 ]
             )
@@ -376,7 +385,8 @@ class AnalysisService:
                     "analysis_protocol",
                     "DECIMER did not confirm its engine version.",
                 ) from exc
-            smiles = recognized_smiles(result["raw_smiles"])
+            checked = source_checked_qc(qc_smiles(result["raw_smiles"]), source_evidence)
+            smiles = recognized_smiles(result["raw_smiles"]) if checked["quality_flag"] == "ok" else None
             response = recognition_response(
                 {
                     "compound_id": compound_id,
@@ -391,7 +401,7 @@ class AnalysisService:
                         []
                         if smiles
                         else [
-                            "DECIMER output was empty or failed bounded RDKit/chemistry QC; inspect the original crop."
+                            f"DECIMER output failed source/chemistry QC ({checked['quality_flag']}); inspect the original crop."
                         ]
                     ),
                 },

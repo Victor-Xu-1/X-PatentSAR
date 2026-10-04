@@ -10,6 +10,7 @@ from .attempts import ATTEMPT_VERSION
 from .errors import WebError
 from .files import private_directory
 from .models import Compound
+from .prediction_identity import compound_prediction_eligible
 from .processes import RunSpec, runtime_identity
 from .storage import Store, encode, now
 
@@ -85,5 +86,5 @@ def correction_prediction(
     compound_id: str,
     compound: Compound,
 ) -> None:
-    if compound.smiles is not None:
+    if compound_prediction_eligible(compound):
         enqueue_prediction(store, connection, project_id, compound_ids=(compound_id,))

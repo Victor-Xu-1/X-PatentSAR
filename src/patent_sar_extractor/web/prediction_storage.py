@@ -12,7 +12,7 @@ from .attempts import spec_record
 from .dto import Error
 from .errors import WebError
 from .prediction_fields import prediction_epoch
-from .prediction_identity import readable_digests, smiles_digest
+from .prediction_identity import readable_digests, smiles_digest, source_stereo_blocked
 from .prediction_models import PredictionSummary
 from .processes import runtime_identity
 from .storage import Store, encode, now
@@ -57,8 +57,13 @@ class PredictionStore:
             )
 
     def summaries(
-        self, project_id: str, inputs: list[tuple[str, str, str | None]]
+        self,
+        project_id: str,
+        inputs: list[tuple[str, str, str | None]],
+        *,
+        molfiles: dict[str, str | None] | None = None,
     ) -> dict[str, PredictionSummary]:
+        molfiles = molfiles or {}
         result = {}
         for offset in range(0, len(inputs), 100):
             chunk = inputs[offset : offset + 100]
@@ -66,7 +71,7 @@ class PredictionStore:
             for compound_id, source, smiles in chunk:
                 if smiles:
                     try:
-                        digests = readable_digests(smiles)
+                        digests = readable_digests(smiles, molfiles.get(compound_id))
                     except WebError:
                         # Fail this molecule in current(), not the entire table.
                         continue
@@ -103,6 +108,7 @@ class PredictionStore:
                     rows.get(compound_id),
                     source,
                     smiles,
+                    molfile=molfiles.get(compound_id),
                     previous=compound_id in previous,
                 )
         return result
@@ -114,6 +120,7 @@ class PredictionStore:
         smiles: str | None,
         *,
         previous: bool = False,
+        molfile: str | None = None,
     ) -> PredictionSummary:
         if not smiles:
             return PredictionSummary(
@@ -124,13 +131,19 @@ class PredictionStore:
                 ),
             )
         try:
-            digests = readable_digests(smiles)
-        except WebError:
+            digests = readable_digests(smiles, molfile)
+        except WebError as exc:
             return PredictionSummary(
-                status="failed",
+                status="unavailable"
+                if exc.code == "manual_stereo_unresolved"
+                else "failed",
                 error=Error(
-                    code="admet_smiles_invalid",
-                    message="ADMET requires a bounded, validated molecular structure.",
+                    code=exc.code
+                    if exc.code == "manual_stereo_unresolved"
+                    else "admet_smiles_invalid",
+                    message=exc.message
+                    if exc.code == "manual_stereo_unresolved"
+                    else "ADMET requires a bounded, validated molecular structure.",
                 ),
             )
         if record is None:
@@ -264,6 +277,12 @@ class PredictionStore:
             effective = apply_correction(
                 project, row, correction, Compound.model_validate_json(row["payload"])
             )
+            if source_stereo_blocked(effective):
+                raise WebError(
+                    409,
+                    "admet_stereo_source_unresolved",
+                    "Source stereochemistry must be resolved by a validated graph correction.",
+                )
             job = connection.execute(
                 "SELECT * FROM jobs WHERE id=? AND project_id=?",
                 (summary.job_id, project_id),
@@ -273,7 +292,8 @@ class PredictionStore:
                 not effective.smiles
                 or correction_source_fingerprint(project, row)
                 != summary.source_fingerprint
-                or smiles_digest(effective.smiles) != summary.smiles_sha256
+                or smiles_digest(effective.smiles, effective.structure_molfile)
+                != summary.smiles_sha256
                 or job is None
                 or job["status"] != "running"
                 or spec.get("include_admet") is not True

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import hashlib
 from pathlib import Path
 
 from fastapi import APIRouter, Query, Request
@@ -24,7 +23,7 @@ from .models import (
     Review,
     ReviewRequest,
 )
-from .molecule_drawing import draw_smiles
+from .molecule_drawing import draw_smiles, drawing_fingerprint
 from .pdf import crop_image, filename_title, page_info, render_page, stream_upload
 from .reviews import put_review
 from .service import WorkspaceService
@@ -166,9 +165,14 @@ def project_routes(service: WorkspaceService, max_upload_bytes: int) -> APIRoute
                 "smiles_unavailable",
                 "No recorded SMILES is available for a derived drawing.",
             )
-        if (
-            fingerprint is not None
-            and fingerprint != hashlib.sha256(dto.smiles.encode()).hexdigest()
+        if dto.structure_molfile is not None and fingerprint is None:
+            raise WebError(
+                422,
+                "drawing_fingerprint_required",
+                "Manual MDL redraw requires its current representation fingerprint.",
+            )
+        if fingerprint is not None and fingerprint != drawing_fingerprint(
+            dto.smiles, dto.structure_molfile
         ):
             raise WebError(
                 409,
@@ -176,7 +180,7 @@ def project_routes(service: WorkspaceService, max_upload_bytes: int) -> APIRoute
                 "Recorded molecule changed; refresh the result view.",
             )
         return Response(
-            draw_smiles(dto.smiles),
+            draw_smiles(dto.smiles, dto.structure_molfile),
             media_type="image/png",
             headers={"Cache-Control": "no-store"},
         )

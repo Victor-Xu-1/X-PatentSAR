@@ -34,6 +34,7 @@ import { decodeBBox as bbox } from './geometryDecoders';
 import { decodeActivitySourceKeys } from './activitySourceDecoders';
 import { decodeActivityRankValues } from './activityRankDecoders';
 import { decodeMolfile, decodePropertyOverrides } from './correctionDecoders';
+import { decodeStereoEvidence } from './stereoDecoders';
 export { decodePage } from './pageDecoders';
 
 const identity = object({ name: string, version: scalar });
@@ -54,6 +55,7 @@ const recognition: Decoder<CompoundRecognition> = object({
   quality_flag: nullable(string),
   model_fingerprint: nullable(string),
   token_confidence: nullable(tokenConfidence),
+  stereochemistry: nullable(decodeStereoEvidence),
 });
 const nonnegative: Decoder<number> = (input, path) => {
   const value = number(input, path);

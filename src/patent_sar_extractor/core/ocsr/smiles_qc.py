@@ -28,6 +28,27 @@ COMMON_FINAL_PRODUCT_ELEMENTS = {
 }
 
 
+def _encoded_double_stereo_count(raw_smiles: str) -> int:
+    """Count raw directions at both double-bond ends before sanitization."""
+    from rdkit import Chem
+
+    molecule = Chem.MolFromSmiles(raw_smiles, sanitize=False)
+    if molecule is None:
+        return 0
+    directed = {Chem.BondDir.ENDUPRIGHT, Chem.BondDir.ENDDOWNRIGHT}
+    return sum(
+        all(
+            any(
+                neighbor.GetIdx() != bond.GetIdx() and neighbor.GetBondDir() in directed
+                for neighbor in atom.GetBonds()
+            )
+            for atom in (bond.GetBeginAtom(), bond.GetEndAtom())
+        )
+        for bond in molecule.GetBonds()
+        if bond.GetBondType() == Chem.BondType.DOUBLE
+    )
+
+
 def qc_smiles(raw_smiles: Optional[str]) -> dict:
     """Validate and standardize a raw SMILES string using RDKit.
 
@@ -62,6 +83,9 @@ def qc_smiles(raw_smiles: Optional[str]) -> dict:
         "heavy_atom_count": 0,
         "ring_count": 0,
         "chiral_centers": 0,
+        "assigned_chiral_centers": 0,
+        "unassigned_chiral_centers": 0,
+        "assigned_double_bonds": 0,
         "has_dummy_atom": False,
         "has_query_atom": False,
         "suspicious_elements": [],
@@ -75,6 +99,10 @@ def qc_smiles(raw_smiles: Optional[str]) -> dict:
         return result
 
     raw_smiles = raw_smiles.strip()
+    if any(char.isspace() for char in raw_smiles) or "|" in raw_smiles:
+        # Printed OCSR emits plain SMILES. Never silently flatten extra metadata.
+        result["quality_flag"] = "unsupported_smiles_metadata"
+        return result
 
     # Check for dummy atoms: * in SMILES
     result["has_dummy_atom"] = _has_dummy_atom(raw_smiles)
@@ -154,8 +182,21 @@ def qc_smiles(raw_smiles: Optional[str]) -> dict:
     try:
         from rdkit.Chem import FindMolChiralCenters
 
-        chiral_centers = FindMolChiralCenters(mol, includeUnassigned=True)
+        chiral_centers = FindMolChiralCenters(
+            mol, includeUnassigned=True, useLegacyImplementation=False
+        )
         result["chiral_centers"] = len(chiral_centers)
+        result["assigned_chiral_centers"] = sum(
+            label != "?" for _, label in chiral_centers
+        )
+        result["unassigned_chiral_centers"] = sum(
+            label == "?" for _, label in chiral_centers
+        )
+        result["assigned_double_bonds"] = sum(
+            bond.GetStereo()
+            not in {Chem.BondStereo.STEREONONE, Chem.BondStereo.STEREOANY}
+            for bond in mol.GetBonds()
+        )
     except Exception:
         pass
 
@@ -164,6 +205,17 @@ def qc_smiles(raw_smiles: Optional[str]) -> dict:
         result["quality_flag"] = "markush_or_query"
     elif result["suspicious_elements"]:
         result["quality_flag"] = "suspicious_element"
+    elif re.search(r"@(AL|SP|TB|OH)", raw_smiles):
+        result["quality_flag"] = "unsupported_stereochemistry"
+    elif (
+        len(re.findall(r"\[[^\]\s]*@", raw_smiles)) > result["assigned_chiral_centers"]
+    ):
+        result["quality_flag"] = "stereochemistry_not_retained"
+    elif ("/" in raw_smiles or "\\" in raw_smiles) and (
+        not result["assigned_double_bonds"]
+        or _encoded_double_stereo_count(raw_smiles) > result["assigned_double_bonds"]
+    ):
+        result["quality_flag"] = "stereochemistry_not_retained"
     else:
         result["quality_flag"] = "ok"
 

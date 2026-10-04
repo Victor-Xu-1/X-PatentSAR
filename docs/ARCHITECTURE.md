@@ -70,8 +70,11 @@ Ketcher Standalone 3.18.0 drawing frame, activity values and six property inputs
 There is no separate editor server or duplicate review dialog. The lazy
 `ketcher.html` entry isolates vendor CSS/portals; its same-origin, window-bound,
 bounded message protocol is split from a single debounced export subscription.
-SMILES then V3000 conversions are serial because the standalone SDK correlates
-replies by input text rather than output format. Timeouts fail visibly and
+One V3000 export is parsed by the same authenticated local MDL authority used for
+corrections. The vendor SMILES getter is not trusted: it can assign parity despite
+a wavy bond. The bounded conversion route has no model, queue or persistence.
+Explicit unknown MDL governs its unspecified start atom, including native writers'
+redundant parity/ABS membership; exact source text remains retained. Timeouts fail visibly and
 require explicit reload; closing unsubscribes, with no polling/export producer.
 No molecule is sent to an external host. Indigo worker/WASM ship in the same
 wheel with third-party notices, loaded only when editing.
@@ -370,7 +373,7 @@ Formal JSON artifacts carry the same identity envelope:
   "schema": {"name": "patentsar.bindings", "version": 2},
   "product": {"name": "X-PatentSAR", "version": "0.1.0"},
   "pipeline_contract": {"name": "patentsar.activity-led", "version": "2.0.0"},
-  "ruleset": {"name": "patentsar.accuracy-first", "version": "2.0.3"}
+  "ruleset": {"name": "patentsar.accuracy-first", "version": "2.0.4"}
 }
 ```
 
@@ -384,10 +387,10 @@ All fail-closed stages use one marker name and one writer: `STRICT_ACCEPTANCE_FA
 |---|---:|---|
 | Product | `0.1.0` | User-visible software release |
 | Pipeline contract | `patentsar.activity-led` `2.0.0` | Stage order or cross-stage semantics |
-| Ruleset | `patentsar.accuracy-first` `2.0.3` | Acceptance or binding behavior |
+| Ruleset | `patentsar.accuracy-first` `2.0.4` | Acceptance or binding behavior |
 | Artifact/cache schema | Namespaced integer versions | Serialized shape or cache compatibility |
 
-Current non-default schema revisions are page classification v2 (`candidate_pages` replaces the ambiguous `core_pages` field), bindings v2 and formal QA v2. The diagnostic review-excerpt metadata starts at v1. All other current artifact/cache schemas are v1.
+Current non-default schema revisions are page classification v2 (`candidate_pages` replaces the ambiguous `core_pages` field), bindings v2 and formal QA v3. The diagnostic review-excerpt metadata starts at v1. All other current artifact/cache schemas are v1.
 
 `contracts.py` is the only authority. Pipeline contract 2.0 removes the unused core-PDF branch and hidden worker profiling. Ruleset 2.0 makes deterministic QA the sole acceptance authority and explicitly separates diagnostic output. Ruleset 2.0.1 fixes spatial duplicate handling and strengthens ambiguity rejection; it invalidates old rule-dependent stage fingerprints without changing the product version or serialized schemas.
 
@@ -464,6 +467,47 @@ Step-cache reuse validates both the current manifest identity envelope and its c
 A printed-number correction requires a duplicated source ID, unique immediately adjacent observed anchors proving one missing integer, that integer in the activity set, and no occurrence of that integer anywhere else in the observed table. Anchors may cross an adjacent observed page boundary, but not a missing page. Original printed ID, coordinates, inferred ID and correction reason remain explicit. Unresolved duplicates, including unsegmented competing rows, are withheld. I-series coordinate pairing works independently on observed table pages even when the locator page list is discontinuous; only the numeric global-sequence rule requires a contiguous full table. Recognized I-series tables cannot fall through to that numeric rule when geometry is ambiguous.
 
 ## Removed ambiguous paths
+
+### Source stereochemistry gate (ruleset 2.0.4)
+
+`core/ocsr/bond_strokes.py` owns bounded raster thinning and stroke observations;
+`stereo_evidence.py` compares periodic unknown-bond risk observations with the
+unmodified parsed molecule. It reads at most 16 MiB/16 million pixels and reduces
+inspection to 768 pixels per edge; stroke/continuation/observation counts are
+bounded. There is no extra model or alternative recognition engine. The exact
+source SHA, image bounds, candidate boxes and parsed stereo counts remain audited.
+The same source is used for all attempts, never a normalized retry or display-only
+crop. Conflicts cannot be repaired by another normalization attempt.
+
+`stereo_gate.py` validates current evidence, source SHA and exact raw/canonical
+agreement for CLI output, checkpoint/export policy, formal QA and Web metadata.
+Research crop recognition invokes the same observation/check functions and binds
+their implementation content into its cache key. Cached model strings are raw
+observations, not cached acceptance. They are rechecked without extra inference.
+Known graph validation is still necessary: extra SMILES metadata, unretained
+encoded centers and unsupported non-tetrahedral stereo fail rather than flatten.
+
+An observed wave with determinate model chirality is withheld; multiple possible
+centers without atom correspondence are explicitly ambiguous. No ID/suffix rule
+assigns or flips stereo, infers a racemate, pairs fractions, or deduplicates their
+identities. The former N-1/N-2 QA assertion is removed because names alone cannot
+prove different absolute configurations; QA v3 carries actual source-stereo errors.
+
+`no_unknown_detected` does not certify R/S, E/Z, or all-drawing accuracy. Raster
+symbol detection is a conservative risk screen, not a graph correspondence model.
+Dense/low-quality strokes can be missed or withheld; angular waves and carbon
+zigzags may be visually ambiguous. Fischer/Haworth/Newman projections, text-based
+configuration assignment, axis/planar/helical/non-tetrahedral stereo and enhanced
+OR/AND collections are not automatically source-verified by this gate. Each needs
+separate representative acceptance before claiming support. Original crop and
+raw output remain available for review; unsupported manual semantics fail visibly.
+
+Product stays v0.1.0. Ruleset 2.0.4 invalidates derived checkpoints without changing
+raw OCSR epoch 2; original-SHA-verified OCR from 2.0.1/2.0.2/2.0.3 remains reusable.
+Historical artifacts are never rewritten or promoted to fresh stereo verification.
+
+Representation references: [RDKit stereo sources and enhanced stereo](https://www.rdkit.org/docs/RDKit_Book.html#sources-of-information-about-stereochemistry)
+and [IUPAC graphical stereo conventions](https://publications.iupac.org/pac/78/10/1897/index.html).
 
 - Automatic `core.pdf` generation: removed because downstream stages always used the original PDF and page indices could not safely cross documents.
 - LLM page reclassification: removed because it could non-deterministically mutate page ownership and previously dropped the classification identity envelope.

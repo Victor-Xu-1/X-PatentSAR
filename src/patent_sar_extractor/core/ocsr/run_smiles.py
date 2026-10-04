@@ -43,6 +43,7 @@ from patent_sar_extractor.contracts import (
 )
 from patent_sar_extractor.core.cpd_filter import filter_examples_only
 from patent_sar_extractor.core.ocsr.smiles_converter import SmilesConverter
+from patent_sar_extractor.core.ocsr.stereo_gate import stereo_record_error
 from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
 from patent_sar_extractor.failures import write_failure_marker
 from patent_sar_extractor.smiles_artifact import (
@@ -175,6 +176,9 @@ def validate_strict_smiles_results(bindings: list, results: list) -> list[str]:
             continue
         cpd = _normalize_cpd(result.get("cpd_id", "")) or "unknown compound"
         suspicious = result.get("suspicious_elements") or []
+        stereo_error = stereo_record_error(result)
+        if stereo_error:
+            errors.append(f"{cpd}: source stereochemistry requires review: {stereo_error}")
         if (
             not result.get("rdkit_valid")
             or not result.get("canonical_smiles")

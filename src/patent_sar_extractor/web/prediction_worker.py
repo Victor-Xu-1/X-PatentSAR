@@ -18,6 +18,7 @@ from .dto import Error
 from .errors import WebError
 from .models import Stage, StageProgress
 from .prediction_fields import selected_metrics
+from .prediction_identity import compound_prediction_eligible
 from .prediction_models import PredictionEngine, PredictionSummary
 from .prediction_storage import PredictionStore, smiles_digest
 from .processes import _process
@@ -77,8 +78,10 @@ def run_predictions(
             404, "compound_not_found", "ADMET selection is outside the current table."
         )
     compounds = [value for value in compounds if not wanted or value.id in wanted]
-    skipped = sum(not value.smiles for value in compounds)
-    compounds = [value for value in compounds if value.smiles]
+    eligible = [value for value in compounds if compound_prediction_eligible(value)]
+    skipped = len(compounds) - len(eligible)
+    compounds = eligible
+    molfiles = {value.id: value.structure_molfile for value in compounds}
     predictions = PredictionStore(service.store)
     inputs = [
         (
@@ -88,7 +91,7 @@ def run_predictions(
         )
         for value in compounds
     ]
-    previous = predictions.summaries(spec.project_id, inputs)
+    previous = predictions.summaries(spec.project_id, inputs, molfiles=molfiles)
     total, completed, hits = len(inputs), 0, 0
     attempted = 0
     started = time.monotonic()
@@ -214,7 +217,7 @@ def run_predictions(
         )
         for compound_id, source, smiles, _ in pending:
             existing = predictions.summaries(
-                spec.project_id, [(compound_id, source, smiles)]
+                spec.project_id, [(compound_id, source, smiles)], molfiles=molfiles
             )[compound_id]
             if existing.status != "complete":
                 predictions.put(

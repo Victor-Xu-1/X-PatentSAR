@@ -640,6 +640,7 @@ class JobQueue:
 
     def _confirm_predictions(self, job_id: str, spec: RunSpec) -> None:
         from .correction_storage import correction_source_fingerprint
+        from .prediction_identity import compound_prediction_eligible
 
         stage, core_completed = read_admet_stage(
             self.store.job(job_id), Path(spec.output_dir)
@@ -675,8 +676,11 @@ class JobQueue:
                 "admet_incomplete",
                 "The selected source observations are no longer present.",
             )
-        skipped = sum(not compound.smiles for compound in selected)
-        selected = [compound for compound in selected if compound.smiles]
+        eligible = [
+            compound for compound in selected if compound_prediction_eligible(compound)
+        ]
+        skipped = len(selected) - len(eligible)
+        selected = eligible
         results = self.service.predictions.summaries(
             spec.project_id,
             [
@@ -687,6 +691,7 @@ class JobQueue:
                 )
                 for compound in selected
             ],
+            molfiles={compound.id: compound.structure_molfile for compound in selected},
         )
         if (
             len(selected) != stage.progress.total

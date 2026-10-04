@@ -216,7 +216,7 @@ class SecurityMiddleware:
             else 8 * 1024 * 1024
             if path.endswith("/export")
             else 1024 * 1024
-            if path.endswith("/correction")
+            if path.endswith("/correction") or path == "/api/v1/chemistry/structure"
             else 65536
         )
         consumed = 0

@@ -104,6 +104,28 @@ class AnalysisFixture(WebFixture):
 
 
 class AnalysisAPITests(AnalysisFixture, unittest.TestCase):
+    def test_research_recognition_uses_same_source_stereo_gate_before_caching(self):
+        from test_source_stereochemistry import wave_image
+
+        self.mock_runtime()
+        self.boundary.raw_smiles = "C[C@H](O)C(=O)O"
+        run = artifact_run(self.root / "run", self.pdf, current=False)
+        wave_image(run / "crop.png")
+        before = {path: hashlib.sha256(path.read_bytes()).hexdigest()
+                  for path in run.rglob("*") if path.is_file()}
+        with self.client(import_runs=[run]) as client:
+            project = client.get("/api/v1/projects").json()["items"][0]
+            path = f"/api/v1/projects/{project['id']}/compounds/Compound%201/recognize"
+            response = client.post(path, json={})
+            self.assertEqual(response.status_code, 200, response.text)
+            self.assertEqual(response.json()["status"], "rejected")
+            self.assertIsNone(response.json()["smiles"])
+            self.assertTrue(any("stereo_source_conflict" in message for message in response.json()["warnings"]))
+            calls = len(self.boundary.calls)
+            self.assertEqual(client.post(path, json={}).json(), response.json())
+            self.assertEqual(calls, len(self.boundary.calls))
+        self.assertEqual(before, {path: hashlib.sha256(path.read_bytes()).hexdigest() for path in before})
+
     def test_unverified_analysis_shutdown_still_closes_queue_and_retains_owner(self):
         app = self.app()
         with patch.object(
