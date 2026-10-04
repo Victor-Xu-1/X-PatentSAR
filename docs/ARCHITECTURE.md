@@ -65,6 +65,21 @@ change binding/SMILES/QA files or declare a failed run formally accepted.
 copies it into the wheel's private package static directory. The installed wheel
 serves both UI and API from one origin; Node.js is a build dependency only.
 
+The row correction dialog is the only editing path: numbered identity, a local
+Ketcher Standalone 3.18.0 drawing frame, activity values and six property inputs.
+There is no separate editor server or duplicate review dialog. The lazy
+`ketcher.html` entry isolates vendor CSS/portals; its same-origin, window-bound,
+bounded message protocol is split from a single debounced export subscription.
+SMILES then V3000 conversions are serial because the standalone SDK correlates
+replies by input text rather than output format. Timeouts fail visibly and
+require explicit reload; closing unsubscribes, with no polling/export producer.
+No molecule is sent to an external host. Indigo worker/WASM ship in the same
+wheel with third-party notices, loaded only when editing.
+
+The workspace/API retain no-eval/no-embed CSP. Only the editor document and
+its owned worker permit WASM compilation; JavaScript unsafe-eval remains
+forbidden. Paper core excludes the unused PaperScript runtime compiler.
+
 The default workspace is PDF on the left and one table on the right. It has no
 permanent sidebar or standalone molecule-analysis workspace. The table combines
 original activity observations with six compact source-bound properties: MW, LogP,
@@ -239,10 +254,27 @@ PDF/geometry, original compound payloads, output roots and core acceptance remai
 unchanged. Filtering, redraw and export consume the same effective overlay.
 Restoring original fields is another audited revision, not deletion of history.
 
-SMILES changes atomically enqueue an ADMET-only attempt in the existing queue.
+Exact MDL/SMILES isomeric graphs are validated by `correction_chemistry.py`;
+`correction_fields.py` owns old-client preservation, and `property_values.py`
+owns effective manual/computed values for filter, sort and export. The raw source,
+model observations and append-only correction audit keep separate authorities.
+Explicit manual null stays blank; a changed graph clears incompatible old
+manual values. Coordinates and unchanged representations retain values.
+`correction_recovery.py` keeps strict reads and a PUT-only exact-original
+corrupt-addon restoration; CAS/job guards remain before recovery, and enqueue
+failure rolls back both correction and audit. Recovery cannot fabricate a
+current graph or promote rejected original evidence.
+
+Molecular-graph changes atomically enqueue an ADMET-only attempt in the existing queue.
 That attempt must not replace the extraction root, refresh the source projection
 or change its nonce. Six-property records are keyed by original source fingerprint,
-effective SMILES digest and reviewed prediction epoch. Only an exact current,
+canonical isomeric graph digest and reviewed prediction epoch.
+`prediction_identity.py` is the single bounded digest authority for readers and
+writers; a raw legacy digest is accepted only as proof for the exact current
+string. It is not migrated or guessed from audits/other rows. Equivalent graphs
+retain verified observations without another model call; stereo, isotope,
+charge, fragments and original source changes still invalidate different inputs.
+Only an exact current,
 verified pinned producer can supply completed values. Cancelled/interrupted/missing
 or corrupt results remain explicit failures, never successful progress.
 

@@ -10,6 +10,7 @@ from collections.abc import Iterator, Sequence
 from .errors import WebError
 from .models import Compound, ExportRequest, Project
 from .prediction_models import METRIC_KEYS
+from .property_values import effective_property_values, manual_property_values
 
 
 def formula_safe(value: object) -> str:
@@ -45,7 +46,9 @@ def selected(rows: list[Compound], request: ExportRequest) -> list[Compound]:
 
 def _manual_change(row: Compound) -> bool:
     return bool(
-        row.correction and row.correction.has_changes and not row.correction.stale
+        manual_property_values(row)
+        or row.structure_molfile
+        or (row.correction and row.correction.has_changes and not row.correction.stale)
     )
 
 
@@ -81,9 +84,14 @@ ADMET_COLUMNS = [
 
 def _admet_values(row: Compound) -> list[object]:
     observation = row.admet
+    properties = effective_property_values(row)
     if observation is None:
-        return ["not_run", *([None] * 16), True]
-    properties = {metric.key: metric.value for metric in observation.properties}
+        return [
+            "not_run",
+            *(properties.get(key) for key in METRIC_KEYS),
+            *([None] * 10),
+            True,
+        ]
     engine = observation.engine
     error = observation.error
     return [
@@ -166,6 +174,7 @@ def export_csv(project: Project, rows: list[Compound]) -> Iterator[bytes]:
             "record_kind",
         ]
         + ADMET_COLUMNS
+        + ["manual_property_keys", "property_basis_smiles"]
     )
     review_only = project.acceptance.state != "accepted" or any(
         _manual_change(row) or _research_prediction(row) or _unassociated(row)
@@ -184,14 +193,23 @@ def export_csv(project: Project, rows: list[Compound]) -> Iterator[bytes]:
             row.review.note if row.review else None,
             row.review.revision if row.review else None,
         ]
-        provenance: list[object] = [
-            row.display_id,
-            _manual_change(row),
-            row.correction.revision if row.correction else None,
-            row.correction.stale if row.correction else None,
-            row.correction.updated_at if row.correction else None,
-            row.record_kind,
-        ] + _admet_values(row)
+        provenance: list[object] = (
+            [
+                row.display_id,
+                _manual_change(row),
+                row.correction.revision if row.correction else None,
+                row.correction.stale if row.correction else None,
+                row.correction.updated_at if row.correction else None,
+                row.record_kind,
+            ]
+            + _admet_values(row)
+            + [
+                "; ".join(
+                    key for key in METRIC_KEYS if key in manual_property_values(row)
+                ),
+                row.property_basis_smiles if manual_property_values(row) else None,
+            ]
+        )
         if not row.activities:
             yield line(prefix + [None] * 6 + provenance)
         for activity in row.activities:

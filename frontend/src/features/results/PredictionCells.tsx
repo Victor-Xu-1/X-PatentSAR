@@ -1,5 +1,6 @@
 import type { Compound } from '../../api/types';
 import { METRIC_SPECS } from '../../api/predictionTypes';
+import { effectiveProperty } from '../../model/propertyValues';
 
 const statusLabels = {
   not_run: '未计算',
@@ -25,10 +26,7 @@ export function PredictionCells({
       {METRIC_SPECS.filter(
         (spec) => !visibleColumns || visibleColumns.has(`property:${spec.key}`),
       ).map((spec) => {
-        const metric =
-          status === 'complete'
-            ? prediction?.properties.find((item) => item.key === spec.key)
-            : null;
+        const metric = effectiveProperty(row, spec.key);
         const label = statusLabels[status];
         return (
           <td
@@ -36,19 +34,21 @@ export function PredictionCells({
             key={spec.key}
             data-property={spec.key}
             title={
-              metric
-                ? `${spec.label} · ${spec.unit} · ${spec.kind === 'prediction' ? '模型预测，非专利实测' : '结构计算，非专利实测'}`
-                : `${label}${prediction?.error ? `：${prediction.error.message}` : ''}`
+              metric.manual
+                ? `${spec.label} · ${spec.unit} · 手工修正${metric.value === null ? '（留空）' : ''}`
+                : metric.value !== null
+                  ? `${spec.label} · ${spec.unit} · ${spec.kind === 'prediction' ? '模型预测，非专利实测' : '结构计算，非专利实测'}`
+                  : `${label}${prediction?.error ? `：${prediction.error.message}` : ''}`
             }
           >
-            {metric ? (
-              <span className="prediction-value">
+            {metric.value !== null ? (
+              <span className={`prediction-value${metric.manual ? ' manually-edited' : ''}`}>
                 {Number.isInteger(metric.value) ? String(metric.value) : metric.value.toFixed(2)}
               </span>
             ) : (
               <span
                 className={status === 'failed' ? 'prediction-failed' : 'muted'}
-                aria-label={`${spec.label} ${label}`}
+                aria-label={`${spec.label} ${metric.manual ? '手工留空' : label}`}
               >
                 —
               </span>

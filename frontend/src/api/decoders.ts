@@ -33,6 +33,7 @@ import { activityContextKey, decodeActivityColumns } from './activityColumnDecod
 import { decodeBBox as bbox } from './geometryDecoders';
 import { decodeActivitySourceKeys } from './activitySourceDecoders';
 import { decodeActivityRankValues } from './activityRankDecoders';
+import { decodeMolfile, decodePropertyOverrides } from './correctionDecoders';
 export { decodePage } from './pageDecoders';
 
 const identity = object({ name: string, version: scalar });
@@ -195,6 +196,22 @@ export const decodeCompound: Decoder<Compound> = (input, path = '$') => {
   const fields = input as Record<string, unknown>;
   return {
     ...compound,
+    ...(Object.hasOwn(fields, 'structure_molfile')
+      ? {
+          structure_molfile: nullable(decodeMolfile)(
+            fields.structure_molfile,
+            `${path}.structure_molfile`,
+          ),
+        }
+      : {}),
+    ...(Object.hasOwn(fields, 'property_overrides')
+      ? {
+          property_overrides: decodePropertyOverrides(
+            fields.property_overrides,
+            `${path}.property_overrides`,
+          ),
+        }
+      : {}),
     ...(Object.hasOwn(fields, 'additional_sources')
       ? {
           additional_sources: array(

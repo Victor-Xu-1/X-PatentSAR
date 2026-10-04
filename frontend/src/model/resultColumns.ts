@@ -31,7 +31,7 @@ export function resultColumns(activities: TableActivityColumn[] = []): ResultCol
   return [
     column('select', '选择', 'check-col frozen-column frozen-select', 38, 38, 100),
     column('compound', 'Compound', 'compound-column frozen-column frozen-compound', 100, 88, 480),
-    column('structure', '结构', 'structure-column frozen-column frozen-structure', 96, 88, 480),
+    column('structure', '结构', 'structure-column frozen-column frozen-structure', 112, 88, 480),
     ...activities.map((activity) => ({
       ...column(
         `activity:${activity.id}`,

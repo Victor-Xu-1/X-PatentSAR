@@ -198,12 +198,25 @@ class SecurityMiddleware:
                 scope, receive, send
             )
             return
+        parts = path.split("/")
+        pdf_upload = request.method == "POST" and (
+            path == "/api/v1/projects"
+            or (
+                len(parts) == 6
+                and parts[1:4] == ["api", "v1", "projects"]
+                and bool(parts[4])
+                and parts[5] == "pdf"
+            )
+        )
         limit = (
             self.max_upload_bytes
-            if request.headers.get("content-type", "").split(";", 1)[0]
+            if pdf_upload
+            and request.headers.get("content-type", "").split(";", 1)[0]
             == "application/pdf"
             else 8 * 1024 * 1024
             if path.endswith("/export")
+            else 1024 * 1024
+            if path.endswith("/correction")
             else 65536
         )
         consumed = 0
@@ -234,6 +247,23 @@ class SecurityMiddleware:
 
         async def secure_send(message: Message) -> None:
             if message["type"] == "http.response.start":
+                # Only this owned isolated document hosts the local WASM editor.
+                # The workspace/API keep their original no-embed/no-eval policy.
+                editor_frame = path == "/ketcher.html"
+                editor_worker = path.startswith(
+                    "/assets/indigoWorker-"
+                ) and path.endswith(".js")
+                policy = (
+                    "default-src 'self'; script-src 'self'"
+                    + (" 'wasm-unsafe-eval'" if editor_frame or editor_worker else "")
+                    + "; style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
+                    "connect-src 'self'; object-src 'none'; base-uri 'none'; "
+                    + (
+                        "worker-src 'self' blob:; frame-ancestors 'self'"
+                        if editor_frame
+                        else "frame-ancestors 'none'"
+                    )
+                )
                 message["headers"] = list(message.get("headers", [])) + [
                     (b"x-content-type-options", b"nosniff"),
                     (b"referrer-policy", b"no-referrer"),
@@ -241,7 +271,7 @@ class SecurityMiddleware:
                     (b"cross-origin-resource-policy", b"same-origin"),
                     (
                         b"content-security-policy",
-                        b"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+                        policy.encode("ascii"),
                     ),
                 ]
             await send(message)

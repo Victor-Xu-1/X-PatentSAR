@@ -132,7 +132,7 @@ describe('Excel-like columns use one full-project server query', () => {
     );
     expect(screen.getByRole('slider', { name: '调整结构列宽' })).toHaveAttribute(
       'aria-valuenow',
-      '104',
+      '120',
     );
   });
 
@@ -191,7 +191,7 @@ describe('Excel-like columns use one full-project server query', () => {
     const region = screen.getByLabelText('可横向滚动的化合物结果表格');
     expect(region.style.getPropertyValue('--frozen-select-width')).toBe('0px');
     expect(region.style.getPropertyValue('--frozen-compound-width')).toBe('0px');
-    expect(region.style.getPropertyValue('--frozen-leading-width')).toBe('96px');
+    expect(region.style.getPropertyValue('--frozen-leading-width')).toBe('112px');
     expect(region.style.getPropertyValue('--frozen-trailing-width')).toBe('0px');
     expect(within(screen.getAllByRole('row')[1]!).getAllByRole('cell')).toHaveLength(
       screen.getAllByRole('columnheader').length,

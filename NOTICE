@@ -16,6 +16,16 @@ Frontend third-party attribution is generated into THIRD_PARTY_LICENSES.md
 and retained in the installed Web bundle. Scientific model weights remain
 operator-installed and subject to their original licenses.
 
+The local structure editor uses EPAM Ketcher 3.18.0 and its Indigo WebAssembly
+runtime (Apache-2.0). Paper.js core (MIT) and events (MIT) are browser build
+dependencies. Exact npm versions and full generated notices are retained;
+no proprietary structure editor service or scientific model weights are bundled.
+https://github.com/epam/ketcher
+Ketcher Copyright (C) 2018 EPAM Systems. This product includes software
+developed at EPAM Systems, Inc. The upstream Ketcher notice and its additional
+dependency-license attributions are retained unchanged in the installed
+Web bundle as KETCHER_NOTICE.md; they are not replaced by this project's license.
+
 Optional local molecular predictions use ADMET-AI 2.0.1 (MIT) and an independently
 installed CPU Chemprop/PyTorch environment. Upstream libraries and pretrained
 weights retain their original terms; they are not bundled in this repository or

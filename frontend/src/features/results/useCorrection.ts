@@ -5,8 +5,15 @@ import type { CorrectionDocument, EditableFields } from '../../api/correctionTyp
 import { useResource } from '../../hooks/useResource';
 import { correctionDraft, draftFields } from './correctionDraft';
 import type { CorrectionDraft } from './correctionDraft';
+import type { ActivityColumn, Compound } from '../../api/types';
 
-export function useCorrection(projectId: string, compoundId: string, onSaved: () => void) {
+export function useCorrection(
+  projectId: string,
+  compound: Compound,
+  columns: ActivityColumn[],
+  onSaved: () => void,
+) {
+  const compoundId = compound.id;
   const load = useCallback(
     (signal: AbortSignal) => api.getCorrection(projectId, compoundId, signal),
     [projectId, compoundId],
@@ -15,19 +22,20 @@ export function useCorrection(projectId: string, compoundId: string, onSaved: ()
   const [basis, setDocument] = useState<CorrectionDocument | null>(null);
   const [editedDraft, setDraft] = useState<CorrectionDraft | null>(null);
   const document = basis ?? resource.data;
-  const draft = editedDraft ?? (document ? correctionDraft(document.values) : null);
+  const draft =
+    editedDraft ?? (document ? correctionDraft(document.values, compound, columns) : null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [message, setMessage] = useState('');
   const uncertain = useRef<{ basis: CorrectionDocument; fields: EditableFields } | null>(null);
-  async function save(restore = false) {
+  async function save() {
     if (!document || !draft || busy || blocked) return;
     setBusy(true);
     setError(null);
     setMessage('');
     try {
-      const fields = restore ? document.original : draftFields(draft);
+      const fields = draftFields(draft);
       uncertain.current = { basis: document, fields };
       await api.saveCorrection(projectId, compoundId, document, fields);
       uncertain.current = null;
@@ -62,7 +70,7 @@ export function useCorrection(projectId: string, compoundId: string, onSaved: ()
       if (draft) setDraft(draft);
       setDocument(latest);
       setBlocked(false);
-      setMessage('已读取当前已保存版本；草稿未覆盖。请对照原始值和当前值，再明确保存。');
+      setMessage('已读取保存版本，草稿保留。请确认后再保存。');
     } catch (failure) {
       setError(failure instanceof Error ? failure : new Error('当前版本加载失败。'));
     } finally {

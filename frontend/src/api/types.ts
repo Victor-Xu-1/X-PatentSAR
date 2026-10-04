@@ -1,4 +1,5 @@
 import type { PredictionSummary } from './predictionTypes';
+import type { PropertyOverrides } from './manualPropertyTypes';
 
 export interface Identity {
   name: string;
@@ -95,6 +96,8 @@ export interface Compound {
   structure_image_url: string | null;
   redraw_image_url: string | null;
   smiles: string | null;
+  structure_molfile?: string | null;
+  property_overrides?: PropertyOverrides;
   recognition: CompoundRecognition | null;
   activities: Activity[];
   activity_source_keys?: string[];

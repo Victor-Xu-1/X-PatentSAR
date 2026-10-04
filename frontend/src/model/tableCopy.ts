@@ -2,6 +2,8 @@ import type { Compound } from '../api/types';
 import type { ResultColumn } from './resultColumns';
 import { activityColumnObservations } from './activityColumns';
 import type { TableActivityColumn } from './activityColumns';
+import { METRIC_SPECS } from '../api/predictionTypes';
+import { effectiveProperty } from './propertyValues';
 
 // TSV is plain text: neutralize spreadsheet formula prefixes only in the copy,
 // and remove embedded row/column separators so each original row stays one row.
@@ -39,11 +41,8 @@ export function tableCopyText(
           );
         if (column.id.startsWith('activity:')) return safeTsvCell(values.get(column.id));
         if (column.id.startsWith('property:')) {
-          const value =
-            row.admet?.status === 'complete'
-              ? row.admet.properties.find((metric) => `property:${metric.key}` === column.id)?.value
-              : null;
-          return safeTsvCell(value);
+          const spec = METRIC_SPECS.find((metric) => `property:${metric.key}` === column.id);
+          return safeTsvCell(spec ? effectiveProperty(row, spec.key).value : null);
         }
         if (column.id === 'source') return safeTsvCell(row.source.page);
         if (column.id === 'edit')

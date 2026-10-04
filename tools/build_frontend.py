@@ -12,7 +12,18 @@ from pathlib import Path
 GENERATOR = "tools/build_frontend.py"
 MARKER = ".bundle.json"
 MAX_BYTES = 64 * 1024 * 1024
-EXTENSIONS = {".html", ".js", ".css", ".svg", ".png", ".ico", ".json", ".woff2", ".md"}
+EXTENSIONS = {
+    ".html",
+    ".js",
+    ".css",
+    ".svg",
+    ".png",
+    ".ico",
+    ".json",
+    ".woff2",
+    ".md",
+    ".wasm",
+}
 
 
 def fingerprints(directory: Path, *, managed: bool = False) -> dict[str, str]:
@@ -49,12 +60,16 @@ def discard_staged_bundle(root: Path) -> None:
         return
     marker = staged / MARKER
     if not marker.is_file() or marker.is_symlink():
-        raise ValueError("Staged Web bundle is unmanaged; preserve it before rebuilding")
+        raise ValueError(
+            "Staged Web bundle is unmanaged; preserve it before rebuilding"
+        )
     previous = json.loads(marker.read_text(encoding="utf-8"))
     if previous.get("generator") != GENERATOR or previous.get("files") != fingerprints(
         staged, managed=True
     ):
-        raise ValueError("Staged Web bundle was modified; preserve it before rebuilding")
+        raise ValueError(
+            "Staged Web bundle was modified; preserve it before rebuilding"
+        )
     # Setuptools copies changed files but otherwise retains obsolete hashed assets.
     # Delete only this exact, unmodified generated copy, not the whole build tree.
     shutil.rmtree(staged)

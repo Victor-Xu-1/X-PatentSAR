@@ -1,0 +1,88 @@
+.correction-form {
+  gap: 14px;
+  padding: 16px 20px;
+  line-height: 1.4;
+}
+.correction-form .form-field {
+  gap: 5px;
+  min-width: 0;
+  font-size: 12px;
+}
+.correction-form .form-field > small {
+  color: var(--muted);
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+.correction-structure {
+  position: relative;
+  min-width: 0;
+}
+.structure-editor {
+  position: relative;
+}
+.structure-drawing-host {
+  height: 350px;
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+}
+.structure-drawing-host iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+.structure-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--muted);
+  font-size: 12px;
+}
+.correction-values {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+.correction-values input {
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  font-size: 13px;
+}
+.correction-properties {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+.correction-form .dialog-actions {
+  position: sticky;
+  bottom: -16px;
+  background: var(--surface);
+  padding: 12px 0 0;
+}
+.manually-edited {
+  text-decoration: underline dotted var(--muted);
+  text-underline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .correction-form {
+    padding: 12px;
+  }
+  .correction-values {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .correction-properties {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .structure-drawing-host {
+    height: 300px;
+  }
+  .correction-form .dialog-actions {
+    bottom: -12px;
+  }
+}

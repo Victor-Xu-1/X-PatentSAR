@@ -72,11 +72,30 @@ Core CLI behavior stays separate and unchanged. Do not relabel an ADMET failure
 as full-job success just because core artifacts were already accepted.
 
 For existing completed projects, **列表选项 → 补齐六项指标** queues an ADMET-only job,
-without rerunning PDF extraction. Online SMILES corrections automatically queue
-only their affected compound. Source/SMILES changes invalidate obsolete properties;
+without rerunning PDF extraction. Online graph corrections automatically queue
+only their affected compound. Coordinate/value-only edits and equivalent isomeric
+graphs do not call the model. Source/graph changes invalidate obsolete properties;
 reset uses a new correction revision. Incomplete model outputs are never shown
 as numeric placeholders. Large molecules/PROTAC predictions remain unvalidated
 research observations, not an efficacy/safety or exact-graph guarantee.
+
+Ketcher is local Standalone 3.18.0, not an additional Linux service. Build and
+package both `index.html` and `ketcher.html`, the Indigo worker and .wasm asset,
+plus generated licenses. The editor is loaded only by row correction.
+Do not enable JavaScript unsafe-eval or external conversion endpoints to repair
+it. Check the narrowly scoped editor/worker WASM CSP and the authenticated
+same-origin assets instead. Export/load failures disable saving; explicit retry
+retains the last successfully parsed structure and column drafts.
+Manual values remain independent overlays, including explicit blanks; they
+cannot change the original prediction or formal QA. Legacy noncanonical raw
+prediction digests require an exact current-string match, otherwise the result
+is stale. The explicit ADMET-only action is the recovery path; do not rewrite
+digests or source payloads during reads.
+Corrupt saved drawing/basis addons fail reads visibly. Only the exact
+authoritative original fields can be restored through an authenticated PUT
+with the current source/revision proof; this is an audited revision, not
+permission to edit SQLite or delete history. Ordinary different edits cannot
+use that recovery boundary, and active jobs still block it.
 
 Back up the workspace SQLite together with its private `job-history` facts and
 uploaded originals. The additive `corrections`, `correction_audit` and

@@ -7,7 +7,6 @@ import { validActivityFocus } from '../../api/activitySourceDecoders';
 import { normalizeLayout } from '../../model/layout';
 import { PdfPane } from '../pdf/PdfPane';
 import { CropDialog } from '../results/CropDialog';
-import { ReviewDialog } from '../results/ReviewDialog';
 import { CorrectionDialog } from '../results/CorrectionDialog';
 import { ExportDialog } from '../results/ExportDialog';
 import { JobActions } from '../jobs/JobActions';
@@ -44,7 +43,6 @@ export function Workspace({
   onAttach: () => void;
 }) {
   const [crop, setCrop] = useState<Compound | null>(null);
-  const [review, setReview] = useState<Compound | null>(null);
   const [editing, setEditing] = useState<Compound | null>(null);
   const [exporting, setExporting] = useState(false);
   const [legacyActivityPage, setLegacyActivityPage] = useState<number | null>(null);
@@ -167,27 +165,12 @@ export function Workspace({
           onClose={() => setCrop(null)}
         />
       )}
-      {review && id && (
-        <ReviewDialog
-          projectId={id}
-          compound={review}
-          onClose={() => setReview(null)}
-          onSaved={() => {
-            setReview(null);
-            results.resource.reload();
-            onProjectReload();
-          }}
-        />
-      )}
       {editing && id && (
         <CorrectionDialog
           projectId={id}
           compound={editing}
+          activityColumns={results.resource.data?.activity_columns}
           onClose={() => setEditing(null)}
-          onReview={() => {
-            setReview(editing);
-            setEditing(null);
-          }}
           onSaved={() => {
             setEditing(null);
             navigateSource({});

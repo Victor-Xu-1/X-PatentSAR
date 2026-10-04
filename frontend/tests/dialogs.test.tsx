@@ -3,12 +3,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { api } from '../src/api';
-import { ApiError } from '../src/api/errors';
-import { ReviewDialog } from '../src/features/results/ReviewDialog';
 import { ExportDialog } from '../src/features/results/ExportDialog';
 import { AttachPdfDialog } from '../src/features/projects/AttachPdfDialog';
 import { Dialog } from '../src/components/Dialog';
-import { compound, project, results } from './fixtures';
+import { project } from './fixtures';
 
 describe('accessible dialogs and explicit mutations', () => {
   it('exports current filters across all matching pages, not selected IDs', async () => {
@@ -111,56 +109,6 @@ describe('accessible dialogs and explicit mutations', () => {
     fireEvent(screen.getByRole('dialog'), new Event('cancel', { bubbles: true, cancelable: true }));
     expect(close).not.toHaveBeenCalled();
     expect(screen.getByLabelText('关闭对话框')).toBeDisabled();
-  });
-  it('retains a draft on review conflict and requires explicit latest-revision reload', async () => {
-    const save = vi
-      .spyOn(api, 'review')
-      .mockRejectedValueOnce(new ApiError(409, 'revision_conflict', '记录已更新'))
-      .mockResolvedValueOnce({
-        decision: 'needs_review',
-        note: '草稿',
-        revision: 3,
-        updated_at: project.updated_at,
-      });
-    vi.spyOn(api, 'results').mockResolvedValue({
-      ...results,
-      items: [
-        {
-          ...compound,
-          review: {
-            decision: 'approved',
-            note: '他人注记',
-            revision: 2,
-            updated_at: project.updated_at,
-          },
-        },
-      ],
-    });
-    const saved = vi.fn();
-    render(
-      <ReviewDialog projectId={project.id} compound={compound} onClose={vi.fn()} onSaved={saved} />,
-    );
-    const user = userEvent.setup();
-    await user.type(screen.getByLabelText('复核注记'), '草稿');
-    await user.click(screen.getByText('保存复核注记'));
-    expect(await screen.findByText('此记录已被更新，未覆盖他人的复核。')).toBeVisible();
-    expect(screen.getByText('保存复核注记')).toBeDisabled();
-    expect(screen.getByLabelText('复核注记')).toHaveValue('草稿');
-    await user.click(screen.getByText('载入最新版本并保留草稿'));
-    expect(await screen.findByText('他人注记')).toBeVisible();
-    await user.click(screen.getByText('保存复核注记'));
-    expect(save).toHaveBeenLastCalledWith(project.id, compound.id, 'needs_review', '草稿', 2);
-    expect(saved).toHaveBeenCalledOnce();
-  });
-  it('does not turn a failed write into a saved review', async () => {
-    vi.spyOn(api, 'review').mockRejectedValue(new ApiError(0, 'network_error', '结果未知', true));
-    const saved = vi.fn();
-    render(
-      <ReviewDialog projectId={project.id} compound={compound} onClose={vi.fn()} onSaved={saved} />,
-    );
-    await userEvent.click(screen.getByText('保存复核注记'));
-    expect(await screen.findByRole('alert')).toHaveTextContent('结果未知');
-    expect(saved).not.toHaveBeenCalled();
   });
   it('exports selected IDs and labels unaccepted output as review-only', async () => {
     const download = vi
