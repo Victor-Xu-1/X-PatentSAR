@@ -15,6 +15,7 @@ from .activity_focus_models import ActivityFocus, ActivitySourceKey
 from .activity_rank_models import ActivityStrengthScale, RankValue
 from .dto import DTO, Error
 from .prediction_models import PredictionSummary
+from .property_values import PropertyOverrides, validate_overrides
 
 Decision = Literal["approved", "rejected", "needs_review"]
 ConfidenceLevel = Literal["high", "medium", "review", "unknown"]
@@ -146,6 +147,24 @@ class Compound(DTO):
     record_kind: (
         Literal["structure_activity", "structure_only", "activity_only"] | None
     ) = None
+    structure_molfile: str | None = Field(
+        default=None,
+        max_length=128 * 1024,
+        strict=True,
+        exclude_if=lambda value: not value,
+    )
+    property_overrides: PropertyOverrides = Field(
+        default_factory=dict, max_length=6, exclude_if=lambda value: not value
+    )
+    # Read-only transport for CSV provenance, deliberately absent from JSON/raw fingerprints.
+    property_basis_smiles: str | None = Field(
+        default=None, max_length=2048, strict=True, exclude=True
+    )
+
+    @field_validator("property_overrides", mode="before")
+    @classmethod
+    def validate_properties(cls, value: object) -> object:
+        return validate_overrides(value)
 
     @model_validator(mode="after")
     def check_rank_alignment(self) -> Compound:

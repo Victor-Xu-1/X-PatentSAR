@@ -6,6 +6,7 @@ from typing import Any
 
 from .activity_columns import activity_column_id, activity_context
 from .models import Compound
+from .property_values import effective_property_values
 
 
 def column_values(row: Compound, column: str) -> list[Any]:
@@ -32,11 +33,6 @@ def column_values(row: Compound, column: str) -> list[Any]:
             and activity.value is not None
         ]
     if column.startswith("property:"):
-        if row.admet is None or row.admet.status != "complete":
-            return []
-        return [
-            metric.value
-            for metric in row.admet.properties
-            if metric.key == column.removeprefix("property:")
-        ]
+        value = effective_property_values(row).get(column.removeprefix("property:"))
+        return [value] if value is not None else []
     return []

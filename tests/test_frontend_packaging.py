@@ -18,6 +18,26 @@ spec.loader.exec_module(packager)
 
 
 class FrontendPackagingTests(unittest.TestCase):
+    def test_local_editor_document_and_wasm_are_fingerprinted_and_packaged(
+        self,
+    ) -> None:
+        (self.dist / "ketcher.html").write_text(
+            '<html><script src="assets/editor.js"></script></html>'
+        )
+        wasm = self.dist / "assets" / "indigo.wasm"
+        wasm.write_bytes(b"\x00asm\x01\x00\x00\x00")
+        (self.dist / "assets" / "editor.js").write_text("/* local editor */")
+        packager.bundle(self.root)
+        packager.bundle(self.root, check=True)
+        self.assertEqual(
+            (self.destination / "assets" / "indigo.wasm").read_bytes(),
+            wasm.read_bytes(),
+        )
+        self.assertTrue((self.destination / "ketcher.html").is_file())
+        wasm.write_bytes(b"modified")
+        with self.assertRaisesRegex(ValueError, "differ"):
+            packager.bundle(self.root, check=True)
+
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
@@ -57,7 +77,9 @@ class FrontendPackagingTests(unittest.TestCase):
         (self.dist / "assets" / "app.js").unlink()
         (self.dist / "assets" / "next.js").write_text("console.info('next');")
         packager.bundle(self.root)
-        self.assertFalse(staged.exists(), "Setuptools must not retain obsolete hashed JS")
+        self.assertFalse(
+            staged.exists(), "Setuptools must not retain obsolete hashed JS"
+        )
         self.assertTrue(unrelated.exists())
 
     def test_unmanaged_staged_assets_are_preserved(self) -> None:
@@ -116,7 +138,9 @@ class FrontendPackagingTests(unittest.TestCase):
 class WorkflowPackagingTests(unittest.TestCase):
     def test_runner_paths_are_initialized_after_job_scheduling(self) -> None:
         workflow = yaml.safe_load(
-            (Path(__file__).resolve().parents[1] / ".github/workflows/ci.yml").read_text()
+            (
+                Path(__file__).resolve().parents[1] / ".github/workflows/ci.yml"
+            ).read_text()
         )
         for job in workflow["jobs"].values():
             for value in job.get("env", {}).values():

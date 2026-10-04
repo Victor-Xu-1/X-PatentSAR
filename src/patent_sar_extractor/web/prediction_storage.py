@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import sqlite3
 from typing import Any
@@ -13,6 +12,7 @@ from .attempts import spec_record
 from .dto import Error
 from .errors import WebError
 from .prediction_fields import prediction_epoch
+from .prediction_identity import readable_digests, smiles_digest
 from .prediction_models import PredictionSummary
 from .processes import runtime_identity
 from .storage import Store, encode, now
@@ -27,10 +27,6 @@ CREATE TABLE IF NOT EXISTS admet_predictions (
 """
 PACKET_SCHEMA = {"name": "patentsar.prediction-projection", "version": 1}
 MAX_PACKET_BYTES = 256 * 1024
-
-
-def smiles_digest(smiles: str) -> str:
-    return hashlib.sha256(smiles.encode()).hexdigest()
 
 
 def terminal_error(status: str, error: Error | None = None) -> Error:
@@ -66,29 +62,40 @@ class PredictionStore:
         result = {}
         for offset in range(0, len(inputs), 100):
             chunk = inputs[offset : offset + 100]
-            known = [item for item in chunk if item[2]]
+            known = []
+            for compound_id, source, smiles in chunk:
+                if smiles:
+                    try:
+                        digests = readable_digests(smiles)
+                    except WebError:
+                        # Fail this molecule in current(), not the entire table.
+                        continue
+                    known.append((compound_id, source, *digests))
             rows: dict[str, dict[str, Any]] = {}
             previous: set[str] = set()
             if known:
-                values = ",".join("(?,?,?)" for _ in known)
+                values = ",".join("(?,?,?,?)" for _ in known)
                 parameters: list[object] = []
-                for compound_id, source, smiles in known:
-                    assert smiles is not None
-                    parameters.extend((compound_id, source, smiles_digest(smiles)))
+                for item in known:
+                    parameters.extend(item)
                 parameters.extend((project_id, project_id, self.epoch))
                 with self.store.connect() as connection:
                     for row in connection.execute(
-                        f"WITH wanted(compound_id,source_fingerprint,smiles_sha256) AS (VALUES {values}) "
-                        "SELECT wanted.compound_id,p.payload,p.project_id,p.job_id,"
+                        f"WITH wanted(compound_id,source_fingerprint,canonical_sha256,legacy_sha256) AS (VALUES {values}) "
+                        "SELECT wanted.compound_id,p.payload,p.project_id,p.job_id,p.source_fingerprint,p.smiles_sha256,p.epoch,"
                         "j.status AS producer_status,j.project_id AS producer_project,j.spec AS producer_spec,"
                         "EXISTS(SELECT 1 FROM admet_predictions old WHERE old.project_id=? AND old.compound_id=wanted.compound_id) AS previous "
                         "FROM wanted LEFT JOIN admet_predictions p ON p.project_id=? AND p.epoch=? AND "
-                        "p.compound_id=wanted.compound_id AND p.source_fingerprint=wanted.source_fingerprint AND p.smiles_sha256=wanted.smiles_sha256 "
-                        "LEFT JOIN jobs j ON j.id=p.job_id",
+                        "p.compound_id=wanted.compound_id AND p.source_fingerprint=wanted.source_fingerprint AND "
+                        "p.smiles_sha256 IN (wanted.canonical_sha256,wanted.legacy_sha256) "
+                        "LEFT JOIN jobs j ON j.id=p.job_id "
+                        "ORDER BY wanted.compound_id,(p.smiles_sha256=wanted.canonical_sha256) DESC",
                         parameters,
                     ):
                         if row["payload"] is not None:
-                            rows[row["compound_id"]] = dict(row)
+                            # The canonical authority wins even if corrupt. A
+                            # valid older raw packet must not hide its failure.
+                            rows.setdefault(row["compound_id"], dict(row))
                         elif row["previous"]:
                             previous.add(row["compound_id"])
             for compound_id, source, smiles in chunk:
@@ -116,7 +123,16 @@ class PredictionStore:
                     message="A validated structure is required for ADMET.",
                 ),
             )
-        digest = smiles_digest(smiles)
+        try:
+            digests = readable_digests(smiles)
+        except WebError:
+            return PredictionSummary(
+                status="failed",
+                error=Error(
+                    code="admet_smiles_invalid",
+                    message="ADMET requires a bounded, validated molecular structure.",
+                ),
+            )
         if record is None:
             return PredictionSummary(status="stale" if previous else "not_run")
         try:
@@ -149,7 +165,10 @@ class PredictionStore:
             summary = PredictionSummary.model_validate(packet["observation"])
             if (
                 summary.source_fingerprint != source
-                or summary.smiles_sha256 != digest
+                or summary.smiles_sha256 not in digests
+                or summary.smiles_sha256 != record["smiles_sha256"]
+                or summary.source_fingerprint != record["source_fingerprint"]
+                or record["epoch"] != self.epoch
                 or summary.job_id != record["job_id"]
                 or producer.get("job_id") != summary.job_id
                 or producer.get("project_id") != record["project_id"]
@@ -180,7 +199,7 @@ class PredictionStore:
                 return PredictionSummary(
                     status="failed",
                     source_fingerprint=source,
-                    smiles_sha256=digest,
+                    smiles_sha256=summary.smiles_sha256,
                     job_id=summary.job_id,
                     error=terminal_error(record["producer_status"]),
                 )

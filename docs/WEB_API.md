@@ -137,14 +137,33 @@ legacy callers, never a synthesized successful observation.
   geometry remain unchanged.
 - GET `/api/v1/projects/{id}/structures/{compound}/correction` returns
   `{source_fingerprint,revision,basis_fingerprint,stale,has_changes,original,values,updated_at}`.
-  Original/values each contain `{display_id,smiles,activities}`. Source fingerprint
+  Original/values contain `{display_id,smiles,activities,structure_molfile,
+  property_overrides,property_basis_smiles}`. The three additive fields default
+  to null, {}, null for legacy clients. Source fingerprint
   identifies the exact raw projection; max 100 measurements for row editing.
 - PUT to the same correction endpoint requires session/CSRF and
   `{expected_revision,expected_source_fingerprint,fields}`. Bounded finite values,
   positive original pages and valid bounded SMILES are checked. Concurrent source
   changes, active project jobs and revision mismatches fail 409 without overwrite.
   Save/reset appends audited revisions; restoring original fields is not deletion.
-  Effective SMILES changes atomically enqueue a targeted ADMET-only attempt.
+  Effective molecular-graph changes atomically enqueue a targeted ADMET-only
+  attempt; equivalent isomeric graphs or coordinate/value-only edits do not.
+  Molfile is one exact UTF-8 MDL V2000/V3000 document, at most 128 KiB and 256
+  atoms, with finite coordinates. Query/dummy atoms, unsupported bonds, SDF,
+  unresolved encoded stereo and graph/SMILES disagreement are rejected.
+  Submitted chemistry strings are preserved, not normalized in audit storage.
+  The correction request body limit is 1 MiB; other ordinary writes remain 64 KiB.
+  `property_overrides` accepts only the six metric keys and finite numbers/null.
+  MW/TPSA/counts are nonnegative; HBD/HBA are integers. Null explicitly leaves
+  a cell blank. Nonempty overrides must refer to the same current graph through
+  `property_basis_smiles`; missing SMILES requires a null basis. Old clients
+  omitting these fields preserve them only for an unchanged graph.
+  Corrupt saved addons still fail GET. PUT may recover only by an exact
+  restoration of the authoritative original fields, under the same source and
+  revision CAS, active-job guard and append-only audit. Other changes remain
+  rejected; no current-value fallback or direct database rewrite is provided.
+  Current `Compound` rows expose nonempty Molfile/overrides additively; raw empty
+  fields are excluded, preserving source serialization and fingerprints.
 - Job request adds `include_admet` and `admet_only` strict booleans. The Web input
   defaults include_admet=true. An ADMET-only request must enable include_admet and
   cannot include core force/advisory/partial/resume options. It consumes existing
@@ -169,7 +188,14 @@ The fixed property catalog is MW (molecular_weight, Dalton), LogP (logP,
 log-ratio), TPSA (tpsa, Å^2), HBD (hydrogen_bond_donors, #), HBA
 (hydrogen_bond_acceptors, #), and LogS (Solubility_AqSolDB, log(mol/L)).
 The first five are descriptors; only LogS is a model prediction. None is a patent
-measurement or clinical safety/efficacy result. JSON/CSV exports preserve effective
+measurement or clinical safety/efficacy result. Manual overrides are separate
+from the unchanged `Compound.admet` model observation and provenance. Table
+filter/sort, clipboard and CSV share effective values (manual null wins); JSON
+retains both model evidence and manual overrides. CSV appends
+`manual_property_keys` and `property_basis_smiles` for distinction.
+New prediction digests use bounded canonical isomeric graph identity. Legacy raw
+digests are readable only for the exact validated current input string; they
+are never reassociated by similarity or guessed aliases. JSON/CSV exports preserve effective
 values, original core acceptance and correction/model provenance. Any manual
 correction, research prediction or unassociated source keeps export review_only=true.
 JSON formal_acceptance_scope is original_activity_association_only; complete

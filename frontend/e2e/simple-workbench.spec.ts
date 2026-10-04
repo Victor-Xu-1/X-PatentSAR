@@ -1,9 +1,10 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { decodeJob, decodeProject, decodeResults } from '../src/api/decoders';
 import { decodeCorrection } from '../src/api/correctionDecoders';
 import { METRIC_SPECS } from '../src/api/predictionTypes';
+import { drawEthanol } from './structure-editor-actions';
 
 const projectId = process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID;
 const editAllowed = process.env.PATENTSAR_E2E_ALLOW_CORRECTION === 'isolated-state';
@@ -127,29 +128,60 @@ test('online edits persist and trigger real owned ADMET without rerunning the PD
   const result = decodeResults(
     await (await page.request.get(`${path()}/results?page=1&page_size=25`)).json(),
   );
-  const row = result.items[0]!;
+  const row =
+    result.items.find((item) => item.id === process.env.PATENTSAR_E2E_EDIT_COMPOUND_ID) ??
+    result.items.find(
+      (item) => item.display_id === (process.env.PATENTSAR_E2E_EDIT_DISPLAY_ID ?? 'Compound 5'),
+    ) ??
+    result.items[0]!;
   const correctionPath = `${path()}/structures/${encodeURIComponent(row.id)}/correction`;
   const basis = decodeCorrection(await (await page.request.get(correctionPath)).json());
   const savedName = `Isolation-edit-${Date.now()}`;
   await page.getByLabel(`修正 ${row.display_id}`, { exact: true }).click();
   await page.getByLabel('修正化合物编号').fill(savedName);
-  // Controlled ethanol reference tests actual descriptor/model transport, not patent graph accuracy.
-  await page.getByLabel('修正 SMILES', { exact: true }).fill('CCO');
-  await page.getByLabel('测量 1 值', { exact: true }).fill('++');
-  await page.getByLabel('测量 1 值类型', { exact: true }).selectOption('text');
+  // Controlled drawn reference tests the editor/model transport, not patent graph accuracy.
+  await drawEthanol(page);
+  const activityInputs = await page
+    .locator('.correction-values[aria-label="活性列数值"] input')
+    .all();
+  for (const input of activityInputs) {
+    const name = await input.getAttribute('aria-label');
+    await input.fill(
+      /\bratio\b/.test(name ?? '') ? '0.11' : name?.includes('degradation') ? 'B' : '++',
+    );
+  }
+  const manualValues = [47.23, -0.4, 21.12, 2, 3, -2.8];
+  for (const [index, spec] of METRIC_SPECS.entries())
+    await page.getByLabel(`修正 ${spec.label}`, { exact: true }).fill(String(manualValues[index]));
   await page.screenshot({ path: test.info().outputPath('correction-dialog.png'), fullPage: true });
   const savedResponse = page.waitForResponse(
     (response) => response.url().endsWith('/correction') && response.request().method() === 'PUT',
   );
   await page.getByRole('button', { name: '保存修正', exact: true }).click();
-  expect((await savedResponse).status()).toBe(200);
+  const correctionResponse = await savedResponse;
+  await writeFile(
+    test.info().outputPath('controlled-correction-request.json'),
+    JSON.stringify(correctionResponse.request().postDataJSON()),
+  );
+  expect(
+    correctionResponse.status(),
+    correctionResponse.status() === 200 ? '' : await correctionResponse.text(),
+  ).toBe(200);
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.reload();
   const saved = decodeCorrection(await (await page.request.get(correctionPath)).json());
   expect(saved.revision).toBe(basis.revision + 1);
   expect(saved.original).toEqual(basis.original);
-  expect(saved.values.smiles).toBe('CCO');
-  expect(saved.values.activities[0]?.value).toBe('++');
+  expect(saved.values.smiles).toMatch(/^(CCO|OCC)$/);
+  expect(saved.values.structure_molfile).toContain('V3000');
+  expect(saved.values.activities).toHaveLength(activityInputs.length);
+  for (const activity of saved.values.activities) {
+    expect(String(activity.value)).toBe(
+      /\bratio\b/.test(activity.name) ? '0.11' : activity.name.includes('degradation') ? 'B' : '++',
+    );
+  }
+  for (const [index, spec] of METRIC_SPECS.entries())
+    expect(saved.values.property_overrides?.[spec.key]).toBe(manualValues[index]);
   expect(saved.values.display_id).toBe(savedName);
   let predicted = result.items[0]!;
   await expect
@@ -185,8 +217,58 @@ test('online edits persist and trigger real owned ADMET without rerunning the PD
   const displayed = page
     .locator('.results-table tbody tr')
     .filter({ has: page.getByLabel(`选择化合物 ${savedName}`, { exact: true }) });
-  await expect(displayed).toContainText('46.07');
+  await expect(displayed).toContainText('47.23');
   await expect(displayed).toContainText('已修正');
+  await page.getByLabel(`修正 ${savedName}`, { exact: true }).click();
+  await expect(page.getByRole('button', { name: '保存修正', exact: true })).toBeEnabled();
+  for (const [index, spec] of METRIC_SPECS.entries())
+    await expect(page.getByLabel(`修正 ${spec.label}`, { exact: true })).toHaveValue(
+      String(manualValues[index]),
+    );
+  const reopened = await page.locator('.correction-values[aria-label="活性列数值"] input').all();
+  for (const input of reopened) {
+    const name = await input.getAttribute('aria-label');
+    await expect(input).toHaveValue(
+      /\bratio\b/.test(name ?? '') ? '0.11' : name?.includes('degradation') ? 'B' : '++',
+    );
+  }
+  await expect(
+    page
+      .frameLocator('iframe[title="Ketcher 结构绘制与预览"]')
+      .getByRole('application')
+      .getByRole('img'),
+  ).toBeVisible();
+  const reopenedCanvas = page
+    .frameLocator('iframe[title="Ketcher 结构绘制与预览"]')
+    .getByRole('application')
+    .getByRole('img');
+  await reopenedCanvas.click({ position: { x: 4, y: 4 } });
+  await page
+    .frameLocator('iframe[title="Ketcher 结构绘制与预览"]')
+    .getByRole('button', { name: 'Clean Up (Ctrl+Shift+L)', exact: true })
+    .click();
+  await expect(page.getByRole('button', { name: '保存修正', exact: true })).toBeEnabled();
+  const unchangedResponse = page.waitForResponse(
+    (response) => response.url().endsWith('/correction') && response.request().method() === 'PUT',
+  );
+  await page.keyboard.press('Control+s');
+  expect((await unchangedResponse).status()).toBe(200);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  const unchanged = decodeCorrection(await (await page.request.get(correctionPath)).json());
+  expect(unchanged.values.display_id).toBe(saved.values.display_id);
+  expect(unchanged.values.smiles).toBe(saved.values.smiles);
+  expect(unchanged.values.activities).toEqual(saved.values.activities);
+  expect(unchanged.values.property_overrides).toEqual(saved.values.property_overrides);
+  expect(unchanged.values.property_basis_smiles).toBe(saved.values.property_basis_smiles);
+  expect(unchanged.values.structure_molfile).toContain('V3000');
+  expect(unchanged.original).toEqual(basis.original);
+  expect(unchanged.revision).toBe(saved.revision + 1);
+  const retained = decodeResults(
+    await (
+      await page.request.get(`${path()}/results?q=${encodeURIComponent(savedName)}&page_size=25`)
+    ).json(),
+  );
+  expect(retained.items[0]?.admet?.job_id).toBe(admetJob.id);
   await page.screenshot({ path: test.info().outputPath('corrected-metrics.png'), fullPage: true });
   const after = decodeProject(await (await page.request.get(path())).json());
   expect(after.acceptance).toEqual(before.acceptance);
@@ -206,6 +288,7 @@ test('online edits persist and trigger real owned ADMET without rerunning the PD
   expect(exported.review_only).toBe(true);
   expect(exported.items[0]?.display_id).toBe(savedName);
   expect(exported.items[0]?.admet?.properties).toHaveLength(6);
+  expect(exported.items[0]?.property_overrides?.molecular_weight).toBe(47.23);
   await test.info().attach('actual-owned-prediction', {
     body: JSON.stringify({
       project: projectId,

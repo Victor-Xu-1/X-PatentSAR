@@ -229,17 +229,9 @@ test.describe('real local backend integration', () => {
     }
     await page.getByLabel(`选择化合物 ${compound.display_id}`, { exact: true }).check();
     await page.getByLabel(`修正 ${compound.display_id}`, { exact: true }).click();
-    await page.getByRole('button', { name: '复核注记', exact: true }).click();
-    const note = `真实浏览器复核 ${new Date().toISOString()}`;
-    await page.getByLabel('复核注记').fill(note);
-    await page.getByRole('button', { name: '保存复核注记' }).click();
-    await expect(page.getByRole('dialog')).toHaveCount(0);
-    await page.reload();
-    await page.getByLabel(`修正 ${compound.display_id}`, { exact: true }).click();
-    await page.getByRole('button', { name: '复核注记', exact: true }).click();
-    await expect(page.getByLabel('复核注记')).toHaveValue(note);
+    await expect(page.getByLabel('结构式绘制区域')).toBeVisible();
+    await expect(page.getByLabel('修正 MW')).toBeVisible();
     await page.getByRole('button', { name: '取消', exact: true }).click();
-    await page.getByLabel(`选择化合物 ${compound.display_id}`, { exact: true }).check();
     await page.getByRole('button', { name: /导出所选/ }).click();
     const downloaded = page.waitForEvent('download');
     await page.getByRole('button', { name: '生成并下载' }).click();

@@ -9,7 +9,15 @@ from typing import Any
 from pydantic import ValidationError
 
 from .analysis_chemistry import canonical_smiles
+from .correction_chemistry import same_graph
+from .correction_fields import prepared_fields
 from .correction_models import CorrectionDocument, CorrectionRequest, EditableFields
+from .correction_recovery import (
+    CorruptCorrectionAddons,
+    exact_original_reset,
+    reset_needs_prediction,
+    saved_fields,
+)
 from .correction_storage import CorrectionStorage, correction_source_fingerprint
 from .errors import WebError
 from .models import Compound, CorrectionMetadata, Recognition
@@ -34,18 +42,6 @@ def original_fields(compound: Compound) -> EditableFields:
         ) from exc
 
 
-def _saved_fields(saved: dict[str, Any]) -> tuple[EditableFields, EditableFields]:
-    try:
-        return (
-            EditableFields.model_validate_json(saved["original_fields"]),
-            EditableFields.model_validate_json(saved["fields"]),
-        )
-    except (ValidationError, ValueError, TypeError) as exc:
-        raise WebError(
-            422, "invalid_correction", "Saved correction fields are invalid."
-        ) from exc
-
-
 def apply_correction(
     project: dict[str, Any],
     row: dict[str, Any],
@@ -54,7 +50,7 @@ def apply_correction(
 ) -> Compound:
     if saved is None:
         return compound
-    baseline, values = _saved_fields(saved)
+    baseline, values = saved_fields(saved)
     stale = saved["basis_fingerprint"] != correction_source_fingerprint(project, row)
     changed = values != baseline
     compound.correction = CorrectionMetadata(
@@ -69,6 +65,9 @@ def apply_correction(
     compound.display_id = values.display_id
     compound.smiles = values.smiles
     compound.activities = values.activities
+    compound.structure_molfile = values.structure_molfile
+    compound.property_overrides = dict(values.property_overrides)
+    compound.property_basis_smiles = values.property_basis_smiles
     compound.flags = [*compound.flags, "manual_correction"]
     if values.smiles != original_smiles:
         if values.smiles is not None:
@@ -106,7 +105,7 @@ class Corrections:
     ) -> CorrectionDocument:
         original = original_fields(Compound.model_validate_json(row["payload"]))
         fingerprint = correction_source_fingerprint(project, row)
-        baseline, values = _saved_fields(saved) if saved else (original, original)
+        baseline, values = saved_fields(saved) if saved else (original, original)
         return CorrectionDocument(
             source_fingerprint=fingerprint,
             revision=saved["revision"] if saved else 0,
@@ -154,29 +153,46 @@ class Corrections:
                     "correction_busy",
                     "Finish the active project task before editing results.",
                 )
-            document = self._document(project, row, saved)
-            if request.expected_revision != document.revision:
+            revision = saved["revision"] if saved else 0
+            fingerprint = correction_source_fingerprint(project, row)
+            if request.expected_revision != revision:
                 raise WebError(
                     409,
                     "correction_conflict",
                     "Correction changed; refresh before saving.",
                 )
-            if request.expected_source_fingerprint != document.source_fingerprint:
+            if request.expected_source_fingerprint != fingerprint:
                 raise WebError(
                     409,
                     "correction_source_conflict",
                     "Source results changed; refresh before saving.",
                 )
-            # Revalidate even internal model_copy callers; API validation is not
-            # the transaction's only input boundary.
             try:
-                fields = EditableFields.model_validate(request.fields.model_dump())
-            except ValidationError as exc:
-                raise WebError(
-                    422, "invalid_correction", "Correction fields are invalid."
-                ) from exc
-            original_pages = {a.page for a in document.original.activities if a.page}
-            if fields.activities != document.original.activities and any(
+                document = self._document(project, row, saved)
+            except CorruptCorrectionAddons:
+                assert saved is not None
+                original = original_fields(Compound.model_validate_json(row["payload"]))
+                fields = exact_original_reset(request.fields, original)
+                needs_prediction = reset_needs_prediction(
+                    saved, fingerprint, fields.smiles
+                )
+            else:
+                original = document.original
+                # Revalidate internal model_copy callers as well as HTTP input.
+                try:
+                    before = (
+                        document.values
+                        if document.has_changes and not document.stale
+                        else original
+                    )
+                    fields = prepared_fields(request.fields, before)
+                except ValidationError as exc:
+                    raise WebError(
+                        422, "invalid_correction", "Correction fields are invalid."
+                    ) from exc
+                needs_prediction = not same_graph(before.smiles, fields.smiles)
+            original_pages = {a.page for a in original.activities if a.page}
+            if fields.activities != original.activities and any(
                 a.page
                 and (
                     a.page > project["page_count"]
@@ -190,23 +206,18 @@ class Corrections:
                     "correction_page",
                     "Activity page is outside the known original document.",
                 )
-            if fields.smiles is not None and fields.smiles != document.original.smiles:
+            if fields.smiles is not None and fields.smiles != original.smiles:
                 # Validate, but never guess/repair/rewrite the operator's string.
                 # An exact reset retains original evidence, including a rejected
                 # raw model string, without promoting it to manual validation.
                 canonical_smiles(fields.smiles)
-            before_smiles = (
-                document.values.smiles
-                if document.has_changes and not document.stale
-                else document.original.smiles
-            )
             result = CorrectionDocument(
-                source_fingerprint=document.source_fingerprint,
-                revision=document.revision + 1,
-                basis_fingerprint=document.source_fingerprint,
+                source_fingerprint=fingerprint,
+                revision=revision + 1,
+                basis_fingerprint=fingerprint,
                 stale=False,
-                has_changes=fields != document.original,
-                original=document.original,
+                has_changes=fields != original,
+                original=original,
                 values=fields,
                 updated_at=now(),
             )
@@ -215,7 +226,7 @@ class Corrections:
             effective = apply_correction(
                 project, row, updated, Compound.model_validate_json(row["payload"])
             )
-            if self.on_save is not None and before_smiles != effective.smiles:
+            if self.on_save is not None and needs_prediction:
                 # Same connection and transaction: a failed durable enqueue
                 # rolls back the overlay AND audit, never a half-saved molecule.
                 self.on_save(connection, project_id, compound_id, effective)

@@ -5,10 +5,16 @@ from __future__ import annotations
 import math
 import unicodedata
 
-from pydantic import Field, ValidationInfo, field_validator
+from pydantic import Field, ValidationInfo, field_validator, model_validator
 from pydantic_core import PydanticCustomError
 
+from .correction_chemistry import (
+    validate_molfile_text,
+    validate_property_basis,
+    validate_structure,
+)
 from .models import DTO, Activity
+from .property_values import PropertyOverrides, validate_overrides
 
 
 def _text(value: object, *, limit: int, required: bool = False) -> None:
@@ -27,8 +33,15 @@ class EditableFields(DTO):
     display_id: str = Field(min_length=1, max_length=200, strict=True)
     smiles: str | None = Field(max_length=2048, strict=True)
     activities: list[Activity] = Field(max_length=100)
+    structure_molfile: str | None = Field(
+        default=None, max_length=128 * 1024, strict=True
+    )
+    property_overrides: PropertyOverrides = Field(default_factory=dict, max_length=6)
+    property_basis_smiles: str | None = Field(
+        default=None, max_length=2048, strict=True
+    )
 
-    @field_validator("display_id", "smiles")
+    @field_validator("display_id", "smiles", "property_basis_smiles")
     @classmethod
     def validate_text(cls, value: str | None, info: ValidationInfo) -> str | None:
         _text(
@@ -37,6 +50,24 @@ class EditableFields(DTO):
             required=info.field_name == "display_id",
         )
         return value
+
+    @field_validator("structure_molfile")
+    @classmethod
+    def validate_molfile(cls, value: str | None) -> str | None:
+        return validate_molfile_text(value)
+
+    @field_validator("property_overrides", mode="before")
+    @classmethod
+    def validate_properties(cls, value: object) -> object:
+        return validate_overrides(value)
+
+    @model_validator(mode="after")
+    def validate_addons(self) -> EditableFields:
+        validate_structure(self.structure_molfile, self.smiles)
+        validate_property_basis(
+            self.property_overrides, self.property_basis_smiles, self.smiles
+        )
+        return self
 
     @field_validator("activities", mode="before")
     @classmethod
