@@ -54,6 +54,17 @@ const props = () => ({
 });
 
 describe('one centered result-table style authority', () => {
+  it('reserves a readable default Compound heading independently of its resize bounds', () => {
+    render(<ResultsTable {...props()} />);
+    const header = screen.getByRole('table').querySelector('th.frozen-compound')!;
+    expect(header.querySelector('.column-heading')!.textContent).toBe('Compound');
+    expect(
+      screen.getByRole('slider', { name: '调整Compound列宽' }).getAttribute('aria-valuenow'),
+    ).toBe('120');
+    expect(
+      screen.getByRole('slider', { name: '调整Compound列宽' }).getAttribute('aria-valuemin'),
+    ).toBe('88');
+  });
   let stylesheet: HTMLStyleElement;
   beforeEach(() => {
     stylesheet = document.createElement('style');
