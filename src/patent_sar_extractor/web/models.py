@@ -75,10 +75,11 @@ class ActivityColumn(DTO):
     strength_scale: ActivityStrengthScale | None = Field(
         default=None, exclude_if=lambda value: value is None
     )
+    # Legacy optional API-v1 metadata remains readable; new menus query on demand.
     filter_values: list[FilterChoice] = Field(
         default_factory=list, max_length=200, exclude_if=lambda value: not value
     )
-    filter_values_truncated: bool = False
+    filter_values_truncated: bool = Field(default=False, exclude_if=lambda value: not value)
 
 
 class Source(DTO):

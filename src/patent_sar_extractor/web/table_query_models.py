@@ -13,17 +13,38 @@ from .errors import WebError
 
 class ColumnFilter(DTO):
     column: str = Field(min_length=1, max_length=100)
-    op: Literal["contains", "eq", "gt", "gte", "lt", "lte", "in", "empty", "not_empty"]
+    op: Literal[
+        "contains",
+        "not_contains",
+        "starts_with",
+        "ends_with",
+        "eq",
+        "ne",
+        "gt",
+        "gte",
+        "lt",
+        "lte",
+        "in",
+        "not_in",
+        "empty",
+        "not_empty",
+        "band",
+    ]
     value: str | None = Field(default=None, max_length=1000)
     values: list[str] | None = Field(default=None, max_length=200)
+    include_empty: bool | None = Field(default=None, strict=True)
 
     @model_validator(mode="after")
     def check_operand(self) -> ColumnFilter:
-        if self.op == "in":
+        if self.op in {"in", "not_in"}:
             if self.values is None or any(len(value) > 1000 for value in self.values):
                 raise ValueError("Value checklist is missing or excessive")
         elif self.op not in {"empty", "not_empty"} and self.value is None:
             raise ValueError("Filter operand is missing")
+        if self.op == "band" and self.value not in {"strong", "medium", "none"}:
+            raise ValueError("Unknown activity color band")
+        if self.include_empty is not None and self.op not in {"in", "not_in"}:
+            raise ValueError("Blank selection belongs to a value checklist")
         return self
 
 

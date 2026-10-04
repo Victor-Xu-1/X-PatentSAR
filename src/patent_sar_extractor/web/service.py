@@ -28,6 +28,7 @@ from .prediction_storage import PredictionStore
 from .processes import runtime_identity
 from .result_queries import ResultQueries
 from .storage import Store, encode, now
+from .table_filter_choices import ColumnFilterValues
 from .task_inputs import patent_identifier
 
 
@@ -467,6 +468,25 @@ class WorkspaceService:
     ) -> Results:
         return self.result_queries.results(
             project_id, page=page, page_size=page_size, **filters
+        )
+
+    def filter_values(
+        self,
+        project_id: str,
+        *,
+        column: str,
+        search: str = "",
+        page: int = 1,
+        page_size: int = 200,
+        **filters: str,
+    ) -> ColumnFilterValues:
+        return self.result_queries.filter_values(
+            project_id,
+            column=column,
+            search=search,
+            page=page,
+            page_size=page_size,
+            **filters,
         )
 
 

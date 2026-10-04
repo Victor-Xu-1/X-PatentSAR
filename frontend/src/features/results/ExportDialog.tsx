@@ -18,7 +18,15 @@ export function ExportDialog({
   onClose: () => void;
 }) {
   const [format, setFormat] = useState<'csv' | 'json'>('csv');
-  const filtered = Boolean(filters.q || filters.target || filters.confidence || filters.review);
+  const columnCount = new Set(filters.column_filters?.map((filter) => filter.column)).size;
+  const filtered = Boolean(
+    filters.q ||
+    filters.target ||
+    filters.confidence ||
+    filters.review ||
+    columnCount ||
+    filters.sort_column,
+  );
   const [scope, setScope] = useState<'selected' | 'filtered' | 'all'>(
     selected.length ? 'selected' : filtered ? 'filtered' : 'all',
   );
@@ -31,9 +39,9 @@ export function ExportDialog({
     setDownloaded(false);
     try {
       const blob =
-        scope === 'filtered'
-          ? await api.export(project.id, format, [], filters)
-          : await api.export(project.id, format, scope === 'selected' ? selected : []);
+        scope === 'all'
+          ? await api.export(project.id, format, [])
+          : await api.export(project.id, format, scope === 'selected' ? selected : [], filters);
       saveBlob(blob, `X-PatentSAR-${project.id.replace(/[^a-zA-Z0-9_-]/g, '_')}.${format}`);
       setDownloaded(true);
     } catch (e) {
@@ -71,11 +79,9 @@ export function ExportDialog({
             <option value="all">全部结果（不受当前表格筛选限制）</option>
           </select>
         </label>
-        {scope === 'filtered' && (
+        {scope !== 'all' && (
           <p className="muted">
-            关键词：{filters.q || '全部'} · 靶点：{filters.target || '全部'} · 置信度：
-            {filters.confidence || '全部'} · 复核：{filters.review || '全部'}
-            。指标显示选择仅改变行内显示，不属于导出查询筛选。
+            按当前表格查询导出 · {columnCount} 列筛选{filters.sort_column ? ' · 保留排序' : ''}
           </p>
         )}
         <label className="form-field">

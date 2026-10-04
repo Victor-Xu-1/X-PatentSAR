@@ -13,6 +13,7 @@ import { ColumnMenu } from './ColumnMenu';
 import '../../styles/table-interactions.css';
 
 export function ResultsTable({
+  projectId,
   rows,
   metrics,
   activityColumns,
@@ -33,6 +34,7 @@ export function ResultsTable({
   onCrop,
   onReview,
 }: {
+  projectId?: string;
   rows: Compound[];
   metrics?: string[];
   activityColumns?: ActivityColumn[];
@@ -131,9 +133,11 @@ export function ResultsTable({
                 title={[header.label, header.context, header.hint].filter(Boolean).join(' · ')}
                 aria-sort={
                   filters?.sort_column === header.id
-                    ? filters.sort_direction === 'desc'
-                      ? 'descending'
-                      : 'ascending'
+                    ? filters.sort_band
+                      ? 'other'
+                      : filters.sort_direction === 'desc'
+                        ? 'descending'
+                        : 'ascending'
                     : undefined
                 }
               >
@@ -154,6 +158,7 @@ export function ResultsTable({
                 )}
                 {onHideColumn && (
                   <ColumnMenu
+                    projectId={projectId}
                     column={header}
                     activity={columns.find((column) => `activity:${column.id}` === header.id)}
                     filters={filters}

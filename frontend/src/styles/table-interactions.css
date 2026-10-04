@@ -36,9 +36,10 @@
   width: min(280px, calc(100vw - 16px));
   max-height: min(550px, calc(100vh - 16px));
   overflow: auto;
-  display: grid;
-  gap: 10px;
-  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
   background: var(--surface);
@@ -48,6 +49,13 @@
 }
 .column-menu small {
   line-height: 1.5;
+}
+.column-menu > * {
+  flex-shrink: 0;
+}
+.column-menu > .column-filter-form {
+  flex-shrink: 1;
+  min-height: 0;
 }
 .column-sort-actions,
 .column-menu-actions {
@@ -61,15 +69,93 @@
   font-size: 12px;
 }
 .column-filter-form {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
   border-top: 1px solid var(--line-soft);
   padding-top: 8px;
 }
-.column-filter-form > label {
+.column-filter-form > * {
+  flex-shrink: 0;
+}
+.column-filter-form > .column-checklist {
+  flex-shrink: 1;
+  min-height: 0;
+}
+.column-condition-fields {
+  display: grid;
+  gap: 6px;
+}
+.column-condition-fields > label {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+.column-detail-toggle {
+  text-align: left;
+  justify-content: flex-start;
+  border: 0;
+  background: transparent;
+}
+.column-detail-toggle[aria-pressed='true'] {
+  background: var(--surface-hover);
+}
+.column-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.column-checklist > * {
+  flex-shrink: 0;
+}
+.column-checklist > .column-value-choices {
+  flex-shrink: 1;
+  min-height: 0;
+}
+.column-choice-pages {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.column-choice-error {
+  display: grid;
+  gap: 4px;
+}
+.column-choice-error button {
+  justify-self: start;
+}
+.column-select-all {
+  border-bottom: 1px solid var(--line-soft);
+}
+.column-band-choices {
+  display: grid;
+  gap: 4px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.column-band-choices button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.column-band-choices button > span:not(.column-band-swatch) {
+  flex: 1;
+  text-align: left;
+}
+.column-band-swatch {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.column-band-swatch[data-activity-strength='strong'] {
+  background: var(--activity-strong-surface);
+}
+.column-band-swatch[data-activity-strength='medium'] {
+  background: var(--activity-medium-surface);
 }
 .column-filter-form select {
   flex: 1;

@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { api } from '../src/api';
+import { filterValuesFixture } from './filter-value-fixtures';
 import { ResultsPane } from '../src/features/results/ResultsPane';
 import { ResultsTable } from '../src/features/results/ResultsTable';
 import { resultColumns } from '../src/model/resultColumns';
@@ -13,10 +15,6 @@ const catalog = [
   {
     id: 'a'.repeat(64),
     ...activity,
-    filter_values: [
-      { value: '++', count: 20 },
-      { value: '+', count: 10 },
-    ],
   },
 ];
 const callbacks = () => ({
@@ -30,6 +28,19 @@ const callbacks = () => ({
   onReview: vi.fn(),
 });
 const baseFilters = { q: '', target: '', confidence: '', review: '', page: 3, page_size: 10 };
+beforeEach(() => {
+  vi.spyOn(api, 'filterValues').mockImplementation(async (_id, column) =>
+    column.startsWith('activity:')
+      ? filterValuesFixture(column, ['++', '+'], {
+          items: [
+            { value: '++', count: 20 },
+            { value: '+', count: 10 },
+          ],
+          matching_rows: 31,
+        })
+      : filterValuesFixture(column, ['300', '500']),
+  );
+});
 const paneProps = () => ({
   ...callbacks(),
   project,
@@ -46,6 +57,31 @@ const paneProps = () => ({
 });
 
 describe('Excel-like columns use one full-project server query', () => {
+  it('exposes color-first order as aria-sort other and clears its band through the toolbar', async () => {
+    const props = paneProps();
+    render(
+      <ResultsPane
+        {...props}
+        filters={{
+          ...baseFilters,
+          sort_column: `activity:${catalog[0]!.id}`,
+          sort_direction: 'desc',
+          sort_band: 'strong',
+        }}
+      />,
+    );
+    expect(document.querySelector(`th[data-column="activity:${catalog[0]!.id}"]`)).toHaveAttribute(
+      'aria-sort',
+      'other',
+    );
+    await userEvent.click(screen.getByRole('button', { name: '取消列排序' }));
+    expect(props.onFilters).toHaveBeenCalledExactlyOnceWith({
+      sort_column: '',
+      sort_direction: 'asc',
+      sort_band: '',
+      page: 1,
+    });
+  });
   it('hides and restores every column, independently of same-name activity contexts', async () => {
     render(<ResultsPane {...paneProps()} />);
     const user = userEvent.setup();
@@ -70,6 +106,7 @@ describe('Excel-like columns use one full-project server query', () => {
     expect(props.onFilters).toHaveBeenCalledExactlyOnceWith({
       sort_column: 'compound',
       sort_direction: 'asc',
+      sort_band: '',
       page: 1,
     });
     expect(document.querySelector('tbody tr')).toHaveAttribute('data-compound', compound.id);
@@ -148,16 +185,16 @@ describe('Excel-like columns use one full-project server query', () => {
         name: `抑制等级 · ${activity.target} · ${activity.assay} 列选项`,
       }),
     );
-    await userEvent.selectOptions(screen.getByLabelText('筛选方式'), 'in');
-    expect(screen.getByLabelText('筛选值 +')).toBeVisible();
+    expect(await screen.findByLabelText('筛选值 +')).toBeVisible();
     expect(screen.getByText('10')).toBeVisible();
+    await userEvent.click(screen.getByLabelText('全选筛选取值'));
     await userEvent.click(screen.getByLabelText('筛选值 +'));
-    await userEvent.click(screen.getByRole('button', { name: '应用筛选' }));
+    await userEvent.click(screen.getByRole('button', { name: '确定' }));
     expect(props.onFilters).toHaveBeenLastCalledWith({
       page: 1,
       column_filters: [
         ...filters.column_filters,
-        { column: `activity:${catalog[0]!.id}`, op: 'in', values: ['+'] },
+        { column: `activity:${catalog[0]!.id}`, op: 'in', values: ['+'], include_empty: false },
       ],
     });
   });
@@ -166,14 +203,15 @@ describe('Excel-like columns use one full-project server query', () => {
     const props = paneProps();
     render(<ResultsPane {...props} />);
     await userEvent.click(screen.getByRole('button', { name: 'MW 列选项' }));
+    await userEvent.click(screen.getByRole('button', { name: '数字筛选' }));
     await userEvent.selectOptions(screen.getByLabelText('筛选方式'), 'range');
     fireEvent.change(screen.getByLabelText('筛选下限'), { target: { value: '500' } });
     fireEvent.change(screen.getByLabelText('筛选上限'), { target: { value: '300' } });
-    await userEvent.click(screen.getByRole('button', { name: '应用筛选' }));
+    await userEvent.click(screen.getByRole('button', { name: '确定' }));
     expect(screen.getByRole('alert')).toHaveTextContent('下限');
     expect(props.onFilters).not.toHaveBeenCalled();
     fireEvent.change(screen.getByLabelText('筛选上限'), { target: { value: '800' } });
-    await userEvent.click(screen.getByRole('button', { name: '应用筛选' }));
+    await userEvent.click(screen.getByRole('button', { name: '确定' }));
     expect(props.onFilters).toHaveBeenLastCalledWith({
       page: 1,
       column_filters: [
@@ -197,7 +235,9 @@ describe('Excel-like columns use one full-project server query', () => {
       screen.getAllByRole('columnheader').length,
     );
     rerender(<ResultsTable {...props} rows={[compound]} hiddenColumns={['structure']} />);
-    expect(region.style.getPropertyValue('--frozen-leading-width')).toBe('138px');
+    expect(region.style.getPropertyValue('--frozen-leading-width')).toBe(
+      `${resultColumns().find((column) => column.id === 'select')!.width + resultColumns().find((column) => column.id === 'compound')!.width}px`,
+    );
     expect(screen.getByLabelText('选择化合物 I-7')).toBeEnabled();
   });
 
@@ -222,6 +262,7 @@ describe('Excel-like columns use one full-project server query', () => {
     const props = paneProps();
     const { rerender } = render(<ResultsPane {...props} />);
     const slider = screen.getByRole('slider', { name: '调整Compound列宽' });
+    const resizedWidth = String(Number(slider.getAttribute('aria-valuenow')) + 8);
     slider.focus();
     await userEvent.keyboard('{ArrowRight}');
     rerender(
@@ -245,7 +286,7 @@ describe('Excel-like columns use one full-project server query', () => {
     await userEvent.click(screen.getByRole('button', { name: '取消列排序' }));
     expect(props.onFilters.mock.calls).toEqual([
       [{ column_filters: [], page: 1 }],
-      [{ sort_column: '', sort_direction: 'asc', page: 1 }],
+      [{ sort_column: '', sort_direction: 'asc', sort_band: '', page: 1 }],
     ]);
     rerender(
       <ResultsPane
@@ -255,7 +296,7 @@ describe('Excel-like columns use one full-project server query', () => {
     );
     expect(screen.getByRole('slider', { name: '调整Compound列宽' })).toHaveAttribute(
       'aria-valuenow',
-      '108',
+      resizedWidth,
     );
     await userEvent.click(screen.getByRole('button', { name: '显示列' }));
     const dialog = screen.getByRole('dialog', { name: '显示列' });
@@ -266,7 +307,7 @@ describe('Excel-like columns use one full-project server query', () => {
     rerender(<ResultsPane {...props} />);
     expect(screen.getByRole('slider', { name: '调整Compound列宽' })).toHaveAttribute(
       'aria-valuenow',
-      '108',
+      resizedWidth,
     );
   });
 });

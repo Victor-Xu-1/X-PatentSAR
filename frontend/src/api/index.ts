@@ -16,6 +16,7 @@ import { ContractError } from './validation';
 import { environmentApi } from './environmentApi';
 import { correctionApi } from './correctionApi';
 import { validActivityFocus } from './activitySourceDecoders';
+import { decodeFilterValues } from './filterValueDecoders';
 
 export const client = new ApiClient();
 const segment = encodeURIComponent;
@@ -36,6 +37,7 @@ function resultQuery(filters: Filters, pagination = true): URLSearchParams {
   if (filters.sort_column) {
     query.set('sort_column', filters.sort_column);
     query.set('sort_direction', filters.sort_direction ?? 'asc');
+    if (filters.sort_band) query.set('sort_band', filters.sort_band);
   }
   return query;
 }
@@ -49,6 +51,40 @@ export const api = {
   results: (id: string, filters: Filters, signal: AbortSignal) => {
     const query = resultQuery(filters);
     return client.get(`${projectPath(id)}/results?${query}`, decodeResults, signal);
+  },
+  filterValues: (
+    id: string,
+    column: string,
+    filters: Filters,
+    search: string,
+    page: number,
+    signal: AbortSignal,
+  ) => {
+    if (
+      !column ||
+      Array.from(column).length > 100 ||
+      Array.from(search).length > 500 ||
+      !Number.isInteger(page) ||
+      page < 1 ||
+      page > 25000
+    )
+      throw new ContractError('$.filter_values_query');
+    const query = resultQuery(filters, false);
+    for (const key of ['sort_column', 'sort_direction', 'sort_band']) query.delete(key);
+    query.set('column', column);
+    query.set('search', search);
+    query.set('page', String(page));
+    query.set('page_size', '200');
+    return client.get(
+      `${projectPath(id)}/filter-values?${query}`,
+      (input) => {
+        const choices = decodeFilterValues(input);
+        if (choices.column !== column || choices.page !== page || choices.page_size !== 200)
+          throw new ContractError('$.filter_values');
+        return choices;
+      },
+      signal,
+    );
   },
   page: (id: string, page: number, signal: AbortSignal, focus?: ActivityFocusSelection) => {
     if (focus !== undefined && !validActivityFocus(focus))

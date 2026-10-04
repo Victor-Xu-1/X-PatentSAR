@@ -10,8 +10,6 @@ from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import patch
 
-from pydantic import ValidationError
-
 from patent_sar_extractor.web import models
 from patent_sar_extractor.web.correction_models import CorrectionRequest
 from patent_sar_extractor.web.corrections import Corrections
@@ -25,6 +23,7 @@ from patent_sar_extractor.web.models import (
 )
 from patent_sar_extractor.web.result_queries import ResultQueries
 from patent_sar_extractor.web.storage import Store, encode, now
+from pydantic import ValidationError
 
 
 def measurement(**changes) -> Activity:
@@ -191,10 +190,13 @@ class ActivityColumnTests(unittest.TestCase):
             compound("missing", []),
         )
         column = self.query.results(self.project_id).activity_columns[0]
+        choices = self.query.filter_values(self.project_id, column=f"activity:{column.id}")
         self.assertEqual(
-            [(item.value, item.count) for item in column.filter_values],
+            [(item.value, item.count) for item in choices.items],
             [("A", 1), ("B", 1), ("C", 1)],
         )
+        self.assertEqual(choices.empty_count, 1)
+        self.assertNotIn("filter_values", column.model_dump())
         for op, values, expected in (("in", ["B"], ["multiple"]), ("in", [], [])):
             packet = self.query.results(
                 self.project_id,

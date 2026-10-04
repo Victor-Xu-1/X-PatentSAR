@@ -63,7 +63,8 @@ export function Workspace({
     if (
       patch.column_filters !== undefined ||
       patch.sort_column !== undefined ||
-      patch.sort_direction !== undefined
+      patch.sort_direction !== undefined ||
+      patch.sort_band !== undefined
     )
       navigate(withTableQuery(route, { ...results.filters, ...patch }));
   }

@@ -1,160 +1,235 @@
 import { useState } from 'react';
-import type { ActivityColumn, ColumnFilter } from '../../api/types';
+import type { ActivityBand, ActivityColumn, ColumnFilter, Filters } from '../../api/types';
+import { activityBands } from '../../api/types';
 import type { ResultColumn } from '../../model/resultColumns';
 import {
   columnFilterDraft,
   columnFilterModes,
   compileColumnFilter,
-  filterLabels,
+  defaultColumnKind,
 } from '../../model/columnFilters';
-import type { FilterMode } from '../../model/columnFilters';
+import { compileValueSelection, restoreValueSelection } from '../../model/columnValueSelection';
+import { ColumnConditionFields } from './ColumnConditionFields';
+import { ColumnValueChecklist } from './ColumnValueChecklist';
+import { ColumnBandChoices } from './ColumnBandChoices';
+import { useFilterValues } from './useFilterValues';
 
+type DraftMode = 'values' | 'condition' | 'band';
 export function ColumnFilterForm({
+  projectId,
   column,
   activity,
   filters,
   disabled,
   onApply,
+  onCancel,
+  onSortBand,
 }: {
+  projectId: string | undefined;
   column: ResultColumn;
   activity: ActivityColumn | undefined;
-  filters: readonly ColumnFilter[];
+  filters: Filters;
   disabled: boolean;
   onApply: (filters: ColumnFilter[]) => void;
+  onCancel: () => void;
+  onSortBand: (band: ActivityBand) => void;
 }) {
-  const modes = columnFilterModes(
-    column,
-    Boolean(activity?.filter_values?.length) ||
-      filters.some((filter) => filter.column === column.id && filter.op === 'in'),
+  const own = (filters.column_filters ?? []).filter((item) => item.column === column.id);
+  const fallbackKind = defaultColumnKind(column, activity);
+  const [mode, setMode] = useState<DraftMode>(() => {
+    if (own[0]?.op === 'band') return 'band';
+    return (own.length && !['in', 'not_in'].includes(own[0]!.op)) || fallbackKind === 'presence'
+      ? 'condition'
+      : 'values';
+  });
+  const [selection, setSelection] = useState(() => restoreValueSelection(column.id, own));
+  const [condition, setCondition] = useState(() =>
+    columnFilterDraft(column.id, own, columnFilterModes(fallbackKind)[0]!),
   );
-  const [draft, setDraft] = useState(() =>
-    columnFilterDraft(column.id, filters, modes[0] ?? 'contains'),
+  const [conditionTouched, setConditionTouched] = useState(() =>
+    own.some((item) => !['in', 'not_in', 'band'].includes(item.op)),
   );
+  const [band, setBand] = useState<ActivityBand | ''>(
+    () => activityBands.find((value) => own[0]?.op === 'band' && value === own[0].value) ?? '',
+  );
+  const [sortColors, setSortColors] = useState(false);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
-  if (!modes.length) return null;
-  const choices = activity?.filter_values ?? [];
-  const available = [
-    ...choices,
-    ...draft.values
-      .filter((value) => !choices.some((choice) => choice.value === value))
-      .map((value) => ({ value, count: null })),
-  ];
-  const scalar = !['empty', 'not_empty', 'in'].includes(draft.op);
+  const [page, setPage] = useState(1);
+  const choices = useFilterValues(projectId, column.id, filters, search, page);
+  const kind = choices.kind ?? fallbackKind;
+  const modes = columnFilterModes(kind);
+  const activeCondition = {
+    ...condition,
+    op: conditionTouched || modes.includes(condition.op) ? condition.op : modes[0]!,
+  };
+  const scale = activity?.strength_scale;
+  const knownScale = Boolean(
+    scale &&
+    scale.direction !== 'unknown' &&
+    scale.eligible &&
+    scale.strong_boundary !== null &&
+    scale.medium_boundary !== null,
+  );
+  const colorsAvailable = knownScale && Boolean(choices.data?.bands?.length);
+  function chooseMode(next: DraftMode) {
+    setMode(next);
+    setSortColors(false);
+    setError('');
+  }
   return (
     <form
       className="column-filter-form"
       onSubmit={(event) => {
         event.preventDefault();
         try {
-          onApply(compileColumnFilter(column.id, draft));
+          if (mode === 'condition') onApply(compileColumnFilter(column.id, activeCondition, kind));
+          else if (mode === 'band') {
+            if (!colorsAvailable || !band) throw new Error('请选择可用的颜色分档。');
+            onApply([{ column: column.id, op: 'band', value: band }]);
+          } else {
+            if (!choices.data || choices.loading || choices.error)
+              throw new Error('请先加载取值，再确定筛选。');
+            onApply(compileValueSelection(column.id, selection));
+          }
         } catch (failure) {
           setError(failure instanceof Error ? failure.message : '筛选条件无效。');
         }
       }}
     >
-      <label>
-        筛选
-        <select
-          aria-label="筛选方式"
-          disabled={disabled}
-          value={draft.op}
-          onChange={(event) => {
-            setDraft({ ...draft, op: event.target.value as FilterMode });
-            setError('');
-          }}
-        >
-          {modes.map((mode) => (
-            <option key={mode} value={mode}>
-              {filterLabels[mode]}
-            </option>
-          ))}
-        </select>
-      </label>
-      {scalar && (
-        <input
-          aria-label={draft.op === 'range' ? '筛选下限' : '筛选值'}
-          placeholder={draft.op === 'range' ? '下限' : '值…'}
-          maxLength={500}
-          disabled={disabled}
-          value={draft.value}
-          onChange={(event) => {
-            setDraft({ ...draft, value: event.target.value });
-            setError('');
-          }}
-        />
-      )}
-      {draft.op === 'range' && (
-        <input
-          aria-label="筛选上限"
-          placeholder="上限"
-          maxLength={500}
-          disabled={disabled}
-          value={draft.upper}
-          onChange={(event) => {
-            setDraft({ ...draft, upper: event.target.value });
-            setError('');
-          }}
-        />
-      )}
-      {draft.op === 'in' && (
+      {activity && (
         <>
-          <input
-            aria-label="查找筛选取值"
-            placeholder="查找取值…"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-          <fieldset className="column-value-choices" disabled={disabled}>
-            <legend>全项目取值</legend>
-            {available
-              .filter((choice) =>
-                choice.value.toLocaleLowerCase().includes(search.toLocaleLowerCase()),
-              )
-              .map((choice) => (
-                <label key={choice.value}>
-                  <input
-                    type="checkbox"
-                    aria-label={`筛选值 ${choice.value}`}
-                    checked={draft.values.includes(choice.value)}
-                    onChange={(event) => {
-                      setDraft({
-                        ...draft,
-                        values: event.target.checked
-                          ? [...draft.values, choice.value]
-                          : draft.values.filter((value) => value !== choice.value),
-                      });
-                      setError('');
-                    }}
-                  />
-                  <span>{choice.value}</span>
-                  <small>{choice.count ?? '已选'}</small>
-                </label>
-              ))}
-          </fieldset>
-          {activity?.filter_values_truncated && (
-            <small className="muted">
-              仅列出有界目录中的取值；其他取值可使用“等于”或“包含”筛选。
-            </small>
+          <button
+            type="button"
+            className="column-detail-toggle"
+            aria-expanded={sortColors}
+            aria-pressed={sortColors}
+            disabled={disabled || !colorsAvailable}
+            onClick={() => setSortColors(!sortColors)}
+          >
+            按颜色排序
+          </button>
+          {sortColors && (
+            <ColumnBandChoices
+              bands={choices.data?.bands}
+              selected={filters.sort_column === column.id ? filters.sort_band : ''}
+              disabled={disabled || !colorsAvailable}
+              action="排序"
+              onChoose={onSortBand}
+            />
+          )}
+          <button
+            type="button"
+            className="column-detail-toggle"
+            aria-expanded={mode === 'band' && !sortColors}
+            aria-pressed={mode === 'band' && !sortColors}
+            disabled={disabled || !colorsAvailable}
+            onClick={() => chooseMode(mode === 'band' ? 'values' : 'band')}
+          >
+            按颜色筛选
+          </button>
+          {mode === 'band' && !sortColors && (
+            <ColumnBandChoices
+              bands={choices.data?.bands}
+              selected={band}
+              disabled={disabled || !colorsAvailable}
+              action="筛选"
+              onChoose={(next) => {
+                setBand(next);
+                chooseMode('band');
+              }}
+            />
+          )}
+          {!knownScale && <small className="muted">分档未知，未推断颜色。</small>}
+        </>
+      )}
+      {kind !== 'presence' && (
+        <button
+          type="button"
+          className="column-detail-toggle"
+          aria-expanded={mode === 'condition' && !sortColors}
+          aria-pressed={mode === 'condition' && !sortColors}
+          disabled={disabled}
+          onClick={() => chooseMode(mode === 'condition' ? 'values' : 'condition')}
+        >
+          {kind === 'number' ? '数字筛选' : '文本筛选'}
+        </button>
+      )}
+      {mode === 'condition' && !sortColors && (
+        <ColumnConditionFields
+          kind={kind}
+          draft={activeCondition}
+          disabled={disabled}
+          onChange={(next) => {
+            setCondition(next);
+            setConditionTouched(true);
+            chooseMode('condition');
+          }}
+        />
+      )}
+      {kind !== 'presence' && (
+        <>
+          {(mode !== 'values' || sortColors) && (
+            <button
+              type="button"
+              className="column-detail-toggle"
+              disabled={disabled}
+              onClick={() => chooseMode('values')}
+            >
+              选择取值
+            </button>
+          )}
+          {mode === 'values' && !sortColors && (
+            <ColumnValueChecklist
+              choices={choices.data}
+              selection={selection}
+              search={search}
+              page={page}
+              disabled={disabled || choices.loading}
+              onSearch={(next) => {
+                setSearch(next);
+                setPage(1);
+              }}
+              onPage={setPage}
+              onChange={(next) => {
+                setSelection(next);
+                chooseMode('values');
+              }}
+              onError={setError}
+            />
           )}
         </>
       )}
-      <small className="muted">筛选完整项目，不只当前页。多次观察任一匹配即保留该行。</small>
+      {choices.loading && <output className="muted">正在加载取值…</output>}
+      {choices.error && (
+        <div className="column-choice-error">
+          <small role="alert">无法加载取值。{choices.error.message} 条件筛选仍可使用。</small>
+          <button type="button" onClick={choices.reload}>
+            重试取值
+          </button>
+        </div>
+      )}
       {error && (
-        <p role="alert" className="error-notice">
+        <small role="alert" className="error-notice">
           {error}
-        </p>
+        </small>
       )}
       <div className="column-menu-actions">
-        <button type="submit" disabled={disabled}>
-          应用筛选
-        </button>
         <button
-          type="button"
-          disabled={disabled || !filters.some((filter) => filter.column === column.id)}
-          onClick={() => onApply([])}
+          type="submit"
+          className="primary"
+          disabled={
+            disabled ||
+            sortColors ||
+            Boolean(error) ||
+            (mode === 'values' && !choices.data) ||
+            (mode === 'band' && (!colorsAvailable || !band))
+          }
         >
-          清除此列筛选
+          确定
+        </button>
+        <button type="button" onClick={onCancel}>
+          取消
         </button>
       </div>
     </form>

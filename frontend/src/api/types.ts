@@ -234,12 +234,49 @@ export interface Filters {
   column_filters?: ColumnFilter[];
   sort_column?: string;
   sort_direction?: 'asc' | 'desc';
+  sort_band?: '' | ActivityBand;
 }
+export const activityBands = ['strong', 'medium', 'none'] as const;
+export type ActivityBand = (typeof activityBands)[number];
+export const columnFilterOperations = [
+  'contains',
+  'not_contains',
+  'starts_with',
+  'ends_with',
+  'eq',
+  'ne',
+  'gt',
+  'gte',
+  'lt',
+  'lte',
+  'in',
+  'not_in',
+  'empty',
+  'not_empty',
+  'band',
+] as const;
 export interface ColumnFilter {
   column: string;
-  op: 'contains' | 'eq' | 'gt' | 'gte' | 'lt' | 'lte' | 'in' | 'empty' | 'not_empty';
+  op: (typeof columnFilterOperations)[number];
   value?: string;
   values?: string[];
+  include_empty?: boolean;
+}
+export type FilterValueKind = 'number' | 'text' | 'presence';
+export interface FilterValueChoice {
+  value: string;
+  count: number;
+}
+export interface FilterValues {
+  column: string;
+  kind: FilterValueKind;
+  items: FilterValueChoice[];
+  total: number;
+  page: number;
+  page_size: number;
+  empty_count: number;
+  matching_rows: number;
+  bands?: { value: ActivityBand; count: number }[];
 }
 export interface Runtime {
   product: Identity;

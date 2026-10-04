@@ -104,9 +104,18 @@ identity columns. Header menus submit bounded column IDs/operators to the same
 filters/sorts the complete effective project before pagination. Multivalued
 activity filters match any original observation; sort uses the first, never a
 best value/average. Stored current property predictions are read only when needed;
-querying never invokes inference. Up to 200 stable full-project activity choices
-and counts are collected in the existing scan; an excessive vocabulary exposes
-its truncation and still supports textual filters. Export uses the same selectors.
+querying never invokes inference. `table_filter_choices.py` provides on-demand
+authenticated distinct values through the same effective scan. It validates all
+query columns, omits only the requested column's predicates, and honors other
+columns/global filters before per-row counting. Search/pagination return at most
+200 choices; at most 25,000 distinct values and four million value characters
+are retained. Excess fails explicitly rather than returning incomplete choices.
+The former eager activity-only choice producer is removed. Stored properties
+hydrate only when needed; choices never load PDF pages or invoke inference.
+Inclusive/exclusive checklists retain an independent blank selection.
+`table_query_bands.py` consumes the original complete-project rank profiles for
+both color selection and stable color-first ordering, never page-local quantiles.
+Export uses the same selectors.
 The URL owns valid query state; the UI can recover empty/error/all-hidden states.
 Plain TSV copies current-page selected/all rows and visible columns only, with
 spreadsheet formula protection. There is no competing page-local sort/filter,

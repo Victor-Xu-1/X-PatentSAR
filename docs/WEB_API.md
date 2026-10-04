@@ -113,15 +113,26 @@ prediction records. Ordinary coordinate edits preserve existing graph identity.
 
 GET `/api/v1/projects/{id}/results` and POST `/api/v1/projects/{id}/export`
 share optional query parameters `column_filters` (JSON list), `sort_column`,
-and `sort_direction` (`asc` or `desc`). The same effective full-project read is
+`sort_direction` (`asc` or `desc`), and optional `sort_band` (`strong`, `medium`,
+`none`, or empty). A nonempty band requires an activity column; it stable-partitions
+the requested band first after normal ordering, using the first observation as
+with scalar sort. The same effective full-project read is
 filtered/sorted before pagination or export selection. Column IDs are `compound`,
 `structure`, `source`, `edit`, `activity:<exact-context-SHA64>`, or
 `property:<fixed-property-key>`; unknown columns/operators fail 422, even for an
 empty result. These are selectors, never SQL or executable spreadsheet formulas.
 
-Each condition is `{column,op,value?,values?}`. Operators are `contains`, `eq`,
-`gt`, `gte`, `lt`, `lte`, `in`, `empty`, `not_empty`. Conditions AND together;
-`in` ORs its values, and an empty checklist matches nothing. Limits are 20
+Each condition is `{column,op,value?,values?,include_empty?}`. Operators are
+`contains`, `not_contains`, `starts_with`, `ends_with`, `eq`, `ne`, `gt`, `gte`,
+`lt`, `lte`, `in`, `not_in`, `empty`, `not_empty`, `band`. Conditions AND together;
+`in` ORs exact distinct raw values, and `not_in` requires no observation matching
+an excluded value. Strict boolean `include_empty` independently controls wholly
+blank cells (defaults false for `in`, true for `not_in`). An empty inclusive
+checklist without blank matches nothing; an empty exclusive checklist with blank
+matches everything. `band` accepts only strong/medium/none on activity columns,
+matching any independently colored observation, with absent cells uncolored.
+Negative text conditions require no observation matching their positive condition;
+prefix/suffix and text comparison are case-insensitive. Limits are 20
 conditions, 16 KiB JSON, 200 checklist entries, 1000 characters per operand.
 Numeric comparisons require finite exact scalars; intervals/censored values are
 not invented numbers. Activity filtering matches any observation in that context;
@@ -129,9 +140,24 @@ sort uses the first observation, never a mean/best value. Missing values sort la
 in either direction. Compound sorting is natural (8, 8A, 8B, 10). Property filters
 use only current completed stored records, and do not enqueue analysis.
 
-`ActivityColumn.filter_values` optionally carries up to 200 lexicographically
-ordered `{value,count}` full-project choices, with `filter_values_truncated=true`
-when additional choices exist. Counts and rank profiles do not change with
+GET `/api/v1/projects/{id}/filter-values` accepts `column`, optional `search`
+(max 500 characters), `page` (1–25000), `page_size` (1–200, default 200), and the
+same global/column filters. All conditions are validated; only this column's
+conditions are omitted for the choice read. Other conditions remain conjunctive.
+Response `{column,kind,items,total,page,page_size,empty_count,matching_rows,bands}`:
+kind is number/text/presence (mixed activity columns use the more frequent type,
+ties are text; property/source columns remain numeric). Items are exact
+`{value,count}` distinct raw strings,
+counted once per row and naturally/numerically ordered. Total is the searched
+nonempty distinct count; empty_count and matching_rows are before choice search.
+Bands are null outside activity columns or strong/medium/none row counts; repeated
+observations can contribute to several bands. Structure presence has no URL
+choices. Properties come from current stored/manual values without inference;
+no PDF pages load. The bounded full vocabulary is 25,000 values/four million
+characters; overflow fails 422 instead of hiding available choices. There is no
+page-local or eagerly generated second checklist. Legacy optional
+`ActivityColumn.filter_values`/`filter_values_truncated` remain readable by API-v1
+clients but are no longer produced. Global rank profiles do not change with
 filters/pages. `strength_scale` adds bounded kind/direction/rule/counts and
 strong/medium boundaries. `Compound.activity_rank_values` is optional aligned
 read-only presentation metadata, excluded from raw records/exports. Tied weighted
