@@ -9,10 +9,15 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
+from patent_sar_extractor.core.ocsr.recognition_inputs import (
+    ordered_source_results,
+    recognition_inputs,
+)
 from patent_sar_extractor.core.pipeline_rules import (
     _label_key,
     annotate_binding_accuracy,
 )
+from patent_sar_extractor.smiles_artifact import smiles_source_records
 
 from .acceptance import ARTIFACTS, authority, current
 from .activity_provenance import activity_contexts, metric_unit, provenance_error
@@ -225,6 +230,37 @@ class ArtifactView:
         smiles = _index(smiles_rows, ("cpd_id", "cpd", "compound_id"))
         structure_rows = records(p.get("structures"), "structures")
         catalog_rows, alias_ids = read_compound_catalog(binding_payload, structure_rows)
+        source_labels: set[str] = set()
+        try:
+            source_smiles = smiles_source_records(smiles_payload)
+            if len(source_smiles) > MAX_RECORDS:
+                raise ValueError("Source recognition collection exceeds its bound.")
+            if source_smiles:
+                if (
+                    not isinstance(smiles_payload, dict)
+                    or smiles_payload.get("formal_acceptance_scope")
+                    != "original_activity_association_only"
+                ):
+                    raise ValueError(
+                        "Source recognition cannot change formal acceptance scope."
+                    )
+                if not current(smiles_payload, "smiles"):
+                    source_smiles = []  # historical observations cannot acquire fresh chemistry
+                else:
+                    _, source_bindings = recognition_inputs(binding_payload)
+                    if not ordered_source_results(source_bindings, source_smiles):
+                        raise ValueError(
+                            "Source recognition does not match proved printed owners."
+                        )
+                    source_labels = {
+                        _label_key(str(row.get("cpd_id") or ""))
+                        for row in source_smiles
+                    }
+                    smiles = _index(
+                        [*smiles_rows, *source_smiles], ("cpd_id", "cpd", "compound_id")
+                    )
+        except ValueError as exc:
+            raise WebError(422, "invalid_source_recognition", str(exc)) from exc
         if catalog_rows is not None:
             bindings = _index(catalog_rows, ("compound_id", "cpd", "cpd_id"))
             catalog_ids = [
@@ -364,6 +400,12 @@ class ArtifactView:
             smile = smile_records[0] if len(smile_records) == 1 else {}
             if len(smile_records) > 1:
                 flags.append("ambiguous_smiles")
+            if smile and smile.get("structure_id") not in {None, structure_id}:
+                raise WebError(
+                    422,
+                    "invalid_source_recognition",
+                    "Recognized molecule belongs to another source image.",
+                )
             source_page = page_number(
                 binding.get("page_no") or structure.get("page_no")
             )
@@ -380,6 +422,13 @@ class ArtifactView:
             smiles_text = text(
                 smile.get("smiles") or smile.get("canonical_smiles"), limit=10000
             )
+            recognition = recognition_status(
+                smile, current=current(p.get("smiles"), "smiles")
+            )
+            # A rejected supplemental candidate remains inspectable in its raw
+            # artifact, but cannot feed descriptors or a determinate prediction.
+            if key in source_labels and recognition["status"] != "valid":
+                smiles_text = None
             dto = Compound(
                 id=compound_id,
                 display_id=compound_id,
@@ -390,11 +439,7 @@ class ArtifactView:
                     else None
                 ),
                 smiles=smiles_text,
-                recognition=Recognition.model_validate(
-                    recognition_status(
-                        smile, current=current(p.get("smiles"), "smiles")
-                    )
-                ),
+                recognition=Recognition.model_validate(recognition),
                 redraw_image_url=(
                     drawing_url(project_id, compound_id, smiles_text)
                     if smiles_text

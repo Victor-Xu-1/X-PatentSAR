@@ -35,8 +35,10 @@ def source_stereo_blocked(compound: Compound) -> bool:
 
 
 def compound_prediction_eligible(compound: Compound) -> bool:
-    return not source_stereo_blocked(compound) and prediction_eligible(
-        compound.smiles, compound.structure_molfile
+    return (
+        compound.recognition.status != "invalid"
+        and not source_stereo_blocked(compound)
+        and prediction_eligible(compound.smiles, compound.structure_molfile)
     )
 
 

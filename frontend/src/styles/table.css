@@ -13,8 +13,12 @@
   font-size: 12px;
   color: var(--primary);
 }
+.results-table th,
+.results-table td {
+  text-align: center;
+  vertical-align: middle;
+}
 .results-table th {
-  text-align: left;
   background: var(--surface-subtle);
   border-bottom: 1px solid var(--line);
   color: var(--muted);
@@ -25,11 +29,9 @@
   z-index: 2;
   white-space: normal;
   overflow-wrap: anywhere;
-  vertical-align: middle;
 }
 .column-heading {
   display: block;
-  padding-right: 5px;
   line-height: 1.45;
 }
 .column-heading small {
@@ -39,14 +41,15 @@
   margin-top: 3px;
   color: var(--faint);
 }
-.results-table .prediction-column {
-  text-align: right;
-}
 .results-table td {
   border-bottom: 1px solid var(--line-soft);
   padding: 6px;
-  vertical-align: middle;
   background: var(--surface);
+}
+.results-table th > input[type='checkbox'],
+.results-table td > input[type='checkbox'] {
+  display: block;
+  margin-inline: auto;
 }
 .results-table th:not(:last-child),
 .results-table td:not(:last-child) {
@@ -72,7 +75,6 @@
 .frozen-edit {
   right: 0;
   box-shadow: -1px 0 0 var(--line);
-  text-align: center;
 }
 .results-table tr:hover td {
   background: var(--surface-subtle);
@@ -103,7 +105,7 @@
   border: 0;
   width: 100%;
   max-width: 100%;
-  text-align: left;
+  text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -155,7 +157,8 @@
 }
 .activity-observation {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  justify-content: center;
   gap: 5px;
   min-width: 0;
 }
@@ -174,7 +177,7 @@
   border-radius: 2px;
   color: inherit;
   background: transparent;
-  text-align: left;
+  text-align: center;
 }
 .activity-source:hover:not(:disabled) {
   background: transparent;
