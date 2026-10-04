@@ -12,6 +12,15 @@ from patent_sar_extractor.core.ocsr.smiles_qc import COMMON_FINAL_PRODUCT_ELEMEN
 
 from .analysis_chemistry import MAX_ATOMS, canonical_smiles
 from .errors import WebError
+from .molecular_stereo import (
+    atoms,
+    bonds,
+    comparable_groups,
+    stereo_snapshot,
+    unknown_bonds,
+    unresolved_stereo_key,
+    validate_stereo_encoding,
+)
 
 MAX_MOLFILE_BYTES = 128 * 1024
 
@@ -49,7 +58,7 @@ def same_graph(left: str | None, right: str | None) -> bool:
         return False
 
 
-def _counts(text: str) -> None:
+def _counts(text: str, *, allow_empty: bool = False) -> tuple[int, int]:
     lines = text.rstrip().splitlines()
     if (
         len(lines) < 5
@@ -73,13 +82,13 @@ def _counts(text: str) -> None:
             raise ValueError("Only V2000 and V3000 are supported")
     except (ValueError, IndexError, StopIteration) as exc:
         raise ValueError("MDL counts/version header is invalid") from exc
-    if not 1 <= atoms <= MAX_ATOMS or not 0 <= bonds <= 4096:
+    if not int(not allow_empty) <= atoms <= MAX_ATOMS or not 0 <= bonds <= 4096:
         raise ValueError("Molfile atom/bond counts are excessive")
+    return atoms, bonds
 
 
-@lru_cache(maxsize=32)
-def _molfile_graph(text: str) -> str:
-    # At most 4 MiB of bounded input strings; retain no RDKit objects or source data.
+def molfile_molecule(text: str) -> Chem.Mol:
+    """Strict, fresh drawing molecule; never cache or rewrite RDKit source objects."""
     validate_molfile_text(text)
     _counts(text)
     with rdBase.BlockLogs():
@@ -93,7 +102,7 @@ def _molfile_graph(text: str) -> str:
                 atom.HasQuery()
                 or atom.GetAtomicNum() == 0
                 or atom.GetSymbol() not in COMMON_FINAL_PRODUCT_ELEMENTS
-                for atom in molecule.GetAtoms()
+                for atom in atoms(molecule)
             ):
                 raise ValueError(
                     "Query, dummy and unsupported atoms are not editable molecules"
@@ -107,19 +116,10 @@ def _molfile_graph(text: str) -> str:
                     Chem.BondType.TRIPLE,
                     Chem.BondType.AROMATIC,
                 }
-                or bond.GetStereo() == Chem.BondStereo.STEREOANY
-                for bond in molecule.GetBonds()
+                for bond in bonds(molecule)
             ):
-                raise ValueError(
-                    "Query/unsupported bonds or unspecified encoded stereo are not supported"
-                )
-            if any(
-                group.GetGroupType() != Chem.StereoGroupType.STEREO_ABSOLUTE
-                for group in molecule.GetStereoGroups()
-            ):
-                raise ValueError(
-                    "Relative/enhanced stereo cannot be represented by the supplied SMILES"
-                )
+                raise ValueError("Query/unsupported bonds are not editable molecules")
+            validate_stereo_encoding(molecule, text)
             for conformer in molecule.GetConformers():
                 for index in range(molecule.GetNumAtoms()):
                     position = conformer.GetAtomPosition(index)
@@ -128,25 +128,70 @@ def _molfile_graph(text: str) -> str:
                         for value in (position.x, position.y, position.z)
                     ):
                         raise ValueError("Molfile coordinates must be finite")
-            stereo = {
-                atom.GetIdx()
-                for atom in molecule.GetAtoms()
-                if atom.GetChiralTag() != Chem.ChiralType.CHI_UNSPECIFIED
-            }
+            stereo = stereo_snapshot(molecule)
+            groups = comparable_groups(molecule)
+            unknown = unknown_bonds(molecule)
             Chem.SanitizeMol(molecule)
             Chem.AssignStereochemistry(molecule, cleanIt=True, force=True)
-            if any(
-                molecule.GetAtomWithIdx(index).GetChiralTag()
-                == Chem.ChiralType.CHI_UNSPECIFIED
-                for index in stereo
+            after = stereo_snapshot(molecule)
+            # Sanitization may perceive defined EZ from the supplied coordinates.
+            # It must not erase/change anything already encoded, including ANY.
+            if (
+                not set(stereo[0]).issubset(after[0])
+                or not set(stereo[1]).issubset(after[1])
+                or groups != comparable_groups(molecule)
+                or unknown_bonds(molecule) != unknown
             ):
                 raise ValueError("Sanitization would discard encoded stereochemistry")
-            molecule = Chem.RemoveHs(molecule)
-            return canonical_smiles(Chem.MolToSmiles(molecule, isomericSmiles=True))
+            return molecule
         except (RuntimeError, ValueError, WebError) as exc:
             raise ValueError(
                 "Molfile is invalid, unsupported or cannot retain exact stereochemistry"
             ) from exc
+
+
+@lru_cache(maxsize=32)
+def molfile_representation(text: str) -> tuple[str, str | None]:
+    # At most 4 MiB of input strings; no mutable RDKit objects are cached.
+    molecule = molfile_molecule(text)
+    ambiguity = unresolved_stereo_key(molecule)
+    graph = canonical_smiles(
+        Chem.MolToSmiles(Chem.RemoveHs(molecule), isomericSmiles=True)
+    )
+    return graph, ambiguity
+
+
+def converted_smiles(text: str) -> str | None:
+    """The same MDL authority derives editor SMILES; never trust vendor parity.
+
+    Keep exact MDL elsewhere. Explicit unknown bonds govern unspecified centers,
+    including native writers' redundant atom parity/ABS collection. No atom,
+    isotope, charge, component or definite stereochemistry is repaired/guessed.
+    """
+    validate_molfile_text(text)
+    atoms, bonds = _counts(text, allow_empty=True)
+    if atoms == bonds == 0:
+        with rdBase.BlockLogs():
+            molecule = Chem.MolFromMolBlock(text, removeHs=False, strictParsing=True)
+        if molecule is None or molecule.GetNumAtoms() or molecule.GetNumBonds():
+            raise ValueError("Empty drawing does not match its atom/bond counts")
+        return None
+    return molfile_representation(text)[0]
+
+
+def same_structure(
+    left: str | None,
+    right: str | None,
+    left_molfile: str | None = None,
+    right_molfile: str | None = None,
+) -> bool:
+    if not same_graph(left, right):
+        return False
+    if left_molfile == right_molfile:
+        return True
+    left_stereo = molfile_representation(left_molfile)[1] if left_molfile else None
+    right_stereo = molfile_representation(right_molfile)[1] if right_molfile else None
+    return left_stereo == right_stereo
 
 
 def validate_structure(molfile: str | None, smiles: str | None) -> None:
@@ -158,7 +203,7 @@ def validate_structure(molfile: str | None, smiles: str | None) -> None:
         identity = canonical_smiles(smiles)
     except WebError as exc:
         raise ValueError("Drawn structure SMILES is invalid") from exc
-    if _molfile_graph(molfile) != identity:
+    if molfile_representation(molfile)[0] != identity:
         raise ValueError(
             "Molfile graph and stereochemistry differ from the supplied SMILES"
         )

@@ -50,14 +50,19 @@ export default function StructureEditor({
         } else if (message.kind === 'save') callbacks.current.onSave();
         else if (message.kind === 'busy') callbacks.current.onReady(false);
         else if (message.kind === 'change') {
+          initialized = true;
+          clearTimeout(timer);
           setLoaded(true);
           callbacks.current.onChange(message.value);
           callbacks.current.onReady(true);
           setError('');
         } else if (message.kind === 'error') {
-          if (!message.recoverable) setLoaded(false);
+          initialized = true;
+          clearTimeout(timer);
+          setLoaded(message.recoverable);
           setError(message.message);
-          callbacks.current.onReady(message.recoverable);
+          // Repairable means the canvas can be used, never that invalid data can save.
+          callbacks.current.onReady(false);
         }
       } catch (failure) {
         setError(failure instanceof Error ? failure.message : '结构编辑数据无效。');

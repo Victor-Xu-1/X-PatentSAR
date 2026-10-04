@@ -134,6 +134,19 @@ export interface CompoundRecognition {
   quality_flag: string | null;
   model_fingerprint: string | null;
   token_confidence: { minimum: number; mean: number } | null;
+  stereochemistry?: StereoEvidence | null;
+}
+export interface StereoEvidence {
+  version: 1;
+  image_sha256: string;
+  image_size: number[];
+  unknown_bond_boxes: BBox[];
+  status: 'no_unknown_detected' | 'unknown_preserved' | 'conflict' | 'ambiguous';
+  reason: string;
+  assigned_centers: number;
+  unassigned_centers: number;
+  assigned_double_bonds: number;
+  absolute_configuration_verified: false;
 }
 export interface PageData {
   page: number;

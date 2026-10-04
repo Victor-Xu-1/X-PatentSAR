@@ -33,6 +33,7 @@ from .jobs import JobQueue
 from .owner import WorkspaceOwner
 from .processes import CLIProcessRunner, ProcessRunner
 from .routes_analysis import analysis_routes
+from .routes_chemistry import chemistry_routes
 from .routes_environments import environment_routes
 from .routes_jobs import job_routes
 from .routes_projects import project_routes
@@ -281,6 +282,7 @@ def create_app(
     app.include_router(project_routes(service, max_upload_bytes))
     app.include_router(job_routes(service, queue))
     app.include_router(analysis_routes(service, analysis))
+    app.include_router(chemistry_routes())
     app.include_router(environment_routes(environments))
 
     @app.get("/{path:path}")

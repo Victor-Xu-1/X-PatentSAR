@@ -174,6 +174,15 @@ apply only to future installations and are not migrations or cleanup requests.
 
 ## Common failures
 
+- `stereo_source_conflict` / `stereo_source_ambiguous`: a source unknown-bond risk and the model's determinate stereo cannot be safely reconciled. Inspect the original crop; do not strip chiral tokens, flip R/S by suffix, merge separated IDs, or run normalization repeatedly. Generated observations and old failed runs remain unchanged. Correct supported chemistry through the audited drawing overlay; it does not turn a failed core run into accepted formal chemistry.
+- `stereo_source_unavailable`: unreadable/excessive source geometry failed the bounded screen before model loading. Correct input quality or source ownership, not memory limits or acceptance flags.
+- Unknown single/crossed-double manual MDL stays lossless in save/redraw/export. Explicit unresolved manual stereo cannot acquire a determinate model result from a previous graph. OR/AND and special stereo remain visibly unsupported. Plain-SMILES legacy research results are not proof of source stereo fidelity.
+
+New tasks use ruleset 2.0.4 while the product remains v0.1.0. Existing original
+PDFs, model observations, QA and manual audits are retained; a new task uses current
+validation instead of relabelling historical results. Only original-SHA-verified
+raw OCR/model observations may be reused. Missing old stereo evidence stays unknown.
+
 - `LLM_API_KEY is not set`: deterministic production stages still run normally; optional advisory QA is recorded as `skipped_no_credentials`. Configure a key only when advisory review is wanted.
 - DECIMER unavailable: verify `DECIMER_PYTHON` points to a Python 3.10 environment, import `decimer_segmentation` in that interpreter, and run health again. Do not force TensorFlow 2.15 into the Python 3.12 orchestrator.
 - PaddleX endpoint unavailable: verify `PATENTSAR_PADDLEX_OCR_URL`; the pipeline must report the degraded OCR path rather than silently claiming equivalent evidence.

@@ -107,6 +107,7 @@ from patent_sar_extractor.core.ocsr.smiles_cache import (
     compute_image_sha256,
 )
 from patent_sar_extractor.core.ocsr.smiles_qc import qc_smiles
+from patent_sar_extractor.core.ocsr.stereo_evidence import check_source_stereochemistry
 from patent_sar_extractor.core.page_classifier import classify_pdf
 from patent_sar_extractor.core.page_ocr_cache import (
     build_cache_metadata,
@@ -520,6 +521,11 @@ class StrictAcceptanceTests(unittest.TestCase):
     def _smiles(cpd: str, structure_id: str, raw: str) -> dict:
         checked = qc_smiles(raw)
         return {
+            "image_hash": "a" * 64,
+            "stereochemistry": check_source_stereochemistry(checked, {
+                "version": 1, "image_sha256": "a" * 64,
+                "image_size": [100, 100], "unknown_bond_boxes": [],
+            }),
             "cpd_id": cpd,
             "structure_id": structure_id,
             "raw_smiles": raw,

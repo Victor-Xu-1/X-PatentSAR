@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import json
-import os
 import re
 import zipfile
 import xml.etree.ElementTree as ET
@@ -26,6 +25,7 @@ from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy, 
 from patent_sar_extractor.core.activity_values import has_usable_activity_values
 from patent_sar_extractor.artifact_io import write_json_atomic
 from patent_sar_extractor.smiles_artifact import smiles_artifact_is_current, smiles_records
+from patent_sar_extractor.core.ocsr.stereo_gate import stereo_record_error
 
 
 def _load_json(path: Path, default: Any):
@@ -154,29 +154,6 @@ def _activity_for_cpd(act_data, cpd, bound_cpds):
     if parent_key not in bound_cpds and isinstance(parent, dict):
         return parent
     return {}
-
-
-def _stereo_pair_duplicates(smiles_records):
-    pairs = {}
-    for rec in smiles_records:
-        cpd = rec.get("cpd_id", "")
-        m = re.match(r"^Compound\s+(\d+)-([12])$", str(cpd))
-        if not m:
-            continue
-        pairs.setdefault(m.group(1), {})[m.group(2)] = rec
-
-    duplicates = []
-    for base, items in pairs.items():
-        left = items.get("1")
-        right = items.get("2")
-        if not left or not right:
-            continue
-        if left.get("canonical_smiles") and left.get("canonical_smiles") == right.get("canonical_smiles"):
-            duplicates.append(f"Compound {base}-1/{base}-2")
-            continue
-        if left.get("inchikey") and left.get("inchikey") == right.get("inchikey"):
-            duplicates.append(f"Compound {base}-1/{base}-2")
-    return sorted(duplicates, key=_cpd_sort_key)
 
 
 def _binding_visual_label_risks(bindings):
@@ -454,11 +431,14 @@ def build_qa_report(output_dir: str, patent_id: str = "", ignore_previous_failur
         for r in smiles
         if _suspicious_smiles_elements(r) or r.get("OCSR_quality_flag") == "suspicious_element"
     ]
+    # Parse each original model string once for this QA pass, not once per list.
+    stereo_findings = [stereo_record_error(record) for record in smiles]
     valid_smiles_records = [
-        r for r in smiles
+        r for index, r in enumerate(smiles)
         if r.get("rdkit_valid") and r not in query_smiles_records
         and not _suspicious_smiles_elements(r)
         and r.get("OCSR_quality_flag", "ok") == "ok"
+        and stereo_findings[index] is None
     ]
     invalid_smiles_records = [
         r for r in smiles
@@ -489,7 +469,10 @@ def build_qa_report(output_dir: str, patent_id: str = "", ignore_previous_failur
         cpd for cpd in bound_cpds
         if _activity_for_cpd(act_data, cpd, bound_cpds)
     }
-    stereo_duplicate_pairs = _stereo_pair_duplicates(smiles)
+    stereo_errors = [
+        {"cpd": r.get("cpd_id", ""), "reason": error}
+        for r, error in zip(smiles, stereo_findings) if error is not None
+    ]
     strict_label_conflicts, weak_label_conflicts = _binding_visual_label_risks(bindings)
     review_required_bindings = _binding_accuracy_risks(bindings)
     accuracy_summary = bind_data.get("accuracy_summary", {}) if isinstance(bind_data, dict) else {}
@@ -555,7 +538,7 @@ def build_qa_report(output_dir: str, patent_id: str = "", ignore_previous_failur
             "invalid_smiles": sorted(invalid_smiles_cpds, key=_cpd_sort_key),
             "query_or_markush_smiles": sorted(query_smiles_cpds, key=_cpd_sort_key),
             "suspicious_element_smiles": suspicious_smiles_records,
-            "duplicate_stereo_pairs": stereo_duplicate_pairs,
+            "stereochemistry_errors": stereo_errors,
         },
         "activity": {
             "rows": len(activity_rows),
@@ -651,8 +634,8 @@ def build_qa_report(output_dir: str, patent_id: str = "", ignore_previous_failur
         hard_errors.append("Query/Markush SMILES cannot be exported as final products.")
     if suspicious_smiles_records:
         hard_errors.append("SMILES with suspicious elements require fallback recognition or review.")
-    if stereo_duplicate_pairs:
-        hard_errors.append("Stereochemical pairs collapse to identical SMILES/InChIKey.")
+    if stereo_errors:
+        hard_errors.append("Source stereochemistry is missing, conflicting or unresolved for one or more model observations.")
     if locator.get("reason") == "structure_table_authoritative_complete":
         if not bindings or any(b.get("binding_rule") != "authoritative_structure_table_sequence" for b in bindings):
             hard_errors.append("An authoritative structure table was detected but not exclusively used for binding.")
@@ -721,8 +704,6 @@ def build_qa_report(output_dir: str, patent_id: str = "", ignore_previous_failur
         warnings.append("Some SMILES contain dummy/query/Markush atoms and require review.")
     if qa["smiles"]["suspicious_element_smiles"]:
         warnings.append("Some valid-looking SMILES contain suspicious elements and require fallback recognition or review.")
-    if qa["smiles"]["duplicate_stereo_pairs"]:
-        warnings.append("Some N-1/N-2 stereochemical pairs have identical SMILES/InChIKey.")
     if qa["activity"]["rows"] == 0:
         warnings.append("No activity rows extracted.")
     elif qa["activity"]["missing_for_bound"]:
@@ -781,8 +762,8 @@ def write_qa_report(output_dir: str, patent_id: str = "", ignore_previous_failur
     lines.extend([f"- {x}" for x in qa["smiles"]["invalid_smiles"][:100]] or ["- None"])
     lines.extend(["", "## Query Or Markush SMILES"])
     lines.extend([f"- {x}" for x in qa["smiles"]["query_or_markush_smiles"][:100]] or ["- None"])
-    lines.extend(["", "## Duplicate Stereo Pairs"])
-    lines.extend([f"- {x}" for x in qa["smiles"]["duplicate_stereo_pairs"][:100]] or ["- None"])
+    lines.extend(["", "## Source Stereochemistry"])
+    lines.extend([f"- {x['cpd']}: {x['reason']}" for x in qa["smiles"]["stereochemistry_errors"][:100]] or ["- None"])
     lines.extend(["", "## Missing Activity For Bound Examples"])
     lines.extend([f"- {x}" for x in qa["activity"]["missing_for_bound"][:150]] or ["- None"])
     md_text = "\n".join(lines) + "\n"

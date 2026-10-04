@@ -6,6 +6,8 @@ import math
 import re
 from typing import Any
 
+from patent_sar_extractor.core.ocsr.stereo_gate import validate_stereo_record
+
 from .errors import WebError
 
 
@@ -36,6 +38,20 @@ def recognition_status(record: dict[str, Any], *, current: bool) -> dict[str, An
         if record.get("rdkit_valid") is True and flag == "ok"
         else "invalid"
     )
+    if record.get("stereochemistry") is not None:
+        try:
+            result["stereochemistry"] = validate_stereo_record(record)
+        except ValueError as exc:
+            raise WebError(
+                422,
+                "invalid_recognition",
+                "Source stereochemistry evidence is invalid.",
+            ) from exc
+        if result["stereochemistry"]["status"] in {"conflict", "ambiguous"}:
+            result["status"] = "invalid"
+    elif result["status"] == "valid":
+        # Old syntax-only observations are not fresh stereo evidence.
+        result["status"] = "unavailable"
     fingerprint = record.get("model_fingerprint")
     if fingerprint is not None and (
         not isinstance(fingerprint, str)

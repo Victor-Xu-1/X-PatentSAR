@@ -15,13 +15,25 @@ export function RecognitionStatus({ recognition }: { recognition: CompoundRecogn
 export function RecognitionDetails({ recognition }: { recognition: CompoundRecognition | null }) {
   return (
     <section className="recognition-details" aria-label="识别质量与模型观察">
-      <h3>识别校验（RDKit）</h3>
+      <h3>识别校验</h3>
       <RecognitionStatus recognition={recognition} />
       <dl>
         <dt>质量标记</dt>
         <dd>{recognition?.quality_flag ?? '未提供'}</dd>
         <dt>模型指纹</dt>
         <dd>{recognition?.model_fingerprint ?? '未提供'}</dd>
+        <dt>原图手性</dt>
+        <dd>
+          {recognition?.stereochemistry?.status === 'conflict'
+            ? '未知键与确定构型冲突'
+            : recognition?.stereochemistry?.status === 'ambiguous'
+              ? '对应关系未确定，需核对'
+              : recognition?.stereochemistry?.status === 'unknown_preserved'
+                ? '保留未指定构型'
+                : recognition?.stereochemistry
+                  ? '未发现未知键；不代表绝对构型已验证'
+                  : '未核验'}
+        </dd>
       </dl>
       {recognition?.token_confidence ? (
         <p>

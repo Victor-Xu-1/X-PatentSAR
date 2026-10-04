@@ -20,6 +20,7 @@ from .engines.decimer_engine import DECIMEREngine
 from .image_preprocess import preprocess_structure_image
 from .smiles_cache import SmilesCache, compute_image_sha256
 from .smiles_qc import COMMON_FINAL_PRODUCT_ELEMENTS, qc_smiles
+from .stereo_evidence import observe_stereo_symbols, source_checked_qc
 
 
 def _resolve_ocsr_image_path(item: dict) -> str:
@@ -476,6 +477,14 @@ class SmilesConverter:
             result["OCSR_failure_reason"] = f"Cannot compute image hash: {e}"
             return {"item": item, "result": result, "ready": False}
 
+        try:
+            # Always inspect the source crop, never a model-normalized retry.
+            evidence = observe_stereo_symbols(ocsr_image_path)
+        except (OSError, ValueError) as exc:
+            result.update(OCSR_status="review_required", OCSR_quality_flag="stereo_source_unavailable",
+                          OCSR_failure_reason=f"Source stereochemistry inspection failed: {exc}")
+            return {"item": item, "result": result, "ready": False}
+
         return {
             "item": item,
             "result": result,
@@ -483,6 +492,7 @@ class SmilesConverter:
             "image_hash": image_hash,
             "working_image": working_image,
             "ocsr_image_path": ocsr_image_path,
+            "stereo_evidence": evidence,
         }
 
     def _prediction(self, engine_name: str, engine, image: str) -> tuple[dict, dict]:
@@ -593,11 +603,13 @@ class SmilesConverter:
                 image, source = images[attempt_index]
                 prediction, notes = self._prediction(engine_name, engine, image)
                 raw, checked, _unused = _qc_ocr_smiles(prediction.get("raw_smiles"))
+                checked = source_checked_qc(checked, prepared["stereo_evidence"])
                 attempt = {
                     "engine": engine_name,
                     "status": prediction.get("status", "failed"),
                     "raw_smiles": raw,
                     "quality_flag": checked["quality_flag"],
+                    "stereochemistry": checked["stereochemistry"],
                     "error": prediction.get("error"),
                     "elapsed_sec": prediction.get("elapsed_sec", 0),
                     "model_fingerprint": prediction.get("model_fingerprint"),
@@ -645,6 +657,7 @@ class SmilesConverter:
                         engine_raw_smiles=raw,
                         OCSR_engine=engine_name,
                         OCSR_quality_flag=checked["quality_flag"],
+                        stereochemistry=checked["stereochemistry"],
                         ocsr_structure_image=image,
                         model_fingerprint=prediction.get("model_fingerprint"),
                         token_confidence=prediction.get("token_confidence"),
@@ -691,6 +704,7 @@ class SmilesConverter:
                     and attempt_index == 0
                     and status == "success"
                     and raw
+                    and not str(checked["quality_flag"]).startswith("stereo_source_")
                     and preprocess_dir
                     and len(self.all_engine_names) == 1
                 ):

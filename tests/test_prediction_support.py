@@ -98,7 +98,11 @@ class ControlledPhaseRunner(SubprocessRunner):
         return [
             sys.executable,
             "-c",
-            "from test_prediction_support import controlled_phase; import sys; controlled_phase(*sys.argv[1:])",
+            # Test helpers are not runtime modules and PYTHONPATH intentionally
+            # contains only src. Bind this controlled child to its actual test
+            # source, rather than relying on the parent's discovery sys.path.
+            f"import sys; sys.path.insert(0, {str(Path(__file__).resolve().parent)!r}); "
+            "from test_prediction_support import controlled_phase; controlled_phase(*sys.argv[1:])",
             spec.job_id,
             spec.project_id,
             spec.pdf_path,

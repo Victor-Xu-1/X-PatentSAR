@@ -1,5 +1,19 @@
 import type { Ketcher } from 'ketcher-core';
 import type { EditorPayload } from './protocol';
+import { boundedEditorOperation, convertMolfile } from './structureConversion';
+import { ApiError } from '../../api/errors';
+
+/** One native MDL export; the backend alone decides chemistry and empty drawings. */
+export async function captureDrawing(ketcher: Ketcher, signal: AbortSignal) {
+  if (ketcher.containsReaction()) throw new Error('请绘制分子结构，不使用反应箭头。');
+  const rawMolfile = await boundedEditorOperation(() => ketcher.getMolfile('v3000'), signal);
+  const smiles = await convertMolfile(rawMolfile, signal);
+  return {
+    smiles: smiles ?? '',
+    molfile: smiles === null ? null : rawMolfile,
+    graphKey: smiles ?? '',
+  };
+}
 
 /** One in-flight export and a short latest-change debounce, never a polling loop. */
 export function subscribeDrawing(
@@ -11,47 +25,26 @@ export function subscribeDrawing(
     active = false,
     disposed = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  async function bounded<T>(promise: Promise<T>): Promise<T> {
-    let expiry: ReturnType<typeof setTimeout> | undefined;
-    try {
-      return await Promise.race([
-        promise,
-        new Promise<T>((_, reject) => {
-          expiry = setTimeout(() => reject(new Error('绘图导出超时，请重新加载编辑器。')), 15000);
-        }),
-      ]);
-    } finally {
-      clearTimeout(expiry);
-    }
-  }
+  const lifetime = new AbortController();
   async function capture() {
     if (active || disposed) return;
     active = true;
     const current = version;
     try {
-      if (ketcher.containsReaction()) throw new Error('请绘制分子结构，不使用反应箭头。');
-      // The standalone SDK identifies convert replies by input text only. Two
-      // parallel formats for the same graph can resolve to the wrong format.
-      const rawSmiles = await bounded(ketcher.getSmiles());
-      const rawMolfile = await bounded(ketcher.getMolfile('v3000'));
+      const drawing = await captureDrawing(ketcher, lifetime.signal);
       if (disposed || current !== version) return;
-      const smiles = rawSmiles.trim();
-      if (smiles.length > 2048 || rawMolfile.length > 131072)
-        throw new Error('结构超过支持的编辑范围。');
       send({
         kind: 'change',
         value: {
-          smiles,
-          molfile: smiles ? rawMolfile : null,
-          graphKey: smiles,
-          graphChanged: smiles !== originalKey,
+          ...drawing,
+          graphChanged: drawing.graphKey !== originalKey,
         },
       });
     } catch (failure) {
       if (!disposed && current === version)
         send({
           kind: 'error',
-          recoverable: false,
+          recoverable: failure instanceof ApiError && failure.status === 422,
           message:
             failure instanceof Error
               ? failure.message.slice(0, 1000)
@@ -76,6 +69,7 @@ export function subscribeDrawing(
   return () => {
     disposed = true;
     clearTimeout(timer);
+    lifetime.abort();
     ketcher.editor.unsubscribe('change', subscription);
   };
 }

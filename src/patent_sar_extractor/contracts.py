@@ -16,7 +16,7 @@ PIPELINE_CONTRACT_NAME: Final = "patentsar.activity-led"
 PIPELINE_CONTRACT_VERSION: Final = "2.0.0"
 
 RULESET_NAME: Final = "patentsar.accuracy-first"
-RULESET_VERSION: Final = "2.0.3"
+RULESET_VERSION: Final = "2.0.4"
 
 RUN_SUMMARY_SCHEMA: Final = "patentsar.run-summary"
 RUN_SUMMARY_SCHEMA_VERSION: Final = 1
@@ -35,6 +35,7 @@ STRUCTURE_LOCATOR_VERSION: Final = "4"
 STRUCTURE_WORKER_VERSION: Final = "4"
 STRUCTURE_BINDER_VERSION: Final = "5"
 OCSR_OBSERVATION_VERSION: Final = "2"
+STEREO_EVIDENCE_VERSION: Final = 1
 DECIMER_ADAPTER_VERSION: Final = "1"
 STRUCTURE_LOCATION_SCHEMA: Final = "patentsar.structure-location"
 STRUCTURE_LOCATION_SCHEMA_VERSION: Final = 1
@@ -47,7 +48,7 @@ COMPOUND_CATALOG_SCHEMA_VERSION: Final = 1
 SMILES_SCHEMA: Final = "patentsar.smiles"
 SMILES_SCHEMA_VERSION: Final = 1
 QA_REPORT_SCHEMA: Final = "patentsar.qa-report"
-QA_REPORT_SCHEMA_VERSION: Final = 2
+QA_REPORT_SCHEMA_VERSION: Final = 3
 LLM_QA_REPORT_SCHEMA: Final = "patentsar.llm-qa-report"
 LLM_QA_REPORT_SCHEMA_VERSION: Final = 1
 HEALTH_REPORT_SCHEMA: Final = "patentsar.health-report"
@@ -63,6 +64,7 @@ PAGE_OCR_OBSERVATION_VERSION: Final = 1
 PAGE_OCR_COMPATIBLE_RULESETS: Final = (
     (RULESET_NAME, "2.0.1"),
     (RULESET_NAME, "2.0.2"),
+    (RULESET_NAME, "2.0.3"),
     (RULESET_NAME, RULESET_VERSION),
 )
 VISIBLE_LABEL_CACHE_SCHEMA: Final = "patentsar.visible-label-cache"

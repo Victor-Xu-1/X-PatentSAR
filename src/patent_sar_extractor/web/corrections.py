@@ -9,7 +9,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from .analysis_chemistry import canonical_smiles
-from .correction_chemistry import same_graph
+from .correction_chemistry import same_graph, same_structure
 from .correction_fields import prepared_fields
 from .correction_models import CorrectionDocument, CorrectionRequest, EditableFields
 from .correction_recovery import (
@@ -22,6 +22,11 @@ from .correction_storage import CorrectionStorage, correction_source_fingerprint
 from .errors import WebError
 from .models import Compound, CorrectionMetadata, Recognition
 from .molecule_drawing import drawing_url
+from .prediction_identity import (
+    compound_prediction_eligible,
+    prediction_eligible,
+    source_stereo_blocked,
+)
 from .storage import Store, now
 
 CorrectionSaved = Callable[[sqlite3.Connection, str, str, Compound], None]
@@ -62,6 +67,8 @@ def apply_correction(
     if stale or not changed:
         return compound
     original_smiles = compound.smiles
+    original_molfile = compound.structure_molfile
+    blocked_original = source_stereo_blocked(compound)
     compound.display_id = values.display_id
     compound.smiles = values.smiles
     compound.activities = values.activities
@@ -69,17 +76,32 @@ def apply_correction(
     compound.property_overrides = dict(values.property_overrides)
     compound.property_basis_smiles = values.property_basis_smiles
     compound.flags = [*compound.flags, "manual_correction"]
-    if values.smiles != original_smiles:
+    if values.smiles != original_smiles or values.structure_molfile != original_molfile:
+        # A view-level producer record must be rechecked against the current
+        # representation; original persisted observations remain untouched.
+        compound.admet = None
         if values.smiles is not None:
             # Private persistence is still an input boundary. A corrupted
             # overlay cannot acquire manual-valid recognition on a later read.
             canonical_smiles(values.smiles)
-        compound.recognition = Recognition(
-            status="valid" if values.smiles else "not_run",
-            quality_flag="manual_correction",
+        ambiguous = (
+            not prediction_eligible(values.smiles, values.structure_molfile)
+            if values.smiles
+            else False
         )
+        if ambiguous:
+            compound.flags = [*compound.flags, "manual_stereo_unresolved"]
+        if not blocked_original or not same_graph(original_smiles, values.smiles):
+            compound.recognition = Recognition(
+                status="valid" if values.smiles else "not_run",
+                quality_flag="manual_stereo_unresolved"
+                if ambiguous
+                else "manual_correction",
+            )
         compound.redraw_image_url = (
-            drawing_url(project["id"], compound.id, values.smiles)
+            drawing_url(
+                project["id"], compound.id, values.smiles, values.structure_molfile
+            )
             if values.smiles
             else None
         )
@@ -190,7 +212,12 @@ class Corrections:
                     raise WebError(
                         422, "invalid_correction", "Correction fields are invalid."
                     ) from exc
-                needs_prediction = not same_graph(before.smiles, fields.smiles)
+                needs_prediction = not same_structure(
+                    before.smiles,
+                    fields.smiles,
+                    before.structure_molfile,
+                    fields.structure_molfile,
+                )
             original_pages = {a.page for a in original.activities if a.page}
             if fields.activities != original.activities and any(
                 a.page
@@ -226,7 +253,11 @@ class Corrections:
             effective = apply_correction(
                 project, row, updated, Compound.model_validate_json(row["payload"])
             )
-            if self.on_save is not None and needs_prediction:
+            if (
+                self.on_save is not None
+                and needs_prediction
+                and compound_prediction_eligible(effective)
+            ):
                 # Same connection and transaction: a failed durable enqueue
                 # rolls back the overlay AND audit, never a half-saved molecule.
                 self.on_save(connection, project_id, compound_id, effective)

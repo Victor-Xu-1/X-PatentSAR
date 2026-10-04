@@ -174,7 +174,7 @@ def export_csv(project: Project, rows: list[Compound]) -> Iterator[bytes]:
             "record_kind",
         ]
         + ADMET_COLUMNS
-        + ["manual_property_keys", "property_basis_smiles"]
+        + ["manual_property_keys", "property_basis_smiles", "structure_molfile_json"]
     )
     review_only = project.acceptance.state != "accepted" or any(
         _manual_change(row) or _research_prediction(row) or _unassociated(row)
@@ -208,6 +208,11 @@ def export_csv(project: Project, rows: list[Compound]) -> Iterator[bytes]:
                     key for key in METRIC_KEYS if key in manual_property_values(row)
                 ),
                 row.property_basis_smiles if manual_property_values(row) else None,
+                # Reversibly encode one exact raw block; a source title/newline
+                # cannot become a spreadsheet formula or require lossy escaping.
+                json.dumps(row.structure_molfile, ensure_ascii=False)
+                if row.structure_molfile is not None
+                else None,
             ]
         )
         if not row.activities:

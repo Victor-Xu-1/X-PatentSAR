@@ -15,10 +15,13 @@ from .correction_storage import (
     joined_correction,
 )
 from .corrections import apply_correction
+from .dto import Error
 from .errors import WebError
 from .models import ActivityColumn, Compound, Results, Review
 from .molecule_drawing import drawing_url
 from .pdf import open_pdf, rendered_box
+from .prediction_identity import source_stereo_blocked
+from .prediction_models import PredictionSummary
 from .prediction_storage import PredictionStore
 from .storage import Store
 from .table_queries import validate_columns, workbook_rows
@@ -121,7 +124,9 @@ class ResultQueries:
             if dto.smiles and dto.redraw_image_url is None:
                 # Rendering is derived presentation; old recognition metadata
                 # remains unknown instead of being promoted to fresh validation.
-                dto.redraw_image_url = drawing_url(project_id, dto.id, dto.smiles)
+                dto.redraw_image_url = drawing_url(
+                    project_id, dto.id, dto.smiles, dto.structure_molfile
+                )
                 if dto.recognition.status == "not_run":
                     dto.recognition.status = "unavailable"
             if row["decision"]:
@@ -185,10 +190,22 @@ class ResultQueries:
         items: list[Compound],
         context: tuple[dict[str, Any], dict[str, dict[str, Any]]],
     ) -> list[Compound]:
+        eligible = []
+        for item in items:
+            if source_stereo_blocked(item):
+                item.admet = PredictionSummary(
+                    status="unavailable",
+                    error=Error(
+                        code="admet_stereo_source_unresolved",
+                        message="Source stereochemistry requires a validated graph correction before inference.",
+                    ),
+                )
+            else:
+                eligible.append(item)
         if (
             self.predictions is not None
-            and items
-            and any(item.admet is None for item in items)
+            and eligible
+            and any(item.admet is None for item in eligible)
         ):
             project, by_id = context
             values = self.predictions.summaries(
@@ -199,10 +216,11 @@ class ResultQueries:
                         correction_source_fingerprint(project, by_id[item.id]),
                         item.smiles,
                     )
-                    for item in items
+                    for item in eligible
                 ],
+                molfiles={item.id: item.structure_molfile for item in eligible},
             )
-            for item in items:
+            for item in eligible:
                 item.admet = values[item.id]
         return items
 
