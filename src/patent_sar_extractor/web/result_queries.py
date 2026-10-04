@@ -23,6 +23,11 @@ from .pdf import open_pdf, rendered_box
 from .prediction_identity import source_stereo_blocked
 from .prediction_models import PredictionSummary
 from .prediction_storage import PredictionStore
+from .recognition_storage import (
+    RECOGNITION_COLUMNS,
+    RECOGNITION_JOIN,
+    apply_recognition,
+)
 from .storage import Store
 from .table_queries import validate_columns, workbook_rows
 from .table_query_models import column_filters as parse_column_filters
@@ -55,9 +60,11 @@ class ResultQueries:
                 for row in connection.execute(
                     "SELECT c.*,r.decision,r.note,r.revision,r.updated_at AS review_updated_at "
                     + CORRECTION_COLUMNS
+                    + RECOGNITION_COLUMNS
                     + "FROM compounds c "
                     "LEFT JOIN reviews r ON c.project_id=r.project_id AND c.id=r.compound_id "
                     + CORRECTION_JOIN
+                    + RECOGNITION_JOIN
                     + "WHERE c.project_id=? ORDER BY c.ordinal LIMIT 25000",
                     (project_id,),
                 )
@@ -110,7 +117,9 @@ class ResultQueries:
                 project,
                 row,
                 joined_correction(row),
-                Compound.model_validate_json(row["payload"]),
+                apply_recognition(
+                    project, row, Compound.model_validate_json(row["payload"])
+                ),
             )
             activity_columns.observe(dto.activities)
             metrics.update(a.name for a in dto.activities)

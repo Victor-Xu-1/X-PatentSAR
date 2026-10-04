@@ -1,8 +1,8 @@
 import { Check, CircleAlert, LoaderCircle } from 'lucide-react';
 import type { Job, StageName } from '../../api/types';
 import { stageNames } from '../../api/types';
-import { jobStatusLabels, stageLabels } from '../../model/presentation';
-import { observedStages, stageStatusText, stoppedJob } from '../../model/extraction';
+import { jobStatusLabels } from '../../model/presentation';
+import { observedStages, stageLabel, stageStatusText, stoppedJob } from '../../model/extraction';
 import { StageObservation } from './StageObservation';
 
 export function StageStrip({ job, compact = false }: { job: Job | null; compact?: boolean }) {
@@ -26,13 +26,14 @@ export function StageStrip({ job, compact = false }: { job: Job | null; compact?
     <ol className="stage-strip" aria-label="真实提取流水线阶段">
       {names.map((name, index) => {
         const stage = stages.find((item) => item.name === name);
+        const label = stageLabel(name, stage);
         const status =
           job && job.history_available !== true ? 'unknown' : (stage?.status ?? 'pending');
         return (
           <li
             className={`stage ${status}`}
             key={name}
-            title={`${stageLabels[name]}：${stageStatusText(job, stage)}`}
+            title={`${label}：${stageStatusText(job, stage)}`}
           >
             <span className="stage-circle">
               {status === 'ok' ? (
@@ -49,7 +50,7 @@ export function StageStrip({ job, compact = false }: { job: Job | null; compact?
               <StageObservation job={job} stage={stage} name={name} />
             ) : (
               <div>
-                <strong>{stageLabels[name]}</strong>
+                <strong>{label}</strong>
                 <small>{stageStatusText(job, stage)}</small>
               </div>
             )}
@@ -79,10 +80,10 @@ export function StageStrip({ job, compact = false }: { job: Job | null; compact?
         : '阶段状态未知'
       : job.status === 'complete'
         ? current?.name === 'admet' && current.status === 'empty'
-          ? 'ADMET · 未计算'
+          ? `${stageLabel(current.name, current)} · 未计算`
           : jobStatusLabels[job.status]
         : current
-          ? `${stageLabels[current.name]} · ${stageStatusText(job, current)}`
+          ? `${stageLabel(current.name, current)} · ${stageStatusText(job, current)}`
           : jobStatusLabels[job.status];
   const progress = current?.progress;
   return (

@@ -70,7 +70,7 @@ const progressShape = object({
   device: nullable(oneOf(['cpu', 'gpu'])),
   peak_rss_mb: nullable(nonnegative),
 });
-const progress: Decoder<StageProgress> = (input, path) => {
+const progress: Decoder<StageProgress> = (input, path = '$') => {
   const value = progressShape(input, path);
   if (
     value.completed > value.total ||
@@ -78,7 +78,12 @@ const progress: Decoder<StageProgress> = (input, path) => {
     value.failures > value.completed
   )
     throw new ContractError(path ?? '$');
-  return value;
+  const fields = input as Record<string, unknown>;
+  if (!Object.hasOwn(fields, 'phase')) return value;
+  return {
+    ...value,
+    phase: nullable(oneOf(['recognition', 'properties']))(fields.phase, `${path}.phase`),
+  };
 };
 const healthShape = object({
   product: identity,

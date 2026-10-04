@@ -1,5 +1,5 @@
-import type { Compound, Job } from '../api/types';
-import { stageStatusLabels } from './presentation';
+import type { Compound, Job, Stage, StageName } from '../api/types';
+import { stageLabels, stageStatusLabels } from './presentation';
 
 export function stoppedJob(job: Job | null): boolean {
   return Boolean(job && job.status !== 'running' && job.status !== 'queued');
@@ -9,6 +9,14 @@ export function observedStages(job: Job | null): Job['stages'] {
   if (job?.history_available !== true) return [];
   const stages = job.admet_only === true ? [] : job.stages;
   return job.include_admet === true && job.admet_stage ? [...stages, job.admet_stage] : stages;
+}
+
+export function stageLabel(name: StageName, stage?: Stage): string {
+  if (name === 'admet') {
+    if (stage?.progress?.phase === 'recognition') return '结构识别';
+    if (stage?.progress?.phase === 'properties') return '指标计算';
+  }
+  return stageLabels[name];
 }
 
 export function stageStatusText(job: Job | null, stage: Job['stages'][number] | undefined): string {

@@ -48,6 +48,9 @@ export function Workspace({
   const [legacyActivityPage, setLegacyActivityPage] = useState<number | null>(null);
   const id = project?.id ?? null;
   const results = useResultsState(id, query, onQuery, job, onProjectReload, route.tableQuery);
+  const currentCrop = crop
+    ? (results.resource.data?.items.find((row) => row.id === crop.id) ?? crop)
+    : null;
   const layout = normalizeLayout(route.layout);
   function navigateSource(patch: Partial<Route>, clearTableQuery = false) {
     setLegacyActivityPage(null);
@@ -157,10 +160,10 @@ export function Workspace({
           />
         }
       />
-      {crop && id && (
+      {currentCrop && id && (
         <CropDialog
           projectId={id}
-          compound={crop}
+          compound={currentCrop}
           available={capabilities?.admet ?? null}
           onClose={() => setCrop(null)}
         />

@@ -71,8 +71,13 @@ The external pinned ADMET runtime is required for this complete Web workflow.
 Core CLI behavior stays separate and unchanged. Do not relabel an ADMET failure
 as full-job success just because core artifacts were already accepted.
 
-For existing completed projects, **列表选项 → 补齐六项指标** queues an ADMET-only job,
-without rerunning PDF extraction. Online graph corrections automatically queue
+For existing projects, **列表选项 → 补齐结构与指标** queues the same ADMET-only job,
+without rerunning PDF extraction. It first completes current source-checked
+recognition for proved numbered crops lacking usable recognition, even with zero
+activity observations, then computes six properties for all eligible structures.
+The same small progress strip shows both phases. Missing models/transport fail
+the job; rejected source chemistry remains explicit without invented SMILES or
+numbers. Explicit user graph corrections/blanks are not overwritten. Online graph corrections automatically queue
 only their affected compound. Coordinate/value-only edits and equivalent isomeric
 graphs do not call the model. Source/graph changes invalidate obsolete properties;
 reset uses a new correction revision. Incomplete model outputs are never shown
@@ -99,7 +104,7 @@ use that recovery boundary, and active jobs still block it.
 
 Back up the workspace SQLite together with its private `job-history` facts and
 uploaded originals. The additive `corrections`, `correction_audit` and
-`admet_predictions` tables remain workspace schema v1; generated core files are
+`admet_predictions` and rebuildable `compound_recognitions` tables remain workspace schema v1; generated core files are
 unchanged. Before rollback, preserve the upgraded database, new job facts and
 audited edits as a separate verified backup, then restore the pre-deployment
 workspace backup together with the old wheel. Old wheels do not understand new
@@ -116,15 +121,16 @@ activities. SMILES schema v2 keeps their source observations separate from the
 formal association list; both use identical chemistry/source-stereo QC and the
 same six-property worker. Rejected recognized molecules cannot enter inference,
 including activity-associated ones. A historical activity-only SMILES checkpoint
-is not complete-catalog evidence: create a new software run, preserving the old
-one. Product v0.1.0, API v1 and SQLite v1 remain unchanged. New software runs establish
+is not complete-catalog evidence: use the completion action for an existing
+verified printed-ID catalog. If source ownership is missing, a new extraction
+is needed; never assign anonymous crops guessed IDs. Product v0.1.0, API v1 and SQLite v1 remain unchanged. Software jobs establish
 new source-bound records without deleting old audit; expanding source coverage alone
 does not reset the independent ADMET cache/runtime identity. Do not populate
 missing records by editing artifacts or reassigning ambiguous numbered crops.
 
 The full table retains unassociated structure observations and activity-only
 records. It is not a unique-compound count or proof of inactivity. Source rows
-without validated SMILES are explicitly skipped by automatic metrics and retain
+without validated SMILES after source completion are explicitly skipped by automatic metrics and retain
 no numeric values; zero eligible inputs produce an empty stage, not fake success.
 The complete-workflow environment preset includes both DECIMER and ADMET CPU
 components; reading existing results still does not require installing models.

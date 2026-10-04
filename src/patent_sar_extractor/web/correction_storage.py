@@ -9,6 +9,7 @@ from typing import Any
 
 from .correction_models import CorrectionDocument
 from .errors import WebError
+from .recognition_storage import RECOGNITION_COLUMNS, RECOGNITION_JOIN, RecognitionStore
 from .storage import Store, encode
 
 _SCHEMA = (
@@ -84,9 +85,19 @@ def joined_correction(row: dict[str, Any]) -> dict[str, Any] | None:
     }
 
 
+def correction_view_fingerprint(project: dict, row: dict, compound: Any) -> str:
+    """Edit CAS includes new model chemistry; stored raw audit basis stays stable."""
+    source = correction_source_fingerprint(project, row)
+    if row.get("recognition_observation") is None:
+        return source
+    current = [source, compound.smiles, compound.recognition.model_dump()]
+    return hashlib.sha256(encode(current).encode()).hexdigest()
+
+
 class CorrectionStorage:
     def __init__(self, store: Store) -> None:
         self.store = store
+        RecognitionStore(store)
         with store.connect(write=True) as connection:
             for statement in _SCHEMA:
                 connection.execute(statement)
@@ -101,7 +112,11 @@ class CorrectionStorage:
         if project is None:
             raise WebError(404, "project_not_found", "Project does not exist.")
         row = connection.execute(
-            "SELECT * FROM compounds WHERE project_id=? AND id=?",
+            "SELECT c.* "
+            + RECOGNITION_COLUMNS
+            + "FROM compounds c "
+            + RECOGNITION_JOIN
+            + "WHERE c.project_id=? AND c.id=?",
             (project_id, compound_id),
         ).fetchone()
         if row is None:

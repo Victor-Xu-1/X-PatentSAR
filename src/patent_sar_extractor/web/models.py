@@ -112,7 +112,9 @@ class Recognition(DTO):
     quality_flag: str | None = None
     model_fingerprint: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
     token_confidence: TokenConfidence | None = None
-    stereochemistry: StereoEvidence | None = Field(default=None, exclude_if=lambda value: value is None)
+    stereochemistry: StereoEvidence | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
 
 
 class CorrectionMetadata(DTO):
@@ -201,6 +203,7 @@ class Acceptance(DTO):
 
 
 class StageProgress(DTO):
+    phase: Literal["recognition", "properties"] | None = None
     completed: int = Field(ge=0, le=1_000_000, strict=True)
     total: int = Field(ge=0, le=1_000_000, strict=True)
     cache_hits: int = Field(ge=0, le=1_000_000, strict=True)

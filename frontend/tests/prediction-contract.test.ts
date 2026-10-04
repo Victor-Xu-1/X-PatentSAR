@@ -164,6 +164,34 @@ describe('additive project/job contracts and automatic queue requests', () => {
         decodeJob({ ...job, include_admet: true, admet_stage: { ...admetStage, progress } }),
       ).toThrow('契约');
   });
+  it.each(['recognition', 'properties', null])(
+    'preserves the optional progress phase %s',
+    (phase) => {
+      const payload = {
+        ...job,
+        include_admet: true,
+        admet_only: true,
+        stages: [],
+        admet_stage: { ...admetStage, progress: { ...admetStage.progress, phase } },
+      };
+      expect(decodeJob(payload)).toEqual(payload);
+      expect(
+        decodeJob({ ...payload, admet_stage: admetStage }).admet_stage?.progress,
+      ).not.toHaveProperty('phase');
+    },
+  );
+  it.each(['', 'admet', 'structures', false, 1, {}, []].map((phase) => ({ phase })))(
+    'rejects an unknown progress phase $phase',
+    ({ phase }) => {
+      expect(() =>
+        decodeJob({
+          ...job,
+          include_admet: true,
+          admet_stage: { ...admetStage, progress: { ...admetStage.progress, phase } },
+        }),
+      ).toThrow('admet_stage.progress.phase');
+    },
+  );
   it('adds automatic ADMET to new requests without weakening QA or invoking paid advice', async () => {
     const mutate = vi.spyOn(client, 'mutate').mockResolvedValue(job);
     await api.createJob(project.id);
