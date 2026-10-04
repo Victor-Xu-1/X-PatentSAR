@@ -1,5 +1,12 @@
 .results-table th:has(.column-menu-button) .column-heading {
-  padding-right: 20px;
+  /* Reserve equal space so the menu does not shift the heading off-center. */
+  padding-inline: min(14px, 20%);
+}
+.results-table th.frozen-compound .column-heading {
+  padding-inline: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .column-menu-button {
   position: absolute;
@@ -17,9 +24,6 @@
 .column-menu-active {
   color: var(--primary);
   background: var(--surface);
-}
-.results-table th.check-col:has(.column-menu-button) {
-  padding-left: 3px;
 }
 .results-table th.check-col .column-menu-button {
   right: 3px;
@@ -145,5 +149,4 @@
 .results-table .empty-table-cell {
   padding: 24px 12px;
   color: var(--muted);
-  text-align: left;
 }

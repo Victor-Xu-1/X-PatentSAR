@@ -169,7 +169,8 @@
   .result-search {
     flex-basis: 100%;
   }
-  .toolbar-button {
+  /* Enlarged toolbar targets must not overflow narrow table cells. */
+  .toolbar-button:not(.results-table *) {
     min-height: 36px;
     min-width: 36px;
   }

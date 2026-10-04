@@ -16,14 +16,20 @@ from patent_sar_extractor.artifact_io import load_json as _load_json
 from patent_sar_extractor.artifact_io import write_json_atomic as _write_json
 from patent_sar_extractor.contracts import (
     OCSR_OBSERVATION_VERSION,
+    SMILES_SCHEMA_VERSION,
 )
 from patent_sar_extractor.core.env_runner import run_in_env
 from patent_sar_extractor.core.ocsr.engines.decimer_engine import DECIMEREngine
+from patent_sar_extractor.core.ocsr.recognition_inputs import (
+    ordered_source_results,
+    recognition_inputs,
+)
 from patent_sar_extractor.paths import PACKAGE_ROOT
 from patent_sar_extractor.smiles_artifact import (
     build_smiles_artifact,
     smiles_artifact_is_current,
     smiles_records,
+    smiles_source_records,
 )
 
 from .pipeline_context import PipelineContext
@@ -70,6 +76,7 @@ def execute_smiles(state: PipelineContext) -> None:
         params={
             **_production_smiles_ocr_options(),
             "ocsr_observation_version": OCSR_OBSERVATION_VERSION,
+            "smiles_schema_version": SMILES_SCHEMA_VERSION,
             "decimer_runtime_fingerprint": DECIMEREngine(
                 env_extra=worker_environment
             ).runtime_identity()["fingerprint"]
@@ -97,14 +104,23 @@ def execute_smiles(state: PipelineContext) -> None:
                 smiles_results,
                 state.bind_payload,
             )
+            _, sources = recognition_inputs(state.bind_payload)
+            if not ordered_source_results(
+                sources, smiles_source_records(smiles_payload)
+            ):
+                reuse_existing_smiles = False
+                reuse_errors.append(
+                    "Source recognition does not cover the complete proved catalog."
+                )
         else:
             reuse_existing_smiles = False
             reuse_errors = [
                 "SMILES output does not match the current production artifact contract."
             ]
         if reuse_existing_smiles:
-            n_smiles = len(smiles_results)
-            n_valid = sum(1 for r in smiles_results if r.get("rdkit_valid"))
+            all_results = [*smiles_results, *smiles_source_records(smiles_payload)]
+            n_smiles = len(all_results)
+            n_valid = sum(1 for r in all_results if r.get("OCSR_quality_flag") == "ok")
             print(f"  ⏭ [{step}] 已存在且通过当前严格规则，跳过")
             state.progress.mark_checkpoint_reused()
         else:
@@ -161,9 +177,18 @@ def execute_smiles(state: PipelineContext) -> None:
                 "SMILES worker returned an incompatible or diagnostic artifact."
             )
         smiles_results = smiles_records(smiles_payload)
-        n_smiles = len(smiles_results)
-        n_valid = sum(1 for r in smiles_results if r.get("rdkit_valid"))
+        _, sources = recognition_inputs(state.bind_payload)
+        if not ordered_source_results(sources, smiles_source_records(smiles_payload)):
+            raise RuntimeError(
+                "SMILES worker omitted or misassigned catalog observations."
+            )
+        all_results = [*smiles_results, *smiles_source_records(smiles_payload)]
+        n_smiles = len(all_results)
+        n_valid = sum(1 for r in all_results if r.get("OCSR_quality_flag") == "ok")
         _write_step_manifest(state.smiles_json, smiles_fp)
+    smiles_payload = _load_json(state.smiles_json, {})
+    smiles_results = smiles_records(smiles_payload)
+    source_results = smiles_source_records(smiles_payload)
     state.pipeline_log["steps"][step] = {
         **state.pipeline_log["steps"].get(step, {}),
         "from_cache": state.progress.checkpoint_reused,
@@ -172,10 +197,10 @@ def execute_smiles(state: PipelineContext) -> None:
         "output": state.smiles_json,
         "total": n_smiles,
         "valid": n_valid,
+        "formal_total": len(smiles_results),
+        "source_total": len(source_results),
     }
     print(f"     ✅ valid_smiles={n_valid}/{n_smiles}")
-    smiles_payload = _load_json(state.smiles_json, {})
-    smiles_results = smiles_records(smiles_payload)
     smiles_errors = _smiles_acceptance_errors(smiles_results, state.bind_payload)
     if smiles_errors:
         state.pipeline_log["steps"][step]["status"] = (

@@ -42,6 +42,10 @@ from patent_sar_extractor.contracts import (
     artifact_identity_matches,
 )
 from patent_sar_extractor.core.cpd_filter import filter_examples_only
+from patent_sar_extractor.core.ocsr.recognition_inputs import (
+    ordered_source_results,
+    recognition_inputs,
+)
 from patent_sar_extractor.core.ocsr.smiles_converter import SmilesConverter
 from patent_sar_extractor.core.ocsr.stereo_gate import stereo_record_error
 from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
@@ -178,7 +182,9 @@ def validate_strict_smiles_results(bindings: list, results: list) -> list[str]:
         suspicious = result.get("suspicious_elements") or []
         stereo_error = stereo_record_error(result)
         if stereo_error:
-            errors.append(f"{cpd}: source stereochemistry requires review: {stereo_error}")
+            errors.append(
+                f"{cpd}: source stereochemistry requires review: {stereo_error}"
+            )
         if (
             not result.get("rdkit_valid")
             or not result.get("canonical_smiles")
@@ -524,21 +530,36 @@ def main():
     if not args.include_intermediates:
         bindings = filter_examples_only(bindings)
 
+    # One model process and one QC authority cover the complete proved catalog.
+    # Formal QA keeps its ordered association view; no-activity rows are not
+    # silently omitted or falsely labelled as formally accepted measurements.
+    supplemental = []
+    if not args.diagnostic_unvalidated_input:
+        with open(args.input, "r", encoding="utf-8") as source:
+            binding_payload = json.load(source)
+        _, supplemental = recognition_inputs(binding_payload)
+        if not args.include_intermediates:
+            supplemental = filter_examples_only(supplemental)
+    formal_count = len(bindings)
+    all_inputs = [*bindings, *supplemental]
+
     # Resolve image paths
     base_dir = os.path.dirname(os.path.abspath(args.input))
-    bindings = resolve_image_paths(bindings, base_dir)
+    all_inputs = resolve_image_paths(all_inputs, base_dir)
+    bindings = all_inputs[:formal_count]
+    supplemental = all_inputs[formal_count:]
 
     # Check how many images are accessible
     images_found = sum(
         1
-        for b in bindings
+        for b in all_inputs
         if os.path.isfile(
             b.get("ocsr_image_path")
             or b.get("source_image_path")
             or b.get("image_path", "")
         )
     )
-    print(f"Images accessible: {images_found}/{len(bindings)}")
+    print(f"Images accessible: {images_found}/{len(all_inputs)}")
 
     # Preprocessing directory
     preprocess_dir = os.path.join(os.path.dirname(args.output), "preprocessed")
@@ -586,7 +607,7 @@ def main():
     start_time = time.time()
 
     results = converter.convert_batch(
-        bindings,
+        all_inputs,
         preprocess_dir=preprocess_dir,
         only_bound=only_bound,
         limit=args.limit,
@@ -595,6 +616,14 @@ def main():
     )
 
     elapsed = time.time() - start_time
+    formal_results = results[:formal_count]
+    source_results = results[formal_count:]
+    if not args.diagnostic_unvalidated_input and not ordered_source_results(
+        supplemental, source_results
+    ):
+        raise RuntimeError(
+            "Source recognition output does not match the proved catalog in order."
+        )
 
     # Save one versioned JSON artifact; bare lists are intentionally rejected
     # by downstream formal gates.
@@ -605,7 +634,9 @@ def main():
     )
     write_json_atomic(
         args.output,
-        build_smiles_artifact(results, execution_mode=execution_mode),
+        build_smiles_artifact(
+            formal_results, execution_mode=execution_mode, source_records=source_results
+        ),
     )
 
     # Save CSV output
@@ -631,7 +662,7 @@ def main():
             f"{stats['valid_entries']} valid"
         )
     if not args.diagnostic_unvalidated_input:
-        result_errors = validate_strict_smiles_results(bindings, results)
+        result_errors = validate_strict_smiles_results(bindings, formal_results)
         if result_errors:
             write_failure_marker(
                 os.path.dirname(args.output) or ".",

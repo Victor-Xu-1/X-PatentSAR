@@ -200,6 +200,14 @@ class ResultQueries:
                         message="Source stereochemistry requires a validated graph correction before inference.",
                     ),
                 )
+            elif item.recognition.status == "invalid":
+                item.admet = PredictionSummary(
+                    status="unavailable",
+                    error=Error(
+                        code="admet_recognition_rejected",
+                        message="Rejected source chemistry requires a validated correction before inference.",
+                    ),
+                )
             else:
                 eligible.append(item)
         if (

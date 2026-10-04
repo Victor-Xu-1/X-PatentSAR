@@ -184,10 +184,28 @@ association is not evidence of inactivity. No unassociated source receives guess
 SMILES, accepted confidence or model values. Missing images are retained as explicit
 unavailable evidence rather than silently dropping their rows.
 
+`core/catalog_reader.py` now owns the common bounded source-proof reader used by
+both recognition and the Web adapter; the former duplicate Web proof logic is removed.
+`core/ocsr/recognition_inputs.py` constructs one batch: the original formal order,
+then remaining uniquely proved printed IDs, with no repeated inference for proved
+reprints. Source-only images enter the same converter/model/cache and identical
+raw-string, RDKit and source-stereo checks, not a fallback/research recognizer.
+SMILES v2 stores the two consumer scopes as `records` and `source_records`; the
+formal Excel/SDF and QA keep their original ordered association scope. The Web
+rechecks exact ID/structure pairs before attaching source results. Rejected source
+candidates do not acquire an effective SMILES or six properties. The existing
+prediction worker accepts qualified molecules independently of activity membership;
+invalid recognition is excluded consistently for both kinds of row.
+The recognition fingerprint includes all proved catalog image contents and SMILES
+schema v2, so an old activity-only checkpoint cannot falsely report full coverage.
+Product v0.1.0, API v1, ruleset 2.0.4 and SQLite v1 remain unchanged. This source
+coverage change does not reset the independent ADMET runtime/cache identity.
+Original artifacts and audit are not retagged.
+
 The raw projection epoch is `compound-catalog-v1`. Rebuilding it once establishes
 a new source nonce; old correction/prediction audit is preserved but becomes stale,
-never silently reapplied. Formal binding, OCSR and deterministic QA still verify
-the activity-associated subset; a full-corpus export declares that scope and remains
+never silently reapplied. Formal binding and deterministic QA still verify
+the activity-associated subset; OCSR now also covers the proved catalog. A full-corpus export declares that scope and remains
 review-only when it includes unassociated sources.
 
 ### Task and analysis boundaries
@@ -377,7 +395,11 @@ Formal JSON artifacts carry the same identity envelope:
 }
 ```
 
-`smiles_results.json` is a versioned object with a `records` array; an unversioned bare list is not a reusable formal artifact. Cache reuse requires exact identity plus PDF, dependency and parameter fingerprints.
+`smiles_results.json` v2 is a versioned object with an ordered formal `records` array
+and a separate `source_records` array for other proved printed IDs. Failed observations
+stay explicit; they never become accepted chemistry or measured activities. An
+unversioned bare list is not a reusable formal artifact. Cache reuse requires exact
+identity plus PDF, dependency and complete source-catalog image fingerprints.
 
 All fail-closed stages use one marker name and one writer: `STRICT_ACCEPTANCE_FAILED.json`. A successful formal QA clears that marker. There are no stage-specific failure filenames with conflicting meanings.
 
@@ -390,7 +412,7 @@ All fail-closed stages use one marker name and one writer: `STRICT_ACCEPTANCE_FA
 | Ruleset | `patentsar.accuracy-first` `2.0.4` | Acceptance or binding behavior |
 | Artifact/cache schema | Namespaced integer versions | Serialized shape or cache compatibility |
 
-Current non-default schema revisions are page classification v2 (`candidate_pages` replaces the ambiguous `core_pages` field), bindings v2 and formal QA v3. The diagnostic review-excerpt metadata starts at v1. All other current artifact/cache schemas are v1.
+Current non-default schema revisions are page classification v2 (`candidate_pages` replaces the ambiguous `core_pages` field), bindings/SMILES v2 and formal QA v3. The diagnostic review-excerpt metadata starts at v1. All other current artifact/cache schemas are v1.
 
 `contracts.py` is the only authority. Pipeline contract 2.0 removes the unused core-PDF branch and hidden worker profiling. Ruleset 2.0 makes deterministic QA the sole acceptance authority and explicitly separates diagnostic output. Ruleset 2.0.1 fixes spatial duplicate handling and strengthens ambiguity rejection; it invalidates old rule-dependent stage fingerprints without changing the product version or serialized schemas.
 

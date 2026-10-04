@@ -111,6 +111,17 @@ An unspecified document page uses `first_structure_page`; explicit deep links
 and source jumps retain their chosen page after refresh. With no extracted
 structure source yet, use **浏览原文** only when deliberately opening page 1.
 
+The same recognition batch now includes confirmed numbered structures without
+activities. SMILES schema v2 keeps their source observations separate from the
+formal association list; both use identical chemistry/source-stereo QC and the
+same six-property worker. Rejected recognized molecules cannot enter inference,
+including activity-associated ones. A historical activity-only SMILES checkpoint
+is not complete-catalog evidence: create a new software run, preserving the old
+one. Product v0.1.0, API v1 and SQLite v1 remain unchanged. New software runs establish
+new source-bound records without deleting old audit; expanding source coverage alone
+does not reset the independent ADMET cache/runtime identity. Do not populate
+missing records by editing artifacts or reassigning ambiguous numbered crops.
+
 The full table retains unassociated structure observations and activity-only
 records. It is not a unique-compound count or proof of inactivity. Source rows
 without validated SMILES are explicitly skipped by automatic metrics and retain

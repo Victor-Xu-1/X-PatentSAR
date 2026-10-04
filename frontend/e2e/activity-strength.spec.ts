@@ -62,7 +62,7 @@ for (const width of [1830, 390]) {
       );
       expect(background).toBe(
         tier === 'strong'
-          ? 'rgb(201, 232, 213)'
+          ? 'rgb(120, 217, 154)'
           : tier === 'medium'
             ? 'rgb(237, 247, 240)'
             : 'rgb(255, 255, 255)',
@@ -100,11 +100,15 @@ for (const width of [1830, 390]) {
     ).toBeVisible();
     expect(
       await selectedCell.evaluate((element) => getComputedStyle(element).backgroundColor),
-    ).toBe('rgb(201, 232, 213)');
+    ).toBe('rgb(120, 217, 154)');
+    await selectedRow.getByRole('checkbox').check();
+    expect(
+      await selectedCell.evaluate((element) => getComputedStyle(element).backgroundColor),
+    ).toBe('rgb(120, 217, 154)');
     await selectedCell.hover();
     expect(
       await selectedCell.evaluate((element) => getComputedStyle(element).backgroundColor),
-    ).toBe('rgb(201, 232, 213)');
+    ).toBe('rgb(120, 217, 154)');
     await page.getByLabel('搜索结果', { exact: true }).fill('');
     await expect(table.locator('tbody tr')).toHaveCount(25);
     await page.locator('.table-scroll').evaluate((element) => {
