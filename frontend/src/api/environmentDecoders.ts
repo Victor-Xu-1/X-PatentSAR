@@ -3,6 +3,7 @@ import {
   boolean,
   ContractError,
   count,
+  defaulted,
   nullable,
   object,
   oneOf,
@@ -88,22 +89,39 @@ export const decodeEnvironmentOperation: Decoder<EnvironmentOperation> = (value,
     throw new ContractError('$.operation');
   return result;
 };
+const componentStatus = oneOf([
+  'unchecked',
+  'checking',
+  'missing',
+  'partial',
+  'ready',
+  'unconfigured',
+  'incompatible',
+  'error',
+]);
+const componentChecks = array(object({ name: string, ok: boolean, message: string }));
 const component = object({
   id: oneOf(environmentComponentIds),
   name: string,
   description: string,
   version: string,
   detected_version: nullable(string),
-  status: oneOf([
-    'unchecked',
-    'checking',
-    'missing',
-    'partial',
-    'ready',
-    'unconfigured',
-    'incompatible',
-    'error',
-  ]),
+  status: componentStatus,
+  presence: defaulted(oneOf(['present', 'missing', 'unconfigured', 'unknown']), 'unknown'),
+  verification: defaulted(oneOf(['current', 'stale', 'unchecked']), 'unchecked'),
+  checked_at: defaulted(nullable(string), null),
+  last_check: defaulted(
+    nullable(
+      object({
+        status: componentStatus,
+        detected_version: nullable(string),
+        checked_at: nullable(string),
+        checks: componentChecks,
+        problem: nullable(string),
+      }),
+    ),
+    null,
+  ),
   location: nullable(string),
   kind: oneOf(['tool', 'runtime', 'models']),
   group: oneOf(['tools', 'base', 'structure', 'admet']),
@@ -113,7 +131,7 @@ const component = object({
   installed_bytes: nullable(count),
   license: string,
   source_url: string,
-  checks: array(object({ name: string, ok: boolean, message: string })),
+  checks: componentChecks,
   problem: nullable(string),
   dependencies: ids,
 });

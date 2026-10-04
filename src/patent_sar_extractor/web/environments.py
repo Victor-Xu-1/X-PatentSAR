@@ -9,8 +9,10 @@ from pathlib import Path
 from typing import Any
 
 from .analysis import AnalysisService
+from .environment_catalog import component_view
 from .environment_config import CONFIG_KEYS, EnvironmentConfig
 from .environment_models import (
+    ComponentId,
     EnvironmentCatalog,
     EnvironmentComponent,
     EnvironmentOperation,
@@ -92,34 +94,36 @@ class EnvironmentManager:
     def _bindings(self) -> dict[str, str | None]:
         return self.config.bindings(self.analysis.settings)
 
-    def _source_key(self) -> str:
+    def _source_key(
+        self,
+        bindings: dict[str, str | None] | None = None,
+        fingerprint: str | None = None,
+    ) -> str:
         info = {
-            "bindings": self._bindings(),
-            "config": self.config.fingerprint(),
+            "bindings": self._bindings() if bindings is None else bindings,
+            "config": self.config.fingerprint() if fingerprint is None else fingerprint,
             "catalog": self.recipe_identity(),
         }
         return hashlib.sha256(encode(info).encode()).hexdigest()
 
+    def _snapshot(self) -> tuple[dict[str, str | None], str, str]:
+        before = self.config.fingerprint()
+        bindings = self._bindings()
+        after = self.config.fingerprint()
+        if before != after:
+            raise WebError(
+                409,
+                "environment_configuration_changed",
+                "Runtime configuration changed while reading; refresh before checking environments.",
+            )
+        return bindings, after, self._source_key(bindings, after)
+
     def catalog(self) -> EnvironmentCatalog:
-        reports = self.store.reports(self._source_key())
-        fields = {
-            "status",
-            "location",
-            "checks",
-            "detected_version",
-            "installed_bytes",
-            "problem",
-        }
+        bindings, _, source_key = self._snapshot()
+        records = self.store.report_records()
         components = [
-            EnvironmentComponent.model_validate(
-                {
-                    **item,
-                    **{
-                        key: value
-                        for key, value in reports.get(item["id"], {}).items()
-                        if key in fields
-                    },
-                }
+            component_view(
+                item, bindings.get(item["id"]), source_key, records.get(item["id"])
             )
             for item in self.metadata()
         ]
@@ -162,7 +166,7 @@ class EnvironmentManager:
                     component_ids=["base", "admet", "admet-models"],
                 ),
             ],
-            checked_at=saved["checked_at"] if reports else None,
+            checked_at=saved["checked_at"],
             active_operation=active,
             operations=operations,
         )
@@ -192,6 +196,7 @@ class EnvironmentManager:
                 "Only pinned, supported component recipes may be installed.",
             )
         root = self.storage.validate(selected.install_root)
+        bindings, fingerprint, source_key = self._snapshot()
         payload = {
             "schema_version": 1,
             "requires_owner_ack": True,
@@ -200,10 +205,10 @@ class EnvironmentManager:
             if request.action == "install"
             else sorted(ids),
             "install_root": str(root),
-            "bindings": self._bindings(),
+            "bindings": bindings,
             "cache_root": str(self.store.root / "downloads"),
-            "config_fingerprint": self.config.fingerprint(),
-            "source_key": self._source_key(),
+            "config_fingerprint": fingerprint,
+            "source_key": source_key,
         }
         fingerprint = hashlib.sha256(
             encode({**request.model_dump(), "component_ids": sorted(ids)}).encode()
@@ -215,12 +220,12 @@ class EnvironmentManager:
             self.queue.wake.set()
         return operation
 
-    def resolve_components(self, identifiers: list[str]) -> list[str]:
+    def resolve_components(self, identifiers: list[ComponentId]) -> list[ComponentId]:
         known = {item["id"]: item for item in self.metadata()}
         visiting: set[str] = set()
-        result: list[str] = []
+        result: list[ComponentId] = []
 
-        def visit(identifier: str) -> None:
+        def visit(identifier: ComponentId) -> None:
             if identifier not in known or identifier in visiting:
                 raise WebError(
                     409,
@@ -329,6 +334,12 @@ class EnvironmentManager:
         return safe
 
     def _completed(self, plan: dict[str, Any], result: dict[str, Any]) -> None:
+        if plan["action"] == "inspect" and self._snapshot()[2] != plan["source_key"]:
+            raise WebError(
+                409,
+                "environment_inspection_changed",
+                "Runtime configuration or recipes changed during inspection; historical results were preserved but not published as current. Refresh and inspect again.",
+            )
         if plan["action"] == "install":
             bindings = self._verified_bindings(plan, result)
             additional = result.get("additional_config") or {}
@@ -398,4 +409,7 @@ class EnvironmentManager:
             EnvironmentComponent.model_validate(item).model_dump()
             for item in result["components"]
         ]
-        self.store.publish_reports(self._source_key(), reports)
+        source_key = (
+            plan["source_key"] if plan["action"] == "inspect" else self._snapshot()[2]
+        )
+        self.store.publish_reports(source_key, reports)

@@ -63,7 +63,7 @@ if mode.startswith('diagnostic-'):
 card = json.loads(sys.argv[3])
 install = plan['action'] == 'install'
 card.update(status='ready' if install else 'missing', detected_version='3.12' if install else None,
-            location=plan['bindings']['base'] if install else None,
+            location=plan['bindings']['base'],
             checks=[{'name':'controlled-boundary','ok':install,'message':'not a real-package claim'}],
             problem=None if install else 'Controlled missing package')
 result = {'schema_version':1, 'operation_id':plan['operation_id'], 'components':[card],
@@ -208,6 +208,9 @@ class EnvironmentAPITests(unittest.TestCase):
             self.assertFalse(value["applied"])
             catalog = client.get("/api/v1/environments").json()
             self.assertEqual(catalog["components"][0]["status"], "missing")
+            self.assertEqual(catalog["components"][0]["presence"], "present")
+            self.assertEqual(catalog["components"][0]["verification"], "current")
+            self.assertIsNotNone(catalog["components"][0]["checked_at"])
             self.assertIsNotNone(catalog["checked_at"])
             duplicate = self.start(client)
             self.assertEqual(duplicate.json()["id"], identifier)
@@ -220,6 +223,30 @@ class EnvironmentAPITests(unittest.TestCase):
                 ],
                 "complete",
             )
+
+    def test_changed_inspection_snapshot_fails_without_promoting_cached_checks(self):
+        with self.client() as client:
+            self.authenticate(client)
+            manager = client.app.state.environments
+            original = manager._completed
+
+            def changed(plan, result):
+                self.config.joinpath("env_paths.local.yaml").write_text(
+                    "custom: changed\n"
+                )
+                self.config.joinpath("env_paths.local.yaml").chmod(0o600)
+                original(plan, result)
+
+            with patch.object(manager.queue, "completed", changed):
+                started = self.start(client, request_id="environment-race-1234")
+                self.assertEqual(started.status_code, 202, started.text)
+                result = self.completed(client, started.json()["id"])
+            self.assertEqual(result["status"], "failed", result)
+            self.assertEqual(result["error"]["code"], "environment_inspection_changed")
+            catalog = client.get("/api/v1/environments").json()
+            self.assertEqual(catalog["components"][0]["verification"], "unchecked")
+            self.assertIsNone(catalog["checked_at"])
+            self.assertFalse(result["applied"])
 
     def test_verified_activation_and_failure_do_not_fake_success(self):
         with self.client() as client:

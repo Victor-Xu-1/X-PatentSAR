@@ -12,7 +12,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
-from .environment_models import EnvironmentOperation
+from .environment_models import ComponentId, EnvironmentOperation
 from .errors import WebError
 from .files import private_directory
 from .storage import encode, now
@@ -45,7 +45,7 @@ class EnvironmentStore:
         self,
         state_root: Path,
         install_root: Path,
-        resolver: Callable[[list[str]], list[str]] | None = None,
+        resolver: Callable[[list[ComponentId]], list[ComponentId]] | None = None,
     ) -> None:
         self.resolver = resolver or (lambda identifiers: identifiers)
         self.root = private_directory(state_root / "environments")
@@ -288,20 +288,39 @@ class EnvironmentStore:
                 (*fields.values(), operation_id),
             )
 
-    def reports(self, source_key: str) -> dict[str, dict[str, Any]]:
+    def report_records(self) -> dict[str, dict[str, Any]]:
+        """Read at most six saved observations, retaining their verification scope."""
         with self.connect() as connection:
-            return {
-                row["id"]: json.loads(row["report"])
-                for row in connection.execute(
-                    "SELECT * FROM components WHERE source_key=?", (source_key,)
-                )
-            }
+            rows = connection.execute("SELECT * FROM components LIMIT 7").fetchall()
+        try:
+            if len(rows) > 6 or any(len(row["report"]) > 128 * 1024 for row in rows):
+                raise ValueError("Unbounded saved reports")
+            output = {}
+            for row in rows:
+                report = json.loads(row["report"])
+                if not isinstance(report, dict) or report.get("id") != row["id"]:
+                    raise ValueError("Saved report identity differs")
+                output[row["id"]] = {"source_key": row["source_key"], "report": report}
+            return output
+        except (ValueError, TypeError) as error:
+            raise WebError(
+                409,
+                "environment_record",
+                "Saved environment checks are invalid; no files were modified.",
+            ) from error
 
     def publish_reports(self, source_key: str, reports: list[dict[str, Any]]) -> None:
+        checked_at = now()
         with self.connect(write=True) as connection:
             for report in reports:
                 connection.execute(
                     "INSERT INTO components(id,source_key,report) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET source_key=excluded.source_key,report=excluded.report",
-                    (report["id"], source_key, encode(report)),
+                    (
+                        report["id"],
+                        source_key,
+                        encode({**report, "checked_at": checked_at}),
+                    ),
                 )
-            connection.execute("UPDATE settings SET checked_at=? WHERE id=1", (now(),))
+            connection.execute(
+                "UPDATE settings SET checked_at=? WHERE id=1", (checked_at,)
+            )

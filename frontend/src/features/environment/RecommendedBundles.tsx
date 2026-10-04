@@ -1,19 +1,22 @@
-import { Download } from 'lucide-react';
+import { Download, ScanLine } from 'lucide-react';
 import type {
   EnvironmentComponent,
   EnvironmentComponentId,
   EnvironmentPreset,
 } from '../../api/environmentTypes';
 import { selectedEnvironmentComponents } from '../../model/environment';
+import { canInstallEnvironmentPlan, environmentBundleAction } from '../../model/environmentStatus';
 export function RecommendedBundles({
   presets,
   components,
   disabled,
+  onInspect,
   onInstall,
 }: {
   presets: EnvironmentPreset[];
   components: EnvironmentComponent[];
   disabled: boolean;
+  onInspect: (ids: EnvironmentComponentId[]) => void;
   onInstall: (ids: EnvironmentComponentId[]) => void;
 }) {
   return (
@@ -29,7 +32,10 @@ export function RecommendedBundles({
           } catch (error) {
             problem = error instanceof Error ? error.message : '组件依赖目录无效。';
           }
-          const complete = problem === null && plan.every((item) => item.installable);
+          const action = environmentBundleAction(plan);
+          const label = { ready: '已就绪', inspect: '检测组合', install: '安装组合' }[action];
+          const complete =
+            problem === null && (action === 'inspect' || canInstallEnvironmentPlan(plan));
           return (
             <article className="environment-preset" key={preset.id}>
               <div>
@@ -44,11 +50,15 @@ export function RecommendedBundles({
                 type="button"
                 className="primary"
                 disabled={disabled || !complete}
-                aria-label={`安装组合 ${preset.name}`}
-                onClick={() => onInstall(preset.component_ids)}
+                aria-label={`${label} ${preset.name}`}
+                onClick={() =>
+                  action === 'inspect'
+                    ? onInspect(plan.map((component) => component.id))
+                    : onInstall(preset.component_ids)
+                }
               >
-                <Download size={14} />
-                安装组合
+                {action === 'inspect' ? <ScanLine size={14} /> : <Download size={14} />}
+                {label}
               </button>
             </article>
           );

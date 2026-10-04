@@ -1,11 +1,14 @@
 import { CheckCircle2, Download, Package, ScanLine } from 'lucide-react';
 import type { EnvironmentComponent, EnvironmentComponentId } from '../../api/environmentTypes';
+import { environmentGroups } from '../../model/environment';
 import {
-  environmentBytes,
-  environmentGroups,
-  environmentStatusLabels,
-  safeEnvironmentSource,
-} from '../../model/environment';
+  environmentComponentAction,
+  environmentComponentBadge,
+  hasEnvironmentComponentFailure,
+  isEnvironmentComponentReady,
+} from '../../model/environmentStatus';
+import { dateText } from '../../model/presentation';
+import { ComponentDetails } from './ComponentDetails';
 export function ComponentLibrary({
   components,
   disabled,
@@ -35,112 +38,109 @@ export function ComponentLibrary({
                 {label}
                 <small>{items.length} 项</small>
               </h3>
-              {items.map((component) => (
-                <article
-                  key={component.id}
-                  className="environment-component"
-                  data-component={component.id}
-                >
-                  <span className="environment-component-icon">
-                    {component.status === 'ready' ? (
-                      <CheckCircle2 size={20} />
-                    ) : (
-                      <Package size={20} />
-                    )}
-                  </span>
-                  <div className="environment-component-body">
-                    <div className="component-title">
-                      <h4>{component.name}</h4>
-                      <span className={`badge environment-status-${component.status}`}>
-                        {environmentStatusLabels[component.status]}
-                      </span>
-                      <small className="muted">
-                        {component.detected_version ?? component.version}
-                      </small>
+              {items.map((component) => {
+                const badge = environmentComponentBadge(component);
+                const action = environmentComponentAction(component);
+                const actionLabel = {
+                  installed: '已安装',
+                  inspect: '先检测',
+                  install: '安装',
+                  repair: '修复',
+                }[action];
+                const canInstall =
+                  (action === 'install' || action === 'repair') && component.installable;
+                const current = component.verification === 'current';
+                const checkedAt = current
+                  ? component.checked_at
+                  : component.verification === 'stale'
+                    ? component.last_check?.checked_at
+                    : null;
+                const problem =
+                  current ||
+                  hasEnvironmentComponentFailure(component) ||
+                  component.presence === 'missing' ||
+                  component.presence === 'unconfigured'
+                    ? component.problem
+                    : null;
+                return (
+                  <article
+                    key={component.id}
+                    className="environment-component"
+                    data-component={component.id}
+                  >
+                    <span className="environment-component-icon">
+                      {isEnvironmentComponentReady(component) ? (
+                        <CheckCircle2 size={20} />
+                      ) : (
+                        <Package size={20} />
+                      )}
+                    </span>
+                    <div className="environment-component-body">
+                      <div className="component-title">
+                        <h4>{component.name}</h4>
+                        <span className={`badge environment-status-${badge.tone}`}>
+                          {badge.label}
+                        </span>
+                        <small className="muted">目标：{component.version}</small>
+                        {current && (
+                          <small className="muted">
+                            实测：{component.detected_version ?? '未报告'}
+                          </small>
+                        )}
+                      </div>
+                      <p
+                        className="component-location break-word"
+                        title={component.location ?? undefined}
+                      >
+                        位置：{component.location ?? '未配置'}
+                      </p>
+                      <p className="component-checked-at muted">
+                        {component.verification === 'stale' ? '上次检测时间：' : '检测时间：'}
+                        {checkedAt ? (
+                          <time dateTime={checkedAt}>{dateText(checkedAt)}</time>
+                        ) : component.verification === 'unchecked' ? (
+                          '未知（待检测）'
+                        ) : (
+                          '时间未知'
+                        )}
+                      </p>
+                      {problem && <p className="component-problem">{problem}</p>}
+                      <ComponentDetails component={component} components={components} />
                     </div>
-                    {component.problem && <p className="component-problem">{component.problem}</p>}
-                    <details>
-                      <summary>版本、来源与检查</summary>
-                      <p className="muted">{component.description}</p>
-                      <dl className="component-metadata">
-                        <div>
-                          <dt>目标版本</dt>
-                          <dd>{component.version}</dd>
-                        </div>
-                        <div>
-                          <dt>检测版本</dt>
-                          <dd>{component.detected_version ?? '未报告'}</dd>
-                        </div>
-                        <div>
-                          <dt>下载</dt>
-                          <dd>{environmentBytes(component.download_bytes)}</dd>
-                        </div>
-                        <div>
-                          <dt>已占用</dt>
-                          <dd>{environmentBytes(component.installed_bytes)}</dd>
-                        </div>
-                      </dl>
-                      {component.location && (
-                        <p className="component-location break-word">位置：{component.location}</p>
-                      )}
-                      {component.dependencies.length > 0 && (
-                        <p className="muted">
-                          前置依赖：
-                          {component.dependencies
-                            .map((id) => components.find((item) => item.id === id)?.name ?? id)
-                            .join(' · ')}
-                        </p>
-                      )}
-                      <p className="break-word">许可证：{component.license || '未报告'}</p>
-                      {safeEnvironmentSource(component.source_url) ? (
-                        <a
-                          href={safeEnvironmentSource(component.source_url)!}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          服务端核定来源
-                        </a>
-                      ) : (
-                        <p className="break-word">来源：{component.source_url || '未报告'}</p>
-                      )}
-                      {component.checks.length ? (
-                        <ul>
-                          {component.checks.map((check, index) => (
-                            <li key={index}>
-                              {check.ok ? '通过' : '未通过'} · {check.name}：{check.message}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="muted">尚未报告检查结果。</p>
-                      )}
-                    </details>
-                  </div>
-                  <div className="component-actions">
-                    <button
-                      type="button"
-                      aria-label={`检测 ${component.name}`}
-                      disabled={disabled}
-                      onClick={() => onInspect([component.id])}
-                    >
-                      <ScanLine size={14} />
-                      检测
-                    </button>
-                    <button
-                      type="button"
-                      aria-label={`安装 ${component.name}`}
-                      disabled={disabled || !component.installable}
-                      onClick={() => onInstall([component.id])}
-                      title={
-                        !component.installable ? '服务端不允许安装此组件，请检查原因' : undefined
-                      }
-                    >
-                      <Download size={14} />
-                      安装
-                    </button>
-                  </div>
-                </article>
-              ))}
+                    <div className="component-actions">
+                      <button
+                        type="button"
+                        aria-label={`检测 ${component.name}`}
+                        disabled={disabled}
+                        onClick={() => onInspect([component.id])}
+                      >
+                        <ScanLine size={14} />
+                        检测
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`${actionLabel} ${component.name}`}
+                        disabled={disabled || !canInstall}
+                        onClick={() => onInstall([component.id])}
+                        title={
+                          action === 'installed'
+                            ? '已通过当前检测，无需重复安装'
+                            : action === 'inspect'
+                              ? '先检测组件状态，不重复安装已有组件'
+                              : !component.installable
+                                ? '服务端不允许安装此组件，请检查原因'
+                                : action === 'repair'
+                                  ? '修复仍需确认完整依赖、下载范围及许可证'
+                                  : undefined
+                        }
+                      >
+                        <Download size={14} />
+                        {actionLabel}
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
             </section>
           ) : null;
         })

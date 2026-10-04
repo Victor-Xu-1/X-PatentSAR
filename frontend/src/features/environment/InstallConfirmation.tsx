@@ -6,6 +6,10 @@ import type {
   EnvironmentSettings,
 } from '../../api/environmentTypes';
 import { environmentBytes } from '../../model/environment';
+import {
+  environmentComponentBadge,
+  isEnvironmentComponentReady,
+} from '../../model/environmentStatus';
 export interface InstallPlan {
   components: EnvironmentComponent[];
   settings: EnvironmentSettings;
@@ -14,18 +18,21 @@ export interface InstallPlan {
 export function InstallConfirmation({
   plan,
   currentRevision,
+  planCurrent,
   busy,
   onClose,
   onConfirm,
 }: {
   plan: InstallPlan;
   currentRevision: number;
+  planCurrent: boolean;
   busy: boolean;
   onClose: () => void;
   onConfirm: () => Promise<void>;
 }) {
   const [confirmed, setConfirmed] = useState(false);
-  const stale = currentRevision !== plan.settings.revision;
+  const configurationChanged = currentRevision !== plan.settings.revision;
+  const stale = configurationChanged || !planCurrent;
   const missingLicense = plan.components.some((component) => !component.license.trim());
   return (
     <Dialog title="确认环境安装" onClose={onClose} busy={busy} wide>
@@ -46,9 +53,14 @@ export function InstallConfirmation({
           {plan.components.map((component) => (
             <li key={component.id} data-install-component={component.id}>
               <strong>
-                {component.name} · {component.version}
+                {component.name} · 目标版本 {component.version}
               </strong>
               <small>{plan.requested.includes(component.id) ? '所选组件' : '前置依赖'}</small>
+              <small>
+                {isEnvironmentComponentReady(component)
+                  ? '已安装·已验证；后端复验后复用'
+                  : environmentComponentBadge(component).label}
+              </small>
               <span>
                 下载：{environmentBytes(component.download_bytes)} · 许可证：
                 {component.license || '未报告'}
@@ -60,7 +72,9 @@ export function InstallConfirmation({
         {(stale || missingLicense) && (
           <p className="error-notice">
             {stale
-              ? '安装目录配置已变化，请关闭并重新确认。'
+              ? configurationChanged
+                ? '安装目录配置已变化，请关闭并重新确认。'
+                : '组件状态或依赖计划已变化，请关闭并重新确认；不重复安装已有组件。'
               : '服务端未提供完整许可证信息，不能确认安装。'}
           </p>
         )}

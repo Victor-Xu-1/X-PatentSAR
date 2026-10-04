@@ -139,6 +139,14 @@
 }
 .component-title small {
   font-size: 11px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.environment-card .component-location,
+.environment-card .component-checked-at {
+  color: var(--muted);
+  font-size: 11px;
+  overflow-wrap: anywhere;
 }
 .component-metadata {
   display: flex;

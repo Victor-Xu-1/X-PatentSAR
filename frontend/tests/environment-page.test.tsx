@@ -74,7 +74,7 @@ describe('one environment workspace and explicit installation authority', () => 
       .mockRejectedValueOnce(new ApiError(0, 'network_error', '结果未知', true))
       .mockResolvedValueOnce(environmentOperation);
     render(<EnvironmentPage {...props()} />);
-    await userEvent.click(await screen.findByRole('button', { name: '检测缺失组件' }));
+    await userEvent.click(await screen.findByRole('button', { name: '检测全部组件' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('结果未知');
     const first = start.mock.calls[0]![0];
     expect(JSON.parse(sessionStorage.getItem(pendingEnvironmentKey)!)).toMatchObject({
@@ -129,7 +129,7 @@ describe('one environment workspace and explicit installation authority', () => 
     });
     render(<EnvironmentPage {...props()} />);
     expect(await screen.findByText('未批准安装根目录')).toBeVisible();
-    expect(screen.getByRole('button', { name: '检测缺失组件' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '检测全部组件' })).toBeDisabled();
     await userEvent.click(screen.getByText('运行诊断'));
     expect(screen.getByText('产品与存储')).toBeVisible();
   });
@@ -159,7 +159,7 @@ describe('one environment workspace and explicit installation authority', () => 
       .mockResolvedValue({ ...environmentOperation, status: 'cancelled' });
     render(<EnvironmentPage {...props()} operationId={environmentOperation.id} />);
     expect(await screen.findByRole('button', { name: '查看当前环境操作' })).toBeVisible();
-    expect(screen.getByRole('button', { name: '检测缺失组件' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '检测全部组件' })).toBeDisabled();
     await userEvent.click(await screen.findByRole('button', { name: '取消此环境操作' }));
     expect(cancel).not.toHaveBeenCalled();
     await userEvent.click(screen.getByRole('button', { name: '确认取消此环境操作' }));
