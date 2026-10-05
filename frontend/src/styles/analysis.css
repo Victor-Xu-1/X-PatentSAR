@@ -8,7 +8,7 @@
 .analysis-panel h2,
 .analysis-panel h3 {
   font-family: var(--font-heading);
-  font-weight: 400;
+  font-weight: 600;
 }
 .analysis-panel h2 {
   font-size: 19px;
@@ -50,7 +50,7 @@
 }
 .analysis-table th,
 .analysis-table td {
-  text-align: left;
+  text-align: center;
   padding: 8px 10px;
   border-bottom: 1px solid var(--line-soft);
   overflow-wrap: anywhere;
@@ -79,9 +79,11 @@
   gap: 8px;
 }
 .evidence-counts > div {
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  padding: 8px;
+  border-right: 1px solid var(--line);
+  padding: 8px 12px;
+}
+.evidence-counts > div:last-child {
+  border-right: 0;
 }
 .evidence-counts dt {
   color: var(--muted);

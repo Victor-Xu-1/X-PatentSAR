@@ -5,13 +5,13 @@
   min-width: 0;
 }
 .topbar {
-  min-height: 42px;
+  min-height: 48px;
   border-bottom: 1px solid var(--line);
   display: flex;
   align-items: center;
-  padding: 0 14px;
-  gap: 20px;
-  background: var(--canvas);
+  padding: 0 18px;
+  gap: 18px;
+  background: var(--surface);
 }
 .brand {
   display: inline-flex;
@@ -52,14 +52,18 @@
   margin-left: auto;
 }
 .topbar-actions > button {
-  min-height: 28px;
-  padding: 4px 8px;
+  min-height: 32px;
+  padding: 5px 10px;
   background: transparent;
   border-color: transparent;
-  font-size: 11px;
+  font-size: 12px;
 }
 .topbar-actions > button[aria-current='page'] {
-  background: var(--surface-pressed);
+  color: var(--accent-strong);
+  background: var(--accent-surface);
+}
+.topbar-actions > button:hover:not(:disabled) {
+  border-color: transparent;
 }
 .topbar-version {
   flex: 0 0 auto;
@@ -83,7 +87,7 @@
   background: transparent;
   flex: 1;
   min-width: 0;
-  font-size: 11px;
+  font-size: 12px;
 }
 .search-field:focus-within {
   outline: 2px solid var(--accent-strong);
@@ -109,48 +113,4 @@ main > .error-notice,
   min-height: 40px;
   justify-content: flex-start;
   font-size: 12px;
-}
-.recent-files-page {
-  max-width: 880px;
-}
-.recent-files-page .page-header {
-  padding-bottom: 14px;
-}
-.recent-files {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.recent-files li + li {
-  border-top: 1px solid var(--line-soft);
-}
-.recent-file {
-  width: 100%;
-  justify-content: flex-start;
-  padding: 14px 10px;
-  border: 0;
-  background: transparent;
-  border-radius: var(--radius-control);
-  gap: 12px;
-  text-align: left;
-}
-.recent-file > svg {
-  color: var(--muted);
-}
-.recent-file-name {
-  display: grid;
-  flex: 1;
-  min-width: 0;
-  gap: 4px;
-}
-.recent-file-name strong {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: 500;
-}
-.recent-file-name small,
-.recent-file time {
-  color: var(--muted);
-  font-size: 11px;
 }

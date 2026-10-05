@@ -1,12 +1,16 @@
 .environment-progress {
   margin-top: 16px;
+  padding: 20px 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
   font-size: 13px;
 }
 .environment-progress > progress {
   width: 100%;
-  height: 5px;
+  height: 6px;
   accent-color: var(--accent);
-  margin: 10px 0;
+  margin: 14px 0 0;
 }
 .environment-recovery {
   display: block;
@@ -40,6 +44,12 @@
 }
 .installation-plan small {
   color: var(--muted);
+}
+.option-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
 }
 @media (max-width: 600px) {
   .environment-page .page-header {

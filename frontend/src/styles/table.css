@@ -2,6 +2,7 @@
   overflow: auto;
   flex: 1;
   min-height: 0;
+  scrollbar-color: var(--line-strong) var(--surface-subtle);
   scroll-padding-inline-start: var(--frozen-leading-width);
   scroll-padding-inline-end: var(--frozen-trailing-width);
 }
@@ -21,9 +22,9 @@
 .results-table th {
   background: var(--surface-subtle);
   border-bottom: 1px solid var(--line);
-  color: var(--muted);
+  color: var(--primary);
   font-weight: 500;
-  padding: 8px 6px;
+  padding: 9px 7px;
   position: sticky;
   top: 0;
   z-index: 2;
@@ -115,10 +116,10 @@
   border: 0;
   border-radius: 0;
   background: transparent;
-  width: 88px;
-  height: 72px;
+  width: 100px;
+  height: 78px;
   max-width: 100%;
-  flex: 0 1 88px;
+  flex: 0 1 100px;
   min-height: 44px;
 }
 .crop-button:hover:not(:disabled) {

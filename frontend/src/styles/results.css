@@ -86,8 +86,8 @@
 .result-toolbar {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 6px;
+  gap: 6px;
+  padding: 4px 8px;
   border-bottom: 1px solid var(--line);
   flex: 0 0 auto;
   min-height: 36px;
@@ -101,10 +101,10 @@
   padding: 4px 5px;
 }
 .toolbar-button {
-  min-height: 26px;
-  min-width: 26px;
-  padding: 4px;
-  font-size: 10px;
+  min-height: 28px;
+  min-width: 28px;
+  padding: 5px;
+  font-size: 11px;
   background: transparent;
   border-color: transparent;
   flex: 0 0 auto;
@@ -151,6 +151,10 @@
 .density-controls {
   display: flex;
   gap: 6px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-inline-size: 0;
 }
 .density-controls button {
   min-height: 32px;
@@ -212,7 +216,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  padding: 4px 8px;
+  padding: 6px 8px;
   border-top: 1px solid var(--line);
   font-size: 10px;
   flex-wrap: wrap;
@@ -239,13 +243,7 @@
   font-size: 10px;
 }
 .page-button.active {
-  color: var(--ink);
-  border-color: var(--line-strong);
-  background: var(--surface-hover);
-}
-.density-controls {
-  border: 0;
-  padding: 0;
-  margin: 0;
-  min-inline-size: 0;
+  color: var(--on-primary);
+  border-color: var(--primary);
+  background: var(--primary);
 }

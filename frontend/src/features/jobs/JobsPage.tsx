@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { FileText, RefreshCw } from 'lucide-react';
 import type { Project } from '../../api/types';
 import { useJobs } from './useJobs';
 import { StageStrip } from './StageStrip';
 import { JobActions } from './JobActions';
-import { dateText, jobStatusLabels } from '../../model/presentation';
+import { dateText } from '../../model/presentation';
 import { Empty, ErrorNotice, Loading } from '../../components/Feedback';
 export function JobsPage({
   projects,
@@ -18,7 +18,7 @@ export function JobsPage({
   const [projectId, setProjectId] = useState<string | null>(null);
   const resource = useJobs(projectId);
   return (
-    <section className="panel management-page">
+    <section className="management-page jobs-page">
       <header className="page-header">
         <div>
           <h1>任务记录</h1>
@@ -57,28 +57,42 @@ export function JobsPage({
             return (
               <article className="job-card" key={job.id}>
                 <header>
-                  <div>
+                  <div className="job-file">
+                    <span className="job-file-icon" aria-hidden="true">
+                      <FileText size={19} />
+                    </span>
                     <button
                       type="button"
                       className="link-button"
                       onClick={() => onOpen(job.project_id)}
                     >
-                      {project?.title ?? job.project_id}
+                      {project?.title ?? '打开关联文件'}
                     </button>
-                    <span className={`badge job-${job.status}`}>{jobStatusLabels[job.status]}</span>
                   </div>
-                  <small title={job.id}>任务 {job.id}</small>
                 </header>
-                <StageStrip job={job} compact />
-                <dl className="job-dates">
-                  <dt>创建</dt>
-                  <dd>{dateText(job.created_at)}</dd>
-                  <dt>开始</dt>
-                  <dd>{dateText(job.started_at)}</dd>
-                  <dt>结束</dt>
-                  <dd>{dateText(job.finished_at)}</dd>
-                </dl>
-                <JobActions project={project} job={job} ready={ready} onChange={resource.reload} />
+                <div className="job-card-footer">
+                  <dl className="job-dates">
+                    <dt>创建</dt>
+                    <dd>{dateText(job.created_at)}</dd>
+                    <dt>开始</dt>
+                    <dd>{dateText(job.started_at)}</dd>
+                    <dt>结束</dt>
+                    <dd>{dateText(job.finished_at)}</dd>
+                  </dl>
+                  <JobActions
+                    project={project}
+                    job={job}
+                    ready={ready}
+                    onChange={resource.reload}
+                  />
+                </div>
+                <details className="job-details">
+                  <summary aria-label="提取阶段详情">任务详情</summary>
+                  <StageStrip job={job} />
+                  <small className="job-identifier" title={job.id}>
+                    任务 {job.id}
+                  </small>
+                </details>
               </article>
             );
           })}

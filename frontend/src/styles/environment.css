@@ -1,21 +1,50 @@
 .environment-page {
   max-width: 1120px;
 }
-.environment-overview {
-  border-bottom: 1px solid var(--line);
+.environment-card.environment-overview {
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
 }
-.environment-overview-heading,
+.environment-overview-state,
 .environment-overview-actions {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
 }
+.environment-overview-state {
+  flex-wrap: nowrap;
+  gap: 16px;
+}
+.environment-overview-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-panel);
+  color: var(--muted);
+  background: var(--surface-subtle);
+}
+.environment-overview-icon.is-ready {
+  color: var(--success);
+  background: var(--success-surface);
+}
+.environment-overview-heading {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
 .environment-overview-heading h2 {
   margin: 0;
+  font-size: 18px;
+  line-height: 1.5;
 }
 .environment-overview-heading > span {
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 1.6;
 }
 .environment-location-editor {
   margin: 4px 0 12px;
@@ -25,7 +54,11 @@
   padding: 12px 0 4px;
 }
 .environment-details-trigger {
+  margin-top: 20px;
+}
+.environment-overview > p.muted {
   margin-top: 16px;
+  font-size: 13px;
 }
 .environment-details .component-library {
   margin-bottom: 12px;

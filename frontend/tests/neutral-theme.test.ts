@@ -6,13 +6,14 @@ const css = (name: string) =>
 const tokens = css('tokens.css');
 const token = (name: string) => tokens.match(new RegExp('--' + name + ':\\s*([^;]+);'))?.[1];
 
-describe('one neutral system-font design authority', () => {
-  it('uses white and gray surfaces with an almost-black monochrome primary', () => {
-    expect(token('canvas')).toBe('#ffffff');
+describe('one restrained biomedical system-font design authority', () => {
+  it('uses cool-neutral surfaces, charcoal actions and limited biomedical accents', () => {
+    expect(token('canvas')).toBe('#f5f7f7');
     expect(token('surface')).toBe('#ffffff');
-    expect(token('surface-subtle')).toBe('#f7f7f8');
-    expect(token('primary')).toBe('#212121');
-    expect(token('accent')).toBe('#212121');
+    expect(token('surface-subtle')).toBe('#f6f8f8');
+    expect(token('primary')).toBe('#202a2f');
+    expect(token('accent')).toBe('#17735d');
+    expect(token('success-surface')).toBe('#ecf8f1');
     expect(token('on-primary')).toBe('#ffffff');
   });
 
@@ -31,5 +32,13 @@ describe('one neutral system-font design authority', () => {
   it('does not revive the retired navigation or project-card design', () => {
     expect(tokens).not.toContain('--sidebar-width');
     expect(css('management.css')).not.toMatch(/\.eyebrow|\.project-(grid|card|icon)/);
+  });
+
+  it('keeps real PDF and table surfaces white, with unframed source structures', () => {
+    expect(token('image-paper')).toBe('#ffffff');
+    expect(css('table.css')).toMatch(/\.crop-button\s*\{[^}]*border: 0;/);
+    expect(css('table.css')).toMatch(/\.crop-button img\s*\{[^}]*object-fit: contain;/);
+    expect(css('pdf.css')).toMatch(/\.pdf-content\s*\{[^}]*background: var\(--surface-subtle\);/);
+    expect(css('shell.css')).not.toMatch(/\.recent-file\s*\{/);
   });
 });

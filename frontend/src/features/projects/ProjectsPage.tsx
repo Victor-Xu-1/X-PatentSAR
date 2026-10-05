@@ -1,4 +1,4 @@
-import { FileText } from 'lucide-react';
+import { ChevronRight, FileText } from 'lucide-react';
 import type { Project } from '../../api/types';
 import type { Resource } from '../../hooks/useResource';
 import { dateText, acceptanceLabels } from '../../model/presentation';
@@ -44,16 +44,20 @@ export function ProjectsPage({
                 aria-label={`打开 ${project.title}`}
                 onClick={() => onOpen(project.id)}
               >
-                <FileText size={19} />
+                <span className="recent-file-icon" aria-hidden="true">
+                  <FileText size={22} />
+                </span>
                 <span className="recent-file-name">
                   <strong title={project.title}>{project.title}</strong>
                   <small>
                     {project.pdf.available ? `${project.pdf.page_count} 页` : '原文未提供'}
-                    {' · '}
-                    {acceptanceLabels[project.acceptance.state]}
                   </small>
                 </span>
+                <span className={`badge recent-file-acceptance ${project.acceptance.state}`}>
+                  {acceptanceLabels[project.acceptance.state]}
+                </span>
                 <time dateTime={project.updated_at}>{dateText(project.updated_at)}</time>
+                <ChevronRight size={16} className="recent-file-chevron" aria-hidden="true" />
               </button>
             </li>
           ))}
