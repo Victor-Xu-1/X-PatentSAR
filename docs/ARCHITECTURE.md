@@ -349,7 +349,7 @@ the existing job-read polling path, with no extra result-prediction poller.
 
 ```mermaid
 flowchart LR
-    ENVUI["Environment manager<br/>location, presets, consent, history"] --> ENVAPI["Existing session/CSRF API"]
+    ENVUI["Complete setup<br/>readiness, one action, active progress; separate details dialog"] --> ENVAPI["Existing session/CSRF API"]
     ENVAPI --> ENVDB["Private environment SQLite v1<br/>revision and idempotent plan"]
     ENVDB --> OWNED["Same owned subprocess carrier<br/>persisted identity + handshake"]
     OWNED --> FIXED["Fixed CPU recipes<br/>hash-locked wheels and models"]
@@ -380,6 +380,22 @@ publishes under that exact identity only; a changed snapshot fails visibly.
 Metadata refresh does not launch another worker or installation. The component
 and bundle UI reuse the same explicit durable inspection and consented installer;
 already verified components do not offer a redundant install action.
+
+The primary setup plan is `EnvironmentCatalog.setup_component_ids`, derived from
+the sole six-component spec/dependency authority, including default-workflow ADMET
+even where the bare CLI marks it optional. One consent submits all IDs to the
+existing durable install endpoint; no new queue, installer or component-by-component
+frontend orchestration is introduced. Existing presets remain API compatibility
+metadata, not primary UI installation routes. Advanced individual controls share
+the same carrier. Backend inspection decides reuse or provision, never stale UI
+badges. An error-only probe (timeout/resource/transport) fails rather than starting
+redundant installation. Each deficient component is reverified; all bindings and
+every reported check must pass before a single configuration activation. Main
+status/actions and active progress/cancel are the only primary UI. Paths, versions,
+location editing and component checks belong to one independent detail module.
+Logs, history, internal operation IDs and runtime diagnostics are not a normal
+workbench interface; they remain durable server/operator evidence, never deleted.
+Missing old complete-plan metadata disables setup instead of guessing.
 
 `tools/build_environment_resources.py` derives the base-worker requirements from
 the sole application `uv.lock` using pinned uv 0.11.31; CI enforces parity. DECIMER

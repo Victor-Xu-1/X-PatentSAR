@@ -124,3 +124,4 @@ class EnvironmentCatalog(DTO):
     checked_at: str | None
     active_operation: EnvironmentOperation | None
     operations: list[EnvironmentOperation]
+    setup_component_ids: list[ComponentId] = Field(default_factory=list, max_length=6)

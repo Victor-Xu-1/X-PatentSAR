@@ -1,0 +1,49 @@
+.environment-progress {
+  margin-top: 16px;
+  font-size: 13px;
+}
+.environment-progress > progress {
+  width: 100%;
+  height: 5px;
+  accent-color: var(--accent);
+  margin: 10px 0;
+}
+.environment-recovery {
+  display: block;
+  margin-bottom: 20px;
+}
+.environment-recovery h2 {
+  font-size: 14px;
+  margin: 0 0 10px;
+}
+.environment-recovery p {
+  margin: 10px 0;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.environment-recovery button {
+  white-space: normal;
+}
+.installation-plan {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+}
+.installation-plan li {
+  display: grid;
+  gap: 3px;
+  margin: 6px 0;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.installation-plan small {
+  color: var(--muted);
+}
+@media (max-width: 600px) {
+  .environment-page .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

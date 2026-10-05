@@ -138,6 +138,7 @@ const component = object({
 const catalogShape = object({
   settings: decodeEnvironmentSettings,
   components: array(component),
+  setup_component_ids: defaulted(ids, []),
   presets: array(object({ id: string, name: string, description: string, component_ids: ids })),
   checked_at: nullable(string),
   active_operation: nullable(decodeEnvironmentOperation),

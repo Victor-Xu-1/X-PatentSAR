@@ -8,6 +8,7 @@ export const environmentCatalog: EnvironmentCatalog = {
     enabled: true,
     reason: null,
   },
+  setup_component_ids: [],
   components: [
     {
       id: 'installer',

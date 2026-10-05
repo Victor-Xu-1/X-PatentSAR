@@ -4,20 +4,16 @@ import {
   decodeEnvironmentCatalog,
   decodeEnvironmentOperation,
 } from '../src/api/environmentDecoders';
+import { activeEnvironmentOperation } from '../src/model/environment';
+import { canSetupEnvironmentPlan, environmentSetupComponents } from '../src/model/environmentSetup';
 import {
-  activeEnvironmentOperation,
-  selectedEnvironmentComponents,
-} from '../src/model/environment';
-import {
-  canInstallEnvironmentPlan,
-  environmentComponentAction,
   environmentComponentBadge,
   isEnvironmentComponentReady,
 } from '../src/model/environmentStatus';
 
 async function catalogFromServer(page: Page) {
   const response = await page.request.get('/api/v1/environments');
-  expect(response.ok(), 'The real authenticated environment catalog must be available').toBe(true);
+  expect(response.ok()).toBe(true);
   return decodeEnvironmentCatalog(await response.json());
 }
 for (const viewport of [
@@ -25,141 +21,101 @@ for (const viewport of [
   { width: 1280, height: 800 },
   { width: 390, height: 844 },
 ]) {
-  test(`real environment catalog, reference layout and confirmation safety at ${viewport.width}×${viewport.height}`, async ({
-    page,
-  }) => {
-    const errors: string[] = [],
-      writes: string[] = [];
-    page.on('pageerror', (error) => errors.push(error.message));
-    page.on('request', (request) => {
-      if (request.method() !== 'GET' && request.url().includes('/api/v1/environments'))
-        writes.push(request.url());
-    });
-    await page.setViewportSize(viewport);
-    await page.goto('/#/settings');
-    await expect(page.getByRole('heading', { name: '环境管理', exact: true })).toBeVisible();
-    const catalog = await catalogFromServer(page);
-    await expect(page.getByLabel('环境安装目录')).toHaveValue(catalog.settings.install_root);
-    for (const component of catalog.components) {
-      const row = page.locator(`[data-component="${component.id}"]`);
-      await expect(row.getByRole('heading', { name: component.name, exact: true })).toBeVisible();
-      await expect(row.locator('.component-title .badge')).toHaveText(
-        environmentComponentBadge(component).label,
+  test(
+    'real compact environment overview and complete consent at ' +
+      viewport.width +
+      'x' +
+      viewport.height,
+    async ({ page }) => {
+      const errors: string[] = [],
+        writes: string[] = [];
+      page.on('pageerror', (error) => errors.push(error.message));
+      page.on('request', (request) => {
+        if (request.method() !== 'GET' && request.url().includes('/api/v1/environments'))
+          writes.push(request.url());
+      });
+      await page.setViewportSize(viewport);
+      await page.goto('/#/settings');
+      await expect(page.getByRole('heading', { name: '完整运行环境', exact: true })).toBeVisible();
+      const catalog = await catalogFromServer(page);
+      await expect(page.getByRole('dialog')).toHaveCount(0);
+      await expect(
+        page.locator(
+          '[data-component], .environment-log, .environment-history, .runtime-diagnostics',
+        ),
+      ).toHaveCount(0);
+      await expect(page.locator('.environment-page')).not.toContainText(
+        catalog.settings.install_root,
       );
-      await expect(row.locator('.component-metadata')).toContainText(component.version);
-      await expect(row.locator('.component-metadata')).toContainText(
-        component.verification === 'current'
-          ? (component.detected_version ?? '未报告')
-          : '尚无当前检测',
-      );
-      await expect(row.locator('.component-location')).toHaveText(
-        `位置：${component.location ?? '未配置'}`,
-      );
-      if (isEnvironmentComponentReady(component))
-        await expect(
-          row.getByRole('button', { name: `已安装 ${component.name}`, exact: true }),
-        ).toBeDisabled();
-    }
-    await expect(page.getByRole('heading', { name: '安装位置', exact: true })).toBeVisible();
-    await expect(page.getByRole('heading', { name: '推荐组合', exact: true })).toBeVisible();
-    await expect(page.getByRole('heading', { name: '组件库', exact: true })).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2)).toBe(
-      true,
-    );
-    await page.screenshot({
-      path: test.info().outputPath(`environment-default-${viewport.width}.png`),
-      fullPage: true,
-    });
-    await page.getByText('运行诊断', { exact: true }).click();
-    await expect(page.getByRole('heading', { name: '产品与存储' })).toBeVisible();
-    if (catalog.settings.enabled && !activeEnvironmentOperation(catalog.active_operation)) {
-      const component = catalog.components.find(
-        (item) =>
-          item.license.trim() &&
-          canInstallEnvironmentPlan(selectedEnvironmentComponents(catalog.components, [item.id])),
-      );
-      if (component) {
-        const action = environmentComponentAction(component) === 'repair' ? '修复' : '安装';
-        const opener = page
-          .locator(`[data-component="${component.id}"]`)
-          .getByRole('button', { name: `${action} ${component.name}`, exact: true });
-        await opener.click();
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2),
+      ).toBe(true);
+      if (viewport.width >= 760 && !activeEnvironmentOperation(catalog.active_operation))
+        expect(
+          await page.locator('.environment-page').evaluate((node) => {
+            // The management shell stretches to the viewport. Measure visible
+            // content, not the intentional empty space below the overview.
+            const visible = Array.from(node.children)
+              .map((child) => child.getBoundingClientRect())
+              .filter((rect) => rect.height > 0);
+            return (
+              Math.max(...visible.map((rect) => rect.bottom)) - node.getBoundingClientRect().top
+            );
+          }),
+        ).toBeLessThan(650);
+      const plan = catalog.setup_component_ids.length ? environmentSetupComponents(catalog) : null;
+      const ready = plan !== null && plan.every(isEnvironmentComponentReady);
+      const primary = page.getByRole('button', {
+        name: ready ? '环境已就绪' : '一键部署全部环境',
+        exact: true,
+      });
+      if (
+        !catalog.settings.enabled ||
+        activeEnvironmentOperation(catalog.active_operation) ||
+        !plan ||
+        !canSetupEnvironmentPlan(plan)
+      ) {
+        await expect(primary).toBeDisabled();
+      } else {
+        await primary.click();
         const dialog = page.getByRole('dialog');
-        const consent = dialog.getByRole('checkbox');
-        await expect(consent).toBeFocused();
-        await expect(dialog).toContainText('CPU');
-        await expect(dialog).toContainText(component!.license);
-        const execution = selectedEnvironmentComponents(catalog.components, [component!.id]);
-        await expect(dialog.locator('[data-install-component]')).toHaveCount(execution.length);
-        for (const item of execution) {
-          const entry = dialog.locator(`[data-install-component="${item.id}"]`);
-          await expect(entry).toContainText(item.name);
-          await expect(entry).toContainText(item.version);
-          await expect(entry).toContainText(item.license);
+        await expect(dialog.locator('[data-install-component]')).toHaveCount(plan.length);
+        for (const component of plan) {
+          await expect(
+            dialog.locator('[data-install-component="' + component.id + '"]'),
+          ).toContainText(component.license);
         }
         await expect(dialog.getByRole('button', { name: '确认下载并安装' })).toBeDisabled();
-        await consent.check();
-        const confirm = dialog.getByRole('button', { name: '确认下载并安装' });
-        await expect(confirm).toBeEnabled();
-        await confirm.focus();
-        await page.keyboard.press('Tab');
-        await page.keyboard.press('Tab');
-        expect(await dialog.evaluate((element) => element.contains(document.activeElement))).toBe(
-          true,
-        );
-        const bounds = await dialog.boundingBox();
-        expect(bounds!.x).toBeGreaterThanOrEqual(0);
-        expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(viewport.width);
+        await dialog.getByRole('checkbox').check();
+        await expect(dialog.getByRole('button', { name: '确认下载并安装' })).toBeEnabled();
         await page.keyboard.press('Escape');
         await expect(dialog).toHaveCount(0);
-        await expect(opener).toBeFocused();
-      } else {
-        await expect(page.getByRole('button', { name: '检测全部组件', exact: true })).toBeEnabled();
-        await expect(page.getByRole('button', { name: /^(安装|修复) / })).toHaveCount(0);
+        await expect(primary).toBeFocused();
       }
-    } else {
-      await expect(page.getByRole('button', { name: '检测全部组件' })).toBeDisabled();
-    }
-    {
-      const menu = page.getByLabel('更多', { exact: true });
-      await menu.click();
-      await expect(menu).toHaveAttribute('aria-expanded', 'true');
-      expect(await menu.evaluate((element) => element.closest('[inert]'))).toBeNull();
-      const bounds = await menu.boundingBox();
-      if (viewport.width < 760) {
-        expect(bounds!.width).toBeGreaterThanOrEqual(44);
-        expect(bounds!.height).toBeGreaterThanOrEqual(44);
+      await page.screenshot({
+        path: test.info().outputPath('environment-default-' + viewport.width + '.png'),
+        fullPage: true,
+      });
+      await page.getByRole('button', { name: '环境详情', exact: true }).click();
+      const dialog = page.getByRole('dialog', { name: '环境详情', exact: true });
+      for (const component of catalog.components) {
+        const row = dialog.locator('[data-component="' + component.id + '"]');
+        await expect(row.locator('.badge')).toHaveText(environmentComponentBadge(component).label);
+        await expect(row.locator('.component-location')).toHaveText(
+          '位置：' + (component.location ?? '未配置'),
+        );
       }
-      expect(
-        await menu.evaluate((element) => {
-          const box = element.getBoundingClientRect();
-          return element.contains(
-            document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2),
-          );
-        }),
-      ).toBe(true);
-      await expect(page.getByRole('button', { name: '环境管理', exact: true })).toBeVisible();
-      await expect(page.locator('.shell-menu-content small')).toHaveText('v0.1.0');
-      await expect(page.locator('.sidebar')).toHaveCount(0);
-      await expect(page.locator('main')).not.toHaveAttribute('inert');
-      await page.keyboard.press('Escape');
-      await expect(menu).toHaveAttribute('aria-expanded', 'false');
-      await expect(menu).toBeFocused();
-    }
-    await expect(page.getByRole('button', { name: '运行环境', exact: true })).toHaveCount(0);
-    await page.screenshot({
-      path: test.info().outputPath(`environment-${viewport.width}.png`),
-      fullPage: true,
-    });
-    await page.reload();
-    await expect(page.getByLabel('环境安装目录')).toHaveValue(catalog.settings.install_root);
-    await expect(page.locator('.environment-footer')).toContainText('X-PatentSAR');
-    expect(
-      writes,
-      'Reading, opening/closing confirmation and reloading must never install',
-    ).toEqual([]);
-    expect(errors).toEqual([]);
-  });
+      await dialog.getByText('修改位置', { exact: true }).click();
+      await expect(dialog.getByLabel('环境安装目录')).toHaveValue(catalog.settings.install_root);
+      await dialog.getByRole('button', { name: '关闭', exact: true }).click();
+      await page.reload();
+      await expect(page.getByRole('heading', { name: '完整运行环境', exact: true })).toBeVisible();
+      await expect(page.getByRole('dialog')).toHaveCount(0);
+      await expect(page.locator('.environment-log, .environment-history')).toHaveCount(0);
+      expect(writes).toEqual([]);
+      expect(errors).toEqual([]);
+    },
+  );
 }
 test('owned lightweight inspection persists history and selected operation across reload without model downloads', async ({
   page,
@@ -174,6 +130,7 @@ test('owned lightweight inspection persists history and selected operation acros
   expect(before.settings.enabled).toBe(true);
   expect(before.active_operation).toBeNull();
   const component = before.components.find((item) => item.id === 'installer')!;
+  await page.getByRole('button', { name: '环境详情', exact: true }).click();
   const response = page.waitForResponse(
     (value) =>
       value.request().method() === 'POST' &&
@@ -215,15 +172,11 @@ test('owned lightweight inspection persists history and selected operation acros
   expect(operation!.request_id).toBe(payload.request_id);
   await page.reload();
   await expect(page).toHaveURL(new RegExp(`operation=${id}$`));
-  await expect(page.getByLabel('环境后台操作')).toContainText(id);
   const persisted = await catalogFromServer(page);
   expect(
     persisted.operations.some((item) => item.id === id && item.request_id === payload.request_id),
   ).toBe(true);
-  const log = page.getByLabel('环境操作日志');
-  await expect(log).toHaveValue(
-    operation!.log_tail.slice(-200).join('\n') || '服务端尚未提供日志。',
-  );
+  await expect(page.locator('.environment-log, .environment-history')).toHaveCount(0);
 });
 
 test('verified existing tool cannot be redundantly installed through the UI', async ({ page }) => {
@@ -238,6 +191,7 @@ test('verified existing tool cannot be redundantly installed through the UI', as
   expect(before.active_operation).toBeNull();
   const component = before.components.find((item) => item.id === 'installer')!;
   expect(isEnvironmentComponentReady(component)).toBe(true);
+  await page.getByRole('button', { name: '环境详情', exact: true }).click();
   const writes: string[] = [];
   page.on('request', (request) => {
     if (request.method() !== 'GET' && request.url().includes('/api/v1/environments'))

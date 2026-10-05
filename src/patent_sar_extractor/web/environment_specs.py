@@ -201,3 +201,8 @@ def resolved_components(component_ids: list[ComponentId]) -> list[ComponentId]:
     for component_id in component_ids:
         visit(component_id)
     return result
+
+
+def complete_components() -> list[ComponentId]:
+    """All default-workflow dependencies, including CLI-optional ADMET components."""
+    return resolved_components([spec.id for spec in _SPECS])

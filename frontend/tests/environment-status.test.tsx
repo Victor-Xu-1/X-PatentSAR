@@ -4,7 +4,6 @@ import { describe, expect, it, vi } from 'vitest';
 import type { EnvironmentComponent } from '../src/api/environmentTypes';
 import { decodeEnvironmentCatalog } from '../src/api/environmentDecoders';
 import { ComponentLibrary } from '../src/features/environment/ComponentLibrary';
-import { RecommendedBundles } from '../src/features/environment/RecommendedBundles';
 import { environmentCatalog } from './environment-fixtures';
 
 function component(overrides: Partial<EnvironmentComponent> = {}): EnvironmentComponent {
@@ -211,75 +210,5 @@ describe('truthful component presence and verification', () => {
     expect(row).toHaveTextContent('未通过 · RDKit：依赖缺失');
     await userEvent.click(within(row).getByRole('button', { name: '修复 基础运行环境' }));
     expect(onInstall).toHaveBeenCalledWith(['base']);
-  });
-});
-
-describe('recommended bundles use the same dependency closure and evidence', () => {
-  function bundles(values: EnvironmentComponent[]) {
-    const handlers = { onInstall: vi.fn(), onInspect: vi.fn() };
-    render(
-      <RecommendedBundles
-        presets={[environmentCatalog.presets[0]!]}
-        components={values}
-        disabled={false}
-        {...handlers}
-      />,
-    );
-    return handlers;
-  }
-  function installer() {
-    return {
-      ...environmentCatalog.components[0]!,
-      presence: 'present' as const,
-      verification: 'current' as const,
-    };
-  }
-  it('disables a fully current verified-ready bundle', async () => {
-    const handlers = bundles([installer(), component()]);
-    const button = screen.getByRole('button', { name: '已就绪 推荐基础组合' });
-    expect(button).toBeDisabled();
-    await userEvent.click(button);
-    expect(handlers.onInstall).not.toHaveBeenCalled();
-    expect(handlers.onInspect).not.toHaveBeenCalled();
-  });
-  it.each(['unchecked', 'stale'] as const)(
-    'inspects an existing %s bundle instead of installing it',
-    async (verification) => {
-      const handlers = bundles([installer(), component({ verification })]);
-      await userEvent.click(screen.getByRole('button', { name: '检测组合 推荐基础组合' }));
-      expect(handlers.onInspect).toHaveBeenCalledWith(['installer', 'base']);
-      expect(handlers.onInstall).not.toHaveBeenCalled();
-    },
-  );
-  it('inspects a missing bundle when a prerequisite has unknown or stale evidence', async () => {
-    const handlers = bundles([
-      { ...installer(), verification: 'stale' },
-      component({ status: 'missing', presence: 'missing', verification: 'unchecked' }),
-    ]);
-    await userEvent.click(screen.getByRole('button', { name: '检测组合 推荐基础组合' }));
-    expect(handlers.onInspect).toHaveBeenCalledWith(['installer', 'base']);
-    expect(handlers.onInstall).not.toHaveBeenCalled();
-  });
-  it('installs a genuinely missing bundle while retaining a ready noninstallable dependency for reuse', async () => {
-    const handlers = bundles([
-      { ...installer(), installable: false },
-      component({ status: 'missing', presence: 'missing', verification: 'unchecked' }),
-    ]);
-    const button = screen.getByRole('button', { name: '安装组合 推荐基础组合' });
-    expect(button).toBeEnabled();
-    await userEvent.click(button);
-    expect(handlers.onInstall).toHaveBeenCalledWith(['installer', 'base']);
-  });
-  it('disables installation when a genuinely missing member is not supported', () => {
-    bundles([
-      installer(),
-      component({
-        status: 'missing',
-        presence: 'missing',
-        verification: 'unchecked',
-        installable: false,
-      }),
-    ]);
-    expect(screen.getByRole('button', { name: '安装组合 推荐基础组合' })).toBeDisabled();
   });
 });

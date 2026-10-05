@@ -6,11 +6,12 @@ import { ApiError } from '../src/api/errors';
 import { EnvironmentPage } from '../src/features/environment/EnvironmentPage';
 import { pendingEnvironmentKey } from '../src/model/environmentRecovery';
 import { environmentCatalog, environmentOperation } from './environment-fixtures';
+import { completeEnvironmentCatalog } from './environment-setup-fixtures';
 import { health } from './fixtures';
 
 beforeEach(() => {
   sessionStorage.removeItem(pendingEnvironmentKey);
-  vi.spyOn(api, 'environments').mockResolvedValue(environmentCatalog);
+  vi.spyOn(api, 'environments').mockResolvedValue(completeEnvironmentCatalog());
   vi.spyOn(api, 'environmentOperation').mockResolvedValue(environmentOperation);
   vi.spyOn(api, 'runtime').mockResolvedValue({
     product: health.product,
@@ -25,8 +26,8 @@ describe('one environment workspace and explicit installation authority', () => 
   it('renders server inventory/groups/versions and never starts installation by rendering', async () => {
     const start = vi.spyOn(api, 'createEnvironmentOperation');
     render(<EnvironmentPage {...props()} />);
-    expect(await screen.findByRole('heading', { name: '安装位置' })).toBeVisible();
-    expect(screen.getByRole('heading', { name: '推荐组合' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: '完整运行环境' })).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: '环境详情' }));
     expect(screen.getByRole('heading', { name: '组件库' })).toBeVisible();
     expect(document.querySelector('[data-component="base"] .component-title')).toHaveTextContent(
       'locked-base',
@@ -36,7 +37,6 @@ describe('one environment workspace and explicit installation authority', () => 
     expect(details.querySelector('.component-metadata')).not.toBeVisible();
     await userEvent.click(details.querySelector('summary')!);
     expect(details.querySelector('.component-metadata')).toBeVisible();
-    expect(screen.getByText('解释器缺失')).toBeVisible();
     expect(start).not.toHaveBeenCalled();
   });
   it('requires CPU/download/license confirmation for bundles, restores focus and submits exact IDs', async () => {
@@ -45,7 +45,7 @@ describe('one environment workspace and explicit installation authority', () => 
       .mockResolvedValue(environmentOperation);
     const options = props();
     render(<EnvironmentPage {...options} />);
-    const opener = await screen.findByRole('button', { name: '安装组合 推荐基础组合' });
+    const opener = await screen.findByRole('button', { name: '一键部署全部环境' });
     await userEvent.click(opener);
     expect(screen.getByRole('button', { name: '确认下载并安装' })).toBeDisabled();
     expect(screen.getByRole('dialog')).toHaveTextContent('CPU');
@@ -60,7 +60,7 @@ describe('one environment workspace and explicit installation authority', () => 
       expect(start).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'install',
-          component_ids: ['installer', 'base'],
+          component_ids: completeEnvironmentCatalog().setup_component_ids,
           expected_revision: 3,
           request_id: expect.stringMatching(/^[A-Za-z0-9_-]{16,64}$/),
         }),
@@ -81,11 +81,29 @@ describe('one environment workspace and explicit installation authority', () => 
       kind: 'operation',
       request: first,
     });
-    expect(screen.queryByRole('button', { name: '使用相同请求 ID 重试' })).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: '检查服务器状态' }));
-    await userEvent.click(await screen.findByRole('button', { name: '使用相同请求 ID 重试' }));
+    expect(screen.queryByText(first.request_id)).not.toBeInTheDocument();
+    expect(screen.queryByText(/操作历史|请求 ID/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '重试原操作' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: '检查状态' }));
+    await userEvent.click(await screen.findByRole('button', { name: '重试原操作' }));
     expect(start).toHaveBeenLastCalledWith(first);
     expect(start).toHaveBeenCalledTimes(2);
+  });
+  it('uses server-state reconciliation before clearing corrupt recovery without a history viewer', async () => {
+    sessionStorage.setItem(pendingEnvironmentKey, 'broken-record');
+    const start = vi.spyOn(api, 'createEnvironmentOperation');
+    render(<EnvironmentPage {...props()} />);
+    expect(await screen.findByRole('heading', { name: '完整运行环境' })).toBeVisible();
+    const clear = screen.getByRole('button', { name: '清除损坏的恢复记录' });
+    expect(clear).toBeDisabled();
+    expect(screen.queryByText(/操作历史|请求 ID/)).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: '检查状态' }));
+    await waitFor(() => expect(clear).toBeEnabled());
+    await userEvent.click(clear);
+    expect(screen.getByRole('dialog')).not.toHaveTextContent('历史');
+    await userEvent.click(screen.getByRole('button', { name: '已核对状态，清除记录' }));
+    expect(sessionStorage.getItem(pendingEnvironmentKey)).toBeNull();
+    expect(start).not.toHaveBeenCalled();
   });
   it('recovers an uncertain persisted request after reload without resubmitting it', async () => {
     const request = {
@@ -103,7 +121,7 @@ describe('one environment workspace and explicit installation authority', () => 
     const start = vi.spyOn(api, 'createEnvironmentOperation');
     const options = props();
     render(<EnvironmentPage {...options} />);
-    await userEvent.click(await screen.findByRole('button', { name: '检查服务器状态' }));
+    await userEvent.click(await screen.findByRole('button', { name: '检查状态' }));
     await waitFor(() => expect(options.onOperation).toHaveBeenCalledWith(environmentOperation.id));
     expect(start).not.toHaveBeenCalled();
   });
@@ -117,9 +135,9 @@ describe('one environment workspace and explicit installation authority', () => 
     };
     vi.spyOn(api, 'environmentOperation').mockResolvedValue(operation);
     render(<EnvironmentPage {...props()} operationId={operation.id} />);
-    expect(await screen.findByText('restart：服务重启中断')).toBeVisible();
-    expect(screen.getByText('<script>untrusted log</script>')).toBeVisible();
-    expect(screen.getByText(/部分安装不代表可用/)).toBeVisible();
+    expect(await screen.findByText('服务重启中断')).toBeVisible();
+    expect(screen.queryByText('<script>untrusted log</script>')).not.toBeInTheDocument();
+    expect(screen.getByText(/现有环境已保留/)).toBeVisible();
     expect(document.querySelector('script')).toBeNull();
   });
   it('disables mutation when management is unsupported and preserves runtime diagnostics', async () => {
@@ -130,8 +148,7 @@ describe('one environment workspace and explicit installation authority', () => 
     render(<EnvironmentPage {...props()} />);
     expect(await screen.findByText('未批准安装根目录')).toBeVisible();
     expect(screen.getByRole('button', { name: '检测全部组件' })).toBeDisabled();
-    await userEvent.click(screen.getByText('运行诊断'));
-    expect(screen.getByText('产品与存储')).toBeVisible();
+    expect(screen.queryByText('运行诊断')).not.toBeInTheDocument();
   });
   it('rejects out-of-scope roots before writing and saves allowed roots with optimistic revision', async () => {
     const save = vi.spyOn(api, 'updateEnvironmentSettings').mockResolvedValue({
@@ -140,6 +157,8 @@ describe('one environment workspace and explicit installation authority', () => 
       revision: 4,
     });
     render(<EnvironmentPage {...props()} />);
+    await userEvent.click(await screen.findByRole('button', { name: '环境详情' }));
+    await userEvent.click(screen.getByText('修改位置'));
     const input = await screen.findByLabelText('环境安装目录');
     fireEvent.change(input, { target: { value: 'C:\\wrong' } });
     await userEvent.click(screen.getByRole('button', { name: '保存安装位置' }));
@@ -158,7 +177,7 @@ describe('one environment workspace and explicit installation authority', () => 
       .spyOn(api, 'cancelEnvironmentOperation')
       .mockResolvedValue({ ...environmentOperation, status: 'cancelled' });
     render(<EnvironmentPage {...props()} operationId={environmentOperation.id} />);
-    expect(await screen.findByRole('button', { name: '查看当前环境操作' })).toBeVisible();
+    expect(await screen.findByLabelText('环境配置进度')).toBeVisible();
     expect(screen.getByRole('button', { name: '检测全部组件' })).toBeDisabled();
     await userEvent.click(await screen.findByRole('button', { name: '取消此环境操作' }));
     expect(cancel).not.toHaveBeenCalled();

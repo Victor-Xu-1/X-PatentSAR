@@ -32,7 +32,9 @@ it('shows loading, empty inventory and failed reads without substituting catalog
   render(<EnvironmentPage {...props()} />);
   expect(await screen.findByText('正在读取真实环境组件目录…')).toBeVisible();
   await act(async () => resolve({ ...environmentCatalog, components: [], presets: [] }));
-  expect(await screen.findByText(/服务端尚未提供组件目录/)).toBeVisible();
+  expect(
+    await within(await screen.findByLabelText('完整运行环境')).findByText(/服务端尚未提供组件目录/),
+  ).toBeVisible();
   expect(screen.getByRole('button', { name: '检测全部组件' })).toBeDisabled();
   vi.spyOn(api, 'environments').mockRejectedValue(
     new ApiError(503, 'unavailable', '目录服务尚未就绪'),
@@ -46,12 +48,9 @@ it('reports unavailable environment endpoints without claiming server history is
     new ApiError(404, 'endpoint_missing', 'API endpoint does not exist.'),
   );
   render(<EnvironmentPage {...props()} />);
-  expect(await screen.findByRole('alert')).toHaveTextContent('HTTP 404');
-  expect(screen.getByText(/不能确认是否有后台操作/)).toBeVisible();
-  expect(screen.getByText('操作历史（未读取）')).toBeVisible();
-  expect(screen.queryByText('操作历史（0）')).not.toBeInTheDocument();
-  await userEvent.click(screen.getByText('运行诊断'));
-  expect(screen.getByText('产品与存储')).toBeVisible();
+  expect(await screen.findByRole('alert')).toHaveTextContent('当前后端未提供环境管理');
+  expect(screen.queryByText(/操作历史/)).not.toBeInTheDocument();
+  expect(screen.queryByText('运行诊断')).not.toBeInTheDocument();
 });
 it('preserves dirty location across revision changes and requires explicit conflict reconciliation', async () => {
   const changed = {
@@ -71,6 +70,8 @@ it('preserves dirty location across revision changes and requires explicit confl
     revision: 5,
   });
   render(<EnvironmentPage {...props()} />);
+  await userEvent.click(await screen.findByRole('button', { name: '环境详情' }));
+  await userEvent.click(screen.getByText('修改位置'));
   const input = await screen.findByLabelText('环境安装目录');
   fireEvent.change(input, { target: { value: '/srv/wsl/envs/operator-choice' } });
   await userEvent.click(screen.getByRole('button', { name: '刷新环境目录' }));
@@ -90,6 +91,7 @@ it('supports component-only confirmation, focuses consent and locks dismissal du
       }),
   );
   const view = render(<EnvironmentPage {...props()} />);
+  await userEvent.click(await screen.findByRole('button', { name: '环境详情' }));
   const opener = await screen.findByRole('button', { name: '安装 基础运行环境' });
   await userEvent.click(opener);
   const dialog = screen.getByRole('dialog');
@@ -124,6 +126,7 @@ it('cannot confirm unlicensed components and does not let history reads become w
   });
   const start = vi.spyOn(api, 'createEnvironmentOperation');
   render(<EnvironmentPage {...props()} />);
+  await userEvent.click(await screen.findByRole('button', { name: '环境详情' }));
   await userEvent.click(await screen.findByRole('button', { name: '安装 基础运行环境' }));
   expect(screen.getByRole('dialog')).toHaveTextContent('不能确认安装');
   expect(screen.getByRole('checkbox')).toBeDisabled();
@@ -136,8 +139,8 @@ it('marks last-known progress stale after polling errors and disables cancellati
     .mockResolvedValueOnce(environmentOperation)
     .mockRejectedValue(new ApiError(503, 'unavailable', '操作读取失败'));
   render(<EnvironmentPage {...props()} operationId={environmentOperation.id} />);
-  expect(await screen.findByText('正在验证基础模块')).toBeVisible();
-  await userEvent.click(screen.getByRole('button', { name: '刷新操作状态' }));
+  expect(await screen.findByLabelText('环境配置进度')).toBeVisible();
+  await userEvent.click(screen.getByRole('button', { name: '刷新环境目录' }));
   expect(await screen.findByText(/当前显示上次已知状态/)).toBeVisible();
   expect(screen.getByRole('button', { name: '取消此环境操作' })).toBeDisabled();
   expect(read).toHaveBeenCalledTimes(2);
