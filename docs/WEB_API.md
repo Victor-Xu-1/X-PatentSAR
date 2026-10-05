@@ -2,14 +2,27 @@
 
 ## Environment management
 
-The single environment workspace replaces the read-only page with installation
-location, recommended bundles, actual component checks, durable install/cancel
-operations and verified activation. The existing process ownership primitives,
+The single environment workspace presents one complete setup plan, actual overall
+status and active progress/cancel; location/component details use one separate
+module. Logs, history and internal IDs remain durable operator/API evidence, not
+normal page content.
+The existing process ownership primitives,
 interpreter configuration and scientific consumers remain authoritative.
 
 All endpoints below use existing local session/CSRF validation. They do not
 accept arbitrary packages, URLs, commands, interpreter paths or model uploads.
 One component allowlist owns installation; no separate HTTP service is added.
+
+The catalog adds `setup_component_ids`: all six default-workflow component IDs in
+dependency order, derived from the canonical specs. It includes ADMET runtime and
+models even where the bare CLI marks them optional. Full setup submits one existing
+`action:"install"` request with that whole plan and one request ID after consent.
+No new endpoint/action or schema/product version is needed. Older catalogs default
+this field to empty; clients must not guess or start an incomplete setup. Legacy
+presets are compatibility metadata, not primary frontend deployment routes.
+Full install rechecks existing components, installs only deficient components and
+reverifies new ones before one configuration publication. A probe error does not
+prove missing content and cannot trigger reinstall. All reported checks must pass.
 
 - GET `/api/v1/environments` -> `EnvironmentCatalog` from `environment_models.py`.
 - PUT `/api/v1/environments/settings` -> `EnvironmentSettings`; request

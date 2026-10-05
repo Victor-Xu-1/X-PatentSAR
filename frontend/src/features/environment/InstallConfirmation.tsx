@@ -11,6 +11,7 @@ import {
   isEnvironmentComponentReady,
 } from '../../model/environmentStatus';
 export interface InstallPlan {
+  scope: 'complete' | 'components';
   components: EnvironmentComponent[];
   settings: EnvironmentSettings;
   requested: EnvironmentComponentId[];
@@ -35,19 +36,24 @@ export function InstallConfirmation({
   const stale = configurationChanged || !planCurrent;
   const missingLicense = plan.components.some((component) => !component.license.trim());
   return (
-    <Dialog title="确认环境安装" onClose={onClose} busy={busy} wide>
+    <Dialog
+      title={plan.scope === 'complete' ? '确认完整环境部署' : '确认环境安装'}
+      onClose={onClose}
+      busy={busy}
+      wide
+    >
       <div className="dialog-body">
         <p>
-          将创建持久化后台操作，在{' '}
-          <strong className="break-word">{plan.settings.install_root}</strong> 安装审核的 CPU
-          组件。可能下载较大文件；不安装 GPU / CUDA，不调用付费服务，不覆盖未知已有环境。
+          安装位置：<strong className="break-word">{plan.settings.install_root}</strong>。
+          一次后台操作处理以下 CPU 组件；不安装 GPU / CUDA，不调用付费服务，不覆盖未知已有环境。
         </p>
         <p className="muted">
-          下方包括所选组件与服务端声明的全部前置依赖，确认后将提交完全相同的组件集合。已可用的前置依赖仍列出核对，由后端验证能否复用；不推测额外组件或隐藏
-          SDK 下载。
+          {plan.scope === 'complete'
+            ? '包含完整运行环境及全部前置依赖。后端逐项复检并复用合格环境，仅安装缺失或不合格组件；检测错误会停止，不以重装掩盖。'
+            : '包含所选组件及全部前置依赖；后端复检并复用合格环境。'}
         </p>
         <p className="muted">
-          下载大小按服务端报告逐项展示，未报告不视为零；实际下载可能因已验证缓存而减少。服务端负责来源校验与验证后配置应用，已有提取/分析操作保留捕获的配置。
+          下载按服务端报告展示，未报告不视为零，复用可减少下载。全部验证通过才应用配置，不改变已有任务或专利结果。
         </p>
         <ul className="installation-plan">
           {plan.components.map((component) => (
@@ -66,10 +72,13 @@ export function InstallConfirmation({
                 {component.license || '未报告'}
               </span>
               <small className="break-word">来源：{component.source_url || '未报告'}</small>
+              {component.location && (
+                <small className="break-word">现有位置：{component.location}</small>
+              )}
             </li>
           ))}
         </ul>
-        {(stale || missingLicense) && (
+        {!busy && (stale || missingLicense) && (
           <p className="error-notice">
             {stale
               ? configurationChanged

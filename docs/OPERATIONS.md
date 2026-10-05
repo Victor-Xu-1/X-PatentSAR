@@ -182,8 +182,20 @@ measurements into scalars, and stored-property filtering never starts a model.
 The activity-band legend is on demand in display options; bands use the complete
 effective project and preserve ties, not current-page extrema.
 
-Open topbar **更多 → 环境管理** (`#/settings`) and inspect components before installing. The
-approved Linux root is configured by `PATENTSAR_ENVIRONMENT_ALLOWED_ROOT`; the
+Open topbar **更多 → 环境管理** (`#/settings`). Use **一键部署全部环境** for the default
+PDF/structure/activity/six-property workflow, not manual component assembly. One
+complete CPU/download/license confirmation creates one durable operation. It
+rechecks/reuses qualified components, provisions deficient ones in owned prefixes
+and activates only after all six are verified. ADMET runtime/models are included.
+Existing ready components are not blindly reinstalled; probe timeouts/resource
+errors fail visibly rather than becoming a reason to duplicate environments.
+All-ready status offers full inspection instead of repeated deployment. The
+default page contains overall readiness, complete setup and active progress/cancel
+only. Location editing and actual component checks use one separate details entry;
+logs/history/internal IDs remain server-side operator evidence, not everyday UI.
+The application/WSL Linux x86_64 Python 3.12 Web startup prerequisite remains a
+bootstrap boundary; this page does not install WSL, system packages or GPU drivers.
+The approved Linux root is configured by `PATENTSAR_ENVIRONMENT_ALLOWED_ROOT`; the
 default new prefix is `PATENTSAR_ENVIRONMENT_ROOT`. Native Linux x86_64 Python 3.12
 is required for this controller. On the E-drive workstation these paths are
 `/srv/wsl/envs` and `/srv/wsl/envs/x-patentsar-managed`, inside `E:\WSL\system`.
@@ -201,8 +213,8 @@ duplicate install. Failed/incompatible probes remain failures even when files ex
 Measured and target versions are separate. Same-path previous checks remain
 historical after a recipe/config change; a new path never inherits those checks.
 Per-component times refer to actual publication for that component; legacy times
-may be unknown. Refresh only rereads metadata. Use **检测全部组件** or a component/
-bundle inspection for a fresh module/model check, without downloads.
+may be unknown. Refresh only rereads metadata. Use full inspection or an advanced
+component inspection for a fresh module/model check, without downloads.
 `environment_inspection_changed` means the configuration/recipe snapshot changed
 during a check. Its operation files/history are retained, no configuration is
 changed and no report is promoted. Refresh and explicitly inspect again after

@@ -24,6 +24,7 @@ from .environment_models import (
 from .environment_paths import ManagedStorage
 from .environment_process import EnvironmentProcessRunner
 from .environment_queue import EnvironmentQueue
+from .environment_specs import complete_components
 from .environment_storage import EnvironmentStore
 from .errors import WebError
 from .files import private_directory
@@ -137,6 +138,9 @@ class EnvironmentManager:
             None,
         )
         saved = self.store.settings()
+        setup_ids = complete_components()
+        if not set(setup_ids) <= {item.id for item in components}:
+            setup_ids = []
         return EnvironmentCatalog(
             settings=self.settings(),
             components=components,
@@ -169,6 +173,7 @@ class EnvironmentManager:
             checked_at=saved["checked_at"],
             active_operation=active,
             operations=operations,
+            setup_component_ids=setup_ids,
         )
 
     def enqueue(self, request: EnvironmentOperationRequest) -> EnvironmentOperation:
@@ -197,11 +202,14 @@ class EnvironmentManager:
             )
         root = self.storage.validate(selected.install_root)
         bindings, fingerprint, source_key = self._snapshot()
+        ordered = (
+            complete_components() if ids == set(complete_components()) else sorted(ids)
+        )
         payload = {
             "schema_version": 1,
             "requires_owner_ack": True,
             "action": request.action,
-            "component_ids": self.resolve_components(sorted(ids))
+            "component_ids": self.resolve_components(ordered)
             if request.action == "install"
             else sorted(ids),
             "install_root": str(root),
@@ -309,7 +317,8 @@ class EnvironmentManager:
                 or reports[identifier].status != "ready"
                 or reports[identifier].location != raw
                 or not reports[identifier].detected_version
-                or not any(check.ok for check in reports[identifier].checks)
+                or not reports[identifier].checks
+                or not all(check.ok for check in reports[identifier].checks)
             ):
                 raise WebError(
                     409,

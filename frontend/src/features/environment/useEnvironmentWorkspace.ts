@@ -10,8 +10,6 @@ export function useEnvironmentWorkspace(
 ) {
   const loadCatalog = useCallback((signal: AbortSignal) => api.environments(signal), []);
   const catalog = useResource('environment-catalog', loadCatalog);
-  const loadRuntime = useCallback((signal: AbortSignal) => api.runtime(signal), []);
-  const runtime = useResource('environment-runtime', loadRuntime);
   const [choice, setChoice] = useState(operationId);
   const [previousRoute, setPreviousRoute] = useState(operationId);
   if (previousRoute !== operationId) {
@@ -19,7 +17,7 @@ export function useEnvironmentWorkspace(
     setChoice(operationId);
   }
   const id =
-    choice ?? catalog.data?.active_operation?.id ?? catalog.data?.operations[0]?.id ?? null;
+    catalog.data?.active_operation?.id ?? choice ?? catalog.data?.operations[0]?.id ?? null;
   const loadOperation = useCallback(
     (signal: AbortSignal) => api.environmentOperation(id ?? '', signal),
     [id],
@@ -39,13 +37,11 @@ export function useEnvironmentWorkspace(
     null;
   const observed = useRef<string | null>(null);
   const refreshCatalog = catalog.reload,
-    refreshRuntime = runtime.reload,
     refreshOperation = operation.reload;
   const refresh = useCallback(() => {
     refreshCatalog();
-    refreshRuntime();
     refreshOperation();
-  }, [refreshCatalog, refreshRuntime, refreshOperation]);
+  }, [refreshCatalog, refreshOperation]);
   const choose = useCallback(
     (next: string) => {
       setChoice(next);
@@ -62,8 +58,7 @@ export function useEnvironmentWorkspace(
     ) {
       observed.current = `${selected.id}:${selected.status}`;
       refreshCatalog();
-      refreshRuntime();
     }
-  }, [selected, refreshCatalog, refreshRuntime]);
-  return { catalog, runtime, operation, selectionId: id, selected, choose, refresh, mutations };
+  }, [selected, refreshCatalog]);
+  return { catalog, operation, selectionId: id, selected, choose, refresh, mutations };
 }

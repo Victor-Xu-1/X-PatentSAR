@@ -41,9 +41,7 @@ export function readPendingEnvironment(): {
   } catch {
     return {
       pending: null,
-      error: new Error(
-        '无法读取环境操作恢复记录。未自动重放任何请求；请先刷新服务器操作历史，再明确清除本功能的损坏记录。',
-      ),
+      error: new Error('恢复信息无法读取，未执行任何操作。请先检查配置状态，再确认清除损坏记录。'),
     };
   }
 }

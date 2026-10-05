@@ -10,43 +10,32 @@ export function RecoveryNotice({
   if (!mutations.pending && !mutations.storageError) return null;
   return (
     <section className="environment-recovery info-banner" aria-label="环境操作状态恢复">
-      <h2>有待核对的环境操作</h2>
-      <p>
-        请求结果尚未确认，不代表安装失败或已取消。未自动重放；先读取服务器持久化状态，再决定下一步。
-      </p>
-      {mutations.pending?.kind === 'operation' && (
-        <p className="break-word">
-          保留的请求 ID：<code>{mutations.pending.request.request_id}</code>
-        </p>
-      )}
+      <h2>配置状态待确认</h2>
+      <p>上次操作结果尚未确认，请先检查状态。不会自动重复安装。</p>
       <div className="inline-actions">
         <button type="button" disabled={mutations.busy} onClick={() => void mutations.check()}>
-          检查服务器状态
+          检查状态
         </button>
         {mutations.pending && mutations.checked && (
           <button type="button" disabled={mutations.busy} onClick={() => void mutations.retry()}>
-            {mutations.pending.kind === 'operation' ? '使用相同请求 ID 重试' : '核对后重试原请求'}
+            重试原操作
           </button>
         )}
       </div>
-      {mutations.checked && (
-        <p>本次可见状态尚未确认请求结果；重试仍使用原始请求参数与幂等 ID，不创建另一份安装计划。</p>
-      )}
+      {mutations.checked && <p>仍未确认结果。重试将沿用原操作，不会创建重复任务。</p>}
       {mutations.storageError && !mutations.pending && (
         <button
           type="button"
           disabled={!mutations.checked || mutations.busy}
           onClick={() => setConfirm(true)}
         >
-          核对历史后清除损坏恢复记录
+          清除损坏的恢复记录
         </button>
       )}
       {confirm && (
         <Dialog title="清除本功能的损坏恢复记录？" onClose={() => setConfirm(false)}>
           <div className="dialog-body">
-            <p>
-              请先检查下方服务器操作历史。只清除环境管理的本地恢复记录，不删除服务器操作，也不取消后台进程。
-            </p>
+            <p>请先检查配置状态。只清除本页面的恢复信息，不停止后台任务或删除服务器记录。</p>
             <footer className="dialog-actions">
               <button type="button" onClick={() => setConfirm(false)}>
                 保留记录
@@ -58,7 +47,7 @@ export function RecoveryNotice({
                   setConfirm(false);
                 }}
               >
-                已核对历史，清除恢复记录
+                已核对状态，清除记录
               </button>
             </footer>
           </div>

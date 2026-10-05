@@ -15,7 +15,7 @@ import './styles/management.css';
 import './styles/tasks.css';
 import './styles/analysis.css';
 import './styles/environment.css';
-import './styles/environment-operations.css';
+import './styles/environment-progress.css';
 import './styles/responsive.css';
 
 const root = document.getElementById('root');

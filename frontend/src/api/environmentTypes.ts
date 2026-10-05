@@ -87,6 +87,7 @@ export interface EnvironmentOperation {
 export interface EnvironmentCatalog {
   settings: EnvironmentSettings;
   components: EnvironmentComponent[];
+  setup_component_ids: EnvironmentComponentId[];
   presets: EnvironmentPreset[];
   checked_at: string | null;
   active_operation: EnvironmentOperation | null;

@@ -2,9 +2,33 @@
   max-width: 1120px;
 }
 .environment-overview {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-  gap: 24px;
+  border-bottom: 1px solid var(--line);
+}
+.environment-overview-heading,
+.environment-overview-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.environment-overview-heading h2 {
+  margin: 0;
+}
+.environment-overview-heading > span {
+  font-size: 12px;
+}
+.environment-location-editor {
+  margin: 4px 0 12px;
+}
+.environment-location-editor .location-card {
+  max-width: 560px;
+  padding: 12px 0 4px;
+}
+.environment-details-trigger {
+  margin-top: 16px;
+}
+.environment-details .component-library {
+  margin-bottom: 12px;
 }
 .environment-card {
   min-width: 0;
@@ -47,42 +71,11 @@
 .location-card form > button {
   justify-self: start;
 }
-.environment-preset {
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  align-items: center;
-  padding: 12px 0;
-  border-top: 1px solid var(--line-soft);
-}
-.environment-preset:last-child {
-  padding-bottom: 0;
-}
-.environment-preset > div {
-  min-width: 0;
-}
-.environment-preset h3 {
-  margin: 0;
-  font-size: 14px;
-  overflow-wrap: anywhere;
-}
-.environment-preset button {
-  flex-shrink: 0;
-}
-.environment-preset .preset-components {
-  color: var(--accent-strong);
-  font-size: 11px;
-}
-.environment-detection,
 .environment-section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-}
-.environment-detection {
-  margin: 16px 0 10px;
-  font-size: 12px;
 }
 .environment-section-header > div {
   min-width: 0;
@@ -195,9 +188,6 @@
   background: var(--surface-subtle);
 }
 @media (max-width: 1100px) {
-  .environment-overview {
-    grid-template-columns: minmax(0, 1fr);
-  }
   .component-actions {
     flex-direction: column;
   }
@@ -206,11 +196,15 @@
   .environment-card {
     padding: 12px 0;
   }
-  .environment-preset,
-  .environment-detection,
   .environment-section-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+  .environment-overview-actions {
+    width: 100%;
+  }
+  .environment-overview-actions > button {
+    white-space: normal;
   }
   .environment-component {
     grid-template-columns: 28px minmax(0, 1fr);

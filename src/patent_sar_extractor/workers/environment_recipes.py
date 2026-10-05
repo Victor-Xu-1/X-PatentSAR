@@ -78,6 +78,11 @@ class EnvironmentProvisioner:
                 op_dir=self.plan.operation_dir,
                 cancel=self.cancel,
             )[0]
+            reused = card.status == "ready"
+            if self.plan.action == "install" and card.status == "error":
+                # A timeout/resource/transport error cannot establish missing content.
+                # Reinstalling in response would duplicate an otherwise valid environment.
+                raise EnvironmentFailure("verification_failed")
             if self.plan.action == "install" and card.status != "ready":
                 self.progress(f"安装固定组件 {identifier} 至新的专属前缀")
                 self.bindings[identifier] = str(self.install(identifier))
@@ -98,6 +103,12 @@ class EnvironmentProvisioner:
                         ],
                     )
             if card.status == "ready":
+                if self.plan.action == "install":
+                    self.progress(
+                        f"复用已验证组件 {identifier}"
+                        if reused
+                        else f"新组件 {identifier} 验证通过"
+                    )
                 assert card.location is not None
                 verified[identifier] = card.location
                 if identifier == "decimer-models":

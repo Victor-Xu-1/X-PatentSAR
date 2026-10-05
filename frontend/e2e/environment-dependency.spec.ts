@@ -31,6 +31,8 @@ for (const viewport of [
       'This read-only confirmation check requires idle owned QA state',
     ).toBeNull();
     for (const id of ['base', 'admet-models'] as const) {
+      if ((await page.getByRole('dialog', { name: '环境详情', exact: true }).count()) === 0)
+        await page.getByRole('button', { name: '环境详情', exact: true }).click();
       const execution = selectedEnvironmentComponents(catalog.components, [id]);
       expect(execution.length).toBeGreaterThan(1);
       const selected = catalog.components.find((item) => item.id === id)!;
@@ -43,7 +45,9 @@ for (const viewport of [
           .locator(`[data-component="${id}"]`)
           .getByRole('button', { name: `${label} ${selected.name}`, exact: true });
         if (action === 'installed' || action === 'inspect') await expect(button).toBeDisabled();
-        await expect(page.getByRole('dialog')).toHaveCount(0);
+        await expect(page.getByRole('dialog', { name: '确认环境安装', exact: true })).toHaveCount(
+          0,
+        );
         continue;
       }
       const label = action === 'repair' ? '修复' : '安装';
@@ -85,7 +89,7 @@ for (const viewport of [
       await expect(dialog.getByRole('button', { name: '确认下载并安装' })).toBeEnabled();
       await page.keyboard.press('Escape');
       await expect(dialog).toHaveCount(0);
-      await expect(opener).toBeFocused();
+      await expect(page.getByRole('button', { name: '环境详情', exact: true })).toBeVisible();
     }
     expect(
       writes,

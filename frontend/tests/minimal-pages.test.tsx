@@ -6,7 +6,8 @@ import { Header } from '../src/components/Header';
 import { EnvironmentPage } from '../src/features/environment/EnvironmentPage';
 import { JobsPage } from '../src/features/jobs/JobsPage';
 import { NewTaskPage } from '../src/features/tasks/NewTaskPage';
-import { environmentCatalog, environmentOperation } from './environment-fixtures';
+import { environmentOperation } from './environment-fixtures';
+import { completeEnvironmentCatalog } from './environment-setup-fixtures';
 import { health, job, project } from './fixtures';
 
 describe('minimal secondary page presentation without changing workflows', () => {
@@ -67,7 +68,7 @@ describe('minimal secondary page presentation without changing workflows', () =>
 
   it('keeps environmental safety on demand without starting installation', async () => {
     sessionStorage.clear();
-    vi.spyOn(api, 'environments').mockResolvedValue(environmentCatalog);
+    vi.spyOn(api, 'environments').mockResolvedValue(completeEnvironmentCatalog());
     vi.spyOn(api, 'environmentOperation').mockResolvedValue(environmentOperation);
     vi.spyOn(api, 'runtime').mockResolvedValue({
       product: health.product,
@@ -77,17 +78,15 @@ describe('minimal secondary page presentation without changing workflows', () =>
     });
     const install = vi.spyOn(api, 'createEnvironmentOperation');
     render(<EnvironmentPage product={health.product} operationId={null} onOperation={vi.fn()} />);
-    await screen.findByRole('heading', { name: '组件库' });
+    await screen.findByRole('heading', { name: '完整运行环境' });
     expect(document.querySelector('.page-header p')).toBeNull();
     expect(document.querySelector('.eyebrow')).toBeNull();
-    const notice = screen.getByText(/只有明确确认后才会安装/);
-    expect(notice).not.toBeVisible();
-    await userEvent.click(screen.getByText('运行与安装说明'));
-    expect(notice).toBeVisible();
-    expect(screen.getByText('X-PatentSAR · v0.1.0')).toBeVisible();
+    expect(screen.queryByText('运行与安装说明')).not.toBeInTheDocument();
+    expect(screen.queryByText(/操作日志|操作历史|安装位置：|目标：/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '环境详情' })).toBeVisible();
     expect(install).not.toHaveBeenCalled();
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: '安装组合 推荐基础组合' })).toBeEnabled(),
+      expect(screen.getByRole('button', { name: '一键部署全部环境' })).toBeEnabled(),
     );
   });
 });

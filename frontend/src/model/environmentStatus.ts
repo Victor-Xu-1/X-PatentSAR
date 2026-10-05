@@ -75,20 +75,6 @@ export function canInstallEnvironmentPlan(components: EnvironmentComponent[]): b
   );
 }
 
-export function environmentBundleAction(
-  components: EnvironmentComponent[],
-): 'ready' | 'inspect' | 'install' {
-  if (components.length > 0 && components.every(isEnvironmentComponentReady)) return 'ready';
-  if (
-    components.some((component) => {
-      const action = environmentComponentAction(component);
-      return action === 'inspect' || action === 'repair';
-    })
-  )
-    return 'inspect';
-  return 'install';
-}
-
 export function isEnvironmentInstallPlanCurrent(
   planned: EnvironmentComponent[],
   requested: EnvironmentComponentId[],
@@ -100,9 +86,18 @@ export function isEnvironmentInstallPlanCurrent(
   } catch {
     return false;
   }
+  return canInstallEnvironmentPlan(current) && environmentPlansMatch(planned, current);
+}
+
+export function environmentPlansMatch(
+  planned: EnvironmentComponent[],
+  current: EnvironmentComponent[],
+): boolean {
   const consentFields = [
     'id',
+    'name',
     'version',
+    'detected_version',
     'license',
     'source_url',
     'download_bytes',
@@ -111,15 +106,17 @@ export function isEnvironmentInstallPlanCurrent(
     'verification',
     'status',
     'installable',
+    'problem',
   ] as const;
   return (
-    canInstallEnvironmentPlan(current) &&
     current.length === planned.length &&
     planned.every((component, index) => {
       const observed = current[index];
       return (
         observed !== undefined &&
-        consentFields.every((field) => component[field] === observed[field])
+        consentFields.every((field) => component[field] === observed[field]) &&
+        component.dependencies.length === observed.dependencies.length &&
+        component.dependencies.every((id, index) => id === observed.dependencies[index])
       );
     })
   );

@@ -27,7 +27,8 @@ export function InstallLocation({
     <section className="panel environment-card location-card">
       <h2>安装位置</h2>
       <p className="muted">
-        新安装仅限服务端批准的本地目录，本机使用 E 盘；不接受 C 盘、UNC、网络路径或自定义命令。
+        仅影响后续新安装，不迁移或删除现有环境。只接受批准的本地目录，不接受 C
+        盘、UNC、网络路径或命令。
       </p>
       <form
         onSubmit={(e) => {
