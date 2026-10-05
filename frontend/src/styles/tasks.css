@@ -46,37 +46,11 @@
 .task-form .upload-drop:has(input:not(:disabled)):hover {
   background: var(--surface-hover);
 }
-.task-advanced {
-  color: var(--muted);
-  font-size: 12px;
-}
-.task-advanced > summary {
-  width: fit-content;
-  cursor: pointer;
-  padding: 4px 0;
-}
-.task-advanced[open] {
-  padding-bottom: 6px;
-}
-.task-advanced > fieldset {
-  margin-top: 16px;
-}
-.task-form .task-options {
-  padding-top: 16px;
-  margin-top: 16px;
-  border-top: 1px solid var(--line);
-}
-.task-options legend {
-  display: none;
-}
 .option-check {
   display: flex;
   align-items: center;
   gap: 8px;
   font-weight: 500;
-}
-.task-options[disabled] {
-  color: var(--disabled);
 }
 .task-status {
   display: flex;

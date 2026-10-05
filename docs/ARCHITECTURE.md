@@ -155,6 +155,11 @@ All pages share a neutral white/light-gray/near-black token set and system sans
 typography. Upload, recent files, jobs, environment management and dialogs follow
 the same minimal interaction hierarchy; details and dangerous-action consent
 remain available on demand rather than occupying permanent panels.
+The global header renders all existing navigation/version entries directly, with
+caption-preserving wrap on narrow screens and no popover state/listeners. Upload
+contains only the PDF input and primary start action; the unused advanced-fields
+component/styles are removed. Safe defaults live in the existing task model,
+and the same validated submission/recovery adapter and complete job chain remain authoritative.
 
 ### Complete source corpus, not an activity-filtered table
 

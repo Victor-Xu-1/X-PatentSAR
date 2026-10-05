@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { Header } from '../src/components/Header';
@@ -18,7 +18,7 @@ const headerProps = {
 };
 
 describe('minimal document shell', () => {
-  it('keeps only the document and two file actions visible, with the original logo', () => {
+  it('shows all former menu actions and the actual version directly beside the original logo and document', () => {
     render(<Header {...headerProps} />);
     const brand = screen.getByRole('link', { name: 'X-PatentSAR · 上传 PDF' });
     expect(brand.querySelector('img')).toHaveAttribute(
@@ -26,40 +26,76 @@ describe('minimal document shell', () => {
       expect.stringContaining('brand-mark.png'),
     );
     expect(screen.getByText(project.title)).toBeVisible();
-    expect(document.querySelectorAll('.topbar-actions > button')).toHaveLength(2);
-    for (const control of document.querySelectorAll('.shell-menu-content button'))
-      expect(control).not.toBeVisible();
-    expect(screen.getByLabelText('更多')).toHaveAttribute('aria-expanded', 'false');
+    expect(document.querySelectorAll('.topbar-actions > button')).toHaveLength(6);
+    for (const name of ['上传 PDF', '最近文件', '环境管理', '任务记录', '返回结果表格', '证据摘要'])
+      expect(screen.getByRole('button', { name })).toBeVisible();
+    expect(screen.getByText('v0.1.0')).toBeVisible();
+    expect(document.querySelector('.shell-menu')).toBeNull();
+    expect(screen.queryByLabelText('更多')).not.toBeInTheDocument();
     expect(screen.queryByRole('navigation', { name: '主导航' })).not.toBeInTheDocument();
   });
-  it('supports Escape and outside-pointer close without inerting the document', async () => {
+  it('uses direct navigation callbacks without a menu, popup or inert document', async () => {
+    const onNavigate = vi.fn();
     render(
       <>
-        <Header {...headerProps} />
+        <Header {...headerProps} onNavigate={onNavigate} />
         <main>原文与表格</main>
       </>,
     );
-    const trigger = screen.getByLabelText('更多');
-    await userEvent.click(trigger);
-    await waitFor(() => expect(trigger).toHaveAttribute('aria-expanded', 'true'));
-    expect(screen.getByRole('button', { name: '环境管理' })).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: '环境管理' }));
+    await userEvent.click(screen.getByRole('button', { name: '任务记录' }));
+    expect(onNavigate.mock.calls).toEqual([['settings'], ['jobs']]);
     expect(screen.getByText('原文与表格')).not.toHaveAttribute('inert');
-    await userEvent.keyboard('{Escape}');
-    await waitFor(() => expect(trigger).toHaveAttribute('aria-expanded', 'false'));
-    expect(trigger).toHaveFocus();
-    await userEvent.click(trigger);
-    await waitFor(() => expect(trigger).toHaveAttribute('aria-expanded', 'true'));
-    fireEvent.pointerDown(screen.getByText('原文与表格'));
-    await waitFor(() => expect(trigger).toHaveAttribute('aria-expanded', 'false'));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
-  it('keeps research navigation secondary and never adds a separate ADMET control', async () => {
+  it('exposes both existing result views directly without adding a separate ADMET workflow', async () => {
     const onAnalysis = vi.fn();
     render(<Header {...headerProps} onAnalysis={onAnalysis} />);
     expect(screen.queryByRole('button', { name: /ADMET/ })).not.toBeInTheDocument();
-    await userEvent.click(screen.getByLabelText('更多'));
     await userEvent.click(screen.getByRole('button', { name: '返回结果表格' }));
-    expect(onAnalysis).toHaveBeenCalledExactlyOnceWith('results');
-    expect(document.querySelector('.shell-menu')).not.toHaveAttribute('open');
+    await userEvent.click(screen.getByRole('button', { name: '证据摘要' }));
+    expect(onAnalysis.mock.calls).toEqual([['results'], ['summary']]);
+  });
+  it('keeps the four general routes visible and marks the current page without project-only controls', () => {
+    render(<Header {...headerProps} view="settings" project={null} />);
+    expect(document.querySelectorAll('.topbar-actions > button')).toHaveLength(4);
+    expect(screen.getByRole('button', { name: '环境管理' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(screen.queryByRole('button', { name: '证据摘要' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '返回结果表格' })).not.toBeInTheDocument();
+  });
+  it('disables every direct control before the existing connection is ready', async () => {
+    const onNavigate = vi.fn(),
+      onAnalysis = vi.fn();
+    render(<Header {...headerProps} disabled onNavigate={onNavigate} onAnalysis={onAnalysis} />);
+    for (const button of screen.getAllByRole('button')) {
+      expect(button).toBeDisabled();
+      await userEvent.click(button);
+    }
+    expect(onNavigate).not.toHaveBeenCalled();
+    expect(onAnalysis).not.toHaveBeenCalled();
+  });
+  it('retains keyboard access to every persistent topbar control', async () => {
+    render(<Header {...headerProps} />);
+    screen.getByRole('link', { name: 'X-PatentSAR · 上传 PDF' }).focus();
+    for (const name of [
+      '上传 PDF',
+      '最近文件',
+      '环境管理',
+      '任务记录',
+      '返回结果表格',
+      '证据摘要',
+    ]) {
+      await userEvent.tab();
+      expect(screen.getByRole('button', { name })).toHaveFocus();
+    }
+  });
+  it('does not invent a product version before the health response arrives', () => {
+    render(<Header {...headerProps} version={null} />);
+    expect(screen.getByText('版本待连接')).toBeVisible();
+    expect(screen.queryByText('v0.1.0')).not.toBeInTheDocument();
   });
   it('ignores retired sidebar URL keys while retaining PDF geometry and source IDs', () => {
     expect(parseRoute('#/').view).toBe('new-task');

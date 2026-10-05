@@ -25,7 +25,9 @@ for (const viewport of [
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto(`/#/projects/${encodeURIComponent(projectId!)}`);
-    await expect(page.locator('.shell-menu > summary[aria-label="更多"]')).toBeVisible();
+    await expect(
+      page.locator('.topbar-actions').getByRole('button', { name: '环境管理', exact: true }),
+    ).toBeVisible();
     // The static shell appears before the real API session/data have finished loading.
     await expect(page.getByRole('table')).toBeVisible();
     const response = await page.request.get(

@@ -76,7 +76,6 @@ test('warm workspace style is consistent across navigation, management and the a
   await expect(active).toHaveAttribute('aria-current', 'page');
   await expect(active).toHaveCSS('background-color', palette.selected);
   await expectReadableText(active);
-  await page.getByLabel('更多', { exact: true }).click();
   await page.getByRole('button', { name: '环境管理', exact: true }).click();
   await expect(page.getByRole('heading', { name: '环境管理' })).toHaveCSS('font-family', /Georgia/);
   await page.getByText('运行诊断', { exact: true }).click();
@@ -92,14 +91,9 @@ test('warm workspace style is consistent across navigation, management and the a
   await expect(page.locator('.upload-drop')).toHaveCSS('background-color', palette.subtle);
   await expect(page.getByRole('radio')).toHaveCount(0);
   await expect(page.getByLabel('原始专利 PDF 文件')).toBeFocused();
-  await expect(page.getByLabel('项目名称（可选）')).toBeHidden();
-  await page.getByText('高级选项', { exact: true }).click();
-  await page.getByLabel('项目名称（可选）').focus();
-  await expect(page.getByLabel('项目名称（可选）')).toHaveCSS('outline-color', palette.focus);
-  await page.keyboard.press('Tab');
-  await expect(page.getByLabel('专利标识（可选）')).toBeFocused();
-  await expect(page.getByLabel('专利标识（可选）')).toHaveCSS('outline-color', palette.focus);
-  await expect(page.getByLabel('专利标识（可选）')).toHaveCSS('outline-style', 'solid');
+  await expect(page.locator('.task-advanced')).toHaveCount(0);
+  await expect(page.getByLabel('项目名称（可选）')).toHaveCount(0);
+  await expect(page.getByLabel('专利标识（可选）')).toHaveCount(0);
   await page.getByRole('button', { name: '最近文件', exact: true }).click();
   await expect(page.getByRole('heading', { name: '最近文件', exact: true })).toBeVisible();
 });
@@ -168,11 +162,13 @@ test('populated mobile workspace contains its table and keeps dialogs and naviga
   expect(box!.x).toBeGreaterThanOrEqual(0);
   expect(box!.x + box!.width).toBeLessThanOrEqual(390);
   await page.keyboard.press('Escape');
-  await page.getByLabel('更多', { exact: true }).click();
   await expect(page.locator('.sidebar')).toHaveCount(0);
   await page.getByRole('button', { name: '环境管理', exact: true }).click();
   await expect(page.getByRole('heading', { name: '环境管理' })).toBeVisible();
-  await expect(page.getByLabel('更多', { exact: true })).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByRole('button', { name: '环境管理', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2),
   ).toBe(true);
@@ -183,11 +179,6 @@ test('populated mobile workspace contains its table and keeps dialogs and naviga
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2)).toBe(
     true,
   );
-  await page.getByText('高级选项', { exact: true }).click();
-  await page.getByLabel('任务说明', { exact: true }).fill('手机运营记录');
-  await page.getByText('高级选项', { exact: true }).click();
-  await expect(page.getByLabel('任务说明', { exact: true })).toBeHidden();
-  await page.getByText('高级选项', { exact: true }).click();
-  await expect(page.getByLabel('任务说明', { exact: true })).toHaveValue('手机运营记录');
-  await expect(page.getByLabel('任务说明', { exact: true })).toBeEnabled();
+  await expect(page.getByLabel('任务说明', { exact: true })).toHaveCount(0);
+  await expect(page.locator('.task-advanced')).toHaveCount(0);
 });
