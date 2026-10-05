@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { FileUp } from 'lucide-react';
 import type { Project } from '../../api/types';
 import { ErrorNotice } from '../../components/Feedback';
-import { JobOptionsFields, defaultJobOptions } from './JobOptionsFields';
+import { defaultJobOptions } from '../../model/tasks';
 import { useTaskSubmission } from './useTaskSubmission';
 
 export function NewTaskPage({
@@ -17,9 +17,6 @@ export function NewTaskPage({
   onOpen: (id: string) => void;
 }) {
   const [file, setFile] = useState<File | null>(null);
-  const [title, setTitle] = useState('');
-  const [patentId, setPatentId] = useState('');
-  const [options, setOptions] = useState(defaultJobOptions);
   const task = useTaskSubmission(onCreated);
   const initial = useRef<HTMLInputElement>(null);
   useEffect(() => initial.current?.focus(), []);
@@ -36,7 +33,7 @@ export function NewTaskPage({
         onSubmit={(event) => {
           event.preventDefault();
           if (!connected || !ready) return;
-          void task.submit({ file, title, patentId, options });
+          void task.submit({ file, title: '', patentId: '', options: defaultJobOptions });
         }}
       >
         <fieldset className="task-inputs" disabled={inputLocked}>
@@ -54,35 +51,6 @@ export function NewTaskPage({
             />
           </label>
         </fieldset>
-        <details className="task-advanced">
-          <summary>高级选项</summary>
-          <fieldset disabled={inputLocked}>
-            <legend className="sr-only">文件信息</legend>
-            <label className="form-field">
-              项目名称（可选）
-              <input
-                value={title}
-                maxLength={200}
-                placeholder="默认使用 PDF 文件名"
-                onChange={(event) => setTitle(event.target.value)}
-              />
-            </label>
-            <label className="form-field">
-              专利标识（可选）
-              <input
-                value={patentId}
-                maxLength={64}
-                placeholder="例如 WO2026/156070"
-                onChange={(event) => setPatentId(event.target.value)}
-              />
-            </label>
-          </fieldset>
-          <JobOptionsFields
-            options={options}
-            onChange={setOptions}
-            disabled={busy || task.uncertain}
-          />
-        </details>
         <div className="task-status" aria-live="polite">
           {task.created && (
             <p className="success-banner">

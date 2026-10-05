@@ -28,21 +28,20 @@ describe('minimal secondary page presentation without changing workflows', () =>
     expect(screen.getByRole('link', { name: 'X-PatentSAR · 上传 PDF' })).toHaveTextContent(
       'X-PatentSAR',
     );
-    await userEvent.click(screen.getByLabelText('更多'));
     expect(screen.getByText('v0.1.0')).toBeVisible();
     expect(screen.getByRole('button', { name: '环境管理' })).toBeVisible();
   });
 
-  it('leaves one PDF entry and one action, with optional controls disclosed separately', async () => {
+  it('leaves one PDF entry and one action without an advanced-options section', () => {
     render(<NewTaskPage ready connected onCreated={vi.fn()} onOpen={vi.fn()} />);
     expect(screen.getByRole('heading', { level: 1, name: '上传专利 PDF' })).toBeVisible();
     expect(document.querySelector('.task-heading p')).toBeNull();
     expect(document.querySelector('.eyebrow')).toBeNull();
     expect(screen.getByLabelText('原始专利 PDF 文件')).toBeVisible();
     expect(screen.getByRole('button', { name: '开始提取' })).toBeDisabled();
-    expect(screen.getByLabelText('包含中间体')).not.toBeVisible();
-    await userEvent.click(screen.getByText('高级选项'));
-    expect(screen.getByLabelText('包含中间体')).toBeVisible();
+    expect(screen.queryByText('高级选项')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('包含中间体')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('项目名称（可选）')).not.toBeInTheDocument();
   });
 
   it('discloses actual job stages on demand while retaining project and task identifiers', async () => {

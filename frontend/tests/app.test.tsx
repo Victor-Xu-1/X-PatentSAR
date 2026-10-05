@@ -44,7 +44,6 @@ describe('minimal application shell, routes and failure states', () => {
     expect(transport.mock.calls.filter(([url]) => String(url).endsWith('/projects'))).toHaveLength(
       0,
     );
-    await userEvent.click(screen.getByLabelText('更多'));
     expect(await screen.findByText('v9.8.7-test')).toBeVisible();
   });
 
@@ -95,15 +94,18 @@ describe('minimal application shell, routes and failure states', () => {
     await waitFor(() => expect(window.location.hash).toContain(project.id));
   });
 
-  it('places job history behind More and closes the popover after navigation', async () => {
+  it('opens job history directly from the persistent topbar and marks the selected route', async () => {
     vi.stubGlobal('fetch', contractTransport());
     render(<App />);
     await connected();
-    expect(screen.getByRole('button', { name: '任务记录', hidden: true })).not.toBeVisible();
-    await userEvent.click(screen.getByLabelText('更多'));
+    expect(screen.getByRole('button', { name: '任务记录' })).toBeVisible();
     await userEvent.click(screen.getByRole('button', { name: '任务记录' }));
     await waitFor(() => expect(window.location.hash).toBe('#/jobs'));
-    expect(document.querySelector('.shell-menu')).not.toHaveAttribute('open');
+    expect(document.querySelector('.shell-menu')).toBeNull();
+    expect(screen.getByRole('button', { name: '任务记录' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
     expect(await screen.findByRole('heading', { name: '任务记录' })).toBeVisible();
   });
 

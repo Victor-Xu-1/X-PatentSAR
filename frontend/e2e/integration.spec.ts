@@ -48,19 +48,18 @@ test.describe('real local backend integration', () => {
       page.on('pageerror', (error) => errors.push(error.message));
       await page.setViewportSize(viewport);
       await page.goto('/#/');
-      await expect(page.getByRole('heading', { name: 'PDF → 结构与活性表格' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: '上传专利 PDF' })).toBeVisible();
       await expect(page.getByRole('button', { name: '上传 PDF', exact: true })).toBeEnabled();
       await expect(page.getByRole('button', { name: '开始提取' })).toBeDisabled();
       await expect(page.locator('.sidebar')).toHaveCount(0);
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2),
       ).toBe(true);
-      await page.getByLabel('更多', { exact: true }).click();
-      await expect(page.locator('.shell-menu-content small')).toHaveText('v0.1.0');
+      await expect(page.locator('.topbar-version')).toHaveText('v0.1.0');
       await page.getByRole('button', { name: '环境管理', exact: true }).click();
       await expect(page.getByRole('heading', { name: '环境管理' })).toBeVisible();
-      await page.getByText('运行诊断', { exact: true }).click();
-      await expect(page.getByText('产品与存储')).toBeVisible();
+      await expect(page.getByRole('heading', { name: '完整运行环境', exact: true })).toBeVisible();
+      await expect(page.getByRole('button', { name: '环境详情', exact: true })).toBeVisible();
       expect(errors).toEqual([]);
     });
   }
@@ -78,13 +77,9 @@ test.describe('real local backend integration', () => {
       'The complete upload workflow requires a configured real ADMET runtime',
     ).toBe(true);
     await page.getByRole('button', { name: '上传 PDF', exact: true }).click();
-    await page.getByText('高级选项', { exact: true }).click();
-    await page.getByLabel('项目名称（可选）').fill(`浏览器验收 ${new Date().toISOString()}`);
     await page.getByLabel('原始专利 PDF 文件').setInputFiles(pdfPath);
     await expect(page.getByRole('radio')).toHaveCount(0);
-    await page.getByLabel('包含中间体').check();
-    const note = `运营记录，不作为模型指令 ${new Date().toISOString()}`;
-    await page.getByLabel('任务说明', { exact: true }).fill(note);
+    await expect(page.locator('.task-advanced')).toHaveCount(0);
     const uploaded = page.waitForResponse(
       (response) =>
         response.request().method() === 'POST' && /\/api\/v1\/projects\?/.test(response.url()),
@@ -104,9 +99,9 @@ test.describe('real local backend integration', () => {
     expect(startResponse.status()).toBe(202);
     expect(startResponse.request().postDataJSON()).toEqual({
       include_admet: true,
-      include_intermediates: true,
+      include_intermediates: false,
       force: false,
-      task_note: note,
+      task_note: '',
       allow_partial: false,
       advisory: false,
       resume_job_id: null,
@@ -126,9 +121,9 @@ test.describe('real local backend integration', () => {
       ),
     ).toMatchObject({
       include_admet: true,
-      include_intermediates: true,
+      include_intermediates: false,
       force: false,
-      task_note: note,
+      task_note: '',
     });
     const persisted = await page.request.get(`/api/v1/projects/${uploadedId}`);
     expect(persisted.ok()).toBe(true);
@@ -175,7 +170,7 @@ test.describe('real local backend integration', () => {
     const stopped = (await (await page.request.get(`/api/v1/jobs/${createdJob.id}`)).json()) as Job;
     expect(['complete', 'failed', 'cancelled', 'interrupted']).toContain(stopped.status);
     await page.getByRole('button', { name: '任务详情' }).click();
-    await expect(page.locator('.job-options-record')).toContainText(note);
+    await expect(page.locator('.job-options-record')).toBeVisible();
   });
   test('real historical results, pagination, actual source availability, review persistence and export', async ({
     page,

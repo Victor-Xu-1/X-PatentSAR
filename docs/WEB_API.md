@@ -461,8 +461,12 @@ thin stage strip and one result toolbar. Statistics, full acceptance evidence,
 filters, density/columns, task parameters and document zoom are available on
 request, not stacked above the table. Six properties live in the same table;
 there is no standalone analysis page, second search box or duplicate result tab
-bar. Recent files and More expose history, environment management and evidence
-summary; all pages and dialogs consume the same visual tokens. Environment
+bar. All previous Header More actions and the real version are directly visible:
+upload, recent files, environment management, job history, and project-only result/evidence
+shortcuts. Narrow screens wrap with captions intact, without an overflow menu.
+Upload has PDF/start only, not an advanced-options disclosure or hidden title,
+patent-ID/flag/note inputs. Safe defaults preserve the existing upload/start/recovery
+contract and the complete ADMET workflow. All pages and dialogs consume the same visual tokens. Environment
 component details are collapsed by default; installation always exposes the
 full dependency/license plan and requires explicit consent.
 Page navigation, zoom, text/annotation tabs, source jumps,

@@ -1,3 +1,13 @@
+import type { JobOptions } from '../api/types';
+
+export const defaultJobOptions: Required<
+  Pick<JobOptions, 'include_intermediates' | 'force' | 'task_note'>
+> = {
+  include_intermediates: false,
+  force: false,
+  task_note: '',
+};
+
 export function normalizePatentId(value: string): string {
   const normalized = value.trim().toUpperCase();
   if (!normalized) return '';

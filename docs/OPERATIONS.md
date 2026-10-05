@@ -29,10 +29,13 @@ Historical imports preserve the original generated files. Reviews have separate
 revisioned records and cannot promote formal acceptance. Web exports include the
 acceptance state; review-only output is not a formal chemistry deliverable.
 
-The minimal default task page is `#/new-task`. Upload/create and enqueue are separate
+The minimal default task page is `#/new-task`: PDF input and one start action only,
+with no advanced-options section or hidden metadata inputs. Filename-derived title,
+server-inferred patent identity and safe flags (`include_intermediates=false`,
+`force=false`, empty task note) use the existing submission adapter. Upload/create and enqueue are separate
 verified steps: a start failure retains the project, while uncertain responses
 require a state check before retry. Notes are immutable job records, not executed
-prompts. Include-intermediate/force options become actual CLI flags; safe resume
+prompts. Explicit operator/API include-intermediate/force options still become actual CLI flags; safe resume
 preserves original notes/options but disables force checkpoint invalidation.
 
 Local analysis uses `PATENTSAR_ADMET_PYTHON`, `PATENTSAR_ADMET_MODEL_DIR`, the
@@ -182,7 +185,10 @@ measurements into scalars, and stored-property filtering never starts a model.
 The activity-band legend is on demand in display options; bands use the complete
 effective project and preserve ties, not current-page extrema.
 
-Open topbar **更多 → 环境管理** (`#/settings`). Use **一键部署全部环境** for the default
+Open the direct topbar **环境管理** entry (`#/settings`). Upload, recent files,
+environment management, job history and actual product version stay visible;
+workspace result/evidence shortcuts also stay visible. Small screens wrap controls
+without hiding captions; there is no Header More menu. Use **一键部署全部环境** for the default
 PDF/structure/activity/six-property workflow, not manual component assembly. One
 complete CPU/download/license confirmation creates one durable operation. It
 rechecks/reuses qualified components, provisions deficient ones in owned prefixes

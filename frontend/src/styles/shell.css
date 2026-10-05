@@ -5,7 +5,7 @@
   min-width: 0;
 }
 .topbar {
-  height: 42px;
+  min-height: 42px;
   border-bottom: 1px solid var(--line);
   display: flex;
   align-items: center;
@@ -44,8 +44,11 @@
 .topbar-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 5px;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
+  justify-content: flex-end;
   margin-left: auto;
 }
 .topbar-actions > button {
@@ -58,54 +61,11 @@
 .topbar-actions > button[aria-current='page'] {
   background: var(--surface-pressed);
 }
-.shell-menu {
-  position: relative;
-}
-.shell-menu > summary {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  list-style: none;
-  width: 32px;
-  min-height: 28px;
-  cursor: pointer;
-  border-radius: var(--radius-control);
-}
-.shell-menu > summary::-webkit-details-marker {
-  display: none;
-}
-.shell-menu > summary:hover,
-.shell-menu[open] > summary {
-  background: var(--surface-hover);
-}
-.shell-menu-content {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  z-index: 35;
-  width: min(210px, calc(100vw - 24px));
-  padding: 5px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel);
-  background: var(--surface);
-  box-shadow: var(--shadow-paper);
-}
-.shell-menu-content button {
-  display: flex;
-  width: 100%;
-  justify-content: flex-start;
-  border: 0;
-  background: transparent;
-  min-height: 36px;
-  font-size: 12px;
-}
-.shell-menu-content small {
-  display: block;
-  margin: 5px 8px 2px;
-  padding-top: 8px;
-  border-top: 1px solid var(--line);
-  color: var(--faint);
+.topbar-version {
+  flex: 0 0 auto;
+  color: var(--muted);
   font-size: 10px;
+  white-space: nowrap;
 }
 .search-field {
   display: flex;

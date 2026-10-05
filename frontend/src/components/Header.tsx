@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-import { Clock3, FileText, History, MoreHorizontal, Settings, Upload } from 'lucide-react';
+import { Clock3, FileText, History, Settings, Upload } from 'lucide-react';
 import type { Project } from '../api/types';
 import type { ResultTab, View } from '../model/route';
 import brandMark from '../assets/brand-mark.png';
@@ -23,33 +22,6 @@ export function Header({
   onAnalysis: (tab: ResultTab) => void;
   disabled: boolean;
 }) {
-  const menu = useRef<HTMLDetailsElement>(null);
-  const [open, setOpen] = useState(false);
-  useEffect(() => {
-    if (!open) return;
-    const close = (event: PointerEvent) => {
-      if (event.target instanceof Node && !menu.current?.contains(event.target))
-        menu.current?.removeAttribute('open');
-    };
-    const escape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        menu.current?.removeAttribute('open');
-        menu.current?.querySelector('summary')?.focus();
-      }
-    };
-    document.addEventListener('pointerdown', close);
-    document.addEventListener('keydown', escape);
-    return () => {
-      document.removeEventListener('pointerdown', close);
-      document.removeEventListener('keydown', escape);
-    };
-  }, [open]);
-  function select(action: () => void) {
-    menu.current?.removeAttribute('open');
-    menu.current?.querySelector('summary')?.focus();
-    action();
-  }
   const title = view === 'workspace' ? (project?.title ?? '正在打开文件…') : '';
   return (
     <header className="topbar">
@@ -70,7 +42,7 @@ export function Header({
           {title}
         </span>
       )}
-      <nav className="topbar-actions" aria-label="文件操作">
+      <nav className="topbar-actions" aria-label="工作台导航">
         <button type="button" aria-label="上传 PDF" onClick={onUpload} disabled={disabled}>
           <Upload size={15} />
           <span>上传 PDF</span>
@@ -85,46 +57,51 @@ export function Header({
           <History size={15} />
           <span>最近文件</span>
         </button>
-        <details
-          className="shell-menu"
-          ref={menu}
-          onToggle={(event) => setOpen(event.currentTarget.open)}
+        <button
+          type="button"
+          aria-label="环境管理"
+          disabled={disabled}
+          onClick={() => onNavigate('settings')}
+          aria-current={view === 'settings' ? 'page' : undefined}
         >
-          <summary aria-label="更多" title="更多" aria-expanded={open}>
-            <MoreHorizontal size={18} />
-          </summary>
-          <div className="shell-menu-content">
+          <Settings size={15} />
+          <span>环境管理</span>
+        </button>
+        <button
+          type="button"
+          aria-label="任务记录"
+          disabled={disabled}
+          onClick={() => onNavigate('jobs')}
+          aria-current={view === 'jobs' ? 'page' : undefined}
+        >
+          <Clock3 size={15} />
+          <span>任务记录</span>
+        </button>
+        {project && view === 'workspace' && (
+          <>
             <button
               type="button"
+              aria-label="返回结果表格"
               disabled={disabled}
-              onClick={() => select(() => onNavigate('settings'))}
+              onClick={() => onAnalysis('results')}
             >
-              <Settings size={15} />
-              环境管理
+              <FileText size={15} />
+              <span>返回结果表格</span>
             </button>
             <button
               type="button"
+              aria-label="证据摘要"
               disabled={disabled}
-              onClick={() => select(() => onNavigate('jobs'))}
+              onClick={() => onAnalysis('summary')}
             >
-              <Clock3 size={15} />
-              任务记录
+              <span>证据摘要</span>
             </button>
-            {project && view === 'workspace' && (
-              <>
-                <button type="button" onClick={() => select(() => onAnalysis('results'))}>
-                  <FileText size={15} />
-                  返回结果表格
-                </button>
-                <button type="button" onClick={() => select(() => onAnalysis('summary'))}>
-                  证据摘要
-                </button>
-              </>
-            )}
-            <small>{version !== null ? `v${version}` : '版本待连接'}</small>
-          </div>
-        </details>
+          </>
+        )}
       </nav>
+      <small className="topbar-version" aria-label="软件版本">
+        {version !== null ? `v${version}` : '版本待连接'}
+      </small>
     </header>
   );
 }

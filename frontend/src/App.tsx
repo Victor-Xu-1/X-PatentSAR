@@ -93,7 +93,7 @@ export default function App() {
           {connection.error && <ErrorNotice error={connection.error} onRetry={reconnect} />}
           {connected && !connection.data?.health.ready && (
             <output className="info-banner runtime-banner">
-              运行环境尚未就绪。已有文件仍可查看；请在“更多 → 环境管理”中检测。
+              运行环境尚未就绪。已有文件仍可查看；请在顶栏“环境管理”中检测。
             </output>
           )}
           {projectResource.error && (

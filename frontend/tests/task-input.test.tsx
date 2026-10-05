@@ -1,9 +1,10 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { api } from '../src/api';
 import { ApiError } from '../src/api/errors';
 import { NewTaskPage } from '../src/features/tasks/NewTaskPage';
+import { useTaskSubmission } from '../src/features/tasks/useTaskSubmission';
 import { job, project } from './fixtures';
 
 async function selectPdf(name = 'WO2026156070.pdf', content = '%PDF-1.7\ncontract') {
@@ -12,18 +13,22 @@ async function selectPdf(name = 'WO2026156070.pdf', content = '%PDF-1.7\ncontrac
     new File([content], name, { type: 'application/pdf' }),
   );
 }
-async function advanced() {
-  await userEvent.click(screen.getByText('高级选项'));
-}
 const props = { ready: true, connected: true, onCreated: vi.fn(), onOpen: vi.fn() };
 
 describe('single PDF task input with two-stage recovery', () => {
-  it('has one file input and primary action, with all optional fields tucked away', () => {
+  it('has one file input and primary action with no advanced disclosure or hidden metadata fields', () => {
     render(<NewTaskPage {...props} />);
     expect(screen.getByLabelText('原始专利 PDF 文件')).toHaveFocus();
-    expect(screen.getByLabelText('项目名称（可选）')).not.toBeVisible();
-    expect(screen.getByLabelText('专利标识（可选）')).not.toBeVisible();
-    expect(screen.getByLabelText('任务说明')).not.toBeVisible();
+    for (const name of [
+      '项目名称（可选）',
+      '专利标识（可选）',
+      '任务说明',
+      '包含中间体',
+      '强制重算',
+    ])
+      expect(screen.queryByLabelText(name)).not.toBeInTheDocument();
+    expect(screen.queryByText('高级选项')).not.toBeInTheDocument();
+    expect(document.querySelector('.task-advanced')).toBeNull();
     expect(screen.getByRole('button', { name: '开始提取' })).toBeDisabled();
     expect(screen.queryByRole('radio')).not.toBeInTheDocument();
   });
@@ -43,18 +48,18 @@ describe('single PDF task input with two-stage recovery', () => {
     });
     expect(upload.mock.invocationCallOrder[0]).toBeLessThan(create.mock.invocationCallOrder[0]!);
   });
-  it('keeps optional metadata and real job flags editable and wired to the existing API', async () => {
+  it('preserves the existing submission adapter metadata contract without exposing inputs on the upload page', async () => {
     const upload = vi.spyOn(api, 'upload').mockResolvedValue(project);
     const create = vi.spyOn(api, 'createJob').mockResolvedValue(job);
-    render(<NewTaskPage {...props} />);
-    await selectPdf();
-    await advanced();
-    await userEvent.type(screen.getByLabelText('项目名称（可选）'), '  复核专利  ');
-    await userEvent.type(screen.getByLabelText('专利标识（可选）'), 'wo2026/156070');
-    await userEvent.type(screen.getByLabelText('任务说明'), '需复核来源');
-    await userEvent.click(screen.getByLabelText('包含中间体'));
-    await userEvent.click(screen.getByLabelText('强制重算'));
-    await userEvent.click(screen.getByRole('button', { name: '开始提取' }));
+    const hook = renderHook(() => useTaskSubmission(vi.fn()));
+    await act(() =>
+      hook.result.current.submit({
+        file: new File(['%PDF-1.7\ncontract'], 'source.pdf', { type: 'application/pdf' }),
+        title: '  复核专利  ',
+        patentId: 'wo2026/156070',
+        options: { include_intermediates: true, force: true, task_note: '需复核来源' },
+      }),
+    );
     await waitFor(() => expect(create).toHaveBeenCalledOnce());
     expect(upload).toHaveBeenCalledWith(expect.any(File), '复核专利', 'WO2026156070');
     expect(create).toHaveBeenCalledWith(project.id, null, {
@@ -63,18 +68,21 @@ describe('single PDF task input with two-stage recovery', () => {
       task_note: '需复核来源',
     });
   });
-  it('rejects invalid patent metadata before either write and preserves editable input', async () => {
+  it('retains adapter validation for invalid declared patent metadata before either write', async () => {
     const upload = vi.spyOn(api, 'upload');
     const create = vi.spyOn(api, 'createJob');
-    render(<NewTaskPage {...props} />);
-    await selectPdf();
-    await advanced();
-    await userEvent.type(screen.getByLabelText('专利标识（可选）'), 'US/2026');
-    await userEvent.click(screen.getByRole('button', { name: '开始提取' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('标识');
+    const hook = renderHook(() => useTaskSubmission(vi.fn()));
+    await act(() =>
+      hook.result.current.submit({
+        file: new File(['%PDF-1.7\ncontract'], 'source.pdf', { type: 'application/pdf' }),
+        title: '',
+        patentId: 'US/2026',
+        options: { include_intermediates: false, force: false, task_note: '' },
+      }),
+    );
+    expect(hook.result.current.error?.message).toContain('标识');
     expect(upload).not.toHaveBeenCalled();
     expect(create).not.toHaveBeenCalled();
-    expect(screen.getByLabelText('专利标识（可选）')).toBeEnabled();
   });
   it('rejects a renamed non-PDF before upload and does not manufacture a project', async () => {
     const upload = vi.spyOn(api, 'upload');
