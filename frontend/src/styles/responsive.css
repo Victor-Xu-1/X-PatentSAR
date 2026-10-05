@@ -70,9 +70,6 @@
     flex-wrap: wrap;
     max-width: 200px;
   }
-  .settings-sections {
-    grid-template-columns: minmax(0, 1fr);
-  }
   .is-fullscreen .workspace-split {
     overflow: auto;
     flex-shrink: 1;
@@ -156,6 +153,34 @@
   }
   .recent-file time {
     display: none;
+  }
+  .recent-file {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) 16px;
+    gap: 8px 12px;
+    padding: 16px;
+  }
+  .recent-file-icon {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+  .recent-file-name {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .recent-file-name strong {
+    font-size: 14px;
+  }
+  .recent-file-acceptance {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
+    white-space: normal;
+    text-align: left;
+  }
+  .recent-file-chevron {
+    grid-column: 3;
+    grid-row: 1 / span 2;
   }
   .evidence-counts {
     grid-template-columns: repeat(2, minmax(0, 1fr));

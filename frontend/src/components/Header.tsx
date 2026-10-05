@@ -43,7 +43,13 @@ export function Header({
         </span>
       )}
       <nav className="topbar-actions" aria-label="工作台导航">
-        <button type="button" aria-label="上传 PDF" onClick={onUpload} disabled={disabled}>
+        <button
+          type="button"
+          aria-label="上传 PDF"
+          onClick={onUpload}
+          disabled={disabled}
+          aria-current={view === 'new-task' ? 'page' : undefined}
+        >
           <Upload size={15} />
           <span>上传 PDF</span>
         </button>

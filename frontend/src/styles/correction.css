@@ -1,7 +1,23 @@
+.dialog.correction-dialog {
+  width: min(1080px, calc(100vw - 30px));
+}
 .correction-form {
   gap: 14px;
   padding: 16px 20px;
   line-height: 1.4;
+}
+.correction-editor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+  min-width: 0;
+}
+.correction-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
 }
 .correction-form .form-field {
   gap: 5px;
@@ -21,9 +37,9 @@
   position: relative;
 }
 .structure-drawing-host {
-  height: 350px;
+  height: 430px;
   width: 100%;
-  background: #fff;
+  background: var(--image-paper);
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
   overflow: hidden;
@@ -44,7 +60,7 @@
 }
 .correction-values {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   align-items: end;
 }
@@ -55,8 +71,8 @@
   font-size: 13px;
 }
 .correction-properties {
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  padding-top: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding-top: 18px;
   border-top: 1px solid var(--line-soft);
 }
 .correction-form .dialog-actions {
@@ -68,6 +84,15 @@
 .manually-edited {
   text-decoration: underline dotted var(--muted);
   text-underline-offset: 3px;
+}
+@media (max-width: 850px) {
+  .correction-editor-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .structure-drawing-host {
+    height: 350px;
+  }
 }
 @media (max-width: 600px) {
   .correction-form {

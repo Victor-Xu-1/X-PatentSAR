@@ -3,7 +3,7 @@
   padding-inline: min(14px, 20%);
 }
 .results-table th.frozen-compound .column-heading {
-  padding-inline: 20px;
+  padding-inline: 18px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

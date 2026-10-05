@@ -1,4 +1,4 @@
-import { Download, ScanLine } from 'lucide-react';
+import { CircleCheck, CircleHelp, Download, ScanLine } from 'lucide-react';
 import type { EnvironmentCatalog, EnvironmentComponentId } from '../../api/environmentTypes';
 import { environmentComponentIds } from '../../api/environmentTypes';
 import { canSetupEnvironmentPlan, environmentSetupComponents } from '../../model/environmentSetup';
@@ -29,11 +29,19 @@ export function EnvironmentOverview({
   return (
     <section className="environment-card environment-overview" aria-label="完整运行环境">
       <div className="environment-section-header">
-        <div className="environment-overview-heading">
-          <h2>完整运行环境</h2>
-          <span className="muted">
-            已就绪 {readyCount}/{environmentComponentIds.length}
+        <div className="environment-overview-state">
+          <span
+            className={`environment-overview-icon${ready ? ' is-ready' : ''}`}
+            aria-hidden="true"
+          >
+            {ready ? <CircleCheck size={26} /> : <CircleHelp size={26} />}
           </span>
+          <div className="environment-overview-heading">
+            <h2>完整运行环境</h2>
+            <span className="muted">
+              已就绪 {readyCount}/{environmentComponentIds.length}
+            </span>
+          </div>
         </div>
         <div className="environment-overview-actions">
           <button

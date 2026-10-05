@@ -1,19 +1,19 @@
 .new-task-page {
-  width: min(100%, 560px);
-  margin: clamp(32px, 13vh, 130px) auto 40px;
+  width: min(100%, 640px);
+  margin: clamp(32px, 10vh, 100px) auto 40px;
 }
 .task-heading {
-  margin-bottom: 28px;
+  margin-bottom: 32px;
   text-align: center;
 }
 .task-heading h1 {
-  font-size: clamp(23px, 3vw, 29px);
+  font-size: clamp(25px, 3vw, 32px);
   line-height: 1.35;
 }
 .task-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
 }
 .task-form fieldset {
   border: 0;
@@ -26,10 +26,32 @@
 }
 .task-form .task-inputs .upload-drop {
   margin: 0;
-  padding: 24px 18px;
-  border-style: solid;
+  justify-content: center;
+  min-height: 224px;
+  padding: 32px 24px;
+  gap: 14px;
+  border-style: dashed;
   border-color: var(--line);
-  border-radius: 20px;
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+.task-form .upload-drop .upload-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 4px;
+  border-radius: var(--radius-panel);
+  background: var(--accent-surface);
+  color: var(--accent-strong);
+}
+.task-form .upload-drop strong {
+  max-width: 100%;
+  font-size: 17px;
+  line-height: 1.5;
+}
+.task-form .upload-drop > span:not(.upload-icon) {
+  font-size: 13px;
 }
 .task-form .upload-drop input {
   position: absolute;
@@ -39,18 +61,23 @@
   opacity: 0;
   cursor: pointer;
 }
+.task-form .upload-drop input:disabled {
+  cursor: not-allowed;
+}
+.task-inputs:disabled .upload-drop {
+  background: var(--surface-subtle);
+}
+.task-inputs:disabled .upload-icon {
+  color: var(--muted);
+  background: var(--disabled-surface);
+}
 .task-form .upload-drop:focus-within {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
 .task-form .upload-drop:has(input:not(:disabled)):hover {
-  background: var(--surface-hover);
-}
-.option-check {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 500;
+  border-color: var(--accent);
+  background: var(--accent-surface);
 }
 .task-status {
   display: flex;
@@ -67,16 +94,17 @@
   gap: 8px;
 }
 .task-submit .primary {
-  min-width: 160px;
-  min-height: 38px;
-  border-radius: 20px;
+  min-width: 208px;
+  min-height: 44px;
+  border-radius: var(--radius-control);
+  font-size: 14px;
 }
 .task-form .muted {
   font-size: 11px;
   line-height: 1.7;
 }
 .job-options-record {
-  font-size: 10px;
+  font-size: 12px;
   margin-top: 4px;
   color: var(--muted);
 }

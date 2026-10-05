@@ -39,7 +39,9 @@ export function NewTaskPage({
         <fieldset className="task-inputs" disabled={inputLocked}>
           <legend className="sr-only">专利 PDF</legend>
           <label className="upload-drop">
-            <FileUp size={26} />
+            <span className="upload-icon" aria-hidden="true">
+              <FileUp size={30} />
+            </span>
             <strong>{file?.name ?? '选择专利 PDF'}</strong>
             <span>PDF · 最大 128 MiB</span>
             <input

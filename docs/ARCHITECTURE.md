@@ -151,10 +151,16 @@ Original crops and bounded RDKit PNGs appear side by side; a redraw is explicitl
 not original evidence. Token probabilities are uncalibrated observations, never
 chemical-accuracy percentages or manual approvals.
 
-All pages share a neutral white/light-gray/near-black token set and system sans
+All pages share a restrained biomedical white/cool-gray/charcoal token set and system sans
 typography. Upload, recent files, jobs, environment management and dialogs follow
 the same minimal interaction hierarchy; details and dangerous-action consent
 remain available on demand rather than occupying permanent panels.
+Small mint accents identify navigation, document icons and genuine ready states;
+activity rank fills retain their independent within-column meaning. All surfaces
+derive from the same token authority, with no remote fonts or additional UI libraries.
+The responsive correction dialog places its existing local editor and editable
+columns side by side on wide screens and stacks them on narrow screens. Only
+presentation grouping changes; correction concurrency, chemistry and save guards do not.
 The global header renders all existing navigation/version entries directly, with
 caption-preserving wrap on narrow screens and no popover state/listeners. Upload
 contains only the PDF input and primary start action; the unused advanced-fields

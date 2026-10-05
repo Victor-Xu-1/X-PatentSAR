@@ -83,6 +83,19 @@ async function ready() {
   await waitFor(() => expect(screen.getByRole('button', { name: '保存修正' })).toBeEnabled());
 }
 describe('bounded editable correction contract', () => {
+  it('groups the real editor and editable columns into two responsive regions without losing fields', async () => {
+    vi.spyOn(api, 'getCorrection').mockResolvedValue(document);
+    render(<CorrectionDialog {...props()} />);
+    await ready();
+    expect(screen.getByRole('dialog')).toHaveClass('correction-dialog');
+    const layout = globalThis.document.querySelector('.correction-editor-layout')!;
+    expect(layout.children).toHaveLength(2);
+    expect(layout.children[0]).toContainElement(screen.getByLabelText('结构式绘制区域'));
+    expect(layout.children[1]).toContainElement(screen.getByLabelText('修正化合物编号'));
+    for (const metric of ['MW', 'LogP', 'TPSA', 'HBD', 'HBA', 'LogS'])
+      expect(layout.children[1]).toContainElement(screen.getByLabelText(`修正 ${metric}`));
+    expect(screen.queryByText('已完成')).not.toBeInTheDocument();
+  });
   it('preserves untouched scalar types and exact contexts; grades/ranges remain text', () => {
     expect(decodeCorrection(document).values.activities[0]?.value).toBe('++');
     const draft = correctionDraft(fields);

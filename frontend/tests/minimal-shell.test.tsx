@@ -18,6 +18,14 @@ const headerProps = {
 };
 
 describe('minimal document shell', () => {
+  it('marks PDF upload as the current page in the same direct navigation', () => {
+    render(<Header {...headerProps} view="new-task" project={null} />);
+    expect(screen.getByRole('button', { name: '上传 PDF' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(screen.getByRole('button', { name: '最近文件' })).not.toHaveAttribute('aria-current');
+  });
   it('shows all former menu actions and the actual version directly beside the original logo and document', () => {
     render(<Header {...headerProps} />);
     const brand = screen.getByRole('link', { name: 'X-PatentSAR · 上传 PDF' });

@@ -40,7 +40,8 @@ button {
   line-height: 1.3;
   transition:
     background-color 120ms ease,
-    border-color 120ms ease;
+    border-color 120ms ease,
+    color 120ms ease;
 }
 button:hover:not(:disabled) {
   border-color: var(--line-strong);
@@ -155,7 +156,7 @@ svg {
   align-items: center;
   justify-content: center;
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: 7px;
   color: var(--muted);
   background: var(--surface-hover);
   font-size: 11px;
@@ -170,8 +171,7 @@ svg {
   color: var(--success);
 }
 .badge.medium,
-.badge.job-running,
-.badge.not_run {
+.badge.job-running {
   background: var(--accent-surface);
   color: var(--accent-strong);
 }
@@ -183,6 +183,7 @@ svg {
 }
 .badge.historical,
 .badge.unknown,
+.badge.not_run,
 .badge.job-interrupted,
 .badge.job-cancelled {
   background: var(--surface-hover);
@@ -219,7 +220,9 @@ svg {
   place-items: center;
   width: 40px;
   height: 40px;
-  color: var(--muted);
+  color: var(--accent);
+  background: var(--accent-surface);
+  border-radius: var(--radius-control);
 }
 .feedback:not(.loading) h3 {
   font-family: var(--font-heading);

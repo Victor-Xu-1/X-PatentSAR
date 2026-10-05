@@ -26,7 +26,13 @@ export function CorrectionDialog({
   const { document, draft, busy, blocked } = edit;
   const [editorReady, setEditorReady] = useState(false);
   return (
-    <Dialog title={`修正 · ${compound.display_id}`} onClose={onClose} busy={busy} wide>
+    <Dialog
+      title={`修正 · ${compound.display_id}`}
+      onClose={onClose}
+      busy={busy}
+      wide
+      className="correction-dialog"
+    >
       {!document || !draft ? (
         <div className="dialog-body">
           {edit.resource.error ? (
@@ -48,40 +54,44 @@ export function CorrectionDialog({
           {(document.stale || blocked) && (
             <p className="conflict">保存版本或原始数据已变化，草稿保留。请先读取当前版本。</p>
           )}
-          <label className="form-field">
-            Compound
-            <input
-              data-initial-focus
-              aria-label="修正化合物编号"
-              required
-              maxLength={200}
-              value={draft.displayId}
-              disabled={busy || blocked}
-              onChange={(event) => edit.setDraft({ ...draft, displayId: event.target.value })}
-            />
-          </label>
-          <div className="correction-structure">
-            <StructureEditor
-              smiles={draft.smiles}
-              molfile={draft.molfile}
-              disabled={busy || blocked}
-              onReady={setEditorReady}
-              onSave={() => {
-                if (editorReady) void edit.save();
-              }}
-              onChange={(value) => edit.setDraft(changeStructureDraft(draft, value))}
-            />
+          <div className="correction-editor-layout">
+            <div className="correction-structure">
+              <StructureEditor
+                smiles={draft.smiles}
+                molfile={draft.molfile}
+                disabled={busy || blocked}
+                onReady={setEditorReady}
+                onSave={() => {
+                  if (editorReady) void edit.save();
+                }}
+                onChange={(value) => edit.setDraft(changeStructureDraft(draft, value))}
+              />
+            </div>
+            <div className="correction-fields">
+              <label className="form-field">
+                Compound
+                <input
+                  data-initial-focus
+                  aria-label="修正化合物编号"
+                  required
+                  maxLength={200}
+                  value={draft.displayId}
+                  disabled={busy || blocked}
+                  onChange={(event) => edit.setDraft({ ...draft, displayId: event.target.value })}
+                />
+              </label>
+              <ActivityEditor
+                values={draft.activities}
+                disabled={busy || blocked}
+                onChange={(activities) => edit.setDraft({ ...draft, activities })}
+              />
+              <PropertyEditor
+                values={draft.properties}
+                disabled={busy || blocked}
+                onChange={(properties) => edit.setDraft({ ...draft, properties })}
+              />
+            </div>
           </div>
-          <ActivityEditor
-            values={draft.activities}
-            disabled={busy || blocked}
-            onChange={(activities) => edit.setDraft({ ...draft, activities })}
-          />
-          <PropertyEditor
-            values={draft.properties}
-            disabled={busy || blocked}
-            onChange={(properties) => edit.setDraft({ ...draft, properties })}
-          />
           {edit.message && <output className="info-banner">{edit.message}</output>}
           {edit.error && <ErrorNotice error={edit.error} />}
           {blocked && (
