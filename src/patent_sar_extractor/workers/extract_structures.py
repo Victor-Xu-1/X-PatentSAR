@@ -116,7 +116,7 @@ def extract_structures_from_pdf(
     target_pages: list[int],
     output_dir: str,
     crop_regions_path: str = "",
-    patent_id: str = "",
+    patent_id: str | None = None,
 ) -> dict:
     """Extract chemical structures from specified pages of a PDF."""
     if not DECIMER_AVAILABLE:
@@ -130,7 +130,7 @@ def extract_structures_from_pdf(
     failed_pages: list[tuple[int, str]] = []
 
     # Extract patent number from filename
-    if not patent_id:
+    if patent_id is None:
         patent_id = Path(pdf_path).stem
         m = re.search(r"(WO\d{6,}|CN\d+)", patent_id)
         if m:
@@ -260,7 +260,7 @@ def main():
         help="Authoritative page numbers from the locator (0-indexed)",
     )
     parser.add_argument("--crop-regions", default="", help="Optional JSON page crop regions in rendered-image pixels")
-    parser.add_argument("--patent-id", default="", help="Explicit pipeline patent identity; uploaded filenames are not patent identifiers")
+    parser.add_argument("--patent-id", default=None, help="Explicit pipeline patent identity; uploaded filenames are not patent identifiers")
     args = parser.parse_args()
 
     extract_structures_from_pdf(args.pdf, args.pages, args.output, args.crop_regions, patent_id=args.patent_id)
