@@ -360,12 +360,16 @@ class AttemptTests(WebFixture, unittest.TestCase):
         self.classification(spec)
         root = Path(spec.output_dir)
         previous = ARTIFACTS["classify"][0]
-        for stage, collection in (
-            ("activity", "rows"),
-            ("locate", "selected_pages"),
-            ("structures", "structures"),
-            ("bind", "final_bindings"),
-        ):
+        collections = {
+            "activity": "rows",
+            "locate": "selected_pages",
+            "structures": "structures",
+            "bind": "final_bindings",
+        }
+        for stage in ARTIFACTS:
+            if stage not in collections:
+                continue
+            collection = collections[stage]
             relative, schema, version = ARTIFACTS[stage]
             payload = {
                 **core.artifact_identity(schema, version),

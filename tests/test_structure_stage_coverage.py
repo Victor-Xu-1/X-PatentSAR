@@ -68,6 +68,12 @@ class StructureStageCoverageTests(unittest.TestCase):
                         *map(str, job["pages"]),
                     ],
                 )
+                import json
+
+                _write_step_manifest(
+                    str(Path(job["output"]) / "metadata.json"),
+                    json.loads(Path(job["fingerprint_file"]).read_text()),
+                )
             return CompletedProcess([], 0)
         output = Path(args[args.index("--output") + 1])
         pages = [int(page) for page in args[args.index("--pages") + 1 :]]

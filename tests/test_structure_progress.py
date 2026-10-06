@@ -8,6 +8,7 @@ import unittest
 from pathlib import Path
 from subprocess import CompletedProcess
 
+from patent_sar_extractor.application.stage_cache import _write_step_manifest
 from patent_sar_extractor.application.structure_progress import StructureProgress
 from patent_sar_extractor.application.structure_window import execute_missing_windows
 from patent_sar_extractor.artifact_io import write_json_atomic
@@ -88,6 +89,11 @@ class StructureProgressTests(unittest.TestCase):
                             else [],
                         },
                     )
+                    if index == 0:
+                        _write_step_manifest(
+                            str(Path(job["output"]) / "metadata.json"),
+                            json.loads(Path(job["fingerprint_file"]).read_text()),
+                        )
                 return CompletedProcess([], 1)
 
             with self.assertRaisesRegex(RuntimeError, "completed chunks retained"):

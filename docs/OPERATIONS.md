@@ -288,6 +288,18 @@ contribute only after fresh metadata and checkpoint validation. Completed
 windows publish the observations. Unknown device/RSS is not fabricated.
 This progress does not publish incomplete chemistry or bypass the existing
 completed-stage projection/strict-QA boundary.
+Checkpoint transport obtains its stage order from the same core registry. A
+source-first task can preserve validated locator and completed segmentation
+chunks before activity extraction starts. No missing downstream artifact may
+prematurely stop copying an earlier declared stage; invalid dependencies still
+reject reuse. Final outputs, acceptance and old history are never transported.
+Each segmentation job receives a bounded input-fingerprint file. The worker
+recomputes it against the original PDF and declared locator/crop dependencies,
+then seals each fresh successful chunk immediately with the existing manifest
+writer. A later interrupted chunk cannot erase earlier sealed work. Inputs are
+rechecked after inference; changed dependencies never acquire a checkpoint.
+The parent validates worker-sealed manifests rather than creating a second
+checkpoint writer. Old metadata without a manifest stays unproved and retained.
 
 PDFs without a readable patent identifier retain the task's explicit unknown value through CLI execution and resume; the upload's temporary filename is never promoted to a patent identifier. Standalone CLI omission still permits the existing filename inference. Explicit `--patent-id ""` requires an explicit output directory.
 
