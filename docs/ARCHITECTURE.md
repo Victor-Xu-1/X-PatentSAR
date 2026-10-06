@@ -130,6 +130,11 @@ invoke recognition or inference; actual graph changes target only that compound.
   (normally30pages, at most60); each completed chunk has its own immutable
   input/dependency checkpoint. A failed later chunk retains successful earlier
   chunks. The next window uses a fresh process, with no overlapping model.
+  Internal window control v2 passes owned bounded fingerprint files. The worker
+  verifies unchanged original/dependencies and seals each successful batch
+  immediately using the sole manifest authority; the parent only verifies.
+  Checkpoint transport follows the same `CORE_STAGE_ORDER`, not artifact-map
+  declaration order. Unsealed old metadata is never retroactively approved.
 - DECIMER recognition is serial with bounded preparation and an exact-image /
   exact-model raw cache. Healthy workers recycle after100observations or900s.
   Consecutive infrastructure starts are bounded; exhaustion aborts the batch

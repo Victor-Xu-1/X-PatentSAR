@@ -35,7 +35,7 @@ MAX_HISTORY_BYTES = 65536
 MAX_COPY_BYTES = 512 * 1024 * 1024
 MAX_COPY_FILES = 25000
 OCR_PATH = "page_classification/page_ocr_cache.json"
-ARTIFACTS = {
+_CHECKPOINT_ARTIFACTS = {
     "classify": (
         "page_classification/page_classification.json",
         core.PAGE_CLASSIFICATION_SCHEMA,
@@ -66,6 +66,13 @@ ARTIFACTS = {
         core.SMILES_SCHEMA,
         core.SMILES_SCHEMA_VERSION,
     ),
+}
+# Artifact declarations are paths, never a second execution-order authority.
+# Final outputs/QA remain absent: copying checkpoints cannot copy acceptance.
+ARTIFACTS = {
+    name: _CHECKPOINT_ARTIFACTS[name]
+    for name in core.CORE_STAGE_ORDER
+    if name in _CHECKPOINT_ARTIFACTS
 }
 DEPENDENCIES = {item[0] for item in ARTIFACTS.values()} | {
     OCR_PATH,

@@ -5,13 +5,17 @@ from pathlib import Path
 
 from patent_sar_extractor.artifact_io import load_json, write_json_atomic
 from patent_sar_extractor.contracts import (
+    SEGMENTATION_INPUT_FINGERPRINT_FILE,
+    SEGMENTATION_WINDOW_SCHEMA,
+    SEGMENTATION_WINDOW_SCHEMA_VERSION,
     STRUCTURES_SCHEMA,
     STRUCTURES_SCHEMA_VERSION,
     artifact_identity_matches,
+    schema_ref,
 )
 
 from .pipeline_io import _require_updated_worker_output, _worker_output_state
-from .stage_cache import _write_step_manifest
+from .stage_cache import _fingerprint_matches
 
 
 def execute_missing_windows(
@@ -30,12 +34,28 @@ def execute_missing_windows(
     results = {}
     for offset in range(0, len(jobs), 3):
         window = jobs[offset : offset + 3]
+        for job in window:
+            write_json_atomic(
+                Path(job["output"]) / SEGMENTATION_INPUT_FINGERPRINT_FILE,
+                job["fingerprint"],
+            )
         plan_path = Path(root) / ".chunks" / f"window_{offset // 3:03d}.json"
         write_json_atomic(
             plan_path,
             {
-                "schema": {"name": "patentsar.segmentation-window", "version": 1},
-                "jobs": [{"pages": j["pages"], "output": j["output"]} for j in window],
+                "schema": schema_ref(
+                    SEGMENTATION_WINDOW_SCHEMA, SEGMENTATION_WINDOW_SCHEMA_VERSION
+                ),
+                "jobs": [
+                    {
+                        "pages": j["pages"],
+                        "output": j["output"],
+                        "fingerprint_file": str(
+                            Path(j["output"]) / SEGMENTATION_INPUT_FINGERPRINT_FILE
+                        ),
+                    }
+                    for j in window
+                ],
             },
         )
         previous = {
@@ -79,7 +99,8 @@ def execute_missing_windows(
             except RuntimeError:
                 continue
             # A failed later chunk must not throw away earlier successful work.
-            _write_step_manifest(str(path), job["fingerprint"])
+            if not _fingerprint_matches(str(path), job["fingerprint"]):
+                continue
             results[job["output"]] = payload
             if on_saved is not None:
                 on_saved(job["pages"])
