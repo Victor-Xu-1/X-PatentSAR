@@ -102,10 +102,12 @@ def read_summary(run_root: Path) -> dict[str, Any] | None:
     return summary
 
 
-def read_progress(files: SafeFiles) -> StageProgress | None:
+def read_progress(files: SafeFiles, stage: str = "smiles") -> StageProgress | None:
+    if stage not in {"smiles", "structures"}:
+        return None
     try:
         payload = json.loads(
-            files.read("smiles/progress.json", max_bytes=MAX_PROGRESS_BYTES)
+            files.read(f"{stage}/progress.json", max_bytes=MAX_PROGRESS_BYTES)
         )
         schema = payload.get("schema") if isinstance(payload, dict) else None
         if (
@@ -116,7 +118,7 @@ def read_progress(files: SafeFiles) -> StageProgress | None:
             != core.schema_ref(
                 core.STAGE_PROGRESS_SCHEMA, core.STAGE_PROGRESS_SCHEMA_VERSION
             )
-            or payload.pop("stage", None) != "smiles"
+            or payload.pop("stage", None) != stage
         ):
             return None
         # Strict counters do not coerce booleans/strings, and JSON NaN is rejected
@@ -181,8 +183,10 @@ def stages_from_summary(
                     raw.get(key) is True for key in ("from_cache", "cache", "reused")
                 ),
                 progress=(
-                    read_progress(files)
-                    if files is not None and name == "smiles" and status != "pending"
+                    read_progress(files, name)
+                    if files is not None
+                    and name in {"smiles", "structures"}
+                    and status != "pending"
                     else None
                 ),
                 resource_wait=(

@@ -4,6 +4,7 @@ import { jobStatusText } from '../../model/presentation';
 import {
   completeCoreStages,
   observedStages,
+  progressUnit,
   stageLabel,
   stageStatusText,
   stoppedJob,
@@ -112,6 +113,7 @@ export function StageStrip({ job, compact = false }: { job: Job | null; compact?
             <span className="stage-progress">
               {' '}
               · {progress.completed} / {progress.total}
+              {current ? progressUnit(current.name) : ''}
             </span>
           )}
         </output>

@@ -101,12 +101,26 @@ class StructureStageCoverageTests(unittest.TestCase):
                 self.assertEqual(worker.call_count, 1)
                 self.assertNotIn("--crop-regions", worker.call_args.kwargs["args"])
                 self.assertEqual(state.n_structures, 2)
+                import json
+
+                saved = json.loads(
+                    (Path(state.step_dirs["structures"]) / "progress.json").read_text()
+                )
+                self.assertEqual(
+                    (saved["completed"], saved["total"], saved["cache_hits"]), (2, 2, 0)
+                )
                 self.assertEqual(
                     state.pipeline_log["steps"]["structures"]["status"], "ok"
                 )
                 execute_structures(state)
                 self.assertEqual(worker.call_count, 1)
                 self.assertTrue(state.pipeline_log["steps"]["structures"]["from_cache"])
+                saved = json.loads(
+                    (Path(state.step_dirs["structures"]) / "progress.json").read_text()
+                )
+                self.assertEqual(
+                    (saved["completed"], saved["total"], saved["cache_hits"]), (2, 2, 2)
+                )
 
     def test_no_activity_chunking_retains_all_pages(self):
         with tempfile.TemporaryDirectory() as temporary:

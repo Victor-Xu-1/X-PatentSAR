@@ -34,6 +34,52 @@ const waiting = () =>
     ),
   });
 describe('actual task progress and unavailable historic stages', () => {
+  it('shows saved structure pages and reused pages without guessed model statistics', () => {
+    const current = decodeJob({
+      ...job,
+      history_available: true,
+      stage_order: [
+        'classify',
+        'locate',
+        'structures',
+        'bind',
+        'activity',
+        'smiles',
+        'final',
+        'qa',
+      ],
+      stages: job.stages.map((stage) => ({
+        ...stage,
+        status:
+          stage.name === 'structures'
+            ? 'running'
+            : ['classify', 'locate'].includes(stage.name)
+              ? 'ok'
+              : 'pending',
+        progress:
+          stage.name === 'structures'
+            ? {
+                completed: 70,
+                total: 208,
+                cache_hits: 30,
+                failures: 0,
+                device: null,
+                peak_rss_mb: null,
+              }
+            : null,
+      })),
+    });
+    render(<StageStrip job={current} compact />);
+    expect(document.querySelector('.stage-current')).toHaveTextContent('70 / 208 页');
+    fireEvent.click(screen.getByLabelText('提取阶段详情'));
+    const stage = screen.getByText('结构分割').closest('li')!;
+    fireEvent.click(within(stage).getByText('结构分割').closest('summary')!);
+    expect(within(stage).getByText('复用 30 页')).toBeVisible();
+    expect(
+      within(stage).queryByText(/失败 0|执行设备未知|峰值 RSS 未提供/),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/预计|\d+%/)).not.toBeInTheDocument();
+  });
   it.each(['running', 'pending'] as const)(
     'shows an actual %s research wait despite rejected core work without promoting acceptance',
     (status) => {

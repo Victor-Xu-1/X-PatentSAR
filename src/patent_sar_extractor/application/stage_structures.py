@@ -36,6 +36,7 @@ from .structure_cache import (
     _structure_chunk_fingerprint,
     _structure_chunk_size,
 )
+from .structure_progress import StructureProgress
 from .structure_window import execute_missing_windows
 from .worker_policy import (
     _gpu_env_extra,
@@ -50,6 +51,7 @@ def execute_structures(state: PipelineContext) -> None:
     state.progress.start(step)
     t0 = time.time()
     structures_dir = state.step_dirs[step]
+    work_progress = StructureProgress(structures_dir, state.structure_pages)
     state.structures_json = os.path.join(structures_dir, "metadata.json")
     if not state.structure_pages:
         print(f"  ⏭ [{step}] 定位器未确认任何结构页，保持空结果并交由验收闸门处理")
@@ -87,6 +89,7 @@ def execute_structures(state: PipelineContext) -> None:
         state.n_structures = int(structures_meta.get("total_structures", 0))
         print(f"  ⏭ [{step}] 已存在，跳过")
         state.progress.mark_checkpoint_reused()
+        work_progress.saved(state.structure_pages, cached=True)
     elif state.structure_pages:
         os.makedirs(structures_dir, exist_ok=True)
         structure_worker_script = str(
@@ -125,6 +128,7 @@ def execute_structures(state: PipelineContext) -> None:
                         flush=True,
                     )
                     chunk_payloads.append(reusable_chunk)
+                    work_progress.saved(chunk_pages, cached=True)
                     continue
                 print(
                     f"     … structure chunk {chunk_index + 1}/"
@@ -154,6 +158,7 @@ def execute_structures(state: PipelineContext) -> None:
                     "decimer", gpu_mode=getattr(state.args, "gpu_mode", "auto")
                 ),
                 cwd=str(WORKING_ROOT),
+                on_saved=work_progress.saved,
             )
             chunk_payloads = [
                 produced[item] if isinstance(item, str) else item
@@ -194,6 +199,7 @@ def execute_structures(state: PipelineContext) -> None:
             if proc.returncode != 0:
                 raise RuntimeError("structure extraction failed")
             _require_updated_worker_output(state.structures_json, previous_output)
+            work_progress.saved(state.structure_pages)
         structures_meta = _load_json(state.structures_json, {})
         state.n_structures = int(structures_meta.get("total_structures", 0))
         if state.structure_pages and state.n_structures == 0:
