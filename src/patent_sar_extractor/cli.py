@@ -60,7 +60,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     command.add_argument("--pdf", required=True)
     command.add_argument("--output", default="")
-    command.add_argument("--patent-id", default="")
+    command.add_argument("--patent-id", default=None)
     command.add_argument("--force", action="store_true")
     command.add_argument(
         "--reuse-ocr-cache",

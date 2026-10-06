@@ -632,6 +632,12 @@ class AttemptTests(WebFixture, unittest.TestCase):
     def test_real_cli_failure_resume_reuses_classification_and_preserves_old_attempt(
         self,
     ):
+        self._assert_real_cli_resume_identity("WO1234567.pdf", "WO1234567")
+
+    def test_real_cli_unknown_patent_identity_remains_unknown_after_resume(self):
+        self._assert_real_cli_resume_identity("Controlled-resume-input.pdf", "")
+
+    def _assert_real_cli_resume_identity(self, filename, expected_patent_id):
         config = self.root / "operator-config"
         config.mkdir(mode=0o700)
 
@@ -649,12 +655,25 @@ class AttemptTests(WebFixture, unittest.TestCase):
                 return env
 
         with self.client(runner=LocalCLI(), job_timeout_seconds=60) as client:
-            project = self.upload(client)
+            response = client.post(
+                f"/api/v1/projects?filename={filename}",
+                content=self.pdf.read_bytes(),
+                headers={"Content-Type": "application/pdf"},
+            )
+            self.assertEqual(response.status_code, 201, response.text)
+            project = response.json()
+            self.assertEqual(project["patent_id"], expected_patent_id)
             endpoint = f"/api/v1/projects/{project['id']}/jobs"
             first = client.post(endpoint, json={}).json()
             original = wait_job(client, first["id"], "failed", timeout=60)
             self.assertTrue(original["history_available"])
             old_root = Path(client.app.state.queue._spec(first["id"]).output_dir)
+            self.assertEqual(
+                json.loads((old_root / "pipeline_summary.json").read_text())[
+                    "patent_id"
+                ],
+                expected_patent_id,
+            )
             before = {
                 str(path.relative_to(old_root)): hashlib.sha256(
                     path.read_bytes()

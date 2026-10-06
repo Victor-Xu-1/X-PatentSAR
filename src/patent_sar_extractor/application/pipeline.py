@@ -34,11 +34,23 @@ from .stage_structures import execute_structures
 
 def execute_pipeline(args, progress: PipelineProgress) -> dict:
     state = PipelineContext(args=args, progress=progress)
-    state.patent_id = getattr(state.args, "patent_id", None) or (
-        re.search(r"(WO\d{6,})", state.args.pdf).group(1)
-        if re.search(r"(WO\d{6,})", state.args.pdf)
-        else os.path.splitext(os.path.basename(state.args.pdf))[0]
+    provided_patent_id = getattr(state.args, "patent_id", None)
+    # Explicit unknown identity is owned by the task, not an invitation to
+    # replace it with the uploader's temporary filename. Standalone omission
+    # retains the existing filename inference.
+    state.patent_id = (
+        provided_patent_id
+        if provided_patent_id is not None
+        else (
+            re.search(r"(WO\d{6,})", state.args.pdf).group(1)
+            if re.search(r"(WO\d{6,})", state.args.pdf)
+            else os.path.splitext(os.path.basename(state.args.pdf))[0]
+        )
     )
+    if not state.patent_id and not state.args.output:
+        raise ValueError(
+            "An empty patent identifier requires an explicit output directory."
+        )
     io_cfg = _load_io_config()
     state.base_dir = state.args.output or (
         os.path.join(io_cfg.get("output_dir", ""), state.patent_id)
