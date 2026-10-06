@@ -189,10 +189,15 @@ def extract_coordinate_tables(doc, pages: list[int]) -> ParsedActivity:
     result = ParsedActivity()
     token_map = {}
     biology_grids: dict[int, list[dict]] = {}
+    biology_header_hints: dict[str, tuple[str, ...]] = {}
     generic_regions = []
     carry: tuple[GridSchema | BiologySchema, list[float], int] | None = None
-    for page_index in sorted(set(pages)):
-        if not 0 <= page_index < len(doc):
+    seeds = {page for page in pages if type(page) is int and 0 <= page < len(doc)}
+    # A continuation need not repeat an assay keyword and may be absent from
+    # classification. Inspect only a seed or the immediately following page
+    # of a proven table; gaps/mismatched grids terminate the chain below.
+    for page_index in range(min(seeds, default=len(doc)), len(doc)):
+        if page_index not in seeds and not (carry and carry[2] + 1 == page_index):
             continue
         page = doc[page_index]
         regions = sorted(
@@ -240,7 +245,7 @@ def extract_coordinate_tables(doc, pages: list[int]) -> ParsedActivity:
             if isinstance(schema, BiologySchema):
                 biology_grids.setdefault(page_index, []).append(region)
                 table_id = schema.table_id
-                result.headers.extend(schema.keys)
+                biology_header_hints.setdefault(table_id, schema.keys)
             else:
                 generic_regions.append((page_index, region, schema))
                 table_id = schema.context.table_id
@@ -262,6 +267,16 @@ def extract_coordinate_tables(doc, pages: list[int]) -> ParsedActivity:
         tokens_for_page=lambda p: token_map[p.number],
         grids_for_page=lambda p: biology_grids[p.number],
     )
+    for table_id, hints in biology_header_hints.items():
+        # The biology authority owns the resolved experiment context. Do not
+        # publish a generic discovery hint beside cell-line-specific row keys.
+        observed = dict.fromkeys(
+            key
+            for record in records
+            if record.table_id == table_id
+            for key in record.values
+        )
+        result.headers.extend(observed or hints)
     result.rows.extend(
         ActivityRow(
             cpd=r.compound,

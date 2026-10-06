@@ -153,6 +153,7 @@ def _pair_cells(
     active_keys: set[str] | None,
     *,
     recognized_pages: Sequence[int] | set[int] = (),
+    repeatable_labels: frozenset[str] = frozenset(),
 ) -> NumberedTableResult:
     """Require one printed ID and one complete segment in its adjacent cell."""
     observed = Counter(_label(cell.label) for cell in cells if _label(cell.label))
@@ -187,7 +188,7 @@ def _pair_cells(
             or not _confirmed_observations(label, cell.observations)
         ):
             reason = "unresolved_label"
-        elif observed[label] != 1:
+        elif observed[label] != 1 and label not in repeatable_labels:
             reason = "duplicate_label"
         elif not _adjacent_cells(label_box, cell_box):
             reason = "invalid_cell_geometry"
@@ -269,6 +270,9 @@ def pair_numbered_table_cells(
             structures,
             None,
             recognized_pages=recognized_pages,
+            # Only an explicitly proved selected subset can retain repeated
+            # additional observations of an already-confirmed primary ID.
+            repeatable_labels=frozenset(confirmed),
         )
         reprints.extend(
             binding for binding in alternate.bindings if binding.label in confirmed

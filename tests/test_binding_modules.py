@@ -122,7 +122,12 @@ class BindingModuleTests(unittest.TestCase):
 
     def test_module_imports_are_explicit_acyclic_and_have_one_bind_and_writer(self):
         core = Path(__file__).resolve().parents[1] / "src/patent_sar_extractor/core"
-        paths = [*core.glob("binding_*.py"), core / "structure_binder.py"]
+        paths = [
+            *core.glob("binding_*.py"),
+            core / "visible_label_cache.py",
+            core / "visible_label_crops.py",
+            core / "structure_binder.py",
+        ]
         graph = {path.stem: set() for path in paths}
         definitions = {}
         for path in paths:

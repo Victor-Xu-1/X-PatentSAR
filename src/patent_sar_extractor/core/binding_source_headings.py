@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
+from pathlib import Path
 
 from .activity_identity import PRINTED_ID, normalize_compound
 from .binding_candidates import _build_binding_from_structure
@@ -20,6 +22,14 @@ _HEADING = re.compile(
     rf"({PRINTED_ID})(?![\w/-])",
     re.IGNORECASE,
 )
+
+
+def _document_sha256(doc) -> str:
+    """Label observations can include pixels outside the molecule crop."""
+    if doc.name and not doc.is_dirty:
+        with Path(doc.name).open("rb") as stream:
+            return hashlib.file_digest(stream, "sha256").hexdigest()
+    return hashlib.sha256(doc.tobytes(no_new_id=True)).hexdigest()
 
 
 def observed_heading_blocks(doc, pages: list[int], line_map: dict) -> list[dict]:
@@ -69,6 +79,10 @@ def select_heading_bindings(
             {"cpd": b["cpd"], "page_no": b["page_no"], "reason": "no_heading_structure"}
             for b in blocks
         ]
+    document_sha256 = _document_sha256(doc)
+    structures = [
+        {**structure, "source_pdf_sha256": document_sha256} for structure in structures
+    ]
     cache = _load_visible_label_cache(output_dir, profile)
     cache = _precompute_visible_label_cache(
         structures,
@@ -95,7 +109,7 @@ def select_heading_bindings(
                 and block["y0"] <= structure["y0"] < end
             ):
                 continue
-            binding = _build_binding_from_structure(structure, block["cpd"])
+            binding = _build_binding_from_structure(structure, key)
             if normalize_compound(binding["cpd"]) != normalize_compound(block["cpd"]):
                 # The shared builder cannot yet represent every printed-ID form.
                 # Preserve the observation as unresolved, never shorten its owner.
