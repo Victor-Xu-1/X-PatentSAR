@@ -384,7 +384,7 @@ npx vitest run tests/simple-table.test.tsx tests/corrections.test.tsx --maxWorke
 npm run build
 cd ..
 uv run python tools/build_frontend.py
-uv build --wheel --out-dir dist
+uv run python tools/build_wheel.py --work-root /srv/wsl/tmp --out-dir dist
 ```
 
 真实浏览器测试在已启动的本机服务上运行：
@@ -399,6 +399,11 @@ WSL 本机设置 `PLAYWRIGHT_BROWSERS_PATH=/srv/wsl/cache/ms-playwright`，避�
 浏览器下载和测试记录放在 C 盘。安装已构建的独立 wheel 使用
 `python -m pip install 'x_patentsar-0.1.0-py3-none-any.whl[web]'`；wheel 含界面，
 运行时无需 Node.js。源码构建和测试需要 Node.js。
+
+统一构建器从当前 Git 管理的包源码和已校验前端清单创建全新临时源目录，
+不复用或清理历史 `build`。轮子审计逐文件校验当前源码清单与 SHA-256，
+拒绝多余旧模块、缺失文件和旧内容。每次构建使用新的输出目录；WSL 的工作目录
+保持在 E 盘对应的 `/srv/wsl/tmp`，CI 使用运行器自己的临时目录。
 
 ## 代码结构
 

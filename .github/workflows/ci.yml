@@ -53,7 +53,7 @@ jobs:
           npm run build
       - run: uv run python tools/build_frontend.py
       - run: uv run python tools/build_frontend.py --check
-      - run: uv build --wheel
+      - run: uv run python tools/build_wheel.py --work-root "$RUNNER_TEMP/x-patentsar-builds" --out-dir dist
       - name: Audit and install wheel
         run: |
           uv run python tools/audit_wheel.py dist/*.whl
