@@ -111,7 +111,7 @@ describe('current extraction failure presentation', () => {
     expect(within(notice).getByText('提取在活性提取阶段停止。')).toBeVisible();
     expect(
       within(notice).getByText(
-        /尚未执行：来源定位、结构分割、结构绑定、SMILES 识别、产物导出、确定性 QA/,
+        /尚未执行：结构定位、结构分割、编号绑定、SMILES 识别、生成结果、核心校验/,
       ),
     ).toBeVisible();
     expect(within(notice).getByText(/待复核候选记录，不是完整结构–活性结果/)).toBeVisible();
@@ -149,10 +149,10 @@ describe('current extraction failure presentation', () => {
         <ExtractionNotice project={failedProject} job={interrupted} />
       </>,
     );
-    expect(document.querySelector('.stage-current')).toHaveTextContent('文档分类 · 停止时进行中');
+    expect(document.querySelector('.stage-current')).toHaveTextContent('文档解析 · 停止时进行中');
     const notice = screen.getByRole('alert', { name: '提取验收与阻塞状态' });
     expect(notice).not.toHaveTextContent('ADMET');
-    expect(notice).toHaveTextContent('尚未执行：活性提取、来源定位');
+    expect(notice).toHaveTextContent('尚未执行：活性提取、结构定位');
     expect(notice).toHaveTextContent('待复核候选记录');
   });
 

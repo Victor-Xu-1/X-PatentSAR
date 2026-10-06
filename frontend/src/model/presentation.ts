@@ -8,15 +8,15 @@ import type {
   StageStatus,
 } from '../api/types';
 export const stageLabels: Record<StageName, string> = {
-  classify: '文档分类',
+  classify: '文档解析',
   activity: '活性提取',
-  locate: '来源定位',
+  locate: '结构定位',
   structures: '结构分割',
-  bind: '结构绑定',
+  bind: '编号绑定',
   smiles: 'SMILES 识别',
-  final: '产物导出',
-  qa: '确定性 QA',
-  admet: 'ADMET',
+  final: '生成结果',
+  qa: '核心校验',
+  admet: 'ADMET / 指标',
 };
 export const stageStatusLabels: Record<StageStatus, string> = {
   pending: '等待',

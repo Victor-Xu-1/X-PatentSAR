@@ -57,7 +57,7 @@ describe('minimal secondary page presentation without changing workflows', () =>
     expect(await screen.findByText('任务 ' + job.id)).toHaveAttribute('title', job.id);
     expect(document.querySelector('.eyebrow')).toBeNull();
     expect(screen.getByRole('heading', { level: 1, name: '任务记录' })).toBeVisible();
-    const stages = screen.getByRole('list', { name: '真实提取流水线阶段', hidden: true });
+    const stages = screen.getByRole('list', { name: '任务运行链路', hidden: true });
     expect(stages).not.toBeVisible();
     fireEvent.click(screen.getByLabelText('提取阶段详情'));
     expect(stages).toBeVisible();

@@ -55,10 +55,11 @@ describe('one slim observed job state with disclosed detail', () => {
         `${stageLabels[name]} · 停止时进行中`,
       );
       expect(observedStages(interrupted)).toHaveLength(8);
-      expect(screen.queryByText('ADMET')).not.toBeInTheDocument();
+      expect(container.querySelector('.stage:last-child')).toHaveTextContent('ADMET / 指标未执行');
+      expect(container.querySelector('.stage:last-child')).not.toHaveClass('failed');
       expect(container.querySelector('.spin')).toBeNull();
       fireEvent.click(screen.getByLabelText('提取阶段详情'));
-      expect(screen.getAllByRole('listitem')).toHaveLength(8);
+      expect(screen.getAllByRole('listitem')).toHaveLength(9);
 
       const failed: Job = {
         ...interrupted,
@@ -71,7 +72,7 @@ describe('one slim observed job state with disclosed detail', () => {
       expect(document.querySelector('.stage-current')).toHaveTextContent(
         `${stageLabels[name]} · 失败`,
       );
-      expect(screen.queryByText('ADMET')).not.toBeInTheDocument();
+      expect(container.querySelector('.stage:last-child')).not.toHaveClass('failed');
     },
   );
   it.each(['pending', 'failed'] as const)(
@@ -84,8 +85,9 @@ describe('one slim observed job state with disclosed detail', () => {
       };
       expect(observedStages(current)).toEqual(job.stages);
       render(<StageStrip job={current} compact />);
-      expect(document.querySelector('.stage-current')).toHaveTextContent('文档分类 · 进行中');
-      expect(screen.queryByText('ADMET')).not.toBeInTheDocument();
+      expect(document.querySelector('.stage-current')).toHaveTextContent('文档解析 · 进行中');
+      expect(document.querySelector('.stage:last-child')).toHaveTextContent('ADMET / 指标等待');
+      expect(document.querySelector('.stage:last-child')).not.toHaveClass('failed');
     },
   );
   it.each(['pending', 'failed'] as const)(
@@ -99,7 +101,7 @@ describe('one slim observed job state with disclosed detail', () => {
       expect(observedStages(current)).toHaveLength(9);
       render(<StageStrip job={current} compact />);
       expect(document.querySelector('.stage-current')).toHaveTextContent(
-        status === 'failed' ? 'ADMET · 失败' : 'ADMET · 等待',
+        status === 'failed' ? 'ADMET / 指标 · 失败' : 'ADMET / 指标 · 等待',
       );
     },
   );
@@ -123,7 +125,7 @@ describe('one slim observed job state with disclosed detail', () => {
     };
     expect(observedStages(current)).toEqual([current.admet_stage]);
     render(<StageStrip job={current} compact />);
-    expect(document.querySelector('.stage-current')).toHaveTextContent('ADMET · 失败');
+    expect(document.querySelector('.stage-current')).toHaveTextContent('ADMET / 指标 · 失败');
   });
   it('does not infer completed core work from a partial successful stage list', () => {
     const current: Job = {
@@ -141,9 +143,9 @@ describe('one slim observed job state with disclosed detail', () => {
   });
   it('renders only the current state/progress until the user opens stage detail', () => {
     render(<StageStrip job={withAdmet} compact />);
-    expect(screen.getByText(/ADMET · 进行中/)).toBeVisible();
+    expect(screen.getByText(/ADMET \/ 指标 · 进行中/)).toBeVisible();
     expect(document.querySelector('.stage-current')).toHaveTextContent('12 / 100');
-    const list = screen.getByRole('list', { name: '真实提取流水线阶段', hidden: true });
+    const list = screen.getByRole('list', { name: '任务运行链路', hidden: true });
     expect(list).not.toBeVisible();
     fireEvent.click(screen.getByLabelText('提取阶段详情'));
     expect(list).toBeVisible();
@@ -170,13 +172,13 @@ describe('one slim observed job state with disclosed detail', () => {
     render(<StageStrip job={only} compact />);
     fireEvent.click(screen.getByLabelText('提取阶段详情'));
     expect(screen.getAllByRole('listitem')).toHaveLength(1);
-    expect(screen.queryByText('文档分类')).not.toBeInTheDocument();
+    expect(screen.queryByText('文档解析')).not.toBeInTheDocument();
   });
   it('keeps stopped progress factual and does not continue its running animation', () => {
     const { container } = render(
       <StageStrip job={{ ...withAdmet, status: 'interrupted' }} compact />,
     );
-    expect(screen.getByText(/ADMET · 停止时进行中/)).toBeVisible();
+    expect(screen.getByText(/ADMET \/ 指标 · 停止时进行中/)).toBeVisible();
     expect(container.querySelector('.spin')).toBeNull();
     expect(document.querySelector('.stage-current')).toHaveTextContent('12 / 100');
   });
@@ -192,11 +194,11 @@ describe('one slim observed job state with disclosed detail', () => {
     };
     const { rerender } = render(<StageStrip job={recognition} compact />);
     expect(document.querySelector('.stage-current')).toHaveTextContent(
-      '结构识别 · 进行中 · 12 / 100',
+      '结构补齐 · 进行中 · 12 / 100',
     );
     expect(screen.getByText('缓存命中 2 · 失败 1')).not.toBeVisible();
     fireEvent.click(screen.getByLabelText('提取阶段详情'));
-    fireEvent.click(screen.getByText('结构识别').closest('summary')!);
+    fireEvent.click(screen.getByText('结构补齐').closest('summary')!);
     expect(screen.getByText('缓存命中 2 · 失败 1')).toBeVisible();
     expect(screen.getAllByRole('listitem')).toHaveLength(1);
 
@@ -217,7 +219,7 @@ describe('one slim observed job state with disclosed detail', () => {
     rerender(<StageStrip job={properties} compact />);
     expect(document.querySelector('.stage-current')).toHaveTextContent('指标计算 · 进行中 · 0 / 7');
     expect(screen.getByText('缓存命中 0 · 失败 0')).toBeVisible();
-    expect(screen.queryByText('结构识别')).not.toBeInTheDocument();
+    expect(screen.queryByText('结构补齐')).not.toBeInTheDocument();
     expect(screen.queryByText(/12 \/ 100/)).not.toBeInTheDocument();
     expect(screen.getAllByRole('listitem')).toHaveLength(1);
   });
@@ -234,7 +236,9 @@ describe('one slim observed job state with disclosed detail', () => {
         compact
       />,
     );
-    expect(document.querySelector('.stage-current')).toHaveTextContent('ADMET · 进行中 · 12 / 100');
+    expect(document.querySelector('.stage-current')).toHaveTextContent(
+      'ADMET / 指标 · 进行中 · 12 / 100',
+    );
   });
   it('keeps a failed recognition phase explicit without a running animation', () => {
     const { container } = render(
@@ -252,7 +256,7 @@ describe('one slim observed job state with disclosed detail', () => {
       />,
     );
     expect(document.querySelector('.stage-current')).toHaveTextContent(
-      '结构识别 · 失败 · 12 / 100',
+      '结构补齐 · 失败 · 12 / 100',
     );
     expect(container.querySelector('.spin')).toBeNull();
   });

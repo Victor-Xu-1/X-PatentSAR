@@ -59,7 +59,7 @@ describe('eligible ADMET workload and explicitly skipped records', () => {
     expect(document.querySelector('.stage-current')).toHaveTextContent('12 / 100');
     expect(document.querySelector('.stage-current')).not.toHaveTextContent('185');
     fireEvent.click(screen.getByLabelText('提取阶段详情'));
-    const summary = screen.getByText('ADMET').closest('summary')!;
+    const summary = screen.getByText('ADMET / 指标').closest('summary')!;
     fireEvent.click(summary);
     expect(detail).toBeVisible();
     expect(screen.queryByText(/12 \/ 285/)).not.toBeInTheDocument();
@@ -74,7 +74,7 @@ describe('eligible ADMET workload and explicitly skipped records', () => {
     };
     expect(decodeJob({ ...only, admet_stage: empty }).admet_stage).toEqual(empty);
     render(<StageObservation job={only} name="admet" stage={empty} />);
-    const summary = screen.getByText('ADMET').closest('summary')!;
+    const summary = screen.getByText('ADMET / 指标').closest('summary')!;
     fireEvent.click(summary);
     expect(screen.getByText('未计算 185（缺少有效SMILES）')).toBeVisible();
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
@@ -96,14 +96,14 @@ describe('eligible ADMET workload and explicitly skipped records', () => {
         compact
       />,
     );
-    expect(document.querySelector('.stage-current')).toHaveTextContent('ADMET · 未计算');
+    expect(document.querySelector('.stage-current')).toHaveTextContent('ADMET / 指标 · 未计算');
     expect(document.querySelector('.stage-current')).not.toHaveTextContent('0 / 0');
     expect(screen.getByText('未计算 185（缺少有效SMILES）')).not.toBeVisible();
   });
 
   it('does not add a permanent zero or guessed skipped note when no record was skipped', () => {
     render(<StageObservation job={only} name="admet" stage={{ ...phase, skipped: 0 }} />);
-    fireEvent.click(screen.getByText('ADMET').closest('summary')!);
+    fireEvent.click(screen.getByText('ADMET / 指标').closest('summary')!);
     expect(screen.queryByText(/未计算 \d+/)).not.toBeInTheDocument();
   });
 
