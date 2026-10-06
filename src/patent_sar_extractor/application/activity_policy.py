@@ -133,7 +133,8 @@ def _annotate_activity_payload(path: str) -> list[str]:
 
 
 def _activity_acceptance_errors(
-    activity_payload: dict, active_cpds: list[str]
+    activity_payload: dict, active_cpds: list[str],
+    *, classified_activity_pages: list[int] | None = None,
 ) -> list[str]:
     if not isinstance(activity_payload, dict):
         return ["Activity extraction output is missing or malformed."]
@@ -145,9 +146,13 @@ def _activity_acceptance_errors(
             "Activity output does not match the current activity schema and ruleset."
         )
     rows = activity_payload.get("rows", [])
-    if not isinstance(rows, list) or not rows:
+    if not isinstance(rows, list):
+        return [*errors, "Activity rows are malformed."]
+    if not rows:
+        if classified_activity_pages == [] and not active_cpds:
+            return errors
         errors.append(
-            "No activity rows were extracted; downstream structure binding is not allowed."
+            "No activity rows were extracted without proof that activity is absent."
         )
         return errors
     active_set = set(active_cpds)
