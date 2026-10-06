@@ -68,10 +68,13 @@ controls. A second server must not share an active workspace.
 
 ### Automatic six-property workbench
 
-New Web jobs request `include_admet=true`. Extraction must satisfy strict core
-QA and release its owned model process before the queue starts research prediction.
+New Web jobs request `include_admet=true`. Extraction releases its verified owned
+model process before research. Formal completion requires strict core QA. Only
+a fully executed, current QA rejection may enrich individually qualified rows;
+the task remains failed with `core_not_accepted`. Incomplete or technical failures
+do not enter this research path.
 The external pinned ADMET runtime is required for this complete Web workflow.
-Core CLI behavior stays separate and unchanged. Do not relabel an ADMET failure
+The CLI now uses the source-led stage order. Do not relabel an ADMET failure
 as full-job success just because core artifacts were already accepted.
 
 For existing projects, **列表选项 → 补齐结构与指标** queues the same ADMET-only job,
@@ -82,7 +85,9 @@ The same small progress strip shows both phases. Missing models/transport fail
 the job; rejected source chemistry remains explicit without invented SMILES or
 numbers. Explicit user graph corrections/blanks are not overwritten. Online graph corrections automatically queue
 only their affected compound. Coordinate/value-only edits and equivalent isomeric
-graphs do not call the model. Source/graph changes invalidate obsolete properties;
+graphs do not call the model. The first five RDKit properties publish separately
+before model loading, with independent source/graph/runtime/algorithm evidence;
+LogS failure retains these calculations, not old model numbers. Source/graph changes invalidate obsolete properties;
 reset uses a new correction revision. Incomplete model outputs are never shown
 as numeric placeholders. Large molecules/PROTAC predictions remain unvalidated
 research observations, not an efficacy/safety or exact-graph guarantee.
@@ -355,8 +360,8 @@ ring numbers or chiral tags to bypass a failure.
 The extraction-repair verification scope follows the affected chain: cell ownership
 and suffix/ambiguity unit regressions; real original-PDF binding and raw DECIMER
 inference; SQLite/API live-checkpoint and failure states; frontend run-switch,
-crop/source navigation and installed-wheel browser checks. Pass criteria are exact
-active-ID order, unique existing images, per-metric provenance, strict SMILES QC,
+crop/source navigation and installed-wheel browser checks. Pass criteria are complete
+proved printed-ID structure coverage, unique existing images, per-metric provenance, strict SMILES QC,
 and final deterministic acceptance. Optional research/ADMET analysis is not an
 alternative acceptance path and is outside this repair's scientific validation.
 

@@ -101,8 +101,10 @@ class ControlledPhaseRunner(SubprocessRunner):
             # Test helpers are not runtime modules and PYTHONPATH intentionally
             # contains only src. Bind this controlled child to its actual test
             # source, rather than relying on the parent's discovery sys.path.
-            f"import sys; sys.path.insert(0, {str(Path(__file__).resolve().parent)!r}); "
-            "from test_prediction_support import controlled_phase; controlled_phase(*sys.argv[1:])",
+            (
+                f"import sys; sys.path.insert(0, {str(Path(__file__).resolve().parent)!r}); "
+                "from test_prediction_support import controlled_phase; controlled_phase(*sys.argv[1:])"
+            ),
             spec.job_id,
             spec.project_id,
             spec.pdf_path,
@@ -169,5 +171,24 @@ def controlled_phase(job_id, project_id, pdf_path, output_dir, phase, mode, acce
         return
     service.predictions.put(
         project_id, "Compound 1", controlled_summary(source, smiles, job_id)
+    )
+    from patent_sar_extractor.web.descriptor_fields import (
+        compute_descriptors,
+        descriptor_engine,
+    )
+    from patent_sar_extractor.web.descriptor_models import DescriptorSummary
+
+    service.descriptors.put(
+        project_id,
+        "Compound 1",
+        DescriptorSummary(
+            status="complete",
+            properties=compute_descriptors(smiles),
+            engine=descriptor_engine(),
+            source_fingerprint=source,
+            smiles_sha256=smiles_digest(smiles),
+            job_id=job_id,
+            generated_at=now(),
+        ),
     )
     write_admet_stage(output, row, controlled_stage(), core_completed=core_completed)

@@ -14,6 +14,7 @@ from patent_sar_extractor.contracts import (
     artifact_identity,
     artifact_identity_matches,
 )
+from patent_sar_extractor.core.activity_identity import normalize_compound
 from patent_sar_extractor.core.activity_values import has_usable_activity_values
 
 logger = logging.getLogger("patent_sar_extractor")
@@ -30,17 +31,7 @@ def _normalize_cpd_label(value: str) -> str:
         re.IGNORECASE,
     ):
         return "Claim 1 compound"
-    match = re.search(
-        r"(?:compound|cpd|example|实施例|化合物)\s*[-:]?\s*(\d+(?:-\d+)?[A-Z]?)",
-        text,
-        re.IGNORECASE,
-    )
-    if match:
-        return f"Compound {match.group(1).upper()}"
-    bare = re.fullmatch(r"(\d+(?:-\d+)?[A-Z]?)", text, re.IGNORECASE)
-    if bare:
-        return f"Compound {bare.group(1).upper()}"
-    return text
+    return normalize_compound(text) or text
 
 
 def _expand_cpd_labels(value: str) -> list[str]:
@@ -54,18 +45,7 @@ def _expand_cpd_labels(value: str) -> list[str]:
     ):
         return []
 
-    expanded: list[str] = []
-    prefix_match = re.match(
-        r"^(?:compound|cpd|example|实施例|化合物)\s*[-:]?\s*(.+)$", text, re.IGNORECASE
-    )
-    if prefix_match and "/" in text:
-        for part in prefix_match.group(1).split("/"):
-            part = part.strip()
-            if re.fullmatch(r"\d+(?:-\d+)?[A-Z]?", part, re.IGNORECASE):
-                expanded.append(f"Compound {part.upper()}")
-        if expanded:
-            return list(dict.fromkeys(expanded))
-
+    # A composite printed row is not evidence that each child was measured.
     normalized = _normalize_cpd_label(text)
     return [normalized] if normalized else []
 
@@ -123,18 +103,21 @@ def _annotate_activity_payload(path: str) -> list[str]:
                 payload[key] = value
                 changed = True
         payload.setdefault("metadata", {})
-        if isinstance(payload["metadata"], dict):
-            if payload["metadata"].get("n_active_cpds") != len(active_cpds):
-                payload["metadata"]["n_active_cpds"] = len(active_cpds)
-                changed = True
+        if isinstance(payload["metadata"], dict) and payload["metadata"].get(
+            "n_active_cpds"
+        ) != len(active_cpds):
+            payload["metadata"]["n_active_cpds"] = len(active_cpds)
+            changed = True
         if changed:
             _write_json(path, payload)
     return active_cpds
 
 
 def _activity_acceptance_errors(
-    activity_payload: dict, active_cpds: list[str],
-    *, classified_activity_pages: list[int] | None = None,
+    activity_payload: dict,
+    active_cpds: list[str],
+    *,
+    classified_activity_pages: list[int] | None = None,
 ) -> list[str]:
     if not isinstance(activity_payload, dict):
         return ["Activity extraction output is missing or malformed."]

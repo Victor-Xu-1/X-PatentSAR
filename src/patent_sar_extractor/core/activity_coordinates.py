@@ -32,13 +32,16 @@ def coordinate_candidates(
             re.search(
                 r"(?:Compound|Cpd|Example|化合物|实施例)\s*[-:]?\s*\d+|[A-Za-z]-\d+\s+[A-G]",
                 text,
-                re.I,
+                re.IGNORECASE,
             )
         )
-        if not text_map or (has_context and (TABLE_MARKER.search(text) or has_rows)):
-            selected.append(page)
-            previous = page
-        elif previous == page - 1 and has_rows and has_context:
+        if (
+            not text_map
+            or (has_context and (TABLE_MARKER.search(text) or has_rows))
+            or previous == page - 1
+            and has_rows
+            and has_context
+        ):
             selected.append(page)
             previous = page
     return selected
@@ -86,7 +89,7 @@ def _read_cell(page, tokens: list[dict], bounds, *, identifier: bool, native: bo
         value = normalize_compound(raw)
         kind = (
             "label"
-            if re.match(r"Compound|Example|Cpd|Cmpd|实施例|化合物", raw, re.I)
+            if re.match(r"Compound|Example|Cpd|Cmpd|实施例|化合物", raw, re.IGNORECASE)
             else "id"
         )
     else:
@@ -94,7 +97,9 @@ def _read_cell(page, tokens: list[dict], bounds, *, identifier: bool, native: bo
         kind = (
             "plus"
             if re.fullmatch(r"\+{1,3}", value)
-            else ("letter" if re.fullmatch(r"[A-D]", value, re.I) else "number")
+            else (
+                "letter" if re.fullmatch(r"[A-D]", value, re.IGNORECASE) else "number"
+            )
         )
     if native:
         # Shared lexical kinds do not support all printed suffixes, missing
@@ -210,7 +215,7 @@ def extract_coordinate_tables(doc, pages: list[int]) -> ParsedActivity:
             # The existing biology authority owns its supported ratio/grade
             # schemas. It never competes with the generic scalar-header reader.
             if not METRIC.search(header) or re.search(
-                r"\bRatio\b.*\bGrade\b|degradation", header, re.I
+                r"\bRatio\b.*\bGrade\b|degradation", header, re.IGNORECASE
             ):
                 schema = (
                     infer_schema(f"{prefix} {header}", len(region["xs"]) - 1) or schema

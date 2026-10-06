@@ -143,6 +143,30 @@ class RawOCSRObservationTests(unittest.TestCase):
             self.assertEqual([r["raw_smiles"] for r in rows], [raw, raw])
             self.assertTrue(all("stereo_correction" not in r for r in rows))
 
+    def test_resource_admission_error_aborts_without_fake_graph_failures(self):
+        from patent_sar_extractor.resource_admission import ResourceAdmissionError
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            converter, calls = self.converter(["CCO"])
+            item = self.fixture(root)
+            with patch.object(converter.engines["decimer"], "predict",
+                              side_effect=ResourceAdmissionError("Controlled headroom wait exhausted")) as prediction:
+                with self.assertRaises(ResourceAdmissionError):
+                    converter.convert_batch([item] * 20)
+            self.assertEqual(prediction.call_count, 1)
+            self.assertEqual(calls, [])
+
+    def test_known_page_render_is_not_accepted_as_a_molecular_crop(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            item = self.fixture(root)
+            page = root / "page_001.png"
+            page.write_bytes(Path(item["image_path"]).read_bytes())
+            converter, calls = self.converter(["CCO"])
+            result = converter.convert_one({**item, "image_path": str(page)})
+            self.assertEqual(result["OCSR_status"], "image_missing")
+            self.assertEqual(calls, [])
+
 
 if __name__ == "__main__":
     unittest.main()

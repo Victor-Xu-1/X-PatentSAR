@@ -13,6 +13,7 @@ from pydantic import (
 
 from .activity_focus_models import ActivityFocus, ActivitySourceKey
 from .activity_rank_models import ActivityStrengthScale, RankValue
+from .descriptor_models import DescriptorSummary
 from .dto import DTO, Error
 from .prediction_models import PredictionSummary
 from .property_values import PropertyOverrides, validate_overrides
@@ -79,7 +80,9 @@ class ActivityColumn(DTO):
     filter_values: list[FilterChoice] = Field(
         default_factory=list, max_length=200, exclude_if=lambda value: not value
     )
-    filter_values_truncated: bool = Field(default=False, exclude_if=lambda value: not value)
+    filter_values_truncated: bool = Field(
+        default=False, exclude_if=lambda value: not value
+    )
 
 
 class Source(DTO):
@@ -148,6 +151,9 @@ class Compound(DTO):
     review: Review | None = None
     flags: list[str] = Field(default_factory=list)
     admet: PredictionSummary | None = None
+    descriptors: DescriptorSummary | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
     correction: CorrectionMetadata | None = None
     record_kind: (
         Literal["structure_activity", "structure_only", "activity_only"] | None
@@ -223,6 +229,13 @@ class StageProgress(DTO):
         return self
 
 
+class ResourceWait(DTO):
+    reason: Literal["memory"]
+    required_mb: float = Field(ge=0, le=16384, strict=True)
+    available_mb: float = Field(ge=0, le=1_000_000_000, strict=True)
+    waited_seconds: float = Field(ge=0, le=120, strict=True)
+
+
 class Stage(DTO):
     name: str
     status: StageStatus = "pending"
@@ -231,6 +244,9 @@ class Stage(DTO):
     reused_checkpoint: bool = Field(default=False, strict=True)
     progress: StageProgress | None = None
     skipped: int = Field(default=0, ge=0, le=1_000_000, strict=True)
+    resource_wait: ResourceWait | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
 
 
 class Job(DTO):
@@ -250,6 +266,20 @@ class Job(DTO):
     include_admet: bool = False
     admet_only: bool = False
     admet_stage: Stage | None = None
+    stage_order: list[str] | None = Field(
+        default=None, max_length=8, exclude_if=lambda value: value is None
+    )
+
+    @field_validator("stage_order")
+    @classmethod
+    def validate_stage_order(cls, value):
+        if (
+            value is not None
+            and value
+            and (len(value) != len(STAGES) or set(value) != set(STAGES))
+        ):
+            raise ValueError("Stage order must contain each formal stage exactly once")
+        return value
 
 
 class Project(DTO):

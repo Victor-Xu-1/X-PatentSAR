@@ -14,6 +14,14 @@ from patent_sar_extractor.core.ocsr.engines.decimer_engine import DECIMEREngine
 
 
 class DecimerProcessTests(unittest.TestCase):
+    def setUp(self):
+        # These real subprocesses are protocol controls, not SDK/model loads.
+        headroom = patch(
+            "patent_sar_extractor.core.ocsr.engines.decimer_engine.wait_for_memory"
+        )
+        headroom.start()
+        self.addCleanup(headroom.stop)
+
     def engine(self, root: Path, behavior: str = "success"):
         script = root / "worker.py"
         script.write_text(
@@ -82,6 +90,18 @@ class DecimerProcessTests(unittest.TestCase):
                 batch_wrapper_script=str(Path(temp) / "missing.py"),
             )
             self.assertFalse(engine.is_available())
+
+    def test_healthy_window_recycles_without_spending_failure_budget(self):
+        with tempfile.TemporaryDirectory() as temp:
+            engine, image = self.engine(Path(temp))
+            self.addCleanup(engine.close)
+            self.assertEqual(engine.predict(str(image), timeout=2)["status"], "success")
+            original = engine.worker_process
+            engine._requests = 100
+            self.assertEqual(engine.predict(str(image), timeout=2)["status"], "success")
+            self.assertIsNot(engine.worker_process, original)
+            self.assertIsNotNone(original.poll())
+            self.assertFalse(engine.session_exhausted)
 
     def test_cpu_policy_is_explicit_and_parent_pythonpath_is_not_inherited(self):
         with patch.dict(

@@ -178,9 +178,11 @@ class ActivityParserModuleTests(unittest.TestCase):
         self.assertEqual(normalize_value("4]"), "4]")
 
     def test_missing_classification_is_not_proof_of_no_activity(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            with self.assertRaisesRegex(ValueError, "Malformed classified"):
-                extract("not-opened.pdf", {}, temporary)
+        with (
+            tempfile.TemporaryDirectory() as temporary,
+            self.assertRaisesRegex(ValueError, "Malformed classified"),
+        ):
+            extract("not-opened.pdf", {}, temporary)
 
     def test_dependency_graph_is_acyclic_with_no_facade_back_import(self):
         import patent_sar_extractor.core.activity_extractor as facade

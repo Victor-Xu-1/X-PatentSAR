@@ -19,7 +19,10 @@ import fitz
 import numpy as np
 
 PACKAGE_IMPORT_ROOT = Path(__file__).resolve().parents[2]
-runpy.run_path(str(PACKAGE_IMPORT_ROOT / "patent_sar_extractor/worker_bootstrap.py"), run_name="__main__")
+runpy.run_path(
+    str(PACKAGE_IMPORT_ROOT / "patent_sar_extractor/worker_bootstrap.py"),
+    run_name="__main__",
+)
 
 from patent_sar_extractor.artifact_io import write_json_atomic
 from patent_sar_extractor.contracts import (
@@ -44,7 +47,7 @@ if not _truthy(os.environ.get("PATENTSAR_DECIMER_ENABLE_GPU")):
     os.environ.setdefault("ABSL_LOGGING_MIN_LOG_LEVEL", "3")
 
 # Fix numpy 2.x compatibility for DECIMER
-if not hasattr(np, 'VisibleDeprecationWarning'):
+if not hasattr(np, "VisibleDeprecationWarning"):
     np.VisibleDeprecationWarning = FutureWarning
 
 try:
@@ -60,16 +63,19 @@ try:
         return _numba_jit(*jit_args, **jit_kwargs)
 
     numba.jit = _jit_no_cache
-except Exception as exc:
+except (ImportError, AttributeError, RuntimeError) as exc:
     logger.debug("Optional numba cache patch was not applied: %s", exc)
 
 try:
     from decimer_segmentation import get_model, segment_chemical_structures
+
     DECIMER_AVAILABLE = True
 except ImportError:
     DECIMER_AVAILABLE = False
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+)
 
 
 def _load_crop_regions(crop_regions_path: str) -> dict:
@@ -78,12 +84,13 @@ def _load_crop_regions(crop_regions_path: str) -> dict:
     try:
         with open(crop_regions_path, encoding="utf-8") as f:
             return json.load(f)
-    except Exception as e:
-        logger.warning(f"Failed to load crop regions {crop_regions_path}: {e}")
-        return {}
+    except (OSError, ValueError) as e:
+        raise RuntimeError("Explicit crop-region metadata could not be read") from e
 
 
-def _resolve_crop_pixels(crop: dict, page, dpi: int, img_width: int, img_height: int) -> tuple[int, int, int, int]:
+def _resolve_crop_pixels(
+    crop: dict, page, dpi: int, img_width: int, img_height: int
+) -> tuple[int, int, int, int]:
     if not crop:
         return 0, 0, img_width, img_height
 
@@ -117,10 +124,13 @@ def extract_structures_from_pdf(
     output_dir: str,
     crop_regions_path: str = "",
     patent_id: str | None = None,
+    initialize_model: bool = True,
 ) -> dict:
     """Extract chemical structures from specified pages of a PDF."""
     if not DECIMER_AVAILABLE:
-        raise RuntimeError("DECIMER segmentation is unavailable; configure the verified scientific environment")
+        raise RuntimeError(
+            "DECIMER segmentation is unavailable; configure the verified scientific environment"
+        )
     os.makedirs(output_dir, exist_ok=True)
     crop_regions = _load_crop_regions(crop_regions_path)
 
@@ -137,47 +147,59 @@ def extract_structures_from_pdf(
             patent_id = m.group(1)
 
     logger.info(f"Using DECIMER segmentation for {len(target_pages)} pages")
-    try:
-        # Load and validate the model once.  Repeating a failed lazy load
-        # for every page turns one environment error into hours of empty
-        # chunks that still exit successfully.
-        configured_weights = os.environ.get("DECIMER_SEGMENTATION_MODEL_DIR", "").strip()
-        if configured_weights:
-            from patent_sar_extractor.workers.environment_segmentation import (
-                configure_segmentation_model,
-            )
+    if initialize_model:
+        try:
+            from patent_sar_extractor.resource_admission import wait_for_memory
 
-            configure_segmentation_model(configured_weights)
-        else:
-            get_model()
-    except Exception as exc:
-        raise RuntimeError(f"DECIMER model initialization failed: {exc}") from exc
+            wait_for_memory(3072)
+            configured_weights = os.environ.get(
+                "DECIMER_SEGMENTATION_MODEL_DIR", ""
+            ).strip()
+            if configured_weights:
+                from patent_sar_extractor.workers.environment_segmentation import (
+                    configure_segmentation_model,
+                )
+
+                configure_segmentation_model(configured_weights)
+            else:
+                get_model()
+        except Exception as exc:
+            raise RuntimeError(f"DECIMER model initialization failed: {exc}") from exc
     for page_num in target_pages:
         if page_num >= doc.page_count:
             continue
         # Render page as image at 150dpi
         page = doc[page_num]
         dpi = 150
-        mat = fitz.Matrix(dpi/72, dpi/72)
+        mat = fitz.Matrix(dpi / 72, dpi / 72)
         pix = page.get_pixmap(matrix=mat)
-        img_path = os.path.join(output_dir, f"page_{page_num+1:03d}.png")
+        img_path = os.path.join(output_dir, f"page_{page_num + 1:03d}.png")
         pix.save(img_path)
 
         try:
             from PIL import Image
+
             img = Image.open(img_path).convert("RGB")
-            crop = crop_regions.get(str(page_num), crop_regions.get(str(page_num + 1), {}))
-            crop_x0, crop_y0, crop_x1, crop_y1 = _resolve_crop_pixels(crop, page, dpi, img.width, img.height)
+            crop = crop_regions.get(
+                str(page_num), crop_regions.get(str(page_num + 1), {})
+            )
+            crop_x0, crop_y0, crop_x1, crop_y1 = _resolve_crop_pixels(
+                crop, page, dpi, img.width, img.height
+            )
             if crop_x0 or crop_y0 or crop_x1 != img.width or crop_y1 != img.height:
                 img = img.crop((crop_x0, crop_y0, crop_x1, crop_y1))
-                img_path = os.path.join(output_dir, f"page_{page_num+1:03d}_synthesis_crop.png")
+                img_path = os.path.join(
+                    output_dir, f"page_{page_num + 1:03d}_synthesis_crop.png"
+                )
                 img.save(img_path)
-                logger.info(f"  Page {page_num+1}: crop ({crop_x0},{crop_y0})-({crop_x1},{crop_y1})")
+                logger.info(
+                    f"  Page {page_num + 1}: crop ({crop_x0},{crop_y0})-({crop_x1},{crop_y1})"
+                )
             segments, bboxes = segment_chemical_structures(
                 np.array(img),
                 return_bboxes=True,
             )
-            logger.info(f"  Page {page_num+1}: found {len(segments)} structures")
+            logger.info(f"  Page {page_num + 1}: found {len(segments)} structures")
 
             for box_idx, (y0, x0, y1, x1) in enumerate(bboxes):
                 x0_abs = x0 + crop_x0
@@ -196,29 +218,34 @@ def extract_structures_from_pdf(
                 try:
                     segment = segments[box_idx]
                     if segment.ndim == 3 and segment.shape[2] == 4:
-                        Image.fromarray(segment.astype(np.uint8), mode="RGBA").save(struct_img_path)
+                        Image.fromarray(segment.astype(np.uint8), mode="RGBA").save(
+                            struct_img_path
+                        )
                     else:
                         Image.fromarray(segment.astype(np.uint8)).save(struct_img_path)
                 except Exception as e:
-                    logger.warning(f"  Failed to crop structure {idx}: {e}")
-                    struct_img_path = img_path
+                    raise RuntimeError(
+                        f"Structure {idx} crop could not be saved; page image is not a structure"
+                    ) from e
 
-                structures.append({
-                    "structure_index": idx,
-                    "structure_id": f"S{idx:04d}",
-                    "page_no": page_num + 1,
-                    "page_idx": page_num,
-                    "bbox_pdf": [pdf_x0, pdf_y0, pdf_x1, pdf_y1],
-                    "bbox": [int(x0_abs), int(y0_abs), int(x1_abs), int(y1_abs)],
-                    "crop_region": crop,
-                    "image_path": struct_img_path,
-                })
+                structures.append(
+                    {
+                        "structure_index": idx,
+                        "structure_id": f"S{idx:04d}",
+                        "page_no": page_num + 1,
+                        "page_idx": page_num,
+                        "bbox_pdf": [pdf_x0, pdf_y0, pdf_x1, pdf_y1],
+                        "bbox": [int(x0_abs), int(y0_abs), int(x1_abs), int(y1_abs)],
+                        "crop_region": crop,
+                        "image_path": struct_img_path,
+                    }
+                )
                 idx += 1
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 -- vendor page boundary; saved failures reject the stage
             err = str(e).replace("\n", " ")
             if "Got a model or layer" in err:
                 err = err.split("Got a model or layer", 1)[0].strip()
-            logger.warning(f"  Page {page_num+1}: DECIMER failed: {err[:500]}")
+            logger.warning(f"  Page {page_num + 1}: DECIMER failed: {err[:500]}")
             failed_pages.append((page_num + 1, err[:500]))
 
     doc.close()
@@ -230,8 +257,7 @@ def extract_structures_from_pdf(
         "total_structures": len(structures),
         "structures": structures,
         "failed_pages": [
-            {"page_no": page_no, "error": error}
-            for page_no, error in failed_pages
+            {"page_no": page_no, "error": error} for page_no, error in failed_pages
         ],
     }
 
@@ -240,7 +266,9 @@ def extract_structures_from_pdf(
     logger.info(f"Saved metadata to {output_path}")
 
     if failed_pages:
-        sample = "; ".join(f"p{page_no}: {error}" for page_no, error in failed_pages[:3])
+        sample = "; ".join(
+            f"p{page_no}: {error}" for page_no, error in failed_pages[:3]
+        )
         raise RuntimeError(
             f"DECIMER segmentation failed on {len(failed_pages)}/{len(target_pages)} pages: {sample}"
         )
@@ -249,21 +277,52 @@ def extract_structures_from_pdf(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Extract chemical structures from a patent PDF")
+    parser = argparse.ArgumentParser(
+        description="Extract chemical structures from a patent PDF"
+    )
     parser.add_argument("--pdf", required=True, help="Path to patent PDF")
     parser.add_argument("--output", required=True, help="Output directory")
-    parser.add_argument(
+    inputs = parser.add_mutually_exclusive_group(required=True)
+    inputs.add_argument(
         "--pages",
         type=int,
         nargs="+",
-        required=True,
         help="Authoritative page numbers from the locator (0-indexed)",
     )
-    parser.add_argument("--crop-regions", default="", help="Optional JSON page crop regions in rendered-image pixels")
-    parser.add_argument("--patent-id", default=None, help="Explicit pipeline patent identity; uploaded filenames are not patent identifiers")
+    inputs.add_argument(
+        "--batch-plan", help="Internal bounded segmentation window plan"
+    )
+    parser.add_argument(
+        "--crop-regions",
+        default="",
+        help="Optional JSON page crop regions in rendered-image pixels",
+    )
+    parser.add_argument(
+        "--patent-id",
+        default=None,
+        help="Explicit pipeline patent identity; uploaded filenames are not patent identifiers",
+    )
     args = parser.parse_args()
 
-    extract_structures_from_pdf(args.pdf, args.pages, args.output, args.crop_regions, patent_id=args.patent_id)
+    if args.batch_plan:
+        from patent_sar_extractor.workers.segmentation_window import execute_window
+
+        execute_window(
+            extract_structures_from_pdf,
+            args.batch_plan,
+            args.pdf,
+            args.output,
+            args.crop_regions,
+            args.patent_id,
+        )
+    else:
+        extract_structures_from_pdf(
+            args.pdf,
+            args.pages,
+            args.output,
+            args.crop_regions,
+            patent_id=args.patent_id,
+        )
 
 
 if __name__ == "__main__":

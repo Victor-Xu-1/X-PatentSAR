@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import csv
 from dataclasses import asdict
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from patent_sar_extractor.artifact_io import write_json_atomic
@@ -54,7 +54,7 @@ def save_results(
         {
             **artifact_identity(ACTIVITY_SCHEMA, ACTIVITY_SCHEMA_VERSION),
             "metadata": {
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "patent_id": profile.get("patent_id", ""),
                 "n_rows": len(rows),
                 "n_unique_cpds": len({r.cpd for r in rows}),

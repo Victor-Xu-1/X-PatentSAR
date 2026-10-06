@@ -6,6 +6,7 @@ import copy
 import unittest
 
 from patent_sar_extractor import contracts
+from patent_sar_extractor.core.binding_catalog import compound_catalog
 from patent_sar_extractor.web.acceptance import ARTIFACTS, authority
 
 
@@ -14,13 +15,49 @@ def complete_payloads():
         name: contracts.artifact_identity(schema, version)
         for name, (_, schema, version) in ARTIFACTS.items()
     }
-    payloads["summary"].update(status="complete", steps={})
-    payloads["activity"].update(active_cpds=["Example 1"], rows=[])
-    payloads["structures"]["structures"] = []
-    payloads["bindings"].update(
-        execution_mode="production_activity_led", final_bindings=[]
+    payloads["summary"].update(
+        status="complete",
+        steps={name: {"status": "ok"} for name in contracts.CORE_STAGE_ORDER},
+        main_chain=list(contracts.CORE_STAGE_ORDER),
     )
-    payloads["smiles"].update(execution_mode="production_decimer", records=[])
+    payloads["classification"].update(page_count=1, activity_pages=[0])
+    payloads["activity"].update(
+        active_cpds=["Compound 1"],
+        rows=[{"cpd": "Compound 1", "activity_values": {"IC50(nM)": "1"}}],
+    )
+    binding = {
+        "cpd": "Compound 1",
+        "structure_id": "S0",
+        "page_no": 1,
+        "image_path": "controlled.png",
+        "struct_x0": 20,
+        "struct_y0": 40,
+        "struct_x1": 120,
+        "struct_y1": 140,
+        "struct_area": 10000,
+        "struct_width": 100,
+        "struct_height": 100,
+        "binding_rule": "structure_table_row_order",
+        "authoritative_table_source_label": "Compound 1",
+    }
+    payloads["structures"]["structures"] = [binding]
+    payloads["bindings"].update(
+        execution_mode="production_structure_led",
+        final_bindings=[binding],
+        compound_catalog=compound_catalog([binding], []),
+    )
+    payloads["smiles"].update(
+        execution_mode="production_decimer",
+        records=[
+            {
+                "cpd_id": "Compound 1",
+                "structure_id": "S0",
+                "canonical_smiles": "CCO",
+                "rdkit_valid": True,
+                "OCSR_quality_flag": "ok",
+            }
+        ],
+    )
     payloads["qa"].update(ok=True, acceptance={"ok": True, "hard_errors": []})
     return payloads
 
@@ -37,6 +74,15 @@ def partial_payloads(status="running"):
 
 
 class AcceptanceTests(unittest.TestCase):
+    def test_empty_activity_is_legitimate_only_with_coverage_proof(self):
+        payloads = complete_payloads()
+        payloads["activity"].update(active_cpds=[], rows=[])
+        result, _ = authority(payloads, pdf_verified=True, marker=None)
+        self.assertEqual(result.state, "failed")
+        payloads["classification"]["activity_pages"] = []
+        result, _ = authority(payloads, pdf_verified=True, marker=None)
+        self.assertEqual(result.state, "accepted")
+
     def test_resumed_successful_stage_does_not_replay_a_previous_failure_as_current(
         self,
     ):

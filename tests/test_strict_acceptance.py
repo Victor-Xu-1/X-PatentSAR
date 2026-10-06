@@ -63,7 +63,9 @@ from patent_sar_extractor.contracts import (
     artifact_identity_matches,
     ruleset_ref,
 )
-from patent_sar_extractor.core import activity_coordinates as activity_coordinates_module
+from patent_sar_extractor.core import (
+    activity_coordinates as activity_coordinates_module,
+)
 from patent_sar_extractor.core import (
     binding_observations,
     binding_ocr,
@@ -71,10 +73,16 @@ from patent_sar_extractor.core import (
 )
 from patent_sar_extractor.core import env_runner as env_runner_module
 from patent_sar_extractor.core import page_ocr_cache as page_ocr_cache_module
-from patent_sar_extractor.core.activity_models import ActivityRow
-from patent_sar_extractor.core.activity_coordinates import coordinate_candidates, extract_coordinate_tables
+from patent_sar_extractor.core.activity_coordinates import (
+    coordinate_candidates,
+    extract_coordinate_tables,
+)
 from patent_sar_extractor.core.activity_headers import infer_value_keys
-from patent_sar_extractor.core.activity_observations import has_usable_values, merge_rows
+from patent_sar_extractor.core.activity_models import ActivityRow
+from patent_sar_extractor.core.activity_observations import (
+    has_usable_values,
+    merge_rows,
+)
 from patent_sar_extractor.core.activity_text import extract_text_tables
 from patent_sar_extractor.core.binding_arbitration import _drop_fail_closed_bindings
 from patent_sar_extractor.core.binding_candidates import _merge_binding_candidates
@@ -515,10 +523,15 @@ class StrictAcceptanceTests(unittest.TestCase):
         checked = qc_smiles(raw)
         return {
             "image_hash": "a" * 64,
-            "stereochemistry": check_source_stereochemistry(checked, {
-                "version": 1, "image_sha256": "a" * 64,
-                "image_size": [100, 100], "unknown_bond_boxes": [],
-            }),
+            "stereochemistry": check_source_stereochemistry(
+                checked,
+                {
+                    "version": 1,
+                    "image_sha256": "a" * 64,
+                    "image_size": [100, 100],
+                    "unknown_bond_boxes": [],
+                },
+            ),
             "cpd_id": cpd,
             "structure_id": structure_id,
             "raw_smiles": raw,
@@ -590,18 +603,26 @@ class StrictAcceptanceTests(unittest.TestCase):
             ),
         ]
         merged = merge_rows(rows)
-        self.assertEqual([row.cpd for row in merged], ["Compound 8", "Compound 2", "Compound 8"])
+        self.assertEqual(
+            [row.cpd for row in merged], ["Compound 8", "Compound 2", "Compound 8"]
+        )
         self.assertEqual(merged[0].activity_values["IC50"], "A")
         self.assertEqual(merged[0].cell_line_data["Dmax"], "60")
         self.assertEqual(merged[2].activity_values["IC50"], "C")
         self.assertEqual(merged[2].cell_line_data["Dmax"], "61")
 
-    def test_ruled_ar_degradation_schema_requires_observed_order_and_units(self) -> None:
+    def test_ruled_ar_degradation_schema_requires_observed_order_and_units(
+        self,
+    ) -> None:
         self.assertEqual(
-            infer_value_keys("AR degradation", "No. LNCaP AR Dmax (%) LNCaP AR DC50 (nM)", 2),
+            infer_value_keys(
+                "AR degradation", "No. LNCaP AR Dmax (%) LNCaP AR DC50 (nM)", 2
+            ),
             ["LNCaP AR Dmax (%)", "LNCaP AR DC50 (nM)"],
         )
-        self.assertEqual(infer_value_keys("AR degradation", "No. DC50", 1), ["DC50 (unit unknown)"])
+        self.assertEqual(
+            infer_value_keys("AR degradation", "No. DC50", 1), ["DC50 (unit unknown)"]
+        )
 
     def test_prefixed_letter_grade_activity_table_decodes_legend_and_continuation(
         self,
@@ -621,15 +642,9 @@ class StrictAcceptanceTests(unittest.TestCase):
         self.assertEqual(
             [row.cpd for row in rows], ["Compound I-1", "Compound 1-2", "Compound I-3"]
         )
-        self.assertEqual(
-            list(rows[0].activity_values.values()), ["<1 nM"]
-        )
-        self.assertEqual(
-            list(rows[1].activity_values.values()), ["not tested"]
-        )
-        self.assertEqual(
-            list(rows[2].activity_values.values()), ["1 - 10 nM"]
-        )
+        self.assertEqual(list(rows[0].activity_values.values()), ["<1 nM"])
+        self.assertEqual(list(rows[1].activity_values.values()), ["not tested"])
+        self.assertEqual(list(rows[2].activity_values.values()), ["1 - 10 nM"])
         self.assertTrue(has_usable_values(rows[0]))
         self.assertFalse(has_usable_values(rows[1]))
         self.assertIn("source label 1-2", rows[1].notes)
@@ -837,7 +852,9 @@ class StrictAcceptanceTests(unittest.TestCase):
         merged = merge_rows([noisy, specific])
         self.assertEqual(len(merged), 1)
         self.assertTrue(merged[0].needs_review)
-        self.assertEqual(merged[0].activity_values["表2化合物小鼠PK参数 value 1"], "8557")
+        self.assertEqual(
+            merged[0].activity_values["表2化合物小鼠PK参数 value 1"], "8557"
+        )
         self.assertEqual(merged[0].activity_values["Jurkat VAV1 Dmax (%)"], "98.1")
 
     def test_flattened_structure_table_continuation_pages_are_classified(self) -> None:

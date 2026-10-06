@@ -236,16 +236,16 @@ class ArtifactView:
             if len(source_smiles) > MAX_RECORDS:
                 raise ValueError("Source recognition collection exceeds its bound.")
             if source_smiles:
-                if (
+                if not current(smiles_payload, "smiles"):
+                    source_smiles = []  # historical observations remain unaccepted
+                elif (
                     not isinstance(smiles_payload, dict)
                     or smiles_payload.get("formal_acceptance_scope")
-                    != "original_activity_association_only"
+                    != "proved_printed_identifier_structure_corpus"
                 ):
                     raise ValueError(
                         "Source recognition cannot change formal acceptance scope."
                     )
-                if not current(smiles_payload, "smiles"):
-                    source_smiles = []  # historical observations cannot acquire fresh chemistry
                 else:
                     _, source_bindings = recognition_inputs(binding_payload)
                     if not ordered_source_results(source_bindings, source_smiles):
@@ -335,7 +335,7 @@ class ArtifactView:
                 binding
                 and verified
                 and current(p.get("bindings"), "bindings")
-                and binding_payload.get("execution_mode") == "production_activity_led"
+                and binding_payload.get("execution_mode") == "production_structure_led"
             ):
                 try:
                     evidence = annotate_binding_accuracy(binding)
@@ -479,7 +479,9 @@ class ArtifactView:
             # Its bbox_pdf is already in rendered-page points; do not rotate twice.
             compounds.append(
                 {
-                    "dto": dto.model_dump(exclude={"admet", "correction"}),
+                    "dto": dto.model_dump(
+                        exclude={"admet", "descriptors", "correction"}
+                    ),
                     "image_path": image_path,
                     "geometry_space": "rendered"
                     if structure.get("bbox_pdf")

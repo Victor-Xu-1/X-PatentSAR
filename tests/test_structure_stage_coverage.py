@@ -53,6 +53,22 @@ class StructureStageCoverageTests(unittest.TestCase):
 
     @staticmethod
     def worker(_env, _script, *, args, **_kwargs):
+        if "--batch-plan" in args:
+            import json
+
+            plan = json.loads(Path(args[args.index("--batch-plan") + 1]).read_text())
+            for job in plan["jobs"]:
+                StructureStageCoverageTests.worker(
+                    _env,
+                    _script,
+                    args=[
+                        "--output",
+                        job["output"],
+                        "--pages",
+                        *map(str, job["pages"]),
+                    ],
+                )
+            return CompletedProcess([], 0)
         output = Path(args[args.index("--output") + 1])
         pages = [int(page) for page in args[args.index("--pages") + 1 :]]
         write_json_atomic(
@@ -106,7 +122,8 @@ class StructureStageCoverageTests(unittest.TestCase):
                 ) as worker,
             ):
                 execute_structures(state)
-            self.assertEqual(worker.call_count, 2)
+            self.assertEqual(worker.call_count, 1)
+            self.assertIn("--batch-plan", worker.call_args.kwargs["args"])
             self.assertEqual(state.n_structures, 3)
 
     def test_worker_failure_is_not_hidden_by_empty_activity(self):

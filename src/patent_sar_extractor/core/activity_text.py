@@ -29,21 +29,24 @@ from .activity_identity import (
 from .activity_models import ActivityRow, ParsedActivity, TableContext
 
 _ROW = re.compile(
-    rf"^((?:{LABEL_PREFIX})?{PRINTED_ID}|{CONTROL.pattern})(?=\s|$)\s*(.*)$", re.I
+    rf"^((?:{LABEL_PREFIX})?{PRINTED_ID}|{CONTROL.pattern})(?=\s|$)\s*(.*)$",
+    re.IGNORECASE,
 )
-_PREFIXED_ROWS = re.compile(rf"(?<!\w){LABEL_PREFIX}{PRINTED_ID}(?=\s|$)", re.I)
+_PREFIXED_ROWS = re.compile(
+    rf"(?<!\w){LABEL_PREFIX}{PRINTED_ID}(?=\s|$)", re.IGNORECASE
+)
 _SERIES_ROWS = re.compile(
-    r"(?<![\w-])(?:[A-Za-z]{1,12}-\d+(?:-\d+)*|\d+-\d+)\s+[A-G](?=\s|$)", re.I
+    r"(?<![\w-])(?:[A-Za-z]{1,12}-\d+(?:-\d+)*|\d+-\d+)\s+[A-G](?=\s|$)", re.IGNORECASE
 )
 _HEADER_START = re.compile(
     r"(?:Compound|Cmpd|Cpd|Example)\s*(?:No\.?|ID|#)|化合物编号|实施例编号|"
     r"\bNo\.(?=\s|$)|\bID\b|\b[A-Za-z]-#",
-    re.I,
+    re.IGNORECASE,
 )
 _STOP = re.compile(
     r"^(?:\*|NA:|N/A:|Note:|以上数据|实验目的|实验方法|计算公式|权利要求|"
     r"What\s+is\s+claimed|EQUIVALENTS|\[\d{4,}\])",
-    re.I,
+    re.IGNORECASE,
 )
 
 
@@ -60,7 +63,9 @@ def _caption_line(text: str) -> str:
 
 def _legend(text: str) -> tuple[str, dict[str, str]] | None:
     source = normalize_metric_text(re.sub(r"\s+", " ", text))
-    match = re.search(r"letter\s+codes?\s+for\s+(.{1,80}?)\s+include\s*:", source, re.I)
+    match = re.search(
+        r"letter\s+codes?\s+for\s+(.{1,80}?)\s+include\s*:", source, re.IGNORECASE
+    )
     if not match or not METRIC.search(match.group(1)):
         return None
     tail = source[match.end() : match.end() + 700]
@@ -69,7 +74,9 @@ def _legend(text: str) -> tuple[str, dict[str, str]] | None:
         tail = tail[: marker.start()]
     definitions = {
         grade.upper(): definition.strip()
-        for grade, definition in re.findall(r"\b([A-G])\s*\(\s*([^)]+)\)", tail, re.I)
+        for grade, definition in re.findall(
+            r"\b([A-G])\s*\(\s*([^)]+)\)", tail, re.IGNORECASE
+        )
     }
     return (match.group(1).strip(), definitions) if len(definitions) >= 2 else None
 
@@ -245,7 +252,9 @@ def _page_segments(text: str) -> list[tuple[str, str]]:
     # References in prose ("results in Table 3.") are not table captions.
     markers = list(
         re.finditer(
-            r"(?m)^\s*(?:Table\s+[A-Za-z]?\d+[A-Za-z]?\b|表\s*\d+[A-Za-z]?)", text, re.I
+            r"(?m)^\s*(?:Table\s+[A-Za-z]?\d+[A-Za-z]?\b|表\s*\d+[A-Za-z]?)",
+            text,
+            re.IGNORECASE,
         )
     )
     if not markers:

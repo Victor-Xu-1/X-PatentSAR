@@ -11,20 +11,20 @@ LABEL_PREFIX = r"(?:Compound|Cmpd|Cpd|Example|实施例|化合物)\s*[-:.：]?\s
 CONTROL = re.compile(
     r"(?:Ref\.?\s*\d+|Reference(?:\s+\S+)?|Vehicle|DMSO|Control|"
     r"Nab[-\s]?paclitaxel|Paclitaxel)",
-    re.I,
+    re.IGNORECASE,
 )
 ID_HEADER = re.compile(
     r"(?:Compound|Cmpd|Cpd|Example|实施例|化合物)\s*(?:No\.?|ID|#|编号|号)?|"
     r"No\.?|ID|编号|受试物|药物名称|[A-Za-z]-#",
-    re.I,
+    re.IGNORECASE,
 )
-_LABEL = re.compile(rf"(?:{LABEL_PREFIX})?({PRINTED_ID})", re.I)
+_LABEL = re.compile(rf"(?:{LABEL_PREFIX})?({PRINTED_ID})", re.IGNORECASE)
 _VALUE = re.compile(
     r"(?:[<>≤≥]=?\s*)?[-+]?\d+(?:[.,]\d+)?(?:[Ee][-+]?\d+)?%?"
     r"(?:\s*(?:±|\+/-)\s*\d+(?:\.\d+)?)?"
     r"(?:\s*(?:nM|uM|µM|μM|mM|pM|mg/kg|ng/mL|h|min))?"
     r"|∞|[A-G](?:[12])?|\+{1,5}|-{1,3}",
-    re.I,
+    re.IGNORECASE,
 )
 
 
@@ -66,7 +66,7 @@ def value_tokens(text: str) -> list[str] | None:
         r"not\s+tested|not\s+determined|not\s+available|未测试|未测定|未检测|"
         r"N/?A|ND|(?:[<>≤≥]=?\s*)?[-+]?\d+(?:[.,]\d+)?(?:[Ee][-+]?\d+)?%?"
         r"(?:\s*(?:±|\+/-)\s*\d+(?:\.\d+)?)?|[-—–]|∞|[A-G](?:[12])?|\+{1,5}",
-        re.I,
+        re.IGNORECASE,
     )
     result = []
     position = 0

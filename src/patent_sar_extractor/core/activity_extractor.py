@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 import fitz
 
@@ -80,7 +80,9 @@ def extract(
         save_page_ocr_cache(cache_path, cache)
     rows = merge_rows([*cells.rows, *text.rows])
     if not include_intermediates:
-        rows = [r for r in rows if not re.fullmatch(r"Int[-\s]?\d+", r.cpd, re.I)]
+        rows = [
+            r for r in rows if not re.fullmatch(r"Int[-\s]?\d+", r.cpd, re.IGNORECASE)
+        ]
     for row in rows:
         apply_ocr_fixes(
             row,

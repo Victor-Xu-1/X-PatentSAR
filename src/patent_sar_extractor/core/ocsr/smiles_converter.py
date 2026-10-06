@@ -11,7 +11,6 @@ import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import List, Optional
 
 from patent_sar_extractor.contracts import OCSR_OBSERVATION_VERSION
 
@@ -33,27 +32,10 @@ def _resolve_ocsr_image_path(item: dict) -> str:
     ):
         path = str(item.get(key) or "").strip()
         if path and os.path.isfile(path):
+            if re.fullmatch(r"page_\d+(?:_synthesis_crop)?\.png", Path(path).name):
+                continue  # Known page-render artifacts are not molecular crops.
             return path
-    source_sid = str(item.get("source_structure_id") or "").strip()
-    if source_sid:
-        display_path = str(item.get("image_path") or "").strip()
-        display_dir = Path(display_path).resolve().parent if display_path else None
-        candidate_roots = []
-        if display_dir is not None:
-            candidate_roots.extend(
-                [display_dir, display_dir.parent, display_dir.parent.parent]
-            )
-        for root in candidate_roots:
-            if not root:
-                continue
-            candidate = (
-                root / "structures" / f"structure_{int(source_sid[1:]):04d}.png"
-                if re.fullmatch(r"S\d{4}", source_sid)
-                else None
-            )
-            if candidate and candidate.is_file():
-                return str(candidate)
-    return str(item.get("image_path") or item.get("structure_image") or "")
+    return ""  # Missing source files cannot be guessed from a basename/index.
 
 
 def _compound_label_for_ocsr_mask(item: dict) -> str:
@@ -73,7 +55,7 @@ def _compound_label_for_ocsr_mask(item: dict) -> str:
         match = re.search(
             r"(?:compound|cpd|example|实施例|化合物)?\s*[-:]?\s*(\d{1,4}[A-Z]?)",
             value,
-            re.I,
+            re.IGNORECASE,
         )
         if match:
             labels.append(match.group(1).upper())
@@ -87,8 +69,8 @@ def _compound_label_for_ocsr_mask(item: dict) -> str:
 def _component_overlap(
     a: tuple[int, int, int, int], b: tuple[int, int, int, int]
 ) -> float:
-    ax0, ay0, ax1, ay1 = a
-    bx0, by0, bx1, by1 = b
+    _ax0, ay0, _ax1, ay1 = a
+    _bx0, by0, _bx1, by1 = b
     overlap = max(0, min(ay1, by1) - max(ay0, by0))
     return overlap / max(1, min(ay1 - ay0, by1 - by0))
 
@@ -109,12 +91,12 @@ def _detect_visible_label_bbox(
         import cv2
         import numpy as np
         from PIL import Image
-    except Exception:
+    except ImportError:
         return None
 
     try:
         image = Image.open(image_path).convert("L")
-    except Exception:
+    except (OSError, ValueError):
         return None
     width, height = image.size
     if width < 40 or height < 28:
@@ -205,12 +187,12 @@ def _mask_visible_label_for_ocsr(
         return image_path, {}
     try:
         from PIL import Image, ImageDraw
-    except Exception:
+    except ImportError:
         return image_path, {}
 
     try:
         image = Image.open(image_path).convert("RGB")
-    except Exception:
+    except (OSError, ValueError):
         return image_path, {}
     width, height = image.size
     x0, y0, x1, y1 = bbox
@@ -231,7 +213,7 @@ def _mask_visible_label_for_ocsr(
         clean_dir = Path(image_path).resolve().parent / ".ocsr_label_masked"
     clean_dir.mkdir(parents=True, exist_ok=True)
     name_key = hashlib.sha1(
-        f"{image_path}|{source_hash}|{safe_label}|{x0},{y0},{x1},{y1}".encode("utf-8")
+        f"{image_path}|{source_hash}|{safe_label}|{x0},{y0},{x1},{y1}".encode()
     ).hexdigest()[:12]
     output_path = clean_dir / f"{Path(image_path).stem}_{safe_label}_{name_key}.png"
 
@@ -246,7 +228,7 @@ def _mask_visible_label_for_ocsr(
     }
 
 
-def _qc_ocr_smiles(raw_smiles: Optional[str]) -> tuple[Optional[str], dict, bool]:
+def _qc_ocr_smiles(raw_smiles: str | None) -> tuple[str | None, dict, bool]:
     """Observe the exact engine string; syntactic/chemical edits are forbidden."""
     return raw_smiles, qc_smiles(raw_smiles), False
 
@@ -261,7 +243,7 @@ def _is_clean_rdkit_result(qc_result: dict) -> bool:
     )
 
 
-def _largest_fragment_mol(smiles: Optional[str]):
+def _largest_fragment_mol(smiles: str | None):
     """Return the largest RDKit fragment, ignoring detached salts/noise."""
     if not smiles:
         return None
@@ -277,7 +259,7 @@ def _largest_fragment_mol(smiles: Optional[str]):
 
 
 def _review_fallback_is_graph_compatible(
-    review_smiles: Optional[str], fallback_smiles: Optional[str]
+    review_smiles: str | None, fallback_smiles: str | None
 ) -> bool:
     """Guard against a clean fallback replacing the wrong review candidate.
 
@@ -308,8 +290,8 @@ def _review_fallback_is_graph_compatible(
     core = editable.GetMol()
     try:
         Chem.SanitizeMol(core)
-    except Exception:
-        pass
+    except (ValueError, RuntimeError):
+        return False
     core_heavy = max(1, core.GetNumHeavyAtoms())
     fallback_heavy = fallback_mol.GetNumHeavyAtoms()
     # A single wildcard is usually an unlabeled atom or a compact substituent.
@@ -319,7 +301,7 @@ def _review_fallback_is_graph_compatible(
         return False
     try:
         return fallback_mol.HasSubstructMatch(core)
-    except Exception:
+    except (ValueError, RuntimeError):
         return False
 
 
@@ -357,14 +339,14 @@ class SmilesConverter:
 
     def __init__(
         self,
-        engines: List[str],
-        fallback_engines: List[str],
+        engines: list[str],
+        fallback_engines: list[str],
         cache_path: str = "",
         preprocess: bool = True,
         timeout: int = 60,
         preprocess_long_edge: int = 1024,
         preprocess_padding: int = 20,
-        engine_configs: Optional[dict] = None,
+        engine_configs: dict | None = None,
         retry_normalization: bool = False,
     ):
         """Initialize SmilesConverter.
@@ -472,7 +454,7 @@ class SmilesConverter:
         try:
             image_hash = compute_image_sha256(ocsr_image_path)
             result["image_hash"] = image_hash
-        except Exception as e:
+        except (OSError, ValueError) as e:
             result["OCSR_status"] = "image_missing"
             result["OCSR_failure_reason"] = f"Cannot compute image hash: {e}"
             return {"item": item, "result": result, "ready": False}
@@ -481,8 +463,11 @@ class SmilesConverter:
             # Always inspect the source crop, never a model-normalized retry.
             evidence = observe_stereo_symbols(ocsr_image_path)
         except (OSError, ValueError) as exc:
-            result.update(OCSR_status="review_required", OCSR_quality_flag="stereo_source_unavailable",
-                          OCSR_failure_reason=f"Source stereochemistry inspection failed: {exc}")
+            result.update(
+                OCSR_status="review_required",
+                OCSR_quality_flag="stereo_source_unavailable",
+                OCSR_failure_reason=f"Source stereochemistry inspection failed: {exc}",
+            )
             return {"item": item, "result": result, "ready": False}
 
         return {
@@ -540,10 +525,9 @@ class SmilesConverter:
                     if not legacy.get("raw_smiles")
                     else "ignored_cached_non_clean"
                 ] = True
-        try:
-            prediction = engine.predict(image, timeout=self.timeout)
-        except Exception as exc:
-            prediction = {"status": "failed", "raw_smiles": None, "error": str(exc)}
+        # Infrastructure/admission exceptions stop the batch and preserve its
+        # clean checkpoints; never turn them into hundreds of false graph failures.
+        prediction = engine.predict(image, timeout=self.timeout)
         if not isinstance(prediction, dict):
             prediction = {
                 "status": "failed",
@@ -572,7 +556,7 @@ class SmilesConverter:
         return prediction, notes
 
     def convert_one(
-        self, item: dict, preprocess_dir: str = "", prepared: Optional[dict] = None
+        self, item: dict, preprocess_dir: str = "", prepared: dict | None = None
     ) -> dict:
         """One evidence-preserving path: image -> raw prediction -> RDKit QC.
 
@@ -736,13 +720,13 @@ class SmilesConverter:
 
     def convert_batch(
         self,
-        items: List[dict],
+        items: list[dict],
         preprocess_dir: str = "",
         only_bound: bool = True,
         limit: int = 0,
         jobs: int = 1,
         progress_path: str = "",
-    ) -> List[dict]:
+    ) -> list[dict]:
         """Bounded parallel image preparation feeding one owned model queue."""
         from .conversion_progress import ConversionProgress
 
@@ -771,6 +755,17 @@ class SmilesConverter:
                         )
                         results.append(result)
                         progress.record(result)
+                        if result.get("OCSR_status") in {
+                            "all_engines_failed",
+                            "engine_timeout",
+                            "engine_unavailable",
+                        } and any(
+                            getattr(engine, "session_exhausted", False)
+                            for engine in self.engines.values()
+                        ):
+                            raise RuntimeError(
+                                "OCSR infrastructure is unavailable; clean observation checkpoints retained for resume"
+                            )
                         print(
                             f"  [{len(results)}/{len(filtered)}] {result.get('cpd_id')}: "
                             f"{result.get('OCSR_status')} engine={result.get('OCSR_engine')} "

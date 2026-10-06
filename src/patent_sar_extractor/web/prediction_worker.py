@@ -8,12 +8,15 @@ import os
 import signal
 import threading
 import time
+from contextlib import nullcontext
 from pathlib import Path
 from typing import Literal
 
 from .admet_history import read_admet_stage, write_admet_stage
 from .analysis import AnalysisService
 from .analysis_chemistry import canonical_smiles
+from .descriptor_fields import compute_descriptors, descriptor_engine
+from .descriptor_models import DescriptorEngine, DescriptorSummary
 from .dto import Error
 from .errors import WebError
 from .models import Stage, StageProgress
@@ -23,6 +26,7 @@ from .prediction_models import PredictionEngine, PredictionSummary
 from .prediction_storage import PredictionStore, smiles_digest
 from .processes import _process
 from .service import WorkspaceService
+from .storage import now
 
 
 def wait_for_owner(service: WorkspaceService, job_id: str) -> dict:
@@ -68,6 +72,8 @@ def run_predictions(
 
     spec = decode_spec(row["spec"])
     root = Path(spec.output_dir)
+    os.environ["PATENTSAR_PROGRESS_ROOT"] = str(root.resolve())
+    os.environ["PATENTSAR_PROGRESS_STAGE"] = "admet"
     _, core_completed = read_admet_stage(row, root)
     from .completion_worker import complete_structures
 
@@ -140,6 +146,27 @@ def run_predictions(
                 )
             attempted = 1
             canonical = canonical_smiles(smiles)
+            # Commit inexpensive calculations independently, before a model is
+            # loaded. A later LogS failure cannot erase this completed evidence.
+            descriptor = service.descriptors.summaries(
+                spec.project_id,
+                [(compound_id, source, smiles)],
+                molfiles=molfiles,
+            )[compound_id]
+            if descriptor.status != "complete":
+                service.descriptors.put(
+                    spec.project_id,
+                    compound_id,
+                    DescriptorSummary(
+                        status="complete",
+                        properties=compute_descriptors(canonical),
+                        source_fingerprint=source,
+                        smiles_sha256=smiles_digest(smiles, compound.structure_molfile),
+                        engine=DescriptorEngine.model_validate(descriptor_engine()),
+                        generated_at=now(),
+                        job_id=row["id"],
+                    ),
+                )
             current = previous[compound_id]
             if current.status == "complete":
                 completed += 1
@@ -157,58 +184,57 @@ def run_predictions(
                     ),
                 )
         publish("running")
-        for offset in range(0, len(pending), 50):
-            latest = service.store.job(row["id"])
-            if latest["cancel_requested"] or (cancel is not None and cancel.is_set()):
-                raise WebError(409, "admet_cancelled", "ADMET job was cancelled.")
-            chunk = pending[offset : offset + 50]
-            attempted = len(chunk)
-            for compound_id, source, smiles, _ in chunk:
-                predictions.put(
-                    spec.project_id,
-                    compound_id,
-                    PredictionSummary(
-                        status="running",
-                        source_fingerprint=source,
-                        smiles_sha256=smiles_digest(smiles),
-                        job_id=row["id"],
-                    ),
-                )
-            response = analysis.admet([value[3] for value in chunk], cancel=cancel)
-            if len(response.predictions) != len(chunk):
-                raise WebError(
-                    502,
-                    "admet_protocol",
-                    "ADMET prediction count does not match its input.",
-                )
-            for (compound_id, source, smiles, canonical), observation in zip(
-                chunk, response.predictions
-            ):
-                if observation.smiles != canonical:
-                    raise WebError(
-                        502,
-                        "admet_protocol",
-                        "ADMET observation belongs to another structure.",
-                    )
-                predictions.put(
-                    spec.project_id,
-                    compound_id,
-                    PredictionSummary(
-                        status="complete",
-                        properties=selected_metrics(observation),
-                        source_fingerprint=source,
-                        smiles_sha256=smiles_digest(smiles),
-                        engine=PredictionEngine.model_validate(
-                            response.engine.model_dump()
+        with analysis.prediction_session(cancel) if pending else nullcontext():
+            for offset in range(0, len(pending), 50):
+                latest = service.store.job(row["id"])
+                if latest["cancel_requested"] or (
+                    cancel is not None and cancel.is_set()
+                ):
+                    raise WebError(409, "admet_cancelled", "ADMET job was cancelled.")
+                chunk = pending[offset : offset + 50]
+                attempted = len(chunk)
+                for compound_id, source, smiles, _ in chunk:
+                    predictions.put(
+                        spec.project_id,
+                        compound_id,
+                        PredictionSummary(
+                            status="running",
+                            source_fingerprint=source,
+                            smiles_sha256=smiles_digest(smiles),
+                            job_id=row["id"],
                         ),
-                        generated_at=response.generated_at,
-                        job_id=row["id"],
-                        warnings=response.warnings,
-                    ),
-                )
-                completed += 1
-                attempted -= 1
-            publish("running")
+                    )
+                response = analysis.admet([value[3] for value in chunk], cancel=cancel)
+                if len(response.predictions) != len(chunk):
+                    raise WebError(
+                        502, "admet_protocol", "ADMET count differs from its input."
+                    )
+                for (compound_id, source, smiles, canonical), observation in zip(
+                    chunk, response.predictions
+                ):
+                    if observation.smiles != canonical:
+                        raise WebError(
+                            502, "admet_protocol", "ADMET belongs to another structure."
+                        )
+                    predictions.put(
+                        spec.project_id,
+                        compound_id,
+                        PredictionSummary(
+                            status="complete",
+                            properties=selected_metrics(observation),
+                            source_fingerprint=source,
+                            smiles_sha256=smiles_digest(smiles),
+                            engine=PredictionEngine.model_validate(
+                                response.engine.model_dump()
+                            ),
+                            generated_at=response.generated_at,
+                            job_id=row["id"],
+                            warnings=response.warnings,
+                        ),
+                    )
+                    completed += 1
+                    attempted -= 1
+                publish("running")
         publish("ok")
     except Exception as exc:
         error = (

@@ -1,4 +1,4 @@
-"""One-shot ADMET-AI 2.0.1 CPU inference; no reference molecules or HTTP server."""
+"""Bounded ADMET-AI CPU inference; one model per owned processing window."""
 
 from __future__ import annotations
 
@@ -17,13 +17,19 @@ runpy.run_path(
     str(Path(__file__).resolve().parents[1] / "worker_bootstrap.py"),
     run_name="__main__",
 )
-from patent_sar_extractor.workers.analysis_protocol import (  # noqa: E402
+from patent_sar_extractor.workers.analysis_protocol import (
     ADMET_BUNDLE_SHA256,
     ADMET_VERSION,
+    MAX_INPUT,
     emit,
     prepare,
     read_request,
+    reject_constant,
 )
+
+_VERSIONS = None
+_MODEL = None
+_MODEL_ROOT = None
 
 
 def _model_metadata(root: Path) -> dict[str, dict[str, str]]:
@@ -71,6 +77,9 @@ def _model_metadata(root: Path) -> dict[str, dict[str, str]]:
 
 
 def _runtime() -> dict[str, str]:
+    global _VERSIONS
+    if _VERSIONS is not None:
+        return _VERSIONS
     versions = {
         name: importlib.metadata.version(name)
         for name in ("admet-ai", "chemprop", "torch", "rdkit", "numpy", "lightning")
@@ -86,10 +95,12 @@ def _runtime() -> dict[str, str]:
         raise ImportError("A CPU-only Torch runtime is required")
     torch.set_num_threads(1)
     torch.set_num_interop_threads(1)
+    _VERSIONS = versions
     return versions
 
 
 def predict(request: dict[str, object]) -> dict[str, object]:
+    global _MODEL, _MODEL_ROOT
     versions = _runtime()
     if request == {"mode": "probe"}:
         return {"versions": versions}
@@ -131,12 +142,17 @@ def predict(request: dict[str, object]) -> dict[str, object]:
     metadata = _model_metadata(root)
     from admet_ai import ADMETModel
 
-    model = ADMETModel(
-        models_dir=root / "models",
-        include_physchem=True,
-        drugbank_path=None,
-        num_workers=0,
-    )
+    if _MODEL is None:
+        _MODEL = ADMETModel(
+            models_dir=root / "models",
+            include_physchem=True,
+            drugbank_path=None,
+            num_workers=0,
+        )
+        _MODEL_ROOT = root
+    elif root != _MODEL_ROOT:
+        raise ValueError("Owned model window cannot change its model root")
+    model = _MODEL
     if model.device != "cpu" or model.drugbank is not None or model.num_ensembles != 2:
         raise ValueError("Unexpected inference configuration")
     frame = model.predict(smiles=values)
@@ -175,18 +191,39 @@ def predict(request: dict[str, object]) -> dict[str, object]:
     }
 
 
-def main() -> None:
-    output = prepare()
+def _respond(output, request) -> None:
     try:
-        result = predict(read_request())
+        result = predict(request)
     except (ImportError, importlib.metadata.PackageNotFoundError):
         emit(output, {"ok": False, "code": "runtime_unavailable"})
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 -- private vendor boundary; no inputs in protocol
         # No molecules, local paths, model logs, credentials or tracebacks in the protocol.
         print(f"ADMET analysis failed type={type(exc).__name__}", file=sys.stderr)
         emit(output, {"ok": False, "code": "inference_failed"})
     else:
         emit(output, {"ok": True, "result": result})
+
+
+def main() -> None:
+    output = prepare()
+    try:
+        if sys.argv[1:] == ["--jsonl"]:
+            # Parent recycles at most five requests /150s; the existing180s
+            # CPU limit is retained and networking/downloads remain prohibited.
+            for _ in range(10):
+                line = sys.stdin.buffer.readline(MAX_INPUT + 1)
+                if not line:
+                    break
+                if len(line) > MAX_INPUT or not line.endswith(b"\n"):
+                    raise ValueError("Oversized or incomplete model request")
+                request = json.loads(line, parse_constant=reject_constant)
+                if not isinstance(request, dict):
+                    raise TypeError("Model request must be an object")
+                _respond(output, request)
+        elif not sys.argv[1:]:
+            _respond(output, read_request())
+        else:
+            raise ValueError("Unknown worker transport")
     finally:
         output.close()
 

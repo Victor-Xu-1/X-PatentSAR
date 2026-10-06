@@ -14,6 +14,7 @@ from types import CodeType, FunctionType
 from unittest.mock import Mock, patch
 
 import fitz
+import numpy as np
 from test_web_support import WebFixture
 
 from patent_sar_extractor.artifact_io import write_json_atomic
@@ -52,6 +53,7 @@ class StructureWorkerIdentityTests(WebFixture, unittest.TestCase):
             "artifact_identity": artifact_identity,
             "STRUCTURES_SCHEMA": STRUCTURES_SCHEMA,
             "STRUCTURES_SCHEMA_VERSION": STRUCTURES_SCHEMA_VERSION,
+            "np": np,
         }
         # Execute the actual function/parser definitions, isolating only eager
         # vendor imports. No model, page segmentation or science acceptance.
@@ -122,3 +124,26 @@ class StructureWorkerIdentityTests(WebFixture, unittest.TestCase):
                 worker["extract_structures_from_pdf"].call_args.kwargs["patent_id"],
                 expected,
             )
+
+    def test_crop_save_failure_never_registers_a_page_as_a_structure(self):
+        worker = self.worker()
+        worker["_resolve_crop_pixels"] = lambda crop, page, dpi, w, h: (0, 0, w, h)
+        worker["segment_chemical_structures"] = Mock(
+            return_value=(
+                [np.zeros((50, 80, 3), dtype=np.uint8)],
+                [(10, 10, 60, 90)],
+            )
+        )
+        output = self.root / "crop-failure"
+        with (
+            patch.dict(os.environ, {"DECIMER_SEGMENTATION_MODEL_DIR": ""}),
+            patch("patent_sar_extractor.resource_admission.wait_for_memory"),
+            patch("PIL.Image.Image.save", side_effect=OSError("Controlled crop fault")),
+            self.assertRaisesRegex(RuntimeError, "segmentation failed"),
+        ):
+            worker["extract_structures_from_pdf"](str(self.pdf), [0], str(output))
+        metadata = json.loads((output / "metadata.json").read_text())
+        self.assertEqual(metadata["structures"], [])
+        self.assertEqual(metadata["total_structures"], 0)
+        self.assertEqual(len(metadata["failed_pages"]), 1)
+        self.assertTrue((output / "page_001.png").is_file())

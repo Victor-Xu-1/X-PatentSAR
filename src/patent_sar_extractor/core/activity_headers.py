@@ -7,20 +7,22 @@ import re
 from .activity_identity import ID_HEADER, is_id_header
 from .activity_models import ColumnGroup, GridSchema, TableContext
 
-TABLE_MARKER = re.compile(r"\bTable\s+[A-Za-z]?\d+[A-Za-z]?\b|表\s*\d+[A-Za-z]?", re.I)
+TABLE_MARKER = re.compile(
+    r"\bTable\s+[A-Za-z]?\d+[A-Za-z]?\b|表\s*\d+[A-Za-z]?", re.IGNORECASE
+)
 METRIC = re.compile(
     r"(?<![A-Za-z0-9])(?:p?IC50|EC50|DC50|GI50|CC50|Ki|Kd|Imax|Dmax|"
     r"Ymin|Ymax|Clint|CL|t1/2|Cmax|AUC(?:0?(?:-|–)?(?:t|inf))?|TGI|"
     r"Dose|Tumou?r\s+volume|p\s*value|Ratio|Grade|F)(?![A-Za-z0-9])"
     r"\s*(?:\([^)]*\)|（[^）]*）)?(?:\s+(?:grade|class))?",
-    re.I,
+    re.IGNORECASE,
 )
 ACTIVITY_CONTEXT = re.compile(
     r"assay|activity|binding|degrad|prolifer|xenograft|microsom|pharmacokinetic|"
     r"活性|降解|增殖|药代|药效|抑制|代谢|HTRF|HiBiT|NanoBiT|FACS",
-    re.I,
+    re.IGNORECASE,
 )
-_UNITLESS = re.compile(r"^(?:p\s*value|Ratio|Grade|Ymin|Ymax)$", re.I)
+_UNITLESS = re.compile(r"^(?:p\s*value|Ratio|Grade|Ymin|Ymax)$", re.IGNORECASE)
 
 
 def unknown_key(index: int) -> str:
@@ -29,7 +31,7 @@ def unknown_key(index: int) -> str:
 
 def normalize_metric_text(text: str) -> str:
     """Canonical spelling of a recognized metric; raw headers remain evidence."""
-    return re.sub(r"\b(p?IC|EC|DC|GI|CC)5[oO]\b", r"\g<1>50", text, flags=re.I)
+    return re.sub(r"\b(p?IC|EC|DC|GI|CC)5[oO]\b", r"\g<1>50", text, flags=re.IGNORECASE)
 
 
 def _key(text: str, index: int) -> str:
@@ -74,8 +76,10 @@ def context_from_text(caption: str, surrounding: str = "") -> TableContext:
     table_id = marker.group() if marker else ""
     raw_assay = TABLE_MARKER.sub("", caption, count=1).strip(" .:：")
     source = f"{surrounding}\n{caption}"
-    target = re.search(r"(?:Target|靶点)\s*[:：]\s*([\w-]+)", source, re.I)
-    assay = re.search(r"(?:Assay|实验)\s*[:：]\s*([^;\n]{1,120})", source, re.I)
+    target = re.search(r"(?:Target|靶点)\s*[:：]\s*([\w-]+)", source, re.IGNORECASE)
+    assay = re.search(
+        r"(?:Assay|实验)\s*[:：]\s*([^;\n]{1,120})", source, re.IGNORECASE
+    )
     cells = re.findall(
         r"\b([A-Za-z][A-Za-z0-9-]{1,20})\s+cells\b|([A-Za-z][A-Za-z0-9-]{1,20})细胞",
         source,

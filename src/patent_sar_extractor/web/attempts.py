@@ -26,7 +26,7 @@ from .errors import WebError
 from .files import MAX_ARTIFACT_BYTES, MAX_RECORDS, SafeFiles, private_directory
 from .models import STAGES, Stage
 from .processes import RunSpec
-from .stages import read_summary, stages_from_summary
+from .stages import read_summary, recorded_stage_order, stages_from_summary
 from .storage import Store, encode
 
 logger = logging.getLogger(__name__)
@@ -173,6 +173,7 @@ def spec_record(raw: str) -> dict[str, Any]:
 class StageHistory:
     available: bool
     stages: list[Stage]
+    stage_order: list[str] | None = None
 
 
 class AttemptHistory:
@@ -274,7 +275,27 @@ class AttemptHistory:
                 and (status in {"queued", "running"} or not row["started_at"])
             )
             return StageHistory(
-                available, [Stage(name=name) for name in STAGES] if available else []
+                available,
+                [
+                    Stage(name=name)
+                    for name in (
+                        core.CORE_STAGE_ORDER
+                        if spec.get("runtime_identity")
+                        == {
+                            "product": core.product_ref(),
+                            "pipeline_contract": core.pipeline_contract_ref(),
+                            "ruleset": core.ruleset_ref(),
+                        }
+                        else STAGES
+                    )
+                ]
+                if available
+                else [],
+                list(core.CORE_STAGE_ORDER)
+                if available
+                and spec.get("runtime_identity", {}).get("pipeline_contract")
+                == core.pipeline_contract_ref()
+                else None,
             )
         if (
             ("output_dir" in summary and summary["output_dir"] != str(root))
@@ -291,7 +312,11 @@ class AttemptHistory:
             )
         ):
             return StageHistory(False, [])
-        return StageHistory(True, stages_from_summary(summary, SafeFiles(root)))
+        return StageHistory(
+            True,
+            stages_from_summary(summary, SafeFiles(root)),
+            recorded_stage_order(summary),
+        )
 
     def read(self, row: dict[str, Any]) -> StageHistory:
         if not isinstance(row.get("id"), str) or not re.fullmatch(
@@ -323,10 +348,22 @@ class AttemptHistory:
             ):
                 return StageHistory(False, [])
             stages = [Stage.model_validate(value) for value in payload["stages"]]
-            if payload["available"] and tuple(stage.name for stage in stages) != STAGES:
+            order = payload.get("stage_order")
+            if order is not None and (
+                not isinstance(order, list)
+                or len(order) != len(STAGES)
+                or not all(isinstance(v, str) for v in order)
+                or set(order) != set(STAGES)
+            ):
+                return StageHistory(False, [])
+            if payload["available"] and tuple(stage.name for stage in stages) != tuple(
+                order or STAGES
+            ):
                 return StageHistory(False, [])
             return StageHistory(
-                payload["available"], stages if payload["available"] else []
+                payload["available"],
+                stages if payload["available"] else [],
+                order,
             )
         except (WebError, ValueError, RecursionError, UnicodeError, ValidationError):
             return StageHistory(False, [])
@@ -350,7 +387,12 @@ class AttemptHistory:
         # phase fails. Overall job failure is retained in the immutable envelope.
         history = self.observe(
             row,
-            "complete"
+            (
+                "failed"
+                if (read_summary(root) or {}).get("status")
+                in {"failed_qa", "failed_accuracy_gate"}
+                else "complete"
+            )
             if core_completed and spec_record(row["spec"]).get("include_admet")
             else status,
         )
@@ -363,6 +405,7 @@ class AttemptHistory:
                 "finished_at": finished_at,
                 "available": history.available,
                 "stages": [stage.model_dump() for stage in history.stages],
+                "stage_order": history.stage_order,
             }
         ).encode()
         if len(payload) > MAX_HISTORY_BYTES:
@@ -557,7 +600,7 @@ class CheckpointCopy:
             stage in {"bind", "smiles"}
             and payload.get("execution_mode")
             != {
-                "bind": "production_activity_led",
+                "bind": "production_structure_led",
                 "smiles": "production_decimer",
             }[stage]
         ):

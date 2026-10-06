@@ -15,7 +15,14 @@ WEB_API_SCHEMA_VERSION: Final = 1
 PIPELINE_CONTRACT_NAME: Final = "patentsar.structure-led"
 PIPELINE_CONTRACT_VERSION: Final = "3.0.0"
 CORE_STAGE_ORDER: Final = (
-    "classify", "locate", "structures", "bind", "activity", "smiles", "final", "qa",
+    "classify",
+    "locate",
+    "structures",
+    "bind",
+    "activity",
+    "smiles",
+    "final",
+    "qa",
 )
 
 RULESET_NAME: Final = "patentsar.accuracy-first"

@@ -25,16 +25,25 @@ class OCSRResourceBudgetTests(unittest.TestCase):
             with (
                 self.subTest(value=value),
                 patch.dict(os.environ, {"PATENTSAR_DECIMER_MAX_RSS_MB": value}),
+                self.assertRaises(ValueError),
             ):
-                with self.assertRaises(ValueError):
-                    resident_budget_mb()
+                resident_budget_mb()
 
     def test_low_headroom_fails_before_model_import(self):
-        with patch("pathlib.Path.read_text", return_value="MemAvailable: 1024 kB\n"):
+        from patent_sar_extractor.resource_admission import ResourceAdmissionError
+
+        with patch(
+            "patent_sar_extractor.resource_admission.wait_for_memory",
+            side_effect=ResourceAdmissionError("No model was loaded"),
+        ) as admission:
             with self.assertRaisesRegex(RuntimeError, "No model was loaded"):
                 check_model_headroom()
-        with patch("pathlib.Path.read_text", return_value="MemAvailable: 4194304 kB\n"):
+            admission.assert_called_once_with(3072)
+        with patch(
+            "patent_sar_extractor.resource_admission.wait_for_memory"
+        ) as admission:
             check_model_headroom()
+            admission.assert_called_once_with(3072)
 
     def test_owned_process_rss_and_exit_are_observable(self):
         self.assertGreater(worker_resident_mb(os.getpid()), 0)
@@ -46,9 +55,11 @@ class OCSRResourceBudgetTests(unittest.TestCase):
 
         worker = JsonLineWorker.__new__(JsonLineWorker)
         worker.process = SimpleNamespace(pid=123)
-        with patch(
-            "patent_sar_extractor.core.ocsr.worker_process.worker_resident_mb",
-            return_value=4097,
+        with (
+            patch(
+                "patent_sar_extractor.core.ocsr.worker_process.worker_resident_mb",
+                return_value=4097,
+            ),
+            self.assertRaisesRegex(WorkerProtocolError, "memory budget"),
         ):
-            with self.assertRaisesRegex(WorkerProtocolError, "memory budget"):
-                worker.receive(1)
+            worker.receive(1)

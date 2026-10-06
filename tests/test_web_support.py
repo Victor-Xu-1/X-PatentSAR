@@ -114,6 +114,7 @@ def artifact_run(
         }
     )
     payloads["classification"]["page_count"] = 1
+    payloads["classification"]["activity_pages"] = [0]
     payloads["activity"].update(
         {
             "active_cpds": ids,
@@ -150,8 +151,16 @@ def artifact_run(
         for i, cpd in enumerate(ids)
     ]
     payloads["bindings"].update(
-        {"execution_mode": "production_activity_led", "final_bindings": bindings}
+        {"execution_mode": "production_structure_led", "final_bindings": bindings}
     )
+    from patent_sar_extractor.core.binding_catalog import compound_catalog
+
+    payloads["bindings"]["compound_catalog"] = compound_catalog(bindings, [])
+    # Formal source order uses the same catalog; these fixtures do not certify
+    # the depicted red-square crop as an actual scientific molecular graph.
+    payloads["bindings"]["final_bindings"] = payloads["bindings"]["compound_catalog"][
+        "entries"
+    ]
     payloads["structures"]["structures"] = [
         {
             "structure_id": f"S{i}",
@@ -165,7 +174,13 @@ def artifact_run(
         {
             "execution_mode": "production_decimer",
             "records": [
-                {"cpd_id": cpd, "smiles": "CCO", "rdkit_valid": True} for cpd in ids
+                {
+                    "cpd_id": b["cpd"],
+                    "structure_id": b["structure_id"],
+                    "smiles": "CCO",
+                    "rdkit_valid": True,
+                }
+                for b in payloads["bindings"]["final_bindings"]
             ],
         }
     )

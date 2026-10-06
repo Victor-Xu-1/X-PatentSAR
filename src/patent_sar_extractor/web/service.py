@@ -12,6 +12,7 @@ from .artifacts import RAW_PROJECTION_LAYOUT, ArtifactView
 from .attempts import AttemptHistory, spec_record
 from .correction_models import CorrectionDocument, CorrectionRequest
 from .corrections import Corrections, CorrectionSaved
+from .descriptor_storage import DescriptorStore
 from .errors import WebError
 from .models import (
     Acceptance,
@@ -45,8 +46,9 @@ class WorkspaceService:
             self.store, self._current_project, on_save=correction_on_save
         )
         self.predictions = PredictionStore(self.store)
+        self.descriptors = DescriptorStore(self.store)
         self.result_queries = ResultQueries(
-            self.store, self._current_project, self.predictions
+            self.store, self._current_project, self.predictions, self.descriptors
         )
 
     def _current_project(self, project_id: str) -> dict[str, Any]:
@@ -340,6 +342,16 @@ class WorkspaceService:
             else (None, False)
         )
         admet_only = spec.get("admet_only", False)
+        if (
+            admet_stage is not None
+            and admet_stage.status == "running"
+            and row["status"] == "running"
+            and output
+        ):
+            from .files import SafeFiles
+            from .resource_progress import read_wait
+
+            admet_stage.resource_wait = read_wait(SafeFiles(output), "admet")
         return Job(
             id=row["id"],
             project_id=row["project_id"],
@@ -359,6 +371,9 @@ class WorkspaceService:
             include_admet=spec.get("include_admet", False),
             admet_only=admet_only,
             admet_stage=admet_stage,
+            stage_order=[]
+            if admet_only
+            else (history.stage_order if history else None),
         )
 
     def project(self, project_id: str) -> Project:

@@ -15,6 +15,8 @@ from .correction_storage import (
     joined_correction,
 )
 from .corrections import apply_correction
+from .descriptor_models import DescriptorSummary
+from .descriptor_storage import DescriptorStore
 from .dto import Error
 from .errors import WebError
 from .models import ActivityColumn, Compound, Results, Review
@@ -40,10 +42,12 @@ class ResultQueries:
         store: Store,
         current_project: Callable[[str], dict[str, Any]],
         predictions: PredictionStore | None = None,
+        descriptors: DescriptorStore | None = None,
     ) -> None:
         self.store = store
         self.current_project = current_project
         self.predictions = predictions
+        self.descriptors = descriptors
 
     def _rows_and_project(
         self, project_id: str
@@ -212,6 +216,7 @@ class ResultQueries:
         eligible = []
         for item in items:
             if source_stereo_blocked(item):
+                item.descriptors = DescriptorSummary(status="unavailable")
                 item.admet = PredictionSummary(
                     status="unavailable",
                     error=Error(
@@ -220,6 +225,7 @@ class ResultQueries:
                     ),
                 )
             elif item.recognition.status == "invalid":
+                item.descriptors = DescriptorSummary(status="unavailable")
                 item.admet = PredictionSummary(
                     status="unavailable",
                     error=Error(
@@ -249,6 +255,22 @@ class ResultQueries:
             )
             for item in eligible:
                 item.admet = values[item.id]
+        if self.descriptors is not None and eligible:
+            project, by_id = context
+            calculated = self.descriptors.summaries(
+                project_id,
+                [
+                    (
+                        item.id,
+                        correction_source_fingerprint(project, by_id[item.id]),
+                        item.smiles,
+                    )
+                    for item in eligible
+                ],
+                molfiles={item.id: item.structure_molfile for item in eligible},
+            )
+            for item in eligible:
+                item.descriptors = calculated[item.id]
         return items
 
     def _normalize_source_boxes(

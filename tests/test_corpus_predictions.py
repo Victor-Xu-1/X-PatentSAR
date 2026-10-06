@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import unittest
+from contextlib import nullcontext
 
 from test_prediction_fields import controlled_prediction
 from test_prediction_support import PredictionFixture
@@ -23,6 +24,9 @@ class ControlledAnalysis:
     def __init__(self):
         self.inputs = []
 
+    def prediction_session(self, cancel=None):
+        return nullcontext()
+
     def admet(self, smiles, *, cancel=None):
         self.inputs.append(smiles)
         return ADMETResponse(
@@ -39,6 +43,16 @@ class ControlledAnalysis:
 
 
 class CorpusPredictionTests(PredictionFixture, unittest.TestCase):
+    def setUp(self):
+        super().setUp()
+        # These cases exercise anonymous/unproved source eligibility, not the
+        # separate proved-ID recognition-completion producer.
+        path = self.run / "structure_bindings/bindings.json"
+        payload = json.loads(path.read_text())
+        payload.pop("compound_catalog", None)
+        path.write_text(json.dumps(payload))
+        self.service.refresh(self.project.id)
+
     def job(self):
         with self.service.store.connect(write=True) as connection:
             job_id = enqueue_prediction(self.service.store, connection, self.project.id)

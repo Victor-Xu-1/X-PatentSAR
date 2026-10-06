@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 import fitz
 
@@ -42,7 +42,9 @@ def review_rows(
                 api_key,
                 model,
             )
-            match = re.fullmatch(r"\s*```(?:json)?\s*(.*?)\s*```\s*", response, re.S)
+            match = re.fullmatch(
+                r"\s*```(?:json)?\s*(.*?)\s*```\s*", response, re.DOTALL
+            )
             try:
                 parsed = json.loads(match.group(1) if match else response)
             except json.JSONDecodeError as error:
