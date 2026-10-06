@@ -54,7 +54,7 @@ export function resultColumns(activities: TableActivityColumn[] = []): ResultCol
         .join(' · '),
     })),
     ...METRIC_SPECS.map((spec) =>
-      column(`property:${spec.key}`, spec.label, 'prediction-column', 64, 48, 180),
+      column(`property:${spec.key}`, spec.label, 'prediction-column', 88, 64, 180),
     ),
     column('source', '原文', 'source-column', 64, 48, 180),
     column('edit', '修正', 'edit-column frozen-column frozen-edit', 48, 40, 120),

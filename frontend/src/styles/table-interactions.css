@@ -8,6 +8,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.results-table th.prediction-column .column-heading {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .column-menu-button {
   position: absolute;
   right: 5px;
