@@ -157,6 +157,10 @@ observations and leaves old outputs/QA/audits/history unchanged. Changed
 pipeline/ruleset epochs require a new run; compatible raw OCR observations may
 be reused, never old derived acceptance. Histories retain their recorded stage
 order; missing old order is unknown, not rewritten as the latest chain.
+Raw OCR compatibility checks the explicit supported producer allowlist rather
+than equality with the new derived-pipeline epoch. Original SHA, byte size,
+page count, raw schema/observation format and supported rules remain required.
+Unknown producers are rejected and the source cache is never rewritten.
 
 One complete environment action owns the default PDF→table→six-property
 dependencies, including ADMET runtime and weights. It rechecks installed
