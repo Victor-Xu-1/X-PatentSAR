@@ -26,9 +26,9 @@ const observed = {
 describe('actual task progress and unavailable historic stages', () => {
   it('shows observed counts and resource data, not guessed percentages or ETA', () => {
     render(<StageStrip job={observed} />);
-    const stage = screen.getByText('文档分类').closest('li')!;
+    const stage = screen.getByText('文档解析').closest('li')!;
     expect(within(stage).getByText(/12 \/ 100/)).toBeVisible();
-    fireEvent.click(within(stage).getByText('文档分类').closest('summary')!);
+    fireEvent.click(within(stage).getByText('文档解析').closest('summary')!);
     expect(within(stage).getByText('缓存命中 3 · 失败 1')).toBeVisible();
     expect(within(stage).getByText('CPU · 峰值 RSS 256.5 MB')).toBeVisible();
     expect(
@@ -41,8 +41,8 @@ describe('actual task progress and unavailable historic stages', () => {
     expect(screen.getAllByText('进度未提供')).toHaveLength(8);
     expect(screen.getAllByText('检查点复用未知')).toHaveLength(8);
     expect(screen.queryByText(/0 \/ 0|缓存命中 0/)).not.toBeInTheDocument();
-    const stage = screen.getByText('文档分类').closest('li')!;
-    fireEvent.click(within(stage).getByText('文档分类').closest('summary')!);
+    const stage = screen.getByText('文档解析').closest('li')!;
+    fireEvent.click(within(stage).getByText('文档解析').closest('summary')!);
     expect(within(stage).getByText('进度未提供')).toBeVisible();
     expect(within(stage).getByText('检查点复用未知')).toBeVisible();
   });
@@ -62,7 +62,7 @@ describe('actual task progress and unavailable historic stages', () => {
         />
       </>,
     );
-    expect(screen.getByText(/历史阶段不可用.*共享目录/)).toBeVisible();
+    expect(screen.getByText(/历史阶段不可用.*无法可靠读取/)).toBeVisible();
     expect(screen.queryByText('完成')).not.toBeInTheDocument();
     expect(screen.queryByText(/12 \/ 100/)).not.toBeInTheDocument();
     expect(container.querySelector('.stage.ok')).toBeNull();
@@ -104,7 +104,7 @@ describe('actual task progress and unavailable historic stages', () => {
       />,
     );
     expect(screen.getByText(/0 \/ 0/)).toBeVisible();
-    fireEvent.click(screen.getByText('文档分类').closest('summary')!);
+    fireEvent.click(screen.getByText('文档解析').closest('summary')!);
     expect(screen.getByText('执行设备未知 · 峰值 RSS 未提供')).toBeVisible();
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
   });

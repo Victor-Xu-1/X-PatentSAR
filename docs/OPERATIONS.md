@@ -297,7 +297,11 @@ incompatible batches run normally under current fingerprints. OCR/raw recognitio
 and strict QA gates remain unchanged.
 
 The compact strip shows actual interrupted/failed core work, not an unstarted
-ADMET marker. Actual ADMET, including prediction-only jobs, remains visible.
+ADMET failure marker. The declared post-core ADMET/property step stays visible as
+waiting/unexecuted, without fabricated counts, while core work is incomplete.
+Actual ADMET, including prediction-only jobs, remains visible; source completion
+and six-property progress retain their actual separate workloads. A missing final
+research record is unknown, not inferred complete from core QA alone.
 Resume preserves saved parameters, disables force and never blindly replays an
 uncertain write before reloading current task state.
 

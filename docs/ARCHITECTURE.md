@@ -372,6 +372,16 @@ completed/total and no model call, never fabricated predictions. Invalid supplie
 SMILES and failed model results still fail; skips cannot hide a failed producer.
 
 ADMET is a separately sealed job-stage fact, not a ninth formal extraction stage.
+The disclosed workflow includes its declared post-core slot from the start when
+`include_admet=true`. `frontend/src/model/extraction.ts` separates workflow intent from
+`observedStages`: pending dependency captions never synthesize a producer record,
+counters, cache/RSS facts or failure. Only accepted core-QA observations can justify
+the research handoff; rejected core warnings cannot become an unstarted ADMET failure.
+Actual `recognition` phase is labelled source-structure completion, distinct from
+formal SMILES recognition; `properties` is six-property calculation/prediction.
+Core-only jobs show eight slots, existing-source completion shows only its carrier,
+and missing history remains unknown. Names are the presentation of the existing
+registry and controller, not another orchestration path or API/schema change.
 Core and model processes are sequential and use the same owned carrier and cleanup
 rules. Cross-process analysis-use locking prevents competing inference or
 environment publication; the SDK remains CPU/bounded/offline. The frontend reuses

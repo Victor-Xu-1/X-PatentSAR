@@ -14,10 +14,11 @@ export function StageObservation({
 }) {
   const progress = stage?.progress;
   const label = stageLabel(name, stage);
+  const state = stageStatusText(job, stage, name);
   return (
     <details className="stage-observation" name={`stage-observations-${job.id}`}>
       <summary
-        title={`${label}：${stageStatusText(job, stage)}${stage?.count == null ? '' : ` · ${stage.count}`}`}
+        title={`${label}：${state}${stage?.count == null ? '' : ` · ${stage.count}`}${name === 'admet' ? ` · ${job.admet_only ? '补齐已证实来源的结构与指标' : '核心校验后执行'}；MW、LogP、TPSA、HBD、HBA 计算，LogS 为 ADMET 预测` : ''}`}
       >
         <strong>{label}</strong>
         {compact ? (
@@ -28,7 +29,7 @@ export function StageObservation({
           ) : null
         ) : (
           <small>
-            <span>{stageStatusText(job, stage)}</span>
+            <span>{state}</span>
             {stage?.count != null && ` · ${stage.count}`}
             {progress && (
               <span className="stage-progress">
@@ -43,7 +44,7 @@ export function StageObservation({
       <div className="stage-observation-detail">
         {compact && (
           <p>
-            {stageStatusText(job, stage)}
+            {state}
             {stage?.count == null ? '' : ` · ${stage.count}`}
           </p>
         )}

@@ -89,7 +89,7 @@ describe('bounded visual sidecar page contracts', () => {
     expect(summary).toHaveTextContent('任务详情');
     expect(summary.parentElement?.tagName).toBe('DETAILS');
     expect(summary.parentElement).not.toHaveAttribute('open');
-    const stages = screen.getByRole('list', { name: '真实提取流水线阶段', hidden: true });
+    const stages = screen.getByRole('list', { name: '任务运行链路', hidden: true });
     const identifier = screen.getByText(`任务 ${job.id}`);
     expect(stages).not.toBeVisible();
     expect(identifier).not.toBeVisible();
@@ -99,7 +99,7 @@ describe('bounded visual sidecar page contracts', () => {
     fireEvent.click(summary);
     expect(stages).toBeVisible();
     expect(identifier).toBeVisible();
-    expect(within(stages).getByText('文档分类')).toBeVisible();
+    expect(within(stages).getByText('文档解析')).toBeVisible();
     expect(within(stages).getByText(/4 \/ 11/)).toBeVisible();
     expect(screen.queryByText(/\d+%|预计完成/)).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: project.title }));

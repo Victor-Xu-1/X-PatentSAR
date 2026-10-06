@@ -181,7 +181,7 @@ describe('core pipeline lifecycle presentation', () => {
   it('shows exactly the actual eight stages, not ADMET or guessed percentages', () => {
     render(<StageStrip job={job} />);
     expect(screen.getAllByRole('listitem')).toHaveLength(8);
-    expect(screen.getByText('文档分类')).toBeVisible();
+    expect(screen.getByText('文档解析')).toBeVisible();
     expect(screen.getByText('进行中')).toBeVisible();
     expect(screen.queryByText(/100%|ADMET/)).not.toBeInTheDocument();
   });

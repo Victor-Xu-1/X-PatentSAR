@@ -1,39 +1,43 @@
 import { Check, CircleAlert, LoaderCircle } from 'lucide-react';
-import type { Job, StageName } from '../../api/types';
-import { stageNames } from '../../api/types';
+import type { Job } from '../../api/types';
 import { jobStatusLabels } from '../../model/presentation';
-import { observedStages, stageLabel, stageStatusText, stoppedJob } from '../../model/extraction';
+import {
+  completeCoreStages,
+  observedStages,
+  stageLabel,
+  stageStatusText,
+  stoppedJob,
+  waitingAdmet,
+  workflowStageNames,
+} from '../../model/extraction';
 import { StageObservation } from './StageObservation';
 
 export function StageStrip({ job, compact = false }: { job: Job | null; compact?: boolean }) {
   const stages = observedStages(job);
-  const names: StageName[] =
-    job?.admet_only === true
-      ? stages.map((stage) => stage.name)
-      : [
-          ...stageNames,
-          ...(stages.some((stage) => stage.name === 'admet') ? ['admet' as const] : []),
-        ];
+  const names = workflowStageNames(job);
   const historyNotice =
     job && job.history_available !== true ? (
       <output className="stage-history-notice">
         {job.history_available === false
-          ? '历史阶段不可用：旧任务使用共享目录，无法可靠还原本次阶段历史。'
+          ? '历史阶段不可用：本次任务的阶段记录无法可靠读取。'
           : '历史阶段可用性未知'}
       </output>
     ) : null;
   const list = (
-    <ol className="stage-strip" aria-label="真实提取流水线阶段">
+    <ol className="stage-strip" aria-label="任务运行链路">
       {names.map((name, index) => {
         const stage = stages.find((item) => item.name === name);
         const label = stageLabel(name, stage);
         const status =
-          job && job.history_available !== true ? 'unknown' : (stage?.status ?? 'pending');
+          job && job.history_available !== true
+            ? 'unknown'
+            : (stage?.status ??
+              (name === 'admet' && !waitingAdmet(job, stage) ? 'unknown' : 'pending'));
         return (
           <li
             className={`stage ${status}`}
             key={name}
-            title={`${label}：${stageStatusText(job, stage)}`}
+            title={`${label}：${stageStatusText(job, stage, name)}`}
           >
             <span className="stage-circle">
               {status === 'ok' ? (
@@ -51,7 +55,7 @@ export function StageStrip({ job, compact = false }: { job: Job | null; compact?
             ) : (
               <div>
                 <strong>{label}</strong>
-                <small>{stageStatusText(job, stage)}</small>
+                <small>{stageStatusText(job, stage, name)}</small>
               </div>
             )}
           </li>
@@ -67,23 +71,30 @@ export function StageStrip({ job, compact = false }: { job: Job | null; compact?
       </div>
     );
 
-  const current =
+  const active =
     stages.find((stage) => stage.status === 'failed') ??
     stages.find((stage) => stage.status === 'running') ??
-    stages.find((stage) => stage.status === 'pending') ??
-    stages.at(-1);
+    stages.find((stage) => stage.status === 'pending');
+  const missingResearch =
+    !active &&
+    job?.include_admet === true &&
+    job.admet_only !== true &&
+    !stages.some((stage) => stage.name === 'admet') &&
+    completeCoreStages(stages);
+  const current = missingResearch ? undefined : (active ?? stages.at(-1));
+  const currentName = missingResearch ? 'admet' : current?.name;
   const label = !job
     ? '尚未启动'
     : job.history_available !== true
       ? job.history_available === false
         ? '历史阶段不可用'
         : '阶段状态未知'
-      : job.status === 'complete'
+      : job.status === 'complete' && !missingResearch
         ? current?.name === 'admet' && current.status === 'empty'
           ? `${stageLabel(current.name, current)} · 未计算`
           : jobStatusLabels[job.status]
-        : current
-          ? `${stageLabel(current.name, current)} · ${stageStatusText(job, current)}`
+        : currentName
+          ? `${stageLabel(currentName, current)} · ${stageStatusText(job, current, currentName)}`
           : jobStatusLabels[job.status];
   const progress = current?.progress;
   return (
