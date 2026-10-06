@@ -1,8 +1,50 @@
 import { expect, test } from '@playwright/test';
+import type { Locator } from '@playwright/test';
 
 const projectId = process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID;
 
+async function expectReadableMetricHeadings(table: Locator) {
+  const metricHeadings = await table.locator('th.prediction-column').evaluateAll((headers) =>
+    headers.map((header) => {
+      const heading = header.querySelector('.column-heading') as HTMLElement;
+      const label = heading.querySelector('span')!;
+      const style = getComputedStyle(heading);
+      const bounds = heading.getBoundingClientRect();
+      const menu = header.querySelector('.column-menu-button')!.getBoundingClientRect();
+      const context = document.createElement('canvas').getContext('2d')!;
+      context.font = style.font;
+      const textWidth = context.measureText(label.textContent!).width;
+      return {
+        whiteSpace: style.whiteSpace,
+        fits:
+          textWidth <=
+          bounds.width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) + 0.5,
+        menuGap: menu.left - (bounds.left + bounds.width / 2 + textWidth / 2),
+      };
+    }),
+  );
+  expect(metricHeadings).toHaveLength(6);
+  for (const heading of metricHeadings) {
+    expect(heading.whiteSpace).toBe('nowrap');
+    expect(heading.fits).toBe(true);
+    expect(heading.menuGap).toBeGreaterThanOrEqual(1);
+  }
+}
+
 for (const width of [1830, 390]) {
+  test(`six short metric headers remain readable before or after results at ${width}`, async ({
+    page,
+  }) => {
+    test.skip(!projectId, 'Requires an approved original project; read-only');
+    await page.setViewportSize({ width, height: width === 1830 ? 1050 : 844 });
+    await page.goto(`/#/projects/${projectId}?tab=original&pdfWidth=28`);
+    const table = page.getByRole('table');
+    await expect(table).toBeVisible();
+    await expectReadableMetricHeadings(table);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2)).toBe(
+      true,
+    );
+  });
   for (const density of ['compact', 'comfortable'] as const) {
     test(`real result table has centered content and functional header menus at ${width} in ${density}`, async ({
       page,
@@ -41,6 +83,9 @@ for (const width of [1830, 390]) {
         }),
       );
       for (const offset of headings) expect(offset).toBeLessThanOrEqual(1);
+      // Short scientific labels (especially TPSA) must fit beside their menus
+      // at the default width, rather than splitting an acronym across lines.
+      await expectReadableMetricHeadings(table);
       const observations = await table.locator('.activity-observation').evaluateAll((elements) =>
         elements.map((element) => {
           const style = getComputedStyle(element);
@@ -101,8 +146,11 @@ for (const width of [1830, 390]) {
       await expect(menu).toBeVisible();
       await expect(trigger).toHaveAttribute('aria-controls', (await menu.getAttribute('id'))!);
       await expect(menu.getByRole('button', { name: '升序', exact: true })).toBeEnabled();
+      await expect(menu.getByLabel('全选筛选取值', { exact: true })).toBeEnabled();
+      await expect(menu.getByLabel('筛选方式', { exact: true })).toHaveCount(0);
+      await menu.getByRole('button', { name: '文本筛选', exact: true }).click();
       await expect(menu.getByLabel('筛选方式', { exact: true })).toBeEnabled();
-      await expect(menu.getByRole('button', { name: '应用筛选', exact: true })).toBeEnabled();
+      await expect(menu.getByRole('button', { name: '确定', exact: true })).toBeEnabled();
       await page.keyboard.press('Escape');
       await expect(menu).toHaveCount(0);
       await expect(trigger).toBeFocused();

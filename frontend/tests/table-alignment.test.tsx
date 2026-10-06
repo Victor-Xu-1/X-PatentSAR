@@ -75,6 +75,26 @@ describe('one centered result-table style authority', () => {
   });
   afterEach(() => stylesheet.remove());
 
+  it.each(['MW', 'LogP', 'TPSA', 'HBD', 'HBA', 'LogS'])(
+    'keeps the short %s heading on one line with room for its column menu',
+    (label) => {
+      render(<ResultsTable {...props()} />);
+      const header = screen.getByRole('columnheader', { name: label });
+      const heading = header.querySelector('.column-heading')!;
+      expect(getComputedStyle(heading).whiteSpace).toBe('nowrap');
+      expect(getComputedStyle(heading).textOverflow).toBe('ellipsis');
+      expect(header).toHaveAttribute('title', label);
+      expect(screen.getByRole('slider', { name: `调整${label}列宽` })).toHaveAttribute(
+        'aria-valuenow',
+        '88',
+      );
+      expect(screen.getByRole('slider', { name: `调整${label}列宽` })).toHaveAttribute(
+        'aria-valuemin',
+        '64',
+      );
+    },
+  );
+
   it.each(['compact', 'comfortable'] as const)(
     'centers every header, data cell and nested value in %s density without a number column',
     (density) => {
