@@ -64,7 +64,7 @@ def state_for(root, stage):
 
 
 class SourceLedPipelineTests(unittest.TestCase):
-    def test_writer_withholds_shared_identity_truncation_instead_of_relabelling(self):
+    def test_writer_preserves_complete_proved_compound_identifier(self):
         with tempfile.TemporaryDirectory() as temporary:
             payload = write_binding_result(
                 Path(temporary),
@@ -79,8 +79,8 @@ class SourceLedPipelineTests(unittest.TestCase):
                 no_binding=[],
                 unbound_pages=[],
             )
-            self.assertEqual(payload["final_bindings"], [])
-            self.assertEqual(payload["source_issues"][0]["cpd"], "Compound 1-2-3AB")
+            self.assertEqual(payload["final_bindings"][0]["cpd"], "Compound 1-2-3AB")
+            self.assertEqual(payload["source_issues"], [])
 
     def test_registry_executes_exact_controller_order(self):
         with tempfile.TemporaryDirectory() as temporary:

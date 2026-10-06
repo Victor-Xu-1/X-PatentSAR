@@ -434,7 +434,7 @@ class JobQueue:
         ):
             return
         stamp = now()
-        self._seal(row, status, stamp)
+        self._seal(row, status, stamp, error)
         with self.store.connect(write=True) as connection:
             connection.execute(
                 "UPDATE jobs SET status=?,finished_at=?,error=?,identity=CASE WHEN ? THEN NULL ELSE identity END WHERE id=?",
@@ -449,7 +449,9 @@ class JobQueue:
             self.service.predictions.finish_job(connection, job_id, status, error)
             self.service.descriptors.finish_job(connection, job_id, status, error)
 
-    def _seal(self, row: dict[str, Any], status: str, stamp: str) -> None:
+    def _seal(
+        self, row: dict[str, Any], status: str, stamp: str, error: Error | None = None
+    ) -> None:
         # Core facts must be sealed independently: an unavailable research
         # envelope must never skip or overwrite the immutable eight-stage log.
         try:
@@ -463,7 +465,20 @@ class JobQueue:
         try:
             root = self.service.attempts.output(row)
             if root is not None and spec_record(row["spec"]).get("include_admet"):
-                seal_admet_stage(self.store.root, root, row, status, stamp)
+                research_complete = bool(
+                    error
+                    and error.code == "core_not_accepted"
+                    and status == "failed"
+                    and completed_qa_rejection(root)
+                )
+                seal_admet_stage(
+                    self.store.root,
+                    root,
+                    row,
+                    status,
+                    stamp,
+                    research_complete=research_complete,
+                )
         except (WebError, OSError, ValueError) as exc:
             logger.warning(
                 "ADMET history unavailable for %s (%s)", row["id"], type(exc).__name__

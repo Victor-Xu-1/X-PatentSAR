@@ -124,6 +124,7 @@ print(f"SDF: {success} written, {failed} failed, total {len(records)}")
         result = subprocess.run(
             [rdkit_python, "-B", str(script_path), str(data_path), output_path],
             capture_output=True,
+            check=False,
             text=True,
             timeout=120,
             env=child_env,

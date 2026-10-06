@@ -183,7 +183,7 @@ def generate_excel(
                 img.height = IMG_HEIGHT_PX
                 ws.add_image(img, f"E{row_idx}")
                 img_count += 1
-            except Exception as e:
+            except (OSError, ValueError, TypeError) as e:
                 ws.cell(
                     row=row_idx, column=5, value=f"图片加载失败: {e}"
                 ).border = THIN_BORDER

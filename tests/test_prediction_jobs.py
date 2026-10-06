@@ -71,6 +71,22 @@ class PredictionJobTests(PredictionFixture, unittest.TestCase):
             self.service.project(self.project.id).acceptance.state, "failed"
         )
 
+    def test_completed_qa_rejection_keeps_failed_job_after_qualified_research(self):
+        runner, _, job = self.execute(mode="qa_rejected", accepted=False)
+        self.assertEqual(runner.started_phases, ["extract", "admet"])
+        self.assertEqual(runner._children, {})
+        self.assertEqual(job.status, "failed")
+        self.assertEqual(job.error.code, "core_not_accepted")
+        self.assertTrue(job.history_available)
+        self.assertEqual(job.stages[-1].status, "failed")
+        self.assertEqual(job.admet_stage.status, "ok")
+        row = self.service.compounds(self.project.id)[0]
+        self.assertEqual(row.admet.status, "complete")
+        self.assertEqual(row.descriptors.status, "complete")
+        self.assertEqual(
+            self.service.project(self.project.id).acceptance.state, "failed"
+        )
+
     def test_research_failure_preserves_formal_core_acceptance_and_stops_pending_rows(
         self,
     ):

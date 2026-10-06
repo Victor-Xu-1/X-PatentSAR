@@ -184,6 +184,25 @@ def artifact_run(
             ],
         }
     )
+    from patent_sar_extractor.core.ocsr.smiles_qc import qc_smiles
+    from patent_sar_extractor.core.ocsr.stereo_evidence import (
+        observe_stereo_symbols,
+        source_checked_qc,
+    )
+
+    screened = source_checked_qc(
+        qc_smiles("CCO"), observe_stereo_symbols(crop.read_bytes())
+    )
+    for record in payloads["smiles"]["records"]:
+        record.update(
+            screened,
+            OCSR_quality_flag=screened["quality_flag"],
+            OCSR_status="success",
+            raw_smiles="CCO",
+            image_hash=screened["stereochemistry"]["image_sha256"],
+        )
+    # This is genuine syntax/risk-screen contract data for an explicit controlled
+    # graph, NOT a claim that the fixture's red crop was recognized as ethanol.
     payloads["qa"].update(
         {
             "ok": accepted,

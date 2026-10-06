@@ -102,7 +102,9 @@ class RawOCSRObservationTests(unittest.TestCase):
     def test_model_fingerprint_change_invalidates_exact_image_cache(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            converter, calls = self.converter(["CCO", "CCN"], cache=str(root / "cache.sqlite"))
+            converter, calls = self.converter(
+                ["CCO", "CCN"], cache=str(root / "cache.sqlite")
+            )
             item = self.fixture(root)
             first = converter.convert_one(item)
             converter.engines["decimer"].fingerprint = "b" * 64
@@ -145,14 +147,22 @@ class RawOCSRObservationTests(unittest.TestCase):
 
     def test_resource_admission_error_aborts_without_fake_graph_failures(self):
         from patent_sar_extractor.resource_admission import ResourceAdmissionError
+
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             converter, calls = self.converter(["CCO"])
             item = self.fixture(root)
-            with patch.object(converter.engines["decimer"], "predict",
-                              side_effect=ResourceAdmissionError("Controlled headroom wait exhausted")) as prediction:
-                with self.assertRaises(ResourceAdmissionError):
-                    converter.convert_batch([item] * 20)
+            with (
+                patch.object(
+                    converter.engines["decimer"],
+                    "predict",
+                    side_effect=ResourceAdmissionError(
+                        "Controlled headroom wait exhausted"
+                    ),
+                ) as prediction,
+                self.assertRaises(ResourceAdmissionError),
+            ):
+                converter.convert_batch([item] * 20)
             self.assertEqual(prediction.call_count, 1)
             self.assertEqual(calls, [])
 

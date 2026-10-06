@@ -22,7 +22,7 @@ def proved_catalog(
     payload: dict, known_structures: set[str] | None = None
 ) -> list[dict]:
     if not isinstance(payload, dict):
-        raise ValueError("Binding artifact must be an object")
+        raise ValueError("Binding artifact must be an object")  # noqa: TRY004 -- shared schema boundary
     catalog, _ = read_catalog_entries(payload, known_structures)
     if catalog is None:
         raise ValueError("Formal binding requires the proved printed-ID catalog")

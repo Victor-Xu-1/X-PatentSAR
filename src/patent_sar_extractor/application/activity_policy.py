@@ -12,9 +12,9 @@ from patent_sar_extractor.contracts import (
     ACTIVITY_SCHEMA,
     ACTIVITY_SCHEMA_VERSION,
     artifact_identity,
-    artifact_identity_matches,
 )
 from patent_sar_extractor.core.activity_identity import normalize_compound
+from patent_sar_extractor.core.activity_join import activity_evidence_errors
 from patent_sar_extractor.core.activity_values import has_usable_activity_values
 
 logger = logging.getLogger("patent_sar_extractor")
@@ -119,40 +119,15 @@ def _activity_acceptance_errors(
     *,
     classified_activity_pages: list[int] | None = None,
 ) -> list[str]:
-    if not isinstance(activity_payload, dict):
-        return ["Activity extraction output is missing or malformed."]
-    errors = []
-    if not artifact_identity_matches(
-        activity_payload, ACTIVITY_SCHEMA, ACTIVITY_SCHEMA_VERSION
-    ):
+    """Compatibility facade; the shared source evidence policy is authority."""
+    try:
+        errors = activity_evidence_errors(activity_payload, classified_activity_pages)
+    except (ValueError, TypeError) as exc:
+        return [str(exc)]
+    if active_cpds != _extract_active_cpds(activity_payload):
         errors.append(
-            "Activity output does not match the current activity schema and ruleset."
+            "Activity metadata differs from the actual measured observations."
         )
-    rows = activity_payload.get("rows", [])
-    if not isinstance(rows, list):
-        return [*errors, "Activity rows are malformed."]
-    if not rows:
-        if classified_activity_pages == [] and not active_cpds:
-            return errors
-        errors.append(
-            "No activity rows were extracted without proof that activity is absent."
-        )
-        return errors
-    active_set = set(active_cpds)
-    review_cpds = [
-        _normalize_cpd_label(row.get("cpd", ""))
-        for row in rows
-        if isinstance(row, dict)
-        and row.get("needs_review")
-        and _has_activity_payload(row)
-        and any(cpd in active_set for cpd in _expand_cpd_labels(row.get("cpd", "")))
-    ]
-    if review_cpds:
-        errors.append(
-            f"Activity rows require review before binding ({review_cpds[:12]})."
-        )
-    if not active_cpds:
-        errors.append("No compound with usable activity values was extracted.")
     if len(active_cpds) != len(set(active_cpds)):
         errors.append("Active compound list contains duplicate identifiers.")
     return errors

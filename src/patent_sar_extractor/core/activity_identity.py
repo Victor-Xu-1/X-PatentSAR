@@ -39,6 +39,19 @@ def normalize_compound(value: str) -> str:
     return ""
 
 
+def printed_identifier_key(value: object) -> str:
+    """One exact proof key; never search hashes, prose or composite measurements."""
+    text = re.sub(r"\s+", " ", str(value or "")).strip()
+    if text.upper() == "CLAIM1" or re.fullmatch(
+        r"(?:claim\s*1\s+compound|claimed\s+compound|main\s+compound|single(?:ton)?\s+compound)",
+        text,
+        re.IGNORECASE,
+    ):
+        return "CLAIM1"  # Read-only legacy identity; not a new printed-ID proof.
+    normalized = normalize_compound(text)
+    return normalized.removeprefix("Compound ").upper() if normalized else ""
+
+
 def is_control(value: str) -> bool:
     return bool(CONTROL.fullmatch(str(value or "").strip()))
 

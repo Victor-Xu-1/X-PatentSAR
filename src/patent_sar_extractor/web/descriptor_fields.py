@@ -55,12 +55,18 @@ def descriptor_engine() -> dict[str, str]:
 def compute_descriptors(smiles: str) -> list[PredictionMetric]:
     """Preserve isotopes, charges, components and stereo in a validated molecule."""
     molecule = Chem.MolFromSmiles(canonical_smiles(smiles))
-    modules = {"Descriptors": Descriptors, "Crippen": Crippen,
-               "rdMolDescriptors": rdMolDescriptors, "Lipinski": Lipinski}
+    modules = {
+        "Descriptors": Descriptors,
+        "Crippen": Crippen,
+        "rdMolDescriptors": rdMolDescriptors,
+        "Lipinski": Lipinski,
+    }
     # RDKit exposes several registered descriptors dynamically; its stubs do
     # not enumerate them. The fixed reviewed algorithm names remain authority.
-    calculators = tuple(getattr(modules[reference.split(".")[0]], reference.split(".")[1])
-                        for reference in ALGORITHMS)
+    calculators = tuple(
+        getattr(modules[reference.split(".")[0]], reference.split(".")[1])
+        for reference in ALGORITHMS
+    )
     result = []
     for key, calculate in zip(DESCRIPTOR_KEYS, calculators):
         label, unit, _kind = METRIC_SPECS[key]

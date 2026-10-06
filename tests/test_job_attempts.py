@@ -701,7 +701,9 @@ class AttemptTests(WebFixture, unittest.TestCase):
                 if path.is_file()
             }
             self.assertEqual(after, before)
-            self.assertEqual(fresh["stages"][1]["status"], "failed")
+            observed = {stage["name"]: stage for stage in fresh["stages"]}
+            self.assertEqual(observed["qa"]["status"], "failed")
+            self.assertEqual(observed["locate"]["status"], "empty")
             self.assertNotEqual(
                 client.get(f"/api/v1/projects/{project['id']}").json()["acceptance"][
                     "state"

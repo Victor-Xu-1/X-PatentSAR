@@ -84,7 +84,7 @@ Interrupted/incomplete/foreign/old core evidence cannot enter that path.
 | Source ownership | Existing spatial binder, source headings, arbitration, catalog reader and one binding writer |
 | Recognition | One verified printed-DECIMER adapter and bounded JSONL carrier, raw observation cache and source QC |
 | Final output | Identifier-led structure and activity join; workbook/SDF modules share formal selection |
-| Acceptance | Deterministic QA, explicit scientific stage errors and failure marker; optional LLM advice cannot approve |
+| Acceptance | One `qa_inputs` context, separate source/file inspections and source/chemistry/output gates; `qa_report` facade never overrides findings |
 | Jobs/recovery | Durable queue, kernel identity, owned phase cleanup, immutable history and bounded checkpoint copy |
 | Molecular evidence | Generic typed `MolecularObservationStore`, configured prediction/descriptor stores; one source/job protocol |
 | Effective values | `property_values.py`; all table filters, sort and CSV use the same resolution |

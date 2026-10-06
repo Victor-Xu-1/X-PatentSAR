@@ -56,7 +56,9 @@ def compound_catalog(
     return {
         "schema": schema_ref(COMPOUND_CATALOG_SCHEMA, COMPOUND_CATALOG_SCHEMA_VERSION),
         "authority": "printed_identifier_and_original_spatial_evidence",
-        "entries": [entries[key] for key in sorted(entries, key=natural_identifier_key)],
+        "entries": [
+            entries[key] for key in sorted(entries, key=natural_identifier_key)
+        ],
         "numbered_compounds": len(entries),
         "source_observations": len(seen),
         "formal_acceptance_scope": "proved_printed_identifier_structure_corpus",

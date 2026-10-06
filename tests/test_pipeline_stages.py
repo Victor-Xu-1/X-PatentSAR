@@ -43,13 +43,16 @@ class PipelineStageTests(unittest.TestCase):
                 ocr_cache_path=str(dependency),
             )
             run_fixture(root)
-            producer_payload = json.loads((root / "structure_bindings/bindings.json").read_text())
+            producer_payload = json.loads(
+                (root / "structure_bindings/bindings.json").read_text()
+            )
 
             def producer(*args, **kwargs):
                 path = Path(context.bind_json)
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(json.dumps(producer_payload))
                 return producer_payload
+
             with (
                 patch(
                     "patent_sar_extractor.core.structure_binder.bind",
@@ -59,7 +62,9 @@ class PipelineStageTests(unittest.TestCase):
                 execute_bind(context)
             binder.assert_called_once()
             serialized = json.loads(Path(context.bind_json).read_text())
-            self.assertEqual(serialized["compound_catalog"], producer_payload["compound_catalog"])
+            self.assertEqual(
+                serialized["compound_catalog"], producer_payload["compound_catalog"]
+            )
             self.assertEqual(context.n_bound, 2)
             self.assertEqual(log["steps"]["bind"]["status"], "ok")
             self.assertEqual(context.source_cpds, ["Compound 42", "Compound 42A"])
@@ -77,7 +82,9 @@ class PipelineStageTests(unittest.TestCase):
                 pdf.write_bytes(b"controlled original hash input")
                 binding = root / "bindings.json"
                 run_fixture(root)
-                binding_payload = json.loads((root / "structure_bindings/bindings.json").read_text())
+                binding_payload = json.loads(
+                    (root / "structure_bindings/bindings.json").read_text()
+                )
                 binding.write_text(json.dumps(binding_payload))
                 smiles = root / "smiles_results.json"
                 smiles.write_text(

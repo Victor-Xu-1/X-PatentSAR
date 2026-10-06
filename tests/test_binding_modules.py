@@ -27,7 +27,9 @@ from patent_sar_extractor.core.structure_binder import bind
 
 class BindingModuleTests(unittest.TestCase):
     def test_original_heading_tokens_are_complete_and_slash_groups_are_not_split(self):
-        from patent_sar_extractor.core.binding_source_headings import observed_heading_blocks
+        from patent_sar_extractor.core.binding_source_headings import (
+            observed_heading_blocks,
+        )
 
         with fitz.open() as doc:
             page = doc.new_page()
@@ -35,10 +37,15 @@ class BindingModuleTests(unittest.TestCase):
             for index, label in enumerate(labels):
                 page.insert_text((72, 72 + index * 30), f"Compound {label}: Synthesis")
             blocks = observed_heading_blocks(doc, [0], {})
-        self.assertEqual([row["cpd"] for row in blocks], [f"Compound {label}" for label in labels[:-1]])
+        self.assertEqual(
+            [row["cpd"] for row in blocks],
+            [f"Compound {label}" for label in labels[:-1]],
+        )
 
     def test_unlabelled_generic_segments_never_invent_compound_ids(self):
-        from patent_sar_extractor.core.binding_source_headings import select_heading_bindings
+        from patent_sar_extractor.core.binding_source_headings import (
+            select_heading_bindings,
+        )
 
         segments = [
             {
@@ -397,7 +404,9 @@ class BindingModuleTests(unittest.TestCase):
             self.assertEqual(
                 [structure["id"] for structure in selected.call_args.args[1]], ["S3"]
             )
-            self.assertEqual([block["cpd"] for block in selected.call_args.args[2]], ["Compound 3"])
+            self.assertEqual(
+                [block["cpd"] for block in selected.call_args.args[2]], ["Compound 3"]
+            )
             self.assertEqual(
                 [binding["cpd"] for binding in result["bindings"]],
                 ["Compound 1", "Compound 2"],

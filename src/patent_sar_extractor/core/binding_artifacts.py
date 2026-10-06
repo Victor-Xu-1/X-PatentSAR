@@ -85,7 +85,7 @@ def write_binding_result(
         for binding in rows:
             label = binding.get("cpd")
             if not isinstance(label, str):
-                raise ValueError("Malformed original binding identifier")
+                raise ValueError("Malformed original binding identifier")  # noqa: TRY004 -- shared schema boundary
             printed = normalize_compound(label)
             if not printed or printed != f"Compound {_label_key(label)}":
                 issues.append(

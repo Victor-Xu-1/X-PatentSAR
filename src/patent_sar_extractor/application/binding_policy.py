@@ -28,7 +28,7 @@ def _load_bindings_from_json(path: str) -> tuple[dict, list[dict]]:
     if not isinstance(payload, dict) or not isinstance(
         payload.get("final_bindings"), list
     ):
-        raise ValueError("Malformed formal binding artifact")
+        raise ValueError("Malformed formal binding artifact")  # noqa: TRY004 -- shared schema boundary
     return payload, payload["final_bindings"]
 
 

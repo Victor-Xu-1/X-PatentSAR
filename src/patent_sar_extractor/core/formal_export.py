@@ -11,7 +11,7 @@ from .ocsr.stereo_gate import stereo_record_error
 
 def record_errors(record: dict) -> list[str]:
     if not isinstance(record, dict):
-        raise ValueError("Malformed recognition record")
+        raise ValueError("Malformed recognition record")  # noqa: TRY004 -- shared schema boundary
     errors = []
     if not record.get("rdkit_valid") or not record.get("canonical_smiles"):
         errors.append("no clean RDKit-valid SMILES")

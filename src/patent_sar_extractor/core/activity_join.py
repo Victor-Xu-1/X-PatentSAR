@@ -13,7 +13,7 @@ from .activity_identity import is_control, is_value, normalize_compound
 
 def _measurement_fields(row: dict) -> list[tuple[str, str]]:
     if not isinstance(row.get("cpd"), str):
-        raise ValueError("Malformed activity compound identifier")
+        raise ValueError("Malformed activity compound identifier")  # noqa: TRY004 -- shared schema boundary
     fields = []
     for name in ("activity_values", "cell_line_data"):
         bucket = row.get(name, {})

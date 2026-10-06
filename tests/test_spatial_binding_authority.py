@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import fitz
+
 from patent_sar_extractor.core.structure_binder import bind
 
 

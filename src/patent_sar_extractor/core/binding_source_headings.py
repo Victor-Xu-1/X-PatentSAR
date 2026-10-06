@@ -18,7 +18,7 @@ _HEADING = re.compile(
     r"^(?:Synthesis\s+(?:of\s+)?)?"
     r"(?:Compound|Cmpd|Cpd|Example|实施例|化合物)\s*[-:.：]?\s*"
     rf"({PRINTED_ID})(?![\w/-])",
-    re.I,
+    re.IGNORECASE,
 )
 
 
