@@ -272,6 +272,33 @@ raw OCR/model observations may be reused. Missing old stereo evidence stays unkn
 
 ## Concurrency and recovery
 
+Use **继续提取** after restarting the application. Startup reconciles active
+records and interrupted records whose prior cleanup was unverified. A valid
+different Linux kernel boot proves old processes cannot survive: no current PID
+or process group is signalled on that proof. Same-boot cleanup requires exact
+owned identity. Canonical workspace/job, command, executable, phase, PID/start
+time and bounded descendant proofs remain mandatory. Malformed, foreign or
+unreadable evidence stays blocked, not guessed or deleted.
+
+Verified recovery saves original identity in private `web-state/job-recovery`
+before publishing resumability. Existing job-history and run files are not
+rewritten. Do not edit boot/identity fields or delete proof to bypass protection.
+Product remains v0.1.0; API and workspace SQLite remain v1.
+
+Checkpoint preparation is one durable queued attempt. Copying and projection
+serialization no longer hold SQLite's writer. The worker cannot claim unready
+attempts; cancellation remains authoritative. Interrupted preparations retain
+their declared inactive source for the next safe resume. Source ancestry cannot
+cross projects or inherit an owned producer. Compatible completed segmentation
+batches are preserved even if the overall stage was interrupted; unfinished or
+incompatible batches run normally under current fingerprints. OCR/raw recognition
+and strict QA gates remain unchanged.
+
+The compact strip shows actual interrupted/failed core work, not an unstarted
+ADMET marker. Actual ADMET, including prediction-only jobs, remains visible.
+Resume preserves saved parameters, disables force and never blindly replays an
+uncertain write before reloading current task state.
+
 After an accuracy-ruleset change, use **运行提取** to establish a new run. A job
 from a different runtime identity is not relabelled or resumed. The queue retains
 the old run and automatically reuses supported, exact-original-SHA OCR observations

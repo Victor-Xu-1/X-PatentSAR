@@ -13,6 +13,7 @@ import os
 import re
 import sqlite3
 import stat
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -88,6 +89,21 @@ def spec_record(raw: str) -> dict[str, Any]:
         payload = json.loads(raw)
         if not isinstance(payload, dict):
             raise TypeError("invalid specification")
+        preparation = payload.get("checkpoint_preparation", "ready")
+        source_job = payload.get("checkpoint_source_job_id")
+        if (
+            not isinstance(preparation, str)
+            or preparation not in {"preparing", "ready"}
+            or (
+                source_job is not None
+                and (
+                    not isinstance(source_job, str)
+                    or not re.fullmatch(r"[a-f0-9]{32}", source_job)
+                )
+            )
+            or (preparation == "preparing" and source_job is None)
+        ):
+            raise ValueError("invalid checkpoint preparation")
         for name in (
             "job_id",
             "project_id",
@@ -375,14 +391,23 @@ class VerifiedCheckpoint:
 class CheckpointCopy:
     """A bounded, independent copy; never directory copying or hardlinks."""
 
-    def __init__(self, source: Path, target: Path) -> None:
+    def __init__(
+        self,
+        source: Path,
+        target: Path,
+        *,
+        check_cancel: Callable[[], None] | None = None,
+    ) -> None:
         self.files = SafeFiles(source)
         self.source = source
         self.target = private_directory(target)
         self.content: dict[str, str] = {}
         self.total = 0
+        self.check_cancel = check_cancel
 
     def put(self, relative: str, content: bytes) -> None:
+        if self.check_cancel is not None:
+            self.check_cancel()
         relative = str(self.files.relative(relative))
         if relative in self.content:
             return
@@ -477,10 +502,22 @@ class CheckpointCopy:
             for value in payload:
                 self.images(value, depth=depth + 1)
 
-    def verify(self, stage: str, spec: RunSpec) -> VerifiedCheckpoint | None:
+    def verify(
+        self, stage: str, spec: RunSpec, *, chunk_path: str | None = None
+    ) -> VerifiedCheckpoint | None:
         from patent_sar_extractor.application.stage_cache import _stable_digest
 
         path, schema, version = ARTIFACTS[stage]
+        if chunk_path is not None:
+            if stage != "structures" or not re.fullmatch(
+                r"structures/\.chunks/chunk_[0-9]{3,4}/metadata\.json", chunk_path
+            ):
+                raise WebError(
+                    409,
+                    "unsafe_checkpoint",
+                    "Chunk checkpoint path is outside its approved stage.",
+                )
+            path = chunk_path
         payload = self.files.json(path)
         manifest = self.files.json(path + ".manifest.json")
         if not core.artifact_identity_matches(
@@ -609,10 +646,12 @@ def checkpoint_json(payload: Any) -> bytes:
     return json.dumps(payload, ensure_ascii=False, allow_nan=False, indent=2).encode()
 
 
-def seed_checkpoints(old: RunSpec, target: Path) -> None:
+def seed_checkpoints(
+    old: RunSpec, target: Path, *, check_cancel: Callable[[], None] | None = None
+) -> None:
     from patent_sar_extractor.core.page_ocr_cache import cache_matches_pdf
 
-    copy = CheckpointCopy(Path(old.output_dir), target)
+    copy = CheckpointCopy(Path(old.output_dir), target, check_cancel=check_cancel)
     cache = copy.files.json(OCR_PATH)
     # Raw page observations have their own compatibility contract. Applying
     # derived-artifact rules here rejects valid older OCR and needlessly forces
@@ -644,3 +683,10 @@ def seed_checkpoints(old: RunSpec, target: Path) -> None:
         # never become a stage checkpoint or acceptance report; the sole worker
         # rechecks their exact image/runtime identity and re-runs failed entries.
         copy.observations()
+    if (
+        ARTIFACTS["locate"][0] in copy.content
+        and "structure_pages/crop_regions.json" in copy.content
+    ):
+        from .checkpoint_chunks import seed_structure_chunks
+
+        seed_structure_chunks(copy, old)

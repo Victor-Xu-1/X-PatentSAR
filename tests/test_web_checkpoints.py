@@ -7,12 +7,13 @@ import time
 import unittest
 from pathlib import Path
 
+from test_web_support import SleepRunner, WebFixture, wait_job
+
 from patent_sar_extractor import contracts as core
 from patent_sar_extractor.artifact_io import write_json_atomic
 from patent_sar_extractor.core.page_ocr_cache import build_cache_metadata
 from patent_sar_extractor.web.files import SafeFiles
 from patent_sar_extractor.web.stages import read_progress
-from test_web_support import SleepRunner, WebFixture, wait_job
 
 
 class LiveCheckpointTests(WebFixture, unittest.TestCase):
@@ -60,9 +61,12 @@ class LiveCheckpointTests(WebFixture, unittest.TestCase):
             self.assertEqual(
                 result["stages"][5]["progress"],
                 {
-                    key: value
-                    for key, value in self.progress_payload().items()
-                    if key not in {"schema", "stage"}
+                    "phase": None,
+                    **{
+                        key: value
+                        for key, value in self.progress_payload().items()
+                        if key not in {"schema", "stage"}
+                    },
                 },
             )
             client.post(f"/api/v1/jobs/{job['id']}/cancel")

@@ -122,7 +122,7 @@ describe('bounded visual sidecar page contracts', () => {
     vi.spyOn(api, 'job').mockResolvedValue(stopped);
     const create = vi.spyOn(api, 'createJob');
     render(<JobsPage projects={projects} ready={ready} onOpen={vi.fn()} />);
-    expect(await screen.findByRole('button', { name: '恢复任务' })).toBeDisabled();
+    expect(await screen.findByRole('button', { name: '继续提取' })).toBeDisabled();
     expect(screen.getByRole('button', { name: '运行提取' })).toBeDisabled();
     expect(screen.getByText('运行失败')).toBeVisible();
     expect(screen.getByText(`任务 ${job.id}`)).not.toBeVisible();

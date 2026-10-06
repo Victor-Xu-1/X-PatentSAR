@@ -6,6 +6,33 @@ import { useResultsState } from '../src/features/workspace/useResultsState';
 import { compound, job, project, results } from './fixtures';
 
 describe('current-run result ownership and stage synchronization', () => {
+  it('does not refresh upstream checkpoints for an unstarted terminal ADMET marker', async () => {
+    const read = vi.spyOn(api, 'results').mockResolvedValue(results);
+    const reloadProject = vi.fn();
+    const current: Job = { ...job, status: 'interrupted', include_admet: true, admet_stage: null };
+    const { result, rerender } = renderHook(
+      ({ current }) => useResultsState(project.id, '', vi.fn(), current, reloadProject),
+      { initialProps: { current } },
+    );
+    await waitFor(() => expect(result.current.resource.data).toBe(results));
+    read.mockClear();
+    reloadProject.mockClear();
+    rerender({
+      current: {
+        ...current,
+        admet_stage: {
+          name: 'admet',
+          status: 'failed',
+          count: null,
+          duration_seconds: null,
+          progress: null,
+          reused_checkpoint: null,
+        },
+      },
+    });
+    expect(read).not.toHaveBeenCalled();
+    expect(reloadProject).not.toHaveBeenCalled();
+  });
   it('does not refresh current results from an unavailable shared-directory stage history', async () => {
     vi.spyOn(api, 'results').mockResolvedValue(results);
     const reloadProject = vi.fn();

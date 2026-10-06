@@ -151,27 +151,47 @@ class Store:
         return dict(row)
 
     def snapshot(
-        self, project_id: str, snapshot: dict[str, Any], compounds: list[dict[str, Any]]
-    ) -> None:
+        self,
+        project_id: str,
+        snapshot: dict[str, Any],
+        compounds: list[dict[str, Any]],
+        *,
+        expected_run_root: str,
+        expected_sha256: str | None,
+    ) -> bool:
+        # Serialize bounded projections before acquiring SQLite's only writer.
+        # Slow CPU/IO must not strand process ownership or cancellation updates.
+        values = [
+            (
+                project_id,
+                c["dto"]["id"],
+                i,
+                encode(c["dto"]),
+                c["image_path"],
+                c["geometry_space"],
+            )
+            for i, c in enumerate(compounds)
+        ]
+        encoded_snapshot = encode(snapshot)
         with self.connect(write=True) as connection:
+            current = connection.execute(
+                "SELECT run_root,sha256 FROM projects WHERE id=?", (project_id,)
+            ).fetchone()
+            if (
+                current is None
+                or current["run_root"] != expected_run_root
+                or current["sha256"] != expected_sha256
+            ):
+                return False  # Source ownership changed; discard before any writes.
             connection.execute(
                 "DELETE FROM compounds WHERE project_id=?", (project_id,)
             )
             connection.executemany(
                 "INSERT INTO compounds(project_id,id,ordinal,payload,image_path,geometry_space) VALUES(?,?,?,?,?,?)",
-                [
-                    (
-                        project_id,
-                        c["dto"]["id"],
-                        i,
-                        encode(c["dto"]),
-                        c["image_path"],
-                        c["geometry_space"],
-                    )
-                    for i, c in enumerate(compounds)
-                ],
+                values,
             )
             connection.execute(
                 "UPDATE projects SET snapshot=?,historical=?,updated_at=? WHERE id=?",
-                (encode(snapshot), int(snapshot["is_historical"]), now(), project_id),
+                (encoded_snapshot, int(snapshot["is_historical"]), now(), project_id),
             )
+        return True

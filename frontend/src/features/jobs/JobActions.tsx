@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { MoreHorizontal, Play, RotateCcw, Square } from 'lucide-react';
 import { api } from '../../api';
+import { ApiError } from '../../api/errors';
 import type { Job, Project } from '../../api/types';
 import { activeJob, jobStatusLabels } from '../../model/presentation';
 import { ErrorNotice } from '../../components/Feedback';
@@ -24,20 +25,33 @@ export function JobActions({
   const [error, setError] = useState<Error | null>(null);
   const [cancelConfirm, setCancelConfirm] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const inFlight = useRef(false);
+  const [submittedResume, setSubmittedResume] = useState<Job | null>(null);
   const running = job !== null && activeJob(job);
-  const canStart = ready && project?.pdf.available && !running && !busy;
+  // A fresh DTO from the existing reload path must reconcile a submitted resume.
+  const awaitingResume = job !== null && submittedResume === job;
+  const canStart = ready && project?.pdf.available && !running && !busy && !awaitingResume;
+  const canResume =
+    job?.can_resume === true &&
+    job.project_id === project?.id &&
+    (job.status === 'interrupted' || job.status === 'failed' || job.status === 'cancelled');
   async function operate(action: 'run' | 'resume' | 'cancel') {
-    if (!project) return;
+    if (!project || inFlight.current) return;
+    if (action !== 'cancel' && (!canStart || (action === 'resume' && !canResume))) return;
+    inFlight.current = true;
     setBusy(true);
     setError(null);
     try {
       if (action === 'cancel' && job) await api.cancelJob(job.id);
       else await api.createJob(project.id, action === 'resume' ? (job?.id ?? null) : null);
+      if (action === 'resume') setSubmittedResume(job);
       setCancelConfirm(false);
       onChange();
     } catch (e) {
+      if (action === 'resume' && e instanceof ApiError && e.uncertain) setSubmittedResume(job);
       setError(e instanceof Error ? e : new Error('任务操作失败。'));
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }
@@ -56,11 +70,11 @@ export function JobActions({
               <button
                 type="button"
                 className={compact ? 'primary' : undefined}
-                disabled={!canStart}
+                disabled={!canStart || !canResume}
                 onClick={() => void operate('resume')}
               >
                 <RotateCcw size={14} />
-                恢复任务
+                继续提取
               </button>
             )}
             {!(compact && job?.can_resume) && (

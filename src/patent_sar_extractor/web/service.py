@@ -303,9 +303,17 @@ class WorkspaceService:
         if not project["run_root"]:
             return
         view = view or ArtifactView.read(Path(project["run_root"]))
+        if view.root.resolve() != Path(project["run_root"]).resolve():
+            return  # A supplied old view must never be rebound to a new attempt.
         snapshot, compounds = view.snapshot(project_id, pdf_sha256=project["sha256"])
         snapshot["correction_projection_id"] = uuid.uuid4().hex
-        self.store.snapshot(project_id, snapshot, compounds)
+        self.store.snapshot(
+            project_id,
+            snapshot,
+            compounds,
+            expected_run_root=project["run_root"],
+            expected_sha256=project["sha256"],
+        )
 
     def job(self, job_id: str) -> Job:
         row = self.store.job(job_id)
