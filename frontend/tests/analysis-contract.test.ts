@@ -97,6 +97,7 @@ describe('additive contract validation and scientific boundary', () => {
       advisory: false,
       resume_job_id: null,
       include_intermediates: true,
+      include_admet: true,
       force: true,
       task_note: '运营记录',
     });

@@ -20,6 +20,7 @@ from patent_sar_extractor.contracts import (
 
 from .errors import WebError
 from .files import private_directory
+from .process_identity import previous_kernel_boot, process_present, validate_identity
 
 
 @dataclass(frozen=True)
@@ -234,9 +235,13 @@ class SubprocessRunner:
                 raise WebError(
                     500, "process_limit", "Extraction exceeded its owned process limit."
                 )
-        saved = {
-            d["pid"]: d for d in identity.descendants if _same(_process(d["pid"]), d)
-        }
+        saved = {}
+        for descendant in identity.descendants:
+            current = _process(descendant["pid"])
+            if _same(current, descendant) or (
+                current is None and process_present(descendant["pid"])
+            ):
+                saved[descendant["pid"]] = descendant
         for pid in owned - {identity.pid}:
             raw = _process(pid)
             if raw:
@@ -253,19 +258,34 @@ class SubprocessRunner:
     def stop(
         self, identity: ProcessIdentity, spec: RunSpec, *, grace_seconds: float = 2
     ) -> bool:
+        try:
+            validate_identity(identity.to_dict())
+        except (ValueError, TypeError):
+            return False
         if (
-            identity.boot_id != self.boot_id
-            or identity.argv != self.command(spec)
+            identity.argv != self.command(spec)
             or identity.cwd != str(Path(spec.output_dir).resolve())
+            or identity.executable != str(Path(identity.argv[0]).resolve())
         ):
+            return False
+        if previous_kernel_boot(identity.boot_id, self.boot_id):
+            # A prior-kernel process and every descendant are necessarily gone.
+            # Do not inspect/signal a current process merely reusing their PIDs.
+            return True
+        if identity.boot_id != self.boot_id:
             return False
         self._observe(identity, spec)
         child = self._children.get(identity.pid)
         if child is not None:
             child.poll()  # Reap only our own direct child if it already exited.
         root_owned = self.owns(identity, spec)
-        root_present = _process(identity.pid) is not None
+        root_present = process_present(identity.pid)
         if root_present and not root_owned:
+            return False
+        if any(
+            _process(d["pid"]) is None and process_present(d["pid"])
+            for d in identity.descendants
+        ):
             return False
         targets = [d for d in identity.descendants if _same(_process(d["pid"]), d)]
         # Never broaden a signal to a group unless its live leader is verified.

@@ -153,25 +153,29 @@ class Store:
     def snapshot(
         self, project_id: str, snapshot: dict[str, Any], compounds: list[dict[str, Any]]
     ) -> None:
+        # Serialize bounded projections before acquiring SQLite's only writer.
+        # Slow CPU/IO must not strand process ownership or cancellation updates.
+        values = [
+            (
+                project_id,
+                c["dto"]["id"],
+                i,
+                encode(c["dto"]),
+                c["image_path"],
+                c["geometry_space"],
+            )
+            for i, c in enumerate(compounds)
+        ]
+        encoded_snapshot = encode(snapshot)
         with self.connect(write=True) as connection:
             connection.execute(
                 "DELETE FROM compounds WHERE project_id=?", (project_id,)
             )
             connection.executemany(
                 "INSERT INTO compounds(project_id,id,ordinal,payload,image_path,geometry_space) VALUES(?,?,?,?,?,?)",
-                [
-                    (
-                        project_id,
-                        c["dto"]["id"],
-                        i,
-                        encode(c["dto"]),
-                        c["image_path"],
-                        c["geometry_space"],
-                    )
-                    for i, c in enumerate(compounds)
-                ],
+                values,
             )
             connection.execute(
                 "UPDATE projects SET snapshot=?,historical=?,updated_at=? WHERE id=?",
-                (encode(snapshot), int(snapshot["is_historical"]), now(), project_id),
+                (encoded_snapshot, int(snapshot["is_historical"]), now(), project_id),
             )

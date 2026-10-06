@@ -237,10 +237,31 @@ not executable prompts. Intermediate/force options become real CLI flags, while
 safe resume retains checkpoints and never repeats force invalidation.
 
 Each new attempt, including resume, receives an independent job-ID output root.
+`web/process_identity.py` validates bounded process records and distinguishes
+verified previous-kernel absence from unknown/malformed identity. The existing
+supervisor signals only exact current owned processes; a different verified boot
+never justifies signalling a reused PID. `web/job_recovery.py` archives the old
+identity before compare-and-set recovery publication. Startup also rechecks
+previously blocked interrupted jobs. Original terminal history, timestamps,
+sources and QA remain immutable; invalid proofs remain blocked.
+
+`web/job_preparation.py` records one queued attempt's private readiness and
+declared inactive source before bounded copying outside the SQLite writer.
+Cancellation remains authoritative; the sole queue claims only ready records.
+Interrupted preparations use their validated declared source, not half-copied
+files. Ancestry is bounded; cross-project/active/unsafe sources are refused.
+No queue, thread, database schema or API/product version is added. Unchanged
+identity/idle polling is read-only, and projection encoding precedes writes.
+
 Resume copies only bounded, content-verified upstream checkpoints, relocates
 declared image/path fields and preserves raw chemistry/provenance exactly. The
 CLI rechecks current fingerprints and strict acceptance; transport is not a second
 cache authority. Terminal attempts seal private write-once stage snapshots.
+The same copier transports compatible completed `structures/.chunks` batches
+while the overall stage is unfinished. Its sole bounded batch adapter validates
+input identity, locator partitions, worker version, dependencies and image paths;
+the CLI rechecks each rebased fingerprint. No whole-stage success or old QA is
+created, and original batches/images remain unchanged.
 An ordinary rerun also uses this same transport when the latest stopped job's
 current-runtime private output and exact PDF observations are verified. It retains
 the new request's options and never inherits old history or acceptance. Changed

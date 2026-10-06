@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import re
 import sqlite3
 import threading
 import time
@@ -16,11 +17,13 @@ from typing import Any
 from patent_sar_extractor import contracts as core
 
 from .admet_history import read_admet_stage, seal_admet_stage, write_admet_stage
-from .attempts import ATTEMPT_VERSION, seed_checkpoints, spec_record
+from .attempts import ATTEMPT_VERSION, spec_record
 from .checkpoints import LiveCheckpoints
 from .errors import WebError
 from .files import SafeFiles, private_directory
 from .job_phases import OwnedPhase, PhaseResult
+from .job_preparation import checkpoint_origin, prepare_attempt
+from .job_recovery import decode_identity, preserve_cleanup, release_retained_identity
 from .models import Error, Job, JobRequest, Stage
 from .prediction_jobs import correction_prediction, enqueue_prediction
 from .processes import ProcessIdentity, ProcessRunner, RunSpec, runtime_identity
@@ -34,6 +37,8 @@ def decode_spec(raw: str) -> RunSpec:
     value = spec_record(raw)
     attempt_version = value.pop("attempt_version", None)
     parent_job = value.pop("resume_job_id", None)
+    value.pop("checkpoint_preparation", None)
+    value.pop("checkpoint_source_job_id", None)
     if (
         attempt_version is not None
         and (type(attempt_version) is not int or attempt_version != ATTEMPT_VERSION)
@@ -249,22 +254,25 @@ class JobQueue:
                     "resume_unavailable",
                     "This job cannot be safely resumed for this project.",
                 )
-            old = self._spec(previous["id"])
+            saved_options = self._spec(previous["id"])
+            old = checkpoint_origin(
+                self.store, previous, self._spec, self.service.attempts.unique
+            )
             if (
-                old.advisory != request.advisory
-                or old.allow_partial != request.allow_partial
+                saved_options.advisory != request.advisory
+                or saved_options.allow_partial != request.allow_partial
             ):
                 raise WebError(
                     409,
                     "resume_parameters",
                     "Resume requires the original job parameters.",
                 )
-            include_intermediates = old.include_intermediates
+            include_intermediates = saved_options.include_intermediates
             force = (
                 False  # Resume reuses verified checkpoints; it never invalidates them.
             )
-            task_note = old.task_note
-            include_admet = old.include_admet
+            task_note = saved_options.task_note
+            include_admet = saved_options.include_admet
         if any(
             parent.is_symlink() for parent in (output, *output.parents)
         ) or not output.resolve().is_relative_to(self.store.root / "runs"):
@@ -293,6 +301,8 @@ class JobQueue:
             "runtime_identity": runtime_identity(),
             "attempt_version": ATTEMPT_VERSION,
             "resume_job_id": request.resume_job_id,
+            "checkpoint_preparation": "preparing" if old is not None else "ready",
+            "checkpoint_source_job_id": old.job_id if old is not None else None,
         }
         try:
             with self.store.connect(write=True) as connection:
@@ -327,38 +337,18 @@ class JobQueue:
                         "unsafe_workspace",
                         "Job output must remain inside its private workspace.",
                     )
-                preparation_error = None
-                if old is not None:
-                    try:
-                        seed_checkpoints(old, output)
-                    except (WebError, OSError, ValueError, RecursionError) as exc:
-                        logger.warning(
-                            "Checkpoint preparation failed for attempt %s (%s)",
-                            job_id,
-                            type(exc).__name__,
-                        )
-                        preparation_error = Error(
-                            code=(
-                                exc.code
-                                if isinstance(exc, WebError)
-                                else "checkpoint_copy_failed"
-                            ),
-                            message="Checkpoint preparation failed; this attempt and the previous run are preserved.",
-                        )
-                # Keep the transaction until seeding finishes so the single
-                # consumer cannot start against a partially prepared attempt.
+                # Reserve a durable queued attempt. Its readiness stays false
+                # until bounded checkpoint preparation finishes outside SQLite.
                 stamp = now()
                 connection.execute(
                     "INSERT INTO jobs(id,project_id,status,created_at,finished_at,error,spec) VALUES(?,?,?,?,?,?,?)",
                     (
                         job_id,
                         project_id,
-                        "failed" if preparation_error else "queued",
+                        "queued",
                         stamp,
-                        stamp if preparation_error else None,
-                        preparation_error.model_dump_json()
-                        if preparation_error
-                        else None,
+                        None,
+                        None,
                         encode(payload),
                     ),
                 )
@@ -388,6 +378,11 @@ class JobQueue:
             raise WebError(
                 409, "job_active", "Project already has a queued or running extraction."
             ) from exc
+        preparation_error = (
+            prepare_attempt(self.store, job_id, old, output)
+            if old is not None
+            else None
+        )
         self.wake.set()
         if preparation_error:
             row = self.store.job(job_id)
@@ -475,14 +470,45 @@ class JobQueue:
             rows = [
                 dict(row)
                 for row in connection.execute(
-                    "SELECT * FROM jobs WHERE status='running'"
+                    "SELECT * FROM jobs WHERE status IN ('running','queued') OR (status='interrupted' AND identity IS NOT NULL)"
                 )
             ]
         for row in rows:
             try:
+                if any(
+                    not isinstance(row.get(key), str)
+                    or not re.fullmatch(r"[a-f0-9]{32}", row[key])
+                    for key in ("id", "project_id")
+                ):
+                    raise WebError(
+                        409,
+                        "invalid_job_record",
+                        "Recovery needs canonical owned workspace identities; no process was touched.",
+                    )
                 spec = self._spec(row["id"])
+                if (
+                    spec_record(row["spec"]).get("checkpoint_preparation", "ready")
+                    == "preparing"
+                ):
+                    if row["identity"]:
+                        raise WebError(
+                            409,
+                            "invalid_process_record",
+                            "An unprepared attempt must not have a producer identity.",
+                        )
+                    self._finish(
+                        row["id"],
+                        "interrupted",
+                        Error(
+                            code="preparation_interrupted",
+                            message="Server stopped while preparing checkpoints; the declared source can be resumed.",
+                        ),
+                    )
+                    continue
+                if row["status"] == "queued":
+                    continue
                 if row["identity"]:
-                    identity = ProcessIdentity(**json.loads(row["identity"]))
+                    identity = decode_identity(row["identity"])
                     cleaned = self.runner.stop(
                         identity, self._phase_spec(spec, identity)
                     )
@@ -497,6 +523,10 @@ class JobQueue:
                             clear_identity=False,
                         )
                         continue
+                    preserve_cleanup(self.store, row, identity, self.runner)
+                    if row["status"] == "interrupted":
+                        release_retained_identity(self.store, row)
+                        continue
                 self._finish(
                     row["id"],
                     "interrupted",
@@ -505,7 +535,7 @@ class JobQueue:
                         message="Server stopped during extraction; verified source and checkpoints may be resumed.",
                     ),
                 )
-            except (WebError, ValueError, TypeError, KeyError) as exc:
+            except (WebError, OSError, ValueError, TypeError, KeyError) as exc:
                 self._finish(
                     row["id"],
                     "interrupted",
@@ -520,17 +550,37 @@ class JobQueue:
                     clear_identity=False,
                 )
 
+    def _claim_ready(self) -> dict[str, Any] | None:
+        # Idle polling is read-only. Slow preparation cannot starve API writers
+        # or start the CLI on a partially copied directory.
+        with self.store.connect() as connection:
+            rows = [
+                dict(row)
+                for row in connection.execute(
+                    "SELECT * FROM jobs WHERE status='queued' ORDER BY created_at,rowid LIMIT 100"
+                )
+            ]
+        for row in rows:
+            try:
+                if (
+                    spec_record(row["spec"]).get("checkpoint_preparation", "ready")
+                    != "ready"
+                ):
+                    continue
+            except WebError:
+                pass  # _execute rejects the record before launching anything.
+            with self.store.connect(write=True) as connection:
+                changed = connection.execute(
+                    "UPDATE jobs SET status='running',started_at=? WHERE id=? AND status='queued' AND spec=?",
+                    (now(), row["id"], row["spec"]),
+                ).rowcount
+            if changed == 1:
+                return row
+        return None
+
     def _consume(self) -> None:
         while not self.shutdown.is_set():
-            with self.store.connect(write=True) as connection:
-                row = connection.execute(
-                    "SELECT * FROM jobs WHERE status='queued' ORDER BY created_at,rowid LIMIT 1"
-                ).fetchone()
-                if row:
-                    connection.execute(
-                        "UPDATE jobs SET status='running',started_at=? WHERE id=?",
-                        (now(), row["id"]),
-                    )
+            row = self._claim_ready()
             if row:
                 self._execute(row["id"])
             else:

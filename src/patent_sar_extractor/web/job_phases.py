@@ -30,6 +30,7 @@ class OwnedPhase:
         self.store = store
         self.runner = runner
         self.shutdown = shutdown
+        self._persisted: dict[str, str] = {}
 
     def run(
         self,
@@ -112,6 +113,7 @@ class OwnedPhase:
             except Exception:
                 logger.exception("Owned phase cleanup failed for %s", spec.job_id)
                 cleaned = False
+        self._persisted.pop(spec.job_id, None)
         if not cleaned:
             return PhaseResult(
                 "interrupted",
@@ -124,13 +126,17 @@ class OwnedPhase:
         return PhaseResult(status, error, True)
 
     def _persist(self, job_id: str, identity: ProcessIdentity) -> bool:
-        with self.store.connect(write=True) as connection:
-            connection.execute(
-                "UPDATE jobs SET identity=? WHERE id=? AND status='running'",
-                (encode(identity.to_dict()), job_id),
-            )
+        encoded = encode(identity.to_dict())
+        changed = self._persisted.get(job_id) != encoded
+        with self.store.connect(write=changed) as connection:
+            if changed:
+                connection.execute(
+                    "UPDATE jobs SET identity=? WHERE id=? AND status='running'",
+                    (encoded, job_id),
+                )
             row = connection.execute(
-                "SELECT status,cancel_requested FROM jobs WHERE id=?", (job_id,)
+                "SELECT status,cancel_requested,identity FROM jobs WHERE id=?",
+                (job_id,),
             ).fetchone()
             if row is None or row["status"] != "running":
                 raise WebError(
@@ -138,4 +144,12 @@ class OwnedPhase:
                     "job_state_changed",
                     "Task is no longer the active owned producer.",
                 )
-            return bool(row["cancel_requested"])
+            if row["identity"] != encoded:
+                raise WebError(
+                    409,
+                    "job_state_changed",
+                    "Persisted producer identity changed; no stale process record was reused.",
+                )
+            cancel = bool(row["cancel_requested"])
+        self._persisted[job_id] = encoded
+        return cancel
