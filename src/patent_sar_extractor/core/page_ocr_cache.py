@@ -50,10 +50,12 @@ def _paddlex_ocr_url() -> str:
     candidates: list[str] = []
     if configured:
         candidates.append(configured)
-    candidates.extend([
-        "http://127.0.0.1:8090/ocr",
-        "http://127.0.0.1:8080/ocr",
-    ])
+    candidates.extend(
+        [
+            "http://127.0.0.1:8090/ocr",
+            "http://127.0.0.1:8080/ocr",
+        ]
+    )
     seen: set[str] = set()
     for url in candidates:
         url = str(url or "").strip()
@@ -98,6 +100,7 @@ def _paddlex_endpoint_accepts_payload(url: str, timeout: float = 2.5) -> bool:
         img = Image.new("RGB", (120, 48), "white")
         try:
             from PIL import ImageDraw
+
             ImageDraw.Draw(img).text((10, 14), "123", fill="black")
         except Exception:
             pass
@@ -117,20 +120,29 @@ def _paddlex_endpoint_accepts_payload(url: str, timeout: float = 2.5) -> bool:
         pruned = _paddlex_pruned_result(data)
         if not pruned and result.get("ocrResults") == []:
             return True
-        return isinstance(pruned.get("rec_texts", []), list) and isinstance(pruned.get("rec_boxes", []), list)
+        return isinstance(pruned.get("rec_texts", []), list) and isinstance(
+            pruned.get("rec_boxes", []), list
+        )
     except Exception:
         return False
 
 
 def _allow_tesseract_fallback() -> bool:
-    return os.environ.get("PATENTSAR_ALLOW_TESSERACT_FALLBACK", "").strip().lower() in {"1", "true", "yes", "on"}
+    return os.environ.get("PATENTSAR_ALLOW_TESSERACT_FALLBACK", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 
 def _tesseract_lang() -> str:
     return os.environ.get("PATENTSAR_TESSERACT_LANG", "chi_sim+eng")
 
 
-def _paddlex_payload_from_image(img: Image.Image, timeout: float = 20.0) -> tuple[list[str], list[list[float]]]:
+def _paddlex_payload_from_image(
+    img: Image.Image, timeout: float = 20.0
+) -> tuple[list[str], list[list[float]]]:
     url = _paddlex_ocr_url()
     if not url or url.lower() in {"off", "none", "0"}:
         return [], []
@@ -268,7 +280,9 @@ def page_ocr_lines(page, ocr_engine=None) -> list[dict]:
     return lines
 
 
-def _page_payload(page, ocr_engine=None, min_native_chars: int = 40, native_text: str | None = None) -> tuple[str, list[dict]]:
+def _page_payload(
+    page, ocr_engine=None, min_native_chars: int = 40, native_text: str | None = None
+) -> tuple[str, list[dict]]:
     """Read one coherent text/coordinate observation, with lazy OCR startup."""
     native = page.get_text("text").strip() if native_text is None else native_text
     if len(native) >= min_native_chars:
@@ -283,7 +297,9 @@ def _page_payload(page, ocr_engine=None, min_native_chars: int = 40, native_text
     return page_text(page, ocr_engine=engine, min_native_chars=min_native_chars), []
 
 
-def _extract_page_payload(pdf_path: str, page_idx: int, min_native_chars: int = 40) -> tuple[int, str, list[dict]]:
+def _extract_page_payload(
+    pdf_path: str, page_idx: int, min_native_chars: int = 40
+) -> tuple[int, str, list[dict]]:
     doc = fitz.open(pdf_path)
     try:
         page = doc[page_idx]
@@ -316,7 +332,11 @@ def _pdf_sha256(pdf_path: str) -> str:
 
 
 def build_cache_metadata(pdf_path: str, total_pages: int | None = None) -> dict:
-    from patent_sar_extractor.contracts import PAGE_OCR_OBSERVATION_SCHEMA, PAGE_OCR_OBSERVATION_VERSION
+    from patent_sar_extractor.contracts import (
+        PAGE_OCR_OBSERVATION_SCHEMA,
+        PAGE_OCR_OBSERVATION_VERSION,
+    )
+
     if total_pages is None:
         doc = fitz.open(pdf_path)
         try:
@@ -326,40 +346,67 @@ def build_cache_metadata(pdf_path: str, total_pages: int | None = None) -> dict:
     stat = os.stat(pdf_path)
     return {
         **artifact_identity(PAGE_OCR_CACHE_SCHEMA, PAGE_OCR_CACHE_SCHEMA_VERSION),
-        "observation_contract": {"name": PAGE_OCR_OBSERVATION_SCHEMA, "version": PAGE_OCR_OBSERVATION_VERSION},
+        "observation_contract": {
+            "name": PAGE_OCR_OBSERVATION_SCHEMA,
+            "version": PAGE_OCR_OBSERVATION_VERSION,
+        },
         "pdf_sha256": _pdf_sha256(pdf_path),
         "pdf_size": int(stat.st_size),
         "page_count": int(total_pages),
     }
 
 
-def cache_matches_pdf(cache: dict, pdf_path: str, total_pages: int | None = None) -> bool:
-    from patent_sar_extractor.contracts import PAGE_OCR_COMPATIBLE_RULESETS
+def cache_matches_pdf(
+    cache: dict, pdf_path: str, total_pages: int | None = None
+) -> bool:
+    from patent_sar_extractor.contracts import (
+        PAGE_OCR_COMPATIBLE_PIPELINES,
+        PAGE_OCR_COMPATIBLE_RULESETS,
+    )
+
     if not isinstance(cache, dict):
         return False
     metadata = cache.get("metadata")
     if not isinstance(metadata, dict):
         return False
-    if not isinstance(metadata.get("page_count"), int) or isinstance(metadata.get("page_count"), bool):
+    if not isinstance(metadata.get("page_count"), int) or isinstance(
+        metadata.get("page_count"), bool
+    ):
         return False
     try:
         expected = build_cache_metadata(pdf_path, total_pages)
     except Exception:
         return False
     identity_matches = all(
-        metadata.get(key) == expected[key]
-        for key in ("schema", "product", "pipeline_contract")
+        metadata.get(key) == expected[key] for key in ("schema", "product")
+    )
+    producer = metadata.get("pipeline_contract")
+    compatible_producer = (
+        isinstance(producer, dict)
+        and (producer.get("name"), producer.get("version"))
+        in PAGE_OCR_COMPATIBLE_PIPELINES
     )
     raw_rule = metadata.get("ruleset") or {}
-    compatible_rule = isinstance(raw_rule, dict) and (raw_rule.get("name"), raw_rule.get("version")) in PAGE_OCR_COMPATIBLE_RULESETS
+    compatible_rule = (
+        isinstance(raw_rule, dict)
+        and (raw_rule.get("name"), raw_rule.get("version"))
+        in PAGE_OCR_COMPATIBLE_RULESETS
+    )
     observation = metadata.get("observation_contract")
     compatible_observation = observation == expected["observation_contract"] or (
-        observation is None and isinstance(raw_rule, dict) and raw_rule.get("version") == "2.0.1"
+        observation is None
+        and isinstance(raw_rule, dict)
+        and raw_rule.get("version") == "2.0.1"
     )
     return (
         identity_matches
-        and compatible_rule and compatible_observation
+        and compatible_producer
+        and compatible_rule
+        and compatible_observation
         and metadata.get("pdf_sha256") == expected["pdf_sha256"]
+        and isinstance(metadata.get("pdf_size"), int)
+        and not isinstance(metadata.get("pdf_size"), bool)
+        and metadata.get("pdf_size") == expected["pdf_size"]
         and int(metadata.get("page_count", -1)) == expected["page_count"]
     )
 
@@ -375,14 +422,20 @@ def inherit_page_ocr_cache(source: str, destination: str, pdf_path: str) -> bool
         return False
     cache = load_page_ocr_cache(source)
     if not cache_matches_pdf(cache, pdf_path):
-        raise ValueError("OCR observation cache does not match this PDF or supported observation contract")
-    if not isinstance(cache.get("page_texts"), dict) or not isinstance(cache.get("ocr_line_map"), dict):
+        raise ValueError(
+            "OCR observation cache does not match this PDF or supported observation contract"
+        )
+    if not isinstance(cache.get("page_texts"), dict) or not isinstance(
+        cache.get("ocr_line_map"), dict
+    ):
         raise ValueError("OCR observation cache collections are malformed")
     save_page_ocr_cache(destination, cache)
     return True
 
 
-def build_page_ocr_cache(pdf_path: str, page_indices: list[int], workers: int = 1, min_native_chars: int = 40) -> dict:
+def build_page_ocr_cache(
+    pdf_path: str, page_indices: list[int], workers: int = 1, min_native_chars: int = 40
+) -> dict:
     doc = fitz.open(pdf_path)
     try:
         total_pages = len(doc)
@@ -463,16 +516,22 @@ def update_page_ocr_cache(
         cache.setdefault("page_texts", {})
         cache.setdefault("ocr_line_map", {})
     unique_indices = [
-        idx for idx in sorted(set(int(i) for i in page_indices if int(i) >= 0))
+        idx
+        for idx in sorted(set(int(i) for i in page_indices if int(i) >= 0))
         if idx < total_pages
     ]
     missing = [
-        idx for idx in unique_indices
+        idx
+        for idx in unique_indices
         if str(idx) not in cache.get("page_texts", {})
         or not str(cache.get("page_texts", {}).get(str(idx), "")).strip()
     ]
     if not missing:
-        logger.info("Shared page OCR cache hit: %s/%s pages", len(unique_indices), len(unique_indices))
+        logger.info(
+            "Shared page OCR cache hit: %s/%s pages",
+            len(unique_indices),
+            len(unique_indices),
+        )
         return cache
 
     workers = max(1, int(workers or 1))
@@ -498,16 +557,24 @@ def update_page_ocr_cache(
                 completed += 1
                 if completed % flush_every == 0 or completed == len(missing):
                     save_page_ocr_cache(cache_path, cache)
-                    logger.info("Shared page OCR cache progress: %d/%d missing pages", completed, len(missing))
+                    logger.info(
+                        "Shared page OCR cache progress: %d/%d missing pages",
+                        completed,
+                        len(missing),
+                    )
         finally:
             doc.close()
         if retry_empty:
             empty_after = [
-                idx for idx in unique_indices
+                idx
+                for idx in unique_indices
                 if not str(cache.get("page_texts", {}).get(str(idx), "")).strip()
             ]
             if empty_after:
-                logger.info("Retrying empty shared page OCR cache entries: %d pages", len(empty_after))
+                logger.info(
+                    "Retrying empty shared page OCR cache entries: %d pages",
+                    len(empty_after),
+                )
                 return update_page_ocr_cache(
                     pdf_path,
                     empty_after,
@@ -539,14 +606,22 @@ def update_page_ocr_cache(
             completed += 1
             if completed % flush_every == 0 or completed == len(missing):
                 save_page_ocr_cache(cache_path, cache)
-                logger.info("Shared page OCR cache progress: %d/%d missing pages", completed, len(missing))
+                logger.info(
+                    "Shared page OCR cache progress: %d/%d missing pages",
+                    completed,
+                    len(missing),
+                )
     if retry_empty:
         empty_after = [
-            idx for idx in unique_indices
+            idx
+            for idx in unique_indices
             if not str(cache.get("page_texts", {}).get(str(idx), "")).strip()
         ]
         if empty_after:
-            logger.info("Retrying empty shared page OCR cache entries: %d pages", len(empty_after))
+            logger.info(
+                "Retrying empty shared page OCR cache entries: %d pages",
+                len(empty_after),
+            )
             return update_page_ocr_cache(
                 pdf_path,
                 empty_after,

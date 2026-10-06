@@ -25,6 +25,10 @@ class OCRCacheInheritanceTests(unittest.TestCase):
             )
             doc.save(pdf)
         metadata = caches.build_cache_metadata(str(pdf))
+        metadata["pipeline_contract"] = {
+            "name": "patentsar.activity-led",
+            "version": "2.0.0",
+        }
         metadata["ruleset"]["version"] = "2.0.1"
         metadata.pop("observation_contract")
         source = root / "prior" / "page_ocr_cache.json"
@@ -77,6 +81,12 @@ class OCRCacheInheritanceTests(unittest.TestCase):
                     {"name": "patentsar.page-ocr-observation", "version": 999},
                 ),
                 ("page_count", True),
+                ("pdf_size", True),
+                ("pipeline_contract", {"name": "foreign.pipeline", "version": "2.0.0"}),
+                (
+                    "pipeline_contract",
+                    {"name": "patentsar.activity-led", "version": "999"},
+                ),
             ):
                 candidate = {**base, "metadata": {**base["metadata"], field: value}}
                 write_json_atomic(source, candidate)
@@ -84,3 +94,39 @@ class OCRCacheInheritanceTests(unittest.TestCase):
                 with self.subTest(field=field), self.assertRaises(ValueError):
                     caches.inherit_page_ocr_cache(str(source), str(target), str(pdf))
                 self.assertFalse(target.exists())
+
+    def test_real_previous_pipeline_envelope_reuses_raw_pages_not_derived_identity(
+        self,
+    ):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pdf, source = self.fixture(root)
+            previous = caches.load_page_ocr_cache(str(source))
+            previous["metadata"]["ruleset"]["version"] = "2.0.4"
+            previous["metadata"]["observation_contract"] = {
+                "name": "patentsar.page-ocr-observation",
+                "version": 1,
+            }
+            write_json_atomic(source, previous)
+            original = source.read_bytes()
+            target = root / "new" / "page_ocr_cache.json"
+            self.assertTrue(caches.cache_matches_pdf(previous, str(pdf)))
+            self.assertTrue(
+                caches.inherit_page_ocr_cache(str(source), str(target), str(pdf))
+            )
+            with patch.object(
+                caches, "get_ocr_engine", side_effect=AssertionError("No repeated OCR")
+            ):
+                actual = caches.update_page_ocr_cache(str(pdf), [0], str(target))
+            self.assertEqual(actual["page_texts"], previous["page_texts"])
+            self.assertEqual(actual["ocr_line_map"], previous["ocr_line_map"])
+            self.assertEqual(source.read_bytes(), original)
+            self.assertFalse(
+                artifact_identity_matches(
+                    previous["metadata"], ACTIVITY_SCHEMA, ACTIVITY_SCHEMA_VERSION
+                )
+            )
+            self.assertEqual(
+                sorted(path.name for path in target.parent.iterdir()),
+                ["page_ocr_cache.json"],
+            )

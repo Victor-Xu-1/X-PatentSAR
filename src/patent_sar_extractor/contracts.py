@@ -78,6 +78,12 @@ PAGE_OCR_COMPATIBLE_RULESETS: Final = (
     (RULESET_NAME, "2.0.4"),
     (RULESET_NAME, RULESET_VERSION),
 )
+# Supported producers of the unchanged raw observation format, not permission
+# to reuse any classifications, associations, chemistry or acceptance.
+PAGE_OCR_COMPATIBLE_PIPELINES: Final = (
+    ("patentsar.activity-led", "2.0.0"),
+    (PIPELINE_CONTRACT_NAME, PIPELINE_CONTRACT_VERSION),
+)
 VISIBLE_LABEL_CACHE_SCHEMA: Final = "patentsar.visible-label-cache"
 VISIBLE_LABEL_CACHE_SCHEMA_VERSION: Final = 1
 

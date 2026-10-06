@@ -266,6 +266,10 @@ New tasks use source-led pipeline 3.0.0 and ruleset 2.1.0 while the product rema
 PDFs, model observations, QA and manual audits are retained; a new task uses current
 validation instead of relabelling historical results. Only original-SHA-verified
 raw OCR/model observations may be reused. Missing old stereo evidence stays unknown.
+For raw OCR, supported activity-led2.0.0 and source-led3.0.0 producer envelopes
+can share observation-format1 after exact original SHA, size and page-count
+verification. Derived classifications, structures, chemistry and QA still require
+their own current identities; this is not a legacy acceptance exception.
 
 - `LLM_API_KEY is not set`: deterministic production stages still run normally; optional advisory QA is recorded as `skipped_no_credentials`. Configure a key only when advisory review is wanted.
 - DECIMER unavailable: verify `DECIMER_PYTHON` points to a Python 3.10 environment, import `decimer_segmentation` in that interpreter, and run health again. Do not force TensorFlow 2.15 into the Python 3.12 orchestrator.
