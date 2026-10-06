@@ -80,6 +80,8 @@ class OwnershipWriteTests(WebFixture, unittest.TestCase):
                         "geometry_space": "pdf",
                     },
                 ],
+                expected_run_root=spec.output_dir,
+                expected_sha256=spec.sha256,
             )
         self.assertEqual(
             service.store.compound(spec.project_id, "controlled-row")["payload"],
