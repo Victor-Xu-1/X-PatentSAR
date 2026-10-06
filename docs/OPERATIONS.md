@@ -272,6 +272,8 @@ raw OCR/model observations may be reused. Missing old stereo evidence stays unkn
 
 ## Concurrency and recovery
 
+PDFs without a readable patent identifier retain the task's explicit unknown value through CLI execution and resume; the upload's temporary filename is never promoted to a patent identifier. Standalone CLI omission still permits the existing filename inference. Explicit `--patent-id ""` requires an explicit output directory.
+
 Use **继续提取** after restarting the application. Startup reconciles active
 records and interrupted records whose prior cleanup was unverified. A valid
 different Linux kernel boot proves old processes cannot survive: no current PID
