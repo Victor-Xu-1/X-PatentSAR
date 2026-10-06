@@ -423,12 +423,18 @@ waited_seconds}` from finite, recent, live owned telemetry. Only an active stage
 can show waiting; missing telemetry is not waiting and terminal jobs do not animate.
 Stage statuses: `pending,running,ok,empty,failed,warnings`.
 Job completion is not necessarily formal QA acceptance. No guessed 100% progress.
-`progress` is null or the actual OCSR observation
+`progress` is null or an actual saved-segmentation/OCSR observation
 `{completed,total,cache_hits,failures,device,peak_rss_mb,phase?}`. Optional phase is
 `recognition`, `properties` or null; old observations may omit it. Counters reset
 between sequential research phases, not fabricated combined percentages.
 Bounded integer counters
 are cross-validated; device/RSS stay null without a current measured observation.
+For `structures`, completed/total/cache_hits count original selected pages in
+validated saved checkpoints, including reused chunks, not molecules or estimated
+time. Failed/pending/unchanged chunks cannot increment them. These page counters
+do not declare chemistry/QA success or SDK-attempt failure counts; the UI labels
+their unit as pages and does not invent model statistics. Existing completed-stage
+publication and immutable history boundaries remain unchanged.
 `reused_checkpoint` records an explicit core fact, not inferred duration. Every
 new/resumed job owns an independent output directory. Terminal history is sealed
 separately from mutable outputs; unreliable legacy shared-directory history

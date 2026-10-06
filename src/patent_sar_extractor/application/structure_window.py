@@ -1,5 +1,6 @@
 """Bounded warm segmentation windows preserve each completed chunk checkpoint."""
 
+from collections.abc import Callable
 from pathlib import Path
 
 from patent_sar_extractor.artifact_io import load_json, write_json_atomic
@@ -24,6 +25,7 @@ def execute_missing_windows(
     crop_regions: str,
     environment: dict,
     cwd: str,
+    on_saved: Callable[[list[int]], None] | None = None,
 ) -> dict[str, dict]:
     results = {}
     for offset in range(0, len(jobs), 3):
@@ -79,6 +81,8 @@ def execute_missing_windows(
             # A failed later chunk must not throw away earlier successful work.
             _write_step_manifest(str(path), job["fingerprint"])
             results[job["output"]] = payload
+            if on_saved is not None:
+                on_saved(job["pages"])
         if proc.returncode != 0 or any(j["output"] not in results for j in window):
             raise RuntimeError(
                 "structure extraction failed in its bounded window; completed chunks retained"

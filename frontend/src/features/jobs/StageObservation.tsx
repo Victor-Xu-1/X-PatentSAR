@@ -1,5 +1,10 @@
 import type { Job, StageName } from '../../api/types';
-import { stageLabel, stageStatusText } from '../../model/extraction';
+import {
+  pageProgressStage,
+  progressUnit,
+  stageLabel,
+  stageStatusText,
+} from '../../model/extraction';
 
 export function StageObservation({
   job,
@@ -26,6 +31,7 @@ export function StageObservation({
           progress && progress.total > 0 && stage?.status === 'running' ? (
             <small className="stage-progress">
               {progress.completed} / {progress.total}
+              {progressUnit(name)}
             </small>
           ) : null
         ) : (
@@ -36,6 +42,7 @@ export function StageObservation({
               <span className="stage-progress">
                 {' · '}
                 {progress.completed} / {progress.total}
+                {progressUnit(name)}
               </span>
             )}
             {stage?.reused_checkpoint === true && <span> · 复用检查点</span>}
@@ -62,15 +69,21 @@ export function StageObservation({
         ) : (
           <>
             <p>
-              缓存命中 {progress.cache_hits} · 失败 {progress.failures}
+              {pageProgressStage(name)
+                ? `复用 ${progress.cache_hits} 页`
+                : `缓存命中 ${progress.cache_hits} · 失败 ${progress.failures}`}
             </p>
-            <p>
-              {progress.device === null ? '执行设备未知' : progress.device.toUpperCase()}
-              {' · '}
-              {progress.peak_rss_mb === null
-                ? '峰值 RSS 未提供'
-                : `峰值 RSS ${progress.peak_rss_mb} MB`}
-            </p>
+            {(!pageProgressStage(name) ||
+              progress.device !== null ||
+              progress.peak_rss_mb !== null) && (
+              <p>
+                {progress.device === null ? '执行设备未知' : progress.device.toUpperCase()}
+                {' · '}
+                {progress.peak_rss_mb === null
+                  ? '峰值 RSS 未提供'
+                  : `峰值 RSS ${progress.peak_rss_mb} MB`}
+              </p>
+            )}
           </>
         )}
         {stage?.reused_checkpoint == null && <p>检查点复用未知</p>}

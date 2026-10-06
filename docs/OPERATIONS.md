@@ -281,6 +281,14 @@ their own current identities; this is not a legacy acceptance exception.
 
 ## Concurrency and recovery
 
+During structure segmentation, the slim workflow reports saved pages/selected
+pages, not a time-estimated percentage or accepted molecule count. Reused
+validated chunks contribute their pages immediately; newly completed chunks
+contribute only after fresh metadata and checkpoint validation. Completed
+windows publish the observations. Unknown device/RSS is not fabricated.
+This progress does not publish incomplete chemistry or bypass the existing
+completed-stage projection/strict-QA boundary.
+
 PDFs without a readable patent identifier retain the task's explicit unknown value through CLI execution and resume; the upload's temporary filename is never promoted to a patent identifier. Standalone CLI omission still permits the existing filename inference. Explicit `--patent-id ""` requires an explicit output directory.
 
 Use **继续提取** after restarting the application. Startup reconciles active

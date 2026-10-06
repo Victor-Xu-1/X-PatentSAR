@@ -77,7 +77,10 @@ class StructureWorkerIdentityTests(WebFixture, unittest.TestCase):
     def metadata(self, options, expected):
         worker = self.worker()
         output = self.root / "worker-output"
-        with patch.dict(os.environ, {"DECIMER_SEGMENTATION_MODEL_DIR": ""}):
+        with (
+            patch.dict(os.environ, {"DECIMER_SEGMENTATION_MODEL_DIR": ""}),
+            patch("patent_sar_extractor.resource_admission.wait_for_memory"),
+        ):
             result = worker["extract_structures_from_pdf"](
                 str(self.pdf), [], str(output), **options
             )

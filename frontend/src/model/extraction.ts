@@ -2,6 +2,14 @@ import type { Compound, Job, Stage, StageName } from '../api/types';
 import { stageNames } from '../api/types';
 import { stageLabels, stageStatusLabels } from './presentation';
 
+export function pageProgressStage(name: StageName): boolean {
+  return name === 'structures';
+}
+
+export function progressUnit(name: StageName): string {
+  return pageProgressStage(name) ? ' 页' : '';
+}
+
 export function stoppedJob(job: Job | null): boolean {
   return Boolean(job && job.status !== 'running' && job.status !== 'queued');
 }
