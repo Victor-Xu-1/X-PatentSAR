@@ -11,11 +11,9 @@ from typing import (
 )
 
 from .binding_candidates import (
-    _active_ordered_bindings,
     _build_binding_from_structure,
 )
 from .binding_geometry import (
-    _attach_structure_geometry,
     _group_structures_by_row,
     _has_cpd_letter_pair_product_text,
     _is_cpd_letter_pair_product_candidate,
@@ -28,7 +26,6 @@ from .binding_labels import (
     _FINAL_COMPOUND_LABEL_RE,
     _active_label_keys,
     _base_cpd_num,
-    _binding_label_key,
     _cpd_letter_pair_base_lines,
     _cpd_letter_pair_label_y,
     _cpd_sort_key,
@@ -718,81 +715,3 @@ def _extract_bare_product_label_bindings(
             bindings.append(binding)
 
     return bindings
-
-
-def _seed_singleton_active_compound_binding(
-    final_bindings: List[Dict],
-    processed_structures: List[Dict],
-    active_cpds: List[str],
-    pages_text: Dict[int, str],
-) -> List[Dict]:
-    """Bind a non-numbered singleton active compound to the claim/formula image.
-
-    Numbered SAR patents are handled by visible labels. Single-compound use or
-    formulation patents often show the only structure in a claim/formula page
-    and refer to it as "claim 1" rather than "Compound 1".
-    """
-    if "CLAIM1" not in _active_label_keys(active_cpds):
-        return final_bindings
-    if any(_binding_label_key(binding) == "CLAIM1" for binding in final_bindings):
-        return final_bindings
-    if not processed_structures:
-        return final_bindings
-
-    singleton_re = re.compile(
-        r"claim\s*1.{0,220}(?:formula\s+shown\s+here|shown\s+here|new\s+compound)|"
-        r"(?:formula\s+shown\s+here|shown\s+here).{0,220}claim\s*1|"
-        r"formula\s+of\s+the\s+new\s+compound|chemical\s+formula.{0,180}Figure\s*[12]",
-        re.IGNORECASE | re.DOTALL,
-    )
-    candidate_pages = {
-        page_idx + 1
-        for page_idx, text in (pages_text or {}).items()
-        if singleton_re.search(str(text or ""))
-    }
-    candidates = [
-        struct
-        for struct in processed_structures
-        if not candidate_pages or int(struct.get("page_no", 0) or 0) in candidate_pages
-    ]
-    if not candidates:
-        candidates = list(processed_structures)
-    best = sorted(
-        candidates,
-        key=lambda s: (
-            0 if int(s.get("page_no", 0) or 0) in candidate_pages else 1,
-            int(s.get("page_no", 0) or 0),
-            float(s.get("y0", 0) or 0),
-            float(s.get("x0", 0) or 0),
-        ),
-    )[0]
-    singleton_name = ""
-    name_match = re.search(
-        r"(?:chemical\s+Name|chemical\s+name|compound\s+with\s+the\s+Name)\s*[\"“'']\s*([^\"”''\n]{30,360})[\"”'']",
-        "\n".join(str(text or "") for text in (pages_text or {}).values()),
-        re.IGNORECASE,
-    )
-    if name_match:
-        singleton_name = re.sub(r"\s+", " ", name_match.group(1)).strip()
-    binding = _attach_structure_geometry(
-        {
-            "cpd": "Claim 1 compound",
-            "cpd_id": "Claim 1 compound",
-            "compound_id": "Claim 1 compound",
-            "example_id": "Claim 1 compound",
-            "prefix": "Claim",
-            "structure_id": best["id"],
-            "page_no": best["page_no"],
-            "structure_index": best["idx"],
-            "struct_x0": best["x0"],
-            "struct_y0": best["y0"],
-            "image_path": best["image_path"],
-            "candidates": len(candidates),
-            "binding_rule": "singleton_claim_formula_structure",
-            "accuracy_status": "confirmed",
-            "evidence_tier": "claim_formula_singleton",
-            "singleton_chemical_name": singleton_name,
-        },
-        best,
-    )
-    return _active_ordered_bindings([*final_bindings, binding], active_cpds)

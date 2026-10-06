@@ -126,9 +126,9 @@ from patent_sar_extractor.core.runtime_env import tensorflow_cuda_caps_support_g
 from patent_sar_extractor.core.structure_page_evidence import _is_structure_table_page
 from patent_sar_extractor.core.structure_page_locator import _covered_active_cpds
 from patent_sar_extractor.smiles_artifact import build_smiles_artifact
-from patent_sar_extractor.workers.gen_final_results import (
-    _validate_smiles_source_for_export,
-)
+from patent_sar_extractor.core.formal_export import qualified_records
+from patent_sar_extractor.core.binding_artifacts import write_binding_result
+from patent_sar_extractor.core.formal_structure import FORMAL_SCOPE, SOURCE_EXECUTION_MODE
 
 _TINY_PNG = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk"
@@ -1484,9 +1484,15 @@ class StrictAcceptanceTests(unittest.TestCase):
             bind_json = base / "structure_bindings/bindings.json"
             stale_payload = {
                 **artifact_identity(BINDINGS_SCHEMA, BINDINGS_SCHEMA_VERSION),
-                "execution_mode": "production_activity_led",
+                "execution_mode": SOURCE_EXECUTION_MODE,
                 "final_bindings": [self._binding("Compound 1", "S0001", image)],
             }
+            complete = write_binding_result(
+                bind_json.parent, patent_id="CONTROL", bindings=[
+                    self._binding("Compound 1", "S0001", image), self._binding("Compound 2", "S0002", image)],
+                detected_style="control", include_intermediates=False, total_structures=2,
+                total_compound_blocks=0, table_pages=[], table_covered_count=0, no_binding=[], unbound_pages=[])
+            stale_payload = {**complete, "final_bindings": complete["final_bindings"][:1]}
             self._write_json(bind_json, stale_payload)
             fingerprint = {
                 "step": "bind",
@@ -1500,21 +1506,13 @@ class StrictAcceptanceTests(unittest.TestCase):
 
             self.assertIsNone(
                 _load_reusable_bindings(
-                    str(bind_json), fingerprint, ["Compound 1", "Compound 2"], {}
+                    str(bind_json), fingerprint, {}
                 )
             )
 
-            valid_payload = {
-                **artifact_identity(BINDINGS_SCHEMA, BINDINGS_SCHEMA_VERSION),
-                "execution_mode": "production_activity_led",
-                "final_bindings": [
-                    self._binding("Compound 1", "S0001", image),
-                    self._binding("Compound 2", "S0002", image),
-                ],
-            }
-            self._write_json(bind_json, valid_payload)
+            self._write_json(bind_json, complete)
             reusable = _load_reusable_bindings(
-                str(bind_json), fingerprint, ["Compound 1", "Compound 2"], {}
+                str(bind_json), fingerprint, {}
             )
             self.assertIsNotNone(reusable)
             self.assertEqual(
@@ -1975,7 +1973,6 @@ class StrictAcceptanceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
             image_path = self._image(base, "structure.png")
-            active_cpds = ["Compound 1", "Compound 2"]
             old_activity = {
                 "rows": [{"cpd": "Compound 1", "activity_values": {"IC50": "A"}}],
                 "ruleset": {"name": "legacy", "version": "0"},
@@ -1989,13 +1986,8 @@ class StrictAcceptanceTests(unittest.TestCase):
                 self._binding("Compound 2", "S1", image_path),
             ]
             binding_payload = {"final_bindings": bindings}
-            binding_errors = _binding_acceptance_errors(
-                binding_payload, active_cpds, {}
-            )
-            self.assertIn(
-                "Multiple active compounds compete for the same structure image.",
-                binding_errors,
-            )
+            with self.assertRaises(ValueError):
+                _binding_acceptance_errors(binding_payload)
             smiles = [
                 self._smiles("Compound 1", "S1", "CCCl"),
                 self._smiles("Compound 2", "S1", "CCO"),
@@ -2007,8 +1999,8 @@ class StrictAcceptanceTests(unittest.TestCase):
             )
             smiles_path = base / "smiles.json"
             self._write_json(smiles_path, smiles)
-            with self.assertRaises(RuntimeError):
-                _validate_smiles_source_for_export(str(smiles_path), bindings)
+            with self.assertRaises(ValueError):
+                qualified_records(bindings, smiles)
 
     def test_direct_smiles_runner_reapplies_strict_binding_and_result_gates(
         self,
@@ -2132,7 +2124,7 @@ class StrictAcceptanceTests(unittest.TestCase):
         ):
             self.assertFalse((ocsr_root / relative).exists(), relative)
 
-    def test_clean_minimal_export_and_qa_preserve_activity_order_and_cells(
+    def test_clean_minimal_source_export_preserves_catalog_and_original_activity_order(
         self,
     ) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -2162,12 +2154,10 @@ class StrictAcceptanceTests(unittest.TestCase):
                 self._binding("Compound 2", "S2", image_2),
                 self._binding("Compound 1", "S1", image_1),
             ]
-            binding_payload = {
-                **artifact_identity(BINDINGS_SCHEMA, BINDINGS_SCHEMA_VERSION),
-                "execution_mode": "production_activity_led",
-                "accuracy_summary": {"total": 2, "confirmed": 2, "review_required": 0},
-                "final_bindings": bindings,
-            }
+            binding_payload = write_binding_result(
+                base / "structure_bindings", patent_id="TEST", bindings=bindings,
+                detected_style="control", include_intermediates=False, total_structures=2,
+                total_compound_blocks=0, table_pages=[], table_covered_count=0, no_binding=[], unbound_pages=[])
             smiles = [
                 self._smiles("Compound 2", "S2", "CCCl"),
                 self._smiles("Compound 1", "S1", "CCO"),
@@ -2176,10 +2166,15 @@ class StrictAcceptanceTests(unittest.TestCase):
             self._write_json(base / "structure_bindings/bindings.json", binding_payload)
             self._write_json(
                 base / "smiles/smiles_results.json",
-                build_smiles_artifact(smiles),
+                {**build_smiles_artifact(list(reversed(smiles))),
+                 "formal_acceptance_scope": FORMAL_SCOPE, "binding_execution_mode": SOURCE_EXECUTION_MODE},
             )
             self._write_json(base / "structures/metadata.json", {"total_structures": 2})
             self._write_json(base / "structure_pages/locator.json", {})
+            self._write_json(base / "page_classification/page_classification.json", {
+                **artifact_identity(PAGE_CLASSIFICATION_SCHEMA, PAGE_CLASSIFICATION_SCHEMA_VERSION),
+                "page_count": 1, "activity_pages": [0],
+            })
             self._write_json(
                 base / "pipeline_summary.json",
                 {"status": "complete", "patent_id": "TEST"},
@@ -2198,6 +2193,8 @@ class StrictAcceptanceTests(unittest.TestCase):
                     str(base / "smiles/smiles_results.json"),
                     "--activity",
                     str(base / "activity/activity_data.json"),
+                    "--classification",
+                    str(base / "page_classification/page_classification.json"),
                     "--output-dir",
                     str(base / "final_results"),
                     "--patent",
@@ -2257,7 +2254,7 @@ class StrictAcceptanceTests(unittest.TestCase):
                 stale_qa["acceptance"]["hard_errors"],
             )
 
-    def test_partial_export_mode_writes_excel_for_missing_bindings(self) -> None:
+    def test_removed_partial_export_mode_cannot_bypass_ownership_and_chemistry(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
             image_1 = self._image(base, "images/structure_1.png")
@@ -2329,17 +2326,8 @@ class StrictAcceptanceTests(unittest.TestCase):
                 check=False,
             )
 
-            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
-            workbook = _read_xlsx_values(base / "final_results/TESTPARTIAL_final.xlsx")
-            final_rows = workbook["sheets"]["Final Results"]["rows"]
-            self.assertEqual(
-                [row[0] for row in final_rows[1:3]], ["Compound 1", "Compound 2"]
-            )
-            self.assertIn("IC50", " ".join(str(cell) for cell in final_rows[0]))
-            from openpyxl import load_workbook
-
-            rendered = load_workbook(base / "final_results/TESTPARTIAL_final.xlsx")
-            self.assertEqual(len(rendered["Final Results"]._images), 2)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertFalse((base / "final_results/TESTPARTIAL_final.xlsx").exists())
 
     def test_partial_mode_keeps_review_bindings_for_partial_export(self) -> None:
         confirmed = self._binding("Compound 1", "S1", "/tmp/s1.png")

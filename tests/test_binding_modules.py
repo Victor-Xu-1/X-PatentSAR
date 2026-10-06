@@ -20,16 +20,25 @@ from patent_sar_extractor.core.binding_spatial import (
 )
 from patent_sar_extractor.core.binding_types import (
     BindingCandidate,
-    BindingSelection,
     SourceOwnership,
 )
 from patent_sar_extractor.core.structure_binder import bind
 
 
 class BindingModuleTests(unittest.TestCase):
+    def test_original_heading_tokens_are_complete_and_slash_groups_are_not_split(self):
+        from patent_sar_extractor.core.binding_source_headings import observed_heading_blocks
+
+        with fitz.open() as doc:
+            page = doc.new_page()
+            labels = ["42", "42A", "1-2-3AB", "AB-12", "1/2"]
+            for index, label in enumerate(labels):
+                page.insert_text((72, 72 + index * 30), f"Compound {label}: Synthesis")
+            blocks = observed_heading_blocks(doc, [0], {})
+        self.assertEqual([row["cpd"] for row in blocks], [f"Compound {label}" for label in labels[:-1]])
+
     def test_unlabelled_generic_segments_never_invent_compound_ids(self):
-        from patent_sar_extractor.core.binding_selection import select_generic_bindings
-        from patent_sar_extractor.core.binding_types import BinderConfig
+        from patent_sar_extractor.core.binding_source_headings import select_heading_bindings
 
         segments = [
             {
@@ -47,34 +56,28 @@ class BindingModuleTests(unittest.TestCase):
             document.new_page()
             with (
                 patch(
-                    "patent_sar_extractor.core.binding_selection._precompute_visible_label_cache",
+                    "patent_sar_extractor.core.binding_source_headings._precompute_visible_label_cache",
                     return_value={},
                 ),
                 patch(
-                    "patent_sar_extractor.core.binding_selection._load_visible_label_cache",
+                    "patent_sar_extractor.core.binding_source_headings._load_visible_label_cache",
                     return_value={},
                 ),
                 patch(
-                    "patent_sar_extractor.core.binding_selection._refine_visible_label_cache_with_page_ocr",
+                    "patent_sar_extractor.core.binding_source_headings._refine_visible_label_cache_with_page_ocr",
                     return_value={},
                 ),
             ):
-                selection = select_generic_bindings(
+                selection, issues = select_heading_bindings(
                     document,
                     segments,
-                    {0: ""},
-                    {},
-                    ["Compound 1", "Compound 2"],
                     [],
-                    "unknown",
+                    {},
                     "unused",
                     {},
-                    1,
-                    False,
-                    BinderConfig(),
                 )
-        self.assertEqual(selection.bindings, [])
-        self.assertNotEqual(selection.detected_style, "structure_sequence_fallback")
+        self.assertEqual(selection, [])
+        self.assertEqual(issues, [])
 
     def test_recognized_series_with_zero_pairings_reserves_its_sources(self):
         # Real series parser, no segmented molecules: withholding cannot give
@@ -307,24 +310,20 @@ class BindingModuleTests(unittest.TestCase):
             profile["active_cpds"] = ["Compound 3A", "Compound 1", "Compound 2"]
             with (
                 patch(
-                    "patent_sar_extractor.core.structure_binder.find_binding_blocks",
+                    "patent_sar_extractor.core.structure_binder.observed_heading_blocks",
                     side_effect=AssertionError("Generic heading scan must not start"),
                 ),
                 patch(
-                    "patent_sar_extractor.core.structure_binder.select_generic_bindings",
+                    "patent_sar_extractor.core.structure_binder.select_heading_bindings",
                     side_effect=AssertionError("Generic selection must not start"),
-                ),
-                patch(
-                    "patent_sar_extractor.core.structure_binder.recover_generic_bindings",
-                    side_effect=AssertionError("Generic recovery must not start"),
                 ),
             ):
                 result = bind(str(pdf), profile, str(root / "bindings"), str(metadata))
             self.assertEqual(
                 [binding["cpd"] for binding in result["bindings"]],
-                profile["active_cpds"],
+                ["Compound 1", "Compound 2", "Compound 3A"],
             )
-            self.assertEqual(result["detected_style"], "original_cell_and_caption")
+            self.assertEqual(result["detected_style"], "original_cell_caption_heading")
             self.assertEqual(result["bound"], 3)
             self.assertTrue(
                 all(
@@ -341,7 +340,7 @@ class BindingModuleTests(unittest.TestCase):
             pdf, metadata, profile = self.pdf_fixture(root, missing_second=True)
             profile["active_cpds"] = ["Compound 1", "Compound 2"]
             with patch(
-                "patent_sar_extractor.core.structure_binder.select_generic_bindings",
+                "patent_sar_extractor.core.structure_binder.select_heading_bindings",
                 side_effect=AssertionError("Recognized grid may not compete"),
             ):
                 result = bind(str(pdf), profile, str(root / "bindings"), str(metadata))
@@ -378,24 +377,19 @@ class BindingModuleTests(unittest.TestCase):
             profile["ocr_text_map"][1] = (
                 "Observed unclaimed original source, no exact caption"
             )
-            selection = BindingSelection([], [], "heading", [], [], {}, [])
             competitors = [
                 {"cpd": "Compound 1", "structure_id": "S3", "page_no": 2},
                 {"cpd": "Compound 3", "structure_id": "S1", "page_no": 2},
             ]
             with (
                 patch(
-                    "patent_sar_extractor.core.structure_binder.find_binding_blocks",
-                    return_value=([], "heading"),
+                    "patent_sar_extractor.core.structure_binder.observed_heading_blocks",
+                    return_value=[{"cpd": "Compound 3", "page_no": 2, "y0": 72}],
                 ),
                 patch(
-                    "patent_sar_extractor.core.structure_binder.select_generic_bindings",
-                    return_value=selection,
+                    "patent_sar_extractor.core.structure_binder.select_heading_bindings",
+                    return_value=(competitors, []),
                 ) as selected,
-                patch(
-                    "patent_sar_extractor.core.structure_binder.recover_generic_bindings",
-                    return_value=competitors,
-                ),
             ):
                 result = bind(
                     str(replacement), profile, str(root / "bindings"), str(metadata)
@@ -403,8 +397,7 @@ class BindingModuleTests(unittest.TestCase):
             self.assertEqual(
                 [structure["id"] for structure in selected.call_args.args[1]], ["S3"]
             )
-            self.assertEqual(selected.call_args.args[4], ["Compound 3"])
-            self.assertEqual(set(selected.call_args.args[2]), {1})
+            self.assertEqual([block["cpd"] for block in selected.call_args.args[2]], ["Compound 3"])
             self.assertEqual(
                 [binding["cpd"] for binding in result["bindings"]],
                 ["Compound 1", "Compound 2"],

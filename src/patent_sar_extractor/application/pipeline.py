@@ -8,6 +8,7 @@ import time
 
 from patent_sar_extractor.application.progress import PipelineProgress
 from patent_sar_extractor.contracts import (
+    CORE_STAGE_ORDER,
     PRODUCT_NAME,
     RUN_SUMMARY_SCHEMA,
     RUN_SUMMARY_SCHEMA_VERSION,
@@ -86,16 +87,7 @@ def execute_pipeline(args, progress: PipelineProgress) -> dict:
         "steps": {},
         "status": "running",
         "started_at": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "main_chain": [
-            "classify",
-            "activity",
-            "locate",
-            "structures",
-            "bind",
-            "smiles",
-            "final",
-            "qa",
-        ],
+        "main_chain": list(CORE_STAGE_ORDER),
         "runtime": {
             "locate_workers": int(getattr(state.args, "locate_workers", 1) or 1),
             "bind_workers": int(getattr(state.args, "bind_workers", 1) or 1),
@@ -110,14 +102,17 @@ def execute_pipeline(args, progress: PipelineProgress) -> dict:
 
     state.progress.bind(state.base_dir, state.pipeline_log)
 
-    for handler in (
-        execute_classify,
-        execute_activity,
-        execute_locate,
-        execute_structures,
-        execute_bind,
-        execute_smiles,
-        execute_final,
-    ):
-        handler(state)
-    return execute_qa(state)
+    handlers = {
+        "classify": execute_classify,
+        "locate": execute_locate,
+        "structures": execute_structures,
+        "bind": execute_bind,
+        "activity": execute_activity,
+        "smiles": execute_smiles,
+        "final": execute_final,
+        "qa": execute_qa,
+    }
+    result = None
+    for stage in CORE_STAGE_ORDER:
+        result = handlers[stage](state)
+    return result

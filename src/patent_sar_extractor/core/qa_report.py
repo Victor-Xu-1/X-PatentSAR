@@ -5,11 +5,12 @@ from __future__ import annotations
 
 import json
 import re
-import zipfile
 import xml.etree.ElementTree as ET
+import zipfile
 from pathlib import Path
 from typing import Any
 
+from patent_sar_extractor.artifact_io import write_json_atomic
 from patent_sar_extractor.contracts import (
     ACTIVITY_SCHEMA,
     ACTIVITY_SCHEMA_VERSION,
@@ -21,11 +22,28 @@ from patent_sar_extractor.contracts import (
     artifact_identity_matches,
     ruleset_ref,
 )
-from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy, summarise_binding_accuracy
-from patent_sar_extractor.core.activity_values import has_usable_activity_values
-from patent_sar_extractor.artifact_io import write_json_atomic
-from patent_sar_extractor.smiles_artifact import smiles_artifact_is_current, smiles_records
+from patent_sar_extractor.core.activity_identity import normalize_compound
+from patent_sar_extractor.core.activity_join import (
+    activity_evidence_errors,
+    activity_for_compound,
+    activity_order_and_map,
+)
+from patent_sar_extractor.core.formal_structure import (
+    FORMAL_SCOPE,
+    SOURCE_EXECUTION_MODE,
+    coverage_errors,
+    proved_catalog,
+)
 from patent_sar_extractor.core.ocsr.stereo_gate import stereo_record_error
+from patent_sar_extractor.core.pipeline_rules import (
+    annotate_binding_accuracy,
+    summarise_binding_accuracy,
+)
+from patent_sar_extractor.smiles_artifact import (
+    smiles_artifact_is_current,
+    smiles_records,
+    smiles_source_records,
+)
 
 
 def _load_json(path: Path, default: Any):
@@ -59,112 +77,15 @@ def _cpd_sort_key(cpd: str):
     return (int(m.group(1)), m.group(2) or "", int(m.group(3) or 0), m.group(4) or "")
 
 
-def _normalize_cpd_label(value: str) -> str:
-    text = re.sub(r"\s+", " ", str(value or "")).strip()
-    if not text:
-        return ""
-    match = re.search(rf"(?:compound|cpd|example|实施例|化合物)\s*[-:]?\s*({_CPD_ID_RE})", text, re.IGNORECASE)
-    if match:
-        return f"Compound {match.group(1)}"
-    return text
-
-
-def _is_control_or_reference_label(value: str) -> bool:
-    return bool(_CONTROL_LABEL_RE.match(re.sub(r"\s+", " ", str(value or "")).strip()))
-
-
-def _expand_cpd_labels(value: str):
-    text = re.sub(r"\s+", " ", str(value or "")).strip()
-    if not text:
-        return []
-    prefix_match = re.match(r"^(?:compound|cpd|example|实施例|化合物)\s*[-:]?\s*(.+)$", text, re.IGNORECASE)
-    if prefix_match and "/" in text:
-        labels = []
-        for part in prefix_match.group(1).split("/"):
-            part = part.strip()
-            if re.fullmatch(_CPD_ID_RE, part):
-                labels.append(f"Compound {part}")
-                continue
-            base_match = re.match(rf"^(\d+[A-Za-z]?)-({_CPD_ID_RE})$", part)
-            if base_match:
-                labels.append(f"Compound {part}")
-                continue
-            suffix_match = re.fullmatch(r"[A-Za-z]|\d+[A-Za-z]?", part)
-            first = labels[0] if labels else ""
-            first_base = re.search(r"Compound\s+(\d+)", first)
-            if suffix_match and first_base:
-                labels.append(f"Compound {first_base.group(1)}{part}")
-        if labels:
-            return list(dict.fromkeys(labels))
-    normalized = _normalize_cpd_label(text)
-    return [normalized] if normalized else []
-
-
-def _activity_map(activity_rows):
-    _order, act_data = _activity_order_and_map(activity_rows)
-    return act_data
-
-
-def _has_activity_values(values: dict) -> bool:
-    return has_usable_activity_values(values)
-
-
-def _activity_order_and_map(activity_rows):
-    order = []
-    act_data = {}
-    for row in activity_rows:
-        if not isinstance(row, dict):
-            continue
-        values = {}
-        for field in ("activity_values", "cell_line_data"):
-            bucket = row.get(field, {}) or {}
-            if isinstance(bucket, dict):
-                values.update(bucket)
-        if not _has_activity_values(values):
-            continue
-        for cpd in _expand_cpd_labels(row.get("cpd", "")):
-            if _is_control_or_reference_label(cpd):
-                continue
-            if cpd not in act_data:
-                order.append(cpd)
-            act_data.setdefault(cpd, {}).update(values)
-    return order, act_data
-
-
-def _activity_for_cpd(act_data, cpd, bound_cpds):
-    direct = act_data.get(cpd, {})
-    if isinstance(direct, dict) and direct:
-        return direct
-
-    m = re.match(r"^Compound\s+(\d+)-([12])$", str(cpd))
-    if not m:
-        return {}
-
-    base, _suffix = m.groups()
-    combo_values = {}
-    for combo in (f"Compound {base}-1/{base}-2", f"Compound {base}-1 和 {base}-2"):
-        values = act_data.get(combo, {})
-        if isinstance(values, dict):
-            combo_values.update(values)
-    if combo_values:
-        return combo_values
-
-    parent_key = f"Compound {base}"
-    parent = act_data.get(parent_key, {})
-    if parent_key not in bound_cpds and isinstance(parent, dict):
-        return parent
-    return {}
-
-
 def _binding_visual_label_risks(bindings):
     strict_sources = {"page_strict", "direct", "pdf_clip"}
-    active_labels = {_normalize_cpd_label(b.get("cpd", "")) for b in bindings if isinstance(b, dict)}
+    active_labels = {normalize_compound(b.get("cpd", "")) for b in bindings if isinstance(b, dict)}
     strict_conflicts = []
     weak_conflicts = []
     for binding in bindings:
         if not isinstance(binding, dict):
             continue
-        cpd = _normalize_cpd_label(binding.get("cpd", ""))
+        cpd = normalize_compound(binding.get("cpd", ""))
         if not cpd:
             continue
         candidates = binding.get("visible_label_candidates") or []
@@ -175,7 +96,7 @@ def _binding_visual_label_risks(bindings):
             for candidate in candidates:
                 if not isinstance(candidate, dict):
                     continue
-                label = _normalize_cpd_label(candidate.get("label", ""))
+                label = normalize_compound(candidate.get("label", ""))
                 if not label:
                     continue
                 if label == cpd:
@@ -186,7 +107,7 @@ def _binding_visual_label_risks(bindings):
                 else:
                     weak_labels.add(label)
         for label in binding.get("visible_labels") or []:
-            norm = _normalize_cpd_label(label)
+            norm = normalize_compound(label)
             if norm == cpd:
                 exact_visual_match = True
             elif norm:
@@ -241,7 +162,7 @@ def _binding_accuracy_risks(bindings):
         if binding.get("accuracy_status") == "confirmed" and not binding.get("fail_closed"):
             continue
         review_required.append({
-            "cpd": _normalize_cpd_label(binding.get("cpd", "")),
+            "cpd": normalize_compound(binding.get("cpd", "")),
             "structure_id": binding.get("structure_id"),
             "binding_rule": binding.get("binding_rule"),
             "evidence_tier": binding.get("evidence_tier", "unknown"),
@@ -341,7 +262,7 @@ def _sheet_rows_by_cpd(sheet: dict) -> tuple[list[str], dict[str, dict[str, str]
     order = []
     mapped = {}
     for row in rows[1:]:
-        cpd = _normalize_cpd_label(row[0] if row else "")
+        cpd = normalize_compound(row[0] if row else "")
         if not cpd:
             continue
         order.append(cpd)
@@ -394,7 +315,6 @@ def build_qa_report(output_dir: str, patent_id: str = "", ignore_previous_failur
     smiles = smiles_records(smiles_payload)
     smiles_identity_ok = smiles_artifact_is_current(smiles_payload)
     activity = _load_json(base / "activity" / "activity_data.json", {})
-    locator = _load_json(base / "structure_pages" / "locator.json", {})
 
     bindings = [
         annotate_binding_accuracy(dict(binding)) if isinstance(binding, dict) else binding
@@ -406,16 +326,16 @@ def build_qa_report(output_dir: str, patent_id: str = "", ignore_previous_failur
         or (bindings and all(str(b.get("prefix", "")) == "Structure" for b in bindings))
     )
     bind_cpds = {
-        _normalize_cpd_label(b.get("cpd", ""))
+        normalize_compound(b.get("cpd", ""))
         for b in bindings
-        if _normalize_cpd_label(b.get("cpd", ""))
+        if normalize_compound(b.get("cpd", ""))
     }
     bound_cpds = {
-        _normalize_cpd_label(b.get("cpd", ""))
+        normalize_compound(b.get("cpd", ""))
         for b in bindings
-        if _normalize_cpd_label(b.get("cpd", "")) and (b.get("structure_id") or b.get("image_path"))
+        if normalize_compound(b.get("cpd", "")) and (b.get("structure_id") or b.get("image_path"))
     }
-    smiles_cpds = {_normalize_cpd_label(r.get("cpd_id", "")) for r in smiles if _normalize_cpd_label(r.get("cpd_id", ""))}
+    smiles_cpds = {normalize_compound(r.get("cpd_id", "")) for r in smiles if normalize_compound(r.get("cpd_id", ""))}
     query_smiles_records = [
         r for r in smiles
         if r.get("OCSR_quality_flag") == "markush_or_query"
@@ -424,7 +344,7 @@ def build_qa_report(output_dir: str, patent_id: str = "", ignore_previous_failur
     ]
     suspicious_smiles_records = [
         {
-            "cpd": _normalize_cpd_label(r.get("cpd_id", "")),
+            "cpd": normalize_compound(r.get("cpd_id", "")),
             "elements": _suspicious_smiles_elements(r),
             "quality_flag": r.get("OCSR_quality_flag", ""),
         }
@@ -444,21 +364,21 @@ def build_qa_report(output_dir: str, patent_id: str = "", ignore_previous_failur
         r for r in smiles
         if not r.get("rdkit_valid")
     ]
-    valid_smiles_cpds = {_normalize_cpd_label(r.get("cpd_id", "")) for r in valid_smiles_records if _normalize_cpd_label(r.get("cpd_id", ""))}
-    invalid_smiles_cpds = {_normalize_cpd_label(r.get("cpd_id", "")) for r in invalid_smiles_records if _normalize_cpd_label(r.get("cpd_id", ""))}
-    query_smiles_cpds = {_normalize_cpd_label(r.get("cpd_id", "")) for r in query_smiles_records if _normalize_cpd_label(r.get("cpd_id", ""))}
+    valid_smiles_cpds = {normalize_compound(r.get("cpd_id", "")) for r in valid_smiles_records if normalize_compound(r.get("cpd_id", ""))}
+    invalid_smiles_cpds = {normalize_compound(r.get("cpd_id", "")) for r in invalid_smiles_records if normalize_compound(r.get("cpd_id", ""))}
+    query_smiles_cpds = {normalize_compound(r.get("cpd_id", "")) for r in query_smiles_records if normalize_compound(r.get("cpd_id", ""))}
     activity_rows = activity.get("rows", []) if isinstance(activity, dict) else []
     activity_ruleset = activity.get("ruleset", {}) if isinstance(activity, dict) else {}
     activity_identity_ok = artifact_identity_matches(activity, ACTIVITY_SCHEMA, ACTIVITY_SCHEMA_VERSION)
     binding_identity_ok = artifact_identity_matches(bind_data, BINDINGS_SCHEMA, BINDINGS_SCHEMA_VERSION)
-    activity_order, act_data = _activity_order_and_map(activity_rows)
+    activity_order, act_data = activity_order_and_map(activity_rows)
     activity_cpds = set(activity_order)
     activity_review_rows = [
-        _normalize_cpd_label(row.get("cpd", ""))
+        normalize_compound(row.get("cpd", ""))
         for row in activity_rows
         if isinstance(row, dict)
         and row.get("needs_review")
-        and _normalize_cpd_label(row.get("cpd", "")) in activity_cpds
+        and normalize_compound(row.get("cpd", "")) in activity_cpds
     ]
     activity_targets = []
     for cpd in activity_order:
@@ -467,7 +387,7 @@ def build_qa_report(output_dir: str, patent_id: str = "", ignore_previous_failur
                 activity_targets.append(target)
     activity_bound_cpds = {
         cpd for cpd in bound_cpds
-        if _activity_for_cpd(act_data, cpd, bound_cpds)
+        if activity_for_compound(act_data, cpd)
     }
     stereo_errors = [
         {"cpd": r.get("cpd_id", ""), "reason": error}
@@ -498,6 +418,8 @@ def build_qa_report(output_dir: str, patent_id: str = "", ignore_previous_failur
     qa = {
         **artifact_identity(QA_REPORT_SCHEMA, QA_REPORT_SCHEMA_VERSION),
         "patent_id": report_patent_id,
+        "execution_mode": SOURCE_EXECUTION_MODE,
+        "formal_acceptance_scope": FORMAL_SCOPE,
         "status": summary.get("status", "unknown"),
         "input_pdf": summary.get("input_pdf", ""),
         "page_count_input": profile.get("page_count"),
@@ -564,32 +486,43 @@ def build_qa_report(output_dir: str, patent_id: str = "", ignore_previous_failur
     hard_errors = []
     review_warnings = []
     final_binding_order = [
-        _normalize_cpd_label(binding.get("cpd", ""))
+        normalize_compound(binding.get("cpd", ""))
         for binding in bindings
-        if _normalize_cpd_label(binding.get("cpd", ""))
+        if normalize_compound(binding.get("cpd", ""))
     ]
     final_binding_pairs = [
-        (_normalize_cpd_label(binding.get("cpd", "")), str(binding.get("structure_id") or ""))
+        (normalize_compound(binding.get("cpd", "")), str(binding.get("structure_id") or ""))
         for binding in bindings
-        if _normalize_cpd_label(binding.get("cpd", ""))
+        if normalize_compound(binding.get("cpd", ""))
     ]
     smiles_pairs = [
-        (_normalize_cpd_label(record.get("cpd_id", "")), str(record.get("structure_id") or ""))
+        (normalize_compound(record.get("cpd_id", "")), str(record.get("structure_id") or ""))
         for record in smiles
         if isinstance(record, dict)
     ]
-    if not activity_order:
-        hard_errors.append("No non-empty activity compound rows are available for a deliverable.")
+    hard_errors.extend(activity_evidence_errors(activity, profile.get("activity_pages")))
+    hard_errors.extend(coverage_errors(bind_data))
+    source_catalog = proved_catalog(bind_data)
+    expected_order = [normalize_compound(row["cpd"]) for row in source_catalog]
+    if final_binding_order != expected_order:
+        hard_errors.append("Confirmed bindings do not exactly cover the proved source catalog in order.")
+    if smiles_source_records(smiles_payload):
+        hard_errors.append("Source-led formal recognition cannot split numbered compounds into supplemental records.")
+    if smiles_payload.get("formal_acceptance_scope") != FORMAL_SCOPE:
+        hard_errors.append("SMILES output does not declare the source-led formal coverage scope.")
+    for stage, findings in summary.get("scientific_errors", {}).items():
+        if not isinstance(findings, list) or any(not isinstance(finding, str) for finding in findings):
+            raise ValueError("Malformed persisted scientific findings")
+        hard_errors.extend(f"{stage}: {finding}" for finding in findings)
+    if activity_cpds - bound_cpds:
+        hard_errors.append("Some measured printed IDs lack a proved structure association.")
     if not activity_identity_ok:
         hard_errors.append("Activity output does not match the current activity schema and ruleset.")
-    if activity_order and final_binding_order != activity_order:
-        hard_errors.append("Confirmed bindings do not exactly cover active compounds in activity-table order.")
-    if activity_review_rows:
-        hard_errors.append("Activity extraction contains rows requiring review before structure binding.")
+
     if not binding_identity_ok:
         hard_errors.append("Binding output does not match the current bindings schema and ruleset.")
-    if qa["bindings"]["execution_mode"] != "production_activity_led":
-        hard_errors.append("Binding output was not produced by the production activity-led pipeline.")
+    if qa["bindings"]["execution_mode"] != SOURCE_EXECUTION_MODE:
+        hard_errors.append("Binding output was not produced by the production structure-led pipeline.")
     if any(
         accuracy_summary.get(field) != recalculated_accuracy_summary.get(field)
         for field in ("total", "confirmed", "review_required")
@@ -606,9 +539,9 @@ def build_qa_report(output_dir: str, patent_id: str = "", ignore_previous_failur
         hard_errors.append("A final binding has a strict visible-label conflict.")
     if weak_label_conflicts:
         hard_errors.append("A final binding has competing visual-label evidence requiring review.")
-    if activity_order and len(bound_cpds) != len(activity_order):
-        hard_errors.append("One or more active compounds do not have a bound final structure.")
-    if activity_order and int(qa["structures"]["total"] or 0) < len(bindings):
+    if len(bound_cpds) != len(source_catalog):
+        hard_errors.append("One or more proved source IDs lack a bound final structure.")
+    if int(qa["structures"]["total"] or 0) < len(bindings):
         hard_errors.append("Extracted structure count is smaller than confirmed binding count.")
     missing_binding_images = []
     for binding in bindings:
@@ -617,7 +550,7 @@ def build_qa_report(output_dir: str, patent_id: str = "", ignore_previous_failur
             for field in ("display_image_path", "source_image_path", "image_path")
         ]
         if not any(path and (Path(path).is_file() or (base / path).is_file()) for path in candidates):
-            missing_binding_images.append(_normalize_cpd_label(binding.get("cpd", "")))
+            missing_binding_images.append(normalize_compound(binding.get("cpd", "")))
     if missing_binding_images:
         hard_errors.append(f"Confirmed binding images are missing for {missing_binding_images[:10]}.")
     if len(valid_smiles_records) != len(bindings):
@@ -636,17 +569,14 @@ def build_qa_report(output_dir: str, patent_id: str = "", ignore_previous_failur
         hard_errors.append("SMILES with suspicious elements require fallback recognition or review.")
     if stereo_errors:
         hard_errors.append("Source stereochemistry is missing, conflicting or unresolved for one or more model observations.")
-    if locator.get("reason") == "structure_table_authoritative_complete":
-        if not bindings or any(b.get("binding_rule") != "authoritative_structure_table_sequence" for b in bindings):
-            hard_errors.append("An authoritative structure table was detected but not exclusively used for binding.")
     if (base / "STRICT_ACCEPTANCE_FAILED.json").is_file() and not ignore_previous_failure_marker:
         hard_errors.append("This output directory contains a strict-acceptance failure marker from a failed run.")
     if workbook.get("error"):
         hard_errors.append(f"Final Excel could not be inspected: {workbook['error']}")
-    elif activity_order:
-        if final_order != activity_order:
-            hard_errors.append("Final Excel main sheet does not match activity-table row order.")
-        if activity_excel_order != activity_order:
+    else:
+        if final_order != expected_order:
+            hard_errors.append("Final Excel main sheet does not match the proved source-catalog order.")
+        if activity_order and activity_excel_order != activity_order:
             hard_errors.append("Final Excel activity sheet does not match activity-table row order.")
         for cpd in activity_order:
             expected = act_data.get(cpd, {})
@@ -681,6 +611,11 @@ def build_qa_report(output_dir: str, patent_id: str = "", ignore_previous_failur
             "activity_cpd_count": len(activity_excel_order),
         },
         "sdf_record_count": _sdf_record_count(selected_sdf) if selected_sdf else 0,
+        "formal_acceptance_scope": FORMAL_SCOPE,
+        "strict_coverage": {"expected_cpds": expected_order,
+                            "binding_cpds": final_binding_order,
+                            "smiles_cpds": [normalize_compound(r.get("cpd_id")) for r in smiles],
+                            "excel_cpds": final_order},
     }
 
     warnings = []
@@ -704,10 +639,7 @@ def build_qa_report(output_dir: str, patent_id: str = "", ignore_previous_failur
         warnings.append("Some SMILES contain dummy/query/Markush atoms and require review.")
     if qa["smiles"]["suspicious_element_smiles"]:
         warnings.append("Some valid-looking SMILES contain suspicious elements and require fallback recognition or review.")
-    if qa["activity"]["rows"] == 0:
-        warnings.append("No activity rows extracted.")
-    elif qa["activity"]["missing_for_bound"]:
-        warnings.append("Some bound examples have no activity rows.")
+    # Explicit absence is not inactivity and does not make a proved structure invalid.
     if not qa["final_files"]["excel_ok"] or not qa["final_files"]["sdf_ok"]:
         warnings.append("Final Excel or SDF is missing.")
     for error in hard_errors:

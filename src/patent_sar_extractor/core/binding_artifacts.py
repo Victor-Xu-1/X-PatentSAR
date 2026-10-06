@@ -9,9 +9,16 @@ from pathlib import Path
 from typing import Any
 
 from patent_sar_extractor.artifact_io import write_json_atomic
+from patent_sar_extractor.contracts import (
+    BINDINGS_SCHEMA,
+    BINDINGS_SCHEMA_VERSION,
+    artifact_identity,
+)
 
+from .activity_identity import normalize_compound
 from .binding_catalog import compound_catalog
-from .pipeline_rules import summarise_binding_accuracy
+from .formal_structure import FORMAL_SCOPE, SOURCE_EXECUTION_MODE
+from .pipeline_rules import _label_key, summarise_binding_accuracy
 
 _CSV_FIELDS = (
     "cpd",
@@ -69,38 +76,71 @@ def write_binding_result(
     unbound_pages: Sequence[Any],
     catalog_bindings: Sequence[dict[str, Any]] = (),
     catalog_sources: Sequence[dict[str, Any]] = (),
+    source_issues: Sequence[dict[str, Any] | str] = (),
 ) -> dict[str, Any]:
-    bindings = [{**binding, "patent_id": patent_id} for binding in bindings]
+    issues = list(source_issues)
+
+    def lossless_sources(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
+        accepted = []
+        for binding in rows:
+            label = binding.get("cpd")
+            if not isinstance(label, str):
+                raise ValueError("Malformed original binding identifier")
+            printed = normalize_compound(label)
+            if not printed or printed != f"Compound {_label_key(label)}":
+                issues.append(
+                    {
+                        "cpd": label,
+                        "structure_id": binding.get("structure_id"),
+                        "page_no": binding.get("page_no"),
+                        "reason": "shared_proof_identifier_is_not_lossless",
+                    }
+                )
+                continue
+            accepted.append({**binding, "patent_id": patent_id})
+        return accepted
+
     catalog = compound_catalog(
-        [{**binding, "patent_id": patent_id} for binding in catalog_bindings],
-        [{**binding, "patent_id": patent_id} for binding in catalog_sources],
+        lossless_sources([*catalog_bindings, *bindings]),
+        lossless_sources(catalog_sources),
     )
+    catalog["formal_acceptance_scope"] = FORMAL_SCOPE
+    bindings = [dict(binding) for binding in catalog["entries"]]
     directory.mkdir(parents=True, exist_ok=True)
     output_json = directory / "bindings.json"
     output_csv = directory / "bindings.csv"
-    write_json_atomic(
-        output_json,
-        {
-            "patent_id": patent_id,
-            "timestamp": datetime.now(UTC).strftime("%Y%m%d_%H%M%S"),
-            "detected_style": detected_style,
-            "include_intermediates": include_intermediates,
-            "total_structures": total_structures,
-            "total_compound_blocks": total_compound_blocks,
-            "final_bindings_count": len(bindings),
-            "accuracy_summary": summarise_binding_accuracy(bindings),
-            "authoritative_structure_table_pages": list(table_pages),
-            "authoritative_structure_table_covered_count": table_covered_count,
-            "no_binding": list(no_binding),
-            "final_bindings": bindings,
-            "compound_catalog": catalog,
+    payload = {
+        **artifact_identity(BINDINGS_SCHEMA, BINDINGS_SCHEMA_VERSION),
+        "execution_mode": SOURCE_EXECUTION_MODE,
+        "formal_acceptance_scope": FORMAL_SCOPE,
+        "patent_id": patent_id,
+        "timestamp": datetime.now(UTC).strftime("%Y%m%d_%H%M%S"),
+        "detected_style": detected_style,
+        "include_intermediates": include_intermediates,
+        "total_structures": total_structures,
+        "total_compound_blocks": total_compound_blocks,
+        "final_bindings_count": len(bindings),
+        "accuracy_summary": summarise_binding_accuracy(bindings),
+        "authoritative_structure_table_pages": list(table_pages),
+        "authoritative_structure_table_covered_count": table_covered_count,
+        "no_binding": list(no_binding),
+        "final_bindings": bindings,
+        "compound_catalog": catalog,
+        "source_issues": issues,
+        "strict_coverage": {
+            "expected_cpds": [binding["cpd"] for binding in bindings],
+            "expected_structure_ids": [binding["structure_id"] for binding in bindings],
+            "catalog_count": len(bindings),
+            "unresolved_sources": issues,
         },
-    )
+    }
+    write_json_atomic(output_json, payload)
     with output_csv.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=_CSV_FIELDS, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(bindings)
     return {
+        **payload,
         "patent_id": patent_id,
         "bindings": bindings,
         "total": total_compound_blocks,
