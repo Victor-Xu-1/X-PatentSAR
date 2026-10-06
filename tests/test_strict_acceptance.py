@@ -63,7 +63,7 @@ from patent_sar_extractor.contracts import (
     artifact_identity_matches,
     ruleset_ref,
 )
-from patent_sar_extractor.core import activity_extractor as activity_extractor_module
+from patent_sar_extractor.core import activity_coordinates as activity_coordinates_module
 from patent_sar_extractor.core import (
     binding_observations,
     binding_ocr,
@@ -71,18 +71,11 @@ from patent_sar_extractor.core import (
 )
 from patent_sar_extractor.core import env_runner as env_runner_module
 from patent_sar_extractor.core import page_ocr_cache as page_ocr_cache_module
-from patent_sar_extractor.core.activity_extractor import (
-    ActivityRow,
-    _activity_row_has_usable_values,
-    _classify_ruled_activity_schema,
-    _coordinate_activity_page_candidates,
-    _extract_chinese_dc50_dmax_rows_from_ocr,
-    _extract_prefixed_letter_grade_activity_rows_from_ocr,
-    _extract_ruled_activity_rows,
-    _merge_activity_rows,
-    _prefer_specific_activity_rows,
-    _split_joined_dc50_dmax_cell,
-)
+from patent_sar_extractor.core.activity_models import ActivityRow
+from patent_sar_extractor.core.activity_coordinates import coordinate_candidates, extract_coordinate_tables
+from patent_sar_extractor.core.activity_headers import infer_value_keys
+from patent_sar_extractor.core.activity_observations import has_usable_values, merge_rows
+from patent_sar_extractor.core.activity_text import extract_text_tables
 from patent_sar_extractor.core.binding_arbitration import _drop_fail_closed_bindings
 from patent_sar_extractor.core.binding_candidates import _merge_binding_candidates
 from patent_sar_extractor.core.binding_products import (
@@ -596,26 +589,19 @@ class StrictAcceptanceTests(unittest.TestCase):
                 confidence=0.75,
             ),
         ]
-        merged = _merge_activity_rows(rows)
-        self.assertEqual([row.cpd for row in merged], ["Compound 8", "Compound 2"])
-        self.assertTrue(merged[0].needs_review)
+        merged = merge_rows(rows)
+        self.assertEqual([row.cpd for row in merged], ["Compound 8", "Compound 2", "Compound 8"])
         self.assertEqual(merged[0].activity_values["IC50"], "A")
         self.assertEqual(merged[0].cell_line_data["Dmax"], "60")
-        self.assertIn("conflicting activity_values.IC50", merged[0].notes)
-        self.assertIn("conflicting cell_line_data.Dmax", merged[0].notes)
+        self.assertEqual(merged[2].activity_values["IC50"], "C")
+        self.assertEqual(merged[2].cell_line_data["Dmax"], "61")
 
-    def test_ruled_ar_degradation_schema_and_joined_cell_split(self) -> None:
-        context = (
-            "化 合 物 降解 活性 细胞 LNCaP AR nM) (Dmax,%) (DC50, "
-            "化 合 物 降解 活性 细胞 AR LNCaP nM) (Dmax,%) (DC50,"
-        )
+    def test_ruled_ar_degradation_schema_requires_observed_order_and_units(self) -> None:
         self.assertEqual(
-            _classify_ruled_activity_schema(context, 4),
-            ("LNCaP AR degradation", ["LNCaP AR DC50 (nM)", "LNCaP AR Dmax (%)"]),
+            infer_value_keys("AR degradation", "No. LNCaP AR Dmax (%) LNCaP AR DC50 (nM)", 2),
+            ["LNCaP AR Dmax (%)", "LNCaP AR DC50 (nM)"],
         )
-        self.assertEqual(_split_joined_dc50_dmax_cell("<20 = 80%"), ("<20", ">80%"))
-        self.assertEqual(_split_joined_dc50_dmax_cell("<20 > 80%"), ("<20", ">80%"))
-        self.assertIsNone(_split_joined_dc50_dmax_cell("<2080%"))
+        self.assertEqual(infer_value_keys("AR degradation", "No. DC50", 1), ["DC50 (unit unknown)"])
 
     def test_prefixed_letter_grade_activity_table_decodes_legend_and_continuation(
         self,
@@ -630,23 +616,23 @@ class StrictAcceptanceTests(unittest.TestCase):
             "1": "IRF5 HiBiT deg. I-# DC5o (nM) I-3 B",
         }
 
-        rows = _extract_prefixed_letter_grade_activity_rows_from_ocr([0, 1], page_texts)
+        rows = extract_text_tables([0, 1], page_texts).rows
 
         self.assertEqual(
-            [row.cpd for row in rows], ["Compound 1", "Compound 2", "Compound 3"]
+            [row.cpd for row in rows], ["Compound I-1", "Compound 1-2", "Compound I-3"]
         )
         self.assertEqual(
-            rows[0].activity_values["IRF5 HiBiT degradation DC50 (nM)"], "<1 nM"
+            list(rows[0].activity_values.values()), ["<1 nM"]
         )
         self.assertEqual(
-            rows[1].activity_values["IRF5 HiBiT degradation DC50 (nM)"], "not tested"
+            list(rows[1].activity_values.values()), ["not tested"]
         )
         self.assertEqual(
-            rows[2].activity_values["IRF5 HiBiT degradation DC50 (nM)"], "1 - 10 nM"
+            list(rows[2].activity_values.values()), ["1 - 10 nM"]
         )
-        self.assertTrue(_activity_row_has_usable_values(rows[0]))
-        self.assertFalse(_activity_row_has_usable_values(rows[1]))
-        self.assertIn("source label I-2", rows[1].notes)
+        self.assertTrue(has_usable_values(rows[0]))
+        self.assertFalse(has_usable_values(rows[1]))
+        self.assertIn("source label 1-2", rows[1].notes)
 
     def test_explicit_not_tested_activity_is_excluded_across_command_annotation(
         self,
@@ -669,26 +655,26 @@ class StrictAcceptanceTests(unittest.TestCase):
         }
 
         self.assertEqual(
-            _coordinate_activity_page_candidates([0, 1, 2], page_texts),
+            coordinate_candidates([0, 1, 2], page_texts),
             [1, 2],
         )
 
     def test_ruled_activity_detection_precedes_coordinate_ocr(self) -> None:
         with (
             patch.object(
-                activity_extractor_module,
-                "_detect_ruled_table_regions",
+                activity_coordinates_module,
+                "detect_ruled_table_regions",
                 return_value=[],
             ),
             patch.object(
-                activity_extractor_module,
-                "_activity_tokens_for_page",
+                activity_coordinates_module,
+                "page_tokens",
                 side_effect=AssertionError(
                     "coordinate OCR must not run without a detected grid"
                 ),
             ),
         ):
-            self.assertEqual(_extract_ruled_activity_rows([object()], [0]), [])
+            self.assertEqual(extract_coordinate_tables([object()], [0]).rows, [])
 
     def test_page_ocr_cache_rejects_foreign_legacy_cache(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -798,14 +784,9 @@ class StrictAcceptanceTests(unittest.TestCase):
             self.assertEqual(set(cache["page_texts"]), {"0", "1"})
 
     def test_clean_chinese_dc50_dmax_rows_are_auto_accepted(self) -> None:
-        class FakeDoc:
-            def __len__(self) -> int:
-                return 1
-
-        rows = _extract_chinese_dc50_dmax_rows_from_ocr(
-            FakeDoc(),
+        rows = extract_text_tables(
             [0],
-            page_text_map={
+            text_map={
                 "0": (
                     "表1化合物对Jurkat细胞VAV1蛋白的降解活性\n"
                     "化合物编号 DC50(nM) Dmax(%)\n"
@@ -816,7 +797,7 @@ class StrictAcceptanceTests(unittest.TestCase):
                     "* DC50≤10nM为A"
                 )
             },
-        )
+        ).rows
 
         self.assertEqual(
             [row.cpd for row in rows],
@@ -825,7 +806,7 @@ class StrictAcceptanceTests(unittest.TestCase):
         self.assertTrue(all(not row.needs_review for row in rows))
         self.assertTrue(all(row.confidence >= 0.88 for row in rows))
 
-    def test_specific_activity_rows_drop_noisy_generic_flat_rows(self) -> None:
+    def test_activity_merging_never_discards_an_unrelated_context(self) -> None:
         noisy = ActivityRow(
             cpd="Compound 1",
             activity_values={
@@ -853,13 +834,11 @@ class StrictAcceptanceTests(unittest.TestCase):
             needs_review=False,
         )
 
-        filtered = _prefer_specific_activity_rows([noisy, specific])
-        merged = _merge_activity_rows(filtered)
-
-        self.assertEqual(len(filtered), 1)
-        self.assertEqual(filtered[0].source, "ocr_chinese_dc50_dmax")
-        self.assertFalse(merged[0].needs_review)
-        self.assertNotIn("表2化合物小鼠PK参数 value 1", merged[0].activity_values)
+        merged = merge_rows([noisy, specific])
+        self.assertEqual(len(merged), 1)
+        self.assertTrue(merged[0].needs_review)
+        self.assertEqual(merged[0].activity_values["表2化合物小鼠PK参数 value 1"], "8557")
+        self.assertEqual(merged[0].activity_values["Jurkat VAV1 Dmax (%)"], "98.1")
 
     def test_flattened_structure_table_continuation_pages_are_classified(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

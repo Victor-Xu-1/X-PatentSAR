@@ -9,12 +9,13 @@ from unittest.mock import patch
 
 import fitz
 
+from patent_sar_extractor.core.activity_coordinates import extract_coordinate_tables
 from patent_sar_extractor.core.activity_extractor import (
     ActivityRow,
-    _extract_english_biology_activity_rows_from_ocr,
-    _merge_activity_rows,
     extract,
 )
+from patent_sar_extractor.core.activity_models import ParsedActivity
+from patent_sar_extractor.core.activity_observations import merge_rows
 from patent_sar_extractor.core.table_cells import read_cell
 
 
@@ -50,12 +51,8 @@ class BiologyActivityTableTests(unittest.TestCase):
                 doc.save(original)
             with (
                 patch(
-                    "patent_sar_extractor.core.activity_extractor._load_ocr_engine",
-                    return_value=None,
-                ),
-                patch(
-                    "patent_sar_extractor.core.activity_extractor._extract_ruled_activity_rows",
-                    return_value=[],
+                    "patent_sar_extractor.core.activity_extractor.extract_text_tables",
+                    return_value=ParsedActivity(),
                 ) as competing,
             ):
                 result = extract(
@@ -67,7 +64,7 @@ class BiologyActivityTableTests(unittest.TestCase):
                     },
                     str(Path(temporary) / "activity"),
                 )
-            self.assertEqual(competing.call_args.args[1], [])
+            self.assertEqual(competing.call_args.args[0], [])
             self.assertEqual(result["n_unique_cpds"], 1)
             self.assertEqual(
                 result["rows"][0].activity_values["Cereblon HTRF ratio"], "0.15"
@@ -111,7 +108,7 @@ class BiologyActivityTableTests(unittest.TestCase):
             {"page_no": 1, "table_id": "Table 52"},
             {"page_no": 2, "table_id": "Table 54"},
         ]
-        rows = _merge_activity_rows(
+        rows = merge_rows(
             [
                 ActivityRow(
                     cpd="Example 31",
@@ -140,7 +137,7 @@ class BiologyActivityTableTests(unittest.TestCase):
                 [100, 125, 150],
                 [["Example ID", "Ratio", "Grade"], ["37A", "", "++"]],
             )
-            rows = _extract_english_biology_activity_rows_from_ocr(doc, [0])
+            rows = extract_coordinate_tables(doc, [0]).rows
             self.assertEqual(len(rows), 1)
             self.assertTrue(rows[0].needs_review)
 
@@ -160,7 +157,7 @@ class BiologyActivityTableTests(unittest.TestCase):
                     ["46", "0.23", "+"],
                 ],
             )
-            rows = _extract_english_biology_activity_rows_from_ocr(doc, [0])
+            rows = extract_coordinate_tables(doc, [0]).rows
             self.assertEqual([r.cpd for r in rows], ["Compound 31", "Compound 46"])
             self.assertEqual(
                 rows[0].activity_values,
@@ -187,7 +184,7 @@ class BiologyActivityTableTests(unittest.TestCase):
                     ["37A", "0.15", "++"],
                 ],
             )
-            rows = _extract_english_biology_activity_rows_from_ocr(doc, [0])
+            rows = extract_coordinate_tables(doc, [0]).rows
             self.assertEqual(len(rows), 1)
             self.assertEqual(rows[0].cpd, "Compound 37A")
             self.assertEqual(rows[0].table_id, "Table 52")
@@ -221,7 +218,7 @@ class BiologyActivityTableTests(unittest.TestCase):
                     ["35", "A", "36", "D"],
                 ],
             )
-            rows = _extract_english_biology_activity_rows_from_ocr(doc, [0, 1])
+            rows = extract_coordinate_tables(doc, [0, 1]).rows
             self.assertEqual(
                 [r.cpd for r in rows], [f"Compound {n}" for n in range(31, 37)]
             )
