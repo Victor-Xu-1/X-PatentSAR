@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from itertools import pairwise
 from types import MappingProxyType
@@ -54,6 +55,7 @@ class SpatialBindings:
     conflicts: tuple[BindingConflict, ...]
     numbered_recognized: bool
     reprints: tuple[dict[str, Any], ...] = ()
+    recognized_table_pages: frozenset[int] = frozenset()
 
     def ordered(self, active_cpds: list[str]) -> list[dict[str, Any]]:
         if not active_cpds:
@@ -163,14 +165,30 @@ def collect_spatial_bindings(
     active_cpds: list[str],
     profile: dict[str, Any],
     table_pages: frozenset[int],
+    *,
+    source_pages: Sequence[int] | None = None,
 ) -> SpatialBindings:
-    numbered = bind_numbered_tables(
-        doc, processed_structures, sorted(table_pages), None
+    # Locator/classifier hints are not a complete table inventory. Discover
+    # original numbered grids across every selected structure-source page;
+    # the grid/header/cell authority still decides ownership, never this set.
+    if source_pages is None:
+        source_pages = [
+            structure["page_no"] - 1
+            for structure in processed_structures
+            if type(structure.get("page_no")) is int
+        ]
+    candidate_pages = sorted(
+        {
+            page
+            for page in (*table_pages, *source_pages)
+            if type(page) is int and page >= 0
+        }
     )
+    numbered = bind_numbered_tables(doc, processed_structures, candidate_pages, None)
     series = (
         pair_series_table(
             processed_structures,
-            sorted(table_pages),
+            candidate_pages,
             _normalise_ocr_line_map(line_map),
             None,
         )
@@ -268,6 +286,7 @@ def collect_spatial_bindings(
         tuple(conflicts),
         numbered.recognized,
         tuple(reprints),
+        frozenset(recognized_pages),
     )
 
 
@@ -331,14 +350,6 @@ def _extract_authoritative_structure_table_sequence_bindings(
     I-series geometry remains independent; the older complete-sequence rule is
     restricted to tables not recognized by either spatial authority.
     """
-    raw_pages = (profile or {}).get("authoritative_structure_table_pages", []) or []
-    try:
-        page_indices = sorted({int(page) for page in raw_pages})
-    except (TypeError, ValueError, OverflowError):
-        return []
-    if not page_indices or page_indices[0] < 0:
-        return []
-
     if numbered_result is not None and numbered_result.recognized:
         bindings = []
         for pair in numbered_result.bindings:
@@ -359,6 +370,18 @@ def _extract_authoritative_structure_table_sequence_bindings(
         # Recognition is authoritative even when every cell is unresolved.
         # A numeric global zip cannot resolve missing/ambiguous cell evidence.
         return bindings
+
+    raw_pages = (
+        series_result.recognized_pages
+        if series_result is not None and series_result.recognized
+        else (profile or {}).get("authoritative_structure_table_pages", []) or []
+    )
+    try:
+        page_indices = sorted({int(page) for page in raw_pages})
+    except (TypeError, ValueError, OverflowError):
+        return []
+    if not page_indices or page_indices[0] < 0:
+        return []
 
     lines_by_page = _normalise_ocr_line_map(ocr_line_map)
     active_keys = _active_label_keys(active_cpds)
@@ -408,6 +431,11 @@ def _extract_authoritative_structure_table_sequence_bindings(
         # A recognized but ambiguous series table must not enter the numeric
         # global-sequence rule, which cannot resolve its spatial uncertainty.
         return bindings
+
+    # The source-led coordinator never enters the legacy sequence adapter.
+    # Retained callers must explicitly supply their old activity-filter scope.
+    if not active_keys:
+        return []
 
     # Only the numeric global zip requires a complete contiguous table. The
     # I-series rule above pairs within each observed original-PDF page.

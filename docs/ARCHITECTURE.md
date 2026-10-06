@@ -43,6 +43,17 @@ chemistry nor synthesizes success, progress, properties or missing provenance.
 - Original grid cells, captions and explicit synthesis headings are ownership
   evidence. Sequence, numerical proximity, molecular similarity or assay
   presence cannot fabricate an identifier or change42 to4-2.
+- Binder epoch7 discovers numbered grids across all selected structure-source
+  pages. Empty or partial classifier/locator table hints cannot exclude a
+  proved original cell; only actually recognized grids are reported as table
+  ownership. Headerless adjacent continuations retain independent ID evidence.
+  An unused pair requires blank original pixels in both cells and no segment
+  evidence. Proved selected reprints can retain multiple additional sources
+  for one confirmed primary ID; novel or conflicting primary IDs stay withheld.
+- Activity epoch4 treats classified pages as seeds, not a complete table
+  inventory. Only a proven table can inspect its immediately adjacent next
+  page; missing grids, changed geometry or unrelated captions stop carry-over.
+  An empty seed set never triggers an all-document OCR scan.
 - Missing activity is legitimate only with explicit classified-page coverage
   evidence. A declared activity page with lost/malformed rows is a failure.
 - The existing `compound_catalog` is the sole independent numbered-source
@@ -81,7 +92,8 @@ Interrupted/incomplete/foreign/old core evidence cannot enter that path.
 | Cache/identity | `contracts.py`, `stage_cache.py`, exact original/dependency/content fingerprints |
 | Shared PDF/OCR geometry | Page observation cache, original-cell grid/read modules, one bounded OCR engine |
 | Activity parsing | Small identity/header/coordinate/text/observation/artifact modules; `activity_extractor.py` is a facade |
-| Source ownership | Existing spatial binder, source headings, arbitration, catalog reader and one binding writer |
+| Source ownership | Spatial cells/captions, source headings, catalog reader and one binding writer |
+| Visible labels | `visible_label_cache.py` owns original PDF/crop identity; `visible_label_crops.py` owns bounded crop geometry; `binding_observations.py` coordinates the existing OCR provider and refinement |
 | Recognition | One verified printed-DECIMER adapter and bounded JSONL carrier, raw observation cache and source QC |
 | Final output | Identifier-led structure and activity join; workbook/SDF modules share formal selection |
 | Acceptance | One `qa_inputs` context, separate source/file inspections and source/chemistry/output gates; `qa_report` facade never overrides findings |
@@ -95,6 +107,12 @@ Activity cell-owned pages cannot reenter the text parser. A generic heading
 strategy sees only unclaimed source labels/crops/pages; it cannot override
 original cell ownership. Removed activity-led filters and fixed table/target
 parsers are not retained as alternative production paths.
+
+Visible-label observations use epoch8 and require the actual original PDF SHA-256,
+crop SHA-256 and exact page/box identity. Missing/foreign/incomplete cache entries
+cannot supply identifiers. Publication is atomic; an unavailable existing OCR
+provider is detected before rendering unused crops. The removed completion module
+and 23 unreferenced private helpers are not alternate binding paths.
 
 ## Five calculations and one prediction
 

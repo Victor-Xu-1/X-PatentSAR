@@ -37,6 +37,7 @@ def bind(
             [],
             {key: value for key, value in profile.items() if key != "active_cpds"},
             observations.authoritative_table_pages,
+            source_pages=observations.page_indices,
         )
         original = spatial.catalogue()
         generic = spatial.structures(processed)
@@ -91,7 +92,7 @@ def bind(
             include_intermediates=include_intermediates,
             total_structures=len(structures),
             total_compound_blocks=len(blocks),
-            table_pages=observations.authoritative_table_pages,
+            table_pages=spatial.recognized_table_pages,
             table_covered_count=len(original),
             no_binding=[issue.get("cpd", "") for issue in issues],
             unbound_pages=issues,

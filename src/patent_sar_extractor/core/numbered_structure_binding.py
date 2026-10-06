@@ -21,6 +21,8 @@ from .numbered_structure_models import (
     NumberedTableResult,
 )
 from .numbered_structure_pairs import (
+    _box,
+    _overlaps,
     pair_numbered_table_cells,
     valid_cell_binding_evidence,
 )
@@ -77,6 +79,33 @@ def _grid_axes(grid: Mapping[str, Any]) -> tuple[list[float], list[float]] | Non
     ):
         return None
     return xs, ys
+
+
+def _unused_pair(
+    page: Any,
+    label_bounds: Box,
+    structure_bounds: Box,
+    structures: Sequence[Mapping[str, Any]],
+    page_index: int,
+) -> bool:
+    """Both original cells must be blank, with no rival segment evidence."""
+    if not callable(getattr(page, "get_pixmap", None)):
+        return False  # Absence of pixel evidence cannot prove an unused cell.
+    for structure in structures:
+        if structure.get("page_no") != page_index + 1:
+            continue
+        box = _box([structure.get(key) for key in ("x0", "y0", "x1", "y1")])
+        if box is None or _overlaps(box, structure_bounds):
+            return False
+    from .table_cells import cell_image
+
+    for bounds in (label_bounds, structure_bounds):
+        image = cell_image(page, bounds, 150)
+        # A fixed tiny noise allowance cannot erase a small labelled molecule
+        # merely because its cell is large. Grid rules are excluded by cell_image.
+        if int((image.min(axis=2) < 200).sum()) > 4:
+            return False
+    return True
 
 
 def bind_numbered_tables(
@@ -167,6 +196,16 @@ def bind_numbered_tables(
                 for pair in range(pairs):
                     start = pair * 2
                     label_bounds = (xs[start], ys[row], xs[start + 1], ys[row + 1])
+                    structure_bounds = (
+                        xs[start + 1],
+                        ys[row],
+                        xs[start + 2],
+                        ys[row + 1],
+                    )
+                    if not _cell_text(tokens, label_bounds).strip() and _unused_pair(
+                        page, label_bounds, structure_bounds, structures, page_index
+                    ):
+                        continue
                     reading = cell_reader(page, label_bounds, tokens, "id", native)
                     cells.append(
                         NumberedTableCell(
@@ -176,7 +215,7 @@ def bind_numbered_tables(
                             pair,
                             str(reading.value),
                             label_bounds,
-                            (xs[start + 1], ys[row], xs[start + 2], ys[row + 1]),
+                            structure_bounds,
                             tuple(dict(o) for o in reading.observations),
                             not reading.needs_review,
                             catalog,

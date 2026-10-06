@@ -160,10 +160,22 @@ no numeric values; zero eligible inputs produce an empty stage, not fake success
 The complete-workflow environment preset includes both DECIMER and ADMET CPU
 components; reading existing results still does not require installing models.
 
-Locator/segmentation epochs 4 rebuild activity-filtered page coverage; binder
-epoch 5 establishes the printed-ID catalog without activity filtering. Use a new
-software job, preserving the old run and its original QA. Confirmed selected
+Locator/segmentation epochs5 retain activity-independent source coverage. Binder
+epoch7 discovers numbered original cells across all selected source pages even
+when no table pages were pre-labelled. Activity epoch4 follows only geometrically
+proved adjacent continuations from classified seeds, preserving each cell's
+actual source page. Missing/changed grids terminate continuation; no fixed patent
+page lists or inferred identifier sequence are used. An eligible continuation
+reuses valid OCR/segmentation checkpoints without `--force`; the changed binder
+and activity epochs reject their old derived stages. Preserve the old run and
+its original QA. Confirmed selected
 reprints become additional sources, while unproved IDs remain numbered-pending.
+Visible-label epoch8 requires matching original PDF and crop SHA-256 identities;
+older or foreign label observations are not promoted. Atomic cache publication
+preserves the previous file if replacement fails. A blank unused table pair is
+skipped only when both original cells are empty and no segmented structure
+overlaps it; drawn/unlabelled or ambiguous cells remain withheld. Repeated IDs
+are allowed only in a proved selected-subset reprint of an already confirmed ID.
 The raw Web corpus layout changes to compound-catalog-v1; a projection rebuild stales old
 source-bound overlays/predictions but preserves their audit. Review before
 explicitly reapplying an edit. Rollback must restore the pre-deployment database
