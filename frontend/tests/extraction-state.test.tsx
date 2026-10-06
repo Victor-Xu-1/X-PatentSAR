@@ -129,6 +129,33 @@ describe('current extraction failure presentation', () => {
     expect(screen.queryByText('未执行')).not.toBeInTheDocument();
   });
 
+  it('does not report unstarted ADMET as a core blocker after upstream interruption', () => {
+    const interrupted = {
+      ...job,
+      status: 'interrupted' as const,
+      include_admet: true,
+      admet_stage: {
+        name: 'admet' as const,
+        status: 'failed' as const,
+        count: null,
+        duration_seconds: null,
+        progress: null,
+        reused_checkpoint: null,
+      },
+    };
+    render(
+      <>
+        <StageStrip job={interrupted} compact />
+        <ExtractionNotice project={failedProject} job={interrupted} />
+      </>,
+    );
+    expect(document.querySelector('.stage-current')).toHaveTextContent('文档分类 · 停止时进行中');
+    const notice = screen.getByRole('alert', { name: '提取验收与阻塞状态' });
+    expect(notice).not.toHaveTextContent('ADMET');
+    expect(notice).toHaveTextContent('尚未执行：活性提取、来源定位');
+    expect(notice).toHaveTextContent('待复核候选记录');
+  });
+
   it('labels unaccepted activity counts as candidates without changing actual numbers', () => {
     render(<Metrics project={failedProject} />);
     expect(screen.getByText('候选活性记录')).toBeVisible();

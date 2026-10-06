@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { StageStrip } from '../src/features/jobs/StageStrip';
 import { observedStages } from '../src/model/extraction';
+import { stageLabels } from '../src/model/presentation';
 import { stageNames } from '../src/api/types';
 import type { Job } from '../src/api/types';
 import { job } from './fixtures';
@@ -29,6 +30,115 @@ const withAdmet: Job = {
   admet_stage: phase,
 };
 describe('one slim observed job state with disclosed detail', () => {
+  it.each(stageNames)(
+    'keeps an interrupted upstream %s visible instead of an unstarted terminal ADMET failure',
+    (name) => {
+      const currentIndex = stageNames.indexOf(name);
+      const interrupted: Job = {
+        ...withAdmet,
+        status: 'interrupted',
+        stages: job.stages.map((stage, index) => ({
+          ...stage,
+          status: index < currentIndex ? 'ok' : index === currentIndex ? 'running' : 'pending',
+        })),
+        admet_stage: {
+          name: 'admet',
+          status: 'failed',
+          count: null,
+          duration_seconds: null,
+          progress: null,
+          reused_checkpoint: null,
+        },
+      };
+      const { container, rerender } = render(<StageStrip job={interrupted} compact />);
+      expect(document.querySelector('.stage-current')).toHaveTextContent(
+        `${stageLabels[name]} · 停止时进行中`,
+      );
+      expect(observedStages(interrupted)).toHaveLength(8);
+      expect(screen.queryByText('ADMET')).not.toBeInTheDocument();
+      expect(container.querySelector('.spin')).toBeNull();
+      fireEvent.click(screen.getByLabelText('提取阶段详情'));
+      expect(screen.getAllByRole('listitem')).toHaveLength(8);
+
+      const failed: Job = {
+        ...interrupted,
+        status: 'failed',
+        stages: interrupted.stages.map((stage) =>
+          stage.name === name ? { ...stage, status: 'failed' } : stage,
+        ),
+      };
+      rerender(<StageStrip job={failed} compact />);
+      expect(document.querySelector('.stage-current')).toHaveTextContent(
+        `${stageLabels[name]} · 失败`,
+      );
+      expect(screen.queryByText('ADMET')).not.toBeInTheDocument();
+    },
+  );
+  it.each(['pending', 'failed'] as const)(
+    'does not expose unstarted ADMET %s while upstream work is incomplete',
+    (status) => {
+      const current: Job = {
+        ...withAdmet,
+        stages: job.stages,
+        admet_stage: { ...phase, status, count: null, duration_seconds: null, progress: null },
+      };
+      expect(observedStages(current)).toEqual(job.stages);
+      render(<StageStrip job={current} compact />);
+      expect(document.querySelector('.stage-current')).toHaveTextContent('文档分类 · 进行中');
+      expect(screen.queryByText('ADMET')).not.toBeInTheDocument();
+    },
+  );
+  it.each(['pending', 'failed'] as const)(
+    'shows ADMET %s after all core stages complete even without model progress',
+    (status) => {
+      const current: Job = {
+        ...withAdmet,
+        status: status === 'failed' ? 'failed' : 'running',
+        admet_stage: { ...phase, status, count: null, duration_seconds: null, progress: null },
+      };
+      expect(observedStages(current)).toHaveLength(9);
+      render(<StageStrip job={current} compact />);
+      expect(document.querySelector('.stage-current')).toHaveTextContent(
+        status === 'failed' ? 'ADMET · 失败' : 'ADMET · 等待',
+      );
+    },
+  );
+  it.each([
+    { count: 0 },
+    { duration_seconds: 0 },
+    { progress: { ...phase.progress!, completed: 0 } },
+  ])('retains an actually started failed ADMET observation: %j', (observation) => {
+    const current: Job = {
+      ...withAdmet,
+      status: 'interrupted',
+      stages: [],
+      admet_stage: {
+        ...phase,
+        status: 'failed',
+        count: null,
+        duration_seconds: null,
+        progress: null,
+        ...observation,
+      },
+    };
+    expect(observedStages(current)).toEqual([current.admet_stage]);
+    render(<StageStrip job={current} compact />);
+    expect(document.querySelector('.stage-current')).toHaveTextContent('ADMET · 失败');
+  });
+  it('does not infer completed core work from a partial successful stage list', () => {
+    const current: Job = {
+      ...withAdmet,
+      stages: withAdmet.stages.slice(0, -1),
+      admet_stage: {
+        ...phase,
+        status: 'failed',
+        count: null,
+        duration_seconds: null,
+        progress: null,
+      },
+    };
+    expect(observedStages(current)).toEqual(current.stages);
+  });
   it('renders only the current state/progress until the user opens stage detail', () => {
     render(<StageStrip job={withAdmet} compact />);
     expect(screen.getByText(/ADMET · 进行中/)).toBeVisible();

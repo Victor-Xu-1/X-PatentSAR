@@ -1,4 +1,5 @@
 import type { Compound, Job, Stage, StageName } from '../api/types';
+import { stageNames } from '../api/types';
 import { stageLabels, stageStatusLabels } from './presentation';
 
 export function stoppedJob(job: Job | null): boolean {
@@ -8,7 +9,22 @@ export function stoppedJob(job: Job | null): boolean {
 export function observedStages(job: Job | null): Job['stages'] {
   if (job?.history_available !== true) return [];
   const stages = job.admet_only === true ? [] : job.stages;
-  return job.include_admet === true && job.admet_stage ? [...stages, job.admet_stage] : stages;
+  const admet = job.include_admet === true ? job.admet_stage : null;
+  if (!admet) return stages;
+  // Terminal sealing can mark ADMET failed before its producer ever starts.
+  const admetStarted =
+    (admet.status !== 'pending' && admet.status !== 'failed') ||
+    admet.count != null ||
+    admet.duration_seconds != null ||
+    admet.progress != null;
+  const coreCompleted = stageNames.every((name) =>
+    stages.some(
+      (stage) =>
+        stage.name === name &&
+        (stage.status === 'ok' || stage.status === 'empty' || stage.status === 'warnings'),
+    ),
+  );
+  return job.admet_only === true || admetStarted || coreCompleted ? [...stages, admet] : stages;
 }
 
 export function stageLabel(name: StageName, stage?: Stage): string {

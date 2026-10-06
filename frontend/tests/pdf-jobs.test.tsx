@@ -211,7 +211,7 @@ describe('core pipeline lifecycle presentation', () => {
         onChange={vi.fn()}
       />,
     );
-    expect(screen.getByText('恢复任务')).toBeDisabled();
+    expect(screen.getByText('继续提取')).toBeDisabled();
     rerender(
       <JobActions
         project={project}
@@ -220,7 +220,7 @@ describe('core pipeline lifecycle presentation', () => {
         onChange={vi.fn()}
       />,
     );
-    await userEvent.click(screen.getByText('恢复任务'));
+    await userEvent.click(screen.getByText('继续提取'));
     await waitFor(() => expect(create).toHaveBeenCalledWith(project.id, job.id));
   });
 });
