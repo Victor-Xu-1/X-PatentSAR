@@ -10,10 +10,13 @@ import zipfile
 from email.parser import BytesParser
 from pathlib import Path, PurePosixPath
 
+from wheel_sources import package_files, verify_package_files
+
 from patent_sar_extractor.contracts import DISTRIBUTION_NAME, __version__
 
 
-def audit(wheel: Path) -> dict[str, object]:
+def audit(wheel: Path, *, source_root: Path | None = None) -> dict[str, object]:
+    expected_sources = package_files(source_root or Path(__file__).resolve().parents[1])
     dist_info = f"{DISTRIBUTION_NAME.replace('-', '_')}-{__version__}.dist-info/"
     package = "patent_sar_extractor/"
     static = package + "web/static/"
@@ -21,6 +24,7 @@ def audit(wheel: Path) -> dict[str, object]:
         names = archive.namelist()
         if len(names) != len(set(names)):
             raise ValueError("Wheel contains duplicate entries")
+        source_count = verify_package_files(archive, expected_sources)
         for item in archive.infolist():
             path = PurePosixPath(item.filename)
             if path.is_absolute() or ".." in path.parts or "\\" in item.filename:
@@ -114,6 +118,7 @@ def audit(wheel: Path) -> dict[str, object]:
             "version": __version__,
             "file_count": len(names),
             "web_asset_count": len(actual),
+            "source_files_matched": source_count,
             "passed": True,
         }
 
@@ -121,9 +126,10 @@ def audit(wheel: Path) -> dict[str, object]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("wheel", type=Path)
+    parser.add_argument("--source-root", type=Path)
     args = parser.parse_args()
     try:
-        result = audit(args.wheel)
+        result = audit(args.wheel, source_root=args.source_root)
     except (OSError, ValueError, KeyError, zipfile.BadZipFile) as error:
         parser.exit(1, f"Wheel audit failed: {error}\n")
     print(json.dumps(result, sort_keys=True))

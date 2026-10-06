@@ -1,5 +1,17 @@
 # Operations and troubleshooting
 
+## Reproducible package construction
+
+After building/checking the frontend, use `tools/build_wheel.py --work-root
+/srv/wsl/tmp --out-dir <new-output-directory>` rather than building in an old
+checkout's setuptools staging tree. The shared inventory contains current Git
+package inputs and exact manifest-verified UI assets. Fresh snapshots do not copy
+historical `build`, egg-info, untracked source or scientific runtime data, and do
+not remove those originals. The same authority audits every packaged path and
+source SHA-256, refusing deleted-but-staged modules and stale bytes. Keep build
+work/output and deployment receipts on E in this workstation. A successful package
+audit does not establish deployment, environment cold-install or scientific QA.
+
 ## Preflight
 
 Run `x-patentsar check-envs` and then `x-patentsar health --no-gpu --output /tmp/patentsar-health.json`. The health command performs a real DECIMER model-load probe in addition to importing the package, so it catches an interpreter that can import the module but cannot load its H5 weights. Use the GPU health path only after TensorFlow/CUDA compatibility is established.
