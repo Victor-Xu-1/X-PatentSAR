@@ -1,5 +1,10 @@
-import { METRIC_KEYS, METRIC_SPECS } from './predictionTypes';
-import type { PredictionMetric, PredictionSummary } from './predictionTypes';
+import { DESCRIPTOR_KEYS, METRIC_KEYS, METRIC_SPECS } from './predictionTypes';
+import type {
+  DescriptorSummary,
+  MetricKey,
+  PredictionMetric,
+  PredictionSummary,
+} from './predictionTypes';
 import { array, ContractError, nullable, number, object, oneOf, string } from './validation';
 import type { Decoder } from './validation';
 
@@ -57,24 +62,41 @@ export const decodePredictionMetric: Decoder<PredictionMetric> = (input, path = 
     throw new ContractError(`${path}.value`);
   return metric;
 };
-const summaryShape = object({
+const summaryFields = {
   status: oneOf(['not_run', 'pending', 'running', 'complete', 'failed', 'stale', 'unavailable']),
-  properties: boundedArray(decodePredictionMetric, METRIC_KEYS.length),
   source_fingerprint: nullable(sha),
   smiles_sha256: nullable(sha),
-  engine: nullable(object({ name: boundedText(40), version: boundedText(40), model_sha256: sha })),
   generated_at: nullable(boundedText(100)),
   job_id: nullable(jobId),
-  warnings: boundedArray(string, 100),
   error: nullable(object({ code: string, message: string })),
   review_only: reviewOnly,
+};
+const summaryShape = object({
+  ...summaryFields,
+  properties: boundedArray(decodePredictionMetric, METRIC_KEYS.length),
+  engine: nullable(object({ name: boundedText(40), version: boundedText(40), model_sha256: sha })),
+  warnings: boundedArray(string, 100),
 });
-export const decodePredictionSummary: Decoder<PredictionSummary> = (input, path = '$') => {
-  const summary = summaryShape(input, path);
+const descriptorShape = object({
+  ...summaryFields,
+  properties: boundedArray(decodePredictionMetric, DESCRIPTOR_KEYS.length),
+  engine: nullable(
+    object({
+      name: oneOf(['RDKit']),
+      version: boundedText(40),
+      algorithm_sha256: sha,
+    }),
+  ),
+});
+function validateSummary<T extends PredictionSummary | DescriptorSummary>(
+  summary: T,
+  keys: readonly MetricKey[],
+  path: string,
+): T {
   if (summary.status === 'complete') {
     if (
-      summary.properties.length !== METRIC_KEYS.length ||
-      summary.properties.some((metric, index) => metric.key !== METRIC_KEYS[index]) ||
+      summary.properties.length !== keys.length ||
+      summary.properties.some((metric, index) => metric.key !== keys[index]) ||
       !summary.source_fingerprint ||
       !summary.smiles_sha256 ||
       !summary.engine ||
@@ -84,5 +106,25 @@ export const decodePredictionSummary: Decoder<PredictionSummary> = (input, path 
   } else if (summary.properties.length) {
     throw new ContractError(`${path}.properties`);
   }
+  return summary;
+}
+export const decodePredictionSummary: Decoder<PredictionSummary> = (input, path = '$') =>
+  validateSummary(summaryShape(input, path), METRIC_KEYS, path);
+export const decodeDescriptorSummary: Decoder<DescriptorSummary> = (input, path = '$') => {
+  const summary = validateSummary(descriptorShape(input, path), DESCRIPTOR_KEYS, path);
+  if (summary.status === 'complete') {
+    if (!summary.job_id || summary.error !== null) throw new ContractError(path);
+  } else if (summary.engine !== null || summary.generated_at !== null) {
+    throw new ContractError(path);
+  }
+  if (
+    (summary.status === 'pending' || summary.status === 'running') &&
+    (!summary.source_fingerprint || !summary.smiles_sha256 || !summary.job_id)
+  )
+    throw new ContractError(path);
+  if (summary.status === 'failed' && summary.error === null)
+    throw new ContractError(`${path}.error`);
+  if (summary.error && (summary.error.code.length > 100 || summary.error.message.length > 2000))
+    throw new ContractError(`${path}.error`);
   return summary;
 };

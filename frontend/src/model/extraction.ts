@@ -20,7 +20,10 @@ export function completeCoreStages(stages: Job['stages']): boolean {
 
 export function workflowStageNames(job: Job | null): StageName[] {
   if (job?.admet_only === true) return ['admet'];
-  return [...stageNames, ...(job?.include_admet === true ? ['admet' as const] : [])];
+  return [
+    ...(job?.stage_order ?? stageNames),
+    ...(job?.include_admet === true ? ['admet' as const] : []),
+  ];
 }
 
 export function waitingAdmet(job: Job | null, stage?: Stage): boolean {
@@ -41,7 +44,13 @@ export function waitingAdmet(job: Job | null, stage?: Stage): boolean {
 
 export function observedStages(job: Job | null): Job['stages'] {
   if (job?.history_available !== true) return [];
-  const stages = job.admet_only === true ? [] : job.stages;
+  const order = workflowStageNames(job);
+  const stages =
+    job.admet_only === true
+      ? []
+      : job.stage_order
+        ? [...job.stages].sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name))
+        : job.stages;
   const admet = job.include_admet === true ? job.admet_stage : null;
   if (!admet) return stages;
   // Terminal sealing can mark ADMET failed before its producer ever starts.
@@ -49,7 +58,8 @@ export function observedStages(job: Job | null): Job['stages'] {
     (admet.status !== 'pending' && admet.status !== 'failed') ||
     admet.count != null ||
     admet.duration_seconds != null ||
-    admet.progress != null;
+    admet.progress != null ||
+    admet.resource_wait != null;
   const coreCompleted = completeCoreStages(stages) && job.error?.code !== 'core_not_accepted';
   return job.admet_only === true || admetStarted || coreCompleted ? [...stages, admet] : stages;
 }
@@ -60,6 +70,15 @@ export function stageLabel(name: StageName, stage?: Stage): string {
     if (stage?.progress?.phase === 'properties') return '指标计算';
   }
   return stageLabels[name];
+}
+
+export function waitingResources(job: Job | null, stage?: Stage): boolean {
+  return Boolean(
+    job?.history_available === true &&
+    !stoppedJob(job) &&
+    stage?.resource_wait != null &&
+    (stage.status === 'running' || stage.status === 'pending'),
+  );
 }
 
 export function stageStatusText(
@@ -77,6 +96,7 @@ export function stageStatusText(
     if (stage.status === 'pending') return '未执行';
     if (stage.status === 'running') return '停止时进行中';
   }
+  if (waitingResources(job, stage)) return '等待资源';
   return stageStatusLabels[stage.status];
 }
 

@@ -3,7 +3,7 @@ import { MoreHorizontal, Play, RotateCcw, Square } from 'lucide-react';
 import { api } from '../../api';
 import { ApiError } from '../../api/errors';
 import type { Job, Project } from '../../api/types';
-import { activeJob, jobStatusLabels } from '../../model/presentation';
+import { activeJob, jobStatusText } from '../../model/presentation';
 import { ErrorNotice } from '../../components/Feedback';
 import { Dialog } from '../../components/Dialog';
 import { JobRecord } from './JobRecord';
@@ -58,7 +58,7 @@ export function JobActions({
   return (
     <div className="job-actions-wrapper">
       <div className="job-actions">
-        {job && <span className={`badge job-${job.status}`}>{jobStatusLabels[job.status]}</span>}
+        {job && <span className={`badge job-${job.status}`}>{jobStatusText(job)}</span>}
         {running ? (
           <button type="button" disabled={busy} onClick={() => setCancelConfirm(true)}>
             <Square size={13} />

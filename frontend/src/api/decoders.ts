@@ -23,12 +23,11 @@ import type {
   Review,
   Runtime,
   Session,
-  StageProgress,
-  StageName,
 } from './types';
 import { recordKinds, stageNames } from './types';
 import type { Decoder } from './validation';
-import { decodePredictionSummary } from './predictionDecoders';
+import { decodeDescriptorSummary, decodePredictionSummary } from './predictionDecoders';
+import { decodeAdmetStage, decodeCoreStage, decodeStageOrder } from './stageDecoders';
 import { activityContextKey, decodeActivityColumns } from './activityColumnDecoders';
 import { decodeBBox as bbox } from './geometryDecoders';
 import { decodeActivitySourceKeys } from './activitySourceDecoders';
@@ -57,34 +56,6 @@ const recognition: Decoder<CompoundRecognition> = object({
   token_confidence: nullable(tokenConfidence),
   stereochemistry: nullable(decodeStereoEvidence),
 });
-const nonnegative: Decoder<number> = (input, path) => {
-  const value = number(input, path);
-  if (value < 0) throw new ContractError(path ?? '$');
-  return value;
-};
-const progressShape = object({
-  completed: count,
-  total: count,
-  cache_hits: count,
-  failures: count,
-  device: nullable(oneOf(['cpu', 'gpu'])),
-  peak_rss_mb: nullable(nonnegative),
-});
-const progress: Decoder<StageProgress> = (input, path = '$') => {
-  const value = progressShape(input, path);
-  if (
-    value.completed > value.total ||
-    value.cache_hits > value.completed ||
-    value.failures > value.completed
-  )
-    throw new ContractError(path ?? '$');
-  const fields = input as Record<string, unknown>;
-  if (!Object.hasOwn(fields, 'phase')) return value;
-  return {
-    ...value,
-    phase: nullable(oneOf(['recognition', 'properties']))(fields.phase, `${path}.phase`),
-  };
-};
 const healthShape = object({
   product: identity,
   schema: identity,
@@ -256,31 +227,16 @@ export const decodeCompound: Decoder<Compound> = (input, path = '$') => {
     ...(Object.hasOwn(fields, 'admet')
       ? { admet: nullable(decodePredictionSummary)(fields.admet, `${path}.admet`) }
       : {}),
+    ...(Object.hasOwn(fields, 'descriptors')
+      ? {
+          descriptors: nullable(decodeDescriptorSummary)(fields.descriptors, `${path}.descriptors`),
+        }
+      : {}),
     ...(Object.hasOwn(fields, 'correction')
       ? { correction: nullable(correctionMetadata)(fields.correction, `${path}.correction`) }
       : {}),
   };
 };
-const stageStatus = oneOf(['pending', 'running', 'ok', 'empty', 'failed', 'warnings']);
-const stageFields = {
-  status: stageStatus,
-  count: nullable(count),
-  duration_seconds: nullable(nonnegative),
-  progress: nullable(progress),
-  reused_checkpoint: nullable(boolean),
-};
-function stageDecoder<const T extends readonly StageName[]>(names: T) {
-  const shape = object({ name: oneOf(names), ...stageFields });
-  return (input: unknown, path = '$') => {
-    const stage = shape(input, path);
-    const fields = input as Record<string, unknown>;
-    if (!Object.hasOwn(fields, 'skipped')) return stage;
-    const skipped = count(fields.skipped, path + '.skipped');
-    if (skipped > 1_000_000) throw new ContractError(path + '.skipped');
-    return { ...stage, skipped };
-  };
-}
-const admetStage = stageDecoder(['admet']);
 const jobShape = object({
   id: string,
   project_id: string,
@@ -294,7 +250,7 @@ const jobShape = object({
   include_intermediates: defaulted(boolean, false),
   force: defaulted(boolean, false),
   task_note: defaulted(string, ''),
-  stages: array(stageDecoder(stageNames)),
+  stages: array(decodeCoreStage),
 });
 export const decodeJob: Decoder<Job> = (input, path = '$') => {
   const job = jobShape(input, path);
@@ -308,7 +264,10 @@ export const decodeJob: Decoder<Job> = (input, path = '$') => {
       ? { admet_only: boolean(fields.admet_only, `${path}.admet_only`) }
       : {}),
     ...(Object.hasOwn(fields, 'admet_stage')
-      ? { admet_stage: nullable(admetStage)(fields.admet_stage, `${path}.admet_stage`) }
+      ? { admet_stage: nullable(decodeAdmetStage)(fields.admet_stage, `${path}.admet_stage`) }
+      : {}),
+    ...(Object.hasOwn(fields, 'stage_order')
+      ? { stage_order: nullable(decodeStageOrder)(fields.stage_order, `${path}.stage_order`) }
       : {}),
   };
   if (
@@ -316,6 +275,11 @@ export const decodeJob: Decoder<Job> = (input, path = '$') => {
     (result.admet_only === true && (result.include_admet !== true || result.stages.length > 0))
   )
     throw new ContractError(path);
+  if (
+    result.stage_order != null &&
+    result.stage_order.length !== (result.admet_only === true ? 0 : stageNames.length)
+  )
+    throw new ContractError(`${path}.stage_order`);
   return result;
 };
 const resultsShape = object({

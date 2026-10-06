@@ -1,4 +1,4 @@
-import type { PredictionSummary } from './predictionTypes';
+import type { DescriptorSummary, PredictionSummary } from './predictionTypes';
 import type { PropertyOverrides } from './manualPropertyTypes';
 
 export interface Identity {
@@ -121,6 +121,7 @@ export interface Compound {
   review: Review | null;
   flags: string[];
   admet?: PredictionSummary | null;
+  descriptors?: DescriptorSummary | null;
   correction?: CorrectionMetadata | null;
 }
 export interface CorrectionMetadata {
@@ -189,6 +190,13 @@ export interface Stage {
   progress: StageProgress | null;
   reused_checkpoint: boolean | null;
   skipped?: number;
+  resource_wait?: ResourceWait | null;
+}
+export interface ResourceWait {
+  reason: 'memory';
+  required_mb: number;
+  available_mb: number;
+  waited_seconds: number;
 }
 export interface Job {
   id: string;
@@ -207,6 +215,7 @@ export interface Job {
   include_admet?: boolean;
   admet_only?: boolean;
   admet_stage?: (Stage & { name: 'admet' }) | null;
+  stage_order?: CoreStageName[] | null;
 }
 export interface JobOptions {
   include_intermediates?: boolean;

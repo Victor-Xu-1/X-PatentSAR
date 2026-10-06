@@ -1,11 +1,80 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { api } from '../src/api';
+import { decodeCompound } from '../src/api/decoders';
 import type { Job } from '../src/api/types';
 import { useResultsState } from '../src/features/workspace/useResultsState';
 import { compound, job, project, results } from './fixtures';
+import { descriptorSummary, predictionSummary } from './descriptor-fixtures';
 
 describe('current-run result ownership and stage synchronization', () => {
+  it('refreshes independent completed descriptors on existing job facts, never resource-wait ticks', async () => {
+    let data = results;
+    const read = vi.spyOn(api, 'results').mockImplementation(async () => data);
+    const reloadProject = vi.fn();
+    const current: Job = {
+      ...job,
+      include_admet: true,
+      admet_only: true,
+      stages: [],
+      stage_order: [],
+      admet_stage: {
+        name: 'admet',
+        status: 'running',
+        count: 0,
+        duration_seconds: null,
+        reused_checkpoint: false,
+        progress: null,
+        resource_wait: {
+          reason: 'memory',
+          required_mb: 2048,
+          available_mb: 512,
+          waited_seconds: 1,
+        },
+      },
+    };
+    const { result, rerender } = renderHook(
+      ({ current }) => useResultsState(project.id, '', vi.fn(), current, reloadProject),
+      { initialProps: { current } },
+    );
+    await waitFor(() => expect(result.current.resource.data).toBe(results));
+    read.mockClear();
+    reloadProject.mockClear();
+    rerender({
+      current: {
+        ...current,
+        admet_stage: {
+          ...current.admet_stage!,
+          resource_wait: { ...current.admet_stage!.resource_wait!, waited_seconds: 12 },
+        },
+      },
+    });
+    expect(read).not.toHaveBeenCalled();
+    expect(reloadProject).not.toHaveBeenCalled();
+    const row = decodeCompound({
+      ...compound,
+      descriptors: descriptorSummary,
+      admet: {
+        ...predictionSummary,
+        status: 'failed',
+        properties: [],
+        error: { code: 'model_failed', message: 'LogS failed' },
+      },
+    });
+    data = { ...results, items: [row] };
+    rerender({
+      current: {
+        ...current,
+        status: 'failed',
+        error: { code: 'model_failed', message: 'LogS failed' },
+        admet_stage: { ...current.admet_stage!, status: 'failed', count: 1, resource_wait: null },
+      },
+    });
+    await waitFor(() => expect(result.current.resource.data?.items[0]).toBe(row));
+    expect(read).toHaveBeenCalledOnce();
+    expect(reloadProject).toHaveBeenCalledOnce();
+    expect(result.current.resource.data?.items[0]?.admet?.status).toBe('failed');
+  });
   it('does not refresh upstream checkpoints for an unstarted terminal ADMET marker', async () => {
     const read = vi.spyOn(api, 'results').mockResolvedValue(results);
     const reloadProject = vi.fn();
