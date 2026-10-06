@@ -30,6 +30,18 @@ SUMMARY_STATUSES = {
 }
 
 
+def recorded_stage_order(summary: dict) -> list[str] | None:
+    value = summary.get("main_chain")
+    if (
+        isinstance(value, list)
+        and len(value) == len(STAGES)
+        and all(isinstance(v, str) for v in value)
+        and set(value) == set(STAGES)
+    ):
+        return value
+    return None
+
+
 def completed_stage_payloads(payloads: dict[str, Any]) -> dict[str, Any]:
     """Only the sole CLI's completed stages can publish current chemistry."""
     summary = payloads.get("summary")
@@ -135,7 +147,7 @@ def stages_from_summary(
         "qa": "count",
     }
     output = []
-    for name in STAGES:
+    for name in recorded_stage_order(summary) or STAGES:
         raw = steps.get(name, {})
         if not isinstance(raw, dict):
             raw = {}
@@ -173,6 +185,17 @@ def stages_from_summary(
                     if files is not None and name == "smiles" and status != "pending"
                     else None
                 ),
+                resource_wait=(
+                    read_resource_wait(files, name)
+                    if files and status == "running"
+                    else None
+                ),
             )
         )
     return output
+
+
+def read_resource_wait(files: SafeFiles, stage: str):
+    from .resource_progress import read_wait
+
+    return read_wait(files, stage)

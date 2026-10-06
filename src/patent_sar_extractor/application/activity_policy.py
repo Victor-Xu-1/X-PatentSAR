@@ -12,8 +12,9 @@ from patent_sar_extractor.contracts import (
     ACTIVITY_SCHEMA,
     ACTIVITY_SCHEMA_VERSION,
     artifact_identity,
-    artifact_identity_matches,
 )
+from patent_sar_extractor.core.activity_identity import normalize_compound
+from patent_sar_extractor.core.activity_join import activity_evidence_errors
 from patent_sar_extractor.core.activity_values import has_usable_activity_values
 
 logger = logging.getLogger("patent_sar_extractor")
@@ -30,17 +31,7 @@ def _normalize_cpd_label(value: str) -> str:
         re.IGNORECASE,
     ):
         return "Claim 1 compound"
-    match = re.search(
-        r"(?:compound|cpd|example|实施例|化合物)\s*[-:]?\s*(\d+(?:-\d+)?[A-Z]?)",
-        text,
-        re.IGNORECASE,
-    )
-    if match:
-        return f"Compound {match.group(1).upper()}"
-    bare = re.fullmatch(r"(\d+(?:-\d+)?[A-Z]?)", text, re.IGNORECASE)
-    if bare:
-        return f"Compound {bare.group(1).upper()}"
-    return text
+    return normalize_compound(text) or text
 
 
 def _expand_cpd_labels(value: str) -> list[str]:
@@ -54,18 +45,7 @@ def _expand_cpd_labels(value: str) -> list[str]:
     ):
         return []
 
-    expanded: list[str] = []
-    prefix_match = re.match(
-        r"^(?:compound|cpd|example|实施例|化合物)\s*[-:]?\s*(.+)$", text, re.IGNORECASE
-    )
-    if prefix_match and "/" in text:
-        for part in prefix_match.group(1).split("/"):
-            part = part.strip()
-            if re.fullmatch(r"\d+(?:-\d+)?[A-Z]?", part, re.IGNORECASE):
-                expanded.append(f"Compound {part.upper()}")
-        if expanded:
-            return list(dict.fromkeys(expanded))
-
+    # A composite printed row is not evidence that each child was measured.
     normalized = _normalize_cpd_label(text)
     return [normalized] if normalized else []
 
@@ -123,48 +103,31 @@ def _annotate_activity_payload(path: str) -> list[str]:
                 payload[key] = value
                 changed = True
         payload.setdefault("metadata", {})
-        if isinstance(payload["metadata"], dict):
-            if payload["metadata"].get("n_active_cpds") != len(active_cpds):
-                payload["metadata"]["n_active_cpds"] = len(active_cpds)
-                changed = True
+        if isinstance(payload["metadata"], dict) and payload["metadata"].get(
+            "n_active_cpds"
+        ) != len(active_cpds):
+            payload["metadata"]["n_active_cpds"] = len(active_cpds)
+            changed = True
         if changed:
             _write_json(path, payload)
     return active_cpds
 
 
 def _activity_acceptance_errors(
-    activity_payload: dict, active_cpds: list[str]
+    activity_payload: dict,
+    active_cpds: list[str],
+    *,
+    classified_activity_pages: list[int] | None = None,
 ) -> list[str]:
-    if not isinstance(activity_payload, dict):
-        return ["Activity extraction output is missing or malformed."]
-    errors = []
-    if not artifact_identity_matches(
-        activity_payload, ACTIVITY_SCHEMA, ACTIVITY_SCHEMA_VERSION
-    ):
+    """Compatibility facade; the shared source evidence policy is authority."""
+    try:
+        errors = activity_evidence_errors(activity_payload, classified_activity_pages)
+    except (ValueError, TypeError) as exc:
+        return [str(exc)]
+    if active_cpds != _extract_active_cpds(activity_payload):
         errors.append(
-            "Activity output does not match the current activity schema and ruleset."
+            "Activity metadata differs from the actual measured observations."
         )
-    rows = activity_payload.get("rows", [])
-    if not isinstance(rows, list) or not rows:
-        errors.append(
-            "No activity rows were extracted; downstream structure binding is not allowed."
-        )
-        return errors
-    active_set = set(active_cpds)
-    review_cpds = [
-        _normalize_cpd_label(row.get("cpd", ""))
-        for row in rows
-        if isinstance(row, dict)
-        and row.get("needs_review")
-        and _has_activity_payload(row)
-        and any(cpd in active_set for cpd in _expand_cpd_labels(row.get("cpd", "")))
-    ]
-    if review_cpds:
-        errors.append(
-            f"Activity rows require review before binding ({review_cpds[:12]})."
-        )
-    if not active_cpds:
-        errors.append("No compound with usable activity values was extracted.")
     if len(active_cpds) != len(set(active_cpds)):
         errors.append("Active compound list contains duplicate identifiers.")
     return errors

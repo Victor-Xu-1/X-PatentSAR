@@ -1,9 +1,12 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { decodeJob } from '../src/api/decoders';
 import { StageStrip } from '../src/features/jobs/StageStrip';
+import { JobActions } from '../src/features/jobs/JobActions';
+import { ExtractionNotice } from '../src/features/results/ExtractionNotice';
 import type { Job } from '../src/api/types';
 import { stageNames } from '../src/api/types';
-import { job } from './fixtures';
+import { job, project } from './fixtures';
 
 const labels = [
   '文档解析',
@@ -24,6 +27,102 @@ function openStages(current: Job) {
 }
 
 describe('actual core then source-completion/six-property task chain', () => {
+  it('uses the supplied source-first order, then the existing configured research slot', () => {
+    const stage_order = [
+      'classify',
+      'locate',
+      'structures',
+      'bind',
+      'activity',
+      'smiles',
+      'final',
+      'qa',
+    ];
+    const current = decodeJob({ ...full, stage_order });
+    const stages = openStages(current);
+    expect(stages.map((stage) => stage.querySelector('strong')?.textContent)).toEqual([
+      '文档解析',
+      '结构定位',
+      '结构分割',
+      '编号绑定',
+      '活性提取',
+      'SMILES 识别',
+      '生成结果',
+      '核心校验',
+      'ADMET / 指标',
+    ]);
+    expect(current.admet_stage).toBeNull();
+    expect(screen.queryByText(/0 \/ 0|缓存命中/)).not.toBeInTheDocument();
+  });
+  it('chooses the next supplied slot for the compact caption without creating producer facts', () => {
+    const stage_order = [
+      'classify',
+      'locate',
+      'structures',
+      'bind',
+      'activity',
+      'smiles',
+      'final',
+      'qa',
+    ];
+    const current = decodeJob({
+      ...full,
+      stage_order,
+      stages: full.stages.map((stage) => ({
+        ...stage,
+        status: stage.name === 'classify' ? 'ok' : 'pending',
+      })),
+    });
+    openStages(current);
+    expect(document.querySelector('.stage-current')).toHaveTextContent('结构定位 · 等待');
+    expect(screen.queryByText(/0 \/ 0|缓存命中/)).not.toBeInTheDocument();
+  });
+  it('honors another actual supplied order rather than hardcoding a new frontend pipeline', () => {
+    const current = decodeJob({
+      ...full,
+      stage_order: [...stageNames].reverse(),
+      include_admet: false,
+    });
+    const stages = openStages(current);
+    expect(stages.map((stage) => stage.querySelector('strong')?.textContent)).toEqual(
+      labels.slice(0, 8).reverse(),
+    );
+  });
+  it('keeps rejected core acceptance failed when independent research has completed', () => {
+    const current: Job = {
+      ...full,
+      status: 'failed',
+      error: { code: 'core_not_accepted', message: 'Core not accepted' },
+      stages: full.stages.map((stage) => ({
+        ...stage,
+        status: stage.name === 'qa' ? 'warnings' : 'ok',
+      })),
+      admet_stage: {
+        name: 'admet',
+        status: 'ok',
+        count: 5,
+        duration_seconds: 1,
+        progress: null,
+        reused_checkpoint: false,
+      },
+    };
+    render(
+      <>
+        <StageStrip job={current} compact />
+        <JobActions project={project} job={current} ready onChange={vi.fn()} compact />
+        <ExtractionNotice
+          project={{ ...project, acceptance: { state: 'failed', errors: [] } }}
+          job={current}
+        />
+      </>,
+    );
+    expect(document.querySelector('.stage-current')).toHaveTextContent('需复核');
+    expect(document.querySelector('.job-actions .badge')).toHaveTextContent('需复核');
+    expect(screen.getByLabelText('提取验收与阻塞状态')).toHaveTextContent('提取未通过验收');
+    expect(screen.queryByText('运行完成')).not.toBeInTheDocument();
+    expect(screen.queryByText('核心 QA 通过')).not.toBeInTheDocument();
+    expect(current.status).toBe('failed');
+  });
   it('shows the complete declared default path before ADMET starts without inventing observations', () => {
     const stages = openStages(full);
     expect(stages.map((stage) => stage.querySelector('strong')?.textContent)).toEqual(labels);

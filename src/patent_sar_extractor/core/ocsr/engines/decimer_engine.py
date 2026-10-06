@@ -13,6 +13,7 @@ from patent_sar_extractor.core.env_runner import (
     configured_model_environment,
     get_python,
 )
+from patent_sar_extractor.core.ocsr.resource_budget import resident_budget_mb
 from patent_sar_extractor.core.ocsr.worker_process import (
     JsonLineWorker,
     WorkerProtocolError,
@@ -20,6 +21,7 @@ from patent_sar_extractor.core.ocsr.worker_process import (
     validate_observation_metadata,
 )
 from patent_sar_extractor.core.runtime_env import build_gpu_env
+from patent_sar_extractor.resource_admission import wait_for_memory
 
 from .base_engine import BaseOCSREngine
 
@@ -44,6 +46,8 @@ class DECIMEREngine(BaseOCSREngine):
         self._lock = threading.Lock()
         self._identity: dict | None = None
         self._starts = 0
+        self._requests = 0
+        self._worker_started = 0.0
         self._last_failure = ""
         self._identity_failure: str | None = None
         self._env_extra = dict(env_extra or {})
@@ -51,6 +55,12 @@ class DECIMEREngine(BaseOCSREngine):
     @property
     def worker_process(self):
         return self._worker.process if self._worker else None
+
+    @property
+    def session_exhausted(self) -> bool:
+        return bool(
+            self._identity_failure or (self._starts >= 2 and self._worker is None)
+        )
 
     def is_available(self) -> bool:
         return (
@@ -92,7 +102,12 @@ class DECIMEREngine(BaseOCSREngine):
         return self._identity
 
     def _start(self) -> None:
-        if self._worker and self._worker.process.poll() is None:
+        if (
+            self._worker
+            and self._worker.process.poll() is None
+            and self._requests < 100
+            and time.monotonic() - self._worker_started < 900
+        ):
             return
         self._stop()
         if self._starts >= 2:
@@ -100,10 +115,13 @@ class DECIMEREngine(BaseOCSREngine):
                 "OCSR bounded process restart budget exhausted: " + self._last_failure
             )
         identity = self.runtime_identity()
+        # A transient shortage is bounded waiting, not a consumed model restart.
+        wait_for_memory(min(resident_budget_mb(), 3072))
         self._starts += 1
         self._worker = JsonLineWorker(
             [self.python_bin, self.batch_wrapper_script], self._build_env()
         )
+        self._requests, self._worker_started = 0, time.monotonic()
         ready = self._worker.receive(120)
         if (
             ready.get("status") != "ready"
@@ -159,6 +177,10 @@ class DECIMEREngine(BaseOCSREngine):
                         "OCSR prediction model fingerprint mismatch"
                     )
                 validate_observation_metadata(output)
+                self._requests += 1
+                self._starts = (
+                    0  # A genuine protocol success restores the bounded restart budget.
+                )
                 return self._make_result(
                     status="success",
                     raw_smiles=smiles,

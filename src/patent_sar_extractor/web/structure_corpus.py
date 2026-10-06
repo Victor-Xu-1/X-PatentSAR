@@ -98,7 +98,7 @@ def unassociated_structures(
         )
         rows.append(
             {
-                "dto": dto.model_dump(exclude={"admet", "correction"}),
+                "dto": dto.model_dump(exclude={"admet", "descriptors", "correction"}),
                 "image_path": image_path,
                 "geometry_space": "rendered"
                 if structure.get("bbox_pdf")

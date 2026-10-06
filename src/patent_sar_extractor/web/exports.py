@@ -53,7 +53,10 @@ def _manual_change(row: Compound) -> bool:
 
 
 def _research_prediction(row: Compound) -> bool:
-    return bool(row.admet and row.admet.status == "complete")
+    return bool(
+        (row.admet and row.admet.status == "complete")
+        or (row.descriptors and row.descriptors.status == "complete")
+    )
 
 
 def _unassociated(row: Compound) -> bool:
@@ -80,6 +83,31 @@ ADMET_COLUMNS = [
     "admet_warnings",
     "admet_review_only",
 ]
+
+DESCRIPTOR_COLUMNS = [
+    "descriptor_status",
+    "descriptor_engine_version",
+    "descriptor_algorithm_sha256",
+    "descriptor_source_fingerprint",
+    "descriptor_smiles_sha256",
+    "descriptor_generated_at",
+    "descriptor_job_id",
+]
+
+
+def _descriptor_values(row: Compound) -> list[object]:
+    observation = row.descriptors
+    if observation is None:
+        return ["not_run", *([None] * 6)]
+    return [
+        observation.status,
+        observation.engine.version if observation.engine else None,
+        observation.engine.algorithm_sha256 if observation.engine else None,
+        observation.source_fingerprint,
+        observation.smiles_sha256,
+        observation.generated_at,
+        observation.job_id,
+    ]
 
 
 def _admet_values(row: Compound) -> list[object]:
@@ -123,7 +151,7 @@ def export_json(project: Project, rows: list[Compound]) -> Iterator[bytes]:
         ),
         "manual_corrections": sum(_manual_change(row) for row in rows),
         "admet_observations": sum(_research_prediction(row) for row in rows),
-        "formal_acceptance_scope": "original_activity_association_only",
+        "formal_acceptance_scope": "proved_printed_identifier_structure_corpus",
         "structure_only": sum(row.record_kind == "structure_only" for row in rows),
         "activity_only": sum(row.record_kind == "activity_only" for row in rows),
     }
@@ -174,6 +202,7 @@ def export_csv(project: Project, rows: list[Compound]) -> Iterator[bytes]:
             "record_kind",
         ]
         + ADMET_COLUMNS
+        + DESCRIPTOR_COLUMNS
         + ["manual_property_keys", "property_basis_smiles", "structure_molfile_json"]
     )
     review_only = project.acceptance.state != "accepted" or any(
@@ -203,6 +232,7 @@ def export_csv(project: Project, rows: list[Compound]) -> Iterator[bytes]:
                 row.record_kind,
             ]
             + _admet_values(row)
+            + _descriptor_values(row)
             + [
                 "; ".join(
                     key for key in METRIC_KEYS if key in manual_property_values(row)

@@ -38,9 +38,8 @@ def execute_locate(state: PipelineContext) -> None:
     locate_fp = _step_fingerprint(
         step,
         pdf_path=state.args.pdf,
-        dependencies=[state.classify_json, state.act_json, state.ocr_cache_path],
+        dependencies=[state.classify_json, state.ocr_cache_path],
         params={
-            "active_cpds": state.active_cpds,
             "locate_workers": int(getattr(state.args, "locate_workers", 1) or 1),
             "structure_locator_contract_version": _STRUCTURE_LOCATOR_CONTRACT_VERSION,
             "structure_coverage_policy": STRUCTURE_COVERAGE_POLICY,
@@ -54,7 +53,7 @@ def execute_locate(state: PipelineContext) -> None:
         state.locator = locate_structure_pages(
             state.args.pdf,
             state.classification,
-            state.active_cpds,
+            [],
             state.locate_json,
             workers=int(getattr(state.args, "locate_workers", 1) or 1),
             ocr_cache_path=state.ocr_cache_path,

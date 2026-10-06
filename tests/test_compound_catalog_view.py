@@ -64,7 +64,8 @@ class CompoundCatalogViewTests(PredictionFixture, unittest.TestCase):
             b"".join(export_json(self.service.project(self.project.id), results.items))
         )
         self.assertEqual(
-            exported["formal_acceptance_scope"], "original_activity_association_only"
+            exported["formal_acceptance_scope"],
+            "proved_printed_identifier_structure_corpus",
         )
 
     def test_zero_activity_still_retains_confirmed_printed_identifiers(self):

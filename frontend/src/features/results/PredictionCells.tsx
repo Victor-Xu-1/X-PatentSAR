@@ -1,6 +1,7 @@
 import type { Compound } from '../../api/types';
 import { METRIC_SPECS } from '../../api/predictionTypes';
-import { effectiveProperty } from '../../model/propertyValues';
+import type { PredictionMetric } from '../../api/predictionTypes';
+import { effectiveProperty, propertyObservation } from '../../model/propertyValues';
 
 const statusLabels = {
   not_run: '未计算',
@@ -19,14 +20,14 @@ export function PredictionCells({
   row: Compound;
   visibleColumns?: ReadonlySet<string> | undefined;
 }) {
-  const prediction = row.admet;
-  const status = prediction?.status ?? 'not_run';
   return (
     <>
       {METRIC_SPECS.filter(
         (spec) => !visibleColumns || visibleColumns.has(`property:${spec.key}`),
       ).map((spec) => {
         const metric = effectiveProperty(row, spec.key);
+        const prediction = propertyObservation(row, spec.key);
+        const status = prediction?.status ?? 'not_run';
         const label = statusLabels[status];
         return (
           <td
@@ -60,27 +61,48 @@ export function PredictionCells({
   );
 }
 
+function ObservedMetrics({ properties }: { properties: PredictionMetric[] }) {
+  return (
+    <dl>
+      {properties.map((metric) => (
+        <div key={metric.key}>
+          <dt>{metric.label}</dt>
+          <dd>
+            {metric.value} {metric.unit}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 export function PredictionEvidence({ row }: { row: Compound }) {
   const prediction = row.admet;
+  const descriptors = row.descriptors;
   return (
     <details className="prediction-evidence">
-      <summary>六项指标 · {statusLabels[prediction?.status ?? 'not_run']}</summary>
+      <summary>
+        {descriptors
+          ? `五项计算 · ${statusLabels[descriptors.status]}；LogS · ${statusLabels[prediction?.status ?? 'not_run']}`
+          : `六项指标 · ${statusLabels[prediction?.status ?? 'not_run']}`}
+      </summary>
       <p className="muted">
         MW、LogP、TPSA、HBD、HBA 为结构计算；LogS 为模型预测，均不是专利实测数据。
       </p>
       {prediction?.error && <p className="error-notice">{prediction.error.message}</p>}
+      {descriptors?.error && <p className="error-notice">{descriptors.error.message}</p>}
+      {descriptors?.status === 'complete' && (
+        <>
+          <ObservedMetrics properties={descriptors.properties} />
+          <p className="muted">
+            {descriptors.engine?.name} {descriptors.engine?.version} · {descriptors.generated_at}
+          </p>
+          <p className="muted">算法校验：{descriptors.engine?.algorithm_sha256}</p>
+        </>
+      )}
       {prediction?.status === 'complete' && (
         <>
-          <dl>
-            {prediction.properties.map((metric) => (
-              <div key={metric.key}>
-                <dt>{metric.label}</dt>
-                <dd>
-                  {metric.value} {metric.unit}
-                </dd>
-              </div>
-            ))}
-          </dl>
+          <ObservedMetrics properties={prediction.properties} />
           <p className="muted">
             {prediction.engine?.name} {prediction.engine?.version} · {prediction.generated_at}
           </p>

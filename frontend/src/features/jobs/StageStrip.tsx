@@ -1,6 +1,6 @@
 import { Check, CircleAlert, LoaderCircle } from 'lucide-react';
 import type { Job } from '../../api/types';
-import { jobStatusLabels } from '../../model/presentation';
+import { jobStatusText } from '../../model/presentation';
 import {
   completeCoreStages,
   observedStages,
@@ -8,6 +8,7 @@ import {
   stageStatusText,
   stoppedJob,
   waitingAdmet,
+  waitingResources,
   workflowStageNames,
 } from '../../model/extraction';
 import { StageObservation } from './StageObservation';
@@ -72,6 +73,9 @@ export function StageStrip({ job, compact = false }: { job: Job | null; compact?
     );
 
   const active =
+    (!stoppedJob(job)
+      ? stages.find((stage) => stage.status === 'running' || waitingResources(job, stage))
+      : undefined) ??
     stages.find((stage) => stage.status === 'failed') ??
     stages.find((stage) => stage.status === 'running') ??
     stages.find((stage) => stage.status === 'pending');
@@ -89,13 +93,15 @@ export function StageStrip({ job, compact = false }: { job: Job | null; compact?
       ? job.history_available === false
         ? '历史阶段不可用'
         : '阶段状态未知'
-      : job.status === 'complete' && !missingResearch
-        ? current?.name === 'admet' && current.status === 'empty'
-          ? `${stageLabel(current.name, current)} · 未计算`
-          : jobStatusLabels[job.status]
-        : currentName
-          ? `${stageLabel(currentName, current)} · ${stageStatusText(job, current, currentName)}`
-          : jobStatusLabels[job.status];
+      : job.status === 'failed' && job.error?.code === 'core_not_accepted'
+        ? jobStatusText(job)
+        : job.status === 'complete' && !missingResearch
+          ? current?.name === 'admet' && current.status === 'empty'
+            ? `${stageLabel(current.name, current)} · 未计算`
+            : jobStatusText(job)
+          : currentName
+            ? `${stageLabel(currentName, current)} · ${stageStatusText(job, current, currentName)}`
+            : jobStatusText(job);
   const progress = current?.progress;
   return (
     <details className="stage-overview stage-disclosure">

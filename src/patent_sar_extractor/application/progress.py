@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from patent_sar_extractor.artifact_io import write_json_atomic
@@ -24,6 +25,8 @@ class PipelineProgress:
         if stage not in self._log["main_chain"]:
             raise ValueError("Unknown extraction stage")
         self._stage = stage
+        os.environ["PATENTSAR_PROGRESS_ROOT"] = str(self._root.resolve())
+        os.environ["PATENTSAR_PROGRESS_STAGE"] = stage
         self._reused = False
         self._log["steps"][stage] = {"status": "running"}
         write_json_atomic(self._root / "pipeline_summary.json", self._log)

@@ -19,6 +19,7 @@ from patent_sar_extractor import contracts as core
 from .admet_history import read_admet_stage, seal_admet_stage, write_admet_stage
 from .attempts import ATTEMPT_VERSION, spec_record
 from .checkpoints import LiveCheckpoints
+from .core_research_policy import completed_qa_rejection
 from .errors import WebError
 from .files import SafeFiles, private_directory
 from .job_phases import OwnedPhase, PhaseResult
@@ -406,6 +407,9 @@ class JobQueue:
                 self.service.predictions.finish_job(
                     connection, job_id, "cancelled", None
                 )
+                self.service.descriptors.finish_job(
+                    connection, job_id, "cancelled", None
+                )
             elif row["status"] == "running":
                 connection.execute(
                     "UPDATE jobs SET cancel_requested=1 WHERE id=?", (job_id,)
@@ -430,7 +434,7 @@ class JobQueue:
         ):
             return
         stamp = now()
-        self._seal(row, status, stamp)
+        self._seal(row, status, stamp, error)
         with self.store.connect(write=True) as connection:
             connection.execute(
                 "UPDATE jobs SET status=?,finished_at=?,error=?,identity=CASE WHEN ? THEN NULL ELSE identity END WHERE id=?",
@@ -443,8 +447,11 @@ class JobQueue:
                 ),
             )
             self.service.predictions.finish_job(connection, job_id, status, error)
+            self.service.descriptors.finish_job(connection, job_id, status, error)
 
-    def _seal(self, row: dict[str, Any], status: str, stamp: str) -> None:
+    def _seal(
+        self, row: dict[str, Any], status: str, stamp: str, error: Error | None = None
+    ) -> None:
         # Core facts must be sealed independently: an unavailable research
         # envelope must never skip or overwrite the immutable eight-stage log.
         try:
@@ -458,7 +465,20 @@ class JobQueue:
         try:
             root = self.service.attempts.output(row)
             if root is not None and spec_record(row["spec"]).get("include_admet"):
-                seal_admet_stage(self.store.root, root, row, status, stamp)
+                research_complete = bool(
+                    error
+                    and error.code == "core_not_accepted"
+                    and status == "failed"
+                    and completed_qa_rejection(root)
+                )
+                seal_admet_stage(
+                    self.store.root,
+                    root,
+                    row,
+                    status,
+                    stamp,
+                    research_complete=research_complete,
+                )
         except (WebError, OSError, ValueError) as exc:
             logger.warning(
                 "ADMET history unavailable for %s (%s)", row["id"], type(exc).__name__
@@ -605,6 +625,7 @@ class JobQueue:
             del content
             deadline = time.monotonic() + self.timeout
             core_completed = False
+            core_rejected = False
             if not spec.admet_only:
                 checkpoints = LiveCheckpoints(
                     Path(spec.output_dir), spec.project_id, self.service.refresh
@@ -613,7 +634,15 @@ class JobQueue:
                 # This is the sole terminal core projection. Never re-project
                 # after ADMET: doing so would invalidate its immutable source key.
                 self.service.refresh(spec.project_id)
-                if outcome.status != "complete" or not outcome.cleaned:
+                core_rejected = (
+                    spec.include_admet
+                    and outcome.status == "failed"
+                    and outcome.cleaned
+                    and completed_qa_rejection(Path(spec.output_dir))
+                )
+                if (
+                    outcome.status != "complete" and not core_rejected
+                ) or not outcome.cleaned:
                     self._finish(
                         job_id,
                         outcome.status,
@@ -626,9 +655,9 @@ class JobQueue:
                     return
                 project = self.store.project(spec.project_id)
                 snapshot = json.loads(project["snapshot"])
-                if (
-                    project["run_root"] != spec.output_dir
-                    or snapshot.get("acceptance", {}).get("state") != "accepted"
+                if project["run_root"] != spec.output_dir or (
+                    snapshot.get("acceptance", {}).get("state") != "accepted"
+                    and not core_rejected
                 ):
                     raise WebError(
                         409,
@@ -647,7 +676,17 @@ class JobQueue:
             if outcome.status == "complete" and outcome.cleaned:
                 self._confirm_predictions(job_id, spec)
             self._finish(
-                job_id, outcome.status, outcome.error, clear_identity=outcome.cleaned
+                job_id,
+                "failed"
+                if core_rejected and outcome.status == "complete"
+                else outcome.status,
+                Error(
+                    code="core_not_accepted",
+                    message="Qualified research values are available, but formal extraction QA requires review.",
+                )
+                if core_rejected and outcome.status == "complete"
+                else outcome.error,
+                clear_identity=outcome.cleaned,
             )
         except Exception as exc:
             logger.exception("Job %s failed at server boundary", job_id)
@@ -750,11 +789,21 @@ class JobQueue:
             ],
             molfiles={compound.id: compound.structure_molfile for compound in selected},
         )
+        calculations = self.service.descriptors.summaries(
+            spec.project_id,
+            [
+                (c.id, correction_source_fingerprint(project, raw[c.id]), c.smiles)
+                for c in selected
+            ],
+            molfiles={c.id: c.structure_molfile for c in selected},
+        )
         if (
             len(selected) != stage.progress.total
             or stage.skipped != skipped
             or len(results) != len(selected)
             or any(result.status != "complete" for result in results.values())
+            or len(calculations) != len(selected)
+            or any(result.status != "complete" for result in calculations.values())
             or sum(result.job_id != job_id for result in results.values())
             != stage.progress.cache_hits
         ):

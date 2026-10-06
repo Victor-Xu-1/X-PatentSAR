@@ -36,6 +36,7 @@ from .structure_cache import (
     _structure_chunk_fingerprint,
     _structure_chunk_size,
 )
+from .structure_window import execute_missing_windows
 from .worker_policy import (
     _gpu_env_extra,
 )
@@ -93,6 +94,7 @@ def execute_structures(state: PipelineContext) -> None:
         )
         if state.structure_pages and len(state.structure_pages) > chunk_size:
             chunk_payloads = []
+            missing_jobs = []
             chunks_dir = os.path.join(structures_dir, ".chunks")
             os.makedirs(chunks_dir, exist_ok=True)
             for chunk_index, start in enumerate(
@@ -124,48 +126,39 @@ def execute_structures(state: PipelineContext) -> None:
                     )
                     chunk_payloads.append(reusable_chunk)
                     continue
-                chunk_args = [
-                    "--pdf",
-                    state.args.pdf,
-                    "--output",
-                    chunk_output,
-                    "--patent-id",
-                    state.patent_id,
-                    "--pages",
-                    *[str(p) for p in chunk_pages],
-                ]
-                if state.locator.get("crop_regions"):
-                    chunk_args.extend(["--crop-regions", state.crop_regions_json])
                 print(
                     f"     … structure chunk {chunk_index + 1}/"
                     f"{(len(state.structure_pages) + chunk_size - 1) // chunk_size}: "
                     f"{len(chunk_pages)} pages",
                     flush=True,
                 )
-                chunk_metadata_path = os.path.join(chunk_output, "metadata.json")
-                previous_output = _worker_output_state(chunk_metadata_path)
-                proc = run_in_env(
-                    "decimer",
-                    structure_worker_script,
-                    args=chunk_args,
-                    timeout=1800,
-                    cwd=str(WORKING_ROOT),
-                    env_extra=_gpu_env_extra(
-                        "decimer", gpu_mode=getattr(state.args, "gpu_mode", "auto")
-                    ),
-                    stream_output=True,
+                missing_jobs.append(
+                    {
+                        "pages": chunk_pages,
+                        "output": chunk_output,
+                        "fingerprint": chunk_fingerprint,
+                    }
                 )
-                if proc.returncode != 0:
-                    raise RuntimeError(
-                        f"structure extraction failed in chunk {chunk_index + 1} "
-                        f"(pages={[p + 1 for p in chunk_pages]})"
-                    )
-                _require_updated_worker_output(chunk_metadata_path, previous_output)
-                chunk_meta = _load_json(chunk_metadata_path, {})
-                _write_step_manifest(
-                    os.path.join(chunk_output, "metadata.json"), chunk_fingerprint
-                )
-                chunk_payloads.append(chunk_meta)
+                chunk_payloads.append(chunk_output)
+            produced = execute_missing_windows(
+                missing_jobs,
+                runner=run_in_env,
+                pdf=state.args.pdf,
+                root=structures_dir,
+                script=structure_worker_script,
+                patent_id=state.patent_id,
+                crop_regions=state.crop_regions_json
+                if state.locator.get("crop_regions")
+                else "",
+                environment=_gpu_env_extra(
+                    "decimer", gpu_mode=getattr(state.args, "gpu_mode", "auto")
+                ),
+                cwd=str(WORKING_ROOT),
+            )
+            chunk_payloads = [
+                produced[item] if isinstance(item, str) else item
+                for item in chunk_payloads
+            ]
             structures_meta = _merge_structure_chunk_metadata(
                 state.patent_id,
                 chunk_payloads,

@@ -78,11 +78,22 @@ class AnalysisService:
         self._busy = threading.Lock()
         self._closed = threading.Event()
         self._runtime: tuple[str, dict[str, str]] | None = None
+        self._session_thread: int | None = None
+        self._session_directory: Path | None = None
+        self._warm = None
 
     def close(self) -> None:
         """Idempotent cancellation and verified cleanup; never stops extraction/other apps."""
         self._closed.set()
         self.runner.close()
+        if self._warm is not None:
+            if not self._busy.acquire(timeout=3):
+                raise WebError(
+                    503, "analysis_shutdown", "Owned model window is still stopping."
+                )
+            self._busy.release()
+            self._warm.close()
+            self._warm = None
 
     def configure(self, publish: Callable[[], AnalysisSettings]) -> None:
         """Publish verified paths only while no inference holds a settings snapshot."""
@@ -107,6 +118,10 @@ class AnalysisService:
 
     @contextmanager
     def _operation(self, cancel: threading.Event | None) -> Iterator[None]:
+        if self._session_thread == threading.get_ident():
+            self._check_cancel(cancel)
+            yield
+            return
         if not self._busy.acquire(blocking=False):
             raise WebError(
                 503,
@@ -142,6 +157,33 @@ class AnalysisService:
                 os.close(fd)
             self._busy.release()
 
+    @contextmanager
+    def prediction_session(self, cancel: threading.Event | None = None):
+        """One job holds the existing lease; a warm model is lazy and bounded."""
+        with (
+            self._operation(cancel),
+            tempfile.TemporaryDirectory(
+                prefix="model-window-", dir=self.cache.root
+            ) as directory,
+        ):
+            self._session_thread = threading.get_ident()
+            self._session_directory = Path(directory)
+            try:
+                yield
+            finally:
+                try:
+                    if self._warm is not None:
+                        try:
+                            self._warm.close()
+                        except WebError:
+                            self._closed.set()
+                            raise  # Retain exact ownership for an explicit close recheck.
+                        else:
+                            self._warm = None
+                finally:
+                    self._session_thread = None
+                    self._session_directory = None
+
     def _check_cancel(self, cancel: threading.Event | None) -> None:
         if self._closed.is_set() or (cancel is not None and cancel.is_set()):
             raise WebError(
@@ -160,6 +202,26 @@ class AnalysisService:
         *,
         crop: bytes | None = None,
     ) -> dict[str, Any]:
+        if (
+            self._session_thread == threading.get_ident()
+            and name == "admet_worker.py"
+            and isinstance(payload, dict)
+            and payload.get("mode") == "predict"
+        ):
+            from .model_session import ModelSession
+
+            assert self._session_directory is not None
+            if self._warm is None:
+                self._warm = ModelSession(
+                    [str(python), "-I", str(_WORKERS / name), "--jsonl"],
+                    cwd=self._session_directory,
+                    env=child_environment(
+                        self.settings, python, self._session_directory
+                    ),
+                    max_memory_bytes=self.runner.max_memory_bytes,
+                    shutdown=self._closed,
+                )
+            return self._warm.exchange(payload, timeout=timeout, cancel=cancel)
         with tempfile.TemporaryDirectory(
             prefix="worker-", dir=self.cache.root
         ) as directory:
@@ -334,7 +396,11 @@ class AnalysisService:
             try:
                 source_evidence = observe_stereo_symbols(data)
             except (OSError, ValueError) as exc:
-                raise WebError(422, "stereo_source_unavailable", "Source bond-symbol inspection failed; no model was loaded.") from exc
+                raise WebError(
+                    422,
+                    "stereo_source_unavailable",
+                    "Source bond-symbol inspection failed; no model was loaded.",
+                ) from exc
             python = executable(self.settings.decimer_python)
             identity = interpreter_key(python)
             model = decimer_model_key(self.settings.pystow_home)
@@ -352,7 +418,13 @@ class AnalysisService:
                     self._adapter_key("analysis_decimer_worker.py"),
                     *(
                         hashlib.sha256((_OCSR_MODULES / name).read_bytes()).hexdigest()
-                        for name in ("printed_model.py", "model_identity.py", "stereo_evidence.py", "bond_strokes.py", "smiles_qc.py")
+                        for name in (
+                            "printed_model.py",
+                            "model_identity.py",
+                            "stereo_evidence.py",
+                            "bond_strokes.py",
+                            "smiles_qc.py",
+                        )
                     ),
                 ]
             )
@@ -385,8 +457,14 @@ class AnalysisService:
                     "analysis_protocol",
                     "DECIMER did not confirm its engine version.",
                 ) from exc
-            checked = source_checked_qc(qc_smiles(result["raw_smiles"]), source_evidence)
-            smiles = recognized_smiles(result["raw_smiles"]) if checked["quality_flag"] == "ok" else None
+            checked = source_checked_qc(
+                qc_smiles(result["raw_smiles"]), source_evidence
+            )
+            smiles = (
+                recognized_smiles(result["raw_smiles"])
+                if checked["quality_flag"] == "ok"
+                else None
+            )
             response = recognition_response(
                 {
                     "compound_id": compound_id,

@@ -14,19 +14,9 @@ def resident_budget_mb() -> int:
 
 
 def check_model_headroom() -> None:
-    available = next(
-        (
-            int(line.split()[1])
-            for line in Path("/proc/meminfo").read_text().splitlines()
-            if line.startswith("MemAvailable:")
-        ),
-        None,
-    )
-    required = min(resident_budget_mb(), 3072) * 1024
-    if available is None or available < required:
-        raise RuntimeError(
-            "Insufficient free memory for DECIMER; release other workloads or retry later. No model was loaded."
-        )
+    from patent_sar_extractor.resource_admission import wait_for_memory
+
+    wait_for_memory(min(resident_budget_mb(), 3072))
 
 
 def worker_resident_mb(pid: int) -> float | None:

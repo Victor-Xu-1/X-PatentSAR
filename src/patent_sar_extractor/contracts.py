@@ -12,11 +12,21 @@ __version__: Final = "0.1.0"
 WEB_API_SCHEMA: Final = "patentsar.web-api"
 WEB_API_SCHEMA_VERSION: Final = 1
 
-PIPELINE_CONTRACT_NAME: Final = "patentsar.activity-led"
-PIPELINE_CONTRACT_VERSION: Final = "2.0.0"
+PIPELINE_CONTRACT_NAME: Final = "patentsar.structure-led"
+PIPELINE_CONTRACT_VERSION: Final = "3.0.0"
+CORE_STAGE_ORDER: Final = (
+    "classify",
+    "locate",
+    "structures",
+    "bind",
+    "activity",
+    "smiles",
+    "final",
+    "qa",
+)
 
 RULESET_NAME: Final = "patentsar.accuracy-first"
-RULESET_VERSION: Final = "2.0.4"
+RULESET_VERSION: Final = "2.1.0"
 
 RUN_SUMMARY_SCHEMA: Final = "patentsar.run-summary"
 RUN_SUMMARY_SCHEMA_VERSION: Final = 1
@@ -30,10 +40,10 @@ REVIEW_EXCERPT_METADATA_SCHEMA: Final = "patentsar.review-excerpt-metadata"
 REVIEW_EXCERPT_METADATA_SCHEMA_VERSION: Final = 1
 ACTIVITY_SCHEMA: Final = "patentsar.activity"
 ACTIVITY_SCHEMA_VERSION: Final = 1
-ACTIVITY_EXTRACTOR_VERSION: Final = "2"
-STRUCTURE_LOCATOR_VERSION: Final = "4"
-STRUCTURE_WORKER_VERSION: Final = "4"
-STRUCTURE_BINDER_VERSION: Final = "5"
+ACTIVITY_EXTRACTOR_VERSION: Final = "3"
+STRUCTURE_LOCATOR_VERSION: Final = "5"
+STRUCTURE_WORKER_VERSION: Final = "5"
+STRUCTURE_BINDER_VERSION: Final = "6"
 OCSR_OBSERVATION_VERSION: Final = "2"
 STEREO_EVIDENCE_VERSION: Final = 1
 DECIMER_ADAPTER_VERSION: Final = "1"
@@ -65,6 +75,7 @@ PAGE_OCR_COMPATIBLE_RULESETS: Final = (
     (RULESET_NAME, "2.0.1"),
     (RULESET_NAME, "2.0.2"),
     (RULESET_NAME, "2.0.3"),
+    (RULESET_NAME, "2.0.4"),
     (RULESET_NAME, RULESET_VERSION),
 )
 VISIBLE_LABEL_CACHE_SCHEMA: Final = "patentsar.visible-label-cache"

@@ -13,6 +13,7 @@ export function StageObservation({
   compact?: boolean;
 }) {
   const progress = stage?.progress;
+  const resourceWait = stage?.resource_wait;
   const label = stageLabel(name, stage);
   const state = stageStatusText(job, stage, name);
   return (
@@ -42,6 +43,14 @@ export function StageObservation({
         )}
       </summary>
       <div className="stage-observation-detail">
+        {resourceWait && (
+          <>
+            <p>
+              所需内存 {resourceWait.required_mb} MB · 可用 {resourceWait.available_mb} MB
+            </p>
+            <p>已等待 {resourceWait.waited_seconds} 秒</p>
+          </>
+        )}
         {compact && (
           <p>
             {state}

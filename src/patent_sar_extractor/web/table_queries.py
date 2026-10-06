@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-import re
 from collections.abc import Sequence
 from typing import Any
+
+from patent_sar_extractor.core.identifier_order import natural_identifier_key
 
 from .activity_rank_models import ActivityStrengthScale
 from .activity_rank_values import rank_value
@@ -132,10 +133,7 @@ def column_sort_key(value: Any, column: str) -> tuple[Any, ...]:
         # Printed IDs stay natural (8, 8A, 8B, 10), not lexical 1,10,100,2.
         return (
             0,
-            tuple(
-                (0, int(token)) if token.isdigit() else (1, token.casefold())
-                for token in re.split(r"([0-9]+)", str(value))
-            ),
+            natural_identifier_key(str(value)),
         )
     if parsed is not None:
         return 0, parsed[0], parsed[1]

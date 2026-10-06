@@ -1,4 +1,4 @@
-"""Single numbered source catalog; formal activity association is a consumer view."""
+"""Single numbered source catalog; activities are identifier-joined observations."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from patent_sar_extractor.contracts import (
 )
 
 from .binding_labels import _binding_label_key
+from .identifier_order import natural_identifier_key
 from .pipeline_rules import annotate_binding_accuracy
 
 
@@ -52,15 +53,13 @@ def compound_catalog(
             entries[label]["additional_sources"].append(checked)
             seen.add(structure_id)
 
-    def order(label: str) -> tuple[int, str]:
-        digits = "".join(value for value in label if value.isdigit())
-        return int(digits or 0), label
-
     return {
         "schema": schema_ref(COMPOUND_CATALOG_SCHEMA, COMPOUND_CATALOG_SCHEMA_VERSION),
         "authority": "printed_identifier_and_original_spatial_evidence",
-        "entries": [entries[key] for key in sorted(entries, key=order)],
+        "entries": [
+            entries[key] for key in sorted(entries, key=natural_identifier_key)
+        ],
         "numbered_compounds": len(entries),
         "source_observations": len(seen),
-        "formal_acceptance_scope": "original_activity_association_only",
+        "formal_acceptance_scope": "proved_printed_identifier_structure_corpus",
     }

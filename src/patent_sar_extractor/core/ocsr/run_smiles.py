@@ -110,13 +110,13 @@ def validate_strict_binding_input(input_path: str, bindings: list) -> list[str]:
     try:
         with open(input_path, "r", encoding="utf-8") as source:
             payload = json.load(source)
-    except Exception as exc:
+    except (OSError, ValueError) as exc:
         return [f"Strict OCSR could not read binding payload: {exc}"]
     if not artifact_identity_matches(payload, BINDINGS_SCHEMA, BINDINGS_SCHEMA_VERSION):
         return ["Binding input does not match the current bindings schema and ruleset."]
-    if payload.get("execution_mode") != "production_activity_led":
+    if payload.get("execution_mode") != "production_structure_led":
         return [
-            "Binding input was not produced by the production activity-led pipeline."
+            "Binding input was not produced by the production structure-led pipeline."
         ]
     final_bindings = payload.get("final_bindings", [])
     if (
@@ -211,8 +211,8 @@ def _load_structure_image_lookup(base_dir: str = "") -> dict[str, dict]:
         try:
             with open(metadata_path, "r", encoding="utf-8") as f:
                 payload = json.load(f)
-        except Exception:
-            continue
+        except (OSError, ValueError) as exc:
+            raise ValueError("Structure metadata lookup is unreadable") from exc
         records = payload.get("structures") if isinstance(payload, dict) else payload
         if not isinstance(records, list):
             continue
@@ -252,22 +252,25 @@ def _choose_ocsr_image_path(
     ).strip()
     rule = str(item.get("binding_rule") or "")
     source_sid = str(item.get("source_structure_id") or "").strip()
-    if structure_lookup and source_sid:
-        # Expanded strict-label crops are visual evidence crops; use the original
-        # segmented structure for OCSR when it is available.
-        if (
+    if (
+        structure_lookup
+        and source_sid
+        and (
             "expanded_strict_labels" in image_path
             or "merged_fragment" not in rule
             and str(item.get("expanded_from_fragment") or "")
+        )
+    ):
+        # Expanded strict-label crops are visual evidence crops; use the original
+        # segmented structure for OCSR when it is available.
+        source_rec = structure_lookup.get(source_sid) or {}
+        src_img = str(source_rec.get("image_path") or "").strip()
+        if (
+            _is_clean_segmented_structure(source_rec)
+            and src_img
+            and os.path.isfile(src_img)
         ):
-            source_rec = structure_lookup.get(source_sid) or {}
-            src_img = str(source_rec.get("image_path") or "").strip()
-            if (
-                _is_clean_segmented_structure(source_rec)
-                and src_img
-                and os.path.isfile(src_img)
-            ):
-                return src_img
+            return src_img
 
     source_path = str(item.get("source_image_path") or "").strip()
     if source_path and os.path.isfile(source_path):
@@ -307,23 +310,6 @@ def resolve_image_paths(bindings: list, base_dir: str = "") -> list:
                 item["ocsr_image_path"] = os.path.abspath(abs_path)
                 resolved.append(item)
                 continue
-
-            # Try to find the image in known output directories
-            filename = os.path.basename(img_path)
-            page_dir = os.path.dirname(img_path)
-            page_name = os.path.basename(page_dir)
-
-            # Search in artifacts/smiles_runs
-            for search_dir in [
-                os.path.join(WORKING_ROOT, "artifacts/smiles_runs"),
-                os.path.join(WORKING_ROOT, "data"),
-            ]:
-                for root, dirs, files in os.walk(search_dir):
-                    if filename in files and page_name in root:
-                        item["ocsr_image_path"] = os.path.join(root, filename)
-                        break
-                if os.path.isfile(item.get("ocsr_image_path", "")):
-                    break
 
         if img_path and os.path.isfile(img_path):
             item["ocsr_image_path"] = os.path.abspath(img_path)
@@ -380,8 +366,8 @@ def main():
     try:
         sys.stdout.reconfigure(line_buffering=True)
         sys.stderr.reconfigure(line_buffering=True)
-    except Exception:
-        pass
+    except (AttributeError, OSError):
+        sys.stderr.write("Output streams do not support line buffering.\n")
 
     parser = argparse.ArgumentParser(
         description="PatentSAR SMILES engine: convert structure images to SMILES"
@@ -648,7 +634,7 @@ def main():
         if "engine_attempts" in df.columns:
             df["engine_attempts"] = df["engine_attempts"].apply(json.dumps)
         df.to_csv(args.csv_output, index=False)
-    except Exception as e:
+    except (OSError, ValueError, TypeError) as e:
         print(f"Warning: CSV output failed: {e}")
 
     # Print summary

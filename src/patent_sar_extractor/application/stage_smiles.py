@@ -19,6 +19,11 @@ from patent_sar_extractor.contracts import (
     SMILES_SCHEMA_VERSION,
 )
 from patent_sar_extractor.core.env_runner import run_in_env
+from patent_sar_extractor.core.formal_structure import (
+    FORMAL_SCOPE,
+    SOURCE_EXECUTION_MODE,
+    coverage_errors,
+)
 from patent_sar_extractor.core.ocsr.engines.decimer_engine import DECIMEREngine
 from patent_sar_extractor.core.ocsr.recognition_inputs import (
     ordered_source_results,
@@ -36,9 +41,9 @@ from .pipeline_context import PipelineContext
 from .pipeline_io import (
     _elapsed_since,
     _owned_worker_outputs,
-    _save_log,
-    _write_accuracy_failure_marker,
 )
+from .recognition_budget import recognition_timeout
+from .scientific_status import retain_scientific_errors
 from .smiles_policy import (
     _smiles_acceptance_errors,
     _smiles_results_can_be_reused,
@@ -58,16 +63,29 @@ def execute_smiles(state: PipelineContext) -> None:
     t0 = time.time()
     smiles_dir = state.step_dirs[step]
     state.smiles_json = os.path.join(smiles_dir, "smiles_results.json")
-    if not state.active_cpds or state.n_bound == 0:
+    # Malformed ownership is technical failure; a known empty proved catalog
+    # remains a scientific rejection and does not start a model.
+    coverage_errors(state.bind_payload)
+    formal_inputs, supplemental = recognition_inputs(state.bind_payload)
+    if supplemental or len(formal_inputs) != state.n_bound:
+        raise ValueError("Recognition must uniformly cover the entire proved catalog")
+    if state.n_bound == 0:
         print(f"  ⏭ [{step}] 无需 SMILES，跳过")
-        _write_json(state.smiles_json, build_smiles_artifact([]))
+        _write_json(
+            state.smiles_json,
+            {
+                **build_smiles_artifact([]),
+                "binding_execution_mode": SOURCE_EXECUTION_MODE,
+                "formal_acceptance_scope": FORMAL_SCOPE,
+            },
+        )
         n_smiles = 0
         n_valid = 0
     worker_environment = (
         _gpu_env_extra(
             "smiles_engine", gpu_mode=getattr(state.args, "gpu_mode", "auto")
         )
-        if state.active_cpds and state.n_bound
+        if state.n_bound
         else {}
     )
     smiles_fp = _step_fingerprint(
@@ -80,7 +98,7 @@ def execute_smiles(state: PipelineContext) -> None:
             "decimer_runtime_fingerprint": DECIMEREngine(
                 env_extra=worker_environment
             ).runtime_identity()["fingerprint"]
-            if state.active_cpds and state.n_bound
+            if state.n_bound
             else None,
             "retry_normalization": True,
             "timeout": 300,
@@ -92,14 +110,16 @@ def execute_smiles(state: PipelineContext) -> None:
     )
     reuse_existing_smiles = False
     if (
-        state.active_cpds
-        and state.n_bound
+        state.n_bound
         and not state.force
         and _fingerprint_matches(state.smiles_json, smiles_fp)
     ):
         smiles_payload = _load_json(state.smiles_json, {})
         smiles_results = smiles_records(smiles_payload)
-        if smiles_artifact_is_current(smiles_payload):
+        if (
+            smiles_artifact_is_current(smiles_payload)
+            and smiles_payload.get("formal_acceptance_scope") == FORMAL_SCOPE
+        ):
             reuse_existing_smiles, reuse_errors = _smiles_results_can_be_reused(
                 smiles_results,
                 state.bind_payload,
@@ -127,7 +147,7 @@ def execute_smiles(state: PipelineContext) -> None:
             print(f"  ↻ [{step}] 已有结果未通过当前严格规则，重跑")
             for error in reuse_errors[:3]:
                 print(f"     - {error}")
-    if not reuse_existing_smiles and state.active_cpds and state.n_bound:
+    if not reuse_existing_smiles and state.n_bound:
         os.makedirs(smiles_dir, exist_ok=True)
         smiles_cache = os.path.join(smiles_dir, "smiles_cache.sqlite")
         if state.force and os.path.isfile(smiles_cache):
@@ -164,7 +184,7 @@ def execute_smiles(state: PipelineContext) -> None:
                 "smiles_engine",
                 smiles_worker_script,
                 args=smiles_args,
-                timeout=7200,
+                timeout=recognition_timeout(state.n_bound, state.started_monotonic),
                 env_extra=worker_environment,
                 stream_output=True,
             )
@@ -177,6 +197,10 @@ def execute_smiles(state: PipelineContext) -> None:
                 "SMILES worker returned an incompatible or diagnostic artifact."
             )
         smiles_results = smiles_records(smiles_payload)
+        if not ordered_source_results(formal_inputs, smiles_results):
+            raise RuntimeError(
+                "SMILES worker omitted or misassigned formal catalog observations"
+            )
         _, sources = recognition_inputs(state.bind_payload)
         if not ordered_source_results(sources, smiles_source_records(smiles_payload)):
             raise RuntimeError(
@@ -185,6 +209,19 @@ def execute_smiles(state: PipelineContext) -> None:
         all_results = [*smiles_results, *smiles_source_records(smiles_payload)]
         n_smiles = len(all_results)
         n_valid = sum(1 for r in all_results if r.get("OCSR_quality_flag") == "ok")
+        smiles_payload.update(
+            {
+                "binding_execution_mode": SOURCE_EXECUTION_MODE,
+                "formal_acceptance_scope": FORMAL_SCOPE,
+                "strict_coverage": {
+                    "expected_cpds": [row["cpd"] for row in formal_inputs],
+                    "expected_structure_ids": [
+                        row["structure_id"] for row in formal_inputs
+                    ],
+                },
+            }
+        )
+        _write_json(state.smiles_json, smiles_payload)
         _write_step_manifest(state.smiles_json, smiles_fp)
     smiles_payload = _load_json(state.smiles_json, {})
     smiles_results = smiles_records(smiles_payload)
@@ -199,21 +236,11 @@ def execute_smiles(state: PipelineContext) -> None:
         "valid": n_valid,
         "formal_total": len(smiles_results),
         "source_total": len(source_results),
+        "binding_execution_mode": SOURCE_EXECUTION_MODE,
+        "formal_acceptance_scope": FORMAL_SCOPE,
+        "output_updated": bool(state.pipeline_log["steps"][step].get("output_updated"))
+        or state.n_bound == 0,
     }
     print(f"     ✅ valid_smiles={n_valid}/{n_smiles}")
     smiles_errors = _smiles_acceptance_errors(smiles_results, state.bind_payload)
-    if smiles_errors:
-        state.pipeline_log["steps"][step]["status"] = (
-            "failed" if state.strict_gates else "warnings"
-        )
-        state.pipeline_log["steps"][step]["acceptance_errors"] = smiles_errors
-        if state.strict_gates:
-            state.pipeline_log["status"] = "failed_accuracy_gate"
-            _save_log(state.pipeline_log, state.base_dir)
-            _write_accuracy_failure_marker(state.base_dir, "smiles", smiles_errors)
-            raise RuntimeError(
-                "Strict SMILES acceptance gate failed: " + "; ".join(smiles_errors[:8])
-            )
-        print(
-            f"     ⚠ SMILES strict gate warnings={len(smiles_errors)}; continuing review-only partial run"
-        )
+    retain_scientific_errors(state, step, smiles_errors)

@@ -68,10 +68,13 @@ controls. A second server must not share an active workspace.
 
 ### Automatic six-property workbench
 
-New Web jobs request `include_admet=true`. Extraction must satisfy strict core
-QA and release its owned model process before the queue starts research prediction.
+New Web jobs request `include_admet=true`. Extraction releases its verified owned
+model process before research. Formal completion requires strict core QA. Only
+a fully executed, current QA rejection may enrich individually qualified rows;
+the task remains failed with `core_not_accepted`. Incomplete or technical failures
+do not enter this research path.
 The external pinned ADMET runtime is required for this complete Web workflow.
-Core CLI behavior stays separate and unchanged. Do not relabel an ADMET failure
+The CLI now uses the source-led stage order. Do not relabel an ADMET failure
 as full-job success just because core artifacts were already accepted.
 
 For existing projects, **列表选项 → 补齐结构与指标** queues the same ADMET-only job,
@@ -82,7 +85,9 @@ The same small progress strip shows both phases. Missing models/transport fail
 the job; rejected source chemistry remains explicit without invented SMILES or
 numbers. Explicit user graph corrections/blanks are not overwritten. Online graph corrections automatically queue
 only their affected compound. Coordinate/value-only edits and equivalent isomeric
-graphs do not call the model. Source/graph changes invalidate obsolete properties;
+graphs do not call the model. The first five RDKit properties publish separately
+before model loading, with independent source/graph/runtime/algorithm evidence;
+LogS failure retains these calculations, not old model numbers. Source/graph changes invalidate obsolete properties;
 reset uses a new correction revision. Incomplete model outputs are never shown
 as numeric placeholders. Large molecules/PROTAC predictions remain unvalidated
 research observations, not an efficacy/safety or exact-graph guarantee.
@@ -257,7 +262,7 @@ apply only to future installations and are not migrations or cleanup requests.
 - `stereo_source_unavailable`: unreadable/excessive source geometry failed the bounded screen before model loading. Correct input quality or source ownership, not memory limits or acceptance flags.
 - Unknown single/crossed-double manual MDL stays lossless in save/redraw/export. Explicit unresolved manual stereo cannot acquire a determinate model result from a previous graph. OR/AND and special stereo remain visibly unsupported. Plain-SMILES legacy research results are not proof of source stereo fidelity.
 
-New tasks use ruleset 2.0.4 while the product remains v0.1.0. Existing original
+New tasks use source-led pipeline 3.0.0 and ruleset 2.1.0 while the product remains v0.1.0. Existing original
 PDFs, model observations, QA and manual audits are retained; a new task uses current
 validation instead of relabelling historical results. Only original-SHA-verified
 raw OCR/model observations may be reused. Missing old stereo evidence stays unknown.
@@ -267,8 +272,8 @@ raw OCR/model observations may be reused. Missing old stereo evidence stays unkn
 - PaddleX endpoint unavailable: verify `PATENTSAR_PADDLEX_OCR_URL`; the pipeline must report the degraded OCR path rather than silently claiming equivalent evidence.
 - Strict acceptance failure: inspect `final_qa_report.json` and `STRICT_ACCEPTANCE_FAILED.json`. Do not manually edit generated tables to bypass the gate.
 - Reused stale data: current caches require an exact namespaced schema and content fingerprint. Rerun with `--force` to deliberately invalidate current stage outputs.
-- Repeated I-series source number: ruleset 2.0.1 preserves spatially separate occurrences and only corrects a unique, activity-supported gap. Inspect `authoritative_table_source_label` and the correction reason. Ambiguous or unsegmented competing occurrences fail closed; do not manually renumber outputs.
-- Long scanned-page text without coordinates: older RapidOCR cache generation omitted coordinates when text exceeded the native-text threshold. Ruleset 2.0.1 stores both from one inference and rejects previous manifest identities. Rerun rather than manually filling coordinate entries; native-text pages legitimately have no OCR coordinates.
+- Repeated printed source number: preserve spatially separate occurrences and inspect original cell/heading evidence. Activity membership, a missing number in a sequence or a similar structure cannot renumber a crop. Ambiguous/conflicting ownership remains unresolved and fails strict coverage; do not manually renumber generated outputs.
+- Long scanned-page text without coordinates: older RapidOCR generation omitted coordinates above a native-text threshold. The current observation path stores text and coordinates from one inference. Reuse requires validated original SHA, compatible raw cache identity and usable required geometry; otherwise rerun the observation stage. Never fill coordinates manually; native-text pages legitimately have no OCR coordinates.
 
 ## Concurrency and recovery
 
@@ -355,8 +360,8 @@ ring numbers or chiral tags to bypass a failure.
 The extraction-repair verification scope follows the affected chain: cell ownership
 and suffix/ambiguity unit regressions; real original-PDF binding and raw DECIMER
 inference; SQLite/API live-checkpoint and failure states; frontend run-switch,
-crop/source navigation and installed-wheel browser checks. Pass criteria are exact
-active-ID order, unique existing images, per-metric provenance, strict SMILES QC,
+crop/source navigation and installed-wheel browser checks. Pass criteria are complete
+proved printed-ID structure coverage, unique existing images, per-metric provenance, strict SMILES QC,
 and final deterministic acceptance. Optional research/ADMET analysis is not an
 alternative acceptance path and is outside this repair's scientific validation.
 

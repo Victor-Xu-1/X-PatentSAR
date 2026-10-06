@@ -21,7 +21,8 @@ class PredictionExportTests(PredictionFixture, unittest.TestCase):
         packet = json.loads(b"".join(export_json(project, compounds)))
         self.assertEqual(packet["acceptance"]["state"], "accepted")
         self.assertEqual(
-            packet["formal_acceptance_scope"], "original_activity_association_only"
+            packet["formal_acceptance_scope"],
+            "proved_printed_identifier_structure_corpus",
         )
         self.assertTrue(packet["review_only"])
         self.assertEqual(packet["admet_observations"], 1)

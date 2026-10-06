@@ -6,14 +6,10 @@ import logging
 import re
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
-    Tuple,
 )
 
 logger = logging.getLogger(__name__)
-
+from .activity_identity import printed_identifier_key
 
 _INTERMEDIATE_RE = re.compile(r"^Intermediate", re.IGNORECASE)
 
@@ -80,7 +76,7 @@ _ROUTE_TITLE_RE = re.compile(
 )
 
 
-def _is_intermediate(item: Dict) -> bool:
+def _is_intermediate(item: dict) -> bool:
     """判断一个化合物条目是否为 Intermediate（中间体）"""
     for key in ("prefix", "cpd_id", "cpd"):
         val = item.get(key, "")
@@ -89,7 +85,7 @@ def _is_intermediate(item: Dict) -> bool:
     return False
 
 
-def _filter_examples_only(items: List[Dict]) -> List[Dict]:
+def _filter_examples_only(items: list[dict]) -> list[dict]:
     """过滤掉 Intermediate，只保留 Example"""
     before = len(items)
     filtered = [item for item in items if not _is_intermediate(item)]
@@ -103,19 +99,19 @@ def _filter_examples_only(items: List[Dict]) -> List[Dict]:
 
 
 def _page_text_for_page_no(
-    pages_text: Optional[Dict[int, str]], page_no: int, include_next: bool = False
+    pages_text: dict[int, str] | None, page_no: int, include_next: bool = False
 ) -> str:
     """Return OCR text for a 1-based PDF page without crossing to the next page by accident."""
     if not pages_text:
         return ""
     try:
         page_no_int = int(page_no)
-    except Exception:
+    except (ValueError, TypeError, OverflowError):
         return ""
     keys = [page_no_int - 1]
     if include_next:
         keys.append(page_no_int)
-    parts: List[str] = []
+    parts: list[str] = []
     for key in keys:
         text = str((pages_text or {}).get(key, "") or "")
         if text.strip():
@@ -123,12 +119,12 @@ def _page_text_for_page_no(
     return "\n".join(parts)
 
 
-def _extract_chinese_compound_sequence(pages_text: Dict[int, str]) -> List[int]:
+def _extract_chinese_compound_sequence(pages_text: dict[int, str]) -> list[int]:
     """Extract ordered "(化合物N)" identifiers from OCR text."""
     text = "\n".join(pages_text.get(i, "") for i in sorted(pages_text))
     nums = [int(n) for n in re.findall(r"化合\s*物\s*(\d+)", text)]
     # Keep OCR order but remove adjacent duplicates from repeated headers.
-    ordered: List[int] = []
+    ordered: list[int] = []
     for n in nums:
         if not ordered or ordered[-1] != n:
             ordered.append(n)
@@ -136,7 +132,7 @@ def _extract_chinese_compound_sequence(pages_text: Dict[int, str]) -> List[int]:
 
 
 def _product_context_distance(
-    pages_text: Dict[int, str], page_no: int, compound_num: int
+    pages_text: dict[int, str], page_no: int, compound_num: int
 ) -> int:
     fuzzy = _ocr_confusable_num_pattern(compound_num)
     fuzzy_token = rf"(?<![\dA-Za-z]){fuzzy}(?![\dA-Za-z-])"
@@ -199,7 +195,7 @@ def _product_context_distance(
 
 
 def _page_has_product_context(
-    pages_text: Dict[int, str], page_no: int, compound_num: int
+    pages_text: dict[int, str], page_no: int, compound_num: int
 ) -> bool:
     return _product_context_distance(pages_text, page_no, compound_num) < 999
 
@@ -210,12 +206,12 @@ def _line_estimated_y(line_idx: int) -> float:
 
 def _product_anchor_lines_from_text(
     text: str, active_bases: set[int]
-) -> List[Tuple[int, float, str]]:
-    anchors: List[Tuple[int, float, str]] = []
-    colon_anchors: List[Tuple[int, float, str]] = []
+) -> list[tuple[int, float, str]]:
+    anchors: list[tuple[int, float, str]] = []
+    colon_anchors: list[tuple[int, float, str]] = []
     if not text:
         return anchors
-    seen: set[Tuple[int, int]] = set()
+    seen: set[tuple[int, int]] = set()
     for line_idx, line in enumerate(str(text).splitlines()):
         clean = re.sub(r"\s+", " ", line).strip()
         if not clean or re.search(r"中间体", clean):
@@ -258,9 +254,9 @@ def _product_anchor_lines_from_text(
                     colon_anchors.append(anchor)
 
     def _dedupe_latest_per_compound(
-        items: List[Tuple[int, float, str]],
-    ) -> List[Tuple[int, float, str]]:
-        latest: Dict[int, Tuple[int, float, str]] = {}
+        items: list[tuple[int, float, str]],
+    ) -> list[tuple[int, float, str]]:
+        latest: dict[int, tuple[int, float, str]] = {}
         for item in items:
             num, y0, _line = item
             if num not in latest or y0 >= latest[num][1]:
@@ -279,14 +275,14 @@ def _int_or_default(value: Any, default: int = 999) -> int:
         return default
     try:
         return int(value)
-    except Exception:
+    except (ValueError, TypeError, OverflowError):
         return default
 
 
 def _normalise_compound_label(text: str) -> str:
     text = text.strip()
     text = text.strip("()[]{}.,;:，。；：")
-    text = text.replace("—", "-").replace("–", "-").replace("_", "-")
+    text = text.replace("—", "-").replace("–", "-")
     if re.fullmatch(r"[1-9]\d*(?:-\d+)?[A-Z]?", text, re.IGNORECASE):
         text = text.upper()
     # NOTE: Do NOT auto-split "42" → "4-2". This caused many misbindings.
@@ -300,8 +296,8 @@ def _cpd_sort_key(value: str):
     return [int(part) if part.isdigit() else part.lower() for part in parts]
 
 
-def _labels_from_ocr_texts(ocr_texts: List[str]) -> List[str]:
-    labels: List[str] = []
+def _labels_from_ocr_texts(ocr_texts: list[str]) -> list[str]:
+    labels: list[str] = []
     for text in ocr_texts or []:
         for value in _labels_from_ocr_text(str(text or "")):
             if value not in labels:
@@ -309,7 +305,7 @@ def _labels_from_ocr_texts(ocr_texts: List[str]) -> List[str]:
     return labels
 
 
-def _labels_from_ocr_text(text: str) -> List[str]:
+def _labels_from_ocr_text(text: str) -> list[str]:
     """Return visible product-label tokens while preserving route step guards."""
     raw_text = str(text or "")
     blocked_spans = [
@@ -321,7 +317,7 @@ def _labels_from_ocr_text(text: str) -> List[str]:
         *blocked_spans,
         *[match.span(1) for match in _PRODUCT_VISIBLE_LABEL_RE.finditer(raw_text)],
     ]
-    labels: List[str] = []
+    labels: list[str] = []
     for match in _PRODUCT_VISIBLE_LABEL_RE.finditer(raw_text):
         span = match.span(1)
         if any(
@@ -345,9 +341,9 @@ def _labels_from_ocr_text(text: str) -> List[str]:
 
 
 def _nearby_ocr_label_kind(
-    struct: Dict,
+    struct: dict,
     label_key: str,
-    lines_by_page: Optional[Dict[int, List[Tuple[float, str]]]],
+    lines_by_page: dict[int, list[tuple[float, str]]] | None,
 ) -> str:
     """Classify a visual module's nearest OCR label as product or precursor."""
     if not label_key or not lines_by_page:
@@ -355,7 +351,7 @@ def _nearby_ocr_label_kind(
     page_idx = int(struct.get("page_no") or 0) - 1
     y0 = float(struct.get("y0") or 0)
     y1 = float(struct.get("y1") or y0)
-    best: Tuple[float, str] | None = None
+    best: tuple[float, str] | None = None
     label_pat = re.escape(label_key)
     for line_y, text in lines_by_page.get(page_idx, []):
         if not (y0 - 24 <= float(line_y) <= y1 + 28):
@@ -379,10 +375,10 @@ def _nearby_ocr_label_kind(
 
 
 def _nearby_exact_product_label(
-    struct: Dict,
+    struct: dict,
     label_key: str,
-    lines_by_page: Optional[Dict[int, List[Tuple[float, str]]]],
-    row: Optional[List[Dict]] = None,
+    lines_by_page: dict[int, list[tuple[float, str]]] | None,
+    row: list[dict] | None = None,
 ) -> str:
     """Return the nearest Cpd-style product label text for a structure."""
     if not label_key or not lines_by_page:
@@ -390,7 +386,7 @@ def _nearby_exact_product_label(
     page_idx = int(struct.get("page_no") or 0) - 1
     y0 = float(struct.get("y0") or 0)
     y1 = float(struct.get("y1") or y0)
-    labels: List[Tuple[float, float, str]] = []
+    labels: list[tuple[float, float, str]] = []
     for line_y, text in lines_by_page.get(page_idx, []):
         if not (y0 - 18 <= float(line_y) <= y1 + 40):
             continue
@@ -441,11 +437,11 @@ def _nearby_exact_product_label(
 
 
 def _passes_exact_visual_label_guard(
-    struct: Dict,
+    struct: dict,
     label_key: str,
-    lines_by_page: Optional[Dict[int, List[Tuple[float, str]]]],
-    row: Optional[List[Dict]] = None,
-) -> Tuple[bool, str]:
+    lines_by_page: dict[int, list[tuple[float, str]]] | None,
+    row: list[dict] | None = None,
+) -> tuple[bool, str]:
     """Fail closed when nearby visible Cpd labels prove a suffix mismatch."""
     exact_label = _nearby_exact_product_label(struct, label_key, lines_by_page, row=row)
     if exact_label and exact_label != label_key:
@@ -453,9 +449,9 @@ def _passes_exact_visual_label_guard(
     return True, exact_label
 
 
-def _split_pair_bases_from_text(text: str) -> List[int]:
+def _split_pair_bases_from_text(text: str) -> list[int]:
     """Return split-product bases visible in OCR text, e.g. 7 from 7-1 ... 7-2."""
-    bases: List[int] = []
+    bases: list[int] = []
     for m in _SPLIT_PAIR_RE.finditer(text.replace("\n", " ")):
         base = int(m.group(1))
         if base not in bases:
@@ -463,9 +459,9 @@ def _split_pair_bases_from_text(text: str) -> List[int]:
     return bases
 
 
-def _cpd_letter_pair_bases_from_text(text: str) -> List[int]:
+def _cpd_letter_pair_bases_from_text(text: str) -> list[int]:
     """Return bases from Cpd-N/Cpd-NA paired-product text."""
-    bases: List[int] = []
+    bases: list[int] = []
     compact = re.sub(r"\s+", " ", str(text or ""))
     for match in _CPD_LETTER_PAIR_RE.finditer(compact):
         base = int(match.group(1))
@@ -477,11 +473,11 @@ def _cpd_letter_pair_bases_from_text(text: str) -> List[int]:
 def _cpd_letter_pair_base_lines(
     page_no: int,
     page_text: str,
-    ocr_line_map: Optional[Dict[int, List[Tuple[float, str]]]] = None,
-) -> List[Tuple[int, Optional[float]]]:
+    ocr_line_map: dict[int, list[tuple[float, str]]] | None = None,
+) -> list[tuple[int, float | None]]:
     """Return Cpd-N/Cpd-NA pair bases with approximate heading y coordinates."""
     lines = (ocr_line_map or {}).get(page_no - 1) or []
-    found: List[Tuple[int, Optional[float]]] = []
+    found: list[tuple[int, float | None]] = []
     for idx, (y0, _text) in enumerate(lines):
         window = " ".join(text for _, text in lines[idx : idx + 3])
         if re.search(
@@ -501,8 +497,8 @@ def _cpd_letter_pair_base_lines(
 def _cpd_letter_pair_label_y(
     base: int,
     page_no: int,
-    lines_by_page: Optional[Dict[int, List[Tuple[float, str]]]],
-) -> Optional[float]:
+    lines_by_page: dict[int, list[tuple[float, str]]] | None,
+) -> float | None:
     """Return y for the printed Cpd-N/Cpd-NA product-label row."""
     if not lines_by_page:
         return None
@@ -536,7 +532,7 @@ def _cpd_letter_pair_label_y(
         line_text = str(text or "")
         if not single_left_re.search(line_text):
             continue
-        nearby_texts: List[str] = []
+        nearby_texts: list[str] = []
         for other_y, other_text in lines[idx : idx + 6]:
             if abs(float(other_y) - float(y0)) > 24.0:
                 break
@@ -554,34 +550,16 @@ def _cpd_letter_pair_label_y(
     return None
 
 
-def _binding_base_num(binding: Dict) -> Optional[int]:
+def _binding_base_num(binding: dict) -> int | None:
     """Return the parent compound number for de-duplicating mixed bind rules."""
     return _base_cpd_num(binding.get("compound_id") or binding.get("cpd") or "")
 
 
 def _cpd_label_key(value: str) -> str:
-    text = re.sub(r"\s+", " ", str(value or "")).strip()
-    if not text:
-        return ""
-    if text.upper() == "CLAIM1":
-        return "CLAIM1"
-    if re.fullmatch(
-        r"(?:claim\s*1\s+compound|claimed\s+compound|main\s+compound|single(?:ton)?\s+compound)",
-        text,
-        re.IGNORECASE,
-    ):
-        return "CLAIM1"
-    match = re.search(
-        r"(?:compound|cpd|example|实施例|化合物)?\s*[-:]?\s*([1-9]\d*(?:-\d+)?[A-Z]?)",
-        text,
-        re.IGNORECASE,
-    )
-    if match:
-        return match.group(1).upper()
-    return ""
+    return printed_identifier_key(value)
 
 
-def _binding_label_key(binding: Dict) -> str:
+def _binding_label_key(binding: dict) -> str:
     return _cpd_label_key(
         binding.get("compound_id")
         or binding.get("cpd")
@@ -590,11 +568,11 @@ def _binding_label_key(binding: Dict) -> str:
     )
 
 
-def _active_label_keys(active_cpds: Optional[List[str]]) -> set[str]:
+def _active_label_keys(active_cpds: list[str] | None) -> set[str]:
     return {key for key in (_cpd_label_key(cpd) for cpd in (active_cpds or [])) if key}
 
 
-def _visible_label_keys_for_binding(binding: Dict) -> set[str]:
+def _visible_label_keys_for_binding(binding: dict) -> set[str]:
     keys: set[str] = set()
     if binding.get("visible_label"):
         key = _cpd_label_key(str(binding.get("visible_label") or ""))
@@ -607,7 +585,7 @@ def _visible_label_keys_for_binding(binding: Dict) -> set[str]:
     return keys
 
 
-def _strict_visible_label_keys_for_binding(binding: Dict) -> set[str]:
+def _strict_visible_label_keys_for_binding(binding: dict) -> set[str]:
     keys: set[str] = set()
     for candidate in binding.get("visible_label_candidates") or []:
         source = str(candidate.get("source") or "")
@@ -627,7 +605,7 @@ def _strict_visible_label_keys_for_binding(binding: Dict) -> set[str]:
 
 
 def _visual_label_keys_for_binding(
-    binding: Dict,
+    binding: dict,
     *,
     include_wide: bool = True,
 ) -> set[str]:
@@ -679,9 +657,9 @@ def _is_short_internal_visible_key(target_key: str, visible_key: str) -> bool:
 
 
 def _route_title_numbers_from_text(
-    page_text: str, active_keys: Optional[set[str]] = None
-) -> List[str]:
-    labels: List[str] = []
+    page_text: str, active_keys: set[str] | None = None
+) -> list[str]:
+    labels: list[str] = []
     for match in _ROUTE_TITLE_RE.finditer(str(page_text or "")):
         key = _cpd_label_key(match.group(1))
         if not key:
@@ -693,12 +671,12 @@ def _route_title_numbers_from_text(
     return labels
 
 
-def _labels_near_structure(words: List[Dict], struct: Dict) -> List[str]:
+def _labels_near_structure(words: list[dict], struct: dict) -> list[str]:
     x0, x1 = float(struct["x0"]), float(struct.get("x1", struct["x0"]))
     y1 = float(struct.get("y1", struct["y0"]))
     cx = (x0 + x1) / 2
     width = max(25.0, x1 - x0)
-    labels: List[str] = []
+    labels: list[str] = []
     for word in words:
         label = _normalise_compound_label(word["text"])
         dx = abs(float(word["x"]) - cx)
@@ -709,7 +687,7 @@ def _labels_near_structure(words: List[Dict], struct: Dict) -> List[str]:
     return labels
 
 
-def _base_cpd_num(value: str) -> Optional[int]:
+def _base_cpd_num(value: str) -> int | None:
     m = re.search(r"(\d+)", str(value or ""))
     return int(m.group(1)) if m else None
 
@@ -720,7 +698,7 @@ def _ocr_confusable_num_pattern(num: int | str) -> str:
     This is meant for Chinese heading/product contexts only. A leading 5 is
     commonly read as S/s/$, and 1/2 can be read as l/I/z in scanned patents.
     """
-    pieces: List[str] = []
+    pieces: list[str] = []
     for ch in str(num):
         if ch == "5":
             pieces.append(r"[5S＄$s]")

@@ -34,6 +34,11 @@ export const jobStatusLabels: Record<Job['status'], string> = {
   cancelled: '已取消',
   interrupted: '已中断',
 };
+export function jobStatusText(job: Job): string {
+  return job.status === 'failed' && job.error?.code === 'core_not_accepted'
+    ? '需复核'
+    : jobStatusLabels[job.status];
+}
 export const acceptanceLabels: Record<AcceptanceState, string> = {
   not_run: '尚未验收',
   accepted: '核心 QA 通过',

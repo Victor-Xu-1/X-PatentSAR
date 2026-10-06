@@ -261,11 +261,15 @@ legacy callers, never a synthesized successful observation.
 - `Job.admet_stage` is a nullable actual/sealed research-stage DTO with name
   `admet`; `stages` remains the eight formal core stages (empty for ADMET-only).
   Full-job completion requires accepted core QA, verified core cleanup and every
-  eligible current source-bound prediction. Model failure/cancel/recovery cannot borrow old
+  eligible current calculation and prediction. A fully executed current core
+  QA rejection can finish qualified research, but remains failed with
+  `error.code="core_not_accepted"`; technical/incomplete core cannot enter it.
+  Model failure/cancel/recovery cannot borrow old
   values or completed stage history.
 - `Stage.skipped` counts missing-SMILES sources separately from eligible
   progress.total. An empty ADMET stage has zero counters and no inference;
-  unavailable source rows retain no numeric properties. A failed or invalid
+  unavailable source rows retain no invented numeric properties. Independently
+  completed five-property calculations remain visible when LogS fails. A failed or invalid
   eligible input is not silently converted into a skip.
 - `Compound.admet`: `{status,properties,source_fingerprint,smiles_sha256,engine,
   generated_at,job_id,warnings,error,review_only:true}`. Status is not_run, pending,
@@ -273,6 +277,13 @@ legacy callers, never a synthesized successful observation.
   ordered six properties and pinned producer provenance; other states carry no
   old numeric values. Storage and query joins are indexed and bounded, not one
   full-PDF read or full-history scan per row.
+- `Compound.descriptors` is optional/null and independent of `admet`:
+  `{status,properties,source_fingerprint,smiles_sha256,engine,generated_at,job_id,error,review_only:true}`.
+  Status values are the same seven lifecycle states. Complete requires exactly
+  five ordered metrics (molecular_weight,logP,tpsa,hydrogen_bond_donors,
+  hydrogen_bond_acceptors), actual RDKit `{name:"RDKit",version,algorithm_sha256}`,
+  current source/graph SHA, owned producer and timezone timestamp. Other states
+  expose no properties or completed engine evidence. Reads never calculate.
 
 The fixed property catalog is MW (molecular_weight, Dalton), LogP (logP,
 log-ratio), TPSA (tpsa, Å^2), HBD (hydrogen_bond_donors, #), HBA
@@ -280,16 +291,20 @@ log-ratio), TPSA (tpsa, Å^2), HBD (hydrogen_bond_donors, #), HBA
 The first five are descriptors; only LogS is a model prediction. None is a patent
 measurement or clinical safety/efficacy result. Manual overrides are separate
 from the unchanged `Compound.admet` model observation and provenance. Table
-filter/sort, clipboard and CSV share effective values (manual null wins); JSON
-retains both model evidence and manual overrides. CSV appends
+filter/sort, clipboard and CSV share effective values: manual override including
+null → complete current five descriptors → compatible complete ADMET. LogS only
+comes from model evidence/manual value. JSON retains each producer and overrides;
+CSV includes descriptor status/algorithm/source/graph/time/job alongside model
+provenance and appends
 `manual_property_keys` and `property_basis_smiles` for distinction.
 New prediction digests use bounded canonical isomeric graph identity. Legacy raw
 digests are readable only for the exact validated current input string; they
 are never reassociated by similarity or guessed aliases. JSON/CSV exports preserve effective
 values, original core acceptance and correction/model provenance. Any manual
 correction, research prediction or unassociated source keeps export review_only=true.
-JSON formal_acceptance_scope is original_activity_association_only; complete
-source coverage does not enlarge the original strict QA acceptance scope.
+JSON formal_acceptance_scope is proved_printed_identifier_structure_corpus.
+New formal QA covers the proved numbered source catalog independently of activity.
+Old original QA is never reclassified as this newer acceptance scope.
 
 `Results.activity_columns` is an additive API-v1 list of
 `{id,name,unit,target,assay}`, at most 1000 distinct exact contexts. It is collected
@@ -399,7 +414,13 @@ historical OCR remains explicitly historical, never a fabricated original page.
 Statuses: `queued`, `running`, `complete`, `failed`, `cancelled`, `interrupted`.
 `error`: `{code,message}` or null. `stages`:
 `[{name,status,count,duration_seconds,reused_checkpoint,progress}]` for the real stages
-`classify,activity,locate,structures,bind,smiles,final,qa`.
+`classify,locate,structures,bind,activity,smiles,final,qa` for new extraction jobs.
+`Job.stage_order` is optional/null; an extraction order contains each core name
+exactly once, while ADMET-only uses an empty list. It comes from recorded current
+stage facts/specification; old missing history retains its old order/unknown state.
+`Stage.resource_wait` is optional/null `{reason:"memory",required_mb,available_mb,
+waited_seconds}` from finite, recent, live owned telemetry. Only an active stage
+can show waiting; missing telemetry is not waiting and terminal jobs do not animate.
 Stage statuses: `pending,running,ok,empty,failed,warnings`.
 Job completion is not necessarily formal QA acceptance. No guessed 100% progress.
 `progress` is null or the actual OCSR observation

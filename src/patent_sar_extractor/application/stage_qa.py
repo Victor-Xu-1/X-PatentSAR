@@ -19,6 +19,7 @@ from .pipeline_io import (
     _save_log,
     _write_accuracy_failure_marker,
 )
+from .scientific_status import CoreNotAcceptedError
 
 WORKING_ROOT = Path.cwd()
 
@@ -68,8 +69,15 @@ def execute_qa(state: PipelineContext) -> dict:
         s.get("elapsed_s", 0) for s in state.pipeline_log["steps"].values()
     )
     state.pipeline_log["status"] = (
-        "complete" if state.pipeline_log["steps"]["qa"]["status"] == "ok" else "review"
+        "complete"
+        if state.pipeline_log["steps"]["qa"]["status"] == "ok"
+        else "failed_accuracy_gate"
     )
+    if not qa_ok:
+        state.pipeline_log["error"] = {
+            "code": "core_not_accepted",
+            "message": "Strict source-led acceptance failed",
+        }
     state.pipeline_log["completed_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
     state.pipeline_log["total_elapsed_s"] = round(total_elapsed, 1)
     _save_log(state.pipeline_log, state.base_dir)
@@ -96,7 +104,7 @@ def execute_qa(state: PipelineContext) -> dict:
             _write_accuracy_failure_marker(
                 state.base_dir, "final_qa", rejection_reasons
             )
-            raise RuntimeError(
+            raise CoreNotAcceptedError(
                 "Strict final acceptance gate failed: "
                 + "; ".join(rejection_reasons[:8])
             )

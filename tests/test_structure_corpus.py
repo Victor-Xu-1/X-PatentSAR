@@ -129,7 +129,8 @@ class StructureCorpusTests(PredictionFixture, unittest.TestCase):
         self.assertTrue(exported["review_only"])
         self.assertEqual(exported["structure_only"], 1)
         self.assertEqual(
-            exported["formal_acceptance_scope"], "original_activity_association_only"
+            exported["formal_acceptance_scope"],
+            "proved_printed_identifier_structure_corpus",
         )
 
     def test_duplicate_structure_ids_do_not_silently_choose_or_drop_an_observation(

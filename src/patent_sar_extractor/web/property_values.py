@@ -55,5 +55,9 @@ def effective_property_values(row: Compound) -> PropertyOverrides:
     values: PropertyOverrides = dict.fromkeys(METRIC_KEYS)
     if row.admet and row.admet.status == "complete":
         values.update((metric.key, metric.value) for metric in row.admet.properties)
+    if row.descriptors and row.descriptors.status == "complete":
+        values.update(
+            (metric.key, metric.value) for metric in row.descriptors.properties
+        )
     values.update(manual_property_values(row))
     return values

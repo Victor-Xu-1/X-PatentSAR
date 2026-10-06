@@ -15,18 +15,14 @@ from patent_sar_extractor.artifact_io import load_json as _load_json
 from patent_sar_extractor.contracts import (
     ACTIVITY_EXTRACTOR_VERSION,
 )
+from patent_sar_extractor.core.activity_join import activity_evidence_errors
 
-from .activity_policy import (
-    _activity_acceptance_errors,
-    _annotate_activity_payload,
-)
 from .pipeline_context import PipelineContext
 from .pipeline_io import (
     _elapsed_since,
     _owned_worker_outputs,
-    _save_log,
-    _write_accuracy_failure_marker,
 )
+from .scientific_status import retain_scientific_errors
 from .worker_policy import (
     _run_activity_rules,
 )
@@ -71,15 +67,21 @@ def execute_activity(state: PipelineContext) -> None:
                 patent_id=state.patent_id,
             )
         _write_step_manifest(state.act_json, activity_fp)
-    state.active_cpds = (
-        _annotate_activity_payload(state.act_json)
-        if os.path.isfile(state.act_json)
-        else []
-    )
     state.activity_payload = (
         _load_json(state.act_json, {}) if os.path.isfile(state.act_json) else {}
     )
-    act_rows = len((state.activity_payload or {}).get("rows", []))
+    activity_errors = activity_evidence_errors(
+        state.activity_payload,
+        classified_activity_pages=state.classification.get("activity_pages"),
+    )
+    # Producer-owned metadata is read only. It cannot admit/relabel compounds or
+    # turn the source-led structure universe back into a numeric activity filter.
+    state.active_cpds = state.activity_payload.get("active_cpds", [])
+    if not isinstance(state.active_cpds, list) or any(
+        not isinstance(compound, str) for compound in state.active_cpds
+    ):
+        raise ValueError("Malformed activity producer metadata")
+    act_rows = len(state.activity_payload["rows"])
     state.pipeline_log["steps"][step] = {
         **state.pipeline_log["steps"].get(step, {}),
         "from_cache": state.progress.checkpoint_reused,
@@ -90,22 +92,4 @@ def execute_activity(state: PipelineContext) -> None:
         "active_cpds": len(state.active_cpds),
     }
     print(f"     ✅ rows={act_rows}, active_cpds={len(state.active_cpds)}")
-    activity_errors = _activity_acceptance_errors(
-        state.activity_payload, state.active_cpds
-    )
-    if activity_errors:
-        state.pipeline_log["steps"][step]["status"] = (
-            "failed" if state.strict_gates else "warnings"
-        )
-        state.pipeline_log["steps"][step]["acceptance_errors"] = activity_errors
-        if state.strict_gates:
-            state.pipeline_log["status"] = "failed_accuracy_gate"
-            _save_log(state.pipeline_log, state.base_dir)
-            _write_accuracy_failure_marker(state.base_dir, "activity", activity_errors)
-            raise RuntimeError(
-                "Strict activity acceptance gate failed: "
-                + "; ".join(activity_errors[:8])
-            )
-        print(
-            f"     ⚠ activity strict gate warnings={len(activity_errors)}; continuing review-only partial run"
-        )
+    retain_scientific_errors(state, step, activity_errors)

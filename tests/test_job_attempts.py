@@ -102,7 +102,7 @@ class AttemptTests(WebFixture, unittest.TestCase):
         )
 
     def test_terminal_history_is_write_once_and_independent_of_mutated_output(self):
-        service, project, queue, job, spec = self.draft()
+        service, _project, queue, job, spec = self.draft()
         self.summary(spec)
         self.finish(service, queue, job)
         original = service.job(job.id).model_dump()
@@ -157,11 +157,14 @@ class AttemptTests(WebFixture, unittest.TestCase):
         self.summary(spec)
         self.finish(service, queue, job)
         original = (Path(spec.output_dir) / "pipeline_summary.json").read_bytes()
-        with patch(
-            "patent_sar_extractor.web.jobs.uuid.uuid4", return_value=uuid.UUID(job.id)
+        with (
+            patch(
+                "patent_sar_extractor.web.jobs.uuid.uuid4",
+                return_value=uuid.UUID(job.id),
+            ),
+            self.assertRaises(WebError) as failure,
         ):
-            with self.assertRaises(WebError) as failure:
-                queue.enqueue(project.id, JobRequest())
+            queue.enqueue(project.id, JobRequest())
         self.assertEqual(failure.exception.code, "attempt_exists")
         self.assertEqual(
             (Path(spec.output_dir) / "pipeline_summary.json").read_bytes(), original
@@ -169,7 +172,7 @@ class AttemptTests(WebFixture, unittest.TestCase):
         self.assertEqual(service.job(job.id).status, "failed")
 
     def test_history_filename_rejects_noncanonical_job_id(self):
-        service, _, queue, job, _ = self.draft()
+        service, _, _queue, job, _ = self.draft()
         row = service.store.job(job.id)
         for identifier in ("../outside", "a" * 31, "A" * 32, "a" * 32 + "/file"):
             with self.subTest(identifier=identifier):
@@ -206,7 +209,7 @@ class AttemptTests(WebFixture, unittest.TestCase):
             self.assertEqual(result.stages, [])
 
     def test_unique_legacy_output_can_expose_only_its_reliable_original_summary(self):
-        service, project, queue, job, spec = self.draft()
+        service, _project, queue, job, spec = self.draft()
         self.summary(spec)
         self.finish(service, queue, job)
         record = json.loads(service.store.job(job.id)["spec"])
@@ -369,7 +372,7 @@ class AttemptTests(WebFixture, unittest.TestCase):
                 collection: [0] if stage == "locate" else [],
             }
             if stage == "bind":
-                payload["execution_mode"] = "production_activity_led"
+                payload["execution_mode"] = "production_structure_led"
             write_json_atomic(root / relative, payload)
             _write_step_manifest(
                 str(root / relative),
@@ -698,7 +701,9 @@ class AttemptTests(WebFixture, unittest.TestCase):
                 if path.is_file()
             }
             self.assertEqual(after, before)
-            self.assertEqual(fresh["stages"][1]["status"], "failed")
+            observed = {stage["name"]: stage for stage in fresh["stages"]}
+            self.assertEqual(observed["qa"]["status"], "failed")
+            self.assertEqual(observed["locate"]["status"], "empty")
             self.assertNotEqual(
                 client.get(f"/api/v1/projects/{project['id']}").json()["acceptance"][
                     "state"

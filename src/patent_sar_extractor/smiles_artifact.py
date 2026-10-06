@@ -27,7 +27,7 @@ def build_smiles_artifact(
         "execution_mode": execution_mode,
         "records": [dict(record) for record in records],
         "source_records": [dict(record) for record in source_records],
-        "formal_acceptance_scope": "original_activity_association_only",
+        "formal_acceptance_scope": "proved_printed_identifier_structure_corpus",
     }
 
 

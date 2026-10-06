@@ -183,7 +183,13 @@ def write_admet_stage(
 
 
 def seal_admet_stage(
-    state_root: Path, root: Path, row: dict[str, Any], status: str, stamp: str
+    state_root: Path,
+    root: Path,
+    row: dict[str, Any],
+    status: str,
+    stamp: str,
+    *,
+    research_complete: bool = False,
 ) -> None:
     spec = _spec(row)
     if status not in TERMINAL or datetime.fromisoformat(stamp).tzinfo is None:
@@ -191,8 +197,17 @@ def seal_admet_stage(
     stage, completed = read_admet_stage(row, root)
     if stage is None:
         stage, completed = Stage(name="admet", status="failed"), False
-    elif status != "complete" or stage.status in {"pending", "running"}:
+    elif (status != "complete" and not research_complete) or stage.status in {
+        "pending",
+        "running",
+    }:
         stage = stage.model_copy(update={"status": "failed"})
+    if research_complete and (
+        status != "failed" or not completed or stage.status not in {"ok", "empty"}
+    ):
+        raise ValueError(
+            "Research completion cannot override missing or failed producer evidence"
+        )
     if status == "complete" and stage.status not in {"ok", "empty"}:
         raise ValueError("Incomplete ADMET facts cannot be sealed as a successful task")
     _validate(stage, spec, completed)

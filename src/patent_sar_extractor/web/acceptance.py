@@ -173,7 +173,7 @@ def authority(
         ), False
     modes = (
         isinstance(payloads.get("bindings"), dict)
-        and payloads["bindings"].get("execution_mode") == "production_activity_led"
+        and payloads["bindings"].get("execution_mode") == "production_structure_led"
         and isinstance(payloads.get("smiles"), dict)
         and payloads["smiles"].get("execution_mode") == "production_decimer"
     )
@@ -181,7 +181,6 @@ def authority(
         isinstance(payloads.get("activity"), dict)
         and isinstance(payloads["activity"].get("active_cpds"), list)
         and isinstance(payloads["activity"].get("rows"), list)
-        and bool(payloads["activity"].get("active_cpds"))
         and isinstance(payloads.get("bindings"), dict)
         and isinstance(payloads["bindings"].get("final_bindings"), list)
         and isinstance(payloads.get("smiles"), dict)
@@ -197,6 +196,44 @@ def authority(
             errors=[
                 "Current artifact shapes or production execution modes do not satisfy formal acceptance."
             ],
+        ), False
+    from patent_sar_extractor.application.activity_policy import (
+        _activity_acceptance_errors,
+    )
+
+    classification = payloads.get("classification") or {}
+    activity_errors = _activity_acceptance_errors(
+        payloads["activity"],
+        payloads["activity"]["active_cpds"],
+        classified_activity_pages=classification.get("activity_pages"),
+    )
+    if activity_errors:
+        return Acceptance(
+            state="failed", errors=[public_error_text(e) for e in activity_errors[:100]]
+        ), False
+    from patent_sar_extractor.core.formal_structure import (
+        binding_pairs,
+        coverage_errors,
+        proved_catalog,
+    )
+
+    try:
+        known_structures = {
+            row["structure_id"] for row in payloads["structures"]["structures"]
+        }
+        proved_catalog(payloads["bindings"], known_structures)
+        source_errors = coverage_errors(payloads["bindings"])
+        if binding_pairs(payloads["bindings"]["final_bindings"]) != binding_pairs(
+            payloads["smiles"]["records"], "cpd_id"
+        ):
+            source_errors.append(
+                "Recognition does not exactly cover the printed-ID structure catalog."
+            )
+    except (ValueError, TypeError, KeyError) as exc:
+        source_errors = [str(exc)]
+    if source_errors:
+        return Acceptance(
+            state="failed", errors=[public_error_text(e) for e in source_errors[:100]]
         ), False
     qa = payloads["qa"]
     decision = qa.get("acceptance")

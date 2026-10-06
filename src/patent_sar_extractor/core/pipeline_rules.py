@@ -11,8 +11,11 @@ from __future__ import annotations
 from typing import Any
 
 from patent_sar_extractor.contracts import ruleset_ref
-from patent_sar_extractor.core.numbered_structure_binding import valid_cell_binding_evidence
+from patent_sar_extractor.core.numbered_structure_binding import (
+    valid_cell_binding_evidence,
+)
 
+from .activity_identity import printed_identifier_key
 
 STRICT_VISIBLE_SOURCES = {"page_strict", "direct", "pdf_clip"}
 VISUAL_LABEL_SOURCES = STRICT_VISIBLE_SOURCES | {"page_wide"}
@@ -52,21 +55,7 @@ REVIEW_BINDING_RULES = {
 
 
 def _label_key(value: Any) -> str:
-    import re
-
-    text = str(value or "").strip()
-    if text.upper() == "CLAIM1" or __import__("re").fullmatch(
-        r"(?:claim\s*1\s+compound|claimed\s+compound|main\s+compound|single(?:ton)?\s+compound)",
-        text,
-        __import__("re").IGNORECASE,
-    ):
-        return "CLAIM1"
-    match = re.search(
-        r"(?:compound|cpd|example|实施例|化合物)?\s*[-:]?\s*([1-9]\d*(?:-\d+)?[A-Z]?)",
-        text,
-        re.IGNORECASE,
-    )
-    return match.group(1).upper() if match else ""
+    return printed_identifier_key(value)
 
 
 def _int_or_default(value: Any, default: int = 999) -> int:
@@ -74,7 +63,7 @@ def _int_or_default(value: Any, default: int = 999) -> int:
         return default
     try:
         return int(value)
-    except Exception:
+    except (ValueError, TypeError, OverflowError):
         return default
 
 
@@ -120,11 +109,13 @@ def _has_table_row_evidence(binding: dict[str, Any]) -> bool:
         return False
     try:
         return float(binding.get("struct_area") or 0) >= 6000
-    except Exception:
+    except (ValueError, TypeError, OverflowError):
         return False
 
 
-def _has_nearby_exact_product_label(target_key: str, binding: dict[str, Any] | None) -> bool:
+def _has_nearby_exact_product_label(
+    target_key: str, binding: dict[str, Any] | None
+) -> bool:
     if not target_key or not binding:
         return False
     exact_key = _label_key(binding.get("nearby_exact_product_label"))
@@ -157,43 +148,62 @@ def _is_internal_annotation_conflict(
     """
     if not target_key:
         return False
-    if binding is not None and str(binding.get("binding_rule") or "") == "ocr_pair_heading_structure_order":
-        if bool(binding.get("pair_heading_sequence_confirmed")):
-            import re
+    if (
+        binding is not None
+        and str(binding.get("binding_rule") or "") == "ocr_pair_heading_structure_order"
+        and bool(binding.get("pair_heading_sequence_confirmed"))
+    ):
+        import re
 
-            match = re.fullmatch(r"([1-9]\d*)-([12])", target_key)
-            if match:
-                base, suffix = match.groups()
-                # The tiny label below a split-pair product is often OCR'd as
-                # only the suffix ("1"/"2") or as a collapsed token ("11").
-                if conflict_key in {base, suffix, f"{base}{suffix}"}:
-                    return True
-    if binding is not None and str(binding.get("binding_rule") or "") == "cpd_letter_pair_row_order":
-        if bool(binding.get("cpd_letter_pair_sequence_confirmed")):
-            import re
+        match = re.fullmatch(r"([1-9]\d*)-([12])", target_key)
+        if match:
+            base, suffix = match.groups()
+            if conflict_key in {base, suffix, f"{base}{suffix}"}:
+                return True
+    if (
+        binding is not None
+        and str(binding.get("binding_rule") or "") == "cpd_letter_pair_row_order"
+        and bool(binding.get("cpd_letter_pair_sequence_confirmed"))
+    ):
+        import re
 
-            if re.fullmatch(r"[1-9]\d{0,2}", target_key):
-                partner = str(binding.get("cpd_letter_pair_partner") or f"{target_key}A").upper()
-                if conflict_key in {target_key, partner, "1"}:
-                    return True
-    if binding is not None and str(binding.get("binding_rule") or "") == "authoritative_structure_table_sequence":
-        if bool(binding.get("authoritative_table_sequence_confirmed")):
-            # In a paginated structure grid, a crop can legitimately include
-            # the printed ID for the next table cell or next row. The complete
-            # table sequence, not that incidental boundary text, is decisive.
-            return bool(conflict_key)
-    if binding is not None and str(binding.get("binding_rule") or "") in {"visual_grid_label", "visual_grid_sequence_order"}:
+        if re.fullmatch(r"[1-9]\d{0,2}", target_key):
+            partner = str(
+                binding.get("cpd_letter_pair_partner") or f"{target_key}A"
+            ).upper()
+            if conflict_key in {target_key, partner, "1"}:
+                return True
+    if (
+        binding is not None
+        and str(binding.get("binding_rule") or "")
+        == "authoritative_structure_table_sequence"
+        and bool(binding.get("authoritative_table_sequence_confirmed"))
+    ):
+        return bool(conflict_key)
+    if binding is not None and str(binding.get("binding_rule") or "") in {
+        "visual_grid_label",
+        "visual_grid_sequence_order",
+    }:
         try:
             target_num = int(__import__("re").match(r"\d+", target_key).group(0))
             conflict_num = int(__import__("re").match(r"\d+", conflict_key).group(0))
             page_min = int(binding.get("visual_grid_page_min") or 0)
             page_max = int(binding.get("visual_grid_page_max") or 0)
-        except Exception:
+        except (ValueError, TypeError, AttributeError, OverflowError):
             target_num = conflict_num = page_min = page_max = 0
         exact_grid_label = target_key in _candidate_labels(binding, strict_only=False)
         sequence_grid_label = bool(binding.get("visual_grid_sequence_confirmed"))
-        if (exact_grid_label or sequence_grid_label) and page_min and page_max and page_min <= target_num <= page_max:
-            if conflict_num and conflict_num < page_min and (conflict_num <= 30 or target_num - conflict_num >= 50):
+        if (
+            (exact_grid_label or sequence_grid_label)
+            and page_min
+            and page_max
+            and page_min <= target_num <= page_max
+        ):
+            if (
+                conflict_num
+                and conflict_num < page_min
+                and (conflict_num <= 30 or target_num - conflict_num >= 50)
+            ):
                 return True
             if (
                 sequence_grid_label
@@ -223,27 +233,31 @@ def _is_internal_annotation_conflict(
                 # Strict crop OCR frequently sees atom/procedure labels such as
                 # 4/5/7/35A inside otherwise complete product drawings.
                 return int(conflict_num_match.group(0)) < int(target_num_match.group(0))
-            except Exception:
-                pass
+            except (ValueError, TypeError, OverflowError):
+                return False
         return _is_short_internal_annotation(target_key, conflict_key)
-    if binding is not None and str(binding.get("binding_rule") or "") in {
-        "direct_structure_label",
-        "direct_structure_label_merged_fragment",
-        "direct_structure_label_right_product_crop",
-        "route_title_row_right_product",
-        "heading_range_fallback",
-    }:
-        if _has_nearby_exact_product_label(target_key, binding):
-            return _is_short_internal_annotation(target_key, conflict_key)
+    if (
+        binding is not None
+        and str(binding.get("binding_rule") or "")
+        in {
+            "direct_structure_label",
+            "direct_structure_label_merged_fragment",
+            "direct_structure_label_right_product_crop",
+            "route_title_row_right_product",
+            "heading_range_fallback",
+        }
+        and _has_nearby_exact_product_label(target_key, binding)
+    ):
+        return _is_short_internal_annotation(target_key, conflict_key)
     if target_key in strict_labels:
         if len(target_key) == 1:
             return False
-        if conflict_key.isdigit() and target_key.isdigit():
-            try:
-                if int(conflict_key) > int(target_key):
-                    return False
-            except Exception:
-                pass
+        if (
+            conflict_key.isdigit()
+            and target_key.isdigit()
+            and int(conflict_key) > int(target_key)
+        ):
+            return False
         return _is_short_internal_annotation(target_key, conflict_key)
     return False
 
@@ -260,12 +274,17 @@ def _is_truncated_visible_prefix(target_key: str, visible_key: str) -> bool:
     return target_key.startswith(visible_key)
 
 
-def _candidate_labels(binding: dict[str, Any], *, strict_only: bool = False) -> set[str]:
+def _candidate_labels(
+    binding: dict[str, Any], *, strict_only: bool = False
+) -> set[str]:
     labels: set[str] = set()
     for candidate in binding.get("visible_label_candidates") or []:
         if not isinstance(candidate, dict):
             continue
-        if strict_only and str(candidate.get("source") or "") not in STRICT_VISIBLE_SOURCES:
+        if (
+            strict_only
+            and str(candidate.get("source") or "") not in STRICT_VISIBLE_SOURCES
+        ):
             continue
         key = _label_key(candidate.get("label"))
         if key:
@@ -305,10 +324,10 @@ def annotate_binding_accuracy(binding: dict[str, Any]) -> dict[str, Any]:
         and not _is_internal_annotation_conflict(target_key, label, strict_labels, item)
         and not _is_truncated_visible_prefix(target_key, label)
     )
-    if (
-        strict_conflicts
-        and rule in {"direct_structure_label_merged_fragment", "direct_structure_label_right_product_crop"}
-    ):
+    if strict_conflicts and rule in {
+        "direct_structure_label_merged_fragment",
+        "direct_structure_label_right_product_crop",
+    }:
         item["accuracy_status"] = "review_required"
         item["evidence_tier"] = "conflict"
         item["evidence_reasons"] = [
@@ -319,17 +338,23 @@ def annotate_binding_accuracy(binding: dict[str, Any]) -> dict[str, Any]:
     if strict_conflicts:
         item["accuracy_status"] = "review_required"
         item["evidence_tier"] = "conflict"
-        item["evidence_reasons"] = [f"strict visible label conflicts: {', '.join(strict_conflicts)}"]
+        item["evidence_reasons"] = [
+            f"strict visible label conflicts: {', '.join(strict_conflicts)}"
+        ]
         item["fail_closed"] = True
         return item
 
     exact_strict_visual = bool(target_key and target_key in strict_labels)
     exact_any_visual = bool(target_key and target_key in all_labels)
-    exact_numbered_cell = rule == "numbered_structure_table_cell" and valid_cell_binding_evidence(item)
+    exact_numbered_cell = (
+        rule == "numbered_structure_table_cell" and valid_cell_binding_evidence(item)
+    )
     if rule == "numbered_structure_table_cell" and not exact_numbered_cell:
         item["accuracy_status"] = "review_required"
         item["evidence_tier"] = "weak"
-        item["evidence_reasons"] = ["invalid or incomplete original structure-table cell evidence"]
+        item["evidence_reasons"] = [
+            "invalid or incomplete original structure-table cell evidence"
+        ]
         item["fail_closed"] = True
         return item
 
@@ -341,8 +366,15 @@ def annotate_binding_accuracy(binding: dict[str, Any]) -> dict[str, Any]:
         reasons.append("exact weak visual label")
 
     if exact_numbered_cell:
-        reasons.append("independently observed ID and unique segment in adjacent original-PDF cell")
-    elif rule in {"structure_table_row_order", "structure_table_row_order_inferred", "structure_table_row_order_corrected", "cmpd_overview_table_order"}:
+        reasons.append(
+            "independently observed ID and unique segment in adjacent original-PDF cell"
+        )
+    elif rule in {
+        "structure_table_row_order",
+        "structure_table_row_order_inferred",
+        "structure_table_row_order_corrected",
+        "cmpd_overview_table_order",
+    }:
         reasons.append("left-column structure table row order")
     elif rule == "singleton_claim_formula_structure":
         reasons.append("claim/formula singleton structure")
@@ -360,25 +392,35 @@ def annotate_binding_accuracy(binding: dict[str, Any]) -> dict[str, Any]:
             reasons.append("direct structure label")
     elif rule:
         reasons.append(f"rule={rule}")
-    if rule == "ocr_pair_heading_structure_order" and bool(item.get("pair_heading_sequence_confirmed")):
+    if rule == "ocr_pair_heading_structure_order" and bool(
+        item.get("pair_heading_sequence_confirmed")
+    ):
         reasons.append("split-pair heading and left/right structure order")
-    if rule == "cpd_letter_pair_row_order" and bool(item.get("cpd_letter_pair_sequence_confirmed")):
+    if rule == "cpd_letter_pair_row_order" and bool(
+        item.get("cpd_letter_pair_sequence_confirmed")
+    ):
         reasons.append("Cpd-N/Cpd-NA title and left/right structure order")
 
     geometry_area = float(item.get("struct_area") or 0)
     geometry_width = float(item.get("struct_width") or 0)
     geometry_height = float(item.get("struct_height") or 0)
-    geometry_aspect = geometry_width / max(geometry_height, 1.0) if geometry_width and geometry_height else 0.0
+    geometry_aspect = (
+        geometry_width / max(geometry_height, 1.0)
+        if geometry_width and geometry_height
+        else 0.0
+    )
     if geometry_area and geometry_area < 1800:
         item["accuracy_status"] = "review_required"
         item["evidence_tier"] = "weak"
-        item["evidence_reasons"] = [*reasons, "structure crop too small for automatic confirmation"]
+        item["evidence_reasons"] = [
+            *reasons,
+            "structure crop too small for automatic confirmation",
+        ]
         item["fail_closed"] = True
         return item
 
-    if (
-        rule == "direct_structure_label_right_product_crop"
-        and (geometry_area < 6500 or geometry_aspect > 5.0 or bool(strict_multi_labels))
+    if rule == "direct_structure_label_right_product_crop" and (
+        geometry_area < 6500 or geometry_aspect > 5.0 or bool(strict_multi_labels)
     ):
         item["accuracy_status"] = "review_required"
         item["evidence_tier"] = "weak"
@@ -389,7 +431,11 @@ def annotate_binding_accuracy(binding: dict[str, Any]) -> dict[str, Any]:
         item["fail_closed"] = True
         return item
 
-    if rule == "singleton_claim_formula_structure" and target_key == "CLAIM1" and geometry_area >= 6000:
+    if (
+        rule == "singleton_claim_formula_structure"
+        and target_key == "CLAIM1"
+        and geometry_area >= 6000
+    ):
         item["accuracy_status"] = "confirmed"
         item["evidence_tier"] = "claim_formula_singleton"
         item["evidence_reasons"] = reasons or ["claim/formula singleton structure"]
@@ -438,7 +484,9 @@ def annotate_binding_accuracy(binding: dict[str, Any]) -> dict[str, Any]:
 
     item["accuracy_status"] = "review_required"
     item["evidence_tier"] = "weak" if rule in REVIEW_BINDING_RULES else "unknown"
-    item["evidence_reasons"] = reasons or ["insufficient patent-agnostic binding evidence"]
+    item["evidence_reasons"] = reasons or [
+        "insufficient patent-agnostic binding evidence"
+    ]
     item["fail_closed"] = True
     return item
 

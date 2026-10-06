@@ -79,6 +79,9 @@ class FirstStructurePageTests(PredictionFixture, unittest.TestCase):
             payload = json.loads(path.read_text())
             for entry in payload[key]:
                 entry["page_no"] = None
+            if key == "final_bindings":
+                for entry in payload["compound_catalog"]["entries"]:
+                    entry["page_no"] = None
             path.write_text(json.dumps(payload))
         self.service.refresh(self.project.id)
         row = self.service.compounds(self.project.id)[0]

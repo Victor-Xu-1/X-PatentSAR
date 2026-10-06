@@ -63,7 +63,9 @@ from patent_sar_extractor.contracts import (
     artifact_identity_matches,
     ruleset_ref,
 )
-from patent_sar_extractor.core import activity_extractor as activity_extractor_module
+from patent_sar_extractor.core import (
+    activity_coordinates as activity_coordinates_module,
+)
 from patent_sar_extractor.core import (
     binding_observations,
     binding_ocr,
@@ -71,27 +73,29 @@ from patent_sar_extractor.core import (
 )
 from patent_sar_extractor.core import env_runner as env_runner_module
 from patent_sar_extractor.core import page_ocr_cache as page_ocr_cache_module
-from patent_sar_extractor.core.activity_extractor import (
-    ActivityRow,
-    _activity_row_has_usable_values,
-    _classify_ruled_activity_schema,
-    _coordinate_activity_page_candidates,
-    _extract_chinese_dc50_dmax_rows_from_ocr,
-    _extract_prefixed_letter_grade_activity_rows_from_ocr,
-    _extract_ruled_activity_rows,
-    _merge_activity_rows,
-    _prefer_specific_activity_rows,
-    _split_joined_dc50_dmax_cell,
+from patent_sar_extractor.core.activity_coordinates import (
+    coordinate_candidates,
+    extract_coordinate_tables,
 )
+from patent_sar_extractor.core.activity_headers import infer_value_keys
+from patent_sar_extractor.core.activity_models import ActivityRow
+from patent_sar_extractor.core.activity_observations import (
+    has_usable_values,
+    merge_rows,
+)
+from patent_sar_extractor.core.activity_text import extract_text_tables
 from patent_sar_extractor.core.binding_arbitration import _drop_fail_closed_bindings
+from patent_sar_extractor.core.binding_artifacts import write_binding_result
 from patent_sar_extractor.core.binding_candidates import _merge_binding_candidates
-from patent_sar_extractor.core.binding_products import (
-    _extract_cpd_letter_pair_product_bindings,
-)
 from patent_sar_extractor.core.binding_spatial import (
     _enforce_authoritative_structure_table_source,
 )
 from patent_sar_extractor.core.binding_tables import _extract_structure_table_bindings
+from patent_sar_extractor.core.formal_export import qualified_records
+from patent_sar_extractor.core.formal_structure import (
+    FORMAL_SCOPE,
+    SOURCE_EXECUTION_MODE,
+)
 from patent_sar_extractor.core.health_check import (
     _parse_tensorflow_gpu_probe,
     _tensorflow_gpu_probe_is_compatible,
@@ -115,19 +119,13 @@ from patent_sar_extractor.core.page_ocr_cache import (
     update_page_ocr_cache,
 )
 from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
-from patent_sar_extractor.core.qa_report import (
-    _read_xlsx_values,
-    build_qa_report,
-    write_qa_report,
-)
+from patent_sar_extractor.core.qa_files import _read_xlsx_values
+from patent_sar_extractor.core.qa_report import build_qa_report, write_qa_report
 from patent_sar_extractor.core.review_excerpt import create_review_excerpt_pdf
 from patent_sar_extractor.core.runtime_env import tensorflow_cuda_caps_support_gpu
 from patent_sar_extractor.core.structure_page_evidence import _is_structure_table_page
 from patent_sar_extractor.core.structure_page_locator import _covered_active_cpds
 from patent_sar_extractor.smiles_artifact import build_smiles_artifact
-from patent_sar_extractor.workers.gen_final_results import (
-    _validate_smiles_source_for_export,
-)
 
 _TINY_PNG = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk"
@@ -145,7 +143,13 @@ class StrictAcceptanceTests(unittest.TestCase):
     def _image(self, directory: Path, name: str) -> str:
         path = directory / name
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(_TINY_PNG)
+        from PIL import Image, ImageDraw
+
+        image = Image.new("RGB", (160, 100), "white")
+        ImageDraw.Draw(image).line(
+            [(20, 30), (60, 60), (100, 30)], fill="black", width=2
+        )
+        image.save(path)
         return str(path)
 
     def _text_pdf(self, path: Path, page_texts: list[str]) -> None:
@@ -271,230 +275,6 @@ class StrictAcceptanceTests(unittest.TestCase):
         self.assertEqual("confirmed", checked["accuracy_status"])
         self.assertFalse(checked["fail_closed"])
 
-    def test_cpd_letter_pair_row_order_recovers_left_non_a_product(self):
-        structures = [
-            {
-                "id": "S1",
-                "idx": 1,
-                "page_no": 1,
-                "x0": 100,
-                "y0": 120,
-                "x1": 200,
-                "y1": 220,
-                "image_path": "s1.png",
-            },
-            {
-                "id": "S2",
-                "idx": 2,
-                "page_no": 1,
-                "x0": 320,
-                "y0": 120,
-                "x1": 420,
-                "y1": 220,
-                "image_path": "s2.png",
-            },
-            {
-                "id": "S6_precursor",
-                "idx": 3,
-                "page_no": 1,
-                "x0": 80,
-                "y0": 320,
-                "x1": 210,
-                "y1": 500,
-                "image_path": "precursor.png",
-            },
-            {
-                "id": "S6",
-                "idx": 4,
-                "page_no": 1,
-                "x0": 300,
-                "y0": 320,
-                "x1": 455,
-                "y1": 510,
-                "image_path": "cpd6.png",
-            },
-            {
-                "id": "S6A",
-                "idx": 5,
-                "page_no": 1,
-                "x0": 520,
-                "y0": 320,
-                "x1": 675,
-                "y1": 510,
-                "image_path": "cpd6a.png",
-            },
-        ]
-        pages_text = {0: "实施例6 化合物 Cpd-6 和 Cpd-6A 制备"}
-
-        bindings = _extract_cpd_letter_pair_product_bindings(
-            pages_text,
-            structures,
-            active_cpds=["Compound 6"],
-        )
-
-        self.assertEqual(1, len(bindings))
-        self.assertEqual("Compound 6", bindings[0]["cpd"])
-        self.assertEqual("S6", bindings[0]["structure_id"])
-        self.assertTrue(bindings[0]["cpd_letter_pair_sequence_confirmed"])
-
-    def test_cpd_letter_pair_row_order_searches_next_page_for_final_pair(self):
-        structures = [
-            {
-                "id": "route_left",
-                "idx": 1,
-                "page_no": 1,
-                "x0": 120,
-                "y0": 300,
-                "x1": 210,
-                "y1": 385,
-                "image_path": "route_left.png",
-            },
-            {
-                "id": "route_right",
-                "idx": 2,
-                "page_no": 1,
-                "x0": 340,
-                "y0": 300,
-                "x1": 430,
-                "y1": 385,
-                "image_path": "route_right.png",
-            },
-            {
-                "id": "precursor",
-                "idx": 3,
-                "page_no": 2,
-                "x0": 100,
-                "y0": 260,
-                "x1": 170,
-                "y1": 358,
-                "image_path": "precursor.png",
-            },
-            {
-                "id": "S7",
-                "idx": 4,
-                "page_no": 2,
-                "x0": 220,
-                "y0": 260,
-                "x1": 290,
-                "y1": 358,
-                "image_path": "cpd7.png",
-            },
-            {
-                "id": "S7A",
-                "idx": 5,
-                "page_no": 2,
-                "x0": 315,
-                "y0": 260,
-                "x1": 385,
-                "y1": 358,
-                "image_path": "cpd7a.png",
-            },
-        ]
-        pages_text = {
-            0: "实施例7 化合物 Cpd-7 和 Cpd-7A 制备",
-            1: "Cpd-7: 25.0mg。 Cpd-7A: 25.0mg。",
-        }
-
-        bindings = _extract_cpd_letter_pair_product_bindings(
-            pages_text,
-            structures,
-            active_cpds=["Compound 7"],
-        )
-
-        self.assertEqual(1, len(bindings))
-        self.assertEqual("S7", bindings[0]["structure_id"])
-
-    def test_cpd_letter_pair_row_order_uses_split_label_lines_on_next_page(self):
-        structures = [
-            {
-                "id": "route_precursor",
-                "idx": 1,
-                "page_no": 1,
-                "x0": 90,
-                "y0": 640,
-                "x1": 165,
-                "y1": 720,
-                "image_path": "route_precursor.png",
-            },
-            {
-                "id": "route_left",
-                "idx": 2,
-                "page_no": 1,
-                "x0": 230,
-                "y0": 640,
-                "x1": 320,
-                "y1": 720,
-                "image_path": "route_left.png",
-            },
-            {
-                "id": "route_right",
-                "idx": 3,
-                "page_no": 1,
-                "x0": 365,
-                "y0": 640,
-                "x1": 455,
-                "y1": 720,
-                "image_path": "route_right.png",
-            },
-            {
-                "id": "precursor",
-                "idx": 4,
-                "page_no": 2,
-                "x0": 100,
-                "y0": 260,
-                "x1": 170,
-                "y1": 358,
-                "image_path": "precursor.png",
-            },
-            {
-                "id": "S7",
-                "idx": 5,
-                "page_no": 2,
-                "x0": 220,
-                "y0": 260,
-                "x1": 290,
-                "y1": 358,
-                "image_path": "cpd7.png",
-            },
-            {
-                "id": "S7A",
-                "idx": 6,
-                "page_no": 2,
-                "x0": 315,
-                "y0": 260,
-                "x1": 385,
-                "y1": 358,
-                "image_path": "cpd7a.png",
-            },
-        ]
-        pages_text = {
-            0: "实施例7 化合物 Cpd-7 和 Cpd-7A 制备",
-            1: "步骤四反应完成，分离得到两个单一构型产物。",
-        }
-        ocr_line_map = {
-            0: [(500.0, "实施例7化合物Cpd-7和Cpd-7A制备")],
-            1: [
-                (330.7, "N"),
-                (332.2, "N"),
-                (333.6, "N"),
-                (345.6, "Cpd-7NH"),
-                (347.0, "NH"),
-                (350.4, "Cpd-7A"),
-                (350.9, "NH"),
-            ],
-        }
-
-        bindings = _extract_cpd_letter_pair_product_bindings(
-            pages_text,
-            structures,
-            active_cpds=["Compound 7"],
-            ocr_line_map=ocr_line_map,
-        )
-
-        self.assertEqual(1, len(bindings))
-        self.assertEqual("S7", bindings[0]["structure_id"])
-        self.assertEqual(345.6, bindings[0]["cpd_letter_pair_label_y0"])
-
     def test_cpd_letter_pair_order_binding_ignores_partner_a_label_bleed(self):
         binding = {
             "cpd": "Compound 6",
@@ -522,10 +302,15 @@ class StrictAcceptanceTests(unittest.TestCase):
         checked = qc_smiles(raw)
         return {
             "image_hash": "a" * 64,
-            "stereochemistry": check_source_stereochemistry(checked, {
-                "version": 1, "image_sha256": "a" * 64,
-                "image_size": [100, 100], "unknown_bond_boxes": [],
-            }),
+            "stereochemistry": check_source_stereochemistry(
+                checked,
+                {
+                    "version": 1,
+                    "image_sha256": "a" * 64,
+                    "image_size": [100, 100],
+                    "unknown_bond_boxes": [],
+                },
+            ),
             "cpd_id": cpd,
             "structure_id": structure_id,
             "raw_smiles": raw,
@@ -596,26 +381,27 @@ class StrictAcceptanceTests(unittest.TestCase):
                 confidence=0.75,
             ),
         ]
-        merged = _merge_activity_rows(rows)
-        self.assertEqual([row.cpd for row in merged], ["Compound 8", "Compound 2"])
-        self.assertTrue(merged[0].needs_review)
+        merged = merge_rows(rows)
+        self.assertEqual(
+            [row.cpd for row in merged], ["Compound 8", "Compound 2", "Compound 8"]
+        )
         self.assertEqual(merged[0].activity_values["IC50"], "A")
         self.assertEqual(merged[0].cell_line_data["Dmax"], "60")
-        self.assertIn("conflicting activity_values.IC50", merged[0].notes)
-        self.assertIn("conflicting cell_line_data.Dmax", merged[0].notes)
+        self.assertEqual(merged[2].activity_values["IC50"], "C")
+        self.assertEqual(merged[2].cell_line_data["Dmax"], "61")
 
-    def test_ruled_ar_degradation_schema_and_joined_cell_split(self) -> None:
-        context = (
-            "化 合 物 降解 活性 细胞 LNCaP AR nM) (Dmax,%) (DC50, "
-            "化 合 物 降解 活性 细胞 AR LNCaP nM) (Dmax,%) (DC50,"
+    def test_ruled_ar_degradation_schema_requires_observed_order_and_units(
+        self,
+    ) -> None:
+        self.assertEqual(
+            infer_value_keys(
+                "AR degradation", "No. LNCaP AR Dmax (%) LNCaP AR DC50 (nM)", 2
+            ),
+            ["LNCaP AR Dmax (%)", "LNCaP AR DC50 (nM)"],
         )
         self.assertEqual(
-            _classify_ruled_activity_schema(context, 4),
-            ("LNCaP AR degradation", ["LNCaP AR DC50 (nM)", "LNCaP AR Dmax (%)"]),
+            infer_value_keys("AR degradation", "No. DC50", 1), ["DC50 (unit unknown)"]
         )
-        self.assertEqual(_split_joined_dc50_dmax_cell("<20 = 80%"), ("<20", ">80%"))
-        self.assertEqual(_split_joined_dc50_dmax_cell("<20 > 80%"), ("<20", ">80%"))
-        self.assertIsNone(_split_joined_dc50_dmax_cell("<2080%"))
 
     def test_prefixed_letter_grade_activity_table_decodes_legend_and_continuation(
         self,
@@ -630,23 +416,17 @@ class StrictAcceptanceTests(unittest.TestCase):
             "1": "IRF5 HiBiT deg. I-# DC5o (nM) I-3 B",
         }
 
-        rows = _extract_prefixed_letter_grade_activity_rows_from_ocr([0, 1], page_texts)
+        rows = extract_text_tables([0, 1], page_texts).rows
 
         self.assertEqual(
-            [row.cpd for row in rows], ["Compound 1", "Compound 2", "Compound 3"]
+            [row.cpd for row in rows], ["Compound I-1", "Compound 1-2", "Compound I-3"]
         )
-        self.assertEqual(
-            rows[0].activity_values["IRF5 HiBiT degradation DC50 (nM)"], "<1 nM"
-        )
-        self.assertEqual(
-            rows[1].activity_values["IRF5 HiBiT degradation DC50 (nM)"], "not tested"
-        )
-        self.assertEqual(
-            rows[2].activity_values["IRF5 HiBiT degradation DC50 (nM)"], "1 - 10 nM"
-        )
-        self.assertTrue(_activity_row_has_usable_values(rows[0]))
-        self.assertFalse(_activity_row_has_usable_values(rows[1]))
-        self.assertIn("source label I-2", rows[1].notes)
+        self.assertEqual(list(rows[0].activity_values.values()), ["<1 nM"])
+        self.assertEqual(list(rows[1].activity_values.values()), ["not tested"])
+        self.assertEqual(list(rows[2].activity_values.values()), ["1 - 10 nM"])
+        self.assertTrue(has_usable_values(rows[0]))
+        self.assertFalse(has_usable_values(rows[1]))
+        self.assertIn("source label 1-2", rows[1].notes)
 
     def test_explicit_not_tested_activity_is_excluded_across_command_annotation(
         self,
@@ -669,26 +449,26 @@ class StrictAcceptanceTests(unittest.TestCase):
         }
 
         self.assertEqual(
-            _coordinate_activity_page_candidates([0, 1, 2], page_texts),
+            coordinate_candidates([0, 1, 2], page_texts),
             [1, 2],
         )
 
     def test_ruled_activity_detection_precedes_coordinate_ocr(self) -> None:
         with (
             patch.object(
-                activity_extractor_module,
-                "_detect_ruled_table_regions",
+                activity_coordinates_module,
+                "detect_ruled_table_regions",
                 return_value=[],
             ),
             patch.object(
-                activity_extractor_module,
-                "_activity_tokens_for_page",
+                activity_coordinates_module,
+                "page_tokens",
                 side_effect=AssertionError(
                     "coordinate OCR must not run without a detected grid"
                 ),
             ),
         ):
-            self.assertEqual(_extract_ruled_activity_rows([object()], [0]), [])
+            self.assertEqual(extract_coordinate_tables([object()], [0]).rows, [])
 
     def test_page_ocr_cache_rejects_foreign_legacy_cache(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -798,14 +578,9 @@ class StrictAcceptanceTests(unittest.TestCase):
             self.assertEqual(set(cache["page_texts"]), {"0", "1"})
 
     def test_clean_chinese_dc50_dmax_rows_are_auto_accepted(self) -> None:
-        class FakeDoc:
-            def __len__(self) -> int:
-                return 1
-
-        rows = _extract_chinese_dc50_dmax_rows_from_ocr(
-            FakeDoc(),
+        rows = extract_text_tables(
             [0],
-            page_text_map={
+            text_map={
                 "0": (
                     "表1化合物对Jurkat细胞VAV1蛋白的降解活性\n"
                     "化合物编号 DC50(nM) Dmax(%)\n"
@@ -816,7 +591,7 @@ class StrictAcceptanceTests(unittest.TestCase):
                     "* DC50≤10nM为A"
                 )
             },
-        )
+        ).rows
 
         self.assertEqual(
             [row.cpd for row in rows],
@@ -825,7 +600,7 @@ class StrictAcceptanceTests(unittest.TestCase):
         self.assertTrue(all(not row.needs_review for row in rows))
         self.assertTrue(all(row.confidence >= 0.88 for row in rows))
 
-    def test_specific_activity_rows_drop_noisy_generic_flat_rows(self) -> None:
+    def test_activity_merging_never_discards_an_unrelated_context(self) -> None:
         noisy = ActivityRow(
             cpd="Compound 1",
             activity_values={
@@ -853,13 +628,13 @@ class StrictAcceptanceTests(unittest.TestCase):
             needs_review=False,
         )
 
-        filtered = _prefer_specific_activity_rows([noisy, specific])
-        merged = _merge_activity_rows(filtered)
-
-        self.assertEqual(len(filtered), 1)
-        self.assertEqual(filtered[0].source, "ocr_chinese_dc50_dmax")
-        self.assertFalse(merged[0].needs_review)
-        self.assertNotIn("表2化合物小鼠PK参数 value 1", merged[0].activity_values)
+        merged = merge_rows([noisy, specific])
+        self.assertEqual(len(merged), 1)
+        self.assertTrue(merged[0].needs_review)
+        self.assertEqual(
+            merged[0].activity_values["表2化合物小鼠PK参数 value 1"], "8557"
+        )
+        self.assertEqual(merged[0].activity_values["Jurkat VAV1 Dmax (%)"], "98.1")
 
     def test_flattened_structure_table_continuation_pages_are_classified(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -1488,8 +1263,28 @@ class StrictAcceptanceTests(unittest.TestCase):
             bind_json = base / "structure_bindings/bindings.json"
             stale_payload = {
                 **artifact_identity(BINDINGS_SCHEMA, BINDINGS_SCHEMA_VERSION),
-                "execution_mode": "production_activity_led",
+                "execution_mode": SOURCE_EXECUTION_MODE,
                 "final_bindings": [self._binding("Compound 1", "S0001", image)],
+            }
+            complete = write_binding_result(
+                bind_json.parent,
+                patent_id="CONTROL",
+                bindings=[
+                    self._binding("Compound 1", "S0001", image),
+                    self._binding("Compound 2", "S0002", image),
+                ],
+                detected_style="control",
+                include_intermediates=False,
+                total_structures=2,
+                total_compound_blocks=0,
+                table_pages=[],
+                table_covered_count=0,
+                no_binding=[],
+                unbound_pages=[],
+            )
+            stale_payload = {
+                **complete,
+                "final_bindings": complete["final_bindings"][:1],
             }
             self._write_json(bind_json, stale_payload)
             fingerprint = {
@@ -1502,24 +1297,10 @@ class StrictAcceptanceTests(unittest.TestCase):
             }
             _write_step_manifest(str(bind_json), fingerprint)
 
-            self.assertIsNone(
-                _load_reusable_bindings(
-                    str(bind_json), fingerprint, ["Compound 1", "Compound 2"], {}
-                )
-            )
+            self.assertIsNone(_load_reusable_bindings(str(bind_json), fingerprint, {}))
 
-            valid_payload = {
-                **artifact_identity(BINDINGS_SCHEMA, BINDINGS_SCHEMA_VERSION),
-                "execution_mode": "production_activity_led",
-                "final_bindings": [
-                    self._binding("Compound 1", "S0001", image),
-                    self._binding("Compound 2", "S0002", image),
-                ],
-            }
-            self._write_json(bind_json, valid_payload)
-            reusable = _load_reusable_bindings(
-                str(bind_json), fingerprint, ["Compound 1", "Compound 2"], {}
-            )
+            self._write_json(bind_json, complete)
+            reusable = _load_reusable_bindings(str(bind_json), fingerprint, {})
             self.assertIsNotNone(reusable)
             self.assertEqual(
                 [row["cpd"] for row in reusable.get("final_bindings", [])],
@@ -1979,13 +1760,12 @@ class StrictAcceptanceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
             image_path = self._image(base, "structure.png")
-            active_cpds = ["Compound 1", "Compound 2"]
             old_activity = {
                 "rows": [{"cpd": "Compound 1", "activity_values": {"IC50": "A"}}],
                 "ruleset": {"name": "legacy", "version": "0"},
             }
             self.assertIn(
-                "Activity output does not match the current activity schema and ruleset.",
+                "Malformed or incompatible activity producer output",
                 _activity_acceptance_errors(old_activity, ["Compound 1"]),
             )
             bindings = [
@@ -1993,13 +1773,8 @@ class StrictAcceptanceTests(unittest.TestCase):
                 self._binding("Compound 2", "S1", image_path),
             ]
             binding_payload = {"final_bindings": bindings}
-            binding_errors = _binding_acceptance_errors(
-                binding_payload, active_cpds, {}
-            )
-            self.assertIn(
-                "Multiple active compounds compete for the same structure image.",
-                binding_errors,
-            )
+            with self.assertRaises(ValueError):
+                _binding_acceptance_errors(binding_payload)
             smiles = [
                 self._smiles("Compound 1", "S1", "CCCl"),
                 self._smiles("Compound 2", "S1", "CCO"),
@@ -2011,8 +1786,8 @@ class StrictAcceptanceTests(unittest.TestCase):
             )
             smiles_path = base / "smiles.json"
             self._write_json(smiles_path, smiles)
-            with self.assertRaises(RuntimeError):
-                _validate_smiles_source_for_export(str(smiles_path), bindings)
+            with self.assertRaises(ValueError):
+                qualified_records(bindings, smiles)
 
     def test_direct_smiles_runner_reapplies_strict_binding_and_result_gates(
         self,
@@ -2023,7 +1798,7 @@ class StrictAcceptanceTests(unittest.TestCase):
             binding = self._binding("Compound 1", "S1", image_path)
             payload = {
                 **artifact_identity(BINDINGS_SCHEMA, BINDINGS_SCHEMA_VERSION),
-                "execution_mode": "production_activity_led",
+                "execution_mode": "production_structure_led",
                 "final_bindings": [binding],
             }
             bindings_path = base / "bindings.json"
@@ -2136,7 +1911,7 @@ class StrictAcceptanceTests(unittest.TestCase):
         ):
             self.assertFalse((ocsr_root / relative).exists(), relative)
 
-    def test_clean_minimal_export_and_qa_preserve_activity_order_and_cells(
+    def test_clean_minimal_source_export_preserves_catalog_and_original_activity_order(
         self,
     ) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -2166,12 +1941,19 @@ class StrictAcceptanceTests(unittest.TestCase):
                 self._binding("Compound 2", "S2", image_2),
                 self._binding("Compound 1", "S1", image_1),
             ]
-            binding_payload = {
-                **artifact_identity(BINDINGS_SCHEMA, BINDINGS_SCHEMA_VERSION),
-                "execution_mode": "production_activity_led",
-                "accuracy_summary": {"total": 2, "confirmed": 2, "review_required": 0},
-                "final_bindings": bindings,
-            }
+            binding_payload = write_binding_result(
+                base / "structure_bindings",
+                patent_id="TEST",
+                bindings=bindings,
+                detected_style="control",
+                include_intermediates=False,
+                total_structures=2,
+                total_compound_blocks=0,
+                table_pages=[],
+                table_covered_count=0,
+                no_binding=[],
+                unbound_pages=[],
+            )
             smiles = [
                 self._smiles("Compound 2", "S2", "CCCl"),
                 self._smiles("Compound 1", "S1", "CCO"),
@@ -2180,10 +1962,24 @@ class StrictAcceptanceTests(unittest.TestCase):
             self._write_json(base / "structure_bindings/bindings.json", binding_payload)
             self._write_json(
                 base / "smiles/smiles_results.json",
-                build_smiles_artifact(smiles),
+                {
+                    **build_smiles_artifact(list(reversed(smiles))),
+                    "formal_acceptance_scope": FORMAL_SCOPE,
+                    "binding_execution_mode": SOURCE_EXECUTION_MODE,
+                },
             )
             self._write_json(base / "structures/metadata.json", {"total_structures": 2})
             self._write_json(base / "structure_pages/locator.json", {})
+            self._write_json(
+                base / "page_classification/page_classification.json",
+                {
+                    **artifact_identity(
+                        PAGE_CLASSIFICATION_SCHEMA, PAGE_CLASSIFICATION_SCHEMA_VERSION
+                    ),
+                    "page_count": 1,
+                    "activity_pages": [0],
+                },
+            )
             self._write_json(
                 base / "pipeline_summary.json",
                 {"status": "complete", "patent_id": "TEST"},
@@ -2202,6 +1998,8 @@ class StrictAcceptanceTests(unittest.TestCase):
                     str(base / "smiles/smiles_results.json"),
                     "--activity",
                     str(base / "activity/activity_data.json"),
+                    "--classification",
+                    str(base / "page_classification/page_classification.json"),
                     "--output-dir",
                     str(base / "final_results"),
                     "--patent",
@@ -2261,7 +2059,9 @@ class StrictAcceptanceTests(unittest.TestCase):
                 stale_qa["acceptance"]["hard_errors"],
             )
 
-    def test_partial_export_mode_writes_excel_for_missing_bindings(self) -> None:
+    def test_removed_partial_export_mode_cannot_bypass_ownership_and_chemistry(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
             image_1 = self._image(base, "images/structure_1.png")
@@ -2333,17 +2133,8 @@ class StrictAcceptanceTests(unittest.TestCase):
                 check=False,
             )
 
-            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
-            workbook = _read_xlsx_values(base / "final_results/TESTPARTIAL_final.xlsx")
-            final_rows = workbook["sheets"]["Final Results"]["rows"]
-            self.assertEqual(
-                [row[0] for row in final_rows[1:3]], ["Compound 1", "Compound 2"]
-            )
-            self.assertIn("IC50", " ".join(str(cell) for cell in final_rows[0]))
-            from openpyxl import load_workbook
-
-            rendered = load_workbook(base / "final_results/TESTPARTIAL_final.xlsx")
-            self.assertEqual(len(rendered["Final Results"]._images), 2)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertFalse((base / "final_results/TESTPARTIAL_final.xlsx").exists())
 
     def test_partial_mode_keeps_review_bindings_for_partial_export(self) -> None:
         confirmed = self._binding("Compound 1", "S1", "/tmp/s1.png")

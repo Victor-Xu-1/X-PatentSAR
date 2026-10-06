@@ -8,6 +8,9 @@ export const METRIC_SPECS = [
 ] as const;
 export type MetricKey = (typeof METRIC_SPECS)[number]['key'];
 export const METRIC_KEYS: readonly MetricKey[] = METRIC_SPECS.map((metric) => metric.key);
+export const DESCRIPTOR_KEYS: readonly MetricKey[] = METRIC_SPECS.filter(
+  (metric) => metric.kind === 'descriptor',
+).map((metric) => metric.key);
 
 export interface PredictionMetric {
   key: MetricKey;
@@ -34,4 +37,12 @@ export interface PredictionSummary {
   warnings: string[];
   error: { code: string; message: string } | null;
   review_only: true;
+}
+export interface DescriptorEngine {
+  name: 'RDKit';
+  version: string;
+  algorithm_sha256: string;
+}
+export interface DescriptorSummary extends Omit<PredictionSummary, 'engine' | 'warnings'> {
+  engine: DescriptorEngine | null;
 }
