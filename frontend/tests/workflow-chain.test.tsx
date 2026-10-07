@@ -117,7 +117,7 @@ describe('actual core then source-completion/six-property task chain', () => {
       </>,
     );
     expect(document.querySelector('.stage-current')).toHaveTextContent('需复核');
-    expect(document.querySelector('.job-actions .badge')).toHaveTextContent('需复核');
+    expect(document.querySelector('.job-actions .badge')).toBeNull();
     expect(screen.getByLabelText('提取验收与阻塞状态')).toHaveTextContent('提取未通过验收');
     expect(screen.queryByText('运行完成')).not.toBeInTheDocument();
     expect(screen.queryByText('核心 QA 通过')).not.toBeInTheDocument();

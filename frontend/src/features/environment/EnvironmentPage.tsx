@@ -41,7 +41,12 @@ export function EnvironmentPage({
         <div>
           <h1>环境管理</h1>
         </div>
-        <button type="button" onClick={workspace.refresh} disabled={catalog.loading}>
+        <button
+          type="button"
+          className="environment-refresh"
+          onClick={workspace.refresh}
+          disabled={catalog.loading}
+        >
           <RefreshCw size={15} />
           刷新环境目录
         </button>

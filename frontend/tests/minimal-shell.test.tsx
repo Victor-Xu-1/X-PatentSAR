@@ -33,7 +33,8 @@ describe('minimal document shell', () => {
       'src',
       expect.stringContaining('brand-mark.png'),
     );
-    expect(screen.getByText(project.title)).toBeVisible();
+    // The selected document is a workbench heading, not duplicated in global navigation.
+    expect(screen.queryByText(project.title)).not.toBeInTheDocument();
     expect(document.querySelectorAll('.topbar-actions > button')).toHaveLength(6);
     for (const name of ['上传 PDF', '最近文件', '环境管理', '任务记录', '返回结果表格', '证据摘要'])
       expect(screen.getByRole('button', { name })).toBeVisible();

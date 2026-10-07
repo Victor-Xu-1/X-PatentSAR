@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { Maximize2, Minimize2, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
-import { normalizeLayout } from '../../model/layout';
+import { defaultLayout, normalizeLayout } from '../../model/layout';
 import type { LayoutState } from '../../model/layout';
 import { ResizeHandle } from '../../components/ResizeHandle';
 
@@ -65,7 +65,6 @@ export function WorkspaceLayout({
       className={`workspace-layout${layout.fullscreen ? ' is-fullscreen' : ''}${layout.pdfVisible ? '' : ' source-collapsed'}`}
     >
       <div className="layout-toolbar" aria-label="工作区布局">
-        <span className="muted">结果优先 · 拖动或用方向键调整原文宽度</span>
         <button
           type="button"
           onClick={() => onChange({ ...layout, pdfVisible: !layout.pdfVisible })}
@@ -110,7 +109,7 @@ export function WorkspaceLayout({
               min={20}
               max={55}
               keyStep={2}
-              resetValue={28}
+              resetValue={defaultLayout.pdfWidth}
               valueText={`原文 ${preview ?? layout.pdfWidth}%，结果 ${100 - (preview ?? layout.pdfWidth)}%`}
               fromPointer={(delta, initial) => {
                 const width = split.current?.getBoundingClientRect().width ?? 0;

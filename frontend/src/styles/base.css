@@ -3,7 +3,7 @@
   color: var(--ink);
   background: var(--canvas);
   font-synthesis: none;
-  font-size: 13px;
+  font-size: 14px;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -34,7 +34,7 @@ button {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  min-height: 34px;
+  min-height: 36px;
   padding: 7px 12px;
   cursor: pointer;
   line-height: 1.3;
@@ -72,7 +72,7 @@ button.primary:disabled {
 input,
 select,
 textarea {
-  min-height: 33px;
+  min-height: 36px;
   padding: 7px 9px;
   max-width: 100%;
 }
@@ -134,7 +134,7 @@ svg {
   overflow-wrap: anywhere;
 }
 .icon-button {
-  width: 31px;
+  width: 34px;
   padding: 6px;
   flex: 0 0 auto;
 }
@@ -159,7 +159,7 @@ svg {
   border-radius: 7px;
   color: var(--muted);
   background: var(--surface-hover);
-  font-size: 11px;
+  font-size: 12px;
   white-space: nowrap;
   line-height: 1.3;
 }

@@ -10,10 +10,10 @@ import { api } from '../src/api';
 import { compound, page, project, results } from './fixtures';
 
 describe('results-first layout with one safe, refreshable state', () => {
-  it('defaults to 28 percent source and validates nonfinite / extreme inputs', () => {
-    expect(defaultLayout).toEqual({ pdfWidth: 28, pdfVisible: true, fullscreen: false });
-    expect(normalizeLayout({ pdfWidth: NaN }).pdfWidth).toBe(28);
-    expect(normalizeLayout({ pdfWidth: Infinity }).pdfWidth).toBe(28);
+  it('defaults to 34 percent source and validates nonfinite / extreme inputs', () => {
+    expect(defaultLayout).toEqual({ pdfWidth: 34, pdfVisible: true, fullscreen: false });
+    expect(normalizeLayout({ pdfWidth: NaN }).pdfWidth).toBe(34);
+    expect(normalizeLayout({ pdfWidth: Infinity }).pdfWidth).toBe(34);
     expect(normalizeLayout({ pdfWidth: -50 }).pdfWidth).toBe(20);
     expect(normalizeLayout({ pdfWidth: 99 }).pdfWidth).toBe(55);
   });
@@ -43,10 +43,10 @@ describe('results-first layout with one safe, refreshable state', () => {
     }
     render(<TestLayout />);
     const splitter = screen.getByRole('slider', { name: '调整原文与结果宽度' });
-    expect(splitter).toHaveAttribute('aria-valuenow', '28');
+    expect(splitter).toHaveAttribute('aria-valuenow', '34');
     splitter.focus();
     await userEvent.keyboard('{ArrowRight}');
-    expect(splitter).toHaveAttribute('aria-valuenow', '30');
+    expect(splitter).toHaveAttribute('aria-valuenow', '36');
     await userEvent.keyboard('{End}');
     expect(splitter).toHaveAttribute('aria-valuenow', '55');
     await userEvent.keyboard('{Home}');
@@ -79,7 +79,7 @@ describe('results-first layout with one safe, refreshable state', () => {
     fireEvent.pointerMove(separator, { pointerId: 1, clientX: 450 });
     expect(change).not.toHaveBeenCalled();
     fireEvent.pointerUp(separator, { pointerId: 1, clientX: 450 });
-    expect(change).toHaveBeenCalledWith({ ...defaultLayout, pdfWidth: 35 });
+    expect(change).toHaveBeenCalledWith({ ...defaultLayout, pdfWidth: 41 });
   });
   it('ignores pointer resize when pane geometry is not measurable', () => {
     const change = vi.fn();

@@ -16,9 +16,9 @@ export function ProjectsPage({
     b.updated_at.localeCompare(a.updated_at),
   );
   return (
-    <section className="management-page recent-files-page">
+    <section className="management-page recent-files-page" aria-labelledby="recent-files-heading">
       <header className="page-header">
-        <h1>最近文件</h1>
+        <h1 id="recent-files-heading">最近文件</h1>
       </header>
       {resource.error ? (
         <ErrorNotice error={resource.error} onRetry={resource.reload} />

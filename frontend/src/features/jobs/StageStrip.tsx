@@ -1,4 +1,5 @@
-import { Check, CircleAlert, LoaderCircle } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { ChevronDown } from 'lucide-react';
 import type { Job } from '../../api/types';
 import { jobStatusText } from '../../model/presentation';
 import {
@@ -6,18 +7,40 @@ import {
   completedCoreRejection,
   observedStages,
   recognitionReviewCount,
-  reviewedCoreStage,
   stageLabel,
   stageProgressText,
   stageStatusText,
   stoppedJob,
-  waitingAdmet,
   waitingResources,
   workflowStageNames,
 } from '../../model/extraction';
-import { StageObservation } from './StageObservation';
+import { StageList } from './StageList';
+import { WorkflowGroups } from './WorkflowGroups';
 
 export function StageStrip({ job, compact = false }: { job: Job | null; compact?: boolean }) {
+  const disclosure = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    if (!compact) return;
+    const outside = (event: PointerEvent) => {
+      const current = disclosure.current;
+      if (current?.open && event.target instanceof Node && !current.contains(event.target))
+        current.open = false;
+    };
+    const escape = (event: KeyboardEvent) => {
+      const current = disclosure.current;
+      if (event.key === 'Escape' && current?.open && !document.querySelector('dialog[open]')) {
+        event.preventDefault();
+        current.open = false;
+        current.querySelector('summary')?.focus();
+      }
+    };
+    document.addEventListener('pointerdown', outside);
+    document.addEventListener('keydown', escape);
+    return () => {
+      document.removeEventListener('pointerdown', outside);
+      document.removeEventListener('keydown', escape);
+    };
+  }, [compact]);
   const stages = observedStages(job);
   const names = workflowStageNames(job);
   const historyNotice =
@@ -28,46 +51,7 @@ export function StageStrip({ job, compact = false }: { job: Job | null; compact?
           : '历史阶段可用性未知'}
       </output>
     ) : null;
-  const list = (
-    <ol className="stage-strip" aria-label="任务运行链路">
-      {names.map((name, index) => {
-        const stage = stages.find((item) => item.name === name);
-        const label = stageLabel(name, stage);
-        const status =
-          job && job.history_available !== true
-            ? 'unknown'
-            : (stage?.status ??
-              (name === 'admet' && !waitingAdmet(job, stage) ? 'unknown' : 'pending'));
-        return (
-          <li
-            className={`stage ${status}${reviewedCoreStage(job, stage) ? ' needs-review' : ''}`}
-            key={name}
-            title={`${label}：${stageStatusText(job, stage, name)}`}
-          >
-            <span className="stage-circle">
-              {status === 'ok' ? (
-                <Check size={13} />
-              ) : status === 'running' && !stoppedJob(job) ? (
-                <LoaderCircle size={13} className="spin" />
-              ) : status === 'failed' ? (
-                <CircleAlert size={13} />
-              ) : (
-                index + 1
-              )}
-            </span>
-            {job?.history_available === true ? (
-              <StageObservation job={job} stage={stage} name={name} />
-            ) : (
-              <div>
-                <strong>{label}</strong>
-                <small>{stageStatusText(job, stage, name)}</small>
-              </div>
-            )}
-          </li>
-        );
-      })}
-    </ol>
-  );
+  const list = <StageList job={job} stages={stages} names={names} />;
   if (!compact)
     return (
       <div className="stage-overview">
@@ -109,18 +93,27 @@ export function StageStrip({ job, compact = false }: { job: Job | null; compact?
   const progress = current?.progress;
   const reviewCount = recognitionReviewCount(job);
   return (
-    <details className="stage-overview stage-disclosure">
+    <details className="stage-overview stage-disclosure" ref={disclosure}>
       <summary className="stage-current-line" aria-label="提取阶段详情">
-        <output className="stage-current" aria-live="polite" style={{ display: 'inline' }}>
+        <WorkflowGroups job={job} />
+        <output
+          className={`stage-current ${completedCoreRejection(job) ? 'is-review' : `is-${job?.status ?? 'idle'}`}`}
+          aria-live="polite"
+        >
+          {job && ['cancelled', 'interrupted'].includes(job.status) && `${jobStatusText(job)} · `}
           {label}
           {reviewCount !== null && <span className="stage-progress"> · {reviewCount} 条结构</span>}
           {!completedCoreRejection(job) && progress && progress.total > 0 && (
             <span className="stage-progress"> · {stageProgressText(current)}</span>
           )}
         </output>
+        <ChevronDown size={14} className="stage-disclosure-chevron" aria-hidden="true" />
       </summary>
-      {historyNotice}
-      {list}
+      <div className="stage-detail-surface">
+        <h2>任务流程</h2>
+        {historyNotice}
+        {list}
+      </div>
     </details>
   );
 }

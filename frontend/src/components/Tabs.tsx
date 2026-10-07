@@ -6,7 +6,7 @@ export function Tabs<T extends string>({
   onChange,
 }: {
   label: string;
-  tabs: { value: T; label: string; disabled?: boolean }[];
+  tabs: { value: T; label: string; ariaLabel?: string; disabled?: boolean }[];
   value: T;
   onChange: (value: T) => void;
 }) {
@@ -46,6 +46,7 @@ export function Tabs<T extends string>({
           role="tab"
           type="button"
           data-tab-index={index}
+          aria-label={tab.ariaLabel}
           aria-selected={value === tab.value}
           tabIndex={value === tab.value ? 0 : -1}
           disabled={tab.disabled}

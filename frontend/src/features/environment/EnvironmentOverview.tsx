@@ -38,9 +38,9 @@ export function EnvironmentOverview({
           </span>
           <div className="environment-overview-heading">
             <h2>完整运行环境</h2>
-            <span className="muted">
+            <output className="muted" aria-label="环境就绪状态" aria-live="polite">
               已就绪 {readyCount}/{environmentComponentIds.length}
-            </span>
+            </output>
           </div>
         </div>
         <div className="environment-overview-actions">
@@ -68,14 +68,16 @@ export function EnvironmentOverview({
           </button>
         </div>
       </div>
-      <p className="muted">PDF 提取 · 结构识别 · 六项指标</p>
+      <div className="environment-overview-footer">
+        <p className="muted">PDF 提取 · 结构识别 · 六项指标</p>
+        <button type="button" className="environment-details-trigger" onClick={onDetails}>
+          存储位置
+        </button>
+      </div>
       {problem && <p className="info-banner">{problem}</p>}
       {plan !== null && !ready && !canSetupEnvironmentPlan(plan) && (
         <p className="info-banner">完整部署暂不可用，请查看组件详情中的服务端限制或检测状态。</p>
       )}
-      <button type="button" className="environment-details-trigger" onClick={onDetails}>
-        存储位置
-      </button>
       {!catalog.components.length && (
         <p className="info-banner">服务端尚未提供组件目录；不会展示演示环境。</p>
       )}

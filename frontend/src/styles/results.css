@@ -27,7 +27,7 @@
   min-width: 0;
 }
 .metric-card div > span {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
   white-space: nowrap;
 }
@@ -51,7 +51,7 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
   background: var(--surface-subtle);
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
 }
 .acceptance-banner > span {
@@ -92,25 +92,25 @@
 .result-toolbar {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
+  gap: 8px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--line);
   flex: 0 0 auto;
-  min-height: 36px;
+  min-height: 52px;
 }
 .result-search {
   flex: 1;
   min-width: 85px;
 }
 .result-search input {
-  min-height: 26px;
-  padding: 4px 5px;
+  min-height: 34px;
+  padding: 6px 8px;
 }
 .toolbar-button {
-  min-height: 28px;
-  min-width: 28px;
-  padding: 5px;
-  font-size: 11px;
+  min-height: 34px;
+  min-width: 34px;
+  padding: 6px;
+  font-size: 13px;
   background: transparent;
   border-color: transparent;
   flex: 0 0 auto;
@@ -118,7 +118,7 @@
 .acceptance-chip {
   min-height: 24px;
   padding: 2px 5px;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
   background: transparent;
   border-color: transparent;
@@ -133,7 +133,7 @@
 }
 .selection-count {
   white-space: nowrap;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
 }
 .result-options .filter-controls {
@@ -200,7 +200,7 @@
 .result-options-info > small[aria-label='记录覆盖数量'] {
   display: block;
   margin-bottom: 14px;
-  font-size: 11px;
+  font-size: 13px;
 }
 .results-content {
   flex: 1;
@@ -224,7 +224,7 @@
   gap: 6px;
   padding: 6px 8px;
   border-top: 1px solid var(--line);
-  font-size: 10px;
+  font-size: 12px;
   flex-wrap: wrap;
 }
 .pagination nav {
@@ -234,7 +234,7 @@
 }
 .pagination select {
   min-height: 26px;
-  font-size: 10px;
+  font-size: 12px;
   padding: 4px;
 }
 .pagination .icon-button {
@@ -246,10 +246,14 @@
   min-height: 26px;
   min-width: 26px;
   padding: 4px;
-  font-size: 10px;
+  font-size: 12px;
 }
 .page-button.active {
   color: var(--on-primary);
   border-color: var(--primary);
   background: var(--primary);
+}
+.result-toolbar .toolbar-button > svg {
+  width: 16px;
+  height: 16px;
 }

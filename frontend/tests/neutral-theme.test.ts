@@ -5,8 +5,29 @@ const css = (name: string) =>
   readFileSync(new URL('../src/styles/' + name, import.meta.url), 'utf8');
 const tokens = css('tokens.css');
 const token = (name: string) => tokens.match(new RegExp('--' + name + ':\\s*([^;]+);'))?.[1];
+function luminance(value: string) {
+  const channels = value.match(/[\da-f]{2}/gi)!.map((hex) => {
+    const channel = Number.parseInt(hex, 16) / 255;
+    return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+  return channels[0]! * 0.2126 + channels[1]! * 0.7152 + channels[2]! * 0.0722;
+}
+function contrast(foreground: string, background: string) {
+  const values = [luminance(token(foreground)!), luminance(token(background)!)].sort(
+    (a, b) => b - a,
+  );
+  return (values[0]! + 0.05) / (values[1]! + 0.05);
+}
 
 describe('one restrained biomedical system-font design authority', () => {
+  it('keeps small metadata and scientific values readable on their actual surfaces', () => {
+    for (const background of ['surface', 'surface-subtle', 'canvas']) {
+      for (const foreground of ['ink', 'primary', 'muted', 'faint'])
+        expect(contrast(foreground, background)).toBeGreaterThanOrEqual(4.5);
+    }
+    expect(contrast('primary', 'activity-strong-surface')).toBeGreaterThanOrEqual(4.5);
+    expect(contrast('primary', 'activity-medium-surface')).toBeGreaterThanOrEqual(4.5);
+  });
   it('uses cool-neutral surfaces, charcoal actions and limited biomedical accents', () => {
     expect(token('canvas')).toBe('#f5f7f7');
     expect(token('surface')).toBe('#ffffff');

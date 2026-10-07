@@ -92,6 +92,9 @@ export function Workspace({
   return (
     <div className="workspace" data-dialog-focus-scope>
       <section className="workflow-panel">
+        <h1 className="workflow-document" title={project?.title}>
+          {project?.title ?? '正在打开文件…'}
+        </h1>
         <StageStrip job={job} compact />
         <JobActions project={project} job={job} ready={ready} onChange={onJobChange} compact />
       </section>

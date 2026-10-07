@@ -41,12 +41,14 @@ export function InstallConfirmation({
       onClose={onClose}
       busy={busy}
       wide
+      className="environment-install-dialog"
     >
-      <div className="dialog-body">
-        <p>
-          安装位置：<strong className="break-word">{plan.settings.install_root}</strong>。
-          一次后台操作处理以下 CPU 组件；不安装 GPU / CUDA，不调用付费服务，不覆盖未知已有环境。
-        </p>
+      <div className="dialog-body environment-installation">
+        <div className="installation-destination">
+          <span className="muted">安装位置</span>
+          <strong className="break-word">{plan.settings.install_root}</strong>
+        </div>
+        <p>一次后台操作配置以下 CPU 组件，不安装 GPU / CUDA、不调用付费服务、不覆盖未知环境。</p>
         <p className="muted">
           {plan.scope === 'complete'
             ? '包含完整运行环境及全部前置依赖。后端逐项复检并复用合格环境，仅安装缺失或不合格组件；检测错误会停止，不以重装掩盖。'
@@ -55,26 +57,32 @@ export function InstallConfirmation({
         <p className="muted">
           下载按服务端报告展示，未报告不视为零，复用可减少下载。全部验证通过才应用配置，不改变已有任务或专利结果。
         </p>
-        <ul className="installation-plan">
+        <ul className="installation-plan" aria-label="环境安装计划">
           {plan.components.map((component) => (
             <li key={component.id} data-install-component={component.id}>
-              <strong>
-                {component.name} · 目标版本 {component.version}
-              </strong>
-              <small>{plan.requested.includes(component.id) ? '所选组件' : '前置依赖'}</small>
+              <div className="installation-component-heading">
+                <strong>{component.name}</strong>
+                <span
+                  className={`badge environment-status-${environmentComponentBadge(component).tone}`}
+                >
+                  {isEnvironmentComponentReady(component)
+                    ? '已安装·已验证；后端复验后复用'
+                    : environmentComponentBadge(component).label}
+                </span>
+              </div>
               <small>
-                {isEnvironmentComponentReady(component)
-                  ? '已安装·已验证；后端复验后复用'
-                  : environmentComponentBadge(component).label}
+                目标版本 {component.version} ·{' '}
+                {plan.requested.includes(component.id) ? '所选组件' : '前置依赖'}
               </small>
-              <span>
+              <span className="installation-license">
                 下载：{environmentBytes(component.download_bytes)} · 许可证：
                 {component.license || '未报告'}
               </span>
-              <small className="break-word">来源：{component.source_url || '未报告'}</small>
-              {component.location && (
-                <small className="break-word">现有位置：{component.location}</small>
-              )}
+              <details className="installation-source-details">
+                <summary>来源与位置</summary>
+                <p className="break-word">来源：{component.source_url || '未报告'}</p>
+                {component.location && <p className="break-word">现有位置：{component.location}</p>}
+              </details>
             </li>
           ))}
         </ul>

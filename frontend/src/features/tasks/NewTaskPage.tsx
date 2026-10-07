@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { FileUp } from 'lucide-react';
+import { ArrowRight, FileText, FileUp } from 'lucide-react';
 import type { Project } from '../../api/types';
 import { ErrorNotice } from '../../components/Feedback';
 import { defaultJobOptions } from '../../model/tasks';
@@ -23,9 +23,9 @@ export function NewTaskPage({
   const busy = task.busy !== null;
   const inputLocked = busy || Boolean(task.created) || task.uncertain;
   return (
-    <section className="new-task-page">
+    <section className="new-task-page" aria-labelledby="new-task-heading">
       <header className="task-heading">
-        <h1>上传专利 PDF</h1>
+        <h1 id="new-task-heading">上传专利 PDF</h1>
       </header>
       <form
         className="task-form"
@@ -38,15 +38,18 @@ export function NewTaskPage({
       >
         <fieldset className="task-inputs" disabled={inputLocked}>
           <legend className="sr-only">专利 PDF</legend>
-          <label className="upload-drop">
+          <label className={`upload-drop${file ? ' has-file' : ''}`}>
             <span className="upload-icon" aria-hidden="true">
-              <FileUp size={30} />
+              {file ? <FileText size={28} /> : <FileUp size={28} />}
             </span>
-            <strong>{file?.name ?? '选择专利 PDF'}</strong>
-            <span>PDF · 最大 128 MiB</span>
+            <strong className="upload-file-name" aria-live="polite">
+              {file?.name ?? '选择专利 PDF'}
+            </strong>
+            <span id="pdf-upload-limit">PDF · 最大 128 MiB</span>
             <input
               ref={initial}
               aria-label="原始专利 PDF 文件"
+              aria-describedby="pdf-upload-limit"
               type="file"
               accept="application/pdf,.pdf"
               onChange={(event) => setFile(event.target.files?.[0] ?? null)}
@@ -96,6 +99,7 @@ export function NewTaskPage({
                   : task.created
                     ? '重试启动'
                     : '开始提取'}
+              {!busy && <ArrowRight size={16} aria-hidden="true" />}
             </button>
           )}
         </footer>

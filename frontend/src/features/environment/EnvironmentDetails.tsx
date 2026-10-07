@@ -36,7 +36,13 @@ export function EnvironmentDetails({
   ) => Promise<EnvironmentSettings | null>;
 }) {
   return (
-    <Dialog title="存储位置" onClose={onClose} busy={busy}>
+    <Dialog
+      title="存储位置"
+      onClose={onClose}
+      busy={busy}
+      wide
+      className="environment-details-dialog"
+    >
       <StorageLocations
         settings={catalog.settings}
         disabled={storageDisabled}
