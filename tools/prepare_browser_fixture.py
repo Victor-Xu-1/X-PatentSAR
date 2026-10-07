@@ -74,26 +74,28 @@ def prepare(workspace: Path) -> dict[str, str]:
                 "A PDF without chemistry must not become a successful extraction"
             )
         environment_store = client.app.state.environments.store
-        settings = environment_store.settings()
-        history_operation, _ = environment_store.enqueue(
-            "controlled-history-deletion-fixture",
-            "controlled-history-deletion-fixture",
-            {
-                "schema_version": 1,
-                "action": "inspect",
-                "component_ids": ["installer"],
-                "install_root": settings["install_root"],
-            },
-            settings["revision"],
-        )
-        # A terminal history fixture, not a real inspection/install or readiness
-        # claim. No environment reports/configuration/model are populated.
-        environment_store.update(
-            history_operation.id,
-            status="cancelled",
-            finished_at=now(),
-            stage="Controlled history fixture; no installation or inspection",
-        )
+    # The app/queue is closed before inserting terminal fixture history. This
+    # prevents even a poll-time race from starting an inspection child.
+    settings = environment_store.settings()
+    history_operation, _ = environment_store.enqueue(
+        "controlled-history-deletion-fixture",
+        "controlled-history-deletion-fixture",
+        {
+            "schema_version": 1,
+            "action": "inspect",
+            "component_ids": ["installer"],
+            "install_root": settings["install_root"],
+        },
+        settings["revision"],
+    )
+    # A terminal history fixture, not a real inspection/install or readiness
+    # claim. No environment reports/configuration/model are populated.
+    environment_store.update(
+        history_operation.id,
+        status="cancelled",
+        finished_at=now(),
+        stage="Controlled history fixture; no installation or inspection",
+    )
     values = {
         "PATENTSAR_WEB_STATE_DIR": str(state),
         "PATENTSAR_E2E_PDF": str(pdf),
