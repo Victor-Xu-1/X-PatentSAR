@@ -351,6 +351,56 @@ class AttemptTests(WebFixture, unittest.TestCase):
         self.assertEqual(ocr_file.read_bytes(), original)
         self.assertEqual(service.job(job.id).status, "failed")
 
+    def test_default_rerun_can_seed_current_checkpoint_with_prior_raw_ruleset(self):
+        service, project, queue, job, spec = self.draft()
+        self.classification(spec)
+        root = Path(spec.output_dir)
+        raw = root / OCR_PATH
+        cached = json.loads(raw.read_text())
+        cached["metadata"]["ruleset"]["version"] = "2.1.0"
+        write_json_atomic(raw, cached)
+        # Seal the actual compatible raw bytes into the current stage proof.
+        source = root / ARTIFACTS["classify"][0]
+        _write_step_manifest(
+            str(source),
+            _step_fingerprint(
+                "classify",
+                pdf_path=spec.pdf_path,
+                dependencies=[str(raw)],
+                params={"ocr_cached": True},
+            ),
+        )
+        self.summary(spec)
+        self.finish(service, queue, job)
+        before = {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
+        fresh = queue.enqueue(project.id, JobRequest())
+        target = Path(decode_spec(service.store.job(fresh.id)["spec"]).output_dir)
+        self.assertTrue((target / ARTIFACTS["classify"][0]).is_file())
+        self.assertEqual((target / OCR_PATH).read_bytes(), raw.read_bytes())
+        self.assertFalse((target / "final_qa_report.json").exists())
+        self.assertEqual({p: p.read_bytes() for p in before}, before)
+
+    def test_default_rerun_does_not_promote_old_derived_checkpoint_with_compatible_raw(
+        self,
+    ):
+        service, project, queue, job, spec = self.draft()
+        self.classification(spec)
+        root = Path(spec.output_dir)
+        raw = root / OCR_PATH
+        cached = json.loads(raw.read_text())
+        cached["metadata"]["ruleset"]["version"] = "2.1.0"
+        write_json_atomic(raw, cached)
+        source = root / ARTIFACTS["classify"][0]
+        payload = json.loads(source.read_text())
+        payload["ruleset"]["version"] = "2.1.0"
+        write_json_atomic(source, payload)
+        self.summary(spec)
+        self.finish(service, queue, job)
+        fresh = queue.enqueue(project.id, JobRequest())
+        target = Path(decode_spec(service.store.job(fresh.id)["spec"]).output_dir)
+        self.assertFalse((target / ARTIFACTS["classify"][0]).exists())
+        self.assertEqual((target / OCR_PATH).read_bytes(), raw.read_bytes())
+
     def test_failed_smiles_resume_transports_raw_cache_not_failed_output_or_qa(self):
         import sqlite3
 
@@ -563,6 +613,7 @@ class AttemptTests(WebFixture, unittest.TestCase):
             "chemical_note": str(source) + "/not-a-path-field",
             "structure_image": str(source / paths[0]),
             "ocsr_structure_image": str(source / paths[1]),
+            "ocsr_original_input": str(source / paths[1]),
             "engine_attempts": [
                 {
                     "input_image": str(source / paths[1]),
@@ -585,6 +636,7 @@ class AttemptTests(WebFixture, unittest.TestCase):
             self.assertEqual(moved[key], record[key])
         self.assertEqual(moved["structure_image"], str(target / paths[0]))
         self.assertEqual(moved["ocsr_structure_image"], str(target / paths[1]))
+        self.assertEqual(moved["ocsr_original_input"], str(target / paths[1]))
         for index in range(2):
             self.assertEqual(
                 moved["engine_attempts"][index]["smiles"],
