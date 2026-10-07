@@ -70,7 +70,7 @@ def execute_smiles(state: PipelineContext) -> None:
     if supplemental or len(formal_inputs) != state.n_bound:
         raise ValueError("Recognition must uniformly cover the entire proved catalog")
     if state.n_bound == 0:
-        print(f"  ⏭ [{step}] 无需 SMILES，跳过")
+        print(f"  ⏭ [{step}] 缺少已证实编号结构，识别未启动")
         _write_json(
             state.smiles_json,
             {
@@ -232,18 +232,25 @@ def execute_smiles(state: PipelineContext) -> None:
     state.pipeline_log["steps"][step] = {
         **state.pipeline_log["steps"].get(step, {}),
         "from_cache": state.progress.checkpoint_reused,
-        "status": "ok" if n_valid or n_smiles == 0 else "warnings",
+        "status": "ok" if n_valid else "warnings" if n_smiles else "failed",
         "elapsed_s": _elapsed_since(t0),
         "output": state.smiles_json,
         "total": n_smiles,
         "valid": n_valid,
         "formal_total": len(smiles_results),
         "source_total": len(source_results),
+        "execution_status": "completed" if state.n_bound else "not_started",
+        **({"blocked_by": "bind"} if not state.n_bound else {}),
         "binding_execution_mode": SOURCE_EXECUTION_MODE,
         "formal_acceptance_scope": FORMAL_SCOPE,
         "output_updated": bool(state.pipeline_log["steps"][step].get("output_updated"))
         or state.n_bound == 0,
     }
-    print(f"     ✅ valid_smiles={n_valid}/{n_smiles}")
+    if n_smiles:
+        print(f"     valid_smiles={n_valid}/{n_smiles}")
     smiles_errors = _smiles_acceptance_errors(smiles_results, state.bind_payload)
+    if not state.n_bound:
+        smiles_errors.append(
+            "No proved printed-ID structures; SMILES recognition was not started."
+        )
     retain_scientific_errors(state, step, smiles_errors)

@@ -63,10 +63,6 @@ class BindingModuleTests(unittest.TestCase):
             document.new_page()
             with (
                 patch(
-                    "patent_sar_extractor.core.binding_source_headings._precompute_visible_label_cache",
-                    return_value={},
-                ),
-                patch(
                     "patent_sar_extractor.core.binding_source_headings._load_visible_label_cache",
                     return_value={},
                 ),
