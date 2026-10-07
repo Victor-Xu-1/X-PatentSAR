@@ -240,6 +240,21 @@ QA and API v1 remain unchanged. Research progress uses
 
 ## Storage, restart and deployment
 
+Recoverable history deletion is a separate presentation/lifecycle authority,
+not scientific acceptance or filesystem garbage collection. Additive private
+tombstones retain original projects, jobs, audit and producer/checkpoint evidence.
+Normal list/read/write routes exclude removed entities; writer-side visibility
+checks and the existing analysis lease protect enqueue/edit/direct-model races.
+Public task visibility is distinct from internal immutable provenance: removing
+a producer record must neither erase properties nor promote failed core QA.
+Project removal includes its children in daily views; restoration does not undo
+individually removed children. Only software-owned saved export files below
+registered result roots are discoverable, without arbitrary path input, symlink
+following, whole-tree scans or model calls. Terminal environment history removal
+never uninstalls components or changes current verification/configuration.
+The recovery UI is explicit that files remain on disk; no purge, retention timer
+or hidden competing deletion path is added. API v1/product v0.1.0 remain unchanged.
+
 The existing revisioned environment-settings transaction also owns upload and
 result locations. Additive private `file_settings`/`file_roots` tables in its
 existing SQLite v1 retain current destinations and bounded historical roots;

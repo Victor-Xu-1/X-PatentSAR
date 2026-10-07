@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from .errors import WebError
+from .history_storage import ensure_project_visible
 from .models import Review, ReviewRequest
 from .storage import Store, now
 
@@ -11,6 +12,7 @@ def put_review(
     store: Store, project_id: str, compound_id: str, request: ReviewRequest
 ) -> Review:
     with store.connect(write=True) as connection:
+        ensure_project_visible(connection, project_id)
         compound = connection.execute(
             "SELECT 1 FROM compounds WHERE project_id=? AND id=?",
             (project_id, compound_id),

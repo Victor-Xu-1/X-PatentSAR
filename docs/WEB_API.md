@@ -108,6 +108,46 @@ never populated with demonstration values. Evidence summary is not an LLM claim.
 
 ## Security and storage
 
+### Recoverable history deletion
+
+The additive authenticated history interface uses the same Origin/session/CSRF
+boundary. It accepts entity identities, never arbitrary filesystem paths:
+
+- GET `/api/v1/history?kind=&project_id=&deleted=false&page=1&page_size=50` returns
+  `{items,total,page,page_size}` with at most100 items per page. Kind is
+  `project`, `job`, `export` or `environment_operation`. The optional project
+  selector scopes project-owned records. A true deleted selector reads recovery
+  entries, including children removed through their parent.
+- GET `/api/v1/history/{kind}/{id}` reads the current confirmation/recovery entry.
+- POST `/api/v1/history/{kind}/{id}/delete` or `/restore` accepts only
+  `{expected_revision:SHA64}` and returns the same `HistoryEntry` contract.
+  A stale confirmation returns409; writes are not blindly replayed. Repeated
+  already-applied operations do not rewrite original evidence.
+
+`HistoryEntry` is `{kind,id,project_id,title,status,created_at,deleted_at,revision,
+can_delete,can_restore,blocked_reason,size_bytes}`. Nullable fields stay null when
+unavailable. Revision binds the observed record to a server-side confirmation;
+permissions are rechecked at mutation, not trusted from a prior UI response.
+Export IDs are opaque and do not disclose directories. Scans are bounded to
+owned regular UUID-named CSV/JSON files in registered per-project export folders;
+unsafe/unavailable evidence is explicit rather than silently treated as empty.
+
+Deletion moves records out of daily views into a recoverable logical trash.
+Original PDF, runs, audit, current result values and checkpoints remain on disk;
+this is not permanent destruction or disk-space cleanup. Project removal hides
+its children and rejects normal source/result/edit/queue/export access. A removed
+task cannot be explicitly read/resumed, but its internal producer/ancestry remains
+valid. Original acceptance is computed independently of record visibility; deleting
+a failed task cannot promote QA. Active/queued/unverified retained work is protected;
+project deletion also respects the existing analysis lease. Restore requires a
+visible parent and does not undo independent child deletions. Environment removal
+only hides terminal history, retaining component readiness, configuration and
+idempotency/recovery evidence. Legacy terminal environment identities remain
+unchanged: exact owned specification/command plus valid prior-kernel or saved-PID
+absence proof can allow removal; live, reused, malformed, foreign or unknown
+ownership blocks it. These checks never signal a process. Productv0.1.0/APIv1/
+private SQLitev1 remain.
+
 - Bind only to loopback (default port 8765). Validate Host and Origin; no wildcard CORS.
 - `GET /api/v1/session` bootstraps a local same-origin session, sets an HttpOnly
   SameSite=Strict cookie, and returns `{csrf_token, user:{name}}`. Reject cross-site

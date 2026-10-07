@@ -17,6 +17,7 @@ from .corrections import Corrections, CorrectionSaved
 from .descriptor_storage import DescriptorStore
 from .errors import WebError
 from .files import SafeFiles
+from .history_storage import ensure_job_visible, ensure_project_visible, tombstone
 from .lead_storage import LeadStore
 from .leads import LeadService
 from .models import (
@@ -108,6 +109,7 @@ class WorkspaceService:
         # No raw DTO, projection ID, correction, history or saved observation is
         # rewritten. A concurrent new attempt cannot acquire this old read view.
         with self.store.connect(write=True) as connection:
+            ensure_project_visible(connection, project["id"])
             changed = connection.execute(
                 "UPDATE projects SET snapshot=? WHERE id=? AND run_root=? AND sha256 IS ? AND snapshot=?",
                 (
@@ -188,6 +190,7 @@ class WorkspaceService:
     def attach_pdf(self, project_id: str, uploaded: UploadedPDF) -> Project:
         try:
             with self.store.connect(write=True) as connection:
+                ensure_project_visible(connection, project_id)
                 project = connection.execute(
                     "SELECT * FROM projects WHERE id=?", (project_id,)
                 ).fetchone()
@@ -260,6 +263,8 @@ class WorkspaceService:
                 "SELECT * FROM projects WHERE import_key=?", (import_key,)
             ).fetchone()
         project_id = existing["id"] if existing else uuid.uuid4().hex
+        if existing:
+            self.store.project(project_id)
         attached_sha = existing["sha256"] if existing else None
         if attached_sha and attached_sha != view.expected_sha256:
             raise WebError(
@@ -288,6 +293,8 @@ class WorkspaceService:
             )
             snapshot["correction_projection_id"] = uuid.uuid4().hex
             with self.store.connect(write=True) as connection:
+                if existing:
+                    ensure_project_visible(connection, project_id)
                 if (
                     not existing
                     and connection.execute("SELECT COUNT(*) FROM projects").fetchone()[
@@ -379,7 +386,18 @@ class WorkspaceService:
         )
 
     def job(self, job_id: str) -> Job:
-        row = self.store.job(job_id)
+        with self.store.connect() as connection:
+            connection.execute("BEGIN")
+            ensure_job_visible(connection, job_id)
+            row = dict(
+                connection.execute(
+                    "SELECT * FROM jobs WHERE id=?", (job_id,)
+                ).fetchone()
+            )
+        return self._job(row)
+
+    def _job(self, row: dict[str, Any]) -> Job:
+        """Retained facts also serve acceptance; public visibility is checked separately."""
         try:
             spec = spec_record(row["spec"])
         except WebError:
@@ -441,10 +459,16 @@ class WorkspaceService:
         row = self._current_project(project_id)
         snapshot = json.loads(row["snapshot"])
         with self.store.connect() as connection:
+            connection.execute("BEGIN")
+            ensure_project_visible(connection, project_id)
             latest = connection.execute(
                 "SELECT * FROM jobs WHERE project_id=? ORDER BY created_at DESC,rowid DESC LIMIT 1",
                 (project_id,),
             ).fetchone()
+            latest_deleted = (
+                latest is not None
+                and tombstone(connection, "job", latest["id"])["deleted_at"] is not None
+            )
             review_counts = connection.execute(
                 "SELECT COUNT(c.id) AS total, "
                 "COALESCE(SUM(CASE WHEN r.decision IN ('approved','rejected') "
@@ -459,22 +483,28 @@ class WorkspaceService:
             row["page_count"] or 20000, 20000
         ):
             first_structure = None
-        last_job = self.job(latest["id"]) if latest else None
+        retained_job = self._job(dict(latest)) if latest else None
+        last_job = retained_job if not latest_deleted else None
         acceptance = Acceptance.model_validate(
             snapshot.get("acceptance", {"state": "historical"})
         )
         core_completed = False
-        if latest and last_job and last_job.include_admet and not last_job.admet_only:
+        if (
+            latest
+            and retained_job
+            and retained_job.include_admet
+            and not retained_job.admet_only
+        ):
             _, core_completed = read_admet_stage(
                 dict(latest),
                 self.attempts.output(dict(latest)),
                 state_root=self.store.root,
             )
         if (
-            last_job
-            and not last_job.admet_only
+            retained_job
+            and not retained_job.admet_only
             and not core_completed
-            and last_job.status != "complete"
+            and retained_job.status != "complete"
             and acceptance.state == "accepted"
         ):
             acceptance = Acceptance(
@@ -511,7 +541,9 @@ class WorkspaceService:
             return [
                 r[0]
                 for r in connection.execute(
-                    "SELECT id FROM projects ORDER BY created_at DESC LIMIT 200"
+                    "SELECT id FROM projects p WHERE NOT EXISTS "
+                    "(SELECT 1 FROM history_tombstones t WHERE t.kind='project' AND t.id=p.id AND t.deleted_at IS NOT NULL) "
+                    "ORDER BY created_at DESC LIMIT 200"
                 )
             ]
 
@@ -522,7 +554,10 @@ class WorkspaceService:
             return [
                 r[0]
                 for r in connection.execute(
-                    "SELECT id FROM jobs WHERE (? IS NULL OR project_id=?) ORDER BY created_at DESC LIMIT 500",
+                    "SELECT id FROM jobs j WHERE (? IS NULL OR project_id=?) AND NOT EXISTS "
+                    "(SELECT 1 FROM history_tombstones t WHERE t.deleted_at IS NOT NULL AND "
+                    "((t.kind='job' AND t.id=j.id) OR (t.kind='project' AND t.id=j.project_id))) "
+                    "ORDER BY created_at DESC LIMIT 500",
                     (project_id, project_id),
                 )
             ]

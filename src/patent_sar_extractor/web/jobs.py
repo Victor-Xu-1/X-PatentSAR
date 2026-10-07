@@ -20,6 +20,7 @@ from .checkpoints import LiveCheckpoints
 from .core_research_policy import completed_qa_rejection
 from .errors import WebError
 from .files import SafeFiles, private_directory
+from .history_storage import ensure_job_visible, ensure_project_visible
 from .job_phases import OwnedPhase, PhaseResult
 from .job_preparation import checkpoint_origin, prepare_attempt
 from .job_recovery import decode_identity, preserve_cleanup, release_retained_identity
@@ -134,6 +135,9 @@ class JobQueue:
         return spec
 
     def enqueue(self, project_id: str, request: JobRequest) -> Job:
+        self.store.project(project_id)
+        if request.resume_job_id:
+            self.service.job(request.resume_job_id)
         if request.admet_only:
             self.service._current_project(project_id)
             if (
@@ -165,6 +169,7 @@ class JobQueue:
                         "This prediction job cannot be resumed.",
                     )
                 with self.store.connect(write=True) as connection:
+                    ensure_job_visible(connection, request.resume_job_id)
                     job_id = enqueue_prediction(
                         self.store,
                         connection,
@@ -323,6 +328,9 @@ class JobQueue:
         }
         try:
             with self.store.connect(write=True) as connection:
+                ensure_project_visible(connection, project_id)
+                if request.resume_job_id:
+                    ensure_job_visible(connection, request.resume_job_id)
                 if (
                     connection.execute(
                         "SELECT COUNT(*) FROM jobs WHERE status='queued'"
@@ -408,6 +416,7 @@ class JobQueue:
 
     def cancel(self, job_id: str) -> Job:
         with self.store.connect(write=True) as connection:
+            ensure_job_visible(connection, job_id)
             row = connection.execute(
                 "SELECT * FROM jobs WHERE id=?", (job_id,)
             ).fetchone()

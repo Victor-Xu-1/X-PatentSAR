@@ -9,6 +9,7 @@ from dataclasses import asdict
 from .attempts import ATTEMPT_VERSION
 from .errors import WebError
 from .files import private_directory
+from .history_storage import ensure_project_visible
 from .models import Compound
 from .prediction_identity import compound_prediction_eligible
 from .processes import RunSpec, runtime_identity
@@ -22,6 +23,7 @@ def enqueue_prediction(
     *,
     compound_ids: tuple[str, ...] = (),
 ) -> str:
+    ensure_project_visible(connection, project_id)
     project = connection.execute(
         "SELECT * FROM projects WHERE id=?", (project_id,)
     ).fetchone()

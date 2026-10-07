@@ -1,26 +1,46 @@
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import { ChevronRight, FileText } from 'lucide-react';
 import type { Project } from '../../api/types';
 import type { Resource } from '../../hooks/useResource';
 import { dateText, acceptanceLabels } from '../../model/presentation';
 import { Empty, ErrorNotice, Loading } from '../../components/Feedback';
+import type { HistoryEntry } from '../../api/historyTypes';
+import { HistoryActions } from '../history/HistoryActions';
+import { HistoryDialog } from '../history/HistoryDialog';
 export function ProjectsPage({
   resource,
   onOpen,
   onUpload,
+  onHistoryChanged,
 }: {
   resource: Resource<{ items: Project[] }>;
   onOpen: (id: string) => void;
   onUpload: () => void;
+  onHistoryChanged?: (entry: HistoryEntry) => void;
 }) {
   const metadataId = useId();
+  const [trashOpen, setTrashOpen] = useState(false);
+  const [files, setFiles] = useState<Project | null>(null);
+  function changed(entry: HistoryEntry) {
+    resource.reload();
+    onHistoryChanged?.(entry);
+    if (entry.kind === 'project' && entry.deleted_at !== null && files?.id === entry.id)
+      setFiles(null);
+  }
   const items = [...(resource.data?.items ?? [])].sort((a, b) =>
     b.updated_at.localeCompare(a.updated_at),
   );
   return (
-    <section className="management-page recent-files-page" aria-labelledby="recent-files-heading">
+    <section
+      className="management-page recent-files-page"
+      aria-labelledby="recent-files-heading"
+      data-dialog-focus-scope
+    >
       <header className="page-header">
         <h1 id="recent-files-heading">最近文件</h1>
+        <button type="button" data-dialog-focus-fallback onClick={() => setTrashOpen(true)}>
+          回收站
+        </button>
       </header>
       {resource.error ? (
         <ErrorNotice error={resource.error} onRetry={resource.reload} />
@@ -39,7 +59,7 @@ export function ProjectsPage({
       ) : (
         <ul className="recent-files" aria-label="最近专利文件">
           {items.map((project, index) => (
-            <li key={project.id}>
+            <li key={project.id} className="recent-file-row">
               <button
                 type="button"
                 className="recent-file"
@@ -67,9 +87,46 @@ export function ProjectsPage({
                 </time>
                 <ChevronRight size={16} className="recent-file-chevron" aria-hidden="true" />
               </button>
+              <div className="recent-file-actions">
+                <button
+                  type="button"
+                  aria-label={`已生成文件 ${project.title}`}
+                  onClick={() => setFiles(project)}
+                >
+                  已生成文件
+                </button>
+                <HistoryActions
+                  target={{ kind: 'project', id: project.id, title: project.title }}
+                  iconOnly
+                  onChanged={changed}
+                />
+              </div>
             </li>
           ))}
         </ul>
+      )}
+      {files && (
+        <HistoryDialog
+          title={`已生成文件 · ${files.title}`}
+          initialKind="export"
+          projectId={files.id}
+          onClose={() => setFiles(null)}
+          onChanged={changed}
+          onTrash={() => {
+            setFiles(null);
+            setTrashOpen(true);
+          }}
+        />
+      )}
+      {trashOpen && (
+        <HistoryDialog
+          title="回收站"
+          initialKind="project"
+          deleted
+          filters
+          onClose={() => setTrashOpen(false)}
+          onChanged={changed}
+        />
       )}
     </section>
   );

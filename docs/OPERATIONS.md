@@ -571,6 +571,38 @@ Activity extraction runs in an isolated subprocess with a bounded workload-aware
 
 ## Logs and retention
 
+### Recoverable page deletion
+
+Daily pages provide deletion for recent-file projects, extraction task records,
+software-saved CSV/JSON files and terminal environment operations. Confirmation
+states the scope and that deletion is recoverable, **not disk-space reclamation**.
+The tombstone transaction removes access from normal authenticated API/list routes;
+source files, generated artifacts, immutable revisions and internal producer /
+checkpoint references remain unchanged. Browser-saved copies are not server-owned.
+Queued/running operations and unverified retained process identities cannot be
+removed. Legacy terminal environment operations may retain forensic identity:
+the shared bounded validator checks exact saved workspace/command ownership and
+proves a prior valid kernel or absence of every saved PID before removal. It
+never signals processes or erases the original record. No WSL, system or unrelated
+software is stopped to enable deletion.
+
+Use the page's **回收站** to restore. Restore the parent file/project first before
+its child entries. Restoring a project preserves separately deleted task/export
+records. A deleted task stays unavailable to explicit resume, while existing
+internal provenance/checkpoint references remain valid; deleting its failure
+cannot certify the current project. Removing environment history does not remove
+installed runtimes/models, active configuration, inspection reports or request-ID
+idempotency facts. Files outside registered software-owned result locations,
+including read-only imported runs and user download folders, are never cleaned.
+
+Keep private deletion metadata with the existing workspace/environment backups.
+An older wheel without this visibility contract can redisplay retained records;
+rollback must preserve the upgraded state for forward recovery and account for
+that limitation. This capability does not raise product/API/database versions,
+disable audit triggers, free retained project/history quotas or implement a
+permanent purge. Archive and independently confirm an exact retention scope before
+any separate operator destruction; do not recursively delete upload/result roots.
+
 Retain the final workbook, SDF, `pipeline_summary.json`, `final_qa_report.*`, optional `llm_qa_report.*`, and any failure marker as one audit unit. Remove OCR caches and intermediate images according to local data-retention policy only after the final audit unit is archived.
 
 ## Rollback

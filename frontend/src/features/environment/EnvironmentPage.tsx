@@ -11,6 +11,8 @@ import { InstallConfirmation } from './InstallConfirmation';
 import { useEnvironmentInstallPlan } from './useEnvironmentInstallPlan';
 import { RecoveryNotice } from './RecoveryNotice';
 import { EnvironmentProgress } from './EnvironmentProgress';
+import type { HistoryEntry } from '../../api/historyTypes';
+import { HistoryDialog } from '../history/HistoryDialog';
 
 export function EnvironmentPage({
   operationId,
@@ -18,13 +20,24 @@ export function EnvironmentPage({
   product,
 }: {
   operationId: string | null;
-  onOperation: (id: string) => void;
+  onOperation: (id: string | null) => void;
   product: Identity;
 }) {
   const workspace = useEnvironmentWorkspace(operationId, onOperation);
   const { catalog, mutations } = workspace;
   const data = catalog.data;
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [trashOpen, setTrashOpen] = useState(false);
+  function historyChanged(entry: HistoryEntry) {
+    if (
+      entry.kind === 'environment_operation' &&
+      entry.deleted_at !== null &&
+      workspace.selectionId === entry.id
+    )
+      workspace.clearSelection();
+    workspace.refresh();
+  }
   const blocked =
     mutations.busy ||
     Boolean(mutations.pending) ||
@@ -41,15 +54,20 @@ export function EnvironmentPage({
         <div>
           <h1>环境管理</h1>
         </div>
-        <button
-          type="button"
-          className="environment-refresh"
-          onClick={workspace.refresh}
-          disabled={catalog.loading}
-        >
-          <RefreshCw size={15} />
-          刷新环境目录
-        </button>
+        <div className="inline-actions">
+          <button type="button" onClick={() => setHistoryOpen(true)}>
+            操作记录
+          </button>
+          <button
+            type="button"
+            className="environment-refresh"
+            onClick={workspace.refresh}
+            disabled={catalog.loading}
+          >
+            <RefreshCw size={15} />
+            刷新环境目录
+          </button>
+        </div>
       </header>
       {mutations.error && (!detailsOpen || !data) && <ErrorNotice error={mutations.error} />}
       {installation.error && <ErrorNotice error={installation.error} />}
@@ -96,6 +114,28 @@ export function EnvironmentPage({
         onCancel={mutations.cancel}
         onReload={workspace.operation.reload}
       />
+      {historyOpen && (
+        <HistoryDialog
+          title="环境操作记录"
+          initialKind="environment_operation"
+          onClose={() => setHistoryOpen(false)}
+          onChanged={historyChanged}
+          onTrash={() => {
+            setHistoryOpen(false);
+            setTrashOpen(true);
+          }}
+        />
+      )}
+      {trashOpen && (
+        <HistoryDialog
+          title="回收站"
+          initialKind="environment_operation"
+          deleted
+          filters
+          onClose={() => setTrashOpen(false)}
+          onChanged={historyChanged}
+        />
+      )}
       {data && detailsOpen && (
         <EnvironmentDetails
           catalog={data}

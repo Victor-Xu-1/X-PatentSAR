@@ -276,7 +276,7 @@ class EnvironmentManager:
         return result
 
     def operation(self, identifier: str) -> EnvironmentOperation:
-        return self.store.operation(self.store.row(identifier))
+        return self.store.operation(self.store.public_row(identifier))
 
     def _prepare(self, plan: dict[str, Any]) -> None:
         root = self.storage.validate(plan["install_root"])

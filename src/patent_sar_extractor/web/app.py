@@ -29,12 +29,14 @@ from .analysis_runtime import AnalysisSettings
 from .environment_paths import ManagedStorage
 from .environments import EnvironmentManager
 from .errors import WebError
+from .history_service import HistoryService
 from .jobs import JobQueue
 from .owner import WorkspaceOwner
 from .processes import CLIProcessRunner, ProcessRunner
 from .routes_analysis import analysis_routes
 from .routes_chemistry import chemistry_routes
 from .routes_environments import environment_routes
+from .routes_history import history_routes
 from .routes_jobs import job_routes
 from .routes_projects import project_routes
 from .security import SecurityMiddleware, Sessions, loopback_host
@@ -167,6 +169,7 @@ def create_app(
     app.state.queue = queue
     app.state.analysis = analysis
     app.state.environments = environments
+    app.state.history = HistoryService(service.store)
     app.state.owner = owner
     app.state.ready = False
     app.add_middleware(
@@ -284,6 +287,7 @@ def create_app(
     app.include_router(analysis_routes(service, analysis))
     app.include_router(chemistry_routes())
     app.include_router(environment_routes(environments))
+    app.include_router(history_routes(app.state.history))
 
     @app.get("/{path:path}")
     def frontend_route(path: str) -> Response:

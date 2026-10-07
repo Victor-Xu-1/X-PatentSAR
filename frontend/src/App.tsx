@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { api, client } from './api';
 import type { Project } from './api/types';
+import type { HistoryEntry } from './api/historyTypes';
 import { emptyRoute } from './model/route';
 import type { View } from './model/route';
 import { useRoute } from './hooks/useRoute';
@@ -57,6 +58,18 @@ export default function App() {
     projects.reload();
     projectResource.reload();
     jobs.reload();
+  }
+  function historyChanged(entry: HistoryEntry) {
+    projects.reload();
+    projectResource.reload();
+    jobs.reload();
+    if (entry.kind === 'project' && entry.deleted_at !== null) {
+      if (attachment?.id === entry.id) setAttachment(null);
+      if (route.projectId === entry.id) {
+        setQuery('');
+        navigate({ ...emptyRoute, view: 'projects' });
+      }
+    }
   }
   const onUpload = () => {
     navigate({ ...emptyRoute, view: 'new-task' });
@@ -125,19 +138,30 @@ export default function App() {
             />
           )}
           {route.view === 'projects' && (
-            <ProjectsPage resource={projects} onOpen={openProject} onUpload={onUpload} />
+            <ProjectsPage
+              resource={projects}
+              onOpen={openProject}
+              onUpload={onUpload}
+              onHistoryChanged={historyChanged}
+            />
           )}
           {route.view === 'jobs' && connected && (
             <JobsPage
               projects={projects.data?.items ?? []}
               ready={connection.data!.health.ready}
               onOpen={openProject}
+              onHistoryChanged={historyChanged}
             />
           )}
           {route.view === 'settings' && connected && (
             <EnvironmentPage
               operationId={route.operationId ?? null}
-              onOperation={(operationId) => navigate({ ...route, operationId })}
+              onOperation={(operationId) => {
+                const next = { ...route };
+                if (operationId === null) delete next.operationId;
+                else next.operationId = operationId;
+                navigate(next);
+              }}
               product={connection.data!.health.product}
             />
           )}

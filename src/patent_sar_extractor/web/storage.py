@@ -16,6 +16,8 @@ from patent_sar_extractor.contracts import WEB_API_SCHEMA_VERSION
 
 from .errors import WebError
 from .files import private_directory
+from .history_storage import SCHEMA as HISTORY_SCHEMA
+from .history_storage import ensure_project_visible, tombstone
 
 if TYPE_CHECKING:
     from .workspace_locations import WorkspaceLocations
@@ -106,6 +108,7 @@ class Store:
                 )
             connection.execute("PRAGMA journal_mode=WAL")
             connection.executescript(SCHEMA)
+            connection.executescript(HISTORY_SCHEMA)
             connection.execute(f"PRAGMA user_version={WEB_API_SCHEMA_VERSION}")
 
     @contextmanager
@@ -129,6 +132,8 @@ class Store:
 
     def project(self, project_id: str) -> dict[str, Any]:
         with self.connect() as connection:
+            connection.execute("BEGIN")
+            ensure_project_visible(connection, project_id)
             row = connection.execute(
                 "SELECT * FROM projects WHERE id=?", (project_id,)
             ).fetchone()
@@ -147,6 +152,8 @@ class Store:
 
     def compound(self, project_id: str, compound_id: str) -> dict[str, Any]:
         with self.connect() as connection:
+            connection.execute("BEGIN")
+            ensure_project_visible(connection, project_id)
             row = connection.execute(
                 "SELECT * FROM compounds WHERE project_id=? AND id=?",
                 (project_id, compound_id),
@@ -188,6 +195,8 @@ class Store:
             ).fetchone()
             if (
                 current is None
+                or tombstone(connection, "project", project_id)["deleted_at"]
+                is not None
                 or current["run_root"] != expected_run_root
                 or current["sha256"] != expected_sha256
             ):

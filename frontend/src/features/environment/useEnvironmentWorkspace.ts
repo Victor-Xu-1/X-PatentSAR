@@ -6,18 +6,20 @@ import { useEnvironmentMutations } from './useEnvironmentMutations';
 
 export function useEnvironmentWorkspace(
   operationId: string | null,
-  onOperation: (id: string) => void,
+  onOperation: (id: string | null) => void,
 ) {
   const loadCatalog = useCallback((signal: AbortSignal) => api.environments(signal), []);
   const catalog = useResource('environment-catalog', loadCatalog);
   const [choice, setChoice] = useState(operationId);
   const [previousRoute, setPreviousRoute] = useState(operationId);
+  const [hiddenSelection, setHiddenSelection] = useState<string | null>(null);
   if (previousRoute !== operationId) {
     setPreviousRoute(operationId);
     setChoice(operationId);
   }
-  const id =
+  const candidate =
     catalog.data?.active_operation?.id ?? choice ?? catalog.data?.operations[0]?.id ?? null;
+  const id = candidate === hiddenSelection ? null : candidate;
   const loadOperation = useCallback(
     (signal: AbortSignal) => api.environmentOperation(id ?? '', signal),
     [id],
@@ -44,11 +46,18 @@ export function useEnvironmentWorkspace(
   }, [refreshCatalog, refreshOperation]);
   const choose = useCallback(
     (next: string) => {
+      setHiddenSelection(null);
       setChoice(next);
       onOperation(next);
     },
     [onOperation],
   );
+  const clearSelection = () => {
+    setHiddenSelection(id);
+    setChoice(null);
+    setLastKnown(null);
+    onOperation(null);
+  };
   const mutations = useEnvironmentMutations(choose, refresh);
   useEffect(() => {
     if (
@@ -60,5 +69,14 @@ export function useEnvironmentWorkspace(
       refreshCatalog();
     }
   }, [selected, refreshCatalog]);
-  return { catalog, operation, selectionId: id, selected, choose, refresh, mutations };
+  return {
+    catalog,
+    operation,
+    selectionId: id,
+    selected,
+    choose,
+    clearSelection,
+    refresh,
+    mutations,
+  };
 }

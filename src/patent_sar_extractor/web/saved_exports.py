@@ -12,7 +12,8 @@ from pathlib import Path
 
 from .errors import WebError
 from .files import SafeFiles, directory_descriptor, private_directory
-from .storage import Store
+from .history_storage import ensure_project_visible, tombstone
+from .storage import Store, now
 
 MAX_EXPORT_BYTES = 128 * 1024 * 1024
 
@@ -22,6 +23,7 @@ class SavedExport:
     path: Path
     sha256: str
     size: int
+    store: Store | None = None
 
 
 def save_export(
@@ -34,6 +36,7 @@ def save_export(
     ):
         raise WebError(400, "export_location", "Export identity or format is invalid.")
     temporary: str | None = None
+    store.project(project_id)
     digest = hashlib.sha256()
     total = 0
     try:
@@ -55,14 +58,17 @@ def save_export(
                 digest.update(content)
             output.flush()
             os.fsync(output.fileno())
-        os.link(
-            temporary, destination, follow_symlinks=False
-        )  # Never overwrite another result.
-        root_fd = directory_descriptor(root)
-        try:
-            os.fsync(root_fd)
-        finally:
-            os.close(root_fd)
+        from .history_exports import register_export
+
+        with store.connect(write=True) as connection:
+            ensure_project_visible(connection, project_id)
+            os.link(temporary, destination, follow_symlinks=False)
+            register_export(connection, project_id, destination, now())
+            root_fd = directory_descriptor(root)
+            try:
+                os.fsync(root_fd)
+            finally:
+                os.close(root_fd)
     except OSError as error:
         raise WebError(
             409,
@@ -74,12 +80,30 @@ def save_export(
             Path(temporary).unlink(
                 missing_ok=True
             )  # Only this exclusive newly generated file.
-    return SavedExport(destination, digest.hexdigest(), total)
+    return SavedExport(destination, digest.hexdigest(), total, store)
 
 
 def export_bytes(saved: SavedExport) -> Iterator[bytes]:
-    with SafeFiles(saved.path.parent).open(
-        saved.path.name, max_bytes=MAX_EXPORT_BYTES
-    ) as source:
-        while chunk := source.read(64 * 1024):
-            yield chunk
+    """Authorize before response headers; an authorized in-flight stream can finish."""
+    from .history_exports import export_id
+
+    if saved.store is not None:
+        with saved.store.connect() as connection:
+            connection.execute("BEGIN")
+            ensure_project_visible(connection, saved.path.parent.parent.name)
+            if (
+                tombstone(connection, "export", export_id(saved.path))["deleted_at"]
+                is not None
+            ):
+                raise WebError(
+                    404, "history_export_missing", "Export is in the recoverable trash."
+                )
+
+    def chunks() -> Iterator[bytes]:
+        with SafeFiles(saved.path.parent).open(
+            saved.path.name, max_bytes=MAX_EXPORT_BYTES
+        ) as source:
+            while chunk := source.read(64 * 1024):
+                yield chunk
+
+    return chunks()
