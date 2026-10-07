@@ -2,7 +2,7 @@
 
 Product **v0.1.0**. `contracts.py` is the only authority for product, pipeline,
 ruleset, artifact and cache versions. The source-led pipeline contract is
-`patentsar.structure-led`3.0.0; the accuracy ruleset is2.1.0. These internal
+`patentsar.structure-led`3.0.0; the accuracy ruleset is2.1.1. These internal
 epochs are not product releases and do not retag old results as current.
 
 ## One workflow

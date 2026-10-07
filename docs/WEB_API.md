@@ -146,7 +146,8 @@ for save/reopen/redraw and reversible `structure_molfile_json` CSV export.
 Determinate stereo, isotopes, charges and fragments cannot be erased/guessed.
 OR/AND and special unsupported stereo are not flattened into plain SMILES.
 
-`Recognition.stereochemistry` is optional additive source evidence v1: exact
+`Recognition.stereochemistry` is optional additive source evidence v2 (historical
+v1 remains readable without being recertified): exact
 source hash/size, bounded unknown-bond risk boxes, parsed counts and status
 `no_unknown_detected`, `unknown_preserved`, `conflict` or `ambiguous`. Absolute
 configuration is never certified by this risk screen. Missing old observations

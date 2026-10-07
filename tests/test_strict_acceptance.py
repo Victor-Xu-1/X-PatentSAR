@@ -57,6 +57,7 @@ from patent_sar_extractor.contracts import (
     REVIEW_EXCERPT_METADATA_SCHEMA_VERSION,
     STRUCTURES_SCHEMA,
     STRUCTURES_SCHEMA_VERSION,
+    STEREO_EVIDENCE_VERSION,
     VISIBLE_LABEL_CACHE_SCHEMA,
     VISIBLE_LABEL_CACHE_SCHEMA_VERSION,
     artifact_identity,
@@ -68,7 +69,6 @@ from patent_sar_extractor.core import (
 )
 from patent_sar_extractor.core import (
     binding_observations,
-    binding_ocr,
     binding_spatial,
 )
 from patent_sar_extractor.core import env_runner as env_runner_module
@@ -305,7 +305,7 @@ class StrictAcceptanceTests(unittest.TestCase):
             "stereochemistry": check_source_stereochemistry(
                 checked,
                 {
-                    "version": 1,
+                    "version": STEREO_EVIDENCE_VERSION,
                     "image_sha256": "a" * 64,
                     "image_size": [100, 100],
                     "unknown_bond_boxes": [],

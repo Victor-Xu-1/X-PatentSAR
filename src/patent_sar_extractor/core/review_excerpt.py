@@ -54,22 +54,34 @@ CLAIMS_HEADING_RE = re.compile(
 BODY_HEADINGS = frozenset(
     text.casefold().replace(" ", "")
     for text in (
-        "具体实施方式", "实施方式", "Examples", "Experimental Section",
-        "Detailed Description", "Detailed Description of the Invention",
+        "具体实施方式",
+        "实施方式",
+        "Examples",
+        "Experimental Section",
+        "Detailed Description",
+        "Detailed Description of the Invention",
     )
 )
 CLAIMS_HEADINGS = frozenset(
     text.casefold().replace(" ", "")
     for text in (
-        "Claims", "权利要求", "权利要求书", "Revendications", "Patentansprüche",
-        "Reivindicaciones", "特許請求の範囲",
+        "Claims",
+        "权利要求",
+        "权利要求书",
+        "Revendications",
+        "Patentansprüche",
+        "Reivindicaciones",
+        "特許請求の範囲",
     )
 )
 ISR_HEADINGS = frozenset(
     text.casefold().replace(" ", "")
     for text in (
-        "International Search Report", "国际检索报告", "PCT/ISA/210",
-        "Rapport de recherche internationale", "Internationaler Recherchenbericht",
+        "International Search Report",
+        "国际检索报告",
+        "PCT/ISA/210",
+        "Rapport de recherche internationale",
+        "Internationaler Recherchenbericht",
     )
 )
 
@@ -145,12 +157,12 @@ def _heading_lines(text: str) -> list[str]:
         for length in (2, 3):
             if idx + length > len(lines):
                 break
-            joined = " ".join(lines[idx:idx + length])
+            joined = " ".join(lines[idx : idx + length])
             compact = re.sub(r"\s+", "", joined).rstrip(":.").casefold()
             if compact in titles:
                 count = length
                 break
-        joined_lines.append(" ".join(lines[idx:idx + count]))
+        joined_lines.append(" ".join(lines[idx : idx + count]))
         idx += count
     return joined_lines
 
@@ -171,7 +183,9 @@ def _section_heading(line: str) -> str | None:
     return None
 
 
-def _terminal_boundary(pages: list[list[str]], body_idx: int) -> tuple[int | None, bool]:
+def _terminal_boundary(
+    pages: list[list[str]], body_idx: int
+) -> tuple[int | None, bool]:
     """Accept a terminal heading only after real body, never its backoff padding."""
     for idx in range(body_idx, len(pages)):
         before_body = False
@@ -249,8 +263,16 @@ def infer_candidate_page_window(
     last_front_idx = None
     for idx in range(strong_start_idx):
         text = compact_pages[idx]
-        has_front = bool(FRONT_MATTER_RE.search(text) or GENERAL_MARKUSH_RE.search(text) or EXCLUDED_SECTION_RE.search(text))
-        has_body = bool(BODY_START_SIGNAL_RE.search(text) or ACTIVITY_RE.search(text) or SYNTHESIS_RE.search(text))
+        has_front = bool(
+            FRONT_MATTER_RE.search(text)
+            or GENERAL_MARKUSH_RE.search(text)
+            or EXCLUDED_SECTION_RE.search(text)
+        )
+        has_body = bool(
+            BODY_START_SIGNAL_RE.search(text)
+            or ACTIVITY_RE.search(text)
+            or SYNTHESIS_RE.search(text)
+        )
         if has_front and not has_body:
             last_front_idx = idx
 
@@ -271,11 +293,14 @@ def infer_candidate_page_window(
         end_idx = first_claim_idx if mixed_body_page else first_claim_idx - 1
         end_reason = (
             "claims_or_isr_after_body_on_same_page"
-            if mixed_body_page else "page_before_claims_or_isr"
+            if mixed_body_page
+            else "page_before_claims_or_isr"
         )
     else:
         last_candidate_idx = None
-        candidates = [p for p in synthesis_pages + activity_pages if start_idx <= p < total]
+        candidates = [
+            p for p in synthesis_pages + activity_pages if start_idx <= p < total
+        ]
         if candidates:
             last_candidate_idx = max(candidates)
         if last_candidate_idx is not None:
@@ -285,7 +310,9 @@ def infer_candidate_page_window(
             end_idx = total - 1
             end_reason = "fallback_document_end"
 
-    candidate_pages = list(range(start_idx, end_idx + 1)) if end_idx >= start_idx else []
+    candidate_pages = (
+        list(range(start_idx, end_idx + 1)) if end_idx >= start_idx else []
+    )
     return {
         "candidate_pages": candidate_pages,
         "start_page_idx": start_idx,
@@ -303,7 +330,7 @@ def _page_lines(page, dpi: int, engine) -> list[OcrLine]:
         # Text PDFs: exact line coordinates are not needed for most pages.
         lines = []
         for block in page.get_text("blocks"):
-            x0, y0, x1, y1, block_text, *_ = block
+            _x0, y0, _x1, y1, block_text, *_ = block
             for raw in str(block_text).splitlines():
                 raw = raw.strip()
                 if raw:
@@ -345,10 +372,20 @@ def _page_lines_tesseract_cli(page, dpi: int) -> list[OcrLine]:
         with tempfile.NamedTemporaryFile(suffix=".png") as tmp:
             pix.save(tmp.name)
             proc = subprocess.run(
-                [tesseract_bin, tmp.name, "stdout", "-l", "eng+chi_sim", "--psm", "6", "tsv"],
+                [
+                    tesseract_bin,
+                    tmp.name,
+                    "stdout",
+                    "-l",
+                    "eng+chi_sim",
+                    "--psm",
+                    "6",
+                    "tsv",
+                ],
                 capture_output=True,
                 text=True,
                 timeout=60,
+                check=False,
             )
         if proc.returncode != 0:
             logger.warning(f"Tesseract CLI failed: {proc.stderr[:200]}")
@@ -374,7 +411,7 @@ def _page_lines_tesseract_cli(page, dpi: int) -> list[OcrLine]:
             lines.append(OcrLine(text, top, bottom))
         lines.sort(key=lambda line: line.top)
         return lines
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as e:
         logger.warning(f"Tesseract CLI OCR failed on page: {e}")
         return []
 
@@ -384,7 +421,9 @@ def _load_ocr_engine():
         from rapidocr_onnxruntime import RapidOCR
 
         return RapidOCR()
-    except Exception as e:
+    # Optional diagnostic OCR can fail with vendor-specific exception classes;
+    # this excerpt helper never certifies formal source ownership or chemistry.
+    except Exception as e:  # noqa: BLE001
         logger.warning(f"RapidOCR unavailable; PDF truncation will use text only: {e}")
         return None
 
@@ -392,22 +431,52 @@ def _load_ocr_engine():
 def _classify_relevant_page(text: str) -> tuple[bool, str]:
     """Return whether a page should be kept in the review excerpt."""
     compact = re.sub(r"\s+", " ", text or "")
-    if any(_section_heading(line) in {"claims", "isr"} for line in _heading_lines(text)):
+    if any(
+        _section_heading(line) in {"claims", "isr"} for line in _heading_lines(text)
+    ):
         return False, "excluded_claims_or_isr"
 
     has_activity = bool(ACTIVITY_RE.search(compact))
     has_synthesis = bool(SYNTHESIS_RE.search(compact))
     has_excluded_section = bool(EXCLUDED_SECTION_RE.search(compact))
     has_markush = bool(GENERAL_MARKUSH_RE.search(compact))
-    has_analytical = bool(re.search(r"MS\s*m/z|HPLC|NMR|收率|产率|yield", compact, re.IGNORECASE))
-    has_exp_heading = bool(re.search(r"实施例\s*\d+|Example\s+\d+|Preparation\s+\d+", compact, re.IGNORECASE))
+    has_analytical = bool(
+        re.search(r"MS\s*m/z|HPLC|NMR|收率|产率|yield", compact, re.IGNORECASE)
+    )
+    has_exp_heading = bool(
+        re.search(
+            r"实施例\s*\d+|Example\s+\d+|Preparation\s+\d+", compact, re.IGNORECASE
+        )
+    )
     has_compound_label = bool(re.search(r"\b\d{1,2}(?:-[12]|[a-z])?\b", compact))
-    has_reaction_context = bool(re.search(r"mg|mmol|mL|°C|小时|h\b|搅拌|反应|得到|制备|MS\s*m/z", compact, re.IGNORECASE))
-    is_instrument_only = bool(re.search(r"测定用|分析使用|色谱仪|仪器|HPLC\s+分析|NMR\s+的测定", compact, re.IGNORECASE))
+    has_reaction_context = bool(
+        re.search(
+            r"mg|mmol|mL|°C|小时|h\b|搅拌|反应|得到|制备|MS\s*m/z",
+            compact,
+            re.IGNORECASE,
+        )
+    )
+    is_instrument_only = bool(
+        re.search(
+            r"测定用|分析使用|色谱仪|仪器|HPLC\s+分析|NMR\s+的测定",
+            compact,
+            re.IGNORECASE,
+        )
+    )
 
-    if has_activity and not re.search(r"药物组合物|制剂|检索报告|PCT/ISA", compact, re.IGNORECASE):
+    if has_activity and not re.search(
+        r"药物组合物|制剂|检索报告|PCT/ISA", compact, re.IGNORECASE
+    ):
         return True, "activity_page"
-    if has_synthesis and (has_exp_heading or (has_analytical and has_compound_label and has_reaction_context and not is_instrument_only)):
+    if has_synthesis and (
+        has_exp_heading
+        or (
+            has_analytical
+            and has_compound_label
+            and has_reaction_context
+            and not is_instrument_only
+        )
+    ):
         return True, "synthesis_experimental_page"
     if has_excluded_section and has_markush and not has_analytical:
         return False, "excluded_markush_definition"
@@ -434,14 +503,16 @@ def create_review_excerpt_pdf(
         joined = "\n".join(line.text for line in lines)
         page_texts.append(joined)
         keep_by_class, class_reason = _classify_relevant_page(joined)
-        classified_infos.append({
-            "source_page_idx": page_idx,
-            "source_page_no": page_idx + 1,
-            "clip_pdf": [0.0, 0.0, float(page.rect.width), float(page.rect.height)],
-            "reason": class_reason,
-            "has_activity_marker": bool(ACTIVITY_RE.search(joined)),
-            "keep": keep_by_class,
-        })
+        classified_infos.append(
+            {
+                "source_page_idx": page_idx,
+                "source_page_no": page_idx + 1,
+                "clip_pdf": [0.0, 0.0, float(page.rect.width), float(page.rect.height)],
+                "reason": class_reason,
+                "has_activity_marker": bool(ACTIVITY_RE.search(joined)),
+                "keep": keep_by_class,
+            }
+        )
 
     synthesis_pages = [
         info["source_page_idx"]
@@ -462,9 +533,9 @@ def create_review_excerpt_pdf(
     page_infos = []
     for idx in sorted(inferred_candidates):
         observed = classified_infos[idx]
-        page_infos.append({
-            key: value for key, value in observed.items() if key != "keep"
-        })
+        page_infos.append(
+            {key: value for key, value in observed.items() if key != "keep"}
+        )
         if not observed["keep"]:
             page_infos[-1]["reason"] = "boundary_window_keep"
 
@@ -472,12 +543,19 @@ def create_review_excerpt_pdf(
         strategy = "boundary_window_before_claims"
     else:
         # Conservative fallback: do not drop data if markers fail, but make it visible.
-        logger.warning("No candidate-page window found; copying original PDF unchanged for review")
+        logger.warning(
+            "No candidate-page window found; copying original PDF unchanged for review"
+        )
         page_infos = [
             {
                 "source_page_idx": i,
                 "source_page_no": i + 1,
-                "clip_pdf": [0.0, 0.0, float(src[i].rect.width), float(src[i].rect.height)],
+                "clip_pdf": [
+                    0.0,
+                    0.0,
+                    float(src[i].rect.width),
+                    float(src[i].rect.height),
+                ],
                 "reason": "fallback_full_pdf_needs_review",
                 "has_activity_marker": False,
             }
@@ -498,7 +576,9 @@ def create_review_excerpt_pdf(
     src.close()
 
     metadata = {
-        **artifact_identity(REVIEW_EXCERPT_METADATA_SCHEMA, REVIEW_EXCERPT_METADATA_SCHEMA_VERSION),
+        **artifact_identity(
+            REVIEW_EXCERPT_METADATA_SCHEMA, REVIEW_EXCERPT_METADATA_SCHEMA_VERSION
+        ),
         "input_pdf": pdf_path,
         "output_pdf": output_pdf,
         "page_count_original": original_page_count,

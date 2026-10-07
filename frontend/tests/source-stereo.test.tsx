@@ -30,8 +30,9 @@ const recognition: CompoundRecognition = {
 describe('source stereochemistry, not model certainty', () => {
   it('decodes bounded real observations without claiming absolute correctness', () => {
     expect(decodeStereoEvidence(stereo)).toEqual(stereo);
+    expect(decodeStereoEvidence({ ...stereo, version: 2 })).toEqual({ ...stereo, version: 2 });
     for (const changes of [
-      { version: 2 },
+      { version: 3 },
       { absolute_configuration_verified: true },
       { unknown_bond_boxes: [[0, 0, 300, 200]] },
       { image_sha256: 'fake' },

@@ -705,7 +705,8 @@ class JobQueue:
                         "Qualified research values are available, but formal extraction QA requires review."
                         if research_stage is not None and research_stage.status == "ok"
                         else "No qualified research values were produced; formal extraction QA requires review."
-                        if research_stage is not None and research_stage.status == "empty"
+                        if research_stage is not None
+                        and research_stage.status == "empty"
                         else "Formal extraction QA requires review; research value availability is unconfirmed."
                     ),
                 )

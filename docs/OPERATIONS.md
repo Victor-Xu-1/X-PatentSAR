@@ -386,7 +386,7 @@ scientific evaluation separately before relying on candidate suggestions.
 - `stereo_source_unavailable`: unreadable/excessive source geometry failed the bounded screen before model loading. Correct input quality or source ownership, not memory limits or acceptance flags.
 - Unknown single/crossed-double manual MDL stays lossless in save/redraw/export. Explicit unresolved manual stereo cannot acquire a determinate model result from a previous graph. OR/AND and special stereo remain visibly unsupported. Plain-SMILES legacy research results are not proof of source stereo fidelity.
 
-New tasks use source-led pipeline 3.0.0 and ruleset 2.1.0 while the product remains v0.1.0. Existing original
+New tasks use source-led pipeline 3.0.0 and ruleset 2.1.1 while the product remains v0.1.0. Existing original
 PDFs, model observations, QA and manual audits are retained; a new task uses current
 validation instead of relabelling historical results. Only original-SHA-verified
 raw OCR/model observations may be reused. Missing old stereo evidence stays unknown.
