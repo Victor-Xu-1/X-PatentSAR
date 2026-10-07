@@ -22,7 +22,15 @@ hand-drawn weights; existing operator-installed files are preserved. CPU inferen
 defaults to `PATENTSAR_DECIMER_CPU_THREADS=2` (1–16) and
 `PATENTSAR_DECIMER_MAX_RSS_MB=4096` (2048–16384 MiB). A worker exceeding its own RSS
 budget fails explicitly; the application never terminates other workloads to make
-room. Low model headroom fails before TensorFlow load. Do not raise limits to hide
+room. The sequential pipeline releases its own completed binding-phase OCR
+aliases and process-local PDF/allocator caches before later model loading. It
+records real RSS observations, not a promised amount of recovered host RAM.
+Original OCR files/checkpoints remain intact and memory admission stays unchanged.
+If headroom is still insufficient after the bounded wait, resume the task later;
+the application does not lower safety budgets or stop other software to proceed.
+
+Recognition uses a separate owned model process. Low model headroom fails before
+TensorFlow load. Do not raise limits to hide
 an environment fault. GPU execution must match the cache's actual execution policy.
 
 The recovered E-drive deployment has an operator-owned entry point at `/srv/wsl/envs/patentsar/bin/x-patentsar` (Windows: `E:\WSL\apps\x-patentsar\X-PatentSAR.cmd`). It loads external interpreter configuration and selects E-drive state/cache/model paths, with CPU inference by default. `PYSTOW_HOME=/srv/wsl/models/patentsar` points DECIMER OCSR to the restored weights. Segmentation health is not proof that OCSR inference succeeds; verify a real crop separately. Do not change `HOME` to find old model weights.
