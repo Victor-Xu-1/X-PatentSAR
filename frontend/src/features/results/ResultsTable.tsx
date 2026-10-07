@@ -11,6 +11,7 @@ import { ResizeHandle } from '../../components/ResizeHandle';
 import { ResultRow } from './ResultRow';
 import { useColumnResize } from './useColumnResize';
 import { ColumnMenu } from './ColumnMenu';
+import { preferredScrollBehavior } from '../../model/motion';
 import '../../styles/table-interactions.css';
 
 export function ResultsTable({
@@ -80,7 +81,7 @@ export function ResultsTable({
     const element = Array.from(
       container.current?.querySelectorAll<HTMLElement>('[data-compound]') ?? [],
     ).find((row) => row.dataset.compound === focusedId);
-    element?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    element?.scrollIntoView({ block: 'nearest', behavior: preferredScrollBehavior() });
   }, [hidden, focusedId, rows]);
   return (
     <section
@@ -161,7 +162,7 @@ export function ResultsTable({
                     {header.details && <small>{header.details}</small>}
                   </span>
                 )}
-                {onHideColumn && (
+                {onHideColumn && header.id !== 'select' && (
                   <ColumnMenu
                     projectId={projectId}
                     column={header}

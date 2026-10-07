@@ -5,6 +5,7 @@ import type { ActivityColumn, Filters } from '../../api/types';
 import type { ResultColumn } from '../../model/resultColumns';
 import { columnCanFilter, columnCanSort, replaceColumnFilters } from '../../model/columnFilters';
 import { ColumnFilterForm } from './ColumnFilterForm';
+import { containTab } from '../../components/focus';
 
 export function ColumnMenu({
   projectId,
@@ -52,6 +53,7 @@ export function ColumnMenu({
       }
     }
     function escape(event: KeyboardEvent) {
+      containTab(event, panel.current);
       if (event.key === 'Escape') {
         event.preventDefault();
         setPosition(null);

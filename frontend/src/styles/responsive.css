@@ -124,8 +124,12 @@
   }
 }
 @media (max-width: 560px) {
-  .results-table .frozen-structure {
+  .results-table td.frozen-structure {
     position: static;
+    box-shadow: none;
+  }
+  .results-table th.frozen-structure {
+    left: auto;
     box-shadow: none;
   }
   .table-scroll {

@@ -40,7 +40,7 @@ describe('Evidence Studio secondary pages', () => {
     const { container } = render(<JobRecord job={failed} />);
     expect(screen.getByText('核心校验未通过，2 条结构需复核。')).toBeVisible();
     expect(screen.queryByText(/499 条结构需复核/)).not.toBeInTheDocument();
-    const details = screen.getByLabelText('提取阶段详情').parentElement!;
+    const details = screen.getByLabelText('任务详情').parentElement!;
     expect(details.tagName).toBe('DETAILS');
     expect(container.querySelectorAll('details.job-record')).toHaveLength(1);
     expect(details).not.toHaveAttribute('open');
@@ -48,7 +48,7 @@ describe('Evidence Studio secondary pages', () => {
     expect(screen.getByText('创建')).not.toBeVisible();
     expect(screen.getByText('<script>not executed</script>')).not.toBeVisible();
     expect(screen.getByRole('list', { name: '任务运行链路', hidden: true })).not.toBeVisible();
-    fireEvent.click(screen.getByLabelText('提取阶段详情'));
+    fireEvent.click(screen.getByLabelText('任务详情'));
     expect(details).toHaveAttribute('open');
     expect(screen.getByText(/core_not_accepted：Source stereo/)).toBeVisible();
     expect(screen.getByText('创建')).toBeVisible();
@@ -57,7 +57,7 @@ describe('Evidence Studio secondary pages', () => {
     expect(screen.getByRole('list', { name: '任务运行链路' })).toBeVisible();
     expect(screen.getByText(`任务 ${failed.id}`)).toHaveAttribute('title', failed.id);
     expect(failed.status).toBe('failed');
-    fireEvent.click(screen.getByLabelText('提取阶段详情'));
+    fireEvent.click(screen.getByLabelText('任务详情'));
     expect(screen.getByText(/core_not_accepted：Source stereo/)).not.toBeVisible();
   });
 
@@ -141,7 +141,7 @@ describe('Evidence Studio secondary pages', () => {
     const create = vi.spyOn(api, 'createJob').mockResolvedValue(job);
     render(<JobsPage projects={[project]} ready onOpen={vi.fn()} />);
     await screen.findByRole('button', { name: project.title });
-    expect(screen.getAllByLabelText('提取阶段详情')).toHaveLength(1);
+    expect(screen.getAllByLabelText('任务详情')).toHaveLength(1);
     expect(screen.getAllByRole('button', { name: '继续提取' })).toHaveLength(1);
     expect(screen.getAllByRole('button', { name: '运行提取' })).toHaveLength(1);
     expect(screen.getByText('创建')).not.toBeVisible();

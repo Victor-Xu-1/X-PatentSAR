@@ -3,6 +3,7 @@ import { safeAssetUrl } from '../../api';
 import type { ActivityFocusSelection, PageData } from '../../api/types';
 import { Empty } from '../../components/Feedback';
 import { ActivityFocusMarks, pageBoxStyle } from './ActivityFocusMarks';
+import { preferredScrollBehavior } from '../../model/motion';
 
 export function PageCanvas({
   page,
@@ -34,14 +35,15 @@ export function PageCanvas({
       : null;
   useEffect(() => {
     if (loaded !== url) return;
+    const behavior = preferredScrollBehavior();
     if (focus?.status === 'located') {
       ref.current
         ?.querySelector<HTMLElement>('[data-activity-focus]')
-        ?.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+        ?.scrollIntoView({ block: 'center', inline: 'nearest', behavior });
     } else if (!activityFocus && selectedId) {
       Array.from(ref.current?.querySelectorAll<HTMLElement>('[data-annotation]') ?? [])
         .find((element) => element.dataset.annotation === selectedId)
-        ?.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+        ?.scrollIntoView({ block: 'center', inline: 'nearest', behavior });
     }
   }, [selectedId, loaded, url, activityFocus, focus]);
   if (!url)

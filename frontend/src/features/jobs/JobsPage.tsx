@@ -45,11 +45,11 @@ export function JobsPage({
       ) : !resource.data?.items.length ? (
         <Empty title="尚无提取任务" description="上传 PDF 开始，或从最近文件打开已有结果。" />
       ) : (
-        <div className="job-history" aria-label="提取任务记录">
+        <ul className="job-history" aria-label="提取任务记录">
           {resource.data.items.map((job) => {
             const project = projects.find((item) => item.id === job.project_id) ?? null;
             return (
-              <article className="job-card" key={job.id}>
+              <li className="job-card" key={job.id}>
                 <header>
                   <div className="job-file">
                     <span className="job-file-icon" aria-hidden="true">
@@ -75,10 +75,10 @@ export function JobsPage({
                     onChange={resource.reload}
                   />
                 </div>
-              </article>
+              </li>
             );
           })}
-        </div>
+        </ul>
       )}
     </section>
   );

@@ -39,6 +39,14 @@
   align-items: center;
   gap: 3px;
 }
+.zoom-controls {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  justify-content: center;
+  gap: 8px;
+}
 .page-navigation input {
   text-align: center;
   width: 42px;
