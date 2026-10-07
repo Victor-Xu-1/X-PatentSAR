@@ -4,41 +4,24 @@ from __future__ import annotations
 
 import logging
 import re
-from datetime import (
-    UTC,
-    datetime,
-)
 from typing import (
     Any,
 )
 
 from patent_sar_extractor.artifact_io import write_json_atomic
-from patent_sar_extractor.contracts import (
-    VISIBLE_LABEL_CACHE_SCHEMA,
-    VISIBLE_LABEL_CACHE_SCHEMA_VERSION,
-    artifact_identity,
-)
 
 from .binding_geometry import (
     _group_structures_by_row,
     _row_for_structure,
 )
 from .binding_labels import (
-    _VISIBLE_LABEL_SOURCE_RANK,
     _base_cpd_num,
     _binding_label_key,
     _cpd_label_key,
-    _cpd_sort_key,
     _is_truncated_visible_prefix,
-    _labels_from_ocr_texts,
     _nearby_exact_product_label,
     _nearby_ocr_label_kind,
     _normalise_compound_label,
-)
-from .binding_ocr import (
-    _paddlex_ocr_texts_batch,
-    _paddlex_ocr_url,
-    paddlex_available,
 )
 from .visible_label_cache import (
     _VISIBLE_LABEL_CACHE_VERSION,
@@ -51,10 +34,6 @@ from .visible_label_cache import (
     _visible_cache_item_matches_structure,
     _visible_label_cache_path,
     _visible_label_candidates_for_structure,
-)
-from .visible_label_crops import (
-    _visible_label_crop_tasks_from_page_image,
-    _visible_label_crop_tasks_from_structure_image,
 )
 
 logger = logging.getLogger(__name__)
@@ -71,8 +50,6 @@ __all__ = [
     "_visible_cache_item_matches_structure",
     "_visible_label_cache_path",
     "_visible_label_candidates_for_structure",
-    "_visible_label_crop_tasks_from_page_image",
-    "_visible_label_crop_tasks_from_structure_image",
 ]
 
 _CD3_LINE_RE = re.compile(r"(?:CD\s*[_₃3]?3?|C\s*D\s*[_₃3]?3)", re.IGNORECASE)
@@ -215,173 +192,6 @@ def _annotate_bindings_with_visible_labels(
                 item["visible_label_crop_source"] = sources[0]
         annotated.append(item)
     return annotated
-
-
-def _precompute_visible_label_cache(
-    processed_structures: list[dict],
-    output_dir: str,
-    profile: dict | None,
-    existing_cache: dict[str, dict] | None,
-    workers: int = 4,
-) -> dict[str, dict]:
-    """Precompute visible structure labels once and persist them for reuse."""
-    cache = _filter_visible_label_cache_for_structures(
-        existing_cache, processed_structures
-    )
-    processed_structures = [
-        s for s in processed_structures if _has_original_identity(s)
-    ]
-    if not processed_structures:
-        logger.warning(
-            "Visible-label OCR requires original PDF identity; nothing was rendered or promoted."
-        )
-        return cache
-    path = _visible_label_cache_path(output_dir, profile)
-    pending = [
-        struct
-        for struct in processed_structures
-        if str(struct.get("id") or "")
-        and not _visible_cache_item_matches_structure(
-            cache.get(str(struct.get("id") or "")), struct
-        )
-    ]
-    if not pending:
-        logger.info("   👁 结构可见编号缓存已完整: %s (%d structures)", path, len(cache))
-        return cache
-
-    # Resolve through the existing authority before allocating any OCR crops.
-    # Empty configuration retains that authority's local endpoint discovery.
-    if paddlex_available() is False or not _paddlex_ocr_url():
-        logger.warning("   PaddleX OCR不可用，跳过可见编号裁图与缓存写入")
-        return cache
-
-    logger.info(
-        "   👁 批量PaddleX识别结构可见编号: %d structures, workers=%d",
-        len(pending),
-        max(1, int(workers or 1)),
-    )
-
-    def _run_stage(
-        stage_name: str, task_builder
-    ) -> tuple[dict[str, list[str]], dict[str, int]]:
-        flat_images: list[Any] = []
-        flat_meta: list[tuple[str, str]] = []
-        attempts: dict[str, int] = {}
-        for struct in pending:
-            sid = str(struct.get("id") or "")
-            if not sid:
-                continue
-            tasks = task_builder(struct)
-            attempts[sid] = attempts.get(sid, 0) + len(tasks)
-            for source, crop in tasks:
-                flat_meta.append((sid, source))
-                flat_images.append(crop)
-        if not flat_images:
-            return {}, attempts
-        ocr_results = _paddlex_ocr_texts_batch(
-            flat_images, workers=workers, timeout=12.0
-        )
-        labels_by_sid: dict[str, list[str]] = {}
-        for (sid, source), ocr_texts in zip(flat_meta, ocr_results):
-            for label in _labels_from_ocr_texts(ocr_texts):
-                entry = f"{label}|{source}"
-                if entry not in labels_by_sid.setdefault(sid, []):
-                    labels_by_sid[sid].append(entry)
-        logger.info(
-            "   👁 %s OCR: %d crops, %d structures with labels",
-            stage_name,
-            len(flat_images),
-            len(labels_by_sid),
-        )
-        return labels_by_sid, attempts
-
-    strict_by_sid, strict_attempts = _run_stage(
-        "strict",
-        lambda struct: [
-            task
-            for task in _visible_label_crop_tasks_from_page_image(
-                struct, include_wide=False
-            )
-            if task[0] == "page_strict"
-        ],
-    )
-    unresolved_after_strict = {
-        str(struct.get("id") or "")
-        for struct in pending
-        if str(struct.get("id") or "")
-        and str(struct.get("id") or "") not in strict_by_sid
-    }
-
-    def _wide_direct_tasks(struct: dict) -> list[tuple[str, Any]]:
-        sid = str(struct.get("id") or "")
-        if sid not in unresolved_after_strict:
-            return []
-        page_tasks = [
-            task
-            for task in _visible_label_crop_tasks_from_page_image(
-                struct, include_wide=True
-            )
-            if task[0] == "page_wide"
-        ]
-        return page_tasks + _visible_label_crop_tasks_from_structure_image(struct)
-
-    wide_by_sid, wide_attempts = _run_stage("wide/direct", _wide_direct_tasks)
-
-    if paddlex_available() is False:
-        logger.warning("   PaddleX OCR不可用，跳过可见编号缓存写入，避免缓存空结果")
-        return cache
-
-    now = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
-    for struct in pending:
-        sid = str(struct.get("id") or "")
-        if not sid:
-            continue
-        candidates: list[dict[str, str]] = []
-        seen_labels: set[str] = set()
-        for packed in (strict_by_sid.get(sid) or []) + (wide_by_sid.get(sid) or []):
-            label, source = packed.split("|", 1)
-            if label in seen_labels:
-                continue
-            seen_labels.add(label)
-            candidates.append({"label": label, "source": source})
-        candidates.sort(
-            key=lambda item: (
-                _VISIBLE_LABEL_SOURCE_RANK.get(str(item.get("source") or ""), 99),
-                _cpd_sort_key(str(item.get("label") or "")),
-            )
-        )
-        cache[sid] = {
-            **artifact_identity(
-                VISIBLE_LABEL_CACHE_SCHEMA, VISIBLE_LABEL_CACHE_SCHEMA_VERSION
-            ),
-            "structure_id": sid,
-            "page_no": int(struct.get("page_no") or 0),
-            "structure_signature": _structure_cache_signature(struct),
-            "visible_labels": [item["label"] for item in candidates],
-            "visible_label_candidates": candidates,
-            "ocr_backend": "paddlex",
-            "cache_version": _VISIBLE_LABEL_CACHE_VERSION,
-            "cache_complete": True,
-            "ocr_attempts": int(
-                strict_attempts.get(sid, 0) + wide_attempts.get(sid, 0)
-            ),
-            "updated_at": now,
-        }
-
-    try:
-        write_json_atomic(path, cache)
-        label_count = sum(
-            1 for item in cache.values() if _labels_from_visible_cache_item(item)
-        )
-        logger.info(
-            "   👁 写入结构可见编号缓存: %s (%d/%d with labels)",
-            path,
-            label_count,
-            len(cache),
-        )
-    except (OSError, TypeError, ValueError) as exc:
-        logger.warning("   可见编号缓存写入失败 %s: %s", path, exc)
-    return cache
 
 
 def _normalise_ocr_line_map(

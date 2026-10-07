@@ -121,7 +121,6 @@ class BindingModuleTests(unittest.TestCase):
         paths = [
             *core.glob("binding_*.py"),
             core / "visible_label_cache.py",
-            core / "visible_label_crops.py",
             core / "structure_binder.py",
         ]
         graph = {path.stem: set() for path in paths}
