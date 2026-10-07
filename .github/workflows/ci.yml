@@ -67,8 +67,13 @@ jobs:
           (cd /tmp && "$GITHUB_WORKSPACE/.venv/bin/x-patentsar" serve --help)
       - name: Install selected browser runtime
         if: steps.scope.outputs.browser_count != '0'
+        timeout-minutes: 5
         working-directory: frontend
-        run: npx --no-install playwright install --with-deps chromium
+        env:
+          PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: "60000"
+        run: |
+          sudo --preserve-env=GITHUB_ACTIONS python3 ../tools/ci_browser_mirrors.py
+          timeout --kill-after=20s 280s npx --no-install playwright install --with-deps --only-shell chromium
       - name: Prepare controlled browser data and real CLI failure
         if: steps.scope.outputs.browser_count != '0'
         env:

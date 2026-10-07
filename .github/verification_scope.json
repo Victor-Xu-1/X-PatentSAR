@@ -3,6 +3,7 @@
   "base_sha": "4cfb994e019c9a11f56a2f8e5c009854b79ad2c9",
   "changed_paths": [
     ".github/verification_scope.json",
+    ".github/workflows/ci.yml",
     "AGENTS.md",
     "NOTICE",
     "README.md",
@@ -70,6 +71,7 @@
     "src/patent_sar_extractor/workers/molscribe_probe.py",
     "src/patent_sar_extractor/workers/molscribe_setup.py",
     "tests/test_bond_stroke_geometry.py",
+    "tests/test_ci_browser_mirrors.py",
     "tests/test_core_recognition_source.py",
     "tests/test_decimer_process.py",
     "tests/test_environment_api.py",
@@ -89,7 +91,8 @@
     "tests/test_strict_acceptance.py",
     "tests/test_uniform_recognition.py",
     "tests/test_web_source_stereo.py",
-    "tools/audit_wheel.py"
+    "tools/audit_wheel.py",
+    "tools/ci_browser_mirrors.py"
   ],
   "python_modules": [
     "tests.test_bond_stroke_geometry",
@@ -123,7 +126,7 @@
     "tests.test_recognition_metadata",
     "tests.test_resource_admission",
     "tests.test_ocsr_resource_budget",
-    "tests.test_phase_resources"
+    "tests.test_ci_browser_mirrors"
   ],
   "frontend_tests": [
     "frontend/tests/source-stereo.test.tsx",
