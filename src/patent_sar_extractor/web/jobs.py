@@ -14,8 +14,6 @@ from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Any
 
-from patent_sar_extractor import contracts as core
-
 from .admet_history import read_admet_stage, seal_admet_stage, write_admet_stage
 from .attempts import ATTEMPT_VERSION, spec_record
 from .checkpoints import LiveCheckpoints
@@ -243,12 +241,11 @@ class JobQueue:
                         in {"complete", "failed", "cancelled", "interrupted"}
                         and not previous["identity"]
                         and self.service.attempts.output(previous) == previous_root
-                        and core.artifact_identity_matches(
-                            cache.get("metadata"),
-                            core.PAGE_OCR_CACHE_SCHEMA,
-                            core.PAGE_OCR_CACHE_SCHEMA_VERSION,
-                        )
                     ):
+                        # Raw OCR compatibility is independent of the ruleset
+                        # that first observed it. cache_matches_pdf already
+                        # verifies that contract; the existing transport/CLI
+                        # gates validate every derived checkpoint separately.
                         try:
                             old = self._spec(previous["id"])
                         except WebError as exc:

@@ -84,6 +84,7 @@ IMAGE_KEYS = {
     "source_image_path",
     "ocsr_image_path",
     "ocsr_structure_image",
+    "ocsr_original_input",
     "structure_image",
     "input_image",
 }
