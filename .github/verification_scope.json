@@ -12,10 +12,12 @@
     "frontend/src/features/results/LeadCell.tsx",
     "frontend/src/styles/lead.css",
     "frontend/tests/lead-column.test.tsx",
+    "src/patent_sar_extractor/web/exports.py",
     "src/patent_sar_extractor/web/lead_chemistry.py",
     "src/patent_sar_extractor/web/lead_models.py",
     "src/patent_sar_extractor/web/lead_scoring.py",
-    "tests/test_lead_scoring.py"
+    "tests/test_lead_scoring.py",
+    "tests/test_lead_workflow.py"
   ],
   "python_modules": [
     "tests.test_lead_scoring",
