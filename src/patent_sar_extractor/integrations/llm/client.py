@@ -20,6 +20,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 
 from .config import get_llm_config
+from .http_transport import Cancellation, HttpCarrierError, bounded_post
 
 logger = logging.getLogger(__name__)
 
@@ -109,15 +110,12 @@ def _response_text(response, limit: int | None, deadline: float | None) -> str:
         # Bound bytes before decoding a provider envelope, not just its eventual
         # message text. Six bytes cover a JSON-escaped Unicode character.
         maximum = limit * 6 + 8192
-        content = bytearray()
-        for chunk in response.iter_content(chunk_size=4096):
-            if (
-                (deadline is not None and time.monotonic() >= deadline)
-                or len(content) + len(chunk) > maximum
-            ):
-                raise ValueError("LLM response exceeded its resource bound")
-            content.extend(chunk)
-        result = json.loads(content)
+        if (
+            not isinstance(response, bytes) or len(response) > maximum
+            or (deadline is not None and time.monotonic() >= deadline)
+        ):
+            raise ValueError("LLM response exceeded its resource bound")
+        result = json.loads(response)
         if result["choices"][0].get("finish_reason") != "stop":
             raise ValueError("LLM structured response was not complete")
     raw = result["choices"][0]["message"]["content"]
@@ -140,6 +138,7 @@ def llm_chat(
     response_format: dict | None = None,
     max_response_chars: int | None = None,
     before_request: Callable[[], bool] | None = None,
+    cancel: Cancellation | None = None,
 ) -> str:
     """调用 LLM，返回文本响应。"""
     llm_cfg = get_llm_config() if config is None else config
@@ -148,6 +147,8 @@ def llm_chat(
     api_key = str(llm_cfg.get("api_key", "")).strip()
     timeout = timeout if timeout is not None else int(llm_cfg.get("timeout", 180) or 180)
     bounded = max_response_chars is not None
+    if bounded and cancel is not None and cancel.is_set():
+        return ""
     if (
         type(max_retries) is not int
         or not 0 <= max_retries <= (1 if bounded else 2)
@@ -200,20 +201,26 @@ def llm_chat(
     attempts = max_retries + 1
     for attempt in range(attempts):
         remaining = timeout if deadline is None else deadline - time.monotonic()
-        if remaining <= 0 or (before_request is not None and not before_request()):
+        if (
+            remaining <= 0 or (bounded and cancel is not None and cancel.is_set())
+            or (before_request is not None and not before_request())
+        ):
             return ""
-        resp = None
         try:
-            options = {"stream": True, "allow_redirects": False} if bounded else {}
-            resp = requests.post(
-                f"{endpoint}/chat/completions",
-                headers=headers,
-                json=payload,
-                timeout=remaining,
-                **options,
-            )
-            resp.raise_for_status()
             try:
+                if bounded:
+                    assert deadline is not None and max_response_chars is not None
+                    resp = bounded_post(
+                        f"{endpoint}/chat/completions", headers=headers, json=payload,
+                        timeout=remaining, deadline=deadline,
+                        max_body_bytes=max_response_chars * 6 + 8192, cancel=cancel,
+                    )
+                else:
+                    resp = requests.post(
+                        f"{endpoint}/chat/completions", headers=headers, json=payload,
+                        timeout=remaining,
+                    )
+                    resp.raise_for_status()
                 content = _response_text(resp, max_response_chars, deadline)
             except (KeyError, IndexError, TypeError, ValueError) as exc:
                 logger.error("LLM response parse failed (%s)", type(exc).__name__)
@@ -223,6 +230,9 @@ def llm_chat(
                 _cache_set(key, content, cache_path=cache_path)
 
             return content
+        except HttpCarrierError:
+            logger.warning("Owned HTTP carrier failed or was cancelled; no retry")
+            return ""
         except requests.exceptions.Timeout:
             logger.warning("LLM timeout (attempt %s/%s)", attempt + 1, attempts)
             if attempt < max_retries and not bounded:
@@ -234,9 +244,6 @@ def llm_chat(
             )
             if attempt < max_retries and not bounded:
                 time.sleep(2 ** attempt)
-        finally:
-            if bounded and resp is not None:
-                resp.close()
 
     return ""
 

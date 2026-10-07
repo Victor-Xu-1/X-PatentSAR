@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from dataclasses import asdict, replace
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import requests
 
@@ -50,20 +50,25 @@ class EvidenceResolutionTests(unittest.TestCase):
             ),
         )
         self.budget = EvidenceCallBudget(self.request.job_id)
-        self.post = self.enterContext(patch.object(client.requests, "post"))
+        self.enterContext(
+            patch.object(
+                client.requests,
+                "post",
+                side_effect=AssertionError("unit test must not use direct HTTP/DNS"),
+            )
+        )
+        self.post = self.enterContext(patch.object(client, "bounded_post"))
         self.response(
             '{"candidates":[{"candidate_id":"heading-1","observation_ids":["text-1"]}]}'
         )
 
     def response(self, content, *, finish_reason="stop"):
-        response = Mock()
         packet = {
             "choices": [
                 {"message": {"content": content}, "finish_reason": finish_reason}
             ]
         }
-        response.json.return_value = packet
-        response.iter_content.return_value = [json.dumps(packet).encode()]
+        response = json.dumps(packet).encode()
         self.post.return_value = response
         self.post.side_effect = None
         return response
@@ -490,11 +495,10 @@ class EvidenceResolutionTests(unittest.TestCase):
             self.assertEqual(disabled.status, "disabled")
             self.assertEqual(self.post.call_count, 8)
 
-    def test_oversized_http_body_stops_reading_and_closes_response(self):
-        response = self.response('{"candidates":[]}')
-        response.iter_content.return_value = [b"x" * 1000000]
+    def test_oversized_injected_transport_body_is_rejected(self):
+        self.post.return_value = b"x" * 1000000
         self.assertEqual(self.resolve().status, "unavailable")
-        response.close.assert_called_once()
+        self.assertEqual(self.post.call_count, 1)
 
 
 if __name__ == "__main__":
