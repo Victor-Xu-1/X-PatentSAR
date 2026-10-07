@@ -68,10 +68,10 @@
 .acceptance-banner.failed > span {
   color: var(--danger);
 }
-.acceptance-banner details {
+.acceptance-banner > details {
   margin-left: auto;
 }
-.acceptance-banner details[open] {
+.acceptance-banner > details[open] {
   flex-basis: 100%;
 }
 .acceptance-banner details ul {
@@ -82,6 +82,12 @@
 .acceptance-banner summary {
   cursor: pointer;
   color: var(--danger);
+}
+.acceptance-banner li > small {
+  display: block;
+}
+.acceptance-banner li {
+  overflow-wrap: anywhere;
 }
 .result-toolbar {
   display: flex;

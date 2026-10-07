@@ -1,11 +1,13 @@
 import type { Job, Project } from '../../api/types';
 import { acceptanceLabels, stageLabels } from '../../model/presentation';
-import { observedStages, stoppedJob } from '../../model/extraction';
+import { completedCoreRejection, observedStages, stoppedJob } from '../../model/extraction';
+import { AcceptanceFindings } from './AcceptanceFindings';
 
 export function ExtractionNotice({ project, job }: { project: Project; job: Job | null }) {
   const failed = project.acceptance.state === 'failed' || job?.status === 'failed';
   const trustedStages = observedStages(job);
   const failedStage = trustedStages.find((stage) => stage.status === 'failed');
+  const rejectedCore = completedCoreRejection(job);
   const unexecuted = stoppedJob(job)
     ? trustedStages.filter((stage) => stage.status === 'pending')
     : [];
@@ -21,7 +23,11 @@ export function ExtractionNotice({ project, job }: { project: Project; job: Job 
       aria-label="提取验收与阻塞状态"
     >
       <span>{failed ? '提取未通过验收' : acceptanceLabels[project.acceptance.state]}</span>
-      {failedStage && <small>提取在{stageLabels[failedStage.name]}阶段停止。</small>}
+      {rejectedCore ? (
+        <small>运行已结束，核心验收未通过。</small>
+      ) : (
+        failedStage && <small>提取在{stageLabels[failedStage.name]}阶段停止。</small>
+      )}
       {unexecuted.length > 0 && (
         <small>尚未执行：{unexecuted.map((stage) => stageLabels[stage.name]).join('、')}。</small>
       )}
@@ -32,16 +38,7 @@ export function ExtractionNotice({ project, job }: { project: Project; job: Job 
             ? '当前表格为待复核候选记录，不是完整结构–活性结果。'
             : '原始提取验收由确定性 QA 决定；补充记录与人工修正不改变验收。'}
       </small>
-      {errors.length > 0 && (
-        <details open={failed}>
-          <summary>查看核心验收问题（{errors.length}）</summary>
-          <ul>
-            {errors.map((error, index) => (
-              <li key={index}>{error}</li>
-            ))}
-          </ul>
-        </details>
-      )}
+      <AcceptanceFindings errors={errors} open={failed} />
     </div>
   );
 }

@@ -453,6 +453,16 @@ time. Failed/pending/unchanged chunks cannot increment them. These page counters
 do not declare chemistry/QA success or SDK-attempt failure counts; the UI labels
 their unit as pages and does not invent model statistics. Existing completed-stage
 publication and immutable history boundaries remain unchanged.
+The frontend labels processed counters explicitly for failed stages; `count` is
+never a failed-record count. A history-available, fully executed `core_not_accepted`
+job may show the SMILES `progress.failures` as its review count only when all work
+is processed and `count` equals the same workload. Missing/incomplete evidence
+keeps the review count unknown. Original failed stages/job/QA stay failed; the
+complete rejection is not described as an early execution stop. Presentation
+groups repeat acceptance messages only by explicit identifier and exact message,
+retaining reporting stages and all distinct/generic reasons. This is not another
+acceptance authority and does not mutate the API payload or stored evidence.
+
 `reused_checkpoint` records an explicit core fact, not inferred duration. Every
 new/resumed job owns an independent output directory. Terminal history is sealed
 separately from mutable outputs; unreliable legacy shared-directory history
