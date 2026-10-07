@@ -37,7 +37,9 @@ def official_https_mirrors(content: str) -> str:
             if url.hostname == "azure.archive.ubuntu.com"
             else url.hostname
         )
-        output.append(" ".join([f"https://{host}/ubuntu/", *fields[1:]]))
+        # apt's mirror protocol uses TAB for metadata. Spaces become part of
+        # the URL and produce a misleading repository/signature failure.
+        output.append("\t".join([f"https://{host}/ubuntu/", *fields[1:]]))
     if not any(line.startswith("https://") for line in output):
         raise ValueError("CI mirror list has no official repository")
     return "\n".join(output) + "\n"

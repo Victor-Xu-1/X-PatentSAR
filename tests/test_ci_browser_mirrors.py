@@ -26,6 +26,13 @@ class BrowserMirrorTests(unittest.TestCase):
             with self.subTest(source=source[:64]), self.assertRaises(ValueError):
                 official_https_mirrors(source)
 
+    def test_mirror_priority_metadata_keeps_required_tab_separator(self):
+        source = "http://azure.archive.ubuntu.com/ubuntu/\tpriority:1\nhttps://security.ubuntu.com/ubuntu/\tpriority:3\n"
+        changed = official_https_mirrors(source)
+        self.assertIn("https://archive.ubuntu.com/ubuntu/\tpriority:1", changed)
+        self.assertIn("https://security.ubuntu.com/ubuntu/\tpriority:3", changed)
+        self.assertNotIn("/ priority:", changed)
+
     def test_local_or_non_root_call_cannot_mutate_system_mirrors(self):
         with (
             patch.dict("os.environ", {"GITHUB_ACTIONS": "false"}),
