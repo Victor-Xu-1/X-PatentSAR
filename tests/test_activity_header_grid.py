@@ -369,7 +369,7 @@ class ActivityHeaderGridTests(unittest.TestCase):
             )
 
         with patch(
-            "patent_sar_extractor.core.activity_coordinates.read_cell",
+            "patent_sar_extractor.core.activity_grid_cells.read_cell",
             side_effect=reading,
         ):
             _, rows = observed_grid(matrix, native=False)

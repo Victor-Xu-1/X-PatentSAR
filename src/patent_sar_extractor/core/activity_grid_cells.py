@@ -7,7 +7,13 @@ from dataclasses import replace
 from itertools import pairwise
 
 from .activity_header_metrics import normalize_metric_text
+from .activity_identity import is_value, normalize_compound, normalize_value
 from .activity_models import GridSchema
+from .activity_values import (
+    is_explicit_missing_activity_value,
+    normalize_activity_value_token,
+)
+from .table_cells import read_cell
 
 
 def continued_header_schema(
@@ -114,3 +120,98 @@ def validate_grid(region: dict, schema: GridSchema) -> None:
         raise ValueError("Activity grid has unowned physical columns")
     if schema.raw_headers and len(schema.raw_headers) != len(xs) - 1:
         raise ValueError("Activity raw headers do not match physical columns")
+
+
+def read_activity_cell(
+    page, tokens: list[dict], bounds, *, identifier: bool, native: bool
+):
+    raw = cell_text(tokens, bounds)
+    crossing = crosses_cell(tokens, bounds)
+    if identifier:
+        value = normalize_compound(raw)
+        kind = (
+            "label"
+            if re.match(r"Compound|Example|Cpd|Cmpd|实施例|化合物", raw, re.IGNORECASE)
+            else "id"
+        )
+    else:
+        value = normalize_value(raw)
+        kind = (
+            "plus"
+            if re.fullmatch(r"\+{1,3}", value)
+            else (
+                "letter" if re.fullmatch(r"[A-D]", value, re.IGNORECASE) else "number"
+            )
+        )
+    if native:
+        # Shared lexical kinds do not support all printed suffixes, missing
+        # markers or ranges. Original native tokens remain exact evidence.
+        observations = [{"method": "native_cell", "text": raw}]
+        return (
+            value,
+            observations,
+            crossing or not bool(value if identifier else is_value(value)),
+        )
+    reading = read_cell(page, bounds, tokens, kind, False)
+    refined = (
+        normalize_compound(reading.value)
+        if identifier
+        else normalize_value(reading.value)
+    )
+    observations = list(reading.observations)
+    if not any(o.get("text") == raw for o in observations):
+        observations.insert(0, {"method": "page_ocr_cell", "text": raw})
+    # Shared scalar OCR cannot erase comparators, classes, units or missing
+    # markers. Conflicting reads retain the raw cell and require review.
+    conflict = bool(
+        value and refined and re.sub(r"\s+", "", value) != re.sub(r"\s+", "", refined)
+    )
+    if (
+        not identifier
+        and is_explicit_missing_activity_value(value)
+        and (
+            normalize_activity_value_token(value)
+            == normalize_activity_value_token(refined)
+        )
+    ):
+        conflict = False
+    # A malformed low-resolution observation is not a competing measurement.
+    # Accept only two independent high-resolution reads of the complete cell;
+    # valid disagreements and qualifiers/footnotes stay explicitly unresolved.
+    consensus = {
+        observation.get("method")
+        for observation in observations
+        if observation.get("text") == refined
+        and type(observation.get("confidence")) in (float, int)
+        and 0.85 <= observation["confidence"] <= 1
+    }
+    recovered = bool(
+        not identifier
+        and not is_value(value)
+        and is_value(refined)
+        and not reading.needs_review
+        and {"cell_ocr_400dpi", "cell_ocr_600dpi"}.issubset(consensus)
+        and not re.search(r"[<>≤≥%±*]|(?:pM|nM|[uµμ]M|mM|mg/kg)\b", value)
+    )
+    if recovered:
+        value, conflict = refined, False
+    cell_proved = (
+        not conflict
+        and not reading.needs_review
+        and any(
+            observation.get("method") in {"cell_ocr_400dpi", "cell_ocr_600dpi"}
+            and observation.get("text") == reading.value
+            and type(observation.get("confidence")) in (float, int)
+            and 0.85 <= observation["confidence"] <= 1
+            for observation in observations
+        )
+    )
+    # A detector's padded box is not the value's ownership proof. Agreement
+    # with the independently clipped original cell supplies that proof.
+    review = (
+        (crossing and not cell_proved)
+        or conflict
+        or reading.needs_review
+        or not reading.value
+    )
+    return value or refined, observations, review

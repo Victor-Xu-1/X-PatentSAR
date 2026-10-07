@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import fitz
 
-from patent_sar_extractor.core.activity_coordinates import _read_cell
+from patent_sar_extractor.core.activity_grid_cells import read_activity_cell
 from patent_sar_extractor.core.table_cells import CellReading, _normalize
 from patent_sar_extractor.core.table_geometry import ocr_tokens_with_positions
 
@@ -34,14 +34,16 @@ class ActivityCellConsensusTests(unittest.TestCase):
             {"method": "cell_ocr_400dpi", "text": "4.01", "confidence": 0.99},
         ]
         with patch(
-            "patent_sar_extractor.core.activity_coordinates.read_cell",
+            "patent_sar_extractor.core.activity_grid_cells.read_cell",
             return_value=CellReading("4.01", bounds, sources, False),
         ):
             self.assertFalse(
-                _read_cell(None, tokens, bounds, identifier=False, native=False)[2]
+                read_activity_cell(
+                    None, tokens, bounds, identifier=False, native=False
+                )[2]
             )
         self.assertTrue(
-            _read_cell(None, tokens, bounds, identifier=False, native=True)[2]
+            read_activity_cell(None, tokens, bounds, identifier=False, native=True)[2]
         )
 
     def test_scalar_observation_keeps_missing_markers_comparators_units_and_sign(self):
@@ -70,10 +72,10 @@ class ActivityCellConsensusTests(unittest.TestCase):
             {"method": "cell_ocr_600dpi", "text": "4.01", "confidence": 0.99},
         ]
         with patch(
-            "patent_sar_extractor.core.activity_coordinates.read_cell",
+            "patent_sar_extractor.core.activity_grid_cells.read_cell",
             return_value=CellReading("4.01", bounds, observations, False),
         ):
-            value, sources, review = _read_cell(
+            value, sources, review = read_activity_cell(
                 None, tokens, bounds, identifier=False, native=False
             )
         self.assertEqual(value, "4.01")
@@ -85,10 +87,10 @@ class ActivityCellConsensusTests(unittest.TestCase):
         for raw, refined in (("4.02", "4.01"), (">4.01", "4.01"), ("0.2 nM", "0.2")):
             tokens = [{"text": raw, "x": 50, "y": 10}]
             with patch(
-                "patent_sar_extractor.core.activity_coordinates.read_cell",
+                "patent_sar_extractor.core.activity_grid_cells.read_cell",
                 return_value=CellReading(refined, bounds, [], False),
             ):
-                value, _, review = _read_cell(
+                value, _, review = read_activity_cell(
                     None, tokens, bounds, identifier=False, native=False
                 )
             self.assertEqual(value, raw)
