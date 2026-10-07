@@ -1,7 +1,8 @@
 import type { EnvironmentCatalog } from '../src/api/environmentTypes';
-import { environmentCatalog } from './environment-fixtures';
+import { molscribeEnvironmentCatalog } from './environment-fixtures';
 
 export function completeEnvironmentCatalog(): EnvironmentCatalog {
+  const environmentCatalog = molscribeEnvironmentCatalog();
   return {
     ...environmentCatalog,
     setup_component_ids: environmentCatalog.components.map((component) => component.id),

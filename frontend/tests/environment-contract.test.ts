@@ -3,13 +3,47 @@ import { api, client } from '../src/api';
 import {
   decodeEnvironmentCatalog,
   decodeEnvironmentOperation,
+  decodeEnvironmentRequest,
 } from '../src/api/environmentDecoders';
 import { normalizeInstallRoot } from '../src/model/environment';
-import { environmentCatalog, environmentOperation } from './environment-fixtures';
+import {
+  environmentCatalog,
+  environmentOperation,
+  molscribeEnvironmentCatalog,
+} from './environment-fixtures';
 import { json, session } from './fixtures';
 
 beforeEach(() => client.resetSession());
 describe('environment management exact contract', () => {
+  it('decodes all eight components, optional structure models and one complete request/receipt', () => {
+    const catalog = molscribeEnvironmentCatalog();
+    const decoded = decodeEnvironmentCatalog(catalog);
+    expect(decoded.setup_component_ids).toHaveLength(8);
+    expect(decoded.components.slice(-2)).toMatchObject([
+      { id: 'molscribe', kind: 'runtime', group: 'structure', required: false },
+      { id: 'molscribe-models', kind: 'models', group: 'structure', required: false },
+    ]);
+    const request = {
+      action: 'install',
+      component_ids: catalog.setup_component_ids,
+      request_id: environmentOperation.request_id,
+      expected_revision: 3,
+    };
+    expect(decodeEnvironmentRequest(request)).toEqual(request);
+    const receipt = {
+      ...environmentOperation,
+      component_ids: catalog.setup_component_ids,
+      completed_components: catalog.setup_component_ids,
+      status: 'complete',
+    };
+    expect(decodeEnvironmentOperation(receipt)).toEqual(receipt);
+    for (const component_ids of [
+      [...catalog.setup_component_ids, 'cuda'],
+      [...catalog.setup_component_ids, 'base'],
+      ['molscribe-models', 'molscribe-models'],
+    ])
+      expect(() => decodeEnvironmentRequest({ ...request, component_ids })).toThrow('契约');
+  });
   it('decodes actual target/detected versions and does not upgrade unchecked or partial states', () => {
     expect(decodeEnvironmentCatalog(environmentCatalog)).toEqual(environmentCatalog);
     expect(decodeEnvironmentOperation(environmentOperation)).toEqual(environmentOperation);

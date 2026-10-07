@@ -65,7 +65,7 @@ export function selectedEnvironmentComponents(
     inventory.size !== components.length ||
     components.some((component) => !environmentComponentIds.includes(component.id))
   )
-    throw new Error('组件依赖目录无效或超出六组件范围，请刷新后重新选择安装组合。');
+    throw new Error('组件依赖目录无效或超出支持组件范围，请刷新后重新选择安装组合。');
   const selected: EnvironmentComponent[] = [];
   const visiting = new Set<EnvironmentComponentId>(),
     complete = new Set<EnvironmentComponentId>();
@@ -81,7 +81,7 @@ export function selectedEnvironmentComponents(
       dependencies.length > limit ||
       new Set(dependencies).size !== dependencies.length
     )
-      throw new Error('服务端组件依赖元数据缺失、重复或超出六组件范围。');
+      throw new Error('服务端组件依赖元数据缺失、重复或超出支持组件范围。');
     if (dependencies.includes(id)) throw new Error('服务端组件依赖不能包含自身。');
     visiting.add(id);
     for (const dependency of dependencies) visit(dependency);

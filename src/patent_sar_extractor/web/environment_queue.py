@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from ..workers.environment_errors import MESSAGES
-from .environment_models import EnvironmentComponent
+from .environment_models import COMPONENT_IDS, MAX_COMPONENTS, EnvironmentComponent
 from .environment_storage import EnvironmentStore
 from .errors import WebError
 from .files import SafeFiles, private_directory
@@ -153,17 +153,13 @@ class EnvironmentQueue:
                     "Worker progress did not satisfy its bounded contract.",
                 )
             completed = value.get("completed_components", [])
-            if len(completed) > 6 or any(
-                item
-                not in {
-                    "installer",
-                    "base",
-                    "decimer",
-                    "decimer-models",
-                    "admet",
-                    "admet-models",
-                }
-                for item in completed
+            if (
+                len(completed) > MAX_COMPONENTS
+                or any(
+                    not isinstance(item, str) or item not in COMPONENT_IDS
+                    for item in completed
+                )
+                or len(set(completed)) != len(completed)
             ):
                 raise WebError(
                     500, "environment_progress", "Worker component progress is invalid."
@@ -192,7 +188,7 @@ class EnvironmentQueue:
             or value.get("schema_version") != 1
             or value.get("operation_id") != spec.job_id
             or not isinstance(value.get("components"), list)
-            or len(value["components"]) > 6
+            or len(value["components"]) > MAX_COMPONENTS
             or not isinstance(value.get("bindings"), dict)
         ):
             raise WebError(
@@ -357,7 +353,8 @@ class EnvironmentQueue:
                     )
                 else:
                     self._run(row)
-            except Exception as error:
+            # Durable queue boundary: unexpected failures must seal the operation.
+            except Exception as error:  # noqa: BLE001
                 logger.error(
                     "environment_operation_failed operation=%s error_type=%s",
                     row["id"],

@@ -19,6 +19,8 @@ from patent_sar_extractor.workers.environment_files import (
 from .analysis_process import BoundedAnalysisRunner
 from .analysis_runtime import AnalysisSettings, child_environment
 from .environment_models import (
+    COMPONENT_IDS,
+    MAX_COMPONENTS,
     ComponentId,
     ComponentStatus,
     EnvironmentCheck,
@@ -48,6 +50,26 @@ def _checks(result: Mapping[str, object]) -> list[EnvironmentCheck]:
     return output
 
 
+def _molscribe_result(
+    result: Mapping[str, object],
+) -> tuple[list[EnvironmentCheck], str]:
+    """The native helper owns verification; this adapter validates its receipt."""
+    if not isinstance(result, Mapping) or type(result.get("ok")) is not bool:
+        raise ValueError("Native probe outcome is missing/invalid")
+    version = result.get("version")
+    if not isinstance(version, str) or not version.strip() or len(version) > 128:
+        raise ValueError("Native probe version is missing/unbounded")
+    checks = _checks(result)
+    checks.append(
+        EnvironmentCheck(
+            name="probe_result",
+            ok=result["ok"] is True,
+            message="Native MolScribe probe outcome; not recognition accuracy acceptance",
+        )
+    )
+    return checks, version
+
+
 @dataclass(frozen=True)
 class InspectionContext:
     installer: Path | None = None
@@ -56,17 +78,12 @@ class InspectionContext:
     decimer_models: Path | None = None
     admet: Path | None = None
     admet_models: Path | None = None
+    molscribe: Path | None = None
+    molscribe_models: Path | None = None
 
     @classmethod
     def from_bindings(cls, bindings: Mapping[str, str | None]) -> InspectionContext:
-        allowed = {
-            "installer",
-            "base",
-            "decimer",
-            "decimer-models",
-            "admet",
-            "admet-models",
-        }
+        allowed = COMPONENT_IDS
         if set(bindings) - allowed:
             raise ValueError("Unknown environment binding")
         values = {}
@@ -94,6 +111,8 @@ class InspectionContext:
                 ("decimer-models", self.decimer_models),
                 ("admet", self.admet),
                 ("admet-models", self.admet_models),
+                ("molscribe", self.molscribe),
+                ("molscribe-models", self.molscribe_models),
             )
         }
 
@@ -110,7 +129,14 @@ def inspect_components(
     Call as an owned durable operation, not a blocking GET health handler. Heavy
     probes share the existing bounded runner; inspection never installs anything.
     """
-    if len(component_ids) > 6 or len(set(component_ids)) != len(component_ids):
+    if (
+        len(component_ids) > MAX_COMPONENTS
+        or any(
+            not isinstance(item, str) or item not in COMPONENT_IDS
+            for item in component_ids
+        )
+        or len(set(component_ids)) != len(component_ids)
+    ):
         raise ValueError("Invalid inspection component set")
     checked_directory(op_dir, private=True)
     runner = BoundedAnalysisRunner()
@@ -125,6 +151,11 @@ def inspect_components(
             payload: dict[str, object] = {"role": role}
             if role == "base":
                 payload["base_recipe"] = str(recipe_path("base-runtime.json"))
+            if role in {"molscribe", "molscribe-models"}:
+                payload.update(
+                    model_root=bindings["molscribe-models"],
+                    recipe=str(recipe_path("molscribe-runtime.json")),
+                )
             if role in {"decimer-ocsrc", "decimer-segmentation"}:
                 payload.update(
                     model_root=str(context.decimer_models),
@@ -216,6 +247,18 @@ def inspect_components(
                         result = run("decimer-segmentation", context.decimer)
                         checks.extend(_checks(result))
                         detected = "OCSR V2 + segmentation 1.5.0"
+                    elif component_id in {"molscribe", "molscribe-models"}:
+                        if component_id == "molscribe":
+                            if not path.is_file() or not os.access(path, os.X_OK):
+                                raise ValueError("Interpreter is not executable")
+                            python = path
+                        else:
+                            if not path.is_dir() or context.molscribe is None:
+                                raise ValueError(
+                                    "MolScribe runtime and model directory are required"
+                                )
+                            python = context.molscribe
+                        checks, detected = _molscribe_result(run(component_id, python))
                     else:
                         manifest = existing_bundle(path)
                         checks.append(
