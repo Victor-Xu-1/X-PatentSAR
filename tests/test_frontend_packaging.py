@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import shutil
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -136,6 +137,18 @@ class FrontendPackagingTests(unittest.TestCase):
 
 
 class WorkflowPackagingTests(unittest.TestCase):
+    def test_final_worker_executable_git_mode_matches_its_script_entry(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        worker = "src/patent_sar_extractor/workers/gen_final_results.py"
+        entry = subprocess.check_output(
+            ["git", "ls-files", "--stage", "--", worker],
+            cwd=root,
+            text=True,
+            timeout=10,
+        ).split()
+        self.assertEqual(entry[0], "100755")
+        self.assertTrue((root / worker).read_bytes().startswith(b"#!/"))
+
     def test_workflow_has_only_explicit_test_phases_and_conditional_browser_work(
         self,
     ) -> None:
