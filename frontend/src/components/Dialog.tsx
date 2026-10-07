@@ -81,6 +81,7 @@ export function Dialog({
       className={`dialog${wide ? ' dialog-wide' : ''}${className ? ` ${className}` : ''}`}
       aria-labelledby={titleId}
       onCancel={(event) => {
+        event.stopPropagation();
         event.preventDefault();
         if (!busy) onClose();
       }}

@@ -110,6 +110,26 @@ describe('accessible dialogs and explicit mutations', () => {
     expect(close).not.toHaveBeenCalled();
     expect(screen.getByLabelText('关闭对话框')).toBeDisabled();
   });
+  it.each([false, true])(
+    'keeps the parent modal open when only the nested modal receives cancel (busy=%s)',
+    (busy) => {
+      const parentClose = vi.fn();
+      const childClose = vi.fn();
+      render(
+        <Dialog title="历史列表" onClose={parentClose}>
+          <Dialog title="删除确认" onClose={childClose} busy={busy}>
+            <button data-initial-focus>取消删除</button>
+          </Dialog>
+        </Dialog>,
+      );
+      fireEvent(
+        screen.getByRole('dialog', { name: '删除确认' }),
+        new Event('cancel', { bubbles: true, cancelable: true }),
+      );
+      expect(parentClose).not.toHaveBeenCalled();
+      expect(childClose).toHaveBeenCalledTimes(busy ? 0 : 1);
+    },
+  );
   it('exports selected IDs and labels unaccepted output as review-only', async () => {
     const download = vi
       .spyOn(api, 'export')

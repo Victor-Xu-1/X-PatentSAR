@@ -66,6 +66,13 @@ async function readList(page: Page, kind: HistoryKind, deleted: boolean, owner?:
   expect(response.ok()).toBe(true);
   return decodeHistoryList(await response.json());
 }
+function historyRow(page: Page, entry: HistoryEntry) {
+  // Opaque IDs are already validated by the API decoder. Titles can repeat
+  // across real exports/attempts; never select an arbitrary same-title record.
+  return page
+    .getByRole('dialog')
+    .locator(`li[data-history-kind="${entry.kind}"][data-history-id="${entry.id}"]`);
+}
 async function closeDialogs(page: Page) {
   // Topmost standard modal only, preserving keyboard/focus behavior.
   while (await page.getByRole('dialog').count()) {
@@ -103,9 +110,7 @@ async function openTrash(page: Page, kind: HistoryKind) {
 }
 async function restoreFromTrash(page: Page, entry: HistoryEntry) {
   await openTrash(page, entry.kind);
-  await page
-    .getByRole('dialog')
-    .last()
+  await historyRow(page, entry)
     .getByRole('button', { name: `恢复 ${entry.title}`, exact: true })
     .click();
   await confirm(page, await readEntry(page, entry.kind, entry.id), true);
@@ -160,9 +165,10 @@ test('synthetic saved file deletes/restores through real API and survives naviga
       exact: true,
     })
     .click();
-  const opener = page
-    .getByRole('dialog')
-    .getByRole('button', { name: `删除 ${file.title}`, exact: true });
+  const opener = historyRow(page, file).getByRole('button', {
+    name: `删除 ${file.title}`,
+    exact: true,
+  });
   await opener.click();
   await expect(
     page.getByRole('dialog').last().getByRole('button', { name: '取消', exact: true }),
@@ -205,8 +211,7 @@ test('synthetic job and project removal retains original facts and enforces pare
   expect(owner.can_delete).toBe(true);
   await page.goto('/#/jobs');
   await page.getByRole('button', { name: '全部记录', exact: true }).click();
-  await page
-    .getByRole('dialog')
+  await historyRow(page, entry)
     .getByRole('button', { name: `删除 ${entry.title}`, exact: true })
     .click();
   await expect(
@@ -214,7 +219,7 @@ test('synthetic job and project removal retains original facts and enforces pare
   ).toBeEnabled();
   await page.keyboard.press('Escape');
   await expect(
-    page.getByRole('dialog').getByRole('button', { name: `删除 ${entry.title}`, exact: true }),
+    historyRow(page, entry).getByRole('button', { name: `删除 ${entry.title}`, exact: true }),
   ).toBeFocused();
   await closeDialogs(page);
   const row = page
@@ -238,8 +243,7 @@ test('synthetic job and project removal retains original facts and enforces pare
   expect(child.deleted_at).not.toBeNull();
   expect(child.can_restore).toBe(false);
   await openTrash(page, 'job');
-  await page
-    .getByRole('dialog')
+  await historyRow(page, child)
     .getByRole('button', { name: `恢复 ${child.title}`, exact: true })
     .click();
   await expect(

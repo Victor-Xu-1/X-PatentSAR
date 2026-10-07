@@ -108,7 +108,11 @@ export function HistoryDialog({
         ) : (
           <ul className="history-entries" aria-label={title}>
             {data.items.map((entry) => (
-              <li key={`${entry.kind}:${entry.id}`}>
+              <li
+                key={`${entry.kind}:${entry.id}`}
+                data-history-kind={entry.kind}
+                data-history-id={entry.id}
+              >
                 <div className="history-entry-content">
                   <strong>{entry.title}</strong>
                   <time dateTime={entry.deleted_at ?? entry.created_at}>
