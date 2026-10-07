@@ -159,6 +159,64 @@ def export(root, *, continue_scientific=False):
 
 
 class SourceLedExportTests(unittest.TestCase):
+    def test_review_workbook_keeps_all_ids_images_and_activity_without_bad_chemistry(
+        self,
+    ):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            activities = [
+                {"cpd": "Compound 42", "activity_values": {"IC50 (nM)": "17"}},
+                {"cpd": "Compound 42A", "activity_values": {"IC50 (nM)": "29"}},
+            ]
+            run_fixture(root, activities=activities, invalid_second=True)
+            result = export(root, continue_scientific=True)
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+            workbook = load_workbook(root / "final_results/CONTROL_final.xlsx")
+            sheet = workbook["Final Results"]
+            rows = list(sheet.values)
+            self.assertEqual(
+                [row[0] for row in rows[1:]], ["Compound 42", "Compound 42A"]
+            )
+            activity_column = rows[0].index("IC50 (nM)")
+            status_column = rows[0].index("识别状态")
+            self.assertEqual([row[activity_column] for row in rows[1:]], ["17", "29"])
+            self.assertEqual(rows[1][status_column], "当前规则通过")
+            self.assertEqual(rows[2][status_column], "待复核")
+            self.assertTrue(all(value is None for value in rows[2][5:10]))
+            self.assertEqual(len(sheet._images), 2)
+            self.assertTrue(
+                all(
+                    image.anchor.ext.cx == image.anchor.ext.cy
+                    for image in sheet._images
+                )
+            )
+            self.assertEqual(sheet.freeze_panes, "F2")
+            self.assertEqual(sheet.auto_filter.ref, sheet.dimensions)
+            receipt = json.loads(
+                (root / "final_results/export_validation.json").read_text()
+            )
+            self.assertFalse(receipt["formal_acceptance_authority"])
+            self.assertEqual(receipt["workbook_review_cpds"], ["Compound 42A"])
+            self.assertEqual(
+                receipt["strict_coverage"]["workbook_cpds"],
+                ["Compound 42", "Compound 42A"],
+            )
+            self.assertEqual(
+                receipt["strict_coverage"]["exported_cpds"], ["Compound 42"]
+            )
+            self.assertEqual(
+                (root / "final_results/CONTROL_final.sdf").read_text().count("$$$$"), 1
+            )
+            qa = build_qa_report(str(root), patent_id="CONTROL")
+            self.assertFalse(qa["acceptance"]["ok"])
+            self.assertFalse(
+                any(
+                    "Excel main sheet does not match" in item
+                    or "missing or changed activity" in item
+                    for item in qa["acceptance"]["hard_errors"]
+                )
+            )
+
     def test_proved_no_activity_exports_all_ids_and_passes_control_qa(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -188,8 +246,9 @@ class SourceLedExportTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
             workbook = load_workbook(root / "final_results/CONTROL_final.xlsx")
             rows = list(workbook["Final Results"].values)
-            self.assertEqual(rows[1][-1], "17 | 29")
-            self.assertIsNone(rows[2][-1])
+            activity_column = rows[0].index("IC50 (nM)")
+            self.assertEqual(rows[1][activity_column], "17 | 29")
+            self.assertIsNone(rows[2][activity_column])
             source_rows = list(workbook["Activity Observations"].values)
             self.assertEqual([row[2] for row in source_rows[1:]], ["17", "29"])
             self.assertTrue(all(row[3] is None for row in source_rows[1:]))

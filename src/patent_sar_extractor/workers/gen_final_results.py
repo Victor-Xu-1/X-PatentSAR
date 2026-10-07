@@ -125,6 +125,7 @@ def main():
     )
     with open(args.bindings, encoding="utf-8") as stream:
         expected = json.load(stream)["final_bindings"]
+    qualified_structure_ids = {row["structure_id"] for row in bindings}
     receipt = {
         "execution_mode": SOURCE_EXECUTION_MODE,
         "formal_acceptance_scope": FORMAL_SCOPE,
@@ -136,7 +137,16 @@ def main():
             "expected_structure_ids": [row["structure_id"] for row in expected],
             "exported_cpds": [row["cpd"] for row in bindings],
             "exported_structure_ids": [row["structure_id"] for row in bindings],
+            "workbook_cpds": [row["cpd"] for row in expected],
+            "workbook_structure_ids": [row["structure_id"] for row in expected],
         },
+        "workbook_scope": "all_proved_identifier_rows",
+        "sdf_scope": "qualified_chemistry_only",
+        "workbook_review_cpds": [
+            row["cpd"]
+            for row in expected
+            if row["structure_id"] not in qualified_structure_ids
+        ],
     }
     if errors:
         write_failure_marker(output.parent, "final_export", errors)
@@ -151,7 +161,7 @@ def main():
     workbook = output / f"{args.patent}_final.xlsx"
     sdf = output / f"{args.patent}_final.sdf"
     generate_excel(
-        bindings,
+        expected,
         *maps,
         activity,
         assays,

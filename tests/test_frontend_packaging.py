@@ -136,6 +136,44 @@ class FrontendPackagingTests(unittest.TestCase):
 
 
 class WorkflowPackagingTests(unittest.TestCase):
+    def test_workflow_has_only_explicit_test_phases_and_conditional_browser_work(
+        self,
+    ) -> None:
+        workflow = yaml.safe_load(
+            (
+                Path(__file__).resolve().parents[1] / ".github/workflows/ci.yml"
+            ).read_text()
+        )
+        steps = workflow["jobs"]["test"]["steps"]
+        commands = [step.get("run", "") for step in steps]
+        for forbidden in ("unittest discover", "npm run test", "npm run e2e"):
+            self.assertFalse(any(forbidden in command for command in commands))
+        for phase in ("python", "frontend", "browser"):
+            self.assertTrue(
+                any(
+                    f"run_verification_scope.py --phase {phase}" in command
+                    for command in commands
+                )
+            )
+        self.assertTrue(any("tools/build_wheel.py" in command for command in commands))
+        browser_steps = [
+            step
+            for step in steps
+            if step.get("name")
+            in {
+                "Install selected browser runtime",
+                "Prepare controlled browser data and real CLI failure",
+                "Real browser workflow against installed wheel",
+            }
+        ]
+        self.assertEqual(len(browser_steps), 3)
+        self.assertTrue(
+            all(
+                step["if"] == "steps.scope.outputs.browser_count != '0'"
+                for step in browser_steps
+            )
+        )
+
     def test_runner_paths_are_initialized_after_job_scheduling(self) -> None:
         workflow = yaml.safe_load(
             (

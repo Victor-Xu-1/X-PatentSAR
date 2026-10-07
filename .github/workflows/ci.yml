@@ -2,6 +2,7 @@ name: ci
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 permissions:
@@ -15,6 +16,8 @@ jobs:
   test:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    env:
+      PATENTSAR_CI_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
     steps:
       - name: Initialize external verification paths
         run: |
@@ -22,10 +25,15 @@ jobs:
           printf 'PATENTSAR_WEB_TEST_ROOT=%s\nPATENTSAR_E2E_OUTPUT_DIR=%s\n' \
             "$RUNNER_TEMP/x-patentsar-api-tests" "$RUNNER_TEMP/x-patentsar-browser-tests" >> "$GITHUB_ENV"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
           cache: pip
+      - name: Validate explicit verification scope
+        id: scope
+        run: python tools/run_verification_scope.py >> "$GITHUB_OUTPUT"
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "24.21.0"
@@ -34,23 +42,20 @@ jobs:
       - run: python -m pip install uv==0.11.31
       - run: uv sync --frozen --extra web
       - run: uv run python tools/build_environment_resources.py --check
-      - run: uv run python -m compileall -q src tests tools
-      - run: uv run python -m unittest discover -s tests -v
+      - name: Scoped Python verification
+        run: uv run python tools/run_verification_scope.py --phase python
       - run: uv pip check --python .venv/bin/python
       - run: bash -n run_patent_sar.sh
-      - name: Web Python checks
+      - name: Verification policy type checks
         run: |
-          uv run ruff check --isolated --target-version=py312 --select E4,E7,E9,F,I src/patent_sar_extractor/web src/patent_sar_extractor/application/web_commands.py src/patent_sar_extractor/cli.py tools tests/test_cli_web.py tests/test_frontend_packaging.py
-          MYPYPATH=src uv run mypy --strict --follow-imports=silent tools/build_frontend.py tools/audit_wheel.py src/patent_sar_extractor/application/web_commands.py
-      - name: Frontend checks and build
+          uv run mypy --strict --follow-imports=silent tools/verification_scope.py tools/run_verification_scope.py
+      - name: Frontend install and build
         working-directory: frontend
         run: |
           npm ci
-          npm run typecheck
-          npm run lint
-          npm run format:check
-          npm run test
           npm run build
+      - name: Scoped frontend verification
+        run: uv run python tools/run_verification_scope.py --phase frontend
       - run: uv run python tools/build_frontend.py
       - run: uv run python tools/build_frontend.py --check
       - run: uv run python tools/build_wheel.py --work-root "$RUNNER_TEMP/x-patentsar-builds" --out-dir dist
@@ -60,20 +65,25 @@ jobs:
           uv pip install --python .venv/bin/python --reinstall --no-deps dist/*.whl
           (cd /tmp && "$GITHUB_WORKSPACE/.venv/bin/x-patentsar" --version)
           (cd /tmp && "$GITHUB_WORKSPACE/.venv/bin/x-patentsar" serve --help)
+      - name: Install selected browser runtime
+        if: steps.scope.outputs.browser_count != '0'
+        working-directory: frontend
+        run: npx --no-install playwright install --with-deps chromium
       - name: Prepare controlled browser data and real CLI failure
+        if: steps.scope.outputs.browser_count != '0'
         env:
           PATENTSAR_PADDLEX_OCR_URL: "off"
           PATENTSAR_BASE_PYTHON: ${{ github.workspace }}/.venv/bin/python
           CUDA_VISIBLE_DEVICES: "-1"
         run: .venv/bin/python tools/prepare_browser_fixture.py "$RUNNER_TEMP/browser-fixture" --github-env
       - name: Real browser workflow against installed wheel
+        if: steps.scope.outputs.browser_count != '0'
         env:
           PATENTSAR_E2E_BASE_URL: http://127.0.0.1:18765
           PATENTSAR_PADDLEX_OCR_URL: "off"
           CUDA_VISIBLE_DEVICES: "-1"
         run: |
-          (cd frontend && npx playwright install --with-deps chromium)
           .venv/bin/x-patentsar serve --port 18765 --state-dir "$PATENTSAR_WEB_STATE_DIR" > "$RUNNER_TEMP/x-patentsar-web.log" 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid"; wait "$server_pid" || true' EXIT
-          (cd frontend && npm run e2e)
+          .venv/bin/python tools/run_verification_scope.py --phase browser

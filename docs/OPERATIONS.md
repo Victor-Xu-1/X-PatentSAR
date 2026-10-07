@@ -39,6 +39,25 @@ misassigned outputs still stop the task. A continuation can reuse exact raw
 predictions without promoting the failed stage, old QA or acceptance. OCSR CSV
 and JSON outputs are colocated in the owned job's `smiles` directory.
 
+The review workbook's main sheet keeps all proved source identifiers and their
+images/activities. A rejected recognition leaves molecular fields blank and is
+marked pending; it does not remove the row or its patent activity. Freeze/filter
+controls remain native Excel features. SDF contains only qualified molecular
+records; the receipt separates those IDs from full workbook and review IDs.
+Neither output scope certifies formal QA or independent chemical accuracy.
+
+## Scoped verification policy
+
+Local and GitHub verification must name changed/directly related consumers; do
+not run repository-wide discovery unless the human explicitly authorizes it.
+Each PR's `.github/verification_scope.json` declares its exact base and complete
+changed-path set. The validator/runner refuses stale, unsafe, wildcard,
+overlapping and whole-inventory selections rather than silently widening scope.
+Use explicit Python names and frontend/browser spec paths; empty selections
+invoke no test engine. CI still builds and audits the actual distribution.
+The former automatic full-unittest runs are retained as historical records;
+their existence is not evidence that this policy was previously enforced.
+
 Recognition uses a separate owned model process. Low model headroom fails before
 TensorFlow load. Do not raise limits to hide
 an environment fault. GPU execution must match the cache's actual execution policy.

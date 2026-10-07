@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "base_sha": "221a97476e12f2d8bb87acd1abdec90accd24f9c",
+  "changed_paths": [
+    ".github/verification_scope.json",
+    ".github/workflows/ci.yml",
+    "README.md",
+    "docs/OPERATIONS.md",
+    "docs/PROJECT_MANIFEST.md",
+    "frontend/e2e/direct-edit.spec.ts",
+    "frontend/e2e/structure-editor-actions.ts",
+    "src/patent_sar_extractor/workers/final_workbook.py",
+    "src/patent_sar_extractor/workers/gen_final_results.py",
+    "tests/test_frontend_packaging.py",
+    "tests/test_source_led_export.py",
+    "tests/test_verification_scope.py",
+    "tools/run_verification_scope.py",
+    "tools/verification_scope.py"
+  ],
+  "python_modules": [
+    "tests.test_source_led_export",
+    "tests.test_source_led_stages",
+    "tests.test_core_research_policy",
+    "tests.test_source_led_pipeline",
+    "tests.test_frontend_packaging",
+    "tests.test_verification_scope"
+  ],
+  "frontend_tests": [],
+  "browser_tests": []
+}
