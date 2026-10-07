@@ -15,6 +15,7 @@ import { decodeAdmet, decodeEvidenceSummary, decodeRecognition } from './analysi
 import { ContractError } from './validation';
 import { environmentApi } from './environmentApi';
 import { correctionApi } from './correctionApi';
+import { historyApi } from './historyApi';
 import { validActivityFocus } from './activitySourceDecoders';
 import { decodeFilterValues } from './filterValueDecoders';
 
@@ -44,6 +45,7 @@ function resultQuery(filters: Filters, pagination = true): URLSearchParams {
 export const api = {
   ...environmentApi(client),
   ...correctionApi(client),
+  ...historyApi(client),
   session: () => client.bootstrap(),
   health: (signal: AbortSignal) => client.get('/health', decodeHealth, signal),
   projects: (signal: AbortSignal) => client.get('/projects', decodeProjects, signal),
