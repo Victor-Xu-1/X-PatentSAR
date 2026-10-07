@@ -13,6 +13,7 @@ from patent_sar_extractor.application.stage_cache import (
 )
 from patent_sar_extractor.artifact_io import load_json as _load_json
 from patent_sar_extractor.contracts import (
+    PAGE_CLASSIFIER_VERSION,
     PAGE_OCR_CACHE_SCHEMA,
     PAGE_OCR_CACHE_SCHEMA_VERSION,
     schema_ref,
@@ -53,6 +54,7 @@ def execute_classify(state: PipelineContext) -> None:
         step,
         pdf_path=state.args.pdf,
         params={
+            "page_classifier_version": PAGE_CLASSIFIER_VERSION,
             "patent_id": state.patent_id,
             "page_ocr_cache_schema": schema_ref(
                 PAGE_OCR_CACHE_SCHEMA, PAGE_OCR_CACHE_SCHEMA_VERSION

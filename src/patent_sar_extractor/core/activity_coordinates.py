@@ -5,7 +5,12 @@ from __future__ import annotations
 import re
 from dataclasses import replace
 
-from .activity_grid_cells import cell_text, crosses_cell, validate_grid
+from .activity_grid_cells import (
+    cell_text,
+    continued_header_schema,
+    crosses_cell,
+    validate_grid,
+)
 from .activity_header_metrics import distinct_value_keys, normalize_metric_text
 from .activity_headers import (
     ACTIVITY_CONTEXT,
@@ -16,6 +21,10 @@ from .activity_headers import (
 )
 from .activity_identity import is_value, normalize_compound, normalize_value
 from .activity_models import ActivityRow, GridSchema, ParsedActivity
+from .activity_values import (
+    is_explicit_missing_activity_value,
+    normalize_activity_value_token,
+)
 from .biology_tables import BiologySchema, extract_tables, infer_schema
 from .table_cells import read_cell
 from .table_geometry import detect_ruled_table_regions, page_tokens
@@ -117,7 +126,54 @@ def _read_cell(page, tokens: list[dict], bounds, *, identifier: bool, native: bo
     conflict = bool(
         value and refined and re.sub(r"\s+", "", value) != re.sub(r"\s+", "", refined)
     )
-    review = crossing or conflict or reading.needs_review or not reading.value
+    if (
+        not identifier
+        and is_explicit_missing_activity_value(value)
+        and (
+            normalize_activity_value_token(value)
+            == normalize_activity_value_token(refined)
+        )
+    ):
+        conflict = False
+    # A malformed low-resolution observation is not a competing measurement.
+    # Accept only two independent high-resolution reads of the complete cell;
+    # valid disagreements and qualifiers/footnotes stay explicitly unresolved.
+    consensus = {
+        observation.get("method")
+        for observation in observations
+        if observation.get("text") == refined
+        and type(observation.get("confidence")) in (float, int)
+        and 0.85 <= observation["confidence"] <= 1
+    }
+    recovered = bool(
+        not identifier
+        and not is_value(value)
+        and is_value(refined)
+        and not reading.needs_review
+        and {"cell_ocr_400dpi", "cell_ocr_600dpi"}.issubset(consensus)
+        and not re.search(r"[<>≤≥%±*]|(?:pM|nM|[uµμ]M|mM|mg/kg)\b", value)
+    )
+    if recovered:
+        value, conflict = refined, False
+    cell_proved = (
+        not conflict
+        and not reading.needs_review
+        and any(
+            observation.get("method") in {"cell_ocr_400dpi", "cell_ocr_600dpi"}
+            and observation.get("text") == reading.value
+            and type(observation.get("confidence")) in (float, int)
+            and 0.85 <= observation["confidence"] <= 1
+            for observation in observations
+        )
+    )
+    # A detector's padded box is not the value's ownership proof. Agreement
+    # with the independently clipped original cell supplies that proof.
+    review = (
+        (crossing and not cell_proved)
+        or conflict
+        or reading.needs_review
+        or not reading.value
+    )
     return value or refined, observations, review
 
 
@@ -191,6 +247,14 @@ def parse_grid(
                 "pair": pair,
                 "cells": cells,
                 "geometry_space": "unrotated" if native else "rendered",
+                "header_region": (
+                    {
+                        "page_no": schema.header_region[0],
+                        "bbox": list(schema.header_region[1]),
+                    }
+                    if schema.header_region
+                    else None
+                ),
             }
             output.append(
                 ActivityRow(
@@ -244,6 +308,15 @@ def extract_coordinate_tables(doc, pages: list[int]) -> ParsedActivity:
             # The existing biology authority owns its supported ratio/grade
             # schemas. It never competes with the generic scalar-header reader.
             if isinstance(schema, GridSchema):
+                if (
+                    carry
+                    and isinstance(carry[0], GridSchema)
+                    and carry[2] + 1 == page_index
+                    and region["ys"][0] < 130
+                ):
+                    schema = continued_header_schema(
+                        carry[0], schema, carry[1], region["xs"], prefix
+                    )
                 header = " ".join(schema.raw_headers)
             normalized_header = normalize_metric_text(header)
             metrics = list(METRIC.finditer(normalized_header))
@@ -291,6 +364,19 @@ def extract_coordinate_tables(doc, pages: list[int]) -> ParsedActivity:
                 table_id = schema.table_id
                 biology_header_hints.setdefault(table_id, schema.keys)
             else:
+                if schema.header_region is None and schema.first_data_row > 0:
+                    schema = replace(
+                        schema,
+                        header_region=(
+                            page_index + 1,
+                            (
+                                region["xs"][0],
+                                region["ys"][0],
+                                region["xs"][-1],
+                                region["ys"][schema.first_data_row],
+                            ),
+                        ),
+                    )
                 generic_regions.append((page_index, region, schema))
                 table_id = schema.context.table_id
                 result.headers.extend(

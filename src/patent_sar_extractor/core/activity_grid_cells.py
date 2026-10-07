@@ -2,9 +2,46 @@
 
 from __future__ import annotations
 
+import re
+from dataclasses import replace
 from itertools import pairwise
 
+from .activity_header_metrics import normalize_metric_text
 from .activity_models import GridSchema
+
+
+def continued_header_schema(
+    old: GridSchema,
+    current: GridSchema,
+    old_xs: list[float],
+    xs: list[float],
+    prefix: str,
+) -> GridSchema:
+    """Repeated header spacing cannot create a new metric on a proved continuation."""
+    if len(xs) != len(old_xs) or any(abs(a - b) > 4 for a, b in zip(xs, old_xs)):
+        return current
+
+    def canonical(text: str) -> str:
+        return re.sub(r"\s+", "", normalize_metric_text(text))
+
+    if not old.raw_headers or tuple(map(canonical, old.raw_headers)) != tuple(
+        map(canonical, current.raw_headers)
+    ):
+        return current
+    # A new caption/prose/assay is a new context, even with identical columns.
+    document_id = r"(?:WO|PCT|US|EP|CN|JP|KR)\s*/?(?:[A-Z]{1,4})?\d[\w/-]*"
+    running = re.compile(
+        rf"{document_id}(?:\s+{document_id})*|[-–—]?\s*\d+\s*[-–—]?", re.IGNORECASE
+    )
+    if any(
+        not running.fullmatch(line.strip())
+        for line in prefix.splitlines()
+        if line.strip()
+    ):
+        return current
+    return replace(
+        current, context=old.context, groups=old.groups, header_region=old.header_region
+    )
 
 
 def cell_tokens(

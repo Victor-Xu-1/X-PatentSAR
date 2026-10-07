@@ -251,8 +251,8 @@ The complete-workflow environment preset includes both DECIMER and ADMET CPU
 components; reading existing results still does not require installing models.
 
 Locator/segmentation epochs5 retain activity-independent source coverage. Binder
-epoch7 discovers numbered original cells across all selected source pages even
-when no table pages were pre-labelled. Activity epoch4 follows only geometrically
+epoch8 discovers numbered original cells across all selected source pages even
+when no table pages were pre-labelled. Activity epoch5 follows only geometrically
 proved adjacent continuations from classified seeds, preserving each cell's
 actual source page. Missing/changed grids terminate continuation; no fixed patent
 page lists or inferred identifier sequence are used. An eligible continuation
@@ -359,6 +359,28 @@ Running extraction jobs keep their startup configuration snapshot. Location chan
 apply only to future installations and are not migrations or cleanup requests.
 
 ## Common failures
+
+### Format repair and optional LLM evidence review
+
+Product remainsv0.1.0. Classifier2, binder8 and activity5 invalidate their old
+derived checkpoints; exact-original compatible OCR/segmentation observations
+remain reusable under existing manifest checks. Start a fresh software attempt,
+not an edit of old generated files. Wide structure grids use actual header roles
+and independent cell reads, including nonadjacent/reordered ID/structure columns.
+Unknown activity columns retain separate physical identities and original values.
+
+The optional `evidence_resolution` section in operator `llm.local.yaml` defaults
+to `mode: off` and `data_consent: false`. Equivalent environment variables are in
+`.env.example`. To opt in, explicitly configure an HTTPS compatible provider,
+model/key and disclosure consent; existing advisory credentials alone do not enable
+it. `on-error` reviews evidence faults only, `quality` also samples bounded column
+hypotheses. No infrastructure/memory failure triggers a model escalation.
+Default cap: eight total HTTP attempts, serial,30s/request, zero retries,
+12,000input characters and1,024output tokens. Evidence-only candidate results
+are written to the current attempt's separate `evidence_resolution_review.json`;
+formal source files/values and QA remain unchanged. No real provider call was
+authorized for the default-OFF installation; perform consented provider and
+scientific evaluation separately before relying on candidate suggestions.
 
 - `stereo_source_conflict` / `stereo_source_ambiguous`: a source unknown-bond risk and the model's determinate stereo cannot be safely reconciled. Inspect the original crop; do not strip chiral tokens, flip R/S by suffix, merge separated IDs, or run normalization repeatedly. Generated observations and old failed runs remain unchanged. Correct supported chemistry through the audited drawing overlay; it does not turn a failed core run into accepted formal chemistry.
 - `stereo_source_unavailable`: unreadable/excessive source geometry failed the bounded screen before model loading. Correct input quality or source ownership, not memory limits or acceptance flags.

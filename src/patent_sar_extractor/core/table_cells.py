@@ -9,10 +9,11 @@ import cv2
 import fitz
 import numpy as np
 
+from .activity_identity import is_value
+from .activity_values import is_explicit_missing_activity_value
 from .page_ocr_cache import get_ocr_engine
 
-_ID = re.compile(r"[1-9]\d{0,3}[A-Z]?", re.I)
-_NUMBER = re.compile(r"[<>]=?\d+(?:\.\d+)?|\d+(?:\.\d+)?")
+_ID = re.compile(r"[1-9]\d{0,3}[A-Z]?", re.IGNORECASE)
 
 
 @dataclass
@@ -27,12 +28,25 @@ def prefixed_label(value: str) -> str:
     match = re.fullmatch(
         r"(?:Example|Compound|Cmpd|Cpd|实施例|化合物)[-:.]?([1-9]\d{0,3}[A-Z]?)",
         re.sub(r"\s+", "", value),
-        re.I,
+        re.IGNORECASE,
     )
     return match.group(1).upper() if match else ""
 
 
 def _normalize(value: str, kind: str) -> str:
+    if kind == "number":
+        text = str(value).strip().replace("＋", "+").replace("％", "%")
+        # One shared lexical authority retains printed signs, units, missing
+        # markers and uncertainty. Never join two separate numbers into one.
+        return (
+            text
+            if is_value(text)
+            and (
+                is_explicit_missing_activity_value(text)
+                or re.match(r"^[<>≤≥+\-]?\s*\d", text)
+            )
+            else ""
+        )
     cleaned = re.sub(r"\s+", "", value).replace("＋", "+")
     if kind == "id":
         cleaned = cleaned.removesuffix(".")
@@ -40,8 +54,7 @@ def _normalize(value: str, kind: str) -> str:
         return prefixed_label(cleaned)
     pattern = {
         "id": _ID,
-        "number": _NUMBER,
-        "letter": re.compile(r"[A-D]", re.I),
+        "letter": re.compile(r"[A-D]", re.IGNORECASE),
         "plus": re.compile(r"\+{1,3}"),
     }[kind]
     return cleaned.upper() if pattern.fullmatch(cleaned) else ""

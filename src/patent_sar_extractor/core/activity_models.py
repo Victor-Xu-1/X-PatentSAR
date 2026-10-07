@@ -69,3 +69,4 @@ class GridSchema:
     # Optional original physical headers survive adjacent-page continuation.
     # Existing positional constructors and activity schema-v1 dictionaries stay valid.
     raw_headers: tuple[str, ...] = ()
+    header_region: tuple[int, tuple[float, float, float, float]] | None = None

@@ -17,6 +17,7 @@ from patent_sar_extractor.contracts import (
 )
 from patent_sar_extractor.core.activity_join import activity_evidence_errors
 
+from .evidence_review import review_source_evidence
 from .pipeline_context import PipelineContext
 from .pipeline_io import (
     _elapsed_since,
@@ -92,4 +93,7 @@ def execute_activity(state: PipelineContext) -> None:
         "active_cpds": len(state.active_cpds),
     }
     print(f"     ✅ rows={act_rows}, active_cpds={len(state.active_cpds)}")
+    evidence_review = review_source_evidence(state, activity_errors)
+    if evidence_review is not None:
+        state.pipeline_log["steps"][step]["evidence_resolution"] = evidence_review
     retain_scientific_errors(state, step, activity_errors)

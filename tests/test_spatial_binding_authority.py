@@ -47,7 +47,7 @@ class SpatialBindingAuthorityTests(unittest.TestCase):
             )
             with (
                 patch(
-                    "patent_sar_extractor.core.binding_source_headings._precompute_visible_label_cache",
+                    "patent_sar_extractor.core.structure_binder.observed_heading_blocks",
                     side_effect=AssertionError("redundant crop OCR"),
                 ),
                 patch(
