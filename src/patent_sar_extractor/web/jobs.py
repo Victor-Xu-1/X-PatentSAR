@@ -691,8 +691,9 @@ class JobQueue:
             )
             phase_spec = replace(spec, admet_only=True)
             outcome = self.phases.run(phase_spec, deadline)
+            research_stage = None
             if outcome.status == "complete" and outcome.cleaned:
-                self._confirm_predictions(job_id, spec)
+                research_stage = self._confirm_predictions(job_id, spec)
             self._finish(
                 job_id,
                 "failed"
@@ -700,7 +701,14 @@ class JobQueue:
                 else outcome.status,
                 Error(
                     code="core_not_accepted",
-                    message="Qualified research values are available, but formal extraction QA requires review.",
+                    message=(
+                        "Qualified research values are available, but formal extraction QA requires review."
+                        if research_stage is not None and research_stage.status == "ok"
+                        else "No qualified research values were produced; formal extraction QA requires review."
+                        if research_stage is not None
+                        and research_stage.status == "empty"
+                        else "Formal extraction QA requires review; research value availability is unconfirmed."
+                    ),
                 )
                 if core_rejected and outcome.status == "complete"
                 else outcome.error,
@@ -745,7 +753,7 @@ class JobQueue:
         correction_prediction(self.store, connection, project_id, compound_id, compound)
         self.wake.set()
 
-    def _confirm_predictions(self, job_id: str, spec: RunSpec) -> None:
+    def _confirm_predictions(self, job_id: str, spec: RunSpec) -> Stage:
         from .completion_inputs import completion_inputs
         from .correction_storage import correction_source_fingerprint
         from .prediction_identity import compound_prediction_eligible
@@ -830,3 +838,4 @@ class JobQueue:
                 "admet_incomplete",
                 "Source-bound predictions are missing or stale; task completion was withheld.",
             )
+        return stage

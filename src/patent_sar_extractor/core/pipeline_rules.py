@@ -16,11 +16,13 @@ from patent_sar_extractor.core.numbered_structure_binding import (
 )
 
 from .activity_identity import printed_identifier_key
+from .heading_evidence import valid_heading_binding_evidence
 
 STRICT_VISIBLE_SOURCES = {"page_strict", "direct", "pdf_clip"}
 VISUAL_LABEL_SOURCES = STRICT_VISIBLE_SOURCES | {"page_wide"}
 
 STRONG_BINDING_RULES = {
+    "original_heading_standalone",
     "numbered_structure_table_cell",
     "direct_structure_label",
     "direct_structure_label_merged_fragment",
@@ -349,6 +351,19 @@ def annotate_binding_accuracy(binding: dict[str, Any]) -> dict[str, Any]:
     exact_numbered_cell = (
         rule == "numbered_structure_table_cell" and valid_cell_binding_evidence(item)
     )
+    exact_original_heading = (
+        rule == "original_heading_standalone" and valid_heading_binding_evidence(item)
+    )
+    if rule == "original_heading_standalone" and not exact_original_heading:
+        item.update(
+            accuracy_status="review_required",
+            evidence_tier="weak",
+            fail_closed=True,
+            evidence_reasons=[
+                "invalid or incomplete original heading/standalone structure proof"
+            ],
+        )
+        return item
     if rule == "numbered_structure_table_cell" and not exact_numbered_cell:
         item["accuracy_status"] = "review_required"
         item["evidence_tier"] = "weak"
@@ -368,6 +383,10 @@ def annotate_binding_accuracy(binding: dict[str, Any]) -> dict[str, Any]:
     if exact_numbered_cell:
         reasons.append(
             "independently observed ID and unique segment in adjacent original-PDF cell"
+        )
+    elif exact_original_heading:
+        reasons.append(
+            "exact original heading and unique standalone diagram before procedure"
         )
     elif rule in {
         "structure_table_row_order",
@@ -444,6 +463,7 @@ def annotate_binding_accuracy(binding: dict[str, Any]) -> dict[str, Any]:
 
     if rule in STRONG_BINDING_RULES and (
         exact_numbered_cell
+        or exact_original_heading
         or exact_strict_visual
         or exact_nearby_product_visual
         or rule.startswith("structure_table_row_order")

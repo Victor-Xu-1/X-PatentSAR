@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import json
-import os
 import tempfile
 import unittest
-from contextlib import ExitStack
 from pathlib import Path
 from unittest.mock import patch
 
@@ -19,7 +17,7 @@ from patent_sar_extractor.contracts import (
     artifact_identity,
 )
 from patent_sar_extractor.core import binding_observations as observations
-from patent_sar_extractor.core import binding_ocr, page_ocr_cache
+from patent_sar_extractor.core import page_ocr_cache
 from patent_sar_extractor.core.binding_source_headings import (
     _document_sha256,
     observed_heading_blocks,
@@ -76,16 +74,16 @@ class HeadingSourceOwnershipTests(unittest.TestCase):
         cache_path = self.root / "visible_labels.json"
         cache_path.write_text(json.dumps(cache), encoding="utf-8")
 
-        def empty_ocr(images, **_kwargs):
-            # Controlled observations only; no OCR backend is invoked.
-            return [[] for _ in images]
-
         with (
             self._document() as document,
             patch.object(
-                observations, "_paddlex_ocr_texts_batch", side_effect=empty_ocr
+                page_ocr_cache,
+                "get_ocr_engine",
+                side_effect=AssertionError(
+                    "Native headings and retained cache are lazy"
+                ),
             ) as ocr,
-            patch.object(observations, "paddlex_available", return_value=False),
+            patch("patent_sar_extractor.core.heading_evidence.get_ocr_engine", ocr),
         ):
             if extra_source_text:
                 document[0].insert_text((72, 300), extra_source_text)
@@ -162,229 +160,90 @@ class HeadingSourceOwnershipTests(unittest.TestCase):
 
     def test_unsigned_sources_do_not_start_crop_ocr_or_write_cache(self):
         structure = self._structure()
+        cache = {"S1": self._cache_entry(structure, ["42A"])}
         structure.pop("source_pdf_sha256")
-        with ExitStack() as stack:
-            crop_work = self._forbid_crop_work(stack)
-            availability = stack.enter_context(
-                patch.object(
-                    observations,
-                    "paddlex_available",
-                    side_effect=AssertionError("unsigned source"),
-                )
-            )
-            result = observations._precompute_visible_label_cache(
-                [structure], str(self.root / "bound"), {}, {}, workers=1
+        path = self.root / "visible_labels.json"
+        original = json.dumps(cache).encode("utf-8")
+        path.write_bytes(original)
+        with patch.object(
+            page_ocr_cache,
+            "get_ocr_engine",
+            side_effect=AssertionError("Unsigned sources cannot initialize OCR"),
+        ) as engine:
+            result = observations._refine_visible_label_cache_with_page_ocr(
+                [structure],
+                cache,
+                {0: [(210.0, "Compound 42A")]},
+                str(self.root / "bound"),
+                {"visible_labels_path": str(path)},
             )
         self.assertEqual(result, {})
+        self.assertEqual(path.read_bytes(), original)
         self.assertFalse((self.root / "bound").exists())
-        availability.assert_not_called()
-        for work in crop_work:
-            work.assert_not_called()
+        engine.assert_not_called()
 
     def test_cache_replace_failure_preserves_existing_bytes(self):
         structure = self._structure()
+        cache = {"S1": self._cache_entry(structure, ["42"])}
         path = self.root / "visible_labels.json"
-        original = b'{"retained": "original cache bytes"}'
+        original = json.dumps(cache).encode("utf-8")
         path.write_bytes(original)
         with (
-            patch.object(observations, "paddlex_available", return_value=True),
             patch.object(
-                observations,
-                "_paddlex_ocr_url",
-                return_value="http://127.0.0.1:8090/ocr",
-            ),
-            patch.object(
-                observations,
-                "_visible_label_crop_tasks_from_page_image",
-                return_value=[("page_strict", object())],
-            ),
-            patch.object(
-                observations,
-                "_visible_label_crop_tasks_from_structure_image",
-                side_effect=AssertionError("strict result already observed"),
-            ),
-            patch.object(
-                observations, "_paddlex_ocr_texts_batch", return_value=[["42A"]]
-            ),
+                page_ocr_cache,
+                "get_ocr_engine",
+                side_effect=AssertionError("Refinement reuses observations"),
+            ) as engine,
             patch(
                 "patent_sar_extractor.artifact_io.os.replace",
                 side_effect=OSError("controlled replace failure"),
             ),
         ):
-            result = observations._precompute_visible_label_cache(
+            result = observations._refine_visible_label_cache_with_page_ocr(
                 [structure],
+                cache,
+                {0: [(210.0, "Compound 42A")]},
                 str(self.root / "bound"),
                 {"visible_labels_path": str(path)},
-                {},
-                workers=1,
             )
         self.assertEqual(path.read_bytes(), original)
         self.assertEqual(result["S1"]["visible_labels"], ["42A"])
+        self.assertEqual(cache["S1"]["visible_labels"], ["42"])
         self.assertFalse(list(self.root.glob(f".{path.name}.*.tmp")))
+        engine.assert_not_called()
 
-    def _precompute_inputs(self):
+    def test_changed_crop_bytes_cannot_reuse_cache_or_change_source_bytes(self):
+        structure = self._structure()
+        cache = {"S1": self._cache_entry(structure, ["42A"])}
+        # Change bytes without creating a new independently provable diagram.
+        changed = Image.new("RGB", (150, 110), "white")
+        changed.putpixel((0, 0), (0, 0, 0))
+        changed.save(structure["image_path"])
+        self.assertFalse(
+            observations._visible_cache_item_matches_structure(cache["S1"], structure)
+        )
+        bindings, issues, engine, path = self._select([structure], cache)
+        self.assertEqual(bindings, [])
+        self.assertTrue(issues)
+        self.assertEqual(json.loads(path.read_text()), cache)
+        engine.assert_not_called()
+
+    def test_filtering_retained_cache_is_read_only_and_requires_exact_identity(self):
         structures = [self._structure(), self._structure("S2"), self._structure("S3")]
-        valid = self._cache_entry(structures[0], ["42A"])
-        stale = self._cache_entry(structures[1], ["42B"])
-        stale["structure_signature"]["page_no"] = 99
-        return structures, {"S1": valid, "S2": stale}
-
-    @staticmethod
-    def _forbid_crop_work(stack):
-        return [
-            stack.enter_context(
-                patch.object(
-                    observations,
-                    name,
-                    side_effect=AssertionError("Disabled OCR must not render or batch"),
-                )
-            )
-            for name in (
-                "_visible_label_crop_tasks_from_page_image",
-                "_visible_label_crop_tasks_from_structure_image",
-                "_paddlex_ocr_texts_batch",
-            )
-        ]
-
-    def test_explicitly_off_paddlex_returns_validated_cache_before_crop_work(self):
-        structures, cache = self._precompute_inputs()
-        path = self.root / "existing_labels.json"
+        cache = {s["id"]: self._cache_entry(s, ["42A"]) for s in structures[:2]}
+        cache["S2"]["structure_signature"]["page_no"] = 99
+        path = self.root / "source_labels.json"
         original = json.dumps(cache).encode("utf-8")
         path.write_bytes(original)
-        for disabled in ("off", " OFF ", "none", "0"):
-            for availability in (None, True, False):
-                with self.subTest(url=disabled, availability=availability):
-                    with ExitStack() as stack:
-                        stack.enter_context(
-                            patch.dict(
-                                os.environ, {"PATENTSAR_PADDLEX_OCR_URL": disabled}
-                            )
-                        )
-                        stack.enter_context(
-                            patch.object(
-                                binding_ocr, "_PADDLEX_OCR_AVAILABLE", availability
-                            )
-                        )
-                        probe = stack.enter_context(
-                            patch.object(
-                                page_ocr_cache,
-                                "_paddlex_endpoint_accepts_payload",
-                                side_effect=AssertionError(
-                                    "Explicit off must not probe"
-                                ),
-                            )
-                        )
-                        crop_work = self._forbid_crop_work(stack)
-                        result = observations._precompute_visible_label_cache(
-                            structures,
-                            str(self.root / "bindings"),
-                            {"visible_labels_path": str(path)},
-                            cache,
-                            workers=1,
-                        )
-                    self.assertEqual(result, {"S1": cache["S1"]})
-                    self.assertEqual(path.read_bytes(), original)
-                    self.assertFalse((self.root / "bindings").exists())
-                    probe.assert_not_called()
-                    for work in crop_work:
-                        work.assert_not_called()
-
-    def test_known_unavailable_paddlex_skips_url_resolution_and_crop_work(self):
-        structures, cache = self._precompute_inputs()
-        with ExitStack() as stack:
-            stack.enter_context(
-                patch.object(binding_ocr, "_PADDLEX_OCR_AVAILABLE", False)
-            )
-            resolve = stack.enter_context(
-                patch.object(
-                    binding_ocr,
-                    "_shared_paddlex_ocr_url",
-                    side_effect=AssertionError("Known unavailable must not resolve"),
-                )
-            )
-            crop_work = self._forbid_crop_work(stack)
-            result = observations._precompute_visible_label_cache(
-                structures, str(self.root / "bindings"), {}, cache, workers=1
-            )
-        self.assertEqual(result, {"S1": cache["S1"]})
-        self.assertFalse((self.root / "visible_labels").exists())
-        resolve.assert_not_called()
-        for work in crop_work:
-            work.assert_not_called()
-
-    def test_empty_paddlex_setting_keeps_existing_endpoint_discovery(self):
-        structure = self._structure()
-        path = self.root / "new_labels.json"
-        with (
-            patch.dict(os.environ, {"PATENTSAR_PADDLEX_OCR_URL": ""}),
-            patch.object(page_ocr_cache, "_PADDLEX_OCR_PROBED", False),
-            patch.object(page_ocr_cache, "_PADDLEX_OCR_URL_RESOLVED", None),
-            patch.object(
-                page_ocr_cache, "_paddlex_endpoint_accepts_payload", return_value=True
-            ) as probe,
-            patch.object(observations, "paddlex_available", side_effect=[None, True]),
-            patch.object(
-                observations,
-                "_visible_label_crop_tasks_from_page_image",
-                return_value=[("page_strict", object())],
-            ) as page_crops,
-            patch.object(
-                observations,
-                "_visible_label_crop_tasks_from_structure_image",
-                side_effect=AssertionError(
-                    "Strict evidence needs no wide/direct crops"
-                ),
-            ) as structure_crops,
-            patch.object(
-                observations, "_paddlex_ocr_texts_batch", return_value=[["42A"]]
-            ) as batch,
-        ):
-            result = observations._precompute_visible_label_cache(
-                [structure],
-                str(self.root / "bindings"),
-                {"visible_labels_path": str(path)},
-                {},
-                workers=1,
-            )
-        probe.assert_called_once_with("http://127.0.0.1:8090/ocr")
-        page_crops.assert_called_once_with(structure, include_wide=False)
-        structure_crops.assert_not_called()
-        batch.assert_called_once()
-        self.assertEqual(batch.call_args.kwargs, {"workers": 1, "timeout": 12.0})
-        self.assertEqual(result["S1"]["visible_labels"], ["42A"])
-        self.assertEqual(json.loads(path.read_text(encoding="utf-8")), result)
-
-    def test_unavailable_endpoint_discovery_does_not_render_or_write(self):
-        structures, cache = self._precompute_inputs()
-        with ExitStack() as stack:
-            stack.enter_context(
-                patch.dict(os.environ, {"PATENTSAR_PADDLEX_OCR_URL": ""})
-            )
-            stack.enter_context(
-                patch.object(binding_ocr, "_PADDLEX_OCR_AVAILABLE", None)
-            )
-            stack.enter_context(
-                patch.object(page_ocr_cache, "_PADDLEX_OCR_PROBED", False)
-            )
-            stack.enter_context(
-                patch.object(page_ocr_cache, "_PADDLEX_OCR_URL_RESOLVED", None)
-            )
-            probe = stack.enter_context(
-                patch.object(
-                    page_ocr_cache,
-                    "_paddlex_endpoint_accepts_payload",
-                    return_value=False,
-                )
-            )
-            crop_work = self._forbid_crop_work(stack)
-            result = observations._precompute_visible_label_cache(
-                structures, str(self.root / "bindings"), {}, cache, workers=1
-            )
-        self.assertEqual(probe.call_count, 2)
-        self.assertEqual(result, {"S1": cache["S1"]})
-        self.assertFalse((self.root / "visible_labels").exists())
-        for work in crop_work:
-            work.assert_not_called()
+        loaded = observations._load_visible_label_cache(
+            str(self.root / "bound"), {"visible_labels_path": str(path)}
+        )
+        filtered = observations._filter_visible_label_cache_for_structures(
+            loaded, structures
+        )
+        self.assertEqual(filtered, {"S1": cache["S1"]})
+        self.assertEqual(loaded, cache)
+        self.assertEqual(path.read_bytes(), original)
 
     def test_unique_exact_suffix_owner_is_confirmed_without_activity_filter(self):
         structure = self._structure()

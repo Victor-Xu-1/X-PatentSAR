@@ -55,6 +55,7 @@ from patent_sar_extractor.contracts import (
     PAGE_CLASSIFICATION_SCHEMA_VERSION,
     REVIEW_EXCERPT_METADATA_SCHEMA,
     REVIEW_EXCERPT_METADATA_SCHEMA_VERSION,
+    STEREO_EVIDENCE_VERSION,
     STRUCTURES_SCHEMA,
     STRUCTURES_SCHEMA_VERSION,
     VISIBLE_LABEL_CACHE_SCHEMA,
@@ -68,7 +69,6 @@ from patent_sar_extractor.core import (
 )
 from patent_sar_extractor.core import (
     binding_observations,
-    binding_ocr,
     binding_spatial,
 )
 from patent_sar_extractor.core import env_runner as env_runner_module
@@ -305,7 +305,7 @@ class StrictAcceptanceTests(unittest.TestCase):
             "stereochemistry": check_source_stereochemistry(
                 checked,
                 {
-                    "version": 1,
+                    "version": STEREO_EVIDENCE_VERSION,
                     "image_sha256": "a" * 64,
                     "image_size": [100, 100],
                     "unknown_bond_boxes": [],
@@ -1008,14 +1008,9 @@ class StrictAcceptanceTests(unittest.TestCase):
                 }
             }
 
-            with patch.object(binding_ocr, "_PADDLEX_OCR_AVAILABLE", False):
-                cache = binding_observations._precompute_visible_label_cache(
-                    [struct],
-                    str(base / "structure_bindings"),
-                    {},
-                    stale_cache,
-                    workers=1,
-                )
+            cache = binding_observations._filter_visible_label_cache_for_structures(
+                stale_cache, [struct]
+            )
 
             self.assertNotIn("S0001", cache)
             self.assertEqual(

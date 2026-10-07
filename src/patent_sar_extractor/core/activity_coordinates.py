@@ -5,6 +5,13 @@ from __future__ import annotations
 import re
 from dataclasses import replace
 
+from .activity_grid_cells import (
+    cell_text,
+    continued_header_schema,
+    read_activity_cell,
+    validate_grid,
+)
+from .activity_header_metrics import distinct_value_keys, normalize_metric_text
 from .activity_headers import (
     ACTIVITY_CONTEXT,
     METRIC,
@@ -12,10 +19,8 @@ from .activity_headers import (
     context_from_text,
     grid_schema,
 )
-from .activity_identity import is_value, normalize_compound, normalize_value
 from .activity_models import ActivityRow, GridSchema, ParsedActivity
 from .biology_tables import BiologySchema, extract_tables, infer_schema
-from .table_cells import read_cell
 from .table_geometry import detect_ruled_table_regions, page_tokens
 
 
@@ -27,7 +32,9 @@ def coordinate_candidates(
     previous = None
     for page in sorted(set(pages)):
         text = str((text_map or {}).get(str(page), "") or "")
-        has_context = bool(ACTIVITY_CONTEXT.search(text) or METRIC.search(text))
+        has_context = bool(
+            ACTIVITY_CONTEXT.search(text) or METRIC.search(normalize_metric_text(text))
+        )
         has_rows = bool(
             re.search(
                 r"(?:Compound|Cpd|Example|化合物|实施例)\s*[-:]?\s*\d+|[A-Za-z]-\d+\s+[A-G]",
@@ -45,14 +52,6 @@ def coordinate_candidates(
             selected.append(page)
             previous = page
     return selected
-
-
-def cell_text(tokens: list[dict], bounds: tuple[float, float, float, float]) -> str:
-    x0, y0, x1, y1 = bounds
-    owned = [t for t in tokens if x0 + 0.5 < t["x"] < x1 - 0.5 and y0 < t["y"] < y1]
-    return " ".join(
-        t["text"] for t in sorted(owned, key=lambda t: (round(t["y"] / 3), t["x"]))
-    )
 
 
 def table_matrix(tokens: list[dict], region: dict) -> list[list[str]]:
@@ -76,71 +75,52 @@ def _prefix(tokens: list[dict], region: dict) -> str:
         " ".join(t["text"] for t in sorted(row, key=lambda t: t["x"]))
         for _, row in sorted(lines.items())
     )
-    markers = list(TABLE_MARKER.finditer(text))
-    if markers:
-        # A new caption never borrows a previous table's assay.
-        text = text[markers[-1].start() :]
     return text
-
-
-def _read_cell(page, tokens: list[dict], bounds, *, identifier: bool, native: bool):
-    raw = cell_text(tokens, bounds)
-    if identifier:
-        value = normalize_compound(raw)
-        kind = (
-            "label"
-            if re.match(r"Compound|Example|Cpd|Cmpd|实施例|化合物", raw, re.IGNORECASE)
-            else "id"
-        )
-    else:
-        value = normalize_value(raw)
-        kind = (
-            "plus"
-            if re.fullmatch(r"\+{1,3}", value)
-            else (
-                "letter" if re.fullmatch(r"[A-D]", value, re.IGNORECASE) else "number"
-            )
-        )
-    if native:
-        # Shared lexical kinds do not support all printed suffixes, missing
-        # markers or ranges. Original native tokens remain exact evidence.
-        observations = [{"method": "native_cell", "text": raw}]
-        return value, observations, not bool(value if identifier else is_value(value))
-    reading = read_cell(page, bounds, tokens, kind, False)
-    if identifier:
-        value = normalize_compound(reading.value) or value
-    else:
-        value = reading.value or value
-    # Unsupported scanned labels/ranges are retained but never auto-accepted.
-    review = reading.needs_review or not reading.value
-    return value, reading.observations, review
 
 
 def parse_grid(
     page, page_no: int, tokens: list[dict], region: dict, schema: GridSchema
 ) -> list[ActivityRow]:
+    validate_grid(region, schema)
     xs, ys = region["xs"], region["ys"]
     native = bool(page.get_text("words"))
     output = []
+    column_groups = [
+        (
+            (group.id_column, "compound_id"),
+            *zip(
+                (col for col, _ in group.value_columns),
+                distinct_value_keys([key for _, key in group.value_columns]),
+            ),
+        )
+        for group in schema.groups
+    ]
     for row_index in range(schema.first_data_row, len(ys) - 1):
-        for pair, group in enumerate(schema.groups):
-            columns = ((group.id_column, "compound_id"), *group.value_columns)
+        for pair, columns in enumerate(column_groups):
             cells, values, review = [], {}, False
             compound = ""
             for column, key in columns:
                 bounds = (xs[column], ys[row_index], xs[column + 1], ys[row_index + 1])
-                value, observations, withheld = _read_cell(
+                value, observations, withheld = read_activity_cell(
                     page, tokens, bounds, identifier=key == "compound_id", native=native
                 )
                 cells.append(
                     {
                         "field": key,
                         "value": value,
+                        "physical_column": column,
+                        "raw_header": schema.raw_headers[column]
+                        if schema.raw_headers
+                        else "",
                         "bbox": list(bounds),
                         "observations": observations,
                     }
                 )
-                review |= withheld or "unknown" in key.lower()
+                review |= (
+                    withheld
+                    or "unknown" in key.lower()
+                    or key.startswith("compound_id [")
+                )
                 if key == "compound_id":
                     compound = value
                 else:
@@ -161,10 +141,21 @@ def parse_grid(
                 "target": context.target,
                 "assay": context.assay,
                 "cell_line": context.cell_line,
+                "raw_caption": context.raw_caption,
+                "body_text": context.body_text,
+                "raw_context": context.raw_context,
                 "row": row_index,
                 "pair": pair,
                 "cells": cells,
                 "geometry_space": "unrotated" if native else "rendered",
+                "header_region": (
+                    {
+                        "page_no": schema.header_region[0],
+                        "bbox": list(schema.header_region[1]),
+                    }
+                    if schema.header_region
+                    else None
+                ),
             }
             output.append(
                 ActivityRow(
@@ -213,14 +204,41 @@ def extract_coordinate_tables(doc, pages: list[int]) -> ParsedActivity:
             matrix = table_matrix(tokens, region)
             prefix = _prefix(tokens, region)
             header = " ".join(matrix[0]) if matrix else ""
-            context = context_from_text(
-                prefix.splitlines()[-1] if prefix else "", prefix
-            )
+            context = context_from_text(prefix, prefix)
             schema: GridSchema | BiologySchema | None = grid_schema(context, matrix)
             # The existing biology authority owns its supported ratio/grade
             # schemas. It never competes with the generic scalar-header reader.
-            if not METRIC.search(header) or re.search(
-                r"\bRatio\b.*\bGrade\b|degradation", header, re.IGNORECASE
+            if isinstance(schema, GridSchema):
+                if (
+                    carry
+                    and isinstance(carry[0], GridSchema)
+                    and carry[2] + 1 == page_index
+                    and region["ys"][0] < 130
+                ):
+                    schema = continued_header_schema(
+                        carry[0], schema, carry[1], region["xs"], prefix
+                    )
+                header = " ".join(schema.raw_headers)
+            normalized_header = normalize_metric_text(header)
+            metrics = list(METRIC.finditer(normalized_header))
+            categorical = metrics and all(
+                re.fullmatch(
+                    r"(?:Ratio|Grade)(?:\s+(?:grade|class))?",
+                    m.group().strip(),
+                    re.IGNORECASE,
+                )
+                for m in metrics
+            )
+            biology_header = re.search(
+                r"\b(?:degradation|anti[-\s]?proliferation)\b",
+                normalized_header,
+                re.IGNORECASE,
+            )
+            explicit_unknown = re.search(
+                r"\bunknown\b|\?", normalized_header, re.IGNORECASE
+            )
+            if schema is None or (
+                not explicit_unknown and (categorical or not metrics and biology_header)
             ):
                 schema = (
                     infer_schema(f"{prefix} {header}", len(region["xs"]) - 1) or schema
@@ -247,6 +265,19 @@ def extract_coordinate_tables(doc, pages: list[int]) -> ParsedActivity:
                 table_id = schema.table_id
                 biology_header_hints.setdefault(table_id, schema.keys)
             else:
+                if schema.header_region is None and schema.first_data_row > 0:
+                    schema = replace(
+                        schema,
+                        header_region=(
+                            page_index + 1,
+                            (
+                                region["xs"][0],
+                                region["ys"][0],
+                                region["xs"][-1],
+                                region["ys"][schema.first_data_row],
+                            ),
+                        ),
+                    )
                 generic_regions.append((page_index, region, schema))
                 table_id = schema.context.table_id
                 result.headers.extend(

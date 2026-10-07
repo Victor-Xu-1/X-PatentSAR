@@ -25,6 +25,30 @@ from tests.test_source_led_pipeline import state_for
 
 
 class SourceLedStageTests(unittest.TestCase):
+    def test_empty_proved_catalog_does_not_report_success_or_start_recognition(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            run_fixture(root)
+            state = state_for(root, "smiles")
+            state.step_dirs["smiles"] = str(root / "smiles")
+            state.bind_json = str(root / "structure_bindings/bindings.json")
+            payload = json.loads(Path(state.bind_json).read_text())
+            payload["final_bindings"] = []
+            payload["compound_catalog"].update(
+                entries=[], numbered_compounds=0, source_observations=0
+            )
+            state.bind_payload = payload
+            state.n_bound = 0
+            with patch(
+                "patent_sar_extractor.application.stage_smiles.run_in_env"
+            ) as worker:
+                execute_smiles(state)
+            worker.assert_not_called()
+            stage = state.pipeline_log["steps"]["smiles"]
+            self.assertEqual(stage["total"], 0)
+            self.assertEqual(stage["status"], "failed")
+            self.assertTrue(stage["acceptance_errors"])
+
     def test_workload_budget_is_finite_and_capped_by_parent_remaining_lifetime(self):
         with patch(
             "patent_sar_extractor.application.recognition_budget.time.monotonic",

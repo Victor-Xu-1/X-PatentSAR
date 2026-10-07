@@ -168,10 +168,10 @@ def _load_visible_label_cache(
 ) -> dict[str, dict]:
     """Load precomputed structure-label OCR cache when available.
 
-    The cache is intentionally optional: if a run has not generated it yet,
-    binder falls back to per-structure visual OCR. When present, however, these
-    labels are the highest-priority binding evidence because they come from the
-    drawing/label region itself rather than prose text.
+    This is optional raw-observation transport. Missing entries never start a
+    private crop OCR provider. Current native/shared original-cell and heading
+    observations establish ownership; cached labels still require exact original,
+    crop and geometry identity before refinement or use.
     """
     candidates: list[Path] = []
     explicit = (profile or {}).get("visible_labels_path") or (profile or {}).get(

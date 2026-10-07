@@ -49,6 +49,9 @@ class TableContext:
     target: str | None = None
     assay: str | None = None
     cell_line: str | None = None
+    raw_caption: str = ""
+    body_text: str = ""
+    raw_context: str = ""
 
 
 @dataclass(frozen=True)
@@ -63,3 +66,7 @@ class GridSchema:
     context: TableContext
     groups: tuple[ColumnGroup, ...]
     first_data_row: int
+    # Optional original physical headers survive adjacent-page continuation.
+    # Existing positional constructors and activity schema-v1 dictionaries stay valid.
+    raw_headers: tuple[str, ...] = ()
+    header_region: tuple[int, tuple[float, float, float, float]] | None = None

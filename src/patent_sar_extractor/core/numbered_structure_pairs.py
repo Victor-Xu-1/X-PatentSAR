@@ -16,6 +16,7 @@ from .numbered_structure_models import (
     NumberedTableResult,
 )
 from .structure_catalogs import repeated_selected_catalogs
+from .structure_table_headers import valid_column_ownership
 
 _ID_RE = re.compile(r"[1-9]\d{0,3}[A-Z]?\.?", re.IGNORECASE)
 
@@ -134,7 +135,13 @@ def valid_cell_binding_evidence(binding: Mapping[str, Any]) -> bool:
             and evidence.get("observed_label_count") == 1
             and bool(binding.get("structure_id"))
             and evidence.get("structure_id") == binding.get("structure_id")
-            and _adjacent_cells(label_box, cell_box)
+            and (
+                _adjacent_cells(label_box, cell_box)
+                if "column_ownership" not in evidence
+                else valid_column_ownership(
+                    evidence["column_ownership"], label_box, cell_box
+                )
+            )
             and segment
             and cell_box
             and source_box == segment
@@ -190,7 +197,11 @@ def _pair_cells(
             reason = "unresolved_label"
         elif observed[label] != 1 and label not in repeatable_labels:
             reason = "duplicate_label"
-        elif not _adjacent_cells(label_box, cell_box):
+        elif not (
+            _adjacent_cells(label_box, cell_box)
+            if cell.column_ownership is None
+            else valid_column_ownership(cell.column_ownership, label_box, cell_box)
+        ):
             reason = "invalid_cell_geometry"
         if reason:
             issues.append(NumberedTableIssue(cell.page_index, label, reason))

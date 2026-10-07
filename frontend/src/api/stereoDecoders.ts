@@ -19,7 +19,7 @@ const shape = object({
 export const decodeStereoEvidence: Decoder<StereoEvidence> = (input, path = '$') => {
   const value = shape(input, path);
   if (
-    value.version !== 1 ||
+    ![1, 2].includes(value.version) ||
     !/^[a-f0-9]{64}$/.test(value.image_sha256) ||
     value.image_size.length !== 2 ||
     value.image_size.some((n) => n < 8) ||

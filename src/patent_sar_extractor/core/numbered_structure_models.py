@@ -23,6 +23,7 @@ class NumberedTableCell:
     observations: tuple[Mapping[str, Any], ...]
     label_confirmed: bool
     catalog: Catalog = field(default_factory=Catalog)
+    column_ownership: Mapping[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -48,6 +49,11 @@ class NumberedTableBinding:
             "contained_segment_count": 1,
             "observed_label_count": 1,
             "observations": [dict(o) for o in self.cell.observations],
+            **(
+                {"column_ownership": dict(self.cell.column_ownership)}
+                if self.cell.column_ownership
+                else {}
+            ),
         }
 
 

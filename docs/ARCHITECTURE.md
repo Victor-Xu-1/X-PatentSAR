@@ -2,7 +2,7 @@
 
 Product **v0.1.0**. `contracts.py` is the only authority for product, pipeline,
 ruleset, artifact and cache versions. The source-led pipeline contract is
-`patentsar.structure-led`3.0.0; the accuracy ruleset is2.1.0. These internal
+`patentsar.structure-led`3.0.0; the accuracy ruleset is2.1.1. These internal
 epochs are not product releases and do not retag old results as current.
 
 ## One workflow
@@ -37,20 +37,41 @@ chemistry nor synthesizes success, progress, properties or missing provenance.
 
 ## Completeness and accuracy
 
+Classifier epoch2 ignores prose examples and cover ISR boilerplate as section
+boundaries. Binder epoch8 parses exact paragraph-prefixed synthesis headings;
+a standalone diagram needs a freshly observed original heading, unique geometry
+before the first procedure, and original/crop fingerprints. Wide/reordered grids
+carry literal header-role proof, not adjacency or a fixed number of columns.
+Activity epoch5 owns every physical column losslessly, retaining multiline raw
+headers and distinct duplicate/unknown fields. Upright table OCR prevents per-token
+digit inversion; independent clipped-cell observations can prove ownership despite
+a padded detector box. Unknown/conflicting meaningful values remain rejected.
+
+An optional single post-bind/activity evidence review reuses the existing LLM
+client/cache with default-OFF and explicit disclosure consent. One serial job
+budget covers bounded column hypotheses. Structured output chooses supplied
+references; all required references are rechecked by the consumer. Proposals,
+abstention, skips and transport failures stay separate from formal acceptance.
+The receipt is additive private evidence, not an alternate artifact writer or
+chemistry/QA authority. No whole-PDF upload, new model service, numerical repair
+or retry/escalation loop is introduced. Heading-owner/table-header protocols are
+available for explicitly validated future consumers, not automatic production
+binding approval.
+
 - Printed identifiers and original spatial evidence define the compound
   universe. Activity membership never determines whether a proved structure
   receives recognition, descriptors, visualization or correction support.
 - Original grid cells, captions and explicit synthesis headings are ownership
   evidence. Sequence, numerical proximity, molecular similarity or assay
   presence cannot fabricate an identifier or change42 to4-2.
-- Binder epoch7 discovers numbered grids across all selected structure-source
+- Binder epoch8 discovers numbered grids across all selected structure-source
   pages. Empty or partial classifier/locator table hints cannot exclude a
   proved original cell; only actually recognized grids are reported as table
   ownership. Headerless adjacent continuations retain independent ID evidence.
   An unused pair requires blank original pixels in both cells and no segment
   evidence. Proved selected reprints can retain multiple additional sources
   for one confirmed primary ID; novel or conflicting primary IDs stay withheld.
-- Activity epoch4 treats classified pages as seeds, not a complete table
+- Activity epoch5 treats classified pages as seeds, not a complete table
   inventory. Only a proven table can inspect its immediately adjacent next
   page; missing grids, changed geometry or unrelated captions stop carry-over.
   An empty seed set never triggers an all-document OCR scan.
@@ -93,7 +114,7 @@ Interrupted/incomplete/foreign/old core evidence cannot enter that path.
 | Shared PDF/OCR geometry | Page observation cache, original-cell grid/read modules, one bounded OCR engine |
 | Activity parsing | Small identity/header/coordinate/text/observation/artifact modules; `activity_extractor.py` is a facade |
 | Source ownership | Spatial cells/captions, source headings, catalog reader and one binding writer |
-| Visible labels | `visible_label_cache.py` owns original PDF/crop identity; `visible_label_crops.py` owns bounded crop geometry; `binding_observations.py` coordinates the existing OCR provider and refinement |
+| Visible labels | `visible_label_cache.py` owns optional raw PDF/crop identity transport; `binding_observations.py` owns validated refinement; fresh native/shared cell/heading observations prove ownership |
 | Recognition | One verified printed-DECIMER adapter and bounded JSONL carrier, raw observation cache and source QC |
 | Observation completion | `ocsr/observation_completion.py` separates complete source observations from scientific acceptance; standalone default stays strict and the coordinator retains every finding for final QA |
 | Final output | Identifier-led structure and activity join; workbook/SDF modules share formal selection |
@@ -112,8 +133,8 @@ parsers are not retained as alternative production paths.
 Visible-label observations use epoch8 and require the actual original PDF SHA-256,
 crop SHA-256 and exact page/box identity. Missing/foreign/incomplete cache entries
 cannot supply identifiers. Publication is atomic; an unavailable existing OCR
-provider is detected before rendering unused crops. The removed completion module
-and 23 unreferenced private helpers are not alternate binding paths.
+provider is selected by the shared page authority, not a private batch fallback. The removed completion module
+and unreferenced private helpers/crop producer are not alternate binding paths.
 
 ## Five calculations and one prediction
 

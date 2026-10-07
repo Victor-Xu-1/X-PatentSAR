@@ -44,9 +44,10 @@ def detect_ruled_table_regions(page, dpi: int = 300) -> list[dict]:
         import cv2  # type: ignore
         import numpy as np
         from PIL import Image
-    except Exception as e:
-        logger.warning(f"Ruled table detection unavailable: {e}")
-        return []
+    except (ImportError, OSError) as exc:
+        raise RuntimeError(
+            "Original ruled-table detection dependency is unavailable"
+        ) from exc
 
     pix = page.get_pixmap(matrix=fitz.Matrix(dpi / 72, dpi / 72))
     img = np.array(Image.open(BytesIO(pix.tobytes("png"))).convert("L"))
@@ -193,7 +194,10 @@ def ocr_tokens_with_positions(
     scale = 72.0 / dpi
     tokens = []
     if engine and engine[0] == "rapidocr":
-        result, _ = engine[1](np.array(image))
+        # The ruled grid fixes the rendered page orientation. Per-token angle
+        # classification can invert isolated digits (90 -> 06, 0.98 -> 860).
+        # Original-cell OCR uses the same upright policy; no numerical repair.
+        result, _ = engine[1](np.array(image), use_cls=False)
         for points, text, confidence in result or []:
             if not str(text).strip():
                 continue

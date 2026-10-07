@@ -26,7 +26,7 @@ CORE_STAGE_ORDER: Final = (
 )
 
 RULESET_NAME: Final = "patentsar.accuracy-first"
-RULESET_VERSION: Final = "2.1.0"
+RULESET_VERSION: Final = "2.1.1"
 
 RUN_SUMMARY_SCHEMA: Final = "patentsar.run-summary"
 RUN_SUMMARY_SCHEMA_VERSION: Final = 1
@@ -36,19 +36,20 @@ STEP_MANIFEST_SCHEMA: Final = "patentsar.step-manifest"
 STEP_MANIFEST_SCHEMA_VERSION: Final = 1
 PAGE_CLASSIFICATION_SCHEMA: Final = "patentsar.page-classification"
 PAGE_CLASSIFICATION_SCHEMA_VERSION: Final = 2
+PAGE_CLASSIFIER_VERSION: Final = "2"
 REVIEW_EXCERPT_METADATA_SCHEMA: Final = "patentsar.review-excerpt-metadata"
 REVIEW_EXCERPT_METADATA_SCHEMA_VERSION: Final = 1
 ACTIVITY_SCHEMA: Final = "patentsar.activity"
 ACTIVITY_SCHEMA_VERSION: Final = 1
-ACTIVITY_EXTRACTOR_VERSION: Final = "4"
+ACTIVITY_EXTRACTOR_VERSION: Final = "5"
 STRUCTURE_LOCATOR_VERSION: Final = "5"
 STRUCTURE_WORKER_VERSION: Final = "5"
 SEGMENTATION_WINDOW_SCHEMA: Final = "patentsar.segmentation-window"
 SEGMENTATION_WINDOW_SCHEMA_VERSION: Final = 2
 SEGMENTATION_INPUT_FINGERPRINT_FILE: Final = "input_fingerprint.json"
-STRUCTURE_BINDER_VERSION: Final = "7"
+STRUCTURE_BINDER_VERSION: Final = "8"
 OCSR_OBSERVATION_VERSION: Final = "2"
-STEREO_EVIDENCE_VERSION: Final = 1
+STEREO_EVIDENCE_VERSION: Final = 2
 DECIMER_ADAPTER_VERSION: Final = "1"
 STRUCTURE_LOCATION_SCHEMA: Final = "patentsar.structure-location"
 STRUCTURE_LOCATION_SCHEMA_VERSION: Final = 1
@@ -79,6 +80,7 @@ PAGE_OCR_COMPATIBLE_RULESETS: Final = (
     (RULESET_NAME, "2.0.2"),
     (RULESET_NAME, "2.0.3"),
     (RULESET_NAME, "2.0.4"),
+    (RULESET_NAME, "2.1.0"),
     (RULESET_NAME, RULESET_VERSION),
 )
 # Supported producers of the unchanged raw observation format, not permission

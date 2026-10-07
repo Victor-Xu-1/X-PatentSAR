@@ -76,7 +76,7 @@ class SourcePageCoverageTests(unittest.TestCase):
                         side_effect=AssertionError("native lines already supplied"),
                     ),
                     patch(
-                        "patent_sar_extractor.core.binding_source_headings._precompute_visible_label_cache",
+                        "patent_sar_extractor.core.structure_binder.observed_heading_blocks",
                         side_effect=AssertionError(
                             "numbered cells already own sources"
                         ),

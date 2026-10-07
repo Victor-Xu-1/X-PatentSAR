@@ -31,10 +31,7 @@ from .structure_catalogs import (
     catalog_at,
     catalog_marks,
 )
-
-_HEADER_RE = re.compile(
-    r"(?:Cmpd|Cpd|Compound|Example)\.?\s*(?:No\.?|ID|#)", re.IGNORECASE
-)
+from .structure_table_headers import structure_column_pairs
 
 __all__ = [
     "NumberedTableBinding",
@@ -67,15 +64,10 @@ def _grid_axes(grid: Mapping[str, Any]) -> tuple[list[float], list[float]] | Non
         xs, ys = [float(v) for v in grid["xs"]], [float(v) for v in grid["ys"]]
     except (KeyError, TypeError, ValueError, OverflowError):
         return None
-    if len(xs) not in (3, 5) or len(ys) < 3:
+    if not 3 <= len(xs) <= 65 or len(ys) < 3:
         return None
     if any(not math.isfinite(v) or v < 0 for v in [*xs, *ys]) or any(
         b <= a for axis in (xs, ys) for a, b in pairwise(axis)
-    ):
-        return None
-    if any(
-        xs[i + 1] - xs[i] > (xs[i + 2] - xs[i + 1]) * 0.65
-        for i in range(0, len(xs) - 1, 2)
     ):
         return None
     return xs, ys
@@ -137,7 +129,7 @@ def bind_numbered_tables(
         cell_reader = read_cell
     cells = []
     recognized: set[int] = set()
-    carry: tuple[int, list[float]] | None = None
+    carry: tuple[int, list[float], list[str], tuple[tuple[int, int], ...]] | None = None
     prior_catalog = Catalog()
     for page_index in sorted(set(page_indices)):
         if not 0 <= page_index < len(doc):
@@ -156,19 +148,12 @@ def bind_numbered_tables(
         for grid_index, (xs, ys) in enumerate(
             sorted(grids, key=lambda axes: axes[1][0])
         ):
-            pairs = (len(xs) - 1) // 2
-            headers = []
-            for pair in range(pairs):
-                start = pair * 2
-                left = _cell_text(tokens, (xs[start], ys[0], xs[start + 1], ys[1]))
-                right = _cell_text(tokens, (xs[start + 1], ys[0], xs[start + 2], ys[1]))
-                headers.append(
-                    bool(
-                        _HEADER_RE.search(left)
-                        and re.search(r"\bStructure\b", right, re.IGNORECASE)
-                    )
-                )
-            has_header = all(headers)
+            headers = [
+                _cell_text(tokens, (xs[column], ys[0], xs[column + 1], ys[1]))
+                for column in range(len(xs) - 1)
+            ]
+            pairs = structure_column_pairs(headers)
+            has_header = bool(pairs)
             continuation = bool(
                 carry
                 and carry[0] + 1 == page_index
@@ -178,28 +163,37 @@ def bind_numbered_tables(
             )
             if not has_header and not continuation:
                 continue
+            if not has_header and carry:
+                headers, pairs = carry[2], carry[3]
             first_row = 1 if has_header else 0
             catalog = catalog_at(marks, ys[0], prior_catalog)
             # The existing I-series module owns labels with a series prefix.
             if any(
                 re.fullmatch(
                     r"(?:I|l)\s*[-–—]\s*[1-9]\d*",
-                    _cell_text(tokens, (xs[0], ys[r], xs[1], ys[r + 1])).strip(),
+                    _cell_text(
+                        tokens, (xs[column], ys[r], xs[column + 1], ys[r + 1])
+                    ).strip(),
                     re.IGNORECASE,
                 )
                 for r in range(first_row, len(ys) - 1)
+                for column, _ in pairs
             ):
                 continue
             recognized.add(page_index)
-            carry = page_index, xs
+            carry = page_index, xs, headers, pairs
             for row in range(first_row, len(ys) - 1):
-                for pair in range(pairs):
-                    start = pair * 2
-                    label_bounds = (xs[start], ys[row], xs[start + 1], ys[row + 1])
-                    structure_bounds = (
-                        xs[start + 1],
+                for pair, (identifier, structure) in enumerate(pairs):
+                    label_bounds = (
+                        xs[identifier],
                         ys[row],
-                        xs[start + 2],
+                        xs[identifier + 1],
+                        ys[row + 1],
+                    )
+                    structure_bounds = (
+                        xs[structure],
+                        ys[row],
+                        xs[structure + 1],
                         ys[row + 1],
                     )
                     if not _cell_text(tokens, label_bounds).strip() and _unused_pair(
@@ -219,6 +213,12 @@ def bind_numbered_tables(
                             tuple(dict(o) for o in reading.observations),
                             not reading.needs_review,
                             catalog,
+                            {
+                                "grid_xs": xs,
+                                "headers": headers,
+                                "identifier_column": identifier,
+                                "structure_column": structure,
+                            },
                         )
                     )
         if marks:
