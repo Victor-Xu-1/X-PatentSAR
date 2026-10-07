@@ -54,3 +54,13 @@ class ConversionProgress:
                     self.payload["peak_rss_mb"] or 0, peak
                 )
         self.publish()
+
+    def replace(self, before: dict, after: dict) -> None:
+        """A checked rescue updates an existing observation, never total/completed."""
+        self.payload["failures"] += int(after.get("OCSR_status") != "success") - int(
+            before.get("OCSR_status") != "success"
+        )
+        peak = after.get("peak_rss_mb")
+        if type(peak) in {int, float} and math.isfinite(peak) and peak >= 0:
+            self.payload["peak_rss_mb"] = max(self.payload["peak_rss_mb"] or 0, peak)
+        self.publish()

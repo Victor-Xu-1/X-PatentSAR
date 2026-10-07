@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import unittest
 
+from patent_sar_extractor.contracts import STEREO_EVIDENCE_VERSION
 from patent_sar_extractor.core.ocsr.smiles_qc import qc_smiles
 from patent_sar_extractor.core.ocsr.stereo_evidence import check_source_stereochemistry
 from patent_sar_extractor.web.errors import WebError
@@ -26,7 +27,7 @@ class RecognitionMetadataTests(unittest.TestCase):
         evidence = check_source_stereochemistry(
             qc_smiles("CCO"),
             {
-                "version": 1,
+                "version": STEREO_EVIDENCE_VERSION,
                 "image_sha256": "b" * 64,
                 "image_size": [100, 100],
                 "unknown_bond_boxes": [],

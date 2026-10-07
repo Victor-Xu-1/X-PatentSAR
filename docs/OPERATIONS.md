@@ -299,7 +299,11 @@ without hiding captions; there is no Header More menu. Use **一键部署全部�
 PDF/structure/activity/six-property workflow, not manual component assembly. One
 complete CPU/download/license confirmation creates one durable operation. It
 rechecks/reuses qualified components, provisions deficient ones in owned prefixes
-and activates only after all six are verified. ADMET runtime/models are included.
+and activates only after all eight are verified. ADMET and constrained local
+stereo-rescue runtimes/models are included. The latter stays CPU-only and is
+loaded only after primary cleanup for at most eight eligible lost-stereo items.
+Use the same operator `env_paths.local.yaml` roles `molscribe` and
+`molscribe_models`; never copy models into the application or guess parity.
 Existing ready components are not blindly reinstalled; probe timeouts/resource
 errors fail visibly rather than becoming a reason to duplicate environments.
 All-ready status offers full inspection instead of repeated deployment. The

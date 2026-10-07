@@ -17,5 +17,6 @@ def recognition_timeout(records: int, started_monotonic: float) -> int:
     )
     if remaining <= 0:
         raise TimeoutError("The parent pipeline's 24-hour lifetime has expired")
-    workload = max(1800, 600 + records * PER_RECORD_SECONDS)
+    # The local rescue queue is serial and capped, never a per-record ensemble.
+    workload = max(1800, 600 + records * PER_RECORD_SECONDS + min(records, 8) * 60)
     return min(workload, remaining, MAX_PIPELINE_SECONDS)

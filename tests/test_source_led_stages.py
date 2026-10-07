@@ -55,7 +55,7 @@ class SourceLedStageTests(unittest.TestCase):
             return_value=1000,
         ):
             self.assertEqual(recognition_timeout(1, 1000), 1800)
-            self.assertEqual(recognition_timeout(100, 1000), 30600)
+            self.assertEqual(recognition_timeout(100, 1000), 31080)
             self.assertEqual(recognition_timeout(1000000, 1000), MAX_PIPELINE_SECONDS)
             self.assertEqual(
                 recognition_timeout(100, 1000 - MAX_PIPELINE_SECONDS + 60), 60

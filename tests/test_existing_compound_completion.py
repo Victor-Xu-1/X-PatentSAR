@@ -5,6 +5,7 @@ import threading
 import unittest
 from contextlib import nullcontext
 from pathlib import Path
+from typing import ClassVar
 from unittest.mock import patch
 
 from test_compound_catalog_view import CompoundCatalogViewTests
@@ -28,7 +29,7 @@ class CompletionAnalysis(ControlledAnalysis):
 
 
 class ControlledConverter:
-    calls = []
+    calls: ClassVar[list] = []
     closed = False
     raw = "CCO"
     foreign = False
@@ -48,6 +49,10 @@ class ControlledConverter:
 
     def close(self):
         type(self).closed = True
+
+    def finalize_batch(self, records, **kwargs):
+        self.close()
+        return records
 
 
 class ExistingCompoundCompletionTests(PredictionFixture, unittest.TestCase):
@@ -264,12 +269,12 @@ class ExistingCompoundCompletionTests(PredictionFixture, unittest.TestCase):
         row = self.prepare()
         ControlledConverter.raw = "CC*"
         analysis = self.complete(row)
-        self.assertEqual(analysis.inputs, [])
+        # A rejected source cannot veto an independent already-qualified source.
+        self.assertEqual(analysis.inputs, [["CCO"]])
         result = self.service.results(self.project.id)
-        self.assertTrue(all(x.recognition.status == "invalid" for x in result.items))
-        self.assertTrue(
-            all(x.smiles is None and not x.admet.properties for x in result.items)
-        )
+        rejected = next(x for x in result.items if x.id == "Compound 8")
+        self.assertEqual(rejected.recognition.status, "invalid")
+        self.assertTrue(rejected.smiles is None and not rejected.admet.properties)
 
     def test_engine_failure_is_failed_stage_not_success_with_blank_data(self):
         row = self.prepare()
@@ -308,7 +313,8 @@ class ExistingCompoundCompletionTests(PredictionFixture, unittest.TestCase):
         )
         self.assertTrue(
             all(
-                x.recognition.quality_flag == "completion_source_changed"
+                x.recognition.quality_flag
+                in {"completion_source_changed", "source_image_changed"}
                 for x in result.items
             )
         )

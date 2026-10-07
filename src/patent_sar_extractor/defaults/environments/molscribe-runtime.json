@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "python": "3.10.20",
+  "sdk": {
+    "url": "https://codeload.github.com/thomas0809/MolScribe/zip/7296a30413eb55436702011efdff78131f66d162",
+    "commit": "7296a30413eb55436702011efdff78131f66d162",
+    "size": 5732518,
+    "sha256": "88fca9e652933943cf107648e266905fd23c87be9371a1309f90e254a47cd60e"
+  },
+  "model": {
+    "url": "https://huggingface.co/yujieq/MolScribe/resolve/a0189776b7415b82795c7ee81eed311bf5c8724b/swin_base_char_aux_1m680k.pth",
+    "revision": "a0189776b7415b82795c7ee81eed311bf5c8724b",
+    "file": "swin_base_char_aux_1m680k.pth",
+    "size": 1134173494,
+    "sha256": "32821fa4ba8d17f9a92e374601438c5e757947dbf1141e9ad0ef51cccfa1c501"
+  },
+  "distributions": {
+    "MolScribe": "1.1.1",
+    "torch": "2.13.0+cpu",
+    "torchvision": "0.28.0+cpu",
+    "timm": "0.4.12",
+    "numpy": "1.26.4",
+    "rdkit": "2026.3.6",
+    "opencv-python": "4.11.0.86",
+    "albumentations": "1.1.0",
+    "OpenNMT-py": "2.2.0",
+    "SmilesPE": "0.0.3"
+  }
+}

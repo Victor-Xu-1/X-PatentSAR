@@ -408,6 +408,7 @@ class SmilesConverter:
             "structure_id": structure_id,
             "structure_image": image_path,
             "ocsr_structure_image": ocsr_image_path,
+            "ocsr_original_input": ocsr_image_path,
             "source_image_path": str(item.get("source_image_path") or image_path),
             "bbox": f"{struct_x0},{struct_y0}" if struct_x0 is not None else "",
             "raw_smiles": None,
@@ -480,7 +481,9 @@ class SmilesConverter:
             "stereo_evidence": evidence,
         }
 
-    def _prediction(self, engine_name: str, engine, image: str) -> tuple[dict, dict]:
+    def _prediction(
+        self, engine_name: str, engine, image: str, *, timeout=None
+    ) -> tuple[dict, dict]:
         """Cache only exact unmodified observations under the current epoch."""
         image_hash = compute_image_sha256(image)
         notes: dict = {"input_image_sha256": image_hash}
@@ -507,8 +510,16 @@ class SmilesConverter:
             if (
                 cached.get("status") == "success"
                 and cached.get("model_fingerprint") == identity
-                and _is_clean_rdkit_result(checked)
+                and (
+                    _is_clean_rdkit_result(checked)
+                    or engine_name == "decimer"
+                    and checked.get("rdkit_valid") is True
+                    and checked.get("quality_flag") == "stereochemistry_not_retained"
+                )
             ):
+                # Reuse only the exact raw lost-stereo observation, never its
+                # acceptance. Current source/QC and independent rescue proof
+                # decide each attempt; other non-clean entries still re-infer.
                 notes["from_cache"] = True
                 return cached, notes
             notes[
@@ -527,7 +538,9 @@ class SmilesConverter:
                 ] = True
         # Infrastructure/admission exceptions stop the batch and preserve its
         # clean checkpoints; never turn them into hundreds of false graph failures.
-        prediction = engine.predict(image, timeout=self.timeout)
+        prediction = engine.predict(
+            image, timeout=self.timeout if timeout is None else timeout
+        )
         if not isinstance(prediction, dict):
             prediction = {
                 "status": "failed",
@@ -718,6 +731,36 @@ class SmilesConverter:
             if callable(closer):
                 closer()
 
+    def finalize_batch(
+        self,
+        results: list[dict],
+        *,
+        source_paths=None,
+        progress=None,
+        check_cancel=None,
+    ) -> list[dict]:
+        """Shared post-primary boundary for formal and source-completion work."""
+        from .conversion_progress import ConversionProgress
+        from .stereo_rescue_pass import apply_stereo_rescue
+
+        self.close()
+        if progress is None:
+            progress = ConversionProgress("", len(results))
+            for result in results:
+                progress.record(result)
+        return apply_stereo_rescue(
+            results,
+            source_paths
+            if source_paths is not None
+            else [r.get("ocsr_original_input", "") for r in results],
+            lambda name, engine, image: self._prediction(
+                name, engine, image, timeout=min(self.timeout, 60)
+            ),
+            engine_configs=self.engine_configs,
+            progress=progress,
+            check_cancel=check_cancel,
+        )
+
     def convert_batch(
         self,
         items: list[dict],
@@ -740,6 +783,7 @@ class SmilesConverter:
         jobs = max(1, min(int(jobs or 1), 8))
         progress = ConversionProgress(progress_path, len(filtered))
         results = []
+        source_paths = []
         started = time.monotonic()
         try:
             with ThreadPoolExecutor(max_workers=jobs) as executor:
@@ -754,6 +798,7 @@ class SmilesConverter:
                             item, preprocess_dir, prepared=observation
                         )
                         results.append(result)
+                        source_paths.append(observation.get("ocsr_image_path", ""))
                         progress.record(result)
                         if result.get("OCSR_status") in {
                             "all_engines_failed",
@@ -772,6 +817,10 @@ class SmilesConverter:
                             f"(total {time.monotonic() - started:.0f}s)",
                             flush=True,
                         )
-            return results
+            # No competing resident model: primary children are reaped before
+            # the bounded optional local rescue queue can load its native SDK.
+            return self.finalize_batch(
+                results, source_paths=source_paths, progress=progress
+            )
         finally:
             self.close()

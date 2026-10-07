@@ -35,6 +35,20 @@ The Web queue owns one extraction carrier, verifies its cleanup, then owns one
 research carrier. The UI consumes the same persisted facts. It neither extracts
 chemistry nor synthesizes success, progress, properties or missing provenance.
 
+The primary OCSR SDK stays DECIMER. After reaping its child, a single CPU-only
+MolScribe worker may inspect at most eight `stereochemistry_not_retained` items.
+The candidate must have the exact same non-stereo atom/bond/isotope/charge/
+fragment graph, restore all raw stereo markup and preserve all previously
+retained stereo across bounded atom mappings. Current source screening and a
+recomputed proof are mandatory for formal/research consumers. Wave/unknown
+source symbols, graph changes, ambiguity or bounded validation failure remain
+review, not guessed parity. No string editing, parallel model ensemble, normal
+result replacement or external LLM call is involved. This pass and its weights
+are part of the same complete environment setup, never a manual extra install.
+Source-evidence epoch3 invalidates derived SMILES/QA/projections independently;
+the original OCR, five upstream stages and content-bound raw model observations
+remain reusable. Historical results are not retagged as current.
+
 ## Completeness and accuracy
 
 Classifier epoch2 ignores prose examples and cover ISR boilerplate as section

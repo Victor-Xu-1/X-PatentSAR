@@ -17,7 +17,9 @@ from patent_sar_extractor.contracts import OCSR_OBSERVATION_VERSION
 from .smiles_cache import OBSERVATIONS_SQL, SmilesCache
 
 _HASH = re.compile(r"[0-9a-f]{64}\Z")
-_ENGINE = re.compile(rf"decimer:raw-v{OCSR_OBSERVATION_VERSION}:([0-9a-f]{{64}})\Z")
+_ENGINE = re.compile(
+    rf"(?:decimer|molscribe):raw-v{OCSR_OBSERVATION_VERSION}:([0-9a-f]{{64}})\Z"
+)
 
 
 def _invalid_constant(value: str) -> None:
@@ -29,7 +31,7 @@ def _bounded_payload(payload: str) -> dict:
         raise ValueError("Raw observation exceeds its limit")
     result = json.loads(payload, parse_constant=_invalid_constant)
     if not isinstance(result, dict):
-        raise ValueError("Raw observation is not an object")
+        raise ValueError("Raw observation is not an object")  # noqa: TRY004 - transport has one ValueError contract
     pending = [(result, 0)]
     while pending:
         value, depth = pending.pop()

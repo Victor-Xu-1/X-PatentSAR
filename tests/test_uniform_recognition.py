@@ -229,6 +229,12 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
 
     def test_pipeline_checks_complete_catalog_then_reuses_identical_checkpoint(self):
         path, payload, artifact = self.prepare()
+        formal, supplemental = recognition_inputs(payload)
+        payload["final_bindings"] = [*formal, *supplemental]
+        write_json_atomic(path, payload)
+        artifact = build_smiles_artifact(
+            [observation(item) for item in payload["final_bindings"]]
+        )
         output = self.root / "stage-output"
         output.mkdir()
         progress = PipelineProgress()
@@ -240,7 +246,7 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
             base_dir=str(output),
             pipeline_log=log,
             active_cpds=["Compound 1"],
-            n_bound=1,
+            n_bound=len(recognition_inputs(payload)[0]),
             bind_json=str(path),
             bind_payload=payload,
             step_dirs={"smiles": str(output)},
@@ -264,15 +270,27 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
         ):
             execute_smiles(state)
             self.assertEqual(log["steps"]["smiles"]["total"], 2)
-            self.assertEqual(log["steps"]["smiles"]["source_total"], 1)
-            self.assertEqual(log["steps"]["smiles"]["formal_total"], 1)
+            self.assertEqual(log["steps"]["smiles"]["source_total"], 0)
+            self.assertEqual(log["steps"]["smiles"]["formal_total"], 2)
             execute_smiles(state)
             worker.assert_called_once()
             self.assertTrue(log["steps"]["smiles"]["from_cache"])
 
     def test_smiles_worker_cannot_omit_no_activity_catalog_results(self):
         path, payload, artifact = self.prepare()
-        artifact["source_records"] = []
+        formal, supplemental = recognition_inputs(payload)
+        payload["final_bindings"] = [*formal, *supplemental]
+        write_json_atomic(path, payload)
+        artifact = build_smiles_artifact(
+            [observation(item) for item in payload["final_bindings"]]
+        )
+        artifact = build_smiles_artifact(
+            [
+                record
+                for record in artifact["records"]
+                if record["cpd_id"] != "Compound 8"
+            ]
+        )
         output = self.root / "stage-output"
         output.mkdir()
         progress = PipelineProgress()
@@ -284,7 +302,7 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
             base_dir=str(output),
             pipeline_log=log,
             active_cpds=["Compound 1"],
-            n_bound=1,
+            n_bound=len(recognition_inputs(payload)[0]),
             bind_json=str(path),
             bind_payload=payload,
             step_dirs={"smiles": str(output)},

@@ -74,6 +74,53 @@ def complete_structures(
 
     publish()
     storage = RecognitionStore(service.store)
+    observations = []
+
+    def check_cancel():
+        latest = service.store.job(row["id"])
+        if latest["cancel_requested"] or (cancel is not None and cancel.is_set()):
+            raise WebError(
+                409, "recognition_cancelled", "Structure completion was cancelled."
+            )
+
+    def persist(record, compound_id, crop):
+        source = correction_source_fingerprint(project, rows[compound_id])
+        # Persist failed raw producer observations too. A failed
+        # attempt must remain diagnosable without becoming chemistry.
+        write_json_atomic(
+            output / f"{source}.json",
+            {
+                "source_fingerprint": source,
+                "crop_sha256": crop,
+                "job_id": row["id"],
+                "observation": record,
+            },
+        )
+        if record.get("OCSR_status") in {
+            "engine_timeout",
+            "engine_unavailable",
+            "all_engines_failed",
+            "image_missing",
+            "preprocessing_failed",
+        }:
+            raise WebError(
+                502,
+                "recognition_failed",
+                "Structure recognition did not produce a source-bound observation.",
+            )
+        checked = checked_observation(
+            record, compound_id, by_id[compound_id].structure_id
+        )
+        storage.put(
+            spec.project_id,
+            compound_id,
+            source=source,
+            crop=crop,
+            record=record,
+            job_id=row["id"],
+        )
+        return checked
+
     try:
         # This package-internal lease is the existing sole concurrency authority.
         # Do not change AnalysisService's source/content cache epoch just to add
@@ -90,53 +137,12 @@ def complete_structures(
             )
             try:
                 for compound_id, binding, crop in inputs:
-                    latest = service.store.job(row["id"])
-                    if latest["cancel_requested"] or (
-                        cancel is not None and cancel.is_set()
-                    ):
-                        raise WebError(
-                            409,
-                            "recognition_cancelled",
-                            "Structure completion was cancelled.",
-                        )
+                    check_cancel()
                     record = converter.convert_one(
                         binding, preprocess_dir=str(output / "inputs")
                     )
-                    source = correction_source_fingerprint(project, rows[compound_id])
-                    # Persist failed raw producer observations too. A failed
-                    # attempt must remain diagnosable without becoming chemistry.
-                    write_json_atomic(
-                        output / f"{source}.json",
-                        {
-                            "source_fingerprint": source,
-                            "crop_sha256": crop,
-                            "job_id": row["id"],
-                            "observation": record,
-                        },
-                    )
-                    if record.get("OCSR_status") in {
-                        "engine_timeout",
-                        "engine_unavailable",
-                        "all_engines_failed",
-                        "image_missing",
-                        "preprocessing_failed",
-                    }:
-                        raise WebError(
-                            502,
-                            "recognition_failed",
-                            "Structure recognition did not produce a source-bound observation.",
-                        )
-                    checked = checked_observation(
-                        record, compound_id, by_id[compound_id].structure_id
-                    )
-                    storage.put(
-                        spec.project_id,
-                        compound_id,
-                        source=source,
-                        crop=crop,
-                        record=record,
-                        job_id=row["id"],
-                    )
+                    checked = persist(record, compound_id, crop)
+                    observations.append((compound_id, crop, record, checked.status))
                     completed += 1
                     hits += int(
                         any(
@@ -146,6 +152,21 @@ def complete_structures(
                     )
                     rejected += int(checked.status != "valid")
                     publish()
+                # Source completion shares the same post-primary queue; do not
+                # load a second resident model or re-run ordinary successful rows.
+                check_cancel()
+                converter.finalize_batch(
+                    [item[2] for item in observations], check_cancel=check_cancel
+                )
+                for compound_id, crop, record, prior_status in observations:
+                    if record.get("stereo_rescue_proof") or record.get(
+                        "local_stereo_rescue"
+                    ):
+                        checked = persist(record, compound_id, crop)
+                        rejected += int(checked.status != "valid") - int(
+                            prior_status != "valid"
+                        )
+                publish()
             finally:
                 converter.close()
                 publish_job_cache(service.store.root, project, cache)

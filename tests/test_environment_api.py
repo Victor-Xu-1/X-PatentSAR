@@ -16,6 +16,10 @@ from fastapi.testclient import TestClient
 from patent_sar_extractor.web.analysis_runtime import AnalysisSettings
 from patent_sar_extractor.web.app import create_app
 from patent_sar_extractor.web.environment_paths import ManagedStorage
+from patent_sar_extractor.web.environment_specs import (
+    complete_components,
+    component_catalog,
+)
 from patent_sar_extractor.web.processes import SubprocessRunner
 
 CARD = {
@@ -106,7 +110,7 @@ class EnvironmentAPITests(unittest.TestCase):
         self.addCleanup(self.overrides.stop)
         self.origin = "http://127.0.0.1:18765"
 
-    def client(self, mode="complete", timeout=10):
+    def client(self, mode="complete", timeout=10, catalog=None):
         app = create_app(
             self.root / "state",
             port=18765,
@@ -115,7 +119,7 @@ class EnvironmentAPITests(unittest.TestCase):
                 self.allowed, self.allowed / "managed", timeout
             ),
             environment_runner=BoundaryRunner(mode),
-            environment_catalog=lambda: [dict(CARD)],
+            environment_catalog=catalog or (lambda: [dict(CARD)]),
         )
         return TestClient(app, base_url=self.origin)
 
@@ -149,16 +153,24 @@ class EnvironmentAPITests(unittest.TestCase):
     def test_default_workflow_preset_includes_automatic_metrics_without_installing(
         self,
     ):
-        with self.client() as client:
+        with self.client(catalog=component_catalog) as client:
             self.authenticate(client)
             catalog = client.get("/api/v1/environments").json()
             preset = next(p for p in catalog["presets"] if p["id"] == "extraction")
             self.assertEqual(
                 preset["component_ids"],
-                ["base", "decimer", "decimer-models", "admet", "admet-models"],
+                complete_components(),
             )
             self.assertEqual(catalog["operations"], [])
             self.assertIsNone(catalog["active_operation"])
+
+    def test_partial_catalog_does_not_offer_unavailable_dependencies(self):
+        with self.client() as client:
+            self.authenticate(client)
+            catalog = client.get("/api/v1/environments").json()
+            preset = next(p for p in catalog["presets"] if p["id"] == "extraction")
+            self.assertEqual(preset["component_ids"], [])
+            self.assertEqual(catalog["setup_component_ids"], [])
 
     def test_auth_csrf_input_and_location_never_start_an_install(self):
         with self.client() as client:

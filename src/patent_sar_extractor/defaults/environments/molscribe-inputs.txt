@@ -1,0 +1,16 @@
+# Native CPU rescue dependencies. The SDK is installed separately from its
+# hash-pinned official source archive, using these same locked build tools.
+numpy==1.26.4
+torch==2.13.0+cpu
+torchvision==0.28.0+cpu
+pandas==2.3.3
+matplotlib==3.10.9
+opencv-python==4.11.0.86
+opencv-python-headless==4.11.0.86
+SmilesPE==0.0.3
+OpenNMT-py==2.2.0
+rdkit==2026.3.6
+albumentations==1.1.0
+timm==0.4.12
+setuptools==80.9.0
+wheel==0.45.1

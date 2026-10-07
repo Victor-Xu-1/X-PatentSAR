@@ -101,6 +101,32 @@ _SPECS = (
         "admet-cpu-requirements.txt",
     ),
     ComponentSpec(
+        "molscribe",
+        "本地手性兜底环境",
+        "受限 CPU 兜底；仅在主模型丢失手性且连接图一致时使用，不并行常驻。",
+        "1.1.1 / reviewed 7296a304",
+        "runtime",
+        "structure",
+        False,
+        "MIT and mixed dependencies; see NOTICE",
+        "https://github.com/thomas0809/MolScribe/tree/7296a30413eb55436702011efdff78131f66d162",
+        ("installer",),
+        "molscribe-requirements.txt",
+    ),
+    ComponentSpec(
+        "molscribe-models",
+        "本地手性兜底模型",
+        "固定官方模型，加载检查不等于预测准确性验收。",
+        "1m680k / a0189776",
+        "models",
+        "structure",
+        False,
+        "MIT",
+        "https://huggingface.co/yujieq/MolScribe/tree/a0189776b7415b82795c7ee81eed311bf5c8724b",
+        ("molscribe",),
+        download_bytes=1134173494,
+    ),
+    ComponentSpec(
         "admet-models",
         "ADMET 模型权重",
         "十个官方 pt 模型及端点元数据；不复制或使用 DrugBank 参考集。",
@@ -162,6 +188,9 @@ def recipe_path(name: str) -> Path:
         "admet-cpu-requirements.txt",
         "decimer-requirements.txt",
         "decimer-models.json",
+        "molscribe-requirements.txt",
+        "molscribe-runtime.json",
+        "molscribe-sdk.json",
     }:
         raise ValueError("Unknown packaged recipe")
     return Path(
@@ -173,7 +202,12 @@ def catalog_fingerprint() -> str:
     recipes = {}
     for name in sorted(
         {s.requirements for s in _SPECS if s.requirements}
-        | {"decimer-models.json", "base-runtime.json"}
+        | {
+            "decimer-models.json",
+            "base-runtime.json",
+            "molscribe-runtime.json",
+            "molscribe-sdk.json",
+        }
     ):
         path = recipe_path(name)
         recipes[name] = (
