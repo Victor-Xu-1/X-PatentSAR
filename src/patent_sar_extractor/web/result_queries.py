@@ -19,6 +19,7 @@ from .descriptor_models import DescriptorSummary
 from .descriptor_storage import DescriptorStore
 from .dto import Error
 from .errors import WebError
+from .history_storage import ensure_project_visible
 from .lead_storage import LeadStore
 from .models import ActivityColumn, Compound, Results, Review
 from .molecule_drawing import drawing_url
@@ -58,6 +59,7 @@ class ResultQueries:
         self.current_project(project_id)
         with self.store.connect() as connection:
             connection.execute("BEGIN")
+            ensure_project_visible(connection, project_id)
             project = dict(
                 connection.execute(
                     "SELECT * FROM projects WHERE id=?", (project_id,)

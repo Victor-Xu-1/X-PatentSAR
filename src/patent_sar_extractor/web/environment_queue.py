@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
 import os
@@ -14,6 +13,7 @@ from typing import Any
 
 from ..workers.environment_errors import MESSAGES
 from .environment_models import COMPONENT_IDS, MAX_COMPONENTS, EnvironmentComponent
+from .environment_records import environment_spec
 from .environment_storage import EnvironmentStore
 from .errors import WebError
 from .files import SafeFiles, private_directory
@@ -66,32 +66,8 @@ class EnvironmentQueue:
             raise self.cleanup_failure
 
     def spec(self, row: dict[str, Any]) -> tuple[RunSpec, dict[str, Any]]:
-        identifier = row["id"]
-        if (
-            not isinstance(identifier, str)
-            or len(identifier) != 32
-            or any(c not in "0123456789abcdef" for c in identifier)
-        ):
-            raise WebError(
-                409,
-                "environment_record",
-                "Environment operation identity is invalid; no process was touched.",
-            )
-        value = json.loads(row["spec"])
-        if (
-            not isinstance(value, dict)
-            or value.get("schema_version") != 1
-            or value.get("operation_id") != identifier
-            or value.get("install_root") != row["install_root"]
-            or value.get("action") != row["action"]
-            or value.get("component_ids") != json.loads(row["component_ids"])
-        ):
-            raise WebError(
-                409,
-                "environment_record",
-                "Environment operation specification is invalid; no process was touched.",
-            )
-        output = self.store.root / "operations" / identifier
+        spec, value = environment_spec(row, self.store.root.parent)
+        output = Path(spec.output_dir)
         if output.is_symlink() or not output.resolve().is_relative_to(
             self.store.root / "operations"
         ):
@@ -100,10 +76,7 @@ class EnvironmentQueue:
                 "environment_record",
                 "Environment operation storage is unsafe; no process was touched.",
             )
-        digest = hashlib.sha256(encode(value).encode()).hexdigest()
-        return RunSpec(
-            identifier, "environment", "", str(output), "environment", digest
-        ), value
+        return spec, value
 
     def reconcile(self) -> None:
         for row in self.store.history(active_only=True):

@@ -21,6 +21,7 @@ from .environment_models import (
 )
 from .errors import WebError
 from .files import private_directory
+from .history_storage import ENVIRONMENT_SCHEMA, tombstone
 from .location_records import MAX_LOCATION_ROOTS, initialize_locations, location_record
 from .storage import encode, now
 
@@ -84,6 +85,7 @@ class EnvironmentStore:
                 )
             connection.execute("PRAGMA journal_mode=WAL")
             connection.executescript(SCHEMA)
+            connection.executescript(ENVIRONMENT_SCHEMA)
             connection.execute("PRAGMA user_version=1")
             connection.execute(
                 "INSERT OR IGNORE INTO settings(id,install_root) VALUES(1,?)",
@@ -188,6 +190,17 @@ class EnvironmentStore:
                         "environment_request_conflict",
                         "The request ID already belongs to a different operation.",
                     )
+                if (
+                    tombstone(connection, "environment_operation", previous["id"])[
+                        "deleted_at"
+                    ]
+                    is not None
+                ):
+                    raise WebError(
+                        409,
+                        "environment_operation_deleted",
+                        "This request belongs to a retained operation in the trash. Restore it before reusing this request ID; no operation was replayed.",
+                    )
                 return self.operation(dict(previous)), False
             settings = connection.execute(
                 "SELECT * FROM settings WHERE id=1"
@@ -277,16 +290,54 @@ class EnvironmentStore:
             applied=bool(row["applied"]),
         )
 
+    def public_row(self, operation_id: str) -> dict[str, Any]:
+        with self.connect() as connection:
+            connection.execute("BEGIN")
+            if (
+                tombstone(connection, "environment_operation", operation_id)[
+                    "deleted_at"
+                ]
+                is not None
+            ):
+                raise WebError(
+                    404,
+                    "environment_operation_missing",
+                    "Environment operation does not exist in the active history.",
+                )
+            row = connection.execute(
+                "SELECT * FROM operations WHERE id=?", (operation_id,)
+            ).fetchone()
+        if row is None:
+            raise WebError(
+                404,
+                "environment_operation_missing",
+                "Environment operation does not exist.",
+            )
+        return dict(row)
+
     def history(self, *, active_only: bool = False) -> list[dict[str, Any]]:
         query = "SELECT * FROM operations"
         if active_only:
             query += " WHERE status IN ('queued','running')"
+        else:
+            query += " WHERE NOT EXISTS (SELECT 1 FROM history_tombstones t WHERE t.kind='environment_operation' AND t.id=operations.id AND t.deleted_at IS NOT NULL)"
         query += " ORDER BY created_at DESC LIMIT 20"
         with self.connect() as connection:
             return [dict(row) for row in connection.execute(query).fetchall()]
 
     def request_cancel(self, operation_id: str) -> EnvironmentOperation:
         with self.connect(write=True) as connection:
+            if (
+                tombstone(connection, "environment_operation", operation_id)[
+                    "deleted_at"
+                ]
+                is not None
+            ):
+                raise WebError(
+                    404,
+                    "environment_operation_missing",
+                    "Environment operation does not exist in the active history.",
+                )
             if (
                 connection.execute(
                     "SELECT 1 FROM operations WHERE id=?", (operation_id,)

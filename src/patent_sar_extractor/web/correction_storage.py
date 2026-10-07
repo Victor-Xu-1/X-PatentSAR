@@ -9,6 +9,7 @@ from typing import Any
 
 from .correction_models import CorrectionDocument
 from .errors import WebError
+from .history_storage import ensure_project_visible
 from .recognition_storage import RECOGNITION_COLUMNS, RECOGNITION_JOIN, RecognitionStore
 from .storage import Store, encode
 
@@ -106,6 +107,7 @@ class CorrectionStorage:
     def context(
         connection: sqlite3.Connection, project_id: str, compound_id: str
     ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any] | None]:
+        ensure_project_visible(connection, project_id)
         project = connection.execute(
             "SELECT * FROM projects WHERE id=?", (project_id,)
         ).fetchone()
@@ -138,6 +140,7 @@ class CorrectionStorage:
         compound_id: str,
         document: CorrectionDocument,
     ) -> None:
+        ensure_project_visible(connection, project_id)
         values = (
             project_id,
             compound_id,

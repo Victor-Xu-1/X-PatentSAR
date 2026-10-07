@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import fcntl
 import hashlib
-import os
-import stat
 import tempfile
 import threading
 import time
@@ -30,6 +27,7 @@ from .analysis_chemistry import (
     recognized_smiles,
     validate_batch,
 )
+from .analysis_lease import analysis_lease
 from .analysis_models import (
     ADMETResponse,
     AnalysisEngine,
@@ -129,33 +127,11 @@ class AnalysisService:
                 "analysis_busy",
                 "Another molecular analysis is running; retry when it finishes.",
             )
-        fd = None
         try:
-            fd = os.open(
-                self.cache.root / "operation.lock",
-                os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW,
-                0o600,
-            )
-            info = os.fstat(fd)
-            if (
-                not stat.S_ISREG(info.st_mode)
-                or info.st_uid != os.getuid()
-                or stat.S_IMODE(info.st_mode) & 0o077
-            ):
-                raise WebError(
-                    503, "analysis_lock", "Analysis operation lock is not private."
-                )
-            try:
-                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except BlockingIOError as exc:
-                raise WebError(
-                    503, "analysis_busy", "Another owned analysis operation is running."
-                ) from exc
-            self._check_cancel(cancel)
-            yield
+            with analysis_lease(self.workspace.store.root):
+                self._check_cancel(cancel)
+                yield
         finally:
-            if fd is not None:
-                os.close(fd)
             self._busy.release()
 
     @contextmanager
@@ -363,6 +339,7 @@ class AnalysisService:
         *,
         cancel: threading.Event | None = None,
     ) -> RecognitionResponse:
+        self.workspace.store.project(project_id)
         deadline = time.monotonic() + self.settings.decimer_timeout_seconds
         with self._operation(cancel):
             project = self.workspace.store.project(project_id)

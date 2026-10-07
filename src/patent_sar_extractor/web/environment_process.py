@@ -11,14 +11,23 @@ from patent_sar_extractor.paths import PACKAGE_IMPORT_ROOT, PACKAGE_ROOT
 from .processes import RunSpec, SubprocessRunner
 
 
+def environment_command(
+    spec: RunSpec, *, python: str | None = None, package_root: Path | None = None
+) -> list[str]:
+    """One exact command authority for execution and read-only cleanup proof."""
+    return [
+        python or sys.executable,
+        str(
+            (package_root or PACKAGE_ROOT) / "workers" / "environment_install_worker.py"
+        ),
+        "--plan",
+        str(Path(spec.output_dir) / "environment-plan.json"),
+    ]
+
+
 class EnvironmentProcessRunner(SubprocessRunner):
     def command(self, spec: RunSpec) -> list[str]:
-        return [
-            sys.executable,
-            str(PACKAGE_ROOT / "workers" / "environment_install_worker.py"),
-            "--plan",
-            str(Path(spec.output_dir) / "environment-plan.json"),
-        ]
+        return environment_command(spec)
 
     def environment(self, spec: RunSpec) -> dict[str, str]:
         # Installer subprocesses must not inherit LLM/Git/cloud credentials or
