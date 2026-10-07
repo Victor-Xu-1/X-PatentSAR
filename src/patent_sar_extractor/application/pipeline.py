@@ -16,6 +16,7 @@ from patent_sar_extractor.contracts import (
     __version__,
     artifact_identity,
 )
+from patent_sar_extractor.core.phase_resources import release_completed_document_phase
 from patent_sar_extractor.paths import state_dir
 
 from .pipeline_context import PipelineContext
@@ -114,5 +115,11 @@ def execute_pipeline(args, progress: PipelineProgress) -> dict:
     }
     result = None
     for stage in CORE_STAGE_ORDER:
-        result = handlers[stage](state)
+        try:
+            result = handlers[stage](state)
+        finally:
+            if stage == "bind":
+                state.pipeline_log["runtime"]["document_phase_resources"] = (
+                    release_completed_document_phase()
+                )
     return result
