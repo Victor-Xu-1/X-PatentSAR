@@ -168,6 +168,20 @@ invoke recognition or inference; actual graph changes target only that compound.
 
 ## Storage, restart and deployment
 
+The existing revisioned environment-settings transaction also owns upload and
+result locations. Additive private `file_settings`/`file_roots` tables in its
+existing SQLite v1 retain current destinations and bounded historical roots;
+there is no second settings endpoint/database or automatic relocation. Native
+data prefixes have workspace/purpose markers, private ownership, write probes,
+no-link access and non-overlap checks. Reads never initialize location state.
+Legacy uploads/runs remain valid; external originals resolve only through recorded
+upload roots, and attempts through recorded result roots. New immutable run specs
+carry explicit `workspace_root`, so ADMET cannot infer state from a result path.
+New exports reuse the existing byte iterator once, saving bounded atomic copies
+under the selected result root before serving those exact bytes to the browser.
+Browser download destinations remain browser-owned. Active tasks retain their
+recorded paths; future requests read the new settings without a service restart.
+
 All local installation/source/model/cache/state/evidence storage belongs on
 E, physically under `E:\WSL` or its registered E-drive VHDX. Native paths live
 under `/srv/wsl`; the C-drive Ubuntu and unrelated apps are protected.

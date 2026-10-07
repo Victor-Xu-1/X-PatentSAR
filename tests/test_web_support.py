@@ -94,9 +94,11 @@ def artifact_run(
     ids = [f"Compound {number}" for number in range(rows, 0, -1)]
     bounds = [20, 40, 120, 140]
     with fitz.open(pdf) as document:
+        displayed_bounds = fitz.Rect(bounds) * document[0].rotation_matrix
         if rendered:
-            bounds = list(fitz.Rect(bounds) * document[0].rotation_matrix)
-        image = document[0].get_pixmap(clip=fitz.Rect(bounds))
+            bounds = list(displayed_bounds)
+        # Rendering is always in display space; only recorded geometry changes.
+        image = document[0].get_pixmap(clip=displayed_bounds)
     crop = root / "crop.png"
     image.save(crop)
     payloads = {

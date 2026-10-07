@@ -1,17 +1,32 @@
 import { decodeEnvironmentOperationId, decodeEnvironmentRequest } from '../api/environmentDecoders';
 import { count, object, string } from '../api/validation';
-import type { EnvironmentOperationRequest } from '../api/environmentTypes';
+import type {
+  EnvironmentOperationRequest,
+  EnvironmentSettingsUpdate,
+} from '../api/environmentTypes';
 import { hasEnvironmentControlCharacters } from './environment';
 export const pendingEnvironmentKey = 'patentsar.environment.pending.v1';
 export type PendingEnvironment =
   | { kind: 'operation'; request: EnvironmentOperationRequest }
-  | { kind: 'settings'; install_root: string; expected_revision: number }
+  | ({ kind: 'settings' } & EnvironmentSettingsUpdate)
   | { kind: 'cancel'; operation_id: string };
 function boundedText(value: unknown, path?: string): string {
   const result = string(value, path);
   if (!result || result.length > 512 || hasEnvironmentControlCharacters(result))
     throw new Error('恢复记录无效');
   return result;
+}
+function settingsIntent(value: unknown): Extract<PendingEnvironment, { kind: 'settings' }> {
+  const settings = object({ install_root: boundedText, expected_revision: count })(value);
+  const input = value as Record<string, unknown>;
+  // Older install-only records must not acquire guessed file locations on replay.
+  if (!('upload_root' in input) && !('result_root' in input))
+    return { kind: 'settings', ...settings };
+  return {
+    kind: 'settings',
+    ...settings,
+    ...object({ upload_root: boundedText, result_root: boundedText })(value),
+  };
 }
 export function readPendingEnvironment(): {
   pending: PendingEnvironment | null;
@@ -27,7 +42,7 @@ export function readPendingEnvironment(): {
       kind === 'operation'
         ? { kind, request: object({ request: decodeEnvironmentRequest })(value).request }
         : kind === 'settings'
-          ? { kind, ...object({ install_root: boundedText, expected_revision: count })(value) }
+          ? settingsIntent(value)
           : kind === 'cancel'
             ? {
                 kind,

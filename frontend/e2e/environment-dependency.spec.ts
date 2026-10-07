@@ -31,8 +31,13 @@ for (const viewport of [
       'This read-only confirmation check requires idle owned QA state',
     ).toBeNull();
     for (const id of ['base', 'admet-models'] as const) {
-      if ((await page.getByRole('dialog', { name: '环境详情', exact: true }).count()) === 0)
-        await page.getByRole('button', { name: '环境详情', exact: true }).click();
+      if ((await page.getByRole('dialog', { name: '存储位置', exact: true }).count()) === 0) {
+        await page.getByRole('button', { name: '存储位置', exact: true }).click();
+        await page
+          .getByRole('dialog', { name: '存储位置', exact: true })
+          .getByText('环境详情', { exact: true })
+          .click();
+      }
       const execution = selectedEnvironmentComponents(catalog.components, [id]);
       expect(execution.length).toBeGreaterThan(1);
       const selected = catalog.components.find((item) => item.id === id)!;
@@ -89,7 +94,7 @@ for (const viewport of [
       await expect(dialog.getByRole('button', { name: '确认下载并安装' })).toBeEnabled();
       await page.keyboard.press('Escape');
       await expect(dialog).toHaveCount(0);
-      await expect(page.getByRole('button', { name: '环境详情', exact: true })).toBeVisible();
+      await expect(page.getByRole('button', { name: '存储位置', exact: true })).toBeVisible();
     }
     expect(
       writes,

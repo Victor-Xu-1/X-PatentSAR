@@ -49,10 +49,19 @@ export interface EnvironmentComponent {
   problem: string | null;
   dependencies: EnvironmentComponentId[];
 }
-export interface EnvironmentSettings {
+export interface EnvironmentStorageLocations {
   install_root: string;
+  upload_root: string;
+  result_root: string;
+}
+export type EnvironmentSettingsUpdate = { expected_revision: number } & (
+  EnvironmentStorageLocations | { install_root: string; upload_root?: never; result_root?: never }
+);
+export interface EnvironmentSettings extends EnvironmentStorageLocations {
   allowed_root: string;
+  allowed_data_root: string;
   revision: number;
+  editable: boolean;
   enabled: boolean;
   reason: string | null;
 }

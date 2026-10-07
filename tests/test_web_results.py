@@ -206,7 +206,7 @@ class ResultTests(WebFixture, unittest.TestCase):
             self.assertEqual(response["total"], 12)
             self.assertEqual(
                 [r["id"] for r in response["items"]],
-                [f"Compound {n}" for n in range(12, 7, -1)],
+                [f"Compound {n}" for n in range(1, 6)],
             )
             self.assertEqual(response["metrics"], ["IC50(nM)"])
             self.assertEqual(response["targets"], ["Measured target"])
@@ -381,11 +381,12 @@ class ResultTests(WebFixture, unittest.TestCase):
             rows = list(
                 csv.DictReader(io.StringIO(response.content.decode("utf-8-sig")))
             )
-            self.assertEqual(rows[0]["metric"], "'=danger")
-            self.assertEqual(rows[0]["value"], "'\t=SUM(1,2)")
-            self.assertEqual(rows[0]["review_note"], "'  @evil")
-            self.assertEqual(rows[0]["review_only"], "True")
-            self.assertEqual(rows[0]["acceptance_state"], "historical")
+            dangerous = next(row for row in rows if row["compound_id"] == "Compound 2")
+            self.assertEqual(dangerous["metric"], "'=danger")
+            self.assertEqual(dangerous["value"], "'\t=SUM(1,2)")
+            self.assertEqual(dangerous["review_note"], "'  @evil")
+            self.assertEqual(dangerous["review_only"], "True")
+            self.assertEqual(dangerous["acceptance_state"], "historical")
 
     def test_real_historical_artifacts_are_read_only_and_never_current(self):
         run = Path("/home/victor_1/.local/state/patent-sar-extractor/runs/WO2026156070")

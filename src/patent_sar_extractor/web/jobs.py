@@ -103,13 +103,18 @@ class JobQueue:
         spec = decode_spec(row["spec"])
         project = self.store.project(row["project_id"])
         output = Path(spec.output_dir)
-        expected_pdf = self.store.root / (project["pdf_rel"] or "missing-original")
+        expected_pdf = self.store.locations.pdf_path(project)
         if (
             spec.job_id != row["id"]
             or spec.project_id != row["project_id"]
             or self.service.attempts.output(row) != output
             or Path(spec.pdf_path) != expected_pdf
             or spec.sha256 != project["sha256"]
+            or spec.workspace_root not in {"", str(self.store.root)}
+            or (
+                not spec.workspace_root
+                and not output.is_relative_to(self.store.root / "runs")
+            )
         ):
             raise WebError(
                 409,
@@ -121,7 +126,7 @@ class JobQueue:
             if any(
                 parent.is_symlink() for parent in (source, *source.parents)
             ) or not source.resolve().is_relative_to(
-                self.store.root / "runs" / row["project_id"]
+                self.store.locations.result_anchor(source) / row["project_id"]
             ):
                 raise WebError(
                     409,
@@ -178,7 +183,8 @@ class JobQueue:
                 "Attach the verified original PDF before extraction.",
             )
         job_id = uuid.uuid4().hex
-        output = self.store.root / "runs" / project_id / job_id
+        result_root = self.store.locations.result_root()
+        output = result_root / project_id / job_id
         include_intermediates = request.include_intermediates
         include_admet = request.include_admet
         force = request.force
@@ -188,9 +194,19 @@ class JobQueue:
         if project["run_root"] and not request.force and not request.resume_job_id:
             previous_root = Path(project["run_root"])
             candidate = previous_root / "page_classification" / "page_ocr_cache.json"
-            project_runs = self.store.root / "runs" / project_id
+            try:
+                project_runs = (
+                    self.store.locations.result_anchor(previous_root) / project_id
+                )
+            except WebError as error:
+                if error.code != "storage_output":
+                    raise
+                project_runs = (
+                    None  # Read-only imported runs are not owned checkpoints.
+                )
             if (
-                not any(
+                project_runs is not None
+                and not any(
                     parent.is_symlink()
                     for parent in (previous_root, *previous_root.parents)
                 )
@@ -211,7 +227,9 @@ class JobQueue:
                     )
                     or {}
                 )
-                if cache_matches_pdf(cache, str(self.store.root / project["pdf_rel"])):
+                if cache_matches_pdf(
+                    cache, str(self.store.locations.pdf_path(project))
+                ):
                     source_ocr_cache = str(candidate)
                     with self.store.connect() as connection:
                         row = connection.execute(
@@ -276,7 +294,7 @@ class JobQueue:
             include_admet = saved_options.include_admet
         if any(
             parent.is_symlink() for parent in (output, *output.parents)
-        ) or not output.resolve().is_relative_to(self.store.root / "runs"):
+        ) or not output.resolve().is_relative_to(result_root):
             raise WebError(
                 400,
                 "unsafe_workspace",
@@ -285,7 +303,7 @@ class JobQueue:
         spec = RunSpec(
             job_id,
             project_id,
-            str(self.store.root / project["pdf_rel"]),
+            str(self.store.locations.pdf_path(project)),
             str(output),
             project["patent_id"],
             project["sha256"],
@@ -296,6 +314,7 @@ class JobQueue:
             task_note,
             source_ocr_cache,
             include_admet,
+            workspace_root=str(self.store.root),
         )
         payload = {
             **asdict(spec),
@@ -332,7 +351,7 @@ class JobQueue:
                         "New attempt output directory already exists; no files were changed.",
                     )
                 resolved_output = private_directory(output)
-                if not resolved_output.is_relative_to(self.store.root / "runs"):
+                if not resolved_output.is_relative_to(result_root):
                     raise WebError(
                         400,
                         "unsafe_workspace",
@@ -612,10 +631,9 @@ class JobQueue:
         outcome: PhaseResult | None = None
         try:
             spec = self._spec(job_id)
-            relative = Path(spec.pdf_path).relative_to(self.store.root)
-            content = SafeFiles(self.store.root).read(
-                relative, max_bytes=128 * 1024 * 1024
-            )
+            original = self.store.project(spec.project_id)
+            files, relative = self.store.locations.pdf_files(original)
+            content = files.read(relative, max_bytes=128 * 1024 * 1024)
             if hashlib.sha256(content).hexdigest() != spec.sha256:
                 raise WebError(
                     409,

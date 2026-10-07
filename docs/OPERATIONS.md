@@ -66,6 +66,45 @@ The recovered E-drive deployment has an operator-owned entry point at `/srv/wsl/
 
 ## Web operation
 
+### User-selected file and installation locations
+
+Use **环境管理 → 存储位置** to save integrated-environment install, original-upload
+and generated-result directories together. These are the existing authenticated
+settings API and optimistic revision, not three independent mutations. New data
+roots are private native Linux directories below `PATENTSAR_DATA_ALLOWED_ROOT`
+(default: Web-state parent). This E-drive launcher sets it to
+`/srv/wsl/data/patentsar`; installation keeps its separate approved native root.
+Unknown existing contents, unsafe permissions, symlinks, overlaps with private
+workspace internals/prior roots and write failures are rejected. Unknown files
+are not adopted, moved, chmodded or removed. A failed/stale save preserves active
+settings; newly prepared but unactivated owned prefixes are retained, not cleaned.
+
+The existing environment database adds `file_settings`/`file_roots` tables without
+rewriting patent data or bumping product/API/workspace schema versions. Previous
+roots are retained (at most128) so older PDFs and stopped attempts remain readable
+and resumable after a location change. Do not delete root records or hand-edit PDF
+paths/specs. Running tasks keep their immutable specification. New/resumed tasks
+choose current result storage but read their original from its recorded location;
+verified bounded checkpoints relocate through the existing authority. New ADMET
+carriers use explicit workspace identity rather than result-directory ancestry.
+
+The selected result directory stores native task artifacts at `<project>/<job>`
+and new software-generated CSV/JSON copies at `<project>/exports/<unique-id>.*`.
+Exports reuse existing serialization and acceptance labels, capped at128MiB;
+an incomplete generation is not published. `X-PatentSAR-Saved-Path` (URL-encoded)
+and `X-PatentSAR-Content-SHA256` describe the saved response copy. Browser download
+or Save As folders are controlled by the browser, not this server. Workspaces,
+sessions, audit databases, installer operation state, caches and control logs are
+not moved by these three settings. Existing verified environments are not moved
+or reinstalled simply because a future install prefix changed.
+
+Cold backup/rollback must preserve the private environment database as well as
+workspace/history, external registered upload/result roots and operator config.
+Older binaries cannot be assumed to read external-path/new-spec records. Before
+restoring an old wheel/database pair preserve all newer settings, originals,
+outputs and audits separately for forward recovery; never restore over newer
+live work or move environments between prefixes as a shortcut.
+
 Run `x-patentsar serve --port 8765` with a built frontend or installed Web wheel.
 The local E-drive deployment uses port 18765 because the portable default is
 occupied by existing applications. `--api-only` is explicit frontend-development
@@ -107,8 +146,10 @@ are available; old OCR remains marked historical and is not described as the
 original page image. The historic core artifacts still do not constitute current
 formal QA. Original recovery is not permission to rewrite generated artifacts.
 
-Uploaded PDFs, new run outputs, private job logs and workspace.sqlite3 live under
-the Web state root. Preserve that root as a unit after stopping PatentSAR jobs.
+Uploaded PDFs and generated runs use the saved locations (legacy default:
+Web-state uploads/runs); their recorded absolute/relative paths remain source-bound.
+Private control state and workspace.sqlite3 stay under the fixed Web-state root.
+Preserve it and every registered external upload/result root after stopping PatentSAR jobs.
 Do not copy a live SQLite/WAL database as a verified cold backup. Restart recovery
 marks interrupted jobs explicitly; resume only through the application's job
 controls. A second server must not share an active workspace.

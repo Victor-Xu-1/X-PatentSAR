@@ -23,6 +23,7 @@ from .activity_focus import FocusEvidence, rendered_focus
 from .errors import WebError
 from .files import SafeFiles, private_directory
 from .models import Annotation, Compound, Page, SourceMode
+from .workspace_locations import WorkspaceLocations
 
 MAX_PDF_BYTES = 128 * 1024 * 1024
 MAX_PDF_PAGES = 10000
@@ -167,9 +168,8 @@ def open_pdf(state_root: Path, project: dict[str, Any]) -> Iterator[fitz.Documen
             404, "pdf_unavailable", "The verified original PDF is not attached."
         )
     with _PDF_LOCK:
-        content = SafeFiles(state_root).read(
-            project["pdf_rel"], max_bytes=MAX_PDF_BYTES
-        )
+        files, relative = WorkspaceLocations(state_root).pdf_files(project)
+        content = files.read(relative, max_bytes=MAX_PDF_BYTES)
         if hashlib.sha256(content).hexdigest() != project["sha256"]:
             raise WebError(
                 409,

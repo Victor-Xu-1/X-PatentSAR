@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from pathlib import Path
+from urllib.parse import quote
 
 from fastapi import APIRouter, Query, Request
 from starlette.concurrency import run_in_threadpool
@@ -26,6 +27,7 @@ from .models import (
 from .molecule_drawing import draw_smiles, drawing_fingerprint
 from .pdf import crop_image, filename_title, page_info, render_page, stream_upload
 from .reviews import put_review
+from .saved_exports import export_bytes, save_export
 from .service import WorkspaceService
 from .table_filter_choices import ColumnFilterValues
 from .task_inputs import patent_identifier
@@ -57,7 +59,9 @@ def project_routes(service: WorkspaceService, max_upload_bytes: int) -> APIRoute
             patent_id = patent_identifier(patent_id)
         async with uploads:
             uploaded = await stream_upload(
-                request, service.store.root / "uploads", max_bytes=max_upload_bytes
+                request,
+                service.store.locations.upload_root(),
+                max_bytes=max_upload_bytes,
             )
             return await run_in_threadpool(
                 service.add_pdf, uploaded, filename, title, patent_id
@@ -73,7 +77,9 @@ def project_routes(service: WorkspaceService, max_upload_bytes: int) -> APIRoute
         service.store.project(project_id)
         async with uploads:
             uploaded = await stream_upload(
-                request, service.store.root / "uploads", max_bytes=max_upload_bytes
+                request,
+                service.store.locations.upload_root(),
+                max_bytes=max_upload_bytes,
             )
             return await run_in_threadpool(service.attach_pdf, project_id, uploaded)
 
@@ -214,7 +220,9 @@ def project_routes(service: WorkspaceService, max_upload_bytes: int) -> APIRoute
             sort_band=sort_band,
         )
 
-    @router.get("/projects/{project_id}/filter-values", response_model=ColumnFilterValues)
+    @router.get(
+        "/projects/{project_id}/filter-values", response_model=ColumnFilterValues
+    )
     def filter_values(
         project_id: str,
         column: str,
@@ -293,13 +301,16 @@ def project_routes(service: WorkspaceService, max_upload_bytes: int) -> APIRoute
             if body.format == "csv"
             else export_json(project, rows)
         )
+        saved = save_export(service.store, project_id, body.format, iterator)
         return StreamingResponse(
-            iterator,
+            export_bytes(saved),
             media_type="text/csv; charset=utf-8"
             if body.format == "csv"
             else "application/json",
             headers={
-                "Content-Disposition": f'attachment; filename="x-patentsar-{project_id}.{body.format}"'
+                "Content-Disposition": f'attachment; filename="x-patentsar-{project_id}.{body.format}"',
+                "X-PatentSAR-Saved-Path": quote(str(saved.path)),
+                "X-PatentSAR-Content-SHA256": saved.sha256,
             },
         )
 

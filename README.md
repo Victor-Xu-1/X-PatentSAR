@@ -158,6 +158,16 @@ Linux 源码、环境和数据仍位于 E 盘 `E:\WSL\system\ext4.vhdx` 内，
 
 ### 环境管理
 
+**存储位置**中可修改集成环境安装目录、上传文件目录和生成结果目录，三项一次保存。
+上传和结果目录必须是允许范围内可写的 Linux 私有目录；存在未知内容、符号链接、
+路径重叠或并发版本冲突时拒绝保存，不改权限、不覆盖文件。结果目录包含新任务的
+运行产物，以及新生成的 CSV/JSON 导出副本；浏览器下载副本的“另存为”位置仍由浏览器控制。
+修改仅影响后续新上传、新任务/续跑和新安装。旧原文、旧结果、旧运行规格和审核记录不搬动，
+历史根目录持续登记，原文显示、结构来源和续跑仍使用原来的真实位置。
+本机 E 盘允许数据根为 `/srv/wsl/data/patentsar`，由仓库外入口的
+`PATENTSAR_DATA_ALLOWED_ROOT` 配置；其他部署默认使用 Web 状态目录的父目录。
+工作区数据库、审计、控制日志与缓存保持固定管理位置，不因修改文件目录而迁移。
+
 顶栏直接显示的 **环境管理**（`#/settings`）以完整环境状态和**一键部署全部环境**为主入口。
 软件安装并启动后，一次确认即可建立一个完整后台任务，自动处理安装工具、基础 PDF/OCR/RDKit、
 DECIMER 运行环境与模型、ADMET CPU 环境与模型。用户不需要逐项安装或手工拼装路径。
@@ -190,6 +200,7 @@ ADMET CPU 环境及权重。主应用和科学环境隔离；不安装系统级�
 ```bash
 export PATENTSAR_ENVIRONMENT_ALLOWED_ROOT=/srv/wsl/envs
 export PATENTSAR_ENVIRONMENT_ROOT=/srv/wsl/envs/x-patentsar-managed
+export PATENTSAR_DATA_ALLOWED_ROOT=/srv/wsl/data/patentsar
 x-patentsar serve --port 18765
 ```
 

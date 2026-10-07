@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from .analysis import AnalysisService
+from .data_location_policy import DataLocationPolicy
 from .environment_catalog import component_view
 from .environment_config import CONFIG_KEYS, EnvironmentConfig
 from .environment_models import (
@@ -71,16 +72,26 @@ class EnvironmentManager:
     def settings(self) -> EnvironmentSettings:
         saved = self.store.settings()
         reason = self.storage.enabled_reason()
+        editable = reason is None and self.queue.cleanup_failure is None
         if self.queue.cleanup_failure:
             reason = self.queue.cleanup_failure.message
         try:
             self.storage.validate(saved["install_root"])
+            data = DataLocationPolicy.from_environment(self.store.root.parent)
+            data.validate("uploads", saved["upload_root"])
+            data.validate("results", saved["result_root"])
         except WebError as error:
             reason = error.message
         return EnvironmentSettings(
             install_root=saved["install_root"],
             allowed_root=str(self.storage.allowed_root),
+            upload_root=saved["upload_root"],
+            result_root=saved["result_root"],
+            allowed_data_root=str(
+                DataLocationPolicy.from_environment(self.store.root.parent).allowed_root
+            ),
             revision=saved["revision"],
+            editable=editable,
             enabled=reason is None,
             reason=reason,
         )
@@ -88,8 +99,19 @@ class EnvironmentManager:
     def save_settings(self, request: EnvironmentSettingsRequest) -> EnvironmentSettings:
         if reason := self.storage.enabled_reason():
             raise WebError(409, "environment_platform", reason)
+        if self.queue.cleanup_failure is not None:
+            raise WebError(
+                409,
+                "environment_cleanup",
+                "Owned environment cleanup must be verified before changing locations.",
+            )
         root = self.storage.validate(request.install_root)
-        self.store.save_settings(root, request.expected_revision)
+        self.store.save_settings(
+            root,
+            request.expected_revision,
+            upload_root=request.upload_root,
+            result_root=request.result_root,
+        )
         return self.settings()
 
     def _bindings(self) -> dict[str, str | None]:

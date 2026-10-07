@@ -4,7 +4,11 @@ export const environmentCatalog: EnvironmentCatalog = {
   settings: {
     install_root: '/srv/wsl/envs/managed',
     allowed_root: '/srv/wsl/envs',
+    upload_root: '/srv/wsl/data/patentsar/uploads',
+    result_root: '/srv/wsl/data/patentsar/results',
+    allowed_data_root: '/srv/wsl/data',
     revision: 3,
+    editable: true,
     enabled: true,
     reason: null,
   },
