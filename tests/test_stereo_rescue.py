@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+from time import monotonic
 from unittest.mock import patch
 
 from patent_sar_extractor.contracts import STEREO_EVIDENCE_VERSION
@@ -140,7 +141,7 @@ class StereoRescueTests(unittest.TestCase):
 
     def test_retained_stereo_can_resolve_competing_nonstereo_mappings(self):
         result = self.validate(
-            "N[C@@H](F)C.NC(F)C." + PARTIAL,
+            "N[C@@H](F)C.N[C@H](F)C." + PARTIAL,
             "N[C@@H](F)C.N[C@H](F)C." + PAIRED,
         )
         self.assertTrue(result["accepted"])
@@ -148,17 +149,81 @@ class StereoRescueTests(unittest.TestCase):
 
     def test_remaining_stereo_assignments_must_agree_after_retained_constraints(self):
         self.assert_rejected(
-            "N[C@@H](F)C." + PARTIAL + ".CC1CC(C)(O)C1",
+            "N[C@@H](F)C." + PARTIAL + "." + PARTIAL,
             "N[C@@H](F)C." + PAIRED + ".C[C@H]1C[C@@](C)(O)C1",
             "ambiguous_stereo_mapping",
         )
 
     def test_distinct_stereo_placements_under_symmetric_maps_are_ambiguous(self):
         self.assert_rejected(
-            PARTIAL + ".CC1CC(C)(O)C1",
+            PARTIAL + "." + PARTIAL,
             PAIRED + ".C[C@H]1C[C@@](C)(O)C1",
             "ambiguous_stereo_mapping",
         )
+
+    def test_unmarked_centers_cannot_be_assigned_in_connected_or_separate_fragments(
+        self,
+    ):
+        cases = (
+            ("NC(F)C." + PARTIAL, "N[C@@H](F)C." + PAIRED),
+            ("NC(F)C" + PARTIAL, "N[C@@H](F)C" + PAIRED),
+            (PARTIAL + ".CC1CC(C)(O)C1", PAIRED + ".C[C@H]1C[C@](C)(O)C1"),
+        )
+        for primary, candidate in cases:
+            with self.subTest(primary=primary):
+                self.assertEqual(qc_smiles(primary)["quality_flag"], FLAG)
+                self.assertEqual(qc_smiles(candidate)["quality_flag"], "ok")
+                self.assert_rejected(primary, candidate, "unrelated_atom_stereo")
+
+    def test_originally_oh_marked_ring_can_add_its_indispensable_counterpart(self):
+        primary = "CC1C[C@](C)(O)C1"
+        self.assertEqual(qc_smiles(primary)["quality_flag"], FLAG)
+        self.assertTrue(self.validate(primary, PAIRED)["accepted"])
+
+    def test_unencoded_double_bond_stereo_cannot_be_added(self):
+        self.assert_rejected(
+            "FC=CC." + PARTIAL, "F/C=C/C." + PAIRED, "unrequested_bond_stereo"
+        )
+
+    def test_lost_nonring_stereo_remains_review_needed(self):
+        primary = "C[C@H](CC(O)C)CC(O)C"
+        candidate = "C[C@H](C[C@H](O)C)C[C@@H](O)C"
+        self.assertEqual(qc_smiles(primary)["quality_flag"], FLAG)
+        self.assertEqual(qc_smiles(candidate)["quality_flag"], "ok")
+        self.assert_rejected(primary, candidate, "unsupported_lost_stereo")
+
+    def test_same_ring_membership_alone_does_not_make_extra_stereo_necessary(self):
+        primary = "C[C@H]1C(C)C(C)(O)C(C)1"
+        candidate = "C[C@H]1[C@H](C)[C@](C)(O)[C@H](C)1"
+        self.assertEqual(qc_smiles(primary)["quality_flag"], FLAG)
+        self.assertEqual(qc_smiles(candidate)["quality_flag"], "ok")
+        self.assert_rejected(primary, candidate, "nonessential_ring_stereo")
+
+    def test_counterfactual_validation_does_not_mutate_either_observed_molecule(self):
+        deadline = monotonic() + 1
+        primary, _ = stereo_rescue._observe("CC1C[C@](C)(O)C1", deadline)
+        candidate, _ = stereo_rescue._observe(PAIRED, deadline)
+
+        def snapshot(graph):
+            return tuple(
+                (
+                    a.GetChiralTag(),
+                    tuple(
+                        (name, a.GetProp(name))
+                        for name in a.GetPropNames(
+                            includePrivate=True, includeComputed=True
+                        )
+                        if name != "__computedProps"
+                    ),
+                )
+                for a in graph.mol.GetAtoms()
+            )
+
+        before = snapshot(primary), snapshot(candidate)
+        self.assertGreater(
+            stereo_rescue._all_mappings(primary, candidate, deadline, 64, 20000), 1
+        )
+        self.assertEqual(before, (snapshot(primary), snapshot(candidate)))
 
     def test_mapping_and_search_bounds_refuse_without_selecting_a_first_match(self):
         result = self.assert_rejected(reason="mapping_budget_exceeded", max_mappings=1)

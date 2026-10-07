@@ -27,6 +27,7 @@ class _Refused(ValueError):
 
 @dataclass(frozen=True)
 class _Graph:
+    mol: Chem.Mol
     keys: tuple
     adjacency: tuple
     fragments: int
@@ -61,6 +62,18 @@ def _tokens(raw):
 
 def _edge(left, right):
     return tuple(sorted((left, right)))
+
+
+def _assign_cip(mol, deadline):
+    _check_time(deadline)
+    for item in (*mol.GetAtoms(), *mol.GetBonds()):
+        item.ClearProp("_CIPCode")
+    Chem.AssignStereochemistry(mol, cleanIt=True, force=True)
+    try:
+        rdCIPLabeler.AssignCIPLabels(mol, maxRecursiveIterations=MAX_CIP_ITERATIONS)
+    except Exception as exc:
+        raise _Refused("cip_assignment_failed") from exc
+    _check_time(deadline)
 
 
 def _observe(raw, deadline):
@@ -116,14 +129,9 @@ def _observe(raw, deadline):
     if covered != directions:
         raise _Refused("unsupported_directional_markup")
     Chem.SanitizeMol(mol)
-    Chem.AssignStereochemistry(mol, cleanIt=True, force=True)
     if mol.GetStereoGroups() or any(a.GetNumRadicalElectrons() for a in mol.GetAtoms()):
         raise _Refused("unsupported_smiles")
-    _check_time(deadline)
-    try:
-        rdCIPLabeler.AssignCIPLabels(mol, maxRecursiveIterations=MAX_CIP_ITERATIONS)
-    except Exception as exc:
-        raise _Refused("cip_assignment_failed") from exc
+    _assign_cip(mol, deadline)
     atoms = tuple(
         a.GetProp("_CIPCode") if a.HasProp("_CIPCode") else None for a in mol.GetAtoms()
     )
@@ -155,7 +163,7 @@ def _observe(raw, deadline):
             neighbors[b.GetOtherAtomIdx(idx)] = str(b.GetBondType()), b.GetIsAromatic()
         adjacency.append(neighbors)
     keys, adjacency, directed = tuple(keys), tuple(adjacency), frozenset(directed)
-    return _Graph(keys, adjacency, fragments, marked, directed, atoms, bonds), qc
+    return _Graph(mol, keys, adjacency, fragments, marked, directed, atoms, bonds), qc
 
 
 def _mapping_stereo(primary, candidate, mapping):
@@ -201,6 +209,42 @@ def _all_mappings(primary, candidate, deadline, max_mappings, max_states):
     mapping, used = {}, set()
     checked, states, signature = 0, 0, None
     last_conflict = None
+    lost = primary.raw_atoms - {
+        i for i, label in enumerate(primary.atom_stereo) if label
+    }
+    rings = tuple(frozenset(r) for r in primary.mol.GetRingInfo().AtomRings())
+    if (
+        not lost
+        or any(not any(i in r for r in rings) for i in lost)
+        or primary.raw_bonds - primary.bond_stereo.keys()
+    ):
+        raise _Refused("unsupported_lost_stereo")
+    dependencies = {}
+
+    def additions(current):
+        atoms, bonds = current
+        if any(label and edge not in primary.raw_bonds for edge, label in bonds):
+            raise _Refused("unrequested_bond_stereo")
+        for i, label in enumerate(atoms):
+            if not label or primary.atom_stereo[i] or i in primary.raw_atoms:
+                continue
+            partners = {
+                j for j in lost if any(i in ring and j in ring for ring in rings)
+            }
+            if not partners:
+                raise _Refused("unrelated_atom_stereo")
+            target = mapping[i]
+            if target not in dependencies:
+                copy = Chem.Mol(candidate.mol)
+                copy.GetAtomWithIdx(target).SetChiralTag(
+                    Chem.ChiralType.CHI_UNSPECIFIED
+                )
+                _assign_cip(copy, deadline)
+                dependencies[target] = {
+                    a.GetIdx() for a in copy.GetAtoms() if not a.HasProp("_CIPCode")
+                }
+            if not any(mapping[j] in dependencies[target] for j in partners):
+                raise _Refused("nonessential_ring_stereo")
 
     def visit(depth):
         nonlocal checked, states, signature, last_conflict
@@ -213,6 +257,7 @@ def _all_mappings(primary, candidate, deadline, max_mappings, max_states):
             if isinstance(current, str):
                 last_conflict = current
                 return
+            additions(current)
             if signature is not None and current != signature:
                 raise _Refused("ambiguous_stereo_mapping")
             signature = current
