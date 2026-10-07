@@ -26,11 +26,14 @@ export function Header({
     <header className="topbar">
       <a
         className="brand"
-        href="#/new-task"
+        href={disabled ? undefined : '#/new-task'}
+        role={disabled ? 'link' : undefined}
         aria-label="X-PatentSAR · 上传 PDF"
+        aria-disabled={disabled || undefined}
+        tabIndex={disabled ? -1 : undefined}
         onClick={(event) => {
           event.preventDefault();
-          onUpload();
+          if (!disabled) onUpload();
         }}
       >
         <img className="brand-symbol" src={brandMark} alt="" width={30} height={30} />

@@ -10,7 +10,7 @@ export function JobRecord({ job, expanded = false }: { job: Job; expanded?: bool
     <>
       {summary && <p className={`job-summary${job.error ? ' has-error' : ''}`}>{summary}</p>}
       <details className="job-options-record job-record" open={expanded ? true : undefined}>
-        <summary aria-label="提取阶段详情">
+        <summary aria-label="任务详情">
           任务详情
           <ChevronDown size={14} aria-hidden="true" />
         </summary>

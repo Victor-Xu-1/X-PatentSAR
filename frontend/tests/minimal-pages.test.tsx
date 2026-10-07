@@ -59,7 +59,7 @@ describe('minimal secondary page presentation without changing workflows', () =>
     expect(screen.getByRole('heading', { level: 1, name: '任务记录' })).toBeVisible();
     const stages = screen.getByRole('list', { name: '任务运行链路', hidden: true });
     expect(stages).not.toBeVisible();
-    fireEvent.click(screen.getByLabelText('提取阶段详情'));
+    fireEvent.click(screen.getByLabelText('任务详情'));
     expect(stages).toBeVisible();
     await userEvent.click(screen.getByRole('button', { name: project.title }));
     expect(onOpen).toHaveBeenCalledExactlyOnceWith(project.id);

@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { ChevronRight, FileText } from 'lucide-react';
 import type { Project } from '../../api/types';
 import type { Resource } from '../../hooks/useResource';
@@ -12,6 +13,7 @@ export function ProjectsPage({
   onOpen: (id: string) => void;
   onUpload: () => void;
 }) {
+  const metadataId = useId();
   const items = [...(resource.data?.items ?? [])].sort((a, b) =>
     b.updated_at.localeCompare(a.updated_at),
   );
@@ -36,12 +38,13 @@ export function ProjectsPage({
         />
       ) : (
         <ul className="recent-files" aria-label="最近专利文件">
-          {items.map((project) => (
+          {items.map((project, index) => (
             <li key={project.id}>
               <button
                 type="button"
                 className="recent-file"
                 aria-label={`打开 ${project.title}`}
+                aria-describedby={`${metadataId}-${index}-source ${metadataId}-${index}-acceptance ${metadataId}-${index}-updated`}
                 onClick={() => onOpen(project.id)}
               >
                 <span className="recent-file-icon" aria-hidden="true">
@@ -49,14 +52,19 @@ export function ProjectsPage({
                 </span>
                 <span className="recent-file-name">
                   <strong title={project.title}>{project.title}</strong>
-                  <small>
+                  <small id={`${metadataId}-${index}-source`}>
                     {project.pdf.available ? `${project.pdf.page_count} 页` : '原文未提供'}
                   </small>
                 </span>
-                <span className={`badge recent-file-acceptance ${project.acceptance.state}`}>
+                <span
+                  id={`${metadataId}-${index}-acceptance`}
+                  className={`badge recent-file-acceptance ${project.acceptance.state}`}
+                >
                   {acceptanceLabels[project.acceptance.state]}
                 </span>
-                <time dateTime={project.updated_at}>{dateText(project.updated_at)}</time>
+                <time id={`${metadataId}-${index}-updated`} dateTime={project.updated_at}>
+                  {dateText(project.updated_at)}
+                </time>
                 <ChevronRight size={16} className="recent-file-chevron" aria-hidden="true" />
               </button>
             </li>

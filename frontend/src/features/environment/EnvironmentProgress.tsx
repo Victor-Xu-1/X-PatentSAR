@@ -45,7 +45,15 @@ export function EnvironmentProgress({
         <>
           <div className="environment-section-header">
             <div className="environment-progress-heading">
-              <strong>{selected.action === 'install' ? '正在配置环境' : '正在检测环境'}</strong>
+              <strong>
+                {selected.status === 'queued'
+                  ? selected.action === 'install'
+                    ? '等待配置环境'
+                    : '等待检测环境'
+                  : selected.action === 'install'
+                    ? '正在配置环境'
+                    : '正在检测环境'}
+              </strong>
               <span className="environment-progress-count" aria-live="polite">
                 {selected.completed_components.length}/{selected.component_ids.length}
               </span>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Dialog } from '../../components/Dialog';
 import type {
   EnvironmentComponent,
@@ -32,9 +32,11 @@ export function InstallConfirmation({
   onConfirm: () => Promise<void>;
 }) {
   const [confirmed, setConfirmed] = useState(false);
+  const reasonId = useId();
   const configurationChanged = currentRevision !== plan.settings.revision;
   const stale = configurationChanged || !planCurrent;
   const missingLicense = plan.components.some((component) => !component.license.trim());
+  const showProblem = !busy && (stale || missingLicense);
   return (
     <Dialog
       title={plan.scope === 'complete' ? '确认完整环境部署' : '确认环境安装'}
@@ -86,8 +88,8 @@ export function InstallConfirmation({
             </li>
           ))}
         </ul>
-        {!busy && (stale || missingLicense) && (
-          <p className="error-notice">
+        {showProblem && (
+          <p id={reasonId} className="error-notice" role="alert">
             {stale
               ? configurationChanged
                 ? '安装目录配置已变化，请关闭并重新确认。'
@@ -99,6 +101,7 @@ export function InstallConfirmation({
           <input
             data-initial-focus
             type="checkbox"
+            aria-describedby={showProblem ? reasonId : undefined}
             checked={confirmed}
             onChange={(e) => setConfirmed(e.target.checked)}
             disabled={busy || stale || missingLicense}

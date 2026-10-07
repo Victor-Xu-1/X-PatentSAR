@@ -22,7 +22,7 @@ function tableProps() {
 describe('result column width changes preserve real row behavior', () => {
   it.each([
     ['Compound', 120, 88],
-    ['结构', 112, 88],
+    ['结构', 136, 88],
   ])(
     'resizes the %s column independently without changing selection',
     async (label, initial, min) => {

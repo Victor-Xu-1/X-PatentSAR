@@ -85,7 +85,7 @@ describe('bounded visual sidecar page contracts', () => {
     const onOpen = vi.fn();
     render(<JobsPage projects={[project]} ready onOpen={onOpen} />);
     await screen.findByRole('button', { name: project.title });
-    const summary = screen.getByLabelText('提取阶段详情');
+    const summary = screen.getByLabelText('任务详情');
     expect(summary).toHaveTextContent('任务详情');
     expect(summary.parentElement?.tagName).toBe('DETAILS');
     expect(summary.parentElement).not.toHaveAttribute('open');

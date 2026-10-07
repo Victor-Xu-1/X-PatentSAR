@@ -87,7 +87,7 @@ export function StorageLocations({
         ))}
       </fieldset>
       {conflict && (
-        <div className="conflict">
+        <div className="conflict" role="alert">
           服务器配置已更新，未覆盖你的输入。当前存储位置：
           <ul className="break-word">
             {storageLocationFields.map(({ key, label }) => (

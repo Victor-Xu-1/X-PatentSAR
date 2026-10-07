@@ -15,29 +15,35 @@
 }
 .column-menu-button {
   position: absolute;
-  right: 5px;
-  top: 50%;
-  transform: translateY(-50%);
+  /* The whole data heading is a target; its resize strip stays independent. */
+  inset: 0 8px 0 0;
   border: 0;
   padding: 0;
   min-height: 24px;
-  width: 20px;
+  width: auto;
   background: transparent;
   color: var(--faint);
 }
-.column-menu-button:hover,
-.column-menu-active {
+.results-table .column-menu-button:hover,
+.results-table .column-menu-button:active,
+.results-table .column-menu-active {
   color: var(--primary);
-  background: var(--surface);
+  background: transparent;
 }
-.results-table th.check-col .column-menu-button {
-  right: 3px;
-  width: 13px;
+.column-menu-button > svg {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.results-table th:has(.column-menu-button:hover),
+.results-table th:has(.column-menu-active) {
+  background: var(--surface-hover);
 }
 .column-menu {
   position: fixed;
   margin: 0;
-  z-index: 20;
+  z-index: 60;
   width: min(280px, calc(100vw - 16px));
   max-height: min(550px, calc(100vh - 16px));
   overflow: auto;

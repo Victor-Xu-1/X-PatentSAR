@@ -2,6 +2,37 @@ import { useEffect, useId, useRef } from 'react';
 import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+function focusInitialControl(dialog: HTMLDialogElement) {
+  const control = dialog.querySelector<HTMLElement>('[data-initial-focus]');
+  if (!control || control.matches(':disabled') || control.closest('[hidden], [inert]'))
+    return false;
+  control.focus();
+  return document.activeElement === control;
+}
+
+function awaitInitialControl(dialog: HTMLDialogElement) {
+  if (focusInitialControl(dialog)) return () => {};
+  const initialFocus = document.activeElement;
+  const intents = ['focusin', 'pointerdown', 'keydown'] as const;
+  const observer = new MutationObserver(() => {
+    if (document.activeElement !== initialFocus || focusInitialControl(dialog)) stop();
+  });
+  function stop() {
+    observer.disconnect();
+    for (const event of intents) dialog.removeEventListener(event, stop);
+  }
+  for (const event of intents) dialog.addEventListener(event, stop);
+  // The correction form arrives after the modal's loading state. Observe only
+  // until its initial control is usable, or the user chooses where to interact.
+  observer.observe(dialog, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['data-initial-focus', 'disabled', 'hidden', 'inert', 'tabindex'],
+  });
+  return stop;
+}
+
 export function Dialog({
   title,
   children,
@@ -21,13 +52,15 @@ export function Dialog({
   const titleId = useId();
   useEffect(() => {
     const dialog = ref.current;
+    if (!dialog) return;
     const previous = document.activeElement;
     const scope = previous?.closest('[data-dialog-focus-scope]');
     const focusKey = previous instanceof HTMLElement ? previous.dataset.focusKey : undefined;
-    dialog?.showModal();
-    dialog?.querySelector<HTMLElement>('[data-initial-focus]')?.focus();
+    dialog.showModal();
+    const stopInitialFocus = awaitInitialControl(dialog);
     return () => {
-      dialog?.close();
+      stopInitialFocus();
+      dialog.close();
       if (previous instanceof HTMLElement && previous.isConnected) {
         previous.focus();
       } else if (scope?.isConnected) {

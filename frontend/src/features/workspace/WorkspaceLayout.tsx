@@ -4,6 +4,7 @@ import { Maximize2, Minimize2, PanelLeftClose, PanelLeftOpen } from 'lucide-reac
 import { defaultLayout, normalizeLayout } from '../../model/layout';
 import type { LayoutState } from '../../model/layout';
 import { ResizeHandle } from '../../components/ResizeHandle';
+import { containTab } from '../../components/focus';
 
 export function WorkspaceLayout({
   layout: input,
@@ -39,22 +40,7 @@ export function WorkspaceLayout({
         onChange({ ...layout, fullscreen: false });
         fullButton.current?.focus();
       }
-      if (e.key === 'Tab') {
-        const controls = Array.from(
-          root.current?.querySelectorAll<HTMLElement>(
-            'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex="0"]',
-          ) ?? [],
-        ).filter((item) => item.getClientRects().length > 0);
-        const first = controls[0],
-          last = controls.at(-1);
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last?.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first?.focus();
-        }
-      }
+      containTab(e, root.current);
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);

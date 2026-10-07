@@ -72,38 +72,43 @@ export function PageControls({
       </button>
       {toolsOpen && (
         <Dialog title="文档工具" onClose={() => setToolsOpen(false)}>
-          <div className="dialog-body zoom-controls">
-            <button
-              type="button"
-              className="icon-button"
-              aria-label="缩小原始文档"
-              disabled={disabled || zoom <= 0.5}
-              onClick={() => onZoom(Math.max(0.5, zoom - 0.25))}
-            >
-              <Minus size={15} />
-            </button>
-            <output aria-label="文档缩放比例" title="100% 表示适配当前栏宽；拖动栏宽时自动重新适配">
-              {Math.round(zoom * 100)}%
-            </output>
-            <button
-              type="button"
-              className="icon-button"
-              aria-label="放大原始文档"
-              disabled={disabled || zoom >= 2}
-              onClick={() => onZoom(Math.min(2, zoom + 0.25))}
-            >
-              <Plus size={15} />
-            </button>
-            <button
-              type="button"
-              className="icon-button"
-              aria-label="重置文档缩放"
-              title="恢复适配当前可用宽度（100%）"
-              disabled={disabled || zoom === 1}
-              onClick={() => onZoom(1)}
-            >
-              <RotateCcw size={15} />
-            </button>
+          <div className="dialog-body">
+            <fieldset className="zoom-controls" aria-label="文档缩放">
+              <button
+                type="button"
+                className="icon-button"
+                aria-label="缩小原始文档"
+                disabled={disabled || zoom <= 0.5}
+                onClick={() => onZoom(Math.max(0.5, zoom - 0.25))}
+              >
+                <Minus size={15} />
+              </button>
+              <output
+                aria-label="文档缩放比例"
+                title="100% 表示适配当前栏宽；拖动栏宽时自动重新适配"
+              >
+                {Math.round(zoom * 100)}%
+              </output>
+              <button
+                type="button"
+                className="icon-button"
+                aria-label="放大原始文档"
+                disabled={disabled || zoom >= 2}
+                onClick={() => onZoom(Math.min(2, zoom + 0.25))}
+              >
+                <Plus size={15} />
+              </button>
+              <button
+                type="button"
+                className="icon-button"
+                aria-label="重置文档缩放"
+                title="恢复适配当前可用宽度（100%）"
+                disabled={disabled || zoom === 1}
+                onClick={() => onZoom(1)}
+              >
+                <RotateCcw size={15} />
+              </button>
+            </fieldset>
           </div>
         </Dialog>
       )}
