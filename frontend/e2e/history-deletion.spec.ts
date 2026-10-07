@@ -12,6 +12,59 @@ const isolated = process.env.PATENTSAR_E2E_HISTORY_MUTATIONS === 'synthetic-isol
 const baseURL = process.env.PATENTSAR_E2E_BASE_URL;
 const output = process.env.PATENTSAR_E2E_OUTPUT_DIR;
 
+test('synthetic history controls and dialogs stay accessible at desktop and narrow widths', async ({
+  page,
+}, info) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  for (const viewport of [
+    { width: 1280, height: 800 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto('/#/projects');
+    const fileButton = page.getByRole('button', {
+      name: '已生成文件 CI controlled historical adapter fixture (not extraction evidence)',
+      exact: true,
+    });
+    await expect(fileButton).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      viewport.width,
+    );
+    await fileButton.click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    const bounds = await dialog.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(viewport.width);
+    expect(bounds!.height).toBeLessThanOrEqual(viewport.height);
+    await expect(dialog.getByRole('button', { name: '关闭', exact: true })).toBeVisible();
+    for (let step = 0; step < 6; step++) {
+      await page.keyboard.press('Tab');
+      expect(await dialog.evaluate((element) => element.contains(document.activeElement))).toBe(
+        true,
+      );
+    }
+    await page.screenshot({
+      path: info.outputPath(`history-dialog-${viewport.width}.png`),
+      fullPage: true,
+    });
+    await page.keyboard.press('Escape');
+    await expect(fileButton).toBeFocused();
+    await page.goto('/#/jobs');
+    await expect(page.getByRole('button', { name: '全部记录', exact: true })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      viewport.width,
+    );
+    await page.screenshot({
+      path: info.outputPath(`history-jobs-${viewport.width}.png`),
+      fullPage: true,
+    });
+  }
+  expect(errors).toEqual([]);
+});
+
 // Only the controller's synthetic fixture is authorized. No copied patent,
 // production lookup, success interception, service startup or model execution.
 test.beforeEach(async ({ page }) => {
