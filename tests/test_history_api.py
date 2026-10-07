@@ -121,8 +121,9 @@ class HistoryAPITests(PredictionFixture, unittest.TestCase):
 
     def test_removed_producer_job_preserves_current_properties_and_raw_identity(self):
         with self.client() as client:
-            row, output = self.terminal_job(client)
             service = client.app.state.workspace
+            self.service = service
+            row, output, _ = self.draft()
             project = service.store.project(self.project.id)
             raw = service.store.compound(self.project.id, "Compound 1")
             source = correction_source_fingerprint(project, raw)
@@ -131,6 +132,12 @@ class HistoryAPITests(PredictionFixture, unittest.TestCase):
                 "Compound 1",
                 controlled_summary(source, "CCO", row["id"]),
             )
+            with service.store.connect(write=True) as connection:
+                connection.execute(
+                    "UPDATE jobs SET status='complete',finished_at=? WHERE id=?",
+                    (now(), row["id"]),
+                )
+            row = service.store.job(row["id"])
             endpoint = f"/api/v1/projects/{self.project.id}/results"
             before = client.get(endpoint).json()["items"]
             self.assertEqual(before[0]["admet"]["status"], "complete")
@@ -253,19 +260,35 @@ class HistoryAPITests(PredictionFixture, unittest.TestCase):
             entry = self.entry(client, "project", self.project.id)
             futures = [pool.submit(self.mutate, client, entry) for _ in range(2)]
             responses = [future.result(timeout=10) for future in futures]
-            self.assertEqual(
-                [response.status_code for response in responses], [200, 200]
+            # The nonblocking shared analysis lease may conservatively reject
+            # one concurrent contender. Every winner has the same single effect;
+            # a subsequent explicit replay is idempotent.
+            self.assertIn(200, [response.status_code for response in responses])
+            self.assertTrue(
+                all(response.status_code in (200, 409) for response in responses)
             )
-            deleted = responses[0].json()
-            self.assertEqual(responses[1].json(), deleted)
+            deleted = next(
+                response.json() for response in responses if response.status_code == 200
+            )
+            self.assertEqual(self.mutate(client, entry).json(), deleted)
             futures = [
                 pool.submit(self.mutate, client, deleted, "restore") for _ in range(2)
             ]
             responses = [future.result(timeout=10) for future in futures]
-            self.assertEqual(
-                [response.status_code for response in responses], [200, 200]
+            self.assertIn(200, [response.status_code for response in responses])
+            self.assertTrue(
+                all(response.status_code in (200, 409) for response in responses)
             )
-            self.assertEqual(responses[0].json(), responses[1].json())
+            restored = next(
+                response.json() for response in responses if response.status_code == 200
+            )
+            self.assertEqual(self.mutate(client, deleted, "restore").json(), restored)
+            with client.app.state.workspace.store.connect() as connection:
+                generation = connection.execute(
+                    "SELECT generation FROM history_tombstones WHERE kind='project' AND id=?",
+                    (self.project.id,),
+                ).fetchone()[0]
+            self.assertEqual(generation, 2)
             # A replay from a previous delete/restore cycle must not remove an
             # item restored with a newer visibility generation.
             self.assertEqual(self.mutate(client, entry).status_code, 409)
