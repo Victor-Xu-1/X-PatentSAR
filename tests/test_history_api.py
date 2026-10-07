@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 
 from test_prediction_support import PredictionFixture, controlled_summary
 
@@ -229,3 +230,42 @@ class HistoryAPITests(PredictionFixture, unittest.TestCase):
             self.assertEqual(
                 client.get("/api/v1/history?kind=project").status_code, 401
             )
+
+    def test_real_shared_analysis_lease_blocks_project_delete_without_model_loading(
+        self,
+    ):
+        with self.client() as client:
+            entry = self.entry(client, "project", self.project.id)
+            with client.app.state.analysis._operation(None):
+                checked = self.entry(client, "project", self.project.id)
+                self.assertFalse(checked["can_delete"])
+                rejected = self.mutate(client, entry)
+                self.assertEqual(rejected.status_code, 409, rejected.text)
+            self.assertIsNone(
+                self.entry(client, "project", self.project.id)["deleted_at"]
+            )
+            self.assertEqual(self.mutate(client, entry).status_code, 200)
+
+    def test_concurrent_identical_confirmation_has_one_effect_and_rejects_old_cycles(
+        self,
+    ):
+        with self.client() as client, ThreadPoolExecutor(max_workers=2) as pool:
+            entry = self.entry(client, "project", self.project.id)
+            futures = [pool.submit(self.mutate, client, entry) for _ in range(2)]
+            responses = [future.result(timeout=10) for future in futures]
+            self.assertEqual(
+                [response.status_code for response in responses], [200, 200]
+            )
+            deleted = responses[0].json()
+            self.assertEqual(responses[1].json(), deleted)
+            futures = [
+                pool.submit(self.mutate, client, deleted, "restore") for _ in range(2)
+            ]
+            responses = [future.result(timeout=10) for future in futures]
+            self.assertEqual(
+                [response.status_code for response in responses], [200, 200]
+            )
+            self.assertEqual(responses[0].json(), responses[1].json())
+            # A replay from a previous delete/restore cycle must not remove an
+            # item restored with a newer visibility generation.
+            self.assertEqual(self.mutate(client, entry).status_code, 409)
