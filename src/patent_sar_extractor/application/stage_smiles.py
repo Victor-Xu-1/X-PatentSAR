@@ -164,6 +164,8 @@ def execute_smiles(state: PipelineContext) -> None:
             state.bind_json,
             "--output",
             state.smiles_json,
+            "--csv-output",
+            os.path.join(smiles_dir, "smiles_results.csv"),
             "--engine",
             ocsr_options["engine"],
             "--fallback",
@@ -174,6 +176,7 @@ def execute_smiles(state: PipelineContext) -> None:
             smiles_cache,
             "--no-preprocess",
             "--retry-normalization",
+            "--continue-on-scientific-errors",
             "--jobs",
             str(getattr(state.args, "smiles_workers", 1) or 1),
         ]
