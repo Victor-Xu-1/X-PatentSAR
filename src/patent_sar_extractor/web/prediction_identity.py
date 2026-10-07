@@ -9,6 +9,7 @@ from .analysis_chemistry import MAX_SMILES, canonical_smiles
 from .correction_chemistry import molfile_representation, validate_structure
 from .errors import WebError
 from .models import Compound
+from .source_epoch import stale_source_epoch
 
 SOURCE_STEREO_FLAGS = frozenset({"stereo_source_conflict", "stereo_source_ambiguous"})
 
@@ -25,7 +26,8 @@ def source_stereo_blocked(compound: Compound) -> bool:
         # validated graph change, never a coordinate-only/SMILES-alias edit.
         return False
     return (
-        recognition.quality_flag in SOURCE_STEREO_FLAGS
+        stale_source_epoch(compound)
+        or recognition.quality_flag in SOURCE_STEREO_FLAGS
         or bool(SOURCE_STEREO_FLAGS.intersection(compound.flags))
         or (
             recognition.stereochemistry is not None

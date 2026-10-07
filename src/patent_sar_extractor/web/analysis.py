@@ -16,6 +16,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from patent_sar_extractor import contracts as core_contracts
 from patent_sar_extractor.core.ocsr.smiles_qc import qc_smiles
 from patent_sar_extractor.core.ocsr.stereo_evidence import (
     observe_stereo_symbols,
@@ -411,6 +412,7 @@ class AnalysisService:
                     1,
                     project_id,
                     compound_id,
+                    core_contracts.STEREO_EVIDENCE_VERSION,
                     hashlib.sha256(data).hexdigest(),
                     identity,
                     model,

@@ -6,6 +6,7 @@ import os
 import time
 from pathlib import Path
 
+from patent_sar_extractor import contracts as core_contracts
 from patent_sar_extractor.application.stage_cache import (
     _bindings_ocsr_digest,
     _fingerprint_matches,
@@ -94,6 +95,7 @@ def execute_smiles(state: PipelineContext) -> None:
         params={
             **_production_smiles_ocr_options(),
             "ocsr_observation_version": OCSR_OBSERVATION_VERSION,
+            "stereo_evidence_version": core_contracts.STEREO_EVIDENCE_VERSION,
             "smiles_schema_version": SMILES_SCHEMA_VERSION,
             "decimer_runtime_fingerprint": DECIMEREngine(
                 env_extra=worker_environment

@@ -26,6 +26,7 @@ from .errors import WebError
 from .files import MAX_ARTIFACT_BYTES, MAX_RECORDS, SafeFiles, private_directory
 from .models import STAGES, Stage
 from .processes import RunSpec
+from .source_epoch import EPOCH_PARAM, smiles_epoch_current
 from .stages import read_summary, recorded_stage_order, stages_from_summary
 from .storage import Store, encode
 
@@ -652,6 +653,12 @@ class CheckpointCopy:
                     "unsafe_checkpoint",
                     "Checkpoint OCR reference is outside its approved artifact.",
                 )
+        if stage == "smiles" and (
+            type(fp["params"].get(EPOCH_PARAM)) is not int
+            or fp["params"][EPOCH_PARAM] != core.STEREO_EVIDENCE_VERSION
+            or not smiles_epoch_current(payload)
+        ):
+            return None
         for dependency, expected in fp["dependency_sha256"].items():
             relative = str(self.files.relative(dependency))
             if relative not in DEPENDENCIES or relative not in self.content:

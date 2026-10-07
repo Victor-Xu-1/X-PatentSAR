@@ -8,6 +8,7 @@ from typing import Any
 from patent_sar_extractor import contracts as core
 
 from .models import STAGES, Acceptance
+from .source_epoch import smiles_epoch_current
 
 ARTIFACTS = {
     "summary": (
@@ -55,7 +56,9 @@ ARTIFACTS = {
 
 def current(payload: object, name: str) -> bool:
     _, schema, version = ARTIFACTS[name]
-    return core.artifact_identity_matches(payload, schema, version)
+    return core.artifact_identity_matches(payload, schema, version) and (
+        name != "smiles" or smiles_epoch_current(payload, allow_unavailable=True)
+    )
 
 
 def public_error_text(value: object) -> str:
@@ -138,7 +141,12 @@ def authority(
         return Acceptance(state="not_run"), False
     # Missing downstream artifacts are normal at checkpoints and strict early
     # stops. Historical identity is determined only by evidence that is present.
-    if not all(current(payloads[name], name) for name in present):
+    if not all(
+        core.artifact_identity_matches(
+            payloads[name], ARTIFACTS[name][1], ARTIFACTS[name][2]
+        )
+        for name in present
+    ):
         return Acceptance(
             state="historical",
             errors=[
@@ -197,6 +205,13 @@ def authority(
                 "Current artifact shapes or production execution modes do not satisfy formal acceptance."
             ],
         ), False
+    if not smiles_epoch_current(payloads["smiles"]):
+        return Acceptance(
+            state="historical",
+            errors=[
+                "Source stereochemistry evidence needs current-epoch recertification; old QA is not current acceptance."
+            ],
+        ), False
     from patent_sar_extractor.application.activity_policy import (
         _activity_acceptance_errors,
     )
@@ -234,6 +249,16 @@ def authority(
     if source_errors:
         return Acceptance(
             state="failed", errors=[public_error_text(e) for e in source_errors[:100]]
+        ), False
+    from patent_sar_extractor.application.smiles_policy import _smiles_acceptance_errors
+
+    recognition_errors = _smiles_acceptance_errors(
+        payloads["smiles"]["records"], payloads["bindings"]
+    )
+    if recognition_errors:
+        return Acceptance(
+            state="failed",
+            errors=[public_error_text(error) for error in recognition_errors[:100]],
         ), False
     qa = payloads["qa"]
     decision = qa.get("acceptance")
