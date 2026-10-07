@@ -21,3 +21,7 @@
   font-size: 12px;
   white-space: nowrap;
 }
+.lead-badge.lead-risk-review {
+  color: #80531f;
+  background: #fff3df;
+}

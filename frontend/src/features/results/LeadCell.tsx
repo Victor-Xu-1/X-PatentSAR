@@ -15,7 +15,8 @@ function assessmentTitle(assessment: LeadAssessment | null | undefined): string 
   return [
     [leadColumnValue(assessment), statusLabels[assessment.status]].filter(Boolean).join(' · '),
     assessment.score === null ? '' : `候选优先级 ${assessment.score.toFixed(1)} / 100`,
-    `活性覆盖 ${(assessment.activity_coverage * 100).toFixed(0)}%`,
+    `可比活性覆盖 ${(assessment.activity_coverage * 100).toFixed(0)}%`,
+    assessment.risk_review_required ? '高模型风险待复核，不代表已验证安全。' : '',
     ...assessment.reasons.map((reason) => `依据：${reason}`),
     ...assessment.warnings.map((warning) => `注意：${warning}`),
     '仅供研究优先排序，不代表实验验证或安全、有效性结论。',
@@ -34,7 +35,15 @@ export function LeadCell({ assessment }: { assessment: LeadAssessment | null | u
       data-lead-status={assessment?.status ?? 'not_run'}
       title={assessmentTitle(assessment)}
     >
-      <span className={label ? 'lead-badge' : stale ? 'lead-stale' : 'lead-placeholder'}>
+      <span
+        className={
+          label
+            ? `lead-badge${assessment?.risk_review_required ? ' lead-risk-review' : ''}`
+            : stale
+              ? 'lead-stale'
+              : 'lead-placeholder'
+        }
+      >
         {label || (stale ? '待更新' : '—')}
       </span>
     </td>

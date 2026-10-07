@@ -145,7 +145,7 @@ class LeadScoringTests(unittest.TestCase):
         self.assertEqual(before, [row.model_dump() for row in rows])
         self.assertTrue(
             all(
-                item.review_only and item.policy_version == "1"
+                item.review_only and item.policy_version == "2"
                 for item in first.values()
             )
         )
@@ -371,7 +371,7 @@ class LeadScoringTests(unittest.TestCase):
             "unranked",
         )
 
-    def test_each_core_risk_direction_lower_and_high_risk_not_recommended(self):
+    def test_each_core_risk_direction_lower_and_review_is_explicit(self):
         for key in ("hERG", "AMES", "DILI", "ClinTox"):
             with self.subTest(key=key):
                 row = compound()
@@ -386,10 +386,42 @@ class LeadScoringTests(unittest.TestCase):
                 )
                 result = evaluate([row, risky])
                 self.assertEqual(result[risky.id].status, "not_selected")
+                self.assertTrue(result[risky.id].risk_review_required)
                 self.assertLess(
                     result[risky.id].components["admet"],
                     result[row.id].components["admet"],
                 )
+
+    def test_high_model_risk_cohort_is_prioritized_with_review_not_experimentally_vetoed(
+        self,
+    ):
+        rows = [compound(index) for index in range(1, 13)]
+        for row in rows:
+            row.admet.endpoints["DILI"] = 0.99
+        selected = [
+            value for value in evaluate(rows).values() if value.status == "selected"
+        ]
+        self.assertEqual(len(selected), 8)
+        self.assertTrue(all(value.risk_review_required for value in selected))
+        self.assertTrue(
+            all(
+                any("待复核" in message for message in value.warnings)
+                for value in selected
+            )
+        )
+        self.assertTrue(all(row.admet.endpoints["DILI"] == 0.99 for row in rows))
+
+    def test_single_core_liability_is_not_averaged_away_and_increasing_risk_is_monotonic(
+        self,
+    ):
+        from patent_sar_extractor.web.lead_chemistry import admet_score
+
+        baseline = compound().admet.endpoints
+        scores = [
+            admet_score({**baseline, "DILI": value}) for value in (0.05, 0.4, 0.8, 0.99)
+        ]
+        self.assertEqual(scores, sorted(scores, reverse=True))
+        self.assertGreater(scores[0] - scores[-1], 20)
 
     def test_absorption_higher_and_cyp_lower_are_beneficial(self):
         from patent_sar_extractor.web.lead_chemistry import admet_score
@@ -713,6 +745,7 @@ class LeadScoringTests(unittest.TestCase):
             {"reasons": ["one\ntwo"]},
             {"reasons": ["x"] * 13},
             {"review_only": False},
+            {"risk_review_required": "true"},
         ):
             with self.subTest(values=values), self.assertRaises(ValidationError):
                 LeadAssessment(**values)

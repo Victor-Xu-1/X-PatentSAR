@@ -8,7 +8,7 @@ from pydantic import Field, field_validator, model_validator
 
 from .dto import DTO
 
-LEAD_POLICY_VERSION: Literal["1"] = "1"
+LEAD_POLICY_VERSION: Literal["2"] = "2"
 
 LeadStatus = Literal[
     "not_run", "stale", "selected", "not_selected", "ineligible", "unranked"
@@ -32,7 +32,8 @@ class LeadAssessment(DTO):
     warnings: list[str] = Field(default_factory=list, max_length=12)
     scaffold: str | None = Field(default=None, max_length=2048, strict=True)
     nearest_similarity: LeadFraction | None = None
-    policy_version: Literal["1"] = LEAD_POLICY_VERSION
+    risk_review_required: bool = Field(default=False, strict=True)
+    policy_version: Literal["2"] = LEAD_POLICY_VERSION
     review_only: Literal[True] = True
 
     @field_validator("reasons", "warnings")

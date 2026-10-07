@@ -60,7 +60,10 @@ def validated_properties(compound: Compound) -> dict[str, float] | None:
 
 
 def admet_score(endpoints: dict[str, float]) -> float:
-    safety = sum(1 - endpoints[key] for key in RISK_ENDPOINTS) / len(RISK_ENDPOINTS)
+    protection = [1 - endpoints[key] for key in RISK_ENDPOINTS]
+    # A strong single liability cannot disappear in an average, but a model
+    # probability is not a validated experimental exclusion threshold.
+    safety = 0.5 * sum(protection) / len(protection) + 0.5 * min(protection)
     absorption = sum(endpoints[key] for key in ABSORPTION_ENDPOINTS) / 2
     metabolism = sum(1 - endpoints[key] for key in CYP_ENDPOINTS) / len(CYP_ENDPOINTS)
     return 100 * (0.6 * safety + 0.2 * absorption + 0.2 * metabolism)

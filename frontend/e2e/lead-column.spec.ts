@@ -44,6 +44,8 @@ async function controlledWorkspace(page: Page) {
     ...row,
     lead: {
       ...assessment,
+      policy_version: '2',
+      risk_review_required: index === 0,
       status:
         index < 8
           ? 'selected'
@@ -139,6 +141,8 @@ test('controlled Lead column retains backend ranks, Excel controls, pagination a
   const table = page.getByRole('table');
   const leadCells = table.locator('tbody td[data-column="lead"]');
   await expect(leadCells.first()).toHaveText('Lead 8');
+  await expect(leadCells.first().locator('.lead-badge')).toHaveClass(/lead-risk-review/);
+  await expect(leadCells.first()).toHaveAttribute('title', /高模型风险待复核/);
   await expect(leadCells.nth(1)).toHaveText('Lead 1');
   await expect(leadCells.nth(8)).toHaveText('待更新');
   await expect(leadCells.nth(9)).toHaveText('—');
