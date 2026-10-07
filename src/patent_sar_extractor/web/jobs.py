@@ -835,4 +835,5 @@ class JobQueue:
                 "admet_incomplete",
                 "Source-bound predictions are missing or stale; task completion was withheld.",
             )
+        self.service.leads.confirm(spec.project_id, job_id)
         return stage

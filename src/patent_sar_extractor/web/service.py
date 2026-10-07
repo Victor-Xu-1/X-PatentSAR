@@ -17,6 +17,8 @@ from .corrections import Corrections, CorrectionSaved
 from .descriptor_storage import DescriptorStore
 from .errors import WebError
 from .files import SafeFiles
+from .lead_storage import LeadStore
+from .leads import LeadService
 from .models import (
     Acceptance,
     Compound,
@@ -51,9 +53,16 @@ class WorkspaceService:
         )
         self.predictions = PredictionStore(self.store)
         self.descriptors = DescriptorStore(self.store)
+        self.lead_store = LeadStore(self.store)
         self.result_queries = ResultQueries(
-            self.store, self._current_project, self.predictions, self.descriptors
+            self.store,
+            self._current_project,
+            self.predictions,
+            self.descriptors,
+            self.lead_store,
         )
+        self.leads = LeadService(self)
+        self.corrections.after_save = self.leads.after_correction
 
     def _current_project(self, project_id: str) -> dict[str, Any]:
         row = self.store.project(project_id)

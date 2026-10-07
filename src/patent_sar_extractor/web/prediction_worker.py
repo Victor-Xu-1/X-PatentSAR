@@ -19,6 +19,7 @@ from .descriptor_fields import compute_descriptors, descriptor_engine
 from .descriptor_models import DescriptorEngine, DescriptorSummary
 from .dto import Error
 from .errors import WebError
+from .lead_endpoints import LEAD_ENDPOINTS, selected_endpoints
 from .models import Stage, StageProgress
 from .prediction_fields import selected_metrics
 from .prediction_identity import compound_prediction_eligible
@@ -133,6 +134,7 @@ def run_predictions(
     pending = []
     if not inputs:
         publish("empty")
+        run_lead_phase(service, row, root, core_completed, cancel)
         return
     publish("running")
     try:
@@ -168,7 +170,9 @@ def run_predictions(
                     ),
                 )
             current = previous[compound_id]
-            if current.status == "complete":
+            if current.status == "complete" and set(current.endpoints) == set(
+                LEAD_ENDPOINTS
+            ):
                 completed += 1
                 hits += 1
             else:
@@ -222,6 +226,7 @@ def run_predictions(
                         PredictionSummary(
                             status="complete",
                             properties=selected_metrics(observation),
+                            endpoints=selected_endpoints(observation),
                             source_fingerprint=source,
                             smiles_sha256=smiles_digest(smiles),
                             engine=PredictionEngine.model_validate(
@@ -263,6 +268,63 @@ def run_predictions(
                 )
         publish("failed", min(max(1, attempted), total - completed))
         raise
+    run_lead_phase(service, row, root, core_completed, cancel)
+
+
+def run_lead_phase(
+    service: WorkspaceService,
+    row: dict,
+    root: Path,
+    core_completed: bool,
+    cancel: threading.Event | None,
+) -> None:
+    """No new carrier/model: one bounded CPU tail after the model session closes."""
+    previous, _ = read_admet_stage(row, root)
+    if previous is None or previous.progress is None:
+        raise WebError(
+            502,
+            "lead_properties_incomplete",
+            "Lead requires completed property evidence.",
+        )
+    total = previous.progress.total
+    started = time.monotonic()
+
+    def publish(status: str) -> None:
+        failed = status == "failed"
+        completed = total if not failed else int(total > 0)
+        write_admet_stage(
+            root,
+            row,
+            Stage(
+                name="admet",
+                status=status,
+                count=completed - int(failed and total > 0),
+                duration_seconds=time.monotonic() - started,
+                skipped=previous.skipped,
+                progress=StageProgress(
+                    phase="lead",
+                    completed=completed,
+                    total=total,
+                    cache_hits=previous.progress.cache_hits if not failed else 0,
+                    failures=int(failed and total > 0),
+                    device="cpu",
+                    peak_rss_mb=None,
+                ),
+            ),
+            core_completed=core_completed,
+        )
+
+    publish("running")
+    try:
+        service.leads.refresh(
+            row["project_id"],
+            job_id=row["id"],
+            cancel=cancel.is_set if cancel is not None else None,
+        )
+    except Exception:
+        publish("failed")
+        raise
+    publish("ok" if total else "empty")
 
 
 def main() -> None:

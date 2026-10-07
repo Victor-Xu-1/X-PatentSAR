@@ -15,6 +15,7 @@ from .activity_focus_models import ActivityFocus, ActivitySourceKey
 from .activity_rank_models import ActivityStrengthScale, RankValue
 from .descriptor_models import DescriptorSummary
 from .dto import DTO, Error
+from .lead_models import LeadAssessment
 from .prediction_models import PredictionSummary
 from .property_values import PropertyOverrides, validate_overrides
 from .stereochemistry_models import StereoEvidence
@@ -151,6 +152,9 @@ class Compound(DTO):
     review: Review | None = None
     flags: list[str] = Field(default_factory=list)
     admet: PredictionSummary | None = None
+    lead: LeadAssessment | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
     descriptors: DescriptorSummary | None = Field(
         default=None, exclude_if=lambda value: value is None
     )
@@ -210,7 +214,7 @@ class Acceptance(DTO):
 
 
 class StageProgress(DTO):
-    phase: Literal["recognition", "properties"] | None = None
+    phase: Literal["recognition", "properties", "lead"] | None = None
     completed: int = Field(ge=0, le=1_000_000, strict=True)
     total: int = Field(ge=0, le=1_000_000, strict=True)
     cache_hits: int = Field(ge=0, le=1_000_000, strict=True)

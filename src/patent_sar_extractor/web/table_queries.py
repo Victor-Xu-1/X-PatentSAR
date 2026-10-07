@@ -25,7 +25,7 @@ def validate_columns(
     sort_band: str = "",
 ) -> None:
     allowed = (
-        {"compound", "structure", "source", "edit"}
+        {"compound", "structure", "lead", "source", "edit"}
         | {f"activity:{column.id}" for column in catalog}
         | {f"property:{key}" for key in METRIC_KEYS}
     )

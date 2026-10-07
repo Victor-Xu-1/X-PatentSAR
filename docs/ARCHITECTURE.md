@@ -22,7 +22,8 @@ flowchart LR
     Q --> R[Owned research phase after core cleanup]
     R --> D[Five independent RDKit calculations]
     D --> M[Pinned LogS model inference]
-    M --> W[PDF and editable table]
+    M --> P[Bounded project-wide Lead prioritization]
+    P --> W[PDF and editable table]
 ```
 
 The formal CLI executes **classify → locate → structures → bind → activity →
@@ -171,6 +172,36 @@ into success. Reads/filters do not compute properties or start a model.
 Raw evidence, overrides and CSV calculation/model provenance remain separate.
 Graph/source changes invalidate old observations. Coordinate-only edits do not
 invoke recognition or inference; actual graph changes target only that compound.
+
+## Lead nomination, not scientific acceptance
+
+The same research worker selects target-eight candidates after model cleanup.
+Pure activity/chemistry/scoring modules separate exact-context percentiles and
+coverage, validated ADMET probabilities, soft physicochemical preferences,
+source quality and bounded Morgan/Tanimoto/scaffold diversity. No full pairwise
+matrix, external LLM, patent-specific list or second model exists. Unknown,
+censored or conflicting activity and unsupported chemistry remain explicit;
+no-activity rows retain their normal structure/property workflow but cannot
+supply invented efficacy. Small or insufficient pools are not padded.
+
+`lead_endpoints.py` selects eleven reviewed probabilities from the already
+verified ADMET response, never clamps inappropriate regressions. Legacy
+six-field packets remain readable; the normal worker supplements them through
+the existing content/model-bound cache before nomination. `lead_storage.py`
+owns one additive rebuildable project packet in workspace SQLite v1. Effective
+input fingerprints and source-revision CAS prevent stale/partial publication.
+Original chemistry, corrections and QA are unchanged. All effective table,
+filter, copy and export consumers use this same assessment before paging/global
+filtering. GET never selects leads or starts inference. Audited value edits
+re-evaluate only this lightweight tail; graph edits retain the existing targeted
+worker, then re-evaluate the whole pool. Changed evidence marks old selections
+stale. Job completion independently checks full current pool/producer evidence.
+
+Nomination is a research heuristic, not experimental Lead validation, safety,
+selectivity, PK, synthetic feasibility or an applicability-domain proof.
+Scores and missing evidence are preserved. Product v0.1.0, formal eight-stage
+QA and API v1 remain unchanged. Research progress uses
+`admet.progress.phase="lead"`, not a competing formal stage registry.
 
 ## Resource lifecycle
 

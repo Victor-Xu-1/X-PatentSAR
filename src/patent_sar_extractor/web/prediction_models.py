@@ -13,6 +13,7 @@ from patent_sar_extractor.workers.analysis_protocol import (
 )
 
 from .dto import DTO, Error
+from .lead_endpoints import validate_endpoints
 
 MetricKey = Literal[
     "molecular_weight",
@@ -92,6 +93,9 @@ class PredictionSummary(DTO):
         "not_run", "pending", "running", "complete", "failed", "stale", "unavailable"
     ] = "not_run"
     properties: list[PredictionMetric] = Field(default_factory=list, max_length=6)
+    endpoints: dict[str, float] = Field(
+        default_factory=dict, max_length=11, exclude_if=lambda value: not value
+    )
     source_fingerprint: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
     smiles_sha256: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
     engine: PredictionEngine | None = None
@@ -100,6 +104,11 @@ class PredictionSummary(DTO):
     warnings: list[str] = Field(default_factory=list, max_length=100)
     error: Error | None = None
     review_only: Literal[True] = True
+
+    @field_validator("endpoints", mode="before")
+    @classmethod
+    def reviewed_endpoints(cls, value: object) -> object:
+        return validate_endpoints(value)
 
     @field_validator("generated_at")
     @classmethod
@@ -133,7 +142,7 @@ class PredictionSummary(DTO):
                 raise ValueError(
                     "A completed prediction requires six source-bound observations"
                 )
-        elif self.properties:
+        elif self.properties or self.endpoints:
             raise ValueError(
                 "Unavailable or stale predictions must not expose old values"
             )

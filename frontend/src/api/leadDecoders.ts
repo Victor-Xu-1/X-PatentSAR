@@ -29,13 +29,23 @@ const fraction = boundedNumber(1);
 const components: Decoder<Record<string, number>> = (input, path = '$') => {
   if (input === null || typeof input !== 'object' || Array.isArray(input))
     throw new ContractError(path);
+  const keys = ['potency', 'coverage', 'admet', 'physchem', 'evidence', 'diversity'];
+  if (
+    Object.keys(input).length > keys.length ||
+    Object.keys(input).some((key) => !keys.includes(key))
+  )
+    throw new ContractError(path);
   return Object.fromEntries(
     Object.entries(input).map(([key, value]) => [key, score(value, `${path}.${key}`)]),
   );
 };
 const notes: Decoder<string[]> = (input, path = '$') => {
   if (!Array.isArray(input) || input.length > 12) throw new ContractError(path);
-  return input.map((value, index) => boundedText(300)(value, `${path}[${index}]`));
+  return input.map((value, index) => {
+    const text = boundedText(300)(value, `${path}[${index}]`);
+    if (!text || /[\u0000-\u001f]/.test(text)) throw new ContractError(`${path}[${index}]`);
+    return text;
+  });
 };
 const reviewOnly: Decoder<true> = (input, path = '$') => {
   if (input !== true) throw new ContractError(path);
@@ -67,6 +77,8 @@ export const decodeLeadAssessment: Decoder<LeadAssessment> = (input, path = '$')
     )
       throw new ContractError(`${path}.${key}`);
   }
-  if (value.status === 'selected' && value.rank === null) throw new ContractError(`${path}.rank`);
+  if (value.status === 'selected' && (value.rank === null || value.score === null))
+    throw new ContractError(`${path}.rank`);
+  if (value.status !== 'selected' && value.rank !== null) throw new ContractError(`${path}.rank`);
   return value;
 };

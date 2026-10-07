@@ -23,7 +23,7 @@ const assessment: LeadAssessment = {
   rank: 1,
   score: 84.75,
   activity_coverage: 0.75,
-  components: { potency: 91, coverage: 75, physicochemical: 80, admet: 70, diversity: 90 },
+  components: { potency: 91, coverage: 75, physchem: 80, admet: 70, diversity: 90 },
   reasons: ['覆盖三个可比活性指标', '优先级兼顾结构多样性'],
   warnings: ['ADMET 是研究预测，并非实验安全性结论'],
   scaffold: 'c1ccccc1',
@@ -74,6 +74,16 @@ const paneProps = () => ({
 });
 
 describe('strict additive Lead assessment contract', () => {
+  it('rejects unbounded or unknown components and inconsistent selection identity', () => {
+    for (const value of [
+      { ...assessment, score: null },
+      { ...assessment, status: 'not_selected', rank: 1 },
+      { ...assessment, components: { unverified: 90 } },
+      { ...assessment, reasons: [''] },
+      { ...assessment, reasons: ['unsafe\nmessage'] },
+    ])
+      expect(() => decodeLeadAssessment(value)).toThrow(ContractError);
+  });
   it('keeps older Compound/Results packets without a Lead field compatible', () => {
     expect(decodeCompound(compound)).not.toHaveProperty('lead');
     expect(decodeCompound({ ...compound, lead: null }).lead).toBeNull();
@@ -143,7 +153,7 @@ describe('strict additive Lead assessment contract', () => {
         rank: 10,
         score: 0,
         activity_coverage: 1,
-        components: { minimum: 0, maximum: 100 },
+        components: { potency: 0, coverage: 100 },
         reasons: Array.from({ length: 12 }, () => '🧪'.repeat(300)),
         warnings: [],
         nearest_similarity: 0,

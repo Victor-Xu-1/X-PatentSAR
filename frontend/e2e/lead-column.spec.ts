@@ -12,7 +12,7 @@ const assessment: LeadAssessment = {
   rank: 1,
   score: 84.75,
   activity_coverage: 0.75,
-  components: { potency: 91, coverage: 75, physicochemical: 80, admet: 70, diversity: 90 },
+  components: { potency: 91, coverage: 75, physchem: 80, admet: 70, diversity: 90 },
   reasons: ['Controlled synthetic coverage', 'Controlled synthetic diversity'],
   warnings: ['Research prioritization, not experimentally validated Leads'],
   scaffold: 'c1ccccc1',

@@ -592,16 +592,18 @@ class CorrectionTests(WebFixture, unittest.TestCase):
                 statements.clear()
                 result = service.results(project_id, page_size=100)
                 self.assertEqual(result.total, total)
-                self.assertTrue(result.items[-1].correction.has_changes)
+                edited = next(item for item in result.items if item.id == "Compound 1")
+                self.assertTrue(edited.correction.has_changes)
                 counts.append(
                     sum(
                         sql.lstrip().upper().startswith(("SELECT", "WITH"))
                         for sql in statements
                     )
                 )
-        self.assertEqual(counts, [5, 5])
-        # One indexed prediction hydration query, not one query per molecule.
-        self.assertEqual(sum("WITH wanted(" in sql for sql in statements), 1)
+        # Two constant Lead-cache metadata reads, never per-compound selection.
+        self.assertEqual(counts, [8, 8])
+        # One indexed prediction and one descriptor batch, not per-molecule queries.
+        self.assertEqual(sum("WITH wanted(" in sql for sql in statements), 2)
 
     def test_reset_restores_rejected_original_without_promoting_model_metadata(self):
         service = WorkspaceService(self.state)
@@ -664,8 +666,11 @@ class CorrectionTests(WebFixture, unittest.TestCase):
             ).json()
             self.assertFalse(exported["review_only"])
             self.assertEqual(exported["manual_corrections"], 0)
-            self.assertEqual(exported["items"][-1]["display_id"], "Compound 1")
-            self.assertTrue(exported["items"][-1]["correction"]["stale"])
+            original = next(
+                item for item in exported["items"] if item["id"] == "Compound 1"
+            )
+            self.assertEqual(original["display_id"], "Compound 1")
+            self.assertTrue(original["correction"]["stale"])
             document = client.get(self.path).json()
             self.assertEqual(
                 self.save(client, document, **document["original"]).status_code, 200
@@ -750,14 +755,16 @@ class CorrectionTests(WebFixture, unittest.TestCase):
             ),
         ):
             rows = service.effective_compounds(project.id)
-            self.assertEqual([row.id for row in rows], ["Compound 2", "Compound 1"])
-            self.assertEqual(rows[-1].display_id, "Consumer edit")
-            self.assertEqual(rows[-1].smiles, "CCCl")
-            self.assertTrue(rows[-1].correction.has_changes)
-            self.assertEqual(rows[-1].source.bbox, [20, 40, 120, 140])
+            self.assertEqual([row.id for row in rows], ["Compound 1", "Compound 2"])
+            edited = next(row for row in rows if row.id == "Compound 1")
+            self.assertEqual(edited.display_id, "Consumer edit")
+            self.assertEqual(edited.smiles, "CCCl")
+            self.assertTrue(edited.correction.has_changes)
+            self.assertEqual(edited.source.bbox, [20, 40, 120, 140])
         projected = service.results(project.id)
-        self.assertEqual(projected.items[-1].source.bbox, [60, 20, 160, 120])
-        self.assertEqual(projected.items[-1].smiles, rows[-1].smiles)
+        displayed = next(row for row in projected.items if row.id == "Compound 1")
+        self.assertEqual(displayed.source.bbox, [60, 20, 160, 120])
+        self.assertEqual(displayed.smiles, edited.smiles)
 
 
 if __name__ == "__main__":

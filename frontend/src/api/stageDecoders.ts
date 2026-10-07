@@ -48,7 +48,7 @@ const progress: Decoder<StageProgress> = (input, path = '$') => {
   if (!Object.hasOwn(fields, 'phase')) return value;
   return {
     ...value,
-    phase: nullable(oneOf(['recognition', 'properties']))(fields.phase, `${path}.phase`),
+    phase: nullable(oneOf(['recognition', 'properties', 'lead']))(fields.phase, `${path}.phase`),
   };
 };
 
