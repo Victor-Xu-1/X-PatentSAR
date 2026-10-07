@@ -1,0 +1,23 @@
+.lead-column {
+  text-align: center;
+}
+.lead-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--accent-surface);
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.lead-placeholder {
+  color: var(--muted);
+}
+.lead-stale {
+  color: var(--warning);
+  font-size: 12px;
+  white-space: nowrap;
+}

@@ -1,5 +1,6 @@
 import type { Compound } from '../api/types';
 import type { ResultColumn } from './resultColumns';
+import { leadColumnValue } from './resultColumns';
 import { activityColumnObservations } from './activityColumns';
 import type { TableActivityColumn } from './activityColumns';
 import { METRIC_SPECS } from '../api/predictionTypes';
@@ -35,6 +36,7 @@ export function tableCopyText(
     return columns
       .map((column) => {
         if (column.id === 'compound') return safeTsvCell(row.display_id);
+        if (column.id === 'lead') return safeTsvCell(leadColumnValue(row.lead));
         if (column.id === 'structure')
           return safeTsvCell(
             row.smiles ?? (row.structure_image_url ? '原文结构裁图（无 SMILES）' : ''),

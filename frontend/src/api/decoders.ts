@@ -34,6 +34,7 @@ import { decodeActivitySourceKeys } from './activitySourceDecoders';
 import { decodeActivityRankValues } from './activityRankDecoders';
 import { decodeMolfile, decodePropertyOverrides } from './correctionDecoders';
 import { decodeStereoEvidence } from './stereoDecoders';
+import { decodeLeadAssessment } from './leadDecoders';
 export { decodePage } from './pageDecoders';
 
 const identity = object({ name: string, version: scalar });
@@ -231,6 +232,9 @@ export const decodeCompound: Decoder<Compound> = (input, path = '$') => {
       ? {
           descriptors: nullable(decodeDescriptorSummary)(fields.descriptors, `${path}.descriptors`),
         }
+      : {}),
+    ...(Object.hasOwn(fields, 'lead')
+      ? { lead: nullable(decodeLeadAssessment)(fields.lead, `${path}.lead`) }
       : {}),
     ...(Object.hasOwn(fields, 'correction')
       ? { correction: nullable(correctionMetadata)(fields.correction, `${path}.correction`) }
