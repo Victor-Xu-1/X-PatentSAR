@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { writeFile } from 'node:fs/promises';
 import { decodeResults } from '../src/api/decoders';
 import { EDITOR_CHANNEL } from '../src/features/structure-editor/protocol';
+import { moveDrawing } from './structure-editor-actions';
 
 const projectId = process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID;
 for (const viewport of [
@@ -146,10 +147,7 @@ test('local Ketcher round trips preserve stereo, isotope, charge and salt fragme
         ),
       )
       .toBe(true);
-    await page
-      .frameLocator('iframe[title="Ketcher 结构绘制与预览"]')
-      .getByRole('button', { name: 'Clean Up (Ctrl+Shift+L)', exact: true })
-      .click();
+    await moveDrawing(page);
     await expect
       .poll(() =>
         page.evaluate(

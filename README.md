@@ -400,6 +400,12 @@ WSL 本机设置 `PLAYWRIGHT_BROWSERS_PATH=/srv/wsl/cache/ms-playwright`，避�
 `python -m pip install 'x_patentsar-0.1.0-py3-none-any.whl[web]'`；wheel 含界面，
 运行时无需 Node.js。源码构建和测试需要 Node.js。
 
+GitHub CI 不执行全量发现测试。每个 PR 必须更新 `.github/verification_scope.json`，
+明确基线 SHA、完整改动路径及直接相关的 Python / Vitest / Playwright 范围；
+范围与提交差异不一致会失败，不会回退成全量测试。空前端或浏览器范围不启动测试引擎。
+构建、环境资源一致性和 wheel 审计仍执行。真实专利与原生编辑器的私有浏览器验收
+在 E 盘保存，不把专利输入或本地会话资料上传到 CI。
+
 统一构建器从当前 Git 管理的包源码和已校验前端清单创建全新临时源目录，
 不复用或清理历史 `build`。轮子审计逐文件校验当前源码清单与 SHA-256，
 拒绝多余旧模块、缺失文件和旧内容。每次构建使用新的输出目录；WSL 的工作目录

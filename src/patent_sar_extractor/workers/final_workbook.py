@@ -145,6 +145,8 @@ def generate_excel(
     all_columns = list(FIXED_COLUMNS) + [(h, w) for h, w, _, _ in assay_cols]
     if grade_note:
         all_columns.append(("活性分级说明", 40))
+    all_columns.append(("识别状态", 18))
+    status_column = len(all_columns)
 
     # 表头
     for col_idx, (h, w) in enumerate(all_columns, 1):
@@ -179,8 +181,9 @@ def generate_excel(
         if img_path and os.path.exists(img_path):
             try:
                 img = XlImage(img_path)
-                img.width = IMG_WIDTH_PX
-                img.height = IMG_HEIGHT_PX
+                scale = min(IMG_WIDTH_PX / img.width, IMG_HEIGHT_PX / img.height)
+                img.width *= scale
+                img.height *= scale
                 ws.add_image(img, f"E{row_idx}")
                 img_count += 1
             except (OSError, ValueError, TypeError) as e:
@@ -198,6 +201,12 @@ def generate_excel(
         sr = get_smiles_for_binding(
             b, smiles_map, smiles_by_binding_key, smiles_by_structure_id
         )
+        # The caller supplies qualified chemistry maps, but every proved source
+        # row remains visible with its original image/activity when not qualified.
+        status = "当前规则通过" if sr.get("canonical_smiles") else "待复核"
+        status_cell = ws.cell(row=row_idx, column=status_column, value=status)
+        status_cell.border = THIN_BORDER
+        status_cell.alignment = Alignment(horizontal="center", vertical="center")
         ws.cell(
             row=row_idx, column=6, value=sr.get("canonical_smiles", "")
         ).border = THIN_BORDER
@@ -271,6 +280,8 @@ def generate_excel(
                 ).border = THIN_BORDER
 
     write_activity_observations(wb, activity_rows or [])
+    ws.freeze_panes = "F2"
+    ws.auto_filter.ref = ws.dimensions
     for sheet in wb:
         for row in sheet:
             for cell in row:
