@@ -219,6 +219,9 @@ legacy callers, never a synthesized successful observation.
   `not_run`, `stale`, `selected`, `not_selected`, `ineligible` or `unranked`;
   nullable rank (1–8 selected), score (0–100), activity_coverage (0–1), bounded
   components/reasons/warnings, scaffold, nearest_similarity and policy version.
+  Policy v2 adds strict boolean `risk_review_required` for uncertain high model
+  risk. It requires amber review presentation, not a claim of safety. Old v1
+  responses remain readable by the frontend but cannot be current backend policy.
   Only a current selected cell has `Lead <rank>`; other cells are blank for
   Excel-style filters. The same full-project packet precedes paging/filtering/
   copy/export. GET never starts selection or a model.

@@ -1,6 +1,15 @@
 import type { LeadAssessment } from './leadTypes';
 import { leadStatuses } from './leadTypes';
-import { ContractError, nullable, number, object, oneOf, positive, string } from './validation';
+import {
+  boolean,
+  ContractError,
+  nullable,
+  number,
+  object,
+  oneOf,
+  positive,
+  string,
+} from './validation';
 import type { Decoder } from './validation';
 
 function boundedNumber(max: number): Decoder<number> {
@@ -62,7 +71,7 @@ const shape = {
   warnings: notes,
   scaffold: nullable(boundedText(2048)),
   nearest_similarity: nullable(fraction),
-  policy_version: oneOf(['1']),
+  policy_version: oneOf(['1', '2']),
   review_only: reviewOnly,
 };
 const assessment = object(shape);
@@ -81,5 +90,12 @@ export const decodeLeadAssessment: Decoder<LeadAssessment> = (input, path = '$')
   if (value.status === 'selected' && (value.rank === null || value.score === null))
     throw new ContractError(`${path}.rank`);
   if (value.status !== 'selected' && value.rank !== null) throw new ContractError(`${path}.rank`);
+  const fields = input as Record<string, unknown>;
+  if (Object.hasOwn(fields, 'risk_review_required'))
+    return {
+      ...value,
+      risk_review_required: boolean(fields.risk_review_required, `${path}.risk_review_required`),
+    };
+  if (value.policy_version === '2') throw new ContractError(`${path}.risk_review_required`);
   return value;
 };

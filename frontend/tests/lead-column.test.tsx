@@ -136,7 +136,7 @@ describe('strict additive Lead assessment contract', () => {
     ['warnings', 'warning'],
     ['scaffold', 'c'.repeat(2049)],
     ['scaffold', 1],
-    ['policy_version', '2'],
+    ['policy_version', '3'],
     ['policy_version', 1],
     ['review_only', false],
     ['review_only', 'true'],
@@ -170,6 +170,29 @@ describe('strict additive Lead assessment contract', () => {
 });
 
 describe('minimal backend-owned Lead column', () => {
+  it('shows policy-two model-risk candidates as review-required without calling them safe', () => {
+    const value = { ...assessment, policy_version: '2', risk_review_required: true };
+    const decoded = decodeLeadAssessment(value);
+    render(
+      <table>
+        <tbody>
+          <tr>
+            <LeadCell assessment={decoded} />
+          </tr>
+        </tbody>
+      </table>,
+    );
+    expect(screen.getByText('Lead 1')).toHaveClass('lead-risk-review');
+    expect(screen.getByText('Lead 1').closest('td')).toHaveAttribute(
+      'title',
+      expect.stringContaining('高模型风险待复核'),
+    );
+    expect(() => decodeLeadAssessment({ ...value, risk_review_required: 'true' })).toThrow(
+      ContractError,
+    );
+    const { risk_review_required: _risk, ...incomplete } = value;
+    expect(() => decodeLeadAssessment(incomplete)).toThrow(ContractError);
+  });
   it('places a centered Lead label after Compound and structure without reordering rows', () => {
     render(<ResultsTable {...callbacks()} rows={rows} />);
     expect(

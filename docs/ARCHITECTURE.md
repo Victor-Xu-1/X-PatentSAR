@@ -175,6 +175,12 @@ invoke recognition or inference; actual graph changes target only that compound.
 
 ## Lead nomination, not scientific acceptance
 
+Policy v2 treats model risk continuously (core safety combines mean and worst
+endpoint protection), not as an experimental veto. Probability >=0.8 requires
+explicit `risk_review_required` and an amber candidate marker, preserving raw
+predictions and strict source/graph/full-evidence gates. This generic research
+policy does not grant safety, experimental validation or clinical advancement.
+
 The same research worker selects target-eight candidates after model cleanup.
 Pure activity/chemistry/scoring modules separate exact-context percentiles and
 coverage, validated ADMET probabilities, soft physicochemical preferences,

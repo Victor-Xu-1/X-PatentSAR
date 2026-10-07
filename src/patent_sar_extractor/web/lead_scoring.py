@@ -216,11 +216,14 @@ def _candidate(
     risk = [key for key in RISK_ENDPOINTS if endpoints[key] >= 0.8]
     if risk:
         reasons.append(
-            "预测高风险信号达到本策略0.8审慎界限，不进入本轮推荐池："
-            + ", ".join(risk)
-            + "。"
+            "核心 ADMET 预测风险较高："
+            + ", ".join(f"{key}={endpoints[key]:.3f}" for key in risk)
+            + "；已连续扣分，候选必须进行风险复核。"
         )
-        warnings.append("分类概率不是实测风险；该界限是可复核策略，不是临床安全阈值。")
+        warnings.insert(
+            0,
+            "高预测风险待复核；0.8仅为提醒界限，不是实测毒性或临床安全的一票否决阈值。",
+        )
     high_cyp = [key for key in CYP_ENDPOINTS if endpoints[key] >= 0.8]
     if high_cyp:
         warnings.append(
@@ -239,17 +242,13 @@ def _candidate(
         reasons=_messages(reasons),
         warnings=_messages([_RESEARCH_WARNING, *warnings]),
         scaffold=features.scaffold,
+        risk_review_required=bool(risk),
     )
     return _Candidate(compound, assessment, features, quality)
 
 
-def _in_pool(candidate: _Candidate, endpoints: dict[str, float]) -> bool:
-    return (
-        candidate.quality >= 60
-        and candidate.assessment.components["potency"] >= 50
-        and candidate.assessment.components["admet"] >= 50
-        and all(endpoints[key] < 0.8 for key in RISK_ENDPOINTS)
-    )
+def _in_pool(candidate: _Candidate) -> bool:
+    return candidate.quality >= 60 and candidate.assessment.components["potency"] >= 50
 
 
 def _publish(
@@ -373,7 +372,7 @@ def prioritize_leads(
     ):
         check_cancel(cancel)
         candidate = _candidate(compound, values, endpoints, observed[compound.id])
-        if _in_pool(candidate, endpoints):
+        if _in_pool(candidate):
             candidates.append(candidate)
         else:
             packet = candidate.assessment.model_dump()
@@ -382,7 +381,7 @@ def prioritize_leads(
             packet["reasons"] = _messages(
                 packet["reasons"]
                 + [
-                    "未满足审慎候选池：活性百分位≥50、ADMET分≥50、基础质量≥60，且无≥0.8的核心预测风险信号。"
+                    "未满足研究候选池：活性百分位≥50、综合质量≥60；模型风险已计入质量分并独立提示。"
                 ]
             )
             assessments[compound.id] = LeadAssessment.model_validate(packet)

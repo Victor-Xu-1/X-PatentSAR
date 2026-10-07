@@ -18,6 +18,7 @@ export interface LeadAssessment {
   warnings: string[];
   scaffold: string | null;
   nearest_similarity: number | null;
-  policy_version: '1';
+  risk_review_required?: boolean;
+  policy_version: '1' | '2';
   review_only: true;
 }

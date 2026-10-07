@@ -152,6 +152,7 @@ class LeadWorkflowTests(PredictionFixture, unittest.TestCase):
             )
         )
         self.assertEqual(record["Lead"], "Lead 1")
+        self.assertEqual(record["lead_risk_review_required"], "False")
         self.assertEqual(service.project(self.project.id).acceptance.state, "accepted")
 
     def test_activity_edit_recomputes_without_model_and_preserves_raw_qa(self):

@@ -103,13 +103,14 @@ LEAD_COLUMNS = [
     "lead_reasons",
     "lead_warnings",
     "lead_policy_version",
+    "lead_risk_review_required",
 ]
 
 
 def _lead_values(row: Compound) -> list[object]:
     value = row.lead
     if value is None:
-        return [None, "not_run", *([None] * 6)]
+        return [None, "not_run", *([None] * 7)]
     return [
         f"Lead {value.rank}" if value.status == "selected" else None,
         value.status,
@@ -119,6 +120,7 @@ def _lead_values(row: Compound) -> list[object]:
         "; ".join(value.reasons),
         "; ".join(value.warnings),
         value.policy_version,
+        value.risk_review_required,
     ]
 
 
