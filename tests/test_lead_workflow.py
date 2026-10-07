@@ -20,8 +20,8 @@ from patent_sar_extractor.web.errors import WebError
 from patent_sar_extractor.web.exports import export_csv, export_json
 from patent_sar_extractor.web.jobs import JobQueue, decode_spec
 from patent_sar_extractor.web.lead_endpoints import LEAD_ENDPOINTS
-from patent_sar_extractor.web.models import Stage
-from patent_sar_extractor.web.prediction_worker import run_predictions
+from patent_sar_extractor.web.models import Stage, StageProgress
+from patent_sar_extractor.web.prediction_worker import run_lead_phase, run_predictions
 from patent_sar_extractor.web.processes import CLIProcessRunner
 from patent_sar_extractor.web.service import WorkspaceService
 from patent_sar_extractor.web.storage import now
@@ -71,6 +71,32 @@ class ControlledLeadAnalysis:
 
 
 class LeadWorkflowTests(PredictionFixture, unittest.TestCase):
+    def test_lead_tail_keeps_full_measured_research_duration(self):
+        row, root, _ = self.draft()
+        write_admet_stage(
+            root,
+            row,
+            Stage(
+                name="admet",
+                status="ok",
+                count=1,
+                duration_seconds=3.0,
+                progress=StageProgress(
+                    completed=1,
+                    total=1,
+                    cache_hits=0,
+                    failures=0,
+                    device="cpu",
+                    peak_rss_mb=None,
+                ),
+            ),
+            core_completed=False,
+        )
+        run_lead_phase(self.service, row, root, False, None)
+        actual, _ = read_admet_stage(row, root)
+        self.assertEqual(actual.progress.phase, "lead")
+        self.assertGreaterEqual(actual.duration_seconds, 3.0)
+
     def execute(self):
         row, root, _ = self.draft()
         write_admet_stage(root, row, Stage(name="admet"), core_completed=False)

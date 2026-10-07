@@ -299,7 +299,9 @@ def run_lead_phase(
                 name="admet",
                 status=status,
                 count=completed - int(failed and total > 0),
-                duration_seconds=time.monotonic() - started,
+                duration_seconds=(previous.duration_seconds or 0.0)
+                + time.monotonic()
+                - started,
                 skipped=previous.skipped,
                 progress=StageProgress(
                     phase="lead",
