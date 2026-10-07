@@ -102,6 +102,7 @@ def prepare(workspace: Path) -> dict[str, str]:
         "PATENTSAR_E2E_HISTORY_PROJECT_ID": historical.id,
         "PATENTSAR_E2E_FAILED_JOB_ID": job_id,
         "PATENTSAR_E2E_ENVIRONMENT_OPERATION_ID": history_operation.id,
+        "PATENTSAR_E2E_HISTORY_MUTATIONS": "synthetic-isolated-state",
         "PATENTSAR_E2E_RUN_JOBS": "1",
     }
     (workspace / "browser-fixture.json").write_text(

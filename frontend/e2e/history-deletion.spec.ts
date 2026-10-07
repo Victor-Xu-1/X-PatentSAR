@@ -36,6 +36,8 @@ test.beforeEach(async ({ page }) => {
       new URL(baseURL!).port,
       'Only the controller-owned isolated port is authorized locally',
     ).toBe('18766');
+  const session = await page.request.get('/api/v1/session');
+  expect(session.ok(), 'Bootstrap the same-origin session before fixture API reads').toBe(true);
   await page.goto('/#/projects');
   const response = await page.request.get(`/api/v1/projects/${projectId}`);
   expect(response.ok()).toBe(true);
