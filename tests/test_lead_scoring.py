@@ -6,7 +6,6 @@ import hashlib
 import unittest
 from unittest.mock import patch
 
-from patent_sar_extractor.web.lead_endpoints import LEAD_ENDPOINTS
 from pydantic import ValidationError
 
 from patent_sar_extractor.web.activity_columns import ActivityColumnCatalog
@@ -18,6 +17,7 @@ from patent_sar_extractor.web.descriptor_models import DescriptorSummary
 from patent_sar_extractor.web.errors import WebError
 from patent_sar_extractor.web.lead_activity import activity_evidence
 from patent_sar_extractor.web.lead_chemistry import chemical_features, similarity
+from patent_sar_extractor.web.lead_endpoints import LEAD_ENDPOINTS
 from patent_sar_extractor.web.lead_models import LeadAssessment
 from patent_sar_extractor.web.lead_scoring import prioritize_leads
 from patent_sar_extractor.web.models import (
