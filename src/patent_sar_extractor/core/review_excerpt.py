@@ -12,41 +12,65 @@ import re
 import shutil
 import subprocess
 import tempfile
+import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 import fitz
 
+from patent_sar_extractor.artifact_io import write_json_atomic
 from patent_sar_extractor.contracts import (
     REVIEW_EXCERPT_METADATA_SCHEMA,
     REVIEW_EXCERPT_METADATA_SCHEMA_VERSION,
     artifact_identity,
 )
-from patent_sar_extractor.artifact_io import write_json_atomic
 
 logger = logging.getLogger(__name__)
 
 
-START_RE = re.compile(
-    r"具体实施方式|实施例\s*1|制备例|合成例|"
-    r"Detailed\s+Description|Example\s+\d+|Preparation\s+\d+|Synthesis\s+(?:of|\d+)",
+HEADING_PREFIX_RE = re.compile(
+    r"^(?:\[\s*\d+\s*\]|\(\s*(?:\d+|[IVXLCDM]+)\s*\)|"
+    r"(?:\d+|[IVXLCDM]+)[.)]|\d+(?=\s))\s*",
     re.IGNORECASE,
 )
-
-STOP_RE = re.compile(
-    r"权利要求书|"
-    r"^What is claimed is|"
-    r"^What is claimed:|"
-    r"^The following claims\b",
-    re.IGNORECASE | re.MULTILINE,
-)
-
-# ISR (International Search Report) marks the end of claims in PCT patents
-ISR_RE = re.compile(
-    r"INTERNATIONAL\s*SEARCH\s*REPORT|"
-    r"PCT/ISA/210",
+NUMBERED_BODY_HEADING_RE = re.compile(
+    r"^(?:Examples?|Preparation|Synthesis(?:\s+Example)?|实施例|制备例|合成例)\s*"
+    r"(?:\d+|[IVXLCDM]+|[〇零一二三四五六七八九十百千两]+)"
+    r"(?=$|[\s:.)、-])(?P<suffix>.*)$",
     re.IGNORECASE,
+)
+HEADING_REFERENCE_RE = re.compile(
+    r"^(?:is|are|was|were|has|have|had|illustrates?|shows?|describes?|"
+    r"demonstrates?|and|or|in|from|of)\b",
+    re.IGNORECASE,
+)
+CLAIMS_HEADING_RE = re.compile(
+    r"^(?:claims|权利要求书?|revendications|patentansprüche|reivindicaciones|特許請求の範囲)"
+    r"(?:\s*[:.]?\s*$|\s*:?\s+\d+[.)、])|"
+    r"^(?:What\s+is\s+claimed(?:\s+is)?|We\s+claim|The\s+following\s+claims)"
+    r"\s*(?::.*|[.]?)$",
+    re.IGNORECASE,
+)
+BODY_HEADINGS = frozenset(
+    text.casefold().replace(" ", "")
+    for text in (
+        "具体实施方式", "实施方式", "Examples", "Experimental Section",
+        "Detailed Description", "Detailed Description of the Invention",
+    )
+)
+CLAIMS_HEADINGS = frozenset(
+    text.casefold().replace(" ", "")
+    for text in (
+        "Claims", "权利要求", "权利要求书", "Revendications", "Patentansprüche",
+        "Reivindicaciones", "特許請求の範囲",
+    )
+)
+ISR_HEADINGS = frozenset(
+    text.casefold().replace(" ", "")
+    for text in (
+        "International Search Report", "国际检索报告", "PCT/ISA/210",
+        "Rapport de recherche internationale", "Internationaler Recherchenbericht",
+    )
 )
 
 ACTIVITY_RE = re.compile(
@@ -90,19 +114,74 @@ FRONT_MATTER_RE = re.compile(
     re.IGNORECASE,
 )
 
-BODY_START_HEADING_RE = re.compile(
-    r"具体实施方式|实施方式|实施例\s*1\b|制备例\s*1\b|合成例\s*1\b|"
-    r"Detailed\s+Description|Experimental\s+Section|Examples?\s*:?|"
-    r"Example\s+1\b|Preparation\s+1\b|Synthesis\s+(?:Example\s+)?1\b",
+BODY_START_SIGNAL_RE = re.compile(
+    r"MS\s*m/z|\b(?:LCMS|LC-MS|NMR|HPLC|mmol|mL|mg)\b|"
+    r"收率|产率|°C|搅拌|反应|得到",
     re.IGNORECASE,
 )
 
-BODY_START_SIGNAL_RE = re.compile(
-    r"实施例\s*\d+|制备例\s*\d+|合成例\s*\d+|"
-    r"Example\s+\d+|Preparation\s+\d+|Synthesis\s+(?:of|\d+)|"
-    r"MS\s*m/z|LCMS|LC-MS|NMR|HPLC|收率|产率|mmol|mL|mg|°C|搅拌|反应|得到",
-    re.IGNORECASE,
-)
+
+def _heading_lines(text: str) -> list[str]:
+    """Normalize observation text without flattening away section layout."""
+    normalized = unicodedata.normalize("NFKC", text or "")
+    normalized = re.sub(r"[\u00ad\u200b\u2060\ufeff]", "", normalized)
+    lines = []
+    for raw in normalized.splitlines():
+        line = re.sub(r"\s+", " ", raw).strip()
+        # PDF line numbers and bracketed paragraph numbers are furniture, not
+        # arbitrary prose prefixes. Do not search for headings inside a sentence.
+        for _ in range(2):
+            line = HEADING_PREFIX_RE.sub("", line, count=1)
+        line = re.sub(r"(?<=[\u3400-\u9fff])\s+(?=[\u3400-\u9fff])", "", line)
+        if line:
+            lines.append(line)
+    # Join only exact known titles split across observation lines. Uncertain
+    # flattened/OCR prose is retained; it cannot establish a terminal boundary.
+    joined_lines = []
+    idx = 0
+    titles = BODY_HEADINGS | CLAIMS_HEADINGS | ISR_HEADINGS
+    while idx < len(lines):
+        count = 1
+        for length in (2, 3):
+            if idx + length > len(lines):
+                break
+            joined = " ".join(lines[idx:idx + length])
+            compact = re.sub(r"\s+", "", joined).rstrip(":.").casefold()
+            if compact in titles:
+                count = length
+                break
+        joined_lines.append(" ".join(lines[idx:idx + count]))
+        idx += count
+    return joined_lines
+
+
+def _section_heading(line: str) -> str | None:
+    compact = re.sub(r"\s+", "", line).rstrip(":.").casefold()
+    if compact in ISR_HEADINGS:
+        return "isr"
+    if compact in CLAIMS_HEADINGS or CLAIMS_HEADING_RE.match(line):
+        return "claims"
+    if compact in BODY_HEADINGS:
+        return "body"
+    match = NUMBERED_BODY_HEADING_RE.fullmatch(line)
+    if match and not HEADING_REFERENCE_RE.match(match["suffix"].strip()):
+        return "body"
+    if re.match(r"^(?:Synthesis|Preparation)\s+of\s+\S", line, re.IGNORECASE):
+        return "body"
+    return None
+
+
+def _terminal_boundary(pages: list[list[str]], body_idx: int) -> tuple[int | None, bool]:
+    """Accept a terminal heading only after real body, never its backoff padding."""
+    for idx in range(body_idx, len(pages)):
+        before_body = False
+        for line in pages[idx]:
+            heading = _section_heading(line)
+            if heading in {"claims", "isr"} and (idx > body_idx or before_body):
+                return idx, before_body
+            if heading == "body" or BODY_START_SIGNAL_RE.search(line):
+                before_body = True
+    return None, False
 
 
 @dataclass
@@ -114,8 +193,8 @@ class OcrLine:
 
 def infer_candidate_page_window(
     page_texts: list[str],
-    synthesis_pages: Optional[list[int]] = None,
-    activity_pages: Optional[list[int]] = None,
+    synthesis_pages: list[int] | None = None,
+    activity_pages: list[int] | None = None,
     start_backoff_pages: int = 2,
 ) -> dict:
     """
@@ -138,13 +217,14 @@ def infer_candidate_page_window(
             "end_reason": "empty_pdf",
         }
 
-    compact_pages = [re.sub(r"\s+", " ", text or "").strip() for text in page_texts]
+    heading_pages = [_heading_lines(text) for text in page_texts]
+    compact_pages = [" ".join(lines) for lines in heading_pages]
 
     strong_start_idx = None
     signal_start_idx = None
     for idx in range(total):
         text = compact_pages[idx]
-        if BODY_START_HEADING_RE.search(text):
+        if any(_section_heading(line) == "body" for line in heading_pages[idx]):
             strong_start_idx = idx
             break
         if signal_start_idx is None and BODY_START_SIGNAL_RE.search(text):
@@ -179,22 +259,20 @@ def infer_candidate_page_window(
         start_idx = max(start_idx, last_front_idx + 1)
         start_reason = f"{start_reason}_after_front_matter"
 
-    # PCT front pages often contain phrases such as "with international search
-    # report (Art. 21(3))". That is not the actual ISR section and must not cut
-    # a 400-page specification down to one page. Only accept claims/ISR stops
-    # after the inferred body/candidate start.
-    first_claim_idx = next(
-        (
-            idx
-            for idx, text in enumerate(compact_pages)
-            if idx >= start_idx and (STOP_RE.search(text) or ISR_RE.search(text))
-        ),
-        None,
+    first_claim_idx, mixed_body_page = (
+        _terminal_boundary(heading_pages, strong_start_idx)
+        if start_reason != "fallback_document_start"
+        else (None, False)
     )
 
     if first_claim_idx is not None:
-        end_idx = max(start_idx, first_claim_idx - 1)
-        end_reason = "page_before_claims_or_isr"
+        # Whole-page candidate coordinates cannot split a mixed body/claims
+        # page. Retain its original body rather than dropping analytical data.
+        end_idx = first_claim_idx if mixed_body_page else first_claim_idx - 1
+        end_reason = (
+            "claims_or_isr_after_body_on_same_page"
+            if mixed_body_page else "page_before_claims_or_isr"
+        )
     else:
         last_candidate_idx = None
         candidates = [p for p in synthesis_pages + activity_pages if start_idx <= p < total]
@@ -235,9 +313,10 @@ def _page_lines(page, dpi: int, engine) -> list[OcrLine]:
     if engine is None:
         return _page_lines_tesseract_cli(page, dpi)
 
+    from io import BytesIO
+
     import numpy as np
     from PIL import Image
-    from io import BytesIO
 
     mat = fitz.Matrix(dpi / 72, dpi / 72)
     pix = page.get_pixmap(matrix=mat)
@@ -313,7 +392,7 @@ def _load_ocr_engine():
 def _classify_relevant_page(text: str) -> tuple[bool, str]:
     """Return whether a page should be kept in the review excerpt."""
     compact = re.sub(r"\s+", " ", text or "")
-    if ISR_RE.search(compact) or STOP_RE.search(compact):
+    if any(_section_heading(line) in {"claims", "isr"} for line in _heading_lines(text)):
         return False, "excluded_claims_or_isr"
 
     has_activity = bool(ACTIVITY_RE.search(compact))
@@ -338,7 +417,7 @@ def _classify_relevant_page(text: str) -> tuple[bool, str]:
 def create_review_excerpt_pdf(
     pdf_path: str,
     output_pdf: str,
-    metadata_path: Optional[str] = None,
+    metadata_path: str | None = None,
     dpi: int = 150,
 ) -> dict:
     """Create a diagnostic review excerpt and return versioned metadata."""
@@ -346,18 +425,14 @@ def create_review_excerpt_pdf(
     original_page_count = len(src)
     engine = _load_ocr_engine()
 
-    page_infos = []
     classified_infos = []
     page_texts = []
-    started = False
-    stopped = False
 
     for page_idx in range(len(src)):
         page = src[page_idx]
         lines = _page_lines(page, dpi, engine)
-        joined = " ".join(line.text for line in lines)
+        joined = "\n".join(line.text for line in lines)
         page_texts.append(joined)
-        page_height = float(page.rect.height)
         keep_by_class, class_reason = _classify_relevant_page(joined)
         classified_infos.append({
             "source_page_idx": page_idx,
@@ -366,46 +441,6 @@ def create_review_excerpt_pdf(
             "reason": class_reason,
             "has_activity_marker": bool(ACTIVITY_RE.search(joined)),
             "keep": keep_by_class,
-        })
-
-        if stopped:
-            # Already stopped marker-based cropping; skip to next page
-            # but continue classifying remaining pages for whitelist building
-            continue
-
-        start_y = 0.0
-        stop_y = page_height
-
-        if not started:
-            for line in lines:
-                if START_RE.search(line.text):
-                    start_y = max(0.0, line.top - 12)
-                    started = True
-                    break
-            if not started:
-                continue
-
-        for line in lines:
-            if STOP_RE.search(line.text):
-                stop_y = max(start_y + 1.0, line.top - 8)
-                stopped = True
-                break
-
-        # ISR marks the end of the useful section in PCT patents
-        if not stopped and ISR_RE.search(joined):
-            # Don't include the ISR page itself; stop before this page
-            if page_infos:  # Only if we have content pages before ISR
-                stopped = True
-                continue  # Don't add this page
-            # If ISR is before any content, just skip it
-            continue
-
-        page_infos.append({
-            "source_page_idx": page_idx,
-            "source_page_no": page_idx + 1,
-            "clip_pdf": [0.0, start_y, float(page.rect.width), stop_y],
-            "reason": "relevant_body_examples_activity",
-            "has_activity_marker": bool(ACTIVITY_RE.search(joined)),
         })
 
     synthesis_pages = [
@@ -424,27 +459,20 @@ def create_review_excerpt_pdf(
         activity_pages=activity_pages,
     )
     inferred_candidates = set(inferred_window["candidate_pages"])
-    whitelist_infos = []
-    if inferred_candidates:
-        for idx in sorted(inferred_candidates):
-            page = src[idx]
-            keep_by_class, class_reason = _classify_relevant_page(page_texts[idx])
-            whitelist_infos.append({
-                "source_page_idx": idx,
-                "source_page_no": idx + 1,
-                "clip_pdf": [0.0, 0.0, float(page.rect.width), float(page.rect.height)],
-                "reason": class_reason if keep_by_class else "boundary_window_keep",
-                "has_activity_marker": bool(ACTIVITY_RE.search(page_texts[idx])),
-            })
+    page_infos = []
+    for idx in sorted(inferred_candidates):
+        observed = classified_infos[idx]
+        page_infos.append({
+            key: value for key, value in observed.items() if key != "keep"
+        })
+        if not observed["keep"]:
+            page_infos[-1]["reason"] = "boundary_window_keep"
 
-    if whitelist_infos:
-        page_infos = whitelist_infos
+    if page_infos:
         strategy = "boundary_window_before_claims"
-    elif page_infos:
-        strategy = "marker_crop_examples_synthesis_activity"
     else:
         # Conservative fallback: do not drop data if markers fail, but make it visible.
-        logger.warning("No candidate-page whitelist or markers found; copying original PDF unchanged for review")
+        logger.warning("No candidate-page window found; copying original PDF unchanged for review")
         page_infos = [
             {
                 "source_page_idx": i,
@@ -459,7 +487,6 @@ def create_review_excerpt_pdf(
 
     out = fitz.open()
     for info in page_infos:
-        source_page = src[info["source_page_idx"]]
         clip = fitz.Rect(info["clip_pdf"])
         new_page = out.new_page(width=clip.width, height=clip.height)
         new_page.show_pdf_page(new_page.rect, src, info["source_page_idx"], clip=clip)
@@ -479,7 +506,7 @@ def create_review_excerpt_pdf(
         "pages": page_infos,
         "classified_pages": classified_infos,
         "strategy": strategy,
-        "boundary": inferred_window if 'inferred_window' in locals() else None,
+        "boundary": inferred_window,
         "needs_review": strategy == "fallback_full_pdf_needs_review",
     }
 
