@@ -138,11 +138,15 @@ this is not permanent destruction or disk-space cleanup. Project removal hides
 its children and rejects normal source/result/edit/queue/export access. A removed
 task cannot be explicitly read/resumed, but its internal producer/ancestry remains
 valid. Original acceptance is computed independently of record visibility; deleting
-a failed task cannot promote QA. Active/queued/retained-identity work is protected;
+a failed task cannot promote QA. Active/queued/unverified retained work is protected;
 project deletion also respects the existing analysis lease. Restore requires a
 visible parent and does not undo independent child deletions. Environment removal
 only hides terminal history, retaining component readiness, configuration and
-idempotency/recovery evidence. Productv0.1.0/APIv1/private SQLitev1 remain.
+idempotency/recovery evidence. Legacy terminal environment identities remain
+unchanged: exact owned specification/command plus valid prior-kernel or saved-PID
+absence proof can allow removal; live, reused, malformed, foreign or unknown
+ownership blocks it. These checks never signal a process. Productv0.1.0/APIv1/
+private SQLitev1 remain.
 
 - Bind only to loopback (default port 8765). Validate Host and Origin; no wildcard CORS.
 - `GET /api/v1/session` bootstraps a local same-origin session, sets an HttpOnly

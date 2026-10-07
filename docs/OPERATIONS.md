@@ -579,8 +579,12 @@ states the scope and that deletion is recoverable, **not disk-space reclamation*
 The tombstone transaction removes access from normal authenticated API/list routes;
 source files, generated artifacts, immutable revisions and internal producer /
 checkpoint references remain unchanged. Browser-saved copies are not server-owned.
-Queued/running operations and retained/unverified process identities cannot be
-removed. No WSL, system or unrelated software is stopped to enable deletion.
+Queued/running operations and unverified retained process identities cannot be
+removed. Legacy terminal environment operations may retain forensic identity:
+the shared bounded validator checks exact saved workspace/command ownership and
+proves a prior valid kernel or absence of every saved PID before removal. It
+never signals processes or erases the original record. No WSL, system or unrelated
+software is stopped to enable deletion.
 
 Use the page's **回收站** to restore. Restore the parent file/project first before
 its child entries. Restoring a project preserves separately deleted task/export
