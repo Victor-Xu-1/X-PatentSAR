@@ -125,9 +125,11 @@
   border-color: var(--danger-line);
   background: var(--danger-surface);
 }
-.stage.warnings .stage-circle {
+.stage.warnings .stage-circle,
+.stage.failed.needs-review .stage-circle {
   color: var(--warning);
   background: var(--warning-surface);
+  border-color: var(--warning-line);
 }
 .job-actions-wrapper {
   flex: 0 0 auto;

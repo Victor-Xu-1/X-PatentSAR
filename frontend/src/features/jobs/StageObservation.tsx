@@ -1,8 +1,9 @@
 import type { Job, StageName } from '../../api/types';
 import {
   pageProgressStage,
-  progressUnit,
+  reviewedCoreStage,
   stageLabel,
+  stageProgressText,
   stageStatusText,
 } from '../../model/extraction';
 
@@ -10,44 +11,36 @@ export function StageObservation({
   job,
   stage,
   name,
-  compact = false,
 }: {
   job: Job;
   stage: Job['stages'][number] | undefined;
   name: StageName;
-  compact?: boolean;
 }) {
   const progress = stage?.progress;
   const resourceWait = stage?.resource_wait;
   const label = stageLabel(name, stage);
   const state = stageStatusText(job, stage, name);
+  const work = stageProgressText(stage);
+  const findingLabel = name === 'smiles' && reviewedCoreStage(job, stage) ? '待复核' : '失败';
+  const countText = work ?? (stage?.count == null ? null : `数量 ${stage.count}`);
   return (
     <details className="stage-observation" name={`stage-observations-${job.id}`}>
       <summary
-        title={`${label}：${state}${stage?.count == null ? '' : ` · ${stage.count}`}${name === 'admet' ? ` · ${job.admet_only ? '补齐已证实来源的结构与指标' : '核心校验后执行'}；MW、LogP、TPSA、HBD、HBA 计算，LogS 为 ADMET 预测` : ''}`}
+        title={`${label}：${state}${countText === null ? '' : ` · ${countText}`}${name === 'admet' ? ` · ${job.admet_only ? '补齐已证实来源的结构与指标' : '核心校验后执行'}；MW、LogP、TPSA、HBD、HBA 计算，LogS 为 ADMET 预测` : ''}`}
       >
         <strong>{label}</strong>
-        {compact ? (
-          progress && progress.total > 0 && stage?.status === 'running' ? (
-            <small className="stage-progress">
-              {progress.completed} / {progress.total}
-              {progressUnit(name)}
-            </small>
-          ) : null
-        ) : (
-          <small>
-            <span>{state}</span>
-            {stage?.count != null && ` · ${stage.count}`}
-            {progress && (
-              <span className="stage-progress">
-                {' · '}
-                {progress.completed} / {progress.total}
-                {progressUnit(name)}
-              </span>
-            )}
-            {stage?.reused_checkpoint === true && <span> · 复用检查点</span>}
-          </small>
-        )}
+        <small>
+          <span>{state}</span>
+          {!progress &&
+            stage?.count != null &&
+            ` · ${stage.status === 'failed' ? '数量 ' : ''}${stage.count}`}
+          {work && (
+            <span className="stage-progress">
+              {' · '}
+              {work}
+            </span>
+          )}
+        </small>
       </summary>
       <div className="stage-observation-detail">
         {resourceWait && (
@@ -58,12 +51,6 @@ export function StageObservation({
             <p>已等待 {resourceWait.waited_seconds} 秒</p>
           </>
         )}
-        {compact && (
-          <p>
-            {state}
-            {stage?.count == null ? '' : ` · ${stage.count}`}
-          </p>
-        )}
         {!progress ? (
           <p>进度未提供</p>
         ) : (
@@ -71,7 +58,7 @@ export function StageObservation({
             <p>
               {pageProgressStage(name)
                 ? `复用 ${progress.cache_hits} 页`
-                : `缓存命中 ${progress.cache_hits} · 失败 ${progress.failures}`}
+                : `缓存命中 ${progress.cache_hits} · ${findingLabel} ${progress.failures}`}
             </p>
             {(!pageProgressStage(name) ||
               progress.device !== null ||
@@ -87,6 +74,8 @@ export function StageObservation({
           </>
         )}
         {stage?.reused_checkpoint == null && <p>检查点复用未知</p>}
+        {stage?.reused_checkpoint === true && <p>复用检查点</p>}
+        {progress && stage?.count != null && <p>阶段记录数量 {stage.count}</p>}
         {name === 'admet' && stage?.skipped != null && stage.skipped > 0 && (
           <p>未计算 {stage.skipped}（缺少有效SMILES）</p>
         )}

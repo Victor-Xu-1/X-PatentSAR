@@ -256,7 +256,7 @@ describe('one slim observed job state with disclosed detail', () => {
       />,
     );
     expect(document.querySelector('.stage-current')).toHaveTextContent(
-      '结构补齐 · 失败 · 12 / 100',
+      '结构补齐 · 失败 · 已处理 12 / 100',
     );
     expect(container.querySelector('.spin')).toBeNull();
   });

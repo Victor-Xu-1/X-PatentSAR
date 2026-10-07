@@ -3,9 +3,12 @@ import type { Job } from '../../api/types';
 import { jobStatusText } from '../../model/presentation';
 import {
   completeCoreStages,
+  completedCoreRejection,
   observedStages,
-  progressUnit,
+  recognitionReviewCount,
+  reviewedCoreStage,
   stageLabel,
+  stageProgressText,
   stageStatusText,
   stoppedJob,
   waitingAdmet,
@@ -37,7 +40,7 @@ export function StageStrip({ job, compact = false }: { job: Job | null; compact?
               (name === 'admet' && !waitingAdmet(job, stage) ? 'unknown' : 'pending'));
         return (
           <li
-            className={`stage ${status}`}
+            className={`stage ${status}${reviewedCoreStage(job, stage) ? ' needs-review' : ''}`}
             key={name}
             title={`${label}：${stageStatusText(job, stage, name)}`}
           >
@@ -104,17 +107,15 @@ export function StageStrip({ job, compact = false }: { job: Job | null; compact?
             ? `${stageLabel(currentName, current)} · ${stageStatusText(job, current, currentName)}`
             : jobStatusText(job);
   const progress = current?.progress;
+  const reviewCount = recognitionReviewCount(job);
   return (
     <details className="stage-overview stage-disclosure">
       <summary className="stage-current-line" aria-label="提取阶段详情">
         <output className="stage-current" aria-live="polite" style={{ display: 'inline' }}>
           {label}
-          {progress && progress.total > 0 && (
-            <span className="stage-progress">
-              {' '}
-              · {progress.completed} / {progress.total}
-              {current ? progressUnit(current.name) : ''}
-            </span>
+          {reviewCount !== null && <span className="stage-progress"> · {reviewCount} 条结构</span>}
+          {!completedCoreRejection(job) && progress && progress.total > 0 && (
+            <span className="stage-progress"> · {stageProgressText(current)}</span>
           )}
         </output>
       </summary>

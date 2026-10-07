@@ -175,6 +175,9 @@ describe('actual task progress and unavailable historic stages', () => {
     fireEvent.click(within(stage).getByText('文档解析').closest('summary')!);
     expect(within(stage).getByText('缓存命中 3 · 失败 1')).toBeVisible();
     expect(within(stage).getByText('CPU · 峰值 RSS 256.5 MB')).toBeVisible();
+    const activity = screen.getByText('活性提取').closest('li')!;
+    expect(within(activity).getByText(/复用检查点/)).not.toBeVisible();
+    fireEvent.click(within(activity).getByText('活性提取').closest('summary')!);
     expect(
       within(screen.getByText('活性提取').closest('li')!).getByText(/复用检查点/),
     ).toBeVisible();

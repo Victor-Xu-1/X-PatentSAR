@@ -26,6 +26,53 @@ export function completeCoreStages(stages: Job['stages']): boolean {
   );
 }
 
+export function completedCoreRejection(job: Job | null): boolean {
+  return Boolean(
+    job?.history_available === true &&
+    job.status === 'failed' &&
+    job.error?.code === 'core_not_accepted' &&
+    job.admet_only !== true &&
+    stageNames.every((name) =>
+      job.stages.some(
+        (stage) =>
+          stage.name === name && ['ok', 'empty', 'warnings', 'failed'].includes(stage.status),
+      ),
+    ) &&
+    job.stages.some(
+      (stage) => stage.name === 'qa' && ['failed', 'warnings'].includes(stage.status),
+    ),
+  );
+}
+
+export function recognitionReviewCount(job: Job | null): number | null {
+  if (!completedCoreRejection(job)) return null;
+  const stage = job!.stages.find((value) => value.name === 'smiles');
+  const progress = stage?.progress;
+  return stage?.status === 'failed' &&
+    progress &&
+    progress.total > 0 &&
+    progress.completed === progress.total &&
+    stage.count === progress.total &&
+    progress.failures > 0 &&
+    progress.failures <= progress.completed
+    ? progress.failures
+    : null;
+}
+
+export function reviewedCoreStage(job: Job | null, stage: Stage | undefined): boolean {
+  return Boolean(
+    stage?.status === 'failed' &&
+    ['smiles', 'final', 'qa'].includes(stage.name) &&
+    completedCoreRejection(job),
+  );
+}
+
+export function stageProgressText(stage: Stage | undefined): string | null {
+  const progress = stage?.progress;
+  if (!stage || !progress) return null;
+  return `${stage.status === 'failed' ? '已处理 ' : ''}${progress.completed} / ${progress.total}${progressUnit(stage.name)}`;
+}
+
 export function workflowStageNames(job: Job | null): StageName[] {
   if (job?.admet_only === true) return ['admet'];
   return [
@@ -105,6 +152,11 @@ export function stageStatusText(
     if (stage.status === 'running') return '停止时进行中';
   }
   if (waitingResources(job, stage)) return '等待资源';
+  if (reviewedCoreStage(job, stage)) {
+    if (stage.name === 'smiles') return '需复核';
+    if (stage.name === 'final') return '未通过验收';
+    if (stage.name === 'qa') return '未通过';
+  }
   return stageStatusLabels[stage.status];
 }
 
