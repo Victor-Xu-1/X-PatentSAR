@@ -106,11 +106,24 @@ def environment_spec(
             ):
                 raise ValueError("Invalid saved plan fingerprint")
         output = root / "operations" / identifier
+        if any(path.is_symlink() for path in (output, *output.parents)) or not (
+            output.resolve().is_relative_to(root / "operations")
+        ):
+            raise ValueError(
+                "Environment output must retain its no-link owned workspace"
+            )
         digest = hashlib.sha256(encode(value).encode()).hexdigest()
         return RunSpec(
             identifier, "environment", "", str(output), "environment", digest
         ), value
-    except (KeyError, ValueError, TypeError, RecursionError, UnicodeError) as error:
+    except (
+        KeyError,
+        ValueError,
+        TypeError,
+        RecursionError,
+        UnicodeError,
+        OSError,
+    ) as error:
         raise WebError(
             409,
             "environment_record",

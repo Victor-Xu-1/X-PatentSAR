@@ -59,11 +59,13 @@
     "src/patent_sar_extractor/web/storage.py",
     "tests/test_history_api.py",
     "tests/test_history_deletion.py",
+    "tests/test_history_environment_paths.py",
     "tools/prepare_browser_fixture.py"
   ],
   "python_modules": [
     "tests.test_history_deletion",
     "tests.test_history_api",
+    "tests.test_history_environment_paths",
     "tests.test_analysis_lock",
     "tests.test_web_corrections.CorrectionTests.test_read_save_persistence_audit_reset_preserves_raw_artifacts_and_reviews",
     "tests.test_web_projection_ownership.ProjectionOwnershipTests.test_refresh_loses_ownership_before_publication_and_does_not_restore_acceptance",
