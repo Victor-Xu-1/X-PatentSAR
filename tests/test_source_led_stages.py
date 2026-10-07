@@ -77,6 +77,9 @@ class SourceLedStageTests(unittest.TestCase):
             ):
                 execute_smiles(state)
             self.assertEqual(worker.call_args.kwargs["timeout"], 1800)
+            self.assertIn(
+                "--continue-on-scientific-errors", worker.call_args.kwargs["args"]
+            )
             budget.assert_called_once_with(2, state.started_monotonic)
             self.assertEqual(state.pipeline_log["steps"]["smiles"]["formal_total"], 2)
             self.assertEqual(state.pipeline_log["steps"]["smiles"]["source_total"], 0)

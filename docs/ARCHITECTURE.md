@@ -95,6 +95,7 @@ Interrupted/incomplete/foreign/old core evidence cannot enter that path.
 | Source ownership | Spatial cells/captions, source headings, catalog reader and one binding writer |
 | Visible labels | `visible_label_cache.py` owns original PDF/crop identity; `visible_label_crops.py` owns bounded crop geometry; `binding_observations.py` coordinates the existing OCR provider and refinement |
 | Recognition | One verified printed-DECIMER adapter and bounded JSONL carrier, raw observation cache and source QC |
+| Observation completion | `ocsr/observation_completion.py` separates complete source observations from scientific acceptance; standalone default stays strict and the coordinator retains every finding for final QA |
 | Final output | Identifier-led structure and activity join; workbook/SDF modules share formal selection |
 | Acceptance | One `qa_inputs` context, separate source/file inspections and source/chemistry/output gates; `qa_report` facade never overrides findings |
 | Jobs/recovery | Durable queue, kernel identity, owned phase cleanup, immutable history and bounded checkpoint copy |

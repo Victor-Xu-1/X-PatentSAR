@@ -29,6 +29,16 @@ Original OCR files/checkpoints remain intact and memory admission stays unchange
 If headroom is still insufficient after the bounded wait, resume the task later;
 the application does not lower safety budgets or stop other software to proceed.
 
+The internal OCSR/final workers distinguish a complete observation collection
+from scientific acceptance. The source coordinator may continue on scientific
+findings only with exact current catalog coverage; final QA still rejects the
+same findings and rejected chemistry remains ineligible for automatic metrics.
+Standalone OCSR is strict by default. Diagnostic/limited/unbound input cannot
+use this source-completion mode. Infrastructure failures and incomplete or
+misassigned outputs still stop the task. A continuation can reuse exact raw
+predictions without promoting the failed stage, old QA or acceptance. OCSR CSV
+and JSON outputs are colocated in the owned job's `smiles` directory.
+
 Recognition uses a separate owned model process. Low model headroom fails before
 TensorFlow load. Do not raise limits to hide
 an environment fault. GPU execution must match the cache's actual execution policy.

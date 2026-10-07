@@ -42,6 +42,11 @@ from patent_sar_extractor.contracts import (
     artifact_identity_matches,
 )
 from patent_sar_extractor.core.cpd_filter import filter_examples_only
+from patent_sar_extractor.core.ocsr.observation_completion import (
+    publish_scientific_findings,
+    require_complete_source_results,
+    validate_source_observation_mode,
+)
 from patent_sar_extractor.core.ocsr.recognition_inputs import (
     ordered_source_results,
     recognition_inputs,
@@ -49,7 +54,6 @@ from patent_sar_extractor.core.ocsr.recognition_inputs import (
 from patent_sar_extractor.core.ocsr.smiles_converter import SmilesConverter
 from patent_sar_extractor.core.ocsr.stereo_gate import stereo_record_error
 from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
-from patent_sar_extractor.failures import write_failure_marker
 from patent_sar_extractor.smiles_artifact import (
     DIAGNOSTIC_SMILES_MODE,
     PRODUCTION_SMILES_MODE,
@@ -469,6 +473,11 @@ def main():
         action="store_true",
         help="Diagnostic only: allow stale/unconfirmed input and non-clean output without accepting deliverables.",
     )
+    parser.add_argument(
+        "--continue-on-scientific-errors",
+        action="store_true",
+        help="Source-led coordinator only: retain complete observations for final QA; never accept rejected chemistry.",
+    )
 
     args = parser.parse_args()
 
@@ -520,12 +529,21 @@ def main():
     # Formal QA keeps its ordered association view; no-activity rows are not
     # silently omitted or falsely labelled as formally accepted measurements.
     supplemental = []
+    binding_payload = {}
     if not args.diagnostic_unvalidated_input:
         with open(args.input, "r", encoding="utf-8") as source:
             binding_payload = json.load(source)
         _, supplemental = recognition_inputs(binding_payload)
         if not args.include_intermediates:
             supplemental = filter_examples_only(supplemental)
+    if args.continue_on_scientific_errors:
+        validate_source_observation_mode(
+            binding_payload,
+            bindings,
+            diagnostic=args.diagnostic_unvalidated_input,
+            limit=args.limit,
+            include_unbound=args.include_unbound,
+        )
     formal_count = len(bindings)
     all_inputs = [*bindings, *supplemental]
 
@@ -604,6 +622,8 @@ def main():
     elapsed = time.time() - start_time
     formal_results = results[:formal_count]
     source_results = results[formal_count:]
+    if args.continue_on_scientific_errors:
+        require_complete_source_results(bindings, formal_results)
     if not args.diagnostic_unvalidated_input and not ordered_source_results(
         supplemental, source_results
     ):
@@ -649,15 +669,11 @@ def main():
         )
     if not args.diagnostic_unvalidated_input:
         result_errors = validate_strict_smiles_results(bindings, formal_results)
-        if result_errors:
-            write_failure_marker(
-                os.path.dirname(args.output) or ".",
-                "smiles_output",
-                result_errors,
-            )
-            raise RuntimeError(
-                "Strict OCSR output gate failed: " + "; ".join(result_errors[:12])
-            )
+        publish_scientific_findings(
+            os.path.dirname(args.output) or ".",
+            result_errors,
+            continue_on_scientific_errors=args.continue_on_scientific_errors,
+        )
 
 
 if __name__ == "__main__":
