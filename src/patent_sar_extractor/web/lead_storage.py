@@ -8,6 +8,7 @@ import re
 import sqlite3
 from collections.abc import Sequence
 from datetime import datetime
+from importlib.metadata import version
 
 from pydantic import ValidationError
 
@@ -18,6 +19,7 @@ from .property_values import effective_property_values
 from .storage import Store, encode, now
 
 POLICY_VERSION = LEAD_POLICY_VERSION
+RDKIT_VERSION = version("rdkit")
 MAX_REPORT_BYTES = 32 * 1024 * 1024
 MAX_SOURCE_BYTES = 128 * 1024 * 1024
 
@@ -27,7 +29,13 @@ def input_fingerprint(project: dict, compounds: Sequence[Compound]) -> str:
     digest = hashlib.sha256()
     digest.update(
         encode(
-            [POLICY_VERSION, project["id"], project["sha256"], project["run_root"]]
+            [
+                POLICY_VERSION,
+                RDKIT_VERSION,
+                project["id"],
+                project["sha256"],
+                project["run_root"],
+            ]
         ).encode()
     )
     for item in sorted(compounds, key=lambda row: row.id):
@@ -122,6 +130,7 @@ class LeadStore:
                 != {
                     "schema",
                     "policy_version",
+                    "rdkit_version",
                     "project_id",
                     "input_fingerprint",
                     "job_id",
@@ -157,6 +166,8 @@ class LeadStore:
                 or report["schema"]
                 != {"name": "patentsar.lead-selection", "version": 1}
                 or report["policy_version"] != POLICY_VERSION
+                or not isinstance(report["rdkit_version"], str)
+                or not 1 <= len(report["rdkit_version"]) <= 40
                 or report["project_id"] != project_id
                 or report["input_fingerprint"] != row["input_fingerprint"]
                 or report["review_only"] is not True
@@ -245,6 +256,7 @@ class LeadStore:
         report = {
             "schema": {"name": "patentsar.lead-selection", "version": 1},
             "policy_version": POLICY_VERSION,
+            "rdkit_version": RDKIT_VERSION,
             "project_id": project_id,
             "input_fingerprint": fingerprint,
             "job_id": job_id,

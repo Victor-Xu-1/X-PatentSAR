@@ -63,15 +63,15 @@
     "tests.test_web_corrections"
   ],
   "frontend_tests": [
-    "tests/lead-column.test.tsx",
-    "tests/prediction-contract.test.ts",
-    "tests/compound-column.test.tsx",
-    "tests/table-column-controls.test.tsx",
-    "tests/table-copy.test.ts",
-    "tests/workflow-chain.test.tsx",
-    "tests/extraction-state.test.tsx"
+    "frontend/tests/lead-column.test.tsx",
+    "frontend/tests/prediction-contract.test.ts",
+    "frontend/tests/compound-column.test.tsx",
+    "frontend/tests/table-column-controls.test.tsx",
+    "frontend/tests/table-copy.test.ts",
+    "frontend/tests/workflow-chain.test.tsx",
+    "frontend/tests/extraction-state.test.tsx"
   ],
   "browser_tests": [
-    "e2e/lead-column.spec.ts"
+    "frontend/e2e/lead-column.spec.ts"
   ]
 }
