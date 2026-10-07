@@ -10,8 +10,8 @@ from patent_sar_extractor.web.stereochemistry_models import StereoEvidence
 
 
 class SourceStereoPresentationTests(unittest.TestCase):
-    def test_both_declared_epochs_are_readable_without_certification(self):
-        for version in (1, 2):
+    def test_declared_epochs_are_readable_without_certification(self):
+        for version in (1, 2, 3):
             with self.subTest(version=version):
                 model = StereoEvidence(
                     version=version,
@@ -28,7 +28,7 @@ class SourceStereoPresentationTests(unittest.TestCase):
                 self.assertEqual(model.version, version)
                 self.assertFalse(model.absolute_configuration_verified)
                 with self.assertRaises(ValidationError):
-                    StereoEvidence.model_validate({**model.model_dump(), "version": 3})
+                    StereoEvidence.model_validate({**model.model_dump(), "version": 4})
                 with self.assertRaises(ValidationError):
                     StereoEvidence.model_validate(
                         {
