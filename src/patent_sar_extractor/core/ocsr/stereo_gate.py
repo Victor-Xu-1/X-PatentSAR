@@ -50,6 +50,9 @@ def validate_stereo_record(record: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(raw, str) or not 0 < len(raw) <= 10000:
         raise ValueError("Source stereochemistry has no bounded raw model observation")
     qc = qc_smiles(raw)
+    from .stereo_rescue_pass import validate_rescue_proof
+
+    validate_rescue_proof(record)
     expected = check_source_stereochemistry(
         qc,
         {

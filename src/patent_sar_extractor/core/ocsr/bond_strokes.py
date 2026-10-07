@@ -101,11 +101,16 @@ def stroke_paths(skeleton: np.ndarray) -> list[np.ndarray]:
     for path in paths:
         if np.array_equal(path[0], path[-1]):
             cycle = path[:-1]
-            window = min(96, len(cycle) - 1)
-            for start in range(0, len(cycle), 16):
-                cyclic_windows.append(cycle[(start + np.arange(window)) % len(cycle)])
-                if len(cyclic_windows) > 8000:
-                    raise ValueError("Source diagram exceeds the cyclic stroke budget")
+            # Short waves also need a local window, not a whole polygon plus wave.
+            for window in sorted({min(size, len(cycle) - 1) for size in (32, 48, 96)}):
+                for start in range(0, len(cycle), 8 if window < 96 else 16):
+                    cyclic_windows.append(
+                        cycle[(start + np.arange(window)) % len(cycle)]
+                    )
+                    if len(cyclic_windows) > 8000:
+                        raise ValueError(
+                            "Source diagram exceeds the cyclic stroke budget"
+                        )
             continue
         ports.setdefault(tuple(path[0]), []).append(path)
         ports.setdefault(tuple(path[-1]), []).append(path[::-1])
@@ -124,16 +129,14 @@ def _smooth_alternating_bends(
 ) -> bool:
     """Rounded half-waves must explain the pixels better than straight corner legs.
 
-    Work is restricted to the already bounded, half-pixel sampled signal. A small
-    blur removes raster staircases, not ink or cycles. Compare only between the
-    observed extrema so connected straight bonds outside the wave cannot veto it.
+    Work is restricted to the already smoothed, bounded half-pixel signal. Compare
+    only between its resolved extrema so connected straight bonds outside the
+    wave cannot veto it.
     """
-    from scipy.ndimage import gaussian_filter1d
-
-    smooth = gaussian_filter1d(signal, 1.0)
+    supported_bends = 0
     straight_error, curved_error = 0.0, 0.0
     for left, right in pairwise(extremes):
-        chunk = smooth[left[0] : right[0] + 1]
+        chunk = signal[left[0] : right[0] + 1]
         amplitude = abs(chunk[-1] - chunk[0])
         if amplitude < 0.5 or len(chunk) < 4:
             continue
@@ -141,11 +144,18 @@ def _smooth_alternating_bends(
         change = chunk[-1] - chunk[0]
         straight = chunk[0] + change * phase
         curved = chunk[0] + change * (1 - np.cos(np.pi * phase)) / 2
-        straight_error += float(np.sum(abs(chunk - straight)) / amplitude)
+        deviation = float(np.sum(abs(chunk - straight)) / amplitude)
+        # A rounded half-wave departs from its chord throughout the leg. Tiny
+        # raster wiggles or a nearly straight middle leg are not bend support,
+        # even when other halves can improve the aggregate cosine fit.
+        # A cosine half's mean chord departure is about 6.8% of its amplitude;
+        # require 4% in at least three independent half-waves, not just in total.
+        supported_bends += deviation / len(chunk) > 0.04
+        straight_error += deviation
         curved_error += float(np.sum(abs(chunk - curved)) / amplitude)
     # Low-resolution waves can have unequal rasterized plateaus. Require an
     # aggregate smooth-shape advantage, not ideal sinusoidal fit at every bend.
-    return straight_error > 0 and curved_error < 0.98 * straight_error
+    return supported_bends >= 3 and curved_error < 0.98 * straight_error
 
 
 def is_periodic_wave(points: np.ndarray) -> bool:
@@ -154,6 +164,7 @@ def is_periodic_wave(points: np.ndarray) -> bool:
     A hit is only a source-symbol risk observation. It never establishes atom
     correspondence, absolute R/S, a racemate or a missing bond in the graph.
     """
+    from scipy.ndimage import gaussian_filter1d
     from scipy.signal import find_peaks
 
     centered = points - points.mean(axis=0)
@@ -173,7 +184,9 @@ def is_periodic_wave(points: np.ndarray) -> bool:
     samples = np.arange(x[0], x[-1], 0.5)
     if len(samples) < 24:
         return False
-    signal = np.interp(samples, x, y)
+    # Count and fit the same resolved signal. Counting extrema before smoothing
+    # allowed one-pixel peaks that the fit then skipped to fake a full period.
+    signal = gaussian_filter1d(np.interp(samples, x, y), 1.0)
     prominence = max(0.75, width * 0.2)
     peaks = find_peaks(signal, prominence=prominence, distance=3)[0]
     troughs = find_peaks(-signal, prominence=prominence, distance=3)[0]

@@ -51,7 +51,7 @@ describe('complete setup uses only the published plan', () => {
     const start = startOperation();
     render(<EnvironmentPage {...props()} />);
     expect(await screen.findByRole('heading', { name: '完整运行环境' })).toBeVisible();
-    expect(screen.getByText('已就绪 0/6')).toBeVisible();
+    expect(screen.getByText('已就绪 0/8')).toBeVisible();
     expect(screen.getByText('PDF 提取 · 结构识别 · 六项指标')).toBeVisible();
     expect(screen.getByRole('button', { name: '一键部署全部环境' })).toBeEnabled();
     expect(screen.queryAllByRole('button', { name: /^安装 / })).toHaveLength(0);
@@ -77,7 +77,7 @@ describe('complete setup uses only the published plan', () => {
     const dialog = screen.getByRole('dialog');
     expect(dialog).toHaveTextContent(catalog.settings.install_root);
     expect(dialog).toHaveTextContent('CPU');
-    expect(dialog.querySelectorAll('[data-install-component]')).toHaveLength(6);
+    expect(dialog.querySelectorAll('[data-install-component]')).toHaveLength(8);
     const ids = Array.from(dialog.querySelectorAll('[data-install-component]')).map((entry) =>
       entry.getAttribute('data-install-component'),
     );
@@ -169,7 +169,7 @@ describe('complete setup uses only the published plan', () => {
       }),
     );
     render(<EnvironmentPage {...props()} />);
-    expect(await screen.findByText('已就绪 0/6')).toBeVisible();
+    expect(await screen.findByText('已就绪 0/8')).toBeVisible();
     expect(screen.getByRole('button', { name: '一键部署全部环境' })).toBeDisabled();
     expect(screen.queryByText('已安装·已验证')).not.toBeInTheDocument();
   });
@@ -179,7 +179,7 @@ describe('complete setup uses only the published plan', () => {
     const start = startOperation();
     render(<EnvironmentPage {...props()} />);
     expect(await screen.findByRole('button', { name: '环境已就绪' })).toBeDisabled();
-    expect(screen.getByText('已就绪 6/6')).toBeVisible();
+    expect(screen.getByText('已就绪 8/8')).toBeVisible();
     expect(screen.queryAllByRole('button', { name: /^已安装 / })).toHaveLength(0);
     await userEvent.click(screen.getByRole('button', { name: '重新检测' }));
     expect(start).toHaveBeenCalledExactlyOnceWith(

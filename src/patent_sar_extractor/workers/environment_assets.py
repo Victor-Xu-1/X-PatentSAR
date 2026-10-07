@@ -18,6 +18,18 @@ from patent_sar_extractor.workers.environment_files import file_sha256
 
 from .environment_errors import EnvironmentFailure
 
+# Only first-party recipes construct URLs. Redirect targets are explicit official
+# delivery hosts; every asset still needs exact size and a pinned content digest.
+OFFICIAL_HOSTS = {
+    "files.pythonhosted.org",
+    "zenodo.org",
+    "codeload.github.com",
+    "huggingface.co",
+    "cdn-lfs.huggingface.co",
+    "cdn-lfs-us-1.huggingface.co",
+    "cas-bridge.xethub.hf.co",
+}
+
 
 class OfficialRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(
@@ -28,11 +40,7 @@ class OfficialRedirect(urllib.request.HTTPRedirectHandler):
             parsed.username
             or parsed.password
             or parsed.scheme != "https"
-            or parsed.hostname
-            not in {
-                "files.pythonhosted.org",
-                "zenodo.org",
-            }
+            or parsed.hostname not in OFFICIAL_HOSTS
         ):
             raise ValueError("Asset redirect left its official source allowlist")
         return super().redirect_request(req, fp, code, msg, headers, newurl)
@@ -52,7 +60,7 @@ def download(
     parsed = urlsplit(url)
     if (
         parsed.scheme != "https"
-        or parsed.hostname not in {"files.pythonhosted.org", "zenodo.org"}
+        or parsed.hostname not in OFFICIAL_HOSTS
         or parsed.username
         or parsed.password
     ):
@@ -125,7 +133,7 @@ def download(
 def _verify(path: Path, size: int, sha256: str | None, md5: str | None) -> None:
     if path.is_symlink() or path.stat().st_size != size:
         raise ValueError("Asset size/type differs from the pinned source")
-    if sha256 and file_sha256(path) != sha256:
+    if sha256 and file_sha256(path, limit=size) != sha256:
         raise EnvironmentFailure("hash_mismatch")
     if md5:
         digest = hashlib.md5(usedforsecurity=False)

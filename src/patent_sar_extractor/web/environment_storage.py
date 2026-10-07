@@ -13,7 +13,12 @@ from pathlib import Path
 from typing import Any
 
 from .data_location_policy import DataLocationPolicy
-from .environment_models import ComponentId, EnvironmentOperation
+from .environment_models import (
+    COMPONENT_IDS,
+    MAX_COMPONENTS,
+    ComponentId,
+    EnvironmentOperation,
+)
 from .errors import WebError
 from .files import private_directory
 from .location_records import MAX_LOCATION_ROOTS, initialize_locations, location_record
@@ -322,16 +327,24 @@ class EnvironmentStore:
             )
 
     def report_records(self) -> dict[str, dict[str, Any]]:
-        """Read at most six saved observations, retaining their verification scope."""
+        """Read the bounded component inventory with its verification scope."""
         with self.connect() as connection:
-            rows = connection.execute("SELECT * FROM components LIMIT 7").fetchall()
+            rows = connection.execute(
+                "SELECT * FROM components LIMIT ?", (MAX_COMPONENTS + 1,)
+            ).fetchall()
         try:
-            if len(rows) > 6 or any(len(row["report"]) > 128 * 1024 for row in rows):
+            if len(rows) > MAX_COMPONENTS or any(
+                len(row["report"]) > 128 * 1024 for row in rows
+            ):
                 raise ValueError("Unbounded saved reports")
             output = {}
             for row in rows:
                 report = json.loads(row["report"])
-                if not isinstance(report, dict) or report.get("id") != row["id"]:
+                if (
+                    row["id"] not in COMPONENT_IDS
+                    or not isinstance(report, dict)
+                    or report.get("id") != row["id"]
+                ):
                     raise ValueError("Saved report identity differs")
                 output[row["id"]] = {"source_key": row["source_key"], "report": report}
             return output

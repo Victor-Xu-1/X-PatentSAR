@@ -12,6 +12,7 @@ from .errors import WebError
 from .files import SafeFiles, records
 from .observation_cache import seed_job_cache
 from .recognition_storage import crop_digest
+from .source_epoch import stale_source_epoch
 
 
 def completion_inputs(project: dict, rows: dict, compounds: list) -> list[tuple]:
@@ -34,7 +35,10 @@ def completion_inputs(project: dict, rows: dict, compounds: list) -> list[tuple]
     by_id = {str(item.get("cpd") or item.get("compound_id")): item for item in catalog}
     output = []
     for compound in compounds:
-        if compound.recognition.status in {"valid", "invalid"}:
+        if compound.recognition.status in {
+            "valid",
+            "invalid",
+        } and not stale_source_epoch(compound):
             continue
         row = rows[compound.id]
         saved = joined_correction(row)

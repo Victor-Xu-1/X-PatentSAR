@@ -21,7 +21,8 @@ import { environmentComponentIds } from './environmentTypes';
 
 const ids: Decoder<EnvironmentComponentId[]> = (value, path = '$') => {
   const result = array(oneOf(environmentComponentIds))(value, path);
-  if (result.length > 6 || new Set(result).size !== result.length) throw new ContractError(path);
+  if (result.length > environmentComponentIds.length || new Set(result).size !== result.length)
+    throw new ContractError(path);
   return result;
 };
 export const decodeEnvironmentRequestId: Decoder<string> = (value, path = '$') => {

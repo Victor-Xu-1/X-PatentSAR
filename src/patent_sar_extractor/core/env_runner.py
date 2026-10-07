@@ -4,14 +4,13 @@ Environment Runner — 多 conda 环境子进程调度
 统一管理各 conda 环境的 Python 路径，提供跨环境执行能力。
 """
 
-import subprocess
-import tempfile
 import logging
 import os
-import sys
-import time
 import selectors
-from typing import Optional
+import subprocess
+import sys
+import tempfile
+import time
 
 from patent_sar_extractor.paths import PACKAGE_IMPORT_ROOT, config_files
 
@@ -49,7 +48,7 @@ def _run_streamed_filtered(
     *,
     timeout: int,
     cwd: str,
-    env: Optional[dict[str, str]],
+    env: dict[str, str] | None,
 ) -> subprocess.CompletedProcess:
     proc = subprocess.Popen(
         cmd,
@@ -89,24 +88,32 @@ def _run_streamed_filtered(
                 output_tail = output_tail[-200:]
                 if _should_stream_child_line(line):
                     print(line, end="", flush=True)
-        return subprocess.CompletedProcess(cmd, proc.returncode, "".join(output_tail), "")
+        return subprocess.CompletedProcess(
+            cmd, proc.returncode, "".join(output_tail), ""
+        )
     finally:
         try:
             selector.close()
-        except Exception:
-            pass
+        except (OSError, ValueError) as error:
+            logger.warning("Owned selector cleanup failed: %s", type(error).__name__)
         if proc.stdout is not None:
             try:
                 proc.stdout.close()
-            except Exception:
-                pass
+            except (OSError, ValueError) as error:
+                logger.warning("Owned output cleanup failed: %s", type(error).__name__)
+
 
 _DEFAULT_PYTHON = os.environ.get("PATENTSAR_PYTHON", sys.executable or "python3")
 
 _ENV_OVERRIDES = {
     "base": ("PATENTSAR_BASE_PYTHON", "PATENTSAR_PYTHON"),
-    "smiles_engine": ("SMILES_ENGINE_PYTHON", "PATENTSAR_SMILES_PYTHON", "PATENTSAR_PYTHON"),
+    "smiles_engine": (
+        "SMILES_ENGINE_PYTHON",
+        "PATENTSAR_SMILES_PYTHON",
+        "PATENTSAR_PYTHON",
+    ),
     "decimer": ("DECIMER_PYTHON", "PATENTSAR_DECIMER_PYTHON"),
+    "molscribe": ("PATENTSAR_MOLSCRIBE_PYTHON",),
     "paddleocr": ("PADDLEOCR_PYTHON", "PATENTSAR_PADDLEOCR_PYTHON", "PATENTSAR_PYTHON"),
     "pymupdf": ("PYMUPDF_PYTHON", "PATENTSAR_PYMUPDF_PYTHON", "PATENTSAR_PYTHON"),
     "ocrmypdf": ("OCRMYPDF_PYTHON", "PATENTSAR_OCRMYPDF_PYTHON", "PATENTSAR_PYTHON"),
@@ -124,7 +131,9 @@ def _load_envs() -> dict[str, str]:
             with open(config_path, encoding="utf-8") as f:
                 loaded = yaml.safe_load(f) or {}
             if isinstance(loaded, dict):
-                envs.update({str(k): str(v) for k, v in loaded.items() if v is not None})
+                envs.update(
+                    {str(k): str(v) for k, v in loaded.items() if v is not None}
+                )
         return envs
     envs: dict[str, str] = {}
     for config_path in config_paths:
@@ -162,6 +171,7 @@ ENV_REQUIRED_MODULES = {
     "base": [],
     "smiles_engine": ["cv2", "PIL", "pandas", "rdkit"],
     "decimer": ["decimer_segmentation"],
+    "molscribe": ["molscribe"],
     "paddleocr": [],
     "pymupdf": ["fitz"],
     "ocrmypdf": [],
@@ -183,6 +193,7 @@ def configured_model_environment() -> dict[str, str]:
         "DECIMER_SEGMENTATION_MODEL_DIR": "decimer_segmentation_models",
         "PATENTSAR_ADMET_PYTHON": "admet",
         "PATENTSAR_ADMET_MODEL_DIR": "admet_models",
+        "PATENTSAR_MOLSCRIBE_MODEL_DIR": "molscribe_models",
     }
     return {
         variable: value
@@ -199,7 +210,7 @@ def captured_runtime_environment() -> dict[str, str]:
     return result
 
 
-def _execution_env(extra: Optional[dict[str, str]] = None) -> dict[str, str]:
+def _execution_env(extra: dict[str, str] | None = None) -> dict[str, str]:
     """Build an isolated child environment without parent binary-package leakage."""
 
     run_env = os.environ.copy()
@@ -215,10 +226,10 @@ def _execution_env(extra: Optional[dict[str, str]] = None) -> dict[str, str]:
 def run_in_env(
     env_name: str,
     script: str,
-    args: Optional[list[str]] = None,
+    args: list[str] | None = None,
     timeout: int = 300,
-    cwd: Optional[str] = None,
-    env_extra: Optional[dict[str, str]] = None,
+    cwd: str | None = None,
+    env_extra: dict[str, str] | None = None,
     stream_output: bool = False,
 ) -> subprocess.CompletedProcess:
     """
@@ -252,6 +263,7 @@ def run_in_env(
     return subprocess.run(
         cmd,
         capture_output=True,
+        check=False,
         text=True,
         timeout=timeout,
         cwd=cwd or os.getcwd(),
@@ -263,8 +275,8 @@ def run_snippet(
     env_name: str,
     code: str,
     timeout: int = 60,
-    cwd: Optional[str] = None,
-    env_extra: Optional[dict[str, str]] = None,
+    cwd: str | None = None,
+    env_extra: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess:
     """
     在指定 conda 环境中运行 Python 代码片段。
@@ -284,7 +296,9 @@ def run_snippet(
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         f.write("import runpy\n")
-        f.write(f"runpy.run_path({str(PACKAGE_IMPORT_ROOT / 'patent_sar_extractor' / 'worker_bootstrap.py')!r}, run_name='__main__')\n")
+        f.write(
+            f"runpy.run_path({str(PACKAGE_IMPORT_ROOT / 'patent_sar_extractor' / 'worker_bootstrap.py')!r}, run_name='__main__')\n"
+        )
         f.write(code)
         script_path = f.name
 
@@ -297,6 +311,7 @@ def run_snippet(
         return subprocess.run(
             cmd,
             capture_output=True,
+            check=False,
             text=True,
             timeout=timeout,
             cwd=cwd or os.getcwd(),
@@ -322,7 +337,11 @@ def check_env(env_name: str) -> dict:
     try:
         proc = subprocess.run(
             [python, "--version"],
-            capture_output=True, text=True, timeout=10, env=_execution_env(),
+            capture_output=True,
+            check=False,
+            text=True,
+            timeout=10,
+            env=_execution_env(),
         )
         if proc.returncode == 0:
             result["available"] = True
@@ -351,13 +370,16 @@ def check_env(env_name: str) -> dict:
             mod_proc = subprocess.run(
                 [python, "-c", code],
                 capture_output=True,
+                check=False,
                 text=True,
                 timeout=30,
                 env=_execution_env(),
             )
             if mod_proc.returncode != 0:
                 result["available"] = False
-                result["error"] = f"missing modules: {mod_proc.stdout.strip() or mod_proc.stderr.strip()}"
+                result["error"] = (
+                    f"missing modules: {mod_proc.stdout.strip() or mod_proc.stderr.strip()}"
+                )
         except (FileNotFoundError, subprocess.TimeoutExpired) as e:
             result["available"] = False
             result["error"] = f"module check failed: {e}"

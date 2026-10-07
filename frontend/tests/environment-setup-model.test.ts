@@ -14,7 +14,9 @@ describe('complete-scope authorization is separate from expert component install
     expect(plan.map((component) => component.id)).toEqual(catalog.setup_component_ids);
     expect(plan.map((component) => component.id)).toContain('admet');
     expect(plan.map((component) => component.id)).toContain('admet-models');
-    expect(plan).toHaveLength(6);
+    expect(plan.map((component) => component.id)).toContain('molscribe');
+    expect(plan.map((component) => component.id)).toContain('molscribe-models');
+    expect(plan).toHaveLength(8);
   });
   it.each(['unchecked', 'stale'] as const)(
     'allows %s verification for complete rechecking but not advanced reinstall',
@@ -46,7 +48,7 @@ describe('complete-scope authorization is separate from expert component install
     }));
     const plan = environmentSetupComponents(catalog);
     expect(canSetupEnvironmentPlan(plan)).toBe(true);
-    expect(plan).toHaveLength(6);
+    expect(plan).toHaveLength(8);
   });
   it('refuses an already-ready complete setup and unsupported deficiencies', () => {
     expect(canSetupEnvironmentPlan(environmentSetupComponents(readyEnvironmentCatalog()))).toBe(

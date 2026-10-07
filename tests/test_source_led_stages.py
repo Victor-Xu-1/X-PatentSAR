@@ -55,7 +55,7 @@ class SourceLedStageTests(unittest.TestCase):
             return_value=1000,
         ):
             self.assertEqual(recognition_timeout(1, 1000), 1800)
-            self.assertEqual(recognition_timeout(100, 1000), 30600)
+            self.assertEqual(recognition_timeout(100, 1000), 31080)
             self.assertEqual(recognition_timeout(1000000, 1000), MAX_PIPELINE_SECONDS)
             self.assertEqual(
                 recognition_timeout(100, 1000 - MAX_PIPELINE_SECONDS + 60), 60
@@ -107,6 +107,13 @@ class SourceLedStageTests(unittest.TestCase):
             budget.assert_called_once_with(2, state.started_monotonic)
             self.assertEqual(state.pipeline_log["steps"]["smiles"]["formal_total"], 2)
             self.assertEqual(state.pipeline_log["steps"]["smiles"]["source_total"], 0)
+            fingerprint = json.loads(
+                Path(state.smiles_json + ".manifest.json").read_text()
+            )["fingerprint"]
+            self.assertEqual(
+                fingerprint["params"]["stereo_evidence_version"],
+                contracts.STEREO_EVIDENCE_VERSION,
+            )
 
     def test_infrastructure_failure_stops_with_no_relaunch_or_retagging(self):
         with tempfile.TemporaryDirectory() as temporary:

@@ -78,6 +78,10 @@ def audit(wheel: Path, *, source_root: Path | None = None) -> dict[str, object]:
             "decimer-inputs.txt",
             "decimer-requirements.txt",
             "decimer-models.json",
+            "molscribe-inputs.txt",
+            "molscribe-requirements.txt",
+            "molscribe-runtime.json",
+            "molscribe-sdk.json",
         ):
             if not archive.read(resources + recipe).strip():
                 raise ValueError("Wheel is missing a managed environment recipe")

@@ -13,6 +13,7 @@ from .data_location_policy import DataLocationPolicy
 from .environment_catalog import component_view
 from .environment_config import CONFIG_KEYS, EnvironmentConfig
 from .environment_models import (
+    MAX_COMPONENTS,
     ComponentId,
     EnvironmentCatalog,
     EnvironmentComponent,
@@ -176,14 +177,8 @@ class EnvironmentManager:
                 EnvironmentPreset(
                     id="extraction",
                     name="PDF 提取与六项指标",
-                    description="PDF/OCR、DECIMER 与 ADMET CPU 环境和模型；支持一次完成默认任务。",
-                    component_ids=[
-                        "base",
-                        "decimer",
-                        "decimer-models",
-                        "admet",
-                        "admet-models",
-                    ],
+                    description="PDF/OCR、DECIMER、可选 MolScribe 与 ADMET CPU 环境和模型；按完整计划检测和配置。",
+                    component_ids=setup_ids,
                 ),
                 EnvironmentPreset(
                     id="admet",
@@ -272,7 +267,7 @@ class EnvironmentManager:
 
         for identifier in identifiers:
             visit(identifier)
-        if len(result) > 6:
+        if len(result) > MAX_COMPONENTS:
             raise WebError(
                 409,
                 "environment_dependencies",
@@ -326,7 +321,7 @@ class EnvironmentManager:
             location = Path(raw)
             if (
                 not location.exists()
-                or identifier in {"installer", "base", "decimer", "admet"}
+                or identifier in {"installer", "base", "decimer", "admet", "molscribe"}
                 and not os.access(location, os.X_OK)
             ):
                 raise WebError(

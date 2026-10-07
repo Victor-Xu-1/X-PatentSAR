@@ -17,7 +17,7 @@ class DecimerProcessTests(unittest.TestCase):
     def setUp(self):
         # These real subprocesses are protocol controls, not SDK/model loads.
         headroom = patch(
-            "patent_sar_extractor.core.ocsr.engines.decimer_engine.wait_for_memory"
+            "patent_sar_extractor.core.ocsr.engines.owned_engine.wait_for_memory"
         )
         headroom.start()
         self.addCleanup(headroom.stop)
@@ -125,7 +125,7 @@ class DecimerProcessTests(unittest.TestCase):
             engine = DECIMEREngine(env_extra=policy)
             policy["PATENTSAR_DECIMER_ENABLE_GPU"] = "1"
             with patch(
-                "patent_sar_extractor.core.ocsr.engines.decimer_engine.query_identity",
+                "patent_sar_extractor.core.ocsr.engines.owned_engine.query_identity",
                 return_value={"fingerprint": "a" * 64},
             ) as identity:
                 engine.runtime_identity()

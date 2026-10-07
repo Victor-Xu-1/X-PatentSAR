@@ -13,7 +13,11 @@ from typing import Any
 
 import yaml
 
-from patent_sar_extractor.core.env_runner import get_python
+from patent_sar_extractor.core.env_runner import (
+    ENV_ROLES,
+    configured_model_environment,
+    get_python,
+)
 from patent_sar_extractor.paths import operator_config_dir
 
 from .analysis_runtime import AnalysisSettings
@@ -27,6 +31,8 @@ CONFIG_KEYS = {
     "decimer-models": ("decimer_models",),
     "admet": ("admet",),
     "admet-models": ("admet_models",),
+    "molscribe": ("molscribe",),
+    "molscribe-models": ("molscribe_models",),
 }
 
 
@@ -82,6 +88,11 @@ class EnvironmentConfig:
             return text if Path(text).is_absolute() else shutil.which(text)
 
         loaded = self.loaded()
+        molscribe_models = (
+            os.environ.get("PATENTSAR_MOLSCRIBE_MODEL_DIR", "").strip()
+            or configured_model_environment().get("PATENTSAR_MOLSCRIBE_MODEL_DIR")
+            or None
+        )
         return {
             "installer": executable(
                 os.environ.get("PATENTSAR_ENVIRONMENT_UV")
@@ -96,6 +107,12 @@ class EnvironmentConfig:
             "admet-models": str(analysis.admet_model_dir)
             if analysis.admet_model_dir
             else None,
+            # An absent optional native role is unconfigured, never a substitute
+            # runtime. The shared role resolver owns actual interpreter selection.
+            "molscribe": executable(get_python("molscribe"))
+            if "molscribe" in ENV_ROLES
+            else None,
+            "molscribe-models": molscribe_models,
         }
 
     def publish(

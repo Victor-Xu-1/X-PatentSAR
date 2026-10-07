@@ -1899,12 +1899,14 @@ class StrictAcceptanceTests(unittest.TestCase):
         self.assertEqual(ENGINE_MAP, {"decimer": ENGINE_MAP["decimer"]})
         ocsr_root = SOURCE_ROOT / "patent_sar_extractor" / "core" / "ocsr"
         for relative in (
-            "engines/molscribe_engine.py",
             "engines/molnextr_engine.py",
             "engines/molvec_engine.py",
             "wrapper_molnextr.py",
         ):
             self.assertFalse((ocsr_root / relative).exists(), relative)
+        # Optional post-primary rescue is not a general registered engine chain.
+        self.assertTrue((ocsr_root / "stereo_rescue.py").is_file())
+        self.assertNotIn("molscribe", ENGINE_MAP)
 
     def test_clean_minimal_source_export_preserves_catalog_and_original_activity_order(
         self,

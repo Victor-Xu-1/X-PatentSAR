@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Literal, get_args
 
 from pydantic import Field, StrictStr, model_validator
 
@@ -10,8 +10,17 @@ from .dto import DTO, Error
 from .models import JobStatus
 
 ComponentId = Literal[
-    "installer", "base", "decimer", "decimer-models", "admet", "admet-models"
+    "installer",
+    "base",
+    "decimer",
+    "decimer-models",
+    "admet",
+    "admet-models",
+    "molscribe",
+    "molscribe-models",
 ]
+COMPONENT_IDS: frozenset[ComponentId] = frozenset(get_args(ComponentId))
+MAX_COMPONENTS = len(COMPONENT_IDS)
 ComponentStatus = Literal[
     "unchecked",
     "checking",
@@ -58,7 +67,9 @@ class EnvironmentComponent(DTO):
     source_url: str
     checks: list[EnvironmentCheck]
     problem: str | None
-    dependencies: list[ComponentId] = Field(default_factory=list)
+    dependencies: list[ComponentId] = Field(
+        default_factory=list, max_length=MAX_COMPONENTS
+    )
     presence: Literal["present", "missing", "unconfigured", "unknown"] = "unknown"
     verification: Literal["current", "stale", "unchecked"] = "unchecked"
     checked_at: str | None = None
@@ -94,12 +105,12 @@ class EnvironmentPreset(DTO):
     id: str
     name: str
     description: str
-    component_ids: list[ComponentId]
+    component_ids: list[ComponentId] = Field(max_length=MAX_COMPONENTS)
 
 
 class EnvironmentOperationRequest(DTO):
     action: Literal["inspect", "install"]
-    component_ids: list[ComponentId] = Field(min_length=1, max_length=6)
+    component_ids: list[ComponentId] = Field(min_length=1, max_length=MAX_COMPONENTS)
     request_id: StrictStr = Field(
         min_length=16, max_length=64, pattern=r"^[A-Za-z0-9_-]+$"
     )
@@ -116,14 +127,14 @@ class EnvironmentOperation(DTO):
     id: str
     request_id: str
     action: Literal["inspect", "install"]
-    component_ids: list[ComponentId]
+    component_ids: list[ComponentId] = Field(max_length=MAX_COMPONENTS)
     status: JobStatus
     created_at: str
     started_at: str | None
     finished_at: str | None
     install_root: str
     stage: str
-    completed_components: list[ComponentId]
+    completed_components: list[ComponentId] = Field(max_length=MAX_COMPONENTS)
     log_tail: list[str]
     error: Error | None
     applied: bool
@@ -131,9 +142,11 @@ class EnvironmentOperation(DTO):
 
 class EnvironmentCatalog(DTO):
     settings: EnvironmentSettings
-    components: list[EnvironmentComponent]
+    components: list[EnvironmentComponent] = Field(max_length=MAX_COMPONENTS)
     presets: list[EnvironmentPreset]
     checked_at: str | None
     active_operation: EnvironmentOperation | None
     operations: list[EnvironmentOperation]
-    setup_component_ids: list[ComponentId] = Field(default_factory=list, max_length=6)
+    setup_component_ids: list[ComponentId] = Field(
+        default_factory=list, max_length=MAX_COMPONENTS
+    )

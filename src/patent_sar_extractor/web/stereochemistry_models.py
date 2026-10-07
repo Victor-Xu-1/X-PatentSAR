@@ -12,7 +12,7 @@ from .dto import DTO
 class StereoEvidence(DTO):
     # Legacy observations remain readable, but only the current epoch can pass
     # the separate formal source gate. Presentation never refreshes old proof.
-    version: Literal[1, 2]
+    version: Literal[1, 2, 3]
     image_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
     image_size: list[int] = Field(min_length=2, max_length=2)
     unknown_bond_boxes: list[list[float]] = Field(max_length=64)

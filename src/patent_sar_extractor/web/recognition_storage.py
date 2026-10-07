@@ -114,6 +114,14 @@ def apply_recognition(project: dict, row: dict, compound: Compound) -> Compound:
 
     content = row.get("recognition_observation")
     if content is None:
+        from .core_recognition_source import core_source_current
+
+        if not core_source_current(project, row, compound):
+            compound.smiles = None
+            compound.redraw_image_url = None
+            compound.recognition = Recognition(
+                status="unavailable", quality_flag="source_image_changed"
+            )
         return compound
     current = (
         row["recognition_source"] == correction_source_fingerprint(project, row)

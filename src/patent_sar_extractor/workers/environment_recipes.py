@@ -1,4 +1,4 @@
-"""Six fixed recipes. New prefixes are exclusive; configured paths are read-only."""
+"""Fixed recipes. New prefixes are exclusive; configured paths are read-only."""
 
 from __future__ import annotations
 
@@ -141,6 +141,8 @@ class EnvironmentProvisioner:
             "decimer-models": "v2-seg1.5.0",
             "admet": "2.0.1-cpu",
             "admet-models": "2.0.1",
+            "molscribe": "1.1.1-cpu-py31020",
+            "molscribe-models": "1m680k",
         }[identifier]
         prefix = (
             self.plan.install_root / f"{identifier}-{version}-{self.plan.operation_id}"
@@ -149,7 +151,7 @@ class EnvironmentProvisioner:
         prefix.mkdir(mode=0o700, exist_ok=False)
         if identifier == "installer":
             binding = self._installer(prefix)
-        elif identifier in {"base", "admet", "decimer"}:
+        elif identifier in {"base", "admet", "decimer", "molscribe"}:
             binding = self._runtime(identifier, prefix)
         elif identifier == "admet-models":
             wheel = download(
@@ -162,6 +164,12 @@ class EnvironmentProvisioner:
             )
             binding = prefix / "models"
             prepare(wheel, binding)
+        elif identifier == "molscribe-models":
+            from .molscribe_setup import install_models
+
+            binding = install_models(
+                prefix, self.plan.cache_root, self.cancel, self.download_progress
+            )
         else:
             binding = self._decimer_models(prefix)
         # This receipt is provenance, not a completion/activation flag. The result
@@ -213,7 +221,7 @@ class EnvironmentProvisioner:
         ):
             raise ValueError("A verified owned installer is required")
         python = Path(sys.executable)
-        if identifier == "decimer":
+        if identifier in {"decimer", "molscribe"}:
             # uv's pinned release carries the official python-build-standalone
             # source/checksum table. No custom mirror/URL or global registration.
             managed = prefix / "python"
@@ -259,9 +267,21 @@ class EnvironmentProvisioner:
             "https://pypi.org/simple",
             str(recipe_path(spec.requirements)),
         ]
-        if identifier == "admet":
+        if identifier in {"admet", "molscribe"}:
             command.extend(["--torch-backend", "cpu"])
         self._command(command)
+        if identifier == "molscribe":
+            from .molscribe_setup import install_sdk
+
+            install_sdk(
+                installer,
+                binding,
+                prefix,
+                self.plan.cache_root,
+                self.cancel,
+                self.download_progress,
+                self._command,
+            )
         self._command([installer, "pip", "check", "--python", str(binding)])
         return binding
 

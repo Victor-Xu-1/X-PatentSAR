@@ -50,3 +50,15 @@ https://zenodo.org/records/10781330
 https://zenodo.org/records/10663579
 The package recipes retain dependency license boundaries. No CUDA/GPU, Java
 PaDEL execution, paid model service or unrelated product is installed by default.
+
+The optional constrained local stereo rescue installs MolScribe source from
+reviewed commit 7296a30413eb55436702011efdff78131f66d162 (MIT), in its own
+CPU-only dependency environment. The model is fixed to revision
+a0189776b7415b82795c7ee81eed311bf5c8724b; that model card declares MIT.
+https://github.com/thomas0809/MolScribe
+https://huggingface.co/yujieq/MolScribe/tree/a0189776b7415b82795c7ee81eed311bf5c8724b
+All retained upstream dependency notices still apply independently, including
+OpenNMT-py (MIT) and RDKit (BSD-3-Clause). Source, third-party runtime and model
+weights are not bundled in this application wheel. Model confidence, loaded
+weights and a graph-compatible candidate are not experimental validation or a
+universal scientific-accuracy guarantee.

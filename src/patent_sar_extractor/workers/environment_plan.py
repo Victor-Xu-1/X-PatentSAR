@@ -11,16 +11,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .environment_files import checked_directory, load_json
+from patent_sar_extractor.web.environment_models import COMPONENT_IDS, MAX_COMPONENTS
 
-COMPONENT_IDS = {
-    "installer",
-    "base",
-    "decimer",
-    "decimer-models",
-    "admet",
-    "admet-models",
-}
+from .environment_files import checked_directory, load_json
 
 
 @dataclass(frozen=True)
@@ -69,14 +62,14 @@ def read_plan(path: Path) -> EnvironmentPlan:
     ids = value["component_ids"]
     if (
         not isinstance(ids, list)
-        or not 1 <= len(ids) <= 6
+        or not 1 <= len(ids) <= MAX_COMPONENTS
         or any(not isinstance(x, str) or x not in COMPONENT_IDS for x in ids)
         or len(set(ids)) != len(ids)
     ):
         raise ValueError("Component selection left the fixed allowlist")
     bindings = value["bindings"]
     if not isinstance(bindings, dict) or set(bindings) != COMPONENT_IDS:
-        raise ValueError("Plan must capture the six configured bindings")
+        raise ValueError("Plan must capture all configured component bindings")
     for raw in bindings.values():
         if raw is not None:
             _path(raw)

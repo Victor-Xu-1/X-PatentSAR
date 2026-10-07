@@ -16,12 +16,12 @@ runpy.run_path(
     str(Path(__file__).resolve().parents[1] / "worker_bootstrap.py"),
     run_name="__main__",
 )
-from patent_sar_extractor.workers.analysis_protocol import (  # noqa: E402 - select the first-party package before imports
+from patent_sar_extractor.workers.analysis_protocol import (
     emit,
     prepare,
     read_request,
 )
-from patent_sar_extractor.workers.environment_files import (  # noqa: E402 - native SDK imports keep their own site-packages
+from patent_sar_extractor.workers.environment_files import (
     load_json,
     verify_decimer_models,
 )
@@ -98,6 +98,10 @@ def probe(request: dict[str, object]) -> dict[str, object]:
         text = " ".join(str(row[1]) for row in output or [])
         check("rapidocr", "123" in text, "Actual bundled ONNX OCR inference")
         result["versions"] = found
+    elif role in {"molscribe", "molscribe-models"}:
+        from patent_sar_extractor.workers.molscribe_probe import probe_local_rescue
+
+        return probe_local_rescue(request, result)
     elif role in {"admet", "admet-models"}:
         import torch
         from admet_ai import ADMETModel

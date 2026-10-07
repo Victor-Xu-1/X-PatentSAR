@@ -127,6 +127,7 @@ class SourceStereochemistryTests(unittest.TestCase):
             self.assertIsNotNone(stereo_record_error(missing))
             for changes in (
                 {"version": 1},
+                {"version": 2},
                 {"version": 0},
                 {"status": "no_unknown_detected"},
                 {"absolute_configuration_verified": True},

@@ -5,6 +5,8 @@ export const environmentComponentIds = [
   'decimer-models',
   'admet',
   'admet-models',
+  'molscribe',
+  'molscribe-models',
 ] as const;
 export type EnvironmentComponentId = (typeof environmentComponentIds)[number];
 export type EnvironmentComponentStatus =

@@ -6,9 +6,21 @@ import {
 } from '../src/api/environmentDecoders';
 import type { EnvironmentComponentId } from '../src/api/environmentTypes';
 import { selectedEnvironmentComponents } from '../src/model/environment';
-import { environmentOperation, prerequisiteCatalog } from './environment-fixtures';
+import {
+  environmentOperation,
+  molscribeEnvironmentCatalog,
+  prerequisiteCatalog,
+} from './environment-fixtures';
 
 describe('server-declared prerequisite closure', () => {
+  it('resolves optional MolScribe models through their sole runtime and installer', () => {
+    const catalog = molscribeEnvironmentCatalog();
+    expect(
+      selectedEnvironmentComponents(catalog.components, ['molscribe-models']).map(
+        (component) => component.id,
+      ),
+    ).toEqual(['installer', 'molscribe', 'molscribe-models']);
+  });
   it('includes installer before base, even when the prerequisite is already ready', () => {
     const catalog = prerequisiteCatalog();
     expect(

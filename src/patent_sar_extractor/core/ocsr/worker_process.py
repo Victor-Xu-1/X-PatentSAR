@@ -80,7 +80,9 @@ class JsonLineWorker:
         while True:
             resident = worker_resident_mb(self.process.pid)
             if resident is not None and resident > resident_budget_mb():
-                raise WorkerProtocolError("DECIMER exceeded its resident memory budget")
+                raise WorkerProtocolError(
+                    "OCSR worker exceeded its resident memory budget"
+                )
             boundary = self._buffer.find(b"\n")
             if boundary >= 0:
                 packet = bytes(self._buffer[:boundary])

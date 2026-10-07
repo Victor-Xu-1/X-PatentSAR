@@ -99,6 +99,23 @@ class RawOCSRObservationTests(unittest.TestCase):
             self.assertEqual(result["raw_smiles"], result["engine_raw_smiles"])
             self.assertEqual(result["OCSR_status"], "success")
 
+    def test_exact_native_stereo_loss_cache_remains_review_not_accepted(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            item = self.fixture(root)
+            converter, calls = self.converter(
+                ["C[C@H]1CC(C)(O)C1"], cache=str(root / "cache.sqlite")
+            )
+            first = converter.convert_one(item)
+            second = converter.convert_one(item)
+            self.assertEqual(len(calls), 1)
+            self.assertEqual(first["raw_smiles"], second["raw_smiles"])
+            self.assertEqual(
+                second["OCSR_quality_flag"], "stereochemistry_not_retained"
+            )
+            self.assertEqual(second["OCSR_status"], "review_required")
+            self.assertTrue(second["engine_attempts"][0]["from_cache"])
+
     def test_model_fingerprint_change_invalidates_exact_image_cache(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

@@ -6,6 +6,7 @@ import os
 import time
 from pathlib import Path
 
+from patent_sar_extractor import contracts as core_contracts
 from patent_sar_extractor.application.stage_cache import (
     _bindings_ocsr_digest,
     _fingerprint_matches,
@@ -25,6 +26,7 @@ from patent_sar_extractor.core.formal_structure import (
     coverage_errors,
 )
 from patent_sar_extractor.core.ocsr.engines.decimer_engine import DECIMEREngine
+from patent_sar_extractor.core.ocsr.engines.molscribe_engine import MolScribeEngine
 from patent_sar_extractor.core.ocsr.recognition_inputs import (
     ordered_source_results,
     recognition_inputs,
@@ -94,6 +96,7 @@ def execute_smiles(state: PipelineContext) -> None:
         params={
             **_production_smiles_ocr_options(),
             "ocsr_observation_version": OCSR_OBSERVATION_VERSION,
+            "stereo_evidence_version": core_contracts.STEREO_EVIDENCE_VERSION,
             "smiles_schema_version": SMILES_SCHEMA_VERSION,
             "decimer_runtime_fingerprint": DECIMEREngine(
                 env_extra=worker_environment
@@ -101,6 +104,15 @@ def execute_smiles(state: PipelineContext) -> None:
             if state.n_bound
             else None,
             "retry_normalization": True,
+            "constrained_stereo_rescue_version": 1,
+            "local_rescue_runtime_fingerprint": (
+                MolScribeEngine(env_extra=worker_environment).runtime_identity()[
+                    "fingerprint"
+                ]
+                if state.n_bound
+                and MolScribeEngine(env_extra=worker_environment).is_available()
+                else None
+            ),
             "timeout": 300,
             "no_preprocess": True,
             "smiles_workers": int(getattr(state.args, "smiles_workers", 1) or 1),

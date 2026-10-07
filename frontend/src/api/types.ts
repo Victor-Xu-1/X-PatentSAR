@@ -138,7 +138,7 @@ export interface CompoundRecognition {
   stereochemistry?: StereoEvidence | null;
 }
 export interface StereoEvidence {
-  version: 1 | 2;
+  version: 1 | 2 | 3;
   image_sha256: string;
   image_size: number[];
   unknown_bond_boxes: BBox[];

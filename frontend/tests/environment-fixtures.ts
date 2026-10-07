@@ -197,6 +197,38 @@ export function prerequisiteCatalog(): EnvironmentCatalog {
     })),
   };
 }
+export function molscribeEnvironmentCatalog(): EnvironmentCatalog {
+  const template = environmentCatalog.components.find((component) => component.id === 'decimer')!;
+  const components = [
+    ...environmentCatalog.components,
+    {
+      ...template,
+      id: 'molscribe' as const,
+      name: 'MolScribe runtime',
+      version: 'controlled-molscribe-runtime',
+      status: 'unconfigured' as const,
+      presence: 'unconfigured' as const,
+      required: false,
+      dependencies: ['installer' as const],
+    },
+    {
+      ...template,
+      id: 'molscribe-models' as const,
+      name: 'MolScribe models',
+      version: 'controlled-molscribe-models',
+      kind: 'models' as const,
+      status: 'unconfigured' as const,
+      presence: 'unconfigured' as const,
+      required: false,
+      dependencies: ['molscribe' as const],
+    },
+  ];
+  return {
+    ...environmentCatalog,
+    components,
+    setup_component_ids: components.map((component) => component.id),
+  };
+}
 export const environmentOperation: EnvironmentOperation = {
   id: 'environment-operation-contract',
   request_id: 'request_contract_12345',

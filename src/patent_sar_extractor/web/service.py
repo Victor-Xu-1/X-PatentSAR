@@ -7,6 +7,8 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from patent_sar_extractor import contracts as core
+
 from .admet_history import read_admet_stage
 from .artifacts import RAW_PROJECTION_LAYOUT, ArtifactView
 from .attempts import AttemptHistory, spec_record
@@ -14,6 +16,7 @@ from .correction_models import CorrectionDocument, CorrectionRequest
 from .corrections import Corrections, CorrectionSaved
 from .descriptor_storage import DescriptorStore
 from .errors import WebError
+from .files import SafeFiles
 from .models import (
     Acceptance,
     Compound,
@@ -28,6 +31,7 @@ from .pdf import UploadedPDF, copy_original, filename_title
 from .prediction_storage import PredictionStore
 from .processes import runtime_identity
 from .result_queries import ResultQueries
+from .source_epoch import EPOCH_MARKER
 from .storage import Store, encode, now
 from .table_filter_choices import ColumnFilterValues
 from .task_inputs import patent_identifier
@@ -63,7 +67,54 @@ class WorkspaceService:
             # become current authority after a rules/software upgrade.
             self.refresh(project_id)
             row = self.store.project(project_id)
+        elif row["run_root"] and (
+            type(snapshot.get(EPOCH_MARKER)) is not int
+            or snapshot[EPOCH_MARKER] != core.STEREO_EVIDENCE_VERSION
+        ):
+            self._refresh_source_epoch(row, snapshot)
+            row = self.store.project(project_id)
         return row
+
+    def _refresh_source_epoch(
+        self, project: dict[str, Any], snapshot: dict[str, Any]
+    ) -> None:
+        """Recheck cached acceptance without changing raw rows/manual audit basis."""
+        from .acceptance import authority
+        from .stages import completed_stage_payloads
+
+        root = Path(project["run_root"])
+        view = ArtifactView.read(root)
+        accepted, _ = authority(
+            completed_stage_payloads(view.payloads),
+            pdf_verified=bool(
+                project["sha256"] and project["sha256"] == view.expected_sha256
+            ),
+            marker=SafeFiles(root).json("STRICT_ACCEPTANCE_FAILED.json"),
+        )
+        updated = {
+            **snapshot,
+            "acceptance": accepted.model_dump(),
+            EPOCH_MARKER: core.STEREO_EVIDENCE_VERSION,
+        }
+        # No raw DTO, projection ID, correction, history or saved observation is
+        # rewritten. A concurrent new attempt cannot acquire this old read view.
+        with self.store.connect(write=True) as connection:
+            changed = connection.execute(
+                "UPDATE projects SET snapshot=? WHERE id=? AND run_root=? AND sha256 IS ? AND snapshot=?",
+                (
+                    encode(updated),
+                    project["id"],
+                    project["run_root"],
+                    project["sha256"],
+                    project["snapshot"],
+                ),
+            ).rowcount
+            if changed != 1:
+                raise WebError(
+                    409,
+                    "projection_changed",
+                    "Source view changed during epoch revalidation; retry the read.",
+                )
 
     @staticmethod
     def _title(title: str) -> str:
@@ -309,6 +360,7 @@ class WorkspaceService:
             return  # A supplied old view must never be rebound to a new attempt.
         snapshot, compounds = view.snapshot(project_id, pdf_sha256=project["sha256"])
         snapshot["correction_projection_id"] = uuid.uuid4().hex
+        snapshot[EPOCH_MARKER] = core.STEREO_EVIDENCE_VERSION
         self.store.snapshot(
             project_id,
             snapshot,
