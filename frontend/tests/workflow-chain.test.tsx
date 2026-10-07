@@ -27,6 +27,33 @@ function openStages(current: Job) {
 }
 
 describe('actual core then source-completion/six-property task chain', () => {
+  it('shows Lead evaluation as the actual lightweight research tail without adding core stages', () => {
+    const current: Job = {
+      ...full,
+      stages: full.stages.map((stage) => ({ ...stage, status: 'ok' })),
+      admet_stage: {
+        name: 'admet',
+        status: 'running',
+        count: 12,
+        duration_seconds: 0.2,
+        reused_checkpoint: false,
+        progress: {
+          phase: 'lead',
+          completed: 12,
+          total: 12,
+          cache_hits: 12,
+          failures: 0,
+          device: 'cpu',
+          peak_rss_mb: null,
+        },
+      },
+    };
+    const stages = openStages(current);
+    expect(stages).toHaveLength(9);
+    expect(stages.at(-1)?.querySelector('strong')).toHaveTextContent('Lead 筛选');
+    expect(document.querySelector('.stage-current')).toHaveTextContent('Lead 筛选');
+    expect(stageNames).toHaveLength(8);
+  });
   it('uses the supplied source-first order, then the existing configured research slot', () => {
     const stage_order = [
       'classify',

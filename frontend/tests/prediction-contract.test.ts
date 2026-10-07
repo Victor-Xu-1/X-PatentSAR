@@ -37,6 +37,28 @@ const admetStage = {
 };
 
 describe('six source-bound ADMET metrics', () => {
+  it('retains reviewed Lead probabilities and rejects unknown, stale or invalid endpoints', () => {
+    expect(
+      decodePredictionSummary({ ...complete, endpoints: { hERG: 0.2, HIA_Hou: 0.8 } }).endpoints,
+    ).toEqual({ hERG: 0.2, HIA_Hou: 0.8 });
+    for (const endpoints of [
+      { hERG: -0.1 },
+      { hERG: 1.1 },
+      { hERG: '0.2' },
+      { hERG: NaN },
+      { unknown: 0.2 },
+      [],
+    ])
+      expect(() => decodePredictionSummary({ ...complete, endpoints })).toThrow('契约');
+    expect(() =>
+      decodePredictionSummary({
+        ...complete,
+        status: 'stale',
+        properties: [],
+        endpoints: { hERG: 0.1 },
+      }),
+    ).toThrow('契约');
+  });
   it('keeps the ordered labels/units and preserves legitimate negative logarithms', () => {
     const result = decodePredictionSummary(complete);
     expect(result).toEqual(complete);
@@ -133,6 +155,14 @@ describe('six source-bound ADMET metrics', () => {
 });
 
 describe('additive project/job contracts and automatic queue requests', () => {
+  it('shows the real Lead tail within the same owned research stage', () => {
+    const payload = {
+      ...job,
+      include_admet: true,
+      admet_stage: { ...admetStage, progress: { ...admetStage.progress, phase: 'lead' } },
+    };
+    expect(decodeJob(payload).admet_stage?.progress?.phase).toBe('lead');
+  });
   it('accepts a bounded first structure page and retains unknown as null or absent', () => {
     expect(decodeProject({ ...project, first_structure_page: 4 }).first_structure_page).toBe(4);
     expect(

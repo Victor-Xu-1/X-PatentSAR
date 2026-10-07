@@ -164,7 +164,7 @@ share optional query parameters `column_filters` (JSON list), `sort_column`,
 the requested band first after normal ordering, using the first observation as
 with scalar sort. The same effective full-project read is
 filtered/sorted before pagination or export selection. Column IDs are `compound`,
-`structure`, `source`, `edit`, `activity:<exact-context-SHA64>`, or
+`structure`, `lead`, `source`, `edit`, `activity:<exact-context-SHA64>`, or
 `property:<fixed-property-key>`; unknown columns/operators fail 422, even for an
 empty result. These are selectors, never SQL or executable spreadsheet formulas.
 
@@ -214,6 +214,26 @@ are uncolored. Conventions are browsing aids, not proof of potency or correctnes
 
 API v1 and workspace SQLite v1 are retained. Additive fields are absent/null for
 legacy callers, never a synthesized successful observation.
+
+- `Compound.lead` is optional/null or a research-only `LeadAssessment`: status
+  `not_run`, `stale`, `selected`, `not_selected`, `ineligible` or `unranked`;
+  nullable rank (1–8 selected), score (0–100), activity_coverage (0–1), bounded
+  components/reasons/warnings, scaffold, nearest_similarity and policy version.
+  Only a current selected cell has `Lead <rank>`; other cells are blank for
+  Excel-style filters. The same full-project packet precedes paging/filtering/
+  copy/export. GET never starts selection or a model.
+- `PredictionSummary.endpoints` is an optional bounded map of eleven reviewed
+  ADMET classification probabilities. Legacy omission stays unknown, not safe.
+  Unknown keys, wrong units/kinds, nonfinite and out-of-range probabilities are
+  rejected, not clamped. Incomplete/stale summaries expose none. These are
+  pinned model predictions, not measurements or safety claims.
+- Research progress may add `phase="lead"` after inference cleanup; the formal
+  stage list remains eight. Completion requires a current full-project report
+  even when it explicitly recommends none. Insufficient qualified candidates
+  cannot be padded. Value edits recompute cheap selection; graph changes retain
+  the existing targeted prediction queue, then recompute the complete pool.
+  CSV adds Lead, status, score, coverage, components, reasons/warnings and policy
+  version. JSON carries the same assessment, never a formal QA promotion.
 
 - `Project.first_structure_page`: nullable positive original PDF page; minimum
   validated raw structure source. Default UI routing waits for it unless a page

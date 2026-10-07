@@ -136,6 +136,7 @@ class Corrections:
         self.storage = CorrectionStorage(store)
         self.current_project = current_project
         self.on_save = on_save
+        self.after_save: Callable[[str], None] | None = None
 
     @staticmethod
     def _document(
@@ -315,4 +316,6 @@ class Corrections:
                 # Same connection and transaction: a failed durable enqueue
                 # rolls back the overlay AND audit, never a half-saved molecule.
                 self.on_save(connection, project_id, compound_id, effective)
+        if self.after_save is not None:
+            self.after_save(project_id)
         return result

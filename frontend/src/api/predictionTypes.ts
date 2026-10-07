@@ -29,6 +29,7 @@ export type PredictionStatus =
 export interface PredictionSummary {
   status: PredictionStatus;
   properties: PredictionMetric[];
+  endpoints?: Record<string, number>;
   source_fingerprint: string | null;
   smiles_sha256: string | null;
   engine: PredictionEngine | null;

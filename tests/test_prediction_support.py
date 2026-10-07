@@ -94,6 +94,14 @@ class ControlledPhaseRunner(SubprocessRunner):
         self.accepted = accepted
         self.started_phases = []
 
+    def environment(self, spec):
+        environment = super().environment(spec)
+        # Child cwd is its immutable run directory. Relative PYTHONPATH from
+        # unittest must not resolve there and fall back to a different editable
+        # canonical checkout. Bind this fixture to the exact tested source.
+        environment["PYTHONPATH"] = str(Path(__file__).resolve().parents[1] / "src")
+        return environment
+
     def command(self, spec):
         return [
             sys.executable,
@@ -210,3 +218,8 @@ def controlled_phase(job_id, project_id, pdf_path, output_dir, phase, mode, acce
         ),
     )
     write_admet_stage(output, row, controlled_stage(), core_completed=core_completed)
+    # The real default research tail is mandatory, including empty nominations
+    # when this legacy six-field synthetic observation has no ADMET endpoints.
+    from patent_sar_extractor.web.prediction_worker import run_lead_phase
+
+    run_lead_phase(service, row, output, core_completed, None)

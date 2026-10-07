@@ -123,6 +123,7 @@ export function stageLabel(name: StageName, stage?: Stage): string {
   if (name === 'admet') {
     if (stage?.progress?.phase === 'recognition') return '结构补齐';
     if (stage?.progress?.phase === 'properties') return '指标计算';
+    if (stage?.progress?.phase === 'lead') return 'Lead 筛选';
   }
   return stageLabels[name];
 }

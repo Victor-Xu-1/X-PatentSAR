@@ -108,8 +108,39 @@ function validateSummary<T extends PredictionSummary | DescriptorSummary>(
   }
   return summary;
 }
-export const decodePredictionSummary: Decoder<PredictionSummary> = (input, path = '$') =>
-  validateSummary(summaryShape(input, path), METRIC_KEYS, path);
+const leadEndpointKeys = new Set([
+  'hERG',
+  'AMES',
+  'DILI',
+  'ClinTox',
+  'HIA_Hou',
+  'Bioavailability_Ma',
+  'CYP1A2_Veith',
+  'CYP2C9_Veith',
+  'CYP2C19_Veith',
+  'CYP2D6_Veith',
+  'CYP3A4_Veith',
+]);
+export const decodePredictionSummary: Decoder<PredictionSummary> = (input, path = '$') => {
+  const summary = validateSummary(summaryShape(input, path), METRIC_KEYS, path);
+  const fields = input as Record<string, unknown>;
+  if (!Object.hasOwn(fields, 'endpoints')) return summary;
+  const raw = fields.endpoints;
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw))
+    throw new ContractError(`${path}.endpoints`);
+  const entries = Object.entries(raw);
+  if (entries.length > leadEndpointKeys.size || (summary.status !== 'complete' && entries.length))
+    throw new ContractError(`${path}.endpoints`);
+  const endpoints = Object.fromEntries(
+    entries.map(([key, value]) => {
+      const scalar = number(value, `${path}.endpoints.${key}`);
+      if (!leadEndpointKeys.has(key) || scalar < 0 || scalar > 1)
+        throw new ContractError(`${path}.endpoints.${key}`);
+      return [key, scalar];
+    }),
+  );
+  return { ...summary, endpoints };
+};
 export const decodeDescriptorSummary: Decoder<DescriptorSummary> = (input, path = '$') => {
   const summary = validateSummary(descriptorShape(input, path), DESCRIPTOR_KEYS, path);
   if (summary.status === 'complete') {

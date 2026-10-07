@@ -1,5 +1,6 @@
 import type { DescriptorSummary, PredictionSummary } from './predictionTypes';
 import type { PropertyOverrides } from './manualPropertyTypes';
+import type { LeadAssessment } from './leadTypes';
 
 export interface Identity {
   name: string;
@@ -122,6 +123,7 @@ export interface Compound {
   flags: string[];
   admet?: PredictionSummary | null;
   descriptors?: DescriptorSummary | null;
+  lead?: LeadAssessment | null;
   correction?: CorrectionMetadata | null;
 }
 export interface CorrectionMetadata {
@@ -174,7 +176,7 @@ export type CoreStageName = (typeof stageNames)[number];
 export type StageName = CoreStageName | 'admet';
 export type StageStatus = 'pending' | 'running' | 'ok' | 'empty' | 'failed' | 'warnings';
 export interface StageProgress {
-  phase?: 'recognition' | 'properties' | null;
+  phase?: 'recognition' | 'properties' | 'lead' | null;
   completed: number;
   total: number;
   cache_hits: number;

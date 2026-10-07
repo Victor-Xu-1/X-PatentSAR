@@ -6,6 +6,7 @@ import type { ActivitySourceCallback, TableActivityColumn } from '../../model/ac
 import { PredictionCells } from './PredictionCells';
 import { StructureCell } from './StructureCell';
 import { CompoundCell } from './CompoundCell';
+import { LeadCell } from './LeadCell';
 
 export function ResultRow({
   row,
@@ -46,6 +47,7 @@ export function ResultRow({
       )}
       {visible('compound') && <CompoundCell row={row} onDetails={onCrop} />}
       {visible('structure') && <StructureCell row={row} onCrop={onCrop} />}
+      {visible('lead') && <LeadCell assessment={row.lead} />}
       {columns.map(
         (column, index) =>
           visible(`activity:${column.id}`) && (

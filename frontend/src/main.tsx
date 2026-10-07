@@ -10,6 +10,7 @@ import './styles/workflow.css';
 import './styles/results.css';
 import './styles/table.css';
 import './styles/activity-strength.css';
+import './styles/lead.css';
 import './styles/pdf.css';
 import './styles/dialogs.css';
 import './styles/management.css';

@@ -158,6 +158,18 @@ controls. A second server must not share an active workspace.
 
 ### Automatic six-property workbench
 
+Default research work also nominates Leads after ADMET model cleanup, using
+existing predictions and RDKit CPU fingerprints. No extra runtime, download,
+LLM, GPU or manual setup is required. The Lead column reports target-eight
+research candidates with reasons and missing evidence; fewer qualified
+candidates is allowed, never filled by guesses. `lead_incomplete` withholds
+completion if a current full-project report is missing. `lead_inputs_changed`
+rejects racing publication. Recompute through the normal software task; never
+edit the cache, molecular output or QA manually. The additive `lead_selections`
+table is private rebuildable workspace state and belongs with workspace backups.
+An older wheel cannot recertify newer nomination policy. Changed input marks
+stay stale/unselected until current evaluation.
+
 New Web jobs request `include_admet=true`. Extraction releases its verified owned
 model process before research. Formal completion requires strict core QA. Only
 a fully executed, current QA rejection may enrich individually qualified rows;

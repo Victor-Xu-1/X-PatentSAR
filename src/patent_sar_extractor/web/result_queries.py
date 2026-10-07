@@ -19,6 +19,7 @@ from .descriptor_models import DescriptorSummary
 from .descriptor_storage import DescriptorStore
 from .dto import Error
 from .errors import WebError
+from .lead_storage import LeadStore
 from .models import ActivityColumn, Compound, Results, Review
 from .molecule_drawing import drawing_url
 from .pdf import open_pdf, rendered_box
@@ -43,11 +44,13 @@ class ResultQueries:
         current_project: Callable[[str], dict[str, Any]],
         predictions: PredictionStore | None = None,
         descriptors: DescriptorStore | None = None,
+        leads: LeadStore | None = None,
     ) -> None:
         self.store = store
         self.current_project = current_project
         self.predictions = predictions
         self.descriptors = descriptors
+        self.leads = leads
 
     def _rows_and_project(
         self, project_id: str
@@ -70,10 +73,14 @@ class ResultQueries:
                     "LEFT JOIN reviews r ON c.project_id=r.project_id AND c.id=r.compound_id "
                     + CORRECTION_JOIN
                     + RECOGNITION_JOIN
-                    + "WHERE c.project_id=? ORDER BY c.ordinal LIMIT 25000",
+                    + "WHERE c.project_id=? ORDER BY c.ordinal LIMIT 25001",
                     (project_id,),
                 )
             ]
+        if len(rows) > 25000:
+            raise WebError(
+                413, "result_row_limit", "Project exceeds its complete-table row limit."
+            )
         return rows, project
 
     def rows(self, project_id: str) -> list[dict[str, Any]]:
@@ -93,6 +100,7 @@ class ResultQueries:
         sort_direction: str = "asc",
         sort_band: str = "",
         choice_column: str = "",
+        project_leads: bool = True,
     ) -> tuple[
         list[Compound],
         dict[str, str],
@@ -114,6 +122,7 @@ class ResultQueries:
         # Reject oversized/malformed input before the full effective-row scan.
         criteria = parse_column_filters(column_filters)
         output = []
+        all_compounds = []
         source_spaces: dict[str, str] = {}
         metrics: set[str] = set()
         targets: set[str] = set()
@@ -152,6 +161,7 @@ class ResultQueries:
                     revision=row["revision"],
                     updated_at=row["review_updated_at"],
                 )
+            all_compounds.append(dto)
             haystack = " ".join(
                 [
                     dto.id,
@@ -189,6 +199,10 @@ class ResultQueries:
             validate_columns([], choice_column, "asc", catalog)
             criteria = [item for item in criteria if item.column != choice_column]
         context = (project, {row["id"]: row for row in rows})
+        if project_leads and self.leads is not None:
+            if self.leads.has_report(project_id):
+                self._predictions(project_id, all_compounds, context)
+            self.leads.attach(project, all_compounds)
         if (
             choice_column.startswith("property:")
             or sort_column.startswith("property:")
@@ -309,8 +323,15 @@ class ResultQueries:
 
     def effective_compounds(self, project_id: str) -> list[Compound]:
         """Corrected molecules for downstream consumers, without opening PDF pages."""
-        items, _, _, _, _, _ = self._filtered_compounds(project_id)
+        items, _, _, _, _, _ = self._filtered_compounds(project_id, project_leads=False)
         return items
+
+    def research_compounds(self, project_id: str) -> list[Compound]:
+        """All effective observations for the one owned research selection tail."""
+        items, _, _, _, context, _ = self._filtered_compounds(
+            project_id, project_leads=False
+        )
+        return self._predictions(project_id, items, context)
 
     def compounds(
         self,

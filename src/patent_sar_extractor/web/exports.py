@@ -94,6 +94,33 @@ DESCRIPTOR_COLUMNS = [
     "descriptor_job_id",
 ]
 
+LEAD_COLUMNS = [
+    "Lead",
+    "lead_status",
+    "lead_score",
+    "lead_activity_coverage",
+    "lead_components_json",
+    "lead_reasons",
+    "lead_warnings",
+    "lead_policy_version",
+]
+
+
+def _lead_values(row: Compound) -> list[object]:
+    value = row.lead
+    if value is None:
+        return [None, "not_run", *([None] * 6)]
+    return [
+        f"Lead {value.rank}" if value.status == "selected" else None,
+        value.status,
+        value.score,
+        value.activity_coverage,
+        json.dumps(value.components, ensure_ascii=False, allow_nan=False),
+        "; ".join(value.reasons),
+        "; ".join(value.warnings),
+        value.policy_version,
+    ]
+
 
 def _descriptor_values(row: Compound) -> list[object]:
     observation = row.descriptors
@@ -203,6 +230,7 @@ def export_csv(project: Project, rows: list[Compound]) -> Iterator[bytes]:
         ]
         + ADMET_COLUMNS
         + DESCRIPTOR_COLUMNS
+        + LEAD_COLUMNS
         + ["manual_property_keys", "property_basis_smiles", "structure_molfile_json"]
     )
     review_only = project.acceptance.state != "accepted" or any(
@@ -233,6 +261,7 @@ def export_csv(project: Project, rows: list[Compound]) -> Iterator[bytes]:
             ]
             + _admet_values(row)
             + _descriptor_values(row)
+            + _lead_values(row)
             + [
                 "; ".join(
                     key for key in METRIC_KEYS if key in manual_property_values(row)

@@ -14,6 +14,12 @@ def column_values(row: Compound, column: str) -> list[Any]:
         return [row.display_id]
     if column == "structure":
         return [row.structure_image_url] if row.structure_image_url else []
+    if column == "lead":
+        return (
+            [f"Lead {row.lead.rank}"]
+            if row.lead and row.lead.status == "selected"
+            else []
+        )
     if column == "source":
         return [row.source.page] if row.source.page is not None else []
     if column == "edit":
