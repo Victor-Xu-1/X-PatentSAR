@@ -32,6 +32,7 @@ export function EnvironmentPage({
     activeEnvironmentOperation(data?.active_operation ?? null) ||
     activeEnvironmentOperation(workspace.selected);
   const disabled = blocked || !data?.settings.enabled || catalog.loading;
+  const storageDisabled = blocked || !data?.settings.editable || catalog.loading;
   const installation = useEnvironmentInstallPlan(data, disabled);
   const { plan } = installation;
   return (
@@ -45,9 +46,9 @@ export function EnvironmentPage({
           刷新环境目录
         </button>
       </header>
-      {mutations.error && <ErrorNotice error={mutations.error} />}
+      {mutations.error && (!detailsOpen || !data) && <ErrorNotice error={mutations.error} />}
       {installation.error && <ErrorNotice error={installation.error} />}
-      <RecoveryNotice mutations={mutations} />
+      {(!detailsOpen || !data) && <RecoveryNotice mutations={mutations} />}
       {catalog.error && (
         <ErrorNotice
           error={
@@ -94,6 +95,10 @@ export function EnvironmentPage({
         <EnvironmentDetails
           catalog={data}
           disabled={disabled}
+          storageDisabled={storageDisabled}
+          busy={mutations.busy}
+          error={mutations.error}
+          recovery={<RecoveryNotice mutations={mutations} />}
           onClose={() => setDetailsOpen(false)}
           onSave={mutations.save}
           onInspect={(ids) => void mutations.start('inspect', ids, data.settings.revision)}

@@ -46,7 +46,7 @@ def enqueue_prediction(
     ):
         raise WebError(413, "queue_limit", "The task queue reached its limit.")
     job_id = uuid.uuid4().hex
-    output = store.root / "runs" / project_id / job_id
+    output = store.locations.result_root() / project_id / job_id
     if output.exists() or any(path.is_symlink() for path in (output, *output.parents)):
         raise WebError(
             409,
@@ -57,13 +57,14 @@ def enqueue_prediction(
     spec = RunSpec(
         job_id,
         project_id,
-        str(store.root / project["pdf_rel"]),
+        str(store.locations.pdf_path(dict(project))),
         str(output),
         project["patent_id"],
         project["sha256"],
         include_admet=True,
         admet_only=True,
         admet_compounds=compound_ids,
+        workspace_root=str(store.root),
     )
     payload = {
         **asdict(spec),

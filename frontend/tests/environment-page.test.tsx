@@ -27,7 +27,8 @@ describe('one environment workspace and explicit installation authority', () => 
     const start = vi.spyOn(api, 'createEnvironmentOperation');
     render(<EnvironmentPage {...props()} />);
     expect(await screen.findByRole('heading', { name: '完整运行环境' })).toBeVisible();
-    await userEvent.click(screen.getByRole('button', { name: '环境详情' }));
+    await userEvent.click(screen.getByRole('button', { name: '存储位置' }));
+    await userEvent.click(screen.getByText('环境详情', { selector: 'summary' }));
     expect(screen.getByRole('heading', { name: '组件库' })).toBeVisible();
     expect(document.querySelector('[data-component="base"] .component-title')).toHaveTextContent(
       'locked-base',
@@ -157,16 +158,25 @@ describe('one environment workspace and explicit installation authority', () => 
       revision: 4,
     });
     render(<EnvironmentPage {...props()} />);
-    await userEvent.click(await screen.findByRole('button', { name: '环境详情' }));
-    await userEvent.click(screen.getByText('修改位置'));
-    const input = await screen.findByLabelText('环境安装目录');
+    await userEvent.click(await screen.findByRole('button', { name: '存储位置' }));
+    await userEvent.click(screen.getByText('环境详情', { selector: 'summary' }));
+    const input = await screen.findByLabelText('集成环境安装目录');
     fireEvent.change(input, { target: { value: 'C:\\wrong' } });
-    await userEvent.click(screen.getByRole('button', { name: '保存安装位置' }));
+    await userEvent.click(screen.getByRole('button', { name: '保存' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('目录');
     expect(save).not.toHaveBeenCalled();
     fireEvent.change(input, { target: { value: '/srv/wsl/envs/new' } });
-    await userEvent.click(screen.getByRole('button', { name: '保存安装位置' }));
-    await waitFor(() => expect(save).toHaveBeenCalledWith('/srv/wsl/envs/new', 3));
+    await userEvent.click(screen.getByRole('button', { name: '保存' }));
+    await waitFor(() =>
+      expect(save).toHaveBeenCalledWith(
+        {
+          install_root: '/srv/wsl/envs/new',
+          upload_root: environmentCatalog.settings.upload_root,
+          result_root: environmentCatalog.settings.result_root,
+        },
+        3,
+      ),
+    );
   });
   it('requires owned-operation cancellation confirmation and refreshes actual status', async () => {
     vi.spyOn(api, 'environments').mockResolvedValue({

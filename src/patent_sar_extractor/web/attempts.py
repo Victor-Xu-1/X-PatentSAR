@@ -157,6 +157,7 @@ def spec_record(raw: str) -> dict[str, Any]:
             raise ValueError("invalid prediction specification")
         note = payload.get("task_note", "")
         source = payload.get("source_ocr_cache", "")
+        workspace = payload.get("workspace_root", "")
         if (
             not isinstance(note, str)
             or len(note) > 2000
@@ -167,6 +168,11 @@ def spec_record(raw: str) -> dict[str, Any]:
             or not isinstance(source, str)
             or len(source) > 4096
             or any(ord(character) < 32 or ord(character) == 127 for character in source)
+            or not isinstance(workspace, str)
+            or len(workspace) > 4096
+            or any(
+                ord(character) < 32 or ord(character) == 127 for character in workspace
+            )
         ):
             raise ValueError("invalid specification metadata")
         return payload
@@ -195,8 +201,9 @@ class AttemptHistory:
             if not isinstance(raw, str) or not raw or "\\" in raw or "\0" in raw:
                 return None
             path = Path(raw)
-            project_root = self.store.root / "runs" / row["project_id"]
-            relative = path.relative_to(self.store.root)
+            anchor = self.store.locations.result_anchor(path)
+            project_root = anchor / row["project_id"]
+            relative = path.relative_to(anchor)
             if (
                 not path.is_relative_to(project_root)
                 or path == project_root
@@ -204,6 +211,11 @@ class AttemptHistory:
                 or any(part in {".", ".."} for part in relative.parts)
                 or spec.get("job_id") != row["id"]
                 or spec.get("project_id") != row["project_id"]
+                or spec.get("workspace_root", "") not in {"", str(self.store.root)}
+                or (
+                    not spec.get("workspace_root")
+                    and anchor != self.store.root / "runs"
+                )
                 or (
                     "attempt_version" in spec
                     and (
@@ -214,7 +226,9 @@ class AttemptHistory:
                 )
             ):
                 return None
-            fd = os.open(self.store.root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+            from .files import directory_descriptor
+
+            fd = directory_descriptor(anchor)
             try:
                 for part in relative.parts:
                     child = os.open(

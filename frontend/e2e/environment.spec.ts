@@ -96,8 +96,12 @@ for (const viewport of [
         path: test.info().outputPath('environment-default-' + viewport.width + '.png'),
         fullPage: true,
       });
-      await page.getByRole('button', { name: '环境详情', exact: true }).click();
-      const dialog = page.getByRole('dialog', { name: '环境详情', exact: true });
+      await page.getByRole('button', { name: '存储位置', exact: true }).click();
+      await page
+        .getByRole('dialog', { name: '存储位置', exact: true })
+        .getByText('环境详情', { exact: true })
+        .click();
+      const dialog = page.getByRole('dialog', { name: '存储位置', exact: true });
       for (const component of catalog.components) {
         const row = dialog.locator('[data-component="' + component.id + '"]');
         await expect(row.locator('.badge')).toHaveText(environmentComponentBadge(component).label);
@@ -105,9 +109,16 @@ for (const viewport of [
           '位置：' + (component.location ?? '未配置'),
         );
       }
-      await dialog.getByText('修改位置', { exact: true }).click();
-      await expect(dialog.getByLabel('环境安装目录')).toHaveValue(catalog.settings.install_root);
-      await dialog.getByRole('button', { name: '关闭', exact: true }).click();
+      await expect(dialog.getByLabel('集成环境安装目录', { exact: true })).toHaveValue(
+        catalog.settings.install_root,
+      );
+      await expect(dialog.getByLabel('上传文件目录', { exact: true })).toHaveValue(
+        catalog.settings.upload_root,
+      );
+      await expect(dialog.getByLabel('生成结果目录', { exact: true })).toHaveValue(
+        catalog.settings.result_root,
+      );
+      await dialog.getByRole('button', { name: '取消', exact: true }).click();
       await page.reload();
       await expect(page.getByRole('heading', { name: '完整运行环境', exact: true })).toBeVisible();
       await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -130,7 +141,11 @@ test('owned lightweight inspection persists history and selected operation acros
   expect(before.settings.enabled).toBe(true);
   expect(before.active_operation).toBeNull();
   const component = before.components.find((item) => item.id === 'installer')!;
-  await page.getByRole('button', { name: '环境详情', exact: true }).click();
+  await page.getByRole('button', { name: '存储位置', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: '存储位置', exact: true })
+    .getByText('环境详情', { exact: true })
+    .click();
   const response = page.waitForResponse(
     (value) =>
       value.request().method() === 'POST' &&
@@ -191,7 +206,11 @@ test('verified existing tool cannot be redundantly installed through the UI', as
   expect(before.active_operation).toBeNull();
   const component = before.components.find((item) => item.id === 'installer')!;
   expect(isEnvironmentComponentReady(component)).toBe(true);
-  await page.getByRole('button', { name: '环境详情', exact: true }).click();
+  await page.getByRole('button', { name: '存储位置', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: '存储位置', exact: true })
+    .getByText('环境详情', { exact: true })
+    .click();
   const writes: string[] = [];
   page.on('request', (request) => {
     if (request.method() !== 'GET' && request.url().includes('/api/v1/environments'))

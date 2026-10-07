@@ -47,8 +47,12 @@ export function matchesEnvironmentRequest(
 }
 export const decodeEnvironmentSettings: Decoder<EnvironmentSettings> = object({
   install_root: string,
+  upload_root: string,
+  result_root: string,
   allowed_root: string,
+  allowed_data_root: string,
   revision: count,
+  editable: boolean,
   enabled: boolean,
   reason: nullable(string),
 });

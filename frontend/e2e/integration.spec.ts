@@ -59,7 +59,7 @@ test.describe('real local backend integration', () => {
       await page.getByRole('button', { name: '环境管理', exact: true }).click();
       await expect(page.getByRole('heading', { name: '环境管理' })).toBeVisible();
       await expect(page.getByRole('heading', { name: '完整运行环境', exact: true })).toBeVisible();
-      await expect(page.getByRole('button', { name: '环境详情', exact: true })).toBeVisible();
+      await expect(page.getByRole('button', { name: '存储位置', exact: true })).toBeVisible();
       expect(errors).toEqual([]);
     });
   }

@@ -56,8 +56,8 @@ describe('complete setup uses only the published plan', () => {
     expect(screen.getByRole('button', { name: '一键部署全部环境' })).toBeEnabled();
     expect(screen.queryAllByRole('button', { name: /^安装 / })).toHaveLength(0);
     expect(screen.queryByRole('heading', { name: '推荐组合' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '环境详情' })).toBeVisible();
-    expect(screen.queryByLabelText('环境安装目录')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '存储位置' })).toBeVisible();
+    expect(screen.queryByLabelText('集成环境安装目录')).not.toBeInTheDocument();
     expect(screen.queryByText('运行诊断')).not.toBeInTheDocument();
     expect(screen.queryByText(/操作历史|操作日志/)).not.toBeInTheDocument();
     expect(screen.queryByText(/目标：|实测：|安装位置：/)).not.toBeInTheDocument();
@@ -122,9 +122,10 @@ describe('complete setup uses only the published plan', () => {
       vi.spyOn(api, 'environments').mockResolvedValue(catalog);
       const start = startOperation();
       render(<EnvironmentPage {...props()} />);
-      await userEvent.click(await screen.findByRole('button', { name: '环境详情' }));
+      await userEvent.click(await screen.findByRole('button', { name: '存储位置' }));
+      await userEvent.click(screen.getByText('环境详情', { selector: 'summary' }));
       expect(screen.getByRole('button', { name: '先检测 基础运行环境' })).toBeDisabled();
-      await userEvent.click(screen.getByRole('button', { name: '关闭' }));
+      await userEvent.click(screen.getByRole('button', { name: '取消' }));
       await userEvent.click(screen.getByRole('button', { name: '一键部署全部环境' }));
       const dialog = screen.getByRole('dialog');
       expect(dialog).toHaveTextContent('复检');

@@ -74,7 +74,7 @@ export function EnvironmentOverview({
         <p className="info-banner">完整部署暂不可用，请查看组件详情中的服务端限制或检测状态。</p>
       )}
       <button type="button" className="environment-details-trigger" onClick={onDetails}>
-        环境详情
+        存储位置
       </button>
       {!catalog.components.length && (
         <p className="info-banner">服务端尚未提供组件目录；不会展示演示环境。</p>

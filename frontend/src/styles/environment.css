@@ -46,12 +46,13 @@
   font-size: 13px;
   line-height: 1.6;
 }
-.environment-location-editor {
-  margin: 4px 0 12px;
+.environment-component-details summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
 }
-.environment-location-editor .location-card {
-  max-width: 560px;
-  padding: 12px 0 4px;
+.environment-component-details .component-library {
+  margin-top: 16px;
 }
 .environment-details-trigger {
   margin-top: 20px;
@@ -59,9 +60,6 @@
 .environment-overview > p.muted {
   margin-top: 16px;
   font-size: 13px;
-}
-.environment-details .component-library {
-  margin-bottom: 12px;
 }
 .environment-card {
   min-width: 0;
@@ -95,14 +93,6 @@
   padding-left: 20px;
   font-size: 12px;
   line-height: 1.8;
-}
-.location-card form {
-  display: grid;
-  gap: 12px;
-  margin-top: 14px;
-}
-.location-card form > button {
-  justify-self: start;
 }
 .environment-section-header {
   display: flex;

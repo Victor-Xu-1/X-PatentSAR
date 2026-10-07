@@ -154,7 +154,7 @@ describe('bounded visual sidecar page contracts', () => {
     expect(screen.queryByRole('button', { name: '一键部署全部环境' })).not.toBeInTheDocument();
     expect(onSetup).not.toHaveBeenCalled();
     expect(onInspect).not.toHaveBeenCalled();
-    await userEvent.click(screen.getByRole('button', { name: '环境详情' }));
+    await userEvent.click(screen.getByRole('button', { name: '存储位置' }));
     expect(onDetails).toHaveBeenCalledOnce();
     expect(onInspect).not.toHaveBeenCalled();
     await userEvent.click(screen.getByRole('button', { name: '重新检测' }));

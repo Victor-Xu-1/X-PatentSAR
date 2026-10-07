@@ -12,9 +12,11 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
+from .data_location_policy import DataLocationPolicy
 from .environment_models import ComponentId, EnvironmentOperation
 from .errors import WebError
 from .files import private_directory
+from .location_records import MAX_LOCATION_ROOTS, initialize_locations, location_record
 from .storage import encode, now
 
 SCHEMA = """
@@ -82,6 +84,7 @@ class EnvironmentStore:
                 "INSERT OR IGNORE INTO settings(id,install_root) VALUES(1,?)",
                 (str(install_root),),
             )
+            initialize_locations(connection, self.root.parent)
 
     @contextmanager
     def connect(self, *, write: bool = False) -> Iterator[sqlite3.Connection]:
@@ -104,10 +107,20 @@ class EnvironmentStore:
     def settings(self) -> dict[str, Any]:
         with self.connect() as connection:
             return dict(
-                connection.execute("SELECT * FROM settings WHERE id=1").fetchone()
+                connection.execute(
+                    "SELECT settings.*,file_settings.upload_root,file_settings.result_root "
+                    "FROM settings JOIN file_settings ON settings.id=file_settings.id WHERE settings.id=1"
+                ).fetchone()
             )
 
-    def save_settings(self, root: Path, expected_revision: int) -> dict[str, Any]:
+    def save_settings(
+        self,
+        root: Path,
+        expected_revision: int,
+        *,
+        upload_root: str | None = None,
+        result_root: str | None = None,
+    ) -> dict[str, Any]:
         with self.connect(write=True) as connection:
             revision = connection.execute(
                 "SELECT revision FROM settings WHERE id=1"
@@ -125,6 +138,26 @@ class EnvironmentStore:
                     409,
                     "environment_busy",
                     "Wait for the active environment operation before changing location.",
+                )
+            if upload_root is not None and result_root is not None:
+                saved = location_record(connection)
+                policy = DataLocationPolicy.from_environment(self.root.parent)
+                policy.validate_set(upload_root, result_root, saved.roots)
+                selected = (("uploads", upload_root), ("results", result_root))
+                if len(set(saved.roots) | set(selected)) > MAX_LOCATION_ROOTS:
+                    raise WebError(
+                        409,
+                        "storage_history_limit",
+                        "Recorded locations reached the safe retention limit; existing roots were preserved.",
+                    )
+                for kind, value in selected:
+                    policy.prepare(kind, value)
+                connection.execute(
+                    "UPDATE file_settings SET upload_root=?,result_root=? WHERE id=1",
+                    (upload_root, result_root),
+                )
+                connection.executemany(
+                    "INSERT OR IGNORE INTO file_roots VALUES(?,?)", selected
                 )
             connection.execute(
                 "UPDATE settings SET install_root=?,revision=revision+1 WHERE id=1",

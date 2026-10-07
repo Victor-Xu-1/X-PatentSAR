@@ -40,6 +40,7 @@ class RunSpec:
     include_admet: bool = False
     admet_only: bool = False
     admet_compounds: tuple[str, ...] = ()
+    workspace_root: str = ""
 
 
 @dataclass
@@ -337,7 +338,7 @@ class CLIProcessRunner(SubprocessRunner):
                 "-m",
                 "patent_sar_extractor.web.prediction_worker",
                 "--state-dir",
-                str(Path(spec.output_dir).parents[2]),
+                spec.workspace_root or str(Path(spec.output_dir).parents[2]),
                 "--job-id",
                 spec.job_id,
             ]

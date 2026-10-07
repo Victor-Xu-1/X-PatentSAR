@@ -15,6 +15,22 @@ MAX_ARTIFACT_BYTES = 32 * 1024 * 1024
 MAX_RECORDS = 25000
 
 
+def directory_descriptor(path: Path) -> int:
+    """Open every absolute root component without following ancestor links."""
+    fd = os.open(path.anchor, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        for part in path.parts[1:]:
+            child = os.open(
+                part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd
+            )
+            os.close(fd)
+            fd = child
+        return fd
+    except BaseException:
+        os.close(fd)
+        raise
+
+
 def private_directory(path: Path) -> Path:
     if path.is_symlink():
         raise WebError(400, "unsafe_state", "State directory must not be a symlink.")
@@ -50,7 +66,7 @@ class SafeFiles:
                 "unsafe_directory",
                 "Run directory must be an existing real directory.",
             )
-        self.root = root.resolve()
+        self.root = Path(os.path.abspath(root))
 
     def relative(self, value: str | Path) -> Path:
         raw = str(value)
@@ -70,7 +86,12 @@ class SafeFiles:
 
     def open(self, value: str | Path, *, max_bytes: int) -> BinaryIO:
         relative = self.relative(value)
-        parent_fd = os.open(self.root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        try:
+            parent_fd = directory_descriptor(self.root)
+        except OSError as exc:
+            raise WebError(
+                404, "asset_unavailable", "Asset root is missing or unsafe."
+            ) from exc
         try:
             for part in relative.parts[:-1]:
                 next_fd = os.open(

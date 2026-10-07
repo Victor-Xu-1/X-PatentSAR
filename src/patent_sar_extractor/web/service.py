@@ -113,7 +113,7 @@ class WorkspaceService:
                         patent_id,
                         stamp,
                         stamp,
-                        str(uploaded.path.relative_to(self.store.root)),
+                        self.store.locations.pdf_record(uploaded.path),
                         uploaded.sha256,
                         uploaded.sha256,
                         uploaded.page_count,
@@ -160,7 +160,7 @@ class WorkspaceService:
                 connection.execute(
                     "UPDATE projects SET pdf_rel=?,sha256=?,page_count=?,updated_at=? WHERE id=?",
                     (
-                        str(uploaded.path.relative_to(self.store.root)),
+                        self.store.locations.pdf_record(uploaded.path),
                         uploaded.sha256,
                         uploaded.page_count,
                         now(),
@@ -208,7 +208,7 @@ class WorkspaceService:
                 "Imported artifact fingerprint no longer matches the attached original.",
             )
         uploaded = (
-            copy_original(pdf_path, self.store.root / "uploads")
+            copy_original(pdf_path, self.store.locations.upload_root())
             if pdf_path is not None
             else None
         )
@@ -260,7 +260,7 @@ class WorkspaceService:
                     connection.execute(
                         "UPDATE projects SET pdf_rel=?,sha256=?,page_count=? WHERE id=?",
                         (
-                            str(uploaded.path.relative_to(self.store.root)),
+                            self.store.locations.pdf_record(uploaded.path),
                             uploaded.sha256,
                             uploaded.page_count,
                             project_id,

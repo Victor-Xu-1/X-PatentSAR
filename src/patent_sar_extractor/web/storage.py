@@ -10,12 +10,15 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from patent_sar_extractor.contracts import WEB_API_SCHEMA_VERSION
 
 from .errors import WebError
 from .files import private_directory
+
+if TYPE_CHECKING:
+    from .workspace_locations import WorkspaceLocations
 
 
 def now() -> str:
@@ -66,6 +69,12 @@ CREATE INDEX IF NOT EXISTS compounds_order ON compounds(project_id,ordinal);
 
 
 class Store:
+    @property
+    def locations(self) -> WorkspaceLocations:
+        from .workspace_locations import WorkspaceLocations
+
+        return WorkspaceLocations(self.root)
+
     def __init__(self, state_root: str | Path) -> None:
         self.root = private_directory(Path(state_root).expanduser())
         self.path = self.root / "workspace.sqlite3"

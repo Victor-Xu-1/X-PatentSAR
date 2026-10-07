@@ -68,14 +68,26 @@ class EnvironmentComponent(DTO):
 class EnvironmentSettings(DTO):
     install_root: str
     allowed_root: str
+    upload_root: str
+    result_root: str
+    allowed_data_root: str
     revision: int = Field(ge=0)
+    editable: bool
     enabled: bool
     reason: str | None
 
 
 class EnvironmentSettingsRequest(DTO):
     install_root: StrictStr = Field(min_length=1, max_length=512)
+    upload_root: StrictStr | None = Field(default=None, min_length=1, max_length=512)
+    result_root: StrictStr | None = Field(default=None, min_length=1, max_length=512)
     expected_revision: int = Field(ge=0, strict=True)
+
+    @model_validator(mode="after")
+    def paired_file_locations(self) -> EnvironmentSettingsRequest:
+        if (self.upload_root is None) != (self.result_root is None):
+            raise ValueError("Upload and result locations must be supplied together")
+        return self
 
 
 class EnvironmentPreset(DTO):

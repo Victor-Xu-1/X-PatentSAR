@@ -8,7 +8,7 @@ import {
   decodeEnvironmentSettings,
   matchesEnvironmentRequest,
 } from './environmentDecoders';
-import type { EnvironmentOperationRequest } from './environmentTypes';
+import type { EnvironmentOperationRequest, EnvironmentStorageLocations } from './environmentTypes';
 
 export function environmentApi(client: ApiClient) {
   const operationPath = (id: string) =>
@@ -21,11 +21,20 @@ export function environmentApi(client: ApiClient) {
   return {
     environments: (signal: AbortSignal) =>
       client.get('/environments', decodeEnvironmentCatalog, signal),
-    updateEnvironmentSettings: (install_root: string, expected_revision: number) =>
+    updateEnvironmentSettings: (
+      locations: EnvironmentStorageLocations | string,
+      expected_revision: number,
+    ) =>
       client.mutate(
         '/environments/settings',
         'PUT',
-        { install_root, expected_revision },
+        {
+          install_root: typeof locations === 'string' ? locations : locations.install_root,
+          ...(typeof locations === 'string'
+            ? {}
+            : { upload_root: locations.upload_root, result_root: locations.result_root }),
+          expected_revision,
+        },
         decodeEnvironmentSettings,
       ),
     createEnvironmentOperation: (input: EnvironmentOperationRequest) => {

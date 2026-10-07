@@ -6,6 +6,7 @@ import type {
   EnvironmentComponentId,
   EnvironmentOperation,
   EnvironmentSettings,
+  EnvironmentStorageLocations,
 } from '../../api/environmentTypes';
 import { activeEnvironmentOperation } from '../../model/environment';
 import {
@@ -66,7 +67,16 @@ export function useEnvironmentMutations(onOperation: (id: string) => void, onRef
         intent.kind === 'operation'
           ? await api.createEnvironmentOperation(intent.request)
           : intent.kind === 'settings'
-            ? await api.updateEnvironmentSettings(intent.install_root, intent.expected_revision)
+            ? await api.updateEnvironmentSettings(
+                intent.upload_root === undefined
+                  ? intent.install_root
+                  : {
+                      install_root: intent.install_root,
+                      upload_root: intent.upload_root,
+                      result_root: intent.result_root,
+                    },
+                intent.expected_revision,
+              )
             : await api.cancelEnvironmentOperation(intent.operation_id);
       if (mounted.current) {
         clear();
@@ -78,8 +88,10 @@ export function useEnvironmentMutations(onOperation: (id: string) => void, onRef
       if (mounted.current) {
         setError(e instanceof Error ? e : new Error('环境操作失败。'));
         if (!sent) setStorageError(true);
-        else if (e instanceof ApiError && !e.uncertain && e.status >= 400 && e.status < 500)
+        else if (e instanceof ApiError && !e.uncertain && e.status >= 400 && e.status < 500) {
           clear();
+          if (e.status === 409) onRefresh();
+        }
       }
       return null;
     } finally {
@@ -105,9 +117,9 @@ export function useEnvironmentMutations(onOperation: (id: string) => void, onRef
       return null;
     }
   }
-  async function save(install_root: string, expected_revision: number) {
+  async function save(locations: EnvironmentStorageLocations, expected_revision: number) {
     if (pending || storageError || lock.current) return null;
-    const result = await dispatch({ kind: 'settings', install_root, expected_revision });
+    const result = await dispatch({ kind: 'settings', ...locations, expected_revision });
     return result && 'revision' in result ? result : null;
   }
   async function cancel(operation_id: string) {
@@ -147,6 +159,9 @@ export function useEnvironmentMutations(onOperation: (id: string) => void, onRef
       } else if (pending.kind === 'settings') {
         if (
           catalog.settings.install_root === pending.install_root &&
+          (pending.upload_root === undefined ||
+            (catalog.settings.upload_root === pending.upload_root &&
+              catalog.settings.result_root === pending.result_root)) &&
           catalog.settings.revision >= pending.expected_revision
         ) {
           clear();
@@ -163,7 +178,7 @@ export function useEnvironmentMutations(onOperation: (id: string) => void, onRef
           return;
         }
       }
-      if (pending.kind !== 'operation' || !activeEnvironmentOperation(catalog.active_operation))
+      if (pending.kind === 'cancel' || !activeEnvironmentOperation(catalog.active_operation))
         setChecked(true);
       else
         setError(new Error('服务器有另一项环境操作正在运行。请等待并再次核对，不重放安装请求。'));
