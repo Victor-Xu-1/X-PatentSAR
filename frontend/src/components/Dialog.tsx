@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef } from 'react';
 import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { containTab } from './focus';
 
 function focusInitialControl(dialog: HTMLDialogElement) {
   const control = dialog.querySelector<HTMLElement>('[data-initial-focus]');
@@ -80,6 +81,16 @@ export function Dialog({
       ref={ref}
       className={`dialog${wide ? ' dialog-wide' : ''}${className ? ` ${className}` : ''}`}
       aria-labelledby={titleId}
+      onKeyDown={(event) => {
+        if (
+          event.key === 'Tab' &&
+          event.target instanceof Element &&
+          event.target.closest('dialog') === event.currentTarget
+        ) {
+          containTab(event.nativeEvent, event.currentTarget);
+          event.stopPropagation();
+        }
+      }}
       onCancel={(event) => {
         event.stopPropagation();
         event.preventDefault();
