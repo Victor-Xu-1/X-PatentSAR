@@ -97,6 +97,7 @@ export function ResultToolbar({
           onClick={() => setChoosing(true)}
         >
           <Columns3 size={14} />
+          <span>列设置</span>
         </button>
         <button
           type="button"

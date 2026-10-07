@@ -3,21 +3,22 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 0 6px;
-  padding: 4px 8px;
+  gap: 0 8px;
+  min-height: 52px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--line);
   flex: 0 0 auto;
 }
 .pdf-toolbar .tabs {
   border: 0;
   padding: 0;
-  gap: 5px;
-  min-height: 28px;
+  gap: 8px;
+  min-height: 34px;
 }
 .pdf-toolbar .tab {
-  min-height: 28px;
-  padding: 4px 2px;
-  font-size: 11px;
+  min-height: 34px;
+  padding: 6px 2px;
+  font-size: 13px;
 }
 .pdf-controls {
   display: flex;
@@ -40,20 +41,20 @@
 }
 .page-navigation input {
   text-align: center;
-  width: 36px;
-  min-height: 26px;
-  padding: 3px 2px;
-  font-size: 11px;
+  width: 42px;
+  min-height: 32px;
+  padding: 5px 3px;
+  font-size: 13px;
 }
 .page-navigation span {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px;
   min-width: 32px;
 }
 .pdf-controls .icon-button {
-  width: 24px;
-  min-height: 26px;
-  padding: 3px;
+  width: 30px;
+  min-height: 32px;
+  padding: 5px;
 }
 .zoom-controls output {
   display: grid;
@@ -81,7 +82,7 @@
   overflow: auto;
   min-height: 0;
   min-width: 0;
-  padding: 12px 10px;
+  padding: 12px;
 }
 .page-canvas {
   position: relative;
@@ -122,7 +123,7 @@
   border-bottom: 1px solid var(--line-soft);
   background: var(--surface);
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px;
 }
 .annotation-box {
   position: absolute;
@@ -137,7 +138,7 @@
   position: absolute;
   top: -24px;
   left: -1px;
-  font-size: 10px;
+  font-size: 12px;
   padding: 3px 6px;
   min-height: 20px;
   border-top-left-radius: var(--radius-control);
@@ -173,7 +174,7 @@
   justify-content: flex-start;
   width: 100%;
   margin-bottom: 4px;
-  font-size: 11px;
+  font-size: 13px;
   padding: 7px 9px;
   color: var(--primary);
   border-color: var(--line-soft);
@@ -185,7 +186,7 @@
 }
 .annotation-list button > span {
   margin-left: auto;
-  font-size: 10px;
+  font-size: 12px;
 }
 .page-text {
   flex: 1;
@@ -205,8 +206,17 @@
   display: flex;
   gap: 6px;
   align-items: center;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
   border-bottom: 1px solid var(--line-soft);
   padding-bottom: 12px;
+}
+@media (pointer: coarse) {
+  .pdf-controls .icon-button,
+  .pdf-toolbar .tab {
+    min-height: 40px;
+  }
+  .pdf-controls .icon-button {
+    width: 36px;
+  }
 }

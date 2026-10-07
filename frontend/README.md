@@ -4,6 +4,8 @@
 前端只消费 [API v1](../docs/WEB_API.md)，不另建提取或预测引擎。
 默认只做 PDF → 完整结构/活性表 → 在线修正；说明和技术信息按需打开。
 系统字体、白/浅灰背景和黑色操作按钮使用唯一样式权威 src/styles/tokens.css。
+Evidence Studio 将真实 PDF 和完整表格作为视觉中心，不使用生成图代替科学证据。
+默认原文栏宽 34%，显式 URL 栏宽不改变；手机结构列随表横向滚动，编号与修正保留。
 
 ## 开发与构建
 
@@ -39,6 +41,9 @@ npm run build
 ## 交互与模块
 
 - features/workspace：左 PDF、右表格，精简页眉。真实进度仍用单一作业读取链路。
+- model/workflowGroups + features/jobs：只将相邻真实阶段归为四个概览组，保留记录
+  顺序、失败及未知状态。完整 StageList 是唯一阶段明细；Esc/点击外部关闭浮层。
+  单阶段分析任务不显示重复概览。不能以分组、颜色或已处理总量替代验收结论。
 - features/results：独立活动列、Excel 式列隐藏/筛选/排序/宽度、冻结编号/结构、
   复制/导出，以及唯一修正窗口。
 - features/structure-editor：本地 Ketcher 3.18.0 独立 frame，隔离 CSS/弹窗；
@@ -48,6 +53,10 @@ npm run build
 - features/tasks / environment：真实上传、持久队列与唯一环境管理页面。
   配置/安装边界见 [运营文档](../docs/OPERATIONS.md)。
 - tests / e2e：隔离状态测试、真实服务 Playwright，不使用生产假数据或拦截成功。
+
+页面样式各有单一模块（workflow / tasks / management / environment / analysis），
+共享弹窗为固定标题、滚动正文及可达的操作区。环境页只显示真实总体就绪、一次完整
+安装与当前进度；路径在独立对话框中修改。技术详情按需打开，不永久展示日志。
 
 点击活性数值直接跳原文并圈出有证据的单元格；不显示重复页码徽标。
 未证明精确框时只定位页，不能画猜测框。首次默认页来自实际 first_structure_page，

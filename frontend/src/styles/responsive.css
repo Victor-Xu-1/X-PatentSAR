@@ -1,35 +1,89 @@
-@media (max-width: 1400px) and (min-width: 1101px) {
+@media (min-width: 900px) {
+  /* Actual header/banner height is included in the viewport budget. */
+  .app-main:has(.workspace) {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+  }
+  .app-main:has(.workspace) > .topbar {
+    flex-shrink: 0;
+  }
+  .app-main:has(.workspace) > main {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    padding: 0 12px 12px;
+  }
+  .workspace {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+  }
+  .workspace-source,
+  .workspace-results {
+    height: 100%;
+  }
+  .workflow-panel {
+    flex-shrink: 0;
+    padding-right: 174px;
+  }
+  .layout-toolbar {
+    position: absolute;
+    top: 12px;
+    right: 4px;
+    margin: 0;
+  }
+  .is-fullscreen .layout-toolbar {
+    position: static;
+    margin-bottom: 8px;
+  }
+}
+@media (max-width: 1399px) {
+  .workflow-groups {
+    gap: 10px;
+  }
+  .workflow-document {
+    max-width: 220px;
+  }
   .topbar {
-    padding: 0 15px;
+    padding-inline: 16px;
+    gap: 14px;
+  }
+  .topbar-actions > button {
+    padding-inline: 8px;
+  }
+}
+@media (max-width: 1279px) {
+  .workflow-groups {
+    display: none;
+  }
+  .stage-current-line {
+    justify-content: flex-end;
+  }
+}
+@media (max-width: 899px) {
+  .topbar {
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .topbar-actions {
+    order: 1;
+    flex: 1 0 100%;
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+  .topbar-version {
+    margin-left: auto;
   }
   main {
     padding: 10px;
   }
-  .stage strong {
-    font-size: 9px;
-  }
-  .stage-circle {
-    width: 17px;
-    height: 17px;
-  }
-  .metric-card > div {
-    gap: 4px;
-  }
-  .metric-card div > span {
-    font-size: 9px;
-  }
-  .acceptance-banner > small {
-    font-size: 9px;
-  }
-}
-@media (max-width: 1100px) {
-  .topbar {
-    padding: 0 13px;
-  }
   .workspace-split {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
   }
   .workspace-results {
     order: 0;
@@ -41,156 +95,71 @@
     display: none;
   }
   .pdf-pane {
-    height: 580px;
+    height: 680px;
   }
   .results-pane {
-    height: max(760px, calc(100dvh - 120px));
-  }
-  .stage-strip {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 6px;
-  }
-  .stage-overview {
-    position: relative;
-  }
-  .stage-observation {
-    position: static;
-  }
-  .stage-observation-detail,
-  .stage:nth-last-child(-n + 3) .stage-observation-detail {
-    left: 0;
-    right: auto;
-    top: 100%;
+    height: max(420px, calc(100dvh - 310px));
   }
   .workflow-panel {
-    align-items: flex-start;
-  }
-  .job-actions {
     flex-wrap: wrap;
-    max-width: 200px;
+    padding: 12px 2px;
+    gap: 10px;
+  }
+  .workflow-document {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+  .workflow-panel .stage-overview {
+    flex: 1;
+  }
+  .stage-current-line {
+    justify-content: flex-start;
+  }
+  .layout-toolbar {
+    margin: 0 0 8px;
   }
   .is-fullscreen .workspace-split {
     overflow: auto;
     flex-shrink: 1;
   }
 }
-@media (max-width: 760px) {
-  .results-pane {
-    height: max(800px, calc(var(--results-min-height) + 330px));
+@media (max-width: 560px) {
+  .results-table .frozen-structure {
+    position: static;
+    box-shadow: none;
   }
-  .topbar {
-    min-height: 48px;
-    height: auto;
-    flex-wrap: wrap;
-    position: sticky;
-    top: 0;
-    z-index: 21;
-    padding: 4px 9px;
-    gap: 4px 8px;
+  .table-scroll {
+    scroll-padding-inline-start: calc(var(--frozen-select-width) + var(--frozen-compound-width));
   }
   .brand strong {
-    font-size: 16px;
-  }
-  .brand-symbol {
-    width: 24px;
-    height: 24px;
-  }
-  .topbar-actions {
-    order: 1;
-    flex: 1 0 100%;
-    margin-left: 0;
-    gap: 2px;
-    justify-content: flex-start;
+    font-size: 18px;
   }
   .topbar-actions > button {
-    width: auto;
     min-height: 44px;
-    padding: 6px;
+    padding: 8px;
+    font-size: 12px;
   }
-  .topbar-version {
-    margin-left: auto;
-  }
-  main {
-    padding: 9px;
-  }
-  .workflow-panel {
-    flex-direction: column;
-  }
-  .stage-strip {
-    width: 100%;
-  }
-  .job-actions-wrapper {
-    width: 100%;
+  .workflow-panel .job-actions-wrapper {
+    flex: 0 0 auto;
+    width: auto;
     max-width: none;
   }
-  .job-actions {
-    max-width: none;
+  .workflow-panel .job-actions button {
+    min-height: 40px;
   }
-  .layout-toolbar > span {
-    display: none;
+  .stage-current {
+    font-size: 12px;
   }
-  .acceptance-banner small {
-    width: 100%;
-  }
-  .pagination {
-    padding: 6px;
-  }
-  .pagination nav {
-    gap: 3px;
-  }
-  .management-page {
-    padding: 17px;
-  }
-  .page-header,
-  .job-card header,
-  .job-card header > div {
-    flex-wrap: wrap;
-  }
-  .new-task-page {
-    margin-top: 40px;
-    padding: 0 9px;
-  }
-  .recent-file time {
-    display: none;
-  }
-  .recent-file {
-    display: grid;
-    grid-template-columns: 42px minmax(0, 1fr) 16px;
-    gap: 8px 12px;
-    padding: 16px;
-  }
-  .recent-file-icon {
-    grid-column: 1;
-    grid-row: 1 / span 2;
-  }
-  .recent-file-name {
-    grid-column: 2;
-    grid-row: 1;
-  }
-  .recent-file-name strong {
-    font-size: 14px;
-  }
-  .recent-file-acceptance {
-    grid-column: 2;
-    grid-row: 2;
-    justify-self: start;
-    white-space: normal;
-    text-align: left;
-  }
-  .recent-file-chevron {
-    grid-column: 3;
-    grid-row: 1 / span 2;
+  .stage-detail-surface {
+    position: fixed;
+    inset: 150px 12px auto;
+    width: auto;
+    max-height: calc(100dvh - 180px);
   }
   .evidence-counts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .analysis-panel {
-    padding: 12px;
-  }
-}
-@media (max-width: 560px) {
-  .document-title {
-    display: none;
+    padding: 16px;
   }
 }

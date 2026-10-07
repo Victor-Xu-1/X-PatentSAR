@@ -31,7 +31,7 @@ export function resultColumns(activities: TableActivityColumn[] = []): ResultCol
   return [
     column('select', '选择', 'check-col frozen-column frozen-select', 38, 38, 100),
     column('compound', 'Compound', 'compound-column frozen-column frozen-compound', 120, 88, 480),
-    column('structure', '结构', 'structure-column frozen-column frozen-structure', 112, 88, 480),
+    column('structure', '结构', 'structure-column frozen-column frozen-structure', 136, 88, 480),
     ...activities.map((activity) => ({
       ...column(
         `activity:${activity.id}`,
@@ -57,6 +57,6 @@ export function resultColumns(activities: TableActivityColumn[] = []): ResultCol
       column(`property:${spec.key}`, spec.label, 'prediction-column', 88, 64, 180),
     ),
     column('source', '原文', 'source-column', 64, 48, 180),
-    column('edit', '修正', 'edit-column frozen-column frozen-edit', 48, 40, 120),
+    column('edit', '修正', 'edit-column frozen-column frozen-edit', 64, 40, 120),
   ];
 }

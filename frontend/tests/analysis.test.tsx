@@ -34,7 +34,9 @@ describe('source-grounded same-project deterministic evidence', () => {
     expect(get).toHaveBeenCalledWith(project.id, expect.any(AbortSignal));
     expect(screen.getByText('nM')).toBeVisible();
     expect(screen.getByText(/确定性证据统计/)).toBeVisible();
+    await userEvent.click(screen.getByText('统计范围与证据边界'));
     expect(screen.getByText(/不是 LLM/)).toBeVisible();
+    await userEvent.click(screen.getByText(/原始来源页 ·/));
     await userEvent.click(screen.getByRole('button', { name: '查看来源第 4 页' }));
     expect(source).toHaveBeenCalledWith(4);
     expect(project.acceptance.state).toBe('not_run');

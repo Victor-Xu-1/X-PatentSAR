@@ -1,8 +1,8 @@
 .analysis-panel {
-  padding: 16px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 20px;
   min-width: 0;
 }
 .analysis-panel h2,
@@ -11,30 +11,113 @@
   font-weight: 600;
 }
 .analysis-panel h2 {
-  font-size: 19px;
+  font-size: 22px;
+  letter-spacing: -0.4px;
 }
 .analysis-panel h3 {
-  font-size: 16px;
-}
-.analysis-notice {
-  background: var(--surface-subtle);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  padding: 9px 12px;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.7;
-}
-.analysis-notice p + p {
-  margin-top: 7px;
-}
-.analysis-notice a {
-  font-size: 12px;
+  font-size: 15px;
 }
 .analysis-provenance {
-  font-size: 11px;
+  margin-top: 6px;
+  font-size: 12px;
   color: var(--muted);
   overflow-wrap: anywhere;
+}
+.evidence-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.evidence-state {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.evidence-state time {
+  font-size: 12px;
+  color: var(--muted);
+}
+.evidence-counts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px 24px;
+  padding: 20px 0;
+  border-block: 1px solid var(--line);
+}
+.evidence-counts > div {
+  min-width: 0;
+}
+.evidence-counts dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+.evidence-counts dd {
+  margin: 6px 0 0;
+  color: var(--ink);
+  font-size: 24px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.evidence-details {
+  display: grid;
+  gap: 0;
+}
+.evidence-details > details,
+.evidence-findings > details {
+  border-bottom: 1px solid var(--line-soft);
+  padding: 12px 0;
+}
+.evidence-details summary {
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--primary);
+  width: fit-content;
+  max-width: 100%;
+}
+.evidence-findings > details > summary {
+  color: var(--warning);
+}
+.evidence-findings details details {
+  padding: 10px 12px 0;
+}
+.evidence-findings ul {
+  padding-left: 24px;
+  margin: 10px 0;
+  font-size: 13px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.evidence-findings li > small {
+  display: block;
+}
+.evidence-limitations p,
+.evidence-limitations ul {
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--muted);
+}
+.evidence-source-pages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 12px;
+  max-height: 240px;
+  overflow: auto;
+}
+.evidence-source-pages button {
+  min-height: 32px;
+  font-size: 12px;
+  padding: 6px 10px;
+}
+.evidence-activities {
+  display: grid;
+  gap: 12px;
 }
 .analysis-table-scroll {
   overflow: auto;
@@ -45,13 +128,13 @@
 .analysis-table {
   border-collapse: collapse;
   width: 100%;
-  font-size: 12px;
+  font-size: 13px;
   min-width: 430px;
 }
 .analysis-table th,
 .analysis-table td {
   text-align: center;
-  padding: 8px 10px;
+  padding: 12px;
   border-bottom: 1px solid var(--line-soft);
   overflow-wrap: anywhere;
 }
@@ -65,66 +148,22 @@
 .analysis-table tbody th {
   font-weight: 500;
 }
-.evidence-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.evidence-counts {
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-.evidence-counts > div {
-  border-right: 1px solid var(--line);
-  padding: 8px 12px;
-}
-.evidence-counts > div:last-child {
-  border-right: 0;
-}
-.evidence-counts dt {
-  color: var(--muted);
-  font-size: 11px;
-}
-.evidence-counts dd {
-  margin: 4px 0 0;
-  font-size: 22px;
-  font-family: var(--font-heading);
-}
-.evidence-sources,
-.evidence-targets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-}
-.evidence-sources h3,
-.evidence-targets h3 {
-  width: 100%;
-}
-.evidence-sources button {
-  padding: 4px 8px;
-  min-height: 28px;
-  font-size: 11px;
-}
-.evidence-targets span {
-  padding: 5px 8px;
-  background: var(--surface-subtle);
-  border-radius: var(--radius-control);
-  font-size: 11px;
-}
 .evidence-panel .analysis-table {
   min-width: 640px;
 }
-.analysis-warnings {
-  padding: 10px 10px 10px 28px;
-  margin: 0;
-  color: var(--warning);
-  background: var(--warning-surface);
-  border: 1px solid var(--warning-line);
+.evidence-targets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.evidence-targets h3 {
+  width: 100%;
+  margin-bottom: 4px;
+}
+.evidence-targets span {
+  padding: 6px 10px;
+  background: var(--surface-subtle);
   border-radius: var(--radius-control);
   font-size: 12px;
 }

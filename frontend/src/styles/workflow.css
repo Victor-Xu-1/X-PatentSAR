@@ -1,0 +1,239 @@
+.workflow-panel {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 64px;
+  padding: 10px 4px;
+  margin-bottom: 4px;
+}
+.workflow-document {
+  flex: 0 1 260px;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.45;
+  letter-spacing: -0.3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stage-overview {
+  min-width: 0;
+}
+.workflow-panel .stage-overview {
+  flex: 1;
+}
+.stage-disclosure {
+  position: relative;
+}
+.stage-current-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 36px;
+  list-style: none;
+  cursor: pointer;
+  border-radius: var(--radius-control);
+}
+.stage-current-line::-webkit-details-marker {
+  display: none;
+}
+.stage-current {
+  display: inline-block;
+  flex: 0 1 auto;
+  margin-left: auto;
+  padding: 6px 9px;
+  border-radius: var(--radius-control);
+  background: var(--surface-hover);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.stage-current.is-review,
+.stage-current.is-queued {
+  color: var(--warning);
+  background: var(--warning-surface);
+}
+.stage-current.is-failed {
+  color: var(--danger);
+  background: var(--danger-surface);
+}
+.stage-current.is-running,
+.stage-current.is-complete {
+  color: var(--accent-strong);
+  background: var(--accent-surface);
+}
+.stage-disclosure-chevron {
+  color: var(--muted);
+}
+.stage-disclosure[open] .stage-disclosure-chevron {
+  transform: rotate(180deg);
+}
+.workflow-groups {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+.workflow-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  color: var(--muted);
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+}
+.workflow-group.ok {
+  color: var(--ink);
+}
+.workflow-group.ok > svg:not(.workflow-group-separator),
+.workflow-group.running {
+  color: var(--accent);
+}
+.workflow-group.review,
+.workflow-group.warnings {
+  color: var(--warning);
+}
+.workflow-group.failed {
+  color: var(--danger);
+}
+.workflow-group-separator {
+  color: var(--line-strong);
+  margin-right: 3px;
+}
+.stage-detail-surface {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 30;
+  width: min(560px, calc(100vw - 32px));
+  max-height: min(680px, 75dvh);
+  overflow: auto;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow-dialog);
+}
+.stage-detail-surface > h2 {
+  margin-bottom: 16px;
+  font-size: 17px;
+}
+.stage-history-notice {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 12px;
+  overflow-wrap: anywhere;
+}
+.stage-strip {
+  display: grid;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 0;
+  min-width: 0;
+}
+.stage {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line-soft);
+  min-width: 0;
+}
+.stage:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.stage-circle {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+  border: 1px solid var(--line-strong);
+  color: var(--muted);
+  border-radius: 50%;
+}
+.stage strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+.stage small {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.stage-observation summary {
+  cursor: pointer;
+  list-style: none;
+}
+.stage-observation summary::-webkit-details-marker {
+  display: none;
+}
+.stage-observation summary small {
+  margin-top: 3px;
+}
+.stage-observation-detail {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: var(--radius-control);
+  background: var(--surface-subtle);
+  font-size: 12px;
+  line-height: 1.8;
+}
+.stage.ok .stage-circle {
+  color: var(--success);
+  background: var(--success-surface);
+  border-color: var(--success-line);
+}
+.stage.running .stage-circle {
+  color: var(--accent-strong);
+  background: var(--accent-surface);
+  border-color: var(--accent-line);
+}
+.stage.failed .stage-circle {
+  color: var(--danger);
+  background: var(--danger-surface);
+  border-color: var(--danger-line);
+}
+.stage.warnings .stage-circle,
+.stage.failed.needs-review .stage-circle {
+  color: var(--warning);
+  background: var(--warning-surface);
+  border-color: var(--warning-line);
+}
+.job-actions-wrapper {
+  flex: 0 0 auto;
+  max-width: 360px;
+}
+.job-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.job-actions button {
+  font-size: 13px;
+  min-height: 36px;
+  padding: 7px 10px;
+}
+.job-actions .badge {
+  font-size: 12px;
+}
+.job-error {
+  font-size: 12px;
+  color: var(--danger);
+  margin-top: 6px;
+  max-width: 360px;
+  overflow-wrap: anywhere;
+}
+.job-actions-wrapper .error-notice {
+  margin-top: 8px;
+  font-size: 13px;
+}

@@ -6,6 +6,7 @@ import './styles/base.css';
 import './styles/resizing.css';
 import './styles/shell.css';
 import './styles/workspace.css';
+import './styles/workflow.css';
 import './styles/results.css';
 import './styles/table.css';
 import './styles/activity-strength.css';

@@ -44,10 +44,12 @@ export function EnvironmentProgress({
       {active ? (
         <>
           <div className="environment-section-header">
-            <span>
-              {selected.action === 'install' ? '正在配置环境' : '正在检测环境'} ·{' '}
-              {selected.completed_components.length}/{selected.component_ids.length}
-            </span>
+            <div className="environment-progress-heading">
+              <strong>{selected.action === 'install' ? '正在配置环境' : '正在检测环境'}</strong>
+              <span className="environment-progress-count" aria-live="polite">
+                {selected.completed_components.length}/{selected.component_ids.length}
+              </span>
+            </div>
             <button type="button" disabled={busy || readError} onClick={() => setTarget(selected)}>
               取消此环境操作
             </button>

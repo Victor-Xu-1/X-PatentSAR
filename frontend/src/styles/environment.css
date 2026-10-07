@@ -1,18 +1,36 @@
 .environment-page {
-  max-width: 1120px;
+  max-width: 1000px;
+  min-width: 0;
+  padding-block: 40px;
+}
+.environment-page .page-header {
+  padding-bottom: 0;
+  margin-bottom: 28px;
+}
+.environment-refresh {
+  flex: 0 0 auto;
+  min-height: 36px;
+}
+.environment-card {
+  min-width: 0;
+  padding: 16px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 .environment-card.environment-overview {
-  padding: 24px;
+  padding: 28px;
   border: 1px solid var(--line);
   border-radius: var(--radius-panel);
   background: var(--surface);
 }
 .environment-overview-state,
-.environment-overview-actions {
+.environment-overview-actions,
+.environment-overview-footer {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
 }
 .environment-overview-state {
   flex-wrap: nowrap;
@@ -24,7 +42,7 @@
   flex: 0 0 auto;
   width: 52px;
   height: 52px;
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-control);
   color: var(--muted);
   background: var(--surface-subtle);
 }
@@ -37,96 +55,134 @@
   min-width: 0;
   gap: 6px;
 }
-.environment-overview-heading h2 {
+.environment-overview .environment-overview-heading h2 {
   margin: 0;
   font-size: 18px;
-  line-height: 1.5;
+  font-weight: 600;
+  line-height: 1.4;
 }
-.environment-overview-heading > span {
+.environment-overview-heading > output {
+  font-size: 14px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+.environment-overview-actions > button {
+  min-height: 36px;
+}
+.environment-overview-footer {
+  justify-content: space-between;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line-soft);
+}
+.environment-overview .environment-overview-footer > p {
+  margin: 0;
   font-size: 13px;
   line-height: 1.6;
 }
-.environment-component-details summary {
-  cursor: pointer;
-  color: var(--muted);
-  font-size: 13px;
-}
-.environment-component-details .component-library {
-  margin-top: 16px;
-}
 .environment-details-trigger {
-  margin-top: 20px;
-}
-.environment-overview > p.muted {
-  margin-top: 16px;
-  font-size: 13px;
-}
-.environment-card {
-  min-width: 0;
-  padding: 16px 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
+  min-height: 36px;
 }
 .environment-card h2 {
+  margin: 0 0 12px;
   font-size: 16px;
-  margin: 0 0 10px;
   font-weight: 600;
+  line-height: 1.5;
 }
 .environment-card p {
-  font-size: 12px;
-  line-height: 1.7;
   margin: 6px 0;
+  font-size: 13px;
+  line-height: 1.65;
   overflow-wrap: anywhere;
 }
 .environment-card summary {
   cursor: pointer;
   color: var(--primary);
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.7;
 }
 .environment-card a {
   color: var(--accent-strong);
-  font-size: 12px;
+  font-size: 13px;
 }
 .environment-card ul {
   padding-left: 20px;
-  font-size: 12px;
-  line-height: 1.8;
+  font-size: 13px;
+  line-height: 1.7;
 }
 .environment-section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 20px;
 }
 .environment-section-header > div {
   min-width: 0;
 }
-.component-library {
-  margin-bottom: 20px;
+.environment-storage-form {
+  gap: 20px;
+}
+.environment-storage-fields {
+  display: grid;
+  min-width: 0;
+  gap: 20px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+.environment-storage-fields .form-field {
+  color: var(--primary);
+  font-weight: 500;
+}
+.environment-storage-fields input {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  font-size: 14px;
+  font-weight: 400;
+}
+.environment-component-details {
+  padding-top: 16px;
+  border-top: 1px solid var(--line-soft);
+}
+.environment-component-details > summary {
+  width: fit-content;
+  max-width: 100%;
+  min-height: 36px;
+  padding: 7px 0;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.6;
+  cursor: pointer;
+}
+.environment-component-details .component-library {
+  padding: 0;
+  margin: 16px 0 0;
 }
 .component-group > h3 {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  margin: 16px 0 0;
-  padding: 8px 0;
+  padding: 12px 0;
+  margin: 20px 0 0;
   border-bottom: 1px solid var(--line);
   color: var(--primary);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
 }
 .component-group > h3 small {
   color: var(--muted);
+  font-size: 12px;
   font-weight: 400;
 }
 .environment-component {
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr) auto;
   align-items: start;
-  gap: 10px;
-  padding: 12px 0;
+  gap: 12px;
+  padding: 18px 0;
   border-bottom: 1px solid var(--line-soft);
 }
 .environment-component:last-child {
@@ -136,7 +192,7 @@
   display: grid;
   place-items: center;
   width: 28px;
-  height: 28px;
+  height: 32px;
   color: var(--muted);
 }
 .environment-component-body {
@@ -149,27 +205,31 @@
   gap: 8px;
 }
 .component-title h4 {
-  font-size: 14px;
   margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
   overflow-wrap: anywhere;
 }
 .component-title small {
-  font-size: 11px;
   max-width: 100%;
+  font-size: 12px;
+  line-height: 1.6;
   overflow-wrap: anywhere;
 }
 .environment-card .component-location,
 .environment-card .component-checked-at {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   overflow-wrap: anywhere;
 }
 .component-metadata {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 20px;
-  margin: 6px 0;
-  font-size: 11px;
+  gap: 12px 24px;
+  margin: 12px 0;
+  font-size: 12px;
+  line-height: 1.6;
 }
 .component-metadata > div {
   min-width: 0;
@@ -184,8 +244,11 @@
 }
 .component-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  padding-top: 3px;
+}
+.component-actions > button {
+  min-height: 36px;
 }
 .environment-card .component-problem {
   color: var(--danger);
@@ -210,36 +273,64 @@
   color: var(--muted);
   background: var(--surface-subtle);
 }
-@media (max-width: 1100px) {
+@media (max-width: 900px) {
+  .environment-overview > .environment-section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
   .component-actions {
     flex-direction: column;
   }
 }
 @media (max-width: 600px) {
-  .environment-card {
-    padding: 12px 0;
+  .environment-page {
+    padding: 24px 16px;
   }
-  .environment-section-header {
+  .environment-page .page-header {
     align-items: flex-start;
-    flex-direction: column;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .environment-card.environment-overview {
+    padding: 20px;
+  }
+  .environment-overview-state {
+    gap: 12px;
+  }
+  .environment-overview-icon {
+    width: 44px;
+    height: 44px;
+  }
+  .environment-overview .environment-overview-heading h2 {
+    font-size: 17px;
   }
   .environment-overview-actions {
     width: 100%;
+    gap: 10px;
   }
   .environment-overview-actions > button {
+    flex: 1 1 100%;
+    min-height: 40px;
     white-space: normal;
+  }
+  .environment-overview-footer {
+    align-items: flex-start;
+    margin-top: 20px;
+    padding-top: 16px;
   }
   .environment-component {
     grid-template-columns: 28px minmax(0, 1fr);
     gap: 10px;
   }
-  .environment-component-icon {
-    width: 28px;
-    height: 32px;
-  }
   .component-actions {
     grid-column: 2;
     flex-direction: row;
-    flex-wrap: wrap;
+  }
+}
+@media (pointer: coarse) {
+  .environment-page button,
+  .environment-component-details > summary {
+    min-height: 44px;
   }
 }

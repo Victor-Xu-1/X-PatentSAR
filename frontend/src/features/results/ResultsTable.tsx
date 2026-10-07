@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { Pencil } from 'lucide-react';
 import type { ActivityColumn, Compound, Filters } from '../../api/types';
 import type { CSSProperties } from 'react';
 import { availableMetrics } from '../../model/results';
@@ -152,7 +153,11 @@ export function ResultsTable({
                   />
                 ) : (
                   <span className="column-heading">
-                    <span>{header.label}</span>
+                    {header.id === 'edit' ? (
+                      <Pencil size={14} aria-hidden="true" />
+                    ) : (
+                      <span>{header.label}</span>
+                    )}
                     {header.details && <small>{header.details}</small>}
                   </span>
                 )}

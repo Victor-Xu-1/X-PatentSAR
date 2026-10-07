@@ -100,9 +100,9 @@ export function PdfPane({
           value={tab}
           onChange={onTab}
           tabs={[
-            { value: 'original', label: '原文视图' },
-            { value: 'text', label: '文本视图' },
-            { value: 'annotations', label: '结构标注' },
+            { value: 'original', label: '原文', ariaLabel: '原文视图' },
+            { value: 'text', label: '文本', ariaLabel: '文本视图' },
+            { value: 'annotations', label: '标注', ariaLabel: '结构标注' },
           ]}
         />
         <PageControls

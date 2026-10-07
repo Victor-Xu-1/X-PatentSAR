@@ -164,7 +164,7 @@ test.describe('real local backend integration', () => {
     if (observed.status === 'queued' || observed.status === 'running') {
       await page.getByRole('button', { name: '取消任务', exact: true }).click();
       await page.getByRole('button', { name: '确认取消此任务' }).click();
-      await expect(page.locator('.job-actions .badge')).toHaveText('已取消');
+      await expect(page.locator('.stage-current')).toContainText('已取消');
     }
     await page.reload();
     const stopped = (await (await page.request.get(`/api/v1/jobs/${createdJob.id}`)).json()) as Job;

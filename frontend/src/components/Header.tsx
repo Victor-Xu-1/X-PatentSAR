@@ -22,7 +22,6 @@ export function Header({
   onAnalysis: (tab: ResultTab) => void;
   disabled: boolean;
 }) {
-  const title = view === 'workspace' ? (project?.title ?? '正在打开文件…') : '';
   return (
     <header className="topbar">
       <a
@@ -34,14 +33,9 @@ export function Header({
           onUpload();
         }}
       >
-        <img className="brand-symbol" src={brandMark} alt="" width={25} height={25} />
+        <img className="brand-symbol" src={brandMark} alt="" width={30} height={30} />
         <strong>X-PatentSAR</strong>
       </a>
-      {title && (
-        <span className="document-title" title={title}>
-          {title}
-        </span>
-      )}
       <nav className="topbar-actions" aria-label="工作台导航">
         <button
           type="button"
@@ -92,7 +86,7 @@ export function Header({
               onClick={() => onAnalysis('results')}
             >
               <FileText size={15} />
-              <span>返回结果表格</span>
+              <span>结果表格</span>
             </button>
             <button
               type="button"

@@ -1,59 +1,161 @@
 .environment-progress {
-  margin-top: 16px;
-  padding: 20px 24px;
+  display: grid;
+  min-width: 0;
+  gap: 16px;
+  padding: 24px 28px;
+  margin-top: 20px;
   border: 1px solid var(--line);
   border-radius: var(--radius-panel);
   background: var(--surface);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.environment-progress-heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+.environment-progress-heading > strong {
+  font-weight: 600;
+}
+.environment-progress-count {
+  color: var(--muted);
   font-size: 13px;
+  font-variant-numeric: tabular-nums;
 }
 .environment-progress > progress {
+  display: block;
   width: 100%;
   height: 6px;
+  border: 0;
   accent-color: var(--accent);
-  margin: 14px 0 0;
 }
 .environment-recovery {
   display: block;
+  padding: 20px;
   margin-bottom: 20px;
 }
 .environment-recovery h2 {
-  font-size: 14px;
-  margin: 0 0 10px;
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
 }
 .environment-recovery p {
-  margin: 10px 0;
-  font-size: 12px;
-  line-height: 1.8;
+  margin: 8px 0 16px;
+  font-size: 13px;
+  line-height: 1.7;
 }
 .environment-recovery button {
   white-space: normal;
 }
+.environment-installation {
+  gap: 20px;
+}
+.installation-destination {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-control);
+  background: var(--surface-subtle);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.installation-destination > strong {
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: 500;
+}
 .installation-plan {
+  display: grid;
   list-style: none;
   padding: 0;
-  margin: 12px 0;
+  margin: 0;
+  border-top: 1px solid var(--line);
 }
 .installation-plan li {
   display: grid;
-  gap: 3px;
-  margin: 6px 0;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--line);
+  min-width: 0;
+  gap: 8px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.installation-component-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.installation-component-heading > strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+.installation-component-heading > .badge {
+  max-width: 100%;
   font-size: 12px;
-  line-height: 1.7;
+  white-space: normal;
 }
 .installation-plan small {
   color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.installation-license {
+  color: var(--primary);
+}
+.installation-source-details {
+  color: var(--muted);
+  font-size: 12px;
+}
+.installation-source-details > summary {
+  width: fit-content;
+  max-width: 100%;
+  min-height: 28px;
+  padding: 4px 0;
+  cursor: pointer;
+}
+.installation-source-details p {
+  padding-top: 8px;
+  line-height: 1.6;
 }
 .option-check {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  font-size: 14px;
   font-weight: 500;
+  line-height: 1.6;
+}
+.option-check input[type='checkbox'] {
+  flex: 0 0 auto;
+  margin-top: 4px;
 }
 @media (max-width: 600px) {
-  .environment-page .page-header {
-    flex-direction: column;
+  .environment-progress {
+    padding: 20px;
+  }
+  .environment-progress .environment-section-header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .environment-progress button,
+  .environment-recovery button {
+    min-height: 40px;
+  }
+  .installation-component-heading {
     align-items: flex-start;
+    flex-direction: column;
+  }
+}
+@media (pointer: coarse) {
+  .installation-source-details > summary {
+    min-height: 44px;
   }
 }

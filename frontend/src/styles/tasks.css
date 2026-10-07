@@ -1,45 +1,47 @@
 .new-task-page {
   width: min(100%, 640px);
-  margin: clamp(32px, 10vh, 100px) auto 40px;
+  margin: clamp(48px, 12vh, 112px) auto 48px;
 }
 .task-heading {
-  margin-bottom: 32px;
+  margin-bottom: 28px;
   text-align: center;
 }
 .task-heading h1 {
-  font-size: clamp(25px, 3vw, 32px);
+  font-size: clamp(26px, 3vw, 32px);
+  font-weight: 600;
   line-height: 1.35;
+  letter-spacing: -0.035em;
 }
 .task-form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 .task-form fieldset {
   border: 0;
   min-width: 0;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 13px;
 }
 .task-form .task-inputs .upload-drop {
   margin: 0;
   justify-content: center;
-  min-height: 224px;
-  padding: 32px 24px;
-  gap: 14px;
-  border-style: dashed;
+  min-height: 244px;
+  padding: 36px 28px;
+  gap: 12px;
+  border-style: solid;
   border-color: var(--line);
   border-radius: var(--radius-panel);
   background: var(--surface);
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
 }
 .task-form .upload-drop .upload-icon {
   display: grid;
   place-items: center;
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   margin-bottom: 4px;
   border-radius: var(--radius-panel);
   background: var(--accent-surface);
@@ -47,17 +49,25 @@
 }
 .task-form .upload-drop strong {
   max-width: 100%;
-  font-size: 17px;
-  line-height: 1.5;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 550;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 .task-form .upload-drop > span:not(.upload-icon) {
   font-size: 13px;
+  line-height: 1.6;
+}
+.task-form .upload-drop.has-file {
+  border-color: var(--accent-line);
 }
 .task-form .upload-drop input {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  margin: 0;
   opacity: 0;
   cursor: pointer;
 }
@@ -72,12 +82,12 @@
   background: var(--disabled-surface);
 }
 .task-form .upload-drop:focus-within {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--accent-strong);
   outline-offset: 3px;
 }
 .task-form .upload-drop:has(input:not(:disabled)):hover {
-  border-color: var(--accent);
-  background: var(--accent-surface);
+  border-color: var(--accent-line);
+  background: var(--surface-subtle);
 }
 .task-status {
   display: flex;
@@ -96,23 +106,174 @@
 .task-submit .primary {
   min-width: 208px;
   min-height: 44px;
+  padding-inline: 20px;
   border-radius: var(--radius-control);
   font-size: 14px;
 }
-.task-form .muted {
-  font-size: 11px;
-  line-height: 1.7;
+.task-submit .primary svg {
+  margin-left: 8px;
 }
-.job-options-record {
-  font-size: 12px;
-  margin-top: 4px;
+.job-summary {
+  margin: 0;
   color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
 }
-.job-options-record summary {
+.job-summary.has-error {
+  color: var(--danger);
+}
+.job-record {
+  min-width: 0;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.job-record > summary {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: fit-content;
+  min-height: 36px;
+  max-width: 100%;
+  padding: 4px 0;
+  list-style: none;
   cursor: pointer;
 }
-.job-options-record p {
-  margin-top: 4px;
+.job-record > summary::-webkit-details-marker {
+  display: none;
+}
+.job-record > summary:hover {
+  color: var(--ink);
+}
+.job-record[open] > summary > svg {
+  transform: rotate(180deg);
+}
+.job-record-body {
+  display: grid;
+  gap: 20px;
+  margin-top: 8px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface-subtle);
+}
+.job-dates {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 20px;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.job-dates > div,
+.job-saved-options dl > div {
+  min-width: 0;
+}
+.job-dates dt,
+.job-saved-options dt {
+  color: var(--muted);
+}
+.job-dates dd,
+.job-saved-options dd {
+  margin: 4px 0 0;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.job-record .stage-overview {
+  margin: 0;
+}
+.job-record .stage-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+.job-record h3 {
+  margin: 0 0 8px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 550;
+  line-height: 1.6;
+}
+.job-record .job-error {
+  max-width: none;
+  margin: 0;
+  color: var(--danger);
+  font-size: 13px;
+  line-height: 1.65;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+.job-saved-options dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 20px;
+  margin: 0;
+}
+.job-saved-options dl > div:last-child {
+  grid-column: 1 / -1;
+}
+.job-saved-options dd {
+  white-space: pre-wrap;
+}
+.job-saved-options p {
+  margin-top: 12px;
+  overflow-wrap: anywhere;
+}
+.job-identifier {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+  .new-task-page {
+    width: min(100%, 560px);
+    margin-top: 48px;
+    padding-inline: 12px;
+  }
+  .task-form .task-inputs .upload-drop {
+    min-height: 224px;
+    padding: 28px 20px;
+  }
+  .job-dates {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .job-dates > div {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .job-dates dd {
+    margin: 0;
+  }
+}
+@media (max-width: 600px) {
+  .new-task-page {
+    margin-top: 36px;
+    padding-inline: 8px;
+  }
+  .task-heading {
+    margin-bottom: 24px;
+  }
+  .task-submit {
+    flex-direction: column;
+  }
+  .task-submit > button {
+    width: 100%;
+    min-height: 44px;
+  }
+  .job-record > summary {
+    min-height: 44px;
+  }
+  .job-record-body {
+    padding: 16px;
+    gap: 16px;
+  }
+  .job-record .stage-strip {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

@@ -66,23 +66,26 @@ export function StorageLocations({
         仅影响后续写入，不会移动已有文件。生成结果含提取产物及 CSV/JSON
         导出副本；下载位置仍由浏览器设置。
       </p>
-      {storageLocationFields.map(({ key, label, allowed }, index) => (
-        <label className="form-field" key={key}>
-          {label}
-          <input
-            value={draft[key]}
-            maxLength={512}
-            spellCheck={false}
-            autoComplete="off"
-            required
-            disabled={locked}
-            data-initial-focus={index === 0 ? true : undefined}
-            aria-describedby={noteId}
-            title={`允许范围：${settings[allowed]}`}
-            onChange={(event) => setDraft({ ...draft, [key]: event.target.value })}
-          />
-        </label>
-      ))}
+      <fieldset className="environment-storage-fields">
+        <legend className="sr-only">存储目录</legend>
+        {storageLocationFields.map(({ key, label, allowed }, index) => (
+          <label className="form-field" key={key}>
+            {label}
+            <input
+              value={draft[key]}
+              maxLength={512}
+              spellCheck={false}
+              autoComplete="off"
+              required
+              disabled={locked}
+              data-initial-focus={index === 0 ? true : undefined}
+              aria-describedby={noteId}
+              title={`允许范围：${settings[allowed]}`}
+              onChange={(event) => setDraft({ ...draft, [key]: event.target.value })}
+            />
+          </label>
+        ))}
+      </fieldset>
       {conflict && (
         <div className="conflict">
           服务器配置已更新，未覆盖你的输入。当前存储位置：

@@ -1,0 +1,96 @@
+import type { Job, Stage, StageName } from '../api/types';
+import {
+  observedStages,
+  reviewedCoreStage,
+  stageLabel,
+  stageStatusText,
+  stoppedJob,
+  waitingAdmet,
+  workflowStageNames,
+} from './extraction';
+
+export type WorkflowGroupState = Stage['status'] | 'review' | 'stopped' | 'unknown';
+export interface WorkflowGroup {
+  key: string;
+  label: string;
+  names: StageName[];
+  state: WorkflowGroupState;
+  description: string;
+}
+
+const sections: Record<StageName, { key: string; label: string }> = {
+  classify: { key: 'source', label: '解析定位' },
+  locate: { key: 'source', label: '解析定位' },
+  structures: { key: 'structure', label: '结构编号' },
+  bind: { key: 'structure', label: '结构编号' },
+  activity: { key: 'recognition', label: '活性识别' },
+  smiles: { key: 'recognition', label: '活性识别' },
+  final: { key: 'delivery', label: '校验与指标' },
+  qa: { key: 'delivery', label: '校验与指标' },
+  admet: { key: 'delivery', label: '校验与指标' },
+};
+
+export const workflowGroupStateText: Record<WorkflowGroupState, string> = {
+  ok: '已完成',
+  empty: '无数据',
+  warnings: '有警告',
+  review: '需复核',
+  running: '进行中',
+  stopped: '停止时未完成',
+  failed: '失败',
+  pending: '等待',
+  unknown: '状态未知',
+};
+
+function groupState(job: Job | null, names: StageName[], stages: Stage[]): WorkflowGroupState {
+  if (!job) return 'pending';
+  if (job.history_available !== true) return 'unknown';
+  const values = names.map((name) => stages.find((stage) => stage.name === name));
+  if (values.some((stage) => stage?.status === 'failed' && !reviewedCoreStage(job, stage)))
+    return 'failed';
+  if (values.some((stage) => reviewedCoreStage(job, stage))) return 'review';
+  if (values.some((stage) => stage?.status === 'running'))
+    return stoppedJob(job) ? 'stopped' : 'running';
+  if (values.some((stage) => stage?.status === 'warnings')) return 'warnings';
+  if (
+    values.some((stage, index) => !stage && !(names[index] === 'admet' && waitingAdmet(job, stage)))
+  )
+    return 'unknown';
+  if (values.some((stage) => !stage || stage.status === 'pending')) return 'pending';
+  if (values.every((stage) => stage?.status === 'empty')) return 'empty';
+  return 'ok';
+}
+
+/** Consecutive presentation groups preserve the recorded order, including legacy orders. */
+export function workflowGroups(job: Job | null): WorkflowGroup[] {
+  const stages = observedStages(job);
+  const groups: WorkflowGroup[] = [];
+  for (const name of workflowStageNames(job)) {
+    const section = sections[name];
+    const previous = groups.at(-1);
+    if (previous?.key.startsWith(`${section.key}:`)) previous.names.push(name);
+    else
+      groups.push({
+        key: `${section.key}:${groups.length}`,
+        label: job?.admet_only
+          ? stageLabel(
+              name,
+              stages.find((stage) => stage.name === name),
+            )
+          : section.label,
+        names: [name],
+        state: 'unknown',
+        description: '',
+      });
+  }
+  return groups.map((group) => ({
+    ...group,
+    state: groupState(job, group.names, stages),
+    description: group.names
+      .map((name) => {
+        const stage = stages.find((value) => value.name === name);
+        return `${stageLabel(name, stage)}：${stageStatusText(job, stage, name)}`;
+      })
+      .join('；'),
+  }));
+}

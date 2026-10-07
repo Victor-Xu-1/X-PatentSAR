@@ -1,42 +1,64 @@
 .dialog {
+  width: min(560px, calc(100vw - 48px));
+  max-width: none;
+  max-height: calc(100dvh - 48px);
   padding: 0;
   border: 1px solid var(--line);
   border-radius: var(--radius-dialog);
   color: var(--primary);
   background: var(--surface);
   font-family: var(--font-ui);
-  width: min(530px, calc(100vw - 30px));
-  max-height: calc(100dvh - 40px);
-  overflow-y: auto;
   box-shadow: var(--shadow-dialog);
+  overflow: hidden;
+}
+.dialog[open] {
+  display: flex;
+  flex-direction: column;
 }
 .dialog::backdrop {
   background: var(--backdrop);
 }
 .dialog-wide {
-  width: min(780px, calc(100vw - 30px));
+  width: min(800px, calc(100vw - 48px));
 }
 .dialog-header {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 16px 20px;
+  gap: 16px;
+  padding: 20px 24px;
   border-bottom: 1px solid var(--line);
   background: var(--surface);
 }
 .dialog-header h2 {
-  font-size: 17px;
-  font-weight: 600;
+  min-width: 0;
   color: var(--ink);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.4;
   overflow-wrap: anywhere;
 }
+.dialog-header .icon-button {
+  width: 36px;
+  min-height: 36px;
+}
 .dialog-body {
-  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  line-height: 1.7;
+  min-width: 0;
+  min-height: 0;
+  gap: 20px;
+  padding: 24px;
+  font-size: 14px;
+  line-height: 1.65;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.dialog-body > * {
+  flex-shrink: 0;
+  min-width: 0;
 }
 .dialog-body > .muted {
   font-size: 13px;
@@ -44,35 +66,54 @@
 .form-field {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   gap: 8px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.5;
 }
 .form-field input:not(:disabled),
 .form-field select:not(:disabled),
 .form-field textarea:not(:disabled) {
   color: var(--ink);
 }
+.dialog-body .form-field input:not([type='checkbox']),
+.dialog-body .form-field select,
+.dialog-body .form-field textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+}
+.dialog-body button {
+  min-height: 36px;
+}
 .dialog-actions {
+  position: sticky;
+  bottom: -24px;
+  z-index: 1;
   display: flex;
+  flex: 0 0 auto;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 8px;
-  padding-top: 16px;
-  margin-top: 0;
+  gap: 10px;
+  padding: 16px 24px;
+  margin: 0 -24px -24px;
   border-top: 1px solid var(--line-soft);
+  background: var(--surface);
 }
 .dialog-actions > button {
   max-width: 100%;
-  min-width: 82px;
+  min-width: 88px;
+  min-height: 36px;
+  white-space: normal;
 }
 .upload-drop {
   position: relative;
   display: flex;
   align-items: center;
   flex-direction: column;
-  gap: 11px;
-  padding: 28px 16px 20px;
+  gap: 12px;
+  padding: 32px 20px 24px;
   border: 1px dashed var(--line-strong);
   border-radius: var(--radius-panel);
   background: var(--surface);
@@ -86,32 +127,34 @@
   color: var(--accent-strong);
 }
 .upload-drop strong {
-  font-size: 14px;
   color: var(--primary);
+  font-size: 15px;
+  line-height: 1.5;
   overflow-wrap: anywhere;
 }
 .upload-drop span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 1.6;
 }
 .upload-drop input {
   width: 100%;
-  margin-top: 7px;
+  margin-top: 8px;
   background: var(--surface);
-  font-size: 12px;
+  font-size: 13px;
 }
 .upload-drop input:not(:disabled) {
   color: var(--primary);
 }
 .upload-drop input::file-selector-button {
+  min-height: 36px;
+  padding: 7px 12px;
+  margin-right: 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
   background: var(--surface);
   color: var(--primary);
   font: inherit;
-  margin-right: 10px;
-  padding: 6px 10px;
-  min-height: 32px;
   cursor: pointer;
 }
 .upload-drop input:disabled::file-selector-button {
@@ -120,15 +163,18 @@
   cursor: not-allowed;
 }
 .conflict {
-  padding: 12px;
+  padding: 16px;
   border: 1px solid var(--warning-line);
-  background: var(--warning-surface);
   border-radius: var(--radius-control);
+  background: var(--warning-surface);
   color: var(--warning);
   font-size: 13px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
 }
 .conflict button {
-  margin-top: 8px;
+  margin-top: 12px;
+  white-space: normal;
 }
 .conflict button:not(:disabled) {
   color: var(--warning);
@@ -136,20 +182,21 @@
 }
 .crop-large {
   width: 100%;
-  max-height: 430px;
-  object-fit: contain;
+  height: clamp(240px, 36dvh, 430px);
   min-height: 200px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel);
-  background: var(--image-paper);
   padding: 16px;
+  border: 0;
+  border-radius: 0;
+  background: var(--image-paper);
+  object-fit: contain;
 }
 .crop-detail dl {
-  margin: 0;
   display: grid;
-  grid-template-columns: 90px minmax(0, 1fr);
-  gap: 9px;
-  font-size: 12px;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 12px 16px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.65;
 }
 .crop-detail dt {
   color: var(--muted);
@@ -161,36 +208,55 @@
 .crop-comparison {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 20px;
 }
 .crop-comparison figure {
-  margin: 0;
   min-width: 0;
+  margin: 0;
 }
 .crop-comparison figcaption {
-  font-size: 12px;
+  margin-bottom: 10px;
+  font-size: 13px;
   font-weight: 600;
-  margin-bottom: 6px;
+  line-height: 1.5;
 }
 .crop-comparison p {
-  font-size: 11px;
-  line-height: 1.55;
-  margin-top: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.65;
+}
+.crop-detail details > summary {
+  width: fit-content;
+  max-width: 100%;
+  padding: 6px 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+  cursor: pointer;
+}
+.crop-detail details[open] > summary {
+  margin-bottom: 12px;
 }
 .recognition-details {
-  padding: 12px;
+  display: grid;
+  min-width: 0;
+  gap: 10px;
+  padding: 16px;
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
   background: var(--surface-subtle);
-  display: grid;
-  gap: 8px;
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
 }
 .recognition-details h3 {
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 600;
 }
 .recognition-details > .badge {
   justify-self: start;
+  max-width: 100%;
+  white-space: normal;
 }
 .danger-button {
   background: var(--danger);
@@ -206,4 +272,66 @@
   background: var(--disabled-surface);
   color: var(--disabled);
   border-color: var(--line);
+}
+@media (max-width: 680px) {
+  .crop-comparison {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  .dialog,
+  .dialog-wide {
+    width: calc(100vw - 24px);
+    max-height: calc(100dvh - 24px);
+  }
+  .dialog-header {
+    gap: 12px;
+    padding: 16px;
+  }
+  .dialog-header h2 {
+    font-size: 17px;
+  }
+  .dialog-header .icon-button {
+    width: 40px;
+    min-height: 40px;
+  }
+  .dialog-body {
+    gap: 18px;
+    padding: 20px 16px;
+    scrollbar-gutter: auto;
+  }
+  .dialog-body button,
+  .dialog-body .form-field input:not([type='checkbox']),
+  .dialog-body .form-field select {
+    min-height: 40px;
+  }
+  .dialog-actions {
+    bottom: -20px;
+    gap: 10px;
+    padding: 16px;
+    margin: 0 -16px -20px;
+  }
+  .dialog-actions > button {
+    flex: 1 1 auto;
+  }
+  .crop-detail dl {
+    grid-template-columns: 80px minmax(0, 1fr);
+    gap: 10px 12px;
+  }
+  .crop-large {
+    height: clamp(220px, 36dvh, 340px);
+    padding: 12px;
+  }
+}
+@media (pointer: coarse) {
+  .dialog-header .icon-button,
+  .dialog-body button,
+  .dialog-body .form-field input:not([type='checkbox']),
+  .dialog-body .form-field select,
+  .dialog-actions > button {
+    min-height: 44px;
+  }
+  .dialog-header .icon-button {
+    width: 44px;
+  }
 }

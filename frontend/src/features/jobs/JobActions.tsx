@@ -58,7 +58,7 @@ export function JobActions({
   return (
     <div className="job-actions-wrapper">
       <div className="job-actions">
-        {job && <span className={`badge job-${job.status}`}>{jobStatusText(job)}</span>}
+        {job && !compact && <span className={`badge job-${job.status}`}>{jobStatusText(job)}</span>}
         {running ? (
           <button type="button" disabled={busy} onClick={() => setCancelConfirm(true)}>
             <Square size={13} />
