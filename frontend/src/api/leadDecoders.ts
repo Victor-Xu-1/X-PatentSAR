@@ -43,7 +43,8 @@ const notes: Decoder<string[]> = (input, path = '$') => {
   if (!Array.isArray(input) || input.length > 12) throw new ContractError(path);
   return input.map((value, index) => {
     const text = boundedText(300)(value, `${path}[${index}]`);
-    if (!text || /[\u0000-\u001f]/.test(text)) throw new ContractError(`${path}[${index}]`);
+    if (!text || Array.from(text).some((char) => char.charCodeAt(0) < 32))
+      throw new ContractError(`${path}[${index}]`);
     return text;
   });
 };
