@@ -127,10 +127,26 @@ function historyRow(page: Page, entry: HistoryEntry) {
     .locator(`li[data-history-kind="${entry.kind}"][data-history-id="${entry.id}"]`);
 }
 async function closeDialogs(page: Page) {
-  // Topmost standard modal only, preserving keyboard/focus behavior.
-  while (await page.getByRole('dialog').count()) {
-    await page.getByRole('dialog').last().getByRole('button', { name: '关闭对话框' }).click();
+  // A successful delete can unmount its row/modal between a locator count and
+  // click. Native Escape targets the current modal; do not wait on a stale row.
+  const open = page.locator('dialog[open]');
+  for (let level = 0; level < 3; level++) {
+    const before = await open.count();
+    if (before === 0) return;
+    await expect
+      .poll(() =>
+        open.evaluateAll((dialogs) => {
+          const top = dialogs.at(-1);
+          if (!top) return true;
+          const close = top.querySelector('button[aria-label="关闭对话框"]');
+          return close instanceof HTMLButtonElement && !close.disabled;
+        }),
+      )
+      .toBe(true);
+    await page.keyboard.press('Escape');
+    await expect.poll(() => open.count()).toBeLessThan(before);
   }
+  await expect(open).toHaveCount(0);
 }
 async function confirm(page: Page, entry: HistoryEntry, restoring = false) {
   const path = `/api/v1/history/${entry.kind}/${entry.id}/${restoring ? 'restore' : 'delete'}`;
