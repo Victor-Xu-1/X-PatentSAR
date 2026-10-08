@@ -1,5 +1,20 @@
 import { expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
+
+async function published(page: Page, kind: 'dataset' | 'job') {
+  // Observe the actual UI success route, then read its persisted record through
+  // the same authenticated controlled browser context. Chromium may discard a
+  // POST's CDP body when the hash route changes; never replay a mutation for it.
+  await expect(page).toHaveURL(new RegExp(`(?:\\?|&)${kind}=[a-f0-9]{32}`));
+  const id = new URLSearchParams(new URL(page.url()).hash.split('?')[1]).get(kind);
+  expect(id).toMatch(/^[a-f0-9]{32}$/);
+  const response = await page.request.get(
+    `/api/v1/sar/${kind === 'dataset' ? 'datasets' : 'jobs'}/${id}`,
+  );
+  expect(response.status()).toBe(200);
+  return response.json();
+}
 
 // Owned synthetic state only. These tests prove UI/API/graph execution, not
 // OCSR accuracy, article reproduction, clinical benefit or original patent SAR.
@@ -47,15 +62,14 @@ for (const width of [390, 800, 1672]) {
       .getByRole('combobox', { name: 'SMILES column', exact: true })
       .selectOption('smiles');
     await importPanel.getByRole('checkbox', { name: 'IC50 (nM)', exact: true }).check();
-    const saved = page
-      .waitForResponse(
-        (response) =>
-          response.url().endsWith('/api/v1/sar/datasets/csv') &&
-          response.request().method() === 'POST',
-      )
-      .then((response) => response.json());
+    const saved = page.waitForResponse(
+      (response) =>
+        response.url().endsWith('/api/v1/sar/datasets/csv') &&
+        response.request().method() === 'POST',
+    );
     await importPanel.getByRole('button', { name: 'Create CSV dataset', exact: true }).click();
-    const dataset = await saved;
+    expect((await saved).status()).toBe(201);
+    const dataset = await published(page, 'dataset');
     expect(dataset.row_count).toBe(4);
     expect(dataset.eligible_count).toBe(3);
     const rows = page.getByRole('region', { name: 'Choose reference molecule', exact: true });
@@ -86,15 +100,14 @@ for (const width of [390, 800, 1672]) {
     await expect(
       page.getByRole('combobox', { name: 'Activity direction', exact: true }),
     ).toHaveValue('lower');
-    const submitted = page
-      .waitForResponse(
-        (response) =>
-          /\/api\/v1\/sar\/datasets\/[^/]+\/jobs$/.test(response.url()) &&
-          response.request().method() === 'POST',
-      )
-      .then((response) => response.json());
+    const submitted = page.waitForResponse(
+      (response) =>
+        /\/api\/v1\/sar\/datasets\/[^/]+\/jobs$/.test(response.url()) &&
+        response.request().method() === 'POST',
+    );
     await page.getByRole('button', { name: 'Start reference comparison', exact: true }).click();
-    const job = await submitted;
+    expect((await submitted).status()).toBe(202);
+    const job = await published(page, 'job');
     const results = page
       .getByRole('region', { name: 'Reference-comparison results', exact: true })
       .first();
@@ -161,15 +174,14 @@ test('current extracted task explicitly creates its separate SAR snapshot', asyn
     project!,
   );
   await page.getByLabel('Dataset title', { exact: true }).fill('Controlled extracted snapshot');
-  const saved = page
-    .waitForResponse(
-      (response) =>
-        response.url().endsWith('/api/v1/sar/datasets/project') &&
-        response.request().method() === 'POST',
-    )
-    .then((response) => response.json());
+  const saved = page.waitForResponse(
+    (response) =>
+      response.url().endsWith('/api/v1/sar/datasets/project') &&
+      response.request().method() === 'POST',
+  );
   await page.getByRole('button', { name: 'Create independent snapshot', exact: true }).click();
-  const dataset = await saved;
+  expect((await saved).status()).toBe(201);
+  const dataset = await published(page, 'dataset');
   expect(dataset.source_kind).toBe('project');
   expect(dataset.source_project_id).toBe(project);
   expect(dataset.row_count).toBe(30);
