@@ -13,6 +13,8 @@ from patent_sar_extractor.web.descriptor_fields import (
 from patent_sar_extractor.web.errors import WebError
 from patent_sar_extractor.web.prediction_models import METRIC_KEYS
 
+from .study_checkpoints import BATCH_SIZE, load, progress, save
+
 
 def describe(molecule: dict) -> dict:
     result = {
@@ -77,3 +79,54 @@ def describe(molecule: dict) -> dict:
         result["reasons"].append("logs_not_provided")
     result["reasons"] = sorted(set(result["reasons"]))
     return result
+
+
+def descriptor_batches(safe, identity, rows, check):
+    output = []
+    for start in range(0, len(rows), BATCH_SIZE):
+        check()
+        batch = rows[start : start + BATCH_SIZE]
+        name = f"descriptors-{start // BATCH_SIZE:04d}.json"
+        records = load(safe, name, identity, start, "rows")
+        if records is None:
+            records = []
+            for molecule in batch:
+                check()
+                records.append(describe(molecule))
+            save(safe.root, name, identity, start, "rows", records)
+        elif len(records) != len(batch) or any(
+            record.get("molecule_id") != row["id"]
+            or record.get("source_graph_sha256") != row["graph_sha256"]
+            or record.get("eligible") != row["eligible"]
+            or record.get("predictions") != row["predictions"]
+            or record.get("prediction_origin") != row["prediction_origin"]
+            for record, row in zip(records, batch, strict=True)
+        ):
+            raise SARInputError("study_descriptor_checkpoint_identity")
+        # Typed finite row validation also applies to cached descriptor packets.
+        for record in records:
+            if set(record) != {
+                "molecule_id",
+                "source_graph_sha256",
+                "eligible",
+                "canonical_smiles",
+                "scaffold_id",
+                "scaffold_smiles",
+                "properties",
+                "property_origins",
+                "predictions",
+                "prediction_origin",
+                "reasons",
+            }:
+                raise SARInputError("study_descriptor_checkpoint_shape")
+            if (
+                not isinstance(record["properties"], dict)
+                or set(record["properties"]) != set(METRIC_KEYS)
+                or not isinstance(record["property_origins"], dict)
+                or set(record["property_origins"]) != set(METRIC_KEYS)
+                or not isinstance(record["reasons"], list)
+            ):
+                raise SARInputError("study_descriptor_checkpoint_shape")
+        output.extend(records)
+        progress(safe.root, identity, len(output), 0)
+    return output

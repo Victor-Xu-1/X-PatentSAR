@@ -28,7 +28,12 @@ from patent_sar_extractor.web.sar.engine import engine_identity
 from patent_sar_extractor.web.sar.models import Dataset, Molecule, Pair, Region, SARJob
 from patent_sar_extractor.web.sar.study_models import StudyReport, StudyRequest
 from patent_sar_extractor.web.sar.study_publication import verify_study
-from patent_sar_extractor.workers import study_analysis, study_pairs
+from patent_sar_extractor.workers import (
+    study_analysis,
+    study_descriptors,
+    study_inputs,
+    study_pairs,
+)
 
 CONTEXT = {
     "target": "controlled target",
@@ -490,7 +495,7 @@ class StudyAnalysisTests(unittest.TestCase):
         self.assertFalse((self.root / "report.json").exists())
         with (
             patch.object(
-                study_analysis,
+                study_descriptors,
                 "describe",
                 side_effect=AssertionError("cached descriptor was recomputed"),
             ),
@@ -532,17 +537,17 @@ class StudyAnalysisTests(unittest.TestCase):
     def test_budgets_policy_conflicts_and_foreign_region_fail_before_report(self):
         packet = self.packet()
         with (
-            patch.object(study_analysis, "MAX_COMPARISONS", 1),
+            patch.object(study_inputs, "MAX_COMPARISONS", 1),
             self.assertRaises(SARInputError),
         ):
             study_analysis.analyse_study(self.root, self.write(packet))
         with (
-            patch.object(study_analysis, "MAX_ROWS", 2),
+            patch.object(study_inputs, "MAX_ROWS", 2),
             self.assertRaises(SARInputError),
         ):
             study_analysis.analyse_study(self.root, self.write(packet))
         with (
-            patch.object(study_analysis, "MAX_OBSERVATIONS", 2),
+            patch.object(study_inputs, "MAX_OBSERVATIONS", 2),
             self.assertRaises(SARInputError),
         ):
             study_analysis.analyse_study(self.root, self.write(packet))
