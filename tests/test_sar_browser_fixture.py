@@ -1,0 +1,51 @@
+"""Only independent-SAR CI fixture selection and no-extraction preparation."""
+
+from __future__ import annotations
+
+import json
+import unittest
+from unittest.mock import patch
+
+from test_web_support import WebFixture
+
+from tools.browser_fixture_mode import PREFIX, fixture_mode
+from tools.prepare_browser_fixture import prepare
+
+
+class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
+    def test_selected_scope_chooses_sar_without_changing_other_fixture_modes(self):
+        self.assertEqual(fixture_mode({PREFIX + "sar-workbench.spec.ts"}), "sar")
+        self.assertEqual(fixture_mode({PREFIX + "topbar.spec.ts"}), "read-only")
+        self.assertEqual(
+            fixture_mode({PREFIX + "llm-settings.spec.ts"}), "llm-settings"
+        )
+        self.assertEqual(
+            fixture_mode({PREFIX + "llm-recovery-stack.spec.ts"}), "llm-recovery"
+        )
+        self.assertEqual(
+            fixture_mode(
+                {PREFIX + "sar-workbench.spec.ts", PREFIX + "real-workflow.spec.ts"}
+            ),
+            "execution",
+        )
+
+    def test_sar_fixture_creates_adapter_source_but_never_runs_extraction(self):
+        with patch(
+            "tools.prepare_browser_fixture.TestClient",
+            side_effect=AssertionError("No extraction fixture allowed"),
+        ):
+            values = prepare(self.root / "browser", sar=True)
+        self.assertEqual(values["PATENTSAR_E2E_RUN_JOBS"], "0")
+        self.assertEqual(
+            values["PATENTSAR_E2E_SAR_MUTATIONS"], "synthetic-isolated-state"
+        )
+        receipt = json.loads((self.root / "browser/browser-fixture.json").read_text())
+        self.assertTrue(receipt["sar_synthetic_scope"])
+        self.assertFalse(receipt["scientific_acceptance_evidence"])
+        self.assertFalse(receipt["real_cli_failure"])
+        with self.assertRaises(ValueError):
+            prepare(self.root / "unused", sar=True, read_only=True)
+
+
+if __name__ == "__main__":
+    unittest.main()

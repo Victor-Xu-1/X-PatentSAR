@@ -102,6 +102,45 @@ The recovered E-drive deployment has an operator-owned entry point at `/srv/wsl/
 
 ## Web operation
 
+### Independent SAR workbench
+
+Use the explicit **SAR analysis** header entry or the current project's entry.
+Project snapshots read current effective source/revisions without restarting
+extraction; CSV inputs are previewed/mapped before an independent dataset is
+created. No browser navigation or GET creates a dataset, starts computation,
+loads a model or changes existing Lead/QA records. The module uses base RDKit;
+there is no new runtime, model download, GPU, local LLM or third-party call.
+
+Private `web-state/sar/sar.sqlite3` owns dataset/region/job/result version1.
+Original CSV copies follow the selected upload root; immutable input, sealed
+chunks and recovery receipts follow the selected result root under owned
+`sar-research` prefixes. Preserve these roots, module database and raw originals
+together. Location changes affect future writes, not relocation of old assets.
+Do not modify snapshots/chunks/database to bypass source or algorithm checks.
+
+Cancel/continue only through SAR controls. A previous worker's valid kernel/PID
+identity or recorded verified cleanup is required; missing/malformed/foreign
+identity remains blocked, with no WSL restart, broad process signal or blind
+repeat. A180-second attempt can be resumed from verified25-pair chunks after
+cleanup. Changed source/graph/algorithm requires a new explicit analysis; product
+release labels alone do not change the independent scientific identity.
+
+SAR storage/startup faults disable only this module with an explicit API error;
+the original PDF workflow remains available. CSV over8MiB, rows over25,000,
+unsupported/query/stereo representations, ambiguous maps and input/record/byte
+limits fail visibly, not partial success. Missing assay information remains
+unknown unless explicitly asserted comparable; an assertion cannot override a
+known conflict. Results are supplied-graph reference comparisons, not image
+recognition accuracy, whole-patent SAR inference, article scoring reproduction,
+drug efficacy/safety or experimental Lead approval.
+
+Daily removal hides only stopped cleanup-verified SAR entries and retains bytes;
+it is not permanent purge. Rollback preserves newer module state/roots separately;
+older wheels without the module cannot read it or certify its results. Deploy
+only exact merged main with focused module/API/browser and unchanged-core checks.
+Cold scientific-environment installation and representative patent accuracy
+remain independent acceptance boundaries.
+
 ### Interface language
 
 The topbar language selector offers English and Chinese; English is the default

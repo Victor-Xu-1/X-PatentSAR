@@ -135,7 +135,11 @@ def main(argv: list[str] | None = None) -> int:
             print(f"browser_count={len(scope.browser_tests)}")
         environment = dict(os.environ)
         if args.phase == "python":
-            environment["PYTHONPATH"] = os.pathsep.join(("src", "tests"))
+            # Owned analysis children use private working directories. Absolute
+            # explicit test paths keep their imports on the same source revision.
+            environment["PYTHONPATH"] = os.pathsep.join(
+                str(ROOT / name) for name in ("src", "tests")
+            )
             environment["PYTHONDONTWRITEBYTECODE"] = "1"
         for cwd, command in phase_commands(scope, args.phase, ROOT):
             subprocess.run(command, cwd=cwd, env=environment, check=True, timeout=1200)

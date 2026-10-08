@@ -1,4 +1,4 @@
-import { Clock3, FileText, History, Settings, Upload } from 'lucide-react';
+import { Clock3, FileText, History, Settings, Upload, FlaskConical } from 'lucide-react';
 import type { Project } from '../api/types';
 import type { ResultTab, View } from '../model/route';
 import brandMark from '../assets/brand-mark.png';
@@ -8,20 +8,24 @@ import { LanguageSwitch } from './LanguageSwitch';
 export function Header({
   view,
   project,
+  sourceProjectId,
   version,
   onUpload,
   onRecent,
   onNavigate,
   onAnalysis,
+  onSAR,
   disabled,
 }: {
   view: View;
   project: Project | null;
+  sourceProjectId?: string | null;
   version: string | number | null;
   onUpload: () => void;
   onRecent: () => void;
   onNavigate: (view: View) => void;
   onAnalysis: (tab: ResultTab) => void;
+  onSAR?: (projectId: string) => void;
   disabled: boolean;
 }) {
   const { t } = useTranslation();
@@ -82,6 +86,20 @@ export function Header({
         >
           <Clock3 size={15} />
           <span>{t('任务记录')}</span>
+        </button>
+        <button
+          type="button"
+          aria-label={t('SAR 分析')}
+          disabled={disabled}
+          aria-current={view === 'sar' ? 'page' : undefined}
+          onClick={() => {
+            const source = sourceProjectId ?? project?.id;
+            if (view === 'workspace' && source && onSAR) onSAR(source);
+            else onNavigate('sar');
+          }}
+        >
+          <FlaskConical size={15} />
+          <span>{t('SAR 分析')}</span>
         </button>
         {project && view === 'workspace' && (
           <>

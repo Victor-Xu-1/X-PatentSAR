@@ -4,7 +4,7 @@ import type { ActivityFocusSelection } from '../api/types';
 import { validActivityFocus } from '../api/activitySourceDecoders';
 import { readTableQuery, writeTableQuery } from './tableQueryRoute';
 import type { TableQuery } from './tableQueryRoute';
-export type View = 'workspace' | 'projects' | 'jobs' | 'settings' | 'new-task';
+export type View = 'workspace' | 'projects' | 'jobs' | 'settings' | 'new-task' | 'sar';
 export type ResultTab = 'results' | 'summary';
 export type PdfTab = 'original' | 'text' | 'annotations';
 export interface Route {
@@ -17,6 +17,8 @@ export interface Route {
   layout?: LayoutState;
   resultTab?: ResultTab;
   operationId?: string;
+  sarDatasetId?: string;
+  sarJobId?: string;
   tableQuery?: TableQuery;
 }
 export const emptyRoute: Route = {
@@ -44,6 +46,27 @@ export function parseRoute(hash: string): Route {
     } catch {
       return { ...emptyRoute, view: 'new-task' };
     }
+  }
+  const sarId = (key: string) => {
+    const value = params.get(key);
+    return value &&
+      value.length <= 200 &&
+      !Array.from(value).some(
+        (character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127,
+      )
+      ? value
+      : undefined;
+  };
+  if (parts[0] === 'sar') {
+    const datasetId = sarId('dataset');
+    const jobId = datasetId ? sarId('job') : undefined;
+    return {
+      ...emptyRoute,
+      view: 'sar',
+      projectId: sarId('project') ?? null,
+      ...(datasetId ? { sarDatasetId: datasetId } : {}),
+      ...(jobId ? { sarJobId: jobId } : {}),
+    };
   }
   const view: View =
     parts[0] === 'new-task'
@@ -100,6 +123,11 @@ export function routeHash(route: Route): string {
         ? '/'
         : `/${route.view}`;
   const params = new URLSearchParams();
+  if (route.view === 'sar') {
+    if (route.projectId) params.set('project', route.projectId);
+    if (route.sarDatasetId) params.set('dataset', route.sarDatasetId);
+    if (route.sarDatasetId && route.sarJobId) params.set('job', route.sarJobId);
+  }
   if (route.view === 'settings' && route.operationId) params.set('operation', route.operationId);
   if (route.projectId && route.view === 'workspace') {
     writeTableQuery(params, route.tableQuery);

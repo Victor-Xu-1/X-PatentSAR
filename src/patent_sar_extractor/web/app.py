@@ -41,6 +41,8 @@ from .routes_history import history_routes
 from .routes_jobs import job_routes
 from .routes_llm import llm_routes
 from .routes_projects import project_routes
+from .sar.feature import SARFeature
+from .sar.routes import sar_routes
 from .security import SecurityMiddleware, Sessions, loopback_host
 from .service import WorkspaceService
 from .static_files import serve_frontend, ui_ready
@@ -100,6 +102,7 @@ def create_app(
             "Body receive timeouts must be bounded by 120 seconds.",
         )
     service = WorkspaceService(state_root)
+    sar_feature = SARFeature(service)
     llm_settings = (
         LLMSettingsService() if llm_settings_service is None else llm_settings_service
     )
@@ -140,11 +143,19 @@ def create_app(
             queue.start()
             started = True
             environments.start()
+            sar_feature.start()
+            app.state.sar = sar_feature.service
+            app.state.sar_queue = sar_feature.queue
             app.state.ready = True
             yield
         finally:
             app.state.ready = False
             failures: list[Exception] = []
+            try:
+                sar_feature.close()
+            except Exception as error:
+                logger.exception("SAR cleanup failed (%s)", type(error).__name__)
+                failures.append(error)
             try:
                 environments.close()
             except Exception as error:
@@ -181,6 +192,8 @@ def create_app(
     app.state.llm_settings = llm_settings
     app.state.analysis = analysis
     app.state.environments = environments
+    app.state.sar = None
+    app.state.sar_queue = None
     app.state.history = HistoryService(service.store)
     app.state.owner = owner
     app.state.ready = False
@@ -301,6 +314,7 @@ def create_app(
     app.include_router(environment_routes(environments))
     app.include_router(llm_routes(llm_settings))
     app.include_router(history_routes(app.state.history))
+    app.include_router(sar_routes(sar_feature))
 
     @app.get("/{path:path}")
     def frontend_route(path: str) -> Response:
