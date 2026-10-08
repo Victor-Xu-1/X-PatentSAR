@@ -1,3 +1,4 @@
+import { useTranslation, UiError } from '../../i18n';
 import { useEffect, useRef } from 'react';
 import type { FilterValues } from '../../api/types';
 import { setSelectedValues, valueIsSelected } from '../../model/columnValueSelection';
@@ -22,8 +23,9 @@ export function ColumnValueChecklist({
   onSearch: (search: string) => void;
   onPage: (page: number) => void;
   onChange: (selection: ValueSelection) => void;
-  onError: (error: string) => void;
+  onError: (error: Error) => void;
 }) {
+  const { t } = useTranslation();
   const selectAll = useRef<HTMLInputElement>(null);
   const items = choices?.items ?? [];
   const searching = Boolean(search);
@@ -45,26 +47,26 @@ export function ColumnValueChecklist({
     try {
       onChange(setSelectedValues(selection, values, next));
     } catch (error) {
-      onError(error instanceof Error ? error.message : '选择超过限额。');
+      onError(error instanceof Error ? error : new UiError('选择超过限额。'));
     }
   }
   const pages = Math.max(1, Math.ceil((choices?.total ?? 0) / 200));
   return (
     <div className="column-checklist">
       <input
-        aria-label="查找筛选取值"
-        placeholder="搜索仅查找取值"
+        aria-label={t('查找筛选取值')}
+        placeholder={t('搜索仅查找取值')}
         maxLength={500}
         value={search}
         onChange={(event) => onSearch(event.target.value)}
       />
       <fieldset className="column-value-choices" disabled={disabled || !choices}>
-        <legend className="sr-only">取值选择</legend>
+        <legend className="sr-only">{t('取值选择')}</legend>
         <label className="column-select-all">
           <input
             ref={selectAll}
             type="checkbox"
-            aria-label={searching ? '全选本页匹配取值' : '全选筛选取值'}
+            aria-label={searching ? t('全选本页匹配取值') : t('全选筛选取值')}
             checked={all}
             disabled={searching && !items.length}
             onChange={(event) => {
@@ -81,23 +83,23 @@ export function ColumnValueChecklist({
                 });
             }}
           />
-          <span>{searching ? '全选（本页匹配）' : '全选'}</span>
+          <span>{searching ? t('全选（本页匹配）') : t('全选')}</span>
         </label>
         <label>
           <input
             type="checkbox"
-            aria-label="筛选值（空白）"
+            aria-label={t('筛选值（空白）')}
             checked={selection.includeEmpty}
             onChange={(event) => onChange({ ...selection, includeEmpty: event.target.checked })}
           />
-          <span>（空白）</span>
+          <span>{t('（空白）')}</span>
           <small>{choices?.empty_count ?? '—'}</small>
         </label>
         {items.map((item) => (
           <label key={item.value}>
             <input
               type="checkbox"
-              aria-label={`筛选值 ${item.value}`}
+              aria-label={t('筛选值 {value}', { value: item.value })}
               checked={valueIsSelected(selection, item.value)}
               onChange={(event) => changeValues([item.value], event.target.checked)}
             />
@@ -106,27 +108,27 @@ export function ColumnValueChecklist({
           </label>
         ))}
         {choices && !items.length && (
-          <small className="muted">{searching ? '无匹配取值' : '无非空取值'}</small>
+          <small className="muted">{searching ? t('无匹配取值') : t('无非空取值')}</small>
         )}
       </fieldset>
       {choices && pages > 1 && (
-        <div className="column-choice-pages" aria-label="取值分页">
+        <div className="column-choice-pages" aria-label={t('取值分页')}>
           <button
             type="button"
             disabled={disabled || page <= 1}
             onClick={() => onPage(page - 1)}
-            aria-label="上一页取值"
+            aria-label={t('上一页取值')}
           >
             ‹
           </button>
           <small>
-            {page} / {pages} · {choices.total} 个取值
+            {t('{page} / {pages} · {total} 个取值', { page, pages, total: choices.total })}
           </small>
           <button
             type="button"
             disabled={disabled || page >= pages}
             onClick={() => onPage(page + 1)}
-            aria-label="下一页取值"
+            aria-label={t('下一页取值')}
           >
             ›
           </button>
@@ -134,9 +136,11 @@ export function ColumnValueChecklist({
       )}
       <small
         className="muted"
-        title="搜索不改变筛选；确定保留各页的显式选择。未搜索时全选控制全部值；搜索时仅控制本页匹配值。"
+        title={t(
+          '搜索不改变筛选；确定保留各页的显式选择。未搜索时全选控制全部值；搜索时仅控制本页匹配值。',
+        )}
       >
-        跨页保留选择 · 最多 200 个显式选择 / 排除
+        {t('跨页保留选择 · 最多 200 个显式选择 / 排除')}
       </small>
     </div>
   );

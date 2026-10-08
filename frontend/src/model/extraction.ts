@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import type { Compound, Job, Stage, StageName } from '../api/types';
 import { stageNames } from '../api/types';
 import { stageLabels, stageStatusLabels } from './presentation';
@@ -7,7 +8,7 @@ export function pageProgressStage(name: StageName): boolean {
 }
 
 export function progressUnit(name: StageName): string {
-  return pageProgressStage(name) ? ' 页' : '';
+  return pageProgressStage(name) ? t(' 页') : '';
 }
 
 export function stoppedJob(job: Job | null): boolean {
@@ -70,7 +71,12 @@ export function reviewedCoreStage(job: Job | null, stage: Stage | undefined): bo
 export function stageProgressText(stage: Stage | undefined): string | null {
   const progress = stage?.progress;
   if (!stage || !progress) return null;
-  return `${stage.status === 'failed' ? '已处理 ' : ''}${progress.completed} / ${progress.total}${progressUnit(stage.name)}`;
+  return t(
+    stage.status === 'failed'
+      ? '已处理 {completed} / {total}{unit}'
+      : '{completed} / {total}{unit}',
+    { completed: progress.completed, total: progress.total, unit: progressUnit(stage.name) },
+  );
 }
 
 export function workflowStageNames(job: Job | null): StageName[] {
@@ -121,11 +127,11 @@ export function observedStages(job: Job | null): Job['stages'] {
 
 export function stageLabel(name: StageName, stage?: Stage): string {
   if (name === 'admet') {
-    if (stage?.progress?.phase === 'recognition') return '结构补齐';
-    if (stage?.progress?.phase === 'properties') return '指标计算';
-    if (stage?.progress?.phase === 'lead') return 'Lead 筛选';
+    if (stage?.progress?.phase === 'recognition') return t('结构补齐');
+    if (stage?.progress?.phase === 'properties') return t('指标计算');
+    if (stage?.progress?.phase === 'lead') return t('Lead 筛选');
   }
-  return stageLabels[name];
+  return t(stageLabels[name]);
 }
 
 export function waitingResources(job: Job | null, stage?: Stage): boolean {
@@ -143,28 +149,29 @@ export function stageStatusText(
   name?: StageName,
 ): string {
   if (job && job.history_available !== true)
-    return job.history_available === false ? '历史阶段不可用' : '阶段状态未知';
+    return job.history_available === false ? t('历史阶段不可用') : t('阶段状态未知');
   if (!stage) {
-    if (name === 'admet' && waitingAdmet(job, stage)) return stoppedJob(job) ? '未执行' : '等待';
-    return job ? '状态未提供' : '尚未启动';
+    if (name === 'admet' && waitingAdmet(job, stage))
+      return stoppedJob(job) ? t('未执行') : t('等待');
+    return job ? t('状态未提供') : t('尚未启动');
   }
   if (stoppedJob(job)) {
-    if (stage.status === 'pending') return '未执行';
-    if (stage.status === 'running') return '停止时进行中';
+    if (stage.status === 'pending') return t('未执行');
+    if (stage.status === 'running') return t('停止时进行中');
   }
-  if (waitingResources(job, stage)) return '等待资源';
+  if (waitingResources(job, stage)) return t('等待资源');
   if (reviewedCoreStage(job, stage)) {
-    if (stage.name === 'smiles') return '需复核';
-    if (stage.name === 'final') return '未通过验收';
-    if (stage.name === 'qa') return '未通过';
+    if (stage.name === 'smiles') return t('需复核');
+    if (stage.name === 'final') return t('未通过验收');
+    if (stage.name === 'qa') return t('未通过');
   }
-  return stageStatusLabels[stage.status];
+  return t(stageStatusLabels[stage.status]);
 }
 
 export function cropPlaceholder(compound: Compound): string {
-  if (compound.flags.includes('image_unavailable')) return '裁图文件缺失或不可访问';
-  if (compound.flags.includes('structure_generation_failed')) return '结构分割失败，未生成裁图';
-  if (compound.flags.includes('structure_not_generated')) return '尚未生成结构裁图';
-  if (compound.flags.includes('structure_unmatched')) return '尚未绑定结构裁图';
-  return '未提供结构裁图';
+  if (compound.flags.includes('image_unavailable')) return t('裁图文件缺失或不可访问');
+  if (compound.flags.includes('structure_generation_failed')) return t('结构分割失败，未生成裁图');
+  if (compound.flags.includes('structure_not_generated')) return t('尚未生成结构裁图');
+  if (compound.flags.includes('structure_unmatched')) return t('尚未绑定结构裁图');
+  return t('未提供结构裁图');
 }

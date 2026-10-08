@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import type { Compound } from '../api/types';
 import type { ResultColumn } from './resultColumns';
 import { leadColumnValue } from './resultColumns';
@@ -40,7 +41,7 @@ export function tableCopyText(
         if (column.id === 'lead') return safeTsvCell(leadColumnValue(row.lead));
         if (column.id === 'structure')
           return safeTsvCell(
-            row.smiles ?? (row.structure_image_url ? '原文结构裁图（无 SMILES）' : ''),
+            row.smiles ?? (row.structure_image_url ? t('原文结构裁图（无 SMILES）') : ''),
           );
         if (column.id.startsWith('activity:')) return safeTsvCell(values.get(column.id));
         if (column.id.startsWith('property:')) {

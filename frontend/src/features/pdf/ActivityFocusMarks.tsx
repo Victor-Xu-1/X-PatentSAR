@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n';
 import type { ActivityFocus, BBox } from '../../api/types';
 
 export function pageBoxStyle([x1, y1, x2, y2]: BBox, width: number, height: number) {
@@ -17,6 +18,7 @@ export function ActivityFocusMarks({
   width: number;
   height: number;
 }) {
+  const { t } = useTranslation();
   return focus.boxes.map((box, index) => (
     <span
       key={index}
@@ -24,7 +26,10 @@ export function ActivityFocusMarks({
       data-activity-focus={focus.activity_key}
       data-focus-compound={focus.compound_id}
       role="note"
-      aria-label={`活性原文定位 ${index + 1} / ${focus.boxes.length}`}
+      aria-label={t('活性原文定位 {index} / {total}', {
+        index: index + 1,
+        total: focus.boxes.length,
+      })}
       style={pageBoxStyle(box, width, height)}
     />
   ));

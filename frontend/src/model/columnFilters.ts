@@ -1,3 +1,4 @@
+import { UiError } from '../i18n';
 import type { ActivityColumn, ColumnFilter, FilterValueKind } from '../api/types';
 import type { ResultColumn } from './resultColumns';
 
@@ -74,20 +75,20 @@ export function compileColumnFilter(
   draft: FilterDraft,
   kind: FilterValueKind,
 ): ColumnFilter[] {
-  if (!columnFilterModes(kind).includes(draft.op)) throw new Error('此列不支持该筛选条件。');
+  if (!columnFilterModes(kind).includes(draft.op)) throw new UiError('此列不支持该筛选条件。');
   if (draft.op === 'empty' || draft.op === 'not_empty') return [{ column, op: draft.op }];
   const value = draft.value.trim();
-  if (!value) throw new Error('请输入筛选值。');
-  if (Array.from(value).length > 1000) throw new Error('筛选值不能超过 1000 个字符。');
+  if (!value) throw new UiError('请输入筛选值。');
+  if (Array.from(value).length > 1000) throw new UiError('筛选值不能超过 1000 个字符。');
   const finiteScalar = (text: string) =>
     /^[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?$/.test(text) && Number.isFinite(Number(text));
   if (kind === 'number') {
-    if (!finiteScalar(value)) throw new Error('比较条件需要有限数值，不能使用等级或区间文本。');
+    if (!finiteScalar(value)) throw new UiError('比较条件需要有限数值，不能使用等级或区间文本。');
   }
   if (draft.op === 'range') {
     const upper = draft.upper.trim();
-    if (!finiteScalar(upper)) throw new Error('请输入有效的筛选上限。');
-    if (Number(value) > Number(upper)) throw new Error('筛选下限不能大于上限。');
+    if (!finiteScalar(upper)) throw new UiError('请输入有效的筛选上限。');
+    if (Number(value) > Number(upper)) throw new UiError('筛选下限不能大于上限。');
     return [
       { column, op: 'gte', value },
       { column, op: 'lte', value: upper },
@@ -102,6 +103,6 @@ export function replaceColumnFilters(
 ): ColumnFilter[] {
   const next = [...filters.filter((filter) => filter.column !== column), ...replacement];
   if (next.length > 20 || new TextEncoder().encode(JSON.stringify(next)).byteLength > 16 * 1024)
-    throw new Error('筛选条件超过 20 项或 16 KiB 限额，请减少选择。');
+    throw new UiError('筛选条件超过 20 项或 16 KiB 限额，请减少选择。');
   return next;
 }

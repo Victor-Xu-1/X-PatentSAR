@@ -1,3 +1,4 @@
+import { useTranslation, UiError } from '../../i18n';
 import { useState } from 'react';
 import { Download } from 'lucide-react';
 import { api } from '../../api';
@@ -17,6 +18,7 @@ export function ExportDialog({
   filters: Filters;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [format, setFormat] = useState<'csv' | 'json'>('csv');
   const columnCount = new Set(filters.column_filters?.map((filter) => filter.column)).size;
   const filtered = Boolean(
@@ -45,13 +47,13 @@ export function ExportDialog({
       saveBlob(blob, `X-PatentSAR-${project.id.replace(/[^a-zA-Z0-9_-]/g, '_')}.${format}`);
       setDownloaded(true);
     } catch (e) {
-      setError(e instanceof Error ? e : new Error('导出失败。'));
+      setError(e instanceof Error ? e : new UiError('导出失败。'));
     } finally {
       setBusy(false);
     }
   }
   return (
-    <Dialog title="导出结构与活性结果" onClose={onClose} busy={busy}>
+    <Dialog title={t('导出结构与活性结果')} onClose={onClose} busy={busy}>
       <form
         className="dialog-body"
         onSubmit={(e) => {
@@ -61,11 +63,13 @@ export function ExportDialog({
       >
         <div className="info-banner">
           {project.acceptance.state === 'accepted'
-            ? '原始提取核心 QA 已通过。人工修正与计算指标单独记录，含这些内容的导出仅供复核 / 研究。'
-            : '当前项目未通过当前核心 QA，下载仅为复核材料，不代表正式交付验收通过。'}
+            ? t(
+                '原始提取核心 QA 已通过。人工修正与计算指标单独记录，含这些内容的导出仅供复核 / 研究。',
+              )
+            : t('当前项目未通过当前核心 QA，下载仅为复核材料，不代表正式交付验收通过。')}
         </div>
         <label className="form-field">
-          导出范围
+          {t('导出范围')}
           <select
             data-initial-focus
             value={scope}
@@ -73,35 +77,38 @@ export function ExportDialog({
             disabled={busy}
           >
             <option value="selected" disabled={!selected.length}>
-              已选择 {selected.length} 个化合物
+              {t('已选择 {count} 个化合物', { count: selected.length })}
             </option>
-            <option value="filtered">当前筛选结果（全部匹配页，不限当前页）</option>
-            <option value="all">全部结果（不受当前表格筛选限制）</option>
+            <option value="filtered">{t('当前筛选结果（全部匹配页，不限当前页）')}</option>
+            <option value="all">{t('全部结果（不受当前表格筛选限制）')}</option>
           </select>
         </label>
         {scope !== 'all' && (
           <p className="muted">
-            按当前表格查询导出 · {columnCount} 列筛选{filters.sort_column ? ' · 保留排序' : ''}
+            {t('按当前表格查询导出 · {count} 列筛选{sort}', {
+              count: columnCount,
+              sort: filters.sort_column ? t(' · 保留排序') : '',
+            })}
           </p>
         )}
         <label className="form-field">
-          文件格式
+          {t('文件格式')}
           <select
             value={format}
             onChange={(e) => setFormat(e.target.value as 'csv' | 'json')}
             disabled={busy}
           >
-            <option value="csv">CSV · 适合表格分析</option>
-            <option value="json">JSON · 保留结构化数据</option>
+            <option value="csv">{t('CSV · 适合表格分析')}</option>
+            <option value="json">{t('JSON · 保留结构化数据')}</option>
           </select>
         </label>
         {error && <ErrorNotice error={error} />}
         {downloaded && (
-          <output className="success-banner">文件已从服务端生成并交给浏览器下载。</output>
+          <output className="success-banner">{t('文件已从服务端生成并交给浏览器下载。')}</output>
         )}
         <footer className="dialog-actions">
           <button type="button" onClick={onClose} disabled={busy}>
-            关闭
+            {t('关闭')}
           </button>
           <button
             type="submit"
@@ -109,7 +116,7 @@ export function ExportDialog({
             disabled={busy || (scope === 'selected' && !selected.length)}
           >
             <Download size={16} />
-            {busy ? '正在导出…' : '生成并下载'}
+            {busy ? t('正在导出…') : t('生成并下载')}
           </button>
         </footer>
       </form>

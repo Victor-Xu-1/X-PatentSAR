@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n';
 import { useEffect, useRef } from 'react';
 import { Pencil } from 'lucide-react';
 import type { ActivityColumn, Compound, Filters } from '../../api/types';
@@ -57,6 +58,7 @@ export function ResultsTable({
   onCrop: (compound: Compound) => void;
   onReview: (compound: Compound) => void;
 }) {
+  const { t } = useTranslation();
   const selectAll = useRef<HTMLInputElement>(null);
   const container = useRef<HTMLDivElement>(null);
   const table = useRef<HTMLTableElement>(null);
@@ -91,7 +93,7 @@ export function ResultsTable({
       // A scrollable table region needs a keyboard focus target for native scrolling.
       // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex
       tabIndex={0}
-      aria-label="可横向滚动的化合物结果表格"
+      aria-label={t('可横向滚动的化合物结果表格')}
       style={
         {
           '--frozen-select-width': `${widthFor('select')}px`,
@@ -114,8 +116,9 @@ export function ResultsTable({
         }
       >
         <caption className="sr-only">
-          原文编号与结构独立成列。每种活性与实验独立成列，六项计算指标独立成列。每个活性值保留独立来源；
-          计算指标不等于专利实测。点击修正可编辑并保存。
+          {t(
+            '原文编号与结构独立成列。每种活性与实验独立成列，六项计算指标独立成列。每个活性值保留独立来源； 计算指标不等于专利实测。点击修正可编辑并保存。',
+          )}
         </caption>
         <colgroup>
           {headers.map((header) => (
@@ -146,7 +149,7 @@ export function ResultsTable({
                   <input
                     ref={selectAll}
                     type="checkbox"
-                    aria-label="选择当前页全部化合物"
+                    aria-label={t('选择当前页全部化合物')}
                     checked={all}
                     onChange={(event) => onSelectPage(event.target.checked)}
                     disabled={!rows.length}
@@ -174,7 +177,9 @@ export function ResultsTable({
                 )}
                 <ResizeHandle
                   className="column-resizer"
-                  label={`调整${[header.label, header.context].filter(Boolean).join(' · ')}列宽`}
+                  label={t('调整{column}列宽', {
+                    column: [header.label, header.context].filter(Boolean).join(' · '),
+                  })}
                   value={resize.widths[header.id] ?? header.width}
                   min={header.min}
                   max={header.max}
@@ -191,7 +196,7 @@ export function ResultsTable({
           {!rows.length && headers.length > 0 && (
             <tr>
               <td colSpan={headers.length} className="empty-table-cell">
-                {emptyMessage}
+                {t(emptyMessage)}
               </td>
             </tr>
           )}

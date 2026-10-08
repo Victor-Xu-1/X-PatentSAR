@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n';
 import { MapPin, Pencil } from 'lucide-react';
 import type { Compound } from '../../api/types';
 import { ActivityValueCell } from './ActivityValueCell';
@@ -32,6 +33,7 @@ export function ResultRow({
   onCrop: (row: Compound) => void;
   onReview: (row: Compound) => void;
 }) {
+  const { t } = useTranslation();
   const observations = activityColumnObservations(row, columns);
   const label = compoundLabel(row);
   const visible = (id: string) => !visibleColumns || visibleColumns.has(id);
@@ -41,7 +43,7 @@ export function ResultRow({
         <td className="frozen-column frozen-select">
           <input
             type="checkbox"
-            aria-label={`选择化合物 ${label}`}
+            aria-label={t('选择化合物 {label}', { label })}
             checked={selected}
             onChange={onSelect}
           />
@@ -68,8 +70,12 @@ export function ResultRow({
           <button
             type="button"
             className="link-button"
-            aria-label={`${label} 结构来源${row.source.page === null ? '未知' : `第 ${row.source.page} 页`}`}
-            title={String(row.source.paragraph ?? '结构来源定位')}
+            aria-label={
+              row.source.page === null
+                ? t('{label} 结构来源未知', { label })
+                : t('{label} 结构来源第 {page} 页', { label, page: row.source.page })
+            }
+            title={String(row.source.paragraph ?? t('结构来源定位'))}
             disabled={row.source.page === null}
             onClick={() => onJump(row)}
           >
@@ -83,8 +89,8 @@ export function ResultRow({
             type="button"
             className="toolbar-button"
             data-focus-key={`edit:${row.id}`}
-            aria-label={`修正 ${label}`}
-            title="在线修正"
+            aria-label={t('修正 {label}', { label })}
+            title={t('在线修正')}
             onClick={() => onReview(row)}
           >
             <Pencil size={14} />

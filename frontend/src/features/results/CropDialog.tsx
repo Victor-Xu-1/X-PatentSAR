@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n';
 import type { Compound } from '../../api/types';
 import { AssetImage } from '../../components/AssetImage';
 import { Dialog } from '../../components/Dialog';
@@ -18,22 +19,27 @@ export function CropDialog({
   available?: boolean | null;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   return (
-    <Dialog title={`结构详情 · ${compoundLabel(compound)}`} onClose={onClose} wide>
+    <Dialog
+      title={t('结构详情 · {label}', { label: compoundLabel(compound) })}
+      onClose={onClose}
+      wide
+    >
       <div className="dialog-body crop-detail">
-        <div className="crop-comparison" aria-label="原始裁图与 SMILES 重绘对照">
+        <div className="crop-comparison" aria-label={t('原始裁图与 SMILES 重绘对照')}>
           <figure>
-            <figcaption>原始 PDF 裁图</figcaption>
+            <figcaption>{t('原始 PDF 裁图')}</figcaption>
             <AssetImage
               url={compound.structure_image_url}
-              alt={`${compoundLabel(compound)} 的原始结构裁图`}
+              alt={t('{label} 的原始结构裁图', { label: compoundLabel(compound) })}
               className="crop-large"
               unavailableLabel={cropPlaceholder(compound)}
             />
           </figure>
           <figure>
             <figcaption>
-              {compound.structure_molfile ? '结构重绘（非原图）' : 'SMILES 重绘（非原图）'}
+              {compound.structure_molfile ? t('结构重绘（非原图）') : t('SMILES 重绘（非原图）')}
             </figcaption>
             <AssetImage
               url={
@@ -43,20 +49,24 @@ export function CropDialog({
                   ? compound.redraw_image_url
                   : null
               }
-              alt={`${compoundLabel(compound)} 的 SMILES 重绘（非原图）`}
+              alt={t('{label} 的 SMILES 重绘（非原图）', { label: compoundLabel(compound) })}
               className="crop-large"
               unavailableLabel={redrawPlaceholder(compound)}
-              invalidLabel="重绘地址无效"
-              errorLabel="重绘加载失败"
+              invalidLabel={t('重绘地址无效')}
+              errorLabel={t('重绘加载失败')}
             />
           </figure>
         </div>
-        <p className="muted">原始裁图保留证据；重绘来自当前结构，不证明与原图一致。</p>
+        <p className="muted">{t('原始裁图保留证据；重绘来自当前结构，不证明与原图一致。')}</p>
         {compound.additional_sources?.length ? (
           <details>
-            <summary>同一编号的其他原文出处（{compound.additional_sources.length}）</summary>
+            <summary>
+              {t('同一编号的其他原文出处（{count}）', {
+                count: compound.additional_sources.length,
+              })}
+            </summary>
             <p className="muted">
-              这些是经过编号与空间证据确认的重复出处，不作为另一个未关联化合物。
+              {t('这些是经过编号与空间证据确认的重复出处，不作为另一个未关联化合物。')}
             </p>
             {compound.additional_sources.map(
               (source, index) =>
@@ -66,7 +76,7 @@ export function CropDialog({
                     href={`#/projects/${encodeURIComponent(projectId)}?page=${source.page}&tab=original&compound=${encodeURIComponent(compound.id)}`}
                     onClick={onClose}
                   >
-                    原文第 {source.page} 页
+                    {t('原文第 {page} 页', { page: source.page })}
                   </a>
                 ),
             )}
@@ -74,28 +84,30 @@ export function CropDialog({
         ) : null}
         {compound.smiles && (
           <label className="form-field">
-            当前 SMILES
+            {t('当前 SMILES')}
             <textarea value={compound.smiles} readOnly rows={3} />
           </label>
         )}
         <PredictionEvidence row={compound} />
         <details>
-          <summary>原始提取证据 / 校验</summary>
+          <summary>{t('原始提取证据 / 校验')}</summary>
           <dl>
-            <dt>来源页</dt>
-            <dd>{compound.source.page ?? '未知'}</dd>
-            <dt>来源标签</dt>
-            <dd>{compound.source.source_label ?? '未提供'}</dd>
-            <dt>绑定证据</dt>
+            <dt>{t('来源页')}</dt>
+            <dd>{compound.source.page ?? t('未知')}</dd>
+            <dt>{t('来源标签')}</dt>
+            <dd>{compound.source.source_label ?? t('未提供')}</dd>
+            <dt>{t('绑定证据')}</dt>
             <dd>
-              {confidenceLabels[compound.confidence.level]} ·{' '}
-              {compound.confidence.reason ?? '依据未提供'}
+              {t(confidenceLabels[compound.confidence.level])} ·{' '}
+              {compound.confidence.reason ?? t('依据未提供')}
             </dd>
-            <dt>人工复核</dt>
-            <dd>{compound.review ? reviewLabels[compound.review.decision] : '未复核'}</dd>
+            <dt>{t('人工复核')}</dt>
+            <dd>{compound.review ? t(reviewLabels[compound.review.decision]) : t('未复核')}</dd>
           </dl>
           <RecognitionDetails recognition={compound.recognition} />
-          {compound.flags.length > 0 && <p className="muted">标记：{compound.flags.join('；')}</p>}
+          {compound.flags.length > 0 && (
+            <p className="muted">{t('标记：{flags}', { flags: compound.flags.join('；') })}</p>
+          )}
         </details>
       </div>
     </Dialog>

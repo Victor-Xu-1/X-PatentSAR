@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n';
 import type { ActivityBand, FilterValues } from '../../api/types';
 
 const labels: Record<ActivityBand, string> = { strong: '强档', medium: '中档', none: '无填充' };
@@ -14,13 +15,19 @@ export function ColumnBandChoices({
   action: '排序' | '筛选';
   onChoose: (band: ActivityBand) => void;
 }) {
+  const { t } = useTranslation();
   return (
-    <fieldset className="column-band-choices" aria-label={`按颜色${action}`}>
+    <fieldset
+      className="column-band-choices"
+      aria-label={t(action === '筛选' ? '按颜色筛选' : '按颜色排序')}
+    >
       {bands?.map((band) => (
         <button
           type="button"
           key={band.value}
-          aria-label={`${labels[band.value]}${action === '筛选' ? '筛选' : '优先'}`}
+          aria-label={t(action === '筛选' ? '{band}筛选' : '{band}优先', {
+            band: t(labels[band.value]),
+          })}
           aria-pressed={selected === band.value}
           disabled={disabled}
           onClick={() => onChoose(band.value)}
@@ -30,11 +37,11 @@ export function ColumnBandChoices({
             data-activity-strength={band.value}
             aria-hidden="true"
           />
-          <span>{labels[band.value]}</span>
+          <span>{t(labels[band.value])}</span>
           <small>{band.count}</small>
         </button>
       ))}
-      {!bands?.length && <small className="muted">颜色分档不可用</small>}
+      {!bands?.length && <small className="muted">{t('颜色分档不可用')}</small>}
     </fieldset>
   );
 }

@@ -1,4 +1,5 @@
 import { client } from '../../api';
+import { UiError } from '../../i18n';
 import { ContractError, object, string } from '../../api/validation';
 
 const decodeStructure = object({
@@ -26,7 +27,7 @@ async function withDeadline<T>(
     controller.signal.addEventListener('abort', rejectAbort, { once: true });
   });
   signal.addEventListener('abort', relay, { once: true });
-  const timer = setTimeout(() => controller.abort(new Error(timeoutMessage)), 15000);
+  const timer = setTimeout(() => controller.abort(new UiError(timeoutMessage)), 15000);
   try {
     return await Promise.race([operation(controller.signal), aborted]);
   } finally {
@@ -47,7 +48,7 @@ export function convertMolfile(molfile: string, signal: AbortSignal): Promise<st
     !molfile ||
     new TextEncoder().encode(molfile).byteLength > 131072
   )
-    return Promise.reject(new Error('结构超过支持的编辑范围，或绘图导出无效。'));
+    return Promise.reject(new UiError('结构超过支持的编辑范围，或绘图导出无效。'));
   return withDeadline(
     signal,
     async (requestSignal) => {

@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n';
 import { useState } from 'react';
 import { AcceptanceFindings } from '../results/AcceptanceFindings';
 
@@ -12,6 +13,7 @@ export function EvidenceDetails({
   limitations: readonly string[];
   onSource: (page: number) => void;
 }) {
+  const { t } = useTranslation();
   const [sourcesOpen, setSourcesOpen] = useState(false);
   return (
     <div className="evidence-details">
@@ -24,7 +26,7 @@ export function EvidenceDetails({
         className="evidence-sources"
         onToggle={(event) => setSourcesOpen(event.currentTarget.open)}
       >
-        <summary>原始来源页 · {pages.length}</summary>
+        <summary>{t('原始来源页 · {count}', { count: pages.length })}</summary>
         {sourcesOpen && (
           <div className="evidence-source-pages">
             {pages.length ? (
@@ -32,23 +34,24 @@ export function EvidenceDetails({
                 <button
                   type="button"
                   key={page}
-                  aria-label={`查看来源第 ${page} 页`}
+                  aria-label={t('查看来源第 {page} 页', { page })}
                   onClick={() => onSource(page)}
                 >
-                  第 {page} 页
+                  {t('第 {page} 页', { page })}
                 </button>
               ))
             ) : (
-              <p className="muted">来源页未提供</p>
+              <p className="muted">{t('来源页未提供')}</p>
             )}
           </div>
         )}
       </details>
       <details className="evidence-limitations">
-        <summary>统计范围与证据边界</summary>
+        <summary>{t('统计范围与证据边界')}</summary>
         <p>
-          仅聚合原始字段与来源；不是 LLM
-          摘要，不推断机制或疗效，不合并不同单位/靶点，不改变正式验收。
+          {t(
+            '仅聚合原始字段与来源；不是 LLM 摘要，不推断机制或疗效，不合并不同单位/靶点，不改变正式验收。',
+          )}
         </p>
         {limitations.length > 0 && (
           <ul>

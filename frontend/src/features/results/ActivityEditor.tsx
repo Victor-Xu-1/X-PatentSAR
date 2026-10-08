@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n';
 import { activityColumnContext, activityColumnLabel } from '../../model/activityColumns';
 import type { ActivityDraft } from './correctionDraft';
 
@@ -10,8 +11,9 @@ export function ActivityEditor({
   disabled: boolean;
   onChange: (values: ActivityDraft[]) => void;
 }) {
+  const { t } = useTranslation();
   return (
-    <div className="correction-values" aria-label="活性列数值">
+    <div className="correction-values" aria-label={t('活性列数值')}>
       {values.map((item, index) => {
         const column = { id: String(index), ...item.source };
         const context = activityColumnContext(column);
@@ -25,7 +27,7 @@ export function ActivityEditor({
             <span title={[label, context].filter(Boolean).join(' · ')}>{label}</span>
             {repeatedName && context && <small>{context}</small>}
             <input
-              aria-label={`修正 ${label} ${index + 1}`}
+              aria-label={t('修正 {label} {index}', { label, index: index + 1 })}
               value={item.value}
               maxLength={1000}
               disabled={disabled}

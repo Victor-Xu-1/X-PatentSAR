@@ -2,10 +2,11 @@ import type { Ketcher } from 'ketcher-core';
 import type { EditorPayload } from './protocol';
 import { boundedEditorOperation, convertMolfile } from './structureConversion';
 import { ApiError } from '../../api/errors';
+import { UiError } from '../../i18n';
 
 /** One native MDL export; the backend alone decides chemistry and empty drawings. */
 export async function captureDrawing(ketcher: Ketcher, signal: AbortSignal) {
-  if (ketcher.containsReaction()) throw new Error('请绘制分子结构，不使用反应箭头。');
+  if (ketcher.containsReaction()) throw new UiError('请绘制分子结构，不使用反应箭头。');
   const rawMolfile = await boundedEditorOperation(() => ketcher.getMolfile('v3000'), signal);
   const smiles = await convertMolfile(rawMolfile, signal);
   return {
@@ -20,6 +21,7 @@ export function subscribeDrawing(
   ketcher: Ketcher,
   originalKey: string,
   send: (message: EditorPayload) => void,
+  describeError?: (error: Error) => { source?: string },
 ) {
   let version = 0,
     active = false,
@@ -41,15 +43,16 @@ export function subscribeDrawing(
         },
       });
     } catch (failure) {
-      if (!disposed && current === version)
+      if (!disposed && current === version) {
+        const error =
+          failure instanceof Error ? failure : new UiError('结构无法导出，请修正后重试。');
         send({
           kind: 'error',
           recoverable: failure instanceof ApiError && failure.status === 422,
-          message:
-            failure instanceof Error
-              ? failure.message.slice(0, 1000)
-              : '结构无法导出，请修正后重试。',
+          message: error.message.slice(0, 1000),
+          ...describeError?.(error),
         });
+      }
     } finally {
       active = false;
       if (!disposed && current !== version) schedule();

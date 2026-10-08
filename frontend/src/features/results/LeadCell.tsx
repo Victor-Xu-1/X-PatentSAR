@@ -1,3 +1,4 @@
+import { useTranslation, t } from '../../i18n';
 import type { LeadAssessment } from '../../api/leadTypes';
 import { leadColumnValue } from '../../model/resultColumns';
 
@@ -11,21 +12,24 @@ const statusLabels: Record<LeadAssessment['status'], string> = {
 };
 
 function assessmentTitle(assessment: LeadAssessment | null | undefined): string {
-  if (!assessment) return '尚未评估 Lead 候选。';
+  if (!assessment) return t('尚未评估 Lead 候选。');
   return [
-    [leadColumnValue(assessment), statusLabels[assessment.status]].filter(Boolean).join(' · '),
-    assessment.score === null ? '' : `候选优先级 ${assessment.score.toFixed(1)} / 100`,
-    `可比活性覆盖 ${(assessment.activity_coverage * 100).toFixed(0)}%`,
-    assessment.risk_review_required ? '高模型风险待复核，不代表已验证安全。' : '',
-    ...assessment.reasons.map((reason) => `依据：${reason}`),
-    ...assessment.warnings.map((warning) => `注意：${warning}`),
-    '仅供研究优先排序，不代表实验验证或安全、有效性结论。',
+    [leadColumnValue(assessment), t(statusLabels[assessment.status])].filter(Boolean).join(' · '),
+    assessment.score === null
+      ? ''
+      : t('候选优先级 {score} / 100', { score: assessment.score.toFixed(1) }),
+    t('可比活性覆盖 {coverage}%', { coverage: (assessment.activity_coverage * 100).toFixed(0) }),
+    assessment.risk_review_required ? t('高模型风险待复核，不代表已验证安全。') : '',
+    ...assessment.reasons.map((reason) => t('依据：{reason}', { reason })),
+    ...assessment.warnings.map((warning) => t('注意：{warning}', { warning })),
+    t('仅供研究优先排序，不代表实验验证或安全、有效性结论。'),
   ]
     .filter(Boolean)
     .join('\n');
 }
 
 export function LeadCell({ assessment }: { assessment: LeadAssessment | null | undefined }) {
+  const { t } = useTranslation();
   const label = leadColumnValue(assessment);
   const stale = assessment?.status === 'stale';
   return (
@@ -44,7 +48,7 @@ export function LeadCell({ assessment }: { assessment: LeadAssessment | null | u
               : 'lead-placeholder'
         }
       >
-        {label || (stale ? '待更新' : '—')}
+        {label || (stale ? t('待更新') : '—')}
       </span>
     </td>
   );

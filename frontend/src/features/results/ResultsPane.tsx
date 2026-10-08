@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n';
 import { useState } from 'react';
 import type { Compound, Filters, Job, Project, Results } from '../../api/types';
 import type { ActivitySourceCallback } from '../../model/activityColumns';
@@ -48,6 +49,7 @@ export function ResultsPane({
   onPredictionQueued?: () => void;
   canPredict?: boolean;
 }) {
+  const { t } = useTranslation();
   const result = resource.data;
   const [density, setDensity] = useState<ResultDensity>('compact');
   const [columnState, setColumnState] = useState<{ project: string | null; hidden: string[] }>({
@@ -106,7 +108,7 @@ export function ResultsPane({
             hidden={Boolean(
               resource.error || (resource.loading && !result) || !visibleColumns.length,
             )}
-            emptyMessage={result?.total ? '当前页暂无结果' : '暂无匹配的提取结果'}
+            emptyMessage={result?.total ? t('当前页暂无结果') : t('暂无匹配的提取结果')}
             rows={result?.items ?? []}
             metrics={metrics}
             hiddenColumns={hidden}
@@ -131,24 +133,26 @@ export function ResultsPane({
         {resource.error ? (
           <ErrorNotice error={resource.error} onRetry={resource.reload} />
         ) : resource.loading && !result ? (
-          <Loading label="正在查询真实结构与活性结果…" />
+          <Loading label={t('正在查询真实结构与活性结果…')} />
         ) : !project ? (
           <Empty
-            title="开始探索专利中的结构与活性"
-            description="上传一份原始专利 PDF，或从项目列表打开已有结果。所有结构、指标和来源均来自真实提取，不生成演示数据。"
+            title={t('开始探索专利中的结构与活性')}
+            description={t(
+              '上传一份原始专利 PDF，或从项目列表打开已有结果。所有结构、指标和来源均来自真实提取，不生成演示数据。',
+            )}
             action={
               <button type="button" className="primary" onClick={onUpload}>
-                上传专利 PDF
+                {t('上传专利 PDF')}
               </button>
             }
           />
         ) : !visibleColumns.length ? (
           <Empty
-            title="所有列已隐藏"
-            description="数据仍然保留，可恢复全部列或在“显示列”中选择。"
+            title={t('所有列已隐藏')}
+            description={t('数据仍然保留，可恢复全部列或在“显示列”中选择。')}
             action={
               <button type="button" onClick={() => setHidden([])}>
-                显示全部列
+                {t('显示全部列')}
               </button>
             }
           />

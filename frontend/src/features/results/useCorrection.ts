@@ -1,3 +1,4 @@
+import { UiError } from '../../i18n';
 import { useCallback, useRef, useState } from 'react';
 import { api } from '../../api';
 import { ApiError } from '../../api/errors';
@@ -41,7 +42,7 @@ export function useCorrection(
       uncertain.current = null;
       onSaved();
     } catch (failure) {
-      setError(failure instanceof Error ? failure : new Error('修正保存失败。'));
+      setError(failure instanceof Error ? failure : new UiError('修正保存失败。'));
       if (failure instanceof ApiError && (failure.status === 409 || failure.uncertain)) {
         setBlocked(true);
         if (!failure.uncertain) uncertain.current = null;
@@ -72,7 +73,7 @@ export function useCorrection(
       setBlocked(false);
       setMessage('已读取保存版本，草稿保留。请确认后再保存。');
     } catch (failure) {
-      setError(failure instanceof Error ? failure : new Error('当前版本加载失败。'));
+      setError(failure instanceof Error ? failure : new UiError('当前版本加载失败。'));
     } finally {
       setBusy(false);
     }
