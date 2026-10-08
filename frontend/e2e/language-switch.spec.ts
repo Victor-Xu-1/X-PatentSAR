@@ -37,6 +37,7 @@ for (const width of [390, 800, 1672]) {
         .getByLabel('Original patent PDF file', { exact: true })
         .evaluate((input) => (input as HTMLInputElement).files?.[0]?.name),
     ).toBe('中文原文-008B.pdf');
+    await page.screenshot({ path: test.info().outputPath('english-upload.png'), fullPage: true });
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(
       page.getByRole('combobox', { name: 'Interface language', exact: true }),
@@ -55,6 +56,10 @@ for (const width of [390, 800, 1672]) {
     await expect(dialog).toBeVisible();
     await expect(dialog.getByLabel('Review mode', { exact: true })).toHaveValue('off');
     await expect(dialog.getByRole('button', { name: 'Save', exact: true })).toBeDisabled();
+    await page.screenshot({
+      path: test.info().outputPath('english-llm-settings.png'),
+      fullPage: true,
+    });
     await dialog.getByRole('button', { name: 'Close dialog', exact: true }).click();
     await page.reload();
     await expect(
@@ -76,10 +81,25 @@ for (const width of [390, 800, 1672]) {
       .selectOption('zh-CN');
     await expect(page.getByRole('heading', { name: '环境管理', exact: true })).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
+    await page.reload();
+    await expect(page.getByRole('combobox', { name: '界面语言', exact: true })).toHaveValue(
+      'zh-CN',
+    );
+    await expect(page.getByRole('heading', { name: '环境管理', exact: true })).toBeVisible();
     expect(writes).toEqual([]);
     expect(errors).toEqual([]);
   });
 }
+
+test('an unsupported saved locale falls back to the English default', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('x-patentsar.locale', 'unsupported-locale'));
+  await page.goto('/#/new-task');
+  await expect(page.getByRole('combobox', { name: 'Interface language', exact: true })).toHaveValue(
+    'en',
+  );
+  await expect(page.getByRole('heading', { name: 'Upload patent PDF', exact: true })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+});
 
 test('installed table localization preserves original IDs, sources and query state', async ({
   page,
@@ -106,6 +126,10 @@ test('installed table localization preserves original IDs, sources and query sta
     .selectOption('zh-CN');
   await page.getByRole('combobox', { name: '界面语言', exact: true }).selectOption('en');
   await expect(page.getByRole('columnheader', { name: /Original ID/ })).toBeVisible();
+  await page.screenshot({
+    path: test.info().outputPath('english-results-table.png'),
+    fullPage: true,
+  });
   expect(page.url()).toBe(before);
   expect(
     await record.locator('.compound-cell, .compound-label, .frozen-compound').first().innerText(),
