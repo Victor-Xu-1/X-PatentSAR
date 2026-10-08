@@ -119,6 +119,9 @@ def context_for_run(
     *,
     policy: EvidenceResolutionConfig | None = None,
 ) -> JobLLMContext:
+    from .job_health import ensure_attempt_id
+
+    ensure_attempt_id()  # Inherit one identity across this CLI's isolated stages.
     configured = os.environ.get("PATENTSAR_LLM_CONTEXT", "")
     if configured:
         context = read_context(configured)

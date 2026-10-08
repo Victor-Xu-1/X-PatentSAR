@@ -169,6 +169,9 @@ legacy contexts are read without rewriting them. POST
 It requires a visible idle resumable attempt, unchanged provider/model/protocol/
 mode/bounds, current consent/config revision and the same original/context. It
 only publishes a private credential-fingerprint grant under config/budget locks;
+  credential renewal cannot clear carrier/cleanup or unsafe-state faults. Those
+  blocks remain visible even if the saved key changes; transient cooldowns are
+  retained and the locked renewal rechecks fault state and remaining quota.
 no model request, task enqueue, semantic mutation or quota reset occurs. The UI
 refreshes, then leaves continuing extraction to the user. Active, stale, foreign,
 removed, operator-ENV or corrupt-control cases reject without an enabling fallback.

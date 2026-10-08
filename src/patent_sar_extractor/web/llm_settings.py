@@ -10,6 +10,7 @@ import threading
 from copy import deepcopy
 from dataclasses import asdict, replace
 from datetime import UTC, datetime
+from functools import partial
 from pathlib import Path
 from typing import Literal, cast, get_args
 
@@ -21,10 +22,16 @@ from patent_sar_extractor.integrations.llm.api_failures import (
 from patent_sar_extractor.integrations.llm.client import llm_chat
 from patent_sar_extractor.integrations.llm.config import EvidenceResolutionConfig
 from patent_sar_extractor.integrations.llm.credential_authorization import (
+    dispatch_authorization,
     renew_authorization,
 )
 from patent_sar_extractor.integrations.llm.evidence_resolution import EvidenceCallBudget
-from patent_sar_extractor.integrations.llm.job_health import clear_state
+from patent_sar_extractor.integrations.llm.job_health import (
+    BLOCKED_REASONS,
+    clear_state,
+    read_state,
+)
+from patent_sar_extractor.integrations.llm.private_state import read_budget
 
 from .errors import WebError
 from .llm_models import (
@@ -226,6 +233,9 @@ class LLMSettingsService:
                 cache=False,
                 response_format=schema,
                 on_failure=failures.append,
+                dispatch_guard=partial(dispatch_authorization, policy)
+                if policy.authorization_file
+                else None,
             )
         except (
             OSError,
@@ -323,11 +333,32 @@ class LLMSettingsService:
         try:
             storage = self._storage()
             with storage.transaction() as directory:
+                health = read_state(context.ledger, context.job_id)
+                if health and health["reason"] in BLOCKED_REASONS - {
+                    "authentication_failed"
+                }:
+                    raise WebError(
+                        409,
+                        "llm_recovery_blocked",
+                        "A non-authentication safety fault cannot be cleared by credential renewal.",
+                    )
+                if (
+                    read_budget(
+                        context.ledger, context.job_id, context.policy.max_calls
+                    )
+                    >= context.policy.max_calls
+                ):
+                    raise WebError(
+                        409,
+                        "llm_renewal_unavailable",
+                        "The task's retained API quota is exhausted.",
+                    )
                 current = self._snapshot(storage, directory)
                 self._revision(current, expected_revision)
                 validate_test_settings(current.view)
                 renew_authorization(context, current.policy, current.view.revision)
-                clear_state(context.ledger, context.job_id)
+                if health and health["reason"] == "authentication_failed":
+                    clear_state(context.ledger, context.job_id)
         except (OSError, TypeError, RecursionError):
             raise unavailable() from None
         except ValueError:

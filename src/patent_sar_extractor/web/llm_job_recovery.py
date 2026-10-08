@@ -10,7 +10,11 @@ from patent_sar_extractor.integrations.llm.credential_authorization import (
     current_credential,
 )
 from patent_sar_extractor.integrations.llm.job_context import read_context
-from patent_sar_extractor.integrations.llm.job_health import gate, read_state
+from patent_sar_extractor.integrations.llm.job_health import (
+    BLOCKED_REASONS,
+    gate,
+    read_state,
+)
 from patent_sar_extractor.integrations.llm.private_state import read_budget
 
 from .errors import WebError
@@ -57,7 +61,9 @@ def recovery_view(store, row: dict, spec: dict, resumable: bool) -> LLMRecovery 
             attempt_id=row["id"] if row["status"] == "running" else "",
         )
         reason = (
-            "authorization_revoked"
+            blocked[0]
+            if blocked and blocked[0] in BLOCKED_REASONS - {"authentication_failed"}
+            else "authorization_revoked"
             if not authorized
             else blocked[0]
             if blocked

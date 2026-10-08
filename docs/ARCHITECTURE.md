@@ -89,6 +89,13 @@ private boundary. Credential-only renewal is an authenticated, consented, idle
 job operation under configuration and budget locks. It retains the exact original,
 profile, immutable policy and spent quota; no inference or automatic resume occurs.
 Every network attempt reserves durable quota before sending. A separate private
+disclosure check follows reservation. GUI settings publication and the bounded
+private-input/EOF handoff to the owned carrier share a directory lease; it ends
+before waiting for a network response. Work already handed off is in-flight and
+cannot be unsent; OFF prevents later handoffs and downstream proposal use. Renewal
+rechecks faults/quota under the budget lock, never clearing non-authentication
+safety blocks or transient cooldowns. Standalone CLI stages inherit one invocation
+identity, so a missing Web launcher cannot reopen a failed circuit.
 budget lock protects serial consumption across processes; corrupt/foreign state
 cannot reset it. Changes apply to future new jobs, not silently to active/resumed
 work. Default OFF makes no request; original evidence, chemistry and strict QA

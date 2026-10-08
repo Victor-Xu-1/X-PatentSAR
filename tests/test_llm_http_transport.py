@@ -11,6 +11,7 @@ import tempfile
 import threading
 import time
 import unittest
+from functools import partial
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
@@ -19,6 +20,11 @@ import requests
 
 from patent_sar_extractor.integrations.llm import client
 from patent_sar_extractor.integrations.llm import http_transport as transport
+from patent_sar_extractor.integrations.llm.credential_authorization import (
+    dispatch_authorization,
+)
+from patent_sar_extractor.integrations.llm.job_context import read_context
+from patent_sar_extractor.web.errors import WebError
 
 TEST_KEY = "controlled-transport-test-only-key"
 
@@ -191,7 +197,78 @@ class DeadlineIntegrationTests(unittest.TestCase):
                 Path(f"/proc/{process.pid}").exists(), "carrier must reap its own child"
             )
             for stream in (process.stdin, process.stdout, process.stderr):
-                self.assertTrue(stream.closed)
+                if stream is not None:
+                    self.assertTrue(stream.closed)
+
+    def test_gui_publication_orders_private_handoff_but_not_network_response(self):
+        from tests.test_llm_credential_renewal import CredentialRenewalTests
+
+        with tempfile.TemporaryDirectory() as temporary:
+            settings, body, path = CredentialRenewalTests().setup_context(
+                Path(temporary)
+            )
+            policy = read_context(path).policy
+            server = self.serve("slow_headers")
+            owned, starts = self.children()
+            handoff = transport._handoff_payload
+            handed_off = threading.Event()
+            outcomes = []
+
+            def checked_handoff(*args):
+                with self.assertRaises(WebError) as error:
+                    settings.save_settings(
+                        body.model_copy(update={"expected_revision": 1, "mode": "off"})
+                    )
+                self.assertEqual(error.exception.code, "llm_settings_busy")
+                handoff(*args)
+
+            def observe_guard():
+                from contextlib import contextmanager
+
+                @contextmanager
+                def observed():
+                    with dispatch_authorization(policy):
+                        yield
+                    handed_off.set()
+
+                return observed()
+
+            def request():
+                try:
+                    outcomes.append(self.call(server, dispatch_guard=observe_guard))
+                except (
+                    AssertionError,
+                    ValueError,
+                    RuntimeError,
+                    OSError,
+                    requests.RequestException,
+                ) as error:
+                    outcomes.append(error)
+
+            with patch.object(
+                transport, "_handoff_payload", side_effect=checked_handoff
+            ):
+                thread = threading.Thread(target=request)
+                thread.start()
+                try:
+                    self.assertTrue(handed_off.wait(2))
+                    # Publication is available while the finite network oracle is
+                    # still waiting for response headers: no long config lease.
+                    settings.save_settings(
+                        body.model_copy(update={"expected_revision": 1, "mode": "off"})
+                    )
+                finally:
+                    thread.join(timeout=3)
+                self.assertFalse(thread.is_alive())
+            self.assertEqual(outcomes, [""])
+            self.assertEqual(
+                self.call(
+                    server, dispatch_guard=partial(dispatch_authorization, policy)
+                ),
+                "",
+            )
+            self.assertEqual(starts.call_count, 1)
+            self.assert_reaped(owned)
 
     def assert_deadline(self, mode):
         server = self.serve(mode)

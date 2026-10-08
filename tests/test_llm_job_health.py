@@ -106,6 +106,7 @@ class APIJobHealthTests(unittest.TestCase):
             )
             fault = read_state(context.ledger, context.job_id)
             with (
+                patch.dict(os.environ, {"PATENTSAR_API_ATTEMPT_ID": "e" * 32}),
                 patch(
                     "patent_sar_extractor.integrations.llm.job_health.time.time",
                     return_value=fault["retry_at"] + 1,
@@ -173,6 +174,29 @@ class APIJobHealthTests(unittest.TestCase):
                     again = self.resolve(context)
                 self.assertEqual(again.reason, "rate_limited")
                 api.assert_called_once()
+
+    def test_standalone_invocation_without_explicit_id_keeps_its_circuit_closed(self):
+        with (
+            tempfile.TemporaryDirectory() as temporary,
+            patch.dict(os.environ, {}, clear=True),
+        ):
+            context = self.context(Path(temporary))
+            with patch.object(
+                client,
+                "bounded_post",
+                side_effect=APIRequestError(APIProblem("rate_limited", 429, True, 1)),
+            ) as api:
+                self.resolve(context)
+                health = read_state(context.ledger, context.job_id)
+                with patch(
+                    "patent_sar_extractor.integrations.llm.job_health.time.time",
+                    return_value=health["retry_at"] + 100,
+                ):
+                    again = self.resolve(context)
+                self.assertEqual(again.reason, "rate_limited")
+                self.assertEqual(again.calls_used, 1)
+                api.assert_called_once()
+                self.assertRegex(health["attempt_id"], r"^[a-f0-9]{32}$")
             with (
                 patch.dict(os.environ, {"PATENTSAR_API_ATTEMPT_ID": "d" * 32}),
                 patch(

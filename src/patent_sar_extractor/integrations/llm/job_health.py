@@ -5,6 +5,8 @@ from __future__ import annotations
 import math
 import os
 import re
+import secrets
+import threading
 import time
 from pathlib import Path
 
@@ -12,6 +14,21 @@ from .api_failures import APIProblem
 from .private_state import read_private, write_private
 
 SCHEMA = {"name": "patentsar.api-job-health", "version": 2}
+_INVOCATION_LOCK = threading.Lock()
+
+
+def ensure_attempt_id() -> str:
+    """One inherited invocation identity, also for standalone CLI consumers."""
+    with _INVOCATION_LOCK:
+        current = os.environ.get("PATENTSAR_API_ATTEMPT_ID", "")
+        if current and not re.fullmatch(r"[a-f0-9]{32}", current):
+            raise ValueError("Malformed API invocation identity")
+        if not current:
+            current = secrets.token_hex(16)
+            os.environ["PATENTSAR_API_ATTEMPT_ID"] = current
+        return current
+
+
 BLOCKED_REASONS = {
     "authentication_failed",
     "unsafe_cache",
@@ -87,17 +104,15 @@ def gate(
     if value["reason"] in BLOCKED_REASONS:
         return value["reason"], None
     remaining = value["retry_at"] - time.time()
-    current = (
-        os.environ.get("PATENTSAR_API_ATTEMPT_ID", "")
-        if attempt_id is None
-        else attempt_id
-    )
+    current = ensure_attempt_id() if attempt_id is None else attempt_id
     if (
-        current
-        and current == value["attempt_id"]
-        and value["reason"]
-        in {"rate_limited", "provider_unavailable", "timeout", "transport_unavailable"}
-    ):
+        not value["attempt_id"] or current and current == value["attempt_id"]
+    ) and value["reason"] in {
+        "rate_limited",
+        "provider_unavailable",
+        "timeout",
+        "transport_unavailable",
+    }:
         return value["reason"], min(45.0, max(0.0, remaining))
     if remaining > 0:
         return value["reason"], min(45.0, remaining)
@@ -132,7 +147,7 @@ def record_fault(ledger: Path | None, job_id: str, problem: APIProblem) -> None:
             "http_status": problem.http_status,
             "retryable": problem.retryable,
             "retry_at": time.time() + cooldown if cooldown else 0.0,
-            "attempt_id": os.environ.get("PATENTSAR_API_ATTEMPT_ID", ""),
+            "attempt_id": ensure_attempt_id(),
         },
     )
 

@@ -13,6 +13,7 @@ MAX_RETRY_AFTER_SECONDS = 45.0
 _REASONS = frozenset(
     {
         "authentication_failed",
+        "authorization_revoked",
         "rate_limited",
         "server_error",
         "http_error",
@@ -133,7 +134,11 @@ def http_problem(status: int, retry_after: str | None = None) -> APIProblem:
 
 def evidence_problem(problem: APIProblem) -> APIProblem | None:
     """Translate wire/cache details once for the source-repair coordinator."""
-    if problem.reason in {"invalid_cached_content", "budget_exhausted"}:
+    if problem.reason in {
+        "invalid_cached_content",
+        "budget_exhausted",
+        "authorization_revoked",
+    }:
         # Cache eviction and budget denial have their own authoritative paths.
         return None
     reason = {

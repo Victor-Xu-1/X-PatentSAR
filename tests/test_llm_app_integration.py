@@ -26,7 +26,9 @@ from patent_sar_extractor.integrations.llm.evidence_resolution import (
     EvidenceRequest,
     resolve_evidence,
 )
+from patent_sar_extractor.integrations.llm.http_transport import HttpCarrierError
 from patent_sar_extractor.integrations.llm.job_context import read_context
+from patent_sar_extractor.integrations.llm.job_health import read_state, record_fault
 from patent_sar_extractor.web.analysis_runtime import AnalysisSettings
 from patent_sar_extractor.web.app import create_app
 from patent_sar_extractor.web.jobs import JobQueue
@@ -331,6 +333,79 @@ class LLMAppIntegrationTests(unittest.TestCase):
         after, after_budget = self.resolve(resumed)
         self.assertEqual(after.status, "resolved")
         self.assertEqual(after_budget.calls, 2)
+
+    def test_key_rotation_cannot_mask_or_clear_unverified_carrier_cleanup(self):
+        client = self.app_client()
+        self.authenticate(client)
+        self.save(client)
+        _, job, _, context, path = self.enqueue(client)
+        self.post.side_effect = HttpCarrierError("Synthetic unverified cleanup")
+        self.assertEqual(self.resolve(context)[0].reason, "carrier_error")
+        client.post(f"/api/v1/jobs/{job}/cancel")
+        before = path.read_bytes(), context.ledger.read_bytes()
+        self.save(client, expected_revision=1, api_key="rotated-synthetic-key")
+        view = client.get(f"/api/v1/jobs/{job}").json()["llm_recovery"]
+        self.assertEqual(view["reason"], "carrier_error")
+        self.assertFalse(view["can_reauthorize"])
+        response = client.post(
+            f"/api/v1/jobs/{job}/llm-authorization",
+            json={"expected_revision": 2, "consent": True},
+        )
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(
+            read_state(context.ledger, context.job_id)["reason"], "carrier_error"
+        )
+        self.assertEqual((path.read_bytes(), context.ledger.read_bytes()), before)
+        self.assertEqual(self.post.call_count, 1)
+
+    def test_budget_locked_renewal_rechecks_a_late_non_authentication_fault(self):
+        client = self.app_client()
+        self.authenticate(client)
+        self.save(client)
+        _, job, _, context, _ = self.enqueue(client)
+        client.post(f"/api/v1/jobs/{job}/cancel")
+        self.save(client, expected_revision=1, api_key="rotated-synthetic-key")
+        self.assertTrue(
+            client.get(f"/api/v1/jobs/{job}").json()["llm_recovery"]["can_reauthorize"]
+        )
+        acquire = EvidenceCallBudget.acquire
+
+        def late_fault(budget):
+            locked = acquire(budget)
+            if locked:
+                record_fault(context.ledger, context.job_id, APIProblem("unsafe_cache"))
+            return locked
+
+        with patch.object(EvidenceCallBudget, "acquire", late_fault):
+            response = client.post(
+                f"/api/v1/jobs/{job}/llm-authorization",
+                json={"expected_revision": 2, "consent": True},
+            )
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(
+            read_state(context.ledger, context.job_id)["reason"], "unsafe_cache"
+        )
+        self.post.assert_not_called()
+
+    def test_revocation_during_reservation_prevents_any_http_dispatch(self):
+        client = self.app_client()
+        self.authenticate(client)
+        self.save(client)
+        _, _, _, context, _ = self.enqueue(client)
+        reserve = EvidenceCallBudget.reserve
+
+        def revoke(budget, limit):
+            reserved = reserve(budget, limit)
+            self.save(client, expected_revision=1, mode="off", data_consent=False)
+            return reserved
+
+        with patch.object(EvidenceCallBudget, "reserve", revoke):
+            result, budget = self.resolve(context)
+        self.assertEqual(
+            (result.status, result.reason), ("disabled", "authorization_revoked")
+        )
+        self.assertEqual(budget.calls, 1)
+        self.post.assert_not_called()
 
     def test_job_renewal_requires_idle_visibility_consent_and_current_revision(self):
         client = self.app_client()

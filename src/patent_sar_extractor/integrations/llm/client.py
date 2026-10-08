@@ -22,6 +22,7 @@ from .external_api import validate_external_endpoint
 from .http_transport import (
     POLL_SECONDS,
     Cancellation,
+    DispatchGuard,
     HttpCancelled,
     HttpCarrierError,
     bounded_post,
@@ -153,6 +154,7 @@ def llm_chat(
     validate_content: Callable[[str], None] | None = None,
     on_failure: Callable[[APIProblem], None] | None = None,
     validation_identity: str = "",
+    dispatch_guard: DispatchGuard | None = None,
 ) -> str:
     """Return text only after local validation, including on every cache hit.
 
@@ -267,6 +269,7 @@ def llm_chat(
                     max_body_bytes=max_response_chars * 6 + 8192,
                     cancel=cancel,
                     require_public=True,
+                    dispatch_guard=dispatch_guard,
                 )
                 content = _response_text(
                     resp, max_response_chars, deadline, wire.protocol

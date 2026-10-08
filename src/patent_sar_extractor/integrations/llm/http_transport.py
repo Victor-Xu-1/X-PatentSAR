@@ -11,10 +11,13 @@ import base64
 import ctypes
 import json as wire_json
 import os
+import selectors
 import signal
 import subprocess
 import sys
 import time
+from collections.abc import Callable
+from contextlib import AbstractContextManager, nullcontext
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -38,6 +41,8 @@ MAX_INPUT_BYTES = 512 * 1024
 MAX_BODY_BYTES = 512 * 1024
 POLL_SECONDS = 0.05
 CLEANUP_SECONDS = 0.5
+HANDOFF_SECONDS = 2.0
+DispatchGuard = Callable[[], AbstractContextManager[None]]
 
 
 class Cancellation(Protocol):
@@ -116,6 +121,41 @@ def _transport_result(stdout: bytes, max_body_bytes: int) -> bytes:
         ) from exc
 
 
+def _handoff_payload(
+    process: subprocess.Popen[bytes],
+    payload: bytes,
+    deadline: float,
+    cancel: Cancellation | None,
+) -> None:
+    """Bounded private input/EOF handoff; no settings lease spans the response."""
+    stream = process.stdin
+    if stream is None:
+        raise HttpCarrierError("Owned carrier has no input pipe")
+    os.set_blocking(stream.fileno(), False)
+    offset = 0
+    handoff_deadline = min(deadline, time.monotonic() + HANDOFF_SECONDS)
+    with selectors.DefaultSelector() as selector:
+        selector.register(stream, selectors.EVENT_WRITE)
+        while offset < len(payload):
+            if cancel is not None and cancel.is_set():
+                raise HttpCancelled("Carrier handoff cancelled")
+            remaining = handoff_deadline - time.monotonic()
+            if remaining <= 0:
+                raise requests.Timeout("Bounded carrier handoff exceeded deadline")
+            if selector.select(min(POLL_SECONDS, remaining)):
+                try:
+                    sent = os.write(stream.fileno(), payload[offset:])
+                except BlockingIOError:
+                    continue
+                except OSError as exc:
+                    raise HttpCarrierError("Carrier input handoff failed") from exc
+                if sent <= 0:
+                    raise HttpCarrierError("Carrier input did not advance")
+                offset += sent
+    stream.close()
+    process.stdin = None  # communicate must not flush the already-closed pipe.
+
+
 def bounded_post(
     url: str,
     *,
@@ -126,6 +166,7 @@ def bounded_post(
     max_body_bytes: int,
     cancel: Cancellation | None = None,
     require_public: bool = False,
+    dispatch_guard: DispatchGuard | None = None,
 ) -> bytes:
     """One request within the caller's deadline, including headers/DNS/body reads."""
     if sys.platform != "linux":
@@ -157,20 +198,35 @@ def bounded_post(
         environment.pop(key, None)
     # Explicit API headers are the authority, not an implicit user's netrc.
     environment["NETRC"] = os.devnull
-    try:
-        process = subprocess.Popen(
-            [sys.executable, "-I", "-B", str(Path(__file__).resolve()), "--worker"],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            start_new_session=True,
-            bufsize=0,
-            env=environment,
-        )
-    except OSError as exc:
-        raise HttpCarrierError("HTTP worker could not start") from exc
+    process = None
     pending: bytes | None = payload
     try:
+        with dispatch_guard() if dispatch_guard is not None else nullcontext():
+            if cancel is not None and cancel.is_set():
+                raise HttpCancelled("HTTP request cancelled at dispatch")
+            if time.monotonic() >= deadline:
+                raise requests.Timeout("HTTP deadline expired at dispatch")
+            try:
+                process = subprocess.Popen(
+                    [
+                        sys.executable,
+                        "-I",
+                        "-B",
+                        str(Path(__file__).resolve()),
+                        "--worker",
+                    ],
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    start_new_session=True,
+                    bufsize=0,
+                    env=environment,
+                )
+            except OSError as exc:
+                raise HttpCarrierError("HTTP worker could not start") from exc
+            if dispatch_guard is not None:
+                _handoff_payload(process, payload, deadline, cancel)
+                pending = None
         while True:
             if cancel is not None and cancel.is_set():
                 raise HttpCancelled("Owned HTTP request cancelled")
@@ -188,7 +244,8 @@ def bounded_post(
             raise HttpCarrierError("HTTP worker did not complete its protocol")
         return _transport_result(stdout, max_body_bytes)
     finally:
-        _stop_child(process)
+        if process is not None:
+            _stop_child(process)
 
 
 def _parent_death_guard(parent_pid: int) -> None:

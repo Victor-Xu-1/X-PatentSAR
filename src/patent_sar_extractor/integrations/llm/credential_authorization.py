@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import json
 import os
 import stat
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import asdict
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -18,6 +21,7 @@ from yaml.events import (  # type: ignore[import-untyped]
 )
 from yaml.nodes import MappingNode, SequenceNode  # type: ignore[import-untyped]
 
+from .api_failures import APIProblem, APIRequestError
 from .private_state import read_private, write_private
 
 if TYPE_CHECKING:
@@ -126,6 +130,41 @@ def current_credential(policy: EvidenceResolutionConfig) -> str | None:
         RecursionError,
     ):
         return None
+
+
+@contextmanager
+def dispatch_authorization(policy: EvidenceResolutionConfig) -> Iterator[None]:
+    """Order the bounded carrier handoff against GUI settings publication.
+
+    The shared directory lease ends once private input has reached the owned
+    carrier, not after its network response. Already handed-off work is in-flight;
+    OFF publication prevents every later handoff and downstream proposal use.
+    """
+    if not policy.authorization_file:
+        yield
+        return
+    path = Path(policy.authorization_file)
+    if not path.is_absolute() or any(p.is_symlink() for p in path.parents):
+        raise APIRequestError(APIProblem("authorization_revoked"))
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
+    descriptor = os.open(path.anchor, flags)
+    try:
+        for part in path.parent.parts[1:]:
+            child = os.open(part, flags, dir_fd=descriptor)
+            os.close(descriptor)
+            descriptor = child
+        info = os.fstat(descriptor)
+        if info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != 0o700:
+            raise APIRequestError(APIProblem("authorization_revoked"))
+        try:
+            fcntl.flock(descriptor, fcntl.LOCK_SH | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise APIRequestError(APIProblem("request_error")) from None
+        if not policy.api_key or current_credential(policy) != policy.api_key:
+            raise APIRequestError(APIProblem("authorization_revoked"))
+        yield
+    finally:
+        os.close(descriptor)  # Release the same inode used by settings writers.
 
 
 def grant_path(root: Path, job_id: str) -> Path:

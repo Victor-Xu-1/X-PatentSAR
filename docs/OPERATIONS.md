@@ -472,6 +472,13 @@ only the credential fingerprint and settings revision, under the job budget lock
 it neither resets calls nor starts a model or task. Resume separately. Changed
 semantics, stale revision, active/removed/foreign jobs and damaged control state
 remain rejected. Operator ENV policies do not gain a browser renewal fallback.
+Renewal cannot clear a carrier/cleanup, unsafe-cache or other non-authentication
+safety block; key rotation does not mask it. Transient wait/fault records remain.
+After durable reservation, disclosure is checked again. A shared configuration
+directory lease orders publication against the at-most-two-second owned-carrier
+input/EOF handoff, not the network response. Already handed-off requests are
+in-flight and cannot be recalled; OFF prevents later handoffs and proposal use.
+Standalone CLI stages inherit one invocation ID and the same circuit semantics.
 
 Authentication faults stop further calls; rate limits, timeouts and temporary
 provider faults are persisted and suspend subsequent API requests of that attempt.

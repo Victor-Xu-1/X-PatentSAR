@@ -13,6 +13,7 @@ import os
 import sqlite3
 import stat
 import threading
+from functools import partial
 from pathlib import Path
 from typing import Protocol
 
@@ -23,6 +24,7 @@ from .config import (
     get_evidence_resolution_config,
     snapshot_disclosure_allowed,
 )
+from .credential_authorization import dispatch_authorization
 from .evidence_protocol import (
     IDENTIFIER,
     EvidenceCandidate,
@@ -226,6 +228,9 @@ def resolve_evidence(
         ):
             denied = True
             return False
+        if not snapshot_disclosure_allowed(policy):
+            denied = True
+            return False
         return True
 
     try:
@@ -257,6 +262,9 @@ def resolve_evidence(
             validate_content=validate_content,
             validation_identity=f"evidence-v3:complete={require_complete_refs}:max={max_selected}",
             on_failure=on_failure,
+            dispatch_guard=partial(dispatch_authorization, policy)
+            if policy.authorization_file
+            else None,
         )
         if denied:
             if not snapshot_disclosure_allowed(policy):
