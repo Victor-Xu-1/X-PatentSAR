@@ -13,14 +13,23 @@ export function DeleteSARJob({
   job,
   title,
   onRemoved,
+  disabled = false,
+  active = true,
+  scope = '',
 }: {
   job: SARJob;
   title: string;
   onRemoved: (id: string) => void;
+  disabled?: boolean;
+  active?: boolean;
+  scope?: string;
 }) {
   const { t } = useTranslation();
   const [confirm, setConfirm] = useState(false);
-  const mutation = useSARMutation();
+  const mutation = useSARMutation({
+    active,
+    scope: JSON.stringify([scope, job.dataset_id, job.id]),
+  });
   const blocked =
     job.error_code === 'sar_process_unverified' ||
     (mutation.error instanceof ApiError && mutation.error.code === 'sar_process_unverified');
@@ -29,7 +38,7 @@ export function DeleteSARJob({
     <>
       <button
         type="button"
-        disabled={job.error_code === 'sar_process_unverified'}
+        disabled={!active || disabled || job.error_code === 'sar_process_unverified'}
         onClick={() => setConfirm(true)}
       >
         {t('移除 SAR 任务')}
@@ -57,7 +66,7 @@ export function DeleteSARJob({
               {t('只软移除这条 SAR 任务记录。数据集、来源、结果和审计字节保留，不释放磁盘空间。')}
             </p>
             {blocked && <p role="alert">{t('SAR 进程清理尚未验证，任务不可移除。')}</p>}
-            <MutationNotice mutation={mutation} />
+            <MutationNotice mutation={mutation} disabled={!active || disabled} />
           </div>
           <footer className="dialog-actions">
             <button
@@ -72,7 +81,7 @@ export function DeleteSARJob({
             </button>
             <button
               type="button"
-              disabled={mutation.locked || blocked}
+              disabled={!active || disabled || mutation.locked || blocked}
               onClick={() => {
                 void mutation.run(
                   () => sarApi.removeJob(job.id),

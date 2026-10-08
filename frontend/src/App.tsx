@@ -93,6 +93,7 @@ export default function App() {
         <Header
           view={route.view}
           project={project}
+          sourceProjectId={route.view === 'workspace' ? route.projectId : null}
           version={connection.data?.health.product.version ?? null}
           onUpload={onUpload}
           onRecent={() => navigateView('projects')}

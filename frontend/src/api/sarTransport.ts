@@ -52,7 +52,7 @@ export function sarTransport(
     } catch (error) {
       if (signal?.aborted) throw signal.reason;
       if (error instanceof ApiError) {
-        if (error.status !== 0) throw error;
+        if (error.status !== 0 && error.status < 500) throw error;
         throw new ApiError(error.status, error.code, error.source, method !== 'GET', error.values);
       }
       throw new ApiError(

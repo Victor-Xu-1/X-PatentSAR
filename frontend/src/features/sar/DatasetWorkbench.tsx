@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { sarApi } from '../../api/sarApi';
 import type { JobList, Molecule, Region, SARJob } from '../../api/sarTypes';
-import { useResource } from '../../hooks/useResource';
+import { useSARResource } from './useSARResource';
 import { Loading } from '../../components/Feedback';
 import { SARFailure } from './SARFailure';
 import { useTranslation } from '../../i18n';
@@ -21,27 +21,29 @@ export function DatasetWorkbench({
   jobId,
   onJob,
   onRemoved,
+  scope = '',
 }: {
   datasetId: string;
   active: boolean;
   jobId: string | null;
   onJob: (id: string | null) => void;
   onRemoved: () => void;
+  scope?: string;
 }) {
   const { t } = useTranslation();
   const [reference, setReference] = useState<Molecule | null>(null);
   const [region, setRegion] = useState<Region | null>(null);
-  const [refresh, setRefresh] = useState(0);
   const load = useCallback((signal: AbortSignal) => sarApi.dataset(datasetId, signal), [datasetId]);
-  const dataset = useResource(active ? `sar:dataset:${datasetId}` : null, load);
+  const dataset = useSARResource(`sar:dataset:${datasetId}`, active, load);
   const loadJobs = useCallback(
     (signal: AbortSignal) => sarApi.jobs(datasetId, signal),
     [datasetId],
   );
-  const jobs = useResource(active ? `sar:jobs:${datasetId}` : null, loadJobs, {
+  const jobs = useSARResource(`sar:jobs:${datasetId}`, active, loadJobs, {
     milliseconds: 3000,
     while: activeList,
   });
+  const ready = dataset.validated && jobs.validated;
   function createdJob(job: SARJob) {
     jobs.reload();
     dataset.reload();
@@ -61,8 +63,6 @@ export function DatasetWorkbench({
                 onClick={() => {
                   dataset.reload();
                   jobs.reload();
-                  setRefresh((old) => old + 1);
-                  setRegion(null);
                 }}
               >
                 {t('刷新')}
@@ -89,12 +89,17 @@ export function DatasetWorkbench({
               </output>
             )}
             <SourceLinks dataset={dataset.data} />
-            <DeleteDataset dataset={dataset.data} active={active} onRemoved={onRemoved} />
+            <DeleteDataset
+              dataset={dataset.data}
+              active={active}
+              disabled={!ready}
+              scope={scope}
+              onRemoved={onRemoved}
+            />
           </section>
           <MoleculeBrowser
-            key={refresh}
             dataset={dataset.data}
-            active={active}
+            active={active && dataset.validated}
             referenceId={reference?.id ?? null}
             onReference={(molecule) => {
               if (
@@ -109,17 +114,21 @@ export function DatasetWorkbench({
           <div className="sar-analysis-grid">
             {reference && (
               <RegionSelector
-                key={`${dataset.data.revision}:${reference.id}:${reference.graph_sha256}:${refresh}`}
+                key={`${dataset.data.revision}:${reference.id}:${reference.graph_sha256}`}
                 dataset={dataset.data}
                 reference={reference}
                 active={active}
+                disabled={!dataset.validated}
+                scope={scope}
                 onRegion={setRegion}
               />
             )}
             <AnalysisForm
               dataset={dataset.data}
               region={region}
-              busy={!jobs.data || Boolean(jobs.error) || jobs.data.items.some(isActiveJob)}
+              busy={!ready || Boolean(jobs.data?.items.some(isActiveJob))}
+              active={active}
+              scope={scope}
               onJob={createdJob}
             />
           </div>
@@ -127,6 +136,9 @@ export function DatasetWorkbench({
             dataset={dataset.data}
             resource={jobs}
             selectedId={jobId}
+            disabled={!ready}
+            active={active}
+            scope={scope}
             onSelect={onJob}
             onRemoved={(id) => {
               jobs.reload();
@@ -139,6 +151,8 @@ export function DatasetWorkbench({
               dataset={dataset.data}
               jobId={jobId}
               active={active}
+              disabled={!dataset.validated}
+              scope={scope}
               reference={reference}
               onJob={(id) => {
                 jobs.reload();

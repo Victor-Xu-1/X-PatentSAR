@@ -10,18 +10,25 @@ export function AnalysisForm({
   region,
   busy,
   onJob,
+  active = true,
+  scope = '',
 }: {
   dataset: Dataset;
   region: Region | null;
   busy: boolean;
   onJob: (job: SARJob) => void;
+  active?: boolean;
+  scope?: string;
 }) {
   const { t } = useTranslation();
   const [metricId, setMetricId] = useState('');
   const [direction, setDirection] = useState<'lower' | 'higher' | ''>('');
   const [grades, setGrades] = useState('');
   const [confirm, setConfirm] = useState(false);
-  const mutation = useSARMutation();
+  const mutation = useSARMutation({
+    active,
+    scope: JSON.stringify([scope, dataset.id, dataset.revision]),
+  });
   const order = gradeOrder(grades);
   const current = Boolean(
     region &&
@@ -34,6 +41,7 @@ export function AnalysisForm({
     dataset.metrics.some((metric) => metric.id === metricId) &&
     direction !== '' &&
     order.valid &&
+    active &&
     !busy;
   return (
     <section className="sar-panel" aria-label={t('分析设置')}>
@@ -54,7 +62,7 @@ export function AnalysisForm({
           void mutation.run(() => sarApi.analyse(dataset.id, payload), onJob, payload.request_id);
         }}
       >
-        <fieldset disabled={mutation.locked || dataset.stale || busy}>
+        <fieldset disabled={!active || mutation.locked || dataset.stale || busy}>
           <div className="sar-form-grid">
             <label>
               {t('活性指标')}
@@ -105,7 +113,7 @@ export function AnalysisForm({
           </button>
         </fieldset>
       </form>
-      <MutationNotice mutation={mutation} />
+      <MutationNotice mutation={mutation} disabled={!active || busy || dataset.stale} />
     </section>
   );
 }

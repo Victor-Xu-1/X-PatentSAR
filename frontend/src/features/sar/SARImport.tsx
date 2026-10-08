@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { api } from '../../api';
 import { sarApi } from '../../api/sarApi';
 import type { CSVPreview, Dataset, ProjectSnapshot } from '../../api/sarTypes';
-import { useResource } from '../../hooks/useResource';
+import { useSARResource } from './useSARResource';
 import { Empty, Loading } from '../../components/Feedback';
 import { SARFailure } from './SARFailure';
 import { UiError, useTranslation } from '../../i18n';
@@ -16,10 +16,12 @@ export function SARImport({
   active,
   sourceProjectId,
   onCreated,
+  scope = '',
 }: {
   active: boolean;
   sourceProjectId: string | null;
   onCreated: (dataset: Dataset) => void;
+  scope?: string;
 }) {
   const { t } = useTranslation();
   const [mode, setMode] = useState<'project' | 'csv'>('project');
@@ -32,15 +34,16 @@ export function SARImport({
   const [title, setTitle] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<CSVPreview | null>(null);
-  const mutation = useSARMutation();
+  const mutation = useSARMutation({ active, scope: JSON.stringify([scope, sourceProjectId]) });
   const loadProjects = useCallback((signal: AbortSignal) => api.projects(signal), []);
-  const projects = useResource(
-    active && mode === 'project' ? 'sar:source-projects' : null,
+  const projects = useSARResource(
+    'sar:source-projects',
+    active && mode === 'project',
     loadProjects,
   );
   const selectedExists = projects.data?.items.some((p) => p.id === projectId);
   function snapshot() {
-    if (!projectId || mutation.locked) return;
+    if (!active || !projects.validated || !projectId || mutation.locked) return;
     const payload: ProjectSnapshot = {
       project_id: projectId,
       title: title.trim() || null,
@@ -49,6 +52,7 @@ export function SARImport({
     void mutation.run(() => sarApi.createProject(payload), onCreated, payload.request_id);
   }
   function upload() {
+    if (!active || mutation.locked) return;
     void mutation.run(async () => {
       if (!file || !/\.csv$/i.test(file.name) || !file.size)
         throw new UiError('请选择非空 CSV 文件。');
@@ -64,7 +68,7 @@ export function SARImport({
         <button
           type="button"
           aria-pressed={mode === 'project'}
-          disabled={mutation.locked}
+          disabled={!active || mutation.locked}
           onClick={() => setMode('project')}
         >
           {t('已提取项目快照')}
@@ -72,13 +76,16 @@ export function SARImport({
         <button
           type="button"
           aria-pressed={mode === 'csv'}
-          disabled={mutation.locked}
+          disabled={!active || mutation.locked}
           onClick={() => setMode('csv')}
         >
           {t('CSV 文件')}
         </button>
       </div>
-      <MutationNotice mutation={mutation} />
+      <MutationNotice
+        mutation={mutation}
+        disabled={!active || (mode === 'project' && !projects.validated)}
+      />
       {mode === 'project' ? (
         <form
           onSubmit={(e) => {
@@ -94,7 +101,7 @@ export function SARImport({
               description="选择已提取项目快照或导入 CSV。打开页面不会创建数据集或启动分析。"
             />
           )}
-          <fieldset disabled={mutation.locked}>
+          <fieldset disabled={!active || !projects.validated || mutation.locked}>
             <div className="sar-form-grid">
               <label>
                 {t('来源项目')}
@@ -135,11 +142,11 @@ export function SARImport({
                 <input
                   type="file"
                   accept=".csv,text/csv"
-                  disabled={mutation.locked}
+                  disabled={!active || mutation.locked}
                   onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                 />
               </label>
-              <button type="button" disabled={!file || mutation.locked} onClick={upload}>
+              <button type="button" disabled={!active || !file || mutation.locked} onClick={upload}>
                 {t('服务器预览')}
               </button>
             </div>
@@ -174,7 +181,7 @@ export function SARImport({
               <CSVMappingForm
                 key={preview.token}
                 preview={preview}
-                disabled={mutation.locked}
+                disabled={!active || mutation.locked}
                 onSubmit={(payload) => {
                   void mutation.run(
                     () => sarApi.createCSV(payload),
@@ -189,7 +196,7 @@ export function SARImport({
               />
               <button
                 type="button"
-                disabled={mutation.locked}
+                disabled={!active || mutation.locked}
                 onClick={() => {
                   void mutation.run(
                     () => sarApi.discardPreview(preview.token),

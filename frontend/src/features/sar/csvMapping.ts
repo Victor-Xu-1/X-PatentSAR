@@ -33,6 +33,7 @@ export function mappingValid(draft: MappingDraft, preview: CSVPreview) {
     draft.title.length <= 200 &&
     draft.activity_columns.length > 0 &&
     draft.activity_columns.length <= 64 &&
+    (!draft.metric_column || draft.activity_columns.length === 1) &&
     new Set(draft.activity_columns).size === draft.activity_columns.length &&
     columns.every((column) => preview.headers.includes(column) && column.length <= 300) &&
     draft.id_column !== draft.smiles_column &&

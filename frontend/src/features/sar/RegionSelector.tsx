@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { sarApi } from '../../api/sarApi';
 import type { Dataset, Molecule, Region, RegionRequest } from '../../api/sarTypes';
-import { useResource } from '../../hooks/useResource';
+import { useSARResource } from './useSARResource';
 import { Loading } from '../../components/Feedback';
 import { SARFailure } from './SARFailure';
 import { useTranslation } from '../../i18n';
@@ -15,27 +15,39 @@ export function RegionSelector({
   dataset,
   reference,
   active,
+  disabled: blocked = false,
+  scope = '',
   onRegion,
 }: {
   dataset: Dataset;
   reference: Molecule;
   active: boolean;
+  disabled?: boolean;
+  scope?: string;
   onRegion: (region: Region | null) => void;
 }) {
   const { t } = useTranslation();
   const [indices, setIndices] = useState<number[]>([]);
   const [saved, setSaved] = useState<Region | null>(null);
-  const [loaded, setLoaded] = useState(false);
-  const [imageFailed, setImageFailed] = useState(false);
-  const mutation = useSARMutation();
+  const [loadedURL, setLoadedURL] = useState<string | null>(null);
+  const [failedURL, setFailedURL] = useState<string | null>(null);
+  const mutation = useSARMutation({
+    active,
+    scope: JSON.stringify([
+      scope,
+      dataset.id,
+      dataset.revision,
+      reference.id,
+      reference.graph_sha256,
+    ]),
+  });
   const load = useCallback(
     (signal: AbortSignal) => sarApi.drawing(dataset.id, reference.id, signal),
     [dataset.id, reference.id],
   );
-  const drawing = useResource(
-    active
-      ? `sar:drawing:${dataset.id}:${dataset.revision}:${reference.id}:${reference.graph_sha256}`
-      : null,
+  const drawing = useSARResource(
+    `sar:drawing:${dataset.id}:${dataset.revision}:${reference.id}:${reference.graph_sha256}`,
+    active && !blocked,
     load,
   );
   const image = useMemo(() => {
@@ -46,19 +58,25 @@ export function RegionSelector({
       return { value: null, error: error as Error };
     }
   }, [drawing.data]);
-  const graphCurrent = Boolean(
+  const compatible = Boolean(
     drawing.data?.molecule.eligible &&
     reference.graph_sha256 &&
     drawing.data.molecule.graph_sha256 === reference.graph_sha256 &&
     drawing.data.atoms.length &&
     !dataset.stale,
   );
-  const disabled = !graphCurrent || !image.value || !loaded || mutation.locked;
+  const loaded = Boolean(image.value && loadedURL === image.value.url);
+  const imageFailed = Boolean(image.value && failedURL === image.value.url);
+  const graphCurrent = compatible && drawing.validated && !blocked;
+  const savedCurrent =
+    saved?.dataset_id === dataset.id &&
+    saved.dataset_revision === dataset.revision &&
+    saved.molecule_id === reference.id &&
+    saved.graph_sha256 === reference.graph_sha256;
+  const disabled = !graphCurrent || !image.value || !loaded || imageFailed || mutation.locked;
   useEffect(() => {
-    if (!graphCurrent || image.error || imageFailed) {
-      onRegion(null);
-    }
-  }, [graphCurrent, image.error, imageFailed, onRegion]);
+    onRegion(graphCurrent && loaded && !image.error && !imageFailed && savedCurrent ? saved : null);
+  }, [graphCurrent, loaded, image.error, imageFailed, savedCurrent, saved, onRegion]);
   function toggle(index: number) {
     setIndices((old) =>
       old.includes(index) ? old.filter((i) => i !== index) : [...old, index].sort((a, b) => a - b),
@@ -91,32 +109,25 @@ export function RegionSelector({
         {t('选择仅用于参考比较，不是结构修正。来源修正仍使用原项目的审计编辑器。')}
       </p>
       {drawing.loading && <Loading />}
-      {drawing.error && (
-        <SARFailure
-          error={drawing.error}
-          onRetry={() => {
-            setLoaded(false);
-            drawing.reload();
-          }}
-        />
-      )}
+      {drawing.error && <SARFailure error={drawing.error} onRetry={drawing.reload} />}
       {image.error && <SARFailure error={image.error} />}
       {imageFailed && <p role="alert">{t('RDKit 结构图加载失败。')}</p>}
-      {drawing.data && !graphCurrent && (
+      {drawing.validated && !compatible && (
         <p role="alert">{t('图或修订发生变化，已禁止使用旧选区。请刷新并重新选择。')}</p>
       )}
       {image.value && (
         <div className="sar-drawing" style={{ aspectRatio: image.value.aspectRatio }}>
           <img
+            key={image.value.url}
             src={image.value.url}
             alt={t('RDKit 参考结构')}
             onLoad={() => {
-              setLoaded(true);
-              setImageFailed(false);
+              setLoadedURL(image.value?.url ?? null);
+              setFailedURL(null);
             }}
             onError={() => {
-              setLoaded(false);
-              setImageFailed(true);
+              setLoadedURL(null);
+              setFailedURL(image.value?.url ?? null);
             }}
           />
           {drawing.data?.atoms.map((atom) => (
@@ -158,16 +169,16 @@ export function RegionSelector({
         <button
           type="button"
           className="primary"
-          disabled={disabled || !indices.length || Boolean(saved)}
+          disabled={disabled || !indices.length || savedCurrent}
           onClick={save}
         >
           {t(mutation.busy ? '正在保存…' : '保存区域')}
         </button>
       </div>
-      {saved && graphCurrent && !image.error && !imageFailed && (
+      {saved && savedCurrent && graphCurrent && loaded && !image.error && !imageFailed && (
         <output>{t('区域已保存 · {count} 个连接点', { count: saved.attachment_count })}</output>
       )}
-      <MutationNotice mutation={mutation} />
+      <MutationNotice mutation={mutation} disabled={!graphCurrent} />
       <SourceLinks dataset={dataset} molecule={drawing.data?.molecule ?? reference} />
       {drawing.data && (
         <details>

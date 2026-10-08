@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { sarApi } from '../../api/sarApi';
 import type { Dataset, Molecule } from '../../api/sarTypes';
-import { useResource } from '../../hooks/useResource';
+import { useSARResource } from './useSARResource';
 import { Loading } from '../../components/Feedback';
 import { SARFailure } from './SARFailure';
 import { useTranslation } from '../../i18n';
@@ -26,28 +26,33 @@ export function SARResults({
   active,
   onJob,
   reference,
+  disabled = false,
+  scope = '',
 }: {
   dataset: Dataset;
   jobId: string;
   active: boolean;
   onJob: (id: string) => void;
   reference?: Molecule | null;
+  disabled?: boolean;
+  scope?: string;
 }) {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [sourceId, setSourceId] = useState<string | null>(null);
-  const mutation = useSARMutation();
-  const exportMutation = useSARMutation();
+  const mutationScope = { active, scope: JSON.stringify([scope, dataset.id, jobId]) };
+  const mutation = useSARMutation(mutationScope);
+  const exportMutation = useSARMutation(mutationScope);
   const exportController = useRef<AbortController | null>(null);
   useEffect(() => () => exportController.current?.abort(), []);
   useEffect(() => {
-    if (!active) exportController.current?.abort();
-  }, [active]);
+    if (!active || disabled) exportController.current?.abort();
+  }, [active, disabled]);
   const loadJob = useCallback(
     (signal: AbortSignal) => sarApi.job(jobId, dataset.id, signal),
     [jobId, dataset.id],
   );
-  const job = useResource(active ? `sar:job:${dataset.id}:${jobId}` : null, loadJob, {
+  const job = useSARResource(`sar:job:${dataset.id}:${jobId}`, active && !disabled, loadJob, {
     milliseconds: 2000,
     while: isActiveJob,
   });
@@ -55,21 +60,22 @@ export function SARResults({
     (signal: AbortSignal) => sarApi.pairs(jobId, dataset.id, page, signal),
     [jobId, dataset.id, page],
   );
-  const pairs = useResource(
-    active && job.data?.status === 'complete'
-      ? `sar:pairs:${jobId}:${page}:${job.data.status}:${job.data.processed}:${job.data.stale}`
-      : null,
+  const pairs = useSARResource(
+    `sar:pairs:${jobId}:${page}:${job.data?.status}:${job.data?.processed}:${job.data?.stale}`,
+    active && !disabled && job.validated && job.data?.status === 'complete',
     loadPairs,
   );
   const loadSource = useCallback(
-    (signal: AbortSignal) => sarApi.drawing(dataset.id, sourceId ?? '', signal),
+    (signal: AbortSignal) => sarApi.molecule(dataset.id, sourceId ?? '', signal),
     [dataset.id, sourceId],
   );
-  const source = useResource(
-    active && sourceId ? `sar:source:${dataset.id}:${sourceId}` : null,
+  const source = useSARResource(
+    `sar:source:${dataset.id}:${sourceId}`,
+    active && !disabled && Boolean(sourceId),
     loadSource,
   );
   const current = job.data && !job.data.stale && !dataset.stale;
+  const ready = active && !disabled && job.validated;
   function refresh() {
     job.reload();
     pairs.reload();
@@ -79,7 +85,7 @@ export function SARResults({
     <section className="sar-panel" aria-label={t('参考比较结果')}>
       <div className="sar-section-heading">
         <h2>{t('参考比较结果')}</h2>
-        <button type="button" onClick={refresh}>
+        <button type="button" onClick={refresh} disabled={!active || disabled}>
           {t('刷新')}
         </button>
       </div>
@@ -99,7 +105,7 @@ export function SARResults({
             {isActiveJob(job.data) && (
               <button
                 type="button"
-                disabled={mutation.locked}
+                disabled={!ready || mutation.locked}
                 onClick={() => {
                   void mutation.run(
                     () => sarApi.cancel(jobId, dataset.id),
@@ -114,7 +120,7 @@ export function SARResults({
               ['cancelled', 'interrupted', 'failed'].includes(job.data.status) && (
                 <button
                   type="button"
-                  disabled={!current || mutation.locked}
+                  disabled={!ready || !current || mutation.locked}
                   onClick={() => {
                     const payload = { expected_input_sha256: job.data!.input_sha256 };
                     void mutation.run(
@@ -142,7 +148,7 @@ export function SARResults({
           )}
           <p className="sar-hint">{t('任务状态与处理计数来自服务器，不代表科学验收。')}</p>
           {job.data.status !== 'complete' && <p>{t('比较结果仅在任务完成后发布。')}</p>}
-          <MutationNotice mutation={mutation} />
+          <MutationNotice mutation={mutation} disabled={!ready} />
           {pairs.loading && <Loading />}
           {pairs.error && <SARFailure error={pairs.error} onRetry={pairs.reload} />}
           {pairs.data && (
@@ -151,13 +157,13 @@ export function SARResults({
                 dataset={dataset}
                 pairs={pairs.data}
                 onSource={setSourceId}
-                reference={reference ?? source.data?.molecule ?? null}
+                reference={reference ?? source.data ?? null}
               />
               <PageControls
                 page={page}
                 total={pairs.data.total}
                 onPage={setPage}
-                disabled={pairs.loading}
+                disabled={!ready || !pairs.validated}
               />
             </>
           )}
@@ -166,7 +172,7 @@ export function SARResults({
               <button
                 key={format}
                 type="button"
-                disabled={exportMutation.busy || job.data!.status !== 'complete'}
+                disabled={!ready || exportMutation.busy || job.data!.status !== 'complete'}
                 onClick={() => {
                   exportController.current?.abort();
                   const controller = new AbortController();
@@ -195,7 +201,7 @@ export function SARResults({
           </div>
           {source.loading && <Loading />}
           {source.error && <SARFailure error={source.error} onRetry={source.reload} />}
-          {source.data && <MoleculeEvidence dataset={dataset} molecule={source.data.molecule} />}
+          {source.data && <MoleculeEvidence dataset={dataset} molecule={source.data} />}
         </div>
       )}
     </section>

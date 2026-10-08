@@ -5,6 +5,7 @@ import {
   decodeDataset,
   decodeDatasets,
   decodeDrawing,
+  decodeMolecule,
   decodeMolecules,
   decodeRegion,
 } from './sarDecoders';
@@ -64,13 +65,25 @@ export function createSARApi(shared: ApiClient, rawFetch?: typeof fetch) {
         signal,
       ),
     removeDataset: (id: string) => raw.remove(datasetPath(id)),
-    molecules: (id: string, page: number, query: string, signal: AbortSignal) =>
-      shared.get(
+    molecules: (id: string, page: number, query: string, signal: AbortSignal) => {
+      if (query.length > 200) throw new ContractError('$.query');
+      return shared.get(
         `${datasetPath(id)}/molecules?${new URLSearchParams({ page: String(page), page_size: '50', query })}`,
         (v) => {
           const result = decodeMolecules(v);
           if (result.page !== page || result.page_size !== 50)
             throw new ContractError('$.molecule_page');
+          return result;
+        },
+        signal,
+      );
+    },
+    molecule: (id: string, moleculeId: string, signal: AbortSignal) =>
+      shared.get(
+        `${datasetPath(id)}/molecules/${encodeURIComponent(moleculeId)}`,
+        (v) => {
+          const result = decodeMolecule(v);
+          if (result.id !== moleculeId) throw new ContractError('$.molecule.id');
           return result;
         },
         signal,

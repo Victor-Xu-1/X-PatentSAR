@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { sarApi } from '../../api/sarApi';
 import type { Dataset, Molecule } from '../../api/sarTypes';
-import { useResource } from '../../hooks/useResource';
+import { useSARResource } from './useSARResource';
 import { useDebounced } from '../../hooks/useDebounced';
 import { Empty, Loading } from '../../components/Feedback';
 import { SARFailure } from './SARFailure';
@@ -29,8 +29,9 @@ export function MoleculeBrowser({
     (signal: AbortSignal) => sarApi.molecules(dataset.id, page, search, signal),
     [dataset.id, page, search],
   );
-  const resource = useResource(
-    active ? `sar:rows:${dataset.id}:${dataset.revision}:${page}:${search}` : null,
+  const resource = useSARResource(
+    `sar:rows:${dataset.id}:${dataset.revision}:${page}:${search}`,
+    active,
     load,
   );
   return (
@@ -40,7 +41,8 @@ export function MoleculeBrowser({
         {t('搜索编号或 SMILES')}
         <input
           type="search"
-          maxLength={500}
+          maxLength={200}
+          disabled={!active}
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -96,7 +98,13 @@ export function MoleculeBrowser({
                       <td>
                         <button
                           type="button"
-                          disabled={dataset.stale || !molecule.eligible || !molecule.graph_sha256}
+                          disabled={
+                            !resource.validated ||
+                            query !== search ||
+                            dataset.stale ||
+                            !molecule.eligible ||
+                            !molecule.graph_sha256
+                          }
                           aria-pressed={referenceId === molecule.id}
                           onClick={() => onReference(molecule)}
                         >
@@ -113,7 +121,7 @@ export function MoleculeBrowser({
             page={page}
             total={resource.data.total}
             onPage={setPage}
-            disabled={resource.loading}
+            disabled={!resource.validated || query !== search}
           />
         </>
       )}

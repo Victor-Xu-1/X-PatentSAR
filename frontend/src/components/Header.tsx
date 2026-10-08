@@ -8,6 +8,7 @@ import { LanguageSwitch } from './LanguageSwitch';
 export function Header({
   view,
   project,
+  sourceProjectId,
   version,
   onUpload,
   onRecent,
@@ -18,6 +19,7 @@ export function Header({
 }: {
   view: View;
   project: Project | null;
+  sourceProjectId?: string | null;
   version: string | number | null;
   onUpload: () => void;
   onRecent: () => void;
@@ -91,7 +93,8 @@ export function Header({
           disabled={disabled}
           aria-current={view === 'sar' ? 'page' : undefined}
           onClick={() => {
-            if (view === 'workspace' && project && onSAR) onSAR(project.id);
+            const source = sourceProjectId ?? project?.id;
+            if (view === 'workspace' && source && onSAR) onSAR(source);
             else onNavigate('sar');
           }}
         >

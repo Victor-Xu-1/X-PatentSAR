@@ -5,7 +5,7 @@ import { sarApi } from '../src/api/sarApi';
 import { setLocale } from '../src/i18n';
 import { PairTable } from '../src/features/sar/PairTable';
 import { SARResults } from '../src/features/sar/SARResults';
-import { sarDataset, sarDrawing, sarJob, sarPair } from './sar-fixtures';
+import { sarDataset, sarDrawing, sarJob, sarMolecule, sarPair } from './sar-fixtures';
 beforeEach(() => {
   setLocale('en');
   vi.spyOn(sarApi, 'job').mockResolvedValue(sarJob);
@@ -17,6 +17,7 @@ beforeEach(() => {
     job: sarJob,
   });
   vi.spyOn(sarApi, 'drawing').mockResolvedValue(sarDrawing);
+  vi.spyOn(sarApi, 'molecule').mockResolvedValue(sarMolecule);
 });
 describe('truthful reference comparisons', () => {
   it('preserves censored/repeated original values, missing exact-fold and original labels/reasons in both languages', async () => {
@@ -102,7 +103,7 @@ describe('truthful reference comparisons', () => {
     expect(screen.getByText(/Export includes all original/)).toBeVisible();
   });
   it('loads source provenance on demand rather than guessing a result page', async () => {
-    const source = vi.spyOn(sarApi, 'drawing').mockResolvedValue(sarDrawing);
+    const source = vi.spyOn(sarApi, 'molecule').mockResolvedValue(sarMolecule);
     render(<SARResults active dataset={sarDataset} jobId={sarJob.id} onJob={vi.fn()} />);
     await screen.findByText('原文 009');
     expect(source).not.toHaveBeenCalled();

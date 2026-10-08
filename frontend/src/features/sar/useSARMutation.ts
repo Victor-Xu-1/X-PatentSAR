@@ -2,8 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { ApiError } from '../../api/errors';
 import { UncertainSARWrite } from '../../api/sarMutation';
 import { UiError } from '../../i18n';
+import { useSARScope } from './useSARScope';
 
-export function useSARMutation() {
+export function useSARMutation({
+  scope = '',
+  active = true,
+}: { scope?: string; active?: boolean } = {}) {
+  const capture = useSARScope(scope, active);
   const mounted = useRef(true);
   const running = useRef(false);
   const retry = useRef<(() => Promise<void>) | null>(null);
@@ -30,6 +35,7 @@ export function useSARMutation() {
     action: () => Promise<T>,
     onSuccess: (value: T) => void,
     requestId: string | null = null,
+    ownsCompletion = capture(),
   ) {
     if (running.current) return;
     running.current = true;
@@ -39,14 +45,15 @@ export function useSARMutation() {
       retry.current = null;
       if (mounted.current) {
         setState({ busy: false, error: null, uncertain: false, requestId: null, success: true });
-        onSuccess(result);
+        if (ownsCompletion()) onSuccess(result);
       }
     } catch (error) {
       const failure = error instanceof Error ? error : new UiError('SAR 操作失败。');
       const uncertain = failure instanceof ApiError && failure.uncertain;
       const retainedId = failure instanceof UncertainSARWrite ? failure.requestId : requestId;
       // Explicit retry only: keep the exact captured payload and request ID, never regenerate it.
-      retry.current = uncertain && retainedId ? () => run(action, onSuccess, retainedId) : null;
+      retry.current =
+        uncertain && retainedId ? () => run(action, onSuccess, retainedId, ownsCompletion) : null;
       if (mounted.current)
         setState({ busy: false, error: failure, uncertain, requestId: retainedId, success: false });
     } finally {

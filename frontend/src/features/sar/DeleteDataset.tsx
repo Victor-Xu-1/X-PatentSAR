@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import type { Dataset } from '../../api/sarTypes';
 import { sarApi } from '../../api/sarApi';
-import { useResource } from '../../hooks/useResource';
+import { useSARResource } from './useSARResource';
 import { Loading } from '../../components/Feedback';
 import { SARFailure } from './SARFailure';
 import { useTranslation } from '../../i18n';
@@ -12,21 +12,29 @@ export function DeleteDataset({
   dataset,
   active,
   onRemoved,
+  disabled = false,
+  scope = '',
 }: {
   dataset: Dataset;
   active: boolean;
   onRemoved: () => void;
+  disabled?: boolean;
+  scope?: string;
 }) {
   const { t } = useTranslation();
   const [confirm, setConfirm] = useState(false);
-  const mutation = useSARMutation();
+  const mutation = useSARMutation({ active, scope: JSON.stringify([scope, dataset.id]) });
   const load = useCallback((signal: AbortSignal) => sarApi.jobs(dataset.id, signal), [dataset.id]);
-  const jobs = useResource(active && confirm ? `sar:delete-jobs:${dataset.id}` : null, load);
-  const inactive = jobs.data !== null && !jobs.data.items.some(isActiveJob);
+  const jobs = useSARResource(
+    `sar:delete-jobs:${dataset.id}`,
+    active && !disabled && confirm,
+    load,
+  );
+  const inactive = jobs.validated && jobs.data !== null && !jobs.data.items.some(isActiveJob);
   return (
     <div className="sar-delete">
       {!confirm ? (
-        <button type="button" onClick={() => setConfirm(true)}>
+        <button type="button" disabled={!active || disabled} onClick={() => setConfirm(true)}>
           {t('移除数据集')}
         </button>
       ) : (
@@ -41,7 +49,7 @@ export function DeleteDataset({
           <div className="sar-actions">
             <button
               type="button"
-              disabled={!inactive || jobs.loading || mutation.locked}
+              disabled={disabled || !active || !inactive || mutation.locked}
               onClick={() => {
                 void mutation.run(() => sarApi.removeDataset(dataset.id), onRemoved);
               }}
@@ -51,11 +59,15 @@ export function DeleteDataset({
             <button type="button" disabled={mutation.locked} onClick={() => setConfirm(false)}>
               {t('取消')}
             </button>
-            <button type="button" disabled={mutation.busy} onClick={jobs.reload}>
+            <button
+              type="button"
+              disabled={!active || disabled || mutation.busy}
+              onClick={jobs.reload}
+            >
               {t('刷新')}
             </button>
           </div>
-          <MutationNotice mutation={mutation} />
+          <MutationNotice mutation={mutation} disabled={!active || disabled || !jobs.validated} />
         </>
       )}
     </div>

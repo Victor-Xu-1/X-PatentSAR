@@ -15,11 +15,13 @@ export function CSVMappingForm({
 }) {
   const { t } = useTranslation();
   const [draft, setDraft] = useState(() => initialMapping(preview));
+  const invalidLong = Boolean(draft.metric_column && draft.activity_columns.length !== 1);
   function column(key: keyof MappingDraft, label: string, optional = false) {
     return (
       <label>
         {t(label)}
         <select
+          aria-invalid={(key === 'metric_column' && invalidLong) || undefined}
           value={String(draft[key] ?? '')}
           onChange={(e) =>
             setDraft((old) => ({ ...old, [key]: e.target.value || (optional ? null : '') }))
@@ -86,6 +88,11 @@ export function CSVMappingForm({
             </label>
           ))}
         </fieldset>
+        {invalidLong && (
+          <p role="alert">
+            {t('指标名称列（可选）')} · {t('活性指标列')}: 1
+          </p>
+        )}
         {!mappingValid(draft, preview) && <p>{t('请明确选择编号、SMILES 和至少一个活性列。')}</p>}
         <button className="primary" type="submit" disabled={!mappingValid(draft, preview)}>
           {t('创建 CSV 数据集')}

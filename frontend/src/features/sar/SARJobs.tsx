@@ -12,12 +12,18 @@ export function SARJobs({
   selectedId,
   onSelect,
   onRemoved,
+  disabled = false,
+  active = true,
+  scope = '',
 }: {
   dataset: Dataset;
   resource: Resource<JobList>;
   selectedId: string | null;
   onSelect: (id: string) => void;
   onRemoved?: (id: string) => void;
+  disabled?: boolean;
+  active?: boolean;
+  scope?: string;
 }) {
   const { t } = useTranslation();
   return (
@@ -42,6 +48,7 @@ export function SARJobs({
             <button
               type="button"
               aria-pressed={selectedId === job.id}
+              disabled={disabled}
               onClick={() => onSelect(job.id)}
             >
               <span>
@@ -64,6 +71,9 @@ export function SARJobs({
             {onRemoved && (
               <DeleteSARJob
                 job={job}
+                disabled={disabled}
+                active={active}
+                scope={scope}
                 title={
                   dataset.metrics.find((metric) => metric.id === job.metric_id)?.name ??
                   job.metric_id

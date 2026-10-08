@@ -35,7 +35,12 @@ export function createSARMutation(shared: ApiClient) {
       if (key) unresolved.delete(key);
       return result;
     } catch (error) {
-      if (error instanceof ApiError && (error.uncertain || error.status === 0)) {
+      // A server failure can follow a committed write. Only an explicit retry may
+      // reuse this identity; a 5xx must never release it as a definite rejection.
+      if (
+        error instanceof ApiError &&
+        (error.uncertain || error.status === 0 || error.status >= 500)
+      ) {
         if (requestId) throw new UncertainSARWrite(error, requestId);
         throw new ApiError(error.status, error.code, error.source, true, error.values);
       }
