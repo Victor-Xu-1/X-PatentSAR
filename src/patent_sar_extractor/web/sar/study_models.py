@@ -47,6 +47,7 @@ class StudyRequest(DTO):
     title: str = Field(min_length=1, max_length=200)
     policies: list[StudyPolicy] = Field(min_length=1, max_length=8)
     region_ids: list[str] = Field(default_factory=list, max_length=12)
+    core_ids: list[str] = Field(default_factory=list, max_length=12)
     confirm_context: bool = Field(default=False, strict=True)
     candidate_count: int = Field(default=8, ge=5, le=10, strict=True)
 
@@ -77,6 +78,8 @@ class StudyScaffold(DTO):
     bins: list[StudyBin]
     molecule_ids: list[str]
     descriptive_only: Literal[True] = True
+    assignment_kind: Literal["murcko", "confirmed_core"] = "murcko"
+    core_region_id: str | None = None
 
 
 class StudyFragment(DTO):
@@ -170,4 +173,3 @@ class StudyRows(DTO):
 class StudyDrawing(DTO):
     id: str
     svg: str
-

@@ -136,6 +136,7 @@ class RegionRequest(DTO):
         min_length=1, max_length=512
     )
     name: str = Field(default="Region", min_length=1, max_length=40)
+    kind: Literal["variable", "core"] = "variable"
 
 
 class Region(DTO):
@@ -148,6 +149,7 @@ class Region(DTO):
     attachment_count: int
     created_at: str
     name: str = "Region"
+    kind: Literal["variable", "core"] = "variable"
 
 
 class AnalysisRequest(DTO):
