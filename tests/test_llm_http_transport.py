@@ -131,17 +131,25 @@ class DeadlineIntegrationTests(unittest.TestCase):
             "cache": False,
         }
         options.update(kwargs)
+
         # Test-only adapter routes the checked public API request to an owned
         # HTTP emulator. It performs no inference and adds no production opt-out.
         def local_wire(url, **wire):
             self.assertEqual(url, "https://api.example.org/v1/chat/completions")
             self.assertTrue(wire.pop("require_public"))
-            return transport.bounded_post(f"http://127.0.0.1:{server.server_port}/v1/chat/completions", **wire)
+            return transport.bounded_post(
+                f"http://127.0.0.1:{server.server_port}/v1/chat/completions", **wire
+            )
 
         with patch.object(client, "bounded_post", side_effect=local_wire):
             return client.llm_chat(
                 [{"role": "user", "content": "controlled local transport observation"}],
-                config={"endpoint": "https://api.example.org/v1", "model": "controlled", "api_key": TEST_KEY, "cache_path": ""},
+                config={
+                    "endpoint": "https://api.example.org/v1",
+                    "model": "controlled",
+                    "api_key": TEST_KEY,
+                    "cache_path": "",
+                },
                 **options,
             )
 
@@ -337,8 +345,12 @@ class DeadlineIntegrationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             transport.bounded_post(
                 f"http://127.0.0.1:{server.server_port}/v1/chat/completions",
-                headers={}, json={}, timeout=1, deadline=time.monotonic() + 1,
-                max_body_bytes=8192, require_public=True,
+                headers={},
+                json={},
+                timeout=1,
+                deadline=time.monotonic() + 1,
+                max_body_bytes=8192,
+                require_public=True,
             )
         self.assertEqual(server.requests, [])
 
@@ -362,9 +374,11 @@ def orphan_call(endpoint, marker):
     with patch.object(transport.subprocess, "Popen", side_effect=record):
         transport.bounded_post(
             endpoint + "/chat/completions",
-            headers={"Authorization": f"Bearer {TEST_KEY}"}, json={},
+            headers={"Authorization": f"Bearer {TEST_KEY}"},
+            json={},
             timeout=5,
-            deadline=time.monotonic() + 5, max_body_bytes=65536,
+            deadline=time.monotonic() + 5,
+            max_body_bytes=65536,
         )
 
 
@@ -464,7 +478,16 @@ class CarrierContractTests(unittest.TestCase):
             ) as posted,
             patch.object(client, "bounded_post") as carrier,
             patch.object(client.time, "sleep") as sleep,
-            patch.dict(os.environ, {"LLM_API_KEY": TEST_KEY, "LLM_ENDPOINT": "https://unit.invalid", "LLM_MODEL": "controlled", "PATENTSAR_LLM_RESOLUTION_MODE": "off", "PATENTSAR_LLM_RESOLUTION_DATA_CONSENT": "false"}),
+            patch.dict(
+                os.environ,
+                {
+                    "LLM_API_KEY": TEST_KEY,
+                    "LLM_ENDPOINT": "https://unit.invalid",
+                    "LLM_MODEL": "controlled",
+                    "PATENTSAR_LLM_RESOLUTION_MODE": "off",
+                    "PATENTSAR_LLM_RESOLUTION_DATA_CONSENT": "false",
+                },
+            ),
         ):
             self.assertEqual(client.llm_chat([], cache=False), "")
         posted.assert_not_called()

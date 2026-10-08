@@ -19,9 +19,7 @@ from .activity_models import ActivityRow
 from .activity_observations import has_usable_values
 
 
-def save_results(
-    rows: list[ActivityRow], output_dir: Path, profile: dict
-) -> None:
+def save_results(rows: list[ActivityRow], output_dir: Path, profile: dict) -> None:
     value_keys = list(dict.fromkeys(k for r in rows for k in r.activity_values))
     cell_keys = list(dict.fromkeys(k for r in rows for k in r.cell_line_data))
     fields = [
