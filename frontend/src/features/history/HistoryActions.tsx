@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n';
 import { useState } from 'react';
 import { RotateCcw, Trash2 } from 'lucide-react';
 import type { HistoryAction, HistoryEntry, HistoryTarget } from '../../api/historyTypes';
@@ -14,8 +15,9 @@ export function HistoryActions({
   action?: HistoryAction;
   iconOnly?: boolean;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const label = `${action === 'restore' ? '恢复' : '删除'} ${target.title}`;
+  const label = t(action === 'restore' ? '恢复 {title}' : '删除 {title}', { title: target.title });
   return (
     <>
       <button
@@ -30,7 +32,7 @@ export function HistoryActions({
         ) : (
           <Trash2 size={15} aria-hidden="true" />
         )}
-        {!iconOnly && <span>{action === 'restore' ? '恢复' : '删除'}</span>}
+        {!iconOnly && <span>{action === 'restore' ? t('恢复') : t('删除')}</span>}
       </button>
       {open && (
         <DeletionDialog

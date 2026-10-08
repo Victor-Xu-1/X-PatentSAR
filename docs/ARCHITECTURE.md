@@ -173,6 +173,16 @@ Interrupted/incomplete/foreign/old core evidence cannot enter that path.
 
 ## Modular responsibilities
 
+Interface localization has one frontend authority in `frontend/src/i18n`:
+supported-language/default registry, local browser preference and subscriptions,
+and modular application-owned message catalogs. English is the default; Chinese
+and English are required, with additional locales added at the same registry/catalog
+boundary. Locale changes update React presentation and document language without
+remounting workflow, input, correction or drawing state. UI errors retain source
+message/parameters for redisplay. Source identifiers, patent headers/text, values,
+units, chemistry and user input are not localized. No translation API, backend
+setting, scientific epoch, task execution or acceptance authority is added.
+
 | Boundary | Authority |
 |---|---|
 | CLI orchestration | `application/pipeline.py`, typed `PipelineContext`, one handler per stage |

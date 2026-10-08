@@ -1,3 +1,4 @@
+import { UiError, useTranslation } from '../../i18n';
 import { RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import type { Identity } from '../../api/types';
@@ -24,6 +25,7 @@ export function EnvironmentPage({
   onOperation: (id: string | null) => void;
   product: Identity;
 }) {
+  const { t } = useTranslation();
   const workspace = useEnvironmentWorkspace(operationId, onOperation);
   const { catalog, mutations } = workspace;
   const data = catalog.data;
@@ -50,14 +52,17 @@ export function EnvironmentPage({
   const installation = useEnvironmentInstallPlan(data, disabled);
   const { plan } = installation;
   return (
-    <section className="management-page environment-page" aria-label={`${product.name} 环境管理`}>
+    <section
+      className="management-page environment-page"
+      aria-label={t('{product} 环境管理', { product: product.name })}
+    >
       <header className="page-header">
         <div>
-          <h1>环境管理</h1>
+          <h1>{t('环境管理')}</h1>
         </div>
         <div className="inline-actions">
           <button type="button" onClick={() => setHistoryOpen(true)}>
-            操作记录
+            {t('操作记录')}
           </button>
           <button
             type="button"
@@ -66,7 +71,7 @@ export function EnvironmentPage({
             disabled={catalog.loading}
           >
             <RefreshCw size={15} />
-            刷新环境目录
+            {t('刷新环境目录')}
           </button>
         </div>
       </header>
@@ -77,20 +82,20 @@ export function EnvironmentPage({
         <ErrorNotice
           error={
             catalog.error instanceof ApiError && catalog.error.status === 404
-              ? new Error('当前后端未提供环境管理，请更新后端后重试。')
+              ? new UiError('当前后端未提供环境管理，请更新后端后重试。')
               : catalog.error
           }
           onRetry={catalog.reload}
         />
       )}
       {catalog.loading && !data ? (
-        <Loading label="正在读取真实环境组件目录…" />
+        <Loading label={t('正在读取真实环境组件目录…')} />
       ) : (
         data && (
           <>
             {!data.settings.enabled && (
               <output className="info-banner">
-                {data.settings.reason ?? '服务端未启用环境管理；网页不会执行替代安装。'}
+                {data.settings.reason ?? t('服务端未启用环境管理；网页不会执行替代安装。')}
               </output>
             )}
             <EnvironmentOverview
@@ -118,7 +123,7 @@ export function EnvironmentPage({
       <LLMApiPanel />
       {historyOpen && (
         <HistoryDialog
-          title="环境操作记录"
+          title={t('环境操作记录')}
           initialKind="environment_operation"
           onClose={() => setHistoryOpen(false)}
           onChanged={historyChanged}
@@ -130,7 +135,7 @@ export function EnvironmentPage({
       )}
       {trashOpen && (
         <HistoryDialog
-          title="回收站"
+          title={t('回收站')}
           initialKind="environment_operation"
           deleted
           filters

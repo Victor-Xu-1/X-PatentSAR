@@ -1,3 +1,4 @@
+import { UiError, useTranslation } from '../../i18n';
 import { useState } from 'react';
 import type { LLMApi } from '../../api/llmApi';
 import { Dialog } from '../../components/Dialog';
@@ -9,16 +10,17 @@ import { useLLMSettings } from './useLLMSettings';
 import '../../styles/llm.css';
 
 export function LLMApiPanel({ api }: { api?: LLMApi }) {
+  const { t } = useTranslation();
   const controller = useLLMSettings(api);
   const [confirming, setConfirming] = useState(false);
   const { settings, readError, loading } = controller;
   const status = loading
-    ? '正在读取…'
+    ? t('正在读取…')
     : readError
-      ? '无法读取'
+      ? t('无法读取')
       : settings
-        ? llmStatusLabels[settings.status]
-        : '尚未读取';
+        ? t(llmStatusLabels[settings.status])
+        : t('尚未读取');
   return (
     <section className="llm-api-panel" aria-label="LLM API">
       <div className="llm-api-row">
@@ -26,19 +28,19 @@ export function LLMApiPanel({ api }: { api?: LLMApi }) {
           <h2>LLM API</h2>
           <output
             className={`llm-api-status${!loading && !readError && settings ? ` llm-status-${settings.status}` : ''}`}
-            aria-label="LLM API 状态"
+            aria-label={t('LLM API 状态')}
             aria-live="polite"
           >
             {status}
           </output>
-          <p className="muted">仅外部 API，不在本机部署模型</p>
+          <p className="muted">{t('仅外部 API，不在本机部署模型')}</p>
         </div>
         <button
           type="button"
           disabled={!settings || controller.unavailable || controller.busy}
           onClick={controller.openDialog}
         >
-          配置
+          {t('配置')}
         </button>
       </div>
       {readError && !controller.open && (
@@ -46,13 +48,13 @@ export function LLMApiPanel({ api }: { api?: LLMApi }) {
       )}
       {controller.needsRefresh && !controller.open && !readError && (
         <ErrorNotice
-          error={new Error('上次请求结果尚未确认。请先读取服务器状态。')}
+          error={new UiError('上次请求结果尚未确认。请先读取服务器状态。')}
           onRetry={() => void controller.refresh()}
         />
       )}
       {controller.open && (
         <Dialog
-          title="LLM API 设置"
+          title={t('LLM API 设置')}
           busy={controller.busy || confirming}
           onClose={controller.close}
           className="llm-settings-dialog"

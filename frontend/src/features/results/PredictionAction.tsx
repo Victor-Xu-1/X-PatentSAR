@@ -1,3 +1,4 @@
+import { useTranslation, UiError } from '../../i18n';
 import { useState } from 'react';
 import { api } from '../../api';
 import { ApiError } from '../../api/errors';
@@ -12,6 +13,7 @@ export function PredictionAction({
   disabled: boolean;
   onQueued: () => void;
 }) {
+  const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
   const [uncertain, setUncertain] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -24,7 +26,7 @@ export function PredictionAction({
       setMessage('已提交结构与指标补齐任务；复用已有结果，不重新提取 PDF。');
       onQueued();
     } catch (failure) {
-      setError(failure instanceof Error ? failure : new Error('结构与指标补齐任务提交失败。'));
+      setError(failure instanceof Error ? failure : new UiError('结构与指标补齐任务提交失败。'));
       if (failure instanceof ApiError && failure.uncertain) setUncertain(true);
     } finally {
       setBusy(false);
@@ -44,7 +46,7 @@ export function PredictionAction({
       setUncertain(false);
       onQueued();
     } catch (failure) {
-      setError(failure instanceof Error ? failure : new Error('任务状态读取失败。'));
+      setError(failure instanceof Error ? failure : new UiError('任务状态读取失败。'));
     } finally {
       setBusy(false);
     }
@@ -52,14 +54,14 @@ export function PredictionAction({
   return (
     <div className="prediction-action">
       <button type="button" disabled={disabled || busy || uncertain} onClick={() => void submit()}>
-        补齐结构与指标
+        {t('补齐结构与指标')}
       </button>
       {uncertain && (
         <button type="button" disabled={busy} onClick={() => void check()}>
-          检查已提交任务
+          {t('检查已提交任务')}
         </button>
       )}
-      {message && <output className="info-banner">{message}</output>}
+      {message && <output className="info-banner">{t(message)}</output>}
       {error && <ErrorNotice error={error} />}
     </div>
   );

@@ -1,5 +1,11 @@
 import { expect, test } from '@playwright/test';
 import packageMetadata from '../package.json' with { type: 'json' };
+import { LOCALE_STORAGE_KEY } from '../src/i18n/locale';
+
+// Existing Chinese navigation contracts remain explicit rather than setting product defaults.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript((key) => localStorage.setItem(key, 'zh-CN'), LOCALE_STORAGE_KEY);
+});
 
 const expectedVersion = packageMetadata.version;
 const projectId = process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID;

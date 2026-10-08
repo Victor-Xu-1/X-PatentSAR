@@ -1,0 +1,173 @@
+import { expect, test } from '@playwright/test';
+
+// Fresh controller-owned state only. UI preference writes never create a task,
+// call a model, or change uploaded patent/source data.
+for (const width of [390, 800, 1672]) {
+  test(`installed bilingual navigation persists and keeps PDF selection at ${width}px`, async ({
+    page,
+  }) => {
+    const writes: string[] = [];
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await page.route('**/api/v1/**', async (route) => {
+      if (route.request().method() !== 'GET') {
+        writes.push(new URL(route.request().url()).pathname);
+        await route.abort('blockedbyclient');
+      } else await route.continue();
+    });
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 942 });
+    await page.goto('/#/new-task');
+    const language = page.getByRole('combobox', { name: 'Interface language', exact: true });
+    await expect(language).toHaveValue('en');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await page.getByLabel('Original patent PDF file', { exact: true }).setInputFiles({
+      name: '中文原文-008B.pdf',
+      mimeType: 'application/pdf',
+      buffer: Buffer.from('%PDF-synthetic-selection-only'),
+    });
+    await language.selectOption('zh-CN');
+    await expect(page.getByRole('heading', { name: '上传专利 PDF', exact: true })).toBeVisible();
+    await page.getByRole('combobox', { name: '界面语言', exact: true }).selectOption('en');
+    await expect(
+      page.getByRole('heading', { name: 'Upload patent PDF', exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText('中文原文-008B.pdf', { exact: true })).toBeVisible();
+    expect(
+      await page
+        .getByLabel('Original patent PDF file', { exact: true })
+        .evaluate((input) => (input as HTMLInputElement).files?.[0]?.name),
+    ).toBe('中文原文-008B.pdf');
+    await page.screenshot({ path: test.info().outputPath('english-upload.png'), fullPage: true });
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(
+      page.getByRole('combobox', { name: 'Interface language', exact: true }),
+    ).toHaveValue('en');
+    for (const [caption, heading] of [
+      ['Recent files', 'Recent files'],
+      ['Tasks', 'Tasks'],
+      ['Environment', 'Environment'],
+    ] as const) {
+      await page.locator('.topbar').getByRole('button', { name: caption, exact: true }).click();
+      await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
+    }
+    const panel = page.getByRole('region', { name: 'LLM API', exact: true });
+    await panel.getByRole('button', { name: 'Configure', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'LLM API settings', exact: true });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByLabel('Review mode', { exact: true })).toHaveValue('off');
+    await expect(dialog.getByRole('button', { name: 'Save', exact: true })).toBeDisabled();
+    await page.screenshot({
+      path: test.info().outputPath('english-llm-settings.png'),
+      fullPage: true,
+    });
+    await dialog.getByRole('button', { name: 'Close dialog', exact: true }).click();
+    await page.reload();
+    await expect(
+      page.getByRole('combobox', { name: 'Interface language', exact: true }),
+    ).toHaveValue('en');
+    await expect(page.getByRole('heading', { name: 'Environment', exact: true })).toBeVisible();
+    const bounds = await page.evaluate(() => ({
+      document: document.documentElement.scrollWidth <= innerWidth + 1,
+      controls: [...document.querySelectorAll('.topbar button, .language-switch select')].every(
+        (item) => {
+          const box = item.getBoundingClientRect();
+          return box.left >= 0 && box.right <= innerWidth + 1;
+        },
+      ),
+    }));
+    expect(bounds).toEqual({ document: true, controls: true });
+    await page
+      .getByRole('combobox', { name: 'Interface language', exact: true })
+      .selectOption('zh-CN');
+    await expect(page.getByRole('heading', { name: '环境管理', exact: true })).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
+    await page.reload();
+    await expect(page.getByRole('combobox', { name: '界面语言', exact: true })).toHaveValue(
+      'zh-CN',
+    );
+    await expect(page.getByRole('heading', { name: '环境管理', exact: true })).toBeVisible();
+    expect(writes).toEqual([]);
+    expect(errors).toEqual([]);
+  });
+}
+
+test('an unsupported saved locale falls back to the English default', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('x-patentsar.locale', 'unsupported-locale'));
+  await page.goto('/#/new-task');
+  await expect(page.getByRole('combobox', { name: 'Interface language', exact: true })).toHaveValue(
+    'en',
+  );
+  await expect(page.getByRole('heading', { name: 'Upload patent PDF', exact: true })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+});
+
+test('installed table localization preserves original IDs, sources and query state', async ({
+  page,
+}) => {
+  const id = process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID;
+  test.skip(!id, 'Requires a controlled read-only historical adapter fixture');
+  const writes: string[] = [];
+  await page.route('**/api/v1/**', async (route) => {
+    if (route.request().method() !== 'GET') {
+      writes.push(route.request().url());
+      await route.abort();
+    } else await route.continue();
+  });
+  await page.goto(`/#/projects/${id}?page=1&tab=original`);
+  const record = page.locator('tbody tr').first();
+  await expect(record).toBeVisible();
+  const original = await record
+    .locator('.compound-cell, .compound-label, .frozen-compound')
+    .first()
+    .innerText();
+  const before = page.url();
+  await page.getByRole('button', { name: 'Original ID column options', exact: true }).click();
+  const menu = page.getByRole('dialog', { name: 'Original ID column options', exact: true });
+  const all = menu.getByRole('checkbox', { name: 'Select all filter values', exact: true });
+  await expect(all).toBeChecked();
+  await all.uncheck();
+  const language = page.getByRole('combobox', { name: 'Interface language', exact: true });
+  await language.click();
+  await language.selectOption('zh-CN');
+  const translatedMenu = page.getByRole('dialog', { name: '原文编号 列选项', exact: true });
+  await expect(translatedMenu).toBeVisible();
+  await expect(
+    translatedMenu.getByRole('checkbox', { name: '全选筛选取值', exact: true }),
+  ).not.toBeChecked();
+  await page.getByRole('combobox', { name: '界面语言', exact: true }).selectOption('en');
+  await expect(all).not.toBeChecked();
+  await menu.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(menu).toHaveCount(0);
+  // Actions share one flow layout, not locale-specific absolute offsets.
+  for (const width of [1280, 1672]) {
+    await page.setViewportSize({ width, height: 942 });
+    const flow = page.locator('.workspace-toolbar .workflow-panel');
+    const controls = page.locator('.workspace-toolbar .layout-toolbar');
+    const actions = flow.locator('.job-actions-wrapper');
+    const [actionBox, controlBox] = await Promise.all([
+      actions.boundingBox(),
+      controls.boundingBox(),
+    ]);
+    expect(actionBox).not.toBeNull();
+    expect(controlBox).not.toBeNull();
+    expect(actionBox!.x + actionBox!.width).toBeLessThanOrEqual(controlBox!.x);
+  }
+  await page
+    .getByRole('combobox', { name: 'Interface language', exact: true })
+    .selectOption('zh-CN');
+  await page.getByRole('combobox', { name: '界面语言', exact: true }).selectOption('en');
+  await expect(page.getByRole('columnheader', { name: /Original ID/ })).toBeVisible();
+  await page.screenshot({
+    path: test.info().outputPath('english-results-table.png'),
+    fullPage: true,
+  });
+  expect(page.url()).toBe(before);
+  expect(
+    await record.locator('.compound-cell, .compound-label, .frozen-compound').first().innerText(),
+  ).toBe(original);
+  await page.reload();
+  await expect(page.getByRole('combobox', { name: 'Interface language', exact: true })).toHaveValue(
+    'en',
+  );
+  expect(writes).toEqual([]);
+});

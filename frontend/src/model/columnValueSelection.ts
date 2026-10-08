@@ -1,3 +1,4 @@
+import { UiError } from '../i18n';
 import type { ColumnFilter } from '../api/types';
 
 export interface ValueSelection {
@@ -34,11 +35,11 @@ export function setSelectedValues(
     else next.delete(value);
   }
   if (next.size > 200)
-    throw new Error('最多保留 200 个显式选择或排除值；请缩小搜索或使用条件筛选。');
+    throw new UiError('最多保留 200 个显式选择或排除值；请缩小搜索或使用条件筛选。');
   return { ...selection, values: [...next] };
 }
 export function compileValueSelection(column: string, selection: ValueSelection): ColumnFilter[] {
-  if (selection.values.length > 200) throw new Error('最多保留 200 个显式选择或排除值。');
+  if (selection.values.length > 200) throw new UiError('最多保留 200 个显式选择或排除值。');
   if (selection.mode === 'exclude' && !selection.values.length && selection.includeEmpty) return [];
   return [
     {

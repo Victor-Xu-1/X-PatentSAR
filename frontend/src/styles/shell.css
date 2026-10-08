@@ -64,6 +64,21 @@
   font-size: 12px;
   white-space: nowrap;
 }
+.language-switch {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 5px;
+  color: var(--muted);
+}
+.language-switch select {
+  border-color: transparent;
+  background-color: transparent;
+  min-height: 36px;
+  width: auto;
+  padding: 6px 24px 6px 5px;
+  font-size: 12px;
+}
 .search-field {
   display: flex;
   align-items: center;

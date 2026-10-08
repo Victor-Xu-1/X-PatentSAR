@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n';
 import { useCallback, useState } from 'react';
 import { api } from '../../api';
 import { historyKinds } from '../../api/historyTypes';
@@ -28,6 +29,7 @@ export function HistoryDialog({
   onChanged: (entry: HistoryEntry) => void;
   onTrash?: () => void;
 }) {
+  const { t } = useTranslation();
   const [kind, setKind] = useState(initialKind);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
@@ -57,15 +59,15 @@ export function HistoryDialog({
   }
   const data = resource.data;
   return (
-    <Dialog title={title} onClose={onClose} className="history-dialog">
+    <Dialog title={t(title)} onClose={onClose} className="history-dialog">
       <div className="dialog-body" data-dialog-focus-scope aria-busy={resource.loading}>
         <div className="inline-actions history-controls">
           {filters && (
             <label className="form-field">
-              记录类型
+              {t('记录类型')}
               <select
                 data-initial-focus
-                aria-label="回收站记录类型"
+                aria-label={t('回收站记录类型')}
                 value={kind}
                 onChange={(event) => {
                   setKind(event.target.value as HistoryKind);
@@ -74,7 +76,7 @@ export function HistoryDialog({
               >
                 {historyKinds.map((value) => (
                   <option key={value} value={value}>
-                    {historyLabels[value]}
+                    {t(historyLabels[value])}
                   </option>
                 ))}
               </select>
@@ -86,27 +88,27 @@ export function HistoryDialog({
             disabled={resource.loading}
             onClick={resource.reload}
           >
-            刷新记录
+            {t('刷新记录')}
           </button>
           {onTrash && (
             <button type="button" onClick={onTrash}>
-              回收站
+              {t('回收站')}
             </button>
           )}
         </div>
-        <p className="muted">{retentionNotice}</p>
-        {deleted && <p className="muted">先恢复项目，再恢复该项目下的任务或文件。</p>}
+        <p className="muted">{t(retentionNotice)}</p>
+        {deleted && <p className="muted">{t('先恢复项目，再恢复该项目下的任务或文件。')}</p>}
         {resource.error ? (
           <ErrorNotice error={resource.error} onRetry={resource.reload} />
         ) : resource.loading && !data ? (
-          <Loading label="正在读取记录…" />
+          <Loading label={t('正在读取记录…')} />
         ) : !data?.items.length ? (
           <Empty
-            title="没有记录"
-            description={deleted ? '此类型回收站为空。' : '暂无已保存记录。'}
+            title={t('没有记录')}
+            description={deleted ? t('此类型回收站为空。') : t('暂无已保存记录。')}
           />
         ) : (
-          <ul className="history-entries" aria-label={title}>
+          <ul className="history-entries" aria-label={t(title)}>
             {data.items.map((entry) => (
               <li
                 key={`${entry.kind}:${entry.id}`}
@@ -128,31 +130,31 @@ export function HistoryDialog({
             ))}
           </ul>
         )}
-        <footer className="history-pagination" aria-label="历史记录分页">
+        <footer className="history-pagination" aria-label={t('历史记录分页')}>
           <span className="muted">
-            共 {data?.total ?? 0} 条 · 第 {page} 页
+            {t('共 {count} 条 · 第 {page} 页', { count: data?.total ?? 0, page })}
           </span>
           <div className="inline-actions">
             <button
               type="button"
-              aria-label="上一页历史记录"
+              aria-label={t('上一页历史记录')}
               disabled={resource.loading || page <= 1}
               onClick={() => setPage((value) => value - 1)}
             >
-              上一页
+              {t('上一页')}
             </button>
             <button
               type="button"
-              aria-label="下一页历史记录"
+              aria-label={t('下一页历史记录')}
               disabled={
                 resource.loading || !data || page >= Math.max(1, Math.ceil(data.total / pageSize))
               }
               onClick={() => setPage((value) => value + 1)}
             >
-              下一页
+              {t('下一页')}
             </button>
             <select
-              aria-label="每页历史记录数量"
+              aria-label={t('每页历史记录数量')}
               value={pageSize}
               disabled={resource.loading}
               onChange={(event) => {
@@ -162,7 +164,7 @@ export function HistoryDialog({
             >
               {[25, 50, 100].map((size) => (
                 <option key={size} value={size}>
-                  {size} 条/页
+                  {t('{count} 条/页', { count: size })}
                 </option>
               ))}
             </select>
@@ -170,7 +172,7 @@ export function HistoryDialog({
         </footer>
         <footer className="dialog-actions">
           <button type="button" data-initial-focus={!filters || undefined} onClick={onClose}>
-            关闭
+            {t('关闭')}
           </button>
         </footer>
       </div>

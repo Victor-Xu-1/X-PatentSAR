@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n';
 import { useEffect, useRef, useState } from 'react';
 import { safeAssetUrl } from '../../api';
 import type { ActivityFocusSelection, PageData } from '../../api/types';
@@ -20,6 +21,7 @@ export function PageCanvas({
   onSelect: (id: string) => void;
   activityFocus?: ActivityFocusSelection | undefined;
 }) {
+  const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState<string | null>(null);
   const [loaded, setLoaded] = useState<string | null>(null);
@@ -49,22 +51,22 @@ export function PageCanvas({
   if (!url)
     return (
       <Empty
-        title="原始 PDF 页面不可用"
+        title={t('原始 PDF 页面不可用')}
         description={
           page.source_mode === 'historical'
-            ? '此页来自历史导入。历史文本可用于复核，但不是原始页面图像。'
-            : '服务端未提供原始 PDF 图像，不会用合成页面替代来源。'
+            ? t('此页来自历史导入。历史文本可用于复核，但不是原始页面图像。')
+            : t('服务端未提供原始 PDF 图像，不会用合成页面替代来源。')
         }
       />
     );
   if (failed === url)
     return (
       <Empty
-        title="页面图像加载失败"
-        description="原始 PNG 未能加载，请检查会话与文档服务。"
+        title={t('页面图像加载失败')}
+        description={t('原始 PNG 未能加载，请检查会话与文档服务。')}
         action={
           <button type="button" onClick={() => setFailed(null)}>
-            重新加载页面图像
+            {t('重新加载页面图像')}
           </button>
         }
       />
@@ -81,14 +83,14 @@ export function PageCanvas({
       >
         <img
           src={url}
-          alt={`原始专利 PDF 第 ${page.page} 页`}
+          alt={t('原始专利 PDF 第 {page} 页', { page: page.page })}
           onLoad={() => setLoaded(url)}
           onError={() => {
             setLoaded(null);
             setFailed(url);
           }}
         />
-        {loaded !== url && <output className="page-loading">正在加载原始 PNG…</output>}
+        {loaded !== url && <output className="page-loading">{t('正在加载原始 PNG…')}</output>}
         {loaded === url && width > 0 && height > 0 && focus?.status === 'located' && (
           <ActivityFocusMarks focus={focus} width={width} height={height} />
         )}
@@ -105,7 +107,10 @@ export function PageCanvas({
                 className={`annotation-box${annotation.compound_id === selectedId ? ' selected' : ''}${annotation.verified ? ' verified' : ''}`}
                 data-annotation={annotation.compound_id}
                 key={`${annotation.compound_id}-${index}`}
-                aria-label={`定位化合物 ${annotation.compound_id}，${annotation.verified ? '证据已确认' : '证据未确认'}`}
+                aria-label={t('定位化合物 {compound}，{evidence}', {
+                  compound: annotation.compound_id,
+                  evidence: t(annotation.verified ? '证据已确认' : '证据未确认'),
+                })}
                 style={pageBoxStyle([x1, y1, x2, y2], width, height)}
                 onClick={() => onSelect(annotation.compound_id)}
               >

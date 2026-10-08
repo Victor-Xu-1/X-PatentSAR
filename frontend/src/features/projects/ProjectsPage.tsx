@@ -7,6 +7,7 @@ import { Empty, ErrorNotice, Loading } from '../../components/Feedback';
 import type { HistoryEntry } from '../../api/historyTypes';
 import { HistoryActions } from '../history/HistoryActions';
 import { HistoryDialog } from '../history/HistoryDialog';
+import { useTranslation } from '../../i18n';
 export function ProjectsPage({
   resource,
   onOpen,
@@ -18,6 +19,7 @@ export function ProjectsPage({
   onUpload: () => void;
   onHistoryChanged?: (entry: HistoryEntry) => void;
 }) {
+  const { t } = useTranslation();
   const metadataId = useId();
   const [trashOpen, setTrashOpen] = useState(false);
   const [files, setFiles] = useState<Project | null>(null);
@@ -37,33 +39,33 @@ export function ProjectsPage({
       data-dialog-focus-scope
     >
       <header className="page-header">
-        <h1 id="recent-files-heading">最近文件</h1>
+        <h1 id="recent-files-heading">{t('最近文件')}</h1>
         <button type="button" data-dialog-focus-fallback onClick={() => setTrashOpen(true)}>
-          回收站
+          {t('回收站')}
         </button>
       </header>
       {resource.error ? (
         <ErrorNotice error={resource.error} onRetry={resource.reload} />
       ) : resource.loading && !resource.data ? (
-        <Loading label="正在读取最近文件…" />
+        <Loading label={t('正在读取最近文件…')} />
       ) : !items.length ? (
         <Empty
-          title="还没有文件"
-          description="上传一份 PDF 开始。"
+          title={t('还没有文件')}
+          description={t('上传一份 PDF 开始。')}
           action={
             <button type="button" onClick={onUpload}>
-              上传 PDF
+              {t('上传 PDF')}
             </button>
           }
         />
       ) : (
-        <ul className="recent-files" aria-label="最近专利文件">
+        <ul className="recent-files" aria-label={t('最近专利文件')}>
           {items.map((project, index) => (
             <li key={project.id} className="recent-file-row">
               <button
                 type="button"
                 className="recent-file"
-                aria-label={`打开 ${project.title}`}
+                aria-label={t('打开 {title}', { title: project.title })}
                 aria-describedby={`${metadataId}-${index}-source ${metadataId}-${index}-acceptance ${metadataId}-${index}-updated`}
                 onClick={() => onOpen(project.id)}
               >
@@ -73,14 +75,16 @@ export function ProjectsPage({
                 <span className="recent-file-name">
                   <strong title={project.title}>{project.title}</strong>
                   <small id={`${metadataId}-${index}-source`}>
-                    {project.pdf.available ? `${project.pdf.page_count} 页` : '原文未提供'}
+                    {project.pdf.available
+                      ? t('{pages} 页', { pages: project.pdf.page_count })
+                      : t('原文未提供')}
                   </small>
                 </span>
                 <span
                   id={`${metadataId}-${index}-acceptance`}
                   className={`badge recent-file-acceptance ${project.acceptance.state}`}
                 >
-                  {acceptanceLabels[project.acceptance.state]}
+                  {t(acceptanceLabels[project.acceptance.state])}
                 </span>
                 <time id={`${metadataId}-${index}-updated`} dateTime={project.updated_at}>
                   {dateText(project.updated_at)}
@@ -90,10 +94,10 @@ export function ProjectsPage({
               <div className="recent-file-actions">
                 <button
                   type="button"
-                  aria-label={`已生成文件 ${project.title}`}
+                  aria-label={t('已生成文件 {title}', { title: project.title })}
                   onClick={() => setFiles(project)}
                 >
-                  已生成文件
+                  {t('已生成文件')}
                 </button>
                 <HistoryActions
                   target={{ kind: 'project', id: project.id, title: project.title }}
@@ -107,7 +111,7 @@ export function ProjectsPage({
       )}
       {files && (
         <HistoryDialog
-          title={`已生成文件 · ${files.title}`}
+          title={t('已生成文件 · {title}', { title: files.title })}
           initialKind="export"
           projectId={files.id}
           onClose={() => setFiles(null)}
@@ -120,7 +124,7 @@ export function ProjectsPage({
       )}
       {trashOpen && (
         <HistoryDialog
-          title="回收站"
+          title={t('回收站')}
           initialKind="project"
           deleted
           filters

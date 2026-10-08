@@ -1,3 +1,4 @@
+import { UiError } from '../../i18n';
 import { hasLLMControlCharacters, validLLMEndpoint } from '../../api/llmDecoders';
 import type {
   LLMMode,
@@ -68,22 +69,22 @@ export function llmSaveRequest(draft: LLMDraft, base: LLMSettings): LLMSettingsU
   const endpoint = draft.endpoint.trim();
   const model = draft.model.trim();
   if (endpoint && !validLLMEndpoint(endpoint))
-    throw new Error('请输入 HTTPS API 基础地址，不得包含凭据、查询参数或片段。');
-  if (model.length > 128 || hasLLMControlCharacters(model)) throw new Error('模型名称无效。');
+    throw new UiError('请输入 HTTPS API 基础地址，不得包含凭据、查询参数或片段。');
+  if (model.length > 128 || hasLLMControlCharacters(model)) throw new UiError('模型名称无效。');
   if (
     draft.apiKey.length > 4096 ||
     hasLLMControlCharacters(draft.apiKey) ||
     (draft.apiKey && /\s/u.test(draft.apiKey))
   )
-    throw new Error('密钥格式无效，请重新输入。');
+    throw new UiError('密钥格式无效，请重新输入。');
   const identityChanged =
     endpoint !== base.endpoint || model !== base.model || draft.protocol !== base.protocol;
   if (identityChanged && !draft.apiKey && !draft.clearKey)
-    throw new Error('地址、模型或协议已改变，请输入新密钥，或明确清除密钥并关闭。');
+    throw new UiError('地址、模型或协议已改变，请输入新密钥，或明确清除密钥并关闭。');
   if (draft.mode !== 'off') {
-    if (!draft.dataConsent) throw new Error('启用前请明确同意发送有限局部文字。');
+    if (!draft.dataConsent) throw new UiError('启用前请明确同意发送有限局部文字。');
     if (!endpoint || !model || draft.clearKey || (!draft.apiKey && !base.key_configured))
-      throw new Error('启用前请填写 API 地址、模型和密钥。');
+      throw new UiError('启用前请填写 API 地址、模型和密钥。');
   }
   return {
     expected_revision: base.revision,

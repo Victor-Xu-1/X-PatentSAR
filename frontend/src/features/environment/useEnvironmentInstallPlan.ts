@@ -1,3 +1,4 @@
+import { UiError } from '../../i18n';
 import { useState } from 'react';
 import type { EnvironmentCatalog, EnvironmentComponentId } from '../../api/environmentTypes';
 import { selectedEnvironmentComponents } from '../../model/environment';
@@ -36,12 +37,12 @@ export function useEnvironmentInstallPlan(data: EnvironmentCatalog | null, disab
           ? canSetupEnvironmentPlan(components)
           : canInstallEnvironmentPlan(components))
       )
-        throw new Error(
+        throw new UiError(
           '所选组件已安装、需先检测或不支持安装，请核对组件详情；不重复安装已有组件。',
         );
       setPlan({ components, settings: { ...data.settings }, requested: [...ids], scope });
     } catch (error) {
-      setError(error instanceof Error ? error : new Error('安装选择无效。'));
+      setError(error instanceof Error ? error : new UiError('安装选择无效。'));
     }
   }
   return {

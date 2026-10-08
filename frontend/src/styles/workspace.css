@@ -11,6 +11,28 @@
   flex: 1;
   --results-min-height: 56dvh;
 }
+.workspace-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+.workspace-toolbar > .workflow-panel {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.workspace-toolbar > .layout-toolbar {
+  flex: 0 0 auto;
+  margin: 0;
+}
+.is-fullscreen .workspace-toolbar {
+  margin-bottom: 8px;
+}
+.is-fullscreen .workflow-panel {
+  display: none;
+}
 .layout-toolbar {
   display: flex;
   align-items: center;

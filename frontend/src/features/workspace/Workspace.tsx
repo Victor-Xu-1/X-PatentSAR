@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n';
 import { useState } from 'react';
 import type { Compound, Filters, Health, Job, Project } from '../../api/types';
 import type { Route } from '../../model/route';
@@ -42,6 +43,7 @@ export function Workspace({
   onUpload: () => void;
   onAttach: () => void;
 }) {
+  const { t } = useTranslation();
   const [crop, setCrop] = useState<Compound | null>(null);
   const [editing, setEditing] = useState<Compound | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -91,16 +93,18 @@ export function Workspace({
   }
   return (
     <div className="workspace" data-dialog-focus-scope>
-      <section className="workflow-panel">
-        <h1 className="workflow-document" title={project?.title}>
-          {project?.title ?? '正在打开文件…'}
-        </h1>
-        <StageStrip job={job} compact />
-        <JobActions project={project} job={job} ready={ready} onChange={onJobChange} compact />
-      </section>
       <WorkspaceLayout
         layout={layout}
         onChange={(layout) => navigate({ ...route, layout })}
+        workflow={
+          <>
+            <h1 className="workflow-document" title={project?.title}>
+              {project?.title ?? t('正在打开文件…')}
+            </h1>
+            <StageStrip job={job} compact />
+            <JobActions project={project} job={job} ready={ready} onChange={onJobChange} compact />
+          </>
+        }
         source={
           <PdfPane
             key={id}

@@ -102,6 +102,18 @@ The recovered E-drive deployment has an operator-owned entry point at `/srv/wsl/
 
 ## Web operation
 
+### Interface language
+
+The topbar language selector offers English and Chinese; English is the default
+for first use or an absent/invalid preference. An explicit supported selection is
+stored only as `x-patentsar.locale` in that browser's local preference store and
+survives navigation/reload/reopen. A blocked preference store keeps the current
+session usable but cannot promise persistence. Do not put provider credentials,
+patents, chemistry, workflow configuration or task state in this preference.
+Switching language is presentation-only: no backend write, model request, upload,
+task restart, data/identifier translation or acceptance change. The one frontend
+language registry/catalog is the extension boundary for additional languages.
+
 ### User-selected file and installation locations
 
 Use **环境管理 → 存储位置** to save integrated-environment install, original-upload

@@ -1,7 +1,9 @@
+import { UiError } from '../i18n';
+
 export type Decoder<T> = (input: unknown, path?: string) => T;
-export class ContractError extends Error {
+export class ContractError extends UiError {
   constructor(path: string) {
-    super(`API 数据格式不符合契约（${path}）。请联系服务维护者。`);
+    super('API 数据格式不符合契约（{path}）。请联系服务维护者。', { path });
     this.name = 'ContractError';
   }
 }

@@ -8,6 +8,7 @@ import type { EditorPayload } from './protocol';
 import { captureDrawing, subscribeDrawing } from './subscribeDrawing';
 import { boundedEditorOperation } from './structureConversion';
 import { ApiError } from '../../api/errors';
+import { UiError, useTranslation } from '../../i18n';
 import 'ketcher-react/dist/index.css';
 import './frame.css';
 
@@ -32,11 +33,16 @@ const buttons = {
 function send(message: EditorPayload) {
   window.parent.postMessage({ channel: EDITOR_CHANNEL, ...message }, window.location.origin);
 }
+/** Only first-party editor copy gets a descriptor; SDK/API diagnostics stay raw. */
+function editorErrorSource(error: Error): { source?: string } {
+  return error instanceof UiError && !(error instanceof ApiError) ? { source: error.source } : {};
+}
 function KetcherFrame() {
+  const { t } = useTranslation();
   const [provider] = useState(() => new StandaloneStructServiceProvider());
   const [instance, setInstance] = useState<Ketcher | null>(null);
   const [blocked, setBlocked] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<Error | null>(null);
   const cleanup = useRef<(() => void) | null>(null);
   useEffect(() => {
     if (!instance) return;
@@ -65,19 +71,24 @@ function KetcherFrame() {
             ? (await captureDrawing(instance, lifetime.signal)).graphKey
             : request.smiles;
         if (disposed) return;
-        cleanup.current = subscribeDrawing(instance, original, send);
-        setError('');
+        cleanup.current = subscribeDrawing(instance, original, send, editorErrorSource);
+        setError(null);
         send({ kind: 'loaded' });
       } catch (failure) {
         if (disposed) return;
         const canRedraw = failure instanceof ApiError && failure.status === 422;
-        if (canRedraw) cleanup.current = subscribeDrawing(instance, '', send);
-        const message =
+        if (canRedraw) cleanup.current = subscribeDrawing(instance, '', send, editorErrorSource);
+        const error =
           failure instanceof Error
-            ? failure.message.slice(0, 1000)
-            : '当前结构无法加载或转换，请重新加载编辑器。原值不会自动清除。';
-        setError(message);
-        send({ kind: 'error', message, recoverable: canRedraw });
+            ? failure
+            : new UiError('当前结构无法加载或转换，请重新加载编辑器。原值不会自动清除。');
+        setError(error);
+        send({
+          kind: 'error',
+          message: error.message.slice(0, 1000),
+          recoverable: canRedraw,
+          ...editorErrorSource(error),
+        });
       } finally {
         if (!disposed) setBlocked(false);
         loading = false;
@@ -114,14 +125,16 @@ function KetcherFrame() {
         buttons={buttons}
         onInit={setInstance}
         errorHandler={() => {
-          const message = '绘图操作失败，请重新加载编辑器。';
-          setError(message);
-          send({ kind: 'error', message, recoverable: false });
+          const error = new UiError('绘图操作失败，请重新加载编辑器。');
+          setError(error);
+          send({ kind: 'error', message: error.message, source: error.source, recoverable: false });
         }}
       />
       {error && (
         <p className="editor-frame-error" role="alert">
-          {error}
+          {error instanceof UiError && !(error instanceof ApiError)
+            ? t(error.source, error.values)
+            : error.message.slice(0, 1000)}
         </p>
       )}
     </div>

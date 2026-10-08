@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n';
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { Maximize2, Minimize2, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
@@ -11,12 +12,15 @@ export function WorkspaceLayout({
   onChange,
   source,
   results,
+  workflow,
 }: {
   layout: LayoutState;
   onChange: (layout: LayoutState) => void;
   source: ReactNode;
   results: ReactNode;
+  workflow?: ReactNode;
 }) {
+  const { t } = useTranslation();
   const layout = normalizeLayout(input);
   const split = useRef<HTMLDivElement>(null);
   const root = useRef<HTMLDivElement>(null);
@@ -50,27 +54,30 @@ export function WorkspaceLayout({
       ref={root}
       className={`workspace-layout${layout.fullscreen ? ' is-fullscreen' : ''}${layout.pdfVisible ? '' : ' source-collapsed'}`}
     >
-      <div className="layout-toolbar" aria-label="工作区布局">
-        <button
-          type="button"
-          onClick={() => onChange({ ...layout, pdfVisible: !layout.pdfVisible })}
-          aria-label={layout.pdfVisible ? '收起原文，结果全宽' : '展开原文'}
-          aria-expanded={layout.pdfVisible}
-          aria-controls="workspace-source"
-        >
-          {layout.pdfVisible ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />}
-          {layout.pdfVisible ? '收起原文' : '展开原文'}
-        </button>
-        <button
-          ref={fullButton}
-          type="button"
-          onClick={() => onChange({ ...layout, fullscreen: !layout.fullscreen })}
-          aria-label={layout.fullscreen ? '退出全屏工作区' : '全屏工作区'}
-          aria-pressed={layout.fullscreen}
-        >
-          {layout.fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-          {layout.fullscreen ? '退出全屏' : '全屏'}
-        </button>
+      <div className="workspace-toolbar">
+        {workflow && <section className="workflow-panel">{workflow}</section>}
+        <div className="layout-toolbar" aria-label={t('工作区布局')}>
+          <button
+            type="button"
+            onClick={() => onChange({ ...layout, pdfVisible: !layout.pdfVisible })}
+            aria-label={layout.pdfVisible ? t('收起原文，结果全宽') : t('展开原文')}
+            aria-expanded={layout.pdfVisible}
+            aria-controls="workspace-source"
+          >
+            {layout.pdfVisible ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />}
+            {layout.pdfVisible ? t('收起原文') : t('展开原文')}
+          </button>
+          <button
+            ref={fullButton}
+            type="button"
+            onClick={() => onChange({ ...layout, fullscreen: !layout.fullscreen })}
+            aria-label={layout.fullscreen ? t('退出全屏工作区') : t('全屏工作区')}
+            aria-pressed={layout.fullscreen}
+          >
+            {layout.fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+            {layout.fullscreen ? t('退出全屏') : t('全屏')}
+          </button>
+        </div>
       </div>
       <div
         className="workspace-split"
@@ -89,14 +96,17 @@ export function WorkspaceLayout({
             </div>
             <ResizeHandle
               className="workspace-divider"
-              label="调整原文与结果宽度"
+              label={t('调整原文与结果宽度')}
               controls="workspace-source workspace-results"
               value={preview ?? layout.pdfWidth}
               min={20}
               max={55}
               keyStep={2}
               resetValue={defaultLayout.pdfWidth}
-              valueText={`原文 ${preview ?? layout.pdfWidth}%，结果 ${100 - (preview ?? layout.pdfWidth)}%`}
+              valueText={t('原文 {source}%，结果 {results}%', {
+                source: preview ?? layout.pdfWidth,
+                results: 100 - (preview ?? layout.pdfWidth),
+              })}
               fromPointer={(delta, initial) => {
                 const width = split.current?.getBoundingClientRect().width ?? 0;
                 return width > 10 ? initial + (delta / (width - 10)) * 100 : NaN;

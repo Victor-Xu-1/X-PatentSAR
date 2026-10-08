@@ -1,3 +1,4 @@
+import { UiError } from '../../i18n';
 import type { Activity, ActivityColumn, Compound } from '../../api/types';
 import type { EditableFields } from '../../api/correctionTypes';
 import type { PropertyOverrides } from '../../api/manualPropertyTypes';
@@ -133,7 +134,7 @@ export function activityValue(item: ActivityDraft): Activity['value'] {
   if (!text) return null;
   if (!decimal.test(text)) return text; // grades, ranges and censored values stay text
   const value = Number(text);
-  if (!Number.isFinite(value)) throw new Error('活性数值必须是有限数字。');
+  if (!Number.isFinite(value)) throw new UiError('活性数值必须是有限数字。');
   return value;
 }
 export function draftFields(draft: CorrectionDraft): EditableFields {
@@ -143,7 +144,7 @@ export function draftFields(draft: CorrectionDraft): EditableFields {
     if (!item.overridden && !item.touched) continue;
     const text = item.value.trim();
     if (text && (!decimal.test(text) || !Number.isFinite(Number(text))))
-      throw new Error(`${label} 必须是有限数字，或留空。`);
+      throw new UiError('{label} 必须是有限数字，或留空。', { label });
     overrides[key] = text ? Number(text) : null;
   }
   const smiles = draft.smiles.trim() || null;

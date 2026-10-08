@@ -1,3 +1,4 @@
+import { UiError } from '../../i18n';
 import { useEffect, useState } from 'react';
 import { api } from '../../api';
 import type { Filters, FilterValueKind, FilterValues } from '../../api/types';
@@ -72,7 +73,7 @@ export function useFilterValues(
               setState({
                 key,
                 data: null,
-                error: error instanceof Error ? error : new Error('无法加载取值。'),
+                error: error instanceof Error ? error : new UiError('无法加载取值。'),
               });
           });
       },
@@ -84,7 +85,7 @@ export function useFilterValues(
     };
   }, [key]);
   const current = !projectId
-    ? { data: null, error: new Error('尚未选择项目，无法加载取值。') }
+    ? { data: null, error: new UiError('尚未选择项目，无法加载取值。') }
     : state.key === key
       ? state
       : { data: null, error: null };

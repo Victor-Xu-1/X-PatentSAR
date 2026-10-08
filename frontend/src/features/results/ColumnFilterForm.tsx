@@ -1,3 +1,4 @@
+import { useTranslation, UiError, errorText } from '../../i18n';
 import { useState } from 'react';
 import type { ActivityBand, ActivityColumn, ColumnFilter, Filters } from '../../api/types';
 import { activityBands } from '../../api/types';
@@ -34,6 +35,7 @@ export function ColumnFilterForm({
   onCancel: () => void;
   onSortBand: (band: ActivityBand) => void;
 }) {
+  const { t } = useTranslation();
   const own = (filters.column_filters ?? []).filter((item) => item.column === column.id);
   const fallbackKind = defaultColumnKind(column, activity);
   const [mode, setMode] = useState<DraftMode>(() => {
@@ -53,7 +55,7 @@ export function ColumnFilterForm({
     () => activityBands.find((value) => own[0]?.op === 'band' && value === own[0].value) ?? '',
   );
   const [sortColors, setSortColors] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<Error | null>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const choices = useFilterValues(projectId, column.id, filters, search, page);
@@ -75,7 +77,7 @@ export function ColumnFilterForm({
   function chooseMode(next: DraftMode) {
     setMode(next);
     setSortColors(false);
-    setError('');
+    setError(null);
   }
   return (
     <form
@@ -85,15 +87,15 @@ export function ColumnFilterForm({
         try {
           if (mode === 'condition') onApply(compileColumnFilter(column.id, activeCondition, kind));
           else if (mode === 'band') {
-            if (!colorsAvailable || !band) throw new Error('请选择可用的颜色分档。');
+            if (!colorsAvailable || !band) throw new UiError('请选择可用的颜色分档。');
             onApply([{ column: column.id, op: 'band', value: band }]);
           } else {
             if (!choices.data || choices.loading || choices.error)
-              throw new Error('请先加载取值，再确定筛选。');
+              throw new UiError('请先加载取值，再确定筛选。');
             onApply(compileValueSelection(column.id, selection));
           }
         } catch (failure) {
-          setError(failure instanceof Error ? failure.message : '筛选条件无效。');
+          setError(failure instanceof Error ? failure : new UiError('筛选条件无效。'));
         }
       }}
     >
@@ -107,7 +109,7 @@ export function ColumnFilterForm({
             disabled={disabled || !colorsAvailable}
             onClick={() => setSortColors(!sortColors)}
           >
-            按颜色排序
+            {t('按颜色排序')}
           </button>
           {sortColors && (
             <ColumnBandChoices
@@ -126,7 +128,7 @@ export function ColumnFilterForm({
             disabled={disabled || !colorsAvailable}
             onClick={() => chooseMode(mode === 'band' ? 'values' : 'band')}
           >
-            按颜色筛选
+            {t('按颜色筛选')}
           </button>
           {mode === 'band' && !sortColors && (
             <ColumnBandChoices
@@ -140,7 +142,7 @@ export function ColumnFilterForm({
               }}
             />
           )}
-          {!knownScale && <small className="muted">分档未知，未推断颜色。</small>}
+          {!knownScale && <small className="muted">{t('分档未知，未推断颜色。')}</small>}
         </>
       )}
       {kind !== 'presence' && (
@@ -152,7 +154,7 @@ export function ColumnFilterForm({
           disabled={disabled}
           onClick={() => chooseMode(mode === 'condition' ? 'values' : 'condition')}
         >
-          {kind === 'number' ? '数字筛选' : '文本筛选'}
+          {kind === 'number' ? t('数字筛选') : t('文本筛选')}
         </button>
       )}
       {mode === 'condition' && !sortColors && (
@@ -176,7 +178,7 @@ export function ColumnFilterForm({
               disabled={disabled}
               onClick={() => chooseMode('values')}
             >
-              选择取值
+              {t('选择取值')}
             </button>
           )}
           {mode === 'values' && !sortColors && (
@@ -200,18 +202,23 @@ export function ColumnFilterForm({
           )}
         </>
       )}
-      {choices.loading && <output className="muted">正在加载取值…</output>}
+      {choices.loading && <output className="muted">{t('正在加载取值…')}</output>}
       {choices.error && (
         <div className="column-choice-error">
-          <small role="alert">无法加载取值。{choices.error.message} 条件筛选仍可使用。</small>
+          <small role="alert">
+            {t('无法加载取值。{error} 条件筛选仍可使用。', {
+              error:
+                choices.error instanceof UiError ? errorText(choices.error) : choices.error.message,
+            })}
+          </small>
           <button type="button" onClick={choices.reload}>
-            重试取值
+            {t('重试取值')}
           </button>
         </div>
       )}
       {error && (
         <small role="alert" className="error-notice">
-          {error}
+          {error instanceof UiError ? errorText(error) : error.message}
         </small>
       )}
       <div className="column-menu-actions">
@@ -226,10 +233,10 @@ export function ColumnFilterForm({
             (mode === 'band' && (!colorsAvailable || !band))
           }
         >
-          确定
+          {t('确定')}
         </button>
         <button type="button" onClick={onCancel}>
-          取消
+          {t('取消')}
         </button>
       </div>
     </form>

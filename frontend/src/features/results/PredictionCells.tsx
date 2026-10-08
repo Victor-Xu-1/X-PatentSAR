@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n';
 import type { Compound } from '../../api/types';
 import { METRIC_SPECS } from '../../api/predictionTypes';
 import type { PredictionMetric } from '../../api/predictionTypes';
@@ -20,6 +21,7 @@ export function PredictionCells({
   row: Compound;
   visibleColumns?: ReadonlySet<string> | undefined;
 }) {
+  const { t } = useTranslation();
   return (
     <>
       {METRIC_SPECS.filter(
@@ -28,7 +30,7 @@ export function PredictionCells({
         const metric = effectiveProperty(row, spec.key);
         const prediction = propertyObservation(row, spec.key);
         const status = prediction?.status ?? 'not_run';
-        const label = statusLabels[status];
+        const label = t(statusLabels[status]);
         return (
           <td
             className="prediction-column"
@@ -36,10 +38,16 @@ export function PredictionCells({
             data-property={spec.key}
             title={
               metric.manual
-                ? `${spec.label} · ${spec.unit} · 手工修正${metric.value === null ? '（留空）' : ''}`
+                ? t('{label} · {unit} · 手工修正{blank}', {
+                    label: spec.label,
+                    unit: spec.unit,
+                    blank: metric.value === null ? t('（留空）') : '',
+                  })
                 : metric.value !== null
-                  ? `${spec.label} · ${spec.unit} · ${spec.kind === 'prediction' ? '模型预测，非专利实测' : '结构计算，非专利实测'}`
-                  : `${label}${prediction?.error ? `：${prediction.error.message}` : ''}`
+                  ? `${spec.label} · ${spec.unit} · ${spec.kind === 'prediction' ? t('模型预测，非专利实测') : t('结构计算，非专利实测')}`
+                  : prediction?.error
+                    ? t('{label}：{error}', { label, error: prediction.error.message })
+                    : label
             }
           >
             {metric.value !== null ? (
@@ -49,7 +57,7 @@ export function PredictionCells({
             ) : (
               <span
                 className={status === 'failed' ? 'prediction-failed' : 'muted'}
-                aria-label={`${spec.label} ${metric.manual ? '手工留空' : label}`}
+                aria-label={`${spec.label} ${metric.manual ? t('手工留空') : label}`}
               >
                 —
               </span>
@@ -77,17 +85,21 @@ function ObservedMetrics({ properties }: { properties: PredictionMetric[] }) {
 }
 
 export function PredictionEvidence({ row }: { row: Compound }) {
+  const { t } = useTranslation();
   const prediction = row.admet;
   const descriptors = row.descriptors;
   return (
     <details className="prediction-evidence">
       <summary>
         {descriptors
-          ? `五项计算 · ${statusLabels[descriptors.status]}；LogS · ${statusLabels[prediction?.status ?? 'not_run']}`
-          : `六项指标 · ${statusLabels[prediction?.status ?? 'not_run']}`}
+          ? t('五项计算 · {descriptors}；LogS · {prediction}', {
+              descriptors: t(statusLabels[descriptors.status]),
+              prediction: t(statusLabels[prediction?.status ?? 'not_run']),
+            })
+          : t('六项指标 · {status}', { status: t(statusLabels[prediction?.status ?? 'not_run']) })}
       </summary>
       <p className="muted">
-        MW、LogP、TPSA、HBD、HBA 为结构计算；LogS 为模型预测，均不是专利实测数据。
+        {t('MW、LogP、TPSA、HBD、HBA 为结构计算；LogS 为模型预测，均不是专利实测数据。')}
       </p>
       {prediction?.error && <p className="error-notice">{prediction.error.message}</p>}
       {descriptors?.error && <p className="error-notice">{descriptors.error.message}</p>}
@@ -97,7 +109,9 @@ export function PredictionEvidence({ row }: { row: Compound }) {
           <p className="muted">
             {descriptors.engine?.name} {descriptors.engine?.version} · {descriptors.generated_at}
           </p>
-          <p className="muted">算法校验：{descriptors.engine?.algorithm_sha256}</p>
+          <p className="muted">
+            {t('算法校验：{hash}', { hash: descriptors.engine?.algorithm_sha256 ?? null })}
+          </p>
         </>
       )}
       {prediction?.status === 'complete' && (
@@ -106,7 +120,9 @@ export function PredictionEvidence({ row }: { row: Compound }) {
           <p className="muted">
             {prediction.engine?.name} {prediction.engine?.version} · {prediction.generated_at}
           </p>
-          <p className="muted">模型校验：{prediction.engine?.model_sha256}</p>
+          <p className="muted">
+            {t('模型校验：{hash}', { hash: prediction.engine?.model_sha256 ?? null })}
+          </p>
         </>
       )}
       {prediction?.warnings.map((warning, index) => (

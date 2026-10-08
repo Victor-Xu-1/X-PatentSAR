@@ -15,8 +15,10 @@ import { NewTaskPage } from './features/tasks/NewTaskPage';
 import { useJobs } from './features/jobs/useJobs';
 import { JobsPage } from './features/jobs/JobsPage';
 import { EnvironmentPage } from './features/environment/EnvironmentPage';
+import { useTranslation } from './i18n';
 
 export default function App() {
+  const { locale, t } = useTranslation();
   const { route, navigate } = useRoute();
   const [attachment, setAttachment] = useState<Project | null>(null);
   const [query, setQuery] = useState('');
@@ -75,7 +77,7 @@ export default function App() {
     navigate({ ...emptyRoute, view: 'new-task' });
   };
   return (
-    <div className="app-shell">
+    <div className="app-shell" lang={locale}>
       <a
         href="#main-content"
         className="skip-link"
@@ -84,7 +86,7 @@ export default function App() {
           document.getElementById('main-content')?.focus();
         }}
       >
-        跳转到主要内容
+        {t('跳转到主要内容')}
       </a>
       <div className="app-main" id="application-content">
         <Header
@@ -100,13 +102,13 @@ export default function App() {
         <main id="main-content" tabIndex={-1}>
           {connection.loading && !connected && (
             <div className="connection-banner">
-              <Loading label="正在建立本地安全会话…" />
+              <Loading label={t('正在建立本地安全会话…')} />
             </div>
           )}
           {connection.error && <ErrorNotice error={connection.error} onRetry={reconnect} />}
           {connected && !connection.data?.health.ready && (
             <output className="info-banner runtime-banner">
-              运行环境尚未就绪。已有文件仍可查看；请在顶栏“环境管理”中检测。
+              {t('运行环境尚未就绪。已有文件仍可查看；请在顶栏“环境管理”中检测。')}
             </output>
           )}
           {projectResource.error && (
@@ -117,7 +119,7 @@ export default function App() {
           )}
           {projectResource.loading && !project && id && (
             <div className="connection-banner">
-              <Loading label="正在打开专利项目…" />
+              <Loading label={t('正在打开专利项目…')} />
             </div>
           )}
           {route.view === 'workspace' && (

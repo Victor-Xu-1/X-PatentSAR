@@ -1,3 +1,4 @@
+import { UiError, useTranslation } from '../../i18n';
 import { useRef, useState } from 'react';
 import { MoreHorizontal, Play, RotateCcw, Square } from 'lucide-react';
 import { api } from '../../api';
@@ -21,6 +22,7 @@ export function JobActions({
   onChange: () => void;
   compact?: boolean;
 }) {
+  const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
   const [submittingRun, setSubmittingRun] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -71,7 +73,7 @@ export function JobActions({
       onChange();
     } catch (e) {
       if (action === 'resume' && e instanceof ApiError && e.uncertain) setSubmittedResume(job);
-      setError(e instanceof Error ? e : new Error('任务操作失败。'));
+      setError(e instanceof Error ? e : new UiError('任务操作失败。'));
     } finally {
       setSubmittingRun(false);
       release();
@@ -84,7 +86,7 @@ export function JobActions({
         {running ? (
           <button type="button" disabled={busy} onClick={() => setCancelConfirm(true)}>
             <Square size={13} />
-            取消任务
+            {t('取消任务')}
           </button>
         ) : (
           <>
@@ -96,7 +98,7 @@ export function JobActions({
                 onClick={() => void operate('resume')}
               >
                 <RotateCcw size={14} />
-                继续提取
+                {t('继续提取')}
               </button>
             )}
             {!(compact && job?.can_resume) && (
@@ -106,17 +108,17 @@ export function JobActions({
                 disabled={!canStart}
                 title={
                   !project
-                    ? '请先选择项目'
+                    ? t('请先选择项目')
                     : !project.pdf.available
-                      ? '请先补充原始 PDF'
+                      ? t('请先补充原始 PDF')
                       : !ready
-                        ? '运行环境未就绪'
-                        : '运行现有核心提取链，不调用付费建议模型'
+                        ? t('运行环境未就绪')
+                        : t('运行现有核心提取链，不调用付费建议模型')
                 }
                 onClick={() => void operate('run')}
               >
                 <Play size={14} />
-                {submittingRun ? '正在提交…' : '运行提取'}
+                {submittingRun ? t('正在提交…') : t('运行提取')}
               </button>
             )}
           </>
@@ -125,33 +127,35 @@ export function JobActions({
           <button
             type="button"
             className="toolbar-button"
-            aria-label="任务详情"
-            title={recoveryHint ? 'API 待核对，查看任务详情' : '任务详情'}
+            aria-label={t('任务详情')}
+            title={recoveryHint ? t('API 待核对，查看任务详情') : t('任务详情')}
             onClick={() => setDetailsOpen(true)}
           >
-            {recoveryHint ? 'API 待核对' : <MoreHorizontal size={14} />}
+            {recoveryHint ? t('API 待核对') : <MoreHorizontal size={14} />}
           </button>
         )}
       </div>
       {error && <ErrorNotice error={error} onRetry={onChange} />}
       {job && !compact && <JobRecord job={job} recoveryControls={recoveryControls} />}
       {job && detailsOpen && (
-        <Dialog title="任务详情" onClose={() => setDetailsOpen(false)} busy={busy}>
+        <Dialog title={t('任务详情')} onClose={() => setDetailsOpen(false)} busy={busy}>
           <div className="dialog-body">
             <JobRecord job={job} expanded recoveryControls={recoveryControls} />
           </div>
         </Dialog>
       )}
       {cancelConfirm && (
-        <Dialog title="取消当前提取任务？" onClose={() => setCancelConfirm(false)} busy={busy}>
+        <Dialog title={t('取消当前提取任务？')} onClose={() => setCancelConfirm(false)} busy={busy}>
           <div className="dialog-body">
             <p>
-              仅取消此项目的当前任务。已保存的结果与缓存不被删除，是否可恢复以服务端真实状态为准。
+              {t(
+                '仅取消此项目的当前任务。已保存的结果与缓存不被删除，是否可恢复以服务端真实状态为准。',
+              )}
             </p>
             {error && <ErrorNotice error={error} />}
             <footer className="dialog-actions">
               <button type="button" onClick={() => setCancelConfirm(false)} disabled={busy}>
-                继续运行
+                {t('继续运行')}
               </button>
               <button
                 type="button"
@@ -159,7 +163,7 @@ export function JobActions({
                 onClick={() => void operate('cancel')}
                 disabled={busy}
               >
-                {busy ? '正在取消…' : '确认取消此任务'}
+                {busy ? t('正在取消…') : t('确认取消此任务')}
               </button>
             </footer>
           </div>

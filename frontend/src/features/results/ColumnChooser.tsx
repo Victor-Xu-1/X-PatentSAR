@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n';
 import { useState } from 'react';
 import type { ResultColumn } from '../../model/resultColumns';
 
@@ -10,6 +11,7 @@ export function ColumnChooser({
   hidden: readonly string[];
   onHidden: (hidden: string[]) => void;
 }) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const visible = columns.filter((column) =>
     [column.label, column.context]
@@ -21,21 +23,23 @@ export function ColumnChooser({
   return (
     <div className="dialog-body column-chooser">
       <input
-        aria-label="查找列"
-        placeholder="查找列…"
+        aria-label={t('查找列')}
+        placeholder={t('查找列…')}
         value={query}
         onChange={(event) => setQuery(event.target.value)}
       />
       <button type="button" onClick={() => onHidden([])}>
-        显示全部列
+        {t('显示全部列')}
       </button>
       <fieldset>
-        <legend className="sr-only">可显示的全部项目列</legend>
+        <legend className="sr-only">{t('可显示的全部项目列')}</legend>
         {visible.map((column) => (
           <label key={column.id}>
             <input
               type="checkbox"
-              aria-label={`显示列 ${[column.label, column.context].filter(Boolean).join(' · ')}`}
+              aria-label={t('显示列 {column}', {
+                column: [column.label, column.context].filter(Boolean).join(' · '),
+              })}
               checked={!hidden.includes(column.id)}
               onChange={(event) =>
                 onHidden(
@@ -51,10 +55,10 @@ export function ColumnChooser({
             </span>
           </label>
         ))}
-        {!visible.length && <p className="muted">没有匹配的列</p>}
+        {!visible.length && <p className="muted">{t('没有匹配的列')}</p>}
       </fieldset>
       <small className="muted">
-        仅改变当前工作台显示，不删除数据，不改变全项目导出或活性分档。
+        {t('仅改变当前工作台显示，不删除数据，不改变全项目导出或活性分档。')}
       </small>
     </div>
   );

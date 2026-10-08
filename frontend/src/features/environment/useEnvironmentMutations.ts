@@ -1,3 +1,4 @@
+import { UiError } from '../../i18n';
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../../api';
 import { ApiError } from '../../api/errors';
@@ -43,7 +44,7 @@ export function useEnvironmentMutations(onOperation: (id: string) => void, onRef
     } catch {
       setStorageError(true);
       setError(
-        new Error(
+        new UiError(
           '服务器结果已读取，但无法清除本功能的恢复记录。请恢复会话存储权限并再次核对；未重放请求。',
         ),
       );
@@ -86,7 +87,7 @@ export function useEnvironmentMutations(onOperation: (id: string) => void, onRef
       return result;
     } catch (e) {
       if (mounted.current) {
-        setError(e instanceof Error ? e : new Error('环境操作失败。'));
+        setError(e instanceof Error ? e : new UiError('环境操作失败。'));
         if (!sent) setStorageError(true);
         else if (e instanceof ApiError && !e.uncertain && e.status >= 400 && e.status < 500) {
           clear();
@@ -112,7 +113,7 @@ export function useEnvironmentMutations(onOperation: (id: string) => void, onRef
       });
     } catch {
       setError(
-        new Error('浏览器无法创建安全请求 ID，未发送环境操作。请在受信任的本地浏览器打开页面。'),
+        new UiError('浏览器无法创建安全请求 ID，未发送环境操作。请在受信任的本地浏览器打开页面。'),
       );
       return null;
     }
@@ -148,7 +149,7 @@ export function useEnvironmentMutations(onOperation: (id: string) => void, onRef
         );
         if (found) {
           if (!matchesEnvironmentRequest(found, pending.request))
-            throw new Error(
+            throw new UiError(
               '服务器请求 ID 对应的操作参数不一致。保留恢复记录，不重放或认领另一项操作。',
             );
           clear();
@@ -181,10 +182,10 @@ export function useEnvironmentMutations(onOperation: (id: string) => void, onRef
       if (pending.kind === 'cancel' || !activeEnvironmentOperation(catalog.active_operation))
         setChecked(true);
       else
-        setError(new Error('服务器有另一项环境操作正在运行。请等待并再次核对，不重放安装请求。'));
+        setError(new UiError('服务器有另一项环境操作正在运行。请等待并再次核对，不重放安装请求。'));
       onRefresh();
     } catch (e) {
-      if (mounted.current) setError(e instanceof Error ? e : new Error('无法核对服务器状态。'));
+      if (mounted.current) setError(e instanceof Error ? e : new UiError('无法核对服务器状态。'));
     } finally {
       lock.current = false;
       if (mounted.current) setBusy(false);
@@ -202,7 +203,7 @@ export function useEnvironmentMutations(onOperation: (id: string) => void, onRef
       setError(null);
       onRefresh();
     } catch {
-      setError(new Error('无法清除本功能的恢复记录。请恢复会话存储权限；未发送请求。'));
+      setError(new UiError('无法清除本功能的恢复记录。请恢复会话存储权限；未发送请求。'));
     }
   }
   return {

@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 export function Pagination({
   page,
@@ -12,6 +13,7 @@ export function Pagination({
   disabled: boolean;
   onChange: (page: number, size: number) => void;
 }) {
+  const { t } = useTranslation();
   const last = Math.max(1, Math.ceil(total / pageSize));
   const pages = Array.from(
     { length: Math.min(5, last) },
@@ -20,14 +22,14 @@ export function Pagination({
   return (
     <footer className="pagination">
       <span className="muted">
-        共 {total} 条结构/活性记录
+        {t('共 {total} 条结构/活性记录', { total })}
         {total > 0 && ` · ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)}`}
       </span>
-      <nav aria-label="结果分页">
+      <nav aria-label={t('结果分页')}>
         <button
           type="button"
           className="icon-button"
-          aria-label="上一页结果"
+          aria-label={t('上一页结果')}
           disabled={disabled || page <= 1}
           onClick={() => onChange(page - 1, pageSize)}
         >
@@ -37,7 +39,7 @@ export function Pagination({
           <button
             type="button"
             key={n}
-            aria-label={`结果第 ${n} 页`}
+            aria-label={t('结果第 {page} 页', { page: n })}
             aria-current={n === page ? 'page' : undefined}
             className={n === page ? 'page-button active' : 'page-button'}
             onClick={() => onChange(n, pageSize)}
@@ -49,21 +51,21 @@ export function Pagination({
         <button
           type="button"
           className="icon-button"
-          aria-label="下一页结果"
+          aria-label={t('下一页结果')}
           disabled={disabled || page >= last}
           onClick={() => onChange(page + 1, pageSize)}
         >
           <ChevronRight size={16} />
         </button>
         <select
-          aria-label="每页化合物数量"
+          aria-label={t('每页化合物数量')}
           value={pageSize}
           disabled={disabled}
           onChange={(e) => onChange(1, Number(e.target.value))}
         >
           {[10, 25, 50, 100].map((size) => (
             <option key={size} value={size}>
-              {size} 条/页
+              {t('{size} 条/页', { size })}
             </option>
           ))}
         </select>

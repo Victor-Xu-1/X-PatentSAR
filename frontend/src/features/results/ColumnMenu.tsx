@@ -1,3 +1,5 @@
+import { useTranslation } from '../../i18n';
+import { isLanguageSelection } from '../../i18n/interaction';
 import { ArrowDown, ArrowUp, ChevronDown, EyeOff, Filter } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -24,6 +26,7 @@ export function ColumnMenu({
   onFilters?: ((patch: Partial<Filters>) => void) | undefined;
   onHide: () => void;
 }) {
+  const { t } = useTranslation();
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
   const button = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDialogElement>(null);
@@ -43,6 +46,7 @@ export function ColumnMenu({
       ?.querySelector<HTMLElement>('button:not(:disabled),select:not(:disabled)')
       ?.focus();
     function outside(event: PointerEvent) {
+      if (isLanguageSelection(event.target)) return;
       if (
         event.target instanceof Node &&
         !panel.current?.contains(event.target) &&
@@ -53,6 +57,7 @@ export function ColumnMenu({
       }
     }
     function escape(event: KeyboardEvent) {
+      if (isLanguageSelection(event.target)) return;
       containTab(event, panel.current);
       if (event.key === 'Escape') {
         event.preventDefault();
@@ -79,7 +84,7 @@ export function ColumnMenu({
         ref={button}
         type="button"
         className={`column-menu-button${filtered || sorted ? ' column-menu-active' : ''}`}
-        aria-label={`${name} 列选项`}
+        aria-label={t('{name} 列选项', { name })}
         aria-haspopup="dialog"
         aria-expanded={Boolean(position)}
         aria-controls={position ? id : undefined}
@@ -113,7 +118,7 @@ export function ColumnMenu({
             ref={panel}
             id={id}
             open
-            aria-label={`${name} 列选项`}
+            aria-label={t('{name} 列选项', { name })}
             className="column-menu"
             style={{ ...position, maxHeight: Math.min(550, window.innerHeight - position.top - 8) }}
           >
@@ -132,11 +137,11 @@ export function ColumnMenu({
                   close();
                 }}
               >
-                清除此列筛选
+                {t('清除此列筛选')}
               </button>
             )}
             {sortable && (
-              <div className="column-sort-actions" aria-label="全项目排序">
+              <div className="column-sort-actions" aria-label={t('全项目排序')}>
                 {(['asc', 'desc'] as const).map((direction) => (
                   <button
                     key={direction}
@@ -156,7 +161,7 @@ export function ColumnMenu({
                     }}
                   >
                     {direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
-                    {direction === 'asc' ? '升序' : '降序'}
+                    {direction === 'asc' ? t('升序') : t('降序')}
                   </button>
                 ))}
                 {sorted && (
@@ -168,7 +173,7 @@ export function ColumnMenu({
                       close();
                     }}
                   >
-                    取消排序
+                    {t('取消排序')}
                   </button>
                 )}
               </div>
@@ -218,7 +223,7 @@ export function ColumnMenu({
               }}
             >
               <EyeOff size={14} />
-              隐藏此列
+              {t('隐藏此列')}
             </button>
           </dialog>,
           document.body,

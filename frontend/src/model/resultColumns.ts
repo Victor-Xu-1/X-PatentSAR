@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { METRIC_SPECS } from '../api/predictionTypes';
 import type { LeadAssessment } from '../api/leadTypes';
 import { activityColumnContext, activityColumnLabel } from './activityColumns';
@@ -41,12 +42,19 @@ export function resultColumns(activities: TableActivityColumn[] = []): ResultCol
   for (const activity of activities)
     counts.set(activity.name, (counts.get(activity.name) ?? 0) + 1);
   return [
-    column('select', '选择', 'check-col frozen-column frozen-select', 38, 38, 100),
-    column('compound', '原文编号', 'compound-column frozen-column frozen-compound', 120, 88, 480),
-    column('structure', '结构', 'structure-column frozen-column frozen-structure', 136, 88, 480),
+    column('select', t('选择'), 'check-col frozen-column frozen-select', 38, 38, 100),
+    column(
+      'compound',
+      t('原文编号'),
+      'compound-column frozen-column frozen-compound',
+      120,
+      88,
+      480,
+    ),
+    column('structure', t('结构'), 'structure-column frozen-column frozen-structure', 136, 88, 480),
     {
       ...column('lead', 'Lead', 'lead-column', 88, 72, 240),
-      hint: '全项目研究候选排序；评分、依据与警告见单元格提示，不代表实验验证。',
+      hint: t('全项目研究候选排序；评分、依据与警告见单元格提示，不代表实验验证。'),
     },
     ...activities.map((activity) => ({
       ...column(
@@ -72,7 +80,7 @@ export function resultColumns(activities: TableActivityColumn[] = []): ResultCol
     ...METRIC_SPECS.map((spec) =>
       column(`property:${spec.key}`, spec.label, 'prediction-column', 88, 64, 180),
     ),
-    column('source', '原文', 'source-column', 64, 48, 180),
-    column('edit', '修正', 'edit-column frozen-column frozen-edit', 64, 40, 120),
+    column('source', t('原文'), 'source-column', 64, 48, 180),
+    column('edit', t('修正'), 'edit-column frozen-column frozen-edit', 64, 40, 120),
   ];
 }

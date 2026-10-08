@@ -4,6 +4,7 @@ import { decodeSession } from './decoders';
 import type { Session } from './types';
 import { boundedResponse } from './response';
 import { ApiError, errorFrom } from './errors';
+import { UiError } from '../i18n';
 async function readJson(response: Response): Promise<unknown> {
   if (Number(response.headers.get('Content-Length')) > 8 * 1024 * 1024)
     throw new ApiError(0, 'response_limit', 'API 响应过大，已停止加载。');
@@ -178,8 +179,9 @@ export class ApiClient {
       throw new ApiError(
         response.status,
         'invalid_write_response',
-        `服务已响应，但无法确认写入结果。请先检查已保存状态，不要盲目重新提交。${error instanceof ContractError ? error.message : '响应格式无效。'}`,
+        '服务已响应，但无法确认写入结果。请先检查已保存状态，不要盲目重新提交。{detail}',
         true,
+        { detail: error instanceof ContractError ? error : new UiError('响应格式无效。') },
       );
     }
   }

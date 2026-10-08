@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n';
 import { useState } from 'react';
 import type { ActivityColumn, Compound } from '../../api/types';
 import { compoundLabel } from '../../model/compoundLabel';
@@ -23,12 +24,13 @@ export function CorrectionDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { t } = useTranslation();
   const edit = useCorrection(projectId, compound, activityColumns, onSaved);
   const { document, draft, busy, blocked } = edit;
   const [editorReady, setEditorReady] = useState(false);
   return (
     <Dialog
-      title={`修正 · ${compoundLabel(compound)}`}
+      title={t('修正 · {label}', { label: compoundLabel(compound) })}
       onClose={onClose}
       busy={busy}
       wide
@@ -39,9 +41,9 @@ export function CorrectionDialog({
           {edit.resource.error ? (
             <ErrorNotice error={edit.resource.error} onRetry={edit.resource.reload} />
           ) : edit.resource.loading ? (
-            <Loading label="正在读取数据…" />
+            <Loading label={t('正在读取数据…')} />
           ) : (
-            <Empty title="修正数据不可用" description="刷新后重试。" />
+            <Empty title={t('修正数据不可用')} description={t('刷新后重试。')} />
           )}
         </div>
       ) : (
@@ -53,7 +55,9 @@ export function CorrectionDialog({
           }}
         >
           {(document.stale || blocked) && (
-            <p className="conflict">保存版本或原始数据已变化，草稿保留。请先读取当前版本。</p>
+            <p className="conflict">
+              {t('保存版本或原始数据已变化，草稿保留。请先读取当前版本。')}
+            </p>
           )}
           <div className="correction-editor-layout">
             <div className="correction-structure">
@@ -70,10 +74,10 @@ export function CorrectionDialog({
             </div>
             <div className="correction-fields">
               <label className="form-field">
-                原文编号
+                {t('原文编号')}
                 <input
                   data-initial-focus
-                  aria-label="修正化合物编号"
+                  aria-label={t('修正化合物编号')}
                   required
                   maxLength={200}
                   value={draft.displayId}
@@ -93,19 +97,19 @@ export function CorrectionDialog({
               />
             </div>
           </div>
-          {edit.message && <output className="info-banner">{edit.message}</output>}
+          {edit.message && <output className="info-banner">{t(edit.message)}</output>}
           {edit.error && <ErrorNotice error={edit.error} />}
           {blocked && (
             <button type="button" disabled={busy} onClick={() => void edit.readLatest()}>
-              检查已保存状态并保留草稿
+              {t('检查已保存状态并保留草稿')}
             </button>
           )}
           <footer className="dialog-actions">
             <button type="button" disabled={busy} onClick={onClose}>
-              取消
+              {t('取消')}
             </button>
             <button type="submit" className="primary" disabled={busy || blocked || !editorReady}>
-              {busy ? '正在保存…' : '保存修正'}
+              {busy ? t('正在保存…') : t('保存修正')}
             </button>
           </footer>
         </form>

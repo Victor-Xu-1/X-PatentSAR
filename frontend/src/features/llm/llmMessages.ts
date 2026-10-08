@@ -1,3 +1,4 @@
+import { UiError, t } from '../../i18n';
 import { ApiError } from '../../api/errors';
 import type { LLMStatus, LLMTestReason } from '../../api/llmTypes';
 import type { JobLLMRecovery } from '../../api/types';
@@ -61,41 +62,42 @@ export const llmRecoveryStatusLabels: Record<JobLLMRecovery['status'], string> =
 export function llmAuthorizationError(error: unknown): Error {
   if (error instanceof ApiError) {
     if (error.uncertain || error.status >= 500)
-      return new Error('授权写入结果尚未确认。请先刷新核对任务和配置，不要重复提交。');
+      return new UiError('授权写入结果尚未确认。请先刷新核对任务和配置，不要重复提交。');
     if (error.status === 409)
-      return new Error('任务、配置或授权已改变。请先刷新核对，不会自动重试授权。');
-    if (error.status === 404) return new Error('当前任务或 API 授权接口不可用，请刷新核对。');
+      return new UiError('任务、配置或授权已改变。请先刷新核对，不会自动重试授权。');
+    if (error.status === 404) return new UiError('当前任务或 API 授权接口不可用，请刷新核对。');
     if (error.status === 422)
-      return new Error('授权未被接受。请核对任务与已保存的相同服务、模型和协议。');
+      return new UiError('授权未被接受。请核对任务与已保存的相同服务、模型和协议。');
     if (error.status === 401 || error.status === 403)
-      return new Error('会话或操作权限已失效，请重新加载页面。');
+      return new UiError('会话或操作权限已失效，请重新加载页面。');
   }
-  return new Error('授权未能确认。请刷新核对任务和配置后再操作。');
+  return new UiError('授权未能确认。请刷新核对任务和配置后再操作。');
 }
 
 export function llmReason(reason: string | null): string | null {
   return reason === null
     ? null
     : Object.hasOwn(reasons, reason)
-      ? reasons[reason]!
-      : '请检查配置或联系服务维护者。';
+      ? t(reasons[reason]!)
+      : t('请检查配置或联系服务维护者。');
 }
 
 export function llmTestReason(reason: string): string {
   return Object.hasOwn(testReasons, reason)
-    ? testReasons[reason as LLMTestReason]
-    : (llmReason(reason) ?? '请核对接口配置。');
+    ? t(testReasons[reason as LLMTestReason])
+    : (llmReason(reason) ?? t('请核对接口配置。'));
 }
 
 export function llmRequestError(error: unknown, write = false): Error {
   if (error instanceof ApiError) {
     if (error.uncertain || (write && error.status >= 500))
-      return new Error('请求结果尚未确认。请先刷新服务器状态，不要重复提交。');
-    if (error.status === 409) return new Error('服务器配置已改变。请先刷新，再确认保留的输入。');
+      return new UiError('请求结果尚未确认。请先刷新服务器状态，不要重复提交。');
+    if (error.status === 409) return new UiError('服务器配置已改变。请先刷新，再确认保留的输入。');
     if (error.status === 401 || error.status === 403)
-      return new Error('会话或操作权限已失效，请重新加载页面。');
-    if (error.status === 404) return new Error('当前后端尚未提供 LLM API 设置。');
-    if (error.status === 422) return new Error('配置未被接受，请检查地址、模型、密钥和发送同意。');
+      return new UiError('会话或操作权限已失效，请重新加载页面。');
+    if (error.status === 404) return new UiError('当前后端尚未提供 LLM API 设置。');
+    if (error.status === 422)
+      return new UiError('配置未被接受，请检查地址、模型、密钥和发送同意。');
   }
-  return new Error(write ? '操作失败，请核对服务器状态后再操作。' : '无法读取 LLM API 设置。');
+  return new UiError(write ? '操作失败，请核对服务器状态后再操作。' : '无法读取 LLM API 设置。');
 }

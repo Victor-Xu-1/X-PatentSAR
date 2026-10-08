@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import type {
   EnvironmentComponent,
   EnvironmentComponentId,
@@ -32,19 +33,19 @@ export function environmentComponentBadge(component: EnvironmentComponent): {
   label: string;
   tone: EnvironmentComponentStatus;
 } {
-  if (hasMissingDependencies(component)) return { label: '缺少依赖', tone: 'partial' };
+  if (hasMissingDependencies(component)) return { label: t('缺少依赖'), tone: 'partial' };
   if (component.status === 'checking' || hasEnvironmentComponentFailure(component))
-    return { label: environmentStatusLabels[component.status], tone: component.status };
-  if (isEnvironmentComponentReady(component)) return { label: '已安装·已验证', tone: 'ready' };
+    return { label: t(environmentStatusLabels[component.status]), tone: component.status };
+  if (isEnvironmentComponentReady(component)) return { label: t('已安装·已验证'), tone: 'ready' };
   if (component.presence === 'present')
     return {
-      label: component.verification === 'stale' ? '已存在·待复检' : '已存在·待检测',
+      label: component.verification === 'stale' ? t('已存在·待复检') : t('已存在·待检测'),
       tone: 'unchecked',
     };
   if (component.presence === 'missing' || component.presence === 'unconfigured')
-    return { label: environmentStatusLabels[component.presence], tone: component.presence };
+    return { label: t(environmentStatusLabels[component.presence]), tone: component.presence };
   return {
-    label: component.verification === 'stale' ? '状态未知·待复检' : '状态未知·待检测',
+    label: component.verification === 'stale' ? t('状态未知·待复检') : t('状态未知·待检测'),
     tone: 'unchecked',
   };
 }
