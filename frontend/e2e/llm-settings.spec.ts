@@ -86,10 +86,17 @@ test('isolated native settings persist, redact keys, require consent and remain 
     ['', '8765', '8766', '18765'],
     'Never use default or workstation production ports',
   ).not.toContain(origin.port);
+  const evidenceRoot = process.env.PATENTSAR_E2E_OUTPUT_DIR ?? '';
+  const runnerRoot = process.env.RUNNER_TEMP ?? '';
+  const isolatedCI =
+    process.env.GITHUB_ACTIONS === 'true' &&
+    runnerRoot.startsWith('/') &&
+    evidenceRoot.startsWith(`${runnerRoot}/`) &&
+    !evidenceRoot.split('/').includes('..');
   expect(
-    process.env.PATENTSAR_E2E_OUTPUT_DIR,
-    'Controller must name an external E-drive evidence directory',
-  ).toMatch(/^\/srv\/wsl\//);
+    evidenceRoot.startsWith('/srv/wsl/') || isolatedCI,
+    'Local evidence stays on E; controlled CI evidence stays in its isolated runner temp root',
+  ).toBe(true);
 
   const consoleErrors: string[] = [];
   const pageErrors: string[] = [];
