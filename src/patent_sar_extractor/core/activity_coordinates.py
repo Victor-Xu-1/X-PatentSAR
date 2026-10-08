@@ -19,6 +19,7 @@ from .activity_headers import (
     context_from_text,
     grid_schema,
 )
+from .activity_header_roles import HeaderResolver
 from .activity_models import ActivityRow, GridSchema, ParsedActivity
 from .biology_tables import BiologySchema, extract_tables, infer_schema
 from .table_geometry import detect_ruled_table_regions, page_tokens
@@ -157,6 +158,8 @@ def parse_grid(
                     else None
                 ),
             }
+            if schema.header_resolution is not None:
+                evidence["header_resolution"] = schema.header_resolution
             output.append(
                 ActivityRow(
                     cpd=compound,
@@ -175,7 +178,9 @@ def parse_grid(
     return output
 
 
-def extract_coordinate_tables(doc, pages: list[int]) -> ParsedActivity:
+def extract_coordinate_tables(
+    doc, pages: list[int], *, header_resolver: HeaderResolver | None = None
+) -> ParsedActivity:
     """Recognized pages remain owned even if a table contains no data rows."""
     result = ParsedActivity()
     token_map = {}
@@ -256,6 +261,8 @@ def extract_coordinate_tables(doc, pages: list[int]) -> ParsedActivity:
                         if isinstance(old, GridSchema)
                         else old
                     )
+            if schema is None and header_resolver is not None and page_index in seeds:
+                schema = header_resolver(context, matrix, region, page_index + 1)
             if schema is None:
                 carry = None
                 continue

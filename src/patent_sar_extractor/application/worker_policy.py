@@ -132,6 +132,7 @@ def _run_activity_rules(
     output_dir: str,
     include_intermediates: bool = False,
     patent_id: str = "",
+    bindings_path: str = "",
 ) -> None:
     profile = {
         "patent_id": patent_id,
@@ -147,7 +148,9 @@ def _run_activity_rules(
     code = (
         "import sys\n"
         "from patent_sar_extractor.core.activity_extractor import extract\n"
-        f"extract(pdf_path={pdf_path!r}, profile={profile!r}, output_dir={output_dir!r}, include_intermediates={bool(include_intermediates)!r})\n"
+        "from patent_sar_extractor.application.header_resolution import make_header_resolver\n"
+        f"resolver = make_header_resolver({pdf_path!r}, {output_dir!r}, {bindings_path!r})\n"
+        f"extract(pdf_path={pdf_path!r}, profile={profile!r}, output_dir={output_dir!r}, include_intermediates={bool(include_intermediates)!r}, header_resolver=resolver)\n"
     )
     timeout_seconds = _activity_timeout_seconds(classification)
     logger.info(

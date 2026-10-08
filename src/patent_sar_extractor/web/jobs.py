@@ -10,9 +10,16 @@ import sqlite3
 import threading
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Any
+
+from patent_sar_extractor.integrations.llm.config import EvidenceResolutionConfig
+from patent_sar_extractor.integrations.llm.job_context import (
+    create_context,
+    read_context,
+)
 
 from .admet_history import read_admet_stage, seal_admet_stage, write_admet_stage
 from .attempts import ATTEMPT_VERSION, spec_record
@@ -64,6 +71,10 @@ def decode_spec(raw: str) -> RunSpec:
     try:
         value["admet_compounds"] = tuple(value.get("admet_compounds", ()))
         spec = RunSpec(**value)
+        if spec.llm_context_id and not re.fullmatch(
+            r"[a-f0-9]{32}", spec.llm_context_id
+        ):
+            raise TypeError("Invalid API context identity")
     except TypeError as exc:
         raise WebError(
             409, "invalid_job_record", "Persisted job specification is invalid."
@@ -73,12 +84,18 @@ def decode_spec(raw: str) -> RunSpec:
 
 class JobQueue:
     def __init__(
-        self, service: WorkspaceService, runner: ProcessRunner, timeout: float
+        self,
+        service: WorkspaceService,
+        runner: ProcessRunner,
+        timeout: float,
+        *,
+        llm_policy: Callable[[], EvidenceResolutionConfig] | None = None,
     ) -> None:
         self.service = service
         self.store = service.store
         self.runner = runner
         self.timeout = timeout
+        self.llm_policy = llm_policy or EvidenceResolutionConfig
         self.shutdown = threading.Event()
         self.wake = threading.Event()
         self.thread: threading.Thread | None = None
@@ -323,7 +340,30 @@ class JobQueue:
             source_ocr_cache,
             include_admet,
             workspace_root=str(self.store.root),
+            llm_context_id=job_id,
         )
+        try:
+            if request.resume_job_id and saved_options.llm_context_id:
+                identifier = saved_options.llm_context_id
+                context = read_context(
+                    self.store.root / "llm" / f"{identifier}.policy.json"
+                )
+                if context.original_sha256 != spec.sha256:
+                    raise ValueError("API snapshot original differs")
+                spec = replace(spec, llm_context_id=identifier)
+            else:
+                policy = (
+                    EvidenceResolutionConfig()
+                    if request.resume_job_id
+                    else self.llm_policy()
+                )
+                create_context(self.store.root, job_id, spec.sha256, policy)
+        except (OSError, ValueError, TypeError) as error:
+            raise WebError(
+                409,
+                "llm_configuration",
+                "API settings or the saved task policy are invalid; no model call was made.",
+            ) from error
         payload = {
             **asdict(spec),
             "runtime_identity": runtime_identity(),

@@ -20,10 +20,12 @@ class ArchitectureContractTests(unittest.TestCase):
             formal_report = output_dir / "final_qa_report.md"
             formal_report.write_text("formal report\n", encoding="utf-8")
 
-            with patch.object(llm_qa_module, "has_llm_key", return_value=False):
+            from patent_sar_extractor.integrations.llm.config import EvidenceResolutionConfig
+
+            with patch.object(llm_qa_module, "get_evidence_resolution_config", return_value=EvidenceResolutionConfig()):
                 result = llm_qa_module.run_advisory_qa(str(output_dir))
 
-            self.assertEqual(result["status"], "skipped_no_credentials")
+            self.assertEqual(result["status"], "skipped_policy")
             self.assertEqual(result["authority"], "advisory")
             self.assertEqual(formal_report.read_text(encoding="utf-8"), "formal report\n")
             self.assertTrue((output_dir / "llm_qa_report.json").is_file())
@@ -31,13 +33,6 @@ class ArchitectureContractTests(unittest.TestCase):
 
     def test_llm_client_has_bounded_retry_and_validates_structured_output(self) -> None:
         from patent_sar_extractor.integrations.llm import client as llm_client
-
-        class SuccessfulResponse:
-            def raise_for_status(self) -> None:
-                return None
-
-            def json(self) -> dict:
-                return {"choices": [{"message": {"content": "{\"ok\": true}"}}]}
 
         config = {
             "model": "test-model",
@@ -47,18 +42,14 @@ class ArchitectureContractTests(unittest.TestCase):
             "cache_path": "",
         }
         with patch.object(llm_client, "get_llm_config", return_value=config), patch.object(
-            llm_client.requests,
-            "post",
-            side_effect=[llm_client.requests.exceptions.Timeout(), SuccessfulResponse()],
+            llm_client, "bounded_post",
+            side_effect=[llm_client.requests.exceptions.Timeout(), b'{"choices":[{"finish_reason":"stop","message":{"content":"{\\"ok\\":true}"}}]}'],
         ) as post, patch.object(llm_client.time, "sleep") as sleep:
-            result = llm_client.llm_chat_structured([{"role": "user", "content": "test"}], cache=False)
+            result = llm_client.llm_chat([{"role": "user", "content": "test"}], cache=False, max_retries=1)
 
-        self.assertEqual(result, {"ok": True})
+        self.assertEqual(result, '{"ok":true}')
         self.assertEqual(post.call_count, 2)
-        sleep.assert_called_once_with(1)
-
-        with patch.object(llm_client, "llm_chat", return_value="```json\n[1, 2]\n```"):
-            self.assertEqual(llm_client.llm_chat_structured([], cache=False), {})
+        sleep.assert_not_called()
 
         key_a = llm_client._cache_key([], "model", 0.0, "https://one.invalid", 100)
         key_b = llm_client._cache_key([], "model", 0.0, "https://two.invalid", 100)

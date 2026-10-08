@@ -20,6 +20,15 @@ from typing import Any, Protocol
 
 import requests
 
+if __package__ in {None, ""}:
+    # -I excludes PYTHONPATH; only this exact trusted package source is admitted.
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+
+from patent_sar_extractor.integrations.llm.external_api import (
+    PublicHTTPSConnection,
+    validate_external_endpoint,
+)
+
 MAX_INPUT_BYTES = 512 * 1024
 MAX_BODY_BYTES = 512 * 1024
 POLL_SECONDS = 0.05
@@ -86,6 +95,7 @@ def bounded_post(
     deadline: float,
     max_body_bytes: int,
     cancel: Cancellation | None = None,
+    require_public: bool = False,
 ) -> bytes:
     """One request within the caller's deadline, including headers/DNS/body reads."""
     if sys.platform != "linux":
@@ -105,6 +115,7 @@ def bounded_post(
             "deadline": deadline,
             "max_body_bytes": max_body_bytes,
             "parent_pid": os.getpid(),
+            "require_public": require_public,
         },
         allow_nan=False,
         separators=(",", ":"),
@@ -167,14 +178,26 @@ def _worker_request(packet: dict[str, Any]) -> bytes:
     remaining = min(packet["timeout"], packet["deadline"] - time.monotonic())
     if remaining <= 0:
         raise requests.Timeout("HTTP deadline expired before request")
-    with requests.post(
-        packet["url"],
-        headers=packet["headers"],
-        json=packet["json"],
-        timeout=remaining,
-        stream=True,
-        allow_redirects=False,
-    ) as response:
+    if packet.get("require_public", False):
+        validate_external_endpoint(packet["url"])
+        from urllib3.connectionpool import HTTPSConnectionPool
+
+        HTTPSConnectionPool.ConnectionCls = PublicHTTPSConnection
+    session = requests.Session()
+    session.trust_env = False
+    with (
+        session,
+        session.post(
+            packet["url"],
+            headers=packet["headers"],
+            json=packet["json"],
+            timeout=remaining,
+            stream=True,
+            allow_redirects=False,
+        ) as response,
+    ):
+        if 300 <= response.status_code < 400:
+            raise requests.RequestException("API redirects are not accepted")
         response.raise_for_status()
         content = bytearray()
         for chunk in response.iter_content(chunk_size=4096):

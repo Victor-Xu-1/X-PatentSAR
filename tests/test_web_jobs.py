@@ -289,7 +289,11 @@ class JobTests(WebFixture, unittest.TestCase):
             )
             runner = CLIProcessRunner()
             command = runner.command(spec)
-            self.assertIn("--skip-advisory-qa", command)
+            from patent_sar_extractor.integrations.llm.job_context import read_context
+
+            environment = runner.environment(spec)
+            self.assertEqual(read_context(environment["PATENTSAR_LLM_CONTEXT"]).policy.mode, "off")
+            self.assertNotIn("LLM_API_KEY", environment)
             self.assertNotIn("--force", command)
             for flag, value in (
                 ("--gpu-mode", "off"),

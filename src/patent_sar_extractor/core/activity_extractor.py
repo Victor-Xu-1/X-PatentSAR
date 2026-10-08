@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import logging
 import re
-from collections.abc import Callable
 from pathlib import Path
 
 import fitz
@@ -17,13 +16,13 @@ import fitz
 from .activity_artifacts import save_results
 from .activity_coordinates import coordinate_candidates, extract_coordinate_tables
 from .activity_models import ActivityRow, OCRFixRule
+from .activity_header_roles import HeaderResolver
 from .activity_observations import (
     DEFAULT_OCR_FIXES,
     apply_ocr_fixes,
     merge_rows,
     validate_rows,
 )
-from .activity_review import review_rows
 from .activity_text import extract_text_tables
 from .page_ocr_cache import load_page_ocr_cache, page_text, save_page_ocr_cache
 
@@ -35,14 +34,10 @@ def extract(
     pdf_path: str,
     profile: dict,
     output_dir: str,
-    use_vlm: bool = False,
-    vlm_api_url: str = "",
-    vlm_api_key: str = "",
-    vlm_model: str = "",
-    vlm_call: Callable[[str, str, str, str, str], str] | None = None,
     ocr_fix_rules: list[OCRFixRule] | None = None,
     max_cpd_num: int = 0,
     include_intermediates: bool = False,
+    header_resolver: HeaderResolver | None = None,
 ) -> dict:
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
@@ -72,7 +67,9 @@ def extract(
                     doc[page_index], min_native_chars=1
                 )
                 dirty = True
-        cells = extract_coordinate_tables(doc, coordinate_candidates(pages, text_map))
+        cells = extract_coordinate_tables(
+            doc, coordinate_candidates(pages, text_map), header_resolver=header_resolver
+        )
         text = extract_text_tables(
             [p for p in pages if p not in cells.owned_pages], text_map
         )
@@ -91,23 +88,7 @@ def extract(
         )
     validate_rows(rows)
     tables = cells.tables + text.tables
-    vlm_results = None
-    if use_vlm:
-        if not vlm_call or not vlm_api_key:
-            raise ValueError(
-                "Activity review requires an explicit adapter and credentials"
-            )
-        vlm_results = review_rows(
-            rows,
-            pdf_path,
-            output,
-            tables,
-            vlm_api_url,
-            vlm_api_key,
-            vlm_model,
-            vlm_call,
-        )
-    save_results(rows, vlm_results, output, profile)
+    save_results(rows, output, profile)
     headers = list(dict.fromkeys([*cells.headers, *text.headers]))
     logger.info(
         "Activity observations: %s rows, %s cell-owned pages",
@@ -122,6 +103,5 @@ def extract(
         "column_layout": {"type": "observed", "split_xs": []},
         "column_headers": headers,
         "col_classes": [],
-        "vlm_results": vlm_results,
         "output_dir": str(output),
     }

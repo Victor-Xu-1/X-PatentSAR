@@ -41,7 +41,7 @@ def execute_activity(state: PipelineContext) -> None:
     activity_fp = _step_fingerprint(
         step,
         pdf_path=state.args.pdf,
-        dependencies=[state.classify_json],
+        dependencies=[state.classify_json, state.bind_json],
         params={
             "include_intermediates": bool(
                 getattr(state.args, "include_intermediates", False)
@@ -66,6 +66,7 @@ def execute_activity(state: PipelineContext) -> None:
                     state.args, "include_intermediates", False
                 ),
                 patent_id=state.patent_id,
+                bindings_path=state.bind_json,
             )
         _write_step_manifest(state.act_json, activity_fp)
     state.activity_payload = (

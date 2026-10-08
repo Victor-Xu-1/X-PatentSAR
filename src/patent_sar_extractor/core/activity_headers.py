@@ -173,14 +173,27 @@ def _context_parts(caption: str, surrounding: str) -> tuple[str, str, str]:
     return raw_caption, body, source
 
 
-def grid_schema(context: TableContext, matrix: list[list[str]]) -> GridSchema | None:
+def grid_schema(
+    context: TableContext,
+    matrix: list[list[str]],
+    *,
+    identifier_columns: tuple[int, ...] | None = None,
+) -> GridSchema | None:
     """Physical columns prove order and repeated ID/value groups."""
     if not matrix:
         return None
     if any(len(row) != len(matrix[0]) for row in matrix):
         raise ValueError("Activity grid has inconsistent physical column counts")
     for row_index, row in enumerate(matrix[:3]):
-        identifiers = [i for i, cell in enumerate(row) if is_id_header(cell)]
+        identifiers = (
+            list(identifier_columns)
+            if identifier_columns is not None and row_index == 0
+            else [i for i, cell in enumerate(row) if is_id_header(cell)]
+        )
+        if any(type(i) is not int or not 0 <= i < len(row) for i in identifiers) or len(
+            set(identifiers)
+        ) != len(identifiers):
+            raise ValueError("Invalid original header roles")
         if not identifiers:
             continue
         first_data_row = row_index + 1

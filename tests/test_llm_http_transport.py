@@ -131,16 +131,19 @@ class DeadlineIntegrationTests(unittest.TestCase):
             "cache": False,
         }
         options.update(kwargs)
-        return client.llm_chat(
-            [{"role": "user", "content": "controlled local transport observation"}],
-            config={
-                "endpoint": f"http://127.0.0.1:{server.server_port}/v1",
-                "model": "controlled",
-                "api_key": TEST_KEY,
-                "cache_path": "",
-            },
-            **options,
-        )
+        # Test-only adapter routes the checked public API request to an owned
+        # HTTP emulator. It performs no inference and adds no production opt-out.
+        def local_wire(url, **wire):
+            self.assertEqual(url, "https://api.example.org/v1/chat/completions")
+            self.assertTrue(wire.pop("require_public"))
+            return transport.bounded_post(f"http://127.0.0.1:{server.server_port}/v1/chat/completions", **wire)
+
+        with patch.object(client, "bounded_post", side_effect=local_wire):
+            return client.llm_chat(
+                [{"role": "user", "content": "controlled local transport observation"}],
+                config={"endpoint": "https://api.example.org/v1", "model": "controlled", "api_key": TEST_KEY, "cache_path": ""},
+                **options,
+            )
 
     def children(self):
         owned = []
@@ -329,6 +332,16 @@ class DeadlineIntegrationTests(unittest.TestCase):
                 "kernel parent-death signal must terminate its own worker",
             )
 
+    def test_production_public_guard_rejects_local_emulator_before_request(self):
+        server = self.serve("fast")
+        with self.assertRaises(ValueError):
+            transport.bounded_post(
+                f"http://127.0.0.1:{server.server_port}/v1/chat/completions",
+                headers={}, json={}, timeout=1, deadline=time.monotonic() + 1,
+                max_body_bytes=8192, require_public=True,
+            )
+        self.assertEqual(server.requests, [])
+
 
 def process_live(pid):
     try:
@@ -347,13 +360,11 @@ def orphan_call(endpoint, marker):
         return process
 
     with patch.object(transport.subprocess, "Popen", side_effect=record):
-        client.llm_chat(
-            [],
-            config={"endpoint": endpoint, "model": "controlled", "api_key": TEST_KEY},
+        transport.bounded_post(
+            endpoint + "/chat/completions",
+            headers={"Authorization": f"Bearer {TEST_KEY}"}, json={},
             timeout=5,
-            max_retries=0,
-            max_response_chars=8192,
-            cache=False,
+            deadline=time.monotonic() + 5, max_body_bytes=65536,
         )
 
 
@@ -445,37 +456,19 @@ class CarrierContractTests(unittest.TestCase):
             ):
                 transport._transport_result(packet, 32)
 
-    def test_legacy_advisory_defaults_keep_timeout_retries_and_no_carrier(self):
-        response = Mock()
-        response.json.return_value = {
-            "choices": [{"message": {"content": "legacy-ok"}}]
-        }
+    def test_stored_key_alone_cannot_enable_legacy_or_bounded_http(self):
         with (
             patch.object(
                 client.requests,
                 "post",
-                side_effect=[requests.Timeout(), requests.Timeout(), response],
             ) as posted,
             patch.object(client, "bounded_post") as carrier,
             patch.object(client.time, "sleep") as sleep,
-            patch.object(
-                client,
-                "get_llm_config",
-                return_value={
-                    "endpoint": "https://unit.invalid",
-                    "model": "controlled",
-                    "api_key": TEST_KEY,
-                    "timeout": 180,
-                    "cache_path": "",
-                },
-            ),
+            patch.dict(os.environ, {"LLM_API_KEY": TEST_KEY, "LLM_ENDPOINT": "https://unit.invalid", "LLM_MODEL": "controlled", "PATENTSAR_LLM_RESOLUTION_MODE": "off", "PATENTSAR_LLM_RESOLUTION_DATA_CONSENT": "false"}),
         ):
-            self.assertEqual(client.llm_chat([], cache=False), "legacy-ok")
-        self.assertEqual(posted.call_count, 3)
-        self.assertTrue(
-            all(call.kwargs["timeout"] == 180 for call in posted.call_args_list)
-        )
-        self.assertEqual([call.args[0] for call in sleep.call_args_list], [1, 2])
+            self.assertEqual(client.llm_chat([], cache=False), "")
+        posted.assert_not_called()
+        sleep.assert_not_called()
         carrier.assert_not_called()
 
 

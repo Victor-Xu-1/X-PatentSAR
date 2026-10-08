@@ -20,7 +20,7 @@ from .activity_observations import has_usable_values
 
 
 def save_results(
-    rows: list[ActivityRow], vlm_results: dict | None, output_dir: Path, profile: dict
+    rows: list[ActivityRow], output_dir: Path, profile: dict
 ) -> None:
     value_keys = list(dict.fromkeys(k for r in rows for k in r.activity_values))
     cell_keys = list(dict.fromkeys(k for r in rows for k in r.cell_line_data))
@@ -64,8 +64,6 @@ def save_results(
             "rows": [asdict(row) for row in rows],
         },
     )
-    if vlm_results:
-        write_json_atomic(output_dir / "vlm_results.json", vlm_results)
     review = [r for r in rows if r.needs_review]
     report = [
         "# Activity Extraction Report",

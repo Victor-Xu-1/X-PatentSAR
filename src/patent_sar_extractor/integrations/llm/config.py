@@ -13,31 +13,26 @@ import logging
 import os
 import re
 from dataclasses import dataclass, field
-from functools import lru_cache
 from typing import Literal
-from urllib.parse import urlsplit
+
+import yaml
 
 from patent_sar_extractor.paths import config_files
+
+from .external_api import validate_external_endpoint
 
 LLM_CONFIG_PATHS = config_files("llm.yaml")
 logger = logging.getLogger(__name__)
 _CONFIG_ERROR_KEY = "_configuration_error"
 
-FALLBACKS = {
-    "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3",
-    "api_key": "",
-    "model": "ark-code-latest",
-    "timeout": 180,
-    "max_workers": 4,
-    "cache_path": "",
-}
 
-
-@lru_cache(maxsize=1)
 def _load_yaml_config() -> dict:
-    try:
-        import yaml
+    """Read current operator overlays; settings saves do not need a restart.
 
+    A task uses a separate immutable private snapshot. A process-global YAML
+    cache would otherwise let the web editor and next task disagree.
+    """
+    try:
         merged: dict[str, object] = {}
         for config_path in LLM_CONFIG_PATHS:
             if not config_path.is_file():
@@ -55,52 +50,9 @@ def _load_yaml_config() -> dict:
                 else:
                     merged[key] = value
         return merged
-    except ImportError:
-        pass
     except (OSError, ValueError, TypeError, yaml.YAMLError) as exc:
         logger.warning("Unable to load YAML LLM configuration (%s)", type(exc).__name__)
         return {_CONFIG_ERROR_KEY: True}
-
-    config: dict[str, object] = {}
-    current_section = None
-    try:
-        for config_path in LLM_CONFIG_PATHS:
-            if not config_path.is_file():
-                continue
-            with open(config_path, "r", encoding="utf-8") as f:
-                for raw_line in f:
-                    if not raw_line.strip() or raw_line.lstrip().startswith("#"):
-                        continue
-                    indent = len(raw_line) - len(raw_line.lstrip(" "))
-                    line = raw_line.strip()
-                    if line.endswith(":") and indent == 0:
-                        current_section = line[:-1].strip()
-                        config.setdefault(current_section, {})
-                        continue
-                    if ":" not in line:
-                        continue
-                    key, value = line.split(":", 1)
-                    value = value.strip().strip('"').strip("'")
-                    target = (
-                        config[current_section]
-                        if current_section
-                        and isinstance(config.get(current_section), dict)
-                        else config
-                    )
-                    target[key.strip()] = value
-    except (OSError, ValueError, TypeError) as exc:
-        logger.warning(
-            "Unable to parse fallback LLM configuration (%s)", type(exc).__name__
-        )
-        return {_CONFIG_ERROR_KEY: True}
-    return config
-
-
-def _coerce_int(value, default: int) -> int:
-    try:
-        return int(str(value).strip())
-    except (TypeError, ValueError):
-        return default
 
 
 def _resolve(role: str, key: str, env_names: list[str], default):
@@ -123,47 +75,22 @@ def _resolve(role: str, key: str, env_names: list[str], default):
 
 
 def get_llm_config() -> dict:
+    """Compatibility accessor obeying the sole opt-in policy, never key-only."""
+    policy = get_evidence_resolution_config()
+    if policy.mode == "off" or not policy.data_consent:
+        return {"endpoint": "", "api_key": "", "model": "", "cache_path": ""}
     return {
-        "endpoint": _resolve(
-            "llm", "endpoint", ["LLM_ENDPOINT"], FALLBACKS["endpoint"]
-        ),
-        "api_key": _resolve("llm", "api_key", ["LLM_API_KEY"], FALLBACKS["api_key"]),
-        "model": _resolve("llm", "model", ["LLM_MODEL"], FALLBACKS["model"]),
-        "timeout": _coerce_int(
-            _resolve("llm", "timeout", ["LLM_TIMEOUT"], FALLBACKS["timeout"]),
-            FALLBACKS["timeout"],
-        ),
-        "max_workers": _coerce_int(
-            _resolve(
-                "llm", "max_workers", ["LLM_MAX_WORKERS"], FALLBACKS["max_workers"]
-            ),
-            FALLBACKS["max_workers"],
-        ),
-        "cache_path": str(
-            _resolve("llm", "cache_path", ["LLM_CACHE_PATH"], FALLBACKS["cache_path"])
-        ),
+        key: getattr(policy, key)
+        for key in (
+            "endpoint",
+            "api_key",
+            "model",
+            "cache_path",
+            "timeout",
+            "protocol",
+            "response_mode",
+        )
     }
-
-
-def get_vlm_config() -> dict:
-    llm = get_llm_config()
-    return {
-        "endpoint": _resolve(
-            "vlm", "endpoint", ["VLM_API_URL", "LLM_ENDPOINT"], llm["endpoint"]
-        ),
-        "api_key": _resolve(
-            "vlm", "api_key", ["VLM_API_KEY", "LLM_API_KEY"], llm["api_key"]
-        ),
-        "model": _resolve("vlm", "model", ["VLM_MODEL", "LLM_MODEL"], llm["model"]),
-        "timeout": _coerce_int(
-            _resolve("vlm", "timeout", ["VLM_TIMEOUT", "LLM_TIMEOUT"], llm["timeout"]),
-            llm["timeout"],
-        ),
-    }
-
-
-def has_llm_key() -> bool:
-    return bool(str(get_llm_config().get("api_key", "")).strip())
 
 
 @dataclass(frozen=True)
@@ -175,6 +102,8 @@ class EvidenceResolutionConfig:
     endpoint: str = ""
     api_key: str = field(default="", repr=False)
     model: str = ""
+    protocol: Literal["openai-compatible", "anthropic", "gemini"] = "openai-compatible"
+    response_mode: Literal["json-schema", "json-object", "prompt-only"] = "json-schema"
     cache_path: str = ""
     timeout: int = 30
     retries: int = 0
@@ -187,6 +116,8 @@ class EvidenceResolutionConfig:
         if (
             self.mode not in {"off", "on-error", "quality"}
             or type(self.data_consent) is not bool
+            or self.protocol not in {"openai-compatible", "anthropic", "gemini"}
+            or self.response_mode not in {"json-schema", "json-object", "prompt-only"}
         ):
             raise ValueError("Invalid evidence disclosure policy")
         for key, lower, upper in (
@@ -218,16 +149,11 @@ class EvidenceResolutionConfig:
             or len(self.cache_path) > 2048
         ):
             raise ValueError("Incomplete evidence provider configuration")
-        endpoint = urlsplit(self.endpoint)
-        if (
-            endpoint.scheme != "https"
-            or not endpoint.hostname
-            or endpoint.username is not None
-            or endpoint.password is not None
-            or endpoint.query
-            or endpoint.fragment
+        validate_external_endpoint(self.endpoint)
+        if self.protocol == "gemini" and not re.fullmatch(
+            r"[A-Za-z0-9_.-]{1,128}", self.model.removeprefix("models/")
         ):
-            raise ValueError("Invalid evidence provider endpoint")
+            raise ValueError("Invalid Gemini model name")
 
 
 def _evidence_option(key: str, default):
@@ -245,13 +171,25 @@ def _evidence_option(key: str, default):
 
 def get_evidence_resolution_config() -> EvidenceResolutionConfig:
     """Read an optional evidence_resolution section, with no enabling fallback."""
+    snapshot = os.environ.get("PATENTSAR_LLM_CONTEXT", "")
+    if snapshot:
+        from .job_context import read_context
+
+        return read_context(snapshot).policy
     defaults = EvidenceResolutionConfig()
     consent = _evidence_option("data_consent", False)
     if isinstance(consent, str) and consent in {"true", "false"}:
         consent = consent == "true"
     if type(consent) is not bool:
         raise ValueError("Explicit boolean data consent is required")
-    values = {"mode": _evidence_option("mode", "off"), "data_consent": consent}
+    values = {
+        "mode": _evidence_option("mode", "off"),
+        "data_consent": consent,
+        "protocol": _resolve("llm", "protocol", ["LLM_PROTOCOL"], "openai-compatible"),
+        "response_mode": _resolve(
+            "llm", "response_mode", ["LLM_RESPONSE_MODE"], "json-schema"
+        ),
+    }
     for key in (
         "timeout",
         "retries",
