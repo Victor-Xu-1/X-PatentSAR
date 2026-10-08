@@ -20,6 +20,7 @@ from .files import SafeFiles
 from .history_storage import ensure_job_visible, ensure_project_visible, tombstone
 from .lead_storage import LeadStore
 from .leads import LeadService
+from .llm_job_recovery import recovery_view
 from .models import (
     Acceptance,
     Compound,
@@ -80,6 +81,7 @@ class WorkspaceService:
         elif row["run_root"] and (
             type(snapshot.get(EPOCH_MARKER)) is not int
             or snapshot[EPOCH_MARKER] != core.STEREO_EVIDENCE_VERSION
+            or snapshot.get("core_qa_schema_version") != core.QA_REPORT_SCHEMA_VERSION
         ):
             self._refresh_source_epoch(row, snapshot)
             row = self.store.project(project_id)
@@ -105,6 +107,7 @@ class WorkspaceService:
             **snapshot,
             "acceptance": accepted.model_dump(),
             EPOCH_MARKER: core.STEREO_EVIDENCE_VERSION,
+            "core_qa_schema_version": core.QA_REPORT_SCHEMA_VERSION,
         }
         # No raw DTO, projection ID, correction, history or saved observation is
         # rewritten. A concurrent new attempt cannot acquire this old read view.
@@ -377,6 +380,7 @@ class WorkspaceService:
         snapshot, compounds = view.snapshot(project_id, pdf_sha256=project["sha256"])
         snapshot["correction_projection_id"] = uuid.uuid4().hex
         snapshot[EPOCH_MARKER] = core.STEREO_EVIDENCE_VERSION
+        snapshot["core_qa_schema_version"] = core.QA_REPORT_SCHEMA_VERSION
         self.store.snapshot(
             project_id,
             snapshot,
@@ -441,6 +445,7 @@ class WorkspaceService:
             error=error,
             stages=[] if admet_only else (history.stages if history else []),
             can_resume=resumable,
+            llm_recovery=recovery_view(self.store, row, spec, resumable),
             history_available=(admet_stage is not None)
             if admet_only
             else (history.available if history else False),

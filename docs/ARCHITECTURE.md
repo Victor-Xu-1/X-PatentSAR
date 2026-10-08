@@ -57,7 +57,7 @@ boundaries. Binder epoch8 parses exact paragraph-prefixed synthesis headings;
 a standalone diagram needs a freshly observed original heading, unique geometry
 before the first procedure, and original/crop fingerprints. Wide/reordered grids
 carry literal header-role proof, not adjacency or a fixed number of columns.
-Activity epoch6 owns every physical column losslessly, retaining multiline raw
+Activity epoch7 owns every physical column losslessly, retaining multiline raw
 headers and distinct duplicate/unknown fields. Upright table OCR prevents per-token
 digit inversion; independent clipped-cell observations can prove ownership despite
 a padded detector box. Unknown/conflicting meaningful values remain rejected.
@@ -83,6 +83,11 @@ automatic binding approval or all-format guarantee.
 
 Each new job captures an immutable private API policy under `workspace/llm`; a
 resume carries the same context identity, quota and 24-hour content-bound cache.
+GUI-managed context v2 stores a credential fingerprint/reference, not another
+key copy; operator ENV profiles and preserved v1 records retain their explicit
+private boundary. Credential-only renewal is an authenticated, consented, idle
+job operation under configuration and budget locks. It retains the exact original,
+profile, immutable policy and spent quota; no inference or automatic resume occurs.
 Every network attempt reserves durable quota before sending. A separate private
 budget lock protects serial consumption across processes; corrupt/foreign state
 cannot reset it. Changes apply to future new jobs, not silently to active/resumed
@@ -90,6 +95,27 @@ work. Default OFF makes no request; original evidence, chemistry and strict QA
 remain authoritative. API/OOM/infrastructure failures never enter an escalation
 loop. No whole-PDF upload, numerical repair, local LLM or extra artifact writer is
 introduced; model/API correctness still requires consented real-provider testing.
+
+The same client validates evidence content before caching and on cache hits;
+namespace identity includes the consumer validation contract. Rejected entries
+are removed only by key plus observed content, never a concurrent replacement.
+Ordinary SQLite lock/storage faults are explicit optional-cache observations;
+unsafe ownership, permissions, links and corruption remain rejection. One safe
+wire failure type preserves status and bounded Retry-After without provider bodies.
+Job health v2 serializes authentication blocks and transient faults under the
+same logical budget. One active attempt never restarts later API requests after
+a transient fault; only a later explicit attempt after cooling may retry. OFF,
+revocation, quota exhaustion and carrier/cleanup faults cannot become retries.
+
+Activity coverage v1 inventories coordinate grids, declared text regions and
+otherwise uncovered classified seeds independently of returned rows. Unsupported
+headers and recognized regions without original rows remain unresolved, even if
+other tables succeeded. Only the existing writer publishes the additive proof;
+activity epoch7 invalidates old derived stage reuse, while unchanged upstream and
+compatible raw observations remain reusable. QA v4 rejects missing/unresolved
+coverage. The read model rechecks only cached acceptance after a QA-schema change,
+preserving raw rows, source IDs, corrections and old producer artifacts. Optional
+repair counters are observations, not estimates or another acceptance authority.
 
 - Printed identifiers and original spatial evidence define the compound
   universe. Activity membership never determines whether a proved structure
@@ -104,7 +130,7 @@ introduced; model/API correctness still requires consented real-provider testing
   An unused pair requires blank original pixels in both cells and no segment
   evidence. Proved selected reprints can retain multiple additional sources
   for one confirmed primary ID; novel or conflicting primary IDs stay withheld.
-- Activity epoch6 treats classified pages as seeds, not a complete table
+- Activity epoch7 treats classified pages as seeds, not a complete table
   inventory. Only a proven table can inspect its immediately adjacent next
   page; missing grids, changed geometry or unrelated captions stop carry-over.
   An empty seed set never triggers an all-document OCR scan.
@@ -146,6 +172,7 @@ Interrupted/incomplete/foreign/old core evidence cannot enter that path.
 | Cache/identity | `contracts.py`, `stage_cache.py`, exact original/dependency/content fingerprints |
 | Shared PDF/OCR geometry | Page observation cache, original-cell grid/read modules, one bounded OCR engine |
 | Activity parsing | Small identity/header/coordinate/text/observation/artifact modules; `activity_extractor.py` is a facade |
+| Activity completeness | `activity_coverage.py` inventories original regions/seed coverage; one writer and strict QA consume its bounded proof |
 | Source ownership | Spatial cells/captions, source headings, catalog reader and one binding writer |
 | Visible labels | `visible_label_cache.py` owns optional raw PDF/crop identity transport; `binding_observations.py` owns validated refinement; fresh native/shared cell/heading observations prove ownership |
 | Recognition | One verified printed-DECIMER adapter and bounded JSONL carrier, raw observation cache and source QC |

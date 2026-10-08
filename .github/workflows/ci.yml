@@ -89,10 +89,11 @@ jobs:
           PATENTSAR_BASE_PYTHON: ${{ github.workspace }}/.venv/bin/python
           CUDA_VISIBLE_DEVICES: "-1"
         run: |
-          mode=$(.venv/bin/python -c 'import json; s=set(json.load(open(".github/verification_scope.json"))["browser_tests"]); print("llm-settings" if "frontend/e2e/llm-settings.spec.ts" in s and s <= {"frontend/e2e/product-version.spec.ts", "frontend/e2e/topbar.spec.ts", "frontend/e2e/llm-settings.spec.ts", "frontend/e2e/identifier-labels.spec.ts"} else "read-only" if s <= {"frontend/e2e/product-version.spec.ts", "frontend/e2e/topbar.spec.ts"} else "execution")')
+          mode=$(.venv/bin/python -c 'import json; s=set(json.load(open(".github/verification_scope.json"))["browser_tests"]); print("llm-recovery" if "frontend/e2e/llm-recovery-stack.spec.ts" in s and s <= {"frontend/e2e/product-version.spec.ts", "frontend/e2e/llm-recovery.spec.ts", "frontend/e2e/llm-recovery-stack.spec.ts"} else "llm-settings" if "frontend/e2e/llm-settings.spec.ts" in s and s <= {"frontend/e2e/product-version.spec.ts", "frontend/e2e/topbar.spec.ts", "frontend/e2e/llm-settings.spec.ts", "frontend/e2e/identifier-labels.spec.ts", "frontend/e2e/llm-recovery.spec.ts"} else "read-only" if s <= {"frontend/e2e/product-version.spec.ts", "frontend/e2e/topbar.spec.ts"} else "execution")')
           args=()
           if [ "$mode" = read-only ]; then args+=(--read-only); fi
           if [ "$mode" = llm-settings ]; then args+=(--llm-settings); fi
+          if [ "$mode" = llm-recovery ]; then args+=(--llm-recovery); fi
           .venv/bin/python tools/prepare_browser_fixture.py "$RUNNER_TEMP/browser-fixture" --github-env "${args[@]}"
       - name: Real browser workflow against installed wheel
         if: steps.scope.outputs.browser_count != '0'

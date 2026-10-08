@@ -28,6 +28,10 @@ _REASONS = frozenset(
         "invalid_cached_content",
         "cache_unavailable",
         "configuration_unavailable",
+        "provider_unavailable",
+        "transport_unavailable",
+        "unsafe_cache",
+        "invalid_evidence_selection",
     }
 )
 
@@ -124,4 +128,20 @@ def http_problem(status: int, retry_after: str | None = None) -> APIProblem:
         status,
         reason in {"rate_limited", "server_error"},
         parse_retry_after(retry_after),
+    )
+
+
+def evidence_problem(problem: APIProblem) -> APIProblem | None:
+    """Translate wire/cache details once for the source-repair coordinator."""
+    if problem.reason in {"invalid_cached_content", "budget_exhausted"}:
+        # Cache eviction and budget denial have their own authoritative paths.
+        return None
+    reason = {
+        "server_error": "provider_unavailable",
+        "request_error": "transport_unavailable",
+        "deadline_exceeded": "timeout",
+        "invalid_content": "invalid_evidence_selection",
+    }.get(problem.reason, problem.reason)
+    return APIProblem(
+        reason, problem.http_status, problem.retryable, problem.retry_after_seconds
     )

@@ -15,6 +15,10 @@ from .config import get_llm_config
 from .private_state import private_root
 
 
+class UnsafeCacheError(ValueError):
+    """An unproved private cache cannot be treated as an optional cache miss."""
+
+
 def _get_cache_db(cache_path: str | None = None) -> sqlite3.Connection | None:
     if cache_path is None:
         cache_path = str(get_llm_config().get("cache_path", "") or "")
@@ -22,7 +26,10 @@ def _get_cache_db(cache_path: str | None = None) -> sqlite3.Connection | None:
         return None
     path = Path(cache_path)
     directory = path.parent.absolute()
-    private_root(directory)
+    try:
+        private_root(directory)
+    except ValueError as error:
+        raise UnsafeCacheError("Unsafe API cache directory") from error
     try:
         fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW, 0o600)
     except FileExistsError:
@@ -34,7 +41,7 @@ def _get_cache_db(cache_path: str | None = None) -> sqlite3.Connection | None:
             or info.st_nlink != 1
             or info.st_size > 64 * 1024 * 1024
         ):
-            raise ValueError("Unsafe or excessive API cache")
+            raise UnsafeCacheError("Unsafe or excessive API cache")
     else:
         os.close(fd)
     # Optional cache contention must not consume the API's absolute deadline.

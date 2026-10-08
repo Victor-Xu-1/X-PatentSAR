@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 
+from .activity_coverage import source_record
 from .activity_headers import (
     ACTIVITY_CONTEXT,
     METRIC,
@@ -341,6 +342,32 @@ def extract_text_tables(pages: list[int], text_map: dict[str, str]) -> ParsedAct
                     )
                 )
                 carry = (caption, observed_header, legend, page_index)
+                result.coverage.append(
+                    source_record(
+                        page_index + 1,
+                        "text",
+                        None,
+                        context.table_id,
+                        observed_header or caption,
+                        "parsed" if rows else "unresolved",
+                        "declared_text" if rows else "no_original_rows",
+                        len(rows),
+                    )
+                )
             else:
+                if observed_header or ACTIVITY_CONTEXT.search(caption):
+                    context = context_from_text(caption)
+                    result.coverage.append(
+                        source_record(
+                            page_index + 1,
+                            "text",
+                            None,
+                            context.table_id,
+                            observed_header or caption,
+                            "unresolved",
+                            "unsupported_header",
+                            0,
+                        )
+                    )
                 carry = None
     return result

@@ -9,9 +9,11 @@ from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
 from .config import EvidenceResolutionConfig
+from .credential_authorization import authorized_key, credential_digest
 from .private_state import private_root, read_budget, read_private, write_private
 
-CONTEXT_SCHEMA = {"name": "patentsar.llm-job-context", "version": 1}
+CONTEXT_SCHEMA = {"name": "patentsar.llm-job-context", "version": 2}
+LEGACY_CONTEXT_SCHEMA = {"name": "patentsar.llm-job-context", "version": 1}
 JOB_ID = re.compile(r"[a-f0-9]{32}")
 
 
@@ -49,13 +51,19 @@ def create_context(
         {"job_id": job_id, "limit": policy.max_calls, "calls": 0},
         exclusive=True,
     )
+    recorded_policy = asdict(policy)
+    reference = ""
+    if policy.authorization_file and policy.mode != "off" and policy.data_consent:
+        reference = credential_digest(policy.api_key)
+        recorded_policy["api_key"] = ""
     write_private(
         path,
         {
             "schema": CONTEXT_SCHEMA,
             "job_id": job_id,
             "original_sha256": original_sha256,
-            "policy": asdict(policy),
+            "policy": recorded_policy,
+            "credential_sha256": reference,
         },
         exclusive=True,
     )
@@ -65,11 +73,15 @@ def create_context(
 def read_context(value: str | Path) -> JobLLMContext:
     path = Path(value)
     packet = read_private(path)
-    if set(packet) != {"schema", "job_id", "original_sha256", "policy"}:
+    legacy = packet.get("schema") == LEGACY_CONTEXT_SCHEMA
+    fields = {"schema", "job_id", "original_sha256", "policy"}
+    if not legacy:
+        fields.add("credential_sha256")
+    if set(packet) != fields:
         raise ValueError("Invalid immutable API context")
     job_id, original = packet["job_id"], packet["original_sha256"]
     if (
-        packet["schema"] != CONTEXT_SCHEMA
+        packet["schema"] not in (CONTEXT_SCHEMA, LEGACY_CONTEXT_SCHEMA)
         or not isinstance(job_id, str)
         or not JOB_ID.fullmatch(job_id)
         or path.name != f"{job_id}.policy.json"
@@ -79,7 +91,20 @@ def read_context(value: str | Path) -> JobLLMContext:
     ):
         raise ValueError("Foreign or malformed API context")
     policy = EvidenceResolutionConfig(**packet["policy"])
-    policy.validate()
+    if policy.authorization_file and policy.mode != "off" and policy.data_consent:
+        # Validate semantics without duplicating the private key in a new snapshot.
+        replace(policy, api_key="credential-reference-validation").validate()
+        reference = (
+            credential_digest(policy.api_key) if legacy else packet["credential_sha256"]
+        )
+        key = authorized_key(path.parent, job_id, original, policy, reference)
+        policy = replace(policy, api_key=key)
+    else:
+        policy.validate()
+        if not legacy and packet["credential_sha256"]:
+            raise ValueError(
+                "An inactive/operator policy cannot carry a GUI credential reference"
+            )
     read_budget(path.parent / f"{job_id}.budget.json", job_id, policy.max_calls)
     if policy.cache_path and policy.cache_path != str(
         path.parent / "responses.sqlite3"

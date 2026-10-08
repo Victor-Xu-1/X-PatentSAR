@@ -158,9 +158,39 @@ old GUI-managed snapshots. The current source original, geometry, identifiers,
 raw measurements/units and deterministic QA remain authoritative. Candidate
 header admission revalidates the complete original physical table and existing
 proved-ID catalog; the ordinary parser/writer continues without invented values.
-Optional column/QA reviews cannot promote formal acceptance. Activity epoch6 and
+Optional column/QA reviews cannot promote formal acceptance. Activity epoch7 and
 policy fingerprints invalidate changed derived parsing independently of product
 PR numbering, APIv1 and the unchanged workspace database schema.
+
+New GUI context v2 stores a credential reference, not a duplicate key. Preserved
+legacy contexts are read without rewriting them. POST
+`/api/v1/jobs/{job_id}/llm-authorization` accepts
+`{expected_revision:current_settings_revision,consent:true}` and returns `Job`.
+It requires a visible idle resumable attempt, unchanged provider/model/protocol/
+mode/bounds, current consent/config revision and the same original/context. It
+only publishes a private credential-fingerprint grant under config/budget locks;
+no model request, task enqueue, semantic mutation or quota reset occurs. The UI
+refreshes, then leaves continuing extraction to the user. Active, stale, foreign,
+removed, operator-ENV or corrupt-control cases reject without an enabling fallback.
+
+`Job.llm_recovery` is optional/null: `{status,reason,remaining_calls,
+retry_after_seconds,can_reauthorize}`. Status is `disabled|ready|blocked|cooldown|
+exhausted|unavailable`; remaining calls is null or0–8; wait is null or a finite0–45
+seconds. Unknown/corrupt state does not fabricate a zero or provider success.
+`ready` is usable configuration/evidence state, never scientific certification.
+Wire faults are safely classified; no raw error body, token or private path is
+returned. Same-attempt transient faults suppress later API calls even after a
+cooldown expires; only an explicit later attempt may retry under its remaining
+logical budget. OFF/consent/key revocation remains authoritative.
+
+`Stage.repair` is optional/null `{regions,unresolved}`, each0–25,000 and
+unresolved≤regions, projected only from actual activity-stage coverage facts.
+Missing/invalid optional counters are unknown, not zero or a change in original
+stage failure/QA. Activity coverage v1 is a bounded original-region/seed inventory;
+QA schema4 rejects missing/unresolved coverage even when other tables have rows.
+Private cache entries must pass domain and full consumer-reference checks before
+storage, and are revalidated on read. Namespace identity invalidates old unchecked
+answers; exact rejected entries are evicted without deleting unrelated observations.
 
 ### Recoverable history deletion
 

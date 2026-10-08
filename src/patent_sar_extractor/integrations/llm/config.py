@@ -12,9 +12,7 @@ from __future__ import annotations
 import logging
 import os
 import re
-import stat
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Literal
 
 import yaml  # type: ignore[import-untyped]
@@ -182,41 +180,9 @@ def snapshot_disclosure_allowed(policy: EvidenceResolutionConfig) -> bool:
     """
     if not policy.authorization_file:
         return True
-    try:
-        path = Path(policy.authorization_file)
-        if not path.is_absolute() or any(p.is_symlink() for p in path.parents):
-            return False
-        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
-        with os.fdopen(fd, "rb") as stream:
-            info = os.fstat(stream.fileno())
-            if (
-                not stat.S_ISREG(info.st_mode)
-                or info.st_uid != os.getuid()
-                or info.st_mode & 0o077
-                or info.st_size > 32768
-            ):
-                return False
-            loaded = yaml.safe_load(stream.read(32769))
-        if not isinstance(loaded, dict) or not isinstance(
-            loaded.get("api_settings"), dict
-        ):
-            return False
-        current = loaded.get("evidence_resolution", {})
-        provider = loaded.get("llm", {})
-        if not isinstance(current, dict) or not isinstance(provider, dict):
-            return False
-    except (OSError, ValueError, TypeError, yaml.YAMLError):
-        return False
-    if current.get("data_consent") is not True or current.get("mode") not in {
-        "on-error",
-        "quality",
-    }:
-        return False
-    return all(
-        provider.get(key, "openai-compatible" if key == "protocol" else "")
-        == getattr(policy, key)
-        for key in ("endpoint", "model", "api_key", "protocol")
-    )
+    from .credential_authorization import current_credential
+
+    return bool(policy.api_key and current_credential(policy) == policy.api_key)
 
 
 def get_evidence_resolution_config() -> EvidenceResolutionConfig:

@@ -1955,6 +1955,30 @@ class StrictAcceptanceTests(unittest.TestCase):
                 self._smiles("Compound 2", "S2", "CCCl"),
                 self._smiles("Compound 1", "S1", "CCO"),
             ]
+            from types import SimpleNamespace
+
+            from patent_sar_extractor.core.activity_coverage import (
+                coverage_packet,
+                source_record,
+            )
+
+            # Declared synthetic two-row control; never a real parser/model claim.
+            activity["coverage"] = coverage_packet(
+                [0],
+                [
+                    source_record(
+                        1,
+                        "text",
+                        None,
+                        "Controlled table",
+                        "IC50 (nM) Dmax (%)",
+                        "parsed",
+                        "declared_text",
+                        2,
+                    )
+                ],
+                [SimpleNamespace(page_no=1), SimpleNamespace(page_no=1)],
+            )
             self._write_json(base / "activity/activity_data.json", activity)
             self._write_json(base / "structure_bindings/bindings.json", binding_payload)
             self._write_json(

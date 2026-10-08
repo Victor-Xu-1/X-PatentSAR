@@ -295,7 +295,7 @@ def create_app(
         }
 
     app.include_router(project_routes(service, max_upload_bytes))
-    app.include_router(job_routes(service, queue))
+    app.include_router(job_routes(service, queue, llm_settings))
     app.include_router(analysis_routes(service, analysis))
     app.include_router(chemistry_routes())
     app.include_router(environment_routes(environments))

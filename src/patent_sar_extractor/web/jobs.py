@@ -342,6 +342,7 @@ class JobQueue:
             workspace_root=str(self.store.root),
             llm_context_id=job_id,
         )
+        new_api_policy = None
         try:
             if request.resume_job_id and saved_options.llm_context_id:
                 identifier = saved_options.llm_context_id
@@ -357,7 +358,8 @@ class JobQueue:
                     if request.resume_job_id
                     else self.llm_policy()
                 )
-                create_context(self.store.root, job_id, spec.sha256, policy)
+                policy.validate()
+                new_api_policy = policy
         except (OSError, ValueError, TypeError) as error:
             raise WebError(
                 409,
@@ -408,6 +410,17 @@ class JobQueue:
                         "unsafe_workspace",
                         "Job output must remain inside its private workspace.",
                     )
+                if new_api_policy is not None:
+                    try:
+                        create_context(
+                            self.store.root, job_id, spec.sha256, new_api_policy
+                        )
+                    except (OSError, ValueError, TypeError) as error:
+                        raise WebError(
+                            409,
+                            "llm_configuration",
+                            "API context could not be reserved; no model call was made.",
+                        ) from error
                 # Reserve a durable queued attempt. Its readiness stays false
                 # until bounded checkpoint preparation finishes outside SQLite.
                 stamp = now()

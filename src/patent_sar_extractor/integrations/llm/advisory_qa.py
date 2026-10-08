@@ -105,7 +105,12 @@ def run_advisory_qa(output_dir: str, *, enabled: bool = True) -> dict[str, Any]:
                     budget = EvidenceCallBudget(
                         context.job_id, context.policy.max_calls, ledger=context.ledger
                     )
-                    review = resolve_evidence(request, budget, config=context.policy)
+                    review = resolve_evidence(
+                        request,
+                        budget,
+                        config=context.policy,
+                        require_complete_refs=True,
+                    )
                     by_id = {item.candidate_id: i for i, item in enumerate(candidates)}
                     selected = [
                         findings[by_id[item.candidate_id]]

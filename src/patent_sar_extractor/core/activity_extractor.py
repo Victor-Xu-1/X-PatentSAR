@@ -15,6 +15,7 @@ import fitz
 
 from .activity_artifacts import save_results
 from .activity_coordinates import coordinate_candidates, extract_coordinate_tables
+from .activity_coverage import coverage_packet
 from .activity_header_roles import HeaderResolver
 from .activity_models import ActivityRow, OCRFixRule
 from .activity_observations import (
@@ -88,7 +89,8 @@ def extract(
         )
     validate_rows(rows)
     tables = cells.tables + text.tables
-    save_results(rows, output, profile)
+    coverage = coverage_packet(pages, [*cells.coverage, *text.coverage], rows)
+    save_results(rows, output, profile, coverage=coverage)
     headers = list(dict.fromkeys([*cells.headers, *text.headers]))
     logger.info(
         "Activity observations: %s rows, %s cell-owned pages",
@@ -97,6 +99,7 @@ def extract(
     )
     return {
         "rows": rows,
+        "coverage": coverage,
         "n_rows": len(rows),
         "n_unique_cpds": len({r.cpd for r in rows}),
         "tables": tables,

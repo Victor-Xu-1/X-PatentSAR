@@ -17,7 +17,11 @@ from patent_sar_extractor.web.storage import now
 
 
 def prepare(
-    workspace: Path, *, read_only: bool = False, llm_settings: bool = False
+    workspace: Path,
+    *,
+    read_only: bool = False,
+    llm_settings: bool = False,
+    llm_recovery: bool = False,
 ) -> dict[str, str]:
     if workspace.exists() and any(workspace.iterdir()):
         raise ValueError("Browser fixture workspace must be empty")
@@ -30,6 +34,10 @@ def prepare(
         workspace / "controlled-native.pdf",
         text="Controlled browser protocol fixture; no chemistry or activity data.",
     )
+    if llm_recovery:
+        from prepare_llm_recovery_fixture import prepare_recovery
+
+        return prepare_recovery(workspace, workspace / "web-state", pdf)
     run = artifact_run(
         workspace / "controlled-history", pdf, current=False, accepted=False, rows=30
     )
@@ -168,6 +176,11 @@ def main() -> None:
     parser.add_argument("workspace", type=Path)
     parser.add_argument("--github-env", action="store_true")
     parser.add_argument(
+        "--llm-recovery",
+        action="store_true",
+        help="Isolated credential renewal through actual API/browser; no provider or scientific run",
+    )
+    parser.add_argument(
         "--llm-settings",
         action="store_true",
         help="Read-only synthetic project plus empty isolated API settings; no CLI/model jobs",
@@ -182,6 +195,7 @@ def main() -> None:
         args.workspace.resolve(),
         read_only=args.read_only,
         llm_settings=args.llm_settings,
+        llm_recovery=args.llm_recovery,
     )
     if args.github_env:
         destination = os.environ.get("GITHUB_ENV")

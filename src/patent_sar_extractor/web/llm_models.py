@@ -25,6 +25,13 @@ TEST_REASONS = Literal[
     "transport_unavailable",
     "settings_changed",
     "input_budget",
+    "authentication_failed",
+    "rate_limited",
+    "provider_unavailable",
+    "timeout",
+    "cancelled",
+    "cache_unavailable",
+    "unsafe_cache",
 ]
 BOUND_NAMES = (
     "max_calls",
@@ -128,6 +135,32 @@ class LLMTestRequest(DTO):
                 "Explicit consent to one charged synthetic test is required"
             )
         return value
+
+
+class LLMReauthorizeRequest(DTO):
+    """Explicit local credential use, not consent to another API/model call."""
+
+    expected_revision: int = Field(ge=0, le=MAX_REVISION, strict=True)
+    consent: StrictBool
+
+    @field_validator("consent")
+    @classmethod
+    def renewal_consent(cls, value: bool) -> bool:
+        if not value:
+            raise ValueError(
+                "Explicit consent to renew this task's API authorization is required"
+            )
+        return value
+
+
+class LLMRecovery(DTO):
+    status: Literal[
+        "disabled", "ready", "blocked", "cooldown", "exhausted", "unavailable"
+    ]
+    reason: str | None = Field(default=None, max_length=64)
+    remaining_calls: int | None = Field(default=None, ge=0, le=8, strict=True)
+    retry_after_seconds: float | None = Field(default=None, ge=0, le=45, strict=True)
+    can_reauthorize: StrictBool = False
 
 
 class LLMLimits(DTO):

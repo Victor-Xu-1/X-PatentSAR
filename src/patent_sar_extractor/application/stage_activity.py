@@ -116,6 +116,13 @@ def execute_activity(state: PipelineContext) -> None:
         "active_cpds": len(state.active_cpds),
     }
     print(f"     ✅ rows={act_rows}, active_cpds={len(state.active_cpds)}")
+    coverage = state.activity_payload.get("coverage")
+    if isinstance(coverage, dict):
+        regions = coverage["regions"]
+        state.pipeline_log["steps"][step]["repair"] = {
+            "regions": len(regions),
+            "unresolved": sum(region["status"] == "unresolved" for region in regions),
+        }
     evidence_review = review_source_evidence(state, activity_errors)
     if evidence_review is not None:
         state.pipeline_log["steps"][step]["evidence_resolution"] = evidence_review

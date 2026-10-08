@@ -16,6 +16,7 @@ import threading
 from pathlib import Path
 from typing import Protocol
 
+from .api_failures import APIProblem, evidence_problem
 from .client import llm_chat
 from .config import (
     EvidenceResolutionConfig,
@@ -37,7 +38,9 @@ from .evidence_protocol import (
     validate_request,
 )
 from .http_transport import Cancellation
+from .job_health import clear_state, gate, record_fault
 from .private_state import read_budget, write_private
+from .response_cache import UnsafeCacheError
 
 __all__ = [
     "EvidenceCallBudget",
@@ -140,6 +143,8 @@ def resolve_evidence(
     *,
     config: EvidenceResolutionConfig | None = None,
     cancel: Cancellation | None = None,
+    require_complete_refs: bool = False,
+    max_selected: int | None = None,
 ) -> EvidenceResolution:
     """Return validated candidate references, or an explicit nonactionable state."""
 
@@ -152,6 +157,12 @@ def resolve_evidence(
 
     try:
         policy = get_evidence_resolution_config() if config is None else config
+        if (
+            policy.mode != "off"
+            and policy.data_consent
+            and not snapshot_disclosure_allowed(policy)
+        ):
+            return result("disabled", "authorization_revoked")
         policy.validate()
     except (ValueError, TypeError, OSError, AttributeError):
         return result("unavailable", "invalid_configuration")
@@ -185,6 +196,28 @@ def resolve_evidence(
     if not budget.acquire():
         return result("unavailable", "serial_busy")
     denied = False
+    failures = []
+
+    def validate_content(content: str) -> None:
+        selected = parse_candidates(content, request)
+        if max_selected is not None and len(selected) > max_selected:
+            raise ValueError("Too many repair proposals")
+        if require_complete_refs:
+            allowed = {
+                item.candidate_id: set(item.observation_ids)
+                for item in request.candidates
+            }
+            if any(
+                set(item.observation_ids) != allowed[item.candidate_id]
+                for item in selected
+            ):
+                raise ValueError("Incomplete source references")
+
+    def on_failure(problem) -> None:
+        normalized = evidence_problem(problem)
+        if normalized is not None:
+            failures.append(normalized)
+            record_fault(budget.ledger, budget.job_id, normalized)
 
     def reserve_attempt() -> bool:
         nonlocal denied
@@ -196,6 +229,9 @@ def resolve_evidence(
         return True
 
     try:
+        blocked = gate(budget.ledger, budget.job_id)
+        if blocked is not None:
+            return result("unavailable", blocked[0])
         content = llm_chat(
             messages,
             model=policy.model,
@@ -218,6 +254,9 @@ def resolve_evidence(
             before_request=reserve_attempt,
             cancel=cancel,
             max_request_chars=policy.max_input_chars,
+            validate_content=validate_content,
+            validation_identity=f"evidence-v3:complete={require_complete_refs}:max={max_selected}",
+            on_failure=on_failure,
         )
         if denied:
             if not snapshot_disclosure_allowed(policy):
@@ -226,12 +265,32 @@ def resolve_evidence(
         if not snapshot_disclosure_allowed(policy):
             return result("disabled", "authorization_revoked")
         if not content:
-            return result("unavailable", "transport_unavailable")
+            failure = next(
+                (
+                    item
+                    for item in reversed(failures)
+                    if item.reason != "cache_unavailable"
+                ),
+                None,
+            )
+            if failure is not None and failure.reason == "invalid_evidence_selection":
+                return result("invalid_response", "invalid_evidence_selection")
+            return result(
+                "unavailable", failure.reason if failure else "transport_unavailable"
+            )
         try:
+            validate_content(content)
             candidates = parse_candidates(content, request)
         except (ValueError, TypeError, RecursionError):
             return result("invalid_response", "invalid_evidence_selection")
+        if budget.ledger is not None and not any(
+            item.reason == "cache_unavailable" for item in failures
+        ):
+            clear_state(budget.ledger, budget.job_id, reason="response_validated")
         return result("resolved", "supplied_candidates_only", candidates)
+    except UnsafeCacheError:
+        record_fault(budget.ledger, budget.job_id, APIProblem("unsafe_cache"))
+        return result("unavailable", "unsafe_cache")
     except (OSError, sqlite3.Error, ValueError, TypeError, RecursionError, MemoryError):
         return result("unavailable", "transport_unavailable")
     finally:

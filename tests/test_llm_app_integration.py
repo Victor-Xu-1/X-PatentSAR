@@ -15,6 +15,10 @@ import yaml
 from fastapi.testclient import TestClient
 
 from patent_sar_extractor.integrations.llm import client as llm_client
+from patent_sar_extractor.integrations.llm.api_failures import (
+    APIProblem,
+    APIRequestError,
+)
 from patent_sar_extractor.integrations.llm.evidence_resolution import (
     EvidenceCallBudget,
     EvidenceCandidate,
@@ -287,4 +291,109 @@ class LLMAppIntegrationTests(unittest.TestCase):
         )
         self.assertEqual(result.status_code, 409)
         self.assertEqual(context.ledger.read_bytes(), corrupt)
+        self.post.assert_not_called()
+
+    def test_explicit_job_renewal_uses_saved_credential_without_starting_or_resetting(
+        self,
+    ):
+        client = self.app_client()
+        self.authenticate(client)
+        self.save(client)
+        project, job, _, context, path = self.enqueue(client)
+        self.post.side_effect = APIRequestError(
+            APIProblem("authentication_failed", 401)
+        )
+        result, budget = self.resolve(context)
+        self.assertEqual(result.reason, "authentication_failed")
+        client.post(f"/api/v1/jobs/{job}/cancel")
+        original = path.read_bytes()
+        self.save(client, expected_revision=1, api_key="rotated-synthetic-key")
+        state = client.get(f"/api/v1/jobs/{job}").json()
+        self.assertTrue(state["llm_recovery"]["can_reauthorize"])
+        self.assertEqual(state["llm_recovery"]["remaining_calls"], 7)
+        renewed = client.post(
+            f"/api/v1/jobs/{job}/llm-authorization",
+            json={"expected_revision": 2, "consent": True},
+        )
+        self.assertEqual(renewed.status_code, 200, renewed.text)
+        self.assertEqual(renewed.json()["status"], "cancelled")
+        self.assertEqual(renewed.json()["llm_recovery"]["status"], "ready")
+        self.assertEqual(self.post.call_count, 1)
+        self.assertEqual(budget.calls, 1)
+        self.assertEqual(path.read_bytes(), original)
+        self.assertNotIn("rotated-synthetic-key", renewed.text)
+        self.runner.start.assert_not_called()
+        self.post.side_effect = self.wire
+        _, _, resumed_spec, resumed, _ = self.enqueue(
+            client, project=project, resume=job
+        )
+        self.assertEqual(resumed_spec.llm_context_id, context.job_id)
+        after, after_budget = self.resolve(resumed)
+        self.assertEqual(after.status, "resolved")
+        self.assertEqual(after_budget.calls, 2)
+
+    def test_job_renewal_requires_idle_visibility_consent_and_current_revision(self):
+        client = self.app_client()
+        self.authenticate(client)
+        self.save(client)
+        _, job, _, _, path = self.enqueue(client)
+        self.assertEqual(
+            client.post(
+                f"/api/v1/jobs/{job}/llm-authorization",
+                json={"expected_revision": 1, "consent": True},
+            ).status_code,
+            409,
+        )
+        client.post(f"/api/v1/jobs/{job}/cancel")
+        self.save(client, expected_revision=1, api_key="rotated-synthetic-key")
+        endpoint = f"/api/v1/jobs/{job}/llm-authorization"
+        self.assertEqual(
+            client.post(
+                endpoint, json={"expected_revision": 2, "consent": False}
+            ).status_code,
+            422,
+        )
+        self.assertEqual(
+            client.post(
+                endpoint, json={"expected_revision": 1, "consent": True}
+            ).status_code,
+            409,
+        )
+        self.assertEqual(
+            client.post(
+                endpoint,
+                json={"expected_revision": 2, "consent": True},
+                headers={"X-CSRF-Token": "wrong"},
+            ).status_code,
+            403,
+        )
+        self.assertFalse(
+            path.with_name(
+                path.name.replace(".policy.json", ".authorization.json")
+            ).exists()
+        )
+        self.post.assert_not_called()
+
+    def test_job_renewal_cannot_switch_the_original_semantic_profile(self):
+        client = self.app_client()
+        self.authenticate(client)
+        self.save(client)
+        _, job, _, context, path = self.enqueue(client)
+        client.post(f"/api/v1/jobs/{job}/cancel")
+        self.save(
+            client,
+            expected_revision=1,
+            model="different-model",
+            api_key="different-key",
+        )
+        state = client.get(f"/api/v1/jobs/{job}").json()
+        self.assertFalse(state["llm_recovery"]["can_reauthorize"])
+        self.assertEqual(
+            client.post(
+                f"/api/v1/jobs/{job}/llm-authorization",
+                json={"expected_revision": 2, "consent": True},
+            ).status_code,
+            409,
+        )
+        self.assertEqual(read_context(path).policy.model, context.policy.model)
         self.post.assert_not_called()

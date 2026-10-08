@@ -14,7 +14,7 @@ from patent_sar_extractor import contracts as core
 
 from .errors import WebError
 from .files import SafeFiles
-from .models import STAGES, Stage, StageProgress
+from .models import STAGES, ActivityRepair, Stage, StageProgress
 
 logger = logging.getLogger(__name__)
 MAX_PROGRESS_BYTES = 8192
@@ -194,9 +194,22 @@ def stages_from_summary(
                     if files and status == "running"
                     else None
                 ),
+                repair=read_repair(raw) if name == "activity" else None,
             )
         )
     return output
+
+
+def read_repair(raw: dict) -> ActivityRepair | None:
+    if "repair" not in raw:
+        return None
+    try:
+        return ActivityRepair.model_validate(raw["repair"])
+    except ValidationError:
+        logger.warning(
+            "Activity repair counters unavailable; original stage state retained"
+        )
+        return None
 
 
 def read_resource_wait(files: SafeFiles, stage: str):

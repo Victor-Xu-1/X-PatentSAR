@@ -5,10 +5,12 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from patent_sar_extractor import contracts
 from patent_sar_extractor.application.stage_activity import execute_activity
+from patent_sar_extractor.core.activity_coverage import coverage_packet, source_record
 from patent_sar_extractor.core.activity_join import (
     activity_evidence_errors,
     activity_order_and_map,
@@ -18,12 +20,32 @@ from tests.test_source_led_export import export, run_fixture, save
 from tests.test_source_led_pipeline import state_for
 
 
-def payload(rows):
+def payload(rows, seed_pages=None):
+    seeds = ([0] if rows else []) if seed_pages is None else seed_pages
+    regions = (
+        [
+            source_record(
+                1,
+                "text",
+                None,
+                "Controlled table",
+                "Declared control cells",
+                "parsed",
+                "declared_text",
+                len(rows),
+            )
+        ]
+        if rows
+        else []
+    )
     return {
         **contracts.artifact_identity(
             contracts.ACTIVITY_SCHEMA, contracts.ACTIVITY_SCHEMA_VERSION
         ),
         "rows": rows,
+        "coverage": coverage_packet(
+            seeds, regions, [SimpleNamespace(page_no=1) for _ in rows]
+        ),
     }
 
 
@@ -98,7 +120,7 @@ class ActivityEvidencePolicyTests(unittest.TestCase):
 
     def test_no_rows_need_actual_empty_classification_proof(self):
         self.assertEqual(activity_evidence_errors(payload([]), []), [])
-        self.assertTrue(activity_evidence_errors(payload([]), [0]))
+        self.assertTrue(activity_evidence_errors(payload([], [0]), [0]))
         self.assertTrue(activity_evidence_errors(payload([]), None))
 
     def test_stage_uses_observation_evidence_not_active_numeric_membership(self):

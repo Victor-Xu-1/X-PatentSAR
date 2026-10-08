@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from dataclasses import replace
 
+from .activity_coverage import source_record
 from .activity_grid_cells import (
     cell_text,
     continued_header_schema,
@@ -264,6 +265,23 @@ def extract_coordinate_tables(
             if schema is None and header_resolver is not None and page_index in seeds:
                 schema = header_resolver(context, matrix, region, page_index + 1)
             if schema is None:
+                result.coverage.append(
+                    source_record(
+                        page_index + 1,
+                        "grid",
+                        [
+                            region["xs"][0],
+                            region["ys"][0],
+                            region["xs"][-1],
+                            region["ys"][-1],
+                        ],
+                        context.table_id,
+                        header,
+                        "unresolved",
+                        "unsupported_header",
+                        0,
+                    )
+                )
                 carry = None
                 continue
             result.owned_pages.add(page_index)
@@ -329,10 +347,53 @@ def extract_coordinate_tables(
         )
         for r in records
     )
+    for page_index, regions in biology_grids.items():
+        for region in regions:
+            count = sum(
+                record.page_no == page_index + 1
+                and any(
+                    isinstance(cell.get("bbox"), (list, tuple))
+                    and region["xs"][0] <= cell["bbox"][0] < region["xs"][-1]
+                    and region["ys"][0] <= cell["bbox"][1] < region["ys"][-1]
+                    for cell in record.evidence.get("cells", [])
+                )
+                for record in records
+            )
+            result.coverage.append(
+                source_record(
+                    page_index + 1,
+                    "grid",
+                    [
+                        region["xs"][0],
+                        region["ys"][0],
+                        region["xs"][-1],
+                        region["ys"][-1],
+                    ],
+                    "",
+                    "",
+                    "parsed" if count else "unresolved",
+                    "original_cells" if count else "no_original_rows",
+                    count,
+                )
+            )
     for page_index, region, schema in generic_regions:
-        result.rows.extend(
-            parse_grid(
-                doc[page_index], page_index + 1, token_map[page_index], region, schema
+        rows = parse_grid(
+            doc[page_index], page_index + 1, token_map[page_index], region, schema
+        )
+        result.rows.extend(rows)
+        result.coverage.append(
+            source_record(
+                page_index + 1,
+                "grid",
+                [region["xs"][0], region["ys"][0], region["xs"][-1], region["ys"][-1]],
+                schema.context.table_id,
+                " ".join(schema.raw_headers),
+                "parsed" if rows else "unresolved",
+                "original_cells" if rows else "no_original_rows",
+                len(rows),
             )
         )
+    result.coverage.sort(
+        key=lambda item: (item["page_no"], (item["bbox"] or [0, 0])[1])
+    )
     return result
