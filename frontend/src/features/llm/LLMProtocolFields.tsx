@@ -13,6 +13,7 @@ export function LLMProtocolFields({
       <label className="form-field">
         API 协议
         <select
+          aria-label="API 协议"
           value={draft.protocol}
           onChange={(event) => onChange({ protocol: event.target.value as LLMProtocol })}
         >
@@ -27,6 +28,7 @@ export function LLMProtocolFields({
           <label className="form-field">
             JSON 格式
             <select
+              aria-label="JSON 格式"
               value={draft.responseMode}
               onChange={(event) =>
                 onChange({ responseMode: event.target.value as LLMResponseMode })

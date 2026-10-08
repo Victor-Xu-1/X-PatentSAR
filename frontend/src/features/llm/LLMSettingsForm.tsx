@@ -96,6 +96,7 @@ export function LLMSettingsForm({
         <label className="form-field">
           复核模式
           <select
+            aria-label="复核模式"
             value={draft.mode}
             aria-describedby={modeNoteId}
             onChange={(event) => controller.update({ mode: event.target.value as LLMMode })}
