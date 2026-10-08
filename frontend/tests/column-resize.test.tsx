@@ -21,7 +21,7 @@ function tableProps() {
 
 describe('result column width changes preserve real row behavior', () => {
   it.each([
-    ['Compound', 120, 88],
+    ['原文编号', 120, 88],
     ['结构', 136, 88],
   ])(
     'resizes the %s column independently without changing selection',
@@ -52,9 +52,9 @@ describe('result column width changes preserve real row behavior', () => {
   it('starts at measured width and cancels back to the original table', () => {
     const props = tableProps();
     render(<ResultsTable {...props} />);
-    const header = screen.getByRole('columnheader', { name: 'Compound' });
+    const header = screen.getByRole('columnheader', { name: '原文编号' });
     vi.spyOn(header, 'getBoundingClientRect').mockReturnValue({ width: 200 } as DOMRect);
-    const resize = screen.getByRole('slider', { name: '调整Compound列宽' });
+    const resize = screen.getByRole('slider', { name: '调整原文编号列宽' });
     fireEvent.pointerDown(resize, { pointerId: 1, button: 0, clientX: 200, isPrimary: true });
     fireEvent.pointerMove(resize, { pointerId: 1, clientX: 290 });
     expect(resize).toHaveAttribute('aria-valuenow', '290');

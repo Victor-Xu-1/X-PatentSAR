@@ -20,7 +20,7 @@ describe('one simple source-bound table', () => {
     render(<ResultsTable {...callbacks()} rows={[compound]} />);
     expect(screen.getAllByRole('columnheader').map((header) => header.textContent)).toEqual([
       '',
-      'Compound',
+      '原文编号',
       '结构',
       '抑制等级',
       ...METRIC_SPECS.map((spec) => spec.label),

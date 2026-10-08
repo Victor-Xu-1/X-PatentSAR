@@ -359,7 +359,7 @@ describe('minimal backend-owned Lead column', () => {
     const headers = resultColumns().filter((column) => ['compound', 'lead'].includes(column.id));
     const snapshot = JSON.stringify(rows);
     expect(tableCopyText(rows, headers, [])).toBe(
-      'Compound\tLead\nCompound 2\tLead 2\nCompound 1\tLead 1\nCompound 3\t\nCompound 4\t',
+      '原文编号\tLead\nCompound 2\tLead 2\nCompound 1\tLead 1\nCompound 3\t\nCompound 4\t',
     );
     expect(
       tableCopyText(

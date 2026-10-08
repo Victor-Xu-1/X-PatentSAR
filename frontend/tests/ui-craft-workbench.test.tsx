@@ -27,8 +27,8 @@ async function openMenu() {
       onFilters={vi.fn()}
     />,
   );
-  await userEvent.click(screen.getByRole('button', { name: 'Compound 列选项' }));
-  const menu = screen.getByRole('dialog', { name: 'Compound 列选项' });
+  await userEvent.click(screen.getByRole('button', { name: '原文编号 列选项' }));
+  const menu = screen.getByRole('dialog', { name: '原文编号 列选项' });
   await within(menu).findByLabelText('筛选值 1');
   return menu;
 }
@@ -91,7 +91,7 @@ describe('complete workbench interaction craft', () => {
     expect(screen.queryByRole('button', { name: '选择 列选项' })).not.toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: '选择当前页全部化合物' })).toBeEnabled();
     expect(screen.getByRole('slider', { name: '调整选择列宽' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Compound 列选项' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: '原文编号 列选项' })).toBeEnabled();
   });
   it('also respects reduced motion when a source jump focuses its table row', () => {
     motionPreference(true);
@@ -111,7 +111,7 @@ describe('complete workbench interaction craft', () => {
     expect(within(menu).getByRole('button', { name: '隐藏此列' })).toHaveFocus();
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Compound 列选项' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: '原文编号 列选项' })).toHaveFocus();
   });
   it('keeps forward Tab inside the open column form', async () => {
     const menu = await openMenu();

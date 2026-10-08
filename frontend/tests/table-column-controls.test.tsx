@@ -85,14 +85,14 @@ describe('Excel-like columns use one full-project server query', () => {
   it('hides and restores every column, independently of same-name activity contexts', async () => {
     render(<ResultsPane {...paneProps()} />);
     const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: 'Compound 列选项' }));
+    await user.click(screen.getByRole('button', { name: '原文编号 列选项' }));
     await user.click(screen.getByRole('button', { name: '隐藏此列' }));
-    expect(screen.queryByRole('columnheader', { name: 'Compound' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: '原文编号' })).not.toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: '结构' })).toBeVisible();
     await user.click(screen.getByRole('button', { name: '显示列' }));
-    await user.click(screen.getByLabelText('显示列 Compound'));
+    await user.click(screen.getByLabelText('显示列 原文编号'));
     await user.click(screen.getByLabelText('显示列 MW'));
-    expect(screen.getByRole('columnheader', { name: 'Compound' })).toBeVisible();
+    expect(screen.getByRole('columnheader', { name: '原文编号' })).toBeVisible();
     expect(screen.queryByRole('columnheader', { name: 'MW' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: '显示全部列' }));
     expect(screen.getByRole('columnheader', { name: 'MW' })).toBeVisible();
@@ -101,7 +101,7 @@ describe('Excel-like columns use one full-project server query', () => {
   it('sorts through the backend, never reorders the current-page rows locally', async () => {
     const props = paneProps();
     render(<ResultsPane {...props} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Compound 列选项' }));
+    await userEvent.click(screen.getByRole('button', { name: '原文编号 列选项' }));
     await userEvent.click(screen.getByRole('button', { name: '升序' }));
     expect(props.onFilters).toHaveBeenCalledExactlyOnceWith({
       sort_column: 'compound',
@@ -254,14 +254,14 @@ describe('Excel-like columns use one full-project server query', () => {
       />,
     );
     expect(screen.getByText('暂无匹配的提取结果')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Compound 列选项' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '原文编号 列选项' })).toBeVisible();
     await userEvent.click(screen.getByRole('button', { name: '清除列筛选' }));
     expect(props.onFilters).toHaveBeenCalledWith({ column_filters: [], page: 1 });
   });
   it('keeps resized widths through loading, failed queries, empty results and all-hidden recovery', async () => {
     const props = paneProps();
     const { rerender } = render(<ResultsPane {...props} />);
-    const slider = screen.getByRole('slider', { name: '调整Compound列宽' });
+    const slider = screen.getByRole('slider', { name: '调整原文编号列宽' });
     const resizedWidth = String(Number(slider.getAttribute('aria-valuenow')) + 8);
     slider.focus();
     await userEvent.keyboard('{ArrowRight}');
@@ -294,7 +294,7 @@ describe('Excel-like columns use one full-project server query', () => {
         resource={{ ...props.resource, data: { ...props.resource.data, items: [], total: 0 } }}
       />,
     );
-    expect(screen.getByRole('slider', { name: '调整Compound列宽' })).toHaveAttribute(
+    expect(screen.getByRole('slider', { name: '调整原文编号列宽' })).toHaveAttribute(
       'aria-valuenow',
       resizedWidth,
     );
@@ -305,7 +305,7 @@ describe('Excel-like columns use one full-project server query', () => {
     await userEvent.click(within(dialog).getByRole('button', { name: '显示全部列' }));
     await userEvent.click(screen.getByRole('button', { name: '关闭对话框' }));
     rerender(<ResultsPane {...props} />);
-    expect(screen.getByRole('slider', { name: '调整Compound列宽' })).toHaveAttribute(
+    expect(screen.getByRole('slider', { name: '调整原文编号列宽' })).toHaveAttribute(
       'aria-valuenow',
       resizedWidth,
     );
@@ -328,7 +328,7 @@ describe('safe TSV copy is explicitly a current visible-page operation', () => {
       ),
       [],
     );
-    expect(text).toBe('Compound\tMW\nI-7\t');
+    expect(text).toBe('原文编号\tMW\nI-7\t');
     expect(text).not.toContain('++');
   });
   it('copies the current page in source order after a user gesture and announces its exact scope', async () => {

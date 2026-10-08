@@ -53,7 +53,7 @@ function Host({
     />
   );
 }
-async function open(name = 'Compound 列选项') {
+async function open(name = '原文编号 列选项') {
   await userEvent.click(screen.getByRole('button', { name }));
   await waitFor(() => expect(screen.queryByText('正在加载取值…')).not.toBeInTheDocument());
 }
@@ -105,7 +105,7 @@ describe('immediate checklist and committed/cancelled drafts', () => {
       else if (method === 'Escape') await userEvent.keyboard('{Escape}');
       else fireEvent.pointerDown(document.body);
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Compound 列选项' })).toHaveFocus();
+      expect(screen.getByRole('button', { name: '原文编号 列选项' })).toHaveFocus();
       expect(apply).not.toHaveBeenCalled();
       await open();
       expect(screen.getByLabelText('筛选值 A')).toBeChecked();

@@ -121,7 +121,7 @@ for (const width of [1830, 390]) {
       );
       for (const offsets of icons)
         for (const offset of offsets) expect(offset).toBeLessThanOrEqual(1);
-      const trigger = table.getByRole('button', { name: 'Compound 列选项', exact: true });
+      const trigger = table.getByRole('button', { name: '原文编号 列选项', exact: true });
       const labelFits = await table.locator('th.frozen-compound').evaluate((header) => {
         const heading = header.querySelector('.column-heading') as HTMLElement;
         const button = header.querySelector('.column-menu-button')!;
@@ -129,7 +129,7 @@ for (const width of [1830, 390]) {
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d')!;
         context.font = style.font;
-        const textWidth = context.measureText('Compound').width;
+        const textWidth = context.measureText('原文编号').width;
         const bounds = heading.getBoundingClientRect();
         const menu = button.getBoundingClientRect();
         const available =
@@ -142,7 +142,7 @@ for (const width of [1830, 390]) {
       expect(labelFits.fits).toBe(true);
       expect(labelFits.gap).toBeGreaterThanOrEqual(1);
       await trigger.click();
-      const menu = page.getByRole('dialog', { name: 'Compound 列选项', exact: true });
+      const menu = page.getByRole('dialog', { name: '原文编号 列选项', exact: true });
       await expect(menu).toBeVisible();
       await expect(trigger).toHaveAttribute('aria-controls', (await menu.getAttribute('id'))!);
       await expect(menu.getByRole('button', { name: '升序', exact: true })).toBeEnabled();
@@ -155,7 +155,7 @@ for (const width of [1830, 390]) {
       await expect(menu).toHaveCount(0);
       await expect(trigger).toBeFocused();
 
-      const slider = table.getByRole('slider', { name: '调整Compound列宽', exact: true });
+      const slider = table.getByRole('slider', { name: '调整原文编号列宽', exact: true });
       const previousWidth = Number(await slider.getAttribute('aria-valuenow'));
       await slider.focus();
       await page.keyboard.press('ArrowRight');

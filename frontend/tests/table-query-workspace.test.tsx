@@ -226,7 +226,7 @@ describe('the existing route is the sole source of global column queries', () =>
     }
     render(<Host />);
     await screen.findByRole('table');
-    await userEvent.click(screen.getByRole('button', { name: 'Compound 列选项' }));
+    await userEvent.click(screen.getByRole('button', { name: '原文编号 列选项' }));
     await userEvent.click(screen.getByRole('button', { name: '升序' }));
     expect(navigate).toHaveBeenLastCalledWith(
       expect.objectContaining({

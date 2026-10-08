@@ -111,7 +111,7 @@ describe('one observation context per independently resizable activity column', 
     const scroller = screen.getByRole('region', { name: '可横向滚动的化合物结果表格' });
     expect(scroller.style.getPropertyValue('--frozen-leading-width')).toBe('270px');
     expect(scroller.style.getPropertyValue('--frozen-trailing-width')).toBe('48px');
-    screen.getByRole('slider', { name: '调整Compound列宽' }).focus();
+    screen.getByRole('slider', { name: '调整原文编号列宽' }).focus();
     await userEvent.keyboard('{Home}');
     expect(scroller.style.getPropertyValue('--frozen-compound-width')).toBe('88px');
     expect(scroller.style.getPropertyValue('--frozen-leading-width')).toBe('238px');

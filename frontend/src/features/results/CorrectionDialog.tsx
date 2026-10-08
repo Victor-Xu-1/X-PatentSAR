@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { ActivityColumn, Compound } from '../../api/types';
+import { compoundLabel } from '../../model/compoundLabel';
 import { Dialog } from '../../components/Dialog';
 import { Empty, ErrorNotice, Loading } from '../../components/Feedback';
 import { ActivityEditor } from './ActivityEditor';
@@ -27,7 +28,7 @@ export function CorrectionDialog({
   const [editorReady, setEditorReady] = useState(false);
   return (
     <Dialog
-      title={`修正 · ${compound.display_id}`}
+      title={`修正 · ${compoundLabel(compound)}`}
       onClose={onClose}
       busy={busy}
       wide
@@ -69,7 +70,7 @@ export function CorrectionDialog({
             </div>
             <div className="correction-fields">
               <label className="form-field">
-                Compound
+                原文编号
                 <input
                   data-initial-focus
                   aria-label="修正化合物编号"
