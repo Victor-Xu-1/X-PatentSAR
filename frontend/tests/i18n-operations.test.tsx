@@ -5,10 +5,15 @@ import { api } from '../src/api';
 import { ApiError } from '../src/api/errors';
 import { llmApi } from '../src/api/llmApi';
 import type { LLMApi } from '../src/api/llmApi';
+import type { LLMSettings } from '../src/api/llmTypes';
 import type { Job, Stage } from '../src/api/types';
-import { combineCatalogs } from '../src/i18n/catalog';
+import { combineCatalogs } from '../src/i18n/catalogMerge';
 import { common } from '../src/i18n/catalogs/common';
 import { operations } from '../src/i18n/catalogs/operations';
+import { jobs } from '../src/i18n/catalogs/jobs';
+import { environment } from '../src/i18n/catalogs/environment';
+import { llm } from '../src/i18n/catalogs/llm';
+import { history } from '../src/i18n/catalogs/history';
 import { errorText, setLocale, t, UiError } from '../src/i18n';
 import { ComponentLibrary } from '../src/features/environment/ComponentLibrary';
 import { EnvironmentPage } from '../src/features/environment/EnvironmentPage';
@@ -19,6 +24,7 @@ import { storageLocationFields } from '../src/features/environment/storageLocati
 import { DeletionDialog } from '../src/features/history/DeletionDialog';
 import { HistoryDialog } from '../src/features/history/HistoryDialog';
 import { JobRecord } from '../src/features/jobs/JobRecord';
+import { JobsPage } from '../src/features/jobs/JobsPage';
 import { LLMRecovery } from '../src/features/jobs/LLMRecovery';
 import { StageStrip } from '../src/features/jobs/StageStrip';
 import { StageObservation } from '../src/features/jobs/StageObservation';
@@ -28,10 +34,10 @@ import { acceptanceIssueCount, acceptanceIssueGroups } from '../src/model/accept
 import { pendingEnvironmentKey } from '../src/model/environmentRecovery';
 import { jobStageProgressText } from '../src/model/jobPresentation';
 import { stageProgressText } from '../src/model/extraction';
-import { activityText, stageLabels } from '../src/model/presentation';
+import { activityText, dateText, stageLabels } from '../src/model/presentation';
 import { environmentOperation } from './environment-fixtures';
 import { completeEnvironmentCatalog, readyEnvironmentCatalog } from './environment-setup-fixtures';
-import { health, job } from './fixtures';
+import { health, job, project } from './fixtures';
 import { historyEntry, historyList, trashed } from './history-fixtures';
 import { recoveryJob, recoverySettings } from './llm-recovery-fixtures';
 
@@ -42,11 +48,22 @@ const controlledLLM = (): LLMApi => ({
   save: vi.fn().mockResolvedValue(recoverySettings),
   test: vi.fn(),
 });
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason: unknown) => void;
+  const promise = new Promise<T>((accept, decline) => {
+    resolve = accept;
+    reject = decline;
+  });
+  return { promise, resolve, reject };
+}
 async function openLLM(client = controlledLLM()) {
   render(<LLMApiPanel api={client} />);
   const opener = await screen.findByRole('button', { name: 'Configure' });
   await waitFor(() => expect(opener).toBeEnabled());
   await userEvent.click(opener);
+  expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+  expect(screen.getByRole('option', { name: 'Disabled (Off)' })).toHaveValue('off');
   return client;
 }
 const change = (label: string, value: string) =>
@@ -82,6 +99,26 @@ afterEach(() => {
 });
 
 describe('operations locale: live presentation without state or data mutation', () => {
+  it('assembles every feature catalog once with common captions at their canonical authority', () => {
+    const catalogs = [jobs, environment, llm, history];
+    const sources = catalogs.flatMap(Object.keys);
+    expect(new Set(sources).size).toBe(sources.length);
+    expect(Object.keys(operations).sort()).toEqual([...sources].sort());
+    expect(operations).toEqual(combineCatalogs(...catalogs));
+    for (const [source, english] of Object.entries({
+      任务记录: 'Tasks',
+      环境管理: 'Environment',
+      'LLM API 设置': 'LLM API settings',
+      复核模式: 'Review mode',
+      配置: 'Configure',
+      保存: 'Save',
+      关闭对话框: 'Close dialog',
+    }))
+      expect(t(source), source).toBe(english);
+    expect(jobs).not.toHaveProperty('回收站');
+    expect(history).not.toHaveProperty('已生成文件');
+  });
+
   it('keeps catalog placeholders exact and exported source labels locale-independent', () => {
     expect(() => combineCatalogs(common, operations)).not.toThrow();
     const placeholders = (value: string) =>
@@ -513,4 +550,177 @@ describe('operations locale: live presentation without state or data mutation', 
       }
     }
   });
+});
+
+describe('operations locale: delayed responses and retained results', () => {
+  it.each([
+    ['disabled', '已关闭', 'Disabled'],
+    ['incomplete', '配置未完成', 'Configuration incomplete'],
+    ['ready', '已配置', 'Configured'],
+  ] as const)(
+    'relocalizes a delayed %s LLM status without rereading settings',
+    async (status, zh, en) => {
+      const pending = deferred<LLMSettings>();
+      const client = controlledLLM();
+      vi.mocked(client.settings).mockReturnValue(pending.promise);
+      render(<LLMApiPanel api={client} />);
+      expect(screen.getByLabelText('LLM API status')).toHaveTextContent('Loading…');
+      expect(screen.getByRole('button', { name: 'Configure' })).toBeDisabled();
+      switchTo('zh-CN');
+      expect(screen.getByLabelText('LLM API 状态')).toHaveTextContent('正在读取…');
+      await act(async () => pending.resolve({ ...recoverySettings, status }));
+      expect(screen.getByLabelText('LLM API 状态')).toHaveTextContent(zh);
+      switchTo('en');
+      expect(screen.getByLabelText('LLM API status')).toHaveTextContent(en);
+      expect(client.settings).toHaveBeenCalledTimes(1);
+      expect(client.save).not.toHaveBeenCalled();
+      expect(client.test).not.toHaveBeenCalled();
+    },
+  );
+
+  it('keeps an in-flight LLM draft and re-localizes its saved result without another write', async () => {
+    const pending = deferred<LLMSettings>();
+    const client = controlledLLM();
+    vi.mocked(client.save).mockReturnValue(pending.promise);
+    await openLLM(client);
+    change('Model', '保存');
+    change('API key', syntheticKey);
+    const input = screen.getByLabelText('Model');
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(screen.getByRole('button', { name: 'Processing…' })).toBeDisabled();
+    switchTo('zh-CN');
+    expect(screen.getByLabelText('模型')).toBe(input);
+    expect(input).toHaveValue('保存');
+    expect(screen.getByLabelText('API 密钥')).toHaveValue(syntheticKey);
+    expect(screen.getByRole('button', { name: '处理中…' })).toBeDisabled();
+    await act(async () => pending.resolve({ ...recoverySettings, revision: 18, model: '保存' }));
+    expect(screen.getByText('设置已保存。')).toBeVisible();
+    switchTo('en');
+    expect(screen.getByText('Settings saved.')).toBeVisible();
+    expect(screen.getByLabelText('Model')).toBe(input);
+    expect(input).toHaveValue('保存');
+    expect(screen.getByLabelText('API key')).toHaveValue('');
+    expect(client.save).toHaveBeenCalledTimes(1);
+    expect(client.settings).toHaveBeenCalledTimes(1);
+    expect(client.test).not.toHaveBeenCalled();
+  });
+
+  it('relocalizes a retained delayed read error and never echoes a provider body', async () => {
+    const pending = deferred<LLMSettings>();
+    const client = controlledLLM();
+    vi.mocked(client.settings).mockReturnValue(pending.promise);
+    render(<LLMApiPanel api={client} />);
+    switchTo('zh-CN');
+    await act(async () =>
+      pending.reject(new ApiError(503, 'unavailable', 'synthetic-private-body')),
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent('无法读取 LLM API 设置。');
+    switchTo('en');
+    expect(screen.getByRole('alert')).toHaveTextContent('Could not read LLM API settings.');
+    expect(screen.queryByText(/synthetic-private-body/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Configure' })).toBeDisabled();
+    expect(client.settings).toHaveBeenCalledTimes(1);
+  });
+
+  it('relocalizes a retained history mutation error without replaying or losing the refresh guard', async () => {
+    const entry = historyEntry({ title: '保存' });
+    const pending = deferred<never>();
+    const read = vi.spyOn(api, 'historyEntry').mockResolvedValue(entry);
+    const remove = vi.spyOn(api, 'deleteHistory').mockReturnValue(pending.promise);
+    render(<DeletionDialog target={entry} action="delete" onClose={vi.fn()} onChanged={vi.fn()} />);
+    const confirm = await screen.findByRole('button', { name: 'Confirm move to Trash' });
+    await waitFor(() => expect(confirm).toBeEnabled());
+    await userEvent.click(confirm);
+    switchTo('zh-CN');
+    await act(async () => pending.reject('synthetic-private-body'));
+    expect(screen.getByRole('alert')).toHaveTextContent('操作结果无法确认，请先刷新核对状态。');
+    switchTo('en');
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'The operation result could not be confirmed.',
+    );
+    expect(screen.getByText(/Submission stopped/)).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Confirm move to Trash' })).toBeDisabled();
+    expect(screen.getByText('保存')).toBeVisible();
+    expect(screen.queryByText(/synthetic-private-body/)).not.toBeInTheDocument();
+    expect(read).toHaveBeenCalledTimes(1);
+    expect(remove).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps an uncertain environment request across language changes and remount without replay', async () => {
+    const catalog = completeEnvironmentCatalog();
+    vi.spyOn(api, 'environments').mockResolvedValue(catalog);
+    vi.spyOn(llmApi, 'settings').mockResolvedValue(recoverySettings);
+    const start = vi
+      .spyOn(api, 'createEnvironmentOperation')
+      .mockRejectedValue(
+        new ApiError(
+          0,
+          'network',
+          '连接中断，写入结果未知。请先刷新状态，再决定是否重新提交。',
+          true,
+        ),
+      );
+    const page = () => (
+      <EnvironmentPage product={health.product} operationId={null} onOperation={vi.fn()} />
+    );
+    const view = render(page());
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Set up complete environment' }),
+    );
+    await userEvent.click(screen.getByRole('checkbox'));
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm download & installation' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('the write result is unknown');
+    const saved = sessionStorage.getItem(pendingEnvironmentKey);
+    expect(saved).not.toBeNull();
+    expect(start.mock.calls[0]![0].component_ids).toEqual(catalog.setup_component_ids);
+    switchTo('zh-CN');
+    expect(screen.getByRole('alert')).toHaveTextContent('连接中断，写入结果未知');
+    switchTo('en');
+    expect(screen.getByRole('alert')).toHaveTextContent('the write result is unknown');
+    expect(sessionStorage.getItem(pendingEnvironmentKey)).toBe(saved);
+    view.unmount();
+    render(page());
+    expect(
+      await screen.findByRole('region', { name: 'Environment operation recovery' }),
+    ).toBeVisible();
+    expect(sessionStorage.getItem(pendingEnvironmentKey)).toBe(saved);
+    expect(start).toHaveBeenCalledTimes(1);
+  });
+
+  it('updates lazy task captions and Intl dates while preserving source timestamps, titles and records', async () => {
+    const pending = deferred<{ items: Job[] }>();
+    const read = vi.spyOn(api, 'jobs').mockReturnValue(pending.promise);
+    vi.spyOn(api, 'job').mockResolvedValue(job);
+    const view = render(<JobsPage projects={[project]} ready onOpen={vi.fn()} />);
+    expect(screen.getByRole('heading', { name: 'Tasks' })).toBeVisible();
+    expect(screen.getByText('Loading task records…')).toBeVisible();
+    switchTo('zh-CN');
+    await act(async () => pending.resolve({ items: [job] }));
+    const time = view.container.querySelector<HTMLTimeElement>('.job-timestamp')!;
+    expect(time).toHaveAttribute('datetime', job.created_at);
+    const expectedDate = (locale: string) =>
+      new Date(job.created_at).toLocaleString(locale, { hour12: false });
+    expect(time).toHaveTextContent(expectedDate('zh-CN'));
+    switchTo('en');
+    expect(time).toHaveTextContent(expectedDate('en'));
+    expect(view.container.querySelector('.job-timestamp')).toBe(time);
+    expect(screen.getByRole('button', { name: project.title })).toBeVisible();
+    expect(dateText('原始日期')).toBe('原始日期');
+    expect(dateText(null)).toBe('—');
+    expect(read).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([null, '', 'unsupported-locale'])(
+    'uses English for a fresh operations import with saved preference %s',
+    async (saved) => {
+      if (saved === null) localStorage.removeItem('x-patentsar.locale');
+      else localStorage.setItem('x-patentsar.locale', saved);
+      vi.resetModules();
+      const fresh = await import('../src/i18n');
+      expect(fresh.getLocale()).toBe('en');
+      expect(fresh.t('任务记录')).toBe('Tasks');
+      expect(fresh.t('环境管理')).toBe('Environment');
+      expect(document.documentElement.lang).toBe('en');
+    },
+  );
 });
