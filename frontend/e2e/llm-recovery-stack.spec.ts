@@ -34,14 +34,19 @@ test('installed API/browser renews one isolated task without provider calls or a
   await dialog.getByRole('button', { name: '确认更新授权', exact: true }).click();
   const reply = await response;
   expect(reply.status()).toBe(200);
-  const job = await reply.json();
+  await expect(dialog).toHaveCount(0);
+  // The successful write refreshes/unmounts its page controls. Read durable
+  // authenticated state independently: a CDP response body can be evicted by
+  // that refresh even when the application consumed it successfully.
+  const persisted = await page.request.get(`/api/v1/jobs/${id}`);
+  expect(persisted.ok()).toBe(true);
+  const job = await persisted.json();
   expect(job.status).toBe('cancelled');
   expect(job.llm_recovery).toMatchObject({
     status: 'ready',
     remaining_calls: 7,
     can_reauthorize: false,
   });
-  await expect(dialog).toHaveCount(0);
   await page.reload();
   await record.locator('summary').first().click();
   await expect(record.getByText('剩余调用 7 次', { exact: false })).toBeVisible();
