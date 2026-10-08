@@ -5,6 +5,11 @@ const expectedVersion = packageMetadata.version;
 const projectId = process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID;
 const primary = ['上传 PDF', '最近文件', '环境管理', '任务记录'];
 
+// Shared responsive.css wraps brand/navigation below 900px; 560px adds a row.
+function headerHeightBudget(width: number) {
+  return width < 561 ? 165 : width < 900 ? 105 : 65;
+}
+
 for (const viewport of [
   { width: 1672, height: 942 },
   { width: 800, height: 900 },
@@ -37,7 +42,7 @@ for (const viewport of [
       true,
     );
     const bounds = await header.boundingBox();
-    expect(bounds!.height).toBeLessThan(viewport.width < 761 ? 150 : 65);
+    expect(bounds!.height).toBeLessThan(headerHeightBudget(viewport.width));
     await page.screenshot({ path: test.info().outputPath('pdf-only-upload.png'), fullPage: true });
     for (const [name, hash, heading] of [
       ['环境管理', '#/settings', '环境管理'],
@@ -83,10 +88,12 @@ for (const viewport of [
       true,
     );
     const bounds = await header.boundingBox();
-    expect(bounds!.height).toBeLessThan(viewport.width < 761 ? 165 : 85);
+    expect(bounds!.height).toBeLessThan(headerHeightBudget(viewport.width));
     await nav.getByRole('button', { name: '证据摘要', exact: true }).click();
     await expect(
-      page.getByRole('heading', { name: '确定性证据统计 · 同项目摘要', exact: true }),
+      page
+        .getByRole('region', { name: '同项目确定性证据摘要', exact: true })
+        .getByRole('heading', { name: '证据摘要', exact: true }),
     ).toBeVisible();
     await nav.getByRole('button', { name: '返回结果表格', exact: true }).click();
     await expect(page.getByRole('table')).toBeVisible();
