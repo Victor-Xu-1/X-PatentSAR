@@ -95,6 +95,96 @@ class JobAPIContextTests(unittest.TestCase):
             )
             self.assertNotIn("not-to-copy", path.read_text())
 
+    def test_missing_ledger_cannot_be_resumed_with_fresh_quota(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = create_context(
+                Path(temporary), "a" * 32, "b" * 64, EvidenceResolutionConfig()
+            )
+            context = read_context(path)
+            context.ledger.unlink()  # Deliberate loss of this isolated controlled record.
+            with self.assertRaises((OSError, ValueError)):
+                read_context(path)
+            with self.assertRaises((OSError, ValueError)):
+                _ = EvidenceCallBudget(context.job_id, ledger=context.ledger).calls
+
+    def test_semantic_cache_identity_excludes_keys_and_distinguishes_modes_models(self):
+        from patent_sar_extractor.application.stage_activity import (
+            evidence_policy_identity,
+        )
+
+        first = EvidenceResolutionConfig(
+            mode="quality",
+            data_consent=True,
+            endpoint="https://api.example.org/v1",
+            model="first",
+            api_key="key1",
+        )
+        with patch(
+            "patent_sar_extractor.application.stage_activity.get_evidence_resolution_config",
+            return_value=first,
+        ):
+            identity = evidence_policy_identity()
+        self.assertNotIn("key1", str(identity))
+        with patch(
+            "patent_sar_extractor.application.stage_activity.get_evidence_resolution_config",
+            return_value=replace(first, api_key="key2"),
+        ):
+            self.assertEqual(evidence_policy_identity(), identity)
+        with patch(
+            "patent_sar_extractor.application.stage_activity.get_evidence_resolution_config",
+            return_value=replace(first, model="second"),
+        ):
+            self.assertNotEqual(evidence_policy_identity(), identity)
+        with patch(
+            "patent_sar_extractor.application.stage_activity.get_evidence_resolution_config",
+            return_value=replace(first, mode="off"),
+        ):
+            self.assertEqual(evidence_policy_identity(), {"mode": "off"})
+
+    def test_clearing_consent_provider_or_credential_revokes_frozen_gui_profile(self):
+        import yaml
+        from patent_sar_extractor.integrations.llm.config import (
+            snapshot_disclosure_allowed,
+        )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "llm.local.yaml"
+            provider = {
+                "endpoint": "https://api.example.org/v1",
+                "model": "controlled",
+                "api_key": "controlled",
+                "protocol": "openai-compatible",
+            }
+            enabled = {"mode": "on-error", "data_consent": True}
+            policy = EvidenceResolutionConfig(
+                **provider, **enabled, authorization_file=str(path)
+            )
+
+            def save(current, settings):
+                path.write_text(
+                    yaml.safe_dump(
+                        {
+                            "llm": current,
+                            "evidence_resolution": settings,
+                            "api_settings": {"revision": 1},
+                        }
+                    )
+                )
+                path.chmod(0o600)
+
+            save(provider, enabled)
+            self.assertTrue(snapshot_disclosure_allowed(policy))
+            for current, settings in (
+                (provider, {"mode": "off", "data_consent": True}),
+                (provider, {"mode": "on-error", "data_consent": False}),
+                ({**provider, "api_key": ""}, enabled),
+                ({**provider, "model": "changed"}, enabled),
+            ):
+                save(current, settings)
+                self.assertFalse(snapshot_disclosure_allowed(policy))
+            path.unlink()
+            self.assertFalse(snapshot_disclosure_allowed(policy))
+
     def test_owned_cli_only_receives_current_private_snapshot_not_parent_keys(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

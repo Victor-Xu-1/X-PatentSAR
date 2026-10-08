@@ -1,11 +1,19 @@
 shared:
-  endpoint: "https://ark.cn-beijing.volces.com/api/coding/v3"
+  endpoint: ""
   api_key: ""
-  model: "ark-code-latest"
-  timeout: 180
+  model: ""
 
 llm:
-  max_workers: 4
+  protocol: "openai-compatible" # or anthropic / gemini
+  response_mode: "json-schema" # compatible API: json-object / prompt-only
   cache_path: ""
 
-vlm: {}
+evidence_resolution:
+  mode: "off"
+  data_consent: false
+  timeout: 30
+  retries: 0
+  max_calls: 8
+  max_input_chars: 12000
+  max_output_chars: 8192
+  max_tokens: 1024

@@ -16,7 +16,9 @@ from patent_sar_extractor.web.service import import_run
 from patent_sar_extractor.web.storage import now
 
 
-def prepare(workspace: Path, *, read_only: bool = False) -> dict[str, str]:
+def prepare(
+    workspace: Path, *, read_only: bool = False, llm_settings: bool = False
+) -> dict[str, str]:
     if workspace.exists() and any(workspace.iterdir()):
         raise ValueError("Browser fixture workspace must be empty")
     workspace.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -31,6 +33,19 @@ def prepare(workspace: Path, *, read_only: bool = False) -> dict[str, str]:
     run = artifact_run(
         workspace / "controlled-history", pdf, current=False, accepted=False, rows=30
     )
+    if llm_settings:
+        # Original-label adapter inputs only; no model/parser acceptance claim.
+        binding_path = run / "structure_bindings/bindings.json"
+        bindings = json.loads(binding_path.read_text())
+        for records in (
+            bindings["final_bindings"],
+            bindings["compound_catalog"]["entries"],
+        ):
+            for row in records:
+                row["authoritative_table_source_label"] = (
+                    "Example " + row["cpd"].split()[-1]
+                )
+        binding_path.write_text(json.dumps(bindings))
     state = workspace / "web-state"
     historical = import_run(
         state,
@@ -39,13 +54,20 @@ def prepare(workspace: Path, *, read_only: bool = False) -> dict[str, str]:
         title="CI controlled historical adapter fixture (not extraction evidence)",
     )
     origin = "http://127.0.0.1:18765"
-    if read_only:
+    if read_only or llm_settings:
         values = {
             "PATENTSAR_WEB_STATE_DIR": str(state),
             "PATENTSAR_E2E_SOURCE_PROJECT_ID": historical.id,
             "PATENTSAR_E2E_HISTORY_PROJECT_ID": historical.id,
             "PATENTSAR_E2E_RUN_JOBS": "0",
+            "PATENTSAR_CONFIG_DIR": str(workspace / "config"),
+            "PATENTSAR_E2E_BASE_URL": "http://127.0.0.1:18766",
         }
+        if llm_settings:
+            values.update(
+                PATENTSAR_E2E_ALLOW_LLM_SETTINGS="isolated-state",
+                PATENTSAR_E2E_LLM_FIXTURE="empty-synthetic",
+            )
         (workspace / "browser-fixture.json").write_text(
             json.dumps(
                 {
@@ -146,12 +168,21 @@ def main() -> None:
     parser.add_argument("workspace", type=Path)
     parser.add_argument("--github-env", action="store_true")
     parser.add_argument(
+        "--llm-settings",
+        action="store_true",
+        help="Read-only synthetic project plus empty isolated API settings; no CLI/model jobs",
+    )
+    parser.add_argument(
         "--read-only",
         action="store_true",
         help="Metadata/navigation only; no task or installer-history fixtures",
     )
     args = parser.parse_args()
-    values = prepare(args.workspace.resolve(), read_only=args.read_only)
+    values = prepare(
+        args.workspace.resolve(),
+        read_only=args.read_only,
+        llm_settings=args.llm_settings,
+    )
     if args.github_env:
         destination = os.environ.get("GITHUB_ENV")
         if not destination or any(

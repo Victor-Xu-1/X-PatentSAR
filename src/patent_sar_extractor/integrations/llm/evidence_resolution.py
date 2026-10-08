@@ -17,7 +17,11 @@ from pathlib import Path
 from typing import Protocol
 
 from .client import llm_chat
-from .config import EvidenceResolutionConfig, get_evidence_resolution_config
+from .config import (
+    EvidenceResolutionConfig,
+    get_evidence_resolution_config,
+    snapshot_disclosure_allowed,
+)
 from .evidence_protocol import (
     IDENTIFIER,
     EvidenceCandidate,
@@ -33,7 +37,7 @@ from .evidence_protocol import (
     validate_request,
 )
 from .http_transport import Cancellation
-from .private_state import read_private, write_private
+from .private_state import read_budget, write_private
 
 __all__ = [
     "EvidenceCallBudget",
@@ -69,18 +73,9 @@ class EvidenceCallBudget:
 
     @property
     def calls(self) -> int:
-        if self.ledger is None or not self.ledger.exists():
+        if self.ledger is None:
             return self._calls
-        value = read_private(self.ledger)
-        if (
-            set(value) != {"job_id", "limit", "calls"}
-            or value["job_id"] != self.job_id
-            or value["limit"] != self.max_calls
-            or type(value["calls"]) is not int
-            or not 0 <= value["calls"] <= self.max_calls
-        ):
-            raise ValueError("Invalid persisted API call budget")
-        return value["calls"]
+        return read_budget(self.ledger, self.job_id, self.max_calls)
 
     def acquire(self) -> bool:
         if not self._serial.acquire(blocking=False):
@@ -164,6 +159,8 @@ def resolve_evidence(
         return result("disabled", "off")
     if not policy.data_consent:
         return result("disabled", "data_consent_required")
+    if not snapshot_disclosure_allowed(policy):
+        return result("disabled", "authorization_revoked")
     try:
         validate_request(request, budget.job_id)
     except (ValueError, TypeError, AttributeError):
@@ -191,7 +188,9 @@ def resolve_evidence(
 
     def reserve_attempt() -> bool:
         nonlocal denied
-        if not budget.reserve(policy.max_calls):
+        if not snapshot_disclosure_allowed(policy) or not budget.reserve(
+            policy.max_calls
+        ):
             denied = True
             return False
         return True
@@ -221,7 +220,11 @@ def resolve_evidence(
             max_request_chars=policy.max_input_chars,
         )
         if denied:
+            if not snapshot_disclosure_allowed(policy):
+                return result("disabled", "authorization_revoked")
             return result("budget_exhausted", "call_budget")
+        if not snapshot_disclosure_allowed(policy):
+            return result("disabled", "authorization_revoked")
         if not content:
             return result("unavailable", "transport_unavailable")
         try:

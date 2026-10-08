@@ -174,7 +174,8 @@ class ResultTests(WebFixture, unittest.TestCase):
             data = response.json()
             self.assertEqual(data["total"], 30)
             self.assertEqual(len(data["items"]), 3)
-            self.assertEqual(data["items"][0]["id"], "Compound 27")
+            # The source catalog's natural ID order is stable before pagination.
+            self.assertEqual(data["items"][0]["id"], "Compound 4")
             self.assertEqual(data["items"][0]["source"]["bbox"], [60, 20, 160, 120])
             self.assertEqual(normalize.call_count, 3)
 

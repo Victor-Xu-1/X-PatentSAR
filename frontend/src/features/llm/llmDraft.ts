@@ -47,7 +47,7 @@ export function dirtyLLMDraft(draft: LLMDraft, base: LLMSettings): boolean {
 }
 
 export function updateLLMDraft(draft: LLMDraft, update: Partial<LLMDraft>): LLMDraft {
-  if (update.clearKey === true || (update.mode === 'off' && draft.mode !== 'off'))
+  if (update.clearKey === true)
     return { ...draft, ...update, mode: 'off', dataConsent: false, apiKey: '', clearKey: true };
   const identityChanged =
     (update.endpoint !== undefined && update.endpoint.trim() !== draft.endpoint.trim()) ||
@@ -56,6 +56,7 @@ export function updateLLMDraft(draft: LLMDraft, update: Partial<LLMDraft>): LLMD
   return {
     ...draft,
     ...update,
+    ...(update.mode === 'off' ? { dataConsent: false } : {}),
     ...(identityChanged ? { apiKey: '' } : {}),
     ...(update.protocol && update.protocol !== 'openai-compatible'
       ? { responseMode: 'json-schema' as const }
@@ -68,15 +69,13 @@ export function llmSaveRequest(draft: LLMDraft, base: LLMSettings): LLMSettingsU
   const model = draft.model.trim();
   if (endpoint && !validLLMEndpoint(endpoint))
     throw new Error('请输入 HTTPS API 基础地址，不得包含凭据、查询参数或片段。');
-  if (model.length > 256 || hasLLMControlCharacters(model)) throw new Error('模型名称无效。');
+  if (model.length > 128 || hasLLMControlCharacters(model)) throw new Error('模型名称无效。');
   if (
-    draft.apiKey.length > 8192 ||
+    draft.apiKey.length > 4096 ||
     hasLLMControlCharacters(draft.apiKey) ||
     (draft.apiKey && /\s/u.test(draft.apiKey))
   )
     throw new Error('密钥格式无效，请重新输入。');
-  if (draft.mode === 'off' && draft.apiKey)
-    throw new Error('关闭模式不保存新密钥；请先选择复核模式并同意发送局部文字。');
   const identityChanged =
     endpoint !== base.endpoint || model !== base.model || draft.protocol !== base.protocol;
   if (identityChanged && !draft.apiKey && !draft.clearKey)
@@ -93,11 +92,7 @@ export function llmSaveRequest(draft: LLMDraft, base: LLMSettings): LLMSettingsU
     protocol: draft.protocol,
     response_mode: draft.protocol === 'openai-compatible' ? draft.responseMode : 'json-schema',
     mode: draft.mode,
-    data_consent: draft.dataConsent,
-    ...(draft.clearKey || draft.mode === 'off'
-      ? { api_key: '' }
-      : draft.apiKey
-        ? { api_key: draft.apiKey }
-        : {}),
+    data_consent: draft.mode === 'off' ? false : draft.dataConsent,
+    ...(draft.clearKey ? { api_key: '' } : draft.apiKey ? { api_key: draft.apiKey } : {}),
   };
 }

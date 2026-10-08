@@ -9,7 +9,7 @@ from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
 from .config import EvidenceResolutionConfig
-from .private_state import private_root, read_private, write_private
+from .private_state import private_root, read_budget, read_private, write_private
 
 CONTEXT_SCHEMA = {"name": "patentsar.llm-job-context", "version": 1}
 JOB_ID = re.compile(r"[a-f0-9]{32}")
@@ -42,6 +42,13 @@ def create_context(
     else:
         policy = replace(policy, cache_path=str(root / "responses.sqlite3"))
     path = root / f"{job_id}.policy.json"
+    if path.exists() or path.is_symlink():
+        raise FileExistsError("Immutable LLM context already exists")
+    write_private(
+        root / f"{job_id}.budget.json",
+        {"job_id": job_id, "limit": policy.max_calls, "calls": 0},
+        exclusive=True,
+    )
     write_private(
         path,
         {
@@ -73,6 +80,7 @@ def read_context(value: str | Path) -> JobLLMContext:
         raise ValueError("Foreign or malformed API context")
     policy = EvidenceResolutionConfig(**packet["policy"])
     policy.validate()
+    read_budget(path.parent / f"{job_id}.budget.json", job_id, policy.max_calls)
     if policy.cache_path and policy.cache_path != str(
         path.parent / "responses.sqlite3"
     ):

@@ -44,7 +44,7 @@ describe('one observation context per independently resizable activity column', 
     expect(cells[2]).toHaveTextContent('+++');
     await userEvent.click(within(cells[1] as HTMLElement).getByRole('button'));
     expect(props.onActivitySource).toHaveBeenCalledExactlyOnceWith(row, values[1], undefined);
-    expect(screen.getAllByRole('slider')).toHaveLength(14);
+    expect(screen.getAllByRole('slider')).toHaveLength(15);
     expect(screen.getByRole('table')).toHaveStyle({ tableLayout: 'fixed' });
   });
   it('keeps the complete catalog on another page, retaining repeated values instead of averaging', () => {
@@ -69,7 +69,7 @@ describe('one observation context per independently resizable activity column', 
     );
     expect(document.querySelectorAll('th.activity-value-column')).toHaveLength(3);
     expect(document.querySelectorAll('td.activity-value-column')).toHaveLength(3);
-    expect(screen.getAllByRole('columnheader')).toHaveLength(14);
+    expect(screen.getAllByRole('columnheader')).toHaveLength(15);
   });
   it('lets hidden columns return with their width while identity stays frozen', async () => {
     const props = callbacks();
@@ -109,12 +109,12 @@ describe('one observation context per independently resizable activity column', 
     expect(document.querySelectorAll('.results-table thead .frozen-column')).toHaveLength(4);
     expect(document.querySelectorAll('.results-table tbody .frozen-column')).toHaveLength(4);
     const scroller = screen.getByRole('region', { name: '可横向滚动的化合物结果表格' });
-    expect(scroller.style.getPropertyValue('--frozen-leading-width')).toBe('270px');
-    expect(scroller.style.getPropertyValue('--frozen-trailing-width')).toBe('48px');
+    expect(scroller.style.getPropertyValue('--frozen-leading-width')).toBe('294px');
+    expect(scroller.style.getPropertyValue('--frozen-trailing-width')).toBe('64px');
     screen.getByRole('slider', { name: '调整原文编号列宽' }).focus();
     await userEvent.keyboard('{Home}');
     expect(scroller.style.getPropertyValue('--frozen-compound-width')).toBe('88px');
-    expect(scroller.style.getPropertyValue('--frozen-leading-width')).toBe('238px');
+    expect(scroller.style.getPropertyValue('--frozen-leading-width')).toBe('262px');
     screen.getByRole('slider', { name: '调整结构列宽' }).focus();
     await userEvent.keyboard('{Home}');
     expect(scroller.style.getPropertyValue('--frozen-leading-width')).toBe('214px');

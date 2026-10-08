@@ -634,6 +634,7 @@ dependencies = [
     { name = "rdkit" },
     { name = "requests" },
     { name = "scipy" },
+    { name = "urllib3" },
 ]
 
 [package.optional-dependencies]
@@ -666,6 +667,7 @@ requires-dist = [
     { name = "rdkit", specifier = "==2026.3.1" },
     { name = "requests", specifier = "==2.33.1" },
     { name = "scipy", specifier = "==1.17.1" },
+    { name = "urllib3", specifier = "==2.7.0" },
     { name = "uvicorn", marker = "extra == 'web'", specifier = "==0.54.0" },
 ]
 provides-extras = ["web"]

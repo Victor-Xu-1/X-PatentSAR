@@ -300,7 +300,7 @@ components; reading existing results still does not require installing models.
 
 Locator/segmentation epochs5 retain activity-independent source coverage. Binder
 epoch8 discovers numbered original cells across all selected source pages even
-when no table pages were pre-labelled. Activity epoch5 follows only geometrically
+when no table pages were pre-labelled. Activity epoch6 follows only geometrically
 proved adjacent continuations from classified seeds, preserving each cell's
 actual source page. Missing/changed grids terminate continuation; no fixed patent
 page lists or inferred identifier sequence are used. An eligible continuation
@@ -421,18 +421,48 @@ not an edit of old generated files. Wide structure grids use actual header roles
 and independent cell reads, including nonadjacent/reordered ID/structure columns.
 Unknown activity columns retain separate physical identities and original values.
 
-The optional `evidence_resolution` section in operator `llm.local.yaml` defaults
-to `mode: off` and `data_consent: false`. Equivalent environment variables are in
-`.env.example`. To opt in, explicitly configure an HTTPS compatible provider,
-model/key and disclosure consent; existing advisory credentials alone do not enable
-it. `on-error` reviews evidence faults only, `quality` also samples bounded column
-hypotheses. No infrastructure/memory failure triggers a model escalation.
-Default cap: eight total HTTP attempts, serial,30s/request, zero retries,
-12,000input characters and1,024output tokens. Evidence-only candidate results
-are written to the current attempt's separate `evidence_resolution_review.json`;
-formal source files/values and QA remain unchanged. No real provider call was
-authorized for the default-OFF installation; perform consented provider and
-scientific evaluation separately before relying on candidate suggestions.
+Use **环境管理 → LLM API → 配置** for the user-selected endpoint/model/key,
+protocol and OFF/on-error/quality policy. All LLM work is an external HTTPS API
+call; never install Ollama/vLLM/local language-model weights as a fallback.
+The existing `llm.local.yaml` is the only editable provider authority. It is
+private0600, atomically replaced under a revisioned lock; reads/saves make no
+network request. Explicit nonempty ENV overrides remain operator-owned and lock
+GUI edits. Blank variables use safe defaults/saved config. Keys are write-only
+in HTTP, never in frontend storage/URL/logs. Clearing a role key masks old shared
+keys, rather than re-enabling legacy credentials. Preserve this configuration
+and the private `workspace/llm` snapshots/budgets/cache in deployment backups.
+
+Compatible Chat Completions, native Anthropic Messages and Gemini GenerateContent
+share one bounded transport. A compatible provider without JSON Schema may use
+the explicitly selected JSON-object/prompt-only format, still with strict local
+selection validation. No automatic protocol/model switch or arbitrary script
+templates exist. Vendor wire references: [Anthropic structured output](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)
+and [Gemini GenerateContent](https://ai.google.dev/api/generate-content). Unsupported
+proprietary protocols/authentication need an external compatible gateway and
+separate verification; configuration is not an all-provider accuracy guarantee.
+
+OFF can store credentials but cannot send requests. API testing requires a
+separate charged-call confirmation and sends one bounded random synthetic
+sample, not a patent. Provider failures/nonce mismatches cannot mark it passed;
+a passed current test is connectivity/protocol proof, not extraction accuracy.
+There are no configured real credentials in the default installation.
+
+Normal rule parsing has no API cost. The source-validated unknown-header fallback,
+bounded quality column review and advisory source-led QA share explicit consent,
+one serial quota and cache. Default cap: eight HTTP attempts reserved durably
+before sending,30s absolute deadline, zero retries,12,000input characters and
+1,024output tokens. A resume preserves the same private profile and remaining
+quota; changed settings apply to future new jobs. OFF/consent withdrawal/key
+clearing revokes further requests from saved GUI-managed profiles without
+rewriting the task's original semantic policy or science. A missing/corrupt
+control file cannot reset its budget or bypass authorization. No OOM/system fault
+triggers an API call or an unbounded retry. Evidence receipts remain separate;
+the same original-cell writer and strict QA own all measurements/acceptance.
+Activity epoch6 and the semantic API-policy fingerprint require fresh derived
+activity parsing after a relevant policy change, not a replay of old acceptance.
+Old whole-page VLM and key-only/free-form QA/batch paths are removed; historical
+files are preserved. Real provider and scientific acceptance remain separate
+user-consented checks, not a claim implied by code, installation or an API test.
 
 - `stereo_source_conflict` / `stereo_source_ambiguous`: a source unknown-bond risk and the model's determinate stereo cannot be safely reconciled. Inspect the original crop; do not strip chiral tokens, flip R/S by suffix, merge separated IDs, or run normalization repeatedly. Generated observations and old failed runs remain unchanged. Correct supported chemistry through the audited drawing overlay; it does not turn a failed core run into accepted formal chemistry.
 - `stereo_source_unavailable`: unreadable/excessive source geometry failed the bounded screen before model loading. Correct input quality or source ownership, not memory limits or acceptance flags.
@@ -447,7 +477,7 @@ can share observation-format1 after exact original SHA, size and page-count
 verification. Derived classifications, structures, chemistry and QA still require
 their own current identities; this is not a legacy acceptance exception.
 
-- `LLM_API_KEY is not set`: deterministic production stages still run normally; optional advisory QA is recorded as `skipped_no_credentials`. Configure a key only when advisory review is wanted.
+- Missing API credentials: default OFF still runs deterministic stages. Configure provider/key and explicit consent only when optional API evidence work is wanted; a stored key alone never enables it.
 - DECIMER unavailable: verify `DECIMER_PYTHON` points to a Python 3.10 environment, import `decimer_segmentation` in that interpreter, and run health again. Do not force TensorFlow 2.15 into the Python 3.12 orchestrator.
 - PaddleX endpoint unavailable: verify `PATENTSAR_PADDLEX_OCR_URL`; the pipeline must report the degraded OCR path rather than silently claiming equivalent evidence.
 - Strict acceptance failure: inspect `final_qa_report.json` and `STRICT_ACCEPTANCE_FAILED.json`. Do not manually edit generated tables to bypass the gate.

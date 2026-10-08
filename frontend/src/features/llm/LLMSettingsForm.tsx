@@ -57,7 +57,7 @@ export function LLMSettingsForm({
             type="text"
             autoComplete="off"
             spellCheck={false}
-            maxLength={256}
+            maxLength={128}
             value={draft.model}
             onChange={(event) => controller.update({ model: event.target.value })}
           />
@@ -70,7 +70,7 @@ export function LLMSettingsForm({
               type="password"
               autoComplete="new-password"
               spellCheck={false}
-              maxLength={8192}
+              maxLength={4096}
               value={draft.apiKey}
               disabled={draft.clearKey}
               aria-describedby={keyNoteId}
@@ -81,7 +81,7 @@ export function LLMSettingsForm({
             {draft.clearKey
               ? '保存时清除密钥并关闭。'
               : settings.key_configured
-                ? '已保存密钥；启用模式下留空保留，不回显。'
+                ? '已保存密钥；留空保留，不回显。'
                 : '尚未保存密钥。'}
           </p>
           <label className="llm-checkbox">
@@ -106,7 +106,7 @@ export function LLMSettingsForm({
           </select>
         </label>
         <p id={modeNoteId} className="muted llm-field-note">
-          关闭时清除密钥；质量模式额外复核有限的列映射。
+          关闭或撤回授权将停止外发；质量模式额外复核列映射。
         </p>
         <label className="llm-checkbox">
           <input
@@ -118,7 +118,7 @@ export function LLMSettingsForm({
           我同意向所选外部 API 发送有限的局部文字
         </label>
         <p id={consentId} className="muted llm-field-note">
-          仅表头文字与对应位置，不发送整份 PDF、分子图、SMILES 或全部数据行。
+          仅局部表头、位置和校验证据，不发送整份 PDF、分子图、SMILES 或全部数据行。
         </p>
       </fieldset>
       <details className="llm-limits">

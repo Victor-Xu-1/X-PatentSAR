@@ -317,16 +317,15 @@ describe('minimal independent LLM API settings', () => {
     });
   });
 
-  it('disabling or clearing cannot silently retain a key, even after undoing the clear checkbox', async () => {
+  it('disabling preserves a configured key without authorizing any API call; clearing is explicit', async () => {
     const { api } = await open(ready);
     change('API 密钥', syntheticKey);
     await userEvent.selectOptions(screen.getByLabelText('复核模式'), 'off');
-    expect(screen.getByLabelText('API 密钥')).toHaveValue('');
-    expect(screen.getByLabelText('清除密钥并关闭')).toBeChecked();
-    await userEvent.click(screen.getByLabelText('清除密钥并关闭'));
+    expect(screen.getByLabelText('API 密钥')).toHaveValue(syntheticKey);
+    expect(screen.getByLabelText('清除密钥并关闭')).not.toBeChecked();
     await userEvent.click(screen.getByRole('button', { name: '保存' }));
     expect(api.save).toHaveBeenCalledExactlyOnceWith(
-      expect.objectContaining({ mode: 'off', api_key: '', data_consent: false }),
+      expect.objectContaining({ mode: 'off', api_key: syntheticKey, data_consent: false }),
     );
   });
 
@@ -621,9 +620,11 @@ describe('strict credential-free REST boundary', () => {
     expect(() => llmSaveRequest({ ...llmDraft(ready), dataConsent: false }, ready)).toThrow(
       '明确同意',
     );
-    expect(() => llmSaveRequest({ ...llmDraft(initial), apiKey: syntheticKey }, initial)).toThrow(
-      '关闭模式',
-    );
+    expect(llmSaveRequest({ ...llmDraft(initial), apiKey: syntheticKey }, initial)).toMatchObject({
+      mode: 'off',
+      data_consent: false,
+      api_key: syntheticKey,
+    });
     expect(
       llmSaveRequest(updateLLMDraft(llmDraft(ready), { clearKey: true }), ready),
     ).toMatchObject({ mode: 'off', data_consent: false, api_key: '' });

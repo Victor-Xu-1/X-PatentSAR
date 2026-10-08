@@ -5,6 +5,7 @@ import { activityColumnObservations } from './activityColumns';
 import type { TableActivityColumn } from './activityColumns';
 import { METRIC_SPECS } from '../api/predictionTypes';
 import { effectiveProperty } from './propertyValues';
+import { compoundLabel } from './compoundLabel';
 
 // TSV is plain text: neutralize spreadsheet formula prefixes only in the copy,
 // and remove embedded row/column separators so each original row stays one row.
@@ -35,7 +36,7 @@ export function tableCopyText(
     );
     return columns
       .map((column) => {
-        if (column.id === 'compound') return safeTsvCell(row.display_id);
+        if (column.id === 'compound') return safeTsvCell(compoundLabel(row));
         if (column.id === 'lead') return safeTsvCell(leadColumnValue(row.lead));
         if (column.id === 'structure')
           return safeTsvCell(

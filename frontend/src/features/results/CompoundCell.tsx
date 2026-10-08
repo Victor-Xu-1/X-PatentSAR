@@ -1,4 +1,5 @@
 import type { Compound } from '../../api/types';
+import { compoundLabel } from '../../model/compoundLabel';
 
 export function CompoundCell({
   row,
@@ -8,12 +9,13 @@ export function CompoundCell({
   onDetails: (row: Compound) => void;
 }) {
   const corrected = Boolean(row.correction?.has_changes && !row.correction.stale && row.smiles);
+  const label = compoundLabel(row);
   const displayLabel =
     row.record_kind === 'structure_only' &&
-    row.display_id.startsWith('未关联结构 ') &&
+    label.startsWith('未关联结构 ') &&
     (!row.correction?.has_changes || row.correction.stale)
-      ? row.display_id.replace(/ · p\.\d+$/, '')
-      : row.display_id;
+      ? label.replace(/ · p\.\d+$/, '')
+      : label;
   return (
     <td className="compound-column frozen-column frozen-compound">
       <div className="compound-identity">
@@ -21,8 +23,8 @@ export function CompoundCell({
           type="button"
           className="compound-detail-button"
           data-focus-key={`detail:${row.id}`}
-          aria-label={`查看 ${row.display_id} 结构详情`}
-          title={row.display_id}
+          aria-label={`查看 ${label} 结构详情`}
+          title={label}
           onClick={() => onDetails(row)}
         >
           {displayLabel}

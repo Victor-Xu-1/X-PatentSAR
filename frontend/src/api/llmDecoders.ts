@@ -74,7 +74,7 @@ export const decodeLLMTestResult: Decoder<LLMTestResult> = strictObject({
 const settingsShape = strictObject({
   revision: count,
   endpoint: boundedString(2048),
-  model: boundedString(256),
+  model: boundedString(128),
   protocol: oneOf(['openai-compatible', 'anthropic', 'gemini']),
   response_mode: oneOf(['json-schema', 'json-object', 'prompt-only']),
   mode: oneOf(['off', 'on-error', 'quality']),
@@ -103,7 +103,12 @@ export const decodeLLMSettings: Decoder<LLMSettings> = (input, path = '$') => {
         !result.model.trim() ||
         !result.key_configured ||
         !result.data_consent)) ||
-    (result.last_test !== null && result.last_test.settings_revision > result.revision)
+    (result.last_test !== null && result.last_test.settings_revision > result.revision) ||
+    result.limits.max_calls > 8 ||
+    result.limits.timeout_seconds > 45 ||
+    result.limits.max_input_chars > 32768 ||
+    result.limits.max_output_chars > 16384 ||
+    result.limits.max_tokens > 2048
   )
     throw new ContractError(path);
   return result;

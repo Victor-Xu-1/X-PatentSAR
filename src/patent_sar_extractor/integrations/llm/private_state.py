@@ -9,6 +9,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from .evidence_protocol import _invalid_constant, _unique_object
+
 MAX_CONTROL_BYTES = 32768
 
 
@@ -42,10 +44,27 @@ def read_private(path: Path, maximum: int = MAX_CONTROL_BYTES) -> dict[str, Any]
         content = stream.read(maximum + 1)
     if len(content) > maximum:
         raise ValueError("LLM control bound exceeded")
-    result = json.loads(content)
+    result = json.loads(
+        content, object_pairs_hook=_unique_object, parse_constant=_invalid_constant
+    )
     if not isinstance(result, dict):
         raise TypeError("LLM control file is not an object")
     return result
+
+
+def read_budget(path: Path, job_id: str, limit: int) -> int:
+    """The sole quota-record validator; missing records are never reset to zero."""
+    value = read_private(path)
+    if (
+        set(value) != {"job_id", "limit", "calls"}
+        or value["job_id"] != job_id
+        or type(value["limit"]) is not int
+        or value["limit"] != limit
+        or type(value["calls"]) is not int
+        or not 0 <= value["calls"] <= limit
+    ):
+        raise ValueError("Invalid persisted API call budget")
+    return value["calls"]
 
 
 def write_private(
