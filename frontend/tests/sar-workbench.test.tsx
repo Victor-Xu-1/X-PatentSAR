@@ -2,15 +2,17 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { sarApi } from '../src/api/sarApi';
+import { sarStudyApi } from '../src/api/sarStudyApi';
 import { setLocale } from '../src/i18n';
 import { MoleculeBrowser } from '../src/features/sar/MoleculeBrowser';
 import { DeleteDataset } from '../src/features/sar/DeleteDataset';
 import { DatasetWorkbench } from '../src/features/sar/DatasetWorkbench';
 import { SARFailure } from '../src/features/sar/SARFailure';
 import { ApiError } from '../src/api/errors';
-import { sarDataset, sarInvalid, sarJob, sarMolecule } from './sar-fixtures';
+import { sarDataset, sarInvalid, sarJob, sarMolecule, studyProfile } from './sar-fixtures';
 beforeEach(() => {
   setLocale('en');
+  vi.spyOn(sarStudyApi, 'profile').mockResolvedValue(studyProfile);
   vi.spyOn(sarApi, 'molecules').mockResolvedValue({
     items: [sarMolecule, sarInvalid],
     total: 3,
@@ -78,6 +80,7 @@ describe('all-row dataset presentation', () => {
     );
     expect(await screen.findByText('4 source records · 3 merged molecule rows')).toBeVisible();
     expect(screen.getByText('3 rows · 2 eligible · 1 issues')).toBeVisible();
+    await userEvent.click(screen.getByText('Single-reference comparison (advanced)'));
     expect(screen.getByRole('button', { name: 'Start reference comparison' })).toBeDisabled();
   });
 });

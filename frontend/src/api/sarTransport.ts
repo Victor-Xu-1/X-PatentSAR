@@ -14,6 +14,7 @@ export function sarTransport(
     body?: BodyInit,
     contentType?: string,
     signal?: AbortSignal,
+    limit?: number,
   ) {
     const session = await client.bootstrap();
     signal?.throwIfAborted();
@@ -28,14 +29,17 @@ export function sarTransport(
         signal: controller.signal,
         ...(body === undefined ? {} : { body }),
         headers: {
-          Accept: method === 'GET' ? 'text/csv, application/json' : 'application/json',
+          Accept:
+            method === 'GET'
+              ? 'text/csv, application/json, chemical/x-mdl-sdfile, text/html'
+              : 'application/json',
           ...(method === 'GET' ? {} : { 'X-CSRF-Token': session.csrf_token }),
           ...(contentType ? { 'Content-Type': contentType } : {}),
         },
       });
       const buffered = await boundedResponse(
         response,
-        method === 'GET' ? 128 * 1024 * 1024 : 8 * 1024 * 1024,
+        limit ?? (method === 'GET' ? 128 * 1024 * 1024 : 8 * 1024 * 1024),
       );
       signal?.throwIfAborted();
       if (!buffered.ok) {
@@ -69,6 +73,20 @@ export function sarTransport(
     }
   }
   return {
+    // The native full-study report is bounded at 32 MiB, larger than the shared
+    // client's 8 MiB JSON boundary. Reuse this authenticated, abort-safe transport.
+    readReport: async <T>(path: string, decode: Decoder<T>, signal: AbortSignal) => {
+      const response = await send(path, 'GET', undefined, undefined, signal, 32 * 1024 * 1024);
+      if (!/^application\/json(?:;|$)/i.test(response.headers.get('Content-Type') ?? ''))
+        throw new ApiError(0, 'invalid_json', '服务返回了无效 JSON，请检查 API 是否运行。');
+      let input: unknown;
+      try {
+        input = JSON.parse(await response.text()) as unknown;
+      } catch {
+        throw new ApiError(0, 'invalid_json', '服务返回了无效 JSON，请检查 API 是否运行。');
+      }
+      return decode(input);
+    },
     upload: async <T>(path: string, file: File, decode: Decoder<T>) => {
       const response = await send(
         path,
@@ -97,10 +115,16 @@ export function sarTransport(
           true,
         );
     },
-    export: async (path: string, format: 'csv' | 'json', signal: AbortSignal) => {
+    export: async (path: string, format: 'csv' | 'json' | 'sdf' | 'html', signal: AbortSignal) => {
       const response = await send(path, 'GET', undefined, undefined, signal);
       const type = response.headers.get('Content-Type') ?? '';
-      if (!(format === 'csv' ? /^text\/csv(?:;|$)/i : /^application\/json(?:;|$)/i).test(type))
+      const types = {
+        csv: /^text\/csv(?:;|$)/i,
+        json: /^application\/json(?:;|$)/i,
+        sdf: /^chemical\/x-mdl-sdfile(?:;|$)/i,
+        html: /^text\/html(?:;|$)/i,
+      };
+      if (!types[format].test(type))
         throw new ApiError(0, 'invalid_download', '导出响应格式无效，未保存文件。');
       return response.blob();
     },

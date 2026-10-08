@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { sarApi } from '../src/api/sarApi';
+import { sarStudyApi } from '../src/api/sarStudyApi';
 import { DatasetWorkbench } from '../src/features/sar/DatasetWorkbench';
 import { SARResults } from '../src/features/sar/SARResults';
 import { setLocale } from '../src/i18n';
@@ -13,6 +14,7 @@ import {
   sarMolecule,
   sarPair,
   sarRegion,
+  studyProfile,
 } from './sar-fixtures';
 
 function deferred<T>() {
@@ -24,6 +26,7 @@ function deferred<T>() {
 }
 beforeEach(() => {
   setLocale('en');
+  vi.spyOn(sarStudyApi, 'profile').mockResolvedValue(studyProfile);
   vi.spyOn(sarApi, 'dataset').mockResolvedValue(sarDataset);
   vi.spyOn(sarApi, 'jobs').mockResolvedValue({ items: [], total: 0 });
   vi.spyOn(sarApi, 'molecules').mockResolvedValue({
@@ -38,6 +41,8 @@ beforeEach(() => {
 });
 const props = { datasetId: sarDataset.id, jobId: null, onJob: vi.fn(), onRemoved: vi.fn() };
 async function enterDraft(saved: boolean) {
+  await screen.findByRole('heading', { name: sarDataset.title });
+  await userEvent.click(screen.getByText('Single-reference comparison (advanced)'));
   await userEvent.click(await screen.findByRole('button', { name: 'Reference' }));
   const image = await screen.findByRole('img', { name: 'RDKit reference drawing' });
   fireEvent.load(image);
@@ -50,7 +55,11 @@ async function enterDraft(saved: boolean) {
   await userEvent.selectOptions(screen.getByLabelText('Activity direction'), 'lower');
   const grades = screen.getByRole('textbox', { name: /Grade order/ });
   await userEvent.type(grades, 'Strong 原文\nWeak');
-  await userEvent.click(screen.getByRole('checkbox', { name: /Known differences still prevent/ }));
+  await userEvent.click(
+    within(screen.getByRole('region', { name: 'Analysis settings' })).getByRole('checkbox', {
+      name: /Known differences still prevent/,
+    }),
+  );
   return { image, grades };
 }
 describe('SAR review: retained drafts do not authorize writes', () => {
@@ -87,7 +96,9 @@ describe('SAR review: retained drafts do not authorize writes', () => {
       expect(screen.getByRole('img', { name: 'RDKit reference drawing' })).toBe(draft.image);
       expect(screen.getByRole('textbox', { name: /Grade order/ })).toBe(draft.grades);
       expect(
-        screen.getByRole('checkbox', { name: /Known differences still prevent/ }),
+        within(screen.getByRole('region', { name: 'Analysis settings' })).getByRole('checkbox', {
+          name: /Known differences still prevent/,
+        }),
       ).toBeChecked();
       if (saved)
         expect(screen.getByRole('button', { name: 'Start reference comparison' })).toBeEnabled();
@@ -100,7 +111,7 @@ describe('SAR review: retained drafts do not authorize writes', () => {
   it('preserves incomplete selections, text and search through refresh/error, without remounting or treating cached data as current', async () => {
     render(<DatasetWorkbench {...props} active />);
     const draft = await enterDraft(false);
-    const search = screen.getByLabelText('Search identifiers or SMILES');
+    const search = screen.getByRole('searchbox', { name: 'Search identifiers or SMILES' });
     expect(search).toHaveAttribute('maxlength', '200');
     fireEvent.change(search, { target: { value: '[C@H](O)Cl %_' } });
     await waitFor(() =>
@@ -122,7 +133,7 @@ describe('SAR review: retained drafts do not authorize writes', () => {
     expect(screen.getByRole('textbox', { name: /等级顺序/ })).toBe(draft.grades);
     await userEvent.click(within(panel).getByRole('button', { name: '刷新' }));
     await waitFor(() => expect(screen.getByRole('button', { name: '保存区域' })).toBeEnabled());
-    expect(screen.getByLabelText('搜索编号或 SMILES')).toBe(search);
+    expect(screen.getByRole('searchbox', { name: '搜索编号或 SMILES' })).toBe(search);
     expect(sarApi.saveRegion).not.toHaveBeenCalled();
   });
   it('keeps text but invalidates the selected region when revalidation finds a new dataset revision', async () => {

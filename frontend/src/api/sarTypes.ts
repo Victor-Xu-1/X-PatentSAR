@@ -26,6 +26,10 @@ export interface Molecule {
   observations: Observation[];
   source_compound_id: string | null;
   source_page: number | null;
+  properties?: Record<string, number | null>;
+  predictions?: Record<string, number | null>;
+  property_origins?: Record<string, string>;
+  prediction_origin?: string;
 }
 export interface Dataset {
   id: string;
@@ -75,7 +79,10 @@ export interface CSVMapping {
   unit_column: string | null;
   cell_line_column: string | null;
   duration_column: string | null;
+  source_page_column?: string | null;
   request_id: string;
+  property_columns?: Record<string, string>;
+  prediction_columns?: Record<string, string>;
 }
 export interface ProjectSnapshot {
   project_id: string;
@@ -98,6 +105,8 @@ export interface RegionRequest {
   expected_dataset_revision: number;
   expected_graph_sha256: string;
   atom_indices: number[];
+  name?: string;
+  kind?: 'variable' | 'core';
 }
 export interface Region {
   id: string;
@@ -108,6 +117,8 @@ export interface Region {
   atom_indices: number[];
   attachment_count: number;
   created_at: string;
+  name?: string;
+  kind?: 'variable' | 'core';
 }
 export interface AnalysisRequest {
   request_id: string;
@@ -135,6 +146,7 @@ export interface SARJob {
   finished_at: string | null;
   input_sha256: string;
   stale: boolean;
+  kind?: 'reference' | 'study';
 }
 export interface JobList {
   items: SARJob[];
@@ -154,6 +166,10 @@ export interface Pair {
   candidate_values: string[];
   fold_change: number | null;
   evidence_basis: 'recorded_context' | 'user_confirmed' | 'insufficient';
+  region_id?: string | null;
+  fragment_id?: string | null;
+  variable_atom_indices?: number[];
+  attachment_mapping?: number[][];
 }
 export interface PairPage {
   items: Pair[];

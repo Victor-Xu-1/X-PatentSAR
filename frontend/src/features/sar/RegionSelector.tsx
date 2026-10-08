@@ -10,6 +10,7 @@ import { SourceLinks } from './SourceLinks';
 import { MutationNotice } from './MutationNotice';
 import { useSARMutation } from './useSARMutation';
 import { MoleculeEvidence } from './MoleculeEvidence';
+import { RegionLegend, RegionMap } from './study/RegionMap';
 
 export function RegionSelector({
   dataset,
@@ -17,6 +18,12 @@ export function RegionSelector({
   active,
   disabled: blocked = false,
   scope = '',
+  name,
+  kind,
+  onNameChange,
+  onKindChange,
+  highlights = [],
+  onSaved,
   onRegion,
 }: {
   dataset: Dataset;
@@ -24,6 +31,12 @@ export function RegionSelector({
   active: boolean;
   disabled?: boolean;
   scope?: string;
+  name?: string;
+  kind?: 'variable' | 'core';
+  onNameChange?: (name: string) => void;
+  onKindChange?: (kind: 'variable' | 'core') => void;
+  highlights?: Region[];
+  onSaved?: (region: Region) => void;
   onRegion: (region: Region | null) => void;
 }) {
   const { t } = useTranslation();
@@ -39,6 +52,8 @@ export function RegionSelector({
       dataset.revision,
       reference.id,
       reference.graph_sha256,
+      name,
+      kind,
     ]),
   });
   const load = useCallback(
@@ -72,7 +87,9 @@ export function RegionSelector({
     saved?.dataset_id === dataset.id &&
     saved.dataset_revision === dataset.revision &&
     saved.molecule_id === reference.id &&
-    saved.graph_sha256 === reference.graph_sha256;
+    saved.graph_sha256 === reference.graph_sha256 &&
+    (name === undefined || saved.name === name) &&
+    (kind === undefined || saved.kind === kind);
   const disabled = !graphCurrent || !image.value || !loaded || imageFailed || mutation.locked;
   useEffect(() => {
     onRegion(graphCurrent && loaded && !image.error && !imageFailed && savedCurrent ? saved : null);
@@ -85,18 +102,27 @@ export function RegionSelector({
     onRegion(null);
   }
   function save() {
-    if (disabled || !indices.length || !reference.graph_sha256) return;
+    if (
+      disabled ||
+      !indices.length ||
+      !reference.graph_sha256 ||
+      (name !== undefined && (!name.trim() || name.length > 40))
+    )
+      return;
     const payload: RegionRequest = {
       molecule_id: reference.id,
       expected_dataset_revision: dataset.revision,
       expected_graph_sha256: reference.graph_sha256,
       atom_indices: [...indices],
+      ...(name === undefined ? {} : { name }),
+      ...(kind === undefined ? {} : { kind }),
     };
     void mutation.run(
       () => sarApi.saveRegion(dataset.id, payload),
       (region) => {
         setSaved(region);
         onRegion(region);
+        onSaved?.(region);
       },
     );
   }
@@ -109,6 +135,30 @@ export function RegionSelector({
         {t('选择仅用于参考比较，不是结构修正。来源修正仍使用原项目的审计编辑器。')}
       </p>
       {drawing.loading && <Loading />}
+      {onNameChange && (
+        <label>
+          {t('区域名称')}
+          <input
+            maxLength={40}
+            value={name ?? ''}
+            disabled={disabled}
+            onChange={(event) => onNameChange(event.target.value)}
+          />
+        </label>
+      )}
+      {onKindChange && (
+        <label>
+          {t('选择用途')}
+          <select
+            value={kind ?? 'variable'}
+            disabled={disabled}
+            onChange={(event) => onKindChange(event.target.value as 'variable' | 'core')}
+          >
+            <option value="variable">{t('变化区域')}</option>
+            <option value="core">{t('用户确认核心')}</option>
+          </select>
+        </label>
+      )}
       {drawing.error && <SARFailure error={drawing.error} onRetry={drawing.reload} />}
       {image.error && <SARFailure error={image.error} />}
       {imageFailed && <p role="alert">{t('RDKit 结构图加载失败。')}</p>}
@@ -130,6 +180,15 @@ export function RegionSelector({
               setFailedURL(image.value?.url ?? null);
             }}
           />
+          <RegionMap
+            atoms={drawing.data?.atoms ?? []}
+            regions={highlights.filter(
+              (r) =>
+                r.molecule_id === reference.id &&
+                r.dataset_revision === dataset.revision &&
+                r.graph_sha256 === reference.graph_sha256,
+            )}
+          />
           {drawing.data?.atoms.map((atom) => (
             <button
               key={atom.index}
@@ -149,6 +208,14 @@ export function RegionSelector({
           ))}
         </div>
       )}
+      <RegionLegend
+        regions={highlights.filter(
+          (r) =>
+            r.molecule_id === reference.id &&
+            r.dataset_revision === dataset.revision &&
+            r.graph_sha256 === reference.graph_sha256,
+        )}
+      />
       <output>
         {indices.length
           ? t('已选原子：{indices}', { indices: indices.join(', ') })
@@ -169,7 +236,9 @@ export function RegionSelector({
         <button
           type="button"
           className="primary"
-          disabled={disabled || !indices.length || savedCurrent}
+          disabled={
+            disabled || !indices.length || savedCurrent || (name !== undefined && !name.trim())
+          }
           onClick={save}
         >
           {t(mutation.busy ? '正在保存…' : '保存区域')}

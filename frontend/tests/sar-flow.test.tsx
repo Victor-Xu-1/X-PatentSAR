@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import App from '../src/App';
 import { api } from '../src/api';
 import { sarApi } from '../src/api/sarApi';
+import { sarStudyApi } from '../src/api/sarStudyApi';
 import { setLocale } from '../src/i18n';
 import { health, project, session } from './fixtures';
 import {
@@ -14,6 +15,7 @@ import {
   sarMolecule,
   sarPair,
   sarRegion,
+  studyProfile,
 } from './sar-fixtures';
 
 describe('complete independent SAR frontend contract flow', () => {
@@ -38,6 +40,7 @@ describe('complete independent SAR frontend contract flow', () => {
       return sarDataset;
     });
     vi.spyOn(sarApi, 'dataset').mockResolvedValue(sarDataset);
+    vi.spyOn(sarStudyApi, 'profile').mockResolvedValue(studyProfile);
     vi.spyOn(sarApi, 'molecules').mockResolvedValue({
       items: [sarMolecule, sarInvalid],
       total: 3,
@@ -70,6 +73,7 @@ describe('complete independent SAR frontend contract flow', () => {
     await userEvent.click(
       await screen.findByRole('button', { name: 'Create independent snapshot' }),
     );
+    await userEvent.click(await screen.findByText('Single-reference comparison (advanced)'));
     expect(await screen.findByText('原文 missing')).toBeVisible();
     await userEvent.click(screen.getAllByRole('button', { name: 'Reference' })[0]!);
     const image = await screen.findByRole('img', { name: 'RDKit reference drawing' });
@@ -103,6 +107,7 @@ describe('complete independent SAR frontend contract flow', () => {
     });
     for (const original of [extraction, prediction, recognition])
       expect(original).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByText('Study task history'));
     await userEvent.click(screen.getByRole('button', { name: 'Remove SAR job' }));
     await userEvent.click(screen.getByRole('button', { name: 'Confirm soft removal' }));
     await waitFor(() => expect(window.location.hash).not.toContain('job='));

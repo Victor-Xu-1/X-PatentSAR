@@ -12,6 +12,16 @@ export class UncertainSARWrite extends ApiError {
     super(error.status, error.code, error.source, true, error.values);
   }
 }
+function canonical(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonical);
+  if (value && typeof value === 'object')
+    return Object.fromEntries(
+      Object.entries(value)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, field]) => [key, canonical(field)]),
+    );
+  return value;
+}
 /** Session-memory identities survive component/navigation changes; no user data is persisted. */
 export function createSARMutation(shared: ApiClient) {
   const unresolved = new Map<string, string>();
@@ -23,7 +33,7 @@ export function createSARMutation(shared: ApiClient) {
       const { request_id: supplied, ...fields } = payload as Record<string, unknown>;
       if (typeof supplied !== 'string' || !/^[a-f0-9]{32}$/.test(supplied))
         throw new ContractError('$.request_id');
-      key = path + '\n' + JSON.stringify(fields, Object.keys(fields).sort());
+      key = path + '\n' + JSON.stringify(canonical(fields));
       requestId = unresolved.get(key) ?? supplied;
       if (!unresolved.has(key) && unresolved.size >= 32)
         throw new UiError('尚有过多未确认写入，请先核对服务器状态。');

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import type { CSVMapping, CSVPreview } from '../../api/sarTypes';
 import { useTranslation } from '../../i18n';
-import { initialMapping, mappingValid } from './csvMapping';
+import { initialMapping, mappingValid, researchMappingValid } from './csvMapping';
 import type { MappingDraft } from './csvMapping';
 import { newRequestId } from './presentation';
+import { ResearchMapping } from './study/ResearchMapping';
 export function CSVMappingForm({
   preview,
   disabled,
@@ -64,6 +65,7 @@ export function CSVMappingForm({
           {column('unit_column', '单位列（可选）', true)}
           {column('target_column', '靶点列（可选）', true)}
           {column('assay_column', '实验列（可选）', true)}
+          {column('source_page_column', 'PDF 来源页列（可选）', true)}
           {column('cell_line_column', '细胞系列（可选）', true)}
           {column('duration_column', '时长列（可选）', true)}
         </div>
@@ -94,6 +96,10 @@ export function CSVMappingForm({
           </p>
         )}
         {!mappingValid(draft, preview) && <p>{t('请明确选择编号、SMILES 和至少一个活性列。')}</p>}
+        <ResearchMapping headers={preview.headers} draft={draft} onChange={setDraft} />
+        {!researchMappingValid(draft, preview) && (
+          <p role="alert">{t('研究映射须使用互不重复且非编号、结构或活性的列。')}</p>
+        )}
         <button className="primary" type="submit" disabled={!mappingValid(draft, preview)}>
           {t('创建 CSV 数据集')}
         </button>
