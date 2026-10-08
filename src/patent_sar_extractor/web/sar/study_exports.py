@@ -23,7 +23,11 @@ def export_study(queue, identifier: str, format: str):
     if format == "json":
         original = safe.read("input.json", max_bytes=32 * 1024 * 1024)
         if hashlib.sha256(original).hexdigest() != job.input_sha256:
-            raise WebError(409, "sar_input_changed", "Immutable study input differs from its receipt.")
+            raise WebError(
+                409,
+                "sar_input_changed",
+                "Immutable study input differs from its receipt.",
+            )
 
         def content():
             yield encode(
