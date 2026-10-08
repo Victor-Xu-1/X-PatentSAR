@@ -206,7 +206,7 @@ class EvidenceResolutionTests(unittest.TestCase):
         self.assertNotIn("job_id", supplied)
         self.assertNotIn("trigger", supplied)
         self.assertNotIn("fault_kind", supplied)
-        self.assertEqual(supplied["protocol_version"], 1)
+        self.assertEqual(supplied["protocol_version"], 2)
         self.assertEqual(supplied["original_sha256"], self.request.original_sha256)
         self.assertEqual(supplied["observations"][0]["observation_id"], "text-1")
         self.assertEqual(supplied["observations"][1]["observation_id"], "region-1")
@@ -409,13 +409,9 @@ class EvidenceResolutionTests(unittest.TestCase):
             with (
                 patch.dict(os.environ, {}, clear=True),
                 patch.object(llm_config, "LLM_CONFIG_PATHS", (path,)),
+                self.assertLogs(llm_config.logger, level="WARNING") as logs,
             ):
-                llm_config._load_yaml_config.cache_clear()
-                try:
-                    with self.assertLogs(llm_config.logger, level="WARNING") as logs:
-                        result = resolve_evidence(self.request, self.budget)
-                finally:
-                    llm_config._load_yaml_config.cache_clear()
+                result = resolve_evidence(self.request, self.budget)
         self.assertEqual(
             (result.outcome, result.reason), ("failed", "invalid_configuration")
         )

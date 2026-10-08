@@ -114,8 +114,7 @@ export function ResultsTable({
         }
       >
         <caption className="sr-only">
-          Compound
-          编号与结构独立成列。每种活性与实验独立成列，六项计算指标独立成列。每个活性值保留独立来源；
+          原文编号与结构独立成列。每种活性与实验独立成列，六项计算指标独立成列。每个活性值保留独立来源；
           计算指标不等于专利实测。点击修正可编辑并保存。
         </caption>
         <colgroup>

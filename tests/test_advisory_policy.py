@@ -20,10 +20,10 @@ class AdvisoryPolicyTests(unittest.TestCase):
             with (
                 patch.object(
                     advisory_qa,
-                    "has_llm_key",
+                    "get_evidence_resolution_config",
                     side_effect=AssertionError("must not read credentials"),
                 ),
-                patch.object(advisory_qa, "llm_chat") as model,
+                patch.object(advisory_qa, "resolve_evidence") as model,
             ):
                 result = advisory_qa.run_advisory_qa(directory, enabled=False)
             model.assert_not_called()

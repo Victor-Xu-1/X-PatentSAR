@@ -132,6 +132,9 @@ class CorrectionMetadata(DTO):
 class Compound(DTO):
     id: str
     display_id: str
+    identifier_label: str | None = Field(
+        default=None, max_length=200, exclude_if=lambda value: value is None
+    )
     structure_id: str | None = None
     structure_image_url: str | None = None
     smiles: str | None = None

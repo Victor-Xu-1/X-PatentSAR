@@ -10,6 +10,7 @@ from patent_sar_extractor.core.identifier_order import natural_identifier_key
 from .activity_rank_models import ActivityStrengthScale
 from .activity_rank_values import rank_value
 from .errors import WebError
+from .identifier_labels import identifier_equal
 from .models import ActivityColumn, Compound
 from .prediction_models import METRIC_KEYS
 from .table_query_bands import BANDS, row_bands
@@ -86,7 +87,15 @@ def matches(
             )
         chosen = set(criterion.values or [])
         # Checkboxes identify actual distinct raw values, not fuzzy text matches.
-        found = any(str(actual).strip() in chosen for actual in values)
+        found = (
+            any(
+                identifier_equal(actual, expected)
+                for actual in values
+                for expected in chosen
+            )
+            if criterion.column == "compound"
+            else any(str(actual).strip() in chosen for actual in values)
+        )
         return found if criterion.op == "in" else not found
     operand = criterion.value or ""
     if criterion.op == "contains":
@@ -102,9 +111,11 @@ def matches(
             str(value).casefold().endswith(operand.casefold()) for value in values
         )
     if criterion.op == "eq":
-        return any(_equal(value, operand) for value in values)
+        equal = identifier_equal if criterion.column == "compound" else _equal
+        return any(equal(value, operand) for value in values)
     if criterion.op == "ne":
-        return all(not _equal(value, operand) for value in values)
+        equal = identifier_equal if criterion.column == "compound" else _equal
+        return all(not equal(value, operand) for value in values)
     expected = rank_value(operand)
     if expected is None:
         raise WebError(

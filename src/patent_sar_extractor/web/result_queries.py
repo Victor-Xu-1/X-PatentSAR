@@ -20,6 +20,7 @@ from .descriptor_storage import DescriptorStore
 from .dto import Error
 from .errors import WebError
 from .history_storage import ensure_project_visible
+from .identifier_labels import identifier_label
 from .lead_storage import LeadStore
 from .models import ActivityColumn, Compound, Results, Review
 from .molecule_drawing import drawing_url
@@ -140,6 +141,7 @@ class ResultQueries:
                 ),
             )
             activity_columns.observe(dto.activities)
+            dto.identifier_label = identifier_label(dto)
             metrics.update(a.name for a in dto.activities)
             targets.update(a.target for a in dto.activities if a.target)
             if len(metrics) > 1000 or len(targets) > 1000:
@@ -168,6 +170,7 @@ class ResultQueries:
                 [
                     dto.id,
                     dto.display_id,
+                    dto.identifier_label or "",
                     dto.smiles or "",
                     *(a.name for a in dto.activities),
                     *(a.target or "" for a in dto.activities),

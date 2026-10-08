@@ -6,6 +6,7 @@ import { redrawPlaceholder } from '../../model/results';
 import { RecognitionDetails } from './RecognitionDetails';
 import { cropPlaceholder } from '../../model/extraction';
 import { PredictionEvidence } from './PredictionCells';
+import { compoundLabel } from '../../model/compoundLabel';
 
 export function CropDialog({
   compound,
@@ -18,14 +19,14 @@ export function CropDialog({
   onClose: () => void;
 }) {
   return (
-    <Dialog title={`结构详情 · ${compound.display_id}`} onClose={onClose} wide>
+    <Dialog title={`结构详情 · ${compoundLabel(compound)}`} onClose={onClose} wide>
       <div className="dialog-body crop-detail">
         <div className="crop-comparison" aria-label="原始裁图与 SMILES 重绘对照">
           <figure>
             <figcaption>原始 PDF 裁图</figcaption>
             <AssetImage
               url={compound.structure_image_url}
-              alt={`${compound.display_id} 的原始结构裁图`}
+              alt={`${compoundLabel(compound)} 的原始结构裁图`}
               className="crop-large"
               unavailableLabel={cropPlaceholder(compound)}
             />
@@ -42,7 +43,7 @@ export function CropDialog({
                   ? compound.redraw_image_url
                   : null
               }
-              alt={`${compound.display_id} 的 SMILES 重绘（非原图）`}
+              alt={`${compoundLabel(compound)} 的 SMILES 重绘（非原图）`}
               className="crop-large"
               unavailableLabel={redrawPlaceholder(compound)}
               invalidLabel="重绘地址无效"

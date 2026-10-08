@@ -93,6 +93,7 @@ export type RecordKind = (typeof recordKinds)[number];
 export interface Compound {
   id: string;
   display_id: string;
+  identifier_label?: string | null;
   structure_id: string | null;
   structure_image_url: string | null;
   redraw_image_url: string | null;

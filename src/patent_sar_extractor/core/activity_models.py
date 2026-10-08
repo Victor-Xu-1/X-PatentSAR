@@ -70,3 +70,4 @@ class GridSchema:
     # Existing positional constructors and activity schema-v1 dictionaries stay valid.
     raw_headers: tuple[str, ...] = ()
     header_region: tuple[int, tuple[float, float, float, float]] | None = None
+    header_resolution: dict | None = None

@@ -31,6 +31,7 @@ from .environments import EnvironmentManager
 from .errors import WebError
 from .history_service import HistoryService
 from .jobs import JobQueue
+from .llm_settings import LLMSettingsService
 from .owner import WorkspaceOwner
 from .processes import CLIProcessRunner, ProcessRunner
 from .routes_analysis import analysis_routes
@@ -38,6 +39,7 @@ from .routes_chemistry import chemistry_routes
 from .routes_environments import environment_routes
 from .routes_history import history_routes
 from .routes_jobs import job_routes
+from .routes_llm import llm_routes
 from .routes_projects import project_routes
 from .security import SecurityMiddleware, Sessions, loopback_host
 from .service import WorkspaceService
@@ -63,6 +65,7 @@ def create_app(
     environment_storage: ManagedStorage | None = None,
     environment_runner: ProcessRunner | None = None,
     environment_catalog: Callable[[], list[dict[str, object]]] | None = None,
+    llm_settings_service: LLMSettingsService | None = None,
 ) -> FastAPI:
     """API-only with frontend_dir=None. Caller chooses the private state root.
 
@@ -97,10 +100,18 @@ def create_app(
             "Body receive timeouts must be bounded by 120 seconds.",
         )
     service = WorkspaceService(state_root)
+    llm_settings = (
+        LLMSettingsService() if llm_settings_service is None else llm_settings_service
+    )
     analysis = AnalysisService(
         service.store.root, service, settings=analysis_settings, runner=analysis_runner
     )
-    queue = JobQueue(service, runner or CLIProcessRunner(), job_timeout_seconds)
+    queue = JobQueue(
+        service,
+        runner or CLIProcessRunner(),
+        job_timeout_seconds,
+        llm_policy=llm_settings.policy,
+    )
     service.corrections.on_save = queue.corrected
     recipe_identity = None
     if environment_catalog is None:
@@ -167,6 +178,7 @@ def create_app(
     )
     app.state.workspace = service
     app.state.queue = queue
+    app.state.llm_settings = llm_settings
     app.state.analysis = analysis
     app.state.environments = environments
     app.state.history = HistoryService(service.store)
@@ -287,6 +299,7 @@ def create_app(
     app.include_router(analysis_routes(service, analysis))
     app.include_router(chemistry_routes())
     app.include_router(environment_routes(environments))
+    app.include_router(llm_routes(llm_settings))
     app.include_router(history_routes(app.state.history))
 
     @app.get("/{path:path}")

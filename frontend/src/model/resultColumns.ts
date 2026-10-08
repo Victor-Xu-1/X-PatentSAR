@@ -42,7 +42,7 @@ export function resultColumns(activities: TableActivityColumn[] = []): ResultCol
     counts.set(activity.name, (counts.get(activity.name) ?? 0) + 1);
   return [
     column('select', '选择', 'check-col frozen-column frozen-select', 38, 38, 100),
-    column('compound', 'Compound', 'compound-column frozen-column frozen-compound', 120, 88, 480),
+    column('compound', '原文编号', 'compound-column frozen-column frozen-compound', 120, 88, 480),
     column('structure', '结构', 'structure-column frozen-column frozen-structure', 136, 88, 480),
     {
       ...column('lead', 'Lead', 'lead-column', 88, 72, 240),

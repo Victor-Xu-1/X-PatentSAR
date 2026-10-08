@@ -6,6 +6,7 @@ import type {
   TableActivityColumn,
 } from '../../model/activityColumns';
 import { activityText, activityValueText } from '../../model/presentation';
+import { compoundLabel } from '../../model/compoundLabel';
 import {
   activityStrength,
   activityStrengthLabels,
@@ -49,7 +50,7 @@ export function ActivityValueCell({
                 data-activity-index={index}
                 data-activity-source-key={sourceKey}
                 disabled={activity.page === null}
-                aria-label={`${row.display_id} ${activity.name} 活性来源${activity.page === null ? '页码未知' : `第 ${activity.page} 页`}`}
+                aria-label={`${compoundLabel(row)} ${activity.name} 活性来源${activity.page === null ? '页码未知' : `第 ${activity.page} 页`}`}
                 title={
                   scale
                     ? `${activityText(activity)} · ${activityStrengthLabels[tiers[position]!]}；${strengthScaleText(scale)}`

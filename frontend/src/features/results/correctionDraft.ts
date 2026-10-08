@@ -6,6 +6,7 @@ import type { MetricKey } from '../../api/predictionTypes';
 import { decodeEditableFields } from '../../api/correctionDecoders';
 import { activityContextKey } from '../../api/activityColumnDecoders';
 import { effectiveProperty } from '../../model/propertyValues';
+import { compoundLabel } from '../../model/compoundLabel';
 
 export interface ActivityDraft {
   source: Activity;
@@ -25,6 +26,7 @@ export interface StructureChange {
 }
 export interface CorrectionDraft {
   displayId: string;
+  identifierOrigin?: { canonical: string; label: string };
   smiles: string;
   molfile: string | null;
   graphKey: string | null;
@@ -89,7 +91,13 @@ export function correctionDraft(
     }),
   ) as Record<MetricKey, PropertyDraft>;
   return {
-    displayId: fields.display_id,
+    displayId:
+      compound && fields.display_id === compound.display_id
+        ? compoundLabel(compound)
+        : fields.display_id,
+    ...(compound && fields.display_id === compound.display_id
+      ? { identifierOrigin: { canonical: fields.display_id, label: compoundLabel(compound) } }
+      : {}),
     smiles: fields.smiles ?? '',
     molfile: fields.structure_molfile ?? null,
     graphKey: null,
@@ -140,7 +148,10 @@ export function draftFields(draft: CorrectionDraft): EditableFields {
   }
   const smiles = draft.smiles.trim() || null;
   return decodeEditableFields({
-    display_id: draft.displayId.trim(),
+    display_id:
+      draft.identifierOrigin && draft.displayId.trim() === draft.identifierOrigin.label
+        ? draft.identifierOrigin.canonical
+        : draft.displayId.trim(),
     smiles,
     structure_molfile: draft.molfile,
     property_overrides: overrides,

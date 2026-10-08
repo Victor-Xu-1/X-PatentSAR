@@ -108,6 +108,60 @@ never populated with demonstration values. Evidence summary is not an LLM claim.
 
 ## Security and storage
 
+### User-configured external LLM API
+
+The environment page adds one independent **LLM API** module; it is not an
+installable local component. Three wire protocols (`openai-compatible`,
+`anthropic`, `gemini`) share one bounded API client, consent policy, quota and
+private cache. Provider endpoint/model/key are user-selected, not vendor presets.
+OpenAI-compatible responses may explicitly use `json-schema`, `json-object` or
+`prompt-only`; native adapters keep their documented structured format. Unknown
+proprietary authentication/wire formats require an external compatible gateway,
+not an automatic alternate model or local inference service.
+
+- GET `/api/v1/llm/settings` returns `{revision,endpoint,model,protocol,
+  response_mode,mode,data_consent,key_configured,editable,status,reason,limits,
+  last_test}`. Mode is `off|on-error|quality`; status is `disabled|incomplete|ready`.
+  Ready means **configuration complete**, not provider/scientific verification.
+  `limits` is `{max_calls,timeout_seconds,max_input_chars,max_output_chars,max_tokens}`.
+  `last_test` is null or `{status:passed|failed,reason,settings_revision,checked_at}`.
+  Only a passed test for the current revision is displayed as verified connectivity.
+  No saved key, private snapshot or raw provider response is returned.
+- PUT `/api/v1/llm/settings` accepts `{expected_revision,endpoint,model,protocol,
+  response_mode,mode,data_consent,api_key?}`. Omitted key retains it; empty string
+  clears it. Endpoint/model/protocol changes require a replacement or explicit
+  clearing, never silently reusing a key for another recipient. Mode OFF can save
+  credentials without any external request. Enabling requires explicit consent
+  and complete valid configuration. Stale revisions return409 without changes.
+  Intentional nonempty operator ENV overrides lock GUI editing; blank examples
+  select safe defaults/saved settings, not unusable empty policy values.
+- POST `/api/v1/llm/test` accepts `{expected_revision,consent:true}` and returns the
+  `last_test` shape. Only a complete enabled consented current configuration can
+  send one bounded random synthetic validation sample; it may incur provider
+  charges. This is neither a patent upload nor model/scientific acceptance.
+  A changed configuration cannot promote the stale test. Writes are never
+  automatically retried; uncertain outcomes require a fresh state read.
+
+All routes use normal authenticated Origin/session/CSRF protection. Public HTTPS,
+no URL credentials/query/fragment, no redirects or ambient proxies, and public-IP
+validation at the actual DNS/socket boundary exclude local/private LLM services
+and DNS rebinding. API keys use private owned no-link0600 `llm.local.yaml` under
+the operator config directory, with atomic CAS publication; unrelated YAML roles
+are retained but an explicit cleared LLM key never resurrects a shared legacy key.
+No model runtime/weights are added to the environment catalog or dependencies.
+
+Each logical job captures a private immutable API policy and persistent serial
+budget in `workspace/llm`; a resume carries the same identity/quota/cache, never a
+new eight-call allowance. Semantic changes apply to future jobs. Disabling API,
+withdrawing consent or clearing/changing its key prevents further requests from
+old GUI-managed snapshots. The current source original, geometry, identifiers,
+raw measurements/units and deterministic QA remain authoritative. Candidate
+header admission revalidates the complete original physical table and existing
+proved-ID catalog; the ordinary parser/writer continues without invented values.
+Optional column/QA reviews cannot promote formal acceptance. Activity epoch6 and
+policy fingerprints invalidate changed derived parsing independently of product
+PR numbering, APIv1 and the unchanged workspace database schema.
+
 ### Recoverable history deletion
 
 The additive authenticated history interface uses the same Origin/session/CSRF
@@ -423,10 +477,22 @@ unverified originals or malformed evidence fail rather than masquerading as
 historical results; they never promote binding confidence.
 
 `Compound`:
-`{id,display_id,structure_id,structure_image_url,redraw_image_url,smiles,recognition,activities,source,
+`{id,display_id,identifier_label?,structure_id,structure_image_url,redraw_image_url,smiles,recognition,activities,source,
 confidence,review,flags}`. IDs preserve confirmed printed identifiers in the
 produced source catalog, with activity observations left-joined by canonical ID.
 An activity-only identifier remains visible when no source binding is confirmed.
+`identifier_label` is an additive read-only presentation field. The table heading
+is “原文编号”, not a fixed `Compound` label. Exact matching original `source_label`
+wins and preserves patent prefixes, zeroes, suffixes and case; otherwise only the
+private canonical `Compound ` wrapper is removed from a proved lexical ID.
+Unconfirmed references are not assigned guessed numbers. Explicit audited user
+renames win. Stable `id`/`display_id`, raw payloads, source fingerprints, source
+links, recognition/prediction keys and formal artifacts are unchanged. Searches,
+distinct-value choices, visible copy and CSV `identifier_label` use the same
+derived label; CSV retains `compound_id` and `display_id` for stable identity.
+Legacy exact canonical-ID filter aliases remain readable without merging zeroes,
+prefixes or A/B entities. The correction UI shows the label but round-trips the
+unchanged canonical value when only metrics or structure are edited.
 `recognition`: `{status,quality_flag,model_fingerprint,token_confidence}`. Status
 is `not_run`, `valid`, `invalid` or `unavailable`; absent historical metadata is
 unavailable rather than reconstructed as model confidence. `token_confidence`

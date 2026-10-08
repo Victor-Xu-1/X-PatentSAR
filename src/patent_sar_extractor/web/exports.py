@@ -8,6 +8,7 @@ import json
 from collections.abc import Iterator, Sequence
 
 from .errors import WebError
+from .identifier_labels import identifier_label
 from .models import Compound, ExportRequest, Project
 from .prediction_models import METRIC_KEYS
 from .property_values import effective_property_values, manual_property_values
@@ -224,6 +225,7 @@ def export_csv(project: Project, rows: list[Compound]) -> Iterator[bytes]:
             "assay",
             "activity_page",
             "display_id",
+            "identifier_label",
             "manual_correction",
             "correction_revision",
             "correction_stale",
@@ -255,6 +257,7 @@ def export_csv(project: Project, rows: list[Compound]) -> Iterator[bytes]:
         provenance: list[object] = (
             [
                 row.display_id,
+                identifier_label(row),
                 _manual_change(row),
                 row.correction.revision if row.correction else None,
                 row.correction.stale if row.correction else None,

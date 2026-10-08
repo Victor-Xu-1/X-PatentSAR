@@ -16,7 +16,7 @@ const callbacks = () => ({
 });
 
 describe('compound identity is separate from the original structure', () => {
-  it('places Compound first among data columns and removes the row-number column', () => {
+  it('places the original identifier first among data columns and removes the row-number column', () => {
     render(<ResultsTable {...callbacks()} rows={[compound]} />);
     const headers = screen.getAllByRole('columnheader');
     expect(headers.slice(0, 3).map((header) => header.getAttribute('data-column'))).toEqual([
@@ -24,7 +24,7 @@ describe('compound identity is separate from the original structure', () => {
       'compound',
       'structure',
     ]);
-    expect(screen.getByRole('columnheader', { name: /^Compound$/ })).toBeVisible();
+    expect(screen.getByRole('columnheader', { name: /^原文编号$/ })).toBeVisible();
     expect(screen.getByRole('columnheader', { name: /^结构$/ })).toBeVisible();
     expect(screen.queryByRole('columnheader', { name: /^#$/ })).not.toBeInTheDocument();
     const row = screen.getAllByRole('row')[1]!;

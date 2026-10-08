@@ -53,15 +53,15 @@ const props = () => ({
 });
 
 describe('one centered result-table style authority', () => {
-  it('reserves a readable default Compound heading independently of its resize bounds', () => {
+  it('reserves a readable default original-identifier heading independently of its resize bounds', () => {
     render(<ResultsTable {...props()} />);
     const header = screen.getByRole('table').querySelector('th.frozen-compound')!;
-    expect(header.querySelector('.column-heading')!.textContent).toBe('Compound');
+    expect(header.querySelector('.column-heading')!.textContent).toBe('原文编号');
     expect(
-      screen.getByRole('slider', { name: '调整Compound列宽' }).getAttribute('aria-valuenow'),
+      screen.getByRole('slider', { name: '调整原文编号列宽' }).getAttribute('aria-valuenow'),
     ).toBe('120');
     expect(
-      screen.getByRole('slider', { name: '调整Compound列宽' }).getAttribute('aria-valuemin'),
+      screen.getByRole('slider', { name: '调整原文编号列宽' }).getAttribute('aria-valuemin'),
     ).toBe('88');
   });
   let stylesheet: HTMLStyleElement;
@@ -115,7 +115,7 @@ describe('one centered result-table style authority', () => {
         expect(getComputedStyle(button).justifyContent).toBe('center');
       }
       expect(screen.queryByRole('columnheader', { name: '#' })).not.toBeInTheDocument();
-      expect(screen.getByRole('slider', { name: '调整Compound列宽' })).toBeEnabled();
+      expect(screen.getByRole('slider', { name: '调整原文编号列宽' })).toBeEnabled();
       expect(getComputedStyle(table.querySelector('.frozen-compound')!).position).toBe('sticky');
     },
   );

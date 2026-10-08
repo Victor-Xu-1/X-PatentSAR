@@ -22,6 +22,8 @@ from patent_sar_extractor.integrations.llm.evidence_resolution import (
     EvidenceRequest,
     resolve_evidence,
 )
+from patent_sar_extractor.integrations.llm.job_context import context_for_run
+from patent_sar_extractor.integrations.llm.private_state import read_private
 
 from .pipeline_context import PipelineContext
 
@@ -151,20 +153,34 @@ def review_source_evidence(
             "reason": "no_bounded_evidence_candidates",
             "authority": "advisory",
         }
-    job_id = (
-        "run:"
-        + hashlib.sha256(str(Path(state.base_dir).resolve()).encode()).hexdigest()[:32]
-    )
+    original = _pdf_sha256(state.args.pdf)
+    try:
+        context = context_for_run(state.base_dir, original, policy=policy)
+        budget = EvidenceCallBudget(
+            context.job_id, policy.max_calls, ledger=context.ledger
+        )
+    except (OSError, TypeError, ValueError):
+        return {
+            "status": "unavailable",
+            "reason": "private_context_unavailable",
+            "authority": "advisory",
+        }
     request = EvidenceRequest(
-        job_id,
-        _pdf_sha256(state.args.pdf),
+        context.job_id,
+        original,
         "column-mapping",
         observations,
         candidates,
         "quality" if quality else "on-error",
     )
-    budget = EvidenceCallBudget(job_id, max_calls=policy.max_calls)
-    result = resolve_evidence(request, budget, config=policy)
+    try:
+        result = resolve_evidence(request, budget, config=context.policy)
+    except (OSError, TypeError, ValueError):
+        return {
+            "status": "unavailable",
+            "reason": "call_budget_unavailable",
+            "authority": "advisory",
+        }
     required = {item.candidate_id: set(item.observation_ids) for item in candidates}
     complete_refs = all(
         item.candidate_id in required
@@ -199,10 +215,16 @@ def review_source_evidence(
         "formal_acceptance_changed": False,
     }
     try:
+        previous_path = Path(state.base_dir) / "evidence_resolution_review.json"
+        if previous_path.exists():
+            previous = read_private(previous_path, 131072)
+            if previous.get("original_sha256") != original:
+                raise ValueError("Foreign source receipt")
+            receipt["header_resolutions"] = previous.get("header_resolutions", [])
         write_json_atomic(
             Path(state.base_dir) / "evidence_resolution_review.json", receipt
         )
-    except OSError as exc:
+    except (OSError, ValueError, TypeError) as exc:
         logger.warning(
             "Optional evidence receipt could not be published (%s)", type(exc).__name__
         )

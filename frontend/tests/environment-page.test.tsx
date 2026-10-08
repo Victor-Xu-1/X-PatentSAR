@@ -1,7 +1,8 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { api } from '../src/api';
+import { llmApi } from '../src/api/llmApi';
 import { ApiError } from '../src/api/errors';
 import { EnvironmentPage } from '../src/features/environment/EnvironmentPage';
 import { pendingEnvironmentKey } from '../src/model/environmentRecovery';
@@ -10,6 +11,29 @@ import { completeEnvironmentCatalog } from './environment-setup-fixtures';
 import { health } from './fixtures';
 
 beforeEach(() => {
+  // Isolate installation/storage assertions from the separate optional module;
+  // its real settings transport and errors have their own focused suite/E2E.
+  vi.spyOn(llmApi, 'settings').mockResolvedValue({
+    revision: 0,
+    endpoint: '',
+    model: '',
+    protocol: 'openai-compatible',
+    response_mode: 'json-schema',
+    mode: 'off',
+    data_consent: false,
+    key_configured: false,
+    editable: true,
+    status: 'disabled',
+    reason: null,
+    limits: {
+      max_calls: 8,
+      timeout_seconds: 30,
+      max_input_chars: 12000,
+      max_output_chars: 8192,
+      max_tokens: 1024,
+    },
+    last_test: null,
+  });
   sessionStorage.removeItem(pendingEnvironmentKey);
   vi.spyOn(api, 'environments').mockResolvedValue(completeEnvironmentCatalog());
   vi.spyOn(api, 'environmentOperation').mockResolvedValue(environmentOperation);
@@ -163,7 +187,8 @@ describe('one environment workspace and explicit installation authority', () => 
     const input = await screen.findByLabelText('集成环境安装目录');
     fireEvent.change(input, { target: { value: 'C:\\wrong' } });
     await userEvent.click(screen.getByRole('button', { name: '保存' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('目录');
+    // The independent LLM module can also report its isolated load failure.
+    expect(await within(screen.getByRole('dialog')).findByRole('alert')).toHaveTextContent('目录');
     expect(save).not.toHaveBeenCalled();
     fireEvent.change(input, { target: { value: '/srv/wsl/envs/new' } });
     await userEvent.click(screen.getByRole('button', { name: '保存' }));

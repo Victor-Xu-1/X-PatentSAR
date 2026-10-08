@@ -1,1 +1,1 @@
-"""OpenAI-compatible LLM and VLM adapters."""
+"""User-configured external LLM APIs over one bounded evidence client."""

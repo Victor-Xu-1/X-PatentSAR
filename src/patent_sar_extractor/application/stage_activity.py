@@ -16,6 +16,10 @@ from patent_sar_extractor.contracts import (
     ACTIVITY_EXTRACTOR_VERSION,
 )
 from patent_sar_extractor.core.activity_join import activity_evidence_errors
+from patent_sar_extractor.integrations.llm.config import get_evidence_resolution_config
+from patent_sar_extractor.integrations.llm.evidence_protocol import (
+    EVIDENCE_PROTOCOL_VERSION,
+)
 
 from .evidence_review import review_source_evidence
 from .pipeline_context import PipelineContext
@@ -31,6 +35,23 @@ from .worker_policy import (
 WORKING_ROOT = Path.cwd()
 
 
+def evidence_policy_identity() -> dict:
+    """Scientific parser inputs, never credentials, private paths or quotas."""
+    try:
+        policy = get_evidence_resolution_config()
+    except (ValueError, TypeError, OSError):
+        return {"mode": "invalid"}
+    if policy.mode == "off" or not policy.data_consent:
+        return {"mode": "off"}
+    return {
+        "protocol_version": EVIDENCE_PROTOCOL_VERSION,
+        **{
+            key: getattr(policy, key)
+            for key in ("mode", "endpoint", "model", "protocol", "response_mode")
+        },
+    }
+
+
 def execute_activity(state: PipelineContext) -> None:
     # Stage: activity
     step = "activity"
@@ -41,7 +62,7 @@ def execute_activity(state: PipelineContext) -> None:
     activity_fp = _step_fingerprint(
         step,
         pdf_path=state.args.pdf,
-        dependencies=[state.classify_json],
+        dependencies=[state.classify_json, state.bind_json],
         params={
             "include_intermediates": bool(
                 getattr(state.args, "include_intermediates", False)
@@ -49,6 +70,7 @@ def execute_activity(state: PipelineContext) -> None:
             "activity_pages": state.classification.get("activity_pages", []),
             "ocr_cache_path": state.ocr_cache_path,
             "activity_extractor_version": ACTIVITY_EXTRACTOR_VERSION,
+            "llm_evidence_policy": evidence_policy_identity(),
             "patent_id": state.patent_id,
         },
     )
@@ -66,6 +88,7 @@ def execute_activity(state: PipelineContext) -> None:
                     state.args, "include_intermediates", False
                 ),
                 patent_id=state.patent_id,
+                bindings_path=state.bind_json,
             )
         _write_step_manifest(state.act_json, activity_fp)
     state.activity_payload = (

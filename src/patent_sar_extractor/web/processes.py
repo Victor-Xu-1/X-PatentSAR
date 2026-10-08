@@ -37,6 +37,7 @@ class RunSpec:
     admet_only: bool = False
     admet_compounds: tuple[str, ...] = ()
     workspace_root: str = ""
+    llm_context_id: str = ""
 
 
 @dataclass
@@ -365,7 +366,7 @@ class CLIProcessRunner(SubprocessRunner):
         ]
         if spec.allow_partial:
             command.append("--allow-partial")
-        if not spec.advisory:
+        if not spec.llm_context_id and not spec.advisory:
             command.append("--skip-advisory-qa")
         if spec.include_intermediates:
             command.append("--include-intermediates")
@@ -380,7 +381,29 @@ class CLIProcessRunner(SubprocessRunner):
         from patent_sar_extractor.core.env_runner import captured_runtime_environment
 
         env.update(captured_runtime_environment())
+        for key in tuple(env):
+            if key.startswith(("LLM_", "VLM_", "PATENTSAR_LLM_")):
+                env.pop(key, None)
+        if spec.llm_context_id and not spec.admet_only:
+            from patent_sar_extractor.integrations.llm.job_context import read_context
+
+            path = (
+                Path(spec.workspace_root) / "llm" / f"{spec.llm_context_id}.policy.json"
+            )
+            captured = read_context(path)
+            if captured.original_sha256 != spec.sha256:
+                raise WebError(
+                    409,
+                    "llm_context",
+                    "The API policy snapshot belongs to another original.",
+                )
+            env["PATENTSAR_LLM_CONTEXT"] = str(path)
+        else:
+            # Legacy jobs and research workers never inherit newly enabled API
+            # credentials/consent merely because the service settings changed.
+            env["PATENTSAR_LLM_RESOLUTION_MODE"] = "off"
+            env["PATENTSAR_LLM_RESOLUTION_DATA_CONSENT"] = "false"
         env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2])
-        # Advisory opt-in is explicit. There is no fallback that omits the CLI
-        # opt-out flag if an old CLI rejects it; such a job genuinely fails.
+        # New jobs use exactly one immutable API policy, not key-only/advisory
+        # switches or separate stage-specific provider settings.
         return env

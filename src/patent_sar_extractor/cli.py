@@ -114,7 +114,6 @@ def build_parser() -> argparse.ArgumentParser:
     command.add_argument("--output", default="")
     command.add_argument("--cpd-prefix", default="")
     command.add_argument("--include-intermediates", action="store_true")
-    command.add_argument("--use-vlm", action="store_true")
     command.add_argument("--force", action="store_true")
 
     command = sub.add_parser("smiles", help="阶段工具：对已确认绑定运行 DECIMER OCSR")

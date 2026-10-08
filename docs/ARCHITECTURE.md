@@ -57,21 +57,39 @@ boundaries. Binder epoch8 parses exact paragraph-prefixed synthesis headings;
 a standalone diagram needs a freshly observed original heading, unique geometry
 before the first procedure, and original/crop fingerprints. Wide/reordered grids
 carry literal header-role proof, not adjacency or a fixed number of columns.
-Activity epoch5 owns every physical column losslessly, retaining multiline raw
+Activity epoch6 owns every physical column losslessly, retaining multiline raw
 headers and distinct duplicate/unknown fields. Upright table OCR prevents per-token
 digit inversion; independent clipped-cell observations can prove ownership despite
 a padded detector box. Unknown/conflicting meaningful values remain rejected.
 
-An optional single post-bind/activity evidence review reuses the existing LLM
-client/cache with default-OFF and explicit disclosure consent. One serial job
-budget covers bounded column hypotheses. Structured output chooses supplied
-references; all required references are rechecked by the consumer. Proposals,
-abstention, skips and transport failures stay separate from formal acceptance.
-The receipt is additive private evidence, not an alternate artifact writer or
-chemistry/QA authority. No whole-PDF upload, new model service, numerical repair
-or retry/escalation loop is introduced. Heading-owner/table-header protocols are
-available for explicitly validated future consumers, not automatic production
-binding approval.
+The optional LLM path has one API policy, quota, cache and HTTP carrier. User-owned
+`llm.local.yaml` is the editable authority; authenticated settings expose only
+redacted metadata. Public HTTPS endpoints, connection-time DNS/IP checks, TLS,
+no redirects/proxies and explicit consent prevent local model/API disclosure
+fallbacks. Three small wire adapters support compatible Chat Completions,
+Anthropic Messages and Gemini GenerateContent; no provider SDK/model is installed.
+
+At an otherwise unparsed activity header, pure core validators construct literal
+ID-column candidates from complete original geometry, known metric/unit/value
+columns and unique printed IDs in the existing proved catalog. The API selects
+one existing role or abstains; exact references and the full original matrix are
+rechecked before the same cell parser/writer continues. No ID/value/unit/graph is
+generated. Unsupported/ambiguous evidence remains rejected. Normal rule parsing
+never invokes this fallback. The optional post-activity column review and final
+source-led findings review share the same interface, without acceptance authority.
+The old whole-page VLM/free-form QA/batch client paths are removed, not kept as
+competing implementations. Heading-owner remains a candidate protocol, not an
+automatic binding approval or all-format guarantee.
+
+Each new job captures an immutable private API policy under `workspace/llm`; a
+resume carries the same context identity, quota and 24-hour content-bound cache.
+Every network attempt reserves durable quota before sending. A separate private
+budget lock protects serial consumption across processes; corrupt/foreign state
+cannot reset it. Changes apply to future new jobs, not silently to active/resumed
+work. Default OFF makes no request; original evidence, chemistry and strict QA
+remain authoritative. API/OOM/infrastructure failures never enter an escalation
+loop. No whole-PDF upload, numerical repair, local LLM or extra artifact writer is
+introduced; model/API correctness still requires consented real-provider testing.
 
 - Printed identifiers and original spatial evidence define the compound
   universe. Activity membership never determines whether a proved structure
@@ -86,7 +104,7 @@ binding approval.
   An unused pair requires blank original pixels in both cells and no segment
   evidence. Proved selected reprints can retain multiple additional sources
   for one confirmed primary ID; novel or conflicting primary IDs stay withheld.
-- Activity epoch5 treats classified pages as seeds, not a complete table
+- Activity epoch6 treats classified pages as seeds, not a complete table
   inventory. Only a proven table can inspect its immediately adjacent next
   page; missing grids, changed geometry or unrelated captions stop carry-over.
   An empty seed set never triggers an all-document OCR scan.
@@ -138,6 +156,13 @@ Interrupted/incomplete/foreign/old core evidence cannot enter that path.
 | Molecular evidence | Generic typed `MolecularObservationStore`, configured prediction/descriptor stores; one source/job protocol |
 | Effective values | `property_values.py`; all table filters, sort and CSV use the same resolution |
 | Presentation | API-v1 typed DTOs and decoders, slim real workflow, split PDF/table and local Ketcher editor |
+
+Presentation uses the derived patent-owned `identifier_label`, separately from
+stable canonical join keys. Exact source labels and audited explicit renames win;
+only a proved lexical ID can lose its private `Compound ` wrapper. Unconfirmed
+source references keep their uncertainty. One helper drives the table, filters,
+copy and export; an unchanged correction label round-trips the original key.
+This additive view does not rewrite raw projection or scientific artifacts.
 | Environment | One fixed component allowlist, complete setup plan, durable installer and atomic configuration publication |
 
 Activity cell-owned pages cannot reenter the text parser. A generic heading

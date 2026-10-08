@@ -47,7 +47,7 @@ test('real Excel-like column controls, project-wide query and safe current-page 
       { column: `activity:${activity.id}`, op: 'in', values: [value], include_empty: false },
     ],
   };
-  await page.getByRole('button', { name: 'Compound 列选项', exact: true }).click();
+  await page.getByRole('button', { name: '原文编号 列选项', exact: true }).click();
   await page.getByRole('button', { name: '降序', exact: true }).click();
   await expect(table.locator('th[data-column="compound"]')).toHaveAttribute(
     'aria-sort',
@@ -91,11 +91,11 @@ test('real Excel-like column controls, project-wide query and safe current-page 
   await expect.poll(rowIds).toEqual(queried.items.map((row) => row.id));
   const selected = queried.items[0]!;
   await page.getByLabel(`选择化合物 ${selected.display_id}`, { exact: true }).check();
-  await page.getByRole('button', { name: 'Compound 列选项', exact: true }).click();
+  await page.getByRole('button', { name: '原文编号 列选项', exact: true }).click();
   await page.getByRole('button', { name: '隐藏此列', exact: true }).click();
   await expect(table.locator('th[data-column="compound"]')).toHaveCount(0);
   await page.getByRole('button', { name: '显示列', exact: true }).click();
-  await page.getByLabel('显示列 Compound', { exact: true }).check();
+  await page.getByLabel('显示列 原文编号', { exact: true }).check();
   await page.getByLabel('显示列 MW', { exact: true }).uncheck();
   await page.keyboard.press('Escape');
   await expect(table.locator('th[data-column="property:molecular_weight"]')).toHaveCount(0);
@@ -110,7 +110,7 @@ test('real Excel-like column controls, project-wide query and safe current-page 
   await page.getByRole('button', { name: '显示列', exact: true }).click();
   await page.getByRole('button', { name: '显示全部列', exact: true }).click();
   await page.keyboard.press('Escape');
-  const slider = table.getByRole('slider', { name: '调整Compound列宽', exact: true });
+  const slider = table.getByRole('slider', { name: '调整原文编号列宽', exact: true });
   const previousWidth = Number(await slider.getAttribute('aria-valuenow'));
   await slider.focus();
   await page.keyboard.press('ArrowRight');

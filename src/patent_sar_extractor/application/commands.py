@@ -77,25 +77,11 @@ def cmd_activity(args):
     if args.cpd_prefix:
         profile["cpd_pattern"] = args.cpd_prefix
         profile["cpd_prefix_pattern"] = args.cpd_prefix
-    vlm_options = {}
-    if args.use_vlm:
-        from patent_sar_extractor.integrations.llm.config import get_vlm_config
-        from patent_sar_extractor.integrations.llm.vlm import call_vlm_image
-
-        vlm_config = get_vlm_config()
-        vlm_options = {
-            "vlm_api_url": str(vlm_config.get("endpoint", "")),
-            "vlm_api_key": str(vlm_config.get("api_key", "")),
-            "vlm_model": str(vlm_config.get("model", "")),
-            "vlm_call": call_vlm_image,
-        }
     result = extract(
         args.pdf,
         profile,
         output_dir,
-        use_vlm=args.use_vlm,
         include_intermediates=args.include_intermediates,
-        **vlm_options,
     )
     activity_json = os.path.join(output_dir, "activity_data.json")
     active_cpds = (

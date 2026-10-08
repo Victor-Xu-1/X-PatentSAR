@@ -17,7 +17,7 @@ classify -> locate -> structures -> bind -> activity -> smiles -> final -> qa
 - 运行平台：Linux / WSL2；当前版本在 Ubuntu WSL2 验证。
 - 主程序：CPython 3.12。
 - OCSR：生产主链仅接受 DECIMER；RDKit 负责 SMILES 校验与标准化。
-- LLM/VLM：仅用于可选的活性表复核和建议性 QA；生产页面分类为确定性规则，模型不能改变正式验收。
+- LLM：仅通过用户配置的外部 API 提供受限证据兜底与复核，不在本机部署模型；模型不能改变正式验收。
 
 专利版式通过原文证据解析，不使用专利号、固定页码或化合物清单做特殊适配。
 标题支持段落号和常见制备/合成前缀；独立标题结构与后续步骤结构分别校验。
@@ -28,22 +28,37 @@ classify -> locate -> structures -> bind -> activity -> smiles -> final -> qa
 
 ### 可选局部证据 LLM 接口
 
-本局部证据接口默认关闭，不调用云模型、不外发原文。本地识别/指标模型照常运行；
-原有独立建议性 QA 仍按其自身开关执行，Web 默认跳过该项。运营方配置 HTTPS LLM 接口并明确同意
-发送局部证据后，可设置 `PATENTSAR_LLM_RESOLUTION_MODE=on-error` 或 `quality`，同时设置
-`PATENTSAR_LLM_RESOLUTION_DATA_CONSENT=true`。前者仅在确定性提取出现证据问题时复核，
-后者额外检查有限的原始列映射。使用现有 LLM 客户端和缓存，不启动常驻模型服务。
-当前链路在绑定/活性提取后、识别前统一执行一次局部列证据复核；接口还定义了受限的
-标题归属和表头候选协议，尚不自动把这两类模型建议升级为正式绑定。
+在 **环境管理 → LLM API → 配置** 设置服务地址、模型、密钥和模式。
+默认关闭；保存密钥不等于授权外发。必须明确勾选局部证据外发授权，再选择“出错兜底”
+或“质量复核”。不绑定厂商：支持 OpenAI 兼容 Chat Completions、Anthropic Messages
+和 Gemini GenerateContent 三种协议。兼容接口还可明确选择 JSON Schema、JSON 模式或
+提示词 JSON；不会在失败后偷偷换协议/模型。专有鉴权、非标准协议或不支持所选格式的
+服务需使用受信任的外部兼容网关，不能承诺任意未来接口天然兼容。
 
-只发送有边界的表头文字和对应位置，不发送整份 PDF、分子图、SMILES 或全部数据行。
-同一列去重，一次任务共用一个预算：默认最多八次 HTTP 尝试，串行，30 秒请求超时、
-零重试、12,000 输入字符及1,024输出 token。结构化响应只允许选择已有候选和证据引用；
-缺失引用、无效响应、预算耗尽和模型弃答均明确记录，不补值、不改手性、不放宽 QA。
-缓存身份包含原文、证据、协议、模型、服务和响应约束，不包含新运行的任务编号。
-结果独立保存为 `evidence_resolution_review.json`，原始列和严格验收不变。
-这是一套可配置、受验证边界约束的接口，不是已经完成真实云模型科学验收的兜底承诺。
-- 交付物：Excel、SDF、结构裁图、带身份信封的绑定/SMILES JSON、流水线摘要与 `final_qa_report.json`；可选模型建议写入独立的 `llm_qa_report.json`。
+只有公共 HTTPS API 被允许，不接入 localhost、私网、元数据地址或本地 LLM。
+服务端保存私有密钥，浏览器只读取“是否配置”，不把密钥放入 URL、浏览器存储或日志。
+“测试连接”需单独确认可能的 API 费用，只发送一次随机验证样本，不发送专利；通过响应
+验证也不代表科学提取准确。环境安装器不安装任何 LLM 运行时或权重。
+
+常规解析不调用 API。遇到陌生编号表头，软件先验证原文格子的编号属于已证实结构目录、
+全部物理列完整且指标/单位/读数有效，再允许模型选择一个已有的编号列候选。
+完整引用、原始几何和目录再次核对后，由现有解析器读取原格、现有写入器生成活性产物。
+模型不生成编号、活性、单位、SMILES、手性或结构；不足/冲突/弃答不会升级为成功。
+质量模式额外进行有限的列证据复核；最终 QA 建议也服从同一开关、API、预算和候选协议，
+不再使用旧的 activity-led 或密钥即开启的独立链路。标题归属协议仍是候选接口，不是自动
+通过结构绑定的承诺。系统/OOM/网络故障不触发 LLM 兜底。
+
+仅发送局部表头/标题、对应位置或已产生的受限 QA 证据，不发送整份 PDF、分子图、
+SMILES 或全部数据行。每个逻辑任务默认最多八次 HTTP 尝试，串行、30 秒绝对请求期限、
+零重试、12,000 输入字符和1,024输出 token。HTTP 辅助子进程只承载请求，不做本地推理。
+调用前持久扣除预算；中断续跑保留相同私有配置与剩余次数。配置修改影响后续新任务，
+不悄悄更改已有/续跑任务；关闭、撤回外发授权或清除/更换密钥会立即阻止旧配置的后续请求。
+24 小时私有缓存以原文、证据、协议、模型、服务和响应约束
+标识，不包含新尝试编号。API 失败和预算耗尽明确记录，原始证据与严格 QA 保持权威。
+
+辅助证明独立保存为 `evidence_resolution_review.json`，建议报告为 `llm_qa_report.json`。
+未配置真实凭据的部署不代表真实云模型已验收；用户配置后需进行实际接口与科学评估。
+交付物仍为 Excel、SDF、结构裁图、身份绑定/SMILES JSON、流水线摘要及 `final_qa_report.json`。
 
 独立版不依赖 Synon 后端、插件 manifest 或 `.synon` 目录。
 
@@ -391,7 +406,7 @@ cp examples/config/llm.local.example.yaml \
   "${XDG_CONFIG_HOME:-$HOME/.config}/patent-sar-extractor/llm.local.yaml"
 ```
 
-常用变量包括 `LLM_API_KEY`、`LLM_ENDPOINT`、`PATENTSAR_BASE_PYTHON`、`SMILES_ENGINE_PYTHON`、`DECIMER_PYTHON` 和 `PATENTSAR_PADDLEX_OCR_URL`。完整列表见 `.env.example`。未使用的解释器变量保持空值，避免覆盖已经配置好的 `env_paths.local.yaml`。
+常用变量包括 `LLM_API_KEY`、`LLM_ENDPOINT`、`LLM_PROTOCOL`、`PATENTSAR_BASE_PYTHON`、`SMILES_ENGINE_PYTHON`、`DECIMER_PYTHON` 和 `PATENTSAR_PADDLEX_OCR_URL`。完整列表见 `.env.example`。使用浏览器配置 API 时保持对应变量空值，避免锁定 GUI。未使用的解释器变量保持空值，避免覆盖已经配置好的 `env_paths.local.yaml`。
 
 本机 E 盘部署入口为 `E:\WSL\apps\x-patentsar\X-PatentSAR.cmd`，Linux 运营入口为 `/srv/wsl/envs/patentsar/bin/x-patentsar`。本机配置、状态、模型、缓存分别位于 `/srv/wsl/data/patentsar/config`、`/srv/wsl/data/patentsar/state`、`/srv/wsl/models/patentsar`、`/srv/wsl/cache/patentsar`。DECIMER 恢复环境保留原 Linux 路径以免破坏 Conda 前缀，但其物理存储同样在 E 盘 VHDX 中。入口默认使用 CPU，GPU 未经过兼容性验收不能默认启用。
 
@@ -520,7 +535,7 @@ GitHub CI 不执行全量发现测试。每个 PR 必须更新 `.github/verifica
 
 - `src/patent_sar_extractor/application/`：主链用例、缓存/验收策略与跨阶段调度。
 - `src/patent_sar_extractor/core/`：确定性分类、提取、绑定、DECIMER OCSR 与正式 QA。
-- `src/patent_sar_extractor/integrations/`：可选 LLM/VLM 外部服务适配；无正式验收权。
+- `src/patent_sar_extractor/integrations/`：可选外部 LLM API 适配；无本地 LLM，无正式验收权。
 - `src/patent_sar_extractor/workers/`：隔离 Python 环境执行的子进程入口。
 - `src/patent_sar_extractor/defaults/`：只读、安全、可移植的打包默认配置。
 - `src/patent_sar_extractor/cli.py`：仅负责参数解析和命令分发。
