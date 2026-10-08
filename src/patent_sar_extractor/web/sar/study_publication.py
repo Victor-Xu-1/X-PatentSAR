@@ -40,6 +40,14 @@ def verify_study(safe, job: SARJob, spec: dict, reply: dict, pairs: list[Pair]) 
         or len(report.rows) != len(molecules)
         or {row.molecule_id for row in report.rows} != ids
         or report.strict_pair_count != len(expected)
+        or report.matched_pair_count
+        != sum(pair.match_status == "matched" for pair in pairs)
+        or report.comparable_pair_count
+        != sum(
+            pair.match_status == "matched"
+            and pair.comparison in {"better", "worse", "equal"}
+            for pair in pairs
+        )
         or actual != expected
         or len(pairs) != len(expected)
         or {summary.region.id for summary in report.regions} != set(region_refs)

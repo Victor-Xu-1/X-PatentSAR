@@ -80,6 +80,21 @@ class StudyResults:
         ):
             raise WebError(422, "sar_page", "Study filter/page exceeds its bound.")
         job, report = self.load(identifier)
+        query_ids = None
+        if query:
+            pattern = (
+                "%"
+                + query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+                + "%"
+            )
+            with self.queue.service.store.connect() as connection:
+                query_ids = {
+                    row[0]
+                    for row in connection.execute(
+                        "SELECT id FROM molecules WHERE dataset_id=? AND (label LIKE ? ESCAPE '\\' OR json_extract(payload,'$.smiles') LIKE ? ESCAPE '\\')",
+                        (job.dataset_id, pattern, pattern),
+                    )
+                }
         allowed = None
         if scaffold_id:
             scaffold = next(
@@ -117,7 +132,7 @@ class StudyResults:
             if (allowed is None or row.molecule_id in allowed)
             and (scope != "strong" or row.strong)
             and (scope != "leads" or row.candidate_status == "selected")
-            and query.casefold() in row.label.casefold()
+            and (query_ids is None or row.molecule_id in query_ids)
         ]
         rows.sort(key=lambda row: (natural_identifier_key(row.label), row.molecule_id))
         return StudyRows(

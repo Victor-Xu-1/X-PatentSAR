@@ -149,6 +149,8 @@ class StudyReport(DTO):
     eligible_count: int
     observation_count: int
     strict_pair_count: int
+    matched_pair_count: int = 0
+    comparable_pair_count: int = 0
     contexts: list[StudyContext]
     policies: list[StudyPolicy]
     distributions: list[StudyDistribution]
