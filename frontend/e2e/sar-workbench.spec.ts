@@ -40,8 +40,12 @@ for (const width of [390, 800, 1672]) {
     await expect(
       importPanel.getByRole('group', { name: 'CSV mapping', exact: true }),
     ).toBeVisible();
-    await importPanel.getByLabel('Source identifier column', { exact: true }).selectOption('id');
-    await importPanel.getByLabel('SMILES column', { exact: true }).selectOption('smiles');
+    await importPanel
+      .getByRole('combobox', { name: 'Source identifier column', exact: true })
+      .selectOption('id');
+    await importPanel
+      .getByRole('combobox', { name: 'SMILES column', exact: true })
+      .selectOption('smiles');
     await importPanel.getByRole('checkbox', { name: 'IC50 (nM)', exact: true }).check();
     const saved = page.waitForResponse(
       (response) =>
@@ -65,15 +69,21 @@ for (const width of [390, 800, 1672]) {
     await expect(
       page.getByText('Region saved · 1 attachment points', { exact: true }),
     ).toBeVisible();
-    await page.getByLabel('Activity metric', { exact: true }).selectOption(dataset.metrics[0].id);
-    await page.getByLabel('Activity direction', { exact: true }).selectOption('lower');
+    await page
+      .getByRole('combobox', { name: 'Activity metric', exact: true })
+      .selectOption(dataset.metrics[0].id);
+    await page
+      .getByRole('combobox', { name: 'Activity direction', exact: true })
+      .selectOption('lower');
     // Same-document navigation/language changes must not erase the selection.
     await page
       .getByRole('combobox', { name: 'Interface language', exact: true })
       .selectOption('zh-CN');
     await expect(page.getByText('区域已保存 · 1 个连接点', { exact: true })).toBeVisible();
     await page.getByRole('combobox', { name: '界面语言', exact: true }).selectOption('en');
-    await expect(page.getByLabel('Activity direction', { exact: true })).toHaveValue('lower');
+    await expect(
+      page.getByRole('combobox', { name: 'Activity direction', exact: true }),
+    ).toHaveValue('lower');
     const submitted = page.waitForResponse(
       (response) =>
         /\/api\/v1\/sar\/datasets\/[^/]+\/jobs$/.test(response.url()) &&
@@ -85,6 +95,11 @@ for (const width of [390, 800, 1672]) {
       .getByRole('region', { name: 'Reference-comparison results', exact: true })
       .first();
     await expect(results.getByText('Complete', { exact: true })).toBeVisible({ timeout: 30000 });
+    await expect(
+      page
+        .getByRole('region', { name: 'SAR jobs', exact: true })
+        .getByText('Complete', { exact: true }),
+    ).toBeVisible();
     const valid = results
       .getByRole('row')
       .filter({ has: page.getByRole('rowheader', { name: 'I-255', exact: true }) });
@@ -97,7 +112,7 @@ for (const width of [390, 800, 1672]) {
         .getByRole('cell', { name: 'Not matched', exact: true }),
     ).toBeVisible();
     await results
-      .getByLabel('Match filter (current page)', { exact: true })
+      .getByRole('combobox', { name: 'Match filter (current page)', exact: true })
       .selectOption('ineligible');
     await results
       .getByRole('row')
@@ -105,7 +120,9 @@ for (const width of [390, 800, 1672]) {
       .getByRole('button', { name: 'Source details', exact: true })
       .click();
     await expect(results.getByText('smiles_missing', { exact: true })).toBeVisible();
-    await results.getByLabel('Match filter (current page)', { exact: true }).selectOption('');
+    await results
+      .getByRole('combobox', { name: 'Match filter (current page)', exact: true })
+      .selectOption('');
     const download = page.waitForEvent('download');
     await results.getByRole('button', { name: 'Export all JSON', exact: true }).click();
     const file = await download;
@@ -136,7 +153,9 @@ test('current extracted task explicitly creates its separate SAR snapshot', asyn
   await page.goto(`/#/projects/${project}?page=1&tab=original`);
   await page.locator('.topbar').getByRole('button', { name: 'SAR analysis', exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`#/sar\\?project=${project}`));
-  await expect(page.getByLabel('Source project', { exact: true })).toHaveValue(project!);
+  await expect(page.getByRole('combobox', { name: 'Source project', exact: true })).toHaveValue(
+    project!,
+  );
   await page.getByLabel('Dataset title', { exact: true }).fill('Controlled extracted snapshot');
   const saved = page.waitForResponse(
     (response) =>

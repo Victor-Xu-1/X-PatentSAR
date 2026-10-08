@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
 
 const expectedVersion = packageMetadata.version;
 const projectId = process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID;
-const primary = ['上传 PDF', '最近文件', '环境管理', '任务记录'];
+const primary = ['上传 PDF', '最近文件', '环境管理', '任务记录', 'SAR 分析'];
 
 // Shared responsive.css wraps brand/navigation below 900px; 560px adds a row.
 function headerHeightBudget(width: number) {
@@ -84,7 +84,7 @@ for (const viewport of [
     await expect(page.getByRole('table')).toBeVisible();
     const header = page.locator('.topbar');
     const nav = header.getByRole('navigation', { name: '工作台导航' });
-    await expect(nav.getByRole('button')).toHaveCount(6);
+    await expect(nav.getByRole('button')).toHaveCount(7);
     for (const name of [...primary, '返回结果表格', '证据摘要']) {
       await expect(nav.getByRole('button', { name, exact: true })).toBeVisible();
       await expect(nav.getByRole('button', { name, exact: true }).locator('span')).toBeVisible();

@@ -759,8 +759,8 @@ class ScopeWorkflowTests(unittest.TestCase):
             self.assertNotIn(forbidden, workflow)
         for required in (
             "PATENTSAR_CI_BASE:",
-            "github.event.pull_request.base.sha || github.event.before",
-            "fetch-depth: 2",
+            "github.event.pull_request.base.sha || inputs.base_sha || github.event.before",
+            "fetch-depth: 0",
             "id: scope",
             '>> "$GITHUB_OUTPUT"',
             "--phase python",
@@ -771,6 +771,8 @@ class ScopeWorkflowTests(unittest.TestCase):
             "npm run build",
             "tools/build_wheel.py --work-root",
             "tools/audit_wheel.py",
+            "tools/browser_fixture_mode.py",
+            'if [ "$mode" = sar ]; then args+=(--sar); fi',
         ):
             self.assertIn(required, workflow)
         self.assertEqual(
