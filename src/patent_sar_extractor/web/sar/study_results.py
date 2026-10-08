@@ -6,11 +6,11 @@ import hashlib
 import json
 from functools import lru_cache
 
-from ...core.identifier_order import natural_identifier_key
 from ...core.sar.drawing import draw_fragment, draw_structure
 from ..errors import WebError
 from .models import Pair
 from .study_models import StudyDrawing, StudyOverview, StudyReport, StudyRows
+from .study_table import order_rows
 
 
 @lru_cache(maxsize=2)
@@ -71,6 +71,8 @@ class StudyResults:
         scaffold_id: str = "",
         region_id: str = "",
         fragment_id: str = "",
+        sort_by: str = "label",
+        sort_direction: str = "asc",
     ) -> StudyRows:
         if (
             not 1 <= page <= 25000
@@ -134,7 +136,7 @@ class StudyResults:
             and (scope != "leads" or row.candidate_status == "selected")
             and (query_ids is None or row.molecule_id in query_ids)
         ]
-        rows.sort(key=lambda row: (natural_identifier_key(row.label), row.molecule_id))
+        rows = order_rows(rows, report, sort_by, sort_direction)
         return StudyRows(
             items=rows[(page - 1) * page_size : page * page_size],
             total=len(rows),

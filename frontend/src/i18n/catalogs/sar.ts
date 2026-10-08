@@ -1,5 +1,6 @@
 /** UI copy only; source labels, grade values, issues and experiment data stay raw. */
 export const sar: Record<string, string> = {
+  '排序（全部研究行）': 'Sort (all study rows)',
   '完整 SAR 研究': 'Full SAR study',
   研究设置: 'Study setup',
   研究名称: 'Study title',

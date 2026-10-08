@@ -25,7 +25,7 @@ export function StudyTableControls({
         {t('列设置')}
       </button>
       <label>
-        {t('排序（当前页）')}
+        {t('排序（全部研究行）')}
         <select value={sort.column} onChange={(e) => onSort({ ...sort, column: e.target.value })}>
           <option value="">{t('服务器自然编号顺序')}</option>
           {columns

@@ -8,7 +8,7 @@ import { SARFailure } from '../SARFailure';
 import { useSARResource } from '../useSARResource';
 import { PageControls } from '../PageControls';
 import { studyColumns, StudyRowTable } from './StudyRowTable';
-import { selectedContexts, sortStudyPage } from './tablePresentation';
+import { selectedContexts } from './tablePresentation';
 import type { PageSort } from './tablePresentation';
 import { StudyTableControls } from './StudyTableControls';
 export function StudyActivityTable({
@@ -31,14 +31,14 @@ export function StudyActivityTable({
   const [hidden, setHidden] = useState<string[]>([]),
     [sort, setSort] = useState<PageSort>({ column: '', direction: 'asc' });
   const columns = studyColumns(selectedContexts(report), t);
-  const key = JSON.stringify({ ...filter, query: search });
+  const key = JSON.stringify({ ...filter, query: search, sort });
   const [paging, setPaging] = useState({ key, page: 1 });
   if (paging.key !== key) setPaging({ key, page: 1 });
   const page = paging.key === key ? paging.page : 1;
   const load = useCallback(
     (signal: AbortSignal) =>
-      sarStudyApi.rows(jobId, report.dataset_id, page, { ...filter, query: search }, signal),
-    [jobId, report.dataset_id, page, filter, search],
+      sarStudyApi.rows(jobId, report.dataset_id, page, { ...filter, query: search }, signal, sort),
+    [jobId, report.dataset_id, page, filter, search, sort],
   );
   const rows = useSARResource('sar:study-rows:' + jobId + ':' + page + ':' + key, active, load);
   function change(patch: Partial<StudyFilter>) {
@@ -128,7 +128,7 @@ export function StudyActivityTable({
       {rows.data && (
         <StudyRowTable
           jobId={jobId}
-          rows={sortStudyPage(rows.data.items, sort)}
+          rows={rows.data.items}
           columns={columns}
           hidden={hidden}
           active={active && rows.validated}

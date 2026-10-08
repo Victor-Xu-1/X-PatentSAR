@@ -7,11 +7,7 @@ import { setLocale } from '../src/i18n';
 import { StudyResults } from '../src/features/sar/study/StudyResults';
 import { StudyReportView } from '../src/features/sar/study/StudyReportView';
 import { StudyImage } from '../src/features/sar/study/StudyImage';
-import {
-  propertyText,
-  selectedContexts,
-  sortStudyPage,
-} from '../src/features/sar/study/tablePresentation';
+import { propertyText, selectedContexts } from '../src/features/sar/study/tablePresentation';
 import {
   sarDataset,
   sarDrawing,
@@ -209,6 +205,15 @@ describe('compact activity-table presentation', () => {
     await userEvent.click(dialog.getByRole('checkbox', { name: /Show column MW/ }));
     await userEvent.click(dialog.getAllByRole('button', { name: 'Close dialog' })[0]!);
     expect(within(table).queryByRole('columnheader', { name: 'MW' })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Sort (all study rows)'), {
+      target: { value: 'property:molecular_weight' },
+    });
+    await waitFor(() =>
+      expect(vi.mocked(sarStudyApi.rows).mock.calls.at(-1)?.[5]).toEqual({
+        column: 'property:molecular_weight',
+        direction: 'asc',
+      }),
+    );
     fireEvent.change(screen.getByLabelText('Search identifiers or SMILES'), {
       target: { value: '[C@H](O)Cl %_' },
     });
@@ -218,7 +223,7 @@ describe('compact activity-table presentation', () => {
     await act(() => setLocale('zh-CN'));
     expect(screen.getByLabelText('搜索编号或 SMILES')).toHaveValue('[C@H](O)Cl %_');
   });
-  it('formats only finite supplied numbers and sorts only a copy of the current page with nulls last', () => {
+  it('formats only finite supplied numbers and exposes only selected scientific contexts', () => {
     expect(propertyText(null)).toBe('—');
     expect(propertyText(NaN)).toBe('—');
     expect(propertyText(1.234)).toBe('1.23');
@@ -228,16 +233,5 @@ describe('compact activity-table presentation', () => {
         contexts: [studyContext, { ...studyContext, id: 'unused' }],
       }),
     ).toEqual([studyContext]);
-    const rows = [
-      studyRow,
-      { ...studyRow, label: 'ID 2', properties: { molecular_weight: 10 } },
-      { ...studyRow, label: 'missing', properties: {} },
-    ];
-    expect(
-      sortStudyPage(rows, { column: 'property:molecular_weight', direction: 'asc' }).map(
-        (r) => r.label,
-      ),
-    ).toEqual(['ID 2', studyRow.label, 'missing']);
-    expect(rows[0]).toBe(studyRow);
   });
 });

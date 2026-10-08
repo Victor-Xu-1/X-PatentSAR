@@ -93,9 +93,12 @@ CSRF, source visibility, input/CAS and owned-worker authorities described above.
   `matched_pair_count` and `comparable_pair_count` separately report proved
   structure matches and determined same-context activity comparisons.
 - GET `/sar/jobs/{id}/study/rows?page=&page_size=&query=&scope=all|strong|leads&
-  scaffold_id=&region_id=&fragment_id=` returns `{items,total,page,page_size,job}`.
+  scaffold_id=&region_id=&fragment_id=&sort_by=&sort_direction=asc|desc` returns `{items,total,page,page_size,job}`.
   Filters apply to the whole study, then natural original-identifier order and
   paging. A fragment requires its exact region; foreign selectors are rejected.
+  Sort identifiers, Lead priority groups, selected context scalars/explicit grades
+  or six properties across the whole filtered pool before paging. Missing,
+  conflicting and interval values stay last; no interval midpoint is invented.
 - GET `/sar/jobs/{id}/study/drawing?kind=molecule|scaffold|fragment&identifier=&
   region_id=` returns passive RDKit SVG. Molecule region highlighting uses only
   saved reference indices or a proved candidate mapping; unknown structures are

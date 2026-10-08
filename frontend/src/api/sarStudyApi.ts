@@ -60,12 +60,25 @@ export function createSARStudyApi(shared: ApiClient, rawFetch?: typeof fetch) {
         },
         signal,
       ),
-    rows: (id: string, dataset: string, page: number, filter: StudyFilter, signal: AbortSignal) => {
+    rows: (
+      id: string,
+      dataset: string,
+      page: number,
+      filter: StudyFilter,
+      signal: AbortSignal,
+      sort = { column: '', direction: 'asc' },
+    ) => {
       if (filter.query.length > 200) throw new ContractError('$.query');
       return shared.get(
         path(id) +
           '/rows?' +
-          new URLSearchParams({ page: String(page), page_size: '50', ...filter }),
+          new URLSearchParams({
+            page: String(page),
+            page_size: '50',
+            ...filter,
+            sort_by: sort.column || 'label',
+            sort_direction: sort.direction,
+          }),
         (v) => {
           const result = decodeStudyRows(v);
           checkJob(result.job, id, dataset);
