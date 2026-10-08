@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import io
 
 from ...core.sar.molecules import read_molfile
@@ -20,6 +21,9 @@ def export_study(queue, identifier: str, format: str):
     record = queue.jobs.record(identifier)
     safe = queue.service.assets.job_files(record["root"], identifier)
     if format == "json":
+        original = safe.read("input.json", max_bytes=32 * 1024 * 1024)
+        if hashlib.sha256(original).hexdigest() != job.input_sha256:
+            raise WebError(409, "sar_input_changed", "Immutable study input differs from its receipt.")
 
         def content():
             yield encode(
@@ -32,7 +36,7 @@ def export_study(queue, identifier: str, format: str):
             yield b',"report":'
             yield safe.read("report.json", max_bytes=32 * 1024 * 1024)
             yield b',"input":'
-            yield safe.read("input.json", max_bytes=32 * 1024 * 1024)
+            yield original
             yield b"}\n"
 
         return content(), "application/json"

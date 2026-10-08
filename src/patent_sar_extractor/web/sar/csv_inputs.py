@@ -43,6 +43,7 @@ def mapped_inputs(
         mapping.cell_line_column,
         mapping.duration_column,
         mapping.metric_column,
+        mapping.source_page_column,
     )
     selected = [
         mapping.id_column,
@@ -89,6 +90,20 @@ def mapped_inputs(
     budget = InputBudget()
     for ordinal, row in enumerate(rows, 1):
         check_deadline(started)
+        page_column = mapping.source_page_column or ("source_page" if native else None)
+        source_page = None
+        if page_column and row.get(page_column, "").strip():
+            raw_page = row[page_column].strip()
+            if (
+                not re.fullmatch(r"[0-9]{1,5}", raw_page)
+                or not 1 <= int(raw_page) <= 20000
+            ):
+                raise WebError(
+                    422,
+                    "sar_csv_page",
+                    "Original PDF page must be an integer from 1 to 20000.",
+                )
+            source_page = int(raw_page)
         if len(row[mapping.id_column]) > 200 or len(row[mapping.smiles_column]) > 8192:
             raise WebError(
                 413,
@@ -159,6 +174,7 @@ def mapped_inputs(
                     unit=unit,
                     context=context,
                     source_row=ordinal,
+                    source_page=source_page,
                     source_kind="imported",
                 )
             )
@@ -187,6 +203,7 @@ def mapped_inputs(
             row[mapping.smiles_column] or None,
             observations,
             molfile,
+            source_page=source_page,
             **csv_evidence(row, mapping),
         )
         budget.add(record[0])

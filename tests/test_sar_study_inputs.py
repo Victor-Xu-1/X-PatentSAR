@@ -79,6 +79,17 @@ class SARStudyInputTests(unittest.TestCase):
             with self.subTest(extra=extra), self.assertRaises(WebError):
                 mapped_inputs(data, self.mapping(**extra))
 
+    def test_csv_source_page_is_original_evidence_not_the_input_row_number(self):
+        data = b"id,smiles,activity,page\nEx. 1,CO,A,79\n"
+        rows, _, _ = mapped_inputs(data, self.mapping(source_page_column="page"))
+        self.assertEqual(rows[0].source_page, 79)
+        self.assertEqual(rows[0].observations[0].source_page, 79)
+        self.assertEqual(rows[0].observations[0].source_row, 1)
+        with self.assertRaises(WebError):
+            mapped_inputs(
+                data.replace(b"79", b"0"), self.mapping(source_page_column="page")
+            )
+
     def test_invalid_probability_finite_or_count_values_reject_complete_import(self):
         for raw, role in [
             ("1.2", "risk"),

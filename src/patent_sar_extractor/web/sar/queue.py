@@ -160,6 +160,9 @@ class SARQueue:
         value = self.jobs.get(identifier)
         value.stale = self.service.dataset(value.dataset_id).stale
         row = self.jobs.record(identifier)
+        value.stale = (
+            value.stale or json.loads(row["spec"])["engine_sha256"] != engine_identity()
+        )
         if not row["ready"]:
             return value
         safe = self.service.assets.job_files(row["root"], identifier)

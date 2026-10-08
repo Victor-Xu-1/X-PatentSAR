@@ -38,7 +38,9 @@ class StudyPolicy(DTO):
     context_id: str = Field(pattern=r"^[a-f0-9]{64}$")
     direction: Literal["lower", "higher"]
     grade_order: list[str] = Field(default_factory=list, max_length=32)
-    strong_threshold: float | None = Field(default=None, allow_inf_nan=False)
+    strong_threshold: float | None = Field(
+        default=None, allow_inf_nan=False, strict=True
+    )
     threshold_inclusive: bool = Field(default=True, strict=True)
 
 

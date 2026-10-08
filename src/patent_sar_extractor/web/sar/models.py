@@ -104,6 +104,7 @@ class CSVMapping(DTO):
     unit_column: str | None = None
     cell_line_column: str | None = None
     duration_column: str | None = None
+    source_page_column: str | None = None
     property_columns: dict[str, str] = Field(default_factory=dict, max_length=6)
     prediction_columns: dict[str, str] = Field(default_factory=dict, max_length=11)
     request_id: str = Field(pattern=r"^[a-f0-9]{32}$")
