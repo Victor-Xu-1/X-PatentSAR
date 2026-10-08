@@ -16,7 +16,7 @@ from patent_sar_extractor.web.service import import_run
 from patent_sar_extractor.web.storage import now
 
 
-def prepare(workspace: Path) -> dict[str, str]:
+def prepare(workspace: Path, *, read_only: bool = False) -> dict[str, str]:
     if workspace.exists() and any(workspace.iterdir()):
         raise ValueError("Browser fixture workspace must be empty")
     workspace.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -39,6 +39,27 @@ def prepare(workspace: Path) -> dict[str, str]:
         title="CI controlled historical adapter fixture (not extraction evidence)",
     )
     origin = "http://127.0.0.1:18765"
+    if read_only:
+        values = {
+            "PATENTSAR_WEB_STATE_DIR": str(state),
+            "PATENTSAR_E2E_SOURCE_PROJECT_ID": historical.id,
+            "PATENTSAR_E2E_HISTORY_PROJECT_ID": historical.id,
+            "PATENTSAR_E2E_RUN_JOBS": "0",
+        }
+        (workspace / "browser-fixture.json").write_text(
+            json.dumps(
+                {
+                    "controlled_adapter_fixture": True,
+                    "scientific_acceptance_evidence": False,
+                    "real_cli_failure": False,
+                    "read_only_browser_scope": True,
+                    **values,
+                },
+                indent=2,
+            )
+            + "\n"
+        )
+        return values
     with TestClient(
         create_app(state, host="127.0.0.1", port=18765, job_timeout_seconds=90),
         base_url=origin,
@@ -124,8 +145,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("workspace", type=Path)
     parser.add_argument("--github-env", action="store_true")
+    parser.add_argument(
+        "--read-only",
+        action="store_true",
+        help="Metadata/navigation only; no task or installer-history fixtures",
+    )
     args = parser.parse_args()
-    values = prepare(args.workspace.resolve())
+    values = prepare(args.workspace.resolve(), read_only=args.read_only)
     if args.github_env:
         destination = os.environ.get("GITHUB_ENV")
         if not destination or any(

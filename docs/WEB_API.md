@@ -81,7 +81,7 @@ measured version. Presence alone is not SDK/package/model proof; path removal or
 access errors invalidate cached readiness. Every published report has its own
 time; legacy individual times stay null. Catalog `checked_at` is the last published
 operation time, including history, not proof that all components were just tested.
-The product stays v0.1.0, Web API v1 and environment SQLite v1. Missing additive
+Product releases follow the PR policy; Web API and environment SQLite remain v1. Missing additive
 fields in older responses decode conservatively, without inventing installation.
 Inspection publication rejects a changed captured binding/config/recipe identity
 with `environment_inspection_changed`; it never stamps old checks with a new key.
@@ -145,7 +145,7 @@ only hides terminal history, retaining component readiness, configuration and
 idempotency/recovery evidence. Legacy terminal environment identities remain
 unchanged: exact owned specification/command plus valid prior-kernel or saved-PID
 absence proof can allow removal; live, reused, malformed, foreign or unknown
-ownership blocks it. These checks never signal a process. Productv0.1.0/APIv1/
+ownership blocks it. These checks never signal a process. Product releases follow the PR policy; APIv1/
 private SQLitev1 remain.
 
 - Bind only to loopback (default port 8765). Validate Host and Origin; no wildcard CORS.
@@ -455,7 +455,7 @@ must agree. Repeated real cells are retained; no numeric search or whole-table b
 is substituted. Missing/malformed paired arguments fail 422; changed source/value
 or wrong page fails 409; unknown row fails 404; out-of-page geometry fails 422.
 No focus parameters leaves the original page contract unchanged. Source keys/focus
-do not alter product v0.1.0, API v1, raw projection identity, formal QA or predictions.
+do not alter product release numbering, API v1, raw projection identity, formal QA or predictions.
 
 For additive `activity_sources` evidence in activity schema v1, presentation
 matches each cell by its exact field name and original scalar value before
@@ -648,7 +648,7 @@ are warnings, not silent clamping or guessed unit transforms. Log-scale negative
 values remain legitimate. The same validation applies to newly inferred and
 cached responses, with adapter/environment/model content included in cache keys.
 
-Additional API v1 contract (all additive; current product remains v0.1.0):
+Additional API v1 contract (all additive; current product release numbering follows the PR policy):
 
 - POST `/projects` additionally accepts optional `patent_id` query metadata.
   Empty metadata keeps filename inference; validate a bounded normalized ID.

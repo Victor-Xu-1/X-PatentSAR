@@ -114,6 +114,7 @@ def product_identity_matches(payload: object) -> bool:
         and set(payload) == {"name", "version"}
         and payload.get("name") == PRODUCT_NAME
         and isinstance(payload.get("version"), str)
+        and len(payload["version"]) <= 32
         and re.fullmatch(
             r"(?:0|[1-9][0-9]*)\.[0-9]\.(?:0|[1-9][0-9]?)", payload["version"]
         )

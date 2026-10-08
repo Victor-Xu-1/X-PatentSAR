@@ -12,6 +12,42 @@ source SHA-256, refusing deleted-but-staged modules and stale bytes. Keep build
 work/output and deployment receipts on E in this workstation. A successful package
 audit does not establish deployment, environment cold-install or scientific QA.
 
+## PR 版本管理
+
+`contracts.__version__` is the sole machine-readable product release authority.
+Each PR merged into `main` advances it once: patch0–99, minor0–9, unlimited major.
+Examples: v0.1.99→v0.2.0, v0.9.99→v1.0.0, v1.9.99→v2.0.0. The policy starts
+prospectively from the original v0.1.0 baseline; it does not count old PRs again.
+These are PR-count releases, not semantic compatibility promises.
+
+After initial PR CI, `prepare-pr-version` runs **trusted main code only**. It
+fetches incoming Git objects as data, never checks out/imports/builds PR code,
+and writes only the literal product version, npm root versions and the exact
+verification scope. Same-repository open PRs receive the next mainline version
+automatically; fork authors use `python tools/pr_version.py --base <exact-main-sha>
+--write` before committing their PR. No fork writes, force pushes, release-only
+PRs, model calls, additional credentials or published binary releases are used.
+The workflow token has only repository contents/actions writes and PR reads;
+ordinary CI stays read-only. Explicit CI dispatch verifies the new revision.
+
+Repeated events are idempotent: the same PR keeps the same next version. A
+closed/unmerged PR does not move main. Concurrent PRs must update their branch
+and scope to the latest main **before merging**, then pass current CI; old
+next-version checks must not be reused after another PR lands. Keep the branch
+protection's up-to-date/check requirements; automation never changes protection
+or bypasses failed checks. Stale/racing heads, foreign metadata, unsafe paths,
+network/permission errors stop visibly, without unbounded retries. Manual
+workflow dispatch accepts an explicit same-repository PR number for recovery.
+
+Product releases remain producer provenance in old artifacts/jobs/checkpoints.
+Version-only changes do not invalidate scientific compatibility: exact product
+name, valid release format, pipeline/ruleset/schema and implementation epochs,
+original SHA, molecular graph, model identity and all normal QC remain required.
+No old payload or audit is rewritten. Changing any scientific authority still
+invalidates its consumers independently. CLI, wheel, health API and header all
+consume the same product version; derived npm metadata is checked, never a
+second authority. Deployment/rollback still follows the mainline gate below.
+
 ## Preflight
 
 Run `x-patentsar check-envs` and then `x-patentsar health --no-gpu --output /tmp/patentsar-health.json`. The health command performs a real DECIMER model-load probe in addition to importing the package, so it catches an interpreter that can import the module but cannot load its H5 weights. Use the GPU health path only after TensorFlow/CUDA compatibility is established.
@@ -250,7 +286,7 @@ same six-property worker. Rejected recognized molecules cannot enter inference,
 including activity-associated ones. A historical activity-only SMILES checkpoint
 is not complete-catalog evidence: use the completion action for an existing
 verified printed-ID catalog. If source ownership is missing, a new extraction
-is needed; never assign anonymous crops guessed IDs. Product v0.1.0, API v1 and SQLite v1 remain unchanged. Software jobs establish
+is needed; never assign anonymous crops guessed IDs. Product release numbering, API v1 and SQLite v1 remain unchanged. Software jobs establish
 new source-bound records without deleting old audit; expanding source coverage alone
 does not reset the independent ADMET cache/runtime identity. Do not populate
 missing records by editing artifacts or reassigning ambiguous numbered crops.
@@ -378,7 +414,7 @@ apply only to future installations and are not migrations or cleanup requests.
 
 ### Format repair and optional LLM evidence review
 
-Product remainsv0.1.0. Classifier2, binder8 and activity5 invalidate their old
+Product release numbering follows the PR policy. Classifier2, binder8 and activity5 invalidate their old
 derived checkpoints; exact-original compatible OCR/segmentation observations
 remain reusable under existing manifest checks. Start a fresh software attempt,
 not an edit of old generated files. Wide structure grids use actual header roles
@@ -402,7 +438,7 @@ scientific evaluation separately before relying on candidate suggestions.
 - `stereo_source_unavailable`: unreadable/excessive source geometry failed the bounded screen before model loading. Correct input quality or source ownership, not memory limits or acceptance flags.
 - Unknown single/crossed-double manual MDL stays lossless in save/redraw/export. Explicit unresolved manual stereo cannot acquire a determinate model result from a previous graph. OR/AND and special stereo remain visibly unsupported. Plain-SMILES legacy research results are not proof of source stereo fidelity.
 
-New tasks use source-led pipeline 3.0.0 and ruleset 2.1.1 while the product remains v0.1.0. Existing original
+New tasks use source-led pipeline 3.0.0 and ruleset 2.1.1 while the product release numbering follows the PR policy. Existing original
 PDFs, model observations, QA and manual audits are retained; a new task uses current
 validation instead of relabelling historical results. Only original-SHA-verified
 raw OCR/model observations may be reused. Missing old stereo evidence stays unknown.
@@ -454,7 +490,7 @@ unreadable evidence stays blocked, not guessed or deleted.
 Verified recovery saves original identity in private `web-state/job-recovery`
 before publishing resumability. Existing job-history and run files are not
 rewritten. Do not edit boot/identity fields or delete proof to bypass protection.
-Product remains v0.1.0; API and workspace SQLite remain v1.
+Product release numbering follows the PR policy; API and workspace SQLite remain v1.
 
 Checkpoint preparation is one durable queued attempt. Copying and projection
 serialization no longer hold SQLite's writer. The worker cannot claim unready
@@ -612,8 +648,8 @@ Retain the final workbook, SDF, `pipeline_summary.json`, `final_qa_report.*`, op
 A task is not complete at branch push or PR creation. Review and merge every
 task-related PR into `main`, fetch the exact remote merge revision, and build the
 frontend/wheel from that clean source. Do not replace unrelated dirty work or
-merge unknown PRs merely to empty the queue. Keep product version `v0.1.0` unless
-the user explicitly requests a version change.
+merge unknown PRs merely to empty the queue. Prepare and verify the next product
+release using the PR version policy above, retaining independent scientific epochs.
 
 Select verification from the exact integrated diff and its affected consumers;
 global suites require explicit user authorization. Do not disable required CI

@@ -1,0 +1,40 @@
+name: prepare-pr-version
+
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Same-repository open PR to prepare
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: prepare-version-${{ github.event.workflow_run.head_branch || inputs.pr_number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: read
+      actions: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Prepare metadata from trusted main; never execute PR code
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python tools/prepare_pr_version.py
