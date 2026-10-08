@@ -33,10 +33,23 @@ async function saveFromUI(page: Page) {
   const response = await saved;
   expect(response.status()).toBe(200);
   expect(response.request().headers()['x-csrf-token']).toBeTruthy();
-  const result = decodeLLMSettings(await response.json());
+  const request = response.request().postDataJSON() as LLMSettingsUpdate;
   await expect(page.getByLabel('API 密钥', { exact: true })).toHaveValue('');
   await expect(page.getByText('设置已保存。', { exact: true })).toBeVisible();
-  return { result, request: response.request().postDataJSON() as LLMSettingsUpdate };
+  // Read actual persisted state after the UI consumes the save response. A CDP
+  // response body can lose its page context across subsequent reloads; the
+  // independent authenticated read proves durability instead of trusting 200.
+  const result = await readSettings(page);
+  expect(result.revision).toBe(request.expected_revision + 1);
+  expect(result).toMatchObject({
+    endpoint: request.endpoint,
+    model: request.model,
+    protocol: request.protocol,
+    response_mode: request.response_mode,
+    mode: request.mode,
+    data_consent: request.data_consent,
+  });
+  return { result, request };
 }
 
 async function reopen(page: Page) {
