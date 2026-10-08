@@ -21,7 +21,7 @@ class SARStudyAPITests(WebFixture, unittest.TestCase):
     region = SARAPITests.region
     completed = SARAPITests.completed
 
-    def start(self, client, dataset, region_ids=None):
+    def start(self, client, dataset, region_ids=None, core_ids=None):
         prefix = ROOT + "/datasets/" + dataset["id"]
         profile = client.get(prefix + "/profile")
         self.assertEqual(profile.status_code, 200, profile.text)
@@ -30,6 +30,7 @@ class SARStudyAPITests(WebFixture, unittest.TestCase):
             "expected_dataset_revision": 1,
             "title": "Synthetic evidence study",
             "region_ids": region_ids or [],
+            "core_ids": core_ids or [],
             "policies": [
                 {
                     "context_id": profile.json()["contexts"][0]["id"],
@@ -144,6 +145,40 @@ class SARStudyAPITests(WebFixture, unittest.TestCase):
                 len(client.get(path + "/export?format=json").json()["report"]["rows"]),
                 1191,
             )
+
+    def test_full_core_is_descriptive_and_never_relaxes_a_variable_region(self):
+        with self.client() as client:
+            dataset = self.dataset(client, CSV)
+            prefix = ROOT + "/datasets/" + dataset["id"]
+            molecule = client.get(prefix + "/molecules").json()["items"][0]
+            atoms = client.get(
+                prefix + "/molecules/" + molecule["id"] + "/drawing"
+            ).json()["atoms"]
+            body = {
+                "molecule_id": molecule["id"],
+                "expected_dataset_revision": 1,
+                "expected_graph_sha256": molecule["graph_sha256"],
+                "atom_indices": [atom["index"] for atom in atoms],
+                "name": "Full confirmed core",
+            }
+            self.assertEqual(
+                client.post(prefix + "/regions", json=body).status_code, 422
+            )
+            body["kind"] = "core"
+            core = client.post(prefix + "/regions", json=body)
+            self.assertEqual(core.status_code, 201, core.text)
+            self.assertEqual(core.json()["attachment_count"], 0)
+            job, _ = self.start(client, dataset, core_ids=[core.json()["id"]])
+            job = self.completed(client, job)
+            report = client.get(ROOT + "/jobs/" + job["id"] + "/study").json()["report"]
+            selected = [
+                item
+                for item in report["scaffolds"]
+                if item["assignment_kind"] == "confirmed_core"
+            ]
+            self.assertEqual(len(selected), 1)
+            self.assertEqual(selected[0]["molecule_count"], 2)
+            self.assertTrue(selected[0]["descriptive_only"])
 
     def test_exact_context_choices_and_grade_policy_validation(self):
         data = (

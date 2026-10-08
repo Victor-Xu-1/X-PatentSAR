@@ -72,6 +72,7 @@ for (const width of [390, 800, 1672]) {
     const dataset = await published(page, 'dataset');
     expect(dataset.row_count).toBe(4);
     expect(dataset.eligible_count).toBe(3);
+    await page.getByText('Single-reference comparison (advanced)', { exact: true }).click();
     const rows = page.getByRole('region', { name: 'Choose reference molecule', exact: true });
     await expect(rows.getByRole('rowheader', { name: 'Example 1', exact: true })).toBeVisible();
     await rows
