@@ -40,10 +40,12 @@ def prepare_scope(source: str, base: str, paths: list[str]) -> str:
     for name in ("changed_paths", "python_modules", "frontend_tests", "browser_tests"):
         items = value[name]
         if not isinstance(items, list) or len(items) > (
-            512 if name == "changed_paths" else 32
+            256 if name == "changed_paths" else 32
         ):
             raise ValueError("Verification selection must stay explicitly bounded")
-        if any(not isinstance(item, str) or len(item) > 256 for item in items):
+        if any(
+            not isinstance(item, str) or not 1 <= len(item) <= 240 for item in items
+        ):
             raise ValueError("Verification selections must be bounded names")
     selected = value["python_modules"]
     for case in VERSION_TESTS:
@@ -54,6 +56,6 @@ def prepare_scope(source: str, base: str, paths: list[str]) -> str:
             "Adding direct version consumers exceeds the test-selection limit"
         )
     value["changed_paths"] = sorted(set(paths) | {SCOPE})
-    if len(value["changed_paths"]) > 512:
+    if len(value["changed_paths"]) > 256:
         raise ValueError("Release scope exceeds the changed-path limit")
     return json.dumps(value, ensure_ascii=False, indent=2) + "\n"
