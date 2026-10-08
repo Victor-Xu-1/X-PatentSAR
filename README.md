@@ -422,9 +422,13 @@ x-patentsar run \
 
 ## 版本与数据契约
 
-- 产品版本：`0.1.0`，遵循 Semantic Versioning。
+- 产品版本：唯一来源是 `contracts.__version__`，每合并一个 PR 自动递增一次。
+  补丁号取 0–99，次版本号取 0–9：`v0.1.99 → v0.2.0`，`v0.9.99 → v1.0.0`。
+  当前规则从原 `v0.1.0` 基线向后生效，不追算历史 PR；未合并或重复触发不推进主分支版本。
+  这是 PR 计数进位规则，不是按功能/破坏性变更判断的 Semantic Versioning。
+  自动准备、CI、安全边界及并发 PR 要求见[版本管理](docs/OPERATIONS.md#pr-版本管理)。
 - 流水线契约：`patentsar.structure-led` `3.0.0`。
-- 准确性规则集：`patentsar.accuracy-first` `2.1.1`；产品仍为 `v0.1.0`。
+- 准确性规则集：`patentsar.accuracy-first` `2.1.1`；独立于产品发布号。
 - 产物/缓存 Schema 各自独立递增：页面分类、绑定与 SMILES 为 `2`，正式 QA 为 `3`；其余当前产物与缓存为 `1`。
 
 唯一权威来源是 `src/patent_sar_extractor/contracts.py`。所有可复用缓存和正式 JSON 产物均使用 `schema`、`product`、`pipeline_contract`、`ruleset` 身份信封；旧插件缓存不会被当前版本误复用。
@@ -438,7 +442,7 @@ x-patentsar run \
 完整结构目录与明示的“选定化合物”重复子表分别归属；只有编号集合证明为
 完整目录子集且对应格内结构证明成立时，才作为同一编号的其他原文出处保留，
 真正的重复/冲突继续失败。编号目录的独立 schema 为 `patentsar.compound-catalog` v1，
-嵌入同一个绑定产物；绑定实现指纹为 8，产品仍是 v0.1.0。表外结构须有
+嵌入同一个绑定产物；绑定实现指纹为 8，独立于产品发布号。表外结构须有
 完整的原文图下注释与唯一空间归属，`8A` 等后缀不会退化成父编号。
 全部结构编号已有确定的原文空间证据时，软件跳过通用多轮补漏，而不是
 重复裁图 OCR。运行中已完成的检查点会展示为候选结果，正式通过仍以最终 QA
@@ -461,7 +465,7 @@ QA 与研究计算。普通结果不再识别一次；波浪/未知键、连接�
 构型时，保留原始候选、标记冲突并阻止正式验收；多中心无法对应时明确待核对，
 不删除 `@`、不按编号猜测 R/S，也不把未知构型当作外消旋体。缓存原始观察同样
 重走当前校验。检查未发现未知键不等于已验证绝对构型；图像风险观察不替代完整
-原子/键对应验证。产品版本不变，规则集独立更新，旧专利结果保留为历史证据。
+原子/键对应验证。规则集独立更新，旧专利结果保留原始生产版本和历史证据。
 
 规则变更后建立新运行记录，旧失败产物保留。Web 新任务自动复用同一私有项目
 内、原文 SHA 与观察契约一致的 OCR 原始缓存；活性、定位、绑定及 QA 全部按
@@ -498,7 +502,7 @@ PATENTSAR_E2E_BASE_URL=http://127.0.0.1:8765 npm run e2e
 
 WSL 本机设置 `PLAYWRIGHT_BROWSERS_PATH=/srv/wsl/cache/ms-playwright`，避免把
 浏览器下载和测试记录放在 C 盘。安装已构建的独立 wheel 使用
-`python -m pip install 'x_patentsar-0.1.0-py3-none-any.whl[web]'`；wheel 含界面，
+`python -m pip install 'dist/x_patentsar-<version>-py3-none-any.whl[web]'`（替换为实际版本）；wheel 含界面，
 运行时无需 Node.js。源码构建和测试需要 Node.js。
 
 GitHub CI 不执行全量发现测试。每个 PR 必须更新 `.github/verification_scope.json`，
@@ -538,6 +542,6 @@ GitHub CI 不执行全量发现测试。每个 PR 必须更新 `.github/verifica
 
 当前独立源码位于 E 盘 WSL 的 `/srv/wsl/projects/patent-sar-extractor`。恢复前的原始源码归档仍在 `E:\WSL\archives\projects`；历史运行数据保留在恢复时的原路径 `/home/victor_1/.local/state/patent-sar-extractor`，新任务使用独立状态目录，不覆盖历史结果。回滚需停止本软件任务并恢复已保留的源码/入口，不必停止 C 盘 Ubuntu；不要把运行产物复制回源码树。
 
-产品名称、Python distribution 和对外命令统一为 X-PatentSAR / `x-patentsar`；版本保持 `v0.1.0`。内部 Python 包 `patent_sar_extractor`、`PATENTSAR_*` 配置和既有数据路径是稳定技术命名，保留以避免破坏历史运行数据与环境前缀。Web 集成和验收进度记录在 `docs/WEB_API.md`，任何历史诊断数据都不能作为当前正式提取已经验收的证明。
+产品名称、Python distribution 和对外命令统一为 X-PatentSAR / `x-patentsar`；版本按上述 PR 规则递增。内部 Python 包 `patent_sar_extractor`、`PATENTSAR_*` 配置和既有数据路径是稳定技术命名，保留以避免破坏历史运行数据与环境前缀。Web 集成和验收进度记录在 `docs/WEB_API.md`，任何历史诊断数据都不能作为当前正式提取已经验收的证明。
 
 许可证：[Apache-2.0](LICENSE)。第一方源码受该许可证约束；专利、用户数据、外部模型和第三方库不因此改许可，见 [NOTICE](NOTICE)。

@@ -7,28 +7,28 @@ classification, activity extraction, and structure-location/binding steps.
 
 from __future__ import annotations
 
-import json
 import base64
 import hashlib
+import json
 import logging
 import os
 import shutil
 import subprocess
+import tempfile
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import BytesIO
 from pathlib import Path
-import tempfile
 
 import fitz
 from PIL import Image
 
+from patent_sar_extractor.artifact_io import write_json_atomic
 from patent_sar_extractor.contracts import (
     PAGE_OCR_CACHE_SCHEMA,
     PAGE_OCR_CACHE_SCHEMA_VERSION,
     artifact_identity,
 )
-from patent_sar_extractor.artifact_io import write_json_atomic
 
 logger = logging.getLogger(__name__)
 _OCR_ENGINE = None
@@ -91,19 +91,13 @@ def _paddlex_pruned_result(data: dict) -> dict:
 
 
 def _paddlex_endpoint_accepts_payload(url: str, timeout: float = 2.5) -> bool:
-    try:
-        import requests  # type: ignore
-    except Exception:
-        return False
+    import requests
+    from PIL import ImageDraw
+
     try:
         buf = BytesIO()
         img = Image.new("RGB", (120, 48), "white")
-        try:
-            from PIL import ImageDraw
-
-            ImageDraw.Draw(img).text((10, 14), "123", fill="black")
-        except Exception:
-            pass
+        ImageDraw.Draw(img).text((10, 14), "123", fill="black")
         img.save(buf, format="PNG")
         session = requests.Session()
         session.trust_env = False
@@ -123,7 +117,7 @@ def _paddlex_endpoint_accepts_payload(url: str, timeout: float = 2.5) -> bool:
         return isinstance(pruned.get("rec_texts", []), list) and isinstance(
             pruned.get("rec_boxes", []), list
         )
-    except Exception:
+    except (requests.RequestException, OSError, ValueError, TypeError, AttributeError):
         return False
 
 
@@ -146,10 +140,8 @@ def _paddlex_payload_from_image(
     url = _paddlex_ocr_url()
     if not url or url.lower() in {"off", "none", "0"}:
         return [], []
-    try:
-        import requests  # type: ignore
-    except Exception:
-        return [], []
+    import requests
+
     try:
         buf = BytesIO()
         img.convert("RGB").save(buf, format="PNG")
@@ -167,7 +159,7 @@ def _paddlex_payload_from_image(
         boxes = pruned.get("rec_boxes") or []
         pairs = [(text, box) for text, box in zip(texts, boxes) if text]
         return [text for text, _box in pairs], [box for _text, box in pairs]
-    except Exception:
+    except (requests.RequestException, OSError, ValueError, TypeError, AttributeError):
         return [], []
 
 
@@ -180,14 +172,14 @@ def _build_ocr_engine():
         # ONNX defaults to a large per-session pool on many-core hosts. Four
         # page workers then multiply three SDK pools, wasting CPU and memory.
         return ("rapidocr", RapidOCR(intra_op_num_threads=2, inter_op_num_threads=1))
-    except Exception:
+    except (ImportError, OSError, RuntimeError, ValueError):
         if not _allow_tesseract_fallback():
             return False
         try:
             import pytesseract  # type: ignore
 
             return ("tesseract", pytesseract)
-        except Exception:
+        except ImportError:
             tesseract_bin = shutil.which("tesseract")
             if tesseract_bin:
                 return ("tesseract_cli", tesseract_bin)
@@ -235,6 +227,7 @@ def page_text(page, ocr_engine=None, min_native_chars: int = 40) -> str:
                 capture_output=True,
                 text=True,
                 timeout=60,
+                check=False,
             )
             if proc.returncode == 0 and str(proc.stdout or "").strip():
                 return proc.stdout.strip()
@@ -260,7 +253,10 @@ def page_ocr_lines(page, ocr_engine=None) -> list[dict]:
                 continue
             try:
                 y0_pdf = float(box[1]) * scale
-            except Exception:
+            except (ValueError, TypeError) as error:
+                logger.warning(
+                    "Discarding an invalid OCR coordinate (%s)", type(error).__name__
+                )
                 continue
             lines.append({"y0": round(float(y0_pdf), 2), "text": text})
         lines.sort(key=lambda item: item["y0"])
@@ -362,6 +358,7 @@ def cache_matches_pdf(
     from patent_sar_extractor.contracts import (
         PAGE_OCR_COMPATIBLE_PIPELINES,
         PAGE_OCR_COMPATIBLE_RULESETS,
+        product_identity_matches,
     )
 
     if not isinstance(cache, dict):
@@ -375,11 +372,11 @@ def cache_matches_pdf(
         return False
     try:
         expected = build_cache_metadata(pdf_path, total_pages)
-    except Exception:
+    except (OSError, RuntimeError, ValueError, TypeError):
         return False
-    identity_matches = all(
-        metadata.get(key) == expected[key] for key in ("schema", "product")
-    )
+    identity_matches = metadata.get("schema") == expected[
+        "schema"
+    ] and product_identity_matches(metadata.get("product"))
     producer = metadata.get("pipeline_contract")
     compatible_producer = (
         isinstance(producer, dict)
@@ -428,7 +425,7 @@ def inherit_page_ocr_cache(source: str, destination: str, pdf_path: str) -> bool
     if not isinstance(cache.get("page_texts"), dict) or not isinstance(
         cache.get("ocr_line_map"), dict
     ):
-        raise ValueError("OCR observation cache collections are malformed")
+        raise TypeError("OCR observation cache collections are malformed")
     save_page_ocr_cache(destination, cache)
     return True
 
@@ -449,7 +446,7 @@ def build_page_ocr_cache(
     if not page_indices:
         return cache
 
-    unique_indices = sorted(set(int(i) for i in page_indices if int(i) >= 0))
+    unique_indices = sorted({int(i) for i in page_indices if int(i) >= 0})
     workers = max(1, int(workers or 1))
 
     if workers <= 1 or len(unique_indices) <= 1:
@@ -477,7 +474,10 @@ def build_page_ocr_cache(
             idx = future_map[future]
             try:
                 resolved_idx, text, lines = future.result()
-            except Exception:
+            except (OSError, RuntimeError, ValueError, TypeError, IndexError) as error:
+                logger.warning(
+                    "Page OCR observation %d failed (%s)", idx, type(error).__name__
+                )
                 continue
             cache["page_texts"][str(resolved_idx)] = text
             if lines:
@@ -517,7 +517,7 @@ def update_page_ocr_cache(
         cache.setdefault("ocr_line_map", {})
     unique_indices = [
         idx
-        for idx in sorted(set(int(i) for i in page_indices if int(i) >= 0))
+        for idx in sorted({int(i) for i in page_indices if int(i) >= 0})
         if idx < total_pages
     ]
     missing = [
@@ -596,8 +596,10 @@ def update_page_ocr_cache(
         for future in as_completed(future_map):
             try:
                 resolved_idx, text, lines = future.result()
-            except Exception as exc:
-                logger.warning("Page OCR cache extraction failed: %s", exc)
+            except (OSError, RuntimeError, ValueError, TypeError, IndexError) as error:
+                logger.warning(
+                    "Page OCR cache extraction failed (%s)", type(error).__name__
+                )
                 completed += 1
                 continue
             cache["page_texts"][str(resolved_idx)] = text

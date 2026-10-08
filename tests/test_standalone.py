@@ -162,9 +162,9 @@ class StandalonePackagingTests(unittest.TestCase):
         self.assertEqual(PRODUCT_NAME, "X-PatentSAR")
         self.assertEqual(DISTRIBUTION_NAME, "x-patentsar")
         self.assertEqual(COMMAND_NAME, "x-patentsar")
-        self.assertEqual(__version__, "0.1.0")
-        self.assertEqual(PIPELINE_CONTRACT_VERSION, "2.0.0")
-        self.assertEqual(RULESET_VERSION, "2.0.4")
+        self.assertRegex(__version__, r"^(?:0|[1-9][0-9]*)\.[0-9]\.(?:0|[1-9][0-9]?)$")
+        self.assertEqual(PIPELINE_CONTRACT_VERSION, "3.0.0")
+        self.assertEqual(RULESET_VERSION, "2.1.1")
         self.assertEqual(RUN_SUMMARY_SCHEMA_VERSION, 1)
         self.assertEqual(PAGE_CLASSIFICATION_SCHEMA_VERSION, 2)
         self.assertEqual(BINDINGS_SCHEMA_VERSION, 2)
@@ -196,6 +196,7 @@ class StandalonePackagingTests(unittest.TestCase):
                 "qa",
                 "serve",
                 "import-run",
+                "import-ocsr-cache",
             },
         )
 

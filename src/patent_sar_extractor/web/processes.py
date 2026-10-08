@@ -12,11 +12,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
 
-from patent_sar_extractor.contracts import (
-    pipeline_contract_ref,
-    product_ref,
-    ruleset_ref,
-)
+from patent_sar_extractor import contracts as core
 
 from .errors import WebError
 from .files import private_directory
@@ -70,10 +66,15 @@ class ProcessRunner(Protocol):
 
 def runtime_identity() -> dict[str, object]:
     return {
-        "product": product_ref(),
-        "pipeline_contract": pipeline_contract_ref(),
-        "ruleset": ruleset_ref(),
+        "product": core.product_ref(),
+        "pipeline_contract": core.pipeline_contract_ref(),
+        "ruleset": core.ruleset_ref(),
     }
+
+
+def runtime_identity_matches(actual: object) -> bool:
+    """Release-compatible producer; all scientific runtime fields stay exact."""
+    return core.release_compatible_record(actual, runtime_identity())
 
 
 def _process(pid: int) -> dict[str, Any] | None:

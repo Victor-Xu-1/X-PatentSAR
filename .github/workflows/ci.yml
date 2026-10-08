@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      base_sha:
+        description: Exact mainline base for version-prepared PR verification
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -17,7 +23,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
-      PATENTSAR_CI_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+      PATENTSAR_CI_BASE: ${{ github.event.pull_request.base.sha || inputs.base_sha || github.event.before }}
     steps:
       - name: Initialize external verification paths
         run: |
@@ -26,7 +32,7 @@ jobs:
             "$RUNNER_TEMP/x-patentsar-api-tests" "$RUNNER_TEMP/x-patentsar-browser-tests" >> "$GITHUB_ENV"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 2
+          fetch-depth: 0
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
@@ -34,6 +40,8 @@ jobs:
       - name: Validate explicit verification scope
         id: scope
         run: python tools/run_verification_scope.py >> "$GITHUB_OUTPUT"
+      - name: Check single next-PR product version
+        run: python tools/pr_version.py --base "$PATENTSAR_CI_BASE"
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "24.21.0"
@@ -74,13 +82,17 @@ jobs:
         run: |
           sudo --preserve-env=GITHUB_ACTIONS python3 ../tools/ci_browser_mirrors.py
           timeout --kill-after=20s 280s npx --no-install playwright install --with-deps --only-shell chromium
-      - name: Prepare controlled browser data and real CLI failure
+      - name: Prepare only the selected controlled browser fixture
         if: steps.scope.outputs.browser_count != '0'
         env:
           PATENTSAR_PADDLEX_OCR_URL: "off"
           PATENTSAR_BASE_PYTHON: ${{ github.workspace }}/.venv/bin/python
           CUDA_VISIBLE_DEVICES: "-1"
-        run: .venv/bin/python tools/prepare_browser_fixture.py "$RUNNER_TEMP/browser-fixture" --github-env
+        run: |
+          mode=$(.venv/bin/python -c 'import json; s=set(json.load(open(".github/verification_scope.json"))["browser_tests"]); print("read-only" if s <= {"frontend/e2e/product-version.spec.ts", "frontend/e2e/topbar.spec.ts"} else "execution")')
+          args=()
+          if [ "$mode" = read-only ]; then args+=(--read-only); fi
+          .venv/bin/python tools/prepare_browser_fixture.py "$RUNNER_TEMP/browser-fixture" --github-env "${args[@]}"
       - name: Real browser workflow against installed wheel
         if: steps.scope.outputs.browser_count != '0'
         env:

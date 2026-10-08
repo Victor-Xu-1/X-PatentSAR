@@ -32,7 +32,7 @@ from .models import (
 )
 from .pdf import UploadedPDF, copy_original, filename_title
 from .prediction_storage import PredictionStore
-from .processes import runtime_identity
+from .processes import runtime_identity_matches
 from .result_queries import ResultQueries
 from .source_epoch import EPOCH_MARKER
 from .storage import Store, encode, now
@@ -69,7 +69,7 @@ class WorkspaceService:
         row = self.store.project(project_id)
         snapshot = json.loads(row["snapshot"])
         if row["run_root"] and (
-            snapshot.get("read_model_identity") != runtime_identity()
+            not runtime_identity_matches(snapshot.get("read_model_identity"))
             or "first_structure_page" not in snapshot
             or snapshot.get("raw_projection_layout") != RAW_PROJECTION_LAYOUT
         ):
@@ -410,7 +410,7 @@ class WorkspaceService:
             and not row["identity"]
             and bool(project["pdf_rel"])
             and project["sha256"] == spec.get("sha256")
-            and spec.get("runtime_identity") == runtime_identity()
+            and runtime_identity_matches(spec.get("runtime_identity"))
             and output is not None
             and self.attempts.unique(row)
         )

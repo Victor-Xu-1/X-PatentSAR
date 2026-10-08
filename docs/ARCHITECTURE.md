@@ -1,6 +1,6 @@
 # X-PatentSAR architecture
 
-Product **v0.1.0**. `contracts.py` is the only authority for product, pipeline,
+Product releases follow the merged-PR numbering policy. `contracts.py` is the only authority for product, pipeline,
 ruleset, artifact and cache versions. The source-led pipeline contract is
 `patentsar.structure-led`3.0.0; the accuracy ruleset is2.1.1. These internal
 epochs are not product releases and do not retag old results as current.
@@ -205,7 +205,7 @@ stale. Job completion independently checks full current pool/producer evidence.
 
 Nomination is a research heuristic, not experimental Lead validation, safety,
 selectivity, PK, synthetic feasibility or an applicability-domain proof.
-Scores and missing evidence are preserved. Product v0.1.0, formal eight-stage
+Scores and missing evidence are preserved. The formal eight-stage
 QA and API v1 remain unchanged. Research progress uses
 `admet.progress.phase="lead"`, not a competing formal stage registry.
 
@@ -253,7 +253,7 @@ registered result roots are discoverable, without arbitrary path input, symlink
 following, whole-tree scans or model calls. Terminal environment history removal
 never uninstalls components or changes current verification/configuration.
 The recovery UI is explicit that files remain on disk; no purge, retention timer
-or hidden competing deletion path is added. API v1/product v0.1.0 remain unchanged.
+or hidden competing deletion path is added. API v1 remains unchanged; product releases follow the PR policy.
 
 The existing revisioned environment-settings transaction also owns upload and
 result locations. Additive private `file_settings`/`file_roots` tables in its
@@ -298,7 +298,7 @@ Release requires focused changed-behavior/consumer tests, reviewed commits,
 merged main, a clean exact-main wheel and asset audit, idle/checkpoint-safe
 application deployment, installed-byte/runtime identity, API and Chrome smoke
 checks. Keep the previous wheel/config/state rollback; never restore a database
-over a newer live task. Product remainsv0.1.0. Implementation, integration,
+over a newer live task. Product release numbering follows the PR policy. Implementation, integration,
 deployment and real scientific acceptance are distinct evidence states.
 
 Endpoint/DTO details belong only in [WEB_API.md](WEB_API.md); installation,

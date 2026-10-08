@@ -15,7 +15,7 @@ from .errors import WebError
 from .prediction_fields import prediction_epoch
 from .prediction_identity import readable_digests, smiles_digest, source_stereo_blocked
 from .prediction_models import PredictionSummary
-from .processes import runtime_identity
+from .processes import runtime_identity, runtime_identity_matches
 from .storage import Store, encode, now
 
 SCHEMA = """
@@ -175,7 +175,7 @@ class MolecularObservationStore[Observation: PredictionSummary | DescriptorSumma
                 or packet["schema"] != self.packet_schema
                 or not isinstance(packet["schema"], dict)
                 or type(packet["schema"].get("version")) is not int
-                or packet["runtime_identity"] != runtime_identity()
+                or not runtime_identity_matches(packet["runtime_identity"])
                 or packet["epoch"] != self.epoch
                 or packet["project_id"] != record["project_id"]
                 or packet["compound_id"] != record["compound_id"]
@@ -194,7 +194,7 @@ class MolecularObservationStore[Observation: PredictionSummary | DescriptorSumma
                 or producer.get("job_id") != summary.job_id
                 or producer.get("project_id") != record["project_id"]
                 or producer.get("include_admet") is not True
-                or producer.get("runtime_identity") != runtime_identity()
+                or not runtime_identity_matches(producer.get("runtime_identity"))
                 or record["producer_status"]
                 not in {
                     "queued",
@@ -312,7 +312,7 @@ class MolecularObservationStore[Observation: PredictionSummary | DescriptorSumma
                 or spec.get("include_admet") is not True
                 or spec.get("job_id") != summary.job_id
                 or spec.get("project_id") != project_id
-                or spec.get("runtime_identity") != runtime_identity()
+                or not runtime_identity_matches(spec.get("runtime_identity"))
                 or (
                     spec.get("admet_compounds")
                     and compound_id not in spec["admet_compounds"]

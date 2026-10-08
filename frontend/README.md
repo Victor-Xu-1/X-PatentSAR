@@ -1,6 +1,7 @@
 # X-PatentSAR 前端
 
-单一 React / TypeScript 工作台，产品版本 v0.1.0 来自 /api/v1/health。
+单一 React / TypeScript 工作台，产品版本来自 /api/v1/health，不写死版本标签。
+package.json 与 npm lock 的根版本由 PR 自动准备流程同步自 contracts.__version__。
 前端只消费 [API v1](../docs/WEB_API.md)，不另建提取或预测引擎。
 默认只做 PDF → 完整结构/活性表 → 在线修正；说明和技术信息按需打开。
 系统字体、白/浅灰背景和黑色操作按钮使用唯一样式权威 src/styles/tokens.css。

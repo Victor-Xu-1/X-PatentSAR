@@ -25,7 +25,7 @@ from patent_sar_extractor import contracts as core
 from .errors import WebError
 from .files import MAX_ARTIFACT_BYTES, MAX_RECORDS, SafeFiles, private_directory
 from .models import STAGES, Stage
-from .processes import RunSpec
+from .processes import RunSpec, runtime_identity_matches
 from .source_epoch import EPOCH_PARAM, smiles_epoch_current
 from .stages import read_summary, recorded_stage_order, stages_from_summary
 from .storage import Store, encode
@@ -303,12 +303,7 @@ class AttemptHistory:
                     Stage(name=name)
                     for name in (
                         core.CORE_STAGE_ORDER
-                        if spec.get("runtime_identity")
-                        == {
-                            "product": core.product_ref(),
-                            "pipeline_contract": core.pipeline_contract_ref(),
-                            "ruleset": core.ruleset_ref(),
-                        }
+                        if runtime_identity_matches(spec.get("runtime_identity"))
                         else STAGES
                     )
                 ]
@@ -633,7 +628,7 @@ class CheckpointCopy:
             not isinstance(fp, dict)
             or fp.get("step") != stage
             or fp.get("pdf_sha256") != spec.sha256
-            or fp.get("product") != core.product_ref()
+            or not core.product_identity_matches(fp.get("product"))
             or fp.get("pipeline_contract") != core.pipeline_contract_ref()
             or (stage != "classify" and fp.get("ruleset") != core.ruleset_ref())
             or not isinstance(fp.get("params"), dict)

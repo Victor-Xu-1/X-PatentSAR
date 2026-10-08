@@ -22,8 +22,10 @@ class SourceFirstContractTests(unittest.TestCase):
             "data": {},
         }
 
-    def test_product_stays_v010(self):
-        self.assertEqual(contracts.__version__, "0.1.0")
+    def test_product_uses_independent_pr_release_number(self):
+        self.assertRegex(
+            contracts.__version__, r"^(?:0|[1-9][0-9]*)\.[0-9]\.(?:0|[1-9][0-9]?)$"
+        )
         self.assertEqual(contracts.PRODUCT_NAME, "X-PatentSAR")
 
     def test_one_source_first_stage_order(self):

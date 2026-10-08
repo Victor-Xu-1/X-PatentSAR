@@ -16,6 +16,7 @@ from patent_sar_extractor.contracts import (
     artifact_identity_matches,
     pipeline_contract_ref,
     product_ref,
+    release_compatible_record,
     ruleset_ref,
 )
 
@@ -116,7 +117,7 @@ def _fingerprint_matches(output_path: str, fingerprint: dict) -> bool:
     ):
         return False
     existing = manifest.get("fingerprint")
-    return existing == fingerprint
+    return release_compatible_record(existing, fingerprint)
 
 
 def _write_step_manifest(output_path: str, fingerprint: dict) -> None:

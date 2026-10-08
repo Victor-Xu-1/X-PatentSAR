@@ -1,7 +1,14 @@
 import { expect, test } from '@playwright/test';
+import packageMetadata from '../package.json' with { type: 'json' };
 
+const expectedVersion = packageMetadata.version;
 const projectId = process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID;
 const primary = ['上传 PDF', '最近文件', '环境管理', '任务记录'];
+
+// Shared responsive.css wraps brand/navigation below 900px; 560px adds a row.
+function headerHeightBudget(width: number) {
+  return width < 561 ? 165 : width < 900 ? 105 : 65;
+}
 
 for (const viewport of [
   { width: 1672, height: 942 },
@@ -24,7 +31,7 @@ for (const viewport of [
       await expect(nav.getByRole('button', { name, exact: true })).toBeVisible();
       await expect(nav.getByRole('button', { name, exact: true }).locator('span')).toBeVisible();
     }
-    await expect(header.locator('.topbar-version')).toHaveText('v0.1.0');
+    await expect(header.locator('.topbar-version')).toHaveText(`v${expectedVersion}`);
     await expect(header.locator('details, .shell-menu')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: '上传专利 PDF', exact: true })).toBeVisible();
     await expect(page.locator('.new-task-page input')).toHaveCount(1);
@@ -35,7 +42,7 @@ for (const viewport of [
       true,
     );
     const bounds = await header.boundingBox();
-    expect(bounds!.height).toBeLessThan(viewport.width < 761 ? 150 : 65);
+    expect(bounds!.height).toBeLessThan(headerHeightBudget(viewport.width));
     await page.screenshot({ path: test.info().outputPath('pdf-only-upload.png'), fullPage: true });
     for (const [name, hash, heading] of [
       ['环境管理', '#/settings', '环境管理'],
@@ -54,7 +61,7 @@ for (const viewport of [
     }
     await page.reload();
     await expect(page.getByLabel('原始专利 PDF 文件')).toBeFocused();
-    await expect(header.locator('.topbar-version')).toHaveText('v0.1.0');
+    await expect(header.locator('.topbar-version')).toHaveText(`v${expectedVersion}`);
     expect(writes).toEqual([]);
     expect(errors).toEqual([]);
   });
@@ -76,15 +83,17 @@ for (const viewport of [
       await expect(nav.getByRole('button', { name, exact: true })).toBeVisible();
       await expect(nav.getByRole('button', { name, exact: true }).locator('span')).toBeVisible();
     }
-    await expect(header.locator('.topbar-version')).toHaveText('v0.1.0');
+    await expect(header.locator('.topbar-version')).toHaveText(`v${expectedVersion}`);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2)).toBe(
       true,
     );
     const bounds = await header.boundingBox();
-    expect(bounds!.height).toBeLessThan(viewport.width < 761 ? 165 : 85);
+    expect(bounds!.height).toBeLessThan(headerHeightBudget(viewport.width));
     await nav.getByRole('button', { name: '证据摘要', exact: true }).click();
     await expect(
-      page.getByRole('heading', { name: '确定性证据统计 · 同项目摘要', exact: true }),
+      page
+        .getByRole('region', { name: '同项目确定性证据摘要', exact: true })
+        .getByRole('heading', { name: '证据摘要', exact: true }),
     ).toBeVisible();
     await nav.getByRole('button', { name: '返回结果表格', exact: true }).click();
     await expect(page.getByRole('table')).toBeVisible();

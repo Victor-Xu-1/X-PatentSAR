@@ -86,7 +86,7 @@ def verified_input(
         crop_regions=regions,
         gpu_mode=gpu,
     )
-    if fingerprint != expected:
+    if not core.release_compatible_record(fingerprint, expected):
         raise ValueError("Segmentation input fingerprint is stale or incompatible")
     return expected
 
