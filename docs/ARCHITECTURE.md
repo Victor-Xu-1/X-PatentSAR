@@ -96,7 +96,7 @@ cannot be unsent; OFF prevents later handoffs and downstream proposal use. Renew
 rechecks faults/quota under the budget lock, never clearing non-authentication
 safety blocks or transient cooldowns. Standalone CLI stages inherit one invocation
 identity, so a missing Web launcher cannot reopen a failed circuit.
-budget lock protects serial consumption across processes; corrupt/foreign state
+A separate private budget lock protects serial consumption across processes; corrupt/foreign state
 cannot reset it. Changes apply to future new jobs, not silently to active/resumed
 work. Default OFF makes no request; original evidence, chemistry and strict QA
 remain authoritative. API/OOM/infrastructure failures never enter an escalation
