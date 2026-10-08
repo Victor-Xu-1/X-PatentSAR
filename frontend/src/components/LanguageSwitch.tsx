@@ -1,5 +1,5 @@
 import { Languages } from 'lucide-react';
-import { setLocale, useTranslation } from '../i18n';
+import { setLocale, SUPPORTED_LANGUAGES, useTranslation } from '../i18n';
 import type { Locale } from '../i18n';
 
 export function LanguageSwitch() {
@@ -12,12 +12,11 @@ export function LanguageSwitch() {
         value={locale}
         onChange={(event) => setLocale(event.target.value as Locale)}
       >
-        <option value="zh-CN" lang="zh-CN">
-          中文
-        </option>
-        <option value="en" lang="en">
-          English
-        </option>
+        {SUPPORTED_LANGUAGES.map((language) => (
+          <option key={language.id} value={language.id} lang={language.id}>
+            {language.label}
+          </option>
+        ))}
       </select>
     </label>
   );

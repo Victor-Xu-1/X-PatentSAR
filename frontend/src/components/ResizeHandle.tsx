@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from '../i18n';
 
 interface Drag {
   id: number;
@@ -36,6 +37,7 @@ export function ResizeHandle({
   onPreview: (value: number | null) => void;
   onCommit: (value: number) => void;
 }) {
+  const { t } = useTranslation();
   const drag = useRef<Drag | null>(null);
   const reportPreview = useRef(onPreview);
   const [moving, setMoving] = useState(false);
@@ -75,8 +77,8 @@ export function ResizeHandle({
       aria-valuemin={min}
       aria-valuemax={max}
       aria-valuenow={value}
-      aria-valuetext={valueText ?? `${value} 像素`}
-      title="拖动调整宽度；方向键调整，双击重置，Escape 取消拖动"
+      aria-valuetext={valueText ?? t('{value} 像素', { value })}
+      title={t('拖动调整宽度；方向键调整，双击重置，Escape 取消拖动')}
       className={`resize-handle ${className}${moving ? ' dragging' : ''}`}
       onChange={(event) => {
         const next = bounded(Number(event.target.value));

@@ -1,12 +1,12 @@
 import { useSyncExternalStore } from 'react';
-
-export type Locale = 'zh-CN' | 'en';
+import { DEFAULT_LOCALE, isLocale } from './languages';
+import type { Locale } from './languages';
+export type { Locale } from './languages';
 export const LOCALE_STORAGE_KEY = 'x-patentsar.locale';
-let current: Locale = 'zh-CN';
+let current: Locale = DEFAULT_LOCALE;
 let initialized = false;
 const listeners = new Set<() => void>();
 
-const valid = (value: unknown): value is Locale => value === 'zh-CN' || value === 'en';
 function apply(value: Locale) {
   current = value;
   if (typeof document !== 'undefined') document.documentElement.lang = value;
@@ -17,14 +17,15 @@ function initialize() {
   initialized = true;
   try {
     const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
-    if (valid(stored)) current = stored;
+    if (isLocale(stored)) current = stored;
   } catch {
     // A blocked browser preference store must not block the application.
   }
   document.documentElement.lang = current;
   window.addEventListener('storage', (event) => {
-    if (event.key === LOCALE_STORAGE_KEY && (valid(event.newValue) || event.newValue === null))
-      apply(event.newValue ?? 'zh-CN');
+    if (event.storageArea && event.storageArea !== window.localStorage) return;
+    if (event.key === LOCALE_STORAGE_KEY || event.key === null)
+      apply(isLocale(event.newValue) ? event.newValue : DEFAULT_LOCALE);
   });
 }
 export function getLocale(): Locale {
@@ -32,7 +33,7 @@ export function getLocale(): Locale {
   return current;
 }
 export function setLocale(value: Locale) {
-  if (!valid(value)) throw new Error('Unsupported interface language');
+  if (!isLocale(value)) throw new Error('Unsupported interface language');
   initialize();
   try {
     window.localStorage.setItem(LOCALE_STORAGE_KEY, value);
@@ -49,5 +50,5 @@ function subscribe(listener: () => void) {
   };
 }
 export function useLocale(): Locale {
-  return useSyncExternalStore(subscribe, getLocale, () => 'zh-CN');
+  return useSyncExternalStore(subscribe, getLocale, () => DEFAULT_LOCALE);
 }

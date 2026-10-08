@@ -4,6 +4,7 @@ import { ApiError } from '../../api/errors';
 import type { JobOptions, Project } from '../../api/types';
 import { validatePdf } from '../../model/uploads';
 import { normalizePatentId } from '../../model/tasks';
+import { UiError } from '../../i18n';
 
 export function useTaskSubmission(onCreated: (project: Project) => void) {
   const [created, setCreated] = useState<Project | null>(null);
@@ -32,9 +33,9 @@ export function useTaskSubmission(onCreated: (project: Project) => void) {
     let next = created;
     try {
       if ((input.options.task_note?.length ?? 0) > 2000)
-        throw new Error('任务说明最多 2000 个字符。');
+        throw new UiError('任务说明最多 2000 个字符。');
       if (!next) {
-        if (!input.file) throw new Error('请选择原始专利 PDF。');
+        if (!input.file) throw new UiError('请选择原始专利 PDF。');
         const title =
           input.title.trim() ||
           input.file.name
@@ -42,7 +43,7 @@ export function useTaskSubmission(onCreated: (project: Project) => void) {
             .trim()
             .slice(0, 200) ||
           '专利 PDF';
-        if (title.length > 200) throw new Error('项目名称最多 200 个字符。');
+        if (title.length > 200) throw new UiError('项目名称最多 200 个字符。');
         const patentId = normalizePatentId(input.patentId);
         setBusy('upload');
         await validatePdf(input.file);
@@ -55,7 +56,7 @@ export function useTaskSubmission(onCreated: (project: Project) => void) {
       if (mounted.current) onCreated(next);
     } catch (e) {
       if (mounted.current) {
-        setError(e instanceof Error ? e : new Error('任务提交失败。'));
+        setError(e instanceof Error ? e : new UiError('任务提交失败。'));
         setUncertain(e instanceof ApiError && e.uncertain);
       }
     } finally {
@@ -77,11 +78,11 @@ export function useTaskSubmission(onCreated: (project: Project) => void) {
       else {
         setUncertain(false);
         setError(
-          new Error('当前未查到任务。请确认服务端状态后，再手动重试启动；不会自动重放请求。'),
+          new UiError('当前未查到任务。请确认服务端状态后，再手动重试启动；不会自动重放请求。'),
         );
       }
     } catch (e) {
-      if (mounted.current) setError(e instanceof Error ? e : new Error('状态检查失败。'));
+      if (mounted.current) setError(e instanceof Error ? e : new UiError('状态检查失败。'));
     } finally {
       lock.current = false;
       if (mounted.current) setBusy(null);

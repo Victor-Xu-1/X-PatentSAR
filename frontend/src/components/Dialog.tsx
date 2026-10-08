@@ -2,6 +2,7 @@ import { useEffect, useId, useRef } from 'react';
 import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { containTab } from './focus';
+import { useTranslation } from '../i18n';
 
 function focusInitialControl(dialog: HTMLDialogElement) {
   const control = dialog.querySelector<HTMLElement>('[data-initial-focus]');
@@ -49,6 +50,7 @@ export function Dialog({
   wide?: boolean;
   className?: string;
 }) {
+  const { t } = useTranslation();
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   useEffect(() => {
@@ -102,7 +104,7 @@ export function Dialog({
         <button
           type="button"
           className="icon-button"
-          aria-label="关闭对话框"
+          aria-label={t('关闭对话框')}
           onClick={onClose}
           disabled={busy}
         >

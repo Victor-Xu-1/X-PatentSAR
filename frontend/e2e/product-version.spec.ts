@@ -1,6 +1,12 @@
 import { expect, test } from '@playwright/test';
 import packageMetadata from '../package.json' with { type: 'json' };
 import type { Health } from '../src/api/types';
+import { LOCALE_STORAGE_KEY } from '../src/i18n/locale';
+
+// Explicit Chinese regression variant; language-switch.spec covers fresh English defaults.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript((key) => localStorage.setItem(key, 'zh-CN'), LOCALE_STORAGE_KEY);
+});
 
 // Python CI verifies this derived npm version against the contracts.py authority.
 const expectedVersion = packageMetadata.version;

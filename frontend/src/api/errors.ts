@@ -1,11 +1,15 @@
-export class ApiError extends Error {
+import { UiError } from '../i18n';
+import type { MessageValues } from '../i18n';
+
+export class ApiError extends UiError {
   constructor(
     public status: number,
     public code: string,
     message: string,
     public uncertain = false,
+    values: MessageValues = {},
   ) {
-    super(message);
+    super(message, values);
     this.name = 'ApiError';
   }
 }
@@ -26,6 +30,8 @@ export function errorFrom(status: number, input: unknown): ApiError {
   return new ApiError(
     status,
     'http_error',
-    `服务请求失败（HTTP ${status}）。请稍后重试或检查服务状态。`,
+    '服务请求失败（HTTP {status}）。请稍后重试或检查服务状态。',
+    false,
+    { status },
   );
 }

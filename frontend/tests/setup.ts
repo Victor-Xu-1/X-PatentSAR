@@ -1,12 +1,19 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
-import { afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, vi } from 'vitest';
+import { setLocale, LOCALE_STORAGE_KEY } from '../src/i18n';
+
+// Existing golden interaction fixtures explicitly exercise Chinese. The new
+// locale specifications and fresh installed browser test the English default.
+beforeEach(() => setLocale('zh-CN'));
 
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   vi.useRealTimers();
   if (typeof window !== 'undefined') window.location.hash = '';
+  setLocale('zh-CN');
+  window.localStorage.removeItem(LOCALE_STORAGE_KEY);
 });
 if (typeof window !== 'undefined') {
   Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
