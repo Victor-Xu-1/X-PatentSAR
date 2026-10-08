@@ -78,7 +78,9 @@ describe('all-row dataset presentation', () => {
         onRemoved={vi.fn()}
       />,
     );
-    expect(await screen.findByText('4 source records · 3 merged molecule rows')).toBeVisible();
+    await screen.findByText('4 source records · 3 merged molecule rows');
+    await userEvent.click(screen.getByText('Dataset actions'));
+    expect(screen.getByText('4 source records · 3 merged molecule rows')).toBeVisible();
     expect(screen.getByText('3 rows · 2 eligible · 1 issues')).toBeVisible();
     await userEvent.click(screen.getByText('Single-reference comparison (advanced)'));
     expect(screen.getByRole('button', { name: 'Start reference comparison' })).toBeDisabled();

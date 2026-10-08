@@ -137,7 +137,7 @@ describe('SAR review: concise, explicit intake', () => {
     expect(screen.queryByText('No SAR datasets yet')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('SAR datasets')).not.toBeInTheDocument();
     expect(screen.getAllByRole('heading', { name: 'Import data' })).toHaveLength(1);
-    const details = screen.getByText('Strict reference comparisons').closest('details');
+    const details = screen.getByText('Method and scope').closest('details');
     expect(details).not.toHaveAttribute('open');
     await userEvent.click(screen.getByRole('button', { name: 'Import data' }));
     expect(screen.getByText('No SAR datasets yet')).toBeVisible();

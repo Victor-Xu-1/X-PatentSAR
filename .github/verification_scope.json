@@ -60,6 +60,7 @@
     "frontend/tests/sar-fixtures.ts",
     "frontend/tests/sar-flow.test.tsx",
     "frontend/tests/sar-review-drafts.test.tsx",
+    "frontend/tests/sar-review-context.test.tsx",
     "frontend/tests/sar-study-api.test.tsx",
     "frontend/tests/sar-study-flow.test.tsx",
     "frontend/tests/sar-study-results.test.tsx",
