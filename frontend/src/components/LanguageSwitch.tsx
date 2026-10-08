@@ -5,7 +5,7 @@ import type { Locale } from '../i18n';
 export function LanguageSwitch() {
   const { locale, t } = useTranslation();
   return (
-    <label className="language-switch" title={t('界面语言')}>
+    <label className="language-switch" title={t('界面语言')} data-interface-language-control>
       <Languages size={15} aria-hidden="true" />
       <select
         aria-label={t('界面语言')}

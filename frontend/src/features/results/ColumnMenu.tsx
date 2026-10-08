@@ -1,4 +1,5 @@
 import { useTranslation } from '../../i18n';
+import { isLanguageSelection } from '../../i18n/interaction';
 import { ArrowDown, ArrowUp, ChevronDown, EyeOff, Filter } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -45,6 +46,7 @@ export function ColumnMenu({
       ?.querySelector<HTMLElement>('button:not(:disabled),select:not(:disabled)')
       ?.focus();
     function outside(event: PointerEvent) {
+      if (isLanguageSelection(event.target)) return;
       if (
         event.target instanceof Node &&
         !panel.current?.contains(event.target) &&
@@ -55,6 +57,7 @@ export function ColumnMenu({
       }
     }
     function escape(event: KeyboardEvent) {
+      if (isLanguageSelection(event.target)) return;
       containTab(event, panel.current);
       if (event.key === 'Escape') {
         event.preventDefault();

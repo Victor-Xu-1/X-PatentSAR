@@ -121,6 +121,23 @@ test('installed table localization preserves original IDs, sources and query sta
     .first()
     .innerText();
   const before = page.url();
+  await page.getByRole('button', { name: 'Original ID column options', exact: true }).click();
+  const menu = page.getByRole('dialog', { name: 'Original ID column options', exact: true });
+  const all = menu.getByRole('checkbox', { name: 'Select all filter values', exact: true });
+  await expect(all).toBeChecked();
+  await all.uncheck();
+  const language = page.getByRole('combobox', { name: 'Interface language', exact: true });
+  await language.click();
+  await language.selectOption('zh-CN');
+  const translatedMenu = page.getByRole('dialog', { name: '原文编号 列选项', exact: true });
+  await expect(translatedMenu).toBeVisible();
+  await expect(
+    translatedMenu.getByRole('checkbox', { name: '全选筛选取值', exact: true }),
+  ).not.toBeChecked();
+  await page.getByRole('combobox', { name: '界面语言', exact: true }).selectOption('en');
+  await expect(all).not.toBeChecked();
+  await menu.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(menu).toHaveCount(0);
   // Actions share one flow layout, not locale-specific absolute offsets.
   for (const width of [1280, 1672]) {
     await page.setViewportSize({ width, height: 942 });

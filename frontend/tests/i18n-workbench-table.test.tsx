@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { api } from '../src/api';
 import { setLocale, UiError, errorText } from '../src/i18n';
@@ -8,6 +9,7 @@ import { compileColumnFilter } from '../src/model/columnFilters';
 import { ResultsPane } from '../src/features/results/ResultsPane';
 import { TableCopyButton } from '../src/features/results/TableCopyButton';
 import { ExportDialog } from '../src/features/results/ExportDialog';
+import { LanguageSwitch } from '../src/components/LanguageSwitch';
 import { project } from './fixtures';
 import { filterValuesFixture } from './filter-value-fixtures';
 import {
@@ -99,6 +101,35 @@ describe('workbench interface language and data boundaries', () => {
 });
 
 describe('English workbench view and live language continuity', () => {
+  it('preserves a nonmodal filter draft for real language-control pointer and keyboard interactions only', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(api, 'filterValues').mockResolvedValue(
+      filterValuesFixture('property:logP', ['-1.25', '2']),
+    );
+    const apply = vi.fn();
+    render(
+      <>
+        <LanguageSwitch />
+        <FilterMenu columnId="property:logP" onFilters={apply} />
+      </>,
+    );
+    await user.click(screen.getByRole('button', { name: 'LogP column options' }));
+    await screen.findByRole('checkbox', { name: 'Filter value -1.25' });
+    await user.click(screen.getByRole('button', { name: 'Number filters' }));
+    await user.type(screen.getByRole('textbox', { name: 'Filter value' }), 'NaN');
+    await user.click(screen.getByRole('button', { name: 'OK' }));
+    const dialog = screen.getByRole('dialog');
+    await user.click(screen.getByRole('combobox', { name: 'Interface language' }));
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Interface language' }), 'zh-CN');
+    expect(screen.getByRole('dialog')).toBe(dialog);
+    expect(screen.getByRole('textbox', { name: '筛选值' })).toHaveValue('NaN');
+    expect(screen.getByRole('alert')).toHaveTextContent('比较条件需要有限数值');
+    await user.keyboard('{Escape}');
+    expect(screen.getByRole('dialog')).toBe(dialog);
+    expect(apply).not.toHaveBeenCalled();
+    fireEvent.pointerDown(document.body);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
   it('relocalizes an existing filter validation error while retaining draft, choices and scientific query keys', async () => {
     const columnId = 'property:logP';
     const choices = vi
@@ -160,7 +191,10 @@ describe('English workbench view and live language continuity', () => {
     const write = vi.fn().mockRejectedValue(new Error('Test-only clipboard refusal'));
     vi.stubGlobal(
       'navigator',
-      Object.assign(Object.create(navigator), { clipboard: { writeText: write } }),
+      Object.defineProperty(Object.create(navigator), 'clipboard', {
+        value: { writeText: write },
+        configurable: true,
+      }),
     );
     render(
       <TableCopyButton

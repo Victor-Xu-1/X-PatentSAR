@@ -123,6 +123,7 @@
     "frontend/src/i18n/catalogs/table.ts",
     "frontend/src/i18n/catalogs/workbench.ts",
     "frontend/src/i18n/index.ts",
+    "frontend/src/i18n/interaction.ts",
     "frontend/src/i18n/languages.ts",
     "frontend/src/i18n/locale.ts",
     "frontend/src/model/acceptanceIssues.ts",
