@@ -29,6 +29,8 @@ from patent_sar_extractor.web.admet_history import (
     write_admet_stage,
 )
 from patent_sar_extractor.web.attempts import ARTIFACTS
+from patent_sar_extractor.web.correction_models import CorrectionRequest, EditableFields
+from patent_sar_extractor.web.correction_storage import correction_source_fingerprint
 from patent_sar_extractor.web.descriptor_fields import (
     compute_descriptors,
     descriptor_engine,
@@ -42,6 +44,7 @@ from patent_sar_extractor.web.processes import (
     runtime_identity,
     runtime_identity_matches,
 )
+from patent_sar_extractor.web.property_values import effective_property_values
 from patent_sar_extractor.web.recognition_storage import RecognitionStore, crop_digest
 from patent_sar_extractor.web.storage import encode, now
 
@@ -321,6 +324,50 @@ class ReleaseObservationTests(PredictionFixture, unittest.TestCase):
         self.assertFalse(core_completed)
         self.assertEqual(self.saved_rows(), before)
         self.assertEqual({path: path.read_bytes() for path in files}, files)
+
+    def test_label_only_upgrade_preserves_manual_source_hash_values_and_audit(self):
+        _, _, source, prediction, descriptors, _, _ = self.seed_old()
+        with patch.object(core, "__version__", OLD_RELEASE):
+            document = self.service.get_correction(self.project.id, "Compound 1")
+            self.service.put_correction(
+                self.project.id,
+                "Compound 1",
+                CorrectionRequest(
+                    expected_revision=document.revision,
+                    expected_source_fingerprint=document.source_fingerprint,
+                    fields=EditableFields(
+                        **{
+                            **document.values.model_dump(),
+                            "display_id": "Reviewed original identifier",
+                            "property_overrides": {"logP": 0, "tpsa": None},
+                            "property_basis_smiles": "CCO",
+                        }
+                    ),
+                ),
+            )
+        before = self.saved_rows()
+        original = self.service.store.project(self.project.id)
+        raw = self.service.store.compound(self.project.id, "Compound 1")
+        self.assertEqual(correction_source_fingerprint(original, raw), source)
+        with patch.object(
+            self.service,
+            "refresh",
+            side_effect=AssertionError(
+                "Release changes must not replace producer identity"
+            ),
+        ):
+            item = self.service.compounds(self.project.id)[0]
+        self.assertFalse(item.correction.stale)
+        self.assertEqual(item.display_id, "Reviewed original identifier")
+        self.assertEqual(item.admet, prediction)
+        self.assertEqual(item.descriptors, descriptors)
+        values = effective_property_values(item)
+        self.assertEqual(values["logP"], 0)
+        self.assertIsNone(values["tpsa"])
+        after = self.service.store.project(self.project.id)
+        self.assertEqual(correction_source_fingerprint(after, raw), source)
+        self.assertEqual(after["snapshot"], original["snapshot"])
+        self.assertEqual(self.saved_rows(), before)
 
     def test_recognition_and_history_reject_invalid_or_scientifically_foreign_runtime(
         self,
