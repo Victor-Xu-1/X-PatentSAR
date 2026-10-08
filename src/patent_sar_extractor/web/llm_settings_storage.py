@@ -13,9 +13,9 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-import yaml
-from yaml.events import AliasEvent, CollectionEndEvent, CollectionStartEvent
-from yaml.nodes import MappingNode, ScalarNode, SequenceNode
+import yaml  # type: ignore[import-untyped]
+from yaml.events import AliasEvent, CollectionEndEvent, CollectionStartEvent  # type: ignore[import-untyped]
+from yaml.nodes import MappingNode, ScalarNode, SequenceNode  # type: ignore[import-untyped]
 
 from patent_sar_extractor.integrations.llm.config import EvidenceResolutionConfig
 

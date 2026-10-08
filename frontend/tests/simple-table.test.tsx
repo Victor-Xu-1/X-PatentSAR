@@ -28,7 +28,7 @@ describe('one simple source-bound table', () => {
       '原文',
       '', // Compact pencil header; accessible column name remains 修正.
     ]);
-    expect(screen.getByRole('columnheader', { name: '修正', exact: true })).toBeVisible();
+    expect(screen.getByRole('columnheader', { name: /^修正$/ })).toBeVisible();
     expect(screen.getByTitle('抑制等级 = ++')).toHaveTextContent('++');
     expect(screen.getByLabelText('MW 未计算')).toHaveTextContent('—');
     expect(screen.queryByText('绑定证据')).not.toBeInTheDocument();

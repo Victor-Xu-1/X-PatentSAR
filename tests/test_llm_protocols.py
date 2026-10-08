@@ -130,6 +130,20 @@ class APIProtocolTests(unittest.TestCase):
                 "openai-compatible",
                 {
                     "choices": [
+                        {
+                            "finish_reason": "stop",
+                            "message": {
+                                "content": "{}",
+                                "tool_calls": [{"id": "not-executed"}],
+                            },
+                        }
+                    ]
+                },
+            ),
+            (
+                "openai-compatible",
+                {
+                    "choices": [
                         {"finish_reason": "length", "message": {"content": "{}"}}
                     ]
                 },

@@ -48,12 +48,12 @@ def _schema_subset(value: Any) -> Any:
 
 
 def build_request(
-    config: dict,
-    messages: list,
+    config: dict[str, Any],
+    messages: list[dict[str, str]],
     model: str,
     temperature: float,
     max_tokens: int,
-    response_format: dict | None,
+    response_format: dict[str, Any] | None,
 ) -> APIRequest:
     protocol = config.get("protocol", "openai-compatible")
     mode = config.get("response_mode", "json-schema")
@@ -82,7 +82,7 @@ def build_request(
     system = "\n".join(item["content"] for item in messages if item["role"] == "system")
     ordinary = [dict(item) for item in messages if item["role"] != "system"]
     if protocol == "openai-compatible":
-        payload = {
+        payload: dict[str, Any] = {
             "model": model,
             "messages": [dict(item) for item in messages],
             "temperature": temperature,
@@ -148,21 +148,32 @@ def build_request(
     )
 
 
-def response_text(packet: dict, protocol: str) -> str:
+def _text(value: Any) -> str:
+    if not isinstance(value, str):
+        raise ValueError("API content must be plain text")
+    return value
+
+
+def response_text(packet: dict[str, Any], protocol: str) -> str:
     if protocol == "openai-compatible":
         choices = packet["choices"]
         if len(choices) != 1 or choices[0].get("finish_reason") != "stop":
             raise ValueError("LLM structured response was not complete")
-        if choices[0]["message"].get("refusal"):
+        message = choices[0]["message"]
+        if (
+            message.get("refusal")
+            or message.get("tool_calls")
+            or message.get("function_call")
+        ):
             raise ValueError("LLM refused the request")
-        return choices[0]["message"]["content"]
+        return _text(message["content"])
     if protocol == "anthropic":
         if packet.get("stop_reason") != "end_turn":
             raise ValueError("Anthropic structured response was not complete")
         parts = packet["content"]
         if len(parts) != 1 or parts[0].get("type") != "text":
             raise ValueError("Unexpected Anthropic content; no tools are executed")
-        return parts[0]["text"]
+        return _text(parts[0]["text"])
     if protocol == "gemini":
         candidates = packet["candidates"]
         if len(candidates) != 1 or candidates[0].get("finishReason") != "STOP":
@@ -170,5 +181,5 @@ def response_text(packet: dict, protocol: str) -> str:
         parts = candidates[0]["content"]["parts"]
         if any(set(item) != {"text"} for item in parts) or not parts:
             raise ValueError("Unexpected Gemini tool/thinking/media output")
-        return "".join(item["text"] for item in parts)
+        return "".join(_text(item["text"]) for item in parts)
     raise ValueError("Unsupported API response protocol")

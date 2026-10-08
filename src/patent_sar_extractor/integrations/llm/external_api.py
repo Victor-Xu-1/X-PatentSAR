@@ -85,7 +85,11 @@ class PublicHTTPSConnection(HTTPSConnection):
             addresses = socket.getaddrinfo(host, self.port, 0, socket.SOCK_STREAM)
         except socket.gaierror as error:
             raise NameResolutionError(host, self, error) from error
-        if not addresses or any(not _public_address(item[4][0]) for item in addresses):
+        if not addresses or any(
+            item[0] not in {socket.AF_INET, socket.AF_INET6}
+            or not _public_address(str(item[4][0]))
+            for item in addresses
+        ):
             raise NewConnectionError(self, "API DNS resolved to a non-public address")
         failure: OSError | None = None
         for family, kind, protocol, _, address in addresses:
