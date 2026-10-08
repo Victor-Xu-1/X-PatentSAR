@@ -60,7 +60,7 @@ export function SARPage({
         <div>
           <h1>{t('SAR 分析')}</h1>
           <details className="sar-intro">
-            <summary>{t('严格参考比较')}</summary>
+            <summary>{t('方法与范围')}</summary>
             <p>{t('按精确实验条件汇总系列证据；候选与片段结论仅供研究。')}</p>
           </details>
         </div>

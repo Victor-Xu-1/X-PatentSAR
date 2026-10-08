@@ -130,7 +130,11 @@ for (const width of [390, 800, 1672]) {
     await page
       .getByRole('combobox', { name: 'Interface language', exact: true })
       .selectOption('zh-CN');
-    await expect(report.getByRole('rowheader', { name: 'Example 5', exact: true })).toBeVisible();
+    await expect(
+      page
+        .getByRole('region', { name: '研究报告', exact: true })
+        .getByRole('rowheader', { name: 'Example 5', exact: true }),
+    ).toBeVisible();
     await page.getByRole('combobox', { name: '界面语言', exact: true }).selectOption('en');
     await page.reload();
     await expect(

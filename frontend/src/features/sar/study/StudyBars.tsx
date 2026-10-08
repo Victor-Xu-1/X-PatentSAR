@@ -16,7 +16,16 @@ export function StudyBars({ bins }: { bins: StudyBin[] }) {
       </label>
       <ul>
         {bins.map((bin, index) => (
-          <li key={index}>
+          <li
+            key={index}
+            className={
+              bin.strong
+                ? 'sar-bin-strong'
+                : ['missing', 'unsupported'].includes(bin.kind)
+                  ? 'sar-bin-unknown'
+                  : ''
+            }
+          >
             <span title={bin.kind}>{bin.label}</span>
             <meter
               min={0}

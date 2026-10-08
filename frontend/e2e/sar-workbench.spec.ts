@@ -113,6 +113,7 @@ for (const width of [390, 800, 1672]) {
       .getByRole('region', { name: 'Reference-comparison results', exact: true })
       .first();
     await expect(results.getByText('Complete', { exact: true })).toBeVisible({ timeout: 30000 });
+    await page.getByText('Study task history', { exact: true }).click();
     await expect(
       page
         .getByRole('region', { name: 'SAR jobs', exact: true })
@@ -190,6 +191,7 @@ test('current extracted task explicitly creates its separate SAR snapshot', asyn
   await expect(
     page.getByRole('heading', { name: 'Controlled extracted snapshot', exact: true }),
   ).toBeVisible();
+  await page.getByText('Single-reference comparison (advanced)', { exact: true }).click();
   await expect(
     page.getByRole('button', { name: 'Start reference comparison', exact: true }),
   ).toBeDisabled();

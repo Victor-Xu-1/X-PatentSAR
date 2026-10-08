@@ -59,7 +59,7 @@ export function DatasetWorkbench({
       {dataset.error && <SARFailure error={dataset.error} onRetry={dataset.reload} />}
       {dataset.data && (
         <>
-          <section className="sar-panel">
+          <section className="sar-panel sar-dataset-summary">
             <div className="sar-section-heading">
               <h2>{dataset.data.title}</h2>
               <button
@@ -79,14 +79,6 @@ export function DatasetWorkbench({
                 issues: dataset.data.issue_count,
               })}
             </p>
-            {dataset.data.input_row_count !== undefined && (
-              <p>
-                {t('{records} 条原始记录 · {rows} 个合并分子行', {
-                  records: dataset.data.input_row_count,
-                  rows: dataset.data.row_count,
-                })}
-              </p>
-            )}
             {dataset.data.stale && (
               <output className="sar-warning">
                 {t('数据集已过期：保留旧结果供核对，请显式创建新快照。')}
@@ -95,6 +87,14 @@ export function DatasetWorkbench({
             <SourceLinks dataset={dataset.data} />
             <details className="sar-compact">
               <summary>{t('数据集管理')}</summary>
+              {dataset.data.input_row_count !== undefined && (
+                <p>
+                  {t('{records} 条原始记录 · {rows} 个合并分子行', {
+                    records: dataset.data.input_row_count,
+                    rows: dataset.data.row_count,
+                  })}
+                </p>
+              )}
               <DeleteDataset
                 dataset={dataset.data}
                 active={active}

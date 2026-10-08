@@ -527,3 +527,34 @@
     transition: none;
   }
 }
+
+.sar-dataset-summary {
+  padding: 12px 18px;
+}
+.sar-dataset-summary .sar-section-heading {
+  margin-bottom: 4px;
+}
+.sar-dataset-summary p {
+  margin: 4px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.sar-dataset-summary .sar-compact {
+  margin: 6px 0 0;
+  padding: 0;
+}
+.sar-dataset-summary h2 {
+  font-size: 17px;
+}
+.sar-study-bars .sar-bin-unknown meter {
+  accent-color: #a2aeaa;
+}
+.sar-study-bars .sar-bin-unknown meter::-webkit-meter-optimum-value {
+  background: #a2aeaa;
+}
+.sar-study-bars .sar-bin-strong meter {
+  accent-color: #30c476;
+}
+.sar-study-bars .sar-bin-strong meter::-webkit-meter-optimum-value {
+  background: #30c476;
+}
