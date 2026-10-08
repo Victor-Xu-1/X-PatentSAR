@@ -52,8 +52,10 @@ export function SARJobs({
               onClick={() => onSelect(job.id)}
             >
               <span>
-                {dataset.metrics.find((metric) => metric.id === job.metric_id)?.name ??
-                  job.metric_id}
+                {job.kind === 'study'
+                  ? t('完整 SAR 研究')
+                  : (dataset.metrics.find((metric) => metric.id === job.metric_id)?.name ??
+                    job.metric_id)}
               </span>
               <span>{t(jobLabels[job.status])}</span>
               <time dateTime={job.created_at}>{dateText(job.created_at)}</time>
@@ -75,8 +77,10 @@ export function SARJobs({
                 active={active}
                 scope={scope}
                 title={
-                  dataset.metrics.find((metric) => metric.id === job.metric_id)?.name ??
-                  job.metric_id
+                  job.kind === 'study'
+                    ? t('完整 SAR 研究')
+                    : (dataset.metrics.find((metric) => metric.id === job.metric_id)?.name ??
+                      job.metric_id)
                 }
                 onRemoved={onRemoved}
               />

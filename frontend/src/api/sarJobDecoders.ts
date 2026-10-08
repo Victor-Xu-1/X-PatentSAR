@@ -9,7 +9,7 @@ import {
   ContractError,
   positive,
 } from './validation';
-import { checkPage, hex, nullOr } from './sarDecoders';
+import { additions, checkPage, hex, nullOr } from './sarDecoders';
 import type { Decoder } from './validation';
 import type { Pair, SARJob } from './sarTypes';
 
@@ -34,7 +34,7 @@ export const decodeSARJob: Decoder<SARJob> = (v, p = '$') => {
   const result = job(v, p);
   if (result.processed > result.total || result.matched > result.processed)
     throw new ContractError(p);
-  return result;
+  return { ...result, ...additions(v, { kind: oneOf(['reference', 'study']) }, p) };
 };
 export const decodeSARJobs = object({ items: array(decodeSARJob), total: count });
 const pair = object({
@@ -58,7 +58,19 @@ export const decodePair: Decoder<Pair> = (v, p = '$') => {
       !['better', 'worse', 'equal'].includes(result.comparison))
   )
     throw new ContractError(`${p}.fold_change`);
-  return result;
+  return {
+    ...result,
+    ...additions(
+      v,
+      {
+        region_id: nullOr(string),
+        fragment_id: nullOr(string),
+        variable_atom_indices: array(count),
+        attachment_mapping: array(array(count)),
+      },
+      p,
+    ),
+  };
 };
 const pairs = object({
   items: array(decodePair),

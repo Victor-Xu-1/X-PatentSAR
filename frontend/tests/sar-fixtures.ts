@@ -7,6 +7,13 @@ import type {
   Region,
   SARJob,
 } from '../src/api/sarTypes';
+import type {
+  StudyContext,
+  StudyFragment,
+  StudyProfile,
+  StudyReport,
+  StudyRow,
+} from '../src/api/sarStudyTypes';
 export const sarDataset: Dataset = {
   id: 'dataset-control',
   title: '原始数据 draft',
@@ -140,4 +147,132 @@ export const csvPreview: CSVPreview = {
   suggested_id: 'compound_id',
   suggested_smiles: 'smiles',
   suggested_activities: ['value'],
+};
+export const studyContext: StudyContext = {
+  id: 'e'.repeat(64),
+  metric_id: 'metric-control',
+  name: 'IC50 原文',
+  unit: 'nM',
+  context: { assay: 'raw assay', target: 'raw target', cell_line: null },
+  molecule_count: 2,
+  observation_count: 3,
+  distinct_value_count: 2,
+  value_samples: ['<10', '5'],
+};
+export const studyJob: SARJob = { ...sarJob, id: 'study-control', kind: 'study' };
+export const namedRegion: Region = { ...sarRegion, name: 'R1 用户原文', kind: 'variable' };
+export const coreRegion: Region = {
+  ...sarRegion,
+  id: '8'.repeat(32),
+  name: 'Core 原文',
+  kind: 'core',
+  atom_indices: [0],
+};
+export const studyProfile: StudyProfile = {
+  dataset_id: sarDataset.id,
+  dataset_revision: 2,
+  contexts: [studyContext],
+  regions: [namedRegion, coreRegion],
+};
+export const studyRow: StudyRow = {
+  molecule_id: sarMolecule.id,
+  label: sarMolecule.label,
+  eligible: true,
+  scaffold_id: 'core/control',
+  values: { [studyContext.id]: ['<10', '<10'] },
+  activity_status: { [studyContext.id]: 'indeterminate' },
+  strong: false,
+  properties: { molecular_weight: 120, Solubility_AqSolDB: null },
+  property_origins: { molecular_weight: 'rdkit_computed', Solubility_AqSolDB: 'manual_null' },
+  predictions: { hERG: 0.24 },
+  prediction_origin: 'imported',
+  pareto_front: 1,
+  candidate_status: 'selected',
+  priority_group: 1,
+  selection_order: 1,
+  coverage: 0.5,
+  reasons: ['raw_reason 原文'],
+};
+export const studyFragment: StudyFragment = {
+  id: 'fragment/control',
+  smiles: '[1*]O',
+  molecule_ids: [sarMolecule.id],
+  molecule_count: 1,
+  strong_count: 1,
+  bins: [{ label: '<10', kind: 'censored', observations: 2, molecules: 1, strong: true }],
+  better: 0,
+  worse: 1,
+  indeterminate: 1,
+  missing: 0,
+  is_reference: true,
+};
+export const studyReport: StudyReport = {
+  schema_version: 1,
+  dataset_id: sarDataset.id,
+  dataset_revision: 2,
+  title: '研究 original draft',
+  input_sha256: studyJob.input_sha256,
+  engine_sha256: '4'.repeat(64),
+  research_only: true,
+  article_algorithm_reproduced: false,
+  molecule_count: 3,
+  eligible_count: 2,
+  observation_count: 4,
+  strict_pair_count: 2,
+  contexts: [studyContext],
+  matched_pair_count: 1,
+  comparable_pair_count: 1,
+  policies: [
+    {
+      context_id: studyContext.id,
+      direction: 'lower',
+      grade_order: [],
+      strong_threshold: 10,
+      threshold_inclusive: true,
+    },
+  ],
+  distributions: [
+    {
+      context_id: studyContext.id,
+      bins: studyFragment.bins,
+      observed_molecules: 2,
+      observations: 3,
+      missing_molecules: 1,
+      unresolved_molecules: 1,
+      strong_molecules: 1,
+    },
+  ],
+  scaffolds: [
+    {
+      id: 'core/control',
+      smiles: 'C',
+      molecule_count: 2,
+      strong_count: 1,
+      bins: studyFragment.bins,
+      molecule_ids: [sarMolecule.id],
+      descriptive_only: true,
+      assignment_kind: 'confirmed_core',
+      core_region_id: coreRegion.id,
+    },
+  ],
+  regions: [
+    {
+      region: namedRegion,
+      reference_label: sarMolecule.label,
+      reference_fragment_id: studyFragment.id,
+      fixed_background_sha256: '5'.repeat(64),
+      matched: 1,
+      not_matched: 0,
+      ambiguous: 1,
+      ineligible: 0,
+      comparable: 1,
+      no_variation: true,
+      independent_backgrounds: 1,
+      fragments: [studyFragment],
+    },
+  ],
+  candidates: [studyRow],
+  rows: [],
+  warnings: ['raw_warning 原文'],
+  candidate_policy: 'strict-context-pareto-v1',
 };

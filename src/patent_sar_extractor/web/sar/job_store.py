@@ -8,7 +8,7 @@ import uuid
 
 from ..errors import WebError
 from ..storage import encode, now
-from .models import JobList, Pair, PairPage, SARJob
+from .models import Dataset, JobList, Pair, PairPage, SARJob
 from .store import SARStore, dataset_row, job_row
 
 
@@ -198,8 +198,18 @@ class Jobs:
                 ) from error
         return value
 
-    def publish(self, identifier: str, pairs: list[Pair], total: int) -> SARJob:
-        if len(pairs) != total or len({item.molecule_id for item in pairs}) != total:
+    def publish(
+        self,
+        identifier: str,
+        pairs: list[Pair],
+        total: int,
+        *,
+        report_sha256: str | None = None,
+    ) -> SARJob:
+        identities = {(item.region_id, item.molecule_id) for item in pairs}
+        if len(identities) != len(pairs) or (
+            report_sha256 is None and len(pairs) != total
+        ):
             raise WebError(
                 502,
                 "sar_result_incomplete",
@@ -208,10 +218,18 @@ class Jobs:
         with self.store.connect(write=True) as connection:
             row = job_row(connection, identifier)
             value = SARJob.model_validate_json(row["payload"])
+            dataset = Dataset.model_validate_json(
+                dataset_row(connection, value.dataset_id)["metadata"]
+            )
+            expected_pairs = (
+                total - dataset.row_count if value.kind == "study" else total
+            )
             if (
                 row["status"] != "running"
                 or row["cancel_requested"]
                 or value.total != total
+                or len(pairs) != expected_pairs
+                or (value.kind == "study") != (report_sha256 is not None)
             ):
                 raise WebError(
                     409,
@@ -232,6 +250,12 @@ class Jobs:
                 "UPDATE jobs SET status='complete',payload=? WHERE id=?",
                 (value.model_dump_json(), identifier),
             )
+            if report_sha256 is not None:
+                spec = json.loads(row["spec"])
+                spec["report_sha256"] = report_sha256
+                connection.execute(
+                    "UPDATE jobs SET spec=? WHERE id=?", (encode(spec), identifier)
+                )
         return value
 
     def pairs(self, identifier: str, page: int, page_size: int) -> PairPage:
@@ -252,8 +276,11 @@ class Jobs:
                 (identifier, page_size, (page - 1) * page_size),
             )
             items = [Pair.model_validate_json(row[0]) for row in rows]
+            pair_count = connection.execute(
+                "SELECT COUNT(*) FROM pairs WHERE job_id=?", (identifier,)
+            ).fetchone()[0]
         return PairPage(
-            items=items, total=value.total, page=page, page_size=page_size, job=value
+            items=items, total=pair_count, page=page, page_size=page_size, job=value
         )
 
     def remove(self, identifier: str) -> None:

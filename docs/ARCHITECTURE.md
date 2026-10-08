@@ -38,6 +38,38 @@ acceptance is independent. A SAR startup/store fault makes this module unavailab
 not the original PDF workflow. SAR database/report/engine versions are independent
 constants in `contracts.py`; product PR labels do not change core scientific epochs.
 
+The optional full study is another view of this same explicit SAR job family,
+not another queue/database/process service or an automatic extraction stage.
+`study_models.py` owns the additive request/profile/report contract; `admission.py`
+owns nonce/cleanup/input publication for both reference and full-study jobs.
+`study_admission.py` selects exact condition identities and named immutable
+variable/core definitions. `workers/study_*` run only inside the existing SAR
+carrier, with bounded resumable calculations and strict comparison chunks.
+`study_publication.py` checks every source row and region/candidate pair before
+the complete-result transaction stores a report receipt. `study_results.py`
+verifies the exact report bytes and applies whole-dataset filters before paging.
+
+The report contains exact-context activity distributions, descriptive Murcko or
+user-confirmed core groups, transparent research candidate comparisons, named
+region fragment distributions and a natural-original-ID molecule table. Fragment
+identity retains mapped fixed attachment ports; region ambiguity is never resolved
+by taking the first embedding. No-variation regions remain visible. A region
+defines one independent fixed background; its edges are not independent repeats.
+Measured grades/intervals/scalars, computed properties and provided predictions
+stay separate. Five descriptors reuse `descriptor_fields.compute_descriptors`;
+explicit manual nulls and out-of-domain computation remain unknown. SAR never
+loads ADMET/OCSR or substitutes a prediction for patent evidence.
+
+The study candidate policy is explicit strict-context Pareto/evidence/diversity
+prioritization for a user-selected experimental objective. It is not the author's
+private score or the default post-extraction Lead policy. Same-grade ties are
+preserved and incomplete risk data is not safety. The original Lead cache is not
+read/written as an alternative SAR acceptance path. Report exports retain all
+rows and conditions; SDF contains only eligible complete structures, with all
+excluded rows still present in CSV/JSON. Private snapshots and original edits
+remain immutable. Database schema2 is unchanged; old single-reference reports
+remain readable, while a changed scientific-engine hash requires a new run.
+
 ```mermaid
 flowchart LR
     I[Original PDF and SHA] --> C[Classify and shared OCR observations]

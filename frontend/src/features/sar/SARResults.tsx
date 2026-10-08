@@ -11,15 +11,7 @@ import { PairTable } from './PairTable';
 import { MutationNotice } from './MutationNotice';
 import { MoleculeEvidence } from './MoleculeEvidence';
 import { useSARMutation } from './useSARMutation';
-
-function download(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.click();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
-}
+import { downloadSAR as download } from './download';
 export function SARResults({
   dataset,
   jobId,

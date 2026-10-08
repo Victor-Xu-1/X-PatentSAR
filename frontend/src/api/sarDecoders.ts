@@ -36,6 +36,18 @@ export const recordOf =
 export function unique(values: readonly (string | number)[], path: string) {
   if (new Set(values).size !== values.length) throw new ContractError(path);
 }
+export function additions<T extends Record<string, Decoder<unknown>>>(
+  v: unknown,
+  shape: T,
+  p = '$',
+) {
+  const input = v as Record<string, unknown>;
+  return Object.fromEntries(
+    Object.entries(shape)
+      .filter(([key]) => Object.hasOwn(input, key))
+      .map(([key, decode]) => [key, decode(input[key], p + '.' + key)]),
+  ) as Partial<{ [K in keyof T]: ReturnType<T[K]> }>;
+}
 export function checkPage<T>(
   value: { items: T[]; total: number; page: number; page_size: number },
   path: string,
@@ -60,7 +72,7 @@ const observation = object({
   source_row: nullOr(count),
   source_kind: oneOf(['patent', 'imported', 'manual']),
 });
-export const decodeMolecule: Decoder<Molecule> = object({
+const molecule = object({
   id: string,
   label: string,
   smiles: nullOr(string),
@@ -71,6 +83,19 @@ export const decodeMolecule: Decoder<Molecule> = object({
   observations: array(observation),
   source_compound_id: nullOr(string),
   source_page: nullOr(positive),
+});
+export const decodeMolecule: Decoder<Molecule> = (v, p = '$') => ({
+  ...molecule(v, p),
+  ...additions(
+    v,
+    {
+      properties: recordOf(nullOr(number), 6),
+      predictions: recordOf(nullOr(number), 11),
+      property_origins: recordOf(string, 6),
+      prediction_origin: string,
+    },
+    p,
+  ),
 });
 const dataset = object({
   id: string,
@@ -175,5 +200,8 @@ export const decodeRegion: Decoder<Region> = (v, p = '$') => {
   const result = region(v, p);
   if (!result.atom_indices.length || result.atom_indices.length > 512) throw new ContractError(p);
   unique(result.atom_indices, `${p}.atom_indices`);
-  return result;
+  const named = additions(v, { name: string, kind: oneOf(['variable', 'core']) }, p);
+  if (named.name !== undefined && (!named.name.length || named.name.length > 40))
+    throw new ContractError(p + '.name');
+  return { ...result, ...named };
 };

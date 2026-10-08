@@ -7,6 +7,8 @@ import sys
 import time
 from pathlib import Path
 
+from patent_sar_extractor.core.sar.errors import SARInputError
+
 
 def _pair(reference, candidate, region, request, matcher):
     from patent_sar_extractor.core.sar.statistics import compare_observations
@@ -68,6 +70,10 @@ def analyse(root: Path, input_sha256: str) -> dict:
 
     safe = SafeFiles(root)
     packet = safe.json("input.json", optional=False)
+    if isinstance(packet, dict) and packet.get("schema") == 2:
+        from .study_analysis import analyse_study
+
+        return analyse_study(root, input_sha256)
     if (
         not isinstance(packet, dict)
         or packet.get("schema") != 1
@@ -163,6 +169,25 @@ def main() -> int:
             raise ValueError("request location")
         result = analyse(root, request["input_sha256"])
         print(json.dumps({"ok": True, "result": result}, allow_nan=False))
+        return 0
+    except SARInputError as error:
+        from patent_sar_extractor.web.sar.engine import engine_identity
+
+        # A typed domain failure is a successful protocol exchange, NOT a
+        # successful analysis. The sole parent publishes an explicit failed job.
+        print(
+            json.dumps(
+                {
+                    "ok": True,
+                    "result": {
+                        "input_sha256": request["input_sha256"],
+                        "engine_sha256": engine_identity(),
+                        "failure_code": error.code,
+                    },
+                },
+                allow_nan=False,
+            )
+        )
         return 0
     except (
         ValueError,

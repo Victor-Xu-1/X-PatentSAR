@@ -48,6 +48,22 @@ def execute(queue: SARQueue, row: dict, runner: BoundedAnalysisRunner) -> None:
             ),
         )
         if (
+            result.get("input_sha256") == value.input_sha256
+            and result.get("engine_sha256") == spec["engine_sha256"]
+            and "failure_code" in result
+        ):
+            if result["failure_code"] == "study_ranking_limit":
+                raise WebError(
+                    413,
+                    "sar_study_ranking_limit",
+                    "More than 5000 rows qualify for candidate ranking. No partial ranking was published; choose an explicit smaller dataset.",
+                )
+            raise WebError(
+                422,
+                "sar_study_input_invalid",
+                "Study input or checkpoint could not be verified. Source records and sealed work were retained; inspect the dataset or create a new analysis.",
+            )
+        if (
             result.get("input_sha256") != value.input_sha256
             or result.get("engine_sha256") != spec["engine_sha256"]
             or type(result.get("chunks")) is not int
@@ -59,7 +75,13 @@ def execute(queue: SARQueue, row: dict, runner: BoundedAnalysisRunner) -> None:
             )
         pairs = collect(safe, value, result["chunks"], spec["engine_sha256"])
         queue.service.current(value.dataset_id)
-        queue.jobs.publish(value.id, pairs, value.total)
+        if value.kind == "study":
+            from .study_publication import verify_study
+
+            report_hash = verify_study(safe, value, spec, result, pairs)
+            queue.jobs.publish(value.id, pairs, value.total, report_sha256=report_hash)
+        else:
+            queue.jobs.publish(value.id, pairs, value.total)
     except WebError as error:
         cancelled = queue.jobs.record(value.id)["cancel_requested"]
         queue.jobs.update(
@@ -120,7 +142,7 @@ def execute(queue: SARQueue, row: dict, runner: BoundedAnalysisRunner) -> None:
 
 
 def collect(safe, value: SARJob, count: int, identity: str) -> list[Pair]:
-    if not 0 <= count <= 1000:
+    if not 0 <= count <= (3000 if value.kind == "study" else 1000):
         raise WebError(502, "sar_result_invalid", "SAR result chunk count is invalid.")
     output = []
     for index in range(count):

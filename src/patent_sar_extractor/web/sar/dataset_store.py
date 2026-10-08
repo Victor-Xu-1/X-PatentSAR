@@ -169,6 +169,17 @@ class Datasets:
             )
         return Region.model_validate_json(row[0])
 
+    def regions(self, dataset_id: str) -> list[Region]:
+        with self.store.connect() as connection:
+            dataset_row(connection, dataset_id)
+            return [
+                Region.model_validate_json(row[0])
+                for row in connection.execute(
+                    "SELECT payload FROM regions WHERE dataset_id=? ORDER BY rowid LIMIT 1000",
+                    (dataset_id,),
+                )
+            ]
+
     def save_region(self, region: Region) -> Region:
         with self.store.connect(write=True) as connection:
             dataset_row(connection, region.dataset_id)

@@ -3,13 +3,11 @@ import { useTranslation } from '../../i18n';
 import { sourceHash } from './presentation';
 export function SourceLinks({ dataset, molecule }: { dataset: Dataset; molecule?: Molecule }) {
   const { t } = useTranslation();
-  const project = sourceHash(dataset, molecule);
+  const project = dataset.source_kind === 'project' ? sourceHash(dataset, molecule) : null;
   const pages = Array.from(
     new Set([
       ...(molecule?.source_page ? [molecule.source_page] : []),
-      ...(molecule?.observations.flatMap((o) =>
-        o.source_kind === 'patent' && o.source_page ? [o.source_page] : [],
-      ) ?? []),
+      ...(molecule?.observations.flatMap((o) => (o.source_page ? [o.source_page] : [])) ?? []),
     ]),
   );
   return (
@@ -21,7 +19,11 @@ export function SourceLinks({ dataset, molecule }: { dataset: Dataset; molecule?
             {t('原文第 {page} 页', { page })}
           </a>
         ))}
-      {molecule && (!project || !pages.length) && <small>{t('未提供原文页码')}</small>}
+      {!project &&
+        pages.map((page) => (
+          <small key={page}>{t('PDF 来源页 {page}（未附 PDF）', { page })}</small>
+        ))}
+      {molecule && !pages.length && <small>{t('未提供原文页码')}</small>}
     </span>
   );
 }

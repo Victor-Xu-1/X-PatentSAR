@@ -15,6 +15,13 @@ from tools.prepare_browser_fixture import prepare
 class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
     def test_selected_scope_chooses_sar_without_changing_other_fixture_modes(self):
         self.assertEqual(fixture_mode({PREFIX + "sar-workbench.spec.ts"}), "sar")
+        self.assertEqual(fixture_mode({PREFIX + "sar-study.spec.ts"}), "sar")
+        self.assertEqual(
+            fixture_mode(
+                {PREFIX + "sar-workbench.spec.ts", PREFIX + "sar-study.spec.ts"}
+            ),
+            "sar",
+        )
         self.assertEqual(fixture_mode({PREFIX + "topbar.spec.ts"}), "read-only")
         self.assertEqual(
             fixture_mode({PREFIX + "llm-settings.spec.ts"}), "llm-settings"

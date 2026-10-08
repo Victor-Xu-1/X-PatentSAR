@@ -83,7 +83,42 @@ def merge_identical(records: list[tuple[Molecule, str | None]]) -> list[Molecule
                     "sar_observation_limit",
                     "One identifier has more than 2000 observations; none were truncated.",
                 )
-            output.append(first.model_copy(update={"observations": observations}))
+            evidence = {}
+            origins = dict(first.property_origins)
+            for field in ("properties", "predictions"):
+                merged = {}
+                for key in {key for item, _ in group for key in getattr(item, field)}:
+                    supplied = [
+                        getattr(item, field)[key]
+                        for item, _ in group
+                        if key in getattr(item, field)
+                    ]
+                    merged[key] = (
+                        supplied[0]
+                        if all(value == supplied[0] for value in supplied)
+                        else None
+                    )
+                    if (
+                        field == "properties"
+                        and merged[key] is None
+                        and len(set(supplied)) > 1
+                    ):
+                        origins[key] = "conflicting_imported"
+                evidence[field] = merged
+            if any(
+                len({item.predictions.get(key) for item, _ in group}) > 1
+                for key in evidence["predictions"]
+            ):
+                evidence["prediction_origin"] = "conflicting_imported"
+            output.append(
+                first.model_copy(
+                    update={
+                        "observations": observations,
+                        "property_origins": origins,
+                        **evidence,
+                    }
+                )
+            )
         else:
             for item, _ in group:
                 item.eligible = False

@@ -5,14 +5,10 @@ from __future__ import annotations
 import json
 import sqlite3
 import threading
-import uuid
-from importlib.metadata import version
 
-from ...contracts import product_ref
 from ..analysis_process import BoundedAnalysisRunner
 from ..errors import WebError
-from ..storage import now
-from .assets import atomic_json, digest
+from .admission import existing, publish
 from .engine import engine_identity
 from .execution import execute
 from .job_store import Jobs
@@ -114,29 +110,15 @@ class SARQueue:
             self.retained_lease = None
 
     def enqueue(self, dataset_id: str, request: AnalysisRequest) -> SARJob:
-        if self.retained_lease or self.recovery_blocked:
-            raise WebError(
-                409,
-                "sar_process_unverified",
-                "Resolve previous SAR worker ownership before starting another analysis.",
-            )
-        with self.service.store.connect() as connection:
-            if connection.execute(
-                "SELECT 1 FROM jobs WHERE status NOT IN ('queued','running') AND json_extract(payload,'$.started_at') IS NOT NULL AND cleanup_verified=0 LIMIT 1"
-            ).fetchone():
-                raise WebError(
-                    409,
-                    "sar_process_unverified",
-                    "Previous started SAR attempt has no verified cleanup.",
-                )
-        request_hash = digest([dataset_id, request.model_dump(exclude={"request_id"})])
-        old = self.jobs.existing(request.request_id, request_hash)
+        old, request_hash = existing(self, dataset_id, request)
         if old:
-            return self.view(old.id)
+            return old
         dataset = self.service.current(dataset_id, request.expected_dataset_revision)
         region = self.service.datasets.region(request.region_id, dataset_id)
-        if region.dataset_revision != dataset.revision or not any(
-            metric.id == request.metric_id for metric in dataset.metrics
+        if (
+            region.kind != "variable"
+            or region.dataset_revision != dataset.revision
+            or not any(metric.id == request.metric_id for metric in dataset.metrics)
         ):
             raise WebError(
                 422,
@@ -158,66 +140,29 @@ class SARQueue:
                 "sar_pool_small",
                 "At least two source records are needed for comparison.",
             )
-        identifier = uuid.uuid4().hex
-        identity = engine_identity()
-        packet = {
-            "schema": 1,
-            "job_id": identifier,
-            "engine_sha256": identity,
-            "producer": {"product": product_ref(), "rdkit_version": version("rdkit")},
-            "dataset": dataset.model_dump(),
-            "molecules": [item.model_dump() for item in molecules],
-            "region": region.model_dump(),
-            "request": request.model_dump(),
-        }
-        input_hash = digest(packet)
-        root = self.service.assets.area("results") / identifier
-        self.service.current(dataset_id, dataset.revision)
-        value = SARJob(
-            id=identifier,
-            dataset_id=dataset_id,
-            region_id=region.id,
-            metric_id=request.metric_id,
-            status="queued",
-            total=len(molecules) - 1,
-            created_at=now(),
-            input_sha256=input_hash,
-        )
-        value = self.jobs.create(
-            value,
-            request.request_id,
+        return publish(
+            self,
+            dataset,
+            molecules,
+            request,
             request_hash,
-            {
-                "engine_sha256": identity,
-                "producer": packet["producer"],
-                "attempt_id": uuid.uuid4().hex,
-                "request": request.model_dump(),
-            },
-            str(root),
+            regions=[region],
+            kind="reference",
+            metric_id=request.metric_id,
         )
-        if value.id != identifier:
-            return self.view(value.id)
-        try:
-            # The admitted location is authoritative even if settings change.
-            root = self.service.assets.job_files(str(root), identifier).root
-            atomic_json(root, "input.json", packet)
-            self.service.current(dataset_id, dataset.revision)
-            self.jobs.prepared(identifier)
-        except (WebError, OSError, ValueError):
-            self.jobs.update(
-                identifier,
-                status="failed",
-                error_code="sar_input_unpublished",
-                error_message="SAR input was not published; no worker was started.",
-            )
-            raise
-        self.wake.set()
-        return value
+
+    def study(self, dataset_id: str, request) -> SARJob:
+        from .study_admission import enqueue_study
+
+        return enqueue_study(self, dataset_id, request)
 
     def view(self, identifier: str) -> SARJob:
         value = self.jobs.get(identifier)
         value.stale = self.service.dataset(value.dataset_id).stale
         row = self.jobs.record(identifier)
+        value.stale = (
+            value.stale or json.loads(row["spec"])["engine_sha256"] != engine_identity()
+        )
         if not row["ready"]:
             return value
         safe = self.service.assets.job_files(row["root"], identifier)

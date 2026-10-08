@@ -40,7 +40,11 @@ class SARService:
         if value.source_project_id:
             try:
                 value.stale = project_revision(
-                    self.workspace, value.source_project_id
+                    self.workspace,
+                    value.source_project_id,
+                    include_research=(
+                        self.datasets.source_revision(identifier) or ""
+                    ).startswith("research2:"),
                 ) != self.datasets.source_revision(identifier)
             except WebError:
                 value.stale = True
@@ -62,7 +66,13 @@ class SARService:
         return value
 
     def from_csv(self, request: CSVMapping) -> Dataset:
-        request_hash = digest(request.model_dump(exclude={"request_id"}))
+        fields = request.model_dump(exclude={"request_id"})
+        # New neutral optional roles do not change an already-published nonce's
+        # meaning. Nonempty mappings remain part of its exact identity.
+        for key in ("source_page_column", "property_columns", "prediction_columns"):
+            if not fields[key]:
+                fields.pop(key)
+        request_hash = digest(fields)
         existing = self.datasets.existing(request.request_id, request_hash)
         if existing:
             return self.dataset(existing.id)
@@ -148,7 +158,20 @@ class SARService:
                 "Region must refer to the exact eligible snapshot graph.",
             )
         try:
-            attachments = validate_region(molecule.molfile, request.atom_indices)
+            if request.kind == "core":
+                from ...core.sar.molecules import read_molfile
+                from ...core.sar.regions import attachment_groups
+                from ...core.sar.study_cores import compile_core
+
+                compile_core(molecule.molfile, request.atom_indices)
+                groups = attachment_groups(
+                    read_molfile(molecule.molfile), frozenset(request.atom_indices)
+                )
+                attachments = sum(
+                    len(key) * len(values) for key, values in groups.items()
+                )
+            else:
+                attachments = validate_region(molecule.molfile, request.atom_indices)
         except ValueError as error:
             raise WebError(
                 422,
@@ -162,6 +185,8 @@ class SARService:
                 dataset.revision,
                 molecule.graph_sha256,
                 sorted(request.atom_indices),
+                request.name,
+                request.kind,
             ]
         )[:32]
         return self.datasets.save_region(
@@ -174,5 +199,7 @@ class SARService:
                 atom_indices=sorted(request.atom_indices),
                 attachment_count=attachments,
                 created_at=now(),
+                name=request.name,
+                kind=request.kind,
             )
         )
