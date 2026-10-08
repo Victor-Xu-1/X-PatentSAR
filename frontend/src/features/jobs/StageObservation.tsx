@@ -43,6 +43,11 @@ export function StageObservation({
         </small>
       </summary>
       <div className="stage-observation-detail">
+        {stage?.repair && (
+          <p>
+            来源区域 {stage.repair.regions} · 待修复 {stage.repair.unresolved}
+          </p>
+        )}
         {resourceWait && (
           <>
             <p>

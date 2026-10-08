@@ -22,6 +22,7 @@ export function JobActions({
   compact?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
+  const [submittingRun, setSubmittingRun] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [cancelConfirm, setCancelConfirm] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -35,12 +36,33 @@ export function JobActions({
     job?.can_resume === true &&
     job.project_id === project?.id &&
     (job.status === 'interrupted' || job.status === 'failed' || job.status === 'cancelled');
-  async function operate(action: 'run' | 'resume' | 'cancel') {
-    if (!project || inFlight.current) return;
-    if (action !== 'cancel' && (!canStart || (action === 'resume' && !canResume))) return;
+  const recoveryHint =
+    job?.llm_recovery?.status === 'blocked' ||
+    (job?.llm_recovery?.can_reauthorize === true && canResume && !running);
+  function acquire() {
+    if (inFlight.current) return false;
     inFlight.current = true;
     setBusy(true);
     setError(null);
+    return true;
+  }
+  function release() {
+    inFlight.current = false;
+    setBusy(false);
+  }
+  const recoveryControls = {
+    eligible: canResume && project?.pdf.available === true && !awaitingResume,
+    disabled: busy,
+    acquire,
+    release,
+    awaitRefresh: () => setSubmittedResume(job),
+    onChange,
+  };
+  async function operate(action: 'run' | 'resume' | 'cancel') {
+    if (!project || inFlight.current) return;
+    if (action !== 'cancel' && (!canStart || (action === 'resume' && !canResume))) return;
+    if (!acquire()) return;
+    setSubmittingRun(action === 'run');
     try {
       if (action === 'cancel' && job) await api.cancelJob(job.id);
       else await api.createJob(project.id, action === 'resume' ? (job?.id ?? null) : null);
@@ -51,8 +73,8 @@ export function JobActions({
       if (action === 'resume' && e instanceof ApiError && e.uncertain) setSubmittedResume(job);
       setError(e instanceof Error ? e : new Error('任务操作失败。'));
     } finally {
-      inFlight.current = false;
-      setBusy(false);
+      setSubmittingRun(false);
+      release();
     }
   }
   return (
@@ -94,7 +116,7 @@ export function JobActions({
                 onClick={() => void operate('run')}
               >
                 <Play size={14} />
-                {busy ? '正在提交…' : '运行提取'}
+                {submittingRun ? '正在提交…' : '运行提取'}
               </button>
             )}
           </>
@@ -104,19 +126,19 @@ export function JobActions({
             type="button"
             className="toolbar-button"
             aria-label="任务详情"
-            title="任务详情"
+            title={recoveryHint ? 'API 待核对，查看任务详情' : '任务详情'}
             onClick={() => setDetailsOpen(true)}
           >
-            <MoreHorizontal size={14} />
+            {recoveryHint ? 'API 待核对' : <MoreHorizontal size={14} />}
           </button>
         )}
       </div>
       {error && <ErrorNotice error={error} onRetry={onChange} />}
-      {job && !compact && <JobRecord job={job} />}
+      {job && !compact && <JobRecord job={job} recoveryControls={recoveryControls} />}
       {job && detailsOpen && (
-        <Dialog title="任务详情" onClose={() => setDetailsOpen(false)}>
+        <Dialog title="任务详情" onClose={() => setDetailsOpen(false)} busy={busy}>
           <div className="dialog-body">
-            <JobRecord job={job} expanded />
+            <JobRecord job={job} expanded recoveryControls={recoveryControls} />
           </div>
         </Dialog>
       )}

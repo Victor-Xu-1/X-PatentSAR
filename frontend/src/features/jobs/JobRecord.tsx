@@ -3,8 +3,18 @@ import { ChevronDown } from 'lucide-react';
 import { dateText } from '../../model/presentation';
 import { jobRecordSummary } from '../../model/jobPresentation';
 import { StageStrip } from './StageStrip';
+import { LLMRecovery } from './LLMRecovery';
+import type { LLMRecoveryControls } from './LLMRecovery';
 
-export function JobRecord({ job, expanded = false }: { job: Job; expanded?: boolean }) {
+export function JobRecord({
+  job,
+  expanded = false,
+  recoveryControls,
+}: {
+  job: Job;
+  expanded?: boolean;
+  recoveryControls?: LLMRecoveryControls;
+}) {
   const summary = jobRecordSummary(job);
   return (
     <>
@@ -30,6 +40,7 @@ export function JobRecord({ job, expanded = false }: { job: Job; expanded?: bool
             ))}
           </dl>
           <StageStrip job={job} />
+          <LLMRecovery job={job} controls={recoveryControls} />
           {job.error && (
             <section className="job-failure-details" aria-label="失败详情">
               <h3>失败详情</h3>
