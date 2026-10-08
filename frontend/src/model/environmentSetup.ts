@@ -1,3 +1,4 @@
+import { UiError } from '../i18n';
 import type {
   EnvironmentCatalog,
   EnvironmentComponent,
@@ -16,10 +17,10 @@ export function environmentSetupComponents(catalog: EnvironmentCatalog): Environ
     ids.length !== catalog.components.length ||
     new Set(ids).size !== ids.length
   )
-    throw new Error('服务端未提供有效的完整部署计划，请刷新或更新匹配的后端。');
+    throw new UiError('服务端未提供有效的完整部署计划，请刷新或更新匹配的后端。');
   const plan = selectedEnvironmentComponents(catalog.components, ids);
   if (plan.length !== ids.length || plan.some((component, index) => component.id !== ids[index]))
-    throw new Error('服务端完整部署计划未包含正确顺序的全部前置依赖。');
+    throw new UiError('服务端完整部署计划未包含正确顺序的全部前置依赖。');
   return plan;
 }
 

@@ -1,3 +1,4 @@
+import { UiError } from '../i18n';
 import { decodeEnvironmentOperationId, decodeEnvironmentRequest } from '../api/environmentDecoders';
 import { count, object, string } from '../api/validation';
 import type {
@@ -13,7 +14,7 @@ export type PendingEnvironment =
 function boundedText(value: unknown, path?: string): string {
   const result = string(value, path);
   if (!result || result.length > 512 || hasEnvironmentControlCharacters(result))
-    throw new Error('恢复记录无效');
+    throw new UiError('恢复记录无效');
   return result;
 }
 function settingsIntent(value: unknown): Extract<PendingEnvironment, { kind: 'settings' }> {
@@ -35,7 +36,7 @@ export function readPendingEnvironment(): {
   try {
     const raw = window.sessionStorage.getItem(pendingEnvironmentKey);
     if (!raw) return { pending: null, error: null };
-    if (raw.length > 16_384) throw new Error('恢复记录过大');
+    if (raw.length > 16_384) throw new UiError('恢复记录过大');
     const value = JSON.parse(raw) as unknown;
     const kind = object({ kind: string })(value).kind;
     const pending: PendingEnvironment =
@@ -50,13 +51,15 @@ export function readPendingEnvironment(): {
                   .operation_id,
               }
             : (() => {
-                throw new Error('未知恢复记录');
+                throw new UiError('未知恢复记录');
               })();
     return { pending, error: null };
   } catch {
     return {
       pending: null,
-      error: new Error('恢复信息无法读取，未执行任何操作。请先检查配置状态，再确认清除损坏记录。'),
+      error: new UiError(
+        '恢复信息无法读取，未执行任何操作。请先检查配置状态，再确认清除损坏记录。',
+      ),
     };
   }
 }
@@ -64,7 +67,7 @@ export function persistPendingEnvironment(pending: PendingEnvironment): void {
   try {
     window.sessionStorage.setItem(pendingEnvironmentKey, JSON.stringify(pending));
   } catch {
-    throw new Error('无法保存环境操作的恢复信息，未发送请求。请允许本地站点的会话存储后再试。');
+    throw new UiError('无法保存环境操作的恢复信息，未发送请求。请允许本地站点的会话存储后再试。');
   }
 }
 export function clearPendingEnvironment(): void {

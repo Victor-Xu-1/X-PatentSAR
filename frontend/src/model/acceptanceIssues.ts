@@ -1,5 +1,6 @@
 import type { StageName } from '../api/types';
 import { stageLabels } from './presentation';
+import { t } from '../i18n';
 
 export interface AcceptanceIssue {
   message: string;
@@ -26,7 +27,7 @@ export function acceptanceIssueGroups(errors: readonly string[]): AcceptanceIssu
         ? stageAliases[prefix[1]!]!
         : prefix[1]!;
       if (Object.hasOwn(stageLabels, stage)) {
-        source = stageLabels[stage as StageName];
+        source = t(stageLabels[stage as StageName]);
         text = prefix[2]!;
       }
     }
@@ -51,7 +52,10 @@ export function acceptanceIssueGroups(errors: readonly string[]): AcceptanceIssu
 export function acceptanceIssueCount(groups: readonly AcceptanceIssueGroup[]): string {
   const subjects = groups.filter((group) => group.subject !== null).length;
   const other = groups.find((group) => group.subject === null)?.issues.length ?? 0;
-  return [subjects ? `${subjects} 条结构` : '', other ? `${other} 项其他检查` : '']
+  return [
+    subjects ? t('{count} 条结构', { count: subjects }) : '',
+    other ? t('{count} 项其他检查', { count: other }) : '',
+  ]
     .filter(Boolean)
-    .join('、');
+    .join(t('、'));
 }

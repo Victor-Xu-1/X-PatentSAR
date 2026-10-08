@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n';
 import { Check, CircleAlert, LoaderCircle } from 'lucide-react';
 import type { Job, StageName } from '../../api/types';
 import {
@@ -18,11 +19,12 @@ export function StageList({
   stages: Job['stages'];
   names: StageName[];
 }) {
+  const { t } = useTranslation();
   return (
-    <ol className="stage-strip" aria-label="任务运行链路">
+    <ol className="stage-strip" aria-label={t('任务运行链路')}>
       {names.map((name, index) => {
         const stage = stages.find((item) => item.name === name);
-        const label = stageLabel(name, stage);
+        const label = t(stageLabel(name, stage));
         const status =
           job && job.history_available !== true
             ? 'unknown'
@@ -32,7 +34,7 @@ export function StageList({
           <li
             className={`stage ${status}${reviewedCoreStage(job, stage) ? ' needs-review' : ''}`}
             key={name}
-            title={`${label}：${stageStatusText(job, stage, name)}`}
+            title={t('{label}：{state}', { label, state: t(stageStatusText(job, stage, name)) })}
           >
             <span className="stage-circle" aria-hidden="true">
               {status === 'ok' ? (
@@ -50,7 +52,7 @@ export function StageList({
             ) : (
               <div>
                 <strong>{label}</strong>
-                <small>{stageStatusText(job, stage, name)}</small>
+                <small>{t(stageStatusText(job, stage, name))}</small>
               </div>
             )}
           </li>

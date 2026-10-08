@@ -1,3 +1,4 @@
+import { UiError } from '../../i18n';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError } from '../../api/errors';
 import { llmApi } from '../../api/llmApi';
@@ -152,7 +153,7 @@ export function useLLMSettings(api: LLMApi = llmApi) {
     } catch (error) {
       setState((current) => ({
         ...current,
-        error: error instanceof Error ? error : new Error('配置无效。'),
+        error: error instanceof Error ? error : new UiError('配置无效。'),
       }));
       return;
     }

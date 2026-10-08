@@ -1,4 +1,5 @@
 import type { Job, Stage, StageName } from '../api/types';
+import { t } from '../i18n';
 import {
   observedStages,
   reviewedCoreStage,
@@ -73,11 +74,13 @@ export function workflowGroups(job: Job | null): WorkflowGroup[] {
       groups.push({
         key: `${section.key}:${groups.length}`,
         label: job?.admet_only
-          ? stageLabel(
-              name,
-              stages.find((stage) => stage.name === name),
+          ? t(
+              stageLabel(
+                name,
+                stages.find((stage) => stage.name === name),
+              ),
             )
-          : section.label,
+          : t(section.label),
         names: [name],
         state: 'unknown',
         description: '',
@@ -89,8 +92,11 @@ export function workflowGroups(job: Job | null): WorkflowGroup[] {
     description: group.names
       .map((name) => {
         const stage = stages.find((value) => value.name === name);
-        return `${stageLabel(name, stage)}：${stageStatusText(job, stage, name)}`;
+        return t('{label}：{state}', {
+          label: t(stageLabel(name, stage)),
+          state: t(stageStatusText(job, stage, name)),
+        });
       })
-      .join('；'),
+      .join(t('；')),
   }));
 }

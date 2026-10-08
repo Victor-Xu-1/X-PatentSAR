@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n';
 import type {
   EnvironmentCatalog,
   EnvironmentComponentId,
@@ -35,9 +36,10 @@ export function EnvironmentDetails({
     revision: number,
   ) => Promise<EnvironmentSettings | null>;
 }) {
+  const { t } = useTranslation();
   return (
     <Dialog
-      title="存储位置"
+      title={t('存储位置')}
       onClose={onClose}
       busy={busy}
       wide
@@ -53,7 +55,7 @@ export function EnvironmentDetails({
       >
         {recovery}
         <details className="environment-component-details">
-          <summary>环境详情</summary>
+          <summary>{t('环境详情')}</summary>
           <ComponentLibrary
             components={catalog.components}
             disabled={disabled}

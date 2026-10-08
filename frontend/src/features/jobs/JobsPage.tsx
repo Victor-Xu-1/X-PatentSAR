@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n';
 import { useState } from 'react';
 import { FileText, RefreshCw } from 'lucide-react';
 import type { Project } from '../../api/types';
@@ -19,6 +20,7 @@ export function JobsPage({
   onOpen: (id: string) => void;
   onHistoryChanged?: (entry: HistoryEntry) => void;
 }) {
+  const { t } = useTranslation();
   const [projectId, setProjectId] = useState<string | null>(null);
   const [trashOpen, setTrashOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -37,14 +39,14 @@ export function JobsPage({
       data-dialog-focus-scope
     >
       <header className="page-header">
-        <h1 id="jobs-heading">任务记录</h1>
+        <h1 id="jobs-heading">{t('任务记录')}</h1>
         <div className="inline-actions">
           <select
-            aria-label="筛选任务所属项目"
+            aria-label={t('筛选任务所属项目')}
             value={projectId ?? ''}
             onChange={(e) => setProjectId(e.target.value || null)}
           >
-            <option value="">全部项目</option>
+            <option value="">{t('全部项目')}</option>
             {projects.map((project) => (
               <option key={project.id} value={project.id}>
                 {project.title}
@@ -56,7 +58,7 @@ export function JobsPage({
             className="history-trash-button"
             onClick={() => setHistoryOpen(true)}
           >
-            全部记录
+            {t('全部记录')}
           </button>
           <button
             type="button"
@@ -64,9 +66,9 @@ export function JobsPage({
             onClick={() => setTrashOpen(true)}
             className="history-trash-button"
           >
-            回收站
+            {t('回收站')}
           </button>
-          <button type="button" aria-label="刷新任务记录" onClick={resource.reload}>
+          <button type="button" aria-label={t('刷新任务记录')} onClick={resource.reload}>
             <RefreshCw size={16} aria-hidden="true" />
           </button>
         </div>
@@ -74,11 +76,14 @@ export function JobsPage({
       {resource.error ? (
         <ErrorNotice error={resource.error} onRetry={resource.reload} />
       ) : resource.loading && !resource.data ? (
-        <Loading label="正在读取任务记录…" />
+        <Loading label={t('正在读取任务记录…')} />
       ) : !resource.data?.items.length ? (
-        <Empty title="尚无提取任务" description="上传 PDF 开始，或从最近文件打开已有结果。" />
+        <Empty
+          title={t('尚无提取任务')}
+          description={t('上传 PDF 开始，或从最近文件打开已有结果。')}
+        />
       ) : (
-        <ul className="job-history" aria-label="提取任务记录">
+        <ul className="job-history" aria-label={t('提取任务记录')}>
           {resource.data.items.map((job) => {
             const project = projects.find((item) => item.id === job.project_id) ?? null;
             return (
@@ -93,17 +98,20 @@ export function JobsPage({
                       className="link-button"
                       onClick={() => onOpen(job.project_id)}
                     >
-                      {project?.title ?? '打开关联文件'}
+                      {project?.title ?? t('打开关联文件')}
                     </button>
                   </div>
-                  <time className="job-timestamp" dateTime={job.created_at} title="创建时间">
+                  <time className="job-timestamp" dateTime={job.created_at} title={t('创建时间')}>
                     {dateText(job.created_at)}
                   </time>
                   <HistoryActions
                     target={{
                       kind: 'job',
                       id: job.id,
-                      title: `${project?.title ?? '任务记录'} · ${dateText(job.created_at)}`,
+                      title: t('{title} · {date}', {
+                        title: project?.title ?? t('任务记录'),
+                        date: dateText(job.created_at),
+                      }),
                     }}
                     iconOnly
                     onChanged={changed}
@@ -124,7 +132,7 @@ export function JobsPage({
       )}
       {trashOpen && (
         <HistoryDialog
-          title="回收站"
+          title={t('回收站')}
           initialKind="job"
           deleted
           filters
@@ -134,7 +142,7 @@ export function JobsPage({
       )}
       {historyOpen && (
         <HistoryDialog
-          title="全部任务记录"
+          title={t('全部任务记录')}
           initialKind="job"
           {...(projectId === null ? {} : { projectId })}
           onClose={() => setHistoryOpen(false)}

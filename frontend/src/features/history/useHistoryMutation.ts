@@ -1,3 +1,4 @@
+import { UiError } from '../../i18n';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../../api';
 import type { HistoryAction, HistoryEntry, HistoryTarget } from '../../api/historyTypes';
@@ -39,7 +40,7 @@ export function useHistoryMutation(
     } catch (reason) {
       if (!mounted.current || controller.signal.aborted) return;
       setNeedsRefresh(true);
-      setFailure(reason instanceof Error ? reason : new Error('无法核对记录状态。'));
+      setFailure(reason instanceof Error ? reason : new UiError('无法核对记录状态。'));
     } finally {
       if (mounted.current && !controller.signal.aborted) setChecking(false);
     }
@@ -76,7 +77,7 @@ export function useHistoryMutation(
       // Even a conflict/server error requires a new authoritative GET. Never replay a write.
       setNeedsRefresh(true);
       setFailure(
-        reason instanceof Error ? reason : new Error('操作结果无法确认，请先刷新核对状态。'),
+        reason instanceof Error ? reason : new UiError('操作结果无法确认，请先刷新核对状态。'),
       );
     } finally {
       inFlight.current = false;

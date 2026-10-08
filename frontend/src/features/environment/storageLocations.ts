@@ -1,3 +1,4 @@
+import { UiError } from '../../i18n';
 import type { EnvironmentSettings, EnvironmentStorageLocations } from '../../api/environmentTypes';
 import { normalizeInstallRoot } from '../../model/environment';
 
@@ -35,8 +36,9 @@ export function normalizeStorageLocations(
     try {
       normalized[key] = normalizeInstallRoot(draft[key], settings[allowed]);
     } catch {
-      throw new Error(
-        `${label}须位于服务端批准的本地目录范围 ${settings[allowed]} 内，不能包含路径跳转、网络地址或命令。`,
+      throw new UiError(
+        `${label}须位于服务端批准的本地目录范围 {root} 内，不能包含路径跳转、网络地址或命令。`,
+        { root: settings[allowed] },
       );
     }
   }

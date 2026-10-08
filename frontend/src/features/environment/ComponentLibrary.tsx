@@ -1,6 +1,7 @@
+import { useTranslation } from '../../i18n';
 import { CheckCircle2, Download, Package, ScanLine } from 'lucide-react';
 import type { EnvironmentComponent, EnvironmentComponentId } from '../../api/environmentTypes';
-import { environmentGroups } from '../../model/environment';
+import { environmentComponentName, environmentGroups } from '../../model/environment';
 import {
   environmentComponentAction,
   environmentComponentBadge,
@@ -20,32 +21,34 @@ export function ComponentLibrary({
   onInspect: (ids: EnvironmentComponentId[]) => void;
   onInstall: (ids: EnvironmentComponentId[]) => void;
 }) {
+  const { t } = useTranslation();
   return (
-    <section className="panel environment-card component-library" aria-label="环境组件库">
+    <section className="panel environment-card component-library" aria-label={t('环境组件库')}>
       <header className="environment-section-header">
         <div>
-          <h2>组件库</h2>
+          <h2>{t('组件库')}</h2>
         </div>
       </header>
       {!components.length ? (
-        <p className="info-banner">服务端尚未提供组件目录；不会展示演示环境。</p>
+        <p className="info-banner">{t('服务端尚未提供组件目录；不会展示演示环境。')}</p>
       ) : (
         Object.entries(environmentGroups).map(([group, label]) => {
           const items = components.filter((item) => item.group === group);
           return items.length ? (
             <section className="component-group" key={group}>
               <h3>
-                {label}
-                <small>{items.length} 项</small>
+                {t(label)}
+                <small>{t('{count} 项', { count: items.length })}</small>
               </h3>
               {items.map((component) => {
+                const name = environmentComponentName(component);
                 const badge = environmentComponentBadge(component);
                 const action = environmentComponentAction(component);
                 const actionLabel = {
-                  installed: '已安装',
-                  inspect: '先检测',
-                  install: '安装',
-                  repair: '修复',
+                  installed: t('已安装'),
+                  inspect: t('先检测'),
+                  install: t('安装'),
+                  repair: t('修复'),
                 }[action];
                 const canInstall =
                   (action === 'install' || action === 'repair') && component.installable;
@@ -77,14 +80,18 @@ export function ComponentLibrary({
                     </span>
                     <div className="environment-component-body">
                       <div className="component-title">
-                        <h4>{component.name}</h4>
+                        <h4>{name}</h4>
                         <span className={`badge environment-status-${badge.tone}`}>
                           {badge.label}
                         </span>
-                        <small className="muted">目标：{component.version}</small>
+                        <small className="muted">
+                          {t('目标：{version}', { version: component.version })}
+                        </small>
                         {current && (
                           <small className="muted">
-                            实测：{component.detected_version ?? '未报告'}
+                            {t('实测：{version}', {
+                              version: component.detected_version ?? t('未报告'),
+                            })}
                           </small>
                         )}
                       </div>
@@ -92,16 +99,16 @@ export function ComponentLibrary({
                         className="component-location break-word"
                         title={component.location ?? undefined}
                       >
-                        位置：{component.location ?? '未配置'}
+                        {t('位置：{location}', { location: component.location ?? t('未配置') })}
                       </p>
                       <p className="component-checked-at muted">
-                        {component.verification === 'stale' ? '上次检测时间：' : '检测时间：'}
+                        {component.verification === 'stale' ? t('上次检测时间：') : t('检测时间：')}
                         {checkedAt ? (
                           <time dateTime={checkedAt}>{dateText(checkedAt)}</time>
                         ) : component.verification === 'unchecked' ? (
-                          '未知（待检测）'
+                          t('未知（待检测）')
                         ) : (
-                          '时间未知'
+                          t('时间未知')
                         )}
                       </p>
                       {problem && <p className="component-problem">{problem}</p>}
@@ -110,27 +117,27 @@ export function ComponentLibrary({
                     <div className="component-actions">
                       <button
                         type="button"
-                        aria-label={`检测 ${component.name}`}
+                        aria-label={t('检测 {name}', { name })}
                         disabled={disabled}
                         onClick={() => onInspect([component.id])}
                       >
                         <ScanLine size={14} />
-                        检测
+                        {t('检测')}
                       </button>
                       <button
                         type="button"
-                        aria-label={`${actionLabel} ${component.name}`}
+                        aria-label={t('{action} {name}', { action: actionLabel, name })}
                         disabled={disabled || !canInstall}
                         onClick={() => onInstall([component.id])}
                         title={
                           action === 'installed'
-                            ? '已通过当前检测，无需重复安装'
+                            ? t('已通过当前检测，无需重复安装')
                             : action === 'inspect'
-                              ? '先检测组件状态，不重复安装已有组件'
+                              ? t('先检测组件状态，不重复安装已有组件')
                               : !component.installable
-                                ? '服务端不允许安装此组件，请检查原因'
+                                ? t('服务端不允许安装此组件，请检查原因')
                                 : action === 'repair'
-                                  ? '修复仍需确认完整依赖、下载范围及许可证'
+                                  ? t('修复仍需确认完整依赖、下载范围及许可证')
                                   : undefined
                         }
                       >

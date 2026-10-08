@@ -1,14 +1,15 @@
+import { useTranslation } from '../../i18n';
 import { useEffect, useRef } from 'react';
 import { ChevronDown } from 'lucide-react';
 import type { Job } from '../../api/types';
 import { jobStatusText } from '../../model/presentation';
+import { jobStageProgressText } from '../../model/jobPresentation';
 import {
   completeCoreStages,
   completedCoreRejection,
   observedStages,
   recognitionReviewCount,
   stageLabel,
-  stageProgressText,
   stageStatusText,
   stoppedJob,
   waitingResources,
@@ -18,6 +19,7 @@ import { StageList } from './StageList';
 import { WorkflowGroups } from './WorkflowGroups';
 
 export function StageStrip({ job, compact = false }: { job: Job | null; compact?: boolean }) {
+  const { t } = useTranslation();
   const disclosure = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     if (!compact) return;
@@ -47,8 +49,8 @@ export function StageStrip({ job, compact = false }: { job: Job | null; compact?
     job && job.history_available !== true ? (
       <output className="stage-history-notice">
         {job.history_available === false
-          ? '历史阶段不可用：本次任务的阶段记录无法可靠读取。'
-          : '历史阶段可用性未知'}
+          ? t('历史阶段不可用：本次任务的阶段记录无法可靠读取。')
+          : t('历史阶段可用性未知')}
       </output>
     ) : null;
   const list = <StageList job={job} stages={stages} names={names} />;
@@ -76,25 +78,25 @@ export function StageStrip({ job, compact = false }: { job: Job | null; compact?
   const current = missingResearch ? undefined : (active ?? stages.at(-1));
   const currentName = missingResearch ? 'admet' : current?.name;
   const label = !job
-    ? '尚未启动'
+    ? t('尚未启动')
     : job.history_available !== true
       ? job.history_available === false
-        ? '历史阶段不可用'
-        : '阶段状态未知'
+        ? t('历史阶段不可用')
+        : t('阶段状态未知')
       : job.status === 'failed' && job.error?.code === 'core_not_accepted'
         ? jobStatusText(job)
         : job.status === 'complete' && !missingResearch
           ? current?.name === 'admet' && current.status === 'empty'
-            ? `${stageLabel(current.name, current)} · 未计算`
+            ? t('{label} · 未计算', { label: t(stageLabel(current.name, current)) })
             : jobStatusText(job)
           : currentName
-            ? `${stageLabel(currentName, current)} · ${stageStatusText(job, current, currentName)}`
+            ? `${t(stageLabel(currentName, current))} · ${t(stageStatusText(job, current, currentName))}`
             : jobStatusText(job);
   const progress = current?.progress;
   const reviewCount = recognitionReviewCount(job);
   return (
     <details className="stage-overview stage-disclosure" ref={disclosure}>
-      <summary className="stage-current-line" aria-label="提取阶段详情">
+      <summary className="stage-current-line" aria-label={t('提取阶段详情')}>
         <WorkflowGroups job={job} />
         <output
           className={`stage-current ${completedCoreRejection(job) ? 'is-review' : `is-${job?.status ?? 'idle'}`}`}
@@ -102,15 +104,17 @@ export function StageStrip({ job, compact = false }: { job: Job | null; compact?
         >
           {job && ['cancelled', 'interrupted'].includes(job.status) && `${jobStatusText(job)} · `}
           {label}
-          {reviewCount !== null && <span className="stage-progress"> · {reviewCount} 条结构</span>}
+          {reviewCount !== null && (
+            <span className="stage-progress"> · {t('{count} 条结构', { count: reviewCount })}</span>
+          )}
           {!completedCoreRejection(job) && progress && progress.total > 0 && (
-            <span className="stage-progress"> · {stageProgressText(current)}</span>
+            <span className="stage-progress"> · {jobStageProgressText(current)}</span>
           )}
         </output>
         <ChevronDown size={14} className="stage-disclosure-chevron" aria-hidden="true" />
       </summary>
       <div className="stage-detail-surface">
-        <h2>任务流程</h2>
+        <h2>{t('任务流程')}</h2>
         {historyNotice}
         {list}
       </div>

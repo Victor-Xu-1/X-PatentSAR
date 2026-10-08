@@ -7,6 +7,7 @@ import type {
   StageName,
   StageStatus,
 } from '../api/types';
+import { getLocale, t } from '../i18n';
 export const stageLabels: Record<StageName, string> = {
   classify: '文档解析',
   activity: '活性提取',
@@ -35,9 +36,11 @@ export const jobStatusLabels: Record<Job['status'], string> = {
   interrupted: '已中断',
 };
 export function jobStatusText(job: Job): string {
-  return job.status === 'failed' && job.error?.code === 'core_not_accepted'
-    ? '需复核'
-    : jobStatusLabels[job.status];
+  return t(
+    job.status === 'failed' && job.error?.code === 'core_not_accepted'
+      ? '需复核'
+      : jobStatusLabels[job.status],
+  );
 }
 export const acceptanceLabels: Record<AcceptanceState, string> = {
   not_run: '尚未验收',
@@ -58,7 +61,7 @@ export const reviewLabels: Record<ReviewDecision, string> = {
 };
 export const activeJob = (job: Job) => job.status === 'running' || job.status === 'queued';
 export function activityValueText(activity: Activity): string {
-  const value = activity.value === null ? '值未提供' : String(activity.value);
+  const value = activity.value === null ? t('值未提供') : String(activity.value);
   const unit = activity.unit?.trim() ?? '';
   const escaped = unit.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const alreadyPresent =
@@ -67,10 +70,10 @@ export function activityValueText(activity: Activity): string {
   return `${value}${suffix}`;
 }
 export function activityText(activity: Activity): string {
-  return `${activity.name || '活性'} = ${activityValueText(activity)}`;
+  return `${activity.name || t('活性')} = ${activityValueText(activity)}`;
 }
 export function dateText(value: string | null): string {
   if (!value) return '—';
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString('zh-CN', { hour12: false });
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString(getLocale(), { hour12: false });
 }

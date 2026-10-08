@@ -1,3 +1,4 @@
+import { UiError, useTranslation } from '../../i18n';
 import { useId, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { EnvironmentSettings, EnvironmentStorageLocations } from '../../api/environmentTypes';
@@ -29,6 +30,7 @@ export function StorageLocations({
     revision: number,
   ) => Promise<EnvironmentSettings | null>;
 }) {
+  const { t } = useTranslation();
   const [base, setBase] = useState(settings);
   const [draft, setDraft] = useState(() => storageLocations(settings));
   const [seen, setSeen] = useState(settings.revision);
@@ -57,20 +59,21 @@ export function StorageLocations({
             const saved = await onSave(locations, base.revision);
             if (saved) onClose();
           } catch (caught) {
-            setError(caught instanceof Error ? caught : new Error('存储位置保存失败。'));
+            setError(caught instanceof Error ? caught : new UiError('存储位置保存失败。'));
           }
         })();
       }}
     >
       <p id={noteId} className="muted">
-        仅影响后续写入，不会移动已有文件。生成结果含提取产物及 CSV/JSON
-        导出副本；下载位置仍由浏览器设置。
+        {t(
+          '仅影响后续写入，不会移动已有文件。生成结果含提取产物及 CSV/JSON 导出副本；下载位置仍由浏览器设置。',
+        )}
       </p>
       <fieldset className="environment-storage-fields">
-        <legend className="sr-only">存储目录</legend>
+        <legend className="sr-only">{t('存储目录')}</legend>
         {storageLocationFields.map(({ key, label, allowed }, index) => (
           <label className="form-field" key={key}>
-            {label}
+            {t(label)}
             <input
               value={draft[key]}
               maxLength={512}
@@ -80,7 +83,7 @@ export function StorageLocations({
               disabled={locked}
               data-initial-focus={index === 0 ? true : undefined}
               aria-describedby={noteId}
-              title={`允许范围：${settings[allowed]}`}
+              title={t('允许范围：{root}', { root: settings[allowed] })}
               onChange={(event) => setDraft({ ...draft, [key]: event.target.value })}
             />
           </label>
@@ -88,16 +91,14 @@ export function StorageLocations({
       </fieldset>
       {conflict && (
         <div className="conflict" role="alert">
-          服务器配置已更新，未覆盖你的输入。当前存储位置：
+          {t('服务器配置已更新，未覆盖你的输入。当前存储位置：')}
           <ul className="break-word">
             {storageLocationFields.map(({ key, label }) => (
-              <li key={key}>
-                {label}：{settings[key]}
-              </li>
+              <li key={key}>{t('{label}：{value}', { label: t(label), value: settings[key] })}</li>
             ))}
           </ul>
           <button type="button" onClick={() => setBase(settings)} disabled={locked}>
-            使用最新版本并保留输入
+            {t('使用最新版本并保留输入')}
           </button>
         </div>
       )}
@@ -105,10 +106,10 @@ export function StorageLocations({
       {children}
       <footer className="dialog-actions">
         <button type="button" onClick={onClose} disabled={busy}>
-          取消
+          {t('取消')}
         </button>
         <button type="submit" className="primary" disabled={locked || conflict || !dirty}>
-          {busy ? '保存中…' : '保存'}
+          {busy ? t('保存中…') : t('保存')}
         </button>
       </footer>
     </form>

@@ -1,3 +1,4 @@
+import { errorText, useTranslation } from '../../i18n';
 import { CircleCheck, CircleHelp, Download, ScanLine } from 'lucide-react';
 import type { EnvironmentCatalog, EnvironmentComponentId } from '../../api/environmentTypes';
 import { environmentComponentIds } from '../../api/environmentTypes';
@@ -17,17 +18,18 @@ export function EnvironmentOverview({
   onInspect: (ids: EnvironmentComponentId[]) => void;
   onDetails: () => void;
 }) {
+  const { t } = useTranslation();
   let plan = null;
   let problem: string | null = null;
   try {
     plan = environmentSetupComponents(catalog);
   } catch (error) {
-    problem = error instanceof Error ? error.message : '完整部署计划无效。';
+    problem = error instanceof Error ? errorText(error) : t('完整部署计划无效。');
   }
   const readyCount = catalog.components.filter(isEnvironmentComponentReady).length;
   const ready = plan !== null && plan.every(isEnvironmentComponentReady);
   return (
-    <section className="environment-card environment-overview" aria-label="完整运行环境">
+    <section className="environment-card environment-overview" aria-label={t('完整运行环境')}>
       <div className="environment-section-header">
         <div className="environment-overview-state">
           <span
@@ -37,9 +39,12 @@ export function EnvironmentOverview({
             {ready ? <CircleCheck size={26} /> : <CircleHelp size={26} />}
           </span>
           <div className="environment-overview-heading">
-            <h2>完整运行环境</h2>
-            <output className="muted" aria-label="环境就绪状态" aria-live="polite">
-              已就绪 {readyCount}/{environmentComponentIds.length}
+            <h2>{t('完整运行环境')}</h2>
+            <output className="muted" aria-label={t('环境就绪状态')} aria-live="polite">
+              {t('已就绪 {ready}/{total}', {
+                ready: readyCount,
+                total: environmentComponentIds.length,
+              })}
             </output>
           </div>
         </div>
@@ -51,7 +56,7 @@ export function EnvironmentOverview({
             onClick={onSetup}
           >
             <Download size={15} />
-            {ready ? '环境已就绪' : '一键部署全部环境'}
+            {ready ? t('环境已就绪') : t('一键部署全部环境')}
           </button>
           <button
             type="button"
@@ -64,22 +69,24 @@ export function EnvironmentOverview({
             }
           >
             <ScanLine size={15} />
-            {ready ? '重新检测' : '检测全部组件'}
+            {ready ? t('重新检测') : t('检测全部组件')}
           </button>
         </div>
       </div>
       <div className="environment-overview-footer">
-        <p className="muted">PDF 提取 · 结构识别 · 六项指标</p>
+        <p className="muted">{t('PDF 提取 · 结构识别 · 六项指标')}</p>
         <button type="button" className="environment-details-trigger" onClick={onDetails}>
-          存储位置
+          {t('存储位置')}
         </button>
       </div>
       {problem && <p className="info-banner">{problem}</p>}
       {plan !== null && !ready && !canSetupEnvironmentPlan(plan) && (
-        <p className="info-banner">完整部署暂不可用，请查看组件详情中的服务端限制或检测状态。</p>
+        <p className="info-banner">
+          {t('完整部署暂不可用，请查看组件详情中的服务端限制或检测状态。')}
+        </p>
       )}
       {!catalog.components.length && (
-        <p className="info-banner">服务端尚未提供组件目录；不会展示演示环境。</p>
+        <p className="info-banner">{t('服务端尚未提供组件目录；不会展示演示环境。')}</p>
       )}
     </section>
   );

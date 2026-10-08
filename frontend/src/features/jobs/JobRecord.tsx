@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n';
 import type { Job } from '../../api/types';
 import { ChevronDown } from 'lucide-react';
 import { dateText } from '../../model/presentation';
@@ -15,13 +16,14 @@ export function JobRecord({
   expanded?: boolean;
   recoveryControls?: LLMRecoveryControls;
 }) {
+  const { t } = useTranslation();
   const summary = jobRecordSummary(job);
   return (
     <>
       {summary && <p className={`job-summary${job.error ? ' has-error' : ''}`}>{summary}</p>}
       <details className="job-options-record job-record" open={expanded ? true : undefined}>
-        <summary aria-label="任务详情">
-          任务详情
+        <summary aria-label={t('任务详情')}>
+          {t('任务详情')}
           <ChevronDown size={14} aria-hidden="true" />
         </summary>
         <div className="job-record-body">
@@ -34,7 +36,7 @@ export function JobRecord({
               ] as const
             ).map(([label, value]) => (
               <div key={label}>
-                <dt>{label}</dt>
+                <dt>{t(label)}</dt>
                 <dd>{value ? <time dateTime={value}>{dateText(value)}</time> : '—'}</dd>
               </div>
             ))}
@@ -42,33 +44,33 @@ export function JobRecord({
           <StageStrip job={job} />
           <LLMRecovery job={job} controls={recoveryControls} />
           {job.error && (
-            <section className="job-failure-details" aria-label="失败详情">
-              <h3>失败详情</h3>
+            <section className="job-failure-details" aria-label={t('失败详情')}>
+              <h3>{t('失败详情')}</h3>
               <output className="job-error">
                 {job.error.code}：{job.error.message}
               </output>
             </section>
           )}
-          <section className="job-saved-options" aria-label="已保存的任务参数">
-            <h3>已保存的任务参数</h3>
+          <section className="job-saved-options" aria-label={t('已保存的任务参数')}>
+            <h3>{t('已保存的任务参数')}</h3>
             <dl>
               <div>
-                <dt>包含中间体</dt>
-                <dd>{job.include_intermediates ? '是' : '否'}</dd>
+                <dt>{t('包含中间体')}</dt>
+                <dd>{job.include_intermediates ? t('是') : t('否')}</dd>
               </div>
               <div>
-                <dt>强制重算</dt>
-                <dd>{job.force ? '是' : '否'}</dd>
+                <dt>{t('强制重算')}</dt>
+                <dd>{job.force ? t('是') : t('否')}</dd>
               </div>
               <div>
-                <dt>运营备注（不执行）</dt>
-                <dd>{job.task_note || '无'}</dd>
+                <dt>{t('运营备注（不执行）')}</dt>
+                <dd>{job.task_note || t('无')}</dd>
               </div>
             </dl>
-            {job.can_resume && <p>续跑保留原备注及中间体选项，不强制重算。</p>}
+            {job.can_resume && <p>{t('续跑保留原备注及中间体选项，不强制重算。')}</p>}
           </section>
           <small className="job-identifier" title={job.id}>
-            任务 {job.id}
+            {t('任务 {id}', { id: job.id })}
           </small>
         </div>
       </details>

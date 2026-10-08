@@ -1,3 +1,4 @@
+import { UiError, useTranslation } from '../../i18n';
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../../api';
 import { ApiError } from '../../api/errors';
@@ -30,24 +31,27 @@ export function LLMRecovery({
   job: Job;
   controls?: LLMRecoveryControls | undefined;
 }) {
+  const { t } = useTranslation();
   const recovery = job.llm_recovery;
   if (!recovery) return null;
   return (
-    <section className="llm-recovery" aria-label="LLM 局部修复">
-      <h3>{llmRecoveryStatusLabels[recovery.status]}</h3>
+    <section className="llm-recovery" aria-label={t('LLM 局部修复')}>
+      <h3>{t(llmRecoveryStatusLabels[recovery.status])}</h3>
       {recovery.reason !== null && <p>{llmReason(recovery.reason)}</p>}
       <p>
         {recovery.remaining_calls === null
-          ? '剩余调用次数未知'
-          : `剩余调用 ${recovery.remaining_calls} 次`}
+          ? t('剩余调用次数未知')
+          : t('剩余调用 {calls} 次', { calls: recovery.remaining_calls })}
         {recovery.retry_after_seconds !== null &&
-          ` · 本次重试等待 ${recovery.retry_after_seconds} 秒（服务端观察）`}
+          t(' · 本次重试等待 {seconds} 秒（服务端观察）', {
+            seconds: recovery.retry_after_seconds,
+          })}
         {recovery.status === 'cooldown' &&
           recovery.retry_after_seconds === null &&
-          ' · 重试等待时间未知'}
+          t(' · 重试等待时间未知')}
       </p>
       <p>
-        <a href="#/settings">配置 LLM API</a>
+        <a href="#/settings">{t('配置 LLM API')}</a>
       </p>
       {controls && <LLMAuthorization key={job.id} job={job} controls={controls} />}
     </section>
@@ -55,6 +59,7 @@ export function LLMRecovery({
 }
 
 function LLMAuthorization({ job, controls }: { job: Job; controls: LLMRecoveryControls }) {
+  const { t } = useTranslation();
   const [phase, setPhase] = useState<'idle' | 'reading' | 'confirming' | 'writing'>('idle');
   const [settings, setSettings] = useState<LLMSettings | null>(null);
   const [error, setError] = useState<Error | null>(null);
@@ -119,7 +124,7 @@ function LLMAuthorization({ job, controls }: { job: Job; controls: LLMRecoveryCo
       if (request.signal.aborted || !alive.current) return;
       setSettings(current);
       if (current.status !== 'ready')
-        setError(new Error('请先在环境管理中保存并启用完整的 API 配置与外发授权。'));
+        setError(new UiError('请先在环境管理中保存并启用完整的 API 配置与外发授权。'));
     } catch (failure) {
       if (request.signal.aborted || !alive.current) return;
       setError(llmRequestError(failure));
@@ -192,45 +197,51 @@ function LLMAuthorization({ job, controls }: { job: Job; controls: LLMRecoveryCo
           disabled={controls.disabled || needsRefresh || submittedJob === job}
           onClick={() => void open()}
         >
-          更新 API 授权
+          {t('更新 API 授权')}
         </button>
       )}
       {saved && (
-        <output aria-live="polite">API 授权已更新，未开始提取。核对后可手动继续提取。</output>
+        <output aria-live="polite">
+          {t('API 授权已更新，未开始提取。核对后可手动继续提取。')}
+        </output>
       )}
       {phase === 'idle' && error && <ErrorNotice error={error} />}
       {phase === 'idle' && needsRefresh && (
         <button ref={refreshAction} type="button" onClick={refresh}>
-          刷新核对任务与配置
+          {t('刷新核对任务与配置')}
         </button>
       )}
       {phase !== 'idle' && (
-        <Dialog title="更新此任务的 API 授权？" onClose={close} busy={phase === 'writing'}>
+        <Dialog title={t('更新此任务的 API 授权？')} onClose={close} busy={phase === 'writing'}>
           <div className="dialog-body">
             <p>
-              只允许这个任务使用已保存且相同服务、模型和协议的凭据。不重置配额、不开始提取、不调用模型；成功后仅刷新，需手动继续提取。
+              {t(
+                '只允许这个任务使用已保存且相同服务、模型和协议的凭据。不重置配额、不开始提取、不调用模型；成功后仅刷新，需手动继续提取。',
+              )}
             </p>
-            {phase === 'reading' && <Loading label="正在读取当前 API 配置…" />}
+            {phase === 'reading' && <Loading label={t('正在读取当前 API 配置…')} />}
             {settings && (
               <dl className="job-dates">
                 <div>
-                  <dt>服务</dt>
-                  <dd>{settings.endpoint || '未配置'}</dd>
+                  <dt>{t('服务')}</dt>
+                  <dd>{settings.endpoint || t('未配置')}</dd>
                 </div>
                 <div>
-                  <dt>模型</dt>
-                  <dd>{settings.model || '未配置'}</dd>
+                  <dt>{t('模型')}</dt>
+                  <dd>{settings.model || t('未配置')}</dd>
                 </div>
                 <div>
-                  <dt>协议</dt>
+                  <dt>{t('协议')}</dt>
                   <dd>{settings.protocol}</dd>
                 </div>
               </dl>
             )}
             <p className="muted">
-              <a href="#/settings">前往环境管理核对配置</a> · 已配置不代表模型验收。
+              <a href="#/settings">{t('前往环境管理核对配置')}</a> {t('· 已配置不代表模型验收。')}
             </p>
-            {!eligible && !needsRefresh && <p role="alert">任务状态已改变，请刷新核对后再操作。</p>}
+            {!eligible && !needsRefresh && (
+              <p role="alert">{t('任务状态已改变，请刷新核对后再操作。')}</p>
+            )}
             {error && <ErrorNotice error={error} />}
             <footer className="dialog-actions">
               <button
@@ -239,11 +250,11 @@ function LLMAuthorization({ job, controls }: { job: Job; controls: LLMRecoveryCo
                 disabled={phase === 'writing'}
                 data-initial-focus
               >
-                取消
+                {t('取消')}
               </button>
               {needsRefresh || !eligible ? (
                 <button type="button" onClick={refresh} disabled={phase === 'writing'}>
-                  刷新核对任务与配置
+                  {t('刷新核对任务与配置')}
                 </button>
               ) : (
                 <button
@@ -252,7 +263,7 @@ function LLMAuthorization({ job, controls }: { job: Job; controls: LLMRecoveryCo
                   onClick={() => void submit()}
                   disabled={phase !== 'confirming' || settings?.status !== 'ready'}
                 >
-                  {phase === 'writing' ? '正在更新…' : '确认更新授权'}
+                  {phase === 'writing' ? t('正在更新…') : t('确认更新授权')}
                 </button>
               )}
             </footer>
