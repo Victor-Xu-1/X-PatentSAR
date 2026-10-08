@@ -9,11 +9,13 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 from openpyxl import load_workbook
 from PIL import Image
 
 from patent_sar_extractor import contracts
+from patent_sar_extractor.core.activity_coverage import coverage_packet, source_record
 from patent_sar_extractor.core.binding_artifacts import write_binding_result
 from patent_sar_extractor.core.formal_structure import (
     FORMAL_SCOPE,
@@ -57,6 +59,31 @@ def control_record(binding, raw="CCO"):
 
 
 def run_fixture(root, *, activities=None, invalid_second=False, classified_pages=None):
+    # Explicit synthetic source inventory, not proof of a real patent/model run.
+    seeds = (
+        classified_pages
+        if classified_pages is not None
+        else ([] if not activities else [0])
+    )
+    regions = (
+        [
+            source_record(
+                1,
+                "text",
+                None,
+                "Controlled table",
+                "Declared control values",
+                "parsed",
+                "declared_text",
+                len(activities),
+            )
+        ]
+        if activities
+        else []
+    )
+    coverage = coverage_packet(
+        seeds, regions, [SimpleNamespace(page_no=1) for _ in activities or []]
+    )
     for number in (1, 2):
         Image.new("RGB", (20, 20), "white").save(root / f"control-{number}.png")
     bindings = [
@@ -95,6 +122,7 @@ def run_fixture(root, *, activities=None, invalid_second=False, classified_pages
                 contracts.ACTIVITY_SCHEMA, contracts.ACTIVITY_SCHEMA_VERSION
             ),
             "rows": activities or [],
+            "coverage": coverage,
         },
     )
     save(

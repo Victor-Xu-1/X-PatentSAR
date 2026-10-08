@@ -194,12 +194,20 @@ export interface Stage {
   reused_checkpoint: boolean | null;
   skipped?: number;
   resource_wait?: ResourceWait | null;
+  repair?: { regions: number; unresolved: number };
 }
 export interface ResourceWait {
   reason: 'memory';
   required_mb: number;
   available_mb: number;
   waited_seconds: number;
+}
+export interface JobLLMRecovery {
+  status: 'disabled' | 'ready' | 'blocked' | 'cooldown' | 'exhausted' | 'unavailable';
+  reason: string | null;
+  remaining_calls: number | null;
+  retry_after_seconds: number | null;
+  can_reauthorize: boolean;
 }
 export interface Job {
   id: string;
@@ -219,6 +227,7 @@ export interface Job {
   admet_only?: boolean;
   admet_stage?: (Stage & { name: 'admet' }) | null;
   stage_order?: CoreStageName[] | null;
+  llm_recovery?: JobLLMRecovery;
 }
 export interface JobOptions {
   include_intermediates?: boolean;

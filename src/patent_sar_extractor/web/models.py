@@ -16,6 +16,7 @@ from .activity_rank_models import ActivityStrengthScale, RankValue
 from .descriptor_models import DescriptorSummary
 from .dto import DTO, Error
 from .lead_models import LeadAssessment
+from .llm_models import LLMRecovery
 from .prediction_models import PredictionSummary
 from .property_values import PropertyOverrides, validate_overrides
 from .stereochemistry_models import StereoEvidence
@@ -243,6 +244,17 @@ class ResourceWait(DTO):
     waited_seconds: float = Field(ge=0, le=120, strict=True)
 
 
+class ActivityRepair(DTO):
+    regions: int = Field(ge=0, le=25000, strict=True)
+    unresolved: int = Field(ge=0, le=25000, strict=True)
+
+    @model_validator(mode="after")
+    def check_counts(self) -> ActivityRepair:
+        if self.unresolved > self.regions:
+            raise ValueError("Activity repair counts are inconsistent")
+        return self
+
+
 class Stage(DTO):
     name: str
     status: StageStatus = "pending"
@@ -252,6 +264,9 @@ class Stage(DTO):
     progress: StageProgress | None = None
     skipped: int = Field(default=0, ge=0, le=1_000_000, strict=True)
     resource_wait: ResourceWait | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
+    repair: ActivityRepair | None = Field(
         default=None, exclude_if=lambda value: value is None
     )
 
@@ -275,6 +290,9 @@ class Job(DTO):
     admet_stage: Stage | None = None
     stage_order: list[str] | None = Field(
         default=None, max_length=8, exclude_if=lambda value: value is None
+    )
+    llm_recovery: LLMRecovery | None = Field(
+        default=None, exclude_if=lambda value: value is None
     )
 
     @field_validator("stage_order")

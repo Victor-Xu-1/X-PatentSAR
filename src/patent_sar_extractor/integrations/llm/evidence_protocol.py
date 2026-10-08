@@ -13,7 +13,7 @@ ResolutionStatus = Literal[
 ]
 ResolutionOutcome = Literal["skipped", "failed", "unresolved", "proposed"]
 IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}")
-EVIDENCE_PROTOCOL_VERSION = 2
+EVIDENCE_PROTOCOL_VERSION = 3
 
 
 @dataclass(frozen=True)

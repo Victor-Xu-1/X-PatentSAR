@@ -60,7 +60,6 @@ class ArchitectureContractTests(unittest.TestCase):
                     b'{"choices":[{"finish_reason":"stop","message":{"content":"{\\"ok\\":true}"}}]}',
                 ],
             ) as post,
-            patch.object(llm_client.time, "sleep") as sleep,
         ):
             result = llm_client.llm_chat(
                 [{"role": "user", "content": "test"}], cache=False, max_retries=1
@@ -68,7 +67,6 @@ class ArchitectureContractTests(unittest.TestCase):
 
         self.assertEqual(result, '{"ok":true}')
         self.assertEqual(post.call_count, 2)
-        sleep.assert_not_called()
 
         key_a = llm_client._cache_key([], "model", 0.0, "https://one.invalid", 100)
         key_b = llm_client._cache_key([], "model", 0.0, "https://two.invalid", 100)

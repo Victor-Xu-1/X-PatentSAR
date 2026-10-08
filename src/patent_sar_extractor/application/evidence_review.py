@@ -38,7 +38,18 @@ def _column_candidates(payload: dict, quality: bool) -> tuple:
     rows = payload.get("rows", [])
     if not isinstance(rows, list) or len(rows) > _MAX_ROWS:
         return (), ()
-    for row in rows:
+    # Quality review remains bounded, but unresolved rows precede easy first rows.
+    ordered = (
+        sorted(
+            rows,
+            key=lambda row: (
+                not (isinstance(row, dict) and row.get("needs_review") is True)
+            ),
+        )
+        if quality
+        else rows
+    )
+    for row in ordered:
         if not isinstance(row, dict) or (not quality and not row.get("needs_review")):
             continue
         sources = row.get("activity_sources", [])
@@ -69,7 +80,16 @@ def _column_candidates(payload: dict, quality: bool) -> tuple:
             cells = source.get("cells", [])
             if not isinstance(cells, list):
                 continue
-            for cell in cells[:64]:
+            ordered_cells = sorted(
+                cells[:64],
+                key=lambda cell: (
+                    not (
+                        isinstance(cell, dict)
+                        and "unknown" in str(cell.get("field", "")).lower()
+                    )
+                ),
+            )
+            for cell in ordered_cells:
                 if not isinstance(cell, dict) or cell.get("field") == "compound_id":
                     continue
                 field = cell.get("field")
@@ -174,7 +194,9 @@ def review_source_evidence(
         "quality" if quality else "on-error",
     )
     try:
-        result = resolve_evidence(request, budget, config=context.policy)
+        result = resolve_evidence(
+            request, budget, config=context.policy, require_complete_refs=True
+        )
     except (OSError, TypeError, ValueError):
         return {
             "status": "unavailable",

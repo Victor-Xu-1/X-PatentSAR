@@ -1,7 +1,7 @@
 import { useId } from 'react';
 import type { LLMMode } from '../../api/llmTypes';
 import { ErrorNotice, Loading } from '../../components/Feedback';
-import { llmReason } from './llmMessages';
+import { llmReason, llmTestReason } from './llmMessages';
 import type { LLMSettingsController } from './useLLMSettings';
 import { LLMProtocolFields } from './LLMProtocolFields';
 
@@ -165,8 +165,13 @@ export function LLMSettingsForm({
         <output className="llm-message" aria-live="polite">
           {lastTest.status === 'passed'
             ? '接口测试通过。'
-            : `接口测试失败。${llmReason(lastTest.reason) ?? ''}`}
+            : `接口测试失败。${llmTestReason(lastTest.reason)}`}
         </output>
+      )}
+      {settings.status === 'ready' && (
+        <p className="muted llm-field-note">
+          已配置不等于模型可用；接口测试只校验随机合成样本，不代表真实模型提取或科学验收。
+        </p>
       )}
       {settings.status === 'incomplete' && !controller.dirty && (
         <p className="muted">{llmReason(settings.reason) ?? '请补全 API 配置。'}</p>

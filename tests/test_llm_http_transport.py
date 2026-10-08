@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import json
 import os
 import subprocess
@@ -10,14 +11,20 @@ import tempfile
 import threading
 import time
 import unittest
+from functools import partial
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import requests
 
 from patent_sar_extractor.integrations.llm import client
 from patent_sar_extractor.integrations.llm import http_transport as transport
+from patent_sar_extractor.integrations.llm.credential_authorization import (
+    dispatch_authorization,
+)
+from patent_sar_extractor.integrations.llm.job_context import read_context
+from patent_sar_extractor.web.errors import WebError
 
 TEST_KEY = "controlled-transport-test-only-key"
 
@@ -30,6 +37,7 @@ class LocalServer(ThreadingHTTPServer):
         self.stopping = threading.Event()
         self.received = threading.Event()
         self.requests = []
+        self.retry_after = "0"
         super().__init__(("127.0.0.1", 0), LocalHandler)
 
 
@@ -52,6 +60,19 @@ class LocalHandler(BaseHTTPRequestHandler):
         ).encode()
         if server.mode == "oversized":
             response = b"x" * 100000
+        status = None
+        if server.mode.startswith("status_"):
+            status = int(server.mode.removeprefix("status_"))
+        elif server.mode == "rate_retry" and len(server.requests) == 1:
+            status = 429
+        if status is not None:
+            error = ("private provider body " + TEST_KEY).encode()
+            self.wfile.write(
+                f"HTTP/1.1 {status} Error\r\nRetry-After: {server.retry_after}\r\nContent-Length: {len(error)}\r\nConnection: close\r\n\r\n".encode()
+                + error
+            )
+            self.wfile.flush()
+            return
         if server.mode == "retry" and len(server.requests) == 1:
             self.wfile.write(
                 b"HTTP/1.1 503 Unavailable\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
@@ -176,7 +197,78 @@ class DeadlineIntegrationTests(unittest.TestCase):
                 Path(f"/proc/{process.pid}").exists(), "carrier must reap its own child"
             )
             for stream in (process.stdin, process.stdout, process.stderr):
-                self.assertTrue(stream.closed)
+                if stream is not None:
+                    self.assertTrue(stream.closed)
+
+    def test_gui_publication_orders_private_handoff_but_not_network_response(self):
+        from tests.test_llm_credential_renewal import CredentialRenewalTests
+
+        with tempfile.TemporaryDirectory() as temporary:
+            settings, body, path = CredentialRenewalTests().setup_context(
+                Path(temporary)
+            )
+            policy = read_context(path).policy
+            server = self.serve("slow_headers")
+            owned, starts = self.children()
+            handoff = transport._handoff_payload
+            handed_off = threading.Event()
+            outcomes = []
+
+            def checked_handoff(*args):
+                with self.assertRaises(WebError) as error:
+                    settings.save_settings(
+                        body.model_copy(update={"expected_revision": 1, "mode": "off"})
+                    )
+                self.assertEqual(error.exception.code, "llm_settings_busy")
+                handoff(*args)
+
+            def observe_guard():
+                from contextlib import contextmanager
+
+                @contextmanager
+                def observed():
+                    with dispatch_authorization(policy):
+                        yield
+                    handed_off.set()
+
+                return observed()
+
+            def request():
+                try:
+                    outcomes.append(self.call(server, dispatch_guard=observe_guard))
+                except (
+                    AssertionError,
+                    ValueError,
+                    RuntimeError,
+                    OSError,
+                    requests.RequestException,
+                ) as error:
+                    outcomes.append(error)
+
+            with patch.object(
+                transport, "_handoff_payload", side_effect=checked_handoff
+            ):
+                thread = threading.Thread(target=request)
+                thread.start()
+                try:
+                    self.assertTrue(handed_off.wait(2))
+                    # Publication is available while the finite network oracle is
+                    # still waiting for response headers: no long config lease.
+                    settings.save_settings(
+                        body.model_copy(update={"expected_revision": 1, "mode": "off"})
+                    )
+                finally:
+                    thread.join(timeout=3)
+                self.assertFalse(thread.is_alive())
+            self.assertEqual(outcomes, [""])
+            self.assertEqual(
+                self.call(
+                    server, dispatch_guard=partial(dispatch_authorization, policy)
+                ),
+                "",
+            )
+            self.assertEqual(starts.call_count, 1)
+            self.assert_reaped(owned)
 
     def assert_deadline(self, mode):
         server = self.serve(mode)
@@ -258,6 +350,138 @@ class DeadlineIntegrationTests(unittest.TestCase):
         self.assertEqual((len(attempts), len(server.requests), len(owned)), (2, 2, 2))
         self.assert_reaped(owned)
 
+    def test_http_status_reasons_survive_real_helper_without_error_body(self):
+        for status, reason, retryable in (
+            (401, "authentication_failed", False),
+            (403, "authentication_failed", False),
+            (429, "rate_limited", True),
+            (500, "server_error", True),
+            (503, "server_error", True),
+            (400, "http_error", False),
+            (302, "redirect_rejected", False),
+        ):
+            with self.subTest(status=status):
+                server = self.serve(f"status_{status}")
+                server.retry_after = "999999"
+                problems = []
+                self.assertEqual(self.call(server, on_failure=problems.append), "")
+                problem = problems[-1]
+                self.assertEqual(
+                    (problem.reason, problem.http_status, problem.retryable),
+                    (reason, status, retryable),
+                )
+                self.assertEqual(problem.retry_after_seconds, 45.0)
+                self.assertNotIn(TEST_KEY, repr(problem))
+                self.assertNotIn("private provider body", repr(problem))
+                self.assertEqual(len(server.requests), 1)
+
+    def test_authentication_never_retries_even_with_opt_in(self):
+        for status in (401, 403):
+            with self.subTest(status=status):
+                server = self.serve(f"status_{status}")
+                budget = Mock(return_value=True)
+                problems = []
+                self.assertEqual(
+                    self.call(
+                        server,
+                        max_retries=1,
+                        before_request=budget,
+                        on_failure=problems.append,
+                    ),
+                    "",
+                )
+                self.assertEqual(len(server.requests), 1)
+                budget.assert_called_once_with()
+                self.assertFalse(problems[-1].retryable)
+
+    def test_rate_limit_retry_reserves_each_attempt_and_reaps_each_helper(self):
+        server = self.serve("rate_retry")
+        server.retry_after = "0.1"
+        owned, _ = self.children()
+        budget = Mock(return_value=True)
+        problems = []
+        self.assertEqual(
+            self.call(
+                server,
+                timeout=2,
+                max_retries=1,
+                before_request=budget,
+                on_failure=problems.append,
+            ),
+            "bounded-ok",
+        )
+        self.assertEqual(
+            (len(server.requests), budget.call_count, len(owned)), (2, 2, 2)
+        )
+        self.assertEqual(problems[0].reason, "rate_limited")
+        self.assertEqual(problems[0].retry_after_seconds, 0.1)
+        self.assert_reaped(owned)
+
+    def test_retryable_statuses_cannot_exceed_two_requests_or_quota(self):
+        for status, quota in ((429, [True, False]), (503, [True, True])):
+            with self.subTest(status=status):
+                server = self.serve(f"status_{status}")
+                budget = Mock(side_effect=quota)
+                problems = []
+                self.assertEqual(
+                    self.call(
+                        server,
+                        timeout=2,
+                        max_retries=1,
+                        before_request=budget,
+                        on_failure=problems.append,
+                    ),
+                    "",
+                )
+                self.assertEqual(len(server.requests), sum(quota))
+                self.assertEqual(budget.call_count, 2)
+                if not quota[-1]:
+                    self.assertEqual(problems[-1].reason, "budget_exhausted")
+
+    def test_retry_after_cannot_exceed_absolute_deadline_or_consume_extra_quota(self):
+        server = self.serve("status_429")
+        server.retry_after = "999999"
+        budget = Mock(return_value=True)
+        started = time.monotonic()
+        self.assertEqual(
+            self.call(
+                server,
+                max_retries=1,
+                before_request=budget,
+                on_failure=lambda problem: None,
+            ),
+            "",
+        )
+        self.assertLess(time.monotonic() - started, 1.7)
+        self.assertEqual(len(server.requests), 1)
+        budget.assert_called_once_with()
+
+    def test_cancellation_in_retry_backoff_prevents_second_quota_and_helper(self):
+        server = self.serve("status_429")
+        server.retry_after = "0.5"
+        budget = Mock(return_value=True)
+        cancel = threading.Event()
+        cancellation = threading.Timer(0.15, cancel.set)
+        self.addCleanup(lambda: cancellation.join(timeout=1))
+
+        def cancelled(problem):
+            if problem.reason == "rate_limited":
+                cancellation.start()
+
+        self.assertEqual(
+            self.call(
+                server,
+                timeout=2,
+                max_retries=1,
+                before_request=budget,
+                cancel=cancel,
+                on_failure=cancelled,
+            ),
+            "",
+        )
+        self.assertEqual(len(server.requests), 1)
+        budget.assert_called_once_with()
+
     def test_exhausted_budget_prevents_spawn_not_just_network(self):
         with patch.object(transport.subprocess, "Popen") as spawned:
             self.assertEqual(
@@ -312,7 +536,7 @@ class DeadlineIntegrationTests(unittest.TestCase):
                     sys.executable,
                     "-B",
                     "-c",
-                    "import sys; from test_llm_http_transport import orphan_call; orphan_call(*sys.argv[1:])",
+                    "import sys; from tests.test_llm_http_transport import orphan_call; orphan_call(*sys.argv[1:])",
                     f"http://127.0.0.1:{server.server_port}/v1",
                     str(marker),
                 ],
@@ -463,12 +687,169 @@ class CarrierContractTests(unittest.TestCase):
             b"not-json",
             b'{"kind":"ok","body":"","extra":true}',
             b'{"kind":"worker_error","body":""}',
+            b'{"kind":"timeout","body":""}',
+            b'{"kind":"request_error","body":""}',
         ):
             with (
                 self.subTest(packet=packet),
                 self.assertRaises(transport.HttpCarrierError),
             ):
                 transport._transport_result(packet, 32)
+
+    def test_worker_failure_packet_contains_only_validated_machine_metadata(self):
+        from patent_sar_extractor.integrations.llm.api_failures import (
+            APIProblem,
+            APIRequestError,
+        )
+
+        problem = APIProblem("rate_limited", 429, True, 1.0)
+        packet = json.dumps(
+            {"kind": "api_error", "problem": problem.to_dict()}
+        ).encode()
+        with self.assertRaises(APIRequestError) as raised:
+            transport._transport_result(packet, 32)
+        self.assertEqual(raised.exception.problem, problem)
+        for invalid in (
+            {"kind": "api_error", "problem": {**problem.to_dict(), "http_status": 401}},
+            {"kind": "api_error", "problem": {**problem.to_dict(), "http_status": 200}},
+            {"kind": "api_error", "problem": {**problem.to_dict(), "retryable": False}},
+            {"kind": "api_error", "problem": {**problem.to_dict(), "body": TEST_KEY}},
+            {
+                "kind": "api_error",
+                "problem": {**problem.to_dict(), "retry_after_seconds": float("inf")},
+            },
+            {"kind": "api_error", "problem": {**problem.to_dict(), "reason": TEST_KEY}},
+            {"kind": "api_error", "problem": problem.to_dict(), "body": TEST_KEY},
+        ):
+            with (
+                self.subTest(invalid=invalid),
+                self.assertRaises(transport.HttpCarrierError),
+            ):
+                transport._transport_result(json.dumps(invalid).encode(), 32)
+
+    def test_retry_after_delta_date_and_invalid_values_are_bounded_locally(self):
+        from patent_sar_extractor.integrations.llm.api_failures import parse_retry_after
+
+        for value, expected in (
+            ("12", 12.0),
+            ("0.25", 0.25),
+            ("999999", 45.0),
+            ("Thu, 01 Jan 1970 00:01:42 GMT", 2.0),
+            ("Thu, 01 Jan 1970 00:00:01 GMT", 0.0),
+            (None, None),
+            ("-3", None),
+            ("nan", None),
+            ("inf", None),
+            (TEST_KEY, None),
+            ("x" * 1024, None),
+        ):
+            with self.subTest(value=value):
+                self.assertEqual(parse_retry_after(value, now=100.0), expected)
+
+    def test_worker_public_tls_carrier_forbids_proxy_redirect_and_error_body(self):
+        from urllib3.connectionpool import HTTPSConnectionPool
+
+        from patent_sar_extractor.integrations.llm.api_failures import APIRequestError
+
+        response = MagicMock()
+        response.__enter__.return_value = response
+        response.status_code = 401
+        response.headers = {"Retry-After": "1"}
+        session = MagicMock()
+        session.post.return_value = response
+        with (
+            patch.object(transport, "_parent_death_guard"),
+            patch.object(transport.requests, "Session", return_value=session),
+            patch.object(
+                HTTPSConnectionPool, "ConnectionCls", HTTPSConnectionPool.ConnectionCls
+            ),
+            self.assertRaises(APIRequestError) as raised,
+        ):
+            try:
+                transport._worker_request(
+                    {
+                        "parent_pid": os.getpid(),
+                        "require_public": True,
+                        "url": "https://api.example.org/v1",
+                        "headers": {},
+                        "json": {},
+                        "timeout": 1,
+                        "deadline": time.monotonic() + 1,
+                        "max_body_bytes": 32,
+                    }
+                )
+            finally:
+                self.assertIs(
+                    HTTPSConnectionPool.ConnectionCls, transport.PublicHTTPSConnection
+                )
+        self.assertEqual(raised.exception.problem.http_status, 401)
+        self.assertFalse(session.trust_env)
+        self.assertFalse(session.post.call_args.kwargs["allow_redirects"])
+        self.assertNotIn("verify", session.post.call_args.kwargs)
+        self.assertNotIn("proxies", session.post.call_args.kwargs)
+        response.iter_content.assert_not_called()
+        response.raise_for_status.assert_not_called()
+
+    def test_public_dns_pins_exact_address_and_refuses_any_private_resolution(self):
+        from patent_sar_extractor.integrations.llm import external_api
+
+        public = (
+            external_api.socket.AF_INET,
+            external_api.socket.SOCK_STREAM,
+            6,
+            "",
+            ("93.184.216.34", 443),
+        )
+        private = (
+            external_api.socket.AF_INET,
+            external_api.socket.SOCK_STREAM,
+            6,
+            "",
+            ("127.0.0.1", 443),
+        )
+        socket = Mock()
+        with (
+            patch.object(external_api.socket, "getaddrinfo", return_value=[public]),
+            patch.object(external_api.socket, "socket", return_value=socket),
+        ):
+            connection = external_api.PublicHTTPSConnection(
+                "api.example.org", 443, timeout=1
+            )
+            self.assertIs(connection._new_conn(), socket)
+            socket.connect.assert_called_once_with(public[4])
+            self.assertEqual(connection.host, "api.example.org")
+        with (
+            patch.object(
+                external_api.socket, "getaddrinfo", return_value=[public, private]
+            ),
+            patch.object(external_api.socket, "socket") as opened,
+            self.assertRaises(external_api.NewConnectionError),
+        ):
+            connection._new_conn()
+        opened.assert_not_called()
+
+    def test_worker_error_serialization_has_no_body_or_raw_request(self):
+        from patent_sar_extractor.integrations.llm.api_failures import (
+            APIProblem,
+            APIRequestError,
+        )
+
+        incoming = Mock(buffer=io.BytesIO(b"{}"))
+        outgoing = io.StringIO()
+        with (
+            patch.object(transport.sys, "stdin", incoming),
+            patch.object(transport.sys, "stdout", outgoing),
+            patch.object(
+                transport,
+                "_worker_request",
+                side_effect=APIRequestError(APIProblem("server_error", 503, True)),
+            ),
+        ):
+            transport._worker_main()
+        packet = json.loads(outgoing.getvalue())
+        self.assertEqual(set(packet), {"kind", "problem"})
+        self.assertEqual(packet["kind"], "api_error")
+        self.assertNotIn(TEST_KEY, outgoing.getvalue())
 
     def test_stored_key_alone_cannot_enable_legacy_or_bounded_http(self):
         with (
@@ -487,6 +868,10 @@ class CarrierContractTests(unittest.TestCase):
                     "PATENTSAR_LLM_RESOLUTION_MODE": "off",
                     "PATENTSAR_LLM_RESOLUTION_DATA_CONSENT": "false",
                 },
+            ),
+            patch(
+                "patent_sar_extractor.integrations.llm.config._load_yaml_config",
+                return_value={},
             ),
         ):
             self.assertEqual(client.llm_chat([], cache=False), "")

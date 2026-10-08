@@ -12,7 +12,7 @@ import {
 } from './decoders';
 import type { ActivityFocusSelection, Filters, JobOptions, ReviewDecision } from './types';
 import { decodeAdmet, decodeEvidenceSummary, decodeRecognition } from './analysisDecoders';
-import { ContractError } from './validation';
+import { ContractError, count } from './validation';
 import { environmentApi } from './environmentApi';
 import { correctionApi } from './correctionApi';
 import { historyApi } from './historyApi';
@@ -127,6 +127,17 @@ export const api = {
       decodeJob,
     ),
   cancelJob: (id: string) => client.mutate(`/jobs/${segment(id)}/cancel`, 'POST', {}, decodeJob),
+  reauthorizeJobLLM: (id: string, expectedRevision: number) =>
+    client.mutate(
+      `/jobs/${segment(id)}/llm-authorization`,
+      'POST',
+      { expected_revision: count(expectedRevision, '$.expected_revision'), consent: true },
+      (input) => {
+        const job = decodeJob(input);
+        if (job.id !== id) throw new ContractError('$.id');
+        return job;
+      },
+    ),
   review: (
     id: string,
     compoundId: string,

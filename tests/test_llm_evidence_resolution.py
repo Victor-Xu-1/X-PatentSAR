@@ -183,8 +183,14 @@ class EvidenceResolutionTests(unittest.TestCase):
         self.post.assert_not_called()
 
     def test_request_deadline_prevents_a_second_attempt_after_elapsed_timeout(self):
-        self.post.side_effect = requests.Timeout()
-        with patch.object(client.time, "monotonic", side_effect=[0, 0, 31]):
+        clock = [0.0]
+
+        def timeout(*args, **kwargs):
+            clock[0] = 31.0
+            raise requests.Timeout()
+
+        self.post.side_effect = timeout
+        with patch.object(client.time, "monotonic", side_effect=lambda: clock[0]):
             result = self.resolve(config=replace(self.config, retries=1))
         self.assertEqual(result.status, "unavailable")
         self.assertEqual(self.post.call_count, 1)
@@ -206,7 +212,7 @@ class EvidenceResolutionTests(unittest.TestCase):
         self.assertNotIn("job_id", supplied)
         self.assertNotIn("trigger", supplied)
         self.assertNotIn("fault_kind", supplied)
-        self.assertEqual(supplied["protocol_version"], 2)
+        self.assertEqual(supplied["protocol_version"], 3)
         self.assertEqual(supplied["original_sha256"], self.request.original_sha256)
         self.assertEqual(supplied["observations"][0]["observation_id"], "text-1")
         self.assertEqual(supplied["observations"][1]["observation_id"], "region-1")

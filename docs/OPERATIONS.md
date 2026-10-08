@@ -300,7 +300,7 @@ components; reading existing results still does not require installing models.
 
 Locator/segmentation epochs5 retain activity-independent source coverage. Binder
 epoch8 discovers numbered original cells across all selected source pages even
-when no table pages were pre-labelled. Activity epoch6 follows only geometrically
+when no table pages were pre-labelled. Activity epoch7 follows only geometrically
 proved adjacent continuations from classified seeds, preserving each cell's
 actual source page. Missing/changed grids terminate continuation; no fixed patent
 page lists or inferred identifier sequence are used. An eligible continuation
@@ -414,7 +414,7 @@ apply only to future installations and are not migrations or cleanup requests.
 
 ### Format repair and optional LLM evidence review
 
-Product release numbering follows the PR policy. Classifier2, binder8 and activity5 invalidate their old
+Product release numbering follows the PR policy. Classifier2, binder8 and activity7 invalidate their old
 derived checkpoints; exact-original compatible OCR/segmentation observations
 remain reusable under existing manifest checks. Start a fresh software attempt,
 not an edit of old generated files. Wide structure grids use actual header roles
@@ -458,11 +458,46 @@ rewriting the task's original semantic policy or science. A missing/corrupt
 control file cannot reset its budget or bypass authorization. No OOM/system fault
 triggers an API call or an unbounded retry. Evidence receipts remain separate;
 the same original-cell writer and strict QA own all measurements/acceptance.
-Activity epoch6 and the semantic API-policy fingerprint require fresh derived
+Activity epoch7 and the semantic API-policy fingerprint require fresh derived
 activity parsing after a relevant policy change, not a replay of old acceptance.
 Old whole-page VLM and key-only/free-form QA/batch paths are removed; historical
 files are preserved. Real provider and scientific acceptance remain separate
 user-consented checks, not a claim implied by code, installation or an API test.
+
+New GUI-controlled context v2 keeps only a private credential reference. Old v1
+snapshots remain preserved and are never rewritten. After key rotation, open an
+idle stopped job's details and explicitly **更新 API 授权**. The existing saved
+provider/model/protocol/mode/bounds must match the frozen profile. The grant records
+only the credential fingerprint and settings revision, under the job budget lock;
+it neither resets calls nor starts a model or task. Resume separately. Changed
+semantics, stale revision, active/removed/foreign jobs and damaged control state
+remain rejected. Operator ENV policies do not gain a browser renewal fallback.
+Renewal cannot clear a carrier/cleanup, unsafe-cache or other non-authentication
+safety block; key rotation does not mask it. Transient wait/fault records remain.
+After durable reservation, disclosure is checked again. A shared configuration
+directory lease orders publication against the at-most-two-second owned-carrier
+input/EOF handoff, not the network response. Already handed-off requests are
+in-flight and cannot be recalled; OFF prevents later handoffs and proposal use.
+Standalone CLI stages inherit one invocation ID and the same circuit semantics.
+
+Authentication faults stop further calls; rate limits, timeouts and temporary
+provider faults are persisted and suspend subsequent API requests of that attempt.
+Cooling alone does not automatically resume a running attempt or rerun a patent.
+After the reported wait, explicitly continue the stopped task; its original policy
+and remaining calls survive. A successful local validation clears the applicable
+fault state, not formal QA. Cache hits are revalidated; invalid content is never
+stored as success. Exact rejected cache entries can be discarded without wiping
+other projects' observations. Ordinary cache contention cannot turn a valid API
+answer into transport failure; unsafe/corrupt storage still requires operator repair.
+
+`activity_data.json.coverage` inventories every encountered activity region and
+otherwise uncovered seed page. Unresolved regions cannot disappear because another
+table had valid rows. Inspect source/coverage proof, not only extracted-row count.
+QA schema4 rejects missing/unresolved coverage; old artifacts remain unchanged and
+their acceptance is rechecked as historical rather than silently promoted. Unchanged
+raw OCR and upstream manifests remain reusable; activity epoch7 reparses its own
+derived stage. Unknown metrics/units, no usable geometry/catalog and wrong OCR values
+still need supported source evidence or review. This is not all-format perfection.
 
 - `stereo_source_conflict` / `stereo_source_ambiguous`: a source unknown-bond risk and the model's determinate stereo cannot be safely reconciled. Inspect the original crop; do not strip chiral tokens, flip R/S by suffix, merge separated IDs, or run normalization repeatedly. Generated observations and old failed runs remain unchanged. Correct supported chemistry through the audited drawing overlay; it does not turn a failed core run into accepted formal chemistry.
 - `stereo_source_unavailable`: unreadable/excessive source geometry failed the bounded screen before model loading. Correct input quality or source ownership, not memory limits or acceptance flags.

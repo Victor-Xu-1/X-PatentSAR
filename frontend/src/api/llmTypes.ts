@@ -2,6 +2,19 @@ export type LLMMode = 'off' | 'on-error' | 'quality';
 export type LLMStatus = 'disabled' | 'incomplete' | 'ready';
 export type LLMProtocol = 'openai-compatible' | 'anthropic' | 'gemini';
 export type LLMResponseMode = 'json-schema' | 'json-object' | 'prompt-only';
+export type LLMTestReason =
+  | 'nonce_verified'
+  | 'invalid_response'
+  | 'transport_unavailable'
+  | 'settings_changed'
+  | 'input_budget'
+  | 'authentication_failed'
+  | 'rate_limited'
+  | 'provider_unavailable'
+  | 'timeout'
+  | 'cancelled'
+  | 'cache_unavailable'
+  | 'unsafe_cache';
 
 export interface LLMLimits {
   max_calls: number;
@@ -13,6 +26,7 @@ export interface LLMLimits {
 
 export interface LLMTestResult {
   status: 'passed' | 'failed';
+  /** Known reasons use LLMTestReason; older bounded strings stay readable, never echoed. */
   reason: string;
   settings_revision: number;
   checked_at: string;

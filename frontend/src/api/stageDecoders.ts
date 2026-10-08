@@ -1,4 +1,4 @@
-import type { CoreStageName, StageName, StageProgress } from './types';
+import type { CoreStageName, Stage, StageName, StageProgress } from './types';
 import { stageNames } from './types';
 import {
   array,
@@ -52,6 +52,18 @@ const progress: Decoder<StageProgress> = (input, path = '$') => {
   };
 };
 
+const repairShape = object({ regions: count, unresolved: count });
+const repair: Decoder<NonNullable<Stage['repair']>> = (input, path = '$') => {
+  const value = repairShape(input, path);
+  if (
+    Object.keys(input as object).some((key) => key !== 'regions' && key !== 'unresolved') ||
+    value.regions > 25000 ||
+    value.unresolved > value.regions
+  )
+    throw new ContractError(path);
+  return value;
+};
+
 function stageDecoder<const T extends readonly StageName[]>(names: T) {
   const shape = object({
     name: oneOf(names),
@@ -70,6 +82,9 @@ function stageDecoder<const T extends readonly StageName[]>(names: T) {
     if (skipped !== undefined && skipped > 1_000_000) throw new ContractError(`${path}.skipped`);
     return {
       ...stage,
+      ...(Object.hasOwn(fields, 'repair')
+        ? { repair: repair(fields.repair, `${path}.repair`) }
+        : {}),
       ...(skipped === undefined ? {} : { skipped }),
       ...(Object.hasOwn(fields, 'resource_wait')
         ? { resource_wait: nullable(resourceWait)(fields.resource_wait, `${path}.resource_wait`) }

@@ -189,3 +189,56 @@ class APIProtocolTests(unittest.TestCase):
                 max_request_chars=10,
             )
         carrier.assert_not_called()
+
+    def test_all_protocols_apply_local_validation_before_cache_publication(self):
+        packets = {
+            "openai-compatible": {
+                "choices": [
+                    {"finish_reason": "stop", "message": {"content": "invented"}}
+                ]
+            },
+            "anthropic": {
+                "stop_reason": "end_turn",
+                "content": [{"type": "text", "text": "invented"}],
+            },
+            "gemini": {
+                "candidates": [
+                    {
+                        "finishReason": "STOP",
+                        "content": {"parts": [{"text": "invented"}]},
+                    }
+                ]
+            },
+        }
+
+        def reject(content):
+            self.assertEqual(content, "invented")
+            raise ValueError("not one of the supplied candidates")
+
+        for protocol, packet in packets.items():
+            failures = []
+            with (
+                self.subTest(protocol=protocol),
+                patch(
+                    "patent_sar_extractor.integrations.llm.client.bounded_post",
+                    return_value=json.dumps(packet).encode(),
+                ) as carrier,
+                patch(
+                    "patent_sar_extractor.integrations.llm.client._cache_set"
+                ) as cached,
+            ):
+                self.assertEqual(
+                    llm_chat(
+                        MESSAGES,
+                        config=self.config(protocol),
+                        response_format=SCHEMA,
+                        validate_content=reject,
+                        validation_identity="nonce-v1",
+                        on_failure=failures.append,
+                        max_retries=1,
+                    ),
+                    "",
+                )
+                cached.assert_not_called()
+                self.assertEqual(carrier.call_count, 1)
+                self.assertEqual(failures[-1].reason, "invalid_content")

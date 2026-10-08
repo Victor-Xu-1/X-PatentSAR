@@ -169,7 +169,7 @@ class StandalonePackagingTests(unittest.TestCase):
         self.assertEqual(PAGE_CLASSIFICATION_SCHEMA_VERSION, 2)
         self.assertEqual(BINDINGS_SCHEMA_VERSION, 2)
         self.assertEqual(SMILES_SCHEMA_VERSION, 2)
-        self.assertEqual(QA_REPORT_SCHEMA_VERSION, 3)
+        self.assertEqual(QA_REPORT_SCHEMA_VERSION, 4)
         self.assertEqual(project["name"], DISTRIBUTION_NAME)
         self.assertIn(COMMAND_NAME, project["scripts"])
         package_find = metadata["tool"]["setuptools"]["packages"]["find"]

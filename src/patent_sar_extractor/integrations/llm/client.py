@@ -9,18 +9,37 @@ LLM Client — 统一大模型调用客户端
 
 import json
 import logging
+import sqlite3
 import time
 from collections.abc import Callable
+from functools import partial
 
 import requests
 
+from .api_failures import APIProblem, APIRequestError
 from .config import get_llm_config
 from .external_api import validate_external_endpoint
-from .http_transport import Cancellation, HttpCarrierError, bounded_post
+from .http_transport import (
+    POLL_SECONDS,
+    Cancellation,
+    DispatchGuard,
+    HttpCancelled,
+    HttpCarrierError,
+    bounded_post,
+)
 from .protocol_adapters import build_request, response_text
-from .response_cache import _cache_key, _cache_set, _cached
+from .response_cache import (
+    _cache_discard,
+    _cache_key,
+    _cache_set,
+    _cached,
+    is_cache_unavailable,
+)
 
 logger = logging.getLogger(__name__)
+FailureHook = Callable[[APIProblem], None]
+ContentValidator = Callable[[str], None]
+_CONTENT_ERRORS = (KeyError, IndexError, TypeError, ValueError, RecursionError)
 
 # ── 核心调用 ──
 
@@ -43,6 +62,79 @@ def _response_text(
     return raw.strip()
 
 
+def _report(problem: APIProblem, on_failure: FailureHook | None) -> None:
+    logger.warning(
+        "LLM API failure: %s (status=%s)", problem.reason, problem.http_status
+    )
+    if on_failure is not None:
+        on_failure(problem)
+
+
+def _stopped(
+    deadline: float, cancel: Cancellation | None, on_failure: FailureHook | None
+) -> bool:
+    reason = None
+    if cancel is not None and cancel.is_set():
+        reason = "cancelled"
+    elif time.monotonic() >= deadline:
+        reason = "deadline_exceeded"
+    if reason is not None:
+        _report(APIProblem(reason), on_failure)
+    return reason is not None
+
+
+def _optional_cache(
+    operation: Callable[[], str | None], on_failure: FailureHook | None
+) -> str | None:
+    try:
+        return operation()
+    except (sqlite3.Error, OSError) as exc:
+        if not is_cache_unavailable(exc):
+            raise
+    _report(APIProblem("cache_unavailable"), on_failure)
+    return None
+
+
+def _valid_content(
+    content: str,
+    limit: int,
+    validator: ContentValidator | None,
+    reason: str,
+    on_failure: FailureHook | None,
+) -> bool:
+    try:
+        if not isinstance(content, str) or len(content) > limit:
+            raise ValueError("Invalid or excessive API content")
+        if validator is not None:
+            validator(content)
+    except _CONTENT_ERRORS:
+        _report(APIProblem(reason), on_failure)
+        return False
+    return True
+
+
+def _retry_ready(
+    problem: APIProblem,
+    deadline: float,
+    cancel: Cancellation | None,
+    on_failure: FailureHook | None,
+) -> bool:
+    if not problem.retryable or _stopped(deadline, cancel, on_failure):
+        return False
+    delay = (
+        problem.retry_after_seconds if problem.retry_after_seconds is not None else 0.1
+    )
+    remaining = deadline - time.monotonic()
+    if delay >= remaining:
+        return False  # No useful retry fits; do not wait or reserve another attempt.
+    wake = time.monotonic() + delay
+    while time.monotonic() < wake:
+        if _stopped(deadline, cancel, on_failure):
+            return False
+        time.sleep(min(POLL_SECONDS, max(0.0, wake - time.monotonic())))
+    return not _stopped(deadline, cancel, on_failure)
+
+
 def llm_chat(
     messages: list,
     model: str | None = None,
@@ -59,15 +151,26 @@ def llm_chat(
     before_request: Callable[[], bool] | None = None,
     cancel: Cancellation | None = None,
     max_request_chars: int = 32768,
+    validate_content: Callable[[str], None] | None = None,
+    on_failure: Callable[[APIProblem], None] | None = None,
+    validation_identity: str = "",
+    dispatch_guard: DispatchGuard | None = None,
 ) -> str:
-    """调用 LLM，返回文本响应。"""
+    """Return text only after local validation, including on every cache hit.
+
+    Validation rejects with ValueError/TypeError/KeyError/IndexError/RecursionError;
+    rejected fresh content is not cached or retried. A stable consumer/version
+    validation_identity isolates old unvalidated observations. Failure hooks get
+    safe metadata; hook/persistence bugs and unsafe cache access are not swallowed.
+    """
+    if cancel is not None and cancel.is_set():
+        _report(APIProblem("cancelled"), on_failure)
+        return ""
     llm_cfg = get_llm_config() if config is None else config
     model = model or str(llm_cfg.get("model", ""))
     endpoint = str(llm_cfg.get("endpoint", "")).rstrip("/")
     api_key = str(llm_cfg.get("api_key", "")).strip()
     timeout = timeout if timeout is not None else int(llm_cfg.get("timeout", 30) or 30)
-    if cancel is not None and cancel.is_set():
-        return ""
     if (
         type(max_retries) is not int
         or not 0 <= max_retries <= 1
@@ -79,6 +182,8 @@ def llm_chat(
         or not 1 <= max_tokens <= 2048
         or type(max_request_chars) is not int
         or not 1 <= max_request_chars <= 32768
+        or (validate_content is not None and not callable(validate_content))
+        or (on_failure is not None and not callable(on_failure))
     ):
         raise ValueError("Invalid LLM request bounds")
     deadline = time.monotonic() + timeout
@@ -86,10 +191,10 @@ def llm_chat(
     use_cache = cache and temperature == 0.0
 
     if not api_key:
-        logger.error("LLM_API_KEY is not set; skipping LLM request")
+        _report(APIProblem("configuration_unavailable"), on_failure)
         return ""
     if not endpoint:
-        logger.error("LLM endpoint is not set; skipping LLM request")
+        _report(APIProblem("configuration_unavailable"), on_failure)
         return ""
 
     endpoint = validate_external_endpoint(endpoint)
@@ -104,17 +209,8 @@ def llm_chat(
         max_response_chars,
         llm_cfg.get("protocol", "openai-compatible"),
         llm_cfg.get("response_mode", "json-schema"),
+        validation_identity,
     )
-    if use_cache:
-        cached = _cached(
-            key,
-            cache_ttl,
-            cache_path=cache_path,
-            max_response_chars=max_response_chars,
-        )
-        if cached is not None:
-            return cached
-
     wire = build_request(
         {**llm_cfg, "endpoint": endpoint, "api_key": api_key},
         messages,
@@ -129,14 +225,38 @@ def llm_chat(
     ):
         raise ValueError("API request exceeded the evidence input budget")
 
+    if use_cache:
+        cached = _optional_cache(
+            lambda: _cached(
+                key,
+                cache_ttl,
+                cache_path=cache_path,
+                max_response_chars=max_response_chars,
+            ),
+            on_failure,
+        )
+        if cached is not None:
+            if _valid_content(
+                cached,
+                max_response_chars,
+                validate_content,
+                "invalid_cached_content",
+                on_failure,
+            ):
+                return "" if _stopped(deadline, cancel, on_failure) else cached
+            _optional_cache(
+                partial(_cache_discard, key, cached, cache_path=cache_path), on_failure
+            )
+
     attempts = max_retries + 1
     for attempt in range(attempts):
-        remaining = deadline - time.monotonic()
-        if (
-            remaining <= 0
-            or (cancel is not None and cancel.is_set())
-            or (before_request is not None and not before_request())
-        ):
+        if _stopped(deadline, cancel, on_failure):
+            return ""
+        if before_request is not None and not before_request():
+            _report(APIProblem("budget_exhausted"), on_failure)
+            return ""
+        # Durable reservation can take time or revoke consent/cancel concurrently.
+        if _stopped(deadline, cancel, on_failure):
             return ""
         try:
             try:
@@ -144,34 +264,52 @@ def llm_chat(
                     wire.url,
                     headers=wire.headers,
                     json=wire.payload,
-                    timeout=remaining,
+                    timeout=deadline - time.monotonic(),
                     deadline=deadline,
                     max_body_bytes=max_response_chars * 6 + 8192,
                     cancel=cancel,
                     require_public=True,
+                    dispatch_guard=dispatch_guard,
                 )
                 content = _response_text(
                     resp, max_response_chars, deadline, wire.protocol
                 )
-            except (KeyError, IndexError, TypeError, ValueError) as exc:
-                logger.error("LLM response parse failed (%s)", type(exc).__name__)
-                break
-
-            if use_cache:
-                _cache_set(key, content, cache_path=cache_path)
-
-            return content
+            except _CONTENT_ERRORS:
+                if not _stopped(deadline, cancel, on_failure):
+                    _report(APIProblem("invalid_response"), on_failure)
+                return ""
+        except APIRequestError as exc:
+            problem = exc.problem
+        except HttpCancelled:
+            _report(APIProblem("cancelled"), on_failure)
+            return ""
         except HttpCarrierError:
-            logger.warning("Owned HTTP carrier failed or was cancelled; no retry")
+            _report(APIProblem("carrier_error"), on_failure)
             return ""
         except requests.exceptions.Timeout:
-            logger.warning("LLM timeout (attempt %s/%s)", attempt + 1, attempts)
-        except requests.exceptions.RequestException as exc:
-            logger.warning(
-                "LLM request failed (%s, attempt %s/%s)",
-                type(exc).__name__,
-                attempt + 1,
-                attempts,
-            )
-
+            problem = APIProblem("timeout", retryable=True)
+        except requests.exceptions.RequestException:
+            problem = APIProblem("request_error")
+        else:
+            if not _valid_content(
+                content,
+                max_response_chars,
+                validate_content,
+                "invalid_content",
+                on_failure,
+            ):
+                return ""
+            if _stopped(deadline, cancel, on_failure):
+                return ""
+            if use_cache:
+                _optional_cache(
+                    partial(_cache_set, key, content, cache_path=cache_path),
+                    on_failure,
+                )
+            return "" if _stopped(deadline, cancel, on_failure) else content
+        _report(problem, on_failure)
+        if attempt + 1 >= attempts or not _retry_ready(
+            problem, deadline, cancel, on_failure
+        ):
+            return ""
     return ""

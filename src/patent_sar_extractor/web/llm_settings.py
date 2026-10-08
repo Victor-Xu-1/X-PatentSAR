@@ -10,12 +10,28 @@ import threading
 from copy import deepcopy
 from dataclasses import asdict, replace
 from datetime import UTC, datetime
+from functools import partial
 from pathlib import Path
-from typing import Literal
+from typing import Literal, cast, get_args
 
 from patent_sar_extractor import paths
+from patent_sar_extractor.integrations.llm.api_failures import (
+    APIProblem,
+    evidence_problem,
+)
 from patent_sar_extractor.integrations.llm.client import llm_chat
 from patent_sar_extractor.integrations.llm.config import EvidenceResolutionConfig
+from patent_sar_extractor.integrations.llm.credential_authorization import (
+    dispatch_authorization,
+    renew_authorization,
+)
+from patent_sar_extractor.integrations.llm.evidence_resolution import EvidenceCallBudget
+from patent_sar_extractor.integrations.llm.job_health import (
+    BLOCKED_REASONS,
+    clear_state,
+    read_state,
+)
+from patent_sar_extractor.integrations.llm.private_state import read_budget
 
 from .errors import WebError
 from .llm_models import (
@@ -199,6 +215,7 @@ class LLMSettingsService:
         policy: EvidenceResolutionConfig,
     ) -> tuple[Literal["passed", "failed"], TEST_REASONS]:
         nonce = secrets.token_hex(16)
+        failures: list[APIProblem] = []
         try:
             messages, schema = nonce_probe(nonce, policy.model, policy.max_input_chars)
         except ValueError:
@@ -215,6 +232,10 @@ class LLMSettingsService:
                 max_request_chars=policy.max_input_chars,
                 cache=False,
                 response_format=schema,
+                on_failure=failures.append,
+                dispatch_guard=partial(dispatch_authorization, policy)
+                if policy.authorization_file
+                else None,
             )
         except (
             OSError,
@@ -227,7 +248,11 @@ class LLMSettingsService:
             # Untrusted provider exceptions never cross the API/log boundary.
             return "failed", "transport_unavailable"
         if not content:
-            return "failed", "transport_unavailable"
+            latest = evidence_problem(failures[-1]) if failures else None
+            reason = latest.reason if latest is not None else "transport_unavailable"
+            return "failed", cast(TEST_REASONS, reason) if reason in get_args(
+                TEST_REASONS
+            ) else "transport_unavailable"
         try:
             if not isinstance(content, str) or len(content) > 2048:
                 raise ValueError("Invalid test response")
@@ -287,3 +312,60 @@ class LLMSettingsService:
             raise unavailable() from None
         finally:
             self._test_lock.release()
+
+    def renew_job(self, context, expected_revision: int) -> None:
+        """No API request, job start, snapshot rewrite, quota reset or key echo."""
+        if environment_overrides():
+            raise WebError(
+                409,
+                "llm_settings_locked",
+                "Operator profiles cannot be renewed in the browser.",
+            )
+        budget = EvidenceCallBudget(
+            context.job_id, context.policy.max_calls, ledger=context.ledger
+        )
+        if not budget.acquire():
+            raise WebError(
+                409,
+                "llm_job_busy",
+                "A task API request is active; authorization was not changed.",
+            )
+        try:
+            storage = self._storage()
+            with storage.transaction() as directory:
+                health = read_state(context.ledger, context.job_id)
+                if health and health["reason"] in BLOCKED_REASONS - {
+                    "authentication_failed"
+                }:
+                    raise WebError(
+                        409,
+                        "llm_recovery_blocked",
+                        "A non-authentication safety fault cannot be cleared by credential renewal.",
+                    )
+                if (
+                    read_budget(
+                        context.ledger, context.job_id, context.policy.max_calls
+                    )
+                    >= context.policy.max_calls
+                ):
+                    raise WebError(
+                        409,
+                        "llm_renewal_unavailable",
+                        "The task's retained API quota is exhausted.",
+                    )
+                current = self._snapshot(storage, directory)
+                self._revision(current, expected_revision)
+                validate_test_settings(current.view)
+                renew_authorization(context, current.policy, current.view.revision)
+                if health and health["reason"] == "authentication_failed":
+                    clear_state(context.ledger, context.job_id)
+        except (OSError, TypeError, RecursionError):
+            raise unavailable() from None
+        except ValueError:
+            raise WebError(
+                409,
+                "llm_profile_changed",
+                "Only credentials for the same saved API profile can be renewed; create a new task for a semantic change.",
+            ) from None
+        finally:
+            budget.release()

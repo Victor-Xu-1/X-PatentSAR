@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import sys
 import tempfile
 import unittest
 from argparse import Namespace
@@ -64,6 +67,70 @@ def state_for(root, stage):
 
 
 class SourceLedPipelineTests(unittest.TestCase):
+    def test_controller_initializes_one_invocation_before_an_isolated_evidence_stage(
+        self,
+    ):
+        from patent_sar_extractor.integrations.llm.job_context import context_for_run
+        from patent_sar_extractor.integrations.llm.job_health import gate, read_state
+
+        source = str(Path(contracts.__file__).resolve().parents[1])
+        child = """
+import json, os, sys
+from patent_sar_extractor.integrations.llm.api_failures import APIProblem
+from patent_sar_extractor.integrations.llm.config import EvidenceResolutionConfig
+from patent_sar_extractor.integrations.llm.job_context import context_for_run
+from patent_sar_extractor.integrations.llm.job_health import record_fault
+context = context_for_run(sys.argv[1], 'a'*64, policy=EvidenceResolutionConfig(mode='on-error', data_consent=True, endpoint='https://synthetic.invalid/v1', model='controlled', api_key='synthetic-only'))
+record_fault(context.ledger, context.job_id, APIProblem('rate_limited', 429, True, 1))
+print(json.dumps({'attempt': os.environ.get('PATENTSAR_API_ATTEMPT_ID')}))
+"""
+        with (
+            tempfile.TemporaryDirectory() as temporary,
+            patch.dict(os.environ, {}, clear=True),
+        ):
+            observed = []
+
+            def isolated(state):
+                # Only a disposable control ledger, no HTTP or scientific stage.
+                parent = os.environ.get("PATENTSAR_API_ATTEMPT_ID")
+                outcome = subprocess.check_output(
+                    [sys.executable, "-c", child, state.base_dir],
+                    env={**os.environ, "PYTHONPATH": source},
+                    text=True,
+                    timeout=10,
+                )
+                self.assertRegex(parent or "", r"^[a-f0-9]{32}$")
+                self.assertEqual(json.loads(outcome)["attempt"], parent)
+                context = context_for_run(state.base_dir, "a" * 64)
+                health = read_state(context.ledger, context.job_id)
+                with patch(
+                    "patent_sar_extractor.integrations.llm.job_health.time.time",
+                    return_value=health["retry_at"] + 100,
+                ):
+                    self.assertEqual(
+                        gate(context.ledger, context.job_id)[0], "rate_limited"
+                    )
+                observed.append(parent)
+
+            args = Namespace(
+                pdf="synthetic.pdf", patent_id="CONTROL", output=temporary, force=False
+            )
+            with patch(
+                "patent_sar_extractor.application.pipeline._load_io_config",
+                return_value={},
+            ):
+                for stage in contracts.CORE_STAGE_ORDER:
+                    self.enterContext(
+                        patch(
+                            f"patent_sar_extractor.application.pipeline.execute_{stage}",
+                            side_effect=isolated
+                            if stage == "activity"
+                            else lambda state: None,
+                        )
+                    )
+                execute_pipeline(args, PipelineProgress())
+            self.assertEqual(len(observed), 1)
+
     def test_writer_preserves_complete_proved_compound_identifier(self):
         with tempfile.TemporaryDirectory() as temporary:
             payload = write_binding_result(

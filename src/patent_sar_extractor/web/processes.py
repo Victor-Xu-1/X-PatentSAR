@@ -381,6 +381,7 @@ class CLIProcessRunner(SubprocessRunner):
         from patent_sar_extractor.core.env_runner import captured_runtime_environment
 
         env.update(captured_runtime_environment())
+        env["PATENTSAR_API_ATTEMPT_ID"] = spec.job_id
         for key in tuple(env):
             if key.startswith(("LLM_", "VLM_", "PATENTSAR_LLM_")):
                 env.pop(key, None)

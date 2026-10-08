@@ -135,7 +135,13 @@ def make_header_resolver(
             "on-error",
         )
         try:
-            result = resolve_evidence(request, budget, config=context.policy)
+            result = resolve_evidence(
+                request,
+                budget,
+                config=context.policy,
+                require_complete_refs=True,
+                max_selected=1,
+            )
             valid = (
                 result.status == "resolved"
                 and len(result.candidates) == 1

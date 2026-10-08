@@ -1,6 +1,16 @@
 import type { Decoder } from './validation';
-import { boolean, ContractError, count, object, oneOf, positive, string } from './validation';
+import {
+  boolean,
+  ContractError,
+  count,
+  number,
+  object,
+  oneOf,
+  positive,
+  string,
+} from './validation';
 import type { LLMSettings, LLMTestResult } from './llmTypes';
+import type { JobLLMRecovery } from './types';
 
 export function hasLLMControlCharacters(value: string): boolean {
   for (let index = 0; index < value.length; index++) {
@@ -34,6 +44,24 @@ function strictObject<T extends Record<string, Decoder<unknown>>>(shape: T) {
 function explicitNullable<T>(decode: Decoder<T>): Decoder<T | null> {
   return (value, path) => (value === null ? null : decode(value, path));
 }
+
+const remainingCalls: Decoder<number> = (input, path = '$') => {
+  const value = count(input, path);
+  if (value > 8) throw new ContractError(path);
+  return value;
+};
+const retryDuration: Decoder<number> = (input, path = '$') => {
+  const value = number(input, path);
+  if (value < 0 || value > 45) throw new ContractError(path);
+  return value;
+};
+export const decodeLLMRecovery: Decoder<JobLLMRecovery> = strictObject({
+  status: oneOf(['disabled', 'ready', 'blocked', 'cooldown', 'exhausted', 'unavailable']),
+  reason: explicitNullable(string),
+  remaining_calls: explicitNullable(remainingCalls),
+  retry_after_seconds: explicitNullable(retryDuration),
+  can_reauthorize: boolean,
+});
 
 /** No credentials, query parameters or fragments may be embedded in an API URL. */
 export function validLLMEndpoint(value: string): boolean {

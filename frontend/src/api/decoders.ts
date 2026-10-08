@@ -35,6 +35,7 @@ import { decodeActivityRankValues } from './activityRankDecoders';
 import { decodeMolfile, decodePropertyOverrides } from './correctionDecoders';
 import { decodeStereoEvidence } from './stereoDecoders';
 import { decodeLeadAssessment } from './leadDecoders';
+import { decodeLLMRecovery } from './llmDecoders';
 export { decodePage } from './pageDecoders';
 
 const identity = object({ name: string, version: scalar });
@@ -264,6 +265,9 @@ export const decodeJob: Decoder<Job> = (input, path = '$') => {
   const fields = input as Record<string, unknown>;
   const result: Job = {
     ...job,
+    ...(Object.hasOwn(fields, 'llm_recovery')
+      ? { llm_recovery: decodeLLMRecovery(fields.llm_recovery, `${path}.llm_recovery`) }
+      : {}),
     ...(Object.hasOwn(fields, 'include_admet')
       ? { include_admet: boolean(fields.include_admet, `${path}.include_admet`) }
       : {}),
