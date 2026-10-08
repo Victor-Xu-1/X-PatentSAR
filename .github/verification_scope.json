@@ -3,13 +3,19 @@
   "base_sha": "e7a2c02183d0523cb7023efa5301ba6fc1348584",
   "changed_paths": [
     ".github/verification_scope.json",
+    "frontend/package-lock.json",
+    "frontend/package.json",
+    "src/patent_sar_extractor/contracts.py",
     "tests/release_publication_support.py",
     "tests/test_release_automation.py",
     "tests/test_release_recovery.py"
   ],
   "python_modules": [
     "tests.test_release_automation",
-    "tests.test_release_recovery"
+    "tests.test_release_recovery",
+    "tests.test_release_policy.ReleaseNumberTests",
+    "tests.test_standalone.StandalonePackagingTests.test_version_command_uses_product_version",
+    "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [],
   "browser_tests": [
