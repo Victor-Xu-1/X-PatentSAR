@@ -17,6 +17,7 @@ from patent_sar_extractor.contracts import (
     artifact_identity,
 )
 from patent_sar_extractor.core.phase_resources import release_completed_document_phase
+from patent_sar_extractor.integrations.llm.job_health import ensure_attempt_id
 from patent_sar_extractor.paths import state_dir
 
 from .pipeline_context import PipelineContext
@@ -35,6 +36,7 @@ from .stage_structures import execute_structures
 
 
 def execute_pipeline(args, progress: PipelineProgress) -> dict:
+    ensure_attempt_id()  # Controller initializes before any isolated child stage.
     state = PipelineContext(args=args, progress=progress)
     provided_patent_id = getattr(state.args, "patent_id", None)
     # Explicit unknown identity is owned by the task, not an invitation to
