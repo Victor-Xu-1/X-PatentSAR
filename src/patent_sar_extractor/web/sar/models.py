@@ -46,6 +46,10 @@ class Molecule(DTO):
     observations: list[Observation] = Field(default_factory=list)
     source_compound_id: str | None = None
     source_page: int | None = None
+    properties: dict[str, float | None] = Field(default_factory=dict, max_length=6)
+    predictions: dict[str, float | None] = Field(default_factory=dict, max_length=11)
+    property_origins: dict[str, str] = Field(default_factory=dict, max_length=6)
+    prediction_origin: str = "not_provided"
 
 
 class Dataset(DTO):
@@ -100,6 +104,8 @@ class CSVMapping(DTO):
     unit_column: str | None = None
     cell_line_column: str | None = None
     duration_column: str | None = None
+    property_columns: dict[str, str] = Field(default_factory=dict, max_length=6)
+    prediction_columns: dict[str, str] = Field(default_factory=dict, max_length=11)
     request_id: str = Field(pattern=r"^[a-f0-9]{32}$")
 
 
@@ -129,6 +135,7 @@ class RegionRequest(DTO):
     atom_indices: list[Annotated[int, Field(strict=True, ge=0, le=511)]] = Field(
         min_length=1, max_length=512
     )
+    name: str = Field(default="Region", min_length=1, max_length=40)
 
 
 class Region(DTO):
@@ -140,6 +147,7 @@ class Region(DTO):
     atom_indices: list[int]
     attachment_count: int
     created_at: str
+    name: str = "Region"
 
 
 class AnalysisRequest(DTO):
@@ -168,6 +176,7 @@ class SARJob(DTO):
     finished_at: str | None = None
     input_sha256: str
     stale: bool = False
+    kind: Literal["reference", "study"] = "reference"
 
 
 class JobList(DTO):
@@ -186,6 +195,10 @@ class Pair(DTO):
     candidate_values: list[str]
     fold_change: float | None = None
     evidence_basis: Literal["recorded_context", "user_confirmed", "insufficient"]
+    region_id: str | None = None
+    fragment_id: str | None = None
+    variable_atom_indices: list[int] = Field(default_factory=list)
+    attachment_mapping: list[list[int]] = Field(default_factory=list)
 
 
 class PairPage(DTO):
