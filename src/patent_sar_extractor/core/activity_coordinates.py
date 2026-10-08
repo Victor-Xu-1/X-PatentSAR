@@ -12,6 +12,7 @@ from .activity_grid_cells import (
     validate_grid,
 )
 from .activity_header_metrics import distinct_value_keys, normalize_metric_text
+from .activity_header_roles import HeaderResolver
 from .activity_headers import (
     ACTIVITY_CONTEXT,
     METRIC,
@@ -19,7 +20,6 @@ from .activity_headers import (
     context_from_text,
     grid_schema,
 )
-from .activity_header_roles import HeaderResolver
 from .activity_models import ActivityRow, GridSchema, ParsedActivity
 from .biology_tables import BiologySchema, extract_tables, infer_schema
 from .table_geometry import detect_ruled_table_regions, page_tokens

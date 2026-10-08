@@ -5,8 +5,8 @@ from __future__ import annotations
 from typing import Any
 
 from .activity_columns import activity_column_id, activity_context
-from .models import Compound
 from .identifier_labels import identifier_label
+from .models import Compound
 from .property_values import effective_property_values
 
 

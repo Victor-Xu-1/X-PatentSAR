@@ -20,9 +20,9 @@ from .descriptor_storage import DescriptorStore
 from .dto import Error
 from .errors import WebError
 from .history_storage import ensure_project_visible
+from .identifier_labels import identifier_label
 from .lead_storage import LeadStore
 from .models import ActivityColumn, Compound, Results, Review
-from .identifier_labels import identifier_label
 from .molecule_drawing import drawing_url
 from .pdf import open_pdf, rendered_box
 from .prediction_identity import source_stereo_blocked

@@ -143,6 +143,7 @@ class JobAPIContextTests(unittest.TestCase):
 
     def test_clearing_consent_provider_or_credential_revokes_frozen_gui_profile(self):
         import yaml
+
         from patent_sar_extractor.integrations.llm.config import (
             snapshot_disclosure_allowed,
         )

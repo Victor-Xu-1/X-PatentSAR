@@ -150,7 +150,7 @@ def build_request(
 
 def _text(value: Any) -> str:
     if not isinstance(value, str):
-        raise ValueError("API content must be plain text")
+        raise TypeError("API content must be plain text")
     return value
 
 

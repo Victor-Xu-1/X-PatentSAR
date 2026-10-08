@@ -8,8 +8,8 @@ import json
 from collections.abc import Iterator, Sequence
 
 from .errors import WebError
-from .models import Compound, ExportRequest, Project
 from .identifier_labels import identifier_label
+from .models import Compound, ExportRequest, Project
 from .prediction_models import METRIC_KEYS
 from .property_values import effective_property_values, manual_property_values
 

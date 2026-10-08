@@ -175,7 +175,9 @@ export const decodeCompound: Decoder<Compound> = (input, path = '$') => {
   const fields = input as Record<string, unknown>;
   return {
     ...compound,
-    ...(Object.hasOwn(fields, 'identifier_label') ? { identifier_label: nullable(string)(fields.identifier_label, `${path}.identifier_label`) } : {}),
+    ...(Object.hasOwn(fields, 'identifier_label')
+      ? { identifier_label: nullable(string)(fields.identifier_label, `${path}.identifier_label`) }
+      : {}),
     ...(Object.hasOwn(fields, 'structure_molfile')
       ? {
           structure_molfile: nullable(decodeMolfile)(

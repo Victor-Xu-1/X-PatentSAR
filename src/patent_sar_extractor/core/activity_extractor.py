@@ -15,8 +15,8 @@ import fitz
 
 from .activity_artifacts import save_results
 from .activity_coordinates import coordinate_candidates, extract_coordinate_tables
-from .activity_models import ActivityRow, OCRFixRule
 from .activity_header_roles import HeaderResolver
+from .activity_models import ActivityRow, OCRFixRule
 from .activity_observations import (
     DEFAULT_OCR_FIXES,
     apply_ocr_fixes,

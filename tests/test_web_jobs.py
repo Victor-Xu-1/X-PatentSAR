@@ -9,13 +9,6 @@ from dataclasses import replace
 from pathlib import Path
 
 from fastapi.testclient import TestClient
-from patent_sar_extractor.web.errors import WebError
-from patent_sar_extractor.web.jobs import JobQueue, decode_spec
-from patent_sar_extractor.web.models import STAGES, JobRequest
-from patent_sar_extractor.web.pdf import copy_original
-from patent_sar_extractor.web.processes import CLIProcessRunner
-from patent_sar_extractor.web.service import WorkspaceService, import_run
-from patent_sar_extractor.web.storage import encode, now
 from test_web_support import (
     BASE_URL,
     DetachedRunner,
@@ -25,6 +18,14 @@ from test_web_support import (
     artifact_run,
     wait_job,
 )
+
+from patent_sar_extractor.web.errors import WebError
+from patent_sar_extractor.web.jobs import JobQueue, decode_spec
+from patent_sar_extractor.web.models import STAGES, JobRequest
+from patent_sar_extractor.web.pdf import copy_original
+from patent_sar_extractor.web.processes import CLIProcessRunner
+from patent_sar_extractor.web.service import WorkspaceService, import_run
+from patent_sar_extractor.web.storage import encode, now
 
 
 def live(pid):

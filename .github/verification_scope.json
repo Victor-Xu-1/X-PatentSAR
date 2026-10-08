@@ -113,6 +113,7 @@
     "tests/test_llm_settings.py",
     "tests/test_web_jobs.py",
     "tests/test_web_results.py",
+    "tests/test_worker_policy_probe.py",
     "tools/prepare_browser_fixture.py",
     "uv.lock"
   ],
@@ -141,7 +142,8 @@
     "tests.test_standalone.StandalonePackagingTests.test_external_config_directory_is_honored_in_new_process",
     "tests.test_standalone.StandalonePackagingTests.test_version_command_uses_product_version",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority",
-    "tests.test_release_policy.ReleaseNumberTests"
+    "tests.test_release_policy.ReleaseNumberTests",
+    "tests.test_worker_policy_probe"
   ],
   "frontend_tests": [
     "frontend/tests/identifier-labels.test.tsx",

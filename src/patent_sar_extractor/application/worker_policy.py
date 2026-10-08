@@ -92,10 +92,10 @@ def _decimer_tensorflow_gpu_safe() -> bool:
             if proc.returncode == 0
             else []
         )
-    except Exception as exc:
+    except (OSError, ValueError, IndexError, subprocess.SubprocessError) as exc:
         logger.warning(
             "DECIMER TensorFlow GPU probe failed; using CPU for structure extraction: %s",
-            exc,
+            type(exc).__name__,
         )
         caps = []
     _DECIMER_TF_GPU_SAFE = _tf_cuda_caps_support_gpu(
