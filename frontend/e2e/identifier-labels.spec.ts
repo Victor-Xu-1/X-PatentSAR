@@ -34,7 +34,7 @@ test('isolated source-owned identifiers remain labels while joins, filters and e
   const values = (await choices.json()).items.map((item: { value: string }) => item.value);
   expect(values).toContain('Example 1');
   expect(values).not.toContain('Compound 1');
-  await page.getByRole('searchbox').fill('Example 1');
+  await page.getByPlaceholder('搜索编号、靶点或活性…').fill('Example 1');
   await expect(nativeButton).toBeVisible();
   // Read-only label consumers only: drawing/save paths use their own focused
   // API/draft tests and must not trigger inference to populate this smoke test.

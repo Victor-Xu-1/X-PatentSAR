@@ -114,6 +114,13 @@ test('isolated native settings persist, redact keys, require consent and remain 
   });
 
   await page.goto('/#/settings');
+  // Wait for the real SPA session and settings load; request contexts do not
+  // create a session independently and must not race the bootstrap cookie.
+  await expect(
+    page
+      .getByRole('region', { name: 'LLM API', exact: true })
+      .getByRole('button', { name: '配置', exact: true }),
+  ).toBeEnabled();
   const before = await readSettings(page);
   expect(before).toMatchObject({
     revision: 0,
