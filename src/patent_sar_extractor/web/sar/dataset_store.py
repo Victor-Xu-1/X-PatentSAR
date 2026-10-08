@@ -208,7 +208,7 @@ class Datasets:
         with self.store.connect(write=True) as connection:
             dataset_row(connection, identifier)
             if connection.execute(
-                "SELECT 1 FROM jobs WHERE dataset_id=? AND (status IN ('queued','running') OR json_extract(payload,'$.error_code')='sar_process_unverified')",
+                "SELECT 1 FROM jobs WHERE dataset_id=? AND (status IN ('queued','running') OR json_extract(payload,'$.error_code')='sar_process_unverified' OR (json_extract(payload,'$.started_at') IS NOT NULL AND cleanup_verified=0))",
                 (identifier,),
             ).fetchone():
                 raise WebError(

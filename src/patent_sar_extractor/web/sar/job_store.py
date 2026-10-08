@@ -63,7 +63,7 @@ class Jobs:
                 raise WebError(409, "sar_queue_full", "SAR queue is full.")
             try:
                 connection.execute(
-                    "INSERT INTO jobs VALUES(?,?,?,?,?,?,?,?,0,0,0)",
+                    "INSERT INTO jobs(id,dataset_id,request_id,request_sha256,status,spec,payload,root) VALUES(?,?,?,?,?,?,?,?)",
                     (
                         job.id,
                         job.dataset_id,
@@ -96,6 +96,19 @@ class Jobs:
                 "UPDATE jobs SET ready=1 WHERE id=? AND ready=0", (identifier,)
             )
 
+    def cleaned(self, identifier: str, attempt: str) -> None:
+        with self.store.connect(write=True) as connection:
+            row = job_row(connection, identifier)
+            if json.loads(row["spec"])["attempt_id"] != attempt:
+                raise WebError(
+                    409,
+                    "sar_attempt_changed",
+                    "SAR attempt changed before cleanup publication.",
+                )
+            connection.execute(
+                "UPDATE jobs SET cleanup_verified=1 WHERE id=?", (identifier,)
+            )
+
     def record(self, identifier: str) -> dict:
         with self.store.connect() as connection:
             return dict(job_row(connection, identifier))
@@ -125,7 +138,7 @@ class Jobs:
             value = SARJob.model_validate_json(row["payload"])
             value.status, value.started_at = "running", now()
             connection.execute(
-                "UPDATE jobs SET status='running',payload=? WHERE id=? AND status='queued'",
+                "UPDATE jobs SET status='running',payload=?,cleanup_verified=0 WHERE id=? AND status='queued'",
                 (value.model_dump_json(), value.id),
             )
             result = dict(row)
@@ -176,7 +189,7 @@ class Jobs:
             spec["attempt_id"] = uuid.uuid4().hex
             try:
                 connection.execute(
-                    "UPDATE jobs SET status='queued',cancel_requested=0,payload=?,spec=? WHERE id=?",
+                    "UPDATE jobs SET status='queued',cancel_requested=0,cleanup_verified=0,payload=?,spec=? WHERE id=?",
                     (value.model_dump_json(), encode(spec), identifier),
                 )
             except sqlite3.IntegrityError as error:
@@ -250,6 +263,7 @@ class Jobs:
             if (
                 value.status in {"queued", "running"}
                 or value.error_code == "sar_process_unverified"
+                or (value.started_at and not row["cleanup_verified"])
             ):
                 raise WebError(
                     409,

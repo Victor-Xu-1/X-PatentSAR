@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 
 from ...core.pipeline_rules import _label_key
 from ..activity_provenance import metric_unit, source_evidence
 from ..artifact_values import page_number, text
+from ..errors import WebError
 from ..files import SafeFiles, records
 from ..models import Activity
 from .assets import digest
@@ -16,19 +19,47 @@ def owner_key(value: str) -> str:
     return _label_key(value) or value
 
 
+def _condition_bytes(project: dict) -> tuple[bytes | None, str]:
+    """Bind the actual original condition bytes, not just flattened DTO rows."""
+    if (
+        not project["run_root"]
+        or not project["sha256"]
+        or project["sha256"] != project["expected_sha256"]
+    ):
+        return None, digest(["no-verified-condition-source"])
+
+    try:
+        data = SafeFiles(Path(project["run_root"])).read(
+            "activity/activity_data.json", max_bytes=32 * 1024 * 1024
+        )
+    except WebError as error:
+        if error.code == "asset_unavailable":
+            return None, digest(["condition-source-missing"])
+        raise
+    return data, hashlib.sha256(data).hexdigest()
+
+
+def conditions_sha256(project: dict) -> str:
+    return _condition_bytes(project)[1]
+
+
+def _nonfinite(value: str):
+    raise ValueError("Nonfinite condition source")
+
+
 class ObservationContexts:
     def __init__(self, project: dict):
         self.exact: dict[tuple, dict[str, dict]] = {}
         self.metric: dict[tuple, dict[str, dict]] = {}
-        if (
-            not project["run_root"]
-            or not project["sha256"]
-            or project["sha256"] != project["expected_sha256"]
-        ):
+        data, self.source_sha256 = _condition_bytes(project)
+        if data is None:
             return
-        payload = SafeFiles(Path(project["run_root"])).json(
-            "activity/activity_data.json"
-        )
+        try:
+            payload = json.loads(data, parse_constant=_nonfinite)
+        except (ValueError, RecursionError, UnicodeError) as error:
+            raise WebError(
+                422, "invalid_artifact", "Condition source JSON is invalid."
+            ) from error
         for row in records(payload, "rows"):
             owner = owner_key(text(row.get("cpd")) or "")
             fallback = (

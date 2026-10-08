@@ -61,8 +61,12 @@ research, not an automatic post-extraction stage or an article/Lead reproduction
 
 Bounds: CSV8MiB/25,000 records, 256 headers/64 selected value columns,
 100,000 observations/1,000 exact contexts, SMILES8192 characters/512 atoms.
-The separate SAR SQLite/report/engine identities are version1 in `contracts.py`;
-no existing schema/scientific epoch is re-labelled. CSV originals/results use the
+The separate SAR SQLite schema is version2; report/engine remain version1 in `contracts.py`.
+Schema1 upgrades retain a verified private SQLite backup. Legacy inputs must
+be SHA-verified before publication/resume; abandoned CSV preparation becomes
+failed, retaining its bytes and retention accounting. Every started attempt
+needs durable cleanup verification before deletion or a competing execution.
+No existing extraction schema/scientific epoch is re-labelled. CSV originals/results use the
 configured upload/result roots with private SAR ownership, no symbolic links or
 arbitrary HTTP paths. One event-driven module queue reuses the shared analysis
 lease and bounded RPC worker: 512MiB RSS,180s/attempt and input/engine-bound
@@ -738,7 +742,7 @@ names; changes require controller review, not independent endpoint invention.
 
 ## Frontend behavior
 
-Chinese UI with X-PatentSAR branding and version from `/health`: a minimal
+English-default bilingual UI with X-PatentSAR branding and version from `/health`: a minimal
 upload page, compact file actions, split original PDF and result workspace,
 neutral white/light-gray/near-black surfaces and system sans-serif typography.
 No permanent navigation sidebar, decorative cards, avatar or breadcrumb is used.

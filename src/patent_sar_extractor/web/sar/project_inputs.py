@@ -12,10 +12,12 @@ from ..service import WorkspaceService
 from ..storage import encode
 from .input_records import InputBudget, check_deadline, metric_key, molecule_record
 from .models import Metric, Molecule, Observation
-from .observation_contexts import ObservationContexts
+from .observation_contexts import ObservationContexts, conditions_sha256
 
 
-def project_revision(service: WorkspaceService, identifier: str) -> str:
+def project_revision(
+    service: WorkspaceService, identifier: str, *, condition_sha: str | None = None
+) -> str:
     used = 0
     result = hashlib.sha256()
     with service.store.connect() as connection:
@@ -48,6 +50,9 @@ def project_revision(service: WorkspaceService, identifier: str) -> str:
                     )
                 result.update(data)
                 result.update(b"\n")
+    result.update(
+        (condition_sha or conditions_sha256(service.store.project(identifier))).encode()
+    )
     return result.hexdigest()
 
 
@@ -57,9 +62,11 @@ def project_inputs(
     # This is an explicit user snapshot action. Current read-model refresh is
     # the existing source authority; SAR never edits its chemistry or acceptance.
     source = service.project(identifier)
-    before = project_revision(service, identifier)
-    compounds = service.effective_compounds(identifier)
     rich_contexts = ObservationContexts(service.store.project(identifier))
+    before = project_revision(
+        service, identifier, condition_sha=rich_contexts.source_sha256
+    )
+    compounds = service.effective_compounds(identifier)
     if not compounds:
         raise WebError(
             422, "sar_source_empty", "This project has no extracted records to analyse."

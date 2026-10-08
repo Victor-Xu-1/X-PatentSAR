@@ -94,6 +94,7 @@ def execute(queue: SARQueue, row: dict, runner: BoundedAnalysisRunner) -> None:
                     "verified": True,
                 },
             )
+            queue.jobs.cleaned(value.id, spec["attempt_id"])
         except (
             WebError,
             OSError,

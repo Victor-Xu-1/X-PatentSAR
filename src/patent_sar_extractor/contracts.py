@@ -16,7 +16,7 @@ WEB_API_SCHEMA_VERSION: Final = 1
 # Independent research domain; never changes the formal extraction stage order.
 SAR_ENGINE_NAME: Final = "patentsar.strict-reference-sar"
 SAR_ENGINE_VERSION: Final = 1
-SAR_DATABASE_VERSION: Final = 1
+SAR_DATABASE_VERSION: Final = 2
 SAR_REPORT_SCHEMA: Final = "patentsar.reference-sar-report"
 SAR_REPORT_SCHEMA_VERSION: Final = 1
 

@@ -23,6 +23,10 @@ class SARFeature:
     def start(self) -> None:
         try:
             self.service = SARService(self.workspace)
+            from .migration import recover_legacy_inputs, recover_preparing_uploads
+
+            recover_legacy_inputs(self.service.store, self.service.assets)
+            recover_preparing_uploads(self.service.store)
             self.queue = SARQueue(self.service)
             self.queue.start()
             self.available = True

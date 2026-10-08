@@ -53,14 +53,15 @@ class SARQueue:
             unfinished = [
                 dict(row)
                 for row in connection.execute(
-                    "SELECT * FROM jobs WHERE status IN ('running','failed','interrupted')"
+                    "SELECT * FROM jobs WHERE deleted=0 AND status!='queued'"
                 )
             ]
         for row in unfinished:
             spec = json.loads(row["spec"])
             value = SARJob.model_validate_json(row["payload"])
             if (
-                value.status != "running"
+                not value.started_at
+                and value.status != "running"
                 and value.error_code != "sar_process_unverified"
             ):
                 continue
@@ -72,14 +73,25 @@ class SARQueue:
             except WebError:
                 verified = False
             self.recovery_blocked = self.recovery_blocked or not verified
-            self.jobs.update(
-                value.id,
-                status="interrupted",
-                error_code=None if verified else "sar_process_unverified",
-                error_message=None
-                if verified
-                else "Previous SAR worker absence has not been verified.",
-            )
+            if verified:
+                self.jobs.cleaned(value.id, spec["attempt_id"])
+                if (
+                    value.status == "running"
+                    or value.error_code == "sar_process_unverified"
+                ):
+                    self.jobs.update(
+                        value.id,
+                        status="interrupted",
+                        error_code=None,
+                        error_message=None,
+                    )
+            else:
+                self.jobs.update(
+                    value.id,
+                    status="interrupted",
+                    error_code="sar_process_unverified",
+                    error_message="Previous SAR worker absence has not been verified.",
+                )
         self.thread = threading.Thread(
             target=self._loop, name="patentsar-sar", daemon=True
         )
@@ -108,6 +120,15 @@ class SARQueue:
                 "sar_process_unverified",
                 "Resolve previous SAR worker ownership before starting another analysis.",
             )
+        with self.service.store.connect() as connection:
+            if connection.execute(
+                "SELECT 1 FROM jobs WHERE status NOT IN ('queued','running') AND json_extract(payload,'$.started_at') IS NOT NULL AND cleanup_verified=0 LIMIT 1"
+            ).fetchone():
+                raise WebError(
+                    409,
+                    "sar_process_unverified",
+                    "Previous started SAR attempt has no verified cleanup.",
+                )
         request_hash = digest([dataset_id, request.model_dump(exclude={"request_id"})])
         old = self.jobs.existing(request.request_id, request_hash)
         if old:
@@ -177,7 +198,8 @@ class SARQueue:
         if value.id != identifier:
             return self.view(value.id)
         try:
-            root = self.service.assets.job_root(identifier)
+            # The admitted location is authoritative even if settings change.
+            root = self.service.assets.job_files(str(root), identifier).root
             atomic_json(root, "input.json", packet)
             self.service.current(dataset_id, dataset.revision)
             self.jobs.prepared(identifier)
@@ -255,7 +277,7 @@ class SARQueue:
             blocked = [
                 dict(item)
                 for item in connection.execute(
-                    "SELECT * FROM jobs WHERE json_extract(payload,'$.error_code')='sar_process_unverified'"
+                    "SELECT * FROM jobs WHERE json_extract(payload,'$.error_code')='sar_process_unverified' OR (status NOT IN ('queued','running') AND json_extract(payload,'$.started_at') IS NOT NULL AND cleanup_verified=0)"
                 )
             ]
         for other in blocked:

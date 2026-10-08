@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS jobs (
  spec TEXT NOT NULL, payload TEXT NOT NULL, root TEXT NOT NULL,
  cancel_requested INTEGER NOT NULL DEFAULT 0, deleted INTEGER NOT NULL DEFAULT 0,
  ready INTEGER NOT NULL DEFAULT 0
+ ,cleanup_verified INTEGER NOT NULL DEFAULT 0
 );
 CREATE UNIQUE INDEX IF NOT EXISTS sar_active_dataset ON jobs(dataset_id)
  WHERE status IN ('queued','running');
@@ -66,11 +67,16 @@ class SARStore:
             os.close(fd)
         with closing(sqlite3.connect(self.path, timeout=3)) as connection:
             current = connection.execute("PRAGMA user_version").fetchone()[0]
-            if current not in (0, SCHEMA_VERSION):
+            if current not in (0, 1, SCHEMA_VERSION):
                 raise WebError(
                     409, "sar_schema", "SAR database version is not supported."
                 )
             connection.execute("PRAGMA journal_mode=WAL")
+            self.migrated_ready = False
+            if current == 1:
+                from .migration import migrate_v1
+
+                self.migrated_ready = migrate_v1(connection, self.root)
             connection.executescript(SCHEMA)
             connection.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
             connection.commit()
