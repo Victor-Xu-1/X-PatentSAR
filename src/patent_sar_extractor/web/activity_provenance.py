@@ -25,6 +25,7 @@ class SourceEvidence:
     context: ActivityContext
     cells: tuple[CellEvidence, ...]
     geometry_space: Literal["rendered", "unrotated"] | None
+    conditions: tuple[tuple[str, str | None], ...] = ()
 
 
 def provenance_error() -> WebError:
@@ -123,7 +124,18 @@ def source_evidence(
             else fallback[1],
             provenance_text(source["assay"]) if "assay" in source else fallback[2],
         )
-        provenance_text(source.get("cell_line"), limit=300)
+        conditions = tuple(
+            (key, provenance_text(source[key], limit=1000))
+            for key in (
+                "cell_line",
+                "construct",
+                "duration",
+                "treatment_duration",
+                "timepoint",
+                "batch",
+            )
+            if key in source
+        )
         provenance_text(source.get("table_id"), limit=300)
         for field in ("row", "pair"):
             number = source.get(field)
@@ -143,7 +155,9 @@ def source_evidence(
         if space not in (None, "rendered", "unrotated"):
             raise provenance_error()
         result.append(
-            SourceEvidence(context, tuple(cell_evidence(cell) for cell in cells), space)
+            SourceEvidence(
+                context, tuple(cell_evidence(cell) for cell in cells), space, conditions
+            )
         )
     return result
 

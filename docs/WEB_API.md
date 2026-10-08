@@ -1,5 +1,73 @@
 # X-PatentSAR Web API v1
 
+## Independent SAR research
+
+All `/api/v1/sar` endpoints retain the existing same-origin session and write-CSRF
+boundary. `web/sar/models.py` owns additive snake-case DTOs; the source extraction
+API, workspace database and formal pipeline stay unchanged. `#/sar` is explicit
+research, not an automatic post-extraction stage or an article/Lead reproduction.
+
+- GET `/sar/datasets` -> `{items:Dataset[],total}`; POST `/sar/datasets/project`
+  accepts `{project_id,title?,request_id}` and publishes a versioned snapshot of
+  current effective results only after visibility/active/source-CAS checks.
+- POST `/sar/csv/preview?filename=` accepts raw CSV bytes through existing upload
+  semantics, not multipart/arbitrary paths. UTF-8/BOM and UTF-16 are supported;
+  response includes a private-token identity, headers, bounded sample rows,
+  original row count and suggested roles. Suggestions are editable, never proof.
+- POST `/sar/datasets/csv` accepts `{token,title,id_column,smiles_column,
+  activity_columns,metric_column?,unit_column?,target_column?,assay_column?,
+  cell_line_column?,duration_column?,request_id}`. Optional metric_column enables
+  native long `metric/value` CSV with exactly one selected value column;
+  wide columns remain distinct. The original
+  byte SHA and all selected raw observations/conditions are retained. Repeat IDs
+  merge only for exact full chemical identity; conflicting graphs remain separate
+  ineligible records. Missing activity never removes a confirmed structure.
+- GET `/sar/datasets/{id}` -> Dataset; `/molecules?page=&page_size=&query=` ->
+  `{items,total,page,page_size}` with literal search and at most200 rows/page.
+  `input_row_count` counts original records separately from merged molecule rows;
+  source_document_sha256 is separate from the snapshot/source fingerprint.
+- GET `/sar/datasets/{id}/molecules/{molecule}` returns original metadata and
+  issues even for ineligible rows; it never requires a successful drawing.
+- GET `/sar/datasets/{id}/molecules/{molecule}/drawing` ->
+  `{molecule,svg,atoms:[{index,element,x,y}]}`; normalized original draw coordinates
+  bind to the exact immutable Molfile order. Invalid structures cannot be selected.
+- POST `/sar/datasets/{id}/regions` accepts `{molecule_id,
+  expected_dataset_revision,expected_graph_sha256,atom_indices}`. Integer indices
+  must identify one connected attached variable region with nonempty fixed graph.
+  Duplicate/stale/foreign indices are rejected. Identical region saves reuse one
+  immutable identity; different atom orders are not guessed equivalent.
+- POST `/sar/datasets/{id}/jobs` accepts `{request_id,
+  expected_dataset_revision,region_id,metric_id,direction:lower|higher,
+  grade_order:strongest_first_labels[],confirm_context:false}` -> SARJob202.
+  Only explicit submission starts work. Recorded context/units conflicts cannot
+  be bypassed; unknown-condition confirmation is labelled user_confirmed.
+- GET `/sar/datasets/{id}/jobs` -> history; GET `/sar/jobs/{id}` -> actual job.
+  POST `/cancel` stops only owned work; POST `/resume` requires
+  `{expected_input_sha256}` and verified previous-worker absence/current inputs.
+  No model call, PDF rerun or automatic retry is involved. Each explicit attempt
+  retains the same bounded lifetime and reuses only verified sealed chunks.
+- GET `/sar/jobs/{id}/pairs?page=&page_size=` returns complete published reference
+  comparisons, including unmatched, ambiguous/ineligible and missing/indeterminate
+  readings. Every candidate is accounted for; pending results are not success.
+  Scalar equality is distinct from same-grade uncertainty. Positive exact raw
+  value ratios are not inferred potency folds or transformed log-scale activity.
+- GET `/sar/jobs/{id}/export?format=csv|json` returns research-labelled data;
+  JSON includes full structures/atom order, region, observations, parameters,
+  input/engine SHA and actual product/RDKit producer. Original/core QA is unchanged.
+- DELETE `/sar/datasets/{id}`, `/sar/jobs/{id}` and unused `/sar/csv/{token}` hide
+  stopped entries. Active/unverified ownership blocks removal; files/checkpoints
+  remain retained, not disk reclamation. Removed identifiers cannot be replayed
+  into a new execution through an old request identity.
+
+Bounds: CSV8MiB/25,000 records, 256 headers/64 selected value columns,
+100,000 observations/1,000 exact contexts, SMILES8192 characters/512 atoms.
+The separate SAR SQLite/report/engine identities are version1 in `contracts.py`;
+no existing schema/scientific epoch is re-labelled. CSV originals/results use the
+configured upload/result roots with private SAR ownership, no symbolic links or
+arbitrary HTTP paths. One event-driven module queue reuses the shared analysis
+lease and bounded RPC worker: 512MiB RSS,180s/attempt and input/engine-bound
+25-pair checkpoints. SAR unavailability is explicit and does not stop PDF work.
+
 ## Environment management
 
 The single environment workspace presents one complete setup plan, actual overall

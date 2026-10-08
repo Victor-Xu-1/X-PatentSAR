@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import Field
 
 from ..dto import DTO
 
-JobState = Literal["queued", "running", "complete", "failed", "cancelled", "interrupted"]
+JobState = Literal[
+    "queued", "running", "complete", "failed", "cancelled", "interrupted"
+]
 MatchState = Literal["matched", "not_matched", "ambiguous", "ineligible"]
-Comparison = Literal["better", "worse", "equal", "indeterminate", "missing", "context_mismatch"]
+Comparison = Literal[
+    "better", "worse", "equal", "indeterminate", "missing", "context_mismatch"
+]
 
 
 class Metric(DTO):
@@ -50,9 +54,11 @@ class Dataset(DTO):
     source_kind: Literal["project", "csv"]
     source_project_id: str | None = None
     source_sha256: str
+    source_document_sha256: str | None = None
     revision: int = 1
     stale: bool = False
     row_count: int
+    input_row_count: int = 0
     eligible_count: int
     issue_count: int
     metrics: list[Metric]
@@ -88,6 +94,7 @@ class CSVMapping(DTO):
     id_column: str = Field(min_length=1, max_length=300)
     smiles_column: str = Field(min_length=1, max_length=300)
     activity_columns: list[str] = Field(min_length=1, max_length=64)
+    metric_column: str | None = None
     assay_column: str | None = None
     target_column: str | None = None
     unit_column: str | None = None
@@ -119,7 +126,9 @@ class RegionRequest(DTO):
     molecule_id: str = Field(min_length=1, max_length=200)
     expected_dataset_revision: int = Field(ge=1)
     expected_graph_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
-    atom_indices: list[int] = Field(min_length=1, max_length=512)
+    atom_indices: list[Annotated[int, Field(strict=True, ge=0, le=511)]] = Field(
+        min_length=1, max_length=512
+    )
 
 
 class Region(DTO):
@@ -140,7 +149,7 @@ class AnalysisRequest(DTO):
     metric_id: str = Field(min_length=1, max_length=200)
     direction: Literal["lower", "higher"]
     grade_order: list[str] = Field(default_factory=list, max_length=32)
-    confirm_context: bool = False
+    confirm_context: bool = Field(default=False, strict=True)
 
 
 class SARJob(DTO):

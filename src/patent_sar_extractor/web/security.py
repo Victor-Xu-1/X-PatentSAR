@@ -214,6 +214,8 @@ class SecurityMiddleware:
             and request.headers.get("content-type", "").split(";", 1)[0]
             == "application/pdf"
             else 8 * 1024 * 1024
+            if request.method == "POST" and path == "/api/v1/sar/csv/preview"
+            else 8 * 1024 * 1024
             if path.endswith("/export")
             else 1024 * 1024
             if path.endswith("/correction") or path == "/api/v1/chemistry/structure"

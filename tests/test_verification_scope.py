@@ -531,7 +531,8 @@ class ScopeRunnerTests(ScopeFixture):
             self.assertTrue(call.kwargs["check"])
             self.assertEqual(call.kwargs["timeout"], 1200)
             self.assertEqual(
-                call.kwargs["env"]["PYTHONPATH"], os.pathsep.join(("src", "tests"))
+                call.kwargs["env"]["PYTHONPATH"],
+                os.pathsep.join(str(runner.ROOT / name) for name in ("src", "tests")),
             )
 
     def test_env_base_and_explicit_base_override(self):

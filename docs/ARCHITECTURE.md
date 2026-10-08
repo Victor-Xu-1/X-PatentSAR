@@ -7,6 +7,37 @@ epochs are not product releases and do not retag old results as current.
 
 ## One workflow
 
+### Independent, user-started SAR domain
+
+`web/sar` owns one separate versioned private dataset/region/job/result store;
+`core/sar` owns deterministic complete-fixed-graph and observation comparison.
+`#/sar` is a separate workbench with explicit project-snapshot or CSV inputs.
+It is not an extraction stage, automatic research tail, replacement Lead cache,
+new PDF parser, permanent model service or separate HTTP application.
+Project snapshots consume the existing effective correction/recognition view
+under current visibility and source-CAS checks. Original IDs/graphs/measurements,
+source document identity and review limitations remain unchanged. Imported data
+is marked imported, not recertified as patent measurements.
+
+Each region binds exact immutable Molfile bytes/atom order and dataset revision.
+One bounded exact induced fixed-graph matcher validates the full complementary
+graph, mapped cut endpoints, bond types, fragments and transported stereo parity;
+multiple region explanations/unsupported encodings/search limits remain explicit.
+Reference parsing is reused within a worker, not a second relaxed batch algorithm.
+Raw scalar/censored/interval/ordinal comparisons preserve observations and refuse
+incomparable known context/units; explicit missing-condition assertions are
+separately labelled. There is no unknown-grade midpoint or model-derived reading.
+
+An event-driven SAR-only queue reuses the existing owned bounded subprocess and
+analysis lease. Durable worker identity is published before any input handoff.
+One model-free CPU child uses 512MiB RSS/180s; immutable 25-pair chunks bind the
+whole input and actual algorithm/RDKit identity. Resume is explicit and requires
+verified old-worker absence, unchanged input/engine/current source and full cache
+validation. Complete publication accounts for every candidate; original/core
+acceptance is independent. A SAR startup/store fault makes this module unavailable,
+not the original PDF workflow. SAR database/report/engine versions are independent
+constants in `contracts.py`; product PR labels do not change core scientific epochs.
+
 ```mermaid
 flowchart LR
     I[Original PDF and SHA] --> C[Classify and shared OCR observations]

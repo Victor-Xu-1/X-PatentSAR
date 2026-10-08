@@ -117,7 +117,7 @@ export const sar: Record<string, string> = {
   活性比较: 'Activity comparison',
   参考原值: 'Original reference values',
   待比较原值: 'Original candidate values',
-  '精确倍数（仅服务器提供）': 'Exact fold (only when supplied by server)',
+  '原始数值比（非药效倍数）': 'Raw value ratio (not a potency fold)',
   证据依据: 'Evidence basis',
   原始原因: 'Original reasons',
   'SAR 匹配': 'Matched',

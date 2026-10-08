@@ -10,10 +10,11 @@ import selectors
 import subprocess
 import threading
 import time
+from collections.abc import Callable
 from pathlib import Path
 from typing import IO, cast
 
-from .analysis_children import Children, alive, read_child
+from .analysis_children import Child, Children, alive, read_child
 from .errors import WebError
 from .storage import encode
 
@@ -63,6 +64,7 @@ class BoundedAnalysisRunner:
         env: dict[str, str],
         timeout: float,
         cancel: threading.Event | None = None,
+        on_start: Callable[[Child], None] | None = None,
     ) -> dict[str, object]:
         if not math.isfinite(timeout) or not 0.05 <= timeout <= 180:
             raise WebError(
@@ -87,7 +89,7 @@ class BoundedAnalysisRunner:
         started = time.monotonic()
         try:
             self._check_cancel(cancel)
-            result = self._run(command, data, cwd, env, timeout, cancel)
+            result = self._run(command, data, cwd, env, timeout, cancel, on_start)
             logger.info(
                 "analysis_worker_complete duration_seconds=%.3f",
                 time.monotonic() - started,
@@ -120,6 +122,7 @@ class BoundedAnalysisRunner:
         env: dict[str, str],
         timeout: float,
         cancel: threading.Event | None,
+        on_start: Callable[[Child], None] | None = None,
     ) -> dict[str, object]:
         deadline = time.monotonic() + timeout
         try:
@@ -155,6 +158,9 @@ class BoundedAnalysisRunner:
                 )
             owner = Children(raw, self.max_memory_bytes)
             self._cleanup_pending = (child, owner)
+            if on_start is not None:
+                # Publish durable ownership before handing off ANY input bytes.
+                on_start(raw)
             assert (
                 child.stdin is not None
                 and child.stdout is not None

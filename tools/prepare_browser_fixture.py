@@ -22,7 +22,10 @@ def prepare(
     read_only: bool = False,
     llm_settings: bool = False,
     llm_recovery: bool = False,
+    sar: bool = False,
 ) -> dict[str, str]:
+    if sum((read_only, llm_settings, llm_recovery, sar)) > 1:
+        raise ValueError("Choose one isolated fixture mode")
     if workspace.exists() and any(workspace.iterdir()):
         raise ValueError("Browser fixture workspace must be empty")
     workspace.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -39,7 +42,7 @@ def prepare(
 
         return prepare_recovery(workspace, workspace / "web-state", pdf)
     run = artifact_run(
-        workspace / "controlled-history", pdf, current=False, accepted=False, rows=30
+        workspace / "controlled-history", pdf, current=sar, accepted=sar, rows=30
     )
     if llm_settings:
         # Original-label adapter inputs only; no model/parser acceptance claim.
@@ -62,7 +65,7 @@ def prepare(
         title="CI controlled historical adapter fixture (not extraction evidence)",
     )
     origin = "http://127.0.0.1:18765"
-    if read_only or llm_settings:
+    if read_only or llm_settings or sar:
         values = {
             "PATENTSAR_WEB_STATE_DIR": str(state),
             "PATENTSAR_E2E_SOURCE_PROJECT_ID": historical.id,
@@ -76,13 +79,16 @@ def prepare(
                 PATENTSAR_E2E_ALLOW_LLM_SETTINGS="isolated-state",
                 PATENTSAR_E2E_LLM_FIXTURE="empty-synthetic",
             )
+        if sar:
+            values["PATENTSAR_E2E_SAR_MUTATIONS"] = "synthetic-isolated-state"
         (workspace / "browser-fixture.json").write_text(
             json.dumps(
                 {
                     "controlled_adapter_fixture": True,
                     "scientific_acceptance_evidence": False,
                     "real_cli_failure": False,
-                    "read_only_browser_scope": True,
+                    "read_only_browser_scope": not sar,
+                    "sar_synthetic_scope": sar,
                     **values,
                 },
                 indent=2,
@@ -176,6 +182,11 @@ def main() -> None:
     parser.add_argument("workspace", type=Path)
     parser.add_argument("--github-env", action="store_true")
     parser.add_argument(
+        "--sar",
+        action="store_true",
+        help="Current synthetic extraction adapter and explicit SAR writes only; no extraction/model run",
+    )
+    parser.add_argument(
         "--llm-recovery",
         action="store_true",
         help="Isolated credential renewal through actual API/browser; no provider or scientific run",
@@ -196,6 +207,7 @@ def main() -> None:
         read_only=args.read_only,
         llm_settings=args.llm_settings,
         llm_recovery=args.llm_recovery,
+        sar=args.sar,
     )
     if args.github_env:
         destination = os.environ.get("GITHUB_ENV")
