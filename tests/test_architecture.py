@@ -6,13 +6,14 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = ROOT / "src" / "patent_sar_extractor"
 
 
 class ArchitectureContractTests(unittest.TestCase):
-    def test_llm_qa_is_explicitly_skipped_and_never_overwrites_formal_report(self) -> None:
+    def test_llm_qa_is_explicitly_skipped_and_never_overwrites_formal_report(
+        self,
+    ) -> None:
         from patent_sar_extractor.integrations.llm import advisory_qa as llm_qa_module
 
         with tempfile.TemporaryDirectory() as tmp:
@@ -20,14 +21,22 @@ class ArchitectureContractTests(unittest.TestCase):
             formal_report = output_dir / "final_qa_report.md"
             formal_report.write_text("formal report\n", encoding="utf-8")
 
-            from patent_sar_extractor.integrations.llm.config import EvidenceResolutionConfig
+            from patent_sar_extractor.integrations.llm.config import (
+                EvidenceResolutionConfig,
+            )
 
-            with patch.object(llm_qa_module, "get_evidence_resolution_config", return_value=EvidenceResolutionConfig()):
+            with patch.object(
+                llm_qa_module,
+                "get_evidence_resolution_config",
+                return_value=EvidenceResolutionConfig(),
+            ):
                 result = llm_qa_module.run_advisory_qa(str(output_dir))
 
             self.assertEqual(result["status"], "skipped_policy")
             self.assertEqual(result["authority"], "advisory")
-            self.assertEqual(formal_report.read_text(encoding="utf-8"), "formal report\n")
+            self.assertEqual(
+                formal_report.read_text(encoding="utf-8"), "formal report\n"
+            )
             self.assertTrue((output_dir / "llm_qa_report.json").is_file())
             self.assertTrue((output_dir / "llm_qa_report.md").is_file())
 
@@ -41,11 +50,21 @@ class ArchitectureContractTests(unittest.TestCase):
             "timeout": 1,
             "cache_path": "",
         }
-        with patch.object(llm_client, "get_llm_config", return_value=config), patch.object(
-            llm_client, "bounded_post",
-            side_effect=[llm_client.requests.exceptions.Timeout(), b'{"choices":[{"finish_reason":"stop","message":{"content":"{\\"ok\\":true}"}}]}'],
-        ) as post, patch.object(llm_client.time, "sleep") as sleep:
-            result = llm_client.llm_chat([{"role": "user", "content": "test"}], cache=False, max_retries=1)
+        with (
+            patch.object(llm_client, "get_llm_config", return_value=config),
+            patch.object(
+                llm_client,
+                "bounded_post",
+                side_effect=[
+                    llm_client.requests.exceptions.Timeout(),
+                    b'{"choices":[{"finish_reason":"stop","message":{"content":"{\\"ok\\":true}"}}]}',
+                ],
+            ) as post,
+            patch.object(llm_client.time, "sleep") as sleep,
+        ):
+            result = llm_client.llm_chat(
+                [{"role": "user", "content": "test"}], cache=False, max_retries=1
+            )
 
         self.assertEqual(result, '{"ok":true}')
         self.assertEqual(post.call_count, 2)
@@ -78,7 +97,9 @@ class ArchitectureContractTests(unittest.TestCase):
         self.assertEqual(decision["warnings"], [])
         self.assertEqual(decision["advisory"]["warnings"], advisory["warnings"])
 
-    def test_domain_core_does_not_import_application_or_integration_layers(self) -> None:
+    def test_domain_core_does_not_import_application_or_integration_layers(
+        self,
+    ) -> None:
         forbidden = (
             "patent_sar_extractor.application",
             "patent_sar_extractor.integrations",
@@ -93,7 +114,9 @@ class ArchitectureContractTests(unittest.TestCase):
 
     def test_cli_contains_presentation_logic_only(self) -> None:
         tree = ast.parse((SOURCE_ROOT / "cli.py").read_text(encoding="utf-8"))
-        functions = {node.name for node in tree.body if isinstance(node, ast.FunctionDef)}
+        functions = {
+            node.name for node in tree.body if isinstance(node, ast.FunctionDef)
+        }
         forbidden = {
             "cmd_run",
             "_activity_acceptance_errors",
@@ -113,12 +136,16 @@ class ArchitectureContractTests(unittest.TestCase):
 
         records = [{"cpd_id": "Compound 1", "canonical_smiles": "CCO"}]
         production = build_smiles_artifact(records)
-        diagnostic = build_smiles_artifact(records, execution_mode=DIAGNOSTIC_SMILES_MODE)
+        diagnostic = build_smiles_artifact(
+            records, execution_mode=DIAGNOSTIC_SMILES_MODE
+        )
 
         self.assertTrue(smiles_artifact_is_current(production))
         self.assertFalse(smiles_artifact_is_current(records))
         self.assertFalse(smiles_artifact_is_current(diagnostic))
-        self.assertTrue(smiles_artifact_is_current(diagnostic, require_production=False))
+        self.assertTrue(
+            smiles_artifact_is_current(diagnostic, require_production=False)
+        )
 
 
 if __name__ == "__main__":

@@ -409,9 +409,9 @@ class EvidenceResolutionTests(unittest.TestCase):
             with (
                 patch.dict(os.environ, {}, clear=True),
                 patch.object(llm_config, "LLM_CONFIG_PATHS", (path,)),
+                self.assertLogs(llm_config.logger, level="WARNING") as logs,
             ):
-                with self.assertLogs(llm_config.logger, level="WARNING") as logs:
-                    result = resolve_evidence(self.request, self.budget)
+                result = resolve_evidence(self.request, self.budget)
         self.assertEqual(
             (result.outcome, result.reason), ("failed", "invalid_configuration")
         )

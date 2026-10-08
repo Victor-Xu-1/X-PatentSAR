@@ -47,9 +47,9 @@ class ExternalAPITests(unittest.TestCase):
         with (
             patch("socket.getaddrinfo", return_value=addresses),
             patch("socket.socket") as sock,
+            self.assertRaises(NewConnectionError),
         ):
-            with self.assertRaises(NewConnectionError):
-                PublicHTTPSConnection("api.example.org")._new_conn()
+            PublicHTTPSConnection("api.example.org")._new_conn()
         sock.assert_not_called()
 
     def test_connection_uses_exact_checked_address_without_second_dns(self):

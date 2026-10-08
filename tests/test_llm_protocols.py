@@ -175,15 +175,17 @@ class APIProtocolTests(unittest.TestCase):
             build_request(
                 self.config("gemini"), MESSAGES, "../metadata", 0, 128, SCHEMA
             )
-        with patch(
-            "patent_sar_extractor.integrations.llm.client.bounded_post"
-        ) as carrier:
-            with self.assertRaises(ValueError):
-                llm_chat(
-                    MESSAGES,
-                    config=self.config("openai-compatible", "prompt-only"),
-                    cache=False,
-                    response_format=SCHEMA,
-                    max_request_chars=10,
-                )
+        with (
+            patch(
+                "patent_sar_extractor.integrations.llm.client.bounded_post"
+            ) as carrier,
+            self.assertRaises(ValueError),
+        ):
+            llm_chat(
+                MESSAGES,
+                config=self.config("openai-compatible", "prompt-only"),
+                cache=False,
+                response_format=SCHEMA,
+                max_request_chars=10,
+            )
         carrier.assert_not_called()
