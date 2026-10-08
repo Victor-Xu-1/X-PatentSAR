@@ -35,8 +35,16 @@ describe('minimal document shell', () => {
     );
     // The selected document is a workbench heading, not duplicated in global navigation.
     expect(screen.queryByText(project.title)).not.toBeInTheDocument();
-    expect(document.querySelectorAll('.topbar-actions > button')).toHaveLength(6);
-    for (const name of ['上传 PDF', '最近文件', '环境管理', '任务记录', '返回结果表格', '证据摘要'])
+    expect(document.querySelectorAll('.topbar-actions > button')).toHaveLength(7);
+    for (const name of [
+      '上传 PDF',
+      '最近文件',
+      '环境管理',
+      '任务记录',
+      'SAR 分析',
+      '返回结果表格',
+      '证据摘要',
+    ])
       expect(screen.getByRole('button', { name })).toBeVisible();
     expect(screen.getByText('v0.1.0')).toBeVisible();
     expect(document.querySelector('.shell-menu')).toBeNull();
@@ -65,9 +73,9 @@ describe('minimal document shell', () => {
     await userEvent.click(screen.getByRole('button', { name: '证据摘要' }));
     expect(onAnalysis.mock.calls).toEqual([['results'], ['summary']]);
   });
-  it('keeps the four general routes visible and marks the current page without project-only controls', () => {
+  it('keeps the general routes visible and marks the current page without project-only controls', () => {
     render(<Header {...headerProps} view="settings" project={null} />);
-    expect(document.querySelectorAll('.topbar-actions > button')).toHaveLength(4);
+    expect(document.querySelectorAll('.topbar-actions > button')).toHaveLength(5);
     expect(screen.getByRole('button', { name: '环境管理' })).toHaveAttribute(
       'aria-current',
       'page',
@@ -94,6 +102,7 @@ describe('minimal document shell', () => {
       '最近文件',
       '环境管理',
       '任务记录',
+      'SAR 分析',
       '返回结果表格',
       '证据摘要',
     ]) {

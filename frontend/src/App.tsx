@@ -16,6 +16,7 @@ import { useJobs } from './features/jobs/useJobs';
 import { JobsPage } from './features/jobs/JobsPage';
 import { EnvironmentPage } from './features/environment/EnvironmentPage';
 import { useTranslation } from './i18n';
+import { SARPage } from './features/sar/SARPage';
 
 export default function App() {
   const { locale, t } = useTranslation();
@@ -97,6 +98,7 @@ export default function App() {
           onRecent={() => navigateView('projects')}
           onNavigate={navigateView}
           onAnalysis={(resultTab) => navigate({ ...route, view: 'workspace', resultTab })}
+          onSAR={(projectId) => navigate({ ...emptyRoute, view: 'sar', projectId })}
           disabled={!connected}
         />
         <main id="main-content" tabIndex={-1}>
@@ -177,6 +179,7 @@ export default function App() {
               onOpen={openProject}
             />
           )}
+          {connected && <SARPage active={route.view === 'sar'} route={route} navigate={navigate} />}
         </main>
       </div>
       {attachment && (

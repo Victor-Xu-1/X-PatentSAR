@@ -1,0 +1,291 @@
+.sar-page {
+  max-width: 1600px;
+  margin: 0 auto;
+  min-width: 0;
+  color: var(--ink);
+}
+.sar-page[hidden],
+.sar-page [hidden] {
+  display: none;
+}
+.sar-page-heading,
+.sar-section-heading,
+.sar-actions,
+.sar-job-status,
+.sar-pagination {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.sar-page-heading,
+.sar-section-heading {
+  justify-content: space-between;
+}
+.sar-page h1 {
+  margin: 0;
+  font-size: 26px;
+}
+.sar-page h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+.sar-page h3 {
+  font-size: 15px;
+}
+.sar-page-heading p,
+.sar-hint {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+.sar-intro {
+  max-width: 850px;
+  line-height: 1.7;
+}
+.sar-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  padding: 20px;
+  margin-top: 16px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.sar-panel fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.sar-panel legend {
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.sar-page label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+.sar-page input:not([type='checkbox']),
+.sar-page select,
+.sar-page textarea {
+  width: 100%;
+  min-width: 0;
+}
+.sar-page textarea {
+  resize: vertical;
+}
+.sar-dataset-picker {
+  max-width: 640px;
+}
+.sar-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 14px;
+  margin: 14px 0;
+}
+.sar-page .sar-checklist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 0;
+}
+.sar-page .sar-checklist label,
+.sar-page .sar-checkbox {
+  flex-direction: row;
+  align-items: flex-start;
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+.sar-page input[type='checkbox'] {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+.sar-analysis-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+}
+.sar-table-scroll {
+  overflow: auto;
+  max-width: 100%;
+  margin: 14px 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+.sar-table-scroll table {
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.sar-table-scroll th,
+.sar-table-scroll td {
+  padding: 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line-soft);
+  min-width: 130px;
+  max-width: 320px;
+  overflow-wrap: anywhere;
+}
+.sar-table-scroll thead {
+  background: var(--surface-subtle);
+}
+.sar-table-scroll tr[data-selected='true'] {
+  background: var(--accent-surface);
+}
+.sar-table-scroll ul {
+  margin: 6px 0;
+  padding-left: 18px;
+}
+.sar-chemistry {
+  font-family: ui-monospace, monospace;
+  max-width: 300px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.sar-drawing {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  margin: 12px auto;
+  background: var(--image-paper);
+}
+.sar-drawing img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.sar-page .sar-atom {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid var(--accent-line);
+  background: var(--annotation-fill);
+  color: var(--accent-strong);
+  width: 30px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0;
+  font-size: 10px;
+}
+.sar-page .sar-atom span {
+  opacity: 0;
+}
+.sar-page .sar-atom:hover span,
+.sar-page .sar-atom:focus-visible span,
+.sar-page .sar-atom[aria-pressed='true'] span {
+  opacity: 1;
+}
+.sar-page .sar-atom[aria-pressed='true'] {
+  background: var(--annotation-selected);
+  border: 2px solid var(--accent-strong);
+  box-shadow: 0 0 0 3px var(--accent-surface);
+}
+.sar-page .sar-atom:disabled {
+  opacity: 0.4;
+}
+.sar-warning {
+  display: block;
+  margin-block: 12px;
+  background: var(--warning-surface);
+  color: var(--warning);
+  border: 1px solid var(--warning-line);
+  padding: 12px;
+  border-radius: var(--radius-control);
+}
+.sar-source-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+.sar-source-links a {
+  color: var(--accent-strong);
+  text-decoration: underline;
+}
+.sar-job-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.sar-job-list li + li {
+  margin-top: 8px;
+}
+.sar-job-list > li > button:first-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+}
+.sar-job-list button[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-surface);
+}
+.sar-pagination {
+  justify-content: flex-end;
+  font-size: 13px;
+  margin-top: 12px;
+}
+.sar-delete {
+  margin-top: 12px;
+}
+.sar-source-detail {
+  border-top: 1px solid var(--line);
+  margin-top: 20px;
+  padding-top: 16px;
+}
+.sar-evidence dl {
+  font-size: 12px;
+}
+.sar-evidence dl div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sar-evidence dd {
+  margin: 0;
+  white-space: pre-wrap;
+}
+.sar-error-details {
+  margin: 10px 0;
+  font-size: 13px;
+}
+@media (max-width: 900px) {
+  .sar-analysis-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .sar-panel {
+    padding: 14px;
+  }
+  .sar-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sar-page-heading {
+    align-items: flex-start;
+  }
+  .sar-pagination {
+    justify-content: flex-start;
+  }
+  .sar-actions button {
+    min-height: 44px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sar-page *,
+  .sar-page *::before,
+  .sar-page *::after {
+    scroll-behavior: auto;
+    animation: none;
+    transition: none;
+  }
+}

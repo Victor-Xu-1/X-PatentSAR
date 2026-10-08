@@ -19,6 +19,7 @@ import './styles/analysis.css';
 import './styles/environment.css';
 import './styles/environment-progress.css';
 import './styles/responsive.css';
+import './styles/sar.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Application root is missing');
