@@ -59,9 +59,67 @@ research, not an automatic post-extraction stage or an article/Lead reproduction
   remain retained, not disk reclamation. Removed identifiers cannot be replayed
   into a new execution through an old request identity.
 
+### Whole-study analysis and article-form exploration
+
+`study_models.py` owns typed study profiles, policies and reports. This is an
+independent, explicit research view, not the article author's private algorithm.
+Existing reference jobs remain readable. All endpoints use the same session,
+CSRF, source visibility, input/CAS and owned-worker authorities described above.
+
+- GET `/sar/datasets/{id}/profile` returns `{dataset_id,dataset_revision,contexts,
+  regions}`. Exact condition IDs cover metric, original unit and all recorded
+  conditions (including cell/duration/construct/batch). Value samples are explicitly
+  limited to32; `distinct_value_count` and full record counts remain complete.
+- Region requests add `name` (1–40 chars) and `kind:variable|core`. Identity includes
+  name/role, graph, atoms and dataset revision. Old definitions default to Region /
+  variable; saving a changed definition creates a new immutable identity.
+- POST `/sar/datasets/{id}/studies` accepts `{request_id,expected_dataset_revision,
+  title,policies:[{context_id,direction,grade_order?,strong_threshold?,
+  threshold_inclusive?}],region_ids?,core_ids?,confirm_context?,candidate_count?}`.
+  One to8 distinct exact policies; up to12 distinct regions and12 confirmed cores;
+  target candidate count5–10, not a promise to fill missing evidence. User grade
+  order is strongest-first; numeric strong thresholds are optional. Grade and
+  numeric threshold conventions cannot be mixed. Known context conflicts cannot
+  be asserted away. No fields identify a hardcoded patent or numbered example.
+- SARJob adds `kind:reference|study`. Study work count is every molecule's
+  calculation plus every region/nonreference comparison, including refusals.
+  The same cancel/resume/delete/list endpoints apply. Pair adds region/fragment
+  identities, proved candidate atom indices and mapped attachment ports.
+- GET `/sar/jobs/{id}/study` returns `{job,report}` with `report.rows:[]`;
+  distributions/core groups/candidate cards/strict region summaries are complete.
+  Each region reports one independent background; matched edges are not independent
+  repeats. Same-grade ties, intervals, missing/conflicting data stay explicit.
+- GET `/sar/jobs/{id}/study/rows?page=&page_size=&query=&scope=all|strong|leads&
+  scaffold_id=&region_id=&fragment_id=` returns `{items,total,page,page_size,job}`.
+  Filters apply to the whole study, then natural original-identifier order and
+  paging. A fragment requires its exact region; foreign selectors are rejected.
+- GET `/sar/jobs/{id}/study/drawing?kind=molecule|scaffold|fragment&identifier=&
+  region_id=` returns passive RDKit SVG. Molecule region highlighting uses only
+  saved reference indices or a proved candidate mapping; unknown structures are
+  never replaced by a placeholder. Fragment dummy atoms are mapped cut ports,
+  not a recertified full molecule.
+- GET `/sar/jobs/{id}/study/export?format=csv|json|sdf|html` requires a complete
+  report receipt. JSON contains the immutable full input/specification and report,
+  including all source rows. CSV includes original labels, selected values,
+  computed/imported/verified-model provenance and missing states. SDF exports only
+  eligible graphs; excluded records remain in CSV/JSON. Printable HTML contains
+  source-bound charts, candidate drawings, fragment/core summaries and all rows,
+  no scripts/network content, with a32MiB complete pre-header bound.
+
+Optional CSV `property_columns` maps the six existing METRIC_KEYS;
+`prediction_columns` maps the reviewed11 probability endpoints. Both require
+distinct actual columns, finite numeric/blank values and declared valid semantics.
+Imported predictions are not verified model output. Conflicting repeated evidence
+remains unknown, not averaged. Project snapshots reuse current already-produced
+source/graph-bound research projections and explicit manual-null precedence;
+their `research2:` source revision additionally binds those observations. Older
+snapshots retain their previous narrower revision meaning without retroactive data.
+The study invokes no prediction model and does not edit the original Lead cache.
+
 Bounds: CSV8MiB/25,000 records, 256 headers/64 selected value columns,
 100,000 observations/1,000 exact contexts, SMILES8192 characters/512 atoms.
-The separate SAR SQLite schema is version2; report/engine remain version1 in `contracts.py`.
+The separate SAR SQLite schema is version2; reference report1, study report1 and
+engine2 are independently declared in `contracts.py`.
 Schema1 upgrades retain a verified private SQLite backup. Legacy inputs must
 be SHA-verified before publication/resume; abandoned CSV preparation becomes
 failed, retaining its bytes and retention accounting. Every started attempt

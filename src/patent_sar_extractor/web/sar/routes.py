@@ -30,6 +30,7 @@ from .models import (
 )
 from .queue import SARQueue
 from .service import SARService
+from .study_routes import study_routes
 
 
 def sar_routes(feature: SARFeature) -> APIRouter:
@@ -41,6 +42,8 @@ def sar_routes(feature: SARFeature) -> APIRouter:
 
     def q() -> SARQueue:
         return feature.require()[1]
+
+    router.include_router(study_routes(srv, q))
 
     @router.get("/datasets", response_model=DatasetList)
     def datasets():
@@ -154,6 +157,17 @@ def sar_routes(feature: SARFeature) -> APIRouter:
 
     @router.get("/jobs/{identifier}/export")
     def export(identifier: str, format: str = "csv"):
+        if q().view(identifier).kind == "study":
+            from .study_exports import export_study
+
+            content, media_type = export_study(q(), identifier, format)
+            return StreamingResponse(
+                content,
+                media_type=media_type,
+                headers={
+                    "Content-Disposition": f'attachment; filename="SAR-study-{identifier}.{format}"'
+                },
+            )
         if format not in {"csv", "json"}:
             raise WebError(422, "sar_export_format", "Choose CSV or JSON export.")
         q().jobs.pairs(

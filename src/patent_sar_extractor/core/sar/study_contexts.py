@@ -67,4 +67,3 @@ def context_observations(molecule: dict, identifier: str) -> list[dict]:
         for item in molecule["observations"]
         if context_identity(item) == identifier
     ]
-

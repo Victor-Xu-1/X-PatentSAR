@@ -59,7 +59,13 @@ def execute(queue: SARQueue, row: dict, runner: BoundedAnalysisRunner) -> None:
             )
         pairs = collect(safe, value, result["chunks"], spec["engine_sha256"])
         queue.service.current(value.dataset_id)
-        queue.jobs.publish(value.id, pairs, value.total)
+        if value.kind == "study":
+            from .study_publication import verify_study
+
+            report_hash = verify_study(safe, value, spec, result, pairs)
+            queue.jobs.publish(value.id, pairs, value.total, report_sha256=report_hash)
+        else:
+            queue.jobs.publish(value.id, pairs, value.total)
     except WebError as error:
         cancelled = queue.jobs.record(value.id)["cancel_requested"]
         queue.jobs.update(
@@ -120,7 +126,7 @@ def execute(queue: SARQueue, row: dict, runner: BoundedAnalysisRunner) -> None:
 
 
 def collect(safe, value: SARJob, count: int, identity: str) -> list[Pair]:
-    if not 0 <= count <= 1000:
+    if not 0 <= count <= (3000 if value.kind == "study" else 1000):
         raise WebError(502, "sar_result_invalid", "SAR result chunk count is invalid.")
     output = []
     for index in range(count):

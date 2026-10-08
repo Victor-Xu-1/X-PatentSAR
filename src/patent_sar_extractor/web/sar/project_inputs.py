@@ -13,10 +13,15 @@ from ..storage import encode
 from .input_records import InputBudget, check_deadline, metric_key, molecule_record
 from .models import Metric, Molecule, Observation
 from .observation_contexts import ObservationContexts, conditions_sha256
+from .research_inputs import project_evidence
 
 
 def project_revision(
-    service: WorkspaceService, identifier: str, *, condition_sha: str | None = None
+    service: WorkspaceService,
+    identifier: str,
+    *,
+    condition_sha: str | None = None,
+    include_research: bool = False,
 ) -> str:
     used = 0
     result = hashlib.sha256()
@@ -50,10 +55,26 @@ def project_revision(
                     )
                 result.update(data)
                 result.update(b"\n")
+        if include_research:
+            for table in ("admet_predictions", "molecular_descriptors"):
+                for row in connection.execute(
+                    f"SELECT compound_id,source_fingerprint,smiles_sha256,epoch,payload,job_id FROM {table} WHERE project_id=? ORDER BY compound_id,source_fingerprint,smiles_sha256,epoch",
+                    (identifier,),
+                ):
+                    data = encode(list(row)).encode()
+                    used += len(data)
+                    if used > 64 * 1024 * 1024:
+                        raise WebError(
+                            413,
+                            "sar_dataset_limit",
+                            "Research snapshot exceeds its complete-input bound.",
+                        )
+                    result.update(data)
+                    result.update(b"\n")
     result.update(
         (condition_sha or conditions_sha256(service.store.project(identifier))).encode()
     )
-    return result.hexdigest()
+    return ("research2:" if include_research else "") + result.hexdigest()
 
 
 def project_inputs(
@@ -64,9 +85,12 @@ def project_inputs(
     source = service.project(identifier)
     rich_contexts = ObservationContexts(service.store.project(identifier))
     before = project_revision(
-        service, identifier, condition_sha=rich_contexts.source_sha256
+        service,
+        identifier,
+        condition_sha=rich_contexts.source_sha256,
+        include_research=True,
     )
-    compounds = service.effective_compounds(identifier)
+    compounds = service.result_queries.research_compounds(identifier)
     if not compounds:
         raise WebError(
             422, "sar_source_empty", "This project has no extracted records to analyse."
@@ -140,10 +164,11 @@ def project_inputs(
             issues,
             source_compound_id=item.id,
             source_page=item.source.page,
+            **project_evidence(item),
         )
         budget.add(record)
         output.append(record)
-    after = project_revision(service, identifier)
+    after = project_revision(service, identifier, include_research=True)
     if before != after:
         raise WebError(
             409,

@@ -68,6 +68,10 @@ def analyse(root: Path, input_sha256: str) -> dict:
 
     safe = SafeFiles(root)
     packet = safe.json("input.json", optional=False)
+    if isinstance(packet, dict) and packet.get("schema") == 2:
+        from .study_analysis import analyse_study
+
+        return analyse_study(root, input_sha256)
     if (
         not isinstance(packet, dict)
         or packet.get("schema") != 1

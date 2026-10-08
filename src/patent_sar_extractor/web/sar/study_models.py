@@ -10,6 +10,7 @@ from typing import Literal
 
 from pydantic import Field
 
+from ...contracts import SAR_STUDY_REPORT_SCHEMA_VERSION
 from ..dto import DTO
 from .models import Region, SARJob
 
@@ -134,7 +135,7 @@ class StudyRow(DTO):
 
 
 class StudyReport(DTO):
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1] = SAR_STUDY_REPORT_SCHEMA_VERSION
     dataset_id: str
     dataset_revision: int
     title: str

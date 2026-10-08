@@ -111,7 +111,7 @@ created. No browser navigation or GET creates a dataset, starts computation,
 loads a model or changes existing Lead/QA records. The module uses base RDKit;
 there is no new runtime, model download, GPU, local LLM or third-party call.
 
-Private `web-state/sar/sar.sqlite3` owns dataset/region/job/result version1.
+Private `web-state/sar/sar.sqlite3` owns dataset/region/job/result version2.
 Original CSV copies follow the selected upload root; immutable input, sealed
 chunks and recovery receipts follow the selected result root under owned
 `sar-research` prefixes. Preserve these roots, module database and raw originals
@@ -131,8 +131,32 @@ unsupported/query/stereo representations, ambiguous maps and input/record/byte
 limits fail visibly, not partial success. Missing assay information remains
 unknown unless explicitly asserted comparable; an assertion cannot override a
 known conflict. Results are supplied-graph reference comparisons, not image
-recognition accuracy, whole-patent SAR inference, article scoring reproduction,
+recognition accuracy, unrestricted all-background SAR inference, article scoring reproduction,
 drug efficacy/safety or experimental Lead approval.
+
+The full-study view uses the same queue and resource limits. Select exact assay /
+cell / duration / unit conditions before plotting or comparing data, and confirm
+any grade order or numeric strong-activity threshold explicitly. Add named variable
+regions (up to12) or confirmed core selections without changing source structures.
+Run a study to generate activity distributions, descriptive core groups, candidate
+cards, per-region horizontal fragment comparisons, an advantage-fragment summary
+and a full horizontally scrollable molecule table. Start without regions for an
+overview; add regions and explicitly create another study when needed. Old
+results are retained, not relabelled after a specification change.
+
+Whole-study comparisons are bounded at75,000. All25,000 permitted source rows are
+accounted for, including missing activity or ineligible structures. The native
+candidate pool has an explicit computational bound; exceeding it fails the study,
+not an invisible first-N ranking. Core/fragment filters and strongest/candidate
+views apply before pagination; counts always refer to the whole selected pool.
+CSV research-property/probability mappings are optional and labelled imported.
+Invalid declared numeric/probability semantics reject the complete import. Source
+project snapshots include only current already-produced molecular evidence and
+bind its revision; no SAR action starts prediction. Fresh descriptor calculations
+do not depend on activity presence. LogS and risk remain missing if not supplied.
+JSON exports preserve the full input/specification/report; CSV preserves all rows;
+SDF exports eligible structures only. Printable HTML is passive, source-bound and
+limited to32MiB before download headers; use JSON/CSV/SDF for larger reports.
 
 Daily removal hides only stopped cleanup-verified SAR entries and retains bytes;
 it is not permanent purge. Rollback preserves newer module state/roots separately;

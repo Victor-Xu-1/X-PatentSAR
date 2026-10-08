@@ -40,7 +40,11 @@ class SARService:
         if value.source_project_id:
             try:
                 value.stale = project_revision(
-                    self.workspace, value.source_project_id
+                    self.workspace,
+                    value.source_project_id,
+                    include_research=(
+                        self.datasets.source_revision(identifier) or ""
+                    ).startswith("research2:"),
                 ) != self.datasets.source_revision(identifier)
             except WebError:
                 value.stale = True
@@ -162,6 +166,8 @@ class SARService:
                 dataset.revision,
                 molecule.graph_sha256,
                 sorted(request.atom_indices),
+                request.name,
+                request.kind,
             ]
         )[:32]
         return self.datasets.save_region(
@@ -174,5 +180,7 @@ class SARService:
                 atom_indices=sorted(request.atom_indices),
                 attachment_count=attachments,
                 created_at=now(),
+                name=request.name,
+                kind=request.kind,
             )
         )

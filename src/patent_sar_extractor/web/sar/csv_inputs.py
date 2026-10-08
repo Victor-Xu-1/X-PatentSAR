@@ -16,6 +16,7 @@ from .input_records import (
     molecule_record,
 )
 from .models import CSVMapping, Metric, Molecule, Observation
+from .research_inputs import csv_evidence, validate_mapping
 
 
 def clean_optional(value: str | None, limit: int = 1000) -> str | None:
@@ -34,6 +35,7 @@ def mapped_inputs(
     data: bytes, mapping: CSVMapping
 ) -> tuple[list[Molecule], list[Metric], int]:
     headers, rows = parse_csv(data)
+    validate_mapping(mapping, headers)
     context_columns = (
         mapping.assay_column,
         mapping.target_column,
@@ -185,6 +187,7 @@ def mapped_inputs(
             row[mapping.smiles_column] or None,
             observations,
             molfile,
+            **csv_evidence(row, mapping),
         )
         budget.add(record[0])
         records.append(record)
