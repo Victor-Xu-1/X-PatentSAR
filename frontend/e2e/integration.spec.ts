@@ -1,7 +1,9 @@
 import { existsSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
+import packageMetadata from '../package.json' with { type: 'json' };
 import type { Health, Job, Project, Results } from '../src/api/types';
 
+const expectedVersion = packageMetadata.version;
 const pdfPath =
   process.env.PATENTSAR_E2E_PDF ??
   '/srv/wsl/data/patentsar/inputs/WO2025264818-PAMPH-20251226-0041.pdf';
@@ -55,7 +57,7 @@ test.describe('real local backend integration', () => {
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2),
       ).toBe(true);
-      await expect(page.locator('.topbar-version')).toHaveText('v0.1.0');
+      await expect(page.locator('.topbar-version')).toHaveText(`v${expectedVersion}`);
       await page.getByRole('button', { name: '环境管理', exact: true }).click();
       await expect(page.getByRole('heading', { name: '环境管理' })).toBeVisible();
       await expect(page.getByRole('heading', { name: '完整运行环境', exact: true })).toBeVisible();

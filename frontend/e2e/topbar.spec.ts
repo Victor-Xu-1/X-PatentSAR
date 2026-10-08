@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
+import packageMetadata from '../package.json' with { type: 'json' };
 
+const expectedVersion = packageMetadata.version;
 const projectId = process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID;
 const primary = ['上传 PDF', '最近文件', '环境管理', '任务记录'];
 
@@ -24,7 +26,7 @@ for (const viewport of [
       await expect(nav.getByRole('button', { name, exact: true })).toBeVisible();
       await expect(nav.getByRole('button', { name, exact: true }).locator('span')).toBeVisible();
     }
-    await expect(header.locator('.topbar-version')).toHaveText('v0.1.0');
+    await expect(header.locator('.topbar-version')).toHaveText(`v${expectedVersion}`);
     await expect(header.locator('details, .shell-menu')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: '上传专利 PDF', exact: true })).toBeVisible();
     await expect(page.locator('.new-task-page input')).toHaveCount(1);
@@ -54,7 +56,7 @@ for (const viewport of [
     }
     await page.reload();
     await expect(page.getByLabel('原始专利 PDF 文件')).toBeFocused();
-    await expect(header.locator('.topbar-version')).toHaveText('v0.1.0');
+    await expect(header.locator('.topbar-version')).toHaveText(`v${expectedVersion}`);
     expect(writes).toEqual([]);
     expect(errors).toEqual([]);
   });
@@ -76,7 +78,7 @@ for (const viewport of [
       await expect(nav.getByRole('button', { name, exact: true })).toBeVisible();
       await expect(nav.getByRole('button', { name, exact: true }).locator('span')).toBeVisible();
     }
-    await expect(header.locator('.topbar-version')).toHaveText('v0.1.0');
+    await expect(header.locator('.topbar-version')).toHaveText(`v${expectedVersion}`);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2)).toBe(
       true,
     );
