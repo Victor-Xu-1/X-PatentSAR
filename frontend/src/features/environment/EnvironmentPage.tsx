@@ -13,6 +13,7 @@ import { RecoveryNotice } from './RecoveryNotice';
 import { EnvironmentProgress } from './EnvironmentProgress';
 import type { HistoryEntry } from '../../api/historyTypes';
 import { HistoryDialog } from '../history/HistoryDialog';
+import { LLMApiPanel } from '../llm/LLMApiPanel';
 
 export function EnvironmentPage({
   operationId,
@@ -114,6 +115,7 @@ export function EnvironmentPage({
         onCancel={mutations.cancel}
         onReload={workspace.operation.reload}
       />
+      <LLMApiPanel />
       {historyOpen && (
         <HistoryDialog
           title="环境操作记录"

@@ -1,0 +1,133 @@
+.llm-api-panel {
+  min-width: 0;
+  margin-top: 24px;
+  padding: 20px 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+.llm-api-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.llm-api-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+  gap: 8px 12px;
+}
+.llm-api-heading h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.llm-api-heading p {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.llm-api-status {
+  color: var(--muted);
+  font-size: 12px;
+}
+.llm-status-ready {
+  color: var(--success);
+}
+.llm-status-incomplete {
+  color: var(--warning);
+}
+.llm-api-row > button {
+  flex: 0 0 auto;
+  min-height: 36px;
+}
+.llm-api-panel > .error-notice {
+  margin-top: 16px;
+}
+.llm-settings-form {
+  gap: 16px;
+}
+.llm-settings-fields {
+  display: grid;
+  min-width: 0;
+  gap: 16px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+.llm-settings-fields .form-field {
+  color: var(--primary);
+  font-size: 13px;
+}
+.llm-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.llm-checkbox input {
+  flex: 0 0 auto;
+  margin-top: 4px;
+}
+.llm-key-field {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+}
+.llm-settings-form .muted,
+.llm-field-note,
+.llm-limits {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.llm-settings-form p {
+  margin: 0;
+}
+.llm-limits {
+  color: var(--muted);
+}
+.llm-limits summary {
+  width: fit-content;
+  padding-block: 4px;
+  cursor: pointer;
+}
+.llm-limits p {
+  padding-top: 4px;
+}
+.llm-limits .form-field {
+  margin-top: 8px;
+}
+.llm-message {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.llm-test-action {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+@media (max-width: 600px) {
+  .llm-api-panel {
+    margin-top: 20px;
+    padding: 18px 20px;
+  }
+  .llm-api-row {
+    gap: 12px;
+  }
+  .llm-api-row > button {
+    min-height: 40px;
+  }
+}
+@media (pointer: coarse) {
+  .llm-api-row > button {
+    min-height: 44px;
+  }
+}
