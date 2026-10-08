@@ -42,12 +42,26 @@ class CompiledReference:
     _anchors: frozenset[int]
 
     def compare(self, candidate_molfile: str) -> dict[str, Any]:
+        return self._compare(candidate_molfile, details=False)
+
+    def compare_details(self, candidate_molfile: str) -> dict[str, Any]:
+        """Expose indices only after exhaustive bounded fixed-graph proof.
+
+        Attachment pairs are reference/candidate FIXED atom indices. Harmless
+        non-anchor symmetries do not select an arbitrary full embedding.
+        """
+        result = self._compare(candidate_molfile, details=True)
+        result.setdefault("variable_atom_indices", [])
+        result.setdefault("attachment_mapping", [])
+        return result
+
+    def _compare(self, candidate_molfile: str, *, details: bool) -> dict[str, Any]:
         try:
             candidate = graph(read_molfile(candidate_molfile))
         except SARInputError as exc:
             return _result("ineligible", "candidate_ineligible", exc.code)
         return _compare_graphs(
-            self._reference, candidate, self._selected, self._anchors
+            self._reference, candidate, self._selected, self._anchors, details=details
         )
 
 
@@ -72,11 +86,16 @@ def _compare_graphs(
     candidate: Graph,
     selected: frozenset[int],
     anchors: frozenset[int],
+    *,
+    details: bool = False,
+    membership: bool = False,
 ) -> dict[str, Any]:
     if len(Chem.GetMolFrags(reference.mol)) != len(Chem.GetMolFrags(candidate.mol)):
         return _result("not_matched", "components_changed")
     fixed_count = reference.mol.GetNumAtoms() - len(selected)
-    if candidate.mol.GetNumAtoms() <= fixed_count:
+    if candidate.mol.GetNumAtoms() < fixed_count or (
+        not membership and candidate.mol.GetNumAtoms() == fixed_count
+    ):
         return _result("not_matched", "candidate_variable_empty")
     failures, proof = set(), None
     try:
@@ -84,7 +103,7 @@ def _compare_graphs(
             remaining = frozenset(range(candidate.mol.GetNumAtoms())) - frozenset(
                 mapping.values()
             )
-            if not connected(candidate.mol, remaining):
+            if not membership and not connected(candidate.mol, remaining):
                 failures.add("candidate_variable_disconnected")
                 continue
             ports = attachment_mapping(
@@ -98,7 +117,14 @@ def _compare_graphs(
             if not preserved(reference, candidate, mapping, ports):
                 failures.add("fixed_stereo_changed")
                 continue
-            signature = remaining, tuple((i, mapping[i]) for i in sorted(anchors))
+            # Descriptive core membership needs existence, not a chosen location.
+            # Every embedding still passes identical ports/stereo/bounds; no
+            # candidate mapping is exposed for this deliberately separate role.
+            signature = (
+                (frozenset(), ())
+                if membership
+                else (remaining, tuple((i, mapping[i]) for i in sorted(anchors)))
+            )
             if proof is not None and signature != proof:
                 return _result("ambiguous", "ambiguous_region_mapping")
             proof = signature
@@ -106,11 +132,15 @@ def _compare_graphs(
         return _result("ambiguous", str(exc))
     except SARInputError as exc:
         return _result("ineligible", exc.code)
-    return (
-        _result("matched")
-        if proof is not None
-        else _result("not_matched", *(failures or {"fixed_graph_changed"}))
-    )
+    if proof is None:
+        return _result("not_matched", *(failures or {"fixed_graph_changed"}))
+    result = _result("matched")
+    if details:
+        result.update(
+            variable_atom_indices=sorted(proof[0]),
+            attachment_mapping=[list(pair) for pair in proof[1]],
+        )
+    return result
 
 
 def compare_structure(
