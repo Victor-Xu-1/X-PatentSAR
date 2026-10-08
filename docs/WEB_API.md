@@ -16,7 +16,7 @@ research, not an automatic post-extraction stage or an article/Lead reproduction
   original row count and suggested roles. Suggestions are editable, never proof.
 - POST `/sar/datasets/csv` accepts `{token,title,id_column,smiles_column,
   activity_columns,metric_column?,unit_column?,target_column?,assay_column?,
-  cell_line_column?,duration_column?,request_id}`. Optional metric_column enables
+  cell_line_column?,duration_column?,source_page_column?,request_id}`. Optional metric_column enables
   native long `metric/value` CSV with exactly one selected value column;
   wide columns remain distinct. The original
   byte SHA and all selected raw observations/conditions are retained. Repeat IDs
@@ -89,6 +89,9 @@ CSRF, source visibility, input/CAS and owned-worker authorities described above.
   distributions/core groups/candidate cards/strict region summaries are complete.
   Each region reports one independent background; matched edges are not independent
   repeats. Same-grade ties, intervals, missing/conflicting data stay explicit.
+  `strict_pair_count` counts checks, not qualified conclusions;
+  `matched_pair_count` and `comparable_pair_count` separately report proved
+  structure matches and determined same-context activity comparisons.
 - GET `/sar/jobs/{id}/study/rows?page=&page_size=&query=&scope=all|strong|leads&
   scaffold_id=&region_id=&fragment_id=` returns `{items,total,page,page_size,job}`.
   Filters apply to the whole study, then natural original-identifier order and

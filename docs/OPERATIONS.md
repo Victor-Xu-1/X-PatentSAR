@@ -160,7 +160,11 @@ limited to32MiB before download headers; use JSON/CSV/SDF for larger reports.
 
 Daily removal hides only stopped cleanup-verified SAR entries and retains bytes;
 it is not permanent purge. Rollback preserves newer module state/roots separately;
-older wheels without the module cannot read it or certify its results. Deploy
+older wheels without the module cannot read it or certify its results. A pre-study
+wheel's strict DTOs can also refuse newer study records even though the SQL tables
+remain schema2; rollback must retain the newer state separately and deliberately
+select the backed-up pre-upgrade SAR database, never strip fields or delete jobs
+to make an older reader pass. Deploy
 only exact merged main with focused module/API/browser and unchanged-core checks.
 Cold scientific-environment installation and representative patent accuracy
 remain independent acceptance boundaries.
