@@ -12,11 +12,13 @@ export function WorkspaceLayout({
   onChange,
   source,
   results,
+  workflow,
 }: {
   layout: LayoutState;
   onChange: (layout: LayoutState) => void;
   source: ReactNode;
   results: ReactNode;
+  workflow?: ReactNode;
 }) {
   const { t } = useTranslation();
   const layout = normalizeLayout(input);
@@ -52,27 +54,30 @@ export function WorkspaceLayout({
       ref={root}
       className={`workspace-layout${layout.fullscreen ? ' is-fullscreen' : ''}${layout.pdfVisible ? '' : ' source-collapsed'}`}
     >
-      <div className="layout-toolbar" aria-label={t('工作区布局')}>
-        <button
-          type="button"
-          onClick={() => onChange({ ...layout, pdfVisible: !layout.pdfVisible })}
-          aria-label={layout.pdfVisible ? t('收起原文，结果全宽') : t('展开原文')}
-          aria-expanded={layout.pdfVisible}
-          aria-controls="workspace-source"
-        >
-          {layout.pdfVisible ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />}
-          {layout.pdfVisible ? t('收起原文') : t('展开原文')}
-        </button>
-        <button
-          ref={fullButton}
-          type="button"
-          onClick={() => onChange({ ...layout, fullscreen: !layout.fullscreen })}
-          aria-label={layout.fullscreen ? t('退出全屏工作区') : t('全屏工作区')}
-          aria-pressed={layout.fullscreen}
-        >
-          {layout.fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-          {layout.fullscreen ? t('退出全屏') : t('全屏')}
-        </button>
+      <div className="workspace-toolbar">
+        {workflow && <section className="workflow-panel">{workflow}</section>}
+        <div className="layout-toolbar" aria-label={t('工作区布局')}>
+          <button
+            type="button"
+            onClick={() => onChange({ ...layout, pdfVisible: !layout.pdfVisible })}
+            aria-label={layout.pdfVisible ? t('收起原文，结果全宽') : t('展开原文')}
+            aria-expanded={layout.pdfVisible}
+            aria-controls="workspace-source"
+          >
+            {layout.pdfVisible ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />}
+            {layout.pdfVisible ? t('收起原文') : t('展开原文')}
+          </button>
+          <button
+            ref={fullButton}
+            type="button"
+            onClick={() => onChange({ ...layout, fullscreen: !layout.fullscreen })}
+            aria-label={layout.fullscreen ? t('退出全屏工作区') : t('全屏工作区')}
+            aria-pressed={layout.fullscreen}
+          >
+            {layout.fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+            {layout.fullscreen ? t('退出全屏') : t('全屏')}
+          </button>
+        </div>
       </div>
       <div
         className="workspace-split"

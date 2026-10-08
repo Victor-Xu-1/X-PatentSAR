@@ -6,11 +6,13 @@ import { api } from '../src/api';
 import type { ActivityColumn, Filters } from '../src/api/types';
 import { ColumnMenu } from '../src/features/results/ColumnMenu';
 import { resultColumns } from '../src/model/resultColumns';
+import type { ResultColumn } from '../src/model/resultColumns';
 import { compound } from './fixtures';
 import { filterValuesFixture } from './filter-value-fixtures';
 
 const base: Filters = { q: '', confidence: '', review: '', target: '', page: 2, page_size: 25 };
-const compoundColumn = resultColumns()[1]!;
+// Captions are view data: derive after the explicit per-test locale is applied.
+let compoundColumn: ResultColumn;
 const activity: ActivityColumn = {
   id: 'a'.repeat(64),
   ...compound.activities[0]!,
@@ -25,7 +27,7 @@ const activity: ActivityColumn = {
     medium_boundary: 1,
   },
 };
-const activityColumn = { ...compoundColumn, id: `activity:${activity.id}`, label: '活性' };
+let activityColumn: ResultColumn;
 
 function Host({
   initial = base,
@@ -58,6 +60,8 @@ async function open(name = '原文编号 列选项') {
   await waitFor(() => expect(screen.queryByText('正在加载取值…')).not.toBeInTheDocument());
 }
 beforeEach(() => {
+  compoundColumn = resultColumns()[1]!;
+  activityColumn = { ...compoundColumn, id: `activity:${activity.id}`, label: '活性' };
   vi.spyOn(api, 'filterValues').mockImplementation(async (_id, column, _filters, _search, page) =>
     filterValuesFixture(column, undefined, { page }),
   );

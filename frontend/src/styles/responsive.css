@@ -26,17 +26,6 @@
   }
   .workflow-panel {
     flex-shrink: 0;
-    padding-right: 174px;
-  }
-  .layout-toolbar {
-    position: absolute;
-    top: 12px;
-    right: 4px;
-    margin: 0;
-  }
-  .is-fullscreen .layout-toolbar {
-    position: static;
-    margin-bottom: 8px;
   }
 }
 @media (max-width: 1399px) {
@@ -63,6 +52,16 @@
   }
 }
 @media (max-width: 899px) {
+  .workspace-toolbar {
+    flex-wrap: wrap;
+    gap: 0;
+  }
+  .workspace-toolbar > .workflow-panel {
+    flex-basis: 100%;
+  }
+  .workspace-toolbar > .layout-toolbar {
+    margin-bottom: 8px;
+  }
   .topbar {
     flex-wrap: wrap;
     padding: 10px 12px;

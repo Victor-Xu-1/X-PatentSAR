@@ -121,6 +121,20 @@ test('installed table localization preserves original IDs, sources and query sta
     .first()
     .innerText();
   const before = page.url();
+  // Actions share one flow layout, not locale-specific absolute offsets.
+  for (const width of [1280, 1672]) {
+    await page.setViewportSize({ width, height: 942 });
+    const flow = page.locator('.workspace-toolbar .workflow-panel');
+    const controls = page.locator('.workspace-toolbar .layout-toolbar');
+    const actions = flow.locator('.job-actions-wrapper');
+    const [actionBox, controlBox] = await Promise.all([
+      actions.boundingBox(),
+      controls.boundingBox(),
+    ]);
+    expect(actionBox).not.toBeNull();
+    expect(controlBox).not.toBeNull();
+    expect(actionBox!.x + actionBox!.width).toBeLessThanOrEqual(controlBox!.x);
+  }
   await page
     .getByRole('combobox', { name: 'Interface language', exact: true })
     .selectOption('zh-CN');

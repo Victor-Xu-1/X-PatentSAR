@@ -75,16 +75,26 @@
   align-items: center;
   gap: 16px;
   min-width: 0;
+  flex: 1 1 auto;
 }
 .workflow-group {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
   color: var(--muted);
   white-space: nowrap;
   font-size: 13px;
   font-weight: 500;
+}
+.workflow-group > svg {
+  flex: 0 0 auto;
+}
+.workflow-group > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .workflow-group.ok {
   color: var(--ink);
