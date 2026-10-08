@@ -15,7 +15,7 @@ from .errors import WebError
 from .files import SafeFiles
 from .models import Compound, Recognition
 from .molecule_drawing import drawing_url
-from .processes import runtime_identity
+from .processes import runtime_identity, runtime_identity_matches
 from .recognition import recognition_status
 from .storage import Store, encode, now
 
@@ -123,10 +123,9 @@ def apply_recognition(project: dict, row: dict, compound: Compound) -> Compound:
                 status="unavailable", quality_flag="source_image_changed"
             )
         return compound
-    current = (
-        row["recognition_source"] == correction_source_fingerprint(project, row)
-        and json.loads(row["recognition_runtime"]) == runtime_identity()
-    )
+    current = row["recognition_source"] == correction_source_fingerprint(
+        project, row
+    ) and runtime_identity_matches(json.loads(row["recognition_runtime"]))
     if current:
         try:
             current = row["recognition_crop"] == crop_digest(
@@ -192,7 +191,7 @@ class RecognitionStore:
                 or spec.get("job_id") != job_id
                 or spec.get("project_id") != project_id
                 or spec.get("include_admet") is not True
-                or spec.get("runtime_identity") != runtime_identity()
+                or not runtime_identity_matches(spec.get("runtime_identity"))
                 or (
                     spec.get("admet_compounds")
                     and compound_id not in spec["admet_compounds"]

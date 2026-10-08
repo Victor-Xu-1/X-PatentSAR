@@ -26,7 +26,13 @@ from .job_preparation import checkpoint_origin, prepare_attempt
 from .job_recovery import decode_identity, preserve_cleanup, release_retained_identity
 from .models import Error, Job, JobRequest, Stage
 from .prediction_jobs import correction_prediction, enqueue_prediction
-from .processes import ProcessIdentity, ProcessRunner, RunSpec, runtime_identity
+from .processes import (
+    ProcessIdentity,
+    ProcessRunner,
+    RunSpec,
+    runtime_identity,
+    runtime_identity_matches,
+)
 from .service import WorkspaceService
 from .storage import encode, now
 
@@ -49,7 +55,7 @@ def decode_spec(raw: str) -> RunSpec:
         raise WebError(
             409, "invalid_job_record", "Persisted job specification is invalid."
         )
-    if value.pop("runtime_identity", None) != runtime_identity():
+    if not runtime_identity_matches(value.pop("runtime_identity", None)):
         raise WebError(
             409,
             "resume_identity",

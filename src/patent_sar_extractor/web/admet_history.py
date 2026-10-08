@@ -17,7 +17,7 @@ from .attempts import spec_record
 from .errors import WebError
 from .files import SafeFiles, private_directory
 from .models import Stage
-from .processes import runtime_identity
+from .processes import runtime_identity, runtime_identity_matches
 
 SCHEMA = {"name": "patentsar.admet-job-stage", "version": 1}
 TERMINAL = {"complete", "failed", "cancelled", "interrupted"}
@@ -37,7 +37,7 @@ def _spec(row: dict[str, Any]) -> dict[str, Any]:
         spec.get("job_id") != row["id"]
         or spec.get("project_id") != row["project_id"]
         or spec.get("include_admet") is not True
-        or spec.get("runtime_identity") != runtime_identity()
+        or not runtime_identity_matches(spec.get("runtime_identity"))
     ):
         raise ValueError("ADMET history does not belong to the producer specification")
     return spec
@@ -110,7 +110,7 @@ def read_admet_stage(
             or set(raw) != keys
             or raw.get("schema") != SCHEMA
             or type(raw["schema"].get("version")) is not int
-            or raw.get("runtime_identity") != runtime_identity()
+            or not runtime_identity_matches(raw.get("runtime_identity"))
             or raw.get("job_id") != row["id"]
             or raw.get("project_id") != row["project_id"]
             or raw.get("spec_sha256")
