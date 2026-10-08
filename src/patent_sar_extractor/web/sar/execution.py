@@ -48,6 +48,22 @@ def execute(queue: SARQueue, row: dict, runner: BoundedAnalysisRunner) -> None:
             ),
         )
         if (
+            result.get("input_sha256") == value.input_sha256
+            and result.get("engine_sha256") == spec["engine_sha256"]
+            and "failure_code" in result
+        ):
+            if result["failure_code"] == "study_ranking_limit":
+                raise WebError(
+                    413,
+                    "sar_study_ranking_limit",
+                    "More than 5000 rows qualify for candidate ranking. No partial ranking was published; choose an explicit smaller dataset.",
+                )
+            raise WebError(
+                422,
+                "sar_study_input_invalid",
+                "Study input or checkpoint could not be verified. Source records and sealed work were retained; inspect the dataset or create a new analysis.",
+            )
+        if (
             result.get("input_sha256") != value.input_sha256
             or result.get("engine_sha256") != spec["engine_sha256"]
             or type(result.get("chunks")) is not int

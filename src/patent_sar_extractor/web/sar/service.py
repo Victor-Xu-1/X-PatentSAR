@@ -152,7 +152,20 @@ class SARService:
                 "Region must refer to the exact eligible snapshot graph.",
             )
         try:
-            attachments = validate_region(molecule.molfile, request.atom_indices)
+            if request.kind == "core":
+                from ...core.sar.molecules import read_molfile
+                from ...core.sar.regions import attachment_groups
+                from ...core.sar.study_cores import compile_core
+
+                compile_core(molecule.molfile, request.atom_indices)
+                groups = attachment_groups(
+                    read_molfile(molecule.molfile), frozenset(request.atom_indices)
+                )
+                attachments = sum(
+                    len(key) * len(values) for key, values in groups.items()
+                )
+            else:
+                attachments = validate_region(molecule.molfile, request.atom_indices)
         except ValueError as error:
             raise WebError(
                 422,
