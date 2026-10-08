@@ -63,6 +63,29 @@ def verify_study(safe, job: SARJob, spec: dict, reply: dict, pairs: list[Pair]) 
             "Study did not account for every source row and region comparison.",
         )
     by_id = {row.id: row for row in molecules}
+    report_rows = {row.molecule_id: row for row in report.rows}
+    candidates = {row.molecule_id: row for row in report.candidates}
+    selected = {
+        row.molecule_id for row in report.rows if row.candidate_status == "selected"
+    }
+    if (
+        len(candidates) != len(report.candidates)
+        or set(candidates) != selected
+        or any(
+            row != report_rows[mid]
+            or row.candidate_status != "selected"
+            or row.selection_order is None
+            or row.priority_group is None
+            or row.selection_order < 1
+            or row.priority_group < 1
+            for mid, row in candidates.items()
+        )
+    ):
+        raise WebError(
+            502,
+            "sar_result_invalid",
+            "Candidate cards differ from the complete row assessments.",
+        )
     if any(
         row.label != by_id[row.molecule_id].label
         or row.eligible != by_id[row.molecule_id].eligible
@@ -103,6 +126,39 @@ def verify_study(safe, job: SARJob, spec: dict, reply: dict, pairs: list[Pair]) 
                 502,
                 "sar_result_invalid",
                 "Region summary does not account for its whole comparison pool.",
+            )
+        matched = [
+            pair
+            for pair in pairs
+            if pair.region_id == summary.region.id and pair.match_status == "matched"
+        ]
+        expected_members = {pair.molecule_id for pair in matched} | {
+            summary.region.molecule_id
+        }
+        actual_members = {
+            mid for fragment in summary.fragments for mid in fragment.molecule_ids
+        }
+        fragments = {fragment.id: fragment for fragment in summary.fragments}
+        if (
+            len(fragments) != len(summary.fragments)
+            or expected_members != actual_members
+            or any(
+                pair.fragment_id not in fragments
+                or pair.molecule_id not in fragments[pair.fragment_id].molecule_ids
+                or not pair.variable_atom_indices
+                or len(set(pair.variable_atom_indices))
+                != len(pair.variable_atom_indices)
+                or any(
+                    type(index) is not int or not 0 <= index <= 511
+                    for index in pair.variable_atom_indices
+                )
+                for pair in matched
+            )
+        ):
+            raise WebError(
+                502,
+                "sar_result_invalid",
+                "Fragment membership differs from proved strict mappings.",
             )
         for fragment in summary.fragments:
             if (

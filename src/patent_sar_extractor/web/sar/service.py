@@ -66,7 +66,13 @@ class SARService:
         return value
 
     def from_csv(self, request: CSVMapping) -> Dataset:
-        request_hash = digest(request.model_dump(exclude={"request_id"}))
+        fields = request.model_dump(exclude={"request_id"})
+        # New neutral optional roles do not change an already-published nonce's
+        # meaning. Nonempty mappings remain part of its exact identity.
+        for key in ("source_page_column", "property_columns", "prediction_columns"):
+            if not fields[key]:
+                fields.pop(key)
+        request_hash = digest(fields)
         existing = self.datasets.existing(request.request_id, request_hash)
         if existing:
             return self.dataset(existing.id)

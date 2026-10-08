@@ -11,7 +11,18 @@ MODES = (
     (
         "sar",
         "sar-workbench.spec.ts",
-        COMMON | {"topbar.spec.ts", "language-switch.spec.ts", "sar-workbench.spec.ts"},
+        COMMON
+        | {
+            "topbar.spec.ts",
+            "language-switch.spec.ts",
+            "sar-workbench.spec.ts",
+            "sar-study.spec.ts",
+        },
+    ),
+    (
+        "sar",
+        "sar-study.spec.ts",
+        COMMON | {"sar-workbench.spec.ts", "sar-study.spec.ts"},
     ),
     (
         "llm-recovery",
