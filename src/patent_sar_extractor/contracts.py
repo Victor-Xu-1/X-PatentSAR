@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import re
 from typing import Final
 
 PRODUCT_NAME: Final = "X-PatentSAR"
 DISTRIBUTION_NAME: Final = "x-patentsar"
 COMMAND_NAME: Final = "x-patentsar"
-__version__: Final = "0.1.0"
+__version__: Final = "0.1.1"
 
 WEB_API_SCHEMA: Final = "patentsar.web-api"
 WEB_API_SCHEMA_VERSION: Final = 1
@@ -102,6 +103,41 @@ def product_ref() -> dict[str, str]:
     return {"name": PRODUCT_NAME, "version": __version__}
 
 
+def product_identity_matches(payload: object) -> bool:
+    """Check producer identity, not scientific compatibility via release labels.
+
+    Product releases count merged PRs. Scientific changes instead invalidate
+    their explicit pipeline, ruleset, schema and implementation epochs.
+    """
+    return (
+        isinstance(payload, dict)
+        and set(payload) == {"name", "version"}
+        and payload.get("name") == PRODUCT_NAME
+        and isinstance(payload.get("version"), str)
+        and re.fullmatch(
+            r"(?:0|[1-9][0-9]*)\.[0-9]\.(?:0|[1-9][0-9]?)", payload["version"]
+        )
+        is not None
+    )
+
+
+def release_compatible_record(actual: object, expected: dict[str, object]) -> bool:
+    """Compare a complete identity/fingerprint except its producer release label.
+
+    No keys are dropped or mutated. Missing/foreign/malformed producers and
+    every other changed field still fail closed.
+    """
+    return (
+        isinstance(actual, dict)
+        and actual.keys() == expected.keys()
+        and product_identity_matches(actual.get("product"))
+        and product_identity_matches(expected.get("product"))
+        and all(
+            actual[key] == value for key, value in expected.items() if key != "product"
+        )
+    )
+
+
 def pipeline_contract_ref() -> dict[str, str]:
     return {"name": PIPELINE_CONTRACT_NAME, "version": PIPELINE_CONTRACT_VERSION}
 
@@ -124,9 +160,11 @@ def artifact_identity(schema_name: str, schema_version: int) -> dict[str, object
 def artifact_identity_matches(
     payload: object, schema_name: str, schema_version: int
 ) -> bool:
-    """Return whether a payload has the exact current identity envelope."""
+    """Check current scientific contracts while retaining producer provenance."""
 
     if not isinstance(payload, dict):
         return False
     expected = artifact_identity(schema_name, schema_version)
-    return all(payload.get(key) == value for key, value in expected.items())
+    return release_compatible_record(
+        {key: payload.get(key) for key in expected}, expected
+    )
