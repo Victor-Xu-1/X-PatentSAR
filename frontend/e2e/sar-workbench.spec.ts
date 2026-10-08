@@ -47,13 +47,15 @@ for (const width of [390, 800, 1672]) {
       .getByRole('combobox', { name: 'SMILES column', exact: true })
       .selectOption('smiles');
     await importPanel.getByRole('checkbox', { name: 'IC50 (nM)', exact: true }).check();
-    const saved = page.waitForResponse(
-      (response) =>
-        response.url().endsWith('/api/v1/sar/datasets/csv') &&
-        response.request().method() === 'POST',
-    );
+    const saved = page
+      .waitForResponse(
+        (response) =>
+          response.url().endsWith('/api/v1/sar/datasets/csv') &&
+          response.request().method() === 'POST',
+      )
+      .then((response) => response.json());
     await importPanel.getByRole('button', { name: 'Create CSV dataset', exact: true }).click();
-    const dataset = await (await saved).json();
+    const dataset = await saved;
     expect(dataset.row_count).toBe(4);
     expect(dataset.eligible_count).toBe(3);
     const rows = page.getByRole('region', { name: 'Choose reference molecule', exact: true });
@@ -84,13 +86,15 @@ for (const width of [390, 800, 1672]) {
     await expect(
       page.getByRole('combobox', { name: 'Activity direction', exact: true }),
     ).toHaveValue('lower');
-    const submitted = page.waitForResponse(
-      (response) =>
-        /\/api\/v1\/sar\/datasets\/[^/]+\/jobs$/.test(response.url()) &&
-        response.request().method() === 'POST',
-    );
+    const submitted = page
+      .waitForResponse(
+        (response) =>
+          /\/api\/v1\/sar\/datasets\/[^/]+\/jobs$/.test(response.url()) &&
+          response.request().method() === 'POST',
+      )
+      .then((response) => response.json());
     await page.getByRole('button', { name: 'Start reference comparison', exact: true }).click();
-    const job = await (await submitted).json();
+    const job = await submitted;
     const results = page
       .getByRole('region', { name: 'Reference-comparison results', exact: true })
       .first();
@@ -157,13 +161,15 @@ test('current extracted task explicitly creates its separate SAR snapshot', asyn
     project!,
   );
   await page.getByLabel('Dataset title', { exact: true }).fill('Controlled extracted snapshot');
-  const saved = page.waitForResponse(
-    (response) =>
-      response.url().endsWith('/api/v1/sar/datasets/project') &&
-      response.request().method() === 'POST',
-  );
+  const saved = page
+    .waitForResponse(
+      (response) =>
+        response.url().endsWith('/api/v1/sar/datasets/project') &&
+        response.request().method() === 'POST',
+    )
+    .then((response) => response.json());
   await page.getByRole('button', { name: 'Create independent snapshot', exact: true }).click();
-  const dataset = await (await saved).json();
+  const dataset = await saved;
   expect(dataset.source_kind).toBe('project');
   expect(dataset.source_project_id).toBe(project);
   expect(dataset.row_count).toBe(30);
