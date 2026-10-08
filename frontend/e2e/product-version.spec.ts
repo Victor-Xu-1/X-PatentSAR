@@ -1,6 +1,5 @@
 import { expect, test } from '@playwright/test';
 import packageMetadata from '../package.json' with { type: 'json' };
-import type { Health } from '../src/api/types';
 import { LOCALE_STORAGE_KEY } from '../src/i18n/locale';
 
 // Explicit Chinese regression variant; language-switch.spec covers fresh English defaults.
@@ -32,21 +31,22 @@ for (const viewport of [
           writes.push(request.url());
       });
       await page.setViewportSize(viewport);
-      // Capture the actual browser response body immediately, before navigation
-      // completion can retire the DevTools response identifier.
+      // Observe the rendered page's real health fetch without retaining a CDP
+      // body handle across navigation. Chromium can retire that handle even
+      // while response.json() is already pending. Read persisted health using
+      // the same isolated authenticated context, never replay a mutation.
       const healthResponse = page
         .waitForResponse(
           (response) =>
             response.request().method() === 'GET' &&
             new URL(response.url()).pathname === '/api/v1/health',
         )
-        .then(async (response) => ({
-          ok: response.ok(),
-          health: (await response.json()) as Health,
-        }));
+        .then((response) => response.ok());
       await page.goto(`/#/${route.path}`);
-      const { ok, health } = await healthResponse;
-      expect(ok).toBe(true);
+      expect(await healthResponse).toBe(true);
+      const current = await page.request.get('/api/v1/health');
+      expect(current.ok()).toBe(true);
+      const health = await current.json();
       expect(health.product.name).toBe('X-PatentSAR');
       expect(health.product.version).toBe(expectedVersion);
       await expect(page.getByRole('heading', { name: route.heading, exact: true })).toBeVisible();
