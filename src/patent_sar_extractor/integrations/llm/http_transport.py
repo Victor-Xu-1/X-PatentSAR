@@ -24,6 +24,11 @@ if __package__ in {None, ""}:
     # -I excludes PYTHONPATH; only this exact trusted package source is admitted.
     sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
+from patent_sar_extractor.integrations.llm.api_failures import (
+    APIProblem,
+    APIRequestError,
+    http_problem,
+)
 from patent_sar_extractor.integrations.llm.external_api import (
     PublicHTTPSConnection,
     validate_external_endpoint,
@@ -60,18 +65,43 @@ def _stop_child(process: subprocess.Popen[bytes]) -> None:
                 stream.close()
 
 
+def _transport_problem(value: Any) -> APIProblem:
+    """The helper can only report consistent HTTP/timeout/network metadata."""
+    problem = APIProblem.from_dict(value)
+    if problem.http_status is None:
+        if (
+            problem.reason not in {"timeout", "request_error"}
+            or problem.retry_after_seconds is not None
+        ):
+            raise ValueError("Invalid transport failure kind")
+        expected = APIProblem(problem.reason, retryable=problem.reason == "timeout")
+    else:
+        if problem.http_status < 300:
+            raise ValueError("Successful status cannot be an HTTP failure")
+        expected = http_problem(problem.http_status)
+    if (problem.reason, problem.retryable) != (expected.reason, expected.retryable):
+        raise ValueError("Inconsistent transport failure metadata")
+    return problem
+
+
 def _transport_result(stdout: bytes, max_body_bytes: int) -> bytes:
     if len(stdout) > max_body_bytes * 2 + 1024:
         raise HttpCarrierError("HTTP worker exceeded its output bound")
     try:
         packet = wire_json.loads(stdout)
-        if not isinstance(packet, dict) or set(packet) != {"kind", "body"}:
+        if not isinstance(packet, dict):
+            raise HttpCarrierError("Invalid transport envelope")
+        if packet.get("kind") == "api_error":
+            try:
+                if set(packet) != {"kind", "problem"}:
+                    raise ValueError("Unexpected API failure fields")
+                problem = _transport_problem(packet["problem"])
+            except (ValueError, TypeError) as exc:
+                raise HttpCarrierError("Invalid HTTP failure metadata") from exc
+            raise APIRequestError(problem)
+        if set(packet) != {"kind", "body"}:
             raise HttpCarrierError("Invalid transport envelope")
         kind = packet["kind"]
-        if kind == "timeout":
-            raise requests.Timeout("Absolute HTTP deadline exceeded")
-        if kind == "request_error":
-            raise requests.RequestException("Owned HTTP request failed")
         if kind == "response_error":
             raise ValueError("HTTP response exceeded its resource bound")
         if kind != "ok" or not isinstance(packet["body"], str):
@@ -196,9 +226,11 @@ def _worker_request(packet: dict[str, Any]) -> bytes:
             allow_redirects=False,
         ) as response,
     ):
-        if 300 <= response.status_code < 400:
-            raise requests.RequestException("API redirects are not accepted")
-        response.raise_for_status()
+        if response.status_code >= 300:
+            # Never read/export an error body (it can contain prompts or keys).
+            raise APIRequestError(
+                http_problem(response.status_code, response.headers.get("Retry-After"))
+            )
         content = bytearray()
         for chunk in response.iter_content(chunk_size=4096):
             if len(content) + len(chunk) > maximum:
@@ -209,6 +241,7 @@ def _worker_request(packet: dict[str, Any]) -> bytes:
 
 def _worker_main() -> None:
     kind, body = "worker_error", ""
+    problem: APIProblem | None = None
     try:
         incoming = sys.stdin.buffer.read(MAX_INPUT_BYTES + 1)
         if len(incoming) > MAX_INPUT_BYTES:
@@ -216,17 +249,25 @@ def _worker_main() -> None:
         packet = wire_json.loads(incoming)
         content = _worker_request(packet)
         kind, body = "ok", base64.b64encode(content).decode("ascii")
+    except APIRequestError as exc:
+        problem = exc.problem
     except requests.Timeout:
-        kind = "timeout"
+        problem = APIProblem("timeout", retryable=True)
     except requests.RequestException:
-        kind = "request_error"
+        problem = APIProblem("request_error")
     except (ValueError, TypeError, KeyError):
         kind = "response_error"
     except (OSError, MemoryError):
         pass
-    sys.stdout.write(
-        wire_json.dumps({"kind": kind, "body": body}, separators=(",", ":"))
+    result = (
+        {"kind": kind, "body": body}
+        if problem is None
+        else {
+            "kind": "api_error",
+            "problem": problem.to_dict(),
+        }
     )
+    sys.stdout.write(wire_json.dumps(result, separators=(",", ":")))
     sys.stdout.flush()
 
 
