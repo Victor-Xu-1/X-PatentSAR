@@ -6,6 +6,7 @@ import { StudyImage } from './StudyImage';
 import { StudyBars } from './StudyBars';
 import { GroupPager } from './GroupPager';
 import { useSARResource } from '../useSARResource';
+import { StudyPolicyNote, hasStrongRule } from './StudyPolicyNote';
 export function StudyScaffolds({
   report,
   jobId,
@@ -32,6 +33,11 @@ export function StudyScaffolds({
   return (
     <div>
       <p className="sar-hint">{t('骨架分组是描述性汇总，不证明严格变化区域关系。')}</p>
+      <StudyPolicyNote
+        policy={report.policies[0]}
+        context={report.contexts.find((context) => context.id === report.policies[0]?.context_id)}
+        primary
+      />
       <div className="sar-card-grid">
         {report.scaffolds.slice((page - 1) * 12, page * 12).map((scaffold, index) => (
           <article className="sar-study-card" key={scaffold.id}>
@@ -57,18 +63,22 @@ export function StudyScaffolds({
             ) : (
               <div className="sar-structure-pending">{t('结构待核对')}</div>
             )}
-            <p>
-              {t('强活性 {strong}/{total}', {
-                strong: scaffold.strong_count,
-                total: scaffold.molecule_count,
-              })}
-            </p>
-            <meter
-              min={0}
-              max={Math.max(1, scaffold.molecule_count)}
-              value={scaffold.strong_count}
-              aria-label={t('强活性占比')}
-            />
+            {hasStrongRule(report.policies[0]) && (
+              <p>
+                {t('强活性 {strong}/{total}', {
+                  strong: scaffold.strong_count,
+                  total: scaffold.molecule_count,
+                })}
+              </p>
+            )}
+            {hasStrongRule(report.policies[0]) && (
+              <meter
+                min={0}
+                max={Math.max(1, scaffold.molecule_count)}
+                value={scaffold.strong_count}
+                aria-label={t('强活性占比')}
+              />
+            )}
             <StudyBars
               bins={scaffold.bins}
               layout="donut"
