@@ -13,6 +13,17 @@ from tools.prepare_browser_fixture import prepare
 
 
 class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
+    def test_structure_detail_scope_uses_only_read_only_imported_source(self):
+        self.assertEqual(
+            fixture_mode(
+                {
+                    PREFIX + "structure-details.spec.ts",
+                    PREFIX + "product-version.spec.ts",
+                }
+            ),
+            "read-only",
+        )
+
     def test_editor_viewport_scope_uses_only_imported_read_only_source(self):
         self.assertEqual(
             fixture_mode(

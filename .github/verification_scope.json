@@ -1,30 +1,37 @@
 {
   "schema_version": 1,
-  "base_sha": "db746db1629323dd912ee7f02a89c8573afce72d",
+  "base_sha": "181a3750a155e4c98b11bc87b423ac42e04f7d38",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/FRONTEND_QUALITY.md",
-    "frontend/e2e/editor-viewport.spec.ts",
+    "frontend/e2e/structure-details.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/features/structure-editor/editorViewport.ts",
-    "frontend/tests/editor-viewport.test.ts",
-    "src/patent_sar_extractor/contracts.py"
+    "frontend/src/features/results/CropDialog.tsx",
+    "frontend/src/features/results/StructureEditor.tsx",
+    "frontend/src/styles/dialogs.css",
+    "frontend/tests/crop-detail-craft.test.tsx",
+    "src/patent_sar_extractor/contracts.py",
+    "tests/test_sar_browser_fixture.py",
+    "tools/browser_fixture_mode.py"
   ],
   "python_modules": [
     "tests.test_product_version_compatibility",
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
-    "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
+    "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority",
+    "tests.test_sar_browser_fixture.SARBrowserFixtureTests.test_structure_detail_scope_uses_only_read_only_imported_source"
   ],
   "frontend_tests": [
-    "frontend/tests/editor-viewport.test.ts",
-    "frontend/tests/structure-editor-frame.test.tsx",
+    "frontend/tests/crop-detail-craft.test.tsx",
+    "frontend/tests/results-workspace.test.tsx",
+    "frontend/tests/source-stereo.test.tsx",
+    "frontend/tests/i18n-workbench-chemistry.test.tsx",
+    "frontend/tests/editor-error-language.test.tsx",
     "frontend/tests/structure-editor-contract.test.ts",
-    "frontend/tests/structure-editor-repair.test.tsx",
-    "frontend/tests/corrections.test.tsx"
+    "frontend/tests/structure-editor-repair.test.tsx"
   ],
   "browser_tests": [
-    "frontend/e2e/editor-viewport.spec.ts",
+    "frontend/e2e/structure-details.spec.ts",
     "frontend/e2e/product-version.spec.ts"
   ]
 }

@@ -125,7 +125,7 @@ export default function StructureEditor({
       </div>
       {error && (
         <p role="alert" className="error-notice">
-          {errorText(error)}
+          {error instanceof UiError ? errorText(error) : error.message}
         </p>
       )}
       {!loaded && error && (

@@ -8,6 +8,13 @@ import { RecognitionDetails } from './RecognitionDetails';
 import { cropPlaceholder } from '../../model/extraction';
 import { PredictionEvidence } from './PredictionCells';
 import { compoundLabel } from '../../model/compoundLabel';
+import { ArrowUpRight } from 'lucide-react';
+
+function sourceHref(projectId: string, compoundId: string, page: number | null) {
+  return page !== null && Number.isInteger(page) && page > 0
+    ? `#/projects/${encodeURIComponent(projectId)}?page=${page}&tab=original&compound=${encodeURIComponent(compoundId)}`
+    : null;
+}
 
 export function CropDialog({
   compound,
@@ -20,6 +27,7 @@ export function CropDialog({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
+  const original = sourceHref(projectId, compound.id, compound.source.page);
   return (
     <Dialog
       title={t('结构详情 · {label}', { label: compoundLabel(compound) })}
@@ -29,7 +37,15 @@ export function CropDialog({
       <div className="dialog-body crop-detail">
         <div className="crop-comparison" aria-label={t('原始裁图与 SMILES 重绘对照')}>
           <figure>
-            <figcaption>{t('原始 PDF 裁图')}</figcaption>
+            <figcaption>
+              <span>{t('原始 PDF 裁图')}</span>
+              {original && (
+                <a className="crop-source-link" href={original} onClick={onClose}>
+                  {t('查看原文')}
+                  <ArrowUpRight size={14} aria-hidden="true" />
+                </a>
+              )}
+            </figcaption>
             <AssetImage
               url={compound.structure_image_url}
               alt={t('{label} 的原始结构裁图', { label: compoundLabel(compound) })}
@@ -38,7 +54,7 @@ export function CropDialog({
             />
           </figure>
           <figure>
-            <figcaption>
+            <figcaption title={t('原始裁图保留证据；重绘来自当前结构，不证明与原图一致。')}>
               {compound.structure_molfile ? t('结构重绘（非原图）') : t('SMILES 重绘（非原图）')}
             </figcaption>
             <AssetImage
@@ -57,7 +73,6 @@ export function CropDialog({
             />
           </figure>
         </div>
-        <p className="muted">{t('原始裁图保留证据；重绘来自当前结构，不证明与原图一致。')}</p>
         {compound.additional_sources?.length ? (
           <details>
             <summary>
@@ -70,10 +85,10 @@ export function CropDialog({
             </p>
             {compound.additional_sources.map(
               (source, index) =>
-                source.page !== null && (
+                sourceHref(projectId, compound.id, source.page) && (
                   <a
                     key={index}
-                    href={`#/projects/${encodeURIComponent(projectId)}?page=${source.page}&tab=original&compound=${encodeURIComponent(compound.id)}`}
+                    href={sourceHref(projectId, compound.id, source.page)!}
                     onClick={onClose}
                   >
                     {t('原文第 {page} 页', { page: source.page })}
@@ -83,14 +98,15 @@ export function CropDialog({
           </details>
         ) : null}
         {compound.smiles && (
-          <label className="form-field">
-            {t('当前 SMILES')}
-            <textarea value={compound.smiles} readOnly rows={3} />
-          </label>
+          <details className="crop-smiles">
+            <summary>{t('当前 SMILES')}</summary>
+            <textarea aria-label={t('当前 SMILES')} value={compound.smiles} readOnly rows={3} />
+          </details>
         )}
         <PredictionEvidence row={compound} />
         <details>
           <summary>{t('原始提取证据 / 校验')}</summary>
+          <p className="muted">{t('原始裁图保留证据；重绘来自当前结构，不证明与原图一致。')}</p>
           <dl>
             <dt>{t('来源页')}</dt>
             <dd>{compound.source.page ?? t('未知')}</dd>

@@ -11,6 +11,7 @@ COMMON = {
     "product-version.spec.ts",
     "recent-density.spec.ts",
     "editor-viewport.spec.ts",
+    "structure-details.spec.ts",
 }
 MODES = (
     (
