@@ -90,6 +90,7 @@ export function StudyReportView({
           onRows={(region_id, fragment_id) =>
             showRows({ region_id, fragment_id, scaffold_id: '', scope: 'all' })
           }
+          onSource={showSource}
         />
       </section>
       <section id={id + '-4'} hidden={tab !== 4} aria-label={t(tabs[4])}>
@@ -101,6 +102,7 @@ export function StudyReportView({
           onRows={(region_id, fragment_id) =>
             showRows({ region_id, fragment_id, scaffold_id: '', scope: 'all' })
           }
+          onSource={showSource}
         />
       </section>
       <section id={id + '-5'} hidden={tab !== 5} aria-label={t(tabs[5])}>

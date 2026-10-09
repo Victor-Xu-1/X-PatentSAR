@@ -100,7 +100,7 @@ describe('complete study report and lifecycle', () => {
     await userEvent.click(screen.getByText('Candidate policy and ties'));
     expect(screen.getByText('strict-context-pareto-v1')).toBeVisible();
     await userEvent.click(screen.getByText('Properties and captured predictions'));
-    expect(screen.getByText(/120.00/)).toBeVisible();
+    for (const value of screen.getAllByText(/120.00/)) expect(value).toBeVisible();
     expect(screen.getByText('0.24')).toBeVisible();
     expect(screen.getByText('Manually left empty')).toBeVisible();
     expect(screen.getByText(/manual_null/)).not.toBeVisible();

@@ -61,6 +61,16 @@ research, not an automatic post-extraction stage or an article/Lead reproduction
 
 ### Whole-study analysis and article-form exploration
 
+GET `/sar/jobs/{id}/study/preview?region_id=&molecule_id=` returns one actual
+strict transformation, reference/candidate report rows, all selected-context raw
+measurements and comparable scalar differences, plus available same-origin
+property differences. It rechecks immutable input SHA, existing complete report,
+fixed graph/stereo/ports and published member mapping. Unknown/foreign/unmatched
+members are rejected; intervals, grades, conflicted repeats and insufficient
+conditions never acquire invented scalar deltas. It is a bounded read-only view,
+not a new analysis job, molecular generator or acceptance authority. Scientific
+checkpoint/report schema and engine identity remain unchanged.
+
 Additive engine3 metadata: project Dataset includes `source_acceptance` and
 `source_page_count` (legacy absence is unknown). StudyReport carries source QA,
 `counting_contract` (`unique-molecules-v2` for new disjoint source-ID partitions;

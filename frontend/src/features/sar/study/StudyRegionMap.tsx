@@ -14,11 +14,15 @@ function ReferenceMap({
   regions,
   label,
   active,
+  selected,
+  onSelect,
 }: {
   datasetId: string;
   regions: Region[];
   label: string;
   active: boolean;
+  selected?: string | undefined;
+  onSelect?: ((id: string) => void) | undefined;
 }) {
   const { t } = useTranslation();
   const moleculeId = regions[0]!.molecule_id;
@@ -57,15 +61,31 @@ function ReferenceMap({
       {drawing.image && resource.data && (
         <div className="sar-reference-map-image" style={{ aspectRatio: drawing.image.aspectRatio }}>
           <img src={drawing.image.url} alt={label} />
-          <RegionMap atoms={resource.data.atoms} regions={regions} />
+          <RegionMap
+            atoms={resource.data.atoms}
+            regions={regions}
+            selected={selected}
+            onSelect={onSelect}
+          />
         </div>
       )}
-      <RegionLegend regions={regions} />
+      <RegionLegend regions={regions} selected={selected} onSelect={onSelect} />
+      {onSelect && <small className="sar-hint">{t('点击结构区域，查看改造与数据变化。')}</small>}
     </article>
   );
 }
 
-export function StudyRegionMap({ report, active }: { report: StudyReport; active: boolean }) {
+export function StudyRegionMap({
+  report,
+  active,
+  selected,
+  onSelect,
+}: {
+  report: StudyReport;
+  active: boolean;
+  selected?: string | undefined;
+  onSelect?: ((id: string) => void) | undefined;
+}) {
   const groups = new Map<string, { label: string; regions: Region[] }>();
   for (const summary of report.regions) {
     const key = summary.region.molecule_id;
@@ -82,6 +102,8 @@ export function StudyRegionMap({ report, active }: { report: StudyReport; active
           regions={group.regions}
           label={group.label}
           active={active}
+          selected={selected}
+          onSelect={onSelect}
         />
       ))}
     </div>

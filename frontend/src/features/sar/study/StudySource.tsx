@@ -39,7 +39,12 @@ export function StudySource({
       </div>
       {source.loading && <Loading />}
       {source.error && <SARFailure error={source.error} onRetry={source.reload} />}
-      {source.data && <MoleculeEvidence dataset={dataset} molecule={source.data} />}
+      {source.data && (
+        <details className="sar-compact">
+          <summary>{t('原始记录')}</summary>
+          <MoleculeEvidence dataset={dataset} molecule={source.data} />
+        </details>
+      )}
       {row && <RowFacts row={row} contexts={contexts} />}
     </aside>
   );

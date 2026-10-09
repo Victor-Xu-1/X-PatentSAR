@@ -108,6 +108,33 @@ class SARStudyAPITests(WebFixture, unittest.TestCase):
             self.assertIn("source IDs / records", html.text)
             self.assertIn("data:image/svg+xml;base64,", html.text)
             self.assertNotIn("<script", html.text)
+            candidate_id = next(
+                mid
+                for group in report["regions"][0]["fragments"]
+                for mid in group["molecule_ids"]
+                if mid != first["molecule_id"]
+            )
+            preview = client.get(
+                path + "/preview",
+                params={"region_id": first["id"], "molecule_id": candidate_id},
+            )
+            self.assertEqual(preview.status_code, 200, preview.text)
+            self.assertEqual(preview.json()["pair"]["match_status"], "matched")
+            self.assertIsNone(preview.json()["measurements"][0]["raw_difference"])
+            self.assertEqual(
+                client.get(
+                    path + "/preview",
+                    params={"region_id": first["id"], "molecule_id": "foreign"},
+                ).status_code,
+                422,
+            )
+            self.assertEqual(
+                client.get(
+                    path + "/preview",
+                    params={"region_id": "foreign", "molecule_id": candidate_id},
+                ).status_code,
+                422,
+            )
             drawing = client.get(
                 path
                 + "/drawing?kind=molecule&identifier="

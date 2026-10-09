@@ -1,6 +1,7 @@
 import { client } from './index';
 import type { ApiClient } from './client';
 import { ContractError } from './validation';
+import { decodeStudyPreview } from './sarPreviewDecoder';
 import { decodeSARJob } from './sarJobDecoders';
 import { createSARMutation } from './sarMutation';
 import { sarTransport } from './sarTransport';
@@ -103,6 +104,26 @@ export function createSARStudyApi(shared: ApiClient, rawFetch?: typeof fetch) {
         (v) => {
           const result = decodeStudyDrawing(v);
           if (result.id !== identifier) throw new ContractError('$.study_drawing_identity');
+          return result;
+        },
+        signal,
+      ),
+    preview: (
+      id: string,
+      dataset: string,
+      regionId: string,
+      moleculeId: string,
+      signal: AbortSignal,
+    ) =>
+      shared.get(
+        path(id) +
+          '/preview?' +
+          new URLSearchParams({ region_id: regionId, molecule_id: moleculeId }),
+        (value) => {
+          const result = decodeStudyPreview(value);
+          checkJob(result.job, id, dataset);
+          if (result.region.id !== regionId || result.candidate.molecule_id !== moleculeId)
+            throw new ContractError('$.preview_selection');
           return result;
         },
         signal,

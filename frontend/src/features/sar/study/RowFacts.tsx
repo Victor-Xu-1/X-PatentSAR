@@ -14,7 +14,7 @@ export function RowFacts({ row, contexts }: { row: StudyRow; contexts: StudyCont
   const { t } = useTranslation();
   return (
     <div>
-      <p>
+      <p className="sar-candidate-coverage">
         {t(candidateLabels[row.candidate_status])} · {t('证据覆盖')}{' '}
         {Math.round(row.coverage * 100)}%
       </p>
@@ -27,6 +27,14 @@ export function RowFacts({ row, contexts }: { row: StudyRow; contexts: StudyCont
                 <span key={index}>{value}</span>
               ))}
             </dd>
+          </div>
+        ))}
+      </dl>
+      <dl className="sar-candidate-properties">
+        {studyProperties.map((property) => (
+          <div key={property.key}>
+            <dt>{property.label}</dt>
+            <dd>{propertyText(row.properties[property.key])}</dd>
           </div>
         ))}
       </dl>

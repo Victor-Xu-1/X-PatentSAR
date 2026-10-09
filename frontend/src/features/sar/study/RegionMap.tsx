@@ -13,52 +13,116 @@ const colors = [
   '#967249',
   '#8b586b',
 ];
-export function RegionMap({ atoms, regions }: { atoms: Atom[]; regions: Region[] }) {
+export function RegionMap({
+  atoms,
+  regions,
+  onSelect,
+  selected,
+}: {
+  atoms: Atom[];
+  regions: Region[];
+  onSelect?: ((id: string) => void) | undefined;
+  selected?: string | undefined;
+}) {
   return (
-    <svg className="sar-region-map" viewBox="0 0 1000 800" aria-hidden="true">
-      {regions.map((region, order) => {
-        const selected = atoms.filter((atom) => region.atom_indices.includes(atom.index));
-        if (!selected.length) return null;
-        const color = colors[order % colors.length];
-        const x = selected.reduce((sum, atom) => sum + atom.x, 0) / selected.length;
-        const y = Math.min(...selected.map((atom) => atom.y));
-        return (
-          <g key={region.id}>
-            {selected.map((atom) => (
-              <circle
-                key={atom.index}
-                cx={atom.x * 1000}
-                cy={atom.y * 800}
-                r="12"
+    <>
+      <svg className="sar-region-map" viewBox="0 0 1000 800" aria-hidden="true">
+        {regions.map((region, order) => {
+          const selected = atoms.filter((atom) => region.atom_indices.includes(atom.index));
+          if (!selected.length) return null;
+          const color = colors[order % colors.length];
+          const x = selected.reduce((sum, atom) => sum + atom.x, 0) / selected.length;
+          const y = Math.min(...selected.map((atom) => atom.y));
+          return (
+            <g key={region.id}>
+              {selected.map((atom) => (
+                <circle
+                  key={atom.index}
+                  cx={atom.x * 1000}
+                  cy={atom.y * 800}
+                  r="12"
+                  fill={color}
+                  fillOpacity=".1"
+                  stroke={color}
+                  strokeWidth="1.5"
+                />
+              ))}
+              <text
+                x={Math.max(24, Math.min(960, x * 1000))}
+                y={Math.max(24, y * 800 - 25)}
                 fill={color}
-                fillOpacity=".1"
-                stroke={color}
-                strokeWidth="1.5"
-              />
-            ))}
-            <text
-              x={Math.max(24, Math.min(960, x * 1000))}
-              y={Math.max(24, y * 800 - 25)}
-              fill={color}
-              fontSize="20"
-              fontWeight="600"
-              textAnchor="middle"
-            >
-              R{order + 1}
-            </text>
-          </g>
-        );
-      })}
-    </svg>
+                fontSize="20"
+                fontWeight="600"
+                textAnchor="middle"
+              >
+                R{order + 1}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+      {onSelect && (
+        <div className="sar-region-hotspots">
+          {regions.flatMap((region, order) =>
+            atoms
+              .filter((atom) => region.atom_indices.includes(atom.index))
+              .map((atom) => (
+                <button
+                  type="button"
+                  key={region.id + ':' + atom.index}
+                  aria-label={
+                    'R' +
+                    (order + 1) +
+                    ' · ' +
+                    region.name +
+                    ' · ' +
+                    atom.element +
+                    ' ' +
+                    atom.index
+                  }
+                  aria-pressed={selected === region.id}
+                  onClick={() => onSelect(region.id)}
+                  style={{
+                    left: atom.x * 100 + '%',
+                    top: atom.y * 100 + '%',
+                    borderColor: colors[order % colors.length],
+                  }}
+                />
+              )),
+          )}
+        </div>
+      )}
+    </>
   );
 }
-export function RegionLegend({ regions }: { regions: Region[] }) {
+export function RegionLegend({
+  regions,
+  onSelect,
+  selected,
+}: {
+  regions: Region[];
+  onSelect?: ((id: string) => void) | undefined;
+  selected?: string | undefined;
+}) {
   return (
     <ul className="sar-region-legend">
       {regions.map((region, order) => (
         <li key={region.id}>
-          <span style={{ background: colors[order % colors.length] }} />R{order + 1} ·{' '}
-          {region.name ?? 'R' + (order + 1)}
+          {onSelect ? (
+            <button
+              type="button"
+              aria-pressed={selected === region.id}
+              onClick={() => onSelect(region.id)}
+            >
+              <span style={{ background: colors[order % colors.length] }} />
+              {region.name ?? 'R' + (order + 1)}
+            </button>
+          ) : (
+            <>
+              <span style={{ background: colors[order % colors.length] }} />R{order + 1} ·{' '}
+              {region.name ?? 'R' + (order + 1)}
+            </>
+          )}
         </li>
       ))}
     </ul>

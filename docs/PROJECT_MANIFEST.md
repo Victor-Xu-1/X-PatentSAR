@@ -1,5 +1,14 @@
 # Project governance manifest
 
+- Expert visual/preview ownership: `product-craft.css` refines shared page/control
+  craft, `sar-explorer.css` owns the region/actual-transformation workbench layout,
+  and established tokens remain the single theme authority. `study_preview.py`
+  and `preview_models.py` are bounded, authenticated read-only projections of
+  existing source/graph/pair/report facts; immutable atom hotspots and shared
+  RDKit drawings preserve identity. No new renderer runtime/dependency, scientific
+  engine/checkpoint change, external transmission or original mutation. Detail
+  disclosure reduces everyday noise without dropping source QA or uncertainty.
+
 - SAR study evidence/craft ownership: engine3 uses `study_distributions.py` for one
   prepared full-context chart domain and disjoint source-ID accounting; observation
   repeats remain separate. `study_conditions.py` alone validates source-anchored

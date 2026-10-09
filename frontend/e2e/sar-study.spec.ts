@@ -150,6 +150,36 @@ for (const width of [390, 800, 1672]) {
         fullPage: true,
       });
     }
+    await report.getByRole('button', { name: 'Variable regions', exact: true }).click();
+    const regions = report.getByRole('region', { name: 'Variable regions', exact: true });
+    await regions
+      .getByRole('button', { name: 'Preview modification', exact: true })
+      .first()
+      .click();
+    const preview = regions.getByRole('region', { name: 'Transformation preview', exact: true });
+    await expect(
+      preview.getByRole('combobox', { name: 'Modified compound', exact: true }),
+    ).toBeEnabled();
+    await expect(preview.locator('.sar-molecule-comparison img')).toHaveCount(2);
+    await expect
+      .poll(() =>
+        preview
+          .locator('img')
+          .evaluateAll((images) =>
+            images.every(
+              (image) =>
+                (image as HTMLImageElement).complete &&
+                (image as HTMLImageElement).naturalWidth > 0,
+            ),
+          ),
+      )
+      .toBe(true);
+    await expect(preview).toContainText('Δ -9.00');
+    await page.screenshot({ path: test.info().outputPath(`preview-${width}.png`), fullPage: true });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
+      true,
+    );
+    await report.getByRole('button', { name: 'Activity table', exact: true }).click();
     const table = report.getByRole('region', { name: 'Activity table', exact: true });
     await expect(table.getByRole('rowheader', { name: 'Example 5', exact: true })).toBeVisible();
     const complete = await page.request.get(

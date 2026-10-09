@@ -1,0 +1,316 @@
+.sar-report-context {
+  display: flex;
+  align-items: center;
+  gap: 8px 16px;
+  flex-wrap: wrap;
+  margin: 8px 0 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.sar-report-context .sar-source-acceptance {
+  margin: 0;
+}
+.sar-report-context .sar-source-acceptance small {
+  display: none;
+}
+.sar-report-context .sar-source-acceptance details {
+  flex-basis: auto;
+}
+.sar-report-context .sar-study-limitations {
+  margin: 0;
+}
+.sar-report-context details[open] {
+  flex-basis: 100%;
+}
+.sar-report-context .sar-research-label {
+  color: var(--muted);
+}
+.sar-study-limitations summary {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
+}
+.sar-region-explorer {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.85fr) minmax(0, 1.15fr);
+  gap: 24px;
+  align-items: start;
+}
+.sar-region-explorer .sar-reference-map-card {
+  border: 0;
+  border-right: 1px solid var(--line-soft);
+  border-radius: 0;
+  padding: 0 24px 0 0;
+  margin: 0;
+}
+.sar-region-explorer .sar-region-group {
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.sar-region-explorer .sar-reference-map-image {
+  max-width: 580px;
+}
+.sar-region-hotspots {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.sar-region-hotspots button {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid transparent !important;
+  background: transparent;
+  pointer-events: auto;
+  opacity: 0.1;
+}
+.sar-region-hotspots button:hover,
+.sar-region-hotspots button:focus-visible {
+  background: var(--accent-surface);
+  opacity: 0.9;
+  border-width: 2px !important;
+  outline-offset: 2px;
+}
+.sar-region-legend {
+  gap: 8px;
+  align-items: stretch;
+}
+.sar-region-legend li button {
+  font-size: 12px;
+  min-height: 34px;
+  gap: 8px;
+  padding: 6px 9px;
+  text-align: left;
+  justify-content: flex-start;
+}
+.sar-region-legend li button > span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+.sar-region-legend button[aria-pressed='true'],
+.sar-region-selector button[aria-pressed='true'] {
+  background: var(--accent-surface);
+  border-color: var(--accent-line);
+  color: var(--accent-strong);
+}
+.sar-region-selector {
+  grid-column: 1/-1;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sar-region-selector + .sar-region-group {
+  grid-column: 1/-1;
+}
+.sar-region-method {
+  margin-block: 8px;
+  font-size: 12px;
+}
+.sar-fragment-strip {
+  border-top: 1px solid var(--line-soft);
+  padding-top: 18px;
+}
+.sar-region-explorer .sar-fragment-strip > article {
+  flex: 0 0 210px;
+  max-width: 80vw;
+  border: 0;
+  border-radius: 0;
+  padding: 8px;
+  border-right: 1px solid var(--line-soft);
+}
+.sar-region-explorer .sar-fragment-strip .sar-study-image {
+  height: 130px;
+  display: grid;
+  align-content: center;
+}
+.sar-region-explorer .sar-fragment-strip img {
+  max-height: 130px;
+}
+.sar-preview-trigger {
+  width: 100%;
+  font-size: 12px;
+  margin-top: 8px;
+}
+.sar-transformation {
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+.sar-transformation > header {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.sar-preview-member {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.sar-preview-member select {
+  max-width: 200px;
+}
+.sar-preview-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+}
+.sar-molecule-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.sar-molecule-comparison > article {
+  min-width: 0;
+}
+.sar-molecule-comparison .sar-study-image {
+  height: 210px;
+  display: grid;
+  align-content: center;
+}
+.sar-molecule-comparison img {
+  max-height: 210px;
+}
+.sar-preview-data table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.sar-preview-data td,
+.sar-preview-data th {
+  padding: 12px 10px;
+  text-align: center;
+  border-bottom: 1px solid var(--line-soft);
+}
+.sar-preview-data th {
+  font-weight: 500;
+  color: var(--muted);
+}
+.sar-preview-data th:first-child {
+  text-align: left;
+  max-width: 180px;
+  white-space: normal;
+}
+.sar-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.sar-delta.is-better {
+  color: var(--success);
+}
+.sar-delta.is-worse {
+  color: var(--warning);
+}
+.sar-delta small {
+  flex-basis: 100%;
+  font-size: 11px;
+  color: var(--muted);
+}
+.sar-property-deltas,
+.sar-candidate-properties {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+.sar-property-deltas dt,
+.sar-candidate-properties dt {
+  font-size: 11px;
+  color: var(--muted);
+}
+.sar-property-deltas dd,
+.sar-candidate-properties dd {
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 500;
+  margin: 6px 0 0;
+}
+.sar-property-deltas small {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.sar-candidate-coverage {
+  color: var(--muted);
+  font-size: 11px !important;
+}
+.sar-candidate-properties {
+  border-block: 1px solid var(--line-soft);
+  padding-block: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.sar-table-scroll:has(.sar-study-table) {
+  max-height: 65vh;
+  overflow: auto;
+}
+.sar-study-table th[scope='row'] {
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  z-index: 1;
+  box-shadow: 1px 0 0 var(--line-soft);
+  min-width: 90px;
+}
+.sar-study-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-subtle);
+}
+.sar-study > .sar-actions {
+  border-top: 1px solid var(--line-soft);
+  padding-top: 16px;
+  margin-top: 24px;
+}
+@media (max-width: 1000px) {
+  .sar-region-explorer {
+    grid-template-columns: 1fr;
+  }
+  .sar-region-explorer .sar-reference-map-card {
+    border-right: 0;
+    padding: 0;
+  }
+  .sar-reference-map-image {
+    max-height: 400px;
+    width: min(100%, 500px);
+  }
+}
+@media (max-width: 540px) {
+  .sar-molecule-comparison {
+    grid-template-columns: 1fr;
+  }
+  .sar-transformation {
+    padding: 14px;
+  }
+  .sar-property-deltas {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .sar-transformation > header {
+    flex-wrap: wrap;
+  }
+  .sar-reference-map-image {
+    max-height: none;
+  }
+}

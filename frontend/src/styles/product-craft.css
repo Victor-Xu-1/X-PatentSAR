@@ -1,0 +1,225 @@
+/* Shared visual craft; feature-specific layout and scientific colors remain owned. */
+:root {
+  --radius-control: 8px;
+  --radius-panel: 14px;
+  --line-soft: #edf1ef;
+  --shadow-paper: 0 2px 12px #17212608;
+}
+.topbar {
+  padding-block: 8px;
+  min-height: 60px;
+}
+.brand strong {
+  font-size: 19px;
+  letter-spacing: -0.45px;
+}
+.topbar-actions > button {
+  font-weight: 500;
+  min-height: 38px;
+}
+.page-header h1,
+.task-heading h1 {
+  letter-spacing: -0.035em;
+  font-weight: 600;
+}
+.management-page {
+  max-width: 1120px;
+}
+.management-page .page-header {
+  gap: 16px;
+  align-items: flex-start;
+}
+.recent-file-row,
+.job-card {
+  transition: background-color 140ms ease;
+}
+.recent-file-row:hover,
+.job-card:hover {
+  background: var(--surface-subtle);
+}
+.recent-file-row {
+  padding-block: 6px;
+}
+.recent-file-name strong {
+  font-weight: 550;
+  letter-spacing: -0.01em;
+}
+.recent-file-acceptance {
+  max-width: 160px;
+  text-align: left;
+  font-size: 11px;
+}
+.job-card {
+  padding-block: 18px;
+}
+.job-card .job-timestamp {
+  font-size: 11px;
+}
+.task-heading {
+  margin-bottom: 32px;
+}
+.task-form .task-inputs .upload-drop {
+  min-height: 224px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 18px;
+  box-shadow: var(--shadow-paper);
+}
+.task-form .upload-drop.has-file {
+  border-style: solid;
+  background: var(--accent-surface);
+}
+.task-form .upload-drop .upload-icon {
+  background: transparent;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+}
+.task-submit .primary {
+  min-width: 224px;
+  min-height: 44px;
+}
+.environment-card.environment-overview {
+  padding: 28px;
+  box-shadow: var(--shadow-paper);
+}
+.llm-api-panel {
+  box-shadow: var(--shadow-paper);
+}
+.environment-overview-heading h2 {
+  letter-spacing: -0.02em;
+}
+.dialog-header {
+  padding: 18px 22px;
+  border-bottom-color: var(--line-soft);
+}
+.dialog-body {
+  padding: 22px;
+  gap: 18px;
+}
+.dialog-header h2 {
+  font-size: 17px;
+  letter-spacing: -0.02em;
+}
+.dialog-actions {
+  border-top-color: var(--line-soft);
+}
+.form-field {
+  font-size: 13px;
+  gap: 6px;
+}
+.feedback.empty {
+  padding: 44px 20px;
+}
+.error-notice {
+  border-radius: 8px;
+}
+.sar-panel {
+  box-shadow: var(--shadow-paper);
+}
+.sar-study-tabs button {
+  border-radius: 6px;
+  min-height: 38px;
+  font-weight: 500;
+  padding-inline: 13px;
+}
+.sar-study-tabs {
+  gap: 6px;
+}
+.sar-study-stats {
+  padding-block: 8px 24px;
+}
+.sar-study-stats dd {
+  font-size: 26px;
+  font-weight: 550;
+  letter-spacing: -0.02em;
+}
+.sar-study-card h3 {
+  letter-spacing: -0.015em;
+}
+.sar-overview-charts .sar-study-card {
+  padding: 20px;
+}
+.sar-study-card,
+.sar-lead-card {
+  border-color: var(--line-soft);
+  box-shadow: var(--shadow-paper);
+}
+.sar-lead-card .sar-facts {
+  font-size: 13px;
+}
+.sar-lead-card .sar-facts dt {
+  max-width: none;
+  overflow-wrap: normal;
+}
+.sar-lead-card .sar-facts dd {
+  font-weight: 550;
+}
+.sar-lead-card .sar-compact {
+  font-size: 12px;
+}
+.sar-study .sar-actions button {
+  font-size: 12px;
+  min-height: 34px;
+}
+.sar-technical-evidence {
+  padding: 10px 12px;
+  background: var(--surface-subtle);
+  border-radius: 8px;
+}
+.sar-source-detail {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  padding: 20px;
+  margin-top: 20px;
+  background: var(--surface-subtle);
+}
+.sar-source-detail > .sar-section-heading {
+  margin-bottom: 14px;
+}
+.sar-page > .sar-page-heading .sar-intro {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+@media (max-width: 700px) {
+  .topbar {
+    padding: 10px 14px;
+  }
+  .management-page {
+    padding-inline: 8px;
+  }
+  .management-page .page-header {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .environment-card.environment-overview {
+    padding: 20px;
+  }
+  .environment-page .page-header {
+    margin-bottom: 20px;
+  }
+  .job-card {
+    padding-inline: 16px;
+  }
+  .dialog-body {
+    padding: 18px;
+  }
+  .sar-study-stats {
+    gap: 12px;
+  }
+  .sar-overview-charts .sar-study-card {
+    padding: 16px;
+  }
+  .sar-lead-card .sar-study-image {
+    height: 180px;
+  }
+  .sar-source-detail {
+    padding: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .recent-file-row,
+  .job-card {
+    transition: none;
+  }
+}

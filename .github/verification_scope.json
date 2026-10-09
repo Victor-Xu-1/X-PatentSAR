@@ -1,24 +1,33 @@
 {
   "schema_version": 1,
-  "base_sha": "4e99a22a7563b9ba48a0809d51b61767f7425d82",
+  "base_sha": "66d2ce01e4bd9ba2dc85ba1866c0bd8edb4ce797",
   "changed_paths": [
-    ".github/verification_scope.json",
-    "frontend/e2e/sar-study.spec.ts",
-    "frontend/package-lock.json",
-    "frontend/package.json",
-    "frontend/src/styles/sar-study.css",
-    "src/patent_sar_extractor/contracts.py"
+    "",
+    ".github/verification_scope.json"
   ],
   "python_modules": [
+    "tests.test_sar_preview",
+    "tests.test_sar_study_api",
+    "tests.test_sar_browser_fixture",
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority",
     "tests.test_product_version_compatibility"
   ],
   "frontend_tests": [
-    "frontend/tests/sar-study-charts.test.tsx"
+    "frontend/tests/sar-preview.test.tsx",
+    "frontend/tests/sar-study-results.test.tsx",
+    "frontend/tests/sar-study-api.test.tsx",
+    "frontend/tests/sar-study-charts.test.tsx",
+    "frontend/tests/i18n-core.test.tsx",
+    "frontend/tests/ui-craft-pages.test.tsx",
+    "frontend/tests/minimal-pages.test.tsx",
+    "frontend/tests/dialogs.test.tsx",
+    "frontend/tests/environment-page.test.tsx",
+    "frontend/tests/llm-settings.test.tsx"
   ],
   "browser_tests": [
     "frontend/e2e/sar-study.spec.ts",
+    "frontend/e2e/expert-visual.spec.ts",
     "frontend/e2e/product-version.spec.ts"
   ]
 }
