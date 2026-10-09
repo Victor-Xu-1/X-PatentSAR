@@ -50,7 +50,7 @@ export function PolicyEditor({
           </div>
         </details>
       </div>
-      {!policyFromDraft(context.id, draft) && (
+      {draft.direction && !policyFromDraft(context.id, draft) && (
         <p className="sar-hint">{t('明确方向；原文等级须唯一。')}</p>
       )}
       {!draft.grades.trim() && <p className="sar-hint">{t('浓度活性自动按第十名数量级分档。')}</p>}

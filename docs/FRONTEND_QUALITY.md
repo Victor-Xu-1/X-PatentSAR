@@ -33,6 +33,11 @@ The reference article's private algorithms are not represented as reproduced.
   intermediate widths. Source title, availability, acceptance and timestamp stay
   visible and associated with the same keyboard-operable open button.
 - Result previews prioritize structures, measured values, distributions and tables.
+  Known overview/region strength rules share the existing context/matching disclosure,
+  rather than repeating an explanatory row above each preview. Unclassified or
+  ambiguous strength remains visible and is never presented as a measured zero.
+  The guided activity selector uses its labelled direction input for the empty
+  draft; invalid grade-order feedback and disabled continuation remain intact.
   Structure detail opens on the original crop and explicitly non-original redraw;
   raw SMILES starts collapsed, remains verbatim, and retains its disclosure state
   across language changes. Primary/secondary original-source links share one URL

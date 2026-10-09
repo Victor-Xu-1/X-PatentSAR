@@ -72,6 +72,9 @@ for (const width of [390, 800, 1672]) {
       setup.getByRole('group', { name: 'Choose activity measurements · 0/1', exact: true }),
     ).toBeVisible();
     await setup.getByRole('checkbox', { name: /IC50/ }).check();
+    await expect(setup.getByText('Confirm direction; source grades must be unique.')).toHaveCount(
+      0,
+    );
     await setup
       .getByRole('combobox', { name: 'Activity direction', exact: true })
       .selectOption('lower');
@@ -142,6 +145,19 @@ for (const width of [390, 800, 1672]) {
         await expect(view.locator('.sar-policy-note').first()).toContainText(
           'Strong <10 nM; medium 10 nM–<100 nM; weak ≥100 nM',
         );
+      if (['Overview', 'Variable regions', 'Fragment summary'].includes(tab)) {
+        const rule = view.locator('.sar-policy-note').first();
+        const disclosure = view
+          .locator(
+            tab === 'Overview' ? '.sar-context-detail summary' : '.sar-region-method summary',
+          )
+          .first();
+        await expect(rule).toBeHidden();
+        await disclosure.click();
+        await expect(rule).toBeVisible();
+        await disclosure.click();
+        await expect(rule).toBeHidden();
+      }
       if (tab === 'Activity table') {
         await expect(view.locator('tbody tr')).toHaveCount(16);
         await checkStudyTableControls(page, report, width);
