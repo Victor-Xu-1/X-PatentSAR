@@ -1,5 +1,9 @@
 import { expect, it } from 'vitest';
 import { safeDrawing } from '../src/features/sar/safeDrawing';
+import { render } from '@testing-library/react';
+import { createElement } from 'react';
+import { RegionMap } from '../src/features/sar/study/RegionMap';
+import { namedRegion } from './sar-fixtures';
 
 function documentFor(url: string) {
   return new DOMParser().parseFromString(
@@ -53,4 +57,17 @@ it('does not weaken the passive-SVG gate or normalize unsupported colors into ac
     '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><circle r="1" fill="#876543"/></svg>',
   );
   expect(documentFor(image.url).querySelector('circle')?.getAttribute('fill')).toBe('#876543');
+});
+it('uses neutral readable region labels and preserves color keylines and exact atom coordinates', () => {
+  const { container } = render(
+    createElement(RegionMap, {
+      atoms: [{ index: 0, element: 'C', x: 0.5, y: 0.5 }],
+      regions: [{ ...namedRegion, atom_indices: [0] }],
+    }),
+  );
+  expect(container.querySelector('text')?.textContent).toBe('R1');
+  expect(container.querySelector('text')?.getAttribute('fill')).toBe('var(--ink)');
+  expect(container.querySelector('circle')?.getAttribute('stroke')).toBe('#137e78');
+  expect(container.querySelector('circle')?.getAttribute('cx')).toBe('500');
+  expect(container.querySelector('circle')?.getAttribute('cy')).toBe('400');
 });

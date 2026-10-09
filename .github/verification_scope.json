@@ -9,6 +9,7 @@
     "frontend/package.json",
     "frontend/src/features/sar/drawingPalette.ts",
     "frontend/src/features/sar/safeDrawing.ts",
+    "frontend/src/features/sar/study/RegionMap.tsx",
     "frontend/tests/sar-drawing-contrast.test.ts",
     "src/patent_sar_extractor/contracts.py"
   ],
