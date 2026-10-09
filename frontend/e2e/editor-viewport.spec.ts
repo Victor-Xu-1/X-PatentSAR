@@ -74,10 +74,21 @@ for (const width of [390, 800, 1672]) {
           box.y + box.height <= view.y + view.height + 2
         );
       });
+    const zoomFeedback = () =>
+      canvas.evaluateAll((elements) => {
+        const svg = elements.find((element) => element.getBoundingClientRect().height > 150) as
+          SVGSVGElement | undefined;
+        const displayed = document.body.innerText.match(/(\d+(?:\.\d+)?)\s*%/);
+        if (!svg || !displayed) return false;
+        const actual = (100 * svg.getBoundingClientRect().width) / svg.viewBox.baseVal.width;
+        return Math.abs(Number(displayed[1]) - actual) <= 1;
+      });
     await expect.poll(measure, { timeout: 30000 }).toBe(true);
+    await expect.poll(zoomFeedback).toBe(true);
     await fit.focus();
     await page.keyboard.press('Enter');
     await expect.poll(measure).toBe(true);
+    await expect.poll(zoomFeedback).toBe(true);
     await page
       .getByRole('combobox', { name: 'Interface language', exact: true })
       .selectOption('zh-CN');
@@ -89,6 +100,7 @@ for (const width of [390, 800, 1672]) {
     await correction.screenshot({ path: test.info().outputPath(`fit-correction-${width}.png`) });
     await page.setViewportSize({ width: width === 390 ? 800 : 390, height: 844 });
     await expect.poll(measure).toBe(true);
+    await expect.poll(zoomFeedback).toBe(true);
     await correction.getByRole('button', { name: 'Cancel', exact: true }).click();
     await expect(opener).toBeFocused();
     await expect(row).toHaveText(original.join(''));

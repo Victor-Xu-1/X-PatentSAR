@@ -1,8 +1,13 @@
 import type { Ketcher } from 'ketcher-core';
+// The pinned micro-editor exposes this UI event; its core facade omits it.
+type NativeMicroEditor = Ketcher['editor'] & {
+  event: Ketcher['editor']['event'] & { zoomChanged: { dispatch: () => void } };
+};
 
 /** Fit the view only. Never move atoms, relayout, export, or canonicalize a graph. */
 export function fitEditorViewport(instance: Ketcher) {
-  const editor = instance.editor,
+  // This frame deliberately enables only the pinned small-molecule editor.
+  const editor = instance.editor as NativeMicroEditor,
     render = editor.render,
     structure = editor.struct();
   if (!structure.atoms.size) return false;
@@ -40,6 +45,7 @@ export function fitEditorViewport(instance: Ketcher) {
     minX: centerX - view.width / 2,
     minY: centerY - view.height / 2,
   }));
+  editor.event.zoomChanged.dispatch();
   return true;
 }
 

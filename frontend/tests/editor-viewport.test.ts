@@ -17,7 +17,12 @@ function fixture(width = 500, height = 400) {
     setViewBox: vi.fn((change) => change(box)),
   };
   const instance = {
-    editor: { render, struct: vi.fn(() => molecule), zoom: vi.fn() },
+    editor: {
+      render,
+      struct: vi.fn(() => molecule),
+      zoom: vi.fn(),
+      event: { zoomChanged: { dispatch: vi.fn() } },
+    },
     setMolecule: vi.fn(),
     layout: vi.fn(),
   };
@@ -25,6 +30,13 @@ function fixture(width = 500, height = 400) {
 }
 
 describe('chemistry-preserving viewport fit', () => {
+  it('publishes the fitted scale through the native zoom-feedback event, without a graph action', () => {
+    const { instance, native } = fixture();
+    fitEditorViewport(instance);
+    expect(native.editor.event.zoomChanged.dispatch).toHaveBeenCalledOnce();
+    expect(native.layout).not.toHaveBeenCalled();
+    expect(native.setMolecule).not.toHaveBeenCalled();
+  });
   it('coalesces resize notifications and disconnects without a polling loop or graph action', () => {
     const { instance, native } = fixture();
     const frames = new Map<number, () => void>();
