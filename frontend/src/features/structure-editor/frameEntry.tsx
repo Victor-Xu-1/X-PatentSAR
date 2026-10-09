@@ -127,7 +127,7 @@ function KetcherFrame() {
           send({ kind: 'error', message: error.message, source: error.source, recoverable: false });
         }}
       />
-      {error && (
+      {error && window.parent === window && (
         <p className="editor-frame-error" role="alert">
           {editorErrorSource(error).source
             ? t(editorErrorSource(error).source!, error instanceof UiError ? error.values : {})

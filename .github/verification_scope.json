@@ -16,6 +16,7 @@
     "frontend/src/api/sarPreviewDecoder.ts",
     "frontend/src/api/sarStudyApi.ts",
     "frontend/src/api/sarStudyTypes.ts",
+    "frontend/src/features/results/StructureEditor.tsx",
     "frontend/src/features/sar/SARPage.tsx",
     "frontend/src/features/sar/study/PreviewMeasurements.tsx",
     "frontend/src/features/sar/study/RegionMap.tsx",
@@ -69,7 +70,10 @@
     "frontend/tests/sar-intake-presentation.test.tsx",
     "frontend/tests/sar-route.test.tsx",
     "frontend/tests/sar-review-context.test.tsx",
-    "frontend/tests/editor-error-language.test.tsx"
+    "frontend/tests/editor-error-language.test.tsx",
+    "frontend/tests/structure-editor-frame.test.tsx",
+    "frontend/tests/structure-editor-repair.test.tsx",
+    "frontend/tests/structure-editor-contract.test.ts"
   ],
   "browser_tests": [
     "frontend/e2e/sar-study.spec.ts",
