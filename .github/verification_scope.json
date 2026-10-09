@@ -8,6 +8,8 @@
     "frontend/package-lock.json",
     "frontend/package.json",
     "frontend/src/features/sar/DatasetWorkbench.tsx",
+    "frontend/src/features/sar/study/StudyResults.tsx",
+    "frontend/src/styles/sar-study.css",
     "frontend/tests/sar-guided-preview.test.tsx",
     "src/patent_sar_extractor/contracts.py"
   ],
@@ -19,6 +21,7 @@
   "frontend_tests": [
     "frontend/tests/sar-guided-preview.test.tsx",
     "frontend/tests/sar-study-setup.test.tsx",
+    "frontend/tests/sar-study-results.test.tsx",
     "frontend/tests/sar-intake-presentation.test.tsx"
   ],
   "browser_tests": [
