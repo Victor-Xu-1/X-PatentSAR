@@ -1,0 +1,343 @@
+.sar-overview-charts {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+}
+.sar-context-detail {
+  font-size: 12px;
+  margin-block: 6px 14px;
+}
+.sar-context-detail summary {
+  color: var(--muted);
+  cursor: pointer;
+}
+.sar-chart-layout-donut {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px 20px;
+}
+.sar-chart-layout-donut > label {
+  grid-column: 1 / -1;
+}
+.sar-composition-donut {
+  width: 160px;
+  margin: 0;
+  text-align: center;
+}
+.sar-composition-donut svg {
+  width: 160px;
+  height: 160px;
+}
+.sar-donut-number {
+  fill: var(--ink);
+  font-size: 25px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.sar-donut-unit {
+  fill: var(--muted);
+  font-size: 8px;
+}
+.sar-composition-donut figcaption,
+.sar-composition-column figcaption {
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.sar-composition-column {
+  margin: 6px 0 12px;
+  text-align: center;
+}
+.sar-composition-total {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.sar-composition-stack {
+  display: flex;
+  flex-direction: column-reverse;
+  width: 54px;
+  height: 148px;
+  margin: 9px auto;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.sar-composition-stack > span {
+  flex-grow: 0;
+  flex-shrink: 0;
+}
+.sar-chart-track {
+  display: block;
+  height: 7px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #edf1ee;
+}
+.sar-chart-track::-webkit-meter-bar {
+  border: 0;
+  background: #edf1ee;
+}
+.sar-chart-track::-webkit-meter-optimum-value {
+  background: currentColor;
+}
+.sar-chart-track::-moz-meter-bar {
+  background: currentColor;
+}
+.sar-study-bars .sar-chart-values > li {
+  grid-template-columns: minmax(100px, 1.3fr) minmax(45px, 1fr) 30px;
+  gap: 9px;
+  margin-block: 8px;
+  font-size: 11px;
+}
+.sar-chart-values strong {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.sar-chart-values span:first-child {
+  overflow-wrap: anywhere;
+}
+.sar-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  padding: 0;
+  list-style: none;
+  font-size: 11px;
+  color: var(--muted);
+}
+.sar-chart-legend > li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+.sar-chart-legend > li > span {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  flex: 0 0 auto;
+}
+.sar-chart-legacy {
+  display: block;
+  grid-column: 1 / -1;
+  color: var(--muted);
+  margin-top: 10px;
+}
+.sar-fragment-controls label {
+  width: 180px;
+}
+.sar-fragment-strip {
+  scroll-snap-type: x proximity;
+  scrollbar-color: #bccfc6 transparent;
+}
+.sar-fragment-strip > article {
+  scroll-snap-align: start;
+}
+.sar-source-acceptance {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-block: 8px;
+  font-size: 12px;
+}
+.sar-source-status {
+  padding: 3px 8px;
+  border-radius: 5px;
+}
+.sar-source-status.is-accepted {
+  color: #086448;
+  background: #e6f4ed;
+}
+.sar-source-status.is-review {
+  color: #745116;
+  background: #fcf2df;
+}
+.sar-source-acceptance small {
+  color: var(--muted);
+}
+.sar-source-acceptance details {
+  flex-basis: 100%;
+}
+.sar-condition-editor {
+  margin-block: 10px 20px;
+  padding: 10px 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-control);
+  font-size: 13px;
+}
+.sar-condition-editor > summary {
+  cursor: pointer;
+  font-weight: 550;
+}
+.sar-structure-pending {
+  min-height: 140px;
+  display: grid;
+  place-content: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+.sar-reference-map-card {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  margin-bottom: 18px;
+}
+.sar-reference-map-card h3 {
+  font-size: 15px;
+  margin: 0;
+}
+.sar-reference-map-card .sar-section-heading > span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.sar-reference-map-image {
+  position: relative;
+  width: min(100%, 700px);
+  margin: 0 auto;
+}
+.sar-reference-map-image > img {
+  display: block;
+  width: 100%;
+}
+.sar-study-card .sar-chart-layout-donut {
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 10px;
+}
+.sar-study-card .sar-composition-donut,
+.sar-study-card .sar-composition-donut svg {
+  width: 120px;
+  height: 120px;
+}
+.sar-overview-charts .sar-chart-layout-donut {
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 20px;
+}
+.sar-overview-charts .sar-composition-donut,
+.sar-overview-charts .sar-composition-donut svg {
+  width: 160px;
+  height: 160px;
+}
+@media (max-width: 620px) {
+  .sar-chart-layout-donut,
+  .sar-study-card .sar-chart-layout-donut,
+  .sar-overview-charts .sar-chart-layout-donut {
+    grid-template-columns: 1fr;
+  }
+  .sar-composition-donut {
+    justify-self: center;
+  }
+  .sar-source-acceptance small {
+    flex-basis: 100%;
+  }
+}
+.sar-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+  column-gap: 24px;
+}
+.sar-page > * {
+  grid-column: 1 / -1;
+}
+.sar-page > .sar-page-heading {
+  grid-column: 1;
+  grid-row: 1;
+}
+.sar-page > .sar-dataset-picker {
+  grid-column: 2;
+  grid-row: 1;
+  margin: 0;
+  align-self: center;
+}
+.sar-page h1 {
+  font-size: 23px;
+  letter-spacing: -0.025em;
+}
+.sar-dataset-summary-collapsed {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin-top: 12px;
+}
+.sar-dataset-summary > details > summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--muted);
+}
+.sar-dataset-summary > details[open] > summary {
+  margin-bottom: 10px;
+}
+.sar-study > .sar-section-heading {
+  gap: 8px;
+}
+.sar-study > .sar-section-heading h2 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+.sar-study > .sar-job-status {
+  font-size: 12px;
+  margin: 6px 0;
+  color: var(--accent-strong);
+}
+.sar-study-limitations {
+  margin: 4px 0;
+}
+.sar-study > .sar-research-label {
+  margin: 2px 0;
+  font-size: 12px;
+}
+.sar-study-tabs {
+  padding-block: 10px;
+  margin-bottom: 16px;
+}
+.sar-technical-evidence {
+  margin-top: 10px;
+  color: var(--muted);
+}
+.sar-technical-evidence pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+}
+.sar-lead-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr));
+}
+.sar-lead-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.sar-lead-heading span {
+  font-size: 11px;
+  color: #8d5c17;
+  background: #fff3dd;
+  padding: 4px 8px;
+  border-radius: 5px;
+}
+.sar-lead-heading h3 {
+  font-size: 17px;
+  margin: 0;
+}
+.sar-lead-card .sar-study-image {
+  height: 210px;
+  display: grid;
+  align-items: center;
+  margin-block: 12px 18px;
+}
+.sar-lead-card .sar-study-image img {
+  max-height: 210px;
+}
+.sar-lead-card .sar-facts dd small {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted);
+}
+@media (max-width: 900px) {
+  .sar-page {
+    display: block;
+  }
+  .sar-page > .sar-dataset-picker {
+    margin-top: 12px;
+  }
+}

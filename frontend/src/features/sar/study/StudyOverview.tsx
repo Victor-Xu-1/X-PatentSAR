@@ -8,7 +8,7 @@ export function StudyOverview({ report }: { report: StudyReport }) {
     <div>
       <dl className="sar-study-stats">
         {[
-          ['分子数', report.molecule_count],
+          ['来源记录', report.molecule_count],
           ['可分析分子', report.eligible_count],
           ['观察数', report.observation_count],
           ['已检查比较', report.strict_pair_count],
@@ -21,20 +21,35 @@ export function StudyOverview({ report }: { report: StudyReport }) {
           </div>
         ))}
       </dl>
-      <div className="sar-card-grid">
+      <div className="sar-card-grid sar-overview-charts">
         {report.distributions.map((distribution) => {
           const context = report.contexts.find((c) => c.id === distribution.context_id);
+          const declaration = report.context_declarations?.find(
+            (item) => item.context_id === distribution.context_id,
+          );
+          const policy = report.policies.find(
+            (item) => item.context_id === distribution.context_id,
+          );
           return (
             <article className="sar-study-card" key={distribution.context_id}>
               <h3>{context ? contextLabel(context) : distribution.context_id}</h3>
               {context && (
-                <p className="sar-hint">
-                  {Object.entries(context.context)
-                    .map(([key, value]) => key + ': ' + (value ?? '—'))
-                    .join(' · ')}
-                </p>
+                <details className="sar-context-detail">
+                  <summary>{t(declaration ? '原文条件人工记录' : '记录条件')}</summary>
+                  <p className="sar-hint">
+                    {Object.entries({ ...context.context, ...declaration?.fields })
+                      .map(([key, value]) => key + ': ' + (value ?? '—'))
+                      .join(' · ')}
+                  </p>
+                  {declaration && <p>{declaration.note}</p>}
+                </details>
               )}
-              <StudyBars bins={distribution.bins} />
+              <StudyBars
+                bins={distribution.bins}
+                layout="donut"
+                countingContract={report.counting_contract}
+                direction={policy?.direction}
+              />
               <p>
                 {t('已观察 {observed} · 缺失 {missing} · 未确定 {unresolved} · 强活性 {strong}', {
                   observed: distribution.observed_molecules,

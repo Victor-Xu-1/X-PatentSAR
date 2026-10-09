@@ -33,4 +33,8 @@ export function policyFromDraft(id: string, draft: PolicyDraft): StudyPolicy | n
   };
 }
 export const contextLabel = (context: { name: string; unit: string | null }) =>
-  [context.name, context.unit].filter((v) => v !== null).join(' · ');
+  context.unit &&
+  !context.name.endsWith('(' + context.unit + ')') &&
+  !context.name.endsWith(' ' + context.unit)
+    ? context.name + ' · ' + context.unit
+    : context.name;

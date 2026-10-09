@@ -23,10 +23,15 @@ export function StudyLeads({
         <p>{report.candidate_policy}</p>
         <p>{t('优先组、Pareto 层与证据覆盖均由报告提供；缺失性质或预测不补值。')}</p>
       </details>
-      <div className="sar-card-grid">
+      <div className="sar-card-grid sar-lead-grid">
         {report.candidates.map((row) => (
-          <article className="sar-study-card" key={row.molecule_id}>
-            <h3>{row.label}</h3>
+          <article className="sar-study-card sar-lead-card" key={row.molecule_id}>
+            <div className="sar-lead-heading">
+              <h3>{row.label}</h3>
+              <span>
+                {t('优先组')} {row.priority_group ?? '—'}
+              </span>
+            </div>
             <StudyImage
               jobId={jobId}
               kind="molecule"

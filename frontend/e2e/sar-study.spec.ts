@@ -101,7 +101,21 @@ for (const width of [390, 800, 1672]) {
       'Activity table',
     ]) {
       await report.getByRole('button', { name: tab, exact: true }).click();
-      await expect(report.getByRole('region', { name: tab, exact: true })).toBeVisible();
+      const view = report.getByRole('region', { name: tab, exact: true });
+      await expect(view).toBeVisible();
+      // Capture rendered structures, never a transient loading placeholder.
+      await expect
+        .poll(
+          () =>
+            view.locator('.sar-study-image, .sar-reference-map-image').evaluateAll((figures) =>
+              figures.every((figure) => {
+                const image = figure.querySelector('img');
+                return image?.complete && image.naturalWidth > 0;
+              }),
+            ),
+          { timeout: 20000 },
+        )
+        .toBe(true);
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),
       ).toBe(true);

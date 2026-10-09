@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from decimal import Decimal, localcontext
+from decimal import Decimal
 from typing import Any
 
 from .contexts import compare_context, select_observations
@@ -12,6 +12,8 @@ from .values import Value, grade_ranks, parse_value
 
 def proven_strong(value: Value, policy: dict, ranks: dict[str, int]) -> bool | None:
     if value.kind == "ordinal":
+        if value.grade is None or value.grade not in ranks:
+            raise SARInputError("invalid_grade_value")
         return ranks[value.grade] == 0
     if value.kind == "missing" or policy.get("strong_threshold") is None:
         return None
@@ -84,97 +86,14 @@ def distribution(
     observations: dict[str, list[dict]],
     policy: dict,
     assessments: dict[str, dict],
+    *,
+    prepared=None,
 ) -> dict:
-    """Every raw observation counts once; each bin counts distinct members once."""
-    ranks = grade_ranks(policy.get("grade_order", []))
-    entries = []
-    scalars: list[Decimal] = []
-    for identifier in members:
-        for observation in observations[identifier]:
-            raw = observation["value"]
-            try:
-                value = parse_value(raw, ranks)
-            except SARInputError:
-                value = Value("unsupported")
-            entries.append((identifier, value))
-            if value.kind == "scalar":
-                scalars.append(value.numeric_bounds()[0])
-    bins: dict[tuple[str, str], dict] = {}
+    """One authority; workers reuse a prepared whole-context chart domain."""
+    from .study_distributions import DistributionContext
 
-    def add(label, kind, identifier, strong=False):
-        key = kind, label
-        bucket = bins.setdefault(
-            key,
-            {
-                "label": label,
-                "kind": kind,
-                "observations": 0,
-                "ids": set(),
-                "strong": strong,
-            },
-        )
-        bucket["observations"] += 1
-        bucket["ids"].add(identifier)
-        bucket["strong"] = bucket["strong"] and strong
-
-    for grade in ranks:
-        bins[("ordinal", grade)] = {
-            "label": grade,
-            "kind": "ordinal",
-            "observations": 0,
-            "ids": set(),
-            "strong": ranks[grade] == 0,
-        }
-    with localcontext() as context:
-        context.prec = 50
-        low, high = (
-            (min(scalars), max(scalars)) if scalars else (Decimal(0), Decimal(0))
-        )
-        width = (high - low) / 8 if scalars and low != high else None
-        for identifier, value in entries:
-            if value.kind == "ordinal":
-                add(value.grade, "ordinal", identifier, ranks[value.grade] == 0)
-            elif value.kind == "scalar":
-                if width is None:
-                    label = str(low)
-                else:
-                    index = min(7, int((value.low - low) / width))
-                    label = f"[{low + width * index},{low + width * (index + 1)}{']' if index == 7 else ')'}"
-                add(
-                    label,
-                    "numeric",
-                    identifier,
-                    proven_strong(value, policy, ranks) is True,
-                )
-            elif value.kind == "interval":
-                strong = proven_strong(value, policy, ranks) is True
-                add(
-                    "proved strong bound" if strong else "interval / censored",
-                    "interval",
-                    identifier,
-                    strong,
-                )
-            else:
-                add(value.kind, value.kind, identifier)
-    missing = sum(assessments[item]["status"] == "missing" for item in members)
-    return {
-        "context_id": policy["context_id"],
-        "bins": [
-            {
-                "label": bucket["label"],
-                "kind": bucket["kind"],
-                "observations": bucket["observations"],
-                "molecules": len(bucket["ids"]),
-                "strong": bucket["strong"],
-            }
-            for bucket in bins.values()
-        ],
-        "observed_molecules": len(members) - missing,
-        "observations": len(entries),
-        "missing_molecules": missing,
-        "unresolved_molecules": sum(
-            assessments[item]["status"] in {"indeterminate", "context_mismatch"}
-            for item in members
-        ),
-        "strong_molecules": sum(assessments[item]["strong"] for item in members),
-    }
+    if prepared is None:
+        prepared = DistributionContext(observations, policy, assessments)
+    elif not prepared.matches(observations, policy, assessments):
+        raise SARInputError("study_distribution_context")
+    return prepared.for_members(members)

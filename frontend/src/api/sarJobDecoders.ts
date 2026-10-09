@@ -47,7 +47,7 @@ const pair = object({
   reference_values: array(string),
   candidate_values: array(string),
   fold_change: nullOr(number),
-  evidence_basis: oneOf(['recorded_context', 'user_confirmed', 'insufficient']),
+  evidence_basis: oneOf(['recorded_context', 'user_confirmed', 'source_declared', 'insufficient']),
 });
 export const decodePair: Decoder<Pair> = (v, p = '$') => {
   const result = pair(v, p);

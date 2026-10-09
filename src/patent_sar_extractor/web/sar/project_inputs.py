@@ -7,6 +7,7 @@ import time
 
 from ..errors import WebError
 from ..history_storage import ensure_project_visible
+from ..models import Acceptance
 from ..prediction_identity import source_stereo_blocked
 from ..service import WorkspaceService
 from ..storage import encode
@@ -79,7 +80,7 @@ def project_revision(
 
 def project_inputs(
     service: WorkspaceService, identifier: str
-) -> tuple[list[Molecule], list[Metric], str, str, str | None]:
+) -> tuple[list[Molecule], list[Metric], str, str, str | None, Acceptance, int | None]:
     # This is an explicit user snapshot action. Current read-model refresh is
     # the existing source authority; SAR never edits its chemistry or acceptance.
     source = service.project(identifier)
@@ -175,4 +176,12 @@ def project_inputs(
             "sar_source_changed",
             "Source results changed during snapshot; no partial dataset was published.",
         )
-    return output, list(metrics.values()), before, source.title, source.pdf.sha256
+    return (
+        output,
+        list(metrics.values()),
+        before,
+        source.title,
+        source.pdf.sha256,
+        source.acceptance.model_copy(deep=True),
+        source.pdf.page_count or None,
+    )

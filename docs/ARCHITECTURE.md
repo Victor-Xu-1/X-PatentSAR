@@ -9,6 +9,20 @@ epochs are not product releases and do not retag old results as current.
 
 ### Independent, user-started SAR domain
 
+Engine3 adds one prepared `DistributionContext` per exact selected context;
+every source-ID population is a disjoint partition while raw repeat observations
+remain intact. All group charts reuse its ordered numeric domain. Publication
+checks source context identity, row/group completeness and count conservation;
+the browser validates the additive partition contract without fetching all rows
+into the overview. Old reports keep legacy counting semantics and byte receipts.
+`study_conditions.py` owns explicitly source-anchored missing-field declarations,
+validated at admission and native input loading. They never mutate observations,
+replace units/known fields or change source QA. Candidate eligibility may use a
+complete `source_declared` context, visibly distinct from recorded/automatically
+verified evidence. Dataset/report QA metadata is additive; absent legacy metadata
+is unknown. Passive HTML figures reuse immutable RDKit drawings and recorded bins,
+with escaped content, no scripts/network dependencies and a32MiB complete bound.
+
 `web/sar` owns one separate versioned private dataset/region/job/result store;
 `core/sar` owns deterministic complete-fixed-graph and observation comparison.
 `#/sar` is a separate workbench with explicit project-snapshot or CSV inputs.

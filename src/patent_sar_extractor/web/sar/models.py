@@ -7,6 +7,7 @@ from typing import Annotated, Literal
 from pydantic import Field
 
 from ..dto import DTO
+from ..models import Acceptance
 
 JobState = Literal[
     "queued", "running", "complete", "failed", "cancelled", "interrupted"
@@ -59,6 +60,8 @@ class Dataset(DTO):
     source_project_id: str | None = None
     source_sha256: str
     source_document_sha256: str | None = None
+    source_acceptance: Acceptance | None = None
+    source_page_count: int | None = Field(default=None, ge=1, le=20000)
     revision: int = 1
     stale: bool = False
     row_count: int
@@ -197,7 +200,9 @@ class Pair(DTO):
     reference_values: list[str]
     candidate_values: list[str]
     fold_change: float | None = None
-    evidence_basis: Literal["recorded_context", "user_confirmed", "insufficient"]
+    evidence_basis: Literal[
+        "recorded_context", "user_confirmed", "source_declared", "insufficient"
+    ]
     region_id: str | None = None
     fragment_id: str | None = None
     variable_atom_indices: list[int] = Field(default_factory=list)

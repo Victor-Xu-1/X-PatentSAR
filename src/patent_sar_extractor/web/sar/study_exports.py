@@ -82,6 +82,9 @@ def _csv(job, report, by_id):
             "predictions",
             "prediction_origin",
             "source_page",
+            "source_acceptance_state",
+            "counting_contract",
+            "context_declarations",
             "reasons",
             "input_sha256",
             "source_stale",
@@ -105,6 +108,11 @@ def _csv(job, report, by_id):
                 encode(row.predictions),
                 row.prediction_origin,
                 molecule.source_page,
+                report.source_acceptance.state
+                if report.source_acceptance
+                else "unknown",
+                report.counting_contract,
+                encode([item.model_dump() for item in report.context_declarations]),
                 encode(row.reasons),
                 job.input_sha256,
                 job.stale,
@@ -128,6 +136,13 @@ def _sdf(job, report, by_id):
             "input_sha256": job.input_sha256,
             "research_only": True,
             "source_stale": job.stale,
+            "source_acceptance": report.source_acceptance.model_dump()
+            if report.source_acceptance
+            else None,
+            "counting_contract": report.counting_contract,
+            "context_declarations": [
+                item.model_dump() for item in report.context_declarations
+            ],
         }.items():
             # JSON keeps multiline values from injecting another SD record.
             mol.SetProp(key, encode(value))

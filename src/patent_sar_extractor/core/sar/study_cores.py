@@ -89,7 +89,14 @@ def compile_core(molfile: str, indices: list[int]) -> ConfirmedCore:
 
 
 def confirmed_core_summaries(
-    cores, molecules, observations, policy, assessments, check=lambda: None
+    cores,
+    molecules,
+    observations,
+    policy,
+    assessments,
+    check=lambda: None,
+    *,
+    prepared=None,
 ):
     indexed = {molecule["id"]: molecule for molecule in molecules}
     summaries, assignments, warnings = [], {}, set()
@@ -117,9 +124,9 @@ def confirmed_core_summaries(
                 "molecule_count": len(members),
                 "molecule_ids": members,
                 "strong_count": sum(assessments[item]["strong"] for item in members),
-                "bins": distribution(members, observations, policy, assessments)[
-                    "bins"
-                ],
+                "bins": distribution(
+                    members, observations, policy, assessments, prepared=prepared
+                )["bins"],
                 "descriptive_only": True,
                 "assignment_kind": "confirmed_core",
                 "core_region_id": core["id"],

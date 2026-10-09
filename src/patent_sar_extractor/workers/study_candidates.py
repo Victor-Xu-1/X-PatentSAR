@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from patent_sar_extractor.core.sar.study_conditions import declared_observation
 from patent_sar_extractor.core.sar.study_contexts import context_identity
 from patent_sar_extractor.core.sar.study_priority import (
     pareto_fronts,
@@ -14,7 +15,8 @@ from patent_sar_extractor.web.lead_chemistry import chemical_features, similarit
 from .study_evidence import secondary_evidence
 
 
-def collect_activities(rows, policies, confirmed):
+def collect_activities(rows, policies, confirmed, declarations=()):
+    declared = {item["context_id"]: item for item in declarations}
     observations = {
         policy["context_id"]: {row["id"]: [] for row in rows} for policy in policies
     }
@@ -22,7 +24,9 @@ def collect_activities(rows, policies, confirmed):
         for observation in row["observations"]:
             identifier = context_identity(observation)
             if identifier in observations:
-                observations[identifier][row["id"]].append(observation)
+                observations[identifier][row["id"]].append(
+                    declared_observation(observation, declared.get(identifier))
+                )
     assessments = {
         policy["context_id"]: {
             row["id"]: assess(
@@ -32,6 +36,15 @@ def collect_activities(rows, policies, confirmed):
         }
         for policy in policies
     }
+    for policy in policies:
+        identifier = policy["context_id"]
+        if identifier in declared:
+            for state in assessments[identifier].values():
+                if state["evidence_basis"] == "recorded_context":
+                    state["evidence_basis"] = "source_declared"
+                state["reasons"].append(
+                    "operator_declared_context_not_automatic_verification"
+                )
     return observations, assessments
 
 
@@ -72,7 +85,8 @@ def rank_candidates(rows, descriptors, request, observations, assessments, check
             assessments[policy["context_id"]][molecule["id"]] for policy in policies
         ]
         known = [
-            state["value"] is not None and state["evidence_basis"] == "recorded_context"
+            state["value"] is not None
+            and state["evidence_basis"] in {"recorded_context", "source_declared"}
             for state in states
         ]
         reasons = set(descriptor["reasons"])

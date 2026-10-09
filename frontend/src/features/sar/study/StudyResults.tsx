@@ -11,6 +11,8 @@ import { MutationNotice } from '../MutationNotice';
 import { SARFailure } from '../SARFailure';
 import { downloadSAR } from '../download';
 import { StudyReportView } from './StudyReportView';
+import { SourceAcceptance } from './SourceAcceptance';
+import { StudyLimitations } from './StudyLimitations';
 import { ContractError } from '../../../api/validation';
 export function StudyResults({
   dataset,
@@ -80,7 +82,7 @@ export function StudyResults({
       {job.data && (
         <div className="sar-job-status">
           <strong>{t(jobLabels[job.data.status])}</strong>
-          <output>
+          <output hidden={job.data.status === 'complete'}>
             {t('已处理 {processed}/{total} · 已匹配 {matched}', {
               processed: job.data.processed,
               total: job.data.total,
@@ -137,17 +139,11 @@ export function StudyResults({
       {overview.data && job.data?.status === 'complete' && (
         <>
           <p className="sar-research-label">{t('仅供研究 · 未复现文章算法 · 非实验验收')}</p>
+          {dataset.source_kind === 'project' && (
+            <SourceAcceptance source={overview.data.report.source_acceptance} />
+          )}
           {overview.data.report.warnings.length > 0 && (
-            <details className="sar-compact">
-              <summary>
-                {t('研究限制与警告')} · {overview.data.report.warnings.length}
-              </summary>
-              <ul>
-                {overview.data.report.warnings.map((warning, i) => (
-                  <li key={i}>{warning}</li>
-                ))}
-              </ul>
-            </details>
+            <StudyLimitations warnings={overview.data.report.warnings} />
           )}
           <StudyReportView
             report={overview.data.report}

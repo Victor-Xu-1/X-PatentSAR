@@ -103,15 +103,23 @@ class SARService:
         if existing:
             return self.dataset(existing.id)
         with analysis_lease(self.workspace.store.root):
-            molecules, metrics, source_revision, source_title, document_hash = (
-                project_inputs(self.workspace, request.project_id)
-            )
+            (
+                molecules,
+                metrics,
+                source_revision,
+                source_title,
+                document_hash,
+                source_acceptance,
+                source_page_count,
+            ) = project_inputs(self.workspace, request.project_id)
             dataset = Dataset(
                 id=uuid.uuid4().hex,
                 title=request.title or source_title,
                 source_kind="project",
                 source_project_id=request.project_id,
                 source_document_sha256=document_hash,
+                source_acceptance=source_acceptance,
+                source_page_count=source_page_count,
                 source_sha256=digest(
                     [source_revision, [item.model_dump() for item in molecules]]
                 ),

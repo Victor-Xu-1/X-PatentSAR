@@ -138,6 +138,10 @@ class SARAPITests(WebFixture, unittest.TestCase):
             self.assertEqual(response.status_code, 201, response.text)
             dataset = response.json()
             self.assertEqual(dataset["row_count"], 2)
+            self.assertEqual(dataset.get("source_acceptance"), project["acceptance"])
+            self.assertEqual(
+                dataset.get("source_page_count"), project["pdf"]["page_count"]
+            )
             rows = client.get(
                 ROOT + "/datasets/" + dataset["id"] + "/molecules"
             ).json()["items"]

@@ -5,6 +5,7 @@ from __future__ import annotations
 from ..errors import WebError
 from .assets import digest
 from .models import Dataset, Molecule, Pair, SARJob
+from .study_integrity import verify_conservation
 from .study_models import StudyReport, StudyRequest
 
 
@@ -33,6 +34,10 @@ def verify_study(safe, job: SARJob, spec: dict, reply: dict, pairs: list[Pair]) 
         or packet.get("job_id") != job.id
         or report.dataset_id != job.dataset_id
         or report.dataset_revision != dataset.revision
+        or report.source_acceptance != dataset.source_acceptance
+        or report.context_declarations != request.context_declarations
+        or report.counting_contract != "unique-molecules-v2"
+        or report.observation_count != sum(len(row.observations) for row in molecules)
         or report.input_sha256 != job.input_sha256
         or report.engine_sha256 != spec["engine_sha256"]
         or report.molecule_count != len(molecules)
@@ -173,4 +178,5 @@ def verify_study(safe, job: SARJob, spec: dict, reply: dict, pairs: list[Pair]) 
     for pair in pairs:
         if pair.label != by_id[pair.molecule_id].label:
             raise WebError(502, "sar_result_invalid", "Study source label differs.")
+    verify_conservation(report, packet)
     return digest(raw)

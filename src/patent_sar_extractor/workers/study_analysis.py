@@ -7,6 +7,7 @@ from pathlib import Path
 
 from patent_sar_extractor.core.sar.errors import SARInputError
 from patent_sar_extractor.core.sar.study_cores import confirmed_core_summaries
+from patent_sar_extractor.core.sar.study_distributions import DistributionContext
 from patent_sar_extractor.core.sar.study_statistics import distribution
 from patent_sar_extractor.core.sar.study_summaries import scaffold_summaries
 from patent_sar_extractor.web.files import SafeFiles
@@ -37,21 +38,46 @@ def analyse_study(root: Path, input_sha256: str) -> dict:
     check()
     descriptors = descriptor_batches(safe, identity, rows, check)
     observations, assessments = collect_activities(
-        rows, request["policies"], request["confirm_context"]
+        rows,
+        request["policies"],
+        request["confirm_context"],
+        request["context_declarations"],
     )
+    domains = {
+        policy["context_id"]: DistributionContext(
+            observations[policy["context_id"]],
+            policy,
+            assessments[policy["context_id"]],
+        )
+        for policy in request["policies"]
+    }
     primary = request["policies"][0]
     primary_obs, primary_states = (
         observations[primary["context_id"]],
         assessments[primary["context_id"]],
     )
     summaries, chunks, matched = analyse_pairs(
-        safe, identity, rows, regions, request, primary_obs, primary_states, check
+        safe,
+        identity,
+        rows,
+        regions,
+        request,
+        primary_obs,
+        primary_states,
+        check,
+        prepared=domains[primary["context_id"]],
     )
     report_rows, candidates = rank_candidates(
         rows, descriptors, request, observations, assessments, check
     )
     core_groups, core_warnings = confirmed_core_summaries(
-        cores, rows, primary_obs, primary, primary_states, check
+        cores,
+        rows,
+        primary_obs,
+        primary,
+        primary_states,
+        check,
+        prepared=domains[primary["context_id"]],
     )
     warnings = {
         "research_only_scientific_validation_required",
@@ -77,6 +103,7 @@ def analyse_study(root: Path, input_sha256: str) -> dict:
             observations[policy["context_id"]],
             policy,
             assessments[policy["context_id"]],
+            prepared=domains[policy["context_id"]],
         )
         for policy in request["policies"]
     ]
@@ -89,6 +116,9 @@ def analyse_study(root: Path, input_sha256: str) -> dict:
         dataset_id=dataset["id"],
         dataset_revision=dataset["revision"],
         title=request["title"],
+        counting_contract="unique-molecules-v2",
+        source_acceptance=dataset["source_acceptance"],
+        context_declarations=request["context_declarations"],
         **identity,
         molecule_count=len(rows),
         eligible_count=sum(row["eligible"] for row in report_rows),
@@ -100,7 +130,13 @@ def analyse_study(root: Path, input_sha256: str) -> dict:
         policies=request["policies"],
         distributions=distributions,
         scaffolds=[
-            *scaffold_summaries(descriptors, primary_obs, primary, primary_states),
+            *scaffold_summaries(
+                descriptors,
+                primary_obs,
+                primary,
+                primary_states,
+                prepared=domains[primary["context_id"]],
+            ),
             *core_groups,
         ],
         regions=summaries,

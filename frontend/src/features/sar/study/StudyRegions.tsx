@@ -4,6 +4,9 @@ import { useTranslation } from '../../../i18n';
 import { StudyImage } from './StudyImage';
 import { StudyBars } from './StudyBars';
 import { GroupPager } from './GroupPager';
+import { ChartLegend } from './StudyComposition';
+import { StudyRegionMap } from './StudyRegionMap';
+import type { CountingUnit } from './chartPresentation';
 function FragmentCard({
   fragment,
   index,
@@ -11,6 +14,8 @@ function FragmentCard({
   jobId,
   active,
   onRows,
+  unit,
+  report,
 }: {
   fragment: StudyFragment;
   index: number;
@@ -18,6 +23,8 @@ function FragmentCard({
   jobId: string;
   active: boolean;
   onRows: (region: string, fragment: string) => void;
+  unit: CountingUnit;
+  report: StudyReport;
 }) {
   const { t } = useTranslation();
   return (
@@ -26,6 +33,14 @@ function FragmentCard({
         {t('片段 {index}', { index })}
         {fragment.is_reference && <small> · {t('参考')}</small>}
       </h4>
+      <StudyBars
+        bins={fragment.bins}
+        layout="stack"
+        controlledUnit={unit}
+        showLegend={false}
+        countingContract={report.counting_contract}
+        direction={report.policies[0]?.direction}
+      />
       <StudyImage
         jobId={jobId}
         kind="fragment"
@@ -40,7 +55,6 @@ function FragmentCard({
           total: fragment.molecule_count,
         })}
       </p>
-      <StudyBars bins={fragment.bins} />
       <p>
         {t('更强 {better} · 更弱 {worse} · 未确定 {indeterminate} · 缺失 {missing}', {
           better: fragment.better,
@@ -62,6 +76,7 @@ function RegionGroup({
   active,
   strongest,
   onRows,
+  report,
 }: {
   summary: StudyRegionSummary;
   index: number;
@@ -69,9 +84,11 @@ function RegionGroup({
   active: boolean;
   strongest: boolean;
   onRows: (region: string, fragment: string) => void;
+  report: StudyReport;
 }) {
   const { t } = useTranslation(),
     [page, setPage] = useState(1);
+  const [unit, setUnit] = useState<CountingUnit>('molecules');
   const fragments = strongest
     ? summary.fragments
         .filter((f) => f.strong_count > 0)
@@ -82,16 +99,6 @@ function RegionGroup({
       <h3>
         {summary.region.name ?? 'R' + index} · {summary.reference_label}
       </h3>
-      {!strongest && (
-        <StudyImage
-          jobId={jobId}
-          kind="molecule"
-          identifier={summary.region.molecule_id}
-          atomRegionId={summary.region.id}
-          label={summary.reference_label}
-          active={active}
-        />
-      )}
       <p className="sar-hint">{t('一个固定背景中的严格参考证据，不是独立系列普遍规律。')}</p>
       <p>
         {t('匹配 {matched} · 未匹配 {not_matched} · 歧义 {ambiguous} · 不合格 {ineligible}', {
@@ -105,6 +112,20 @@ function RegionGroup({
         {t('可比较数量')} {summary.comparable}
       </p>
       {summary.no_variation && <output>{t('该区域没有观察到结构变化。')}</output>}
+      <div className="sar-fragment-controls">
+        <label>
+          {t('统计单位')}
+          <select
+            value={report.counting_contract === 'unique-molecules-v2' ? unit : 'observations'}
+            onChange={(event) => setUnit(event.target.value as CountingUnit)}
+          >
+            <option value="molecules" disabled={report.counting_contract !== 'unique-molecules-v2'}>
+              {t('原始编号 / 记录')}
+            </option>
+            <option value="observations">{t('观察数')}</option>
+          </select>
+        </label>
+      </div>
       <div className="sar-fragment-strip">
         {fragments.slice((page - 1) * 6, page * 6).map((fragment) => (
           <FragmentCard
@@ -115,9 +136,15 @@ function RegionGroup({
             jobId={jobId}
             active={active}
             onRows={onRows}
+            unit={unit}
+            report={report}
           />
         ))}
       </div>
+      <ChartLegend
+        bins={report.distributions[0]?.bins ?? []}
+        direction={report.policies[0]?.direction}
+      />
       {!fragments.length && <p>{t(strongest ? '无强活性支持片段' : '无片段记录')}</p>}
       <GroupPager page={page} total={fragments.length} size={6} onPage={setPage} />
     </article>
@@ -139,6 +166,7 @@ export function StudyRegions({
   const { t } = useTranslation();
   return (
     <div>
+      {!strongest && <StudyRegionMap report={report} active={active} />}
       {report.regions.map((summary, index) => (
         <RegionGroup
           key={summary.region.id}
@@ -148,6 +176,7 @@ export function StudyRegions({
           active={active}
           strongest={strongest}
           onRows={onRows}
+          report={report}
         />
       ))}
       {!report.regions.length && <p>{t('本研究未选择区域。保存区域后可明确运行新研究。')}</p>}

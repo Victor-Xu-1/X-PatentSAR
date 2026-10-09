@@ -101,6 +101,12 @@ class SARStudyAPITests(WebFixture, unittest.TestCase):
             if report["regions"][0]["no_variation"]:
                 self.assertIn("No selected-region variation", html.text)
             self.assertIn("Synthetic evidence study", html.text)
+            self.assertIn("stack vertical", html.text)
+            self.assertIn("reference region map", html.text)
+            self.assertIn("All source records", html.text)
+            self.assertIn("source IDs / records", html.text)
+            self.assertIn("data:image/svg+xml;base64,", html.text)
+            self.assertNotIn("<script", html.text)
             drawing = client.get(
                 path
                 + "/drawing?kind=molecule&identifier="

@@ -61,6 +61,19 @@ research, not an automatic post-extraction stage or an article/Lead reproduction
 
 ### Whole-study analysis and article-form exploration
 
+Additive engine3 metadata: project Dataset includes `source_acceptance` and
+`source_page_count` (legacy absence is unknown). StudyReport carries source QA,
+`counting_contract` (`unique-molecules-v2` for new disjoint source-ID partitions;
+legacy reports keep `legacy-per-bin-members`) and `context_declarations`.
+StudyRequest may include at most8 declarations, each `{context_id,fields,
+source_document_sha256,source_pages,note}`. Only missing target/assay/cell_line/
+duration fields may be filled; selected context, document hash and pages must
+belong to the immutable project input. No unit/known-field override, CSV source
+claim or original mutation is allowed. Native comparison basis is `source_declared`,
+not automatic verification. Full-context candidates retain that limitation.
+Overview omits rows by design; full-pool rows remain paginated. Report publication
+checks context identity, disjoint populations and observations before completion.
+
 `study_models.py` owns typed study profiles, policies and reports. This is an
 independent, explicit research view, not the article author's private algorithm.
 Existing reference jobs remain readable. All endpoints use the same session,

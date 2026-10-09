@@ -9,7 +9,12 @@ from .study_statistics import distribution
 
 
 def scaffold_summaries(
-    descriptors: list[dict], observations: dict, policy: dict, assessments: dict
+    descriptors: list[dict],
+    observations: dict,
+    policy: dict,
+    assessments: dict,
+    *,
+    prepared=None,
 ) -> list[dict]:
     groups: dict[str, dict[str, Any]] = {}
     for row in descriptors:
@@ -28,7 +33,11 @@ def scaffold_summaries(
                 assessments[item]["strong"] for item in group["molecule_ids"]
             ),
             "bins": distribution(
-                group["molecule_ids"], observations, policy, assessments
+                group["molecule_ids"],
+                observations,
+                policy,
+                assessments,
+                prepared=prepared,
             )["bins"],
             "descriptive_only": True,
         }
@@ -45,6 +54,8 @@ def region_summary(
     observations: dict,
     policy: dict,
     assessments: dict,
+    *,
+    prepared=None,
 ) -> dict:
     groups = {
         reference_fragment["id"]: {
@@ -95,9 +106,9 @@ def region_summary(
                 **group,
                 "molecule_count": len(members),
                 "strong_count": sum(assessments[item]["strong"] for item in members),
-                "bins": distribution(members, observations, policy, assessments)[
-                    "bins"
-                ],
+                "bins": distribution(
+                    members, observations, policy, assessments, prepared=prepared
+                )["bins"],
             }
         )
     return {

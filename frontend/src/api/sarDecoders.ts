@@ -63,6 +63,10 @@ const metric = object({
   target: nullOr(string),
   assay: nullOr(string),
 });
+export const decodeSourceAcceptance = object({
+  state: oneOf(['not_run', 'accepted', 'failed', 'historical']),
+  errors: array(string),
+});
 const observation = object({
   metric_id: string,
   value: string,
@@ -122,6 +126,11 @@ export const decodeDataset: Decoder<Dataset> = (v, p = '$') => {
   const input = v as Record<string, unknown>;
   return {
     ...result,
+    ...additions(
+      v,
+      { source_acceptance: nullOr(decodeSourceAcceptance), source_page_count: nullOr(positive) },
+      p,
+    ),
     ...(Object.hasOwn(input, 'input_row_count')
       ? { input_row_count: count(input.input_row_count, `${p}.input_row_count`) }
       : {}),

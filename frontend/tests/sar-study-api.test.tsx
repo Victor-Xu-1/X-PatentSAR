@@ -76,6 +76,56 @@ describe('study DTOs and exact policies', () => {
     ).toThrow();
     expect(() => decodeRegion({ ...coreRegion, kind: 'advantage' })).toThrow();
   });
+  it('requires conserved current counts without rewriting historical chart semantics', () => {
+    const bin = { label: '<10', kind: 'interval', observations: 1, molecules: 1, strong: true };
+    const current = {
+      ...studyReport,
+      counting_contract: 'unique-molecules-v2',
+      molecule_count: 1,
+      eligible_count: 1,
+      observation_count: 1,
+      strict_pair_count: 0,
+      matched_pair_count: 0,
+      comparable_pair_count: 0,
+      regions: [],
+      contexts: [{ ...studyContext, molecule_count: 1, observation_count: 1 }],
+      distributions: [
+        {
+          ...studyReport.distributions[0],
+          bins: [bin],
+          observed_molecules: 1,
+          observations: 1,
+          missing_molecules: 0,
+          unresolved_molecules: 0,
+          strong_molecules: 1,
+        },
+      ],
+      scaffolds: [
+        {
+          ...studyReport.scaffolds[0],
+          assignment_kind: 'murcko',
+          molecule_count: 1,
+          strong_count: 1,
+          molecule_ids: [studyRow.molecule_id],
+          bins: [bin],
+        },
+      ],
+      rows: [studyRow],
+      candidates: [studyRow],
+    };
+    expect(decodeStudyReport(current).counting_contract).toBe('unique-molecules-v2');
+    for (const invalid of [
+      { ...current, rows: [studyRow, studyRow] },
+      { ...current, candidates: [] },
+      { ...current, scaffolds: [] },
+      { ...current, distributions: [] },
+      { ...current, observation_count: 2 },
+      { ...current, distributions: [{ ...current.distributions[0], missing_molecules: 1 }] },
+    ])
+      expect(() => decodeStudyReport(invalid)).toThrow();
+    expect(decodeStudyReport({ ...current, rows: [] }).molecule_count).toBe(1);
+    expect(decodeStudyReport(studyReport)).toEqual(studyReport);
+  });
   it('never infers grades, thresholds or direction and forbids mixed numeric/grade conventions', () => {
     expect(policyFromDraft(studyContext.id, emptyPolicy())).toBeNull();
     expect(

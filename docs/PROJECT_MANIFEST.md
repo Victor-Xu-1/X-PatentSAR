@@ -1,5 +1,16 @@
 # Project governance manifest
 
+- SAR study evidence/craft ownership: engine3 uses `study_distributions.py` for one
+  prepared full-context chart domain and disjoint source-ID accounting; observation
+  repeats remain separate. `study_conditions.py` alone validates source-anchored
+  missing-field declarations; source QA/known conditions/units remain unchanged.
+  `study_integrity.py` validates publication conservation, and frontend typed
+  decoders validate current chart population while keeping old reports readable.
+  Figures and static HTML reuse recorded bins and RDKit graphs, not author assets
+  or guessed scores. UI details retain raw evidence without crowding main views.
+  Additive optional DTOs keep SQL2/report1; older engine checkpoints require a new
+  explicit study. No model, dependency, extra queue, PDF rerun or source edit.
+
 - Independent SAR ownership: `core/sar` is the sole strict fixed-graph/stereo/port and raw-measurement comparison domain; `web/sar` owns independent snapshots, imports, immutable named regions/cores, jobs and results in private SQLite schema2. `frontend/src/features/sar` consumes additive authenticated API-v1 contracts and the existing locale/token system. Explicit user submissions share one admission/queue/owned CPU process/analysis lease, whether single-reference or whole-study. The latter adds activity distributions, descriptive or confirmed core groups, transparent candidate priority, strict multi-region fragment summaries and full-pool paged tables/exports. Exact graphs/conditions/revisions, content-bound engine identity and sealed chunks prevent guessed or stale reuse. `contracts.py` owns independent engine/report/database versions. No navigation starts work; no second queue/database/dependency/model/local LLM/transmission/global test or original extraction/QA/Lead mutation is introduced.
 
 - Interface-language ownership: `frontend/src/i18n/languages.ts` owns supported locales and the English default; `locale.ts` owns the one browser preference/subscription; modular message catalogs have one conflict-checked assembly/formatting authority. Chinese and English are mandatory and additional languages extend the same registry/catalog. React locale changes do not remount workspaces, dialogs or drawings, rewrite raw source/chemistry/value/user data, change route/filter IDs, call a model/API, or create a second backend settings/pipeline. UI error source descriptors remain redisplayable after a switch. Product releases follow the PR policy; scientific epochs and API/database contracts remain unchanged.

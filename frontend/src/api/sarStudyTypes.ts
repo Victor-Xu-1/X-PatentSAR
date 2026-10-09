@@ -1,5 +1,6 @@
 /** Sole authority: web/sar/study_models.py. No locally inferred scientific fields. */
 import type { Region, SARJob } from './sarTypes';
+import type { Project } from './types';
 export interface StudyContext {
   id: string;
   metric_id: string;
@@ -33,6 +34,14 @@ export interface StudyRequest {
   core_ids?: string[];
   confirm_context: boolean;
   candidate_count: number;
+  context_declarations?: ConditionDeclaration[];
+}
+export interface ConditionDeclaration {
+  context_id: string;
+  fields: Partial<Record<'target' | 'assay' | 'cell_line' | 'duration', string>>;
+  source_document_sha256: string;
+  source_pages: number[];
+  note: string;
 }
 export interface StudyBin {
   label: string;
@@ -116,6 +125,9 @@ export interface StudyReport {
   engine_sha256: string;
   research_only: true;
   article_algorithm_reproduced: false;
+  counting_contract?: 'legacy-per-bin-members' | 'unique-molecules-v2';
+  source_acceptance?: Project['acceptance'] | null;
+  context_declarations?: ConditionDeclaration[];
   molecule_count: number;
   eligible_count: number;
   observation_count: number;
