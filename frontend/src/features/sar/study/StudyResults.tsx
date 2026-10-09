@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { sarApi } from '../../../api/sarApi';
 import { sarStudyApi } from '../../../api/sarStudyApi';
 import type { Dataset } from '../../../api/sarTypes';
@@ -11,8 +11,7 @@ import { MutationNotice } from '../MutationNotice';
 import { SARFailure } from '../SARFailure';
 import { downloadSAR } from '../download';
 import { StudyReportView } from './StudyReportView';
-import { SourceAcceptance } from './SourceAcceptance';
-import { StudyLimitations } from './StudyLimitations';
+import { StudyReportInfo } from './StudyReportInfo';
 import { ContractError } from '../../../api/validation';
 export function StudyResults({
   dataset,
@@ -31,6 +30,8 @@ export function StudyResults({
 }) {
   const { t } = useTranslation(),
     controller = useRef<AbortController | null>(null);
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [format, setFormat] = useState<'csv' | 'json' | 'sdf' | 'html'>('csv');
   const loadJob = useCallback(
     async (signal: AbortSignal) => {
       const result = await sarApi.job(jobId, dataset.id, signal);
@@ -76,6 +77,11 @@ export function StudyResults({
         <button type="button" disabled={!active || disabled} onClick={refresh}>
           {t('刷新')}
         </button>
+        {overview.data && (
+          <button type="button" onClick={() => setInfoOpen(true)}>
+            {t('研究详情')}
+          </button>
+        )}
       </div>
       {job.loading && <Loading />}
       {job.error && <SARFailure error={job.error} onRetry={job.reload} />}
@@ -126,8 +132,11 @@ export function StudyResults({
         </p>
       )}
       {job.data && !current && (
-        <output className="sar-warning">
-          {t('结果已过期，仅供历史核对；禁止续跑或作为当前结论。')}
+        <output
+          className="sar-source-status is-review"
+          title={t('结果已过期，仅供历史核对；禁止续跑或作为当前结论。')}
+        >
+          {t('历史研究')}
         </output>
       )}
       <MutationNotice mutation={mutation} disabled={!ready} />
@@ -139,14 +148,17 @@ export function StudyResults({
       {overview.data && job.data?.status === 'complete' && (
         <>
           <div className="sar-report-context">
-            <span className="sar-research-label">{t('研究候选 · 非实验验收')}</span>
-            {dataset.source_kind === 'project' && (
-              <SourceAcceptance source={overview.data.report.source_acceptance} />
-            )}
-            {overview.data.report.warnings.length > 0 && (
-              <StudyLimitations warnings={overview.data.report.warnings} />
-            )}
+            <span className="sar-research-label" title={t('研究候选 · 非实验验收')}>
+              {t('研究预览')}
+            </span>
           </div>
+          {infoOpen && (
+            <StudyReportInfo
+              report={overview.data.report}
+              historical={!current}
+              onClose={() => setInfoOpen(false)}
+            />
+          )}
           <StudyReportView
             report={overview.data.report}
             dataset={dataset}
@@ -156,28 +168,40 @@ export function StudyResults({
         </>
       )}
       <div className="sar-actions">
-        {(['csv', 'json', 'sdf', 'html'] as const).map((format) => (
-          <button
-            key={format}
-            type="button"
-            disabled={!ready || job.data?.status !== 'complete' || exporting.busy}
-            onClick={() => {
-              controller.current?.abort();
-              const read = new AbortController();
-              controller.current = read;
-              void exporting.run(
-                () => sarStudyApi.export(jobId, format, read.signal),
-                (blob) =>
-                  downloadSAR(
-                    blob,
-                    'sar-study-' + jobId.replace(/[^a-zA-Z0-9_-]/g, '_') + '.' + format,
-                  ),
-              );
-            }}
-          >
-            {t('导出报告 {format}', { format: format.toUpperCase() })}
-          </button>
-        ))}
+        <label className="sr-only" htmlFor={'sar-export-' + jobId}>
+          {t('导出格式')}
+        </label>
+        <select
+          id={'sar-export-' + jobId}
+          value={format}
+          onChange={(e) => setFormat(e.target.value as typeof format)}
+        >
+          {(['csv', 'json', 'sdf', 'html'] as const).map((value) => (
+            <option key={value} value={value}>
+              {value.toUpperCase()}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          aria-label={t('导出报告 {format}', { format: format.toUpperCase() })}
+          disabled={!ready || job.data?.status !== 'complete' || exporting.busy}
+          onClick={() => {
+            controller.current?.abort();
+            const read = new AbortController();
+            controller.current = read;
+            void exporting.run(
+              () => sarStudyApi.export(jobId, format, read.signal),
+              (blob) =>
+                downloadSAR(
+                  blob,
+                  'sar-study-' + jobId.replace(/[^a-zA-Z0-9_-]/g, '_') + '.' + format,
+                ),
+            );
+          }}
+        >
+          {t('导出')}
+        </button>
       </div>
       <MutationNotice mutation={exporting} />
     </section>

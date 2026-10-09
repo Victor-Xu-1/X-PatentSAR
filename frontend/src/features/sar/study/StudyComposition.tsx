@@ -85,7 +85,7 @@ export function StudyComposition({
           {t(unit === 'molecules' ? '来源记录' : '观察数')}
         </text>
       </svg>
-      <figcaption>{t('完整分布，缺失与冲突单独保留')}</figcaption>
+      <figcaption className="sr-only">{t('完整分布，缺失与冲突单独保留')}</figcaption>
     </figure>
   );
 }

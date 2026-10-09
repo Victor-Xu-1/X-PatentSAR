@@ -17,12 +17,6 @@ export function StudyLeads({
   const { t } = useTranslation();
   return (
     <div>
-      <p className="sar-hint">{t('候选是研究优先级，不是已验证先导药物；同组不伪造唯一排名。')}</p>
-      <details className="sar-compact">
-        <summary>{t('候选政策与并列处理')}</summary>
-        <p>{report.candidate_policy}</p>
-        <p>{t('优先组、Pareto 层与证据覆盖均由报告提供；缺失性质或预测不补值。')}</p>
-      </details>
       <div className="sar-card-grid sar-lead-grid">
         {report.candidates.map((row) => (
           <article className="sar-study-card sar-lead-card" key={row.molecule_id}>
@@ -39,7 +33,7 @@ export function StudyLeads({
               label={row.label}
               active={active && row.eligible}
             />
-            <RowFacts row={row} contexts={selectedContexts(report)} />
+            <RowFacts row={row} contexts={selectedContexts(report)} compact />
             <button type="button" onClick={() => onSource(row.molecule_id)}>
               {t('来源详情')}
             </button>

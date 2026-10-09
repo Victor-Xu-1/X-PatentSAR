@@ -62,16 +62,14 @@ export function SARPage({
     <div className="sar-page" hidden={!active}>
       <header className="sar-page-heading">
         <div>
-          <h1>{t('SAR 分析')}</h1>
-          <details className="sar-intro">
-            <summary>{t('方法与范围')}</summary>
-            <p>{t('按精确实验条件汇总系列证据；候选与片段结论仅供研究。')}</p>
-          </details>
+          <h1 className={jobId ? 'sr-only' : undefined}>{t('SAR 分析')}</h1>
         </div>
         <div className="sar-actions">
-          <button type="button" onClick={datasets.reload}>
-            {t('刷新')}
-          </button>
+          {!jobId && (
+            <button type="button" onClick={datasets.reload}>
+              {t('刷新')}
+            </button>
+          )}
           <button
             type="button"
             aria-expanded={importOpen}

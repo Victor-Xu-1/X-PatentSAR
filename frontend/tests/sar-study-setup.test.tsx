@@ -38,17 +38,18 @@ beforeEach(() => {
   });
   vi.spyOn(sarApi, 'drawing').mockResolvedValue(sarDrawing);
 });
-async function selectContext() {
+async function selectContext(review = true) {
   const check = await screen.findByRole('checkbox', { name: /IC50 原文.*raw assay/ });
   await userEvent.click(check);
   await userEvent.selectOptions(screen.getByLabelText('Activity direction'), 'lower');
+  if (review) await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 }
 describe('explicit full-study setup', () => {
   it('performs only GET on entry; accepts an overview without regions only after direction selection', async () => {
     render(<StudySetup {...props} />);
-    await screen.findByText('<10 · 5');
+    await screen.findByRole('checkbox', { name: /IC50 原文.*raw assay/ });
     expect(sarStudyApi.start).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: 'Run full study' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
     await selectContext();
     await userEvent.click(screen.getByRole('button', { name: 'Run full study' }));
     await waitFor(() => expect(props.onJob).toHaveBeenCalledWith(studyJob));
@@ -74,7 +75,7 @@ describe('explicit full-study setup', () => {
   });
   it('keeps source-owned condition and language drafts through failed/inactive reads, and disables until revalidated', async () => {
     const { rerender } = render(<StudySetup {...props} />);
-    await selectContext();
+    await selectContext(false);
     await userEvent.click(screen.getByText('Source grades (optional)'));
     const grades = screen.getByRole('textbox', { name: /Grade order/ });
     await userEvent.type(grades, 'Strong 原文\nWeak');
@@ -82,28 +83,29 @@ describe('explicit full-study setup', () => {
     rerender(<StudySetup {...props} active={false} />);
     expect(signal.aborted).toBe(true);
     expect(grades).toHaveValue('Strong 原文\nWeak');
-    expect(screen.getByRole('button', { name: 'Run full study' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
     vi.mocked(sarStudyApi.profile).mockRejectedValueOnce(new Error('profile 原文 unavailable'));
     rerender(<StudySetup {...props} />);
     expect(await screen.findByRole('alert')).toHaveTextContent('profile 原文 unavailable');
     await act(() => setLocale('zh-CN'));
     expect(screen.getByRole('textbox', { name: /等级顺序/ })).toBe(grades);
-    expect(screen.getByRole('button', { name: '运行完整研究' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '下一步' })).toBeDisabled();
     await userEvent.click(screen.getByRole('button', { name: '重新加载' }));
-    await waitFor(() => expect(screen.getByRole('button', { name: '运行完整研究' })).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole('button', { name: '下一步' })).toBeEnabled());
     expect(sarStudyApi.start).not.toHaveBeenCalled();
   });
   it('requires unique source grades without numeric overrides and keeps saved core and variable IDs distinct', async () => {
     render(<StudySetup {...props} />);
-    await selectContext();
+    await selectContext(false);
     await userEvent.click(screen.getByText('Source grades (optional)'));
     const grade = screen.getByRole('textbox', { name: /Grade order/ });
     await userEvent.type(grade, 'Strong\nStrong');
     expect(
       screen.queryByLabelText('Strong-activity threshold (optional, raw value)'),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Run full study' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
     await userEvent.clear(grade);
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
     await userEvent.click(screen.getByText(/Confirmed cores \(optional\)/));
     await userEvent.click(screen.getByRole('checkbox', { name: /Core 原文/ }));
     await userEvent.click(screen.getByText(/Variable regions \(optional\)/));
@@ -153,7 +155,7 @@ describe('explicit full-study setup', () => {
       .spyOn(sarApi, 'saveRegion')
       .mockResolvedValue({ ...coreRegion, atom_indices: [1], name: 'Core 用户' });
     render(<StudySetup {...props} />);
-    await screen.findByText('<10 · 5');
+    await selectContext();
     await userEvent.click(screen.getByText('Add a named selection'));
     await userEvent.click(await screen.findByRole('button', { name: 'Reference' }));
     fireEvent.load(await screen.findByRole('img', { name: 'RDKit reference drawing' }));

@@ -7,21 +7,6 @@
   font-size: 12px;
   color: var(--muted);
 }
-.sar-report-context .sar-source-acceptance {
-  margin: 0;
-}
-.sar-report-context .sar-source-acceptance small {
-  display: none;
-}
-.sar-report-context .sar-source-acceptance details {
-  flex-basis: auto;
-}
-.sar-report-context .sar-study-limitations {
-  margin: 0;
-}
-.sar-report-context details[open] {
-  flex-basis: 100%;
-}
 .sar-report-context .sar-research-label {
   color: var(--muted);
 }

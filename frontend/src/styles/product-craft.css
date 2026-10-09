@@ -166,11 +166,6 @@
 .sar-source-detail > .sar-section-heading {
   margin-bottom: 14px;
 }
-.sar-page > .sar-page-heading .sar-intro {
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 5px;
-}
 @media (max-width: 700px) {
   .management-page {
     padding-inline: 8px;

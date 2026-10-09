@@ -48,6 +48,8 @@ describe('complete study report and lifecycle', () => {
   it('distinguishes all checked attempts, actual matches, comparable evidence and observed compounds vs observations', async () => {
     render(<StudyResults {...props} />);
     await screen.findByText(studyReport.title);
+    expect(screen.queryByText('Comparisons checked')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Details' }));
     const checked = screen.getByText('Comparisons checked').closest('div')!;
     expect(within(checked).getByText('2')).toBeVisible();
     expect(
@@ -56,6 +58,7 @@ describe('complete study report and lifecycle', () => {
     expect(
       within(screen.getByText('Comparable comparisons').closest('div')!).getByText('1'),
     ).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: 'Close dialog' }));
     // A retained pre-conservation report must not be rendered as a disjoint
     // molecular population. Raw observations remain readable and unchanged.
     expect(screen.getByRole('meter', { name: '<10 · Observations' })).toHaveAttribute('value', '2');
@@ -97,14 +100,23 @@ describe('complete study report and lifecycle', () => {
     expect(within(screen.getByRole('region', { name: 'Leads' })).getAllByText('<10')).toHaveLength(
       2,
     );
+    expect(screen.queryByText('Evidence coverage')).not.toBeInTheDocument();
+    expect(screen.queryByText('Properties and captured predictions')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Details' }));
     await userEvent.click(screen.getByText('Candidate policy and ties'));
     expect(screen.getByText('strict-context-pareto-v1')).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: 'Close dialog' }));
+    await userEvent.click(
+      within(screen.getByRole('region', { name: 'Leads' })).getByRole('button', {
+        name: 'Source details',
+      }),
+    );
     await userEvent.click(screen.getByText('Properties and captured predictions'));
     for (const value of screen.getAllByText(/120.00/)) expect(value).toBeVisible();
     expect(screen.getByText('0.24')).toBeVisible();
     expect(screen.getByText('Manually left empty')).toBeVisible();
     expect(screen.getByText(/manual_null/)).not.toBeVisible();
-    const lead = within(screen.getByRole('region', { name: 'Leads' }));
+    const lead = within(screen.getByRole('complementary', { name: 'Source details' }));
     await userEvent.click(lead.getByText('Evidence basis'));
     await userEvent.click(lead.getByText('Technical evidence'));
     expect(lead.getByText(/manual_null/)).toBeVisible();
@@ -123,6 +135,7 @@ describe('complete study report and lifecycle', () => {
         'The full report is published only after completion. Partial progress is not a scientific conclusion.',
       );
       expect(sarStudyApi.overview).not.toHaveBeenCalled();
+      await userEvent.selectOptions(screen.getByLabelText('Export format'), 'json');
       expect(screen.getByRole('button', { name: 'Export report JSON' })).toBeDisabled();
       if (status === 'failed')
         expect(await screen.findByRole('alert')).toHaveTextContent('sar_attempt_budget');
@@ -157,6 +170,7 @@ describe('complete study report and lifecycle', () => {
     );
     render(<StudyResults {...props} />);
     for (const format of ['CSV', 'JSON', 'SDF', 'HTML']) {
+      await userEvent.selectOptions(screen.getByLabelText('Export format'), format.toLowerCase());
       const button = await screen.findByRole('button', { name: 'Export report ' + format });
       await waitFor(() => expect(button).toBeEnabled());
       await userEvent.click(button);

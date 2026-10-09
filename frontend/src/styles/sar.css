@@ -257,10 +257,6 @@
   font-size: 13px;
   line-height: 1.65;
 }
-.sar-intro {
-  max-width: 850px;
-  line-height: 1.7;
-}
 .sar-panel {
   background: var(--surface);
   border: 1px solid var(--line);

@@ -15,6 +15,13 @@ The reference article's private algorithms are not represented as reproduced.
   interface language. English is the fresh-visit default; saved choices are retained.
 - Complete SAR results start at results, with intake collapsed. Intake drafts remain
   mounted and are revealed only by an explicit action or a new dataset context.
+- SAR tasks use three concise milestones: data, activity, analyze. Activity choices
+  precede the review/run step. Back and language changes preserve drafts; only the
+  existing explicit submit creates a study. Regions remain optional, not a second queue.
+- Result previews prioritize structures, measured values, distributions and tables.
+  One details dialog owns technical counts, source QA and limitations. Candidate
+  cards show chemistry, raw activity and six properties; provenance stays available
+  through source selection. A single format selector preserves all four exports.
 - A region click selects a recorded region. Modification preview reads a published
   strict comparison and rechecks its immutable full graph and attachment mapping.
   It does not design a molecule, rerun extraction or call a model.
@@ -43,7 +50,7 @@ screen as the finished page. A screenshot alone proves neither computation nor a
 | Private LLM settings | API configuration, consent, key replacement, synthetic test | disabled/unconfigured, nonsecret draft, validation/conflict, no unsolicited call |
 | Evidence summary | counts, measured assay records, source links, issues | loaded, no data, genuine error, collapsed technical detail |
 | SAR intake | extracted snapshot, CSV preview and explicit column mapping | new intake, complete-result route, preserved draft, validation/import conflict |
-| SAR setup | context/policy selection, original reference, atom/port selection | unselected, named multi-regions, saved region, ambiguous/invalid selection |
+| SAR setup | guided activity/review steps, context/policy selection, original reference, atom/port selection | unselected/continue disabled, back/draft/focus preservation, named multi-regions, saved region, ambiguous/invalid selection |
 | SAR overview | independent counts and distributions, counting units | source rows vs eligible molecules vs observations, grades/intervals, missing values |
 | SAR scaffolds | descriptive cores and members, original structures | one/multiple cores, paging, original-source selection; not strict proof by itself |
 | SAR candidates | raw measured contexts, six captured properties, prediction provenance | real candidates, tied evidence, missing/predicted facts, no fabricated score |
