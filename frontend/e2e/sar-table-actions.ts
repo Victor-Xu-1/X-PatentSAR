@@ -8,7 +8,7 @@ export async function checkStudyTableControls(page: Page, report: Locator, width
   const options = view.getByRole('button', { name: 'Filters and sort', exact: true });
   const search = view.getByRole('searchbox', { name: 'Search identifiers or SMILES', exact: true });
   await expect(options).toHaveAttribute('aria-expanded', 'false');
-  await expect(view.getByLabel('Row scope', { exact: true })).not.toBeVisible();
+  await expect(view.getByRole('combobox', { name: 'Row scope', exact: true })).not.toBeVisible();
   await expect(view.locator('.sar-hint')).toHaveCount(0);
   expect(
     await table.locator('th,td').evaluateAll((cells) =>
@@ -26,33 +26,39 @@ export async function checkStudyTableControls(page: Page, report: Locator, width
     ).toBeLessThan(50);
 
   await options.click();
-  await view.getByLabel('Sort (all study rows)', { exact: true }).selectOption('label');
-  await view.getByLabel('Sort direction', { exact: true }).selectOption('desc');
+  await view
+    .getByRole('combobox', { name: 'Sort (all study rows)', exact: true })
+    .selectOption('label');
+  await view.getByRole('combobox', { name: 'Sort direction', exact: true }).selectOption('desc');
   await expect(table.getByRole('rowheader').first()).toHaveText('Example 16');
   await search.fill('Example 2');
   await expect(table.locator('tbody tr')).toHaveCount(1);
   await expect(table.getByRole('rowheader')).toHaveText('Example 2');
   await options.click();
-  await expect(view.getByLabel('Sort direction', { exact: true })).not.toBeVisible();
+  await expect(
+    view.getByRole('combobox', { name: 'Sort direction', exact: true }),
+  ).not.toBeVisible();
   await expect(options).toHaveText(/1$/);
 
   const columns = view.getByRole('button', { name: 'Column settings', exact: true });
   await columns.click();
   const chooser = page.getByRole('dialog', { name: 'Column settings', exact: true });
-  await chooser.getByRole('checkbox', { name: 'Show column MW', exact: true }).uncheck();
+  await chooser.getByRole('checkbox', { name: /^Show column MW · Dalton$/ }).uncheck();
   await page.keyboard.press('Escape');
   await expect(columns).toBeFocused();
   await expect(table.getByRole('columnheader', { name: 'MW', exact: true })).toHaveCount(0);
 
   await options.click();
-  await expect(view.getByLabel('Sort direction', { exact: true })).toHaveValue('desc');
+  await expect(view.getByRole('combobox', { name: 'Sort direction', exact: true })).toHaveValue(
+    'desc',
+  );
   await view.getByRole('button', { name: 'Reset filters and sort', exact: true }).click();
   await expect(search).toHaveValue('Example 2');
   await expect(table.getByRole('columnheader', { name: 'MW', exact: true })).toHaveCount(0);
   await options.click();
   await expect(options).not.toHaveAttribute('data-active');
   await columns.click();
-  await chooser.getByRole('checkbox', { name: 'Show column MW', exact: true }).check();
+  await chooser.getByRole('checkbox', { name: /^Show column MW · Dalton$/ }).check();
   await page.keyboard.press('Escape');
   await expect(table.getByRole('columnheader', { name: 'MW', exact: true })).toBeVisible();
   await search.fill('No source match 原文');
