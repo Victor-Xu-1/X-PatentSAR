@@ -127,9 +127,6 @@
   min-height: 36px;
   font-size: 12px;
 }
-.sar-fragment-strip .sar-composition-stack {
-  height: 104px;
-}
 .sar-region-explorer .sar-fragment-strip .sar-study-image {
   height: 130px;
   display: grid;

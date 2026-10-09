@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+from xml.etree import ElementTree
 
 import test_sar_api as support
 from test_sar_api import ROOT, nonce
@@ -142,6 +143,21 @@ class SARStudyAPITests(WebFixture, unittest.TestCase):
             )
             self.assertEqual(drawing.status_code, 200, drawing.text)
             self.assertIn("</svg>", drawing.json()["svg"])
+            fragment = report["regions"][0]["fragments"][0]
+            fragment_drawing = client.get(
+                path + "/drawing",
+                params={
+                    "kind": "fragment",
+                    "identifier": fragment["id"],
+                    "region_id": first["id"],
+                },
+            )
+            self.assertEqual(fragment_drawing.status_code, 200, fragment_drawing.text)
+            self.assertEqual(
+                ElementTree.fromstring(fragment_drawing.json()["svg"]).get("viewBox"),
+                "0 0 360 240",
+            )
+            self.assertEqual(client.get(path + "/export?format=json").json(), full)
             repeat = client.post(prefix + "/studies", json=body)
             self.assertEqual(repeat.json()["id"], job["id"])
             self.assertEqual(

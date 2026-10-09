@@ -133,7 +133,11 @@ for (const width of [390, 800, 1672]) {
             view.locator('.sar-study-image, .sar-reference-map-image').evaluateAll((figures) =>
               figures.every((figure) => {
                 const image = figure.querySelector('img');
-                return image?.complete && image.naturalWidth > 0;
+                return (
+                  image?.complete &&
+                  image.naturalWidth > 0 &&
+                  !figure.querySelector('.feedback.loading')
+                );
               }),
             ),
           { timeout: 20000 },
@@ -160,6 +164,29 @@ for (const width of [390, 800, 1672]) {
         }),
       );
       expect(maps).toBe(true);
+      if (tab === 'Variable regions' || tab === 'Fragment summary') {
+        const fragments = await view.locator('.sar-fragment-strip article').evaluateAll((cards) =>
+          cards.map((card) => {
+            const stack = card.querySelector('.sar-composition-stack')!;
+            const svg = decodeURIComponent(
+              card.querySelector('img')!.src.split(',').slice(1).join(','),
+            );
+            return {
+              height: stack.getBoundingClientRect().height,
+              direction: getComputedStyle(stack).flexDirection,
+              canvas: new DOMParser()
+                .parseFromString(svg, 'image/svg+xml')
+                .documentElement.getAttribute('viewBox'),
+            };
+          }),
+        );
+        expect(fragments.length).toBeGreaterThan(0);
+        for (const fragment of fragments) {
+          expect(fragment.height).toBeLessThanOrEqual(14);
+          expect(fragment.direction).toBe('row');
+          expect(fragment.canvas).toBe('0 0 360 240');
+        }
+      }
       if (tab === 'Leads') {
         // The strongest candidate can contain Br rather than Cl. Check the
         // actual candidate gallery, without forcing its scientific ordering.

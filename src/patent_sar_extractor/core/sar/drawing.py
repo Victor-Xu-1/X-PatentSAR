@@ -12,6 +12,7 @@ from .errors import SARInputError
 from .molecules import depict, read_molfile
 
 WIDTH, HEIGHT = 1000, 800
+FRAGMENT_CANVAS = (360, 240)
 
 
 def draw_structure(
@@ -30,10 +31,13 @@ def draw_fragment(smiles: str) -> str:
         mol = Chem.MolFromSmiles(smiles)
     if mol is None or not 1 <= mol.GetNumAtoms() <= 512:
         raise SARInputError("fragment_drawing_invalid")
-    return _draw(mol, [])["svg"]
+    return _draw(mol, [], canvas=FRAGMENT_CANVAS)["svg"]
 
 
-def _draw(mol, highlighted_atoms: list[int]) -> dict[str, Any]:
+def _draw(
+    mol, highlighted_atoms: list[int], *, canvas: tuple[int, int] = (WIDTH, HEIGHT)
+) -> dict[str, Any]:
+    width, height = canvas
     if any(
         type(index) is not int or not 0 <= index < mol.GetNumAtoms()
         for index in highlighted_atoms
@@ -45,7 +49,7 @@ def _draw(mol, highlighted_atoms: list[int]) -> dict[str, Any]:
             drawing = rdMolDraw2D.PrepareMolForDrawing(
                 mol, addChiralHs=False, wedgeBonds=True, forceCoords=False
             )
-            drawer = rdMolDraw2D.MolDraw2DSVG(WIDTH, HEIGHT)
+            drawer = rdMolDraw2D.MolDraw2DSVG(width, height)
             # Native drawing-option properties have incomplete SDK annotations.
             options: Any = drawer.drawOptions()
             options.padding = 0.08
@@ -66,7 +70,7 @@ def _draw(mol, highlighted_atoms: list[int]) -> dict[str, Any]:
             atoms = []
             for atom in mol.GetAtoms():
                 point = drawer.GetDrawCoords(atom.GetIdx())
-                x, y = point.x / WIDTH, point.y / HEIGHT
+                x, y = point.x / width, point.y / height
                 if not all(math.isfinite(v) and 0 <= v <= 1 for v in (x, y)):
                     raise SARInputError("drawing_coordinates_invalid")
                 atoms.append(
