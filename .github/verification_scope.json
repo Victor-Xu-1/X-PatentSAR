@@ -33,9 +33,12 @@
     "frontend/tests/setup.ts",
     "frontend/tests/structure-conversion.test.ts",
     "frontend/tests/visual-sidecar-pages.test.tsx",
-    "src/patent_sar_extractor/contracts.py"
+    "src/patent_sar_extractor/contracts.py",
+    "tests/test_sar_browser_fixture.py",
+    "tools/browser_fixture_mode.py"
   ],
   "python_modules": [
+    "tests.test_sar_browser_fixture",
     "tests.test_product_version_compatibility",
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"

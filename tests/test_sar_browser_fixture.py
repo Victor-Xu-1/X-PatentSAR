@@ -13,6 +13,25 @@ from tools.prepare_browser_fixture import prepare
 
 
 class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
+    def test_ui_recovery_scope_uses_imported_synthetic_source_without_extraction(self):
+        self.assertEqual(
+            fixture_mode(
+                {
+                    PREFIX + "correction-response.spec.ts",
+                    PREFIX + "expert-controls.spec.ts",
+                    PREFIX + "expert-visual.spec.ts",
+                    PREFIX + "product-version.spec.ts",
+                }
+            ),
+            "sar",
+        )
+        self.assertEqual(
+            fixture_mode(
+                {PREFIX + "expert-visual.spec.ts", PREFIX + "expert-controls.spec.ts"}
+            ),
+            "read-only",
+        )
+
     def test_selected_scope_chooses_sar_without_changing_other_fixture_modes(self):
         self.assertEqual(fixture_mode({PREFIX + "sar-workbench.spec.ts"}), "sar")
         self.assertEqual(fixture_mode({PREFIX + "sar-study.spec.ts"}), "sar")

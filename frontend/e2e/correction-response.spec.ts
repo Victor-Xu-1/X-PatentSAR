@@ -47,6 +47,6 @@ test('committed correction with a lost server response is recovered by reading, 
   await expect(dialog).toHaveCount(0);
   const recovered = await (await page.request.get(endpoint)).json();
   expect(recovered.revision).toBe(original.revision + 1);
-  expect(recovered.values.activities[0].value).toBe('31');
+  expect(recovered.values.activities[0].value).toBe(31);
   expect(puts).toBe(1);
 });
