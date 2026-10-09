@@ -24,6 +24,12 @@ The reference article's private algorithms are not represented as reproduced.
   One details dialog owns technical counts, source QA and limitations. Candidate
   cards show chemistry, raw activity and six properties; provenance stays available
   through source selection. A single format selector preserves all four exports.
+- The SAR activity table starts with one search/columns/options toolbar. Secondary
+  filters and sorting are disclosed explicitly; hiding options preserves their
+  controlled values and shows the active-option count. Reset changes only those
+  filters/sort, not the source search or column visibility. Existing server-side
+  query, paging and complete-report export authorities remain unchanged. Preview
+  cells are centered; generic pair-table alignment cannot override study tables.
 - A region click selects a recorded region. Modification preview reads a published
   strict comparison and rechecks its immutable full graph and attachment mapping.
   It does not design a molecule, rerun extraction or call a model.

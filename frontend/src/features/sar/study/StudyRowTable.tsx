@@ -88,7 +88,7 @@ export function StudyRowTable({
           title={row.reasons.join(' · ')}
           onClick={() => onSource(row.molecule_id, row)}
         >
-          {t(candidateLabels[row.candidate_status])}
+          <span>{t(candidateLabels[row.candidate_status])}</span>
           {row.priority_group !== null && <small> · {row.priority_group}</small>}
         </button>
       );

@@ -225,8 +225,6 @@ export const sar: Record<string, string> = {
   研究行范围: 'Row scope',
   全部研究行: 'All rows',
   研究片段: 'Fragment',
-  '按原始编号自然顺序；筛选和分页由服务器执行，导出保留全部报告。':
-    'Natural source-identifier order. Filtering and pagination run on the server; export retains the full report.',
   研究结构: 'Structure',
   研究候选状态: 'Candidate status',
   '完整报告仅在任务完成后发布；部分进度不是科学结论。':
@@ -408,6 +406,10 @@ export const sar: Record<string, string> = {
   'SAR 操作已完成。': 'The SAR operation completed.',
   '正在保存…': 'Saving…',
   '正在导出…': 'Exporting…',
+  筛选与排序: 'Filters and sort',
+  重置筛选与排序: 'Reset filters and sort',
+  表格选项: 'Table options',
+  '已启用 {count} 项表格选项': '{count} active table options',
   '来源数据未经翻译；问题代码与原始原因保留服务器原文。':
     'Source data is not translated. Issue codes and original reasons retain the server text.',
 };
