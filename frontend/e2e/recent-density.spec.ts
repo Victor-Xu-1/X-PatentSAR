@@ -20,12 +20,14 @@ for (const width of [390, 800, 1672]) {
     expect(sourceId).toBeTruthy();
     const source = await page.request.get('/api/v1/projects/' + sourceId);
     expect(source.status()).toBe(200);
-    const { title, updated_at } = await source.json();
+    const { title, updated_at, pdf } = await source.json();
     const open = page.getByRole('button', { name: 'Open ' + title, exact: true });
     await expect(open).toBeVisible();
     await expect(open.locator('strong')).toHaveText(title);
     await expect(open.locator('time')).toHaveAttribute('datetime', updated_at);
-    await expect(open).toHaveAccessibleDescription(/Original PDF not provided/);
+    await expect(open).toHaveAccessibleDescription(
+      new RegExp(pdf.available ? `Pages: ${pdf.page_count} ` : 'Original PDF not provided '),
+    );
     const layout = await open.evaluate((button) => {
       const title = button.querySelector('.recent-file-name')!;
       const row = button.closest('.recent-file-row')!;
