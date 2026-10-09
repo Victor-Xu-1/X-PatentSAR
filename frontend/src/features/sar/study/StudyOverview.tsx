@@ -2,6 +2,7 @@ import type { StudyReport } from '../../../api/sarStudyTypes';
 import { useTranslation } from '../../../i18n';
 import { StudyBars } from './StudyBars';
 import { contextLabel } from './policyDraft';
+import { StudyPolicyNote, hasStrongRule } from './StudyPolicyNote';
 export function StudyOverview({ report }: { report: StudyReport }) {
   const { t } = useTranslation();
   return (
@@ -50,13 +51,19 @@ export function StudyOverview({ report }: { report: StudyReport }) {
                 countingContract={report.counting_contract}
                 direction={policy?.direction}
               />
+              <StudyPolicyNote policy={policy} context={context} />
               <p>
-                {t('已观察 {observed} · 缺失 {missing} · 未确定 {unresolved} · 强活性 {strong}', {
+                {t('已观察 {observed} · 缺失 {missing} · 未确定 {unresolved}', {
                   observed: distribution.observed_molecules,
                   missing: distribution.missing_molecules,
                   unresolved: distribution.unresolved_molecules,
-                  strong: distribution.strong_molecules,
                 })}
+                {hasStrongRule(policy) && (
+                  <>
+                    {' '}
+                    · {t('强活性')} {distribution.strong_molecules}
+                  </>
+                )}
               </p>
               <small>
                 {t('{molecules} 个分子 · {observations} 条观察', {

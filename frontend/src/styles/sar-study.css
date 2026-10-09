@@ -304,7 +304,7 @@
   font-size: 11px;
 }
 .sar-lead-grid {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 390px), 1fr));
 }
 .sar-lead-heading {
   display: flex;
@@ -324,13 +324,29 @@
   margin: 0;
 }
 .sar-lead-card .sar-study-image {
-  height: 210px;
+  height: 240px;
   display: grid;
   align-items: center;
   margin-block: 12px 18px;
 }
 .sar-lead-card .sar-study-image img {
-  max-height: 210px;
+  max-height: 240px;
+}
+.sar-policy-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  margin: 12px 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.sar-policy-note > strong {
+  color: var(--ink);
+  font-weight: 500;
+}
+.sar-overview-charts > article {
+  box-shadow: none;
 }
 .sar-lead-card .sar-facts dd small {
   display: block;

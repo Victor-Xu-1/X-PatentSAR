@@ -8,6 +8,7 @@ import { ChartLegend } from './StudyComposition';
 import { StudyRegionMap } from './StudyRegionMap';
 import type { CountingUnit } from './chartPresentation';
 import { TransformationPreview } from './TransformationPreview';
+import { StudyPolicyNote, hasStrongRule } from './StudyPolicyNote';
 function FragmentCard({
   fragment,
   index,
@@ -52,12 +53,14 @@ function FragmentCard({
         label={fragment.smiles}
         active={active}
       />
-      <p>
-        {t('强活性 {strong}/{total}', {
-          strong: fragment.strong_count,
-          total: fragment.molecule_count,
-        })}
-      </p>
+      {hasStrongRule(report.policies[0]) && (
+        <p>
+          {t('强活性 {strong}/{total}', {
+            strong: fragment.strong_count,
+            total: fragment.molecule_count,
+          })}
+        </p>
+      )}
       <p>
         {t('更强 {better} · 更弱 {worse} · 未确定 {indeterminate} · 缺失 {missing}', {
           better: fragment.better,
@@ -141,6 +144,11 @@ function RegionGroup({
         {t('可比较数量')} {summary.comparable}
       </p>
       {summary.no_variation && <output>{t('该区域没有观察到结构变化。')}</output>}
+      <StudyPolicyNote
+        policy={report.policies[0]}
+        context={report.contexts.find((context) => context.id === report.policies[0]?.context_id)}
+        primary
+      />
       <div className="sar-fragment-controls">
         <label>
           {t('统计单位')}
@@ -186,7 +194,17 @@ function RegionGroup({
         bins={report.distributions[0]?.bins ?? []}
         direction={report.policies[0]?.direction}
       />
-      {!fragments.length && <p>{t(strongest ? '无强活性支持片段' : '无片段记录')}</p>}
+      {!fragments.length && (
+        <p>
+          {t(
+            strongest && !hasStrongRule(report.policies[0])
+              ? '未定义强活性分档'
+              : strongest
+                ? '无强活性支持片段'
+                : '无片段记录',
+          )}
+        </p>
+      )}
       <GroupPager page={page} total={fragments.length} size={6} onPage={setPage} />
     </article>
   );

@@ -103,6 +103,8 @@ for (const width of [390, 800, 1672]) {
       await report.getByRole('button', { name: tab, exact: true }).click();
       const view = report.getByRole('region', { name: tab, exact: true });
       await expect(view).toBeVisible();
+      if (['Overview', 'Scaffolds', 'Variable regions', 'Fragment summary'].includes(tab))
+        await expect(view.locator('.sar-policy-note').first()).toContainText('Strong ≤ 2 nM');
       if (tab === 'Activity table') await expect(view.locator('tbody tr')).toHaveCount(5);
       const contained = await view.locator('.sar-composition-donut').evaluateAll((figures) =>
         figures.every((figure) => {

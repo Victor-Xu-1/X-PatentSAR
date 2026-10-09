@@ -53,6 +53,16 @@ screen as the finished page. A screenshot alone proves neither computation nor a
 
 ## Verification boundaries
 
+Publication-grade readability follows the principles in
+[Nature's figure specifications](https://research-figure-guide.nature.com/figures/preparing-figures-our-specifications/)
+and [panel guidance](https://research-figure-guide.nature.com/figures/building-and-exporting-figure-panels/):
+clear units, original labels, restrained colors with redundant meanings, sufficient
+structure space, consistent type, honest counts and no ornamental chart shadows.
+Physical manuscript point sizes are not applied to screen UI. This is not a claim
+that a browser screenshot satisfies a particular journal's editable-artwork submission.
+Strength captions come from captured study policy, never guessed patent thresholds;
+an absent rule is unclassified, not observed zero strong activity.
+
 Run only explicit changed-module and direct-consumer checks from
 `.github/verification_scope.json`. Browser writes use isolated controller-owned
 fixtures or copies, never production tasks. Real completed tasks are used read-only

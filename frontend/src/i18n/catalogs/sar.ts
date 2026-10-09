@@ -1,5 +1,13 @@
 /** UI copy only; source labels, grade values, issues and experiment data stay raw. */
 export const sar: Record<string, string> = {
+  研究规则: 'Research rule',
+  分档从强到弱: 'Grades, strongest first',
+  值越低活性越强: 'Lower is stronger',
+  值越高活性越强: 'Higher is stronger',
+  '强活性 {rule}': 'Strong {rule}',
+  未定义强活性分档: 'Strong activity not classified',
+  '已观察 {observed} · 缺失 {missing} · 未确定 {unresolved}':
+    'Observed {observed} · Missing {missing} · Unresolved {unresolved}',
   '已有 ADMET 预测': 'Captured ADMET predictions',
   预测指标: 'Predicted endpoint',
   '模型预测与实验活性分开，不把缺失当安全。':
