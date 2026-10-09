@@ -4,6 +4,7 @@ import type {
   EnvironmentComponentId,
   EnvironmentComponentStatus,
 } from '../api/environmentTypes';
+import { environmentComponentIds } from '../api/environmentTypes';
 import { environmentStatusLabels, selectedEnvironmentComponents } from './environment';
 
 export function isEnvironmentComponentReady(component: EnvironmentComponent): boolean {
@@ -12,6 +13,23 @@ export function isEnvironmentComponentReady(component: EnvironmentComponent): bo
     component.presence === 'present' &&
     component.verification === 'current'
   );
+}
+
+/** Unknown and stale checks are not missing installations or verified readiness. */
+export function environmentReadiness(components: readonly EnvironmentComponent[]) {
+  return {
+    ready: components.filter(isEnvironmentComponentReady).length,
+    provided: components.length,
+    total: environmentComponentIds.length,
+    needsCheck: components.filter(
+      (component) =>
+        component.status === 'checking' ||
+        (!['missing', 'unconfigured'].includes(component.presence) &&
+          (component.verification !== 'current' ||
+            component.presence === 'unknown' ||
+            component.status === 'unchecked')),
+    ).length,
+  };
 }
 
 function hasMissingDependencies(component: EnvironmentComponent): boolean {

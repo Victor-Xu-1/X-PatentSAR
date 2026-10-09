@@ -1,8 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import type { CoreStageName, Job } from '../src/api/types';
 import { StageStrip } from '../src/features/jobs/StageStrip';
 import { workflowGroups } from '../src/model/workflowGroups';
+import { WorkflowGroups } from '../src/features/jobs/WorkflowGroups';
+import { setLocale } from '../src/i18n';
 import { job } from './fixtures';
 
 const sourceOrder: CoreStageName[] = [
@@ -16,6 +18,7 @@ const sourceOrder: CoreStageName[] = [
   'qa',
 ];
 const sourceJob: Job = { ...job, stage_order: sourceOrder, include_admet: true };
+beforeEach(() => setLocale('zh-CN'));
 
 describe('Evidence Studio groups are a view of the recorded chain', () => {
   it('groups the source-first chain without putting post-core properties before QA', () => {
@@ -100,6 +103,18 @@ describe('Evidence Studio groups are a view of the recorded chain', () => {
 });
 
 describe('readable workflow disclosure', () => {
+  it('shows short English labels while preserving complete stage meaning and recorded order', () => {
+    setLocale('en');
+    const { container } = render(<WorkflowGroups job={sourceJob} />);
+    for (const label of ['Parse', 'Structure', 'Activity', 'Validate'])
+      expect(screen.getByText(label, { exact: true })).toBeVisible();
+    const groups = workflowGroups(sourceJob);
+    expect(groups.flatMap((group) => group.names)).toEqual([...sourceOrder, 'admet']);
+    for (const [index, element] of [...container.querySelectorAll('.workflow-group')].entries()) {
+      expect(element.getAttribute('aria-label')).toContain(groups[index]!.label);
+      expect(element.getAttribute('title')).toBe(groups[index]!.description);
+    }
+  });
   it('opens real stage details, closes with Escape and returns keyboard focus', () => {
     render(<StageStrip job={sourceJob} compact />);
     const trigger = screen.getByLabelText('提取阶段详情');

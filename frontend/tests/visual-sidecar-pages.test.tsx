@@ -148,7 +148,9 @@ describe('bounded visual sidecar page contracts', () => {
       />,
     );
     expect(screen.getAllByRole('region', { name: '完整运行环境' })).toHaveLength(1);
-    expect(screen.getByText('已就绪 6/6')).toBeVisible();
+    expect(
+      screen.getByText(`已就绪 ${catalog.components.length}/${catalog.components.length}`),
+    ).toBeVisible();
     expect(container.querySelectorAll('.environment-overview-icon.is-ready')).toHaveLength(1);
     expect(screen.getByRole('button', { name: '环境已就绪' })).toBeDisabled();
     expect(screen.queryByRole('button', { name: '一键部署全部环境' })).not.toBeInTheDocument();
@@ -186,16 +188,17 @@ describe('bounded visual sidecar page contracts', () => {
   it('keeps unavailable and active-operation overview actions disabled without extra variants', () => {
     const onSetup = vi.fn();
     const onInspect = vi.fn();
+    const catalog = completeEnvironmentCatalog();
     render(
       <EnvironmentOverview
-        catalog={completeEnvironmentCatalog()}
+        catalog={catalog}
         disabled
         onSetup={onSetup}
         onInspect={onInspect}
         onDetails={vi.fn()}
       />,
     );
-    expect(screen.getByText('已就绪 0/6')).toBeVisible();
+    expect(screen.getByText(`已就绪 0/${catalog.components.length}`)).toBeVisible();
     expect(screen.getAllByRole('region', { name: '完整运行环境' })).toHaveLength(1);
     expect(screen.getByRole('button', { name: '一键部署全部环境' })).toBeDisabled();
     expect(screen.getByRole('button', { name: '检测全部组件' })).toBeDisabled();

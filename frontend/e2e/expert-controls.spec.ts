@@ -112,7 +112,7 @@ test('drawing transport failure is localized once, keeps saving blocked and neve
   const dialog = page.getByRole('dialog', { name: /^Correction/ });
   const alert = dialog.getByRole('alert');
   await expect(alert).toHaveText(
-    'The connection was interrupted and the write result is unknown. Refresh the state before deciding whether to submit again.',
+    'Cannot connect to the API. Check the service address and reload.',
   );
   await expect(alert).toHaveCount(1);
   await expect(dialog.getByRole('button', { name: 'Save correction', exact: true })).toBeDisabled();

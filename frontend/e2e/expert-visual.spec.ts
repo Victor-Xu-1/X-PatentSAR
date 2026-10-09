@@ -55,6 +55,18 @@ for (const width of [390, 800, 1672])
       true,
     );
     await page.screenshot({ path: test.info().outputPath(`workspace-${width}.png`) });
+    const labels = await page.locator('.workflow-group > span:last-child').allTextContents();
+    // This read-only imported fixture has no invented job history. Current and
+    // legacy recorded chains can have different consecutive grouping counts.
+    expect(
+      labels.every((label) => ['Parse', 'Structure', 'Activity', 'Validate'].includes(label)),
+    ).toBe(true);
+    if (!labels.length)
+      await expect(page.getByLabel('Stage groups', { exact: true })).toHaveCount(0);
+    const clipped = await page
+      .locator('.workflow-group > span:last-child')
+      .evaluateAll((items) => items.some((item) => item.scrollWidth > item.clientWidth + 1));
+    expect(clipped).toBe(false);
     await page.getByRole('button', { name: 'Evidence', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Evidence', exact: true })).toBeVisible();
     await page.screenshot({ path: test.info().outputPath(`summary-${width}.png`) });

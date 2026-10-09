@@ -229,4 +229,6 @@ export const environment: Readonly<Record<string, string>> = {
   '已存在·待检测': 'Present · Check required',
   '状态未知·待复检': 'Unknown · Recheck required',
   '状态未知·待检测': 'Unknown · Check required',
+  '需要检测 · {count} 个组件': 'Check required · {count} components',
+  ' · {count} 待检测': ' · {count} awaiting check',
 };

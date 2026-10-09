@@ -269,7 +269,11 @@ describe('online correction persistence and concurrency', () => {
     await ready();
     fireEvent.change(screen.getByLabelText('修正化合物编号'), { target: { value: 'Saved-7' } });
     await userEvent.click(screen.getByRole('button', { name: '保存修正' }));
-    await userEvent.click(await screen.findByRole('button', { name: '检查已保存状态并保留草稿' }));
+    const check = await screen.findByRole('button', { name: '检查已保存状态并保留草稿' });
+    expect(
+      screen.queryByText('保存版本或原始数据已变化，草稿保留。请先读取当前版本。'),
+    ).not.toBeInTheDocument();
+    await userEvent.click(check);
     await waitFor(() => expect(callbacks.onSaved).toHaveBeenCalledOnce());
     expect(save).toHaveBeenCalledOnce();
   });

@@ -13,7 +13,7 @@ afterEach(() => {
   vi.useRealTimers();
   if (typeof window !== 'undefined') window.location.hash = '';
   setLocale('zh-CN');
-  window.localStorage.removeItem(LOCALE_STORAGE_KEY);
+  if (typeof window !== 'undefined') window.localStorage.removeItem(LOCALE_STORAGE_KEY);
 });
 if (typeof window !== 'undefined') {
   Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {

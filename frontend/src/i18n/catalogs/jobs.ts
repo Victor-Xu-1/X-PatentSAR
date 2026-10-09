@@ -126,6 +126,8 @@ export const jobs: Readonly<Record<string, string>> = {
   '历史阶段不可用。': 'Stage history unavailable.',
   '阶段状态未知。': 'Stage status unknown.',
   等待资源: 'Waiting for resources',
+  解析: 'Parse',
+  校验: 'Validate',
   解析定位: 'Parse & locate',
   结构编号: 'Structures & IDs',
   活性识别: 'Activity & recognition',

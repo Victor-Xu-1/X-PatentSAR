@@ -10,6 +10,21 @@ COMMON = {"product-version.spec.ts"}
 MODES = (
     (
         "sar",
+        "correction-response.spec.ts",
+        COMMON
+        | {
+            "correction-response.spec.ts",
+            "expert-visual.spec.ts",
+            "expert-controls.spec.ts",
+        },
+    ),
+    (
+        "read-only",
+        "expert-visual.spec.ts",
+        COMMON | {"expert-visual.spec.ts", "expert-controls.spec.ts"},
+    ),
+    (
+        "sar",
         "sar-workbench.spec.ts",
         COMMON
         | {

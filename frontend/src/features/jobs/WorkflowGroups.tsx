@@ -31,7 +31,7 @@ export function WorkflowGroups({ job }: { job: Job | null }) {
           ) : (
             <Circle size={20} aria-hidden="true" />
           )}
-          <span>{group.label}</span>
+          <span>{group.compactLabel}</span>
         </span>
       ))}
     </span>

@@ -25,14 +25,16 @@ export function useCorrection(
   const document = basis ?? resource.data;
   const draft =
     editedDraft ?? (document ? correctionDraft(document.values, compound, columns) : null);
-  const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState<'saving' | 'reading' | null>(null);
+  const busy = phase !== null;
   const [error, setError] = useState<Error | null>(null);
-  const [blocked, setBlocked] = useState(false);
+  const [blockReason, setBlockReason] = useState<'conflict' | 'uncertain' | null>(null);
+  const blocked = blockReason !== null;
   const [message, setMessage] = useState('');
   const uncertain = useRef<{ basis: CorrectionDocument; fields: EditableFields } | null>(null);
   async function save() {
     if (!document || !draft || busy || blocked) return;
-    setBusy(true);
+    setPhase('saving');
     setError(null);
     setMessage('');
     try {
@@ -44,15 +46,15 @@ export function useCorrection(
     } catch (failure) {
       setError(failure instanceof Error ? failure : new UiError('修正保存失败。'));
       if (failure instanceof ApiError && (failure.status === 409 || failure.uncertain)) {
-        setBlocked(true);
+        setBlockReason(failure.uncertain ? 'uncertain' : 'conflict');
         if (!failure.uncertain) uncertain.current = null;
       } else uncertain.current = null;
     } finally {
-      setBusy(false);
+      setPhase(null);
     }
   }
   async function readLatest() {
-    setBusy(true);
+    setPhase('reading');
     setError(null);
     try {
       const latest = await load(new AbortController().signal);
@@ -70,13 +72,26 @@ export function useCorrection(
       uncertain.current = null;
       if (draft) setDraft(draft);
       setDocument(latest);
-      setBlocked(false);
+      setBlockReason(null);
       setMessage('已读取保存版本，草稿保留。请确认后再保存。');
     } catch (failure) {
       setError(failure instanceof Error ? failure : new UiError('当前版本加载失败。'));
     } finally {
-      setBusy(false);
+      setPhase(null);
     }
   }
-  return { resource, document, draft, setDraft, busy, blocked, error, message, save, readLatest };
+  return {
+    resource,
+    document,
+    draft,
+    setDraft,
+    phase,
+    busy,
+    blockReason,
+    blocked,
+    error,
+    message,
+    save,
+    readLatest,
+  };
 }

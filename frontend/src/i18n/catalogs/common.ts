@@ -99,6 +99,9 @@ export const common: Record<string, string> = {
   '无法连接 API 服务，请检查服务地址并重新加载。':
     'Cannot connect to the API. Check the service address and reload.',
   'API 请求失败。': 'The API request failed.',
+  '服务暂时不可用，无法确认写入结果。请先刷新状态。':
+    'The service is unavailable and the write result is unknown. Refresh the saved state first.',
+  '结构校验响应无效，暂不能保存。': 'Invalid structure-validation response. Saving is blocked.',
   '服务已响应，但无法确认写入结果。请先检查已保存状态，不要盲目重新提交。{detail}':
     'The server responded, but the write result could not be confirmed. Check the saved state before resubmitting. {detail}',
   '响应格式无效。': 'The response format is invalid.',
