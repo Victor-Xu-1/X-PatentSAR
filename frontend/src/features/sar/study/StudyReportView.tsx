@@ -9,6 +9,7 @@ import { StudyRegions } from './StudyRegions';
 import { StudyActivityTable } from './StudyActivityTable';
 import { StudySource } from './StudySource';
 import { selectedContexts } from './tablePresentation';
+import { StudyViewTabs } from './StudyViewTabs';
 const tabs = [
   '研究概览',
   '研究骨架',
@@ -48,19 +49,7 @@ export function StudyReportView({
   }
   return (
     <div className="sar-study-report">
-      <nav className="sar-study-tabs" aria-label={t('研究视图')}>
-        {tabs.map((label, i) => (
-          <button
-            key={label}
-            type="button"
-            aria-current={tab === i ? 'page' : undefined}
-            aria-controls={id + '-' + i}
-            onClick={() => setTab(i)}
-          >
-            {t(label)}
-          </button>
-        ))}
-      </nav>
+      <StudyViewTabs labels={tabs} selected={tab} panelId={id} onSelect={setTab} />
       <section id={id + '-0'} hidden={tab !== 0} aria-label={t(tabs[0])}>
         <StudyOverview report={report} />
       </section>

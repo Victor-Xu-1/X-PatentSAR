@@ -13,6 +13,20 @@ from tools.prepare_browser_fixture import prepare
 
 
 class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
+    def test_density_scope_adds_only_read_only_recent_file_checks(self):
+        recent = PREFIX + "recent-density.spec.ts"
+        self.assertEqual(fixture_mode({recent}), "read-only")
+        self.assertEqual(
+            fixture_mode(
+                {
+                    recent,
+                    PREFIX + "sar-study.spec.ts",
+                    PREFIX + "product-version.spec.ts",
+                }
+            ),
+            "sar",
+        )
+
     def test_ui_recovery_scope_uses_imported_synthetic_source_without_extraction(self):
         self.assertEqual(
             fixture_mode(

@@ -131,6 +131,8 @@ export const sar: Record<string, string> = {
   研究名称: 'Study title',
   候选数量: 'Candidate count',
   精确实验条件: 'Exact experiment contexts',
+  选择活性指标: 'Choose activity measurements',
+  '{molecules} 个分子': '{molecules} molecules',
   '研究等级与阈值（可选）': 'Grades and threshold (optional)',
   已检查比较: 'Comparisons checked',
   已匹配比较: 'Matched comparisons',

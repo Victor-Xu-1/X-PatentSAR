@@ -195,10 +195,6 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
 }
-.recent-file-row .recent-file {
-  grid-template-columns: 40px minmax(0, 1fr) 132px 140px 16px;
-  gap: 14px;
-}
 .recent-file-actions {
   display: flex;
   align-items: center;
@@ -215,7 +211,7 @@
 }
 .recent-file {
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) 156px 164px 16px;
+  grid-template-columns: 40px minmax(0, 1fr) 132px 140px 16px;
   align-items: center;
   width: 100%;
   min-height: 88px;
@@ -223,7 +219,7 @@
   border: 0;
   border-radius: 0;
   background: transparent;
-  gap: 20px;
+  gap: 14px;
   text-align: left;
 }
 .recent-file:focus-visible {
@@ -269,12 +265,14 @@
 .recent-file-chevron {
   color: var(--muted);
 }
-@media (max-width: 760px) {
+@media (max-width: 1000px) {
   .recent-file-row {
     grid-template-columns: minmax(0, 1fr);
   }
-  .recent-file-row .recent-file {
+  .recent-file {
     grid-template-columns: 40px minmax(0, 1fr) 16px;
+    gap: 8px 14px;
+    padding: 20px;
   }
   .recent-file-actions {
     justify-content: flex-end;
@@ -283,6 +281,30 @@
   .recent-file-actions button {
     min-height: 44px;
   }
+  .recent-file-icon {
+    grid-column: 1;
+    grid-row: 1 / span 3;
+    align-self: start;
+  }
+  .recent-file-name {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .recent-file-acceptance {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .recent-file time {
+    grid-column: 2;
+    grid-row: 3;
+    justify-self: start;
+  }
+  .recent-file-chevron {
+    grid-column: 3;
+    grid-row: 1 / span 3;
+  }
+}
+@media (max-width: 760px) {
   .job-card > header > .history-action {
     margin-left: auto;
   }
@@ -337,33 +359,6 @@
     grid-column: 1;
     grid-row: auto;
     justify-self: stretch;
-  }
-  .recent-file {
-    grid-template-columns: 40px minmax(0, 1fr) 16px;
-    gap: 8px 14px;
-    padding: 20px;
-  }
-  .recent-file-icon {
-    grid-column: 1;
-    grid-row: 1 / span 3;
-    align-self: start;
-  }
-  .recent-file-name {
-    grid-column: 2;
-    grid-row: 1;
-  }
-  .recent-file-acceptance {
-    grid-column: 2;
-    grid-row: 2;
-  }
-  .recent-file time {
-    grid-column: 2;
-    grid-row: 3;
-    justify-self: start;
-  }
-  .recent-file-chevron {
-    grid-column: 3;
-    grid-row: 1 / span 3;
   }
 }
 @media (max-width: 600px) {

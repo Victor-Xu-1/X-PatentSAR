@@ -17,15 +17,23 @@
 }
 .sar-study-tabs {
   display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-  padding-block: 16px;
+  gap: 6px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  max-width: 100%;
+  padding-block: 10px;
   border-bottom: 1px solid var(--line);
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 .sar-study-tabs button {
+  flex: 0 0 auto;
+  white-space: nowrap;
   background: transparent;
   border-color: transparent;
+  border-radius: 6px;
+  min-height: 38px;
+  font-weight: 500;
+  padding-inline: 13px;
 }
 .sar-study-tabs button[aria-current] {
   background: var(--accent-surface);
@@ -227,6 +235,14 @@
   display: block;
   color: var(--muted);
   padding-top: 4px;
+}
+@media (min-width: 700px) {
+  .sar-context-list.is-compact {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 24px;
+    max-height: none;
+  }
 }
 .sar-page .sar-policy {
   border-top: 1px solid var(--line);
@@ -550,6 +566,9 @@
     justify-content: flex-start;
   }
   .sar-actions button {
+    min-height: 44px;
+  }
+  .sar-study-tabs button {
     min-height: 44px;
   }
 }
