@@ -37,6 +37,7 @@ export function DatasetWorkbench({
   const [region, setRegion] = useState<Region | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [setupOpen, setSetupOpen] = useState(!jobId);
+  const setupVisible = !jobId || setupOpen;
   const [optionsOpen, setOptionsOpen] = useState(false);
   const load = useCallback((signal: AbortSignal) => sarApi.dataset(datasetId, signal), [datasetId]);
   const dataset = useSARResource(`sar:dataset:${datasetId}`, active, load);
@@ -161,14 +162,16 @@ export function DatasetWorkbench({
             )}
             <details
               className="sar-compact"
-              open={setupOpen}
-              onToggle={(event) => setSetupOpen(event.currentTarget.open)}
+              open={setupVisible}
+              onToggle={(event) => {
+                if (jobId) setSetupOpen(event.currentTarget.open);
+              }}
             >
               <summary hidden={!jobId}>{t('研究设置')}</summary>
-              <div hidden={!setupOpen}>
+              <div hidden={!setupVisible}>
                 <StudySetup
                   dataset={dataset.data}
-                  active={active && setupOpen}
+                  active={active && setupVisible}
                   disabled={!ready || Boolean(jobs.data?.items.some(isActiveJob))}
                   scope={scope}
                   onJob={createdJob}

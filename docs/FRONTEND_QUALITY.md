@@ -18,6 +18,8 @@ The reference article's private algorithms are not represented as reproduced.
 - SAR tasks use three concise milestones: data, activity, analyze. Activity choices
   precede the review/run step. Back and language changes preserve drafts; only the
   existing explicit submit creates a study. Regions remain optional, not a second queue.
+  A persistent result workbench returning to the same dataset without a job must
+  reveal setup from the current route, not its first-mounted disclosure state.
 - Result previews prioritize structures, measured values, distributions and tables.
   One details dialog owns technical counts, source QA and limitations. Candidate
   cards show chemistry, raw activity and six properties; provenance stays available
