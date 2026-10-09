@@ -37,6 +37,10 @@
   align-items: start;
 }
 .sar-region-explorer .sar-reference-map-card {
+  position: sticky;
+  top: 84px;
+  max-height: calc(100dvh - 112px);
+  overflow: auto;
   border: 0;
   border-right: 1px solid var(--line-soft);
   border-radius: 0;
@@ -305,6 +309,9 @@
     grid-template-columns: 1fr;
   }
   .sar-region-explorer .sar-reference-map-card {
+    position: static;
+    max-height: none;
+    overflow: visible;
     border-right: 0;
     padding: 0;
   }

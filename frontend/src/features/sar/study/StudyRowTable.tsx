@@ -76,7 +76,7 @@ export function StudyRowTable({
             row.property_origins[key] ?? 'not_provided',
           ].join(' · ')}
         >
-          {propertyText(value)}
+          {propertyText(value, key)}
         </span>
       );
     }

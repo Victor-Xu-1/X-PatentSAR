@@ -8,6 +8,7 @@ import { decodeStudyPreview } from '../src/api/sarPreviewDecoder';
 import { TransformationPreview } from '../src/features/sar/study/TransformationPreview';
 import { differenceText } from '../src/features/sar/study/PreviewMeasurements';
 import { StudyRegions } from '../src/features/sar/study/StudyRegions';
+import { propertyText } from '../src/features/sar/study/tablePresentation';
 import {
   sarDataset,
   sarDrawing,
@@ -104,6 +105,11 @@ describe('actual transformation preview', () => {
     ).toThrow();
     expect(differenceText(-0.00012)).toBe('-0.000120');
     expect(differenceText(null)).toBe('—');
+    expect(propertyText(1, 'hydrogen_bond_donors')).toBe('1');
+    expect(propertyText(2, 'hydrogen_bond_acceptors')).toBe('2');
+    expect(propertyText(1.5, 'hydrogen_bond_donors')).toBe('1.50');
+    expect(propertyText(250, 'molecular_weight')).toBe('250.00');
+    expect(propertyText(null, 'hydrogen_bond_acceptors')).toBe('—');
   });
   it('switches a clicked region without starting computation and presents only the selected modification group', async () => {
     const second = {

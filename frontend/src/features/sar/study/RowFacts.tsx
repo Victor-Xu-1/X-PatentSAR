@@ -34,7 +34,7 @@ export function RowFacts({ row, contexts }: { row: StudyRow; contexts: StudyCont
         {studyProperties.map((property) => (
           <div key={property.key}>
             <dt>{property.label}</dt>
-            <dd>{propertyText(row.properties[property.key])}</dd>
+            <dd>{propertyText(row.properties[property.key], property.key)}</dd>
           </div>
         ))}
       </dl>
@@ -45,7 +45,7 @@ export function RowFacts({ row, contexts }: { row: StudyRow; contexts: StudyCont
             <div key={key}>
               <dt>{studyProperties.find((p) => p.key === key)?.label ?? key}</dt>
               <dd title={value == null ? undefined : String(value)}>
-                {propertyText(value)}{' '}
+                {propertyText(value, key)}{' '}
                 <small>
                   {t(originCopy[row.property_origins[key] ?? 'not_provided'] ?? '来源待确认')}
                 </small>

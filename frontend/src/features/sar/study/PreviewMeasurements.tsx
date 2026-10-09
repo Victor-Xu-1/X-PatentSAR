@@ -66,7 +66,7 @@ export function PreviewMeasurements({ data, report }: { data: StudyPreview; repo
             <div key={property.key}>
               <dt>{property.label}</dt>
               <dd>
-                {propertyText(data.candidate.properties[property.key] ?? null)}
+                {propertyText(data.candidate.properties[property.key] ?? null, property.key)}
                 <small>Δ {differenceText(data.property_differences[property.key] ?? null)}</small>
               </dd>
             </div>

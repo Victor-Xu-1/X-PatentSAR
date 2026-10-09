@@ -111,7 +111,9 @@ test('drawing transport failure is localized once, keeps saving blocked and neve
     .click();
   const dialog = page.getByRole('dialog', { name: /^Correction/ });
   const alert = dialog.getByRole('alert');
-  await expect(alert).toContainText('Connection interrupted');
+  await expect(alert).toHaveText(
+    'The connection was interrupted and the write result is unknown. Refresh the state before deciding whether to submit again.',
+  );
   await expect(alert).toHaveCount(1);
   await expect(dialog.getByRole('button', { name: 'Save correction', exact: true })).toBeDisabled();
   const frame = page.frameLocator('iframe[title="Ketcher structure drawing and preview"]');

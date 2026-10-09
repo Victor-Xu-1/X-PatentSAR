@@ -3,10 +3,6 @@
   padding-block: 8px;
   min-height: 60px;
 }
-.brand strong {
-  font-size: 19px;
-  letter-spacing: -0.45px;
-}
 .topbar-actions > button {
   font-weight: 500;
   min-height: 38px;
@@ -176,9 +172,6 @@
   margin-top: 5px;
 }
 @media (max-width: 700px) {
-  .topbar {
-    padding: 10px 14px;
-  }
   .management-page {
     padding-inline: 8px;
   }
