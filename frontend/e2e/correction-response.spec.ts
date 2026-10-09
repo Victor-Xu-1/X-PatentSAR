@@ -4,7 +4,8 @@ test('committed correction with a lost server response is recovered by reading, 
   page,
 }) => {
   test.skip(
-    process.env.PATENTSAR_E2E_HISTORY_MUTATIONS !== 'synthetic-isolated-state',
+    process.env.PATENTSAR_E2E_HISTORY_MUTATIONS !== 'synthetic-isolated-state' &&
+      process.env.PATENTSAR_E2E_SAR_MUTATIONS !== 'synthetic-isolated-state',
     'Uses only the explicitly marked fresh controller-owned synthetic fixture',
   );
   const source = process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID;
