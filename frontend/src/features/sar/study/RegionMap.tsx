@@ -1,4 +1,6 @@
 import type { Atom, Region } from '../../../api/sarTypes';
+import { useRef } from 'react';
+import { useInlineSelection } from './useInlineSelection';
 const colors = [
   '#137e78',
   '#466ca4',
@@ -104,8 +106,10 @@ export function RegionLegend({
   onSelect?: ((id: string) => void) | undefined;
   selected?: string | undefined;
 }) {
+  const strip = useRef<HTMLUListElement>(null);
+  useInlineSelection(strip, 'button[aria-pressed="true"]');
   return (
-    <ul className="sar-region-legend">
+    <ul ref={strip} className="sar-region-legend">
       {regions.map((region, order) => (
         <li key={region.id}>
           {onSelect ? (

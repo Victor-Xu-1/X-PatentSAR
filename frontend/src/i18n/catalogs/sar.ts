@@ -43,6 +43,7 @@ export const sar: Record<string, string> = {
   记录活性: 'Recorded activity',
   更强: 'Stronger',
   更弱: 'Weaker',
+  未确定: 'Indeterminate',
   改造化合物: 'Modified compound',
   '点击结构区域，查看改造与数据变化。':
     'Click a structural region to explore modifications and data changes.',
@@ -211,8 +212,6 @@ export const sar: Record<string, string> = {
   '优先组、Pareto 层与证据覆盖均由报告提供；缺失性质或预测不补值。':
     'Priority groups, Pareto fronts and coverage come from the report. Missing properties or predictions are not filled.',
   暂无有支持证据的候选: 'No supported candidates yet',
-  '更强 {better} · 更弱 {worse} · 未确定 {indeterminate} · 缺失 {missing}':
-    'Better {better} · Worse {worse} · Indeterminate {indeterminate} · Missing {missing}',
   查看支持与反例: 'View support and counterexamples',
   '一个固定背景中的严格参考证据，不是独立系列普遍规律。':
     'Strict reference evidence in one fixed background, not a general rule across independent series.',

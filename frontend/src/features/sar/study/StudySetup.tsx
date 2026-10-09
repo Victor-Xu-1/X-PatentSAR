@@ -14,7 +14,7 @@ import { StudyRegionEditor } from './StudyRegionEditor';
 import { ConditionEditor } from './ConditionEditor';
 import { declarationFromDraft, emptyCondition } from './conditionDraft';
 import type { ConditionDraft } from './conditionDraft';
-import { emptyPolicy, policyFromDraft } from './policyDraft';
+import { contextLabel, emptyPolicy, policyFromDraft } from './policyDraft';
 import type { PolicyDraft } from './policyDraft';
 import { StudyGuide } from './StudyGuide';
 export function StudySetup({
@@ -195,12 +195,7 @@ export function StudySetup({
             <ul className="sar-selected-contexts">
               {selected.map((id) => {
                 const context = profile.data?.contexts.find((c) => c.id === id);
-                return context ? (
-                  <li key={id}>
-                    {context.name}
-                    {context.unit && ' · ' + context.unit}
-                  </li>
-                ) : null;
+                return context ? <li key={id}>{contextLabel(context)}</li> : null;
               })}
             </ul>
             {(['variable', 'core'] as const).map((kind) => {

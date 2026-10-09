@@ -72,6 +72,7 @@ for (const width of [390, 800, 1672]) {
       setup.getByRole('group', { name: 'Choose activity measurements · 0/1', exact: true }),
     ).toBeVisible();
     await setup.getByRole('checkbox', { name: /IC50/ }).check();
+    const selectedLabel = await setup.locator('.sar-context-choice strong').first().innerText();
     await expect(setup.getByText('Confirm direction; source grades must be unique.')).toHaveCount(
       0,
     );
@@ -82,6 +83,7 @@ for (const width of [390, 800, 1672]) {
       setup.getByText('Concentration potency uses the tenth strongest measurement’s decade.'),
     ).toBeVisible();
     await setup.getByRole('button', { name: 'Continue', exact: true }).click();
+    await expect(setup.locator('.sar-selected-contexts li')).toHaveText(selectedLabel);
     await setup.getByText('Add a named selection', { exact: true }).click();
     const browser = setup.getByRole('region', { name: 'Choose reference molecule', exact: true });
     await browser
@@ -208,6 +210,9 @@ for (const width of [390, 800, 1672]) {
       );
       expect(maps).toBe(true);
       if (tab === 'Variable regions' || tab === 'Fragment summary') {
+        const outcomes = view.locator('.sar-fragment-comparisons');
+        await expect(outcomes.first()).toBeVisible();
+        expect(await outcomes.first().locator('dd').count()).toBe(4);
         const fragments = await view.locator('.sar-fragment-strip article').evaluateAll((cards) =>
           cards.map((card) => {
             const stack = card.querySelector('.sar-composition-stack')!;
@@ -294,6 +299,44 @@ for (const width of [390, 800, 1672]) {
       )
       .toBe(true);
     await expect(preview).toContainText('Δ -9.00');
+    if (width === 390) {
+      const changeFits = await preview
+        .locator('.sar-preview-change')
+        .first()
+        .evaluate((cell) => {
+          const bounds = cell.getBoundingClientRect();
+          const clip = cell.closest('.sar-table-scroll')!.getBoundingClientRect();
+          return bounds.left >= clip.left - 1 && bounds.right <= clip.right + 1;
+        });
+      expect(changeFits).toBe(true);
+    }
+    // Check the actual Chromium accessibility tree after responsive CSS, not
+    // only inferred DOM roles. Native headers must still belong to the table.
+    const protocol = await page.context().newCDPSession(page);
+    const accessibility = await protocol.send('Accessibility.getFullAXTree');
+    const accessibleTable = accessibility.nodes.find(
+      (node) =>
+        !node.ignored && node.role?.value === 'table' && node.name?.value === 'Recorded activity',
+    );
+    expect(accessibleTable).toBeTruthy();
+    const byId = new Map(accessibility.nodes.map((node) => [node.nodeId, node]));
+    const descendants = new Set<string>();
+    function visit(id: string) {
+      if (descendants.has(id)) return;
+      descendants.add(id);
+      for (const child of byId.get(id)?.childIds ?? []) visit(child);
+    }
+    visit(accessibleTable!.nodeId);
+    expect(
+      accessibility.nodes.some(
+        (node) =>
+          descendants.has(node.nodeId) &&
+          !node.ignored &&
+          node.role?.value === 'columnheader' &&
+          node.name?.value === 'Change',
+      ),
+    ).toBe(true);
+    await protocol.detach();
     await page.screenshot({ path: test.info().outputPath(`preview-${width}.png`), fullPage: true });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
       true,

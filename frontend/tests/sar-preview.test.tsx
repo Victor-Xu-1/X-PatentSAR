@@ -1,4 +1,4 @@
-import { render, screen, within, waitFor } from '@testing-library/react';
+import { act, render, screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { setLocale } from '../src/i18n';
@@ -6,7 +6,7 @@ import { sarStudyApi } from '../src/api/sarStudyApi';
 import { sarApi } from '../src/api/sarApi';
 import { decodeStudyPreview } from '../src/api/sarPreviewDecoder';
 import { TransformationPreview } from '../src/features/sar/study/TransformationPreview';
-import { differenceText } from '../src/features/sar/study/PreviewMeasurements';
+import { differenceText, PreviewMeasurements } from '../src/features/sar/study/PreviewMeasurements';
 import { StudyRegions } from '../src/features/sar/study/StudyRegions';
 import { propertyText } from '../src/features/sar/study/tablePresentation';
 import {
@@ -61,6 +61,43 @@ beforeEach(() => {
   vi.spyOn(sarApi, 'drawing').mockResolvedValue(sarDrawing);
 });
 describe('actual transformation preview', () => {
+  it('retains table/header associations and source-owned mobile captions and units', () => {
+    render(<PreviewMeasurements data={decodeStudyPreview(preview)} report={studyReport} />);
+    const table = screen.getByRole('table', { name: 'Recorded activity' });
+    expect(within(table).getByRole('columnheader', { name: studyRow.label })).toBeInTheDocument();
+    expect(within(table).getByRole('rowheader', { name: 'IC50 原文 · nM' })).toBeInTheDocument();
+    const captions = table.querySelectorAll('.sar-preview-compound-label');
+    expect([...captions].map((item) => item.textContent)).toEqual([
+      studyRow.label,
+      candidate.label,
+    ]);
+    expect([...captions].every((item) => item.getAttribute('aria-hidden') === 'true')).toBe(true);
+    expect(table.querySelector('.sar-preview-change')).toHaveTextContent('StrongerΔ -9.00');
+  });
+  it('keeps censored values and indeterminate changes raw through language changes without a fabricated delta', async () => {
+    const data = decodeStudyPreview({
+      ...preview,
+      measurements: [
+        {
+          ...preview.measurements[0]!,
+          reference_values: ['<10'],
+          candidate_values: ['<20'],
+          comparison: 'indeterminate',
+          raw_difference: null,
+        },
+      ],
+    });
+    const original = JSON.stringify(data);
+    render(<PreviewMeasurements data={data} report={studyReport} />);
+    const table = screen.getByRole('table', { name: 'Recorded activity' });
+    expect(within(table).getByText('<10')).toBeVisible();
+    expect(within(table).getByText('<20')).toBeVisible();
+    expect(within(table).queryByText(/Δ/)).not.toBeInTheDocument();
+    await act(() => setLocale('zh-CN'));
+    expect(within(table).getByText('<10')).toBeVisible();
+    expect(within(table).getByText('不可判定')).toBeVisible();
+    expect(JSON.stringify(data)).toBe(original);
+  });
   it('renders source scalars and backend differences, highlights exact region and keeps source selection', async () => {
     const onSource = vi.fn();
     render(
