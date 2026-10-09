@@ -202,7 +202,9 @@
   grid-template-columns: 120px minmax(0, 1fr);
   gap: 10px;
 }
-.sar-study-card .sar-composition-donut,
+.sar-study-card .sar-composition-donut {
+  width: 120px;
+}
 .sar-study-card .sar-composition-donut svg {
   width: 120px;
   height: 120px;
@@ -211,7 +213,9 @@
   grid-template-columns: 160px minmax(0, 1fr);
   gap: 20px;
 }
-.sar-overview-charts .sar-composition-donut,
+.sar-overview-charts .sar-composition-donut {
+  width: 160px;
+}
 .sar-overview-charts .sar-composition-donut svg {
   width: 160px;
   height: 160px;
