@@ -52,13 +52,10 @@ export function convertMolfile(molfile: string, signal: AbortSignal): Promise<st
   return withDeadline(
     signal,
     async (requestSignal) => {
-      const response = await client.mutate(
-        '/chemistry/structure',
-        'POST',
-        { molfile },
-        decodeStructure,
-        { signal: requestSignal, timeoutMs: 15000 },
-      );
+      const response = await client.postRead('/chemistry/structure', { molfile }, decodeStructure, {
+        signal: requestSignal,
+        timeoutMs: 15000,
+      });
       return response.smiles;
     },
     '结构转换超时，请重新加载编辑器。',

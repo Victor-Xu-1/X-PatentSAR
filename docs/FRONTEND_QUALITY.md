@@ -30,6 +30,15 @@ The reference article's private algorithms are not represented as reproduced.
 - Raw measurements, computed properties and captured predictions remain separate.
   Grade/interval overlap, missing context and unrepresentable differences stay unknown.
   Hidden technical detail does not remove source links, issues or acceptance boundaries.
+- Compact workflow labels remain legible in both languages; full stage meaning,
+  actual states and recorded execution order stay in the same model and disclosure.
+- Environment readiness distinguishes unknown/stale checks from verified readiness
+  and known missing paths. The currently available next action receives emphasis;
+  no presentation shortcut enables installation or turns path presence into readiness.
+- Local MDL conversion is a bounded, CSRF-authenticated read despite HTTP POST.
+  Read failures never imply that a correction was saved. Actual writes with server
+  faults or unreadable successful bodies stay uncertain, without automatic replay.
+  Filtered downloads use the same 128 MiB export bound as unfiltered downloads.
 
 ## Required page/module/state matrix
 

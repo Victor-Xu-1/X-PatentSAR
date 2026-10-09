@@ -54,7 +54,7 @@ export function CorrectionDialog({
             if (editorReady) void edit.save();
           }}
         >
-          {(document.stale || blocked) && (
+          {(document.stale || edit.blockReason === 'conflict') && (
             <p className="conflict">
               {t('保存版本或原始数据已变化，草稿保留。请先读取当前版本。')}
             </p>
@@ -101,7 +101,7 @@ export function CorrectionDialog({
           {edit.error && <ErrorNotice error={edit.error} />}
           {blocked && (
             <button type="button" disabled={busy} onClick={() => void edit.readLatest()}>
-              {t('检查已保存状态并保留草稿')}
+              {edit.phase === 'reading' ? t('正在检查已保存状态…') : t('检查已保存状态并保留草稿')}
             </button>
           )}
           <footer className="dialog-actions">
@@ -109,7 +109,7 @@ export function CorrectionDialog({
               {t('取消')}
             </button>
             <button type="submit" className="primary" disabled={busy || blocked || !editorReady}>
-              {busy ? t('正在保存…') : t('保存修正')}
+              {edit.phase === 'saving' ? t('正在保存…') : t('保存修正')}
             </button>
           </footer>
         </form>

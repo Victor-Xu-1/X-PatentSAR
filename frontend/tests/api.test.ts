@@ -171,6 +171,57 @@ describe('API authentication and writes', () => {
   });
 });
 describe('bounded reads and errors', () => {
+  it('does not allow a mutating route to be mislabeled as the audited readonly POST', async () => {
+    const transport = vi.fn<typeof fetch>();
+    await expect(
+      new ApiClient(transport).postRead(
+        '/projects/id/jobs' as '/chemistry/structure',
+        {},
+        (value) => value,
+      ),
+    ).rejects.toThrow('readonly_path');
+    expect(transport).not.toHaveBeenCalled();
+  });
+  it.each([500, 502, 503, 504])(
+    'does not claim a write was rejected or replay it after HTTP %s',
+    async (status) => {
+      const transport = vi.fn<typeof fetch>(async (url) =>
+        String(url).endsWith('/session') ? json(session) : json({}, status),
+      );
+      await expect(
+        new ApiClient(transport).mutate('/projects/id/jobs', 'POST', {}, decodeProject),
+      ).rejects.toMatchObject({ status, uncertain: true });
+      expect(transport).toHaveBeenCalledTimes(2);
+    },
+  );
+  it('keeps a successful write with an unreadable bounded body uncertain', async () => {
+    const transport = vi.fn<typeof fetch>(async (url) =>
+      String(url).endsWith('/session')
+        ? json(session)
+        : new Response('{}', {
+            headers: { 'Content-Length': String(8 * 1024 * 1024 + 1) },
+          }),
+    );
+    await expect(
+      new ApiClient(transport).mutate('/projects/id/jobs', 'POST', {}, decodeProject),
+    ).rejects.toMatchObject({ uncertain: true, code: 'invalid_write_response' });
+    expect(transport).toHaveBeenCalledTimes(2);
+  });
+  it('uses the full export limit when a validated filter query is present', async () => {
+    const transport = vi.fn<typeof fetch>(async (url) =>
+      String(url).endsWith('/session')
+        ? json(session)
+        : new Response('id\n1', {
+            headers: {
+              'Content-Type': 'text/csv',
+              'Content-Length': String(16 * 1024 * 1024),
+            },
+          }),
+    );
+    const blob = await new ApiClient(transport).download('/projects/id/export?q=source', {});
+    expect(blob.size).toBe(4);
+    expect(transport).toHaveBeenCalledTimes(2);
+  });
   it('reports malformed successful mutation responses as uncertain without replaying', async () => {
     const transport = vi.fn<typeof fetch>(async (url) =>
       String(url).endsWith('/session')
@@ -223,6 +274,14 @@ describe('bounded reads and errors', () => {
     await expect(
       boundedResponse(new Response('ok', { headers: { 'Content-Length': '100' } }), 4),
     ).rejects.toThrow('大小限制');
+  });
+  it('cancels an oversized declared response rather than leaving its stream active', async () => {
+    const cancel = vi.fn();
+    const body = new ReadableStream<Uint8Array>({ cancel });
+    await expect(
+      boundedResponse(new Response(body, { headers: { 'Content-Length': '100' } }), 4),
+    ).rejects.toMatchObject({ code: 'response_limit' });
+    expect(cancel).toHaveBeenCalledOnce();
   });
   it('rejects non-download success responses', async () => {
     const transport = vi.fn<typeof fetch>(async (url) =>

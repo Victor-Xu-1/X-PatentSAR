@@ -14,21 +14,28 @@ export type WorkflowGroupState = Stage['status'] | 'review' | 'stopped' | 'unkno
 export interface WorkflowGroup {
   key: string;
   label: string;
+  compactLabel: string;
   names: StageName[];
   state: WorkflowGroupState;
   description: string;
 }
 
-const sections: Record<StageName, { key: string; label: string }> = {
-  classify: { key: 'source', label: '解析定位' },
-  locate: { key: 'source', label: '解析定位' },
-  structures: { key: 'structure', label: '结构编号' },
-  bind: { key: 'structure', label: '结构编号' },
-  activity: { key: 'recognition', label: '活性识别' },
-  smiles: { key: 'recognition', label: '活性识别' },
-  final: { key: 'delivery', label: '校验与指标' },
-  qa: { key: 'delivery', label: '校验与指标' },
-  admet: { key: 'delivery', label: '校验与指标' },
+const sections = {
+  source: { label: '解析定位', compactLabel: '解析' },
+  structure: { label: '结构编号', compactLabel: '结构' },
+  recognition: { label: '活性识别', compactLabel: '活性' },
+  delivery: { label: '校验与指标', compactLabel: '校验' },
+} as const;
+const sectionKeys: Record<StageName, keyof typeof sections> = {
+  classify: 'source',
+  locate: 'source',
+  structures: 'structure',
+  bind: 'structure',
+  activity: 'recognition',
+  smiles: 'recognition',
+  final: 'delivery',
+  qa: 'delivery',
+  admet: 'delivery',
 };
 
 export const workflowGroupStateText: Record<WorkflowGroupState, string> = {
@@ -67,12 +74,13 @@ export function workflowGroups(job: Job | null): WorkflowGroup[] {
   const stages = observedStages(job);
   const groups: WorkflowGroup[] = [];
   for (const name of workflowStageNames(job)) {
-    const section = sections[name];
+    const key = sectionKeys[name];
+    const section = sections[key];
     const previous = groups.at(-1);
-    if (previous?.key.startsWith(`${section.key}:`)) previous.names.push(name);
+    if (previous?.key.startsWith(`${key}:`)) previous.names.push(name);
     else
       groups.push({
-        key: `${section.key}:${groups.length}`,
+        key: `${key}:${groups.length}`,
         label: job?.admet_only
           ? t(
               stageLabel(
@@ -81,6 +89,14 @@ export function workflowGroups(job: Job | null): WorkflowGroup[] {
               ),
             )
           : t(section.label),
+        compactLabel: job?.admet_only
+          ? t(
+              stageLabel(
+                name,
+                stages.find((stage) => stage.name === name),
+              ),
+            )
+          : t(section.compactLabel),
         names: [name],
         state: 'unknown',
         description: '',

@@ -25,7 +25,9 @@ describe('Evidence Studio environment and dialog presentation', () => {
         onDetails={details}
       />,
     );
-    expect(screen.getByRole('status', { name: '环境就绪状态' })).toHaveTextContent('已就绪 0/6');
+    expect(screen.getByRole('status', { name: '环境就绪状态' })).toHaveTextContent(
+      `已就绪 0/${catalog.components.length}`,
+    );
     expect(container.querySelector('.environment-overview-footer')).not.toBeNull();
     expect(screen.getByRole('button', { name: '一键部署全部环境' })).toHaveClass('primary');
     expect(screen.queryByText(catalog.settings.install_root)).not.toBeInTheDocument();
@@ -53,7 +55,9 @@ describe('Evidence Studio environment and dialog presentation', () => {
         onDetails={vi.fn()}
       />,
     );
-    expect(screen.getByRole('status', { name: '环境就绪状态' })).toHaveTextContent('已就绪 5/6');
+    expect(screen.getByRole('status', { name: '环境就绪状态' })).toHaveTextContent(
+      `已就绪 ${catalog.components.length - 1}/${catalog.components.length} · 1 待检测`,
+    );
     expect(container.querySelector('.environment-overview-icon.is-ready')).toBeNull();
     expect(screen.queryByRole('button', { name: '环境已就绪' })).not.toBeInTheDocument();
   });
@@ -129,7 +133,9 @@ describe('Evidence Studio environment and dialog presentation', () => {
       expect(entry).toHaveTextContent(component.source_url);
       expect(entry).toHaveTextContent(component.version);
     }
-    expect(within(dialog).getAllByText('来源与位置', { selector: 'summary' })).toHaveLength(6);
+    expect(within(dialog).getAllByText('来源与位置', { selector: 'summary' })).toHaveLength(
+      catalog.components.length,
+    );
     const submit = within(dialog).getByRole('button', { name: '确认下载并安装' });
     expect(submit).toBeDisabled();
     expect(confirm).not.toHaveBeenCalled();

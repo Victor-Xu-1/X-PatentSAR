@@ -1,9 +1,8 @@
 import { errorText, useTranslation } from '../../i18n';
 import { CircleCheck, CircleHelp, Download, ScanLine } from 'lucide-react';
 import type { EnvironmentCatalog, EnvironmentComponentId } from '../../api/environmentTypes';
-import { environmentComponentIds } from '../../api/environmentTypes';
 import { canSetupEnvironmentPlan, environmentSetupComponents } from '../../model/environmentSetup';
-import { isEnvironmentComponentReady } from '../../model/environmentStatus';
+import { environmentReadiness, isEnvironmentComponentReady } from '../../model/environmentStatus';
 
 export function EnvironmentOverview({
   catalog,
@@ -26,8 +25,9 @@ export function EnvironmentOverview({
   } catch (error) {
     problem = error instanceof Error ? errorText(error) : t('完整部署计划无效。');
   }
-  const readyCount = catalog.components.filter(isEnvironmentComponentReady).length;
+  const counts = environmentReadiness(catalog.components);
   const ready = plan !== null && plan.every(isEnvironmentComponentReady);
+  const setupPossible = plan !== null && canSetupEnvironmentPlan(plan);
   return (
     <section className="environment-card environment-overview" aria-label={t('完整运行环境')}>
       <div className="environment-section-header">
@@ -41,18 +41,20 @@ export function EnvironmentOverview({
           <div className="environment-overview-heading">
             <h2>{t('完整运行环境')}</h2>
             <output className="muted" aria-label={t('环境就绪状态')} aria-live="polite">
-              {t('已就绪 {ready}/{total}', {
-                ready: readyCount,
-                total: environmentComponentIds.length,
-              })}
+              {counts.provided > 0 && counts.needsCheck === counts.provided
+                ? t('需要检测 · {count} 个组件', { count: counts.needsCheck })
+                : t('已就绪 {ready}/{total}', counts)}
+              {counts.needsCheck > 0 &&
+                counts.needsCheck < counts.provided &&
+                t(' · {count} 待检测', { count: counts.needsCheck })}
             </output>
           </div>
         </div>
         <div className="environment-overview-actions">
           <button
             type="button"
-            className="primary"
-            disabled={disabled || plan === null || !canSetupEnvironmentPlan(plan)}
+            className={setupPossible ? 'primary' : undefined}
+            disabled={disabled || !setupPossible}
             onClick={onSetup}
           >
             <Download size={15} />
@@ -60,6 +62,7 @@ export function EnvironmentOverview({
           </button>
           <button
             type="button"
+            className={!setupPossible ? 'primary' : undefined}
             disabled={disabled || !catalog.components.length}
             onClick={() =>
               onInspect(

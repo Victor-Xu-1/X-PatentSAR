@@ -67,7 +67,7 @@ describe('complete setup uses only the published plan', () => {
     await userEvent.click(screen.getByRole('button', { name: '刷新环境目录' }));
     expect(start).not.toHaveBeenCalled();
   });
-  it('discloses all six components then sends exactly one install request after one consent', async () => {
+  it('discloses the complete published component plan then sends one install request after consent', async () => {
     const catalog = completeEnvironmentCatalog();
     const start = startOperation();
     const options = props();
@@ -169,7 +169,7 @@ describe('complete setup uses only the published plan', () => {
       }),
     );
     render(<EnvironmentPage {...props()} />);
-    expect(await screen.findByText('已就绪 0/8')).toBeVisible();
+    expect(await screen.findByText('需要检测 · 8 个组件')).toBeVisible();
     expect(screen.getByRole('button', { name: '一键部署全部环境' })).toBeDisabled();
     expect(screen.queryByText('已安装·已验证')).not.toBeInTheDocument();
   });

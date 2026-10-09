@@ -17,6 +17,7 @@ export const chemistry: Readonly<Record<string, string>> = {
     'The saved revision or source data has changed. Your draft is retained; load the current revision first.',
   修正化合物编号: 'Correct compound ID',
   检查已保存状态并保留草稿: 'Check saved state and retain draft',
+  '正在检查已保存状态…': 'Checking saved state…',
   '正在保存…': 'Saving…',
   保存修正: 'Save correction',
   '结构详情 · {label}': 'Structure details · {label}',

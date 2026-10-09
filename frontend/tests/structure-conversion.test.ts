@@ -49,8 +49,21 @@ describe('authenticated bounded local structure conversion', () => {
       vi.fn().mockResolvedValueOnce(json(session)).mockResolvedValueOnce(json(payload)),
     );
     await expect(convertMolfile(molfile, new AbortController().signal)).rejects.toMatchObject({
-      code: 'invalid_write_response',
+      code: 'invalid_read_response',
+      uncertain: false,
     });
+  });
+  it('reports a failed draft read without implying that any correction was saved', async () => {
+    const transport = vi
+      .fn()
+      .mockResolvedValueOnce(json(session))
+      .mockRejectedValueOnce(new TypeError('offline'));
+    vi.stubGlobal('fetch', transport);
+    await expect(convertMolfile(molfile, new AbortController().signal)).rejects.toMatchObject({
+      code: 'network_error',
+      uncertain: false,
+    });
+    expect(transport).toHaveBeenCalledTimes(2);
   });
   it.each([401, 403, 422, 503])('does not retry or fall back after HTTP %s', async (status) => {
     const transport = vi

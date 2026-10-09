@@ -32,6 +32,28 @@ async function withServer(
 }
 
 describe('native HTTP client protocol (test-only controlled service, not backend acceptance)', () => {
+  it('keeps a pure authenticated POST read distinct from uncertain writes on native HTTP', async () => {
+    let reads = 0;
+    await withServer(
+      (request, response) => {
+        response.setHeader('Content-Type', 'application/json');
+        if (request.url === '/api/v1/session') response.end(JSON.stringify(session));
+        else {
+          reads++;
+          response.statusCode = 503;
+          response.end(
+            JSON.stringify({ error: { code: 'validation_unavailable', message: 'Unavailable' } }),
+          );
+        }
+      },
+      async (client) => {
+        await expect(
+          client.postRead('/chemistry/structure', { molfile: 'controlled-MDL' }, (input) => input),
+        ).rejects.toMatchObject({ status: 503, uncertain: false });
+      },
+    );
+    expect(reads).toBe(1);
+  });
   it('reads producer-owned order, waits and independent descriptors through native HTTP', async () => {
     const current = {
       ...job,
