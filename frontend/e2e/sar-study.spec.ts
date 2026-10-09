@@ -152,9 +152,12 @@ for (const width of [390, 800, 1672]) {
     }
     await report.getByRole('button', { name: 'Variable regions', exact: true }).click();
     const regions = report.getByRole('region', { name: 'Variable regions', exact: true });
+    // Fragment1 includes an unchanged blank reading. Inspect the actual ethyl
+    // transformation for the numeric-difference contract.
     await regions
+      .locator('.sar-fragment-strip article')
+      .filter({ has: regions.getByRole('heading', { name: 'Fragment 2', exact: true }) })
       .getByRole('button', { name: 'Preview modification', exact: true })
-      .first()
       .click();
     const preview = regions.getByRole('region', { name: 'Transformation preview', exact: true });
     await expect(
