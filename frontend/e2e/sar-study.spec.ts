@@ -148,8 +148,14 @@ for (const width of [390, 800, 1672]) {
       );
       expect(maps).toBe(true);
       if (tab === 'Leads') {
-        const displayed = await view.locator('.sar-study-image img').first().getAttribute('src');
-        const svg = decodeURIComponent(displayed!.split(',').slice(1).join(','));
+        // The strongest candidate can contain Br rather than Cl. Check the
+        // actual candidate gallery, without forcing its scientific ordering.
+        const sources = await view
+          .locator('.sar-study-image img')
+          .evaluateAll((images) => images.map((image) => image.getAttribute('src')!));
+        const svg = sources
+          .map((displayed) => decodeURIComponent(displayed.split(',').slice(1).join(',')))
+          .join('\n');
         expect(svg).toContain('#B42318');
         expect(svg).toContain('#166534');
         expect(svg).not.toContain('#FF0000');
