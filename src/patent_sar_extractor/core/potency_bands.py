@@ -134,12 +134,12 @@ class PotencyPool:
             for identity, value in self.readings.items()
             if identity not in self.uncertain and value.kind != "missing"
         ]
-        counts = dict(
-            population=len(samples),
-            eligible=len(valid),
-            excluded=len(self.readings) - len(valid),
-            distinct=len(set(valid)),
-        )
+        counts = {
+            "population": len(samples),
+            "eligible": len(valid),
+            "excluded": len(self.readings) - len(valid),
+            "distinct": len(set(valid)),
+        }
         if self.overflow:
             return PotencyScale("limit", **counts)
         if len(samples) < 10:

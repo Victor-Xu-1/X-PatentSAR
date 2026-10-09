@@ -6,12 +6,13 @@ import json
 import unittest
 from unittest.mock import patch
 
+from test_prediction_support import PredictionFixture, controlled_summary
+
 from patent_sar_extractor.web.activity_columns import ActivityColumnCatalog
 from patent_sar_extractor.web.models import Activity, Compound, Confidence, Source
 from patent_sar_extractor.web.table_filter_choices import filter_choices
 from patent_sar_extractor.web.table_queries import workbook_rows
 from patent_sar_extractor.web.table_query_models import ColumnFilter
-from test_prediction_support import PredictionFixture, controlled_summary
 
 
 def row(identifier, values):

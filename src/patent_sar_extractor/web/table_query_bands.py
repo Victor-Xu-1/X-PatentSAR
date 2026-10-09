@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Literal
 
-from decimal import Decimal
 from ..core.potency_bands import classify_potency
 from ..core.sar.values import parse_value
-
 from .activity_rank_models import ActivityStrengthScale
 from .activity_rank_values import rank_value
 from .models import Compound

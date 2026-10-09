@@ -7,7 +7,6 @@ from dataclasses import dataclass, replace
 from itertools import accumulate
 
 from ..core.potency_bands import PotencyPool, concentration_unit
-
 from .activity_rank_models import ActivityStrengthScale, RankKind
 from .activity_rank_values import rank_direction, rank_value
 

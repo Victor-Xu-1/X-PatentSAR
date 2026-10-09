@@ -6,7 +6,6 @@ from decimal import Decimal
 from typing import Any
 
 from ..potency_bands import classify_potency
-
 from .contexts import compare_context, select_observations
 from .errors import SARInputError
 from .values import Value, grade_ranks, parse_value

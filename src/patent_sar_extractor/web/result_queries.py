@@ -6,7 +6,6 @@ from collections.abc import Callable
 from typing import Any
 
 from .activity_columns import ActivityColumnCatalog, activity_context
-from .table_query_bands import value_band
 from .activity_focus import activity_source_keys
 from .activity_rank_values import rank_value
 from .correction_storage import (
@@ -37,6 +36,7 @@ from .recognition_storage import (
 from .storage import Store
 from .table_filter_choices import ColumnFilterValues, choice_parameters, filter_choices
 from .table_queries import validate_columns, workbook_rows
+from .table_query_bands import value_band
 from .table_query_models import column_filters as parse_column_filters
 
 

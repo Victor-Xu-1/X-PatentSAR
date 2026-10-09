@@ -11,9 +11,9 @@ from typing import Annotated, Literal
 from pydantic import Field
 
 from ...contracts import SAR_STUDY_REPORT_SCHEMA_VERSION
+from ..activity_rank_models import ActivityStrengthScale
 from ..dto import DTO
 from ..models import Acceptance
-from ..activity_rank_models import ActivityStrengthScale
 from .models import Region, SARJob
 
 

@@ -10,6 +10,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import patch
 
+from pydantic import ValidationError
+
 from patent_sar_extractor.web import models
 from patent_sar_extractor.web.correction_models import CorrectionRequest
 from patent_sar_extractor.web.corrections import Corrections
@@ -23,7 +25,6 @@ from patent_sar_extractor.web.models import (
 )
 from patent_sar_extractor.web.result_queries import ResultQueries
 from patent_sar_extractor.web.storage import Store, encode, now
-from pydantic import ValidationError
 
 
 def measurement(**changes) -> Activity:
