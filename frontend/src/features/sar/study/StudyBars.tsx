@@ -63,7 +63,7 @@ export function StudyBars({
                           ? '未支持读数'
                           : '重复读数未确定',
                     )
-                  : compactBinLabel(bin.label)}
+                  : compactBinLabel(bin.label, bin.kind)}
               </span>
               <meter
                 className="sar-chart-track"

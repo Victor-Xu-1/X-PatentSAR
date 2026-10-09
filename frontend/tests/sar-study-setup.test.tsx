@@ -62,7 +62,8 @@ describe('explicit full-study setup', () => {
           direction: 'lower',
           grade_order: [],
           strong_threshold: null,
-          threshold_inclusive: true,
+          threshold_inclusive: false,
+          strength_method: 'tenth_decade',
         },
       ],
       region_ids: [],
@@ -74,7 +75,7 @@ describe('explicit full-study setup', () => {
   it('keeps source-owned condition and language drafts through failed/inactive reads, and disables until revalidated', async () => {
     const { rerender } = render(<StudySetup {...props} />);
     await selectContext();
-    await userEvent.click(screen.getByText('Grades and threshold (optional)'));
+    await userEvent.click(screen.getByText('Source grades (optional)'));
     const grades = screen.getByRole('textbox', { name: /Grade order/ });
     await userEvent.type(grades, 'Strong 原文\nWeak');
     const signal = vi.mocked(sarStudyApi.profile).mock.calls[0]![2];
@@ -92,15 +93,15 @@ describe('explicit full-study setup', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: '运行完整研究' })).toBeEnabled());
     expect(sarStudyApi.start).not.toHaveBeenCalled();
   });
-  it('refuses mixed grade/threshold policy and keeps saved core and variable IDs distinct', async () => {
+  it('requires unique source grades without numeric overrides and keeps saved core and variable IDs distinct', async () => {
     render(<StudySetup {...props} />);
     await selectContext();
-    await userEvent.click(screen.getByText('Grades and threshold (optional)'));
+    await userEvent.click(screen.getByText('Source grades (optional)'));
     const grade = screen.getByRole('textbox', { name: /Grade order/ });
-    await userEvent.type(grade, 'Strong\nWeak');
-    const threshold = screen.getByLabelText('Strong-activity threshold (optional, raw value)');
-    await userEvent.type(threshold, '10');
-    expect(screen.getByRole('alert')).toHaveTextContent('cannot be used together');
+    await userEvent.type(grade, 'Strong\nStrong');
+    expect(
+      screen.queryByLabelText('Strong-activity threshold (optional, raw value)'),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Run full study' })).toBeDisabled();
     await userEvent.clear(grade);
     await userEvent.click(screen.getByText(/Confirmed cores \(optional\)/));

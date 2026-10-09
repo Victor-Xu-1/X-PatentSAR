@@ -39,11 +39,11 @@ class ActivityColumnCatalog:
         self._rank_budget = RankBudget()
         self._ranks: dict[ActivityContext, RankDistribution] = {}
 
-    def observe(self, activities: Iterable[Activity]) -> None:
+    def observe(self, activities: Iterable[Activity], *, compound_id: str) -> None:
         for activity in activities:
             context = activity_context(activity)
             if context in self._ranks:
-                self._ranks[context].observe(activity.value)
+                self._ranks[context].observe(activity.value, compound_id)
             if context in self._columns:
                 continue
             if len(self._columns) >= MAX_ACTIVITY_COLUMNS:
@@ -61,7 +61,7 @@ class ActivityColumnCatalog:
                 assay=assay,
             )
             distribution = self._ranks[context] = RankDistribution(self._rank_budget)
-            distribution.observe(activity.value)
+            distribution.observe(activity.value, compound_id)
 
     def columns(self) -> list[ActivityColumn]:
         contexts = sorted(

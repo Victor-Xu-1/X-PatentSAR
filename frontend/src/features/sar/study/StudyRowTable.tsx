@@ -119,7 +119,16 @@ export function StudyRowTable({
                     {cell(row, column)}
                   </th>
                 ) : (
-                  <td key={column.id}>{cell(row, column)}</td>
+                  <td
+                    key={column.id}
+                    data-activity-strength={
+                      column.id.startsWith('context:')
+                        ? row.activity_bands?.[column.id.slice(8)]
+                        : undefined
+                    }
+                  >
+                    {cell(row, column)}
+                  </td>
                 ),
               )}
             </tr>

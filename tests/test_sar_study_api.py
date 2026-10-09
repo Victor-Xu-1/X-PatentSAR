@@ -36,7 +36,7 @@ class SARStudyAPITests(WebFixture, unittest.TestCase):
                 {
                     "context_id": profile.json()["contexts"][0]["id"],
                     "direction": "lower",
-                    "strong_threshold": 2,
+                    "strength_method": "tenth_decade",
                 }
             ],
             "confirm_context": True,
@@ -83,9 +83,7 @@ class SARStudyAPITests(WebFixture, unittest.TestCase):
                 ["Example 2", "Example 3"],
             )
             strong = client.get(path + "/rows?scope=strong").json()
-            self.assertEqual(
-                {item["label"] for item in strong["items"]}, {"Example 2", "Example 3"}
-            )
+            self.assertEqual({item["label"] for item in strong["items"]}, set())
             missing = client.get(path + "/rows?query=Example+4").json()["items"][0]
             self.assertGreater(missing["properties"]["molecular_weight"], 0)
             self.assertEqual(missing["prediction_origin"], "not_provided")

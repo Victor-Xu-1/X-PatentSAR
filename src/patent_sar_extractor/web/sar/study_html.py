@@ -67,6 +67,16 @@ def render_report(job, report, by_id) -> bytes:
     for distribution in report.distributions:
         context = names[distribution.context_id]
         add(f'<article class="card"><h3>{esc(context.name)}</h3>')
+        policy = next(p for p in report.policies if p.context_id == context.id)
+        if policy.strength_method == "tenth_decade":
+            scale = policy.strength_scale
+            unit = " " + context.unit if context.unit else ""
+            caption = (
+                f"Strong &lt;{esc(scale.strong_boundary)}{esc(unit)}; medium {esc(scale.strong_boundary)}{esc(unit)}–&lt;{esc(scale.medium_boundary)}{esc(unit)}; weak ≥{esc(scale.medium_boundary)}{esc(unit)}"
+                if scale and scale.status == "ready"
+                else "Unclassified: insufficient or uncertain tenth measurement, or unsupported endpoint."
+            )
+            add(f"<p>Tenth potency decade · {caption}</p>")
         add(composition(distribution.bins, current=current))
         add(
             f"<p>{distribution.observed_molecules} observed · {distribution.missing_molecules} missing · {distribution.unresolved_molecules} unresolved · {distribution.strong_molecules} proved strong</p><details><summary>Recorded conditions</summary><pre>{esc(context.context)}</pre></details></article>"

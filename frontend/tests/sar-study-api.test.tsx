@@ -126,15 +126,14 @@ describe('study DTOs and exact policies', () => {
     expect(decodeStudyReport({ ...current, rows: [] }).molecule_count).toBe(1);
     expect(decodeStudyReport(studyReport)).toEqual(studyReport);
   });
-  it('never infers grades, thresholds or direction and forbids mixed numeric/grade conventions', () => {
+  it('requires direction, keeps raw grades and leaves potency thresholds to the backend', () => {
     expect(policyFromDraft(studyContext.id, emptyPolicy())).toBeNull();
     expect(
       policyFromDraft(studyContext.id, { ...emptyPolicy(), direction: 'lower' }),
     ).toMatchObject({ grade_order: [], strong_threshold: null });
-    for (const threshold of ['<10', 'NaN', 'Infinity', '1e999'])
-      expect(
-        policyFromDraft(studyContext.id, { ...emptyPolicy(), direction: 'lower', threshold }),
-      ).toBeNull();
+    expect(
+      policyFromDraft(studyContext.id, { ...emptyPolicy(), direction: 'lower' }),
+    ).toMatchObject({ strength_method: 'tenth_decade', threshold_inclusive: false });
     expect(
       policyFromDraft(studyContext.id, { ...emptyPolicy(), direction: 'higher', grades: 'A\nA' }),
     ).toBeNull();
@@ -143,9 +142,8 @@ describe('study DTOs and exact policies', () => {
         ...emptyPolicy(),
         direction: 'higher',
         grades: 'strong\nweak',
-        threshold: '10',
       }),
-    ).toBeNull();
+    ).toMatchObject({ strength_method: 'source', grade_order: ['strong', 'weak'] });
   });
   it('maps declared research/source-page columns only, rejects duplicate roles and preserves native long defaults', () => {
     const preview = { ...csvPreview, headers: [...csvPreview.headers, 'mw', 'risk', 'page'] };

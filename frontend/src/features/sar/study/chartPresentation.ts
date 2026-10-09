@@ -1,4 +1,5 @@
 import type { StudyBin } from '../../../api/sarStudyTypes';
+import { t } from '../../../i18n';
 
 const grades = ['#008c68', '#55b9a7', '#78a5c4', '#d8a142', '#ab80b7', '#d78270', '#c66475'];
 const numeric = [
@@ -13,13 +14,25 @@ const numeric = [
 ];
 export type CountingUnit = 'molecules' | 'observations';
 export function chartColor(bin: StudyBin, index: number, direction: 'lower' | 'higher' = 'lower') {
+  if (bin.kind === 'strength')
+    return (
+      { strong: '#42c984', medium: '#edf7f0', weak: '#eff2f0', unclassified: '#a8b2ae' }[
+        bin.label as 'strong' | 'medium' | 'weak' | 'unclassified'
+      ] ?? '#a8b2ae'
+    );
   if (['missing', 'unsupported', 'unresolved'].includes(bin.kind)) return '#a8b2ae';
   if (bin.kind === 'numeric')
     return numeric[direction === 'higher' ? 7 - Math.min(index, 7) : Math.min(index, 7)];
   if (bin.kind === 'interval') return '#997b4d';
   return grades[index % grades.length];
 }
-export function compactBinLabel(label: string) {
+export function compactBinLabel(label: string, kind?: string) {
+  if (kind === 'strength')
+    return t(
+      { strong: '强活性', medium: '中等活性', weak: '弱活性', unclassified: '未分档' }[
+        label as 'strong' | 'medium' | 'weak' | 'unclassified'
+      ] ?? '未分档',
+    );
   const match = /^([[(])([^,]+),([^\])]+)([\])])$/.exec(label);
   if (!match) return label;
   const format = (raw: string) => {

@@ -13,6 +13,7 @@ from pydantic import Field
 from ...contracts import SAR_STUDY_REPORT_SCHEMA_VERSION
 from ..dto import DTO
 from ..models import Acceptance
+from ..activity_rank_models import ActivityStrengthScale
 from .models import Region, SARJob
 
 
@@ -43,6 +44,13 @@ class StudyPolicy(DTO):
         default=None, allow_inf_nan=False, strict=True
     )
     threshold_inclusive: bool = Field(default=True, strict=True)
+    strength_method: Literal["tenth_decade", "source", "unclassified"] = "tenth_decade"
+
+
+class StudyResultPolicy(StudyPolicy):
+    # A historical report without this field keeps its captured legacy meaning.
+    strength_method: Literal["tenth_decade", "source", "unclassified"] = "source"
+    strength_scale: ActivityStrengthScale | None = None
 
 
 class ConditionDeclaration(DTO):
@@ -136,6 +144,9 @@ class StudyRow(DTO):
     values: dict[str, list[str]]
     activity_status: dict[str, str]
     strong: bool
+    activity_bands: dict[str, Literal["strong", "medium", "weak", "unclassified"]] = (
+        Field(default_factory=dict)
+    )
     properties: dict[str, float | None]
     property_origins: dict[str, str]
     predictions: dict[str, float | None] = Field(default_factory=dict)
@@ -171,7 +182,7 @@ class StudyReport(DTO):
     matched_pair_count: int = 0
     comparable_pair_count: int = 0
     contexts: list[StudyContext]
-    policies: list[StudyPolicy]
+    policies: list[StudyResultPolicy]
     distributions: list[StudyDistribution]
     scaffolds: list[StudyScaffold]
     regions: list[StudyRegionSummary]

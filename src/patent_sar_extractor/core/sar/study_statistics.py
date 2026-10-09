@@ -5,12 +5,19 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Any
 
+from ..potency_bands import classify_potency
+
 from .contexts import compare_context, select_observations
 from .errors import SARInputError
 from .values import Value, grade_ranks, parse_value
 
 
 def proven_strong(value: Value, policy: dict, ranks: dict[str, int]) -> bool | None:
+    if policy.get("strength_method") == "unclassified":
+        return None
+    if policy.get("strength_method") == "tenth_decade" and not ranks:
+        band = strength_band(value, policy, ranks)
+        return None if band == "unclassified" else band == "strong"
     if value.kind == "ordinal":
         if value.grade is None or value.grade not in ranks:
             raise SARInputError("invalid_grade_value")
@@ -27,6 +34,22 @@ def proven_strong(value: Value, policy: dict, ranks: dict[str, int]) -> bool | N
     return low > threshold or (
         low == threshold and (inclusive or not value.lower_closed)
     )
+
+
+def strength_band(value: Value | None, policy: dict, ranks: dict[str, int]) -> str:
+    if value is None or policy.get("strength_method") == "unclassified":
+        return "unclassified"
+    if policy.get("strength_method") == "tenth_decade" and not ranks:
+        scale = policy.get("strength_scale")
+        if not scale or scale["status"] != "ready":
+            return "unclassified"
+        return classify_potency(
+            value,
+            Decimal(str(scale["strong_boundary"])),
+            Decimal(str(scale["medium_boundary"])),
+        )
+    known = proven_strong(value, policy, ranks)
+    return "unclassified" if known is None else "strong" if known else "weak"
 
 
 def assess(observations: list[dict], policy: dict, confirmed: bool) -> dict:

@@ -32,9 +32,18 @@ def composition(bins, *, current: bool, vertical: bool = False) -> str:
     for index, item in enumerate(bins):
         value = getattr(item, unit)
         color = (
-            COLORS[index % len(COLORS)]
-            if item.kind in {"numeric", "ordinal"}
-            else "#b4bfc1"
+            {
+                "strong": "#42c984",
+                "medium": "#e5f5ec",
+                "weak": "#eff2f0",
+                "unclassified": "#b4bfc1",
+            }.get(item.label, "#b4bfc1")
+            if item.kind == "strength"
+            else (
+                COLORS[index % len(COLORS)]
+                if item.kind in {"numeric", "ordinal"}
+                else "#b4bfc1"
+            )
         )
         percent = 100 * value / max(1, total)
         style = f"height:{percent:.4f}%;" if vertical else f"width:{percent:.4f}%;"

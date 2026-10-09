@@ -1,6 +1,6 @@
 /** Sole authority: web/sar/study_models.py. No locally inferred scientific fields. */
 import type { Pair, Region, SARJob } from './sarTypes';
-import type { Project } from './types';
+import type { ActivityStrengthScale, Project } from './types';
 export interface StudyContext {
   id: string;
   metric_id: string;
@@ -24,6 +24,8 @@ export interface StudyPolicy {
   grade_order: string[];
   strong_threshold: number | null;
   threshold_inclusive: boolean;
+  strength_method?: 'tenth_decade' | 'source' | 'unclassified';
+  strength_scale?: ActivityStrengthScale | null;
 }
 export interface StudyRequest {
   request_id: string;
@@ -121,6 +123,7 @@ export interface StudyRow {
   values: Record<string, string[]>;
   activity_status: Record<string, string>;
   strong: boolean;
+  activity_bands?: Record<string, 'strong' | 'medium' | 'weak' | 'unclassified'>;
   properties: Record<string, number | null>;
   property_origins: Record<string, string>;
   predictions: Record<string, number | null>;

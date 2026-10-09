@@ -76,6 +76,14 @@ export interface ActivityStrengthScale {
   distinct: number;
   strong_boundary: number | null;
   medium_boundary: number | null;
+  method?: 'tied_terciles' | 'tenth_decade';
+  status?: 'ready' | 'insufficient' | 'ambiguous' | 'limit' | 'unsupported';
+  boundary_inclusive?: boolean;
+  population?: number | null;
+  anchor_rank?: 10 | null;
+  anchor_lower?: number | null;
+  anchor_upper?: number | null;
+  anchor_exponent?: number | null;
 }
 export interface ActivityFocusSelection {
   compoundId: string;
@@ -104,6 +112,7 @@ export interface Compound {
   activities: Activity[];
   activity_source_keys?: string[];
   activity_rank_values?: (number | null)[];
+  activity_bands?: ('strong' | 'medium' | 'none')[];
   record_kind?: RecordKind | null;
   source: {
     page: number | null;

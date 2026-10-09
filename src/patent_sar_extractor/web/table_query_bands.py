@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from typing import Literal
 
+from decimal import Decimal
+from ..core.potency_bands import classify_potency
+from ..core.sar.values import parse_value
+
 from .activity_rank_models import ActivityStrengthScale
 from .activity_rank_values import rank_value
 from .models import Compound
@@ -14,6 +18,19 @@ BANDS: tuple[Band, ...] = ("strong", "medium", "none")
 
 
 def value_band(value: object, scale: ActivityStrengthScale | None) -> Band:
+    if scale and scale.method == "tenth_decade":
+        if scale.status != "ready":
+            return "none"
+        try:
+            parsed_value = parse_value(str(value) if value is not None else "", {})
+        except ValueError:
+            return "none"
+        tier = classify_potency(
+            parsed_value,
+            Decimal(str(scale.strong_boundary)),
+            Decimal(str(scale.medium_boundary)),
+        )
+        return tier if tier in {"strong", "medium"} else "none"
     parsed = rank_value(value)
     if (
         parsed is None
@@ -21,6 +38,7 @@ def value_band(value: object, scale: ActivityStrengthScale | None) -> Band:
         or parsed[0] != scale.kind
         or scale.direction == "unknown"
         or not scale.eligible
+        or scale.status != "ready"
         or scale.strong_boundary is None
         or scale.medium_boundary is None
     ):

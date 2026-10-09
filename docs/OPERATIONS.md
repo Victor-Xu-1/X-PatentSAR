@@ -1,5 +1,23 @@
 # Operations and troubleshooting
 
+## Activity-strength compatibility
+
+New positive-concentration SAR studies use the complete-context tenth-potency
+decade: if the tenth strongest source identity is in `10^e`, strong ends at
+`10^(e+1)` (exclusive), medium at `10^(e+2)` (exclusive), and weak starts there.
+Equivalent molar units keep equivalent physical limits. Repeats are bounded once
+per source identity, not averaged or counted as extra ranks. Missing data,
+uncertain tenth-order bounds, unsupported endpoints and population limits stay
+explicit; no fake zero or fallback threshold is supplied.
+
+Legacy reports retain their captured rules. New numeric studies refuse manual
+thresholds; explicit original grade orders do not become concentrations.
+Scales and aligned tiers are additive API fields. Originals and audited edits
+are not migrated or overwritten. The engine identity includes the strength
+authority and DTOs: old scientific checkpoints cannot resume under new rules.
+Create a fresh study using the retained dataset. Rollback uses the previous
+wheel/state backup, preserving newer study records for forward recovery.
+
 ## Reproducible package construction
 
 After building/checking the frontend, use `tools/build_wheel.py --work-root

@@ -5,7 +5,7 @@ from __future__ import annotations
 from decimal import Decimal, localcontext
 
 from .errors import SARInputError
-from .study_statistics import proven_strong
+from .study_statistics import proven_strong, strength_band
 from .values import Value, grade_ranks, parse_value
 
 
@@ -71,6 +71,12 @@ class DistributionContext:
         )
 
     def _key(self, value: Value) -> tuple[str, str]:
+        if (
+            self.policy.get("strength_method") == "tenth_decade"
+            and not self.ranks
+            and value.kind in {"scalar", "interval"}
+        ):
+            return "strength", strength_band(value, self.policy, self.ranks)
         if value.kind == "ordinal":
             if value.grade is None:
                 raise SARInputError("study_distribution_grade")
@@ -94,9 +100,15 @@ class DistributionContext:
             )
         return value.kind, value.kind
 
-    def _member_key(self, values):
+    def _member_key(self, values, state=None):
         if not values or all(value.kind == "missing" for value in values):
             return "missing", "missing"
+        if (
+            self.policy.get("strength_method") == "tenth_decade"
+            and not self.ranks
+            and state is not None
+        ):
+            return "strength", state.get("band", "unclassified")
         if len(set(values)) == 1:
             return self._key(values[0])
         if any(value.kind == "missing" for value in values):
@@ -105,8 +117,22 @@ class DistributionContext:
 
     def _seeds(self):
         return [
+            *(
+                [
+                    ("strength", tier)
+                    for tier in ("strong", "medium", "weak", "unclassified")
+                ]
+                if self.policy.get("strength_method") == "tenth_decade"
+                and not self.ranks
+                else []
+            ),
             *[("ordinal", grade) for grade in self.ranks],
-            *[("numeric", label) for label in self.numeric],
+            *(
+                []
+                if self.policy.get("strength_method") == "tenth_decade"
+                and not self.ranks
+                else [("numeric", label) for label in self.numeric]
+            ),
             ("interval", "proved strong bound"),
             ("interval", "interval / censored"),
             ("missing", "missing"),
@@ -143,24 +169,27 @@ class DistributionContext:
                     and supported
                     and proven_strong(value, self.policy, self.ranks) is True
                 )
-            key = self._member_key(values)
+            key = self._member_key(values, self.assessments[identifier])
             buckets[key]["molecules"] += 1
         output = []
         for key, bucket in buckets.items():
             if (
                 not bucket["observations"]
                 and not bucket["molecules"]
-                and key[0] not in {"ordinal", "numeric"}
+                and key[0] not in {"ordinal", "numeric", "strength"}
             ):
                 continue
             bucket["strong"] = (
-                self.ranks.get(key[1]) == 0
+                key[1] == "strong"
+                if key[0] == "strength"
+                else self.ranks.get(key[1]) == 0
                 if key[0] == "ordinal"
                 else all_strong.get(key, False)
             )
             output.append(bucket)
         missing = sum(
-            self._member_key(self.values[identifier])[0] == "missing"
+            self._member_key(self.values[identifier], self.assessments[identifier])[0]
+            == "missing"
             for identifier in members
         )
         observation_count = sum(len(self.values[identifier]) for identifier in members)

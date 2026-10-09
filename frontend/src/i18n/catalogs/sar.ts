@@ -1,5 +1,20 @@
 /** UI copy only; source labels, grade values, issues and experiment data stay raw. */
 export const sar: Record<string, string> = {
+  第十名数量级: 'Tenth potency decade',
+  '原文等级（可选）': 'Source grades (optional)',
+  '明确方向；原文等级须唯一。': 'Confirm direction; source grades must be unique.',
+  '浓度活性自动按第十名数量级分档。':
+    'Concentration potency uses the tenth strongest measurement’s decade.',
+  '强 <{strong}；中 {strong}–<{medium}；弱 ≥{medium}':
+    'Strong <{strong}; medium {strong}–<{medium}; weak ≥{medium}',
+  '不足十个化合物，未分档': 'Fewer than ten measured compounds; unclassified',
+  '第十名数量级不确定，未分档': 'The tenth measurement’s decade is uncertain; unclassified',
+  该指标不适用浓度倍数分档: 'Concentration-decade tiers do not apply to this endpoint',
+  '第十名数量级；强 <{strong}，中 {strong}–<{medium}，弱 ≥{medium}。全任务计算，筛选和翻页不改变分档。':
+    'Tenth potency decade: strong <{strong}, medium {strong}–<{medium}, weak ≥{medium}. The full task fixes tiers; filtering and paging do not change them.',
+  中等活性: 'Medium activity',
+  弱活性: 'Weak activity',
+  未分档: 'Unclassified',
   研究规则: 'Research rule',
   分档从强到弱: 'Grades, strongest first',
   值越低活性越强: 'Lower is stronger',
