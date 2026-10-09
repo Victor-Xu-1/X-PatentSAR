@@ -147,6 +147,14 @@ for (const width of [390, 800, 1672]) {
         }),
       );
       expect(maps).toBe(true);
+      if (tab === 'Leads') {
+        const displayed = await view.locator('.sar-study-image img').first().getAttribute('src');
+        const svg = decodeURIComponent(displayed!.split(',').slice(1).join(','));
+        expect(svg).toContain('#B42318');
+        expect(svg).toContain('#166534');
+        expect(svg).not.toContain('#FF0000');
+        expect(svg).not.toContain('#00CC00');
+      }
       await page.screenshot({
         path: test.info().outputPath(`study-${width}-${tab.replaceAll(' ', '-')}.png`),
         fullPage: true,

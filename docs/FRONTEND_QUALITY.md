@@ -62,6 +62,10 @@ Physical manuscript point sizes are not applied to screen UI. This is not a clai
 that a browser screenshot satisfies a particular journal's editable-artwork submission.
 Strength captions come from captured study policy, never guessed patent thresholds;
 an absent rule is unclassified, not observed zero strong activity.
+The shared passive-SVG viewer applies readable variants of the stock O/F/Cl
+palette after validation. This affects display color only: source SVG, atom/bond
+geometry, labels, indices, stereochemistry, region coordinates and immutable reports
+are not rewritten. Unknown colors remain unchanged and unsafe SVG remains rejected.
 
 Run only explicit changed-module and direct-consumer checks from
 `.github/verification_scope.json`. Browser writes use isolated controller-owned

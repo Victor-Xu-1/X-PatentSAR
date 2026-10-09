@@ -1,4 +1,5 @@
 import { UiError } from '../../i18n';
+import { improveDrawingContrast } from './drawingPalette';
 const tags = new Set([
   'svg',
   'g',
@@ -130,6 +131,7 @@ export function safeDrawing(svg: string) {
   const w = viewBox?.length === 4 ? viewBox[2] : width;
   const h = viewBox?.length === 4 ? viewBox[3] : height;
   if (!w || !h || !Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) reject();
+  improveDrawingContrast(root);
   return {
     url: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(root))}`,
     aspectRatio: `${w} / ${h}`,
