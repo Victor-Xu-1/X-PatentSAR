@@ -1,5 +1,6 @@
 import { UiError, errorText, useTranslation } from '../../i18n';
 import { useEffect, useRef, useState } from 'react';
+import { Maximize2 } from 'lucide-react';
 import type { StructureChange } from './correctionDraft';
 import { EDITOR_CHANNEL, readEditorMessage } from '../structure-editor/protocol';
 
@@ -91,6 +92,21 @@ export default function StructureEditor({
   }, [attempt]);
   return (
     <section className="structure-editor" aria-label={t('结构式编辑器')}>
+      <div className="structure-view-tools">
+        <button
+          type="button"
+          disabled={disabled || !loaded}
+          onClick={() =>
+            frame.current?.contentWindow?.postMessage(
+              { channel: EDITOR_CHANNEL, kind: 'fit' },
+              window.location.origin,
+            )
+          }
+        >
+          <Maximize2 size={14} aria-hidden="true" />
+          {t('适应画布')}
+        </button>
+      </div>
       {!loaded && !error && <output className="structure-loading">{t('正在加载 Ketcher…')}</output>}
       <div
         className="structure-drawing-host"

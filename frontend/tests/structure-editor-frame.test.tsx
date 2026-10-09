@@ -10,6 +10,11 @@ const frame = vi.hoisted(() => ({
   element: null as ReactElement | null,
   instance: null as Ketcher | null,
 }));
+const viewport = vi.hoisted(() => ({ fit: vi.fn(), observe: vi.fn(() => vi.fn()) }));
+vi.mock('../src/features/structure-editor/editorViewport', () => ({
+  fitEditorViewport: viewport.fit,
+  observeEditorViewport: viewport.observe,
+}));
 vi.mock('react-dom/client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-dom/client')>();
   return {
@@ -49,6 +54,8 @@ beforeAll(async () => {
   entry.remove();
 });
 beforeEach(() => {
+  viewport.fit.mockClear();
+  viewport.observe.mockClear();
   client.resetSession();
   vi.useFakeTimers();
   change = () => {};
@@ -88,6 +95,18 @@ describe('initial editor graph and failure boundary', () => {
     const send = vi.spyOn(window.parent, 'postMessage').mockImplementation(() => {});
     const view = render(frame.element!);
     await load('OCC');
+    expect(viewport.observe).toHaveBeenCalledExactlyOnceWith(frame.instance);
+    await act(async () => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          source: window.parent,
+          origin: window.location.origin,
+          data: { channel: EDITOR_CHANNEL, kind: 'fit' },
+        }),
+      );
+    });
+    expect(viewport.fit).toHaveBeenCalledExactlyOnceWith(frame.instance);
+    expect(frame.instance!.getMolfile).toHaveBeenCalledOnce();
     expect(send).toHaveBeenLastCalledWith(
       { channel: EDITOR_CHANNEL, kind: 'loaded' },
       window.location.origin,

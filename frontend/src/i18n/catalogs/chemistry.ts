@@ -1,5 +1,6 @@
 /** Correction, local drawing, recognition and molecular-property copy. */
 export const chemistry: Readonly<Record<string, string>> = {
+  适应画布: 'Fit to canvas',
   活性列数值: 'Activity column values',
   '修正 {label} {index}': 'Correct {label} {index}',
   '查看 {label} 结构详情': 'View {label} structure details',

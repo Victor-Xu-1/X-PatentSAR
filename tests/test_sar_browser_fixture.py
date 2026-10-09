@@ -13,6 +13,14 @@ from tools.prepare_browser_fixture import prepare
 
 
 class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
+    def test_editor_viewport_scope_uses_only_imported_read_only_source(self):
+        self.assertEqual(
+            fixture_mode(
+                {PREFIX + "editor-viewport.spec.ts", PREFIX + "product-version.spec.ts"}
+            ),
+            "read-only",
+        )
+
     def test_density_scope_adds_only_read_only_recent_file_checks(self):
         recent = PREFIX + "recent-density.spec.ts"
         self.assertEqual(fixture_mode({recent}), "read-only")
