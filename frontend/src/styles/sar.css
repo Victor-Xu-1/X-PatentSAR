@@ -84,12 +84,58 @@
 .sar-study-table-controls {
   margin-top: 12px;
 }
+.sar-study-table-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.sar-page .sar-study-search {
+  position: relative;
+  flex: 1 1 240px;
+}
+.sar-study-search > svg {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+.sar-page .sar-study-search input {
+  padding-left: 36px;
+}
+.sar-study-table-toolbar button[data-active] {
+  border-color: var(--accent-line);
+  background: var(--accent-surface);
+  color: var(--accent-strong);
+}
+.sar-study-table-toolbar output {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.sar-study-table-options {
+  margin-top: 12px;
+  padding: 16px;
+  background: var(--surface-subtle);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
 .sar-lead-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
   font-size: 12px;
   padding: 4px 6px;
   background: transparent;
   border: 0;
   text-decoration: underline;
+}
+.sar-study-table .sar-lead-mark small {
+  display: inline;
+  white-space: nowrap;
 }
 .sar-study-stats dt {
   color: var(--muted);
@@ -341,12 +387,14 @@
 .sar-table-scroll th,
 .sar-table-scroll td {
   padding: 12px;
-  text-align: left;
-  vertical-align: top;
   border-bottom: 1px solid var(--line-soft);
   min-width: 130px;
   max-width: 320px;
   overflow-wrap: anywhere;
+}
+.sar-table-scroll table:not(.sar-study-table) :is(th, td) {
+  text-align: left;
+  vertical-align: top;
 }
 .sar-table-scroll thead {
   background: var(--surface-subtle);

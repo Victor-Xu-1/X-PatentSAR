@@ -198,6 +198,51 @@ describe('complete study report and lifecycle', () => {
   });
 });
 describe('compact activity-table presentation', () => {
+  it('starts with previews and compact tools; hidden table options retain source-bound filters and reset without clearing search', async () => {
+    render(
+      <StudyReportView report={studyReport} dataset={sarDataset} jobId={studyJob.id} active />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Activity table' }));
+    await screen.findByRole('table');
+    const options = screen.getByRole('button', { name: 'Filters and sort' });
+    expect(options).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByLabelText('Row scope')).not.toBeVisible();
+    expect(
+      screen.queryByText(/Filtering and pagination run on the server/),
+    ).not.toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText('Search identifiers or SMILES'), '原文');
+    await userEvent.click(options);
+    expect(options).toHaveAttribute('aria-expanded', 'true');
+    await userEvent.selectOptions(screen.getByLabelText('Row scope'), 'strong');
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: 'Variable regions' }),
+      studyReport.regions[0]!.region.id,
+    );
+    await waitFor(() =>
+      expect(vi.mocked(sarStudyApi.rows).mock.calls.at(-1)?.[3]).toMatchObject({
+        query: '原文',
+        scope: 'strong',
+        region_id: studyReport.regions[0]!.region.id,
+      }),
+    );
+    await userEvent.click(options);
+    expect(screen.getByLabelText('Row scope')).not.toBeVisible();
+    expect(options).toHaveTextContent('2');
+    await userEvent.click(options);
+    expect(screen.getByLabelText('Row scope')).toHaveValue('strong');
+    await userEvent.click(screen.getByRole('button', { name: 'Reset filters and sort' }));
+    expect(screen.getByLabelText('Search identifiers or SMILES')).toHaveValue('原文');
+    await waitFor(() =>
+      expect(vi.mocked(sarStudyApi.rows).mock.calls.at(-1)?.[3]).toEqual({
+        query: '原文',
+        scope: 'all',
+        scaffold_id: '',
+        region_id: '',
+        fragment_id: '',
+      }),
+    );
+    expect(options).not.toHaveTextContent('2');
+  });
   it('uses only selected contexts, short property headings/2dp, server filtering/paging and shared column chooser', async () => {
     const report = {
       ...studyReport,
@@ -228,6 +273,7 @@ describe('compact activity-table presentation', () => {
     await userEvent.click(dialog.getByRole('checkbox', { name: /Show column MW/ }));
     await userEvent.click(dialog.getAllByRole('button', { name: 'Close dialog' })[0]!);
     expect(within(table).queryByRole('columnheader', { name: 'MW' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Filters and sort' }));
     fireEvent.change(screen.getByLabelText('Sort (all study rows)'), {
       target: { value: 'property:molecular_weight' },
     });

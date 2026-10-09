@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
+import { checkStudyTableControls } from './sar-table-actions';
 
 async function persisted(page: Page, kind: 'dataset' | 'job') {
   await expect(page).toHaveURL(new RegExp(`(?:\\?|&)${kind}=[a-f0-9]{32}`));
@@ -118,7 +119,10 @@ for (const width of [390, 800, 1672]) {
         await expect(view.locator('.sar-policy-note').first()).toContainText(
           'Strong <10 nM; medium 10 nM–<100 nM; weak ≥100 nM',
         );
-      if (tab === 'Activity table') await expect(view.locator('tbody tr')).toHaveCount(16);
+      if (tab === 'Activity table') {
+        await expect(view.locator('tbody tr')).toHaveCount(16);
+        await checkStudyTableControls(page, report, width);
+      }
       const contained = await view.locator('.sar-composition-donut').evaluateAll((figures) =>
         figures.every((figure) => {
           const caption = figure.querySelector('figcaption')?.getBoundingClientRect();
@@ -284,6 +288,10 @@ for (const width of [390, 800, 1672]) {
         .getByRole('region', { name: '研究报告', exact: true })
         .getByRole('rowheader', { name: 'Example 5', exact: true }),
     ).toBeVisible();
+    await expect(page.getByRole('button', { name: '筛选与排序', exact: true })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
     await page.getByRole('combobox', { name: '界面语言', exact: true }).selectOption('en');
     await page.reload();
     await expect(
