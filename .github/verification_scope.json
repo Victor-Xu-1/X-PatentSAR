@@ -1,36 +1,27 @@
 {
   "schema_version": 1,
-  "base_sha": "8261ae10ed2955f492717731fab7892dc842dc7a",
+  "base_sha": "db746db1629323dd912ee7f02a89c8573afce72d",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/FRONTEND_QUALITY.md",
     "frontend/e2e/editor-viewport.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/features/results/StructureEditor.tsx",
     "frontend/src/features/structure-editor/editorViewport.ts",
-    "frontend/src/features/structure-editor/frameEntry.tsx",
-    "frontend/src/i18n/catalogs/chemistry.ts",
-    "frontend/src/styles/correction.css",
     "frontend/tests/editor-viewport.test.ts",
-    "frontend/tests/structure-editor-frame.test.tsx",
-    "src/patent_sar_extractor/contracts.py",
-    "tests/test_sar_browser_fixture.py",
-    "tools/browser_fixture_mode.py"
+    "src/patent_sar_extractor/contracts.py"
   ],
   "python_modules": [
     "tests.test_product_version_compatibility",
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
-    "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority",
-    "tests.test_sar_browser_fixture.SARBrowserFixtureTests.test_editor_viewport_scope_uses_only_imported_read_only_source"
+    "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
     "frontend/tests/editor-viewport.test.ts",
     "frontend/tests/structure-editor-frame.test.tsx",
     "frontend/tests/structure-editor-contract.test.ts",
     "frontend/tests/structure-editor-repair.test.tsx",
-    "frontend/tests/corrections.test.tsx",
-    "frontend/tests/i18n-core.test.tsx"
+    "frontend/tests/corrections.test.tsx"
   ],
   "browser_tests": [
     "frontend/e2e/editor-viewport.spec.ts",

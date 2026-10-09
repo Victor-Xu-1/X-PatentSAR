@@ -64,6 +64,9 @@ The reference article's private algorithms are not represented as reproduced.
   corrections; it does not export/revalidate on resize. Resize notifications
   are coalesced into one animation frame and disposed with the editor. The
   native minimum zoom is preserved, with manual pan/zoom retained for extremes.
+  Fitting also publishes the native micro-editor zoom-feedback event, so the
+  displayed percentage matches the actual SVG viewBox scale rather than an
+  earlier toolbar state. Feedback never uses the drawing-change/export channel.
 
 ## Required page/module/state matrix
 
