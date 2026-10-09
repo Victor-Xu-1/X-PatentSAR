@@ -18,6 +18,7 @@ class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
             fixture_mode(
                 {
                     PREFIX + "structure-details.spec.ts",
+                    PREFIX + "expert-controls.spec.ts",
                     PREFIX + "product-version.spec.ts",
                 }
             ),

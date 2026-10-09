@@ -4,6 +4,7 @@
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/FRONTEND_QUALITY.md",
+    "frontend/e2e/expert-controls.spec.ts",
     "frontend/e2e/structure-details.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
@@ -31,6 +32,7 @@
     "frontend/tests/structure-editor-repair.test.tsx"
   ],
   "browser_tests": [
+    "frontend/e2e/expert-controls.spec.ts",
     "frontend/e2e/structure-details.spec.ts",
     "frontend/e2e/product-version.spec.ts"
   ]
