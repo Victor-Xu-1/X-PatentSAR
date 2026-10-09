@@ -18,6 +18,17 @@ class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
         self.assertEqual(fixture_mode({PREFIX + "sar-study.spec.ts"}), "sar")
         self.assertEqual(
             fixture_mode(
+                {
+                    PREFIX + "sar-study.spec.ts",
+                    PREFIX + "expert-visual.spec.ts",
+                    PREFIX + "expert-controls.spec.ts",
+                    PREFIX + "product-version.spec.ts",
+                }
+            ),
+            "sar",
+        )
+        self.assertEqual(
+            fixture_mode(
                 {PREFIX + "sar-workbench.spec.ts", PREFIX + "sar-study.spec.ts"}
             ),
             "sar",

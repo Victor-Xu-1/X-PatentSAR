@@ -1,0 +1,65 @@
+# Product craft and acceptance
+
+X-PatentSAR uses restrained biomedical-workbench presentation: original documents,
+structures, raw measurements and the user's next action take priority over technical
+metadata. Award and commercial quality are design targets, not certification claims.
+The reference article's private algorithms are not represented as reproduced.
+
+## One visual and interaction authority
+
+- `frontend/src/styles/tokens.css` owns theme values. Feature styles own their layout;
+  `product-craft.css` applies the shared page/dialog rhythm, not another theme.
+- Existing components own dialogs, table queries, column selection, source navigation,
+  language persistence, private settings and drawing edits. No parallel UI controller.
+- Source identifiers, chemistry, values, units and user titles never change with the
+  interface language. English is the fresh-visit default; saved choices are retained.
+- Complete SAR results start at results, with intake collapsed. Intake drafts remain
+  mounted and are revealed only by an explicit action or a new dataset context.
+- A region click selects a recorded region. Modification preview reads a published
+  strict comparison and rechecks its immutable full graph and attachment mapping.
+  It does not design a molecule, rerun extraction or call a model.
+- Raw measurements, computed properties and captured predictions remain separate.
+  Grade/interval overlap, missing context and unrepresentable differences stay unknown.
+  Hidden technical detail does not remove source links, issues or acceptance boundaries.
+
+## Required page/module/state matrix
+
+Keep current evidence outside source trees, indexed by revision, installed-wheel
+identity, source task identity, viewport, language and state. Do not accept a loading
+screen as the finished page. A screenshot alone proves neither computation nor a save.
+
+| Surface | Modules and interactions | States to inspect |
+| --- | --- | --- |
+| Shared shell | direct navigation, language selector, skip link, version, project return | fresh English, saved language, narrow navigation, focus and active route |
+| PDF intake | file chooser/drop target, selected PDF, submit state | empty, selected, invalid, busy, recoverable error; no implied job creation |
+| Recent files | source list, acceptance marker, open action, recoverable deletion | populated, empty, paged, deletion confirmation, conflict/error |
+| Tasks | current stage, compact progress, pause/cancel/resume, history actions | pending, running, complete, failed, interrupted, retained history |
+| Main workspace | original/text/annotation tabs, page tools, draggable split, collapse/fullscreen | genuine loaded PDF/crops, source focus, narrow stack, keyboard resize |
+| Result table | original IDs, structure, Lead, individual assays, six properties, paging | no-activity rows retained, sticky IDs, wide scroll, empty search, loading/error |
+| Spreadsheet controls | column visibility, value/condition/color filters, sort, resize, copy/export | selected values, cleared filters, hidden/restored columns, keyboard/pointer focus |
+| Structure details | original crop, current redraw, raw structure identity | loaded/absent/invalid drawing, source-owned stereochemistry, close/focus restore |
+| Online correction | Ketcher bridge, original ID, activity and property fields, save | initialized, edited, validation, conflict, uncertain write recovery, saved reread |
+| Environment | complete setup, component status, storage dialog | real untested/present/ready states, disabled capability, explicit install consent |
+| Private LLM settings | API configuration, consent, key replacement, synthetic test | disabled/unconfigured, nonsecret draft, validation/conflict, no unsolicited call |
+| Evidence summary | counts, measured assay records, source links, issues | loaded, no data, genuine error, collapsed technical detail |
+| SAR intake | extracted snapshot, CSV preview and explicit column mapping | new intake, complete-result route, preserved draft, validation/import conflict |
+| SAR setup | context/policy selection, original reference, atom/port selection | unselected, named multi-regions, saved region, ambiguous/invalid selection |
+| SAR overview | independent counts and distributions, counting units | source rows vs eligible molecules vs observations, grades/intervals, missing values |
+| SAR scaffolds | descriptive cores and members, original structures | one/multiple cores, paging, original-source selection; not strict proof by itself |
+| SAR candidates | raw measured contexts, six captured properties, prediction provenance | real candidates, tied evidence, missing/predicted facts, no fabricated score |
+| SAR regions | atom-coordinate map, region selector, fragments, exact modification preview | selected/changed/no-variation, support/counterexample, actual graph pair/data delta |
+| SAR activity table | selected-context columns, source IDs, properties, filters and export | long/short table, paging, missing activity, hidden columns, source callback |
+| SAR source and lifecycle | immutable source, contextual detail, warnings, export and resume | historical/stale/complete/error, canceled/interrupted, original data preserved |
+
+## Verification boundaries
+
+Run only explicit changed-module and direct-consumer checks from
+`.github/verification_scope.json`. Browser writes use isolated controller-owned
+fixtures or copies, never production tasks. Real completed tasks are used read-only
+for rendered source/result consistency and scientific-boundary checks. Provider calls,
+scientific reruns and environment installs require their own authority and evidence.
+
+Record observed defects and repeat their focused checks. Publish only after the PR
+is merged and the exact mainline wheel is deployed, with retained rollback material.
+Keep unvisited states, external scientific acceptance and commercial usability testing
+explicitly outstanding; do not replace them with a static-build success or award claim.

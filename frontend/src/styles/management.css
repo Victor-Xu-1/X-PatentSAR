@@ -66,6 +66,10 @@
   padding: 8px;
   flex: 0 0 auto;
 }
+.jobs-page .inline-actions .history-trash-button {
+  width: auto;
+  padding-inline: 12px;
+}
 .job-history {
   display: grid;
   gap: 0;

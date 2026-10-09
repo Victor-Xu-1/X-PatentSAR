@@ -8,6 +8,7 @@ from fastapi import APIRouter
 from starlette.responses import StreamingResponse
 
 from .models import SARJob
+from .preview_models import StudyPreview
 from .study_admission import profile
 from .study_exports import export_study
 from .study_models import (
@@ -73,6 +74,15 @@ def study_routes(service, queue) -> APIRouter:
         async with reads:
             return await asyncio.to_thread(
                 StudyResults(queue()).drawing, job_id, kind, identifier, region_id
+            )
+
+    @router.get("/jobs/{identifier}/study/preview", response_model=StudyPreview)
+    async def transformation_preview(identifier: str, region_id: str, molecule_id: str):
+        from .study_preview import preview
+
+        async with reads:
+            return await asyncio.to_thread(
+                preview, queue(), identifier, region_id, molecule_id
             )
 
     @router.get("/jobs/{identifier}/study/export")

@@ -138,13 +138,15 @@ export function StudyResults({
       {overview.error && <SARFailure error={overview.error} onRetry={overview.reload} />}
       {overview.data && job.data?.status === 'complete' && (
         <>
-          <p className="sar-research-label">{t('仅供研究 · 未复现文章算法 · 非实验验收')}</p>
-          {dataset.source_kind === 'project' && (
-            <SourceAcceptance source={overview.data.report.source_acceptance} />
-          )}
-          {overview.data.report.warnings.length > 0 && (
-            <StudyLimitations warnings={overview.data.report.warnings} />
-          )}
+          <div className="sar-report-context">
+            <span className="sar-research-label">{t('研究候选 · 非实验验收')}</span>
+            {dataset.source_kind === 'project' && (
+              <SourceAcceptance source={overview.data.report.source_acceptance} />
+            )}
+            {overview.data.report.warnings.length > 0 && (
+              <StudyLimitations warnings={overview.data.report.warnings} />
+            )}
+          </div>
           <StudyReportView
             report={overview.data.report}
             dataset={dataset}

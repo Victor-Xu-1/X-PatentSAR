@@ -72,6 +72,15 @@
     flex: 1 0 100%;
     margin-left: 0;
     justify-content: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    overscroll-behavior-x: contain;
+    padding-block: 2px;
+  }
+  .topbar-actions > button {
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
   .topbar-version {
     margin-left: auto;
@@ -122,6 +131,39 @@
     flex-shrink: 1;
   }
 }
+@media (max-width: 540px) {
+  .topbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 6px 10px;
+  }
+  .topbar-actions {
+    grid-column: 1 / -1;
+  }
+  .brand {
+    min-width: 0;
+    gap: 7px;
+  }
+  .brand strong {
+    font-size: 16px;
+  }
+  .brand-symbol {
+    width: 24px;
+    height: 24px;
+  }
+  .language-switch {
+    gap: 0;
+  }
+  .language-switch select {
+    font-size: 11px;
+    padding-inline: 4px 16px;
+  }
+  .topbar-version {
+    font-size: 11px;
+    padding-left: 8px;
+    margin-left: 0;
+  }
+}
 @media (max-width: 560px) {
   .results-table td.frozen-structure {
     position: static;
@@ -135,7 +177,10 @@
     scroll-padding-inline-start: calc(var(--frozen-select-width) + var(--frozen-compound-width));
   }
   .brand strong {
-    font-size: 18px;
+    font-size: 16px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .topbar-actions > button {
     min-height: 44px;

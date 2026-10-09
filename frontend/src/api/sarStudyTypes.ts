@@ -1,5 +1,5 @@
 /** Sole authority: web/sar/study_models.py. No locally inferred scientific fields. */
-import type { Region, SARJob } from './sarTypes';
+import type { Pair, Region, SARJob } from './sarTypes';
 import type { Project } from './types';
 export interface StudyContext {
   id: string;
@@ -82,6 +82,22 @@ export interface StudyFragment {
   indeterminate: number;
   missing: number;
   is_reference: boolean;
+}
+export interface StudyPreview {
+  job: SARJob;
+  region: Region;
+  reference: StudyRow;
+  candidate: StudyRow;
+  pair: Pair;
+  measurements: {
+    context_id: string;
+    reference_values: string[];
+    candidate_values: string[];
+    comparison: string;
+    evidence_basis: string;
+    raw_difference: number | null;
+  }[];
+  property_differences: Record<string, number | null>;
 }
 export interface StudyRegionSummary {
   region: Region;

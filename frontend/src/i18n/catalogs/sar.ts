@@ -1,5 +1,28 @@
 /** UI copy only; source labels, grade values, issues and experiment data stay raw. */
 export const sar: Record<string, string> = {
+  '已有 ADMET 预测': 'Captured ADMET predictions',
+  预测指标: 'Predicted endpoint',
+  '模型预测与实验活性分开，不把缺失当安全。':
+    'Predictions are separate from experimental activity; missing data is not safety.',
+  记录活性: 'Recorded activity',
+  更强: 'Stronger',
+  更弱: 'Weaker',
+  改造化合物: 'Modified compound',
+  '点击结构区域，查看改造与数据变化。':
+    'Click a structural region to explore modifications and data changes.',
+  改造预览: 'Transformation preview',
+  '正在加载改造…': 'Loading transformation…',
+  专利实测: 'Patent measurements',
+  变化: 'Change',
+  无数值变化: 'No numeric change',
+  未测定: 'Not measured',
+  条件不可比: 'Incomparable conditions',
+  不可判定: 'Indeterminate',
+  查看改造与变化: 'Preview modification',
+  匹配详情: 'Matching details',
+  '仅圈选区域改变；其余结构固定。理化差值不表示药效改善。':
+    'Only the selected region changes; the rest of the structure is fixed. Property deltas are not potency improvements.',
+  '研究候选 · 非实验验收': 'Research candidates · not experimentally validated',
   数据集详情: 'Dataset details',
   技术证据: 'Technical evidence',
   '候选仅供实验优先级参考；骨架汇总不等于严格匹配，预测不替代实测。':

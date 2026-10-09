@@ -9,6 +9,17 @@ epochs are not product releases and do not retag old results as current.
 
 ### Independent, user-started SAR domain
 
+Interactive presentation uses the already installed RDKit backend and current
+strict reference matcher; Ketcher remains the one correction editor. Region
+hotspots bind original draw coordinates/immutable atom indices. Clicking a region
+selects its recorded fragment series, and explicit transformation preview compares
+actual reference/candidate graphs and selected-context measurements. The small
+`study_preview.py` read projection revalidates input/graph/member identities and
+reuses conservative context/value comparison; no second SAR algorithm or model
+service is introduced. New preview DTOs are isolated in `preview_models.py` so
+visual work does not invalidate scientific checkpoints. Raw/provenance detail is
+available on demand; missing/failed/stale states remain explicit.
+
 Engine3 adds one prepared `DistributionContext` per exact selected context;
 every source-ID population is a disjoint partition while raw repeat observations
 remain intact. All group charts reuse its ordered numeric domain. Publication

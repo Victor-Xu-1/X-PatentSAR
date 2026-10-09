@@ -22,9 +22,9 @@
 }
 .brand strong {
   font-family: var(--font-heading);
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 650;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.45px;
   white-space: nowrap;
 }
 .brand-symbol {

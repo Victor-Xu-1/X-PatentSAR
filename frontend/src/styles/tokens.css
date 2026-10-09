@@ -39,9 +39,9 @@
   --activity-strong-surface: #78d99a;
   --activity-medium-surface: #edf7f0;
   --floating-surface: #fffffff5;
-  --shadow-paper: 0 1px 6px #1721260a;
+  --shadow-paper: 0 2px 12px #17212608;
   --shadow-dialog: 0 16px 48px #17212624;
-  --radius-control: 10px;
-  --radius-panel: 12px;
+  --radius-control: 8px;
+  --radius-panel: 14px;
   --radius-dialog: 16px;
 }

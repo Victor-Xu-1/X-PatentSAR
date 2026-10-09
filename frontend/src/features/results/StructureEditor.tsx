@@ -1,4 +1,4 @@
-import { UiError, useTranslation } from '../../i18n';
+import { UiError, errorText, useTranslation } from '../../i18n';
 import { useEffect, useRef, useState } from 'react';
 import type { StructureChange } from './correctionDraft';
 import { EDITOR_CHANNEL, readEditorMessage } from '../structure-editor/protocol';
@@ -109,7 +109,7 @@ export default function StructureEditor({
       </div>
       {error && (
         <p role="alert" className="error-notice">
-          {error instanceof UiError ? t(error.source, error.values) : error.message}
+          {errorText(error)}
         </p>
       )}
       {!loaded && error && (

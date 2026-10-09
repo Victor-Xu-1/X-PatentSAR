@@ -14,7 +14,7 @@ export function RowFacts({ row, contexts }: { row: StudyRow; contexts: StudyCont
   const { t } = useTranslation();
   return (
     <div>
-      <p>
+      <p className="sar-candidate-coverage">
         {t(candidateLabels[row.candidate_status])} · {t('证据覆盖')}{' '}
         {Math.round(row.coverage * 100)}%
       </p>
@@ -30,6 +30,14 @@ export function RowFacts({ row, contexts }: { row: StudyRow; contexts: StudyCont
           </div>
         ))}
       </dl>
+      <dl className="sar-candidate-properties">
+        {studyProperties.map((property) => (
+          <div key={property.key}>
+            <dt>{property.label}</dt>
+            <dd>{propertyText(row.properties[property.key], property.key)}</dd>
+          </div>
+        ))}
+      </dl>
       <details className="sar-compact">
         <summary>{t('研究性质与已有预测')}</summary>
         <dl className="sar-facts">
@@ -37,7 +45,7 @@ export function RowFacts({ row, contexts }: { row: StudyRow; contexts: StudyCont
             <div key={key}>
               <dt>{studyProperties.find((p) => p.key === key)?.label ?? key}</dt>
               <dd title={value == null ? undefined : String(value)}>
-                {propertyText(value)}{' '}
+                {propertyText(value, key)}{' '}
                 <small>
                   {t(originCopy[row.property_origins[key] ?? 'not_provided'] ?? '来源待确认')}
                 </small>
