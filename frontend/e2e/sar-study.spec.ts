@@ -103,6 +103,14 @@ for (const width of [390, 800, 1672]) {
       await report.getByRole('button', { name: tab, exact: true }).click();
       const view = report.getByRole('region', { name: tab, exact: true });
       await expect(view).toBeVisible();
+      if (tab === 'Activity table') await expect(view.locator('tbody tr')).toHaveCount(5);
+      const contained = await view.locator('.sar-composition-donut').evaluateAll((figures) =>
+        figures.every((figure) => {
+          const caption = figure.querySelector('figcaption')?.getBoundingClientRect();
+          return caption && caption.bottom <= figure.getBoundingClientRect().bottom + 1;
+        }),
+      );
+      expect(contained).toBe(true);
       // Capture rendered structures, never a transient loading placeholder.
       await expect
         .poll(
