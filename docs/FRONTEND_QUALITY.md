@@ -20,6 +20,18 @@ The reference article's private algorithms are not represented as reproduced.
   existing explicit submit creates a study. Regions remain optional, not a second queue.
   A persistent result workbench returning to the same dataset without a job must
   reveal setup from the current route, not its first-mounted disclosure state.
+- Activity selection shows the actual selectable count up to the existing eight
+  context limit. Small lists use two columns where space permits. Equal molecule
+  and observation counts are shown once; unequal counts remain explicit. Raw
+  context, repeat information and original IDs remain unchanged and accessible.
+- The report title, actual job state, historical scope and research-only meaning
+  share one compact header. Full explanations live in existing details, not a
+  second status block. Result views form a single horizontally scrolling row;
+  programmatic card-to-table navigation reveals its active control without
+  scrolling the document or taking focus. Navigation never starts a study.
+- Recent-file rows stack metadata and actions before titles become cramped at
+  intermediate widths. Source title, availability, acceptance and timestamp stay
+  visible and associated with the same keyboard-operable open button.
 - Result previews prioritize structures, measured values, distributions and tables.
   One details dialog owns technical counts, source QA and limitations. Candidate
   cards show chemistry, raw activity and six properties; provenance stays available

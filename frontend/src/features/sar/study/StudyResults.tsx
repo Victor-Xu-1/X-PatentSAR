@@ -4,7 +4,7 @@ import { sarStudyApi } from '../../../api/sarStudyApi';
 import type { Dataset } from '../../../api/sarTypes';
 import { Loading } from '../../../components/Feedback';
 import { useTranslation } from '../../../i18n';
-import { isActiveJob, jobLabels } from '../presentation';
+import { isActiveJob } from '../presentation';
 import { useSARResource } from '../useSARResource';
 import { useSARMutation } from '../useSARMutation';
 import { MutationNotice } from '../MutationNotice';
@@ -12,6 +12,7 @@ import { SARFailure } from '../SARFailure';
 import { downloadSAR } from '../download';
 import { StudyReportView } from './StudyReportView';
 import { StudyReportInfo } from './StudyReportInfo';
+import { StudyReportHeader } from './StudyReportHeader';
 import { ContractError } from '../../../api/validation';
 export function StudyResults({
   dataset,
@@ -72,23 +73,20 @@ export function StudyResults({
   }
   return (
     <section className="sar-panel sar-study" aria-label={t('研究报告')}>
-      <div className="sar-section-heading">
-        <h2>{overview.data?.report.title ?? t('研究报告')}</h2>
-        <button type="button" disabled={!active || disabled} onClick={refresh}>
-          {t('刷新')}
-        </button>
-        {overview.data && (
-          <button type="button" onClick={() => setInfoOpen(true)}>
-            {t('研究详情')}
-          </button>
-        )}
-      </div>
+      <StudyReportHeader
+        title={overview.data?.report.title ?? null}
+        status={job.data?.status ?? null}
+        historical={Boolean(job.data && !current)}
+        research={Boolean(overview.data && job.data?.status === 'complete')}
+        disabled={!active || disabled}
+        onRefresh={refresh}
+        onDetails={overview.data ? () => setInfoOpen(true) : null}
+      />
       {job.loading && <Loading />}
       {job.error && <SARFailure error={job.error} onRetry={job.reload} />}
-      {job.data && (
+      {job.data && job.data.status !== 'complete' && (
         <div className="sar-job-status">
-          <strong>{t(jobLabels[job.data.status])}</strong>
-          <output hidden={job.data.status === 'complete'}>
+          <output>
             {t('已处理 {processed}/{total} · 已匹配 {matched}', {
               processed: job.data.processed,
               total: job.data.total,
@@ -131,14 +129,6 @@ export function StudyResults({
           {job.data.error_code}: {job.data.error_message}
         </p>
       )}
-      {job.data && !current && (
-        <output
-          className="sar-source-status is-review"
-          title={t('结果已过期，仅供历史核对；禁止续跑或作为当前结论。')}
-        >
-          {t('历史研究')}
-        </output>
-      )}
       <MutationNotice mutation={mutation} disabled={!ready} />
       {job.data?.status !== 'complete' && (
         <p>{t('完整报告仅在任务完成后发布；部分进度不是科学结论。')}</p>
@@ -147,11 +137,6 @@ export function StudyResults({
       {overview.error && <SARFailure error={overview.error} onRetry={overview.reload} />}
       {overview.data && job.data?.status === 'complete' && (
         <>
-          <div className="sar-report-context">
-            <span className="sar-research-label" title={t('研究候选 · 非实验验收')}>
-              {t('研究预览')}
-            </span>
-          </div>
           {infoOpen && (
             <StudyReportInfo
               report={overview.data.report}

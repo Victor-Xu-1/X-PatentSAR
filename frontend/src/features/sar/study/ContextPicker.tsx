@@ -21,7 +21,7 @@ export function ContextPicker({
   return (
     <fieldset className="sar-context-picker">
       <legend>
-        {t('精确实验条件')} · {selected.length}/8
+        {t('选择活性指标')} · {selected.length}/{Math.min(contexts.length, 8)}
       </legend>
       {contexts.length > 12 && (
         <label>
@@ -37,7 +37,7 @@ export function ContextPicker({
           />
         </label>
       )}
-      <div className="sar-context-list">
+      <div className={`sar-context-list${contexts.length <= 12 ? ' is-compact' : ''}`}>
         {visible.slice((page - 1) * 50, page * 50).map((context) => (
           <label
             className="sar-context-choice"
@@ -56,11 +56,18 @@ export function ContextPicker({
             <span>
               <strong>{contextLabel(context)}</strong>
               <small>{Object.values(context.context).filter(Boolean).join(' · ')}</small>
-              <small>
-                {t('{molecules} 个分子 · {observations} 条观察', {
+              <small
+                title={t('{molecules} 个分子 · {observations} 条观察', {
                   molecules: context.molecule_count,
                   observations: context.observation_count,
                 })}
+              >
+                {context.molecule_count === context.observation_count
+                  ? t('{molecules} 个分子', { molecules: context.molecule_count })
+                  : t('{molecules} 个分子 · {observations} 条观察', {
+                      molecules: context.molecule_count,
+                      observations: context.observation_count,
+                    })}
               </small>
             </span>
           </label>

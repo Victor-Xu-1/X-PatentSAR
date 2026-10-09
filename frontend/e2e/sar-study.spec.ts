@@ -68,6 +68,9 @@ for (const width of [390, 800, 1672]) {
     expect(dataset.row_count).toBe(16);
     const setup = page.getByRole('region', { name: 'Study setup', exact: true });
     await expect(setup).toBeVisible();
+    await expect(
+      setup.getByRole('group', { name: 'Choose activity measurements · 0/1', exact: true }),
+    ).toBeVisible();
     await setup.getByRole('checkbox', { name: /IC50/ }).check();
     await setup
       .getByRole('combobox', { name: 'Activity direction', exact: true })
@@ -99,6 +102,8 @@ for (const width of [390, 800, 1672]) {
       timeout: 30000,
     });
     const details = report.getByRole('button', { name: 'Details', exact: true });
+    await expect(report.locator('.sar-study-header')).toContainText('Complete');
+    await expect(report.locator('.sar-study-header')).toContainText('Research preview');
     await details.click();
     await expect(page.getByRole('dialog', { name: 'Details', exact: true })).toBeVisible();
     await page.keyboard.press('Escape');
@@ -115,6 +120,24 @@ for (const width of [390, 800, 1672]) {
       await report.getByRole('button', { name: tab, exact: true }).click();
       const view = report.getByRole('region', { name: tab, exact: true });
       await expect(view).toBeVisible();
+      const singleRow = await report.locator('.sar-study-tabs').evaluate((strip) => {
+        const buttons = Array.from(strip.querySelectorAll('button'));
+        const active = strip.querySelector('[aria-current]')!.getBoundingClientRect();
+        const bounds = strip.getBoundingClientRect();
+        return {
+          oneRow: buttons.every(
+            (button) =>
+              Math.abs(
+                button.getBoundingClientRect().top - buttons[0]!.getBoundingClientRect().top,
+              ) < 1,
+          ),
+          currentVisible: active.left >= bounds.left - 1 && active.right <= bounds.right + 1,
+          height: bounds.height,
+        };
+      });
+      expect(singleRow.oneRow).toBe(true);
+      expect(singleRow.currentVisible).toBe(true);
+      expect(singleRow.height).toBeLessThanOrEqual(82);
       if (['Overview', 'Scaffolds', 'Variable regions', 'Fragment summary'].includes(tab))
         await expect(view.locator('.sar-policy-note').first()).toContainText(
           'Strong <10 nM; medium 10 nM–<100 nM; weak ≥100 nM',
@@ -210,6 +233,23 @@ for (const width of [390, 800, 1672]) {
         fullPage: true,
       });
     }
+    // A card-to-table callback is a programmatic selection, not a nav click.
+    await report.getByRole('button', { name: 'Scaffolds', exact: true }).click();
+    await report
+      .getByRole('region', { name: 'Scaffolds', exact: true })
+      .getByRole('button', { name: 'View molecules', exact: true })
+      .first()
+      .click();
+    await expect(report.getByRole('region', { name: 'Activity table', exact: true })).toBeVisible();
+    await expect
+      .poll(() =>
+        report.locator('.sar-study-tabs').evaluate((strip) => {
+          const active = strip.querySelector('[aria-current]')!.getBoundingClientRect(),
+            bounds = strip.getBoundingClientRect();
+          return active.left >= bounds.left - 1 && active.right <= bounds.right + 1;
+        }),
+      )
+      .toBe(true);
     await report.getByRole('button', { name: 'Variable regions', exact: true }).click();
     const regions = report.getByRole('region', { name: 'Variable regions', exact: true });
     // Fragment1 includes an unchanged blank reading. Inspect the actual ethyl

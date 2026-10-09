@@ -53,7 +53,7 @@ describe('independent default study and retained advanced mode', () => {
       );
     }
     render(<Harness />);
-    await screen.findByText('<10 · 5');
+    await screen.findByRole('group', { name: 'Choose activity measurements · 0/1' });
     expect(study).not.toHaveBeenCalled();
     const advanced = screen.getByText('Single-reference comparison (advanced)').closest('details')!;
     expect(advanced).not.toHaveAttribute('open');
@@ -62,6 +62,7 @@ describe('independent default study and retained advanced mode', () => {
       screen.getByRole('combobox', { name: 'Activity direction' }),
       'lower',
     );
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
     await userEvent.click(screen.getByRole('button', { name: 'Run full study' }));
     expect(await screen.findByRole('button', { name: 'Overview' })).toBeVisible();
     expect(navigate).toHaveBeenCalledWith(
