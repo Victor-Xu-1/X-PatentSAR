@@ -17,6 +17,7 @@
 }
 .sar-chart-layout-donut > label {
   grid-column: 1 / -1;
+  max-width: 220px;
 }
 .sar-composition-donut {
   width: 160px;
