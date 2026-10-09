@@ -5,6 +5,7 @@ import unittest
 
 import test_sar_api as support
 from test_web_support import WebFixture
+
 from patent_sar_extractor.core.sar.values import parse_value
 from patent_sar_extractor.web.sar.study_preview import _scalar_difference
 
