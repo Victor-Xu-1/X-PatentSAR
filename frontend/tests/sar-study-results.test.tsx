@@ -84,9 +84,11 @@ describe('complete study report and lifecycle', () => {
       regionView.getByText('No structural variation was observed in this region.'),
     ).toBeVisible();
     expect(regionView.getByRole('heading', { name: /Fragment 1/ })).toBeVisible();
-    expect(regionView.getByText('Better 0 · Worse 1 · Indeterminate 1 · Missing 0')).toBeVisible();
+    const outcomes = regionView.getByRole('group', { name: 'Reference-comparison results' });
+    expect(within(outcomes).getByText('Indeterminate')).toBeVisible();
+    expect(within(outcomes).getByText('Weaker')).toBeVisible();
     expect(screen.queryByText('fragment/control')).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'View support and counterexamples' }));
+    await userEvent.click(screen.getByRole('button', { name: 'View molecules' }));
     await waitFor(() => expect(sarStudyApi.rows).toHaveBeenCalled());
     expect(vi.mocked(sarStudyApi.rows).mock.calls.at(-1)?.[3]).toMatchObject({
       region_id: studyReport.regions[0]!.region.id,

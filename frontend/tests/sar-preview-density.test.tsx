@@ -35,7 +35,8 @@ it('keeps the captured region rule with matching detail and preserves visible co
   expect(rule).not.toBeVisible();
   expect(rule.closest('details')).not.toHaveAttribute('open');
   expect(screen.getByText('Strong activity 1/1')).toBeVisible();
-  expect(screen.getByText('Better 0 · Worse 1 · Indeterminate 1 · Missing 0')).toBeVisible();
+  expect(screen.getByRole('group', { name: 'Reference-comparison results' })).toBeVisible();
+  expect(screen.getByText('Indeterminate')).toBeVisible();
   await userEvent.click(screen.getByText('Matching details'));
   expect(rule).toBeVisible();
   expect(screen.getByText(/Matched 1/)).toBeVisible();

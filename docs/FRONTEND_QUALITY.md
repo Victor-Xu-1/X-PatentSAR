@@ -57,6 +57,16 @@ The reference article's private algorithms are not represented as reproduced.
 - A region click selects a recorded region. Modification preview reads a published
   strict comparison and rechecks its immutable full graph and attachment mapping.
   It does not design a molecule, rerun extraction or call a model.
+  Fragment cards use a compact labelled comparison-count group, not a sentence,
+  normalized share or inferred score. Zero, unknown and missing counts stay distinct.
+  Current conservation reports show only the displayed fragments' nonempty legend
+  categories; colours retain their complete original-domain index. Full ranges stay
+  in matching detail and historical observation charts keep their recorded scope.
+  Shared inline-selection reveal owns result tabs and both region selectors; resize
+  work is animation-frame coalesced and disposed, without page scroll or focus changes.
+  Narrow previews retain table/row/header semantics while putting both raw values
+  and their backend change result in the visible width. Source IDs and unit labels
+  use existing captured data and the shared context-label presentation authority.
 - Raw measurements, computed properties and captured predictions remain separate.
   Grade/interval overlap, missing context and unrepresentable differences stay unknown.
   Hidden technical detail does not remove source links, issues or acceptance boundaries.

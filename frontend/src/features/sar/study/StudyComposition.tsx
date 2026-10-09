@@ -93,27 +93,33 @@ export function StudyComposition({
 export function ChartLegend({
   bins,
   direction = 'lower',
+  visibleBins,
 }: {
   bins: StudyBin[];
   direction?: 'lower' | 'higher' | undefined;
+  visibleBins?: readonly StudyBin[] | undefined;
 }) {
   const { t } = useTranslation();
+  const visible = visibleBins && new Set(visibleBins.map((bin) => bin.kind + ':' + bin.label));
+  if (visible?.size === 0) return null;
   return (
     <ul className="sar-chart-legend" aria-label={t('活性图例')}>
-      {bins.map((bin, index) => (
-        <li key={bin.kind + ':' + bin.label} title={bin.label}>
-          <span style={{ background: chartColor(bin, index, direction) }} />
-          {['missing', 'unsupported', 'unresolved'].includes(bin.kind)
-            ? t(
-                bin.label === 'missing'
-                  ? '无活性记录'
-                  : bin.label === 'unsupported'
-                    ? '未支持读数'
-                    : '重复读数未确定',
-              )
-            : compactBinLabel(bin.label, bin.kind)}
-        </li>
-      ))}
+      {bins.map((bin, index) =>
+        !visible || visible.has(bin.kind + ':' + bin.label) ? (
+          <li key={bin.kind + ':' + bin.label} title={bin.label}>
+            <span style={{ background: chartColor(bin, index, direction) }} />
+            {['missing', 'unsupported', 'unresolved'].includes(bin.kind)
+              ? t(
+                  bin.label === 'missing'
+                    ? '无活性记录'
+                    : bin.label === 'unsupported'
+                      ? '未支持读数'
+                      : '重复读数未确定',
+                )
+              : compactBinLabel(bin.label, bin.kind)}
+          </li>
+        ) : null,
+      )}
     </ul>
   );
 }

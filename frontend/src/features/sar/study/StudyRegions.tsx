@@ -1,100 +1,14 @@
-import { useState } from 'react';
-import type { StudyFragment, StudyRegionSummary, StudyReport } from '../../../api/sarStudyTypes';
+import { useRef, useState } from 'react';
+import type { StudyRegionSummary, StudyReport } from '../../../api/sarStudyTypes';
 import { useTranslation } from '../../../i18n';
-import { StudyImage } from './StudyImage';
-import { StudyBars } from './StudyBars';
 import { GroupPager } from './GroupPager';
 import { ChartLegend } from './StudyComposition';
 import { StudyRegionMap } from './StudyRegionMap';
 import type { CountingUnit } from './chartPresentation';
 import { TransformationPreview } from './TransformationPreview';
 import { StudyPolicyNote, hasStrongRule } from './StudyPolicyNote';
-function FragmentCard({
-  fragment,
-  index,
-  regionId,
-  jobId,
-  active,
-  onRows,
-  unit,
-  report,
-  onPreview,
-}: {
-  fragment: StudyFragment;
-  index: number;
-  regionId: string;
-  jobId: string;
-  active: boolean;
-  onRows: (region: string, fragment: string) => void;
-  unit: CountingUnit;
-  report: StudyReport;
-  onPreview: (id: string) => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <article className="sar-study-card">
-      <h4>
-        {t('片段 {index}', { index })}
-        {fragment.is_reference && <small> · {t('参考')}</small>}
-      </h4>
-      <StudyImage
-        jobId={jobId}
-        kind="fragment"
-        identifier={fragment.id}
-        regionId={regionId}
-        label={fragment.smiles}
-        active={active}
-      />
-      <StudyBars
-        bins={fragment.bins}
-        layout="stack"
-        controlledUnit={unit}
-        showLegend={false}
-        countingContract={report.counting_contract}
-        direction={report.policies[0]?.direction}
-      />
-      {hasStrongRule(report.policies[0]) && (
-        <p>
-          {t('强活性 {strong}/{total}', {
-            strong: fragment.strong_count,
-            total: fragment.molecule_count,
-          })}
-        </p>
-      )}
-      <p>
-        {t('更强 {better} · 更弱 {worse} · 未确定 {indeterminate} · 缺失 {missing}', {
-          better: fragment.better,
-          worse: fragment.worse,
-          indeterminate: fragment.indeterminate,
-          missing: fragment.missing,
-        })}
-      </p>
-      <button type="button" onClick={() => onRows(regionId, fragment.id)}>
-        {t('查看支持与反例')}
-      </button>
-      {fragment.molecule_ids.some(
-        (mid) =>
-          mid !== report.regions.find((item) => item.region.id === regionId)?.region.molecule_id,
-      ) && (
-        <button
-          type="button"
-          className="primary sar-preview-trigger"
-          onClick={() =>
-            onPreview(
-              fragment.molecule_ids.find(
-                (mid) =>
-                  mid !==
-                  report.regions.find((item) => item.region.id === regionId)?.region.molecule_id,
-              )!,
-            )
-          }
-        >
-          {t('查看改造与变化')}
-        </button>
-      )}
-    </article>
-  );
-}
+import { StudyFragmentCard } from './StudyFragmentCard';
+import { useInlineSelection } from './useInlineSelection';
 function RegionGroup({
   summary,
   index,
@@ -123,6 +37,8 @@ function RegionGroup({
         .filter((f) => f.strong_count > 0)
         .toSorted((a, b) => b.strong_count - a.strong_count)
     : summary.fragments;
+  const shownFragments = fragments.slice((page - 1) * 6, page * 6);
+  const countingUnit = report.counting_contract === 'unique-molecules-v2' ? unit : 'observations';
   return (
     <article className="sar-region-group">
       <h3>
@@ -148,6 +64,10 @@ function RegionGroup({
             ineligible: summary.ineligible,
           })}
         </p>
+        <ChartLegend
+          bins={report.distributions[0]?.bins ?? []}
+          direction={report.policies[0]?.direction}
+        />
       </details>
       <p>
         {t('可比较数量')} {summary.comparable}
@@ -164,7 +84,7 @@ function RegionGroup({
         <label>
           {t('统计单位')}
           <select
-            value={report.counting_contract === 'unique-molecules-v2' ? unit : 'observations'}
+            value={countingUnit}
             onChange={(event) => setUnit(event.target.value as CountingUnit)}
           >
             <option value="molecules" disabled={report.counting_contract !== 'unique-molecules-v2'}>
@@ -175,16 +95,17 @@ function RegionGroup({
         </label>
       </div>
       <div className="sar-fragment-strip">
-        {fragments.slice((page - 1) * 6, page * 6).map((fragment) => (
-          <FragmentCard
+        {shownFragments.map((fragment) => (
+          <StudyFragmentCard
             key={fragment.id}
             index={summary.fragments.findIndex((f) => f.id === fragment.id) + 1}
             fragment={fragment}
             regionId={summary.region.id}
+            referenceId={summary.region.molecule_id}
             jobId={jobId}
             active={active}
             onRows={onRows}
-            unit={unit}
+            unit={countingUnit}
             report={report}
             onPreview={setPreviewId}
           />
@@ -204,6 +125,13 @@ function RegionGroup({
       <ChartLegend
         bins={report.distributions[0]?.bins ?? []}
         direction={report.policies[0]?.direction}
+        visibleBins={
+          report.counting_contract === 'unique-molecules-v2'
+            ? shownFragments.flatMap((fragment) =>
+                fragment.bins.filter((bin) => bin[countingUnit] > 0),
+              )
+            : undefined
+        }
       />
       {!fragments.length && (
         <p>
@@ -239,6 +167,8 @@ export function StudyRegions({
   const [selection, setSelection] = useState(report.regions[0]?.region.id ?? '');
   const selected =
     report.regions.find((summary) => summary.region.id === selection) ?? report.regions[0];
+  const strip = useRef<HTMLDivElement>(null);
+  useInlineSelection(strip, 'button[aria-pressed="true"]');
   return (
     <div className="sar-region-explorer">
       {!strongest && (
@@ -250,7 +180,7 @@ export function StudyRegions({
         />
       )}
       {strongest && (
-        <div className="sar-region-selector">
+        <div ref={strip} className="sar-region-selector">
           {report.regions.map((summary) => (
             <button
               key={summary.region.id}

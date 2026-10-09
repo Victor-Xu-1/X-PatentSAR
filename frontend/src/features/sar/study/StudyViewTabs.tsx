@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useTranslation } from '../../../i18n';
+import { useInlineSelection } from './useInlineSelection';
 
 export function StudyViewTabs({
   labels,
@@ -14,17 +15,7 @@ export function StudyViewTabs({
 }) {
   const { t } = useTranslation();
   const strip = useRef<HTMLElement>(null);
-  // Scroll only this strip, including programmatic source/table navigation or a
-  // language change. Do not move the document or change the selected result.
-  useEffect(() => {
-    const element = strip.current;
-    const current = element?.querySelector<HTMLElement>('button[aria-current]');
-    if (!element || !current) return;
-    const bounds = element.getBoundingClientRect(),
-      choice = current.getBoundingClientRect();
-    if (choice.left < bounds.left) element.scrollLeft -= bounds.left - choice.left;
-    else if (choice.right > bounds.right) element.scrollLeft += choice.right - bounds.right;
-  });
+  useInlineSelection(strip, 'button[aria-current]');
   return (
     <nav ref={strip} className="sar-study-tabs" aria-label={t('研究视图')}>
       {labels.map((label, index) => (
