@@ -9,6 +9,7 @@ import { captureDrawing, subscribeDrawing } from './subscribeDrawing';
 import { boundedEditorOperation } from './structureConversion';
 import { ApiError } from '../../api/errors';
 import { UiError, useTranslation } from '../../i18n';
+import { editorErrorSource } from './editorErrorSource';
 import 'ketcher-react/dist/index.css';
 import './frame.css';
 
@@ -32,10 +33,6 @@ const buttons = {
 };
 function send(message: EditorPayload) {
   window.parent.postMessage({ channel: EDITOR_CHANNEL, ...message }, window.location.origin);
-}
-/** Only first-party editor copy gets a descriptor; SDK/API diagnostics stay raw. */
-function editorErrorSource(error: Error): { source?: string } {
-  return error instanceof UiError && !(error instanceof ApiError) ? { source: error.source } : {};
 }
 function KetcherFrame() {
   const { t } = useTranslation();
@@ -132,8 +129,8 @@ function KetcherFrame() {
       />
       {error && (
         <p className="editor-frame-error" role="alert">
-          {error instanceof UiError && !(error instanceof ApiError)
-            ? t(error.source, error.values)
+          {editorErrorSource(error).source
+            ? t(editorErrorSource(error).source!, error instanceof UiError ? error.values : {})
             : error.message.slice(0, 1000)}
         </p>
       )}

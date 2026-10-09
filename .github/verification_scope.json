@@ -26,12 +26,15 @@
     "frontend/src/features/sar/study/StudyResults.tsx",
     "frontend/src/features/sar/study/StudySource.tsx",
     "frontend/src/features/sar/study/TransformationPreview.tsx",
+    "frontend/src/features/structure-editor/editorErrorSource.ts",
+    "frontend/src/features/structure-editor/frameEntry.tsx",
     "frontend/src/i18n/catalogs/sar.ts",
     "frontend/src/main.tsx",
     "frontend/src/styles/management.css",
     "frontend/src/styles/product-craft.css",
     "frontend/src/styles/sar-explorer.css",
     "frontend/src/styles/tokens.css",
+    "frontend/tests/editor-error-language.test.tsx",
     "frontend/tests/sar-intake-presentation.test.tsx",
     "frontend/tests/sar-preview.test.tsx",
     "frontend/tests/sar-study-results.test.tsx",
@@ -65,7 +68,8 @@
     "frontend/tests/llm-settings.test.tsx",
     "frontend/tests/sar-intake-presentation.test.tsx",
     "frontend/tests/sar-route.test.tsx",
-    "frontend/tests/sar-review-context.test.tsx"
+    "frontend/tests/sar-review-context.test.tsx",
+    "frontend/tests/editor-error-language.test.tsx"
   ],
   "browser_tests": [
     "frontend/e2e/sar-study.spec.ts",

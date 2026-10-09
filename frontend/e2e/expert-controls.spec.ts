@@ -10,7 +10,12 @@ for (const width of [390, 800, 1672]) {
       writes: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await page.route('**/api/v1/**', async (route) => {
-      if (route.request().method() !== 'GET') {
+      // The local chemistry endpoint canonicalizes MDL without saving data.
+      // It uses POST for the bounded structure body; it is not a correction.
+      const chemistryRead =
+        route.request().method() === 'POST' &&
+        new URL(route.request().url()).pathname === '/api/v1/chemistry/structure';
+      if (route.request().method() !== 'GET' && !chemistryRead) {
         writes.push(route.request().url());
         await route.abort();
       } else await route.continue();
