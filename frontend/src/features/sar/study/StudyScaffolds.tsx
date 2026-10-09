@@ -46,13 +46,17 @@ export function StudyScaffolds({
                   : '描述性 Murcko 骨架',
               )}
             </small>
-            <StudyImage
-              jobId={jobId}
-              kind="scaffold"
-              identifier={scaffold.id}
-              label={scaffold.smiles ?? scaffold.id}
-              active={active}
-            />
+            {scaffold.smiles ? (
+              <StudyImage
+                jobId={jobId}
+                kind="scaffold"
+                identifier={scaffold.id}
+                label={scaffold.smiles ?? scaffold.id}
+                active={active}
+              />
+            ) : (
+              <div className="sar-structure-pending">{t('结构待核对')}</div>
+            )}
             <p>
               {t('强活性 {strong}/{total}', {
                 strong: scaffold.strong_count,
@@ -65,7 +69,12 @@ export function StudyScaffolds({
               value={scaffold.strong_count}
               aria-label={t('强活性占比')}
             />
-            <StudyBars bins={scaffold.bins} />
+            <StudyBars
+              bins={scaffold.bins}
+              layout="donut"
+              countingContract={report.counting_contract}
+              direction={report.policies[0]?.direction}
+            />
             <button type="button" onClick={() => onRows(scaffold.id)}>
               {t('查看分子')}
             </button>

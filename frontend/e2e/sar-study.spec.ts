@@ -101,10 +101,42 @@ for (const width of [390, 800, 1672]) {
       'Activity table',
     ]) {
       await report.getByRole('button', { name: tab, exact: true }).click();
-      await expect(report.getByRole('region', { name: tab, exact: true })).toBeVisible();
+      const view = report.getByRole('region', { name: tab, exact: true });
+      await expect(view).toBeVisible();
+      // Capture rendered structures, never a transient loading placeholder.
+      await expect
+        .poll(
+          () =>
+            view.locator('.sar-study-image, .sar-reference-map-image').evaluateAll((figures) =>
+              figures.every((figure) => {
+                const image = figure.querySelector('img');
+                return image?.complete && image.naturalWidth > 0;
+              }),
+            ),
+          { timeout: 20000 },
+        )
+        .toBe(true);
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),
       ).toBe(true);
+      const maps = await view.locator('.sar-reference-map-image').evaluateAll((items) =>
+        items.every((item) => {
+          const picture = item.querySelector('img')?.getBoundingClientRect();
+          const marks = item.querySelector('.sar-region-map')?.getBoundingClientRect();
+          return (
+            picture &&
+            marks &&
+            ['x', 'y', 'width', 'height'].every(
+              (key) =>
+                Math.abs(
+                  (picture[key as keyof DOMRect] as number) -
+                    (marks[key as keyof DOMRect] as number),
+                ) < 1,
+            )
+          );
+        }),
+      );
+      expect(maps).toBe(true);
       await page.screenshot({
         path: test.info().outputPath(`study-${width}-${tab.replaceAll(' ', '-')}.png`),
         fullPage: true,

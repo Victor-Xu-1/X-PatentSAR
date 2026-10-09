@@ -2,6 +2,7 @@ import type { StudyContext, StudyRow } from '../../../api/sarStudyTypes';
 import { useTranslation } from '../../../i18n';
 import { contextLabel } from './policyDraft';
 import { propertyText, studyProperties } from './tablePresentation';
+import { evidenceSummaries, originCopy } from './evidencePresentation';
 export const candidateLabels = {
   selected: '研究已选候选',
   not_selected: '研究未选候选',
@@ -14,7 +15,8 @@ export function RowFacts({ row, contexts }: { row: StudyRow; contexts: StudyCont
   return (
     <div>
       <p>
-        {t(candidateLabels[row.candidate_status])} · {t('证据覆盖')} {row.coverage}
+        {t(candidateLabels[row.candidate_status])} · {t('证据覆盖')}{' '}
+        {Math.round(row.coverage * 100)}%
       </p>
       <dl className="sar-facts">
         {contexts.map((context) => (
@@ -35,14 +37,15 @@ export function RowFacts({ row, contexts }: { row: StudyRow; contexts: StudyCont
             <div key={key}>
               <dt>{studyProperties.find((p) => p.key === key)?.label ?? key}</dt>
               <dd title={value == null ? undefined : String(value)}>
-                {propertyText(value)} · {row.property_origins[key] ?? 'not_provided'}
+                {propertyText(value)}{' '}
+                <small>
+                  {t(originCopy[row.property_origins[key] ?? 'not_provided'] ?? '来源待确认')}
+                </small>
               </dd>
             </div>
           ))}
         </dl>
-        <h4>
-          {t('已捕获的预测')} · {row.prediction_origin}
-        </h4>
+        <h4>{t('已捕获的预测')}</h4>
         <dl className="sar-facts">
           {Object.entries(row.predictions).map(([key, value]) => (
             <div key={key}>
@@ -58,16 +61,26 @@ export function RowFacts({ row, contexts }: { row: StudyRow; contexts: StudyCont
       </p>
       <details className="sar-compact">
         <summary>{t('证据依据')}</summary>
-        <ul className="sar-raw-reasons">
-          {Object.entries(row.activity_status).map(([id, value]) => (
-            <li key={id}>
-              {contexts.find((c) => c.id === id)?.name ?? t('活性指标')}: {value}
-            </li>
-          ))}
-          {row.reasons.map((reason, i) => (
-            <li key={i}>{reason}</li>
+        <ul>
+          {evidenceSummaries(row.reasons).map((reason) => (
+            <li key={reason}>{t(reason)}</li>
           ))}
         </ul>
+        <details className="sar-technical-evidence">
+          <summary>{t('技术证据')}</summary>
+          <pre>
+            {JSON.stringify(
+              {
+                activity_status: row.activity_status,
+                property_origins: row.property_origins,
+                prediction_origin: row.prediction_origin,
+                reasons: row.reasons,
+              },
+              null,
+              2,
+            )}
+          </pre>
+        </details>
       </details>
     </div>
   );

@@ -1,4 +1,5 @@
 /** Mirror of web/sar/models.py; optional additive fields permit staged controller integration. */
+import type { Project } from './types';
 export interface Metric {
   id: string;
   name: string;
@@ -38,6 +39,8 @@ export interface Dataset {
   source_project_id: string | null;
   source_sha256: string;
   source_document_sha256?: string | null;
+  source_acceptance?: Project['acceptance'] | null;
+  source_page_count?: number | null;
   revision: number;
   stale: boolean;
   row_count: number;
@@ -165,7 +168,7 @@ export interface Pair {
   reference_values: string[];
   candidate_values: string[];
   fold_change: number | null;
-  evidence_basis: 'recorded_context' | 'user_confirmed' | 'insufficient';
+  evidence_basis: 'recorded_context' | 'user_confirmed' | 'source_declared' | 'insufficient';
   region_id?: string | null;
   fragment_id?: string | null;
   variable_atom_indices?: number[];

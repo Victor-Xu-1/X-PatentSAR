@@ -26,6 +26,7 @@ export const comparisonLabels: Record<Comparison, string> = {
 export const evidenceLabels: Record<Pair['evidence_basis'], string> = {
   recorded_context: '记录条件',
   user_confirmed: '用户确认缺失条件',
+  source_declared: '原文条件人工记录',
   insufficient: '证据不足',
 };
 export const isActiveJob = (job: { status: JobState }) =>

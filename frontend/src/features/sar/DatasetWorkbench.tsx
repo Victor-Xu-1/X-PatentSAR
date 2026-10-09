@@ -13,6 +13,7 @@ import { RegionSelector } from './RegionSelector';
 import { SARJobs } from './SARJobs';
 import { SARJobResults } from './SARJobResults';
 import { StudySetup } from './study/StudySetup';
+import { SourceAcceptance } from './study/SourceAcceptance';
 import { DeleteDataset } from './DeleteDataset';
 
 const activeList = (list: JobList) => list.items.some(isActiveJob);
@@ -59,49 +60,61 @@ export function DatasetWorkbench({
       {dataset.error && <SARFailure error={dataset.error} onRetry={dataset.reload} />}
       {dataset.data && (
         <>
-          <section className="sar-panel sar-dataset-summary">
-            <div className="sar-section-heading">
-              <h2>{dataset.data.title}</h2>
-              <button
-                type="button"
-                onClick={() => {
-                  dataset.reload();
-                  jobs.reload();
-                }}
-              >
-                {t('刷新')}
-              </button>
-            </div>
-            <p>
-              {t('{rows} 行 · {eligible} 行可分析 · {issues} 项问题', {
-                rows: dataset.data.row_count,
-                eligible: dataset.data.eligible_count,
-                issues: dataset.data.issue_count,
-              })}
-            </p>
-            {dataset.data.stale && (
-              <output className="sar-warning">
-                {t('数据集已过期：保留旧结果供核对，请显式创建新快照。')}
-              </output>
-            )}
-            <SourceLinks dataset={dataset.data} />
-            <details className="sar-compact">
-              <summary>{t('数据集管理')}</summary>
-              {dataset.data.input_row_count !== undefined && (
-                <p>
-                  {t('{records} 条原始记录 · {rows} 个合并分子行', {
-                    records: dataset.data.input_row_count,
-                    rows: dataset.data.row_count,
-                  })}
-                </p>
+          <section
+            className={
+              'sar-panel sar-dataset-summary' + (jobId ? ' sar-dataset-summary-collapsed' : '')
+            }
+          >
+            <details open={jobId ? undefined : true}>
+              <summary>
+                {t('数据集详情')} · {dataset.data.row_count} {t('来源记录')}
+              </summary>
+              <div className="sar-section-heading">
+                <h2>{dataset.data.title}</h2>
+                <button
+                  type="button"
+                  onClick={() => {
+                    dataset.reload();
+                    jobs.reload();
+                  }}
+                >
+                  {t('刷新')}
+                </button>
+              </div>
+              <p>
+                {t('{rows} 行 · {eligible} 行可分析 · {issues} 项问题', {
+                  rows: dataset.data.row_count,
+                  eligible: dataset.data.eligible_count,
+                  issues: dataset.data.issue_count,
+                })}
+              </p>
+              {dataset.data.stale && (
+                <output className="sar-warning">
+                  {t('数据集已过期：保留旧结果供核对，请显式创建新快照。')}
+                </output>
               )}
-              <DeleteDataset
-                dataset={dataset.data}
-                active={active}
-                disabled={!ready}
-                scope={scope}
-                onRemoved={onRemoved}
-              />
+              <SourceLinks dataset={dataset.data} />
+              {dataset.data.source_kind === 'project' && !jobId && (
+                <SourceAcceptance source={dataset.data.source_acceptance} />
+              )}
+              <details className="sar-compact">
+                <summary>{t('数据集管理')}</summary>
+                {dataset.data.input_row_count !== undefined && (
+                  <p>
+                    {t('{records} 条原始记录 · {rows} 个合并分子行', {
+                      records: dataset.data.input_row_count,
+                      rows: dataset.data.row_count,
+                    })}
+                  </p>
+                )}
+                <DeleteDataset
+                  dataset={dataset.data}
+                  active={active}
+                  disabled={!ready}
+                  scope={scope}
+                  onRemoved={onRemoved}
+                />
+              </details>
             </details>
           </section>
           {jobs.error && <SARFailure error={jobs.error} onRetry={jobs.reload} />}

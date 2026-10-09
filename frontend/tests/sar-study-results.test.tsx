@@ -56,17 +56,21 @@ describe('complete study report and lifecycle', () => {
     expect(
       within(screen.getByText('Comparable comparisons').closest('div')!).getByText('1'),
     ).toBeVisible();
-    const meter = screen.getByRole('meter', { name: '<10 · Molecules' });
-    expect(meter).toHaveAttribute('value', '1');
-    await userEvent.selectOptions(
-      screen.getByRole('combobox', { name: 'Counting unit' }),
-      'observations',
-    );
+    // A retained pre-conservation report must not be rendered as a disjoint
+    // molecular population. Raw observations remain readable and unchanged.
     expect(screen.getByRole('meter', { name: '<10 · Observations' })).toHaveAttribute('value', '2');
+    expect(screen.getByRole('combobox', { name: 'Counting unit' })).toHaveValue('observations');
+    expect(screen.getByRole('option', { name: 'Source IDs / records' })).toBeDisabled();
+    expect(
+      within(screen.getByRole('region', { name: 'Overview' })).getByText(
+        /This historical chart shows raw observations/,
+      ),
+    ).toBeVisible();
     expect(sarStudyApi.rows).not.toHaveBeenCalled();
     expect(sarStudyApi.drawing).not.toHaveBeenCalled();
   });
   it('uses human core/fragment labels and exact immutable drawing/filter IDs, keeping no-variation and counterexamples visible', async () => {
+    vi.spyOn(sarApi, 'drawing').mockResolvedValue(sarDrawing);
     render(<StudyResults {...props} />);
     await userEvent.click(await screen.findByRole('button', { name: 'Scaffolds' }));
     expect(await screen.findByText('Core 原文')).toBeVisible();
@@ -98,7 +102,12 @@ describe('complete study report and lifecycle', () => {
     await userEvent.click(screen.getByText('Properties and captured predictions'));
     expect(screen.getByText(/120.00/)).toBeVisible();
     expect(screen.getByText('0.24')).toBeVisible();
-    expect(screen.getByText(/manual_null/)).toBeVisible();
+    expect(screen.getByText('Manually left empty')).toBeVisible();
+    expect(screen.getByText(/manual_null/)).not.toBeVisible();
+    const lead = within(screen.getByRole('region', { name: 'Leads' }));
+    await userEvent.click(lead.getByText('Evidence basis'));
+    await userEvent.click(lead.getByText('Technical evidence'));
+    expect(lead.getByText(/manual_null/)).toBeVisible();
     expect(screen.queryByText(/score/i)).not.toBeInTheDocument();
   });
   it.each(['queued', 'running', 'cancelled', 'interrupted', 'failed'] as const)(

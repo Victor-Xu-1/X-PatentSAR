@@ -104,6 +104,21 @@ The recovered E-drive deployment has an operator-owned entry point at `/srv/wsl/
 
 ### Independent SAR workbench
 
+SAR engine3 invalidates older interrupted scientific checkpoints; create a new
+explicit study rather than retagging/reusing them. Completed engine2 reports remain
+readable as historical raw-observation charts. Private SQL schema2 and report
+schema1 are unchanged; optional provenance/declaration/counting fields require no
+destructive migration. Rollback preserves both old/new reports and original data;
+new interrupted jobs must not resume with a different engine.
+
+For source-documented contexts, first create a fresh project snapshot that carries
+original document identity/page count. Check actual methods, fill only missing
+target/assay/cell/duration, and supply original pages and a review note. Do not use
+this facility to repair a wrong known condition, invent units, promote historical
+source QA, or claim automated verification. CSV users map actual condition columns;
+without attached source identity they cannot submit document declarations. Full
+JSON, CSV, eligible SDF and passive HTML retain declarations and QA provenance.
+
 Use the explicit **SAR analysis** header entry or the current project's entry.
 Project snapshots read current effective source/revisions without restarting
 extraction; CSV inputs are previewed/mapped before an independent dataset is

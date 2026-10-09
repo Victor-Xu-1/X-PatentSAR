@@ -9,11 +9,21 @@ import {
   string,
   ContractError,
 } from './validation';
-import { additions, checkPage, decodeRegion, hex, nullOr, unique } from './sarDecoders';
+import {
+  additions,
+  checkPage,
+  decodeRegion,
+  decodeSourceAcceptance,
+  hex,
+  nullOr,
+  unique,
+} from './sarDecoders';
+import { decodeConditionDeclaration } from './sarConditionDecoders';
 import { decodeSARJob } from './sarJobDecoders';
 import { studyBin, studyContext, studyPolicy, studyRow } from './sarStudyRowDecoders';
 import type { Decoder } from './validation';
 import type { StudyOverview, StudyProfile, StudyReport, StudyRows } from './sarStudyTypes';
+import { verifyStudyConservation } from './sarStudyIntegrity';
 const truth: Decoder<true> = (v, p = '$') => {
   if (v !== true) throw new ContractError(p);
   return true;
@@ -151,10 +161,22 @@ export const decodeStudyReport: Decoder<StudyReport> = (v, p = '$') => {
     )
   )
     throw new ContractError(p);
-  return {
+  const report = {
     ...result,
-    ...additions(v, { matched_pair_count: count, comparable_pair_count: count }, p),
+    ...additions(
+      v,
+      {
+        matched_pair_count: count,
+        comparable_pair_count: count,
+        counting_contract: oneOf(['legacy-per-bin-members', 'unique-molecules-v2']),
+        source_acceptance: nullOr(decodeSourceAcceptance),
+        context_declarations: array(decodeConditionDeclaration),
+      },
+      p,
+    ),
   };
+  verifyStudyConservation(report, p);
+  return report;
 };
 export const decodeStudyOverview: Decoder<StudyOverview> = object({
   job: decodeSARJob,

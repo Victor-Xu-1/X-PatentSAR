@@ -260,7 +260,9 @@ class StudyAnalysisTests(unittest.TestCase):
         )
         distribution = report.distributions[0]
         strongest = next(bucket for bucket in distribution.bins if bucket.label == "A")
-        self.assertEqual((strongest.observations, strongest.molecules), (3, 2))
+        self.assertEqual((strongest.observations, strongest.molecules), (3, 1))
+        self.assertEqual(sum(bucket.molecules for bucket in distribution.bins), 3)
+        self.assertEqual(report.counting_contract, "unique-molecules-v2")
         self.assertEqual(distribution.strong_molecules, 1)
         self.assertEqual(distribution.unresolved_molecules, 1)
         self.assertEqual(distribution.missing_molecules, 1)
@@ -518,6 +520,54 @@ class StudyAnalysisTests(unittest.TestCase):
         with self.assertRaises(SARInputError) as error:
             study_analysis.analyse_study(self.root, input_sha)
         self.assertEqual(error.exception.code, "study_pair_checkpoint_proof")
+
+    def test_rehashed_report_count_and_context_tampering_is_rejected(self):
+        from patent_sar_extractor.web.errors import WebError
+
+        packet = self.packet(regions=1, cores=1)
+        reply, _ = self.run_packet(packet)
+        safe = SafeFiles(self.root)
+        original = safe.json("report.json", optional=False)
+        pairs = [
+            Pair.model_validate(pair)
+            for index in range(reply["chunks"])
+            for pair in safe.json(f"chunk-{index:04d}.json")["pairs"]
+        ]
+        job = SARJob(
+            id=self.root.name,
+            dataset_id=packet["dataset"]["id"],
+            region_id=packet["regions"][0]["id"],
+            metric_id="activity",
+            kind="study",
+            status="running",
+            total=5,
+            created_at="2026-01-01T00:00:00Z",
+            input_sha256=digest(packet),
+        )
+        changes = [
+            lambda raw: raw["contexts"][0].update(name="invented endpoint"),
+            lambda raw: raw["distributions"][0]["bins"][0].update(molecules=99),
+            lambda raw: raw["distributions"][0].update(missing_molecules=99),
+            lambda raw: raw["scaffolds"][0]["bins"][0].update(observations=99),
+            lambda raw: raw["regions"][0]["fragments"][0]["bins"][0].update(
+                molecules=99
+            ),
+            lambda raw: raw["scaffolds"].pop(0),
+        ]
+        for index, change in enumerate(changes):
+            with self.subTest(tamper=index):
+                raw = json.loads(json.dumps(original))
+                change(raw)
+                atomic_json(self.root, "report.json", raw)
+                changed = {**reply, "report_sha256": digest(raw)}
+                with self.assertRaises(WebError):
+                    verify_study(
+                        safe,
+                        job,
+                        {"engine_sha256": packet["engine_sha256"]},
+                        changed,
+                        pairs,
+                    )
 
     def test_descriptor_checkpoint_order_and_engine_tampering_are_rejected(self):
         packet = self.packet(regions=0)

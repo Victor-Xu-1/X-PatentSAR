@@ -8,6 +8,7 @@ from importlib.metadata import version
 
 from patent_sar_extractor.core.identifier_order import natural_identifier_key
 from patent_sar_extractor.core.sar.errors import SARInputError
+from patent_sar_extractor.core.sar.study_conditions import validate_declarations
 from patent_sar_extractor.core.sar.study_contexts import context_catalog
 from patent_sar_extractor.core.sar.values import grade_ranks
 from patent_sar_extractor.web.prediction_models import METRIC_KEYS
@@ -119,4 +120,10 @@ def read_input(safe, input_sha256):
     known = {context["id"] for context in contexts}
     if any(policy["context_id"] not in known for policy in request["policies"]):
         raise SARInputError("study_context_identity")
+    validate_declarations(
+        dataset,
+        contexts,
+        known.intersection(policy["context_id"] for policy in request["policies"]),
+        request["context_declarations"],
+    )
     return dataset, rows, regions, cores, request, contexts, packet["engine_sha256"]

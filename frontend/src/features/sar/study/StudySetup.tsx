@@ -11,6 +11,9 @@ import { newRequestId } from '../presentation';
 import { ContextPicker } from './ContextPicker';
 import { PolicyEditor } from './PolicyEditor';
 import { StudyRegionEditor } from './StudyRegionEditor';
+import { ConditionEditor } from './ConditionEditor';
+import { declarationFromDraft, emptyCondition } from './conditionDraft';
+import type { ConditionDraft } from './conditionDraft';
 import { emptyPolicy, policyFromDraft } from './policyDraft';
 import type { PolicyDraft } from './policyDraft';
 export function StudySetup({
@@ -30,6 +33,7 @@ export function StudySetup({
   const [title, setTitle] = useState(dataset.title),
     [selected, setSelected] = useState<string[]>([]);
   const [drafts, setDrafts] = useState<Record<string, PolicyDraft>>({});
+  const [conditionDrafts, setConditionDrafts] = useState<Record<string, ConditionDraft>>({});
   const [regionIds, setRegionIds] = useState<string[]>([]);
   const [coreIds, setCoreIds] = useState<string[]>([]);
   const [confirm, setConfirm] = useState(false),
@@ -49,6 +53,14 @@ export function StudySetup({
   });
   const ready = profile.validated && !disabled && !dataset.stale;
   const policies = selected.map((id) => policyFromDraft(id, drafts[id] ?? emptyPolicy()));
+  const declarations = selected.map((id) => {
+    const context = profile.data?.contexts.find((item) => item.id === id);
+    const draft = conditionDrafts[id] ?? emptyCondition();
+    return {
+      enabled: draft.enabled,
+      value: context ? declarationFromDraft(dataset, context, draft) : null,
+    };
+  });
   const valid =
     ready &&
     title.trim().length > 0 &&
@@ -56,6 +68,7 @@ export function StudySetup({
     selected.length > 0 &&
     selected.length <= 8 &&
     policies.every(Boolean) &&
+    declarations.every((item) => !item.enabled || item.value !== null) &&
     selected.every((id) => profile.data?.contexts.some((c) => c.id === id)) &&
     regionIds.length <= 12 &&
     regionIds.every((id) =>
@@ -92,6 +105,7 @@ export function StudySetup({
         onSubmit={(event) => {
           event.preventDefault();
           if (!valid || mutation.locked) return;
+          const documented = declarations.flatMap((item) => (item.value ? [item.value] : []));
           const payload = {
             title,
             request_id: newRequestId(),
@@ -101,6 +115,7 @@ export function StudySetup({
             core_ids: [...coreIds],
             candidate_count: candidateCount,
             confirm_context: confirm,
+            ...(documented.length ? { context_declarations: documented } : {}),
           };
           void mutation.run(
             () => sarStudyApi.start(dataset.id, payload),
@@ -140,12 +155,20 @@ export function StudySetup({
           {selected.map((id) => {
             const context = profile.data?.contexts.find((c) => c.id === id);
             return context ? (
-              <PolicyEditor
-                key={id}
-                context={context}
-                draft={drafts[id] ?? emptyPolicy()}
-                onChange={(draft) => setDrafts((old) => ({ ...old, [id]: draft }))}
-              />
+              <div key={id} className="sar-policy-block">
+                <PolicyEditor
+                  key={id}
+                  context={context}
+                  draft={drafts[id] ?? emptyPolicy()}
+                  onChange={(draft) => setDrafts((old) => ({ ...old, [id]: draft }))}
+                />
+                <ConditionEditor
+                  dataset={dataset}
+                  context={context}
+                  draft={conditionDrafts[id] ?? emptyCondition()}
+                  onChange={(draft) => setConditionDrafts((old) => ({ ...old, [id]: draft }))}
+                />
+              </div>
             ) : (
               <p key={id} role="alert">
                 {t('实验条件已变化，请重新确认选择。')}

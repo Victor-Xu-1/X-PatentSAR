@@ -55,6 +55,12 @@ def make_pair(
         measured = compare_observations(
             left, right, metric, policy["direction"], policy["grade_order"], confirmed
         )
+        if any(item.get("_sar_declared_context") for item in [*left, *right]):
+            measured["reasons"].append(
+                "operator_declared_context_not_automatic_verification"
+            )
+            if measured["evidence_basis"] == "recorded_context":
+                measured["evidence_basis"] = "source_declared"
         # The scalar comparator may refuse its own per-comparison budget; study
         # evidence still retains all selected raw observations without truncation.
         measured.update(
@@ -77,7 +83,16 @@ def make_pair(
 
 
 def analyse_pairs(
-    safe, identity, rows, regions, request, observations, assessments, check
+    safe,
+    identity,
+    rows,
+    regions,
+    request,
+    observations,
+    assessments,
+    check,
+    *,
+    prepared=None,
 ):
     indexed = {row["id"]: row for row in rows}
     policy = request["policies"][0]
@@ -195,6 +210,7 @@ def analyse_pairs(
                 observations,
                 policy,
                 assessments,
+                prepared=prepared,
             )
         )
     flush()

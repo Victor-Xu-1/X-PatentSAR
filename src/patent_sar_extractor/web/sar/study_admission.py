@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ...core.sar.study_conditions import validate_declarations
 from ...core.sar.study_contexts import context_catalog
 from ...core.sar.values import grade_ranks
 from ..errors import WebError
@@ -62,6 +63,19 @@ def enqueue_study(queue, dataset_id: str, request: StudyRequest):
             "sar_study_context",
             "Select distinct exact contexts from this dataset.",
         )
+    try:
+        validate_declarations(
+            dataset.model_dump(),
+            contexts,
+            ids,
+            [declaration.model_dump() for declaration in request.context_declarations],
+        )
+    except ValueError as error:
+        raise WebError(
+            422,
+            "sar_conditions_invalid",
+            "Only missing conditions may be documented with this original document and valid source pages. Create a fresh snapshot if source provenance is absent.",
+        ) from error
     if len(set(request.region_ids)) != len(request.region_ids):
         raise WebError(422, "sar_study_region", "Study regions must be distinct.")
     regions = [

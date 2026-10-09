@@ -6,12 +6,13 @@ ranking formula. Context IDs select exact recorded experimental conditions.
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import Field
 
 from ...contracts import SAR_STUDY_REPORT_SCHEMA_VERSION
 from ..dto import DTO
+from ..models import Acceptance
 from .models import Region, SARJob
 
 
@@ -44,6 +45,16 @@ class StudyPolicy(DTO):
     threshold_inclusive: bool = Field(default=True, strict=True)
 
 
+class ConditionDeclaration(DTO):
+    context_id: str = Field(pattern=r"^[a-f0-9]{64}$")
+    fields: dict[str, str] = Field(min_length=1, max_length=4)
+    source_document_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    source_pages: list[Annotated[int, Field(strict=True, ge=1, le=20000)]] = Field(
+        min_length=1, max_length=12
+    )
+    note: str = Field(min_length=1, max_length=2000)
+
+
 class StudyRequest(DTO):
     request_id: str = Field(pattern=r"^[a-f0-9]{32}$")
     expected_dataset_revision: int = Field(ge=1)
@@ -53,6 +64,9 @@ class StudyRequest(DTO):
     core_ids: list[str] = Field(default_factory=list, max_length=12)
     confirm_context: bool = Field(default=False, strict=True)
     candidate_count: int = Field(default=8, ge=5, le=10, strict=True)
+    context_declarations: list[ConditionDeclaration] = Field(
+        default_factory=list, max_length=8
+    )
 
 
 class StudyBin(DTO):
@@ -145,6 +159,11 @@ class StudyReport(DTO):
     engine_sha256: str
     research_only: Literal[True] = True
     article_algorithm_reproduced: Literal[False] = False
+    counting_contract: Literal["legacy-per-bin-members", "unique-molecules-v2"] = (
+        "legacy-per-bin-members"
+    )
+    source_acceptance: Acceptance | None = None
+    context_declarations: list[ConditionDeclaration] = Field(default_factory=list)
     molecule_count: int
     eligible_count: int
     observation_count: int
