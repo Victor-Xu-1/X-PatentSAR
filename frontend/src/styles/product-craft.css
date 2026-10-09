@@ -1,10 +1,4 @@
 /* Shared visual craft; feature-specific layout and scientific colors remain owned. */
-:root {
-  --radius-control: 8px;
-  --radius-panel: 14px;
-  --line-soft: #edf1ef;
-  --shadow-paper: 0 2px 12px #17212608;
-}
 .topbar {
   padding-block: 8px;
   min-height: 60px;

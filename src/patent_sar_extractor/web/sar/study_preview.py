@@ -10,12 +10,30 @@ from ...core.sar.statistics import compare_observations
 from ...core.sar.study_conditions import declared_observation
 from ...core.sar.study_contexts import context_observations
 from ...core.sar.study_graphs import cut_identity
-from ...core.sar.values import grade_ranks, parse_value
+from ...core.sar.values import Value, grade_ranks, parse_value
 from ..errors import WebError
 from .assets import digest
 from .models import Pair
 from .preview_models import PreviewMeasurement, StudyPreview
 from .study_results import StudyResults
+
+
+def _scalar_difference(left: Value, right: Value) -> float | None:
+    if left.kind != "scalar" or right.kind != "scalar":
+        return None
+    a, b = left.numeric_bounds()[0], right.numeric_bounds()[0]
+    exponent_a, exponent_b = a.as_tuple().exponent, b.as_tuple().exponent
+    if not isinstance(exponent_a, int) or not isinstance(exponent_b, int):
+        return None
+    # Parsed numbers already have bounded size/exponents. Exact subtraction
+    # avoids turning close, high-precision measurements into a false zero.
+    with localcontext() as context:
+        context.prec = max(a.adjusted(), b.adjusted()) - min(exponent_a, exponent_b) + 2
+        difference = b - a
+        value = float(difference)
+    if not math.isfinite(value) or (value == 0 and difference != 0):
+        return None
+    return value
 
 
 def preview(queue, identifier: str, region_id: str, molecule_id: str) -> StudyPreview:
@@ -126,12 +144,7 @@ def preview(queue, identifier: str, region_id: str, molecule_id: str) -> StudyPr
                 parse_value(left[0]["value"], ranks),
                 parse_value(right[0]["value"], ranks),
             )
-            if a.kind == b.kind == "scalar":
-                with localcontext() as decimal_context:
-                    decimal_context.prec = 50
-                    value = float(b.numeric_bounds()[0] - a.numeric_bounds()[0])
-                if math.isfinite(value):
-                    difference = value
+            difference = _scalar_difference(a, b)
         measurements.append(
             PreviewMeasurement(
                 context_id=policy.context_id,

@@ -55,10 +55,8 @@ for (const width of [390, 800, 1672])
       true,
     );
     await page.screenshot({ path: test.info().outputPath(`workspace-${width}.png`) });
-    await page.getByRole('button', { name: 'Evidence summary', exact: true }).click();
-    await expect(
-      page.getByRole('heading', { name: 'Evidence summary', exact: true }),
-    ).toBeVisible();
+    await page.getByRole('button', { name: 'Evidence', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Evidence', exact: true })).toBeVisible();
     await page.screenshot({ path: test.info().outputPath(`summary-${width}.png`) });
     expect(errors).toEqual([]);
     expect(writes).toEqual([]);

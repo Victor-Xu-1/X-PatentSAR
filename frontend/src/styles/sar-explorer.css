@@ -125,6 +125,22 @@
   padding: 8px;
   border-right: 1px solid var(--line-soft);
 }
+.sar-fragment-strip article h4 {
+  margin-bottom: 12px;
+}
+.sar-fragment-strip article p {
+  margin-block: 10px;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.sar-fragment-strip article > button {
+  width: 100%;
+  min-height: 36px;
+  font-size: 12px;
+}
+.sar-fragment-strip .sar-composition-stack {
+  height: 104px;
+}
 .sar-region-explorer .sar-fragment-strip .sar-study-image {
   height: 130px;
   display: grid;

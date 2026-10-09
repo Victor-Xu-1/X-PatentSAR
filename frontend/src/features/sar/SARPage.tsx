@@ -26,7 +26,11 @@ export function SARPage({
   });
   const datasetId = route.view === 'sar' ? (route.sarDatasetId ?? null) : selection.datasetId;
   const jobId = route.view === 'sar' ? (route.sarJobId ?? null) : selection.jobId;
-  const [importOpen, setImportOpen] = useState(!route.sarDatasetId);
+  // This page stays mounted while the user visits other views. Derive the
+  // default from the current selection, not the route on its first mount.
+  const importScope = JSON.stringify([datasetId, route.view === 'sar' ? route.projectId : null]);
+  const [importChoice, setImportChoice] = useState<{ scope: string; open: boolean } | null>(null);
+  const importOpen = importChoice?.scope === importScope ? importChoice.open : !datasetId;
   const load = useCallback((signal: AbortSignal) => sarApi.datasets(signal), []);
   const datasets = useSARResource('sar:datasets', active, load);
   const scope = JSON.stringify([
@@ -51,7 +55,7 @@ export function SARPage({
   }
   function created(dataset: Dataset) {
     datasets.reload();
-    setImportOpen(false);
+    setImportChoice(null);
     select(dataset.id);
   }
   return (
@@ -71,7 +75,7 @@ export function SARPage({
           <button
             type="button"
             aria-expanded={importOpen}
-            onClick={() => setImportOpen((old) => !old)}
+            onClick={() => setImportChoice({ scope: importScope, open: !importOpen })}
           >
             {t('导入数据')}
           </button>
@@ -119,7 +123,7 @@ export function SARPage({
           onJob={(id) => select(datasetId, id)}
           onRemoved={() => {
             datasets.reload();
-            setImportOpen(true);
+            setImportChoice(null);
             select(null);
           }}
         />

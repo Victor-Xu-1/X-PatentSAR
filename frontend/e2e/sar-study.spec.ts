@@ -156,7 +156,7 @@ for (const width of [390, 800, 1672]) {
     // transformation for the numeric-difference contract.
     await regions
       .locator('.sar-fragment-strip article')
-      .filter({ has: regions.getByRole('heading', { name: 'Fragment 2', exact: true }) })
+      .filter({ has: page.getByRole('heading', { name: 'Fragment 2', exact: true }) })
       .getByRole('button', { name: 'Preview modification', exact: true })
       .click();
     const preview = regions.getByRole('region', { name: 'Transformation preview', exact: true });

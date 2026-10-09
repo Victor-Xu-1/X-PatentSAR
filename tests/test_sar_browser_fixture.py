@@ -21,6 +21,7 @@ class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
                 {
                     PREFIX + "sar-study.spec.ts",
                     PREFIX + "expert-visual.spec.ts",
+                    PREFIX + "expert-controls.spec.ts",
                     PREFIX + "product-version.spec.ts",
                 }
             ),

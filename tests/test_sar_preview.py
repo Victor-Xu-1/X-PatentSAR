@@ -5,11 +5,24 @@ import unittest
 
 import test_sar_api as support
 from test_web_support import WebFixture
+from patent_sar_extractor.core.sar.values import parse_value
+from patent_sar_extractor.web.sar.study_preview import _scalar_difference
 
 
 class SARPreviewTests(WebFixture, unittest.TestCase):
     completed = support.SARAPITests.completed
     region = support.SARAPITests.region
+
+    def test_display_difference_is_exact_or_explicitly_unrepresentable(self):
+        def delta(a, b):
+            return _scalar_difference(parse_value(a, {}), parse_value(b, {}))
+
+        self.assertEqual(delta("1", "1." + "0" * 100 + "1"), 1e-101)
+        self.assertEqual(delta("10", "1"), -9)
+        self.assertEqual(delta("1e308", "1e308"), 0)
+        self.assertIsNone(delta("1e-308", "1.0000000000000001e-308"))
+        self.assertIsNone(delta("-1e308", "1e308"))
+        self.assertIsNone(delta("<10", "1"))
 
     def test_exact_values_deltas_graph_proof_and_immutable_input(self):
         with self.client() as client:
