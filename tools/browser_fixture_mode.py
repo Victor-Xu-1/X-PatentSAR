@@ -22,7 +22,8 @@ MODES = (
     (
         "sar",
         "sar-study.spec.ts",
-        COMMON | {"sar-workbench.spec.ts", "sar-study.spec.ts", "expert-visual.spec.ts"},
+        COMMON
+        | {"sar-workbench.spec.ts", "sar-study.spec.ts", "expert-visual.spec.ts"},
     ),
     (
         "llm-recovery",
