@@ -122,7 +122,7 @@ def compound(number=1, *, smiles=None, value=10.0, activities=None, endpoints=No
 def catalog(rows):
     columns = ActivityColumnCatalog()
     for row in rows:
-        columns.observe(row.activities)
+        columns.observe(row.activities, compound_id=row.id)
     return columns.columns()
 
 

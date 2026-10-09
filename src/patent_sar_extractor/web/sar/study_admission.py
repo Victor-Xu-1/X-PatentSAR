@@ -49,11 +49,18 @@ def enqueue_study(queue, dataset_id: str, request: StudyRequest):
             grade_ranks(policy.grade_order)
             if policy.grade_order and policy.strong_threshold is not None:
                 raise ValueError("mixed strong definition")
+            if not policy.grade_order and (
+                policy.strong_threshold is not None
+                or policy.strength_method == "source"
+            ):
+                raise ValueError(
+                    "New numeric studies use tenth-potency decades, not a manual threshold"
+                )
     except ValueError as error:
         raise WebError(
             422,
             "sar_study_policy",
-            "Use distinct grades or a numeric threshold, never both.",
+            "Use explicit source grade order, or automatic tenth-potency decades for numeric activity; manual numeric strength thresholds are historical only.",
         ) from error
     known = {context["id"]: context for context in contexts}
     ids = [policy.context_id for policy in request.policies]

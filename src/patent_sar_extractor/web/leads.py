@@ -36,7 +36,7 @@ class LeadService:
         fingerprint = input_fingerprint(project, compounds)
         catalog = ActivityColumnCatalog()
         for compound in compounds:
-            catalog.observe(compound.activities)
+            catalog.observe(compound.activities, compound_id=compound.id)
         try:
             assessments = prioritize_leads(compounds, catalog.columns(), cancel=cancel)
             if cancel and cancel():

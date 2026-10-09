@@ -148,6 +148,9 @@ class Compound(DTO):
     activity_rank_values: list[RankValue | None] = Field(
         default_factory=list, max_length=2000, exclude_if=lambda value: not value
     )
+    activity_bands: list[Literal["strong", "medium", "none"]] = Field(
+        default_factory=list, max_length=2000, exclude_if=lambda value: not value
+    )
     source: Source
     additional_sources: list[Source] = Field(
         default_factory=list, max_length=1000, exclude_if=lambda value: not value
@@ -187,6 +190,8 @@ class Compound(DTO):
 
     @model_validator(mode="after")
     def check_rank_alignment(self) -> Compound:
+        if self.activity_bands and len(self.activity_bands) != len(self.activities):
+            raise ValueError("Activity bands must align with source observations")
         if self.activity_rank_values and len(self.activity_rank_values) != len(
             self.activities
         ):

@@ -4,11 +4,13 @@
   position: relative;
 }
 .results-table tbody tr td[data-activity-strength='strong'],
+.sar-study-table td[data-activity-strength='strong'],
 .activity-observation[data-activity-strength='strong'],
 .activity-strength-legend [data-activity-strength='strong'] {
   background: var(--activity-strong-surface);
 }
 .results-table tbody tr td[data-activity-strength='medium'],
+.sar-study-table td[data-activity-strength='medium'],
 .activity-observation[data-activity-strength='medium'],
 .activity-strength-legend [data-activity-strength='medium'] {
   background: var(--activity-medium-surface);

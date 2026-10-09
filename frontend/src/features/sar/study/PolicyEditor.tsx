@@ -36,17 +36,8 @@ export function PolicyEditor({
           open={open}
           onToggle={(event) => setOpen(event.currentTarget.open)}
         >
-          <summary>{t('研究等级与阈值（可选）')}</summary>
+          <summary>{t('原文等级（可选）')}</summary>
           <div hidden={!open}>
-            <label>
-              {t('强活性阈值（可选，原始数值）')}
-              <input
-                inputMode="decimal"
-                maxLength={100}
-                value={draft.threshold}
-                onChange={(e) => onChange({ ...draft, threshold: e.target.value })}
-              />
-            </label>
             <label>
               {t('等级顺序（可选，最强在前，每行一个原始等级）')}
               <textarea
@@ -56,23 +47,13 @@ export function PolicyEditor({
                 onChange={(e) => onChange({ ...draft, grades: e.target.value })}
               />
             </label>
-            <label className="sar-checkbox">
-              <input
-                type="checkbox"
-                checked={draft.inclusive}
-                onChange={(e) => onChange({ ...draft, inclusive: e.target.checked })}
-              />
-              {t('阈值包含边界')}
-            </label>
           </div>
         </details>
       </div>
       {!policyFromDraft(context.id, draft) && (
-        <p className="sar-hint">{t('明确方向；可选等级须唯一，可选阈值须为有限数值。')}</p>
+        <p className="sar-hint">{t('明确方向；原文等级须唯一。')}</p>
       )}
-      {draft.grades.trim() && draft.threshold.trim() && (
-        <p role="alert">{t('等级顺序与数值阈值不能同时使用。')}</p>
-      )}
+      {!draft.grades.trim() && <p className="sar-hint">{t('浓度活性自动按第十名数量级分档。')}</p>}
     </fieldset>
   );
 }

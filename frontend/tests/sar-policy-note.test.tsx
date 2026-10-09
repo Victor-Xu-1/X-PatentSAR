@@ -4,8 +4,52 @@ import { setLocale } from '../src/i18n';
 import { StudyPolicyNote, hasStrongRule } from '../src/features/sar/study/StudyPolicyNote';
 import { StudyOverview } from '../src/features/sar/study/StudyOverview';
 import { studyContext, studyReport } from './sar-fixtures';
+import type { ActivityStrengthScale } from '../src/api/types';
 
 beforeEach(() => setLocale('en'));
+it('shows automatic tenth-decade limits and refuses to present ambiguous strength as zero', async () => {
+  const scale: ActivityStrengthScale = {
+    kind: 'numeric',
+    direction: 'lower',
+    method: 'tenth_decade',
+    rule: 'tenth_decade',
+    status: 'ready',
+    boundary_inclusive: false,
+    population: 12,
+    eligible: 12,
+    excluded: 0,
+    distinct: 5,
+    anchor_rank: 10,
+    anchor_lower: 1,
+    anchor_upper: 1,
+    anchor_exponent: 0,
+    strong_boundary: 10,
+    medium_boundary: 100,
+  };
+  const policy = {
+    ...studyReport.policies[0]!,
+    strength_method: 'tenth_decade' as const,
+    strength_scale: scale,
+    strong_threshold: null,
+  };
+  const { rerender } = render(<StudyPolicyNote policy={policy} context={studyContext} />);
+  expect(screen.getByText('Strong <10 nM; medium 10 nM–<100 nM; weak ≥100 nM')).toBeVisible();
+  expect(hasStrongRule(policy)).toBe(true);
+  await act(() => setLocale('zh-CN'));
+  expect(screen.getByText('强 <10 nM；中 10 nM–<100 nM；弱 ≥100 nM')).toBeVisible();
+  const unresolved = {
+    ...policy,
+    strength_scale: {
+      ...scale,
+      status: 'ambiguous' as const,
+      strong_boundary: null,
+      medium_boundary: null,
+    },
+  };
+  rerender(<StudyPolicyNote policy={unresolved} context={studyContext} />);
+  expect(screen.getByText('第十名数量级不确定，未分档')).toBeVisible();
+  expect(hasStrongRule(unresolved)).toBe(false);
+});
 it.each([
   ['lower', true, '≤'],
   ['lower', false, '<'],

@@ -36,6 +36,10 @@ for (const width of [390, 800, 1672]) {
       'Example 3,CCCOc1ccc(Cl)cc1,2,T,binding,not applicable,1h',
       'Example 4,CCOc1ccc(Br)cc1,0.5,T,binding,not applicable,1h',
       'Example 5,COc1ccc(Cl)cc1,,T,binding,not applicable,1h',
+      ...['0.01', '0.02', '0.03', '0.04', '0.05', '0.06', '1', '9', '10', '99', '100'].map(
+        (value, index) =>
+          `Example ${index + 6},${'C'.repeat(index + 4)}Oc1ccc(Cl)cc1,${value},T,binding,not applicable,1h`,
+      ),
     ].join('\n');
     await imports.getByLabel('Choose a CSV file', { exact: true }).setInputFiles({
       name: `study-${width}.csv`,
@@ -60,21 +64,21 @@ for (const width of [390, 800, 1672]) {
     }
     await imports.getByRole('button', { name: 'Create CSV dataset', exact: true }).click();
     const dataset = await persisted(page, 'dataset');
-    expect(dataset.row_count).toBe(5);
+    expect(dataset.row_count).toBe(16);
     const setup = page.getByRole('region', { name: 'Study setup', exact: true });
     await expect(setup).toBeVisible();
     await setup.getByRole('checkbox', { name: /IC50/ }).check();
     await setup
       .getByRole('combobox', { name: 'Activity direction', exact: true })
       .selectOption('lower');
-    await setup.getByText('Grades and threshold (optional)', { exact: true }).click();
-    await setup
-      .getByLabel('Strong-activity threshold (optional, raw value)', { exact: true })
-      .fill('2');
+    await expect(
+      setup.getByText('Concentration potency uses the tenth strongest measurement’s decade.'),
+    ).toBeVisible();
     await setup.getByText('Add a named selection', { exact: true }).click();
     const browser = setup.getByRole('region', { name: 'Choose reference molecule', exact: true });
     await browser
-      .getByRole('row', { name: /Example 1/ })
+      .getByRole('row')
+      .filter({ has: page.getByRole('rowheader', { name: 'Example 1', exact: true }) })
       .getByRole('button', { name: 'Reference', exact: true })
       .click();
     await setup.getByLabel('Selection name', { exact: true }).fill('R1');
@@ -104,8 +108,10 @@ for (const width of [390, 800, 1672]) {
       const view = report.getByRole('region', { name: tab, exact: true });
       await expect(view).toBeVisible();
       if (['Overview', 'Scaffolds', 'Variable regions', 'Fragment summary'].includes(tab))
-        await expect(view.locator('.sar-policy-note').first()).toContainText('Strong ≤ 2 nM');
-      if (tab === 'Activity table') await expect(view.locator('tbody tr')).toHaveCount(5);
+        await expect(view.locator('.sar-policy-note').first()).toContainText(
+          'Strong <10 nM; medium 10 nM–<100 nM; weak ≥100 nM',
+        );
+      if (tab === 'Activity table') await expect(view.locator('tbody tr')).toHaveCount(16);
       const contained = await view.locator('.sar-composition-donut').evaluateAll((figures) =>
         figures.every((figure) => {
           const caption = figure.querySelector('figcaption')?.getBoundingClientRect();
@@ -212,8 +218,27 @@ for (const width of [390, 800, 1672]) {
     await report.getByRole('button', { name: 'Export report JSON', exact: true }).click();
     const download = await downloading;
     const exported = JSON.parse(await readFile((await download.path())!, 'utf8'));
-    expect(exported.report.rows).toHaveLength(5);
-    expect(exported.input.molecules).toHaveLength(5);
+    expect(exported.report.rows).toHaveLength(16);
+    expect(exported.input.molecules).toHaveLength(16);
+    expect(exported.report.policies[0].strength_scale).toMatchObject({
+      method: 'tenth_decade',
+      anchor_rank: 10,
+      strong_boundary: 10,
+      medium_boundary: 100,
+    });
+    for (const [label, tier] of [
+      ['Example 13', 'strong'],
+      ['Example 14', 'medium'],
+      ['Example 15', 'medium'],
+      ['Example 16', 'weak'],
+    ] as const) {
+      await expect(
+        table
+          .getByRole('row')
+          .filter({ has: page.getByRole('rowheader', { name: label, exact: true }) })
+          .locator('td[data-activity-strength]'),
+      ).toHaveAttribute('data-activity-strength', tier);
+    }
     expect(exported.report.article_algorithm_reproduced).toBe(false);
     expect(exported.report.regions).toHaveLength(1);
     await page

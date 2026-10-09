@@ -6,12 +6,13 @@ import json
 import unittest
 from unittest.mock import patch
 
+from test_prediction_support import PredictionFixture, controlled_summary
+
 from patent_sar_extractor.web.activity_columns import ActivityColumnCatalog
 from patent_sar_extractor.web.models import Activity, Compound, Confidence, Source
 from patent_sar_extractor.web.table_filter_choices import filter_choices
 from patent_sar_extractor.web.table_queries import workbook_rows
 from patent_sar_extractor.web.table_query_models import ColumnFilter
-from test_prediction_support import PredictionFixture, controlled_summary
 
 
 def row(identifier, values):
@@ -35,7 +36,7 @@ class AutoFilterLogicTests(unittest.TestCase):
         ]
         catalog = ActivityColumnCatalog()
         for item in self.rows:
-            catalog.observe(item.activities)
+            catalog.observe(item.activities, compound_id=item.id)
         self.catalog = catalog.columns()
         self.column = "activity:" + self.catalog[0].id
 
@@ -74,19 +75,19 @@ class AutoFilterLogicTests(unittest.TestCase):
         result = workbook_rows(self.rows, conditions, "", "asc", self.catalog)
         self.assertEqual(result, [])
         self.assertEqual(
-            self.select(op="band", value="none"), ["Compound 2", "Compound 11"]
+            self.select(op="band", value="none"), [item.id for item in self.rows]
         )
 
     def test_color_sort_and_natural_tie_sort(self):
         result = workbook_rows(self.rows, [], self.column, "asc", self.catalog, "none")
         self.assertEqual(
             [item.id for item in result],
-            ["Compound 11", "Compound 1", "Compound 2", "Compound 10"],
+            ["Compound 1", "Compound 2", "Compound 10", "Compound 11"],
         )
 
     def test_negative_text_conditions_and_prefix_suffix(self):
         for op, operand, expected in (
-            ("starts_with", "Compound 1", ["Compound 1", "Compound 10", "Compound 11"]),
+            ("starts_with", "1", ["Compound 1", "Compound 10", "Compound 11"]),
             ("ends_with", "1", ["Compound 1", "Compound 11"]),
             ("not_contains", "1", ["Compound 2"]),
         ):
@@ -104,13 +105,13 @@ class AutoFilterLogicTests(unittest.TestCase):
         first = filter_choices(rows, "compound", [], search="", page=1, page_size=200)
         second = filter_choices(rows, "compound", [], search="", page=2, page_size=200)
         self.assertEqual((first.total, second.total), (231, 231))
-        self.assertEqual(first.items[0].value, "Compound 1")
-        self.assertEqual(second.items[0].value, "Compound 201")
+        self.assertEqual(first.items[0].value, "1")
+        self.assertEqual(second.items[0].value, "201")
         self.assertEqual(len(second.items), 31)
         searched = filter_choices(
-            rows, "compound", [], search="Compound 231", page=1, page_size=200
+            rows, "compound", [], search="231", page=1, page_size=200
         )
-        self.assertEqual([item.value for item in searched.items], ["Compound 231"])
+        self.assertEqual([item.value for item in searched.items], ["231"])
         self.assertEqual(searched.matching_rows, 231)
 
     def test_choice_counts_are_per_row_and_blank_is_independent_of_search(self):

@@ -7,6 +7,7 @@ from .assets import digest
 from .models import Dataset, Molecule, Pair, SARJob
 from .study_integrity import verify_conservation
 from .study_models import StudyReport, StudyRequest
+from .study_strength_check import verify_strength
 
 
 def verify_study(safe, job: SARJob, spec: dict, reply: dict, pairs: list[Pair]) -> str:
@@ -57,7 +58,6 @@ def verify_study(safe, job: SARJob, spec: dict, reply: dict, pairs: list[Pair]) 
         or len(pairs) != len(expected)
         or {summary.region.id for summary in report.regions} != set(region_refs)
         or len(report.regions) != len(region_refs)
-        or report.policies != request.policies
         or len(report.candidates) > request.candidate_count
         or any(row.molecule_id not in ids for row in report.candidates)
         or any(pair.reference_id != region_refs.get(pair.region_id) for pair in pairs)
@@ -179,4 +179,5 @@ def verify_study(safe, job: SARJob, spec: dict, reply: dict, pairs: list[Pair]) 
         if pair.label != by_id[pair.molecule_id].label:
             raise WebError(502, "sar_result_invalid", "Study source label differs.")
     verify_conservation(report, packet)
+    verify_strength(report, packet, request)
     return digest(raw)

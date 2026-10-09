@@ -31,7 +31,7 @@ import { decodeAdmetStage, decodeCoreStage, decodeStageOrder } from './stageDeco
 import { activityContextKey, decodeActivityColumns } from './activityColumnDecoders';
 import { decodeBBox as bbox } from './geometryDecoders';
 import { decodeActivitySourceKeys } from './activitySourceDecoders';
-import { decodeActivityRankValues } from './activityRankDecoders';
+import { decodeActivityBands, decodeActivityRankValues } from './activityRankDecoders';
 import { decodeMolfile, decodePropertyOverrides } from './correctionDecoders';
 import { decodeStereoEvidence } from './stereoDecoders';
 import { decodeLeadAssessment } from './leadDecoders';
@@ -214,6 +214,15 @@ export const decodeCompound: Decoder<Compound> = (input, path = '$') => {
             fields.activity_rank_values,
             compound.activities.length,
             `${path}.activity_rank_values`,
+          ),
+        }
+      : {}),
+    ...(Object.hasOwn(fields, 'activity_bands')
+      ? {
+          activity_bands: decodeActivityBands(
+            fields.activity_bands,
+            compound.activities.length,
+            `${path}.activity_bands`,
           ),
         }
       : {}),

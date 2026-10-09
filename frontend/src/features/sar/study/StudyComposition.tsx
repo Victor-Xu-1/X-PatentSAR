@@ -111,7 +111,7 @@ export function ChartLegend({
                     ? '未支持读数'
                     : '重复读数未确定',
               )
-            : compactBinLabel(bin.label)}
+            : compactBinLabel(bin.label, bin.kind)}
         </li>
       ))}
     </ul>

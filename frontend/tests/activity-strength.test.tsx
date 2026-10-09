@@ -30,7 +30,67 @@ const callbacks = () => ({
 });
 const column = { id: 'a'.repeat(64), ...compound.activities[0]!, strength_scale: scale };
 
+const potency: ActivityStrengthScale = {
+  ...scale,
+  method: 'tenth_decade',
+  status: 'ready',
+  rule: 'tenth_decade',
+  eligible: 12,
+  distinct: 6,
+  population: 12,
+  boundary_inclusive: false,
+  anchor_rank: 10,
+  anchor_lower: 1,
+  anchor_upper: 1,
+  anchor_exponent: 0,
+  strong_boundary: 10,
+  medium_boundary: 100,
+};
+
 describe('project-wide activity colors consume authoritative scores, never local-page ranks', () => {
+  it('uses tenth potency decade boundaries exactly and never recalibrates on a displayed page', () => {
+    // New potency tiers come from server Decimal bounds, never browser floats.
+    expect(activityStrength(1, potency)).toBe('none');
+    expect(
+      decodeActivityColumns([{ ...column, strength_scale: potency }])[0]?.strength_scale,
+    ).toEqual(potency);
+    for (const broken of [
+      { ...potency, strong_boundary: 60 },
+      { ...potency, anchor_exponent: 2 },
+      { ...potency, anchor_rank: 9 },
+      { ...potency, status: 'ambiguous' },
+    ])
+      expect(() => decodeActivityColumns([{ ...column, strength_scale: broken }])).toThrow();
+    expect(
+      activityStrength(1, {
+        ...potency,
+        status: 'insufficient',
+        strong_boundary: null,
+        medium_boundary: null,
+      }),
+    ).toBe('none');
+  });
+  it('renders authoritative exact bands rather than rounded binary scores for tenth-decade data', () => {
+    const row = {
+      ...compound,
+      activities: [{ ...compound.activities[0]!, value: '9.999999999999999999999' }],
+      activity_rank_values: [10],
+      activity_bands: ['strong' as const],
+    };
+    render(
+      <ResultsTable
+        {...callbacks()}
+        rows={[row]}
+        activityColumns={[{ ...column, strength_scale: potency }]}
+      />,
+    );
+    expect(document.querySelector('td.activity-value-column')).toHaveAttribute(
+      'data-activity-strength',
+      'strong',
+    );
+    for (const invalid of [['weak'], [null], [], ['strong', 'medium']])
+      expect(() => decodeCompound({ ...compound, activity_bands: invalid })).toThrow();
+  });
   it('uses both directions and preserves zero, boundaries and ties', () => {
     expect([0, 3, 4, 6, 7].map((value) => activityStrength(value, scale))).toEqual([
       'strong',

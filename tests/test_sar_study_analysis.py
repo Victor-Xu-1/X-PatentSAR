@@ -62,6 +62,7 @@ def observation(value, **kwargs):
 
 def policy(**kwargs):
     return {
+        "strength_method": "source",  # Explicit retained historical-policy fixture.
         "context_id": context_identity(observation("1")),
         "direction": "lower",
         "grade_order": [],

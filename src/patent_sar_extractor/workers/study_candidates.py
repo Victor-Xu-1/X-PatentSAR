@@ -126,6 +126,10 @@ def rank_candidates(rows, descriptors, request, observations, assessments, check
                     for policy, state in zip(policies, states, strict=True)
                 },
                 "strong": assessments[primary][molecule["id"]]["strong"],
+                "activity_bands": {
+                    policy["context_id"]: state.get("band", "unclassified")
+                    for policy, state in zip(policies, states, strict=True)
+                },
                 "properties": descriptor["properties"],
                 "property_origins": descriptor["property_origins"],
                 "predictions": descriptor["predictions"],

@@ -142,7 +142,7 @@ class ActivityHeaderGridTests(unittest.TestCase):
         projected = _activities(asdict(rows[0]), page_count=1)
         self.assertEqual([a.unit for a in projected], ["nM", "nM"])
         catalog = ActivityColumnCatalog()
-        catalog.observe(projected)
+        catalog.observe(projected, compound_id="controlled-source")
         self.assertEqual(len(catalog.columns()), 2)
         self.assertEqual(len({c.id for c in catalog.columns()}), 2)
         cells = rows[0].activity_sources[0]["cells"][1:]

@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from .activity_columns import ActivityColumnCatalog
+from .activity_columns import ActivityColumnCatalog, activity_context
 from .activity_focus import activity_source_keys
 from .activity_rank_values import rank_value
 from .correction_storage import (
@@ -36,6 +36,7 @@ from .recognition_storage import (
 from .storage import Store
 from .table_filter_choices import ColumnFilterValues, choice_parameters, filter_choices
 from .table_queries import validate_columns, workbook_rows
+from .table_query_bands import value_band
 from .table_query_models import column_filters as parse_column_filters
 
 
@@ -140,7 +141,7 @@ class ResultQueries:
                     project, row, Compound.model_validate_json(row["payload"])
                 ),
             )
-            activity_columns.observe(dto.activities)
+            activity_columns.observe(dto.activities, compound_id=dto.id)
             dto.identifier_label = identifier_label(dto)
             metrics.update(a.name for a in dto.activities)
             targets.update(a.target for a in dto.activities if a.target)
@@ -400,7 +401,15 @@ class ResultQueries:
         )
         offset = (page - 1) * page_size
         visible = compounds[offset : offset + page_size]
+        scales = {
+            (c.name, c.unit, c.target, c.assay): c.strength_scale
+            for c in activity_columns
+        }
         for item in visible:
+            item.activity_bands = [
+                value_band(a.value, scales.get(activity_context(a)))
+                for a in item.activities
+            ]
             item.activity_rank_values = [
                 parsed[1]
                 if (parsed := rank_value(activity.value)) is not None

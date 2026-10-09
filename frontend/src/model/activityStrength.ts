@@ -12,6 +12,8 @@ export function activityStrength(
     value === undefined ||
     !Number.isFinite(value) ||
     !scale ||
+    scale.method === 'tenth_decade' ||
+    (scale.status && scale.status !== 'ready') ||
     scale.direction === 'unknown' ||
     scale.eligible === 0 ||
     scale.strong_boundary === null ||
@@ -35,6 +37,22 @@ export const activityStrengthLabels = {
 };
 
 export function strengthScaleText(scale: ActivityStrengthScale): string {
+  if (scale.method === 'tenth_decade') {
+    if (scale.status !== 'ready')
+      return t(
+        scale.status === 'insufficient'
+          ? '不足十个化合物，未分档'
+          : scale.status === 'ambiguous'
+            ? '第十名数量级不确定，未分档'
+            : scale.status === 'limit'
+              ? '超过上色统计限额，保留原值但不着色'
+              : '该指标不适用浓度倍数分档',
+      );
+    return t(
+      '第十名数量级；强 <{strong}，中 {strong}–<{medium}，弱 ≥{medium}。全任务计算，筛选和翻页不改变分档。',
+      { strong: scale.strong_boundary!, medium: scale.medium_boundary! },
+    );
+  }
   if (scale.direction === 'unknown')
     return scale.rule === 'mixed_types'
       ? t('混合值类型，未自动分档')

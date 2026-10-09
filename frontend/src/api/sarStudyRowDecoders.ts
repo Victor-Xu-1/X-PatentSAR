@@ -9,7 +9,8 @@ import {
   string,
   ContractError,
 } from './validation';
-import { hex, nullOr, recordOf } from './sarDecoders';
+import { additions, hex, nullOr, recordOf } from './sarDecoders';
+import { decodeStrengthScale } from './activityRankDecoders';
 import type { Decoder } from './validation';
 import type { StudyContext, StudyPolicy, StudyRow } from './sarStudyTypes';
 export const studyContext: Decoder<StudyContext> = object({
@@ -23,12 +24,23 @@ export const studyContext: Decoder<StudyContext> = object({
   distinct_value_count: count,
   value_samples: array(string),
 });
-export const studyPolicy: Decoder<StudyPolicy> = object({
+const policyShape = object({
   context_id: hex(64),
   direction: oneOf(['lower', 'higher']),
   grade_order: defaulted(array(string), []),
   strong_threshold: defaulted(nullOr(number), null),
   threshold_inclusive: defaulted(boolean, true),
+});
+export const studyPolicy: Decoder<StudyPolicy> = (input, path = '$') => ({
+  ...policyShape(input, path),
+  ...additions(
+    input,
+    {
+      strength_method: oneOf(['tenth_decade', 'source', 'unclassified']),
+      strength_scale: nullOr(decodeStrengthScale),
+    },
+    path,
+  ),
 });
 export const studyBin = object({
   label: string,
@@ -42,7 +54,7 @@ const fraction: Decoder<number> = (v, p = '$') => {
   if (result < 0 || result > 1) throw new ContractError(p);
   return result;
 };
-export const studyRow: Decoder<StudyRow> = object({
+const rowShape = object({
   molecule_id: string,
   label: string,
   eligible: boolean,
@@ -60,4 +72,12 @@ export const studyRow: Decoder<StudyRow> = object({
   selection_order: nullOr(count),
   coverage: fraction,
   reasons: array(string),
+});
+export const studyRow: Decoder<StudyRow> = (input, path = '$') => ({
+  ...rowShape(input, path),
+  ...additions(
+    input,
+    { activity_bands: recordOf(oneOf(['strong', 'medium', 'weak', 'unclassified']), 8) },
+    path,
+  ),
 });

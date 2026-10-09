@@ -10,6 +10,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import patch
 
+from pydantic import ValidationError
+
 from patent_sar_extractor.web import models
 from patent_sar_extractor.web.correction_models import CorrectionRequest
 from patent_sar_extractor.web.corrections import Corrections
@@ -23,7 +25,6 @@ from patent_sar_extractor.web.models import (
 )
 from patent_sar_extractor.web.result_queries import ResultQueries
 from patent_sar_extractor.web.storage import Store, encode, now
-from pydantic import ValidationError
 
 
 def measurement(**changes) -> Activity:
@@ -135,13 +136,13 @@ class ActivityColumnTests(unittest.TestCase):
         self.insert(
             *(
                 compound(f"r-{index}", [measurement(value=index)])
-                for index in range(1, 10)
+                for index in range(1, 11)
             )
         )
         full = self.query.results(self.project_id)
         scale = full.activity_columns[0].strength_scale
         assert scale is not None
-        self.assertEqual((scale.strong_boundary, scale.medium_boundary), (3, 6))
+        self.assertEqual((scale.strong_boundary, scale.medium_boundary), (100, 1000))
         for packet in (
             self.query.results(self.project_id, page=2, page_size=2),
             self.query.results(self.project_id, q="r-8"),
@@ -190,7 +191,9 @@ class ActivityColumnTests(unittest.TestCase):
             compound("missing", []),
         )
         column = self.query.results(self.project_id).activity_columns[0]
-        choices = self.query.filter_values(self.project_id, column=f"activity:{column.id}")
+        choices = self.query.filter_values(
+            self.project_id, column=f"activity:{column.id}"
+        )
         self.assertEqual(
             [(item.value, item.count) for item in choices.items],
             [("A", 1), ("B", 1), ("C", 1)],
@@ -244,7 +247,7 @@ class ActivityColumnTests(unittest.TestCase):
         self.insert(
             *(
                 compound(f"r-{index}", [measurement(value=index)])
-                for index in range(1, 10)
+                for index in range(1, 11)
             )
         )
         raw = self.store.compound(self.project_id, "r-2")["payload"]
@@ -256,14 +259,14 @@ class ActivityColumnTests(unittest.TestCase):
                 expected_revision=document.revision,
                 expected_source_fingerprint=document.source_fingerprint,
                 fields=document.values.model_copy(
-                    update={"activities": [measurement(value=90)]}
+                    update={"activities": [measurement(value=900)]}
                 ),
             ),
         )
         packet = self.query.results(self.project_id, q="r-1")
         scale = packet.activity_columns[0].strength_scale
         assert scale is not None
-        self.assertEqual((scale.strong_boundary, scale.medium_boundary), (4, 7))
+        self.assertEqual((scale.strong_boundary, scale.medium_boundary), (1000, 10000))
         self.assertEqual(self.store.compound(self.project_id, "r-2")["payload"], raw)
         self.assertNotIn("activity_rank_values", raw)
         unfiltered, *_ = self.query._filtered_compounds(self.project_id)
@@ -287,7 +290,7 @@ class ActivityColumnTests(unittest.TestCase):
         self.assertEqual(len(result.activity_columns), 3)
         scales = [column.strength_scale for column in result.activity_columns]
         self.assertEqual(
-            sum(scale.direction == "unknown" for scale in scales if scale), 2
+            sum(scale.direction == "unknown" for scale in scales if scale), 1
         )
         self.assertEqual(result.items[0].activities[0].value, "<10")
 
@@ -457,7 +460,9 @@ class ActivityColumnTests(unittest.TestCase):
                 counts.append(
                     sum(sql.lstrip().upper().startswith("SELECT") for sql in statements)
                 )
-        self.assertEqual(counts, [4, 4])
+        # The current main already includes recognition/property/Lead cache
+        # joins: seven reads, still constant for one or a hundred source rows.
+        self.assertEqual(counts, [7, 7])
 
     def test_utf8_context_and_missing_values_are_preserved_without_normalization(self):
         name = '活性 "等级" / 实验\\观察'

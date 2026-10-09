@@ -28,8 +28,12 @@ export function ActivityValueCell({
   const { t } = useTranslation();
   const scale = column.strength_scale;
   const descriptionId = useId();
-  const tiers = observations.map(({ index }) =>
-    activityStrength(row.activity_rank_values?.[index], scale),
+  const tiers = observations.map(
+    ({ index }) =>
+      row.activity_bands?.[index] ??
+      (scale?.method === 'tenth_decade'
+        ? 'none'
+        : activityStrength(row.activity_rank_values?.[index], scale)),
   );
   const uniform = new Set(tiers).size === 1 ? tiers[0] : undefined;
   return (

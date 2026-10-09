@@ -18,11 +18,23 @@ def engine_identity() -> str:
     files += sorted(Path(sar_worker.__file__).parent.glob("study_*.py"))
     # Both modes use source-bound descriptors and shared chemistry primitives;
     # scientific checkpoints cannot survive a change to those computations.
-    from .. import descriptor_fields, lead_chemistry, lead_endpoints
+    from ...core import potency_bands
+    from .. import (
+        activity_rank_models,
+        descriptor_fields,
+        lead_chemistry,
+        lead_endpoints,
+    )
 
     files += [
         Path(module.__file__)
-        for module in (descriptor_fields, lead_chemistry, lead_endpoints)
+        for module in (
+            activity_rank_models,
+            descriptor_fields,
+            lead_chemistry,
+            lead_endpoints,
+            potency_bands,
+        )
     ]
     files += [
         Path(__file__).with_name(name) for name in ("models.py", "study_models.py")

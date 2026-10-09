@@ -1,4 +1,4 @@
-"""Presentation-only, tied-value project terciles; no chemistry inference."""
+"""Whole-context tenth-dose decades; source grades stay non-quantitative."""
 
 import unittest
 
@@ -14,15 +14,16 @@ def profile(values, name="IC50", unit="nM", assay="binding"):
 
 
 class ActivityRankingTests(unittest.TestCase):
-    def test_numeric_lower_and_higher_directions_keep_exact_terciles(self):
-        low = profile(range(1, 10))
+    def test_numeric_concentrations_use_tenth_decade_but_log_values_are_not_doses(self):
+        low = profile([0.1] * 9 + [1, 10, 100])
         high = profile(range(1, 10), name="pIC50", unit=None)
         self.assertEqual(
-            (low.direction, low.strong_boundary, low.medium_boundary), ("lower", 3, 6)
+            (low.direction, low.strong_boundary, low.medium_boundary),
+            ("lower", 10, 100),
         )
         self.assertEqual(
             (high.direction, high.strong_boundary, high.medium_boundary),
-            ("higher", 7, 4),
+            ("higher", None, None),
         )
 
     def test_source_grade_order_and_weighted_ties_do_not_split_values(self):
@@ -54,7 +55,7 @@ class ActivityRankingTests(unittest.TestCase):
             (same.distinct, same.strong_boundary, same.medium_boundary), (1, 3, 3)
         )
         self.assertEqual(
-            (two.distinct, two.strong_boundary, two.medium_boundary), (2, 1, 1)
+            (two.distinct, two.strong_boundary, two.medium_boundary), (2, None, None)
         )
 
     def test_censored_missing_invalid_and_nonfinite_values_are_never_ranked(self):

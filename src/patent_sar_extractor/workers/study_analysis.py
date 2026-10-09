@@ -19,6 +19,7 @@ from .study_checkpoints import progress
 from .study_descriptors import descriptor_batches
 from .study_inputs import read_input
 from .study_pairs import analyse_pairs
+from .study_strength import resolve_strength
 
 DEADLINE_SECONDS = 175
 
@@ -43,6 +44,12 @@ def analyse_study(root: Path, input_sha256: str) -> dict:
         request["confirm_context"],
         request["context_declarations"],
     )
+    request = {
+        **request,
+        "policies": resolve_strength(
+            request["policies"], contexts, observations, assessments
+        ),
+    }
     domains = {
         policy["context_id"]: DistributionContext(
             observations[policy["context_id"]],
