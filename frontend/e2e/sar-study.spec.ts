@@ -119,6 +119,24 @@ for (const width of [390, 800, 1672]) {
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),
       ).toBe(true);
+      const maps = await view.locator('.sar-reference-map-image').evaluateAll((items) =>
+        items.every((item) => {
+          const picture = item.querySelector('img')?.getBoundingClientRect();
+          const marks = item.querySelector('.sar-region-map')?.getBoundingClientRect();
+          return (
+            picture &&
+            marks &&
+            ['x', 'y', 'width', 'height'].every(
+              (key) =>
+                Math.abs(
+                  (picture[key as keyof DOMRect] as number) -
+                    (marks[key as keyof DOMRect] as number),
+                ) < 1,
+            )
+          );
+        }),
+      );
+      expect(maps).toBe(true);
       await page.screenshot({
         path: test.info().outputPath(`study-${width}-${tab.replaceAll(' ', '-')}.png`),
         fullPage: true,

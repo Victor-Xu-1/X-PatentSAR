@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import unittest
 
-from test_sar_api import ROOT, SARAPITests, nonce
+import test_sar_api as support
+from test_sar_api import ROOT, nonce
 from test_web_support import WebFixture
 
 CSV = (
@@ -17,9 +18,9 @@ CSV = (
 
 
 class SARStudyAPITests(WebFixture, unittest.TestCase):
-    dataset = SARAPITests.dataset
-    region = SARAPITests.region
-    completed = SARAPITests.completed
+    dataset = support.SARAPITests.dataset
+    region = support.SARAPITests.region
+    completed = support.SARAPITests.completed
 
     def start(self, client, dataset, region_ids=None, core_ids=None):
         prefix = ROOT + "/datasets/" + dataset["id"]
