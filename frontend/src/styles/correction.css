@@ -43,6 +43,19 @@
   position: relative;
   min-width: 0;
 }
+.structure-view-tools {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+.structure-view-tools button {
+  min-height: 32px;
+  padding: 5px 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
 .structure-drawing-host {
   width: 100%;
   height: clamp(350px, 54dvh, 480px);
@@ -107,6 +120,9 @@
   }
 }
 @media (max-width: 600px) {
+  .structure-view-tools button {
+    min-height: 44px;
+  }
   .dialog.correction-dialog {
     width: calc(100vw - 24px);
   }

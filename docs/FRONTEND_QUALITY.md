@@ -57,6 +57,13 @@ The reference article's private algorithms are not represented as reproduced.
   Read failures never imply that a correction was saved. Actual writes with server
   faults or unreadable successful bodies stay uncertain, without automatic replay.
   Filtered downloads use the same 128 MiB export bound as unfiltered downloads.
+- The correction canvas fits the loaded structure after its native render is
+  available and when its dimensions change. An explicit fit control restores
+  that view after manual zoom/pan. The viewport module changes only renderer
+  zoom/viewBox, never atom coordinates, graph identity, descriptors, or saved
+  corrections; it does not export/revalidate on resize. Resize notifications
+  are coalesced into one animation frame and disposed with the editor. The
+  native minimum zoom is preserved, with manual pan/zoom retained for extremes.
 
 ## Required page/module/state matrix
 

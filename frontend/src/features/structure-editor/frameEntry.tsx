@@ -10,6 +10,7 @@ import { boundedEditorOperation } from './structureConversion';
 import { ApiError } from '../../api/errors';
 import { UiError, useTranslation } from '../../i18n';
 import { editorErrorSource } from './editorErrorSource';
+import { fitEditorViewport, observeEditorViewport } from './editorViewport';
 import 'ketcher-react/dist/index.css';
 import './frame.css';
 
@@ -46,11 +47,18 @@ function KetcherFrame() {
     let disposed = false,
       loading = false;
     const lifetime = new AbortController();
+    let stopViewport: (() => void) | null = null;
     const receive = async (event: MessageEvent) => {
       if (event.source !== window.parent || event.origin !== window.location.origin || loading)
         return;
       if (event.data?.channel !== EDITOR_CHANNEL) return;
+      if (event.data?.kind === 'fit') {
+        if (!disposed) fitEditorViewport(instance);
+        return;
+      }
       loading = true;
+      stopViewport?.();
+      stopViewport = null;
       cleanup.current?.();
       cleanup.current = null;
       setBlocked(true);
@@ -69,6 +77,7 @@ function KetcherFrame() {
             : request.smiles;
         if (disposed) return;
         cleanup.current = subscribeDrawing(instance, original, send, editorErrorSource);
+        stopViewport = observeEditorViewport(instance);
         setError(null);
         send({ kind: 'loaded' });
       } catch (failure) {
@@ -107,6 +116,7 @@ function KetcherFrame() {
     return () => {
       disposed = true;
       lifetime.abort();
+      stopViewport?.();
       window.removeEventListener('message', handler);
       document.removeEventListener('keydown', save, true);
       cleanup.current?.();

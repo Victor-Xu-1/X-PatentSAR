@@ -7,7 +7,11 @@ from pathlib import Path
 
 PREFIX = "frontend/e2e/"
 # Both are read-only and can accompany any controlled feature fixture.
-COMMON = {"product-version.spec.ts", "recent-density.spec.ts"}
+COMMON = {
+    "product-version.spec.ts",
+    "recent-density.spec.ts",
+    "editor-viewport.spec.ts",
+}
 MODES = (
     (
         "sar",
