@@ -75,6 +75,14 @@ The shared passive-SVG viewer applies readable variants of the stock O/F/Cl
 palette after validation. This affects display color only: source SVG, atom/bond
 geometry, labels, indices, stereochemistry, region coordinates and immutable reports
 are not rewritten. Unknown colors remain unchanged and unsafe SVG remains rejected.
+The same RDKit drawing authority uses a 360 by 240 display canvas for recorded
+fragments and descriptive cores, so port labels and small substituents remain
+legible in compact cards. Full molecule drawings and atom-selection maps retain
+their 1000 by 800 canvas, immutable atom order and normalized overlay coordinates.
+Fragment composition is one 12-pixel horizontal strip, with no later competing
+height override. Drawing requests never revise structures, reports or measurements.
+The conservative content-bound SAR engine still invalidates interrupted older
+engine checkpoints after code changes; completed historical reports remain readable.
 
 Run only explicit changed-module and direct-consumer checks from
 `.github/verification_scope.json`. Browser writes use isolated controller-owned
