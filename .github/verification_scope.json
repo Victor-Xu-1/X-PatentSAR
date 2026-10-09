@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "base_sha": "e0d08288f8b60834ba031f8449da9f009361043b",
+  "base_sha": "ff75930d339dde8f0fd2305fe83707aa86c48ef5",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/FRONTEND_QUALITY.md",
@@ -8,30 +8,9 @@
     "frontend/package-lock.json",
     "frontend/package.json",
     "frontend/src/features/sar/DatasetWorkbench.tsx",
-    "frontend/src/features/sar/SARImport.tsx",
-    "frontend/src/features/sar/SARPage.tsx",
-    "frontend/src/features/sar/study/ContextPicker.tsx",
-    "frontend/src/features/sar/study/RowFacts.tsx",
-    "frontend/src/features/sar/study/StudyComposition.tsx",
-    "frontend/src/features/sar/study/StudyGuide.tsx",
-    "frontend/src/features/sar/study/StudyLeads.tsx",
-    "frontend/src/features/sar/study/StudyOverview.tsx",
-    "frontend/src/features/sar/study/StudyRegionMap.tsx",
-    "frontend/src/features/sar/study/StudyRegions.tsx",
-    "frontend/src/features/sar/study/StudyReportInfo.tsx",
     "frontend/src/features/sar/study/StudyResults.tsx",
-    "frontend/src/features/sar/study/StudyScaffolds.tsx",
-    "frontend/src/features/sar/study/StudySetup.tsx",
-    "frontend/src/features/sar/study/TransformationPreview.tsx",
-    "frontend/src/i18n/catalogs/sar.ts",
-    "frontend/src/styles/product-craft.css",
-    "frontend/src/styles/sar-explorer.css",
     "frontend/src/styles/sar-study.css",
-    "frontend/src/styles/sar.css",
     "frontend/tests/sar-guided-preview.test.tsx",
-    "frontend/tests/sar-policy-note.test.tsx",
-    "frontend/tests/sar-study-results.test.tsx",
-    "frontend/tests/sar-study-setup.test.tsx",
     "src/patent_sar_extractor/contracts.py"
   ],
   "python_modules": [
@@ -43,12 +22,7 @@
     "frontend/tests/sar-guided-preview.test.tsx",
     "frontend/tests/sar-study-setup.test.tsx",
     "frontend/tests/sar-study-results.test.tsx",
-    "frontend/tests/sar-policy-note.test.tsx",
-    "frontend/tests/sar-study-charts.test.tsx",
-    "frontend/tests/sar-intake-presentation.test.tsx",
-    "frontend/tests/sar-import.test.tsx",
-    "frontend/tests/sar-preview.test.tsx",
-    "frontend/tests/table-alignment.test.tsx"
+    "frontend/tests/sar-intake-presentation.test.tsx"
   ],
   "browser_tests": [
     "frontend/e2e/sar-study.spec.ts",

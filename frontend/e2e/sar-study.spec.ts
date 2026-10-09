@@ -265,6 +265,14 @@ for (const width of [390, 800, 1672]) {
         .getByRole('navigation', { name: 'Study views', exact: true }),
     ).toBeVisible();
     expect(errors).toEqual([]);
+    await page.evaluate(() => {
+      location.hash = location.hash.replace(/&job=[a-f0-9]{32}/, '');
+    });
+    const returning = page.getByRole('region', { name: 'Study setup', exact: true });
+    await expect(
+      returning.getByRole('list', { name: 'Analysis steps', exact: true }),
+    ).toBeVisible();
+    await expect(returning.getByRole('button', { name: 'Continue', exact: true })).toBeDisabled();
     expect(foreignWrites).toEqual([]);
   });
 }

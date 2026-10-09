@@ -167,7 +167,7 @@ export function StudyResults({
           />
         </>
       )}
-      <div className="sar-actions">
+      <div className="sar-actions sar-export-actions">
         <label className="sr-only" htmlFor={'sar-export-' + jobId}>
           {t('导出格式')}
         </label>

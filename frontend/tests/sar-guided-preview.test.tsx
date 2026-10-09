@@ -6,6 +6,7 @@ import { sarStudyApi } from '../src/api/sarStudyApi';
 import { setLocale } from '../src/i18n';
 import { StudySetup } from '../src/features/sar/study/StudySetup';
 import { StudyResults } from '../src/features/sar/study/StudyResults';
+import { DatasetWorkbench } from '../src/features/sar/DatasetWorkbench';
 import {
   sarDataset,
   sarDrawing,
@@ -25,6 +26,25 @@ beforeEach(() => {
     id,
     svg: sarDrawing.svg,
   }));
+});
+
+it('reveals the guide when a persistent result workbench returns to the same dataset without a job', async () => {
+  vi.spyOn(sarApi, 'dataset').mockResolvedValue(sarDataset);
+  vi.spyOn(sarApi, 'jobs').mockResolvedValue({ items: [studyJob], total: 1 });
+  const props = {
+    datasetId: sarDataset.id,
+    active: true,
+    scope: 'owned',
+    onJob: vi.fn(),
+    onRemoved: vi.fn(),
+  };
+  const { rerender } = render(<DatasetWorkbench {...props} jobId={studyJob.id} />);
+  await screen.findByText(studyReport.title);
+  expect(screen.queryByRole('list', { name: 'Analysis steps' })).not.toBeInTheDocument();
+  rerender(<DatasetWorkbench {...props} jobId={null} />);
+  expect(await screen.findByRole('list', { name: 'Analysis steps' })).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
+  expect(sarStudyApi.start).not.toHaveBeenCalled();
 });
 
 it('guides activity selection before analysis; back/locale preserve drafts and do not issue a write', async () => {
