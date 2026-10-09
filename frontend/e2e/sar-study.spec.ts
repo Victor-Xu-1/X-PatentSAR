@@ -77,7 +77,8 @@ for (const width of [390, 800, 1672]) {
     await setup.getByText('Add a named selection', { exact: true }).click();
     const browser = setup.getByRole('region', { name: 'Choose reference molecule', exact: true });
     await browser
-      .getByRole('row', { name: /Example 1/ })
+      .getByRole('row')
+      .filter({ has: page.getByRole('rowheader', { name: 'Example 1', exact: true }) })
       .getByRole('button', { name: 'Reference', exact: true })
       .click();
     await setup.getByLabel('Selection name', { exact: true }).fill('R1');
