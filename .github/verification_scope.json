@@ -1,20 +1,16 @@
 {
   "schema_version": 1,
-  "base_sha": "fedbaad6bf5ca131da27981635d76fdee131ee32",
+  "base_sha": "b421cacf0c763b24d7b9266c2a36109ccbd0ad76",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/FRONTEND_QUALITY.md",
     "frontend/e2e/sar-study.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/features/sar/study/StudyOverview.tsx",
-    "frontend/src/features/sar/study/StudyPolicyNote.tsx",
-    "frontend/src/features/sar/study/StudyRegions.tsx",
-    "frontend/src/features/sar/study/StudyScaffolds.tsx",
-    "frontend/src/i18n/catalogs/sar.ts",
-    "frontend/src/styles/product-craft.css",
-    "frontend/src/styles/sar-study.css",
-    "frontend/tests/sar-policy-note.test.tsx",
+    "frontend/src/features/sar/drawingPalette.ts",
+    "frontend/src/features/sar/safeDrawing.ts",
+    "frontend/src/features/sar/study/RegionMap.tsx",
+    "frontend/tests/sar-drawing-contrast.test.ts",
     "src/patent_sar_extractor/contracts.py"
   ],
   "python_modules": [
@@ -23,13 +19,10 @@
     "tests.test_product_version_compatibility"
   ],
   "frontend_tests": [
-    "frontend/tests/sar-policy-note.test.tsx",
-    "frontend/tests/sar-study-results.test.tsx",
-    "frontend/tests/sar-study-charts.test.tsx",
+    "frontend/tests/sar-drawing-contrast.test.ts",
+    "frontend/tests/sar-contract.test.ts",
     "frontend/tests/sar-preview.test.tsx",
-    "frontend/tests/i18n-core.test.tsx",
-    "frontend/tests/minimal-pages.test.tsx",
-    "frontend/tests/ui-craft-pages.test.tsx"
+    "frontend/tests/sar-study-results.test.tsx"
   ],
   "browser_tests": [
     "frontend/e2e/sar-study.spec.ts",

@@ -50,7 +50,7 @@ export function RegionMap({
               <text
                 x={Math.max(24, Math.min(960, x * 1000))}
                 y={Math.max(24, y * 800 - 25)}
-                fill={color}
+                fill="var(--ink)"
                 fontSize="20"
                 fontWeight="600"
                 textAnchor="middle"

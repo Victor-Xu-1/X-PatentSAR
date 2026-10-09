@@ -147,6 +147,20 @@ for (const width of [390, 800, 1672]) {
         }),
       );
       expect(maps).toBe(true);
+      if (tab === 'Leads') {
+        // The strongest candidate can contain Br rather than Cl. Check the
+        // actual candidate gallery, without forcing its scientific ordering.
+        const sources = await view
+          .locator('.sar-study-image img')
+          .evaluateAll((images) => images.map((image) => image.getAttribute('src')!));
+        const svg = sources
+          .map((displayed) => decodeURIComponent(displayed.split(',').slice(1).join(',')))
+          .join('\n');
+        expect(svg).toContain('#B42318');
+        expect(svg).toContain('#166534');
+        expect(svg).not.toContain('#FF0000');
+        expect(svg).not.toContain('#00CC00');
+      }
       await page.screenshot({
         path: test.info().outputPath(`study-${width}-${tab.replaceAll(' ', '-')}.png`),
         fullPage: true,
