@@ -1,39 +1,34 @@
 {
   "schema_version": 1,
-  "base_sha": "181a3750a155e4c98b11bc87b423ac42e04f7d38",
+  "base_sha": "edd73cdcb65350ecc6be96a442fef85202af73a9",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/FRONTEND_QUALITY.md",
-    "frontend/e2e/expert-controls.spec.ts",
-    "frontend/e2e/structure-details.spec.ts",
+    "frontend/e2e/sar-study.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/features/results/CropDialog.tsx",
-    "frontend/src/features/results/StructureEditor.tsx",
-    "frontend/src/styles/dialogs.css",
-    "frontend/tests/crop-detail-craft.test.tsx",
-    "src/patent_sar_extractor/contracts.py",
-    "tests/test_sar_browser_fixture.py",
-    "tools/browser_fixture_mode.py"
+    "frontend/src/features/sar/study/PolicyEditor.tsx",
+    "frontend/src/features/sar/study/StudyOverview.tsx",
+    "frontend/src/features/sar/study/StudyRegions.tsx",
+    "frontend/src/styles/sar.css",
+    "frontend/tests/sar-preview-density.test.tsx",
+    "src/patent_sar_extractor/contracts.py"
   ],
   "python_modules": [
     "tests.test_product_version_compatibility",
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
-    "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority",
-    "tests.test_sar_browser_fixture.SARBrowserFixtureTests.test_structure_detail_scope_uses_only_read_only_imported_source"
+    "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
-    "frontend/tests/crop-detail-craft.test.tsx",
-    "frontend/tests/results-workspace.test.tsx",
-    "frontend/tests/source-stereo.test.tsx",
-    "frontend/tests/i18n-workbench-chemistry.test.tsx",
-    "frontend/tests/editor-error-language.test.tsx",
-    "frontend/tests/structure-editor-contract.test.ts",
-    "frontend/tests/structure-editor-repair.test.tsx"
+    "frontend/tests/sar-preview-density.test.tsx",
+    "frontend/tests/sar-policy-note.test.tsx",
+    "frontend/tests/sar-guided-preview.test.tsx",
+    "frontend/tests/sar-study-setup.test.tsx",
+    "frontend/tests/sar-study-results.test.tsx",
+    "frontend/tests/sar-study-charts.test.tsx"
   ],
   "browser_tests": [
-    "frontend/e2e/expert-controls.spec.ts",
-    "frontend/e2e/structure-details.spec.ts",
+    "frontend/e2e/sar-study.spec.ts",
     "frontend/e2e/product-version.spec.ts"
   ]
 }

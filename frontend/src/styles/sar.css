@@ -246,8 +246,8 @@
 }
 .sar-page .sar-policy {
   border-top: 1px solid var(--line);
-  margin-top: 18px;
-  padding-block: 18px 0;
+  margin-top: 12px;
+  padding-block: 10px 0;
 }
 .sar-study-setup .primary + small {
   display: block;

@@ -131,6 +131,15 @@ function RegionGroup({
       <details className="sar-compact sar-region-method">
         <summary>{t('匹配详情')}</summary>
         <p className="sar-hint">{t('一个固定背景中的严格参考证据，不是独立系列普遍规律。')}</p>
+        {hasStrongRule(report.policies[0]) && (
+          <StudyPolicyNote
+            policy={report.policies[0]}
+            context={report.contexts.find(
+              (context) => context.id === report.policies[0]?.context_id,
+            )}
+            primary
+          />
+        )}
         <p>
           {t('匹配 {matched} · 未匹配 {not_matched} · 歧义 {ambiguous} · 不合格 {ineligible}', {
             matched: summary.matched,
@@ -144,11 +153,13 @@ function RegionGroup({
         {t('可比较数量')} {summary.comparable}
       </p>
       {summary.no_variation && <output>{t('该区域没有观察到结构变化。')}</output>}
-      <StudyPolicyNote
-        policy={report.policies[0]}
-        context={report.contexts.find((context) => context.id === report.policies[0]?.context_id)}
-        primary
-      />
+      {!hasStrongRule(report.policies[0]) && (
+        <StudyPolicyNote
+          policy={report.policies[0]}
+          context={report.contexts.find((context) => context.id === report.policies[0]?.context_id)}
+          primary
+        />
+      )}
       <div className="sar-fragment-controls">
         <label>
           {t('统计单位')}
