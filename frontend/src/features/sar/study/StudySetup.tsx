@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Dataset, Region, SARJob } from '../../../api/sarTypes';
 import { sarStudyApi } from '../../../api/sarStudyApi';
 import { useTranslation } from '../../../i18n';
@@ -16,6 +16,7 @@ import { declarationFromDraft, emptyCondition } from './conditionDraft';
 import type { ConditionDraft } from './conditionDraft';
 import { emptyPolicy, policyFromDraft } from './policyDraft';
 import type { PolicyDraft } from './policyDraft';
+import { StudyGuide } from './StudyGuide';
 export function StudySetup({
   dataset,
   active,
@@ -30,6 +31,13 @@ export function StudySetup({
   onJob: (job: SARJob) => void;
 }) {
   const { t } = useTranslation();
+  const [step, setStep] = useState<2 | 3>(2);
+  const heading = useRef<HTMLHeadingElement>(null),
+    previousStep = useRef(step);
+  useEffect(() => {
+    if (active && step !== previousStep.current) heading.current?.focus();
+    previousStep.current = step;
+  }, [active, step]);
   const [title, setTitle] = useState(dataset.title),
     [selected, setSelected] = useState<string[]>([]);
   const [drafts, setDrafts] = useState<Record<string, PolicyDraft>>({});
@@ -94,11 +102,14 @@ export function StudySetup({
   return (
     <section className="sar-panel sar-study-setup" aria-label={t('研究设置')}>
       <div className="sar-section-heading">
-        <h2>{t('完整 SAR 研究')}</h2>
+        <h2 ref={heading} tabIndex={-1}>
+          {t('完整 SAR 研究')}
+        </h2>
         <button type="button" disabled={!active || disabled} onClick={profile.reload}>
           {t('刷新')}
         </button>
       </div>
+      <StudyGuide current={step} />
       {profile.loading && <Loading />}
       {profile.error && <SARFailure error={profile.error} onRetry={profile.reload} />}
       <form
@@ -125,118 +136,151 @@ export function StudySetup({
         }}
       >
         <fieldset disabled={!ready || mutation.locked}>
-          <div className="sar-form-grid">
-            <label>
-              {t('研究名称')}
-              <input maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} />
-            </label>
-            <label>
-              {t('候选数量')}
-              <select
-                value={candidateCount}
-                onChange={(e) => setCandidateCount(Number(e.target.value))}
-              >
-                {[5, 6, 7, 8, 9, 10].map((n) => (
-                  <option key={n}>{n}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-          {profile.data && (
-            <ContextPicker
-              contexts={profile.data.contexts}
-              selected={selected}
-              onSelect={(id, checked) => {
-                setSelected((old) => (checked ? [...old, id] : old.filter((v) => v !== id)));
-                setDrafts((old) => ({ ...old, [id]: old[id] ?? emptyPolicy() }));
-              }}
-            />
-          )}
-          {selected.map((id) => {
-            const context = profile.data?.contexts.find((c) => c.id === id);
-            return context ? (
-              <div key={id} className="sar-policy-block">
-                <PolicyEditor
-                  key={id}
-                  context={context}
-                  draft={drafts[id] ?? emptyPolicy()}
-                  onChange={(draft) => setDrafts((old) => ({ ...old, [id]: draft }))}
-                />
-                <ConditionEditor
-                  dataset={dataset}
-                  context={context}
-                  draft={conditionDrafts[id] ?? emptyCondition()}
-                  onChange={(draft) => setConditionDrafts((old) => ({ ...old, [id]: draft }))}
-                />
-              </div>
-            ) : (
-              <p key={id} role="alert">
-                {t('实验条件已变化，请重新确认选择。')}
-              </p>
-            );
-          })}
-          {(['variable', 'core'] as const).map((kind) => {
-            const ids = kind === 'core' ? coreIds : regionIds,
-              update = kind === 'core' ? setCoreIds : setRegionIds;
-            return (
-              <details className="sar-compact" key={kind}>
-                <summary>
-                  {t(kind === 'core' ? '已确认核心（可选）' : '变化区域（可选）')} · {ids.length}/12
-                </summary>
-                <div className="sar-region-list">
-                  {profile.data?.regions
-                    .filter((r) => (r.kind ?? 'variable') === kind)
-                    .map((region, index) => (
-                      <label className="sar-checkbox" key={region.id}>
-                        <input
-                          type="checkbox"
-                          checked={ids.includes(region.id)}
-                          disabled={
-                            region.dataset_revision !== dataset.revision ||
-                            (ids.length >= 12 && !ids.includes(region.id))
-                          }
-                          onChange={(e) => {
-                            const checked = e.target.checked;
-                            update((old) =>
-                              checked ? [...old, region.id] : old.filter((id) => id !== region.id),
-                            );
-                          }}
-                        />
-                        {region.name ?? 'R' + (index + 1)} ·{' '}
-                        {t('已选原子：{indices}', { indices: region.atom_indices.join(', ') })}
-                      </label>
-                    ))}
+          <div hidden={step !== 2}>
+            {profile.data && (
+              <ContextPicker
+                contexts={profile.data.contexts}
+                selected={selected}
+                onSelect={(id, checked) => {
+                  setSelected((old) => (checked ? [...old, id] : old.filter((v) => v !== id)));
+                  setDrafts((old) => ({ ...old, [id]: old[id] ?? emptyPolicy() }));
+                }}
+              />
+            )}
+            {selected.map((id) => {
+              const context = profile.data?.contexts.find((c) => c.id === id);
+              return context ? (
+                <div key={id} className="sar-policy-block">
+                  <PolicyEditor
+                    key={id}
+                    context={context}
+                    draft={drafts[id] ?? emptyPolicy()}
+                    onChange={(draft) => setDrafts((old) => ({ ...old, [id]: draft }))}
+                  />
+                  <ConditionEditor
+                    dataset={dataset}
+                    context={context}
+                    draft={conditionDrafts[id] ?? emptyCondition()}
+                    onChange={(draft) => setConditionDrafts((old) => ({ ...old, [id]: draft }))}
+                  />
                 </div>
-              </details>
-            );
-          })}
-          <label className="sar-checkbox">
-            <input
-              type="checkbox"
-              checked={confirm}
-              onChange={(e) => setConfirm(e.target.checked)}
-            />
-            {t('我仅确认缺失的实验条件允许比较；已知条件差异仍禁止比较。')}
-          </label>
-          <button className="primary" type="submit" disabled={!valid}>
-            {t('运行完整研究')}
-          </button>
-          <small className="sar-hint">
-            {t('无区域也可运行概览；不猜测等级、阈值或实验条件。')}
-          </small>
+              ) : (
+                <p key={id} role="alert">
+                  {t('实验条件已变化，请重新确认选择。')}
+                </p>
+              );
+            })}
+            <button type="button" className="primary" disabled={!valid} onClick={() => setStep(3)}>
+              {t('下一步')}
+            </button>
+          </div>
+          <div hidden={step !== 3}>
+            <div className="sar-form-grid">
+              <label>
+                {t('研究名称')}
+                <input maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} />
+              </label>
+              <label>
+                {t('候选数量')}
+                <select
+                  value={candidateCount}
+                  onChange={(e) => setCandidateCount(Number(e.target.value))}
+                >
+                  {[5, 6, 7, 8, 9, 10].map((n) => (
+                    <option key={n}>{n}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <ul className="sar-selected-contexts">
+              {selected.map((id) => {
+                const context = profile.data?.contexts.find((c) => c.id === id);
+                return context ? (
+                  <li key={id}>
+                    {context.name}
+                    {context.unit && ' · ' + context.unit}
+                  </li>
+                ) : null;
+              })}
+            </ul>
+            {(['variable', 'core'] as const).map((kind) => {
+              const ids = kind === 'core' ? coreIds : regionIds,
+                update = kind === 'core' ? setCoreIds : setRegionIds;
+              return (
+                <details className="sar-compact" key={kind}>
+                  <summary>
+                    {t(kind === 'core' ? '已确认核心（可选）' : '变化区域（可选）')} · {ids.length}
+                    /12
+                  </summary>
+                  <div className="sar-region-list">
+                    {profile.data?.regions
+                      .filter((r) => (r.kind ?? 'variable') === kind)
+                      .map((region, index) => (
+                        <label className="sar-checkbox" key={region.id}>
+                          <input
+                            type="checkbox"
+                            checked={ids.includes(region.id)}
+                            disabled={
+                              region.dataset_revision !== dataset.revision ||
+                              (ids.length >= 12 && !ids.includes(region.id))
+                            }
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              update((old) =>
+                                checked
+                                  ? [...old, region.id]
+                                  : old.filter((id) => id !== region.id),
+                              );
+                            }}
+                          />
+                          <span
+                            title={t('已选原子：{indices}', {
+                              indices: region.atom_indices.join(', '),
+                            })}
+                          >
+                            {region.name ?? 'R' + (index + 1)}
+                          </span>
+                        </label>
+                      ))}
+                  </div>
+                </details>
+              );
+            })}
+            <details className="sar-compact">
+              <summary>{t('实验条件确认（可选）')}</summary>
+              <label className="sar-checkbox">
+                <input
+                  type="checkbox"
+                  checked={confirm}
+                  onChange={(e) => setConfirm(e.target.checked)}
+                />
+                {t('我仅确认缺失的实验条件允许比较；已知条件差异仍禁止比较。')}
+              </label>
+            </details>
+            <div className="sar-actions">
+              <button type="button" onClick={() => setStep(2)}>
+                {t('上一步')}
+              </button>
+              <button className="primary" type="submit" disabled={!valid}>
+                {t('运行完整研究')}
+              </button>
+            </div>
+          </div>
         </fieldset>
       </form>
       <MutationNotice mutation={mutation} disabled={!ready} />
-      {profile.data && (
-        <StudyRegionEditor
-          dataset={dataset}
-          regions={profile.data.regions}
-          active={active}
-          disabled={!ready || mutation.locked}
-          scope={scope}
-          onSaved={saved}
-        />
-      )}
+      <div hidden={step !== 3}>
+        {profile.data && (
+          <StudyRegionEditor
+            dataset={dataset}
+            regions={profile.data.regions}
+            active={active && step === 3}
+            disabled={!ready || mutation.locked}
+            scope={scope}
+            onSaved={saved}
+          />
+        )}
+      </div>
     </section>
   );
 }

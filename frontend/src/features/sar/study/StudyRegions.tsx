@@ -37,14 +37,6 @@ function FragmentCard({
         {t('片段 {index}', { index })}
         {fragment.is_reference && <small> · {t('参考')}</small>}
       </h4>
-      <StudyBars
-        bins={fragment.bins}
-        layout="stack"
-        controlledUnit={unit}
-        showLegend={false}
-        countingContract={report.counting_contract}
-        direction={report.policies[0]?.direction}
-      />
       <StudyImage
         jobId={jobId}
         kind="fragment"
@@ -52,6 +44,14 @@ function FragmentCard({
         regionId={regionId}
         label={fragment.smiles}
         active={active}
+      />
+      <StudyBars
+        bins={fragment.bins}
+        layout="stack"
+        controlledUnit={unit}
+        showLegend={false}
+        countingContract={report.counting_contract}
+        direction={report.policies[0]?.direction}
       />
       {hasStrongRule(report.policies[0]) && (
         <p>

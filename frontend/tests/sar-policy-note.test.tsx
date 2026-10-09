@@ -94,7 +94,7 @@ it('does not present unconfigured strength as measured zero or hide actual obser
   };
   render(<StudyOverview report={report} />);
   expect(screen.getByText('Strong activity not classified')).toBeVisible();
-  expect(screen.getByText('Observed 2 · Missing 1 · Unresolved 1')).toBeVisible();
+  expect(screen.getByRole('meter', { name: '<10 · Observations' })).toBeVisible();
   expect(screen.queryByText(/Strong activity 0/)).not.toBeInTheDocument();
   expect(hasStrongRule(undefined)).toBe(false);
   expect(hasStrongRule({ ...report.policies[0]!, strong_threshold: 0 })).toBe(true);

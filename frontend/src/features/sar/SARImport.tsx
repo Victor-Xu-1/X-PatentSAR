@@ -11,6 +11,7 @@ import { MutationNotice } from './MutationNotice';
 import { newRequestId } from './presentation';
 import { useSARMutation } from './useSARMutation';
 import { TableScroll } from './TableScroll';
+import { StudyGuide } from './study/StudyGuide';
 
 export function SARImport({
   active,
@@ -64,6 +65,7 @@ export function SARImport({
   return (
     <section className="sar-panel" aria-label={t('导入数据')}>
       <h2>{t('导入数据')}</h2>
+      <StudyGuide current={1} />
       <div className="sar-actions">
         <button
           type="button"
@@ -123,7 +125,6 @@ export function SARImport({
                 <input maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} />
               </label>
             </div>
-            <p className="sar-hint">{t('快照保留当前有效来源与修订；不会触发原始提取任务。')}</p>
             <button
               className="primary"
               type="submit"
@@ -151,7 +152,6 @@ export function SARImport({
               </button>
             </div>
           )}
-          {!preview && <p className="sar-hint">{t('CSV · 最大 8 MiB · 最多 256 列')}</p>}
           {preview && (
             <>
               <h3>

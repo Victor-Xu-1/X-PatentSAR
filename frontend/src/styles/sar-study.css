@@ -1,6 +1,100 @@
 .sar-overview-charts {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
 }
+.sar-study-guide {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  margin: 14px 0 24px;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  color: var(--muted);
+}
+.sar-study-guide li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sar-study-guide li > span {
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+}
+.sar-study-guide .is-active {
+  color: var(--ink);
+  font-weight: 600;
+}
+.sar-study-guide .is-active > span {
+  border-color: var(--accent-strong);
+  color: var(--accent-strong);
+}
+.sar-study-guide .is-done > span {
+  border-color: transparent;
+  background: var(--surface-subtle);
+  color: var(--accent-strong);
+}
+.sar-study .sar-study-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.sar-workbench-options {
+  margin-block: 16px;
+}
+.sar-workbench-options > summary {
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.sar-dataset-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-block: 12px;
+}
+.sar-counting-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  margin: 0 0 16px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.sar-counting-control select {
+  width: auto;
+}
+.sar-selected-contexts {
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+}
+.sar-selected-contexts li {
+  display: inline-block;
+  margin: 0 8px 10px 0;
+  padding: 5px 9px;
+  background: var(--surface-subtle);
+  border-radius: 5px;
+}
+.sar-fragment-strip .sar-composition-stack {
+  flex-direction: row;
+  width: 100%;
+  height: 12px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+}
+.sar-lead-card dd[data-activity-strength='strong'] {
+  background: var(--activity-strong-surface);
+}
+.sar-lead-card dd[data-activity-strength='medium'] {
+  background: var(--activity-medium-surface);
+}
+.sar-lead-card dd[data-activity-strength] {
+  padding: 2px 6px;
+  border-radius: 4px;
+}
 .sar-context-detail {
   font-size: 12px;
   margin-block: 6px 14px;

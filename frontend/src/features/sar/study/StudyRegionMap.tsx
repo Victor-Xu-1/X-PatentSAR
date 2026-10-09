@@ -70,7 +70,6 @@ function ReferenceMap({
         </div>
       )}
       <RegionLegend regions={regions} selected={selected} onSelect={onSelect} />
-      {onSelect && <small className="sar-hint">{t('点击结构区域，查看改造与数据变化。')}</small>}
     </article>
   );
 }

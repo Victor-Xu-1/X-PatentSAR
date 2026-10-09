@@ -124,9 +124,6 @@ export function TransformationPreview({
             ))}
           </div>
           <PreviewMeasurements data={data} report={report} />
-          <small className="sar-hint">
-            {t('仅圈选区域改变；其余结构固定。理化差值不表示药效改善。')}
-          </small>
         </>
       )}
     </section>

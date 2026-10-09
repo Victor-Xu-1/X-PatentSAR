@@ -1,5 +1,18 @@
 /** UI copy only; source labels, grade values, issues and experiment data stay raw. */
 export const sar: Record<string, string> = {
+  分析步骤: 'Analysis steps',
+  选择数据: 'Data',
+  选择活性: 'Activity',
+  开始分析: 'Analyze',
+  研究详情: 'Details',
+  活性规则: 'Activity rules',
+  历史研究: 'Historical study',
+  研究预览: 'Research preview',
+  导出格式: 'Export format',
+  研究选项: 'Study options',
+  '实验条件确认（可选）': 'Assay confirmation (optional)',
+  上一步: 'Back',
+  下一步: 'Continue',
   第十名数量级: 'Tenth potency decade',
   '原文等级（可选）': 'Source grades (optional)',
   '明确方向；原文等级须唯一。': 'Confirm direction; source grades must be unique.',

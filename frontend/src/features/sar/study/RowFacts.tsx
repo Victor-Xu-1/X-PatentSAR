@@ -10,19 +10,32 @@ export const candidateLabels = {
   ineligible: 'SAR 不合格',
   partial: '研究部分证据',
 } as const;
-export function RowFacts({ row, contexts }: { row: StudyRow; contexts: StudyContext[] }) {
+export function RowFacts({
+  row,
+  contexts,
+  compact = false,
+}: {
+  row: StudyRow;
+  contexts: StudyContext[];
+  compact?: boolean;
+}) {
   const { t } = useTranslation();
   return (
     <div>
-      <p className="sar-candidate-coverage">
-        {t(candidateLabels[row.candidate_status])} · {t('证据覆盖')}{' '}
-        {Math.round(row.coverage * 100)}%
-      </p>
+      {!compact && (
+        <p className="sar-candidate-coverage">
+          {t(candidateLabels[row.candidate_status])} · {t('证据覆盖')}{' '}
+          {Math.round(row.coverage * 100)}%
+        </p>
+      )}
       <dl className="sar-facts">
         {contexts.map((context) => (
           <div key={context.id}>
             <dt>{contextLabel(context)}</dt>
-            <dd title={row.activity_status[context.id]}>
+            <dd
+              title={row.activity_status[context.id]}
+              data-activity-strength={row.activity_bands?.[context.id]}
+            >
               {(row.values[context.id] ?? []).map((value, index) => (
                 <span key={index}>{value}</span>
               ))}
@@ -38,58 +51,62 @@ export function RowFacts({ row, contexts }: { row: StudyRow; contexts: StudyCont
           </div>
         ))}
       </dl>
-      <details className="sar-compact">
-        <summary>{t('研究性质与已有预测')}</summary>
-        <dl className="sar-facts">
-          {Object.entries(row.properties).map(([key, value]) => (
-            <div key={key}>
-              <dt>{studyProperties.find((p) => p.key === key)?.label ?? key}</dt>
-              <dd title={value == null ? undefined : String(value)}>
-                {propertyText(value, key)}{' '}
-                <small>
-                  {t(originCopy[row.property_origins[key] ?? 'not_provided'] ?? '来源待确认')}
-                </small>
-              </dd>
-            </div>
-          ))}
-        </dl>
-        <h4>{t('已捕获的预测')}</h4>
-        <dl className="sar-facts">
-          {Object.entries(row.predictions).map(([key, value]) => (
-            <div key={key}>
-              <dt>{key}</dt>
-              <dd>{value ?? '—'}</dd>
-            </div>
-          ))}
-        </dl>
-        {!Object.keys(row.predictions).length && <p>{t('未提供预测')}</p>}
-      </details>
-      <p>
-        {t('Pareto 层')} {row.pareto_front ?? '—'} · {t('优先组')} {row.priority_group ?? '—'}
-      </p>
-      <details className="sar-compact">
-        <summary>{t('证据依据')}</summary>
-        <ul>
-          {evidenceSummaries(row.reasons).map((reason) => (
-            <li key={reason}>{t(reason)}</li>
-          ))}
-        </ul>
-        <details className="sar-technical-evidence">
-          <summary>{t('技术证据')}</summary>
-          <pre>
-            {JSON.stringify(
-              {
-                activity_status: row.activity_status,
-                property_origins: row.property_origins,
-                prediction_origin: row.prediction_origin,
-                reasons: row.reasons,
-              },
-              null,
-              2,
-            )}
-          </pre>
-        </details>
-      </details>
+      {!compact && (
+        <>
+          <details className="sar-compact">
+            <summary>{t('研究性质与已有预测')}</summary>
+            <dl className="sar-facts">
+              {Object.entries(row.properties).map(([key, value]) => (
+                <div key={key}>
+                  <dt>{studyProperties.find((p) => p.key === key)?.label ?? key}</dt>
+                  <dd title={value == null ? undefined : String(value)}>
+                    {propertyText(value, key)}{' '}
+                    <small>
+                      {t(originCopy[row.property_origins[key] ?? 'not_provided'] ?? '来源待确认')}
+                    </small>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <h4>{t('已捕获的预测')}</h4>
+            <dl className="sar-facts">
+              {Object.entries(row.predictions).map(([key, value]) => (
+                <div key={key}>
+                  <dt>{key}</dt>
+                  <dd>{value ?? '—'}</dd>
+                </div>
+              ))}
+            </dl>
+            {!Object.keys(row.predictions).length && <p>{t('未提供预测')}</p>}
+          </details>
+          <p>
+            {t('Pareto 层')} {row.pareto_front ?? '—'} · {t('优先组')} {row.priority_group ?? '—'}
+          </p>
+          <details className="sar-compact">
+            <summary>{t('证据依据')}</summary>
+            <ul>
+              {evidenceSummaries(row.reasons).map((reason) => (
+                <li key={reason}>{t(reason)}</li>
+              ))}
+            </ul>
+            <details className="sar-technical-evidence">
+              <summary>{t('技术证据')}</summary>
+              <pre>
+                {JSON.stringify(
+                  {
+                    activity_status: row.activity_status,
+                    property_origins: row.property_origins,
+                    prediction_origin: row.prediction_origin,
+                    reasons: row.reasons,
+                  },
+                  null,
+                  2,
+                )}
+              </pre>
+            </details>
+          </details>
+        </>
+      )}
     </div>
   );
 }

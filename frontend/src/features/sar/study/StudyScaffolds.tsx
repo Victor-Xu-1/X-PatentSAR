@@ -32,7 +32,6 @@ export function StudyScaffolds({
   );
   return (
     <div>
-      <p className="sar-hint">{t('骨架分组是描述性汇总，不证明严格变化区域关系。')}</p>
       <StudyPolicyNote
         policy={report.policies[0]}
         context={report.contexts.find((context) => context.id === report.policies[0]?.context_id)}

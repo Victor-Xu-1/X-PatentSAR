@@ -3,18 +3,18 @@ import { useTranslation } from '../../../i18n';
 import { StudyBars } from './StudyBars';
 import { contextLabel } from './policyDraft';
 import { StudyPolicyNote, hasStrongRule } from './StudyPolicyNote';
+import { useState } from 'react';
+import type { CountingUnit } from './chartPresentation';
 export function StudyOverview({ report }: { report: StudyReport }) {
   const { t } = useTranslation();
+  const [unit, setUnit] = useState<CountingUnit>('molecules');
   return (
     <div>
       <dl className="sar-study-stats">
         {[
           ['来源记录', report.molecule_count],
           ['可分析分子', report.eligible_count],
-          ['观察数', report.observation_count],
-          ['已检查比较', report.strict_pair_count],
-          ['已匹配比较', report.matched_pair_count ?? '—'],
-          ['可比较证据', report.comparable_pair_count ?? '—'],
+          ['候选数量', report.candidates.length],
         ].map(([label, value]) => (
           <div key={label}>
             <dt>{t(String(label))}</dt>
@@ -22,6 +22,18 @@ export function StudyOverview({ report }: { report: StudyReport }) {
           </div>
         ))}
       </dl>
+      <label className="sar-counting-control">
+        {t('统计单位')}
+        <select
+          value={report.counting_contract === 'unique-molecules-v2' ? unit : 'observations'}
+          onChange={(e) => setUnit(e.target.value as CountingUnit)}
+        >
+          <option value="molecules" disabled={report.counting_contract !== 'unique-molecules-v2'}>
+            {t('原始编号 / 记录')}
+          </option>
+          <option value="observations">{t('观察数')}</option>
+        </select>
+      </label>
       <div className="sar-card-grid sar-overview-charts">
         {report.distributions.map((distribution) => {
           const context = report.contexts.find((c) => c.id === distribution.context_id);
@@ -50,27 +62,14 @@ export function StudyOverview({ report }: { report: StudyReport }) {
                 layout="donut"
                 countingContract={report.counting_contract}
                 direction={policy?.direction}
+                controlledUnit={unit}
               />
               <StudyPolicyNote policy={policy} context={context} />
-              <p>
-                {t('已观察 {observed} · 缺失 {missing} · 未确定 {unresolved}', {
-                  observed: distribution.observed_molecules,
-                  missing: distribution.missing_molecules,
-                  unresolved: distribution.unresolved_molecules,
-                })}
-                {hasStrongRule(policy) && (
-                  <>
-                    {' '}
-                    · {t('强活性')} {distribution.strong_molecules}
-                  </>
-                )}
-              </p>
-              <small>
-                {t('{molecules} 个分子 · {observations} 条观察', {
-                  molecules: distribution.observed_molecules,
-                  observations: distribution.observations,
-                })}
-              </small>
+              {hasStrongRule(policy) && (
+                <small>
+                  {t('强活性')} {distribution.strong_molecules}
+                </small>
+              )}
             </article>
           );
         })}

@@ -23,18 +23,20 @@ export function ContextPicker({
       <legend>
         {t('精确实验条件')} · {selected.length}/8
       </legend>
-      <label>
-        {t('查找实验条件')}
-        <input
-          type="search"
-          maxLength={200}
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setPage(1);
-          }}
-        />
-      </label>
+      {contexts.length > 12 && (
+        <label>
+          {t('查找实验条件')}
+          <input
+            type="search"
+            maxLength={200}
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
+          />
+        </label>
+      )}
       <div className="sar-context-list">
         {visible.slice((page - 1) * 50, page * 50).map((context) => (
           <label
@@ -53,18 +55,13 @@ export function ContextPicker({
             />
             <span>
               <strong>{contextLabel(context)}</strong>
-              <small>
-                {Object.entries(context.context)
-                  .map(([key, value]) => key + ': ' + (value ?? '—'))
-                  .join(' · ')}
-              </small>
+              <small>{Object.values(context.context).filter(Boolean).join(' · ')}</small>
               <small>
                 {t('{molecules} 个分子 · {observations} 条观察', {
                   molecules: context.molecule_count,
                   observations: context.observation_count,
                 })}
               </small>
-              <small>{context.value_samples.join(' · ')}</small>
             </span>
           </label>
         ))}

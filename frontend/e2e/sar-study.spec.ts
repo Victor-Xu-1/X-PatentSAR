@@ -74,6 +74,7 @@ for (const width of [390, 800, 1672]) {
     await expect(
       setup.getByText('Concentration potency uses the tenth strongest measurement’s decade.'),
     ).toBeVisible();
+    await setup.getByRole('button', { name: 'Continue', exact: true }).click();
     await setup.getByText('Add a named selection', { exact: true }).click();
     const browser = setup.getByRole('region', { name: 'Choose reference molecule', exact: true });
     await browser
@@ -96,6 +97,12 @@ for (const width of [390, 800, 1672]) {
     await expect(report.getByRole('navigation', { name: 'Study views', exact: true })).toBeVisible({
       timeout: 30000,
     });
+    const details = report.getByRole('button', { name: 'Details', exact: true });
+    await details.click();
+    await expect(page.getByRole('dialog', { name: 'Details', exact: true })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(details).toBeFocused();
     for (const tab of [
       'Overview',
       'Scaffolds',
@@ -215,6 +222,7 @@ for (const width of [390, 800, 1672]) {
     expect(noActivity.properties.molecular_weight).toBeGreaterThan(0);
     expect(noActivity.prediction_origin).toBe('not_provided');
     const downloading = page.waitForEvent('download');
+    await report.getByLabel('Export format', { exact: true }).selectOption('json');
     await report.getByRole('button', { name: 'Export report JSON', exact: true }).click();
     const download = await downloading;
     const exported = JSON.parse(await readFile((await download.path())!, 'utf8'));
