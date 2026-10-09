@@ -13,6 +13,9 @@ for (const width of [390, 800, 1672]) {
     });
     await page.setViewportSize({ width, height: width === 390 ? 844 : 1060 });
     await page.goto('/#/projects');
+    // Wait for the app's normal session bootstrap and source-list read before
+    // using the context's authenticated read-only API client.
+    await expect(page.locator('.recent-file-row').first()).toBeVisible();
     const sourceId = process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID;
     expect(sourceId).toBeTruthy();
     const source = await page.request.get('/api/v1/projects/' + sourceId);
