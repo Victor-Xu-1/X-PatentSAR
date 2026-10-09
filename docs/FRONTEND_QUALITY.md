@@ -33,6 +33,13 @@ The reference article's private algorithms are not represented as reproduced.
   intermediate widths. Source title, availability, acceptance and timestamp stay
   visible and associated with the same keyboard-operable open button.
 - Result previews prioritize structures, measured values, distributions and tables.
+  Structure detail opens on the original crop and explicitly non-original redraw;
+  raw SMILES starts collapsed, remains verbatim, and retains its disclosure state
+  across language changes. Primary/secondary original-source links share one URL
+  resolver and never invent a page. Full extraction caveats stay in existing
+  validation detail and on the redraw caption, while actionable image/chemistry
+  failures remain visible. Frame errors with explicit UI provenance localize;
+  untagged raw SDK/server diagnostic messages remain untouched.
   One details dialog owns technical counts, source QA and limitations. Candidate
   cards show chemistry, raw activity and six properties; provenance stays available
   through source selection. A single format selector preserves all four exports.

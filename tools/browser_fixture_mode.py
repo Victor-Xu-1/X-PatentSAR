@@ -6,11 +6,13 @@ import json
 from pathlib import Path
 
 PREFIX = "frontend/e2e/"
-# Both are read-only and can accompany any controlled feature fixture.
+# Read-only specs can accompany any controlled feature fixture.
 COMMON = {
     "product-version.spec.ts",
     "recent-density.spec.ts",
     "editor-viewport.spec.ts",
+    "structure-details.spec.ts",
+    "expert-controls.spec.ts",
 }
 MODES = (
     (

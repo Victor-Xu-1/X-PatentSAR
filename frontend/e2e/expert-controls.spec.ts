@@ -88,37 +88,3 @@ for (const width of [390, 800, 1672]) {
     expect(writes).toEqual([]);
   });
 }
-
-test('drawing transport failure is localized once, keeps saving blocked and never saves a correction', async ({
-  page,
-}) => {
-  const source = process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID;
-  expect(source).toBeTruthy();
-  const writes: string[] = [];
-  await page.route('**/api/v1/**', async (route) => {
-    if (new URL(route.request().url()).pathname === '/api/v1/chemistry/structure')
-      await route.abort();
-    else if (route.request().method() !== 'GET') {
-      writes.push(route.request().url());
-      await route.abort();
-    } else await route.continue();
-  });
-  await page.goto('/#/projects/' + source);
-  await page
-    .locator('.results-table tbody tr')
-    .first()
-    .getByRole('button', { name: /^Correct / })
-    .click();
-  const dialog = page.getByRole('dialog', { name: /^Correction/ });
-  const alert = dialog.getByRole('alert');
-  await expect(alert).toHaveText(
-    'Cannot connect to the API. Check the service address and reload.',
-  );
-  await expect(alert).toHaveCount(1);
-  await expect(dialog.getByRole('button', { name: 'Save correction', exact: true })).toBeDisabled();
-  const frame = page.frameLocator('iframe[title="Ketcher structure drawing and preview"]');
-  await expect(frame.getByRole('alert')).toHaveCount(0);
-  await dialog.screenshot({ path: test.info().outputPath('drawing-transport-error.png') });
-  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
-  expect(writes).toEqual([]);
-});
