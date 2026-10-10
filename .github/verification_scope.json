@@ -1,17 +1,17 @@
 {
   "schema_version": 1,
-  "base_sha": "1c3673de20fe64ad30204f1c18b07e286c4fbad8",
+  "base_sha": "c74a159e4069714e472fb64afc4fd7338aa1cceb",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/FRONTEND_QUALITY.md",
+    "frontend/e2e/column-chooser-actions.ts",
     "frontend/e2e/sar-table-actions.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/features/sar/study/StudySource.tsx",
-    "frontend/src/i18n/catalogs/sar.ts",
-    "frontend/src/styles/dialogs.css",
-    "frontend/tests/sar-direct-inspection.test.tsx",
-    "frontend/tests/sar-study-results.test.tsx",
+    "frontend/src/features/results/ColumnChooser.tsx",
+    "frontend/src/i18n/catalogs/table.ts",
+    "frontend/src/styles/table-interactions.css",
+    "frontend/tests/column-chooser-craft.test.tsx",
     "src/patent_sar_extractor/contracts.py"
   ],
   "python_modules": [
@@ -20,10 +20,10 @@
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
+    "frontend/tests/column-chooser-craft.test.tsx",
+    "frontend/tests/table-column-controls.test.tsx",
     "frontend/tests/sar-direct-inspection.test.tsx",
-    "frontend/tests/sar-table-identity.test.tsx",
     "frontend/tests/sar-study-results.test.tsx",
-    "frontend/tests/dialogs.test.tsx",
     "frontend/tests/i18n-core.test.tsx"
   ],
   "browser_tests": [

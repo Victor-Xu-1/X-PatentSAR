@@ -19,11 +19,11 @@ export const table: Readonly<Record<string, string>> = {
   查找列: 'Find column',
   '查找列…': 'Find column…',
   显示全部列: 'Show all columns',
+  列详情: 'Column details',
+  仅影响显示: 'Display only',
   可显示的全部项目列: 'All available project columns',
   '显示列 {column}': 'Show column {column}',
   没有匹配的列: 'No matching columns',
-  '仅改变当前工作台显示，不删除数据，不改变全项目导出或活性分档。':
-    'Changes only this workspace view; no data is deleted, and project-wide exports and activity tiers are unchanged.',
   条件: 'Condition',
   筛选方式: 'Filter condition',
   '{condition}（已有条件，请重新选择）': '{condition} (existing condition; choose again)',

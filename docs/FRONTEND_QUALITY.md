@@ -74,6 +74,11 @@ The reference article's private algorithms are not represented as reproduced.
   column identity, not a first-column index, selects the corner header; hiding
   the ID never freezes an unrelated structure/activity header. Restoring it
   restores the same source-owned labels and their matching heading.
+  The shared column chooser uses compact, horizontally aligned checkbox rows,
+  with context on demand. Duplicate source headings always retain their original
+  context visibly; search and accessible names still include every raw context.
+  Its component-owned layout is not inherited from a page's vertical form labels.
+  Language changes preserve the query, detail choice and source-owned IDs.
   Original IDs are the direct source-detail action. The duplicate source-action
   column starts hidden but remains recoverable in the shared column chooser.
   Requested study source detail uses the existing native modal, not an invisible

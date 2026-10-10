@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
+import { checkDistinctColumnChoices } from './column-chooser-actions';
 
 async function checkRootFooter(dialog: Locator) {
   const footer = dialog.locator(':scope > .dialog-actions');
@@ -91,6 +92,7 @@ export async function checkStudyTableControls(page: Page, report: Locator, width
   const columns = view.getByRole('button', { name: 'Column settings', exact: true });
   await columns.click();
   const chooser = page.getByRole('dialog', { name: 'Column settings', exact: true });
+  await checkDistinctColumnChoices(chooser);
   await checkRootFooter(chooser);
   await chooser.getByRole('checkbox', { name: /^Show column MW · Dalton$/ }).uncheck();
   await page.keyboard.press('Escape');
