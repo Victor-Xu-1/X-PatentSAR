@@ -107,6 +107,11 @@
   min-height: 36px;
   white-space: normal;
 }
+.dialog > .dialog-actions {
+  position: static;
+  bottom: auto;
+  margin: 0;
+}
 .upload-drop {
   position: relative;
   display: flex;

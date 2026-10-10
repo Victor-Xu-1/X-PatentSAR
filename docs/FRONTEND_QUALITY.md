@@ -81,6 +81,10 @@ The reference article's private algorithms are not represented as reproduced.
   The detail binds its owning job/dataset/revision/input, closes before another
   study is committed, and stays open across locale-only changes. Old facts
   cannot remain presented as belonging to the newly selected study.
+  Source detail names its original identifier in the title. Root-level dialog
+  footers are ordinary non-inset siblings of the scroll body; only footers
+  inside a padded body use its sticky negative-margin treatment. Both supported
+  compositions keep complete buttons within the actual dialog at every width.
   Table structures use a slightly larger unframed thumbnail that itself opens
   the existing validated passive drawing inspector. No overlay icon covers
   atoms/bonds, extra drawing request/renderer or editing path is introduced.

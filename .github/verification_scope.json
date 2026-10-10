@@ -1,21 +1,16 @@
 {
   "schema_version": 1,
-  "base_sha": "2a4b358d1de43aebd608510f961014ce67f5ef66",
+  "base_sha": "1c3673de20fe64ad30204f1c18b07e286c4fbad8",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/FRONTEND_QUALITY.md",
     "frontend/e2e/sar-table-actions.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/features/sar/study/StudyActivityTable.tsx",
-    "frontend/src/features/sar/study/StudyImage.tsx",
-    "frontend/src/features/sar/study/StudyReportView.tsx",
-    "frontend/src/features/sar/study/StudyRowTable.tsx",
     "frontend/src/features/sar/study/StudySource.tsx",
     "frontend/src/i18n/catalogs/sar.ts",
-    "frontend/src/styles/sar.css",
+    "frontend/src/styles/dialogs.css",
     "frontend/tests/sar-direct-inspection.test.tsx",
-    "frontend/tests/sar-molecular-focus.test.tsx",
     "frontend/tests/sar-study-results.test.tsx",
     "src/patent_sar_extractor/contracts.py"
   ],
@@ -26,13 +21,9 @@
   ],
   "frontend_tests": [
     "frontend/tests/sar-direct-inspection.test.tsx",
-    "frontend/tests/sar-molecular-focus.test.tsx",
     "frontend/tests/sar-table-identity.test.tsx",
     "frontend/tests/sar-study-results.test.tsx",
-    "frontend/tests/sar-study-flow.test.tsx",
-    "frontend/tests/sar-preview.test.tsx",
-    "frontend/tests/sar-fragment-preview.test.tsx",
-    "frontend/tests/sar-guided-preview.test.tsx",
+    "frontend/tests/dialogs.test.tsx",
     "frontend/tests/i18n-core.test.tsx"
   ],
   "browser_tests": [
