@@ -37,6 +37,16 @@ The reference article's private algorithms are not represented as reproduced.
   or invents a saved region. Unconfirmed or failed reads retain the lock and
   preserve original error details. A late response cannot revive a previous
   view owner; explicit current readback can restore the same immutable selection.
+  A successful current read with no matching record can offer a separate explicit
+  retry of the exact captured request. That absence is not proof that an earlier
+  request can never commit: the existing content-addressed server returns the
+  original receipt if it does. Readback itself still performs no write. Failed,
+  stale or ambiguous reads never grant the retry action, and ordinary editing
+  remains locked until the write outcome is resolved. Only a deliberate click
+  sends one retry; no background loop, new draft or nonce is introduced.
+  Recovery states hide the ordinary disabled Clear/Save row and show only the
+  current check/retry actions. Native visibility checks ensure CSS cannot repaint
+  that hidden row; atom/input locks and server validation stay unchanged.
   The check stays mounted while reading, and a specific saved-region result
   replaces the duplicate generic success line. Normal saves, cancellation,
   input identity, scientific validation and backend defaults remain unchanged.

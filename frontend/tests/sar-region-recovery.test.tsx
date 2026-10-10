@@ -29,6 +29,79 @@ async function saveSelection() {
 }
 
 describe('explicit immutable region readback', () => {
+  it.each(['read-error', 'stale', 'ambiguous'] as const)(
+    'does not offer a write retry for %s',
+    async (reason) => {
+      vi.spyOn(sarApi, 'saveRegion').mockRejectedValue(
+        new ApiError(503, 'lost', 'Unknown write result', true),
+      );
+      if (reason === 'read-error')
+        vi.spyOn(sarStudyApi, 'profile').mockRejectedValue(
+          new ApiError(503, 'sar_region_not_confirmed', 'Original server diagnostic'),
+        );
+      if (reason === 'stale')
+        vi.spyOn(sarApi, 'dataset').mockResolvedValue({ ...sarDataset, stale: true });
+      if (reason === 'ambiguous')
+        vi.spyOn(sarStudyApi, 'profile').mockResolvedValue({
+          ...studyProfile,
+          regions: [recovered, recovered],
+        });
+      render(<RegionSelector active {...props} />);
+      await saveSelection();
+      await userEvent.click(await screen.findByRole('button', { name: 'Check saved selection' }));
+      await waitFor(() =>
+        expect(screen.getByRole('button', { name: 'Check saved selection' })).toBeEnabled(),
+      );
+      expect(screen.queryByRole('button', { name: 'Retry saving the same selection' })).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Save region' })).toBeNull();
+      expect(screen.getByRole('button', { name: 'Atom 1 (O)' })).toBeDisabled();
+      expect(sarApi.saveRegion).toHaveBeenCalledOnce();
+    },
+  );
+  it('keeps the explicit retry control mounted while sending the exact captured request', async () => {
+    let resolve!: (value: typeof recovered) => void;
+    const save = vi
+      .spyOn(sarApi, 'saveRegion')
+      .mockRejectedValueOnce(new ApiError(503, 'lost', 'Unknown write result', true))
+      .mockImplementationOnce(
+        () =>
+          new Promise((done) => {
+            resolve = done;
+          }),
+      );
+    vi.spyOn(sarStudyApi, 'profile').mockResolvedValue({ ...studyProfile, regions: [] });
+    render(<RegionSelector active {...props} />);
+    await saveSelection();
+    await userEvent.click(await screen.findByRole('button', { name: 'Check saved selection' }));
+    const retry = await screen.findByRole('button', { name: 'Retry saving the same selection' });
+    await userEvent.click(retry);
+    expect(retry).toBeInTheDocument();
+    expect(retry).toBeDisabled();
+    expect(save.mock.calls[1]?.[1]).toEqual(save.mock.calls[0]?.[1]);
+    await act(async () => resolve(recovered));
+    await screen.findByText('Region saved · 1 attachment points');
+    expect(save).toHaveBeenCalledTimes(2);
+  });
+  it('offers a deliberate identical retry only after a complete current read finds no saved selection', async () => {
+    const save = vi
+      .spyOn(sarApi, 'saveRegion')
+      .mockRejectedValueOnce(new ApiError(503, 'lost', 'Unknown write result', true))
+      .mockResolvedValue(recovered);
+    vi.spyOn(sarStudyApi, 'profile').mockResolvedValue({ ...studyProfile, regions: [] });
+    render(<RegionSelector active {...props} />);
+    await saveSelection();
+    expect(screen.queryByRole('button', { name: 'Retry saving the same selection' })).toBeNull();
+    await userEvent.click(await screen.findByRole('button', { name: 'Check saved selection' }));
+    const retry = await screen.findByRole('button', { name: 'Retry saving the same selection' });
+    expect(save).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('button', { name: 'Save region' })).toBeNull();
+    await act(() => setLocale('zh-CN'));
+    expect(screen.getByRole('button', { name: '重试保存同一选区' })).toBe(retry);
+    await userEvent.click(retry);
+    await screen.findByText('区域已保存 · 1 个连接点');
+    expect(save).toHaveBeenCalledTimes(2);
+    expect(save.mock.calls[1]?.[1]).toEqual(save.mock.calls[0]?.[1]);
+  });
   it('recovers a committed uncertain save using current dataset/profile reads, without another POST or automatic readback', async () => {
     const save = vi
       .spyOn(sarApi, 'saveRegion')
@@ -39,7 +112,7 @@ describe('explicit immutable region readback', () => {
     const check = await screen.findByRole('button', { name: 'Check saved selection' });
     expect(sarStudyApi.profile).not.toHaveBeenCalled();
     expect(sarApi.dataset).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: 'Save region' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Save region' })).toBeNull();
     await userEvent.click(check);
     await screen.findByText('Region saved · 1 attachment points');
     expect(selected).toHaveBeenLastCalledWith(recovered);
@@ -69,12 +142,11 @@ describe('explicit immutable region readback', () => {
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Check saved selection' })).toBeEnabled(),
     );
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      'A unique matching saved selection has not been confirmed. Check again later.',
-    );
+    expect(screen.getByRole('alert')).toHaveTextContent('Save is not confirmed.');
     expect(screen.queryByText('Region saved · 1 attachment points')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Save region' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Clear selection' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Save region' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Clear selection' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Atom 1 (O)' })).toBeDisabled();
     expect(sarApi.saveRegion).toHaveBeenCalledOnce();
   });
   it('reads back a late successful save only after explicit return and does not revive an old owner', async () => {
@@ -112,7 +184,7 @@ describe('explicit immutable region readback', () => {
     await waitFor(() =>
       expect(screen.getByRole('button', { name: '检查已保存选区' })).toBeEnabled(),
     );
-    expect(screen.getByRole('button', { name: '保存区域' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: '保存区域' })).toBeNull();
     expect(screen.getByText('Original read failure')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: '检查已保存选区' }));
     await screen.findByText('区域已保存 · 1 个连接点');

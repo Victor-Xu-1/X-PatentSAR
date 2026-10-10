@@ -1,27 +1,23 @@
 {
   "schema_version": 1,
-  "base_sha": "5719d860620bbf4439557933a7b463332b62ad4f",
+  "base_sha": "4f14c9d70fc7e018764f3929fd74fa5c6484d9b6",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/FRONTEND_QUALITY.md",
     "frontend/e2e/sar-region-recovery.spec.ts",
-    "frontend/e2e/sar-selection-viewport.spec.ts",
-    "frontend/e2e/sarSnapshotFixture.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/features/sar/MutationNotice.tsx",
     "frontend/src/features/sar/RegionSelector.tsx",
     "frontend/src/features/sar/readSavedRegion.ts",
     "frontend/src/features/sar/useRegionSave.ts",
     "frontend/src/i18n/catalogs/sar.ts",
     "frontend/tests/sar-region-recovery.test.tsx",
     "src/patent_sar_extractor/contracts.py",
-    "tests/test_sar_browser_fixture.py",
-    "tools/browser_fixture_mode.py"
+    "tests/test_sar_api.py"
   ],
   "python_modules": [
+    "tests.test_sar_api.SARAPITests.test_identical_region_retry_returns_original_receipt_without_duplicate_or_job",
     "tests.test_sar_browser_fixture.SARBrowserFixtureTests.test_region_recovery_scope_uses_only_isolated_snapshot_and_region_writes",
-    "tests.test_sar_browser_fixture.SARBrowserFixtureTests.test_sar_fixture_creates_adapter_source_but_never_runs_extraction",
     "tests.test_product_version_compatibility",
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
