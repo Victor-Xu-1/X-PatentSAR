@@ -21,6 +21,7 @@ export function EnvironmentDetails({
   onInspect,
   onInstall,
   onSave,
+  onHistory,
 }: {
   catalog: EnvironmentCatalog;
   disabled: boolean;
@@ -35,11 +36,12 @@ export function EnvironmentDetails({
     locations: EnvironmentStorageLocations,
     revision: number,
   ) => Promise<EnvironmentSettings | null>;
+  onHistory?: () => void;
 }) {
   const { t } = useTranslation();
   return (
     <Dialog
-      title={t('存储位置')}
+      title={t('环境详情')}
       onClose={onClose}
       busy={busy}
       wide
@@ -55,7 +57,7 @@ export function EnvironmentDetails({
       >
         {recovery}
         <details className="environment-component-details">
-          <summary>{t('环境详情')}</summary>
+          <summary>{t('组件详情')}</summary>
           <ComponentLibrary
             components={catalog.components}
             disabled={disabled}
@@ -63,6 +65,11 @@ export function EnvironmentDetails({
             onInstall={onInstall}
           />
         </details>
+        {onHistory && (
+          <button type="button" className="link-button" onClick={onHistory} disabled={busy}>
+            {t('操作记录')}
+          </button>
+        )}
       </StorageLocations>
     </Dialog>
   );

@@ -70,8 +70,8 @@ it('preserves dirty location across revision changes and requires explicit confl
     revision: 5,
   });
   render(<EnvironmentPage {...props()} />);
-  await userEvent.click(await screen.findByRole('button', { name: '存储位置' }));
-  await userEvent.click(screen.getByText('环境详情', { selector: 'summary' }));
+  await userEvent.click(await screen.findByRole('button', { name: '环境详情' }));
+  await userEvent.click(screen.getByText('组件详情', { selector: 'summary' }));
   const input = await screen.findByLabelText('集成环境安装目录');
   fireEvent.change(input, { target: { value: '/srv/wsl/envs/operator-choice' } });
   await userEvent.click(screen.getByRole('button', { name: '刷新环境目录' }));
@@ -100,8 +100,8 @@ it('supports component-only confirmation, focuses consent and locks dismissal du
       }),
   );
   const view = render(<EnvironmentPage {...props()} />);
-  await userEvent.click(await screen.findByRole('button', { name: '存储位置' }));
-  await userEvent.click(screen.getByText('环境详情', { selector: 'summary' }));
+  await userEvent.click(await screen.findByRole('button', { name: '环境详情' }));
+  await userEvent.click(screen.getByText('组件详情', { selector: 'summary' }));
   const opener = await screen.findByRole('button', { name: '安装 基础运行环境' });
   await userEvent.click(opener);
   const dialog = screen.getByRole('dialog');
@@ -136,8 +136,8 @@ it('cannot confirm unlicensed components and does not let history reads become w
   });
   const start = vi.spyOn(api, 'createEnvironmentOperation');
   render(<EnvironmentPage {...props()} />);
-  await userEvent.click(await screen.findByRole('button', { name: '存储位置' }));
-  await userEvent.click(screen.getByText('环境详情', { selector: 'summary' }));
+  await userEvent.click(await screen.findByRole('button', { name: '环境详情' }));
+  await userEvent.click(screen.getByText('组件详情', { selector: 'summary' }));
   await userEvent.click(await screen.findByRole('button', { name: '安装 基础运行环境' }));
   expect(screen.getByRole('dialog')).toHaveTextContent('不能确认安装');
   expect(screen.getByRole('checkbox')).toBeDisabled();

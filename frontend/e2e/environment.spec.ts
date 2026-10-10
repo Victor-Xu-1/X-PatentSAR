@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { setLocale } from '../src/i18n';
 import {
   decodeEnvironmentCatalog,
   decodeEnvironmentOperation,
@@ -10,6 +11,14 @@ import {
   environmentComponentBadge,
   isEnvironmentComponentReady,
 } from '../src/model/environmentStatus';
+
+setLocale('zh-CN');
+test.beforeEach(async ({ page }) => {
+  await page.goto('/#/settings');
+  await page
+    .getByRole('combobox', { name: 'Interface language', exact: true })
+    .selectOption('zh-CN');
+});
 
 async function catalogFromServer(page: Page) {
   const response = await page.request.get('/api/v1/environments');
@@ -96,12 +105,12 @@ for (const viewport of [
         path: test.info().outputPath('environment-default-' + viewport.width + '.png'),
         fullPage: true,
       });
-      await page.getByRole('button', { name: '存储位置', exact: true }).click();
+      await page.getByRole('button', { name: '环境详情', exact: true }).click();
       await page
-        .getByRole('dialog', { name: '存储位置', exact: true })
-        .getByText('环境详情', { exact: true })
+        .getByRole('dialog', { name: '环境详情', exact: true })
+        .getByText('组件详情', { exact: true })
         .click();
-      const dialog = page.getByRole('dialog', { name: '存储位置', exact: true });
+      const dialog = page.getByRole('dialog', { name: '环境详情', exact: true });
       for (const component of catalog.components) {
         const row = dialog.locator('[data-component="' + component.id + '"]');
         await expect(row.locator('.badge')).toHaveText(environmentComponentBadge(component).label);
@@ -141,10 +150,10 @@ test('owned lightweight inspection persists history and selected operation acros
   expect(before.settings.enabled).toBe(true);
   expect(before.active_operation).toBeNull();
   const component = before.components.find((item) => item.id === 'installer')!;
-  await page.getByRole('button', { name: '存储位置', exact: true }).click();
+  await page.getByRole('button', { name: '环境详情', exact: true }).click();
   await page
-    .getByRole('dialog', { name: '存储位置', exact: true })
-    .getByText('环境详情', { exact: true })
+    .getByRole('dialog', { name: '环境详情', exact: true })
+    .getByText('组件详情', { exact: true })
     .click();
   const response = page.waitForResponse(
     (value) =>
@@ -206,10 +215,10 @@ test('verified existing tool cannot be redundantly installed through the UI', as
   expect(before.active_operation).toBeNull();
   const component = before.components.find((item) => item.id === 'installer')!;
   expect(isEnvironmentComponentReady(component)).toBe(true);
-  await page.getByRole('button', { name: '存储位置', exact: true }).click();
+  await page.getByRole('button', { name: '环境详情', exact: true }).click();
   await page
-    .getByRole('dialog', { name: '存储位置', exact: true })
-    .getByText('环境详情', { exact: true })
+    .getByRole('dialog', { name: '环境详情', exact: true })
+    .getByText('组件详情', { exact: true })
     .click();
   const writes: string[] = [];
   page.on('request', (request) => {

@@ -6,8 +6,8 @@ export const jobs: Readonly<Record<string, string>> = {
   请先选择项目: 'Select a project first',
   '请先补充原始 PDF': 'Add the original PDF first',
   运行环境未就绪: 'The runtime is not ready',
-  '运行现有核心提取链，不调用付费建议模型':
-    'Run the core extraction pipeline without paid advisory models',
+  创建新的提取任务: 'Create a new extraction task',
+  打开工作台: 'Open workspace',
   '正在提交…': 'Submitting…',
   运行提取: 'Run extraction',
   任务详情: 'Task details',

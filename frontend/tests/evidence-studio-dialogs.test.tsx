@@ -34,7 +34,7 @@ describe('Evidence Studio environment and dialog presentation', () => {
     expect(screen.queryByRole('region', { name: '环境组件库' })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: '检测全部组件' }));
     expect(inspect).toHaveBeenCalledExactlyOnceWith(catalog.setup_component_ids);
-    await userEvent.click(screen.getByRole('button', { name: '存储位置' }));
+    await userEvent.click(screen.getByRole('button', { name: '环境详情' }));
     expect(details).toHaveBeenCalledOnce();
     expect(setup).not.toHaveBeenCalled();
   });
@@ -79,7 +79,7 @@ describe('Evidence Studio environment and dialog presentation', () => {
         onSave={save}
       />,
     );
-    const dialog = screen.getByRole('dialog', { name: '存储位置' });
+    const dialog = screen.getByRole('dialog', { name: '环境详情' });
     expect(dialog).toHaveClass('dialog-wide', 'environment-details-dialog');
     const group = within(dialog).getByRole('group', { name: '存储目录' });
     expect(within(group).getAllByRole('textbox')).toHaveLength(3);
@@ -87,7 +87,7 @@ describe('Evidence Studio environment and dialog presentation', () => {
     expect(input).toHaveFocus();
     expect(input).toHaveAccessibleDescription(/仅影响后续写入/);
     expect(within(dialog).getByRole('button', { name: '保存' })).toBeDisabled();
-    const componentDetails = within(dialog).getByText('环境详情', { selector: 'summary' });
+    const componentDetails = within(dialog).getByText('组件详情', { selector: 'summary' });
     expect(componentDetails.parentElement).not.toHaveAttribute('open');
     expect(within(dialog).queryByText(/操作日志|操作历史/)).not.toBeInTheDocument();
     await userEvent.clear(input);

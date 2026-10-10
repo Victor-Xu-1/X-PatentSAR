@@ -51,8 +51,8 @@ describe('one environment workspace and explicit installation authority', () => 
     const start = vi.spyOn(api, 'createEnvironmentOperation');
     render(<EnvironmentPage {...props()} />);
     expect(await screen.findByRole('heading', { name: '完整运行环境' })).toBeVisible();
-    await userEvent.click(screen.getByRole('button', { name: '存储位置' }));
-    await userEvent.click(screen.getByText('环境详情', { selector: 'summary' }));
+    await userEvent.click(screen.getByRole('button', { name: '环境详情' }));
+    await userEvent.click(screen.getByText('组件详情', { selector: 'summary' }));
     expect(screen.getByRole('heading', { name: '组件库' })).toBeVisible();
     expect(document.querySelector('[data-component="base"] .component-title')).toHaveTextContent(
       'locked-base',
@@ -182,8 +182,8 @@ describe('one environment workspace and explicit installation authority', () => 
       revision: 4,
     });
     render(<EnvironmentPage {...props()} />);
-    await userEvent.click(await screen.findByRole('button', { name: '存储位置' }));
-    await userEvent.click(screen.getByText('环境详情', { selector: 'summary' }));
+    await userEvent.click(await screen.findByRole('button', { name: '环境详情' }));
+    await userEvent.click(screen.getByText('组件详情', { selector: 'summary' }));
     const input = await screen.findByLabelText('集成环境安装目录');
     fireEvent.change(input, { target: { value: 'C:\\wrong' } });
     await userEvent.click(screen.getByRole('button', { name: '保存' }));

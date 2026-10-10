@@ -43,8 +43,8 @@ function catalog() {
 }
 const props = () => ({ operationId: null, onOperation: vi.fn(), product: health.product });
 async function openStorage() {
-  await userEvent.click(await screen.findByRole('button', { name: '存储位置' }));
-  return screen.getByRole('dialog', { name: '存储位置' });
+  await userEvent.click(await screen.findByRole('button', { name: '环境详情' }));
+  return screen.getByRole('dialog', { name: '环境详情' });
 }
 function editLocations(values = locations) {
   for (const [key, label] of fields)
@@ -113,11 +113,11 @@ describe('minimal storage dialog and atomic revisioned save', () => {
     const save = vi.spyOn(api, 'updateEnvironmentSettings');
     const install = vi.spyOn(api, 'createEnvironmentOperation');
     render(<EnvironmentPage {...props()} />);
-    const opener = await screen.findByRole('button', { name: '存储位置' });
-    expect(screen.getAllByRole('button', { name: '存储位置' })).toHaveLength(1);
+    const opener = await screen.findByRole('button', { name: '环境详情' });
+    expect(screen.getAllByRole('button', { name: '环境详情' })).toHaveLength(1);
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     await userEvent.click(opener);
-    const dialog = screen.getByRole('dialog', { name: '存储位置' });
+    const dialog = screen.getByRole('dialog', { name: '环境详情' });
     for (const [key, label] of fields)
       expect(within(dialog).getByLabelText(label)).toHaveValue(catalog().settings[key]);
     expect(within(dialog).getByLabelText('集成环境安装目录')).toHaveFocus();
@@ -126,7 +126,7 @@ describe('minimal storage dialog and atomic revisioned save', () => {
     expect(dialog).toHaveTextContent('下载位置仍由浏览器设置');
     expect(within(dialog).getByRole('button', { name: '保存' })).toBeDisabled();
     const details = within(dialog)
-      .getByText('环境详情', { selector: 'summary' })
+      .getByText('组件详情', { selector: 'summary' })
       .closest('details');
     expect(details).not.toHaveAttribute('open');
     expect(within(dialog).getByRole('heading', { name: '组件库' })).not.toBeVisible();
@@ -140,7 +140,7 @@ describe('minimal storage dialog and atomic revisioned save', () => {
     editLocations();
     await userEvent.click(screen.getByRole('button', { name: '取消' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '存储位置' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: '环境详情' })).toHaveFocus();
     await openStorage();
     for (const [key, label] of fields)
       expect(screen.getByLabelText(label)).toHaveValue(catalog().settings[key]);
@@ -274,7 +274,7 @@ describe('minimal storage dialog and atomic revisioned save', () => {
     for (const [, label] of fields) expect(screen.getByLabelText(label)).toBeEnabled();
     expect(screen.getByRole('button', { name: '一键部署全部环境' })).toBeDisabled();
     expect(screen.getByRole('button', { name: '检测全部组件' })).toBeDisabled();
-    await userEvent.click(within(dialog).getByText('环境详情', { selector: 'summary' }));
+    await userEvent.click(within(dialog).getByText('组件详情', { selector: 'summary' }));
     const componentActions = within(dialog).getAllByRole('button', {
       name: /^(安装|检测|修复|先检测) /,
     });
