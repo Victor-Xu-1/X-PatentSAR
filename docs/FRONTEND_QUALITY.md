@@ -95,6 +95,14 @@ The reference article's private algorithms are not represented as reproduced.
   measured geometry, not fixed patent or viewport assumptions; stacked and
   not-yet-measured references retain native document flow. No scroll listener,
   continuous observer or competing focus authority is added by this reveal.
+  Explicit wide comparison also reveals the selected reference card's start
+  inside the same native pane. A lower legend item may have panned its diagram
+  out of a short screen; the selected graph, not an assumed first source, is
+  brought back. Ordinary reference reads, language changes and other focus
+  remain untouched. Reference cards use shrinkable grid minima and wrapping
+  source headings, so narrow labels cannot enlarge the drawing/atom frame
+  beyond the reference pane. The original image and normalized overlay retain
+  identical bounds, with no chemical coordinates or source labels rewritten.
   Fragment cards use a compact labelled comparison-count group, not a sentence,
   normalized share or inferred score. Zero, unknown and missing counts stay distinct.
   Current conservation reports show only the displayed fragments' nonempty legend

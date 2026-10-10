@@ -18,6 +18,18 @@ export function revealTransformation(panel: HTMLElement) {
       bounds.height > 0 &&
       bounds.right < comparison.left
     ) {
+      const selected = reference
+        .querySelector('.sar-region-legend button[aria-pressed="true"]')
+        ?.closest<HTMLElement>('.sar-reference-map-card');
+      if (selected) {
+        // Selecting a low legend item can natively pan the graph out of a short
+        // viewport. This explicit comparison reveals its own original graph,
+        // not the first reference in a multi-source study.
+        reference.scrollTo({
+          top: Math.max(0, selected.getBoundingClientRect().top - bounds.top + reference.scrollTop),
+          behavior,
+        });
+      }
       const margin = Number.parseFloat(getComputedStyle(panel).scrollMarginBlockStart) || 0;
       // Sticky layout cannot cross its containing block's bottom. Respect that
       // same boundary when the preview's asynchronous content extends the page.
