@@ -1,5 +1,18 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator } from '@playwright/test';
 import { syntheticSnapshot } from './sarSnapshotFixture';
+
+async function expectCompleteBadge(atom: Locator, index: number) {
+  const badge = atom.locator('span');
+  await expect(badge).toHaveText(String(index));
+  expect(
+    await badge.evaluate((span) => {
+      const text = document.createRange();
+      text.selectNodeContents(span);
+      return text.getClientRects().length;
+    }),
+  ).toBe(1);
+  expect(await badge.evaluate((span) => getComputedStyle(span).opacity)).toBe('1');
+}
 
 // Exact RDKit atom identities from isolated authored graphs, not OCSR evidence.
 // Only snapshot preparation writes; selection and localization stay unsaved.
@@ -37,21 +50,20 @@ for (const width of [390, 800, 1672]) {
       await expect(atom).toHaveAttribute('aria-pressed', 'true');
       await expect(atom).toHaveAttribute('aria-label', `Atom ${sample.index} (C)`);
       await expect(panel.locator('output').first()).toHaveText(`Selected atoms: ${sample.index}`);
-      const badge = atom.locator('span');
-      expect(
-        await badge.evaluate((span) => {
-          const text = document.createRange();
-          text.selectNodeContents(span);
-          return text.getClientRects().length;
-        }),
-      ).toBe(1);
-      expect(await badge.evaluate((span) => getComputedStyle(span).opacity)).toBe('1');
+      await expectCompleteBadge(atom, sample.index);
       await page
         .getByRole('combobox', { name: 'Interface language', exact: true })
         .selectOption('zh-CN');
-      await expect(atom).toHaveAttribute('aria-label', `原子 ${sample.index}（C）`);
-      await expect(atom).toHaveAttribute('aria-pressed', 'true');
-      await expect(badge).toHaveText(String(sample.index));
+      const localizedPanel = page.getByRole('region', { name: '选择变化区域', exact: true });
+      const localizedAtom = localizedPanel
+        .locator('.sar-atom')
+        .filter({ hasText: new RegExp(`^${sample.index}$`) });
+      await expect(localizedPanel.getByRole('heading')).toHaveText(
+        `选择变化区域 · ${sample.label}`,
+      );
+      await expect(localizedAtom).toHaveAttribute('aria-label', `原子 ${sample.index}（C）`);
+      await expect(localizedAtom).toHaveAttribute('aria-pressed', 'true');
+      await expectCompleteBadge(localizedAtom, sample.index);
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),
       ).toBe(true);
