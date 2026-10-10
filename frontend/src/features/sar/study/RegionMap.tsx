@@ -26,27 +26,34 @@ export function RegionMap({
   onSelect?: ((id: string) => void) | undefined;
   selected?: string | undefined;
 }) {
+  const hasSelection = regions.some((region) => region.id === selected);
   return (
     <>
       <svg className="sar-region-map" viewBox="0 0 1000 800" aria-hidden="true">
         {regions.map((region, order) => {
-          const selected = atoms.filter((atom) => region.atom_indices.includes(atom.index));
-          if (!selected.length) return null;
+          const regionAtoms = atoms.filter((atom) => region.atom_indices.includes(atom.index));
+          if (!regionAtoms.length) return null;
+          const isSelected = selected === region.id;
           const color = colors[order % colors.length];
-          const x = selected.reduce((sum, atom) => sum + atom.x, 0) / selected.length;
-          const y = Math.min(...selected.map((atom) => atom.y));
+          const x = regionAtoms.reduce((sum, atom) => sum + atom.x, 0) / regionAtoms.length;
+          const y = Math.min(...regionAtoms.map((atom) => atom.y));
           return (
-            <g key={region.id}>
-              {selected.map((atom) => (
+            <g
+              key={region.id}
+              data-region-id={region.id}
+              data-selected={isSelected || undefined}
+              opacity={hasSelection && !isSelected ? 0.5 : 1}
+            >
+              {regionAtoms.map((atom) => (
                 <circle
                   key={atom.index}
                   cx={atom.x * 1000}
                   cy={atom.y * 800}
                   r="12"
                   fill={color}
-                  fillOpacity=".1"
+                  fillOpacity={isSelected ? 0.24 : 0.1}
                   stroke={color}
-                  strokeWidth="1.5"
+                  strokeWidth={isSelected ? 3 : 1.5}
                 />
               ))}
               <text
@@ -71,6 +78,9 @@ export function RegionMap({
               .map((atom) => (
                 <button
                   type="button"
+                  // The adjacent named legend is the single keyboard route.
+                  // Every atom remains a pointer target, without duplicate Tab stops.
+                  tabIndex={-1}
                   key={region.id + ':' + atom.index}
                   aria-label={
                     'R' +

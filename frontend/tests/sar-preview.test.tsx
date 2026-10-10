@@ -61,6 +61,69 @@ beforeEach(() => {
   vi.spyOn(sarApi, 'drawing').mockResolvedValue(sarDrawing);
 });
 describe('actual transformation preview', () => {
+  it('reveals an explicitly opened preview once, respects reduced motion, and returns to its exact fragment', async () => {
+    const scroll = vi.spyOn(HTMLElement.prototype, 'scrollIntoView');
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({ matches: true })),
+    );
+    const report = {
+      ...studyReport,
+      regions: [
+        {
+          ...summary,
+          fragments: [
+            {
+              ...summary.fragments[0]!,
+              molecule_ids: [summary.region.molecule_id, candidate.molecule_id],
+            },
+          ],
+        },
+      ],
+    };
+    const original = JSON.stringify(report);
+    render(<StudyRegions report={report} jobId={studyJob.id} active onRows={vi.fn()} />);
+    const opener = await screen.findByRole('button', { name: 'Preview modification' });
+    await userEvent.click(opener);
+    const panel = screen.getByRole('region', { name: 'Transformation preview' });
+    expect(panel).toHaveFocus();
+    expect(scroll).toHaveBeenLastCalledWith({ block: 'start', behavior: 'auto' });
+    await within(panel).findByText('Stronger');
+    const revealed = scroll.mock.calls.length;
+    await act(() => setLocale('zh-CN'));
+    expect(panel).toHaveFocus();
+    expect(scroll.mock.calls.length).toBe(revealed);
+    await userEvent.click(screen.getByRole('button', { name: '关闭改造预览' }));
+    expect(screen.queryByRole('region', { name: '改造预览' })).not.toBeInTheDocument();
+    expect(opener).toHaveFocus();
+    expect(JSON.stringify(report)).toBe(original);
+  });
+  it('reveals a repeated explicit preview click without replaying computation or a stale selection', async () => {
+    const report = {
+      ...studyReport,
+      regions: [
+        {
+          ...summary,
+          fragments: [
+            {
+              ...summary.fragments[0]!,
+              molecule_ids: [summary.region.molecule_id, candidate.molecule_id],
+            },
+          ],
+        },
+      ],
+    };
+    render(<StudyRegions report={report} jobId={studyJob.id} active onRows={vi.fn()} />);
+    const opener = await screen.findByRole('button', { name: 'Preview modification' });
+    await userEvent.click(opener);
+    await within(screen.getByRole('region', { name: 'Transformation preview' })).findByText(
+      'Stronger',
+    );
+    const requests = vi.mocked(sarStudyApi.preview).mock.calls.length;
+    await userEvent.click(opener);
+    expect(screen.getByRole('region', { name: 'Transformation preview' })).toHaveFocus();
+    expect(sarStudyApi.preview).toHaveBeenCalledTimes(requests);
+  });
   it('retains table/header associations and source-owned mobile captions and units', () => {
     render(<PreviewMeasurements data={decodeStudyPreview(preview)} report={studyReport} />);
     const table = screen.getByRole('table', { name: 'Recorded activity' });
@@ -73,6 +136,72 @@ describe('actual transformation preview', () => {
     ]);
     expect([...captions].every((item) => item.getAttribute('aria-hidden') === 'true')).toBe(true);
     expect(table.querySelector('.sar-preview-change')).toHaveTextContent('StrongerΔ -9.00');
+  });
+  it('does not steal focus when a hidden view is reactivated or a read is revalidated', async () => {
+    const scroll = vi.spyOn(HTMLElement.prototype, 'scrollIntoView');
+    const props = {
+      report: studyReport,
+      summary,
+      moleculeId: candidate.molecule_id,
+      jobId: studyJob.id,
+      onSource: vi.fn(),
+      onClose: vi.fn(),
+      requestId: 1,
+    };
+    const { rerender } = render(
+      <>
+        <button type="button">Another control</button>
+        <TransformationPreview {...props} active />
+      </>,
+    );
+    const elsewhere = screen.getByRole('button', { name: 'Another control' });
+    await within(screen.getByRole('region', { name: 'Transformation preview' })).findByText(
+      'Stronger',
+    );
+    await userEvent.click(elsewhere);
+    const revealed = scroll.mock.calls.length;
+    rerender(
+      <>
+        <button type="button">Another control</button>
+        <TransformationPreview {...props} active={false} />
+      </>,
+    );
+    rerender(
+      <>
+        <button type="button">Another control</button>
+        <TransformationPreview {...props} active />
+      </>,
+    );
+    await within(screen.getByRole('region', { name: 'Transformation preview' })).findByText(
+      'Stronger',
+    );
+    expect(elsewhere).toHaveFocus();
+    expect(scroll.mock.calls.length).toBe(revealed);
+  });
+  it('can close a pending preview and restore the exact opener without waiting for its response', async () => {
+    vi.mocked(sarStudyApi.preview).mockImplementation(() => new Promise(() => {}));
+    const report = {
+      ...studyReport,
+      regions: [
+        {
+          ...summary,
+          fragments: [
+            {
+              ...summary.fragments[0]!,
+              molecule_ids: [summary.region.molecule_id, candidate.molecule_id],
+            },
+          ],
+        },
+      ],
+    };
+    render(<StudyRegions report={report} jobId={studyJob.id} active onRows={vi.fn()} />);
+    const opener = await screen.findByRole('button', { name: 'Preview modification' });
+    await userEvent.click(opener);
+    await userEvent.click(screen.getByRole('button', { name: 'Close transformation preview' }));
+    expect(
+      screen.queryByRole('region', { name: 'Transformation preview' }),
+    ).not.toBeInTheDocument();
+    expect(opener).toHaveFocus();
   });
   it('keeps censored values and indeterminate changes raw through language changes without a fabricated delta', async () => {
     const data = decodeStudyPreview({
@@ -108,6 +237,7 @@ describe('actual transformation preview', () => {
         jobId={studyJob.id}
         active
         onSource={onSource}
+        onClose={vi.fn()}
       />,
     );
     await screen.findByText('Stronger');

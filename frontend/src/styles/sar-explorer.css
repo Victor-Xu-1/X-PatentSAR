@@ -169,11 +169,15 @@
   display: none;
 }
 .sar-transformation {
+  scroll-margin-block-start: 16px;
   margin-top: 20px;
   padding: 20px;
   border: 1px solid var(--accent-line);
   border-radius: var(--radius-panel);
   background: var(--surface);
+}
+.sar-transformation > header .icon-button {
+  flex: 0 0 auto;
 }
 .sar-transformation > header {
   display: flex;
@@ -193,13 +197,6 @@
 }
 .sar-preview-member select {
   max-width: 200px;
-}
-.sar-preview-label {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-variant-numeric: tabular-nums;
-  font-size: 13px;
 }
 .sar-molecule-comparison {
   display: grid;

@@ -49,6 +49,7 @@ export const sar: Record<string, string> = {
   '点击结构区域，查看改造与数据变化。':
     'Click a structural region to explore modifications and data changes.',
   改造预览: 'Transformation preview',
+  关闭改造预览: 'Close transformation preview',
   '放大结构 {identifier}': 'Enlarge structure {identifier}',
   '结构预览 · {identifier}': 'Molecular preview · {identifier}',
   缩小结构: 'Zoom out structure',
