@@ -69,6 +69,9 @@ describe('explicit immutable region readback', () => {
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Check saved selection' })).toBeEnabled(),
     );
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'A unique matching saved selection has not been confirmed. Check again later.',
+    );
     expect(screen.queryByText('Region saved · 1 attachment points')).toBeNull();
     expect(screen.getByRole('button', { name: 'Save region' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Clear selection' })).toBeDisabled();

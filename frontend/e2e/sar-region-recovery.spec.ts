@@ -91,12 +91,18 @@ for (const width of [390, 1672]) {
       await received;
       if (interrupted) {
         await page.getByRole('button', { name: 'Change reference', exact: true }).click();
+        const delivered = page.waitForResponse(
+          (response) =>
+            response.request().method() === 'POST' &&
+            new URL(response.url()).pathname.endsWith('/' + dataset.id + '/regions'),
+        );
         release();
-        await panel
-          .getByRole('button', { name: 'Check saved selection', exact: true, includeHidden: true })
-          .waitFor({ state: 'attached' });
+        expect((await delivered).status()).toBe(201);
         await page.getByRole('button', { name: 'Return to selection', exact: true }).click();
       }
+      await expect(
+        panel.getByText('Region saved · 1 attachment points', { exact: true }),
+      ).toHaveCount(0);
       const chinese = await recover(panel, page);
       const after = await (await page.request.get(profilePath)).json();
       expect(after.regions).toHaveLength(before.regions.length + 1);

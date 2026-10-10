@@ -2,13 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { sarApi } from '../../api/sarApi';
 import type { Dataset, Molecule, Region, RegionRequest } from '../../api/sarTypes';
 import { useSARResource } from './useSARResource';
-import { Loading } from '../../components/Feedback';
+import { ErrorNotice, Loading } from '../../components/Feedback';
 import { SARFailure } from './SARFailure';
 import { useTranslation } from '../../i18n';
 import { safeDrawing } from './safeDrawing';
 import { SourceLinks } from './SourceLinks';
 import { MutationNotice } from './MutationNotice';
 import { useRegionSave } from './useRegionSave';
+import { RegionReadbackError } from './readSavedRegion';
 import { MoleculeEvidence } from './MoleculeEvidence';
 import { RegionLegend } from './study/RegionMap';
 import { SelectionDrawing } from './SelectionDrawing';
@@ -253,7 +254,11 @@ export function RegionSelector({
           </button>
         </div>
       )}
-      <MutationNotice mutation={mutation} disabled={!graphCurrent} showSuccess={false} />
+      {mutation.error instanceof RegionReadbackError ? (
+        <ErrorNotice error={mutation.error} />
+      ) : (
+        <MutationNotice mutation={mutation} disabled={!graphCurrent} showSuccess={false} />
+      )}
       <SourceLinks dataset={dataset} molecule={drawing.data?.molecule ?? reference} />
       {drawing.data && (
         <details>
