@@ -1,0 +1,56 @@
+import { expect, test } from '@playwright/test';
+
+// Long unsearched values on the same read-only native fixture. No submit/save/run.
+for (const [width, height] of [
+  [390, 600],
+  [390, 844],
+  [800, 600],
+  [1672, 600],
+]) {
+  test(`bounded filter value painting and pointer targets at ${width}x${height}`, async ({
+    page,
+  }) => {
+    const source = process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID;
+    expect(source).toBeTruthy();
+    const writes: string[] = [],
+      errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await page.route('**/api/v1/**', (route) => {
+      if (route.request().method() === 'GET') return route.continue();
+      writes.push(route.request().url());
+      return route.abort();
+    });
+    await page.setViewportSize({ width: width!, height: height! });
+    await page.goto('/#/projects/' + source);
+    const table = page.locator('.results-table');
+    await expect(table.locator('tbody tr').first()).toBeVisible();
+    const raw = (await table.locator('tbody .frozen-compound button').first().innerText()).trim();
+    const opener = table.locator('th[data-column="compound"]').getByRole('button');
+    await opener.click();
+    const menu = page.locator('dialog.column-menu');
+    await expect(menu.getByLabel('Select all filter values', { exact: true })).toBeEnabled();
+    await menu.getByLabel('Select all filter values', { exact: true }).uncheck();
+    await menu.getByLabel('Filter value ' + raw, { exact: true }).check();
+    const list = menu.locator('.column-value-choices');
+    const escaped = await list.evaluate((node) => {
+      const box = node.getBoundingClientRect();
+      return [...node.querySelectorAll('input[type="checkbox"]')]
+        .filter((input) => {
+          const bounds = input.getBoundingClientRect();
+          const x = bounds.x + bounds.width / 2,
+            y = bounds.y + bounds.height / 2;
+          return (
+            (x < box.left || x > box.right || y < box.top || y > box.bottom) &&
+            node.contains(document.elementFromPoint(x, y))
+          );
+        })
+        .map((input) => input.getAttribute('aria-label'));
+    });
+    expect(escaped, 'No value may paint/hit-test over the filter actions').toEqual([]);
+    await menu.screenshot({ path: test.info().outputPath(`long-filter-${width}-${height}.png`) });
+    await page.keyboard.press('Escape');
+    await expect(opener).toBeFocused();
+    expect(writes).toEqual([]);
+    expect(errors).toEqual([]);
+  });
+}
