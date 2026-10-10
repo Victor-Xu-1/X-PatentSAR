@@ -1,28 +1,31 @@
 {
   "schema_version": 1,
-  "base_sha": "c1c0bbb3c8d5b00a77a211d42b204e0f186c45af",
+  "base_sha": "1045007e4c4e76eab91e07491c4e030ccc06eb5f",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/FRONTEND_QUALITY.md",
     "frontend/e2e/sar-study.spec.ts",
+    "frontend/e2e/sar-workbench.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/features/sar/study/FragmentComparisons.tsx",
-    "frontend/src/features/sar/study/PreviewMeasurements.tsx",
+    "frontend/src/components/Header.tsx",
+    "frontend/src/components/useInlineSelection.ts",
+    "frontend/src/features/sar/SARImport.tsx",
+    "frontend/src/features/sar/study/MolecularFocus.tsx",
     "frontend/src/features/sar/study/RegionMap.tsx",
-    "frontend/src/features/sar/study/StudyComposition.tsx",
-    "frontend/src/features/sar/study/StudyFragmentCard.tsx",
+    "frontend/src/features/sar/study/StudyImage.tsx",
     "frontend/src/features/sar/study/StudyRegions.tsx",
-    "frontend/src/features/sar/study/StudySetup.tsx",
     "frontend/src/features/sar/study/StudyViewTabs.tsx",
+    "frontend/src/features/sar/study/TransformationPreview.tsx",
     "frontend/src/features/sar/study/useInlineSelection.ts",
     "frontend/src/i18n/catalogs/sar.ts",
     "frontend/src/styles/sar-explorer.css",
-    "frontend/tests/sar-fragment-preview.test.tsx",
-    "frontend/tests/sar-inline-selection.test.tsx",
-    "frontend/tests/sar-preview-density.test.tsx",
-    "frontend/tests/sar-preview.test.tsx",
-    "frontend/tests/sar-study-results.test.tsx",
+    "frontend/tests/minimal-shell.test.tsx",
+    "frontend/tests/sar-flow.test.tsx",
+    "frontend/tests/sar-import.test.tsx",
+    "frontend/tests/sar-intake-presentation.test.tsx",
+    "frontend/tests/sar-molecular-focus.test.tsx",
+    "frontend/tests/sar-review-context.test.tsx",
     "src/patent_sar_extractor/contracts.py"
   ],
   "python_modules": [
@@ -31,17 +34,20 @@
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
-    "frontend/tests/sar-fragment-preview.test.tsx",
+    "frontend/tests/minimal-shell.test.tsx",
+    "frontend/tests/sar-molecular-focus.test.tsx",
     "frontend/tests/sar-inline-selection.test.tsx",
-    "frontend/tests/sar-preview-density.test.tsx",
+    "frontend/tests/sar-import.test.tsx",
+    "frontend/tests/sar-review-context.test.tsx",
+    "frontend/tests/sar-intake-presentation.test.tsx",
+    "frontend/tests/sar-flow.test.tsx",
+    "frontend/tests/sar-route.test.tsx",
     "frontend/tests/sar-preview.test.tsx",
-    "frontend/tests/sar-guided-preview.test.tsx",
-    "frontend/tests/sar-study-setup.test.tsx",
-    "frontend/tests/sar-study-results.test.tsx",
-    "frontend/tests/sar-study-charts.test.tsx"
+    "frontend/tests/sar-study-results.test.tsx"
   ],
   "browser_tests": [
     "frontend/e2e/sar-study.spec.ts",
+    "frontend/e2e/sar-workbench.spec.ts",
     "frontend/e2e/product-version.spec.ts"
   ]
 }

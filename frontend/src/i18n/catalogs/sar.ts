@@ -2,6 +2,7 @@
 export const sar: Record<string, string> = {
   分析步骤: 'Analysis steps',
   选择数据: 'Data',
+  '自定义名称（可选）': 'Name (optional)',
   选择活性: 'Activity',
   开始分析: 'Analyze',
   研究详情: 'Details',
@@ -48,6 +49,13 @@ export const sar: Record<string, string> = {
   '点击结构区域，查看改造与数据变化。':
     'Click a structural region to explore modifications and data changes.',
   改造预览: 'Transformation preview',
+  '放大结构 {identifier}': 'Enlarge structure {identifier}',
+  '结构预览 · {identifier}': 'Molecular preview · {identifier}',
+  缩小结构: 'Zoom out structure',
+  放大结构: 'Zoom in structure',
+  适应窗口: 'Fit',
+  相对适应窗口的放大比例: 'Magnification relative to fit',
+  结构查看区域: 'Molecular canvas',
   '正在加载改造…': 'Loading transformation…',
   专利实测: 'Patent measurements',
   变化: 'Change',

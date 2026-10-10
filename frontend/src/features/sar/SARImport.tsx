@@ -104,33 +104,35 @@ export function SARImport({
             />
           )}
           <fieldset disabled={!active || !projects.validated || mutation.locked}>
-            <div className="sar-form-grid">
-              <label>
-                {t('来源项目')}
-                <select
-                  value={projectId}
-                  onChange={(e) => setSelection({ source: sourceProjectId, value: e.target.value })}
-                >
-                  <option value="">{t('请选择已提取项目')}</option>
-                  {projectId && !selectedExists && <option value={projectId}>{projectId}</option>}
-                  {projects.data?.items.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.title}
-                    </option>
-                  ))}
-                </select>
-              </label>
+            <label>
+              {t('来源项目')}
+              <select
+                value={projectId}
+                onChange={(e) => setSelection({ source: sourceProjectId, value: e.target.value })}
+              >
+                <option value="">{t('请选择已提取项目')}</option>
+                {projectId && !selectedExists && <option value={projectId}>{projectId}</option>}
+                {projects.data?.items.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <details className="sar-compact">
+              <summary>{t('自定义名称（可选）')}</summary>
               <label>
                 {t('数据集名称')}
                 <input maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} />
               </label>
-            </div>
+            </details>
             <button
               className="primary"
               type="submit"
+              title={t('创建独立快照')}
               disabled={!projectId || Boolean(projects.error)}
             >
-              {t('创建独立快照')}
+              {t('下一步')}
             </button>
           </fieldset>
         </form>

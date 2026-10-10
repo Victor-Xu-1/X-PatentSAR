@@ -1,9 +1,11 @@
 import { Clock3, FileText, History, Settings, Upload, FlaskConical } from 'lucide-react';
+import { useRef } from 'react';
 import type { Project } from '../api/types';
 import type { ResultTab, View } from '../model/route';
 import brandMark from '../assets/brand-mark.png';
 import { useTranslation } from '../i18n';
 import { LanguageSwitch } from './LanguageSwitch';
+import { useInlineSelection } from './useInlineSelection';
 
 export function Header({
   view,
@@ -29,6 +31,8 @@ export function Header({
   disabled: boolean;
 }) {
   const { t } = useTranslation();
+  const navigation = useRef<HTMLElement>(null);
+  useInlineSelection(navigation, 'button[aria-current]');
   return (
     <header className="topbar">
       <a
@@ -46,7 +50,7 @@ export function Header({
         <img className="brand-symbol" src={brandMark} alt="" width={30} height={30} />
         <strong>X-PatentSAR</strong>
       </a>
-      <nav className="topbar-actions" aria-label={t('工作台导航')}>
+      <nav ref={navigation} className="topbar-actions" aria-label={t('工作台导航')}>
         <button
           type="button"
           aria-label={t('上传 PDF')}

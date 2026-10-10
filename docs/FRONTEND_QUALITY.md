@@ -20,6 +20,10 @@ The reference article's private algorithms are not represented as reproduced.
   existing explicit submit creates a study. Regions remain optional, not a second queue.
   A persistent result workbench returning to the same dataset without a job must
   reveal setup from the current route, not its first-mounted disclosure state.
+  Project intake starts with the source and one Continue action; the optional
+  custom title is retained in a native disclosure. Existing snapshot identity,
+  default source title, uncertain-write protection and explicit submission stay
+  unchanged; revealing the name field never creates a dataset or task.
 - Activity selection shows the actual selectable count up to the existing eight
   context limit. Small lists use two columns where space permits. Equal molecule
   and observation counts are shown once; unequal counts remain explicit. Raw
@@ -67,6 +71,14 @@ The reference article's private algorithms are not represented as reproduced.
   Narrow previews retain table/row/header semantics while putting both raw values
   and their backend change result in the visible width. Source IDs and unit labels
   use existing captured data and the shared context-label presentation authority.
+  Molecular comparisons offer a small read-only enlargement control after their
+  current safe drawing has loaded and been validated. The existing modal reuses
+  exactly that passive RDKit image, with bounded 100–400% fit-relative display
+  magnification, Fit and native overflow scrolling. No second renderer, graph
+  parsing, molecule editing, provider call or drawing request is introduced.
+  Failed/inactive/stale identities cannot open or revive an inspector. Closing
+  restores its originating control; raw identifiers and images survive locale
+  changes. Shared inline reveal also keeps the current header module visible.
 - Raw measurements, computed properties and captured predictions remain separate.
   Grade/interval overlap, missing context and unrepresentable differences stay unknown.
   Hidden technical detail does not remove source links, issues or acceptance boundaries.

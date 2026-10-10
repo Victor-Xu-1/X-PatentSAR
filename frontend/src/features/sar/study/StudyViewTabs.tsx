@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { useTranslation } from '../../../i18n';
-import { useInlineSelection } from './useInlineSelection';
+import { useInlineSelection } from '../../../components/useInlineSelection';
 
 export function StudyViewTabs({
   labels,

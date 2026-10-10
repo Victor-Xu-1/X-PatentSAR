@@ -210,12 +210,71 @@
   min-width: 0;
 }
 .sar-molecule-comparison .sar-study-image {
+  position: relative;
   height: 210px;
   display: grid;
   align-content: center;
 }
 .sar-molecule-comparison img {
   max-height: 210px;
+}
+.sar-image-focus-action {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 40px;
+  min-height: 40px;
+  background: var(--surface);
+}
+.sar-molecule-focus {
+  width: min(1040px, calc(100vw - 48px));
+}
+.sar-molecule-focus-body {
+  gap: 12px;
+}
+.sar-molecule-focus-toolbar,
+.sar-molecule-focus-toolbar > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sar-molecule-focus-toolbar {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.sar-molecule-focus-toolbar > span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.sar-molecule-focus-toolbar output {
+  min-width: 46px;
+  text-align: center;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.sar-molecule-focus-viewport {
+  height: min(60dvh, 580px);
+  width: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: var(--image-paper);
+}
+.sar-molecule-focus-canvas {
+  min-width: 100%;
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+}
+.sar-molecule-focus-canvas img {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: contain;
+}
+@media (max-width: 600px) {
+  .sar-molecule-focus {
+    width: calc(100vw - 24px);
+  }
 }
 .sar-preview-data table {
   border-collapse: collapse;

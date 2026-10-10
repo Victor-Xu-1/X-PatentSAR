@@ -18,6 +18,33 @@ const headerProps = {
 };
 
 describe('minimal document shell', () => {
+  it('reveals a programmatically selected module in the same strip without moving focus or invoking navigation', () => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      const strip = this.closest('nav');
+      return (
+        this.tagName === 'NAV'
+          ? { left: 0, right: 200, width: 200 }
+          : {
+              left: 240 - (strip?.scrollLeft ?? 0),
+              right: 360 - (strip?.scrollLeft ?? 0),
+              width: 120,
+            }
+      ) as DOMRect;
+    });
+    const onNavigate = vi.fn();
+    const { rerender } = render(<Header {...headerProps} view="sar" onNavigate={onNavigate} />);
+    const strip = document.querySelector<HTMLElement>('.topbar-actions')!;
+    expect(strip.scrollLeft).toBe(160);
+    rerender(<Header {...headerProps} view="jobs" onNavigate={onNavigate} />);
+    expect(strip.scrollLeft).toBe(160);
+    expect(strip.querySelector('[aria-current]')).toHaveTextContent('任务记录');
+    expect(onNavigate).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(document.body);
+    expect(window.scrollY).toBe(0);
+    vi.restoreAllMocks();
+  });
   it('marks PDF upload as the current page in the same direct navigation', () => {
     render(<Header {...headerProps} view="new-task" project={null} />);
     expect(screen.getByRole('button', { name: '上传 PDF' })).toHaveAttribute(

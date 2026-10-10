@@ -299,6 +299,83 @@ for (const width of [390, 800, 1672]) {
       )
       .toBe(true);
     await expect(preview).toContainText('Δ -9.00');
+    // Inspect only this published, loaded source drawing: no new engine/read/write.
+    const originalImage = preview.locator('.sar-molecule-comparison img').first();
+    const sourceLabel = (await originalImage.getAttribute('alt'))!;
+    const sourceDrawing = await originalImage.getAttribute('src');
+    const enlarge = preview.getByRole('button', {
+      name: `Enlarge structure ${sourceLabel}`,
+      exact: true,
+    });
+    const drawingRequests: string[] = [];
+    const observeDrawing = (request: import('@playwright/test').Request) => {
+      if (request.url().includes('/api/v1/sar/') && request.url().includes('/drawing'))
+        drawingRequests.push(request.url());
+    };
+    page.on('request', observeDrawing);
+    await enlarge.click();
+    const focus = page.getByRole('dialog', {
+      name: `Molecular preview · ${sourceLabel}`,
+      exact: true,
+    });
+    await expect(focus).toBeVisible();
+    await expect(focus.getByRole('img', { name: sourceLabel, exact: true })).toHaveAttribute(
+      'src',
+      sourceDrawing!,
+    );
+    await expect(focus.getByLabel('Magnification relative to fit', { exact: true })).toHaveText(
+      '100%',
+    );
+    await focus.screenshot({ path: test.info().outputPath(`molecular-fit-${width}.png`) });
+    for (let i = 0; i < 3; i++)
+      await focus.getByRole('button', { name: 'Zoom in structure', exact: true }).click();
+    await expect(focus.getByLabel('Magnification relative to fit', { exact: true })).toHaveText(
+      '175%',
+    );
+    const pane = focus.getByRole('region', { name: 'Molecular canvas', exact: true });
+    const geometry = await pane.evaluate((element) => ({
+      pane: element.clientWidth,
+      canvas: element.firstElementChild!.getBoundingClientRect().width,
+    }));
+    expect(Math.abs(geometry.canvas - geometry.pane * 1.75)).toBeLessThan(1);
+    await focus.getByRole('button', { name: 'Zoom in structure', exact: true }).focus();
+    await page.keyboard.press('Tab');
+    await expect(focus.getByRole('button', { name: 'Fit', exact: true })).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(pane).toBeFocused();
+    const scroll = await pane.evaluate((element) => element.scrollLeft);
+    await page.keyboard.press('ArrowRight');
+    await expect.poll(() => pane.evaluate((element) => element.scrollLeft)).toBeGreaterThan(scroll);
+    await focus.getByRole('button', { name: 'Fit', exact: true }).click();
+    await expect
+      .poll(() => pane.evaluate((element) => element.scrollLeft + element.scrollTop))
+      .toBe(0);
+    expect(
+      await focus.evaluate((element) => element.getBoundingClientRect().right <= innerWidth),
+    ).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(focus).toHaveCount(0);
+    await expect(enlarge).toBeFocused();
+    await page
+      .getByRole('combobox', { name: 'Interface language', exact: true })
+      .selectOption('zh-CN');
+    const chineseEnlarge = preview.getByRole('button', {
+      name: `放大结构 ${sourceLabel}`,
+      exact: true,
+    });
+    await chineseEnlarge.click();
+    const translatedFocus = page.getByRole('dialog', {
+      name: `结构预览 · ${sourceLabel}`,
+      exact: true,
+    });
+    await expect(
+      translatedFocus.getByRole('img', { name: sourceLabel, exact: true }),
+    ).toHaveAttribute('src', sourceDrawing!);
+    await page.keyboard.press('Escape');
+    await expect(chineseEnlarge).toBeFocused();
+    await page.getByRole('combobox', { name: '界面语言', exact: true }).selectOption('en');
+    expect(drawingRequests).toEqual([]);
+    page.off('request', observeDrawing);
     if (width === 390) {
       const changeFits = await preview
         .locator('.sar-preview-change')

@@ -70,9 +70,7 @@ describe('complete independent SAR frontend contract flow', () => {
       job: sarJob,
     });
     render(<App />);
-    await userEvent.click(
-      await screen.findByRole('button', { name: 'Create independent snapshot' }),
-    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Continue' }));
     await userEvent.click(await screen.findByText('Single-reference comparison (advanced)'));
     expect(await screen.findByText('原文 missing')).toBeVisible();
     await userEvent.click(screen.getAllByRole('button', { name: 'Reference' })[0]!);

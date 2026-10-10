@@ -175,13 +175,15 @@ test('current extracted task explicitly creates its separate SAR snapshot', asyn
   await expect(page.getByRole('combobox', { name: 'Source project', exact: true })).toHaveValue(
     project!,
   );
+  await expect(page.getByLabel('Dataset title', { exact: true })).toBeHidden();
+  await page.getByText('Name (optional)', { exact: true }).click();
   await page.getByLabel('Dataset title', { exact: true }).fill('Controlled extracted snapshot');
   const saved = page.waitForResponse(
     (response) =>
       response.url().endsWith('/api/v1/sar/datasets/project') &&
       response.request().method() === 'POST',
   );
-  await page.getByRole('button', { name: 'Create independent snapshot', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
   expect((await saved).status()).toBe(201);
   const dataset = await published(page, 'dataset');
   expect(dataset.source_kind).toBe('project');
