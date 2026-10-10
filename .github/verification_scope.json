@@ -11,6 +11,7 @@
     "frontend/src/features/sar/study/StudyFragmentCard.tsx",
     "frontend/src/features/sar/study/StudyLeads.tsx",
     "frontend/src/features/sar/study/StudyScaffolds.tsx",
+    "frontend/src/styles/sar-explorer.css",
     "frontend/src/styles/sar-study.css",
     "frontend/src/styles/sar.css",
     "frontend/tests/sar-card-inspection.test.tsx",

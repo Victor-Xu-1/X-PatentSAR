@@ -134,7 +134,8 @@
   display: grid;
   align-content: center;
 }
-.sar-region-explorer .sar-fragment-strip img {
+.sar-region-explorer .sar-fragment-strip .sar-study-image > img,
+.sar-region-explorer .sar-fragment-strip .sar-study-image > .sar-image-focus-trigger > img {
   max-height: 130px;
 }
 .sar-preview-trigger {
@@ -226,7 +227,8 @@
   display: grid;
   align-content: center;
 }
-.sar-molecule-comparison img {
+.sar-molecule-comparison .sar-study-image > img,
+.sar-molecule-comparison .sar-study-image > .sar-image-focus-trigger > img {
   max-height: 210px;
 }
 .sar-image-focus-action {
