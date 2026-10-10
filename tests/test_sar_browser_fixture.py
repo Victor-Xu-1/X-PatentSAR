@@ -6,13 +6,62 @@ import json
 import unittest
 from unittest.mock import patch
 
-from test_web_support import WebFixture
+from test_web_support import ARTIFACTS, WebFixture, artifact_run, make_pdf
 
 from tools.browser_fixture_mode import PREFIX, fixture_mode
 from tools.prepare_browser_fixture import prepare
 
 
 class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
+    def test_atom_label_samples_preserve_default_adapter_graphs_without_jobs(self):
+        browser = self.root / "browser"
+        with patch(
+            "tools.prepare_browser_fixture.TestClient",
+            side_effect=AssertionError("No execution fixture allowed"),
+        ):
+            values = prepare(browser, sar=True)
+        self.assertEqual(values["PATENTSAR_E2E_RUN_JOBS"], "0")
+        records = json.loads(
+            (browser / "controlled-history" / ARTIFACTS["smiles"][0]).read_text()
+        )["records"]
+        by_label = {row["cpd_id"]: row for row in records}
+        self.assertEqual(len(records), 30)
+        for label, count in (("Compound 29", 16), ("Compound 30", 116)):
+            row = by_label[label]
+            self.assertEqual(row["smiles"], "C" * count)
+            self.assertEqual(row["raw_smiles"], row["smiles"])
+            self.assertEqual(row["heavy_atom_count"], count)
+            self.assertTrue(row["rdkit_valid"])
+        self.assertTrue(
+            all(
+                row["smiles"] == "CCO"
+                for label, row in by_label.items()
+                if label not in {"Compound 29", "Compound 30"}
+            )
+        )
+        pdf = make_pdf(self.root / "default.pdf")
+        default = artifact_run(self.root / "default", pdf)
+        self.assertTrue(
+            all(
+                row["smiles"] == "CCO"
+                for row in json.loads((default / ARTIFACTS["smiles"][0]).read_text())[
+                    "records"
+                ]
+            )
+        )
+
+    def test_atom_label_scope_never_selects_execution_fixture(self):
+        selected = {
+            PREFIX + "sar-atom-label.spec.ts",
+            PREFIX + "sar-selection-viewport.spec.ts",
+            PREFIX + "product-version.spec.ts",
+        }
+        self.assertEqual(fixture_mode(selected), "sar")
+        self.assertEqual(fixture_mode({PREFIX + "sar-atom-label.spec.ts"}), "sar")
+        self.assertEqual(
+            fixture_mode(selected | {PREFIX + "real-workflow.spec.ts"}), "execution"
+        )
+
     def test_region_recovery_scope_uses_only_isolated_snapshot_and_region_writes(self):
         selected = {
             PREFIX + "sar-region-recovery.spec.ts",

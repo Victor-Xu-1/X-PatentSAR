@@ -87,7 +87,14 @@ def make_pdf(
 
 
 def artifact_run(
-    root: Path, pdf: Path, *, current=True, accepted=True, rows=2, rendered=True
+    root: Path,
+    pdf: Path,
+    *,
+    current=True,
+    accepted=True,
+    rows=2,
+    rendered=True,
+    smiles_by_label: dict[str, str] | None = None,
 ) -> Path:
     """Small contract fixtures. These are NOT evidence of a successful core run."""
     root.mkdir()
@@ -179,7 +186,7 @@ def artifact_run(
                 {
                     "cpd_id": b["cpd"],
                     "structure_id": b["structure_id"],
-                    "smiles": "CCO",
+                    "smiles": (smiles_by_label or {}).get(b["cpd"], "CCO"),
                     "rdkit_valid": True,
                 }
                 for b in payloads["bindings"]["final_bindings"]
@@ -192,19 +199,22 @@ def artifact_run(
         source_checked_qc,
     )
 
-    screened = source_checked_qc(
-        qc_smiles("CCO"), observe_stereo_symbols(crop.read_bytes())
-    )
+    observed = observe_stereo_symbols(crop.read_bytes())
+    screened_graphs = {
+        smiles: source_checked_qc(qc_smiles(smiles), observed)
+        for smiles in {record["smiles"] for record in payloads["smiles"]["records"]}
+    }
     for record in payloads["smiles"]["records"]:
+        screened = screened_graphs[record["smiles"]]
         record.update(
             screened,
             OCSR_quality_flag=screened["quality_flag"],
             OCSR_status="success",
-            raw_smiles="CCO",
+            raw_smiles=record["smiles"],
             image_hash=screened["stereochemistry"]["image_sha256"],
         )
     # This is genuine syntax/risk-screen contract data for an explicit controlled
-    # graph, NOT a claim that the fixture's red crop was recognized as ethanol.
+    # graph, NOT a claim that the fixture's red crop was recognized as a molecule.
     payloads["qa"].update(
         {
             "ok": accepted,
