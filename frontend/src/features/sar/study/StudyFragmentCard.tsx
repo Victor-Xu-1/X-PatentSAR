@@ -31,10 +31,11 @@ export function StudyFragmentCard({
 }) {
   const { t } = useTranslation();
   const candidate = fragment.molecule_ids.find((id) => id !== referenceId);
+  const label = t('片段 {index}', { index });
   return (
     <article className="sar-study-card">
       <h4>
-        {t('片段 {index}', { index })}
+        {label}
         {fragment.is_reference && <small> · {t('参考')}</small>}
       </h4>
       <StudyImage
@@ -42,8 +43,10 @@ export function StudyFragmentCard({
         kind="fragment"
         identifier={fragment.id}
         regionId={regionId}
-        label={fragment.smiles}
+        label={label}
         active={active}
+        inspectable
+        inspectionTrigger="image"
       />
       <StudyBars
         bins={fragment.bins}
