@@ -359,7 +359,8 @@ for (const width of [390, 800, 1672]) {
     await page
       .getByRole('combobox', { name: 'Interface language', exact: true })
       .selectOption('zh-CN');
-    const chineseEnlarge = preview.getByRole('button', {
+    const chinesePreview = page.getByRole('region', { name: '改造预览', exact: true });
+    const chineseEnlarge = chinesePreview.getByRole('button', {
       name: `放大结构 ${sourceLabel}`,
       exact: true,
     });
