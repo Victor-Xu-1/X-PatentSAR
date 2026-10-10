@@ -26,10 +26,16 @@ for (const width of [390, 800, 1672]) {
       const table = report.getByRole('region', { name: 'Activity table', exact: true });
       await expect(table).toBeFocused();
       await expect
-        .poll(() => table.evaluate((element) => element.getBoundingClientRect().top))
-        .toBeLessThan(50);
+        .poll(() =>
+          table.locator('.sar-study-table-toolbar').evaluate((element) => {
+            const bounds = element.getBoundingClientRect();
+            return bounds.top >= -1 && bounds.bottom <= innerHeight + 1;
+          }),
+        )
+        .toBe(true);
       await expect(table.getByRole('table')).toBeVisible();
       await expect(table.getByRole('rowheader')).toHaveText(fixture.molecule.label);
+      await expect(table.locator('tbody img')).toHaveJSProperty('complete', true);
       expect(fixture.rowRequests.at(-1)).toMatchObject(
         view === 'Scaffolds'
           ? { scope: 'all', scaffold_id: 'core/control', region_id: '', fragment_id: '' }
