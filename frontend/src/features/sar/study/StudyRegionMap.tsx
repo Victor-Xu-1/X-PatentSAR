@@ -8,6 +8,7 @@ import { SARFailure } from '../SARFailure';
 import { useSARResource } from '../useSARResource';
 import { safeDrawing } from '../safeDrawing';
 import { RegionLegend, RegionMap } from './RegionMap';
+import { StudyReferencePane } from './StudyReferencePane';
 
 function ReferenceMap({
   datasetId,
@@ -92,8 +93,9 @@ export function StudyRegionMap({
     group.regions.push(summary.region);
     groups.set(key, group);
   }
+  if (!groups.size) return null;
   return (
-    <div className="sar-reference-maps">
+    <StudyReferencePane active={active}>
       {[...groups.entries()].map(([key, group]) => (
         <ReferenceMap
           key={key}
@@ -105,6 +107,6 @@ export function StudyRegionMap({
           onSelect={onSelect}
         />
       ))}
-    </div>
+    </StudyReferencePane>
   );
 }

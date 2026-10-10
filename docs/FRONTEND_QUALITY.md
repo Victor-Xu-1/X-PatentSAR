@@ -61,6 +61,16 @@ The reference article's private algorithms are not represented as reproduced.
 - A region click selects a recorded region. Modification preview reads a published
   strict comparison and rechecks its immutable full graph and attachment mapping.
   It does not design a molecule, rerun extraction or call a model.
+  In the wide two-column explorer, the reference viewport itself stays alongside
+  the chosen modification and its measurements. Its bounded native scrolling
+  contains one or multiple reference graphs; an inner card is not a competing
+  sticky/scroll owner. Narrow layouts restore ordinary document flow. Keyboard
+  access is exposed only for real overflow, with coalesced/disposed resize work;
+  reference loading/locale changes never move focus or rerun a drawing provider.
+  Home/End control only the focused reference viewport's native scroll range;
+  child controls and modifier shortcuts keep their original behavior.
+  Pointer outlines are visible only during interaction, not a duplicate permanent
+  circle around every atom. The existing region palette remains their authority.
   The active region has a stronger keyline and tint; other regions remain visible.
   Original atom coordinates and region membership never change with selection.
   Hover/focus hotspots emphasize their region-coloured outline only: their
@@ -79,6 +89,12 @@ The reference article's private algorithms are not represented as reproduced.
   that explicit request may settle its view once; a user who has moved to another
   control is never pulled back. Native installed-browser checks verify the
   comparison's final visible position, not just its programmatic focus.
+  Wide-layout explicit reveal also respects the sticky reference's containing
+  block bottom, so a tall multi-reference viewport is not pushed above the
+  screen by unconditional preview-to-page-top alignment. It uses current
+  measured geometry, not fixed patent or viewport assumptions; stacked and
+  not-yet-measured references retain native document flow. No scroll listener,
+  continuous observer or competing focus authority is added by this reveal.
   Fragment cards use a compact labelled comparison-count group, not a sentence,
   normalized share or inferred score. Zero, unknown and missing counts stay distinct.
   Current conservation reports show only the displayed fragments' nonempty legend

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "base_sha": "2f4e0d2618df204148876a2047ec13494d271890",
+  "base_sha": "c92d64c510f7ae9d10142b45834edae27ec54dc8",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/FRONTEND_QUALITY.md",
@@ -8,8 +8,15 @@
     "frontend/package-lock.json",
     "frontend/package.json",
     "frontend/src/features/sar/study/RegionMap.tsx",
+    "frontend/src/features/sar/study/StudyReferencePane.tsx",
+    "frontend/src/features/sar/study/StudyRegionMap.tsx",
+    "frontend/src/features/sar/study/TransformationPreview.tsx",
+    "frontend/src/features/sar/study/revealTransformation.ts",
+    "frontend/src/i18n/catalogs/sar.ts",
     "frontend/src/styles/sar-explorer.css",
     "frontend/tests/sar-region-map-interaction.test.tsx",
+    "frontend/tests/sar-reference-pane.test.tsx",
+    "frontend/tests/sar-preview-reveal.test.ts",
     "src/patent_sar_extractor/contracts.py"
   ],
   "python_modules": [
@@ -18,8 +25,12 @@
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
+    "frontend/tests/i18n-core.test.tsx",
     "frontend/tests/sar-drawing-contrast.test.ts",
     "frontend/tests/sar-inline-selection.test.tsx",
+    "frontend/tests/sar-preview.test.tsx",
+    "frontend/tests/sar-preview-reveal.test.ts",
+    "frontend/tests/sar-reference-pane.test.tsx",
     "frontend/tests/sar-region-map-interaction.test.tsx",
     "frontend/tests/sar-region.test.tsx"
   ],

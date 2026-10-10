@@ -98,7 +98,7 @@ export function RegionMap({
                   style={{
                     left: atom.x * 100 + '%',
                     top: atom.y * 100 + '%',
-                    borderColor: colors[order % colors.length],
+                    color: colors[order % colors.length],
                   }}
                 />
               )),
