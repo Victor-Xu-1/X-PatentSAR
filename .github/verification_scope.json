@@ -1,13 +1,15 @@
 {
   "schema_version": 1,
-  "base_sha": "7d4ebdc57c8c340988253b416d6c37b4767d5ac1",
+  "base_sha": "7060e2ab39e61e5e6ecdbb569462f05b388532e1",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/FRONTEND_QUALITY.md",
-    "frontend/e2e/daily-actions.spec.ts",
+    "frontend/e2e/sar-table-actions.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/styles/management.css",
+    "frontend/src/features/sar/study/StudyRowTable.tsx",
+    "frontend/src/styles/sar-explorer.css",
+    "frontend/tests/sar-table-identity.test.tsx",
     "src/patent_sar_extractor/contracts.py"
   ],
   "python_modules": [
@@ -16,12 +18,12 @@
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
-    "frontend/tests/job-workspace-actions.test.tsx",
-    "frontend/tests/i18n-operations-jobs.test.tsx",
-    "frontend/tests/minimal-pages.test.tsx"
+    "frontend/tests/sar-table-identity.test.tsx",
+    "frontend/tests/sar-study-results.test.tsx",
+    "frontend/tests/sar-study-flow.test.tsx"
   ],
   "browser_tests": [
-    "frontend/e2e/daily-actions.spec.ts",
+    "frontend/e2e/sar-study.spec.ts",
     "frontend/e2e/product-version.spec.ts"
   ]
 }

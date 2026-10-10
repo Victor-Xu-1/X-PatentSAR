@@ -104,7 +104,12 @@ export function StudyRowTable({
         <thead>
           <tr>
             {visible.map((column) => (
-              <th key={column.id} title={column.context}>
+              <th
+                key={column.id}
+                scope="col"
+                className={column.id === 'label' ? 'sar-study-identifier' : undefined}
+                title={column.context}
+              >
                 {column.label}
               </th>
             ))}

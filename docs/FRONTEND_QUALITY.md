@@ -69,6 +69,11 @@ The reference article's private algorithms are not represented as reproduced.
   filters/sort, not the source search or column visibility. Existing server-side
   query, paging and complete-report export authorities remain unchanged. Preview
   cells are centered; generic pair-table alignment cannot override study tables.
+  The original-ID column heading freezes with its row labels during horizontal
+  scrolling and remains above them while scrolling vertically. A stable semantic
+  column identity, not a first-column index, selects the corner header; hiding
+  the ID never freezes an unrelated structure/activity header. Restoring it
+  restores the same source-owned labels and their matching heading.
 - A region click selects a recorded region. Modification preview reads a published
   strict comparison and rechecks its immutable full graph and attachment mapping.
   It does not design a molecule, rerun extraction or call a model.

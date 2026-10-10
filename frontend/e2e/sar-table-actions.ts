@@ -1,6 +1,33 @@
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 
+async function checkIdentityHeading(table: Locator) {
+  const pane = table.locator('..');
+  await pane.evaluate((element) => {
+    element.scrollLeft = Math.min(600, element.scrollWidth - element.clientWidth);
+    element.scrollTop = 100;
+  });
+  const geometry = await table.evaluate((element) => {
+    const bounds = element.parentElement!.getBoundingClientRect();
+    const heading = element.querySelector('thead th.sar-study-identifier')!.getBoundingClientRect();
+    const label = element.querySelector('tbody th[scope="row"]')!.getBoundingClientRect();
+    return {
+      paneLeft: bounds.left,
+      paneTop: bounds.top,
+      headingLeft: heading.left,
+      headingTop: heading.top,
+      labelLeft: label.left,
+    };
+  });
+  expect(geometry.headingLeft).toBeGreaterThanOrEqual(geometry.paneLeft - 1);
+  expect(Math.abs(geometry.headingLeft - geometry.labelLeft)).toBeLessThan(1);
+  expect(Math.abs(geometry.headingTop - geometry.paneTop)).toBeLessThan(2);
+  await pane.evaluate((element) => {
+    element.scrollLeft = 0;
+    element.scrollTop = 0;
+  });
+}
+
 /** Existing isolated native study only; presentation/query controls never write. */
 export async function checkStudyTableControls(page: Page, report: Locator, width: number) {
   const view = report.getByRole('region', { name: 'Activity table', exact: true });
@@ -18,6 +45,7 @@ export async function checkStudyTableControls(page: Page, report: Locator, width
       }),
     ),
   ).toBe(true);
+  await checkIdentityHeading(table);
   if (width === 1672)
     expect(
       await view
@@ -66,5 +94,23 @@ export async function checkStudyTableControls(page: Page, report: Locator, width
   await search.fill('');
   await expect(table.locator('tbody tr')).toHaveCount(16);
   await expect(table.getByRole('rowheader').first()).toHaveText('Example 1');
+  await columns.click();
+  const identifierChoice = chooser.getByRole('checkbox', {
+    name: /^Show column Original ID(?: ·|$)/,
+  });
+  await identifierChoice.uncheck();
+  await page.keyboard.press('Escape');
+  await expect(table.locator('.sar-study-identifier')).toHaveCount(0);
+  await expect(table.getByRole('rowheader')).toHaveCount(0);
+  expect(
+    await table
+      .getByRole('columnheader', { name: 'Structure', exact: true })
+      .evaluate((element) => getComputedStyle(element).left),
+  ).toBe('auto');
+  await columns.click();
+  await identifierChoice.check();
+  await page.keyboard.press('Escape');
+  await expect(table.getByRole('rowheader').first()).toHaveText('Example 1');
+  await checkIdentityHeading(table);
   await page.screenshot({ path: test.info().outputPath(`table-tools-${width}.png`) });
 }
