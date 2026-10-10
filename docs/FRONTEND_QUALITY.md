@@ -67,6 +67,8 @@ The reference article's private algorithms are not represented as reproduced.
   sticky/scroll owner. Narrow layouts restore ordinary document flow. Keyboard
   access is exposed only for real overflow, with coalesced/disposed resize work;
   reference loading/locale changes never move focus or rerun a drawing provider.
+  Home/End control only the focused reference viewport's native scroll range;
+  child controls and modifier shortcuts keep their original behavior.
   Pointer outlines are visible only during interaction, not a duplicate permanent
   circle around every atom. The existing region palette remains their authority.
   The active region has a stronger keyline and tint; other regions remain visible.

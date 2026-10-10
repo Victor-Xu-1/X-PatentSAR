@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { StudyRegionMap } from '../src/features/sar/study/StudyRegionMap';
 import { setLocale } from '../src/i18n';
@@ -114,4 +114,27 @@ it('tracks actual content/viewport overflow once per frame without focus movemen
   expect(disconnect).toHaveBeenCalledOnce();
   expect(pane).toHaveAttribute('tabindex', '-1');
   unmount();
+});
+
+it('limits Home/End to its own viewport focus and preserves child/modifier keyboard actions', () => {
+  const scroll = vi.fn();
+  render(
+    <StudyReferencePane active>
+      <button type="button">Child action</button>
+    </StudyReferencePane>,
+  );
+  const pane = screen.getByRole('region', { name: 'Reference structures' });
+  Object.defineProperty(pane, 'scrollTo', { value: scroll });
+  Object.defineProperty(pane, 'scrollHeight', { value: 600 });
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn(() => ({ matches: true })),
+  );
+  fireEvent.keyDown(pane, { key: 'Home' });
+  expect(scroll).toHaveBeenLastCalledWith({ top: 0, behavior: 'auto' });
+  fireEvent.keyDown(pane, { key: 'End' });
+  expect(scroll).toHaveBeenLastCalledWith({ top: 600, behavior: 'auto' });
+  fireEvent.keyDown(screen.getByRole('button', { name: 'Child action' }), { key: 'Home' });
+  fireEvent.keyDown(pane, { key: 'Home', ctrlKey: true });
+  expect(scroll).toHaveBeenCalledTimes(2);
 });

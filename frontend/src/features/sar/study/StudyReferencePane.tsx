@@ -1,5 +1,6 @@
-import { useLayoutEffect, useRef, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
 import { useTranslation } from '../../../i18n';
+import { preferredScrollBehavior } from '../../../model/motion';
 
 /** One bounded reference viewport, including multiple original reference graphs. */
 export function StudyReferencePane({ active, children }: { active: boolean; children: ReactNode }) {
@@ -34,10 +35,32 @@ export function StudyReferencePane({ active, children }: { active: boolean; chil
     };
   }, [active]);
   return (
-    <section ref={viewport} aria-label={t('参考结构')} className="sar-reference-maps">
+    <section
+      ref={viewport}
+      aria-label={t('参考结构')}
+      className="sar-reference-maps"
+      onKeyDown={scrollBoundary}
+    >
       <div ref={content} className="sar-reference-map-content">
         {children}
       </div>
     </section>
   );
+}
+
+function scrollBoundary(event: KeyboardEvent<HTMLElement>) {
+  if (
+    event.target !== event.currentTarget ||
+    event.altKey ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.shiftKey ||
+    !['Home', 'End'].includes(event.key)
+  )
+    return;
+  event.preventDefault();
+  event.currentTarget.scrollTo({
+    top: event.key === 'Home' ? 0 : event.currentTarget.scrollHeight,
+    behavior: preferredScrollBehavior(),
+  });
 }
