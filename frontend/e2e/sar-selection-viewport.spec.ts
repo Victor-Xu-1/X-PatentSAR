@@ -28,7 +28,13 @@ async function syntheticSnapshot(page: Page) {
   const dataset = await created.json();
   expect(dataset.row_count).toBe(30);
   expect(dataset.eligible_count).toBeGreaterThan(0);
-  await page.goto('/#/sar?dataset=' + dataset.id);
+  // A full document load reads the new snapshot list. Hash-only navigation
+  // would retain the pre-snapshot list because this controlled API setup did
+  // not pass through the UI's explicit list invalidation.
+  await page.goto('/?controlled-snapshot=' + dataset.id + '#/sar?dataset=' + dataset.id);
+  await expect(
+    page.getByRole('combobox', { name: 'SAR datasets', exact: true }).locator('option:checked'),
+  ).toHaveText(dataset.title);
   return dataset;
 }
 
@@ -87,6 +93,13 @@ for (const width of [390, 800, 1672]) {
       const first = browser.locator('tbody tr').first();
       const label = await first.getByRole('rowheader').innerText();
       const reference = first.getByRole('button', { name: 'Reference', exact: true });
+      expect(
+        await reference.evaluate((button) => {
+          const text = document.createRange();
+          text.selectNodeContents(button);
+          return text.getClientRects().length;
+        }),
+      ).toBe(1);
       await reference.scrollIntoViewIfNeeded();
       expect(
         await reference.evaluate((button) => {

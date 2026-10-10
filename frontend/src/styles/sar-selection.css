@@ -17,14 +17,17 @@
   z-index: 1;
 }
 .sar-reference-browser :is(th, td):nth-child(2) {
-  min-width: 112px;
-  width: 112px;
-  max-width: 112px;
+  min-width: 128px;
+  width: 128px;
+  max-width: 128px;
   position: sticky;
   left: 108px;
   background: var(--surface);
   z-index: 1;
   border-inline-end: 1px solid var(--line);
+}
+.sar-reference-browser tbody td:nth-child(2) button {
+  white-space: nowrap;
 }
 .sar-reference-browser thead th {
   position: sticky;
