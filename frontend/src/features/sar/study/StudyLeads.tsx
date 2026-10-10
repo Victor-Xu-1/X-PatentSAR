@@ -36,7 +36,7 @@ export function StudyLeads({
               inspectionTrigger="image"
             />
             <RowFacts row={row} contexts={selectedContexts(report)} compact />
-            <button type="button" onClick={() => onSource(row.molecule_id)}>
+            <button type="button" disabled={!active} onClick={() => onSource(row.molecule_id)}>
               {t('来源详情')}
             </button>
           </article>
