@@ -32,15 +32,19 @@ it('opens only a loaded, validated current drawing and magnifies the same passiv
   const image = within(dialog).getByRole('img', { name: props.label });
   expect(image.getAttribute('src')).toBe(original.getAttribute('src'));
   const zoom = within(dialog).getByLabelText('Magnification relative to fit');
+  const pane = within(dialog).getByRole('region', { name: 'Molecular canvas' });
   expect(zoom).toHaveTextContent('100%');
+  expect(pane).toHaveAttribute('tabindex', '-1');
   expect(within(dialog).getByRole('button', { name: 'Zoom out structure' })).toBeDisabled();
   for (let i = 0; i < 12; i++)
     await userEvent.click(within(dialog).getByRole('button', { name: 'Zoom in structure' }));
   expect(zoom).toHaveTextContent('400%');
+  expect(pane).toHaveAttribute('tabindex', '0');
   expect(within(dialog).getByRole('button', { name: 'Zoom in structure' })).toBeDisabled();
   expect(image.parentElement).toHaveStyle({ width: '400%', height: '400%' });
   await userEvent.click(within(dialog).getByRole('button', { name: 'Fit' }));
   expect(zoom).toHaveTextContent('100%');
+  expect(pane).toHaveAttribute('tabindex', '-1');
   const url = image.getAttribute('src');
   await act(() => setLocale('zh-CN'));
   expect(screen.getByRole('dialog', { name: '结构预览 · ' + props.label })).toBe(dialog);

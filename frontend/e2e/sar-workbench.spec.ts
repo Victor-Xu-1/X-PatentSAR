@@ -113,12 +113,14 @@ for (const width of [390, 800, 1672]) {
       .getByRole('region', { name: 'Reference-comparison results', exact: true })
       .first();
     await expect(results.getByText('Complete', { exact: true })).toBeVisible({ timeout: 30000 });
+    await page.getByText('Study options', { exact: true }).click();
     await page.getByText('Study task history', { exact: true }).click();
     await expect(
       page
         .getByRole('region', { name: 'SAR jobs', exact: true })
         .getByText('Complete', { exact: true }),
     ).toBeVisible();
+    await page.getByText('Study options', { exact: true }).click();
     const valid = results
       .getByRole('row')
       .filter({ has: page.getByRole('rowheader', { name: 'I-255', exact: true }) });
@@ -190,6 +192,7 @@ test('current extracted task explicitly creates its separate SAR snapshot', asyn
   expect(dataset.source_project_id).toBe(project);
   expect(dataset.row_count).toBe(30);
   expect(dataset.source_document_sha256).toMatch(/^[a-f0-9]{64}$/);
+  await page.locator('.sar-dataset-summary > details > summary').click();
   await expect(
     page.getByRole('heading', { name: 'Controlled extracted snapshot', exact: true }),
   ).toBeVisible();

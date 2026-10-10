@@ -21,6 +21,9 @@ export function MolecularFocus({
   useLayoutEffect(() => {
     const pane = viewport.current;
     if (pane) {
+      // Only magnified overflow is keyboard-interactive. Explicit current-state
+      // focusability also lets the shared modal boundary include native scrolling.
+      pane.tabIndex = zoom > 1 ? 0 : -1;
       const ratio = zoom / previousZoom.current;
       pane.scrollLeft =
         zoom === 1 ? 0 : (pane.scrollLeft + pane.clientWidth / 2) * ratio - pane.clientWidth / 2;
