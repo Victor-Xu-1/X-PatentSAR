@@ -273,6 +273,14 @@ for (const width of [390, 800, 1672]) {
       .toBe(true);
     await report.getByRole('button', { name: 'Variable regions', exact: true }).click();
     const regions = report.getByRole('region', { name: 'Variable regions', exact: true });
+    const atomTarget = regions.locator('.sar-region-hotspots button').first();
+    await atomTarget.click();
+    const hoverStyle = await atomTarget.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return { background: style.backgroundColor, border: style.borderTopWidth };
+    });
+    expect(hoverStyle.background).toBe('rgba(0, 0, 0, 0)');
+    expect(hoverStyle.border).toBe('2px');
     // Fragment1 includes an unchanged blank reading. Inspect the actual ethyl
     // transformation for the numeric-difference contract.
     const previewTrigger = regions

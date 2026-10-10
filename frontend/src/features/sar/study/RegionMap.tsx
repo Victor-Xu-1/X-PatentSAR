@@ -43,7 +43,7 @@ export function RegionMap({
               key={region.id}
               data-region-id={region.id}
               data-selected={isSelected || undefined}
-              opacity={hasSelection && !isSelected ? 0.5 : 1}
+              opacity={hasSelection && !isSelected ? 0.7 : 1}
             >
               {regionAtoms.map((atom) => (
                 <circle

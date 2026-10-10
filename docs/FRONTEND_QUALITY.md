@@ -63,6 +63,11 @@ The reference article's private algorithms are not represented as reproduced.
   It does not design a molecule, rerun extraction or call a model.
   The active region has a stronger keyline and tint; other regions remain visible.
   Original atom coordinates and region membership never change with selection.
+  Hover/focus hotspots emphasize their region-coloured outline only: their
+  transparent centers must not cover element letters or stereochemical marks.
+  Inactive region labels retain readable contrast while the current keyline
+  and tint remain distinct. Pointer feedback uses the same colour assignment,
+  not an overriding border authority or another drawing layer.
   Atom hotspots stay pointer targets while the adjacent named legend owns one
   keyboard control per region, rather than duplicating each atom in Tab order.
   An explicit preview click reveals and focuses its inline comparison using the
