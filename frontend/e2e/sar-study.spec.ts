@@ -275,12 +275,37 @@ for (const width of [390, 800, 1672]) {
     const regions = report.getByRole('region', { name: 'Variable regions', exact: true });
     // Fragment1 includes an unchanged blank reading. Inspect the actual ethyl
     // transformation for the numeric-difference contract.
-    await regions
+    const previewTrigger = regions
       .locator('.sar-fragment-strip article')
       .filter({ has: page.getByRole('heading', { name: 'Fragment 2', exact: true }) })
-      .getByRole('button', { name: 'Preview modification', exact: true })
-      .click();
+      .getByRole('button', { name: 'Preview modification', exact: true });
+    await previewTrigger.click();
     const preview = regions.getByRole('region', { name: 'Transformation preview', exact: true });
+    await expect(preview).toBeFocused();
+    await expect
+      .poll(() =>
+        preview.evaluate((element) => {
+          const bounds = element.getBoundingClientRect();
+          return bounds.top >= -1 && bounds.top < innerHeight / 2;
+        }),
+      )
+      .toBe(true);
+    const map = regions.locator('.sar-region-map');
+    await expect(map.locator('g[data-selected="true"]')).toHaveCount(1);
+    expect(
+      await regions
+        .locator('.sar-region-hotspots button')
+        .evaluateAll((buttons) =>
+          buttons.every((button) => (button as HTMLButtonElement).tabIndex === -1),
+        ),
+    ).toBe(true);
+    await preview
+      .getByRole('button', { name: 'Close transformation preview', exact: true })
+      .click();
+    await expect(preview).toHaveCount(0);
+    await expect(previewTrigger).toBeFocused();
+    await previewTrigger.click();
+    await expect(preview).toBeFocused();
     await expect(
       preview.getByRole('combobox', { name: 'Modified compound', exact: true }),
     ).toBeEnabled();

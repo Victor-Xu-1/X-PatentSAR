@@ -61,6 +61,19 @@ The reference article's private algorithms are not represented as reproduced.
 - A region click selects a recorded region. Modification preview reads a published
   strict comparison and rechecks its immutable full graph and attachment mapping.
   It does not design a molecule, rerun extraction or call a model.
+  The active region has a stronger keyline and tint; other regions remain visible.
+  Original atom coordinates and region membership never change with selection.
+  Atom hotspots stay pointer targets while the adjacent named legend owns one
+  keyboard control per region, rather than duplicating each atom in Tab order.
+  An explicit preview click reveals and focuses its inline comparison using the
+  shared reduced-motion preference. Repeating that click reveals the same view,
+  without replaying its API computation. Refresh, language changes and returning
+  to a hidden view do not steal focus or scroll again. Close returns to the exact
+  originating fragment, including while the preview is loading or failed.
+  When asynchronous content extends the document's initial scroll limit, only
+  that explicit request may settle its view once; a user who has moved to another
+  control is never pulled back. Native installed-browser checks verify the
+  comparison's final visible position, not just its programmatic focus.
   Fragment cards use a compact labelled comparison-count group, not a sentence,
   normalized share or inferred score. Zero, unknown and missing counts stay distinct.
   Current conservation reports show only the displayed fragments' nonempty legend

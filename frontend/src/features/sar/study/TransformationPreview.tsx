@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { X } from 'lucide-react';
 import type { StudyRegionSummary, StudyReport } from '../../../api/sarStudyTypes';
 import { sarStudyApi } from '../../../api/sarStudyApi';
 import { useTranslation } from '../../../i18n';
@@ -9,6 +9,7 @@ import { SARFailure } from '../SARFailure';
 import { PageControls } from '../PageControls';
 import { StudyImage } from './StudyImage';
 import { PreviewMeasurements } from './PreviewMeasurements';
+import { preferredScrollBehavior } from '../../../model/motion';
 export function TransformationPreview({
   report,
   summary,
@@ -16,6 +17,8 @@ export function TransformationPreview({
   jobId,
   active,
   onSource,
+  onClose,
+  requestId = 0,
 }: {
   report: StudyReport;
   summary: StudyRegionSummary;
@@ -23,6 +26,8 @@ export function TransformationPreview({
   jobId: string;
   active: boolean;
   onSource: (id: string) => void;
+  onClose: () => void;
+  requestId?: number;
 }) {
   const { t } = useTranslation();
   const regionId = summary.region.id;
@@ -57,8 +62,39 @@ export function TransformationPreview({
     load,
   );
   const data = resource.data;
+  const panel = useRef<HTMLElement>(null);
+  const revealed = useRef<number | null>(null);
+  const settled = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    const newlyOpened = revealed.current !== requestId;
+    if (newlyOpened) {
+      revealed.current = requestId;
+      if (active && panel.current) {
+        panel.current.focus({ preventScroll: true });
+        panel.current.scrollIntoView({ block: 'start', behavior: preferredScrollBehavior() });
+      }
+    }
+    if (!active || settled.current === requestId || !(resource.validated || resource.error)) return;
+    settled.current = requestId;
+    // The loaded content can extend the document beyond its initial scroll limit.
+    // Settle only this explicit request, and never pull the user from another control.
+    if (!newlyOpened && panel.current === document.activeElement) {
+      panel.current?.scrollIntoView({ block: 'start', behavior: preferredScrollBehavior() });
+    }
+  }, [active, requestId, resource.validated, resource.error]);
   return (
-    <section className="sar-transformation" aria-label={t('改造预览')}>
+    <section ref={panel} tabIndex={-1} className="sar-transformation" aria-label={t('改造预览')}>
+      <header>
+        <h3>{t('改造预览')}</h3>
+        <button
+          type="button"
+          className="icon-button"
+          aria-label={t('关闭改造预览')}
+          onClick={onClose}
+        >
+          <X size={17} />
+        </button>
+      </header>
       <label className="sar-preview-member">
         {t('改造化合物')}
         <select
@@ -91,14 +127,6 @@ export function TransformationPreview({
       {resource.error && <SARFailure error={resource.error} onRetry={resource.reload} />}
       {data && resource.validated && (
         <>
-          <header>
-            <h3>{t('改造预览')}</h3>
-            <span className="sar-preview-label">
-              {data.reference.label}
-              <ArrowRight size={14} />
-              {data.candidate.label}
-            </span>
-          </header>
           <div className="sar-molecule-comparison">
             {[data.reference, data.candidate].map((row) => (
               <article key={row.molecule_id}>

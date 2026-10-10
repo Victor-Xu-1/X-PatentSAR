@@ -27,7 +27,7 @@ export function StudyFragmentCard({
   unit: CountingUnit;
   report: StudyReport;
   onRows: (region: string, fragment: string) => void;
-  onPreview: (id: string) => void;
+  onPreview: (id: string, trigger: HTMLButtonElement) => void;
 }) {
   const { t } = useTranslation();
   const candidate = fragment.molecule_ids.find((id) => id !== referenceId);
@@ -73,7 +73,7 @@ export function StudyFragmentCard({
         <button
           type="button"
           className="primary sar-preview-trigger"
-          onClick={() => onPreview(candidate)}
+          onClick={(event) => onPreview(candidate, event.currentTarget)}
         >
           {t('查看改造与变化')}
         </button>

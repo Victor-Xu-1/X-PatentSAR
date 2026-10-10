@@ -31,7 +31,8 @@ function RegionGroup({
   const { t } = useTranslation(),
     [page, setPage] = useState(1);
   const [unit, setUnit] = useState<CountingUnit>('molecules');
-  const [previewId, setPreviewId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{ id: string; request: number } | null>(null);
+  const previewTrigger = useRef<HTMLButtonElement | null>(null);
   const fragments = strongest
     ? summary.fragments
         .filter((f) => f.strong_count > 0)
@@ -107,19 +108,27 @@ function RegionGroup({
             onRows={onRows}
             unit={countingUnit}
             report={report}
-            onPreview={setPreviewId}
+            onPreview={(id, trigger) => {
+              previewTrigger.current = trigger;
+              setPreview((previous) => ({ id, request: (previous?.request ?? 0) + 1 }));
+            }}
           />
         ))}
       </div>
-      {previewId && (
+      {preview && (
         <TransformationPreview
-          key={previewId}
+          key={preview.id}
           report={report}
           summary={summary}
-          moleculeId={previewId}
+          moleculeId={preview.id}
+          requestId={preview.request}
           jobId={jobId}
           active={active}
           onSource={onSource}
+          onClose={() => {
+            setPreview(null);
+            if (previewTrigger.current?.isConnected) previewTrigger.current.focus();
+          }}
         />
       )}
       <ChartLegend
