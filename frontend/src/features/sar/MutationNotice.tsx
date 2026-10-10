@@ -5,9 +5,11 @@ import type { useSARMutation } from './useSARMutation';
 export function MutationNotice({
   mutation,
   disabled = false,
+  showSuccess = true,
 }: {
   mutation: ReturnType<typeof useSARMutation>;
   disabled?: boolean;
+  showSuccess?: boolean;
 }) {
   const { t } = useTranslation();
   return (
@@ -21,7 +23,7 @@ export function MutationNotice({
           {t('已核对服务器状态，使用同一请求身份重试')}
         </button>
       )}
-      {mutation.success && <output>{t('SAR 操作已完成。')}</output>}
+      {showSuccess && mutation.success && <output>{t('SAR 操作已完成。')}</output>}
     </div>
   );
 }

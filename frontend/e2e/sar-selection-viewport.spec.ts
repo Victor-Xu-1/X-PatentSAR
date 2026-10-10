@@ -1,42 +1,5 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
-import { randomUUID } from 'node:crypto';
-
-async function syntheticSnapshot(page: Page) {
-  const origin = new URL(process.env.PATENTSAR_E2E_BASE_URL!);
-  expect(['127.0.0.1', 'localhost', '[::1]']).toContain(origin.hostname);
-  expect(Number(origin.port)).toBeGreaterThanOrEqual(18766);
-  expect(Number(origin.port)).toBeLessThanOrEqual(18866);
-  const project = process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID;
-  expect(project).toMatch(/^[a-f0-9]{32}$/);
-  const initialized = page.waitForResponse(
-    (response) =>
-      response.request().method() === 'GET' &&
-      new URL(response.url()).pathname === '/api/v1/sar/datasets' &&
-      response.ok(),
-  );
-  await page.goto('/#/sar');
-  // Let the UI's single bootstrap settle before reading its current session.
-  // Creating a second session concurrently can replace the context's cookie.
-  await initialized;
-  const session = await page.request.get('/api/v1/session');
-  expect(session.ok()).toBe(true);
-  const created = await page.request.post('/api/v1/sar/datasets/project', {
-    headers: { Origin: origin.origin, 'X-CSRF-Token': (await session.json()).csrf_token },
-    data: { project_id: project, request_id: randomUUID().replaceAll('-', '') },
-  });
-  expect(created.status()).toBe(201);
-  const dataset = await created.json();
-  expect(dataset.row_count).toBe(30);
-  expect(dataset.eligible_count).toBeGreaterThan(0);
-  // A full document load reads the new snapshot list. Hash-only navigation
-  // would retain the pre-snapshot list because this controlled API setup did
-  // not pass through the UI's explicit list invalidation.
-  await page.goto('/?controlled-snapshot=' + dataset.id + '#/sar?dataset=' + dataset.id);
-  await expect(
-    page.getByRole('combobox', { name: 'SAR datasets', exact: true }).locator('option:checked'),
-  ).toHaveText(dataset.title);
-  return dataset;
-}
+import { syntheticSnapshot } from './sarSnapshotFixture';
 
 async function picker(page: Page, mode: 'study' | 'advanced') {
   if (mode === 'advanced') {
