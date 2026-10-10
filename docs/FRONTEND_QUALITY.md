@@ -79,6 +79,9 @@ The reference article's private algorithms are not represented as reproduced.
   context visibly; search and accessible names still include every raw context.
   Its component-owned layout is not inherited from a page's vertical form labels.
   Language changes preserve the query, detail choice and source-owned IDs.
+  Context rows keep their intrinsic content height within the bounded scroll
+  list. A minimum hit target is not a maximum row height: expanded or required
+  duplicate assay conditions must never overlap the next source heading.
   Original IDs are the direct source-detail action. The duplicate source-action
   column starts hidden but remains recoverable in the shared column chooser.
   Requested study source detail uses the existing native modal, not an invisible

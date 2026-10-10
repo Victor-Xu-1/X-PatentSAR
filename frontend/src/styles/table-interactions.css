@@ -218,6 +218,7 @@
 .column-chooser fieldset {
   border: 0;
   display: grid;
+  grid-auto-rows: max-content;
   gap: 4px;
   max-height: 50vh;
   overflow: auto;
