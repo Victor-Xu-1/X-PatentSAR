@@ -361,6 +361,14 @@ for (const width of [390, 800, 1672]) {
           const image = pane.querySelector('img')!.getBoundingClientRect();
           const bounds = pane.getBoundingClientRect();
           const comparison = document.querySelector('.sar-transformation')!.getBoundingClientRect();
+          if (image.top < 0 || image.bottom > innerHeight)
+            console.log('reference_visibility_geometry', {
+              pane: bounds.toJSON(),
+              image: image.toJSON(),
+              comparison: comparison.toJSON(),
+              scrollTop: pane.scrollTop,
+              viewportHeight: innerHeight,
+            });
           return {
             imageVisible: image.top >= 0 && image.bottom <= innerHeight,
             sideBySide: bounds.right < comparison.left,
