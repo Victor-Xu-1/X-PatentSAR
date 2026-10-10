@@ -89,6 +89,12 @@ The reference article's private algorithms are not represented as reproduced.
   that explicit request may settle its view once; a user who has moved to another
   control is never pulled back. Native installed-browser checks verify the
   comparison's final visible position, not just its programmatic focus.
+  Wide-layout explicit reveal also respects the sticky reference's containing
+  block bottom, so a tall multi-reference viewport is not pushed above the
+  screen by unconditional preview-to-page-top alignment. It uses current
+  measured geometry, not fixed patent or viewport assumptions; stacked and
+  not-yet-measured references retain native document flow. No scroll listener,
+  continuous observer or competing focus authority is added by this reveal.
   Fragment cards use a compact labelled comparison-count group, not a sentence,
   normalized share or inferred score. Zero, unknown and missing counts stay distinct.
   Current conservation reports show only the displayed fragments' nonempty legend

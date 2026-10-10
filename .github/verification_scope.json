@@ -10,10 +10,13 @@
     "frontend/src/features/sar/study/RegionMap.tsx",
     "frontend/src/features/sar/study/StudyReferencePane.tsx",
     "frontend/src/features/sar/study/StudyRegionMap.tsx",
+    "frontend/src/features/sar/study/TransformationPreview.tsx",
+    "frontend/src/features/sar/study/revealTransformation.ts",
     "frontend/src/i18n/catalogs/sar.ts",
     "frontend/src/styles/sar-explorer.css",
     "frontend/tests/sar-region-map-interaction.test.tsx",
     "frontend/tests/sar-reference-pane.test.tsx",
+    "frontend/tests/sar-preview-reveal.test.ts",
     "src/patent_sar_extractor/contracts.py"
   ],
   "python_modules": [
@@ -26,6 +29,7 @@
     "frontend/tests/sar-drawing-contrast.test.ts",
     "frontend/tests/sar-inline-selection.test.tsx",
     "frontend/tests/sar-preview.test.tsx",
+    "frontend/tests/sar-preview-reveal.test.ts",
     "frontend/tests/sar-reference-pane.test.tsx",
     "frontend/tests/sar-region-map-interaction.test.tsx",
     "frontend/tests/sar-region.test.tsx"

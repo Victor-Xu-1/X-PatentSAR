@@ -9,7 +9,7 @@ import { SARFailure } from '../SARFailure';
 import { PageControls } from '../PageControls';
 import { StudyImage } from './StudyImage';
 import { PreviewMeasurements } from './PreviewMeasurements';
-import { preferredScrollBehavior } from '../../../model/motion';
+import { revealTransformation } from './revealTransformation';
 export function TransformationPreview({
   report,
   summary,
@@ -71,7 +71,7 @@ export function TransformationPreview({
       revealed.current = requestId;
       if (active && panel.current) {
         panel.current.focus({ preventScroll: true });
-        panel.current.scrollIntoView({ block: 'start', behavior: preferredScrollBehavior() });
+        revealTransformation(panel.current);
       }
     }
     if (!active || settled.current === requestId || !(resource.validated || resource.error)) return;
@@ -79,7 +79,7 @@ export function TransformationPreview({
     // The loaded content can extend the document beyond its initial scroll limit.
     // Settle only this explicit request, and never pull the user from another control.
     if (!newlyOpened && panel.current === document.activeElement) {
-      panel.current?.scrollIntoView({ block: 'start', behavior: preferredScrollBehavior() });
+      if (panel.current) revealTransformation(panel.current);
     }
   }, [active, requestId, resource.validated, resource.error]);
   return (
