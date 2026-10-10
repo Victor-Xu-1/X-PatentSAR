@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { StudyContext } from '../../../api/sarStudyTypes';
 import { useTranslation } from '../../../i18n';
 import { PageControls } from '../PageControls';
-import { contextLabel } from './policyDraft';
+import { contextLabel } from '../presentation';
 export function ContextPicker({
   contexts,
   selected,

@@ -13,6 +13,16 @@ from tools.prepare_browser_fixture import prepare
 
 
 class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
+    def test_source_unit_scope_uses_only_isolated_csv_intake_without_analysis(self):
+        selected = {
+            PREFIX + "sar-source-unit.spec.ts",
+            PREFIX + "product-version.spec.ts",
+        }
+        self.assertEqual(fixture_mode(selected), "sar")
+        self.assertEqual(
+            fixture_mode(selected | {PREFIX + "real-workflow.spec.ts"}), "execution"
+        )
+
     def test_card_inspection_scope_uses_only_isolated_protocol_and_source(self):
         selected = {
             PREFIX + "sar-card-inspection.spec.ts",

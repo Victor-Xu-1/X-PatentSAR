@@ -331,3 +331,12 @@ reads. Candidate marks show only captured selection and priority group (`G`), no
 a locally inferred ordinal rank. Non-selected rows are passive marks; unranked,
 partial and ineligible states stay distinct. Full status/group remains accessible,
 and original scientific facts/reasons remain in the existing source detail.
+
+SAR metric labels share one display-only unit rule across reference selection,
+source records, setup, tables and transformation previews. An exact terminal unit
+already present in a source-owned name is not appended again. A distinct
+observation unit remains visible beside the original name; no conversion,
+case-folding or scientific reconciliation occurs. Raw values (including relation
+symbols), names and identifiers stay unchanged across locale switches. Focused
+installed-browser evidence covers real isolated CSV intake, mapping, reference
+selection and unsaved atom selection only; it must not submit scientific jobs.

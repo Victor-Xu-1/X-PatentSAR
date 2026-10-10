@@ -42,6 +42,13 @@ export function sourceHash(dataset: Dataset, molecule?: Molecule, page: number |
   });
 }
 export const newRequestId = () => crypto.randomUUID().replaceAll('-', '');
+/** One display-only label rule; source names/units and values remain unchanged. */
+export const contextLabel = (context: { name: string; unit: string | null }) =>
+  context.unit &&
+  !context.name.endsWith('(' + context.unit + ')') &&
+  !context.name.endsWith(' ' + context.unit)
+    ? context.name + ' · ' + context.unit
+    : context.name;
 export function gradeOrder(text: string) {
   const values = text
     .split(/\r?\n/)

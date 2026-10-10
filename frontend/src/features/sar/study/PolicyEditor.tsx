@@ -1,7 +1,8 @@
 import type { StudyContext } from '../../../api/sarStudyTypes';
 import { useState } from 'react';
 import { useTranslation } from '../../../i18n';
-import { contextLabel, policyFromDraft } from './policyDraft';
+import { contextLabel } from '../presentation';
+import { policyFromDraft } from './policyDraft';
 import type { PolicyDraft } from './policyDraft';
 export function PolicyEditor({
   context,

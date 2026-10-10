@@ -1,18 +1,25 @@
 {
   "schema_version": 1,
-  "base_sha": "6a0cd2997659a6327137179fd9a3a9e213660846",
+  "base_sha": "b1aaa7499c8586abcca51344a6f998ef7aa90985",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/FRONTEND_QUALITY.md",
-    "frontend/e2e/sar-candidate-source.spec.ts",
+    "frontend/e2e/sar-source-unit.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/features/sar/study/StudyCandidateMark.tsx",
-    "frontend/src/features/sar/study/StudyLeads.tsx",
-    "frontend/src/features/sar/study/StudyReportView.tsx",
+    "frontend/src/features/sar/MoleculeBrowser.tsx",
+    "frontend/src/features/sar/MoleculeEvidence.tsx",
+    "frontend/src/features/sar/presentation.ts",
+    "frontend/src/features/sar/study/ContextPicker.tsx",
+    "frontend/src/features/sar/study/PolicyEditor.tsx",
+    "frontend/src/features/sar/study/PreviewMeasurements.tsx",
+    "frontend/src/features/sar/study/RowFacts.tsx",
+    "frontend/src/features/sar/study/StudyOverview.tsx",
+    "frontend/src/features/sar/study/StudyPolicyNote.tsx",
     "frontend/src/features/sar/study/StudyRowTable.tsx",
-    "frontend/src/styles/sar.css",
-    "frontend/tests/sar-candidate-mark.test.tsx",
+    "frontend/src/features/sar/study/StudySetup.tsx",
+    "frontend/src/features/sar/study/policyDraft.ts",
+    "frontend/tests/sar-source-unit-presentation.test.tsx",
     "src/patent_sar_extractor/contracts.py",
     "tests/test_sar_browser_fixture.py",
     "tools/browser_fixture_mode.py"
@@ -24,14 +31,16 @@
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
-    "frontend/tests/sar-candidate-mark.test.tsx",
+    "frontend/tests/sar-source-unit-presentation.test.tsx",
     "frontend/tests/sar-table-identity.test.tsx",
+    "frontend/tests/sar-study-setup.test.tsx",
     "frontend/tests/sar-study-results.test.tsx",
-    "frontend/tests/sar-card-inspection.test.tsx",
+    "frontend/tests/sar-study-charts.test.tsx",
+    "frontend/tests/sar-fragment-preview.test.tsx",
     "frontend/tests/sar-preview.test.tsx"
   ],
   "browser_tests": [
-    "frontend/e2e/sar-candidate-source.spec.ts",
+    "frontend/e2e/sar-source-unit.spec.ts",
     "frontend/e2e/product-version.spec.ts"
   ]
 }
