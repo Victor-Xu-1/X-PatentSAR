@@ -8,7 +8,16 @@ async function syntheticSnapshot(page: Page) {
   expect(Number(origin.port)).toBeLessThanOrEqual(18866);
   const project = process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID;
   expect(project).toMatch(/^[a-f0-9]{32}$/);
+  const initialized = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'GET' &&
+      new URL(response.url()).pathname === '/api/v1/sar/datasets' &&
+      response.ok(),
+  );
   await page.goto('/#/sar');
+  // Let the UI's single bootstrap settle before reading its current session.
+  // Creating a second session concurrently can replace the context's cookie.
+  await initialized;
   const session = await page.request.get('/api/v1/session');
   expect(session.ok()).toBe(true);
   const created = await page.request.post('/api/v1/sar/datasets/project', {
