@@ -8,7 +8,7 @@ import { useTranslation } from '../../i18n';
 import { safeDrawing } from './safeDrawing';
 import { SourceLinks } from './SourceLinks';
 import { MutationNotice } from './MutationNotice';
-import { useSARMutation } from './useSARMutation';
+import { useRegionSave } from './useRegionSave';
 import { MoleculeEvidence } from './MoleculeEvidence';
 import { RegionLegend } from './study/RegionMap';
 import { SelectionDrawing } from './SelectionDrawing';
@@ -45,24 +45,33 @@ export function RegionSelector({
 }) {
   const { t } = useTranslation();
   const [indices, setIndices] = useState<number[]>([]);
-  const [saved, setSaved] = useState<Region | null>(null);
   const [loadedURL, setLoadedURL] = useState<string | null>(null);
   const [failedURL, setFailedURL] = useState<string | null>(null);
   const [showHighlights, setShowHighlights] = useState(false);
   const panelRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
-  const mutation = useSARMutation({
+  const request: RegionRequest | null =
+    reference.graph_sha256 && indices.length
+      ? {
+          molecule_id: reference.id,
+          expected_dataset_revision: dataset.revision,
+          expected_graph_sha256: reference.graph_sha256,
+          atom_indices: [...indices],
+          ...(name === undefined ? {} : { name }),
+          ...(kind === undefined ? {} : { kind }),
+        }
+      : null;
+  const saving = useRegionSave({
+    datasetId: dataset.id,
+    request,
+    scope,
     active,
-    scope: JSON.stringify([
-      scope,
-      dataset.id,
-      dataset.revision,
-      reference.id,
-      reference.graph_sha256,
-      name,
-      kind,
-    ]),
+    onSaved: (region) => {
+      onRegion(region);
+      onSaved?.(region);
+    },
   });
+  const { mutation, saved } = saving;
   const load = useCallback(
     (signal: AbortSignal) => sarApi.drawing(dataset.id, reference.id, signal),
     [dataset.id, reference.id],
@@ -112,7 +121,7 @@ export function RegionSelector({
     setIndices((old) =>
       old.includes(index) ? old.filter((i) => i !== index) : [...old, index].sort((a, b) => a - b),
     );
-    setSaved(null);
+    saving.clear();
     onRegion(null);
   }
   function save() {
@@ -123,22 +132,7 @@ export function RegionSelector({
       (name !== undefined && (!name.trim() || name.length > 40))
     )
       return;
-    const payload: RegionRequest = {
-      molecule_id: reference.id,
-      expected_dataset_revision: dataset.revision,
-      expected_graph_sha256: reference.graph_sha256,
-      atom_indices: [...indices],
-      ...(name === undefined ? {} : { name }),
-      ...(kind === undefined ? {} : { kind }),
-    };
-    void mutation.run(
-      () => sarApi.saveRegion(dataset.id, payload),
-      (region) => {
-        setSaved(region);
-        onRegion(region);
-        onSaved?.(region);
-      },
-    );
+    if (!saving.canRecover) saving.save();
   }
   return (
     <section
@@ -224,7 +218,7 @@ export function RegionSelector({
           disabled={disabled || !indices.length}
           onClick={() => {
             setIndices([]);
-            setSaved(null);
+            saving.clear();
             onRegion(null);
           }}
         >
@@ -234,7 +228,11 @@ export function RegionSelector({
           type="button"
           className="primary"
           disabled={
-            disabled || !indices.length || savedCurrent || (name !== undefined && !name.trim())
+            disabled ||
+            !indices.length ||
+            savedCurrent ||
+            saving.canRecover ||
+            (name !== undefined && !name.trim())
           }
           onClick={save}
         >
@@ -244,7 +242,18 @@ export function RegionSelector({
       {saved && savedCurrent && graphCurrent && loaded && !image.error && !imageFailed && (
         <output>{t('区域已保存 · {count} 个连接点', { count: saved.attachment_count })}</output>
       )}
-      <MutationNotice mutation={mutation} disabled={!graphCurrent} />
+      {saving.canRecover && (
+        <div className="sar-actions">
+          <button
+            type="button"
+            disabled={!graphCurrent || !loaded || imageFailed || mutation.busy}
+            onClick={saving.recover}
+          >
+            {t('检查已保存选区')}
+          </button>
+        </div>
+      )}
+      <MutationNotice mutation={mutation} disabled={!graphCurrent} showSuccess={false} />
       <SourceLinks dataset={dataset} molecule={drawing.data?.molecule ?? reference} />
       {drawing.data && (
         <details>

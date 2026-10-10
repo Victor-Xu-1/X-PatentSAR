@@ -176,6 +176,11 @@ export const sar: Record<string, string> = {
   更换参考: 'Change reference',
   返回选区: 'Return to selection',
   显示已保存选区: 'Show saved selections',
+  检查已保存选区: 'Check saved selection',
+  '无法核对已保存选区，请稍后再次检查。':
+    'Saved selection could not be checked. Check again later.',
+  '尚未找到唯一匹配的已保存选区，请稍后再次检查。':
+    'A unique matching saved selection has not been confirmed. Check again later.',
   区域名称: 'Selection name',
   选择用途: 'Selection purpose',
   用户确认核心: 'User-confirmed core',

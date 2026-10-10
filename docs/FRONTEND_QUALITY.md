@@ -30,6 +30,15 @@ The reference article's private algorithms are not represented as reproduced.
   moves on. Unselected atom targets are transparent; selected rings and index badges
   leave the original glyph visible. Saved overlays are opt-in. Server geometry,
   immutable-region identity and save validation remain the only chemical authority.
+  Interrupted region saves expose one explicit saved-selection check. It reads
+  the existing current profile and requires a unique complete match of dataset,
+  revision, molecule, graph, atom set, name and purpose; it never replays a POST
+  or invents a saved region. Unconfirmed or failed reads retain the lock and
+  preserve original error details. A late response cannot revive a previous
+  view owner; explicit current readback can restore the same immutable selection.
+  The check stays mounted while reading, and a specific saved-region result
+  replaces the duplicate generic success line. Normal saves, cancellation,
+  input identity, scientific validation and backend defaults remain unchanged.
   A persistent result workbench returning to the same dataset without a job must
   reveal setup from the current route, not its first-mounted disclosure state.
   Project intake starts with the source and one Continue action; the optional
