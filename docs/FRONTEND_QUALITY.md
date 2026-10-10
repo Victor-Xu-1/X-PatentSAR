@@ -318,3 +318,9 @@ Focused native coverage includes two- and three-digit labels from explicit isola
 16- and 116-atom adapter graphs. The other 28 source-adapter rows and the default
 fixture graphs are retained; these samples are layout evidence, not OCSR accuracy,
 scientific extraction or drug-likeness evidence.
+
+An explicit core/fragment member choice reveals and focuses the activity-table
+panel while retaining the same source-bound filter and search. The panel is a
+programmatic focus destination, not an extra tab stop. Ordinary view selection,
+later row/drawing responses, locale changes and refresh do not replay that
+navigation or take focus away from fields the user has started editing.

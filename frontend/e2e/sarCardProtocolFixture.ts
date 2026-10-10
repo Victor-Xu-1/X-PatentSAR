@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 import type { Dataset, Molecule } from '../src/api/sarTypes';
-import { studyJob, studyReport } from '../tests/sar-fixtures';
+import { studyJob, studyReport, studyRow } from '../tests/sar-fixtures';
 
 /** Layout-only report DTOs; no fake record is inserted into a server job store.
  * Drawings come from the real installed RDKit dataset endpoint. Scientific
@@ -36,6 +36,7 @@ export async function cardProtocol(page: Page, dataset: Dataset) {
   report.regions[0]!.fragments[0]!.smiles = molecule.smiles!;
   report.regions[0]!.fragments[0]!.molecule_ids = [molecule.id];
   const drawings: Array<{ kind: string; identifier: string }> = [];
+  const rowRequests: Array<Record<string, string>> = [];
   await page.route(`**/api/v1/sar/datasets/${dataset.id}/jobs`, (route) =>
     route.fulfill({ json: { items: [job], total: 1 } }),
   );
@@ -50,6 +51,29 @@ export async function cardProtocol(page: Page, dataset: Dataset) {
       );
       expect(response.ok()).toBe(true);
       await route.fulfill({ json: { id: identifier, svg: (await response.json()).svg } });
+    } else if (url.pathname.endsWith('/study/rows')) {
+      const filters = Object.fromEntries(url.searchParams);
+      rowRequests.push(filters);
+      const query = (filters.query ?? '').toLocaleLowerCase();
+      const matched = !query || molecule.label.toLocaleLowerCase().includes(query);
+      await route.fulfill({
+        json: {
+          job,
+          page: Number(filters.page),
+          page_size: 50,
+          total: matched ? 1 : 0,
+          items: matched
+            ? [
+                {
+                  ...studyRow,
+                  molecule_id: molecule.id,
+                  label: molecule.label,
+                  properties: molecule.properties ?? {},
+                },
+              ]
+            : [],
+        },
+      });
     } else if (url.pathname.endsWith('/study')) {
       await route.fulfill({ json: { job, report } });
     } else if (url.pathname.endsWith('/' + job.id)) {
@@ -60,5 +84,5 @@ export async function cardProtocol(page: Page, dataset: Dataset) {
   });
   await page.goto(`/?card-protocol=${dataset.id}#/sar?dataset=${dataset.id}&job=${job.id}`);
   await expect(page.getByRole('region', { name: 'Study report', exact: true })).toBeVisible();
-  return { drawings, molecule, report };
+  return { drawings, molecule, report, rowRequests, job };
 }

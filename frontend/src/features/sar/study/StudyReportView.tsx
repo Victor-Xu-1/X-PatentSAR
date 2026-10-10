@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { Dataset } from '../../../api/sarTypes';
 import type { StudyFilter, StudyReport, StudyRow } from '../../../api/sarStudyTypes';
 import { useTranslation } from '../../../i18n';
@@ -10,6 +10,7 @@ import { StudyActivityTable } from './StudyActivityTable';
 import { StudySource } from './StudySource';
 import { selectedContexts } from './tablePresentation';
 import { StudyViewTabs } from './StudyViewTabs';
+import { preferredScrollBehavior } from '../../../model/motion';
 const tabs = [
   '研究概览',
   '研究骨架',
@@ -32,6 +33,9 @@ export function StudyReportView({
   const { t } = useTranslation(),
     id = useId();
   const sourceOwner = JSON.stringify([jobId, dataset.id, dataset.revision, report.input_sha256]);
+  const rowsPanel = useRef<HTMLElement>(null),
+    revealedRows = useRef(0);
+  const [rowsRequest, setRowsRequest] = useState(0);
   const [tab, setTab] = useState(0),
     [source, setSource] = useState<{ owner: string; id: string; row: StudyRow | null } | null>(
       null,
@@ -44,9 +48,19 @@ export function StudyReportView({
     region_id: '',
     fragment_id: '',
   });
+  useEffect(() => {
+    if (revealedRows.current === rowsRequest) return;
+    revealedRows.current = rowsRequest;
+    if (!active || tab !== 5 || !rowsPanel.current) return;
+    // Only an explicit member choice transfers focus. Later reads, locale
+    // changes and ordinary tab visits must not steal the user's current focus.
+    rowsPanel.current.focus({ preventScroll: true });
+    rowsPanel.current.scrollIntoView({ block: 'start', behavior: preferredScrollBehavior() });
+  }, [active, rowsRequest, tab]);
   function showRows(patch: Partial<StudyFilter>) {
     setFilter((old) => ({ ...old, ...patch }));
     setTab(5);
+    setRowsRequest((request) => request + 1);
   }
   function showSource(id: string, row?: StudyRow) {
     setSource({
@@ -102,7 +116,13 @@ export function StudyReportView({
           onSource={showSource}
         />
       </section>
-      <section id={id + '-5'} hidden={tab !== 5} aria-label={t(tabs[5])}>
+      <section
+        id={id + '-5'}
+        ref={rowsPanel}
+        tabIndex={-1}
+        hidden={tab !== 5}
+        aria-label={t(tabs[5])}
+      >
         <StudyActivityTable
           report={report}
           jobId={jobId}

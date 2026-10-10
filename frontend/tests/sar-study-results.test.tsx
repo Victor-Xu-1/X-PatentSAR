@@ -221,6 +221,51 @@ describe('complete study report and lifecycle', () => {
   });
 });
 describe('compact activity-table presentation', () => {
+  it.each(['Scaffolds', 'Variable regions', 'Fragment summary'])(
+    'hands member navigation from %s to the table without replaying on later reads or language changes',
+    async (viewName) => {
+      vi.spyOn(sarApi, 'drawing').mockResolvedValue(sarDrawing);
+      const scroll = vi.spyOn(HTMLElement.prototype, 'scrollIntoView');
+      const original = JSON.stringify(studyReport);
+      render(
+        <StudyReportView report={studyReport} dataset={sarDataset} jobId={studyJob.id} active />,
+      );
+      await userEvent.click(screen.getByRole('button', { name: 'Activity table', exact: true }));
+      await screen.findByRole('table');
+      const search = screen.getByLabelText('Search identifiers or SMILES');
+      await userEvent.type(search, '原文 007B');
+      await userEvent.click(screen.getByRole('button', { name: viewName, exact: true }));
+      await userEvent.click(screen.getByRole('button', { name: 'View molecules', exact: true }));
+      const tablePanel = screen.getByRole('region', { name: 'Activity table', exact: true });
+      await waitFor(() => expect(tablePanel).toHaveFocus());
+      expect(scroll.mock.contexts.at(-1)).toBe(tablePanel);
+      await waitFor(() =>
+        expect(vi.mocked(sarStudyApi.rows).mock.calls.at(-1)?.[3]).toMatchObject({
+          query: '原文 007B',
+          scope: 'all',
+          ...(viewName === 'Scaffolds'
+            ? { scaffold_id: 'core/control', region_id: '', fragment_id: '' }
+            : {
+                scaffold_id: '',
+                region_id: studyReport.regions[0]!.region.id,
+                fragment_id: 'fragment/control',
+              }),
+        }),
+      );
+      const revealed = scroll.mock.calls.length;
+      await userEvent.click(search);
+      await userEvent.type(search, ' 原文');
+      await waitFor(() =>
+        expect(vi.mocked(sarStudyApi.rows).mock.calls.at(-1)?.[3].query).toBe('原文 007B 原文'),
+      );
+      expect(search).toHaveFocus();
+      expect(scroll).toHaveBeenCalledTimes(revealed);
+      await act(() => setLocale('zh-CN'));
+      expect(screen.getByLabelText('搜索编号或 SMILES')).toHaveFocus();
+      expect(scroll).toHaveBeenCalledTimes(revealed);
+      expect(JSON.stringify(studyReport)).toBe(original);
+    },
+  );
   it('starts with previews and compact tools; hidden table options retain source-bound filters and reset without clearing search', async () => {
     render(
       <StudyReportView report={studyReport} dataset={sarDataset} jobId={studyJob.id} active />,
