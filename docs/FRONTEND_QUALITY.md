@@ -70,6 +70,10 @@ The reference article's private algorithms are not represented as reproduced.
   without replaying its API computation. Refresh, language changes and returning
   to a hidden view do not steal focus or scroll again. Close returns to the exact
   originating fragment, including while the preview is loading or failed.
+  When asynchronous content extends the document's initial scroll limit, only
+  that explicit request may settle its view once; a user who has moved to another
+  control is never pulled back. Native installed-browser checks verify the
+  comparison's final visible position, not just its programmatic focus.
   Fragment cards use a compact labelled comparison-count group, not a sentence,
   normalized share or inferred score. Zero, unknown and missing counts stay distinct.
   Current conservation reports show only the displayed fragments' nonempty legend

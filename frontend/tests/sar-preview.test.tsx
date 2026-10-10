@@ -203,6 +203,39 @@ describe('actual transformation preview', () => {
     ).not.toBeInTheDocument();
     expect(opener).toHaveFocus();
   });
+  it('does not pull the user back when pending data finishes after they move to another control', async () => {
+    let finish: ((value: typeof preview) => void) | undefined;
+    vi.mocked(sarStudyApi.preview).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const scroll = vi.spyOn(HTMLElement.prototype, 'scrollIntoView');
+    render(
+      <>
+        <button type="button">Another control</button>
+        <TransformationPreview
+          report={studyReport}
+          summary={summary}
+          moleculeId={candidate.molecule_id}
+          jobId={studyJob.id}
+          active
+          onSource={vi.fn()}
+          onClose={vi.fn()}
+        />
+      </>,
+    );
+    const elsewhere = screen.getByRole('button', { name: 'Another control' });
+    await userEvent.click(elsewhere);
+    const revealed = scroll.mock.calls.length;
+    await act(async () => finish?.(preview));
+    await within(screen.getByRole('region', { name: 'Transformation preview' })).findByText(
+      'Stronger',
+    );
+    expect(elsewhere).toHaveFocus();
+    expect(scroll.mock.calls.length).toBe(revealed);
+  });
   it('keeps censored values and indeterminate changes raw through language changes without a fabricated delta', async () => {
     const data = decodeStudyPreview({
       ...preview,

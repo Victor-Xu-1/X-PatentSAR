@@ -64,13 +64,24 @@ export function TransformationPreview({
   const data = resource.data;
   const panel = useRef<HTMLElement>(null);
   const revealed = useRef<number | null>(null);
+  const settled = useRef<number | null>(null);
   useLayoutEffect(() => {
-    if (revealed.current === requestId) return;
-    revealed.current = requestId;
-    if (!active || !panel.current) return;
-    panel.current.focus({ preventScroll: true });
-    panel.current.scrollIntoView({ block: 'start', behavior: preferredScrollBehavior() });
-  }, [active, requestId]);
+    const newlyOpened = revealed.current !== requestId;
+    if (newlyOpened) {
+      revealed.current = requestId;
+      if (active && panel.current) {
+        panel.current.focus({ preventScroll: true });
+        panel.current.scrollIntoView({ block: 'start', behavior: preferredScrollBehavior() });
+      }
+    }
+    if (!active || settled.current === requestId || !(resource.validated || resource.error)) return;
+    settled.current = requestId;
+    // The loaded content can extend the document beyond its initial scroll limit.
+    // Settle only this explicit request, and never pull the user from another control.
+    if (!newlyOpened && panel.current === document.activeElement) {
+      panel.current?.scrollIntoView({ block: 'start', behavior: preferredScrollBehavior() });
+    }
+  }, [active, requestId, resource.validated, resource.error]);
   return (
     <section ref={panel} tabIndex={-1} className="sar-transformation" aria-label={t('改造预览')}>
       <header>
