@@ -1,20 +1,15 @@
 {
   "schema_version": 1,
-  "base_sha": "bfc74a533adebd709b54888ceb68cac1e2da3373",
+  "base_sha": "00c836a9bfc2d0a176b6ab08e8b22ccf23a9b2ac",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/FRONTEND_QUALITY.md",
-    "frontend/e2e/sar-card-inspection.spec.ts",
+    "frontend/e2e/sar-member-navigation.spec.ts",
     "frontend/e2e/sarCardProtocolFixture.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/features/sar/study/StudyFragmentCard.tsx",
-    "frontend/src/features/sar/study/StudyLeads.tsx",
-    "frontend/src/features/sar/study/StudyScaffolds.tsx",
-    "frontend/src/styles/sar-explorer.css",
-    "frontend/src/styles/sar-study.css",
-    "frontend/src/styles/sar.css",
-    "frontend/tests/sar-card-inspection.test.tsx",
+    "frontend/src/features/sar/study/StudyReportView.tsx",
+    "frontend/tests/sar-study-results.test.tsx",
     "src/patent_sar_extractor/contracts.py",
     "tests/test_sar_browser_fixture.py",
     "tools/browser_fixture_mode.py"
@@ -26,12 +21,12 @@
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
-    "frontend/tests/sar-card-inspection.test.tsx",
-    "frontend/tests/sar-molecular-focus.test.tsx",
     "frontend/tests/sar-study-results.test.tsx",
+    "frontend/tests/sar-card-inspection.test.tsx",
     "frontend/tests/sar-fragment-preview.test.tsx"
   ],
   "browser_tests": [
+    "frontend/e2e/sar-member-navigation.spec.ts",
     "frontend/e2e/sar-card-inspection.spec.ts",
     "frontend/e2e/product-version.spec.ts"
   ]
