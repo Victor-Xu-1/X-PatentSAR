@@ -7,7 +7,19 @@ async function paintedSize(image: Locator) {
     const picture = node as HTMLImageElement;
     const box = picture.getBoundingClientRect();
     const scale = Math.min(box.width / picture.naturalWidth, box.height / picture.naturalHeight);
-    return { width: picture.naturalWidth * scale, height: picture.naturalHeight * scale };
+    const style = getComputedStyle(picture);
+    const canvas = picture.parentElement!;
+    return {
+      width: picture.naturalWidth * scale,
+      height: picture.naturalHeight * scale,
+      box: box.toJSON(),
+      naturalWidth: picture.naturalWidth,
+      naturalHeight: picture.naturalHeight,
+      maxHeight: style.maxHeight,
+      maxWidth: style.maxWidth,
+      canvas: canvas.getBoundingClientRect().toJSON(),
+      canvasInline: canvas.getAttribute('style'),
+    };
   });
 }
 
@@ -87,6 +99,10 @@ for (const width of [390, 800, 1672]) {
         '400%',
       );
       const magnifiedSize = await paintedSize(enlarged);
+      console.log(
+        'card_magnification_geometry',
+        JSON.stringify({ tab: sample.tab, width, fitSize, magnifiedSize }),
+      );
       expect(magnifiedSize.width / fitSize.width).toBeCloseTo(4, 1);
       expect(magnifiedSize.height / fitSize.height).toBeCloseTo(4, 1);
       expect(
