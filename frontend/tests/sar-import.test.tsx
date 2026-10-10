@@ -17,6 +17,17 @@ beforeEach(() => {
   });
 });
 describe('two explicit SAR intake choices', () => {
+  it('guides the project choice with one next action and keeps the optional name out of the initial form', async () => {
+    const create = vi.spyOn(sarApi, 'createProject').mockResolvedValue(sarDataset);
+    render(<SARImport active sourceProjectId="project-control" onCreated={vi.fn()} />);
+    await screen.findByRole('option', { name: '原文项目' });
+    expect(screen.getByLabelText('Dataset title')).not.toBeVisible();
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled();
+    expect(create).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByText('Name (optional)'));
+    expect(screen.getByLabelText('Dataset title')).toBeVisible();
+    expect(create).not.toHaveBeenCalled();
+  });
   it('rejects over-limit CSV files before sending bytes to the server', async () => {
     const preview = vi.spyOn(sarApi, 'preview');
     render(<SARImport active sourceProjectId={null} onCreated={vi.fn()} />);
@@ -36,6 +47,7 @@ describe('two explicit SAR intake choices', () => {
     expect(await screen.findByRole('option', { name: '原文项目' })).toBeVisible();
     expect(screen.getByLabelText('Source project')).toHaveValue('project-control');
     const title = screen.getByLabelText('Dataset title');
+    await userEvent.click(screen.getByText('Name (optional)'));
     await userEvent.type(title, '用户 snapshot draft');
     await act(() => setLocale('zh-CN'));
     expect(screen.getByLabelText('数据集名称')).toBe(title);
@@ -49,7 +61,7 @@ describe('two explicit SAR intake choices', () => {
     const created = vi.fn();
     render(<SARImport active sourceProjectId="project-control" onCreated={created} />);
     await screen.findByRole('option', { name: '原文项目' });
-    await userEvent.click(screen.getByRole('button', { name: 'Create independent snapshot' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
     await waitFor(() => expect(created).toHaveBeenCalledWith(sarDataset));
     expect(create.mock.calls[0]?.[0]).toEqual({
       project_id: 'project-control',
@@ -108,14 +120,15 @@ describe('two explicit SAR intake choices', () => {
     const created = vi.fn();
     render(<SARImport active sourceProjectId="project-control" onCreated={created} />);
     await screen.findByRole('option', { name: '原文项目' });
+    await userEvent.click(screen.getByText('Name (optional)'));
     await userEvent.type(screen.getByLabelText('Dataset title'), 'frozen draft');
-    await userEvent.click(screen.getByRole('button', { name: 'Create independent snapshot' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
     const retry = await screen.findByRole('button', {
       name: 'I checked server state; retry with the same request identity',
     });
     expect(create).toHaveBeenCalledOnce();
     expect(screen.getByLabelText('Dataset title')).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Create independent snapshot' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
     await userEvent.click(retry);
     await waitFor(() => expect(created).toHaveBeenCalledWith(sarDataset));
     expect(create.mock.calls[1]?.[0]).toBe(create.mock.calls[0]?.[0]);

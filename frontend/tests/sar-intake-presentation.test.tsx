@@ -35,6 +35,8 @@ it('defaults a later result route to collapsed intake and preserves explicit imp
   expect(api.projects).not.toHaveBeenCalled();
   await userEvent.click(screen.getByRole('button', { name: 'Import data' }));
   const title = await screen.findByLabelText('Dataset title');
+  expect(title).not.toBeVisible();
+  await userEvent.click(screen.getByText('Name (optional)'));
   await userEvent.type(title, 'source-owned title');
   await act(() => setLocale('zh-CN'));
   expect(screen.getByLabelText('数据集名称')).toBe(title);

@@ -1,6 +1,6 @@
 import type { Atom, Region } from '../../../api/sarTypes';
 import { useRef } from 'react';
-import { useInlineSelection } from './useInlineSelection';
+import { useInlineSelection } from '../../../components/useInlineSelection';
 const colors = [
   '#137e78',
   '#466ca4',

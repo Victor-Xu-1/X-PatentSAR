@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect } from 'react';
 import type { RefObject } from 'react';
 
-/** Reveal a selected control without scrolling the page or moving focus. */
+/** Shared inline navigation: reveal selection without scrolling the page or moving focus. */
 export function useInlineSelection(ref: RefObject<HTMLElement | null>, selector: string) {
   const reveal = useCallback(() => {
     const strip = ref.current;

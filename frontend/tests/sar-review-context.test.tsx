@@ -79,11 +79,10 @@ describe('SAR review: source and completion ownership', () => {
     const routeA = { ...emptyRoute, view: 'sar' as const, projectId: 'source-A' };
     const routeB = { ...routeA, projectId: 'source-B' };
     const { rerender } = render(<SARPage active route={routeA} navigate={navigate} />);
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Create independent snapshot' })).toBeEnabled(),
-    );
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled());
+    await userEvent.click(screen.getByText('Name (optional)'));
     await userEvent.type(screen.getByLabelText('Dataset title'), 'draft 原文');
-    await userEvent.click(screen.getByRole('button', { name: 'Create independent snapshot' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
     rerender(
       <SARPage
         active={false}
@@ -137,7 +136,7 @@ describe('SAR review: concise, explicit intake', () => {
     expect(screen.queryByText('No SAR datasets yet')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('SAR datasets')).not.toBeInTheDocument();
     expect(screen.getAllByRole('heading', { name: 'Import data' })).toHaveLength(1);
-    const details = screen.getByText('Method and scope').closest('details');
+    const details = screen.getByText('Name (optional)').closest('details');
     expect(details).not.toHaveAttribute('open');
     await userEvent.click(screen.getByRole('button', { name: 'Import data' }));
     expect(screen.getByText('No SAR datasets yet')).toBeVisible();

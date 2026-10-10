@@ -8,7 +8,7 @@ import type { CountingUnit } from './chartPresentation';
 import { TransformationPreview } from './TransformationPreview';
 import { StudyPolicyNote, hasStrongRule } from './StudyPolicyNote';
 import { StudyFragmentCard } from './StudyFragmentCard';
-import { useInlineSelection } from './useInlineSelection';
+import { useInlineSelection } from '../../../components/useInlineSelection';
 function RegionGroup({
   summary,
   index,

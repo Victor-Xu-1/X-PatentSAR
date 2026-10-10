@@ -119,6 +119,7 @@ export function TransformationPreview({
                   atomRegionId={regionId}
                   label={row.label}
                   active={active}
+                  inspectable
                 />
               </article>
             ))}
