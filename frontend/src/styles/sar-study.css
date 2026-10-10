@@ -450,7 +450,8 @@
   align-items: center;
   margin-block: 12px 18px;
 }
-.sar-lead-card .sar-study-image img {
+.sar-lead-card .sar-study-image > img,
+.sar-lead-card .sar-study-image > .sar-image-focus-trigger > img {
   max-height: 240px;
 }
 .sar-policy-note {

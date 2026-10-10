@@ -208,6 +208,10 @@ The reference article's private algorithms are not represented as reproduced.
   names rather than putting raw SMILES in a modal title; source-owned names and all
   underlying identifiers, structures and report measurements remain unchanged.
   Opening, zooming or translating a card never requests another drawing or model.
+  Thumbnail sizing targets only the direct thumbnail or its image-trigger child,
+  never every descendant image inside an inspector. Native magnification checks
+  measure the object-fit painted image at Fit and 400%, not just the toolbar
+  percentage or scroll-canvas size; the actual drawing must scale fourfold.
   Layout-only browser report DTOs are explicitly synthetic and never inserted into
   server job records; actual backend SVGs and completed real-data post-deploy paths
   provide separate rendering/integration evidence without a new scientific run.
