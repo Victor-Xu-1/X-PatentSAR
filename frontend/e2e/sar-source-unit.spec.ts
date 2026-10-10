@@ -95,7 +95,9 @@ for (const width of [390, 800, 1672]) {
       .selectOption('lower');
     await setup.getByRole('button', { name: 'Continue', exact: true }).click();
     await setup.getByText('Add a named selection', { exact: true }).click();
-    const picker = page.getByRole('region', { name: 'Choose reference molecule', exact: true });
+    const picker = page.getByRole('region', {
+      name: /^(Choose reference molecule|选择参考分子)$/,
+    });
     const row = picker
       .locator('tbody tr')
       .filter({ has: page.getByRole('rowheader', { name: 'Example 1', exact: true }) });
