@@ -186,6 +186,13 @@
   border-radius: var(--radius-control);
   padding: 6px;
 }
+.column-value-choices > fieldset {
+  /* The ordinary outer box clips native fieldset content when flex-constrained. */
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
 .column-value-choices label {
   display: flex;
   gap: 8px;
