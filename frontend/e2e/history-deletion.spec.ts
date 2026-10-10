@@ -93,6 +93,9 @@ test.beforeEach(async ({ page }) => {
   expect(session.ok(), 'Bootstrap the same-origin session before fixture API reads').toBe(true);
   await page.goto('/#/projects');
   const response = await page.request.get(`/api/v1/projects/${projectId}`);
+  await page
+    .getByRole('combobox', { name: 'Interface language', exact: true })
+    .selectOption('zh-CN');
   expect(response.ok()).toBe(true);
   const source = decodeProject(await response.json());
   expect(source.title).toBe('CI controlled historical adapter fixture (not extraction evidence)');
