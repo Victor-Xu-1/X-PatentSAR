@@ -377,6 +377,11 @@
   z-index: 1;
   background: var(--surface-subtle);
 }
+.sar-study-table thead th.sar-study-identifier {
+  left: 0;
+  z-index: 2;
+  box-shadow: 1px 0 0 var(--line-soft);
+}
 .sar-study > .sar-actions {
   border-top: 1px solid var(--line-soft);
   padding-top: 16px;
