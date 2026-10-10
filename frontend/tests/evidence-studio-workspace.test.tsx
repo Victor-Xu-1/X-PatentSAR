@@ -5,7 +5,7 @@ import { api } from '../src/api';
 import { PdfPane } from '../src/features/pdf/PdfPane';
 import { ResultsTable } from '../src/features/results/ResultsTable';
 import { JobsPage } from '../src/features/jobs/JobsPage';
-import { compound, job, page, project } from './fixtures';
+import { compound, job, page, project, projectListResource } from './fixtures';
 
 describe('Evidence Studio compact workspace controls', () => {
   it('uses short PDF captions while preserving explicit accessible names and keyboard switching', async () => {
@@ -60,7 +60,7 @@ describe('Evidence Studio compact workspace controls', () => {
   it('distinguishes repeated task rows with one real timestamp without expanding technical details', async () => {
     const stopped = { ...job, status: 'interrupted' as const };
     vi.spyOn(api, 'jobs').mockResolvedValue({ items: [stopped] });
-    render(<JobsPage projects={[project]} ready onOpen={vi.fn()} />);
+    render(<JobsPage projects={projectListResource([project])} ready onOpen={vi.fn()} />);
     await screen.findByRole('button', { name: project.title });
     const timestamp = document.querySelector('time.job-timestamp')!;
     expect(timestamp).toBeVisible();

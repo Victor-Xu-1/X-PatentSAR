@@ -5,7 +5,7 @@ import { api } from '../src/api';
 import { JobActions } from '../src/features/jobs/JobActions';
 import { JobsPage } from '../src/features/jobs/JobsPage';
 import { setLocale } from '../src/i18n';
-import { job, project } from './fixtures';
+import { job, project, projectListResource } from './fixtures';
 
 beforeEach(() => setLocale('en'));
 
@@ -42,7 +42,7 @@ it.each(['complete', 'failed', 'cancelled', 'interrupted', 'queued', 'running'] 
 it('passes the existing project navigation from task records and retains source identity across languages', async () => {
   vi.spyOn(api, 'jobs').mockResolvedValue({ items: [{ ...job, status: 'complete' }] });
   const onOpen = vi.fn();
-  render(<JobsPage projects={[project]} ready={false} onOpen={onOpen} />);
+  render(<JobsPage projects={projectListResource([project])} ready={false} onOpen={onOpen} />);
   const opener = await screen.findByRole('button', { name: 'Open workspace' });
   expect(screen.getByRole('button', { name: project.title })).toBeVisible();
   await act(() => setLocale('zh-CN'));

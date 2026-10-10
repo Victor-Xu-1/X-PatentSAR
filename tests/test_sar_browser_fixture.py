@@ -13,6 +13,16 @@ from tools.prepare_browser_fixture import prepare
 
 
 class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
+    def test_jobs_project_recovery_scope_is_read_only_and_never_starts_a_producer(self):
+        selected = {
+            PREFIX + "jobs-project-recovery.spec.ts",
+            PREFIX + "product-version.spec.ts",
+        }
+        self.assertEqual(fixture_mode(selected), "read-only")
+        self.assertEqual(
+            fixture_mode(selected | {PREFIX + "real-workflow.spec.ts"}), "execution"
+        )
+
     def test_source_unit_scope_uses_only_isolated_csv_intake_without_analysis(self):
         selected = {
             PREFIX + "sar-source-unit.spec.ts",

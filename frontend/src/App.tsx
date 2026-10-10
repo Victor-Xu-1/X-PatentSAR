@@ -41,7 +41,7 @@ export default function App() {
     loadProject,
   );
   const project = projectResource.data;
-  const jobs = useJobs(id, connected && Boolean(id) && route.view === 'workspace');
+  const jobs = useJobs(id, { enabled: connected && Boolean(id) && route.view === 'workspace' });
   function openProject(projectId: string) {
     setQuery('');
     navigate({ ...emptyRoute, view: 'workspace', projectId });
@@ -152,7 +152,7 @@ export default function App() {
           )}
           {route.view === 'jobs' && connected && (
             <JobsPage
-              projects={projects.data?.items ?? []}
+              projects={projects}
               ready={connection.data!.health.ready}
               onOpen={openProject}
               onHistoryChanged={historyChanged}

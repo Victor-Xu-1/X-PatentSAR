@@ -1,29 +1,50 @@
 {
   "schema_version": 1,
-  "base_sha": "f0810bd031e0343a0842ba997aab70ee3340edd6",
+  "base_sha": "3fe24c68f909de3f05b6d7a2d40f1d8b43a2daf4",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/FRONTEND_QUALITY.md",
-    "frontend/e2e/column-filter-viewport.spec.ts",
+    "frontend/e2e/jobs-project-recovery.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/features/results/ColumnMenu.tsx",
-    "frontend/tests/column-menu-placement.test.tsx",
-    "src/patent_sar_extractor/contracts.py"
+    "frontend/src/App.tsx",
+    "frontend/src/features/jobs/JobActions.tsx",
+    "frontend/src/features/jobs/JobsPage.tsx",
+    "frontend/src/features/jobs/useJobs.ts",
+    "frontend/tests/evidence-studio-pages.test.tsx",
+    "frontend/tests/evidence-studio-workspace.test.tsx",
+    "frontend/tests/fixtures.ts",
+    "frontend/tests/history-resources.test.tsx",
+    "frontend/tests/i18n-operations-jobs.test.tsx",
+    "frontend/tests/job-workspace-actions.test.tsx",
+    "frontend/tests/jobs-metadata-recovery.test.tsx",
+    "frontend/tests/minimal-pages.test.tsx",
+    "frontend/tests/ui-craft-pages.test.tsx",
+    "frontend/tests/visual-sidecar-pages.test.tsx",
+    "src/patent_sar_extractor/contracts.py",
+    "tests/test_sar_browser_fixture.py",
+    "tools/browser_fixture_mode.py"
   ],
   "python_modules": [
-    "tests.test_sar_browser_fixture.SARBrowserFixtureTests.test_filter_viewport_scope_uses_only_read_only_source",
+    "tests.test_sar_browser_fixture",
     "tests.test_product_version_compatibility",
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
-    "frontend/tests/column-menu-placement.test.tsx",
-    "frontend/tests/column-filter-scroll.test.tsx",
-    "frontend/tests/excel-autofilter.test.tsx"
+    "frontend/tests/jobs-metadata-recovery.test.tsx",
+    "frontend/tests/job-workspace-actions.test.tsx",
+    "frontend/tests/history-resources.test.tsx",
+    "frontend/tests/i18n-operations-jobs.test.tsx",
+    "frontend/tests/app.test.tsx",
+    "frontend/tests/visual-sidecar-pages.test.tsx",
+    "frontend/tests/evidence-studio-workspace.test.tsx",
+    "frontend/tests/evidence-studio-pages.test.tsx",
+    "frontend/tests/ui-craft-pages.test.tsx",
+    "frontend/tests/minimal-pages.test.tsx"
   ],
   "browser_tests": [
-    "frontend/e2e/column-filter-viewport.spec.ts",
+    "frontend/e2e/jobs-project-recovery.spec.ts",
     "frontend/e2e/product-version.spec.ts"
   ]
 }

@@ -9,7 +9,7 @@ import { ProjectsPage } from '../src/features/projects/ProjectsPage';
 import { NewTaskPage } from '../src/features/tasks/NewTaskPage';
 import { acceptanceLabels, dateText } from '../src/model/presentation';
 import { completeEnvironmentCatalog, readyEnvironmentCatalog } from './environment-setup-fixtures';
-import { job, project } from './fixtures';
+import { job, project, projectListResource } from './fixtures';
 
 // Isolated component contracts only; no live API or preview sample content.
 describe('bounded visual sidecar page contracts', () => {
@@ -83,7 +83,7 @@ describe('bounded visual sidecar page contracts', () => {
     vi.spyOn(api, 'jobs').mockResolvedValue({ items: [observed] });
     vi.spyOn(api, 'job').mockResolvedValue(observed);
     const onOpen = vi.fn();
-    render(<JobsPage projects={[project]} ready onOpen={onOpen} />);
+    render(<JobsPage projects={projectListResource([project])} ready onOpen={onOpen} />);
     await screen.findByRole('button', { name: project.title });
     const summary = screen.getByLabelText('任务详情');
     expect(summary).toHaveTextContent('任务详情');
@@ -121,7 +121,7 @@ describe('bounded visual sidecar page contracts', () => {
     vi.spyOn(api, 'jobs').mockResolvedValue({ items: [stopped] });
     vi.spyOn(api, 'job').mockResolvedValue(stopped);
     const create = vi.spyOn(api, 'createJob');
-    render(<JobsPage projects={projects} ready={ready} onOpen={vi.fn()} />);
+    render(<JobsPage projects={projectListResource(projects)} ready={ready} onOpen={vi.fn()} />);
     expect(await screen.findByRole('button', { name: '继续提取' })).toBeDisabled();
     expect(screen.getByRole('button', { name: '运行提取' })).toBeDisabled();
     expect(screen.getByText('运行失败')).toBeVisible();

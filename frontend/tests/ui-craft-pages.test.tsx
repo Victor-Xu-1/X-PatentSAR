@@ -11,7 +11,7 @@ import { ProjectsPage } from '../src/features/projects/ProjectsPage';
 import { dateText, acceptanceLabels } from '../src/model/presentation';
 import { environmentOperation } from './environment-fixtures';
 import { completeEnvironmentCatalog } from './environment-setup-fixtures';
-import { job, project } from './fixtures';
+import { job, project, projectListResource } from './fixtures';
 
 describe('supporting-page craft and accessible state contracts', () => {
   it('uses the visible task-details caption as its sole accessible name', () => {
@@ -63,7 +63,7 @@ describe('supporting-page craft and accessible state contracts', () => {
     });
     vi.spyOn(api, 'job').mockResolvedValue(finished);
     const onOpen = vi.fn();
-    render(<JobsPage projects={[project]} ready onOpen={onOpen} />);
+    render(<JobsPage projects={projectListResource([project])} ready onOpen={onOpen} />);
     const list = await screen.findByRole('list', { name: '提取任务记录' });
     expect(list.tagName).toBe('UL');
     const rows = within(list)

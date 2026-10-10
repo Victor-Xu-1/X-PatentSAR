@@ -8,7 +8,7 @@ import { JobsPage } from '../src/features/jobs/JobsPage';
 import { ProjectsPage } from '../src/features/projects/ProjectsPage';
 import { environmentOperation } from './environment-fixtures';
 import { completeEnvironmentCatalog } from './environment-setup-fixtures';
-import { health, page, results, session } from './fixtures';
+import { health, page, results, session, projectListResource } from './fixtures';
 import {
   historyEntry,
   historyList,
@@ -65,7 +65,7 @@ describe('history mutations refresh only affected resource views', () => {
       .mockResolvedValueOnce(blocked)
       .mockResolvedValue({ ...blocked, can_delete: true, blocked_reason: null });
     vi.mocked(api.deleteHistory).mockResolvedValue(trashed(blocked));
-    render(<JobsPage projects={[project]} ready={false} onOpen={vi.fn()} />);
+    render(<JobsPage projects={projectListResource([project])} ready={false} onOpen={vi.fn()} />);
     await userEvent.click(await screen.findByRole('button', { name: /^删除 / }));
     expect(await screen.findByText('归属尚未核对。')).toBeVisible();
     expect(screen.getByRole('button', { name: '确认移入回收站' })).toBeDisabled();
@@ -78,13 +78,15 @@ describe('history mutations refresh only affected resource views', () => {
   });
   it('clears a removed job project filter rather than retaining an inaccessible selection', async () => {
     vi.spyOn(api, 'jobs').mockResolvedValue({ items: [] });
-    const view = render(<JobsPage projects={[project]} ready={false} onOpen={vi.fn()} />);
+    const view = render(
+      <JobsPage projects={projectListResource([project])} ready={false} onOpen={vi.fn()} />,
+    );
     await screen.findByText('尚无提取任务');
     await userEvent.selectOptions(screen.getByLabelText('筛选任务所属项目'), project.id);
     await waitFor(() =>
       expect(api.jobs).toHaveBeenLastCalledWith(project.id, expect.any(AbortSignal)),
     );
-    view.rerender(<JobsPage projects={[]} ready={false} onOpen={vi.fn()} />);
+    view.rerender(<JobsPage projects={projectListResource([])} ready={false} onOpen={vi.fn()} />);
     await waitFor(() => expect(screen.getByLabelText('筛选任务所属项目')).toHaveValue(''));
     expect(api.jobs).toHaveBeenLastCalledWith(null, expect.any(AbortSignal));
   });
@@ -93,7 +95,7 @@ describe('history mutations refresh only affected resource views', () => {
     const old = historyEntry({ kind: 'job', id: '4'.repeat(32), title: '旧的合成任务' });
     vi.mocked(api.history).mockResolvedValue(historyList([old], { total: 501 }));
     vi.mocked(api.historyEntry).mockResolvedValue(old);
-    render(<JobsPage projects={[project]} ready={false} onOpen={vi.fn()} />);
+    render(<JobsPage projects={projectListResource([project])} ready={false} onOpen={vi.fn()} />);
     await screen.findByText('尚无提取任务');
     await userEvent.selectOptions(screen.getByLabelText('筛选任务所属项目'), project.id);
     await userEvent.click(screen.getByRole('button', { name: '全部记录' }));
