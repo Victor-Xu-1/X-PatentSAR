@@ -61,6 +61,7 @@ for (const [width, height] of [
       await expect(menu.getByLabel('筛选值 ' + raw, { exact: true })).toBeChecked();
       expect((await list.boundingBox())!.height).toBeGreaterThanOrEqual(144);
       await menu.screenshot({ path: test.info().outputPath('long-filter-390-844-zh.png') });
+      await menu.getByLabel('筛选值 ' + raw, { exact: true }).focus();
     }
     await page.keyboard.press('Escape');
     await expect(opener).toBeFocused();
