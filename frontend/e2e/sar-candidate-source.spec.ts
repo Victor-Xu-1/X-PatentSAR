@@ -102,7 +102,9 @@ for (const width of [390, 800, 1672]) {
     await expect(mark).toBeDisabled();
     await expect(sourceButton).toBeDisabled();
     await expect(page.getByRole('dialog')).toHaveCount(0);
-    await sourceButton.scrollIntoViewIfNeeded();
+    await sourceButton.evaluate((element) =>
+      element.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' }),
+    );
     for (const button of [identifier, mark, sourceButton])
       expect(
         await button.evaluate((element) => {
