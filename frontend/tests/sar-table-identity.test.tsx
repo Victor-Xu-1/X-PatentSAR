@@ -25,12 +25,11 @@ describe('SAR source-identity column', () => {
     render(table());
     const heading = screen.getByRole('columnheader', {
       name: locale === 'en' ? 'Original ID' : '原文编号',
-      exact: true,
     });
     expect(heading).toHaveClass('sar-study-identifier');
     expect(heading).toHaveAttribute('scope', 'col');
-    expect(screen.getByRole('rowheader', { name: 'Example A 原文', exact: true })).toBeVisible();
-    expect(screen.getByRole('columnheader', { name: 'MW', exact: true })).not.toHaveClass(
+    expect(screen.getByRole('rowheader', { name: 'Example A 原文' })).toBeVisible();
+    expect(screen.getByRole('columnheader', { name: 'MW' })).not.toHaveClass(
       'sar-study-identifier',
     );
   });
