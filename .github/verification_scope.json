@@ -1,34 +1,44 @@
 {
   "schema_version": 1,
-  "base_sha": "66d628863bf07b93b19369a4046d87419e14c2d1",
+  "base_sha": "fc9a6dd8218cf9c2677cd01980d5623fe992701e",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/FRONTEND_QUALITY.md",
-    "frontend/e2e/column-filter-viewport.spec.ts",
+    "frontend/e2e/sar-selection-viewport.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/features/results/ColumnValueChecklist.tsx",
-    "frontend/src/styles/table-interactions.css",
-    "frontend/tests/column-filter-scroll.test.tsx",
+    "frontend/src/features/sar/DatasetWorkbench.tsx",
+    "frontend/src/features/sar/MoleculeBrowser.tsx",
+    "frontend/src/features/sar/MoleculeEvidence.tsx",
+    "frontend/src/features/sar/ReferenceWorkspace.tsx",
+    "frontend/src/features/sar/RegionSelector.tsx",
+    "frontend/src/features/sar/SelectionDrawing.tsx",
+    "frontend/src/features/sar/study/StudyRegionEditor.tsx",
+    "frontend/src/features/sar/useSelectionReveal.ts",
+    "frontend/src/i18n/catalogs/sar.ts",
+    "frontend/src/main.tsx",
+    "frontend/src/styles/sar-selection.css",
+    "frontend/src/styles/sar.css",
+    "frontend/tests/sar-reference-selection.test.tsx",
+    "frontend/tests/sar-workbench.test.tsx",
     "src/patent_sar_extractor/contracts.py",
     "tests/test_sar_browser_fixture.py",
     "tools/browser_fixture_mode.py"
   ],
   "python_modules": [
-    "tests.test_sar_browser_fixture.SARBrowserFixtureTests.test_filter_viewport_scope_uses_only_read_only_source",
+    "tests.test_sar_browser_fixture.SARBrowserFixtureTests.test_selection_viewport_scope_uses_snapshot_only_synthetic_source",
+    "tests.test_sar_browser_fixture.SARBrowserFixtureTests.test_sar_fixture_creates_adapter_source_but_never_runs_extraction",
     "tests.test_product_version_compatibility",
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
-    "frontend/tests/column-filter-scroll.test.tsx",
-    "frontend/tests/excel-autofilter.test.tsx",
-    "frontend/tests/filter-values-loading.test.tsx",
-    "frontend/tests/table-column-controls.test.tsx",
-    "frontend/tests/column-value-selection.test.ts"
+    "frontend/tests/sar-reference-selection.test.tsx",
+    "frontend/tests/sar-region.test.tsx",
+    "frontend/tests/sar-workbench.test.tsx"
   ],
   "browser_tests": [
-    "frontend/e2e/column-filter-viewport.spec.ts",
+    "frontend/e2e/sar-selection-viewport.spec.ts",
     "frontend/e2e/product-version.spec.ts"
   ]
 }

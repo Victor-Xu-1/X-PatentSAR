@@ -5,10 +5,12 @@ export function MoleculeEvidence({
   dataset,
   molecule,
   includeLinks = true,
+  includeIssues = true,
 }: {
   dataset: Dataset;
   molecule: Molecule;
   includeLinks?: boolean;
+  includeIssues?: boolean;
 }) {
   const { t } = useTranslation();
   return (
@@ -48,7 +50,7 @@ export function MoleculeEvidence({
           </li>
         ))}
       </ul>
-      {!!molecule.issues.length && (
+      {includeIssues && !!molecule.issues.length && (
         <ul>
           {molecule.issues.map((issue, i) => (
             <li key={i}>{issue}</li>

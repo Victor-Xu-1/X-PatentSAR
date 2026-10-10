@@ -173,6 +173,9 @@ export const sar: Record<string, string> = {
   '无区域也可运行概览；不猜测等级、阈值或实验条件。':
     'Overview can run without regions. No grades, thresholds or conditions are guessed.',
   新增命名区域: 'Add a named selection',
+  更换参考: 'Change reference',
+  返回选区: 'Return to selection',
+  显示已保存选区: 'Show saved selections',
   区域名称: 'Selection name',
   选择用途: 'Selection purpose',
   用户确认核心: 'User-confirmed core',

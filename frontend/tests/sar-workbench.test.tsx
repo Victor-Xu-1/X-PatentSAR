@@ -39,7 +39,7 @@ describe('all-row dataset presentation', () => {
     render(
       <MoleculeBrowser active dataset={sarDataset} referenceId={null} onReference={onReference} />,
     );
-    await screen.findByText('原文 missing');
+    await screen.findByRole('rowheader', { name: '原文 missing' });
     expect(screen.getByText('missing_smiles')).toBeVisible();
     expect(screen.getByText('graph_conflict')).toBeVisible();
     expect(screen.getByText('SMILES not provided')).toBeVisible();
@@ -79,6 +79,7 @@ describe('all-row dataset presentation', () => {
       />,
     );
     await screen.findByText('4 source records · 3 merged molecule rows');
+    await userEvent.click(screen.getByText(/^Dataset details ·/, { selector: 'summary' }));
     await userEvent.click(screen.getByText('Dataset actions'));
     expect(screen.getByText('4 source records · 3 merged molecule rows')).toBeVisible();
     expect(screen.getByText('3 rows · 2 eligible · 1 issues')).toBeVisible();
