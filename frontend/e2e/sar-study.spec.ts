@@ -13,8 +13,15 @@ async function persisted(page: Page, kind: 'dataset' | 'job') {
   return response.json();
 }
 
-for (const width of [390, 800, 1672]) {
-  test(`independent study, all research views and full export at ${width}px`, async ({ page }) => {
+for (const { width, height } of [
+  { width: 390, height: 844 },
+  { width: 800, height: 1060 },
+  { width: 1672, height: 1060 },
+  { width: 1672, height: 600 },
+]) {
+  test(`independent study, all research views and full export at ${width}x${height}`, async ({
+    page,
+  }) => {
     test.skip(process.env.PATENTSAR_E2E_SAR_MUTATIONS !== 'synthetic-isolated-state');
     const errors: string[] = [];
     const foreignWrites: string[] = [];
@@ -31,7 +38,7 @@ for (const width of [390, 800, 1672]) {
         await route.abort();
       } else await route.continue();
     });
-    await page.setViewportSize({ width, height: width === 390 ? 844 : 1060 });
+    await page.setViewportSize({ width, height });
     await page.goto('/#/sar');
     const imports = page.getByRole('region', { name: 'Import data', exact: true });
     await imports.getByRole('button', { name: 'CSV file', exact: true }).click();
@@ -212,11 +219,14 @@ for (const width of [390, 800, 1672]) {
       ).toBe(true);
       const maps = await view.locator('.sar-reference-map-image').evaluateAll((items) =>
         items.every((item) => {
+          const pane = item.closest('.sar-reference-maps')!.getBoundingClientRect();
           const picture = item.querySelector('img')?.getBoundingClientRect();
           const marks = item.querySelector('.sar-region-map')?.getBoundingClientRect();
           return (
             picture &&
             marks &&
+            picture.left >= pane.left - 1 &&
+            picture.right <= pane.right + 1 &&
             ['x', 'y', 'width', 'height'].every(
               (key) =>
                 Math.abs(

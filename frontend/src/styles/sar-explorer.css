@@ -19,6 +19,7 @@
 .sar-reference-map-content {
   display: grid;
   gap: 18px;
+  min-width: 0;
 }
 .sar-region-explorer .sar-reference-map-card {
   border: 0;
@@ -26,6 +27,11 @@
   border-radius: 0;
   padding: 0 24px 0 0;
   margin: 0;
+  min-width: 0;
+}
+.sar-reference-map-card h3 {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .sar-region-explorer .sar-region-group {
   padding: 0;

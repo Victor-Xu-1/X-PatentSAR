@@ -38,6 +38,48 @@ afterEach(() => {
 });
 
 describe('explicit transformation reveal', () => {
+  it('reveals the complete selected original after native legend scrolling in a short pane', () => {
+    vi.spyOn(window, 'scrollBy').mockImplementation(() => {});
+    const preview = layout({ height: 488, bottom: 680 });
+    const reference = preview
+      .closest('.sar-region-explorer')!
+      .querySelector<HTMLElement>('.sar-reference-maps')!;
+    const card = document.createElement('article');
+    card.className = 'sar-reference-map-card';
+    card.innerHTML =
+      '<ul class="sar-region-legend"><li><button aria-pressed="true">R6</button></li></ul>';
+    reference.append(card);
+    reference.scrollTop = 136;
+    const scroll = vi.fn();
+    Object.defineProperty(reference, 'scrollTo', { value: scroll });
+    vi.spyOn(card, 'getBoundingClientRect').mockReturnValue(box(-184, 440, 57, 709));
+    revealTransformation(preview);
+    expect(scroll).toHaveBeenCalledExactlyOnceWith({ top: 0, behavior: 'auto' });
+  });
+
+  it('reveals the selected reference rather than resetting a multi-reference pane to the first source', () => {
+    vi.spyOn(window, 'scrollBy').mockImplementation(() => {});
+    const preview = layout();
+    const reference = preview
+      .closest('.sar-region-explorer')!
+      .querySelector<HTMLElement>('.sar-reference-maps')!;
+    const first = document.createElement('article');
+    first.className = 'sar-reference-map-card';
+    first.innerHTML =
+      '<ul class="sar-region-legend"><li><button aria-pressed="false">R1</button></li></ul>';
+    const selected = document.createElement('article');
+    selected.className = 'sar-reference-map-card';
+    selected.innerHTML =
+      '<ul class="sar-region-legend"><li><button aria-pressed="true">R2</button></li></ul>';
+    reference.append(first, selected);
+    reference.scrollTop = 400;
+    const scroll = vi.fn();
+    Object.defineProperty(reference, 'scrollTo', { value: scroll });
+    vi.spyOn(selected, 'getBoundingClientRect').mockReturnValue(box(-40, 584, 57, 709));
+    revealTransformation(preview);
+    expect(scroll).toHaveBeenCalledExactlyOnceWith({ top: 408, behavior: 'auto' });
+  });
+
   it('repairs the measured tall multi-reference end boundary rather than scrolling the original away', () => {
     const scroll = vi.spyOn(window, 'scrollBy').mockImplementation(() => {});
     const preview = layout();
