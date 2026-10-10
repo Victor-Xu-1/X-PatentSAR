@@ -57,9 +57,10 @@ for (const width of [390, 800, 1672]) {
       await search.fill(fixture.molecule.label);
       await expect.poll(() => fixture.rowRequests.at(-1)?.query).toBe(fixture.molecule.label);
       await expect(search).toBeFocused();
-      await page
-        .getByRole('combobox', { name: 'Interface language', exact: true })
-        .selectOption('zh-CN');
+      const language = page.getByRole('combobox', { name: 'Interface language', exact: true });
+      await language.focus();
+      await expect(language).toBeFocused();
+      await language.selectOption('zh-CN');
       const localized = page.getByRole('region', { name: '研究活性表', exact: true });
       await expect(localized.getByRole('rowheader')).toHaveText(fixture.molecule.label);
       await expect(page.getByRole('combobox', { name: '界面语言', exact: true })).toBeFocused();
