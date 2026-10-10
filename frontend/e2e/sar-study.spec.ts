@@ -326,6 +326,19 @@ for (const width of [390, 800, 1672]) {
     await expect(focus.getByLabel('Magnification relative to fit', { exact: true })).toHaveText(
       '100%',
     );
+    async function fittedImageIsContained() {
+      return focus.locator('.sar-molecule-focus-viewport').evaluate((pane) => {
+        const image = pane.querySelector('img')!.getBoundingClientRect();
+        const bounds = pane.getBoundingClientRect();
+        return (
+          image.left >= bounds.left - 1 &&
+          image.top >= bounds.top - 1 &&
+          image.right <= bounds.left + pane.clientWidth + 1 &&
+          image.bottom <= bounds.top + pane.clientHeight + 1
+        );
+      });
+    }
+    expect(await fittedImageIsContained()).toBe(true);
     await focus.screenshot({ path: test.info().outputPath(`molecular-fit-${width}.png`) });
     for (let i = 0; i < 3; i++)
       await focus.getByRole('button', { name: 'Zoom in structure', exact: true }).click();
@@ -350,6 +363,7 @@ for (const width of [390, 800, 1672]) {
     await expect
       .poll(() => pane.evaluate((element) => element.scrollLeft + element.scrollTop))
       .toBe(0);
+    expect(await fittedImageIsContained()).toBe(true);
     expect(
       await focus.evaluate((element) => element.getBoundingClientRect().right <= innerWidth),
     ).toBe(true);

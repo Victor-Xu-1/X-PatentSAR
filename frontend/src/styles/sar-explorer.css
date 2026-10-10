@@ -262,8 +262,6 @@
 .sar-molecule-focus-canvas {
   min-width: 100%;
   min-height: 100%;
-  display: grid;
-  place-items: center;
 }
 .sar-molecule-focus-canvas img {
   width: 100%;
