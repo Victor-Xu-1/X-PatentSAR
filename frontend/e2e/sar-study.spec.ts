@@ -356,18 +356,19 @@ for (const width of [390, 800, 1672]) {
       });
       await expect(referencePane.locator('.sar-reference-map-card')).toHaveCount(2);
       await expect(referencePane).toHaveAttribute('tabindex', '0');
-      const jointView = await referencePane.evaluate((pane) => {
-        const image = pane.querySelector('img')!.getBoundingClientRect();
-        const bounds = pane.getBoundingClientRect();
-        const comparison = document.querySelector('.sar-transformation')!.getBoundingClientRect();
-        return {
-          imageVisible: image.top >= 0 && image.bottom <= innerHeight,
-          sideBySide: bounds.right < comparison.left,
-          position: getComputedStyle(pane).position,
-          maxHeight: bounds.height <= innerHeight - 84,
-        };
-      });
-      expect(jointView).toEqual({
+      const jointView = () =>
+        referencePane.evaluate((pane) => {
+          const image = pane.querySelector('img')!.getBoundingClientRect();
+          const bounds = pane.getBoundingClientRect();
+          const comparison = document.querySelector('.sar-transformation')!.getBoundingClientRect();
+          return {
+            imageVisible: image.top >= 0 && image.bottom <= innerHeight,
+            sideBySide: bounds.right < comparison.left,
+            position: getComputedStyle(pane).position,
+            maxHeight: bounds.height <= innerHeight - 84,
+          };
+        });
+      await expect.poll(jointView).toEqual({
         imageVisible: true,
         sideBySide: true,
         position: 'sticky',
