@@ -41,6 +41,14 @@ for (const width of [390, 800, 1672]) {
         exact: true,
       });
       await expect(open).toHaveClass('primary');
+      const titleReadability = await row.locator('.job-file .link-button').evaluate((title) => {
+        const lineHeight = Number.parseFloat(getComputedStyle(title).lineHeight);
+        return title.getBoundingClientRect().height <= lineHeight * 3 + 1;
+      });
+      expect(
+        titleReadability,
+        'A short original title must not become a vertical character column',
+      ).toBe(true);
       await expect(
         row.getByRole('button', { name: zh ? '运行提取' : 'Run extraction', exact: true }),
       ).not.toHaveClass('primary');
