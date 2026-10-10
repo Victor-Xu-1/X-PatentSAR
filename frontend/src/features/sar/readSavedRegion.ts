@@ -6,7 +6,13 @@ import { UiError, type MessageValues } from '../../i18n';
 
 /** Only locally authored readback messages carry this explicit localization provenance. */
 export class RegionReadbackError extends ApiError {
-  constructor(status: number, code: string, source: string, values: MessageValues = {}) {
+  constructor(
+    status: number,
+    code: string,
+    source: string,
+    values: MessageValues = {},
+    readonly missingSavedSelection = false,
+  ) {
     super(status, code, source, true, values);
   }
 }
@@ -56,7 +62,9 @@ export async function readSavedRegion(datasetId: string, request: RegionRequest)
     throw new RegionReadbackError(
       0,
       'sar_region_not_confirmed',
-      '尚未找到唯一匹配的已保存选区，请稍后再次检查。',
+      matches.length === 0 ? '尚未确认保存。' : '无法确认唯一匹配选区。',
+      {},
+      matches.length === 0,
     );
   return matches[0]!;
 }

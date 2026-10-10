@@ -35,7 +35,8 @@ async function recover(panel: Locator, page: Page) {
   await expect(
     panel.getByRole('button', { name: 'Check saved selection', exact: true }),
   ).toBeEnabled();
-  await expect(panel.getByRole('button', { name: 'Save region', exact: true })).toBeDisabled();
+  await expect(panel.getByRole('button', { name: 'Save region', exact: true })).toHaveCount(0);
+  await expect(panel.locator('.sar-actions[hidden]')).not.toBeVisible();
   await page
     .getByRole('combobox', { name: 'Interface language', exact: true })
     .selectOption('zh-CN');
@@ -150,16 +151,85 @@ test('a noncommitted save stays unconfirmed without an automatic or user-recover
   const check = panel.getByRole('button', { name: 'Check saved selection', exact: true });
   await expect(check).toBeEnabled();
   await check.click();
-  await expect(panel.getByRole('alert')).toContainText(
-    'unique matching saved selection has not been confirmed',
-  );
+  await expect(panel.getByRole('alert')).toContainText('Save is not confirmed.');
   await expect(check).toBeEnabled();
-  await expect(panel.getByRole('button', { name: 'Clear selection', exact: true })).toBeDisabled();
-  await expect(panel.getByRole('button', { name: 'Save region', exact: true })).toBeDisabled();
+  await expect(panel.getByRole('button', { name: 'Clear selection', exact: true })).toHaveCount(0);
+  await expect(panel.getByRole('button', { name: 'Save region', exact: true })).toHaveCount(0);
+  await expect(panel.locator('.sar-atom').first()).toBeDisabled();
+  await expect(panel.locator('.sar-actions[hidden]')).not.toBeVisible();
   expect(posts).toBe(1);
   expect(forbidden).toEqual([]);
   expect(
     (await (await page.request.get('/api/v1/sar/datasets/' + dataset.id + '/profile')).json())
       .regions,
   ).toEqual([]);
+  await expect(
+    panel.getByRole('button', { name: 'Retry saving the same selection', exact: true }),
+  ).toBeEnabled();
 });
+
+for (const width of [390, 1672]) {
+  test(`explicit retry sends the identical missing selection without duplicates at ${width}px`, async ({
+    page,
+  }, info) => {
+    test.skip(process.env.PATENTSAR_E2E_SAR_MUTATIONS !== 'synthetic-isolated-state');
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 1060 });
+    const forbidden = await guardRegionWrites(page);
+    const dataset = await syntheticSnapshot(page),
+      panel = await selection(page);
+    const bodies: unknown[] = [];
+    await page.route('**/api/v1/sar/datasets/' + dataset.id + '/regions', async (route) => {
+      bodies.push(route.request().postDataJSON());
+      if (bodies.length === 1)
+        await route.fulfill({
+          status: 503,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            error: {
+              code: 'controlled_before_commit',
+              message: 'Controlled failure without forwarding the POST.',
+            },
+          }),
+        });
+      else await route.fulfill({ response: await route.fetch() });
+    });
+    await panel.getByRole('button', { name: 'Save region', exact: true }).click();
+    await expect(
+      panel.getByRole('button', { name: 'Check saved selection', exact: true }),
+    ).toBeEnabled();
+    await expect(
+      panel.getByRole('button', { name: 'Retry saving the same selection', exact: true }),
+    ).toHaveCount(0);
+    await panel.getByRole('button', { name: 'Check saved selection', exact: true }).click();
+    const retry = panel.getByRole('button', {
+      name: 'Retry saving the same selection',
+      exact: true,
+    });
+    await expect(retry).toBeEnabled();
+    expect(bodies).toHaveLength(1);
+    await panel.screenshot({
+      path: info.outputPath('01-missing-save.png'),
+      animations: 'disabled',
+    });
+    await page
+      .getByRole('combobox', { name: 'Interface language', exact: true })
+      .selectOption('zh-CN');
+    const chinese = page.getByRole('region', { name: '选择变化区域', exact: true });
+    await chinese.getByRole('button', { name: '重试保存同一选区', exact: true }).click();
+    await expect(chinese.getByText('区域已保存 · 1 个连接点', { exact: true })).toBeVisible();
+    expect(bodies).toHaveLength(2);
+    expect(bodies[1]).toEqual(bodies[0]);
+    const profile = await (
+      await page.request.get('/api/v1/sar/datasets/' + dataset.id + '/profile')
+    ).json();
+    expect(profile.regions).toHaveLength(1);
+    expect(
+      (await (await page.request.get('/api/v1/sar/datasets/' + dataset.id + '/jobs')).json()).items,
+    ).toEqual([]);
+    expect(forbidden).toEqual([]);
+    await chinese.screenshot({
+      path: info.outputPath('02-confirmed-save.png'),
+      animations: 'disabled',
+    });
+  });
+}

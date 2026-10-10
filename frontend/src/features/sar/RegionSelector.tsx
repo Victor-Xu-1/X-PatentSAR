@@ -213,7 +213,7 @@ export function RegionSelector({
           ? t('已选原子：{indices}', { indices: indices.join(', ') })
           : t('尚未选择原子')}
       </output>
-      <div className="sar-actions">
+      <div className="sar-actions" hidden={saving.canRecover || saving.canResubmit}>
         <button
           type="button"
           disabled={disabled || !indices.length}
@@ -243,15 +243,27 @@ export function RegionSelector({
       {saved && savedCurrent && graphCurrent && loaded && !image.error && !imageFailed && (
         <output>{t('区域已保存 · {count} 个连接点', { count: saved.attachment_count })}</output>
       )}
-      {saving.canRecover && (
+      {(saving.canRecover || saving.canResubmit) && (
         <div className="sar-actions">
-          <button
-            type="button"
-            disabled={!graphCurrent || !loaded || imageFailed || mutation.busy}
-            onClick={saving.recover}
-          >
-            {t('检查已保存选区')}
-          </button>
+          {saving.canRecover && (
+            <button
+              type="button"
+              disabled={!graphCurrent || !loaded || imageFailed || mutation.busy}
+              onClick={saving.recover}
+            >
+              {t('检查已保存选区')}
+            </button>
+          )}
+          {saving.canResubmit && (
+            <button
+              type="button"
+              className="primary"
+              disabled={!graphCurrent || !loaded || imageFailed || mutation.busy}
+              onClick={saving.resubmit}
+            >
+              {t('重试保存同一选区')}
+            </button>
+          )}
         </div>
       )}
       {mutation.error instanceof RegionReadbackError ? (

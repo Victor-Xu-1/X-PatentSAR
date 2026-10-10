@@ -73,6 +73,40 @@ class SARAPITests(WebFixture, unittest.TestCase):
             time.sleep(0.03)
         self.fail("Bounded controlled SAR worker did not complete")
 
+    def test_identical_region_retry_returns_original_receipt_without_duplicate_or_job(
+        self,
+    ):
+        with self.client() as client:
+            dataset = self.dataset(client)
+            prefix = ROOT + "/datasets/" + dataset["id"]
+            reference = client.get(prefix + "/molecules").json()["items"][0]
+            body = {
+                "molecule_id": reference["id"],
+                "expected_dataset_revision": dataset["revision"],
+                "expected_graph_sha256": reference["graph_sha256"],
+                "atom_indices": [0, 1],
+                "name": "Original R test",
+                "kind": "variable",
+            }
+            first = client.post(prefix + "/regions", json=body)
+            self.assertEqual(first.status_code, 201, first.text)
+            repeated = client.post(prefix + "/regions", json=body)
+            reordered = client.post(
+                prefix + "/regions", json={**body, "atom_indices": [1, 0]}
+            )
+            self.assertEqual(repeated.status_code, 201, repeated.text)
+            self.assertEqual(reordered.status_code, 201, reordered.text)
+            self.assertEqual(first.json(), repeated.json())
+            self.assertEqual(first.json(), reordered.json())
+            self.assertEqual(
+                client.get(prefix + "/profile").json()["regions"], [first.json()]
+            )
+            self.assertEqual(client.get(prefix + "/jobs").json()["items"], [])
+            with client.app.state.workspace.store.connect() as connection:
+                self.assertEqual(
+                    connection.execute("SELECT COUNT(*) FROM jobs").fetchone()[0], 0
+                )
+
     def test_real_worker_csv_region_activity_and_exports_without_extraction_job(self):
         with self.client() as client:
             dataset = self.dataset(client)
