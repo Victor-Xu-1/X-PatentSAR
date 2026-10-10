@@ -73,13 +73,33 @@ it('shows requested details in the shared modal rather than an off-screen panel 
       onClose={vi.fn()}
     />,
   );
-  const dialog = screen.getByRole('dialog', { name: 'Source details' });
+  const dialog = screen.getByRole('dialog', { name: 'Source details · ' + studyRow.label });
   expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
   await userEvent.click(await within(dialog).findByText('Original records', { exact: true }));
   await within(dialog).findByText(sarMolecule.label);
   const label = within(dialog).getByText(sarMolecule.label);
   await act(() => setLocale('zh-CN'));
-  expect(screen.getByRole('dialog', { name: '来源详情' })).toBe(dialog);
+  expect(screen.getByRole('dialog', { name: '来源详情 · ' + studyRow.label })).toBe(dialog);
   expect(label).toHaveTextContent(sarMolecule.label);
+  expect(sarApi.molecule).toHaveBeenCalledOnce();
+});
+
+it('uses the fetched original label when a source is opened without a report row', async () => {
+  render(
+    <StudySource
+      dataset={sarDataset}
+      id={sarMolecule.id}
+      row={null}
+      contexts={[]}
+      active
+      onClose={vi.fn()}
+    />,
+  );
+  const dialog = await screen.findByRole('dialog', {
+    name: 'Source details · ' + sarMolecule.label,
+  });
+  expect(dialog.querySelector(':scope > .dialog-actions')).not.toBeNull();
+  await act(() => setLocale('zh-CN'));
+  expect(screen.getByRole('dialog', { name: '来源详情 · ' + sarMolecule.label })).toBe(dialog);
   expect(sarApi.molecule).toHaveBeenCalledOnce();
 });

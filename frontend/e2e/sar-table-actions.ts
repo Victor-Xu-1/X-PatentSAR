@@ -1,6 +1,26 @@
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 
+async function checkRootFooter(dialog: Locator) {
+  const footer = dialog.locator(':scope > .dialog-actions');
+  await expect(footer).toHaveCount(1);
+  expect(await footer.getByRole('button').count()).toBeGreaterThan(0);
+  expect(
+    await footer.evaluate((element) => {
+      const bounds = element.closest('dialog')!.getBoundingClientRect();
+      return [element, ...element.querySelectorAll('button')].every((item) => {
+        const box = item.getBoundingClientRect();
+        return (
+          box.left >= bounds.left &&
+          box.right <= bounds.right &&
+          box.top >= bounds.top &&
+          box.bottom <= bounds.bottom
+        );
+      });
+    }),
+  ).toBe(true);
+}
+
 async function checkIdentityHeading(table: Locator) {
   const pane = table.locator('..');
   await pane.evaluate((element) => {
@@ -71,6 +91,7 @@ export async function checkStudyTableControls(page: Page, report: Locator, width
   const columns = view.getByRole('button', { name: 'Column settings', exact: true });
   await columns.click();
   const chooser = page.getByRole('dialog', { name: 'Column settings', exact: true });
+  await checkRootFooter(chooser);
   await chooser.getByRole('checkbox', { name: /^Show column MW · Dalton$/ }).uncheck();
   await page.keyboard.press('Escape');
   await expect(columns).toBeFocused();
@@ -99,7 +120,7 @@ export async function checkStudyTableControls(page: Page, report: Locator, width
     .first()
     .getByRole('button', { name: 'Example 1', exact: true });
   await originalID.click();
-  const source = page.getByRole('dialog', { name: 'Source details', exact: true });
+  const source = page.getByRole('dialog', { name: 'Source details · Example 1', exact: true });
   await expect(source).toBeVisible();
   expect(
     await source.evaluate(
@@ -108,6 +129,7 @@ export async function checkStudyTableControls(page: Page, report: Locator, width
         element.getBoundingClientRect().bottom <= innerHeight + 1,
     ),
   ).toBe(true);
+  await checkRootFooter(source);
   await page.keyboard.press('Escape');
   await expect(originalID).toBeFocused();
   const firstRow = table.locator('tbody tr').first();
@@ -144,4 +166,16 @@ export async function checkStudyTableControls(page: Page, report: Locator, width
   await expect(table.getByRole('rowheader').first()).toHaveText('Example 1');
   await checkIdentityHeading(table);
   await page.screenshot({ path: test.info().outputPath(`table-tools-${width}.png`) });
+  const studyOptions = page.getByText('Study options', { exact: true });
+  const history = page.getByText('Study task history', { exact: true });
+  await studyOptions.click();
+  await history.click();
+  const remove = page.getByRole('button', { name: 'Remove SAR job', exact: true }).first();
+  await remove.click();
+  const confirmation = page.getByRole('dialog', { name: 'Remove SAR job', exact: true });
+  await checkRootFooter(confirmation);
+  await confirmation.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(remove).toBeFocused();
+  await history.click();
+  await studyOptions.click();
 }

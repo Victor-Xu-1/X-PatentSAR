@@ -30,8 +30,13 @@ export function StudySource({
     [dataset.id, id],
   );
   const source = useSARResource('sar:study-source:' + dataset.id + ':' + id, active, load);
+  const label = row?.label ?? source.data?.label;
   return (
-    <Dialog title={t('来源详情')} onClose={onClose} wide>
+    <Dialog
+      title={label ? t('来源详情 · {identifier}', { identifier: label }) : t('来源详情')}
+      onClose={onClose}
+      wide
+    >
       <div className="dialog-body">
         {source.loading && <Loading />}
         {source.error && <SARFailure error={source.error} onRetry={source.reload} />}

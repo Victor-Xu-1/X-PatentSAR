@@ -52,10 +52,10 @@ describe('complete study report and lifecycle', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Activity table' }));
     const table = await screen.findByRole('table');
     await userEvent.click(within(table).getByRole('button', { name: studyRow.label }));
-    const source = screen.getByRole('dialog', { name: 'Source details' });
+    const source = screen.getByRole('dialog', { name: 'Source details · ' + studyRow.label });
     await within(source).findByText('Original records');
     await act(() => setLocale('zh-CN'));
-    expect(screen.getByRole('dialog', { name: '来源详情' })).toBe(source);
+    expect(screen.getByRole('dialog', { name: '来源详情 · ' + studyRow.label })).toBe(source);
     view.rerender(
       <StudyReportView
         report={studyReport}
@@ -139,7 +139,7 @@ describe('complete study report and lifecycle', () => {
     expect(screen.getByText('0.24')).toBeVisible();
     expect(screen.getByText('Manually left empty')).toBeVisible();
     expect(screen.getByText(/manual_null/)).not.toBeVisible();
-    const lead = within(screen.getByRole('dialog', { name: 'Source details' }));
+    const lead = within(screen.getByRole('dialog', { name: 'Source details · ' + studyRow.label }));
     await userEvent.click(lead.getByText('Evidence basis'));
     await userEvent.click(lead.getByText('Technical evidence'));
     expect(lead.getByText(/manual_null/)).toBeVisible();
@@ -289,7 +289,9 @@ describe('compact activity-table presentation', () => {
     table = await screen.findByRole('table');
     const calls = vi.mocked(sarStudyApi.rows).mock.calls.length;
     await userEvent.click(within(table).getByRole('button', { name: studyRow.label }));
-    const source = await screen.findByRole('dialog', { name: 'Source details' });
+    const source = await screen.findByRole('dialog', {
+      name: 'Source details · ' + studyRow.label,
+    });
     await within(source).findByText('Original records');
     expect(vi.mocked(sarStudyApi.rows).mock.calls.length).toBe(calls);
     await userEvent.click(within(source).getAllByRole('button', { name: 'Close dialog' })[0]!);
