@@ -9,11 +9,18 @@
   gap: 24px;
   align-items: start;
 }
-.sar-region-explorer .sar-reference-map-card {
+.sar-region-explorer > .sar-reference-maps {
   position: sticky;
   top: 84px;
   max-height: calc(100dvh - 112px);
   overflow: auto;
+  overscroll-behavior: contain;
+}
+.sar-reference-map-content {
+  display: grid;
+  gap: 18px;
+}
+.sar-region-explorer .sar-reference-map-card {
   border: 0;
   border-right: 1px solid var(--line-soft);
   border-radius: 0;
@@ -51,6 +58,7 @@
   background: transparent;
   opacity: 0.9;
   border-width: 2px;
+  border-color: currentColor;
   outline-offset: 2px;
 }
 .sar-region-legend {
@@ -372,10 +380,12 @@
   .sar-region-explorer {
     grid-template-columns: 1fr;
   }
-  .sar-region-explorer .sar-reference-map-card {
+  .sar-region-explorer > .sar-reference-maps {
     position: static;
     max-height: none;
     overflow: visible;
+  }
+  .sar-region-explorer .sar-reference-map-card {
     border-right: 0;
     padding: 0;
   }

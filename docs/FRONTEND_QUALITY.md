@@ -61,6 +61,14 @@ The reference article's private algorithms are not represented as reproduced.
 - A region click selects a recorded region. Modification preview reads a published
   strict comparison and rechecks its immutable full graph and attachment mapping.
   It does not design a molecule, rerun extraction or call a model.
+  In the wide two-column explorer, the reference viewport itself stays alongside
+  the chosen modification and its measurements. Its bounded native scrolling
+  contains one or multiple reference graphs; an inner card is not a competing
+  sticky/scroll owner. Narrow layouts restore ordinary document flow. Keyboard
+  access is exposed only for real overflow, with coalesced/disposed resize work;
+  reference loading/locale changes never move focus or rerun a drawing provider.
+  Pointer outlines are visible only during interaction, not a duplicate permanent
+  circle around every atom. The existing region palette remains their authority.
   The active region has a stronger keyline and tint; other regions remain visible.
   Original atom coordinates and region membership never change with selection.
   Hover/focus hotspots emphasize their region-coloured outline only: their

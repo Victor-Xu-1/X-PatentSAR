@@ -67,6 +67,9 @@ it('keeps every atom clickable while keyboard navigation uses one named control 
   ];
   expect(hotspots).toHaveLength(3);
   expect(hotspots.every((button) => button.tabIndex === -1)).toBe(true);
+  expect(
+    hotspots.every((button) => button.style.borderColor === '' && button.style.color !== ''),
+  ).toBe(true);
   await userEvent.tab();
   expect(screen.getByRole('button', { name: regions[0]!.name! })).toHaveFocus();
   await userEvent.tab();

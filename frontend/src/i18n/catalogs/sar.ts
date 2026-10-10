@@ -134,6 +134,7 @@ export const sar: Record<string, string> = {
     'This historical chart shows raw observations. Run a new study for disjoint source-record counts.',
   结构待核对: 'Structure needs review',
   参考分子区域总览: 'Reference region map',
+  参考结构: 'Reference structures',
   方法与范围: 'Method and scope',
   '排序（全部研究行）': 'Sort (all study rows)',
   '完整 SAR 研究': 'Full SAR study',

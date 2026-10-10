@@ -99,6 +99,20 @@ for (const width of [390, 800, 1672]) {
     await expect(
       setup.getByText('Region saved · 1 attachment points', { exact: true }),
     ).toBeVisible();
+    await browser
+      .getByRole('row')
+      .filter({ has: page.getByRole('rowheader', { name: 'Example 2', exact: true }) })
+      .getByRole('button', { name: 'Reference', exact: true })
+      .click();
+    await setup.getByLabel('Selection name', { exact: true }).fill('R2');
+    const halogen = setup.getByRole('button', { name: /^Atom \d+ \(Cl\)$/ });
+    await expect(halogen).toHaveCount(1);
+    await expect(halogen).toBeEnabled();
+    await halogen.click();
+    await setup.getByRole('button', { name: 'Save region', exact: true }).click();
+    await expect(
+      setup.getByText('Region saved · 1 attachment points', { exact: true }),
+    ).toBeVisible();
     await setup.getByRole('button', { name: 'Run full study', exact: true }).click();
     const job = await persisted(page, 'job');
     expect(job.kind).toBe('study');
@@ -274,6 +288,9 @@ for (const width of [390, 800, 1672]) {
     await report.getByRole('button', { name: 'Variable regions', exact: true }).click();
     const regions = report.getByRole('region', { name: 'Variable regions', exact: true });
     const atomTarget = regions.locator('.sar-region-hotspots button').first();
+    expect(await atomTarget.evaluate((element) => getComputedStyle(element).borderTopColor)).toBe(
+      'rgba(0, 0, 0, 0)',
+    );
     await atomTarget.click();
     const hoverStyle = await atomTarget.evaluate((element) => {
       const style = getComputedStyle(element);
@@ -332,6 +349,41 @@ for (const width of [390, 800, 1672]) {
       )
       .toBe(true);
     await expect(preview).toContainText('Δ -9.00');
+    if (width > 1000) {
+      const referencePane = regions.getByRole('region', {
+        name: 'Reference structures',
+        exact: true,
+      });
+      await expect(referencePane.locator('.sar-reference-map-card')).toHaveCount(2);
+      await expect(referencePane).toHaveAttribute('tabindex', '0');
+      const jointView = await referencePane.evaluate((pane) => {
+        const image = pane.querySelector('img')!.getBoundingClientRect();
+        const bounds = pane.getBoundingClientRect();
+        const comparison = document.querySelector('.sar-transformation')!.getBoundingClientRect();
+        return {
+          imageVisible: image.top >= 0 && image.bottom <= innerHeight,
+          sideBySide: bounds.right < comparison.left,
+          position: getComputedStyle(pane).position,
+          maxHeight: bounds.height <= innerHeight - 84,
+        };
+      });
+      expect(jointView).toEqual({
+        imageVisible: true,
+        sideBySide: true,
+        position: 'sticky',
+        maxHeight: true,
+      });
+      await referencePane.focus();
+      const scroll = await referencePane.evaluate((element) => element.scrollTop);
+      await page.keyboard.press('ArrowDown');
+      await expect
+        .poll(() => referencePane.evaluate((element) => element.scrollTop))
+        .toBeGreaterThan(scroll);
+      await page.keyboard.press('Home');
+      await expect
+        .poll(() => referencePane.evaluate((element) => element.scrollTop))
+        .toBeLessThanOrEqual(1);
+    }
     // Inspect only this published, loaded source drawing: no new engine/read/write.
     const originalImage = preview.locator('.sar-molecule-comparison img').first();
     const sourceLabel = (await originalImage.getAttribute('alt'))!;
