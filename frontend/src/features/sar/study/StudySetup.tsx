@@ -7,14 +7,14 @@ import { SARFailure } from '../SARFailure';
 import { MutationNotice } from '../MutationNotice';
 import { useSARMutation } from '../useSARMutation';
 import { useSARResource } from '../useSARResource';
-import { newRequestId } from '../presentation';
+import { contextLabel, newRequestId } from '../presentation';
 import { ContextPicker } from './ContextPicker';
 import { PolicyEditor } from './PolicyEditor';
 import { StudyRegionEditor } from './StudyRegionEditor';
 import { ConditionEditor } from './ConditionEditor';
 import { declarationFromDraft, emptyCondition } from './conditionDraft';
 import type { ConditionDraft } from './conditionDraft';
-import { contextLabel, emptyPolicy, policyFromDraft } from './policyDraft';
+import { emptyPolicy, policyFromDraft } from './policyDraft';
 import type { PolicyDraft } from './policyDraft';
 import { StudyGuide } from './StudyGuide';
 export function StudySetup({

@@ -20,9 +20,3 @@ export function policyFromDraft(id: string, draft: PolicyDraft): StudyPolicy | n
     strength_method: grades.values.length ? 'source' : 'tenth_decade',
   };
 }
-export const contextLabel = (context: { name: string; unit: string | null }) =>
-  context.unit &&
-  !context.name.endsWith('(' + context.unit + ')') &&
-  !context.name.endsWith(' ' + context.unit)
-    ? context.name + ' · ' + context.unit
-    : context.name;

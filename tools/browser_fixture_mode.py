@@ -18,6 +18,11 @@ COMMON = {
 MODES = (
     (
         "sar",
+        "sar-source-unit.spec.ts",
+        COMMON | {"sar-source-unit.spec.ts"},
+    ),
+    (
+        "sar",
         "sar-candidate-source.spec.ts",
         COMMON | {"sar-candidate-source.spec.ts"},
     ),

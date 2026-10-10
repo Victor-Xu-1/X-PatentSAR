@@ -1,7 +1,7 @@
 import type { StudyReport } from '../../../api/sarStudyTypes';
 import { useTranslation } from '../../../i18n';
 import { StudyBars } from './StudyBars';
-import { contextLabel } from './policyDraft';
+import { contextLabel } from '../presentation';
 import { StudyPolicyNote, hasStrongRule } from './StudyPolicyNote';
 import { useState } from 'react';
 import type { CountingUnit } from './chartPresentation';

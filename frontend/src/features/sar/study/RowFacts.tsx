@@ -1,6 +1,6 @@
 import type { StudyContext, StudyRow } from '../../../api/sarStudyTypes';
 import { useTranslation } from '../../../i18n';
-import { contextLabel } from './policyDraft';
+import { contextLabel } from '../presentation';
 import { propertyText, studyProperties } from './tablePresentation';
 import { evidenceSummaries, originCopy } from './evidencePresentation';
 export const candidateLabels = {

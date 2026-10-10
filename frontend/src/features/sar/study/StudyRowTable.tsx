@@ -4,7 +4,7 @@ import { useTranslation } from '../../../i18n';
 import { TableScroll } from '../TableScroll';
 import { StudyImage } from './StudyImage';
 import { StudyCandidateMark } from './StudyCandidateMark';
-import { contextLabel } from './policyDraft';
+import { contextLabel } from '../presentation';
 import { propertyText, studyProperties } from './tablePresentation';
 export function studyColumns(
   contexts: StudyContext[],

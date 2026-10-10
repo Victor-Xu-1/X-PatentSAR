@@ -9,6 +9,7 @@ import { useTranslation } from '../../i18n';
 import { PageControls } from './PageControls';
 import { MoleculeEvidence } from './MoleculeEvidence';
 import { TableScroll } from './TableScroll';
+import { contextLabel } from './presentation';
 
 export function MoleculeBrowser({
   dataset,
@@ -92,10 +93,14 @@ export function MoleculeBrowser({
                       <td>
                         {molecule.observations.map((observation, index) => (
                           <div key={index}>
-                            {dataset.metrics.find((metric) => metric.id === observation.metric_id)
-                              ?.name ?? observation.metric_id}
+                            {contextLabel({
+                              name:
+                                dataset.metrics.find(
+                                  (metric) => metric.id === observation.metric_id,
+                                )?.name ?? observation.metric_id,
+                              unit: observation.unit,
+                            })}
                             : {observation.value}
-                            {observation.unit && <span> · {observation.unit}</span>}
                           </div>
                         ))}
                       </td>

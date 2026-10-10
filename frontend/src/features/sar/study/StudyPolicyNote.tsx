@@ -1,6 +1,6 @@
 import type { StudyContext, StudyPolicy } from '../../../api/sarStudyTypes';
 import { useTranslation } from '../../../i18n';
-import { contextLabel } from './policyDraft';
+import { contextLabel } from '../presentation';
 
 export function hasStrongRule(policy: StudyPolicy | undefined) {
   if (policy?.strength_method === 'tenth_decade') return policy.strength_scale?.status === 'ready';

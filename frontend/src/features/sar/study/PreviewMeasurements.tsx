@@ -2,7 +2,7 @@ import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import type { StudyReport, StudyPreview } from '../../../api/sarStudyTypes';
 import { useTranslation } from '../../../i18n';
 import { propertyText, studyProperties } from './tablePresentation';
-import { contextLabel } from './policyDraft';
+import { contextLabel } from '../presentation';
 export function differenceText(value: number | null | undefined) {
   if (value == null || !Number.isFinite(value)) return '—';
   return value !== 0 && Math.abs(value) < 0.01 ? value.toPrecision(3) : value.toFixed(2);
