@@ -32,6 +32,8 @@ export function StudyLeads({
               identifier={row.molecule_id}
               label={row.label}
               active={active && row.eligible}
+              inspectable
+              inspectionTrigger="image"
             />
             <RowFacts row={row} contexts={selectedContexts(report)} compact />
             <button type="button" onClick={() => onSource(row.molecule_id)}>

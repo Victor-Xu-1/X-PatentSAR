@@ -30,6 +30,9 @@ export function StudyScaffolds({
     active,
     load,
   );
+  const labelFor = (scaffold: StudyReport['scaffolds'][number], index: number) =>
+    profile.data?.regions.find((region) => region.id === scaffold.core_region_id)?.name ??
+    t('母核 {index}', { index: (page - 1) * 12 + index + 1 });
   return (
     <div>
       <StudyPolicyNote
@@ -40,10 +43,7 @@ export function StudyScaffolds({
       <div className="sar-card-grid">
         {report.scaffolds.slice((page - 1) * 12, page * 12).map((scaffold, index) => (
           <article className="sar-study-card" key={scaffold.id}>
-            <h3>
-              {profile.data?.regions.find((r) => r.id === scaffold.core_region_id)?.name ??
-                t('母核 {index}', { index: (page - 1) * 12 + index + 1 })}
-            </h3>
+            <h3>{labelFor(scaffold, index)}</h3>
             <small>
               {t(
                 scaffold.assignment_kind === 'confirmed_core'
@@ -56,8 +56,10 @@ export function StudyScaffolds({
                 jobId={jobId}
                 kind="scaffold"
                 identifier={scaffold.id}
-                label={scaffold.smiles ?? scaffold.id}
+                label={labelFor(scaffold, index)}
                 active={active}
+                inspectable
+                inspectionTrigger="image"
               />
             ) : (
               <div className="sar-structure-pending">{t('结构待核对')}</div>

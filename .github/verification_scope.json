@@ -1,33 +1,35 @@
 {
   "schema_version": 1,
-  "base_sha": "22be667f0f440062dcb71d55ef03e6998ce9c843",
+  "base_sha": "bfc74a533adebd709b54888ceb68cac1e2da3373",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/FRONTEND_QUALITY.md",
-    "frontend/e2e/sar-atom-label.spec.ts",
+    "frontend/e2e/sar-card-inspection.spec.ts",
+    "frontend/e2e/sarCardProtocolFixture.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/styles/sar-selection.css",
+    "frontend/src/features/sar/study/StudyFragmentCard.tsx",
+    "frontend/src/features/sar/study/StudyLeads.tsx",
+    "frontend/src/features/sar/study/StudyScaffolds.tsx",
+    "frontend/tests/sar-card-inspection.test.tsx",
     "src/patent_sar_extractor/contracts.py",
     "tests/test_sar_browser_fixture.py",
-    "tests/test_web_support.py",
-    "tools/browser_fixture_mode.py",
-    "tools/prepare_browser_fixture.py"
+    "tools/browser_fixture_mode.py"
   ],
   "python_modules": [
-    "tests.test_sar_api.SARAPITests.test_identical_region_retry_returns_original_receipt_without_duplicate_or_job",
     "tests.test_sar_browser_fixture",
     "tests.test_product_version_compatibility",
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
-    "frontend/tests/sar-reference-selection.test.tsx",
-    "frontend/tests/sar-region.test.tsx"
+    "frontend/tests/sar-card-inspection.test.tsx",
+    "frontend/tests/sar-molecular-focus.test.tsx",
+    "frontend/tests/sar-study-results.test.tsx",
+    "frontend/tests/sar-fragment-preview.test.tsx"
   ],
   "browser_tests": [
-    "frontend/e2e/sar-atom-label.spec.ts",
-    "frontend/e2e/sar-selection-viewport.spec.ts",
+    "frontend/e2e/sar-card-inspection.spec.ts",
     "frontend/e2e/product-version.spec.ts"
   ]
 }

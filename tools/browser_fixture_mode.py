@@ -18,6 +18,11 @@ COMMON = {
 MODES = (
     (
         "sar",
+        "sar-card-inspection.spec.ts",
+        COMMON | {"sar-card-inspection.spec.ts"},
+    ),
+    (
+        "sar",
         "sar-region-recovery.spec.ts",
         COMMON | {"sar-region-recovery.spec.ts", "sar-selection-viewport.spec.ts"},
     ),

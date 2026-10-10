@@ -201,6 +201,16 @@ The reference article's private algorithms are not represented as reproduced.
   dimensions: intrinsic grid minimums must not enlarge it beyond the viewport.
   Inspect actual large source molecules as well as small controlled graphs;
   passing scalar zoom checks alone does not prove full-structure containment.
+- Lead, core and fragment cards use that same validated passive inspector directly
+  from the drawing. The image is the sole magnification trigger, with no overlaid
+  icon obscuring chemistry. Fit, bounded zoom, native scrolling and focus restoration
+  remain in the shared viewer. Core and fragment captions match their visible human
+  names rather than putting raw SMILES in a modal title; source-owned names and all
+  underlying identifiers, structures and report measurements remain unchanged.
+  Opening, zooming or translating a card never requests another drawing or model.
+  Layout-only browser report DTOs are explicitly synthetic and never inserted into
+  server job records; actual backend SVGs and completed real-data post-deploy paths
+  provide separate rendering/integration evidence without a new scientific run.
 - Raw measurements, computed properties and captured predictions remain separate.
   Grade/interval overlap, missing context and unrepresentable differences stay unknown.
   Hidden technical detail does not remove source links, issues or acceptance boundaries.
