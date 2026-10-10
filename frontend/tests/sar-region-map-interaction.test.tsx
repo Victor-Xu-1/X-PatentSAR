@@ -14,6 +14,13 @@ const regions = [
   { ...namedRegion, id: 'second-region', name: 'R2 source label', atom_indices: [2] },
 ];
 
+it('does not add an empty overlay to a reference without recorded regions or atom coordinates', () => {
+  const { container, rerender } = render(<RegionMap atoms={atoms} regions={[]} />);
+  expect(container).toBeEmptyDOMElement();
+  rerender(<RegionMap atoms={[]} regions={regions} />);
+  expect(container).toBeEmptyDOMElement();
+});
+
 it('emphasizes only the selected recorded region without moving or rewriting atoms', () => {
   const original = JSON.stringify({ atoms, regions });
   const { container, rerender } = render(

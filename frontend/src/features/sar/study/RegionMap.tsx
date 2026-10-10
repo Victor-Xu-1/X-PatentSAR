@@ -26,6 +26,7 @@ export function RegionMap({
   onSelect?: ((id: string) => void) | undefined;
   selected?: string | undefined;
 }) {
+  if (!regions.length || !atoms.length) return null;
   const hasSelection = regions.some((region) => region.id === selected);
   return (
     <>
