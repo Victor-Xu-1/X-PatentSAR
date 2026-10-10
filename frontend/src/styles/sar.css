@@ -412,6 +412,7 @@
   margin-top: 2px;
 }
 .sar-table-scroll {
+  position: relative;
   overflow: auto;
   max-width: 100%;
   margin: 14px 0;
