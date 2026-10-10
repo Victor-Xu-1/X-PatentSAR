@@ -20,7 +20,9 @@ class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
             PREFIX + "product-version.spec.ts",
         }
         self.assertEqual(fixture_mode(selected), "sar")
-        self.assertEqual(fixture_mode(selected | {PREFIX + "real-workflow.spec.ts"}), "execution")
+        self.assertEqual(
+            fixture_mode(selected | {PREFIX + "real-workflow.spec.ts"}), "execution"
+        )
 
     def test_selection_viewport_scope_uses_snapshot_only_synthetic_source(self):
         selected = {
