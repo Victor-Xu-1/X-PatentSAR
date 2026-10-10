@@ -105,3 +105,11 @@ export function json(input: unknown, status = 200) {
     headers: { 'Content-Type': 'application/json' },
   });
 }
+
+/** One explicit ready project-list resource for component consumers. */
+export function projectListResource(
+  items: Project[] = [project],
+  reload: () => void = () => undefined,
+) {
+  return { data: { items }, error: null, loading: false, reload };
+}

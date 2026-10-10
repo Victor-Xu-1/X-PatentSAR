@@ -8,7 +8,7 @@ import { JobsPage } from '../src/features/jobs/JobsPage';
 import { NewTaskPage } from '../src/features/tasks/NewTaskPage';
 import { environmentOperation } from './environment-fixtures';
 import { completeEnvironmentCatalog } from './environment-setup-fixtures';
-import { health, job, project } from './fixtures';
+import { health, job, project, projectListResource } from './fixtures';
 
 describe('minimal secondary page presentation without changing workflows', () => {
   it('does not duplicate a page title in the header, preserving brand and version', async () => {
@@ -53,7 +53,7 @@ describe('minimal secondary page presentation without changing workflows', () =>
     vi.spyOn(api, 'jobs').mockResolvedValue({ items: [complete] });
     vi.spyOn(api, 'job').mockResolvedValue(complete);
     const onOpen = vi.fn();
-    render(<JobsPage projects={[project]} ready onOpen={onOpen} />);
+    render(<JobsPage projects={projectListResource([project])} ready onOpen={onOpen} />);
     expect(await screen.findByText('任务 ' + job.id)).toHaveAttribute('title', job.id);
     expect(document.querySelector('.eyebrow')).toBeNull();
     expect(screen.getByRole('heading', { level: 1, name: '任务记录' })).toBeVisible();

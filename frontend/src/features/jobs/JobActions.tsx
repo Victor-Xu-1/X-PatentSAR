@@ -33,6 +33,8 @@ export function JobActions({
   const inFlight = useRef(false);
   const [submittedResume, setSubmittedResume] = useState<Job | null>(null);
   const running = job !== null && activeJob(job);
+  const canCancel =
+    job !== null && running && project !== null && job.project_id === project.id && !busy;
   const hasWorkspace =
     !compact && Boolean(onOpenWorkspace) && project !== null && job?.project_id === project.id;
   // A fresh DTO from the existing reload path must reconcile a submitted resume.
@@ -66,6 +68,7 @@ export function JobActions({
   };
   async function operate(action: 'run' | 'resume' | 'cancel') {
     if (!project || inFlight.current) return;
+    if (action === 'cancel' && !canCancel) return;
     if (action !== 'cancel' && (!canStart || (action === 'resume' && !canResume))) return;
     if (!acquire()) return;
     setSubmittingRun(action === 'run');
@@ -101,7 +104,7 @@ export function JobActions({
           </button>
         )}
         {running ? (
-          <button type="button" disabled={busy} onClick={() => setCancelConfirm(true)}>
+          <button type="button" disabled={!canCancel} onClick={() => setCancelConfirm(true)}>
             <Square size={13} />
             {t('取消任务')}
           </button>
@@ -178,7 +181,7 @@ export function JobActions({
                 type="button"
                 className="danger-button"
                 onClick={() => void operate('cancel')}
-                disabled={busy}
+                disabled={!canCancel}
               >
                 {busy ? t('正在取消…') : t('确认取消此任务')}
               </button>

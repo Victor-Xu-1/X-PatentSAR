@@ -348,3 +348,13 @@ must retain at least 144 pixels, with the entire panel inside the eight-pixel
 viewport inset. Brief non-filter menus keep their existing placement. Value
 clipping/hit bounds, cancel/Escape focus, server filters and source facts remain
 unchanged; this is one placement correction, not a second popup implementation.
+
+Task-history project choices consume the same explicit resource as their parent.
+Loading/error is not an empty catalog: retain the selected original ID/title,
+disable unresolved choices/actions and offer the existing read retry. Only a
+successful current catalog can prove a removed project and clear its filter.
+The existing task refresh reloads choices and records together. Cancellation
+requires a currently matching project/job identity, rather than exposing a
+clickable no-op. The list page reads the records it actually consumes, without
+also requesting/polling an unused latest-task detail; the workspace retains that
+existing detail path. No new query, cache, queue or scientific execution path is added.

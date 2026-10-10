@@ -11,7 +11,7 @@ import { acceptanceIssueCount, acceptanceIssueGroups } from '../src/model/accept
 import { jobStageProgressText } from '../src/model/jobPresentation';
 import { stageProgressText } from '../src/model/extraction';
 import { activityText, dateText } from '../src/model/presentation';
-import { job, project } from './fixtures';
+import { job, project, projectListResource } from './fixtures';
 import {
   deferred,
   progress,
@@ -136,7 +136,9 @@ describe('operations locale: jobs', () => {
     const pending = deferred<{ items: Job[] }>();
     const read = vi.spyOn(api, 'jobs').mockReturnValue(pending.promise);
     vi.spyOn(api, 'job').mockResolvedValue(job);
-    const view = render(<JobsPage projects={[project]} ready onOpen={vi.fn()} />);
+    const view = render(
+      <JobsPage projects={projectListResource([project])} ready onOpen={vi.fn()} />,
+    );
     expect(screen.getByRole('heading', { name: 'Tasks' })).toBeVisible();
     expect(screen.getByText('Loading task records…')).toBeVisible();
     switchTo('zh-CN');

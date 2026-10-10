@@ -8,7 +8,7 @@ import { JobsPage } from '../src/features/jobs/JobsPage';
 import { NewTaskPage } from '../src/features/tasks/NewTaskPage';
 import { ProjectsPage } from '../src/features/projects/ProjectsPage';
 import { jobRecordSummary } from '../src/model/jobPresentation';
-import { job, project } from './fixtures';
+import { job, project, projectListResource } from './fixtures';
 
 function rejectedJob(): Job {
   return {
@@ -139,7 +139,7 @@ describe('Evidence Studio secondary pages', () => {
     vi.spyOn(api, 'jobs').mockResolvedValue({ items: [interrupted] });
     vi.spyOn(api, 'job').mockResolvedValue(interrupted);
     const create = vi.spyOn(api, 'createJob').mockResolvedValue(job);
-    render(<JobsPage projects={[project]} ready onOpen={vi.fn()} />);
+    render(<JobsPage projects={projectListResource([project])} ready onOpen={vi.fn()} />);
     await screen.findByRole('button', { name: project.title });
     expect(screen.getAllByLabelText('任务详情')).toHaveLength(1);
     expect(screen.getAllByRole('button', { name: '继续提取' })).toHaveLength(1);
