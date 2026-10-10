@@ -41,16 +41,16 @@
   padding: 0;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  border: 1px solid transparent !important;
+  border: 1px solid transparent;
   background: transparent;
   pointer-events: auto;
   opacity: 0.1;
 }
 .sar-region-hotspots button:hover,
 .sar-region-hotspots button:focus-visible {
-  background: var(--accent-surface);
+  background: transparent;
   opacity: 0.9;
-  border-width: 2px !important;
+  border-width: 2px;
   outline-offset: 2px;
 }
 .sar-region-legend {

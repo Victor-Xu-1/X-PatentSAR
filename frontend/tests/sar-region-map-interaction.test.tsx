@@ -31,6 +31,7 @@ it('emphasizes only the selected recorded region without moving or rewriting ato
   expect(groups[0]).toHaveAttribute('data-selected', 'true');
   expect(groups[0]!.querySelector('circle')).toHaveAttribute('stroke-width', '3');
   expect(groups[1]).not.toHaveAttribute('data-selected');
+  expect(groups[1]).toHaveAttribute('opacity', '0.7');
   const points = () =>
     [...container.querySelectorAll('circle')].map((circle) => [
       circle.getAttribute('cx'),
