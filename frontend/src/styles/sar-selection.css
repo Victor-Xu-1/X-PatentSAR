@@ -113,3 +113,37 @@
 .sar-page .sar-atom:disabled {
   opacity: 0.4;
 }
+@media (max-width: 560px) {
+  /* The phone picker is a list of the same semantic rows, not a squeezed wide table. */
+  .sar-reference-browser :is(table, tbody) {
+    display: block;
+  }
+  .sar-reference-browser thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .sar-reference-browser tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .sar-reference-browser tbody tr :is(th, td) {
+    position: static;
+    min-width: 0;
+    max-width: none;
+    width: auto;
+    border: 0;
+    background: inherit;
+  }
+  .sar-reference-browser tbody tr td:nth-child(n + 3) {
+    grid-column: 1 / -1;
+    padding-block: 4px;
+  }
+  .sar-reference-browser tbody tr td:last-child {
+    padding-block-end: 12px;
+  }
+}

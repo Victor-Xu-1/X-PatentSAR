@@ -20,7 +20,9 @@ The reference article's private algorithms are not represented as reproduced.
   existing explicit submit creates a study. Regions remain optional, not a second queue.
   Both study selections and single-reference comparisons share a bounded reference
   chooser. The source ID and explicit Reference action stay together while the
-  table scrolls; raw structure/source details open on demand. Missing structures
+  table scrolls; phone rows stack activity and source detail below that same
+  ID/action pair instead of squeezing them behind frozen columns. Raw
+  structure/source details open on demand. Missing structures
   and original issue codes remain visible and ineligible rows cannot be selected.
   Explicit reference choice reveals the atom work area; returning from the chooser
   preserves same-graph drafts. Refresh, inactivity and locale changes never replay

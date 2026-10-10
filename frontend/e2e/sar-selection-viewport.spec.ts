@@ -93,6 +93,17 @@ for (const width of [390, 800, 1672]) {
       const first = browser.locator('tbody tr').first();
       const label = await first.getByRole('rowheader').innerText();
       const reference = first.getByRole('button', { name: 'Reference', exact: true });
+      if (width === 390) {
+        await expect(first.locator('td').nth(1)).toBeVisible();
+        const details = first.locator('summary');
+        expect(
+          await details.evaluate((element) => {
+            const box = element.getBoundingClientRect(),
+              scroll = element.closest('.sar-table-scroll')!.getBoundingClientRect();
+            return box.left >= scroll.left && box.right <= scroll.right;
+          }),
+        ).toBe(true);
+      }
       expect(
         await reference.evaluate((button) => {
           const text = document.createRange();
