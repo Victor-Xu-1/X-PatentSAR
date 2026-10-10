@@ -54,6 +54,14 @@ for (const [width, height] of [
     });
     expect(escaped, 'No value may paint/hit-test over the filter actions').toEqual([]);
     await menu.screenshot({ path: test.info().outputPath(`long-filter-${width}-${height}.png`) });
+    if (width === 390 && height === 844) {
+      const language = page.getByRole('combobox', { name: 'Interface language', exact: true });
+      await language.click();
+      await language.selectOption('zh-CN');
+      await expect(menu.getByLabel('筛选值 ' + raw, { exact: true })).toBeChecked();
+      expect((await list.boundingBox())!.height).toBeGreaterThanOrEqual(144);
+      await menu.screenshot({ path: test.info().outputPath('long-filter-390-844-zh.png') });
+    }
     await page.keyboard.press('Escape');
     await expect(opener).toBeFocused();
     expect(writes).toEqual([]);
