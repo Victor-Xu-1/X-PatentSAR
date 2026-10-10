@@ -82,6 +82,12 @@ The reference article's private algorithms are not represented as reproduced.
   Context rows keep their intrinsic content height within the bounded scroll
   list. A minimum hit target is not a maximum row height: expanded or required
   duplicate assay conditions must never overlap the next source heading.
+  Long column-filter values scroll inside an ordinary bounded box, with their
+  semantic disabled fieldset retained inside it. Native fieldset content must
+  not paint or receive pointer events outside that box over pagination, hints
+  or confirm/cancel controls when the menu is constrained by a short viewport.
+  Browser acceptance checks real clipping/hit testing as well as box geometry;
+  short searched lists alone cannot certify the unsearched full-value state.
   Original IDs are the direct source-detail action. The duplicate source-action
   column starts hidden but remains recoverable in the shared column chooser.
   Requested study source detail uses the existing native modal, not an invisible

@@ -13,6 +13,7 @@ COMMON = {
     "editor-viewport.spec.ts",
     "structure-details.spec.ts",
     "expert-controls.spec.ts",
+    "column-filter-viewport.spec.ts",
 }
 MODES = (
     (

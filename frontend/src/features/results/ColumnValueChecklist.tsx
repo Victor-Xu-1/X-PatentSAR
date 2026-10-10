@@ -60,57 +60,59 @@ export function ColumnValueChecklist({
         value={search}
         onChange={(event) => onSearch(event.target.value)}
       />
-      <fieldset className="column-value-choices" disabled={disabled || !choices}>
-        <legend className="sr-only">{t('取值选择')}</legend>
-        <label className="column-select-all">
-          <input
-            ref={selectAll}
-            type="checkbox"
-            aria-label={searching ? t('全选本页匹配取值') : t('全选筛选取值')}
-            checked={all}
-            disabled={searching && !items.length}
-            onChange={(event) => {
-              if (searching)
-                changeValues(
-                  items.map((item) => item.value),
-                  event.target.checked,
-                );
-              else
-                onChange({
-                  mode: event.target.checked ? 'exclude' : 'include',
-                  values: [],
-                  includeEmpty: event.target.checked,
-                });
-            }}
-          />
-          <span>{searching ? t('全选（本页匹配）') : t('全选')}</span>
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            aria-label={t('筛选值（空白）')}
-            checked={selection.includeEmpty}
-            onChange={(event) => onChange({ ...selection, includeEmpty: event.target.checked })}
-          />
-          <span>{t('（空白）')}</span>
-          <small>{choices?.empty_count ?? '—'}</small>
-        </label>
-        {items.map((item) => (
-          <label key={item.value}>
+      <div className="column-value-choices">
+        <fieldset disabled={disabled || !choices}>
+          <legend className="sr-only">{t('取值选择')}</legend>
+          <label className="column-select-all">
+            <input
+              ref={selectAll}
+              type="checkbox"
+              aria-label={searching ? t('全选本页匹配取值') : t('全选筛选取值')}
+              checked={all}
+              disabled={searching && !items.length}
+              onChange={(event) => {
+                if (searching)
+                  changeValues(
+                    items.map((item) => item.value),
+                    event.target.checked,
+                  );
+                else
+                  onChange({
+                    mode: event.target.checked ? 'exclude' : 'include',
+                    values: [],
+                    includeEmpty: event.target.checked,
+                  });
+              }}
+            />
+            <span>{searching ? t('全选（本页匹配）') : t('全选')}</span>
+          </label>
+          <label>
             <input
               type="checkbox"
-              aria-label={t('筛选值 {value}', { value: item.value })}
-              checked={valueIsSelected(selection, item.value)}
-              onChange={(event) => changeValues([item.value], event.target.checked)}
+              aria-label={t('筛选值（空白）')}
+              checked={selection.includeEmpty}
+              onChange={(event) => onChange({ ...selection, includeEmpty: event.target.checked })}
             />
-            <span>{item.value}</span>
-            <small>{item.count}</small>
+            <span>{t('（空白）')}</span>
+            <small>{choices?.empty_count ?? '—'}</small>
           </label>
-        ))}
-        {choices && !items.length && (
-          <small className="muted">{searching ? t('无匹配取值') : t('无非空取值')}</small>
-        )}
-      </fieldset>
+          {items.map((item) => (
+            <label key={item.value}>
+              <input
+                type="checkbox"
+                aria-label={t('筛选值 {value}', { value: item.value })}
+                checked={valueIsSelected(selection, item.value)}
+                onChange={(event) => changeValues([item.value], event.target.checked)}
+              />
+              <span>{item.value}</span>
+              <small>{item.count}</small>
+            </label>
+          ))}
+          {choices && !items.length && (
+            <small className="muted">{searching ? t('无匹配取值') : t('无非空取值')}</small>
+          )}
+        </fieldset>
+      </div>
       {choices && pages > 1 && (
         <div className="column-choice-pages" aria-label={t('取值分页')}>
           <button
