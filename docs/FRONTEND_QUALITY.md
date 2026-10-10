@@ -79,6 +79,10 @@ The reference article's private algorithms are not represented as reproduced.
   Failed/inactive/stale identities cannot open or revive an inspector. Closing
   restores its originating control; raw identifiers and images survive locale
   changes. Shared inline reveal also keeps the current header module visible.
+  At Fit the entire passive image frame must be contained by the definite canvas
+  dimensions: intrinsic grid minimums must not enlarge it beyond the viewport.
+  Inspect actual large source molecules as well as small controlled graphs;
+  passing scalar zoom checks alone does not prove full-structure containment.
 - Raw measurements, computed properties and captured predictions remain separate.
   Grade/interval overlap, missing context and unrepresentable differences stay unknown.
   Hidden technical detail does not remove source links, issues or acceptance boundaries.
