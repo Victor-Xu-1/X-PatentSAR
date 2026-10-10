@@ -33,15 +33,16 @@ for (const width of [390, 800, 1672]) {
     const dataset = await syntheticSnapshot(page);
     const fixture = await cardProtocol(page, dataset, { candidateStatus: 'not_selected' });
     const original = JSON.stringify(fixture.report);
-    const report = page.getByRole('region', { name: 'Study report', exact: true });
+    const report = page.getByRole('region', { name: /^(Study report|研究报告)$/ });
     await report.getByRole('button', { name: 'Activity table', exact: true }).click();
-    const table = report.getByRole('region', { name: 'Activity table', exact: true });
+    const table = report.getByRole('region', { name: /^(Activity table|研究活性表)$/ });
     const scrollport = table.locator('.sar-table-scroll');
     const mark = table.locator('.sar-candidate-none');
     const description = mark.locator('.sr-only');
     await expect(mark).toBeAttached();
-    await expect(description).toHaveText('Not selected candidate');
+    await expect(description).toHaveText('Not selected');
     await expect(mark.getByRole('button')).toHaveCount(0);
+    await expect(table.locator('tbody img')).toHaveJSProperty('complete', true);
     await expect
       .poll(() =>
         page.evaluate(() => ({
@@ -73,7 +74,7 @@ for (const width of [390, 800, 1672]) {
     await page.keyboard.press('Enter');
     await expect(description).toHaveText('研究未选候选');
     expect(await table.locator('tbody td').allTextContents()).toEqual(
-      before.map((value) => value.replace('Not selected candidate', '研究未选候选')),
+      before.map((value) => value.replace('Not selected', '研究未选候选')),
     );
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
     await page.screenshot({ path: info.outputPath('passive-mark-zh.png'), animations: 'disabled' });
