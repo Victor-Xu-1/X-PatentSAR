@@ -25,6 +25,15 @@ export async function checkDistinctColumnChoices(chooser: Locator) {
   await details.click();
   await expect(details).toHaveAttribute('aria-expanded', 'true');
   expect(await chooser.locator('.column-chooser-context').count()).toBeGreaterThan(0);
+  expect(
+    await chooser.locator('.column-chooser-choice').evaluateAll((rows) =>
+      rows.every((row) => {
+        const bounds = row.getBoundingClientRect();
+        const text = row.querySelector('span')!.getBoundingClientRect();
+        return text.top >= bounds.top && text.bottom <= bounds.bottom;
+      }),
+    ),
+  ).toBe(true);
   await details.click();
   await expect(chooser.locator('.column-chooser-context')).toHaveCount(0);
 }
