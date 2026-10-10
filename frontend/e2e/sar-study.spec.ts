@@ -555,7 +555,12 @@ for (const width of [390, 800, 1672]) {
       ).toHaveAttribute('data-activity-strength', tier);
     }
     expect(exported.report.article_algorithm_reproduced).toBe(false);
-    expect(exported.report.regions).toHaveLength(1);
+    expect(exported.report.regions).toHaveLength(2);
+    expect(
+      exported.report.regions.map(
+        (summary: { reference_label: string }) => summary.reference_label,
+      ),
+    ).toEqual(['Example 1', 'Example 2']);
     await page
       .getByRole('combobox', { name: 'Interface language', exact: true })
       .selectOption('zh-CN');
