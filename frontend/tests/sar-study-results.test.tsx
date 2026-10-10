@@ -230,13 +230,13 @@ describe('compact activity-table presentation', () => {
       render(
         <StudyReportView report={studyReport} dataset={sarDataset} jobId={studyJob.id} active />,
       );
-      await userEvent.click(screen.getByRole('button', { name: 'Activity table', exact: true }));
+      await userEvent.click(screen.getByRole('button', { name: 'Activity table' }));
       await screen.findByRole('table');
       const search = screen.getByLabelText('Search identifiers or SMILES');
       await userEvent.type(search, '原文 007B');
-      await userEvent.click(screen.getByRole('button', { name: viewName, exact: true }));
-      await userEvent.click(screen.getByRole('button', { name: 'View molecules', exact: true }));
-      const tablePanel = screen.getByRole('region', { name: 'Activity table', exact: true });
+      await userEvent.click(screen.getByRole('button', { name: viewName }));
+      await userEvent.click(screen.getByRole('button', { name: 'View molecules' }));
+      const tablePanel = screen.getByRole('region', { name: 'Activity table' });
       await waitFor(() => expect(tablePanel).toHaveFocus());
       expect(scroll.mock.contexts.at(-1)).toBe(tablePanel);
       await waitFor(() =>
