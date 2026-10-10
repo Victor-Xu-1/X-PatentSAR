@@ -24,6 +24,14 @@ class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
             PREFIX + "product-version.spec.ts",
         }
         self.assertEqual(fixture_mode(members), "sar")
+        sources = {
+            PREFIX + "sar-candidate-source.spec.ts",
+            PREFIX + "product-version.spec.ts",
+        }
+        self.assertEqual(fixture_mode(sources), "sar")
+        self.assertEqual(
+            fixture_mode(sources | {PREFIX + "real-workflow.spec.ts"}), "execution"
+        )
         self.assertEqual(
             fixture_mode(members | {PREFIX + "sar-card-inspection.spec.ts"}), "sar"
         )

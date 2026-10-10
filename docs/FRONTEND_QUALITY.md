@@ -324,3 +324,10 @@ panel while retaining the same source-bound filter and search. The panel is a
 programmatic focus destination, not an extra tab stop. Ordinary view selection,
 later row/drawing responses, locale changes and refresh do not replay that
 navigation or take focus away from fields the user has started editing.
+
+All row-source entries share the same fresh-read gate; cached rows and candidate
+cards remain readable but cannot open a new source detail after failed or inactive
+reads. Candidate marks show only captured selection and priority group (`G`), not
+a locally inferred ordinal rank. Non-selected rows are passive marks; unranked,
+partial and ineligible states stay distinct. Full status/group remains accessible,
+and original scientific facts/reasons remain in the existing source detail.

@@ -151,13 +151,24 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
   gap: 4px;
+  white-space: nowrap;
   font-size: 12px;
   padding: 4px 6px;
   background: transparent;
   border: 0;
-  text-decoration: underline;
+  color: var(--ink);
+}
+.sar-lead-mark[data-selected] {
+  padding: 4px 8px;
+  border: 1px solid var(--warning-line);
+  border-radius: var(--radius-control);
+  background: var(--warning-surface);
+  color: var(--warning);
+  font-weight: 600;
+}
+.sar-candidate-none {
+  color: var(--muted);
 }
 .sar-study-table .sar-lead-mark small {
   display: inline;

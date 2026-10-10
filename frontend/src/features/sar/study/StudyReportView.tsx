@@ -63,6 +63,7 @@ export function StudyReportView({
     setRowsRequest((request) => request + 1);
   }
   function showSource(id: string, row?: StudyRow) {
+    if (!active) return;
     setSource({
       owner: sourceOwner,
       id,

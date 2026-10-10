@@ -3,7 +3,7 @@ import type { StudyContext, StudyRow } from '../../../api/sarStudyTypes';
 import { useTranslation } from '../../../i18n';
 import { TableScroll } from '../TableScroll';
 import { StudyImage } from './StudyImage';
-import { candidateLabels } from './RowFacts';
+import { StudyCandidateMark } from './StudyCandidateMark';
 import { contextLabel } from './policyDraft';
 import { propertyText, studyProperties } from './tablePresentation';
 export function studyColumns(
@@ -42,6 +42,9 @@ export function StudyRowTable({
 }) {
   const { t } = useTranslation(),
     visible = columns.filter((c) => !hidden.includes(c.id));
+  function openSource(row: StudyRow) {
+    if (active) onSource(row.molecule_id, row);
+  }
   function cell(row: StudyRow, column: ResultColumn) {
     if (column.id === 'label')
       return (
@@ -50,7 +53,7 @@ export function StudyRowTable({
           className="link-button sar-source-identifier"
           title={t('来源详情')}
           disabled={!active}
-          onClick={() => onSource(row.molecule_id, row)}
+          onClick={() => openSource(row)}
         >
           {row.label}
         </button>
@@ -94,19 +97,9 @@ export function StudyRowTable({
       );
     }
     if (column.id === 'lead')
-      return (
-        <button
-          type="button"
-          className="sar-lead-mark"
-          title={row.reasons.join(' · ')}
-          onClick={() => onSource(row.molecule_id, row)}
-        >
-          <span>{t(candidateLabels[row.candidate_status])}</span>
-          {row.priority_group !== null && <small> · {row.priority_group}</small>}
-        </button>
-      );
+      return <StudyCandidateMark row={row} active={active} onOpen={() => openSource(row)} />;
     return (
-      <button type="button" onClick={() => onSource(row.molecule_id, row)}>
+      <button type="button" disabled={!active} onClick={() => openSource(row)}>
         {t('来源详情')}
       </button>
     );
