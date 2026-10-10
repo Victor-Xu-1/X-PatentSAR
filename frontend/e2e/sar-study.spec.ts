@@ -19,6 +19,11 @@ for (const width of [390, 800, 1672]) {
     const errors: string[] = [];
     const foreignWrites: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
+    page.on('console', async (message) => {
+      if (message.text().startsWith('reference_visibility_geometry')) {
+        console.log('reference_visibility_geometry', await message.args()[1]?.jsonValue());
+      }
+    });
     await page.route('**/api/v1/**', async (route) => {
       const path = new URL(route.request().url()).pathname;
       if (route.request().method() !== 'GET' && !path.startsWith('/api/v1/sar/')) {
