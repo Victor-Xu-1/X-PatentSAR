@@ -358,3 +358,13 @@ requires a currently matching project/job identity, rather than exposing a
 clickable no-op. The list page reads the records it actually consumes, without
 also requesting/polling an unused latest-task detail; the workspace retains that
 existing detail path. No new query, cache, queue or scientific execution path is added.
+
+The shared SAR table scrollport owns the positioning boundary for its descendants.
+Offscreen accessible candidate descriptions remain present for assistive technology,
+but cannot contribute an absolute box to the initial page containing block. Wide
+tables scroll locally by pointer or keyboard without widening the document; sticky
+source identifiers, original values and translated interface status remain intact.
+Do not hide overflow on the document or remove accessible descriptions to mask a
+table-boundary defect. Native coverage includes passive, not-selected candidates,
+not only the selected Lead buttons. CSV preview, reference rows and single-pair
+tables continue to consume the same bounded scrollport, without another grid.

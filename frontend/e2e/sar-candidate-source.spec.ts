@@ -16,6 +16,74 @@ async function compactMark(mark: Locator) {
 }
 
 for (const width of [390, 800, 1672]) {
+  test(`passive candidate descriptions stay in the table scrollport at ${width}px`, async ({
+    page,
+  }, info) => {
+    test.skip(process.env.PATENTSAR_E2E_SAR_MUTATIONS !== 'synthetic-isolated-state');
+    const errors: string[] = [],
+      writes: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await page.route('**/api/v1/**', (route) => {
+      if (route.request().method() === 'GET') return route.continue();
+      writes.push(new URL(route.request().url()).pathname);
+      return route.abort();
+    });
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 1060 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    const dataset = await syntheticSnapshot(page);
+    const fixture = await cardProtocol(page, dataset, { candidateStatus: 'not_selected' });
+    const original = JSON.stringify(fixture.report);
+    const report = page.getByRole('region', { name: /^(Study report|研究报告)$/ });
+    await report.getByRole('button', { name: 'Activity table', exact: true }).click();
+    const table = report.getByRole('region', { name: /^(Activity table|研究活性表)$/ });
+    const scrollport = table.locator('.sar-table-scroll');
+    const mark = table.locator('.sar-candidate-none');
+    const description = mark.locator('.sr-only');
+    await expect(mark).toBeAttached();
+    await expect(description).toHaveText('Not selected');
+    await expect(mark.getByRole('button')).toHaveCount(0);
+    await expect(table.locator('tbody img')).toHaveJSProperty('complete', true);
+    await expect
+      .poll(() =>
+        page.evaluate(() => ({
+          viewport: innerWidth,
+          document: document.documentElement.scrollWidth,
+        })),
+      )
+      .toEqual({ viewport: width, document: width });
+    const before = await table.locator('tbody td').allTextContents();
+    await scrollport.focus();
+    await expect(scrollport).toBeFocused();
+    const overflow = await scrollport.evaluate(
+      (element) => element.scrollWidth > element.clientWidth,
+    );
+    if (overflow) {
+      await scrollport.press('ArrowRight');
+      await expect
+        .poll(() => scrollport.evaluate((element) => element.scrollLeft))
+        .toBeGreaterThan(0);
+    }
+    await mark.scrollIntoViewIfNeeded();
+    await expect(description).toBeAttached();
+    expect(await page.evaluate(() => window.scrollX)).toBe(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    await page.screenshot({ path: info.outputPath('passive-mark-en.png'), animations: 'disabled' });
+    const language = page.getByRole('combobox', { name: 'Interface language', exact: true });
+    await language.click();
+    await page.keyboard.press('End');
+    await page.keyboard.press('Enter');
+    await expect(description).toHaveText('研究未选候选');
+    expect(await table.locator('tbody td').allTextContents()).toEqual(
+      before.map((value) => value.replace('Not selected', '研究未选候选')),
+    );
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    await page.screenshot({ path: info.outputPath('passive-mark-zh.png'), animations: 'disabled' });
+    const jobs = await page.request.get(`/api/v1/sar/datasets/${dataset.id}/jobs`);
+    expect((await jobs.json()).items).toEqual([]);
+    expect(JSON.stringify(fixture.report)).toBe(original);
+    expect(errors).toEqual([]);
+    expect(writes).toEqual([]);
+  });
   test(`candidate sources require current reads at ${width}px`, async ({ page }, info) => {
     test.skip(process.env.PATENTSAR_E2E_SAR_MUTATIONS !== 'synthetic-isolated-state');
     const errors: string[] = [],

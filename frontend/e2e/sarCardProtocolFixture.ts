@@ -1,12 +1,17 @@
 import { expect, type Page } from '@playwright/test';
 import type { Dataset, Molecule } from '../src/api/sarTypes';
+import type { StudyRow } from '../src/api/sarStudyTypes';
 import { studyJob, studyReport, studyRow } from '../tests/sar-fixtures';
 
 /** Layout-only report DTOs; no fake record is inserted into a server job store.
  * Drawings come from the real installed RDKit dataset endpoint. Scientific
  * report correctness is deliberately not asserted by this protocol fixture.
  */
-export async function cardProtocol(page: Page, dataset: Dataset) {
+export async function cardProtocol(
+  page: Page,
+  dataset: Dataset,
+  options: { candidateStatus?: 'selected' | 'not_selected' } = {},
+) {
   const rows = await page.request.get(
     `/api/v1/sar/datasets/${dataset.id}/molecules?page=1&page_size=50`,
   );
@@ -23,6 +28,16 @@ export async function cardProtocol(page: Page, dataset: Dataset) {
   report.candidates[0]!.molecule_id = molecule.id;
   report.candidates[0]!.label = molecule.label;
   report.candidates[0]!.properties = molecule.properties ?? {};
+  const row: StudyRow = {
+    ...studyRow,
+    molecule_id: molecule.id,
+    label: molecule.label,
+    properties: molecule.properties ?? {},
+    ...(options.candidateStatus === 'not_selected'
+      ? { candidate_status: 'not_selected', priority_group: null, selection_order: null }
+      : {}),
+  };
+  if (options.candidateStatus === 'not_selected') report.candidates = [];
   report.scaffolds[0]!.smiles = molecule.smiles;
   report.scaffolds[0]!.molecule_ids = [molecule.id];
   report.regions[0]!.region = {
@@ -62,16 +77,7 @@ export async function cardProtocol(page: Page, dataset: Dataset) {
           page: Number(filters.page),
           page_size: 50,
           total: matched ? 1 : 0,
-          items: matched
-            ? [
-                {
-                  ...studyRow,
-                  molecule_id: molecule.id,
-                  label: molecule.label,
-                  properties: molecule.properties ?? {},
-                },
-              ]
-            : [],
+          items: matched ? [row] : [],
         },
       });
     } else if (url.pathname.endsWith('/study')) {
