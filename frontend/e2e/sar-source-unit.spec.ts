@@ -101,23 +101,38 @@ for (const width of [390, 800, 1672]) {
       .filter({ has: page.getByRole('rowheader', { name: 'Example 1', exact: true }) });
     await expect(row.locator('td').nth(1)).toHaveText('IC50 (nM): <10');
     const detail = row.locator('td > details');
-    await detail.locator('summary').click();
+    const disclosure = detail.locator(':scope > summary');
+    const rawRecord = detail.locator('.sar-evidence > ul > li > span');
+    await disclosure.click();
     await expect(detail.locator('.sar-evidence > ul > li > span')).toHaveText('IC50 (nM): <10');
     await detail
-      .locator('summary')
+      .locator('.sar-evidence > ul > li > span')
       .evaluate((element) => element.scrollIntoView({ block: 'center', inline: 'end' }));
     await capture(page, info, '01-source-en');
     await page
       .getByRole('combobox', { name: 'Interface language', exact: true })
       .selectOption('zh-CN');
-    await expect(detail.locator('summary')).toHaveText('来源详情');
+    await expect(disclosure).toHaveText('来源详情');
     await expect(row.locator('td').nth(1)).toHaveText('IC50 (nM): <10');
     await expect(detail.locator('.sar-evidence > ul > li > span')).toHaveText('IC50 (nM): <10');
     await detail
-      .locator('summary')
+      .locator('.sar-evidence > ul > li > span')
       .evaluate((element) => element.scrollIntoView({ block: 'center', inline: 'end' }));
     await capture(page, info, '02-source-zh');
-    await detail.locator('summary').click();
+    await expect(rawRecord).toBeVisible();
+    expect(
+      await rawRecord.evaluate((element) => {
+        const box = element.getBoundingClientRect(),
+          frame = element.closest('.sar-table-scroll')!.getBoundingClientRect();
+        return (
+          box.left >= Math.max(0, frame.left) &&
+          box.right <= Math.min(innerWidth, frame.right) &&
+          box.top >= Math.max(0, frame.top) &&
+          box.bottom <= Math.min(innerHeight, frame.bottom)
+        );
+      }),
+    ).toBe(true);
+    await disclosure.click();
     await row.getByRole('button', { name: '参考', exact: true }).click();
     const selection = page.getByRole('region', { name: '选择变化区域', exact: true });
     await expect(selection.locator('.sar-atom').first()).toBeEnabled();
