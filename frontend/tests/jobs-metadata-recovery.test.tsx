@@ -67,9 +67,9 @@ it('shows project-read failure with explicit retry instead of silently treating 
   expect(await screen.findByRole('alert')).toHaveTextContent('Project metadata unavailable');
   expect(screen.getByLabelText('筛选任务所属项目')).toBeDisabled();
   read.mockResolvedValue({ items: [project] });
-  await userEvent.click(screen.getByRole('button', { name: '重新加载', exact: true }));
+  await userEvent.click(screen.getByRole('button', { name: '重新加载' }));
   await waitFor(() => expect(screen.getByLabelText('筛选任务所属项目')).toBeEnabled());
-  expect(screen.getByRole('option', { name: project.title, exact: true })).toBeVisible();
+  expect(screen.getByRole('option', { name: project.title })).toBeVisible();
   expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 });
 
@@ -77,27 +77,27 @@ it('refreshes project choices with task records and retains the selected scope t
   const read = vi.spyOn(api, 'projects').mockResolvedValue({ items: [project] });
   render(<App />);
   const select = await screen.findByLabelText('筛选任务所属项目');
-  await screen.findByRole('option', { name: project.title, exact: true });
+  await screen.findByRole('option', { name: project.title });
   await userEvent.selectOptions(select, project.id);
   await waitFor(() =>
     expect(api.jobs).toHaveBeenLastCalledWith(project.id, expect.any(AbortSignal)),
   );
   const count = read.mock.calls.length;
   read.mockRejectedValue(new Error('Project metadata unavailable'));
-  await userEvent.click(screen.getByRole('button', { name: '刷新任务记录', exact: true }));
+  await userEvent.click(screen.getByRole('button', { name: '刷新任务记录' }));
   await waitFor(() => expect(read.mock.calls.length).toBe(count + 1));
   expect(await screen.findByRole('alert')).toHaveTextContent('Project metadata unavailable');
   expect(select).toHaveValue(project.id);
   expect(select).toBeDisabled();
-  expect(screen.getByRole('option', { name: project.title, exact: true })).toBeVisible();
+  expect(screen.getByRole('option', { name: project.title })).toBeVisible();
   expect(api.jobs).toHaveBeenLastCalledWith(project.id, expect.any(AbortSignal));
   await act(() => setLocale('en'));
   expect(screen.getByLabelText('Filter tasks by project')).toBe(select);
   expect(select).toHaveValue(project.id);
-  expect(screen.getByRole('option', { name: project.title, exact: true })).toBeVisible();
+  expect(screen.getByRole('option', { name: project.title })).toBeVisible();
   await act(() => setLocale('zh-CN'));
   read.mockResolvedValue({ items: [project] });
-  await userEvent.click(screen.getByRole('button', { name: '重新加载', exact: true }));
+  await userEvent.click(screen.getByRole('button', { name: '重新加载' }));
   await waitFor(() => expect(select).toBeEnabled());
   expect(select).toHaveValue(project.id);
 });
@@ -108,14 +108,14 @@ it.each([null, { ...project, id: 'different-project' }])(
     render(
       <JobActions project={linked} job={{ ...job, status: 'running' }} ready onChange={vi.fn()} />,
     );
-    expect(screen.getByRole('button', { name: '取消任务', exact: true })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '取消任务' })).toBeDisabled();
   },
 );
 
 it('retains the chosen project during a pending metadata refresh rather than treating it as a fresh removal', async () => {
   const read = vi.spyOn(api, 'projects').mockResolvedValue({ items: [project] });
   render(<App />);
-  await screen.findByRole('option', { name: project.title, exact: true });
+  await screen.findByRole('option', { name: project.title });
   const select = screen.getByLabelText('筛选任务所属项目');
   await userEvent.selectOptions(select, project.id);
   let resolve!: (value: { items: (typeof project)[] }) => void;
@@ -124,7 +124,7 @@ it('retains the chosen project during a pending metadata refresh rather than tre
       resolve = value;
     }),
   );
-  await userEvent.click(screen.getByRole('button', { name: '刷新任务记录', exact: true }));
+  await userEvent.click(screen.getByRole('button', { name: '刷新任务记录' }));
   await waitFor(() => expect(select).toHaveAttribute('aria-busy', 'true'));
   expect(select).toBeDisabled();
   expect(select).toHaveValue(project.id);
