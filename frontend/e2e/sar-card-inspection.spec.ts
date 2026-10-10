@@ -1,6 +1,15 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator } from '@playwright/test';
 import { syntheticSnapshot } from './sarSnapshotFixture';
 import { cardProtocol } from './sarCardProtocolFixture';
+
+async function paintedSize(image: Locator) {
+  return image.evaluate((node) => {
+    const picture = node as HTMLImageElement;
+    const box = picture.getBoundingClientRect();
+    const scale = Math.min(box.width / picture.naturalWidth, box.height / picture.naturalHeight);
+    return { width: picture.naturalWidth * scale, height: picture.naturalHeight * scale };
+  });
+}
 
 // Read-only card interactions on an isolated layout-only report DTO. Actual
 // backend drawings are reused; no extraction/analysis/model task is started.
@@ -54,6 +63,7 @@ for (const width of [390, 800, 1672]) {
       });
       const enlarged = dialog.getByRole('img', { name: sample.label, exact: true });
       await expect(enlarged).toHaveAttribute('src', source!);
+      const fitSize = await paintedSize(enlarged);
       const pane = dialog.getByRole('region', { name: 'Molecular canvas', exact: true });
       expect(
         await pane.evaluate((element) => {
@@ -76,6 +86,9 @@ for (const width of [390, 800, 1672]) {
       await expect(dialog.getByLabel('Magnification relative to fit', { exact: true })).toHaveText(
         '400%',
       );
+      const magnifiedSize = await paintedSize(enlarged);
+      expect(magnifiedSize.width / fitSize.width).toBeCloseTo(4, 1);
+      expect(magnifiedSize.height / fitSize.height).toBeCloseTo(4, 1);
       expect(
         await pane.evaluate(
           (element) =>
