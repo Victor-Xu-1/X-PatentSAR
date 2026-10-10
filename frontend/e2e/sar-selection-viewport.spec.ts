@@ -95,7 +95,7 @@ for (const width of [390, 800, 1672]) {
       const reference = first.getByRole('button', { name: 'Reference', exact: true });
       if (width === 390) {
         await expect(first.locator('td').nth(1)).toBeVisible();
-        const details = first.locator('summary');
+        const details = first.locator('td > details > summary');
         expect(
           await details.evaluate((element) => {
             const box = element.getBoundingClientRect(),
