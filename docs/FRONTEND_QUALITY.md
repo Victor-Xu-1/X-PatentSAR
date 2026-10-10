@@ -295,3 +295,12 @@ Record observed defects and repeat their focused checks. Publish only after the 
 is merged and the exact mainline wheel is deployed, with retained rollback material.
 Keep unvisited states, external scientific acceptance and commercial usability testing
 explicitly outstanding; do not replace them with a static-build success or award claim.
+
+Atom-index badges remain a single complete number when hovered, keyboard-focused
+or selected, independent of the surrounding panel's prose-wrapping policy. Only
+badge wrapping is constrained; normalized drawing coordinates, native atom targets,
+accessible identity, selection membership and original source numbering are unchanged.
+Focused native coverage includes two- and three-digit labels from explicit isolated
+16- and 116-atom adapter graphs. The other 28 source-adapter rows and the default
+fixture graphs are retained; these samples are layout evidence, not OCSR accuracy,
+scientific extraction or drug-likeness evidence.

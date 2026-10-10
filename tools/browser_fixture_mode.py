@@ -24,7 +24,12 @@ MODES = (
     (
         "sar",
         "sar-selection-viewport.spec.ts",
-        COMMON | {"sar-selection-viewport.spec.ts"},
+        COMMON | {"sar-selection-viewport.spec.ts", "sar-atom-label.spec.ts"},
+    ),
+    (
+        "sar",
+        "sar-atom-label.spec.ts",
+        COMMON | {"sar-atom-label.spec.ts"},
     ),
     (
         "sar",

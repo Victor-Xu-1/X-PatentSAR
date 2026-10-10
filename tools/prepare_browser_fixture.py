@@ -42,7 +42,16 @@ def prepare(
 
         return prepare_recovery(workspace, workspace / "web-state", pdf)
     run = artifact_run(
-        workspace / "controlled-history", pdf, current=sar, accepted=sar, rows=30
+        workspace / "controlled-history",
+        pdf,
+        current=sar,
+        accepted=sar,
+        rows=30,
+        # Label-layout samples only; the other 28 historical adapter rows stay
+        # unchanged. No depicted-structure/recognition accuracy is certified.
+        smiles_by_label={"Compound 29": "C" * 16, "Compound 30": "C" * 116}
+        if sar
+        else None,
     )
     if llm_settings:
         # Original-label adapter inputs only; no model/parser acceptance claim.

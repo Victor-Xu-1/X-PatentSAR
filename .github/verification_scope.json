@@ -1,35 +1,32 @@
 {
   "schema_version": 1,
-  "base_sha": "4f14c9d70fc7e018764f3929fd74fa5c6484d9b6",
+  "base_sha": "22be667f0f440062dcb71d55ef03e6998ce9c843",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/FRONTEND_QUALITY.md",
-    "frontend/e2e/sar-region-recovery.spec.ts",
+    "frontend/e2e/sar-atom-label.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/features/sar/RegionSelector.tsx",
-    "frontend/src/features/sar/readSavedRegion.ts",
-    "frontend/src/features/sar/useRegionSave.ts",
-    "frontend/src/i18n/catalogs/sar.ts",
-    "frontend/tests/sar-region-recovery.test.tsx",
+    "frontend/src/styles/sar-selection.css",
     "src/patent_sar_extractor/contracts.py",
-    "tests/test_sar_api.py"
+    "tests/test_sar_browser_fixture.py",
+    "tests/test_web_support.py",
+    "tools/browser_fixture_mode.py",
+    "tools/prepare_browser_fixture.py"
   ],
   "python_modules": [
     "tests.test_sar_api.SARAPITests.test_identical_region_retry_returns_original_receipt_without_duplicate_or_job",
-    "tests.test_sar_browser_fixture.SARBrowserFixtureTests.test_region_recovery_scope_uses_only_isolated_snapshot_and_region_writes",
+    "tests.test_sar_browser_fixture",
     "tests.test_product_version_compatibility",
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
     "frontend/tests/sar-reference-selection.test.tsx",
-    "frontend/tests/sar-region-recovery.test.tsx",
-    "frontend/tests/sar-region.test.tsx",
-    "frontend/tests/sar-study-setup.test.tsx"
+    "frontend/tests/sar-region.test.tsx"
   ],
   "browser_tests": [
-    "frontend/e2e/sar-region-recovery.spec.ts",
+    "frontend/e2e/sar-atom-label.spec.ts",
     "frontend/e2e/sar-selection-viewport.spec.ts",
     "frontend/e2e/product-version.spec.ts"
   ]

@@ -92,6 +92,8 @@
 }
 .sar-page .sar-atom span {
   position: absolute;
+  white-space: nowrap;
+  overflow-wrap: normal;
   left: 50%;
   bottom: calc(100% + 4px);
   transform: translateX(-50%);
