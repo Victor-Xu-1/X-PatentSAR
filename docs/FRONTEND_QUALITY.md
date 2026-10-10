@@ -74,6 +74,16 @@ The reference article's private algorithms are not represented as reproduced.
   column identity, not a first-column index, selects the corner header; hiding
   the ID never freezes an unrelated structure/activity header. Restoring it
   restores the same source-owned labels and their matching heading.
+  Original IDs are the direct source-detail action. The duplicate source-action
+  column starts hidden but remains recoverable in the shared column chooser.
+  Requested study source detail uses the existing native modal, not an invisible
+  below-table panel; cancellation returns to its original ID/card control.
+  The detail binds its owning job/dataset/revision/input, closes before another
+  study is committed, and stays open across locale-only changes. Old facts
+  cannot remain presented as belonging to the newly selected study.
+  Table structures use a slightly larger unframed thumbnail that itself opens
+  the existing validated passive drawing inspector. No overlay icon covers
+  atoms/bonds, extra drawing request/renderer or editing path is introduced.
 - A region click selects a recorded region. Modification preview reads a published
   strict comparison and rechecks its immutable full graph and attachment mapping.
   It does not design a molecule, rerun extraction or call a model.

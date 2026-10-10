@@ -395,6 +395,7 @@ export const sar: Record<string, string> = {
   '导出全部 CSV': 'Export all CSV',
   '导出全部 JSON': 'Export all JSON',
   来源详情: 'Source details',
+  原始记录: 'Original records',
   参考来源详情: 'Reference source details',
   来源项目链接: 'Source project link',
   '原文第 {page} 页': 'Original page {page}',

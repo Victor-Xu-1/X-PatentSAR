@@ -121,3 +121,18 @@ it('leaves normal table and fragment thumbnails unchanged unless inspection is e
   expect(screen.queryByRole('button')).not.toBeInTheDocument();
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
+
+it('uses the loaded thumbnail itself as an inert-until-ready inspection trigger without covering chemistry with an icon', async () => {
+  const view = render(<StudyImage {...props} inspectionTrigger="image" />);
+  const original = await screen.findByRole('img', { name: props.label });
+  const opener = screen.getByRole('button', { name: 'Enlarge structure ' + props.label });
+  expect(opener).toContainElement(original);
+  expect(opener).toBeDisabled();
+  fireEvent.load(original);
+  await userEvent.click(opener);
+  expect(screen.getByRole('dialog', { name: 'Molecular preview · ' + props.label })).toBeVisible();
+  expect(sarStudyApi.drawing).toHaveBeenCalledOnce();
+  view.rerender(<StudyImage {...props} inspectionTrigger="image" active={false} />);
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Enlarge structure ' + props.label })).toBeDisabled();
+});

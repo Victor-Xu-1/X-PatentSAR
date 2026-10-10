@@ -43,7 +43,18 @@ export function StudyRowTable({
   const { t } = useTranslation(),
     visible = columns.filter((c) => !hidden.includes(c.id));
   function cell(row: StudyRow, column: ResultColumn) {
-    if (column.id === 'label') return row.label;
+    if (column.id === 'label')
+      return (
+        <button
+          type="button"
+          className="link-button sar-source-identifier"
+          title={t('来源详情')}
+          disabled={!active}
+          onClick={() => onSource(row.molecule_id, row)}
+        >
+          {row.label}
+        </button>
+      );
     if (column.id === 'structure')
       return row.eligible ? (
         <StudyImage
@@ -52,6 +63,8 @@ export function StudyRowTable({
           identifier={row.molecule_id}
           label={row.label}
           active={active}
+          inspectable
+          inspectionTrigger="image"
         />
       ) : (
         t('不可分析')

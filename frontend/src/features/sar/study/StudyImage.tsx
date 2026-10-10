@@ -17,6 +17,7 @@ export function StudyImage({
   label,
   active,
   inspectable = false,
+  inspectionTrigger = 'control',
 }: {
   jobId: string;
   kind: StudyDrawingKind;
@@ -26,6 +27,7 @@ export function StudyImage({
   label: string;
   active: boolean;
   inspectable?: boolean;
+  inspectionTrigger?: 'control' | 'image';
 }) {
   const { t } = useTranslation(),
     [failed, setFailed] = useState<string | null>(null),
@@ -61,26 +63,43 @@ export function StudyImage({
   );
   // Drop ownership before commit: returning to a view must not reopen an old dialog.
   if (expanded && (!ready || expanded.identity !== identity)) setExpanded(null);
+  const drawing = image.value && failed !== image.value.url && (
+    <img
+      src={image.value.url}
+      alt={label}
+      style={{ aspectRatio: image.value.aspectRatio }}
+      onLoad={inspectable ? () => setLoaded(image.value!.url) : undefined}
+      onError={() => setFailed(image.value!.url)}
+    />
+  );
+  function expand() {
+    if (ready && image.value) setExpanded({ identity, url: image.value.url });
+  }
   return (
     <figure className="sar-study-image">
       {resource.loading && <Loading />}
       {resource.error && <SARFailure error={resource.error} onRetry={resource.reload} />}
       {image.error && <SARFailure error={image.error} />}
-      {image.value && failed !== image.value.url && (
-        <img
-          src={image.value.url}
-          alt={label}
-          style={{ aspectRatio: image.value.aspectRatio }}
-          onLoad={inspectable ? () => setLoaded(image.value!.url) : undefined}
-          onError={() => setFailed(image.value!.url)}
-        />
-      )}
-      {ready && image.value && (
+      {drawing &&
+        (inspectable && inspectionTrigger === 'image' ? (
+          <button
+            type="button"
+            className="sar-image-focus-trigger"
+            aria-label={t('放大结构 {identifier}', { identifier: label })}
+            disabled={!ready}
+            onClick={expand}
+          >
+            {drawing}
+          </button>
+        ) : (
+          drawing
+        ))}
+      {ready && image.value && inspectionTrigger === 'control' && (
         <button
           type="button"
           className="icon-button sar-image-focus-action"
           aria-label={t('放大结构 {identifier}', { identifier: label })}
-          onClick={() => setExpanded({ identity, url: image.value!.url })}
+          onClick={expand}
         >
           <Expand size={17} />
         </button>
