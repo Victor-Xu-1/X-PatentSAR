@@ -3,6 +3,7 @@ import { sarApi } from '../../../api/sarApi';
 import type { Dataset } from '../../../api/sarTypes';
 import type { StudyContext, StudyRow } from '../../../api/sarStudyTypes';
 import { Loading } from '../../../components/Feedback';
+import { Dialog } from '../../../components/Dialog';
 import { useTranslation } from '../../../i18n';
 import { MoleculeEvidence } from '../MoleculeEvidence';
 import { SARFailure } from '../SARFailure';
@@ -30,22 +31,23 @@ export function StudySource({
   );
   const source = useSARResource('sar:study-source:' + dataset.id + ':' + id, active, load);
   return (
-    <aside className="sar-source-detail" aria-label={t('来源详情')}>
-      <div className="sar-section-heading">
-        <h3>{t('来源详情')}</h3>
+    <Dialog title={t('来源详情')} onClose={onClose} wide>
+      <div className="dialog-body">
+        {source.loading && <Loading />}
+        {source.error && <SARFailure error={source.error} onRetry={source.reload} />}
+        {source.data && (
+          <details className="sar-compact">
+            <summary>{t('原始记录')}</summary>
+            <MoleculeEvidence dataset={dataset} molecule={source.data} />
+          </details>
+        )}
+        {row && <RowFacts row={row} contexts={contexts} />}
+      </div>
+      <footer className="dialog-actions">
         <button type="button" onClick={onClose}>
           {t('关闭对话框')}
         </button>
-      </div>
-      {source.loading && <Loading />}
-      {source.error && <SARFailure error={source.error} onRetry={source.reload} />}
-      {source.data && (
-        <details className="sar-compact">
-          <summary>{t('原始记录')}</summary>
-          <MoleculeEvidence dataset={dataset} molecule={source.data} />
-        </details>
-      )}
-      {row && <RowFacts row={row} contexts={contexts} />}
-    </aside>
+      </footer>
+    </Dialog>
   );
 }

@@ -94,6 +94,37 @@ export async function checkStudyTableControls(page: Page, report: Locator, width
   await search.fill('');
   await expect(table.locator('tbody tr')).toHaveCount(16);
   await expect(table.getByRole('rowheader').first()).toHaveText('Example 1');
+  const originalID = table
+    .getByRole('rowheader')
+    .first()
+    .getByRole('button', { name: 'Example 1', exact: true });
+  await originalID.click();
+  const source = page.getByRole('dialog', { name: 'Source details', exact: true });
+  await expect(source).toBeVisible();
+  expect(
+    await source.evaluate(
+      (element) =>
+        element.getBoundingClientRect().top >= 0 &&
+        element.getBoundingClientRect().bottom <= innerHeight + 1,
+    ),
+  ).toBe(true);
+  await page.keyboard.press('Escape');
+  await expect(originalID).toBeFocused();
+  const firstRow = table.locator('tbody tr').first();
+  const inspect = firstRow.getByRole('button', {
+    name: 'Enlarge structure Example 1',
+    exact: true,
+  });
+  await expect(inspect).toBeEnabled();
+  const drawing = await firstRow.locator('.sar-study-image img').getAttribute('src');
+  await inspect.click();
+  const focus = page.getByRole('dialog', { name: 'Molecular preview · Example 1', exact: true });
+  await expect(focus.getByRole('img', { name: 'Example 1', exact: true })).toHaveAttribute(
+    'src',
+    drawing!,
+  );
+  await page.keyboard.press('Escape');
+  await expect(inspect).toBeFocused();
   await columns.click();
   const identifierChoice = chooser.getByRole('checkbox', {
     name: /^Show column Original ID(?: ·|$)/,

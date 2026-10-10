@@ -28,7 +28,7 @@ export function StudyActivityTable({
 }) {
   const { t } = useTranslation(),
     search = useDebounced(filter.query, 250);
-  const [hidden, setHidden] = useState<string[]>([]),
+  const [hidden, setHidden] = useState<string[]>(['source']),
     [sort, setSort] = useState<PageSort>({ column: '', direction: 'asc' });
   const columns = studyColumns(selectedContexts(report), t);
   const key = JSON.stringify({ ...filter, query: search, sort });

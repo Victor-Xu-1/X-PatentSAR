@@ -86,8 +86,25 @@
   font-variant-numeric: tabular-nums;
 }
 .sar-study-table .sar-study-image {
-  width: 160px;
+  width: 180px;
   margin: 0 auto;
+}
+.sar-study-table .sar-source-identifier {
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink);
+}
+.sar-study-image .sar-image-focus-trigger {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+.sar-study-image .sar-image-focus-trigger:disabled {
+  cursor: default;
 }
 .sar-study-table-controls {
   margin-top: 12px;

@@ -31,8 +31,12 @@ export function StudyReportView({
 }) {
   const { t } = useTranslation(),
     id = useId();
+  const sourceOwner = JSON.stringify([jobId, dataset.id, dataset.revision, report.input_sha256]);
   const [tab, setTab] = useState(0),
-    [source, setSource] = useState<{ id: string; row: StudyRow | null } | null>(null);
+    [source, setSource] = useState<{ owner: string; id: string; row: StudyRow | null } | null>(
+      null,
+    );
+  if (source && source.owner !== sourceOwner) setSource(null);
   const [filter, setFilter] = useState<StudyFilter>({
     query: '',
     scope: 'all',
@@ -45,7 +49,11 @@ export function StudyReportView({
     setTab(5);
   }
   function showSource(id: string, row?: StudyRow) {
-    setSource({ id, row: row ?? report.candidates.find((r) => r.molecule_id === id) ?? null });
+    setSource({
+      owner: sourceOwner,
+      id,
+      row: row ?? report.candidates.find((r) => r.molecule_id === id) ?? null,
+    });
   }
   return (
     <div className="sar-study-report">

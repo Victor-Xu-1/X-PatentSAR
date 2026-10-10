@@ -45,6 +45,27 @@ const props = {
   onJob: vi.fn(),
 };
 describe('complete study report and lifecycle', () => {
+  it('closes requested source detail when its owning study changes, not after locale-only changes', async () => {
+    const view = render(
+      <StudyReportView report={studyReport} dataset={sarDataset} jobId={studyJob.id} active />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Activity table' }));
+    const table = await screen.findByRole('table');
+    await userEvent.click(within(table).getByRole('button', { name: studyRow.label }));
+    const source = screen.getByRole('dialog', { name: 'Source details' });
+    await within(source).findByText('Original records');
+    await act(() => setLocale('zh-CN'));
+    expect(screen.getByRole('dialog', { name: '来源详情' })).toBe(source);
+    view.rerender(
+      <StudyReportView
+        report={studyReport}
+        dataset={sarDataset}
+        jobId="different-owned-study"
+        active
+      />,
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
   it('distinguishes all checked attempts, actual matches, comparable evidence and observed compounds vs observations', async () => {
     render(<StudyResults {...props} />);
     await screen.findByText(studyReport.title);
@@ -118,7 +139,7 @@ describe('complete study report and lifecycle', () => {
     expect(screen.getByText('0.24')).toBeVisible();
     expect(screen.getByText('Manually left empty')).toBeVisible();
     expect(screen.getByText(/manual_null/)).not.toBeVisible();
-    const lead = within(screen.getByRole('complementary', { name: 'Source details' }));
+    const lead = within(screen.getByRole('dialog', { name: 'Source details' }));
     await userEvent.click(lead.getByText('Evidence basis'));
     await userEvent.click(lead.getByText('Technical evidence'));
     expect(lead.getByText(/manual_null/)).toBeVisible();
@@ -267,9 +288,12 @@ describe('compact activity-table presentation', () => {
     await waitFor(() => expect(vi.mocked(sarStudyApi.rows).mock.calls.at(-1)?.[2]).toBe(2));
     table = await screen.findByRole('table');
     const calls = vi.mocked(sarStudyApi.rows).mock.calls.length;
-    await userEvent.click(within(table).getByRole('button', { name: 'Source details' }));
-    await screen.findByRole('complementary', { name: 'Source details' });
+    await userEvent.click(within(table).getByRole('button', { name: studyRow.label }));
+    const source = await screen.findByRole('dialog', { name: 'Source details' });
+    await within(source).findByText('Original records');
     expect(vi.mocked(sarStudyApi.rows).mock.calls.length).toBe(calls);
+    await userEvent.click(within(source).getAllByRole('button', { name: 'Close dialog' })[0]!);
+    expect(within(table).getByRole('button', { name: studyRow.label })).toHaveFocus();
     await userEvent.click(screen.getByRole('button', { name: 'Column settings' }));
     const dialog = within(screen.getByRole('dialog'));
     await userEvent.click(dialog.getByRole('checkbox', { name: /Show column MW/ }));
