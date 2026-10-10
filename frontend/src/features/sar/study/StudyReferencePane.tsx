@@ -4,7 +4,7 @@ import { useTranslation } from '../../../i18n';
 /** One bounded reference viewport, including multiple original reference graphs. */
 export function StudyReferencePane({ active, children }: { active: boolean; children: ReactNode }) {
   const { t } = useTranslation();
-  const viewport = useRef<HTMLDivElement>(null);
+  const viewport = useRef<HTMLElement>(null);
   const content = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const pane = viewport.current,
@@ -34,10 +34,10 @@ export function StudyReferencePane({ active, children }: { active: boolean; chil
     };
   }, [active]);
   return (
-    <div ref={viewport} role="region" aria-label={t('参考结构')} className="sar-reference-maps">
+    <section ref={viewport} aria-label={t('参考结构')} className="sar-reference-maps">
       <div ref={content} className="sar-reference-map-content">
         {children}
       </div>
-    </div>
+    </section>
   );
 }
