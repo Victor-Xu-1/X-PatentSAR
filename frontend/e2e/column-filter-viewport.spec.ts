@@ -32,6 +32,12 @@ for (const [width, height] of [
     await menu.getByLabel('Select all filter values', { exact: true }).uncheck();
     await menu.getByLabel('Filter value ' + raw, { exact: true }).check();
     const list = menu.locator('.column-value-choices');
+    // Opening near the viewport bottom must retain a useful value working area,
+    // rather than reserving less height than the panel's own preferred maximum.
+    expect((await list.boundingBox())!.height).toBeGreaterThanOrEqual(144);
+    const frame = (await menu.boundingBox())!;
+    expect(frame.y).toBeGreaterThanOrEqual(8);
+    expect(frame.y + frame.height).toBeLessThanOrEqual(height! - 8 + 1);
     const escaped = await list.evaluate((node) => {
       const box = node.getBoundingClientRect();
       return [...node.querySelectorAll('input[type="checkbox"]')]
@@ -48,6 +54,15 @@ for (const [width, height] of [
     });
     expect(escaped, 'No value may paint/hit-test over the filter actions').toEqual([]);
     await menu.screenshot({ path: test.info().outputPath(`long-filter-${width}-${height}.png`) });
+    if (width === 390 && height === 844) {
+      const language = page.getByRole('combobox', { name: 'Interface language', exact: true });
+      await language.click();
+      await language.selectOption('zh-CN');
+      await expect(menu.getByLabel('筛选值 ' + raw, { exact: true })).toBeChecked();
+      expect((await list.boundingBox())!.height).toBeGreaterThanOrEqual(144);
+      await menu.screenshot({ path: test.info().outputPath('long-filter-390-844-zh.png') });
+      await menu.getByLabel('筛选值 ' + raw, { exact: true }).focus();
+    }
     await page.keyboard.press('Escape');
     await expect(opener).toBeFocused();
     expect(writes).toEqual([]);

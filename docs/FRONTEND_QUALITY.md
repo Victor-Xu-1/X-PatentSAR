@@ -340,3 +340,11 @@ case-folding or scientific reconciliation occurs. Raw values (including relation
 symbols), names and identifiers stay unchanged across locale switches. Focused
 installed-browser evidence covers real isolated CSV intake, mapping, reference
 selection and unsaved atom selection only; it must not submit scientific jobs.
+
+Column-filter placement reserves the same preferred height used by its bounded
+panel, so opening near the bottom does not squeeze the values into a token strip.
+At the tested phone/tablet/desktop viewport sizes the native value working area
+must retain at least 144 pixels, with the entire panel inside the eight-pixel
+viewport inset. Brief non-filter menus keep their existing placement. Value
+clipping/hit bounds, cancel/Escape focus, server filters and source facts remain
+unchanged; this is one placement correction, not a second popup implementation.
