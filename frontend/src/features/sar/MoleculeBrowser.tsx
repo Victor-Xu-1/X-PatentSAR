@@ -7,7 +7,7 @@ import { Empty, Loading } from '../../components/Feedback';
 import { SARFailure } from './SARFailure';
 import { useTranslation } from '../../i18n';
 import { PageControls } from './PageControls';
-import { SourceLinks } from './SourceLinks';
+import { MoleculeEvidence } from './MoleculeEvidence';
 import { TableScroll } from './TableScroll';
 
 export function MoleculeBrowser({
@@ -35,7 +35,7 @@ export function MoleculeBrowser({
     load,
   );
   return (
-    <section className="sar-panel" aria-label={t('选择参考分子')}>
+    <section className="sar-panel sar-reference-browser" aria-label={t('选择参考分子')}>
       <h2>{t('选择参考分子')}</h2>
       <label>
         {t('搜索编号或 SMILES')}
@@ -62,43 +62,20 @@ export function MoleculeBrowser({
                 <thead>
                   <tr>
                     <th>{t('原文编号')}</th>
-                    <th>SMILES</th>
-                    <th>{t('原始活性')}</th>
-                    <th>{t('行问题')}</th>
-                    <th>{t('来源详情')}</th>
                     <th>{t('参考')}</th>
+                    <th>{t('原始活性')}</th>
+                    <th>{t('来源详情')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {resource.data.items.map((molecule) => (
                     <tr key={molecule.id} data-selected={referenceId === molecule.id}>
                       <th scope="row">{molecule.label}</th>
-                      <td className="sar-chemistry">{molecule.smiles ?? t('未提供 SMILES')}</td>
-                      <td>
-                        {molecule.observations.map((observation, index) => (
-                          <div key={index}>
-                            {dataset.metrics.find((metric) => metric.id === observation.metric_id)
-                              ?.name ?? observation.metric_id}
-                            : {observation.value}
-                            {observation.unit && <span> · {observation.unit}</span>}
-                          </div>
-                        ))}
-                      </td>
-                      <td>
-                        {molecule.eligible ? t('可作为参考') : t('不可分析')}
-                        <ul>
-                          {molecule.issues.map((issue, i) => (
-                            <li key={i}>{issue}</li>
-                          ))}
-                        </ul>
-                      </td>
-                      <td>
-                        <SourceLinks dataset={dataset} molecule={molecule} />
-                      </td>
                       <td>
                         <button
                           type="button"
                           disabled={
+                            !active ||
                             !resource.validated ||
                             query !== search ||
                             dataset.stale ||
@@ -110,6 +87,35 @@ export function MoleculeBrowser({
                         >
                           {t('参考')}
                         </button>
+                        {!molecule.eligible && <small>{t('不可分析')}</small>}
+                      </td>
+                      <td>
+                        {molecule.observations.map((observation, index) => (
+                          <div key={index}>
+                            {dataset.metrics.find((metric) => metric.id === observation.metric_id)
+                              ?.name ?? observation.metric_id}
+                            : {observation.value}
+                            {observation.unit && <span> · {observation.unit}</span>}
+                          </div>
+                        ))}
+                      </td>
+                      <td>
+                        {!molecule.smiles && <small>{t('未提供 SMILES')}</small>}
+                        {!!molecule.issues.length && (
+                          <ul>
+                            {molecule.issues.map((issue, i) => (
+                              <li key={i}>{issue}</li>
+                            ))}
+                          </ul>
+                        )}
+                        <details>
+                          <summary>{t('来源详情')}</summary>
+                          <MoleculeEvidence
+                            dataset={dataset}
+                            molecule={molecule}
+                            includeIssues={false}
+                          />
+                        </details>
                       </td>
                     </tr>
                   ))}
@@ -121,11 +127,10 @@ export function MoleculeBrowser({
             page={page}
             total={resource.data.total}
             onPage={setPage}
-            disabled={!resource.validated || query !== search}
+            disabled={!active || !resource.validated || query !== search}
           />
         </>
       )}
-      <p className="sar-hint">{t('来源数据未经翻译；问题代码与原始原因保留服务器原文。')}</p>
     </section>
   );
 }

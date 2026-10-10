@@ -18,6 +18,16 @@ The reference article's private algorithms are not represented as reproduced.
 - SAR tasks use three concise milestones: data, activity, analyze. Activity choices
   precede the review/run step. Back and language changes preserve drafts; only the
   existing explicit submit creates a study. Regions remain optional, not a second queue.
+  Both study selections and single-reference comparisons share a bounded reference
+  chooser. The source ID and explicit Reference action stay together while the
+  table scrolls; raw structure/source details open on demand. Missing structures
+  and original issue codes remain visible and ineligible rows cannot be selected.
+  Explicit reference choice reveals the atom work area; returning from the chooser
+  preserves same-graph drafts. Refresh, inactivity and locale changes never replay
+  that navigation, and an asynchronous drawing cannot steal focus after the user
+  moves on. Unselected atom targets are transparent; selected rings and index badges
+  leave the original glyph visible. Saved overlays are opt-in. Server geometry,
+  immutable-region identity and save validation remain the only chemical authority.
   A persistent result workbench returning to the same dataset without a job must
   reveal setup from the current route, not its first-mounted disclosure state.
   Project intake starts with the source and one Continue action; the optional

@@ -1,0 +1,112 @@
+/* Selection owns viewport layout only; structure and atom coordinates stay server-owned. */
+.sar-reference-browser .sar-table-scroll {
+  max-height: min(360px, 45dvh);
+  scrollbar-gutter: stable;
+}
+.sar-reference-browser table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.sar-reference-browser :is(th, td):nth-child(1) {
+  min-width: 108px;
+  width: 108px;
+  max-width: 108px;
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  z-index: 1;
+}
+.sar-reference-browser :is(th, td):nth-child(2) {
+  min-width: 112px;
+  width: 112px;
+  max-width: 112px;
+  position: sticky;
+  left: 108px;
+  background: var(--surface);
+  z-index: 1;
+  border-inline-end: 1px solid var(--line);
+}
+.sar-reference-browser thead th {
+  position: sticky;
+  top: 0;
+  background: var(--surface-subtle);
+  z-index: 2;
+}
+.sar-reference-browser thead th:nth-child(-n + 2) {
+  background: var(--surface-subtle);
+  z-index: 3;
+}
+.sar-reference-browser tr[data-selected='true'] :is(th, td):nth-child(-n + 2) {
+  background: var(--accent-surface);
+}
+.sar-reference-browser .sar-evidence {
+  min-width: 240px;
+}
+.sar-reference-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-block-start: 12px;
+}
+.sar-selection-panel {
+  scroll-margin-block-start: 96px;
+}
+.sar-selection-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.sar-page .sar-selection-overlay-toggle {
+  flex-direction: row;
+  align-items: center;
+  width: fit-content;
+  font-size: 13px;
+}
+.sar-drawing {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  margin: 16px auto;
+  background: var(--image-paper);
+}
+.sar-drawing img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.sar-page .sar-atom {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: transparent;
+  color: var(--ink);
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  padding: 0;
+  font-size: 10px;
+}
+.sar-page .sar-atom span {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 4px);
+  transform: translateX(-50%);
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  pointer-events: none;
+  opacity: 0;
+}
+.sar-page .sar-atom:is(:hover, :focus-visible, [aria-pressed='true']) span {
+  opacity: 1;
+}
+.sar-page .sar-atom:is(:hover, :focus-visible, [aria-pressed='true']) {
+  background: transparent;
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 3px var(--accent-surface);
+}
+.sar-page .sar-atom:disabled {
+  opacity: 0.4;
+}

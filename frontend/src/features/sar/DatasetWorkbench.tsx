@@ -8,7 +8,7 @@ import { useTranslation } from '../../i18n';
 import { isActiveJob } from './presentation';
 import { SourceLinks } from './SourceLinks';
 import { AnalysisForm } from './AnalysisForm';
-import { MoleculeBrowser } from './MoleculeBrowser';
+import { ReferenceWorkspace } from './ReferenceWorkspace';
 import { RegionSelector } from './RegionSelector';
 import { SARJobs } from './SARJobs';
 import { SARJobResults } from './SARJobResults';
@@ -185,10 +185,11 @@ export function DatasetWorkbench({
             >
               <summary>{t('单参考比较（高级）')}</summary>
               <div hidden={!advancedOpen}>
-                <MoleculeBrowser
+                <ReferenceWorkspace
                   dataset={dataset.data}
-                  active={active && advancedOpen && dataset.validated}
-                  referenceId={reference?.id ?? null}
+                  active={active && advancedOpen}
+                  disabled={!dataset.validated}
+                  reference={reference}
                   onReference={(molecule) => {
                     if (
                       reference?.id !== molecule.id ||
@@ -198,28 +199,31 @@ export function DatasetWorkbench({
                       setRegion(null);
                     }
                   }}
+                >
+                  {({ active: selecting, revealRequest }) =>
+                    reference &&
+                    dataset.data && (
+                      <RegionSelector
+                        key={`${dataset.data.revision}:${reference.id}:${reference.graph_sha256}`}
+                        dataset={dataset.data}
+                        reference={reference}
+                        active={selecting}
+                        revealRequest={revealRequest}
+                        disabled={!dataset.validated}
+                        scope={scope}
+                        onRegion={setRegion}
+                      />
+                    )
+                  }
+                </ReferenceWorkspace>
+                <AnalysisForm
+                  dataset={dataset.data}
+                  region={region}
+                  busy={!ready || Boolean(jobs.data?.items.some(isActiveJob))}
+                  active={active && advancedOpen}
+                  scope={scope}
+                  onJob={createdJob}
                 />
-                <div className="sar-analysis-grid">
-                  {reference && (
-                    <RegionSelector
-                      key={`${dataset.data.revision}:${reference.id}:${reference.graph_sha256}`}
-                      dataset={dataset.data}
-                      reference={reference}
-                      active={active && advancedOpen}
-                      disabled={!dataset.validated}
-                      scope={scope}
-                      onRegion={setRegion}
-                    />
-                  )}
-                  <AnalysisForm
-                    dataset={dataset.data}
-                    region={region}
-                    busy={!ready || Boolean(jobs.data?.items.some(isActiveJob))}
-                    active={active && advancedOpen}
-                    scope={scope}
-                    onJob={createdJob}
-                  />
-                </div>
               </div>
             </details>
             <details className="sar-compact">

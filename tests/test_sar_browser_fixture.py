@@ -13,6 +13,16 @@ from tools.prepare_browser_fixture import prepare
 
 
 class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
+    def test_selection_viewport_scope_uses_snapshot_only_synthetic_source(self):
+        selected = {
+            PREFIX + "sar-selection-viewport.spec.ts",
+            PREFIX + "product-version.spec.ts",
+        }
+        self.assertEqual(fixture_mode(selected), "sar")
+        self.assertEqual(
+            fixture_mode(selected | {PREFIX + "real-workflow.spec.ts"}), "execution"
+        )
+
     def test_filter_viewport_scope_uses_only_read_only_source(self):
         selected = {
             PREFIX + "column-filter-viewport.spec.ts",

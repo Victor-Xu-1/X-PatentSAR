@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { sarApi } from '../../api/sarApi';
 import type { Dataset, Molecule, Region, RegionRequest } from '../../api/sarTypes';
 import { useSARResource } from './useSARResource';
@@ -10,7 +10,9 @@ import { SourceLinks } from './SourceLinks';
 import { MutationNotice } from './MutationNotice';
 import { useSARMutation } from './useSARMutation';
 import { MoleculeEvidence } from './MoleculeEvidence';
-import { RegionLegend, RegionMap } from './study/RegionMap';
+import { RegionLegend } from './study/RegionMap';
+import { SelectionDrawing } from './SelectionDrawing';
+import { useSelectionReveal } from './useSelectionReveal';
 
 export function RegionSelector({
   dataset,
@@ -23,6 +25,7 @@ export function RegionSelector({
   onNameChange,
   onKindChange,
   highlights = [],
+  revealRequest = 0,
   onSaved,
   onRegion,
 }: {
@@ -36,6 +39,7 @@ export function RegionSelector({
   onNameChange?: (name: string) => void;
   onKindChange?: (kind: 'variable' | 'core') => void;
   highlights?: Region[];
+  revealRequest?: number;
   onSaved?: (region: Region) => void;
   onRegion: (region: Region | null) => void;
 }) {
@@ -44,6 +48,9 @@ export function RegionSelector({
   const [saved, setSaved] = useState<Region | null>(null);
   const [loadedURL, setLoadedURL] = useState<string | null>(null);
   const [failedURL, setFailedURL] = useState<string | null>(null);
+  const [showHighlights, setShowHighlights] = useState(false);
+  const panelRef = useRef<HTMLElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
   const mutation = useSARMutation({
     active,
     scope: JSON.stringify([
@@ -91,6 +98,13 @@ export function RegionSelector({
     (name === undefined || saved.name === name) &&
     (kind === undefined || saved.kind === kind);
   const disabled = !graphCurrent || !image.value || !loaded || imageFailed || mutation.locked;
+  useSelectionReveal(panelRef, canvasRef, active, revealRequest, loaded);
+  const compatibleHighlights = highlights.filter(
+    (region) =>
+      region.molecule_id === reference.id &&
+      region.dataset_revision === dataset.revision &&
+      region.graph_sha256 === reference.graph_sha256,
+  );
   useEffect(() => {
     onRegion(graphCurrent && loaded && !image.error && !imageFailed && savedCurrent ? saved : null);
   }, [graphCurrent, loaded, image.error, imageFailed, savedCurrent, saved, onRegion]);
@@ -127,38 +141,42 @@ export function RegionSelector({
     );
   }
   return (
-    <section className="sar-panel" aria-label={t('选择变化区域')}>
+    <section
+      ref={panelRef}
+      tabIndex={-1}
+      className="sar-panel sar-selection-panel"
+      aria-label={t('选择变化区域')}
+    >
       <h2>
         {t('选择变化区域')} · {reference.label}
       </h2>
-      <p className="sar-hint">
-        {t('选择仅用于参考比较，不是结构修正。来源修正仍使用原项目的审计编辑器。')}
-      </p>
       {drawing.loading && <Loading />}
-      {onNameChange && (
-        <label>
-          {t('区域名称')}
-          <input
-            maxLength={40}
-            value={name ?? ''}
-            disabled={disabled}
-            onChange={(event) => onNameChange(event.target.value)}
-          />
-        </label>
-      )}
-      {onKindChange && (
-        <label>
-          {t('选择用途')}
-          <select
-            value={kind ?? 'variable'}
-            disabled={disabled}
-            onChange={(event) => onKindChange(event.target.value as 'variable' | 'core')}
-          >
-            <option value="variable">{t('变化区域')}</option>
-            <option value="core">{t('用户确认核心')}</option>
-          </select>
-        </label>
-      )}
+      <div className="sar-selection-fields">
+        {onNameChange && (
+          <label>
+            {t('区域名称')}
+            <input
+              maxLength={40}
+              value={name ?? ''}
+              disabled={disabled}
+              onChange={(event) => onNameChange(event.target.value)}
+            />
+          </label>
+        )}
+        {onKindChange && (
+          <label>
+            {t('选择用途')}
+            <select
+              value={kind ?? 'variable'}
+              disabled={disabled}
+              onChange={(event) => onKindChange(event.target.value as 'variable' | 'core')}
+            >
+              <option value="variable">{t('变化区域')}</option>
+              <option value="core">{t('用户确认核心')}</option>
+            </select>
+          </label>
+        )}
+      </div>
       {drawing.error && <SARFailure error={drawing.error} onRetry={drawing.reload} />}
       {image.error && <SARFailure error={image.error} />}
       {imageFailed && <p role="alert">{t('RDKit 结构图加载失败。')}</p>}
@@ -166,56 +184,35 @@ export function RegionSelector({
         <p role="alert">{t('图或修订发生变化，已禁止使用旧选区。请刷新并重新选择。')}</p>
       )}
       {image.value && (
-        <div className="sar-drawing" style={{ aspectRatio: image.value.aspectRatio }}>
-          <img
-            key={image.value.url}
-            src={image.value.url}
-            alt={t('RDKit 参考结构')}
-            onLoad={() => {
-              setLoadedURL(image.value?.url ?? null);
-              setFailedURL(null);
-            }}
-            onError={() => {
-              setLoadedURL(null);
-              setFailedURL(image.value?.url ?? null);
-            }}
-          />
-          <RegionMap
-            atoms={drawing.data?.atoms ?? []}
-            regions={highlights.filter(
-              (r) =>
-                r.molecule_id === reference.id &&
-                r.dataset_revision === dataset.revision &&
-                r.graph_sha256 === reference.graph_sha256,
-            )}
-          />
-          {drawing.data?.atoms.map((atom) => (
-            <button
-              key={atom.index}
-              type="button"
-              className="sar-atom"
-              style={{ left: `${atom.x * 100}%`, top: `${atom.y * 100}%` }}
-              aria-label={t('原子 {index}（{element}）', {
-                index: atom.index,
-                element: atom.element,
-              })}
-              aria-pressed={indices.includes(atom.index)}
-              disabled={disabled}
-              onClick={() => toggle(atom.index)}
-            >
-              <span>{atom.index}</span>
-            </button>
-          ))}
-        </div>
+        <SelectionDrawing
+          canvasRef={canvasRef}
+          image={image.value}
+          atoms={drawing.data?.atoms ?? []}
+          regions={showHighlights ? compatibleHighlights : []}
+          indices={indices}
+          disabled={disabled}
+          onToggle={toggle}
+          onLoad={() => {
+            setLoadedURL(image.value?.url ?? null);
+            setFailedURL(null);
+          }}
+          onError={() => {
+            setLoadedURL(null);
+            setFailedURL(image.value?.url ?? null);
+          }}
+        />
       )}
-      <RegionLegend
-        regions={highlights.filter(
-          (r) =>
-            r.molecule_id === reference.id &&
-            r.dataset_revision === dataset.revision &&
-            r.graph_sha256 === reference.graph_sha256,
-        )}
-      />
+      {!!compatibleHighlights.length && (
+        <label className="sar-selection-overlay-toggle">
+          <input
+            type="checkbox"
+            checked={showHighlights}
+            onChange={(event) => setShowHighlights(event.target.checked)}
+          />
+          {t('显示已保存选区')}
+        </label>
+      )}
+      {showHighlights && <RegionLegend regions={compatibleHighlights} />}
       <output>
         {indices.length
           ? t('已选原子：{indices}', { indices: indices.join(', ') })
@@ -252,6 +249,9 @@ export function RegionSelector({
       {drawing.data && (
         <details>
           <summary>{t('来源详情')}</summary>
+          <p className="sar-hint">
+            {t('选择仅用于参考比较，不是结构修正。来源修正仍使用原项目的审计编辑器。')}
+          </p>
           <MoleculeEvidence
             dataset={dataset}
             molecule={drawing.data.molecule}
