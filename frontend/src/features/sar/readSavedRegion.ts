@@ -1,5 +1,6 @@
 import { ApiError } from '../../api/errors';
 import { sarStudyApi } from '../../api/sarStudyApi';
+import { sarApi } from '../../api/sarApi';
 import type { Region, RegionRequest } from '../../api/sarTypes';
 import { UiError } from '../../i18n';
 
@@ -7,6 +8,14 @@ import { UiError } from '../../i18n';
 export async function readSavedRegion(datasetId: string, request: RegionRequest): Promise<Region> {
   let profile;
   try {
+    const current = await sarApi.dataset(datasetId, new AbortController().signal);
+    if (current.stale || current.revision !== request.expected_dataset_revision)
+      throw new ApiError(
+        409,
+        'sar_dataset_stale',
+        '来源数据已经变化，无法确认当前选区。请重新加载数据集。',
+        true,
+      );
     profile = await sarStudyApi.profile(
       datasetId,
       request.expected_dataset_revision,

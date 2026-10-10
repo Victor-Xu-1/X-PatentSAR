@@ -31,7 +31,8 @@ The reference article's private algorithms are not represented as reproduced.
   leave the original glyph visible. Saved overlays are opt-in. Server geometry,
   immutable-region identity and save validation remain the only chemical authority.
   Interrupted region saves expose one explicit saved-selection check. It reads
-  the existing current profile and requires a unique complete match of dataset,
+  the existing current dataset and profile, rejects stale/changed snapshots,
+  and requires a unique complete match of dataset,
   revision, molecule, graph, atom set, name and purpose; it never replays a POST
   or invents a saved region. Unconfirmed or failed reads retain the lock and
   preserve original error details. A late response cannot revive a previous

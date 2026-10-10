@@ -19,6 +19,7 @@ const props = {
 beforeEach(() => {
   setLocale('en');
   vi.spyOn(sarApi, 'drawing').mockResolvedValue(sarDrawing);
+  vi.spyOn(sarApi, 'dataset').mockResolvedValue(sarDataset);
   vi.spyOn(sarStudyApi, 'profile').mockResolvedValue({ ...studyProfile, regions: [recovered] });
 });
 async function saveSelection() {
@@ -28,7 +29,7 @@ async function saveSelection() {
 }
 
 describe('explicit immutable region readback', () => {
-  it('recovers a committed uncertain save using one read, without another POST or automatic readback', async () => {
+  it('recovers a committed uncertain save using current dataset/profile reads, without another POST or automatic readback', async () => {
     const save = vi
       .spyOn(sarApi, 'saveRegion')
       .mockRejectedValue(new ApiError(503, 'lost', 'Unknown write result', true));
@@ -37,6 +38,7 @@ describe('explicit immutable region readback', () => {
     await saveSelection();
     const check = await screen.findByRole('button', { name: 'Check saved selection' });
     expect(sarStudyApi.profile).not.toHaveBeenCalled();
+    expect(sarApi.dataset).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: 'Save region' })).toBeDisabled();
     await userEvent.click(check);
     await screen.findByText('Region saved · 1 attachment points');
@@ -46,6 +48,7 @@ describe('explicit immutable region readback', () => {
       2,
       expect.any(AbortSignal),
     );
+    expect(sarApi.dataset).toHaveBeenCalledExactlyOnceWith(sarDataset.id, expect.any(AbortSignal));
     expect(save).toHaveBeenCalledOnce();
     expect(screen.queryByRole('button', { name: 'Check saved selection' })).toBeNull();
   });
@@ -154,4 +157,19 @@ describe('explicit immutable region readback', () => {
       }),
     ).rejects.toMatchObject({ uncertain: true, code: 'sar_region_not_confirmed' });
   });
+  it.each([{ stale: true }, { revision: 3 }])(
+    'fails closed before reading the profile for a changed dataset %j',
+    async (changed) => {
+      vi.spyOn(sarApi, 'dataset').mockResolvedValue({ ...sarDataset, ...changed });
+      await expect(
+        readSavedRegion(sarDataset.id, {
+          molecule_id: sarMolecule.id,
+          expected_dataset_revision: 2,
+          expected_graph_sha256: sarMolecule.graph_sha256!,
+          atom_indices: [1],
+        }),
+      ).rejects.toMatchObject({ uncertain: true, code: 'sar_dataset_stale' });
+      expect(sarStudyApi.profile).not.toHaveBeenCalled();
+    },
+  );
 });
