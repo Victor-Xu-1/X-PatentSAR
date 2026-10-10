@@ -31,9 +31,10 @@ for (const width of [390, 800, 1672]) {
     const dataset = await syntheticSnapshot(page);
     const fixture = await cardProtocol(page, dataset);
     const original = JSON.stringify(fixture.report);
-    const report = page.getByRole('region', { name: 'Study report', exact: true });
+    await page.getByRole('region', { name: 'Study report', exact: true }).waitFor();
+    const report = page.locator('section.sar-study');
     await report.getByRole('button', { name: 'Activity table', exact: true }).click();
-    const panel = report.getByRole('region', { name: 'Activity table', exact: true });
+    const panel = report.locator('.sar-study-report > section').nth(5);
     await panel.getByRole('rowheader').waitFor();
     await panel.getByRole('button', { name: 'Column settings', exact: true }).click();
     const chooser = page.getByRole('dialog', { name: 'Column settings', exact: true });
