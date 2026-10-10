@@ -49,3 +49,22 @@ it('does not describe known missing paths as unknown checks or change the full s
     'primary',
   );
 });
+
+it('emphasizes verification of unknown/stale paths even when complete setup remains explicitly available', () => {
+  const catalog = readyEnvironmentCatalog();
+  catalog.components = catalog.components.map((component) => ({
+    ...component,
+    status: 'unchecked',
+    verification: 'stale',
+    installable: true,
+  }));
+  const handlers = actions();
+  render(<EnvironmentOverview catalog={catalog} {...handlers} />);
+  expect(screen.getByRole('button', { name: 'Check all components' })).toHaveClass('primary');
+  expect(screen.getByRole('button', { name: 'Set up complete environment' })).not.toHaveClass(
+    'primary',
+  );
+  expect(screen.getByRole('button', { name: 'Set up complete environment' })).toBeEnabled();
+  expect(handlers.onSetup).not.toHaveBeenCalled();
+  expect(handlers.onInspect).not.toHaveBeenCalled();
+});

@@ -50,6 +50,7 @@ export const environment: Readonly<Record<string, string>> = {
   确认取消此环境操作: 'Confirm cancellation of this operation',
   存储位置: 'Storage locations',
   环境详情: 'Environment details',
+  组件详情: 'Component details',
   '完整部署计划无效。': 'The complete setup plan is invalid.',
   完整运行环境: 'Complete runtime environment',
   环境就绪状态: 'Environment readiness',

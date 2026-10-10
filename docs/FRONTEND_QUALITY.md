@@ -36,6 +36,12 @@ The reference article's private algorithms are not represented as reproduced.
 - Recent-file rows stack metadata and actions before titles become cramped at
   intermediate widths. Source title, availability, acceptance and timestamp stay
   visible and associated with the same keyboard-operable open button.
+- Daily task records prioritize opening the associated project's current workspace.
+  This uses the existing project navigation, not an invented historical result
+  viewer or a new task submission. It remains readable without scientific runtimes;
+  original status/errors and explicit run/resume/cancel controls are retained.
+  Compact in-workspace controls keep their existing role. New-run tooltips describe
+  the explicit submission, not a promise that configured evidence APIs cannot cost.
 - Result previews prioritize structures, measured values, distributions and tables.
   Known overview/region strength rules share the existing context/matching disclosure,
   rather than repeating an explanatory row above each preview. Unclassified or
@@ -133,6 +139,14 @@ The reference article's private algorithms are not represented as reproduced.
 - Environment readiness distinguishes unknown/stale checks from verified readiness
   and known missing paths. The currently available next action receives emphasis;
   no presentation shortcut enables installation or turns path presence into readiness.
+  Primary emphasis reuses the component-action authority: unknown/stale paths prefer
+  checking, known deficiencies can prefer complete setup, and ready environments
+  prefer recheck. Complete setup remains explicit, with unchanged consent and plan
+  gates. Metadata refresh is a labelled icon, distinct from SDK inspection.
+  Normal operation records live inside environment details, while catalog failures
+  retain independent record access. Native details/history/confirmation order agrees
+  with the modal hierarchy; opening history keeps the storage draft mounted and close
+  restores its actual opener. History removal/restore and backend records are retained.
 - Local MDL conversion is a bounded, CSRF-authenticated read despite HTTP POST.
   Read failures never imply that a correction was saved. Actual writes with server
   faults or unreadable successful bodies stay uncertain, without automatic replay.

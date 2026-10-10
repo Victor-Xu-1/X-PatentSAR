@@ -55,23 +55,28 @@ export function EnvironmentPage({
     <section
       className="management-page environment-page"
       aria-label={t('{product} 环境管理', { product: product.name })}
+      data-dialog-focus-scope
     >
       <header className="page-header">
         <div>
           <h1>{t('环境管理')}</h1>
         </div>
         <div className="inline-actions">
-          <button type="button" onClick={() => setHistoryOpen(true)}>
-            {t('操作记录')}
-          </button>
+          {!data && catalog.error && (
+            <button type="button" onClick={() => setHistoryOpen(true)}>
+              {t('操作记录')}
+            </button>
+          )}
           <button
             type="button"
-            className="environment-refresh"
+            className="environment-refresh icon-button"
+            aria-label={t('刷新环境目录')}
+            title={t('刷新环境目录')}
+            data-dialog-focus-fallback
             onClick={workspace.refresh}
             disabled={catalog.loading}
           >
-            <RefreshCw size={15} />
-            {t('刷新环境目录')}
+            <RefreshCw size={15} aria-hidden="true" />
           </button>
         </div>
       </header>
@@ -121,6 +126,24 @@ export function EnvironmentPage({
         onReload={workspace.operation.reload}
       />
       <LLMApiPanel />
+      {data && detailsOpen && (
+        <EnvironmentDetails
+          catalog={data}
+          disabled={disabled}
+          storageDisabled={storageDisabled}
+          busy={mutations.busy}
+          error={mutations.error}
+          recovery={<RecoveryNotice mutations={mutations} />}
+          onClose={() => setDetailsOpen(false)}
+          onSave={mutations.save}
+          onHistory={() => setHistoryOpen(true)}
+          onInspect={(ids) => void mutations.start('inspect', ids, data.settings.revision)}
+          onInstall={(ids) => {
+            setDetailsOpen(false);
+            installation.install(ids);
+          }}
+        />
+      )}
       {historyOpen && (
         <HistoryDialog
           title={t('环境操作记录')}
@@ -141,23 +164,6 @@ export function EnvironmentPage({
           filters
           onClose={() => setTrashOpen(false)}
           onChanged={historyChanged}
-        />
-      )}
-      {data && detailsOpen && (
-        <EnvironmentDetails
-          catalog={data}
-          disabled={disabled}
-          storageDisabled={storageDisabled}
-          busy={mutations.busy}
-          error={mutations.error}
-          recovery={<RecoveryNotice mutations={mutations} />}
-          onClose={() => setDetailsOpen(false)}
-          onSave={mutations.save}
-          onInspect={(ids) => void mutations.start('inspect', ids, data.settings.revision)}
-          onInstall={(ids) => {
-            setDetailsOpen(false);
-            installation.install(ids);
-          }}
         />
       )}
       {plan && data && (

@@ -2,7 +2,11 @@ import { errorText, useTranslation } from '../../i18n';
 import { CircleCheck, CircleHelp, Download, ScanLine } from 'lucide-react';
 import type { EnvironmentCatalog, EnvironmentComponentId } from '../../api/environmentTypes';
 import { canSetupEnvironmentPlan, environmentSetupComponents } from '../../model/environmentSetup';
-import { environmentReadiness, isEnvironmentComponentReady } from '../../model/environmentStatus';
+import {
+  environmentComponentAction,
+  environmentReadiness,
+  isEnvironmentComponentReady,
+} from '../../model/environmentStatus';
 
 export function EnvironmentOverview({
   catalog,
@@ -28,6 +32,9 @@ export function EnvironmentOverview({
   const counts = environmentReadiness(catalog.components);
   const ready = plan !== null && plan.every(isEnvironmentComponentReady);
   const setupPossible = plan !== null && canSetupEnvironmentPlan(plan);
+  const preferInspect =
+    !setupPossible ||
+    plan?.some((component) => environmentComponentAction(component) === 'inspect');
   return (
     <section className="environment-card environment-overview" aria-label={t('完整运行环境')}>
       <div className="environment-section-header">
@@ -53,7 +60,7 @@ export function EnvironmentOverview({
         <div className="environment-overview-actions">
           <button
             type="button"
-            className={setupPossible ? 'primary' : undefined}
+            className={setupPossible && !preferInspect ? 'primary' : undefined}
             disabled={disabled || !setupPossible}
             onClick={onSetup}
           >
@@ -62,7 +69,7 @@ export function EnvironmentOverview({
           </button>
           <button
             type="button"
-            className={!setupPossible ? 'primary' : undefined}
+            className={preferInspect ? 'primary' : undefined}
             disabled={disabled || !catalog.components.length}
             onClick={() =>
               onInspect(
@@ -79,7 +86,7 @@ export function EnvironmentOverview({
       <div className="environment-overview-footer">
         <p className="muted">{t('PDF 提取 · 结构识别 · 六项指标')}</p>
         <button type="button" className="environment-details-trigger" onClick={onDetails}>
-          {t('存储位置')}
+          {t('环境详情')}
         </button>
       </div>
       {problem && <p className="info-banner">{problem}</p>}

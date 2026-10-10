@@ -198,6 +198,7 @@ describe('history mutations refresh only affected resource views', () => {
     );
     expect(await screen.findByText('合成终态失败详情')).toBeVisible();
     const beforeCatalog = vi.mocked(api.environments).mock.calls.length;
+    await userEvent.click(screen.getByRole('button', { name: '环境详情' }));
     await userEvent.click(screen.getByRole('button', { name: '操作记录' }));
     await userEvent.click(await screen.findByRole('button', { name: `删除 ${entry.title}` }));
     expect(screen.getByRole('dialog', { name: '删除环境操作？' })).toHaveTextContent(

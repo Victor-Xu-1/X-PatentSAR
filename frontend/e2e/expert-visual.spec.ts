@@ -26,7 +26,7 @@ for (const width of [390, 800, 1672])
       ).toBe(true);
       await page.screenshot({ path: test.info().outputPath(`${route}-${width}.png`) });
     }
-    await page.getByRole('button', { name: 'Storage locations', exact: true }).click();
+    await page.getByRole('button', { name: 'Environment details', exact: true }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     expect(
       await page.getByRole('dialog').evaluate((el) => el.scrollWidth <= el.clientWidth + 1),

@@ -363,9 +363,10 @@ test('synthetic terminal environment history deletes/restores without installing
       mutations.push(new URL(request.url()).pathname);
   });
   await page.goto(`/#/settings?operation=${environmentId}`);
+  await page.getByRole('button', { name: '环境详情', exact: true }).click();
   await page.getByRole('button', { name: '操作记录', exact: true }).click();
   await page
-    .getByRole('dialog')
+    .getByRole('dialog', { name: '环境操作记录', exact: true })
     .getByRole('button', { name: `删除 ${entry.title}`, exact: true })
     .click();
   await expect(page.getByRole('dialog').last()).toContainText('不卸载环境，也不改变环境就绪状态');
@@ -373,13 +374,19 @@ test('synthetic terminal environment history deletes/restores without installing
   await closeDialogs(page);
   await expect(page).not.toHaveURL(/operation=/);
   await page.reload();
+  await page.getByRole('button', { name: '环境详情', exact: true }).click();
   await page.getByRole('button', { name: '操作记录', exact: true }).click();
   await expect(
-    page.getByRole('dialog').getByRole('button', { name: `删除 ${entry.title}`, exact: true }),
+    page
+      .getByRole('dialog', { name: '环境操作记录', exact: true })
+      .getByRole('button', { name: `删除 ${entry.title}`, exact: true }),
   ).toHaveCount(0);
-  await page.getByRole('dialog').getByRole('button', { name: '回收站', exact: true }).click();
   await page
-    .getByRole('dialog')
+    .getByRole('dialog', { name: '环境操作记录', exact: true })
+    .getByRole('button', { name: '回收站', exact: true })
+    .click();
+  await page
+    .getByRole('dialog', { name: '回收站', exact: true })
     .getByRole('button', { name: `恢复 ${entry.title}`, exact: true })
     .click();
   await confirm(page, await readEntry(page, 'environment_operation', environmentId!), true);

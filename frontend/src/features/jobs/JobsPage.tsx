@@ -123,6 +123,7 @@ export function JobsPage({
                     job={job}
                     ready={ready}
                     onChange={resource.reload}
+                    onOpenWorkspace={onOpen}
                   />
                 </div>
               </li>

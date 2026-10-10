@@ -26,16 +26,16 @@ describe('operations locale: environment', () => {
     vi.spyOn(llmApi, 'settings').mockResolvedValue(recoverySettings);
     render(<EnvironmentPage product={health.product} operationId={null} onOperation={vi.fn()} />);
     expect(await screen.findByText('Ready 0/8')).toBeVisible();
-    await userEvent.click(screen.getByRole('button', { name: 'Storage locations' }));
-    const dialog = screen.getByRole('dialog', { name: 'Storage locations' });
-    await userEvent.click(within(dialog).getByText('Environment details', { selector: 'summary' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Environment details' }));
+    const dialog = screen.getByRole('dialog', { name: 'Environment details' });
+    await userEvent.click(within(dialog).getByText('Component details', { selector: 'summary' }));
     expect(
       within(dialog).getByRole('heading', { name: 'Local stereo-rescue runtime' }),
     ).toBeVisible();
     switchTo('zh-CN');
-    expect(screen.getByRole('dialog', { name: '存储位置' })).toBe(dialog);
+    expect(screen.getByRole('dialog', { name: '环境详情' })).toBe(dialog);
     expect(
-      within(dialog).getByText('环境详情', { selector: 'summary' }).closest('details'),
+      within(dialog).getByText('组件详情', { selector: 'summary' }).closest('details'),
     ).toHaveAttribute('open');
     expect(read).toHaveBeenCalledTimes(1);
     expect(install).not.toHaveBeenCalled();

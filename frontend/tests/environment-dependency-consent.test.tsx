@@ -37,8 +37,8 @@ it.each([
         component_ids: request.component_ids,
       }));
     render(<EnvironmentPage {...props()} />);
-    await userEvent.click(await screen.findByRole('button', { name: '存储位置' }));
-    await userEvent.click(screen.getByText('环境详情', { selector: 'summary' }));
+    await userEvent.click(await screen.findByRole('button', { name: '环境详情' }));
+    await userEvent.click(screen.getByText('组件详情', { selector: 'summary' }));
     await userEvent.click(await screen.findByRole('button', { name: label }));
     const dialog = screen.getByRole('dialog');
     const entries = dialog.querySelectorAll('.installation-plan li');
@@ -74,8 +74,8 @@ it('requires the prerequisite license, not only the selected model license', asy
   );
   vi.spyOn(api, 'environments').mockResolvedValue(catalog);
   render(<EnvironmentPage {...props()} />);
-  await userEvent.click(await screen.findByRole('button', { name: '存储位置' }));
-  await userEvent.click(screen.getByText('环境详情', { selector: 'summary' }));
+  await userEvent.click(await screen.findByRole('button', { name: '环境详情' }));
+  await userEvent.click(screen.getByText('组件详情', { selector: 'summary' }));
   await userEvent.click(await screen.findByRole('button', { name: '安装 ADMET 模型' }));
   expect(screen.getByRole('dialog')).toHaveTextContent('不能确认安装');
   expect(screen.getByRole('checkbox')).toBeDisabled();
@@ -88,8 +88,8 @@ it('shows malformed dependency errors without offering confirmation or sending a
   vi.spyOn(api, 'environments').mockResolvedValue(catalog);
   const start = vi.spyOn(api, 'createEnvironmentOperation');
   render(<EnvironmentPage {...props()} />);
-  await userEvent.click(await screen.findByRole('button', { name: '存储位置' }));
-  await userEvent.click(screen.getByText('环境详情', { selector: 'summary' }));
+  await userEvent.click(await screen.findByRole('button', { name: '环境详情' }));
+  await userEvent.click(screen.getByText('组件详情', { selector: 'summary' }));
   await userEvent.click(await screen.findByRole('button', { name: '安装 基础运行环境' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('依赖');
   expect(start).not.toHaveBeenCalled();
@@ -104,8 +104,8 @@ it('persists and retries exactly the already-consented closure after an uncertai
       component_ids: request.component_ids,
     }));
   render(<EnvironmentPage {...props()} />);
-  await userEvent.click(await screen.findByRole('button', { name: '存储位置' }));
-  await userEvent.click(screen.getByText('环境详情', { selector: 'summary' }));
+  await userEvent.click(await screen.findByRole('button', { name: '环境详情' }));
+  await userEvent.click(screen.getByText('组件详情', { selector: 'summary' }));
   await userEvent.click(await screen.findByRole('button', { name: '安装 ADMET 模型' }));
   await userEvent.click(screen.getByRole('checkbox'));
   await userEvent.click(screen.getByRole('button', { name: '确认下载并安装' }));
@@ -130,12 +130,12 @@ it('keeps inspection to the requested component without implicitly inspecting al
     completed_components: [],
   }));
   render(<EnvironmentPage {...props()} />);
-  await userEvent.click(await screen.findByRole('button', { name: '存储位置' }));
-  await userEvent.click(screen.getByText('环境详情', { selector: 'summary' }));
+  await userEvent.click(await screen.findByRole('button', { name: '环境详情' }));
+  await userEvent.click(screen.getByText('组件详情', { selector: 'summary' }));
   await userEvent.click(await screen.findByRole('button', { name: '检测 ADMET 模型' }));
   expect(start).toHaveBeenCalledWith(
     expect.objectContaining({ action: 'inspect', component_ids: ['admet-models'] }),
   );
-  expect(screen.getByRole('dialog', { name: '存储位置' })).toBeVisible();
+  expect(screen.getByRole('dialog', { name: '环境详情' })).toBeVisible();
   expect(screen.queryByRole('dialog', { name: '确认环境安装' })).not.toBeInTheDocument();
 });

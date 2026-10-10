@@ -1,6 +1,6 @@
 import { UiError, useTranslation } from '../../i18n';
 import { useRef, useState } from 'react';
-import { MoreHorizontal, Play, RotateCcw, Square } from 'lucide-react';
+import { MoreHorizontal, Play, RotateCcw, Square, Table2 } from 'lucide-react';
 import { api } from '../../api';
 import { ApiError } from '../../api/errors';
 import type { Job, Project } from '../../api/types';
@@ -14,12 +14,14 @@ export function JobActions({
   job,
   ready,
   onChange,
+  onOpenWorkspace,
   compact = false,
 }: {
   project: Project | null;
   job: Job | null;
   ready: boolean;
   onChange: () => void;
+  onOpenWorkspace?: (id: string) => void;
   compact?: boolean;
 }) {
   const { t } = useTranslation();
@@ -31,6 +33,8 @@ export function JobActions({
   const inFlight = useRef(false);
   const [submittedResume, setSubmittedResume] = useState<Job | null>(null);
   const running = job !== null && activeJob(job);
+  const hasWorkspace =
+    !compact && Boolean(onOpenWorkspace) && project !== null && job?.project_id === project.id;
   // A fresh DTO from the existing reload path must reconcile a submitted resume.
   const awaitingResume = job !== null && submittedResume === job;
   const canStart = ready && project?.pdf.available && !running && !busy && !awaitingResume;
@@ -83,6 +87,19 @@ export function JobActions({
     <div className="job-actions-wrapper">
       <div className="job-actions">
         {job && !compact && <span className={`badge job-${job.status}`}>{jobStatusText(job)}</span>}
+        {hasWorkspace && (
+          <button
+            type="button"
+            className="primary"
+            disabled={busy}
+            onClick={() => {
+              if (project) onOpenWorkspace?.(project.id);
+            }}
+          >
+            <Table2 size={14} aria-hidden="true" />
+            {t('打开工作台')}
+          </button>
+        )}
         {running ? (
           <button type="button" disabled={busy} onClick={() => setCancelConfirm(true)}>
             <Square size={13} />
@@ -103,7 +120,7 @@ export function JobActions({
             )}
             {!(compact && job?.can_resume) && (
               <button
-                className="primary"
+                className={hasWorkspace ? undefined : 'primary'}
                 type="button"
                 disabled={!canStart}
                 title={
@@ -113,7 +130,7 @@ export function JobActions({
                       ? t('请先补充原始 PDF')
                       : !ready
                         ? t('运行环境未就绪')
-                        : t('运行现有核心提取链，不调用付费建议模型')
+                        : t('创建新的提取任务')
                 }
                 onClick={() => void operate('run')}
               >

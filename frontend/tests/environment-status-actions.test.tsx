@@ -59,8 +59,8 @@ it.each([
     vi.spyOn(api, 'environments').mockResolvedValue(catalogWithBase({ ...failedBase, status }));
     const start = startOperation();
     render(<EnvironmentPage {...props()} />);
-    await userEvent.click(await screen.findByRole('button', { name: '存储位置' }));
-    await userEvent.click(screen.getByText('环境详情', { selector: 'summary' }));
+    await userEvent.click(await screen.findByRole('button', { name: '环境详情' }));
+    await userEvent.click(screen.getByText('组件详情', { selector: 'summary' }));
     await userEvent.click(await screen.findByRole('button', { name: '修复 基础运行环境' }));
     const dialog = screen.getByRole('dialog');
     expect(start).not.toHaveBeenCalled();
@@ -95,8 +95,8 @@ it('does not bypass a ready prerequisite license when repairing a failed compone
   vi.spyOn(api, 'environments').mockResolvedValue(catalog);
   const start = startOperation();
   render(<EnvironmentPage {...props()} />);
-  await userEvent.click(await screen.findByRole('button', { name: '存储位置' }));
-  await userEvent.click(screen.getByText('环境详情', { selector: 'summary' }));
+  await userEvent.click(await screen.findByRole('button', { name: '环境详情' }));
+  await userEvent.click(screen.getByText('组件详情', { selector: 'summary' }));
   await userEvent.click(await screen.findByRole('button', { name: '修复 基础运行环境' }));
   expect(screen.getByRole('dialog')).toHaveTextContent('不能确认安装');
   expect(screen.getByRole('checkbox')).toBeDisabled();
@@ -106,8 +106,8 @@ it('keeps a verified-ready noninstallable dependency in the consented missing-co
   vi.spyOn(api, 'environments').mockResolvedValue(catalogWithBase({}));
   const start = startOperation();
   render(<EnvironmentPage {...props()} />);
-  await userEvent.click(await screen.findByRole('button', { name: '存储位置' }));
-  await userEvent.click(screen.getByText('环境详情', { selector: 'summary' }));
+  await userEvent.click(await screen.findByRole('button', { name: '环境详情' }));
+  await userEvent.click(screen.getByText('组件详情', { selector: 'summary' }));
   await userEvent.click(await screen.findByRole('button', { name: '安装 基础运行环境' }));
   const dialog = screen.getByRole('dialog');
   expect(dialog.querySelectorAll('[data-install-component]')).toHaveLength(2);
@@ -134,8 +134,8 @@ it.each(['unchecked', 'stale'] as const)(
     );
     const start = startOperation();
     render(<EnvironmentPage {...props()} />);
-    await userEvent.click(await screen.findByRole('button', { name: '存储位置' }));
-    await userEvent.click(screen.getByText('环境详情', { selector: 'summary' }));
+    await userEvent.click(await screen.findByRole('button', { name: '环境详情' }));
+    await userEvent.click(screen.getByText('组件详情', { selector: 'summary' }));
     const opener = await screen.findByRole('button', { name: '检测 基础运行环境' });
     expect(start).not.toHaveBeenCalled();
     await userEvent.click(opener);
@@ -147,7 +147,7 @@ it.each(['unchecked', 'stale'] as const)(
         }),
       ),
     );
-    expect(screen.getByRole('dialog', { name: '存储位置' })).toBeVisible();
+    expect(screen.getByRole('dialog', { name: '环境详情' })).toBeVisible();
     expect(screen.queryByRole('dialog', { name: '确认环境安装' })).not.toBeInTheDocument();
     expect(start).toHaveBeenCalledTimes(1);
   },
@@ -178,8 +178,8 @@ it('cannot submit a now-ready install after a metadata refresh while consent is 
   vi.spyOn(api, 'environments').mockResolvedValueOnce(environmentCatalog).mockResolvedValue(ready);
   const start = startOperation();
   render(<EnvironmentPage {...props()} />);
-  await userEvent.click(await screen.findByRole('button', { name: '存储位置' }));
-  await userEvent.click(screen.getByText('环境详情', { selector: 'summary' }));
+  await userEvent.click(await screen.findByRole('button', { name: '环境详情' }));
+  await userEvent.click(screen.getByText('组件详情', { selector: 'summary' }));
   await userEvent.click(await screen.findByRole('button', { name: '安装 基础运行环境' }));
   const dialog = screen.getByRole('dialog');
   await userEvent.click(within(dialog).getByRole('checkbox'));

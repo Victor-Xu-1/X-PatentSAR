@@ -82,7 +82,7 @@ describe('minimal secondary page presentation without changing workflows', () =>
     expect(document.querySelector('.eyebrow')).toBeNull();
     expect(screen.queryByText('运行与安装说明')).not.toBeInTheDocument();
     expect(screen.queryByText(/操作日志|操作历史|安装位置：|目标：/)).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '存储位置' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '环境详情' })).toBeVisible();
     expect(install).not.toHaveBeenCalled();
     await waitFor(() =>
       expect(screen.getByRole('button', { name: '一键部署全部环境' })).toBeEnabled(),
