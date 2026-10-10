@@ -71,6 +71,7 @@
   padding-inline: 12px;
 }
 .job-history {
+  container-type: inline-size;
   display: grid;
   gap: 0;
   list-style: none;
@@ -325,6 +326,8 @@
   .jobs-page .inline-actions {
     flex-wrap: wrap;
   }
+}
+@container (max-width: 950px) {
   .job-card {
     display: block;
     padding: 20px;

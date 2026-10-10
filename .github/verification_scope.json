@@ -1,38 +1,13 @@
 {
   "schema_version": 1,
-  "base_sha": "8df9d475286a4cc3b2c446ee89eeda5d7af1db1d",
+  "base_sha": "7d4ebdc57c8c340988253b416d6c37b4767d5ac1",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/FRONTEND_QUALITY.md",
     "frontend/e2e/daily-actions.spec.ts",
-    "frontend/e2e/environment-dependency.spec.ts",
-    "frontend/e2e/environment.spec.ts",
-    "frontend/e2e/expert-visual.spec.ts",
-    "frontend/e2e/history-deletion.spec.ts",
-    "frontend/e2e/integration.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/features/environment/EnvironmentDetails.tsx",
-    "frontend/src/features/environment/EnvironmentOverview.tsx",
-    "frontend/src/features/environment/EnvironmentPage.tsx",
-    "frontend/src/features/jobs/JobActions.tsx",
-    "frontend/src/features/jobs/JobsPage.tsx",
-    "frontend/src/i18n/catalogs/environment.ts",
-    "frontend/src/i18n/catalogs/jobs.ts",
-    "frontend/tests/environment-dependency-consent.test.tsx",
-    "frontend/tests/environment-detail-history.test.tsx",
-    "frontend/tests/environment-interactions.test.tsx",
-    "frontend/tests/environment-overview-state.test.tsx",
-    "frontend/tests/environment-page.test.tsx",
-    "frontend/tests/environment-setup.test.tsx",
-    "frontend/tests/environment-status-actions.test.tsx",
-    "frontend/tests/evidence-studio-dialogs.test.tsx",
-    "frontend/tests/history-resources.test.tsx",
-    "frontend/tests/i18n-operations-environment.test.tsx",
-    "frontend/tests/job-workspace-actions.test.tsx",
-    "frontend/tests/minimal-pages.test.tsx",
-    "frontend/tests/storage-locations.test.tsx",
-    "frontend/tests/visual-sidecar-pages.test.tsx",
+    "frontend/src/styles/management.css",
     "src/patent_sar_extractor/contracts.py"
   ],
   "python_modules": [
@@ -41,30 +16,12 @@
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
-    "frontend/tests/environment-dependency-consent.test.tsx",
-    "frontend/tests/environment-detail-history.test.tsx",
-    "frontend/tests/environment-interactions.test.tsx",
-    "frontend/tests/environment-overview-state.test.tsx",
-    "frontend/tests/environment-page.test.tsx",
-    "frontend/tests/environment-setup.test.tsx",
-    "frontend/tests/environment-status-actions.test.tsx",
-    "frontend/tests/evidence-studio-dialogs.test.tsx",
-    "frontend/tests/history-dialogs.test.tsx",
-    "frontend/tests/history-resources.test.tsx",
-    "frontend/tests/i18n-core.test.tsx",
-    "frontend/tests/i18n-operations-environment.test.tsx",
-    "frontend/tests/i18n-operations-jobs.test.tsx",
-    "frontend/tests/job-resume.test.tsx",
     "frontend/tests/job-workspace-actions.test.tsx",
-    "frontend/tests/minimal-pages.test.tsx",
-    "frontend/tests/pdf-jobs.test.tsx",
-    "frontend/tests/storage-locations.test.tsx",
-    "frontend/tests/visual-sidecar-pages.test.tsx"
+    "frontend/tests/i18n-operations-jobs.test.tsx",
+    "frontend/tests/minimal-pages.test.tsx"
   ],
   "browser_tests": [
     "frontend/e2e/daily-actions.spec.ts",
-    "frontend/e2e/environment.spec.ts",
-    "frontend/e2e/history-deletion.spec.ts",
     "frontend/e2e/product-version.spec.ts"
   ]
 }

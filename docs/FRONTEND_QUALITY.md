@@ -42,6 +42,11 @@ The reference article's private algorithms are not represented as reproduced.
   original status/errors and explicit run/resume/cancel controls are retained.
   Compact in-workspace controls keep their existing role. New-run tooltips describe
   the explicit submission, not a promise that configured evidence APIs cannot cost.
+  Task rows reflow from their available list width, not just a phone viewport
+  breakpoint. A complete action group must not compress the original title into
+  a vertical character column at intermediate widths or in the longer locale.
+  One list container owns the stacked-row rule; phone hit-target/spacing rules
+  remain independent. Source titles are neither truncated nor rewritten.
 - Result previews prioritize structures, measured values, distributions and tables.
   Known overview/region strength rules share the existing context/matching disclosure,
   rather than repeating an explanatory row above each preview. Unclassified or
