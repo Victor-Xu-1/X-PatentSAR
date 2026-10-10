@@ -3,12 +3,23 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { api } from '../src/api';
 import { ApiError } from '../src/api/errors';
+import { llmApi } from '../src/api/llmApi';
 import { EnvironmentPage } from '../src/features/environment/EnvironmentPage';
 import { pendingEnvironmentKey } from '../src/model/environmentRecovery';
 import { environmentOperation, prerequisiteCatalog } from './environment-fixtures';
 import { health } from './fixtures';
+import { recoverySettings } from './llm-recovery-fixtures';
 
 beforeEach(() => {
+  // This suite owns environment consent/retry, not the independent API module's
+  // settings transport. Its load error must not make alert selection timing-dependent.
+  vi.spyOn(llmApi, 'settings').mockResolvedValue({
+    ...recoverySettings,
+    mode: 'off',
+    status: 'disabled',
+    data_consent: false,
+    key_configured: false,
+  });
   sessionStorage.removeItem(pendingEnvironmentKey);
   vi.spyOn(api, 'environments').mockResolvedValue(prerequisiteCatalog());
   vi.spyOn(api, 'runtime').mockResolvedValue({
