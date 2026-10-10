@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, type ReactNode } from 'react';
 import { useTranslation } from '../../../i18n';
 import { preferredScrollBehavior } from '../../../model/motion';
 
@@ -17,30 +17,29 @@ export function StudyReferencePane({ active, children }: { active: boolean; chil
       pane.tabIndex = pane.scrollHeight > pane.clientHeight + 1 ? 0 : -1;
     };
     measure();
-    if (typeof ResizeObserver !== 'function') return;
     let frame: number | null = null;
-    const observer = new ResizeObserver(() => {
-      if (frame !== null) return;
-      frame = requestAnimationFrame(() => {
-        frame = null;
-        measure();
-      });
-    });
-    observer.observe(pane);
-    observer.observe(body);
+    pane.addEventListener('keydown', scrollBoundary);
+    const observer =
+      typeof ResizeObserver === 'function'
+        ? new ResizeObserver(() => {
+            if (frame !== null) return;
+            frame = requestAnimationFrame(() => {
+              frame = null;
+              measure();
+            });
+          })
+        : null;
+    observer?.observe(pane);
+    observer?.observe(body);
     return () => {
-      observer.disconnect();
+      observer?.disconnect();
+      pane.removeEventListener('keydown', scrollBoundary);
       if (frame !== null) cancelAnimationFrame(frame);
       pane.tabIndex = -1;
     };
   }, [active]);
   return (
-    <section
-      ref={viewport}
-      aria-label={t('参考结构')}
-      className="sar-reference-maps"
-      onKeyDown={scrollBoundary}
-    >
+    <section ref={viewport} aria-label={t('参考结构')} className="sar-reference-maps">
       <div ref={content} className="sar-reference-map-content">
         {children}
       </div>
@@ -48,7 +47,7 @@ export function StudyReferencePane({ active, children }: { active: boolean; chil
   );
 }
 
-function scrollBoundary(event: KeyboardEvent<HTMLElement>) {
+function scrollBoundary(event: KeyboardEvent) {
   if (
     event.target !== event.currentTarget ||
     event.altKey ||
@@ -59,8 +58,9 @@ function scrollBoundary(event: KeyboardEvent<HTMLElement>) {
   )
     return;
   event.preventDefault();
-  event.currentTarget.scrollTo({
-    top: event.key === 'Home' ? 0 : event.currentTarget.scrollHeight,
+  const pane = event.currentTarget as HTMLElement;
+  pane.scrollTo({
+    top: event.key === 'Home' ? 0 : pane.scrollHeight,
     behavior: preferredScrollBehavior(),
   });
 }
