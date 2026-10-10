@@ -9,6 +9,8 @@ import { columnCanFilter, columnCanSort, replaceColumnFilters } from '../../mode
 import { ColumnFilterForm } from './ColumnFilterForm';
 import { containTab } from '../../components/focus';
 
+const COLUMN_MENU_MAX_HEIGHT = 550;
+
 export function ColumnMenu({
   projectId,
   column,
@@ -94,9 +96,12 @@ export function ColumnMenu({
             return;
           }
           const box = button.current!.getBoundingClientRect();
+          // Filter content must reserve its own full preferred height. Brief
+          // hide-only menus retain their existing placement.
+          const reserve = onFilters && columnCanFilter(column) ? COLUMN_MENU_MAX_HEIGHT + 8 : 400;
           setPosition({
             left: Math.max(8, Math.min(box.right - 280, window.innerWidth - 288)),
-            top: Math.max(8, Math.min(box.bottom + 4, window.innerHeight - 400)),
+            top: Math.max(8, Math.min(box.bottom + 4, window.innerHeight - reserve)),
           });
         }}
       >
@@ -120,7 +125,10 @@ export function ColumnMenu({
             open
             aria-label={t('{name} 列选项', { name })}
             className="column-menu"
-            style={{ ...position, maxHeight: Math.min(550, window.innerHeight - position.top - 8) }}
+            style={{
+              ...position,
+              maxHeight: Math.min(COLUMN_MENU_MAX_HEIGHT, window.innerHeight - position.top - 8),
+            }}
           >
             <strong>{column.label}</strong>
             {column.context && <small className="muted">{column.context}</small>}

@@ -32,6 +32,12 @@ for (const [width, height] of [
     await menu.getByLabel('Select all filter values', { exact: true }).uncheck();
     await menu.getByLabel('Filter value ' + raw, { exact: true }).check();
     const list = menu.locator('.column-value-choices');
+    // Opening near the viewport bottom must retain a useful value working area,
+    // rather than reserving less height than the panel's own preferred maximum.
+    expect((await list.boundingBox())!.height).toBeGreaterThanOrEqual(144);
+    const frame = (await menu.boundingBox())!;
+    expect(frame.y).toBeGreaterThanOrEqual(8);
+    expect(frame.y + frame.height).toBeLessThanOrEqual(height! - 8 + 1);
     const escaped = await list.evaluate((node) => {
       const box = node.getBoundingClientRect();
       return [...node.querySelectorAll('input[type="checkbox"]')]
