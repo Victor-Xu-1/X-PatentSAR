@@ -102,6 +102,7 @@ for (const width of [390, 800, 1672]) {
     await expect(mark).toBeDisabled();
     await expect(sourceButton).toBeDisabled();
     await expect(page.getByRole('dialog')).toHaveCount(0);
+    await mark.scrollIntoViewIfNeeded();
     await page.screenshot({
       path: info.outputPath('candidate-read-failure.png'),
       animations: 'disabled',
@@ -137,7 +138,7 @@ for (const width of [390, 800, 1672]) {
     await report.getByRole('alert').first().waitFor();
     await expect(cardSource).toBeDisabled();
     await expect(page.getByRole('dialog')).toHaveCount(0);
-    await page.screenshot({
+    await card.screenshot({
       path: info.outputPath('candidate-card-read-failure.png'),
       animations: 'disabled',
     });
