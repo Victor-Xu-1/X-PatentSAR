@@ -109,7 +109,11 @@ export function StudyNetwork({
               }}
             >
               <strong>{centre.label}</strong>
-              <small>{t('{count} 个位点', { count: centre.sites.length })}</small>
+              <small>
+                {t('{count} 个位点', {
+                  count: allSites ? centre.sites.length : centre.compact.length,
+                })}
+              </small>
             </button>
           </article>
         ))}

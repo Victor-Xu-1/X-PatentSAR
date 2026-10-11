@@ -85,6 +85,7 @@ export function StudyScaffolds({
               layout="donut"
               countingContract={report.counting_contract}
               direction={report.policies[0]?.direction}
+              strongRule={hasStrongRule(report.policies[0])}
             />
             <button type="button" onClick={() => onRows(scaffold.id)}>
               {t('查看分子')}

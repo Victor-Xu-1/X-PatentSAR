@@ -220,6 +220,7 @@ export const sar: Record<string, string> = {
   '描述性 Murcko 骨架': 'Descriptive Murcko scaffold',
   '强活性 {strong}/{total}': 'Strong activity {strong}/{total}',
   强活性占比: 'Strong-activity share',
+  '强活性 {percent}%': 'Strong {percent}%',
   查看分子: 'View molecules',
   无骨架分组: 'No scaffold groups',
   研究已选候选: 'Selected candidate',

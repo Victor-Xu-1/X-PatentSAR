@@ -7,12 +7,52 @@ import test_sar_api as support
 from test_web_support import WebFixture
 
 from patent_sar_extractor.core.sar.values import parse_value
+from patent_sar_extractor.web.sar.study_html_charts import ACTIVITY_COLORS, composition
+from patent_sar_extractor.web.sar.study_models import StudyBin
 from patent_sar_extractor.web.sar.study_preview import _scalar_difference
 
 
 class SARPreviewTests(WebFixture, unittest.TestCase):
     completed = support.SARAPITests.completed
     region = support.SARAPITests.region
+
+    def test_passive_chart_palette_and_percentage_use_all_recorded_counts(self):
+        bins = [
+            StudyBin(
+                label=label,
+                kind="missing" if label == "missing" else "strength",
+                molecules=molecules,
+                observations=observations,
+                strong=label == "strong",
+            )
+            for label, molecules, observations in [
+                ("strong", 6, 10),
+                ("medium", 10, 17),
+                ("weak", 1, 9),
+                ("missing", 2, 2),
+            ]
+        ]
+        original = [item.model_dump() for item in bins]
+        current = composition(bins, current=True)
+        self.assertIn("19 source IDs / records", current)
+        self.assertIn("Strong 31.6%", current)
+        historical = composition(bins, current=False)
+        self.assertIn("38 raw observations", historical)
+        self.assertIn("Strong 26.3%", historical)
+        for item in bins:
+            self.assertIn("background:" + ACTIVITY_COLORS[item.label], current)
+        self.assertEqual([item.model_dump() for item in bins], original)
+
+    def test_passive_chart_does_not_assign_a_share_to_an_unknown_or_empty_domain(self):
+        self.assertNotIn("Strong", composition([], current=True))
+        bins = [
+            StudyBin(
+                label="A", kind="ordinal", molecules=8, observations=8, strong=False
+            )
+        ]
+        self.assertNotIn("Strong", composition(bins, current=True))
+        self.assertIn("Strong 0.0%", composition(bins, current=True, strong_rule=True))
+        self.assertNotIn("Strong", composition(bins, current=True, strong_rule=False))
 
     def test_display_difference_is_exact_or_explicitly_unrepresentable(self):
         def delta(a, b):

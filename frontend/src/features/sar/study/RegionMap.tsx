@@ -1,6 +1,7 @@
 import type { Atom, Region } from '../../../api/sarTypes';
 import { useRef } from 'react';
 import { useInlineSelection } from '../../../components/useInlineSelection';
+import { regionLabels } from './regionLabels';
 const colors = [
   '#137e78',
   '#466ca4',
@@ -28,6 +29,7 @@ export function RegionMap({
 }) {
   if (!regions.length || !atoms.length) return null;
   const hasSelection = regions.some((region) => region.id === selected);
+  const labels = regionLabels(atoms, regions);
   return (
     <>
       <svg className="sar-region-map" viewBox="0 0 1000 800" aria-hidden="true">
@@ -36,8 +38,6 @@ export function RegionMap({
           if (!regionAtoms.length) return null;
           const isSelected = selected === region.id;
           const color = colors[order % colors.length];
-          const x = regionAtoms.reduce((sum, atom) => sum + atom.x, 0) / regionAtoms.length;
-          const y = Math.min(...regionAtoms.map((atom) => atom.y));
           return (
             <g
               key={region.id}
@@ -57,19 +57,44 @@ export function RegionMap({
                   strokeWidth={isSelected ? 3 : 1.5}
                 />
               ))}
-              <text
-                x={Math.max(24, Math.min(960, x * 1000))}
-                y={Math.max(24, y * 800 - 25)}
-                fill="var(--ink)"
-                fontSize="20"
-                fontWeight="600"
-                textAnchor="middle"
-              >
-                R{order + 1}
-              </text>
             </g>
           );
         })}
+        {labels.map(({ x, y, anchorX, anchorY, order }) => (
+          <g
+            key={regions[order]!.id}
+            className="sar-region-label"
+            data-region-id={regions[order]!.id}
+          >
+            <line
+              x1={anchorX}
+              y1={anchorY}
+              x2={x}
+              y2={y}
+              stroke={colors[order % colors.length]}
+              strokeWidth="1.5"
+            />
+            <rect
+              x={x - 26}
+              y={y - 15}
+              width="52"
+              height="30"
+              rx="5"
+              fill="var(--surface)"
+              fillOpacity="0.95"
+            />
+            <text
+              x={x}
+              y={y + 7}
+              fill="var(--ink)"
+              fontSize="22"
+              fontWeight="600"
+              textAnchor="middle"
+            >
+              R{order + 1}
+            </text>
+          </g>
+        ))}
       </svg>
       {onSelect && (
         <div className="sar-region-hotspots">

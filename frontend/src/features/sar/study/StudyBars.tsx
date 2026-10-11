@@ -11,6 +11,7 @@ export function StudyBars({
   direction = 'lower',
   showLegend = true,
   countingContract,
+  strongRule,
 }: {
   bins: StudyBin[];
   layout?: 'bars' | 'donut' | 'stack';
@@ -18,6 +19,7 @@ export function StudyBars({
   direction?: 'lower' | 'higher' | undefined;
   showLegend?: boolean;
   countingContract?: 'legacy-per-bin-members' | 'unique-molecules-v2' | undefined;
+  strongRule?: boolean | undefined;
 }) {
   const { t } = useTranslation(),
     [localUnit, setUnit] = useState<CountingUnit>('molecules');
@@ -39,7 +41,13 @@ export function StudyBars({
         </label>
       )}
       {presentation !== 'bars' && (
-        <StudyComposition bins={bins} unit={unit} layout={presentation} direction={direction} />
+        <StudyComposition
+          bins={bins}
+          unit={unit}
+          layout={presentation}
+          direction={direction}
+          strongRule={strongRule}
+        />
       )}
       {presentation !== 'stack' && (
         <ul className="sar-chart-values">
@@ -54,7 +62,8 @@ export function StudyBars({
                     : ''
               }
             >
-              <span title={bin.label}>
+              <span className="sar-bin-label" title={bin.label}>
+                <i aria-hidden="true" style={{ background: chartColor(bin, index, direction) }} />
                 {['missing', 'unsupported', 'unresolved'].includes(bin.kind)
                   ? t(
                       bin.kind === 'missing'

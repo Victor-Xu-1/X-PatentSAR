@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { compactNetworkSites } from '../src/features/sar/study/networkSites';
 import { studyReport } from './sar-fixtures';
 import type { StudyRegionSummary } from '../src/api/sarStudyTypes';
+import { regionLabels } from '../src/features/sar/study/regionLabels';
 
 function site(id: string, atoms: number[], members: string[]): StudyRegionSummary {
   const original = studyReport.regions[0]!;
@@ -15,6 +16,27 @@ function site(id: string, atoms: number[], members: string[]): StudyRegionSummar
   };
 }
 describe('compact chemical sites without lost comparisons or scientific rewrites', () => {
+  it('separates colocated region labels while preserving chemical anchors and original site order', () => {
+    const atoms = [{ index: 0, x: 0.5, y: 0.3, element: 'C' }];
+    const regions = Array.from({ length: 10 }, (_, i) => site('region-' + i, [0], ['a']).region);
+    const original = JSON.stringify([atoms, regions]);
+    const labels = regionLabels(atoms, regions);
+    expect(labels).toHaveLength(10);
+    for (const [index, label] of labels.entries()) {
+      expect(label.order).toBe(index);
+      expect(label.anchorX).toBe(500);
+      expect(label.anchorY).toBe(240);
+      expect(label.x).toBeGreaterThanOrEqual(32);
+      expect(label.x).toBeLessThanOrEqual(968);
+      expect(label.y).toBeGreaterThanOrEqual(28);
+      expect(label.y).toBeLessThanOrEqual(772);
+      for (const other of labels.slice(index + 1))
+        expect(Math.abs(label.x - other.x) >= 60 || Math.abs(label.y - other.y) >= 34).toBe(true);
+    }
+    expect(regionLabels(atoms, regions)).toEqual(labels);
+    expect(JSON.stringify([atoms, regions])).toBe(original);
+    expect(regionLabels(atoms, [site('unknown-atom', [99], ['a']).region])).toEqual([]);
+  });
   it('keeps the minimal nested interpretation with exactly identical accepted source pairs', () => {
     const small = site('small', [1], ['a', 'b']),
       large = site('large', [1, 2], ['b', 'a']);

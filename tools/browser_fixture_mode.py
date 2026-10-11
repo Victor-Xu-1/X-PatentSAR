@@ -21,7 +21,12 @@ MODES = (
     (
         "sar",
         "sar-multiport.spec.ts",
-        COMMON | {"sar-multiport.spec.ts", "sar-single-site.spec.ts"},
+        COMMON
+        | {
+            "sar-multiport.spec.ts",
+            "sar-single-site.spec.ts",
+            "sar-chart-presentation.spec.ts",
+        },
     ),
     (
         "sar",
