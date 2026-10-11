@@ -15,6 +15,7 @@ from .input_records import InputBudget, check_deadline, metric_key, molecule_rec
 from .models import Metric, Molecule, Observation
 from .observation_contexts import ObservationContexts, conditions_sha256
 from .research_inputs import project_evidence
+from .source_scope import source_exclusion
 
 
 def project_revision(
@@ -103,6 +104,25 @@ def project_inputs(
     budget = InputBudget()
     for ordinal, item in enumerate(compounds, 1):
         check_deadline(started)
+        label = item.identifier_label or item.display_id
+        identifier_issues = []
+        if item.confidence.level != "high" or {
+            "structure_number_unconfirmed",
+            "ambiguous_binding",
+            "historical_identity",
+            "structure_unmatched",
+        }.intersection(item.flags):
+            identifier_issues.append("unverified_source_identifier")
+        source_role = (
+            source_exclusion(item.source.source_label)
+            if item.source.source_label
+            else None
+        )
+        if (
+            source_exclusion(label, item.id, item.flags)
+            or source_role == "intermediate"
+        ):
+            continue
         observations = []
         for activity in item.activities:
             key = metric_key(
@@ -138,18 +158,7 @@ def project_inputs(
                 "sar_observation_limit",
                 "Project observations exceed their complete snapshot limit.",
             )
-        issues = []
-        if (
-            item.confidence.level != "high"
-            or item.id.startswith("source-structure:")
-            or {
-                "structure_number_unconfirmed",
-                "ambiguous_binding",
-                "historical_identity",
-                "structure_unmatched",
-            }.intersection(item.flags)
-        ):
-            issues.append("unverified_source_identifier")
+        issues = list(identifier_issues)
         if item.recognition.status != "valid" or source_stereo_blocked(item):
             issues.append("unverified_source_structure")
         if item.correction and item.correction.stale:
@@ -158,7 +167,7 @@ def project_inputs(
             issues.append("review_rejected")
         record, _ = molecule_record(
             ordinal,
-            item.identifier_label or item.display_id,
+            label,
             item.smiles,
             observations,
             item.structure_molfile,
@@ -169,6 +178,12 @@ def project_inputs(
         )
         budget.add(record)
         output.append(record)
+    if not output:
+        raise WebError(
+            422,
+            "sar_numbered_pool_empty",
+            "No identified final compounds are available for SAR.",
+        )
     after = project_revision(service, identifier, include_research=True)
     if before != after:
         raise WebError(

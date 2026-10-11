@@ -26,7 +26,16 @@ export function StudyPolicyNote({
     return (
       <p className="sar-policy-note">
         {primary && <strong>{contextLabel(context)}</strong>}
-        <span>{t('第十名数量级')}</span>
+        <span>
+          {scale?.status === 'ready'
+            ? t('第十名 {value}', {
+                value:
+                  (scale.anchor_lower === scale.anchor_upper
+                    ? String(scale.anchor_lower)
+                    : `${scale.anchor_lower}–${scale.anchor_upper}`) + unit,
+              })
+            : t('第十名数量级')}
+        </span>
         <span>
           {scale?.status === 'ready'
             ? t('强 <{strong}；中 {strong}–<{medium}；弱 ≥{medium}', {

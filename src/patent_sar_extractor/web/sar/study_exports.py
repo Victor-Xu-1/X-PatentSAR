@@ -17,7 +17,7 @@ from .study_results import StudyResults
 def export_study(queue, identifier: str, format: str):
     if format not in {"json", "csv", "sdf", "html"}:
         raise WebError(422, "sar_export_format", "Choose CSV, JSON, SDF or HTML.")
-    job, report = StudyResults(queue).load(identifier)
+    job, report, basis = StudyResults(queue).current(identifier)
     record = queue.jobs.record(identifier)
     safe = queue.service.assets.job_files(record["root"], identifier)
     if format == "json":
@@ -41,6 +41,10 @@ def export_study(queue, identifier: str, format: str):
             yield safe.read("report.json", max_bytes=32 * 1024 * 1024)
             yield b',"input":'
             yield original
+            yield b',"activity_view":'
+            yield encode(
+                {"basis": basis.model_dump(), "report": report.model_dump()}
+            ).encode()
             yield b"}\n"
 
         return content(), "application/json"

@@ -271,14 +271,9 @@ class Jobs:
                     "sar_results_pending",
                     "Complete SAR results are not yet available.",
                 )
-            rows = connection.execute(
-                "SELECT payload FROM pairs WHERE job_id=? ORDER BY ordinal LIMIT ? OFFSET ?",
-                (identifier, page_size, (page - 1) * page_size),
-            )
-            items = [Pair.model_validate_json(row[0]) for row in rows]
-            pair_count = connection.execute(
-                "SELECT COUNT(*) FROM pairs WHERE job_id=?", (identifier,)
-            ).fetchone()[0]
+            from .pair_scope import scoped_pairs
+
+            items, pair_count = scoped_pairs(connection, value, page, page_size)
         return PairPage(
             items=items, total=pair_count, page=page, page_size=page_size, job=value
         )

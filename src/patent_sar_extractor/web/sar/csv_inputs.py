@@ -17,6 +17,7 @@ from .input_records import (
 )
 from .models import CSVMapping, Metric, Molecule, Observation
 from .research_inputs import csv_evidence, validate_mapping
+from .source_scope import source_exclusion
 
 
 def clean_optional(value: str | None, limit: int = 1000) -> str | None:
@@ -90,6 +91,8 @@ def mapped_inputs(
     budget = InputBudget()
     for ordinal, row in enumerate(rows, 1):
         check_deadline(started)
+        if source_exclusion(row[mapping.id_column]):
+            continue
         page_column = mapping.source_page_column or ("source_page" if native else None)
         source_page = None
         if page_column and row.get(page_column, "").strip():
@@ -208,4 +211,10 @@ def mapped_inputs(
         )
         budget.add(record[0])
         records.append(record)
+    if not records:
+        raise WebError(
+            422,
+            "sar_numbered_pool_empty",
+            "No identified final compounds are available for SAR.",
+        )
     return merge_identical(records), list(metrics.values()), len(rows)

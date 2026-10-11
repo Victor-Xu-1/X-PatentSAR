@@ -1,0 +1,222 @@
+"""Current tenth-dose views over preserved historical synthetic reports."""
+
+import copy
+import json
+import shutil
+import unittest
+import uuid
+
+import test_sar_api as support
+import test_sar_study_analysis as study_support
+from test_web_support import WebFixture
+
+from patent_sar_extractor.web.sar.assets import digest
+from patent_sar_extractor.web.sar.models import Dataset, Molecule, SARJob
+from patent_sar_extractor.web.sar.source_scope import source_exclusion
+from patent_sar_extractor.web.sar.study_view import current_report
+from patent_sar_extractor.web.storage import encode
+
+molecule = study_support.molecule
+policy = study_support.policy
+
+
+class CurrentStrengthTests(unittest.TestCase):
+    setUp = study_support.StudyAnalysisTests.setUp
+    packet = study_support.StudyAnalysisTests.packet
+    write = study_support.StudyAnalysisTests.write
+    run_packet = study_support.StudyAnalysisTests.run_packet
+
+    def historical(self, values):
+        rows = [
+            molecule(f"S{index + 1}", "COc1ccc(Cl)cc1", value)
+            for index, value in enumerate(values)
+        ]
+        packet = self.packet(
+            rows=rows, regions=0, policies=[policy(strong_threshold=1.0)]
+        )
+        _, report = self.run_packet(packet)
+        return packet, report
+
+    def test_historical_fixed_threshold_becomes_tenth_decade_in_current_view_only(self):
+        packet, captured = self.historical(
+            ["0.1"] * 9 + ["1", "9", "10", "99", "100", ""]
+        )
+        original = copy.deepcopy(captured.model_dump())
+        current, excluded = current_report(packet, captured, [])
+        scale = current.policies[0].strength_scale
+        self.assertEqual(
+            (scale.anchor_rank, scale.strong_boundary, scale.medium_boundary),
+            (10, 10, 100),
+        )
+        bins = {item.label: item.molecules for item in current.distributions[0].bins}
+        self.assertEqual(
+            (bins["strong"], bins["medium"], bins["weak"], bins["missing"]),
+            (11, 2, 1, 1),
+        )
+        context = current.policies[0].context_id
+        self.assertEqual(current.rows[9].activity_bands[context], "strong")
+        self.assertEqual(captured.model_dump(), original)
+        self.assertEqual(excluded, {})
+
+    def test_numberless_and_explicit_intermediate_records_do_not_set_the_anchor(self):
+        packet, captured = self.historical(["0.1"] * 9 + ["10", "100", "1000", ""])
+        # These records retain legitimate measured source values in the archive.
+        packet["molecules"][0]["source_compound_id"] = "source-structure:unconfirmed"
+        packet["molecules"][1]["label"] = "Intermediate 2"
+        captured.rows[1].label = "Intermediate 2"
+        current, excluded = current_report(packet, captured, [])
+        self.assertEqual(current.molecule_count, 11)
+        self.assertEqual(current.policies[0].strength_scale.strong_boundary, 10000)
+        self.assertEqual(excluded, {"unconfirmed_identifier": 1, "intermediate": 1})
+        self.assertFalse(any(row.label == "Intermediate 2" for row in current.rows))
+        self.assertEqual(len(packet["molecules"]), 13)
+
+    def test_fewer_than_ten_and_uncertain_tenth_never_fall_back_to_fifth(self):
+        packet, captured = self.historical(["1"] * 5 + ["10"] * 4)
+        current, _ = current_report(packet, captured, [])
+        self.assertEqual(current.policies[0].strength_scale.status, "insufficient")
+        self.assertTrue(all(not row.strong for row in current.rows))
+
+    def test_scope_keeps_printed_identifiers_without_activity_or_structure(self):
+        self.assertIsNone(
+            source_exclusion("8A", "Compound 8A", ["unverified_source_structure"])
+        )
+        self.assertIsNone(source_exclusion("I-255"))
+        self.assertEqual(source_exclusion(""), "unconfirmed_identifier")
+        self.assertEqual(
+            source_exclusion("编号待确认 S0498", "source-structure:x"),
+            "unconfirmed_identifier",
+        )
+        self.assertEqual(source_exclusion("中间体 12"), "intermediate")
+        self.assertEqual(source_exclusion("Intermediate18"), "intermediate")
+        self.assertEqual(source_exclusion("Intermediate_18"), "intermediate")
+
+
+class CurrentStrengthAPITests(WebFixture, unittest.TestCase):
+    dataset = support.SARAPITests.dataset
+
+    def test_csv_scope_retains_identified_missing_measurements_and_excludes_blank_or_intermediate(
+        self,
+    ):
+        with self.client() as client:
+            data = b"id,smiles,IC50 (nM),assay\nS1,CO,1,binding\n,CCO,0.0001,binding\nIntermediate 3,CCCO,0.0001,binding\nI-255,CCCO,,binding\n8B,,9,binding\n"
+            dataset = self.dataset(client, data)
+            self.assertEqual((dataset["input_row_count"], dataset["row_count"]), (5, 3))
+            path = support.ROOT + "/datasets/" + dataset["id"] + "/molecules"
+            rows = client.get(path).json()
+            self.assertEqual(
+                {row["label"] for row in rows["items"]}, {"S1", "I-255", "8B"}
+            )
+            self.assertEqual(
+                client.get(path + "?page=2&page_size=1").json()["total"], 3
+            )
+            self.assertEqual(
+                len(client.get(path + "?page=2&page_size=1").json()["items"]), 1
+            )
+
+    def test_native_historical_api_view_filter_and_export_share_the_current_scope(self):
+        # A native old-policy worker fixture, published only to this private test state.
+        fixture = study_support.StudyAnalysisTests()
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        values = ["0.1"] * 9 + ["1", "10", "100", ""]
+        rows = [
+            molecule(f"S{index + 1}", "COc1ccc(Cl)cc1", value)
+            for index, value in enumerate(values)
+        ]
+        unknown = molecule("unconfirmed", "CO", "0.000001")
+        unknown.update(
+            label="", eligible=False, issues=["missing_or_invalid_identifier"]
+        )
+        packet = fixture.packet(
+            rows=[*rows, unknown], regions=1, policies=[policy(strong_threshold=1.0)]
+        )
+        reply, captured = fixture.run_packet(packet)
+        with self.client() as client:
+            service, queue = client.app.state.sar, client.app.state.sar_queue
+            service.datasets.publish(
+                Dataset.model_validate(packet["dataset"]),
+                [Molecule.model_validate(row) for row in packet["molecules"]],
+                uuid.uuid4().hex,
+                "a" * 64,
+            )
+            root = service.assets.area("results") / packet["job_id"]
+            shutil.copytree(fixture.root, root)
+            job = SARJob(
+                id=packet["job_id"],
+                dataset_id=packet["dataset"]["id"],
+                region_id=packet["regions"][0]["id"],
+                metric_id="activity",
+                kind="study",
+                status="complete",
+                total=len(packet["molecules"]) + captured.strict_pair_count,
+                processed=len(packet["molecules"]) + captured.strict_pair_count,
+                created_at=packet["dataset"]["created_at"],
+                input_sha256=digest(packet),
+            )
+            queue.jobs.create(
+                job,
+                uuid.uuid4().hex,
+                "b" * 64,
+                {
+                    "engine_sha256": packet["engine_sha256"],
+                    "report_sha256": reply["report_sha256"],
+                    "attempt_id": uuid.uuid4().hex,
+                    "kind": "study",
+                    "request": packet["request"],
+                },
+                str(root),
+            )
+            recorded_pairs = [
+                pair
+                for index in range(reply["chunks"])
+                for pair in json.loads(
+                    (root / f"chunk-{index:04d}.json").read_text()
+                )["pairs"]
+            ]
+            with service.store.connect(write=True) as connection:
+                connection.executemany(
+                    "INSERT INTO pairs VALUES(?,?,?)",
+                    [
+                        (job.id, ordinal, encode(pair))
+                        for ordinal, pair in enumerate(recorded_pairs)
+                    ],
+                )
+            original_bytes = (root / "report.json").read_bytes()
+            path = support.ROOT + "/jobs/" + job.id + "/study"
+            response = client.get(path)
+            self.assertEqual(response.status_code, 200, response.text)
+            view = response.json()
+            self.assertEqual(view["activity_basis"]["anchor_rank"], 10)
+            self.assertEqual(
+                view["activity_basis"]["excluded_records"],
+                {"unconfirmed_identifier": 1},
+            )
+            self.assertEqual(view["report"]["molecule_count"], 13)
+            scale = view["report"]["policies"][0]["strength_scale"]
+            self.assertEqual(
+                (scale["strong_boundary"], scale["medium_boundary"]), (10, 100)
+            )
+            self.assertEqual(
+                client.get(path + "/rows?scope=strong&page_size=2").json()["total"], 10
+            )
+            self.assertEqual(
+                client.get(path + "/rows?page=2&page_size=2").json()["total"], 13
+            )
+            self.assertEqual(
+                client.get(
+                    support.ROOT + "/jobs/" + job.id + "/pairs?page_size=2"
+                ).json()["total"],
+                12,
+            )
+            full = client.get(path + "/export?format=json").json()
+            self.assertEqual(full["report"], captured.model_dump())
+            self.assertEqual(full["activity_view"]["report"]["molecule_count"], 13)
+            self.assertNotIn(
+                "unconfirmed", client.get(path + "/export?format=csv").text
+            )
+            self.assertEqual((root / "report.json").read_bytes(), original_bytes)
+
+
+if __name__ == "__main__":
+    unittest.main()

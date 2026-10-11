@@ -44,6 +44,8 @@ for (const { width, height } of [
     await imports.getByRole('button', { name: 'CSV file', exact: true }).click();
     const csv = [
       'id,smiles,IC50 (nM),target,assay,cell_line,duration',
+      ',CO,0.000001,T,binding,not applicable,1h',
+      'Intermediate 18,CCO,0.000001,T,binding,not applicable,1h',
       'Example 1,COc1ccc(Cl)cc1,10,T,binding,not applicable,1h',
       'Example 2,CCOc1ccc(Cl)cc1,1,T,binding,not applicable,1h',
       'Example 3,CCCOc1ccc(Cl)cc1,2,T,binding,not applicable,1h',
@@ -78,6 +80,15 @@ for (const { width, height } of [
     await imports.getByRole('button', { name: 'Create CSV dataset', exact: true }).click();
     const dataset = await persisted(page, 'dataset');
     expect(dataset.row_count).toBe(16);
+    expect(dataset.input_row_count).toBe(18);
+    const scopedRows = await (
+      await page.request.get(`/api/v1/sar/datasets/${dataset.id}/molecules?page_size=200`)
+    ).json();
+    expect(
+      scopedRows.items.every(
+        (row: { label: string }) => row.label.trim() && !row.label.startsWith('Intermediate'),
+      ),
+    ).toBe(true);
     const setup = page.getByRole('region', { name: 'Study setup', exact: true });
     await expect(setup).toBeVisible();
     await expect(

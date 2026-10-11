@@ -1,26 +1,60 @@
 {
   "schema_version": 1,
-  "base_sha": "cf335c60e762e95b3859bb45ebcf3f0c14c68345",
+  "base_sha": "4386ff31cd42b72eaeacc8e3d84cc8dec6c2563d",
   "changed_paths": [
     ".github/verification_scope.json",
-    "docs/FRONTEND_QUALITY.md",
-    "frontend/e2e/product-version.spec.ts",
-    "frontend/e2e/topbar.spec.ts",
+    "docs/ARCHITECTURE.md",
+    "docs/OPERATIONS.md",
+    "docs/PROJECT_MANIFEST.md",
+    "frontend/e2e/sar-study.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/styles/responsive.css",
-    "src/patent_sar_extractor/contracts.py"
+    "frontend/src/api/sarStudyDecoders.ts",
+    "frontend/src/api/sarStudyTypes.ts",
+    "frontend/src/features/sar/study/StudyOverview.tsx",
+    "frontend/src/features/sar/study/StudyPolicyNote.tsx",
+    "frontend/src/i18n/catalogs/sar.ts",
+    "frontend/tests/sar-study-api.test.tsx",
+    "frontend/tests/sar-study-charts.test.tsx",
+    "src/patent_sar_extractor/contracts.py",
+    "src/patent_sar_extractor/web/sar/csv_inputs.py",
+    "src/patent_sar_extractor/web/sar/dataset_store.py",
+    "src/patent_sar_extractor/web/sar/exports.py",
+    "src/patent_sar_extractor/web/sar/job_store.py",
+    "src/patent_sar_extractor/web/sar/pair_scope.py",
+    "src/patent_sar_extractor/web/sar/project_inputs.py",
+    "src/patent_sar_extractor/web/sar/queue.py",
+    "src/patent_sar_extractor/web/sar/source_scope.py",
+    "src/patent_sar_extractor/web/sar/study_admission.py",
+    "src/patent_sar_extractor/web/sar/study_current.py",
+    "src/patent_sar_extractor/web/sar/study_exports.py",
+    "src/patent_sar_extractor/web/sar/study_preview.py",
+    "src/patent_sar_extractor/web/sar/study_results.py",
+    "src/patent_sar_extractor/web/sar/study_routes.py",
+    "src/patent_sar_extractor/web/sar/study_view.py",
+    "src/patent_sar_extractor/web/sar/study_view_groups.py",
+    "src/patent_sar_extractor/web/sar/study_view_models.py",
+    "tests/test_sar_current_strength.py"
   ],
   "python_modules": [
+    "tests.test_sar_current_strength",
+    "tests.test_sar_potency_bands",
+    "tests.test_potency_bands",
+    "tests.test_sar_study_api.SARStudyAPITests.test_native_multi_region_report_views_exports_and_source_order",
+    "tests.test_sar_api.SARAPITests.test_real_worker_csv_region_activity_and_exports_without_extraction_job",
+    "tests.test_sar_api.SARAPITests.test_project_snapshot_reads_effective_correction_without_rewriting_artifacts",
+    "tests.test_sar_preview.SARPreviewTests.test_exact_values_deltas_graph_proof_and_immutable_input",
     "tests.test_product_version_compatibility",
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
-    "frontend/tests/minimal-shell.test.tsx"
+    "frontend/tests/sar-study-api.test.tsx",
+    "frontend/tests/sar-study-charts.test.tsx",
+    "frontend/tests/activity-strength.test.tsx"
   ],
   "browser_tests": [
-    "frontend/e2e/topbar.spec.ts",
+    "frontend/e2e/sar-study.spec.ts",
     "frontend/e2e/product-version.spec.ts"
   ]
 }

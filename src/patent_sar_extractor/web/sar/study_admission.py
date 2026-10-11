@@ -7,12 +7,14 @@ from ...core.sar.study_contexts import context_catalog
 from ...core.sar.values import grade_ranks
 from ..errors import WebError
 from .admission import existing, publish
+from .source_scope import included_molecules
 from .study_models import StudyProfile, StudyRequest
 
 
 def profile(service, dataset_id: str) -> StudyProfile:
     dataset = service.dataset(dataset_id)
-    molecules = service.datasets.all(dataset_id)
+    molecules = included_molecules(service.datasets.all(dataset_id))
+    ids = {row.id for row in molecules}
     try:
         contexts = context_catalog(
             [row.model_dump() for row in molecules],
@@ -28,7 +30,11 @@ def profile(service, dataset_id: str) -> StudyProfile:
         dataset_id=dataset.id,
         dataset_revision=dataset.revision,
         contexts=contexts,
-        regions=service.datasets.regions(dataset_id),
+        regions=[
+            region
+            for region in service.datasets.regions(dataset_id)
+            if region.molecule_id in ids
+        ],
     )
 
 
@@ -37,7 +43,14 @@ def enqueue_study(queue, dataset_id: str, request: StudyRequest):
     if old:
         return old
     dataset = queue.service.current(dataset_id, request.expected_dataset_revision)
-    molecules = queue.service.datasets.all(dataset_id)
+    molecules = included_molecules(queue.service.datasets.all(dataset_id))
+    dataset = dataset.model_copy(
+        update={
+            "row_count": len(molecules),
+            "eligible_count": sum(row.eligible for row in molecules),
+            "issue_count": sum(bool(row.issues) for row in molecules),
+        }
+    )
     if not molecules:
         raise WebError(422, "sar_pool_small", "A study requires source records.")
     try:
@@ -93,6 +106,15 @@ def enqueue_study(queue, dataset_id: str, request: StudyRequest):
         queue.service.datasets.region(identifier, dataset_id)
         for identifier in request.core_ids
     ]
+    if any(
+        region.molecule_id not in {row.id for row in molecules}
+        for region in [*regions, *cores]
+    ):
+        raise WebError(
+            422,
+            "sar_numbered_reference",
+            "Choose an identified final compound as the reference.",
+        )
     if (
         len(set(request.core_ids)) != len(request.core_ids)
         or any(region.kind != "variable" for region in regions)

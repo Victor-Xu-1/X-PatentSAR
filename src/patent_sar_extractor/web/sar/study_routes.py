@@ -13,12 +13,12 @@ from .study_admission import profile
 from .study_exports import export_study
 from .study_models import (
     StudyDrawing,
-    StudyOverview,
     StudyProfile,
     StudyRequest,
     StudyRows,
 )
 from .study_results import StudyResults
+from .study_view_models import CurrentStudyOverview
 
 
 def study_routes(service, queue) -> APIRouter:
@@ -36,7 +36,7 @@ def study_routes(service, queue) -> APIRouter:
     def start(identifier: str, body: StudyRequest):
         return queue().study(identifier, body)
 
-    @router.get("/jobs/{identifier}/study", response_model=StudyOverview)
+    @router.get("/jobs/{identifier}/study", response_model=CurrentStudyOverview)
     async def overview(identifier: str):
         async with reads:
             return await asyncio.to_thread(StudyResults(queue()).overview, identifier)

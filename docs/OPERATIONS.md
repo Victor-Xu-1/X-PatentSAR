@@ -10,12 +10,22 @@ per source identity, not averaged or counted as extra ranks. Missing data,
 uncertain tenth-order bounds, unsupported endpoints and population limits stay
 explicit; no fake zero or fallback threshold is supplied.
 
-Legacy reports retain their captured rules. New numeric studies refuse manual
-thresholds; explicit original grade orders do not become concentrations.
+Legacy report files retain their captured rules. Current SAR views, filters and
+CSV/SDF/HTML exports apply the shared tenth-decade authority to the complete
+identified-final-compound pool. The overview includes `activity_basis` with the
+original input/report fingerprints and exclusion counts. JSON exports retain the
+captured `report`/`input` and add the current `activity_view`; no archive is rewritten.
+New numeric studies refuse manual thresholds; explicit original grade orders do
+not become concentrations. Missing and uncertain values remain separate states.
+Blank/unconfirmed source IDs, temporary structure IDs and explicitly labelled
+intermediates are excluded before import or historical-view pagination and ranking.
+An identified compound without activity or a usable structure remains in the pool;
+structure eligibility and identifier scope are independent. Existing immutable
+datasets and task records are preserved, and new studies use the filtered pool.
 Scales and aligned tiers are additive API fields. Originals and audited edits
 are not migrated or overwritten. The engine identity includes the strength
 authority and DTOs: old scientific checkpoints cannot resume under new rules.
-Create a fresh study using the retained dataset. Rollback uses the previous
+Create a fresh study for new scientific calculations using the retained dataset. Rollback uses the previous
 wheel/state backup, preserving newer study records for forward recovery.
 
 ## Reproducible package construction

@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { setLocale } from '../src/i18n';
 import { StudyBars } from '../src/features/sar/study/StudyBars';
+import { StudyPolicyNote } from '../src/features/sar/study/StudyPolicyNote';
+import { studyContext } from './sar-fixtures';
 import {
   chartColor,
   compactBinLabel,
@@ -17,6 +19,41 @@ const bins: StudyBin[] = [
 ];
 beforeEach(() => setLocale('en'));
 describe('genuine count-driven chart presentation', () => {
+  it('shows the actual tenth measurement and decade limits rather than a fifth-rank fallback', () => {
+    render(
+      <StudyPolicyNote
+        context={studyContext}
+        policy={{
+          context_id: studyContext.id,
+          direction: 'lower',
+          grade_order: [],
+          strong_threshold: null,
+          threshold_inclusive: false,
+          strength_method: 'tenth_decade',
+          strength_scale: {
+            kind: 'numeric',
+            direction: 'lower',
+            rule: 'tenth_decade',
+            method: 'tenth_decade',
+            status: 'ready',
+            eligible: 20,
+            excluded: 0,
+            distinct: 20,
+            boundary_inclusive: false,
+            population: 20,
+            anchor_rank: 10,
+            anchor_lower: 0.56,
+            anchor_upper: 0.56,
+            anchor_exponent: -1,
+            strong_boundary: 1,
+            medium_boundary: 10,
+          },
+        }}
+      />,
+    );
+    expect(screen.getByText('10th strongest: 0.56 nM')).toBeVisible();
+    expect(screen.getByText(/Strong <1 nM/)).toBeVisible();
+  });
   it('separates source-record counts from repeats and retains full raw labels', async () => {
     render(<StudyBars bins={bins} layout="donut" countingContract="unique-molecules-v2" />);
     expect(screen.getByRole('meter', { name: 'A · Source IDs / records' })).toHaveAttribute(

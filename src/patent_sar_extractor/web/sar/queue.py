@@ -15,6 +15,7 @@ from .job_store import Jobs
 from .models import AnalysisRequest, SARJob
 from .ownership import absent
 from .service import SARService
+from .source_scope import included_molecules
 
 
 class SARQueue:
@@ -133,7 +134,20 @@ class SARQueue:
                 "sar_grade_order",
                 "Grade order must contain distinct explicit labels, strongest first.",
             )
-        molecules = self.service.datasets.all(dataset_id)
+        molecules = included_molecules(self.service.datasets.all(dataset_id))
+        if region.molecule_id not in {row.id for row in molecules}:
+            raise WebError(
+                422,
+                "sar_numbered_reference",
+                "Choose an identified final compound as the reference.",
+            )
+        dataset = dataset.model_copy(
+            update={
+                "row_count": len(molecules),
+                "eligible_count": sum(row.eligible for row in molecules),
+                "issue_count": sum(bool(row.issues) for row in molecules),
+            }
+        )
         if len(molecules) < 2:
             raise WebError(
                 422,

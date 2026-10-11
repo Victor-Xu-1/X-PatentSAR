@@ -55,7 +55,6 @@ export function StudyOverview({ report }: { report: StudyReport }) {
                       .join(' · ')}
                   </p>
                   {declaration && <p>{declaration.note}</p>}
-                  {hasStrongRule(policy) && <StudyPolicyNote policy={policy} context={context} />}
                 </details>
               )}
               <StudyBars
@@ -65,7 +64,7 @@ export function StudyOverview({ report }: { report: StudyReport }) {
                 direction={policy?.direction}
                 controlledUnit={unit}
               />
-              {!hasStrongRule(policy) && <StudyPolicyNote policy={policy} context={context} />}
+              <StudyPolicyNote policy={policy} context={context} />
               {hasStrongRule(policy) && (
                 <small>
                   {t('强活性')} {distribution.strong_molecules}

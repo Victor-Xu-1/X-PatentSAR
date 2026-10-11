@@ -58,8 +58,19 @@ class StudyResults:
         return job, report
 
     def overview(self, identifier: str) -> StudyOverview:
-        job, report = self.load(identifier)
-        return StudyOverview(job=job, report=report.model_copy(update={"rows": []}))
+        from .study_view_models import CurrentStudyOverview
+
+        job, report, basis = self.current(identifier)
+        return CurrentStudyOverview(
+            job=job, report=report.model_copy(update={"rows": []}), activity_basis=basis
+        )
+
+    def current(self, identifier: str):
+        from .study_current import projected
+
+        job, captured = self.load(identifier)
+        report, basis = projected(self.queue, identifier, job, captured)
+        return job, report, basis
 
     def rows(
         self,
@@ -81,7 +92,7 @@ class StudyResults:
             or scope not in {"all", "strong", "leads"}
         ):
             raise WebError(422, "sar_page", "Study filter/page exceeds its bound.")
-        job, report = self.load(identifier)
+        job, report, _ = self.current(identifier)
         query_ids = None
         if query:
             pattern = (
