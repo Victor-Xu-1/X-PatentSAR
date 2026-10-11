@@ -73,7 +73,7 @@ it('coalesces resize work and releases observer/animation work without changing 
   expect(window.scrollY).toBe(0);
 });
 
-it('keeps programmatically selected result controls visible without moving page focus', () => {
+it('changes the current wrapped result tab without horizontal navigation scrolling or page focus movement', () => {
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
     this: HTMLElement,
   ) {
@@ -97,7 +97,7 @@ it('keeps programmatically selected result controls visible without moving page 
     />,
   );
   const strip = screen.getByRole('navigation');
-  expect(strip.scrollLeft).toBe(160);
+  expect(strip.scrollLeft).toBe(0);
   rerender(
     <StudyViewTabs
       labels={['研究概览', '研究活性表']}
@@ -106,7 +106,7 @@ it('keeps programmatically selected result controls visible without moving page 
       onSelect={vi.fn()}
     />,
   );
-  expect(strip.scrollLeft).toBe(160);
+  expect(strip.scrollLeft).toBe(0);
   expect(strip.querySelector('[aria-current]')).toHaveAttribute('aria-controls', 'owned-1');
   expect(document.activeElement).toBe(document.body);
 });

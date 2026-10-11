@@ -86,27 +86,50 @@ export function StudyRegionMap({
   selected?: string | undefined;
   onSelect?: ((id: string) => void) | undefined;
 }) {
-  const groups = new Map<string, { label: string; regions: Region[] }>();
-  for (const summary of report.regions) {
-    const key = summary.region.molecule_id;
-    const group = groups.get(key) ?? { label: summary.reference_label, regions: [] };
-    group.regions.push(summary.region);
-    groups.set(key, group);
-  }
-  if (!groups.size) return null;
+  const { t } = useTranslation();
+  const groups = useMemo(() => {
+    const references = new Map<string, { label: string; regions: Region[] }>();
+    for (const summary of report.regions) {
+      const key = summary.region.molecule_id;
+      const group = references.get(key) ?? { label: summary.reference_label, regions: [] };
+      group.regions.push(summary.region);
+      references.set(key, group);
+    }
+    return [...references.entries()].map(([id, group]) => ({ id, ...group }));
+  }, [report.regions]);
+  const current =
+    groups.find((group) => group.regions.some((region) => region.id === selected)) ?? groups[0];
+  if (!current) return null;
   return (
     <StudyReferencePane active={active}>
-      {[...groups.entries()].map(([key, group]) => (
-        <ReferenceMap
-          key={key}
-          datasetId={report.dataset_id}
-          regions={group.regions}
-          label={group.label}
-          active={active}
-          selected={selected}
-          onSelect={onSelect}
-        />
-      ))}
+      {groups.length > 1 && (
+        <label className="sar-reference-choice">
+          {t('选择参考分子')}
+          <select
+            value={current.id}
+            disabled={!onSelect}
+            onChange={(event) => {
+              const next = groups.find((group) => group.id === event.target.value);
+              if (next) onSelect?.(next.regions[0]!.id);
+            }}
+          >
+            {groups.map((group) => (
+              <option key={group.id} value={group.id}>
+                {group.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      <ReferenceMap
+        key={current.id}
+        datasetId={report.dataset_id}
+        regions={current.regions}
+        label={current.label}
+        active={active}
+        selected={selected}
+        onSelect={onSelect}
+      />
     </StudyReferencePane>
   );
 }

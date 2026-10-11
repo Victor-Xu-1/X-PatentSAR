@@ -10,15 +10,19 @@ import { studyContext, studyReport } from './sar-fixtures';
 
 beforeEach(() => setLocale('en'));
 
-it('keeps a known overview rule in recorded-context detail without losing its raw values', async () => {
+it('keeps a known chart rule visible while recorded conditions stay in detail without losing raw values', async () => {
   const original = JSON.stringify(studyReport);
   render(<StudyOverview report={studyReport} />);
   const rule = screen.getByText('Strong ≤ 10 nM');
-  expect(rule).not.toBeVisible();
-  const detail = rule.closest('details');
-  expect(detail).not.toBeNull();
+  expect(rule).toBeVisible();
+  const detail = screen.getByText('Recorded context').closest('details')!;
   expect(detail).not.toHaveAttribute('open');
+  const conditions = detail.querySelector('p')!;
+  expect(conditions).not.toBeVisible();
   await userEvent.click(screen.getByText('Recorded context'));
+  expect(conditions).toBeVisible();
+  await userEvent.click(screen.getByText('Recorded context'));
+  expect(conditions).not.toBeVisible();
   expect(rule).toBeVisible();
   await act(() => setLocale('zh-CN'));
   expect(screen.getByText('强活性 ≤ 10 nM')).toBeVisible();

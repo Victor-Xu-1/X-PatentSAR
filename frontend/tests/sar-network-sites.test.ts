@@ -57,6 +57,28 @@ describe('compact chemical sites without lost comparisons or scientific rewrites
     expect(compactNetworkSites([small, large])).toEqual([small]);
     expect(JSON.stringify([small, large])).toBe(before);
   });
+  it('reserves complete wide marker captions without clipping or overlapping labels and preserves atom anchors', () => {
+    const atoms = [{ index: 0, x: 0.005, y: 0.3, element: 'C' }];
+    const regions = Array.from(
+      { length: 4 },
+      (_, index) => site('wide-' + index, [0], ['a']).region,
+    );
+    const captions = ['R12345 H', 'R27', 'R9 H', 'R3333'];
+    const before = JSON.stringify({ atoms, regions });
+    const labels = regionLabels(atoms, regions, captions);
+    for (const [index, label] of labels.entries()) {
+      expect(label.anchorX).toBe(5);
+      expect(label.x - label.width / 2).toBeGreaterThanOrEqual(6);
+      expect(label.x + label.width / 2).toBeLessThanOrEqual(994);
+      expect(label.width).toBeGreaterThanOrEqual(captions[index]!.length * 14 + 16);
+      for (const other of labels.slice(index + 1))
+        expect(
+          Math.abs(label.x - other.x) >= (label.width + other.width) / 2 + 8 ||
+            Math.abs(label.y - other.y) >= 34,
+        ).toBe(true);
+    }
+    expect(JSON.stringify({ atoms, regions })).toBe(before);
+  });
   it('keeps unique pairs, distinct positions and explicit manual regions', () => {
     const small = site('small', [1], ['a']),
       expanded = site('expanded', [1, 2], ['a', 'b']);

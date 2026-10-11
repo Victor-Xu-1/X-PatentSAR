@@ -207,6 +207,38 @@ for (const { width, height } of [
         await expect(rule).toBeVisible();
       }
       if (['Variable regions', 'Fragment summary'].includes(tab)) {
+        const referencePane = view.getByRole('region', {
+          name: 'Reference structures',
+          exact: true,
+        });
+        await expect(referencePane.locator('.sar-reference-map-card')).toHaveCount(1);
+        const referenceChoice = referencePane.getByRole('combobox', {
+          name: 'Choose reference molecule',
+          exact: true,
+        });
+        await expect(referenceChoice.getByRole('option')).toHaveText(['Example 1', 'Example 2']);
+        const choices = await referenceChoice
+          .locator('option')
+          .evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value));
+        await referenceChoice.selectOption(choices[1]!);
+        await expect(
+          referencePane.getByRole('img', { name: 'Example 2', exact: true }),
+        ).toBeVisible();
+        await expect(
+          referencePane.getByRole('button', { name: 'R2', exact: true }),
+        ).toHaveAttribute('aria-pressed', 'true');
+        await expect(view.locator('.sar-region-group > h3')).toHaveText('R2 · Example 2');
+        await expect(referencePane.locator('.sar-region-label text')).toHaveText('R2');
+        await referencePane.screenshot({
+          path: test
+            .info()
+            .outputPath(`reference-choice-${width}-${height}-${tab.replaceAll(' ', '-')}.png`),
+        });
+        await referenceChoice.selectOption(choices[0]!);
+        await expect(
+          referencePane.getByRole('img', { name: 'Example 1', exact: true }),
+        ).toBeVisible();
+        await expect(view.locator('.sar-region-group > h3')).toHaveText('R1 · Example 1');
         const rule = view.locator('.sar-policy-note').first();
         const disclosure = view.locator('.sar-region-method summary').first();
         await expect(rule).toBeHidden();
@@ -423,8 +455,11 @@ for (const { width, height } of [
         name: 'Reference structures',
         exact: true,
       });
-      await expect(referencePane.locator('.sar-reference-map-card')).toHaveCount(2);
-      await expect(referencePane).toHaveAttribute('tabindex', '0');
+      await expect(referencePane.locator('.sar-reference-map-card')).toHaveCount(1);
+      const overflows = await referencePane.evaluate(
+        (pane) => pane.scrollHeight > pane.clientHeight + 1,
+      );
+      await expect(referencePane).toHaveAttribute('tabindex', overflows ? '0' : '-1');
       const jointView = () =>
         referencePane.evaluate((pane) => {
           const image = pane.querySelector('img')!.getBoundingClientRect();
@@ -451,16 +486,18 @@ for (const { width, height } of [
         position: 'sticky',
         maxHeight: true,
       });
-      await referencePane.focus();
-      const scroll = await referencePane.evaluate((element) => element.scrollTop);
-      await page.keyboard.press('ArrowDown');
-      await expect
-        .poll(() => referencePane.evaluate((element) => element.scrollTop))
-        .toBeGreaterThan(scroll);
-      await page.keyboard.press('Home');
-      await expect
-        .poll(() => referencePane.evaluate((element) => element.scrollTop))
-        .toBeLessThanOrEqual(1);
+      if (overflows) {
+        await referencePane.focus();
+        const scroll = await referencePane.evaluate((element) => element.scrollTop);
+        await page.keyboard.press('ArrowDown');
+        await expect
+          .poll(() => referencePane.evaluate((element) => element.scrollTop))
+          .toBeGreaterThan(scroll);
+        await page.keyboard.press('Home');
+        await expect
+          .poll(() => referencePane.evaluate((element) => element.scrollTop))
+          .toBeLessThanOrEqual(1);
+      }
     }
     // Inspect only this published, loaded source drawing: no new engine/read/write.
     const originalImage = preview.locator('.sar-molecule-comparison img').first();
