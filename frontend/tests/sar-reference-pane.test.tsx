@@ -19,15 +19,21 @@ it('renders only the selected original reference while retaining every reference
   const original = JSON.stringify(report);
   const onSelect = vi.fn();
   const { container } = render(
-    <StudyRegionMap report={report} active={false} selected={other.region.id} onSelect={onSelect} />,
+    <StudyRegionMap
+      report={report}
+      active={false}
+      selected={other.region.id}
+      onSelect={onSelect}
+    />,
   );
   expect(container.querySelectorAll('.sar-reference-map-card')).toHaveLength(1);
-  const choice = screen.getByRole('combobox', { name: 'Choose reference molecule', exact: true });
+  const choice = screen.getByRole('combobox', { name: 'Choose reference molecule' });
   expect(choice).toHaveValue(other.region.molecule_id);
-  expect(within(choice).getAllByRole('option').map((item) => item.textContent)).toEqual([
-    first.reference_label,
-    other.reference_label,
-  ]);
+  expect(
+    within(choice)
+      .getAllByRole('option')
+      .map((item) => item.textContent),
+  ).toEqual([first.reference_label, other.reference_label]);
   fireEvent.change(choice, { target: { value: first.region.molecule_id } });
   expect(onSelect).toHaveBeenCalledExactlyOnceWith(first.region.id);
   expect(JSON.stringify(report)).toBe(original);
@@ -47,23 +53,27 @@ it('requests only the selected drawing and keeps that choice and source labels t
   }));
   const props = { report, active: true, onSelect: vi.fn() };
   const { rerender } = render(<StudyRegionMap {...props} selected={first.region.id} />);
-  await screen.findByRole('img', { name: first.reference_label, exact: true });
-  expect(draw).toHaveBeenCalledExactlyOnceWith(report.dataset_id, first.region.molecule_id, expect.any(AbortSignal));
+  await screen.findByRole('img', { name: first.reference_label });
+  expect(draw).toHaveBeenCalledExactlyOnceWith(
+    report.dataset_id,
+    first.region.molecule_id,
+    expect.any(AbortSignal),
+  );
   rerender(<StudyRegionMap {...props} selected={other.region.id} />);
-  await screen.findByRole('img', { name: other.reference_label, exact: true });
-  expect(screen.queryByRole('img', { name: first.reference_label, exact: true })).not.toBeInTheDocument();
+  await screen.findByRole('img', { name: other.reference_label });
+  expect(screen.queryByRole('img', { name: first.reference_label })).not.toBeInTheDocument();
   expect(draw).toHaveBeenCalledTimes(2);
-  const choice = screen.getByRole('combobox', { name: 'Choose reference molecule', exact: true });
+  const choice = screen.getByRole('combobox', { name: 'Choose reference molecule' });
   choice.focus();
   await act(() => setLocale('zh-CN'));
-  expect(screen.getByRole('combobox', { name: '选择参考分子', exact: true })).toBe(choice);
+  expect(screen.getByRole('combobox', { name: '选择参考分子' })).toBe(choice);
   expect(choice).toHaveValue(other.region.molecule_id);
   expect(choice).toHaveFocus();
   expect(draw).toHaveBeenCalledTimes(2);
   expect(props.onSelect).not.toHaveBeenCalled();
 });
 
-it('keeps every original reference grouped in one named pane without relabelling or mixing regions', async () => {
+it('keeps grouped original references selectable in one pane without relabelling or mixing regions', async () => {
   const first = studyReport.regions[0]!;
   const report = {
     ...studyReport,
@@ -93,15 +103,13 @@ it('keeps every original reference grouped in one named pane without relabelling
   );
   const pane = screen.getByRole('region', { name: 'Reference structures' });
   expect(pane).toHaveAttribute('tabindex', '-1');
-  expect(container.querySelectorAll('.sar-reference-map-card')).toHaveLength(2);
+  expect(container.querySelectorAll('.sar-reference-map-card')).toHaveLength(1);
   expect(within(pane).getByRole('button', { name: 'Linker 原文' })).toHaveAttribute(
     'aria-pressed',
     'true',
   );
-  expect(within(pane).getByRole('button', { name: 'R2 原文' })).toHaveAttribute(
-    'aria-pressed',
-    'false',
-  );
+  expect(within(pane).queryByRole('button', { name: 'R2 原文' })).not.toBeInTheDocument();
+  expect(within(pane).getByRole('option', { name: first.reference_label })).toBeInTheDocument();
   await act(() => setLocale('zh-CN'));
   expect(screen.getByRole('region', { name: '参考结构' })).toBe(pane);
   expect(within(pane).getByText('参考分子区域总览 · 原文 I-255')).toBeVisible();
@@ -112,6 +120,25 @@ it('keeps every original reference grouped in one named pane without relabelling
 it('does not create a focusable empty reference pane without a recorded region', () => {
   const { container } = render(<StudyRegionMap report={{ ...studyReport, regions: [] }} active />);
   expect(container).toBeEmptyDOMElement();
+});
+
+it('does not add a redundant reference selector or fetch an inactive single reference', () => {
+  const draw = vi.spyOn(sarApi, 'drawing');
+  render(
+    <StudyRegionMap
+      report={studyReport}
+      active={false}
+      selected={studyReport.regions[0]!.region.id}
+      onSelect={vi.fn()}
+    />,
+  );
+  expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+  expect(
+    screen
+      .getByRole('region', { name: 'Reference structures' })
+      .querySelectorAll('.sar-reference-map-card'),
+  ).toHaveLength(1);
+  expect(draw).not.toHaveBeenCalled();
 });
 
 it('tracks actual content/viewport overflow once per frame without focus movement and disposes hidden/unmounted work', () => {

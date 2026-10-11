@@ -1,17 +1,16 @@
 {
   "schema_version": 1,
-  "base_sha": "57b73cd2a5ee157a2953a0c186900c410875a8ec",
+  "base_sha": "efaebe3d467a68e2eaa5d8be07d80a9d3037154b",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/FRONTEND_QUALITY.md",
-    "frontend/e2e/sar-single-site.spec.ts",
+    "frontend/e2e/sar-study.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/components/useScrollFocus.ts",
-    "frontend/src/features/sar/study/PreviewProperties.tsx",
-    "frontend/src/i18n/catalogs/sar.ts",
+    "frontend/src/features/sar/study/StudyRegionMap.tsx",
     "frontend/src/styles/sar-explorer.css",
-    "frontend/tests/sar-property-scroll.test.tsx",
+    "frontend/tests/sar-preview-density.test.tsx",
+    "frontend/tests/sar-reference-pane.test.tsx",
     "src/patent_sar_extractor/contracts.py"
   ],
   "python_modules": [
@@ -19,11 +18,13 @@
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
-    "frontend/tests/sar-property-scroll.test.tsx",
     "frontend/tests/sar-preview.test.tsx",
-    "frontend/tests/sar-reference-pane.test.tsx"
+    "frontend/tests/sar-reference-pane.test.tsx",
+    "frontend/tests/sar-fragment-preview.test.tsx",
+    "frontend/tests/sar-preview-density.test.tsx"
   ],
   "browser_tests": [
+    "frontend/e2e/sar-study.spec.ts",
     "frontend/e2e/sar-single-site.spec.ts",
     "frontend/e2e/sar-aromatic.spec.ts"
   ]

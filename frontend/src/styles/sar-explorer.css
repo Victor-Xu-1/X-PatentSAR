@@ -21,6 +21,17 @@
   gap: 18px;
   min-width: 0;
 }
+.sar-reference-choice {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.sar-reference-choice select {
+  min-width: 0;
+  max-width: 100%;
+}
 .sar-region-explorer .sar-reference-map-card {
   border: 0;
   border-right: 1px solid var(--line-soft);
