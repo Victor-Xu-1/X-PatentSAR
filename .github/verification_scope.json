@@ -4,6 +4,7 @@
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/FRONTEND_QUALITY.md",
+    "frontend/e2e/product-version.spec.ts",
     "frontend/e2e/topbar.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
