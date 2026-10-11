@@ -29,6 +29,34 @@ it('shows an explicit diagram alias for nonnumeric names without changing the ra
   expect(recorded.name).toBe('Linker 原文');
 });
 
+it.each([
+  ['R27 original region', null, 'R27 original region · C 0'],
+  ['R100-H original region', null, 'R100-H original region · C 0'],
+  ['Linker 原文', null, 'R1 · Linker 原文 · C 0'],
+  ['R2D2 original region', null, 'R1 · R2D2 original region · C 0'],
+  [undefined, null, 'R1 · C 0'],
+  ['R27 original region', 0, 'R27 original region · H · C 0'],
+] as const)(
+  'names an atom once without rewriting the recorded region (%s, H=%s)',
+  (name, anchor, label) => {
+    const recorded = { ...namedRegion, atom_indices: [0], hydrogen_anchor: anchor };
+    if (name === undefined) delete recorded.name;
+    else recorded.name = name;
+    const original = JSON.stringify({ atoms, recorded });
+    render(<RegionMap atoms={atoms} regions={[recorded]} onSelect={vi.fn()} />);
+    const pointer = screen.getByRole('button', { name: label });
+    expect(pointer).toHaveAttribute('tabindex', '-1');
+    expect(JSON.stringify({ atoms, recorded })).toBe(original);
+  },
+);
+
+it('uses the same unduplicated source description for a read-only legend', () => {
+  const recorded = { ...namedRegion, name: 'R27 original region' };
+  const { container } = render(<RegionLegend regions={[recorded]} />);
+  expect(container.querySelector('li')).toHaveTextContent(/^R27 original region$/);
+  expect(screen.queryByRole('button')).not.toBeInTheDocument();
+});
+
 it('does not add an empty overlay to a reference without recorded regions or atom coordinates', () => {
   const { container, rerender } = render(<RegionMap atoms={atoms} regions={[]} />);
   expect(container).toBeEmptyDOMElement();

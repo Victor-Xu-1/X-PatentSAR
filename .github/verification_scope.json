@@ -1,40 +1,29 @@
 {
   "schema_version": 1,
-  "base_sha": "e011caf5b4aa93361e657efaec8204048b1823cb",
+  "base_sha": "814ee27445bbedbaeaf78e1078a183a921e3e8dc",
   "changed_paths": [
     ".github/verification_scope.json",
-    "docs/ARCHITECTURE.md",
     "docs/FRONTEND_QUALITY.md",
-    "docs/PROJECT_MANIFEST.md",
+    "frontend/e2e/sar-single-site.spec.ts",
+    "frontend/e2e/sar-study.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "src/patent_sar_extractor/contracts.py",
-    "src/patent_sar_extractor/web/sar/study_projection_models.py",
-    "src/patent_sar_extractor/web/sar/study_view.py",
-    "src/patent_sar_extractor/web/sar/study_view_groups.py",
-    "src/patent_sar_extractor/web/sar/study_view_models.py",
-    "tests/test_sar_projection_bins.py",
-    "tests/test_sar_view_groups.py"
+    "frontend/src/features/sar/study/RegionMap.tsx",
+    "frontend/src/features/sar/study/regionMarker.ts",
+    "frontend/tests/sar-region-map-interaction.test.tsx",
+    "src/patent_sar_extractor/contracts.py"
   ],
   "python_modules": [
-    "tests.test_sar_projection_bins",
-    "tests.test_sar_view_groups",
-    "tests.test_sar_current_strength",
-    "tests.test_sar_report_preparation",
-    "tests.test_sar_preview.SARPreviewTests.test_passive_chart_palette_and_percentage_use_all_recorded_counts",
-    "tests.test_sar_preview.SARPreviewTests.test_passive_chart_does_not_assign_a_share_to_an_unknown_or_empty_domain",
-    "tests.test_sar_preview.SARPreviewTests.test_exact_values_deltas_graph_proof_and_immutable_input",
-    "tests.test_sar_study_api.SARStudyAPITests.test_native_multi_region_report_views_exports_and_source_order",
-    "tests.test_sar_study_api.SARStudyAPITests.test_1191_records_are_not_truncated_to_1000",
-    "tests.test_sar_study_table",
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
-    "frontend/tests/sar-study-api.test.tsx",
-    "frontend/tests/sar-study-results.test.tsx",
-    "frontend/tests/sar-preview.test.tsx",
-    "frontend/tests/sar-network-sites.test.ts"
+    "frontend/tests/sar-region-map-interaction.test.tsx",
+    "frontend/tests/sar-reference-pane.test.tsx",
+    "frontend/tests/sar-hydrogen.test.tsx",
+    "frontend/tests/sar-inline-selection.test.tsx",
+    "frontend/tests/sar-drawing-contrast.test.ts",
+    "frontend/tests/sar-fragment-preview.test.tsx"
   ],
   "browser_tests": [
     "frontend/e2e/sar-study.spec.ts",

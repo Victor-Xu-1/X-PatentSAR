@@ -458,3 +458,10 @@ Independent current objects preserve all region/fragment groups, bins, raw label
 whole-context bands and comparisons; JSON fields/defaults and chart semantics stay
 identical. No region or table is replaced with a partial empty list, no report
 is sampled, and browser consumers continue through the same API and decoder.
+
+Region atom controls and read-only legends use the same source-preserving
+description authority. An explicit recorded R-number is not announced twice;
+unlabelled regions use the existing diagram alias without a literal null value.
+Other original names retain their alias and complete text, and an actual hydrogen
+site keeps its H annotation. Original names, graph/atom identity, pointer targets,
+keyboard routing, drawing positions and scientific results are unchanged.

@@ -135,15 +135,7 @@ export function RegionMap({
                   // Every atom remains a pointer target, without duplicate Tab stops.
                   tabIndex={-1}
                   key={region.id + ':' + atom.index}
-                  aria-label={
-                    markers[order]!.caption +
-                    ' · ' +
-                    region.name +
-                    ' · ' +
-                    atom.element +
-                    ' ' +
-                    atom.index
-                  }
+                  aria-label={markers[order]!.description + ' · ' + atom.element + ' ' + atom.index}
                   aria-pressed={selected === region.id}
                   onClick={() => onSelect(region.id)}
                   onMouseEnter={() => setHovered(region.id)}
@@ -192,7 +184,7 @@ export function RegionLegend({
           ) : (
             <>
               <span style={{ background: colors[order % colors.length] }} />
-              {regionMarker(region, order).marker} · {region.name ?? 'R' + (order + 1)}
+              {regionMarker(region, order).description}
             </>
           )}
         </li>
