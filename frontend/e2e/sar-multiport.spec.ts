@@ -37,7 +37,7 @@ for (const width of [390, 1672]) {
       ['1', '2', '-9.00'],
       ['4', '5', '-18.00'],
     ]) {
-      const network = page.locator('.sar-network');
+      const network = page.locator('.sar-network').filter({ visible: true });
       await network.getByRole('button', { name: `Select core ${left}`, exact: true }).click();
       const wanted = twoPortSite(decoded.regions, left!, ids[right!]);
       await network
