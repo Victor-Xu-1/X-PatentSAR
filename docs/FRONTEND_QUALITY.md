@@ -378,3 +378,5 @@ unlocks an uncertain mutation, or enables source actions after a failed read.
 Source text remains escaped and source-owned identifiers are not translated.
 Non-SAR human-facing errors keep their existing message path. This is shared
 presentation, not a new transport, error state, queue or automatic recovery path.
+Expanded source text keeps a separate eight-pixel gap below the focused summary,
+so the keyboard focus outline cannot overlap the diagnostic message.

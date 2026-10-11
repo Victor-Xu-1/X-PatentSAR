@@ -200,6 +200,13 @@ for (const width of [390, 800, 1672]) {
       details.getByText('Controlled browser read failure', { exact: true }),
     ).toBeVisible();
     await expect(details.locator('code')).toHaveText('sar_controlled_read_failure');
+    expect(
+      await details.evaluate((element) => {
+        const summary = element.querySelector('summary')!.getBoundingClientRect();
+        const message = element.querySelector('p')!.getBoundingClientRect();
+        return message.top - summary.bottom;
+      }),
+    ).toBeGreaterThanOrEqual(8);
     await page.screenshot({
       path: info.outputPath('read-error-details-en.png'),
       animations: 'disabled',

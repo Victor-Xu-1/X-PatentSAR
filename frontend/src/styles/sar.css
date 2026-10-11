@@ -519,6 +519,9 @@
   margin: 10px 0;
   font-size: 13px;
 }
+.sar-error-details > p {
+  margin: 8px 0;
+}
 .sar-error-details code {
   display: block;
   overflow-wrap: anywhere;
