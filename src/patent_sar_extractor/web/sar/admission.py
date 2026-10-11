@@ -14,6 +14,16 @@ from .models import SARJob
 
 
 def existing(queue, dataset_id: str, request) -> tuple[SARJob | None, str]:
+    fields = request.model_dump(exclude={"request_id"})
+    # Neutral additive declarations preserve previously published request IDs.
+    if not fields.get("context_declarations"):
+        fields.pop("context_declarations", None)
+    request_hash = digest([dataset_id, fields])
+    old = queue.jobs.existing(request.request_id, request_hash)
+    if old:
+        # An identical replay only reads its published job. Cleanup gates apply
+        # to new work, not a retry that cannot create another worker or asset.
+        return queue.view(old.id), request_hash
     if queue.retained_lease or queue.recovery_blocked:
         raise WebError(
             409,
@@ -29,13 +39,7 @@ def existing(queue, dataset_id: str, request) -> tuple[SARJob | None, str]:
                 "sar_process_unverified",
                 "Previous started SAR attempt has no verified cleanup.",
             )
-    fields = request.model_dump(exclude={"request_id"})
-    # Neutral additive declarations preserve previously published request IDs.
-    if not fields.get("context_declarations"):
-        fields.pop("context_declarations", None)
-    request_hash = digest([dataset_id, fields])
-    old = queue.jobs.existing(request.request_id, request_hash)
-    return (queue.view(old.id) if old else None), request_hash
+    return None, request_hash
 
 
 def publish(

@@ -5,13 +5,16 @@ import json
 import shutil
 import unittest
 import uuid
+from unittest.mock import Mock
 
 import test_sar_api as support
 import test_sar_study_analysis as study_support
 from test_web_support import WebFixture
 
+from patent_sar_extractor.web.errors import WebError
+from patent_sar_extractor.web.sar.admission import existing
 from patent_sar_extractor.web.sar.assets import digest
-from patent_sar_extractor.web.sar.models import Dataset, Molecule, SARJob
+from patent_sar_extractor.web.sar.models import AnalysisRequest, Dataset, Molecule, SARJob
 from patent_sar_extractor.web.sar.source_scope import source_exclusion
 from patent_sar_extractor.web.sar.study_view import current_report
 from patent_sar_extractor.web.storage import encode
@@ -90,6 +93,28 @@ class CurrentStrengthTests(unittest.TestCase):
         self.assertEqual(source_exclusion("中间体 12"), "intermediate")
         self.assertEqual(source_exclusion("Intermediate18"), "intermediate")
         self.assertEqual(source_exclusion("Intermediate_18"), "intermediate")
+
+    def test_identical_replay_is_read_only_while_new_work_stays_cleanup_blocked(self):
+        request = AnalysisRequest(
+            request_id="a" * 32,
+            expected_dataset_revision=1,
+            region_id="b" * 32,
+            metric_id="IC50",
+            direction="lower",
+        )
+        queue = Mock(retained_lease=True, recovery_blocked=True)
+        published = Mock(id="published")
+        queue.jobs.existing.return_value = published
+        queue.view.return_value = published
+        value, _ = existing(queue, "dataset", request)
+        self.assertIs(value, published)
+        queue.view.assert_called_once_with("published")
+        queue.service.store.connect.assert_not_called()
+        queue.jobs.existing.return_value = None
+        with self.assertRaises(WebError) as rejected:
+            existing(queue, "dataset", request)
+        self.assertEqual(rejected.exception.code, "sar_process_unverified")
+        queue.service.store.connect.assert_not_called()
 
 
 class CurrentStrengthAPITests(WebFixture, unittest.TestCase):

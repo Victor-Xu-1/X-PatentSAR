@@ -17,6 +17,7 @@
     "frontend/tests/sar-study-api.test.tsx",
     "frontend/tests/sar-study-charts.test.tsx",
     "src/patent_sar_extractor/contracts.py",
+    "src/patent_sar_extractor/web/sar/admission.py",
     "src/patent_sar_extractor/web/sar/csv_inputs.py",
     "src/patent_sar_extractor/web/sar/dataset_store.py",
     "src/patent_sar_extractor/web/sar/exports.py",
