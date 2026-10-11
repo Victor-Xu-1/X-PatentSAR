@@ -9,6 +9,7 @@ from rdkit import Chem, rdBase
 from rdkit.Chem.Draw import rdMolDraw2D
 
 from .errors import SARInputError
+from .fragment_graphs import read_graph_notation
 from .hydrogen import hydrogen_sites, hydrogen_view
 from .molecules import depict, read_molfile
 
@@ -25,8 +26,15 @@ def draw_structure(
     return _draw(mol, highlighted_atoms or [])
 
 
-def draw_fragment(smiles: str) -> str:
+def draw_fragment(smiles: str | None, *, graph_smiles: str | None = None) -> str:
     """Render a recorded scaffold/port-labelled fragment, not an eligible molecule."""
+    if graph_smiles is not None:
+        if smiles is not None:
+            raise SARInputError("fragment_drawing_invalid")
+        mol = read_graph_notation(graph_smiles)
+        if mol.GetNumAtoms() > 512:
+            raise SARInputError("fragment_drawing_invalid")
+        return _draw(mol, [], canvas=FRAGMENT_CANVAS, graph_only=True)["svg"]
     if not isinstance(smiles, str) or not 1 <= len(smiles) <= 8192:
         raise SARInputError("fragment_drawing_invalid")
     with rdBase.BlockLogs():
@@ -53,7 +61,11 @@ def draw_molecule_preview(
 
 
 def _draw(
-    mol, highlighted_atoms: list[int], *, canvas: tuple[int, int] = (WIDTH, HEIGHT)
+    mol,
+    highlighted_atoms: list[int],
+    *,
+    canvas: tuple[int, int] = (WIDTH, HEIGHT),
+    graph_only=False,
 ) -> dict[str, Any]:
     width, height = canvas
     if any(
@@ -65,7 +77,11 @@ def _draw(
         with rdBase.BlockLogs():
             depict(mol)
             drawing = rdMolDraw2D.PrepareMolForDrawing(
-                mol, addChiralHs=False, wedgeBonds=True, forceCoords=False
+                mol,
+                addChiralHs=False,
+                wedgeBonds=True,
+                forceCoords=False,
+                kekulize=not graph_only,
             )
             drawer = rdMolDraw2D.MolDraw2DSVG(width, height)
             # Native drawing-option properties have incomplete SDK annotations.
@@ -85,6 +101,8 @@ def _draw(
                 highlightBondColors={index: (0.25, 0.80, 0.60) for index in bonds},
             )
             drawer.FinishDrawing()
+            if graph_only:
+                return {"svg": drawer.GetDrawingText().rstrip(), "atoms": []}
             atoms = []
             sites = hydrogen_sites(mol)
             for atom in mol.GetAtoms():

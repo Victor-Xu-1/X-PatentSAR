@@ -13,6 +13,8 @@ from ..identifier_order import natural_identifier_key
 from .errors import SARInputError
 from .matching import compile_reference
 from .molecules import chemical_identity, read_molfile
+from .prepared_graphs import GraphPool
+from .site_reduction import compact_proved_sites
 from .site_cuts import candidate_cuts, hydrogen_cuts
 
 MAX_CUTS = 100000
@@ -84,6 +86,7 @@ def discover_sites(
         for region in manual_regions
     }
     sites, comparisons = [], 0
+    pool = GraphPool()
     for key, members in sorted(families.items()):
         check()
         if len(members) < 2:
@@ -112,7 +115,10 @@ def discover_sites(
                 continue
             try:
                 compile_reference(
-                    by_id[mid]["molfile"], selection, hydrogen_anchor=hydrogen_anchor
+                    by_id[mid]["molfile"],
+                    selection,
+                    hydrogen_anchor=hydrogen_anchor,
+                    pool=pool,
                 )
             except ValueError:
                 excluded["unsupported_reference_boundary"] += 1
@@ -156,23 +162,28 @@ def discover_sites(
                 }
             )
             comparisons += len(candidates)
-            if len(sites) > MAX_SITES or comparisons > pair_budget:
+            if comparisons > pair_budget:
                 raise SARInputError("study_discovery_pair_limit")
+    sites, redundant = compact_proved_sites(sites, ordered, pool, check)
+    comparisons = sum(len(item["candidate_ids"]) for item in sites)
+    if len(sites) > MAX_SITES:
+        raise SARInputError("study_discovery_pair_limit")
     return sites, {
-        "method": "single-region-one-to-three-cut-h-v4",
+        "method": "single-region-three-port-aromatic-h-v5",
         "candidate_sites": len(sites),
         "candidate_comparisons": comparisons,
         "indexed_cuts": cuts,
         "examined_boundaries": boundaries,
         "indexed_hydrogen_sites": hydrogen_sites,
         "max_cut_bonds": 3,
+        "aromatic_boundaries": True,
+        "redundant_proved_sites": redundant,
         "excluded": dict(excluded),
         "max_variable_atoms": MAX_VARIABLE,
         "max_variable_fraction": 0.4,
         "min_fixed_atoms": 6,
         "limitations": [
             "hydrogen_boundary_stereo_not_supported",
-            "aromatic_boundaries_not_cut",
             "more_than_three_ports_not_enumerated",
         ],
     }

@@ -8,6 +8,15 @@ from typing import Any
 from .study_statistics import distribution
 
 
+def _fragment_fields(fragment):
+    fields = {"id": fragment["id"], "smiles": fragment["smiles"]}
+    if fragment.get("graph_smiles") is not None:
+        fields.update(
+            representation="aromatic_graph", graph_smiles=fragment["graph_smiles"]
+        )
+    return fields
+
+
 def scaffold_summaries(
     descriptors: list[dict],
     observations: dict,
@@ -59,8 +68,7 @@ def region_summary(
 ) -> dict:
     groups = {
         reference_fragment["id"]: {
-            "id": reference_fragment["id"],
-            "smiles": reference_fragment["smiles"],
+            **_fragment_fields(reference_fragment),
             "molecule_ids": [reference["id"]],
             "better": 0,
             "worse": 0,
@@ -81,8 +89,7 @@ def region_summary(
         group = groups.setdefault(
             fragment["id"],
             {
-                "id": fragment["id"],
-                "smiles": fragment["smiles"],
+                **_fragment_fields(fragment),
                 "molecule_ids": [],
                 "better": 0,
                 "worse": 0,

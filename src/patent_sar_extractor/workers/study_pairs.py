@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from patent_sar_extractor.core.sar.errors import SARInputError
 from patent_sar_extractor.core.sar.matching import compile_reference
+from patent_sar_extractor.core.sar.prepared_graphs import GraphPool
 from patent_sar_extractor.core.sar.statistics import compare_observations
 from patent_sar_extractor.core.sar.study_graphs import cut_identity, reference_cut
 from patent_sar_extractor.core.sar.study_summaries import region_summary
@@ -117,6 +118,7 @@ def analyse_pairs(
         ]
     )
     total = sum(len(plan["candidate_ids"]) for plan in plans)
+    pool = GraphPool()
 
     def flush():
         nonlocal chunk_index, completed, matched
@@ -143,6 +145,7 @@ def analyse_pairs(
             reference["molfile"],
             region["atom_indices"],
             hydrogen_anchor=region.get("hydrogen_anchor"),
+            pool=pool,
         )
         ref_fragment = reference_cut(
             reference["molfile"],

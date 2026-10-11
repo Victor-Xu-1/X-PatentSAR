@@ -4,6 +4,8 @@ from itertools import combinations, product
 
 from rdkit import Chem
 
+from .cut_blocks import bridges, cycle_blocks
+
 
 def _reachable(adjacency, start, blocked):
     mask, pending = 0, [start]
@@ -14,33 +16,6 @@ def _reachable(adjacency, start, blocked):
         mask |= 1 << node
         pending.extend(other for other, edge in adjacency[node] if edge not in blocked)
     return mask
-
-
-def _bridges(adjacency, blocked=()):
-    """Tarjan bridge search, bounded by the existing maximum 512 input atoms."""
-    entered = [-1] * len(adjacency)
-    low = [0] * len(adjacency)
-    clock, result = 0, set()
-
-    def visit(node, parent_edge):
-        nonlocal clock
-        entered[node] = low[node] = clock
-        clock += 1
-        for other, edge in adjacency[node]:
-            if edge in blocked or edge == parent_edge:
-                continue
-            if entered[other] == -1:
-                visit(other, edge)
-                low[node] = min(low[node], low[other])
-                if low[other] > entered[node]:
-                    result.add(edge)
-            else:
-                low[node] = min(low[node], entered[other])
-
-    for node in range(len(adjacency)):
-        if entered[node] == -1:
-            visit(node, -1)
-    return result
 
 
 def _crosses(mask, boundary, bonds):
@@ -84,11 +59,11 @@ def boundary_regions(mol, inspect):
     bonds = {
         bond.GetIdx(): (bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
         for bond in mol.GetBonds()
-        if bond.GetBondType() == Chem.BondType.SINGLE and not bond.GetIsAromatic()
+        if bond.GetBondType() == Chem.BondType.SINGLE or bond.GetIsAromatic()
     }
-    bridges = _bridges(adjacency)
+    original_bridges = bridges(adjacency)
     sides = {}
-    for edge in sorted(set(bonds) & bridges):
+    for edge in sorted(set(bonds) & original_bridges):
         inspect()
         begin, _ = bonds[edge]
         side = _reachable(adjacency, begin, {edge})
@@ -104,10 +79,12 @@ def boundary_regions(mol, inspect):
             for mask in _bridge_partitions(boundary, sides, bonds):
                 yield boundary, mask
 
-    ring_edges = set(bonds) - bridges
+    ring_edges = set(bonds) - original_bridges
+    blocks = [sorted(group & ring_edges) for group in cycle_blocks(adjacency)]
+    block_by_edge = {edge: set(group) for group in blocks for edge in group}
     for first in sorted(ring_edges):
         inspect()
-        partners = _bridges(adjacency, {first}) & ring_edges
+        partners = bridges(adjacency, {first}) & block_by_edge[first]
         for second in sorted(edge for edge in partners if edge > first):
             inspect()
             begin, _ = bonds[first]
@@ -126,17 +103,15 @@ def boundary_regions(mol, inspect):
                             if _crosses(selected, boundary, bonds):
                                 yield boundary, selected
 
-    for first, second in combinations(sorted(ring_edges), 2):
-        inspect()
-        if components[bonds[first][0]] != components[bonds[second][0]]:
-            continue
-        partners = _bridges(adjacency, {first, second}) & ring_edges
-        for third in sorted(edge for edge in partners if edge > second):
+    for group in blocks:
+        for first, second in combinations(group, 2):
             inspect()
-            boundary = first, second, third
-            # Complements may contain several disconnected components; inspect
-            # the actual components at both endpoints of the last bridge instead.
-            for start in bonds[third]:
-                selected = _reachable(adjacency, start, set(boundary))
-                if _crosses(selected, boundary, bonds):
-                    yield boundary, selected
+            partners = bridges(adjacency, {first, second}) & set(group)
+            for third in sorted(edge for edge in partners if edge > second):
+                inspect()
+                boundary = first, second, third
+                # Complements may contain several disconnected components.
+                for start in bonds[third]:
+                    selected = _reachable(adjacency, start, set(boundary))
+                    if _crosses(selected, boundary, bonds):
+                        yield boundary, selected

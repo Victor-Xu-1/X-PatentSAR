@@ -45,6 +45,7 @@ class CompiledReference:
     _reference: Graph
     _selected: frozenset[int]
     _anchors: frozenset[int]
+    _pool: Any = None
 
     def compare(self, candidate_molfile: str) -> dict[str, Any]:
         return self._compare(candidate_molfile, details=False)
@@ -62,7 +63,11 @@ class CompiledReference:
 
     def _compare(self, candidate_molfile: str, *, details: bool) -> dict[str, Any]:
         try:
-            candidate = graph(read_molfile(candidate_molfile))
+            candidate = (
+                self._pool.read(candidate_molfile)
+                if self._pool is not None
+                else graph(read_molfile(candidate_molfile))
+            )
         except SARInputError as exc:
             return _result("ineligible", "candidate_ineligible", exc.code)
         result = _compare_graphs(
@@ -147,13 +152,20 @@ class CompiledReference:
 
 
 def compile_reference(
-    reference_molfile: str, atom_indices: Sequence[int], *, hydrogen_anchor=None
+    reference_molfile: str,
+    atom_indices: Sequence[int],
+    *,
+    hydrogen_anchor=None,
+    pool=None,
 ) -> CompiledReference:
     """Optional pure worker helper; invalid references raise safe ValueError."""
-    mol, selected = region_view(
-        read_molfile(reference_molfile), atom_indices, hydrogen_anchor
+    prepared = (
+        pool.read(reference_molfile)
+        if pool is not None
+        else graph(read_molfile(reference_molfile))
     )
-    reference = graph(mol)
+    mol, selected = region_view(prepared.mol, atom_indices, hydrogen_anchor)
+    reference = prepared if mol is prepared.mol else graph(mol)
     if not boundary_supported(reference, selected):
         raise SARInputError("unsupported_boundary_bond_stereo")
     anchors = frozenset(
@@ -161,7 +173,7 @@ def compile_reference(
         for key in attachment_groups(reference.mol, selected)
         for endpoint, _ in key
     )
-    return CompiledReference(reference, selected, anchors)
+    return CompiledReference(reference, selected, anchors, pool)
 
 
 def _compare_graphs(

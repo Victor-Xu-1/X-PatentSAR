@@ -8,14 +8,14 @@ from typing import Final
 PRODUCT_NAME: Final = "X-PatentSAR"
 DISTRIBUTION_NAME: Final = "x-patentsar"
 COMMAND_NAME: Final = "x-patentsar"
-__version__: Final = "0.1.60"
+__version__: Final = "0.1.61"
 
 WEB_API_SCHEMA: Final = "patentsar.web-api"
 WEB_API_SCHEMA_VERSION: Final = 1
 
 # Independent research domain; never changes the formal extraction stage order.
 SAR_ENGINE_NAME: Final = "patentsar.strict-reference-sar"
-SAR_ENGINE_VERSION: Final = 7
+SAR_ENGINE_VERSION: Final = 8
 SAR_DATABASE_VERSION: Final = 2
 SAR_REPORT_SCHEMA: Final = "patentsar.reference-sar-report"
 SAR_REPORT_SCHEMA_VERSION: Final = 1

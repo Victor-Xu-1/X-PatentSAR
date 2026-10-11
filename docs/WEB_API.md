@@ -90,9 +90,14 @@ new webpage studies explicitly send true). The same study queue reserves its
 `discovery` with method, candidate/cut counts, exclusions and explicit limits.
 Region summaries add `origin:manual|single_site` and nullable `comparison_pool`;
 manual regions still compare the whole source pool, derived regions compare
-their complete indexed pool through the identical strict validator. SAR engine7
+their complete indexed pool through the identical strict validator. SAR engine8
 invalidates incompatible unfinished scientific work without retagging old reports.
-Discovery method is `single-region-one-to-three-cut-h-v4` with `max_cut_bonds:3`,
+Discovery method is `single-region-three-port-aromatic-h-v5` with `max_cut_bonds:3`,
+explicit `aromatic_boundaries:true` and bounded `redundant_proved_sites`. Prior
+methods cannot claim aromatic coverage. Broader same-pool automatic sites are
+removed only after a stricter connected region proves every candidate through
+the identical full matcher; raw proposal comparisons still obey75000 and
+retained sites4096. Failed/ambiguous strict proofs cannot remove a site.
 `indexed_hydrogen_sites` and `examined_boundaries` (0–500000); the prior v2/v3
 keep their explicit two-port coverage, and legacy `single-non-ring-bond-v1` keeps
 one-port coverage. No historical report is upgraded or rewritten. Indexed
@@ -105,6 +110,13 @@ H selection has empty original indices, variable kind and one attachment.
 Pair adds nullable `candidate_hydrogen_anchor`; when present it requires a
 matched proof, empty original variable indices and its single mapped anchor.
 Drawing atoms add ordinary-H count and supported-site facts, never virtual atoms.
+StudyFragment adds `representation:port_fragment|aromatic_graph` (legacy default
+port_fragment) and nullable `graph_smiles`. Aromatic subgraphs require null
+`smiles` plus nonempty graph notation; regular fragments require molecule-parsable
+port SMILES and no graph notation. Graph notation is NEVER an eligible molecule,
+SDF structure or ADMET input. Existing drawing/HTML paths share explicit partial
+graph rendering; original complete molecules remain unchanged. Publication and
+preview rederive graph identity/fields from the original and actual full proof.
 The existing drawing/preview routes render a known ordinary H in passive views;
 source Molfile/hash/order and raw JSON archive remain untouched. Boundary stereo
 is refused, and more than64 compatible H locations is explicit ambiguity.

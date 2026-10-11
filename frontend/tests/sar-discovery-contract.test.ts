@@ -25,6 +25,21 @@ const current = {
 };
 
 describe('explicit legacy and one/two-port discovery coverage', () => {
+  it('requires explicit aromatic capability and leaves earlier method claims unchanged', () => {
+    const aromatic = {
+      ...current,
+      method: 'single-region-three-port-aromatic-h-v5',
+      max_cut_bonds: 3,
+      indexed_hydrogen_sites: 1,
+      aromatic_boundaries: true,
+    };
+    expect(decodeStudyDiscovery(aromatic)).toEqual(aromatic);
+    expect(() => decodeStudyDiscovery({ ...aromatic, aromatic_boundaries: undefined })).toThrow();
+    expect(() => decodeStudyDiscovery({ ...aromatic, aromatic_boundaries: false })).toThrow();
+    expect(() =>
+      decodeStudyDiscovery({ ...aromatic, method: 'single-region-one-to-three-cut-h-v4' }),
+    ).toThrow();
+  });
   it('accepts explicit three-port coverage without upgrading prior reports', () => {
     const triple = {
       ...current,

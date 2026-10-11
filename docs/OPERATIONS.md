@@ -8,12 +8,12 @@ model installation or external API is required. The existing one-CPU/512MiB/
 180s study carrier and analysis lease remain authoritative. A complete search
 refuses rather than truncates at500000 examined boundary sets,100000 indexed cuts,
 4096 sites or75000 combined comparisons. Automatic enumeration covers up to three
-nonaromatic single-bond boundaries, including two-ended linkers, branched centres
-and bridged-ring segments, plus ordinary H sites. Aromatic cuts and >3 ports remain manual-only;
+single/aromatic bond boundaries, including two-ended linkers, branched centres,
+bridged rings and partial aromatic substitutions, plus ordinary H sites. >3 ports remain manual-only;
 hydrogen-boundary stereo is unsupported. H sites bind original atom anchors;
 private expanded views do not rewrite the original molecule or public indices.
 Native input-bound plans and25-pair batches survive interruption. Changes to
-SAR engine7 make old unfinished engine6/older
+SAR engine8 make old unfinished engine7/older
 checkpoints incompatible; retain their artifacts or roll back the prior wheel,
 never rewrite scientific identities. Completed old reports remain readable.
 Fixed endpoints/bond types and full fixed chemistry remain mandatory; internal
@@ -23,6 +23,18 @@ labels. Multiple indistinguishable ligands cannot silently prove fixed parity.
 The same checker also caps compatible H views at64 per comparison and returns
 explicit ambiguity on exhaustion. Atom drawings advertise only verified H-site
 availability; manual H mode and uncertain-write readback retain exact anchor CAS.
+
+Partial aromatic regions are derived port-labelled graphs, not standalone
+compounds. Their fragment `smiles` is null; explicit `graph_smiles` and
+`representation:aromatic_graph` drive passive graph drawing without clearing
+aromaticity. Original complete molecules/eligibility/SMILES are unchanged.
+Parent publication and previews rederive these graph identities and full proof.
+Raw index candidates retain the75000-comparison bound. A broader automatic site
+may be removed only when a smaller connected region has the SAME candidate pool
+and strict matching proves every member. Failed/ambiguous proofs retain the
+broader site. `redundant_proved_sites` reports removal;4096 retained sites and all
+other budgets remain unchanged. Job-local256-entry exact-Molfile preparation
+avoids reparsing without a persistent/chemical-identity result cache.
 
 ## Activity-strength compatibility
 

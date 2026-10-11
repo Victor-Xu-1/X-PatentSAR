@@ -9,6 +9,7 @@ from ..errors import WebError
 from .assets import digest
 from .models import Dataset, Molecule, Pair, SARJob
 from .study_hydrogen_proofs import verify_hydrogen_proofs
+from .study_fragment_proofs import verify_aromatic_fragments
 from .study_integrity import verify_conservation
 from .study_models import StudyDiscovery, StudyReport, StudyRequest
 from .study_strength_check import verify_strength
@@ -215,6 +216,7 @@ def verify_study(
         if pair.label != by_id[pair.molecule_id].label:
             raise WebError(502, "sar_result_invalid", "Study source label differs.")
     verify_hydrogen_proofs(pairs, plan_by_id, by_id, check)
+    verify_aromatic_fragments(report, pairs, by_id, check)
     verify_conservation(report, packet)
     verify_strength(report, packet, request)
     return digest(raw), len(molecules)

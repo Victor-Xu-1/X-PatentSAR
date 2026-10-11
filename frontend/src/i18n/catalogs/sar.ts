@@ -221,6 +221,9 @@ export const sar: Record<string, string> = {
   '强活性 {strong}/{total}': 'Strong activity {strong}/{total}',
   强活性占比: 'Strong-activity share',
   'H 位点': 'H site',
+  芳香子图: 'Aromatic subgraph',
+  '单一区域，最多三个连接点；支持芳香环局部替换、氢位点、支链与桥环。固定结构严格不变；氢边界手性及更多连接点尚未自动枚举。':
+    'One region, up to three ports: local aromatic substitutions, H sites, branches and bridged rings. The fixed structure is unchanged. H-boundary stereo and further ports are not automatically enumerated.',
   '单一区域，最多三个连接点；支持氢位点、支链与非芳香桥环变化。固定结构严格不变；氢边界手性、芳香切割及更多连接点尚未自动枚举。':
     'One region, up to three ports: H sites, branches and nonaromatic bridged rings. The fixed structure is unchanged. H-boundary stereo, aromatic cuts and further ports are not automatically enumerated.',
   '单一变化区域，支持普通氢位点、一至两个连接点及非芳香环片段；其余结构严格不变。氢边界手性、芳香切割及更多连接点仍不支持自动枚举。':

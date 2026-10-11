@@ -4,6 +4,7 @@ from rdkit import Chem, rdBase
 
 from .cut_topology import boundary_regions
 from .errors import SARInputError
+from .fragment_graphs import graph_notation
 from .hydrogen import hydrogen_sites, hydrogen_view
 from .molecules import chemical_identity
 
@@ -74,6 +75,10 @@ def candidate_cuts(mol, inspect, excluded, *, max_variable, max_fraction, min_fi
                 ):
                     included.add(atom.GetIdx())
             fixed = sorted(set(range(fragmented.GetNumAtoms())) - included)
+            if any(mol.GetBondWithIdx(edge).GetIsAromatic() for edge in boundary):
+                key = "aromatic-graph-index-v1:" + graph_notation(fragmented, fixed)
+                yield key, selected, len(boundary)
+                continue
             fragment = Chem.MolFragmentToSmiles(
                 fragmented, atomsToUse=fixed, canonical=True, isomericSmiles=True
             )

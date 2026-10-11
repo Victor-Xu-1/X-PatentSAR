@@ -167,7 +167,11 @@ def render_report(job, report, by_id) -> bytes:
                     strong_rule=primary_strong_rule,
                 )
             )
-            add(figures.fragment(item.smiles, f"Fragment {index}"))
+            add(
+                figures.fragment(
+                    item.smiles, f"Fragment {index}", graph_smiles=item.graph_smiles
+                )
+            )
             add(
                 f"<p>{item.strong_count}/{item.molecule_count} strong · Better {item.better} · Worse {item.worse} · Indeterminate {item.indeterminate} · Missing {item.missing}</p></article>"
             )

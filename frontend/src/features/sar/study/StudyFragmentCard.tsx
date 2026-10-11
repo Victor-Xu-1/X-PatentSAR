@@ -37,6 +37,7 @@ export function StudyFragmentCard({
       <h4>
         {label}
         {fragment.is_reference && <small> · {t('参考')}</small>}
+        {fragment.representation === 'aromatic_graph' && <small> · {t('芳香子图')}</small>}
       </h4>
       <StudyImage
         jobId={jobId}

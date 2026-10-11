@@ -8,6 +8,7 @@ from rdkit import Chem, rdBase
 from rdkit.Chem.Scaffolds import MurckoScaffold
 
 from .errors import SARInputError
+from .fragment_graphs import graph_notation
 from .hydrogen import region_view
 from .molecules import chemical_identity, read_molfile
 
@@ -27,7 +28,8 @@ def cut_identity(
 
     Repeated ports to one anchor share its label but preserve multiplicity and
     bond types. Isotopes/charges/stereo/components are retained on both sides.
-    Partial aromatic rings have no supported independent fragment identity.
+    Partial aromatic rings use explicitly labelled graph notation, not a
+    standalone molecule SMILES or a new chemical eligibility authority.
     """
     mol, variable = region_view(
         read_molfile(molfile), variable_indices, hydrogen_anchor
@@ -45,8 +47,6 @@ def cut_identity(
         fixed = right if left in variable else left
         if fixed not in labels:
             raise SARInputError("study_attachment_identity")
-        if bond.GetIsAromatic():
-            raise SARInputError("study_aromatic_cut_unsupported")
         cuts.append((bond.GetIdx(), fixed, left in variable))
     if {fixed for _, fixed, _ in cuts} != set(labels):
         raise SARInputError("study_attachment_identity")
@@ -64,6 +64,18 @@ def cut_identity(
             for index in (first, second):
                 cut.GetAtomWithIdx(index).SetAtomMapNum(labels[fixed])
             included.add(second if begin_variable else first)
+        if any(mol.GetBondWithIdx(index).GetIsAromatic() for index, _, _ in cuts):
+            graph = graph_notation(cut, included)
+            background = graph_notation(cut, set(range(cut.GetNumAtoms())) - included)
+            return {
+                "id": _sha("port-aromatic-graph-v2:" + graph),
+                "smiles": None,
+                "representation": "aromatic_graph",
+                "graph_smiles": graph,
+                "fixed_background_sha256": _sha(
+                    "port-aromatic-background-v2:" + background
+                ),
+            }
         variable_smiles = Chem.MolFragmentToSmiles(
             cut, atomsToUse=sorted(included), canonical=True, isomericSmiles=True
         )

@@ -214,7 +214,7 @@ class StudyResults:
                     item for item in report.regions if item.region.id == region_id
                 )
                 fragment = next(item for item in region.fragments if item.id == key)
-                svg = draw_fragment(fragment.smiles)
+                svg = draw_fragment(fragment.smiles, graph_smiles=fragment.graph_smiles)
             else:
                 raise ValueError("unavailable")
         except (StopIteration, ValueError, RuntimeError) as error:
