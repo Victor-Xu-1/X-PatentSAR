@@ -1,6 +1,6 @@
 # Project governance manifest
 
-- Single-site discovery ownership: SAR engine7 uses `core/sar/discovery.py` as
+- Single-site discovery ownership: SAR engine8 uses `core/sar/discovery.py` as
   the sole bounded candidate planner. `cut_topology.py` enumerates exact connected
   one/two/three-edge partitions and `site_cuts.py` indexes canonical backgrounds;
   neither is a proof authority. The existing strict compiled matcher freezes
@@ -21,6 +21,13 @@
   preview and CAS/readback all preserve that binding. No relaxed atom keys;
   isotope H is not substituted for an implicit ordinary H, and boundary stereo
   or capped ambiguous views cannot be promoted. API1/SQL2/report1 remain additive.
+  `cut_blocks.py` prunes impossible cross-block topology, not accepted chemistry.
+  `fragment_graphs.py` owns explicitly labelled aromatic subgraphs; their nullable
+  molecule SMILES cannot masquerade as an eligible compound. `site_reduction.py`
+  uses the SAME full proof before removing nested same-pool automatic duplicates;
+  all budgets stay unchanged. `prepared_graphs.py` owns one job-local bounded
+  exact-source preparation pool; publication/preview recheck graph fields and
+  no persisted result cache, new queue/model/dependency or original rewrite exists.
 
 - Current SAR activity ownership: `source_scope.py` defines identified final
   compounds; source-only placeholders, blank IDs and explicit intermediates are
@@ -41,7 +48,7 @@
   engine/checkpoint change, external transmission or original mutation. Detail
   disclosure reduces everyday noise without dropping source QA or uncertainty.
 
-- SAR study evidence/craft ownership: engine7 uses `study_distributions.py` for one
+- SAR study evidence/craft ownership: engine8 uses `study_distributions.py` for one
   prepared full-context chart domain and disjoint source-ID accounting; observation
   repeats remain separate. `study_conditions.py` alone validates source-anchored
   missing-field declarations; source QA/known conditions/units remain unchanged.

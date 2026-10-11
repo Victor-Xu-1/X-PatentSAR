@@ -75,7 +75,9 @@ export interface StudyScaffold {
 }
 export interface StudyFragment {
   id: string;
-  smiles: string;
+  smiles: string | null;
+  representation?: 'port_fragment' | 'aromatic_graph';
+  graph_smiles?: string | null;
   molecule_ids: string[];
   molecule_count: number;
   strong_count: number;
@@ -170,13 +172,16 @@ export interface StudyReport {
       | 'single-non-ring-bond-v1'
       | 'single-region-one-two-cut-v2'
       | 'single-region-one-two-cut-h-v3'
-      | 'single-region-one-to-three-cut-h-v4';
+      | 'single-region-one-to-three-cut-h-v4'
+      | 'single-region-three-port-aromatic-h-v5';
     candidate_sites: number;
     candidate_comparisons: number;
     indexed_cuts: number;
     examined_boundaries?: number;
     indexed_hydrogen_sites?: number;
+    redundant_proved_sites?: number;
     max_cut_bonds?: 1 | 2 | 3;
+    aromatic_boundaries?: boolean;
     excluded: Record<string, number>;
     max_variable_atoms: 32;
     max_variable_fraction: 0.4;

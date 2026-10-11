@@ -25,7 +25,7 @@ for (const width of [390, 1672]) {
     const { job, report } = await createNetwork(page, width, csv);
     const overview = await (await page.request.get(`/api/v1/sar/jobs/${job}/study`)).json();
     const decoded = decodeStudyReport(overview.report);
-    expect(decoded.discovery?.method).toBe('single-region-one-to-three-cut-h-v4');
+    expect(decoded.discovery?.method).toBe('single-region-three-port-aromatic-h-v5');
     expect(overview.report.discovery.max_cut_bonds).toBe(3);
     expect(overview.report.molecule_count).toBe(5);
     const rows = await (await page.request.get(`/api/v1/sar/jobs/${job}/study/rows`)).json();

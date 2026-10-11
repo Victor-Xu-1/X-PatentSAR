@@ -77,9 +77,9 @@ const scaffold = object({
   assignment_kind: defaulted(oneOf(['murcko', 'confirmed_core']), 'murcko'),
   core_region_id: defaulted(nullOr(string), null),
 });
-const fragment = object({
+const fragmentBase = object({
   id: string,
-  smiles: string,
+  smiles: nullOr(string),
   molecule_ids: array(string),
   molecule_count: count,
   strong_count: count,
@@ -90,6 +90,20 @@ const fragment = object({
   missing: count,
   is_reference: boolean,
 });
+const fragment = (value: unknown, path = '$') => {
+  const result = {
+    ...fragmentBase(value, path),
+    ...additions(
+      value,
+      { representation: oneOf(['port_fragment', 'aromatic_graph']), graph_smiles: nullOr(string) },
+      path,
+    ),
+  };
+  if (result.representation === 'aromatic_graph') {
+    if (result.smiles !== null || !result.graph_smiles) throw new ContractError(path);
+  } else if (!result.smiles || result.graph_smiles != null) throw new ContractError(path);
+  return result;
+};
 const regionSummaryBase = object({
   region: decodeRegion,
   reference_label: string,

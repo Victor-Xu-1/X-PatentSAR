@@ -221,6 +221,9 @@ export const sar: Record<string, string> = {
   '强活性 {strong}/{total}': 'Strong activity {strong}/{total}',
   强活性占比: 'Strong-activity share',
   'H 位点': 'H site',
+  芳香子图: 'Aromatic subgraph',
+  '单一区域，最多三个连接点；支持芳香环局部替换、氢位点、支链与桥环。固定结构严格不变；氢边界手性及更多连接点尚未自动枚举。':
+    'One region, up to three ports: local aromatic substitutions, H sites, branches and bridged rings. The fixed structure is unchanged. H-boundary stereo and further ports are not automatically enumerated.',
   '单一区域，最多三个连接点；支持氢位点、支链与非芳香桥环变化。固定结构严格不变；氢边界手性、芳香切割及更多连接点尚未自动枚举。':
     'One region, up to three ports: H sites, branches and nonaromatic bridged rings. The fixed structure is unchanged. H-boundary stereo, aromatic cuts and further ports are not automatically enumerated.',
   '单一变化区域，支持普通氢位点、一至两个连接点及非芳香环片段；其余结构严格不变。氢边界手性、芳香切割及更多连接点仍不支持自动枚举。':
@@ -451,6 +454,10 @@ export const sar: Record<string, string> = {
   查找核心编号: 'Find a core ID',
   核心结构: 'Core structures',
   结构分支: 'Structure branches',
+  仅强活性: 'Strong activity only',
+  '{identifier} · 变化片段': '{identifier} · Variable fragment',
+  活性与理化值对应完整分子: 'Measurements and properties refer to the full molecule',
+  片段结构不可用: 'Variable fragment unavailable',
   '选择核心 {identifier}': 'Select core {identifier}',
   '比较 {identifier}': 'Compare {identifier}',
   '{count} 个核心': '{count} cores',

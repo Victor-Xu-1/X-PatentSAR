@@ -58,6 +58,10 @@ class MultiportTests(unittest.TestCase):
                         item
                         for item in boundary_regions(mol, lambda: None)
                         if len(item[0]) <= 2
+                        and all(
+                            not mol.GetBondWithIdx(edge).GetIsAromatic()
+                            for edge in item[0]
+                        )
                     },
                     expected,
                 )

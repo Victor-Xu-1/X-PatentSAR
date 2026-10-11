@@ -85,7 +85,10 @@ def preview(queue, identifier: str, region_id: str, molecule_id: str) -> StudyPr
     if fragment[
         "fixed_background_sha256"
     ] != summary.fixed_background_sha256 or not any(
-        item.id == fragment["id"] and molecule_id in item.molecule_ids
+        item.id == fragment["id"]
+        and molecule_id in item.molecule_ids
+        and item.smiles == fragment["smiles"]
+        and item.graph_smiles == fragment.get("graph_smiles")
         for item in summary.fragments
     ):
         raise WebError(

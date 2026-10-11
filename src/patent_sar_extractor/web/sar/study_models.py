@@ -110,7 +110,9 @@ class StudyScaffold(DTO):
 
 class StudyFragment(DTO):
     id: str
-    smiles: str
+    smiles: str | None
+    graph_smiles: str | None = Field(default=None, min_length=1, max_length=8192)
+    representation: Literal["port_fragment", "aromatic_graph"] = "port_fragment"
     molecule_ids: list[str]
     molecule_count: int
     strong_count: int
@@ -120,6 +122,15 @@ class StudyFragment(DTO):
     indeterminate: int
     missing: int
     is_reference: bool
+
+    @model_validator(mode="after")
+    def exact_graph_representation(self) -> StudyFragment:
+        if self.representation == "aromatic_graph":
+            if self.smiles is not None or not self.graph_smiles:
+                raise ValueError("fragment_graph_representation")
+        elif not self.smiles or self.graph_smiles is not None:
+            raise ValueError("fragment_graph_representation")
+        return self
 
 
 class StudyRegionSummary(DTO):
@@ -145,13 +156,16 @@ class StudyDiscovery(DTO):
         "single-region-one-two-cut-v2",
         "single-region-one-two-cut-h-v3",
         "single-region-one-to-three-cut-h-v4",
+        "single-region-three-port-aromatic-h-v5",
     ]
     candidate_sites: int = Field(ge=0, le=4096)
     candidate_comparisons: int = Field(ge=0, le=75000)
     indexed_cuts: int = Field(ge=0, le=100000)
     examined_boundaries: int = Field(default=0, ge=0, le=500000)
     indexed_hydrogen_sites: int = Field(default=0, ge=0, le=100000)
+    redundant_proved_sites: int = Field(default=0, ge=0, le=100000)
     max_cut_bonds: Literal[1, 2, 3] = 1
+    aromatic_boundaries: bool = False
     excluded: dict[str, int]
     max_variable_atoms: Literal[32] = 32
     max_variable_fraction: Literal[0.4] = 0.4
@@ -165,6 +179,7 @@ class StudyDiscovery(DTO):
             "single-region-one-two-cut-v2": 2,
             "single-region-one-two-cut-h-v3": 2,
             "single-region-one-to-three-cut-h-v4": 3,
+            "single-region-three-port-aromatic-h-v5": 3,
         }[self.method]
         if self.max_cut_bonds != expected:
             raise ValueError("discovery_method_coverage")
@@ -173,11 +188,15 @@ class StudyDiscovery(DTO):
             and not {"max_cut_bonds", "examined_boundaries"} <= self.model_fields_set
         ):
             raise ValueError("discovery_coverage_missing")
-        if self.method.endswith(("-h-v3", "-h-v4")) and (
+        if self.method.endswith(("-h-v3", "-h-v4", "-h-v5")) and (
             "indexed_hydrogen_sites" not in self.model_fields_set
             or self.indexed_hydrogen_sites > self.indexed_cuts
         ):
             raise ValueError("discovery_hydrogen_coverage")
+        if self.aromatic_boundaries != (
+            self.method == "single-region-three-port-aromatic-h-v5"
+        ):
+            raise ValueError("discovery_aromatic_coverage")
         return self
 
 

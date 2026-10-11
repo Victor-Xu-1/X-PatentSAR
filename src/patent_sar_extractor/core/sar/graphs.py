@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from collections import Counter
+from collections import Counter, OrderedDict
 from collections.abc import Iterator
 from dataclasses import dataclass
 
 from rdkit import Chem
 
 from .errors import MappingLimit
+from .graph_features import GraphFacts, prepare_facts
 from .limits import MAX_MAPPINGS, MAX_SEARCH_STATES
 from .regions import BondKey, bond_key
 
@@ -22,6 +23,10 @@ class Graph:
     adjacency: tuple[dict[int, BondKey], ...]
     potential_atoms: frozenset[int]
     potential_bonds: frozenset[int]
+    by_key: dict[AtomKey, tuple[int, ...]]
+    neighbor_keys: tuple[Counter, ...]
+    neighbor_masks: tuple[int, ...]
+    facts: GraphFacts
 
 
 def graph(mol: Chem.Mol) -> Graph:
@@ -43,6 +48,9 @@ def graph(mol: Chem.Mol) -> Graph:
         for a in mol.GetAtoms()
     )
     potential = Chem.FindPotentialStereo(mol, cleanIt=False, flagPossible=True)
+    keyed = {}
+    for index, key in enumerate(atoms):
+        keyed.setdefault(key, []).append(index)
     return Graph(
         mol,
         atoms,
@@ -55,56 +63,105 @@ def graph(mol: Chem.Mol) -> Graph:
         frozenset(
             p.centeredOn for p in potential if p.type == Chem.StereoType.Bond_Double
         ),
+        {key: tuple(indices) for key, indices in keyed.items()},
+        tuple(
+            Counter((bond, atoms[other]) for other, bond in links.items())
+            for links in adjacency
+        ),
+        tuple(sum(1 << other for other in links) for links in adjacency),
+        prepare_facts(mol),
     )
 
 
+class FixedAtoms:
+    """Reference-only constraints and at most eight exact traversal orders.
+
+    This caches preparation, never embeddings or scientific results. Domain
+    lengths alone determine traversal; all actual domains/edges stay checked.
+    """
+
+    def __init__(self, reference: Graph, selected: frozenset[int]):
+        self.reference, self.selected = reference, selected
+        self.fixed = frozenset(range(len(reference.atoms))) - selected
+        self.nodes = tuple(sorted(self.fixed))
+        self.required = {
+            index: tuple(
+                sorted(
+                    Counter(
+                        (bond, reference.atoms[other])
+                        for other, bond in reference.adjacency[index].items()
+                        if other in self.fixed
+                    ).items()
+                )
+            )
+            for index in self.nodes
+        }
+        self._orders = OrderedDict()
+
+    def order(self, domains):
+        signature = tuple(len(domains[index]) for index in self.nodes)
+        if signature not in self._orders:
+            order, unplaced = [], set(self.fixed)
+            frontiers = dict.fromkeys(self.fixed, 0)
+            while unplaced:
+                node = min(
+                    unplaced,
+                    key=lambda index: (
+                        -frontiers[index],
+                        len(domains[index]),
+                        -len(self.reference.adjacency[index]),
+                        index,
+                    ),
+                )
+                order.append(node)
+                unplaced.remove(node)
+                for neighbor in self.reference.adjacency[node]:
+                    if neighbor in unplaced:
+                        frontiers[neighbor] += 1
+            self._orders[signature] = tuple(order)
+            if len(self._orders) > 8:
+                self._orders.popitem(last=False)
+        else:
+            self._orders.move_to_end(signature)
+        return self._orders[signature]
+
+
 def fixed_mappings(
-    reference: Graph, candidate: Graph, selected: frozenset[int]
+    reference: Graph,
+    candidate: Graph,
+    selected: frozenset[int],
+    *,
+    prepared: FixedAtoms | None = None,
 ) -> Iterator[dict[int, int]]:
     """Yield at most 64 complete embeddings; any further proof is ambiguous.
 
     Work is counted deterministically, including rejected assignments. Degrees
     and H counts describe the original full molecule, not a sanitized fragment.
     """
-    fixed = frozenset(range(len(reference.atoms))) - selected
-    colors = [
-        Counter((bond, candidate.atoms[j]) for j, bond in links.items())
-        for links in candidate.adjacency
-    ]
+    prepared = prepared if prepared is not None else FixedAtoms(reference, selected)
+    if prepared.reference is not reference or prepared.selected != selected:
+        raise ValueError("fixed_preparation_identity")
     domains = {}
-    for i in sorted(fixed):
-        required = Counter(
-            (bond, reference.atoms[j])
-            for j, bond in reference.adjacency[i].items()
-            if j in fixed
-        )
+    for i in prepared.nodes:
+        required = prepared.required[i]
         domains[i] = tuple(
-            j
-            for j, key in enumerate(candidate.atoms)
-            if reference.atoms[i] == key and not required - colors[j]
+            index
+            for index in candidate.by_key.get(reference.atoms[i], ())
+            if all(
+                amount <= candidate.neighbor_keys[index][key]
+                for key, amount in required
+            )
         )
     if any(not domain for domain in domains.values()):
         return
     # Visit connected frontiers first to keep long common linkers inexpensive.
-    order, unplaced = [], set(fixed)
-    while unplaced:
-        next_atom = min(
-            unplaced,
-            key=lambda i: (
-                -sum(j in order for j in reference.adjacency[i]),
-                len(domains[i]),
-                -len(reference.adjacency[i]),
-                i,
-            ),
-        )
-        order.append(next_atom)
-        unplaced.remove(next_atom)
+    order = prepared.order(domains)
     mapping: dict[int, int] = {}
-    used: set[int] = set()
+    used = 0
     states = completed = 0
 
     def visit(position: int) -> Iterator[dict[int, int]]:
-        nonlocal states, completed
+        nonlocal states, completed, used
         if position == len(order):
             if completed == MAX_MAPPINGS:
                 raise MappingLimit("mapping_limit_exceeded")
@@ -113,10 +170,15 @@ def fixed_mappings(
             return
         node = order[position]
         allowed = None
-        for other in reference.adjacency[node]:
-            if other in mapping:
-                neighbors = set(candidate.adjacency[mapping[other]])
-                allowed = neighbors if allowed is None else allowed & neighbors
+        attached = [
+            (mapping[other], bond)
+            for other, bond in reference.adjacency[node].items()
+            if other in mapping
+        ]
+        expected_neighbors = sum(1 << target for target, _ in attached)
+        for target, _ in attached:
+            neighbors = set(candidate.adjacency[target])
+            allowed = neighbors if allowed is None else allowed & neighbors
         choices = (
             domains[node]
             if allowed is None
@@ -126,16 +188,22 @@ def fixed_mappings(
             states += 1
             if states > MAX_SEARCH_STATES:
                 raise MappingLimit("mapping_search_limit_exceeded")
-            if target in used or any(
-                reference.adjacency[node].get(other)
-                != candidate.adjacency[target].get(mapped)
-                for other, mapped in mapping.items()
+            bit = 1 << target
+            # The bitset proves BOTH edges and nonedges to every placed atom;
+            # bond keys then prove the exact types of all required edges.
+            if (
+                used & bit
+                or (candidate.neighbor_masks[target] & used != expected_neighbors)
+                or any(
+                    bond != candidate.adjacency[target].get(mapped)
+                    for mapped, bond in attached
+                )
             ):
                 continue
             mapping[node] = target
-            used.add(target)
+            used |= bit
             yield from visit(position + 1)
-            used.remove(target)
+            used ^= bit
             del mapping[node]
 
     yield from visit(0)

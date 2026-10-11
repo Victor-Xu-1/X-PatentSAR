@@ -106,7 +106,13 @@ class ThreeportTests(unittest.TestCase):
                                 )
                             ):
                                 expected.add((cuts, sum(1 << index for index in atoms)))
-                actual = list(boundary_regions(mol, lambda: None))
+                actual = [
+                    item
+                    for item in boundary_regions(mol, lambda: None)
+                    if all(
+                        not mol.GetBondWithIdx(edge).GetIsAromatic() for edge in item[0]
+                    )
+                ]
                 self.assertEqual(len(actual), len(set(actual)))
                 self.assertEqual(set(actual), expected)
 

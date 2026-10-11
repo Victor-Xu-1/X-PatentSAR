@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
 import userEvent from '@testing-library/user-event';
 import { expect, it, vi } from 'vitest';
 import { RegionLegend, RegionMap } from '../src/features/sar/study/RegionMap';
@@ -19,6 +20,58 @@ it('does not add an empty overlay to a reference without recorded regions or ato
   expect(container).toBeEmptyDOMElement();
   rerender(<RegionMap atoms={[]} regions={regions} />);
   expect(container).toBeEmptyDOMElement();
+});
+
+it('keeps dense region controls at intrinsic width instead of splitting original names', () => {
+  const style = document.createElement('style');
+  style.textContent = readFileSync('src/styles/sar-explorer.css', 'utf8');
+  document.head.append(style);
+  try {
+    const many = Array.from({ length: 45 }, (_, index) => ({
+      ...namedRegion,
+      id: 'region-' + index,
+      name: 'R' + (index + 1),
+    }));
+    const { container } = render(<RegionLegend regions={many} onSelect={() => {}} />);
+    const items = container.querySelectorAll('.sar-region-legend > li');
+    expect(items).toHaveLength(45);
+    for (const item of items) {
+      expect(getComputedStyle(item).flexShrink).toBe('0');
+      expect(getComputedStyle(item.querySelector('button')!).whiteSpace).toBe('nowrap');
+    }
+    expect(screen.getByRole('button', { name: /^R12$/ })).toHaveTextContent('R12');
+  } finally {
+    style.remove();
+  }
+});
+
+it('keeps dense maps structure-first while retaining every region and pointer target', async () => {
+  const many = Array.from({ length: 45 }, (_, index) => ({
+    ...namedRegion,
+    id: 'region-' + index,
+    name: 'R' + (index + 1),
+    atom_indices: [index % atoms.length],
+  }));
+  const onSelect = vi.fn();
+  const { container } = render(
+    <>
+      <RegionMap atoms={atoms} regions={many} selected={many[12]!.id} onSelect={onSelect} />
+      <RegionLegend regions={many} selected={many[12]!.id} onSelect={onSelect} />
+    </>,
+  );
+  expect(container.querySelectorAll('.sar-region-label')).toHaveLength(1);
+  expect(container.querySelector('.sar-region-label')).toHaveTextContent('R13');
+  expect(container.querySelectorAll('.sar-region-hotspots button')).toHaveLength(45);
+  expect(container.querySelectorAll('.sar-region-legend button')).toHaveLength(45);
+  expect(container.querySelector('.sar-region-legend')).toHaveAttribute('data-dense', 'true');
+  const target = container.querySelectorAll<HTMLButtonElement>('.sar-region-hotspots button')[30]!;
+  await userEvent.hover(target);
+  expect(container.querySelectorAll('.sar-region-label')).toHaveLength(2);
+  expect(container.querySelectorAll('.sar-region-label')[1]).toHaveTextContent('R31');
+  await userEvent.click(target);
+  expect(onSelect).toHaveBeenLastCalledWith(many[30]!.id);
+  await userEvent.unhover(target);
+  expect(container.querySelectorAll('.sar-region-label')).toHaveLength(1);
 });
 
 it('emphasizes only the selected recorded region without moving or rewriting atoms', () => {

@@ -5,7 +5,7 @@ import json
 import shutil
 import unittest
 import uuid
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import test_sar_api as support
 import test_sar_study_analysis as study_support
@@ -21,7 +21,10 @@ from patent_sar_extractor.web.sar.models import (
     SARJob,
 )
 from patent_sar_extractor.web.sar.source_scope import source_exclusion
+from patent_sar_extractor.web.sar.study_current import _derive
+from patent_sar_extractor.web.sar.study_models import StudyReport
 from patent_sar_extractor.web.sar.study_view import current_report
+from patent_sar_extractor.web.sar.study_view_groups import GroupBins
 from patent_sar_extractor.web.storage import encode
 
 molecule = study_support.molecule
@@ -33,6 +36,55 @@ class CurrentStrengthTests(unittest.TestCase):
     packet = study_support.StudyAnalysisTests.packet
     write = study_support.StudyAnalysisTests.write
     run_packet = study_support.StudyAnalysisTests.run_packet
+
+    def test_group_bin_preparation_is_bounded_and_returns_independent_count_objects(
+        self,
+    ):
+        domain = Mock()
+        domain.for_members.side_effect = lambda members: {
+            "bins": [
+                {
+                    "label": "missing",
+                    "kind": "missing",
+                    "strong": False,
+                    "molecules": len(members),
+                    "observations": 0,
+                }
+            ]
+        }
+        cache = GroupBins(domain)
+        first = cache.for_members(["B", "A"])
+        first[0].molecules = 999
+        second = cache.for_members(["A", "B"])
+        self.assertEqual(second[0].molecules, 2)
+        self.assertEqual(domain.for_members.call_count, 1)
+        for index in range(300):
+            cache.for_members([str(index)])
+        self.assertLessEqual(len(cache._items), 256)
+        self.assertLessEqual(sum(len(key) for key in cache._items), 4096)
+        cache.for_members([str(index) for index in range(4097)])
+        self.assertLessEqual(sum(len(key) for key in cache._items), 4096)
+
+    def test_receipt_validated_large_view_reuses_one_model_without_changing_projection(
+        self,
+    ):
+        packet, captured = self.historical(["0.1"] * 9 + ["1", "10", "100", ""])
+        original = copy.deepcopy(captured.model_dump())
+        expected, exclusions = current_report(packet, captured, [])
+        with patch.object(
+            StudyReport,
+            "model_validate_json",
+            side_effect=AssertionError("duplicate parse"),
+        ):
+            current, actual_exclusions = _derive(
+                encode(packet).encode(),
+                encode(original).encode(),
+                b"[]",
+                captured=captured,
+            )
+        self.assertEqual(current.model_dump(), expected.model_dump())
+        self.assertEqual(actual_exclusions, exclusions)
+        self.assertEqual(captured.model_dump(), original)
 
     def historical(self, values):
         rows = [

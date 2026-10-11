@@ -12,6 +12,7 @@ import { StudySource } from './StudySource';
 import { selectedContexts } from './tablePresentation';
 import { StudyViewTabs } from './StudyViewTabs';
 import { preferredScrollBehavior } from '../../../model/motion';
+import { hasStrongRule } from './StudyPolicyNote';
 const tabs = [
   '研究概览',
   '研究骨架',
@@ -41,6 +42,8 @@ export function StudyReportView({
     [source, setSource] = useState<{ owner: string; id: string; row: StudyRow | null } | null>(
       null,
     );
+  const [strongFragments, setStrongFragments] = useState(false);
+  const strongest = strongFragments && hasStrongRule(report.policies[0]);
   if (source && source.owner !== sourceOwner) setSource(null);
   const [filter, setFilter] = useState<StudyFilter>({
     query: '',
@@ -116,12 +119,22 @@ export function StudyReportView({
         )}
       </section>
       <section id={id + '-4'} hidden={tab !== 4} aria-label={t(tabs[4])}>
+        <label className="sar-checkbox">
+          <input
+            type="checkbox"
+            checked={strongest}
+            disabled={!hasStrongRule(report.policies[0])}
+            onChange={(event) => setStrongFragments(event.target.checked)}
+          />
+          {t('仅强活性')}
+        </label>
         {report.discovery ? (
           <StudyNetwork
             report={report}
             jobId={jobId}
             active={active && tab === 4}
-            strongest
+            strongest={strongest}
+            fragments
             onSource={showSource}
           />
         ) : (
@@ -129,7 +142,7 @@ export function StudyReportView({
             report={report}
             jobId={jobId}
             active={active && tab === 4}
-            strongest
+            strongest={strongest}
             onRows={(region_id, fragment_id) =>
               showRows({ region_id, fragment_id, scaffold_id: '', scope: 'all' })
             }

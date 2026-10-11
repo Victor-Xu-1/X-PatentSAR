@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import time
+from collections import defaultdict
 
 from ...core.sar.discovery import comparison_plan
 from ..errors import WebError
 from .assets import digest
 from .models import Dataset, Molecule, Pair, SARJob
+from .study_fragment_proofs import verify_aromatic_fragments
 from .study_hydrogen_proofs import verify_hydrogen_proofs
 from .study_integrity import verify_conservation
 from .study_models import StudyDiscovery, StudyReport, StudyRequest
@@ -30,7 +32,7 @@ def verify_study(
     ids = {row.id for row in molecules}
     started = time.monotonic()
 
-    def check():
+    def discovery_check():
         if time.monotonic() - started > 30:
             raise ValueError("study_discovery_verification_deadline")
 
@@ -39,8 +41,16 @@ def verify_study(
         packet["regions"],
         packet["dataset"],
         packet["request"],
-        check,
+        discovery_check,
     )
+    discovery_check()
+    proof_started = time.monotonic()
+
+    def check():
+        observed = time.monotonic()
+        if observed - started > 60 or observed - proof_started > 30:
+            raise ValueError("study_proof_verification_deadline")
+
     plan_by_id = {plan["region"]["id"]: plan for plan in plans}
     region_refs = {
         identifier: plan["region"]["molecule_id"]
@@ -52,6 +62,10 @@ def verify_study(
         for mid in plan["candidate_ids"]
     }
     actual = {(pair.region_id, pair.molecule_id) for pair in pairs}
+    matched_by_region = defaultdict(list)
+    for pair in pairs:
+        if pair.match_status == "matched":
+            matched_by_region[pair.region_id].append(pair)
     if (
         packet.get("schema") != 2
         or packet.get("job_id") != job.id
@@ -143,6 +157,7 @@ def verify_study(
                 "Scaffold coverage differs from source membership.",
             )
     for summary in report.regions:
+        check()
         plan = plan_by_id[summary.region.id]
         original = plan["region"]
         if (
@@ -165,11 +180,7 @@ def verify_study(
                 "sar_result_invalid",
                 "Region summary does not account for its whole comparison pool.",
             )
-        matched = [
-            pair
-            for pair in pairs
-            if pair.region_id == summary.region.id and pair.match_status == "matched"
-        ]
+        matched = matched_by_region[summary.region.id]
         expected_members = {pair.molecule_id for pair in matched} | {
             summary.region.molecule_id
         }
@@ -215,6 +226,8 @@ def verify_study(
         if pair.label != by_id[pair.molecule_id].label:
             raise WebError(502, "sar_result_invalid", "Study source label differs.")
     verify_hydrogen_proofs(pairs, plan_by_id, by_id, check)
+    verify_aromatic_fragments(report, pairs, by_id, check)
     verify_conservation(report, packet)
     verify_strength(report, packet, request)
+    check()
     return digest(raw), len(molecules)

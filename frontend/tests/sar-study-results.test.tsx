@@ -7,6 +7,7 @@ import { setLocale } from '../src/i18n';
 import { StudyResults } from '../src/features/sar/study/StudyResults';
 import { StudyReportView } from '../src/features/sar/study/StudyReportView';
 import { StudyImage } from '../src/features/sar/study/StudyImage';
+import { NetworkBranches } from '../src/features/sar/study/NetworkBranches';
 import { propertyText, selectedContexts } from '../src/features/sar/study/tablePresentation';
 import {
   sarDataset,
@@ -14,6 +15,7 @@ import {
   sarMolecule,
   studyContext,
   studyJob,
+  studyFragment,
   studyProfile,
   studyReport,
   studyRow,
@@ -45,6 +47,74 @@ const props = {
   onJob: vi.fn(),
 };
 describe('complete study report and lifecycle', () => {
+  it('keeps unclassified fragments visible by default rather than silently selecting strong-only', async () => {
+    const report = {
+      ...studyReport,
+      policies: studyReport.policies.map((policy) => ({ ...policy, strong_threshold: null })),
+      regions: studyReport.regions.map((summary) => ({
+        ...summary,
+        fragments: summary.fragments.map((fragment) => ({ ...fragment, strong_count: 0 })),
+      })),
+    };
+    render(<StudyReportView report={report} dataset={sarDataset} jobId={studyJob.id} active />);
+    await userEvent.click(screen.getByRole('button', { name: 'Fragment summary' }));
+    const panel = within(screen.getByRole('region', { name: 'Fragment summary' }));
+    expect(panel.getByRole('checkbox', { name: 'Strong activity only' })).not.toBeChecked();
+    expect(panel.getByRole('checkbox', { name: 'Strong activity only' })).toBeDisabled();
+    expect(panel.getByRole('heading', { name: /Fragment 1/ })).toBeVisible();
+  });
+  it('shows source-bound variable graphs while keeping readings assigned to the full molecule', async () => {
+    const row = { ...studyRow, molecule_id: 'candidate', label: 'Example 原文 2', strong: false };
+    const fragment = {
+      ...studyFragment,
+      id: 'aromatic/control',
+      smiles: null,
+      representation: 'aromatic_graph' as const,
+      graph_smiles: '[*:1]:[cH]:[*:2]',
+      molecule_ids: [row.molecule_id],
+      is_reference: false,
+      strong_count: 0,
+    };
+    const summary = { ...studyReport.regions[0]!, no_variation: false, fragments: [fragment] };
+    vi.mocked(sarStudyApi.rows).mockResolvedValue({
+      job: studyJob,
+      items: [row],
+      page: 1,
+      page_size: 6,
+      total: 1,
+    });
+    const original = JSON.stringify({ row, summary });
+    render(
+      <NetworkBranches
+        report={studyReport}
+        summary={summary}
+        jobId={studyJob.id}
+        active
+        strongest={false}
+        fragments
+        onSource={vi.fn()}
+      />,
+    );
+    expect(await screen.findByRole('button', { name: 'Compare ' + row.label })).toBeVisible();
+    expect(screen.getByText('Aromatic subgraph')).toBeVisible();
+    await waitFor(() =>
+      expect(sarStudyApi.drawing).toHaveBeenCalledWith(
+        studyJob.id,
+        'fragment',
+        fragment.id,
+        expect.any(AbortSignal),
+        summary.region.id,
+      ),
+    );
+    expect(
+      screen.getByTitle('Measurements and properties refer to the full molecule'),
+    ).toHaveTextContent('120.00');
+    expect(vi.mocked(sarStudyApi.rows).mock.calls.at(-1)?.[3].scope).toBe('changes');
+    await act(() => setLocale('zh-CN'));
+    expect(screen.getByRole('button', { name: '比较 ' + row.label })).toBeVisible();
+    expect(screen.getByText('芳香子图')).toBeVisible();
+    expect(JSON.stringify({ row, summary })).toBe(original);
+  });
   it('closes requested source detail when its owning study changes, not after locale-only changes', async () => {
     const view = render(
       <StudyReportView report={studyReport} dataset={sarDataset} jobId={studyJob.id} active />,

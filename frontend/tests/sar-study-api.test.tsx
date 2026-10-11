@@ -42,6 +42,24 @@ const filter = {
   fragment_id: '',
 };
 describe('study DTOs and exact policies', () => {
+  it('keeps partial aromatic graphics distinct from complete fragment molecules', () => {
+    const report = structuredClone(studyReport);
+    const item = report.regions[0]!.fragments[0]!;
+    item.smiles = null;
+    item.representation = 'aromatic_graph';
+    item.graph_smiles = '[*:1]:[n]:[*:2]';
+    expect(decodeStudyReport(report).regions[0]!.fragments[0]).toEqual(item);
+    for (const bad of [
+      { ...item, representation: undefined },
+      { ...item, smiles: 'CO' },
+      { ...item, graph_smiles: undefined },
+      { ...item, representation: 'molecule' },
+    ]) {
+      expect(() =>
+        decodeStudyReport({ ...report, regions: [{ ...report.regions[0]!, fragments: [bad] }] }),
+      ).toThrow();
+    }
+  });
   it('does not reinterpret a legacy report as a completed discovered network', () => {
     const discovered = {
       method: 'single-non-ring-bond-v1',

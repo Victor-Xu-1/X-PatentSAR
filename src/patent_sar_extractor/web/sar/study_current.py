@@ -11,9 +11,11 @@ from .study_view import current_report
 from .study_view_models import ActivityBasis
 
 
-def _derive(source: bytes, report: bytes, pairs: bytes):
+def _derive(source: bytes, report: bytes, pairs: bytes, *, captured=None):
     return current_report(
-        json.loads(source), StudyReport.model_validate_json(report), json.loads(pairs)
+        json.loads(source),
+        captured if captured is not None else StudyReport.model_validate_json(report),
+        json.loads(pairs),
     )
 
 
@@ -49,12 +51,14 @@ def projected(queue, identifier, job, captured):
             "Published comparison coverage differs from the captured study.",
         )
     pair_bytes = encode(compact).encode()
-    derive = (
-        _small_view
-        if len(source) + len(report) + len(pair_bytes) <= 4 * 1024 * 1024
-        else _derive
-    )
-    current, excluded = derive(source, report, pair_bytes)
+    if len(source) + len(report) + len(pair_bytes) <= 4 * 1024 * 1024:
+        current, excluded = _small_view(source, report, pair_bytes)
+    else:
+        # load() already validated this captured model. Both subsequent byte
+        # receipts were checked above against the SAME immutable input/report
+        # hashes. Reuse it rather than parse a large report a second time; do
+        # not retain large packets in a process-global cache.
+        current, excluded = _derive(source, report, pair_bytes, captured=captured)
     basis = ActivityBasis(
         source_input_sha256=job.input_sha256,
         source_report_sha256=spec["report_sha256"],

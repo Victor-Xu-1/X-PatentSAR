@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from patent_sar_extractor.core.sar.errors import SARInputError
 from patent_sar_extractor.core.sar.matching import compile_reference
+from patent_sar_extractor.core.sar.prepared_graphs import GraphPool
 from patent_sar_extractor.core.sar.statistics import compare_observations
 from patent_sar_extractor.core.sar.study_graphs import cut_identity, reference_cut
 from patent_sar_extractor.core.sar.study_summaries import region_summary
@@ -21,6 +22,8 @@ def make_pair(
     confirmed,
     matcher,
     reference_fragment,
+    *,
+    pool=None,
 ):
     proof = {
         "match_status": "ineligible",
@@ -46,6 +49,7 @@ def make_pair(
             proof["variable_atom_indices"],
             proof["attachment_mapping"],
             hydrogen_anchor=proof.get("candidate_hydrogen_anchor"),
+            pool=pool,
         )
         if (
             fragment["fixed_background_sha256"]
@@ -117,6 +121,7 @@ def analyse_pairs(
         ]
     )
     total = sum(len(plan["candidate_ids"]) for plan in plans)
+    pool = GraphPool()
 
     def flush():
         nonlocal chunk_index, completed, matched
@@ -143,11 +148,13 @@ def analyse_pairs(
             reference["molfile"],
             region["atom_indices"],
             hydrogen_anchor=region.get("hydrogen_anchor"),
+            pool=pool,
         )
         ref_fragment = reference_cut(
             reference["molfile"],
             region["atom_indices"],
             hydrogen_anchor=region.get("hydrogen_anchor"),
+            pool=pool,
         )
         fragments = {ref_fragment["id"]: ref_fragment}
         compact = []
@@ -176,6 +183,7 @@ def analyse_pairs(
                     request["confirm_context"],
                     matcher,
                     ref_fragment,
+                    pool=pool,
                 )
             else:
                 pair = Pair.model_validate(saved[len(batch)]).model_dump()
@@ -199,6 +207,7 @@ def analyse_pairs(
                         pair["variable_atom_indices"],
                         pair["attachment_mapping"],
                         hydrogen_anchor=pair.get("candidate_hydrogen_anchor"),
+                        pool=pool,
                     )
                     if (
                         fragment["id"] != pair["fragment_id"]

@@ -1,5 +1,5 @@
 import type { Atom, Region } from '../../../api/sarTypes';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useInlineSelection } from '../../../components/useInlineSelection';
 import { regionLabels } from './regionLabels';
 const colors = [
@@ -27,13 +27,27 @@ export function RegionMap({
   onSelect?: ((id: string) => void) | undefined;
   selected?: string | undefined;
 }) {
+  const [hovered, setHovered] = useState('');
   if (!regions.length || !atoms.length) return null;
+  const dense = regions.length > 8;
   const hasSelection = regions.some((region) => region.id === selected);
-  const labels = regionLabels(atoms, regions);
+  const visibleRegions = dense
+    ? regions.filter(
+        (region, index) =>
+          region.id === selected ||
+          region.id === hovered ||
+          (!hasSelection && !hovered && index === 0),
+      )
+    : regions;
+  const labels = regionLabels(atoms, visibleRegions).map((label) => ({
+    ...label,
+    order: regions.indexOf(visibleRegions[label.order]!),
+  }));
   return (
     <>
       <svg className="sar-region-map" viewBox="0 0 1000 800" aria-hidden="true">
         {regions.map((region, order) => {
+          if (dense && !visibleRegions.includes(region)) return null;
           const regionAtoms = atoms.filter(
             (atom) =>
               region.atom_indices.includes(atom.index) || atom.index === region.hydrogen_anchor,
@@ -128,6 +142,8 @@ export function RegionMap({
                   }
                   aria-pressed={selected === region.id}
                   onClick={() => onSelect(region.id)}
+                  onMouseEnter={() => setHovered(region.id)}
+                  onMouseLeave={() => setHovered('')}
                   style={{
                     left: atom.x * 100 + '%',
                     top: atom.y * 100 + '%',
@@ -153,7 +169,7 @@ export function RegionLegend({
   const strip = useRef<HTMLUListElement>(null);
   useInlineSelection(strip, 'button[aria-pressed="true"]');
   return (
-    <ul ref={strip} className="sar-region-legend">
+    <ul ref={strip} className="sar-region-legend" data-dense={regions.length > 8 || undefined}>
       {regions.map((region, order) => (
         <li key={region.id}>
           {onSelect ? (

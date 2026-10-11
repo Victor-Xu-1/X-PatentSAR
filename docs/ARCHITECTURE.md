@@ -16,6 +16,12 @@ current tier/count views from the complete immutable input through the existing
 source receipts on every read and caches at most two packets whose combined
 input/report/pair bytes are at most 4 MiB; large views are not retained in cache.
 Overview, table filters, preview and CSV/SDF/HTML exports share this projection.
+For large reads the already validated captured model is reused only after both
+immutable byte receipts are freshly rechecked; the report is not parsed twice.
+Within ONE projection, group-bin preparation reuses exact member sets under at
+most256 entries/4096 total member references. Returned DTOs are independently
+validated copies. This does not retain large reports between reads or bypass
+current source exclusion, tenth-dose calculation, pair coverage or raw evidence.
 JSON retains original report/input plus an explicit current activity view. No
 model, new worker, queue, database, archive rewrite or manual numeric threshold
 is introduced. Candidate priority and graph proofs retain their captured meaning.
@@ -479,20 +485,43 @@ automatically found families. Every numbered source is still in the report;
 unmatched/ambiguous sites and coverage limits are not hidden by positive matches.
 The input-bound plan and native 25-pair batches are preserved on interruption.
 The parent checks plan/coverage before one atomic result publication. Discovery
-uses SAR engine7, not an extraction epoch or product-label-only change. Exact
+uses SAR engine8, not an extraction epoch or product-label-only change. Exact
 one/two/three-edge topology partitions reuse original side bitmasks and bridge
 searches; three original bridges use intersections, mixed ring/bridge cuts use
 actual region sides, and three ring edges require a residual bridge after two
-cuts. No unbounded all-edge triple fragmentation is performed. Only viable
+cuts. Original edge-block grouping excludes impossible cross-ring-block pairs
+without dropping connected cut regions. No unbounded all-edge triple fragmentation is performed. Only viable
 bounded regions enter RDKit canonical indexing. Connected three-port branches
-and bridged rings join existing linker/ring changes under the SAME strict proof. `hydrogen.py`
+and bridged rings join existing linker/ring changes under the SAME strict proof.
+`fragment_graphs.py` preserves labelled partial-aromatic graphs separately from
+standalone molecule SMILES. Passive drawing skips fragment kekulization, not
+original molecule validation or any fixed atom/bond/stereo key. Publication and
+preview rederive original-bound graph fields; malicious rehashing is not proof.
+RDKit's [aromaticity model](https://www.rdkit.org/docs/RDKit_Book.html#aromaticity)
+is retained; broken-ring fragments are not converted to artificial nonaromatic
+species. `site_reduction.py` removes broader automatic sites only after the SAME
+full matcher proves a smaller connected region for all the same candidates.
+Index overlap alone never qualifies. Raw comparison and retained-site budgets
+remain bounded. `prepared_graphs.py` is a256-entry job-local exact-Molfile pool,
+not a result cache/alternate proof or original mutation.
+Full-source bond/stereo facts are prepared once in `graph_features.py`. Fixed
+constraints and at most eight domain-length traversal orders are local to one
+compiled reference. Every real domain, induced edge AND nonedge, bond key and
+stereo mapping is still checked; source order, search-state and mapping caps do
+not change. Parent grouping avoids repeated all-pair scans, and original-source
+parsing is reused for cut graphics only after the same source validation.
+Discovery and independent result proof have separate30-second phase deadlines,
+with a60-second overall verification ceiling. Both phases are mandatory; either
+expiry refuses publication. Scientific search/embedding,512MiB child memory and
+180-second native-worker limits are unchanged, not extended by verification.
+`hydrogen.py`
 normalizes ONE already-existing ordinary H into a private graph view for the
 same matcher; all full atom keys, fixed stereochemistry, isotope/charge/components
 and exact cut ports stay mandatory. Original source indices are never invented:
 Region has an optional `hydrogen_anchor`, while a proved H candidate has empty
 original variable indices plus `candidate_hydrogen_anchor`. Parent publication,
 checkpoint fragment identities and preview independently reuse the same proof.
-Hydrogen-boundary stereo, aromatic cut boundaries and >3 ports remain explicit
+Hydrogen-boundary stereo and >3 ports remain explicit
 limitations. At most64 compatible H views may be examined per comparison;
 exceeding the limit is ambiguity, never a partial accepted match. Complete search
 refuses at500000 boundary sets,100000 indexed cuts,4096 sites or75000 comparisons.

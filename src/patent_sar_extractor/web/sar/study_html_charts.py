@@ -75,12 +75,16 @@ class ReportFigures:
     def __init__(self):
         self.cache: dict[tuple[str, str], str] = {}
 
-    def fragment(self, smiles: str | None, label: str) -> str:
-        if not smiles:
+    def fragment(self, smiles: str | None, label: str, *, graph_smiles=None) -> str:
+        if not smiles and not graph_smiles:
             return '<p class="notice">Structure needs review; no graph is invented.</p>'
-        key = ("fragment", smiles)
+        key = (
+            ("aromatic_graph", graph_smiles)
+            if graph_smiles is not None
+            else ("fragment", smiles)
+        )
         if key not in self.cache:
-            self.cache[key] = draw_fragment(smiles)
+            self.cache[key] = draw_fragment(smiles, graph_smiles=graph_smiles)
         return image(self.cache[key], label)
 
     def molecule(self, molecule) -> str:

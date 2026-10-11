@@ -1,11 +1,13 @@
 """Revalidate new hydrogen mappings with the same native strict matcher."""
 
 from ...core.sar.matching import compile_reference
+from ...core.sar.prepared_graphs import GraphPool
 from ..errors import WebError
 
 
 def verify_hydrogen_proofs(pairs, plans, by_id, check):
     references = {}
+    pool = GraphPool()
     for pair in pairs:
         region = plans[pair.region_id]["region"]
         if pair.match_status != "matched" or (
@@ -19,6 +21,7 @@ def verify_hydrogen_proofs(pairs, plans, by_id, check):
                 by_id[region["molecule_id"]].molfile,
                 region["atom_indices"],
                 hydrogen_anchor=region.get("hydrogen_anchor"),
+                pool=pool,
             )
         proof = references[pair.region_id].compare_details(
             by_id[pair.molecule_id].molfile

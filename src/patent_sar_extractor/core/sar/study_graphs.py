@@ -8,6 +8,8 @@ from rdkit import Chem, rdBase
 from rdkit.Chem.Scaffolds import MurckoScaffold
 
 from .errors import SARInputError
+from .fragment_graphs import graph_notation
+from .graph_features import prepare_facts
 from .hydrogen import region_view
 from .molecules import chemical_identity, read_molfile
 
@@ -22,15 +24,25 @@ def cut_identity(
     attachment_mapping: list[list[int]],
     *,
     hydrogen_anchor=None,
+    pool=None,
 ) -> dict:
     """Label cut dummies by immutable reference fixed endpoints, not embedding order.
 
     Repeated ports to one anchor share its label but preserve multiplicity and
     bond types. Isotopes/charges/stereo/components are retained on both sides.
-    Partial aromatic rings have no supported independent fragment identity.
+    Partial aromatic rings use explicitly labelled graph notation, not a
+    standalone molecule SMILES or a new chemical eligibility authority.
     """
+    prepared = pool.read(molfile) if pool is not None else None
     mol, variable = region_view(
-        read_molfile(molfile), variable_indices, hydrogen_anchor
+        prepared.mol if prepared is not None else read_molfile(molfile),
+        variable_indices,
+        hydrogen_anchor,
+    )
+    facts = (
+        prepared.facts
+        if prepared is not None and mol is prepared.mol
+        else prepare_facts(mol)
     )
     labels = {candidate: reference + 1 for reference, candidate in attachment_mapping}
     if len(labels) != len(attachment_mapping) or any(
@@ -38,16 +50,14 @@ def cut_identity(
     ):
         raise SARInputError("study_attachment_identity")
     cuts = []
-    for bond in mol.GetBonds():
-        left, right = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
+    for bond in facts.bonds:
+        left, right = bond.begin, bond.end
         if (left in variable) == (right in variable):
             continue
         fixed = right if left in variable else left
         if fixed not in labels:
             raise SARInputError("study_attachment_identity")
-        if bond.GetIsAromatic():
-            raise SARInputError("study_aromatic_cut_unsupported")
-        cuts.append((bond.GetIdx(), fixed, left in variable))
+        cuts.append((bond.index, fixed, left in variable))
     if {fixed for _, fixed, _ in cuts} != set(labels):
         raise SARInputError("study_attachment_identity")
     with rdBase.BlockLogs():
@@ -64,6 +74,18 @@ def cut_identity(
             for index in (first, second):
                 cut.GetAtomWithIdx(index).SetAtomMapNum(labels[fixed])
             included.add(second if begin_variable else first)
+        if any(facts.bonds[index].aromatic for index, _, _ in cuts):
+            graph = graph_notation(cut, included)
+            background = graph_notation(cut, set(range(cut.GetNumAtoms())) - included)
+            return {
+                "id": _sha("port-aromatic-graph-v2:" + graph),
+                "smiles": None,
+                "representation": "aromatic_graph",
+                "graph_smiles": graph,
+                "fixed_background_sha256": _sha(
+                    "port-aromatic-background-v2:" + background
+                ),
+            }
         variable_smiles = Chem.MolFragmentToSmiles(
             cut, atomsToUse=sorted(included), canonical=True, isomericSmiles=True
         )
@@ -91,9 +113,17 @@ def cut_identity(
 
 
 def reference_cut(
-    molfile: str, atom_indices: list[int], *, hydrogen_anchor=None
+    molfile: str,
+    atom_indices: list[int],
+    *,
+    hydrogen_anchor=None,
+    pool=None,
 ) -> dict:
-    mol, variable = region_view(read_molfile(molfile), atom_indices, hydrogen_anchor)
+    mol, variable = region_view(
+        pool.read(molfile).mol if pool is not None else read_molfile(molfile),
+        atom_indices,
+        hydrogen_anchor,
+    )
     anchors = sorted(
         {
             bond.GetOtherAtomIdx(index)
@@ -107,6 +137,7 @@ def reference_cut(
         atom_indices,
         [[index, index] for index in anchors],
         hydrogen_anchor=hydrogen_anchor,
+        pool=pool,
     )
 
 
