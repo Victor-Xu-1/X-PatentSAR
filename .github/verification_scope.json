@@ -27,7 +27,8 @@
     "tests/test_sar_multiport.py",
     "tests/test_sar_multiport_api.py",
     "tests/test_sar_threeport.py",
-    "tests/test_sar_threeport_api.py"
+    "tests/test_sar_threeport_api.py",
+    "tools/browser_fixture_mode.py"
   ],
   "python_modules": [
     "tests.test_sar_threeport",

@@ -20,6 +20,17 @@ COMMON = {
 MODES = (
     (
         "sar",
+        "sar-threeport.spec.ts",
+        COMMON
+        | {
+            "sar-threeport.spec.ts",
+            "sar-hydrogen.spec.ts",
+            "sar-single-site.spec.ts",
+            "sar-multiport.spec.ts",
+        },
+    ),
+    (
+        "sar",
         "sar-hydrogen.spec.ts",
         COMMON
         | {"sar-hydrogen.spec.ts", "sar-single-site.spec.ts", "sar-multiport.spec.ts"},
