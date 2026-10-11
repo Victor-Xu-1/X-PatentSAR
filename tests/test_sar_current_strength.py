@@ -14,7 +14,12 @@ from test_web_support import WebFixture
 from patent_sar_extractor.web.errors import WebError
 from patent_sar_extractor.web.sar.admission import existing
 from patent_sar_extractor.web.sar.assets import digest
-from patent_sar_extractor.web.sar.models import AnalysisRequest, Dataset, Molecule, SARJob
+from patent_sar_extractor.web.sar.models import (
+    AnalysisRequest,
+    Dataset,
+    Molecule,
+    SARJob,
+)
 from patent_sar_extractor.web.sar.source_scope import source_exclusion
 from patent_sar_extractor.web.sar.study_view import current_report
 from patent_sar_extractor.web.storage import encode
