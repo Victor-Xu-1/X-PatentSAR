@@ -11,6 +11,7 @@
     "frontend/package-lock.json",
     "frontend/package.json",
     "frontend/src/features/sar/study/NetworkBranches.tsx",
+    "frontend/src/features/sar/study/NetworkBranchCard.tsx",
     "frontend/src/features/sar/study/StudyNetwork.tsx",
     "frontend/src/features/sar/study/StudyReportView.tsx",
     "frontend/src/features/sar/study/StudyTableControls.tsx",

@@ -290,3 +290,41 @@ it('switches original manual cores without merging region identities or candidat
   expect(screen.getByRole('button', { name: 'R9 source' })).toBeVisible();
   expect(JSON.stringify(manual)).toBe(original);
 });
+
+it('keeps manual branch captions aligned with the core map before and after narrowing a site', async () => {
+  const manual = {
+    ...report,
+    discovery: null,
+    regions: sites.map((site, index) => ({
+      ...site,
+      origin: 'manual' as const,
+      region: { ...site.region, name: ['Linker 原文', 'Halogen 原文'][index]! },
+    })),
+  };
+  vi.mocked(sarStudyApi.rows).mockImplementation(async (_job, _dataset, page, filter) => ({
+    job: studyJob,
+    page,
+    page_size: 6,
+    items: filter.region_id === 'direction-b' ? rows.slice(1) : rows,
+    total: filter.region_id === 'direction-b' ? 2 : 3,
+  }));
+  const original = JSON.stringify(manual);
+  render(<StudyNetwork report={manual} jobId={studyJob.id} active onSource={vi.fn()} />);
+  function caption() {
+    return screen
+      .getByRole('button', { name: 'Compare 原文 b' })
+      .closest('article')!
+      .querySelector('.sar-branch-site-label');
+  }
+  await screen.findByRole('button', { name: 'Compare 原文 b' });
+  expect(caption()).toHaveTextContent('R2');
+  await userEvent.click(
+    within(document.querySelector('.sar-region-legend') as HTMLElement).getByRole('button', {
+      name: 'Halogen 原文',
+    }),
+  );
+  await waitFor(() => expect(caption()).toHaveTextContent('R2'));
+  await userEvent.click(screen.getByRole('button', { name: 'All directions' }));
+  await waitFor(() => expect(caption()).toHaveTextContent('R2'));
+  expect(JSON.stringify(manual)).toBe(original);
+});

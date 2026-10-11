@@ -55,6 +55,10 @@ for (const width of [390, 800, 1672]) {
         network.getByRole('button', { name: 'Compare ' + label, exact: true }),
       ).toBeVisible();
     await expect(network.locator('.sar-network-branch')).toHaveCount(3);
+    const halogenBranch = network
+      .locator('.sar-network-branch')
+      .filter({ has: page.getByRole('button', { name: 'Compare 3', exact: true }) });
+    await expect(halogenBranch.locator('.sar-branch-site-label')).toHaveText('R2');
     expect(requests).toHaveLength(1);
     const noActivity = network
       .locator('.sar-network-branch')
@@ -67,6 +71,7 @@ for (const width of [390, 800, 1672]) {
     await legend.getByRole('button', { name: 'Halogen 原文', exact: true }).click();
     await expect(network.locator('.sar-network-branch')).toHaveCount(1);
     await expect(network.getByRole('button', { name: 'Compare 3', exact: true })).toBeVisible();
+    await expect(halogenBranch.locator('.sar-branch-site-label')).toHaveText('R2');
     await network.getByRole('button', { name: 'All directions', exact: true }).click();
     await expect(network.locator('.sar-network-branch')).toHaveCount(3);
     await network.getByRole('button', { name: 'Compare 2', exact: true }).click();

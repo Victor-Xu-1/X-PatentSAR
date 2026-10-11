@@ -10,6 +10,7 @@ export function NetworkBranchCard({
   row,
   report,
   sites,
+  siteOrder,
   jobId,
   active,
   fragments,
@@ -18,6 +19,7 @@ export function NetworkBranchCard({
   row: StudyRow;
   report: StudyReport;
   sites: StudyRegionSummary[];
+  siteOrder?: ReadonlyMap<string, number>;
   jobId: string;
   active: boolean;
   fragments: boolean;
@@ -32,6 +34,9 @@ export function NetworkBranchCard({
       )
     : undefined;
   const available = !!site && (!fragments || !!fragment);
+  function marker(item: StudyRegionSummary, index: number) {
+    return regionMarker(item.region, siteOrder?.get(item.region.id) ?? index);
+  }
   return (
     <article className="sar-network-branch">
       {available ? (
@@ -57,24 +62,24 @@ export function NetworkBranchCard({
           >
             {sites.map((item, index) => (
               <option key={item.region.id} value={item.region.id}>
-                {regionMarker(item.region, index).caption}
+                {marker(item, index).caption}
               </option>
             ))}
           </select>
         ) : sites.length === 1 ? (
-          <span className="sar-branch-site-label">{regionMarker(sites[0]!.region, 0).caption}</span>
+          <span className="sar-branch-site-label">{marker(sites[0]!, 0).caption}</span>
         ) : (
           sites.map((item, index) => {
-            const marker = regionMarker(item.region, index);
+            const region = marker(item, index);
             return (
               <button
                 key={item.region.id}
                 type="button"
-                aria-label={t('查看区域 {region}', { region: marker.caption })}
+                aria-label={t('查看区域 {region}', { region: region.caption })}
                 aria-pressed={site?.region.id === item.region.id}
                 onClick={() => setSelected(item.region.id)}
               >
-                {marker.caption}
+                {region.caption}
               </button>
             );
           })

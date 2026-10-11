@@ -479,3 +479,7 @@ statistics and counterexamples remain in Fragment summary. Member navigation
 retains one visible/resettable core filter in the existing table controls, and
 changing grouping or dependent selections cannot carry an incompatible hidden
 reference. No scientific result is rewritten or relabelled by this presentation.
+Diagram aliases are derived from the same displayed core-site order for the map,
+every candidate card and its narrowed site view. Filtering one candidate's
+accepted explanations cannot restart an unnamed/manual site's alias at R1.
+Recorded names and region identities remain unchanged.
