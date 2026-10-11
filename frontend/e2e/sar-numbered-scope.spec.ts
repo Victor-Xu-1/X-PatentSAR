@@ -109,8 +109,9 @@ for (const width of [390, 1672]) {
     for (const locale of ['en', 'zh-CN']) {
       await page.locator('.language-switch select').selectOption(locale);
       await report.locator('.sar-study-tabs button').nth(0).click();
-      await expect(report.locator('.sar-policy-note')).toHaveCount(1);
-      await expect(report.locator('.sar-policy-note')).toContainText(/10 nM/);
+      const chartRule = report.locator('.sar-overview-charts .sar-policy-note');
+      await expect(chartRule).toHaveCount(1);
+      await expect(chartRule).toContainText(/10 nM/);
       await page.screenshot({
         path: `${process.env.PATENTSAR_E2E_OUTPUT_DIR}/numbered-overview-${locale}-${width}.png`,
         fullPage: true,
