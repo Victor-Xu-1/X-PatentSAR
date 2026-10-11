@@ -1,4 +1,4 @@
-"""Exact one/two-edge connected partitions; no fragment chemistry or SAR proof."""
+"""Exact one/two/three-edge connected partitions, never chemistry/SAR proof."""
 
 from itertools import combinations, product
 
@@ -43,14 +43,32 @@ def _bridges(adjacency, blocked=()):
     return result
 
 
+def _crosses(mask, boundary, bonds):
+    return mask and all(
+        bool(mask & (1 << begin)) != bool(mask & (1 << end))
+        for begin, end in (bonds[edge] for edge in boundary)
+    )
+
+
+def _bridge_partitions(boundary, sides, bonds):
+    seen = set()
+    for choices in product(*(sides[edge] for edge in boundary)):
+        mask = choices[0]
+        for side in choices[1:]:
+            mask &= side
+        if mask not in seen and _crosses(mask, boundary, bonds):
+            seen.add(mask)
+            yield mask
+
+
 def boundary_regions(mol, inspect):
     """Yield original-atom bitmasks attached across exactly the supplied cuts.
 
-    For two original bridges, intersect cached sides instead of repeatedly
-    fragmenting full molecules. For ring edges, a partner is considered only
-    when it becomes a bridge after the first cut. A bridge/ring combination
-    cannot delimit a two-edge connected region and is never brute-forced.
-    Spectator components remain outside every selected region.
+    Original bridge sides are cached bitmasks. Ring pairs form two-port regions;
+    one further bridge can restrict those to three ports. Three ring edges are
+    considered only when the third becomes a bridge after two cuts. Two original
+    bridges plus one ring edge cannot separate a connected region. No arbitrary
+    all-edge triple fragmentation; spectators never enter selected regions.
     """
     adjacency = tuple(
         tuple(
@@ -78,24 +96,13 @@ def boundary_regions(mol, inspect):
         for mask in sides[edge]:
             yield (edge,), mask
 
-    for first, second in combinations(sides, 2):
-        inspect()
-        # No connected variable region spans distinct molecular components.
-        if components[bonds[first][0]] != components[bonds[second][0]]:
-            continue
-        seen = set()
-        for left, right in product(sides[first], sides[second]):
-            mask = left & right
-            if (
-                mask
-                and mask not in seen
-                and all(
-                    bool(mask & (1 << begin)) != bool(mask & (1 << end))
-                    for begin, end in (bonds[first], bonds[second])
-                )
-            ):
-                seen.add(mask)
-                yield (first, second), mask
+    for size in (2, 3):
+        for boundary in combinations(sides, size):
+            inspect()
+            if len({components[bonds[edge][0]] for edge in boundary}) != 1:
+                continue
+            for mask in _bridge_partitions(boundary, sides, bonds):
+                yield boundary, mask
 
     ring_edges = set(bonds) - bridges
     for first in sorted(ring_edges):
@@ -106,8 +113,30 @@ def boundary_regions(mol, inspect):
             begin, _ = bonds[first]
             side = _reachable(adjacency, begin, {first, second})
             for mask in (side, components[begin] ^ side):
-                if mask and all(
-                    bool(mask & (1 << start)) != bool(mask & (1 << end))
-                    for start, end in (bonds[first], bonds[second])
-                ):
+                if _crosses(mask, (first, second), bonds):
                     yield (first, second), mask
+                    for bridge, bridge_sides in sides.items():
+                        # Only an internal bridge can create one additional port.
+                        if not all(mask & (1 << atom) for atom in bonds[bridge]):
+                            continue
+                        inspect()
+                        boundary = tuple(sorted((first, second, bridge)))
+                        for bridge_side in bridge_sides:
+                            selected = mask & bridge_side
+                            if _crosses(selected, boundary, bonds):
+                                yield boundary, selected
+
+    for first, second in combinations(sorted(ring_edges), 2):
+        inspect()
+        if components[bonds[first][0]] != components[bonds[second][0]]:
+            continue
+        partners = _bridges(adjacency, {first, second}) & ring_edges
+        for third in sorted(edge for edge in partners if edge > second):
+            inspect()
+            boundary = first, second, third
+            # Complements may contain several disconnected components; inspect
+            # the actual components at both endpoints of the last bridge instead.
+            for start in bonds[third]:
+                selected = _reachable(adjacency, start, set(boundary))
+                if _crosses(selected, boundary, bonds):
+                    yield boundary, selected

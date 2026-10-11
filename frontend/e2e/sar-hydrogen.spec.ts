@@ -15,7 +15,7 @@ for (const width of [390, 800, 1672]) {
     const { job, dataset, report } = await createNetwork(page, width, csv);
     const snapshot = await (await page.request.get(`/api/v1/sar/jobs/${job}/study`)).json();
     const data = decodeStudyReport(snapshot.report);
-    expect(data.discovery?.method).toBe('single-region-one-two-cut-h-v3');
+    expect(data.discovery?.method).toBe('single-region-one-to-three-cut-h-v4');
     const rows = await (await page.request.get(`/api/v1/sar/jobs/${job}/study/rows`)).json();
     const ids = Object.fromEntries(
       rows.items.map((row: { label: string; molecule_id: string }) => [row.label, row.molecule_id]),

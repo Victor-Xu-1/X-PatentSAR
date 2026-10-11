@@ -2,7 +2,12 @@ import { expect, type Page } from '@playwright/test';
 import type { StudyRegionSummary } from '../src/api/sarStudyTypes';
 import { compactNetworkSites } from '../src/features/sar/study/networkSites';
 
-export function twoPortSite(summaries: StudyRegionSummary[], label: string, candidate: string) {
+export function portSite(
+  summaries: StudyRegionSummary[],
+  label: string,
+  candidate: string,
+  ports: number,
+) {
   const visible = compactNetworkSites(
     summaries.filter(
       (item) => item.reference_label === label && item.matched && !item.no_variation,
@@ -12,7 +17,7 @@ export function twoPortSite(summaries: StudyRegionSummary[], label: string, cand
     .map((item, index) => ({ item, index }))
     .filter(
       ({ item }) =>
-        item.region.attachment_count === 2 &&
+        item.region.attachment_count === ports &&
         item.fragments.some((fragment) => fragment.molecule_ids.includes(candidate)),
     )
     .sort((a, b) => a.item.region.atom_indices.length - b.item.region.atom_indices.length)[0];

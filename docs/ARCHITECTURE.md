@@ -479,17 +479,20 @@ automatically found families. Every numbered source is still in the report;
 unmatched/ambiguous sites and coverage limits are not hidden by positive matches.
 The input-bound plan and native 25-pair batches are preserved on interruption.
 The parent checks plan/coverage before one atomic result publication. Discovery
-uses SAR engine6, not an extraction epoch or product-label-only change. Exact
-one/two-edge topology partitions reuse original side bitmasks and bridge searches;
-only viable bounded regions enter RDKit canonical cut indexing. One/two nonaromatic
-single-bond boundaries include linker and ring-segment changes. `hydrogen.py`
+uses SAR engine7, not an extraction epoch or product-label-only change. Exact
+one/two/three-edge topology partitions reuse original side bitmasks and bridge
+searches; three original bridges use intersections, mixed ring/bridge cuts use
+actual region sides, and three ring edges require a residual bridge after two
+cuts. No unbounded all-edge triple fragmentation is performed. Only viable
+bounded regions enter RDKit canonical indexing. Connected three-port branches
+and bridged rings join existing linker/ring changes under the SAME strict proof. `hydrogen.py`
 normalizes ONE already-existing ordinary H into a private graph view for the
 same matcher; all full atom keys, fixed stereochemistry, isotope/charge/components
 and exact cut ports stay mandatory. Original source indices are never invented:
 Region has an optional `hydrogen_anchor`, while a proved H candidate has empty
 original variable indices plus `candidate_hydrogen_anchor`. Parent publication,
 checkpoint fragment identities and preview independently reuse the same proof.
-Hydrogen-boundary stereo, aromatic cut boundaries and >2 ports remain explicit
+Hydrogen-boundary stereo, aromatic cut boundaries and >3 ports remain explicit
 limitations. At most64 compatible H views may be examined per comparison;
 exceeding the limit is ambiguity, never a partial accepted match. Complete search
 refuses at500000 boundary sets,100000 indexed cuts,4096 sites or75000 comparisons.

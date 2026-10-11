@@ -1,8 +1,8 @@
 """Bounded candidate sites; every comparison still needs the strict matcher.
 
 Canonical cut backgrounds are only an index, never proof. All source records
-remain in the study table. One/two-cut linkers and ring segments are supported;
-implicit-H/aromatic boundaries and >2 ports are not an exhaustive search.
+remain in the study table. Up to three-cut connected regions and ordinary H are
+supported; aromatic boundaries, H boundary stereo and >3 ports are not exhaustive.
 """
 
 import hashlib
@@ -159,13 +159,13 @@ def discover_sites(
             if len(sites) > MAX_SITES or comparisons > pair_budget:
                 raise SARInputError("study_discovery_pair_limit")
     return sites, {
-        "method": "single-region-one-two-cut-h-v3",
+        "method": "single-region-one-to-three-cut-h-v4",
         "candidate_sites": len(sites),
         "candidate_comparisons": comparisons,
         "indexed_cuts": cuts,
         "examined_boundaries": boundaries,
         "indexed_hydrogen_sites": hydrogen_sites,
-        "max_cut_bonds": 2,
+        "max_cut_bonds": 3,
         "excluded": dict(excluded),
         "max_variable_atoms": MAX_VARIABLE,
         "max_variable_fraction": 0.4,
@@ -173,7 +173,7 @@ def discover_sites(
         "limitations": [
             "hydrogen_boundary_stereo_not_supported",
             "aromatic_boundaries_not_cut",
-            "more_than_two_ports_not_enumerated",
+            "more_than_three_ports_not_enumerated",
         ],
     }
 

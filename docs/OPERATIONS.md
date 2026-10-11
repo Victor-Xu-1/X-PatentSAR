@@ -7,13 +7,13 @@ explicitly disable discovery and retain manual regions. No new environment,
 model installation or external API is required. The existing one-CPU/512MiB/
 180s study carrier and analysis lease remain authoritative. A complete search
 refuses rather than truncates at500000 examined boundary sets,100000 indexed cuts,
-4096 sites or75000 combined comparisons. Automatic enumeration covers one/two
-nonaromatic single-bond boundaries, including two-ended linker changes and ring
-segments, plus ordinary H sites. Aromatic cuts and >2 ports remain manual-only;
+4096 sites or75000 combined comparisons. Automatic enumeration covers up to three
+nonaromatic single-bond boundaries, including two-ended linkers, branched centres
+and bridged-ring segments, plus ordinary H sites. Aromatic cuts and >3 ports remain manual-only;
 hydrogen-boundary stereo is unsupported. H sites bind original atom anchors;
 private expanded views do not rewrite the original molecule or public indices.
 Native input-bound plans and25-pair batches survive interruption. Changes to
-SAR engine6 make old unfinished engine5/older
+SAR engine7 make old unfinished engine6/older
 checkpoints incompatible; retain their artifacts or roll back the prior wheel,
 never rewrite scientific identities. Completed old reports remain readable.
 Fixed endpoints/bond types and full fixed chemistry remain mandatory; internal

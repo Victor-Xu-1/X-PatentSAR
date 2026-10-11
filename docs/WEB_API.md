@@ -90,13 +90,13 @@ new webpage studies explicitly send true). The same study queue reserves its
 `discovery` with method, candidate/cut counts, exclusions and explicit limits.
 Region summaries add `origin:manual|single_site` and nullable `comparison_pool`;
 manual regions still compare the whole source pool, derived regions compare
-their complete indexed pool through the identical strict validator. SAR engine6
+their complete indexed pool through the identical strict validator. SAR engine7
 invalidates incompatible unfinished scientific work without retagging old reports.
-Discovery method is `single-region-one-two-cut-h-v3` with `max_cut_bonds:2`,
-`indexed_hydrogen_sites` and `examined_boundaries` (0–500000); the prior v2 and
-legacy `single-non-ring-bond-v1` remain
-readable with one-port coverage. Indexed cuts/sites/comparisons retain their
-existing bounds. Two cut bonds delimit ONE connected variable region; fixed
+Discovery method is `single-region-one-to-three-cut-h-v4` with `max_cut_bonds:3`,
+`indexed_hydrogen_sites` and `examined_boundaries` (0–500000); the prior v2/v3
+keep their explicit two-port coverage, and legacy `single-non-ring-bond-v1` keeps
+one-port coverage. No historical report is upgraded or rewritten. Indexed
+cuts/sites/comparisons retain their existing bounds. Up to three cut bonds delimit ONE connected variable region; fixed
 anchors, bond types, full fixed chemistry and transported stereo remain proved.
 Variable linker endpoints need not retain an internal one-to-one atom mapping.
 Region requests/results add nullable `hydrogen_anchor` (original index0–511).

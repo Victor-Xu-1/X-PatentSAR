@@ -13,6 +13,7 @@ const common = object({
     'single-non-ring-bond-v1',
     'single-region-one-two-cut-v2',
     'single-region-one-two-cut-h-v3',
+    'single-region-one-to-three-cut-h-v4',
   ]),
   candidate_sites: count,
   candidate_comparisons: count,
@@ -36,7 +37,7 @@ export const decodeStudyDiscovery: Decoder<NonNullable<StudyReport['discovery']>
         examined_boundaries: count,
         indexed_hydrogen_sites: count,
         max_cut_bonds: (raw, p = '$') => {
-          if (raw !== 1 && raw !== 2) throw new ContractError(p);
+          if (raw !== 1 && raw !== 2 && raw !== 3) throw new ContractError(p);
           return raw;
         },
       },
@@ -45,13 +46,14 @@ export const decodeStudyDiscovery: Decoder<NonNullable<StudyReport['discovery']>
   };
   if (
     result.method !== 'single-non-ring-bond-v1' &&
-    (result.max_cut_bonds !== 2 ||
+    (result.max_cut_bonds !== (result.method === 'single-region-one-to-three-cut-h-v4' ? 3 : 2) ||
       result.examined_boundaries === undefined ||
       result.examined_boundaries > 500000)
   )
     throw new ContractError(path);
   if (
-    result.method === 'single-region-one-two-cut-h-v3' &&
+    (result.method === 'single-region-one-two-cut-h-v3' ||
+      result.method === 'single-region-one-to-three-cut-h-v4') &&
     (result.indexed_hydrogen_sites === undefined ||
       result.indexed_hydrogen_sites > result.indexed_cuts)
   )

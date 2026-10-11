@@ -25,6 +25,24 @@ const current = {
 };
 
 describe('explicit legacy and one/two-port discovery coverage', () => {
+  it('accepts explicit three-port coverage without upgrading prior reports', () => {
+    const triple = {
+      ...current,
+      method: 'single-region-one-to-three-cut-h-v4',
+      max_cut_bonds: 3,
+      indexed_hydrogen_sites: 1,
+      limitations: [
+        'hydrogen_boundary_stereo_not_supported',
+        'aromatic_boundaries_not_cut',
+        'more_than_three_ports_not_enumerated',
+      ],
+    };
+    expect(decodeStudyDiscovery(triple)).toEqual(triple);
+    expect(() => decodeStudyDiscovery({ ...triple, max_cut_bonds: 2 })).toThrow();
+    expect(() => decodeStudyDiscovery({ ...triple, indexed_hydrogen_sites: undefined })).toThrow();
+    expect(() => decodeStudyDiscovery({ ...current, max_cut_bonds: 3 })).toThrow();
+    expect(() => decodeStudyDiscovery({ ...triple, max_cut_bonds: 4 })).toThrow();
+  });
   it('requires declared hydrogen coverage without silently upgrading old methods', () => {
     const hydrogen = {
       ...current,
