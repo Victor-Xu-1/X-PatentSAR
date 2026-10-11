@@ -66,7 +66,8 @@ for (const width of [390, 800, 1672]) {
     );
     await report.screenshot({ path: test.info().outputPath(`aromatic-fragments-${width}.png`) });
     await page.locator('.language-switch select').selectOption('zh-CN');
-    await expect(report.getByText('芳香子图', { exact: false }).first()).toBeVisible();
+    const localizedReport = page.getByRole('region', { name: '研究报告', exact: true });
+    await expect(localizedReport.getByText('芳香子图', { exact: false }).first()).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
       true,
     );
