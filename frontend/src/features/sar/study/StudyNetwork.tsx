@@ -12,12 +12,14 @@ export function StudyNetwork({
   jobId,
   active,
   strongest = false,
+  fragments = false,
   onSource,
 }: {
   report: StudyReport;
   jobId: string;
   active: boolean;
   strongest?: boolean;
+  fragments?: boolean;
   onSource: (id: string) => void;
 }) {
   const { t } = useTranslation();
@@ -143,12 +145,13 @@ export function StudyNetwork({
             )}
           </div>
           <NetworkBranches
-            key={summary.region.id + ':' + strongest}
+            key={summary.region.id + ':' + strongest + ':' + fragments}
             report={report}
             summary={summary}
             jobId={jobId}
             active={active}
             strongest={strongest}
+            fragments={fragments}
             onSource={onSource}
           />
         </div>

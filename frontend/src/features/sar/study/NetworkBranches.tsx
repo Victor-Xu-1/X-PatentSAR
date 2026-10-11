@@ -15,7 +15,7 @@ function Reading({ row, report }: { row: StudyRow; report: StudyReport }) {
   const context = report.contexts.find((item) => item.id === report.policies[0]?.context_id);
   const values = context ? (row.values[context.id] ?? []) : [];
   return (
-    <dl className="sar-branch-readings">
+    <dl className="sar-branch-readings" title={t('活性与理化值对应完整分子')}>
       <div data-activity-strength={context ? row.activity_bands?.[context.id] : undefined}>
         <dt>{context?.name ?? t('活性')}</dt>
         <dd>
@@ -38,6 +38,7 @@ export function NetworkBranches({
   jobId,
   active,
   strongest,
+  fragments = false,
   onSource,
 }: {
   report: StudyReport;
@@ -45,6 +46,7 @@ export function NetworkBranches({
   jobId: string;
   active: boolean;
   strongest: boolean;
+  fragments?: boolean;
   onSource: (id: string) => void;
 }) {
   const { t } = useTranslation();
@@ -82,35 +84,52 @@ export function NetworkBranches({
       {rows.validated && rows.data && (
         <>
           <div className="sar-network-branch-grid">
-            {rows.data.items.map((row) => (
-              <article key={row.molecule_id} className="sar-network-branch">
-                <StudyImage
-                  jobId={jobId}
-                  kind="molecule"
-                  identifier={row.molecule_id}
-                  atomRegionId={summary.region.id}
-                  label={row.label}
-                  active={active}
-                  inspectable
-                />
-                <button
-                  type="button"
-                  className="sar-network-compare"
-                  onClick={(event) => {
-                    trigger.current = event.currentTarget;
-                    setPreview((old) => ({
-                      id: row.molecule_id,
-                      request: (old?.request ?? 0) + 1,
-                    }));
-                  }}
-                  aria-label={t('比较 {identifier}', { identifier: row.label })}
-                >
-                  <strong>{row.label}</strong>
-                  <ArrowUpRight size={16} />
-                </button>
-                <Reading row={row} report={report} />
-              </article>
-            ))}
+            {rows.data.items.map((row) => {
+              const fragment = fragments
+                ? summary.fragments.find((item) => item.molecule_ids.includes(row.molecule_id))
+                : undefined;
+              return (
+                <article key={row.molecule_id} className="sar-network-branch">
+                  {fragments && !fragment ? (
+                    <div className="sar-structure-pending">{t('片段结构不可用')}</div>
+                  ) : (
+                    <StudyImage
+                      jobId={jobId}
+                      kind={fragment ? 'fragment' : 'molecule'}
+                      identifier={fragment?.id ?? row.molecule_id}
+                      {...(fragment
+                        ? { regionId: summary.region.id }
+                        : { atomRegionId: summary.region.id })}
+                      label={
+                        fragment
+                          ? t('{identifier} · 变化片段', { identifier: row.label })
+                          : row.label
+                      }
+                      active={active}
+                      inspectable
+                    />
+                  )}
+                  {fragment?.representation === 'aromatic_graph' && <small>{t('芳香子图')}</small>}
+                  <button
+                    type="button"
+                    className="sar-network-compare"
+                    disabled={fragments && !fragment}
+                    onClick={(event) => {
+                      trigger.current = event.currentTarget;
+                      setPreview((old) => ({
+                        id: row.molecule_id,
+                        request: (old?.request ?? 0) + 1,
+                      }));
+                    }}
+                    aria-label={t('比较 {identifier}', { identifier: row.label })}
+                  >
+                    <strong>{row.label}</strong>
+                    <ArrowUpRight size={16} />
+                  </button>
+                  <Reading row={row} report={report} />
+                </article>
+              );
+            })}
           </div>
           {!rows.data.items.length && <p>{t('没有符合条件的结构分支')}</p>}
           <GroupPager page={page} size={6} total={rows.data.total} onPage={setPage} />
