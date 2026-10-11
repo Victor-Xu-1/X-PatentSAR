@@ -49,6 +49,16 @@ never reuse or rewrite an old unfinished receipt as a compatible result.
 
 ## Activity-strength compatibility
 
+Large completed reports are not kept in a persistent in-process result cache.
+Concurrent current/drawing/preview readers may share one fully validated model
+only while another reader still uses it. Every read rechecks complete report
+bytes and task/input/dataset identity. The weak preparation pool holds at most32
+digest/size references, not packet bytes or strong model references; failed
+validation is never cached. Existing two <=4MiB small-report retention remains.
+Current group/count projections are independent mutable results. No file-size,
+worker/proof limit, original report, source acceptance or scientific epoch is
+changed by this preparation-only optimization.
+
 New positive-concentration SAR studies use the complete-context tenth-potency
 decade: if the tenth strongest source identity is in `10^e`, strong ends at
 `10^(e+1)` (exclusive), medium at `10^(e+2)` (exclusive), and weak starts there.
