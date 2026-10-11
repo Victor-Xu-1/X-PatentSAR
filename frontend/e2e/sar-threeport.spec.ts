@@ -31,6 +31,13 @@ for (const width of [390, 800, 1672]) {
       rows.items.map((row: { label: string; molecule_id: string }) => [row.label, row.molecule_id]),
     );
     await report.getByRole('button', { name: 'Variable regions', exact: true }).click();
+    await expect(page.locator('.sar-network-map').filter({ visible: true })).toHaveCSS(
+      'min-width',
+      '0px',
+    );
+    await expect(
+      page.locator('.sar-network .sar-reference-map-card').filter({ visible: true }),
+    ).toHaveCSS('min-width', '0px');
     for (const [left, right, difference] of [
       ['1', '2', '-9.00'],
       ['4', '5', '-18.00'],
