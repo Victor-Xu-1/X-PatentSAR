@@ -99,6 +99,13 @@ for (const width of [390, 800, 1672]) {
     ).json();
     const properties = preview.getByRole('table', { name: 'Properties', exact: true });
     await expect(properties.getByRole('row')).toHaveCount(4);
+    expect(
+      await properties
+        .locator('th, td')
+        .evaluateAll((cells) =>
+          cells.every((cell) => getComputedStyle(cell).textAlign === 'center'),
+        ),
+    ).toBe(true);
     const propertyRows = properties.locator('tbody tr');
     for (const [index, row] of [actual.reference, actual.candidate].entries()) {
       await expect(propertyRows.nth(index).getByRole('rowheader')).toHaveText(row.label);

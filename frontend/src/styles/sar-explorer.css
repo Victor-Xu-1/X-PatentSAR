@@ -377,7 +377,7 @@
   position: sticky;
   left: 0;
   background: var(--surface);
-  text-align: left;
+  text-align: center;
   width: 100px;
   max-width: 150px;
   white-space: normal;
