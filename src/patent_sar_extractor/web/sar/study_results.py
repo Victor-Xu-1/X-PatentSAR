@@ -6,7 +6,7 @@ import hashlib
 import json
 from functools import lru_cache
 
-from ...core.sar.drawing import draw_fragment, draw_structure
+from ...core.sar.drawing import draw_fragment, draw_molecule_preview
 from ..errors import WebError
 from .models import Pair
 from .study_models import StudyDrawing, StudyOverview, StudyReport, StudyRows
@@ -182,7 +182,7 @@ class StudyResults:
                             pair = Pair.model_validate_json(saved[0])
                             if pair.match_status == "matched":
                                 atoms = pair.variable_atom_indices
-                svg = draw_structure(molecule.molfile, highlighted_atoms=atoms)["svg"]
+                svg = draw_molecule_preview(molecule.molfile, highlighted_atoms=atoms)
             elif kind == "scaffold":
                 scaffold = next(item for item in report.scaffolds if item.id == key)
                 svg = draw_fragment(scaffold.smiles or "")
