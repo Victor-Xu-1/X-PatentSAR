@@ -185,6 +185,70 @@ describe('explicit recoverable deletion and authoritative preview', () => {
 });
 
 describe('compact history and trash paging', () => {
+  it.each(['project', 'job', 'export', 'environment_operation'] as const)(
+    'does not invent a zero population while the %s catalog is unresolved or failed',
+    async (kind) => {
+      let fail!: (error: Error) => void;
+      vi.mocked(api.history).mockImplementationOnce(
+        () =>
+          new Promise((_resolve, reject) => {
+            fail = reject;
+          }),
+      );
+      render(
+        <HistoryDialog
+          title="回收站"
+          initialKind={kind}
+          deleted
+          filters
+          onClose={vi.fn()}
+          onChanged={vi.fn()}
+        />,
+      );
+      expect(await screen.findByText('正在读取记录…')).toBeVisible();
+      expect(screen.queryByText('共 0 条 · 第 1 页')).not.toBeInTheDocument();
+      fail(new Error('The source did not return a record count.'));
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'The source did not return a record count.',
+      );
+      expect(screen.queryByText('共 0 条 · 第 1 页')).not.toBeInTheDocument();
+      expect(screen.queryByText('此类型回收站为空。')).not.toBeInTheDocument();
+      expect(api.deleteHistory).not.toHaveBeenCalled();
+      expect(api.restoreHistory).not.toHaveBeenCalled();
+      await userEvent.click(screen.getByRole('button', { name: '重新加载' }));
+      expect(await screen.findByText('此类型回收站为空。')).toBeVisible();
+      expect(screen.getByText('共 0 条 · 第 1 页')).toBeVisible();
+    },
+  );
+  it('does not certify an older count while refresh is pending and restores the new confirmed total', async () => {
+    let finish!: (value: ReturnType<typeof historyList>) => void;
+    vi.mocked(api.history)
+      .mockResolvedValueOnce(historyList([], { total: 137 }))
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finish = resolve;
+          }),
+      );
+    render(
+      <HistoryDialog
+        title="回收站"
+        initialKind="project"
+        deleted
+        filters
+        onClose={vi.fn()}
+        onChanged={vi.fn()}
+      />,
+    );
+    expect(await screen.findByText('共 137 条 · 第 1 页')).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: '刷新记录' }));
+    expect(screen.queryByText('共 137 条 · 第 1 页')).not.toBeInTheDocument();
+    expect(screen.queryByText('共 0 条 · 第 1 页')).not.toBeInTheDocument();
+    finish(historyList([], { total: 42 }));
+    expect(await screen.findByText('共 42 条 · 第 1 页')).toBeVisible();
+    expect(api.deleteHistory).not.toHaveBeenCalled();
+    expect(api.restoreHistory).not.toHaveBeenCalled();
+  });
   it('keeps an unchanged file preview open after uncertainty reconciliation for a new explicit decision', async () => {
     const entry = historyEntry({ kind: 'export' });
     vi.mocked(api.history).mockResolvedValue(historyList([entry]));

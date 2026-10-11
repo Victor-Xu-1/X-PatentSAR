@@ -1,41 +1,34 @@
 {
   "schema_version": 1,
-  "base_sha": "b51524be3eccd1206519cf02c253fc207f345b2d",
+  "base_sha": "e60aea8888c799c1a67de6cb683ea34fd3eecbda",
   "changed_paths": [
     ".github/verification_scope.json",
-    "docs/ARCHITECTURE.md",
     "docs/FRONTEND_QUALITY.md",
+    "frontend/e2e/history-deletion.spec.ts",
+    "frontend/e2e/history-failures.spec.ts",
+    "frontend/e2e/history-fixture.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "src/patent_sar_extractor/contracts.py",
-    "src/patent_sar_extractor/web/sar/study_activity_view.py",
-    "src/patent_sar_extractor/web/sar/study_current.py",
-    "src/patent_sar_extractor/web/sar/study_preview.py",
-    "src/patent_sar_extractor/web/sar/study_results.py",
-    "src/patent_sar_extractor/web/sar/study_view.py",
-    "src/patent_sar_extractor/web/sar/study_view_groups.py",
-    "src/patent_sar_extractor/web/sar/study_view_models.py",
-    "tests/test_sar_view_groups.py"
+    "frontend/src/features/history/HistoryDialog.tsx",
+    "frontend/tests/history-dialogs.test.tsx",
+    "src/patent_sar_extractor/contracts.py"
   ],
   "python_modules": [
-    "tests.test_sar_view_groups",
-    "tests.test_sar_current_strength",
-    "tests.test_sar_report_preparation",
-    "tests.test_sar_preview.SARPreviewTests.test_exact_values_deltas_graph_proof_and_immutable_input",
-    "tests.test_sar_study_api.SARStudyAPITests.test_native_multi_region_report_views_exports_and_source_order",
-    "tests.test_sar_study_api.SARStudyAPITests.test_1191_records_are_not_truncated_to_1000",
-    "tests.test_sar_study_table",
+    "tests.test_history_api.HistoryAPITests.test_removed_producer_job_preserves_current_properties_and_raw_identity",
+    "tests.test_history_api.HistoryAPITests.test_deleting_failed_core_record_cannot_promote_latest_acceptance",
+    "tests.test_history_api.HistoryAPITests.test_authentication_csrf_validation_and_stale_confirmation",
+    "tests.test_history_api.HistoryAPITests.test_concurrent_identical_confirmation_has_one_effect_and_rejects_old_cycles",
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
-    "frontend/tests/sar-study-api.test.tsx",
-    "frontend/tests/sar-study-results.test.tsx",
-    "frontend/tests/sar-preview.test.tsx",
-    "frontend/tests/sar-network-sites.test.ts"
+    "frontend/tests/history-dialogs.test.tsx",
+    "frontend/tests/history-resources.test.tsx",
+    "frontend/tests/history-contract.test.ts",
+    "frontend/tests/i18n-operations-history.test.tsx"
   ],
   "browser_tests": [
-    "frontend/e2e/sar-study.spec.ts",
-    "frontend/e2e/sar-single-site.spec.ts"
+    "frontend/e2e/history-deletion.spec.ts",
+    "frontend/e2e/history-failures.spec.ts"
   ]
 }

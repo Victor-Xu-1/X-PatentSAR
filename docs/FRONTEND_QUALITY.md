@@ -442,3 +442,12 @@ still checked before filtering/paging; strong bands use the whole context.
 Preview retains its independent full-graph/port/stereo and recorded-pair proof.
 Unknown, excluded and empty-after-exclusion selections stay refused. No browser
 calculation, report mutation, scientific rerun or widened resource limit is added.
+
+The shared history catalog publishes a count only after a successful current read.
+Pending, failed and refreshing reads keep the known requested page but do not
+report an invented zero or certify an older total. A genuinely empty successful
+read still reports zero. The four history types share that resource/presentation
+authority. A lost mutation response keeps confirmation locked until explicit
+server-state readback; a committed deletion is never automatically replayed.
+Restoration remains a new explicit action with the authoritative revision, without
+altering original files, scientific results, QA or environment readiness.
