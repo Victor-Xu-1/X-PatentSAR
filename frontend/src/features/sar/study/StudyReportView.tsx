@@ -119,7 +119,7 @@ export function StudyReportView({
         )}
       </section>
       <section id={id + '-4'} hidden={tab !== 4} aria-label={t(tabs[4])}>
-        <label className="check-row sar-fragment-controls">
+        <label className="sar-checkbox">
           <input
             type="checkbox"
             checked={strongest}

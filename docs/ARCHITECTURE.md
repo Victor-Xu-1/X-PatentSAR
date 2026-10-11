@@ -16,6 +16,12 @@ current tier/count views from the complete immutable input through the existing
 source receipts on every read and caches at most two packets whose combined
 input/report/pair bytes are at most 4 MiB; large views are not retained in cache.
 Overview, table filters, preview and CSV/SDF/HTML exports share this projection.
+For large reads the already validated captured model is reused only after both
+immutable byte receipts are freshly rechecked; the report is not parsed twice.
+Within ONE projection, group-bin preparation reuses exact member sets under at
+most256 entries/4096 total member references. Returned DTOs are independently
+validated copies. This does not retain large reports between reads or bypass
+current source exclusion, tenth-dose calculation, pair coverage or raw evidence.
 JSON retains original report/input plus an explicit current activity view. No
 model, new worker, queue, database, archive rewrite or manual numeric threshold
 is introduced. Candidate priority and graph proofs retain their captured meaning.

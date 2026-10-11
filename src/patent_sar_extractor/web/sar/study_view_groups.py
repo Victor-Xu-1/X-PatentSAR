@@ -1,27 +1,50 @@
 """Conserve source memberships while presenting current global potency bands."""
 
-from collections import Counter, defaultdict
+from collections import Counter, OrderedDict, defaultdict
 
 from ..errors import WebError
 from .study_models import StudyBin
 
 
-def _group(item, ids, domain, states):
+class GroupBins:
+    """One projection's immutable-domain preparation, not a cross-read cache."""
+
+    def __init__(self, domain):
+        self.domain = domain
+        self._items = OrderedDict()
+
+    def for_members(self, members):
+        key = tuple(sorted(members))
+        if key not in self._items:
+            result = tuple(
+                tuple(value.items())
+                for value in self.domain.for_members(members)["bins"]
+            )
+            if len(key) <= 4096:
+                self._items[key] = result
+                while (
+                    len(self._items) > 256
+                    or sum(len(item) for item in self._items) > 4096
+                ):
+                    self._items.popitem(last=False)
+            return [StudyBin.model_validate(dict(item)) for item in result]
+        self._items.move_to_end(key)
+        return [StudyBin.model_validate(dict(item)) for item in self._items[key]]
+
+
+def _group(item, ids, states, bins):
     members = [identifier for identifier in item.molecule_ids if identifier in ids]
     return item.model_copy(
         update={
             "molecule_ids": members,
             "molecule_count": len(members),
             "strong_count": sum(states[identifier]["strong"] for identifier in members),
-            "bins": [
-                StudyBin.model_validate(value)
-                for value in domain.for_members(members)["bins"]
-            ],
+            "bins": bins.for_members(members),
         }
     )
 
 
-def _region(summary, selected, ids, domain, states):
+def _region(summary, selected, ids, states, bins):
     pool = (
         (ids - {summary.region.molecule_id})
         if summary.comparison_pool is None
@@ -40,7 +63,7 @@ def _region(summary, selected, ids, domain, states):
             outcomes[pair["fragment_id"]][pair["comparison"]] += 1
     fragments = []
     for original in summary.fragments:
-        fragment = _group(original, ids, domain, states)
+        fragment = _group(original, ids, states, bins)
         if not fragment.molecule_ids:
             continue
         changes = outcomes[fragment.id]
@@ -79,17 +102,18 @@ def _region(summary, selected, ids, domain, states):
 
 
 def current_groups(captured, ids, domain, states, pairs):
+    bins = GroupBins(domain)
     indexed = defaultdict(list)
     for pair in pairs:
         if pair["molecule_id"] in ids:
             indexed[pair["region_id"]].append(pair)
     scaffolds = [
-        _group(item, ids, domain, states)
+        _group(item, ids, states, bins)
         for item in captured.scaffolds
         if ids.intersection(item.molecule_ids)
     ]
     regions = [
-        _region(summary, indexed[summary.region.id], ids, domain, states)
+        _region(summary, indexed[summary.region.id], ids, states, bins)
         for summary in captured.regions
         if summary.region.molecule_id in ids
     ]
