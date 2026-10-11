@@ -99,13 +99,14 @@ for (const width of [390, 800, 1672]) {
     await page
       .getByRole('combobox', { name: 'Interface language', exact: true })
       .selectOption('zh-CN');
-    await report.getByRole('button', { name: '变化区域', exact: true }).click();
-    await expect(report.getByRole('button', { name: '选择核心 1', exact: true })).toBeVisible();
-    await expect(report.getByRole('button', { name: '全部改造方向', exact: true })).toHaveAttribute(
+    const translated = page.getByRole('region', { name: '研究报告', exact: true });
+    await translated.getByRole('button', { name: '变化区域', exact: true }).click();
+    await expect(translated.getByRole('button', { name: '选择核心 1', exact: true })).toBeVisible();
+    await expect(translated.getByRole('button', { name: '全部改造方向', exact: true })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
-    await report
+    await translated
       .getByRole('region', { name: '单点结构对比', exact: true })
       .screenshot({ path: test.info().outputPath(`manual-chinese-${width}.png`) });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
