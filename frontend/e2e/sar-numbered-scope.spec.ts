@@ -119,12 +119,20 @@ for (const width of [390, 1672]) {
       });
       await report.locator('.sar-study-tabs button').nth(5).click();
       await expect(report.locator('table tbody tr')).toHaveCount(16);
-      await page.waitForFunction(() =>
-        [...document.querySelectorAll('.sar-study-report img')]
-          .filter((el) => el.checkVisibility())
-          .every(
-            (el) => (el as HTMLImageElement).complete && (el as HTMLImageElement).naturalWidth > 0,
-          ),
+      await page.waitForFunction(
+        () =>
+          ![...document.querySelectorAll('.sar-study-report .feedback.loading')].some((el) =>
+            el.checkVisibility(),
+          ) &&
+          [...document.querySelectorAll('.sar-study-report img')].some((el) =>
+            el.checkVisibility(),
+          ) &&
+          [...document.querySelectorAll('.sar-study-report img')]
+            .filter((el) => el.checkVisibility())
+            .every(
+              (el) =>
+                (el as HTMLImageElement).complete && (el as HTMLImageElement).naturalWidth > 0,
+            ),
       );
       await page.screenshot({
         path: `${process.env.PATENTSAR_E2E_OUTPUT_DIR}/numbered-table-${locale}-${width}.png`,
