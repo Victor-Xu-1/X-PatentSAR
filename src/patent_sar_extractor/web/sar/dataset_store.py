@@ -5,6 +5,7 @@ from __future__ import annotations
 from ..errors import WebError
 from .input_records import MAX_DATASET_BYTES
 from .models import Dataset, DatasetList, Molecule, MoleculePage, Region
+from .source_scope import included_molecules, source_exclusion
 from .store import SARStore, dataset_row
 
 
@@ -112,17 +113,22 @@ class Datasets:
         with self.store.connect() as connection:
             dataset_row(connection, identifier)
             where = "dataset_id=? AND (label LIKE ? ESCAPE '\\' OR json_extract(payload,'$.smiles') LIKE ? ESCAPE '\\')"
-            total = connection.execute(
-                "SELECT COUNT(*) FROM molecules WHERE " + where,
-                (identifier, pattern, pattern),
-            ).fetchone()[0]
             rows = connection.execute(
                 "SELECT payload FROM molecules WHERE "
                 + where
-                + " ORDER BY ordinal LIMIT ? OFFSET ?",
-                (identifier, pattern, pattern, page_size, (page - 1) * page_size),
+                + " ORDER BY ordinal LIMIT 25001",
+                (identifier, pattern, pattern),
             )
             items = [Molecule.model_validate_json(row[0]) for row in rows]
+        if len(items) > 25000:
+            raise WebError(
+                413,
+                "sar_dataset_limit",
+                "SAR dataset exceeds its complete-input limit.",
+            )
+        items = included_molecules(items)
+        total = len(items)
+        items = items[(page - 1) * page_size : page * page_size]
         return MoleculePage(items=items, total=total, page=page, page_size=page_size)
 
     def all(self, identifier: str) -> list[Molecule]:
@@ -154,7 +160,14 @@ class Datasets:
             raise WebError(
                 404, "sar_molecule_missing", "Molecule is not in this SAR dataset."
             )
-        return Molecule.model_validate_json(row[0])
+        value = Molecule.model_validate_json(row[0])
+        if source_exclusion(value.label, value.source_compound_id, value.issues):
+            raise WebError(
+                422,
+                "sar_numbered_reference",
+                "Choose an identified final compound for SAR.",
+            )
+        return value
 
     def region(self, identifier: str, dataset_id: str) -> Region:
         with self.store.connect() as connection:

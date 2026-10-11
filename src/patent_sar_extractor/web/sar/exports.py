@@ -13,15 +13,31 @@ from ...contracts import (
     SAR_REPORT_SCHEMA,
     SAR_REPORT_SCHEMA_VERSION,
 )
+from ..errors import WebError
 from ..exports import formula_safe
 from ..storage import encode
 from .queue import SARQueue
+from .source_scope import included_molecules
 
 
 def export_json(queue: SARQueue, identifier: str) -> Iterator[bytes]:
     job = queue.view(identifier)
     dataset = queue.service.dataset(job.dataset_id)
     region = queue.service.datasets.region(job.region_id, job.dataset_id)
+    molecules = included_molecules(queue.service.datasets.all(job.dataset_id))
+    if region.molecule_id not in {item.id for item in molecules}:
+        raise WebError(
+            422,
+            "sar_numbered_reference",
+            "Choose an identified final compound for SAR.",
+        )
+    dataset = dataset.model_copy(
+        update={
+            "row_count": len(molecules),
+            "eligible_count": sum(item.eligible for item in molecules),
+            "issue_count": sum(bool(item.issues) for item in molecules),
+        }
+    )
     spec = json.loads(queue.jobs.record(identifier)["spec"])
     request = spec["request"]
     header = {
@@ -40,7 +56,7 @@ def export_json(queue: SARQueue, identifier: str) -> Iterator[bytes]:
         },
     }
     yield encode(header)[:-1].encode() + b',"molecules":['
-    for index, molecule in enumerate(queue.service.datasets.all(job.dataset_id)):
+    for index, molecule in enumerate(molecules):
         yield (b"," if index else b"") + molecule.model_dump_json().encode()
     yield b'],"pairs":['
     used = 0
@@ -55,7 +71,16 @@ def export_csv(queue: SARQueue, identifier: str) -> Iterator[bytes]:
     job = queue.view(identifier)
     dataset = queue.service.dataset(job.dataset_id)
     region = queue.service.datasets.region(job.region_id, job.dataset_id)
-    by_id = {item.id: item for item in queue.service.datasets.all(job.dataset_id)}
+    by_id = {
+        item.id: item
+        for item in included_molecules(queue.service.datasets.all(job.dataset_id))
+    }
+    if region.molecule_id not in by_id:
+        raise WebError(
+            422,
+            "sar_numbered_reference",
+            "Choose an identified final compound for SAR.",
+        )
     reference = by_id[region.molecule_id]
     buffer = io.StringIO(newline="")
     writer = csv.writer(buffer)

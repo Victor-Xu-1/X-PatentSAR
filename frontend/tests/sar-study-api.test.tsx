@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ApiClient } from '../src/api/client';
 import { createSARStudyApi } from '../src/api/sarStudyApi';
-import { decodeStudyProfile, decodeStudyReport } from '../src/api/sarStudyDecoders';
+import {
+  decodeStudyOverview,
+  decodeStudyProfile,
+  decodeStudyReport,
+} from '../src/api/sarStudyDecoders';
 import { decodeMolecule, decodeRegion } from '../src/api/sarDecoders';
 import { decodeSARJob, decodePair } from '../src/api/sarJobDecoders';
 import { policyFromDraft, emptyPolicy } from '../src/features/sar/study/policyDraft';
@@ -38,6 +42,29 @@ const filter = {
   fragment_id: '',
 };
 describe('study DTOs and exact policies', () => {
+  it('binds current tenth-dose presentation to the exact source and scoped count', () => {
+    const basis = {
+      rule: 'numbered-tenth-decades-v1',
+      anchor_rank: 10,
+      source_input_sha256: studyReport.input_sha256,
+      source_report_sha256: 'a'.repeat(64),
+      retained_records: studyReport.molecule_count,
+      excluded_records: { unconfirmed_identifier: 123 },
+    };
+    expect(
+      decodeStudyOverview({ job: studyJob, report: studyReport, activity_basis: basis })
+        .activity_basis,
+    ).toEqual(basis);
+    for (const bad of [
+      { ...basis, anchor_rank: 5 },
+      { ...basis, source_input_sha256: 'c'.repeat(64) },
+      { ...basis, retained_records: 0 },
+    ]) {
+      expect(() =>
+        decodeStudyOverview({ job: studyJob, report: studyReport, activity_basis: bad }),
+      ).toThrow();
+    }
+  });
   it('decodes full source-owned report facts, core role, old reference fixtures and additive evidence', () => {
     expect(decodeStudyProfile(studyProfile)).toEqual(studyProfile);
     expect(decodeStudyReport(studyReport)).toEqual(studyReport);

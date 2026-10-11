@@ -15,6 +15,7 @@ export const sar: Record<string, string> = {
   上一步: 'Back',
   下一步: 'Continue',
   第十名数量级: 'Tenth potency decade',
+  '第十名 {value}': '10th strongest: {value}',
   '原文等级（可选）': 'Source grades (optional)',
   '明确方向；原文等级须唯一。': 'Confirm direction; source grades must be unique.',
   '浓度活性自动按第十名数量级分档。':

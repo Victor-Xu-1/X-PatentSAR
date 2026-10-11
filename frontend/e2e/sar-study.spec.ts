@@ -44,6 +44,8 @@ for (const { width, height } of [
     await imports.getByRole('button', { name: 'CSV file', exact: true }).click();
     const csv = [
       'id,smiles,IC50 (nM),target,assay,cell_line,duration',
+      ',CO,0.000001,T,binding,not applicable,1h',
+      'Intermediate 18,CCO,0.000001,T,binding,not applicable,1h',
       'Example 1,COc1ccc(Cl)cc1,10,T,binding,not applicable,1h',
       'Example 2,CCOc1ccc(Cl)cc1,1,T,binding,not applicable,1h',
       'Example 3,CCCOc1ccc(Cl)cc1,2,T,binding,not applicable,1h',
@@ -78,6 +80,15 @@ for (const { width, height } of [
     await imports.getByRole('button', { name: 'Create CSV dataset', exact: true }).click();
     const dataset = await persisted(page, 'dataset');
     expect(dataset.row_count).toBe(16);
+    expect(dataset.input_row_count).toBe(18);
+    const scopedRows = await (
+      await page.request.get(`/api/v1/sar/datasets/${dataset.id}/molecules?page_size=200`)
+    ).json();
+    expect(
+      scopedRows.items.every(
+        (row: { label: string }) => row.label.trim() && !row.label.startsWith('Intermediate'),
+      ),
+    ).toBe(true);
     const setup = page.getByRole('region', { name: 'Study setup', exact: true });
     await expect(setup).toBeVisible();
     await expect(
@@ -180,13 +191,23 @@ for (const { width, height } of [
         await expect(view.locator('.sar-policy-note').first()).toContainText(
           'Strong <10 nM; medium 10 nM–<100 nM; weak ≥100 nM',
         );
-      if (['Overview', 'Variable regions', 'Fragment summary'].includes(tab)) {
+      if (tab === 'Overview') {
         const rule = view.locator('.sar-policy-note').first();
-        const disclosure = view
-          .locator(
-            tab === 'Overview' ? '.sar-context-detail summary' : '.sar-region-method summary',
-          )
-          .first();
+        const details = view.locator('.sar-context-detail').first();
+        const conditions = details.locator('.sar-hint');
+        await expect(rule).toBeVisible();
+        await expect(rule).toContainText('10th strongest: 2 nM');
+        await expect(conditions).toBeHidden();
+        await details.locator('summary').click();
+        await expect(conditions).toBeVisible();
+        await expect(rule).toBeVisible();
+        await details.locator('summary').click();
+        await expect(conditions).toBeHidden();
+        await expect(rule).toBeVisible();
+      }
+      if (['Variable regions', 'Fragment summary'].includes(tab)) {
+        const rule = view.locator('.sar-policy-note').first();
+        const disclosure = view.locator('.sar-region-method summary').first();
         await expect(rule).toBeHidden();
         await disclosure.click();
         await expect(rule).toBeVisible();

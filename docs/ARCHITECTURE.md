@@ -9,6 +9,17 @@ epochs are not product releases and do not retag old results as current.
 
 ### Independent, user-started SAR domain
 
+`web/sar/source_scope.py` owns the identified-final-compound boundary for imports,
+historical browsing, reference pairs and study admission. `study_view.py` derives
+current tier/count views from the complete immutable input through the existing
+`resolve_strength` and `DistributionContext` authorities. `study_current.py` checks
+source receipts on every read and caches at most two packets whose combined
+input/report/pair bytes are at most 4 MiB; large views are not retained in cache.
+Overview, table filters, preview and CSV/SDF/HTML exports share this projection.
+JSON retains original report/input plus an explicit current activity view. No
+model, new worker, queue, database, archive rewrite or manual numeric threshold
+is introduced. Candidate priority and graph proofs retain their captured meaning.
+
 Interactive presentation uses the already installed RDKit backend and current
 strict reference matcher; Ketcher remains the one correction editor. Region
 hotspots bind original draw coordinates/immutable atom indices. Clicking a region

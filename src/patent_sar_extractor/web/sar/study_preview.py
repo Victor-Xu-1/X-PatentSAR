@@ -37,7 +37,7 @@ def _scalar_difference(left: Value, right: Value) -> float | None:
 
 
 def preview(queue, identifier: str, region_id: str, molecule_id: str) -> StudyPreview:
-    job, report = StudyResults(queue).load(identifier)
+    job, report, _ = StudyResults(queue).current(identifier)
     summary = next(
         (item for item in report.regions if item.region.id == region_id), None
     )

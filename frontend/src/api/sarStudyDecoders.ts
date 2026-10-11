@@ -16,6 +16,7 @@ import {
   decodeSourceAcceptance,
   hex,
   nullOr,
+  recordOf,
   unique,
 } from './sarDecoders';
 import { decodeConditionDeclaration } from './sarConditionDecoders';
@@ -178,10 +179,33 @@ export const decodeStudyReport: Decoder<StudyReport> = (v, p = '$') => {
   verifyStudyConservation(report, p);
   return report;
 };
-export const decodeStudyOverview: Decoder<StudyOverview> = object({
-  job: decodeSARJob,
-  report: decodeStudyReport,
-});
+export const decodeStudyOverview: Decoder<StudyOverview> = (v, p = '$') => {
+  const result = object({ job: decodeSARJob, report: decodeStudyReport })(v, p);
+  const extra = additions(
+    v,
+    {
+      activity_basis: object({
+        rule: oneOf(['numbered-tenth-decades-v1']),
+        anchor_rank: (value, path = '$') => {
+          if (value !== 10) throw new ContractError(path);
+          return 10 as const;
+        },
+        source_input_sha256: hex(64),
+        source_report_sha256: hex(64),
+        retained_records: count,
+        excluded_records: recordOf(count, 8),
+      }),
+    },
+    p,
+  );
+  if (
+    extra.activity_basis &&
+    (extra.activity_basis.source_input_sha256 !== result.report.input_sha256 ||
+      extra.activity_basis.retained_records !== result.report.molecule_count)
+  )
+    throw new ContractError(p + '.activity_basis');
+  return { ...result, ...extra };
+};
 export const decodeStudyRows: Decoder<StudyRows> = (v, p = '$') => {
   const result = object({
     items: array(studyRow),

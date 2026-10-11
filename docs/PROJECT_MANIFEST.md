@@ -1,5 +1,15 @@
 # Project governance manifest
 
+- Current SAR activity ownership: `source_scope.py` defines identified final
+  compounds; source-only placeholders, blank IDs and explicit intermediates are
+  excluded before admission or historical browsing. Numbered records retain
+  missing activity/structure states. `study_view.py` reuses the existing complete
+  context tenth-decade and conserved distribution authorities; `study_current.py`
+  checks immutable receipts and bounds its read cache. Overview/table/preview and
+  CSV/SDF/HTML consume the same current view. JSON keeps the captured input/report
+  plus a named current activity view. `study_view_models.py` owns its additive
+  provenance DTO; scientific models/epochs, queues, schemas and archives stay intact.
+
 - Expert visual/preview ownership: `product-craft.css` refines shared page/control
   craft, `sar-explorer.css` owns the region/actual-transformation workbench layout,
   and established tokens remain the single theme authority. `study_preview.py`

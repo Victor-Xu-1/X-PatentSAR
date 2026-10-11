@@ -1,4 +1,4 @@
-/** Sole authority: web/sar/study_models.py. No locally inferred scientific fields. */
+/** Authorities: web/sar/study_models.py and study_view_models.py; no local grading. */
 import type { Pair, Region, SARJob } from './sarTypes';
 import type { ActivityStrengthScale, Project } from './types';
 export interface StudyContext {
@@ -166,6 +166,14 @@ export interface StudyReport {
 export interface StudyOverview {
   job: SARJob;
   report: StudyReport;
+  activity_basis?: {
+    rule: 'numbered-tenth-decades-v1';
+    anchor_rank: 10;
+    source_input_sha256: string;
+    source_report_sha256: string;
+    retained_records: number;
+    excluded_records: Record<string, number>;
+  };
 }
 export interface StudyRows {
   items: StudyRow[];
