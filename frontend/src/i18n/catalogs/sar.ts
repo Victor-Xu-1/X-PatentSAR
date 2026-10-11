@@ -328,6 +328,8 @@ export const sar: Record<string, string> = {
     'Soft-remove from daily views only. Source data, results and audit remain; no disk space is reclaimed. Active datasets cannot be removed.',
   确认软移除: 'Confirm soft removal',
   选择参考分子: 'Choose reference molecule',
+  仅结构变化: 'Structural changes only',
+  强活性结构变化: 'Strong structural changes',
   '搜索编号或 SMILES': 'Search identifiers or SMILES',
   数据集所有行: 'All dataset rows',
   原始活性: 'Original activity',

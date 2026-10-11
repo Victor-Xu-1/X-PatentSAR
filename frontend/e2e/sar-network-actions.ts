@@ -28,7 +28,7 @@ export function portSite(
 const terminalCSV =
   'id,smiles,IC50 (nM),t_half (h),target,assay,cell_line,duration\n1,COc1ccc(Cl)cc1,10,1,T,controlled,C,1h\n2,CCOc1ccc(Cl)cc1,1,2,T,controlled,C,1h\n3,COc1ccc(Br)cc1,0.1,3,T,controlled,C,1h\n4,CCCOc1ccc(Cl)cc1,,4,T,controlled,C,1h\n,CO,0.00001,99,T,controlled,C,1h\nIntermediate 18,CCO,0.00001,99,T,controlled,C,1h\n';
 
-export async function createNetwork(page: Page, width: number, csv = terminalCSV) {
+export async function createNetwork(page: Page, width: number, csv = terminalCSV, manual = false) {
   await page.goto('/#/sar');
   const imports = page.getByRole('region', { name: 'Import data', exact: true });
   await imports.getByRole('button', { name: 'CSV file', exact: true }).click();
@@ -70,6 +70,30 @@ export async function createNetwork(page: Page, width: number, csv = terminalCSV
   await expect(
     setup.getByRole('checkbox', { name: 'Find single-site changes', exact: true }),
   ).toBeChecked();
+  if (manual) {
+    await setup.getByRole('checkbox', { name: 'Find single-site changes', exact: true }).uncheck();
+    await setup.getByText('Add a named selection', { exact: true }).click();
+    const browser = setup.getByRole('region', { name: 'Choose reference molecule', exact: true });
+    for (const [name, atom] of [
+      ['Linker 原文', 'Atom 0 (C)'],
+      ['Halogen 原文', /^Atom \d+ \(Cl\)$/],
+    ] as const) {
+      await browser
+        .getByRole('row')
+        .filter({
+          has: page.getByRole('rowheader', { name: '1', exact: true }),
+        })
+        .getByRole('button', { name: 'Reference', exact: true })
+        .click();
+      await setup.getByLabel('Selection name', { exact: true }).fill(name);
+      await setup.getByRole('button', { name: atom, exact: true }).click();
+      await setup.getByRole('button', { name: 'Save region', exact: true }).click();
+      await expect(
+        setup.getByText('Region saved · 1 attachment points', { exact: true }),
+      ).toBeVisible();
+      await setup.getByRole('button', { name: 'Change reference', exact: true }).click();
+    }
+  }
   await setup.getByRole('button', { name: 'Run full study', exact: true }).click();
   await expect(page).toHaveURL(/job=[a-f0-9]{32}/);
   const params = new URLSearchParams(new URL(page.url()).hash.split('?')[1]);

@@ -14,6 +14,12 @@ export function StudyTableFilters({
   function change(patch: Partial<StudyFilter>) {
     onFilter({ ...filter, ...patch });
   }
+  const references = [
+    ...new Map(
+      report.regions.map((item) => [item.region.molecule_id, item.reference_label]),
+    ).entries(),
+  ];
+  const changes = filter.scope === 'changes' || filter.scope === 'strong_changes';
   return (
     <div className="sar-study-filters">
       <label>
@@ -25,8 +31,37 @@ export function StudyTableFilters({
           <option value="all">{t('全部研究行')}</option>
           <option value="strong">{t('强活性')}</option>
           <option value="leads">{t('研究先导候选')}</option>
+          {(filter.reference_id || filter.region_id) && (
+            <>
+              <option value="changes">{t('仅结构变化')}</option>
+              <option value="strong_changes">{t('强活性结构变化')}</option>
+            </>
+          )}
         </select>
       </label>
+      {references.length > 0 && (
+        <label>
+          {t('选择参考分子')}
+          <select
+            value={filter.reference_id ?? ''}
+            onChange={(event) =>
+              change({
+                reference_id: event.target.value,
+                region_id: '',
+                fragment_id: '',
+                scope: !event.target.value && changes ? 'all' : filter.scope,
+              })
+            }
+          >
+            <option value="">{t('全部状态')}</option>
+            {references.map(([id, label]) => (
+              <option key={id} value={id}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <label>
         {t('研究骨架')}
         <select
@@ -45,7 +80,14 @@ export function StudyTableFilters({
         {t('变化区域')}
         <select
           value={filter.region_id}
-          onChange={(e) => change({ region_id: e.target.value, fragment_id: '' })}
+          onChange={(e) =>
+            change({
+              region_id: e.target.value,
+              fragment_id: '',
+              reference_id: '',
+              scope: !e.target.value && changes ? 'all' : filter.scope,
+            })
+          }
         >
           <option value="">{t('全部状态')}</option>
           {report.regions.map(({ region }, index) => (

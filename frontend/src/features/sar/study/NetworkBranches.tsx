@@ -78,6 +78,7 @@ export function NetworkBranches({
       {rows.error && <SARFailure error={rows.error} onRetry={rows.reload} />}
       {rows.validated && rows.data && (
         <>
+          {summary?.no_variation && <output>{t('该区域没有观察到结构变化。')}</output>}
           <div className="sar-network-branch-grid">
             {rows.data.items.map((row) => (
               <NetworkBranchCard

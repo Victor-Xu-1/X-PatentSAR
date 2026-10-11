@@ -35,6 +35,7 @@ export function StudyTableControls({
     filter.scaffold_id,
     filter.region_id,
     filter.fragment_id,
+    filter.reference_id,
     sort.column || sort.direction !== 'asc',
   ].filter(Boolean).length;
   return (
@@ -117,6 +118,7 @@ export function StudyTableControls({
                 scaffold_id: '',
                 region_id: '',
                 fragment_id: '',
+                reference_id: '',
               });
               onSort({ column: '', direction: 'asc' });
             }}
