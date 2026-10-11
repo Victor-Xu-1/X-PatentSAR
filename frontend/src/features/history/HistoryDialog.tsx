@@ -58,6 +58,7 @@ export function HistoryDialog({
     resource.reload();
   }
   const data = resource.data;
+  const countAvailable = data !== null && !resource.loading && resource.error === null;
   return (
     <Dialog title={t(title)} onClose={onClose} className="history-dialog">
       <div className="dialog-body" data-dialog-focus-scope aria-busy={resource.loading}>
@@ -132,7 +133,9 @@ export function HistoryDialog({
         )}
         <footer className="history-pagination" aria-label={t('历史记录分页')}>
           <span className="muted">
-            {t('共 {count} 条 · 第 {page} 页', { count: data?.total ?? 0, page })}
+            {countAvailable
+              ? t('共 {count} 条 · 第 {page} 页', { count: data.total, page })
+              : t('第 {page} 页', { page })}
           </span>
           <div className="inline-actions">
             <button
