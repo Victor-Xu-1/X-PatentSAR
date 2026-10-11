@@ -29,9 +29,11 @@ describe('all-row dataset presentation', () => {
         error={new ApiError(422, 'sar_graph_changed', 'Original identifier 原始/control is stale.')}
       />,
     );
-    expect(screen.getByRole('alert')).toHaveTextContent('SAR request failed (sar_graph_changed)');
+    expect(screen.getByRole('alert')).toHaveTextContent('The SAR operation failed.');
+    expect(screen.getByRole('alert')).not.toHaveTextContent('sar_graph_changed');
+    await userEvent.click(screen.getByText('Error details', { exact: true }));
     await act(() => setLocale('zh-CN'));
-    expect(screen.getByRole('alert')).toHaveTextContent('SAR 请求失败（sar_graph_changed）');
+    expect(screen.getByRole('alert')).toHaveTextContent('SAR 操作失败。');
     expect(screen.getByText('Original identifier 原始/control is stale.')).toBeInTheDocument();
   });
   it('keeps missing/invalid structures and explicit issues visible, and disables only their reference action', async () => {

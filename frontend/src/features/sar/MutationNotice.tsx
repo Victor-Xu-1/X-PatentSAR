@@ -14,9 +14,11 @@ export function MutationNotice({
   const { t } = useTranslation();
   return (
     <div aria-live="polite">
-      {mutation.error && <SARFailure error={mutation.error} />}
-      {mutation.uncertain && mutation.requestId && (
-        <p>{t('请求身份：{id}', { id: mutation.requestId })}</p>
+      {mutation.error && (
+        <SARFailure
+          error={mutation.error}
+          requestId={mutation.uncertain ? mutation.requestId : null}
+        />
       )}
       {mutation.canRetry && (
         <button type="button" disabled={disabled || mutation.busy} onClick={mutation.retry}>

@@ -113,7 +113,7 @@ for (const width of [390, 800, 1672]) {
     const row = panel.locator('tbody tr').first();
     const mark = row.locator('.sar-lead-mark');
     const identifier = row.locator('th button');
-    const sourceButton = row.getByRole('button', { name: 'Source details', exact: true });
+    const sourceButton = row.getByRole('button', { name: /^(Source details|来源详情)$/ });
     await compactMark(mark);
     await mark.click();
     const source = page.getByRole('dialog', {
@@ -184,6 +184,53 @@ for (const width of [390, 800, 1672]) {
       path: info.outputPath('candidate-read-failure.png'),
       animations: 'disabled',
     });
+    const alert = panel.getByRole('alert');
+    const details = panel.locator('details.sar-error-details');
+    await expect(alert).toContainText('Unable to load SAR data.');
+    await expect(alert).not.toContainText('sar_controlled_read_failure');
+    await expect(details).not.toHaveAttribute('open');
+    await expect(
+      details.getByText('Controlled browser read failure', { exact: true }),
+    ).not.toBeVisible();
+    const disclosure = details.locator('summary');
+    await disclosure.focus();
+    await disclosure.press('Enter');
+    await expect(details).toHaveAttribute('open');
+    await expect(
+      details.getByText('Controlled browser read failure', { exact: true }),
+    ).toBeVisible();
+    await expect(details.locator('code')).toHaveText('sar_controlled_read_failure');
+    expect(
+      await details.evaluate((element) => {
+        const summary = element.querySelector('summary')!.getBoundingClientRect();
+        const message = element.querySelector('p')!.getBoundingClientRect();
+        return message.top - summary.bottom;
+      }),
+    ).toBeGreaterThanOrEqual(8);
+    await page.screenshot({
+      path: info.outputPath('read-error-details-en.png'),
+      animations: 'disabled',
+    });
+    await page
+      .getByRole('combobox', { name: 'Interface language', exact: true })
+      .selectOption('zh-CN');
+    await expect(alert).toContainText('无法读取 SAR 数据。');
+    await expect(disclosure).toHaveText('错误详情');
+    await expect(details).toHaveAttribute('open');
+    await expect(
+      details.getByText('Controlled browser read failure', { exact: true }),
+    ).toBeVisible();
+    await expect(mark).toBeDisabled();
+    await expect(sourceButton).toBeDisabled();
+    expect(failedReads).toBe(2);
+    await page.screenshot({
+      path: info.outputPath('read-error-details-zh.png'),
+      animations: 'disabled',
+    });
+    await disclosure.focus();
+    await disclosure.press('Enter');
+    await expect(details).not.toHaveAttribute('open');
+    await page.getByRole('combobox', { name: '界面语言', exact: true }).selectOption('en');
     rejectRows = false;
     await panel.getByRole('button', { name: 'Reload', exact: true }).click();
     await expect(identifier).toBeEnabled();
