@@ -60,7 +60,7 @@ for (const viewport of [
     await page.setViewportSize(viewport);
     await page.goto('/#/new-task');
     const header = page.locator('.topbar');
-    const nav = header.getByRole('navigation', { name: '工作台导航' });
+    const nav = header.getByRole('navigation', { name: /^(工作台导航|Workspace navigation)$/ });
     for (const name of primary) {
       await expect(nav.getByRole('button', { name, exact: true })).toBeVisible();
       await expect(nav.getByRole('button', { name, exact: true }).locator('span')).toBeVisible();
@@ -112,7 +112,7 @@ for (const viewport of [
     await page.goto('/#/projects/' + projectId);
     await expect(page.getByRole('table')).toBeVisible();
     const header = page.locator('.topbar');
-    const nav = header.getByRole('navigation', { name: '工作台导航' });
+    const nav = header.getByRole('navigation', { name: /^(工作台导航|Workspace navigation)$/ });
     await expect(nav.getByRole('button')).toHaveCount(7);
     await exposedNavigation(page, nav);
     for (const name of [...primary, '返回结果表格', '证据摘要']) {
