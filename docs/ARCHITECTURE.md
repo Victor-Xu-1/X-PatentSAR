@@ -497,7 +497,18 @@ species. `site_reduction.py` removes broader automatic sites only after the SAME
 full matcher proves a smaller connected region for all the same candidates.
 Index overlap alone never qualifies. Raw comparison and retained-site budgets
 remain bounded. `prepared_graphs.py` is a256-entry job-local exact-Molfile pool,
-not a result cache/alternate proof or original mutation. `hydrogen.py`
+not a result cache/alternate proof or original mutation.
+Full-source bond/stereo facts are prepared once in `graph_features.py`. Fixed
+constraints and at most eight domain-length traversal orders are local to one
+compiled reference. Every real domain, induced edge AND nonedge, bond key and
+stereo mapping is still checked; source order, search-state and mapping caps do
+not change. Parent grouping avoids repeated all-pair scans, and original-source
+parsing is reused for cut graphics only after the same source validation.
+Discovery and independent result proof have separate30-second phase deadlines,
+with a60-second overall verification ceiling. Both phases are mandatory; either
+expiry refuses publication. Scientific search/embedding,512MiB child memory and
+180-second native-worker limits are unchanged, not extended by verification.
+`hydrogen.py`
 normalizes ONE already-existing ordinary H into a private graph view for the
 same matcher; all full atom keys, fixed stereochemistry, isotope/charge/components
 and exact cut ports stay mandatory. Original source indices are never invented:

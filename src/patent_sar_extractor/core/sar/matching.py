@@ -7,10 +7,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from rdkit import Chem
-
 from .errors import MappingLimit, SARInputError
-from .graphs import Graph, fixed_mappings, graph
+from .graphs import FixedAtoms, Graph, fixed_mappings, graph
 from .hydrogen import hydrogen_sites, hydrogen_view, region_view
 from .limits import MAX_HYDROGEN_VIEWS
 from .molecules import chemical_identity, read_molfile
@@ -46,6 +44,7 @@ class CompiledReference:
     _selected: frozenset[int]
     _anchors: frozenset[int]
     _pool: Any = None
+    _fixed: FixedAtoms | None = None
 
     def compare(self, candidate_molfile: str) -> dict[str, Any]:
         return self._compare(candidate_molfile, details=False)
@@ -71,14 +70,18 @@ class CompiledReference:
         except SARInputError as exc:
             return _result("ineligible", "candidate_ineligible", exc.code)
         result = _compare_graphs(
-            self._reference, candidate, self._selected, self._anchors, details=details
+            self._reference,
+            candidate,
+            self._selected,
+            self._anchors,
+            details=details,
+            prepared=self._fixed,
         )
         fixed_count = self._reference.mol.GetNumAtoms() - len(self._selected)
+        if candidate.mol.GetNumAtoms() != fixed_count:
+            return result
         ports = attachment_groups(self._reference.mol, self._selected)
-        if (
-            candidate.mol.GetNumAtoms() != fixed_count
-            or sum(len(key) * len(values) for key, values in ports.items()) != 1
-        ):
+        if sum(len(key) * len(values) for key, values in ports.items()) != 1:
             return result
         accepted, failures = None, set()
         anchor = next(iter(self._anchors))
@@ -127,6 +130,7 @@ class CompiledReference:
                 self._selected,
                 self._anchors,
                 details=True,
+                prepared=self._fixed,
             )
             if proof["match_status"] == "ambiguous":
                 return _result("ambiguous", *proof["reasons"])
@@ -173,7 +177,9 @@ def compile_reference(
         for key in attachment_groups(reference.mol, selected)
         for endpoint, _ in key
     )
-    return CompiledReference(reference, selected, anchors, pool)
+    return CompiledReference(
+        reference, selected, anchors, pool, FixedAtoms(reference, selected)
+    )
 
 
 def _compare_graphs(
@@ -184,8 +190,9 @@ def _compare_graphs(
     *,
     details: bool = False,
     membership: bool = False,
+    prepared: FixedAtoms | None = None,
 ) -> dict[str, Any]:
-    if len(Chem.GetMolFrags(reference.mol)) != len(Chem.GetMolFrags(candidate.mol)):
+    if reference.facts.components != candidate.facts.components:
         return _result("not_matched", "components_changed")
     fixed_count = reference.mol.GetNumAtoms() - len(selected)
     if candidate.mol.GetNumAtoms() < fixed_count or (
@@ -194,7 +201,9 @@ def _compare_graphs(
         return _result("not_matched", "candidate_variable_empty")
     failures, proof = set(), None
     try:
-        for mapping in fixed_mappings(reference, candidate, selected):
+        for mapping in fixed_mappings(
+            reference, candidate, selected, prepared=prepared
+        ):
             remaining = frozenset(range(candidate.mol.GetNumAtoms())) - frozenset(
                 mapping.values()
             )

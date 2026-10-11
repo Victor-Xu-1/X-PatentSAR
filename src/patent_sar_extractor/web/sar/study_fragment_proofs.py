@@ -3,7 +3,6 @@
 from functools import lru_cache
 
 from ...core.sar.matching import compile_reference
-from ...core.sar.molecules import read_molfile
 from ...core.sar.prepared_graphs import GraphPool
 from ...core.sar.study_graphs import cut_identity, reference_cut
 
@@ -13,7 +12,7 @@ def verify_aromatic_fragments(report, pairs, by_id, check):
 
     @lru_cache(maxsize=256)
     def source_mol(identifier):
-        return read_molfile(by_id[identifier].molfile)
+        return pool.read(by_id[identifier].molfile).mol
 
     grouped = {}
     for pair in pairs:
@@ -41,7 +40,7 @@ def verify_aromatic_fragments(report, pairs, by_id, check):
             continue
         check()
         reference = by_id[region.molecule_id].molfile
-        expected = reference_cut(reference, region.atom_indices)
+        expected = reference_cut(reference, region.atom_indices, pool=pool)
         if (
             expected["fixed_background_sha256"] != summary.fixed_background_sha256
             or expected["id"] != summary.reference_fragment_id
@@ -64,7 +63,10 @@ def verify_aromatic_fragments(report, pairs, by_id, check):
             ):
                 raise ValueError("study_fragment_graph_proof")
             fragment = cut_identity(
-                candidate, proof["variable_atom_indices"], proof["attachment_mapping"]
+                candidate,
+                proof["variable_atom_indices"],
+                proof["attachment_mapping"],
+                pool=pool,
             )
             if (
                 fragment["id"] != pair.fragment_id

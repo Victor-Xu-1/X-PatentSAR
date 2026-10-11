@@ -16,6 +16,11 @@ Native input-bound plans and25-pair batches survive interruption. Changes to
 SAR engine8 make old unfinished engine7/older
 checkpoints incompatible; retain their artifacts or roll back the prior wheel,
 never rewrite scientific identities. Completed old reports remain readable.
+Parent verification separately bounds candidate-plan regeneration at30s and
+independent result proof at30s, with a60s overall ceiling. Complete native pair
+work alone cannot publish a report; either verification timeout is a hard failure.
+These CPU-only phases share the existing task/lease; no new queue, model or
+automatic retry is added. The512MiB/180s native-worker budgets are unchanged.
 Fixed endpoints/bond types and full fixed chemistry remain mandatory; internal
 variable endpoints may split/merge as a linker changes. Boundary stereo uses
 anchor-specific ligand maps, not a global variable-atom bijection or raw CIP

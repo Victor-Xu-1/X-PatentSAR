@@ -1,20 +1,85 @@
 """Partial aromatic regions stay labelled graphs, not invented full molecules."""
 
 import unittest
+from collections import Counter
 from itertools import combinations
 
-from rdkit import Chem
+from rdkit import Chem, rdBase
 from test_sar_discovery import source
 from test_sar_graph import prepared
 
 from patent_sar_extractor.core.sar.cut_topology import boundary_regions
 from patent_sar_extractor.core.sar.discovery import discover_sites
 from patent_sar_extractor.core.sar.drawing import draw_fragment
+from patent_sar_extractor.core.sar.fragment_graphs import graph_notation
 from patent_sar_extractor.core.sar.matching import compile_reference
+from patent_sar_extractor.core.sar.site_cuts import candidate_cuts
 from patent_sar_extractor.core.sar.study_graphs import cut_identity, reference_cut
 
 
 class AromaticTests(unittest.TestCase):
+    def test_index_keys_equal_independent_complete_fragment_components(self):
+        for raw in (
+            "COc1ccccc1Cl",
+            "COc1ccc2ccccc2c1Cl",
+            "c1ccccc1Oc1ccccc1Cl",
+            "NC1COCC1F",
+            "FC1CC2CCC1C2N.[Na+]",
+        ):
+            with self.subTest(raw=raw), rdBase.BlockLogs():
+                mol = Chem.MolFromSmiles(raw)
+                count = mol.GetNumAtoms()
+                cuts = list(
+                    candidate_cuts(
+                        mol,
+                        lambda: None,
+                        Counter(),
+                        max_variable=32,
+                        max_fraction=0.4,
+                        min_fixed=6,
+                    )
+                )
+                self.assertTrue(cuts)
+                for actual, selection, port_count in cuts:
+                    selected = set(selection)
+                    boundary = [
+                        bond.GetIdx()
+                        for bond in mol.GetBonds()
+                        if (bond.GetBeginAtomIdx() in selected)
+                        != (bond.GetEndAtomIdx() in selected)
+                    ]
+                    self.assertEqual(len(boundary), port_count)
+                    fractured = Chem.FragmentOnBonds(
+                        mol,
+                        boundary,
+                        dummyLabels=[(0, 0)] * len(boundary),
+                    )
+                    for index in range(count, fractured.GetNumAtoms()):
+                        fractured.GetAtomWithIdx(index).SetAtomMapNum(1)
+                    variable = next(
+                        component
+                        for component in Chem.GetMolFrags(fractured)
+                        if {index for index in component if index < count} == selected
+                    )
+                    fixed = sorted(set(range(fractured.GetNumAtoms())) - set(variable))
+                    if any(
+                        mol.GetBondWithIdx(edge).GetIsAromatic() for edge in boundary
+                    ):
+                        expected = "aromatic-graph-index-v1:" + graph_notation(
+                            fractured, fixed
+                        )
+                    else:
+                        fragment = Chem.MolFragmentToSmiles(
+                            fractured,
+                            atomsToUse=fixed,
+                            canonical=True,
+                            isomericSmiles=True,
+                        )
+                        expected = Chem.MolToSmiles(
+                            Chem.MolFromSmiles(fragment), isomericSmiles=True
+                        )
+                    self.assertEqual(actual, expected)
+
     def test_aromatic_and_ring_block_partitions_equal_independent_components(self):
         for raw in (
             "COc1ccccc1Cl",

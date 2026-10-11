@@ -22,6 +22,8 @@ def make_pair(
     confirmed,
     matcher,
     reference_fragment,
+    *,
+    pool=None,
 ):
     proof = {
         "match_status": "ineligible",
@@ -47,6 +49,7 @@ def make_pair(
             proof["variable_atom_indices"],
             proof["attachment_mapping"],
             hydrogen_anchor=proof.get("candidate_hydrogen_anchor"),
+            pool=pool,
         )
         if (
             fragment["fixed_background_sha256"]
@@ -151,6 +154,7 @@ def analyse_pairs(
             reference["molfile"],
             region["atom_indices"],
             hydrogen_anchor=region.get("hydrogen_anchor"),
+            pool=pool,
         )
         fragments = {ref_fragment["id"]: ref_fragment}
         compact = []
@@ -179,6 +183,7 @@ def analyse_pairs(
                     request["confirm_context"],
                     matcher,
                     ref_fragment,
+                    pool=pool,
                 )
             else:
                 pair = Pair.model_validate(saved[len(batch)]).model_dump()
@@ -202,6 +207,7 @@ def analyse_pairs(
                         pair["variable_atom_indices"],
                         pair["attachment_mapping"],
                         hydrogen_anchor=pair.get("candidate_hydrogen_anchor"),
+                        pool=pool,
                     )
                     if (
                         fragment["id"] != pair["fragment_id"]

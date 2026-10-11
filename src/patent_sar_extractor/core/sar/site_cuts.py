@@ -49,7 +49,9 @@ def hydrogen_cuts(mol, inspect, excluded, *, min_fixed):
 
 def candidate_cuts(mol, inspect, excluded, *, max_variable, max_fraction, min_fixed):
     count = mol.GetNumAtoms()
+    aromatic_edges = {bond.GetIdx() for bond in mol.GetBonds() if bond.GetIsAromatic()}
     previous, fragmented = None, None
+    dummy_neighbors, all_indices = (), frozenset()
     for boundary, mask in boundary_regions(mol, inspect):
         size = mask.bit_count()
         if (
@@ -65,17 +67,25 @@ def candidate_cuts(mol, inspect, excluded, *, max_variable, max_fraction, min_fi
                 fragmented = Chem.FragmentOnBonds(
                     mol, list(boundary), dummyLabels=[(0, 0)] * len(boundary)
                 )
-                for atom in list(fragmented.GetAtoms())[count:]:
+                appended = (
+                    fragmented.GetAtomWithIdx(index)
+                    for index in range(count, fragmented.GetNumAtoms())
+                )
+                dummy_neighbors = []
+                for atom in appended:
                     atom.SetAtomMapNum(1)
+                    dummy_neighbors.extend(
+                        (atom.GetIdx(), neighbor.GetIdx())
+                        for neighbor in atom.GetNeighbors()
+                    )
+                all_indices = frozenset(range(fragmented.GetNumAtoms()))
                 previous = boundary
             included = set(selected)
-            for atom in list(fragmented.GetAtoms())[count:]:
-                if any(
-                    neighbor.GetIdx() in included for neighbor in atom.GetNeighbors()
-                ):
-                    included.add(atom.GetIdx())
-            fixed = sorted(set(range(fragmented.GetNumAtoms())) - included)
-            if any(mol.GetBondWithIdx(edge).GetIsAromatic() for edge in boundary):
+            included.update(
+                dummy for dummy, neighbor in dummy_neighbors if neighbor in included
+            )
+            fixed = sorted(all_indices - included)
+            if any(edge in aromatic_edges for edge in boundary):
                 key = "aromatic-graph-index-v1:" + graph_notation(fragmented, fixed)
                 yield key, selected, len(boundary)
                 continue
