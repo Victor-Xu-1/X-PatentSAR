@@ -352,23 +352,30 @@
   font-weight: 500;
   margin: 6px 0 0;
 }
-.sar-property-comparison {
+.sar-property-panel {
   margin-block: 16px;
+  min-width: 0;
+}
+.sar-property-comparison {
+  margin: 0;
   max-width: 100%;
 }
-.sar-property-comparison table {
+.sar-property-comparison .sar-property-table {
   border-collapse: collapse;
   width: 100%;
   min-width: 560px;
+  table-layout: fixed;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
-.sar-property-comparison td,
-.sar-property-comparison th {
+.sar-property-comparison .sar-property-table :is(td, th) {
+  min-width: 0;
+  max-width: none;
   padding: 9px 10px;
   text-align: center;
   border-bottom: 1px solid var(--line-soft);
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .sar-property-comparison th {
   font-weight: 500;
@@ -389,6 +396,17 @@
 }
 .sar-property-comparison tbody tr:last-child {
   color: var(--muted);
+}
+.sar-property-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  padding-top: 4px;
+}
+.sar-property-controls button {
+  width: 28px;
+  min-height: 28px;
+  padding: 4px;
 }
 .sar-candidate-coverage {
   color: var(--muted);

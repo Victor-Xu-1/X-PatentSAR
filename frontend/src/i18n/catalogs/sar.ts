@@ -9,6 +9,8 @@ export const sar: Record<string, string> = {
   活性规则: 'Activity rules',
   历史研究: 'Historical study',
   研究预览: 'Research preview',
+  向左滚动性质: 'Scroll properties left',
+  向右滚动性质: 'Scroll properties right',
   导出格式: 'Export format',
   研究选项: 'Study options',
   '实验条件确认（可选）': 'Assay confirmation (optional)',

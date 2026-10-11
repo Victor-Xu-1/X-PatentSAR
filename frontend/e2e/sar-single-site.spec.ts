@@ -99,6 +99,23 @@ for (const width of [390, 800, 1672]) {
     ).json();
     const properties = preview.getByRole('table', { name: 'Properties', exact: true });
     await expect(properties.getByRole('row')).toHaveCount(4);
+    const propertyViewport = preview.locator('.sar-property-comparison');
+    if (await propertyViewport.evaluate((element) => element.clientWidth >= 560)) {
+      expect(
+        await propertyViewport.evaluate(
+          (element) => element.scrollWidth <= element.clientWidth + 1,
+        ),
+      ).toBe(true);
+      expect(
+        await properties
+          .getByRole('columnheader', { name: 'LogS', exact: true })
+          .evaluate((cell) => {
+            const bounds = cell.closest('.sar-property-comparison')!.getBoundingClientRect();
+            const column = cell.getBoundingClientRect();
+            return column.left >= bounds.left - 1 && column.right <= bounds.right + 1;
+          }),
+      ).toBe(true);
+    }
     expect(
       await properties
         .locator('th, td')
@@ -126,6 +143,28 @@ for (const width of [390, 800, 1672]) {
     await page.locator('.language-switch select').selectOption('en');
     if (width === 390) {
       const viewport = preview.locator('.sar-property-comparison');
+      const nextProperty = preview.getByRole('button', { name: 'Scroll properties right' });
+      await expect(nextProperty).toBeVisible();
+      await expect(preview.getByRole('button', { name: 'Scroll properties left' })).toBeDisabled();
+      await nextProperty.click();
+      await expect
+        .poll(() => viewport.evaluate((element) => element.scrollLeft))
+        .toBeGreaterThan(await viewport.evaluate((element) => element.clientWidth / 2));
+      await nextProperty.click();
+      await expect(nextProperty).toBeDisabled();
+      expect(
+        await properties
+          .getByRole('columnheader', { name: 'LogS', exact: true })
+          .evaluate((cell) => {
+            const bounds = cell.closest('.sar-property-comparison')!.getBoundingClientRect();
+            const column = cell.getBoundingClientRect();
+            return column.left >= bounds.left - 1 && column.right <= bounds.right + 1;
+          }),
+      ).toBe(true);
+      await viewport.evaluate((element) => {
+        element.scrollLeft = 0;
+      });
+      await expect(preview.getByRole('button', { name: 'Scroll properties left' })).toBeDisabled();
       expect(await viewport.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(
         true,
       );
