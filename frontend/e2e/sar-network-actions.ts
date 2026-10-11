@@ -86,6 +86,8 @@ export async function createNetwork(page: Page, width: number, csv = terminalCSV
         .getByRole('button', { name: 'Reference', exact: true })
         .click();
       await setup.getByLabel('Selection name', { exact: true }).fill(name);
+      const clear = setup.getByRole('button', { name: 'Clear selection', exact: true });
+      if (await clear.isEnabled()) await clear.click();
       await setup.getByRole('button', { name: atom, exact: true }).click();
       await setup.getByRole('button', { name: 'Save region', exact: true }).click();
       await expect(
