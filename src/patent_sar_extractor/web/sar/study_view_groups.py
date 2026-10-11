@@ -1,9 +1,10 @@
 """Conserve source memberships while presenting current global potency bands."""
 
 from collections import Counter, OrderedDict, defaultdict
+from dataclasses import dataclass
 
 from ..errors import WebError
-from .study_models import StudyBin
+from .study_models import StudyBin, StudyRegionSummary, StudyScaffold
 
 
 class GroupBins:
@@ -12,6 +13,7 @@ class GroupBins:
     def __init__(self, domain):
         self.domain = domain
         self._items = OrderedDict()
+        self._member_references = 0
 
     def for_members(self, members):
         key = tuple(sorted(members))
@@ -22,29 +24,25 @@ class GroupBins:
             )
             if len(key) <= 4096:
                 self._items[key] = result
-                while (
-                    len(self._items) > 256
-                    or sum(len(item) for item in self._items) > 4096
-                ):
-                    self._items.popitem(last=False)
+                self._member_references += len(key)
+                while len(self._items) > 256 or self._member_references > 4096:
+                    removed, _ = self._items.popitem(last=False)
+                    self._member_references -= len(removed)
             return [StudyBin.model_validate(dict(item)) for item in result]
         self._items.move_to_end(key)
         return [StudyBin.model_validate(dict(item)) for item in self._items[key]]
 
 
-def _group(item, ids, states, bins):
-    members = [identifier for identifier in item.molecule_ids if identifier in ids]
-    return item.model_copy(
-        update={
-            "molecule_ids": members,
-            "molecule_count": len(members),
-            "strong_count": sum(states[identifier]["strong"] for identifier in members),
-            "bins": bins.for_members(members),
-        }
-    )
+def _group_fields(members, states, bins):
+    return {
+        "molecule_ids": members,
+        "molecule_count": len(members),
+        "strong_count": sum(states[identifier]["strong"] for identifier in members),
+        "bins": bins.for_members(members),
+    }
 
 
-def _region(summary, selected, ids, states, bins):
+def _require_coverage(summary, selected, ids):
     pool = (
         (ids - {summary.region.molecule_id})
         if summary.comparison_pool is None
@@ -56,6 +54,9 @@ def _region(summary, selected, ids, states, bins):
             "sar_report_scope",
             "Published pairs do not cover the identified source pool.",
         )
+
+
+def _region(summary, selected, ids, states, bins):
     counts = Counter(pair["match_status"] for pair in selected)
     outcomes = defaultdict(Counter)
     for pair in selected:
@@ -63,13 +64,16 @@ def _region(summary, selected, ids, states, bins):
             outcomes[pair["fragment_id"]][pair["comparison"]] += 1
     fragments = []
     for original in summary.fragments:
-        fragment = _group(original, ids, states, bins)
-        if not fragment.molecule_ids:
+        members = [
+            identifier for identifier in original.molecule_ids if identifier in ids
+        ]
+        if not members:
             continue
-        changes = outcomes[fragment.id]
+        changes = outcomes[original.id]
         fragments.append(
-            fragment.model_copy(
+            original.model_copy(
                 update={
+                    **_group_fields(members, states, bins),
                     "better": changes["better"],
                     "worse": changes["worse"],
                     "missing": changes["missing"],
@@ -101,20 +105,46 @@ def _region(summary, selected, ids, states, bins):
     )
 
 
-def current_groups(captured, ids, domain, states, pairs):
-    bins = GroupBins(domain)
+@dataclass(frozen=True)
+class GroupScope:
+    """Read-only captured memberships after every current pool is checked."""
+
+    scaffolds: list[StudyScaffold]
+    regions: list[StudyRegionSummary]
+    pairs: dict[str, list[dict]]
+
+
+def source_groups(captured, ids, pairs) -> GroupScope:
     indexed = defaultdict(list)
     for pair in pairs:
         if pair["molecule_id"] in ids:
             indexed[pair["region_id"]].append(pair)
     scaffolds = [
-        _group(item, ids, states, bins)
-        for item in captured.scaffolds
-        if ids.intersection(item.molecule_ids)
+        item for item in captured.scaffolds if ids.intersection(item.molecule_ids)
     ]
     regions = [
-        _region(summary, indexed[summary.region.id], ids, states, bins)
-        for summary in captured.regions
-        if summary.region.molecule_id in ids
+        summary for summary in captured.regions if summary.region.molecule_id in ids
+    ]
+    for summary in regions:
+        _require_coverage(summary, indexed[summary.region.id], ids)
+    return GroupScope(scaffolds, regions, indexed)
+
+
+def current_groups(captured, ids, domain, states, pairs):
+    scope = source_groups(captured, ids, pairs)
+    bins = GroupBins(domain)
+    scaffolds = [
+        item.model_copy(
+            update=_group_fields(
+                [identifier for identifier in item.molecule_ids if identifier in ids],
+                states,
+                bins,
+            )
+        )
+        for item in scope.scaffolds
+    ]
+    regions = [
+        _region(summary, scope.pairs[summary.region.id], ids, states, bins)
+        for summary in scope.regions
     ]
     return scaffolds, regions

@@ -37,7 +37,7 @@ def _scalar_difference(left: Value, right: Value) -> float | None:
 
 
 def preview(queue, identifier: str, region_id: str, molecule_id: str) -> StudyPreview:
-    job, report, _ = StudyResults(queue).current(identifier)
+    job, report, _ = StudyResults(queue).current(identifier, records_only=True)
     summary = next(
         (item for item in report.regions if item.region.id == region_id), None
     )
@@ -47,7 +47,11 @@ def preview(queue, identifier: str, region_id: str, molecule_id: str) -> StudyPr
         )
     region = summary.region
     members = {mid for fragment in summary.fragments for mid in fragment.molecule_ids}
-    if molecule_id not in members or molecule_id == region.molecule_id:
+    if (
+        molecule_id not in report.molecule_ids
+        or molecule_id not in members
+        or molecule_id == region.molecule_id
+    ):
         raise WebError(
             422,
             "sar_preview_selection",

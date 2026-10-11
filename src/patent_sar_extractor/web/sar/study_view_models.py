@@ -1,9 +1,18 @@
 """Current activity presentation metadata, independent of scientific checkpoints."""
 
+from dataclasses import dataclass
 from typing import Literal
 
 from ..dto import DTO
-from .study_models import StudyOverview
+from .study_models import (
+    ConditionDeclaration,
+    StudyContext,
+    StudyOverview,
+    StudyRegionSummary,
+    StudyResultPolicy,
+    StudyRow,
+    StudyScaffold,
+)
 
 
 class ActivityBasis(DTO):
@@ -17,3 +26,17 @@ class ActivityBasis(DTO):
 
 class CurrentStudyOverview(StudyOverview):
     activity_basis: ActivityBasis
+
+
+@dataclass(frozen=True)
+class CurrentRecordView:
+    """Internal facts view; captured groups supply memberships, never chart counts."""
+
+    molecule_count: int
+    molecule_ids: set[str]
+    policies: list[StudyResultPolicy]
+    contexts: list[StudyContext]
+    context_declarations: list[ConditionDeclaration]
+    rows: list[StudyRow]
+    scaffolds: list[StudyScaffold]
+    regions: list[StudyRegionSummary]
