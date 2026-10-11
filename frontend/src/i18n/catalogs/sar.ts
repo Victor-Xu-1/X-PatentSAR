@@ -220,6 +220,9 @@ export const sar: Record<string, string> = {
   '描述性 Murcko 骨架': 'Descriptive Murcko scaffold',
   '强活性 {strong}/{total}': 'Strong activity {strong}/{total}',
   强活性占比: 'Strong-activity share',
+  'H 位点': 'H site',
+  '单一变化区域，支持普通氢位点、一至两个连接点及非芳香环片段；其余结构严格不变。氢边界手性、芳香切割及更多连接点仍不支持自动枚举。':
+    'One variable region: ordinary H sites, one/two attachment ports and nonaromatic ring segments; all other structure stays fixed. Hydrogen-boundary stereo, aromatic cuts and further ports are not automatically enumerated.',
   '强活性 {percent}%': 'Strong {percent}%',
   查看分子: 'View molecules',
   无骨架分组: 'No scaffold groups',

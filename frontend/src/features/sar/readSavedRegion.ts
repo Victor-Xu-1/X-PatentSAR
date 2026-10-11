@@ -56,6 +56,7 @@ export async function readSavedRegion(datasetId: string, request: RegionRequest)
       region.graph_sha256 === request.expected_graph_sha256 &&
       region.name === name &&
       region.kind === kind &&
+      (region.hydrogen_anchor ?? null) === (request.hydrogen_anchor ?? null) &&
       [...region.atom_indices].sort((a, b) => a - b).join(',') === atoms,
   );
   if (matches.length !== 1)

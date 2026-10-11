@@ -179,7 +179,11 @@ class SARService:
                     len(key) * len(values) for key, values in groups.items()
                 )
             else:
-                attachments = validate_region(molecule.molfile, request.atom_indices)
+                attachments = validate_region(
+                    molecule.molfile,
+                    request.atom_indices,
+                    hydrogen_anchor=request.hydrogen_anchor,
+                )
         except ValueError as error:
             raise WebError(
                 422,
@@ -195,6 +199,11 @@ class SARService:
                 sorted(request.atom_indices),
                 request.name,
                 request.kind,
+                *(
+                    ["ordinary_hydrogen", request.hydrogen_anchor]
+                    if request.hydrogen_anchor is not None
+                    else []
+                ),
             ]
         )[:32]
         return self.datasets.save_region(
@@ -205,6 +214,7 @@ class SARService:
                 dataset_revision=dataset.revision,
                 graph_sha256=molecule.graph_sha256,
                 atom_indices=sorted(request.atom_indices),
+                hydrogen_anchor=request.hydrogen_anchor,
                 attachment_count=attachments,
                 created_at=now(),
                 name=request.name,

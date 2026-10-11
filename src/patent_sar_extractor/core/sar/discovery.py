@@ -7,12 +7,13 @@ implicit-H/aromatic boundaries and >2 ports are not an exhaustive search.
 
 import hashlib
 from collections import Counter, defaultdict
+from itertools import chain
 
 from ..identifier_order import natural_identifier_key
 from .errors import SARInputError
 from .matching import compile_reference
 from .molecules import chemical_identity, read_molfile
-from .site_cuts import candidate_cuts
+from .site_cuts import candidate_cuts, hydrogen_cuts
 
 MAX_CUTS = 100000
 MAX_SITES = 4096
@@ -36,7 +37,7 @@ def discover_sites(
     ordered = sorted(
         rows, key=lambda row: (natural_identifier_key(row["label"]), row["id"])
     )
-    cuts, boundaries = 0, 0
+    cuts, boundaries, hydrogen_sites = 0, 0, 0
 
     def inspect():
         nonlocal boundaries
@@ -52,25 +53,34 @@ def discover_sites(
             continue
         mol = read_molfile(row["molfile"])
         identities[row["id"]] = chemical_identity(mol)
-        for key, selection, ports in candidate_cuts(
+        heavy_cuts = candidate_cuts(
             mol,
             inspect,
             excluded,
             max_variable=MAX_VARIABLE,
             max_fraction=0.4,
             min_fixed=6,
+        )
+        for key, selection, ports, hydrogen_anchor in chain(
+            ((*cut, None) for cut in heavy_cuts),
+            hydrogen_cuts(mol, inspect, excluded, min_fixed=6),
         ):
             cuts += 1
+            hydrogen_sites += hydrogen_anchor is not None
             if cuts > MAX_CUTS:
                 raise SARInputError("study_discovery_cut_limit")
             previous = families[key].get(row["id"])
-            if previous is not None and previous != (selection, ports):
+            if previous is not None and previous != (selection, ports, hydrogen_anchor):
                 families[key][row["id"]] = ()  # No arbitrary symmetric site.
             elif row["id"] not in families[key]:
-                families[key][row["id"]] = (selection, ports)
+                families[key][row["id"]] = (selection, ports, hydrogen_anchor)
     by_id = {row["id"]: row for row in ordered}
     manual = {
-        (region["molecule_id"], tuple(sorted(region["atom_indices"])))
+        (
+            region["molecule_id"],
+            tuple(sorted(region["atom_indices"])),
+            region.get("hydrogen_anchor"),
+        )
         for region in manual_regions
     }
     sites, comparisons = [], 0
@@ -89,16 +99,21 @@ def discover_sites(
                 identifier,
             ),
         ):
-            selection, ports = members[mid]
+            selection, ports, hydrogen_anchor = members[mid]
             candidates = [
                 other
                 for other in members
                 if other != mid and identities[other] != identities[mid]
             ]
-            if not candidates or (mid, tuple(sorted(selection))) in manual:
+            if (
+                not candidates
+                or (mid, tuple(sorted(selection)), hydrogen_anchor) in manual
+            ):
                 continue
             try:
-                compile_reference(by_id[mid]["molfile"], selection)
+                compile_reference(
+                    by_id[mid]["molfile"], selection, hydrogen_anchor=hydrogen_anchor
+                )
             except ValueError:
                 excluded["unsupported_reference_boundary"] += 1
                 continue
@@ -110,6 +125,9 @@ def discover_sites(
                     by_id[mid]["graph_sha256"],
                     key,
                     ",".join(map(str, selection)),
+                    "ordinary_hydrogen:" + str(hydrogen_anchor)
+                    if hydrogen_anchor is not None
+                    else "original_atoms",
                 )
             )
             region_id = hashlib.sha256(seed.encode()).hexdigest()[:32]
@@ -122,6 +140,7 @@ def discover_sites(
                         "molecule_id": mid,
                         "graph_sha256": by_id[mid]["graph_sha256"],
                         "atom_indices": list(selection),
+                        "hydrogen_anchor": hydrogen_anchor,
                         "attachment_count": ports,
                         "kind": "variable",
                         "name": f"S{len(sites) + 1}",
@@ -140,18 +159,19 @@ def discover_sites(
             if len(sites) > MAX_SITES or comparisons > pair_budget:
                 raise SARInputError("study_discovery_pair_limit")
     return sites, {
-        "method": "single-region-one-two-cut-v2",
+        "method": "single-region-one-two-cut-h-v3",
         "candidate_sites": len(sites),
         "candidate_comparisons": comparisons,
         "indexed_cuts": cuts,
         "examined_boundaries": boundaries,
+        "indexed_hydrogen_sites": hydrogen_sites,
         "max_cut_bonds": 2,
         "excluded": dict(excluded),
         "max_variable_atoms": MAX_VARIABLE,
         "max_variable_fraction": 0.4,
         "min_fixed_atoms": 6,
         "limitations": [
-            "implicit_h_not_enumerated",
+            "hydrogen_boundary_stereo_not_supported",
             "aromatic_boundaries_not_cut",
             "more_than_two_ports_not_enumerated",
         ],

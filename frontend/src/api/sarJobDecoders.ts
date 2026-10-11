@@ -58,7 +58,7 @@ export const decodePair: Decoder<Pair> = (v, p = '$') => {
       !['better', 'worse', 'equal'].includes(result.comparison))
   )
     throw new ContractError(`${p}.fold_change`);
-  return {
+  const decoded = {
     ...result,
     ...additions(
       v,
@@ -67,10 +67,23 @@ export const decodePair: Decoder<Pair> = (v, p = '$') => {
         fragment_id: nullOr(string),
         variable_atom_indices: array(count),
         attachment_mapping: array(array(count)),
+        candidate_hydrogen_anchor: nullOr(count),
       },
       p,
     ),
   };
+  if (
+    decoded.candidate_hydrogen_anchor != null &&
+    (decoded.candidate_hydrogen_anchor > 511 ||
+      decoded.match_status !== 'matched' ||
+      !decoded.variable_atom_indices ||
+      decoded.variable_atom_indices.length ||
+      decoded.attachment_mapping?.length !== 1 ||
+      decoded.attachment_mapping[0]?.length !== 2 ||
+      decoded.attachment_mapping[0][1] !== decoded.candidate_hydrogen_anchor)
+  )
+    throw new ContractError(p + '.candidate_hydrogen_anchor');
+  return decoded;
 };
 const pairs = object({
   items: array(decodePair),

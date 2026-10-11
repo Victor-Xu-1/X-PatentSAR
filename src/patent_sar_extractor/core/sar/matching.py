@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
@@ -10,15 +11,19 @@ from rdkit import Chem
 
 from .errors import MappingLimit, SARInputError
 from .graphs import Graph, fixed_mappings, graph
-from .molecules import read_molfile
-from .regions import attachment_groups, attachment_mapping, connected, selection
+from .hydrogen import hydrogen_sites, hydrogen_view, region_view
+from .limits import MAX_HYDROGEN_VIEWS
+from .molecules import chemical_identity, read_molfile
+from .regions import attachment_groups, attachment_mapping, connected
 from .stereo import boundary_supported, preserved
 
 
-def validate_region(molfile: str, atom_indices: Sequence[int]) -> int:
+def validate_region(
+    molfile: str, atom_indices: Sequence[int], *, hydrogen_anchor=None
+) -> int:
     """Return number of cut bonds, or ValueError containing a safe code only."""
     mol = read_molfile(molfile)
-    selected = selection(mol, atom_indices)
+    mol, selected = region_view(mol, atom_indices, hydrogen_anchor)
     return sum(
         len(key) * len(values)
         for key, values in attachment_groups(mol, selected).items()
@@ -60,17 +65,95 @@ class CompiledReference:
             candidate = graph(read_molfile(candidate_molfile))
         except SARInputError as exc:
             return _result("ineligible", "candidate_ineligible", exc.code)
-        return _compare_graphs(
+        result = _compare_graphs(
             self._reference, candidate, self._selected, self._anchors, details=details
         )
+        fixed_count = self._reference.mol.GetNumAtoms() - len(self._selected)
+        ports = attachment_groups(self._reference.mol, self._selected)
+        if (
+            candidate.mol.GetNumAtoms() != fixed_count
+            or sum(len(key) * len(values) for key, values in ports.items()) != 1
+        ):
+            return result
+        accepted, failures = None, set()
+        anchor = next(iter(self._anchors))
+        required = Counter(
+            (bond, self._reference.atoms[index])
+            for index, bond in self._reference.adjacency[anchor].items()
+            if index not in self._selected
+        )
+        possible = []
+        for index, key in enumerate(candidate.atoms):
+            adjusted = (*key[:5], key[5] + 1, key[6] - 1, key[7])
+            if (
+                key[0] > 1
+                and key[6] > 0
+                and adjusted == self._reference.atoms[anchor]
+                and required
+                == Counter(
+                    (bond, candidate.atoms[other])
+                    for other, bond in candidate.adjacency[index].items()
+                )
+            ):
+                possible.append(index)
+        if len(possible) > MAX_HYDROGEN_VIEWS:
+            return _result("ambiguous", "hydrogen_view_limit_exceeded")
+        if not possible:
+            return result
+        sites, identity = (
+            hydrogen_sites(candidate.mol),
+            chemical_identity(candidate.mol),
+        )
+        for index in possible:
+            atom = candidate.mol.GetAtomWithIdx(index)
+            try:
+                expanded, virtual = hydrogen_view(
+                    candidate.mol,
+                    atom.GetIdx(),
+                    prepared_sites=sites,
+                    source_identity=identity,
+                )
+            except SARInputError as error:
+                failures.add(error.code)
+                continue
+            proof = _compare_graphs(
+                self._reference,
+                graph(expanded),
+                self._selected,
+                self._anchors,
+                details=True,
+            )
+            if proof["match_status"] == "ambiguous":
+                return _result("ambiguous", *proof["reasons"])
+            if proof["match_status"] != "matched":
+                failures.update(proof["reasons"])
+                continue
+            if proof["variable_atom_indices"] != [virtual]:
+                raise SARInputError("hydrogen_view_identity")
+            signature = tuple(map(tuple, proof["attachment_mapping"]))
+            if accepted is not None and accepted[0] != signature:
+                return _result("ambiguous", "ambiguous_region_mapping")
+            accepted = (signature, atom.GetIdx())
+        if accepted is None:
+            return _result("not_matched", *(failures or result["reasons"]))
+        proof = _result("matched")
+        if details:
+            proof.update(
+                variable_atom_indices=[],
+                attachment_mapping=[list(pair) for pair in accepted[0]],
+                candidate_hydrogen_anchor=accepted[1],
+            )
+        return proof
 
 
 def compile_reference(
-    reference_molfile: str, atom_indices: Sequence[int]
+    reference_molfile: str, atom_indices: Sequence[int], *, hydrogen_anchor=None
 ) -> CompiledReference:
     """Optional pure worker helper; invalid references raise safe ValueError."""
-    reference = graph(read_molfile(reference_molfile))
-    selected = selection(reference.mol, atom_indices)
+    mol, selected = region_view(
+        read_molfile(reference_molfile), atom_indices, hydrogen_anchor
+    )
+    reference = graph(mol)
     if not boundary_supported(reference, selected):
         raise SARInputError("unsupported_boundary_bond_stereo")
     anchors = frozenset(

@@ -27,8 +27,10 @@ export function compactNetworkSites(sites: StudyRegionSummary[]): StudyRegionSum
             a.site.region.molecule_id === b.site.region.molecule_id &&
             a.site.region.graph_sha256 === b.site.region.graph_sha256 &&
             a.members === b.members &&
-            a.atoms.size < b.atoms.size &&
-            [...a.atoms].every((index) => b.atoms.has(index)),
+            b.site.region.hydrogen_anchor == null &&
+            (a.site.region.hydrogen_anchor != null
+              ? b.atoms.has(a.site.region.hydrogen_anchor)
+              : a.atoms.size < b.atoms.size && [...a.atoms].every((index) => b.atoms.has(index))),
         ),
     )
     .map((item) => item.site);

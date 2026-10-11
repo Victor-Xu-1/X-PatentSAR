@@ -25,6 +25,20 @@ const current = {
 };
 
 describe('explicit legacy and one/two-port discovery coverage', () => {
+  it('requires declared hydrogen coverage without silently upgrading old methods', () => {
+    const hydrogen = {
+      ...current,
+      method: 'single-region-one-two-cut-h-v3',
+      indexed_hydrogen_sites: 1,
+    };
+    expect(decodeStudyDiscovery(hydrogen)).toEqual(hydrogen);
+    expect(() =>
+      decodeStudyDiscovery({ ...hydrogen, indexed_hydrogen_sites: undefined }),
+    ).toThrow();
+    expect(() =>
+      decodeStudyDiscovery({ ...hydrogen, indexed_hydrogen_sites: hydrogen.indexed_cuts + 1 }),
+    ).toThrow();
+  });
   it('preserves legacy payload shape and never upgrades its boundary coverage', () => {
     expect(decodeStudyDiscovery(legacy)).toEqual(legacy);
     expect(() => decodeStudyDiscovery({ ...legacy, max_cut_bonds: 2 })).toThrow();

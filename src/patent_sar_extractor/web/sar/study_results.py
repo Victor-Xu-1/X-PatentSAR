@@ -175,6 +175,7 @@ class StudyResults:
                 if not molecule.eligible or not molecule.molfile:
                     raise ValueError("unavailable")
                 atoms = []
+                hydrogen_anchor = None
                 if region_id:
                     region = next(
                         (
@@ -188,6 +189,7 @@ class StudyResults:
                         raise ValueError("unavailable")
                     if region.molecule_id == key:
                         atoms = region.atom_indices
+                        hydrogen_anchor = region.hydrogen_anchor
                     else:
                         with self.queue.service.store.connect() as connection:
                             saved = connection.execute(
@@ -198,7 +200,12 @@ class StudyResults:
                             pair = Pair.model_validate_json(saved[0])
                             if pair.match_status == "matched":
                                 atoms = pair.variable_atom_indices
-                svg = draw_molecule_preview(molecule.molfile, highlighted_atoms=atoms)
+                                hydrogen_anchor = pair.candidate_hydrogen_anchor
+                svg = draw_molecule_preview(
+                    molecule.molfile,
+                    highlighted_atoms=atoms,
+                    hydrogen_anchor=hydrogen_anchor,
+                )
             elif kind == "scaffold":
                 scaffold = next(item for item in report.scaffolds if item.id == key)
                 svg = draw_fragment(scaffold.smiles or "")

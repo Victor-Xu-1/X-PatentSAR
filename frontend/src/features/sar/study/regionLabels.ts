@@ -4,7 +4,9 @@ import type { Atom, Region } from '../../../api/sarTypes';
 export function regionLabels(atoms: Atom[], regions: Region[]) {
   const placed: { x: number; y: number; anchorX: number; anchorY: number; order: number }[] = [];
   for (const [order, region] of regions.entries()) {
-    const selected = atoms.filter((atom) => region.atom_indices.includes(atom.index));
+    const selected = atoms.filter(
+      (atom) => region.atom_indices.includes(atom.index) || atom.index === region.hydrogen_anchor,
+    );
     if (!selected.length) continue;
     const anchorX = (1000 * selected.reduce((sum, atom) => sum + atom.x, 0)) / selected.length;
     const anchorY = 800 * Math.min(...selected.map((atom) => atom.y));

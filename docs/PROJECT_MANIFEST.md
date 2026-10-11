@@ -1,6 +1,6 @@
 # Project governance manifest
 
-- Single-site discovery ownership: SAR engine5 uses `core/sar/discovery.py` as
+- Single-site discovery ownership: SAR engine6 uses `core/sar/discovery.py` as
   the sole bounded candidate planner. `cut_topology.py` enumerates exact connected
   one/two-edge partitions and `site_cuts.py` indexes canonical backgrounds;
   neither is a proof authority. The existing strict compiled matcher freezes
@@ -15,6 +15,12 @@
   paging and transformation preview; PK is existing recorded measurement data,
   never invented prediction. Original extraction epochs and historical artifacts
   remain unchanged. Search coverage and complete-refusal budgets are explicit.
+  `hydrogen.py` owns source-preserving one-ordinary-H views for the same matcher
+  and drawing availability. Virtual nodes stay private; Region/Pair store original
+  anchors, not fabricated indices. Parent H proofs, immutable fragment identities,
+  preview and CAS/readback all preserve that binding. No relaxed atom keys;
+  isotope H is not substituted for an implicit ordinary H, and boundary stereo
+  or capped ambiguous views cannot be promoted. API1/SQL2/report1 remain additive.
 
 - Current SAR activity ownership: `source_scope.py` defines identified final
   compounds; source-only placeholders, blank IDs and explicit intermediates are
@@ -35,7 +41,7 @@
   engine/checkpoint change, external transmission or original mutation. Detail
   disclosure reduces everyday noise without dropping source QA or uncertainty.
 
-- SAR study evidence/craft ownership: engine5 uses `study_distributions.py` for one
+- SAR study evidence/craft ownership: engine6 uses `study_distributions.py` for one
   prepared full-context chart domain and disjoint source-ID accounting; observation
   repeats remain separate. `study_conditions.py` alone validates source-anchored
   missing-field declarations; source QA/known conditions/units remain unchanged.

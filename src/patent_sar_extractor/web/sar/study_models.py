@@ -140,11 +140,16 @@ class StudyRegionSummary(DTO):
 
 
 class StudyDiscovery(DTO):
-    method: Literal["single-non-ring-bond-v1", "single-region-one-two-cut-v2"]
+    method: Literal[
+        "single-non-ring-bond-v1",
+        "single-region-one-two-cut-v2",
+        "single-region-one-two-cut-h-v3",
+    ]
     candidate_sites: int = Field(ge=0, le=4096)
     candidate_comparisons: int = Field(ge=0, le=75000)
     indexed_cuts: int = Field(ge=0, le=100000)
     examined_boundaries: int = Field(default=0, ge=0, le=500000)
+    indexed_hydrogen_sites: int = Field(default=0, ge=0, le=100000)
     max_cut_bonds: Literal[1, 2] = 1
     excluded: dict[str, int]
     max_variable_atoms: Literal[32] = 32

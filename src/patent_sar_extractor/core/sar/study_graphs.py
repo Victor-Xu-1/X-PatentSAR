@@ -8,8 +8,8 @@ from rdkit import Chem, rdBase
 from rdkit.Chem.Scaffolds import MurckoScaffold
 
 from .errors import SARInputError
+from .hydrogen import region_view
 from .molecules import chemical_identity, read_molfile
-from .regions import selection
 
 
 def _sha(value: str) -> str:
@@ -17,7 +17,11 @@ def _sha(value: str) -> str:
 
 
 def cut_identity(
-    molfile: str, variable_indices: list[int], attachment_mapping: list[list[int]]
+    molfile: str,
+    variable_indices: list[int],
+    attachment_mapping: list[list[int]],
+    *,
+    hydrogen_anchor=None,
 ) -> dict:
     """Label cut dummies by immutable reference fixed endpoints, not embedding order.
 
@@ -25,8 +29,9 @@ def cut_identity(
     bond types. Isotopes/charges/stereo/components are retained on both sides.
     Partial aromatic rings have no supported independent fragment identity.
     """
-    mol = read_molfile(molfile)
-    variable = selection(mol, variable_indices)
+    mol, variable = region_view(
+        read_molfile(molfile), variable_indices, hydrogen_anchor
+    )
     labels = {candidate: reference + 1 for reference, candidate in attachment_mapping}
     if len(labels) != len(attachment_mapping) or any(
         label <= 0 for label in labels.values()
@@ -85,9 +90,10 @@ def cut_identity(
     }
 
 
-def reference_cut(molfile: str, atom_indices: list[int]) -> dict:
-    mol = read_molfile(molfile)
-    variable = selection(mol, atom_indices)
+def reference_cut(
+    molfile: str, atom_indices: list[int], *, hydrogen_anchor=None
+) -> dict:
+    mol, variable = region_view(read_molfile(molfile), atom_indices, hydrogen_anchor)
     anchors = sorted(
         {
             bond.GetOtherAtomIdx(index)
@@ -96,7 +102,12 @@ def reference_cut(molfile: str, atom_indices: list[int]) -> dict:
             if bond.GetOtherAtomIdx(index) not in variable
         }
     )
-    return cut_identity(molfile, atom_indices, [[index, index] for index in anchors])
+    return cut_identity(
+        molfile,
+        atom_indices,
+        [[index, index] for index in anchors],
+        hydrogen_anchor=hydrogen_anchor,
+    )
 
 
 def graph_description(molfile: str) -> dict:

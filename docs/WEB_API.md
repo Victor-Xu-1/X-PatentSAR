@@ -90,14 +90,24 @@ new webpage studies explicitly send true). The same study queue reserves its
 `discovery` with method, candidate/cut counts, exclusions and explicit limits.
 Region summaries add `origin:manual|single_site` and nullable `comparison_pool`;
 manual regions still compare the whole source pool, derived regions compare
-their complete indexed pool through the identical strict validator. SAR engine5
+their complete indexed pool through the identical strict validator. SAR engine6
 invalidates incompatible unfinished scientific work without retagging old reports.
-Discovery method is `single-region-one-two-cut-v2` with `max_cut_bonds:2` and
-`examined_boundaries` (0–500000); the legacy `single-non-ring-bond-v1` remains
+Discovery method is `single-region-one-two-cut-h-v3` with `max_cut_bonds:2`,
+`indexed_hydrogen_sites` and `examined_boundaries` (0–500000); the prior v2 and
+legacy `single-non-ring-bond-v1` remain
 readable with one-port coverage. Indexed cuts/sites/comparisons retain their
 existing bounds. Two cut bonds delimit ONE connected variable region; fixed
 anchors, bond types, full fixed chemistry and transported stereo remain proved.
 Variable linker endpoints need not retain an internal one-to-one atom mapping.
+Region requests/results add nullable `hydrogen_anchor` (original index0–511).
+Exactly one of a nonempty `atom_indices` selection or an H anchor is allowed;
+H selection has empty original indices, variable kind and one attachment.
+Pair adds nullable `candidate_hydrogen_anchor`; when present it requires a
+matched proof, empty original variable indices and its single mapped anchor.
+Drawing atoms add ordinary-H count and supported-site facts, never virtual atoms.
+The existing drawing/preview routes render a known ordinary H in passive views;
+source Molfile/hash/order and raw JSON archive remain untouched. Boundary stereo
+is refused, and more than64 compatible H locations is explicit ambiguity.
 `scope=changes|strong_changes` requires an exact region and excludes its reference;
 pagination and source filters remain server-side. All current scopes use the same
 numbered source admission and tenth-dose bands. Existing measured PK columns are
