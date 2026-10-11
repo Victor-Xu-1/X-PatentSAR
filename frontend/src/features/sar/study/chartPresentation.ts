@@ -1,6 +1,6 @@
 import type { StudyBin } from '../../../api/sarStudyTypes';
 import { t } from '../../../i18n';
-import palette from '../../../../../src/patent_sar_extractor/web/sar/chart_palette.json';
+import palette from '../../../../../src/patent_sar_extractor/web/sar/chart_palette.json' with { type: 'json' };
 
 const grades = ['#008c68', '#55b9a7', '#78a5c4', '#d8a142', '#ab80b7', '#d78270', '#c66475'];
 const numeric = [

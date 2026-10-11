@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { createNetwork } from './sar-network-actions';
-import palette from '../../src/patent_sar_extractor/web/sar/chart_palette.json';
+import palette from '../../src/patent_sar_extractor/web/sar/chart_palette.json' with { type: 'json' };
 
 const csv =
   'id,smiles,IC50 (nM),t_half (h),target,assay,cell_line,duration\n' +
