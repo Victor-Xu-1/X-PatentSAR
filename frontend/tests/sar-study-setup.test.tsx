@@ -71,7 +71,21 @@ describe('explicit full-study setup', () => {
       core_ids: [],
       candidate_count: 8,
       confirm_context: false,
+      discover_single_sites: true,
     });
+  });
+  it('keeps the explicit discovery choice through a language change without starting work', async () => {
+    render(<StudySetup {...props} />);
+    await selectContext();
+    const choice = screen.getByRole('checkbox', { name: 'Find single-site changes' });
+    expect(choice).toBeChecked();
+    await userEvent.click(choice);
+    await act(() => setLocale('zh-CN'));
+    expect(screen.getByRole('checkbox', { name: '自动寻找单点变化' })).not.toBeChecked();
+    expect(sarStudyApi.start).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: '运行完整研究' }));
+    await waitFor(() => expect(sarStudyApi.start).toHaveBeenCalled());
+    expect(vi.mocked(sarStudyApi.start).mock.calls[0]?.[1].discover_single_sites).toBe(false);
   });
   it('keeps source-owned condition and language drafts through failed/inactive reads, and disables until revalidated', async () => {
     const { rerender } = render(<StudySetup {...props} />);

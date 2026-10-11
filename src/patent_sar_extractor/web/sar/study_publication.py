@@ -2,15 +2,20 @@
 
 from __future__ import annotations
 
+import time
+
+from ...core.sar.discovery import comparison_plan
 from ..errors import WebError
 from .assets import digest
 from .models import Dataset, Molecule, Pair, SARJob
 from .study_integrity import verify_conservation
-from .study_models import StudyReport, StudyRequest
+from .study_models import StudyDiscovery, StudyReport, StudyRequest
 from .study_strength_check import verify_strength
 
 
-def verify_study(safe, job: SARJob, spec: dict, reply: dict, pairs: list[Pair]) -> str:
+def verify_study(
+    safe, job: SARJob, spec: dict, reply: dict, pairs: list[Pair]
+) -> tuple[str, int]:
     packet = safe.json("input.json", optional=False)
     raw = safe.json("report.json", optional=False)
     if digest(packet) != job.input_sha256 or digest(raw) != reply.get("report_sha256"):
@@ -22,12 +27,28 @@ def verify_study(safe, job: SARJob, spec: dict, reply: dict, pairs: list[Pair]) 
     request = StudyRequest.model_validate(packet["request"])
     molecules = [Molecule.model_validate(row) for row in packet["molecules"]]
     ids = {row.id for row in molecules}
-    region_refs = {row["id"]: row["molecule_id"] for row in packet["regions"]}
+    started = time.monotonic()
+
+    def check():
+        if time.monotonic() - started > 30:
+            raise ValueError("study_discovery_verification_deadline")
+
+    plans, coverage = comparison_plan(
+        packet["molecules"],
+        packet["regions"],
+        packet["dataset"],
+        packet["request"],
+        check,
+    )
+    plan_by_id = {plan["region"]["id"]: plan for plan in plans}
+    region_refs = {
+        identifier: plan["region"]["molecule_id"]
+        for identifier, plan in plan_by_id.items()
+    }
     expected = {
         (region_id, mid)
-        for region_id, ref in region_refs.items()
-        for mid in ids
-        if mid != ref
+        for region_id, plan in plan_by_id.items()
+        for mid in plan["candidate_ids"]
     }
     actual = {(pair.region_id, pair.molecule_id) for pair in pairs}
     if (
@@ -38,6 +59,15 @@ def verify_study(safe, job: SARJob, spec: dict, reply: dict, pairs: list[Pair]) 
         or report.source_acceptance != dataset.source_acceptance
         or report.context_declarations != request.context_declarations
         or report.counting_contract != "unique-molecules-v2"
+        or report.discovery
+        != (StudyDiscovery.model_validate(coverage) if coverage is not None else None)
+        or job.total
+        != len(molecules)
+        + (
+            75000
+            if request.discover_single_sites
+            else len(packet["regions"]) * (len(molecules) - 1)
+        )
         or report.observation_count != sum(len(row.observations) for row in molecules)
         or report.input_sha256 != job.input_sha256
         or report.engine_sha256 != spec["engine_sha256"]
@@ -112,11 +142,13 @@ def verify_study(safe, job: SARJob, spec: dict, reply: dict, pairs: list[Pair]) 
                 "Scaffold coverage differs from source membership.",
             )
     for summary in report.regions:
-        original = next(
-            item for item in packet["regions"] if item["id"] == summary.region.id
-        )
+        plan = plan_by_id[summary.region.id]
+        original = plan["region"]
         if (
             summary.region.model_dump() != original
+            or summary.origin != plan["origin"]
+            or summary.comparison_pool
+            != (plan["candidate_ids"] if plan["origin"] == "single_site" else None)
             or sum(
                 (
                     summary.matched,
@@ -125,7 +157,7 @@ def verify_study(safe, job: SARJob, spec: dict, reply: dict, pairs: list[Pair]) 
                     summary.ineligible,
                 )
             )
-            != len(molecules) - 1
+            != len(plan["candidate_ids"])
         ):
             raise WebError(
                 502,
@@ -180,4 +212,4 @@ def verify_study(safe, job: SARJob, spec: dict, reply: dict, pairs: list[Pair]) 
             raise WebError(502, "sar_result_invalid", "Study source label differs.")
     verify_conservation(report, packet)
     verify_strength(report, packet, request)
-    return digest(raw)
+    return digest(raw), len(molecules)

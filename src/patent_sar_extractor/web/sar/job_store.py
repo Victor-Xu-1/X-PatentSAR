@@ -205,6 +205,8 @@ class Jobs:
         total: int,
         *,
         report_sha256: str | None = None,
+        source_count: int | None = None,
+        expected_total: int | None = None,
     ) -> SARJob:
         identities = {(item.region_id, item.molecule_id) for item in pairs}
         if len(identities) != len(pairs) or (
@@ -222,12 +224,19 @@ class Jobs:
                 dataset_row(connection, value.dataset_id)["metadata"]
             )
             expected_pairs = (
-                total - dataset.row_count if value.kind == "study" else total
+                total - (dataset.row_count if source_count is None else source_count)
+                if value.kind == "study"
+                else total
             )
             if (
                 row["status"] != "running"
                 or row["cancel_requested"]
-                or value.total != total
+                or value.total != (total if expected_total is None else expected_total)
+                or total > value.total
+                or (
+                    source_count is not None
+                    and not 1 <= source_count <= dataset.input_row_count
+                )
                 or len(pairs) != expected_pairs
                 or (value.kind == "study") != (report_sha256 is not None)
             ):
@@ -245,6 +254,7 @@ class Jobs:
                 ],
             )
             value.status, value.finished_at, value.processed = "complete", now(), total
+            value.total = total
             value.matched = sum(pair.match_status == "matched" for pair in pairs)
             connection.execute(
                 "UPDATE jobs SET status='complete',payload=? WHERE id=?",

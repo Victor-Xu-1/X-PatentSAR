@@ -1,0 +1,189 @@
+.sar-network-tools {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin: 6px 0 18px;
+}
+.sar-network-tools input {
+  width: min(320px, 100%);
+}
+.sar-network-tools > span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.sar-core-gallery {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scroll-padding: 8px;
+}
+.sar-core-card {
+  flex: 0 0 170px;
+  min-width: 0;
+  border-bottom: 2px solid var(--line-soft);
+}
+.sar-core-card[data-selected='true'] {
+  border-color: var(--accent);
+}
+.sar-core-card > .sar-study-image {
+  height: 108px;
+  margin: 0;
+}
+.sar-core-card .sar-study-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.sar-core-card > button {
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  padding: 8px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+  gap: 8px;
+}
+.sar-core-card small {
+  color: var(--muted);
+  font-size: 11px;
+}
+.sar-network-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.7fr) minmax(0, 1.3fr);
+  gap: 30px;
+  align-items: start;
+  margin-top: 18px;
+}
+.sar-network-layout > .sar-reference-maps {
+  position: sticky;
+  top: 84px;
+  max-height: calc(100dvh - 112px);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.sar-network-layout .sar-reference-map-card {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.sar-network-layout .sar-reference-map-card h3 {
+  font-size: 14px;
+}
+.sar-network-branches {
+  min-width: 0;
+}
+.sar-network-branch-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  border-left: 1px solid var(--accent-line);
+  padding-left: 22px;
+}
+.sar-network-branch {
+  position: relative;
+  min-width: 0;
+}
+.sar-network-branch::before {
+  content: '';
+  position: absolute;
+  left: -23px;
+  top: 82px;
+  width: 20px;
+  height: 1px;
+  background: var(--accent-line);
+}
+.sar-network-branch > .sar-study-image {
+  position: relative;
+  height: 165px;
+  margin: 0;
+}
+.sar-network-branch .sar-study-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.sar-network-compare {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+}
+.sar-branch-readings {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+}
+.sar-branch-readings > div:first-child {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+}
+.sar-branch-readings dt {
+  color: var(--muted);
+  font-size: 10px;
+}
+.sar-branch-readings dd {
+  margin: 2px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+.sar-branch-readings [data-activity-strength='strong'] {
+  background: var(--activity-strong-surface);
+}
+.sar-branch-readings [data-activity-strength='medium'] {
+  background: var(--activity-medium-surface);
+}
+.sar-branch-readings [data-activity-strength='strong'] dt {
+  color: var(--ink);
+}
+.sar-network-scope {
+  margin-top: 20px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.sar-discovery-choice {
+  margin: 2px 0 18px;
+}
+@media (max-width: 1000px) {
+  .sar-network-layout {
+    grid-template-columns: 1fr;
+  }
+  .sar-network-layout > .sar-reference-maps {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+  .sar-network-layout .sar-reference-map-image {
+    max-width: 520px;
+    margin: auto;
+  }
+}
+@media (max-width: 500px) {
+  .sar-network-layout {
+    gap: 22px;
+  }
+  .sar-network-branch-grid {
+    grid-template-columns: 1fr;
+    padding-left: 16px;
+  }
+  .sar-network-branch::before {
+    left: -17px;
+    width: 14px;
+  }
+  .sar-network-tools input {
+    width: 100%;
+  }
+}

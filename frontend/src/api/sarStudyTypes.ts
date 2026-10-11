@@ -35,6 +35,7 @@ export interface StudyRequest {
   region_ids: string[];
   core_ids?: string[];
   confirm_context: boolean;
+  discover_single_sites?: boolean;
   candidate_count: number;
   context_declarations?: ConditionDeclaration[];
 }
@@ -114,6 +115,8 @@ export interface StudyRegionSummary {
   no_variation: boolean;
   fragments: StudyFragment[];
   independent_backgrounds: 1;
+  origin?: 'manual' | 'single_site';
+  comparison_pool?: string[] | null;
 }
 export interface StudyRow {
   molecule_id: string;
@@ -162,6 +165,17 @@ export interface StudyReport {
   rows: StudyRow[];
   warnings: string[];
   candidate_policy: string;
+  discovery?: {
+    method: 'single-non-ring-bond-v1';
+    candidate_sites: number;
+    candidate_comparisons: number;
+    indexed_cuts: number;
+    excluded: Record<string, number>;
+    max_variable_atoms: 32;
+    max_variable_fraction: 0.4;
+    min_fixed_atoms: 6;
+    limitations: string[];
+  } | null;
 }
 export interface StudyOverview {
   job: SARJob;
@@ -188,7 +202,7 @@ export interface StudyDrawing {
 }
 export interface StudyFilter {
   query: string;
-  scope: 'all' | 'strong' | 'leads';
+  scope: 'all' | 'strong' | 'leads' | 'changes' | 'strong_changes';
   scaffold_id: string;
   region_id: string;
   fragment_id: string;

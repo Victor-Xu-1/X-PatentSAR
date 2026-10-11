@@ -129,7 +129,12 @@ def current_report(packet: dict, captured: StudyReport, pairs: list[dict]):
                 for row in captured.candidates
                 if row.molecule_id in by_id
             ],
-            "strict_pair_count": len(regions) * (len(ids) - 1),
+            "strict_pair_count": sum(
+                len(summary.comparison_pool)
+                if summary.comparison_pool is not None
+                else len(ids) - 1
+                for summary in regions
+            ),
             "matched_pair_count": sum(item.matched for item in regions),
             "comparable_pair_count": sum(item.comparable for item in regions),
         }

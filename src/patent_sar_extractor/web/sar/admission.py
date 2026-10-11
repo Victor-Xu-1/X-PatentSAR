@@ -18,6 +18,8 @@ def existing(queue, dataset_id: str, request) -> tuple[SARJob | None, str]:
     # Neutral additive declarations preserve previously published request IDs.
     if not fields.get("context_declarations"):
         fields.pop("context_declarations", None)
+    if not fields.get("discover_single_sites"):
+        fields.pop("discover_single_sites", None)
     request_hash = digest([dataset_id, fields])
     old = queue.jobs.existing(request.request_id, request_hash)
     if old:
@@ -78,7 +80,11 @@ def publish(
     input_hash = digest(packet)
     root = queue.service.assets.area("results") / identifier
     queue.service.current(dataset.id, dataset.revision)
-    comparisons = len(regions) * (len(molecules) - 1)
+    comparisons = (
+        75000
+        if kind == "study" and request.discover_single_sites
+        else len(regions) * (len(molecules) - 1)
+    )
     value = SARJob(
         id=identifier,
         dataset_id=dataset.id,
@@ -100,6 +106,7 @@ def publish(
             "attempt_id": uuid.uuid4().hex,
             "request": request.model_dump(),
             "kind": kind,
+            "source_count": len(molecules),
         },
         str(root),
     )

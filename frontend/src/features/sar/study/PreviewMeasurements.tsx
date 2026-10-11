@@ -13,10 +13,10 @@ export function PreviewMeasurements({ data, report }: { data: StudyPreview; repo
     <>
       <div className="sar-preview-data">
         <div className="sar-table-scroll">
-          <table aria-label={t('记录活性')}>
+          <table aria-label={t('记录值')}>
             <thead>
               <tr>
-                <th scope="col">{t('记录活性')}</th>
+                <th scope="col">{t('记录值')}</th>
                 <th scope="col">{data.reference.label}</th>
                 <th scope="col">{data.candidate.label}</th>
                 <th scope="col">{t('变化')}</th>
@@ -48,18 +48,26 @@ export function PreviewMeasurements({ data, report }: { data: StudyPreview; repo
                           measurement.raw_difference > 0 ? (
                           <ArrowUpRight size={15} />
                         ) : null}
-                        {t(
-                          (
-                            {
-                              better: '更强',
-                              worse: '更弱',
-                              equal: '无数值变化',
-                              indeterminate: '不可判定',
-                              missing: '未测定',
-                              context_mismatch: '条件不可比',
-                            } as Record<string, string>
-                          )[measurement.comparison] ?? '不可判定',
-                        )}
+                        {measurement.raw_difference !== null
+                          ? t(
+                              measurement.raw_difference < 0
+                                ? '更低'
+                                : measurement.raw_difference > 0
+                                  ? '更高'
+                                  : '相同',
+                            )
+                          : t(
+                              (
+                                {
+                                  better: 'SAR 更强',
+                                  worse: 'SAR 更弱',
+                                  equal: '无数值变化',
+                                  indeterminate: '不可判定',
+                                  missing: '未测定',
+                                  context_mismatch: '条件不可比',
+                                } as Record<string, string>
+                              )[measurement.comparison] ?? '不可判定',
+                            )}
                         {measurement.raw_difference !== null && (
                           <small>
                             Δ {measurement.raw_difference > 0 ? '+' : ''}

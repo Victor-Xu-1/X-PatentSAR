@@ -89,7 +89,14 @@ def save(root, name: str, identity: dict, start: int, field: str, records: list[
         atomic_json(root, receipt_name, receipt)
 
 
-def progress(root, identity: dict, processed: int, matched: int):
+def progress(root, identity: dict, processed: int, matched: int, *, total=None):
     atomic_json(
-        root, "progress.json", {**identity, "processed": processed, "matched": matched}
+        root,
+        "progress.json",
+        {
+            **identity,
+            "processed": processed,
+            "matched": matched,
+            **({"total": total} if total is not None else {}),
+        },
     )

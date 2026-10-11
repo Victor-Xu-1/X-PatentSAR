@@ -22,9 +22,12 @@ def _group(item, ids, domain, states):
 
 
 def _region(summary, selected, ids, domain, states):
-    if {pair["molecule_id"] for pair in selected} != ids - {
-        summary.region.molecule_id
-    } or len(selected) != len(ids) - 1:
+    pool = (
+        (ids - {summary.region.molecule_id})
+        if summary.comparison_pool is None
+        else ids.intersection(summary.comparison_pool)
+    )
+    if {pair["molecule_id"] for pair in selected} != pool or len(selected) != len(pool):
         raise WebError(
             409,
             "sar_report_scope",
@@ -62,6 +65,9 @@ def _region(summary, selected, ids, domain, states):
                 for key in ("matched", "not_matched", "ambiguous", "ineligible")
             },
             "fragments": fragments,
+            "comparison_pool": None
+            if summary.comparison_pool is None
+            else [mid for mid in summary.comparison_pool if mid in ids],
             "no_variation": len(fragments) == 1,
             "comparable": sum(
                 pair["match_status"] == "matched"

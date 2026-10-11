@@ -80,6 +80,11 @@ MODES = (
     ),
     (
         "sar",
+        "sar-single-site.spec.ts",
+        COMMON | {"sar-single-site.spec.ts", "sar-study.spec.ts"},
+    ),
+    (
+        "sar",
         "sar-study.spec.ts",
         COMMON
         | {

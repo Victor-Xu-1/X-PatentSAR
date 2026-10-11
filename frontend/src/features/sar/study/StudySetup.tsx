@@ -44,6 +44,7 @@ export function StudySetup({
   const [conditionDrafts, setConditionDrafts] = useState<Record<string, ConditionDraft>>({});
   const [regionIds, setRegionIds] = useState<string[]>([]);
   const [coreIds, setCoreIds] = useState<string[]>([]);
+  const [discover, setDiscover] = useState(true);
   const [confirm, setConfirm] = useState(false),
     [candidateCount, setCandidateCount] = useState(8);
   const load = useCallback(
@@ -126,6 +127,7 @@ export function StudySetup({
             core_ids: [...coreIds],
             candidate_count: candidateCount,
             confirm_context: confirm,
+            discover_single_sites: discover,
             ...(documented.length ? { context_declarations: documented } : {}),
           };
           void mutation.run(
@@ -175,6 +177,14 @@ export function StudySetup({
             </button>
           </div>
           <div hidden={step !== 3}>
+            <label className="sar-checkbox sar-discovery-choice">
+              <input
+                type="checkbox"
+                checked={discover}
+                onChange={(event) => setDiscover(event.target.checked)}
+              />
+              {t('自动寻找单点变化')}
+            </label>
             <div className="sar-form-grid">
               <label>
                 {t('研究名称')}
