@@ -97,6 +97,7 @@
   background: var(--accent-line);
 }
 .sar-network-branch > .sar-study-image {
+  position: relative;
   height: 165px;
   margin: 0;
 }

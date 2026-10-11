@@ -89,9 +89,16 @@ for (const width of [390, 800, 1672]) {
     const network = report.getByRole('region', { name: 'Single-site comparisons', exact: true });
     await expect(network).toBeVisible();
     await network.getByRole('button', { name: 'Select core 1', exact: true }).click();
+    const visibleSites = overview.report.regions.filter(
+      (item: { reference_label: string; matched: number; no_variation: boolean }) =>
+        item.reference_label === '1' && item.matched && !item.no_variation,
+    );
+    const siteIndex = visibleSites.findIndex(
+      (item: { region: { id: string } }) => item.region.id === site.region.id,
+    );
     await network
       .locator('.sar-region-legend')
-      .getByRole('button', { name: site.region.name, exact: true })
+      .getByRole('button', { name: 'R' + (siteIndex + 1), exact: true })
       .click();
     await expect(network.getByRole('button', { name: 'Compare 2', exact: true })).toBeVisible();
     await page.waitForFunction(() =>
@@ -101,6 +108,22 @@ for (const width of [390, 800, 1672]) {
           (el) => (el as HTMLImageElement).complete && (el as HTMLImageElement).naturalWidth > 0,
         ),
     );
+    expect(
+      await network.locator('.sar-network-branch > .sar-study-image').evaluateAll((figures) =>
+        figures.every((figure) => {
+          const button = figure.querySelector('.sar-image-focus-action');
+          if (!button) return true;
+          const bounds = figure.getBoundingClientRect(),
+            control = button.getBoundingClientRect();
+          return (
+            control.top >= bounds.top - 1 &&
+            control.bottom <= bounds.bottom + 1 &&
+            control.left >= bounds.left - 1 &&
+            control.right <= bounds.right + 1
+          );
+        }),
+      ),
+    ).toBe(true);
     await network.screenshot({ path: test.info().outputPath(`network-${width}.png`) });
     await network.getByRole('button', { name: 'Compare 2', exact: true }).click();
     const preview = network.getByRole('region', { name: 'Transformation preview', exact: true });

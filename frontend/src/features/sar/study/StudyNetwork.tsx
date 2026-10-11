@@ -44,6 +44,12 @@ export function StudyNetwork({
   );
   const selected = filtered.find((centre) => centre.id === reference) ?? filtered[0];
   const summary = selected?.sites.find((item) => item.region.id === site) ?? selected?.sites[0];
+  const mapSites =
+    selected?.sites.map((item, index) =>
+      item.origin === 'single_site'
+        ? { ...item, region: { ...item.region, name: 'R' + (index + 1) } }
+        : item,
+    ) ?? [];
   const showing = filtered.slice((page - 1) * 6, page * 6);
   const matches = useMemo(
     () =>
@@ -110,7 +116,7 @@ export function StudyNetwork({
       {selected && summary && (
         <div className="sar-network-layout">
           <StudyRegionMap
-            report={{ ...report, regions: selected.sites }}
+            report={{ ...report, regions: mapSites }}
             active={active}
             selected={summary.region.id}
             onSelect={setSite}
