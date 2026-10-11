@@ -152,24 +152,30 @@ for (const { width, height } of [
       await report.getByRole('button', { name: tab, exact: true }).click();
       const view = report.getByRole('region', { name: tab, exact: true });
       await expect(view).toBeVisible();
-      const singleRow = await report.locator('.sar-study-tabs').evaluate((strip) => {
+      const navigation = await report.locator('.sar-study-tabs').evaluate((strip) => {
         const buttons = Array.from(strip.querySelectorAll('button'));
         const active = strip.querySelector('[aria-current]')!.getBoundingClientRect();
         const bounds = strip.getBoundingClientRect();
         return {
-          oneRow: buttons.every(
-            (button) =>
-              Math.abs(
-                button.getBoundingClientRect().top - buttons[0]!.getBoundingClientRect().top,
-              ) < 1,
-          ),
+          allVisible: buttons.every((button) => {
+            const box = button.getBoundingClientRect();
+            const range = document.createRange();
+            range.selectNodeContents(button);
+            return (
+              box.left >= bounds.left - 1 &&
+              box.right <= bounds.right + 1 &&
+              [...range.getClientRects()].every(
+                (rect) => rect.left >= box.left - 1 && rect.right <= box.right + 1,
+              )
+            );
+          }),
           currentVisible: active.left >= bounds.left - 1 && active.right <= bounds.right + 1,
           height: bounds.height,
         };
       });
-      expect(singleRow.oneRow).toBe(true);
-      expect(singleRow.currentVisible).toBe(true);
-      expect(singleRow.height).toBeLessThanOrEqual(82);
+      expect(navigation.allVisible).toBe(true);
+      expect(navigation.currentVisible).toBe(true);
+      expect(navigation.height).toBeLessThanOrEqual(width <= 600 ? 112 : 82);
       if (['Overview', 'Scaffolds', 'Variable regions', 'Fragment summary'].includes(tab))
         await expect(view.locator('.sar-policy-note').first()).toContainText(
           'Strong <10 nM; medium 10 nM–<100 nM; weak ≥100 nM',

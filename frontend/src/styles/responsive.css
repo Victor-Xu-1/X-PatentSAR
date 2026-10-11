@@ -72,10 +72,7 @@
     flex: 1 0 100%;
     margin-left: 0;
     justify-content: flex-start;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: thin;
-    overscroll-behavior-x: contain;
+    flex-wrap: wrap;
     padding-block: 2px;
   }
   .topbar-actions > button {
@@ -139,6 +136,19 @@
   }
   .topbar-actions {
     grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
+    gap: 4px;
+  }
+  .topbar-actions > button {
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    white-space: normal;
+  }
+  .topbar-actions > button > span {
+    font-size: 11px;
+    line-height: 1.25;
   }
   .brand {
     min-width: 0;
@@ -184,7 +194,7 @@
   }
   .topbar-actions > button {
     min-height: 44px;
-    padding: 8px;
+    padding: 5px 3px;
     font-size: 12px;
   }
   .workflow-panel .job-actions-wrapper {

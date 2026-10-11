@@ -18,8 +18,7 @@
 .sar-study-tabs {
   display: flex;
   gap: 6px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
+  flex-wrap: wrap;
   max-width: 100%;
   padding-block: 10px;
   border-bottom: 1px solid var(--line);
@@ -557,6 +556,17 @@
   }
   .sar-study-tabs button {
     min-height: 44px;
+    min-width: 0;
+    white-space: normal;
+    font-size: 12px;
+    line-height: 1.25;
+    padding: 4px 6px;
+  }
+  .sar-study-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    padding-block: 8px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

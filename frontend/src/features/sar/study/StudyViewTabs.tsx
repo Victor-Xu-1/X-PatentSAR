@@ -1,6 +1,4 @@
-import { useRef } from 'react';
 import { useTranslation } from '../../../i18n';
-import { useInlineSelection } from '../../../components/useInlineSelection';
 
 export function StudyViewTabs({
   labels,
@@ -14,10 +12,8 @@ export function StudyViewTabs({
   onSelect: (index: number) => void;
 }) {
   const { t } = useTranslation();
-  const strip = useRef<HTMLElement>(null);
-  useInlineSelection(strip, 'button[aria-current]');
   return (
-    <nav ref={strip} className="sar-study-tabs" aria-label={t('研究视图')}>
+    <nav className="sar-study-tabs" aria-label={t('研究视图')}>
       {labels.map((label, index) => (
         <button
           key={label}

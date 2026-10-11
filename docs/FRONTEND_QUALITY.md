@@ -383,3 +383,12 @@ Non-SAR human-facing errors keep their existing message path. This is shared
 presentation, not a new transport, error state, queue or automatic recovery path.
 Expanded source text keeps a separate eight-pixel gap below the focused summary,
 so the keyboard focus outline cannot overlap the diagnostic message.
+
+Primary navigation wraps into a compact labelled icon grid on narrow screens.
+All available routes remain exposed in English and Chinese, including workspace
+shortcuts; phone targets keep a 44-pixel minimum height. SAR view selectors use
+two compact rows on phones and wrap naturally above that breakpoint. Navigation
+never relies on horizontal scrolling to reveal an active route. The retired
+scroll observers are removed from these two navigations; region/fragment strips
+retain their own existing selection behavior. Route identity, selection, focus,
+source data and the shared language authority remain unchanged.
