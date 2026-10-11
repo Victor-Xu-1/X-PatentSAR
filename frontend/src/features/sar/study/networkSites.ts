@@ -1,5 +1,16 @@
 import type { StudyRegionSummary } from '../../../api/sarStudyTypes';
 
+/** Original accepted changed-fragment memberships; never infer a new match. */
+export function networkRowSites(sites: StudyRegionSummary[], moleculeId: string) {
+  return sites.filter(
+    (site) =>
+      site.region.molecule_id !== moleculeId &&
+      site.fragments.some(
+        (fragment) => !fragment.is_reference && fragment.molecule_ids.includes(moleculeId),
+      ),
+  );
+}
+
 /** Only hide nested automatic views of the exact same accepted source pairs.
  * Manual selections and unique comparisons stay visible. Reports stay intact.
  */

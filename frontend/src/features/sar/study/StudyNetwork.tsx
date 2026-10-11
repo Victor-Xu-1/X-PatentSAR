@@ -49,7 +49,7 @@ export function StudyNetwork({
   const selected = filtered.find((centre) => centre.id === reference) ?? filtered[0];
   const compact = selected?.compact ?? [];
   const visibleSites = allSites ? (selected?.sites ?? []) : compact;
-  const summary = visibleSites.find((item) => item.region.id === site) ?? visibleSites[0];
+  const summary = visibleSites.find((item) => item.region.id === site);
   const mapSites = visibleSites.map((item, index) =>
     item.origin === 'single_site'
       ? { ...item, region: { ...item.region, name: 'R' + (index + 1) } }
@@ -60,11 +60,13 @@ export function StudyNetwork({
     () =>
       new Set(
         report.regions.flatMap((item) =>
-          item.fragments.flatMap((fragment) =>
-            fragment.molecule_ids
-              .filter((id) => id !== item.region.molecule_id)
-              .map((id) => [id, item.region.molecule_id].sort().join('\0')),
-          ),
+          item.fragments
+            .filter((fragment) => !fragment.is_reference)
+            .flatMap((fragment) =>
+              fragment.molecule_ids
+                .filter((id) => id !== item.region.molecule_id)
+                .map((id) => [id, item.region.molecule_id].sort().join('\0')),
+            ),
         ),
       ),
     [report.regions],
@@ -122,39 +124,53 @@ export function StudyNetwork({
       </div>
       <GroupPager page={page} size={6} total={filtered.length} onPage={setPage} />
       {!showing.length && <p>{t('没有可显示的核心结构')}</p>}
-      {selected && summary && (
-        <div className="sar-network-layout">
-          <div className="sar-network-map">
-            <StudyRegionMap
-              report={{ ...report, regions: mapSites }}
-              active={active}
-              selected={summary.region.id}
-              onSelect={setSite}
-            />
-            {selected.sites.length !== compact.length && (
-              <button
-                type="button"
-                className="button secondary"
-                aria-pressed={allSites}
-                onClick={() => setAllSites((value) => !value)}
-              >
-                {allSites
-                  ? t('精简位点')
-                  : t('全部位点（{count}）', { count: selected.sites.length })}
-              </button>
-            )}
+      {selected && visibleSites.length > 0 && (
+        <>
+          <div className="sar-network-view-tools">
+            <button
+              type="button"
+              className="button secondary"
+              aria-pressed={!summary}
+              onClick={() => setSite('')}
+            >
+              {t('全部改造方向')}
+            </button>
           </div>
-          <NetworkBranches
-            key={summary.region.id + ':' + strongest + ':' + fragments}
-            report={report}
-            summary={summary}
-            jobId={jobId}
-            active={active}
-            strongest={strongest}
-            fragments={fragments}
-            onSource={onSource}
-          />
-        </div>
+          <div className="sar-network-layout">
+            <div className="sar-network-map">
+              <StudyRegionMap
+                report={{ ...report, regions: mapSites }}
+                active={active}
+                selected={summary?.region.id}
+                onSelect={setSite}
+              />
+              {selected.sites.length !== compact.length && (
+                <button
+                  type="button"
+                  className="button secondary"
+                  aria-pressed={allSites}
+                  onClick={() => setAllSites((value) => !value)}
+                >
+                  {allSites
+                    ? t('精简位点')
+                    : t('全部位点（{count}）', { count: selected.sites.length })}
+                </button>
+              )}
+            </div>
+            <NetworkBranches
+              key={(summary?.region.id ?? selected.id) + ':' + strongest + ':' + fragments}
+              report={report}
+              summary={mapSites.find((item) => item.region.id === summary?.region.id)}
+              summaries={mapSites}
+              referenceId={selected.id}
+              jobId={jobId}
+              active={active}
+              strongest={strongest}
+              fragments={fragments}
+              onSource={onSource}
+            />
+          </div>
+        </>
       )}
       <details className="sar-compact sar-network-scope">
         <summary>{t('搜索范围')}</summary>

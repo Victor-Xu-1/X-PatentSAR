@@ -53,6 +53,7 @@ def study_routes(service, queue) -> APIRouter:
         fragment_id: str = "",
         sort_by: str = "label",
         sort_direction: str = "asc",
+        reference_id: str = "",
     ):
         async with reads:
             return await asyncio.to_thread(
@@ -67,6 +68,7 @@ def study_routes(service, queue) -> APIRouter:
                 fragment_id,
                 sort_by,
                 sort_direction,
+                reference_id,
             )
 
     @router.get("/jobs/{job_id}/study/drawing", response_model=StudyDrawing)

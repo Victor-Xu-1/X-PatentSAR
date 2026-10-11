@@ -156,10 +156,16 @@ CSRF, source visibility, input/CAS and owned-worker authorities described above.
   `strict_pair_count` counts checks, not qualified conclusions;
   `matched_pair_count` and `comparable_pair_count` separately report proved
   structure matches and determined same-context activity comparisons.
-- GET `/sar/jobs/{id}/study/rows?page=&page_size=&query=&scope=all|strong|leads&
-  scaffold_id=&region_id=&fragment_id=&sort_by=&sort_direction=asc|desc` returns `{items,total,page,page_size,job}`.
+- GET `/sar/jobs/{id}/study/rows?page=&page_size=&query=&scope=all|strong|leads|changes|strong_changes&
+  scaffold_id=&region_id=&fragment_id=&reference_id=&sort_by=&sort_direction=asc|desc` returns `{items,total,page,page_size,job}`.
   Filters apply to the whole study, then natural original-identifier order and
   paging. A fragment requires its exact region; foreign selectors are rejected.
+  Optional `reference_id` selects the union of that original molecule's published
+  exact region memberships. Change scopes require a region or reference selector;
+  original-fragment aliases and the reference itself are not structural changes.
+  Multiple valid region explanations never duplicate a source row. Region and
+  reference selectors must agree. Normal tables and raw archives retain original
+  aliases, missing activity and every record; no new comparison is inferred.
   Sort identifiers, Lead priority groups, selected context scalars/explicit grades
   or six properties across the whole filtered pool before paging. Missing,
   conflicting and interval values stay last; no interval midpoint is invented.

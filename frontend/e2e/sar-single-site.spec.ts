@@ -43,6 +43,34 @@ for (const width of [390, 800, 1672]) {
       (item: { reference_label: string; matched: number; no_variation: boolean }) =>
         item.reference_label === '1' && item.matched && !item.no_variation,
     );
+    await expect(
+      network.getByRole('button', { name: 'All directions', exact: true }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    for (const label of ['2', '3', '4'])
+      await expect(
+        network.getByRole('button', { name: 'Compare ' + label, exact: true }),
+      ).toBeVisible();
+    await expect(network.locator('.sar-network-branch')).toHaveCount(3);
+    const directions = await (
+      await page.request.get(
+        `/api/v1/sar/jobs/${job}/study/rows?scope=changes&reference_id=${visibleSites[0]!.region.molecule_id}`,
+      )
+    ).json();
+    expect(directions.total).toBe(3);
+    expect(directions.items.map((row: { label: string }) => row.label)).toEqual(['2', '3', '4']);
+    const withoutActivity = network
+      .locator('.sar-network-branch')
+      .filter({ has: page.getByRole('button', { name: 'Compare 4', exact: true }) });
+    await expect(withoutActivity.locator('.sar-branch-measurement dd').first()).toHaveText('—');
+    await expect(withoutActivity.locator('.sar-branch-measurement dd').last()).toHaveText('4');
+    await page.waitForFunction(() =>
+      [...document.querySelectorAll('.sar-network img')]
+        .filter((el) => el.checkVisibility())
+        .every(
+          (el) => (el as HTMLImageElement).complete && (el as HTMLImageElement).naturalWidth > 0,
+        ),
+    );
+    await network.screenshot({ path: test.info().outputPath(`all-directions-${width}.png`) });
     const legend = network.locator('.sar-region-legend button');
     const compactCount = await legend.count();
     expect(compactCount).toBeLessThanOrEqual(visibleSites.length);

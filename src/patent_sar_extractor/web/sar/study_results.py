@@ -9,6 +9,7 @@ from ..errors import WebError
 from .models import Pair
 from .report_preparation import report_preparation
 from .study_models import StudyDrawing, StudyOverview, StudyRows
+from .study_row_scope import selected_members
 from .study_table import order_rows
 
 
@@ -68,13 +69,21 @@ class StudyResults:
         fragment_id: str = "",
         sort_by: str = "label",
         sort_direction: str = "asc",
+        reference_id: str = "",
     ) -> StudyRows:
         if (
             not 1 <= page <= 25000
             or not 1 <= page_size <= 200
             or len(query) > 200
             or scope not in {"all", "strong", "leads", "changes", "strong_changes"}
-            or (scope in {"changes", "strong_changes"} and not region_id)
+            or (
+                scope in {"changes", "strong_changes"}
+                and not (region_id or reference_id)
+            )
+            or any(
+                len(value) > 200
+                for value in (scaffold_id, region_id, fragment_id, reference_id)
+            )
         ):
             raise WebError(422, "sar_page", "Study filter/page exceeds its bound.")
         job, report, _ = self.current(identifier, records_only=True)
@@ -93,47 +102,19 @@ class StudyResults:
                         (job.dataset_id, pattern, pattern),
                     )
                 }
-        allowed = None
-        if scaffold_id:
-            scaffold = next(
-                (item for item in report.scaffolds if item.id == scaffold_id), None
-            )
-            if scaffold is None:
-                raise WebError(
-                    422, "sar_study_filter", "Scaffold is not in this study."
-                )
-            allowed = set(scaffold.molecule_ids)
-        if fragment_id and not region_id:
-            raise WebError(
-                422, "sar_study_filter", "Fragment selection requires its exact region."
-            )
-        if region_id:
-            region = next(
-                (item for item in report.regions if item.region.id == region_id), None
-            )
-            if region is None:
-                raise WebError(422, "sar_study_filter", "Region is not in this study.")
-            fragments = [
-                item
-                for item in region.fragments
-                if (not fragment_id or item.id == fragment_id)
-                and report.molecule_ids.intersection(item.molecule_ids)
-            ]
-            if fragment_id and not fragments:
-                raise WebError(
-                    422, "sar_study_filter", "Fragment is not in this region."
-                )
-            members = {mid for fragment in fragments for mid in fragment.molecule_ids}
-            allowed = members if allowed is None else allowed & members
+        allowed = selected_members(
+            report,
+            scope=scope,
+            scaffold_id=scaffold_id,
+            region_id=region_id,
+            fragment_id=fragment_id,
+            reference_id=reference_id,
+        )
         rows = [
             row
             for row in report.rows
             if (allowed is None or row.molecule_id in allowed)
             and (scope not in {"strong", "strong_changes"} or row.strong)
-            and (
-                scope not in {"changes", "strong_changes"}
-                or row.molecule_id != region.region.molecule_id
-            )
             and (scope != "leads" or row.candidate_status == "selected")
             and (query_ids is None or row.molecule_id in query_ids)
         ]
