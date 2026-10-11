@@ -1,7 +1,7 @@
 # X-PatentSAR 前端
 
 单一 React / TypeScript 工作台，产品版本来自 /api/v1/health，不写死版本标签。
-package.json 与 npm lock 的根版本由 PR 自动准备流程同步自 contracts.__version__。
+package.json 与 npm lock 的根版本由 PR 自动准备流程同步自 contracts.**version**。
 前端只消费 [API v1](../docs/WEB_API.md)，不另建提取或预测引擎。
 默认只做 PDF → 完整结构/活性表 → 在线修正；说明和技术信息按需打开。
 系统字体、白/浅灰背景和黑色操作按钮使用唯一样式权威 src/styles/tokens.css。
@@ -121,6 +121,8 @@ simple-workbench.spec.ts 的 online edits persist 用真实工具画受控乙醇
 化学往返测试通过编辑器公开消息边界提供明确参考、真实整理绘图和导出，
 不写入专利结果。未提供必需参数的测试为跳过，不能算通过。
 所有 trace/截图/验证产物放 E 盘外部证据目录；不用全套场景代替范围选择。
+密集区域图只注释当前/悬停位点，完整位点按钮保留在本地横向滚动条中。
+区域编号按固有宽度单行显示，不能将 R10 等编号挤成竖排；原始区域名和选择不变。
 
 ## 依赖与排错
 

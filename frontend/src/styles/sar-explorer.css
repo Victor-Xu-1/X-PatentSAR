@@ -319,6 +319,12 @@
   flex-wrap: nowrap;
   overflow-x: auto;
 }
+.sar-region-legend[data-dense] > li {
+  flex: 0 0 auto;
+}
+.sar-region-legend[data-dense] button {
+  white-space: nowrap;
+}
 .sar-delta.is-better {
   color: var(--success);
 }
