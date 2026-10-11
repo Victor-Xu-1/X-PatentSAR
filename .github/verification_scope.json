@@ -1,31 +1,28 @@
 {
   "schema_version": 1,
-  "base_sha": "b3f45bdfa316db2aed55733c986a11004389fcfe",
+  "base_sha": "57b73cd2a5ee157a2953a0c186900c410875a8ec",
   "changed_paths": [
     ".github/verification_scope.json",
-    "docs/ARCHITECTURE.md",
-    "docs/OPERATIONS.md",
-    "docs/PROJECT_MANIFEST.md",
+    "docs/FRONTEND_QUALITY.md",
+    "frontend/e2e/sar-single-site.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "src/patent_sar_extractor/contracts.py",
-    "src/patent_sar_extractor/web/sar/report_preparation.py",
-    "src/patent_sar_extractor/web/sar/study_results.py",
-    "tests/test_sar_report_preparation.py"
+    "frontend/src/components/useScrollFocus.ts",
+    "frontend/src/features/sar/study/PreviewProperties.tsx",
+    "frontend/src/i18n/catalogs/sar.ts",
+    "frontend/src/styles/sar-explorer.css",
+    "frontend/tests/sar-property-scroll.test.tsx",
+    "src/patent_sar_extractor/contracts.py"
   ],
   "python_modules": [
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
-    "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority",
-    "tests.test_sar_report_preparation",
-    "tests.test_sar_current_strength",
-    "tests.test_sar_preview",
-    "tests.test_sar_study_api",
-    "tests.test_sar_aromatic_api",
-    "tests.test_sar_multiport_api",
-    "tests.test_sar_threeport_api",
-    "tests.test_sar_hydrogen_api"
+    "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
-  "frontend_tests": [],
+  "frontend_tests": [
+    "frontend/tests/sar-property-scroll.test.tsx",
+    "frontend/tests/sar-preview.test.tsx",
+    "frontend/tests/sar-reference-pane.test.tsx"
+  ],
   "browser_tests": [
     "frontend/e2e/sar-single-site.spec.ts",
     "frontend/e2e/sar-aromatic.spec.ts"

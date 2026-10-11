@@ -404,3 +404,14 @@ differences stay distinct. Counts retain integer display where actually integral
 Unknown/origin-incomparable deltas are not recalculated in the browser. A phone
 scrolls this matrix locally with source IDs frozen; the measured activity/PK
 comparison, uncertainty, predictions and original structure authority stay separate.
+
+The shared six-property comparison has its own compact fixed table geometry,
+not the generic130px scientific-column minimum. At >=560px available width all
+six fields fit; narrower panes retain local native scrolling and original-ID
+sticky cells. Only actual overflow exposes two icon-only labelled page controls,
+whose disabled edges track scrolling/resizing through the existing shared
+observer/frame authority. Controls respect reduced-motion preference; locale
+switching never changes data/selection/scroll position or triggers computation.
+Values may wrap rather than overflow into adjacent columns; none are removed or
+ellipsized. Native geometry checks cover enough-width LogS visibility, narrow
+last-column reach and pointer/keyboard/source-ID behaviour.
