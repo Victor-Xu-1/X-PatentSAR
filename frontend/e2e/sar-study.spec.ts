@@ -191,13 +191,23 @@ for (const { width, height } of [
         await expect(view.locator('.sar-policy-note').first()).toContainText(
           'Strong <10 nM; medium 10 nM–<100 nM; weak ≥100 nM',
         );
-      if (['Overview', 'Variable regions', 'Fragment summary'].includes(tab)) {
+      if (tab === 'Overview') {
         const rule = view.locator('.sar-policy-note').first();
-        const disclosure = view
-          .locator(
-            tab === 'Overview' ? '.sar-context-detail summary' : '.sar-region-method summary',
-          )
-          .first();
+        const details = view.locator('.sar-context-detail').first();
+        const conditions = details.locator('.sar-hint');
+        await expect(rule).toBeVisible();
+        await expect(rule).toContainText('10th strongest: 2 nM');
+        await expect(conditions).toBeHidden();
+        await details.locator('summary').click();
+        await expect(conditions).toBeVisible();
+        await expect(rule).toBeVisible();
+        await details.locator('summary').click();
+        await expect(conditions).toBeHidden();
+        await expect(rule).toBeVisible();
+      }
+      if (['Variable regions', 'Fragment summary'].includes(tab)) {
+        const rule = view.locator('.sar-policy-note').first();
+        const disclosure = view.locator('.sar-region-method summary').first();
         await expect(rule).toBeHidden();
         await disclosure.click();
         await expect(rule).toBeVisible();
