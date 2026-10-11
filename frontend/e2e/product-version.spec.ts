@@ -2,6 +2,24 @@ import { expect, test } from '@playwright/test';
 import packageMetadata from '../package.json' with { type: 'json' };
 import { LOCALE_STORAGE_KEY } from '../src/i18n/locale';
 
+// CI starts the owned service immediately before this selected scope.
+// Wait for its bounded startup; the tests below still verify exact identity.
+test.beforeAll(async ({ request }) => {
+  await expect
+    .poll(
+      async () => {
+        try {
+          const response = await request.get('/api/v1/health', { timeout: 2000 });
+          return response.ok() && (await response.json()).ready === true;
+        } catch {
+          return false;
+        }
+      },
+      { timeout: 15000, message: 'Owned browser fixture must become ready' },
+    )
+    .toBe(true);
+});
+
 // Explicit Chinese regression variant; language-switch.spec covers fresh English defaults.
 test.beforeEach(async ({ page }) => {
   await page.addInitScript((key) => localStorage.setItem(key, 'zh-CN'), LOCALE_STORAGE_KEY);
