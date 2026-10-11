@@ -113,7 +113,7 @@ for (const width of [390, 800, 1672]) {
     const row = panel.locator('tbody tr').first();
     const mark = row.locator('.sar-lead-mark');
     const identifier = row.locator('th button');
-    const sourceButton = row.getByRole('button', { name: 'Source details', exact: true });
+    const sourceButton = row.getByRole('button', { name: /^(Source details|来源详情)$/ });
     await compactMark(mark);
     await mark.click();
     const source = page.getByRole('dialog', {
