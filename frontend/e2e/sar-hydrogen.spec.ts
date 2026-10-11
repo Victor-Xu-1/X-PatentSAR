@@ -55,6 +55,7 @@ for (const width of [390, 800, 1672]) {
             (el) => (el as HTMLImageElement).complete && (el as HTMLImageElement).naturalWidth > 0,
           ),
       );
+      await network.getByRole('textbox', { name: 'Find a core ID', exact: true }).focus();
       await network.screenshot({ path: test.info().outputPath(`hydrogen-${left}-${width}.png`) });
       await preview
         .getByRole('button', { name: 'Close transformation preview', exact: true })
@@ -62,6 +63,7 @@ for (const width of [390, 800, 1672]) {
     }
     await page.locator('.language-switch select').selectOption('zh-CN');
     await expect(network.getByRole('button', { name: '选择核心 2', exact: true })).toBeVisible();
+    await network.getByRole('textbox', { name: '查找核心编号', exact: true }).focus();
     await network.screenshot({ path: test.info().outputPath(`hydrogen-zh-${width}.png`) });
     expect((await (await page.request.get(`/api/v1/sar/jobs/${job}/study`)).json()).report).toEqual(
       snapshot.report,
