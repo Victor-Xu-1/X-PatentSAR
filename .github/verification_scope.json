@@ -3,6 +3,7 @@
   "base_sha": "7f84d78ee1e2cc777f82176c201872df34482cd7",
   "changed_paths": [
     ".github/verification_scope.json",
+    "AGENTS.md",
     "docs/FRONTEND_QUALITY.md",
     "frontend/e2e/sar-single-site.spec.ts",
     "frontend/package-lock.json",
