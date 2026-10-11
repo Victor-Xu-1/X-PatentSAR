@@ -571,7 +571,7 @@ for (const { width, height } of [
     const accessibility = await protocol.send('Accessibility.getFullAXTree');
     const accessibleTable = accessibility.nodes.find(
       (node) =>
-        !node.ignored && node.role?.value === 'table' && node.name?.value === 'Recorded activity',
+        !node.ignored && node.role?.value === 'table' && node.name?.value === 'Recorded values',
     );
     expect(accessibleTable).toBeTruthy();
     const byId = new Map(accessibility.nodes.map((node) => [node.nodeId, node]));

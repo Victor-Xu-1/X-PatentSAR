@@ -17,6 +17,7 @@
     "frontend/src/api/sarStudyIntegrity.ts",
     "frontend/src/api/sarStudyTypes.ts",
     "frontend/src/features/sar/study/NetworkBranches.tsx",
+    "frontend/src/features/sar/study/PreviewMeasurements.tsx",
     "frontend/src/features/sar/study/StudyNetwork.tsx",
     "frontend/src/features/sar/study/StudyReportView.tsx",
     "frontend/src/features/sar/study/StudySetup.tsx",

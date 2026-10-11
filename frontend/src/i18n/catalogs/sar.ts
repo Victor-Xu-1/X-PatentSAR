@@ -43,6 +43,9 @@ export const sar: Record<string, string> = {
   '模型预测与实验活性分开，不把缺失当安全。':
     'Predictions are separate from experimental activity; missing data is not safety.',
   记录活性: 'Recorded activity',
+  记录值: 'Recorded values',
+  更低: 'Lower',
+  更高: 'Higher',
   更强: 'Stronger',
   更弱: 'Weaker',
   未确定: 'Indeterminate',

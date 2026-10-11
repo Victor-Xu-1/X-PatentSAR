@@ -35,7 +35,9 @@ export function StudyNetwork({
       group.sites.push(summary);
       groups.set(summary.region.molecule_id, group);
     }
-    return [...groups.entries()].map(([id, group]) => ({ id, ...group }));
+    return [...groups.entries()]
+      .map(([id, group]) => ({ id, ...group }))
+      .toSorted((a, b) => a.label.localeCompare(b.label, 'en', { numeric: true }));
   }, [report.regions]);
   const filtered = centres.filter((centre) =>
     centre.label.toLowerCase().includes(search.toLowerCase().trim()),
