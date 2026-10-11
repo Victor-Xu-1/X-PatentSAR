@@ -537,3 +537,15 @@ refuses at500000 boundary sets,100000 indexed cuts,4096 sites or75000 comparison
 
 Endpoint/DTO details belong only in [WEB_API.md](WEB_API.md); installation,
 recovery and deployment procedures belong in [OPERATIONS.md](OPERATIONS.md).
+
+`web/sar/report_preparation.py` is the single receipt-checked typed report loader
+for current views, drawings and modification previews. Each read hashes all
+bounded report bytes against the published receipt before model reuse; dataset
+and input identity remain checked by `StudyResults.load`. Two <=4MiB byte packets
+keep the existing small-report retention policy. Larger report objects are held
+only by active readers: at most32 weak digest/size references and one parse lock
+coalesce concurrent cold reads without retaining large packets/models after the
+final reader. Failed validation never enters the weak pool. Captured objects are
+read-only inputs; current projections retain their own group/count models. This
+does not change scientific epochs, report/API/SQL contracts, file-size limits,
+publication or graph proofs, and introduces no store, task or persisted cache.

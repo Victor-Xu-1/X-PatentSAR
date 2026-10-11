@@ -2,22 +2,14 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
-from functools import lru_cache
 
 from ...core.sar.drawing import draw_fragment, draw_molecule_preview
 from ..errors import WebError
 from .models import Pair
-from .study_models import StudyDrawing, StudyOverview, StudyReport, StudyRows
+from .report_preparation import report_preparation
+from .study_models import StudyDrawing, StudyOverview, StudyRows
 from .study_table import order_rows
-
-
-@lru_cache(maxsize=2)
-def _small_report(content: bytes) -> StudyReport:
-    # At most two <=4MiB immutable byte packets are cached. Large reports never
-    # stay in the web process cache; every read still checks the exact receipt.
-    return StudyReport.model_validate_json(content)
 
 
 class StudyResults:
@@ -35,17 +27,7 @@ class StudyResults:
         content = self.queue.service.assets.job_files(saved["root"], identifier).read(
             "report.json", max_bytes=32 * 1024 * 1024
         )
-        if hashlib.sha256(content).hexdigest() != spec.get("report_sha256"):
-            raise WebError(
-                409,
-                "sar_report_changed",
-                "Study report bytes differ from the complete receipt.",
-            )
-        report = (
-            _small_report(content)
-            if len(content) <= 4 * 1024 * 1024
-            else StudyReport.model_validate_json(content)
-        )
+        report = report_preparation.read(content, spec.get("report_sha256"))
         if (
             report.input_sha256 != job.input_sha256
             or report.dataset_id != job.dataset_id

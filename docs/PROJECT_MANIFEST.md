@@ -52,6 +52,11 @@
   RDKit drawings preserve identity. No new renderer runtime/dependency, scientific
   engine/checkpoint change, external transmission or original mutation. Detail
   disclosure reduces everyday noise without dropping source QA or uncertainty.
+  `report_preparation.py` owns one receipt-checked typed read path for every
+  study consumer. Large concurrent reads share active read-only objects through
+  at most32 weak digest/size references; no large packet/model is retained when
+  readers release it. Current projections do not mutate captured group/count
+  objects. Complete byte/dataset/input identity and all proofs remain mandatory.
 
 - SAR study evidence/craft ownership: engine8 uses `study_distributions.py` for one
   prepared full-context chart domain and disjoint source-ID accounting; observation
