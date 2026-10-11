@@ -19,6 +19,12 @@ function headerHeightBudget(width: number) {
 async function exposedNavigation(page: Page, nav: Locator) {
   for (const language of ['en', 'zh-CN']) {
     await page.locator('.language-switch select').selectOption(language);
+    expect(
+      await page
+        .locator('.brand strong')
+        .evaluate((element) => element.scrollWidth <= element.clientWidth),
+      `Full product name remains visible in ${language}`,
+    ).toBe(true);
     const items = await nav.evaluate((element) => {
       const navBox = element.getBoundingClientRect();
       return [...element.querySelectorAll('button')].map((button) => {

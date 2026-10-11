@@ -391,4 +391,6 @@ two compact rows on phones and wrap naturally above that breakpoint. Navigation
 never relies on horizontal scrolling to reveal an active route. The retired
 scroll observers are removed from these two navigations; region/fragment strips
 retain their own existing selection behavior. Route identity, selection, focus,
-source data and the shared language authority remain unchanged.
+source data and the shared language authority remain unchanged. At the narrowest
+phone widths, only the decorative language icon is omitted so the full product
+name, language selector and version remain visible.
