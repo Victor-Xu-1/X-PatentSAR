@@ -277,6 +277,31 @@ for (const { width, height } of [
         expect(svg).toContain('#166534');
         expect(svg).not.toContain('#FF0000');
         expect(svg).not.toContain('#00CC00');
+        const opener = view.getByRole('button', { name: /^Enlarge structure / }).first();
+        await expect(opener).toBeEnabled();
+        const thumbnail = opener.locator('img');
+        await expect(thumbnail).toHaveJSProperty('naturalWidth', 360);
+        await expect(thumbnail).toHaveJSProperty('naturalHeight', 288);
+        const source = await thumbnail.getAttribute('src');
+        await opener.click();
+        const focus = page.getByRole('dialog', { name: /^Molecular preview · / });
+        await expect(focus.locator('img')).toHaveAttribute('src', source!);
+        await page.screenshot({
+          path: test.info().outputPath(`molecule-fit-${width}-${height}.png`),
+          animations: 'disabled',
+        });
+        for (let count = 0; count < 4; count++)
+          await focus.getByRole('button', { name: 'Zoom in structure', exact: true }).click();
+        await expect(focus.getByLabel('Magnification relative to fit', { exact: true })).toHaveText(
+          '200%',
+        );
+        await expect(focus.locator('img')).toHaveAttribute('src', source!);
+        await page.screenshot({
+          path: test.info().outputPath(`molecule-zoom-${width}-${height}.png`),
+          animations: 'disabled',
+        });
+        await page.keyboard.press('Escape');
+        await expect(opener).toBeFocused();
       }
       await page.screenshot({
         path: test.info().outputPath(`study-${width}-${tab.replaceAll(' ', '-')}.png`),

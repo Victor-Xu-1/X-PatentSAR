@@ -5,7 +5,7 @@ from __future__ import annotations
 import base64
 from html import escape
 
-from ...core.sar.drawing import draw_fragment, draw_structure
+from ...core.sar.drawing import draw_fragment, draw_molecule_preview, draw_structure
 
 COLORS = (
     "#106c57",
@@ -77,7 +77,7 @@ class ReportFigures:
             return "<span>Structure needs review</span>"
         key = ("molecule", molecule.graph_sha256)
         if key not in self.cache:
-            self.cache[key] = draw_structure(molecule.molfile)["svg"]
+            self.cache[key] = draw_molecule_preview(molecule.molfile)
         return image(self.cache[key], molecule.label)
 
     def region_map(self, molecule, regions) -> str:

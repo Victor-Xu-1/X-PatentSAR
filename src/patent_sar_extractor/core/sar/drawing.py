@@ -13,6 +13,7 @@ from .molecules import depict, read_molfile
 
 WIDTH, HEIGHT = 1000, 800
 FRAGMENT_CANVAS = (360, 240)
+MOLECULE_PREVIEW_CANVAS = (360, 288)
 
 
 def draw_structure(
@@ -32,6 +33,17 @@ def draw_fragment(smiles: str) -> str:
     if mol is None or not 1 <= mol.GetNumAtoms() <= 512:
         raise SARInputError("fragment_drawing_invalid")
     return _draw(mol, [], canvas=FRAGMENT_CANVAS)["svg"]
+
+
+def draw_molecule_preview(
+    molfile: str, *, highlighted_atoms: list[int] | None = None
+) -> str:
+    """Size passive vectors for cards; selectable maps keep their original canvas."""
+    return _draw(
+        read_molfile(molfile),
+        highlighted_atoms or [],
+        canvas=MOLECULE_PREVIEW_CANVAS,
+    )["svg"]
 
 
 def _draw(

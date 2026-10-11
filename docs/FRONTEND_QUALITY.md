@@ -292,8 +292,11 @@ geometry, labels, indices, stereochemistry, region coordinates and immutable rep
 are not rewritten. Unknown colors remain unchanged and unsafe SVG remains rejected.
 The same RDKit drawing authority uses a 360 by 240 display canvas for recorded
 fragments and descriptive cores, so port labels and small substituents remain
-legible in compact cards. Full molecule drawings and atom-selection maps retain
-their 1000 by 800 canvas, immutable atom order and normalized overlay coordinates.
+legible in compact cards. Passive full-molecule previews use a 360 by 288 canvas
+through that same drawer, so table downscaling does not reduce regular bonds to
+subpixel hairlines. The displayed SVG is reused for magnification and passive
+HTML report figures. Atom-selection maps retain their 1000 by 800 canvas,
+immutable atom order and normalized overlay coordinates.
 Fragment composition is one 12-pixel horizontal strip, with no later competing
 height override. Drawing requests never revise structures, reports or measurements.
 The conservative content-bound SAR engine still invalidates interrupted older

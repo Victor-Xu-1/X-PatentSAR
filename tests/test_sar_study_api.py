@@ -143,6 +143,18 @@ class SARStudyAPITests(WebFixture, unittest.TestCase):
             )
             self.assertEqual(drawing.status_code, 200, drawing.text)
             self.assertIn("</svg>", drawing.json()["svg"])
+            self.assertEqual(
+                ElementTree.fromstring(drawing.json()["svg"]).get("viewBox"),
+                "0 0 360 288",
+            )
+            atom_map = client.get(
+                prefix + "/molecules/" + first["molecule_id"] + "/drawing"
+            )
+            self.assertEqual(atom_map.status_code, 200, atom_map.text)
+            self.assertEqual(
+                ElementTree.fromstring(atom_map.json()["svg"]).get("viewBox"),
+                "0 0 1000 800",
+            )
             fragment = report["regions"][0]["fragments"][0]
             fragment_drawing = client.get(
                 path + "/drawing",
