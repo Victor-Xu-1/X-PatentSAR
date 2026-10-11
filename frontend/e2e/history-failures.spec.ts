@@ -162,7 +162,12 @@ for (const language of ['en', 'zh-CN']) {
     await historyRow(page, entry)
       .getByRole('button', { name: `${label('Delete', '删除')} ${entry.title}`, exact: true })
       .click();
-    const modal = page.getByRole('dialog').last();
+    const modal = page.getByRole('dialog').filter({
+      has: page.getByRole('button', {
+        name: label('Confirm move to Trash', '确认移入回收站'),
+        exact: true,
+      }),
+    });
     const confirmButton = modal.getByRole('button', {
       name: label('Confirm move to Trash', '确认移入回收站'),
       exact: true,
