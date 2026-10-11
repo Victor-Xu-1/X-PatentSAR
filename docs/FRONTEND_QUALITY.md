@@ -426,3 +426,10 @@ The single-reference view adds no redundant selector. Locale changes preserve th
 original labels, selected graph/region and focused control without extra reads.
 The same component serves manual studies and the single-site network, with no
 patent-specific count, identity, page or layout branch.
+
+Compact diagram markers preserve an explicit recorded R-number when that region
+appears in another reference group. Other names retain their complete original
+legend/accessibility text and receive an explicit diagram-only R alias, never a
+renamed record. Numeric and hydrogen captions reserve their actual drawing box
+width for edge containment/collision placement. Only label positions change;
+original atoms, hotspot coordinates, graph, regions and source data do not.

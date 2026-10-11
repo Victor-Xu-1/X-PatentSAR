@@ -15,6 +15,20 @@ const regions = [
   { ...namedRegion, id: 'second-region', name: 'R2 source label', atom_indices: [2] },
 ];
 
+it('keeps an explicitly named marker when another reference contains only that region', () => {
+  const recorded = { ...regions[1]!, name: 'R27 original region' };
+  const { container } = render(<RegionMap atoms={atoms} regions={[recorded]} />);
+  expect(container.querySelector('.sar-region-label text')).toHaveTextContent(/^R27$/);
+});
+
+it('shows an explicit diagram alias for nonnumeric names without changing the raw accessible name', () => {
+  const recorded = { ...regions[1]!, name: 'Linker 原文' };
+  render(<RegionLegend regions={[recorded]} onSelect={vi.fn()} />);
+  const choice = screen.getByRole('button', { name: 'Linker 原文' });
+  expect(choice).toHaveTextContent('R1 · Linker 原文');
+  expect(recorded.name).toBe('Linker 原文');
+});
+
 it('does not add an empty overlay to a reference without recorded regions or atom coordinates', () => {
   const { container, rerender } = render(<RegionMap atoms={atoms} regions={[]} />);
   expect(container).toBeEmptyDOMElement();

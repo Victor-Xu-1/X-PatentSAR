@@ -228,6 +228,7 @@ for (const { width, height } of [
           referencePane.getByRole('button', { name: 'R2', exact: true }),
         ).toHaveAttribute('aria-pressed', 'true');
         await expect(view.locator('.sar-region-group > h3')).toHaveText('R2 · Example 2');
+        await expect(referencePane.locator('.sar-region-label text')).toHaveText('R2');
         await referencePane.screenshot({
           path: test
             .info()

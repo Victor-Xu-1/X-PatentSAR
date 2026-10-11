@@ -7,10 +7,16 @@
     "frontend/e2e/sar-study.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
+    "frontend/src/features/sar/study/RegionMap.tsx",
     "frontend/src/features/sar/study/StudyRegionMap.tsx",
+    "frontend/src/features/sar/study/regionLabels.ts",
+    "frontend/src/features/sar/study/regionMarker.ts",
     "frontend/src/styles/sar-explorer.css",
+    "frontend/tests/sar-inline-selection.test.tsx",
+    "frontend/tests/sar-network-sites.test.ts",
     "frontend/tests/sar-preview-density.test.tsx",
     "frontend/tests/sar-reference-pane.test.tsx",
+    "frontend/tests/sar-region-map-interaction.test.tsx",
     "src/patent_sar_extractor/contracts.py"
   ],
   "python_modules": [
@@ -21,7 +27,12 @@
     "frontend/tests/sar-preview.test.tsx",
     "frontend/tests/sar-reference-pane.test.tsx",
     "frontend/tests/sar-fragment-preview.test.tsx",
-    "frontend/tests/sar-preview-density.test.tsx"
+    "frontend/tests/sar-preview-density.test.tsx",
+    "frontend/tests/sar-region-map-interaction.test.tsx",
+    "frontend/tests/sar-network-sites.test.ts",
+    "frontend/tests/sar-hydrogen.test.tsx",
+    "frontend/tests/sar-inline-selection.test.tsx",
+    "frontend/tests/sar-drawing-contrast.test.ts"
   ],
   "browser_tests": [
     "frontend/e2e/sar-study.spec.ts",

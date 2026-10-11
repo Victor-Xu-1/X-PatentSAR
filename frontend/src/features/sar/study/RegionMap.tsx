@@ -2,6 +2,7 @@ import type { Atom, Region } from '../../../api/sarTypes';
 import { useRef, useState } from 'react';
 import { useInlineSelection } from '../../../components/useInlineSelection';
 import { regionLabels } from './regionLabels';
+import { regionMarker } from './regionMarker';
 const colors = [
   '#137e78',
   '#466ca4',
@@ -39,7 +40,12 @@ export function RegionMap({
           (!hasSelection && !hovered && index === 0),
       )
     : regions;
-  const labels = regionLabels(atoms, visibleRegions).map((label) => ({
+  const markers = regions.map(regionMarker);
+  const labels = regionLabels(
+    atoms,
+    visibleRegions,
+    visibleRegions.map((region) => markers[regions.indexOf(region)]!.caption),
+  ).map((label) => ({
     ...label,
     order: regions.indexOf(visibleRegions[label.order]!),
   }));
@@ -78,7 +84,7 @@ export function RegionMap({
             </g>
           );
         })}
-        {labels.map(({ x, y, anchorX, anchorY, order }) => (
+        {labels.map(({ x, y, anchorX, anchorY, order, width }) => (
           <g
             key={regions[order]!.id}
             className="sar-region-label"
@@ -93,9 +99,9 @@ export function RegionMap({
               strokeWidth="1.5"
             />
             <rect
-              x={x - 26}
+              x={x - width / 2}
               y={y - 15}
-              width="52"
+              width={width}
               height="30"
               rx="5"
               fill="var(--surface)"
@@ -109,8 +115,7 @@ export function RegionMap({
               fontWeight="600"
               textAnchor="middle"
             >
-              R{order + 1}
-              {regions[order]!.hydrogen_anchor == null ? '' : ' H'}
+              {markers[order]!.caption}
             </text>
           </g>
         ))}
@@ -131,8 +136,7 @@ export function RegionMap({
                   tabIndex={-1}
                   key={region.id + ':' + atom.index}
                   aria-label={
-                    'R' +
-                    (order + 1) +
+                    markers[order]!.caption +
                     ' · ' +
                     region.name +
                     ' · ' +
@@ -179,13 +183,16 @@ export function RegionLegend({
               onClick={() => onSelect(region.id)}
             >
               <span style={{ background: colors[order % colors.length] }} />
+              {regionMarker(region, order).showAlias && (
+                <b aria-hidden="true">{regionMarker(region, order).marker} · </b>
+              )}
               {region.name ?? 'R' + (order + 1)}
               {region.hydrogen_anchor == null ? '' : ' · H'}
             </button>
           ) : (
             <>
-              <span style={{ background: colors[order % colors.length] }} />R{order + 1} ·{' '}
-              {region.name ?? 'R' + (order + 1)}
+              <span style={{ background: colors[order % colors.length] }} />
+              {regionMarker(region, order).marker} · {region.name ?? 'R' + (order + 1)}
             </>
           )}
         </li>
