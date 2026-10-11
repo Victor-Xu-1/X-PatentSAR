@@ -18,6 +18,7 @@ from patent_sar_extractor.web.sar.study_models import (
     StudyRegionSummary,
     StudyScaffold,
 )
+from patent_sar_extractor.web.sar.study_projection_models import CurrentStudyFragment
 from patent_sar_extractor.web.sar.study_results import StudyResults
 from patent_sar_extractor.web.sar.study_view import current_records, current_report
 from patent_sar_extractor.web.sar.study_view_groups import GroupBins, current_groups
@@ -146,13 +147,13 @@ class ViewGroupTests(unittest.TestCase):
         report, pairs = group_report()
         original = report.regions[0].model_dump()
         calls = []
-        copy_model = StudyFragment.model_copy
+        copy_model = CurrentStudyFragment.model_validate
 
         def counted(item, **kwargs):
-            calls.append(item.id)
+            calls.append(item["id"])
             return copy_model(item, **kwargs)
 
-        with patch.object(StudyFragment, "model_copy", counted):
+        with patch.object(CurrentStudyFragment, "model_validate", counted):
             scaffolds, regions = current_groups(
                 report,
                 {"A", "B", "C", "D"},
@@ -175,13 +176,13 @@ class ViewGroupTests(unittest.TestCase):
     def test_excluded_members_and_empty_fragments_never_receive_a_dto_copy(self):
         report, pairs = group_report()
         calls = []
-        copy_model = StudyFragment.model_copy
+        copy_model = CurrentStudyFragment.model_validate
 
         def counted(item, **kwargs):
-            calls.append(item.id)
+            calls.append(item["id"])
             return copy_model(item, **kwargs)
 
-        with patch.object(StudyFragment, "model_copy", counted):
+        with patch.object(CurrentStudyFragment, "model_validate", counted):
             scaffolds, regions = current_groups(
                 report,
                 {"A", "D"},

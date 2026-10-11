@@ -13,6 +13,7 @@ from .study_models import (
     StudyRow,
     StudyScaffold,
 )
+from .study_projection_models import CurrentStudyReport
 
 
 class ActivityBasis(DTO):
@@ -25,6 +26,7 @@ class ActivityBasis(DTO):
 
 
 class CurrentStudyOverview(StudyOverview):
+    report: CurrentStudyReport
     activity_basis: ActivityBasis
 
 

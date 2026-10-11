@@ -57,6 +57,12 @@
   at most32 weak digest/size references; no large packet/model is retained when
   readers release it. Current projections do not mutate captured group/count
   objects. Complete byte/dataset/input identity and all proofs remain mandatory.
+  `study_projection_models.py` owns only the current chart's compact validated
+  five-scalar bin leaves and typed containers. Source/publication StudyBin and
+  StudyReport remain unchanged. Current copies stay independently mutable; the
+  same full wire schema, fields/defaults and complete counts are verified against
+  captured contracts. No lazy omission, extra API/cache, changed producer identity
+  or model/scientific execution accompanies this allocation optimization.
 
 - SAR study evidence/craft ownership: engine8 uses `study_distributions.py` for one
   prepared full-context chart domain and disjoint source-ID accounting; observation
