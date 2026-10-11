@@ -35,6 +35,10 @@ async function createNetwork(page: Page, width: number) {
   await setup.getByRole('checkbox', { name: /t_half/ }).check();
   await setup
     .getByRole('combobox', { name: 'Activity direction', exact: true })
+    .first()
+    .selectOption('lower');
+  await setup
+    .getByRole('combobox', { name: 'Activity direction', exact: true })
     .nth(1)
     .selectOption('higher');
   await setup.getByRole('button', { name: 'Continue', exact: true }).click();
