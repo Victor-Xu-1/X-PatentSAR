@@ -14,6 +14,7 @@
     "frontend/src/features/sar/study/StudyReferencePane.tsx",
     "frontend/src/features/sar/study/tablePresentation.ts",
     "frontend/src/styles/sar-explorer.css",
+    "frontend/src/styles/sar.css",
     "frontend/tests/sar-preview.test.tsx",
     "src/patent_sar_extractor/contracts.py"
   ],

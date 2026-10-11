@@ -12,7 +12,7 @@ export function PreviewProperties({ data }: { data: StudyPreview }) {
       className="sar-property-comparison sar-table-scroll"
       aria-label={t('性质')}
     >
-      <table ref={content} aria-label={t('性质')}>
+      <table ref={content} className="sar-property-table" aria-label={t('性质')}>
         <thead>
           <tr>
             <th scope="col">{t('性质')}</th>

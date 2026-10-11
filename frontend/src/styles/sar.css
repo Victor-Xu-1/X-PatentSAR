@@ -431,7 +431,7 @@
   max-width: 320px;
   overflow-wrap: anywhere;
 }
-.sar-table-scroll table:not(.sar-study-table) :is(th, td) {
+.sar-table-scroll table:not(.sar-study-table, .sar-property-table) :is(th, td) {
   text-align: left;
   vertical-align: top;
 }
