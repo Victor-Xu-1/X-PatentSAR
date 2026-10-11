@@ -99,6 +99,51 @@ class CurrentStrengthTests(unittest.TestCase):
         self.assertEqual(source_exclusion("Intermediate18"), "intermediate")
         self.assertEqual(source_exclusion("Intermediate_18"), "intermediate")
 
+    def test_explicit_missing_number_markers_are_not_compound_identifiers(self):
+        for label in (
+            "-",
+            "--",
+            "—",
+            "–",
+            "N/A",
+            "n/a",
+            "NaN",
+            "None",
+            "null",
+            "undefined",
+            "unnumbered",
+            "unassigned",
+            "无编号",
+            "未编号",
+            "编号缺失",
+            "编号待定",
+            "  N/A  ",
+        ):
+            with self.subTest(label=label):
+                self.assertEqual(source_exclusion(label), "unconfirmed_identifier")
+        # Missing-marker detection is exact, never a guessed numbering grammar.
+        for label in ("8", "8A", "8B", "I-255", "Example 12", "NA-1", "A", "0"):
+            with self.subTest(label=label):
+                self.assertIsNone(source_exclusion(label))
+
+    def test_historical_missing_number_markers_do_not_enter_counts_or_anchor(self):
+        packet, captured = self.historical(["0.1"] * 9 + ["10", "100", "1000", ""])
+        original = copy.deepcopy(packet)
+        for index, label in enumerate(("-", "N/A")):
+            packet["molecules"][index]["label"] = label
+            captured.rows[index].label = label
+        archive = copy.deepcopy(captured.model_dump())
+        current, excluded = current_report(packet, captured, [])
+        self.assertEqual(current.molecule_count, 11)
+        self.assertEqual(current.policies[0].strength_scale.strong_boundary, 10000)
+        self.assertEqual(excluded, {"unconfirmed_identifier": 2})
+        self.assertFalse({"-", "N/A"}.intersection(row.label for row in current.rows))
+        self.assertEqual(
+            sum(item.molecules for item in current.distributions[0].bins), 11
+        )
+        self.assertEqual(captured.model_dump(), archive)
+        self.assertEqual(len(packet["molecules"]), len(original["molecules"]))
+
     def test_identical_replay_is_read_only_while_new_work_stays_cleanup_blocked(self):
         request = AnalysisRequest(
             request_id="a" * 32,
@@ -124,6 +169,47 @@ class CurrentStrengthTests(unittest.TestCase):
 
 class CurrentStrengthAPITests(WebFixture, unittest.TestCase):
     dataset = support.SARAPITests.dataset
+
+    def test_csv_placeholder_numbers_are_excluded_before_paging_and_empty_pool_rejected(
+        self,
+    ):
+        with self.client() as client:
+            markers = ("-", "N/A", "NaN", "None", "未编号", "Intermediate 1")
+            source = "id,smiles,IC50 (nM),assay\n" + "".join(
+                f"{label},CO,0.000001,binding\n" for label in markers
+            )
+            dataset = self.dataset(
+                client, (source + "I-255,CCO,,binding\n8B,,9,binding\n").encode()
+            )
+            self.assertEqual((dataset["input_row_count"], dataset["row_count"]), (8, 2))
+            path = support.ROOT + "/datasets/" + dataset["id"] + "/molecules"
+            rows = client.get(path).json()
+            self.assertEqual({row["label"] for row in rows["items"]}, {"I-255", "8B"})
+            self.assertEqual(
+                client.get(path + "?page=2&page_size=1").json()["total"], 2
+            )
+            preview = client.post(
+                support.ROOT + "/csv/preview?filename=numberless.csv",
+                content=source.encode(),
+                headers={"Content-Type": "text/csv"},
+            )
+            self.assertEqual(preview.status_code, 200, preview.text)
+            rejected = client.post(
+                support.ROOT + "/datasets/csv",
+                json={
+                    "token": preview.json()["token"],
+                    "title": "No numbered compounds",
+                    "id_column": "id",
+                    "smiles_column": "smiles",
+                    "activity_columns": ["IC50 (nM)"],
+                    "assay_column": "assay",
+                    "request_id": uuid.uuid4().hex,
+                },
+            )
+            self.assertEqual(rejected.status_code, 422, rejected.text)
+            self.assertEqual(
+                rejected.json()["error"]["code"], "sar_numbered_pool_empty"
+            )
 
     def test_csv_scope_retains_identified_missing_measurements_and_excludes_blank_or_intermediate(
         self,
@@ -154,10 +240,10 @@ class CurrentStrengthAPITests(WebFixture, unittest.TestCase):
             molecule(f"S{index + 1}", "COc1ccc(Cl)cc1", value)
             for index, value in enumerate(values)
         ]
+        # A legacy import may contain a placeholder with otherwise valid chemistry.
+        # Scope cannot rely only on historical issues/eligibility flags.
         unknown = molecule("unconfirmed", "CO", "0.000001")
-        unknown.update(
-            label="", eligible=False, issues=["missing_or_invalid_identifier"]
-        )
+        unknown.update(label="N/A")
         packet = fixture.packet(
             rows=[*rows, unknown], regions=1, policies=[policy(strong_threshold=1.0)]
         )

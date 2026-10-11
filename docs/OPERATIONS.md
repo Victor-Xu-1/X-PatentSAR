@@ -32,6 +32,10 @@ New numeric studies refuse manual thresholds; explicit original grade orders do
 not become concentrations. Missing and uncertain values remain separate states.
 Blank/unconfirmed source IDs, temporary structure IDs and explicitly labelled
 intermediates are excluded before import or historical-view pagination and ranking.
+Whole-cell missing-number markers (`-`, `N/A`, `NaN`, `None`, `null`,
+`undefined`, unnumbered/unassigned and explicit Chinese missing-number labels)
+are also excluded. Matching is exact after trimming/case folding, not a numbering
+grammar: labels such as `8A/8B`, `I-255`, `NA-1` and `Example 12` remain unchanged.
 An identified compound without activity or a usable structure remains in the pool;
 structure eligibility and identifier scope are independent. Existing immutable
 datasets and task records are preserved, and new studies use the filtered pool.
