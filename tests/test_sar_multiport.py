@@ -53,7 +53,14 @@ class MultiportTests(unittest.TestCase):
                             atoms = tuple(index for index in component if index < count)
                             if atoms and len(component) - len(atoms) == size:
                                 expected.add((cuts, sum(1 << index for index in atoms)))
-                self.assertEqual(set(boundary_regions(mol, lambda: None)), expected)
+                self.assertEqual(
+                    {
+                        item
+                        for item in boundary_regions(mol, lambda: None)
+                        if len(item[0]) <= 2
+                    },
+                    expected,
+                )
 
     def test_boundary_search_budget_refuses_without_publishing_partial_sites(self):
         rows = [source("1", "n1ccccc1COc1ccccc1F"), source("2", "n1ccccc1CCOc1ccccc1F")]
@@ -166,7 +173,7 @@ class MultiportTests(unittest.TestCase):
                         ):
                             proved.add((region["molecule_id"], mid))
                 self.assertEqual(proved, {("1", "2"), ("2", "1")})
-                self.assertEqual(coverage["max_cut_bonds"], 2)
+                self.assertEqual(coverage["max_cut_bonds"], 3)
                 self.assertEqual(
                     discover_sites(
                         list(reversed(rows)), {"id": "dataset", "revision": 1}

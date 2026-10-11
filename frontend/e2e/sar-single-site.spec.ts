@@ -22,7 +22,7 @@ for (const width of [390, 800, 1672]) {
     const { job, report } = await createNetwork(page, width);
     const overview = await (await page.request.get(`/api/v1/sar/jobs/${job}/study`)).json();
     expect(overview.report.molecule_count).toBe(4);
-    expect(overview.report.discovery.method).toBe('single-region-one-two-cut-h-v3');
+    expect(overview.report.discovery.method).toBe('single-region-one-to-three-cut-h-v4');
     const all = await (await page.request.get(`/api/v1/sar/jobs/${job}/study/rows`)).json();
     const candidate = all.items.find((row: { label: string }) => row.label === '2');
     const site = overview.report.regions.find(

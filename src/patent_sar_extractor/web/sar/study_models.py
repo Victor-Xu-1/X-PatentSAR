@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from ...contracts import SAR_STUDY_REPORT_SCHEMA_VERSION
 from ..activity_rank_models import ActivityStrengthScale
@@ -144,18 +144,41 @@ class StudyDiscovery(DTO):
         "single-non-ring-bond-v1",
         "single-region-one-two-cut-v2",
         "single-region-one-two-cut-h-v3",
+        "single-region-one-to-three-cut-h-v4",
     ]
     candidate_sites: int = Field(ge=0, le=4096)
     candidate_comparisons: int = Field(ge=0, le=75000)
     indexed_cuts: int = Field(ge=0, le=100000)
     examined_boundaries: int = Field(default=0, ge=0, le=500000)
     indexed_hydrogen_sites: int = Field(default=0, ge=0, le=100000)
-    max_cut_bonds: Literal[1, 2] = 1
+    max_cut_bonds: Literal[1, 2, 3] = 1
     excluded: dict[str, int]
     max_variable_atoms: Literal[32] = 32
     max_variable_fraction: Literal[0.4] = 0.4
     min_fixed_atoms: Literal[6] = 6
     limitations: list[str]
+
+    @model_validator(mode="after")
+    def exact_method_coverage(self) -> StudyDiscovery:
+        expected = {
+            "single-non-ring-bond-v1": 1,
+            "single-region-one-two-cut-v2": 2,
+            "single-region-one-two-cut-h-v3": 2,
+            "single-region-one-to-three-cut-h-v4": 3,
+        }[self.method]
+        if self.max_cut_bonds != expected:
+            raise ValueError("discovery_method_coverage")
+        if (
+            expected > 1
+            and not {"max_cut_bonds", "examined_boundaries"} <= self.model_fields_set
+        ):
+            raise ValueError("discovery_coverage_missing")
+        if self.method.endswith(("-h-v3", "-h-v4")) and (
+            "indexed_hydrogen_sites" not in self.model_fields_set
+            or self.indexed_hydrogen_sites > self.indexed_cuts
+        ):
+            raise ValueError("discovery_hydrogen_coverage")
+        return self
 
 
 class StudyRow(DTO):

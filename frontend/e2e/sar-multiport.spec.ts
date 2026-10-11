@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { createNetwork, twoPortSite } from './sar-network-actions';
+import { createNetwork, portSite } from './sar-network-actions';
 import { decodeStudyReport } from '../src/api/sarStudyDecoders';
 
 const csv =
@@ -25,8 +25,8 @@ for (const width of [390, 1672]) {
     const { job, report } = await createNetwork(page, width, csv);
     const overview = await (await page.request.get(`/api/v1/sar/jobs/${job}/study`)).json();
     const decoded = decodeStudyReport(overview.report);
-    expect(decoded.discovery?.method).toBe('single-region-one-two-cut-h-v3');
-    expect(overview.report.discovery.max_cut_bonds).toBe(2);
+    expect(decoded.discovery?.method).toBe('single-region-one-to-three-cut-h-v4');
+    expect(overview.report.discovery.max_cut_bonds).toBe(3);
     expect(overview.report.molecule_count).toBe(5);
     const rows = await (await page.request.get(`/api/v1/sar/jobs/${job}/study/rows`)).json();
     const ids = Object.fromEntries(
@@ -39,7 +39,7 @@ for (const width of [390, 1672]) {
     ]) {
       const network = page.locator('.sar-network').filter({ visible: true });
       await network.getByRole('button', { name: `Select core ${left}`, exact: true }).click();
-      const wanted = twoPortSite(decoded.regions, left!, ids[right!]);
+      const wanted = portSite(decoded.regions, left!, ids[right!], 2);
       await network
         .locator('.sar-region-legend')
         .getByRole('button', { name: `R${wanted.index + 1}`, exact: true })

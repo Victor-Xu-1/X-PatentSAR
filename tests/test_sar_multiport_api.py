@@ -22,9 +22,9 @@ class MultiportAPITests(WebFixture, unittest.TestCase):
             path = support.ROOT + "/jobs/" + job["id"] + "/study"
             report = client.get(path).json()["report"]
             self.assertEqual(
-                report["discovery"]["method"], "single-region-one-two-cut-h-v3"
+                report["discovery"]["method"], "single-region-one-to-three-cut-h-v4"
             )
-            self.assertEqual(report["discovery"]["max_cut_bonds"], 2)
+            self.assertEqual(report["discovery"]["max_cut_bonds"], 3)
             ids = {
                 row["label"]: row["molecule_id"]
                 for row in client.get(path + "/rows").json()["items"]
@@ -83,7 +83,7 @@ class MultiportAPITests(WebFixture, unittest.TestCase):
             self.assertGreater(missing["properties"]["molecular_weight"], 0)
             exported = client.get(path + "/export?format=json").json()
             self.assertEqual(len(exported["input"]["molecules"]), 5)
-            self.assertEqual(exported["report"]["discovery"]["max_cut_bonds"], 2)
+            self.assertEqual(exported["report"]["discovery"]["max_cut_bonds"], 3)
             self.assertEqual(
                 client.get(path + "/export?format=json").json()["input"],
                 exported["input"],
