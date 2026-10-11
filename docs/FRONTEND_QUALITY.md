@@ -451,3 +451,10 @@ authority. A lost mutation response keeps confirmation locked until explicit
 server-state readback; a committed deletion is never automatically replayed.
 Restoration remains a new explicit action with the authoritative revision, without
 altering original files, scientific results, QA or environment readiness.
+
+Complete SAR chart reads use compact validated scalar leaves inside the current
+view, while the original report retains its existing typed receipt contract.
+Independent current objects preserve all region/fragment groups, bins, raw labels,
+whole-context bands and comparisons; JSON fields/defaults and chart semantics stay
+identical. No region or table is replaced with a partial empty list, no report
+is sampled, and browser consumers continue through the same API and decoder.

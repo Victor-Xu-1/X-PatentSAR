@@ -33,6 +33,15 @@ projection copy with membership, chart and comparison counts together; excluded
 fragments are discarded before DTO construction. Returned chart DTOs are
 independently validated copies. This does not retain large reports between reads
 or bypass source exclusion, tenth-dose calculation, pair coverage or raw evidence.
+`study_projection_models.py` separates those current chart copies from immutable
+worker/publication DTOs. Five-scalar bins use validated slotted objects with the
+same shared finite/extra-field configuration; current containers inherit the
+captured field constraints and independently validate their updates. The whole
+wire schema is checked for identical fields/defaults/constraints, apart from
+internal OpenAPI component names. Every group/bin remains present and independently
+mutable, with the same scalar dump and nested serialization. Original typed
+reports, complete receipt checks and scientific producer identity are unchanged;
+there is no partial-response endpoint, sampled chart or second read cache.
 JSON retains original report/input plus an explicit current activity view. No
 model, new worker, queue, database, archive rewrite or manual numeric threshold
 is introduced. Candidate priority and graph proofs retain their captured meaning.

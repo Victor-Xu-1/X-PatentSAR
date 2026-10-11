@@ -4,7 +4,13 @@ from collections import Counter, OrderedDict, defaultdict
 from dataclasses import dataclass
 
 from ..errors import WebError
-from .study_models import StudyBin, StudyRegionSummary, StudyScaffold
+from .study_models import StudyRegionSummary, StudyScaffold
+from .study_projection_models import (
+    CurrentStudyBin,
+    CurrentStudyFragment,
+    CurrentStudyRegion,
+    CurrentStudyScaffold,
+)
 
 
 class GroupBins:
@@ -28,9 +34,9 @@ class GroupBins:
                 while len(self._items) > 256 or self._member_references > 4096:
                     removed, _ = self._items.popitem(last=False)
                     self._member_references -= len(removed)
-            return [StudyBin.model_validate(dict(item)) for item in result]
+            return [CurrentStudyBin(**dict(item)) for item in result]
         self._items.move_to_end(key)
-        return [StudyBin.model_validate(dict(item)) for item in self._items[key]]
+        return [CurrentStudyBin(**dict(item)) for item in self._items[key]]
 
 
 def _group_fields(members, states, bins):
@@ -71,8 +77,9 @@ def _region(summary, selected, ids, states, bins):
             continue
         changes = outcomes[original.id]
         fragments.append(
-            original.model_copy(
-                update={
+            CurrentStudyFragment.model_validate(
+                {
+                    **original.__dict__,
                     **_group_fields(members, states, bins),
                     "better": changes["better"],
                     "worse": changes["worse"],
@@ -85,8 +92,9 @@ def _region(summary, selected, ids, states, bins):
                 }
             )
         )
-    return summary.model_copy(
-        update={
+    return CurrentStudyRegion.model_validate(
+        {
+            **summary.__dict__,
             **{
                 key: counts[key]
                 for key in ("matched", "not_matched", "ambiguous", "ineligible")
@@ -134,12 +142,19 @@ def current_groups(captured, ids, domain, states, pairs):
     scope = source_groups(captured, ids, pairs)
     bins = GroupBins(domain)
     scaffolds = [
-        item.model_copy(
-            update=_group_fields(
-                [identifier for identifier in item.molecule_ids if identifier in ids],
-                states,
-                bins,
-            )
+        CurrentStudyScaffold.model_validate(
+            {
+                **item.__dict__,
+                **_group_fields(
+                    [
+                        identifier
+                        for identifier in item.molecule_ids
+                        if identifier in ids
+                    ],
+                    states,
+                    bins,
+                ),
+            }
         )
         for item in scope.scaffolds
     ]

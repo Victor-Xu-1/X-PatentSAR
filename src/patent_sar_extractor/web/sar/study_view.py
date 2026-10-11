@@ -1,7 +1,8 @@
 """Source-bound current views over the same complete immutable study archives."""
 
 from .study_activity_view import prepare_activity
-from .study_models import StudyDistribution, StudyReport
+from .study_models import StudyReport
+from .study_projection_models import CurrentStudyDistribution, CurrentStudyReport
 from .study_view_groups import current_groups, source_groups
 from .study_view_models import CurrentRecordView
 
@@ -35,8 +36,9 @@ def current_report(packet: dict, captured: StudyReport, pairs: list[dict]):
         pairs,
     )
     by_id = {row.molecule_id: row for row in activity.rows}
-    current = captured.model_copy(
-        update={
+    current = CurrentStudyReport.model_validate(
+        {
+            **captured.__dict__,
             "counting_contract": "unique-molecules-v2",
             "molecule_count": len(activity.sources),
             "eligible_count": sum(row["eligible"] for row in activity.sources),
@@ -46,7 +48,7 @@ def current_report(packet: dict, captured: StudyReport, pairs: list[dict]):
             "contexts": activity.contexts,
             "policies": activity.policies,
             "distributions": [
-                StudyDistribution.model_validate(
+                CurrentStudyDistribution.model_validate(
                     activity.domains[policy.context_id].for_members(list(activity.ids))
                 )
                 for policy in activity.policies
