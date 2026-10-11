@@ -73,9 +73,9 @@ def hydrogen_view(
     return expanded, virtual
 
 
-def region_view(mol, atom_indices, hydrogen_anchor=None):
+def region_view(mol, atom_indices, hydrogen_anchor=None, *, adjacency=None):
     if hydrogen_anchor is None:
-        return mol, selection(mol, atom_indices)
+        return mol, selection(mol, atom_indices, adjacency=adjacency)
     if not isinstance(atom_indices, (list, tuple)) or atom_indices:
         raise SARInputError("region_invalid_indices")
     expanded, virtual = hydrogen_view(mol, hydrogen_anchor)

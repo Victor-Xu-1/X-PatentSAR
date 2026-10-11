@@ -396,3 +396,11 @@ phone widths, only the decorative language icon is omitted so the full product
 name, language selector and version remain visible.
 The compact height budget is checked inside each language state, including
 two-line English captions, not only after the final language switch.
+
+Transformation properties use one compact matrix: original reference ID,
+modified ID and backend-authoritative delta across the six existing fields.
+The reference value is visible without subtraction; zero, missing and small
+differences stay distinct. Counts retain integer display where actually integral.
+Unknown/origin-incomparable deltas are not recalculated in the browser. A phone
+scrolls this matrix locally with source IDs frozen; the measured activity/PK
+comparison, uncertainty, predictions and original structure authority stay separate.

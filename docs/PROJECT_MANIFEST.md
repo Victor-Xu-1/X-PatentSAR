@@ -28,6 +28,11 @@
   all budgets stay unchanged. `prepared_graphs.py` owns one job-local bounded
   exact-source preparation pool; publication/preview recheck graph fields and
   no persisted result cache, new queue/model/dependency or original rewrite exists.
+  `regions.py` owns exact prepared adjacency/port inventories; reference ports
+  and at most64 per-comparison remainder topologies are reused, not embeddings
+  or scientific results. Every full mapping retains its own anchor/stereo proof.
+  Preparation changes keep engine8 semantics but change its source-bound hash;
+  old unfinished work must not be relabelled or resumed with that new hash.
 
 - Current SAR activity ownership: `source_scope.py` defines identified final
   compounds; source-only placeholders, blank IDs and explicit intermediates are

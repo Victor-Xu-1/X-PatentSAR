@@ -40,6 +40,12 @@ and strict matching proves every member. Failed/ambiguous proofs retain the
 broader site. `redundant_proved_sites` reports removal;4096 retained sites and all
 other budgets remain unchanged. Job-local256-entry exact-Molfile preparation
 avoids reparsing without a persistent/chemical-identity result cache.
+Exact original adjacency and fixed-port preparation also avoid repeated native
+walks during strict comparisons and cut validation. Each embedding still proves
+its own fixed anchors/stereo; per-comparison topology reuse is bounded by the64
+embedding cap. Preparation-only changes retain engine8 meaning but alter the
+content-bound engine hash: start fresh native work from the existing dataset,
+never reuse or rewrite an old unfinished receipt as a compatible result.
 
 ## Activity-strength compatibility
 

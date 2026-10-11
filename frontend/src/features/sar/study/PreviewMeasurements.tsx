@@ -1,12 +1,9 @@
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import type { StudyReport, StudyPreview } from '../../../api/sarStudyTypes';
 import { useTranslation } from '../../../i18n';
-import { propertyText, studyProperties } from './tablePresentation';
+import { differenceText, propertyText } from './tablePresentation';
 import { contextLabel } from '../presentation';
-export function differenceText(value: number | null | undefined) {
-  if (value == null || !Number.isFinite(value)) return '—';
-  return value !== 0 && Math.abs(value) < 0.01 ? value.toPrecision(3) : value.toFixed(2);
-}
+import { PreviewProperties } from './PreviewProperties';
 export function PreviewMeasurements({ data, report }: { data: StudyPreview; report: StudyReport }) {
   const { t } = useTranslation();
   return (
@@ -82,18 +79,8 @@ export function PreviewMeasurements({ data, report }: { data: StudyPreview; repo
             </tbody>
           </table>
         </div>
-        <dl className="sar-property-deltas">
-          {studyProperties.map((property) => (
-            <div key={property.key}>
-              <dt>{property.label}</dt>
-              <dd>
-                {propertyText(data.candidate.properties[property.key] ?? null, property.key)}
-                <small>Δ {differenceText(data.property_differences[property.key] ?? null)}</small>
-              </dd>
-            </div>
-          ))}
-        </dl>
       </div>
+      <PreviewProperties data={data} />
       {Object.keys({ ...data.reference.predictions, ...data.candidate.predictions }).length > 0 && (
         <details className="sar-compact">
           <summary>{t('已有 ADMET 预测')}</summary>

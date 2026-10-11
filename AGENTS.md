@@ -2,6 +2,9 @@
 
 - Read `README.md`, `docs/ARCHITECTURE.md`, `docs/OPERATIONS.md`, and `docs/PROJECT_MANIFEST.md` before changing behavior or repository shape.
 - Preserve fail-closed acceptance. Do not turn binding, SMILES, or QA errors into warnings to make a run appear successful.
+- Software rules apply to every task through the shared production path. Never add patent/job/dataset IDs, fixed source pages, special compound lists or expected result counts as case-specific business branches. Real patents are verification evidence, not production templates.
+- Repair a failing case at the general parser, graph, measurement, lifecycle or presentation authority. Add differing-input and boundary regressions; never edit an existing task's scientific results to make a software test pass.
+- Separate tested coverage from generality claims: one successful patent does not prove every format or chemical encoding. Unsupported/ambiguous inputs must remain explicit rather than silently receive fabricated structures, activities or success.
 - Production primary OCSR remains DECIMER. A maximum-eight-item local MolScribe pass is allowed only after primary cleanup for lost-stereo results with identical non-stereo graphs, preserved prior stereo, current original source QC and independently revalidated proof. It must not replace normal primary results or invent unspecified source stereochemistry.
 - Keep credentials, patents, model weights, caches, logs, images, spreadsheets, and run directories out of Git.
 - Every behavior change needs a regression test. Select checks from the exact diff and its affected consumers; do not run global tests without explicit user authorization. Deployment requires a clean wheel build, installed-wheel identity/health smoke, and the affected real-browser/API path. Do not disable required checks or branch protection to satisfy this scope.
