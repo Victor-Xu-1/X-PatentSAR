@@ -3,6 +3,7 @@
   "base_sha": "3c14080b3da302d252a5955492c95e09e0494b8e",
   "changed_paths": [
     ".github/verification_scope.json",
+    "README.md",
     "docs/ARCHITECTURE.md",
     "docs/OPERATIONS.md",
     "docs/PROJECT_MANIFEST.md",
