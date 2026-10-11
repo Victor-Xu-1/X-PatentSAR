@@ -14,6 +14,7 @@ export function StudyNetwork({
   strongest = false,
   fragments = false,
   onSource,
+  onRows,
 }: {
   report: StudyReport;
   jobId: string;
@@ -21,6 +22,7 @@ export function StudyNetwork({
   strongest?: boolean;
   fragments?: boolean;
   onSource: (id: string) => void;
+  onRows?: ((reference: string, region: string) => void) | undefined;
 }) {
   const { t } = useTranslation();
   const [search, setSearch] = useState(''),
@@ -31,7 +33,9 @@ export function StudyNetwork({
   const centres = useMemo(() => {
     const groups = new Map<string, { label: string; sites: StudyRegionSummary[] }>();
     for (const summary of report.regions) {
-      if (!summary.matched || summary.no_variation) continue;
+      const automatic =
+        summary.origin === 'single_site' || (report.discovery && summary.origin !== 'manual');
+      if (automatic && (!summary.matched || summary.no_variation)) continue;
       const group = groups.get(summary.region.molecule_id) ?? {
         label: summary.reference_label,
         sites: [],
@@ -42,7 +46,7 @@ export function StudyNetwork({
     return [...groups.entries()]
       .map(([id, group]) => ({ id, ...group, compact: compactNetworkSites(group.sites) }))
       .toSorted((a, b) => a.label.localeCompare(b.label, 'en', { numeric: true }));
-  }, [report.regions]);
+  }, [report.regions, report.discovery]);
   const filtered = centres.filter((centre) =>
     centre.label.toLowerCase().includes(search.toLowerCase().trim()),
   );
@@ -123,7 +127,15 @@ export function StudyNetwork({
         ))}
       </div>
       <GroupPager page={page} size={6} total={filtered.length} onPage={setPage} />
-      {!showing.length && <p>{t('没有可显示的核心结构')}</p>}
+      {!showing.length && (
+        <p>
+          {t(
+            !report.discovery && !report.regions.length
+              ? '本研究未选择区域。保存区域后可明确运行新研究。'
+              : '没有可显示的核心结构',
+          )}
+        </p>
+      )}
       {selected && visibleSites.length > 0 && (
         <>
           <div className="sar-network-view-tools">
@@ -135,6 +147,15 @@ export function StudyNetwork({
             >
               {t('全部改造方向')}
             </button>
+            {onRows && (
+              <button
+                type="button"
+                className="button secondary"
+                onClick={() => onRows(selected.id, summary?.region.id ?? '')}
+              >
+                {t('查看分子')}
+              </button>
+            )}
           </div>
           <div className="sar-network-layout">
             <div className="sar-network-map">
@@ -172,22 +193,24 @@ export function StudyNetwork({
           </div>
         </>
       )}
-      <details className="sar-compact sar-network-scope">
-        <summary>{t('搜索范围')}</summary>
-        <p>
-          {t(
-            report.discovery?.method === 'single-region-three-port-aromatic-h-v5'
-              ? '单一区域，最多三个连接点；支持芳香环局部替换、氢位点、支链与桥环。固定结构严格不变；氢边界手性及更多连接点尚未自动枚举。'
-              : report.discovery?.method === 'single-region-one-to-three-cut-h-v4'
-                ? '单一区域，最多三个连接点；支持氢位点、支链与非芳香桥环变化。固定结构严格不变；氢边界手性、芳香切割及更多连接点尚未自动枚举。'
-                : report.discovery?.method === 'single-region-one-two-cut-h-v3'
-                  ? '单一变化区域，支持普通氢位点、一至两个连接点及非芳香环片段；其余结构严格不变。氢边界手性、芳香切割及更多连接点仍不支持自动枚举。'
-                  : report.discovery?.method === 'single-region-one-two-cut-v2'
-                    ? '单一变化区域，支持一至两个连接点及非芳香环片段；其余完整结构严格不变。隐式氢、芳香边界及更多连接点仍需手工区域。'
-                    : '自动枚举单个非环单键的连接点，其他完整结构由严格匹配器确认。隐式氢、环内和多连接点变化尚未自动枚举，可继续使用手工区域。',
-          )}
-        </p>
-      </details>
+      {report.discovery && (
+        <details className="sar-compact sar-network-scope">
+          <summary>{t('搜索范围')}</summary>
+          <p>
+            {t(
+              report.discovery?.method === 'single-region-three-port-aromatic-h-v5'
+                ? '单一区域，最多三个连接点；支持芳香环局部替换、氢位点、支链与桥环。固定结构严格不变；氢边界手性及更多连接点尚未自动枚举。'
+                : report.discovery?.method === 'single-region-one-to-three-cut-h-v4'
+                  ? '单一区域，最多三个连接点；支持氢位点、支链与非芳香桥环变化。固定结构严格不变；氢边界手性、芳香切割及更多连接点尚未自动枚举。'
+                  : report.discovery?.method === 'single-region-one-two-cut-h-v3'
+                    ? '单一变化区域，支持普通氢位点、一至两个连接点及非芳香环片段；其余结构严格不变。氢边界手性、芳香切割及更多连接点仍不支持自动枚举。'
+                    : report.discovery?.method === 'single-region-one-two-cut-v2'
+                      ? '单一变化区域，支持一至两个连接点及非芳香环片段；其余完整结构严格不变。隐式氢、芳香边界及更多连接点仍需手工区域。'
+                      : '自动枚举单个非环单键的连接点，其他完整结构由严格匹配器确认。隐式氢、环内和多连接点变化尚未自动枚举，可继续使用手工区域。',
+            )}
+          </p>
+        </details>
+      )}
     </section>
   );
 }

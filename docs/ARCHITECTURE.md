@@ -57,6 +57,17 @@ service is introduced. New preview DTOs are isolated in `preview_models.py` so
 visual work does not invalidate scientific checkpoints. Raw/provenance detail is
 available on demand; missing/failed/stale states remain explicit.
 
+The Variable-regions view uses one `StudyNetwork` core/rows/preview workbench for
+both manually specified and automatically discovered regions. Original region
+origins/names and immutable producer reports do not change. Manual no-variation
+or unproved selections remain selectable, but only the existing published
+changed-fragment membership can produce modification cards. Fragment aggregation
+remains a distinct report view, not a second matcher. Core-wide member navigation
+uses the same optional reference selector; dependent region/fragment selection,
+group navigation and reset clear stale filters. Automatic search limitations are
+displayed only for a report that actually ran discovery. No API/schema/scientific
+epoch, dependency, new worker, task rerun or stored report migration is introduced.
+
 Engine3 adds one prepared `DistributionContext` per exact selected context;
 every source-ID population is a disjoint partition while raw repeat observations
 remain intact. All group charts reuse its ordered numeric domain. Publication

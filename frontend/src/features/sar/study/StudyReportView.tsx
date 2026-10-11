@@ -51,6 +51,7 @@ export function StudyReportView({
     scaffold_id: '',
     region_id: '',
     fragment_id: '',
+    reference_id: '',
   });
   useEffect(() => {
     if (revealedRows.current === rowsRequest) return;
@@ -86,7 +87,13 @@ export function StudyReportView({
           jobId={jobId}
           active={active && tab === 1}
           onRows={(scaffold_id) =>
-            showRows({ scaffold_id, scope: 'all', region_id: '', fragment_id: '' })
+            showRows({
+              scaffold_id,
+              scope: 'all',
+              region_id: '',
+              fragment_id: '',
+              reference_id: '',
+            })
           }
         />
       </section>
@@ -99,24 +106,21 @@ export function StudyReportView({
         />
       </section>
       <section id={id + '-3'} hidden={tab !== 3} aria-label={t(tabs[3])}>
-        {report.discovery ? (
-          <StudyNetwork
-            report={report}
-            jobId={jobId}
-            active={active && tab === 3}
-            onSource={showSource}
-          />
-        ) : (
-          <StudyRegions
-            report={report}
-            jobId={jobId}
-            active={active && tab === 3}
-            onRows={(region_id, fragment_id) =>
-              showRows({ region_id, fragment_id, scaffold_id: '', scope: 'all' })
-            }
-            onSource={showSource}
-          />
-        )}
+        <StudyNetwork
+          report={report}
+          jobId={jobId}
+          active={active && tab === 3}
+          onSource={showSource}
+          onRows={(reference_id, region_id) =>
+            showRows({
+              reference_id,
+              region_id,
+              fragment_id: '',
+              scaffold_id: '',
+              scope: 'changes',
+            })
+          }
+        />
       </section>
       <section id={id + '-4'} hidden={tab !== 4} aria-label={t(tabs[4])}>
         <label className="sar-checkbox">
@@ -136,6 +140,15 @@ export function StudyReportView({
             strongest={strongest}
             fragments
             onSource={showSource}
+            onRows={(reference_id, region_id) =>
+              showRows({
+                reference_id,
+                region_id,
+                fragment_id: '',
+                scaffold_id: '',
+                scope: strongest ? 'strong_changes' : 'changes',
+              })
+            }
           />
         ) : (
           <StudyRegions
@@ -144,7 +157,7 @@ export function StudyReportView({
             active={active && tab === 4}
             strongest={strongest}
             onRows={(region_id, fragment_id) =>
-              showRows({ region_id, fragment_id, scaffold_id: '', scope: 'all' })
+              showRows({ region_id, fragment_id, scaffold_id: '', reference_id: '', scope: 'all' })
             }
             onSource={showSource}
           />

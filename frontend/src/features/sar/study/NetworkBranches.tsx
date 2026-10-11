@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import type { StudyRegionSummary, StudyReport } from '../../../api/sarStudyTypes';
 import { sarStudyApi } from '../../../api/sarStudyApi';
 import { useTranslation } from '../../../i18n';
@@ -39,6 +39,16 @@ export function NetworkBranches({
     summary: StudyRegionSummary;
   } | null>(null);
   const sites = summary ? [summary] : summaries;
+  const siteOrder = useMemo(
+    () =>
+      new Map(
+        (summaries.length ? summaries : summary ? [summary] : []).map((item, index) => [
+          item.region.id,
+          index,
+        ]),
+      ),
+    [summaries, summary],
+  );
   const trigger = useRef<HTMLButtonElement | null>(null);
   const load = useCallback(
     (signal: AbortSignal) =>
@@ -78,6 +88,7 @@ export function NetworkBranches({
       {rows.error && <SARFailure error={rows.error} onRetry={rows.reload} />}
       {rows.validated && rows.data && (
         <>
+          {summary?.no_variation && <output>{t('该区域没有观察到结构变化。')}</output>}
           <div className="sar-network-branch-grid">
             {rows.data.items.map((row) => (
               <NetworkBranchCard
@@ -85,6 +96,7 @@ export function NetworkBranches({
                 row={row}
                 report={report}
                 sites={networkRowSites(sites, row.molecule_id)}
+                siteOrder={siteOrder}
                 jobId={jobId}
                 active={active}
                 fragments={fragments}

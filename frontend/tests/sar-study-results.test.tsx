@@ -29,10 +29,10 @@ beforeEach(() => {
     id: identifier,
     svg: sarDrawing.svg,
   }));
-  vi.spyOn(sarStudyApi, 'rows').mockImplementation(async (_id, _dataset, page) => ({
+  vi.spyOn(sarStudyApi, 'rows').mockImplementation(async (_id, _dataset, page, filter) => ({
     job: studyJob,
-    items: [studyRow],
-    total: 70,
+    items: filter.scope === 'changes' || filter.scope === 'strong_changes' ? [] : [studyRow],
+    total: filter.scope === 'changes' || filter.scope === 'strong_changes' ? 0 : 70,
     page,
     page_size: 50,
   }));
@@ -171,11 +171,16 @@ describe('complete study report and lifecycle', () => {
     expect(screen.queryByText('core/control')).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Variable regions' }));
     const regionView = within(screen.getByRole('region', { name: 'Variable regions' }));
+    expect(regionView.getByRole('button', { name: 'All directions' })).toBeVisible();
+    await userEvent.click(regionView.getByRole('button', { name: 'R1 用户原文' }));
     expect(
-      regionView.getByText('No structural variation was observed in this region.'),
+      await regionView.findByText('No structural variation was observed in this region.'),
     ).toBeVisible();
-    expect(regionView.getByRole('heading', { name: /Fragment 1/ })).toBeVisible();
-    const outcomes = regionView.getByRole('group', { name: 'Reference-comparison results' });
+    expect(regionView.queryByRole('button', { name: /^Compare / })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Fragment summary' }));
+    const fragments = within(screen.getByRole('region', { name: 'Fragment summary' }));
+    expect(fragments.getByRole('heading', { name: /Fragment 1/ })).toBeVisible();
+    const outcomes = fragments.getByRole('group', { name: 'Reference-comparison results' });
     expect(within(outcomes).getByText('Indeterminate')).toBeVisible();
     expect(within(outcomes).getByText('Weaker')).toBeVisible();
     expect(screen.queryByText('fragment/control')).not.toBeInTheDocument();
@@ -312,14 +317,22 @@ describe('compact activity-table presentation', () => {
       await waitFor(() =>
         expect(vi.mocked(sarStudyApi.rows).mock.calls.at(-1)?.[3]).toMatchObject({
           query: '原文 007B',
-          scope: 'all',
           ...(viewName === 'Scaffolds'
-            ? { scaffold_id: 'core/control', region_id: '', fragment_id: '' }
-            : {
-                scaffold_id: '',
-                region_id: studyReport.regions[0]!.region.id,
-                fragment_id: 'fragment/control',
-              }),
+            ? { scope: 'all', scaffold_id: 'core/control', region_id: '', fragment_id: '' }
+            : viewName === 'Variable regions'
+              ? {
+                  scope: 'changes',
+                  reference_id: studyReport.regions[0]!.region.molecule_id,
+                  scaffold_id: '',
+                  region_id: '',
+                  fragment_id: '',
+                }
+              : {
+                  scope: 'all',
+                  scaffold_id: '',
+                  region_id: studyReport.regions[0]!.region.id,
+                  fragment_id: 'fragment/control',
+                }),
         }),
       );
       const revealed = scroll.mock.calls.length;
@@ -377,9 +390,45 @@ describe('compact activity-table presentation', () => {
         scaffold_id: '',
         region_id: '',
         fragment_id: '',
+        reference_id: '',
       }),
     );
     expect(options).not.toHaveTextContent('2');
+  });
+  it('keeps core-wide member scope visible and resettable, and clears it when navigating to another grouping', async () => {
+    vi.spyOn(sarApi, 'drawing').mockResolvedValue(sarDrawing);
+    render(
+      <StudyReportView report={studyReport} dataset={sarDataset} jobId={studyJob.id} active />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Variable regions' }));
+    await userEvent.click(screen.getByRole('button', { name: 'View molecules' }));
+    await screen.findByRole('region', { name: 'Activity table' });
+    const options = screen.getByRole('button', { name: 'Filters and sort' });
+    await userEvent.click(options);
+    expect(screen.getByRole('combobox', { name: 'Row scope' })).toHaveValue('changes');
+    expect(screen.getByRole('combobox', { name: 'Choose reference molecule' })).toHaveValue(
+      studyReport.regions[0]!.region.molecule_id,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Reset filters and sort' }));
+    await waitFor(() =>
+      expect(vi.mocked(sarStudyApi.rows).mock.calls.at(-1)?.[3]).toMatchObject({
+        scope: 'all',
+        reference_id: '',
+        region_id: '',
+        fragment_id: '',
+      }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Variable regions' }));
+    await userEvent.click(screen.getByRole('button', { name: 'View molecules' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Scaffolds' }));
+    await userEvent.click(screen.getByRole('button', { name: 'View molecules' }));
+    await waitFor(() =>
+      expect(vi.mocked(sarStudyApi.rows).mock.calls.at(-1)?.[3]).toMatchObject({
+        scope: 'all',
+        reference_id: '',
+        scaffold_id: 'core/control',
+      }),
+    );
   });
   it('uses only selected contexts, short property headings/2dp, server filtering/paging and shared column chooser', async () => {
     const report = {

@@ -466,10 +466,20 @@ Other original names retain their alias and complete text, and an actual hydroge
 site keeps its H annotation. Original names, graph/atom identity, pointer targets,
 keyboard routing, drawing positions and scientific results are unchanged.
 
-Automatic core views start with all proved modification directions, not an
+Manual and automatic Variable-regions views start with all proved modification directions, not an
 implicitly selected first site. The existing paged read supplies six unique
 source cards; site choices narrow that same path and the all-directions action
 restores it. Each card retains explicit valid region choices and draws/previews
 that exact source region, without inventing a combined transformation. All
 selected activity/PK measurements stay visible, with missing values distinct
 from zero. Raw data, original identifiers and view selection survive localization.
+Manual no-variation/unproved selections remain accessible with an explicit empty
+change view; an absent region is distinct from a failed read. Recorded fragment
+statistics and counterexamples remain in Fragment summary. Member navigation
+retains one visible/resettable core filter in the existing table controls, and
+changing grouping or dependent selections cannot carry an incompatible hidden
+reference. No scientific result is rewritten or relabelled by this presentation.
+Diagram aliases are derived from the same displayed core-site order for the map,
+every candidate card and its narrowed site view. Filtering one candidate's
+accepted explanations cannot restart an unnamed/manual site's alias at R1.
+Recorded names and region identities remain unchanged.

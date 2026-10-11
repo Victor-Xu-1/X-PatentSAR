@@ -13,6 +13,16 @@ from tools.prepare_browser_fixture import prepare
 
 
 class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
+    def test_manual_and_automatic_directions_use_only_isolated_sar_fixture(self):
+        manual = PREFIX + "sar-manual-directions.spec.ts"
+        self.assertEqual(fixture_mode({manual}), "sar")
+        self.assertEqual(
+            fixture_mode({manual, PREFIX + "sar-single-site.spec.ts"}), "sar"
+        )
+        self.assertEqual(
+            fixture_mode({manual, PREFIX + "real-workflow.spec.ts"}), "execution"
+        )
+
     def test_jobs_project_recovery_scope_is_read_only_and_never_starts_a_producer(self):
         selected = {
             PREFIX + "jobs-project-recovery.spec.ts",
