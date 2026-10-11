@@ -63,7 +63,8 @@ for (const width of [390, 1672]) {
     await setup.getByRole('button', { name: 'Run full study', exact: true }).click();
     await expect(page).toHaveURL(/job=[a-f0-9]{32}/);
     const job = new URLSearchParams(new URL(page.url()).hash.split('?')[1]).get('job');
-    const report = page.getByRole('region', { name: 'Study report', exact: true });
+    // The same result DOM survives locale changes; its accessible name localizes.
+    const report = page.locator('.sar-study-report');
     await expect(report.locator('.sar-study-tabs')).toBeVisible({ timeout: 30000 });
     const path = `/api/v1/sar/jobs/${job}/study`;
     const current = await (await page.request.get(path)).json();
