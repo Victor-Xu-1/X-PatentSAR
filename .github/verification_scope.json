@@ -18,8 +18,11 @@
     "frontend/src/api/sarStudyIntegrity.ts",
     "frontend/src/api/sarStudyTypes.ts",
     "frontend/src/features/sar/study/StudyNetwork.tsx",
+    "frontend/src/features/sar/study/networkSites.ts",
     "frontend/src/i18n/catalogs/sar.ts",
+    "frontend/src/styles/sar-network.css",
     "frontend/tests/sar-discovery-contract.test.ts",
+    "frontend/tests/sar-network-sites.test.ts",
     "src/patent_sar_extractor/contracts.py",
     "src/patent_sar_extractor/core/sar/cut_topology.py",
     "src/patent_sar_extractor/core/sar/discovery.py",
@@ -51,7 +54,8 @@
   "frontend_tests": [
     "frontend/tests/sar-discovery-contract.test.ts",
     "frontend/tests/sar-study-api.test.tsx",
-    "frontend/tests/sar-study-results.test.tsx"
+    "frontend/tests/sar-study-results.test.tsx",
+    "frontend/tests/sar-network-sites.test.ts"
   ],
   "browser_tests": [
     "frontend/e2e/sar-multiport.spec.ts",

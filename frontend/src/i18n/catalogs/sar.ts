@@ -454,6 +454,8 @@ export const sar: Record<string, string> = {
   没有符合条件的结构分支: 'No matching structure branches',
   没有可显示的核心结构: 'No core structures to show',
   搜索范围: 'Search coverage',
+  精简位点: 'Compact sites',
+  '全部位点（{count}）': 'All sites ({count})',
   '自动枚举单个非环单键的连接点，其他完整结构由严格匹配器确认。隐式氢、环内和多连接点变化尚未自动枚举，可继续使用手工区域。':
     'Single non-ring bond sites are enumerated and the remaining complete graph is strictly verified. Implicit-H, ring and multi-port changes are not automatically enumerated; manual regions remain available.',
   '单一变化区域，支持一至两个连接点及非芳香环片段；其余完整结构严格不变。隐式氢、芳香边界及更多连接点仍需手工区域。':

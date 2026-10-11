@@ -38,6 +38,16 @@ for (const width of [390, 800, 1672]) {
       (item: { reference_label: string; matched: number; no_variation: boolean }) =>
         item.reference_label === '1' && item.matched && !item.no_variation,
     );
+    const legend = network.locator('.sar-region-legend button');
+    const compactCount = await legend.count();
+    expect(compactCount).toBeLessThanOrEqual(visibleSites.length);
+    if (compactCount < visibleSites.length) {
+      await network.getByRole('button', { name: /^All sites \(/ }).click();
+      await expect(legend).toHaveCount(visibleSites.length);
+      await network.getByRole('button', { name: 'Compact sites', exact: true }).click();
+      await expect(legend).toHaveCount(compactCount);
+      await network.getByRole('button', { name: /^All sites \(/ }).click();
+    }
     const siteIndex = visibleSites.findIndex(
       (item: { region: { id: string } }) => item.region.id === site.region.id,
     );

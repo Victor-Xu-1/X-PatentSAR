@@ -1,9 +1,12 @@
 import { expect, type Page } from '@playwright/test';
 import type { StudyRegionSummary } from '../src/api/sarStudyTypes';
+import { compactNetworkSites } from '../src/features/sar/study/networkSites';
 
 export function twoPortSite(summaries: StudyRegionSummary[], label: string, candidate: string) {
-  const visible = summaries.filter(
-    (item) => item.reference_label === label && item.matched && !item.no_variation,
+  const visible = compactNetworkSites(
+    summaries.filter(
+      (item) => item.reference_label === label && item.matched && !item.no_variation,
+    ),
   );
   const chosen = visible
     .map((item, index) => ({ item, index }))

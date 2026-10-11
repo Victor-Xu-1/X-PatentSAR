@@ -5,6 +5,7 @@ import { GroupPager } from './GroupPager';
 import { StudyImage } from './StudyImage';
 import { StudyRegionMap } from './StudyRegionMap';
 import { NetworkBranches } from './NetworkBranches';
+import { compactNetworkSites } from './networkSites';
 
 export function StudyNetwork({
   report,
@@ -24,6 +25,7 @@ export function StudyNetwork({
     [page, setPage] = useState(1);
   const [reference, setReference] = useState(''),
     [site, setSite] = useState('');
+  const [allSites, setAllSites] = useState(false);
   const centres = useMemo(() => {
     const groups = new Map<string, { label: string; sites: StudyRegionSummary[] }>();
     for (const summary of report.regions) {
@@ -43,13 +45,14 @@ export function StudyNetwork({
     centre.label.toLowerCase().includes(search.toLowerCase().trim()),
   );
   const selected = filtered.find((centre) => centre.id === reference) ?? filtered[0];
-  const summary = selected?.sites.find((item) => item.region.id === site) ?? selected?.sites[0];
-  const mapSites =
-    selected?.sites.map((item, index) =>
-      item.origin === 'single_site'
-        ? { ...item, region: { ...item.region, name: 'R' + (index + 1) } }
-        : item,
-    ) ?? [];
+  const compact = useMemo(() => compactNetworkSites(selected?.sites ?? []), [selected?.sites]);
+  const visibleSites = allSites ? (selected?.sites ?? []) : compact;
+  const summary = visibleSites.find((item) => item.region.id === site) ?? visibleSites[0];
+  const mapSites = visibleSites.map((item, index) =>
+    item.origin === 'single_site'
+      ? { ...item, region: { ...item.region, name: 'R' + (index + 1) } }
+      : item,
+  );
   const showing = filtered.slice((page - 1) * 6, page * 6);
   const matches = useMemo(
     () =>
@@ -115,12 +118,26 @@ export function StudyNetwork({
       {!showing.length && <p>{t('没有可显示的核心结构')}</p>}
       {selected && summary && (
         <div className="sar-network-layout">
-          <StudyRegionMap
-            report={{ ...report, regions: mapSites }}
-            active={active}
-            selected={summary.region.id}
-            onSelect={setSite}
-          />
+          <div className="sar-network-map">
+            <StudyRegionMap
+              report={{ ...report, regions: mapSites }}
+              active={active}
+              selected={summary.region.id}
+              onSelect={setSite}
+            />
+            {selected.sites.length !== compact.length && (
+              <button
+                type="button"
+                className="button secondary"
+                aria-pressed={allSites}
+                onClick={() => setAllSites((value) => !value)}
+              >
+                {allSites
+                  ? t('精简位点')
+                  : t('全部位点（{count}）', { count: selected.sites.length })}
+              </button>
+            )}
+          </div>
           <NetworkBranches
             key={summary.region.id + ':' + strongest}
             report={report}
