@@ -39,7 +39,7 @@ it('keeps dense region controls at intrinsic width instead of splitting original
       expect(getComputedStyle(item).flexShrink).toBe('0');
       expect(getComputedStyle(item.querySelector('button')!).whiteSpace).toBe('nowrap');
     }
-    expect(screen.getByRole('button', { name: 'R12', exact: true })).toHaveTextContent('R12');
+    expect(screen.getByRole('button', { name: /^R12$/ })).toHaveTextContent('R12');
   } finally {
     style.remove();
   }
