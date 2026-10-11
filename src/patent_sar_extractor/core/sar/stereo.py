@@ -11,6 +11,7 @@ from rdkit import Chem
 from .errors import SARInputError
 from .graphs import Graph
 from .molecules import DOUBLE_STEREO, TETRAHEDRAL
+from .regions import PortMap
 
 
 def boundary_supported(graph: Graph, variable: frozenset[int]) -> bool:
@@ -21,11 +22,11 @@ def boundary_supported(graph: Graph, variable: frozenset[int]) -> bool:
     )
 
 
-def _mapped(index: int, mapping: dict[int, int], ports: dict[int, int]) -> int:
+def _mapped(index: int, anchor: int, mapping: dict[int, int], ports: PortMap) -> int:
     if index in mapping:
         return mapping[index]
-    if index in ports:
-        return ports[index]
+    if (anchor, index) in ports:
+        return ports[anchor, index]
     raise SARInputError("unsupported_boundary_stereo")
 
 
@@ -45,7 +46,7 @@ def _permutation_sign(left: list[int], right: list[int]) -> int:
 
 
 def _tetrahedral(
-    reference: Graph, candidate: Graph, mapping: dict[int, int], ports: dict[int, int]
+    reference: Graph, candidate: Graph, mapping: dict[int, int], ports: PortMap
 ) -> bool:
     for source, target in mapping.items():
         if (source in reference.potential_atoms) != (
@@ -66,7 +67,8 @@ def _tetrahedral(
         if left.GetDegree() not in {3, 4}:
             raise SARInputError("unsupported_tetrahedral_stereo")
         neighbors = [
-            _mapped(atom.GetIdx(), mapping, ports) for atom in left.GetNeighbors()
+            _mapped(atom.GetIdx(), source, mapping, ports)
+            for atom in left.GetNeighbors()
         ]
         sign = _permutation_sign(
             neighbors, [atom.GetIdx() for atom in right.GetNeighbors()]
@@ -85,7 +87,7 @@ def _double_sign(bond: Chem.Bond) -> int:
 
 
 def _double_bonds(
-    reference: Graph, candidate: Graph, mapping: dict[int, int], ports: dict[int, int]
+    reference: Graph, candidate: Graph, mapping: dict[int, int], ports: PortMap
 ) -> bool:
     for left in reference.mol.GetBonds():
         begin, end = left.GetBeginAtomIdx(), left.GetEndAtomIdx()
@@ -114,7 +116,7 @@ def _double_bonds(
             (end, begin, carriers[1]),
         ):
             actual = candidate_carriers[mapping[endpoint]]
-            expected = _mapped(carrier, mapping, ports)
+            expected = _mapped(carrier, endpoint, mapping, ports)
             if actual != expected:
                 alternatives = {
                     atom.GetIdx()
@@ -131,7 +133,7 @@ def _double_bonds(
 
 
 def preserved(
-    reference: Graph, candidate: Graph, mapping: dict[int, int], ports: dict[int, int]
+    reference: Graph, candidate: Graph, mapping: dict[int, int], ports: PortMap
 ) -> bool:
     return _tetrahedral(reference, candidate, mapping, ports) and _double_bonds(
         reference, candidate, mapping, ports

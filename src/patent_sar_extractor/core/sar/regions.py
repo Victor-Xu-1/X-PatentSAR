@@ -11,6 +11,7 @@ from .errors import SARInputError
 
 BondKey = tuple[str, bool]
 AttachmentKey = tuple[tuple[int, BondKey], ...]
+PortMap = dict[tuple[int, int], int]
 
 
 def bond_key(bond: Chem.Bond) -> BondKey:
@@ -58,10 +59,10 @@ def selection(mol: Chem.Mol, atom_indices: Sequence[int]) -> frozenset[int]:
 def attachment_groups(
     mol: Chem.Mol, variable: frozenset[int], inverse: dict[int, int] | None = None
 ) -> dict[AttachmentKey, list[int]]:
-    """Group cut bonds by their actual variable endpoint, not arbitrary dummies.
+    """Inventory actual cut bonds for region validation and fixed-anchor labels.
 
-    Every group records the complete fixed endpoints and bond types. A bridge
-    endpoint cannot silently split into two endpoints, nor can ports migrate.
+    Variable endpoint grouping is not a requirement that the selected internal
+    graph keep the same size or topology. The proof below freezes fixed edges.
     """
     groups: dict[AttachmentKey, list[int]] = {}
     for index in sorted(variable):
@@ -82,14 +83,29 @@ def attachment_mapping(
     selected: frozenset[int],
     remaining: frozenset[int],
     mapping: dict[int, int],
-) -> dict[int, int] | None:
-    left = attachment_groups(reference, selected)
-    right = attachment_groups(candidate, remaining, {v: k for k, v in mapping.items()})
+) -> PortMap | None:
+    def fixed_ports(mol, variable, inverse=None):
+        groups = {}
+        for index in sorted(variable):
+            for bond in mol.GetAtomWithIdx(index).GetBonds():
+                other = bond.GetOtherAtomIdx(index)
+                if other not in variable:
+                    fixed = other if inverse is None else inverse[other]
+                    groups.setdefault((fixed, bond_key(bond)), []).append(index)
+        return groups
+
+    left = fixed_ports(reference, selected)
+    right = fixed_ports(candidate, remaining, {v: k for k, v in mapping.items()})
     if Counter({key: len(values) for key, values in left.items()}) != Counter(
         {key: len(values) for key, values in right.items()}
     ):
         return None
-    # Nonunique port endpoints cannot prove a boundary stereochemical mapping.
+    # Freeze the anchor/bond/multiplicity, not internal variable vertices. A
+    # one-atom bridge can extend into two vertices without moving either anchor.
+    # Indistinguishable multiple ligands at the SAME fixed stereo centre cannot
+    # supply arbitrary parity; consumers refuse when such a mapping is needed.
     return {
-        values[0]: right[key][0] for key, values in left.items() if len(values) == 1
+        (key[0], values[0]): right[key][0]
+        for key, values in left.items()
+        if len(values) == 1
     }

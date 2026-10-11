@@ -1,8 +1,13 @@
 # Project governance manifest
 
-- Single-site discovery ownership: SAR engine4 uses `core/sar/discovery.py` as
-  the sole bounded candidate planner and the existing strict compiled matcher
-  as proof authority. `study_discovery.py` binds plans to the existing native
+- Single-site discovery ownership: SAR engine5 uses `core/sar/discovery.py` as
+  the sole bounded candidate planner. `cut_topology.py` enumerates exact connected
+  one/two-edge partitions and `site_cuts.py` indexes canonical backgrounds;
+  neither is a proof authority. The existing strict compiled matcher freezes
+  fixed-anchor edges rather than the variable graph's internal vertex topology,
+  transporting parity per anchor and refusing indistinguishable stereo ports.
+  The old single-cut enumerator is removed; the sole retained matcher remains
+  proof authority. `study_discovery.py` binds plans to the existing native
   study/checkpoint path; `study_pairs.py` processes exact planned pools through
   one matcher/writer. Parent publication regenerates/validates the plan and
   source coverage. No second task queue, dataset store, DB migration, model or
@@ -30,7 +35,7 @@
   engine/checkpoint change, external transmission or original mutation. Detail
   disclosure reduces everyday noise without dropping source QA or uncertainty.
 
-- SAR study evidence/craft ownership: engine4 uses `study_distributions.py` for one
+- SAR study evidence/craft ownership: engine5 uses `study_distributions.py` for one
   prepared full-context chart domain and disjoint source-ID accounting; observation
   repeats remain separate. `study_conditions.py` alone validates source-anchored
   missing-field declarations; source QA/known conditions/units remain unchanged.

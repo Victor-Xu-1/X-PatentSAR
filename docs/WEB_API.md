@@ -90,8 +90,14 @@ new webpage studies explicitly send true). The same study queue reserves its
 `discovery` with method, candidate/cut counts, exclusions and explicit limits.
 Region summaries add `origin:manual|single_site` and nullable `comparison_pool`;
 manual regions still compare the whole source pool, derived regions compare
-their complete indexed pool through the identical strict validator. SAR engine4
+their complete indexed pool through the identical strict validator. SAR engine5
 invalidates incompatible unfinished scientific work without retagging old reports.
+Discovery method is `single-region-one-two-cut-v2` with `max_cut_bonds:2` and
+`examined_boundaries` (0–500000); the legacy `single-non-ring-bond-v1` remains
+readable with one-port coverage. Indexed cuts/sites/comparisons retain their
+existing bounds. Two cut bonds delimit ONE connected variable region; fixed
+anchors, bond types, full fixed chemistry and transported stereo remain proved.
+Variable linker endpoints need not retain an internal one-to-one atom mapping.
 `scope=changes|strong_changes` requires an exact region and excludes its reference;
 pagination and source filters remain server-side. All current scopes use the same
 numbered source admission and tenth-dose bands. Existing measured PK columns are

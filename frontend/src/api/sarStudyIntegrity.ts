@@ -117,6 +117,13 @@ export function verifyStudyConservation(report: StudyReport, path: string) {
     );
     const derived = report.regions.filter((summary) => summary.origin === 'single_site');
     require(derived.length === report.discovery.candidate_sites);
+    const ports = report.discovery.max_cut_bonds ?? 1;
+    require(
+      derived.every(
+        (summary) =>
+          summary.region.attachment_count >= 1 && summary.region.attachment_count <= ports,
+      ),
+    );
     require(
       derived.reduce((sum, summary) => sum + (summary.comparison_pool?.length ?? 0), 0) ===
         report.discovery.candidate_comparisons,
