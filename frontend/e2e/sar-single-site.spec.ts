@@ -1,6 +1,11 @@
 import { expect, test } from '@playwright/test';
 import { createNetwork } from './sar-network-actions';
 import { readFile } from 'node:fs/promises';
+import {
+  studyProperties,
+  differenceText,
+  propertyText,
+} from '../src/features/sar/study/tablePresentation';
 
 for (const width of [390, 800, 1672]) {
   test(`multiple native cores, atom sites, PK deltas and export at ${width}`, async ({ page }) => {
@@ -87,6 +92,54 @@ for (const width of [390, 800, 1672]) {
     await expect(activity.locator('td').last()).toContainText('-9.00');
     const pk = preview.getByRole('row').filter({ hasText: 't_half' });
     await expect(pk.locator('td').last()).toContainText('1.00');
+    const actual = await (
+      await page.request.get(
+        `/api/v1/sar/jobs/${job}/study/preview?region_id=${site.region.id}&molecule_id=${candidate.molecule_id}`,
+      )
+    ).json();
+    const properties = preview.getByRole('table', { name: 'Properties', exact: true });
+    await expect(properties.getByRole('row')).toHaveCount(4);
+    const propertyRows = properties.locator('tbody tr');
+    for (const [index, row] of [actual.reference, actual.candidate].entries()) {
+      await expect(propertyRows.nth(index).getByRole('rowheader')).toHaveText(row.label);
+      await expect(propertyRows.nth(index).getByRole('cell')).toHaveText(
+        studyProperties.map((property) => propertyText(row.properties[property.key], property.key)),
+      );
+    }
+    await expect(propertyRows.nth(2).getByRole('cell')).toHaveText(
+      studyProperties.map((property) => {
+        const value = actual.property_differences[property.key];
+        return (value != null && value > 0 ? '+' : '') + differenceText(value, property.key);
+      }),
+    );
+    const values = await properties.locator('tbody').innerText();
+    await page.locator('.language-switch select').selectOption('zh-CN');
+    const localized = page.getByRole('table', { name: '性质', exact: true });
+    expect(await localized.locator('tbody').innerText()).toBe(values);
+    await page.locator('.language-switch select').selectOption('en');
+    if (width === 390) {
+      const viewport = preview.locator('.sar-property-comparison');
+      expect(await viewport.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(
+        true,
+      );
+      await viewport.focus();
+      await viewport.press('ArrowRight');
+      await expect
+        .poll(() => viewport.evaluate((element) => element.scrollLeft))
+        .toBeGreaterThan(0);
+      const aligned = await propertyRows
+        .first()
+        .getByRole('rowheader')
+        .evaluate((cell) => {
+          const port = cell.closest('.sar-property-comparison')!.getBoundingClientRect();
+          const box = cell.getBoundingClientRect();
+          return box.left >= port.left - 1 && box.right <= port.right + 1;
+        });
+      expect(aligned).toBe(true);
+      await viewport.evaluate((element) => {
+        element.scrollLeft = 0;
+      });
+    }
     await preview.screenshot({ path: test.info().outputPath(`network-comparison-${width}.png`) });
     await preview
       .getByRole('button', { name: 'Close transformation preview', exact: true })

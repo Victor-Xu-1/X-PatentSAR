@@ -16,6 +16,11 @@ export function propertyText(value: number | null | undefined, key?: string) {
   if (countProperties.has(key ?? '') && Number.isInteger(value)) return String(value);
   return value.toFixed(2);
 }
+export function differenceText(value: number | null | undefined, key?: string) {
+  if (value == null || !Number.isFinite(value)) return '—';
+  if (countProperties.has(key ?? '') && Number.isInteger(value)) return String(value);
+  return value !== 0 && Math.abs(value) < 0.01 ? value.toPrecision(3) : value.toFixed(2);
+}
 export interface PageSort {
   column: string;
   direction: 'asc' | 'desc';

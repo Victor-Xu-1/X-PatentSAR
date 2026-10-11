@@ -6,9 +6,9 @@ import { sarStudyApi } from '../src/api/sarStudyApi';
 import { sarApi } from '../src/api/sarApi';
 import { decodeStudyPreview } from '../src/api/sarPreviewDecoder';
 import { TransformationPreview } from '../src/features/sar/study/TransformationPreview';
-import { differenceText, PreviewMeasurements } from '../src/features/sar/study/PreviewMeasurements';
+import { PreviewMeasurements } from '../src/features/sar/study/PreviewMeasurements';
 import { StudyRegions } from '../src/features/sar/study/StudyRegions';
-import { propertyText } from '../src/features/sar/study/tablePresentation';
+import { differenceText, propertyText } from '../src/features/sar/study/tablePresentation';
 import {
   sarDataset,
   sarDrawing,
@@ -61,6 +61,67 @@ beforeEach(() => {
   vi.spyOn(sarApi, 'drawing').mockResolvedValue(sarDrawing);
 });
 describe('actual transformation preview', () => {
+  it('shows both source-owned property rows and authoritative deltas without computing missing values', async () => {
+    const data = decodeStudyPreview({
+      ...preview,
+      reference: {
+        ...preview.reference,
+        properties: {
+          molecular_weight: 250,
+          logP: 0,
+          tpsa: 80,
+          hydrogen_bond_donors: 1,
+          hydrogen_bond_acceptors: 3,
+          Solubility_AqSolDB: null,
+        },
+      },
+      candidate: {
+        ...preview.candidate,
+        properties: {
+          molecular_weight: 264.03,
+          logP: 1,
+          tpsa: 85,
+          hydrogen_bond_donors: 2,
+          hydrogen_bond_acceptors: 3,
+          Solubility_AqSolDB: -4,
+        },
+      },
+      property_differences: {
+        molecular_weight: 14.03,
+        logP: null,
+        tpsa: 5,
+        hydrogen_bond_donors: 1,
+        hydrogen_bond_acceptors: 0,
+        Solubility_AqSolDB: null,
+      },
+    });
+    const original = JSON.stringify(data);
+    render(<PreviewMeasurements data={data} report={studyReport} />);
+    const table = screen.getByRole('table', { name: 'Properties' });
+    const rows = within(table).getAllByRole('row');
+    expect(rows).toHaveLength(4);
+    expect(within(rows[1]!).getByRole('rowheader')).toHaveTextContent(data.reference.label);
+    expect(within(rows[2]!).getByRole('rowheader')).toHaveTextContent(data.candidate.label);
+    expect(
+      within(rows[1]!)
+        .getAllByRole('cell')
+        .map((cell) => cell.textContent),
+    ).toEqual(['250.00', '0.00', '80.00', '1', '3', '—']);
+    expect(
+      within(rows[2]!)
+        .getAllByRole('cell')
+        .map((cell) => cell.textContent),
+    ).toEqual(['264.03', '1.00', '85.00', '2', '3', '-4.00']);
+    expect(
+      within(rows[3]!)
+        .getAllByRole('cell')
+        .map((cell) => cell.textContent),
+    ).toEqual(['+14.03', '—', '+5.00', '+1', '0', '—']);
+    await act(() => setLocale('zh-CN'));
+    expect(screen.getByRole('table', { name: '性质' })).toBe(table);
+    expect(JSON.stringify(data)).toBe(original);
+    expect(sarStudyApi.preview).not.toHaveBeenCalled();
+  });
   it('reveals an explicitly opened preview once, respects reduced motion, and returns to its exact fragment', async () => {
     const scroll = vi.spyOn(HTMLElement.prototype, 'scrollIntoView');
     vi.stubGlobal(
@@ -88,7 +149,7 @@ describe('actual transformation preview', () => {
     const panel = screen.getByRole('region', { name: 'Transformation preview' });
     expect(panel).toHaveFocus();
     expect(scroll).toHaveBeenLastCalledWith({ block: 'start', behavior: 'auto' });
-    await within(panel).findByText('Stronger');
+    await within(panel).findByText('Lower');
     const revealed = scroll.mock.calls.length;
     await act(() => setLocale('zh-CN'));
     expect(panel).toHaveFocus();
@@ -117,7 +178,7 @@ describe('actual transformation preview', () => {
     const opener = await screen.findByRole('button', { name: 'Preview modification' });
     await userEvent.click(opener);
     await within(screen.getByRole('region', { name: 'Transformation preview' })).findByText(
-      'Stronger',
+      'Lower',
     );
     const requests = vi.mocked(sarStudyApi.preview).mock.calls.length;
     await userEvent.click(opener);
@@ -126,7 +187,7 @@ describe('actual transformation preview', () => {
   });
   it('retains table/header associations and source-owned mobile captions and units', () => {
     render(<PreviewMeasurements data={decodeStudyPreview(preview)} report={studyReport} />);
-    const table = screen.getByRole('table', { name: 'Recorded activity' });
+    const table = screen.getByRole('table', { name: 'Recorded values' });
     expect(within(table).getByRole('columnheader', { name: studyRow.label })).toBeInTheDocument();
     expect(within(table).getByRole('rowheader', { name: 'IC50 原文 · nM' })).toBeInTheDocument();
     const captions = table.querySelectorAll('.sar-preview-compound-label');
@@ -135,7 +196,7 @@ describe('actual transformation preview', () => {
       candidate.label,
     ]);
     expect([...captions].every((item) => item.getAttribute('aria-hidden') === 'true')).toBe(true);
-    expect(table.querySelector('.sar-preview-change')).toHaveTextContent('StrongerΔ -9.00');
+    expect(table.querySelector('.sar-preview-change')).toHaveTextContent('LowerΔ -9.00');
   });
   it('does not steal focus when a hidden view is reactivated or a read is revalidated', async () => {
     const scroll = vi.spyOn(HTMLElement.prototype, 'scrollIntoView');
@@ -156,7 +217,7 @@ describe('actual transformation preview', () => {
     );
     const elsewhere = screen.getByRole('button', { name: 'Another control' });
     await within(screen.getByRole('region', { name: 'Transformation preview' })).findByText(
-      'Stronger',
+      'Lower',
     );
     await userEvent.click(elsewhere);
     const revealed = scroll.mock.calls.length;
@@ -173,7 +234,7 @@ describe('actual transformation preview', () => {
       </>,
     );
     await within(screen.getByRole('region', { name: 'Transformation preview' })).findByText(
-      'Stronger',
+      'Lower',
     );
     expect(elsewhere).toHaveFocus();
     expect(scroll.mock.calls.length).toBe(revealed);
@@ -231,7 +292,7 @@ describe('actual transformation preview', () => {
     const revealed = scroll.mock.calls.length;
     await act(async () => finish?.(preview));
     await within(screen.getByRole('region', { name: 'Transformation preview' })).findByText(
-      'Stronger',
+      'Lower',
     );
     expect(elsewhere).toHaveFocus();
     expect(scroll.mock.calls.length).toBe(revealed);
@@ -251,7 +312,7 @@ describe('actual transformation preview', () => {
     });
     const original = JSON.stringify(data);
     render(<PreviewMeasurements data={data} report={studyReport} />);
-    const table = screen.getByRole('table', { name: 'Recorded activity' });
+    const table = screen.getByRole('table', { name: 'Recorded values' });
     expect(within(table).getByText('<10')).toBeVisible();
     expect(within(table).getByText('<20')).toBeVisible();
     expect(within(table).queryByText(/Δ/)).not.toBeInTheDocument();
@@ -273,9 +334,11 @@ describe('actual transformation preview', () => {
         onClose={vi.fn()}
       />,
     );
-    await screen.findByText('Stronger');
+    await screen.findByText('Lower');
     expect(screen.getByText(/Δ -9.00/)).toBeVisible();
-    expect(screen.getByText(/Δ 14.03/)).toBeVisible();
+    expect(
+      within(screen.getByRole('table', { name: 'Properties' })).getByText('+14.03'),
+    ).toBeVisible();
     await userEvent.click(screen.getAllByRole('button', { name: 'View original' })[1]!);
     expect(onSource).toHaveBeenCalledWith(candidate.molecule_id);
     expect(sarStudyApi.preview).toHaveBeenCalledWith(

@@ -336,31 +336,59 @@
   font-size: 11px;
   color: var(--muted);
 }
-.sar-property-deltas,
 .sar-candidate-properties {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 10px;
   margin: 16px 0;
 }
-.sar-property-deltas dt,
 .sar-candidate-properties dt {
   font-size: 11px;
   color: var(--muted);
 }
-.sar-property-deltas dd,
 .sar-candidate-properties dd {
   font-variant-numeric: tabular-nums;
   font-size: 13px;
   font-weight: 500;
   margin: 6px 0 0;
 }
-.sar-property-deltas small {
-  display: block;
-  font-size: 11px;
-  font-weight: 400;
+.sar-property-comparison {
+  margin-block: 16px;
+  max-width: 100%;
+}
+.sar-property-comparison table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 560px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.sar-property-comparison td,
+.sar-property-comparison th {
+  padding: 9px 10px;
+  text-align: center;
+  border-bottom: 1px solid var(--line-soft);
+  white-space: nowrap;
+}
+.sar-property-comparison th {
+  font-weight: 500;
+}
+.sar-property-comparison th:first-child {
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  text-align: left;
+  width: 100px;
+  max-width: 150px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  box-shadow: 1px 0 0 var(--line-soft);
+}
+.sar-property-comparison tbody tr:nth-child(2) td {
+  background: var(--surface-subtle);
+}
+.sar-property-comparison tbody tr:last-child {
   color: var(--muted);
-  margin-top: 3px;
 }
 .sar-candidate-coverage {
   color: var(--muted);
@@ -437,9 +465,6 @@
   }
   .sar-transformation {
     padding: 14px;
-  }
-  .sar-property-deltas {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .sar-transformation > header {
     flex-wrap: wrap;
