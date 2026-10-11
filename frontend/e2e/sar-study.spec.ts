@@ -133,6 +133,7 @@ for (const { width, height } of [
     const halogen = setup.getByRole('button', { name: /^Atom \d+ \(Cl\)$/ });
     await expect(halogen).toHaveCount(1);
     await expect(halogen).toBeEnabled();
+    const halogenIndex = (await halogen.getAttribute('aria-label'))!.match(/\d+/u)![0];
     await halogen.click();
     await setup.getByRole('button', { name: 'Save region', exact: true }).click();
     await expect(
@@ -225,6 +226,9 @@ for (const { width, height } of [
           referencePane.getByRole('img', { name: 'Example 2', exact: true }),
         ).toBeVisible();
         await expect(
+          referencePane.getByRole('button', { name: 'R2 · Cl ' + halogenIndex, exact: true }),
+        ).toHaveAttribute('tabindex', '-1');
+        await expect(
           referencePane.getByRole('button', { name: 'R2', exact: true }),
         ).toHaveAttribute('aria-pressed', 'true');
         await expect(view.locator('.sar-region-group > h3')).toHaveText('R2 · Example 2');
@@ -238,6 +242,9 @@ for (const { width, height } of [
         await expect(
           referencePane.getByRole('img', { name: 'Example 1', exact: true }),
         ).toBeVisible();
+        await expect(
+          referencePane.getByRole('button', { name: 'R1 · C 0', exact: true }),
+        ).toHaveAttribute('tabindex', '-1');
         await expect(view.locator('.sar-region-group > h3')).toHaveText('R1 · Example 1');
         const rule = view.locator('.sar-policy-note').first();
         const disclosure = view.locator('.sar-region-method summary').first();

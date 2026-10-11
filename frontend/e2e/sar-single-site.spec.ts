@@ -68,6 +68,13 @@ for (const width of [390, 800, 1672]) {
           (el) => (el as HTMLImageElement).complete && (el as HTMLImageElement).naturalWidth > 0,
         ),
     );
+    const atomLabels = await network
+      .locator('.sar-region-hotspots button')
+      .evaluateAll((buttons) => buttons.map((button) => button.getAttribute('aria-label')));
+    expect(atomLabels.length).toBeGreaterThan(0);
+    expect(
+      atomLabels.every((label) => label && !/^(R[0-9]+)(?: H)? · \1(?:$|[ ·])/u.test(label)),
+    ).toBe(true);
     expect(
       await network.locator('.sar-network-branch > .sar-study-image').evaluateAll((figures) =>
         figures.every((figure) => {
