@@ -111,6 +111,7 @@ for (const { width, height } of [
     await expect(
       setup.getByText('Region saved · 1 attachment points', { exact: true }),
     ).toBeVisible();
+    await setup.getByRole('button', { name: 'Change reference', exact: true }).click();
     await browser
       .getByRole('row')
       .filter({ has: page.getByRole('rowheader', { name: 'Example 2', exact: true }) })
