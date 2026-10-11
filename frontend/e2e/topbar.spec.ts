@@ -46,6 +46,10 @@ async function exposedNavigation(page: Page, nav: Locator) {
       });
     });
     expect(items.filter((item) => !item.contained || !item.caption || !item.touch)).toEqual([]);
+    const bounds = await page.locator('.topbar').boundingBox();
+    expect(bounds!.height, `Compact topbar in ${language}`).toBeLessThan(
+      headerHeightBudget(page.viewportSize()!.width),
+    );
   }
 }
 

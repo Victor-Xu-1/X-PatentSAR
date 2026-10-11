@@ -394,3 +394,5 @@ retain their own existing selection behavior. Route identity, selection, focus,
 source data and the shared language authority remain unchanged. At the narrowest
 phone widths, only the decorative language icon is omitted so the full product
 name, language selector and version remain visible.
+The compact height budget is checked inside each language state, including
+two-line English captions, not only after the final language switch.
