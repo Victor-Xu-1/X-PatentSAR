@@ -131,7 +131,12 @@ for (const width of [390, 1672]) {
       });
     }
     await page.reload();
-    await expect(page.locator('.sar-study-report table tbody tr')).toHaveCount(16);
+    await expect(report.locator('.sar-study-tabs')).toBeVisible();
+    await report.locator('.sar-study-tabs button').nth(5).click();
+    await expect(report.locator('table tbody tr')).toHaveCount(16);
+    expect((await (await page.request.get(path)).json()).report.policies[0].strength_scale).toEqual(
+      scale,
+    );
     expect(errors).toEqual([]);
     expect(foreignWrites).toEqual([]);
   });
