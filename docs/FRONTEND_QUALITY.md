@@ -62,9 +62,10 @@ The reference article's private algorithms are not represented as reproduced.
   context, repeat information and original IDs remain unchanged and accessible.
 - The report title, actual job state, historical scope and research-only meaning
   share one compact header. Full explanations live in existing details, not a
-  second status block. Result views form a single horizontally scrolling row;
+  second status block. Result views use the shared compact, wrapping navigation;
   programmatic card-to-table navigation reveals its active control without
-  scrolling the document or taking focus. Navigation never starts a study.
+  horizontal document scrolling or unsolicited focus changes. Navigation never
+  starts a study.
 - Recent-file rows stack metadata and actions before titles become cramped at
   intermediate widths. Source title, availability, acceptance and timestamp stay
   visible and associated with the same keyboard-operable open button.
@@ -433,3 +434,11 @@ legend/accessibility text and receive an explicit diagram-only R alias, never a
 renamed record. Numeric and hydrogen captions reserve their actual drawing box
 width for edge containment/collision placement. Only label positions change;
 original atoms, hotspot coordinates, graph, regions and source data do not.
+
+SAR table pagination and explicit modification previews consume the same complete
+source-bound record preparation without reconstructing unrelated chart DTOs.
+The full report receipt, typed validation and every retained comparison pool are
+still checked before filtering/paging; strong bands use the whole context.
+Preview retains its independent full-graph/port/stereo and recorded-pair proof.
+Unknown, excluded and empty-after-exclusion selections stay refused. No browser
+calculation, report mutation, scientific rerun or widened resource limit is added.

@@ -16,12 +16,23 @@ current tier/count views from the complete immutable input through the existing
 source receipts on every read and caches at most two packets whose combined
 input/report/pair bytes are at most 4 MiB; large views are not retained in cache.
 Overview, table filters, preview and CSV/SDF/HTML exports share this projection.
+`study_activity_view.py` is their sole whole-source/context/row preparation.
+Paged rows and transformation previews request an internal record-only view:
+the complete typed report and immutable receipts are still checked, every current
+region pool is verified, and the tenth-dose policy uses every retained source.
+Captured groups provide read-only membership/graph facts, never current chart
+counts. Only report/chart consumers construct independent group-bin DTOs. The
+same two-entry small-view cache keys its purpose; there is no extra cache or
+large-report retention, row limit, alternate ranking or weaker preview proof.
 For large reads the already validated captured model is reused only after both
 immutable byte receipts are freshly rechecked; the report is not parsed twice.
 Within ONE projection, group-bin preparation reuses exact member sets under at
-most256 entries/4096 total member references. Returned DTOs are independently
-validated copies. This does not retain large reports between reads or bypass
-current source exclusion, tenth-dose calculation, pair coverage or raw evidence.
+most256 entries/4096 total member references. Incremental capacity accounting
+does not rescan unrelated keys. A retained fragment receives one independent
+projection copy with membership, chart and comparison counts together; excluded
+fragments are discarded before DTO construction. Returned chart DTOs are
+independently validated copies. This does not retain large reports between reads
+or bypass source exclusion, tenth-dose calculation, pair coverage or raw evidence.
 JSON retains original report/input plus an explicit current activity view. No
 model, new worker, queue, database, archive rewrite or manual numeric threshold
 is introduced. Candidate priority and graph proofs retain their captured meaning.

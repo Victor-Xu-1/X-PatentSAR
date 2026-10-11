@@ -47,11 +47,13 @@ class StudyResults:
             job=job, report=report.model_copy(update={"rows": []}), activity_basis=basis
         )
 
-    def current(self, identifier: str):
+    def current(self, identifier: str, *, records_only=False):
         from .study_current import projected
 
         job, captured = self.load(identifier)
-        report, basis = projected(self.queue, identifier, job, captured)
+        report, basis = projected(
+            self.queue, identifier, job, captured, records_only=records_only
+        )
         return job, report, basis
 
     def rows(
@@ -75,7 +77,7 @@ class StudyResults:
             or (scope in {"changes", "strong_changes"} and not region_id)
         ):
             raise WebError(422, "sar_page", "Study filter/page exceeds its bound.")
-        job, report, _ = self.current(identifier)
+        job, report, _ = self.current(identifier, records_only=True)
         query_ids = None
         if query:
             pattern = (
@@ -114,7 +116,8 @@ class StudyResults:
             fragments = [
                 item
                 for item in region.fragments
-                if not fragment_id or item.id == fragment_id
+                if (not fragment_id or item.id == fragment_id)
+                and report.molecule_ids.intersection(item.molecule_ids)
             ]
             if fragment_id and not fragments:
                 raise WebError(
