@@ -4,6 +4,7 @@ import copy
 import unittest
 
 import test_sar_study_analysis as support
+
 from patent_sar_extractor.web.files import SafeFiles
 from patent_sar_extractor.web.sar.assets import atomic_json, digest
 from patent_sar_extractor.web.sar.models import Pair, SARJob

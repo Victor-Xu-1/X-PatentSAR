@@ -7,8 +7,8 @@ from rdkit import Chem
 from test_sar_discovery import source
 from test_sar_graph import prepared
 
-from patent_sar_extractor.core.sar.discovery import discover_sites
 from patent_sar_extractor.core.sar.cut_topology import boundary_regions
+from patent_sar_extractor.core.sar.discovery import discover_sites
 from patent_sar_extractor.core.sar.drawing import draw_fragment
 from patent_sar_extractor.core.sar.matching import compile_reference
 from patent_sar_extractor.core.sar.study_graphs import cut_identity, reference_cut

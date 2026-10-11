@@ -14,8 +14,8 @@ from .errors import SARInputError
 from .matching import compile_reference
 from .molecules import chemical_identity, read_molfile
 from .prepared_graphs import GraphPool
-from .site_reduction import compact_proved_sites
 from .site_cuts import candidate_cuts, hydrogen_cuts
+from .site_reduction import compact_proved_sites
 
 MAX_CUTS = 100000
 MAX_SITES = 4096

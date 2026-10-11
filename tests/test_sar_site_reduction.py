@@ -1,10 +1,12 @@
 """Index-only overlap cannot drop a valid broader comparison."""
 
 import unittest
+
 from rdkit import Chem
 from test_sar_discovery import source
-from patent_sar_extractor.core.sar.prepared_graphs import GraphPool
+
 from patent_sar_extractor.core.sar.matching import compile_reference
+from patent_sar_extractor.core.sar.prepared_graphs import GraphPool
 from patent_sar_extractor.core.sar.site_reduction import compact_proved_sites
 
 

@@ -8,8 +8,8 @@ from ...core.sar.discovery import comparison_plan
 from ..errors import WebError
 from .assets import digest
 from .models import Dataset, Molecule, Pair, SARJob
-from .study_hydrogen_proofs import verify_hydrogen_proofs
 from .study_fragment_proofs import verify_aromatic_fragments
+from .study_hydrogen_proofs import verify_hydrogen_proofs
 from .study_integrity import verify_conservation
 from .study_models import StudyDiscovery, StudyReport, StudyRequest
 from .study_strength_check import verify_strength
