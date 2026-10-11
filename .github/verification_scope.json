@@ -1,32 +1,57 @@
 {
   "schema_version": 1,
-  "base_sha": "814ee27445bbedbaeaf78e1078a183a921e3e8dc",
+  "base_sha": "009ef972fa4d19838804fc5d63b801e91e7f1634",
   "changed_paths": [
     ".github/verification_scope.json",
+    "README.md",
+    "docs/ARCHITECTURE.md",
     "docs/FRONTEND_QUALITY.md",
+    "docs/WEB_API.md",
     "frontend/e2e/sar-single-site.spec.ts",
-    "frontend/e2e/sar-study.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/features/sar/study/RegionMap.tsx",
-    "frontend/src/features/sar/study/regionMarker.ts",
-    "frontend/tests/sar-region-map-interaction.test.tsx",
-    "src/patent_sar_extractor/contracts.py"
+    "frontend/src/api/sarStudyTypes.ts",
+    "frontend/src/features/sar/study/NetworkBranchCard.tsx",
+    "frontend/src/features/sar/study/NetworkBranchReadings.tsx",
+    "frontend/src/features/sar/study/NetworkBranches.tsx",
+    "frontend/src/features/sar/study/StudyNetwork.tsx",
+    "frontend/src/features/sar/study/networkSites.ts",
+    "frontend/src/i18n/catalogs/sar.ts",
+    "frontend/src/styles/sar-network.css",
+    "frontend/tests/sar-core-directions.test.tsx",
+    "src/patent_sar_extractor/contracts.py",
+    "src/patent_sar_extractor/web/sar/study_results.py",
+    "src/patent_sar_extractor/web/sar/study_routes.py",
+    "src/patent_sar_extractor/web/sar/study_row_scope.py",
+    "tests/test_sar_row_scope.py",
+    "tests/test_sar_study_api.py"
   ],
   "python_modules": [
+    "tests.test_sar_row_scope",
+    "tests.test_sar_study_api.SARStudyAPITests.test_reference_changes_union_keeps_directions_unique_and_rejects_foreign_or_zero_changes",
+    "tests.test_sar_study_api.SARStudyAPITests.test_native_multi_region_report_views_exports_and_source_order",
+    "tests.test_sar_study_table",
+    "tests.test_sar_current_strength",
+    "tests.test_sar_preview.SARPreviewTests.test_exact_values_deltas_graph_proof_and_immutable_input",
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
+    "frontend/tests/sar-core-directions.test.tsx",
+    "frontend/tests/sar-study-results.test.tsx",
+    "frontend/tests/sar-study-api.test.tsx",
+    "frontend/tests/sar-network-sites.test.ts",
+    "frontend/tests/sar-preview.test.tsx",
     "frontend/tests/sar-region-map-interaction.test.tsx",
     "frontend/tests/sar-reference-pane.test.tsx",
     "frontend/tests/sar-hydrogen.test.tsx",
-    "frontend/tests/sar-inline-selection.test.tsx",
-    "frontend/tests/sar-drawing-contrast.test.ts",
-    "frontend/tests/sar-fragment-preview.test.tsx"
+    "frontend/tests/i18n-core.test.tsx"
   ],
   "browser_tests": [
-    "frontend/e2e/sar-study.spec.ts",
-    "frontend/e2e/sar-single-site.spec.ts"
+    "frontend/e2e/sar-single-site.spec.ts",
+    "frontend/e2e/sar-hydrogen.spec.ts",
+    "frontend/e2e/sar-multiport.spec.ts",
+    "frontend/e2e/sar-threeport.spec.ts",
+    "frontend/e2e/sar-aromatic.spec.ts"
   ]
 }

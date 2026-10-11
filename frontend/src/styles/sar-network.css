@@ -125,7 +125,7 @@
   margin: 0;
   font-size: 12px;
 }
-.sar-branch-readings > div:first-child {
+.sar-branch-readings > .sar-branch-measurement {
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
@@ -151,6 +151,43 @@
 .sar-branch-readings [data-activity-strength='strong'] dt {
   color: var(--ink);
 }
+.sar-network-view-tools {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+.sar-network-view-tools [aria-pressed='true'],
+.sar-branch-sites [aria-pressed='true'] {
+  border-color: var(--accent-line);
+  background: var(--accent-surface);
+  color: var(--accent-strong);
+}
+.sar-branch-sites {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+.sar-branch-sites button {
+  min-height: 30px;
+  padding: 4px 8px;
+  font-size: 11px;
+}
+.sar-branch-sites select {
+  min-width: 0;
+  max-width: 100%;
+  font-size: 12px;
+}
+.sar-branch-site-label {
+  font-size: 11px;
+  color: var(--accent-strong);
+}
+.sar-branch-measurement {
+  min-width: 0;
+}
+.sar-branch-measurement :is(dt, dd) {
+  overflow-wrap: anywhere;
+}
 .sar-network-scope {
   margin-top: 20px;
   color: var(--muted);
@@ -174,6 +211,9 @@
   }
 }
 @media (max-width: 500px) {
+  .sar-branch-sites button {
+    min-height: 44px;
+  }
   .sar-network-layout {
     gap: 22px;
   }

@@ -456,6 +456,8 @@ export const sar: Record<string, string> = {
   查找核心编号: 'Find a core ID',
   核心结构: 'Core structures',
   结构分支: 'Structure branches',
+  全部改造方向: 'All directions',
+  '查看区域 {region}': 'View region {region}',
   仅强活性: 'Strong activity only',
   '{identifier} · 变化片段': '{identifier} · Variable fragment',
   活性与理化值对应完整分子: 'Measurements and properties refer to the full molecule',

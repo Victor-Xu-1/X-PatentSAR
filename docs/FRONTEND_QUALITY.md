@@ -465,3 +465,11 @@ unlabelled regions use the existing diagram alias without a literal null value.
 Other original names retain their alias and complete text, and an actual hydrogen
 site keeps its H annotation. Original names, graph/atom identity, pointer targets,
 keyboard routing, drawing positions and scientific results are unchanged.
+
+Automatic core views start with all proved modification directions, not an
+implicitly selected first site. The existing paged read supplies six unique
+source cards; site choices narrow that same path and the all-directions action
+restores it. Each card retains explicit valid region choices and draws/previews
+that exact source region, without inventing a combined transformation. All
+selected activity/PK measurements stay visible, with missing values distinct
+from zero. Raw data, original identifiers and view selection survive localization.

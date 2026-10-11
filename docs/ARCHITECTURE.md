@@ -558,6 +558,15 @@ refuses at500000 boundary sets,100000 indexed cuts,4096 sites or75000 comparison
 Endpoint/DTO details belong only in [WEB_API.md](WEB_API.md); installation,
 recovery and deployment procedures belong in [OPERATIONS.md](OPERATIONS.md).
 
+`web/sar/study_row_scope.py` owns exact whole-core, region, fragment and scaffold
+membership intersection for the existing paged read. Core change views union
+published changed-fragment memberships, excluding reference-fragment aliases;
+normal rows/archives retain them. No new match, rank, graph normalization or
+scientific result is computed by this view. One page read replaces per-region
+fanout, and the response/report/SQL schemas remain unchanged. Network cards use
+the same accepted region identities for drawing and explicit modification preview,
+showing all selected measurements rather than hiding provided PK columns.
+
 `web/sar/report_preparation.py` is the single receipt-checked typed report loader
 for current views, drawings and modification previews. Each read hashes all
 bounded report bytes against the published receipt before model reuse; dataset

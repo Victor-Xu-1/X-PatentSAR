@@ -1,40 +1,20 @@
 import { useCallback, useRef, useState } from 'react';
-import { ArrowUpRight } from 'lucide-react';
-import type { StudyRegionSummary, StudyReport, StudyRow } from '../../../api/sarStudyTypes';
+import type { StudyRegionSummary, StudyReport } from '../../../api/sarStudyTypes';
 import { sarStudyApi } from '../../../api/sarStudyApi';
 import { useTranslation } from '../../../i18n';
 import { Loading } from '../../../components/Feedback';
 import { SARFailure } from '../SARFailure';
 import { useSARResource } from '../useSARResource';
 import { GroupPager } from './GroupPager';
-import { StudyImage } from './StudyImage';
 import { TransformationPreview } from './TransformationPreview';
-
-function Reading({ row, report }: { row: StudyRow; report: StudyReport }) {
-  const { t } = useTranslation();
-  const context = report.contexts.find((item) => item.id === report.policies[0]?.context_id);
-  const values = context ? (row.values[context.id] ?? []) : [];
-  return (
-    <dl className="sar-branch-readings" title={t('活性与理化值对应完整分子')}>
-      <div data-activity-strength={context ? row.activity_bands?.[context.id] : undefined}>
-        <dt>{context?.name ?? t('活性')}</dt>
-        <dd>
-          {values.length > 1 ? t('{count} 次测量', { count: values.length }) : (values[0] ?? '—')}
-        </dd>
-      </div>
-      {(['molecular_weight', 'logP', 'tpsa'] as const).map((key, index) => (
-        <div key={key}>
-          <dt>{['MW', 'LogP', 'TPSA'][index]}</dt>
-          <dd>{row.properties[key]?.toFixed(2) ?? '—'}</dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
+import { NetworkBranchCard } from './NetworkBranchCard';
+import { networkRowSites } from './networkSites';
 
 export function NetworkBranches({
   report,
   summary,
+  summaries = [],
+  referenceId = summary?.region.molecule_id ?? '',
   jobId,
   active,
   strongest,
@@ -42,7 +22,9 @@ export function NetworkBranches({
   onSource,
 }: {
   report: StudyReport;
-  summary: StudyRegionSummary;
+  summary?: StudyRegionSummary | undefined;
+  summaries?: StudyRegionSummary[];
+  referenceId?: string;
   jobId: string;
   active: boolean;
   strongest: boolean;
@@ -51,7 +33,12 @@ export function NetworkBranches({
 }) {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
-  const [preview, setPreview] = useState<{ id: string; request: number } | null>(null);
+  const [preview, setPreview] = useState<{
+    id: string;
+    request: number;
+    summary: StudyRegionSummary;
+  } | null>(null);
+  const sites = summary ? [summary] : summaries;
   const trigger = useRef<HTMLButtonElement | null>(null);
   const load = useCallback(
     (signal: AbortSignal) =>
@@ -62,7 +49,8 @@ export function NetworkBranches({
         {
           query: '',
           scope: strongest ? 'strong_changes' : 'changes',
-          region_id: summary.region.id,
+          region_id: summary?.region.id ?? '',
+          reference_id: referenceId,
           scaffold_id: '',
           fragment_id: '',
         },
@@ -70,10 +58,17 @@ export function NetworkBranches({
         { column: 'label', direction: 'asc' },
         6,
       ),
-    [jobId, report.dataset_id, page, summary.region.id, strongest],
+    [jobId, report.dataset_id, page, summary?.region.id, referenceId, strongest],
   );
   const rows = useSARResource(
-    JSON.stringify(['sar:network-branches', jobId, summary.region.id, page, strongest]),
+    JSON.stringify([
+      'sar:network-branches',
+      jobId,
+      referenceId,
+      summary?.region.id ?? '',
+      page,
+      strongest,
+    ]),
     active,
     load,
   );
@@ -84,52 +79,21 @@ export function NetworkBranches({
       {rows.validated && rows.data && (
         <>
           <div className="sar-network-branch-grid">
-            {rows.data.items.map((row) => {
-              const fragment = fragments
-                ? summary.fragments.find((item) => item.molecule_ids.includes(row.molecule_id))
-                : undefined;
-              return (
-                <article key={row.molecule_id} className="sar-network-branch">
-                  {fragments && !fragment ? (
-                    <div className="sar-structure-pending">{t('片段结构不可用')}</div>
-                  ) : (
-                    <StudyImage
-                      jobId={jobId}
-                      kind={fragment ? 'fragment' : 'molecule'}
-                      identifier={fragment?.id ?? row.molecule_id}
-                      {...(fragment
-                        ? { regionId: summary.region.id }
-                        : { atomRegionId: summary.region.id })}
-                      label={
-                        fragment
-                          ? t('{identifier} · 变化片段', { identifier: row.label })
-                          : row.label
-                      }
-                      active={active}
-                      inspectable
-                    />
-                  )}
-                  {fragment?.representation === 'aromatic_graph' && <small>{t('芳香子图')}</small>}
-                  <button
-                    type="button"
-                    className="sar-network-compare"
-                    disabled={fragments && !fragment}
-                    onClick={(event) => {
-                      trigger.current = event.currentTarget;
-                      setPreview((old) => ({
-                        id: row.molecule_id,
-                        request: (old?.request ?? 0) + 1,
-                      }));
-                    }}
-                    aria-label={t('比较 {identifier}', { identifier: row.label })}
-                  >
-                    <strong>{row.label}</strong>
-                    <ArrowUpRight size={16} />
-                  </button>
-                  <Reading row={row} report={report} />
-                </article>
-              );
-            })}
+            {rows.data.items.map((row) => (
+              <NetworkBranchCard
+                key={row.molecule_id}
+                row={row}
+                report={report}
+                sites={networkRowSites(sites, row.molecule_id)}
+                jobId={jobId}
+                active={active}
+                fragments={fragments}
+                onCompare={(chosen, id, button) => {
+                  trigger.current = button;
+                  setPreview((old) => ({ id, summary: chosen, request: (old?.request ?? 0) + 1 }));
+                }}
+              />
+            ))}
           </div>
           {!rows.data.items.length && <p>{t('没有符合条件的结构分支')}</p>}
           <GroupPager page={page} size={6} total={rows.data.total} onPage={setPage} />
@@ -137,9 +101,9 @@ export function NetworkBranches({
       )}
       {preview && (
         <TransformationPreview
-          key={preview.id}
+          key={preview.id + ':' + preview.summary.region.id}
           report={report}
-          summary={summary}
+          summary={preview.summary}
           moleculeId={preview.id}
           requestId={preview.request}
           jobId={jobId}

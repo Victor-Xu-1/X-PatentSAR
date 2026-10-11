@@ -218,6 +218,7 @@ export interface StudyFilter {
   scaffold_id: string;
   region_id: string;
   fragment_id: string;
+  reference_id?: string;
 }
 export type StudyDrawingKind = 'molecule' | 'scaffold' | 'fragment';
 export type StudyExportFormat = 'csv' | 'json' | 'sdf' | 'html';

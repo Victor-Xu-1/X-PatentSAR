@@ -206,6 +206,103 @@ class SARStudyAPITests(WebFixture, unittest.TestCase):
                 1191,
             )
 
+    def test_reference_changes_union_keeps_directions_unique_and_rejects_foreign_or_zero_changes(
+        self,
+    ):
+        data = (
+            "id,smiles,IC50 (nM),assay\n"
+            "Ref 原文,COc1ccc(Cl)cc1,10,binding\n"
+            "A-2,CCOc1ccc(Cl)cc1,1,binding\n"
+            "B-4,COc1ccc(Br)cc1,100,binding\n"
+            "Both-5,CCOc1ccc(Br)cc1,0.01,binding\n"
+            "Alias-7,COc1ccc(Cl)cc1,,binding\n"
+            "NoAct-8,CCCOc1ccc(Cl)cc1,,binding\n"
+        ).encode()
+        with self.client() as client:
+            dataset = self.dataset(client, data)
+            prefix = ROOT + "/datasets/" + dataset["id"]
+            molecules = client.get(prefix + "/molecules").json()["items"]
+            reference = next(item for item in molecules if item["label"] == "Ref 原文")
+            atoms = client.get(
+                prefix + "/molecules/" + reference["id"] + "/drawing"
+            ).json()["atoms"]
+            regions = []
+            for name, indices in [
+                ("R1", [0]),
+                ("R2", [a["index"] for a in atoms if a["element"] == "Cl"]),
+            ]:
+                saved = client.post(
+                    prefix + "/regions",
+                    json={
+                        "molecule_id": reference["id"],
+                        "expected_dataset_revision": 1,
+                        "expected_graph_sha256": reference["graph_sha256"],
+                        "atom_indices": indices,
+                        "name": name,
+                    },
+                )
+                self.assertEqual(saved.status_code, 201, saved.text)
+                regions.append(saved.json()["id"])
+            # A second interpretation of R1 must not duplicate a molecule card.
+            repeat = client.post(
+                prefix + "/regions",
+                json={
+                    "molecule_id": reference["id"],
+                    "expected_dataset_revision": 1,
+                    "expected_graph_sha256": reference["graph_sha256"],
+                    "atom_indices": [0],
+                    "name": "R3 same boundary",
+                },
+            )
+            self.assertEqual(repeat.status_code, 201, repeat.text)
+            regions.append(repeat.json()["id"])
+            job, _ = self.start(client, dataset, regions)
+            job = self.completed(client, job)
+            path = ROOT + "/jobs/" + job["id"] + "/study"
+            original = client.get(path + "/export?format=json").json()
+            params = {
+                "scope": "changes",
+                "reference_id": reference["id"],
+                "page_size": 2,
+            }
+            first = client.get(path + "/rows", params=params)
+            self.assertEqual(first.status_code, 200, first.text)
+            self.assertEqual(first.json()["total"], 3)
+            self.assertEqual(
+                [row["label"] for row in first.json()["items"]], ["A-2", "B-4"]
+            )
+            params["page"] = 2
+            second = client.get(path + "/rows", params=params).json()
+            self.assertEqual([row["label"] for row in second["items"]], ["NoAct-8"])
+            self.assertGreater(second["items"][0]["properties"]["molecular_weight"], 0)
+            self.assertEqual(list(second["items"][0]["values"].values()), [[""]])
+            selected = client.get(
+                path + "/rows",
+                params={
+                    "scope": "changes",
+                    "region_id": regions[0],
+                    "reference_id": reference["id"],
+                },
+            )
+            self.assertEqual(selected.status_code, 200, selected.text)
+            self.assertEqual(
+                {row["label"] for row in selected.json()["items"]}, {"A-2", "NoAct-8"}
+            )
+            for invalid in [
+                {"scope": "changes", "reference_id": "foreign"},
+                {"scope": "changes"},
+                {
+                    "scope": "changes",
+                    "reference_id": reference["id"],
+                    "region_id": "foreign",
+                },
+            ]:
+                self.assertEqual(
+                    client.get(path + "/rows", params=invalid).status_code, 422
+                )
+            self.assertEqual(client.get(path + "/rows").json()["total"], 6)
+            self.assertEqual(client.get(path + "/export?format=json").json(), original)
+
     def test_full_core_is_descriptive_and_never_relaxes_a_variable_region(self):
         with self.client() as client:
             dataset = self.dataset(client, CSV)
