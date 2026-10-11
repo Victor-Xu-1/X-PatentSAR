@@ -3,10 +3,65 @@ import { beforeEach, expect, it, vi } from 'vitest';
 import { StudyRegionMap } from '../src/features/sar/study/StudyRegionMap';
 import { setLocale } from '../src/i18n';
 import { sarApi } from '../src/api/sarApi';
-import { studyReport } from './sar-fixtures';
+import { sarDrawing, studyReport } from './sar-fixtures';
 import { StudyReferencePane } from '../src/features/sar/study/StudyReferencePane';
 
 beforeEach(() => setLocale('en'));
+
+it('renders only the selected original reference while retaining every reference choice', () => {
+  const first = studyReport.regions[0]!;
+  const other = {
+    ...first,
+    reference_label: '原文 I-255',
+    region: { ...first.region, id: 'other-region', molecule_id: 'other-reference' },
+  };
+  const report = { ...studyReport, regions: [first, other] };
+  const original = JSON.stringify(report);
+  const onSelect = vi.fn();
+  const { container } = render(
+    <StudyRegionMap report={report} active={false} selected={other.region.id} onSelect={onSelect} />,
+  );
+  expect(container.querySelectorAll('.sar-reference-map-card')).toHaveLength(1);
+  const choice = screen.getByRole('combobox', { name: 'Choose reference molecule', exact: true });
+  expect(choice).toHaveValue(other.region.molecule_id);
+  expect(within(choice).getAllByRole('option').map((item) => item.textContent)).toEqual([
+    first.reference_label,
+    other.reference_label,
+  ]);
+  fireEvent.change(choice, { target: { value: first.region.molecule_id } });
+  expect(onSelect).toHaveBeenCalledExactlyOnceWith(first.region.id);
+  expect(JSON.stringify(report)).toBe(original);
+});
+
+it('requests only the selected drawing and keeps that choice and source labels through locale changes', async () => {
+  const first = studyReport.regions[0]!;
+  const other = {
+    ...first,
+    reference_label: '原文 I-255',
+    region: { ...first.region, id: 'other-region', molecule_id: 'other-reference' },
+  };
+  const report = { ...studyReport, regions: [first, other] };
+  const draw = vi.spyOn(sarApi, 'drawing').mockImplementation(async (_dataset, molecule) => ({
+    ...sarDrawing,
+    molecule: { ...sarDrawing.molecule, id: molecule },
+  }));
+  const props = { report, active: true, onSelect: vi.fn() };
+  const { rerender } = render(<StudyRegionMap {...props} selected={first.region.id} />);
+  await screen.findByRole('img', { name: first.reference_label, exact: true });
+  expect(draw).toHaveBeenCalledExactlyOnceWith(report.dataset_id, first.region.molecule_id, expect.any(AbortSignal));
+  rerender(<StudyRegionMap {...props} selected={other.region.id} />);
+  await screen.findByRole('img', { name: other.reference_label, exact: true });
+  expect(screen.queryByRole('img', { name: first.reference_label, exact: true })).not.toBeInTheDocument();
+  expect(draw).toHaveBeenCalledTimes(2);
+  const choice = screen.getByRole('combobox', { name: 'Choose reference molecule', exact: true });
+  choice.focus();
+  await act(() => setLocale('zh-CN'));
+  expect(screen.getByRole('combobox', { name: '选择参考分子', exact: true })).toBe(choice);
+  expect(choice).toHaveValue(other.region.molecule_id);
+  expect(choice).toHaveFocus();
+  expect(draw).toHaveBeenCalledTimes(2);
+  expect(props.onSelect).not.toHaveBeenCalled();
+});
 
 it('keeps every original reference grouped in one named pane without relabelling or mixing regions', async () => {
   const first = studyReport.regions[0]!;
