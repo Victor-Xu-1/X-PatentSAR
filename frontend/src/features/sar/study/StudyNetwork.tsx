@@ -38,14 +38,14 @@ export function StudyNetwork({
       groups.set(summary.region.molecule_id, group);
     }
     return [...groups.entries()]
-      .map(([id, group]) => ({ id, ...group }))
+      .map(([id, group]) => ({ id, ...group, compact: compactNetworkSites(group.sites) }))
       .toSorted((a, b) => a.label.localeCompare(b.label, 'en', { numeric: true }));
   }, [report.regions]);
   const filtered = centres.filter((centre) =>
     centre.label.toLowerCase().includes(search.toLowerCase().trim()),
   );
   const selected = filtered.find((centre) => centre.id === reference) ?? filtered[0];
-  const compact = useMemo(() => compactNetworkSites(selected?.sites ?? []), [selected?.sites]);
+  const compact = selected?.compact ?? [];
   const visibleSites = allSites ? (selected?.sites ?? []) : compact;
   const summary = visibleSites.find((item) => item.region.id === site) ?? visibleSites[0];
   const mapSites = visibleSites.map((item, index) =>
