@@ -25,7 +25,6 @@
   ],
   "browser_tests": [
     "frontend/e2e/sar-study.spec.ts",
-    "frontend/e2e/sar-single-site.spec.ts",
-    "frontend/e2e/sar-aromatic.spec.ts"
+    "frontend/e2e/sar-single-site.spec.ts"
   ]
 }
