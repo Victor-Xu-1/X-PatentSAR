@@ -276,15 +276,25 @@ svg {
 }
 .skip-link {
   position: fixed;
-  top: -60px;
+  top: 10px;
   left: 12px;
   background: var(--surface);
-  padding: 12px;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
   z-index: 100;
-  border: 2px solid var(--primary);
+  border: 0;
 }
 .skip-link:focus {
-  top: 10px;
+  width: auto;
+  height: auto;
+  padding: 12px;
+  overflow: visible;
+  clip-path: none;
+  border: 2px solid var(--primary);
 }
 .spin {
   animation: spin 1.2s linear infinite;

@@ -64,6 +64,14 @@ for (const width of [390, 800, 1672]) {
     await page.locator('.language-switch select').selectOption('zh-CN');
     await expect(network.getByRole('button', { name: '选择核心 2', exact: true })).toBeVisible();
     await network.getByRole('textbox', { name: '查找核心编号', exact: true }).focus();
+    const skip = page.locator('.skip-link');
+    await skip.focus();
+    await expect(skip).toBeFocused();
+    expect(await skip.evaluate((element) => getComputedStyle(element).clipPath)).toBe('none');
+    await skip.press('Enter');
+    await expect(page.locator('#main-content')).toBeFocused();
+    expect(await skip.evaluate((element) => getComputedStyle(element).clipPath)).toBe('inset(50%)');
+    await network.getByRole('textbox', { name: '查找核心编号', exact: true }).focus();
     await network.screenshot({ path: test.info().outputPath(`hydrogen-zh-${width}.png`) });
     expect((await (await page.request.get(`/api/v1/sar/jobs/${job}/study`)).json()).report).toEqual(
       snapshot.report,
