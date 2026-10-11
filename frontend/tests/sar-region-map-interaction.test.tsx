@@ -21,6 +21,35 @@ it('does not add an empty overlay to a reference without recorded regions or ato
   expect(container).toBeEmptyDOMElement();
 });
 
+it('keeps dense maps structure-first while retaining every region and pointer target', async () => {
+  const many = Array.from({ length: 45 }, (_, index) => ({
+    ...namedRegion,
+    id: 'region-' + index,
+    name: 'R' + (index + 1),
+    atom_indices: [index % atoms.length],
+  }));
+  const onSelect = vi.fn();
+  const { container } = render(
+    <>
+      <RegionMap atoms={atoms} regions={many} selected={many[12]!.id} onSelect={onSelect} />
+      <RegionLegend regions={many} selected={many[12]!.id} onSelect={onSelect} />
+    </>,
+  );
+  expect(container.querySelectorAll('.sar-region-label')).toHaveLength(1);
+  expect(container.querySelector('.sar-region-label')).toHaveTextContent('R13');
+  expect(container.querySelectorAll('.sar-region-hotspots button')).toHaveLength(45);
+  expect(container.querySelectorAll('.sar-region-legend button')).toHaveLength(45);
+  expect(container.querySelector('.sar-region-legend')).toHaveAttribute('data-dense', 'true');
+  const target = container.querySelectorAll<HTMLButtonElement>('.sar-region-hotspots button')[30]!;
+  await userEvent.hover(target);
+  expect(container.querySelectorAll('.sar-region-label')).toHaveLength(2);
+  expect(container.querySelectorAll('.sar-region-label')[1]).toHaveTextContent('R31');
+  await userEvent.click(target);
+  expect(onSelect).toHaveBeenLastCalledWith(many[30]!.id);
+  await userEvent.unhover(target);
+  expect(container.querySelectorAll('.sar-region-label')).toHaveLength(1);
+});
+
 it('emphasizes only the selected recorded region without moving or rewriting atoms', () => {
   const original = JSON.stringify({ atoms, regions });
   const { container, rerender } = render(

@@ -315,6 +315,10 @@
   flex-wrap: wrap;
   justify-content: center;
 }
+.sar-region-legend[data-dense] {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
 .sar-delta.is-better {
   color: var(--success);
 }
