@@ -510,6 +510,15 @@ compiled reference. Every real domain, induced edge AND nonedge, bond key and
 stereo mapping is still checked; source order, search-state and mapping caps do
 not change. Parent grouping avoids repeated all-pair scans, and original-source
 parsing is reused for cut graphics only after the same source validation.
+`regions.py` reuses the already-prepared original adjacency for connectedness
+and cut-port inventories. Each compiled reference retains its exact port
+inventory; a comparison reuses topology only for the same candidate remainder,
+with at most64 entries under the existing embedding cap. Every embedding still
+independently remaps fixed anchors and checks full stereochemistry. No accepted
+mapping/result is cached or guessed. Virtual H views prepare their own expanded
+topology, never borrowing the original adjacency. This preparation-only change
+keeps engine8 semantics; content-bound engine identity still invalidates old
+unfinished native work, while completed reports and raw sources stay untouched.
 Discovery and independent result proof have separate30-second phase deadlines,
 with a60-second overall verification ceiling. Both phases are mandatory; either
 expiry refuses publication. Scientific search/embedding,512MiB child memory and

@@ -11,7 +11,7 @@ from rdkit import Chem
 from .errors import MappingLimit
 from .graph_features import GraphFacts, prepare_facts
 from .limits import MAX_MAPPINGS, MAX_SEARCH_STATES
-from .regions import BondKey, bond_key
+from .regions import BondKey, bond_key, fixed_ports
 
 AtomKey = tuple[int, int, int, bool, int, int, int, int]
 
@@ -84,6 +84,7 @@ class FixedAtoms:
         self.reference, self.selected = reference, selected
         self.fixed = frozenset(range(len(reference.atoms))) - selected
         self.nodes = tuple(sorted(self.fixed))
+        self.ports = fixed_ports(reference.mol, selected, adjacency=reference.adjacency)
         self.required = {
             index: tuple(
                 sorted(

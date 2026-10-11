@@ -38,6 +38,7 @@ def cut_identity(
         prepared.mol if prepared is not None else read_molfile(molfile),
         variable_indices,
         hydrogen_anchor,
+        adjacency=prepared.adjacency if prepared is not None else None,
     )
     facts = (
         prepared.facts
@@ -119,10 +120,12 @@ def reference_cut(
     hydrogen_anchor=None,
     pool=None,
 ) -> dict:
+    prepared = pool.read(molfile) if pool is not None else None
     mol, variable = region_view(
-        pool.read(molfile).mol if pool is not None else read_molfile(molfile),
+        prepared.mol if prepared is not None else read_molfile(molfile),
         atom_indices,
         hydrogen_anchor,
+        adjacency=prepared.adjacency if prepared is not None else None,
     )
     anchors = sorted(
         {

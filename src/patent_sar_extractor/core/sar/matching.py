@@ -12,7 +12,7 @@ from .graphs import FixedAtoms, Graph, fixed_mappings, graph
 from .hydrogen import hydrogen_sites, hydrogen_view, region_view
 from .limits import MAX_HYDROGEN_VIEWS
 from .molecules import chemical_identity, read_molfile
-from .regions import attachment_groups, attachment_mapping, connected
+from .regions import attachment_groups, attachment_mapping, connected, fixed_ports
 from .stereo import boundary_supported, preserved
 
 
@@ -80,7 +80,9 @@ class CompiledReference:
         fixed_count = self._reference.mol.GetNumAtoms() - len(self._selected)
         if candidate.mol.GetNumAtoms() != fixed_count:
             return result
-        ports = attachment_groups(self._reference.mol, self._selected)
+        ports = attachment_groups(
+            self._reference.mol, self._selected, adjacency=self._reference.adjacency
+        )
         if sum(len(key) * len(values) for key, values in ports.items()) != 1:
             return result
         accepted, failures = None, set()
@@ -168,13 +170,17 @@ def compile_reference(
         if pool is not None
         else graph(read_molfile(reference_molfile))
     )
-    mol, selected = region_view(prepared.mol, atom_indices, hydrogen_anchor)
+    mol, selected = region_view(
+        prepared.mol, atom_indices, hydrogen_anchor, adjacency=prepared.adjacency
+    )
     reference = prepared if mol is prepared.mol else graph(mol)
     if not boundary_supported(reference, selected):
         raise SARInputError("unsupported_boundary_bond_stereo")
     anchors = frozenset(
         endpoint
-        for key in attachment_groups(reference.mol, selected)
+        for key in attachment_groups(
+            reference.mol, selected, adjacency=reference.adjacency
+        )
         for endpoint, _ in key
     )
     return CompiledReference(
@@ -200,6 +206,11 @@ def _compare_graphs(
     ):
         return _result("not_matched", "candidate_variable_empty")
     failures, proof = set(), None
+    prepared = prepared if prepared is not None else FixedAtoms(reference, selected)
+    # At most MAX_MAPPINGS entries in one exhaustive comparison, never a result
+    # cache. Different embeddings with the same remainder still prove their own
+    # exact fixed anchors and stereo below.
+    topologies = {}
     try:
         for mapping in fixed_mappings(
             reference, candidate, selected, prepared=prepared
@@ -207,11 +218,28 @@ def _compare_graphs(
             remaining = frozenset(range(candidate.mol.GetNumAtoms())) - frozenset(
                 mapping.values()
             )
-            if not membership and not connected(candidate.mol, remaining):
+            if remaining not in topologies:
+                topologies[remaining] = (
+                    membership
+                    or connected(
+                        candidate.mol, remaining, adjacency=candidate.adjacency
+                    ),
+                    fixed_ports(
+                        candidate.mol, remaining, adjacency=candidate.adjacency
+                    ),
+                )
+            is_connected, candidate_ports = topologies[remaining]
+            if not is_connected:
                 failures.add("candidate_variable_disconnected")
                 continue
             ports = attachment_mapping(
-                reference.mol, candidate.mol, selected, remaining, mapping
+                reference.mol,
+                candidate.mol,
+                selected,
+                remaining,
+                mapping,
+                reference_ports=prepared.ports,
+                candidate_ports=candidate_ports,
             )
             if ports is None:
                 failures.add("attachment_endpoints_changed")
