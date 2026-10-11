@@ -197,6 +197,19 @@ class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
         )
 
     def test_selected_scope_chooses_sar_without_changing_other_fixture_modes(self):
+        self.assertEqual(
+            fixture_mode(
+                {
+                    PREFIX + name
+                    for name in (
+                        "sar-study.spec.ts",
+                        "topbar.spec.ts",
+                        "product-version.spec.ts",
+                    )
+                }
+            ),
+            "sar",
+        )
         self.assertEqual(fixture_mode({PREFIX + "sar-workbench.spec.ts"}), "sar")
         self.assertEqual(fixture_mode({PREFIX + "sar-study.spec.ts"}), "sar")
         self.assertEqual(

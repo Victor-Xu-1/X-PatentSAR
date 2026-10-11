@@ -8,6 +8,7 @@ from pathlib import Path
 PREFIX = "frontend/e2e/"
 # Read-only specs can accompany any controlled feature fixture.
 COMMON = {
+    "topbar.spec.ts",
     "jobs-project-recovery.spec.ts",
     "product-version.spec.ts",
     "recent-density.spec.ts",
@@ -72,7 +73,6 @@ MODES = (
         "sar-workbench.spec.ts",
         COMMON
         | {
-            "topbar.spec.ts",
             "language-switch.spec.ts",
             "sar-workbench.spec.ts",
             "sar-study.spec.ts",
@@ -99,7 +99,6 @@ MODES = (
         "llm-settings.spec.ts",
         COMMON
         | {
-            "topbar.spec.ts",
             "llm-settings.spec.ts",
             "identifier-labels.spec.ts",
             "llm-recovery.spec.ts",
@@ -114,9 +113,7 @@ def fixture_mode(selected: set[str]) -> str:
             PREFIX + name for name in allowed
         }:
             return mode
-    if selected <= {
-        PREFIX + name for name in COMMON | {"topbar.spec.ts", "language-switch.spec.ts"}
-    }:
+    if selected <= {PREFIX + name for name in COMMON | {"language-switch.spec.ts"}}:
         return "read-only"
     return "execution"
 
