@@ -9,7 +9,11 @@ const literal =
     return expected;
   };
 const common = object({
-  method: oneOf(['single-non-ring-bond-v1', 'single-region-one-two-cut-v2']),
+  method: oneOf([
+    'single-non-ring-bond-v1',
+    'single-region-one-two-cut-v2',
+    'single-region-one-two-cut-h-v3',
+  ]),
   candidate_sites: count,
   candidate_comparisons: count,
   indexed_cuts: count,
@@ -30,6 +34,7 @@ export const decodeStudyDiscovery: Decoder<NonNullable<StudyReport['discovery']>
       value,
       {
         examined_boundaries: count,
+        indexed_hydrogen_sites: count,
         max_cut_bonds: (raw, p = '$') => {
           if (raw !== 1 && raw !== 2) throw new ContractError(p);
           return raw;
@@ -39,10 +44,16 @@ export const decodeStudyDiscovery: Decoder<NonNullable<StudyReport['discovery']>
     ),
   };
   if (
-    result.method === 'single-region-one-two-cut-v2' &&
+    result.method !== 'single-non-ring-bond-v1' &&
     (result.max_cut_bonds !== 2 ||
       result.examined_boundaries === undefined ||
       result.examined_boundaries > 500000)
+  )
+    throw new ContractError(path);
+  if (
+    result.method === 'single-region-one-two-cut-h-v3' &&
+    (result.indexed_hydrogen_sites === undefined ||
+      result.indexed_hydrogen_sites > result.indexed_cuts)
   )
     throw new ContractError(path);
   if (

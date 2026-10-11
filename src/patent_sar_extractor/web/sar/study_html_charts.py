@@ -100,6 +100,7 @@ class ReportFigures:
                 atom
                 for atom in drawing["atoms"]
                 if atom["index"] in region.atom_indices
+                or atom["index"] == region.hydrogen_anchor
             ]
             for atom in atoms:
                 marks.append(
@@ -111,7 +112,7 @@ class ReportFigures:
                 )
                 y = max(24, min(atom["y"] for atom in atoms) * 800 - 25)
                 marks.append(
-                    f'<text x="{x:.3f}" y="{y:.3f}" fill="{color}" text-anchor="middle" font-size="20">R{order + 1}</text>'
+                    f'<text x="{x:.3f}" y="{y:.3f}" fill="{color}" text-anchor="middle" font-size="20">R{order + 1}{" (H)" if region.hydrogen_anchor is not None else ""}</text>'
                 )
             legend.append(
                 f'<li><i style="background:{color}"></i>R{order + 1} · {escape(region.name or "")}</li>'

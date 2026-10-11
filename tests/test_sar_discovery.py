@@ -44,7 +44,9 @@ class DiscoveryTests(unittest.TestCase):
         for plan in plans:
             region = plan["region"]
             matcher = compile_reference(
-                indexed[region["molecule_id"]]["molfile"], region["atom_indices"]
+                indexed[region["molecule_id"]]["molfile"],
+                region["atom_indices"],
+                hydrogen_anchor=region.get("hydrogen_anchor"),
             )
             for mid in plan["candidate_ids"]:
                 result = matcher.compare_details(indexed[mid]["molfile"])

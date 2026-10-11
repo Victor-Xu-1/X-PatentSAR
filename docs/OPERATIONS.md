@@ -9,15 +9,20 @@ model installation or external API is required. The existing one-CPU/512MiB/
 refuses rather than truncates at500000 examined boundary sets,100000 indexed cuts,
 4096 sites or75000 combined comparisons. Automatic enumeration covers one/two
 nonaromatic single-bond boundaries, including two-ended linker changes and ring
-segments. Implicit-H, aromatic boundaries and >2 ports remain manual-only.
+segments, plus ordinary H sites. Aromatic cuts and >2 ports remain manual-only;
+hydrogen-boundary stereo is unsupported. H sites bind original atom anchors;
+private expanded views do not rewrite the original molecule or public indices.
 Native input-bound plans and25-pair batches survive interruption. Changes to
-SAR engine5 make old unfinished engine4
+SAR engine6 make old unfinished engine5/older
 checkpoints incompatible; retain their artifacts or roll back the prior wheel,
 never rewrite scientific identities. Completed old reports remain readable.
 Fixed endpoints/bond types and full fixed chemistry remain mandatory; internal
 variable endpoints may split/merge as a linker changes. Boundary stereo uses
 anchor-specific ligand maps, not a global variable-atom bijection or raw CIP
 labels. Multiple indistinguishable ligands cannot silently prove fixed parity.
+The same checker also caps compatible H views at64 per comparison and returns
+explicit ambiguity on exhaustion. Atom drawings advertise only verified H-site
+availability; manual H mode and uncertain-write readback retain exact anchor CAS.
 
 ## Activity-strength compatibility
 

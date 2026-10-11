@@ -26,7 +26,7 @@ it('emphasizes only the selected recorded region without moving or rewriting ato
   const { container, rerender } = render(
     <RegionMap atoms={atoms} regions={regions} selected={regions[0]!.id} />,
   );
-  const groups = container.querySelectorAll('g[data-region-id]');
+  const groups = container.querySelectorAll('g[data-region-id]:not(.sar-region-label)');
   expect(groups).toHaveLength(2);
   expect(groups[0]).toHaveAttribute('data-selected', 'true');
   expect(groups[0]!.querySelector('circle')).toHaveAttribute('stroke-width', '3');
@@ -48,7 +48,7 @@ it('emphasizes only the selected recorded region without moving or rewriting ato
   rerender(<RegionMap atoms={atoms} regions={regions} selected="another-reference-region" />);
   expect(container.querySelectorAll('g[data-selected]')).toHaveLength(0);
   expect(
-    [...container.querySelectorAll('g[data-region-id]')].every(
+    [...container.querySelectorAll('g[data-region-id]:not(.sar-region-label)')].every(
       (group) => group.getAttribute('opacity') === '1',
     ),
   ).toBe(true);

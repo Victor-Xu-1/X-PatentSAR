@@ -97,6 +97,8 @@ export interface Atom {
   element: string;
   x: number;
   y: number;
+  ordinary_hydrogens?: number;
+  hydrogen_site_supported?: boolean;
 }
 export interface MoleculeDrawing {
   molecule: Molecule;
@@ -108,6 +110,7 @@ export interface RegionRequest {
   expected_dataset_revision: number;
   expected_graph_sha256: string;
   atom_indices: number[];
+  hydrogen_anchor?: number | null | undefined;
   name?: string;
   kind?: 'variable' | 'core';
 }
@@ -118,6 +121,7 @@ export interface Region {
   dataset_revision: number;
   graph_sha256: string;
   atom_indices: number[];
+  hydrogen_anchor?: number | null | undefined;
   attachment_count: number;
   created_at: string;
   name?: string;
@@ -173,6 +177,7 @@ export interface Pair {
   fragment_id?: string | null;
   variable_atom_indices?: number[];
   attachment_mapping?: number[][];
+  candidate_hydrogen_anchor?: number | null | undefined;
 }
 export interface PairPage {
   items: Pair[];

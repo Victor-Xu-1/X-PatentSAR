@@ -108,6 +108,7 @@ export function createSARApi(shared: ApiClient, rawFetch?: typeof fetch) {
           result.graph_sha256 !== payload.expected_graph_sha256 ||
           (payload.name !== undefined && result.name !== payload.name) ||
           (payload.kind !== undefined && result.kind !== payload.kind) ||
+          (result.hydrogen_anchor ?? null) !== (payload.hydrogen_anchor ?? null) ||
           [...result.atom_indices].sort((a, b) => a - b).join() !==
             [...payload.atom_indices].sort((a, b) => a - b).join()
         )

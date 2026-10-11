@@ -16,6 +16,19 @@ function site(id: string, atoms: number[], members: string[]): StudyRegionSummar
   };
 }
 describe('compact chemical sites without lost comparisons or scientific rewrites', () => {
+  it('keeps distinct hydrogen anchors and only folds the broader containing region with identical comparisons', () => {
+    const one = {
+      ...site('h1', [], ['a']),
+      region: { ...site('h1', [], ['a']).region, hydrogen_anchor: 1 },
+    };
+    const other = {
+      ...site('h2', [], ['a']),
+      region: { ...site('h2', [], ['a']).region, hydrogen_anchor: 3 },
+    };
+    const whole = site('whole', [1, 2], ['a']);
+    const distinct = site('distinct', [1, 2], ['a', 'b']);
+    expect(compactNetworkSites([one, other, whole, distinct])).toEqual([one, other, distinct]);
+  });
   it('separates colocated region labels while preserving chemical anchors and original site order', () => {
     const atoms = [{ index: 0, x: 0.5, y: 0.3, element: 'C' }];
     const regions = Array.from({ length: 10 }, (_, i) => site('region-' + i, [0], ['a']).region);

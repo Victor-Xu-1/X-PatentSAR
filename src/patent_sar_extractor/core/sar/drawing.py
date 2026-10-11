@@ -9,6 +9,7 @@ from rdkit import Chem, rdBase
 from rdkit.Chem.Draw import rdMolDraw2D
 
 from .errors import SARInputError
+from .hydrogen import hydrogen_sites, hydrogen_view
 from .molecules import depict, read_molfile
 
 WIDTH, HEIGHT = 1000, 800
@@ -36,12 +37,17 @@ def draw_fragment(smiles: str) -> str:
 
 
 def draw_molecule_preview(
-    molfile: str, *, highlighted_atoms: list[int] | None = None
+    molfile: str, *, highlighted_atoms: list[int] | None = None, hydrogen_anchor=None
 ) -> str:
     """Size passive vectors for cards; selectable maps keep their original canvas."""
+    mol = read_molfile(molfile)
+    highlighted = highlighted_atoms or []
+    if hydrogen_anchor is not None:
+        mol, virtual = hydrogen_view(mol, hydrogen_anchor)
+        highlighted = [virtual]
     return _draw(
-        read_molfile(molfile),
-        highlighted_atoms or [],
+        mol,
+        highlighted,
         canvas=MOLECULE_PREVIEW_CANVAS,
     )["svg"]
 
@@ -80,6 +86,7 @@ def _draw(
             )
             drawer.FinishDrawing()
             atoms = []
+            sites = hydrogen_sites(mol)
             for atom in mol.GetAtoms():
                 point = drawer.GetDrawCoords(atom.GetIdx())
                 x, y = point.x / width, point.y / height
@@ -91,6 +98,8 @@ def _draw(
                         "element": atom.GetSymbol(),
                         "x": x,
                         "y": y,
+                        "ordinary_hydrogens": sites[atom.GetIdx()][0],
+                        "hydrogen_site_supported": bool(sites[atom.GetIdx()][1]),
                     }
                 )
             return {"svg": drawer.GetDrawingText().rstrip(), "atoms": atoms}

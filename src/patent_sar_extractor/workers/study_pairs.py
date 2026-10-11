@@ -45,6 +45,7 @@ def make_pair(
             candidate["molfile"],
             proof["variable_atom_indices"],
             proof["attachment_mapping"],
+            hydrogen_anchor=proof.get("candidate_hydrogen_anchor"),
         )
         if (
             fragment["fixed_background_sha256"]
@@ -76,6 +77,7 @@ def make_pair(
         match_status=proof["match_status"],
         variable_atom_indices=proof["variable_atom_indices"],
         attachment_mapping=proof["attachment_mapping"],
+        candidate_hydrogen_anchor=proof.get("candidate_hydrogen_anchor"),
         reasons=sorted({*proof["reasons"], *measured.pop("reasons")}),
         **measured,
     )
@@ -137,8 +139,16 @@ def analyse_pairs(
         region = plan["region"]
         check()
         reference = indexed[region["molecule_id"]]
-        matcher = compile_reference(reference["molfile"], region["atom_indices"])
-        ref_fragment = reference_cut(reference["molfile"], region["atom_indices"])
+        matcher = compile_reference(
+            reference["molfile"],
+            region["atom_indices"],
+            hydrogen_anchor=region.get("hydrogen_anchor"),
+        )
+        ref_fragment = reference_cut(
+            reference["molfile"],
+            region["atom_indices"],
+            hydrogen_anchor=region.get("hydrogen_anchor"),
+        )
         fragments = {ref_fragment["id"]: ref_fragment}
         compact = []
         for candidate_id in plan["candidate_ids"]:
@@ -188,6 +198,7 @@ def analyse_pairs(
                         candidate["molfile"],
                         pair["variable_atom_indices"],
                         pair["attachment_mapping"],
+                        hydrogen_anchor=pair.get("candidate_hydrogen_anchor"),
                     )
                     if (
                         fragment["id"] != pair["fragment_id"]
@@ -199,6 +210,7 @@ def analyse_pairs(
                     pair["variable_atom_indices"]
                     or pair["attachment_mapping"]
                     or pair["fragment_id"] is not None
+                    or pair.get("candidate_hydrogen_anchor") is not None
                 ):
                     raise SARInputError("study_pair_checkpoint_proof")
             if fragment:

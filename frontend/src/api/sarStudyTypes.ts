@@ -166,11 +166,13 @@ export interface StudyReport {
   warnings: string[];
   candidate_policy: string;
   discovery?: {
-    method: 'single-non-ring-bond-v1' | 'single-region-one-two-cut-v2';
+    method:
+      'single-non-ring-bond-v1' | 'single-region-one-two-cut-v2' | 'single-region-one-two-cut-h-v3';
     candidate_sites: number;
     candidate_comparisons: number;
     indexed_cuts: number;
     examined_boundaries?: number;
+    indexed_hydrogen_sites?: number;
     max_cut_bonds?: 1 | 2;
     excluded: Record<string, number>;
     max_variable_atoms: 32;

@@ -34,7 +34,10 @@ export function RegionMap({
     <>
       <svg className="sar-region-map" viewBox="0 0 1000 800" aria-hidden="true">
         {regions.map((region, order) => {
-          const regionAtoms = atoms.filter((atom) => region.atom_indices.includes(atom.index));
+          const regionAtoms = atoms.filter(
+            (atom) =>
+              region.atom_indices.includes(atom.index) || atom.index === region.hydrogen_anchor,
+          );
           if (!regionAtoms.length) return null;
           const isSelected = selected === region.id;
           const color = colors[order % colors.length];
@@ -55,6 +58,7 @@ export function RegionMap({
                   fillOpacity={isSelected ? 0.24 : 0.1}
                   stroke={color}
                   strokeWidth={isSelected ? 3 : 1.5}
+                  strokeDasharray={region.hydrogen_anchor == null ? undefined : '4 3'}
                 />
               ))}
             </g>
@@ -92,6 +96,7 @@ export function RegionMap({
               textAnchor="middle"
             >
               R{order + 1}
+              {regions[order]!.hydrogen_anchor == null ? '' : ' H'}
             </text>
           </g>
         ))}
@@ -100,7 +105,10 @@ export function RegionMap({
         <div className="sar-region-hotspots">
           {regions.flatMap((region, order) =>
             atoms
-              .filter((atom) => region.atom_indices.includes(atom.index))
+              .filter(
+                (atom) =>
+                  region.atom_indices.includes(atom.index) || atom.index === region.hydrogen_anchor,
+              )
               .map((atom) => (
                 <button
                   type="button"
@@ -156,6 +164,7 @@ export function RegionLegend({
             >
               <span style={{ background: colors[order % colors.length] }} />
               {region.name ?? 'R' + (order + 1)}
+              {region.hydrogen_anchor == null ? '' : ' · H'}
             </button>
           ) : (
             <>

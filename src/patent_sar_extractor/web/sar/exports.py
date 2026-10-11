@@ -108,6 +108,8 @@ def export_csv(queue: SARQueue, identifier: str) -> Iterator[bytes]:
             "evidence_basis",
             "reasons",
             "variable_atom_indices_0based",
+            "reference_hydrogen_anchor_0based",
+            "candidate_hydrogen_anchor_0based",
             "input_sha256",
         ]
     )
@@ -129,6 +131,8 @@ def export_csv(queue: SARQueue, identifier: str) -> Iterator[bytes]:
                     pair.evidence_basis,
                     "; ".join(pair.reasons),
                     ",".join(map(str, region.atom_indices)),
+                    region.hydrogen_anchor,
+                    pair.candidate_hydrogen_anchor,
                     job.input_sha256,
                 ]
             )

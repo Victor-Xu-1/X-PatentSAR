@@ -19,7 +19,7 @@ def _pair(reference, candidate, region, request, matcher):
     ]
     graph = {"match_status": "ineligible", "reasons": ["structure_unavailable"]}
     if candidate.eligible and candidate.molfile:
-        graph = matcher.compare(candidate.molfile)
+        graph = matcher.compare_details(candidate.molfile)
     measured = {
         "comparison": "indeterminate",
         "reference_values": values(reference),
@@ -50,6 +50,9 @@ def _pair(reference, candidate, region, request, matcher):
         molecule_id=candidate.id,
         label=candidate.label,
         match_status=graph["match_status"],
+        variable_atom_indices=graph.get("variable_atom_indices", []),
+        attachment_mapping=graph.get("attachment_mapping", []),
+        candidate_hydrogen_anchor=graph.get("candidate_hydrogen_anchor"),
         reasons=list(dict.fromkeys([*graph["reasons"], *measured.pop("reasons", [])])),
         **measured,
     )
@@ -99,7 +102,9 @@ def analyse(root: Path, input_sha256: str) -> dict:
     ):
         raise ValueError("region identity")
     candidates = [row for row in rows if row.id != reference.id]
-    matcher = compile_reference(reference.molfile, region.atom_indices)
+    matcher = compile_reference(
+        reference.molfile, region.atom_indices, hydrogen_anchor=region.hydrogen_anchor
+    )
     count = (len(candidates) + 24) // 25
     processed = matched = 0
     started = time.monotonic()

@@ -66,7 +66,9 @@ def preview(queue, identifier: str, region_id: str, molecule_id: str) -> StudyPr
     sources = {row["id"]: row for row in packet["molecules"]}
     reference, candidate = sources[region.molecule_id], sources[molecule_id]
     proof = compile_reference(
-        reference["molfile"], region.atom_indices
+        reference["molfile"],
+        region.atom_indices,
+        hydrogen_anchor=region.hydrogen_anchor,
     ).compare_details(candidate["molfile"])
     if proof["match_status"] != "matched":
         raise WebError(
@@ -78,6 +80,7 @@ def preview(queue, identifier: str, region_id: str, molecule_id: str) -> StudyPr
         candidate["molfile"],
         proof["variable_atom_indices"],
         proof["attachment_mapping"],
+        hydrogen_anchor=proof.get("candidate_hydrogen_anchor"),
     )
     if fragment[
         "fixed_background_sha256"
@@ -105,6 +108,7 @@ def preview(queue, identifier: str, region_id: str, molecule_id: str) -> StudyPr
         or pair.fragment_id != fragment["id"]
         or pair.variable_atom_indices != proof["variable_atom_indices"]
         or pair.attachment_mapping != proof["attachment_mapping"]
+        or pair.candidate_hydrogen_anchor != proof.get("candidate_hydrogen_anchor")
         or pair.match_status != "matched"
     ):
         raise WebError(

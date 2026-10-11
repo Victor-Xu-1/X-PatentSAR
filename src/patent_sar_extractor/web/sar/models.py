@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from ..dto import DTO
 from ..models import Acceptance
@@ -124,6 +124,8 @@ class Atom(DTO):
     element: str
     x: float
     y: float
+    ordinary_hydrogens: int = Field(default=0, ge=0, le=512)
+    hydrogen_site_supported: bool = False
 
 
 class MoleculeDrawing(DTO):
@@ -132,24 +134,36 @@ class MoleculeDrawing(DTO):
     atoms: list[Atom]
 
 
-class RegionRequest(DTO):
+class RegionSelection(DTO):
+    atom_indices: list[Annotated[int, Field(strict=True, ge=0, le=511)]] = Field(
+        max_length=512
+    )
+    hydrogen_anchor: Annotated[int | None, Field(strict=True, ge=0, le=511)] = None
+
+    @model_validator(mode="after")
+    def coherent_selection(self):
+        if self.hydrogen_anchor is None:
+            if not self.atom_indices:
+                raise ValueError("region_invalid_indices")
+        elif self.atom_indices or getattr(self, "kind", "variable") != "variable":
+            raise ValueError("region_invalid_hydrogen_site")
+        return self
+
+
+class RegionRequest(RegionSelection):
     molecule_id: str = Field(min_length=1, max_length=200)
     expected_dataset_revision: int = Field(ge=1)
     expected_graph_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
-    atom_indices: list[Annotated[int, Field(strict=True, ge=0, le=511)]] = Field(
-        min_length=1, max_length=512
-    )
     name: str = Field(default="Region", min_length=1, max_length=40)
     kind: Literal["variable", "core"] = "variable"
 
 
-class Region(DTO):
+class Region(RegionSelection):
     id: str
     dataset_id: str
     molecule_id: str
     dataset_revision: int
     graph_sha256: str
-    atom_indices: list[int]
     attachment_count: int
     created_at: str
     name: str = "Region"
@@ -207,6 +221,21 @@ class Pair(DTO):
     fragment_id: str | None = None
     variable_atom_indices: list[int] = Field(default_factory=list)
     attachment_mapping: list[list[int]] = Field(default_factory=list)
+    candidate_hydrogen_anchor: Annotated[
+        int | None, Field(strict=True, ge=0, le=511)
+    ] = None
+
+    @model_validator(mode="after")
+    def coherent_hydrogen_proof(self):
+        if self.candidate_hydrogen_anchor is not None and (
+            self.match_status != "matched"
+            or self.variable_atom_indices
+            or len(self.attachment_mapping) != 1
+            or len(self.attachment_mapping[0]) != 2
+            or self.attachment_mapping[0][1] != self.candidate_hydrogen_anchor
+        ):
+            raise ValueError("candidate_hydrogen_proof_invalid")
+        return self
 
 
 class PairPage(DTO):

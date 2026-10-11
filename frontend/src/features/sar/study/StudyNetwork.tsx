@@ -157,9 +157,11 @@ export function StudyNetwork({
         <summary>{t('搜索范围')}</summary>
         <p>
           {t(
-            report.discovery?.method === 'single-region-one-two-cut-v2'
-              ? '单一变化区域，支持一至两个连接点及非芳香环片段；其余完整结构严格不变。隐式氢、芳香边界及更多连接点仍需手工区域。'
-              : '自动枚举单个非环单键的连接点，其他完整结构由严格匹配器确认。隐式氢、环内和多连接点变化尚未自动枚举，可继续使用手工区域。',
+            report.discovery?.method === 'single-region-one-two-cut-h-v3'
+              ? '单一变化区域，支持普通氢位点、一至两个连接点及非芳香环片段；其余结构严格不变。氢边界手性、芳香切割及更多连接点仍不支持自动枚举。'
+              : report.discovery?.method === 'single-region-one-two-cut-v2'
+                ? '单一变化区域，支持一至两个连接点及非芳香环片段；其余完整结构严格不变。隐式氢、芳香边界及更多连接点仍需手工区域。'
+                : '自动枚举单个非环单键的连接点，其他完整结构由严格匹配器确认。隐式氢、环内和多连接点变化尚未自动枚举，可继续使用手工区域。',
           )}
         </p>
       </details>

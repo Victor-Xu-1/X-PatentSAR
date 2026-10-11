@@ -184,7 +184,10 @@ const coordinate: Decoder<number> = (v, p) => {
 const drawing = object({
   molecule: decodeMolecule,
   svg: string,
-  atoms: array(object({ index: count, element: string, x: coordinate, y: coordinate })),
+  atoms: array((value, path) => ({
+    ...object({ index: count, element: string, x: coordinate, y: coordinate })(value, path),
+    ...additions(value, { ordinary_hydrogens: count, hydrogen_site_supported: boolean }, path),
+  })),
 });
 export const decodeDrawing: Decoder<MoleculeDrawing> = (v, p = '$') => {
   const result = drawing(v, p);
@@ -193,6 +196,14 @@ export const decodeDrawing: Decoder<MoleculeDrawing> = (v, p = '$') => {
     result.atoms.map((atom) => atom.index),
     `${p}.atoms`,
   );
+  if (
+    result.atoms.some(
+      (atom) =>
+        (atom.ordinary_hydrogens ?? 0) > 512 ||
+        (atom.hydrogen_site_supported && !(atom.ordinary_hydrogens && atom.ordinary_hydrogens > 0)),
+    )
+  )
+    throw new ContractError(p + '.atoms');
   return result;
 };
 const region = object({
@@ -207,9 +218,23 @@ const region = object({
 });
 export const decodeRegion: Decoder<Region> = (v, p = '$') => {
   const result = region(v, p);
-  if (!result.atom_indices.length || result.atom_indices.length > 512) throw new ContractError(p);
+  if (result.atom_indices.length > 512 || result.atom_indices.some((index) => index > 511))
+    throw new ContractError(p);
   unique(result.atom_indices, `${p}.atom_indices`);
-  const named = additions(v, { name: string, kind: oneOf(['variable', 'core']) }, p);
+  const named = additions(
+    v,
+    { name: string, kind: oneOf(['variable', 'core']), hydrogen_anchor: nullOr(count) },
+    p,
+  );
+  if (named.hydrogen_anchor != null) {
+    if (
+      named.hydrogen_anchor > 511 ||
+      result.atom_indices.length ||
+      named.kind === 'core' ||
+      result.attachment_count !== 1
+    )
+      throw new ContractError(p + '.hydrogen_anchor');
+  } else if (!result.atom_indices.length) throw new ContractError(p + '.atom_indices');
   if (named.name !== undefined && (!named.name.length || named.name.length > 40))
     throw new ContractError(p + '.name');
   return { ...result, ...named };

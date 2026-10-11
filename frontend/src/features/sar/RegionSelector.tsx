@@ -46,6 +46,8 @@ export function RegionSelector({
 }) {
   const { t } = useTranslation();
   const [indices, setIndices] = useState<number[]>([]);
+  const [hydrogen, setHydrogen] = useState(false);
+  const hydrogenMode = hydrogen && kind !== 'core';
   const [loadedURL, setLoadedURL] = useState<string | null>(null);
   const [failedURL, setFailedURL] = useState<string | null>(null);
   const [showHighlights, setShowHighlights] = useState(false);
@@ -57,7 +59,8 @@ export function RegionSelector({
           molecule_id: reference.id,
           expected_dataset_revision: dataset.revision,
           expected_graph_sha256: reference.graph_sha256,
-          atom_indices: [...indices],
+          atom_indices: hydrogenMode ? [] : [...indices],
+          ...(hydrogenMode ? { hydrogen_anchor: indices[0] } : {}),
           ...(name === undefined ? {} : { name }),
           ...(kind === undefined ? {} : { kind }),
         }
@@ -106,7 +109,8 @@ export function RegionSelector({
     saved.molecule_id === reference.id &&
     saved.graph_sha256 === reference.graph_sha256 &&
     (name === undefined || saved.name === name) &&
-    (kind === undefined || saved.kind === kind);
+    (kind === undefined || saved.kind === kind) &&
+    (saved.hydrogen_anchor ?? null) === (hydrogenMode ? indices[0] : null);
   const disabled = !graphCurrent || !image.value || !loaded || imageFailed || mutation.locked;
   useSelectionReveal(panelRef, canvasRef, active, revealRequest, loaded);
   const compatibleHighlights = highlights.filter(
@@ -119,6 +123,7 @@ export function RegionSelector({
     onRegion(graphCurrent && loaded && !image.error && !imageFailed && savedCurrent ? saved : null);
   }, [graphCurrent, loaded, image.error, imageFailed, savedCurrent, saved, onRegion]);
   function toggle(index: number) {
+    if (hydrogenMode) setHydrogen(false);
     setIndices((old) =>
       old.includes(index) ? old.filter((i) => i !== index) : [...old, index].sort((a, b) => a - b),
     );
@@ -172,6 +177,26 @@ export function RegionSelector({
           </label>
         )}
       </div>
+      {kind !== 'core' && (
+        <label className="sar-selection-overlay-toggle">
+          <input
+            type="checkbox"
+            checked={hydrogenMode}
+            disabled={
+              disabled ||
+              indices.length !== 1 ||
+              !drawing.data?.atoms.find((atom) => atom.index === indices[0])
+                ?.hydrogen_site_supported
+            }
+            onChange={(event) => {
+              setHydrogen(event.target.checked);
+              saving.clear();
+              onRegion(null);
+            }}
+          />
+          {t('H 位点')}
+        </label>
+      )}
       {drawing.error && <SARFailure error={drawing.error} onRetry={drawing.reload} />}
       {image.error && <SARFailure error={image.error} />}
       {imageFailed && <p role="alert">{t('RDKit 结构图加载失败。')}</p>}
@@ -209,9 +234,11 @@ export function RegionSelector({
       )}
       {showHighlights && <RegionLegend regions={compatibleHighlights} />}
       <output>
-        {indices.length
-          ? t('已选原子：{indices}', { indices: indices.join(', ') })
-          : t('尚未选择原子')}
+        {hydrogenMode
+          ? 'H'
+          : indices.length
+            ? t('已选原子：{indices}', { indices: indices.join(', ') })
+            : t('尚未选择原子')}
       </output>
       <div className="sar-actions" hidden={saving.canRecover || saving.canResubmit}>
         <button
