@@ -519,6 +519,10 @@
   margin: 10px 0;
   font-size: 13px;
 }
+.sar-error-details code {
+  display: block;
+  overflow-wrap: anywhere;
+}
 @media (max-width: 900px) {
   .sar-card-grid,
   .sar-study-filters {

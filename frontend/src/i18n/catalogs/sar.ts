@@ -420,8 +420,8 @@ export const sar: Record<string, string> = {
   '尚有过多未确认写入，请先核对服务器状态。':
     'Too many writes remain unconfirmed. Check the server state first.',
   'SAR 操作失败。': 'The SAR operation failed.',
-  'SAR 请求失败（{code}）。请检查当前状态。':
-    'SAR request failed ({code}). Check the current state.',
+  '无法读取 SAR 数据。': 'Unable to load SAR data.',
+  错误详情: 'Error details',
   '移除 SAR 任务': 'Remove SAR job',
   '只软移除这条 SAR 任务记录。数据集、来源、结果和审计字节保留，不释放磁盘空间。':
     'Soft-remove only this SAR job record. Dataset, source, result and audit bytes remain; no disk space is reclaimed.',

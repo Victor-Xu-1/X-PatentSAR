@@ -1,14 +1,18 @@
 {
   "schema_version": 1,
-  "base_sha": "5f95c78f474b6be4eb8657867ca5d2b20824421c",
+  "base_sha": "94508c5257f3d2f8877608cc9b04d9bf33b66b6e",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/FRONTEND_QUALITY.md",
     "frontend/e2e/sar-candidate-source.spec.ts",
-    "frontend/e2e/sarCardProtocolFixture.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
+    "frontend/src/features/sar/MutationNotice.tsx",
+    "frontend/src/features/sar/SARFailure.tsx",
+    "frontend/src/i18n/catalogs/sar.ts",
     "frontend/src/styles/sar.css",
+    "frontend/tests/sar-failure-disclosure.test.tsx",
+    "frontend/tests/sar-workbench.test.tsx",
     "src/patent_sar_extractor/contracts.py"
   ],
   "python_modules": [
@@ -17,11 +21,11 @@
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
-    "frontend/tests/sar-candidate-mark.test.tsx",
+    "frontend/tests/sar-failure-disclosure.test.tsx",
     "frontend/tests/sar-direct-inspection.test.tsx",
-    "frontend/tests/sar-study-results.test.tsx",
-    "frontend/tests/sar-results.test.tsx",
     "frontend/tests/sar-import.test.tsx",
+    "frontend/tests/sar-study-setup.test.tsx",
+    "frontend/tests/sar-region-recovery.test.tsx",
     "frontend/tests/sar-workbench.test.tsx"
   ],
   "browser_tests": [

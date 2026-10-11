@@ -368,3 +368,13 @@ Do not hide overflow on the document or remove accessible descriptions to mask a
 table-boundary defect. Native coverage includes passive, not-selected candidates,
 not only the selected Lead buttons. CSV preview, reference rows and single-pair
 tables continue to consume the same bounded scrollport, without another grid.
+
+SAR failures use a short read/operation notice with the existing explicit action.
+Original server detail and error code live in a default-closed, keyboard-operable
+disclosure, not repeated page prose. An uncertain write retains its original
+human-facing confirmation warning; its exact request identity is available in
+that disclosure. Inspecting details or changing language never retries a request,
+unlocks an uncertain mutation, or enables source actions after a failed read.
+Source text remains escaped and source-owned identifiers are not translated.
+Non-SAR human-facing errors keep their existing message path. This is shared
+presentation, not a new transport, error state, queue or automatic recovery path.
