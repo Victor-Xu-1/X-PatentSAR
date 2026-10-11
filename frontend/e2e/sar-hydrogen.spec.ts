@@ -12,7 +12,7 @@ for (const width of [390, 800, 1672]) {
     await page.setViewportSize({ width, height: 1060 });
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
-    const { job, report } = await createNetwork(page, width, csv);
+    const { job, dataset, report } = await createNetwork(page, width, csv);
     const snapshot = await (await page.request.get(`/api/v1/sar/jobs/${job}/study`)).json();
     const data = decodeStudyReport(snapshot.report);
     expect(data.discovery?.method).toBe('single-region-one-two-cut-h-v3');
@@ -79,6 +79,26 @@ for (const width of [390, 800, 1672]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
       true,
     );
+    await page.goto('/#/sar?dataset=' + dataset);
+    await page.locator('.language-switch select').selectOption('en');
+    await page.getByText('Single-reference comparison (advanced)', { exact: true }).click();
+    const references = page.getByRole('region', { name: 'Choose reference molecule', exact: true });
+    await references.getByRole('button', { name: 'Reference', exact: true }).first().click();
+    const selection = page.getByRole('region', { name: 'Select variable region', exact: true });
+    await selection.getByRole('button', { name: 'Atom 3 (C)', exact: true }).click();
+    await expect(selection.getByRole('checkbox', { name: 'H site', exact: true })).toBeEnabled();
+    await selection.getByRole('checkbox', { name: 'H site', exact: true }).check();
+    await selection.getByRole('button', { name: 'Save region', exact: true }).click();
+    await expect(
+      selection.getByText('Region saved · 1 attachment points', { exact: true }),
+    ).toBeVisible();
+    const saved = await (await page.request.get(`/api/v1/sar/datasets/${dataset}/profile`)).json();
+    expect(saved.regions.at(-1)).toMatchObject({
+      atom_indices: [],
+      hydrogen_anchor: 3,
+      kind: 'variable',
+    });
+    await selection.screenshot({ path: test.info().outputPath(`manual-hydrogen-${width}.png`) });
     expect(errors).toEqual([]);
   });
 }
