@@ -1,5 +1,16 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { createNetwork } from './sar-network-actions';
+
+async function drawingsReady(page: Page) {
+  await page.waitForFunction(() =>
+    [...document.querySelectorAll('img')]
+      .filter((element) => element.checkVisibility())
+      .every(
+        (element) =>
+          (element as HTMLImageElement).complete && (element as HTMLImageElement).naturalWidth > 0,
+      ),
+  );
+}
 
 for (const width of [390, 800, 1672]) {
   test(`manual directions share the core workbench and exact measured preview at ${width}`, async ({
@@ -50,15 +61,7 @@ for (const width of [390, 800, 1672]) {
       .filter({ has: page.getByRole('button', { name: 'Compare 4', exact: true }) });
     await expect(noActivity.locator('.sar-branch-measurement dd').first()).toHaveText('—');
     await expect(noActivity.locator('.sar-branch-measurement dd').last()).toHaveText('4');
-    await page.waitForFunction(() =>
-      [...document.querySelectorAll('.sar-network img')]
-        .filter((element) => element.checkVisibility())
-        .every(
-          (element) =>
-            (element as HTMLImageElement).complete &&
-            (element as HTMLImageElement).naturalWidth > 0,
-        ),
-    );
+    await drawingsReady(page);
     await network.screenshot({ path: test.info().outputPath(`manual-directions-${width}.png`) });
     const legend = network.locator('.sar-region-legend');
     await legend.getByRole('button', { name: 'Halogen 原文', exact: true }).click();
@@ -77,6 +80,8 @@ for (const width of [390, 800, 1672]) {
     await expect(
       preview.getByRole('row').filter({ hasText: 't_half' }).locator('td').last(),
     ).toContainText('1.00');
+    await expect(preview.locator('.sar-molecule-comparison img')).toHaveCount(2);
+    await drawingsReady(page);
     await preview.screenshot({ path: test.info().outputPath(`manual-comparison-${width}.png`) });
     await preview
       .getByRole('button', { name: 'Close transformation preview', exact: true })
@@ -102,10 +107,11 @@ for (const width of [390, 800, 1672]) {
     const translated = page.getByRole('region', { name: '研究报告', exact: true });
     await translated.getByRole('button', { name: '变化区域', exact: true }).click();
     await expect(translated.getByRole('button', { name: '选择核心 1', exact: true })).toBeVisible();
-    await expect(translated.getByRole('button', { name: '全部改造方向', exact: true })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    await expect(
+      translated.getByRole('button', { name: '全部改造方向', exact: true }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(translated.getByRole('button', { name: '比较 4', exact: true })).toBeVisible();
+    await drawingsReady(page);
     await translated
       .getByRole('region', { name: '单点结构对比', exact: true })
       .screenshot({ path: test.info().outputPath(`manual-chinese-${width}.png`) });
