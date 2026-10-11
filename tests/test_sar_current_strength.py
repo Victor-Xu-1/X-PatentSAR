@@ -170,9 +170,9 @@ class CurrentStrengthAPITests(WebFixture, unittest.TestCase):
             recorded_pairs = [
                 pair
                 for index in range(reply["chunks"])
-                for pair in json.loads(
-                    (root / f"chunk-{index:04d}.json").read_text()
-                )["pairs"]
+                for pair in json.loads((root / f"chunk-{index:04d}.json").read_text())[
+                    "pairs"
+                ]
             ]
             with service.store.connect(write=True) as connection:
                 connection.executemany(
