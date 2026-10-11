@@ -1,0 +1,137 @@
+import { useMemo, useState } from 'react';
+import type { StudyRegionSummary, StudyReport } from '../../../api/sarStudyTypes';
+import { useTranslation } from '../../../i18n';
+import { GroupPager } from './GroupPager';
+import { StudyImage } from './StudyImage';
+import { StudyRegionMap } from './StudyRegionMap';
+import { NetworkBranches } from './NetworkBranches';
+
+export function StudyNetwork({
+  report,
+  jobId,
+  active,
+  strongest = false,
+  onSource,
+}: {
+  report: StudyReport;
+  jobId: string;
+  active: boolean;
+  strongest?: boolean;
+  onSource: (id: string) => void;
+}) {
+  const { t } = useTranslation();
+  const [search, setSearch] = useState(''),
+    [page, setPage] = useState(1);
+  const [reference, setReference] = useState(''),
+    [site, setSite] = useState('');
+  const centres = useMemo(() => {
+    const groups = new Map<string, { label: string; sites: StudyRegionSummary[] }>();
+    for (const summary of report.regions) {
+      if (!summary.matched || summary.no_variation) continue;
+      const group = groups.get(summary.region.molecule_id) ?? {
+        label: summary.reference_label,
+        sites: [],
+      };
+      group.sites.push(summary);
+      groups.set(summary.region.molecule_id, group);
+    }
+    return [...groups.entries()].map(([id, group]) => ({ id, ...group }));
+  }, [report.regions]);
+  const filtered = centres.filter((centre) =>
+    centre.label.toLowerCase().includes(search.toLowerCase().trim()),
+  );
+  const selected = filtered.find((centre) => centre.id === reference) ?? filtered[0];
+  const summary = selected?.sites.find((item) => item.region.id === site) ?? selected?.sites[0];
+  const showing = filtered.slice((page - 1) * 6, page * 6);
+  const matches = useMemo(
+    () =>
+      new Set(
+        report.regions.flatMap((item) =>
+          item.fragments.flatMap((fragment) =>
+            fragment.molecule_ids
+              .filter((id) => id !== item.region.molecule_id)
+              .map((id) => [id, item.region.molecule_id].sort().join('\0')),
+          ),
+        ),
+      ),
+    [report.regions],
+  );
+  return (
+    <section className="sar-network" aria-label={t('单点结构对比')}>
+      <div className="sar-network-tools">
+        <input
+          aria-label={t('查找核心编号')}
+          placeholder={t('查找核心编号')}
+          value={search}
+          maxLength={200}
+          onChange={(event) => {
+            setSearch(event.target.value);
+            setPage(1);
+          }}
+        />
+        <span>
+          {t('{count} 个核心', { count: centres.length })} ·{' '}
+          {t('{count} 对变化', { count: matches.size })}
+        </span>
+      </div>
+      <div className="sar-core-gallery" aria-label={t('核心结构')}>
+        {showing.map((centre) => (
+          <article
+            key={centre.id}
+            className="sar-core-card"
+            data-selected={selected?.id === centre.id}
+          >
+            <StudyImage
+              jobId={jobId}
+              kind="molecule"
+              identifier={centre.id}
+              label={centre.label}
+              active={active}
+            />
+            <button
+              type="button"
+              aria-label={t('选择核心 {identifier}', { identifier: centre.label })}
+              aria-pressed={selected?.id === centre.id}
+              onClick={() => {
+                setReference(centre.id);
+                setSite('');
+              }}
+            >
+              <strong>{centre.label}</strong>
+              <small>{t('{count} 个位点', { count: centre.sites.length })}</small>
+            </button>
+          </article>
+        ))}
+      </div>
+      <GroupPager page={page} size={6} total={filtered.length} onPage={setPage} />
+      {!showing.length && <p>{t('没有可显示的核心结构')}</p>}
+      {selected && summary && (
+        <div className="sar-network-layout">
+          <StudyRegionMap
+            report={{ ...report, regions: selected.sites }}
+            active={active}
+            selected={summary.region.id}
+            onSelect={setSite}
+          />
+          <NetworkBranches
+            key={summary.region.id + ':' + strongest}
+            report={report}
+            summary={summary}
+            jobId={jobId}
+            active={active}
+            strongest={strongest}
+            onSource={onSource}
+          />
+        </div>
+      )}
+      <details className="sar-compact sar-network-scope">
+        <summary>{t('搜索范围')}</summary>
+        <p>
+          {t(
+            '自动枚举单个非环单键的连接点，其他完整结构由严格匹配器确认。隐式氢、环内和多连接点变化尚未自动枚举，可继续使用手工区域。',
+          )}
+        </p>
+      </details>
+    </section>
+  );
+}

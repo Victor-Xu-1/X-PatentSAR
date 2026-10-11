@@ -89,7 +89,8 @@ class StudyResults:
             not 1 <= page <= 25000
             or not 1 <= page_size <= 200
             or len(query) > 200
-            or scope not in {"all", "strong", "leads"}
+            or scope not in {"all", "strong", "leads", "changes", "strong_changes"}
+            or (scope in {"changes", "strong_changes"} and not region_id)
         ):
             raise WebError(422, "sar_page", "Study filter/page exceeds its bound.")
         job, report, _ = self.current(identifier)
@@ -143,7 +144,11 @@ class StudyResults:
             row
             for row in report.rows
             if (allowed is None or row.molecule_id in allowed)
-            and (scope != "strong" or row.strong)
+            and (scope not in {"strong", "strong_changes"} or row.strong)
+            and (
+                scope not in {"changes", "strong_changes"}
+                or row.molecule_id != region.region.molecule_id
+            )
             and (scope != "leads" or row.candidate_status == "selected")
             and (query_ids is None or row.molecule_id in query_ids)
         ]

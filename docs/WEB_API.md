@@ -84,6 +84,19 @@ not automatic verification. Full-context candidates retain that limitation.
 Overview omits rows by design; full-pool rows remain paginated. Report publication
 checks context identity, disjoint populations and observations before completion.
 
+StudyRequest adds optional `discover_single_sites:boolean` (API default false;
+new webpage studies explicitly send true). The same study queue reserves its
+75000-comparison bound, then reports the exact derived total. Report adds nullable
+`discovery` with method, candidate/cut counts, exclusions and explicit limits.
+Region summaries add `origin:manual|single_site` and nullable `comparison_pool`;
+manual regions still compare the whole source pool, derived regions compare
+their complete indexed pool through the identical strict validator. SAR engine4
+invalidates incompatible unfinished scientific work without retagging old reports.
+`scope=changes|strong_changes` requires an exact region and excludes its reference;
+pagination and source filters remain server-side. All current scopes use the same
+numbered source admission and tenth-dose bands. Existing measured PK columns are
+ordinary exact-context measurements; only comparable scalar values receive deltas.
+
 `study_models.py` owns typed study profiles, policies and reports. This is an
 independent, explicit research view, not the article author's private algorithm.
 Existing reference jobs remain readable. All endpoints use the same session,

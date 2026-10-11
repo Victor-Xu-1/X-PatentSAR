@@ -23,6 +23,7 @@ import './styles/sar.css';
 import './styles/sar-selection.css';
 import './styles/sar-study.css';
 import './styles/sar-explorer.css';
+import './styles/sar-network.css';
 import './styles/product-craft.css';
 
 const root = document.getElementById('root');

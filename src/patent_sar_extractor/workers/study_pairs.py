@@ -93,13 +93,28 @@ def analyse_pairs(
     check,
     *,
     prepared=None,
+    plans=None,
 ):
     indexed = {row["id"]: row for row in rows}
     policy = request["policies"][0]
     summaries, batch = [], []
     chunk_index = completed = matched = 0
     saved = None
-    total = len(regions) * (len(rows) - 1)
+    plans = (
+        plans
+        if plans is not None
+        else [
+            {
+                "region": region,
+                "candidate_ids": [
+                    row["id"] for row in rows if row["id"] != region["molecule_id"]
+                ],
+                "origin": "manual",
+            }
+            for region in regions
+        ]
+    )
+    total = sum(len(plan["candidate_ids"]) for plan in plans)
 
     def flush():
         nonlocal chunk_index, completed, matched
@@ -112,20 +127,22 @@ def analyse_pairs(
             save(safe.root, name, identity, start, "pairs", batch)
         completed += len(batch)
         matched += sum(pair["match_status"] == "matched" for pair in batch)
-        progress(safe.root, identity, len(rows) + completed, matched)
+        progress(
+            safe.root, identity, len(rows) + completed, matched, total=len(rows) + total
+        )
         chunk_index += 1
         batch.clear()
 
-    for region in regions:
+    for plan in plans:
+        region = plan["region"]
         check()
         reference = indexed[region["molecule_id"]]
         matcher = compile_reference(reference["molfile"], region["atom_indices"])
         ref_fragment = reference_cut(reference["molfile"], region["atom_indices"])
         fragments = {ref_fragment["id"]: ref_fragment}
         compact = []
-        for candidate in rows:
-            if candidate["id"] == reference["id"]:
-                continue
+        for candidate_id in plan["candidate_ids"]:
+            candidate = indexed[candidate_id]
             check()
             if not batch:
                 saved = load(
@@ -200,20 +217,21 @@ def analyse_pairs(
             batch.append(pair)
             if len(batch) == BATCH_SIZE:
                 flush()
-        summaries.append(
-            region_summary(
-                region,
-                reference,
-                ref_fragment,
-                compact,
-                fragments,
-                observations,
-                policy,
-                assessments,
-                prepared=prepared,
-            )
+        summary = region_summary(
+            region,
+            reference,
+            ref_fragment,
+            compact,
+            fragments,
+            observations,
+            policy,
+            assessments,
+            prepared=prepared,
         )
+        if plan["origin"] == "single_site":
+            summary.update(origin="single_site", comparison_pool=plan["candidate_ids"])
+        summaries.append(summary)
     flush()
-    if completed != len(regions) * (len(rows) - 1):
+    if completed != total:
         raise SARInputError("study_pair_completeness")
     return summaries, chunk_index, matched

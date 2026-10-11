@@ -106,6 +106,7 @@ for (const { width, height } of [
       setup.getByText('Concentration potency uses the tenth strongest measurement’s decade.'),
     ).toBeVisible();
     await setup.getByRole('button', { name: 'Continue', exact: true }).click();
+    await setup.getByRole('checkbox', { name: 'Find single-site changes', exact: true }).uncheck();
     await expect(setup.locator('.sar-selected-contexts li')).toHaveText(selectedLabel);
     await setup.getByText('Add a named selection', { exact: true }).click();
     const browser = setup.getByRole('region', { name: 'Choose reference molecule', exact: true });

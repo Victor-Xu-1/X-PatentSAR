@@ -42,6 +42,24 @@ const filter = {
   fragment_id: '',
 };
 describe('study DTOs and exact policies', () => {
+  it('does not reinterpret a legacy report as a completed discovered network', () => {
+    const discovered = {
+      method: 'single-non-ring-bond-v1',
+      candidate_sites: 1,
+      candidate_comparisons: 1,
+      indexed_cuts: 2,
+      excluded: {},
+      max_variable_atoms: 32,
+      max_variable_fraction: 0.4,
+      min_fixed_atoms: 6,
+      limitations: ['implicit_h_not_enumerated', 'ring_multiport_not_enumerated'],
+    };
+    expect(() => decodeStudyReport({ ...studyReport, discovery: discovered })).toThrow();
+    expect(() =>
+      decodeStudyReport({ ...studyReport, discovery: { ...discovered, max_variable_atoms: 200 } }),
+    ).toThrow();
+    expect(decodeStudyReport(studyReport).discovery).toBeUndefined();
+  });
   it('binds current tenth-dose presentation to the exact source and scoped count', () => {
     const basis = {
       rule: 'numbered-tenth-decades-v1',

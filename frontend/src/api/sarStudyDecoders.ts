@@ -23,7 +23,13 @@ import { decodeConditionDeclaration } from './sarConditionDecoders';
 import { decodeSARJob } from './sarJobDecoders';
 import { studyBin, studyContext, studyPolicy, studyRow } from './sarStudyRowDecoders';
 import type { Decoder } from './validation';
-import type { StudyOverview, StudyProfile, StudyReport, StudyRows } from './sarStudyTypes';
+import type {
+  StudyOverview,
+  StudyProfile,
+  StudyReport,
+  StudyRows,
+  StudyRegionSummary,
+} from './sarStudyTypes';
 import { verifyStudyConservation } from './sarStudyIntegrity';
 const truth: Decoder<true> = (v, p = '$') => {
   if (v !== true) throw new ContractError(p);
@@ -83,7 +89,7 @@ const fragment = object({
   missing: count,
   is_reference: boolean,
 });
-const regionSummary = object({
+const regionSummaryBase = object({
   region: decodeRegion,
   reference_label: string,
   reference_fragment_id: nullOr(string),
@@ -96,6 +102,17 @@ const regionSummary = object({
   no_variation: boolean,
   fragments: array(fragment),
   independent_backgrounds: defaulted(one, 1),
+});
+const regionSummary: Decoder<StudyRegionSummary> = (value, path = '$') => ({
+  ...regionSummaryBase(value, path),
+  ...additions(
+    value,
+    {
+      origin: oneOf(['manual', 'single_site']),
+      comparison_pool: nullOr(array(string)),
+    },
+    path,
+  ),
 });
 export const decodeStudyReport: Decoder<StudyReport> = (v, p = '$') => {
   const result = object({
@@ -172,10 +189,34 @@ export const decodeStudyReport: Decoder<StudyReport> = (v, p = '$') => {
         counting_contract: oneOf(['legacy-per-bin-members', 'unique-molecules-v2']),
         source_acceptance: nullOr(decodeSourceAcceptance),
         context_declarations: array(decodeConditionDeclaration),
+        discovery: nullOr(
+          object({
+            method: oneOf(['single-non-ring-bond-v1']),
+            candidate_sites: count,
+            candidate_comparisons: count,
+            indexed_cuts: count,
+            excluded: recordOf(count, 16),
+            max_variable_atoms: (value, path = '$') => {
+              if (value !== 32) throw new ContractError(path);
+              return 32 as const;
+            },
+            max_variable_fraction: (value, path = '$') => {
+              if (value !== 0.4) throw new ContractError(path);
+              return 0.4 as const;
+            },
+            min_fixed_atoms: (value, path = '$') => {
+              if (value !== 6) throw new ContractError(path);
+              return 6 as const;
+            },
+            limitations: array(string),
+          }),
+        ),
       },
       p,
     ),
   };
+  if (report.discovery && report.counting_contract !== 'unique-molecules-v2')
+    throw new ContractError(p + '.discovery');
   verifyStudyConservation(report, p);
   return report;
 };

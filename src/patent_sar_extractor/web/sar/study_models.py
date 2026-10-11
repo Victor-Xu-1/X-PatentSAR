@@ -71,6 +71,7 @@ class StudyRequest(DTO):
     region_ids: list[str] = Field(default_factory=list, max_length=12)
     core_ids: list[str] = Field(default_factory=list, max_length=12)
     confirm_context: bool = Field(default=False, strict=True)
+    discover_single_sites: bool = Field(default=False, strict=True)
     candidate_count: int = Field(default=8, ge=5, le=10, strict=True)
     context_declarations: list[ConditionDeclaration] = Field(
         default_factory=list, max_length=8
@@ -134,6 +135,20 @@ class StudyRegionSummary(DTO):
     no_variation: bool
     fragments: list[StudyFragment]
     independent_backgrounds: Literal[1] = 1
+    origin: Literal["manual", "single_site"] = "manual"
+    comparison_pool: list[str] | None = None
+
+
+class StudyDiscovery(DTO):
+    method: Literal["single-non-ring-bond-v1"]
+    candidate_sites: int = Field(ge=0, le=4096)
+    candidate_comparisons: int = Field(ge=0, le=75000)
+    indexed_cuts: int = Field(ge=0, le=100000)
+    excluded: dict[str, int]
+    max_variable_atoms: Literal[32] = 32
+    max_variable_fraction: Literal[0.4] = 0.4
+    min_fixed_atoms: Literal[6] = 6
+    limitations: list[str]
 
 
 class StudyRow(DTO):
@@ -190,6 +205,7 @@ class StudyReport(DTO):
     rows: list[StudyRow]
     warnings: list[str]
     candidate_policy: str = "strict-context-pareto-v1"
+    discovery: StudyDiscovery | None = None
 
 
 class StudyOverview(DTO):

@@ -1,5 +1,18 @@
 # Operations and troubleshooting
 
+## Single-site SAR discovery
+
+New webpage studies default to automatic single-site candidates; callers may
+explicitly disable discovery and retain manual regions. No new environment,
+model installation or external API is required. The existing one-CPU/512MiB/
+180s study carrier and analysis lease remain authoritative. A complete search
+refuses rather than truncates at100000 indexed cuts,4096 sites or75000 combined
+comparisons. Automatic enumeration excludes implicit-H/ring/multi-port changes;
+manual strict regions remain available. Native input-bound plans and25-pair
+batches survive interruption. Changes to SAR engine4 make old unfinished engine3
+checkpoints incompatible; retain their artifacts or roll back the prior wheel,
+never rewrite scientific identities. Completed old reports remain readable.
+
 ## Activity-strength compatibility
 
 New positive-concentration SAR studies use the complete-context tenth-potency

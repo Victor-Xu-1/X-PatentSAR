@@ -437,4 +437,20 @@ export const sar: Record<string, string> = {
   '已启用 {count} 项表格选项': '{count} active table options',
   '来源数据未经翻译；问题代码与原始原因保留服务器原文。':
     'Source data is not translated. Issue codes and original reasons retain the server text.',
+  自动寻找单点变化: 'Find single-site changes',
+  单点结构对比: 'Single-site comparisons',
+  查找核心编号: 'Find a core ID',
+  核心结构: 'Core structures',
+  结构分支: 'Structure branches',
+  '选择核心 {identifier}': 'Select core {identifier}',
+  '比较 {identifier}': 'Compare {identifier}',
+  '{count} 个核心': '{count} cores',
+  '{count} 对变化': '{count} changes',
+  '{count} 个位点': '{count} sites',
+  '{count} 次测量': '{count} measurements',
+  没有符合条件的结构分支: 'No matching structure branches',
+  没有可显示的核心结构: 'No core structures to show',
+  搜索范围: 'Search coverage',
+  '自动枚举单个非环单键的连接点，其他完整结构由严格匹配器确认。隐式氢、环内和多连接点变化尚未自动枚举，可继续使用手工区域。':
+    'Single non-ring bond sites are enumerated and the remaining complete graph is strictly verified. Implicit-H, ring and multi-port changes are not automatically enumerated; manual regions remain available.',
 };

@@ -58,6 +58,15 @@ def execute(queue: SARQueue, row: dict, runner: BoundedAnalysisRunner) -> None:
                     "sar_study_ranking_limit",
                     "More than 5000 rows qualify for candidate ranking. No partial ranking was published; choose an explicit smaller dataset.",
                 )
+            if result["failure_code"] in {
+                "study_discovery_cut_limit",
+                "study_discovery_pair_limit",
+            }:
+                raise WebError(
+                    413,
+                    "sar_discovery_limit",
+                    "Single-site discovery exceeds its complete-search budget (100000 cuts, 4096 sites or 75000 comparisons). No partial network was published; choose an explicit smaller dataset or manual regions.",
+                )
             raise WebError(
                 422,
                 "sar_study_input_invalid",
@@ -78,8 +87,15 @@ def execute(queue: SARQueue, row: dict, runner: BoundedAnalysisRunner) -> None:
         if value.kind == "study":
             from .study_publication import verify_study
 
-            report_hash = verify_study(safe, value, spec, result, pairs)
-            queue.jobs.publish(value.id, pairs, value.total, report_sha256=report_hash)
+            report_hash, source_count = verify_study(safe, value, spec, result, pairs)
+            queue.jobs.publish(
+                value.id,
+                pairs,
+                source_count + len(pairs),
+                report_sha256=report_hash,
+                source_count=source_count,
+                expected_total=value.total,
+            )
         else:
             queue.jobs.publish(value.id, pairs, value.total)
     except WebError as error:

@@ -6,6 +6,7 @@ import { StudyOverview } from './StudyOverview';
 import { StudyScaffolds } from './StudyScaffolds';
 import { StudyLeads } from './StudyLeads';
 import { StudyRegions } from './StudyRegions';
+import { StudyNetwork } from './StudyNetwork';
 import { StudyActivityTable } from './StudyActivityTable';
 import { StudySource } from './StudySource';
 import { selectedContexts } from './tablePresentation';
@@ -95,27 +96,46 @@ export function StudyReportView({
         />
       </section>
       <section id={id + '-3'} hidden={tab !== 3} aria-label={t(tabs[3])}>
-        <StudyRegions
-          report={report}
-          jobId={jobId}
-          active={active && tab === 3}
-          onRows={(region_id, fragment_id) =>
-            showRows({ region_id, fragment_id, scaffold_id: '', scope: 'all' })
-          }
-          onSource={showSource}
-        />
+        {report.discovery ? (
+          <StudyNetwork
+            report={report}
+            jobId={jobId}
+            active={active && tab === 3}
+            onSource={showSource}
+          />
+        ) : (
+          <StudyRegions
+            report={report}
+            jobId={jobId}
+            active={active && tab === 3}
+            onRows={(region_id, fragment_id) =>
+              showRows({ region_id, fragment_id, scaffold_id: '', scope: 'all' })
+            }
+            onSource={showSource}
+          />
+        )}
       </section>
       <section id={id + '-4'} hidden={tab !== 4} aria-label={t(tabs[4])}>
-        <StudyRegions
-          report={report}
-          jobId={jobId}
-          active={active && tab === 4}
-          strongest
-          onRows={(region_id, fragment_id) =>
-            showRows({ region_id, fragment_id, scaffold_id: '', scope: 'all' })
-          }
-          onSource={showSource}
-        />
+        {report.discovery ? (
+          <StudyNetwork
+            report={report}
+            jobId={jobId}
+            active={active && tab === 4}
+            strongest
+            onSource={showSource}
+          />
+        ) : (
+          <StudyRegions
+            report={report}
+            jobId={jobId}
+            active={active && tab === 4}
+            strongest
+            onRows={(region_id, fragment_id) =>
+              showRows({ region_id, fragment_id, scaffold_id: '', scope: 'all' })
+            }
+            onSource={showSource}
+          />
+        )}
       </section>
       <section
         id={id + '-5'}

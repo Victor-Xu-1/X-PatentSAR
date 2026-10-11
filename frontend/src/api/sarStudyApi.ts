@@ -68,14 +68,21 @@ export function createSARStudyApi(shared: ApiClient, rawFetch?: typeof fetch) {
       filter: StudyFilter,
       signal: AbortSignal,
       sort = { column: '', direction: 'asc' },
+      pageSize = 50,
     ) => {
-      if (filter.query.length > 200) throw new ContractError('$.query');
+      if (
+        filter.query.length > 200 ||
+        !Number.isInteger(pageSize) ||
+        pageSize < 1 ||
+        pageSize > 200
+      )
+        throw new ContractError('$.query');
       return shared.get(
         path(id) +
           '/rows?' +
           new URLSearchParams({
             page: String(page),
-            page_size: '50',
+            page_size: String(pageSize),
             ...filter,
             sort_by: sort.column || 'label',
             sort_direction: sort.direction,
@@ -83,7 +90,11 @@ export function createSARStudyApi(shared: ApiClient, rawFetch?: typeof fetch) {
         (v) => {
           const result = decodeStudyRows(v);
           checkJob(result.job, id, dataset);
-          if (result.page !== page || result.page_size !== 50 || result.job.status !== 'complete')
+          if (
+            result.page !== page ||
+            result.page_size !== pageSize ||
+            result.job.status !== 'complete'
+          )
             throw new ContractError('$.study_page');
           return result;
         },

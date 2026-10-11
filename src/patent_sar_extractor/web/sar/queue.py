@@ -181,6 +181,11 @@ class SARQueue:
             return value
         safe = self.service.assets.job_files(row["root"], identifier)
         progress = safe.json("progress.json")
+        actual_total = (
+            progress.get("total", value.total)
+            if isinstance(progress, dict)
+            else value.total
+        )
         if (
             value.status in {"running", "interrupted", "failed", "cancelled"}
             and isinstance(progress, dict)
@@ -188,10 +193,30 @@ class SARQueue:
                 progress.get("input_sha256") == value.input_sha256
                 and type(progress.get("processed")) is int
                 and type(progress.get("matched")) is int
-                and 0 <= progress["matched"] <= progress["processed"] <= value.total
+                and type(actual_total) is int
+                and (
+                    actual_total == value.total
+                    or (
+                        value.kind == "study"
+                        and json.loads(row["spec"])["request"].get(
+                            "discover_single_sites"
+                        )
+                        is True
+                    )
+                )
+                and (
+                    value.kind != "study"
+                    or actual_total >= json.loads(row["spec"]).get("source_count", 0)
+                )
+                and 0
+                <= progress["matched"]
+                <= progress["processed"]
+                <= actual_total
+                <= value.total
             )
         ):
             value.processed, value.matched = progress["processed"], progress["matched"]
+            value.total = actual_total
         return value
 
     def resume(self, identifier: str, expected: str) -> SARJob:

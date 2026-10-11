@@ -227,7 +227,7 @@ class StudyAnalysisTests(unittest.TestCase):
             verify_study(
                 safe, job, {"engine_sha256": packet["engine_sha256"]}, reply, pairs
             ),
-            reply["report_sha256"],
+            (reply["report_sha256"], len(packet["molecules"])),
         )
         self.assertEqual(report["strict_pair_count"], 4)
         self.assertEqual(report["matched_pair_count"], 2)

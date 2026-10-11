@@ -73,8 +73,13 @@ export function verifyStudyConservation(report: StudyReport, path: string) {
     const fragmentMembers: string[] = [];
     require(
       summary.matched + summary.not_matched + summary.ambiguous + summary.ineligible ===
-        report.molecule_count - 1,
+        (summary.comparison_pool?.length ?? report.molecule_count - 1),
     );
+    if (summary.origin === 'single_site') {
+      const pool = summary.comparison_pool;
+      require(Boolean(pool) && new Set(pool).size === pool?.length);
+      require(Boolean(pool?.every((id) => ids.has(id) && id !== summary.region.molecule_id)));
+    } else require(summary.comparison_pool == null);
     for (const fragment of summary.fragments) {
       binsValid(fragment.bins, fragment.molecule_ids);
       require(fragment.molecule_count === fragment.molecule_ids.length);
@@ -104,6 +109,19 @@ export function verifyStudyConservation(report: StudyReport, path: string) {
     );
   }
   const declarations = report.context_declarations ?? [];
+  if (report.discovery) {
+    require(
+      report.discovery.candidate_sites <= 4096 &&
+        report.discovery.indexed_cuts <= 100000 &&
+        report.strict_pair_count <= 75000,
+    );
+    const derived = report.regions.filter((summary) => summary.origin === 'single_site');
+    require(derived.length === report.discovery.candidate_sites);
+    require(
+      derived.reduce((sum, summary) => sum + (summary.comparison_pool?.length ?? 0), 0) ===
+        report.discovery.candidate_comparisons,
+    );
+  }
   require(new Set(declarations.map((claim) => claim.context_id)).size === declarations.length);
   require(declarations.every((claim) => policies.includes(claim.context_id)));
 }

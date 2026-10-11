@@ -17,6 +17,7 @@ from patent_sar_extractor.web.sar.study_models import StudyReport
 from .study_candidates import collect_activities, rank_candidates
 from .study_checkpoints import progress
 from .study_descriptors import descriptor_batches
+from .study_discovery import native_plan
 from .study_inputs import read_input
 from .study_pairs import analyse_pairs
 from .study_strength import resolve_strength
@@ -37,6 +38,9 @@ def analyse_study(root: Path, input_sha256: str) -> dict:
     )
     identity = {"input_sha256": input_sha256, "engine_sha256": engine}
     check()
+    plans, discovery = native_plan(
+        safe, identity, rows, regions, dataset, request, check
+    )
     descriptors = descriptor_batches(safe, identity, rows, check)
     observations, assessments = collect_activities(
         rows,
@@ -73,6 +77,7 @@ def analyse_study(root: Path, input_sha256: str) -> dict:
         primary_states,
         check,
         prepared=domains[primary["context_id"]],
+        plans=plans,
     )
     report_rows, candidates = rank_candidates(
         rows, descriptors, request, observations, assessments, check
@@ -130,7 +135,7 @@ def analyse_study(root: Path, input_sha256: str) -> dict:
         molecule_count=len(rows),
         eligible_count=sum(row["eligible"] for row in report_rows),
         observation_count=sum(len(row["observations"]) for row in rows),
-        strict_pair_count=len(regions) * (len(rows) - 1),
+        strict_pair_count=sum(len(plan["candidate_ids"]) for plan in plans),
         matched_pair_count=matched,
         comparable_pair_count=sum(summary["comparable"] for summary in summaries),
         contexts=contexts,
@@ -150,11 +155,18 @@ def analyse_study(root: Path, input_sha256: str) -> dict:
         candidates=candidates,
         rows=report_rows,
         warnings=sorted(warnings),
+        discovery=discovery,
     ).model_dump()
     existing = safe.json("report.json")
     if existing is not None and existing != report:
         raise SARInputError("study_report_checkpoint_identity")
     if existing is None:
         atomic_json(root, "report.json", report)
-    progress(root, identity, len(rows) + len(regions) * (len(rows) - 1), matched)
+    progress(
+        root,
+        identity,
+        len(rows) + report["strict_pair_count"],
+        matched,
+        total=len(rows) + report["strict_pair_count"],
+    )
     return {**identity, "chunks": chunks, "report_sha256": digest(report)}

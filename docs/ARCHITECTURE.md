@@ -469,5 +469,14 @@ checks. Keep the previous wheel/config/state rollback; never restore a database
 over a newer live task. Product release numbering follows the PR policy. Implementation, integration,
 deployment and real scientific acceptance are distinct evidence states.
 
+Automatic single-site discovery remains inside one existing study worker. A
+canonical cut index proposes sites; compiled full-fixed-graph/port/stereo proof
+remains mandatory. Exact comparison pools avoid regions×all-records work for
+automatically found families. Every numbered source is still in the report;
+unmatched/ambiguous sites and coverage limits are not hidden by positive matches.
+The input-bound plan and native 25-pair batches are preserved on interruption.
+The parent checks plan/coverage before one atomic result publication. Discovery
+uses SAR engine4, not an extraction epoch or product-label-only change.
+
 Endpoint/DTO details belong only in [WEB_API.md](WEB_API.md); installation,
 recovery and deployment procedures belong in [OPERATIONS.md](OPERATIONS.md).
