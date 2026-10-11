@@ -6,12 +6,18 @@ New webpage studies default to automatic single-site candidates; callers may
 explicitly disable discovery and retain manual regions. No new environment,
 model installation or external API is required. The existing one-CPU/512MiB/
 180s study carrier and analysis lease remain authoritative. A complete search
-refuses rather than truncates at100000 indexed cuts,4096 sites or75000 combined
-comparisons. Automatic enumeration excludes implicit-H/ring/multi-port changes;
-manual strict regions remain available. Native input-bound plans and25-pair
-batches survive interruption. Changes to SAR engine4 make old unfinished engine3
+refuses rather than truncates at500000 examined boundary sets,100000 indexed cuts,
+4096 sites or75000 combined comparisons. Automatic enumeration covers one/two
+nonaromatic single-bond boundaries, including two-ended linker changes and ring
+segments. Implicit-H, aromatic boundaries and >2 ports remain manual-only.
+Native input-bound plans and25-pair batches survive interruption. Changes to
+SAR engine5 make old unfinished engine4
 checkpoints incompatible; retain their artifacts or roll back the prior wheel,
 never rewrite scientific identities. Completed old reports remain readable.
+Fixed endpoints/bond types and full fixed chemistry remain mandatory; internal
+variable endpoints may split/merge as a linker changes. Boundary stereo uses
+anchor-specific ligand maps, not a global variable-atom bijection or raw CIP
+labels. Multiple indistinguishable ligands cannot silently prove fixed parity.
 
 ## Activity-strength compatibility
 

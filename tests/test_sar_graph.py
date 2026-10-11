@@ -363,7 +363,10 @@ class MatchingTests(unittest.TestCase):
             self.compare("NCOC", "NCCOC", [1, 2])["match_status"], "matched"
         )
         self.assertEqual(
-            self.compare("NOC", "NOOC", [1])["match_status"], "not_matched"
+            # One connected linker changes; the same N/C anchors and bond types
+            # remain fixed. Internal variable endpoints are allowed to split.
+            self.compare("NOC", "NOOC", [1])["match_status"],
+            "matched",
         )
 
     def test_preserved_salts_and_lost_or_changed_salts(self):

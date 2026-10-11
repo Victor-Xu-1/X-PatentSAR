@@ -61,11 +61,12 @@ def execute(queue: SARQueue, row: dict, runner: BoundedAnalysisRunner) -> None:
             if result["failure_code"] in {
                 "study_discovery_cut_limit",
                 "study_discovery_pair_limit",
+                "study_discovery_boundary_limit",
             }:
                 raise WebError(
                     413,
                     "sar_discovery_limit",
-                    "Single-site discovery exceeds its complete-search budget (100000 cuts, 4096 sites or 75000 comparisons). No partial network was published; choose an explicit smaller dataset or manual regions.",
+                    "Single-site discovery exceeds its complete-search budget (500000 boundary sets, 100000 cuts, 4096 sites or 75000 comparisons). No partial network was published; choose an explicit smaller dataset or manual regions.",
                 )
             raise WebError(
                 422,

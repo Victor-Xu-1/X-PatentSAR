@@ -20,6 +20,7 @@ import {
   unique,
 } from './sarDecoders';
 import { decodeConditionDeclaration } from './sarConditionDecoders';
+import { decodeStudyDiscovery } from './sarStudyDiscoveryDecoder';
 import { decodeSARJob } from './sarJobDecoders';
 import { studyBin, studyContext, studyPolicy, studyRow } from './sarStudyRowDecoders';
 import type { Decoder } from './validation';
@@ -189,28 +190,7 @@ export const decodeStudyReport: Decoder<StudyReport> = (v, p = '$') => {
         counting_contract: oneOf(['legacy-per-bin-members', 'unique-molecules-v2']),
         source_acceptance: nullOr(decodeSourceAcceptance),
         context_declarations: array(decodeConditionDeclaration),
-        discovery: nullOr(
-          object({
-            method: oneOf(['single-non-ring-bond-v1']),
-            candidate_sites: count,
-            candidate_comparisons: count,
-            indexed_cuts: count,
-            excluded: recordOf(count, 16),
-            max_variable_atoms: (value, path = '$') => {
-              if (value !== 32) throw new ContractError(path);
-              return 32 as const;
-            },
-            max_variable_fraction: (value, path = '$') => {
-              if (value !== 0.4) throw new ContractError(path);
-              return 0.4 as const;
-            },
-            min_fixed_atoms: (value, path = '$') => {
-              if (value !== 6) throw new ContractError(path);
-              return 6 as const;
-            },
-            limitations: array(string),
-          }),
-        ),
+        discovery: nullOr(decodeStudyDiscovery),
       },
       p,
     ),

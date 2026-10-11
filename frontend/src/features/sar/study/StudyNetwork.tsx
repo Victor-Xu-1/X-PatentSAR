@@ -5,6 +5,7 @@ import { GroupPager } from './GroupPager';
 import { StudyImage } from './StudyImage';
 import { StudyRegionMap } from './StudyRegionMap';
 import { NetworkBranches } from './NetworkBranches';
+import { compactNetworkSites } from './networkSites';
 
 export function StudyNetwork({
   report,
@@ -24,6 +25,7 @@ export function StudyNetwork({
     [page, setPage] = useState(1);
   const [reference, setReference] = useState(''),
     [site, setSite] = useState('');
+  const [allSites, setAllSites] = useState(false);
   const centres = useMemo(() => {
     const groups = new Map<string, { label: string; sites: StudyRegionSummary[] }>();
     for (const summary of report.regions) {
@@ -36,20 +38,21 @@ export function StudyNetwork({
       groups.set(summary.region.molecule_id, group);
     }
     return [...groups.entries()]
-      .map(([id, group]) => ({ id, ...group }))
+      .map(([id, group]) => ({ id, ...group, compact: compactNetworkSites(group.sites) }))
       .toSorted((a, b) => a.label.localeCompare(b.label, 'en', { numeric: true }));
   }, [report.regions]);
   const filtered = centres.filter((centre) =>
     centre.label.toLowerCase().includes(search.toLowerCase().trim()),
   );
   const selected = filtered.find((centre) => centre.id === reference) ?? filtered[0];
-  const summary = selected?.sites.find((item) => item.region.id === site) ?? selected?.sites[0];
-  const mapSites =
-    selected?.sites.map((item, index) =>
-      item.origin === 'single_site'
-        ? { ...item, region: { ...item.region, name: 'R' + (index + 1) } }
-        : item,
-    ) ?? [];
+  const compact = selected?.compact ?? [];
+  const visibleSites = allSites ? (selected?.sites ?? []) : compact;
+  const summary = visibleSites.find((item) => item.region.id === site) ?? visibleSites[0];
+  const mapSites = visibleSites.map((item, index) =>
+    item.origin === 'single_site'
+      ? { ...item, region: { ...item.region, name: 'R' + (index + 1) } }
+      : item,
+  );
   const showing = filtered.slice((page - 1) * 6, page * 6);
   const matches = useMemo(
     () =>
@@ -106,7 +109,11 @@ export function StudyNetwork({
               }}
             >
               <strong>{centre.label}</strong>
-              <small>{t('{count} 个位点', { count: centre.sites.length })}</small>
+              <small>
+                {t('{count} 个位点', {
+                  count: allSites ? centre.sites.length : centre.compact.length,
+                })}
+              </small>
             </button>
           </article>
         ))}
@@ -115,12 +122,26 @@ export function StudyNetwork({
       {!showing.length && <p>{t('没有可显示的核心结构')}</p>}
       {selected && summary && (
         <div className="sar-network-layout">
-          <StudyRegionMap
-            report={{ ...report, regions: mapSites }}
-            active={active}
-            selected={summary.region.id}
-            onSelect={setSite}
-          />
+          <div className="sar-network-map">
+            <StudyRegionMap
+              report={{ ...report, regions: mapSites }}
+              active={active}
+              selected={summary.region.id}
+              onSelect={setSite}
+            />
+            {selected.sites.length !== compact.length && (
+              <button
+                type="button"
+                className="button secondary"
+                aria-pressed={allSites}
+                onClick={() => setAllSites((value) => !value)}
+              >
+                {allSites
+                  ? t('精简位点')
+                  : t('全部位点（{count}）', { count: selected.sites.length })}
+              </button>
+            )}
+          </div>
           <NetworkBranches
             key={summary.region.id + ':' + strongest}
             report={report}
@@ -136,7 +157,9 @@ export function StudyNetwork({
         <summary>{t('搜索范围')}</summary>
         <p>
           {t(
-            '自动枚举单个非环单键的连接点，其他完整结构由严格匹配器确认。隐式氢、环内和多连接点变化尚未自动枚举，可继续使用手工区域。',
+            report.discovery?.method === 'single-region-one-two-cut-v2'
+              ? '单一变化区域，支持一至两个连接点及非芳香环片段；其余完整结构严格不变。隐式氢、芳香边界及更多连接点仍需手工区域。'
+              : '自动枚举单个非环单键的连接点，其他完整结构由严格匹配器确认。隐式氢、环内和多连接点变化尚未自动枚举，可继续使用手工区域。',
           )}
         </p>
       </details>

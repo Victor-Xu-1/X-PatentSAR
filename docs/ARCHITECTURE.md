@@ -58,6 +58,9 @@ is marked imported, not recertified as patent measurements.
 Each region binds exact immutable Molfile bytes/atom order and dataset revision.
 One bounded exact induced fixed-graph matcher validates the full complementary
 graph, mapped cut endpoints, bond types, fragments and transported stereo parity;
+anchor-specific cut-edge correspondence permits variable linker topology/length
+changes without moving fixed endpoints. Multiple indistinguishable variable
+ligands at a fixed stereocentre remain unsupported rather than arbitrarily mapped.
 multiple region explanations/unsupported encodings/search limits remain explicit.
 Reference parsing is reused within a worker, not a second relaxed batch algorithm.
 Raw scalar/censored/interval/ordinal comparisons preserve observations and refuse
@@ -476,7 +479,12 @@ automatically found families. Every numbered source is still in the report;
 unmatched/ambiguous sites and coverage limits are not hidden by positive matches.
 The input-bound plan and native 25-pair batches are preserved on interruption.
 The parent checks plan/coverage before one atomic result publication. Discovery
-uses SAR engine4, not an extraction epoch or product-label-only change.
+uses SAR engine5, not an extraction epoch or product-label-only change. Exact
+one/two-edge topology partitions reuse original side bitmasks and bridge searches;
+only viable bounded regions enter RDKit canonical cut indexing. One/two nonaromatic
+single-bond boundaries include linker and ring-segment changes; implicit-H,
+aromatic boundaries and >2 ports remain explicit limitations. Complete search
+refuses at500000 boundary sets,100000 indexed cuts,4096 sites or75000 comparisons.
 
 Endpoint/DTO details belong only in [WEB_API.md](WEB_API.md); installation,
 recovery and deployment procedures belong in [OPERATIONS.md](OPERATIONS.md).

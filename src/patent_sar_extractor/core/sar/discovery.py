@@ -1,58 +1,24 @@
 """Bounded candidate sites; every comparison still needs the strict matcher.
 
 Canonical cut backgrounds are only an index, never proof. All source records
-remain in the study table. Ring/multi-port and implicit-H changes are not
-enumerated here and must not be mistaken for an exhaustive chemical search.
+remain in the study table. One/two-cut linkers and ring segments are supported;
+implicit-H/aromatic boundaries and >2 ports are not an exhaustive search.
 """
 
 import hashlib
 from collections import Counter, defaultdict
-from collections.abc import Callable
-
-from rdkit import Chem
 
 from ..identifier_order import natural_identifier_key
 from .errors import SARInputError
 from .matching import compile_reference
 from .molecules import chemical_identity, read_molfile
+from .site_cuts import candidate_cuts
 
 MAX_CUTS = 100000
 MAX_SITES = 4096
 MAX_PAIRS = 75000
 MAX_VARIABLE = 32
-
-
-def _cuts(mol, check: Callable):
-    count = mol.GetNumAtoms()
-    for bond in mol.GetBonds():
-        check()
-        if bond.IsInRing() or bond.GetBondType() != Chem.BondType.SINGLE:
-            continue
-        cut = Chem.FragmentOnBonds(mol, [bond.GetIdx()], dummyLabels=[(0, 0)])
-        for atom in list(cut.GetAtoms())[count:]:
-            atom.SetAtomMapNum(1)
-        for component in Chem.GetMolFrags(cut):
-            selected = tuple(index for index in component if index < count)
-            if len(component) == len(selected):
-                continue  # Spectator components remain frozen, not selected.
-            if (
-                not selected
-                or len(selected) > MAX_VARIABLE
-                or len(selected) > count * 0.4
-            ):
-                continue
-            if count - len(selected) < 6:
-                continue
-            fixed = sorted(set(range(cut.GetNumAtoms())) - set(component))
-            fragment = Chem.MolFragmentToSmiles(
-                cut, atomsToUse=fixed, canonical=True, isomericSmiles=True
-            )
-            core = Chem.MolFromSmiles(fragment)
-            if core is not None:
-                yield (
-                    Chem.MolToSmiles(core, canonical=True, isomericSmiles=True),
-                    selected,
-                )
+MAX_BOUNDARIES = 500000
 
 
 def discover_sites(
@@ -70,7 +36,15 @@ def discover_sites(
     ordered = sorted(
         rows, key=lambda row: (natural_identifier_key(row["label"]), row["id"])
     )
-    cuts = 0
+    cuts, boundaries = 0, 0
+
+    def inspect():
+        nonlocal boundaries
+        check()
+        boundaries += 1
+        if boundaries > MAX_BOUNDARIES:
+            raise SARInputError("study_discovery_boundary_limit")
+
     for row in ordered:
         check()
         if not row["eligible"] or not row.get("molfile"):
@@ -78,15 +52,22 @@ def discover_sites(
             continue
         mol = read_molfile(row["molfile"])
         identities[row["id"]] = chemical_identity(mol)
-        for key, selection in _cuts(mol, check):
+        for key, selection, ports in candidate_cuts(
+            mol,
+            inspect,
+            excluded,
+            max_variable=MAX_VARIABLE,
+            max_fraction=0.4,
+            min_fixed=6,
+        ):
             cuts += 1
             if cuts > MAX_CUTS:
                 raise SARInputError("study_discovery_cut_limit")
             previous = families[key].get(row["id"])
-            if previous is not None and previous != selection:
+            if previous is not None and previous != (selection, ports):
                 families[key][row["id"]] = ()  # No arbitrary symmetric site.
             elif row["id"] not in families[key]:
-                families[key][row["id"]] = selection
+                families[key][row["id"]] = (selection, ports)
     by_id = {row["id"]: row for row in ordered}
     manual = {
         (region["molecule_id"], tuple(sorted(region["atom_indices"])))
@@ -108,7 +89,7 @@ def discover_sites(
                 identifier,
             ),
         ):
-            selection = members[mid]
+            selection, ports = members[mid]
             candidates = [
                 other
                 for other in members
@@ -141,7 +122,7 @@ def discover_sites(
                         "molecule_id": mid,
                         "graph_sha256": by_id[mid]["graph_sha256"],
                         "atom_indices": list(selection),
-                        "attachment_count": 1,
+                        "attachment_count": ports,
                         "kind": "variable",
                         "name": f"S{len(sites) + 1}",
                         "created_at": dataset.get("created_at", "source-derived"),
@@ -159,15 +140,21 @@ def discover_sites(
             if len(sites) > MAX_SITES or comparisons > pair_budget:
                 raise SARInputError("study_discovery_pair_limit")
     return sites, {
-        "method": "single-non-ring-bond-v1",
+        "method": "single-region-one-two-cut-v2",
         "candidate_sites": len(sites),
         "candidate_comparisons": comparisons,
         "indexed_cuts": cuts,
+        "examined_boundaries": boundaries,
+        "max_cut_bonds": 2,
         "excluded": dict(excluded),
         "max_variable_atoms": MAX_VARIABLE,
         "max_variable_fraction": 0.4,
         "min_fixed_atoms": 6,
-        "limitations": ["implicit_h_not_enumerated", "ring_multiport_not_enumerated"],
+        "limitations": [
+            "implicit_h_not_enumerated",
+            "aromatic_boundaries_not_cut",
+            "more_than_two_ports_not_enumerated",
+        ],
     }
 
 

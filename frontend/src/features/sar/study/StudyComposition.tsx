@@ -8,19 +8,26 @@ export function StudyComposition({
   unit,
   layout,
   direction = 'lower',
+  strongRule,
 }: {
   bins: StudyBin[];
   unit: CountingUnit;
   layout: 'donut' | 'stack';
   direction?: 'lower' | 'higher' | undefined;
+  strongRule?: boolean | undefined;
 }) {
   const { t } = useTranslation();
-  const { total, parts } = composition(bins, unit);
+  const { total, parts, strongPercentage } = composition(bins, unit, strongRule);
+  const strongLabel =
+    strongPercentage === null
+      ? null
+      : t('强活性 {percent}%', { percent: strongPercentage.toFixed(1) });
   if (!total) return <div className="sar-chart-empty">{t('无分布记录')}</div>;
   if (layout === 'stack')
     return (
       <figure className="sar-composition-column" aria-label={t('活性分档组成')}>
         <strong className="sar-composition-total">{total}</strong>
+        {strongLabel && <small className="sar-composition-share">{strongLabel}</small>}
         <div
           className="sar-composition-stack"
           role="graphics-object"
@@ -78,10 +85,15 @@ export function StudyComposition({
               </circle>
             );
           })}
-        <text x="64" y="65" textAnchor="middle" className="sar-donut-number">
+        <text x="64" y={strongLabel ? 54 : 65} textAnchor="middle" className="sar-donut-number">
           {total}
         </text>
-        <text x="64" y="82" textAnchor="middle" className="sar-donut-unit">
+        {strongLabel && (
+          <text x="64" y="72" textAnchor="middle" className="sar-donut-share">
+            {strongLabel}
+          </text>
+        )}
+        <text x="64" y={strongLabel ? 86 : 82} textAnchor="middle" className="sar-donut-unit">
           {t(unit === 'molecules' ? '来源记录' : '观察数')}
         </text>
       </svg>

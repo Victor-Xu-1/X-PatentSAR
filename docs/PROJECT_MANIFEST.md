@@ -1,8 +1,13 @@
 # Project governance manifest
 
-- Single-site discovery ownership: SAR engine4 uses `core/sar/discovery.py` as
-  the sole bounded candidate planner and the existing strict compiled matcher
-  as proof authority. `study_discovery.py` binds plans to the existing native
+- Single-site discovery ownership: SAR engine5 uses `core/sar/discovery.py` as
+  the sole bounded candidate planner. `cut_topology.py` enumerates exact connected
+  one/two-edge partitions and `site_cuts.py` indexes canonical backgrounds;
+  neither is a proof authority. The existing strict compiled matcher freezes
+  fixed-anchor edges rather than the variable graph's internal vertex topology,
+  transporting parity per anchor and refusing indistinguishable stereo ports.
+  The old single-cut enumerator is removed; the sole retained matcher remains
+  proof authority. `study_discovery.py` binds plans to the existing native
   study/checkpoint path; `study_pairs.py` processes exact planned pools through
   one matcher/writer. Parent publication regenerates/validates the plan and
   source coverage. No second task queue, dataset store, DB migration, model or
@@ -30,7 +35,7 @@
   engine/checkpoint change, external transmission or original mutation. Detail
   disclosure reduces everyday noise without dropping source QA or uncertainty.
 
-- SAR study evidence/craft ownership: engine4 uses `study_distributions.py` for one
+- SAR study evidence/craft ownership: engine5 uses `study_distributions.py` for one
   prepared full-context chart domain and disjoint source-ID accounting; observation
   repeats remain separate. `study_conditions.py` alone validates source-anchored
   missing-field declarations; source QA/known conditions/units remain unchanged.
@@ -93,6 +98,7 @@
 - Verification policy: map the exact diff and affected consumers to focused regressions, static checks, wheel-content audit, installed-wheel identity/health and applicable real-browser/API smoke. Global test suites require explicit user authorization. Existing required checks and branch protections must not be disabled or bypassed; an unrun check is never reported as passed. Dependency changes additionally require frozen sync and dependency validation.
 - Rollback: stop the new process and restore the previous executable/path; never mutate existing run directories during rollback.
 - Visual authority: `frontend/src/styles/tokens.css`; all pages consume one white/cool-gray/charcoal palette and system sans-serif typography with restrained biomedical mint accents. All Header navigation/version entries are direct (narrow-screen captions wrap, no More popover); upload exposes only PDF/start with model-owned safe defaults and the existing validated submission/recovery adapter. The correction editor and existing column fields share one responsive two-region layout. Concept design previews remain external on E and never supply application molecules, values, status or acceptance. X-PatentSAR retains its orange logo; no third-party trademarks, proprietary fonts or product assets are copied.
+- SAR category-chart colors: packaged `web/sar/chart_palette.json` is the shared online/HTML semantic palette. Distinct emerald, lime, slate, amber and blue-gray represent strong, medium, weak, unclassified and missing respectively; table activity fills remain independent. Percentage labels use strong/current-unit total, including missing/unclassified, and never reclassify measurements or reinterpret unknown grades.
 - External molecular runtime: ADMET-AI 2.0.1/Chemprop/PyTorch CPU lives in an independently installed Python 3.12 environment. Packaged `defaults/environments/admet-cpu-requirements.txt` pins the complete external boundary with hashes; it does not compete with the main application's `uv.lock`. `tools/prepare_admet_models.py` and the installed model preparation library share one verification authority. The model inventory, inference cache and actual scientific inputs remain outside Git.
 - Task presentation: one PDF input invokes the same upload/durable queue, then automatic six-property analysis after core QA and verified model cleanup. `web/result_queries.py` owns corrected source-bound presentation; `correction_models/storage/corrections` own the revisioned overlay and audit; `prediction_models/fields/storage/jobs/worker` own additive research result orchestration while reusing `web/analysis*` and the existing isolated SDK worker. No standalone frontend model pipeline or formal-output authority is added.
 - Activity-column presentation: `web/activity_columns.py` is the sole bounded exact-context catalog, collected before filtering/pagination in the existing effective-row scan. API-v1 content IDs and order remain stable across pages; frontend context/value modules render independent columns, fixed structure identity and draggable widths. The former stacked activity-summary renderer is removed. No measurement, artifact, database schema or product version is changed.

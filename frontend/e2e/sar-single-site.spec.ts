@@ -1,61 +1,6 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { createNetwork } from './sar-network-actions';
 import { readFile } from 'node:fs/promises';
-
-async function createNetwork(page: Page, width: number) {
-  await page.goto('/#/sar');
-  const imports = page.getByRole('region', { name: 'Import data', exact: true });
-  await imports.getByRole('button', { name: 'CSV file', exact: true }).click();
-  const csv =
-    'id,smiles,IC50 (nM),t_half (h),target,assay,cell_line,duration\n1,COc1ccc(Cl)cc1,10,1,T,controlled,C,1h\n2,CCOc1ccc(Cl)cc1,1,2,T,controlled,C,1h\n3,COc1ccc(Br)cc1,0.1,3,T,controlled,C,1h\n4,CCCOc1ccc(Cl)cc1,,4,T,controlled,C,1h\n,CO,0.00001,99,T,controlled,C,1h\nIntermediate 18,CCO,0.00001,99,T,controlled,C,1h\n';
-  await imports.getByLabel('Choose a CSV file', { exact: true }).setInputFiles({
-    name: `single-site-${width}.csv`,
-    mimeType: 'text/csv',
-    buffer: Buffer.from(csv),
-  });
-  await imports.getByRole('button', { name: 'Preview on server', exact: true }).click();
-  await imports
-    .getByRole('combobox', { name: 'Source identifier column', exact: true })
-    .selectOption('id');
-  await imports
-    .getByRole('combobox', { name: 'SMILES column', exact: true })
-    .selectOption('smiles');
-  for (const name of ['IC50 (nM)', 't_half (h)'])
-    await imports.getByRole('checkbox', { name, exact: true }).check();
-  for (const [label, column] of [
-    ['Target column (optional)', 'target'],
-    ['Assay column (optional)', 'assay'],
-    ['Cell-line column (optional)', 'cell_line'],
-    ['Duration column (optional)', 'duration'],
-  ] as const)
-    await imports.getByRole('combobox', { name: label, exact: true }).selectOption(column);
-  await imports.getByRole('button', { name: 'Create CSV dataset', exact: true }).click();
-  await expect(page).toHaveURL(/dataset=[a-f0-9]{32}/);
-  const setup = page.getByRole('region', { name: 'Study setup', exact: true });
-  await setup.getByRole('checkbox', { name: /IC50/ }).check();
-  await setup.getByRole('checkbox', { name: /t_half/ }).check();
-  await setup
-    .getByRole('combobox', { name: 'Activity direction', exact: true })
-    .first()
-    .selectOption('lower');
-  await setup
-    .getByRole('combobox', { name: 'Activity direction', exact: true })
-    .nth(1)
-    .selectOption('higher');
-  await setup.getByRole('button', { name: 'Continue', exact: true }).click();
-  await expect(
-    setup.getByRole('checkbox', { name: 'Find single-site changes', exact: true }),
-  ).toBeChecked();
-  await setup.getByRole('button', { name: 'Run full study', exact: true }).click();
-  await expect(page).toHaveURL(/job=[a-f0-9]{32}/);
-  const params = new URLSearchParams(new URL(page.url()).hash.split('?')[1]);
-  const job = params.get('job')!,
-    dataset = params.get('dataset')!;
-  const report = page.getByRole('region', { name: 'Study report', exact: true });
-  await expect(report.getByRole('button', { name: 'Variable regions', exact: true })).toBeVisible({
-    timeout: 20000,
-  });
-  return { job, dataset, report };
-}
 
 for (const width of [390, 800, 1672]) {
   test(`multiple native cores, atom sites, PK deltas and export at ${width}`, async ({ page }) => {
@@ -77,7 +22,7 @@ for (const width of [390, 800, 1672]) {
     const { job, report } = await createNetwork(page, width);
     const overview = await (await page.request.get(`/api/v1/sar/jobs/${job}/study`)).json();
     expect(overview.report.molecule_count).toBe(4);
-    expect(overview.report.discovery.method).toBe('single-non-ring-bond-v1');
+    expect(overview.report.discovery.method).toBe('single-region-one-two-cut-v2');
     const all = await (await page.request.get(`/api/v1/sar/jobs/${job}/study/rows`)).json();
     const candidate = all.items.find((row: { label: string }) => row.label === '2');
     const site = overview.report.regions.find(
@@ -93,6 +38,16 @@ for (const width of [390, 800, 1672]) {
       (item: { reference_label: string; matched: number; no_variation: boolean }) =>
         item.reference_label === '1' && item.matched && !item.no_variation,
     );
+    const legend = network.locator('.sar-region-legend button');
+    const compactCount = await legend.count();
+    expect(compactCount).toBeLessThanOrEqual(visibleSites.length);
+    if (compactCount < visibleSites.length) {
+      await network.getByRole('button', { name: /^All sites \(/ }).click();
+      await expect(legend).toHaveCount(visibleSites.length);
+      await network.getByRole('button', { name: 'Compact sites', exact: true }).click();
+      await expect(legend).toHaveCount(compactCount);
+      await network.getByRole('button', { name: /^All sites \(/ }).click();
+    }
     const siteIndex = visibleSites.findIndex(
       (item: { region: { id: string } }) => item.region.id === site.region.id,
     );

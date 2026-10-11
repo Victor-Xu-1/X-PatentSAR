@@ -58,7 +58,7 @@
   align-items: start;
   margin-top: 18px;
 }
-.sar-network-layout > .sar-reference-maps {
+.sar-network-layout > .sar-network-map {
   position: sticky;
   top: 84px;
   max-height: calc(100dvh - 112px);
@@ -161,7 +161,7 @@
   .sar-network-layout {
     grid-template-columns: 1fr;
   }
-  .sar-network-layout > .sar-reference-maps {
+  .sar-network-layout > .sar-network-map {
     position: static;
     max-height: none;
     overflow: visible;

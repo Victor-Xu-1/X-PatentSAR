@@ -55,6 +55,7 @@ export function StudyFragmentCard({
         showLegend={false}
         countingContract={report.counting_contract}
         direction={report.policies[0]?.direction}
+        strongRule={hasStrongRule(report.policies[0])}
       />
       {hasStrongRule(report.policies[0]) && (
         <p>

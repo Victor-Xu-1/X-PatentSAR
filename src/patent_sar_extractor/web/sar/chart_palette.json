@@ -1,0 +1,9 @@
+{
+  "strong": "#08a35c",
+  "medium": "#a6d86e",
+  "weak": "#526170",
+  "unclassified": "#d59a28",
+  "missing": "#cbd5e1",
+  "unsupported": "#81749b",
+  "unresolved": "#c47b45"
+}

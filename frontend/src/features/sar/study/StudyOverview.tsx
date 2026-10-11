@@ -63,6 +63,7 @@ export function StudyOverview({ report }: { report: StudyReport }) {
                 countingContract={report.counting_contract}
                 direction={policy?.direction}
                 controlledUnit={unit}
+                strongRule={hasStrongRule(policy)}
               />
               <StudyPolicyNote policy={policy} context={context} />
               {hasStrongRule(policy) && (

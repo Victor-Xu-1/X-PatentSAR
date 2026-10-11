@@ -36,6 +36,18 @@ def render_report(job, report, by_id) -> bytes:
     names = {context.id: context for context in report.contexts}
     current = report.counting_contract == "unique-molecules-v2"
 
+    def strong_rule(policy):
+        if policy.strength_method == "tenth_decade":
+            return (
+                policy.strength_scale is not None
+                and policy.strength_scale.status == "ready"
+            )
+        if policy.strength_method == "unclassified":
+            return False
+        return policy.strong_threshold is not None or bool(policy.grade_order)
+
+    primary_strong_rule = bool(report.policies) and strong_rule(report.policies[0])
+
     def values(row):
         text = '<dl class="facts">'
         for policy in report.policies:
@@ -77,7 +89,11 @@ def render_report(job, report, by_id) -> bytes:
                 else "Unclassified: insufficient or uncertain tenth measurement, or unsupported endpoint."
             )
             add(f"<p>Tenth potency decade · {caption}</p>")
-        add(composition(distribution.bins, current=current))
+        add(
+            composition(
+                distribution.bins, current=current, strong_rule=strong_rule(policy)
+            )
+        )
         add(
             f"<p>{distribution.observed_molecules} observed · {distribution.missing_molecules} missing · {distribution.unresolved_molecules} unresolved · {distribution.strong_molecules} proved strong</p><details><summary>Recorded conditions</summary><pre>{esc(context.context)}</pre></details></article>"
         )
@@ -114,7 +130,7 @@ def render_report(job, report, by_id) -> bytes:
             f'<article class="card"><h3>Core {index} · {esc(item.assignment_kind)}</h3>'
         )
         add(figures.fragment(item.smiles, f"Core {index}"))
-        add(composition(item.bins, current=current))
+        add(composition(item.bins, current=current, strong_rule=primary_strong_rule))
         add(
             f"<p>{item.molecule_count} source records · {item.strong_count} strong</p></article>"
         )
@@ -143,7 +159,14 @@ def render_report(job, report, by_id) -> bytes:
             add(
                 f'<article class="card"><h3>Fragment {index}{" · reference" if item.is_reference else ""}</h3>'
             )
-            add(composition(item.bins, current=current, vertical=True))
+            add(
+                composition(
+                    item.bins,
+                    current=current,
+                    vertical=True,
+                    strong_rule=primary_strong_rule,
+                )
+            )
             add(figures.fragment(item.smiles, f"Fragment {index}"))
             add(
                 f"<p>{item.strong_count}/{item.molecule_count} strong · Better {item.better} · Worse {item.worse} · Indeterminate {item.indeterminate} · Missing {item.missing}</p></article>"

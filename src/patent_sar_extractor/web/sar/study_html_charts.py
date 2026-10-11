@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import base64
+import json
 from html import escape
+from importlib.resources import files
 
 from ...core.sar.drawing import draw_fragment, draw_molecule_preview, draw_structure
 
@@ -18,6 +20,9 @@ COLORS = (
     "#edf5f1",
 )
 REGION_COLORS = ("#137e78", "#466ca4", "#a17421", "#865ba3", "#407b3a", "#a05166")
+ACTIVITY_COLORS = json.loads(
+    files(__package__).joinpath("chart_palette.json").read_text()
+)
 
 
 def image(svg: str, label: str) -> str:
@@ -25,24 +30,21 @@ def image(svg: str, label: str) -> str:
     return f'<img alt="{escape(label, quote=True)}" src="data:image/svg+xml;base64,{data}">'
 
 
-def composition(bins, *, current: bool, vertical: bool = False) -> str:
+def composition(
+    bins, *, current: bool, vertical: bool = False, strong_rule: bool | None = None
+) -> str:
     unit = "molecules" if current else "observations"
     total = sum(getattr(item, unit) for item in bins)
     pieces, legend = [], []
     for index, item in enumerate(bins):
         value = getattr(item, unit)
         color = (
-            {
-                "strong": "#42c984",
-                "medium": "#e5f5ec",
-                "weak": "#eff2f0",
-                "unclassified": "#b4bfc1",
-            }.get(item.label, "#b4bfc1")
+            ACTIVITY_COLORS.get(item.label, ACTIVITY_COLORS["unclassified"])
             if item.kind == "strength"
             else (
                 COLORS[index % len(COLORS)]
                 if item.kind in {"numeric", "ordinal"}
-                else "#b4bfc1"
+                else ACTIVITY_COLORS.get(item.kind, ACTIVITY_COLORS["unclassified"])
             )
         )
         percent = 100 * value / max(1, total)
@@ -57,7 +59,16 @@ def composition(bins, *, current: bool, vertical: bool = False) -> str:
         "source IDs / records" if current else "raw observations (historical counting)"
     )
     orientation = "vertical" if vertical else "horizontal"
-    return f'<div class="composition"><strong>{total} {label}</strong><div class="stack {orientation}" aria-label="Activity composition">{"".join(pieces)}</div><ul class="legend">{"".join(legend)}</ul></div>'
+    strong = sum(getattr(item, unit) for item in bins if item.strong)
+    classified = (
+        any(item.kind == "strength" or item.strong for item in bins)
+        if strong_rule is None
+        else strong_rule
+    )
+    share = (
+        f"<div>Strong {100 * strong / total:.1f}%</div>" if total and classified else ""
+    )
+    return f'<div class="composition"><strong>{total} {label}</strong>{share}<div class="stack {orientation}" aria-label="Activity composition">{"".join(pieces)}</div><ul class="legend">{"".join(legend)}</ul></div>'
 
 
 class ReportFigures:
