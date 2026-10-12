@@ -22,6 +22,7 @@
     "frontend/src/features/sar/study/StudySetup.tsx",
     "frontend/src/features/sar/study/policyDraft.ts",
     "frontend/src/i18n/catalogs/sar.ts",
+    "frontend/src/styles/sar.css",
     "frontend/tests/sar-flow.test.tsx",
     "frontend/tests/sar-indicator-defaults.test.tsx",
     "frontend/tests/sar-region.test.tsx",

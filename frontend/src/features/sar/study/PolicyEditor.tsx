@@ -21,7 +21,7 @@ export function PolicyEditor({
   return (
     <fieldset className="sar-policy">
       <legend>{contextLabel(context)}</legend>
-      <div className="sar-form-grid">
+      <div className="sar-form-grid sar-policy-controls">
         <IndicatorDirection
           value={draft.direction}
           hint={hint}
