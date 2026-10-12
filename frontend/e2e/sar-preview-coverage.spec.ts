@@ -113,7 +113,7 @@ for (const width of [390, 800, 1672]) {
     const potencyRow = matrix
       .getByRole('rowheader', { name: 'IC50 (nM)', exact: true })
       .locator('..');
-    await expect(potencyRow.getByRole('cell')).toHaveText(['10', '1Δ -9.00', '—Unmeasured']);
+    await expect(potencyRow.getByRole('cell')).toHaveText(['10', '1Δ -9.00', '—Not measured']);
     const matrixPK = matrix
       .getByRole('rowheader', { name: 't_half (h)', exact: true })
       .locator('..');

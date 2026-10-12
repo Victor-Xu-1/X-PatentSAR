@@ -75,7 +75,7 @@
   max-width: 150px;
   background: var(--surface-subtle);
   color: var(--muted);
-  text-align: left;
+  text-align: center;
   font-size: 11px;
 }
 .sar-matrix-table .sar-matrix-baseline {
@@ -101,7 +101,7 @@
 }
 .sar-matrix-identity > strong {
   flex: 1;
-  text-align: left;
+  text-align: center;
   color: var(--ink);
 }
 .sar-matrix-identity .icon-button {
@@ -199,6 +199,7 @@
   }
   .sar-matrix-table .sar-matrix-baseline {
     position: static;
+    left: auto;
     box-shadow: none;
   }
   .sar-matrix-table thead .sar-matrix-baseline {
