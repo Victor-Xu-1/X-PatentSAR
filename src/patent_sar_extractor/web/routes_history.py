@@ -1,15 +1,30 @@
-"""Thin authenticated API-v1 adapters for recoverable trash, never purge."""
+"""Thin authenticated recoverable history and permanent whole-trash adapters."""
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Path, Query
 
 from .history_models import HistoryEntry, HistoryKind, HistoryList, HistoryMutation
+from .history_purge_models import TrashClearReceipt, TrashClearRequest, TrashPlan
 from .history_service import HistoryService
 
 
 def history_routes(service: HistoryService) -> APIRouter:
     router = APIRouter(prefix="/api/v1/history")
+
+    @router.get("/trash/plan", response_model=TrashPlan)
+    def trash_plan() -> TrashPlan:
+        return service.trash_plan()
+
+    @router.post("/trash/clear", response_model=TrashClearReceipt)
+    def clear_trash(body: TrashClearRequest) -> TrashClearReceipt:
+        return service.clear_trash(body)
+
+    @router.get("/trash/receipts/{request_id}", response_model=TrashClearReceipt)
+    def clear_receipt(
+        request_id: str = Path(pattern=r"^[a-f0-9]{32}$"),
+    ) -> TrashClearReceipt:
+        return service.clear_receipt(request_id)
 
     @router.get("", response_model=HistoryList)
     def listing(

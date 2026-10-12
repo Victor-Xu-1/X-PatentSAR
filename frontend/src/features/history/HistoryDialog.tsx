@@ -9,6 +9,7 @@ import { useResource } from '../../hooks/useResource';
 import { dateText } from '../../model/presentation';
 import { HistoryActions } from './HistoryActions';
 import { historyLabels, retentionNotice } from './historyPresentation';
+import { TrashClearDialog } from './TrashClearDialog';
 
 export function HistoryDialog({
   title,
@@ -33,6 +34,7 @@ export function HistoryDialog({
   const [kind, setKind] = useState(initialKind);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
+  const [clearOpen, setClearOpen] = useState(false);
   const load = useCallback(
     (signal: AbortSignal) =>
       api.history(
@@ -96,8 +98,19 @@ export function HistoryDialog({
               {t('回收站')}
             </button>
           )}
+          {deleted && (
+            <button type="button" className="danger-button" onClick={() => setClearOpen(true)}>
+              {t('清空回收站')}
+            </button>
+          )}
         </div>
-        <p className="muted">{t(retentionNotice)}</p>
+        <p className="muted">
+          {t(
+            deleted
+              ? '回收站中的记录可恢复；清空后会永久移除记录并清理已核实未引用的文件。'
+              : retentionNotice,
+          )}
+        </p>
         {deleted && <p className="muted">{t('先恢复项目，再恢复该项目下的任务或文件。')}</p>}
         {resource.error ? (
           <ErrorNotice error={resource.error} onRetry={resource.reload} />
@@ -179,6 +192,15 @@ export function HistoryDialog({
           </button>
         </footer>
       </div>
+      {clearOpen && (
+        <TrashClearDialog
+          onClose={() => setClearOpen(false)}
+          onDone={() => {
+            setPage(1);
+            resource.reload();
+          }}
+        />
+      )}
     </Dialog>
   );
 }

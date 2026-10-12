@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 from decimal import localcontext
 
+from ...core.sar.errors import SARInputError
 from ...core.sar.matching import compile_reference
 from ...core.sar.statistics import compare_observations
 from ...core.sar.study_conditions import declared_observation
@@ -14,6 +15,7 @@ from ...core.sar.values import Value, grade_ranks, parse_value
 from ..errors import WebError
 from .assets import digest
 from .models import Pair
+from .preview_drawing import paired_drawings
 from .preview_models import PreviewMeasurement, StudyPreview
 from .preview_records import recorded_measurements
 from .study_results import StudyResults
@@ -183,6 +185,14 @@ def preview(queue, identifier: str, region_id: str, molecule_id: str) -> StudyPr
             if property_difference is None or math.isfinite(property_difference)
             else None
         )
+    try:
+        drawings = paired_drawings(reference, candidate, region, proof)
+    except (SARInputError, ValueError, RuntimeError, OverflowError) as error:
+        raise WebError(
+            422,
+            "sar_structure_unavailable",
+            "Paired structure drawing is unavailable; no chemical placeholder was substituted.",
+        ) from error
     return StudyPreview(
         job=job,
         region=region,
@@ -197,4 +207,5 @@ def preview(queue, identifier: str, region_id: str, molecule_id: str) -> StudyPr
             {policy.context_id for policy in report.policies},
         ),
         property_differences=differences,
+        drawings=drawings,
     )

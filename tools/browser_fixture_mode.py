@@ -18,6 +18,11 @@ COMMON = {
     "column-filter-viewport.spec.ts",
 }
 MODES = (
+    (
+        "history",
+        "history-trash-clear.spec.ts",
+        COMMON | {"history-trash-clear.spec.ts", "sar-preview-coverage.spec.ts"},
+    ),
     ("sar", "sar-preview-coverage.spec.ts", COMMON | {"sar-preview-coverage.spec.ts"}),
     ("sar", "sar-csv-defaults.spec.ts", COMMON | {"sar-csv-defaults.spec.ts"}),
     (

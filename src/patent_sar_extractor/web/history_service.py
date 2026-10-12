@@ -15,7 +15,10 @@ from .errors import WebError
 from .history_entries import history_entry, project_status
 from .history_environment import EnvironmentHistoryStore
 from .history_exports import ExportHistory, register_export
+from .history_guard import history_guard
 from .history_models import HistoryEntry, HistoryKind, HistoryList
+from .history_purge_models import TrashClearReceipt, TrashClearRequest, TrashPlan
+from .history_purge_storage import permanently_removed
 from .history_queries import history_page
 from .history_storage import (
     lifecycle_block,
@@ -36,6 +39,8 @@ class HistoryService:
         self.store = store
         self.exports = ExportHistory(store)
         self.environments = EnvironmentHistoryStore(store.root)
+        with history_guard(store.root):
+            pass
 
     @staticmethod
     def _validate(kind: str, identifier: str | None = None) -> None:
@@ -82,6 +87,12 @@ class HistoryService:
         *,
         check_lease: bool = True,
     ) -> HistoryEntry:
+        if permanently_removed(connection, kind, row["id"], row.get("project_id")):
+            raise WebError(
+                404,
+                "history_purged",
+                "This record was permanently removed from history.",
+            )
         if kind in {"job", "export"}:
             project = connection.execute(
                 "SELECT title FROM projects WHERE id=?", (row["project_id"],)
@@ -177,7 +188,13 @@ class HistoryService:
                 return HistoryList(items=[], total=0, page=page, page_size=page_size)
             connection.execute("BEGIN")
             if exports is not None:
-                entries = [self._entry(connection, kind, row) for row in exports]
+                entries = [
+                    self._entry(connection, kind, row)
+                    for row in exports
+                    if not permanently_removed(
+                        connection, kind, row["id"], row["project_id"]
+                    )
+                ]
                 entries = [
                     entry
                     for entry in entries
@@ -217,6 +234,21 @@ class HistoryService:
     ) -> HistoryEntry:
         return self._mutate(kind, identifier, expected_revision, "restore")
 
+    def trash_plan(self) -> TrashPlan:
+        from .history_purge import TrashPurge
+
+        return TrashPurge(self).plan()
+
+    def clear_trash(self, request: TrashClearRequest) -> TrashClearReceipt:
+        from .history_purge import TrashPurge
+
+        return TrashPurge(self).clear(request)
+
+    def clear_receipt(self, request_id: str) -> TrashClearReceipt:
+        from .history_purge import TrashPurge
+
+        return TrashPurge(self).receipt(request_id)
+
     def _mutate(
         self, kind: HistoryKind, identifier: str, expected_revision: str, action: str
     ) -> HistoryEntry:
@@ -228,7 +260,11 @@ class HistoryService:
         export = self.exports.get(identifier) if kind == "export" else None
         lease = analysis_lease(self.store.root) if kind == "project" else nullcontext()
         try:
-            with lease, self._database(kind).connect(write=True) as connection:
+            with (
+                history_guard(self.store.root),
+                lease,
+                self._database(kind).connect(write=True) as connection,
+            ):
                 assert connection is not None
                 row = (
                     self.exports.inspect(export)

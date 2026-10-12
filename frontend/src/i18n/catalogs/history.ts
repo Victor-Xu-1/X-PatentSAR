@@ -1,5 +1,39 @@
 /** Recoverable history actions. Record titles and raw block reasons stay verbatim. */
 export const history: Readonly<Record<string, string>> = {
+  清空回收站: 'Empty Trash',
+  '回收站中的记录可恢复；清空后会永久移除记录并清理已核实未引用的文件。':
+    'Trashed records can be restored. Empty Trash permanently removes records and verified unreferenced files.',
+  '清空回收站？': 'Empty Trash?',
+  '正在核对全部回收站…': 'Checking all trashed records…',
+  '全部类型、全部分页，共 {count} 条记录。': 'All record types and pages: {count} records.',
+  '全部类型、全部分页，共 1 条记录。': 'All record types and pages: 1 record.',
+  '已永久移除 {count} 条记录。': 'Permanently removed {count} records.',
+  '已永久移除 1 条记录。': 'Permanently removed 1 record.',
+  '{count} 条记录仍有活动或未核实的进程，暂不能清空。':
+    '{count} records have active or unverified processes. Trash cannot be cleared yet.',
+  '清空不可撤销。只删除已核实未被引用的原始文件和产物；被引用的文件、共享环境和审计保留。':
+    'Emptying Trash cannot be undone. Only verified unreferenced originals and artifacts are deleted; referenced files, shared environments and audit records remain.',
+  '可清理 {count} 个未引用文件。': '{count} unreferenced files can be deleted.',
+  '可清理 1 个未引用文件。': '1 unreferenced file can be deleted.',
+  '{count} 组被引用、导入或无法核实的资产将保留。':
+    '{count} referenced, imported or unverified asset groups will be retained.',
+  '1 组被引用、导入或无法核实的资产将保留。':
+    '1 referenced, imported or unverified asset group will be retained.',
+  '已删除 1 个文件。': 'Deleted 1 file.',
+  '已删除 {count} 个文件。': 'Deleted {count} files.',
+  '新增引用的 1 个文件已保留。': '1 newly referenced file was retained.',
+  '新增引用的 {count} 个文件已保留。': '{count} newly referenced files were retained.',
+  '文件清理未完成，可继续原操作。': 'File cleanup is incomplete. Continue the saved operation.',
+  继续清理文件: 'Continue file cleanup',
+  '清空结果尚未确认。请先核对，不会自动重复删除。':
+    'The clear result is unconfirmed. Check its state first; deletion is never automatically repeated.',
+  核对回收站: 'Check Trash',
+  重试此清空操作: 'Retry this clear request',
+  确认清空全部: 'Confirm empty all',
+  '清空结果尚未确认。': 'The clear result is unconfirmed.',
+  '清空回执不匹配，未重复提交。': 'The clear receipt does not match. No submission was repeated.',
+  '回收站已变化。请关闭后重新核对；未重复清空。':
+    'Trash has changed. Close and review it again; no clear request was repeated.',
   '恢复{kind}？': 'Restore {kind}?',
   '删除{kind}？': 'Delete {kind}?',
   '将此记录恢复到日常视图。项目在回收站时，请先恢复项目，再恢复其下的记录。':

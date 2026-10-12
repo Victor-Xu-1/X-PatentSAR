@@ -10,6 +10,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from .errors import WebError
+from .history_purge_storage import attach_control
 from .history_storage import ENVIRONMENT_SCHEMA
 
 
@@ -46,6 +47,7 @@ class EnvironmentHistoryStore:
         )
         connection.row_factory = sqlite3.Row
         try:
+            attach_control(connection, self.path.parent.parent, required=True)
             if connection.execute("PRAGMA user_version").fetchone()[0] != 1:
                 raise WebError(
                     409,

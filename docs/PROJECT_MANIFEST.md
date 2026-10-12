@@ -1,5 +1,34 @@
 # Project governance manifest
 
+- Whole-trash ownership: existing history visibility/lifecycle/lease gates remain
+  sole authority. `history_trash_plan.py` prepares a bounded complete four-kind
+  snapshot, not a page/category sample. `history_purge.py` publishes all permanent
+  UI markers and one exact-request receipt atomically in the workspace writer;
+  environment history attaches that private control read-only. A short shared
+  history guard serializes restore/delete/clear. Small `history_asset_*` modules
+  inventory exact native first-party files, retained project/checkpoint/SAR
+  references and a sealed finite cleanup journal; `history_file_*` owns streaming
+  fingerprints and exclusive kernel open-file protection. Only proved unreferenced
+  originals/products are removed by no-replace quarantine/exact unlink and empty
+  owned-directory rmdir, never a broad recursive delete. Imported, referenced,
+  linked, busy or unverified assets, audit/source rows, caches and shared installed
+  environments remain. Pending cleanup requires explicit same-request resume;
+  reads/startup cannot replay. Cleared audit metadata no longer consumes ordinary
+  quotas. Additive private tables retain schema1; no new queue/model/provider,
+  scientific acceptance change or global test is introduced.
+
+- Paired-layout ownership: `web/sar/preview_alignment.py` and `preview_drawing.py`
+  and `preview_geometry.py` own only validated comparison coordinates/shared
+  camera and native acute-fold safety. Connected fixed-core alignment is distinct
+  from whole-background alignment for disconnected linker ends. The existing strict
+  matcher remains sole admission authority; bounded equivalent embeddings are
+  rechecked through its retained graph/ports/stereo primitives, with deterministic
+  source-index presentation choice rather than a new chemical atom identity.
+  Isolated preview DTOs and the existing `StudyImage`/safe SVG/focus path consume
+  source-bound paired vectors. Native failures are explicit, redraw identity is
+  checked, and no original atom/structure/measurement/producer is rewritten. No
+  scientific engine hash/epoch, schema, queue, model, dependency or cache changes.
+
 - Full-preview ownership: the existing strict preview and region/changes page
   authorities remain sole acceptance/member paths. `preview_records.py` provides
   only exact-source unselected-reading projection through isolated preview DTOs;
@@ -108,7 +137,7 @@
 
 - Bounded repair/recovery ownership: `core/activity_coverage.py` inventories original coordinate/text regions and otherwise uncovered classified seeds independently of returned rows; activity epoch7 and QA schema4 prevent partial rows from masking missing tables. One existing writer/QA owns publication and acceptance. `integrations/llm/api_failures.py`, `job_health.py` and `credential_authorization.py` separate safe wire faults, same-logical-budget attempt circuit state and revocable GUI credential references. New context v2 does not duplicate GUI keys; explicit idle-job renewal preserves semantics, original, snapshot and spent calls. The sole HTTP/cache client validates before caching and revalidates/precisely evicts on read. Web `llm_job_recovery.py` owns additive v1 health/renewal metadata; thin routes retain session/CSRF/visibility and active/config/budget locks. Frontend recovery remains on demand and never automatically resumes, invents counts or exposes raw provider failures. No local LLM, extra parser/writer, new model service, whole-PDF transmission, numerical/chemistry rewrite or acceptance bypass is introduced.
 
-- History-removal ownership: one recoverable history service and additive private visibility records own daily-page deletion/restore for projects, jobs, owned saved exports and terminal environment operations. Immutable artifacts, audit, internal producer/checkpoint ancestry and acceptance remain independent. Normal source/write routes recheck visibility, mutations use revision and active/ownership gates; project removal respects the existing analysis lease. Child restoration requires a visible parent and preserves separate removals. Bounded native export discovery cannot adopt arbitrary/symlink/imported paths. UI confirmation states retained bytes/no disk reclamation. No permanent purge, uninstall, retention scheduler, model call, audit-trigger weakening or competing deletion chain is introduced. Product releases follow the PR policy; APIv1/private SQLitev1 stay unchanged.
+- History-removal ownership: the same history service owns recoverable daily-page deletion/restore and explicitly confirmed permanent whole-trash clearing. Revision/lifecycle/visibility and analysis-lease gates remain authoritative. Soft deletion retains files; permanent clear's separate sealed file-cleanup phase removes only verified unreferenced owned assets, preserves audit/ancestry/shared environment data and exposes incomplete cleanup. No uninstall, retention scheduler, model call, audit-trigger weakening or competing deletion chain. Product releases follow the PR policy; APIv1/private SQLitev1 stay unchanged.
 
 - Lead ownership: small `web/lead_*` modules own reviewed cached ADMET evidence, exact-context activity scoring, molecular diversity and one rebuildable project-wide nomination packet. The existing research worker invokes this bounded CPU tail after model release; completion checks current full pool/producer evidence. `ResultQueries` attaches shared marks before filters/paging/export; UI never scores or selects. Audited value edits re-evaluate without inference; graph changes use the existing targeted task. Unknown activity or unproved/rejected chemistry is never padded into target-eight candidates. Original artifacts/QA/audit, API v1 and workspace schema v1 remain unchanged. The additive private `lead_selections` table is a rebuildable research cache with source/graph/value/policy fingerprints and CAS, not an acceptance authority.
 

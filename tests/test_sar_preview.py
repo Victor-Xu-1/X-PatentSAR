@@ -111,6 +111,15 @@ class SARPreviewTests(WebFixture, unittest.TestCase):
             response = client.get(path + "/preview", params=params)
             self.assertEqual(response.status_code, 200, response.text)
             preview = response.json()
+            drawings = preview.get("drawings")
+            self.assertIsNotNone(drawings, "A strict comparison needs paired layouts")
+            self.assertEqual(drawings["layout"], "fixed_background")
+            self.assertEqual(
+                drawings["reference"]["id"], preview["reference"]["molecule_id"]
+            )
+            self.assertEqual(drawings["candidate"]["id"], candidate["id"])
+            self.assertGreaterEqual(drawings["equivalent_mappings"], 1)
+            self.assertIsNone(drawings["reason"])
             measured = preview["measurements"][0]
             self.assertEqual(measured["reference_values"], ["10"])
             self.assertEqual(measured["candidate_values"], ["1"])

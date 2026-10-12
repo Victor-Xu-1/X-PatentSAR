@@ -98,6 +98,30 @@ PK/activity, repeats/censored/empty strings and source context labels remain
 distinct. Unknown/overlapping contexts are refused, not silently reassigned.
 No source report/engine/queue/store/schema/dependency change is introduced.
 
+Paired transformation drawings are a read-only coordinate policy outside the
+scientific engine inventory. `preview_alignment.py` reuses the exact fixed-graph
+embedding/port/stereo primitives only AFTER the existing exhaustive member proof;
+it cannot admit a comparison. It exhausts equivalent fixed automorphisms and
+chooses their source-index lexical minimum for presentation, never claiming a
+unique scientific atom correspondence. Explicit RDKit atom-map constraints keep
+the largest complete connected fixed block at identical coordinates. When the
+fixed complement is connected this is the whole background; disconnected fixed
+parts may translate as a linker changes length, rather than forcing both ends
+into the original short separation and folding the linker. `fixed_component`
+is distinct from `fixed_background`; ALL fixed chemistry/ports/stereo still
+pass the full unchanged proof. A non-ring two-bond acute-fold guard explicitly
+withholds the alignment claim and returns normal independent geometry when a
+native constrained layout is crowded. `preview_drawing.py` supplies one
+complete shared extent/scale to the same installed native RDKit renderer and
+roundtrips each prepared molecule to recheck full chemical identity. Original
+Molfiles/atom order, regions, measurements and reports are untouched. Existing
+private one-H views remain private. A native constraint failure is explicitly
+labelled independent layout; invalid chemical redraws are refused, not replaced
+with placeholders. Bounded additive preview DTOs carry both source-bound SVGs;
+`StudyImage` uses its existing passive-SVG/focus authority without two independent
+drawing requests. Standalone thumbnails and immutable atom-map drawings remain
+unchanged; there is no new renderer runtime, dependency, cache or acceptance path.
+
 The Variable-regions view uses one `StudyNetwork` core/rows/preview workbench for
 both manually specified and automatically discovered regions. Original region
 origins/names and immutable producer reports do not change. Manual no-variation
@@ -496,6 +520,27 @@ QA and API v1 remain unchanged. Research progress uses
   retries, alternative recognizers, fabricated outputs or relaxed QA.
 
 ## Storage, restart and deployment
+
+Whole-trash clearing reuses existing history source/lifecycle and analysis lease
+gates. A bounded all-kind snapshot binds full source revisions and counts to one
+opaque token. Permanent presentation markers plus an exact-request receipt are
+published in one workspace transaction, while environment readers attach that
+private authority read-only. The short history guard also covers ordinary
+delete/restore to prevent cross-database visibility races. A sealed, bounded
+asset inventory reuses registered upload/result roots, exact task ownership,
+retained project/checkpoint/SAR references and document/content identities.
+Only verified unreferenced first-party original files, attempt outputs, exports
+and terminal environment-operation outputs enter physical cleanup. Imported,
+referenced, linked, busy or unverified targets remain untouched. Native exclusive
+file leases prove there are no open readers/writers without privileged /proc
+access; inode/hash/lease state are rechecked before an exclusive same-directory
+quarantine rename and exact-file unlink. Broad recursive deletion is absent.
+One additive cleanup journal shares the permanent-marker transaction. Finite
+explicit clear/resume requests checkpoint progress; GET/readback/startup never
+replay deletion. Pending cleanup cannot claim completion or start a competing
+clear. Metadata/audit rows remain, but permanently cleared records no longer
+consume active/recoverable project or environment-history quotas. API-v1/SQL1
+remain additive; shared environments, source acceptance and queues are unchanged.
 
 Recoverable history deletion is a separate presentation/lifecycle authority,
 not scientific acceptance or filesystem garbage collection. Additive private

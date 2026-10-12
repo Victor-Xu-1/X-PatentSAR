@@ -6,6 +6,7 @@ import sqlite3
 from typing import Any
 
 from .errors import WebError
+from .history_purge_storage import PURGE_SCHEMA, purge_table
 
 TOMBSTONE_SCHEMA = """
 CREATE TABLE IF NOT EXISTS history_tombstones (
@@ -22,9 +23,23 @@ CREATE TABLE IF NOT EXISTS history_exports (
 );
 CREATE INDEX IF NOT EXISTS history_exports_project ON history_exports(project_id);
 """
-SCHEMA = TOMBSTONE_SCHEMA + EXPORT_SCHEMA
+SCHEMA = TOMBSTONE_SCHEMA + EXPORT_SCHEMA + PURGE_SCHEMA
 ENVIRONMENT_SCHEMA = TOMBSTONE_SCHEMA
 TERMINAL = frozenset({"complete", "failed", "cancelled", "interrupted"})
+
+
+def retained_count(connection: sqlite3.Connection, kind: str) -> int:
+    """Permanent audit rows do not consume the recoverable active-history quota."""
+    table = {"project": "projects", "environment_operation": "operations"}[kind]
+    purges = purge_table(connection)
+    clause = (
+        f" WHERE NOT EXISTS (SELECT 1 FROM {purges} p WHERE p.kind=? AND p.id=r.id)"
+        if purges
+        else ""
+    )
+    return connection.execute(
+        f"SELECT COUNT(*) FROM {table} r" + clause, (kind,) if purges else ()
+    ).fetchone()[0]
 
 
 def tombstone(
