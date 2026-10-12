@@ -80,7 +80,12 @@ for (const width of [390, 800, 1672]) {
       fullPage: true,
     });
     const ic = profile.contexts.find((item: { name: string }) => item.name.includes('IC50'));
+    const session = await page.request.get('/api/v1/session');
     const rejected = await page.request.post(path + '/studies', {
+      headers: {
+        Origin: new URL(page.url()).origin,
+        'X-CSRF-Token': (await session.json()).csrf_token,
+      },
       data: {
         request_id: 'f'.repeat(32),
         expected_dataset_revision: 1,
