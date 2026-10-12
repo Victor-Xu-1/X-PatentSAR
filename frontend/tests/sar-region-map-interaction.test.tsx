@@ -114,7 +114,7 @@ it('keeps every dense region selectable while hit targets follow only the painte
   await userEvent.click(target);
   expect(onSelect).toHaveBeenLastCalledWith(many[12]!.id);
   await userEvent.unhover(target);
-  await userEvent.click(screen.getByRole('button', { name: 'R31', exact: true }));
+  await userEvent.click(screen.getByRole('button', { name: /^R31$/ }));
   expect(onSelect).toHaveBeenLastCalledWith(many[30]!.id);
   rerender(
     <>
