@@ -8,6 +8,7 @@ import { useSARResource } from '../useSARResource';
 import { GroupPager } from './GroupPager';
 import { TransformationPreview } from './TransformationPreview';
 import { NetworkBranchCard } from './NetworkBranchCard';
+import { NetworkMatrix } from './NetworkMatrix';
 import { networkRowSites } from './networkSites';
 
 export function NetworkBranches({
@@ -89,24 +90,45 @@ export function NetworkBranches({
       {rows.validated && rows.data && (
         <>
           {summary?.no_variation && <output>{t('该区域没有观察到结构变化。')}</output>}
-          <div className="sar-network-branch-grid">
-            {rows.data.items.map((row) => (
-              <NetworkBranchCard
-                key={row.molecule_id}
-                row={row}
-                report={report}
-                sites={networkRowSites(sites, row.molecule_id)}
-                siteOrder={siteOrder}
-                jobId={jobId}
-                active={active}
-                fragments={fragments}
-                onCompare={(chosen, id, button) => {
-                  trigger.current = button;
-                  setPreview((old) => ({ id, summary: chosen, request: (old?.request ?? 0) + 1 }));
-                }}
-              />
-            ))}
-          </div>
+          {!fragments && rows.data.items.length > 0 ? (
+            <NetworkMatrix
+              rows={rows.data.items}
+              report={report}
+              sites={sites}
+              siteOrder={siteOrder}
+              referenceId={referenceId}
+              jobId={jobId}
+              active={active}
+              onSource={onSource}
+              onCompare={(chosen, id, button) => {
+                trigger.current = button;
+                setPreview((old) => ({ id, summary: chosen, request: (old?.request ?? 0) + 1 }));
+              }}
+            />
+          ) : (
+            <div className="sar-network-branch-grid">
+              {rows.data.items.map((row) => (
+                <NetworkBranchCard
+                  key={row.molecule_id}
+                  row={row}
+                  report={report}
+                  sites={networkRowSites(sites, row.molecule_id)}
+                  siteOrder={siteOrder}
+                  jobId={jobId}
+                  active={active}
+                  fragments={fragments}
+                  onCompare={(chosen, id, button) => {
+                    trigger.current = button;
+                    setPreview((old) => ({
+                      id,
+                      summary: chosen,
+                      request: (old?.request ?? 0) + 1,
+                    }));
+                  }}
+                />
+              ))}
+            </div>
+          )}
           {!rows.data.items.length && <p>{t('没有符合条件的结构分支')}</p>}
           <GroupPager page={page} size={6} total={rows.data.total} onPage={setPage} />
         </>

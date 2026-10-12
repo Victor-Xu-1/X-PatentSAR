@@ -7,7 +7,8 @@ layout only; this does not claim a unique chemical atom correspondence.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+import math
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Literal
 
@@ -68,12 +69,14 @@ def prepare_layout(
     candidate_molfile: str,
     region: Region,
     proof: Mapping[str, Any],
+    reference_coordinates: Sequence[tuple[float, float]] | None = None,
 ) -> PreviewLayout:
     """Called only after immutable member/fragment/published-proof verification."""
     if proof.get("match_status") != "matched":
         raise SARInputError("drawing_alignment_proof")
+    original_reference = read_molfile(reference_molfile)
     reference, selected = region_view(
-        read_molfile(reference_molfile), region.atom_indices, region.hydrogen_anchor
+        original_reference, region.atom_indices, region.hydrogen_anchor
     )
     candidate, remaining = region_view(
         read_molfile(candidate_molfile),
@@ -102,7 +105,10 @@ def prepare_layout(
     alignment_mapping = tuple((a, b) for a, b in mapping if a in block)
     with rdBase.BlockLogs():
         reason = None
-        depict(reference)
+        if reference_coordinates is None:
+            depict(reference)
+        else:
+            reference_geometry(original_reference, reference, reference_coordinates)
         constrained = Chem.Mol(candidate)
         params: Any = rdDepictor.ConstrainedDepictionParams()
         params.acceptFailure = False
@@ -146,3 +152,40 @@ def prepare_layout(
         layout,
         reason,
     )
+
+
+def reference_geometry(original, view, coordinates):
+    """Original atom order stays the camera anchor, including private H views."""
+    if len(coordinates) != original.GetNumAtoms() or any(
+        not math.isfinite(value) or abs(value) > 1e6
+        for point in coordinates
+        for value in point
+    ):
+        raise SARInputError("drawing_reference_coordinates")
+    conformer = Chem.Conformer(original.GetNumAtoms())
+    conformer.Set3D(False)
+    for index, (x, y) in enumerate(coordinates):
+        conformer.SetAtomPosition(index, (x, y, 0))
+    original.RemoveAllConformers()
+    original.AddConformer(conformer)
+    if view.GetNumAtoms() == original.GetNumAtoms():
+        view.RemoveAllConformers()
+        view.AddConformer(Chem.Conformer(conformer))
+    else:
+        # region_view adds only one private ordinary H; its placement must not
+        # rotate/re-layout the source atoms shared by other matrix directions.
+        params: Any = rdDepictor.ConstrainedDepictionParams()
+        params.acceptFailure = False
+        params.forceRDKit = True
+        params.useRingTemplates = False
+        params.adjustMolBlockWedging = True
+        rdDepictor.GenerateDepictionMatching2DStructure(
+            view, original, [(i, i) for i in range(original.GetNumAtoms())], -1, params
+        )
+    placed = view.GetConformer()
+    if any(
+        abs(placed.GetAtomPosition(i).x - x) > 1e-6
+        or abs(placed.GetAtomPosition(i).y - y) > 1e-6
+        for i, (x, y) in enumerate(coordinates)
+    ):
+        raise SARInputError("drawing_reference_coordinates")

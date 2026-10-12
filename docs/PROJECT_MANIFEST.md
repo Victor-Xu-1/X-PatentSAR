@@ -1,5 +1,16 @@
 # Project governance manifest
 
+- Matrix ownership: `preview_source.py` prepares a single immutable report/input;
+  `study_preview.verified_preview` remains the unique strict member/pair/value
+  proof. `study_matrix.py` and isolated `matrix_models.py` project at most6
+  same-reference candidates, completely refused above8MiB or on any invalid
+  member. `matrix_drawing.py` reuses original-atom native coordinates, existing
+  connected-core alignment, stereo/graph roundtrip and one full matrix camera.
+  Modular frontend matrix components reuse member paging, source/focus/locale
+  authorities, keep raw supporting data and captured predictions separate,
+  and never infer missing PK, activity, properties or confidence. No new
+  dependency, queue, schema, scientific epoch, archive edit or global suite.
+
 - Whole-trash ownership: existing history visibility/lifecycle/lease gates remain
   sole authority. `history_trash_plan.py` prepares a bounded complete four-kind
   snapshot, not a page/category sample. `history_purge.py` publishes all permanent

@@ -2,6 +2,7 @@ import { client } from './index';
 import type { ApiClient } from './client';
 import { ContractError } from './validation';
 import { decodeStudyPreview } from './sarPreviewDecoder';
+import { decodeStudyMatrix } from './sarMatrixDecoder';
 import { decodeSARJob } from './sarJobDecoders';
 import { createSARMutation } from './sarMutation';
 import { sarTransport } from './sarTransport';
@@ -141,6 +142,47 @@ export function createSARStudyApi(shared: ApiClient, rawFetch?: typeof fetch) {
       ),
     export: (id: string, format: StudyExportFormat, signal: AbortSignal) =>
       raw.export(path(id) + '/export?format=' + format, format, signal),
+    matrix: (
+      id: string,
+      dataset: string,
+      reference: string,
+      selections: readonly { region_id: string; molecule_id: string }[],
+      signal: AbortSignal,
+    ) => {
+      if (
+        !selections.length ||
+        selections.length > 6 ||
+        new Set(selections.map((item) => item.molecule_id)).size !== selections.length
+      )
+        throw new ContractError('$.matrix_selection');
+      const query = new URLSearchParams({ reference_id: reference });
+      selections.forEach((item) => {
+        query.append('region_id', item.region_id);
+        query.append('molecule_id', item.molecule_id);
+      });
+      return shared.get(
+        path(id) + '/matrix?' + query,
+        (value) => {
+          const result = decodeStudyMatrix(value);
+          if (
+            result.previews.length !== selections.length ||
+            result.reference_drawing.id !== reference
+          )
+            throw new ContractError('$.matrix_selection');
+          result.previews.forEach((item, index) => {
+            checkJob(item.job, id, dataset);
+            if (
+              item.job.status !== 'complete' ||
+              item.region.id !== selections[index]!.region_id ||
+              item.candidate.molecule_id !== selections[index]!.molecule_id
+            )
+              throw new ContractError('$.matrix_selection');
+          });
+          return result;
+        },
+        signal,
+      );
+    },
   };
 }
 export const sarStudyApi = createSARStudyApi(client);

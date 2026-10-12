@@ -7,6 +7,34 @@ epochs are not product releases and do not retag old results as current.
 
 ## One workflow
 
+### Multi-candidate comparison presentation
+
+`preview_source.py` prepares one receipt-checked current report and immutable
+input for a read. The existing `study_preview.verified_preview` remains the sole
+member/complete-graph/fragment/published-pair and measurement proof for single
+and matrix views. A request-local compiled reference is reused only within the
+same exact region; each candidate still independently passes the full proof.
+`study_matrix.py` admits 1–6 distinct candidates with the same source reference,
+rejects mixed/missing/unproved selections atomically and caps the complete wire
+packet at8MiB. No second matcher, queue, store, persistent cache or model exists.
+
+`matrix_drawing.py` prepares one original-atom reference coordinate system and
+one complete camera extent for every candidate. Private H views constrain the
+original prefix without publishing virtual atom identities. The existing native
+connected-fixed-block alignment and crowded-layout guard stay authoritative;
+independent layout is explicit, and every prepared graph/stereo is roundtripped.
+The unhighlighted reference and highlighted candidate images share the same
+camera, including disconnected components. Source Molfiles/reports are untouched.
+
+`NetworkMatrix`, small header/value/prediction components and typed decoders
+consume that additive read view. One reference column and single row labels show
+all selected and recorded supporting measurements, repeats/censoring/missingness
+and all six properties. Only existing exact-condition scalar comparisons supply
+activity deltas; property deltas require the same recorded origin. Captured
+predictions remain in a separate disclosure, not experimental PK or inference.
+The retained complete member paging, source drawer, image focus and pair preview
+work unchanged. Isolated DTOs keep scientific engine/checkpoint/API1/SQL2 identities.
+
 ### Independent, user-started SAR domain
 
 `csv_mapping_rules.py` is the one intake header-role authority. It reuses the

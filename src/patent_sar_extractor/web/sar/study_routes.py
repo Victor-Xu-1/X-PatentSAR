@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+from typing import Annotated
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from starlette.responses import StreamingResponse
 
 from .indicator_models import IndicatorProfile
+from .matrix_models import StudyMatrix
 from .models import SARJob
 from .preview_models import StudyPreview
 from .study_admission import profile
@@ -101,5 +103,24 @@ def study_routes(service, queue) -> APIRouter:
                 "X-Content-Type-Options": "nosniff",
             },
         )
+
+    @router.get("/jobs/{identifier}/study/matrix", response_model=StudyMatrix)
+    async def comparison_matrix(
+        identifier: str,
+        reference_id: str,
+        region_id: Annotated[list[str] | None, Query(max_length=6)] = None,
+        molecule_id: Annotated[list[str] | None, Query(max_length=6)] = None,
+    ):
+        from .study_matrix import matrix
+
+        async with reads:
+            return await asyncio.to_thread(
+                matrix,
+                queue(),
+                identifier,
+                reference_id,
+                region_id or [],
+                molecule_id or [],
+            )
 
     return router

@@ -1,5 +1,12 @@
 # X-PatentSAR
 
+SAR variable-region results provide reference-first multi-candidate structure
+comparisons: one metric row across independently proved single-site alternatives,
+all six properties, raw supporting readings and separate captured predictions.
+The complete pool stays paged; original identifiers, chemistry, unknown conditions
+and missing data remain unchanged. No new model or scientific task is triggered
+by browsing the comparison matrix.
+
 开源仓库：[Victor-Xu-1/X-PatentSAR](https://github.com/Victor-Xu-1/X-PatentSAR)。
 软件与仓库的对外名称统一为 **X-PatentSAR**；Python 发行包与 CLI 使用规范化技术标识
 `x-patentsar`。第一方源码采用 Apache-2.0，第三方许可和模型边界见 `NOTICE`。
