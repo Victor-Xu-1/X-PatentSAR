@@ -32,7 +32,10 @@ class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
             values["PATENTSAR_E2E_HISTORY_MUTATIONS"], "synthetic-isolated-state"
         )
         self.assertEqual(values["PATENTSAR_E2E_TRASH_CLEAR_RECORDS"], "104")
-        self.assertNotEqual(values["PATENTSAR_E2E_HISTORY_PROJECT_ID"], values["PATENTSAR_E2E_SOURCE_PROJECT_ID"])
+        self.assertNotEqual(
+            values["PATENTSAR_E2E_HISTORY_PROJECT_ID"],
+            values["PATENTSAR_E2E_SOURCE_PROJECT_ID"],
+        )
 
     def test_preview_coverage_scope_uses_only_isolated_sar_fixture(self):
         selected = {PREFIX + "sar-preview-coverage.spec.ts"}
