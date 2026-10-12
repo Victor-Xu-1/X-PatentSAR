@@ -57,6 +57,11 @@ it('offers one all-type/all-page clear even when the selected trash category is 
     />,
   );
   await userEvent.click(screen.getByRole('button', { name: /^Empty Trash$/ }));
+  expect(
+    screen.getByText(
+      'Trashed records can be restored. Empty Trash permanently removes records and verified unreferenced files.',
+    ),
+  ).toBeInTheDocument();
   const dialog = screen.getByRole('dialog', { name: 'Empty Trash?' });
   expect(await within(dialog).findByText('All record types and pages: 204 records.')).toBeVisible();
   expect(api.clearTrash).not.toHaveBeenCalled();

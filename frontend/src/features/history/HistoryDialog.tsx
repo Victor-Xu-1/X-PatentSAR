@@ -104,7 +104,13 @@ export function HistoryDialog({
             </button>
           )}
         </div>
-        <p className="muted">{t(retentionNotice)}</p>
+        <p className="muted">
+          {t(
+            deleted
+              ? '回收站中的记录可恢复；清空后会永久移除记录并清理已核实未引用的文件。'
+              : retentionNotice,
+          )}
+        </p>
         {deleted && <p className="muted">{t('先恢复项目，再恢复该项目下的任务或文件。')}</p>}
         {resource.error ? (
           <ErrorNotice error={resource.error} onRetry={resource.reload} />

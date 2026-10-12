@@ -1,6 +1,8 @@
 /** Recoverable history actions. Record titles and raw block reasons stay verbatim. */
 export const history: Readonly<Record<string, string>> = {
   清空回收站: 'Empty Trash',
+  '回收站中的记录可恢复；清空后会永久移除记录并清理已核实未引用的文件。':
+    'Trashed records can be restored. Empty Trash permanently removes records and verified unreferenced files.',
   '清空回收站？': 'Empty Trash?',
   '正在核对全部回收站…': 'Checking all trashed records…',
   '全部类型、全部分页，共 {count} 条记录。': 'All record types and pages: {count} records.',
