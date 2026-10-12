@@ -52,7 +52,13 @@ it('does not erase tiny imported, manual, modeled or unknown-origin differences'
 it('requires current comparable status, equal native provenance and exact raw subtraction before approximation', () => {
   const data = source('tpsa', 137.11, 137.11000000000004);
   for (const status of [undefined, 'origin_unknown', 'origin_mismatch'] as const) {
-    const guarded = { ...data, property_statuses: status ? { tpsa: status } : undefined };
+    const guarded = status
+      ? { ...data, property_statuses: { tpsa: status } }
+      : {
+          reference: data.reference,
+          candidate: data.candidate,
+          property_differences: data.property_differences,
+        };
     expect(propertyDelta(guarded, 'tpsa').approximate).toBe(false);
   }
   expect(
