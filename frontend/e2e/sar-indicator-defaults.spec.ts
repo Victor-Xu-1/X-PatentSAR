@@ -65,6 +65,18 @@ for (const width of [390, 800, 1672]) {
       setup.getByRole('combobox', { name: 'Activity direction', exact: true }),
     ).toHaveCount(0);
     await expect(setup.getByRole('button', { name: 'Continue', exact: true })).toBeEnabled();
+    const policyGeometry = await setup.locator('.sar-policy .sar-form-grid').evaluateAll((rows) =>
+      rows.map((row) => ({
+        height: row.getBoundingClientRect().height,
+        children: [...row.children].map((child) => ({
+          tag: child.tagName,
+          height: child.getBoundingClientRect().height,
+          margin: getComputedStyle(child).margin,
+        })),
+      })),
+    );
+    console.log('automatic-policy-geometry', JSON.stringify({ width, policyGeometry }));
+    expect(policyGeometry.every((row) => row.height <= 80)).toBe(true);
     await page.screenshot({
       path: test.info().outputPath(`known-rules-${width}.png`),
       fullPage: true,
