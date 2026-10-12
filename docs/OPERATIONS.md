@@ -180,6 +180,15 @@ changed-path set. The validator/runner refuses stale, unsafe, wildcard,
 overlapping and whole-inventory selections rather than silently widening scope.
 Use explicit Python names and frontend/browser spec paths; empty selections
 invoke no test engine. CI still builds and audits the actual distribution.
+Before native browser verification, `tools/wait_browser_server.py` waits at most
+30 seconds for the already-started owned PID and loopback health schema with the
+exact installed package version. It ignores proxies, refuses redirects and
+invalid identity, and never starts/stops a service or invokes models. Dependency
+readiness is still checked by the relevant product workflow, not fabricated by
+this HTTP startup gate. Native matrix checks wait for a real column/end stop and
+physically hit-test visible identifiers; smooth-motion start is not completion.
+On CI failure only controlled failure PNGs are retained for seven days; private
+local patent captures, traces, sessions, databases and credentials are not uploaded.
 The former automatic full-unittest runs are retained as historical records;
 their existence is not evidence that this policy was previously enforced.
 
