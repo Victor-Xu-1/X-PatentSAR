@@ -99,9 +99,12 @@ for (const { width, height } of [
     await expect(setup.getByText('Confirm direction; source grades must be unique.')).toHaveCount(
       0,
     );
-    await setup
-      .getByRole('combobox', { name: 'Activity direction', exact: true })
-      .selectOption('lower');
+    await expect(
+      setup.getByRole('combobox', { name: 'Activity direction', exact: true }),
+    ).toHaveCount(0);
+    await expect(setup.getByRole('status', { name: 'Activity direction', exact: true })).toHaveText(
+      'Automatic · Lower is stronger',
+    );
     await expect(
       setup.getByText('Concentration potency uses the tenth strongest measurement’s decade.'),
     ).toBeVisible();

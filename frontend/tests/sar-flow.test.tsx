@@ -72,7 +72,7 @@ describe('complete independent SAR frontend contract flow', () => {
     render(<App />);
     await userEvent.click(await screen.findByRole('button', { name: 'Continue' }));
     await userEvent.click(await screen.findByText('Single-reference comparison (advanced)'));
-    expect(await screen.findByText('原文 missing')).toBeVisible();
+    expect(await screen.findByRole('rowheader', { name: '原文 missing' })).toBeVisible();
     await userEvent.click(screen.getAllByRole('button', { name: 'Reference' })[0]!);
     const image = await screen.findByRole('img', { name: 'RDKit reference drawing' });
     fireEvent.load(image);

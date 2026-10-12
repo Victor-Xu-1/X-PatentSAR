@@ -89,18 +89,21 @@ for (const width of [390, 800, 1672]) {
     await page
       .getByRole('combobox', { name: 'Activity metric', exact: true })
       .selectOption(dataset.metrics[0].id);
-    await page
-      .getByRole('combobox', { name: 'Activity direction', exact: true })
-      .selectOption('lower');
+    await expect(
+      page.getByRole('combobox', { name: 'Activity direction', exact: true }),
+    ).toHaveCount(0);
+    await expect(page.getByRole('status', { name: 'Activity direction', exact: true })).toHaveText(
+      'Automatic · Lower is stronger',
+    );
     // Same-document navigation/language changes must not erase the selection.
     await page
       .getByRole('combobox', { name: 'Interface language', exact: true })
       .selectOption('zh-CN');
     await expect(page.getByText('区域已保存 · 1 个连接点', { exact: true })).toBeVisible();
     await page.getByRole('combobox', { name: '界面语言', exact: true }).selectOption('en');
-    await expect(
-      page.getByRole('combobox', { name: 'Activity direction', exact: true }),
-    ).toHaveValue('lower');
+    await expect(page.getByRole('status', { name: 'Activity direction', exact: true })).toHaveText(
+      'Automatic · Lower is stronger',
+    );
     const submitted = page.waitForResponse(
       (response) =>
         /\/api\/v1\/sar\/datasets\/[^/]+\/jobs$/.test(response.url()) &&

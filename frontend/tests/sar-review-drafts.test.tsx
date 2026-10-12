@@ -111,12 +111,14 @@ describe('SAR review: retained drafts do not authorize writes', () => {
   it('preserves incomplete selections, text and search through refresh/error, without remounting or treating cached data as current', async () => {
     render(<DatasetWorkbench {...props} active />);
     const draft = await enterDraft(false);
+    await userEvent.click(screen.getByRole('button', { name: 'Change reference' }));
     const search = screen.getByRole('searchbox', { name: 'Search identifiers or SMILES' });
     expect(search).toHaveAttribute('maxlength', '200');
     fireEvent.change(search, { target: { value: '[C@H](O)Cl %_' } });
     await waitFor(() =>
       expect(vi.mocked(sarApi.molecules).mock.calls.at(-1)?.[2]).toBe('[C@H](O)Cl %_'),
     );
+    await userEvent.click(screen.getByRole('button', { name: 'Return to selection' }));
     vi.mocked(sarApi.dataset).mockRejectedValueOnce(new Error('read unavailable 原文'));
     const panel = screen.getByRole('heading', { name: sarDataset.title }).closest('section')!;
     await userEvent.click(within(panel).getByRole('button', { name: 'Refresh' }));
@@ -133,7 +135,8 @@ describe('SAR review: retained drafts do not authorize writes', () => {
     expect(screen.getByRole('textbox', { name: /等级顺序/ })).toBe(draft.grades);
     await userEvent.click(within(panel).getByRole('button', { name: '刷新' }));
     await waitFor(() => expect(screen.getByRole('button', { name: '保存区域' })).toBeEnabled());
-    expect(screen.getByRole('searchbox', { name: '搜索编号或 SMILES' })).toBe(search);
+    expect(search).toBeInTheDocument();
+    expect(search.closest('label')).toHaveTextContent('搜索编号或 SMILES');
     expect(sarApi.saveRegion).not.toHaveBeenCalled();
   });
   it('keeps text but invalidates the selected region when revalidation finds a new dataset revision', async () => {

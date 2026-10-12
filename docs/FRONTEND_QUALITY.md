@@ -1,5 +1,14 @@
 # Product craft and acceptance
 
+SAR setup reduces routine operation through server-owned endpoint polarity, not
+front-end name guessing. Known metrics show one compact translated automatic
+direction status; unknown metrics alone show a selector. The same component and
+typed profile facts serve whole-study and single-reference forms. Original names,
+conditions, units and grade labels remain source-owned. Failed or inactive reads
+cannot authorize submission using cached defaults, and changing a metric does
+not borrow another metric's manual direction or grade order. Only explicit Run
+submits work; entry, language switching, selection and refresh are read-only.
+
 X-PatentSAR uses restrained biomedical-workbench presentation: original documents,
 structures, raw measurements and the user's next action take priority over technical
 metadata. Award and commercial quality are design targets, not certification claims.

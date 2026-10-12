@@ -61,7 +61,9 @@ export function StudySetup({
     scope: JSON.stringify([scope, dataset.id, dataset.revision]),
   });
   const ready = profile.validated && !disabled && !dataset.stale;
-  const policies = selected.map((id) => policyFromDraft(id, drafts[id] ?? emptyPolicy()));
+  const policies = selected.map((id) =>
+    policyFromDraft(id, drafts[id] ?? emptyPolicy(), profile.data?.policy_defaults?.[id]),
+  );
   const declarations = selected.map((id) => {
     const context = profile.data?.contexts.find((item) => item.id === id);
     const draft = conditionDrafts[id] ?? emptyCondition();
@@ -157,6 +159,7 @@ export function StudySetup({
                     key={id}
                     context={context}
                     draft={drafts[id] ?? emptyPolicy()}
+                    hint={profile.data?.policy_defaults?.[id]}
                     onChange={(draft) => setDrafts((old) => ({ ...old, [id]: draft }))}
                   />
                   <ConditionEditor

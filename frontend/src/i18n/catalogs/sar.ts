@@ -1,5 +1,6 @@
 /** UI copy only; source labels, grade values, issues and experiment data stay raw. */
 export const sar: Record<string, string> = {
+  '自动 · {direction}': 'Automatic · {direction}',
   分析步骤: 'Analysis steps',
   选择数据: 'Data',
   '自定义名称（可选）': 'Name (optional)',

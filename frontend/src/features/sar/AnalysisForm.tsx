@@ -1,10 +1,15 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { sarApi } from '../../api/sarApi';
 import type { AnalysisRequest, Dataset, Region, SARJob } from '../../api/sarTypes';
 import { useTranslation } from '../../i18n';
 import { gradeOrder, newRequestId } from './presentation';
 import { MutationNotice } from './MutationNotice';
 import { useSARMutation } from './useSARMutation';
+import { sarStudyApi } from '../../api/sarStudyApi';
+import { useSARResource } from './useSARResource';
+import { SARFailure } from './SARFailure';
+import { IndicatorDirection } from './IndicatorDirection';
+import { resolvedDirection } from './study/policyDraft';
 export function AnalysisForm({
   dataset,
   region,
@@ -25,6 +30,17 @@ export function AnalysisForm({
   const [direction, setDirection] = useState<'lower' | 'higher' | ''>('');
   const [grades, setGrades] = useState('');
   const [confirm, setConfirm] = useState(false);
+  const load = useCallback(
+    (signal: AbortSignal) => sarStudyApi.profile(dataset.id, dataset.revision, signal),
+    [dataset.id, dataset.revision],
+  );
+  const profile = useSARResource(
+    'sar:reference-profile:' + dataset.id + ':' + dataset.revision,
+    active && !busy && !dataset.stale,
+    load,
+  );
+  const hint = profile.data?.metric_defaults?.[metricId];
+  const effectiveDirection = resolvedDirection(direction, hint);
   const mutation = useSARMutation({
     active,
     scope: JSON.stringify([scope, dataset.id, dataset.revision]),
@@ -39,7 +55,8 @@ export function AnalysisForm({
   const valid =
     current &&
     dataset.metrics.some((metric) => metric.id === metricId) &&
-    direction !== '' &&
+    effectiveDirection !== '' &&
+    profile.validated &&
     order.valid &&
     active &&
     !busy;
@@ -55,7 +72,7 @@ export function AnalysisForm({
             expected_dataset_revision: dataset.revision,
             region_id: region.id,
             metric_id: metricId,
-            direction,
+            direction: effectiveDirection,
             grade_order: order.values,
             confirm_context: confirm,
           };
@@ -66,7 +83,14 @@ export function AnalysisForm({
           <div className="sar-form-grid">
             <label>
               {t('活性指标')}
-              <select value={metricId} onChange={(e) => setMetricId(e.target.value)}>
+              <select
+                value={metricId}
+                onChange={(e) => {
+                  setMetricId(e.target.value);
+                  setDirection('');
+                  setGrades('');
+                }}
+              >
                 <option value="">{t('请选择活性指标')}</option>
                 {dataset.metrics.map((metric) => (
                   <option value={metric.id} key={metric.id}>
@@ -77,17 +101,7 @@ export function AnalysisForm({
                 ))}
               </select>
             </label>
-            <label>
-              {t('活性方向')}
-              <select
-                value={direction}
-                onChange={(e) => setDirection(e.target.value as typeof direction)}
-              >
-                <option value="">{t('请选择方向')}</option>
-                <option value="lower">{t('越低越强')}</option>
-                <option value="higher">{t('越高越强')}</option>
-              </select>
-            </label>
+            <IndicatorDirection value={direction} hint={hint} onChange={setDirection} />
           </div>
           <label>
             {t('等级顺序（可选，最强在前，每行一个原始等级）')}
@@ -113,6 +127,7 @@ export function AnalysisForm({
           </button>
         </fieldset>
       </form>
+      {profile.error && <SARFailure error={profile.error} onRetry={profile.reload} />}
       <MutationNotice mutation={mutation} disabled={!active || busy || dataset.stale} />
     </section>
   );

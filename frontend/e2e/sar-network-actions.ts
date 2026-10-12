@@ -58,13 +58,11 @@ export async function createNetwork(page: Page, width: number, csv = terminalCSV
   const setup = page.getByRole('region', { name: 'Study setup', exact: true });
   await setup.getByRole('checkbox', { name: /IC50/ }).check();
   await setup.getByRole('checkbox', { name: /t_half/ }).check();
+  await expect(setup.getByRole('status', { name: 'Activity direction', exact: true })).toHaveText(
+    'Automatic · Lower is stronger',
+  );
   await setup
     .getByRole('combobox', { name: 'Activity direction', exact: true })
-    .first()
-    .selectOption('lower');
-  await setup
-    .getByRole('combobox', { name: 'Activity direction', exact: true })
-    .nth(1)
     .selectOption('higher');
   await setup.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(

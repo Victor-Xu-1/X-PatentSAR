@@ -20,6 +20,11 @@ COMMON = {
 MODES = (
     (
         "sar",
+        "sar-indicator-defaults.spec.ts",
+        COMMON | {"sar-indicator-defaults.spec.ts"},
+    ),
+    (
+        "sar",
         "sar-manual-directions.spec.ts",
         COMMON | {"sar-manual-directions.spec.ts", "sar-single-site.spec.ts"},
     ),

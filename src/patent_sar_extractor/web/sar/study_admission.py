@@ -7,11 +7,13 @@ from ...core.sar.study_contexts import context_catalog
 from ...core.sar.values import grade_ranks
 from ..errors import WebError
 from .admission import existing, publish
+from .indicator_models import IndicatorProfile
+from .indicator_policy import setup_defaults, validate_direction
 from .source_scope import included_molecules
-from .study_models import StudyProfile, StudyRequest
+from .study_models import StudyRequest
 
 
-def profile(service, dataset_id: str) -> StudyProfile:
+def profile(service, dataset_id: str) -> IndicatorProfile:
     dataset = service.dataset(dataset_id)
     molecules = included_molecules(service.datasets.all(dataset_id))
     ids = {row.id for row in molecules}
@@ -26,10 +28,13 @@ def profile(service, dataset_id: str) -> StudyProfile:
             "sar_study_context",
             "Recorded contexts exceed their complete-catalog bound.",
         ) from error
-    return StudyProfile(
+    policies, metrics = setup_defaults(contexts)
+    return IndicatorProfile(
         dataset_id=dataset.id,
         dataset_revision=dataset.revision,
         contexts=contexts,
+        policy_defaults=policies,
+        metric_defaults=metrics,
         regions=[
             region
             for region in service.datasets.regions(dataset_id)
@@ -83,6 +88,8 @@ def enqueue_study(queue, dataset_id: str, request: StudyRequest):
             "sar_study_context",
             "Select distinct exact contexts from this dataset.",
         )
+    for policy in request.policies:
+        validate_direction(known[policy.context_id], policy.direction)
     try:
         validate_declarations(
             dataset.model_dump(),
