@@ -87,6 +87,17 @@ service is introduced. New preview DTOs are isolated in `preview_models.py` so
 visual work does not invalidate scientific checkpoints. Raw/provenance detail is
 available on demand; missing/failed/stale states remain explicit.
 
+Preview member browsing uses the retained paged `changes`/region selector, not
+the opened fragment group, so all published alternatives for the same frozen
+background can be selected without a new analysis. `preview_records.py` indexes
+each source observation once by the shared exact context identity and projects
+unselected supporting readings through additive bounded preview DTOs. It does
+not infer direction, conditions, uncertainty, numeric deltas or SAR conclusions.
+Selected scientific comparisons remain on the unchanged authority; raw supporting
+PK/activity, repeats/censored/empty strings and source context labels remain
+distinct. Unknown/overlapping contexts are refused, not silently reassigned.
+No source report/engine/queue/store/schema/dependency change is introduced.
+
 The Variable-regions view uses one `StudyNetwork` core/rows/preview workbench for
 both manually specified and automatically discovered regions. Original region
 origins/names and immutable producer reports do not change. Manual no-variation

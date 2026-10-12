@@ -33,21 +33,19 @@ export function TransformationPreview({
   const regionId = summary.region.id;
   const [selected, setSelected] = useState(moleculeId);
   const [page, setPage] = useState(1);
-  const fragmentId =
-    summary.fragments.find((fragment) => fragment.molecule_ids.includes(moleculeId))?.id ?? '';
   const loadMembers = useCallback(
     (signal: AbortSignal) =>
       sarStudyApi.rows(
         jobId,
         report.dataset_id,
         page,
-        { query: '', scope: 'all', scaffold_id: '', region_id: regionId, fragment_id: fragmentId },
+        { query: '', scope: 'changes', scaffold_id: '', region_id: regionId, fragment_id: '' },
         signal,
       ),
-    [jobId, report.dataset_id, regionId, fragmentId, page],
+    [jobId, report.dataset_id, regionId, page],
   );
   const members = useSARResource(
-    JSON.stringify(['sar:preview-members', jobId, regionId, fragmentId, page]),
+    JSON.stringify(['sar:preview-members', jobId, regionId, page]),
     active,
     loadMembers,
   );

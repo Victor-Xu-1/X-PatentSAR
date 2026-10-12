@@ -15,6 +15,7 @@ from ..errors import WebError
 from .assets import digest
 from .models import Pair
 from .preview_models import PreviewMeasurement, StudyPreview
+from .preview_records import recorded_measurements
 from .study_results import StudyResults
 
 
@@ -189,5 +190,11 @@ def preview(queue, identifier: str, region_id: str, molecule_id: str) -> StudyPr
         candidate=alt,
         pair=pair,
         measurements=measurements,
+        recorded_measurements=recorded_measurements(
+            reference,
+            candidate,
+            report.contexts,
+            {policy.context_id for policy in report.policies},
+        ),
         property_differences=differences,
     )

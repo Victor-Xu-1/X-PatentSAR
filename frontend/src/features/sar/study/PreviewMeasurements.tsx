@@ -1,11 +1,20 @@
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import type { StudyReport, StudyPreview } from '../../../api/sarStudyTypes';
 import { useTranslation } from '../../../i18n';
-import { differenceText, propertyText } from './tablePresentation';
+import { differenceText, previewValueText, propertyText } from './tablePresentation';
 import { contextLabel } from '../presentation';
 import { PreviewProperties } from './PreviewProperties';
+import { PreviewRecordedRows } from './PreviewRecordedRows';
+import { ContractError } from '../../../api/validation';
+import { SARFailure } from '../SARFailure';
 export function PreviewMeasurements({ data, report }: { data: StudyPreview; report: StudyReport }) {
   const { t } = useTranslation();
+  if (
+    data.recorded_measurements?.some(
+      (reading) => !report.contexts.some((context) => context.id === reading.context_id),
+    )
+  )
+    return <SARFailure error={new ContractError('$.preview.recorded_measurements')} />;
   return (
     <>
       <div className="sar-preview-data">
@@ -29,13 +38,13 @@ export function PreviewMeasurements({ data, report }: { data: StudyPreview; repo
                       <span className="sar-preview-compound-label" aria-hidden="true">
                         {data.reference.label}
                       </span>
-                      {measurement.reference_values.join(' · ') || '—'}
+                      {previewValueText(measurement.reference_values)}
                     </td>
                     <td>
                       <span className="sar-preview-compound-label" aria-hidden="true">
                         {data.candidate.label}
                       </span>
-                      {measurement.candidate_values.join(' · ') || '—'}
+                      {previewValueText(measurement.candidate_values)}
                     </td>
                     <td className="sar-preview-change">
                       <span className={'sar-delta is-' + measurement.comparison}>
@@ -76,6 +85,7 @@ export function PreviewMeasurements({ data, report }: { data: StudyPreview; repo
                   </tr>
                 );
               })}
+              <PreviewRecordedRows data={data} report={report} />
             </tbody>
           </table>
         </div>
