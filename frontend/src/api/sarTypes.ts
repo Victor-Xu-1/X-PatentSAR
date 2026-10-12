@@ -61,6 +61,7 @@ export interface MoleculePage {
   page_size: number;
 }
 export interface CSVPreview {
+  mapping_defaults?: CSVMappingDefaults;
   token: string;
   filename: string;
   headers: string[];
@@ -69,6 +70,12 @@ export interface CSVPreview {
   suggested_id: string | null;
   suggested_smiles: string | null;
   suggested_activities: string[];
+}
+export interface CSVMappingDefaults {
+  columns: Record<string, string>;
+  property_columns: Record<string, string>;
+  prediction_columns: Record<string, string>;
+  ambiguous_roles: string[];
 }
 export interface CSVMapping {
   token: string;

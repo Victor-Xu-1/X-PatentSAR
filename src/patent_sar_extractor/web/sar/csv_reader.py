@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import csv
 import io
-import re
 
 from ..errors import WebError
-from .models import CSVPreview
+from .csv_mapping_rules import mapping_defaults
+from .csv_preview_models import CSVImportPreview
 
 MAX_CSV_BYTES = 8 * 1024 * 1024
 MAX_ROWS = 25000
@@ -71,51 +71,10 @@ def parse_csv(data: bytes) -> tuple[list[str], list[dict[str, str]]]:
         ) from error
 
 
-def preview(data: bytes, filename: str, token: str) -> CSVPreview:
+def preview(data: bytes, filename: str, token: str) -> CSVImportPreview:
     headers, rows = parse_csv(data)
-    normalized = {re.sub(r"[\s_-]", "", key.casefold()): key for key in headers}
-
-    def named(*aliases: str) -> str | None:
-        return next((normalized[name] for name in aliases if name in normalized), None)
-
-    identity = named(
-        "identifierlabel",
-        "compoundid",
-        "displayid",
-        "compound",
-        "id",
-        "编号",
-        "化合物编号",
-        "化合物",
-    )
-    smiles = named("smiles", "canonicalsmiles", "isomericsmiles")
-    long = {"metric", "value"}.issubset(headers)
-    ignored = {
-        identity,
-        smiles,
-        named("assay"),
-        named("target"),
-        named("unit"),
-        named("cellline"),
-        named("duration"),
-    }
-    candidates = (
-        ["value"]
-        if long
-        else [
-            key
-            for key in headers
-            if key not in ignored
-            and any(
-                re.fullmatch(
-                    r"\s*(?:[<>≤≥~]?\s*[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?\s*(?:[a-zA-Zµμ%/]+)?|[A-G]|\+{1,6})\s*",
-                    row[key],
-                )
-                for row in rows[:20]
-            )
-        ][:64]
-    )
-    return CSVPreview(
+    identity, smiles, candidates, defaults = mapping_defaults(headers)
+    return CSVImportPreview(
         token=token,
         filename=filename,
         headers=headers,
@@ -124,4 +83,5 @@ def preview(data: bytes, filename: str, token: str) -> CSVPreview:
         suggested_id=identity,
         suggested_smiles=smiles,
         suggested_activities=candidates,
+        mapping_defaults=defaults,
     )

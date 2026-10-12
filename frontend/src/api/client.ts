@@ -204,6 +204,8 @@ export class ApiClient {
     }
   }
   private unconfirmedResponse(status: number, error: unknown): ApiError {
+    if (error instanceof ApiError)
+      return new ApiError(status, error.code, error.source, true, error.values);
     return new ApiError(
       status,
       'invalid_write_response',

@@ -144,9 +144,20 @@ export const csvPreview: CSVPreview = {
       assay: '原始实验',
     },
   ],
-  suggested_id: 'compound_id',
+  suggested_id: 'identifier_label',
   suggested_smiles: 'smiles',
   suggested_activities: ['value'],
+  mapping_defaults: {
+    columns: {
+      metric_column: 'metric',
+      unit_column: 'unit',
+      target_column: 'target',
+      assay_column: 'assay',
+    },
+    property_columns: {},
+    prediction_columns: {},
+    ambiguous_roles: [],
+  },
 };
 export const studyContext: StudyContext = {
   id: 'e'.repeat(64),

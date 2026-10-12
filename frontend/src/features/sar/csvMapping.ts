@@ -22,19 +22,26 @@ export function researchMappingValid(draft: MappingDraft, preview: CSVPreview) {
   );
 }
 export function initialMapping(preview: CSVPreview): MappingDraft {
-  const has = (name: string) => (preview.headers.includes(name) ? name : null);
-  const longForm = has('metric') && has('value');
+  const defaults = preview.mapping_defaults;
+  const columns = defaults?.columns ?? {};
   return {
     title: preview.filename.replace(/\.csv$/i, ''),
-    id_column: has('identifier_label') ?? has('compound_id') ?? preview.suggested_id ?? '',
-    smiles_column: has('smiles') ?? preview.suggested_smiles ?? '',
-    activity_columns: longForm ? ['value'] : [...preview.suggested_activities],
-    metric_column: has('metric'),
-    unit_column: has('unit'),
-    target_column: has('target'),
-    assay_column: has('assay'),
-    cell_line_column: has('cell_line'),
-    duration_column: has('duration'),
+    id_column: preview.suggested_id ?? '',
+    smiles_column: preview.suggested_smiles ?? '',
+    activity_columns: [...preview.suggested_activities],
+    metric_column: columns.metric_column ?? null,
+    unit_column: columns.unit_column ?? null,
+    target_column: columns.target_column ?? null,
+    assay_column: columns.assay_column ?? null,
+    cell_line_column: columns.cell_line_column ?? null,
+    duration_column: columns.duration_column ?? null,
+    source_page_column: columns.source_page_column ?? null,
+    ...(defaults
+      ? {
+          property_columns: { ...defaults.property_columns },
+          prediction_columns: { ...defaults.prediction_columns },
+        }
+      : {}),
   };
 }
 export function mappingValid(draft: MappingDraft, preview: CSVPreview) {
