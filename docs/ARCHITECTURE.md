@@ -73,6 +73,8 @@ more than one member. A single original core goes directly to that same map and
 proved branch selector. This decision uses the complete collection, never the
 filtered page, so narrowing a multi-core search cannot remove the search control.
 The scientific selection/rows authorities and stored identities are unchanged.
+Single-core selection bypasses the hidden gallery's search/page state without
+writing or resetting those preferences or altering the scientific source.
 
 Engine3 adds one prepared `DistributionContext` per exact selected context;
 every source-ID population is a disjoint partition while raw repeat observations

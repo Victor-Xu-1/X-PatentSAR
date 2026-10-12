@@ -429,3 +429,52 @@ it('uses correct singular counts without altering original labels on locale chan
   expect(document.querySelector('.sar-network-tools')).toHaveTextContent('1 个核心 · 1 对变化');
   expect(screen.getByRole('button', { name: '比较 原文 a' })).toBeVisible();
 });
+
+it('does not carry an invisible multi-core search into a single-core report', async () => {
+  const other = {
+    ...sites[1]!,
+    reference_label: 'Example I-255',
+    region: { ...sites[1]!.region, molecule_id: 'other-core' },
+  };
+  const view = render(
+    <StudyNetwork
+      report={{ ...report, regions: [sites[0]!, other] }}
+      jobId={studyJob.id}
+      active
+      onSource={vi.fn()}
+    />,
+  );
+  await userEvent.type(screen.getByRole('textbox', { name: 'Find a core ID' }), 'I-255');
+  view.rerender(<StudyNetwork report={report} jobId={studyJob.id} active onSource={vi.fn()} />);
+  expect(screen.queryByRole('textbox', { name: 'Find a core ID' })).not.toBeInTheDocument();
+  expect(document.querySelector('.sar-network-map')).toBeVisible();
+  expect(await screen.findByRole('button', { name: 'Compare 原文 shared' })).toBeVisible();
+  expect(screen.queryByText('No core structures to show')).not.toBeInTheDocument();
+});
+
+it('does not carry a hidden later gallery page into a single-core report', async () => {
+  const many = Array.from({ length: 7 }, (_, index) => ({
+    ...sites[0]!,
+    reference_label: 'Original ' + (index + 1),
+    region: { ...sites[0]!.region, molecule_id: 'reference-' + index },
+  }));
+  const view = render(
+    <StudyNetwork
+      report={{ ...report, regions: many }}
+      jobId={studyJob.id}
+      active={false}
+      onSource={vi.fn()}
+    />,
+  );
+  await userEvent.click(screen.getByRole('button', { name: 'Next page' }));
+  view.rerender(
+    <StudyNetwork
+      report={{ ...report, regions: [many[0]!] }}
+      jobId={studyJob.id}
+      active={false}
+      onSource={vi.fn()}
+    />,
+  );
+  expect(screen.getByRole('heading', { name: 'Reference region map · Original 1' })).toBeVisible();
+  expect(screen.queryByText('No core structures to show')).not.toBeInTheDocument();
+});

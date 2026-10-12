@@ -491,3 +491,6 @@ Multiple-core search and six-card pagination retain their existing authority,
 including when the filtered page contains only one core. Original identity,
 site selection, preview/focus, table navigation and locale preservation remain
 unchanged. Singular count captions are localized as interface text only.
+When a mounted report becomes single-core, hidden search/page preferences do not
+filter that sole original map or create a false empty state. Multi-core controls
+keep their explicit user preferences; no source state or scientific data is reset.

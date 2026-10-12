@@ -47,10 +47,10 @@ export function StudyNetwork({
       .map(([id, group]) => ({ id, ...group, compact: compactNetworkSites(group.sites) }))
       .toSorted((a, b) => a.label.localeCompare(b.label, 'en', { numeric: true }));
   }, [report.regions, report.discovery]);
-  const filtered = centres.filter((centre) =>
-    centre.label.toLowerCase().includes(search.toLowerCase().trim()),
-  );
   const multiple = centres.length > 1;
+  const filtered = multiple
+    ? centres.filter((centre) => centre.label.toLowerCase().includes(search.toLowerCase().trim()))
+    : centres;
   const selected = filtered.find((centre) => centre.id === reference) ?? filtered[0];
   const compact = selected?.compact ?? [];
   const visibleSites = allSites ? (selected?.sites ?? []) : compact;
@@ -60,7 +60,7 @@ export function StudyNetwork({
       ? { ...item, region: { ...item.region, name: 'R' + (index + 1) } }
       : item,
   );
-  const showing = filtered.slice((page - 1) * 6, page * 6);
+  const showing = multiple ? filtered.slice((page - 1) * 6, page * 6) : filtered;
   const matches = useMemo(
     () =>
       new Set(
