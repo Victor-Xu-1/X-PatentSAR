@@ -1,5 +1,18 @@
 # X-PatentSAR Web API v1
 
+## Strict SAR comparison matrix (read-only)
+
+`GET /api/v1/sar/jobs/{job}/study/matrix?reference_id=...&region_id=...&molecule_id=...`
+uses the existing session/visibility boundary. Repeated `region_id` and
+`molecule_id` parameters are ordered pairs, 1–6 distinct candidates, all with
+the same immutable reference. It returns `reference_drawing` and `previews`
+using the existing strict preview contract, with native shared-camera images.
+No partial matrix is returned: invalid/mixed/unproved selection is422, changed
+source/published proof409, and complete wire packet over8MiB413. Each candidate
+retains raw supporting observations, selected-context comparison, origin-safe
+property differences and separately labelled captured predictions. It does
+not mutate datasets, start jobs/inference or change engine/database identity.
+
 ## Independent SAR research
 
 All `/api/v1/sar` endpoints retain the existing same-origin session and write-CSRF

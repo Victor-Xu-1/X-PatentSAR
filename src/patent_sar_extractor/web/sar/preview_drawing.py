@@ -21,11 +21,11 @@ HIGHLIGHT = (0.25, 0.80, 0.60)
 
 
 def camera(layout: PreviewLayout) -> tuple[Point2D, Point2D]:
-    points = [
-        point
-        for mol in (layout.reference, layout.candidate)
-        for point in mol.GetConformer().GetPositions()
-    ]
+    return molecule_bounds((layout.reference, layout.candidate))
+
+
+def molecule_bounds(molecules: Sequence[Chem.Mol]) -> tuple[Point2D, Point2D]:
+    points = [point for mol in molecules for point in mol.GetConformer().GetPositions()]
     if any(not math.isfinite(v) or abs(v) > 1e6 for point in points for v in point):
         raise SARInputError("drawing_coordinates_invalid")
     # Shared complete extent includes the changed region, isotopes, salts and

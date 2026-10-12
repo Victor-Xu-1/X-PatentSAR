@@ -193,6 +193,18 @@ The recovered E-drive deployment has an operator-owned entry point at `/srv/wsl/
 
 ### Independent SAR workbench
 
+The Variable-regions workbench now displays up to six current-page strict
+alternatives beside one reference, with one row per metric/property. The full
+member pool remains paged, not truncated. Click a region for its exact series,
+or use All directions for independently proved single-region changes from the
+same reference. Source labels/values are never localized. Recorded supporting
+measurements (including PK only when provided) are raw, not assigned invented
+direction/deltas; captured predictions are a separate optional disclosure.
+The authenticated matrix GET prepares no task/model and rejects invalid members,
+mixed references or complete responses over8MiB instead of partial success.
+Existing source/pair inspection remains available. This presentation-only
+upgrade needs no dataset migration/re-run or scientific engine/checkpoint retag.
+
 SAR engine3 invalidates older interrupted scientific checkpoints; create a new
 explicit study rather than retagging/reusing them. Completed engine2 reports remain
 readable as historical raw-observation charts. Private SQL schema2 and report

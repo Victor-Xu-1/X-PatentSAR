@@ -10,6 +10,7 @@ import { setLocale } from '../src/i18n';
 import {
   sarDataset,
   sarDrawing,
+  sarPair,
   studyFragment,
   studyJob,
   studyReport,
@@ -56,9 +57,45 @@ beforeEach(() => {
     page: 1,
     page_size: 6,
   });
+  vi.spyOn(sarStudyApi, 'matrix').mockImplementation(
+    async (_job, _dataset, reference, selections) => ({
+      reference_drawing: { id: reference, svg: sarDrawing.svg },
+      previews: selections.map((selection) => ({
+        job: studyJob,
+        region: { ...base.region, id: selection.region_id, molecule_id: reference },
+        reference: { ...studyRow, molecule_id: reference },
+        candidate: rows.find((row) => row.molecule_id === selection.molecule_id)!,
+        pair: {
+          ...sarPair,
+          reference_id: reference,
+          molecule_id: selection.molecule_id,
+          region_id: selection.region_id,
+          match_status: 'matched',
+        },
+        measurements: [
+          {
+            context_id: studyReport.policies[0]!.context_id,
+            reference_values: ['<10'],
+            candidate_values: ['<10'],
+            comparison: 'indeterminate',
+            evidence_basis: 'insufficient',
+            raw_difference: null,
+          },
+        ],
+        property_differences: {},
+        drawings: {
+          reference: { id: reference, svg: sarDrawing.svg },
+          candidate: { id: selection.molecule_id, svg: sarDrawing.svg },
+          layout: 'fixed_background',
+          equivalent_mappings: 1,
+          reason: null,
+        },
+      })),
+    }),
+  );
 });
 
-it('starts with all proved directions through one paged read and one card per original candidate', async () => {
+it('starts with all proved directions through one paged read and one matrix column per original candidate', async () => {
   const original = JSON.stringify(report);
   render(<StudyNetwork report={report} jobId={studyJob.id} active onSource={vi.fn()} />);
   await screen.findByRole('button', { name: 'Compare 原文 shared' });
@@ -72,17 +109,18 @@ it('starts with all proved directions through one paged read and one card per or
     'aria-pressed',
     'true',
   );
-  const cards = document.querySelectorAll('.sar-network-branch');
-  expect(cards).toHaveLength(3);
-  const shared = [...cards].find((card) =>
-    within(card as HTMLElement).queryByRole('button', { name: 'Compare 原文 shared' }),
-  )!;
-  expect(
-    within(shared as HTMLElement).getByRole('button', { name: 'View region R1' }),
-  ).toBeVisible();
-  expect(
-    within(shared as HTMLElement).getByRole('button', { name: 'View region R2' }),
-  ).toBeVisible();
+  const table = screen.getByRole('table', { name: 'Structure comparison' });
+  expect(within(table).getAllByRole('columnheader')).toHaveLength(5);
+  const shared = screen.getByRole('button', { name: 'Compare 原文 shared' }).closest('th')!;
+  const selector = within(shared).getByRole('combobox', { name: 'Variable regions · 原文 shared' });
+  expect(within(selector).getByRole('option', { name: 'R1' })).toBeInTheDocument();
+  expect(within(selector).getByRole('option', { name: 'R2' })).toBeInTheDocument();
+  await userEvent.selectOptions(selector, 'direction-b');
+  await waitFor(() =>
+    expect(vi.mocked(sarStudyApi.matrix).mock.calls.at(-1)?.[3].at(-1)?.region_id).toBe(
+      'direction-b',
+    ),
+  );
   expect(JSON.stringify(report)).toBe(original);
 });
 
@@ -314,8 +352,8 @@ it('keeps manual branch captions aligned with the core map before and after narr
   function caption() {
     return screen
       .getByRole('button', { name: 'Compare 原文 b' })
-      .closest('article')!
-      .querySelector('.sar-branch-site-label');
+      .closest('th')!
+      .querySelector('.sar-matrix-site');
   }
   await screen.findByRole('button', { name: 'Compare 原文 b' });
   expect(caption()).toHaveTextContent('R2');

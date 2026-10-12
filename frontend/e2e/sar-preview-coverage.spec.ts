@@ -107,6 +107,26 @@ for (const width of [390, 800, 1672]) {
     await expect(network.getByRole('button', { name: 'Compare 2', exact: true })).toBeVisible();
     await expect(network.getByRole('button', { name: 'Compare 4', exact: true })).toBeVisible();
     await expect(network.getByRole('button', { name: 'Compare 3', exact: true })).toHaveCount(0);
+    const matrix = network.getByRole('table', { name: 'Structure comparison', exact: true });
+    await expect(matrix).toBeVisible();
+    await expect(matrix.getByRole('columnheader')).toHaveCount(4);
+    const potencyRow = matrix
+      .getByRole('rowheader', { name: 'IC50 (nM)', exact: true })
+      .locator('..');
+    await expect(potencyRow.getByRole('cell')).toHaveText(['10', '1Δ -9.00', '—Not measured']);
+    const matrixPK = matrix
+      .getByRole('rowheader', { name: 't_half (h)', exact: true })
+      .locator('..');
+    await expect(matrixPK.getByRole('cell')).toHaveText(['1', '2', '4']);
+    await expect(matrixPK).not.toContainText('Δ');
+    for (const label of ['MW', 'LogP', 'TPSA', 'HBD', 'HBA', 'LogS'])
+      await expect(matrix.getByRole('rowheader', { name: label, exact: true })).toHaveCount(1);
+    if (width < 1000) {
+      await network.getByRole('button', { name: 'Next structures', exact: true }).click();
+      await expect
+        .poll(() => network.locator('.sar-matrix-viewport').evaluate((node) => node.scrollLeft))
+        .toBeGreaterThan(0);
+    }
     await network.getByRole('button', { name: 'Compare 2', exact: true }).click();
     const preview = network.getByRole('region', { name: 'Transformation preview', exact: true });
     const members = preview.getByRole('combobox', { name: 'Modified compound', exact: true });

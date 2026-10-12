@@ -167,7 +167,7 @@ export function StudyNetwork({
               </button>
             )}
           </div>
-          <div className="sar-network-layout">
+          <div className={'sar-network-layout' + (fragments ? '' : ' sar-network-matrix-layout')}>
             <div className="sar-network-map">
               <StudyRegionMap
                 report={{ ...report, regions: mapSites }}

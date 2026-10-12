@@ -13,12 +13,11 @@ from ...core.sar.study_contexts import context_observations
 from ...core.sar.study_graphs import cut_identity
 from ...core.sar.values import Value, grade_ranks, parse_value
 from ..errors import WebError
-from .assets import digest
 from .models import Pair
 from .preview_drawing import paired_drawings
 from .preview_models import PreviewMeasurement, StudyPreview
 from .preview_records import recorded_measurements
-from .study_results import StudyResults
+from .preview_source import PreviewSource, VerifiedPreview, load_source
 
 
 def _scalar_difference(left: Value, right: Value) -> float | None:
@@ -39,11 +38,13 @@ def _scalar_difference(left: Value, right: Value) -> float | None:
     return value
 
 
-def preview(queue, identifier: str, region_id: str, molecule_id: str) -> StudyPreview:
-    job, report, _ = StudyResults(queue).current(identifier, records_only=True)
-    summary = next(
-        (item for item in report.regions if item.region.id == region_id), None
-    )
+def verified_preview(
+    queue, source: PreviewSource, region_id: str, molecule_id: str
+) -> VerifiedPreview:
+    """The single retained graph/member/fragment/published-pair authority."""
+    job, report, packet = source.job, source.report, source.packet
+    identifier = job.id
+    summary = source.summaries.get(region_id)
     if summary is None or len(molecule_id) > 200:
         raise WebError(
             422, "sar_preview_selection", "Choose a recorded study region and member."
@@ -60,23 +61,17 @@ def preview(queue, identifier: str, region_id: str, molecule_id: str) -> StudyPr
             "sar_preview_selection",
             "Choose an actual non-reference strict member.",
         )
-    record = queue.jobs.record(identifier)
-    packet = queue.service.assets.job_files(record["root"], identifier).json(
-        "input.json", optional=False
+    reference, candidate = (
+        source.sources[region.molecule_id],
+        source.sources[molecule_id],
     )
-    if digest(packet) != job.input_sha256:
-        raise WebError(
-            409,
-            "sar_input_changed",
-            "Preview source differs from immutable study input.",
+    if region_id not in source.matchers:
+        source.matchers[region_id] = compile_reference(
+            reference["molfile"],
+            region.atom_indices,
+            hydrogen_anchor=region.hydrogen_anchor,
         )
-    sources = {row["id"]: row for row in packet["molecules"]}
-    reference, candidate = sources[region.molecule_id], sources[molecule_id]
-    proof = compile_reference(
-        reference["molfile"],
-        region.atom_indices,
-        hydrogen_anchor=region.hydrogen_anchor,
-    ).compare_details(candidate["molfile"])
+    proof = source.matchers[region_id].compare_details(candidate["molfile"])
     if proof["match_status"] != "matched":
         raise WebError(
             409,
@@ -169,8 +164,7 @@ def preview(queue, identifier: str, region_id: str, molecule_id: str) -> StudyPr
                 raw_difference=difference,
             )
         )
-    rows = {row.molecule_id: row for row in report.rows}
-    ref, alt = rows[region.molecule_id], rows[molecule_id]
+    ref, alt = source.rows[region.molecule_id], source.rows[molecule_id]
     differences = {}
     for key, first in ref.properties.items():
         second = alt.properties.get(key)
@@ -185,15 +179,7 @@ def preview(queue, identifier: str, region_id: str, molecule_id: str) -> StudyPr
             if property_difference is None or math.isfinite(property_difference)
             else None
         )
-    try:
-        drawings = paired_drawings(reference, candidate, region, proof)
-    except (SARInputError, ValueError, RuntimeError, OverflowError) as error:
-        raise WebError(
-            422,
-            "sar_structure_unavailable",
-            "Paired structure drawing is unavailable; no chemical placeholder was substituted.",
-        ) from error
-    return StudyPreview(
+    data = StudyPreview(
         job=job,
         region=region,
         reference=ref,
@@ -207,5 +193,22 @@ def preview(queue, identifier: str, region_id: str, molecule_id: str) -> StudyPr
             {policy.context_id for policy in report.policies},
         ),
         property_differences=differences,
-        drawings=drawings,
     )
+    return VerifiedPreview(data, reference, candidate, proof)
+
+
+def preview(queue, identifier: str, region_id: str, molecule_id: str) -> StudyPreview:
+    selected = verified_preview(
+        queue, load_source(queue, identifier), region_id, molecule_id
+    )
+    try:
+        selected.data.drawings = paired_drawings(
+            selected.reference, selected.candidate, selected.data.region, selected.proof
+        )
+    except (SARInputError, ValueError, RuntimeError, OverflowError) as error:
+        raise WebError(
+            422,
+            "sar_structure_unavailable",
+            "Paired structure drawing is unavailable; no chemical placeholder was substituted.",
+        ) from error
+    return selected.data

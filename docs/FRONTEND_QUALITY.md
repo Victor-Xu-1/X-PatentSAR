@@ -1,5 +1,16 @@
 # Product craft and acceptance
 
+The structure-comparison matrix keeps one reference baseline and one row label
+per selected/supporting metric or property. Native drawings share source-atom
+coordinates/scale; independent layout remains explicit. All current-page strict
+alternatives are shown, with complete pool pagination, not an arbitrary shortlist.
+Verify three viewport widths, both locales, same-region/all-direction switching,
+next-page members, horizontal keyboard scrolling, original/source inspection,
+image/pair focus restoration, loading/refused/stale state and immutable source
+values. Repeat/censored/missing and unselected PK/other observations cannot gain
+fabricated deltas or strength. Six-property origin-safe differences are not
+activity claims; already-captured predictions remain a separate disclosure.
+
 CSV intake consumes one server header-role proposal. Raw header names stay in
 every selector, known roles are prefilled and one deliberate import commits the
 dataset. Unknown/colliding identifiers or structures keep import disabled until

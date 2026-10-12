@@ -123,6 +123,10 @@ export interface PreviewDrawingPair {
   equivalent_mappings: number;
   reason: 'depiction_failed' | 'layout_clash' | null;
 }
+export interface StudyMatrix {
+  reference_drawing: StudyDrawing;
+  previews: StudyPreview[];
+}
 export interface StudyRegionSummary {
   region: Region;
   reference_label: string;
