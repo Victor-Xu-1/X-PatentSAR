@@ -18,6 +18,7 @@ COMMON = {
     "column-filter-viewport.spec.ts",
 }
 MODES = (
+    ("sar", "sar-preview-coverage.spec.ts", COMMON | {"sar-preview-coverage.spec.ts"}),
     ("sar", "sar-csv-defaults.spec.ts", COMMON | {"sar-csv-defaults.spec.ts"}),
     (
         "sar",

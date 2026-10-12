@@ -108,6 +108,11 @@ export interface StudyPreview {
     evidence_basis: string;
     raw_difference: number | null;
   }[];
+  recorded_measurements?: {
+    context_id: string;
+    reference_values: string[];
+    candidate_values: string[];
+  }[];
   property_differences: Record<string, number | null>;
 }
 export interface StudyRegionSummary {

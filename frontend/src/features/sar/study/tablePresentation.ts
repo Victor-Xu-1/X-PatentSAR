@@ -21,6 +21,9 @@ export function differenceText(value: number | null | undefined, key?: string) {
   if (countProperties.has(key ?? '') && Number.isInteger(value)) return String(value);
   return value !== 0 && Math.abs(value) < 0.01 ? value.toPrecision(3) : value.toFixed(2);
 }
+export function previewValueText(values: readonly string[]) {
+  return values.map((value) => (value === '' ? '—' : value)).join(' · ') || '—';
+}
 export interface PageSort {
   column: string;
   direction: 'asc' | 'desc';

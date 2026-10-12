@@ -1,5 +1,6 @@
 /** UI copy only; source labels, grade values, issues and experiment data stay raw. */
 export const sar: Record<string, string> = {
+  未纳入本次统计: 'Not assessed in this study',
   请选择列: 'Choose a column',
   自动列匹配: 'Column matching',
   '已匹配 {count} 列，可核对后导入。': '{count} columns matched. Review and import.',

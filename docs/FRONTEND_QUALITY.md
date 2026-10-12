@@ -514,3 +514,23 @@ unchanged. Singular count captions are localized as interface text only.
 When a mounted report becomes single-core, hidden search/page preferences do not
 filter that sole original map or create a false empty state. Multi-core controls
 keep their explicit user preferences; no source state or scientific data is reset.
+
+Pair preview member navigation exposes the whole published same-region changed
+pool, not only aliases of the opened fragment. Selecting an alternative refreshes
+the exact source images/measurements without starting a study. Supporting original
+activity/PK readings share the compact comparison table, with unchanged names,
+units and repeat/censored values. Empty readings have explicit missing markers;
+unselected measurements never receive statistical interpretation or fabricated
+deltas. A concise accessible tooltip distinguishes them without a new paragraph
+or additional setup. Legacy previews remain readable; foreign/duplicate context
+packets do not become unlabelled rows. Locale changes preserve actual selections,
+raw content and parent report bytes. Native checks cover structural hotspot,
+alternative selection, missing activity, PK, focus restoration and both languages.
+
+Dense region maps mount pointer targets only for their painted current region;
+invisible overlapping sites cannot steal a click or create a hidden hover state.
+Every recorded region remains available through the full named keyboard legend,
+and selecting one reveals its exact original atoms and click targets. No source
+region, graph or accepted comparison is removed. A fresh real captured input
+with71sites/670overlappingtargets reproduced the pointer interception; unit
+contracts and native element-from-point checks are the repair acceptance gates.

@@ -1,5 +1,7 @@
 """Additive read-only preview DTOs; scientific checkpoint identity is unchanged."""
 
+from pydantic import Field
+
 from ..dto import DTO
 from .models import Comparison, Pair, Region, SARJob
 from .study_models import StudyRow
@@ -14,6 +16,14 @@ class PreviewMeasurement(DTO):
     raw_difference: float | None = None
 
 
+class PreviewRecordedMeasurement(DTO):
+    """Raw source readings, not an inferred direction, delta or SAR conclusion."""
+
+    context_id: str
+    reference_values: list[str]
+    candidate_values: list[str]
+
+
 class StudyPreview(DTO):
     job: SARJob
     region: Region
@@ -21,4 +31,7 @@ class StudyPreview(DTO):
     candidate: StudyRow
     pair: Pair
     measurements: list[PreviewMeasurement]
+    recorded_measurements: list[PreviewRecordedMeasurement] = Field(
+        default_factory=list, max_length=1000
+    )
     property_differences: dict[str, float | None]

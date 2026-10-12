@@ -1,5 +1,12 @@
 # Project governance manifest
 
+- Full-preview ownership: the existing strict preview and region/changes page
+  authorities remain sole acceptance/member paths. `preview_records.py` provides
+  only exact-source unselected-reading projection through isolated preview DTOs;
+  frontend validates optional legacy-compatible data and keeps source values
+  separate from analyzed conclusions. No inferred supporting delta/rank/context,
+  new matcher/queue/store/model, captured-model change or scientific epoch bump.
+
 - CSV-default ownership: `csv_mapping_rules.py` is the only header-role suggestion
   authority; `csv_preview_models.py` isolates bounded additive intake metadata.
   Frontend consumes typed suggestions rather than running another header matcher.
