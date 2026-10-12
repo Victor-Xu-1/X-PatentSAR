@@ -107,7 +107,17 @@ test('one clear spans all types/pages, cleans unreferenced files and retains sha
       value.url().endsWith('/api/v1/history/trash/clear') && value.request().method() === 'POST',
   );
   await confirmation.getByRole('button', { name: 'Confirm empty all', exact: true }).dblclick();
-  const receipt = await (await response).json();
+  const clearedReply = await response;
+  expect(clearedReply.status()).toBe(200);
+  const request = clearedReply.request().postDataJSON() as { request_id: string };
+  // The app consumes the fetch body immediately and may refresh its parent.
+  // Verify the durable exact-request receipt instead of Chromium's transient
+  // network-body cache; never repeat the mutation to obtain test evidence.
+  const receiptReply = await page.request.get(
+    '/api/v1/history/trash/receipts/' + request.request_id,
+  );
+  expect(receiptReply.status()).toBe(200);
+  const receipt = await receiptReply.json();
   expect(receipt.status).toBe('complete');
   expect(receipt.files_deleted).toBe(3);
   expect(receipt.files_total).toBe(3);
