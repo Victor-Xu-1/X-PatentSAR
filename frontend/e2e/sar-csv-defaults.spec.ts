@@ -71,7 +71,7 @@ for (const width of [390, 800, 1672]) {
       ['Solubility_AqSolDB', 'LogS'],
       ['hERG', 'predicted hERG'],
     ] as const)
-      await expect(panel.getByLabel(key, { exact: true })).toHaveValue(value);
+      await expect(panel.getByRole('combobox', { name: key, exact: true })).toHaveValue(value);
     await page
       .getByRole('combobox', { name: 'Interface language', exact: true })
       .selectOption('zh-CN');
