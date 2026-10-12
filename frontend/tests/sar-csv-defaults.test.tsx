@@ -76,6 +76,9 @@ describe('source-owned CSV defaults', () => {
       />,
     );
     expect(screen.getByLabelText('Source identifier column')).toHaveValue('');
+    expect(
+      screen.getByLabelText('Source identifier column').querySelector('option[value=""]'),
+    ).toHaveTextContent('Choose a column');
     expect(screen.getByRole('button', { name: 'Create CSV dataset' })).toBeDisabled();
   });
 });

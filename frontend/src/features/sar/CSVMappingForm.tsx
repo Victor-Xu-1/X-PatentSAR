@@ -44,7 +44,7 @@ export function CSVMappingForm({
             setDraft((old) => ({ ...old, [key]: e.target.value || (optional ? null : '') }))
           }
         >
-          <option value="">{t(optional ? '不映射' : '请选择活性指标')}</option>
+          <option value="">{t(optional ? '不映射' : '请选择列')}</option>
           {preview.headers.map((header) => (
             <option value={header} key={header}>
               {header}

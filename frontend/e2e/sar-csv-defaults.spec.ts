@@ -115,6 +115,11 @@ for (const width of [390, 800, 1672]) {
     );
     await expect(panel.getByRole('checkbox', { name: 'Mystery', exact: true })).not.toBeChecked();
     await expect(
+      panel
+        .getByRole('combobox', { name: 'SMILES column', exact: true })
+        .locator('option[value=""]'),
+    ).toHaveText('Choose a column');
+    await expect(
       panel.getByRole('button', { name: 'Create CSV dataset', exact: true }),
     ).toBeDisabled();
     await page.screenshot({
