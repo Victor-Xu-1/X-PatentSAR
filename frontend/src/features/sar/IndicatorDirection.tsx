@@ -13,11 +13,11 @@ export function IndicatorDirection({
   const { t } = useTranslation();
   if (hint && hint.direction !== 'unknown')
     return (
-      <p className="sar-hint" role="status" aria-label={t('活性方向')}>
+      <output className="sar-hint" aria-label={t('活性方向')}>
         {t('自动 · {direction}', {
           direction: t(hint.direction === 'lower' ? '值越低活性越强' : '值越高活性越强'),
         })}
-      </p>
+      </output>
     );
   return (
     <label>
