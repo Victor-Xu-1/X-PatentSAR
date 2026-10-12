@@ -47,6 +47,16 @@ for (const width of [390, 800, 1672]) {
     });
     await report.getByRole('button', { name: 'Variable regions', exact: true }).click();
     const network = report.getByRole('region', { name: 'Single-site comparisons', exact: true });
+    await expect(network.getByRole('textbox', { name: 'Find a core ID', exact: true })).toHaveCount(
+      0,
+    );
+    await expect(network.locator('.sar-core-gallery')).toHaveCount(0);
+    await expect(network.locator('.sar-network-tools')).toContainText('1 core');
+    const toolsBox = await network.locator('.sar-network-tools').boundingBox();
+    const mapBox = await network.locator('.sar-network-map').boundingBox();
+    expect(toolsBox).not.toBeNull();
+    expect(mapBox).not.toBeNull();
+    expect(mapBox!.y - toolsBox!.y - toolsBox!.height).toBeLessThan(100);
     await expect(
       network.getByRole('button', { name: 'All directions', exact: true }),
     ).toHaveAttribute('aria-pressed', 'true');
@@ -111,7 +121,11 @@ for (const width of [390, 800, 1672]) {
       .selectOption('zh-CN');
     const translated = page.getByRole('region', { name: '研究报告', exact: true });
     await translated.getByRole('button', { name: '变化区域', exact: true }).click();
-    await expect(translated.getByRole('button', { name: '选择核心 1', exact: true })).toBeVisible();
+    await expect(translated.getByRole('button', { name: '选择核心 1', exact: true })).toHaveCount(
+      0,
+    );
+    await expect(translated.locator('.sar-network-map')).toBeVisible();
+    await expect(translated.locator('.sar-network-tools')).toContainText('1 个核心');
     await expect(
       translated.getByRole('button', { name: '全部改造方向', exact: true }),
     ).toHaveAttribute('aria-pressed', 'true');

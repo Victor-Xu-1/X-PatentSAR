@@ -47,9 +47,10 @@ export function StudyNetwork({
       .map(([id, group]) => ({ id, ...group, compact: compactNetworkSites(group.sites) }))
       .toSorted((a, b) => a.label.localeCompare(b.label, 'en', { numeric: true }));
   }, [report.regions, report.discovery]);
-  const filtered = centres.filter((centre) =>
-    centre.label.toLowerCase().includes(search.toLowerCase().trim()),
-  );
+  const multiple = centres.length > 1;
+  const filtered = multiple
+    ? centres.filter((centre) => centre.label.toLowerCase().includes(search.toLowerCase().trim()))
+    : centres;
   const selected = filtered.find((centre) => centre.id === reference) ?? filtered[0];
   const compact = selected?.compact ?? [];
   const visibleSites = allSites ? (selected?.sites ?? []) : compact;
@@ -59,7 +60,7 @@ export function StudyNetwork({
       ? { ...item, region: { ...item.region, name: 'R' + (index + 1) } }
       : item,
   );
-  const showing = filtered.slice((page - 1) * 6, page * 6);
+  const showing = multiple ? filtered.slice((page - 1) * 6, page * 6) : filtered;
   const matches = useMemo(
     () =>
       new Set(
@@ -78,55 +79,64 @@ export function StudyNetwork({
   return (
     <section className="sar-network" aria-label={t('单点结构对比')}>
       <div className="sar-network-tools">
-        <input
-          aria-label={t('查找核心编号')}
-          placeholder={t('查找核心编号')}
-          value={search}
-          maxLength={200}
-          onChange={(event) => {
-            setSearch(event.target.value);
-            setPage(1);
-          }}
-        />
+        {multiple && (
+          <input
+            aria-label={t('查找核心编号')}
+            placeholder={t('查找核心编号')}
+            value={search}
+            maxLength={200}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(1);
+            }}
+          />
+        )}
         <span>
-          {t('{count} 个核心', { count: centres.length })} ·{' '}
-          {t('{count} 对变化', { count: matches.size })}
+          {t(centres.length === 1 ? '1 个核心' : '{count} 个核心', { count: centres.length })} ·{' '}
+          {t(matches.size === 1 ? '1 对变化' : '{count} 对变化', { count: matches.size })}
         </span>
       </div>
-      <div className="sar-core-gallery" aria-label={t('核心结构')}>
-        {showing.map((centre) => (
-          <article
-            key={centre.id}
-            className="sar-core-card"
-            data-selected={selected?.id === centre.id}
-          >
-            <StudyImage
-              jobId={jobId}
-              kind="molecule"
-              identifier={centre.id}
-              label={centre.label}
-              active={active}
-            />
-            <button
-              type="button"
-              aria-label={t('选择核心 {identifier}', { identifier: centre.label })}
-              aria-pressed={selected?.id === centre.id}
-              onClick={() => {
-                setReference(centre.id);
-                setSite('');
-              }}
+      {multiple && (
+        <div className="sar-core-gallery" aria-label={t('核心结构')}>
+          {showing.map((centre) => (
+            <article
+              key={centre.id}
+              className="sar-core-card"
+              data-selected={selected?.id === centre.id}
             >
-              <strong>{centre.label}</strong>
-              <small>
-                {t('{count} 个位点', {
-                  count: allSites ? centre.sites.length : centre.compact.length,
-                })}
-              </small>
-            </button>
-          </article>
-        ))}
-      </div>
-      <GroupPager page={page} size={6} total={filtered.length} onPage={setPage} />
+              <StudyImage
+                jobId={jobId}
+                kind="molecule"
+                identifier={centre.id}
+                label={centre.label}
+                active={active}
+              />
+              <button
+                type="button"
+                aria-label={t('选择核心 {identifier}', { identifier: centre.label })}
+                aria-pressed={selected?.id === centre.id}
+                onClick={() => {
+                  setReference(centre.id);
+                  setSite('');
+                }}
+              >
+                <strong>{centre.label}</strong>
+                <small>
+                  {t(
+                    (allSites ? centre.sites.length : centre.compact.length) === 1
+                      ? '1 个位点'
+                      : '{count} 个位点',
+                    {
+                      count: allSites ? centre.sites.length : centre.compact.length,
+                    },
+                  )}
+                </small>
+              </button>
+            </article>
+          ))}
+        </div>
+      )}
+      {multiple && <GroupPager page={page} size={6} total={filtered.length} onPage={setPage} />}
       {!showing.length && (
         <p>
           {t(
