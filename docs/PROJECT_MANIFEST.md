@@ -1,5 +1,14 @@
 # Project governance manifest
 
+- Series-reading ownership: `coreChoices.ts` is presentation-only core inventory
+  and alternate view order over complete published membership; no new drug score,
+  region pruning or original-label rewrite. `matrixScrolling.ts` owns bounded
+  actual-column navigation through the shared focus/motion/overflow path.
+  `preview_properties.py` supplies shared pair/matrix origin-aware arithmetic and
+  isolated typed status. Raw values, captures, graph/pair proofs and scientific
+  engine/checkpoint identity stay intact; unknown/different provenance cannot
+  manufacture a delta. No new producer, model, queue, cache, schema or dependency.
+
 - Matrix ownership: `preview_source.py` prepares a single immutable report/input;
   `study_preview.verified_preview` remains the unique strict member/pair/value
   proof. `study_matrix.py` and isolated `matrix_models.py` project at most6

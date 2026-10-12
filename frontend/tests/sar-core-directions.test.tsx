@@ -516,3 +516,55 @@ it('does not carry a hidden later gallery page into a single-core report', async
   expect(screen.getByRole('heading', { name: 'Reference region map · Original 1' })).toBeVisible();
   expect(screen.queryByText('No core structures to show')).not.toBeInTheDocument();
 });
+
+it('opens the core with more published alternatives and keeps an explicitly selected core/region on reorder and locale switch', async () => {
+  const less = {
+    ...sites[0]!,
+    reference_label: '1',
+    region: { ...sites[0]!.region, molecule_id: 'less' },
+    fragments: [{ ...studyFragment, is_reference: false, molecule_ids: ['a'] }],
+  };
+  const more = {
+    ...sites[1]!,
+    reference_label: '10',
+    region: { ...sites[1]!.region, molecule_id: 'more' },
+    fragments: [{ ...studyFragment, is_reference: false, molecule_ids: ['a', 'b', 'shared'] }],
+  };
+  vi.mocked(sarStudyApi.rows).mockImplementation(async (_job, _dataset, page, filter) => ({
+    job: studyJob,
+    page,
+    page_size: 6,
+    total: filter.reference_id === 'less' ? 1 : 3,
+    items: filter.reference_id === 'less' ? rows.slice(0, 1) : rows,
+  }));
+  render(
+    <StudyNetwork
+      report={{ ...report, regions: [less, more] }}
+      jobId={studyJob.id}
+      active
+      onSource={vi.fn()}
+    />,
+  );
+  await screen.findByRole('button', { name: 'Compare 原文 shared' });
+  expect(screen.getByRole('combobox', { name: 'Core order' })).toHaveValue('alternatives');
+  expect(document.querySelector('.sar-core-gallery')!.querySelector('button')!).toHaveTextContent(
+    '10',
+  );
+  await userEvent.click(screen.getByRole('button', { name: 'Select core 1' }));
+  await screen.findByRole('button', { name: 'Compare 原文 a' });
+  const order = screen.getByRole('combobox', { name: 'Core order' });
+  await userEvent.selectOptions(order, 'identifier');
+  expect(screen.getByRole('button', { name: 'Select core 1' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  expect(document.querySelector('.sar-core-gallery')!.querySelector('button')!).toHaveTextContent(
+    '1',
+  );
+  await act(() => setLocale('zh-CN'));
+  expect(screen.getByRole('combobox', { name: '核心排序' })).toHaveValue('identifier');
+  expect(screen.getByRole('button', { name: '选择核心 1' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+});

@@ -2,6 +2,7 @@ import type { StudyMatrix, StudyPreview, StudyReport } from '../../../api/sarStu
 import { useTranslation } from '../../../i18n';
 import { contextLabel } from '../presentation';
 import { matrixDifference, matrixReadings } from './matrixReadings';
+import { propertyComparisonMessage } from './propertyComparisonMessage';
 import {
   differenceText,
   previewValueText,
@@ -79,6 +80,8 @@ export function MatrixValues({ data, report }: { data: StudyMatrix; report: Stud
             </td>
             {data.previews.map((preview) => {
               const difference = preview.property_differences[property.key];
+              const status = preview.property_statuses?.[property.key];
+              const reason = propertyComparisonMessage(status);
               return (
                 <td
                   key={preview.candidate.molecule_id}
@@ -91,6 +94,15 @@ export function MatrixValues({ data, report }: { data: StudyMatrix; report: Stud
                     <small className="sar-matrix-delta">
                       Δ {difference > 0 ? '+' : ''}
                       {differenceText(difference, property.key)}
+                    </small>
+                  )}
+                  {difference == null && reason && status !== 'missing' && (
+                    <small
+                      className="sar-matrix-uncertainty"
+                      title={t(reason)}
+                      aria-label={t(reason)}
+                    >
+                      —
                     </small>
                   )}
                 </td>

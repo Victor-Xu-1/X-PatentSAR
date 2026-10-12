@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
-import type { StudyRegionSummary, StudyReport } from '../../../api/sarStudyTypes';
+import type { StudyReport } from '../../../api/sarStudyTypes';
 import { useTranslation } from '../../../i18n';
 import { GroupPager } from './GroupPager';
 import { StudyImage } from './StudyImage';
 import { StudyRegionMap } from './StudyRegionMap';
 import { NetworkBranches } from './NetworkBranches';
-import { compactNetworkSites } from './networkSites';
+import { coreChoices, orderCores } from './coreChoices';
+import type { CoreOrder } from './coreChoices';
 
 export function StudyNetwork({
   report,
@@ -30,23 +31,9 @@ export function StudyNetwork({
   const [reference, setReference] = useState(''),
     [site, setSite] = useState('');
   const [allSites, setAllSites] = useState(false);
-  const centres = useMemo(() => {
-    const groups = new Map<string, { label: string; sites: StudyRegionSummary[] }>();
-    for (const summary of report.regions) {
-      const automatic =
-        summary.origin === 'single_site' || (report.discovery && summary.origin !== 'manual');
-      if (automatic && (!summary.matched || summary.no_variation)) continue;
-      const group = groups.get(summary.region.molecule_id) ?? {
-        label: summary.reference_label,
-        sites: [],
-      };
-      group.sites.push(summary);
-      groups.set(summary.region.molecule_id, group);
-    }
-    return [...groups.entries()]
-      .map(([id, group]) => ({ id, ...group, compact: compactNetworkSites(group.sites) }))
-      .toSorted((a, b) => a.label.localeCompare(b.label, 'en', { numeric: true }));
-  }, [report.regions, report.discovery]);
+  const [order, setOrder] = useState<CoreOrder>('alternatives');
+  const collection = useMemo(() => coreChoices(report), [report.regions, report.discovery]);
+  const centres = useMemo(() => orderCores(collection, order), [collection, order]);
   const multiple = centres.length > 1;
   const filtered = multiple
     ? centres.filter((centre) => centre.label.toLowerCase().includes(search.toLowerCase().trim()))
@@ -80,16 +67,37 @@ export function StudyNetwork({
     <section className="sar-network" aria-label={t('单点结构对比')}>
       <div className="sar-network-tools">
         {multiple && (
-          <input
-            aria-label={t('查找核心编号')}
-            placeholder={t('查找核心编号')}
-            value={search}
-            maxLength={200}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setPage(1);
-            }}
-          />
+          <>
+            <input
+              aria-label={t('查找核心编号')}
+              placeholder={t('查找核心编号')}
+              value={search}
+              maxLength={200}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPage(1);
+              }}
+            />
+            <select
+              aria-label={t('核心排序')}
+              value={order}
+              onChange={(event) => {
+                const next = event.target.value;
+                if (next !== 'alternatives' && next !== 'identifier') return;
+                // Reordering the gallery must not discard the current reference,
+                // selected region or an in-progress inspection.
+                setReference(selected?.id ?? '');
+                setOrder(next);
+                const index = orderCores(collection, next)
+                  .filter((core) => core.label.toLowerCase().includes(search.toLowerCase().trim()))
+                  .findIndex((core) => core.id === selected?.id);
+                setPage(Math.floor(Math.max(0, index) / 6) + 1);
+              }}
+            >
+              <option value="alternatives">{t('改造最多')}</option>
+              <option value="identifier">{t('按原文编号')}</option>
+            </select>
+          </>
         )}
         <span>
           {t(centres.length === 1 ? '1 个核心' : '{count} 个核心', { count: centres.length })} ·{' '}
@@ -122,14 +130,9 @@ export function StudyNetwork({
               >
                 <strong>{centre.label}</strong>
                 <small>
-                  {t(
-                    (allSites ? centre.sites.length : centre.compact.length) === 1
-                      ? '1 个位点'
-                      : '{count} 个位点',
-                    {
-                      count: allSites ? centre.sites.length : centre.compact.length,
-                    },
-                  )}
+                  {t(centre.alternativeCount === 1 ? '1 个改造' : '{count} 个改造', {
+                    count: centre.alternativeCount,
+                  })}
                 </small>
               </button>
             </article>

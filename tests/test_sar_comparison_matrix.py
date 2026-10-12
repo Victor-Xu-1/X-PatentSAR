@@ -46,6 +46,14 @@ class SARComparisonMatrixTests(WebFixture, unittest.TestCase):
                 self.assertEqual(raw["CL (mL/min/kg)"]["reference_values"], ["2"])
                 self.assertNotIn("raw_difference", raw["CL (mL/min/kg)"])
                 self.assertNotIn("comparison", raw["CL (mL/min/kg)"])
+                self.assertEqual(
+                    set(item["property_statuses"]), set(item["property_differences"])
+                )
+                for key, status in item["property_statuses"].items():
+                    self.assertEqual(
+                        status == "comparable",
+                        item["property_differences"][key] is not None,
+                    )
             final = matrix["previews"][1]
             raw = {
                 names[value["context_id"]]: value

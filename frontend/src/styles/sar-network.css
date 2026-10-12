@@ -8,6 +8,9 @@
 .sar-network-tools input {
   width: min(320px, 100%);
 }
+.sar-network-tools select {
+  width: min(180px, 100%);
+}
 .sar-network-tools > span {
   color: var(--muted);
   font-size: 12px;

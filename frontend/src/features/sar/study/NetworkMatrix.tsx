@@ -13,6 +13,7 @@ import { MatrixHead } from './MatrixHead';
 import { MatrixValues } from './MatrixValues';
 import { MatrixPredictions } from './MatrixPredictions';
 import { matrixReadings } from './matrixReadings';
+import { moveMatrix } from './matrixScrolling';
 
 export function NetworkMatrix({
   rows,
@@ -66,10 +67,14 @@ export function NetworkMatrix({
       return failure instanceof Error ? failure : new ContractError('$.matrix');
     }
   }, [data, report]);
-  const { viewport, content, edges, scrollPage } = useScrollFocus<HTMLDivElement, HTMLTableElement>(
+  const { viewport, content, edges } = useScrollFocus<HTMLDivElement, HTMLTableElement>(
     'x',
     !!data,
   );
+  function scrollPage(direction: -1 | 1) {
+    if (viewport.current && content.current)
+      moveMatrix(viewport.current, content.current, direction);
+  }
   return (
     <section className="sar-network-matrix" aria-label={t('结构对照')}>
       {resource.loading && <Loading />}

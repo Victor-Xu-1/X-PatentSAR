@@ -74,6 +74,9 @@ for (const width of [390, 800, 1672]) {
       name: 'Single-site comparisons',
       exact: true,
     });
+    await expect(network.getByRole('combobox', { name: 'Core order', exact: true })).toHaveValue(
+      'alternatives',
+    );
     await network.getByRole('textbox', { name: 'Find a core ID', exact: true }).fill('1');
     await network.getByRole('button', { name: 'Select core 1', exact: true }).click();
     const sites = compactNetworkSites(
@@ -126,6 +129,28 @@ for (const width of [390, 800, 1672]) {
       await expect
         .poll(() => network.locator('.sar-matrix-viewport').evaluate((node) => node.scrollLeft))
         .toBeGreaterThan(0);
+      await network.locator('.sar-matrix-viewport').scrollIntoViewIfNeeded();
+      const visibility = await matrix.evaluate((node) => {
+        const pane = node.closest('.sar-matrix-viewport')!.getBoundingClientRect();
+        const cells = [...node.querySelectorAll<HTMLTableCellElement>('thead th')];
+        const reference = cells[1]!;
+        const style = getComputedStyle(reference);
+        const frozen =
+          style.position === 'sticky' && style.left !== 'auto'
+            ? reference.getBoundingClientRect().right
+            : cells[0]!.getBoundingClientRect().right;
+        return cells.slice(2).flatMap((cell) => {
+          const box = cell.getBoundingClientRect();
+          const visible = Math.max(0, Math.min(box.right, pane.right) - Math.max(box.left, frozen));
+          if (visible < box.width / 2) return [];
+          const label = cell.querySelector('strong')!,
+            rect = label.getBoundingClientRect();
+          const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+          return [!!hit && label.closest('button')!.contains(hit)];
+        });
+      });
+      expect(visibility.length).toBeGreaterThan(0);
+      expect(visibility.every(Boolean)).toBe(true);
     }
     await network.getByRole('button', { name: 'Compare 2', exact: true }).click();
     const preview = network.getByRole('region', { name: 'Transformation preview', exact: true });

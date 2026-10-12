@@ -6,14 +6,14 @@ from ..errors import WebError
 from .assets import digest
 from .models import SARJob
 from .preview_models import StudyPreview
-from .study_models import StudyReport
 from .study_results import StudyResults
+from .study_view_models import CurrentRecordView
 
 
 @dataclass(slots=True)
 class PreviewSource:
     job: SARJob
-    report: StudyReport
+    report: CurrentRecordView
     packet: dict
     sources: dict
     rows: dict

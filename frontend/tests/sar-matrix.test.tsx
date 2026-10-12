@@ -156,6 +156,40 @@ it('refuses mixed references/jobs, duplicate members, missing drawings and a gre
     expect(() => decodeStudyMatrix(invalid)).toThrow();
 });
 
+it('preserves unknown/mixed-origin property values while showing no manufactured zero or delta', async () => {
+  const guarded = {
+    ...packet,
+    previews: packet.previews.map((item) => ({
+      ...item,
+      property_differences: { molecular_weight: null, Solubility_AqSolDB: null },
+      property_statuses: { molecular_weight: 'origin_unknown', Solubility_AqSolDB: 'missing' },
+    })),
+  };
+  vi.mocked(sarStudyApi.matrix).mockResolvedValue(decodeStudyMatrix(guarded));
+  render(<NetworkMatrix {...props} />);
+  const table = await screen.findByRole('table', { name: 'Structure comparison' });
+  const row = within(table).getByRole('rowheader', { name: 'MW' }).closest('tr')!;
+  expect(row).toHaveTextContent('120.00');
+  expect(row).not.toHaveTextContent('Δ');
+  expect(within(row).getAllByLabelText('Property origin not established')).toHaveLength(2);
+  await act(() => setLocale('zh-CN'));
+  expect(within(row).getAllByLabelText('性质来源未确认')).toHaveLength(2);
+  for (const statuses of [
+    { molecular_weight: 'origin_unknown', Solubility_AqSolDB: 'missing' },
+    { molecular_weight: 'comparable', Solubility_AqSolDB: 'comparable' },
+    { unexpected: 'missing' },
+  ])
+    expect(() =>
+      decodeStudyMatrix({
+        ...packet,
+        previews: packet.previews.map((item) => ({
+          ...item,
+          property_statuses: statuses,
+        })),
+      }),
+    ).toThrow();
+});
+
 it('uses one exact ordered read with shared authentication and rejects wrong selectors without a write', async () => {
   const transport = vi.fn<typeof fetch>(async (url) =>
     json(String(url).endsWith('/session') ? session : packet),

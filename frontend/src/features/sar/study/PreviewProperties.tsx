@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from '../../../i18n';
 import { useScrollFocus } from '../../../components/useScrollFocus';
 import { differenceText, propertyText, studyProperties } from './tablePresentation';
+import { propertyComparisonMessage } from './propertyComparisonMessage';
 
 export function PreviewProperties({ data }: { data: StudyPreview }) {
   const { t } = useTranslation();
@@ -42,8 +43,9 @@ export function PreviewProperties({ data }: { data: StudyPreview }) {
               <th scope="row">Δ</th>
               {studyProperties.map((property) => {
                 const value = data.property_differences[property.key];
+                const reason = propertyComparisonMessage(data.property_statuses?.[property.key]);
                 return (
-                  <td key={property.key}>
+                  <td key={property.key} title={reason ? t(reason) : undefined}>
                     {value != null && value > 0 ? '+' : ''}
                     {differenceText(value, property.key)}
                   </td>
