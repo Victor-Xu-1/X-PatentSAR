@@ -8,6 +8,10 @@ from ..dto import DTO
 from .models import Comparison, Pair, Region, SARJob
 from .study_models import StudyRow
 
+PropertyComparisonStatus = Literal[
+    "comparable", "missing", "origin_unknown", "origin_mismatch", "not_representable"
+]
+
 
 class PreviewMoleculeDrawing(DTO):
     id: str = Field(min_length=1, max_length=200)
@@ -56,10 +60,21 @@ class StudyPreview(DTO):
         default_factory=list, max_length=1000
     )
     property_differences: dict[str, float | None]
+    property_statuses: dict[str, PropertyComparisonStatus] = Field(
+        default_factory=dict, max_length=6
+    )
     drawings: PreviewDrawingPair | None = None
 
     @model_validator(mode="after")
     def drawing_identity(self):
+        if self.property_statuses and (
+            set(self.property_statuses) != set(self.property_differences)
+            or any(
+                (status == "comparable") != (self.property_differences[key] is not None)
+                for key, status in self.property_statuses.items()
+            )
+        ):
+            raise ValueError("property_comparison_status")
         if self.drawings and (
             self.drawings.reference.id != self.reference.molecule_id
             or self.drawings.candidate.id != self.candidate.molecule_id

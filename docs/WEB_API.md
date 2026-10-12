@@ -2,6 +2,13 @@
 
 ## Strict SAR comparison matrix (read-only)
 
+Single-pair and matrix previews add optional `property_statuses` with at most6
+keys: `comparable`, `missing`, `origin_unknown`, `origin_mismatch`, or
+`not_representable`. When present, its keys exactly match `property_differences`;
+only `comparable` has a finite difference. Missing/unsupported producer origin
+does not authorize arithmetic even if both labels are equally absent. Raw values
+stay unchanged. Legacy responses without the additive field remain readable.
+
 `GET /api/v1/sar/jobs/{job}/study/matrix?reference_id=...&region_id=...&molecule_id=...`
 uses the existing session/visibility boundary. Repeated `region_id` and
 `molecule_id` parameters are ordered pairs, 1–6 distinct candidates, all with

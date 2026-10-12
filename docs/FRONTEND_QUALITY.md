@@ -1,5 +1,12 @@
 # Product craft and acceptance
 
+Core exploration defaults to more published alternatives, not drug priority;
+original-ID order and selected reference/region/locale identity must survive.
+Matrix column controls align with the actual frozen edge. Acceptance must check
+that a mostly visible candidate's identifier is painted outside frozen headers,
+not just that a DOM node has a box. Unknown/mixed property origins keep values
+but no delta; unavailable differences need an accessible compact reason.
+
 The structure-comparison matrix keeps one reference baseline and one row label
 per selected/supporting metric or property. Native drawings share source-atom
 coordinates/scale; independent layout remains explicit. All current-page strict

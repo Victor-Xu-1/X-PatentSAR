@@ -16,6 +16,7 @@ from ..errors import WebError
 from .models import Pair
 from .preview_drawing import paired_drawings
 from .preview_models import PreviewMeasurement, StudyPreview
+from .preview_properties import property_comparisons
 from .preview_records import recorded_measurements
 from .preview_source import PreviewSource, VerifiedPreview, load_source
 
@@ -165,20 +166,7 @@ def verified_preview(
             )
         )
     ref, alt = source.rows[region.molecule_id], source.rows[molecule_id]
-    differences = {}
-    for key, first in ref.properties.items():
-        second = alt.properties.get(key)
-        same_origin = ref.property_origins.get(key) == alt.property_origins.get(key)
-        property_difference = (
-            second - first
-            if first is not None and second is not None and same_origin
-            else None
-        )
-        differences[key] = (
-            property_difference
-            if property_difference is None or math.isfinite(property_difference)
-            else None
-        )
+    properties = property_comparisons(ref, alt)
     data = StudyPreview(
         job=job,
         region=region,
@@ -192,7 +180,8 @@ def verified_preview(
             report.contexts,
             {policy.context_id for policy in report.policies},
         ),
-        property_differences=differences,
+        property_differences=properties.differences,
+        property_statuses=properties.statuses,
     )
     return VerifiedPreview(data, reference, candidate, proof)
 

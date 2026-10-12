@@ -7,6 +7,11 @@ The complete pool stays paged; original identifiers, chemistry, unknown conditio
 and missing data remain unchanged. No new model or scientific task is triggered
 by browsing the comparison matrix.
 
+Core exploration opens on more published single-site alternatives, with original
+patent-ID order also available; this is not a drug ranking. Column controls retain
+readable identifiers outside frozen headers. Unknown/mixed property origins keep
+their raw values but cannot manufacture a difference.
+
 开源仓库：[Victor-Xu-1/X-PatentSAR](https://github.com/Victor-Xu-1/X-PatentSAR)。
 软件与仓库的对外名称统一为 **X-PatentSAR**；Python 发行包与 CLI 使用规范化技术标识
 `x-patentsar`。第一方源码采用 Apache-2.0，第三方许可和模型边界见 `NOTICE`。

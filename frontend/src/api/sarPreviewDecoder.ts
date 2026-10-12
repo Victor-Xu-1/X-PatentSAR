@@ -41,6 +41,16 @@ export const decodeStudyPreview: Decoder<StudyPreview> = (value, path = '$') => 
       value,
       {
         drawings: nullOr(decodePreviewDrawings),
+        property_statuses: recordOf(
+          oneOf([
+            'comparable',
+            'missing',
+            'origin_unknown',
+            'origin_mismatch',
+            'not_representable',
+          ]),
+          6,
+        ),
         recorded_measurements: array(
           object({
             context_id: hex(64),
@@ -53,6 +63,17 @@ export const decodeStudyPreview: Decoder<StudyPreview> = (value, path = '$') => 
     ),
   };
   const recorded = result.recorded_measurements ?? [];
+  const statuses = result.property_statuses ?? {};
+  if (
+    Object.keys(statuses).length &&
+    (Object.keys(statuses).length !== Object.keys(result.property_differences).length ||
+      Object.entries(statuses).some(
+        ([key, status]) =>
+          !(key in result.property_differences) ||
+          (status === 'comparable') !== (result.property_differences[key] != null),
+      ))
+  )
+    throw new ContractError(path + '.property_comparison_status');
   const contexts = [...result.measurements, ...recorded].map((item) => item.context_id);
   if (
     result.pair.match_status !== 'matched' ||

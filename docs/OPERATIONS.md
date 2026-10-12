@@ -193,6 +193,14 @@ The recovered E-drive deployment has an operator-owned entry point at `/srv/wsl/
 
 ### Independent SAR workbench
 
+Core exploration defaults to the complete report's most published alternatives;
+use Original ID order for natural patent-label browsing. Sorting preserves the
+current reference/region and does not imply efficacy or experimental independence.
+Matrix arrows move by actual columns outside frozen headers. Property previews
+show raw numbers even when their origin is unknown or differs, but withhold
+those deltas and provide a compact reason. No dataset or completed report needs
+to be rewritten/re-run for these read/presentation changes.
+
 The Variable-regions workbench now displays up to six current-page strict
 alternatives beside one reference, with one row per metric/property. The full
 member pool remains paged, not truncated. Click a region for its exact series,

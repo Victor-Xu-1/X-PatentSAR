@@ -114,8 +114,11 @@ export interface StudyPreview {
     candidate_values: string[];
   }[];
   property_differences: Record<string, number | null>;
+  property_statuses?: Record<string, PropertyComparisonStatus>;
   drawings?: PreviewDrawingPair | null;
 }
+export type PropertyComparisonStatus =
+  'comparable' | 'missing' | 'origin_unknown' | 'origin_mismatch' | 'not_representable';
 export interface PreviewDrawingPair {
   reference: StudyDrawing;
   candidate: StudyDrawing;

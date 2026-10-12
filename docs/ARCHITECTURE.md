@@ -9,6 +9,23 @@ epochs are not product releases and do not retag old results as current.
 
 ### Multi-candidate comparison presentation
 
+`coreChoices.ts` orders the retained complete core collection by unique published
+non-reference alternatives, with natural original-label tie breaking. This is
+exploration order, not drug efficacy, experimental independence or Lead ranking.
+Manual zero-variation cores remain and explicit selection/regions survive order
+and locale changes. Original-ID order remains available on the same gallery.
+`matrixScrolling.ts` reads actual frozen-edge and candidate-column geometry for
+bounded forward/back movement; shared overflow/focus/motion authorities remain.
+It does not change data order, source identity or RDKit coordinates.
+
+`preview_properties.py` is the one single-pair/matrix property arithmetic
+authority. Both non-null values require the same explicitly supported producer
+origin; absent/unknown origins are not an equality proof. Missing, unknown,
+mixed-origin and unrepresentable differences preserve raw numbers and expose
+bounded status, never a zero or efficacy claim. Isolated preview DTOs/decoders
+validate status/delta consistency. Original reports and scientific epochs remain
+unchanged; this does not run descriptors or inference on a read.
+
 `preview_source.py` prepares one receipt-checked current report and immutable
 input for a read. The existing `study_preview.verified_preview` remains the sole
 member/complete-graph/fragment/published-pair and measurement proof for single

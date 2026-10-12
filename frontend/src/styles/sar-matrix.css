@@ -104,6 +104,16 @@
   text-align: center;
   color: var(--ink);
 }
+.sar-matrix-identity .sar-network-compare {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  justify-content: center;
+  gap: 8px;
+}
+.sar-matrix-identity .sar-network-compare strong {
+  overflow-wrap: anywhere;
+}
 .sar-matrix-identity .icon-button {
   flex: 0 0 auto;
   width: 32px;
