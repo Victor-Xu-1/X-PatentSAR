@@ -8,10 +8,13 @@ import re
 import sqlite3
 from collections.abc import Sequence
 from datetime import datetime
+from functools import lru_cache
 from importlib.metadata import version
+from pathlib import Path
 
 from pydantic import ValidationError
 
+from . import activity_rank_values, indicator_conventions
 from .errors import WebError
 from .lead_models import LEAD_POLICY_VERSION, LeadAssessment
 from .models import Compound
@@ -24,6 +27,16 @@ MAX_REPORT_BYTES = 32 * 1024 * 1024
 MAX_SOURCE_BYTES = 128 * 1024 * 1024
 
 
+@lru_cache(maxsize=1)
+def indicator_fingerprint() -> str:
+    """One installed-code digest, not a new result cache or science version."""
+    digest = hashlib.sha256()
+    for module in (activity_rank_values, indicator_conventions):
+        digest.update(Path(module.__file__).read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
 def input_fingerprint(project: dict, compounds: Sequence[Compound]) -> str:
     """Exact effective inputs; no paging, filter, timestamp or page-render identity."""
     digest = hashlib.sha256()
@@ -31,6 +44,7 @@ def input_fingerprint(project: dict, compounds: Sequence[Compound]) -> str:
         encode(
             [
                 POLICY_VERSION,
+                indicator_fingerprint(),
                 RDKIT_VERSION,
                 project["id"],
                 project["sha256"],

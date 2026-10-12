@@ -8,6 +8,8 @@
   for unknown/conflicting endpoints. New admissions recheck known polarity after
   existing request replay lookup. Lead safety/desirability guards, source values,
   grade definitions, engine identity and archived inputs/results stay independent.
+  Its rebuildable cache fingerprints the shared installed direction code and
+  refuses old-rule nominations without read-side recalculation or inference.
   No new queue, database, dependency, inference or acceptance authority is added.
 
 - Single-site discovery ownership: SAR engine8 uses `core/sar/discovery.py` as

@@ -71,6 +71,39 @@ class ControlledLeadAnalysis:
 
 
 class LeadWorkflowTests(PredictionFixture, unittest.TestCase):
+    def test_shared_indicator_rule_identity_invalidates_cache_without_inference(self):
+        row, root, analysis = self.execute()
+        original = {
+            str(path): path.read_bytes() for path in root.rglob("*") if path.is_file()
+        }
+        self.assertEqual(
+            self.service.results(self.project.id).items[0].lead.status, "selected"
+        )
+        with patch(
+            "patent_sar_extractor.web.lead_storage.indicator_fingerprint",
+            return_value="0" * 64,
+            create=True,
+        ):
+            self.assertEqual(
+                self.service.results(self.project.id).items[0].lead.status, "stale"
+            )
+            with self.assertRaises(WebError):
+                self.service.leads.confirm(self.project.id, row["id"])
+            self.service.leads.refresh(self.project.id, job_id=row["id"])
+            self.assertEqual(
+                self.service.results(self.project.id).items[0].lead.status, "selected"
+            )
+            self.service.leads.confirm(self.project.id, row["id"])
+        self.assertEqual(analysis.calls, 1)
+        self.assertEqual(
+            {
+                str(path): path.read_bytes()
+                for path in root.rglob("*")
+                if path.is_file()
+            },
+            original,
+        )
+
     def test_lead_tail_keeps_full_measured_research_duration(self):
         row, root, _ = self.draft()
         write_admet_stage(

@@ -16,7 +16,10 @@ into a bounded `IndicatorProfile` on the existing read-only profile endpoint.
 Both forms consume these typed server facts; only unknown/conflicting rules keep
 manual direction controls. New admission validates known polarity AFTER original
 idempotent-request lookup and before publishing work. Lead's separate safety and
-desirability guards remain strict. Defaults do not manufacture grade thresholds,
+desirability guards remain strict. Its existing input fingerprint includes one
+bounded installed-code digest of the shared direction functions; an old cache
+becomes stale without a GET-side inference/recalculation or source rewrite.
+Defaults do not manufacture grade thresholds,
 units, measurement values, missing conditions or medicinal objectives.
 `indicator_models.py` deliberately isolates setup additions from captured
 `study_models.py`, input/report serialization and scientific engine identity.

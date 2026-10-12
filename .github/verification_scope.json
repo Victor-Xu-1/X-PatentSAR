@@ -30,12 +30,14 @@
     "src/patent_sar_extractor/contracts.py",
     "src/patent_sar_extractor/web/activity_rank_values.py",
     "src/patent_sar_extractor/web/indicator_conventions.py",
+    "src/patent_sar_extractor/web/lead_storage.py",
     "src/patent_sar_extractor/web/sar/indicator_models.py",
     "src/patent_sar_extractor/web/sar/indicator_policy.py",
     "src/patent_sar_extractor/web/sar/queue.py",
     "src/patent_sar_extractor/web/sar/study_admission.py",
     "src/patent_sar_extractor/web/sar/study_routes.py",
     "tests/test_sar_browser_fixture.py",
+    "tests/test_lead_workflow.py",
     "tests/test_sar_indicator_defaults.py",
     "tools/browser_fixture_mode.py"
   ],
@@ -47,6 +49,8 @@
     "tests.test_lead_scoring.LeadScoringTests.test_ymin_only_proved_context_and_negative_readings_not_clamped",
     "tests.test_lead_scoring.LeadScoringTests.test_counter_toxicity_negative_and_unknown_assays_not_potency",
     "tests.test_lead_scoring.LeadScoringTests.test_supported_ordinal_grade_and_mixed_types_fail_closed",
+    "tests.test_lead_workflow.LeadWorkflowTests.test_shared_indicator_rule_identity_invalidates_cache_without_inference",
+    "tests.test_lead_workflow.LeadWorkflowTests.test_changed_inputs_publication_cas_and_read_staleness",
     "tests.test_sar_browser_fixture.SARBrowserFixtureTests.test_indicator_defaults_scope_uses_only_isolated_sar_fixture",
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
