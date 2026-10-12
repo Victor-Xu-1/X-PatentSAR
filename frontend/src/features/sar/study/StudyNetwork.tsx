@@ -32,7 +32,7 @@ export function StudyNetwork({
     [site, setSite] = useState('');
   const [allSites, setAllSites] = useState(false);
   const [order, setOrder] = useState<CoreOrder>('alternatives');
-  const collection = useMemo(() => coreChoices(report), [report.regions, report.discovery]);
+  const collection = useMemo(() => coreChoices(report), [report]);
   const centres = useMemo(() => orderCores(collection, order), [collection, order]);
   const multiple = centres.length > 1;
   const filtered = multiple
