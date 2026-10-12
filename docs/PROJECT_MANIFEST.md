@@ -1,5 +1,11 @@
 # Project governance manifest
 
+- Property-number presentation ownership: `propertyDelta.ts` is the shared
+  matrix/pair display authority. A source/status-bound native continuous-property
+  machine-precision guard labels approximation, retaining the full raw delta.
+  It cannot alter API/storage values, activity rules, outcomes, ranking, count
+  metrics, imported/manual/model evidence or scientific engine identity.
+
 - Browser startup ownership: `tools/wait_browser_server.py` validates a bounded
   already-started owned PID/loopback HTTP schema/exact installed version. CI keeps
   service lifecycle ownership; this tool cannot start/stop it or run science.

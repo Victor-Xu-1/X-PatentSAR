@@ -3,6 +3,7 @@ import { useTranslation } from '../../../i18n';
 import { contextLabel } from '../presentation';
 import { matrixDifference, matrixReadings } from './matrixReadings';
 import { propertyComparisonMessage } from './propertyComparisonMessage';
+import { propertyDelta } from './propertyDelta';
 import {
   differenceText,
   previewValueText,
@@ -82,6 +83,7 @@ export function MatrixValues({ data, report }: { data: StudyMatrix; report: Stud
               const difference = preview.property_differences[property.key];
               const status = preview.property_statuses?.[property.key];
               const reason = propertyComparisonMessage(status);
+              const delta = propertyDelta(preview, property.key);
               return (
                 <td
                   key={preview.candidate.molecule_id}
@@ -91,9 +93,8 @@ export function MatrixValues({ data, report }: { data: StudyMatrix; report: Stud
                     {propertyText(preview.candidate.properties[property.key], property.key)}
                   </span>
                   {difference != null && (
-                    <small className="sar-matrix-delta">
-                      Δ {difference > 0 ? '+' : ''}
-                      {differenceText(difference, property.key)}
+                    <small className="sar-matrix-delta" title={t('原始差值') + ': ' + delta.raw}>
+                      Δ {delta.text}
                     </small>
                   )}
                   {difference == null && reason && status !== 'missing' && (

@@ -190,6 +190,51 @@ it('preserves unknown/mixed-origin property values while showing no manufactured
     ).toThrow();
 });
 
+it('renders approximate native roundoff and exact small deltas consistently without changing source data or locale identity', async () => {
+  const first = 137.11,
+    second = 137.11000000000004;
+  const near = second - first,
+    small = -5.746154 - -5.74;
+  const controlled = {
+    ...packet,
+    previews: packet.previews.map((item) => ({
+      ...item,
+      reference: {
+        ...item.reference,
+        properties: { ...item.reference.properties, tpsa: first, Solubility_AqSolDB: -5.74 },
+        property_origins: {
+          ...item.reference.property_origins,
+          tpsa: 'computed_rdkit',
+          Solubility_AqSolDB: 'computed_rdkit',
+        },
+      },
+      candidate: {
+        ...item.candidate,
+        properties: { ...item.candidate.properties, tpsa: second, Solubility_AqSolDB: -5.746154 },
+        property_origins: {
+          ...item.candidate.property_origins,
+          tpsa: 'computed_rdkit',
+          Solubility_AqSolDB: 'computed_rdkit',
+        },
+      },
+      property_differences: { tpsa: near, Solubility_AqSolDB: small },
+      property_statuses: { tpsa: 'comparable', Solubility_AqSolDB: 'comparable' },
+    })),
+  };
+  const original = JSON.stringify(controlled);
+  vi.mocked(sarStudyApi.matrix).mockResolvedValue(decodeStudyMatrix(controlled));
+  render(<NetworkMatrix {...props} />);
+  const table = await screen.findByRole('table', { name: 'Structure comparison' });
+  expect(within(table).getAllByText('Δ ≈ 0')).toHaveLength(2);
+  expect(within(table).getAllByText('Δ -0.00615')).toHaveLength(2);
+  expect(within(table).getAllByTitle('Raw difference: +' + String(near))).toHaveLength(2);
+  await act(() => setLocale('zh-CN'));
+  expect(within(table).getAllByTitle('原始差值: +' + String(near))).toHaveLength(2);
+  expect(within(table).getAllByText('Δ ≈ 0')).toHaveLength(2);
+  expect(sarStudyApi.matrix).toHaveBeenCalledTimes(1);
+  expect(JSON.stringify(controlled)).toBe(original);
+});
+
 it('uses one exact ordered read with shared authentication and rejects wrong selectors without a write', async () => {
   const transport = vi.fn<typeof fetch>(async (url) =>
     json(String(url).endsWith('/session') ? session : packet),

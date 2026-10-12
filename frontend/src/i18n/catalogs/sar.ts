@@ -75,6 +75,7 @@ export const sar: Record<string, string> = {
   '正在加载改造…': 'Loading transformation…',
   专利实测: 'Patent measurements',
   变化: 'Change',
+  原始差值: 'Raw difference',
   无数值变化: 'No numeric change',
   未测定: 'Not measured',
   条件不可比: 'Incomparable conditions',

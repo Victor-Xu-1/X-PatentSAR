@@ -7,6 +7,7 @@ import { sarApi } from '../src/api/sarApi';
 import { decodeStudyPreview } from '../src/api/sarPreviewDecoder';
 import { TransformationPreview } from '../src/features/sar/study/TransformationPreview';
 import { PreviewMeasurements } from '../src/features/sar/study/PreviewMeasurements';
+import { PreviewProperties } from '../src/features/sar/study/PreviewProperties';
 import { StudyRegions } from '../src/features/sar/study/StudyRegions';
 import { differenceText, propertyText } from '../src/features/sar/study/tablePresentation';
 import {
@@ -61,6 +62,55 @@ beforeEach(() => {
   vi.spyOn(sarApi, 'drawing').mockResolvedValue(sarDrawing);
 });
 describe('actual transformation preview', () => {
+  it('uses the same source-preserving property delta display as the matrix and localizes only tooltip copy', async () => {
+    const first = 137.11,
+      second = 137.11000000000004;
+    const near = second - first,
+      small = -5.746154 - -5.74;
+    const data = decodeStudyPreview({
+      ...preview,
+      reference: {
+        ...preview.reference,
+        properties: { ...preview.reference.properties, tpsa: first, Solubility_AqSolDB: -5.74 },
+        property_origins: {
+          ...preview.reference.property_origins,
+          tpsa: 'computed_rdkit',
+          Solubility_AqSolDB: 'computed_rdkit',
+        },
+      },
+      candidate: {
+        ...preview.candidate,
+        properties: {
+          ...preview.candidate.properties,
+          tpsa: second,
+          Solubility_AqSolDB: -5.746154,
+        },
+        property_origins: {
+          ...preview.candidate.property_origins,
+          tpsa: 'computed_rdkit',
+          Solubility_AqSolDB: 'computed_rdkit',
+        },
+      },
+      property_differences: { tpsa: near, Solubility_AqSolDB: small },
+      property_statuses: { tpsa: 'comparable', Solubility_AqSolDB: 'comparable' },
+    });
+    const original = JSON.stringify(data);
+    render(<PreviewProperties data={data} />);
+    const table = screen.getByRole('table', { name: 'Properties' });
+    expect(within(table).getByText('≈ 0')).toHaveAttribute(
+      'title',
+      'Raw difference: +' + String(near),
+    );
+    expect(within(table).getByText('-0.00615')).toHaveAttribute(
+      'title',
+      'Raw difference: ' + String(small),
+    );
+    await act(() => setLocale('zh-CN'));
+    expect(screen.getByRole('table', { name: '性质' })).toBe(table);
+    expect(within(table).getByText('≈ 0')).toHaveAttribute('title', '原始差值: +' + String(near));
+    expect(JSON.stringify(data)).toBe(original);
+    expect(sarStudyApi.preview).not.toHaveBeenCalled();
+  });
   it('shows both source-owned property rows and authoritative deltas without computing missing values', async () => {
     const data = decodeStudyPreview({
       ...preview,
