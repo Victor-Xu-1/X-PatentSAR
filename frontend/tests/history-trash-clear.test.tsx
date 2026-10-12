@@ -153,7 +153,7 @@ it('shows incomplete file cleanup honestly and resumes the exact frozen request 
   const resume = screen.getByRole('button', { name: 'Continue file cleanup' });
   expect(resume).toBeEnabled();
   await userEvent.dblClick(resume);
-  expect(await screen.findByText('Deleted 2/2 files.')).toBeVisible();
+  expect(await screen.findByText('Deleted 2 files.')).toBeVisible();
   expect(api.clearTrash).toHaveBeenCalledTimes(1);
   expect(api.clearTrash).toHaveBeenCalledWith({
     request_id: pending.request_id,
@@ -180,4 +180,36 @@ it('rejects incomplete, nonfinite and contradictory clear claims rather than sho
     { ...receipt, status: 'cleanup_pending' },
   ])
     expect(() => decodeTrashClearReceipt(malformed)).toThrow();
+});
+
+it('renders truthful singular counts and does not present retained referenced files as incomplete deletion', async () => {
+  const one = {
+    ...plan,
+    total: 1,
+    counts: { project: 1, job: 0, export: 0, environment_operation: 0 },
+    files_total: 1,
+  };
+  vi.mocked(api.trashPlan).mockResolvedValue(one);
+  vi.mocked(api.clearTrash).mockImplementation(async (request) => ({
+    ...receipt,
+    request_id: request.request_id,
+    cleared: 1,
+    counts: one.counts,
+    files_total: 1,
+    files_deleted: 0,
+    files_retained: 1,
+    bytes_removed: 0,
+  }));
+  render(<TrashClearDialog onClose={vi.fn()} onDone={vi.fn()} />);
+  expect(await screen.findByText('All record types and pages: 1 record.')).toBeVisible();
+  expect(screen.getByText('1 unreferenced file can be deleted.')).toBeVisible();
+  expect(
+    screen.getByText('1 referenced, imported or unverified asset group will be retained.'),
+  ).toBeVisible();
+  await userEvent.click(screen.getByRole('button', { name: 'Confirm empty all' }));
+  expect(await screen.findByText('Permanently removed 1 record.')).toBeVisible();
+  expect(screen.getByText('1 newly referenced file was retained.')).toBeVisible();
+  expect(
+    screen.queryByText('File cleanup is incomplete. Continue the saved operation.'),
+  ).not.toBeInTheDocument();
 });

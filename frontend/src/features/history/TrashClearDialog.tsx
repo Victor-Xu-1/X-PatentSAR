@@ -20,13 +20,30 @@ export function TrashClearDialog({ onClose, onDone }: { onClose: () => void; onD
         {state.error && <ErrorNotice error={state.error} />}
         {state.receipt ? (
           <div className="info-banner">
-            <output>{t('已永久移除 {count} 条记录。', { count: state.receipt.cleared })}</output>
+            <output>
+              {t(
+                state.receipt.cleared === 1
+                  ? '已永久移除 1 条记录。'
+                  : '已永久移除 {count} 条记录。',
+                { count: state.receipt.cleared },
+              )}
+            </output>
             <p>
-              {t('已清理 {deleted}/{total} 个文件。', {
-                deleted: state.receipt.files_deleted,
-                total: state.receipt.files_total,
-              })}
+              {t(
+                state.receipt.files_deleted === 1 ? '已删除 1 个文件。' : '已删除 {count} 个文件。',
+                { count: state.receipt.files_deleted },
+              )}
             </p>
+            {state.receipt.files_retained > 0 && (
+              <p>
+                {t(
+                  state.receipt.files_retained === 1
+                    ? '新增引用的 1 个文件已保留。'
+                    : '新增引用的 {count} 个文件已保留。',
+                  { count: state.receipt.files_retained },
+                )}
+              </p>
+            )}
             {state.receipt.status === 'cleanup_pending' && (
               <output>{t('文件清理未完成，可继续原操作。')}</output>
             )}
@@ -35,7 +52,12 @@ export function TrashClearDialog({ onClose, onDone }: { onClose: () => void; onD
           state.plan && (
             <>
               <strong>
-                {t('全部类型、全部分页，共 {count} 条记录。', { count: state.plan.total })}
+                {t(
+                  state.plan.total === 1
+                    ? '全部类型、全部分页，共 1 条记录。'
+                    : '全部类型、全部分页，共 {count} 条记录。',
+                  { count: state.plan.total },
+                )}
               </strong>
               <ul className="trash-clear-counts">
                 {historyKinds
@@ -47,12 +69,24 @@ export function TrashClearDialog({ onClose, onDone }: { onClose: () => void; onD
                     </li>
                   ))}
               </ul>
-              <p>{t('可清理 {count} 个未引用文件。', { count: state.plan.files_total })}</p>
+              <p>
+                {t(
+                  state.plan.files_total === 1
+                    ? '可清理 1 个未引用文件。'
+                    : '可清理 {count} 个未引用文件。',
+                  { count: state.plan.files_total },
+                )}
+              </p>
               {state.plan.retained_targets > 0 && (
                 <p>
-                  {t('{count} 组被引用、导入或无法核实的资产将保留。', {
-                    count: state.plan.retained_targets,
-                  })}
+                  {t(
+                    state.plan.retained_targets === 1
+                      ? '1 组被引用、导入或无法核实的资产将保留。'
+                      : '{count} 组被引用、导入或无法核实的资产将保留。',
+                    {
+                      count: state.plan.retained_targets,
+                    },
+                  )}
                 </p>
               )}
               {state.plan.blocked > 0 && (

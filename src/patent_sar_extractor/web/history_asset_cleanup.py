@@ -59,8 +59,10 @@ def continue_cleanup(store, request_id: str) -> TrashClearReceipt:
         )
     manifest = CleanupManifest.model_validate_json(saved["manifest"])
     cursor = saved["next_index"]
+    directory_cursor = saved["next_directory"]
     if (
         not 0 <= cursor <= len(manifest.files)
+        or not 0 <= directory_cursor <= len(manifest.directories)
         or receipt.files_total != len(manifest.files)
         or cursor != receipt.files_deleted + receipt.files_retained
     ):
@@ -83,28 +85,36 @@ def continue_cleanup(store, request_id: str) -> TrashClearReceipt:
             receipt.bytes_removed += item.identity[2] if removed else 0
             cursor = index + 1
             if cursor % 16 == 0:
-                _progress(store, request_id, receipt, cursor)
+                _progress(store, request_id, receipt, cursor, directory_cursor)
         if cursor == len(manifest.files):
-            _progress(store, request_id, receipt, cursor)
-            for directory in sorted(
+            _progress(store, request_id, receipt, cursor, directory_cursor)
+            directories = sorted(
                 manifest.directories, key=lambda item: len(item.path), reverse=True
-            ):
+            )
+            for index in range(directory_cursor, len(directories)):
+                if time.monotonic() - started > 30:
+                    break
+                directory = directories[index]
                 remove_empty_directory(store, directory, references)
-            receipt.status = "complete"
-            receipt.completed_at = now()
+                directory_cursor = index + 1
+                if directory_cursor % 16 == 0:
+                    _progress(store, request_id, receipt, cursor, directory_cursor)
+            if directory_cursor == len(directories):
+                receipt.status = "complete"
+                receipt.completed_at = now()
     except (OSError, ValueError, WebError):
         # Publish only completed exact-file work, never fake whole-operation success.
-        _progress(store, request_id, receipt, cursor)
+        _progress(store, request_id, receipt, cursor, directory_cursor)
         return receipt
-    _progress(store, request_id, receipt, cursor)
+    _progress(store, request_id, receipt, cursor, directory_cursor)
     return receipt
 
 
-def _progress(store, request_id, receipt, cursor):
+def _progress(store, request_id, receipt, cursor, directory_cursor):
     with store.connect(write=True) as connection:
         connection.execute(
-            "UPDATE history_file_cleanup SET next_index=? WHERE request_id=?",
-            (cursor, request_id),
+            "UPDATE history_file_cleanup SET next_index=?,next_directory=? WHERE request_id=?",
+            (cursor, directory_cursor, request_id),
         )
         connection.execute(
             "UPDATE history_purge_requests SET payload=? WHERE request_id=?",

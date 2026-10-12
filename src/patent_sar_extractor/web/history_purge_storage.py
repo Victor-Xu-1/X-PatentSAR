@@ -21,7 +21,8 @@ CREATE TABLE IF NOT EXISTS history_purge_requests (
 );
 CREATE TABLE IF NOT EXISTS history_file_cleanup (
  request_id TEXT PRIMARY KEY REFERENCES history_purge_requests(request_id),
- manifest TEXT NOT NULL, sha256 TEXT NOT NULL, next_index INTEGER NOT NULL DEFAULT 0
+ manifest TEXT NOT NULL, sha256 TEXT NOT NULL, next_index INTEGER NOT NULL DEFAULT 0,
+ next_directory INTEGER NOT NULL DEFAULT 0
 );
 """
 

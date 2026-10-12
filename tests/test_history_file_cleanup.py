@@ -10,6 +10,7 @@ from unittest.mock import patch
 from test_prediction_support import PredictionFixture
 
 from patent_sar_extractor.web.errors import WebError
+from patent_sar_extractor.web.history_asset_removal import remove_empty_directory
 from patent_sar_extractor.web.history_purge_models import TrashClearRequest
 from patent_sar_extractor.web.history_service import HistoryService
 from patent_sar_extractor.web.pdf import UploadedPDF
@@ -19,6 +20,41 @@ from patent_sar_extractor.web.storage import now
 
 
 class HistoryFileCleanupTests(PredictionFixture, unittest.TestCase):
+    def test_empty_directory_phase_is_bounded_and_resumes_after_files_are_processed(
+        self,
+    ):
+        self.remove_project()
+        request, _ = self.request()
+        clock = {"value": 0}
+
+        def finish_one(*args):
+            remove_empty_directory(*args)
+            clock["value"] = 31
+
+        with (
+            patch(
+                "patent_sar_extractor.web.history_asset_cleanup.time.monotonic",
+                side_effect=lambda: clock["value"],
+            ),
+            patch(
+                "patent_sar_extractor.web.history_asset_cleanup.remove_empty_directory",
+                side_effect=finish_one,
+            ),
+        ):
+            pending = self.history.clear_trash(request)
+        self.assertEqual(pending.status, "cleanup_pending")
+        self.assertEqual(pending.files_deleted, 3)
+        with self.service.store.connect() as connection:
+            progress = connection.execute(
+                "SELECT next_directory FROM history_file_cleanup WHERE request_id=?",
+                (request.request_id,),
+            ).fetchone()[0]
+        self.assertEqual(progress, 1)
+        complete = HistoryService(self.service.store).clear_trash(request)
+        self.assertEqual(complete.status, "complete")
+        self.assertEqual(complete.files_deleted, 3)
+        self.assertFalse(self.output.exists())
+
     def setUp(self):
         super().setUp()
         self.history = HistoryService(self.service.store)
