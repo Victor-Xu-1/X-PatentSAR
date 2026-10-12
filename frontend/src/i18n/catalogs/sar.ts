@@ -62,6 +62,7 @@ export const sar: Record<string, string> = {
   改造预览: 'Transformation preview',
   绘图布局: 'Drawing layout',
   固定背景已对齐: 'Fixed background aligned',
+  固定核心已对齐: 'Fixed core aligned',
   独立布局: 'Independent layouts',
   关闭改造预览: 'Close transformation preview',
   '放大结构 {identifier}': 'Enlarge structure {identifier}',

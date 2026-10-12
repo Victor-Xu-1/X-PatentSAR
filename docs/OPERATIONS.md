@@ -857,6 +857,44 @@ Activity extraction runs in an isolated subprocess with a bounded workload-aware
 
 ### Recoverable page deletion
 
+The recycle bin also has one **Empty Trash / 清空回收站** action. Its confirmation
+counts ALL four record types across all pages/projects, regardless of the current
+list filter. This permanently removes the daily/recycle-bin entries and their
+ordinary restore access. After explicit confirmation it also deletes verified
+unreferenced first-party uploads, attempt outputs, exports and terminal
+environment-operation outputs. Project/checkpoint ancestry and SAR source
+project/document/CSV digests protect shared data. Imported directories, linked,
+open or unverified assets, shared caches, model/install environments and audit
+rows are preserved. Browser-saved copies are outside server ownership.
+The complete bounds are25000 records/files/directories,8GiB of candidate content
+and30s for whole-inventory hashing; existing export discovery remains10000.
+Exceeded inventory bounds refuse before any deletion, never truncate to a page.
+
+One private workspace transaction publishes every permanent marker and its
+idempotent request receipt. Restore/delete share one history guard; a changed
+count/source revision, active or unverified ownership, unsafe control or partial
+transaction refuses the complete operation. A lost response requires explicit
+readback of that exact request; checked absence permits only a deliberate retry
+of the same frozen body/nonce. No automatic replay or inferred success from an
+empty page. `history_purged_entries`, `history_purge_requests` and
+`history_file_cleanup` are private operational state, not acceptance/audit
+replacements. The sealed file manifest binds exact paths, roots, inode metadata
+and SHA-256; same-directory no-replace quarantine and exclusive kernel file
+leases prevent overwriting or deleting changed/linked/open data. Files are removed
+individually; only frozen, verified empty task/operation directories are rmdir'd.
+Physical cleanup is not an atomic multi-file filesystem transaction: records and
+intent commit together, and30s finite cleanup requests durably checkpoint partial
+work. Interruption produces `cleanup_pending`, not fake completion. Reopen Empty
+Trash and choose Continue file cleanup to resume that exact manifest/request.
+Receipt/plan GET and startup never replay a write. A newly retained reference is
+preserved on resume. Audit metadata does not consume ordinary retention quotas.
+Older wheels cannot honor permanent visibility markers: preserve newer state
+separately and deliberately restore the pre-upgrade backup for rollback. Do not
+strip markers or delete underlying source rows to make an older reader pass.
+Application rollback cannot recreate files that the user permanently cleared;
+restoring such files requires an independent pre-clear backup. Do not silently
+restore previously deleted data during an application upgrade or rollback.
+
 Daily pages provide deletion for recent-file projects, extraction task records,
 software-saved CSV/JSON files and terminal environment operations. Confirmation
 states the scope and that deletion is recoverable, **not disk-space reclamation**.

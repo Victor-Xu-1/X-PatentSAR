@@ -92,6 +92,10 @@ it('uses the exact paired source drawings, not two independently scaled fetches'
 it('retains paired layout metadata and refuses mismatched or unsupported alignment claims', () => {
   const source = packet();
   expect(decodeStudyPreview(source)).toHaveProperty('drawings', source.drawings);
+  expect(
+    decodeStudyPreview({ ...source, drawings: { ...source.drawings, layout: 'fixed_component' } })
+      .drawings?.layout,
+  ).toBe('fixed_component');
   for (const drawings of [
     { ...source.drawings, candidate: { ...source.drawings.candidate, id: 'foreign' } },
     { ...source.drawings, equivalent_mappings: 0 },

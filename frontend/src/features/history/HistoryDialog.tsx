@@ -9,6 +9,7 @@ import { useResource } from '../../hooks/useResource';
 import { dateText } from '../../model/presentation';
 import { HistoryActions } from './HistoryActions';
 import { historyLabels, retentionNotice } from './historyPresentation';
+import { TrashClearDialog } from './TrashClearDialog';
 
 export function HistoryDialog({
   title,
@@ -33,6 +34,7 @@ export function HistoryDialog({
   const [kind, setKind] = useState(initialKind);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
+  const [clearOpen, setClearOpen] = useState(false);
   const load = useCallback(
     (signal: AbortSignal) =>
       api.history(
@@ -94,6 +96,11 @@ export function HistoryDialog({
           {onTrash && (
             <button type="button" onClick={onTrash}>
               {t('回收站')}
+            </button>
+          )}
+          {deleted && (
+            <button type="button" className="danger-button" onClick={() => setClearOpen(true)}>
+              {t('清空回收站')}
             </button>
           )}
         </div>
@@ -179,6 +186,15 @@ export function HistoryDialog({
           </button>
         </footer>
       </div>
+      {clearOpen && (
+        <TrashClearDialog
+          onClose={() => setClearOpen(false)}
+          onDone={() => {
+            setPage(1);
+            resource.reload();
+          }}
+        />
+      )}
     </Dialog>
   );
 }

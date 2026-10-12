@@ -128,11 +128,15 @@ export function TransformationPreview({
           {data.drawings && (
             <output
               aria-label={t('绘图布局')}
-              className={
-                data.drawings.layout === 'fixed_background' ? 'sr-only' : 'sar-preview-layout'
-              }
+              className={data.drawings.layout !== 'independent' ? 'sr-only' : 'sar-preview-layout'}
             >
-              {t(data.drawings.layout === 'fixed_background' ? '固定背景已对齐' : '独立布局')}
+              {t(
+                data.drawings.layout === 'fixed_background'
+                  ? '固定背景已对齐'
+                  : data.drawings.layout === 'fixed_component'
+                    ? '固定核心已对齐'
+                    : '独立布局',
+              )}
             </output>
           )}
           <div className="sar-molecule-comparison" data-layout={data.drawings?.layout}>

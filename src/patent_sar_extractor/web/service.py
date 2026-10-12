@@ -17,7 +17,12 @@ from .corrections import Corrections, CorrectionSaved
 from .descriptor_storage import DescriptorStore
 from .errors import WebError
 from .files import SafeFiles
-from .history_storage import ensure_job_visible, ensure_project_visible, tombstone
+from .history_storage import (
+    ensure_job_visible,
+    ensure_project_visible,
+    retained_count,
+    tombstone,
+)
 from .lead_storage import LeadStore
 from .leads import LeadService
 from .llm_job_recovery import recovery_view
@@ -162,10 +167,7 @@ class WorkspaceService:
         }
         try:
             with self.store.connect(write=True) as connection:
-                if (
-                    connection.execute("SELECT COUNT(*) FROM projects").fetchone()[0]
-                    >= 200
-                ):
+                if retained_count(connection, "project") >= 200:
                     raise WebError(
                         413, "project_limit", "Workspace has reached its project limit."
                     )
@@ -298,13 +300,7 @@ class WorkspaceService:
             with self.store.connect(write=True) as connection:
                 if existing:
                     ensure_project_visible(connection, project_id)
-                if (
-                    not existing
-                    and connection.execute("SELECT COUNT(*) FROM projects").fetchone()[
-                        0
-                    ]
-                    >= 200
-                ):
+                if not existing and retained_count(connection, "project") >= 200:
                     raise WebError(
                         413, "project_limit", "Workspace has reached its project limit."
                     )

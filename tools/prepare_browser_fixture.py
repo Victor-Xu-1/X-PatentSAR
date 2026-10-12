@@ -23,8 +23,9 @@ def prepare(
     llm_settings: bool = False,
     llm_recovery: bool = False,
     sar: bool = False,
+    history: bool = False,
 ) -> dict[str, str]:
-    if sum((read_only, llm_settings, llm_recovery, sar)) > 1:
+    if sum((read_only, llm_settings, llm_recovery, sar, history)) > 1:
         raise ValueError("Choose one isolated fixture mode")
     if workspace.exists() and any(workspace.iterdir()):
         raise ValueError("Browser fixture workspace must be empty")
@@ -44,8 +45,8 @@ def prepare(
     run = artifact_run(
         workspace / "controlled-history",
         pdf,
-        current=sar,
-        accepted=sar,
+        current=sar or history,
+        accepted=sar or history,
         rows=30,
         # Label-layout samples only; the other 28 historical adapter rows stay
         # unchanged. No depicted-structure/recognition accuracy is certified.
@@ -74,7 +75,7 @@ def prepare(
         title="CI controlled historical adapter fixture (not extraction evidence)",
     )
     origin = "http://127.0.0.1:18765"
-    if read_only or llm_settings or sar:
+    if read_only or llm_settings or sar or history:
         values = {
             "PATENTSAR_WEB_STATE_DIR": str(state),
             "PATENTSAR_E2E_SOURCE_PROJECT_ID": historical.id,
@@ -88,16 +89,41 @@ def prepare(
                 PATENTSAR_E2E_ALLOW_LLM_SETTINGS="isolated-state",
                 PATENTSAR_E2E_LLM_FIXTURE="empty-synthetic",
             )
-        if sar:
+        if sar or history:
             values["PATENTSAR_E2E_SAR_MUTATIONS"] = "synthetic-isolated-state"
+        if history:
+            if __package__:
+                from .prepare_trash_fixture import prepare_trash
+            else:
+                from prepare_trash_fixture import prepare_trash
+            trash_pdf = make_pdf(
+                workspace / "controlled-trash-native.pdf",
+                text="Distinct isolated trash-cleanup original; no model or extraction execution.",
+            )
+            trash_run = artifact_run(
+                workspace / "controlled-trash-history",
+                trash_pdf,
+                current=True,
+                accepted=True,
+                rows=1,
+            )
+            trash_project = import_run(
+                state,
+                trash_run,
+                pdf_path=trash_pdf,
+                title="Isolated trash-cleanup adapter fixture",
+            )
+            values.update(prepare_trash(state, trash_project.id))
+            values["PATENTSAR_E2E_HISTORY_PROJECT_ID"] = trash_project.id
         (workspace / "browser-fixture.json").write_text(
             json.dumps(
                 {
                     "controlled_adapter_fixture": True,
                     "scientific_acceptance_evidence": False,
                     "real_cli_failure": False,
-                    "read_only_browser_scope": not sar,
-                    "sar_synthetic_scope": sar,
+                    "read_only_browser_scope": not (sar or history),
+                    "sar_synthetic_scope": sar or history,
+                    "history_synthetic_scope": history,
                     **values,
                 },
                 indent=2,
@@ -191,6 +217,11 @@ def main() -> None:
     parser.add_argument("workspace", type=Path)
     parser.add_argument("--github-env", action="store_true")
     parser.add_argument(
+        "--history",
+        action="store_true",
+        help="Stopped synthetic all-category trash plus isolated SAR; no CLI/model/install execution",
+    )
+    parser.add_argument(
         "--sar",
         action="store_true",
         help="Current synthetic extraction adapter and explicit SAR writes only; no extraction/model run",
@@ -217,6 +248,7 @@ def main() -> None:
         llm_settings=args.llm_settings,
         llm_recovery=args.llm_recovery,
         sar=args.sar,
+        history=args.history,
     )
     if args.github_env:
         destination = os.environ.get("GITHUB_ENV")

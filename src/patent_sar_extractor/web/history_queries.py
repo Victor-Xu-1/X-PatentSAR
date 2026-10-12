@@ -6,6 +6,7 @@ import sqlite3
 from typing import Any
 
 from .history_models import HistoryKind
+from .history_purge_storage import purge_table
 
 
 def history_page(
@@ -38,6 +39,14 @@ def history_page(
     parameters: list[Any] = [kind] if has_markers else []
     condition = f"({state})=?"
     parameters.append(int(deleted))
+    purges = purge_table(connection)
+    if purges:
+        condition += (
+            f" AND NOT EXISTS (SELECT 1 FROM {purges} z WHERE z.kind=? AND z.id=r.id)"
+        )
+        parameters.append(kind)
+        if kind == "job":
+            condition += f" AND NOT EXISTS (SELECT 1 FROM {purges} z WHERE z.kind='project' AND z.id=r.project_id)"
     if project_id is not None:
         condition += " AND " + ("r.id=?" if kind == "project" else "r.project_id=?")
         parameters.append(project_id)

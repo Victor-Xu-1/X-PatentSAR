@@ -27,12 +27,25 @@ The reference article's private algorithms are not represented as reproduced.
 
 ## One visual and interaction authority
 
-Transformation previews use one source-bound paired layout: fixed atoms have
-identical native and screen coordinates and bond scale, while complete changed
+Every existing recycle-bin dialog offers one all-record clear action. The concise
+confirmation lists complete four-kind counts, irreversible restore/file cleanup
+semantics, eligible files and protected asset groups, with Cancel initially focused.
+Current filter/page does not narrow
+the action. Only explicit confirmation writes; stale/error/blocked states cannot
+borrow old counts. Unknown responses hide ordinary confirmation until exact
+receipt/readback succeeds; retries are explicit and preserve the frozen request.
+Partial physical cleanup is distinctly pending, with a deliberate same-operation
+resume even after reopening. Empty Trash never implies file cleanup succeeded.
+The shared modal stack, locale and source labels remain authoritative.
+
+Transformation previews use one source-bound paired layout: the complete connected
+fixed core has identical native and screen coordinates, all molecules share bond
+scale, and disconnected fixed parts can move to accommodate linker length without
+relaxing their chemical identity. Complete changed
 regions retain their own stereo. Cards use the available width rather than a
 210px ceiling. Shared SVG validation, magnification, keyboard/focus and locale
 ownership are unchanged. Successful alignment adds no visible explanatory block;
-an independent layout is explicitly labelled. The API and shared image boundary
+an independent/crowded layout is explicitly labelled. The API and shared image boundary
 refuse foreign drawing identities; active SVG markup is never displayed. This
 is a presentation improvement, not new chemistry/accuracy or an award claim.
 

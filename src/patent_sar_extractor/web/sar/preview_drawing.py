@@ -100,13 +100,14 @@ def paired_drawings(
         layout.candidate, layout.candidate_atoms, bounds
     )
     if layout.aligned and any(
-        math.dist(points_left[a], points_right[b]) > 1e-4 for a, b in layout.mapping
+        math.dist(points_left[a], points_right[b]) > 1e-4
+        for a, b in layout.alignment_mapping
     ):
         raise SARInputError("drawing_alignment_coordinates")
     return PreviewDrawingPair(
         reference=PreviewMoleculeDrawing(id=reference["id"], svg=left),
         candidate=PreviewMoleculeDrawing(id=candidate["id"], svg=right),
-        layout="fixed_background" if layout.aligned else "independent",
+        layout=layout.layout,
         equivalent_mappings=layout.equivalent_mappings,
-        reason=None if layout.aligned else "depiction_failed",
+        reason=layout.reason,
     )

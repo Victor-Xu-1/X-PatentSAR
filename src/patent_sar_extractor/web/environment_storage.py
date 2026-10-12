@@ -21,7 +21,8 @@ from .environment_models import (
 )
 from .errors import WebError
 from .files import private_directory
-from .history_storage import ENVIRONMENT_SCHEMA, tombstone
+from .history_purge_storage import attach_control
+from .history_storage import ENVIRONMENT_SCHEMA, retained_count, tombstone
 from .location_records import MAX_LOCATION_ROOTS, initialize_locations, location_record
 from .storage import encode, now
 
@@ -100,6 +101,7 @@ class EnvironmentStore:
         try:
             connection.execute("PRAGMA busy_timeout=10000")
             if write:
+                attach_control(connection, self.root.parent)
                 connection.execute("BEGIN IMMEDIATE")
             yield connection
             if write:
@@ -220,10 +222,7 @@ class EnvironmentStore:
                 raise WebError(
                     409, "environment_busy", "Another environment operation is active."
                 )
-            if (
-                connection.execute("SELECT COUNT(*) FROM operations").fetchone()[0]
-                >= 1000
-            ):
+            if retained_count(connection, "environment_operation") >= 1000:
                 raise WebError(
                     413,
                     "environment_history_limit",

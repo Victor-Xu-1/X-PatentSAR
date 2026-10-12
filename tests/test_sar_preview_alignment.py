@@ -1,5 +1,6 @@
 """Native paired-depiction boundaries; no recognizer, model or production task."""
 
+import math
 import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -41,7 +42,7 @@ class PreviewAlignmentTests(unittest.TestCase):
         svg_b, points_b = render_molecule(
             layout.candidate, layout.candidate_atoms, bounds
         )
-        for i, j in layout.mapping:
+        for i, j in layout.alignment_mapping:
             for left_point, right_point in zip(points_a[i], points_b[j]):
                 self.assertAlmostEqual(left_point, right_point, places=5)
         for mol, svg in ((layout.reference, svg_a), (layout.candidate, svg_b)):
@@ -54,10 +55,45 @@ class PreviewAlignmentTests(unittest.TestCase):
         return layout
 
     def test_leaf_extension_keeps_all_fixed_pixels_at_identical_scale(self):
-        self.pair("COc1ccc(Cl)cc1", "CCCOc1ccc(Cl)cc1", [0, 1])
+        layout = self.pair("COc1ccc(Cl)cc1", "CCCOc1ccc(Cl)cc1", [0, 1])
+        conformer = layout.candidate.GetConformer()
+        for index in layout.candidate_atoms:
+            atom = layout.candidate.GetAtomWithIdx(index)
+            if atom.IsInRing() or atom.GetDegree() != 2:
+                continue
+            first, second = (other.GetIdx() for other in atom.GetNeighbors())
+            center = conformer.GetAtomPosition(index)
+            a, b = (
+                conformer.GetAtomPosition(other) - center for other in (first, second)
+            )
+            angle = math.degrees(
+                math.acos(max(-1, min(1, a.DotProduct(b) / (a.Length() * b.Length()))))
+            )
+            self.assertGreaterEqual(
+                angle, 70, "A chain must not fold back over its attachment bond"
+            )
 
     def test_two_port_linker_length_change_keeps_both_fixed_ends(self):
         self.pair("c1ccccc1COCc1ccncc1", "c1ccccc1COCCc1ccncc1", [6, 7, 8])
+
+    def test_linker_expansion_does_not_force_disconnected_fixed_ends_together(self):
+        layout = self.pair("COc1ccc(Cl)cc1", "CCCOc1ccc(Cl)cc1", [1])
+        self.assertEqual(layout.layout, "fixed_component")
+        self.assertLess(len(layout.alignment_mapping), len(layout.mapping))
+        conformer = layout.candidate.GetConformer()
+        for index in layout.candidate_atoms:
+            atom = layout.candidate.GetAtomWithIdx(index)
+            if atom.IsInRing() or atom.GetDegree() != 2:
+                continue
+            first, second = (other.GetIdx() for other in atom.GetNeighbors())
+            center = conformer.GetAtomPosition(index)
+            a, b = (
+                conformer.GetAtomPosition(other) - center for other in (first, second)
+            )
+            angle = math.degrees(
+                math.acos(max(-1, min(1, a.DotProduct(b) / (a.Length() * b.Length()))))
+            )
+            self.assertGreaterEqual(angle, 70)
 
     def test_three_port_centre_preserves_fixed_neighbors(self):
         self.pair("COC(c1ccccc1)c1ccncc1", "CON(c1ccccc1)c1ccncc1", [2])
@@ -119,6 +155,27 @@ class PreviewAlignmentTests(unittest.TestCase):
             result = prepare_layout(first, second, region, proof)
         self.assertFalse(result.aligned)
         self.assertGreaterEqual(result.equivalent_mappings, 1)
+        self.assertEqual(result.reason, "depiction_failed")
+        self.assertEqual(
+            chemical_identity(result.candidate), chemical_identity(read_molfile(second))
+        )
+
+    def test_crowded_native_layout_returns_independent_geometry_without_rewriting_chemistry(
+        self,
+    ):
+        first, second = (
+            Chem.MolToMolBlock(read_smiles(s))
+            for s in ("COc1ccc(Cl)cc1", "CCOc1ccc(Cl)cc1")
+        )
+        region = SimpleNamespace(atom_indices=[0, 1], hydrogen_anchor=None)
+        proof = compile_reference(first, region.atom_indices).compare_details(second)
+        with patch(
+            "patent_sar_extractor.web.sar.preview_alignment.crowded_chain",
+            return_value=True,
+        ):
+            result = prepare_layout(first, second, region, proof)
+        self.assertEqual(result.layout, "independent")
+        self.assertEqual(result.reason, "layout_clash")
         self.assertEqual(
             chemical_identity(result.candidate), chemical_identity(read_molfile(second))
         )

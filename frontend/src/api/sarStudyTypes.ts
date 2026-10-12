@@ -119,9 +119,9 @@ export interface StudyPreview {
 export interface PreviewDrawingPair {
   reference: StudyDrawing;
   candidate: StudyDrawing;
-  layout: 'fixed_background' | 'independent';
+  layout: 'fixed_background' | 'fixed_component' | 'independent';
   equivalent_mappings: number;
-  reason: 'depiction_failed' | null;
+  reason: 'depiction_failed' | 'layout_clash' | null;
 }
 export interface StudyRegionSummary {
   region: Region;

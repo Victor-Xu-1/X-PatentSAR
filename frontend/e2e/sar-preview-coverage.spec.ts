@@ -120,7 +120,7 @@ for (const width of [390, 800, 1672]) {
     );
     expect(paired.ok()).toBe(true);
     const drawingPair = (await paired.json()).drawings;
-    expect(drawingPair.layout).toBe('fixed_background');
+    expect(drawingPair.layout).toBe('fixed_component');
     expect(drawingPair.reference.id).toBe(id('1'));
     expect(drawingPair.candidate.id).toBe(id('2'));
     expect(drawingPair.equivalent_mappings).toBeGreaterThanOrEqual(1);
@@ -151,7 +151,7 @@ for (const width of [390, 800, 1672]) {
     await ready();
     await expect(preview.locator('.sar-molecule-comparison')).toHaveAttribute(
       'data-layout',
-      'fixed_background',
+      'fixed_component',
     );
     for (const figure of await preview.locator('.sar-molecule-comparison figure').all()) {
       const geometry = await figure.evaluate((node) => {

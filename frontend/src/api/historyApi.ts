@@ -1,5 +1,7 @@
 import type { ApiClient } from './client';
 import type { HistoryAction, HistoryKind, HistoryQuery } from './historyTypes';
+import type { TrashClearRequest } from './historyTrashTypes';
+import { decodeTrashPlan, decodeTrashClearReceipt } from './historyTrashDecoders';
 import { boolean, ContractError, positive } from './validation';
 import {
   decodeHistoryEntry,
@@ -33,6 +35,38 @@ export function historyApi(client: ApiClient) {
       scoped(kind, id, action),
     );
   return {
+    trashPlan: (signal: AbortSignal) => client.get('/history/trash/plan', decodeTrashPlan, signal),
+    trashClearReceipt: (requestId: string, signal: AbortSignal) =>
+      client.get(
+        '/history/trash/receipts/' + decodeHistoryProjectId(requestId),
+        (value) => {
+          const receipt = decodeTrashClearReceipt(value);
+          if (receipt.request_id !== requestId) throw new ContractError('$.trash_request_identity');
+          return receipt;
+        },
+        signal,
+      ),
+    clearTrash: (request: TrashClearRequest) =>
+      client.mutate(
+        '/history/trash/clear',
+        'POST',
+        {
+          request_id: decodeHistoryProjectId(request.request_id),
+          expected_revision: decodeHistoryRevision(request.expected_revision),
+          expected_total: positive(request.expected_total),
+        },
+        (value) => {
+          const receipt = decodeTrashClearReceipt(value);
+          if (
+            receipt.request_id !== request.request_id ||
+            receipt.plan_revision !== request.expected_revision ||
+            receipt.cleared !== request.expected_total
+          )
+            throw new ContractError('$.trash_clear_identity');
+          return receipt;
+        },
+        { timeoutMs: 75_000 },
+      ),
     history: (query: HistoryQuery, signal: AbortSignal) => {
       const kind = decodeHistoryKind(query.kind);
       const deleted = boolean(query.deleted ?? false);

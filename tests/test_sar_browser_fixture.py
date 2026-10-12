@@ -13,6 +13,27 @@ from tools.prepare_browser_fixture import prepare
 
 
 class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
+    def test_trash_and_preview_scope_has_only_stopped_history_and_sar_fixtures(self):
+        selected = {
+            PREFIX + "history-trash-clear.spec.ts",
+            PREFIX + "sar-preview-coverage.spec.ts",
+        }
+        self.assertEqual(fixture_mode(selected), "history")
+        self.assertEqual(
+            fixture_mode(selected | {PREFIX + "real-workflow.spec.ts"}), "execution"
+        )
+        with patch(
+            "tools.prepare_browser_fixture.TestClient",
+            side_effect=AssertionError("No CLI or model fixture"),
+        ):
+            values = prepare(self.root / "trash-browser", history=True)
+        self.assertEqual(values["PATENTSAR_E2E_RUN_JOBS"], "0")
+        self.assertEqual(
+            values["PATENTSAR_E2E_HISTORY_MUTATIONS"], "synthetic-isolated-state"
+        )
+        self.assertEqual(values["PATENTSAR_E2E_TRASH_CLEAR_RECORDS"], "104")
+        self.assertNotEqual(values["PATENTSAR_E2E_HISTORY_PROJECT_ID"], values["PATENTSAR_E2E_SOURCE_PROJECT_ID"])
+
     def test_preview_coverage_scope_uses_only_isolated_sar_fixture(self):
         selected = {PREFIX + "sar-preview-coverage.spec.ts"}
         self.assertEqual(fixture_mode(selected), "sar")

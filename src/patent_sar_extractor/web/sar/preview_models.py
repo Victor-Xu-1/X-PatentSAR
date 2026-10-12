@@ -17,13 +17,13 @@ class PreviewMoleculeDrawing(DTO):
 class PreviewDrawingPair(DTO):
     reference: PreviewMoleculeDrawing
     candidate: PreviewMoleculeDrawing
-    layout: Literal["fixed_background", "independent"]
+    layout: Literal["fixed_background", "fixed_component", "independent"]
     equivalent_mappings: int = Field(ge=1, le=64)
-    reason: Literal["depiction_failed"] | None = None
+    reason: Literal["depiction_failed", "layout_clash"] | None = None
 
     @model_validator(mode="after")
     def layout_status(self):
-        if (self.layout == "fixed_background") != (self.reason is None):
+        if (self.layout != "independent") != (self.reason is None):
             raise ValueError("drawing_layout_status")
         return self
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 
 from rdkit import Chem, rdBase
 from rdkit.Chem import rdDepictor
@@ -21,6 +21,7 @@ from ...core.sar.molecules import chemical_identity, depict, read_molfile
 from ...core.sar.regions import attachment_mapping
 from ...core.sar.stereo import preserved
 from .models import Region
+from .preview_geometry import crowded_chain
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,8 +31,36 @@ class PreviewLayout:
     reference_atoms: tuple[int, ...]
     candidate_atoms: tuple[int, ...]
     mapping: tuple[tuple[int, int], ...]
+    alignment_mapping: tuple[tuple[int, int], ...]
     equivalent_mappings: int
-    aligned: bool
+    layout: Literal["fixed_background", "fixed_component", "independent"]
+    reason: Literal["depiction_failed", "layout_clash"] | None
+
+    @property
+    def aligned(self) -> bool:
+        return self.layout != "independent"
+
+
+def alignment_atoms(reference, selected):
+    """Choose a complete connected fixed block, not a forced linker end distance.
+
+    The whole complementary chemical graph still passes the retained proof.
+    Disconnected fixed fragments may translate as linker length changes; their
+    relative drawing distance is not a chemical identity constraint.
+    """
+    unvisited = set(range(reference.mol.GetNumAtoms())) - set(selected)
+    blocks = []
+    while unvisited:
+        pending, block = [min(unvisited)], set()
+        while pending:
+            node = pending.pop()
+            if node not in unvisited:
+                continue
+            unvisited.remove(node)
+            block.add(node)
+            pending.extend(set(reference.adjacency[node]) & unvisited)
+        blocks.append(frozenset(block))
+    return max(blocks, key=lambda block: (len(block), -min(block))), len(blocks)
 
 
 def prepare_layout(
@@ -69,7 +98,10 @@ def prepare_layout(
         raise SARInputError("drawing_alignment_proof")
     # Harmless fixed symmetries do not become new scientific identity claims.
     mapping = min(mappings)
+    block, block_count = alignment_atoms(ref, selected)
+    alignment_mapping = tuple((a, b) for a, b in mapping if a in block)
     with rdBase.BlockLogs():
+        reason = None
         depict(reference)
         constrained = Chem.Mol(candidate)
         params: Any = rdDepictor.ConstrainedDepictionParams()
@@ -80,29 +112,37 @@ def prepare_layout(
         params.useRingTemplates = False
         try:
             rdDepictor.GenerateDepictionMatching2DStructure(
-                constrained, reference, list(mapping), -1, params
+                constrained, reference, list(alignment_mapping), -1, params
             )
         except (ValueError, RuntimeError):
             # A native depiction failure is explicit. Never promote an
             # unconstrained image as aligned, or change the accepted comparison.
             depict(candidate)
-            aligned = False
+            layout = "independent"
+            reason = "depiction_failed"
         else:
             if chemical_identity(constrained) != chemical_identity(candidate):
                 raise SARInputError("drawing_chemical_identity_changed")
             first, second = reference.GetConformer(), constrained.GetConformer()
             if any(
                 (first.GetAtomPosition(a) - second.GetAtomPosition(b)).Length() > 1e-6
-                for a, b in mapping
+                for a, b in alignment_mapping
             ):
                 raise SARInputError("drawing_alignment_coordinates")
-            candidate, aligned = constrained, True
+            if crowded_chain(constrained, remaining):
+                depict(candidate)
+                layout, reason = "independent", "layout_clash"
+            else:
+                candidate = constrained
+                layout = "fixed_background" if block_count == 1 else "fixed_component"
     return PreviewLayout(
         reference,
         candidate,
         tuple(sorted(selected)),
         tuple(sorted(remaining)),
         mapping,
+        alignment_mapping,
         len(mappings),
-        aligned,
+        layout,
+        reason,
     )

@@ -8,13 +8,13 @@ export const decodePreviewDrawings: Decoder<PreviewDrawingPair> = (value, path =
   const result = object({
     reference: decodeStudyDrawing,
     candidate: decodeStudyDrawing,
-    layout: oneOf(['fixed_background', 'independent']),
+    layout: oneOf(['fixed_background', 'fixed_component', 'independent']),
     equivalent_mappings: positive,
-    reason: nullOr(oneOf(['depiction_failed'])),
+    reason: nullOr(oneOf(['depiction_failed', 'layout_clash'])),
   })(value, path);
   if (
     result.equivalent_mappings > 64 ||
-    (result.layout === 'fixed_background') !== (result.reason === null) ||
+    (result.layout !== 'independent') !== (result.reason === null) ||
     !result.reference.svg ||
     !result.candidate.svg ||
     !result.reference.id ||
