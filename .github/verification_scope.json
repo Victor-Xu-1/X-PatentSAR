@@ -1,30 +1,32 @@
 {
   "schema_version": 1,
-  "base_sha": "bb2c5df26d92dba82a2632b7e2ee2120ff2fd679",
+  "base_sha": "3ea1433b4185fb630e60952d96044d803b79ba21",
   "changed_paths": [
     ".github/verification_scope.json",
-    ".github/workflows/ci.yml",
     "README.md",
-    "docs/OPERATIONS.md",
+    "docs/FRONTEND_QUALITY.md",
     "docs/PROJECT_MANIFEST.md",
-    "frontend/e2e/matrix-reading.ts",
-    "frontend/e2e/sar-preview-coverage.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/tests/sar-matrix-reading.test.ts",
-    "src/patent_sar_extractor/contracts.py",
-    "tests/test_browser_server.py",
-    "tools/wait_browser_server.py"
+    "frontend/src/features/sar/study/MatrixValues.tsx",
+    "frontend/src/features/sar/study/PreviewProperties.tsx",
+    "frontend/src/features/sar/study/propertyDelta.ts",
+    "frontend/src/i18n/catalogs/sar.ts",
+    "frontend/tests/sar-matrix.test.tsx",
+    "frontend/tests/sar-preview.test.tsx",
+    "frontend/tests/sar-property-delta.test.ts",
+    "src/patent_sar_extractor/contracts.py"
   ],
   "python_modules": [
-    "tests.test_browser_server",
-    "tests.test_verification_scope.ScopeWorkflowTests",
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
-    "frontend/tests/sar-matrix-reading.test.ts",
-    "frontend/tests/sar-matrix-scroll.test.ts"
+    "frontend/tests/sar-property-delta.test.ts",
+    "frontend/tests/sar-matrix.test.tsx",
+    "frontend/tests/sar-preview.test.tsx",
+    "frontend/tests/sar-preview-layout.test.tsx",
+    "frontend/tests/i18n-core.test.tsx"
   ],
   "browser_tests": [
     "frontend/e2e/sar-preview-coverage.spec.ts"

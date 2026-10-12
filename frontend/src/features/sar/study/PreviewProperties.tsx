@@ -2,8 +2,9 @@ import type { StudyPreview } from '../../../api/sarStudyTypes';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from '../../../i18n';
 import { useScrollFocus } from '../../../components/useScrollFocus';
-import { differenceText, propertyText, studyProperties } from './tablePresentation';
+import { propertyText, studyProperties } from './tablePresentation';
 import { propertyComparisonMessage } from './propertyComparisonMessage';
+import { propertyDelta } from './propertyDelta';
 
 export function PreviewProperties({ data }: { data: StudyPreview }) {
   const { t } = useTranslation();
@@ -42,12 +43,20 @@ export function PreviewProperties({ data }: { data: StudyPreview }) {
             <tr>
               <th scope="row">Δ</th>
               {studyProperties.map((property) => {
-                const value = data.property_differences[property.key];
+                const delta = propertyDelta(data, property.key);
                 const reason = propertyComparisonMessage(data.property_statuses?.[property.key]);
                 return (
-                  <td key={property.key} title={reason ? t(reason) : undefined}>
-                    {value != null && value > 0 ? '+' : ''}
-                    {differenceText(value, property.key)}
+                  <td
+                    key={property.key}
+                    title={
+                      reason
+                        ? t(reason)
+                        : delta.raw != null
+                          ? t('原始差值') + ': ' + delta.raw
+                          : undefined
+                    }
+                  >
+                    {delta.text}
                   </td>
                 );
               })}

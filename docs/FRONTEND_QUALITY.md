@@ -1,5 +1,15 @@
 # Product craft and acceptance
 
+Matrix and paired-property panels share `propertyDelta.ts` for display only.
+Current comparable continuous RDKit descriptor deltas (`computed_rdkit` or
+`verified_project_descriptor`, identical origins) within four machine epsilons
+of the actual finite source scale/subtraction may read `≈ 0`; exact zero remains
+distinct and the full signed unrounded delta is available in a localized hover
+detail. Missing/current-unknown/mixed provenance, integer counts, imported,
+manual/model values, LogS and genuinely small deltas cannot borrow this
+approximation. API/source values, activity comparisons/tiers, ranking and proof
+are unchanged. Verify both panels and locales without mutating source data.
+
 Core exploration defaults to more published alternatives, not drug priority;
 original-ID order and selected reference/region/locale identity must survive.
 Matrix column controls align with the actual frozen edge. Acceptance must check
