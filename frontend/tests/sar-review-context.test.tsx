@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../src/App';
 import { api } from '../src/api';
 import { sarApi } from '../src/api/sarApi';
+import { sarStudyApi } from '../src/api/sarStudyApi';
 import { Header } from '../src/components/Header';
 import { SARPage } from '../src/features/sar/SARPage';
 import { SARImport } from '../src/features/sar/SARImport';
@@ -12,7 +13,7 @@ import { CSVMappingForm } from '../src/features/sar/CSVMappingForm';
 import { emptyRoute } from '../src/model/route';
 import { setLocale } from '../src/i18n';
 import { health, project, session } from './fixtures';
-import { csvPreview, sarDataset, sarJob, sarRegion } from './sar-fixtures';
+import { csvPreview, sarDataset, sarJob, sarRegion, studyProfile } from './sar-fixtures';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -23,6 +24,7 @@ function deferred<T>() {
 }
 beforeEach(() => {
   setLocale('en');
+  vi.spyOn(sarStudyApi, 'profile').mockResolvedValue(studyProfile);
   vi.spyOn(api, 'projects').mockResolvedValue({
     items: [
       { ...project, id: 'source-A' },

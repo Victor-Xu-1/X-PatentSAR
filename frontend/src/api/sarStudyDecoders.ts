@@ -20,6 +20,7 @@ import {
   unique,
 } from './sarDecoders';
 import { decodeConditionDeclaration } from './sarConditionDecoders';
+import { indicatorDefaults } from './sarIndicatorDecoder';
 import { decodeStudyDiscovery } from './sarStudyDiscoveryDecoder';
 import { decodeSARJob } from './sarJobDecoders';
 import { studyBin, studyContext, studyPolicy, studyRow } from './sarStudyRowDecoders';
@@ -64,7 +65,7 @@ export const decodeStudyProfile: Decoder<StudyProfile> = (v, p = '$') => {
     result.regions.some((r) => r.dataset_id !== result.dataset_id)
   )
     throw new ContractError(p);
-  return result;
+  return { ...result, ...indicatorDefaults(v, result.contexts, p) };
 };
 const scaffold = object({
   id: string,

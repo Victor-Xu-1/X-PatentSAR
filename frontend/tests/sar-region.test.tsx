@@ -2,13 +2,22 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { sarApi } from '../src/api/sarApi';
+import { sarStudyApi } from '../src/api/sarStudyApi';
 import { setLocale } from '../src/i18n';
 import { RegionSelector } from '../src/features/sar/RegionSelector';
 import { AnalysisForm } from '../src/features/sar/AnalysisForm';
-import { sarDataset, sarDrawing, sarJob, sarMolecule, sarRegion } from './sar-fixtures';
+import {
+  sarDataset,
+  sarDrawing,
+  sarJob,
+  sarMolecule,
+  sarRegion,
+  studyProfile,
+} from './sar-fixtures';
 
 beforeEach(() => {
   setLocale('en');
+  vi.spyOn(sarStudyApi, 'profile').mockResolvedValue(studyProfile);
   vi.spyOn(sarApi, 'drawing').mockResolvedValue(sarDrawing);
 });
 describe('server-owned graph atom selection', () => {

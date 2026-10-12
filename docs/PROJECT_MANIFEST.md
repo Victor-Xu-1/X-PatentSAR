@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- Indicator-default ownership: `web/indicator_conventions.py` supplies numeric
+  polarity through the retained `activity_rank_values.rank_direction` interface.
+  SAR `indicator_policy.py` projects bounded exact-context and unanimous metric
+  defaults; isolated `indicator_models.py` extends only the profile read view.
+  Both setup forms share one typed default display and keep manual controls only
+  for unknown/conflicting endpoints. New admissions recheck known polarity after
+  existing request replay lookup. Lead safety/desirability guards, source values,
+  grade definitions, engine identity and archived inputs/results stay independent.
+  Its rebuildable cache fingerprints the shared installed direction code and
+  refuses old-rule nominations without read-side recalculation or inference.
+  No new queue, database, dependency, inference or acceptance authority is added.
+
 - Single-site discovery ownership: SAR engine8 uses `core/sar/discovery.py` as
   the sole bounded candidate planner. `cut_topology.py` enumerates exact connected
   one/two/three-edge partitions and `site_cuts.py` indexes canonical backgrounds;

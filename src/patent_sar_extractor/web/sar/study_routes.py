@@ -7,13 +7,13 @@ import asyncio
 from fastapi import APIRouter
 from starlette.responses import StreamingResponse
 
+from .indicator_models import IndicatorProfile
 from .models import SARJob
 from .preview_models import StudyPreview
 from .study_admission import profile
 from .study_exports import export_study
 from .study_models import (
     StudyDrawing,
-    StudyProfile,
     StudyRequest,
     StudyRows,
 )
@@ -25,7 +25,7 @@ def study_routes(service, queue) -> APIRouter:
     router = APIRouter()
     reads = asyncio.Semaphore(2)
 
-    @router.get("/datasets/{identifier}/profile", response_model=StudyProfile)
+    @router.get("/datasets/{identifier}/profile", response_model=IndicatorProfile)
     async def dataset_profile(identifier: str):
         async with reads:
             return await asyncio.to_thread(profile, service(), identifier)

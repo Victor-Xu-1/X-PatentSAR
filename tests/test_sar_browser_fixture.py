@@ -13,6 +13,13 @@ from tools.prepare_browser_fixture import prepare
 
 
 class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
+    def test_indicator_defaults_scope_uses_only_isolated_sar_fixture(self):
+        selected = {PREFIX + "sar-indicator-defaults.spec.ts"}
+        self.assertEqual(fixture_mode(selected), "sar")
+        self.assertEqual(
+            fixture_mode(selected | {PREFIX + "real-workflow.spec.ts"}), "execution"
+        )
+
     def test_manual_and_automatic_directions_use_only_isolated_sar_fixture(self):
         manual = PREFIX + "sar-manual-directions.spec.ts"
         self.assertEqual(fixture_mode({manual}), "sar")

@@ -277,6 +277,20 @@
   margin-top: 12px;
   padding-block: 10px 0;
 }
+.sar-form-grid.sar-policy-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  margin-block: 4px;
+}
+.sar-policy-controls > * {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+.sar-policy-controls > .sar-compact {
+  margin-block: 0;
+}
 .sar-study-setup .primary + small {
   display: block;
   margin-top: 10px;

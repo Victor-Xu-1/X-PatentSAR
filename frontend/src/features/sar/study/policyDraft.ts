@@ -1,4 +1,4 @@
-import type { StudyPolicy } from '../../../api/sarStudyTypes';
+import type { IndicatorDefault, StudyPolicy } from '../../../api/sarStudyTypes';
 import { gradeOrder } from '../presentation';
 export interface PolicyDraft {
   direction: '' | 'lower' | 'higher';
@@ -8,12 +8,23 @@ export const emptyPolicy = (): PolicyDraft => ({
   direction: '',
   grades: '',
 });
-export function policyFromDraft(id: string, draft: PolicyDraft): StudyPolicy | null {
+export function resolvedDirection(
+  draft: PolicyDraft['direction'],
+  hint?: IndicatorDefault,
+): PolicyDraft['direction'] {
+  return hint && hint.direction !== 'unknown' ? hint.direction : draft;
+}
+export function policyFromDraft(
+  id: string,
+  draft: PolicyDraft,
+  hint?: IndicatorDefault,
+): StudyPolicy | null {
   const grades = gradeOrder(draft.grades);
-  if (!draft.direction || !grades.valid) return null;
+  const direction = resolvedDirection(draft.direction, hint);
+  if (!direction || !grades.valid) return null;
   return {
     context_id: id,
-    direction: draft.direction,
+    direction,
     grade_order: grades.values,
     strong_threshold: null,
     threshold_inclusive: false,

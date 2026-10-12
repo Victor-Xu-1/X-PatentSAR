@@ -9,6 +9,22 @@ epochs are not product releases and do not retag old results as current.
 
 ### Independent, user-started SAR domain
 
+`web/indicator_conventions.py` owns numeric semantic polarity through the existing
+`activity_rank_values.rank_direction` authority used by table ranks, Lead and SAR.
+SAR `indicator_policy.py` projects context defaults and unanimous metric defaults
+into a bounded `IndicatorProfile` on the existing read-only profile endpoint.
+Both forms consume these typed server facts; only unknown/conflicting rules keep
+manual direction controls. New admission validates known polarity AFTER original
+idempotent-request lookup and before publishing work. Lead's separate safety and
+desirability guards remain strict. Its existing input fingerprint includes one
+bounded installed-code digest of the shared direction functions; an old cache
+becomes stale without a GET-side inference/recalculation or source rewrite.
+Defaults do not manufacture grade thresholds,
+units, measurement values, missing conditions or medicinal objectives.
+`indicator_models.py` deliberately isolates setup additions from captured
+`study_models.py`, input/report serialization and scientific engine identity.
+No migration, dependency, new queue, model or checkpoint relabelling is required.
+
 `web/sar/source_scope.py` owns the identified-final-compound boundary for imports,
 historical browsing, reference pairs and study admission. `study_view.py` derives
 current tier/count views from the complete immutable input through the existing

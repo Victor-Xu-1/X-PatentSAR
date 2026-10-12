@@ -6,11 +6,13 @@ import json
 import sqlite3
 import threading
 
+from ...core.sar.study_contexts import context_catalog
 from ..analysis_process import BoundedAnalysisRunner
 from ..errors import WebError
 from .admission import existing, publish
 from .engine import engine_identity
 from .execution import execute
+from .indicator_policy import validate_direction
 from .job_store import Jobs
 from .models import AnalysisRequest, SARJob
 from .ownership import absent
@@ -135,6 +137,20 @@ class SARQueue:
                 "Grade order must contain distinct explicit labels, strongest first.",
             )
         molecules = included_molecules(self.service.datasets.all(dataset_id))
+        try:
+            contexts = context_catalog(
+                [row.model_dump() for row in molecules],
+                [metric.model_dump() for metric in dataset.metrics],
+            )
+        except ValueError as error:
+            raise WebError(
+                422,
+                "sar_study_context",
+                "Recorded contexts exceed their complete-catalog bound.",
+            ) from error
+        for context in contexts:
+            if context["metric_id"] == request.metric_id:
+                validate_direction(context, request.direction)
         if region.molecule_id not in {row.id for row in molecules}:
             raise WebError(
                 422,

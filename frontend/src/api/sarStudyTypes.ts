@@ -17,6 +17,12 @@ export interface StudyProfile {
   dataset_revision: number;
   contexts: StudyContext[];
   regions: Region[];
+  policy_defaults?: Record<string, IndicatorDefault>;
+  metric_defaults?: Record<string, IndicatorDefault>;
+}
+export interface IndicatorDefault {
+  direction: 'lower' | 'higher' | 'unknown';
+  rule: string;
 }
 export interface StudyPolicy {
   context_id: string;
