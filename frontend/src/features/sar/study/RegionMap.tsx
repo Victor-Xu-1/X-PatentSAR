@@ -1,5 +1,5 @@
 import type { Atom, Region } from '../../../api/sarTypes';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { useInlineSelection } from '../../../components/useInlineSelection';
 import { regionLabels } from './regionLabels';
 import { regionMarker } from './regionMarker';
@@ -28,17 +28,11 @@ export function RegionMap({
   onSelect?: ((id: string) => void) | undefined;
   selected?: string | undefined;
 }) {
-  const [hovered, setHovered] = useState('');
   if (!regions.length || !atoms.length) return null;
   const dense = regions.length > 8;
   const hasSelection = regions.some((region) => region.id === selected);
   const visibleRegions = dense
-    ? regions.filter(
-        (region, index) =>
-          region.id === selected ||
-          region.id === hovered ||
-          (!hasSelection && !hovered && index === 0),
-      )
+    ? regions.filter((region, index) => (hasSelection ? region.id === selected : index === 0))
     : regions;
   const markers = regions.map(regionMarker);
   const labels = regionLabels(
@@ -122,8 +116,9 @@ export function RegionMap({
       </svg>
       {onSelect && (
         <div className="sar-region-hotspots">
-          {regions.flatMap((region, order) =>
-            atoms
+          {visibleRegions.flatMap((region) => {
+            const order = regions.indexOf(region);
+            return atoms
               .filter(
                 (atom) =>
                   region.atom_indices.includes(atom.index) || atom.index === region.hydrogen_anchor,
@@ -135,19 +130,18 @@ export function RegionMap({
                   // Every atom remains a pointer target, without duplicate Tab stops.
                   tabIndex={-1}
                   key={region.id + ':' + atom.index}
+                  data-region-id={region.id}
                   aria-label={markers[order]!.description + ' · ' + atom.element + ' ' + atom.index}
                   aria-pressed={selected === region.id}
                   onClick={() => onSelect(region.id)}
-                  onMouseEnter={() => setHovered(region.id)}
-                  onMouseLeave={() => setHovered('')}
                   style={{
                     left: atom.x * 100 + '%',
                     top: atom.y * 100 + '%',
                     color: colors[order % colors.length],
                   }}
                 />
-              )),
-          )}
+              ));
+          })}
         </div>
       )}
     </>

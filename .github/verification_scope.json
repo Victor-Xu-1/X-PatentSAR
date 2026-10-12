@@ -14,10 +14,12 @@
     "frontend/src/api/sarStudyTypes.ts",
     "frontend/src/features/sar/study/PreviewMeasurements.tsx",
     "frontend/src/features/sar/study/PreviewRecordedRows.tsx",
+    "frontend/src/features/sar/study/RegionMap.tsx",
     "frontend/src/features/sar/study/TransformationPreview.tsx",
     "frontend/src/features/sar/study/tablePresentation.ts",
     "frontend/src/i18n/catalogs/sar.ts",
     "frontend/tests/sar-preview-coverage.test.tsx",
+    "frontend/tests/sar-region-map-interaction.test.tsx",
     "src/patent_sar_extractor/contracts.py",
     "src/patent_sar_extractor/web/sar/preview_models.py",
     "src/patent_sar_extractor/web/sar/preview_records.py",
@@ -41,6 +43,7 @@
     "frontend/tests/sar-preview-density.test.tsx",
     "frontend/tests/sar-study-api.test.tsx",
     "frontend/tests/sar-network-sites.test.ts",
+    "frontend/tests/sar-region-map-interaction.test.tsx",
     "frontend/tests/i18n-core.test.tsx"
   ],
   "browser_tests": [

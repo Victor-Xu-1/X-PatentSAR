@@ -87,7 +87,7 @@ it('keeps dense region controls at intrinsic width instead of splitting original
   }
 });
 
-it('keeps dense maps structure-first while retaining every region and pointer target', async () => {
+it('keeps every dense region selectable while hit targets follow only the painted region', async () => {
   const many = Array.from({ length: 45 }, (_, index) => ({
     ...namedRegion,
     id: 'region-' + index,
@@ -95,7 +95,8 @@ it('keeps dense maps structure-first while retaining every region and pointer ta
     atom_indices: [index % atoms.length],
   }));
   const onSelect = vi.fn();
-  const { container } = render(
+  const original = JSON.stringify({ atoms, many });
+  const { container, rerender } = render(
     <>
       <RegionMap atoms={atoms} regions={many} selected={many[12]!.id} onSelect={onSelect} />
       <RegionLegend regions={many} selected={many[12]!.id} onSelect={onSelect} />
@@ -103,17 +104,33 @@ it('keeps dense maps structure-first while retaining every region and pointer ta
   );
   expect(container.querySelectorAll('.sar-region-label')).toHaveLength(1);
   expect(container.querySelector('.sar-region-label')).toHaveTextContent('R13');
-  expect(container.querySelectorAll('.sar-region-hotspots button')).toHaveLength(45);
+  expect(container.querySelectorAll('.sar-region-hotspots button')).toHaveLength(1);
   expect(container.querySelectorAll('.sar-region-legend button')).toHaveLength(45);
   expect(container.querySelector('.sar-region-legend')).toHaveAttribute('data-dense', 'true');
-  const target = container.querySelectorAll<HTMLButtonElement>('.sar-region-hotspots button')[30]!;
+  const target = container.querySelector<HTMLButtonElement>('.sar-region-hotspots button')!;
+  expect(target).toHaveAttribute('data-region-id', many[12]!.id);
   await userEvent.hover(target);
-  expect(container.querySelectorAll('.sar-region-label')).toHaveLength(2);
-  expect(container.querySelectorAll('.sar-region-label')[1]).toHaveTextContent('R31');
-  await userEvent.click(target);
-  expect(onSelect).toHaveBeenLastCalledWith(many[30]!.id);
-  await userEvent.unhover(target);
   expect(container.querySelectorAll('.sar-region-label')).toHaveLength(1);
+  await userEvent.click(target);
+  expect(onSelect).toHaveBeenLastCalledWith(many[12]!.id);
+  await userEvent.unhover(target);
+  await userEvent.click(screen.getByRole('button', { name: 'R31', exact: true }));
+  expect(onSelect).toHaveBeenLastCalledWith(many[30]!.id);
+  rerender(
+    <>
+      <RegionMap atoms={atoms} regions={many} selected={many[30]!.id} onSelect={onSelect} />
+      <RegionLegend regions={many} selected={many[30]!.id} onSelect={onSelect} />
+    </>,
+  );
+  expect(container.querySelectorAll('.sar-region-label')).toHaveLength(1);
+  expect(container.querySelector('.sar-region-label')).toHaveTextContent('R31');
+  expect(container.querySelectorAll('.sar-region-hotspots button')).toHaveLength(1);
+  expect(container.querySelector('.sar-region-hotspots button')).toHaveAttribute(
+    'data-region-id',
+    many[30]!.id,
+  );
+  expect(container.querySelectorAll('.sar-region-legend button')).toHaveLength(45);
+  expect(JSON.stringify({ atoms, many })).toBe(original);
 });
 
 it('emphasizes only the selected recorded region without moving or rewriting atoms', () => {
