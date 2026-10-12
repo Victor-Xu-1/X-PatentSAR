@@ -211,8 +211,8 @@ describe('study DTOs and exact policies', () => {
   it('maps declared research/source-page columns only, rejects duplicate roles and preserves native long defaults', () => {
     const preview = { ...csvPreview, headers: [...csvPreview.headers, 'mw', 'risk', 'page'] };
     const draft = initialMapping(preview);
-    expect(draft.property_columns).toBeUndefined();
-    expect(draft.prediction_columns).toBeUndefined();
+    expect(draft.property_columns).toEqual({});
+    expect(draft.prediction_columns).toEqual({});
     expect(
       mappingValid(
         {

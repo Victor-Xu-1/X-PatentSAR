@@ -1,5 +1,13 @@
 # Product craft and acceptance
 
+CSV intake consumes one server header-role proposal. Raw header names stay in
+every selector, known roles are prefilled and one deliberate import commits the
+dataset. Unknown/colliding identifiers or structures keep import disabled until
+confirmed; numeric-looking metadata/properties do not become selected activities.
+Captured predictions stay explicitly imported, not model-certified. Preview,
+language switching and review do not start any scientific producer. API response
+limit faults preserve both their cause and possibly-committed uncertainty.
+
 SAR setup reduces routine operation through server-owned endpoint polarity, not
 front-end name guessing. Known metrics show one compact translated automatic
 direction status; unknown metrics alone show a selector. The same component and

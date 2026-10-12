@@ -8,13 +8,13 @@ from fastapi import APIRouter, Query, Request
 from starlette.responses import Response, StreamingResponse
 
 from ..errors import WebError
+from .csv_preview_models import CSVImportPreview
 from .csv_reader import MAX_CSV_BYTES
 from .exports import export_csv, export_json
 from .feature import SARFeature
 from .models import (
     AnalysisRequest,
     CSVMapping,
-    CSVPreview,
     Dataset,
     DatasetList,
     JobList,
@@ -49,7 +49,7 @@ def sar_routes(feature: SARFeature) -> APIRouter:
     def datasets():
         return srv().list()
 
-    @router.post("/csv/preview", response_model=CSVPreview)
+    @router.post("/csv/preview", response_model=CSVImportPreview)
     async def csv_preview(
         request: Request, filename: str = Query(min_length=1, max_length=200)
     ):

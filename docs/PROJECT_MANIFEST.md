@@ -1,5 +1,13 @@
 # Project governance manifest
 
+- CSV-default ownership: `csv_mapping_rules.py` is the only header-role suggestion
+  authority; `csv_preview_models.py` isolates bounded additive intake metadata.
+  Frontend consumes typed suggestions rather than running another header matcher.
+  Known metadata/physchem and explicitly declared captured predictions are
+  prefilled; unknown/duplicate roles stay explicit. No numeric-sample heuristic,
+  silent endpoint prefix, value/unit rewrite, new import/storage/queue/model,
+  schema migration or scientific engine/checkpoint change is introduced.
+
 - Indicator-default ownership: `web/indicator_conventions.py` supplies numeric
   polarity through the retained `activity_rank_values.rank_direction` interface.
   SAR `indicator_policy.py` projects bounded exact-context and unanimous metric

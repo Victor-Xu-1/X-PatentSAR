@@ -1,5 +1,8 @@
 /** UI copy only; source labels, grade values, issues and experiment data stay raw. */
 export const sar: Record<string, string> = {
+  请选择列: 'Choose a column',
+  自动列匹配: 'Column matching',
+  '已匹配 {count} 列，可核对后导入。': '{count} columns matched. Review and import.',
   '自动 · {direction}': 'Automatic · {direction}',
   分析步骤: 'Analysis steps',
   选择数据: 'Data',

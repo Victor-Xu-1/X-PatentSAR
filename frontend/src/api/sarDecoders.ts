@@ -11,6 +11,7 @@ import {
 } from './validation';
 import type { Decoder } from './validation';
 import type { CSVPreview, Dataset, Molecule, MoleculeDrawing, Region } from './sarTypes';
+import { csvMappingDefaults } from './sarCsvDefaultsDecoder';
 
 export const hex =
   (length: number): Decoder<string> =>
@@ -174,7 +175,7 @@ export const decodeCSVPreview: Decoder<CSVPreview> = (v, p = '$') => {
     result.samples.some((row) => Object.keys(row).some((key) => !result.headers.includes(key)))
   )
     throw new ContractError(p);
-  return result;
+  return { ...result, ...csvMappingDefaults(v, result, p) };
 };
 const coordinate: Decoder<number> = (v, p) => {
   const result = number(v, p);

@@ -17,6 +17,22 @@ export function CSVMappingForm({
   const { t } = useTranslation();
   const [draft, setDraft] = useState(() => initialMapping(preview));
   const invalidLong = Boolean(draft.metric_column && draft.activity_columns.length !== 1);
+  const matched = new Set(
+    [
+      draft.id_column,
+      draft.smiles_column,
+      ...draft.activity_columns,
+      draft.metric_column,
+      draft.unit_column,
+      draft.target_column,
+      draft.assay_column,
+      draft.cell_line_column,
+      draft.duration_column,
+      draft.source_page_column,
+      ...Object.values(draft.property_columns ?? {}),
+      ...Object.values(draft.prediction_columns ?? {}),
+    ].filter(Boolean),
+  ).size;
   function column(key: keyof MappingDraft, label: string, optional = false) {
     return (
       <label>
@@ -28,7 +44,7 @@ export function CSVMappingForm({
             setDraft((old) => ({ ...old, [key]: e.target.value || (optional ? null : '') }))
           }
         >
-          <option value="">{t(optional ? '不映射' : '请选择活性指标')}</option>
+          <option value="">{t(optional ? '不映射' : '请选择列')}</option>
           {preview.headers.map((header) => (
             <option value={header} key={header}>
               {header}
@@ -49,7 +65,9 @@ export function CSVMappingForm({
     >
       <fieldset disabled={disabled}>
         <legend>{t('CSV 映射')}</legend>
-        <p className="sar-hint">{t('建议列仅供参考，提交前请核对原始表头与样例。')}</p>
+        <output className="sar-hint" aria-label={t('自动列匹配')}>
+          {t('已匹配 {count} 列，可核对后导入。', { count: matched })}
+        </output>
         <div className="sar-form-grid">
           <label>
             {t('数据集名称')}

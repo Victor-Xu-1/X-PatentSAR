@@ -9,6 +9,20 @@ epochs are not product releases and do not retag old results as current.
 
 ### Independent, user-started SAR domain
 
+`csv_mapping_rules.py` is the one intake header-role authority. It reuses the
+existing endpoint conventions/catalog, matches unique semantic header roles and
+declared property/prediction names, and never treats a numeric sample as proof
+of an activity endpoint. Normalized-name collisions remain unresolved; the source
+header/value is unchanged. More than64 endpoints require an explicit subset,
+not silent truncation. The old numeric-sample producer and frontend lowercase
+metadata guesser are removed. A bounded `CSVImportPreview`/`CSVMappingDefaults`
+view supplies the existing import form; parser, SHA-bound upload, explicit submit,
+role/value validation, source scope, dataset storage and queue remain single.
+Preview additions live outside scientific `models.py`; no engine/report/schema
+change, model execution, dependency or old-input retagging accompanies defaults.
+Shared mutation decoding retains the concrete API failure cause while keeping a
+possibly committed write uncertain and preventing automatic replay.
+
 `web/indicator_conventions.py` owns numeric semantic polarity through the existing
 `activity_rank_values.rank_direction` authority used by table ranks, Lead and SAR.
 SAR `indicator_policy.py` projects context defaults and unanimous metric defaults

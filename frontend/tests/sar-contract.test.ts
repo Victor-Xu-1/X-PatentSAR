@@ -95,6 +95,12 @@ describe('explicit CSV and grade conventions', () => {
       suggested_id: null,
       suggested_smiles: null,
       suggested_activities: ['raw x', 'raw y'],
+      mapping_defaults: {
+        columns: {},
+        property_columns: {},
+        prediction_columns: {},
+        ambiguous_roles: [],
+      },
     };
     const draft = initialMapping(preview);
     expect(draft.metric_column).toBeNull();

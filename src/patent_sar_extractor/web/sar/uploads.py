@@ -8,8 +8,8 @@ from pathlib import Path
 
 from ..errors import WebError
 from .assets import SARAssets, atomic_bytes
+from .csv_preview_models import CSVImportPreview
 from .csv_reader import MAX_CSV_BYTES, preview
-from .models import CSVPreview
 from .store import SARStore
 
 
@@ -17,7 +17,7 @@ class Uploads:
     def __init__(self, store: SARStore, assets: SARAssets):
         self.store, self.assets = store, assets
 
-    def create(self, data: bytes, filename: str) -> CSVPreview:
+    def create(self, data: bytes, filename: str) -> CSVImportPreview:
         if not 1 <= len(filename) <= 200 or any(
             char in filename for char in "/\\\x00\r\n"
         ):
