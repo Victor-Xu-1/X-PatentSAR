@@ -483,3 +483,11 @@ Diagram aliases are derived from the same displayed core-site order for the map,
 every candidate card and its narrowed site view. Filtering one candidate's
 accepted explanations cannot restart an unnamed/manual site's alias at R1.
 Recorded names and region identities remain unchanged.
+
+The core picker appears only when the complete available core set offers a real
+choice. A single-core manual or automatic study opens directly on its original
+region map and proved changes; no duplicate thumbnail or search precedes it.
+Multiple-core search and six-card pagination retain their existing authority,
+including when the filtered page contains only one core. Original identity,
+site selection, preview/focus, table navigation and locale preservation remain
+unchanged. Singular count captions are localized as interface text only.

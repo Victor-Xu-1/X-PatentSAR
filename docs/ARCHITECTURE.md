@@ -68,6 +68,12 @@ group navigation and reset clear stale filters. Automatic search limitations are
 displayed only for a report that actually ran discovery. No API/schema/scientific
 epoch, dependency, new worker, task rerun or stored report migration is introduced.
 
+Core search/gallery/pagination are mounted only when the full core collection has
+more than one member. A single original core goes directly to that same map and
+proved branch selector. This decision uses the complete collection, never the
+filtered page, so narrowing a multi-core search cannot remove the search control.
+The scientific selection/rows authorities and stored identities are unchanged.
+
 Engine3 adds one prepared `DistributionContext` per exact selected context;
 every source-ID population is a disjoint partition while raw repeat observations
 remain intact. All group charts reuse its ordered numeric domain. Publication
