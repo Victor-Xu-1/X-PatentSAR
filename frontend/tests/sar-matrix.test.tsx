@@ -97,6 +97,7 @@ it('shows reference and multiple candidates with one metric label and all six pr
   const table = await screen.findByRole('table', { name: 'Structure comparison' });
   expect(within(table).getAllByRole('rowheader')).toHaveLength(8);
   expect(within(table).getAllByRole('columnheader')).toHaveLength(4);
+  expect(within(table).getByText('Reference', { exact: true })).toBeVisible();
   const potency = within(table).getByRole('rowheader', { name: 'IC50 原文 · nM' }).closest('tr')!;
   expect(potency).toHaveTextContent('10');
   expect(potency).toHaveTextContent('Δ -9.00');

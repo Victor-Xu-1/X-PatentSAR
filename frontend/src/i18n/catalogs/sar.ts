@@ -468,6 +468,7 @@ export const sar: Record<string, string> = {
   核心结构: 'Core structures',
   结构分支: 'Structure branches',
   结构对照: 'Structure comparison',
+  参考分子: 'Reference',
   向左查看结构: 'Previous structures',
   向右查看结构: 'Next structures',
   全部改造方向: 'All directions',
