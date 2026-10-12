@@ -163,7 +163,9 @@ for (const width of [390, 800, 1672]) {
       path: test.info().outputPath(`preview-records-zh-${width}.png`),
     });
     await translated.getByRole('button', { name: '关闭改造预览', exact: true }).click();
-    await expect(translatedNetwork.getByRole('button', { name: '比较 2', exact: true })).toBeFocused();
+    await expect(
+      translatedNetwork.getByRole('button', { name: '比较 2', exact: true }),
+    ).toBeFocused();
     expect(await (await page.request.get(path + '/export?format=json')).text()).toBe(before);
     const wrong = await page.request.get(
       path +
