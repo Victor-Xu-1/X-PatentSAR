@@ -148,7 +148,10 @@ for (const width of [390, 800, 1672]) {
     await page
       .getByRole('combobox', { name: 'Interface language', exact: true })
       .selectOption('zh-CN');
-    const translated = network.getByRole('region', { name: '改造预览', exact: true });
+    const translatedNetwork = page
+      .getByRole('region', { name: '研究报告', exact: true })
+      .getByRole('region', { name: '单点结构对比', exact: true });
+    const translated = translatedNetwork.getByRole('region', { name: '改造预览', exact: true });
     await expect(translated.getByRole('combobox', { name: '改造化合物', exact: true })).toHaveValue(
       id('4'),
     );
@@ -160,7 +163,7 @@ for (const width of [390, 800, 1672]) {
       path: test.info().outputPath(`preview-records-zh-${width}.png`),
     });
     await translated.getByRole('button', { name: '关闭改造预览', exact: true }).click();
-    await expect(network.getByRole('button', { name: '比较 2', exact: true })).toBeFocused();
+    await expect(translatedNetwork.getByRole('button', { name: '比较 2', exact: true })).toBeFocused();
     expect(await (await page.request.get(path + '/export?format=json')).text()).toBe(before);
     const wrong = await page.request.get(
       path +
