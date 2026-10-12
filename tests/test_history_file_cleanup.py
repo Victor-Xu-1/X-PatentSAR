@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 from test_prediction_support import PredictionFixture
 
+from patent_sar_extractor.web.environment_storage import EnvironmentStore
 from patent_sar_extractor.web.errors import WebError
 from patent_sar_extractor.web.history_asset_removal import remove_empty_directory
 from patent_sar_extractor.web.history_purge_models import TrashClearRequest
@@ -20,6 +21,26 @@ from patent_sar_extractor.web.storage import now
 
 
 class HistoryFileCleanupTests(PredictionFixture, unittest.TestCase):
+    def test_shared_environment_in_operator_selected_output_location_is_never_deleted(
+        self,
+    ):
+        shared = self.output / "shared-runtime"
+        shared.mkdir()
+        binary = shared / "keep-sdk.bin"
+        binary.write_bytes(
+            b"Shared installed runtime must not be treated as an artifact"
+        )
+        environment = EnvironmentStore(self.state, shared)
+        settings = environment.settings()
+        self.remove_project()
+        request, plan = self.request()
+        self.assertEqual(plan.files_total, 1)
+        receipt = self.history.clear_trash(request)
+        self.assertEqual(receipt.status, "complete")
+        self.assertTrue(binary.exists())
+        self.assertTrue(self.generated.exists())
+        self.assertEqual(environment.settings(), settings)
+
     def test_empty_directory_phase_is_bounded_and_resumes_after_files_are_processed(
         self,
     ):

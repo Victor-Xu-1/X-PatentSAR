@@ -13,6 +13,7 @@ from pathlib import Path
 
 from .errors import WebError
 from .files import directory_descriptor
+from .history_environment import EnvironmentHistoryStore
 from .history_purge_storage import permanently_removed
 from .storage import encode
 
@@ -27,7 +28,7 @@ class AssetReferences:
     def protects(self, path: Path, digest: str | None = None) -> bool:
         return bool(
             digest in self.digests
-            or any(path == root or path.is_relative_to(root) for root in self.paths)
+            or any(parent in self.paths for parent in (path, *path.parents))
         )
 
 
@@ -83,6 +84,54 @@ def reference_path(raw) -> Path:
     return Path(raw)
 
 
+def environment_paths(store) -> set[Path]:
+    """Keep configured/saved shared runtimes even in an operator-selected job path."""
+    paths = {store.root / "environments/downloads"}
+    with EnvironmentHistoryStore(store.root).connect() as connection:
+        if connection is None:
+            return paths
+        tables = {
+            row[0]
+            for row in connection.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            )
+        }
+        if not {"settings", "components"} <= tables:
+            paths.add(
+                store.root / "environments"
+            )  # old unverified environment metadata
+            return paths
+        roots = [
+            row[0] for row in connection.execute("SELECT install_root FROM settings")
+        ]
+        locations = []
+        for row in bounded_rows(connection, "SELECT report FROM components LIMIT 9"):
+            location = record(row["report"]).get("location")
+            if location is not None:
+                locations.append(reference_path(location))
+        for row in bounded_rows(
+            connection, "SELECT install_root,spec FROM operations LIMIT 25001"
+        ):
+            roots.append(row["install_root"])
+            bindings = record(row["spec"]).get("bindings", {})
+            if not isinstance(bindings, dict):
+                raise WebError(
+                    409,
+                    "history_asset_reference",
+                    "Saved environment bindings are invalid; files were preserved.",
+                )
+            locations.extend(
+                reference_path(raw) for raw in bindings.values() if raw is not None
+            )
+        paths.update(reference_path(raw) for raw in roots)
+        for location in locations:
+            paths.add(location)
+            # Venv executable bindings also depend on their sibling libraries.
+            if location.parent.name == "bin":
+                paths.add(location.parent.parent)
+    return paths
+
+
 @contextmanager
 def sar_references(root: Path):
     """No SAR store construction, schema creation, migration, model or task start."""
@@ -127,7 +176,7 @@ def sar_references(root: Path):
 def asset_references(
     store, connection, clearing: frozenset[tuple[str, str]]
 ) -> AssetReferences:
-    paths, protected, digests = set(), set(), set()
+    paths, protected, digests = environment_paths(store), set(), set()
     projects = bounded_rows(
         connection, "SELECT id,sha256,run_root,pdf_rel FROM projects LIMIT 25001"
     )
