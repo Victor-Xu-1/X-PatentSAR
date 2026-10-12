@@ -107,4 +107,13 @@ jobs:
           .venv/bin/x-patentsar serve --port 18766 --state-dir "$PATENTSAR_WEB_STATE_DIR" > "$RUNNER_TEMP/x-patentsar-web.log" 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid"; wait "$server_pid" || true' EXIT
+          .venv/bin/python tools/wait_browser_server.py --pid "$server_pid" --port 18766
           .venv/bin/python tools/run_verification_scope.py --phase browser
+      - name: Preserve controlled browser failure screenshots
+        if: failure() && steps.scope.outputs.browser_count != '0'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: browser-failure-screenshots
+          path: ${{ runner.temp }}/x-patentsar-browser-tests/**/test-failed-*.png
+          if-no-files-found: ignore
+          retention-days: 7

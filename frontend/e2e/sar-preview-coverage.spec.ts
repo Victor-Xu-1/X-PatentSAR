@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import type { StudyReport } from '../src/api/sarStudyTypes';
 import { compactNetworkSites } from '../src/features/sar/study/networkSites';
 import { regionMarker } from '../src/features/sar/study/regionMarker';
+import { matrixReading } from './matrix-reading';
 
 const csv =
   'id,smiles,IC50 (nM),t_half (h),target,assay,cell_line,duration\n' +
@@ -10,8 +11,13 @@ const csv =
   '3,COc1ccc(Br)cc1,0.1,3,T,controlled,C,1h\n' +
   '4,CCCOc1ccc(Cl)cc1,,4,T,controlled,C,1h\n';
 
-for (const width of [390, 800, 1672]) {
-  test(`same-site alternatives retain supporting PK and strict source identity at ${width}`, async ({
+for (const [width, reducedMotion] of [
+  [390, 'no-preference'],
+  [800, 'no-preference'],
+  [1672, 'no-preference'],
+  [800, 'reduce'],
+] as const) {
+  test(`same-site alternatives retain supporting PK and strict source identity at ${width} ${reducedMotion}`, async ({
     page,
   }) => {
     test.skip(process.env.PATENTSAR_E2E_SAR_MUTATIONS !== 'synthetic-isolated-state');
@@ -29,6 +35,7 @@ for (const width of [390, 800, 1672]) {
       return route.continue();
     });
     await page.setViewportSize({ width, height: 1060 });
+    await page.emulateMedia({ reducedMotion });
     await page.goto('/#/sar');
     const imports = page.getByRole('region', { name: 'Import data', exact: true });
     await imports.getByRole('button', { name: 'CSV file', exact: true }).click();
@@ -126,31 +133,22 @@ for (const width of [390, 800, 1672]) {
       await expect(matrix.getByRole('rowheader', { name: label, exact: true })).toHaveCount(1);
     if (width < 1000) {
       await network.getByRole('button', { name: 'Next structures', exact: true }).click();
+      await network
+        .locator('.sar-matrix-viewport')
+        .evaluate((node) =>
+          node.scrollIntoView({ block: 'start', inline: 'nearest', behavior: 'instant' }),
+        );
+      // Default smooth motion must actually reach a column stop before the
+      // strict physical check. A nonzero scrollLeft proves only animation start.
       await expect
-        .poll(() => network.locator('.sar-matrix-viewport').evaluate((node) => node.scrollLeft))
-        .toBeGreaterThan(0);
-      await network.locator('.sar-matrix-viewport').scrollIntoViewIfNeeded();
-      const visibility = await matrix.evaluate((node) => {
-        const pane = node.closest('.sar-matrix-viewport')!.getBoundingClientRect();
-        const cells = [...node.querySelectorAll<HTMLTableCellElement>('thead th')];
-        const reference = cells[1]!;
-        const style = getComputedStyle(reference);
-        const frozen =
-          style.position === 'sticky' && style.left !== 'auto'
-            ? reference.getBoundingClientRect().right
-            : cells[0]!.getBoundingClientRect().right;
-        return cells.slice(2).flatMap((cell) => {
-          const box = cell.getBoundingClientRect();
-          const visible = Math.max(0, Math.min(box.right, pane.right) - Math.max(box.left, frozen));
-          if (visible < box.width / 2) return [];
-          const label = cell.querySelector('strong')!,
-            rect = label.getBoundingClientRect();
-          const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
-          return [!!hit && label.closest('button')!.contains(hit)];
-        });
-      });
-      expect(visibility.length).toBeGreaterThan(0);
-      expect(visibility.every(Boolean)).toBe(true);
+        .poll(async () => {
+          const state = await matrix.evaluate(matrixReading);
+          return state.scrollLeft > 1 && state.atBoundary && state.readable;
+        })
+        .toBe(true);
+      const reading = await matrix.evaluate(matrixReading);
+      expect(reading.visible.length).toBeGreaterThan(0);
+      expect(reading.visible.every((item) => item.readable)).toBe(true);
     }
     await network.getByRole('button', { name: 'Compare 2', exact: true }).click();
     const preview = network.getByRole('region', { name: 'Transformation preview', exact: true });

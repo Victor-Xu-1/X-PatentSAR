@@ -1,5 +1,11 @@
 # Project governance manifest
 
+- Browser startup ownership: `tools/wait_browser_server.py` validates a bounded
+  already-started owned PID/loopback HTTP schema/exact installed version. CI keeps
+  service lifecycle ownership; this tool cannot start/stop it or run science.
+  `frontend/e2e/matrix-reading.ts` verifies completed native column geometry and
+  physical ID hit targets, without changing product motion, graph or result data.
+
 - Series-reading ownership: `coreChoices.ts` is presentation-only core inventory
   and alternate view order over complete published membership; no new drug score,
   region pruning or original-label rewrite. `matrixScrolling.ts` owns bounded
