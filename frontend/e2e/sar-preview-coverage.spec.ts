@@ -121,6 +121,12 @@ for (const width of [390, 800, 1672]) {
     await expect(matrixPK).not.toContainText('Δ');
     for (const label of ['MW', 'LogP', 'TPSA', 'HBD', 'HBA', 'LogS'])
       await expect(matrix.getByRole('rowheader', { name: label, exact: true })).toHaveCount(1);
+    if (width < 1000) {
+      await network.getByRole('button', { name: 'Next structures', exact: true }).click();
+      await expect
+        .poll(() => network.locator('.sar-matrix-viewport').evaluate((node) => node.scrollLeft))
+        .toBeGreaterThan(0);
+    }
     await network.getByRole('button', { name: 'Compare 2', exact: true }).click();
     const preview = network.getByRole('region', { name: 'Transformation preview', exact: true });
     const members = preview.getByRole('combobox', { name: 'Modified compound', exact: true });
