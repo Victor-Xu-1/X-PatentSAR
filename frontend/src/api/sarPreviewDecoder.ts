@@ -4,6 +4,7 @@ import { decodePair, decodeSARJob } from './sarJobDecoders';
 import { studyRow } from './sarStudyRowDecoders';
 import type { Decoder } from './validation';
 import type { StudyPreview } from './sarStudyTypes';
+import { decodePreviewDrawings } from './sarPreviewDrawingDecoder';
 export const decodeStudyPreview: Decoder<StudyPreview> = (value, path = '$') => {
   const result = {
     ...object({
@@ -39,6 +40,7 @@ export const decodeStudyPreview: Decoder<StudyPreview> = (value, path = '$') => 
     ...additions(
       value,
       {
+        drawings: nullOr(decodePreviewDrawings),
         recorded_measurements: array(
           object({
             context_id: hex(64),
@@ -60,7 +62,10 @@ export const decodeStudyPreview: Decoder<StudyPreview> = (value, path = '$') => 
     result.region.molecule_id !== result.reference.molecule_id ||
     result.measurements.length > 8 ||
     recorded.length > 1000 ||
-    new Set(contexts).size !== contexts.length
+    new Set(contexts).size !== contexts.length ||
+    (result.drawings &&
+      (result.drawings.reference.id !== result.reference.molecule_id ||
+        result.drawings.candidate.id !== result.candidate.molecule_id))
   )
     throw new ContractError(path + '.preview_identity');
   return result;

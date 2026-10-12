@@ -1,5 +1,15 @@
 # Project governance manifest
 
+- Paired-layout ownership: `web/sar/preview_alignment.py` and `preview_drawing.py`
+  own only validated comparison coordinates/shared camera. The existing strict
+  matcher remains sole admission authority; bounded equivalent embeddings are
+  rechecked through its retained graph/ports/stereo primitives, with deterministic
+  source-index presentation choice rather than a new chemical atom identity.
+  Isolated preview DTOs and the existing `StudyImage`/safe SVG/focus path consume
+  source-bound paired vectors. Native failures are explicit, redraw identity is
+  checked, and no original atom/structure/measurement/producer is rewritten. No
+  scientific engine hash/epoch, schema, queue, model, dependency or cache changes.
+
 - Full-preview ownership: the existing strict preview and region/changes page
   authorities remain sole acceptance/member paths. `preview_records.py` provides
   only exact-source unselected-reading projection through isolated preview DTOs;

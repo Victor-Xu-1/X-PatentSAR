@@ -110,6 +110,21 @@ for (const width of [390, 800, 1672]) {
     await network.getByRole('button', { name: 'Compare 2', exact: true }).click();
     const preview = network.getByRole('region', { name: 'Transformation preview', exact: true });
     const members = preview.getByRole('combobox', { name: 'Modified compound', exact: true });
+    const paired = await page.request.get(
+      path +
+        '/preview?' +
+        new URLSearchParams({
+          region_id: chosen.region.id,
+          molecule_id: id('2'),
+        }),
+    );
+    expect(paired.ok()).toBe(true);
+    const drawingPair = (await paired.json()).drawings;
+    expect(drawingPair.layout).toBe('fixed_background');
+    expect(drawingPair.reference.id).toBe(id('1'));
+    expect(drawingPair.candidate.id).toBe(id('2'));
+    expect(drawingPair.equivalent_mappings).toBeGreaterThanOrEqual(1);
+    expect(drawingPair.reason).toBeNull();
     await expect(members.getByRole('option', { name: '4', exact: true })).toHaveCount(1);
     await expect(members.getByRole('option', { name: '3', exact: true })).toHaveCount(0);
     const pk = preview
@@ -134,6 +149,31 @@ for (const width of [390, 800, 1672]) {
         );
       });
     await ready();
+    await expect(preview.locator('.sar-molecule-comparison')).toHaveAttribute(
+      'data-layout',
+      'fixed_background',
+    );
+    for (const figure of await preview.locator('.sar-molecule-comparison figure').all()) {
+      const geometry = await figure.evaluate((node) => {
+        const image = node.querySelector('img')!;
+        return {
+          canvas: node.getBoundingClientRect().width,
+          image: image.getBoundingClientRect().width,
+        };
+      });
+      expect(Math.abs(geometry.canvas - geometry.image)).toBeLessThanOrEqual(1);
+    }
+    await preview.getByRole('button', { name: 'Enlarge structure 2', exact: true }).click();
+    const focus = page.getByRole('dialog');
+    await expect(focus.getByRole('img', { name: '2', exact: true })).toBeVisible();
+    await focus.getByRole('button', { name: 'Zoom in structure', exact: true }).click();
+    await expect(
+      focus.getByRole('status', { name: 'Magnification relative to fit', exact: true }),
+    ).toHaveText('125%');
+    await page.keyboard.press('Escape');
+    await expect(
+      preview.getByRole('button', { name: 'Enlarge structure 2', exact: true }),
+    ).toBeFocused();
     await preview.screenshot({ path: test.info().outputPath(`preview-all-records-${width}.png`) });
     await members.selectOption(id('4'));
     await expect(preview.locator('.sar-molecule-comparison strong').last()).toHaveText('4');

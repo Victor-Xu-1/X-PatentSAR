@@ -98,6 +98,23 @@ PK/activity, repeats/censored/empty strings and source context labels remain
 distinct. Unknown/overlapping contexts are refused, not silently reassigned.
 No source report/engine/queue/store/schema/dependency change is introduced.
 
+Paired transformation drawings are a read-only coordinate policy outside the
+scientific engine inventory. `preview_alignment.py` reuses the exact fixed-graph
+embedding/port/stereo primitives only AFTER the existing exhaustive member proof;
+it cannot admit a comparison. It exhausts equivalent fixed automorphisms and
+chooses their source-index lexical minimum for presentation, never claiming a
+unique scientific atom correspondence. Explicit RDKit atom-map constraints keep
+the fixed background at identical coordinates. `preview_drawing.py` supplies one
+complete shared extent/scale to the same installed native RDKit renderer and
+roundtrips each prepared molecule to recheck full chemical identity. Original
+Molfiles/atom order, regions, measurements and reports are untouched. Existing
+private one-H views remain private. A native constraint failure is explicitly
+labelled independent layout; invalid chemical redraws are refused, not replaced
+with placeholders. Bounded additive preview DTOs carry both source-bound SVGs;
+`StudyImage` uses its existing passive-SVG/focus authority without two independent
+drawing requests. Standalone thumbnails and immutable atom-map drawings remain
+unchanged; there is no new renderer runtime, dependency, cache or acceptance path.
+
 The Variable-regions view uses one `StudyNetwork` core/rows/preview workbench for
 both manually specified and automatically discovered regions. Original region
 origins/names and immutable producer reports do not change. Manual no-variation

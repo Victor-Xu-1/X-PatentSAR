@@ -242,6 +242,22 @@
 .sar-molecule-comparison .sar-study-image > .sar-image-focus-trigger > img {
   max-height: 210px;
 }
+.sar-molecule-comparison[data-layout] .sar-study-image {
+  height: auto;
+  min-height: 200px;
+  aspect-ratio: 3 / 2;
+}
+.sar-molecule-comparison[data-layout] .sar-study-image > img {
+  max-height: none;
+  width: 100%;
+  height: 100%;
+}
+.sar-preview-layout {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin: 0 0 12px;
+}
 .sar-image-focus-action {
   position: absolute;
   right: 0;

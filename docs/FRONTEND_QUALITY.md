@@ -27,6 +27,15 @@ The reference article's private algorithms are not represented as reproduced.
 
 ## One visual and interaction authority
 
+Transformation previews use one source-bound paired layout: fixed atoms have
+identical native and screen coordinates and bond scale, while complete changed
+regions retain their own stereo. Cards use the available width rather than a
+210px ceiling. Shared SVG validation, magnification, keyboard/focus and locale
+ownership are unchanged. Successful alignment adds no visible explanatory block;
+an independent layout is explicitly labelled. The API and shared image boundary
+refuse foreign drawing identities; active SVG markup is never displayed. This
+is a presentation improvement, not new chemistry/accuracy or an award claim.
+
 - `frontend/src/styles/tokens.css` owns theme values. Feature styles own their layout;
   `product-craft.css` applies the shared page/dialog rhythm, not another theme.
 - Existing components own dialogs, table queries, column selection, source navigation,

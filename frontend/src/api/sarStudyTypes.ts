@@ -114,6 +114,14 @@ export interface StudyPreview {
     candidate_values: string[];
   }[];
   property_differences: Record<string, number | null>;
+  drawings?: PreviewDrawingPair | null;
+}
+export interface PreviewDrawingPair {
+  reference: StudyDrawing;
+  candidate: StudyDrawing;
+  layout: 'fixed_background' | 'independent';
+  equivalent_mappings: number;
+  reason: 'depiction_failed' | null;
 }
 export interface StudyRegionSummary {
   region: Region;

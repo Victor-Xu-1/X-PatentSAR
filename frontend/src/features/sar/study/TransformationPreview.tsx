@@ -125,8 +125,18 @@ export function TransformationPreview({
       {resource.error && <SARFailure error={resource.error} onRetry={resource.reload} />}
       {data && resource.validated && (
         <>
-          <div className="sar-molecule-comparison">
-            {[data.reference, data.candidate].map((row) => (
+          {data.drawings && (
+            <output
+              aria-label={t('绘图布局')}
+              className={
+                data.drawings.layout === 'fixed_background' ? 'sr-only' : 'sar-preview-layout'
+              }
+            >
+              {t(data.drawings.layout === 'fixed_background' ? '固定背景已对齐' : '独立布局')}
+            </output>
+          )}
+          <div className="sar-molecule-comparison" data-layout={data.drawings?.layout}>
+            {[data.reference, data.candidate].map((row, index) => (
               <article key={row.molecule_id}>
                 <div className="sar-section-heading">
                   <strong>{row.label}</strong>
@@ -146,6 +156,9 @@ export function TransformationPreview({
                   label={row.label}
                   active={active}
                   inspectable
+                  {...(data.drawings
+                    ? { providedDrawing: data.drawings[index === 0 ? 'reference' : 'candidate'] }
+                    : {})}
                 />
               </article>
             ))}

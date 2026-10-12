@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Expand } from 'lucide-react';
 import { sarStudyApi } from '../../../api/sarStudyApi';
-import type { StudyDrawingKind } from '../../../api/sarStudyTypes';
+import { ContractError } from '../../../api/validation';
+import type { StudyDrawing, StudyDrawingKind } from '../../../api/sarStudyTypes';
 import { Loading } from '../../../components/Feedback';
 import { useTranslation } from '../../../i18n';
 import { SARFailure } from '../SARFailure';
@@ -18,6 +19,7 @@ export function StudyImage({
   active,
   inspectable = false,
   inspectionTrigger = 'control',
+  providedDrawing,
 }: {
   jobId: string;
   kind: StudyDrawingKind;
@@ -28,6 +30,8 @@ export function StudyImage({
   active: boolean;
   inspectable?: boolean;
   inspectionTrigger?: 'control' | 'image';
+  /** A receipt-validated paired layout, using the same passive image/focus authority. */
+  providedDrawing?: StudyDrawing;
 }) {
   const { t } = useTranslation(),
     [failed, setFailed] = useState<string | null>(null),
@@ -46,17 +50,21 @@ export function StudyImage({
       sarStudyApi.drawing(jobId, kind, identifier, signal, regionId || atomRegionId),
     [jobId, kind, identifier, regionId, atomRegionId],
   );
-  const resource = useSARResource(identity, active, load);
+  const resource = useSARResource(identity, active && !providedDrawing, load);
+  const source = providedDrawing ?? resource.data;
   const image = useMemo(() => {
     try {
-      return { value: resource.data ? safeDrawing(resource.data.svg) : null, error: null };
+      if (providedDrawing && providedDrawing.id !== identifier)
+        throw new ContractError('$.paired_drawing_identity');
+      return { value: source ? safeDrawing(source.svg) : null, error: null };
     } catch (error) {
       return { value: null, error: error as Error };
     }
-  }, [resource.data]);
+  }, [source, providedDrawing, identifier]);
   const ready = Boolean(
     inspectable &&
-    resource.validated &&
+    active &&
+    (providedDrawing ? providedDrawing.id === identifier : resource.validated) &&
     image.value &&
     loaded === image.value.url &&
     failed !== image.value.url,
@@ -77,8 +85,10 @@ export function StudyImage({
   }
   return (
     <figure className="sar-study-image">
-      {resource.loading && <Loading />}
-      {resource.error && <SARFailure error={resource.error} onRetry={resource.reload} />}
+      {!providedDrawing && resource.loading && <Loading />}
+      {!providedDrawing && resource.error && (
+        <SARFailure error={resource.error} onRetry={resource.reload} />
+      )}
       {image.error && <SARFailure error={image.error} />}
       {drawing &&
         (inspectable && inspectionTrigger === 'image' ? (
