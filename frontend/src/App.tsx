@@ -152,6 +152,11 @@ export default function App() {
           )}
           {route.view === 'jobs' && connected && (
             <JobsPage
+              module={route.jobModule ?? 'patent'}
+              onModule={(jobModule) => navigate({ ...route, jobModule })}
+              onOpenSAR={(sarDatasetId, sarJobId) =>
+                navigate({ ...emptyRoute, view: 'sar', sarDatasetId, sarJobId })
+              }
               projects={projects}
               ready={connection.data!.health.ready}
               onOpen={openProject}

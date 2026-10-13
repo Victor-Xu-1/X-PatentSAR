@@ -20,6 +20,11 @@ COMMON = {
 MODES = (
     (
         "sar",
+        "sar-task-history.spec.ts",
+        COMMON | {"sar-task-history.spec.ts"},
+    ),
+    (
+        "sar",
         "sar-supporting-deltas.spec.ts",
         COMMON | {"sar-supporting-deltas.spec.ts", "sar-single-site.spec.ts"},
     ),

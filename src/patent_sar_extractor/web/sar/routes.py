@@ -12,12 +12,14 @@ from .csv_preview_models import CSVImportPreview
 from .csv_reader import MAX_CSV_BYTES
 from .exports import export_csv, export_json
 from .feature import SARFeature
+from .job_history import HistoryPage, history
 from .models import (
     AnalysisRequest,
     CSVMapping,
     Dataset,
     DatasetList,
     JobList,
+    JobState,
     Molecule,
     MoleculeDrawing,
     MoleculePage,
@@ -44,6 +46,17 @@ def sar_routes(feature: SARFeature) -> APIRouter:
         return feature.require()[1]
 
     router.include_router(study_routes(srv, q))
+
+    @router.get("/jobs", response_model=HistoryPage)
+    def job_history(
+        page: int = Query(default=1, ge=1, le=2048),
+        page_size: int = Query(default=25, ge=1, le=100),
+        dataset_id: str | None = Query(default=None, pattern=r"^[a-f0-9]{32}$"),
+        status: JobState | None = None,
+    ):
+        return history(
+            q(), page=page, page_size=page_size, dataset_id=dataset_id, status=status
+        )
 
     @router.get("/datasets", response_model=DatasetList)
     def datasets():

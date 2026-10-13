@@ -20,6 +20,7 @@ import type {
 import { ContractError } from './validation';
 import { createSARMutation } from './sarMutation';
 import { sarTransport } from './sarTransport';
+import { decodeSARHistory, type SARHistoryQuery } from './sarHistory';
 
 export function createSARApi(shared: ApiClient, rawFetch?: typeof fetch) {
   const raw = sarTransport(shared, rawFetch);
@@ -33,6 +34,26 @@ export function createSARApi(shared: ApiClient, rawFetch?: typeof fetch) {
     return result;
   };
   return {
+    history: (query: SARHistoryQuery, signal: AbortSignal) => {
+      const params = new URLSearchParams({ page: String(query.page), page_size: '25' });
+      if (query.datasetId) params.set('dataset_id', query.datasetId);
+      if (query.status) params.set('status', query.status);
+      return shared.get(
+        '/sar/jobs?' + params,
+        (value) => {
+          const result = decodeSARHistory(value);
+          if (
+            result.page !== query.page ||
+            result.page_size !== 25 ||
+            (query.datasetId &&
+              result.items.some((item) => item.job.dataset_id !== query.datasetId))
+          )
+            throw new ContractError('$.sar_history_scope');
+          return result;
+        },
+        signal,
+      );
+    },
     datasets: (signal: AbortSignal) => shared.get('/sar/datasets', decodeDatasets, signal),
     preview: (file: File) =>
       raw.upload(

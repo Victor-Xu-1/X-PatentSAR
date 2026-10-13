@@ -7,6 +7,24 @@ epochs are not product releases and do not retag old results as current.
 
 ## One workflow
 
+### Unified task history navigation
+
+`JobsPage` composes `ExtractionJobs` and `SARHistoryPanel` behind the shared Tabs
+component; inactive panels stop their requests/polling while keeping selections.
+`job_history.py` reads a bounded, paginated SQL join of the existing SAR jobs and
+datasets, excluding either soft-removed parent or child. Every returned job uses
+the existing `SARQueue.view` for real progress/staleness; no second task/history
+store, execution queue, report scan or scientific computation is introduced.
+Authenticated `GET /sar/jobs` supports exact dataset/status filters and a scoped
+active count for polling. Titles stay source-owned. Navigation binds the exact
+dataset/job route; removal reuses `DeleteSARJob` and the existing ownership guard.
+Extraction history and its recycle bin retain their existing authority. SAR soft
+removal is not presented as permanent file deletion or general recycle-bin restore.
+This navigation/read change does not alter scientific epochs or SQL schemas.
+Shared `api/response.ts` drains bodyless HTTP statuses under the original byte
+and time bounds, then rebuilds them with a null body. Empty native streams are
+not fabricated JSON; nonempty forbidden bodies stay explicit uncertain failures.
+
 ### Multi-candidate comparison presentation
 
 `coreChoices.ts` orders the retained complete core collection by unique published

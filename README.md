@@ -1,5 +1,10 @@
 # X-PatentSAR
 
+Task history has separate Patent extraction and SAR analysis tabs. SAR history
+lists retained jobs across datasets with paging, dataset/status filters, direct
+report access and the existing confirmed soft-removal action. Opening history
+does not run an analysis. The selected module is refreshable at `#/jobs?module=sar`.
+
 SAR comparison previews automatically show neutral scalar changes for additional
 recorded PK/activity endpoints when units, conditions and repeated readings are
 comparable. They need not be selected as ranking objectives. This does not infer

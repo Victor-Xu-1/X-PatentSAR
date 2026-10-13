@@ -1,5 +1,12 @@
 # Project governance manifest
 
+- Task history ownership: `features/jobs/JobsPage` owns only the two-module
+  navigation; `ExtractionJobs` retains the original extraction/history controls.
+  `SARHistoryPanel` and `job_history.py` expose the sole existing SAR database
+  through a bounded cross-dataset page, never a duplicate history/queue.
+  Live progress/staleness and soft deletion use existing SAR authorities.
+  Route `module=sar` is UI state only; API1/SQL2/engine13/input6 stay unchanged.
+
 - Core exploration context ownership: `StudyNetwork` chooses references from
   the complete current inventory independently of gallery filtering. Only
   deliberate different-core selection resets a site. Matrix-specific palette

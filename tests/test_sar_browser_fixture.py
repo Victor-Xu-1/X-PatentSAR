@@ -13,6 +13,17 @@ from tools.prepare_browser_fixture import prepare
 
 
 class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
+    def test_cross_dataset_history_scope_uses_only_the_sar_fixture(self):
+        self.assertEqual(
+            fixture_mode(
+                {
+                    PREFIX + "sar-task-history.spec.ts",
+                    PREFIX + "jobs-project-recovery.spec.ts",
+                }
+            ),
+            "sar",
+        )
+
     def test_trash_and_preview_scope_has_only_stopped_history_and_sar_fixtures(self):
         selected = {
             PREFIX + "history-trash-clear.spec.ts",
