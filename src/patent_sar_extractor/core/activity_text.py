@@ -253,7 +253,7 @@ def _page_segments(text: str) -> list[tuple[str, str]]:
     # References in prose ("results in Table 3.") are not table captions.
     markers = list(
         re.finditer(
-            r"(?m)^\s*(?:Table\s+[A-Za-z]?\d+[A-Za-z]?\b|表\s*\d+[A-Za-z]?)",
+            rf"(?m)^\s*(?:{TABLE_MARKER.pattern})",
             text,
             re.IGNORECASE,
         )

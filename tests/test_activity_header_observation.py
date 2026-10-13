@@ -8,6 +8,52 @@ from patent_sar_extractor.core.activity_headers import context_from_text, grid_s
 
 
 class HeaderObservationTests(unittest.TestCase):
+    def test_missing_initial_schema_can_be_recovered_only_by_full_header_agreement(
+        self,
+    ):
+        for mismatch in (False, True):
+            with self.subTest(mismatch=mismatch):
+                page = Mock(rect=fitz.Rect(0, 0, 500, 600))
+                page.get_text.return_value = []
+                region = {"xs": [40, 80, 150], "ys": [100, 140, 160, 180]}
+                headers = [["No.", "IC50 (nM)"]]
+                other = [["No.", "IC50 (uM)"]] if mismatch else headers
+                with (
+                    patch(
+                        "patent_sar_extractor.core.activity_header_observation.ocr_tokens_with_positions",
+                        return_value=[],
+                    ),
+                    patch(
+                        "patent_sar_extractor.core.activity_header_observation.table_matrix",
+                        side_effect=[headers, other],
+                    ),
+                    patch(
+                        "patent_sar_extractor.core.activity_header_observation._prefix",
+                        return_value="Table 61. Binding assay",
+                    ),
+                ):
+                    result = refine_scanned_header(page, region, None)
+                if mismatch:
+                    self.assertIsNone(result)
+                else:
+                    self.assertEqual(result.first_data_row, 1)
+                    self.assertEqual(result.raw_headers, ("No.", "IC50 (nM)"))
+                    self.assertEqual(result.context.table_id, "Table 61")
+
+    def test_native_or_oversized_unresolved_grid_does_not_start_rescue_ocr(self):
+        for words, bottom in ((["native"], 160), ([], 600)):
+            page = Mock(rect=fitz.Rect(0, 0, 500, 700))
+            page.get_text.return_value = words
+            with patch(
+                "patent_sar_extractor.core.activity_header_observation.ocr_tokens_with_positions"
+            ) as ocr:
+                self.assertIsNone(
+                    refine_scanned_header(
+                        page, {"xs": [40, 80, 150], "ys": [100, bottom]}, None
+                    )
+                )
+            ocr.assert_not_called()
+
     def observe(self, rows):
         page = Mock(rect=fitz.Rect(0, 0, 500, 600))
         page.get_text.return_value = []

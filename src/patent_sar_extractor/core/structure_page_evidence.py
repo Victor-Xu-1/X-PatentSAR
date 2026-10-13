@@ -5,6 +5,8 @@ from __future__ import annotations
 import re
 from functools import lru_cache
 
+from .source_table_markers import TABLE_MARKER
+
 STRUCTURE_TABLE_HEADER_RE = re.compile(
     r"化合物编号|化合物\s*(?:结构|列表)|结构式|化学结构|结构列表|结构表|"
     r"\bcompounds?\s+(?:table|list)\b|"
@@ -77,12 +79,38 @@ def _dense_caption_catalog(text: str) -> bool:
     return len(labels) >= 6 and len(re.sub(r"\s+", "", text)) <= len(labels) * 50
 
 
+def _caption_catalog_entry(text: str) -> bool:
+    """A titled catalog may start below unrelated long introductory prose.
+
+    Test the explicitly titled section, not page-global density. Bare table
+    references, repeated IDs and assay columns cannot establish this signal.
+    This is nomination only; physical caption/drawing proof is still required.
+    """
+    for marker in TABLE_MARKER.finditer(text):
+        tail = text[marker.end() :]
+        title = re.match(
+            r"\s*[.:：]?\s*(?:(?:non[-\s]?limiting|exemplary)\s+)*"
+            r"(?:compounds?|structures?)\b(?:\s+(?:table|catalog|list))?",
+            tail,
+            re.IGNORECASE,
+        )
+        if title:
+            section = tail[title.end() :]
+            if _dense_caption_catalog(section) and not STRUCTURE_PROSE_ASSAY_RE.search(
+                section
+            ):
+                return True
+    return False
+
+
 @lru_cache(maxsize=512)
 def _is_structure_table_page(text: str) -> bool:
     """Retain the established numbered-table/continuation observation rule."""
     value = str(text or "")
     if not value.strip():
         return False
+    if _caption_catalog_entry(value):
+        return True
     if STRUCTURE_TABLE_HEADER_RE.search(value):
         return True
     row_ids = len(STRUCTURE_TABLE_ROW_ID_RE.findall(value))
@@ -127,6 +155,8 @@ def _has_table_row_evidence(text: str) -> bool:
 
 
 def _numbered_structure_table(text: str) -> bool:
+    if _caption_catalog_entry(text):
+        return True
     if not _is_structure_table_page(text):
         return False
     # A following formula/claims introduction cannot hide the catalog above it.

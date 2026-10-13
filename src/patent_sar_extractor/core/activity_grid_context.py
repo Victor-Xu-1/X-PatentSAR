@@ -1,9 +1,8 @@
 """Original cell matrices and local caption windows."""
 
-import re
-
 from .activity_grid_cells import cell_text
 from .activity_headers import TABLE_MARKER
+from .source_table_markers import TABLE_CAPTION_START
 
 
 def table_matrix(tokens: list[dict], region: dict) -> list[list[str]]:
@@ -27,9 +26,7 @@ def _prefix(tokens: list[dict], region: dict) -> str:
     for _, row in sorted(lines.items()):
         parts: list[list[dict]] = [[]]
         for token in sorted(row, key=lambda t: t["x"]):
-            if parts[-1] and re.match(
-                r"^(?:Table\b|表\s*\d)", token["text"], re.IGNORECASE
-            ):
+            if parts[-1] and TABLE_CAPTION_START.match(token["text"]):
                 parts.append([])
             parts[-1].append(token)
         for part in parts:
