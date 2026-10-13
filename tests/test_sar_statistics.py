@@ -174,7 +174,7 @@ class StatisticsTests(unittest.TestCase):
             "insufficient",
         )
 
-    def test_units_are_exact_no_implicit_conversion_or_inline_guess(self):
+    def test_context_units_remain_exact_and_explicit_inline_units_are_interpreted(self):
         for unit in ("uM", "nm", "µM", "mg/mL"):
             result = compare(
                 [observation("10")],
@@ -185,7 +185,7 @@ class StatisticsTests(unittest.TestCase):
             self.assertIn("unit_conflict", result["reasons"])
         self.assertEqual(
             compare([observation("10 nM")], [observation("2")])["comparison"],
-            "indeterminate",
+            "better",
         )
         redundant = {**CONTEXT, "unit": "uM"}
         self.assertEqual(

@@ -105,7 +105,16 @@
   unchanged. Independent interval/endpoint inputs and full native publication
   checks must cover this shared rule, not one patent's expected result.
 
-- Single-site discovery ownership: SAR engine9 uses `core/sar/discovery.py` as
+- Measurement-unit authority: engine10/input4 use `core/sar/measurements.py` for
+  exact molar-prefix/percent interpretation. Only immutable new-analysis copies
+  may derive a missing basis from an explicit numeric suffix; raw stored records
+  remain unchanged. `input_records.analysis_molecules` is shared by profile and
+  reference/study admissions, for CSV and project snapshots. Statistical values,
+  potency bands, charts, row sorting and preview deltas share the same parser.
+  Old input2/3 reads keep their captured parser semantics; no caller-facing unit
+  override or alternative science path is introduced.
+
+- Single-site discovery ownership: SAR engine10 uses `core/sar/discovery.py` as
   the sole bounded candidate planner. `cut_topology.py` enumerates exact connected
   one/two/three-edge partitions and `site_cuts.py` indexes canonical backgrounds;
   neither is a proof authority. The existing strict compiled matcher freezes
@@ -169,7 +178,7 @@
   captured contracts. No lazy omission, extra API/cache, changed producer identity
   or model/scientific execution accompanies this allocation optimization.
 
-- SAR study evidence/craft ownership: engine9 uses `study_distributions.py` for one
+- SAR study evidence/craft ownership: engine10 uses `study_distributions.py` for one
   prepared full-context chart domain and disjoint source-ID accounting; observation
   repeats remain separate. `study_conditions.py` alone validates source-anchored
   missing-field declarations; source QA/known conditions/units remain unchanged.

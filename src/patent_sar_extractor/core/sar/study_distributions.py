@@ -5,8 +5,9 @@ from __future__ import annotations
 from decimal import Decimal, localcontext
 
 from .errors import SARInputError
+from .measurements import parse_measurement
 from .study_statistics import proven_strong, strength_band
-from .values import Value, grade_ranks, parse_value
+from .values import Value, grade_ranks
 
 
 class DistributionContext:
@@ -17,7 +18,14 @@ class DistributionContext:
     Source-only molecules contribute to missing membership, not fake readings.
     """
 
-    def __init__(self, observations: dict, policy: dict, assessments: dict):
+    def __init__(
+        self,
+        observations: dict,
+        policy: dict,
+        assessments: dict,
+        *,
+        inline_units: bool = True,
+    ):
         self.observations, self.policy, self.assessments = (
             observations,
             policy,
@@ -30,7 +38,12 @@ class DistributionContext:
             parsed = []
             for record in records:
                 try:
-                    value = parse_value(record["value"], self.ranks)
+                    value = parse_measurement(
+                        record["value"],
+                        self.ranks,
+                        record.get("unit"),
+                        inline_units=inline_units,
+                    )
                 except SARInputError:
                     value = Value("unsupported")
                 parsed.append(value)

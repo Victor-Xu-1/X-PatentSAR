@@ -15,7 +15,9 @@ from patent_sar_extractor.web.lead_chemistry import chemical_features, similarit
 from .study_evidence import secondary_evidence
 
 
-def collect_activities(rows, policies, confirmed, declarations=()):
+def collect_activities(
+    rows, policies, confirmed, declarations=(), *, inline_units=True
+):
     declared = {item["context_id"]: item for item in declarations}
     observations = {
         policy["context_id"]: {row["id"]: [] for row in rows} for policy in policies
@@ -30,7 +32,10 @@ def collect_activities(rows, policies, confirmed, declarations=()):
     assessments = {
         policy["context_id"]: {
             row["id"]: assess(
-                observations[policy["context_id"]][row["id"]], policy, confirmed
+                observations[policy["context_id"]][row["id"]],
+                policy,
+                confirmed,
+                inline_units=inline_units,
             )
             for row in rows
         }

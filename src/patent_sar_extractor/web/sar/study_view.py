@@ -12,6 +12,7 @@ def current_records(packet: dict, captured: StudyReport, pairs: list[dict]):
     scope = source_groups(captured, activity.ids, pairs)
     return (
         CurrentRecordView(
+            inline_units=activity.inline_units,
             molecule_count=len(activity.sources),
             molecule_ids=activity.ids,
             policies=activity.policies,

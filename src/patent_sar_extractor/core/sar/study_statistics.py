@@ -8,7 +8,8 @@ from typing import Any
 from ..potency_bands import classify_potency
 from .contexts import compare_context, select_observations
 from .errors import SARInputError
-from .values import Value, grade_ranks, parse_value
+from .measurements import parse_measurement
+from .values import Value, grade_ranks
 
 
 def proven_strong(value: Value, policy: dict, ranks: dict[str, int]) -> bool | None:
@@ -51,7 +52,13 @@ def strength_band(value: Value | None, policy: dict, ranks: dict[str, int]) -> s
     return "unclassified" if known is None else "strong" if known else "weak"
 
 
-def assess(observations: list[dict], policy: dict, confirmed: bool) -> dict:
+def assess(
+    observations: list[dict],
+    policy: dict,
+    confirmed: bool,
+    *,
+    inline_units: bool = True,
+) -> dict:
     result: dict[str, Any] = {
         "status": "missing",
         "value": None,
@@ -65,7 +72,12 @@ def assess(observations: list[dict], policy: dict, confirmed: bool) -> dict:
     try:
         ranks = grade_ranks(policy.get("grade_order", []))
         selected = select_observations(observations, observations[0]["metric_id"])
-        parsed = [parse_value(item["value"], ranks) for item in selected]
+        parsed = [
+            parse_measurement(
+                item["value"], ranks, item.get("unit"), inline_units=inline_units
+            )
+            for item in selected
+        ]
         ordinal = all(item.kind in {"ordinal", "missing"} for item in parsed)
         basis, reasons, conflict = compare_context(
             selected, ordinal=ordinal, confirmed=confirmed

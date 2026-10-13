@@ -8,7 +8,8 @@ from typing import Any
 
 from .contexts import compare_context, select_observations
 from .errors import SARInputError
-from .values import MISSING, Value, compare_values, grade_ranks, parse_value
+from .measurements import parse_measurement
+from .values import MISSING, Value, compare_values, grade_ranks
 
 
 def _fold(
@@ -41,6 +42,7 @@ def compare_observations(
     confirm_context: bool,
     *,
     open_bounds: bool = True,
+    inline_units: bool = True,
 ) -> dict[str, Any]:
     """Compare only this metric, retaining every raw value in original order.
 
@@ -67,6 +69,7 @@ def compare_observations(
             or direction not in {"lower", "higher"}
             or type(confirm_context) is not bool
             or type(open_bounds) is not bool
+            or type(inline_units) is not bool
         ):
             raise SARInputError("invalid_statistics_input")
         ranks = grade_ranks(grade_order)
@@ -90,8 +93,18 @@ def compare_observations(
         if conflict:
             result["comparison"] = "context_mismatch"
             return result
-        reference = [parse_value(o["value"], ranks) for o in left]
-        candidate = [parse_value(o["value"], ranks) for o in right]
+        reference = [
+            parse_measurement(
+                o["value"], ranks, o.get("unit"), inline_units=inline_units
+            )
+            for o in left
+        ]
+        candidate = [
+            parse_measurement(
+                o["value"], ranks, o.get("unit"), inline_units=inline_units
+            )
+            for o in right
+        ]
         if all(value.kind == "missing" for value in reference) or all(
             value.kind == "missing" for value in candidate
         ):

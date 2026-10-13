@@ -13,7 +13,7 @@ bridged rings and partial aromatic substitutions, plus ordinary H sites. >3 port
 hydrogen-boundary stereo is unsupported. H sites bind original atom anchors;
 private expanded views do not rewrite the original molecule or public indices.
 Native input-bound plans and25-pair batches survive interruption. Changes to
-SAR engine9 make old unfinished engine8/older
+SAR engine10 make old unfinished engine9/older
 checkpoints incompatible; retain their artifacts or roll back the prior wheel,
 never rewrite scientific identities. Completed old reports remain readable.
 Parent verification separately bounds candidate-plan regeneration at30s and
@@ -49,8 +49,8 @@ never reuse or rewrite an old unfinished receipt as a compatible result.
 
 ## Activity-strength compatibility
 
-New engine9 studies use private input schema3 and candidate policy
-`strict-context-pareto-v2`. Strict ordering includes a shared finite boundary
+New engine10 studies use private input schema4 and candidate policy
+`strict-context-pareto-units-v3`. Strict ordering includes a shared finite boundary
 when either side excludes that boundary: `<10` vs `>=10`, or `<=10` vs `>10`.
 `<=10` vs `>=10` can still be equal at10 and remains indeterminate. Intervals
 never receive a fabricated midpoint, fold or numeric difference. Context/unit
@@ -60,6 +60,18 @@ input2 read previews retain the old positive-gap requirement and recorded ranks;
 reading/exporting old tasks does not rerun or rewrite science. Start a fresh SAR
 study from the retained dataset to use the new semantics; do not rehash an old
 checkpoint into compatibility. No SQL migration, model or environment install.
+
+Input4 interprets explicit inline `M/mM/uM/µM/μM/nM/pM/fM` and percent units.
+The original value text is retained; exact conversion is for calculation only.
+Existing nonempty unit metadata remains authoritative and dimension conflicts
+are not overridden. If metadata is absent, an explicitly unit-bearing numeric
+reading may define a standard nM/percent analysis basis. Bare/unknown readings
+remain unit-unknown; no neighbouring value, default nM or whole-column guess is
+used. Both saved project and CSV datasets are copied for new admission, never
+edited; reimport is unnecessary. Contexts with different declared units or assay
+conditions are still separate. Old input2/3 views retain bare-value parsing and
+archived ranks. Inputs exceeding supported numeric limits or using mass units,
+unresolved suffixes/footnotes or ambiguous decimal separators are not coerced.
 
 Large completed reports are not kept in a persistent in-process result cache.
 Concurrent current/drawing/preview readers may share one fully validated model

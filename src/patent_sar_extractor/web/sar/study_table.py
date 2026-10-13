@@ -3,13 +3,20 @@
 from __future__ import annotations
 
 from ...core.identifier_order import natural_identifier_key
-from ...core.sar.values import grade_ranks, parse_value
+from ...core.sar.measurements import parse_measurement
+from ...core.sar.values import grade_ranks
 from ..errors import WebError
 from ..prediction_models import METRIC_KEYS
 
 
 def order_rows(rows, report, column: str = "label", direction: str = "asc"):
     policies = {policy.context_id: policy for policy in report.policies}
+    inline_units = getattr(report, "inline_units", False)
+    units = (
+        {context.id: context.unit for context in report.contexts}
+        if inline_units
+        else {}
+    )
     allowed = (
         {"label", "lead"}
         | {"property:" + key for key in METRIC_KEYS}
@@ -37,7 +44,13 @@ def order_rows(rows, report, column: str = "label", direction: str = "asc"):
         values = row.values.get(policy.context_id, [])
         try:
             parsed = {
-                parse_value(raw, grade_ranks(policy.grade_order)) for raw in values
+                parse_measurement(
+                    raw,
+                    grade_ranks(policy.grade_order),
+                    units.get(policy.context_id),
+                    inline_units=inline_units,
+                )
+                for raw in values
             }
         except ValueError:
             return None

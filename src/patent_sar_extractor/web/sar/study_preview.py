@@ -7,11 +7,12 @@ from decimal import localcontext
 
 from ...core.sar.errors import SARInputError
 from ...core.sar.matching import compile_reference
+from ...core.sar.measurements import parse_measurement
 from ...core.sar.statistics import compare_observations
 from ...core.sar.study_conditions import declared_observation
 from ...core.sar.study_contexts import context_observations
 from ...core.sar.study_graphs import cut_identity
-from ...core.sar.values import Value, grade_ranks, parse_value
+from ...core.sar.values import Value, grade_ranks
 from ..errors import WebError
 from .models import Pair
 from .preview_drawing import paired_drawings
@@ -146,7 +147,8 @@ def verified_preview(
             packet["request"]["confirm_context"],
             # Archived inputs keep their captured comparison semantics. This
             # is a read adapter, never an alternative new-study engine.
-            open_bounds=packet["schema"] == 3,
+            open_bounds=packet["schema"] in {3, 4},
+            inline_units=packet["schema"] == 4,
         )
         if claim and compared["evidence_basis"] == "recorded_context":
             compared["evidence_basis"] = "source_declared"
@@ -154,8 +156,18 @@ def verified_preview(
         if compared["comparison"] in {"better", "worse", "equal"}:
             ranks = grade_ranks(policy.grade_order)
             a, b = (
-                parse_value(left[0]["value"], ranks),
-                parse_value(right[0]["value"], ranks),
+                parse_measurement(
+                    left[0]["value"],
+                    ranks,
+                    left[0].get("unit"),
+                    inline_units=packet["schema"] == 4,
+                ),
+                parse_measurement(
+                    right[0]["value"],
+                    ranks,
+                    right[0].get("unit"),
+                    inline_units=packet["schema"] == 4,
+                ),
             )
             difference = _scalar_difference(a, b)
         measurements.append(
