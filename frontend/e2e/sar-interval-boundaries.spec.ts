@@ -94,8 +94,8 @@ for (const scenario of cases)
     const matrix = network.getByRole('table', { name: 'Structure comparison', exact: true });
     await expect(matrix.locator('thead th strong')).toHaveText(['A1', 'A2']);
     for (const [label, values] of [
-      ['IC50 (nM)', scenario.potency],
-      ['Dmax (%)', scenario.efficacy],
+      [scenario.intervals ? 'IC50 (nM)' : 'IC50 · nM', scenario.potency],
+      [scenario.intervals ? 'Dmax (%)' : 'Dmax · %', scenario.efficacy],
       ['CL (mL/min/kg)', ['2', '3']],
     ] as const) {
       const row = matrix.getByRole('rowheader', { name: label, exact: true }).locator('..');
