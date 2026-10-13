@@ -1,14 +1,44 @@
 """Existing-engine column-header checks on isolated controlled original renders."""
 
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
 import fitz
 
+from patent_sar_extractor.core.activity_artifacts import save_results
+from patent_sar_extractor.core.activity_coordinates import extract_coordinate_tables
+from patent_sar_extractor.core.activity_coverage import coverage_packet
 from patent_sar_extractor.core.activity_header_observation import refine_scanned_header
 from patent_sar_extractor.core.activity_headers import context_from_text, grid_schema
+from patent_sar_extractor.core.activity_join import activity_evidence_errors
 
 
 class HeaderColumnNativeTests(unittest.TestCase):
+    def test_actual_scanned_adapter_writer_and_qa_preserve_first_measurement(self):
+        doc, _page, _region = self.render([["No."], ["IC50", "nM"], ["Dmax", "%"]])
+        with doc:
+            result = extract_coordinate_tables(doc, [1])
+        self.assertEqual(len(result.rows), 1)
+        self.assertEqual(result.rows[0].cpd, "Compound 79")
+        self.assertEqual(
+            result.rows[0].activity_values, {"IC50 (nM)": "0.125", "Dmax (%)": "85"}
+        )
+        self.assertFalse(result.rows[0].needs_review)
+        coverage = coverage_packet([1], result.coverage, result.rows)
+        with tempfile.TemporaryDirectory() as root:
+            save_results(
+                result.rows,
+                Path(root),
+                {},
+                coverage=coverage,
+                header_observations=result.header_observations,
+            )
+            payload = json.loads((Path(root) / "activity_data.json").read_text())
+        self.assertEqual(len(payload["header_observations"]), 1)
+        self.assertEqual(activity_evidence_errors(payload, [1]), [])
+
     def render(self, headers):
         doc = fitz.open()
         page = doc.new_page()
