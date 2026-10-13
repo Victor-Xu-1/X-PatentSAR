@@ -22,6 +22,7 @@
     "src/patent_sar_extractor/core/activity_join.py",
     "src/patent_sar_extractor/core/activity_models.py",
     "src/patent_sar_extractor/core/cell_ocr_observation.py",
+    "tests/test_activity_coverage.py",
     "tests/test_activity_header_observation.py",
     "tests/test_header_column_boundaries.py",
     "tests/test_header_column_native.py",
