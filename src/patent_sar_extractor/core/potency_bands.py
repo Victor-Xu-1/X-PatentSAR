@@ -94,16 +94,21 @@ class PotencyPool:
     def observe(self, identity: str, raw: object) -> None:
         if self.overflow:
             return
+        try:
+            value = parse_value(str(raw) if raw is not None else "", {})
+        except ValueError:
+            value = Value("unsupported")
+        self.observe_value(identity, value)
+
+    def observe_value(self, identity: str, value: Value) -> None:
+        """Consume an already interpreted reading through the same pool rules."""
+        if self.overflow:
+            return
         if identity not in self.readings and len(self.readings) >= self.limit:
             self.overflow = True
             self.readings.clear()
             self.uncertain.clear()
             return
-        try:
-            value = parse_value(str(raw) if raw is not None else "", {})
-        except ValueError:
-            value = UNKNOWN
-            self.uncertain.add(identity)
         if value.kind != "missing":
             positive = positive_range(value)
             if positive is None:

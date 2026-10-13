@@ -12,8 +12,8 @@ class SARPotencyTests(WebFixture, unittest.TestCase):
     dataset = support.SARAPITests.dataset
     completed = support.SARAPITests.completed
 
-    def run_study(self, client, values):
-        csv = "id,smiles,IC50 (nM),target,assay,cell_line,duration\n" + "\n".join(
+    def run_study(self, client, values, *, metric="IC50 (nM)"):
+        csv = f"id,smiles,{metric},target,assay,cell_line,duration\n" + "\n".join(
             f"S{index + 1},{'C' * (index + 1)}O,{raw},T,binding,C,2h"
             for index, raw in enumerate(values)
         )
@@ -27,7 +27,7 @@ class SARPotencyTests(WebFixture, unittest.TestCase):
                 "title": "Controlled tenth-dose study",
                 "id_column": "id",
                 "smiles_column": "smiles",
-                "activity_columns": ["IC50 (nM)"],
+                "activity_columns": [metric],
                 "target_column": "target",
                 "assay_column": "assay",
                 "cell_line_column": "cell_line",

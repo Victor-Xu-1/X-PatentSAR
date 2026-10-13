@@ -19,10 +19,13 @@ class SARIntervalAPITests(WebFixture, unittest.TestCase):
     region = support.SARAPITests.region
 
     def test_different_endpoints_preserve_raw_intervals_through_native_study(self):
-        for endpoint, left, right, direction in (
-            ("IC50 (nM)", ">10", "<10", "lower"),
-            ("DC50 (pM)", ">=0.01", "<0.01", "lower"),
-            ("Dmax (%)", "<80", ">=80", "higher"),
+        for endpoint, left, right, direction, fold, delta, legacy_v3 in (
+            ("IC50 (nM)", ">10", "<10", "lower", None, None, "better"),
+            ("DC50 (pM)", ">=0.01", "<0.01", "lower", None, None, "better"),
+            ("Dmax (%)", "<80", ">=80", "higher", None, None, "better"),
+            ("IC50 (nM)", "10 nM", "0.002 µM", "lower", 5.0, -8.0, "indeterminate"),
+            ("DC50 (pM)", ">10 pM", "<0.01 nM", "lower", None, None, "indeterminate"),
+            ("Dmax (%)", "70 %", "80%", "higher", 80 / 70, 10.0, "indeterminate"),
         ):
             with self.subTest(endpoint=endpoint), self.client() as client:
                 data = io.StringIO(newline="")
@@ -81,9 +84,11 @@ class SARIntervalAPITests(WebFixture, unittest.TestCase):
                 exported = client.get(path + "/export?format=json")
                 self.assertEqual(exported.status_code, 200, exported.text)
                 archive = exported.json()
-                self.assertEqual(archive["input"]["schema"], 3)
+                self.assertEqual(archive["input"]["schema"], 4)
                 report = archive["report"]
-                self.assertEqual(report["candidate_policy"], "strict-context-pareto-v2")
+                self.assertEqual(
+                    report["candidate_policy"], "strict-context-pareto-units-v3"
+                )
                 self.assertEqual(report["matched_pair_count"], 1)
                 self.assertEqual(report["comparable_pair_count"], 1)
                 fronts = {row["label"]: row["pareto_front"] for row in report["rows"]}
@@ -96,12 +101,12 @@ class SARIntervalAPITests(WebFixture, unittest.TestCase):
                 self.assertEqual(reply.status_code, 200, reply.text)
                 result = reply.json()
                 self.assertEqual(result["pair"]["comparison"], "better")
-                self.assertIsNone(result["pair"]["fold_change"])
+                self.assertEqual(result["pair"]["fold_change"], fold)
                 measured = result["measurements"][0]
                 self.assertEqual(measured["comparison"], "better")
                 self.assertEqual(measured["reference_values"], [left])
                 self.assertEqual(measured["candidate_values"], [right])
-                self.assertIsNone(measured["raw_difference"])
+                self.assertEqual(measured["raw_difference"], delta)
                 self.assertEqual(measured["evidence_basis"], "recorded_context")
                 matrix = client.get(
                     path + "/matrix",
@@ -126,6 +131,11 @@ class SARIntervalAPITests(WebFixture, unittest.TestCase):
                 self.assertEqual(
                     old_view.data.measurements[0].comparison, "indeterminate"
                 )
+                legacy = replace(source, packet={**source.packet, "schema": 3})
+                old_view = verified_preview(
+                    queue, legacy, region["id"], candidate["id"]
+                )
+                self.assertEqual(old_view.data.measurements[0].comparison, legacy_v3)
                 self.assertEqual(
                     client.get(path + "/export?format=json").content, exported.content
                 )

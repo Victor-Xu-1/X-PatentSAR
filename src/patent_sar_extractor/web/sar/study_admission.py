@@ -9,13 +9,14 @@ from ..errors import WebError
 from .admission import existing, publish
 from .indicator_models import IndicatorProfile
 from .indicator_policy import setup_defaults, validate_direction
+from .input_records import analysis_molecules
 from .source_scope import included_molecules
 from .study_models import StudyRequest
 
 
 def profile(service, dataset_id: str) -> IndicatorProfile:
     dataset = service.dataset(dataset_id)
-    molecules = included_molecules(service.datasets.all(dataset_id))
+    molecules = analysis_molecules(included_molecules(service.datasets.all(dataset_id)))
     ids = {row.id for row in molecules}
     try:
         contexts = context_catalog(
@@ -48,7 +49,9 @@ def enqueue_study(queue, dataset_id: str, request: StudyRequest):
     if old:
         return old
     dataset = queue.service.current(dataset_id, request.expected_dataset_revision)
-    molecules = included_molecules(queue.service.datasets.all(dataset_id))
+    molecules = analysis_molecules(
+        included_molecules(queue.service.datasets.all(dataset_id))
+    )
     dataset = dataset.model_copy(
         update={
             "row_count": len(molecules),

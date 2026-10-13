@@ -22,9 +22,13 @@ class ActivityView:
     assessments: dict
     rows: list[StudyRow]
     excluded: dict[str, int]
+    inline_units: bool
 
 
 def prepare_activity(packet: dict, captured: StudyReport) -> ActivityView:
+    if packet.get("schema") not in {2, 3, 4}:
+        raise WebError(409, "sar_input_changed", "Unknown study measurement policy.")
+    inline_units = packet["schema"] == 4
     excluded = Counter()
     sources = []
     for row in packet["molecules"]:
@@ -56,6 +60,7 @@ def prepare_activity(packet: dict, captured: StudyReport) -> ActivityView:
         policies,
         packet["request"].get("confirm_context", False),
         [item.model_dump() for item in captured.context_declarations],
+        inline_units=inline_units,
     )
     catalog = {
         item["id"]: item
@@ -77,13 +82,18 @@ def prepare_activity(packet: dict, captured: StudyReport) -> ActivityView:
         for item in captured.contexts
     ]
     policies = resolve_strength(
-        policies, [item.model_dump() for item in contexts], observations, assessments
+        policies,
+        [item.model_dump() for item in contexts],
+        observations,
+        assessments,
+        inline_units=inline_units,
     )
     domains = {
         policy["context_id"]: DistributionContext(
             observations[policy["context_id"]],
             policy,
             assessments[policy["context_id"]],
+            inline_units=inline_units,
         )
         for policy in policies
     }
@@ -118,4 +128,5 @@ def prepare_activity(packet: dict, captured: StudyReport) -> ActivityView:
         assessments=assessments,
         rows=rows,
         excluded=dict(excluded),
+        inline_units=inline_units,
     )

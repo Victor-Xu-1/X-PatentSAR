@@ -650,13 +650,28 @@ deployment and real scientific acceptance are distinct evidence states.
 
 Automatic single-site discovery remains inside one existing study worker. A
 single `values.strictly_below` rule also owns interval ordering for comparisons
-and Pareto dominance. SAR engine9/private study input3 allow a touching finite
-boundary only if at least one interval excludes it. No midpoint, fold, numeric
-delta, unit conversion or cross-context inference is introduced. Current native
-publication requires `strict-context-pareto-v2`; only the archived input2 read
+and Pareto dominance. Since SAR engine9/private study input3, touching finite
+boundaries prove direction only if at least one interval excludes that point.
+That proof invents no midpoint, fold, numeric delta or cross-context inference.
+Only the archived input2 read
 adapter disables open-touching order to preserve captured conclusions. Old
 reports, pairs, ranks and source data are never rewritten or re-executed on GET.
 This compatibility switch is not a second new-study execution path.
+
+Engine10/private input4 add `core/sar/measurements.py` as the single explicit-unit
+interpretation authority. `input_records.analysis_molecules` prepares immutable
+new-analysis copies for both source kinds and both queue entry points; profile
+uses the same preparation. Absent unit metadata may use an explicit numeric
+suffix, never another row's unit. Persisted dataset/CSV/project records are not
+changed. Exact Decimal exponent shifts preserve coefficients and interval bounds;
+only molar SI prefixes and percent are supported, not mass-dose conversion.
+Statistics, distribution parsing, typed potency-pool observations, sorting and
+preview differences consume the same values in the recorded/derived basis.
+Publication requires `strict-context-pareto-units-v3`. Old input2 keeps gap-only
+ordering; input3 keeps open-boundary ordering but bare-value interpretation.
+The internal current-record view carries its interpretation mode for sorting;
+there is no new user switch or competing source store. A fresh new analysis of
+an older dataset can interpret explicit suffixes without reimporting its data.
 
 A canonical cut index proposes sites; compiled full-fixed-graph/port/stereo proof
 remains mandatory. Exact comparison pools avoid regions×all-records work for
@@ -664,7 +679,7 @@ automatically found families. Every numbered source is still in the report;
 unmatched/ambiguous sites and coverage limits are not hidden by positive matches.
 The input-bound plan and native 25-pair batches are preserved on interruption.
 The parent checks plan/coverage before one atomic result publication. Discovery
-was introduced in SAR engine8 and is retained in engine9, independently of extraction. Exact
+was introduced in SAR engine8 and is retained in engine10, independently of extraction. Exact
 one/two/three-edge topology partitions reuse original side bitmasks and bridge
 searches; three original bridges use intersections, mixed ring/bridge cuts use
 actual region sides, and three ring edges require a residual bridge after two

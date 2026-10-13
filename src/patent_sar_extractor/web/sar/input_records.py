@@ -7,11 +7,41 @@ import time
 from collections import defaultdict
 
 from ...core.sar.chemistry import prepare_structure
+from ...core.sar.measurements import explicit_unit_basis
 from ..errors import WebError
 from ..storage import encode
 from .models import Molecule, Observation
 
 MAX_DATASET_BYTES = 32 * 1024 * 1024
+
+
+def analysis_molecules(molecules: list[Molecule]) -> list[Molecule]:
+    """Prepare new-analysis units without mutating any persisted source record.
+
+    Both project and CSV snapshots use this path, including older datasets.
+    An absent metadata unit can use the unit explicitly written in that reading;
+    bare/unknown values cannot borrow a unit from another molecule or experiment.
+    """
+    result = []
+    for molecule in molecules:
+        observations = []
+        changed = False
+        for observation in molecule.observations:
+            basis = (
+                explicit_unit_basis(observation.value)
+                if not (observation.unit or "").strip()
+                else None
+            )
+            if basis:
+                changed = True
+                observation = observation.model_copy(update={"unit": basis})
+            observations.append(observation)
+        result.append(
+            molecule.model_copy(update={"observations": observations})
+            if changed
+            else molecule
+        )
+    return result
 
 
 class InputBudget:

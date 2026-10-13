@@ -25,6 +25,14 @@ Closed touching/overlapping intervals remain unresolved. The same rule drives
 new pair comparisons and Pareto priority; old study archives keep their captured
 semantics and cannot be resumed as a new scientific calculation.
 
+New SAR studies interpret explicit molar units in readings (for example `10 nM`
+and `0.002 µM`) and percent suffixes without altering the original cell text.
+Calculations, tenth-dose bands, plots, sorting and pair deltas share one exact
+interpretation. When unit metadata is absent, a numeric cell's explicit suffix
+can supply an nM/percent analysis basis; a bare number cannot borrow a unit from
+its neighbours. Separate declared contexts are not merged. Unsupported units,
+contradictory dimensions, ambiguous number spelling and missing units stay explicit.
+
 开源仓库：[Victor-Xu-1/X-PatentSAR](https://github.com/Victor-Xu-1/X-PatentSAR)。
 软件与仓库的对外名称统一为 **X-PatentSAR**；Python 发行包与 CLI 使用规范化技术标识
 `x-patentsar`。第一方源码采用 Apache-2.0，第三方许可和模型边界见 `NOTICE`。

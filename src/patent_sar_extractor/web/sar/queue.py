@@ -13,6 +13,7 @@ from .admission import existing, publish
 from .engine import engine_identity
 from .execution import execute
 from .indicator_policy import validate_direction
+from .input_records import analysis_molecules
 from .job_store import Jobs
 from .models import AnalysisRequest, SARJob
 from .ownership import absent
@@ -136,7 +137,9 @@ class SARQueue:
                 "sar_grade_order",
                 "Grade order must contain distinct explicit labels, strongest first.",
             )
-        molecules = included_molecules(self.service.datasets.all(dataset_id))
+        molecules = analysis_molecules(
+            included_molecules(self.service.datasets.all(dataset_id))
+        )
         try:
             contexts = context_catalog(
                 [row.model_dump() for row in molecules],

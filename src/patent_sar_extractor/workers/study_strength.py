@@ -3,12 +3,15 @@
 from dataclasses import replace
 
 from patent_sar_extractor.core.potency_bands import PotencyPool, concentration_unit
+from patent_sar_extractor.core.sar.measurements import parse_measurement
 from patent_sar_extractor.core.sar.study_statistics import strength_band
-from patent_sar_extractor.core.sar.values import grade_ranks
+from patent_sar_extractor.core.sar.values import Value, grade_ranks
 from patent_sar_extractor.web.activity_rank_models import ActivityStrengthScale
 
 
-def resolve_strength(policies, contexts, observations, assessments):
+def resolve_strength(
+    policies, contexts, observations, assessments, *, inline_units=True
+):
     by_id = {item["id"]: item for item in contexts}
     result = []
     for original in policies:
@@ -29,7 +32,13 @@ def resolve_strength(policies, contexts, observations, assessments):
                         or state["status"] == "context_mismatch"
                     ):
                         raw = "unsupported" if state["status"] != "missing" else ""
-                    pool.observe(source_id, raw)
+                    try:
+                        value = parse_measurement(
+                            raw, {}, observation.get("unit"), inline_units=inline_units
+                        )
+                    except ValueError:
+                        value = Value("unsupported")
+                    pool.observe_value(source_id, value)
             scale = pool.scale()
             if policy["direction"] != "lower" or not concentration_unit(
                 by_id[identifier]["unit"]

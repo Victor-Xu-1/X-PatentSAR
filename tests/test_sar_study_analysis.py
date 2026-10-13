@@ -571,12 +571,14 @@ class StudyAnalysisTests(unittest.TestCase):
                     )
 
     def test_archived_input_schema_cannot_start_a_new_scientific_calculation(self):
-        packet = self.packet(regions=0)
-        packet["schema"] = 2
-        with self.assertRaises(SARInputError) as error:
-            study_analysis.analyse_study(self.root, self.write(packet))
-        self.assertEqual(error.exception.code, "study_input_identity")
-        self.assertFalse((self.root / "report.json").exists())
+        for schema in (2, 3):
+            with self.subTest(schema=schema):
+                packet = self.packet(regions=0)
+                packet["schema"] = schema
+                with self.assertRaises(SARInputError) as error:
+                    study_analysis.analyse_study(self.root, self.write(packet))
+                self.assertEqual(error.exception.code, "study_input_identity")
+                self.assertFalse((self.root / "report.json").exists())
 
     def test_descriptor_checkpoint_order_and_engine_tampering_are_rejected(self):
         packet = self.packet(regions=0)
