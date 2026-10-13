@@ -1,11 +1,24 @@
 # X-PatentSAR
 
+Scanned activity headers are reread within each physical column by the existing
+OCR engine at two bounded resolutions. Missing-schema clips locate header roles
+only; the same column reader proves final fields without consuming data rows.
+Known endpoint, unit and table-context conflicts stay unresolved even when two
+new reads agree. Literal endpoint/unit joins such as DC50nM are separated only
+when the complete unit is printed, never guessed. Raw column/crop/line evidence,
+including rejected no-row layouts, is retained once in the existing activity JSON;
+row references are identity-checked before acceptance. Activity schema3/epoch12
+keep older derived proof historical and originals/manual revisions unchanged.
+Metadata roles, source-reference continuations, hybrid-PDF coverage and remaining
+chemical findings require separate validation; controlled checks do not establish
+perfect extraction or full patent scientific acceptance.
+
 Original cell readings retain raw OCR text, line confidence and owned geometry
 alongside normalized values. Captions use one exact grammar; literal elution
 notes do not assign stereochemistry or borrow confidence for the printed ID.
 Overlapping detector fragments are re-read from a bounded physical line using
 the same OCR engine. Valid disagreements stay review-only, including serialized
-numbered-cell proof. Binding schema3/activity schema2 mark older derived proof
+numbered-cell proof. Binding schema3/activity schema3 mark older derived proof
 historical without changing originals or manual edits; verified page OCR remains
 reusable. These engineering checks are not a perfect-extraction claim.
 

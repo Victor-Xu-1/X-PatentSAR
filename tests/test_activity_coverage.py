@@ -53,7 +53,7 @@ class ActivityCoverageTests(unittest.TestCase):
             patch.object(
                 coordinates,
                 "refine_scanned_header",
-                side_effect=lambda page, region, schema: schema,
+                side_effect=lambda page, region, schema, **kwargs: schema,
             ),
         ):
             parsed = coordinates.extract_coordinate_tables(

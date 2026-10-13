@@ -115,7 +115,25 @@ def extract_coordinate_tables(
                 continue
             schema: GridSchema | BiologySchema | None = grid_schema(context, matrix)
             if schema is None or isinstance(schema, GridSchema):
-                schema = refine_scanned_header(page, region, schema)
+                header_observations = []
+                schema = refine_scanned_header(
+                    page,
+                    region,
+                    schema,
+                    tokens=tokens,
+                    evidence_sink=header_observations,
+                )
+                for proof in header_observations:
+                    proof.update(
+                        page_no=page_index + 1,
+                        table_bbox=[
+                            region["xs"][0],
+                            region["ys"][0],
+                            region["xs"][-1],
+                            region["ys"][-1],
+                        ],
+                    )
+                result.header_observations.extend(header_observations)
                 if schema is not None:
                     context = schema.context
             # The existing biology authority owns its supported ratio/grade

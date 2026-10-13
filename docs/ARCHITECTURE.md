@@ -1,5 +1,20 @@
 # X-PatentSAR architecture
 
+Physical header ownership is split by responsibility, not by competing parser:
+`activity_header_layout.py` bounds missing-role discovery to at most three rows
+and 250 PDF points including the caption. `activity_header_columns.py` uses the
+shared cell observer for each declared column at400/600dpi; low-confidence and
+cross-boundary readings cannot establish a header. `activity_header_identity.py`
+preserves any valid old endpoint/unit/context contradiction. The one coordinator
+`activity_header_observation.py` retains raw locator/column proof and never reads
+data values. `activity_coordinates.py` supplies original tokens and physical
+page/table ownership, including unsuccessful layout observations.
+`activity_header_evidence.py` stores full content-addressed proof once in the
+existing activity JSON and compact references on rows; the shared join/QA checks
+missing, changed and unresolved references. Cell contexts/values and Web source
+focus are unchanged. Activity schema3/epoch12 invalidate affected derived reuse;
+no extra queue/store/provider/model, SQL/API migration or real-data rewrite.
+
 Shared source-cell authority: `compound_caption.py` owns the exact whole-caption
 grammar, `cell_ocr_observation.py` retains raw/normalized line observations and
 identity confidence, and `cell_ocr_lines.py` resolves only physical overlapping
@@ -8,8 +23,8 @@ fragments through the same OCR engine (up to eight lines/32 detections per cell)
 activity consumers. Neither two matching resolutions nor native evidence can
 erase another valid ID/value contradiction. Numbered proof rechecks this on
 deserialization. Unknown annotations remain unresolved; elution notes never
-assign stereochemistry. Binding3/activity2 retain old products as historical
-review; binder12/activity11/visible-label9 invalidate derived reuse independently
+assign stereochemistry. Binding3/activity3 retain old products as historical
+review; binder12/activity12/visible-label9 invalidate derived reuse independently
 of unchanged verified original-page OCR/structure assets and manual audit data.
 
 `api/localSession.ts` owns one ephemeral cached/single-flight same-origin session

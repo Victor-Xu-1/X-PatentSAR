@@ -1,105 +1,138 @@
-"""Bounded original-image header rereads; no metric spelling/number guessing."""
+"""One final physical-column header authority with immutable source evidence."""
 
 from dataclasses import replace
 
-from .activity_grid_context import _prefix, table_matrix
-from .activity_header_metrics import normalize_metric_text
+from .activity_grid_context import _prefix
+from .activity_header_columns import observe_header_columns
+from .activity_header_identity import compact_header, context_conflict, header_conflict
+from .activity_header_layout import discover_header_layout, header_bounds
 from .activity_headers import context_from_text, grid_schema
 from .activity_models import GridSchema
 from .table_geometry import ocr_tokens_with_positions
 
 
 def refine_scanned_header(
-    page, region: dict, original: GridSchema | None
+    page, region: dict, original: GridSchema | None, *, tokens=(), evidence_sink=None
 ) -> GridSchema | None:
-    """Require two clipped resolutions to agree on every column and caption ID.
+    """Discover missing roles if needed, then prove every field in its own column.
 
-    These are corroborating readings, not a calibrated accuracy guarantee.
-    Disagreement retains the unresolved original. Values are never read here.
+    Missing initial schemas require complete proof; known schemas keep unresolved
+    columns/source identities as review. Neither matching resolutions nor high
+    confidence establishes chemical/scientific correctness on its own.
     """
-    if page.get_text("words") or original is not None and original.first_data_row <= 0:
+    if page.get_text("words") or (
+        original is not None
+        and type(original.first_data_row) is int
+        and original.first_data_row == 0
+    ):
         return original
-    limit = original.first_data_row if original else min(3, len(region["ys"]) - 1)
-    top, bottom = region["ys"][0], region["ys"][limit]
-    bounds = (0, max(0, top - 80), page.rect.width, bottom)
-    if bottom - bounds[1] > 250 or not 2 <= len(region["xs"]) <= 65:
-        return original
-    candidates = []
-    observations = []
+    bounds = header_bounds(page, region, original)
+    if bounds is None:
+        proof = {
+            "status": "unresolved",
+            "reason": "unsupported_header_bounds",
+            "observations": [],
+        }
+        if evidence_sink is not None:
+            evidence_sink.append(proof)
+        return replace(original, header_resolution=proof) if original else None
+    limit, discovery_bounds = bounds
+    discovery = ()
+    source = original
+    if source is None:
+        layout = discover_header_layout(page, region, discovery_bounds, limit)
+        discovery = layout.observations
+        source = layout.schema
+        if source is not None:
+            limit = source.first_data_row
+    prefix_bounds = (0, max(0, region["ys"][0] - 80), page.rect.width, region["ys"][0])
+    observations, candidates, verified = [], [], []
+
+    def resolution(status, **extra):
+        evidence = {
+            "status": status,
+            "original_headers": list(original.raw_headers) if original else [],
+            "original_context": original.context.raw_context if original else "",
+            "discovery_observations": list(discovery),
+            "observations": observations,
+            "header_band_bbox": [
+                region["xs"][0],
+                region["ys"][0],
+                region["xs"][-1],
+                region["ys"][limit],
+            ],
+            **extra,
+        }
+        if evidence_sink is not None:
+            evidence_sink.append(evidence)
+        return evidence
+
+    def unresolved(reason):
+        proof = resolution("unresolved", reason=reason)
+        return replace(original, header_resolution=proof) if original else None
+
+    if source is None:
+        return unresolved("unproved_header_roles")
+    if len(source.raw_headers) != len(region["xs"]) - 1:
+        return unresolved("header_column_count_mismatch")
     for dpi in (400, 600):
-        tokens = ocr_tokens_with_positions(page, dpi=dpi, bounds=bounds)
-        matrix = table_matrix(tokens, region)
-        prefix = _prefix(tokens, region)
-        candidate = grid_schema(context_from_text(prefix, prefix), matrix)
+        columns = observe_header_columns(page, region, limit, dpi, tokens)
+        prefix_tokens = ocr_tokens_with_positions(page, dpi=dpi, bounds=prefix_bounds)
+        prefix = _prefix(prefix_tokens, region)
+        candidate = grid_schema(context_from_text(prefix, prefix), columns.matrix)
         observations.append(
             {
                 "method": f"header_ocr_{dpi}dpi",
-                "bbox": list(bounds),
-                "matrix": matrix[: candidate.first_data_row if candidate else limit],
+                "bbox": list(prefix_bounds),
+                "matrix": columns.matrix,
                 "prefix": prefix,
+                "columns": list(columns.columns),
             }
         )
-        if candidate is None or (
-            original is not None and candidate.first_data_row != original.first_data_row
-        ):
-            if original is None:
-                return None
-            return replace(
-                original,
-                header_resolution={
-                    "status": "unresolved",
-                    "observations": observations,
-                },
-            )
+        verified.append(columns.verified)
+        if candidate is None or candidate.first_data_row != limit:
+            return unresolved("unproved_header_boundary")
         candidates.append(candidate)
     first, second = candidates
-    if (
-        first.first_data_row != second.first_data_row
-        or len(first.raw_headers) != len(second.raw_headers)
-        or len(first.raw_headers) != len(region["xs"]) - 1
-        or tuple(g.id_column for g in first.groups)
-        != tuple(g.id_column for g in second.groups)
+    identifiers = tuple(g.id_column for g in source.groups)
+    if any(
+        tuple(g.id_column for g in candidate.groups) != identifiers
+        for candidate in candidates
     ):
-        return original
-
-    def compact(value):
-        return "".join(normalize_metric_text(value).split()).casefold()
-
-    agreed = [
-        compact(a) == compact(b) for a, b in zip(first.raw_headers, second.raw_headers)
+        return unresolved("conflicting_identifier_columns")
+    conflicts = [
+        any(header_conflict(old, candidate.raw_headers[i]) for candidate in candidates)
+        for i, old in enumerate(source.raw_headers)
     ]
-    caption_proved = bool(first.context.table_id) and compact(
+    agreed = [
+        compact_header(a) == compact_header(b)
+        and all(v[i] for v in verified)
+        and not conflicts[i]
+        for i, (a, b) in enumerate(zip(first.raw_headers, second.raw_headers))
+    ]
+    caption_conflict = any(
+        context_conflict(source.context, c.context) for c in candidates
+    )
+    caption_proved = bool(first.context.table_id) and compact_header(
         first.context.raw_caption
-    ) == compact(second.context.raw_caption)
-    # A missing schema has no safe per-column fallback. Only complete agreement
-    # on the actual header, row boundary and caption can establish a new one.
-    if original is None:
-        if not all(agreed) or not caption_proved:
-            return None
-        return replace(
-            first,
-            header_resolution={
-                "status": "observed_header_consensus",
-                "original_headers": [],
-                "original_context": "",
-                "observations": observations,
-            },
-        )
+    ) == compact_header(second.context.raw_caption)
+    if original is None and (not all(agreed) or not caption_proved or caption_conflict):
+        return unresolved("incomplete_initial_header_proof")
     headers = tuple(
-        first.raw_headers[i] if ok else original.raw_headers[i]
+        first.raw_headers[i] if ok else source.raw_headers[i]
         for i, ok in enumerate(agreed)
     )
-    context = first.context if caption_proved else original.context
+    context = (
+        first.context if caption_proved and not caption_conflict else source.context
+    )
     selected = grid_schema(context, [list(headers)])
     if selected is None:
-        return original
-    return replace(
-        selected,
-        first_data_row=original.first_data_row,
-        header_resolution={
-            "status": "observed_header_consensus" if all(agreed) else "unresolved",
-            "original_headers": list(original.raw_headers),
-            "original_context": original.context.raw_context,
-            "observations": observations,
-        },
+        return unresolved("unproved_resolved_header")
+    complete = all(agreed) and not caption_conflict
+    proof = resolution(
+        "observed_header_consensus" if complete else "unresolved",
+        conflicting_columns=[i for i, c in enumerate(conflicts) if c],
+        unverified_columns=[i for i, ok in enumerate(agreed) if not ok],
+        context_conflict=caption_conflict,
     )
+    return replace(selected, first_data_row=limit, header_resolution=proof)

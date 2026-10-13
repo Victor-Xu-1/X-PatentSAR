@@ -74,7 +74,12 @@ def observe_cell(
         cv2.BORDER_CONSTANT,
         value=(255, 255, 255),
     )
-    detected = kind == "label"
+    # A bounded one-line header cell can be a single printed "n" or "%";
+    # line detection routinely suppresses those legitimate tiny observations.
+    # Multiline headers and every compound caption still use line detection.
+    detected = kind == "label" or (
+        kind == "header" and (crop[3] - crop[1]) * 72 / dpi > 12
+    )
     result, _ = engine(image, use_det=detected, use_cls=False)
     parts = []
     for item in result or []:
@@ -108,7 +113,7 @@ def observe_cell(
         else ""
     )
     score = min((part["confidence"] for part in parts), default=0.0)
-    if detected and value:
+    if kind == "label" and value:
         _, identity_end = caption_identity(raw)
         # Only a completely recognized literal annotation may be separated.
         # Every fragment touching the ID/prefix must pass its own confidence.
