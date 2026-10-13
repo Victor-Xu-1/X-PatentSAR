@@ -86,16 +86,18 @@ for (const width of [390, 1440])
     await page
       .getByRole('combobox', { name: 'Interface language', exact: true })
       .selectOption('zh-CN');
-    const boundaryRow = table.getByRole('row').filter({
-      has: page.getByRole('rowheader', { name: 'L10', exact: true }),
-    });
+    const localized = page.getByRole('region', { name: '研究报告', exact: true });
+    const boundaryRow = localized
+      .locator('table.sar-study-table')
+      .getByRole('row')
+      .filter({
+        has: page.getByRole('rowheader', { name: 'L10', exact: true }),
+      });
     await boundaryRow
       .locator('td[data-activity-strength="strong"]')
       .first()
       .evaluate((cell) => cell.scrollIntoView({ block: 'start', inline: 'center' }));
-    await page
-      .getByRole('region', { name: '研究报告', exact: true })
-      .screenshot({ path: testInfo.outputPath(`log-table-zh-${width}.png`) });
+    await localized.screenshot({ path: testInfo.outputPath(`log-table-zh-${width}.png`) });
     expect(await (await page.request.get(path + '/export?format=json')).text()).toBe(archive);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
       true,
