@@ -871,6 +871,13 @@ their own current identities; this is not a legacy acceptance exception.
 
 ## Concurrency and recovery
 
+An epoch-only acceptance refresh is idempotent when another reader has already
+published byte-identical derived state for the same run root and original hash.
+This avoids a manual Reload on first open after a QA upgrade. Any different
+source/root/snapshot still raises the existing projection conflict; no raw rows,
+corrections, audit records or task history are overwritten, and no retry loop is
+introduced.
+
 During structure segmentation, the slim workflow reports saved pages/selected
 pages, not a time-estimated percentage or accepted molecule count. Reused
 validated chunks contribute their pages immediately; newly completed chunks

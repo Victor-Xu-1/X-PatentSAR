@@ -323,6 +323,80 @@ class SourceEpochProjectionTests(PredictionFixture, unittest.TestCase):
             ]
         )
 
+    def test_two_readers_of_the_same_epoch_publication_are_idempotent(self):
+        project = self.service.store.project(self.project.id)
+        snapshot = json.loads(project["snapshot"])
+
+        def raw_rows():
+            with self.service.store.connect() as connection:
+                return [
+                    tuple(row)
+                    for row in connection.execute(
+                        "SELECT * FROM compounds WHERE project_id=? ORDER BY ordinal",
+                        (self.project.id,),
+                    )
+                ]
+
+        original_rows = raw_rows()
+        with patch.object(core, "STEREO_EVIDENCE_VERSION", self.next_epoch):
+            self.service._refresh_source_epoch(project, snapshot)
+            published = self.service.store.project(self.project.id)["snapshot"]
+            # Both requests read the old snapshot before either could publish.
+            self.service._refresh_source_epoch(project, snapshot)
+        self.assertEqual(
+            self.service.store.project(self.project.id)["snapshot"], published
+        )
+        self.assertEqual(raw_rows(), original_rows)
+
+    def test_identical_epoch_snapshot_cannot_cross_a_new_source_root_or_hash(self):
+        from patent_sar_extractor.web.errors import WebError
+
+        project = self.service.store.project(self.project.id)
+        snapshot = json.loads(project["snapshot"])
+        with patch.object(core, "STEREO_EVIDENCE_VERSION", self.next_epoch):
+            self.service._refresh_source_epoch(project, snapshot)
+            for root, digest in (
+                (project["run_root"] + "-new", project["sha256"]),
+                (project["run_root"], "0" * 64),
+            ):
+                with self.subTest(root=root, digest=digest):
+                    with self.service.store.connect(write=True) as connection:
+                        connection.execute(
+                            "UPDATE projects SET run_root=?,sha256=? WHERE id=?",
+                            (root, digest, self.project.id),
+                        )
+                    with self.assertRaises(WebError) as error:
+                        self.service._refresh_source_epoch(project, snapshot)
+                    self.assertEqual(error.exception.code, "projection_changed")
+
+    def test_overlapping_current_project_reads_finish_without_manual_reload(self):
+        from concurrent.futures import ThreadPoolExecutor
+        from threading import Barrier
+
+        from patent_sar_extractor.web import acceptance
+        from patent_sar_extractor.web.source_epoch import EPOCH_MARKER
+
+        barrier = Barrier(2)
+        original_authority = acceptance.authority
+
+        def simultaneous(*args, **kwargs):
+            result = original_authority(*args, **kwargs)
+            barrier.wait(timeout=5)
+            return result
+
+        with (
+            patch.object(core, "STEREO_EVIDENCE_VERSION", self.next_epoch),
+            patch.object(acceptance, "authority", side_effect=simultaneous),
+            ThreadPoolExecutor(max_workers=2) as pool,
+        ):
+            futures = [
+                pool.submit(self.service._current_project, self.project.id)
+                for _ in range(2)
+            ]
+            rows = [future.result(timeout=10) for future in futures]
+        self.assertEqual(rows[0]["snapshot"], rows[1]["snapshot"])
+        self.assertEqual(json.loads(rows[0]["snapshot"])[EPOCH_MARKER], self.next_epoch)
+
 
 class SourceEpochRawRecertificationTests(unittest.TestCase):
     def test_raw_v2_cache_is_rescreened_after_epoch_change_without_model_or_mutation(

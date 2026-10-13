@@ -129,6 +129,20 @@ class WorkspaceService:
                 ),
             ).rowcount
             if changed != 1:
+                current = connection.execute(
+                    "SELECT run_root,sha256,snapshot FROM projects WHERE id=?",
+                    (project["id"],),
+                ).fetchone()
+                # Concurrent readers may publish the identical epoch result.
+                # Accept only byte-identical state for the SAME original/run;
+                # a new attempt or any other projection change still conflicts.
+                if (
+                    current is not None
+                    and current["run_root"] == project["run_root"]
+                    and current["sha256"] == project["sha256"]
+                    and current["snapshot"] == encode(updated)
+                ):
+                    return
                 raise WebError(
                     409,
                     "projection_changed",
