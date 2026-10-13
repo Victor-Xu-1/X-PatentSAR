@@ -17,6 +17,7 @@
     "frontend/src/features/tasks/NewTaskPage.tsx",
     "frontend/src/i18n/catalogs/common.ts",
     "frontend/src/i18n/catalogs/jobs.ts",
+    "frontend/src/styles/responsive.css",
     "frontend/tests/app.test.tsx",
     "frontend/tests/history-resources.test.tsx",
     "frontend/tests/i18n-core.test.tsx",
