@@ -2,13 +2,19 @@ import type { CatalogRegion } from '../../../api/sarCatalogTypes';
 
 /** Original accepted changed-fragment memberships; never infer a new match. */
 export function networkRowSites(sites: CatalogRegion[], moleculeId: string) {
-  return sites.filter(
+  const choices = sites.filter(
     (site) =>
       site.region.molecule_id !== moleculeId &&
       site.fragments.some(
         (fragment) => !fragment.is_reference && fragment.molecule_ids.includes(moleculeId),
       ),
   );
+  // Presentation only: prefer the smaller already-proved reference footprint.
+  // Keep every option and stable ties; authored/legacy ordering stays authoritative.
+  if (choices.some((site) => site.origin !== 'single_site')) return choices;
+  const footprint = (site: CatalogRegion) =>
+    site.region.hydrogen_anchor == null ? site.region.atom_indices.length : 1;
+  return choices.sort((a, b) => footprint(a) - footprint(b));
 }
 
 /** Only hide nested automatic views of the exact same accepted source pairs.

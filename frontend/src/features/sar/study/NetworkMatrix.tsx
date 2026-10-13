@@ -15,6 +15,8 @@ import { MatrixValues } from './MatrixValues';
 import { MatrixPredictions } from './MatrixPredictions';
 import { matrixReadings } from './matrixReadings';
 import { moveMatrix } from './matrixScrolling';
+import { useMediaQuery } from '../../../hooks/useMediaQuery';
+import { MatrixPairControls } from './MatrixPairControls';
 
 export function NetworkMatrix({
   rows,
@@ -39,6 +41,8 @@ export function NetworkMatrix({
 }) {
   const { t } = useTranslation();
   const [chosen, setChosen] = useState<Record<string, string>>({});
+  const paired = useMediaQuery('(max-width: 700px)');
+  const [candidate, setCandidate] = useState('');
   const choices = rows.map((row) => networkRowSites(sites, row.molecule_id));
   const selections = rows.map((row, index) => ({
     molecule_id: row.molecule_id,
@@ -59,6 +63,13 @@ export function NetworkMatrix({
     load,
   );
   const data = resource.validated ? resource.data : null;
+  const candidateIndex = Math.max(
+    0,
+    data?.previews.findIndex((item) => item.candidate.molecule_id === candidate) ?? 0,
+  );
+  const visibleData =
+    data && paired ? { ...data, previews: [data.previews[candidateIndex]!] } : data;
+  const visibleChoices = paired ? [choices[candidateIndex] ?? []] : choices;
   const error = useMemo(() => {
     if (!data) return null;
     try {
@@ -77,18 +88,24 @@ export function NetworkMatrix({
       moveMatrix(viewport.current, content.current, direction);
   }
   return (
-    <section className="sar-network-matrix" aria-label={t('结构对照')}>
+    <section
+      className={'sar-network-matrix' + (paired ? ' sar-matrix-paired' : '')}
+      aria-label={t('结构对照')}
+    >
       {resource.loading && <Loading />}
       {(resource.error || error) && (
         <SARFailure error={(resource.error ?? error)!} onRetry={resource.reload} />
       )}
-      {data && !error && (
+      {data && visibleData && !error && (
         <>
+          {paired && (
+            <MatrixPairControls data={data} index={candidateIndex} onSelect={setCandidate} />
+          )}
           <div ref={viewport} className="sar-matrix-viewport" aria-label={t('结构对照')}>
             <table ref={content} className="sar-matrix-table" aria-label={t('结构对照')}>
               <MatrixHead
-                data={data}
-                sites={choices}
+                data={visibleData}
+                sites={visibleChoices}
                 siteOrder={siteOrder}
                 jobId={jobId}
                 active={active}
@@ -98,10 +115,10 @@ export function NetworkMatrix({
                   setChosen((old) => ({ ...old, [molecule]: region }))
                 }
               />
-              <MatrixValues data={data} report={report} />
+              <MatrixValues data={visibleData} report={report} />
             </table>
           </div>
-          {edges.overflow && (
+          {!paired && edges.overflow && (
             <div className="sar-matrix-controls">
               <button
                 type="button"
@@ -121,7 +138,7 @@ export function NetworkMatrix({
               </button>
             </div>
           )}
-          <MatrixPredictions data={data} />
+          <MatrixPredictions data={visibleData} />
         </>
       )}
     </section>

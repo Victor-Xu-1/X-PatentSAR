@@ -2,6 +2,12 @@
 
 ## Large SAR reports
 
+Narrow screens show reference and one candidate together, with previous/next
+and a labelled candidate selector within the current page. Desktop displays the
+full page. Reference footprint orders automatic default regions without deleting
+choices or changing R labels; a manually chosen larger region remains selected.
+Existing reports need no recalculation for these presentation improvements.
+
 Initial report browsing now requests a complete membership catalog rather than
 all fragment chemistry and chart leaves. Core/region inventory and comparison
 counts are not page samples. Opening a manual fragment region retrieves its

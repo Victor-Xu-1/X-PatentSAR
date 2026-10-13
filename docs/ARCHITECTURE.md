@@ -59,6 +59,14 @@ not fabricated JSON; nonempty forbidden bodies stay explicit uncertain failures.
 
 ### Multi-candidate comparison presentation
 
+`networkRowSites` orders automatic-only accepted options by reference footprint
+(ordinary-H view counts as one site); ties retain published order. It is a
+presentation preference, not a unique chemical-minimum proof or new admission.
+Manual/legacy options preserve authored order; explicit choices take precedence.
+`MatrixPairControls` selects one candidate from the same validated complete matrix
+on <=700px screens. Header/value/prediction consumers share the same response,
+camera and source identity; resizing/selection/locale do not issue a second read.
+
 `coreChoices.ts` orders the retained complete core collection by unique published
 non-reference alternatives, with natural original-label tie breaking. This is
 exploration order, not drug efficacy, experimental independence or Lead ranking.

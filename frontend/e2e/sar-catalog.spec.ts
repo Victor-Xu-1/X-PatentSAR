@@ -44,6 +44,9 @@ for (const width of [390, 800, 1672]) {
     await expect(fragments.getByRole('heading', { name: /Halogen 原文/ })).toBeVisible();
     expect(reads).toContain(path + '/regions/' + full.report.regions[1].region.id);
     await expect(fragments.getByRole('alert')).toHaveCount(0);
+    await expect(fragments.locator('.sar-fragment-strip img')).toHaveCount(
+      Math.min(6, full.report.regions[1].fragments.length),
+    );
     await page.waitForFunction(() =>
       [...document.querySelectorAll('img')]
         .filter((image) => image.checkVisibility())

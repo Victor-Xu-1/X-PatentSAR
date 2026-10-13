@@ -501,6 +501,7 @@ export const sar: Record<string, string> = {
   参考分子: 'Reference',
   向左查看结构: 'Previous structures',
   向右查看结构: 'Next structures',
+  对比分子: 'Comparison molecule',
   全部改造方向: 'All directions',
   '查看区域 {region}': 'View region {region}',
   仅强活性: 'Strong activity only',

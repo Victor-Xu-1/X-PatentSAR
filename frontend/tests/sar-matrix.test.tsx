@@ -7,6 +7,7 @@ import { ApiClient } from '../src/api/client';
 import { json, session } from './fixtures';
 import { decodeStudyMatrix } from '../src/api/sarMatrixDecoder';
 import { NetworkMatrix } from '../src/features/sar/study/NetworkMatrix';
+import { useMediaQuery } from '../src/hooks/useMediaQuery';
 import { setLocale } from '../src/i18n';
 import { sarDrawing, sarPair, studyContext, studyJob, studyReport, studyRow } from './sar-fixtures';
 
@@ -16,6 +17,7 @@ const rawContext = {
   name: 'CL 原文 (mL/min/kg)',
   unit: 'mL/min/kg',
 };
+vi.mock('../src/hooks/useMediaQuery', () => ({ useMediaQuery: vi.fn(() => false) }));
 const report = { ...studyReport, contexts: [studyContext, rawContext] };
 const rows = [2, 3].map((number) => ({
   ...studyRow,
@@ -85,11 +87,39 @@ const props = {
 };
 
 beforeEach(() => {
+  vi.mocked(useMediaQuery).mockReturnValue(false);
   setLocale('en');
   vi.spyOn(sarStudyApi, 'matrix').mockResolvedValue(decodeStudyMatrix(packet));
   vi.spyOn(sarStudyApi, 'drawing');
   props.onCompare.mockClear();
   props.onSource.mockClear();
+});
+
+it('keeps a reference/candidate pair on narrow screens and preserves selection across resize and locale without new reads', async () => {
+  vi.mocked(useMediaQuery).mockReturnValue(true);
+  const before = JSON.stringify(packet);
+  const { rerender } = render(<NetworkMatrix {...props} />);
+  const table = await screen.findByRole('table', { name: 'Structure comparison' });
+  expect(within(table).getAllByRole('columnheader')).toHaveLength(3);
+  expect(screen.getByRole('button', { name: 'Previous structures' })).toBeDisabled();
+  await userEvent.selectOptions(
+    screen.getByRole('combobox', { name: 'Comparison molecule' }),
+    'P3',
+  );
+  expect(within(table).getByRole('button', { name: 'Compare I-3' })).toBeVisible();
+  expect(within(table).queryByRole('button', { name: 'Compare I-2' })).not.toBeInTheDocument();
+  expect(table).toHaveTextContent('<0.5 · >9');
+  expect(screen.getByRole('button', { name: 'Next structures' })).toBeDisabled();
+  vi.mocked(useMediaQuery).mockReturnValue(false);
+  rerender(<NetworkMatrix {...props} />);
+  expect(within(table).getAllByRole('columnheader')).toHaveLength(4);
+  vi.mocked(useMediaQuery).mockReturnValue(true);
+  rerender(<NetworkMatrix {...props} />);
+  await act(() => setLocale('zh-CN'));
+  expect(screen.getByRole('combobox', { name: '对比分子' })).toHaveValue('P3');
+  expect(within(table).getByRole('button', { name: '比较 I-3' })).toBeVisible();
+  expect(sarStudyApi.matrix).toHaveBeenCalledTimes(1);
+  expect(JSON.stringify(packet)).toBe(before);
 });
 
 it('shows reference and multiple candidates with one metric label and all six property rows', async () => {
@@ -109,6 +139,49 @@ it('shows reference and multiple candidates with one metric label and all six pr
     within(table).getByRole('rowheader', { name: 'LogS' }).closest('tr'),
   ).not.toHaveTextContent('0.00');
   expect(sarStudyApi.drawing).not.toHaveBeenCalled();
+});
+
+it('uses a local automatic default but preserves explicit broader selection on locale and resize', async () => {
+  const broad = {
+    ...site,
+    origin: 'single_site' as const,
+    region: { ...site.region, id: 'a'.repeat(32), atom_indices: [0, 1, 2] },
+  };
+  const local = { ...broad, region: { ...broad.region, id: 'b'.repeat(32), atom_indices: [0] } };
+  vi.mocked(sarStudyApi.matrix).mockImplementation(async (_job, _dataset, _reference, selections) =>
+    decodeStudyMatrix({
+      ...packet,
+      previews: packet.previews.map((item, index) => {
+        const region =
+          selections[index]!.region_id === local.region.id ? local.region : broad.region;
+        return { ...item, region, pair: { ...item.pair, region_id: region.id } };
+      }),
+    }),
+  );
+  const changed = {
+    ...props,
+    sites: [broad, local],
+    siteOrder: new Map([
+      [broad.region.id, 0],
+      [local.region.id, 1],
+    ]),
+  };
+  const { rerender } = render(<NetworkMatrix {...changed} />);
+  expect(await screen.findByRole('combobox', { name: 'Variable regions · I-2' })).toHaveValue(
+    local.region.id,
+  );
+  await userEvent.selectOptions(
+    screen.getByRole('combobox', { name: 'Variable regions · I-2' }),
+    broad.region.id,
+  );
+  expect(await screen.findByRole('combobox', { name: 'Variable regions · I-2' })).toHaveValue(
+    broad.region.id,
+  );
+  vi.mocked(useMediaQuery).mockReturnValue(true);
+  rerender(<NetworkMatrix {...changed} />);
+  await act(() => setLocale('zh-CN'));
+  expect(screen.getByRole('combobox', { name: '变化区域 · I-2' })).toHaveValue(broad.region.id);
+  expect(sarStudyApi.matrix).toHaveBeenCalledTimes(2);
 });
 
 it('keeps source labels and raw readings unchanged on language switch and supports direct source/pair controls', async () => {

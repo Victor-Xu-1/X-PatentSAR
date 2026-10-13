@@ -1,5 +1,12 @@
 # Project governance manifest
 
+- Local comparison ownership: `networkRowSites` owns automatic-only stable
+  reference-footprint preference over already-proved options. Manual/legacy and
+  explicit selection remain authoritative. `MatrixPairControls` and the existing
+  shared media-query hook project one member of the same validated matrix page
+  on narrow screens; shared native drawing/value/source paths remain unchanged.
+  No new chemistry, request path, schema, scientific epoch, dependency or cache.
+
 - Catalog ownership: `study_catalog_models.py` defines explicit read-only compact
   fragment membership DTOs, reusing report/group projection and complete receipt
   checks. The frontend catalog types and decoder keep every identity/count while
