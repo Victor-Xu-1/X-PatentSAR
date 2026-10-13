@@ -18,7 +18,7 @@ for (const viewport of [
     });
     const screens = [
       ['new-task', '上传专利 PDF', '01-input'],
-      ['projects', '最近文件', '02-recent'],
+      ['projects', '历史文件', '02-recent'],
       ['jobs', '任务记录', '03-jobs'],
     ] as const;
     for (const [route, heading, file] of screens) {

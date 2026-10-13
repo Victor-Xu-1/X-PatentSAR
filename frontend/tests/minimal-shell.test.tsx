@@ -18,6 +18,37 @@ const headerProps = {
 };
 
 describe('minimal document shell', () => {
+  it.each(['new-task', 'sar', 'jobs', 'projects', 'settings'] as const)(
+    'keeps the requested module order and current marker on %s',
+    (view) => {
+      render(<Header {...headerProps} view={view} project={null} />);
+      const names = ['专利提取', 'SAR 分析', '任务记录', '历史文件', '环境管理'];
+      const buttons = screen.getByRole('navigation').querySelectorAll('button');
+      expect([...buttons].map((button) => button.textContent)).toEqual(names);
+      const index = ['new-task', 'sar', 'jobs', 'projects', 'settings'].indexOf(view);
+      expect(buttons[index]).toHaveAttribute('aria-current', 'page');
+      expect([...buttons].filter((button) => button.hasAttribute('aria-current'))).toHaveLength(1);
+    },
+  );
+  it('retains extraction, file history and source-bound SAR callbacks after reordering', async () => {
+    const onUpload = vi.fn(),
+      onRecent = vi.fn(),
+      onSAR = vi.fn(),
+      onNavigate = vi.fn();
+    const props = { ...headerProps, onUpload, onRecent, onSAR, onNavigate };
+    const { rerender } = render(<Header {...props} sourceProjectId="original-source" />);
+    await userEvent.click(screen.getByRole('button', { name: '专利提取' }));
+    await userEvent.click(screen.getByRole('button', { name: '历史文件' }));
+    await userEvent.click(screen.getByRole('button', { name: 'SAR 分析' }));
+    expect(onUpload).toHaveBeenCalledOnce();
+    expect(onRecent).toHaveBeenCalledOnce();
+    expect(onSAR).toHaveBeenCalledExactlyOnceWith('original-source');
+    expect(onNavigate).not.toHaveBeenCalled();
+    rerender(<Header {...props} view="jobs" />);
+    await userEvent.click(screen.getByRole('button', { name: 'SAR 分析' }));
+    expect(onNavigate).toHaveBeenCalledExactlyOnceWith('sar');
+    expect(onSAR).toHaveBeenCalledOnce();
+  });
   it('marks a programmatically selected module without taking focus or invoking navigation', () => {
     const onNavigate = vi.fn();
     const { rerender } = render(<Header {...headerProps} view="sar" onNavigate={onNavigate} />);
@@ -32,15 +63,15 @@ describe('minimal document shell', () => {
   });
   it('marks PDF upload as the current page in the same direct navigation', () => {
     render(<Header {...headerProps} view="new-task" project={null} />);
-    expect(screen.getByRole('button', { name: '上传 PDF' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: '专利提取' })).toHaveAttribute(
       'aria-current',
       'page',
     );
-    expect(screen.getByRole('button', { name: '最近文件' })).not.toHaveAttribute('aria-current');
+    expect(screen.getByRole('button', { name: '历史文件' })).not.toHaveAttribute('aria-current');
   });
   it('shows all former menu actions and the actual version directly beside the original logo and document', () => {
     render(<Header {...headerProps} />);
-    const brand = screen.getByRole('link', { name: 'X-PatentSAR · 上传 PDF' });
+    const brand = screen.getByRole('link', { name: 'X-PatentSAR · 专利提取' });
     expect(brand.querySelector('img')).toHaveAttribute(
       'src',
       expect.stringContaining('brand-mark.png'),
@@ -49,11 +80,11 @@ describe('minimal document shell', () => {
     expect(screen.queryByText(project.title)).not.toBeInTheDocument();
     expect(document.querySelectorAll('.topbar-actions > button')).toHaveLength(7);
     for (const name of [
-      '上传 PDF',
-      '最近文件',
-      '环境管理',
-      '任务记录',
+      '专利提取',
       'SAR 分析',
+      '任务记录',
+      '历史文件',
+      '环境管理',
       '返回结果表格',
       '证据摘要',
     ])
@@ -108,13 +139,13 @@ describe('minimal document shell', () => {
   });
   it('retains keyboard access to every persistent topbar control', async () => {
     render(<Header {...headerProps} />);
-    screen.getByRole('link', { name: 'X-PatentSAR · 上传 PDF' }).focus();
+    screen.getByRole('link', { name: 'X-PatentSAR · 专利提取' }).focus();
     for (const name of [
-      '上传 PDF',
-      '最近文件',
-      '环境管理',
-      '任务记录',
+      '专利提取',
       'SAR 分析',
+      '任务记录',
+      '历史文件',
+      '环境管理',
       '返回结果表格',
       '证据摘要',
     ]) {
@@ -171,7 +202,7 @@ describe('recent-file list', () => {
     const resource = { data: null, loading: true, error: null, reload: vi.fn() };
     const props = { resource, onOpen: vi.fn(), onUpload: vi.fn() };
     const { rerender } = render(<ProjectsPage {...props} />);
-    expect(screen.getByText('正在读取最近文件…')).toBeVisible();
+    expect(screen.getByText('正在读取历史文件…')).toBeVisible();
     rerender(<ProjectsPage {...props} resource={{ ...resource, loading: false }} />);
     expect(screen.getByText('还没有文件')).toBeVisible();
     await userEvent.click(screen.getByRole('button', { name: '上传 PDF' }));

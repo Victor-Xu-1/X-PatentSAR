@@ -156,7 +156,7 @@ describe('history mutations refresh only affected resource views', () => {
     expect(await screen.findByTitle('抑制等级 = ++')).toBeVisible();
     await userEvent.click(screen.getByRole('button', { name: '任务记录' }));
     await screen.findByRole('heading', { name: '任务记录' });
-    await userEvent.click(screen.getByRole('button', { name: '最近文件' }));
+    await userEvent.click(screen.getByRole('button', { name: '历史文件' }));
     expect(await screen.findByRole('button', { name: `打开 ${project.title}` })).toBeVisible();
     expect(results.items[0]?.smiles).toBeNull();
     expect(api.deleteHistory).toHaveBeenCalledOnce();

@@ -49,13 +49,20 @@ describe('one application-owned localization authority', () => {
     );
     await user.selectOptions(screen.getByRole('combobox', { name: 'Interface language' }), 'zh-CN');
     await user.selectOptions(screen.getByRole('combobox', { name: '界面语言' }), 'en');
-    expect(screen.getByRole('button', { name: 'Upload PDF' })).toBeVisible();
-    expect(screen.getByRole('navigation', { name: 'Workspace navigation' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Patent extraction' })).toBeVisible();
+    const nav = screen.getByRole('navigation', { name: 'Workspace navigation' });
+    expect([...nav.querySelectorAll('button')].map((button) => button.textContent)).toEqual([
+      'Patent extraction',
+      'SAR analysis',
+      'Tasks',
+      'File history',
+      'Environment',
+    ]);
     expect(screen.getByRole('combobox', { name: 'Interface language' })).toHaveValue('en');
     expect(document.documentElement.lang).toBe('en');
     expect(localStorage.getItem(LOCALE_STORAGE_KEY)).toBe('en');
     await user.selectOptions(screen.getByRole('combobox', { name: 'Interface language' }), 'zh-CN');
-    expect(screen.getByRole('button', { name: '上传 PDF' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '专利提取' })).toBeVisible();
     expect(document.documentElement.lang).toBe('zh-CN');
   });
 
@@ -64,7 +71,7 @@ describe('one application-owned localization authority', () => {
     const language = screen.getByRole('combobox', { name: 'Interface language' });
     expect(language).toBeEnabled();
     await userEvent.selectOptions(language, 'en');
-    expect(screen.getByRole('button', { name: 'Upload PDF' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Patent extraction' })).toBeDisabled();
     expect(screen.getByRole('combobox', { name: 'Interface language' })).toBeEnabled();
   });
 

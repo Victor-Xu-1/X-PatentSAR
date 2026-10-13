@@ -620,8 +620,10 @@ measurements into scalars, and stored-property filtering never starts a model.
 The activity-band legend is on demand in display options; bands use the complete
 effective project and preserve ties, not current-page extrema.
 
-Open the direct topbar **环境管理** entry (`#/settings`). Upload, recent files,
-environment management, job history and actual product version stay visible;
+Open the direct topbar **环境管理** entry (`#/settings`). The shared navigation
+order is Patent extraction, SAR analysis, Tasks, File history, Environment
+(专利提取、SAR 分析、任务记录、历史文件、环境管理). Both languages keep the same
+routes, keyboard order and visible captions; the actual product version stays visible;
 workspace result/evidence shortcuts also stay visible. Small screens wrap controls
 without hiding captions; there is no Header More menu. Use **一键部署全部环境** for the default
 PDF/structure/activity/six-property workflow, not manual component assembly. One

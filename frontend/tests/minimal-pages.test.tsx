@@ -25,7 +25,7 @@ describe('minimal secondary page presentation without changing workflows', () =>
       />,
     );
     expect(document.querySelector('.document-title')).toBeNull();
-    expect(screen.getByRole('link', { name: 'X-PatentSAR · 上传 PDF' })).toHaveTextContent(
+    expect(screen.getByRole('link', { name: 'X-PatentSAR · 专利提取' })).toHaveTextContent(
       'X-PatentSAR',
     );
     expect(screen.getByText('v0.1.0')).toBeVisible();

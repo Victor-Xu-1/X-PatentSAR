@@ -29,7 +29,7 @@ test.beforeEach(async ({ page }) => {
 const expectedVersion = packageMetadata.version;
 const routes = [
   { path: 'new-task', heading: '上传专利 PDF' },
-  { path: 'projects', heading: '最近文件' },
+  { path: 'projects', heading: '历史文件' },
   { path: 'jobs', heading: '任务记录' },
   { path: 'settings', heading: '环境管理' },
 ];

@@ -25,7 +25,7 @@ function contractTransport() {
   });
 }
 async function connected() {
-  await waitFor(() => expect(screen.getByRole('button', { name: '上传 PDF' })).toBeEnabled());
+  await waitFor(() => expect(screen.getByRole('button', { name: '专利提取' })).toBeEnabled());
 }
 
 describe('minimal application shell, routes and failure states', () => {
@@ -54,10 +54,10 @@ describe('minimal application shell, routes and failure states', () => {
     document.querySelectorAll<HTMLElement>('.topbar-actions > button > span').forEach((caption) => {
       caption.style.display = 'none';
     });
-    await userEvent.click(screen.getByRole('button', { name: '最近文件' }));
+    await userEvent.click(screen.getByRole('button', { name: '历史文件' }));
     await userEvent.click(await screen.findByRole('button', { name: `打开 ${project.title}` }));
     expect(await screen.findByTitle('抑制等级 = ++')).toBeVisible();
-    await userEvent.click(screen.getByRole('button', { name: '上传 PDF' }));
+    await userEvent.click(screen.getByRole('button', { name: '专利提取' }));
     expect(await screen.findByRole('heading', { name: '上传专利 PDF' })).toBeVisible();
     expect(screen.getByLabelText('原始专利 PDF 文件')).toHaveFocus();
   });
@@ -78,7 +78,7 @@ describe('minimal application shell, routes and failure states', () => {
     expect(transport.mock.calls.filter(([url]) => String(url).endsWith('/session'))).toHaveLength(
       1,
     );
-    await userEvent.click(screen.getByRole('link', { name: 'X-PatentSAR · 上传 PDF' }));
+    await userEvent.click(screen.getByRole('link', { name: 'X-PatentSAR · 专利提取' }));
     expect(window.location.hash).toBe('#/new-task');
     expect(screen.getByLabelText('原始专利 PDF 文件')).toHaveFocus();
   });
@@ -87,7 +87,7 @@ describe('minimal application shell, routes and failure states', () => {
     window.location.hash = '#/projects';
     vi.stubGlobal('fetch', contractTransport());
     render(<App />);
-    expect(await screen.findByRole('list', { name: '最近专利文件' })).toBeVisible();
+    expect(await screen.findByRole('list', { name: '历史专利文件' })).toBeVisible();
     expect(document.querySelector('.project-grid')).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: `打开 ${project.title}` }));
     expect(await screen.findByTitle('抑制等级 = ++')).toBeVisible();
@@ -119,7 +119,7 @@ describe('minimal application shell, routes and failure states', () => {
     expect(screen.getByText('重新加载')).toBeVisible();
     expect(screen.queryByText('抑制等级 = ++')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: '开始提取' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: '上传 PDF' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '专利提取' })).toBeDisabled();
   });
 
   it('does not allow the complete PDF task when the ADMET capability is missing', async () => {

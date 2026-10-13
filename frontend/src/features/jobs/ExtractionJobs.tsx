@@ -111,7 +111,7 @@ export function ExtractionJobs({
       ) : !resource.data?.items.length ? (
         <Empty
           title={t('尚无提取任务')}
-          description={t('上传 PDF 开始，或从最近文件打开已有结果。')}
+          description={t('上传 PDF 开始，或从历史文件打开已有结果。')}
         />
       ) : (
         <ul className="job-history" aria-label={t('提取任务记录')}>

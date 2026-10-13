@@ -54,8 +54,8 @@ export const jobs: Readonly<Record<string, string>> = {
   刷新任务记录: 'Refresh task records',
   '正在读取任务记录…': 'Loading task records…',
   尚无提取任务: 'No extraction tasks yet',
-  '上传 PDF 开始，或从最近文件打开已有结果。':
-    'Upload a PDF to begin, or open existing results from Recent files.',
+  '上传 PDF 开始，或从历史文件打开已有结果。':
+    'Upload a PDF to begin, or open existing results from File history.',
   提取任务记录: 'Extraction task records',
   打开关联文件: 'Open linked file',
   创建时间: 'Created at',

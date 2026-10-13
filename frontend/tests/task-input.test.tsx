@@ -174,7 +174,7 @@ describe('single PDF task input with two-stage recovery', () => {
     await selectPdf();
     await userEvent.click(screen.getByRole('button', { name: '开始提取' }));
     await screen.findByRole('alert');
-    expect(screen.getByRole('link', { name: '最近文件' })).toHaveAttribute('href', '#/projects');
+    expect(screen.getByRole('link', { name: '历史文件' })).toHaveAttribute('href', '#/projects');
     expect(screen.queryByRole('button', { name: '开始提取' })).not.toBeInTheDocument();
     expect(screen.getByLabelText('原始专利 PDF 文件')).toBeDisabled();
     expect(upload).toHaveBeenCalledOnce();
