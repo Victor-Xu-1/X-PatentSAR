@@ -20,7 +20,12 @@ from .activity_observations import has_usable_values
 
 
 def save_results(
-    rows: list[ActivityRow], output_dir: Path, profile: dict, *, coverage: dict
+    rows: list[ActivityRow],
+    output_dir: Path,
+    profile: dict,
+    *,
+    coverage: dict,
+    unresolved_rows: list[dict] | None = None,
 ) -> None:
     value_keys = list(dict.fromkeys(k for r in rows for k in r.activity_values))
     cell_keys = list(dict.fromkeys(k for r in rows for k in r.cell_line_data))
@@ -63,6 +68,7 @@ def save_results(
             "active_cpds": active,
             "rows": [asdict(row) for row in rows],
             "coverage": coverage,
+            "unresolved_rows": unresolved_rows or [],
         },
     )
     review = [r for r in rows if r.needs_review]

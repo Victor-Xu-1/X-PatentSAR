@@ -60,8 +60,18 @@ def detect_ruled_table_regions(page, dpi: int = 300) -> list[dict]:
     v_kernel = cv2.getStructuringElement(
         cv2.MORPH_RECT, (1, max(35, int(img.shape[0] * 0.035)))
     )
-    h_mask = cv2.morphologyEx(bw, cv2.MORPH_OPEN, h_kernel)
-    v_mask = cv2.morphologyEx(bw, cv2.MORPH_OPEN, v_kernel)
+    # Scanned fine-dotted rules are still physical boundaries. Close only
+    # sub-1.5pt axial gaps before detecting long rules; never bridge table gaps
+    # or infer missing separators from numeric values or expected row counts.
+    gap = max(2, round(1.5 / scale))
+    h_rule = cv2.morphologyEx(
+        bw, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_RECT, (gap, 1))
+    )
+    v_rule = cv2.morphologyEx(
+        bw, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_RECT, (1, gap))
+    )
+    h_mask = cv2.morphologyEx(h_rule, cv2.MORPH_OPEN, h_kernel)
+    v_mask = cv2.morphologyEx(v_rule, cv2.MORPH_OPEN, v_kernel)
 
     h_segments = []
     contours = cv2.findContours(h_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
@@ -143,7 +153,16 @@ def detect_ruled_table_regions(page, dpi: int = 300) -> list[dict]:
             [
                 seg["x"]
                 for seg in v_segments
-                if seg["y0"] <= y0 + 4
+                if (
+                    seg["y0"] <= y0 + 4
+                    # Merged headers can omit a separator above the body.
+                    # Retain only a rule beginning on an observed early row
+                    # boundary and reaching the bottom over at least two rows.
+                    or any(
+                        abs(seg["y0"] - start) <= 4
+                        for start in ys[1 : min(4, len(ys) - 2)]
+                    )
+                )
                 and seg["y1"] >= y1 - 4
                 and x0 - 8 <= seg["x"] <= x1 + 8
             ],
@@ -160,6 +179,13 @@ def detect_ruled_table_regions(page, dpi: int = 300) -> list[dict]:
                 "xs": xs,
                 "ys": ys,
                 "bbox": (min(xs), y0, max(xs), y1),
+                "vertical_rules": [
+                    [seg["x"], seg["y0"], seg["y1"]]
+                    for seg in v_segments
+                    if x0 - 8 <= seg["x"] <= x1 + 8
+                    and seg["y1"] >= y0
+                    and seg["y0"] <= y1
+                ],
             }
         )
     return tables
@@ -185,13 +211,19 @@ def page_tokens(
 
 
 def ocr_tokens_with_positions(
-    page, dpi: int = 150, allow_tesseract: bool | None = None
+    page, dpi: int = 150, allow_tesseract: bool | None = None, *, bounds=None
 ) -> list[dict]:
     """Use the shared configured engine, not an extra private model instance."""
     engine = get_ocr_engine()
-    pix = page.get_pixmap(matrix=fitz.Matrix(dpi / 72, dpi / 72), alpha=False)
+    clip = (fitz.Rect(bounds) & page.rect) if bounds is not None else page.rect
+    if clip.is_empty:
+        raise ValueError("Original OCR bounds are empty")
+    pix = page.get_pixmap(
+        matrix=fitz.Matrix(dpi / 72, dpi / 72), clip=clip, alpha=False
+    )
     image = Image.open(BytesIO(pix.tobytes("png"))).convert("RGB")
     scale = 72.0 / dpi
+    offset_x, offset_y = pix.x * scale, pix.y * scale
     tokens = []
     if engine and engine[0] == "rapidocr":
         # The ruled grid fixes the rendered page orientation. Per-token angle
@@ -201,7 +233,8 @@ def ocr_tokens_with_positions(
         for points, text, confidence in result or []:
             if not str(text).strip():
                 continue
-            xs, ys = [p[0] * scale for p in points], [p[1] * scale for p in points]
+            xs = [p[0] * scale + offset_x for p in points]
+            ys = [p[1] * scale + offset_y for p in points]
             tokens.append(
                 {
                     "text": str(text).strip(),
@@ -218,6 +251,8 @@ def ocr_tokens_with_positions(
             if len(box) < 4:
                 continue
             x0, y0, x1, y1 = [float(v) * scale for v in box[:4]]
+            x0, x1 = x0 + offset_x, x1 + offset_x
+            y0, y1 = y0 + offset_y, y1 + offset_y
             tokens.append(
                 {
                     "text": text,
@@ -250,6 +285,7 @@ def ocr_tokens_with_positions(
             float(data[key][index]) * scale
             for key in ("left", "top", "width", "height")
         )
+        x0, y0 = x0 + offset_x, y0 + offset_y
         tokens.append(
             {
                 "text": text,

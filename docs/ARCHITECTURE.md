@@ -1,5 +1,38 @@
 # X-PatentSAR architecture
 
+## Source extraction ownership
+
+Classifier3 separates molar activity units from synthesis amounts, particle sizes
+and disease abbreviations. Locator6 nominates dense distinct printed captions,
+including catalog/formula transition pages; nomination is never binding proof.
+Binder9 uses `caption_grid_binding.py` to prove a ruled catalog's caption direction
+at its start, physical cell containment and adjacent-page column continuity.
+Split captions retain both label and drawing page identities. Recognized but
+unproved catalogs cannot fall back to nearest-label matching. Numbered-column and
+caption readers share one call-local grid/token observation cache per original
+PDF. Elution annotations are source labels, never absolute stereochemistry.
+
+Activity8 has one grid context, cell parser and continuation authority in separate
+small modules. Bounded fine-rule closing retains physical separators; partial
+vertical rules preserve merged headers without inventing value boundaries.
+Parallel panels borrow only proved compatible headers; transposed measurements
+retain original metric/value boxes. Two bounded header rereads retain disagreements
+as review evidence. Oversized raw headers remain evidence, not public field IDs.
+Unreadable IDs are serialized in additive `unresolved_rows` in the existing v1
+activity artifact and generate unresolved coverage; other original rows survive.
+The same strict acceptance consumer still rejects incomplete or ambiguous output.
+No API/SQL migration, new queue, model, dependency or acceptance authority is added.
+
+### Structural quality verification
+
+Measure discovery recall, crop completeness, printed-ID ownership, full molecular
+graph correctness and stereochemical correctness separately on independently
+reviewed samples. A parsable SMILES is not identity proof. Include mixed catalog
+pages, both caption directions, cross-page splits, suffixes/elution annotations,
+position/stereo isomers, multi-component structures and deliberate negative cases.
+Report rejected/ambiguous items alongside coverage and resource cost. Improving one
+patent is a regression check, not a claim of universal scientific validation.
+
 Product releases follow the merged-PR numbering policy. `contracts.py` is the only authority for product, pipeline,
 ruleset, artifact and cache versions. The source-led pipeline contract is
 `patentsar.structure-led`3.0.0; the accuracy ruleset is2.1.1. These internal
@@ -382,12 +415,12 @@ remain reusable. Historical results are not retagged as current.
 
 ## Completeness and accuracy
 
-Classifier epoch2 ignores prose examples and cover ISR boilerplate as section
-boundaries. Binder epoch8 parses exact paragraph-prefixed synthesis headings;
+Classifier epoch3 ignores prose examples and cover ISR boilerplate as section
+boundaries. Binder epoch9 parses exact paragraph-prefixed synthesis headings;
 a standalone diagram needs a freshly observed original heading, unique geometry
 before the first procedure, and original/crop fingerprints. Wide/reordered grids
 carry literal header-role proof, not adjacency or a fixed number of columns.
-Activity epoch7 owns every physical column losslessly, retaining multiline raw
+Activity epoch8 owns every physical column losslessly, retaining multiline raw
 headers and distinct duplicate/unknown fields. Upright table OCR prevents per-token
 digit inversion; independent clipped-cell observations can prove ownership despite
 a padded detector box. Unknown/conflicting meaningful values remain rejected.
@@ -448,7 +481,7 @@ Activity coverage v1 inventories coordinate grids, declared text regions and
 otherwise uncovered classified seeds independently of returned rows. Unsupported
 headers and recognized regions without original rows remain unresolved, even if
 other tables succeeded. Only the existing writer publishes the additive proof;
-activity epoch7 invalidates old derived stage reuse, while unchanged upstream and
+activity epoch8 invalidates old derived stage reuse, while unchanged upstream and
 compatible raw observations remain reusable. QA v4 rejects missing/unresolved
 coverage. The read model rechecks only cached acceptance after a QA-schema change,
 preserving raw rows, source IDs, corrections and old producer artifacts. Optional
@@ -460,14 +493,14 @@ repair counters are observations, not estimates or another acceptance authority.
 - Original grid cells, captions and explicit synthesis headings are ownership
   evidence. Sequence, numerical proximity, molecular similarity or assay
   presence cannot fabricate an identifier or change42 to4-2.
-- Binder epoch8 discovers numbered grids across all selected structure-source
+- Binder epoch9 discovers numbered grids across all selected structure-source
   pages. Empty or partial classifier/locator table hints cannot exclude a
   proved original cell; only actually recognized grids are reported as table
   ownership. Headerless adjacent continuations retain independent ID evidence.
   An unused pair requires blank original pixels in both cells and no segment
   evidence. Proved selected reprints can retain multiple additional sources
   for one confirmed primary ID; novel or conflicting primary IDs stay withheld.
-- Activity epoch7 treats classified pages as seeds, not a complete table
+- Activity epoch8 treats classified pages as seeds, not a complete table
   inventory. Only a proven table can inspect its immediately adjacent next
   page; missing grids, changed geometry or unrelated captions stop carry-over.
   An empty seed set never triggers an all-document OCR scan.

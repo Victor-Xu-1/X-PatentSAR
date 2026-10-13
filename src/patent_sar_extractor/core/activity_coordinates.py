@@ -6,13 +6,12 @@ import re
 from dataclasses import replace
 
 from .activity_coverage import source_record
-from .activity_grid_cells import (
-    cell_text,
-    continued_header_schema,
-    read_activity_cell,
-    validate_grid,
-)
-from .activity_header_metrics import distinct_value_keys, normalize_metric_text
+from .activity_grid_cells import continued_header_schema
+from .activity_grid_context import _prefix, table_matrix
+from .activity_grid_continuations import Panel, continued_panel
+from .activity_grid_parser import parse_grid
+from .activity_header_metrics import normalize_metric_text
+from .activity_header_observation import refine_scanned_header
 from .activity_header_roles import HeaderResolver
 from .activity_headers import (
     ACTIVITY_CONTEXT,
@@ -22,6 +21,7 @@ from .activity_headers import (
     grid_schema,
 )
 from .activity_models import ActivityRow, GridSchema, ParsedActivity
+from .activity_transposed import extract_transposed
 from .biology_tables import BiologySchema, extract_tables, infer_schema
 from .table_geometry import detect_ruled_table_regions, page_tokens
 
@@ -56,129 +56,6 @@ def coordinate_candidates(
     return selected
 
 
-def table_matrix(tokens: list[dict], region: dict) -> list[list[str]]:
-    xs, ys = region["xs"], region["ys"]
-    return [
-        [
-            cell_text(tokens, (xs[i], ys[j], xs[i + 1], ys[j + 1]))
-            for i in range(len(xs) - 1)
-        ]
-        for j in range(len(ys) - 1)
-    ]
-
-
-def _prefix(tokens: list[dict], region: dict) -> str:
-    top = region["ys"][0]
-    selected = [t for t in tokens if max(0, top - 310) <= t["y"] < top]
-    lines: dict[int, list[dict]] = {}
-    for token in selected:
-        lines.setdefault(round(token["y"] / 3), []).append(token)
-    text = "\n".join(
-        " ".join(t["text"] for t in sorted(row, key=lambda t: t["x"]))
-        for _, row in sorted(lines.items())
-    )
-    return text
-
-
-def parse_grid(
-    page, page_no: int, tokens: list[dict], region: dict, schema: GridSchema
-) -> list[ActivityRow]:
-    validate_grid(region, schema)
-    xs, ys = region["xs"], region["ys"]
-    native = bool(page.get_text("words"))
-    output = []
-    column_groups = [
-        (
-            (group.id_column, "compound_id"),
-            *zip(
-                (col for col, _ in group.value_columns),
-                distinct_value_keys([key for _, key in group.value_columns]),
-            ),
-        )
-        for group in schema.groups
-    ]
-    for row_index in range(schema.first_data_row, len(ys) - 1):
-        for pair, columns in enumerate(column_groups):
-            cells, values, review = [], {}, False
-            compound = ""
-            for column, key in columns:
-                bounds = (xs[column], ys[row_index], xs[column + 1], ys[row_index + 1])
-                value, observations, withheld = read_activity_cell(
-                    page, tokens, bounds, identifier=key == "compound_id", native=native
-                )
-                cells.append(
-                    {
-                        "field": key,
-                        "value": value,
-                        "physical_column": column,
-                        "raw_header": schema.raw_headers[column]
-                        if schema.raw_headers
-                        else "",
-                        "bbox": list(bounds),
-                        "observations": observations,
-                    }
-                )
-                review |= (
-                    withheld
-                    or "unknown" in key.lower()
-                    or key.startswith("compound_id [")
-                )
-                if key == "compound_id":
-                    compound = value
-                else:
-                    values[key] = value
-            if not compound:
-                if any(
-                    cell["value"] or any(o["text"] for o in cell["observations"])
-                    for cell in cells
-                ):
-                    raise RuntimeError(
-                        f"Unresolved compound ID in {schema.context.table_id}, page {page_no}, row {row_index}"
-                    )
-                continue
-            context = schema.context
-            evidence = {
-                "page_no": page_no,
-                "table_id": context.table_id,
-                "target": context.target,
-                "assay": context.assay,
-                "cell_line": context.cell_line,
-                "raw_caption": context.raw_caption,
-                "body_text": context.body_text,
-                "raw_context": context.raw_context,
-                "row": row_index,
-                "pair": pair,
-                "cells": cells,
-                "geometry_space": "unrotated" if native else "rendered",
-                "header_region": (
-                    {
-                        "page_no": schema.header_region[0],
-                        "bbox": list(schema.header_region[1]),
-                    }
-                    if schema.header_region
-                    else None
-                ),
-            }
-            if schema.header_resolution is not None:
-                evidence["header_resolution"] = schema.header_resolution
-            output.append(
-                ActivityRow(
-                    cpd=compound,
-                    activity_values=values,
-                    page_no=page_no,
-                    table_id=context.table_id,
-                    source="observed_grid_cells",
-                    confidence=0.5 if review else 0.95,
-                    needs_review=review,
-                    notes="Original cell ownership; unknown/conflicting cells withheld."
-                    if review
-                    else "Original cell ownership.",
-                    activity_sources=[evidence],
-                )
-            )
-    return output
-
-
 def extract_coordinate_tables(
     doc, pages: list[int], *, header_resolver: HeaderResolver | None = None
 ) -> ParsedActivity:
@@ -188,17 +65,24 @@ def extract_coordinate_tables(
     biology_grids: dict[int, list[dict]] = {}
     biology_header_hints: dict[str, tuple[str, ...]] = {}
     generic_regions = []
+    panels: list[Panel] = []
     carry: tuple[GridSchema | BiologySchema, list[float], int] | None = None
     seeds = {page for page in pages if type(page) is int and 0 <= page < len(doc)}
     # A continuation need not repeat an assay keyword and may be absent from
     # classification. Inspect only a seed or the immediately following page
     # of a proven table; gaps/mismatched grids terminate the chain below.
     for page_index in range(min(seeds, default=len(doc)), len(doc)):
-        if page_index not in seeds and not (carry and carry[2] + 1 == page_index):
+        if page_index not in seeds and not (
+            carry
+            and carry[2] + 1 == page_index
+            or any(p.page + 1 == page_index for p in panels)
+        ):
             continue
+        panels = [p for p in panels if p.page >= page_index - 1]
         page = doc[page_index]
         regions = sorted(
-            detect_ruled_table_regions(page, dpi=240), key=lambda r: r["ys"][0]
+            detect_ruled_table_regions(page, dpi=240),
+            key=lambda r: (r["ys"][0], r["xs"][0]),
         )
         if not regions:
             carry = None
@@ -211,7 +95,21 @@ def extract_coordinate_tables(
             prefix = _prefix(tokens, region)
             header = " ".join(matrix[0]) if matrix else ""
             context = context_from_text(prefix, prefix)
+            transposed = extract_transposed(
+                page, page_index + 1, tokens, region, matrix, context
+            )
+            if transposed is not None:
+                result.owned_pages.update(transposed.owned_pages)
+                result.rows.extend(transposed.rows)
+                result.headers.extend(transposed.headers)
+                result.coverage.extend(transposed.coverage)
+                result.tables.extend(transposed.tables)
+                carry = None
+                continue
             schema: GridSchema | BiologySchema | None = grid_schema(context, matrix)
+            if isinstance(schema, GridSchema):
+                schema = refine_scanned_header(page, region, schema)
+                context = schema.context
             # The existing biology authority owns its supported ratio/grade
             # schemas. It never competes with the generic scalar-header reader.
             if isinstance(schema, GridSchema):
@@ -250,7 +148,15 @@ def extract_coordinate_tables(
                     infer_schema(f"{prefix} {header}", len(region["xs"]) - 1) or schema
                 )
             new_caption = bool(TABLE_MARKER.search(prefix))
-            if schema is None and not new_caption and carry and region["ys"][0] < 130:
+            if schema is None:
+                schema = continued_panel(panels, page_index, region, context, prefix)
+            if (
+                schema is None
+                and not new_caption
+                and carry
+                and isinstance(carry[0], BiologySchema)
+                and region["ys"][0] < 130
+            ):
                 old, old_xs, old_page = carry
                 if (
                     page_index == old_page + 1
@@ -304,6 +210,7 @@ def extract_coordinate_tables(
                         ),
                     )
                 generic_regions.append((page_index, region, schema))
+                panels.append(Panel(page_index, region, schema))
                 table_id = schema.context.table_id
                 result.headers.extend(
                     key for group in schema.groups for _, key in group.value_columns
@@ -377,8 +284,28 @@ def extract_coordinate_tables(
                 )
             )
     for page_index, region, schema in generic_regions:
+        unresolved = []
         rows = parse_grid(
-            doc[page_index], page_index + 1, token_map[page_index], region, schema
+            doc[page_index],
+            page_index + 1,
+            token_map[page_index],
+            region,
+            schema,
+            unresolved_rows=unresolved,
+        )
+        result.unresolved_rows.extend(unresolved)
+        result.coverage.extend(
+            source_record(
+                page_index + 1,
+                "grid",
+                item["bbox"],
+                schema.context.table_id,
+                "Unresolved original compound ID",
+                "unresolved",
+                "no_original_rows",
+                0,
+            )
+            for item in unresolved
         )
         result.rows.extend(rows)
         result.coverage.append(

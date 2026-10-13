@@ -68,6 +68,15 @@ PUNCTUATED_ID_RE = re.compile(
 )
 
 
+def _dense_caption_catalog(text: str) -> bool:
+    """Distinct compact captions nominate a page; repeated prose cannot vote."""
+    labels = {
+        re.sub(r"\s+", "", m.group()).casefold()
+        for m in NUMBERED_LABEL_RE.finditer(text)
+    }
+    return len(labels) >= 6 and len(re.sub(r"\s+", "", text)) <= len(labels) * 50
+
+
 @lru_cache(maxsize=512)
 def _is_structure_table_page(text: str) -> bool:
     """Retain the established numbered-table/continuation observation rule."""
@@ -79,7 +88,6 @@ def _is_structure_table_page(text: str) -> bool:
     row_ids = len(STRUCTURE_TABLE_ROW_ID_RE.findall(value))
     masses = len(STRUCTURE_TABLE_MASS_RE.findall(value))
     numbered_compounds = len(re.findall(r"化合物\s*\d+", value, re.IGNORECASE))
-    english_compounds = len(re.findall(r"\bCompound\s*\d+\b", value, re.IGNORECASE))
     flattened_hits = len(STRUCTURE_TABLE_FLATTENED_ID_MASS_RE.findall(value))
     chem_name_hits = len(STRUCTURE_TABLE_CHEM_NAME_RE.findall(value))
     series_id_hits = len(STRUCTURE_TABLE_SERIES_ID_RE.findall(value))
@@ -96,7 +104,7 @@ def _is_structure_table_page(text: str) -> bool:
     return (
         (row_ids >= 3 and masses >= 3)
         or (numbered_compounds >= 2 and masses >= 2)
-        or (english_compounds >= 6 and not prose)
+        or (_dense_caption_catalog(value) and not prose)
         or (row_ids >= 8 and not prose)
         or (flattened_hits >= 3 and masses >= 3 and chem_name_hits >= 2 and not prose)
         or explicit_series_header
@@ -121,6 +129,10 @@ def _has_table_row_evidence(text: str) -> bool:
 def _numbered_structure_table(text: str) -> bool:
     if not _is_structure_table_page(text):
         return False
+    # A following formula/claims introduction cannot hide the catalog above it.
+    # This only widens source discovery; cell/diagram ownership is still proved.
+    if _dense_caption_catalog(text) and not STRUCTURE_PROSE_ASSAY_RE.search(text):
+        return True
     if STRUCTURE_COLUMN_RE.search(text):
         # Formula prose plus claim numbers/chemical locants is not a table.
         # Require an actual number column or adjacent column headings with

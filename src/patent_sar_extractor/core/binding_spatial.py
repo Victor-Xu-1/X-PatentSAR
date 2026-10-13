@@ -44,6 +44,7 @@ from .binding_types import (
     SourceKind,
     SourceOwnership,
 )
+from .table_geometry import detect_ruled_table_regions, page_tokens
 
 logger = logging.getLogger(__name__)
 
@@ -184,7 +185,29 @@ def collect_spatial_bindings(
             if type(page) is int and page >= 0
         }
     )
-    numbered = bind_numbered_tables(doc, processed_structures, candidate_pages, None)
+    # Reuse observations only inside this immutable document call. The two
+    # layout interpreters cannot start competing OCR passes or borrow a page
+    # cache from a different PDF.
+    grids, tokens = {}, {}
+
+    def grids_for_page(page):
+        if page.number not in grids:
+            grids[page.number] = detect_ruled_table_regions(page, dpi=240)
+        return grids[page.number]
+
+    def tokens_for_page(page):
+        if page.number not in tokens:
+            tokens[page.number] = page_tokens(page, dpi=200, allow_tesseract=False)
+        return tokens[page.number]
+
+    numbered = bind_numbered_tables(
+        doc,
+        processed_structures,
+        candidate_pages,
+        None,
+        grids_for_page=grids_for_page,
+        tokens_for_page=tokens_for_page,
+    )
     series = (
         pair_series_table(
             processed_structures,
@@ -217,7 +240,19 @@ def collect_spatial_bindings(
         for structure in processed_structures
         if int(structure["page_no"]) - 1 not in recognized_pages
     ]
-    captions = bind_visible_captions(doc, remaining, None, excluded=observed_keys)
+    caption_issues = []
+    captions = bind_visible_captions(
+        doc,
+        remaining,
+        None,
+        excluded=frozenset(observed_keys),
+        source_pages=[p for p in candidate_pages if p not in recognized_pages],
+        recognized_pages=recognized_pages,
+        observed_labels=observed_keys,
+        issues=caption_issues,
+        grids_for_page=grids_for_page,
+        tokens_for_page=tokens_for_page,
+    )
     caption_ids = set()
     caption_keys = set()
     for pair in captions:
@@ -234,6 +269,8 @@ def collect_spatial_bindings(
                 "product_context_distance": 0,
                 "exact_caption_evidence": {
                     "bbox": list(pair.label_bbox),
+                    "page_no": pair.label_page_no,
+                    "ownership": pair.ownership,
                     "observations": pair.observations,
                 },
             }
@@ -260,6 +297,15 @@ def collect_spatial_bindings(
         )
     conflicts = (
         *conflicts,
+        *(
+            BindingConflict(
+                issue["cpd"],
+                issue["page_no"] - 1,
+                issue["reason"],
+                issue.get("evidence", {}),
+            )
+            for issue in caption_issues
+        ),
         *(
             BindingConflict(issue.label, issue.page_index, issue.reason)
             for issue in numbered.issues

@@ -84,11 +84,22 @@ class ActivityParserModuleTests(unittest.TestCase):
         self.assertEqual(result.rows, [])
 
     def test_unresolved_printed_id_is_not_guessed_from_values(self):
+        from patent_sar_extractor.core.activity_coverage import (
+            coverage_errors,
+            coverage_packet,
+        )
+
         with fitz.open() as doc:
             page = doc.new_page()
-            draw_grid(page, [["No.", "IC50 (nM)"], ["?", "17"]])
-            with self.assertRaisesRegex(RuntimeError, "Unresolved compound ID"):
-                extract_coordinate_tables(doc, [0])
+            draw_grid(page, [["No.", "IC50 (nM)"], ["?", "17"], ["81", "23"]])
+            result = extract_coordinate_tables(doc, [0])
+        self.assertEqual([r.cpd for r in result.rows], ["Compound 81"])
+        self.assertEqual(
+            result.unresolved_rows[0]["cells"][0]["observations"][0]["text"], "?"
+        )
+        self.assertTrue(
+            coverage_errors(coverage_packet([0], result.coverage, result.rows), [0])
+        )
 
     def test_continuation_requires_adjacent_page_and_same_geometry(self):
         for supplied in ([0, 1], [0, 2]):

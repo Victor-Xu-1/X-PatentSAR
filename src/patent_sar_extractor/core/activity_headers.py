@@ -37,6 +37,11 @@ def _key(text: str, index: int) -> str:
     clean = re.sub(r"\s+", " ", normalize_metric_text(text)).strip(" |:：;,.")
     clean = re.sub(r"\s*[（(]\s*", " (", clean)
     clean = clean.replace("）", ")")
+    # Large/unresolved observations belong in raw_header, not public field IDs.
+    # Reserve room for unknown/unit and duplicate-column suffixes. No raw source
+    # is rewritten and the unknown key still requires scientific review.
+    if len(clean) > 200:
+        return unknown_key(index)
     matches = list(METRIC.finditer(clean))
     if len(matches) != 1:
         if not clean:

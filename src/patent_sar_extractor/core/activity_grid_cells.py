@@ -16,6 +16,17 @@ from .activity_values import (
 from .table_cells import read_cell
 
 
+def continuation_prefix(prefix: str) -> bool:
+    """Only document running headings, not new experimental prose, may pass."""
+    document_id = r"(?:WO|PCT|US|EP|CN|JP|KR)\s*/?(?:[A-Z]{1,4})?\d[\w/-]*"
+    running = re.compile(
+        rf"{document_id}(?:\s+{document_id})*|[-–—]?\s*\d+\s*[-–—]?", re.IGNORECASE
+    )
+    return all(
+        running.fullmatch(line.strip()) for line in prefix.splitlines() if line.strip()
+    )
+
+
 def continued_header_schema(
     old: GridSchema,
     current: GridSchema,
@@ -35,15 +46,7 @@ def continued_header_schema(
     ):
         return current
     # A new caption/prose/assay is a new context, even with identical columns.
-    document_id = r"(?:WO|PCT|US|EP|CN|JP|KR)\s*/?(?:[A-Z]{1,4})?\d[\w/-]*"
-    running = re.compile(
-        rf"{document_id}(?:\s+{document_id})*|[-–—]?\s*\d+\s*[-–—]?", re.IGNORECASE
-    )
-    if any(
-        not running.fullmatch(line.strip())
-        for line in prefix.splitlines()
-        if line.strip()
-    ):
+    if not continuation_prefix(prefix):
         return current
     return replace(
         current, context=old.context, groups=old.groups, header_region=old.header_region

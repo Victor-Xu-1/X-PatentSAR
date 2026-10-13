@@ -77,6 +77,7 @@ def bind(
                 "cpd": conflict.label_key,
                 "page_no": conflict.page_index + 1,
                 "reason": conflict.reason,
+                "evidence": conflict.evidence,
             }
             for conflict in spatial.conflicts
         ]
