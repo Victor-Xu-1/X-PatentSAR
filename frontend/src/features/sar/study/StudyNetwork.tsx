@@ -215,7 +215,9 @@ export function StudyNetwork({
           <summary>{t('搜索范围')}</summary>
           <p>
             {t(
-              report.discovery?.method === 'single-region-three-port-aromatic-h-v5'
+              report.discovery?.method === 'single-region-three-port-multiple-h-v6'
+                ? '单一区域，最多三个连接点；支持芳香环、非立体多重键、氢位点与桥环变化。固定结构严格不变；氢与双键边界手性及更多连接点仍受限。'
+                : report.discovery?.method === 'single-region-three-port-aromatic-h-v5'
                 ? '单一区域，最多三个连接点；支持芳香环局部替换、氢位点、支链与桥环。固定结构严格不变；氢边界手性及更多连接点尚未自动枚举。'
                 : report.discovery?.method === 'single-region-one-to-three-cut-h-v4'
                   ? '单一区域，最多三个连接点；支持氢位点、支链与非芳香桥环变化。固定结构严格不变；氢边界手性、芳香切割及更多连接点尚未自动枚举。'

@@ -24,6 +24,7 @@ const common = object({
     'single-region-one-two-cut-h-v3',
     'single-region-one-to-three-cut-h-v4',
     'single-region-three-port-aromatic-h-v5',
+    'single-region-three-port-multiple-h-v6',
   ]),
   candidate_sites: count,
   candidate_comparisons: count,
@@ -48,6 +49,7 @@ export const decodeStudyDiscovery: Decoder<NonNullable<StudyReport['discovery']>
         indexed_hydrogen_sites: count,
         redundant_proved_sites: count,
         aromatic_boundaries: boolean,
+        multiple_bond_boundaries: boolean,
         max_cut_bonds: (raw, p = '$') => {
           if (raw !== 1 && raw !== 2 && raw !== 3) throw new ContractError(p);
           return raw;
@@ -59,7 +61,7 @@ export const decodeStudyDiscovery: Decoder<NonNullable<StudyReport['discovery']>
   if (
     result.method !== 'single-non-ring-bond-v1' &&
     (result.max_cut_bonds !==
-      (['single-region-one-to-three-cut-h-v4', 'single-region-three-port-aromatic-h-v5'].includes(
+      (['single-region-one-to-three-cut-h-v4', 'single-region-three-port-aromatic-h-v5', 'single-region-three-port-multiple-h-v6'].includes(
         result.method,
       )
         ? 3
@@ -71,7 +73,8 @@ export const decodeStudyDiscovery: Decoder<NonNullable<StudyReport['discovery']>
   if (
     (result.method === 'single-region-one-two-cut-h-v3' ||
       result.method === 'single-region-one-to-three-cut-h-v4' ||
-      result.method === 'single-region-three-port-aromatic-h-v5') &&
+      result.method === 'single-region-three-port-aromatic-h-v5' ||
+      result.method === 'single-region-three-port-multiple-h-v6') &&
     (result.indexed_hydrogen_sites === undefined ||
       result.indexed_hydrogen_sites > result.indexed_cuts)
   )
@@ -83,9 +86,15 @@ export const decodeStudyDiscovery: Decoder<NonNullable<StudyReport['discovery']>
   )
     throw new ContractError(path);
   if (
-    result.method === 'single-region-three-port-aromatic-h-v5'
+    ['single-region-three-port-aromatic-h-v5', 'single-region-three-port-multiple-h-v6'].includes(result.method)
       ? result.aromatic_boundaries !== true
       : result.aromatic_boundaries === true
+  )
+    throw new ContractError(path);
+  if (
+    result.method === 'single-region-three-port-multiple-h-v6'
+      ? result.multiple_bond_boundaries !== true
+      : result.multiple_bond_boundaries === true
   )
     throw new ContractError(path);
   return result;

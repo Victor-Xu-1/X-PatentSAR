@@ -2,7 +2,8 @@
 
 Canonical cut backgrounds are only an index, never proof. All source records
 remain in the study table. Up to three-cut connected regions and ordinary H are
-supported; aromatic boundaries, H boundary stereo and >3 ports are not exhaustive.
+supported, including aromatic and non-stereogenic multiple-bond boundaries.
+H boundary stereo, stereogenic double-bond cuts and >3 ports are not exhaustive.
 """
 
 import hashlib
@@ -169,7 +170,7 @@ def discover_sites(
     if len(sites) > MAX_SITES:
         raise SARInputError("study_discovery_pair_limit")
     return sites, {
-        "method": "single-region-three-port-aromatic-h-v5",
+        "method": "single-region-three-port-multiple-h-v6",
         "candidate_sites": len(sites),
         "candidate_comparisons": comparisons,
         "indexed_cuts": cuts,
@@ -177,6 +178,7 @@ def discover_sites(
         "indexed_hydrogen_sites": hydrogen_sites,
         "max_cut_bonds": 3,
         "aromatic_boundaries": True,
+        "multiple_bond_boundaries": True,
         "redundant_proved_sites": redundant,
         "excluded": dict(excluded),
         "max_variable_atoms": MAX_VARIABLE,
@@ -184,6 +186,7 @@ def discover_sites(
         "min_fixed_atoms": 6,
         "limitations": [
             "hydrogen_boundary_stereo_not_supported",
+            "stereogenic_multiple_bond_boundaries_not_supported",
             "more_than_three_ports_not_enumerated",
         ],
     }
