@@ -128,6 +128,7 @@ def verified_preview(
             # is a read adapter, never an alternative new-study engine.
             open_bounds=packet["schema"] >= 3,
             inline_units=packet["schema"] >= 4,
+            declared_units=packet["schema"] >= 7,
         )
         if claim and compared["evidence_basis"] == "recorded_context":
             compared["evidence_basis"] = "source_declared"
@@ -140,12 +141,14 @@ def verified_preview(
                     ranks,
                     left[0].get("unit"),
                     inline_units=packet["schema"] >= 4,
+                    declared_units=packet["schema"] >= 7,
                 ),
                 parse_measurement(
                     right[0]["value"],
                     ranks,
                     right[0].get("unit"),
                     inline_units=packet["schema"] >= 4,
+                    declared_units=packet["schema"] >= 7,
                 ),
             )
             difference = scalar_difference(a, b)
@@ -174,6 +177,7 @@ def verified_preview(
             report.contexts,
             {policy.context_id for policy in report.policies},
             differences=packet["schema"] >= 6,
+            declared_units=packet["schema"] >= 7,
         ),
         property_differences=properties.differences,
         property_statuses=properties.statuses,

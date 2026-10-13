@@ -16,7 +16,13 @@ from .study_evidence import secondary_evidence
 
 
 def collect_activities(
-    rows, policies, confirmed, declarations=(), *, inline_units=True
+    rows,
+    policies,
+    confirmed,
+    declarations=(),
+    *,
+    inline_units=True,
+    declared_units=True,
 ):
     declared = {item["context_id"]: item for item in declarations}
     observations = {
@@ -36,6 +42,7 @@ def collect_activities(
                 policy,
                 confirmed,
                 inline_units=inline_units,
+                declared_units=declared_units,
             )
             for row in rows
         }

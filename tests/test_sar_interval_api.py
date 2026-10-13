@@ -84,10 +84,10 @@ class SARIntervalAPITests(WebFixture, unittest.TestCase):
                 exported = client.get(path + "/export?format=json")
                 self.assertEqual(exported.status_code, 200, exported.text)
                 archive = exported.json()
-                self.assertEqual(archive["input"]["schema"], 6)
+                self.assertEqual(archive["input"]["schema"], 7)
                 report = archive["report"]
                 self.assertEqual(
-                    report["candidate_policy"], "strict-context-pareto-units-v3"
+                    report["candidate_policy"], "strict-context-pareto-units-v4"
                 )
                 self.assertEqual(report["matched_pair_count"], 1)
                 self.assertEqual(report["comparable_pair_count"], 1)

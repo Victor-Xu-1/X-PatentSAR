@@ -1,9 +1,10 @@
 """Exact interpretation of an explicit inline unit in a declared measurement unit.
 
-Only molar SI prefixes and percent are supported here. Source strings stay
-immutable. Intake may choose a standard basis from an explicit numeric suffix;
-bare cells never inherit an unstated unit from their neighbours. This does not
-merge declared columns/experiments or convert mass concentration, p-values or PK.
+Molar SI prefixes and percent have explicit conversion rules. Other numeric
+suffixes must exactly equal the recorded column unit; they are not converted or
+inferred. Source strings stay immutable. Intake may choose a molar/percent basis
+from an explicit suffix; bare cells never inherit a neighbour's unit. Declared
+columns/experiments are not merged, and PK desirability is never inferred.
 """
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ import math
 import re
 from decimal import Decimal, localcontext
 
+from .contexts import UNKNOWN_CONTEXT
 from .errors import SARInputError
 from .limits import MAX_VALUE_CHARS
 from .values import Value, parse_value
@@ -77,12 +79,40 @@ def explicit_unit_basis(raw: str) -> str | None:
     return "nM" if unit[0] == "molar" else "%"
 
 
+def _declared_value(raw: str, ranks: dict[str, int], unit: str | None) -> Value:
+    """Read a literal declared unit, not a unit ontology or a fuzzy suffix match."""
+    try:
+        # A dimensionless unit such as 1 or e1 must not truncate a valid number.
+        return parse_value(raw, ranks)
+    except SARInputError as error:
+        if error.code != "unsupported_measurement_value":
+            raise
+    symbol = (unit or "").strip()
+    text = raw.strip()
+    if (
+        not symbol
+        or symbol.casefold() in UNKNOWN_CONTEXT
+        or not any(character.isalpha() for character in symbol)
+        or not text.endswith(symbol)
+    ):
+        raise SARInputError("unsupported_measurement_value")
+    prefix = text[: -len(symbol)]
+    # A numeric-leading declaration (10^6 cells) needs an explicit separator.
+    if not prefix or (symbol[0].isdigit() and not prefix[-1].isspace()):
+        raise SARInputError("unsupported_measurement_value")
+    value = parse_value(prefix.strip(), ranks)
+    if value.kind not in {"scalar", "interval"}:
+        raise SARInputError("unsupported_measurement_value")
+    return value
+
+
 def parse_measurement(
     raw: str,
     ranks: dict[str, int],
     unit: str | None,
     *,
     inline_units: bool = True,
+    declared_units: bool = True,
 ) -> Value:
     if len(raw) > MAX_VALUE_CHARS:
         raise SARInputError("value_limit_exceeded")
@@ -90,8 +120,19 @@ def parse_measurement(
         return parse_value(raw, ranks)
     suffix = _SUFFIX.fullmatch(raw.strip())
     if suffix is None:
-        return parse_value(raw, ranks)
+        return (
+            _declared_value(raw, ranks, unit)
+            if declared_units
+            else parse_value(raw, ranks)
+        )
     source, target = _unit(suffix[2]), _unit(unit)
+    if (
+        declared_units
+        and target is None
+        and unit
+        and raw.strip().endswith(unit.strip())
+    ):
+        return _declared_value(raw, ranks, unit)
     if not unit or not unit.strip():
         raise SARInputError("unit_missing")
     if source is None or target is None or source[0] != target[0]:

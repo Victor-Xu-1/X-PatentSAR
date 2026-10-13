@@ -42,6 +42,7 @@ def compare_observations(
     *,
     open_bounds: bool = True,
     inline_units: bool = True,
+    declared_units: bool = True,
 ) -> dict[str, Any]:
     """Rank only after the shared context/repeat/value gate accepts both sides.
 
@@ -63,6 +64,7 @@ def compare_observations(
             grade_order,
             confirm_context,
             inline_units=inline_units,
+            declared_units=declared_units,
         )
         if values is None:
             return result

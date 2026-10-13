@@ -33,7 +33,7 @@ are unsupported. Terminal multiple-bond substitutions use the smallest proved
 connected region; adjoining fixed carbon atoms need not be included. H sites bind original atom anchors;
 private expanded views do not rewrite the original molecule or public indices.
 Native input-bound plans and25-pair batches survive interruption. Changes to
-SAR engine13 make old unfinished engine12/older
+SAR engine14 make old unfinished engine13/older
 checkpoints incompatible; retain their artifacts or roll back the prior wheel,
 never rewrite scientific identities. Completed old reports remain readable.
 Parent verification separately bounds candidate-plan regeneration at30s and
@@ -69,8 +69,14 @@ never reuse or rewrite an old unfinished receipt as a compatible result.
 
 ## Activity-strength compatibility
 
-New engine13 studies use private input schema6 and retain candidate policy
-`strict-context-pareto-units-v3`. Strict ordering includes a shared finite boundary
+For exact declared units, new studies accept `2 h` in an `h` column and
+`2 mL/min/kg` in an `mL/min/kg` column, including exact interval bounds.
+Mixed spellings, undeclared PK units, footnotes or different units are not guessed.
+This does not convert PK units or supply a higher/lower preference or percentage
+threshold. Stored inputs stay unchanged; input2–6 keep their captured parsing.
+
+New engine14 studies use private input schema7 and candidate policy
+`strict-context-pareto-units-v4`. Strict ordering includes a shared finite boundary
 when either side excludes that boundary: `<10` vs `>=10`, or `<=10` vs `>10`.
 `<=10` vs `>=10` can still be equal at10 and remains indeterminate. Intervals
 never receive a fabricated midpoint, fold or numeric difference. Context/unit

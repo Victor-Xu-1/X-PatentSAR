@@ -113,6 +113,11 @@ recorded conditions, exact units and consistent repeats, with no borrowed
 selected-endpoint confirmation. Matrix uses the identical preview projection.
 Original exports/policies remain immutable; archived input2–5 omit this field.
 The shared gate refactor is engine13; input6 freezes this new read interpretation.
+Engine14/input7 additionally recognizes a numeric suffix exactly equal to the
+recorded column unit (for example `2 mL/min/kg`). One parser drives selected
+comparisons, supporting differences, current distributions and numeric sorting.
+No new public fields are required. Old input2–6 keep their prior suffix policy;
+no missing PK unit, unit synonym/conversion or potency direction is inferred.
 
 Additive engine3 metadata: project Dataset includes `source_acceptance` and
 `source_page_count` (legacy absence is unknown). StudyReport carries source QA,
@@ -133,9 +138,9 @@ new webpage studies explicitly send true). The same study queue reserves its
 `discovery` with method, candidate/cut counts, exclusions and explicit limits.
 Region summaries add `origin:manual|single_site` and nullable `comparison_pool`;
 manual regions still compare the whole source pool, derived regions compare
-their complete indexed pool through the identical strict validator. SAR engine13
+their complete indexed pool through the identical strict validator. SAR engine14
 invalidates incompatible unfinished scientific work without retagging old reports.
-New study input6 and `candidate_policy:strict-context-pareto-units-v3` use exact
+New study input7 and `candidate_policy:strict-context-pareto-units-v4` use exact
 open/closed interval boundary ordering in both comparisons and Pareto fronts.
 An excluded shared endpoint can prove direction; no interval fold/raw difference
 is generated. Existing request/response shapes remain, old archived input2

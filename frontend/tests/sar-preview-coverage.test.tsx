@@ -69,45 +69,52 @@ beforeEach(() => {
   }));
 });
 
-it('shows the same neutral supporting delta in pair and matrix without assigning a potency tier', async () => {
-  const data = decodeStudyPreview({
-    ...packet,
-    recorded_measurements: [
-      {
-        context_id: supportingContext.id,
-        reference_values: ['2'],
-        candidate_values: ['5'],
-        difference: { status: 'comparable', value: 3 },
-      },
-    ],
-  });
-  const report = { ...studyReport, contexts: [studyContext, supportingContext] };
-  const original = JSON.stringify(data);
-  render(
-    <>
-      <PreviewMeasurements data={data} report={report} />
-      <table aria-label="matrix">
-        <MatrixValues
-          data={{
-            reference_drawing: { ...sarDrawing, id: studyRow.molecule_id },
-            previews: [data],
-          }}
-          report={report}
-        />
-      </table>
-    </>,
-  );
-  const deltas = screen.getAllByLabelText('Numeric change; not a ranking');
-  expect(deltas).toHaveLength(2);
-  for (const delta of deltas) {
-    expect(delta).toHaveTextContent('Δ +3.00');
-    expect(delta.closest('[data-activity-strength]')).toBeNull();
-    expect(delta.closest('.is-better, .is-worse')).toBeNull();
-  }
-  await act(() => setLocale('zh-CN'));
-  expect(screen.getAllByLabelText('数值差，不代表优劣')).toHaveLength(2);
-  expect(JSON.stringify(data)).toBe(original);
-});
+it.each([false, true])(
+  'shows the same neutral delta with declared-unit suffix %s',
+  async (explicit) => {
+    const data = decodeStudyPreview({
+      ...packet,
+      recorded_measurements: [
+        {
+          context_id: supportingContext.id,
+          reference_values: [explicit ? '2 mL/min/kg' : '2'],
+          candidate_values: [explicit ? '5 mL/min/kg' : '5'],
+          difference: { status: 'comparable', value: 3 },
+        },
+      ],
+    });
+    const report = { ...studyReport, contexts: [studyContext, supportingContext] };
+    const original = JSON.stringify(data);
+    render(
+      <>
+        <PreviewMeasurements data={data} report={report} />
+        <table aria-label="matrix">
+          <MatrixValues
+            data={{
+              reference_drawing: { ...sarDrawing, id: studyRow.molecule_id },
+              previews: [data],
+            }}
+            report={report}
+          />
+        </table>
+      </>,
+    );
+    const deltas = screen.getAllByLabelText('Numeric change; not a ranking');
+    if (explicit) {
+      expect(screen.getAllByText('2 mL/min/kg')).toHaveLength(2);
+      expect(screen.getAllByText('5 mL/min/kg')).toHaveLength(2);
+    }
+    expect(deltas).toHaveLength(2);
+    for (const delta of deltas) {
+      expect(delta).toHaveTextContent('Δ +3.00');
+      expect(delta.closest('[data-activity-strength]')).toBeNull();
+      expect(delta.closest('.is-better, .is-worse')).toBeNull();
+    }
+    await act(() => setLocale('zh-CN'));
+    expect(screen.getAllByLabelText('数值差，不代表优劣')).toHaveLength(2);
+    expect(JSON.stringify(data)).toBe(original);
+  },
+);
 
 it('validates supporting arithmetic status without upgrading legacy or uncertain measurements', () => {
   for (const difference of [

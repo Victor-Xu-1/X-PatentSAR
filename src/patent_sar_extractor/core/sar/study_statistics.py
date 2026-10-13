@@ -59,6 +59,7 @@ def assess(
     confirmed: bool,
     *,
     inline_units: bool = True,
+    declared_units: bool = True,
 ) -> dict:
     result: dict[str, Any] = {
         "status": "missing",
@@ -75,7 +76,11 @@ def assess(
         selected = select_observations(observations, observations[0]["metric_id"])
         parsed = [
             parse_measurement(
-                item["value"], ranks, item.get("unit"), inline_units=inline_units
+                item["value"],
+                ranks,
+                item.get("unit"),
+                inline_units=inline_units,
+                declared_units=declared_units,
             )
             for item in selected
         ]

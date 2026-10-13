@@ -26,7 +26,12 @@ MODES = (
     (
         "sar",
         "sar-supporting-deltas.spec.ts",
-        COMMON | {"sar-supporting-deltas.spec.ts", "sar-single-site.spec.ts"},
+        COMMON
+        | {
+            "sar-supporting-deltas.spec.ts",
+            "sar-single-site.spec.ts",
+            "sar-interval-boundaries.spec.ts",
+        },
     ),
     (
         "sar",

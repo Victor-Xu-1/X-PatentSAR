@@ -14,6 +14,7 @@ def recorded_measurements(
     selected: set[str],
     *,
     differences: bool = False,
+    declared_units: bool = False,
 ) -> list[PreviewRecordedMeasurement]:
     known = {item.id for item in contexts}
     indexed: list[dict[str, list[dict]]] = []
@@ -39,6 +40,7 @@ def recorded_measurements(
                 indexed[0].get(context.id, []),
                 indexed[1].get(context.id, []),
                 context.metric_id,
+                declared_units=declared_units,
             )
             if differences
             else None,

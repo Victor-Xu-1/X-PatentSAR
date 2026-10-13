@@ -64,9 +64,9 @@ for (const scenario of cases)
       reportView.getByRole('button', { name: 'Variable regions', exact: true }),
     ).toBeVisible({ timeout: 20000 });
     const before = await (await page.request.get(path + '/export?format=json')).text();
-    expect(JSON.parse(before).input.schema).toBe(5);
+    expect(JSON.parse(before).input.schema).toBe(7);
     const report: StudyReport = (await (await page.request.get(path)).json()).report;
-    expect(report.candidate_policy).toBe('strict-context-pareto-units-v3');
+    expect(report.candidate_policy).toBe('strict-context-pareto-units-v4');
     const sources = (
       await (await page.request.get('/api/v1/sar/datasets/' + dataset + '/molecules')).json()
     ).items;
@@ -96,12 +96,14 @@ for (const scenario of cases)
     for (const [label, values] of [
       [scenario.intervals ? 'IC50 (nM)' : 'IC50 · nM', scenario.potency],
       [scenario.intervals ? 'Dmax (%)' : 'Dmax · %', scenario.efficacy],
-      ['CL (mL/min/kg)', ['2', '3']],
+      ['CL (mL/min/kg)', ['2', '3Δ +1.00']],
     ] as const) {
       const row = matrix.getByRole('rowheader', { name: label, exact: true }).locator('..');
       await expect(row.getByRole('cell')).toHaveText([...values]);
-      if (scenario.intervals || label === 'CL (mL/min/kg)')
+      if (scenario.intervals && label !== 'CL (mL/min/kg)')
         await expect(row).not.toContainText('Δ');
+      if (label === 'CL (mL/min/kg)')
+        await expect(row.getByLabel('Numeric change; not a ranking')).toHaveText('Δ +1.00');
     }
     await page.waitForFunction(() =>
       [...document.querySelectorAll('.sar-network img')]

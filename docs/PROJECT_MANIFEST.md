@@ -5,7 +5,15 @@
   `SARHistoryPanel` and `job_history.py` expose the sole existing SAR database
   through a bounded cross-dataset page, never a duplicate history/queue.
   Live progress/staleness and soft deletion use existing SAR authorities.
-  Route `module=sar` is UI state only; API1/SQL2/engine13/input6 stay unchanged.
+  Route `module=sar` is UI state only; history never changes API/SQL/scientific epochs.
+
+- Declared-unit ownership: engine14/private input7 extends the existing
+  `core/sar/measurements.py` parser with exact recorded-unit suffix recognition.
+  Bare readings, selected pairs, neutral differences, charts and table sorting
+  share it; no fuzzy units, missing-PK inference or cross-column conversion.
+  Private-schema read gates preserve input2–6 semantics and raw source strings.
+  Candidate policy units-v4 prevents reusing prior computed nominations. No new
+  schema/queue/model/dependency, source mutation or relaxed chemical proof.
 
 - Core exploration context ownership: `StudyNetwork` chooses references from
   the complete current inventory independently of gallery filtering. Only
@@ -138,7 +146,7 @@
   matrix views. `RecordedDelta` renders no potency color or ranking claim.
   Archived input2–5 omit the additive field; reports/sources/queues stay intact.
 
-- Single-site discovery ownership: SAR engine13 uses `core/sar/discovery.py` as
+- Single-site discovery ownership: SAR engine14 uses `core/sar/discovery.py` as
   the sole bounded candidate planner. `cut_topology.py` enumerates exact connected
   one/two/three-edge partitions and `site_cuts.py` indexes canonical backgrounds;
   neither is a proof authority. The same background is frozen for
@@ -207,7 +215,7 @@
   captured contracts. No lazy omission, extra API/cache, changed producer identity
   or model/scientific execution accompanies this allocation optimization.
 
-- SAR study evidence/craft ownership: engine13 uses `study_distributions.py` for one
+- SAR study evidence/craft ownership: engine14 uses `study_distributions.py` for one
   prepared full-context chart domain and disjoint source-ID accounting; observation
   repeats remain separate. `study_conditions.py` alone validates source-anchored
   missing-field declarations; source QA/known conditions/units remain unchanged.

@@ -25,6 +25,7 @@ class DistributionContext:
         assessments: dict,
         *,
         inline_units: bool = True,
+        declared_units: bool = True,
     ):
         self.observations, self.policy, self.assessments = (
             observations,
@@ -43,6 +44,7 @@ class DistributionContext:
                         self.ranks,
                         record.get("unit"),
                         inline_units=inline_units,
+                        declared_units=declared_units,
                     )
                 except SARInputError:
                     value = Value("unsupported")
