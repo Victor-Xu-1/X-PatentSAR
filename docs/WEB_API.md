@@ -129,7 +129,9 @@ Charts, tenth-dose bands and numeric sorting use that same interpretation.
 Input2/3 read adapters retain bare-value semantics. No request/response shape,
 database migration, environment, producer execution-on-read or LLM is added.
 Activity strength metadata adds `basis:concentration|negative_log_molar` (absent
-historical basis means concentration). For a log basis, the anchor and boundaries
+historical basis means concentration). The concentration default is omitted from
+serialization so historical response/export metadata stays byte-compatible;
+log markers are never omitted. For a log basis, the anchor and boundaries
 remain in original pActivity units; `anchor_exponent` denotes its underlying
 molar-concentration decade. Direction is higher and both strong/medium lower
 cutoffs are strict. All colors and filters use server interval proof, not rounded
