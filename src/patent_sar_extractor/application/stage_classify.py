@@ -16,6 +16,8 @@ from patent_sar_extractor.contracts import (
     PAGE_CLASSIFIER_VERSION,
     PAGE_OCR_CACHE_SCHEMA,
     PAGE_OCR_CACHE_SCHEMA_VERSION,
+    PAGE_OCR_OBSERVATION_SCHEMA,
+    PAGE_OCR_OBSERVATION_VERSION,
     schema_ref,
 )
 from patent_sar_extractor.core.page_classifier import classify_pdf
@@ -58,6 +60,9 @@ def execute_classify(state: PipelineContext) -> None:
             "patent_id": state.patent_id,
             "page_ocr_cache_schema": schema_ref(
                 PAGE_OCR_CACHE_SCHEMA, PAGE_OCR_CACHE_SCHEMA_VERSION
+            ),
+            "page_ocr_observation": schema_ref(
+                PAGE_OCR_OBSERVATION_SCHEMA, PAGE_OCR_OBSERVATION_VERSION
             ),
         },
     )

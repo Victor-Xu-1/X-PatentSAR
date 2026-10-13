@@ -28,9 +28,12 @@ from patent_sar_extractor.contracts import (
     PAGE_OCR_CACHE_SCHEMA,
     PAGE_OCR_CACHE_SCHEMA_VERSION,
     artifact_identity,
+    schema_ref_matches,
 )
 
 logger = logging.getLogger(__name__)
+from .source_geometry import native_lines, source_layout
+
 _OCR_ENGINE = None
 _PADDLEX_OCR_URL_RESOLVED: str | None = None
 _PADDLEX_OCR_PROBED = False
@@ -196,11 +199,18 @@ def get_ocr_engine():
 
 def page_text(page, ocr_engine=None, min_native_chars: int = 40) -> str:
     text = page.get_text("text").strip()
-    if len(text) > min_native_chars:
+    layout = source_layout(page)
+    if len(text) > min_native_chars and layout.raster_bounds is None:
         return text
     engine = ocr_engine if ocr_engine is not None else get_ocr_engine()
     if not engine:
+        if layout.native and layout.raster_bounds is not None:
+            raise RuntimeError(
+                "Unobserved raster content cannot use a native-only page cache"
+            )
         return text
+    if layout.raster_bounds is not None and engine[0] in {"rapidocr", "paddlex"}:
+        return _page_payload(page, engine, min_native_chars, text)[0]
     import numpy as np
 
     pix = page.get_pixmap(matrix=fitz.Matrix(150 / 72, 150 / 72))
@@ -234,7 +244,7 @@ def page_text(page, ocr_engine=None, min_native_chars: int = 40) -> str:
     return text
 
 
-def page_ocr_lines(page, ocr_engine=None) -> list[dict]:
+def page_ocr_lines(page, ocr_engine=None, *, bounds=None) -> list[dict]:
     engine = ocr_engine if ocr_engine is not None else get_ocr_engine()
     if not engine:
         return []
@@ -242,7 +252,12 @@ def page_ocr_lines(page, ocr_engine=None) -> list[dict]:
 
     dpi = 150
     scale = 72.0 / dpi
-    pix = page.get_pixmap(matrix=fitz.Matrix(dpi / 72, dpi / 72))
+    pix = page.get_pixmap(
+        matrix=fitz.Matrix(dpi / 72, dpi / 72),
+        clip=fitz.Rect(bounds) if bounds is not None else page.rect,
+        alpha=False,
+    )
+    offset_x, offset_y = pix.x * scale, pix.y * scale
     img = Image.open(BytesIO(pix.tobytes("png"))).convert("RGB")
     engine_name, backend = engine
     if engine_name == "paddlex":
@@ -252,26 +267,56 @@ def page_ocr_lines(page, ocr_engine=None) -> list[dict]:
             if not text or not isinstance(box, list) or len(box) < 4:
                 continue
             try:
-                y0_pdf = float(box[1]) * scale
+                bbox = [
+                    float(box[0]) * scale + offset_x,
+                    float(box[1]) * scale + offset_y,
+                    float(box[2]) * scale + offset_x,
+                    float(box[3]) * scale + offset_y,
+                ]
+                y0_pdf = bbox[1]
             except (ValueError, TypeError) as error:
                 logger.warning(
                     "Discarding an invalid OCR coordinate (%s)", type(error).__name__
                 )
                 continue
-            lines.append({"y0": round(float(y0_pdf), 2), "text": text})
+            lines.append(
+                {
+                    "y0": round(float(y0_pdf), 2),
+                    "text": text,
+                    "bbox": bbox,
+                    "source": "page_ocr",
+                    "geometry_space": "rendered",
+                }
+            )
         lines.sort(key=lambda item: item["y0"])
         return lines
     if engine_name != "rapidocr":
         return []
-    result, _ = backend(np.array(img))
+    result, _ = backend(
+        np.array(img), **({"use_cls": False} if bounds is not None else {})
+    )
     lines = []
     for item in result or []:
         text = str(item[1]).strip()
         if not text:
             continue
         box = item[0]
-        y0_pdf = min(p[1] for p in box) * scale
-        lines.append({"y0": round(float(y0_pdf), 2), "text": text})
+        bbox = [
+            min(p[0] for p in box) * scale + offset_x,
+            min(p[1] for p in box) * scale + offset_y,
+            max(p[0] for p in box) * scale + offset_x,
+            max(p[1] for p in box) * scale + offset_y,
+        ]
+        y0_pdf = bbox[1]
+        lines.append(
+            {
+                "y0": round(float(y0_pdf), 2),
+                "text": text,
+                "bbox": bbox,
+                "source": "page_ocr",
+                "geometry_space": "rendered",
+            }
+        )
     lines.sort(key=lambda item: item["y0"])
     return lines
 
@@ -281,13 +326,23 @@ def _page_payload(
 ) -> tuple[str, list[dict]]:
     """Read one coherent text/coordinate observation, with lazy OCR startup."""
     native = page.get_text("text").strip() if native_text is None else native_text
-    if len(native) >= min_native_chars:
+    layout = source_layout(page)
+    if len(native) >= min_native_chars and layout.raster_bounds is None:
         return native, []
     engine = ocr_engine if ocr_engine is not None else get_ocr_engine()
     if not engine:
+        if layout.native and layout.raster_bounds is not None:
+            raise RuntimeError(
+                "Unobserved raster content cannot use a native-only page cache"
+            )
         return native, []
     if engine[0] in {"rapidocr", "paddlex"}:
-        lines = page_ocr_lines(page, ocr_engine=engine)
+        if layout.native and layout.raster_bounds is not None:
+            lines = page_ocr_lines(page, ocr_engine=engine, bounds=layout.raster_bounds)
+            lines = [*native_lines(layout, layout.raster_bounds), *lines]
+            lines.sort(key=lambda line: (line["y0"], line.get("bbox", [0])[0]))
+        else:
+            lines = page_ocr_lines(page, ocr_engine=engine)
         return " ".join(line["text"] for line in lines) or native, lines
     # Explicitly enabled text-only backends do not supply coordinate evidence.
     return page_text(page, ocr_engine=engine, min_native_chars=min_native_chars), []
@@ -300,7 +355,10 @@ def _extract_page_payload(
     try:
         page = doc[page_idx]
         native_text = page.get_text("text").strip()
-        if len(native_text) >= min_native_chars:
+        if (
+            len(native_text) >= min_native_chars
+            and source_layout(page).raster_bounds is None
+        ):
             return page_idx, native_text, []
         if not getattr(_THREAD_OCR, "initialized", False):
             _THREAD_OCR.engine = _build_ocr_engine()
@@ -374,9 +432,9 @@ def cache_matches_pdf(
         expected = build_cache_metadata(pdf_path, total_pages)
     except (OSError, RuntimeError, ValueError, TypeError):
         return False
-    identity_matches = metadata.get("schema") == expected[
-        "schema"
-    ] and product_identity_matches(metadata.get("product"))
+    identity_matches = schema_ref_matches(
+        metadata.get("schema"), expected["schema"]
+    ) and product_identity_matches(metadata.get("product"))
     producer = metadata.get("pipeline_contract")
     compatible_producer = (
         isinstance(producer, dict)
@@ -390,12 +448,23 @@ def cache_matches_pdf(
         in PAGE_OCR_COMPATIBLE_RULESETS
     )
     observation = metadata.get("observation_contract")
-    compatible_observation = observation == expected["observation_contract"] or (
-        observation is None
-        and isinstance(raw_rule, dict)
-        and raw_rule.get("version") == "2.0.1"
+    legacy_observation = (
+        schema_ref_matches(
+            observation,
+            {"name": expected["observation_contract"]["name"], "version": 1},
+        )
+        and expected["observation_contract"]["version"] == 2
+        or (
+            observation is None
+            and isinstance(raw_rule, dict)
+            and raw_rule.get("version") == "2.0.1"
+        )
     )
-    return (
+    compatible_observation = (
+        schema_ref_matches(observation, expected["observation_contract"])
+        or legacy_observation
+    )
+    compatible = (
         identity_matches
         and compatible_producer
         and compatible_rule
@@ -406,6 +475,19 @@ def cache_matches_pdf(
         and metadata.get("pdf_size") == expected["pdf_size"]
         and int(metadata.get("page_count", -1)) == expected["page_count"]
     )
+    if compatible:
+        from .source_cache_policy import (
+            legacy_source_receipt,
+            preserved_source_provenance,
+        )
+
+        try:
+            preserved_source_provenance(metadata)
+            if legacy_observation:
+                return legacy_source_receipt(cache, pdf_path) is not None
+        except (OSError, RuntimeError, TypeError, ValueError):
+            return False
+    return compatible
 
 
 def inherit_page_ocr_cache(source: str, destination: str, pdf_path: str) -> bool:
@@ -497,6 +579,7 @@ def update_page_ocr_cache(
 ) -> dict:
     """Fill missing page OCR cache entries with progress and partial flushes."""
     cache = load_page_ocr_cache(cache_path)
+    original_metadata = cache.get("metadata")
     doc = fitz.open(pdf_path)
     try:
         total_pages = len(doc)
@@ -512,6 +595,18 @@ def update_page_ocr_cache(
             "ocr_line_map": {},
         }
     else:
+        from .source_cache_policy import preserved_source_provenance
+
+        expected_metadata.update(preserved_source_provenance(cache["metadata"]))
+        previous_observation = cache["metadata"].get("observation_contract")
+        if previous_observation != expected_metadata["observation_contract"]:
+            from .source_cache_policy import legacy_source_receipt
+
+            receipt = legacy_source_receipt(cache, pdf_path)
+            if receipt is None:
+                raise ValueError("Unproved raw source coverage cannot be promoted")
+            expected_metadata["inherited_observation_contract"] = previous_observation
+            expected_metadata["source_policy_validation"] = receipt
         cache["metadata"] = expected_metadata
         cache.setdefault("page_texts", {})
         cache.setdefault("ocr_line_map", {})
@@ -527,6 +622,8 @@ def update_page_ocr_cache(
         or not str(cache.get("page_texts", {}).get(str(idx), "")).strip()
     ]
     if not missing:
+        if cache.get("metadata") != original_metadata:
+            save_page_ocr_cache(cache_path, cache)
         logger.info(
             "Shared page OCR cache hit: %s/%s pages",
             len(unique_indices),

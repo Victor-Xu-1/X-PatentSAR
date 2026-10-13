@@ -13,6 +13,7 @@ from .activity_values import (
     is_explicit_missing_activity_value,
     normalize_activity_value_token,
 )
+from .source_geometry import native_region
 from .table_cells import read_cell
 
 
@@ -128,6 +129,7 @@ def validate_grid(region: dict, schema: GridSchema) -> None:
 def read_activity_cell(
     page, tokens: list[dict], bounds, *, identifier: bool, native: bool
 ):
+    native = native_region(tokens, bounds, native)
     raw = cell_text(tokens, bounds)
     crossing = crosses_cell(tokens, bounds)
     if identifier:

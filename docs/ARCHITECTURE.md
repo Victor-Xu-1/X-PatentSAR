@@ -1,5 +1,24 @@
 # X-PatentSAR architecture
 
+`source_geometry.py` is the shared call-local original native/raster and rendered
+coordinate authority, without an engine/store/writer. `table_geometry.page_tokens`
+observes one bounded raster window with the existing engine, keeps native words
+outside for layout and preserves inside native evidence separately. Shared cell,
+header, biology/transposed, numbered/visible caption and heading consumers retain
+source disagreements. Known header conflicts cannot escape through biology,
+continuation or optional API role resolution. Source focus carries explicit
+rendered geometry rather than mixing native unrotated and raster point boxes.
+The sole page-cache producer handles hybrid text/coordinates coherently and keeps
+pure native laziness. `source_cache_policy.py` checks older observation1 source
+scope before transport, refusing native+raster omissions while preserving safe
+unchanged raw observations and immutable origin bytes. A persisted inherited
+contract/validation receipt survives later cache hits. Shared reference-version
+checks reject bool/float/string versions instead of Python numeric equality.
+Raw observation2, classifier4/binder13/activity13/visible10 and binding4/activity4
+invalidate affected derived acceptance. API/SQL/queue/model/dependencies stay.
+Earlier revision notes below retain their original epoch numbers; this source
+authority and `contracts.py` define currentness, not historical revision prose.
+
 Physical header ownership is split by responsibility, not by competing parser:
 `activity_header_layout.py` bounds missing-role discovery to at most three rows
 and 250 PDF points including the caption. `activity_header_columns.py` uses the

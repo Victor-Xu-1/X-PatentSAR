@@ -1,5 +1,19 @@
 # X-PatentSAR
 
+Hybrid PDF pages use one shared native/raster source geometry contract. A native
+footer cannot suppress observation of a scanned table. The existing OCR engine
+reads one bounded original raster window per hybrid page; native text outside
+remains fast, and native text inside is retained separately as contradiction
+evidence rather than concatenated with competing OCR. Rendered grid/native boxes
+share an explicit coordinate frame. Valid header/value/ID disagreements remain
+review-only and cannot fall through to another schema or optional API resolver.
+Raw OCR observation2 rejects older hybrid coverage. Unaffected older native or
+scanned observations may be transported after read-only original scope validation,
+with inherited provenance retained; original cache files and science are unchanged.
+Classifier4/binder13/activity13/visible-label10 and binding4/activity4 require
+fresh derived evidence. These controlled checks are not all-format/perfect recall
+or chemical acceptance; vector/partial layers and broader source roles remain open.
+
 Scanned activity headers are reread within each physical column by the existing
 OCR engine at two bounded resolutions. Missing-schema clips locate header roles
 only; the same column reader proves final fields without consuming data rows.
@@ -7,7 +21,7 @@ Known endpoint, unit and table-context conflicts stay unresolved even when two
 new reads agree. Literal endpoint/unit joins such as DC50nM are separated only
 when the complete unit is printed, never guessed. Raw column/crop/line evidence,
 including rejected no-row layouts, is retained once in the existing activity JSON;
-row references are identity-checked before acceptance. Activity schema3/epoch12
+row references are identity-checked before acceptance. Activity schema4/epoch13
 keep older derived proof historical and originals/manual revisions unchanged.
 Metadata roles, source-reference continuations, hybrid-PDF coverage and remaining
 chemical findings require separate validation; controlled checks do not establish
@@ -18,7 +32,7 @@ alongside normalized values. Captions use one exact grammar; literal elution
 notes do not assign stereochemistry or borrow confidence for the printed ID.
 Overlapping detector fragments are re-read from a bounded physical line using
 the same OCR engine. Valid disagreements stay review-only, including serialized
-numbered-cell proof. Binding schema3/activity schema3 mark older derived proof
+numbered-cell proof. Binding schema4/activity schema4 mark older derived proof
 historical without changing originals or manual edits; verified page OCR remains
 reusable. These engineering checks are not a perfect-extraction claim.
 

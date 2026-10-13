@@ -15,6 +15,7 @@ import numpy as np
 from PIL import Image
 
 from .page_ocr_cache import _paddlex_payload_from_image, get_ocr_engine
+from .source_geometry import SourceTokens, overlaps, source_layout
 
 logger = logging.getLogger(__name__)
 
@@ -194,20 +195,21 @@ def detect_ruled_table_regions(page, dpi: int = 300) -> list[dict]:
 def page_tokens(
     page, dpi: int = 200, allow_tesseract: bool | None = None
 ) -> list[dict]:
-    """Prefer original native words; otherwise observe one coordinate OCR pass."""
-    words = page.get_text("words")
-    if words:
-        return [
-            {
-                "text": w[4],
-                "x": (w[0] + w[2]) / 2,
-                "y": (w[1] + w[3]) / 2,
-                "bbox": list(w[:4]),
-                "confidence": 1.0,
-            }
-            for w in words
-        ]
-    return ocr_tokens_with_positions(page, dpi=dpi, allow_tesseract=allow_tesseract)
+    """Keep native text outside the one original raster observation window.
+
+    Any native footer is insufficient to cover raster table contents. Native
+    observations inside that window remain separate cell contradiction evidence,
+    never concatenated with competing OCR words to manufacture a field/number.
+    """
+    layout = source_layout(page)
+    if layout.native and layout.raster_bounds is None:
+        return SourceTokens(list(layout.native), layout)
+    bounds = layout.raster_bounds if layout.native else tuple(page.rect)
+    observed = ocr_tokens_with_positions(
+        page, dpi=dpi, allow_tesseract=allow_tesseract, bounds=bounds
+    )
+    outside = [t for t in layout.native if not overlaps(t["bbox"], bounds)]
+    return SourceTokens([*outside, *observed], layout, bounds)
 
 
 def ocr_tokens_with_positions(

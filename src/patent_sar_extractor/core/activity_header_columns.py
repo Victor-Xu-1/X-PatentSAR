@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from .activity_grid_cells import crosses_cell
 from .cell_ocr_observation import observe_cell
 from .page_ocr_cache import get_ocr_engine
+from .source_geometry import native_cell_text
 from .table_cells import cell_image
 
 
@@ -41,6 +42,7 @@ def observe_header_columns(
         columns.append(
             {
                 **reading.evidence(dpi, bounds),
+                "native_text": native_cell_text(tokens, bounds),
                 "physical_column": column,
                 "crosses_boundary": crossing,
             }

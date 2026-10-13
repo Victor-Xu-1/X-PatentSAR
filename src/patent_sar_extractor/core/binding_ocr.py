@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 
 from . import page_ocr_cache
+from .source_geometry import source_layout
 
 try:
     import fitz
@@ -21,8 +22,8 @@ def _extract_binder_page_text(pdf_path: str, page_idx: int) -> tuple[int, str]:
     try:
         page = doc[page_idx]
         text = page.get_text("text")
-        if not text.strip():
-            text = page_ocr_cache.page_text(page)
+        if not text.strip() or source_layout(page).raster_bounds is not None:
+            text = page_ocr_cache.page_text(page, min_native_chars=0)
         return page_idx, text
     finally:
         doc.close()
@@ -47,6 +48,10 @@ def _binder_line_y(value: object) -> float:
 
 def _get_ocr_line_coords(page) -> list[tuple[float, str]]:
     """Keep native PDF points or one shared OCR observation, never a private retry."""
+    layout = source_layout(page)
+    if layout.native and layout.raster_bounds is not None:
+        _text, observations = page_ocr_cache._page_payload(page, min_native_chars=0)
+        return [(_binder_line_y(item["y0"]), item["text"]) for item in observations]
     native = []
     for block in page.get_text("dict").get("blocks", []):
         if block.get("type") != 0:
@@ -56,7 +61,8 @@ def _get_ocr_line_coords(page) -> list[tuple[float, str]]:
                 span.get("text", "") for span in line.get("spans", [])
             ).strip()
             if text:
-                native.append((_binder_line_y(line["bbox"][1]), text))
+                rendered = fitz.Rect(line["bbox"]) * page.rotation_matrix
+                native.append((_binder_line_y(rendered.y0), text))
     if native:
         return sorted(native, key=lambda line: line[0])
 

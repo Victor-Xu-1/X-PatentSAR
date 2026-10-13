@@ -10,6 +10,7 @@ from patent_sar_extractor.application.activity_policy import (
     _expand_cpd_labels,
     _normalize_cpd_label,
 )
+from patent_sar_extractor.core.activity_coverage import coverage_packet
 
 
 class SourceFirstContractTests(unittest.TestCase):
@@ -20,6 +21,7 @@ class SourceFirstContractTests(unittest.TestCase):
             ),
             "rows": [],
             "data": {},
+            "coverage": coverage_packet([], [], []),
         }
 
     def test_product_uses_independent_pr_release_number(self):
@@ -49,6 +51,13 @@ class SourceFirstContractTests(unittest.TestCase):
                 self.empty_activity(), [], classified_activity_pages=[]
             ),
             [],
+        )
+
+    def test_missing_source_coverage_is_not_an_absence_certificate(self):
+        payload = self.empty_activity()
+        payload.pop("coverage")
+        self.assertTrue(
+            _activity_acceptance_errors(payload, [], classified_activity_pages=[])
         )
 
     def test_missing_values_on_declared_activity_pages_stay_failure(self):

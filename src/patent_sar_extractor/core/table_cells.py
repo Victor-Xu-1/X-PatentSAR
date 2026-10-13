@@ -14,6 +14,7 @@ from .activity_values import is_explicit_missing_activity_value
 from .cell_ocr_observation import OCRObservation, observe_cell
 from .compound_caption import prefixed_label
 from .page_ocr_cache import get_ocr_engine
+from .source_geometry import native_cell_text, native_region
 
 _ID = re.compile(r"[1-9]\d{0,3}[A-Z]?", re.IGNORECASE)
 
@@ -119,6 +120,7 @@ def _ocr_cell(page, bounds, kind: str, dpi: int) -> OCRObservation:
 
 
 def read_cell(page, bounds, tokens: list[dict], kind: str, native: bool) -> CellReading:
+    native = native_region(tokens, bounds, native)
     x0, y0, x1, y1 = bounds
     owned = [t for t in tokens if x0 + 0.5 < t["x"] < x1 - 0.5 and y0 < t["y"] < y1]
     raw = " ".join(
@@ -128,21 +130,35 @@ def read_cell(page, bounds, tokens: list[dict], kind: str, native: bool) -> Cell
     observations = [
         {"method": "native_cell" if native else "page_ocr_cell", "text": raw}
     ]
+    native_raw = native_cell_text(tokens, bounds)
+    native_value = _normalize(native_raw, kind) if native_raw else ""
+    if not native and native_raw:
+        observations.append({"method": "native_cell", "text": native_raw})
     if native:
         return CellReading(initial, bounds, observations, not bool(initial))
     if kind == "plus":
         value = _plus_count(cell_image(page, bounds, 450), 450)
         observations.append({"method": "printed_cross_components", "text": value})
-        return CellReading(value, bounds, observations, not bool(value))
+        return CellReading(
+            value,
+            bounds,
+            observations,
+            not bool(value) or bool(native_value and value != native_value),
+        )
     first_read = _ocr_cell(page, bounds, kind, 400)
     first = first_read.value
     observations.append(first_read.evidence(400, bounds))
-    if first and first == initial:
+    if first and first == initial and (not native_value or first == native_value):
         return CellReading(first, bounds, observations)
     second_read = _ocr_cell(page, bounds, kind, 600)
     second = second_read.value
     observations.append(second_read.evidence(600, bounds))
-    agreed = bool(first and first == second and (not initial or first == initial))
+    agreed = bool(
+        first
+        and first == second
+        and (not initial or first == initial)
+        and (not native_value or first == native_value)
+    )
     return CellReading(
         first if agreed else initial or first or second,
         bounds,

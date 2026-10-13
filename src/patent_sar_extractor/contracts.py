@@ -8,7 +8,7 @@ from typing import Final
 PRODUCT_NAME: Final = "X-PatentSAR"
 DISTRIBUTION_NAME: Final = "x-patentsar"
 COMMAND_NAME: Final = "x-patentsar"
-__version__: Final = "0.2.1"
+__version__: Final = "0.2.2"
 
 WEB_API_SCHEMA: Final = "patentsar.web-api"
 WEB_API_SCHEMA_VERSION: Final = 1
@@ -48,12 +48,12 @@ STEP_MANIFEST_SCHEMA: Final = "patentsar.step-manifest"
 STEP_MANIFEST_SCHEMA_VERSION: Final = 1
 PAGE_CLASSIFICATION_SCHEMA: Final = "patentsar.page-classification"
 PAGE_CLASSIFICATION_SCHEMA_VERSION: Final = 2
-PAGE_CLASSIFIER_VERSION: Final = "3"
+PAGE_CLASSIFIER_VERSION: Final = "4"
 REVIEW_EXCERPT_METADATA_SCHEMA: Final = "patentsar.review-excerpt-metadata"
 REVIEW_EXCERPT_METADATA_SCHEMA_VERSION: Final = 1
 ACTIVITY_SCHEMA: Final = "patentsar.activity"
-ACTIVITY_SCHEMA_VERSION: Final = 3
-ACTIVITY_EXTRACTOR_VERSION: Final = "12"
+ACTIVITY_SCHEMA_VERSION: Final = 4
+ACTIVITY_EXTRACTOR_VERSION: Final = "13"
 ACTIVITY_COVERAGE_SCHEMA: Final = "patentsar.activity-coverage"
 ACTIVITY_COVERAGE_SCHEMA_VERSION: Final = 2
 STRUCTURE_LOCATOR_VERSION: Final = "8"
@@ -61,7 +61,7 @@ STRUCTURE_WORKER_VERSION: Final = "6"
 SEGMENTATION_WINDOW_SCHEMA: Final = "patentsar.segmentation-window"
 SEGMENTATION_WINDOW_SCHEMA_VERSION: Final = 2
 SEGMENTATION_INPUT_FINGERPRINT_FILE: Final = "input_fingerprint.json"
-STRUCTURE_BINDER_VERSION: Final = "12"
+STRUCTURE_BINDER_VERSION: Final = "13"
 OCSR_OBSERVATION_VERSION: Final = "2"
 STEREO_EVIDENCE_VERSION: Final = 3
 DECIMER_ADAPTER_VERSION: Final = "1"
@@ -72,7 +72,7 @@ STRUCTURES_SCHEMA_VERSION: Final = 1
 STRUCTURE_INVENTORY_SCHEMA: Final = "patentsar.structure-page-inventory"
 STRUCTURE_INVENTORY_SCHEMA_VERSION: Final = 1
 BINDINGS_SCHEMA: Final = "patentsar.bindings"
-BINDINGS_SCHEMA_VERSION: Final = 3
+BINDINGS_SCHEMA_VERSION: Final = 4
 COMPOUND_CATALOG_SCHEMA: Final = "patentsar.compound-catalog"
 COMPOUND_CATALOG_SCHEMA_VERSION: Final = 1
 SMILES_SCHEMA: Final = "patentsar.smiles"
@@ -88,7 +88,7 @@ FAILURE_MARKER_SCHEMA_VERSION: Final = 1
 PAGE_OCR_CACHE_SCHEMA: Final = "patentsar.page-ocr-cache"
 PAGE_OCR_CACHE_SCHEMA_VERSION: Final = 1
 PAGE_OCR_OBSERVATION_SCHEMA: Final = "patentsar.page-ocr-observation"
-PAGE_OCR_OBSERVATION_VERSION: Final = 1
+PAGE_OCR_OBSERVATION_VERSION: Final = 2
 # This compatibility is for raw observations only, never derived/accepted data.
 # 2.0.0 lacks coherent scanned-page coordinates and is intentionally excluded.
 PAGE_OCR_COMPATIBLE_RULESETS: Final = (
@@ -107,7 +107,7 @@ PAGE_OCR_COMPATIBLE_PIPELINES: Final = (
 )
 VISIBLE_LABEL_CACHE_SCHEMA: Final = "patentsar.visible-label-cache"
 VISIBLE_LABEL_CACHE_SCHEMA_VERSION: Final = 1
-VISIBLE_LABEL_OBSERVATION_VERSION: Final = 9
+VISIBLE_LABEL_OBSERVATION_VERSION: Final = 10
 
 
 def schema_ref(name: str, version: int) -> dict[str, object]:
@@ -148,6 +148,10 @@ def release_compatible_record(actual: object, expected: dict[str, object]) -> bo
         and actual.keys() == expected.keys()
         and product_identity_matches(actual.get("product"))
         and product_identity_matches(expected.get("product"))
+        and (
+            "schema" not in expected
+            or schema_ref_matches(actual.get("schema"), expected["schema"])
+        )
         and all(
             actual[key] == value for key, value in expected.items() if key != "product"
         )
@@ -156,6 +160,17 @@ def release_compatible_record(actual: object, expected: dict[str, object]) -> bo
 
 def pipeline_contract_ref() -> dict[str, str]:
     return {"name": PIPELINE_CONTRACT_NAME, "version": PIPELINE_CONTRACT_VERSION}
+
+
+def schema_ref_matches(actual: object, expected: object) -> bool:
+    """Integer versions cannot acquire bool/float equality from JSON values."""
+    return (
+        isinstance(actual, dict)
+        and isinstance(expected, dict)
+        and actual.keys() == expected.keys()
+        and type(actual.get("version")) is type(expected.get("version"))
+        and actual == expected
+    )
 
 
 def ruleset_ref() -> dict[str, str]:

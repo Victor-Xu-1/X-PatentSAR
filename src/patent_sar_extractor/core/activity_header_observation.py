@@ -8,6 +8,7 @@ from .activity_header_identity import compact_header, context_conflict, header_c
 from .activity_header_layout import discover_header_layout, header_bounds
 from .activity_headers import context_from_text, grid_schema
 from .activity_models import GridSchema
+from .source_geometry import native_region
 from .table_geometry import ocr_tokens_with_positions
 
 
@@ -20,7 +21,12 @@ def refine_scanned_header(
     columns/source identities as review. Neither matching resolutions nor high
     confidence establishes chemical/scientific correctness on its own.
     """
-    if page.get_text("words") or (
+    band = (
+        (region["xs"][0], region["ys"][0], region["xs"][-1], region["ys"][-1])
+        if region.get("xs") and region.get("ys")
+        else (0, 0, page.rect.width, page.rect.height)
+    )
+    if native_region(tokens, band, bool(page.get_text("words"))) or (
         original is not None
         and type(original.first_data_row) is int
         and original.first_data_row == 0
@@ -102,6 +108,12 @@ def refine_scanned_header(
         return unresolved("conflicting_identifier_columns")
     conflicts = [
         any(header_conflict(old, candidate.raw_headers[i]) for candidate in candidates)
+        or any(
+            header_conflict(column.get("native_text", ""), candidate.raw_headers[i])
+            for observed, candidate in zip(observations, candidates)
+            for column in observed["columns"]
+            if column["physical_column"] == i
+        )
         for i, old in enumerate(source.raw_headers)
     ]
     agreed = [
@@ -117,7 +129,13 @@ def refine_scanned_header(
         first.context.raw_caption
     ) == compact_header(second.context.raw_caption)
     if original is None and (not all(agreed) or not caption_proved or caption_conflict):
-        return unresolved("incomplete_initial_header_proof")
+        proof = resolution(
+            "unresolved",
+            reason="incomplete_initial_header_proof",
+            conflicting_columns=[i for i, c in enumerate(conflicts) if c],
+            context_conflict=caption_conflict,
+        )
+        return None
     headers = tuple(
         first.raw_headers[i] if ok else source.raw_headers[i]
         for i, ok in enumerate(agreed)

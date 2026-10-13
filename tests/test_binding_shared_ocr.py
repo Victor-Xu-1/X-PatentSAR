@@ -271,6 +271,7 @@ class BindingSharedOCRTests(unittest.TestCase):
         ):
             with self.subTest(helper=helper.__name__):
                 page = Mock()
+                page.get_image_info.return_value = []
                 page.get_text.side_effect = lambda kind: (
                     {"blocks": []} if kind == "dict" else ""
                 )
