@@ -93,6 +93,7 @@ describe('activity value itself is the provenance control', () => {
       const [route, setRoute] = useState<Route>({ ...emptyRoute, projectId: project.id, page: 4 });
       return (
         <Workspace
+          jobVerified
           project={project}
           route={route}
           navigate={(next) => {

@@ -80,6 +80,7 @@ describe('the existing route is the sole source of global column queries', () =>
       const [query, setQuery] = useState('');
       return (
         <Workspace
+          jobVerified
           project={project}
           route={route}
           navigate={(next) => {
@@ -207,6 +208,7 @@ describe('the existing route is the sole source of global column queries', () =>
       const [route, setRoute] = useState(initial);
       return (
         <Workspace
+          jobVerified
           project={project}
           route={route}
           navigate={(next) => {

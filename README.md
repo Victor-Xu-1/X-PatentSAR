@@ -1,5 +1,14 @@
 # X-PatentSAR
 
+Long-running workspaces recover an explicit same-origin session failure through
+one shared handshake and one safe GET re-read. Writes, uploads, downloads and
+readonly POSTs are never automatically replayed. Failed task reads retain the
+same-source last-known state for viewing, mark current status unknown and disable
+start/resume/cancel until fresh state is validated. Project changes cannot carry
+old task state. Explicit reconnects serialize behind older wire handshakes and
+cannot publish superseded credentials. Authentication, CSRF, scientific epochs,
+raw artifacts and task execution remain unchanged.
+
 Numbered biological/assay Example sections are recorded as source sections, not
 automatically as compound IDs. Explicit compound titles on the same page retain
 their independent original ownership proof. Conflicting synthesis/assay titles

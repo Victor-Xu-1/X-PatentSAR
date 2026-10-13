@@ -106,7 +106,13 @@ it.each([null, { ...project, id: 'different-project' }])(
   'does not offer cancellation without the matching project identity',
   (linked) => {
     render(
-      <JobActions project={linked} job={{ ...job, status: 'running' }} ready onChange={vi.fn()} />,
+      <JobActions
+        verified
+        project={linked}
+        job={{ ...job, status: 'running' }}
+        ready
+        onChange={vi.fn()}
+      />,
     );
     expect(screen.getByRole('button', { name: '取消任务' })).toBeDisabled();
   },

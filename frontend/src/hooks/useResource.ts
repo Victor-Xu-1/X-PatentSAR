@@ -16,6 +16,7 @@ export function useResource<T>(
   key: string | null,
   load: (signal: AbortSignal) => Promise<T>,
   poll?: { milliseconds: number; while: (value: T) => boolean },
+  options: { retainOnError?: boolean } = {},
 ): Resource<T> {
   const [revision, setRevision] = useState(0);
   const [state, setState] = useState<State<T>>({
@@ -27,6 +28,7 @@ export function useResource<T>(
   const reload = useCallback(() => setRevision((v) => v + 1), []);
   const interval = poll?.milliseconds;
   const shouldPoll = poll?.while;
+  const retainOnError = options.retainOnError === true;
   useEffect(() => {
     if (key === null) return;
     const controller = new AbortController();
@@ -45,12 +47,12 @@ export function useResource<T>(
         if (interval && shouldPoll?.(data)) timer = setTimeout(() => void run(), interval);
       } catch (error) {
         if (!controller.signal.aborted)
-          setState({
+          setState((old) => ({
             key,
-            data: null,
+            data: retainOnError && old.key === key ? old.data : null,
             error: error instanceof Error ? error : new Error('加载失败。'),
             loading: false,
-          });
+          }));
       }
     };
     void run();
@@ -58,7 +60,7 @@ export function useResource<T>(
       controller.abort();
       clearTimeout(timer);
     };
-  }, [key, load, revision, interval, shouldPoll]);
+  }, [key, load, revision, interval, shouldPoll, retainOnError]);
   if (key === null) return { data: null, error: null, loading: false, reload };
   if (state.key !== key) return { data: null, error: null, loading: true, reload };
   return { data: state.data, error: state.error, loading: state.loading, reload };

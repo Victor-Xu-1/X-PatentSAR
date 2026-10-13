@@ -10,14 +10,16 @@ import type { LLMRecoveryControls } from './LLMRecovery';
 export function JobRecord({
   job,
   expanded = false,
+  verified = true,
   recoveryControls,
 }: {
   job: Job;
   expanded?: boolean;
+  verified?: boolean;
   recoveryControls?: LLMRecoveryControls;
 }) {
   const { t } = useTranslation();
-  const summary = jobRecordSummary(job);
+  const summary = verified ? jobRecordSummary(job) : t('阶段状态未知');
   return (
     <>
       {summary && <p className={`job-summary${job.error ? ' has-error' : ''}`}>{summary}</p>}
@@ -41,7 +43,7 @@ export function JobRecord({
               </div>
             ))}
           </dl>
-          <StageStrip job={job} />
+          <StageStrip job={job} verified={verified} />
           <LLMRecovery job={job} controls={recoveryControls} />
           {job.error && (
             <section className="job-failure-details" aria-label={t('失败详情')}>

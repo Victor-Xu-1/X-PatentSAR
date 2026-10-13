@@ -1,5 +1,19 @@
 # Operations and troubleshooting
 
+## Interrupted browser sessions during running tasks
+
+An explicit401/session_required on a safe GET uses the existing same-origin
+bootstrap once and retries that read once. Persistent failure shows an error
+and unknown task status, keeping only source-bound last-known information.
+Start/resume/cancel remain disabled until both task and project reads are current.
+Use Reload to retry failed reads; it never starts or cancels a task. Writes,
+uploads, exports and chemistry POST reads are not replayed after auth failure.
+Explicit reconnect cannot publish an obsolete in-flight handshake. Server session
+lifetime remains8hours; a browser becoming disconnected does not prove expiry
+or backend task termination. Check actual task state before another submission.
+No auth/CSRF weakening, local model operation, artifact rewrite or auto-resume is
+introduced. Scientific producer epochs and historical acceptance stay unchanged.
+
 ## Original-source extraction repair
 
 Bindings now retain `source_sections` for literal assay Example observations.

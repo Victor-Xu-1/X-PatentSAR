@@ -136,7 +136,7 @@ describe('actual core then source-completion/six-property task chain', () => {
     render(
       <>
         <StageStrip job={current} compact />
-        <JobActions project={project} job={current} ready onChange={vi.fn()} compact />
+        <JobActions verified project={project} job={current} ready onChange={vi.fn()} compact />
         <ExtractionNotice
           project={{ ...project, acceptance: { state: 'failed', errors: [] } }}
           job={current}

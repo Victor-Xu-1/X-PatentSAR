@@ -102,6 +102,7 @@ describe('real-value presentation and selection', () => {
   it('first empty workspace is complete and extraction is disabled', () => {
     render(
       <Workspace
+        jobVerified
         project={null}
         route={emptyRoute}
         navigate={vi.fn()}

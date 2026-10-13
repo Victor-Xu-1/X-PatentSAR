@@ -17,6 +17,7 @@ it.each(['complete', 'failed', 'cancelled', 'interrupted', 'queued', 'running'] 
     const onOpen = vi.fn();
     render(
       <JobActions
+        verified
         job={{ ...job, status }}
         project={project}
         ready={false}
@@ -56,6 +57,7 @@ it.each([null, { ...project, id: 'different-project' }])(
   (linked) => {
     render(
       <JobActions
+        verified
         project={linked}
         job={job}
         ready={false}
@@ -70,6 +72,7 @@ it.each([null, { ...project, id: 'different-project' }])(
 it('preserves compact workspace controls rather than creating a competing navigation action', () => {
   render(
     <JobActions
+      verified
       project={project}
       job={{ ...job, status: 'complete' }}
       ready

@@ -12,7 +12,14 @@ import { authorizedJob, deferred, recoveryJob, recoverySettings } from './llm-re
 function mount(current: Job = recoveryJob, compact = false) {
   const onChange = vi.fn();
   const view = render(
-    <JobActions project={project} job={current} ready onChange={onChange} compact={compact} />,
+    <JobActions
+      verified
+      project={project}
+      job={current}
+      ready
+      onChange={onChange}
+      compact={compact}
+    />,
   );
   return { ...view, onChange };
 }
@@ -57,7 +64,9 @@ describe('explicit logical-job API reauthorization', () => {
     );
     expect(screen.getByRole('status')).toHaveTextContent('未开始提取');
     expect(screen.getByRole('button', { name: '继续提取' })).toBeDisabled();
-    rerender(<JobActions project={project} job={authorizedJob} ready onChange={onChange} />);
+    rerender(
+      <JobActions verified project={project} job={authorizedJob} ready onChange={onChange} />,
+    );
     expect(screen.getByRole('button', { name: '继续提取' })).toBeEnabled();
     expect(screen.queryByRole('button', { name: '更新 API 授权' })).not.toBeInTheDocument();
     expect(api.createJob).not.toHaveBeenCalled();
@@ -137,7 +146,9 @@ describe('explicit logical-job API reauthorization', () => {
     expect(onChange).toHaveBeenCalledOnce();
     expect(screen.getByRole('button', { name: '继续提取' })).toBeDisabled();
     expect(api.reauthorizeJobLLM).toHaveBeenCalledOnce();
-    rerender(<JobActions project={project} job={{ ...recoveryJob }} ready onChange={onChange} />);
+    rerender(
+      <JobActions verified project={project} job={{ ...recoveryJob }} ready onChange={onChange} />,
+    );
     expect(screen.getByRole('button', { name: '继续提取' })).toBeEnabled();
     await userEvent.click(screen.getByRole('button', { name: '更新 API 授权' }));
     await waitFor(() => expect(llmApi.settings).toHaveBeenCalledTimes(2));
@@ -154,7 +165,7 @@ describe('explicit logical-job API reauthorization', () => {
     async (current) => {
       const { rerender, onChange } = mount();
       const dialog = await open();
-      rerender(<JobActions project={project} job={current} ready onChange={onChange} />);
+      rerender(<JobActions verified project={project} job={current} ready onChange={onChange} />);
       expect(
         within(dialog).queryByRole('button', { name: '确认更新授权' }),
       ).not.toBeInTheDocument();
