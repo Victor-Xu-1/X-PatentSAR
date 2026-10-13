@@ -20,6 +20,11 @@ COMMON = {
 MODES = (
     (
         "sar",
+        "sar-log-potency.spec.ts",
+        COMMON | {"sar-log-potency.spec.ts", "sar-interval-boundaries.spec.ts"},
+    ),
+    (
+        "sar",
         "sar-interval-boundaries.spec.ts",
         COMMON | {"sar-interval-boundaries.spec.ts"},
     ),

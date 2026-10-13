@@ -5,24 +5,32 @@ from __future__ import annotations
 import hashlib
 import time
 from collections import defaultdict
+from collections.abc import Iterable
 
 from ...core.sar.chemistry import prepare_structure
 from ...core.sar.measurements import explicit_unit_basis
 from ..errors import WebError
+from ..indicator_conventions import numeric_direction
 from ..storage import encode
-from .models import Molecule, Observation
+from .models import Metric, Molecule, Observation
 
 MAX_DATASET_BYTES = 32 * 1024 * 1024
 
 
-def analysis_molecules(molecules: list[Molecule]) -> list[Molecule]:
+def analysis_molecules(
+    molecules: list[Molecule], metrics: Iterable[Metric] = ()
+) -> list[Molecule]:
     """Prepare new-analysis units without mutating any persisted source record.
 
     Both project and CSV snapshots use this path, including older datasets.
     An absent metadata unit can use the unit explicitly written in that reading;
     bare/unknown values cannot borrow a unit from another molecule or experiment.
+    An explicitly named negative-log molar endpoint (pIC50, pKi, etc.) defines
+    dimensionless units itself. Its new analysis copy uses unit 1; stored source
+    metadata stays unchanged. Unknown log transforms/declared conflicts do not.
     """
     result = []
+    names = {metric.id: metric.name for metric in metrics}
     for molecule in molecules:
         observations = []
         changed = False
@@ -32,6 +40,17 @@ def analysis_molecules(molecules: list[Molecule]) -> list[Molecule]:
                 if not (observation.unit or "").strip()
                 else None
             )
+            if (
+                not basis
+                and not (observation.unit or "").strip()
+                and numeric_direction(
+                    names.get(observation.metric_id, ""),
+                    None,
+                    observation.context.get("assay"),
+                )[1]
+                == "log_potency"
+            ):
+                basis = "1"
             if basis:
                 changed = True
                 observation = observation.model_copy(update={"unit": basis})

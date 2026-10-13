@@ -28,6 +28,7 @@ def value_band(value: object, scale: ActivityStrengthScale | None) -> Band:
             parsed_value,
             Decimal(str(scale.strong_boundary)),
             Decimal(str(scale.medium_boundary)),
+            basis=scale.basis,
         )
         return tier if tier in {"strong", "medium"} else "none"
     parsed = rank_value(value)

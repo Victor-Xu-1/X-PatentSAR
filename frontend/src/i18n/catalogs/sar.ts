@@ -29,6 +29,10 @@ export const sar: Record<string, string> = {
     'Concentration potency uses the tenth strongest measurement’s decade.',
   '强 <{strong}；中 {strong}–<{medium}；弱 ≥{medium}':
     'Strong <{strong}; medium {strong}–<{medium}; weak ≥{medium}',
+  '强 >{strong}；中 >{medium}–≤{strong}；弱 ≤{medium}':
+    'Strong >{strong}; medium >{medium}–≤{strong}; weak ≤{medium}',
+  '第十名对应浓度数量级；强 >{strong}，中 >{medium}–≤{strong}，弱 ≤{medium}。全任务计算，筛选和翻页不改变分档。':
+    'Tenth concentration-equivalent decade: strong >{strong}, medium >{medium}–≤{strong}, weak ≤{medium}. The full task fixes tiers; filtering and paging do not change them.',
   '不足十个化合物，未分档': 'Fewer than ten measured compounds; unclassified',
   '第十名数量级不确定，未分档': 'The tenth measurement’s decade is uncertain; unclassified',
   该指标不适用浓度倍数分档: 'Concentration-decade tiers do not apply to this endpoint',

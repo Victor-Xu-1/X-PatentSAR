@@ -52,6 +52,7 @@ class RankDistribution:
         self.budget.remaining_subjects += len(self.pool.readings)
         self.pool.readings.clear()
         self.pool.uncertain.clear()
+        self.pool.nonpositive.clear()
 
     def observe(self, value: object, subject: str | None = None) -> None:
         self.total += 1
@@ -86,14 +87,17 @@ class RankDistribution:
         if (
             kind == "unknown"
             and not self.reason
-            and concentration_unit(unit)
-            and rank_direction(name, unit, assay, "numeric")[1] == "potency"
+            and rank_direction(name, unit, assay, "numeric")[1]
+            in {"potency", "log_potency"}
         ):
             kind = "numeric"
         direction, rule = rank_direction(name, unit, assay, kind)
         if kind == "numeric" and not self.reason:
-            scale = self.pool.scale()
-            if (
+            logarithmic = direction == "higher" and rule == "log_potency"
+            scale = self.pool.scale(
+                basis="negative_log_molar" if logarithmic else "concentration"
+            )
+            if not logarithmic and (
                 direction != "lower"
                 or rule != "potency"
                 or not concentration_unit(unit)
@@ -105,6 +109,7 @@ class RankDistribution:
                     anchor_upper=None,
                     strong_boundary=None,
                     medium_boundary=None,
+                    anchor_exponent=None,
                 )
             return ActivityStrengthScale.from_potency(scale, direction=direction)
         if self.reason:

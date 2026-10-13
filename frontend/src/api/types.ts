@@ -84,6 +84,7 @@ export interface ActivityStrengthScale {
   anchor_lower?: number | null;
   anchor_upper?: number | null;
   anchor_exponent?: number | null;
+  basis?: 'concentration' | 'negative_log_molar';
 }
 export interface ActivityFocusSelection {
   compoundId: string;

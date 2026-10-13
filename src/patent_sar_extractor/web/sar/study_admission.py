@@ -16,7 +16,9 @@ from .study_models import StudyRequest
 
 def profile(service, dataset_id: str) -> IndicatorProfile:
     dataset = service.dataset(dataset_id)
-    molecules = analysis_molecules(included_molecules(service.datasets.all(dataset_id)))
+    molecules = analysis_molecules(
+        included_molecules(service.datasets.all(dataset_id)), dataset.metrics
+    )
     ids = {row.id for row in molecules}
     try:
         contexts = context_catalog(
@@ -50,7 +52,7 @@ def enqueue_study(queue, dataset_id: str, request: StudyRequest):
         return old
     dataset = queue.service.current(dataset_id, request.expected_dataset_revision)
     molecules = analysis_molecules(
-        included_molecules(queue.service.datasets.all(dataset_id))
+        included_molecules(queue.service.datasets.all(dataset_id)), dataset.metrics
     )
     dataset = dataset.model_copy(
         update={

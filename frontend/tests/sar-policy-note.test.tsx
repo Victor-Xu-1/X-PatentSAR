@@ -7,6 +7,46 @@ import { studyContext, studyReport } from './sar-fixtures';
 import type { ActivityStrengthScale } from '../src/api/types';
 
 beforeEach(() => setLocale('en'));
+it('presents equivalent log-potency boundaries without changing the original endpoint', async () => {
+  const policy = {
+    ...studyReport.policies[0]!,
+    direction: 'higher' as const,
+    strength_method: 'tenth_decade' as const,
+    strong_threshold: null,
+    strength_scale: {
+      kind: 'numeric' as const,
+      direction: 'higher' as const,
+      rule: 'tenth_decade',
+      method: 'tenth_decade' as const,
+      status: 'ready' as const,
+      basis: 'negative_log_molar' as const,
+      boundary_inclusive: false,
+      population: 12,
+      eligible: 12,
+      excluded: 0,
+      distinct: 4,
+      anchor_rank: 10 as const,
+      anchor_lower: 9,
+      anchor_upper: 9,
+      anchor_exponent: -9,
+      strong_boundary: 8,
+      medium_boundary: 7,
+    },
+  };
+  render(
+    <StudyPolicyNote
+      policy={policy}
+      context={{ ...studyContext, name: 'pIC50 原文', unit: '1' }}
+      primary
+    />,
+  );
+  expect(screen.getByText('pIC50 原文')).toBeVisible();
+  expect(screen.getByText('10th strongest: 9')).toBeVisible();
+  expect(screen.getByText('Strong >8; medium >7–≤8; weak ≤7')).toBeVisible();
+  await act(() => setLocale('zh-CN'));
+  expect(screen.getByText('强 >8；中 >7–≤8；弱 ≤7')).toBeVisible();
+  expect(screen.getByText('pIC50 原文')).toBeVisible();
+});
 it('shows automatic tenth-decade limits and refuses to present ambiguous strength as zero', async () => {
   const scale: ActivityStrengthScale = {
     kind: 'numeric',

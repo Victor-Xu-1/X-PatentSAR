@@ -147,8 +147,8 @@ def verified_preview(
             packet["request"]["confirm_context"],
             # Archived inputs keep their captured comparison semantics. This
             # is a read adapter, never an alternative new-study engine.
-            open_bounds=packet["schema"] in {3, 4},
-            inline_units=packet["schema"] == 4,
+            open_bounds=packet["schema"] >= 3,
+            inline_units=packet["schema"] >= 4,
         )
         if claim and compared["evidence_basis"] == "recorded_context":
             compared["evidence_basis"] = "source_declared"
@@ -160,13 +160,13 @@ def verified_preview(
                     left[0]["value"],
                     ranks,
                     left[0].get("unit"),
-                    inline_units=packet["schema"] == 4,
+                    inline_units=packet["schema"] >= 4,
                 ),
                 parse_measurement(
                     right[0]["value"],
                     ranks,
                     right[0].get("unit"),
-                    inline_units=packet["schema"] == 4,
+                    inline_units=packet["schema"] >= 4,
                 ),
             )
             difference = _scalar_difference(a, b)

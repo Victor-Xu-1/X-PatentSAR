@@ -47,6 +47,7 @@ def strength_band(value: Value | None, policy: dict, ranks: dict[str, int]) -> s
             value,
             Decimal(str(scale["strong_boundary"])),
             Decimal(str(scale["medium_boundary"])),
+            basis=scale.get("basis", "concentration"),
         )
     known = proven_strong(value, policy, ranks)
     return "unclassified" if known is None else "strong" if known else "weak"

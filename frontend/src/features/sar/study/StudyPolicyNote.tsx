@@ -22,7 +22,7 @@ export function StudyPolicyNote({
   if (!policy || !context || policy.context_id !== context.id) return null;
   if (policy.strength_method === 'tenth_decade') {
     const scale = policy.strength_scale;
-    const unit = context.unit ? ' ' + context.unit : '';
+    const unit = context.unit && context.unit !== '1' ? ' ' + context.unit : '';
     return (
       <p className="sar-policy-note">
         {primary && <strong>{contextLabel(context)}</strong>}
@@ -38,10 +38,15 @@ export function StudyPolicyNote({
         </span>
         <span>
           {scale?.status === 'ready'
-            ? t('强 <{strong}；中 {strong}–<{medium}；弱 ≥{medium}', {
-                strong: scale.strong_boundary! + unit,
-                medium: scale.medium_boundary! + unit,
-              })
+            ? t(
+                scale.basis === 'negative_log_molar'
+                  ? '强 >{strong}；中 >{medium}–≤{strong}；弱 ≤{medium}'
+                  : '强 <{strong}；中 {strong}–<{medium}；弱 ≥{medium}',
+                {
+                  strong: scale.strong_boundary! + unit,
+                  medium: scale.medium_boundary! + unit,
+                },
+              )
             : t(
                 scale?.status === 'insufficient'
                   ? '不足十个化合物，未分档'

@@ -7,10 +7,17 @@ from patent_sar_extractor.core.sar.measurements import parse_measurement
 from patent_sar_extractor.core.sar.study_statistics import strength_band
 from patent_sar_extractor.core.sar.values import Value, grade_ranks
 from patent_sar_extractor.web.activity_rank_models import ActivityStrengthScale
+from patent_sar_extractor.web.indicator_conventions import numeric_direction
 
 
 def resolve_strength(
-    policies, contexts, observations, assessments, *, inline_units=True
+    policies,
+    contexts,
+    observations,
+    assessments,
+    *,
+    inline_units=True,
+    log_potency=True,
 ):
     by_id = {item["id"]: item for item in contexts}
     result = []
@@ -39,9 +46,23 @@ def resolve_strength(
                     except ValueError:
                         value = Value("unsupported")
                     pool.observe_value(source_id, value)
-            scale = pool.scale()
-            if policy["direction"] != "lower" or not concentration_unit(
-                by_id[identifier]["unit"]
+            context = by_id[identifier]
+            logarithmic = (
+                log_potency
+                and policy["direction"] == "higher"
+                and numeric_direction(
+                    context.get("name", ""),
+                    context["unit"],
+                    context.get("context", {}).get("assay"),
+                )[1]
+                == "log_potency"
+            )
+            scale = pool.scale(
+                basis="negative_log_molar" if logarithmic else "concentration"
+            )
+            if not logarithmic and (
+                policy["direction"] != "lower"
+                or not concentration_unit(by_id[identifier]["unit"])
             ):
                 scale = replace(
                     scale,
@@ -50,6 +71,7 @@ def resolve_strength(
                     anchor_upper=None,
                     strong_boundary=None,
                     medium_boundary=None,
+                    anchor_exponent=None,
                 )
             policy.update(
                 strength_scale=ActivityStrengthScale.from_potency(

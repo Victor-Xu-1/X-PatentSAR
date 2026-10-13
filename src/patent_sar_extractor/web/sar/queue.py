@@ -138,7 +138,7 @@ class SARQueue:
                 "Grade order must contain distinct explicit labels, strongest first.",
             )
         molecules = analysis_molecules(
-            included_molecules(self.service.datasets.all(dataset_id))
+            included_molecules(self.service.datasets.all(dataset_id)), dataset.metrics
         )
         try:
             contexts = context_catalog(
