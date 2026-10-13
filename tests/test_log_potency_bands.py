@@ -19,6 +19,32 @@ def profile(values):
 
 
 class LogPotencyTests(unittest.TestCase):
+    def test_default_basis_preserves_historical_nested_serialization(self):
+        from patent_sar_extractor.web.sar.study_models import StudyResultPolicy
+
+        pool = PotencyPool()
+        for index in range(10):
+            pool.observe(str(index), "1")
+        concentration = ActivityStrengthScale.from_potency(pool.scale())
+        historical = concentration.model_dump(exclude={"basis"})
+        self.assertEqual(concentration.model_dump(), historical)
+        self.assertEqual(
+            ActivityStrengthScale.model_validate(historical).model_dump(), historical
+        )
+        policy = StudyResultPolicy(
+            context_id="a" * 64,
+            direction="lower",
+            strength_method="tenth_decade",
+            strength_scale=concentration,
+        )
+        self.assertEqual(policy.model_dump()["strength_scale"], historical)
+        logarithmic = ActivityStrengthScale.from_potency(profile(["9"] * 10))
+        self.assertEqual(logarithmic.model_dump()["basis"], "negative_log_molar")
+        self.assertEqual(
+            ActivityStrengthScale.model_validate_json(logarithmic.model_dump_json()),
+            logarithmic,
+        )
+
     def test_main_table_catalog_color_filters_and_metadata_use_the_same_basis(self):
         for name in ("pIC50", "pEC50", "pDC50", "pKi", "pKd"):
             with self.subTest(name=name):

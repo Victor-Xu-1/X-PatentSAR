@@ -35,7 +35,11 @@ class ActivityStrengthScale(DTO):
     anchor_lower: RankValue | None = None
     anchor_upper: RankValue | None = None
     anchor_exponent: int | None = Field(default=None, ge=-308, le=306, strict=True)
-    basis: Literal["concentration", "negative_log_molar"] = "concentration"
+    # Absence has always meant concentration. Do not add a default field to
+    # historical transport/export bytes; only the new log basis needs a marker.
+    basis: Literal["concentration", "negative_log_molar"] = Field(
+        default="concentration", exclude_if=lambda value: value == "concentration"
+    )
 
     @classmethod
     def from_potency(
