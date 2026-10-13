@@ -50,6 +50,11 @@ class ActivityCoverageTests(unittest.TestCase):
             ),
             patch.object(coordinates, "extract_tables", return_value=[]),
             patch.object(coordinates, "parse_grid", return_value=rows),
+            patch.object(
+                coordinates,
+                "refine_scanned_header",
+                side_effect=lambda page, region, schema: schema,
+            ),
         ):
             parsed = coordinates.extract_coordinate_tables(
                 [SimpleNamespace(number=0), SimpleNamespace(number=1)],

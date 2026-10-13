@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, Literal, Mapping
+from collections.abc import Mapping
+from dataclasses import dataclass, field
+from typing import Any, Literal
 
 
 @dataclass
@@ -33,6 +34,7 @@ class BindingConflict:
     label_key: str
     page_index: int
     reason: str
+    evidence: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

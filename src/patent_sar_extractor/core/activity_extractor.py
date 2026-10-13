@@ -90,7 +90,9 @@ def extract(
     validate_rows(rows)
     tables = cells.tables + text.tables
     coverage = coverage_packet(pages, [*cells.coverage, *text.coverage], rows)
-    save_results(rows, output, profile, coverage=coverage)
+    save_results(
+        rows, output, profile, coverage=coverage, unresolved_rows=cells.unresolved_rows
+    )
     headers = list(dict.fromkeys([*cells.headers, *text.headers]))
     logger.info(
         "Activity observations: %s rows, %s cell-owned pages",

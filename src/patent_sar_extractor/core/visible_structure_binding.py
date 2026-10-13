@@ -6,9 +6,10 @@ import math
 import re
 from collections import Counter
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
+from .caption_grid_binding import bind_caption_grids
 from .table_cells import prefixed_label, read_cell
 from .table_geometry import page_tokens
 
@@ -25,6 +26,8 @@ class CaptionBinding:
     structure: Mapping[str, Any]
     label_bbox: Box
     observations: list[dict[str, Any]]
+    label_page_no: int | None = None
+    ownership: dict = field(default_factory=dict)
 
 
 def _box(values: Sequence[Any]) -> Box | None:
@@ -80,6 +83,12 @@ def bind_visible_captions(
     active: set[str] | None,
     *,
     excluded: set[str] | frozenset[str] = frozenset(),
+    source_pages: Sequence[int] | None = None,
+    recognized_pages: set[int] | None = None,
+    observed_labels: set[str] | None = None,
+    issues: list[dict] | None = None,
+    grids_for_page=None,
+    tokens_for_page=None,
 ) -> list[CaptionBinding]:
     by_page: dict[int, list[Mapping[str, Any]]] = {}
     for structure in structures:
@@ -87,8 +96,34 @@ def bind_visible_captions(
         if type(page) is int and 1 <= page <= len(doc):
             by_page.setdefault(page, []).append(structure)
     identities = Counter(str(s.get("id") or "") for s in structures)
-    bindings: list[CaptionBinding] = []
+    boxes_by_page = {
+        p: [_box([s.get(k) for k in ("x0", "y0", "x1", "y1")]) for s in items]
+        for p, items in by_page.items()
+    }
+    catalog = bind_caption_grids(
+        doc,
+        by_page,
+        boxes_by_page,
+        [p + 1 for p in source_pages] if source_pages is not None else sorted(by_page),
+        grids_for_page=grids_for_page,
+        tokens_for_page=tokens_for_page,
+    )
+    if recognized_pages is not None:
+        recognized_pages.update(p - 1 for p in catalog.pages)
+    if observed_labels is not None:
+        observed_labels.update(catalog.labels)
+    if issues is not None:
+        issues.extend(catalog.issues)
+    bindings = [
+        CaptionBinding(**item)
+        for item in catalog.bindings
+        if item["label"] not in excluded
+        and (active is None or item["label"] in active)
+        and identities[str(item["structure"].get("id") or "")] == 1
+    ]
     for page_no, page_structures in sorted(by_page.items()):
+        if page_no in catalog.pages:
+            continue
         boxes = [
             _box([s.get(k) for k in ("x0", "y0", "x1", "y1")]) for s in page_structures
         ]
@@ -96,7 +131,13 @@ def bind_visible_captions(
         if any(box is None for box in boxes):
             continue
         page = doc[page_no - 1]
-        tokens = page_tokens(page, dpi=200, allow_tesseract=False)
+        tokens = catalog.tokens.get(page_no)
+        if tokens is None:
+            tokens = (
+                tokens_for_page(page)
+                if tokens_for_page
+                else page_tokens(page, dpi=200, allow_tesseract=False)
+            )
         native = bool(page.get_text("words"))
         candidates = []
         for token in _caption_tokens(tokens):
@@ -131,7 +172,9 @@ def bind_visible_captions(
             reading = read_cell(page, expanded, [token], "label", native)
             if not reading.needs_review and reading.value == label:
                 candidates.append(
-                    CaptionBinding(label, owners[0], bounds, reading.observations)
+                    CaptionBinding(
+                        label, owners[0], bounds, reading.observations, page_no
+                    )
                 )
         labels = Counter(b.label for b in candidates)
         owner_counts = Counter(str(b.structure["id"]) for b in candidates)
@@ -141,4 +184,14 @@ def bind_visible_captions(
             if labels[b.label] == 1 and owner_counts[str(b.structure["id"])] == 1
         )
     counts = Counter(b.label for b in bindings)
+    if issues is not None:
+        issues.extend(
+            {
+                "cpd": b.label,
+                "page_no": b.label_page_no or b.structure["page_no"],
+                "reason": "ambiguous_caption_label",
+            }
+            for b in bindings
+            if counts[b.label] > 1
+        )
     return [b for b in bindings if counts[b.label] == 1]

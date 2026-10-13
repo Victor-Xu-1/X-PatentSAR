@@ -26,7 +26,8 @@ class CellReading:
 
 def prefixed_label(value: str) -> str:
     match = re.fullmatch(
-        r"(?:Example|Compound|Cmpd|Cpd|实施例|化合物)[-:.]?([1-9]\d{0,3}[A-Z]?)",
+        r"(?:Example|Compound|Cmpd|Cpd|实施例|化合物)[-:.]?([1-9]\d{0,3}[A-Z]?)"
+        r"(?:\*?(?:first|second)elutingisomer)?",
         re.sub(r"\s+", "", value),
         re.IGNORECASE,
     )
@@ -133,11 +134,26 @@ def _ocr_cell(page, bounds, kind: str, dpi: int) -> tuple[str, float]:
     )
     # The grid already supplies detection. Re-running a whole-image detector
     # for every tiny cell is both slower and less reliable for isolated digits.
-    result, _ = engine[1](image, use_det=False, use_cls=False)
-    if len(result or []) != 1:
-        return "", 0.0
-    value = _normalize(str(result[0][0]), kind)
-    score = float(result[0][1])
+    multiline = kind == "label" and (ink_y.max() - ink_y.min() + 1) * 72 / dpi > 12
+    result, _ = engine[1](image, use_det=multiline, use_cls=False)
+    if multiline:
+        if not result:
+            return "", 0.0
+        ordered = sorted(
+            result,
+            key=lambda item: (
+                round(min(p[1] for p in item[0]) * 72 / dpi / 3),
+                min(p[0] for p in item[0]),
+            ),
+        )
+        raw = " ".join(str(item[1]) for item in ordered)
+        value = _normalize(raw, kind)
+        score = min(float(item[2]) for item in ordered)
+    else:
+        if len(result or []) != 1:
+            return "", 0.0
+        value = _normalize(str(result[0][0]), kind)
+        score = float(result[0][1])
     return (value, score) if score >= 0.85 else ("", score)
 
 

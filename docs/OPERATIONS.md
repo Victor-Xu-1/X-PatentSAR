@@ -1,5 +1,20 @@
 # Operations and troubleshooting
 
+## Original-source extraction repair
+
+Current changed stages are classifier3, locator6, binder9 and activity8;
+segmentation remains5. Preserve failed runs and raw observation caches. Old
+caption bindings must not be relabelled as current: a new run must re-prove source
+ownership, including whether labels precede drawings or cross a page boundary.
+A correctly parsed molecular string does not certify chemical identity.
+
+For the authorized end-to-end acceptance, submit the original PDF and subsequent
+SAR study through the frontend at the unchanged operator URL. Do not substitute
+private scripts, edit scientific outputs, guess missing IDs/measurements, or turn
+off acceptance gates. Synthetic/focused code tests remain separate from real
+platform acceptance. Only outputs of the frontend-submitted platform jobs count as
+the delivered patent/SAR result. Retain every attempt and deployed revision.
+
 ## Large SAR reports
 
 Narrow screens show reference and one candidate together, with previous/next
@@ -616,9 +631,9 @@ no numeric values; zero eligible inputs produce an empty stage, not fake success
 The complete-workflow environment preset includes both DECIMER and ADMET CPU
 components; reading existing results still does not require installing models.
 
-Locator/segmentation epochs5 retain activity-independent source coverage. Binder
-epoch8 discovers numbered original cells across all selected source pages even
-when no table pages were pre-labelled. Activity epoch7 follows only geometrically
+Locator epoch6 and segmentation epoch5 retain activity-independent source coverage. Binder
+epoch9 discovers numbered original cells across all selected source pages even
+when no table pages were pre-labelled. Activity epoch8 follows only geometrically
 proved adjacent continuations from classified seeds, preserving each cell's
 actual source page. Missing/changed grids terminate continuation; no fixed patent
 page lists or inferred identifier sequence are used. An eligible continuation
@@ -734,7 +749,7 @@ apply only to future installations and are not migrations or cleanup requests.
 
 ### Format repair and optional LLM evidence review
 
-Product release numbering follows the PR policy. Classifier2, binder8 and activity7 invalidate their old
+Product release numbering follows the PR policy. Classifier2, binder9 and activity8 invalidate their old
 derived checkpoints; exact-original compatible OCR/segmentation observations
 remain reusable under existing manifest checks. Start a fresh software attempt,
 not an edit of old generated files. Wide structure grids use actual header roles
@@ -778,7 +793,7 @@ rewriting the task's original semantic policy or science. A missing/corrupt
 control file cannot reset its budget or bypass authorization. No OOM/system fault
 triggers an API call or an unbounded retry. Evidence receipts remain separate;
 the same original-cell writer and strict QA own all measurements/acceptance.
-Activity epoch7 and the semantic API-policy fingerprint require fresh derived
+Activity epoch8 and the semantic API-policy fingerprint require fresh derived
 activity parsing after a relevant policy change, not a replay of old acceptance.
 Old whole-page VLM and key-only/free-form QA/batch paths are removed; historical
 files are preserved. Real provider and scientific acceptance remain separate
@@ -815,7 +830,7 @@ otherwise uncovered seed page. Unresolved regions cannot disappear because anoth
 table had valid rows. Inspect source/coverage proof, not only extracted-row count.
 QA schema4 rejects missing/unresolved coverage; old artifacts remain unchanged and
 their acceptance is rechecked as historical rather than silently promoted. Unchanged
-raw OCR and upstream manifests remain reusable; activity epoch7 reparses its own
+raw OCR and upstream manifests remain reusable; activity epoch8 reparses its own
 derived stage. Unknown metrics/units, no usable geometry/catalog and wrong OCR values
 still need supported source evidence or review. This is not all-format perfection.
 

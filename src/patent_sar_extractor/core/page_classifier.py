@@ -22,7 +22,8 @@ CLASSIFIER_TEXT_WINDOW = 2400
 
 # ── 关键词规则 ──
 ACTIVITY_RE = re.compile(
-    r"IC50|DC50|EC50|Ki\b|Kd\b|Dmax|nM\b|µM|μM|GI50|CC50|pIC50|"
+    r"IC50|DC50|EC50|(?<![A-Za-z])Ki\b|(?<![A-Za-z])Kd\b|Dmax|"
+    r"(?-i:(?<![A-Za-z])[nµμu]M(?![A-Za-z]))|GI50|CC50|pIC50|"
     r"抑制率|结合率|降解率|表\s*\d|Table\s+\d.*activit",
     re.IGNORECASE,
 )
@@ -111,8 +112,12 @@ def classify_pdf(pdf_path: str, output_dir: str, force_ocr_cache: bool = False) 
         min_native_chars=30,
         force=force_ocr_cache,
     )
-    pages_text_map = {int(k): v for k, v in cache.get("page_texts", {}).items() if str(k).isdigit()}
-    pages_text = [str(pages_text_map.get(i, ""))[:CLASSIFIER_TEXT_WINDOW] for i in range(total)]
+    pages_text_map = {
+        int(k): v for k, v in cache.get("page_texts", {}).items() if str(k).isdigit()
+    }
+    pages_text = [
+        str(pages_text_map.get(i, ""))[:CLASSIFIER_TEXT_WINDOW] for i in range(total)
+    ]
     logger.info(f"  RapidOCR/缓存完成 ({total} 页)")
 
     # Step 2: 关键词分类（策略：宁可多不能少，只明确排除非核心页）
@@ -124,7 +129,6 @@ def classify_pdf(pdf_path: str, output_dir: str, force_ocr_cache: bool = False) 
     for i, text in enumerate(pages_text):
         is_activity = bool(ACTIVITY_RE.search(text))
         is_synthesis = bool(SYNTHESIS_RE.search(text))
-        is_non_core = bool(NON_CORE_RE.search(text))
         is_structure_table = bool(STRUCTURE_TABLE_RE.search(text))
 
         cpd_dense = len(re.findall(r"Cpd[-\s]?\d+|实施例\s*\d+", text, re.IGNORECASE))
@@ -133,25 +137,17 @@ def classify_pdf(pdf_path: str, output_dir: str, force_ocr_cache: bool = False) 
         is_data_table = cpd_dense >= 10 and nums >= cpd_dense * 2
         structure_table_ids = len(STRUCTURE_TABLE_CONTINUATION_ID_RE.findall(text))
         structure_table_masses = len(STRUCTURE_TABLE_MASS_RE.findall(text))
-        line_id_hits, line_mass_hits, line_cpd_hits = _structure_table_continuation_score(text)
+        line_id_hits, line_mass_hits, line_cpd_hits = (
+            _structure_table_continuation_score(text)
+        )
         flattened_table = _is_flattened_structure_table_continuation(text)
         is_structure_table_page = is_structure_table and (
-            chinese_cpd_dense >= 2
-            or len(re.findall(r"\b\d+(?:\.\d+)?\b", text)) >= 6
+            chinese_cpd_dense >= 2 or len(re.findall(r"\b\d+(?:\.\d+)?\b", text)) >= 6
         )
         is_structure_table_continuation = (
-            (
-                structure_table_ids >= 3
-                and structure_table_masses >= 3
-            )
-            or (
-                line_id_hits >= 3
-                and line_mass_hits >= 3
-            )
-            or (
-                line_cpd_hits >= 2
-                and line_mass_hits >= 2
-            )
+            (structure_table_ids >= 3 and structure_table_masses >= 3)
+            or (line_id_hits >= 3 and line_mass_hits >= 3)
+            or (line_cpd_hits >= 2 and line_mass_hits >= 2)
             or flattened_table
         ) and not is_activity
 
@@ -169,7 +165,7 @@ def classify_pdf(pdf_path: str, output_dir: str, force_ocr_cache: bool = False) 
     # section break (bioassay / claims) appears. This helps scanned Chinese
     # patents where only the first table page has a strong header signal.
     synthesis_set = set(synthesis_pages)
-    for start_idx in sorted(list(synthesis_set)):
+    for start_idx in sorted(synthesis_set):
         text = pages_text[start_idx]
         if not STRUCTURE_TABLE_RE.search(text):
             continue
@@ -179,9 +175,13 @@ def classify_pdf(pdf_path: str, output_dir: str, force_ocr_cache: bool = False) 
                 continue
             if NON_CORE_RE.search(next_text) or BIOASSAY_RE.search(next_text):
                 break
-            continuation_ids = len(STRUCTURE_TABLE_CONTINUATION_ID_RE.findall(next_text))
+            continuation_ids = len(
+                STRUCTURE_TABLE_CONTINUATION_ID_RE.findall(next_text)
+            )
             continuation_masses = len(STRUCTURE_TABLE_MASS_RE.findall(next_text))
-            line_id_hits, line_mass_hits, continuation_cpds = _structure_table_continuation_score(next_text)
+            line_id_hits, line_mass_hits, continuation_cpds = (
+                _structure_table_continuation_score(next_text)
+            )
             flattened_table = _is_flattened_structure_table_continuation(next_text)
             if continuation_ids >= 2 and continuation_masses >= 2:
                 synthesis_set.add(next_idx)
@@ -200,7 +200,9 @@ def classify_pdf(pdf_path: str, output_dir: str, force_ocr_cache: bool = False) 
 
     # Cpd 前缀
     valid_prefixes = {k: v for k, v in cpd_counts.items() if v > 0}
-    best_prefix = max(valid_prefixes, key=valid_prefixes.get) if valid_prefixes else "Cpd-"
+    best_prefix = (
+        max(valid_prefixes, key=valid_prefixes.get) if valid_prefixes else "Cpd-"
+    )
 
     best_pattern = r"Cpd[-\s]?(\d+)"
     for pat, prefix in CPD_PREFIX_PATTERNS:
@@ -217,7 +219,9 @@ def classify_pdf(pdf_path: str, output_dir: str, force_ocr_cache: bool = False) 
 
     other_pages = sorted(set(range(total)) - set(synthesis_pages) - set(activity_pages))
     result = {
-        **artifact_identity(PAGE_CLASSIFICATION_SCHEMA, PAGE_CLASSIFICATION_SCHEMA_VERSION),
+        **artifact_identity(
+            PAGE_CLASSIFICATION_SCHEMA, PAGE_CLASSIFICATION_SCHEMA_VERSION
+        ),
         "synthesis_pages": sorted(synthesis_pages),
         "activity_pages": sorted(activity_pages),
         "other_pages": sorted(other_pages),

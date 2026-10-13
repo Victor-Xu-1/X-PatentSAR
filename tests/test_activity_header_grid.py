@@ -8,11 +8,9 @@ from unittest.mock import patch
 
 import fitz
 
-from patent_sar_extractor.core.activity_coordinates import (
-    cell_text,
-    extract_coordinate_tables,
-    parse_grid,
-)
+from patent_sar_extractor.core.activity_coordinates import extract_coordinate_tables
+from patent_sar_extractor.core.activity_grid_cells import cell_text
+from patent_sar_extractor.core.activity_grid_parser import parse_grid
 from patent_sar_extractor.core.activity_headers import (
     context_from_text,
     grid_schema,
@@ -55,6 +53,17 @@ def observed_grid(matrix, *, context=CONTEXT, schema=None, native=True):
 
 
 class ActivityHeaderGridTests(unittest.TestCase):
+    def test_long_unresolved_headers_keep_raw_evidence_not_overlong_machine_keys(self):
+        header = "No. | " + ("unresolved original text " * 70)
+        rows = parse_segment("Table 7. Activity assay", header + "\nA-7 | 3", page_no=2)
+        self.assertEqual(len(rows), 1)
+        self.assertTrue(rows[0].needs_review)
+        self.assertTrue(all(len(key) <= 300 for key in rows[0].activity_values))
+        self.assertIn(
+            "unresolved original text", rows[0].activity_sources[0]["raw_header"]
+        )
+        _activities(asdict(rows[0]), page_count=10)
+
     def test_actual_caption_and_body_survive_trailing_paragraph_number(self):
         source = "Table 83. MET cellular binding\nAssay: enzyme\n[00831]"
         context = context_from_text("[00831]", source)

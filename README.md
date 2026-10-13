@@ -1,5 +1,13 @@
 # X-PatentSAR
 
+Structure extraction follows original ruled-cell ownership, including caption-above,
+caption-below and proved adjacent-page splits. Dense numbered catalogs are not
+excluded because small atom letters were missed by page OCR. Unproved labels,
+conflicting reads, missing crops and molecular-identity findings remain rejected;
+there is no all-format or 100% chemical-accuracy claim. Activity grids retain
+parallel/transposed physical sources and unresolved rows rather than losing an
+entire table after one unreadable identifier.
+
 Automatic SAR comparisons open on the smallest already-proved reference-side
 variable footprint, with stable ties and every alternative retained. Manual and
 legacy region order and explicit choices are preserved. At narrow widths the

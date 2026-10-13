@@ -15,6 +15,39 @@ from patent_sar_extractor.core.structure_page_locator import locate_structure_pa
 
 
 class StructurePageCoverageTests(unittest.TestCase):
+    def test_mixed_catalog_and_formula_prose_keeps_dense_original_ids(self):
+        from patent_sar_extractor.core.structure_page_evidence import (
+            structure_page_evidence,
+        )
+
+        for prefix in ("Compound", "Example", "Cpd"):
+            with self.subTest(prefix=prefix):
+                text = (
+                    " ".join(f"{prefix} {n}" for n in range(91, 103))
+                    + " Non-limiting embodiments: a compound having formula (I)"
+                )
+                self.assertIn(0, structure_page_evidence({0: text}, set()))
+
+    def test_repeated_single_reference_is_not_a_dense_catalog(self):
+        from patent_sar_extractor.core.structure_page_evidence import (
+            structure_page_evidence,
+        )
+
+        text = "Compound 71 " * 12 + "Biological observations reported above."
+        self.assertNotIn(0, structure_page_evidence({0: text}, set()))
+
+    def test_dense_printed_caption_catalog_does_not_require_ocr_atom_letters(self):
+        result = self.locate(
+            [
+                " ".join(f"Compound {n}" for n in range(13, 37)),
+                "Compound No. IC50 (nM) "
+                + " ".join(f"Compound {n} 20" for n in range(13, 37)),
+            ],
+            {"synthesis_pages": [], "activity_pages": [1]},
+            [],
+        )
+        self.assertEqual(result["selected_pages"], [0])
+
     def locate(self, texts: list[str], classification: dict, active: list[str]):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
