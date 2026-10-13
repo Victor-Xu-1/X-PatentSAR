@@ -50,7 +50,8 @@ for (const width of [390, 800, 1672]) {
       await expect(
         network.getByRole('button', { name: 'Compare ' + label, exact: true }),
       ).toBeVisible();
-    await expect(network.locator('.sar-network-branch')).toHaveCount(3);
+    const matrix = network.getByRole('table', { name: 'Structure comparison', exact: true });
+    await expect(matrix.locator('thead th strong')).toHaveText(['1', '2', '3', '4']);
     const directions = await (
       await page.request.get(
         `/api/v1/sar/jobs/${job}/study/rows?scope=changes&reference_id=${visibleSites[0]!.region.molecule_id}`,
@@ -58,11 +59,12 @@ for (const width of [390, 800, 1672]) {
     ).json();
     expect(directions.total).toBe(3);
     expect(directions.items.map((row: { label: string }) => row.label)).toEqual(['2', '3', '4']);
-    const withoutActivity = network
-      .locator('.sar-network-branch')
-      .filter({ has: page.getByRole('button', { name: 'Compare 4', exact: true }) });
-    await expect(withoutActivity.locator('.sar-branch-measurement dd').first()).toHaveText('—');
-    await expect(withoutActivity.locator('.sar-branch-measurement dd').last()).toHaveText('4');
+    await expect(
+      matrix.getByRole('row').filter({ hasText: 'IC50' }).locator('td').last(),
+    ).toHaveText('—Not measured');
+    await expect(
+      matrix.getByRole('row').filter({ hasText: 't_half' }).locator('td').last(),
+    ).toHaveText('4Δ +3.00');
     await page.waitForFunction(() =>
       [...document.querySelectorAll('.sar-network img')]
         .filter((el) => el.checkVisibility())
@@ -103,11 +105,13 @@ for (const width of [390, 800, 1672]) {
     expect(
       atomLabels.every((label) => label && !/^(R[0-9]+)(?: H)? · \1(?:$|[ ·])/u.test(label)),
     ).toBe(true);
+    const structures = matrix.locator('thead .sar-study-image');
+    expect(await structures.count()).toBeGreaterThan(1);
     expect(
-      await network.locator('.sar-network-branch > .sar-study-image').evaluateAll((figures) =>
+      await structures.evaluateAll((figures) =>
         figures.every((figure) => {
           const button = figure.querySelector('.sar-image-focus-action');
-          if (!button) return true;
+          if (!button) return false;
           const bounds = figure.getBoundingClientRect(),
             control = button.getBoundingClientRect();
           return (
