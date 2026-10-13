@@ -136,6 +136,12 @@ export default function App() {
               ready={connected && connection.data!.health.ready}
               capabilities={connection.data?.health.capabilities ?? null}
               job={jobs.job}
+              jobVerified={
+                jobs.verified &&
+                project !== null &&
+                !projectResource.loading &&
+                !projectResource.error
+              }
               onJobChange={jobs.reload}
               onProjectReload={projectResource.reload}
               onUpload={onUpload}

@@ -1,5 +1,17 @@
 # X-PatentSAR architecture
 
+`api/localSession.ts` owns one ephemeral cached/single-flight same-origin session
+inside the existing ApiClient. Generation checks and serialized explicit reset
+prevent obsolete response/Set-Cookie races. Only GET +401 +session_required can
+trigger one handshake and one authenticated re-read; other faults and every
+mutation/POST retain existing explicit errors and non-replay semantics.
+`useResource` has opt-in same-key presentation retention, used only by `useJobs`.
+Fresh list/detail validation is separate from last-known presentation. Workspace
+and task history pass required current-read verification to JobActions; unknown
+state disables task start/resume/cancel and does not imply an empty/not-started task.
+StageStrip marks unverified status unknown. Existing reload, queue, state store,
+locale and security authorities remain; no source/QA reinterpretation occurs.
+
 `source_section_roles.py` separates original numbered assay sections from compound
 headings. Binding retains source-section text/geometry, stops diagram ownership
 at every observed heading, and requires independent crop-label proof or a unique

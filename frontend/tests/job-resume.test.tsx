@@ -34,7 +34,7 @@ describe('single authoritative interrupted-job resume action', () => {
     vi.stubGlobal('fetch', transport);
     const onChange = vi.fn();
     const { rerender } = render(
-      <JobActions project={project} job={interrupted} ready onChange={onChange} compact />,
+      <JobActions verified project={project} job={interrupted} ready onChange={onChange} compact />,
     );
     const resume = screen.getByRole('button', { name: '继续提取' });
     expect(resume).toBeVisible();
@@ -62,7 +62,9 @@ describe('single authoritative interrupted-job resume action', () => {
     expect(resume).toBeDisabled();
     fireEvent.click(resume);
     expect(transport).toHaveBeenCalledTimes(2);
-    rerender(<JobActions project={project} job={resumed} ready onChange={onChange} compact />);
+    rerender(
+      <JobActions verified project={project} job={resumed} ready onChange={onChange} compact />,
+    );
     expect(screen.queryByRole('button', { name: '继续提取' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: '取消任务' })).toBeEnabled();
   });
@@ -75,7 +77,7 @@ describe('single authoritative interrupted-job resume action', () => {
     vi.stubGlobal('fetch', transport);
     const onChange = vi.fn();
     const { rerender } = render(
-      <JobActions project={project} job={interrupted} ready onChange={onChange} compact />,
+      <JobActions verified project={project} job={interrupted} ready onChange={onChange} compact />,
     );
     await userEvent.click(screen.getByRole('button', { name: '继续提取' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('写入结果未知');
@@ -89,7 +91,14 @@ describe('single authoritative interrupted-job resume action', () => {
     expect(transport).toHaveBeenCalledTimes(2);
     expect(screen.getByRole('button', { name: '继续提取' })).toBeDisabled();
     rerender(
-      <JobActions project={project} job={{ ...interrupted }} ready onChange={onChange} compact />,
+      <JobActions
+        verified
+        project={project}
+        job={{ ...interrupted }}
+        ready
+        onChange={onChange}
+        compact
+      />,
     );
     expect(screen.getByRole('button', { name: '继续提取' })).toBeEnabled();
     expect(transport).toHaveBeenCalledTimes(2);
@@ -104,7 +113,9 @@ describe('single authoritative interrupted-job resume action', () => {
       );
     vi.stubGlobal('fetch', transport);
     const onChange = vi.fn();
-    render(<JobActions project={project} job={interrupted} ready onChange={onChange} compact />);
+    render(
+      <JobActions verified project={project} job={interrupted} ready onChange={onChange} compact />,
+    );
     await userEvent.click(screen.getByRole('button', { name: '继续提取' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('任务暂不可恢复');
     expect(screen.getByRole('button', { name: '继续提取' })).toBeEnabled();
@@ -138,6 +149,7 @@ describe('single authoritative interrupted-job resume action', () => {
     vi.stubGlobal('fetch', transport);
     render(
       <JobActions
+        verified
         project={selectedProject}
         job={current}
         ready={ready}
@@ -156,6 +168,7 @@ describe('single authoritative interrupted-job resume action', () => {
     vi.stubGlobal('fetch', transport);
     render(
       <JobActions
+        verified
         project={project}
         job={{ ...interrupted, status }}
         ready
@@ -173,6 +186,7 @@ describe('single authoritative interrupted-job resume action', () => {
     vi.stubGlobal('fetch', transport);
     render(
       <JobActions
+        verified
         project={project}
         job={{ ...interrupted, can_resume: false }}
         ready

@@ -30,6 +30,7 @@ function IsolatedRecoveryPage() {
       <article className="job-card">
         <div className="job-card-body">
           <JobActions
+            verified
             project={project}
             job={job}
             ready

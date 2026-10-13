@@ -18,7 +18,15 @@ import {
 import { StageList } from './StageList';
 import { WorkflowGroups } from './WorkflowGroups';
 
-export function StageStrip({ job, compact = false }: { job: Job | null; compact?: boolean }) {
+export function StageStrip({
+  job,
+  compact = false,
+  verified = true,
+}: {
+  job: Job | null;
+  compact?: boolean;
+  verified?: boolean;
+}) {
   const { t } = useTranslation();
   const disclosure = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
@@ -53,7 +61,12 @@ export function StageStrip({ job, compact = false }: { job: Job | null; compact?
           : t('历史阶段可用性未知')}
       </output>
     ) : null;
-  const list = <StageList job={job} stages={stages} names={names} />;
+  const list =
+    !verified && !job ? (
+      <output>{t('阶段状态未知')}</output>
+    ) : (
+      <StageList job={job} stages={stages} names={names} />
+    );
   if (!compact)
     return (
       <div className="stage-overview">
@@ -77,21 +90,23 @@ export function StageStrip({ job, compact = false }: { job: Job | null; compact?
     completeCoreStages(stages);
   const current = missingResearch ? undefined : (active ?? stages.at(-1));
   const currentName = missingResearch ? 'admet' : current?.name;
-  const label = !job
-    ? t('尚未启动')
-    : job.history_available !== true
-      ? job.history_available === false
-        ? t('历史阶段不可用')
-        : t('阶段状态未知')
-      : job.status === 'failed' && job.error?.code === 'core_not_accepted'
-        ? jobStatusText(job)
-        : job.status === 'complete' && !missingResearch
-          ? current?.name === 'admet' && current.status === 'empty'
-            ? t('{label} · 未计算', { label: t(stageLabel(current.name, current)) })
-            : jobStatusText(job)
-          : currentName
-            ? `${t(stageLabel(currentName, current))} · ${t(stageStatusText(job, current, currentName))}`
-            : jobStatusText(job);
+  const label = !verified
+    ? t('阶段状态未知')
+    : !job
+      ? t('尚未启动')
+      : job.history_available !== true
+        ? job.history_available === false
+          ? t('历史阶段不可用')
+          : t('阶段状态未知')
+        : job.status === 'failed' && job.error?.code === 'core_not_accepted'
+          ? jobStatusText(job)
+          : job.status === 'complete' && !missingResearch
+            ? current?.name === 'admet' && current.status === 'empty'
+              ? t('{label} · 未计算', { label: t(stageLabel(current.name, current)) })
+              : jobStatusText(job)
+            : currentName
+              ? `${t(stageLabel(currentName, current))} · ${t(stageStatusText(job, current, currentName))}`
+              : jobStatusText(job);
   const progress = current?.progress;
   const reviewCount = recognitionReviewCount(job);
   return (
@@ -99,7 +114,7 @@ export function StageStrip({ job, compact = false }: { job: Job | null; compact?
       <summary className="stage-current-line" aria-label={t('提取阶段详情')}>
         <WorkflowGroups job={job} />
         <output
-          className={`stage-current ${completedCoreRejection(job) ? 'is-review' : `is-${job?.status ?? 'idle'}`}`}
+          className={`stage-current ${!verified ? 'is-unknown' : completedCoreRejection(job) ? 'is-review' : `is-${job?.status ?? 'idle'}`}`}
           aria-live="polite"
         >
           {job && ['cancelled', 'interrupted'].includes(job.status) && `${jobStatusText(job)} · `}
@@ -107,7 +122,7 @@ export function StageStrip({ job, compact = false }: { job: Job | null; compact?
           {reviewCount !== null && (
             <span className="stage-progress"> · {t('{count} 条结构', { count: reviewCount })}</span>
           )}
-          {!completedCoreRejection(job) && progress && progress.total > 0 && (
+          {verified && !completedCoreRejection(job) && progress && progress.total > 0 && (
             <span className="stage-progress"> · {jobStageProgressText(current)}</span>
           )}
         </output>

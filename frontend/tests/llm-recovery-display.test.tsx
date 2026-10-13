@@ -113,7 +113,7 @@ describe('source-backed LLM recovery details only', () => {
       llm_recovery === undefined ? (rest as Job) : ({ ...rest, llm_recovery } as Job);
     const transport = vi.fn();
     vi.stubGlobal('fetch', transport);
-    render(<JobActions project={project} job={value} ready onChange={vi.fn()} />);
+    render(<JobActions verified project={project} job={value} ready onChange={vi.fn()} />);
     expect(
       screen.queryByRole('button', { name: '更新 API 授权', hidden: true }),
     ).not.toBeInTheDocument();
@@ -125,6 +125,7 @@ describe('source-backed LLM recovery details only', () => {
     (status) => {
       render(
         <JobActions
+          verified
           project={project}
           job={{ ...recoveryJob, status }}
           ready={false}
@@ -231,6 +232,7 @@ describe('actionable credential-free nonce test failures', () => {
     ({ state, hint, can_reauthorize }) => {
       render(
         <JobActions
+          verified
           project={project}
           job={{
             ...recoveryJob,

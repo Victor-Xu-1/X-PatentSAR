@@ -2,36 +2,24 @@ import type { Decoder } from './validation';
 import { ContractError } from './validation';
 import { decodeSession } from './decoders';
 import type { Session } from './types';
+import { LocalSession } from './localSession';
 import { boundedResponse, readJson } from './response';
 import { ApiError, errorFrom } from './errors';
 import { UiError } from '../i18n';
 export class ApiClient {
-  private session: Session | null = null;
-  private bootstrapping: Promise<Session> | null = null;
+  private readonly sessions = new LocalSession(() =>
+    this.send('/session', { method: 'GET' }, undefined).then(readJson).then(decodeSession),
+  );
   constructor(
     private readonly transport: typeof fetch = (...args) => fetch(...args),
     private readonly timeout = 30_000,
   ) {}
 
   resetSession() {
-    this.session = null;
-    this.bootstrapping = null;
+    this.sessions.reset();
   }
   bootstrap(): Promise<Session> {
-    if (this.session) return Promise.resolve(this.session);
-    if (!this.bootstrapping) {
-      this.bootstrapping = this.send('/session', { method: 'GET' }, undefined)
-        .then(readJson)
-        .then(decodeSession)
-        .then((session) => {
-          this.session = session;
-          return session;
-        })
-        .finally(() => {
-          this.bootstrapping = null;
-        });
-    }
-    return this.bootstrapping;
+    return this.sessions.bootstrap();
   }
 
   private async send(
@@ -76,7 +64,6 @@ export class ApiClient {
           await this.backoff(signal);
           continue;
         }
-        if (response.status === 401) this.resetSession();
         let payload: unknown = null;
         try {
           payload = await readJson(await boundedResponse(response, 8 * 1024 * 1024));
@@ -129,9 +116,29 @@ export class ApiClient {
     });
   }
   async get<T>(path: string, decode: Decoder<T>, signal?: AbortSignal): Promise<T> {
-    if (path !== '/health') await this.bootstrap();
+    const observed = path !== '/health' ? await this.bootstrap() : null;
     signal?.throwIfAborted();
-    return decode(await readJson(await this.send(path, { method: 'GET' }, signal)));
+    const read = async () =>
+      decode(await readJson(await this.send(path, { method: 'GET' }, signal)));
+    try {
+      return await read();
+    } catch (error) {
+      if (!observed || !(error instanceof ApiError) || error.status !== 401) throw error;
+      this.sessions.invalidate(observed);
+      // Only the server's explicit same-origin session fault admits one safe GET
+      // recovery. No mutation, readonly POST, arbitrary 401 or health is replayed.
+      if (error.code !== 'session_required') throw error;
+      signal?.throwIfAborted();
+      const renewed = await this.bootstrap();
+      signal?.throwIfAborted();
+      try {
+        return await read();
+      } catch (failure) {
+        if (failure instanceof ApiError && failure.status === 401)
+          this.sessions.invalidate(renewed);
+        throw failure;
+      }
+    }
   }
   private async authenticatedBody(
     path: string,
@@ -142,17 +149,22 @@ export class ApiClient {
     mayWrite = true,
   ): Promise<Response> {
     const session = await this.bootstrap();
-    return this.send(
-      path,
-      {
-        method,
-        body,
-        headers: { 'Content-Type': contentType, 'X-CSRF-Token': session.csrf_token },
-      },
-      options.signal,
-      options.timeoutMs,
-      mayWrite,
-    );
+    try {
+      return await this.send(
+        path,
+        {
+          method,
+          body,
+          headers: { 'Content-Type': contentType, 'X-CSRF-Token': session.csrf_token },
+        },
+        options.signal,
+        options.timeoutMs,
+        mayWrite,
+      );
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) this.sessions.invalidate(session);
+      throw error;
+    }
   }
   async mutate<T>(
     path: string,

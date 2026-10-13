@@ -112,7 +112,7 @@ describe('actual task progress and unavailable historic stages', () => {
     render(
       <>
         <StageStrip job={current} compact />
-        <JobActions project={project} job={current} ready onChange={vi.fn()} compact />
+        <JobActions verified project={project} job={current} ready onChange={vi.fn()} compact />
       </>,
     );
     expect(document.querySelector('.stage-current')).toHaveTextContent('文档解析 · 等待资源');

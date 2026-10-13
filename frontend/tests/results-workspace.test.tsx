@@ -201,6 +201,7 @@ describe('dense evidence-led result workspace', () => {
     const navigate = vi.fn();
     render(
       <Workspace
+        jobVerified
         project={project}
         route={{ ...emptyRoute, projectId: project.id }}
         navigate={navigate}

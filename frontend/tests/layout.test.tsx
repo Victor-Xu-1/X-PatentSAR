@@ -103,6 +103,7 @@ describe('results-first layout with one safe, refreshable state', () => {
     const navigate = vi.fn();
     render(
       <Workspace
+        jobVerified
         project={project}
         route={{
           ...emptyRoute,

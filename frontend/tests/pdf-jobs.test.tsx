@@ -188,14 +188,14 @@ describe('core pipeline lifecycle presentation', () => {
   it('starts only the existing core pipeline without paid advisory calls', async () => {
     const create = vi.spyOn(api, 'createJob').mockResolvedValue(job);
     const onChange = vi.fn();
-    render(<JobActions project={project} job={null} ready onChange={onChange} />);
+    render(<JobActions verified project={project} job={null} ready onChange={onChange} />);
     await userEvent.click(screen.getByText('运行提取'));
     await waitFor(() => expect(create).toHaveBeenCalledWith(project.id, null));
     expect(onChange).toHaveBeenCalledOnce();
   });
   it('cancel targets only the actual job and requires confirmation', async () => {
     const cancel = vi.spyOn(api, 'cancelJob').mockResolvedValue({ ...job, status: 'cancelled' });
-    render(<JobActions project={project} job={job} ready onChange={vi.fn()} />);
+    render(<JobActions verified project={project} job={job} ready onChange={vi.fn()} />);
     await userEvent.click(screen.getByText('取消任务'));
     expect(cancel).not.toHaveBeenCalled();
     await userEvent.click(screen.getByText('确认取消此任务'));
@@ -205,6 +205,7 @@ describe('core pipeline lifecycle presentation', () => {
     const create = vi.spyOn(api, 'createJob').mockResolvedValue(job);
     const { rerender } = render(
       <JobActions
+        verified
         project={project}
         job={{ ...job, status: 'interrupted', can_resume: true }}
         ready={false}
@@ -214,6 +215,7 @@ describe('core pipeline lifecycle presentation', () => {
     expect(screen.getByText('继续提取')).toBeDisabled();
     rerender(
       <JobActions
+        verified
         project={project}
         job={{ ...job, status: 'interrupted', can_resume: true }}
         ready

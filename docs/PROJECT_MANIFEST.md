@@ -1,5 +1,14 @@
 # Project governance manifest
 
+- Session/read-state ownership: `frontend/src/api/localSession.ts` owns the one
+  ephemeral same-origin cache/handshake authority inside the existing ApiClient.
+  Safe GET session faults admit one shared handshake/re-read; every write/POST
+  keeps its non-replay boundary. `useResource` opt-in same-key retention serves
+  only task presentation; `useJobs` separately verifies current list/detail state.
+  Workspace/history pass required read verification to JobActions. Unknown task
+  reads cannot become launch/cancel/resume permission or a not-started claim.
+  Source roles, scientific epochs, security/CSRF, queue and database stay intact.
+
 - Source-role ownership: `source_section_roles.py` is the one bounded literal
   heading-role authority, shared by binding discovery and original-heading QC.
   Assay Example IDs are source sections rather than compound identities;
