@@ -2,15 +2,22 @@
 
 ## Original-source extraction repair
 
-When a catalog begins after long introductory prose, inspect start-page nomination
-before blaming every continuation's caption direction. The original start must be
-segmented and re-proved; do not choose above/below from number order. Table-word
+Every original page now receives visual detection, regardless of readable text.
+Inspect `structures/metadata.json` source_inventory when checking coverage:
+missing/failed/partial pages and mismatched crop counts cannot be accepted or
+reused as complete chunks. Zero candidates means the detector completed that page,
+not a claim that no chemistry exists. New workers keep page rasters in memory,
+persisting only source crops and the original PDF. Old run bytes are unchanged;
+old QA cannot claim the new full-page proof. No automatic task rerun occurs.
+
+The original catalog start must still be segmented and its caption direction
+re-proved; do not choose above/below from number order. Table-word
 OCR variations can nominate a coordinate read, never numerical/chemical repair.
 An unknown scanned schema now gets one bounded header observation pair. Conflicting
 headers and unsupported source regions still fail QA and must remain visible.
 
-Current changed stages are classifier3, locator7, binder10 and activity9;
-segmentation remains5. Preserve failed runs and raw observation caches. Old
+Current stages are classifier3, locator8, segmentation6, binder10 and activity9;
+QA uses schema5. Preserve failed runs and raw observation caches. Old
 caption bindings must not be relabelled as current: a new run must re-prove source
 ownership, including whether labels precede drawings or cross a page boundary.
 A correctly parsed molecular string does not certify chemical identity.
@@ -638,7 +645,7 @@ no numeric values; zero eligible inputs produce an empty stage, not fake success
 The complete-workflow environment preset includes both DECIMER and ADMET CPU
 components; reading existing results still does not require installing models.
 
-Locator epoch7 and segmentation epoch5 retain activity-independent source coverage. Binder
+Locator epoch8 and segmentation epoch6 retain activity-independent source coverage. Binder
 epoch10 discovers numbered original cells across all selected source pages even
 when no table pages were pre-labelled. Activity epoch9 follows only geometrically
 proved adjacent continuations from classified seeds, preserving each cell's
@@ -835,7 +842,7 @@ answer into transport failure; unsafe/corrupt storage still requires operator re
 `activity_data.json.coverage` inventories every encountered activity region and
 otherwise uncovered seed page. Unresolved regions cannot disappear because another
 table had valid rows. Inspect source/coverage proof, not only extracted-row count.
-QA schema4 rejects missing/unresolved coverage; old artifacts remain unchanged and
+QA schema5 rejects missing/unresolved coverage; old artifacts remain unchanged and
 their acceptance is rechecked as historical rather than silently promoted. Unchanged
 raw OCR and upstream manifests remain reusable; activity epoch9 reparses its own
 derived stage. Unknown metrics/units, no usable geometry/catalog and wrong OCR values

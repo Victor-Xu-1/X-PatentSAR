@@ -6,6 +6,7 @@ import re
 from typing import Any
 
 from patent_sar_extractor import contracts as core
+from patent_sar_extractor.core.structure_inventory import structure_coverage_errors
 
 from .models import STAGES, Acceptance
 from .source_epoch import smiles_epoch_current
@@ -237,7 +238,11 @@ def authority(
             row["structure_id"] for row in payloads["structures"]["structures"]
         }
         proved_catalog(payloads["bindings"], known_structures)
-        source_errors = coverage_errors(payloads["bindings"])
+        source_errors = coverage_errors(
+            payloads["bindings"]
+        ) + structure_coverage_errors(
+            payloads["structures"], classification.get("page_count")
+        )
         if binding_pairs(payloads["bindings"]["final_bindings"]) != binding_pairs(
             payloads["smiles"]["records"], "cpd_id"
         ):

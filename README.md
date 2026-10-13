@@ -1,8 +1,17 @@
 # X-PatentSAR
 
-Catalog entry discovery evaluates an explicitly titled compound/structure section
-separately from preceding long prose, preserving the first physical page needed
-to prove caption direction. A shared literal table-marker reader recognizes
+Every original PDF page now enters bounded visual structure detection, including
+pages with no readable labels. Text classification supplies hints, never a page
+exclusion gate. Page receipts distinguish completed zero-candidate observations
+from missing, failed or partial-region processing, and conserve crop counts
+through chunk sealing, resume, merge and formal QA. Source crops are not automatically
+numbered compounds or SAR inputs; ownership and chemical checks remain independent.
+Only structure crops are persisted alongside the retained original PDF, avoiding
+duplicate full-page rasters. Old results remain readable but lack current full-page
+coverage acceptance unless reprocessed through the application.
+
+Catalog hints evaluate an explicitly titled compound/structure section separately
+from preceding long prose. A shared literal table-marker reader recognizes
 bounded OCR typography without changing original captions or printed numbers.
 Scanned activity grids without an initial schema receive one bounded two-resolution
 header observation; only full header/row/caption agreement can establish a schema.

@@ -3,10 +3,22 @@
 from __future__ import annotations
 
 import copy
+import hashlib
+import io
 import unittest
+from types import SimpleNamespace
+
+from PIL import Image
 
 from patent_sar_extractor import contracts
+from patent_sar_extractor.core.activity_coverage import coverage_packet, source_record
 from patent_sar_extractor.core.binding_catalog import compound_catalog
+from patent_sar_extractor.core.ocsr.smiles_qc import qc_smiles
+from patent_sar_extractor.core.ocsr.stereo_evidence import (
+    observe_stereo_symbols,
+    source_checked_qc,
+)
+from patent_sar_extractor.core.structure_inventory import inventory_packet
 from patent_sar_extractor.web.acceptance import ARTIFACTS, authority
 
 
@@ -23,7 +35,18 @@ def complete_payloads():
     payloads["classification"].update(page_count=1, activity_pages=[0])
     payloads["activity"].update(
         active_cpds=["Compound 1"],
-        rows=[{"cpd": "Compound 1", "activity_values": {"IC50(nM)": "1"}}],
+        rows=[
+            {"cpd": "Compound 1", "activity_values": {"IC50(nM)": "1"}, "page_no": 1}
+        ],
+        coverage=coverage_packet(
+            [0],
+            [
+                source_record(
+                    1, "text", None, "Control", "IC50(nM)", "parsed", "declared_text", 1
+                )
+            ],
+            [SimpleNamespace(page_no=1)],
+        ),
     )
     binding = {
         "cpd": "Compound 1",
@@ -41,6 +64,20 @@ def complete_payloads():
         "authoritative_table_source_label": "Compound 1",
     }
     payloads["structures"]["structures"] = [binding]
+    payloads["structures"].update(
+        total_structures=1,
+        source_inventory=inventory_packet(
+            1,
+            [
+                {
+                    "page_no": 1,
+                    "status": "detected",
+                    "scope": "full_page",
+                    "candidates": 1,
+                }
+            ],
+        ),
+    )
     payloads["bindings"].update(
         execution_mode="production_structure_led",
         final_bindings=[binding],
@@ -58,6 +95,17 @@ def complete_payloads():
             }
         ],
     )
+    # Explicit graph/source-risk controls, not a model recognition assertion.
+    image = io.BytesIO()
+    Image.new("RGB", (20, 20), "white").save(image, format="PNG")
+    screened = source_checked_qc(
+        qc_smiles("CCO"), observe_stereo_symbols(image.getvalue())
+    )
+    payloads["smiles"]["records"][0].update(
+        screened,
+        raw_smiles="CCO",
+        image_hash=hashlib.sha256(image.getvalue()).hexdigest(),
+    )
     payloads["qa"].update(ok=True, acceptance={"ok": True, "hard_errors": []})
     return payloads
 
@@ -74,12 +122,20 @@ def partial_payloads(status="running"):
 
 
 class AcceptanceTests(unittest.TestCase):
+    def test_successful_qa_cannot_hide_a_missing_original_page_inventory(self):
+        payloads = complete_payloads()
+        payloads["structures"].pop("source_inventory")
+        result, _ = authority(payloads, pdf_verified=True, marker=None)
+        self.assertEqual(result.state, "failed")
+        self.assertIn("structure-page coverage", str(result.errors))
+
     def test_empty_activity_is_legitimate_only_with_coverage_proof(self):
         payloads = complete_payloads()
         payloads["activity"].update(active_cpds=[], rows=[])
         result, _ = authority(payloads, pdf_verified=True, marker=None)
         self.assertEqual(result.state, "failed")
         payloads["classification"]["activity_pages"] = []
+        payloads["activity"]["coverage"] = coverage_packet([], [], [])
         result, _ = authority(payloads, pdf_verified=True, marker=None)
         self.assertEqual(result.state, "accepted")
 

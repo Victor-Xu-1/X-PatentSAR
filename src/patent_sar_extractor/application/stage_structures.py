@@ -22,6 +22,7 @@ from patent_sar_extractor.contracts import (
     artifact_identity,
 )
 from patent_sar_extractor.core.env_runner import run_in_env
+from patent_sar_extractor.core.structure_inventory import validate_structure_inventory
 from patent_sar_extractor.paths import PACKAGE_ROOT
 
 from .pipeline_context import PipelineContext
@@ -86,6 +87,11 @@ def execute_structures(state: PipelineContext) -> None:
         and _fingerprint_matches(state.structures_json, structures_fp)
     ):
         structures_meta = _load_json(state.structures_json, {})
+        validate_structure_inventory(
+            structures_meta,
+            expected_pages=state.structure_pages,
+            page_count=state.classification.get("page_count"),
+        )
         state.n_structures = int(structures_meta.get("total_structures", 0))
         print(f"  ⏭ [{step}] 已存在，跳过")
         state.progress.mark_checkpoint_reused()
@@ -201,12 +207,14 @@ def execute_structures(state: PipelineContext) -> None:
             _require_updated_worker_output(state.structures_json, previous_output)
             work_progress.saved(state.structure_pages)
         structures_meta = _load_json(state.structures_json, {})
+        validate_structure_inventory(
+            structures_meta,
+            expected_pages=state.structure_pages,
+            page_count=state.classification.get("page_count"),
+        )
         state.n_structures = int(structures_meta.get("total_structures", 0))
-        if state.structure_pages and state.n_structures == 0:
-            raise RuntimeError(
-                "structure extraction returned 0 structures on non-empty candidate pages; "
-                "please inspect DECIMER environment and page selection"
-            )
+        # A successfully observed zero-candidate document is not a model crash.
+        # Binding/final QA still refuse a missing proved compound corpus.
         _write_step_manifest(state.structures_json, structures_fp)
     state.pipeline_log["steps"][step] = {
         "from_cache": state.progress.checkpoint_reused,

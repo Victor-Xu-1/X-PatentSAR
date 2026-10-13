@@ -24,6 +24,7 @@ from patent_sar_extractor.core.formal_structure import (
 from patent_sar_extractor.core.ocsr.smiles_qc import qc_smiles
 from patent_sar_extractor.core.ocsr.stereo_evidence import check_source_stereochemistry
 from patent_sar_extractor.core.qa_report import build_qa_report
+from patent_sar_extractor.core.structure_inventory import inventory_packet
 from patent_sar_extractor.smiles_artifact import build_smiles_artifact
 from tests.test_source_led_pipeline import proved_binding
 
@@ -138,7 +139,26 @@ def run_fixture(root, *, activities=None, invalid_second=False, classified_pages
             else ([] if not activities else [0]),
         },
     )
-    save(root / "structures/metadata.json", {"total_structures": 2})
+    save(
+        root / "structures/metadata.json",
+        {
+            "total_structures": 2,
+            "structures": [
+                {"structure_id": b["structure_id"], "page_no": 1} for b in bindings
+            ],
+            "source_inventory": inventory_packet(
+                1,
+                [
+                    {
+                        "page_no": 1,
+                        "status": "detected",
+                        "scope": "full_page",
+                        "candidates": 2,
+                    }
+                ],
+            ),
+        },
+    )
     save(root / "structure_pages/locator.json", {})
     save(
         root / "pipeline_summary.json",

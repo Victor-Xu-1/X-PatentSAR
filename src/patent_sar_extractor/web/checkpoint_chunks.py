@@ -7,6 +7,7 @@ import re
 from typing import TYPE_CHECKING
 
 from patent_sar_extractor import contracts as core
+from patent_sar_extractor.core.structure_inventory import validate_structure_inventory
 
 from .attempts import MAX_COPY_FILES
 from .errors import WebError
@@ -97,4 +98,9 @@ def seed_structure_chunks(copy: CheckpointCopy, spec: RunSpec) -> None:
         # The existing bounded copier validates image paths, relocates only
         # declared fields and rebases dependency hashes. No whole-stage success
         # or old acceptance/history is created. The CLI rechecks fingerprints.
+        try:
+            validate_structure_inventory(verified.payload, expected_pages=expected)
+        except (ValueError, TypeError, KeyError):
+            logger.info("Unproved page inventory was not transported: %s", entry.name)
+            continue
         copy.checkpoint(verified)

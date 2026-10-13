@@ -149,4 +149,52 @@ class StructureWorkerIdentityTests(WebFixture, unittest.TestCase):
         self.assertEqual(metadata["structures"], [])
         self.assertEqual(metadata["total_structures"], 0)
         self.assertEqual(len(metadata["failed_pages"]), 1)
-        self.assertTrue((output / "page_001.png").is_file())
+        self.assertTrue(self.pdf.is_file())
+        self.assertFalse((output / "page_001.png").exists())
+        self.assertEqual(metadata["source_inventory"]["pages"][0]["status"], "failed")
+
+    def test_zero_candidate_page_has_an_explicit_successful_observation(self):
+        worker = self.worker()
+        worker["_resolve_crop_pixels"] = lambda crop, page, dpi, w, h: (0, 0, w, h)
+        worker["segment_chemical_structures"] = Mock(return_value=([], []))
+        output = self.root / "zero-candidates"
+        with patch("patent_sar_extractor.resource_admission.wait_for_memory"):
+            result = worker["extract_structures_from_pdf"](
+                str(self.pdf), [0], str(output), initialize_model=False
+            )
+        self.assertEqual(
+            result["source_inventory"]["pages"],
+            [
+                {
+                    "page_no": 1,
+                    "status": "detected",
+                    "scope": "full_page",
+                    "candidates": 0,
+                }
+            ],
+        )
+        self.assertEqual(result["structures"], [])
+        self.assertFalse(list(output.glob("page_*.png")))
+
+    def test_invalid_page_request_never_initializes_the_model(self):
+        for pages in ([-1], [False], [0, 0], [1000]):
+            worker = self.worker()
+            with self.subTest(pages=pages), self.assertRaises(ValueError):
+                worker["extract_structures_from_pdf"](
+                    str(self.pdf), pages, str(self.root / "invalid")
+                )
+            worker["get_model"].assert_not_called()
+
+    def test_mask_box_count_mismatch_is_a_recorded_failure_not_empty_success(self):
+        worker = self.worker()
+        worker["_resolve_crop_pixels"] = lambda crop, page, dpi, w, h: (0, 0, w, h)
+        worker["segment_chemical_structures"] = Mock(
+            return_value=([np.zeros((5, 5, 3), dtype=np.uint8)], [])
+        )
+        output = self.root / "mismatch"
+        with self.assertRaisesRegex(RuntimeError, "segmentation failed"):
+            worker["extract_structures_from_pdf"](
+                str(self.pdf), [0], str(output), initialize_model=False
+            )
+        result = json.loads((output / "metadata.json").read_text())
+        self.assertEqual(result["source_inventory"]["pages"][0]["status"], "failed")

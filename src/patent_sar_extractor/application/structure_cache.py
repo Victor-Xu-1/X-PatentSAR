@@ -20,6 +20,10 @@ from patent_sar_extractor.contracts import (
     artifact_identity,
     artifact_identity_matches,
 )
+from patent_sar_extractor.core.structure_inventory import (
+    inventory_packet,
+    validate_structure_inventory,
+)
 
 logger = logging.getLogger("patent_sar_extractor")
 WORKING_ROOT = Path.cwd()
@@ -28,14 +32,17 @@ WORKING_ROOT = Path.cwd()
 def _merge_structure_chunk_metadata(patent_id: str, chunks: list[dict]) -> dict:
     """Merge per-chunk structure extraction metadata into one stable index."""
     merged_structures = []
+    observations = []
+    page_count = None
     next_index = 0
     for chunk_idx, payload in enumerate(chunks):
-        structures = payload.get("structures", []) if isinstance(payload, dict) else []
-        if not isinstance(structures, list):
-            continue
+        inventory = validate_structure_inventory(payload)
+        if page_count is not None and page_count != inventory["page_count"]:
+            raise ValueError("Structure chunks have different original page counts")
+        page_count = inventory["page_count"]
+        observations.extend(inventory["pages"])
+        structures = payload["structures"]
         for structure in structures:
-            if not isinstance(structure, dict):
-                continue
             row = dict(structure)
             row.setdefault("source_chunk_index", chunk_idx)
             row.setdefault("source_structure_id", row.get("structure_id"))
@@ -43,14 +50,19 @@ def _merge_structure_chunk_metadata(patent_id: str, chunks: list[dict]) -> dict:
             row["structure_id"] = f"S{next_index:04d}"
             merged_structures.append(row)
             next_index += 1
-    return {
+    merged = {
         **artifact_identity(STRUCTURES_SCHEMA, STRUCTURES_SCHEMA_VERSION),
         "patent_number": patent_id,
         "total_structures": len(merged_structures),
         "structures": merged_structures,
         "chunked_extraction": True,
         "chunk_count": len(chunks),
+        "source_inventory": inventory_packet(
+            page_count, sorted(observations, key=lambda row: row["page_no"])
+        ),
     }
+    validate_structure_inventory(merged)
+    return merged
 
 
 def _structure_chunk_fingerprint(
@@ -89,6 +101,12 @@ def _load_reusable_structure_chunk(chunk_output: str, fingerprint: dict) -> dict
         return None
     structures = payload.get("structures", [])
     if not isinstance(structures, list):
+        return None
+    try:
+        validate_structure_inventory(
+            payload, expected_pages=fingerprint["params"]["chunk_pages"]
+        )
+    except (KeyError, ValueError, TypeError):
         return None
     return payload
 

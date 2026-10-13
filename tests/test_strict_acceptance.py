@@ -1147,10 +1147,25 @@ class StrictAcceptanceTests(unittest.TestCase):
     def test_structure_chunk_metadata_merge_reindexes_without_losing_image_paths(
         self,
     ) -> None:
+        from patent_sar_extractor.core.structure_inventory import inventory_packet
+
         merged = _merge_structure_chunk_metadata(
             "WO1234567890",
             [
                 {
+                    "total_structures": 2,
+                    "source_inventory": inventory_packet(
+                        3,
+                        [
+                            {
+                                "page_no": p,
+                                "status": "detected",
+                                "scope": "full_page",
+                                "candidates": 1,
+                            }
+                            for p in (1, 2)
+                        ],
+                    ),
                     "structures": [
                         {
                             "structure_index": 0,
@@ -1167,6 +1182,18 @@ class StrictAcceptanceTests(unittest.TestCase):
                     ],
                 },
                 {
+                    "total_structures": 1,
+                    "source_inventory": inventory_packet(
+                        3,
+                        [
+                            {
+                                "page_no": 3,
+                                "status": "detected",
+                                "scope": "full_page",
+                                "candidates": 1,
+                            }
+                        ],
+                    ),
                     "structures": [
                         {
                             "structure_index": 0,
@@ -1193,6 +1220,8 @@ class StrictAcceptanceTests(unittest.TestCase):
     def test_structure_chunk_cache_reuses_only_matching_pdf_pages_and_rules(
         self,
     ) -> None:
+        from patent_sar_extractor.core.structure_inventory import inventory_packet
+
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
             pdf = base / "WO123.pdf"
@@ -1207,8 +1236,25 @@ class StrictAcceptanceTests(unittest.TestCase):
                 **artifact_identity(STRUCTURES_SCHEMA, STRUCTURES_SCHEMA_VERSION),
                 "patent_number": "WO123",
                 "total_structures": 1,
+                "source_inventory": inventory_packet(
+                    4,
+                    [
+                        {
+                            "page_no": 2,
+                            "status": "detected",
+                            "scope": "full_page",
+                            "candidates": 1,
+                        },
+                        {
+                            "page_no": 3,
+                            "status": "detected",
+                            "scope": "full_page",
+                            "candidates": 0,
+                        },
+                    ],
+                ),
                 "structures": [
-                    {"structure_id": "S0000", "page_no": 1, "image_path": "s0.png"}
+                    {"structure_id": "S0000", "page_no": 2, "image_path": "s0.png"}
                 ],
             }
             self._write_json(chunk_meta_path, payload)

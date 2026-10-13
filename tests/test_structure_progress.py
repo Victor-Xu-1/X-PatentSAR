@@ -8,7 +8,10 @@ import unittest
 from pathlib import Path
 from subprocess import CompletedProcess
 
-from patent_sar_extractor.application.stage_cache import _write_step_manifest
+from patent_sar_extractor.application.stage_cache import (
+    _step_fingerprint,
+    _write_step_manifest,
+)
 from patent_sar_extractor.application.structure_progress import StructureProgress
 from patent_sar_extractor.application.structure_window import execute_missing_windows
 from patent_sar_extractor.artifact_io import write_json_atomic
@@ -17,6 +20,7 @@ from patent_sar_extractor.contracts import (
     STRUCTURES_SCHEMA_VERSION,
     artifact_identity,
 )
+from patent_sar_extractor.core.structure_inventory import inventory_packet
 from patent_sar_extractor.web.files import SafeFiles
 from patent_sar_extractor.web.stages import read_progress
 
@@ -62,11 +66,20 @@ class StructureProgressTests(unittest.TestCase):
     def test_failed_window_reports_only_fresh_valid_saved_chunks(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
+            import fitz
+
+            pdf = root / "control.pdf"
+            with fitz.open() as doc:
+                for _ in range(3):
+                    doc.new_page()
+                doc.save(pdf)
             jobs = [
                 {
                     "pages": [index],
                     "output": str(root / f"chunk_{index}"),
-                    "fingerprint": {"control": index},
+                    "fingerprint": _step_fingerprint(
+                        "structures", pdf_path=str(pdf), params={"control": index}
+                    ),
                 }
                 for index in range(3)
             ]
@@ -84,6 +97,18 @@ class StructureProgressTests(unittest.TestCase):
                                 STRUCTURES_SCHEMA, STRUCTURES_SCHEMA_VERSION
                             ),
                             "structures": [],
+                            "total_structures": 0,
+                            "source_inventory": inventory_packet(
+                                3,
+                                [
+                                    {
+                                        "page_no": index + 1,
+                                        "status": "detected",
+                                        "scope": "full_page",
+                                        "candidates": 0,
+                                    }
+                                ],
+                            ),
                             "failed_pages": ["controlled failure"]
                             if index == 1
                             else [],
@@ -100,7 +125,7 @@ class StructureProgressTests(unittest.TestCase):
                 execute_missing_windows(
                     jobs,
                     runner=runner,
-                    pdf="control.pdf",
+                    pdf=str(pdf),
                     root=str(root),
                     script="control.py",
                     patent_id="CONTROL",

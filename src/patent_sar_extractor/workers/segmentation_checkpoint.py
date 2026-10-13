@@ -11,6 +11,7 @@ from patent_sar_extractor.application.stage_cache import _write_step_manifest
 from patent_sar_extractor.application.structure_cache import (
     _structure_chunk_fingerprint,
 )
+from patent_sar_extractor.core.structure_inventory import validate_structure_inventory
 
 MAX_INPUT_BYTES = 8 * 1024 * 1024
 
@@ -103,4 +104,7 @@ def seal_chunk(output: Path, before, fingerprint: dict) -> None:
         or not isinstance(payload.get("structures"), list)
     ):
         raise ValueError("Segmentation output is not a successful current chunk")
+    validate_structure_inventory(
+        payload, expected_pages=fingerprint["params"]["chunk_pages"]
+    )
     _write_step_manifest(str(path), fingerprint)

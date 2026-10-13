@@ -179,6 +179,22 @@ def artifact_run(
         }
         for i in range(rows)
     ]
+    from patent_sar_extractor.core.structure_inventory import inventory_packet
+
+    payloads["structures"].update(
+        total_structures=rows,
+        source_inventory=inventory_packet(
+            1,
+            [
+                {
+                    "page_no": 1,
+                    "status": "detected",
+                    "scope": "full_page",
+                    "candidates": rows,
+                }
+            ],
+        ),
+    )
     payloads["smiles"].update(
         {
             "execution_mode": "production_decimer",

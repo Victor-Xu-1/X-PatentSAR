@@ -2,8 +2,19 @@
 
 ## Source extraction ownership
 
-Locator7 scopes density to an explicitly titled catalog section when long prose
-precedes it. This retains the start-page geometry; it never infers missing labels.
+Locator8 nominates every original PDF page, after checking its actual page count.
+Text-derived catalog/synthesis observations are hints, not a page admission gate.
+The existing worker6 emits a bounded `structure-page-inventory` v1 with each
+requested original page's full/partial scope, detection outcome and candidate
+count, including zeros. One shared validator checks counts and exact subsets
+before sealing/reusing/copying/merging chunks. QA5 and its Web consumer require
+the entire original page set; metadata/QA flags cannot hide missing observations.
+This is processing coverage, not proof of perfect detector recall or chemistry.
+Full-page rasters stay transient; crops and the original PDF remain source assets.
+Existing source-ID/role admission and SAR numbered-compound exclusion stay intact.
+
+Catalog hints scope density to an explicitly titled section when prose precedes
+it. The hint never infers a missing label or suppresses another visual page.
 `source_table_markers.py` is the shared literal caption-token authority for
 catalogs and activity grids/text. It normalizes only Table-word typography for
 table identity, not source numbers, metric names, values or raw caption evidence.
@@ -13,8 +24,8 @@ height/64columns); mismatching column roles, data boundaries or captions reject.
 Native grids never start OCR, and missing schemas have no per-column fallback.
 
 Classifier3 separates molar activity units from synthesis amounts, particle sizes
-and disease abbreviations. Locator7 nominates dense distinct printed captions,
-including catalog/formula transition pages; nomination is never binding proof.
+and disease abbreviations. Catalog hints retain dense distinct printed captions,
+including catalog/formula transitions; hints are never binding proof.
 Binder10 uses `caption_grid_binding.py` to prove a ruled catalog's caption direction
 at its start, physical cell containment and adjacent-page column continuity.
 Split captions retain both label and drawing page identities. Recognized but
@@ -492,7 +503,7 @@ otherwise uncovered classified seeds independently of returned rows. Unsupported
 headers and recognized regions without original rows remain unresolved, even if
 other tables succeeded. Only the existing writer publishes the additive proof;
 activity epoch9 invalidates old derived stage reuse, while unchanged upstream and
-compatible raw observations remain reusable. QA v4 rejects missing/unresolved
+compatible raw observations remain reusable. QA v5 rejects missing/unresolved
 coverage. The read model rechecks only cached acceptance after a QA-schema change,
 preserving raw rows, source IDs, corrections and old producer artifacts. Optional
 repair counters are observations, not estimates or another acceptance authority.
