@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Extract chemical structures from patent PDF using DECIMER Image Segmentation.
 Generates metadata.json for the structure binder.
