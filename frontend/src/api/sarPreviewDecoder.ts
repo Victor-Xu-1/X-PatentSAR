@@ -51,13 +51,38 @@ export const decodeStudyPreview: Decoder<StudyPreview> = (value, path = '$') => 
           ]),
           6,
         ),
-        recorded_measurements: array(
-          object({
-            context_id: hex(64),
-            reference_values: array(string),
-            candidate_values: array(string),
-          }),
-        ),
+        recorded_measurements: array((value, path) => {
+          const record = {
+            ...object({
+              context_id: hex(64),
+              reference_values: array(string),
+              candidate_values: array(string),
+            })(value, path),
+            ...additions(
+              value,
+              {
+                difference: object({
+                  status: oneOf([
+                    'comparable',
+                    'missing',
+                    'context_mismatch',
+                    'indeterminate',
+                    'not_scalar',
+                    'not_representable',
+                  ]),
+                  value: nullOr(number),
+                }),
+              },
+              path,
+            ),
+          };
+          if (
+            record.difference &&
+            (record.difference.status === 'comparable') !== (record.difference.value !== null)
+          )
+            throw new ContractError(path + '.recorded_difference_status');
+          return record;
+        }),
       },
       path,
     ),

@@ -24,7 +24,7 @@ class LogPotencyWorkflowTests(WebFixture, unittest.TestCase):
             )
             archived = client.get(path + "/export?format=json").json()
             before = client.get(path + "/export?format=json").content
-            self.assertEqual(archived["input"]["schema"], 5)
+            self.assertEqual(archived["input"]["schema"], 6)
             dataset_path = (
                 support.ROOT + "/datasets/" + archived["input"]["dataset"]["id"]
             )

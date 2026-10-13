@@ -1,6 +1,7 @@
 """Unselected source measurements remain visible, never statistical conclusions."""
 
 import unittest
+from dataclasses import replace
 
 import test_sar_api as support
 from test_web_support import WebFixture
@@ -8,7 +9,9 @@ from test_web_support import WebFixture
 from patent_sar_extractor.core.sar.study_contexts import context_catalog
 from patent_sar_extractor.web.errors import WebError
 from patent_sar_extractor.web.sar.preview_records import recorded_measurements
+from patent_sar_extractor.web.sar.preview_source import load_source
 from patent_sar_extractor.web.sar.study_models import StudyContext
+from patent_sar_extractor.web.sar.study_preview import verified_preview
 
 
 class SARPreviewRecordTests(WebFixture, unittest.TestCase):
@@ -110,10 +113,43 @@ class SARPreviewRecordTests(WebFixture, unittest.TestCase):
             self.assertEqual(by_name["CL (mL/min/kg)"]["reference_values"], ["2"])
             self.assertEqual(by_name["CL (mL/min/kg)"]["candidate_values"], ["5"])
             self.assertEqual(by_name["Ymin"]["candidate_values"], ["20"])
+            self.assertEqual(
+                by_name["CL (mL/min/kg)"]["difference"],
+                {"status": "comparable", "value": 3.0},
+            )
+            self.assertEqual(
+                by_name["Ymin"]["difference"],
+                {"status": "indeterminate", "value": None},
+            )
             for item in recorded:
                 self.assertNotIn("comparison", item)
                 self.assertNotIn("raw_difference", item)
                 self.assertNotIn("evidence_basis", item)
+            matrix = client.get(
+                path + "/matrix",
+                params={
+                    "reference_id": region["molecule_id"],
+                    "region_id": region["id"],
+                    "molecule_id": rows["P2"]["id"],
+                },
+            )
+            self.assertEqual(matrix.status_code, 200, matrix.text)
+            self.assertEqual(
+                matrix.json()["previews"][0]["recorded_measurements"], recorded
+            )
+            queue = client.app.state.sar_queue
+            source = load_source(queue, path.split("/")[-2])
+            for schema in (2, 3, 4, 5):
+                legacy = replace(source, packet={**source.packet, "schema": schema})
+                old = verified_preview(
+                    queue, legacy, region["id"], rows["P2"]["id"]
+                ).data
+                self.assertTrue(
+                    all(
+                        "difference" not in item.model_dump()
+                        for item in old.recorded_measurements
+                    )
+                )
             self.assertEqual(client.get(path + "/export?format=json").content, original)
 
     def test_censored_repeats_and_missing_values_are_not_filled_or_ranked(self):

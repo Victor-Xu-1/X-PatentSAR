@@ -136,12 +136,18 @@ Preview member browsing uses the retained paged `changes`/region selector, not
 the opened fragment group, so all published alternatives for the same frozen
 background can be selected without a new analysis. `preview_records.py` indexes
 each source observation once by the shared exact context identity and projects
-unselected supporting readings through additive bounded preview DTOs. It does
-not infer direction, conditions, uncertainty, numeric deltas or SAR conclusions.
-Selected scientific comparisons remain on the unchanged authority; raw supporting
-PK/activity, repeats/censored/empty strings and source context labels remain
-distinct. Unknown/overlapping contexts are refused, not silently reassigned.
-No source report/engine/queue/store/schema/dependency change is introduced.
+unselected supporting readings through additive bounded preview DTOs. Engine13 /
+private input6 adds neutral exact scalar differences for those readings. The
+shared `core/sar/observation_pair.py` gate owns context/unit/repeat validation for
+both selected ranking and supporting arithmetic; `measurements.scalar_difference`
+is the single exact subtraction authority. Supporting endpoints require complete
+recorded conditions and never inherit confirmation of a selected endpoint.
+It does not infer direction, conditions, uncertainty, averaging or SAR conclusions.
+Missing/conflicted/interval/ordinal/unrepresentable readings carry bounded status
+without a fabricated delta. Matrix and single-pair UI share neutral `RecordedDelta`;
+no strength color, better/worse arrow or priority score is added. Original strings,
+reports and source labels stay unchanged. Input2–5 retain their old raw-only view,
+omitting the additive difference field. No new queue/store/dependency is added.
 
 Paired transformation drawings are a read-only coordinate policy outside the
 scientific engine inventory. `preview_alignment.py` reuses the exact fixed-graph
@@ -694,7 +700,7 @@ automatically found families. Every numbered source is still in the report;
 unmatched/ambiguous sites and coverage limits are not hidden by positive matches.
 The input-bound plan and native 25-pair batches are preserved on interruption.
 The parent checks plan/coverage before one atomic result publication. Discovery
-was introduced in SAR engine8 and is retained in engine12, independently of extraction. Exact
+was introduced in SAR engine8 and is retained in engine13, independently of extraction. Exact
 one/two/three-edge topology partitions reuse original side bitmasks and bridge
 searches; three original bridges use intersections, mixed ring/bridge cuts use
 actual region sides, and three ring edges require a residual bridge after two

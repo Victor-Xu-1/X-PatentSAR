@@ -5,6 +5,7 @@ import { sarStudyApi } from '../src/api/sarStudyApi';
 import { decodeStudyPreview } from '../src/api/sarPreviewDecoder';
 import { TransformationPreview } from '../src/features/sar/study/TransformationPreview';
 import { PreviewMeasurements } from '../src/features/sar/study/PreviewMeasurements';
+import { MatrixValues } from '../src/features/sar/study/MatrixValues';
 import { setLocale } from '../src/i18n';
 import { sarDrawing, sarPair, studyContext, studyJob, studyReport, studyRow } from './sar-fixtures';
 
@@ -66,6 +67,77 @@ beforeEach(() => {
     page: 1,
     page_size: 50,
   }));
+});
+
+it('shows the same neutral supporting delta in pair and matrix without assigning a potency tier', async () => {
+  const data = decodeStudyPreview({
+    ...packet,
+    recorded_measurements: [
+      {
+        context_id: supportingContext.id,
+        reference_values: ['2'],
+        candidate_values: ['5'],
+        difference: { status: 'comparable', value: 3 },
+      },
+    ],
+  });
+  const report = { ...studyReport, contexts: [studyContext, supportingContext] };
+  const original = JSON.stringify(data);
+  render(
+    <>
+      <PreviewMeasurements data={data} report={report} />
+      <table aria-label="matrix">
+        <MatrixValues
+          data={{
+            reference_drawing: { ...sarDrawing, id: studyRow.molecule_id },
+            previews: [data],
+          }}
+          report={report}
+        />
+      </table>
+    </>,
+  );
+  const deltas = screen.getAllByLabelText('Numeric change; not a ranking');
+  expect(deltas).toHaveLength(2);
+  for (const delta of deltas) {
+    expect(delta).toHaveTextContent('Δ +3.00');
+    expect(delta.closest('[data-activity-strength]')).toBeNull();
+    expect(delta.closest('.is-better, .is-worse')).toBeNull();
+  }
+  await act(() => setLocale('zh-CN'));
+  expect(screen.getAllByLabelText('数值差，不代表优劣')).toHaveLength(2);
+  expect(JSON.stringify(data)).toBe(original);
+});
+
+it('validates supporting arithmetic status without upgrading legacy or uncertain measurements', () => {
+  for (const difference of [
+    { status: 'comparable', value: null },
+    { status: 'missing', value: 0 },
+    { status: 'comparable', value: Infinity },
+    { status: 'better', value: 3 },
+    null,
+  ])
+    expect(() =>
+      decodeStudyPreview({
+        ...packet,
+        recorded_measurements: [{ ...packet.recorded_measurements[0], difference }],
+      }),
+    ).toThrow();
+  const legacy = decodeStudyPreview(packet);
+  expect(legacy.recorded_measurements?.[0]).not.toHaveProperty('difference');
+  const uncertain = decodeStudyPreview({
+    ...packet,
+    recorded_measurements: [
+      { ...packet.recorded_measurements[0], difference: { status: 'not_scalar', value: null } },
+    ],
+  });
+  render(
+    <PreviewMeasurements
+      data={uncertain}
+      report={{ ...studyReport, contexts: [studyContext, supportingContext] }}
+    />,
+  );
+  expect(screen.getByLabelText('A difference requires exact values')).toHaveTextContent('—');
 });
 
 it('offers all recorded changed fragments for the same region and switches exact candidate without a write', async () => {

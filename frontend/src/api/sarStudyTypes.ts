@@ -112,6 +112,7 @@ export interface StudyPreview {
     context_id: string;
     reference_values: string[];
     candidate_values: string[];
+    difference?: RecordedDifference;
   }[];
   property_differences: Record<string, number | null>;
   property_statuses?: Record<string, PropertyComparisonStatus>;
@@ -119,6 +120,16 @@ export interface StudyPreview {
 }
 export type PropertyComparisonStatus =
   'comparable' | 'missing' | 'origin_unknown' | 'origin_mismatch' | 'not_representable';
+export interface RecordedDifference {
+  status:
+    | 'comparable'
+    | 'missing'
+    | 'context_mismatch'
+    | 'indeterminate'
+    | 'not_scalar'
+    | 'not_representable';
+  value: number | null;
+}
 export interface PreviewDrawingPair {
   reference: StudyDrawing;
   candidate: StudyDrawing;

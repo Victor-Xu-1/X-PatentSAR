@@ -1,5 +1,8 @@
 /** UI copy only; source labels, grade values, issues and experiment data stay raw. */
 export const sar: Record<string, string> = {
+  '数值差，不代表优劣': 'Numeric change; not a ranking',
+  仅精确数值可计算差值: 'A difference requires exact values',
+  数值差超出显示范围: 'Difference outside display range',
   未纳入本次统计: 'Not assessed in this study',
   请选择列: 'Choose a column',
   自动列匹配: 'Column matching',

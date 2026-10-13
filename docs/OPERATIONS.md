@@ -15,7 +15,7 @@ are unsupported. Terminal multiple-bond substitutions use the smallest proved
 connected region; adjoining fixed carbon atoms need not be included. H sites bind original atom anchors;
 private expanded views do not rewrite the original molecule or public indices.
 Native input-bound plans and25-pair batches survive interruption. Changes to
-SAR engine12 make old unfinished engine11/older
+SAR engine13 make old unfinished engine12/older
 checkpoints incompatible; retain their artifacts or roll back the prior wheel,
 never rewrite scientific identities. Completed old reports remain readable.
 Parent verification separately bounds candidate-plan regeneration at30s and
@@ -51,7 +51,7 @@ never reuse or rewrite an old unfinished receipt as a compatible result.
 
 ## Activity-strength compatibility
 
-New engine12 studies retain private input schema5 and candidate policy
+New engine13 studies use private input schema6 and retain candidate policy
 `strict-context-pareto-units-v3`. Strict ordering includes a shared finite boundary
 when either side excludes that boundary: `<10` vs `>=10`, or `<=10` vs `>10`.
 `<=10` vs `>=10` can still be equal at10 and remains indeterminate. Intervals
@@ -88,6 +88,16 @@ source dataset fields and text remain unchanged. Existing input4 and older
 studies keep their captured log-strength behavior; start a fresh analysis from
 the saved dataset to apply input5. Do not rewrite or relabel archived studies.
 Percentage/Dmax values retain raw comparisons but no invented automatic tiers.
+
+Input6 adds descriptive differences for unselected supporting PK/activity
+readings in both single-pair and matrix previews. Complete recorded conditions,
+equal declared units and consistent exact scalar repeats are required. No global
+confirmation of selected endpoints is inherited, no averaging/interval midpoint
+is supplied, and a numeric change never becomes a desirability or strength tier.
+Input2–5 keep their original raw-only supporting view; no old report is rewritten.
+The selected ranking and supporting difference use the same context/repeat gate.
+PK values with units in their column metadata work without selecting them as an
+objective; arbitrary inline time/clearance/AUC conversions are not inferred.
 
 Large completed reports are not kept in a persistent in-process result cache.
 Concurrent current/drawing/preview readers may share one fully validated model

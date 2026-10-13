@@ -8,8 +8,9 @@ merge declared columns/experiments or convert mass concentration, p-values or PK
 
 from __future__ import annotations
 
+import math
 import re
-from decimal import Decimal
+from decimal import Decimal, localcontext
 
 from .errors import SARInputError
 from .limits import MAX_VALUE_CHARS
@@ -18,6 +19,23 @@ from .values import Value, parse_value
 _MOLAR = {"fM": -15, "pM": -12, "nM": -9, "uM": -6, "mM": -3, "M": 0}
 _PERCENT = {"%", "％", "percent", "percentage"}
 _SUFFIX = re.compile(r"(.+?)\s*(fM|pM|nM|[uµμ]M|mM|M|%|％)\s*", re.DOTALL)
+
+
+def scalar_difference(left: Value, right: Value) -> float | None:
+    """Exact candidate minus reference, never a midpoint or a rounded false zero."""
+    if left.kind != "scalar" or right.kind != "scalar":
+        return None
+    a, b = left.numeric_bounds()[0], right.numeric_bounds()[0]
+    exponent_a, exponent_b = a.as_tuple().exponent, b.as_tuple().exponent
+    if not isinstance(exponent_a, int) or not isinstance(exponent_b, int):
+        return None
+    with localcontext() as context:
+        context.prec = max(a.adjusted(), b.adjusted()) - min(exponent_a, exponent_b) + 2
+        difference = b - a
+        value = float(difference)
+    if not math.isfinite(value) or (value == 0 and difference != 0):
+        return None
+    return value
 
 
 def _unit(text: str | None) -> tuple[str, int] | None:

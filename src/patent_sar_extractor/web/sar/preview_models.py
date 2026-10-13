@@ -41,12 +41,33 @@ class PreviewMeasurement(DTO):
     raw_difference: float | None = None
 
 
+class RecordedDifference(DTO):
+    status: Literal[
+        "comparable",
+        "missing",
+        "context_mismatch",
+        "indeterminate",
+        "not_scalar",
+        "not_representable",
+    ]
+    value: float | None = None
+
+    @model_validator(mode="after")
+    def scalar_status(self):
+        if (self.status == "comparable") != (self.value is not None):
+            raise ValueError("recorded_difference_status")
+        return self
+
+
 class PreviewRecordedMeasurement(DTO):
-    """Raw source readings, not an inferred direction, delta or SAR conclusion."""
+    """Raw readings and optional descriptive arithmetic, never a ranking claim."""
 
     context_id: str
     reference_values: list[str]
     candidate_values: list[str]
+    difference: RecordedDifference | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
 
 
 class StudyPreview(DTO):

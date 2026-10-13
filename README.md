@@ -1,5 +1,11 @@
 # X-PatentSAR
 
+SAR comparison previews automatically show neutral scalar changes for additional
+recorded PK/activity endpoints when units, conditions and repeated readings are
+comparable. They need not be selected as ranking objectives. This does not infer
+better/worse, percentage tiers or missing measurements; historic reports retain
+their captured interpretation. New analyses use SAR engine13/private input6.
+
 Automatic single-region discovery includes double/triple-bond boundaries, so
 terminal carbonyl/thiocarbonyl and nitrile/alkyne replacements can keep their
 neighbouring carbon fixed. The same full-graph matcher proves every comparison;

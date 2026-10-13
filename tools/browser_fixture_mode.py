@@ -20,6 +20,11 @@ COMMON = {
 MODES = (
     (
         "sar",
+        "sar-supporting-deltas.spec.ts",
+        COMMON | {"sar-supporting-deltas.spec.ts", "sar-single-site.spec.ts"},
+    ),
+    (
+        "sar",
         "sar-multiple-bonds.spec.ts",
         COMMON
         | {
