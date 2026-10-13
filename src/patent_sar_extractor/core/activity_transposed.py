@@ -4,10 +4,12 @@ import re
 
 from .activity_coverage import source_record
 from .activity_grid_cells import cell_text, read_activity_cell
+from .activity_header_identity import header_conflict
 from .activity_header_metrics import METRIC, distinct_value_keys, normalize_metric_text
 from .activity_headers import _key
 from .activity_identity import LABEL_PREFIX, is_control, normalize_compound
 from .activity_models import ActivityRow, ParsedActivity
+from .source_geometry import native_cell_text, token_geometry_space
 
 
 def _declared_compound(text):
@@ -107,6 +109,10 @@ def extract_transposed(page, page_no, tokens, region, matrix, context):
         values = {}
         for row, key in enumerate(keys, header_row + 1):
             bounds = (xs[col], ys[row], xs[col + 1], ys[row + 1])
+            native_header = native_cell_text(
+                tokens, (xs[0], ys[row], xs[1], ys[row + 1])
+            )
+            review |= header_conflict(native_header, matrix[row][0])
             value, readings, withheld = read_activity_cell(
                 page, tokens, bounds, identifier=False, native=native
             )
@@ -118,6 +124,7 @@ def extract_transposed(page, page_no, tokens, region, matrix, context):
                     "value": value,
                     "bbox": list(bounds),
                     "raw_header": matrix[row][0],
+                    "raw_native_header": native_header,
                     "observations": readings,
                     "metric_header_bbox": [xs[0], ys[row], xs[1], ys[row + 1]],
                 }
@@ -133,7 +140,7 @@ def extract_transposed(page, page_no, tokens, region, matrix, context):
             "row": header_row,
             "pair": col,
             "cells": cells,
-            "geometry_space": "unrotated" if native else "rendered",
+            "geometry_space": token_geometry_space(tokens, native),
             "header_region": {
                 "page_no": page_no,
                 "bbox": [xs[0], ys[0], xs[-1], ys[header_row + 1]],

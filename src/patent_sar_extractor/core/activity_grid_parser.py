@@ -3,6 +3,7 @@
 from .activity_grid_cells import read_activity_cell, validate_grid
 from .activity_header_metrics import distinct_value_keys
 from .activity_models import ActivityRow, GridSchema
+from .source_geometry import token_geometry_space
 
 
 def parse_grid(
@@ -99,7 +100,7 @@ def parse_grid(
                 "row": row_index,
                 "pair": pair,
                 "cells": cells,
-                "geometry_space": "unrotated" if native else "rendered",
+                "geometry_space": token_geometry_space(tokens, native),
                 "header_region": (
                     {
                         "page_no": schema.header_region[0],

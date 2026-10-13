@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- Hybrid-source ownership: `source_geometry.py` owns original native/raster scope
+  and rendered point projection without another engine/cache. The existing page
+  and table observers share it, keep native/raster contradiction evidence apart
+  and route original ID/value/header/caption/heading consumers through that same
+  source contract. One bounded raster window per hybrid page, native laziness,
+  explicit missing/error scope and unchanged original artifacts are required.
+  `source_cache_policy.py` proves eligible old raw scope before transport; the sole
+  cache writer preserves origin/validation receipts. Integer reference versions
+  use `contracts.schema_ref_matches`, not bool/float equality. RawObs2/classifier4/
+  binder13/activity13/visible10 and binding4/activity4 invalidate derived claims.
+  No new model, dependency, queue, SQL/API migration or scientific fill/rewrite.
+
 - Header-source ownership: `activity_header_observation.py` is the sole final
   coordinator. `activity_header_layout.py` supplies bounded missing-role hints;
   `activity_header_columns.py` proves fields using the shared cell observer;
@@ -7,7 +19,7 @@
   Production tokens and no-row observations flow through `activity_coordinates`.
   `activity_header_evidence.py` uses the existing activity writer for one complete
   proof catalog plus checked row references, not a competing cache/store/parser.
-  Activity3/epoch12 keep historical proof and manual/raw inputs unchanged; API,
+  Activity4/epoch13 keep historical proof and manual/raw inputs unchanged; API,
   database, dependencies, models, authentication and queue do not change.
   Native-engine synthetic controls are not real-patent scientific acceptance.
 
@@ -17,8 +29,8 @@
   engine; `table_cells.py` is the shared geometry/admission entry point. No second
   parser/engine/writer, string majority, label sequence fill or numeric rewrite.
   `numbered_structure_pairs.py` rechecks all valid serialized observations.
-  Binding3/activity3 preserve old results as historical review. Binder12,
-  activity12 and visible-label9 invalidate derived proof while retaining raw
+  Binding4/activity4 preserve old results as historical review. Binder13,
+  activity13 and visible-label10 invalidate derived proof while retaining raw
   original inputs and manual history. No API/DB/environment installation.
 
 - Session/read-state ownership: `frontend/src/api/localSession.ts` owns the one

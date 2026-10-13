@@ -12,6 +12,7 @@ from PIL import Image
 
 from .activity_identity import printed_identifier_key
 from .page_ocr_cache import get_ocr_engine
+from .source_geometry import native_lines, overlaps, source_layout
 from .source_section_roles import section_heading
 
 _BODY = re.compile(
@@ -33,6 +34,25 @@ def heading_identifier(text: object) -> str:
 
 def original_heading_lines(page, cached_lines=()) -> list[dict]:
     """Keep native columns separate; cached OCR lines do not invent x bounds."""
+    layout = source_layout(page)
+    if layout.native and layout.raster_bounds is not None:
+        raster = layout.raster_bounds
+        observed = [
+            {
+                "y0": float(y),
+                "y1": float(y) + 14,
+                "text": str(text),
+                "bbox": [raster[0], float(y), raster[2], min(float(y) + 14, raster[3])],
+                "source": "page_ocr",
+            }
+            for y, text in cached_lines
+            if str(text).strip()
+            and math.isfinite(float(y))
+            and raster[1] <= float(y) < raster[3]
+        ]
+        for line in native_lines(layout, raster):
+            observed.append({**line, "y1": line["bbox"][3]})
+        return sorted(observed, key=lambda line: (line["y0"], line["bbox"][0]))
     words = page.get_text("words")
     if not words:
         return [
@@ -63,6 +83,7 @@ def original_heading_lines(page, cached_lines=()) -> list[dict]:
                 max(w[2] for w in group),
                 max(w[3] for w in group),
             ]
+            bbox = list(fitz.Rect(bbox) * page.rotation_matrix)
             lines.append(
                 {
                     "y0": bbox[1],
@@ -100,8 +121,12 @@ def _read_heading(page, block: dict) -> tuple[str, str]:
     bounds &= page.rect
     if bounds.is_empty:
         return "", ""
-    native = page.get_text("text", clip=bounds)
-    if native.strip():
+    layout = source_layout(page)
+    raster = layout.raster_bounds is not None and overlaps(
+        layout.raster_bounds, tuple(bounds)
+    )
+    native = page.get_text("text", clip=bounds * page.derotation_matrix)
+    if native.strip() and not raster:
         return heading_identifier(" ".join(native.split())), "native_heading"
     engine = get_ocr_engine()
     if not engine or engine[0] not in {"rapidocr", "paddlex"}:
@@ -117,11 +142,15 @@ def _read_heading(page, block: dict) -> tuple[str, str]:
     )
     with Image.open(BytesIO(pixmap.tobytes("png"))) as image:
         if engine[0] == "rapidocr":
-            result, _ = engine[1](np.array(image.convert("RGB")))
+            result, _ = engine[1](np.array(image.convert("RGB")), use_cls=False)
             texts = [str(row[1]) for row in result or [] if float(row[2]) >= 0.85]
         else:
             texts, _ = _paddlex_payload_from_image(image)
-    return heading_identifier(" ".join(texts)), f"{engine[0]}_heading"
+    label = heading_identifier(" ".join(texts))
+    native_label = heading_identifier(" ".join(native.split()))
+    if native_label and native_label != label:
+        return "", "conflicting_native_raster_heading"
+    return label, f"{engine[0]}_heading"
 
 
 def standalone_heading_evidence(

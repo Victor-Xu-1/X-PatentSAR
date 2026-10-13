@@ -8,11 +8,12 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 import cv2
 
+from .source_geometry import token_geometry_space
 from .table_cells import cell_image, read_cell
 
 logger = logging.getLogger(__name__)
@@ -42,19 +43,19 @@ class BiologyRecord:
 
 def infer_schema(context: str, columns: int) -> BiologySchema | None:
     """Require observed biology/header semantics, never specific table numbers."""
-    matches = list(re.finditer(r"\bTable\s+(\d+)\b", context, re.I))
+    matches = list(re.finditer(r"\bTable\s+(\d+)\b", context, re.IGNORECASE))
     if not matches or not re.search(
-        r"Example\s*(?:ID|#)|Compound\s*(?:ID|No)", context, re.I
+        r"Example\s*(?:ID|#)|Compound\s*(?:ID|No)", context, re.IGNORECASE
     ):
         return None
     table_id = f"Table {matches[-1].group(1)}"
     if (
         columns == 3
-        and re.search(r"\bHTRF\b", context, re.I)
-        and re.search(r"\bRatio\b", context, re.I)
+        and re.search(r"\bHTRF\b", context, re.IGNORECASE)
+        and re.search(r"\bRatio\b", context, re.IGNORECASE)
     ):
         target = re.search(
-            r"([A-Za-z][A-Za-z0-9-]*)\s+binding\s+measured", context, re.I
+            r"([A-Za-z][A-Za-z0-9-]*)\s+binding\s+measured", context, re.IGNORECASE
         )
         prefix = f"{target.group(1)} HTRF" if target else "HTRF"
         return BiologySchema(
@@ -64,12 +65,16 @@ def infer_schema(context: str, columns: int) -> BiologySchema | None:
             target=target.group(1) if target else None,
             assay="HTRF",
         )
-    if columns in {2, 4} and re.search(r"degradation", context, re.I):
+    if columns in {2, 4} and re.search(r"degradation", context, re.IGNORECASE):
         cell_lines = re.findall(r"\b([A-Za-z][A-Za-z0-9-]{1,14})\s+cells\b", context)
-        protein = re.search(r"Ranking\s+of\s+([A-Za-z][A-Za-z0-9-]*)", context, re.I)
+        protein = re.search(
+            r"Ranking\s+of\s+([A-Za-z][A-Za-z0-9-]*)", context, re.IGNORECASE
+        )
         if protein is None:
             proteins = list(
-                re.finditer(r"([A-Za-z][A-Za-z0-9-]*)\s+degradation", context, re.I)
+                re.finditer(
+                    r"([A-Za-z][A-Za-z0-9-]*)\s+degradation", context, re.IGNORECASE
+                )
             )
             protein = proteins[-1] if proteins else None
         target = (
@@ -85,11 +90,11 @@ def infer_schema(context: str, columns: int) -> BiologySchema | None:
             columns // 2,
             target=target if target != "Protein" else None,
             assay="Western blot"
-            if re.search(r"Western\s+blot", context, re.I)
+            if re.search(r"Western\s+blot", context, re.IGNORECASE)
             else None,
             cell_line=cell_lines[-1] if cell_lines else None,
         )
-    if columns == 2 and re.search(r"anti[-\s]?proliferation", context, re.I):
+    if columns == 2 and re.search(r"anti[-\s]?proliferation", context, re.IGNORECASE):
         return BiologySchema(
             table_id,
             ("Anti-proliferation activity grade",),
@@ -175,6 +180,7 @@ def extract_tables(
                     values = dict(zip(schema.keys, (c.value for c in cells[1:])))
                     needs_review = any(c.needs_review for c in cells)
                     evidence = {
+                        "geometry_space": token_geometry_space(tokens, native),
                         "page_no": page_idx + 1,
                         "table_id": schema.table_id,
                         "target": schema.target,

@@ -1,8 +1,30 @@
 # Operations and troubleshooting
 
+## Hybrid PDF source observation
+
+A native footer or caption does not cover raster table contents. The shared
+source geometry keeps one rendered point frame and reads one original raster
+window per hybrid page through the existing OCR engine. Native-only pages and
+native blank cells do not start another model. Native and raster observations
+inside a cell remain separate; valid contradictory labels, values, endpoints or
+units stay review-only, even when raster reads agree. Cached raster headings are
+not hidden by native footer text. Alternative schema/API-role paths cannot waive
+valid header conflicts. This is not a new parser, queue, store or model.
+Raw observation2 refuses older hybrid coverage. Older raw native/scanned pages
+may be reused only after read-only source-scope verification. New target caches
+retain `inherited_observation_contract` and `source_policy_validation` when this
+transport occurs; repeated cache hits preserve those receipts. The historical
+source file remains unchanged. An incompatible optional frontend checkpoint is
+not reused; the normal new task observes its original source instead.
+Classifier4/binder13/activity13/visible10 and binding4/activity4 require current
+derived proof; old scientific outputs are historical, never retagged in place.
+No automatic task, external call, model installation or WSL restart. Outlined/
+partial vector text, unreadable source completeness, metadata/results references
+and unresolved chemistry remain separate open verification scope.
+
 ## Physical header evidence and currentness
 
-Activity schema3 keeps a `header_observations` map in `activity_data.json`.
+Activity schema4 keeps a `header_observations` map in `activity_data.json`.
 Each `activity_sources[].header_resolution` contains a small evidence reference
 and status; its full raw proof is stored once in that map, including rejected
 layouts with no rows. IDs are SHA-256 of canonical proof content, not a claim of
@@ -13,16 +35,16 @@ The existing OCR engine reads only bounded physical header columns at400/600dpi.
 Missing header-role discovery is bounded, and valid endpoint/unit/context
 disagreement cannot be outvoted by matching reads. Unknown metadata remains
 explicit rather than being assigned an invented activity or condition role.
-Activity epoch12 reparses affected interpretation only in an authorized software
-task; older activity1/2 proof stays historical, not migrated or retagged in place.
+Activity epoch13 reparses affected interpretation only in an authorized software
+task; older activity1/2/3 proof stays historical, not migrated or retagged in place.
 Original PDF/OCR/structure assets and manual history are retained. No new model
 installation, external request, independent patent probe or automatic rerun.
 
 ## Original cell proof revisions
 
-Binding schema3/activity schema3 do not retag older scientific artifacts. Existing
+Binding schema4/activity schema4 do not retag older scientific artifacts. Existing
 files and human correction history remain reviewable; old derived acceptance
-cannot become current merely by upgrading. Binder12/activity12/visible-label9
+cannot become current merely by upgrading. Binder13/activity13/visible-label10
 checkpoint identities rerun affected source interpretation in the normal software
 workflow; original PDF, verified page OCR and structural discovery remain separate
 unchanged inputs. No database migration, manual artifact rewriting or extra queue

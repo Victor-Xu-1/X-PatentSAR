@@ -169,7 +169,7 @@ def bind_visible_captions(
                 min(page.rect.width, bounds[2] + 4),
                 min(page.rect.height, bounds[3] + 4),
             )
-            reading = read_cell(page, expanded, [token], "label", native)
+            reading = read_cell(page, expanded, tokens, "label", native)
             if not reading.needs_review and reading.value == label:
                 candidates.append(
                     CaptionBinding(

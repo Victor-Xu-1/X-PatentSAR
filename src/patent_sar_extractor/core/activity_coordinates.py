@@ -114,6 +114,7 @@ def extract_coordinate_tables(
                 carry = None
                 continue
             schema: GridSchema | BiologySchema | None = grid_schema(context, matrix)
+            header_conflict = False
             if schema is None or isinstance(schema, GridSchema):
                 header_observations = []
                 schema = refine_scanned_header(
@@ -134,6 +135,12 @@ def extract_coordinate_tables(
                         ],
                     )
                 result.header_observations.extend(header_observations)
+                header_conflict = any(
+                    proof.get("conflicting_columns")
+                    or proof.get("context_conflict")
+                    or proof.get("reason") == "conflicting_identifier_columns"
+                    for proof in header_observations
+                )
                 if schema is not None:
                     context = schema.context
             # The existing biology authority owns its supported ratio/grade
@@ -167,17 +174,22 @@ def extract_coordinate_tables(
             explicit_unknown = re.search(
                 r"\bunknown\b|\?", normalized_header, re.IGNORECASE
             )
-            if schema is None or (
-                not explicit_unknown and (categorical or not metrics and biology_header)
+            if not header_conflict and (
+                schema is None
+                or (
+                    not explicit_unknown
+                    and (categorical or not metrics and biology_header)
+                )
             ):
                 schema = (
                     infer_schema(f"{prefix} {header}", len(region["xs"]) - 1) or schema
                 )
             new_caption = bool(TABLE_MARKER.search(prefix))
-            if schema is None:
+            if schema is None and not header_conflict:
                 schema = continued_panel(panels, page_index, region, context, prefix)
             if (
                 schema is None
+                and not header_conflict
                 and not new_caption
                 and carry
                 and isinstance(carry[0], BiologySchema)
@@ -194,7 +206,12 @@ def extract_coordinate_tables(
                         if isinstance(old, GridSchema)
                         else old
                     )
-            if schema is None and header_resolver is not None and page_index in seeds:
+            if (
+                schema is None
+                and not header_conflict
+                and header_resolver is not None
+                and page_index in seeds
+            ):
                 schema = header_resolver(context, matrix, region, page_index + 1)
             if schema is None:
                 result.coverage.append(
