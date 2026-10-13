@@ -77,6 +77,7 @@ def write_binding_result(
     catalog_bindings: Sequence[dict[str, Any]] = (),
     catalog_sources: Sequence[dict[str, Any]] = (),
     source_issues: Sequence[dict[str, Any] | str] = (),
+    source_sections: Sequence[dict[str, Any]] = (),
 ) -> dict[str, Any]:
     issues = list(source_issues)
 
@@ -127,6 +128,7 @@ def write_binding_result(
         "final_bindings": bindings,
         "compound_catalog": catalog,
         "source_issues": issues,
+        "source_sections": list(source_sections),
         "strict_coverage": {
             "expected_cpds": [binding["cpd"] for binding in bindings],
             "expected_structure_ids": [binding["structure_id"] for binding in bindings],

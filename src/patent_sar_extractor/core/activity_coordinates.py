@@ -14,50 +14,33 @@ from .activity_header_metrics import normalize_metric_text
 from .activity_header_observation import refine_scanned_header
 from .activity_header_roles import HeaderResolver
 from .activity_headers import (
-    ACTIVITY_CONTEXT,
     METRIC,
     TABLE_MARKER,
     context_from_text,
     grid_schema,
 )
 from .activity_models import ActivityRow, GridSchema, ParsedActivity
+from .activity_source_roles import method_page_evidence
 from .activity_transposed import extract_transposed
 from .biology_tables import BiologySchema, extract_tables, infer_schema
 from .table_geometry import detect_ruled_table_regions, page_tokens
 
 
-def coordinate_candidates(
-    pages: list[int], text_map: dict[str, str] | None = None
-) -> list[int]:
-    """Cached table evidence gates expensive OCR; units in synthesis are not proof."""
-    selected = []
-    previous = None
-    for page in sorted(set(pages)):
-        text = str((text_map or {}).get(str(page), "") or "")
-        has_context = bool(
-            ACTIVITY_CONTEXT.search(text) or METRIC.search(normalize_metric_text(text))
-        )
-        has_rows = bool(
-            re.search(
-                r"(?:Compound|Cpd|Example|化合物|实施例)\s*[-:]?\s*\d+|[A-Za-z]-\d+\s+[A-G]",
-                text,
-                re.IGNORECASE,
-            )
-        )
-        if (
-            not text_map
-            or (has_context and (TABLE_MARKER.search(text) or has_rows))
-            or previous == page - 1
-            and has_rows
-            and has_context
-        ):
-            selected.append(page)
-            previous = page
-    return selected
+def coordinate_candidates(pages: list[int]) -> list[int]:
+    """Every classified source gets geometry inspection before expensive OCR."""
+    if not isinstance(pages, list) or any(
+        type(page) is not int or not 0 <= page < 10000 for page in pages
+    ):
+        raise ValueError("Malformed activity coordinate seeds")
+    return sorted(set(pages))
 
 
 def extract_coordinate_tables(
-    doc, pages: list[int], *, header_resolver: HeaderResolver | None = None
+    doc,
+    pages: list[int],
+    *,
+    header_resolver: HeaderResolver | None = None,
+    page_texts: dict[str, str] | None = None,
 ) -> ParsedActivity:
     """Recognized pages remain owned even if a table contains no data rows."""
     result = ParsedActivity()
@@ -85,6 +68,30 @@ def extract_coordinate_tables(
             key=lambda r: (r["ys"][0], r["xs"][0]),
         )
         if not regions:
+            native = page.get_text("text") if hasattr(page, "get_text") else ""
+            observed = [
+                text
+                for text in (
+                    native,
+                    str((page_texts or {}).get(str(page_index), "") or ""),
+                )
+                if text.strip()
+            ]
+            proofs = [method_page_evidence(text) for text in observed]
+            method = proofs[0] if proofs and all(proofs) else ""
+            if method:
+                result.coverage.append(
+                    source_record(
+                        page_index + 1,
+                        "page",
+                        None,
+                        "",
+                        method,
+                        "context",
+                        "observed_methods",
+                        0,
+                    )
+                )
             carry = None
             continue
         # No persistent page-number-only cache: different PDFs cannot borrow tokens.

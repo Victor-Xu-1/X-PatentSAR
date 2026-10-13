@@ -81,7 +81,9 @@ def activity_evidence_errors(
                 "No activity rows without classification proof that activity is absent."
             )
         return errors
-    if classified_activity_pages == []:
+    coverage = payload.get("coverage")
+    independent = isinstance(coverage, dict) and bool(coverage.get("discovered_pages"))
+    if classified_activity_pages == [] and not independent:
         errors.append(
             "Observed activity rows contradict the absent-activity classification."
         )

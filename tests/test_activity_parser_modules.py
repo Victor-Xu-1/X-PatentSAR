@@ -145,7 +145,7 @@ class ActivityParserModuleTests(unittest.TestCase):
         ]
         self.assertEqual([(a.value, a.page) for a in projected], [("17", 1), ("29", 2)])
 
-    def test_empty_classified_set_cannot_trigger_document_scan_or_pseudo_compound(self):
+    def test_independent_native_source_is_not_lost_with_empty_classification(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             pdf = root / "control.pdf"
@@ -155,15 +155,17 @@ class ActivityParserModuleTests(unittest.TestCase):
                 doc.save(pdf)
             with patch(
                 "patent_sar_extractor.core.activity_extractor.page_text",
-                side_effect=AssertionError("no scan"),
+                side_effect=lambda page, **kwargs: page.get_text("text"),
             ):
                 result = extract(str(pdf), {"activity_pages": []}, str(root / "out"))
-            self.assertEqual(result["rows"], [])
+            self.assertEqual([row.cpd for row in result["rows"]], ["Compound 42"])
+            self.assertEqual(result["coverage"]["seed_pages"], [])
+            self.assertEqual(result["coverage"]["discovered_pages"], [0])
             self.assertEqual(
                 json.loads((root / "out/activity_data.json").read_text())[
                     "active_cpds"
                 ],
-                [],
+                ["Compound 42"],
             )
 
     def test_empty_owned_grid_is_not_reparsed_as_cached_text(self):

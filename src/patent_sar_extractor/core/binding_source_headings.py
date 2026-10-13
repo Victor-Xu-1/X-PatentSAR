@@ -13,11 +13,11 @@ from .binding_observations import (
     _refine_visible_label_cache_with_page_ocr,
 )
 from .heading_evidence import (
-    heading_identifier,
     original_heading_lines,
     standalone_heading_evidence,
 )
 from .pipeline_rules import _candidate_labels, annotate_binding_accuracy
+from .source_section_roles import section_heading
 
 
 def _document_sha256(doc) -> str:
@@ -28,17 +28,25 @@ def _document_sha256(doc) -> str:
     return hashlib.sha256(doc.tobytes(no_new_id=True)).hexdigest()
 
 
-def observed_heading_blocks(doc, pages: list[int], line_map: dict) -> list[dict]:
+def observed_heading_blocks(
+    doc, pages: list[int], line_map: dict, *, source_sections: list[dict] | None = None
+) -> list[dict]:
     """Coordinates and complete labels originate in the source, not an ID list."""
     blocks = []
     for page_index in sorted(set(pages)):
         observed = original_heading_lines(doc[page_index], line_map.get(page_index, []))
         for line in observed:
-            label = heading_identifier(line["text"])
-            if label:
+            observation = section_heading(line["text"])
+            if observation:
+                if source_sections is not None:
+                    source_sections.append(
+                        {**observation, "page_no": page_index + 1, "bbox": line["bbox"]}
+                    )
+                if observation["role"] == "assay_section":
+                    continue
                 blocks.append(
                     {
-                        "cpd": f"Compound {label}",
+                        "cpd": f"Compound {observation['identifier']}",
                         "page_no": page_index + 1,
                         "y0": line["y0"],
                         "y1": line["y1"],

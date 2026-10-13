@@ -24,6 +24,7 @@ from .activity_observations import (
     merge_rows,
     validate_rows,
 )
+from .activity_source_discovery import discover_activity_sources
 from .activity_text import extract_text_tables
 from .page_ocr_cache import load_page_ocr_cache, page_text, save_page_ocr_cache
 
@@ -59,20 +60,25 @@ def extract(
         pages = sorted(set(raw_pages))
         if any(page >= len(doc) for page in pages):
             raise ValueError("Classified activity page is outside the original PDF")
-        for page_index in pages:
+        discovered = discover_activity_sources(doc, text_map)
+        source_pages = sorted(set(pages) | set(discovered))
+        for page_index in source_pages:
             if not str(text_map.get(str(page_index), "") or "").strip():
                 # page_text uses the sole configured/shared OCR authority. Native
-                # pages do not start a model and an empty classified set is not
-                # silently expanded into an all-document scan.
+                # pages do not start a model. Independent source nomination
+                # reads only original native text or already cached OCR.
                 text_map[str(page_index)] = page_text(
                     doc[page_index], min_native_chars=1
                 )
                 dirty = True
         cells = extract_coordinate_tables(
-            doc, coordinate_candidates(pages, text_map), header_resolver=header_resolver
+            doc,
+            coordinate_candidates(source_pages),
+            header_resolver=header_resolver,
+            page_texts=text_map,
         )
         text = extract_text_tables(
-            [p for p in pages if p not in cells.owned_pages], text_map
+            [p for p in source_pages if p not in cells.owned_pages], text_map
         )
     if dirty and cache_path:
         save_page_ocr_cache(cache_path, cache)
@@ -89,7 +95,9 @@ def extract(
         )
     validate_rows(rows)
     tables = cells.tables + text.tables
-    coverage = coverage_packet(pages, [*cells.coverage, *text.coverage], rows)
+    coverage = coverage_packet(
+        pages, [*cells.coverage, *text.coverage], rows, discovered_pages=discovered
+    )
     save_results(
         rows, output, profile, coverage=coverage, unresolved_rows=cells.unresolved_rows
     )

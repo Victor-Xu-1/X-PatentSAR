@@ -441,16 +441,10 @@ class StrictAcceptanceTests(unittest.TestCase):
 
         self.assertEqual(_extract_active_cpds(payload), ["Compound 3"])
 
-    def test_coordinate_activity_candidates_exclude_synthesis_unit_noise(self) -> None:
-        page_texts = {
-            "0": "Step 2 product was prepared in 1 mL DMSO at 25 C with 4 nM impurity.",
-            "1": "Table 10 IRF5 HiBiT degradation DC5o (nM) I-1 A I-2 B",
-            "2": "IRF5 HiBiT deg. DC5o (nM) I-3 B I-4 C",
-        }
-
+    def test_classified_activity_candidates_all_receive_geometry_checks(self) -> None:
         self.assertEqual(
-            coordinate_candidates([0, 1, 2], page_texts),
-            [1, 2],
+            coordinate_candidates([0, 1, 2]),
+            [0, 1, 2],
         )
 
     def test_ruled_activity_detection_precedes_coordinate_ocr(self) -> None:

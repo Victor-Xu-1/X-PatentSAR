@@ -14,8 +14,10 @@ from patent_sar_extractor.contracts import (
     schema_ref,
 )
 
+from .activity_source_roles import method_page_evidence
+
 MAX_REGIONS = 25000
-STATUSES = {"parsed", "empty", "unresolved"}
+STATUSES = {"parsed", "empty", "unresolved", "context"}
 KINDS = {"grid", "text", "page"}
 REASONS = {
     "original_cells",
@@ -24,6 +26,7 @@ REASONS = {
     "no_original_rows",
     "no_supported_activity_table",
     "empty_original_cells",
+    "observed_methods",
 }
 
 
@@ -87,6 +90,15 @@ def _validate_region(record: dict) -> None:
         and record["row_count"] == 0
         or record["status"] != "parsed"
         and record["row_count"] != 0
+        or (record["status"] == "context" or record["reason"] == "observed_methods")
+        and not (
+            record["status"] == "context"
+            and record["reason"] == "observed_methods"
+            and record["kind"] == "page"
+            and record["bbox"] is None
+            and not record["table_id"]
+            and method_page_evidence(record["header"])
+        )
     ):
         raise ValueError("Malformed activity source inventory")
     bbox = record["bbox"]
@@ -119,13 +131,27 @@ def _validate_region(record: dict) -> None:
         )
 
 
-def coverage_packet(seed_pages: list[int], regions: list[dict], rows: list) -> dict:
+def coverage_packet(
+    seed_pages: list[int],
+    regions: list[dict],
+    rows: list,
+    *,
+    discovered_pages: list[int] | None = None,
+) -> dict:
     """A missing seed cannot become success merely because another page has rows."""
     if not isinstance(seed_pages, list) or any(
         type(page) is not int or not 0 <= page < 10000 for page in seed_pages
     ):
         raise ValueError("Malformed activity source seeds")
     seeds = sorted(set(seed_pages))
+    if discovered_pages is not None and (
+        not isinstance(discovered_pages, list)
+        or any(
+            type(page) is not int or not 0 <= page < 10000 for page in discovered_pages
+        )
+    ):
+        raise ValueError("Malformed discovered activity source pages")
+    discovered = sorted(set(discovered_pages or []))
     observed = {region["page_no"] for region in regions}
     records = list(regions)
     parsed_pages = {
@@ -133,7 +159,7 @@ def coverage_packet(seed_pages: list[int], regions: list[dict], rows: list) -> d
     }
     if any(row.page_no not in parsed_pages for row in rows):
         raise ValueError("An activity row has no recorded parsed original source")
-    for page in seeds:
+    for page in sorted(set(seeds) | set(discovered)):
         if page + 1 not in observed:
             records.append(
                 source_record(
@@ -152,6 +178,7 @@ def coverage_packet(seed_pages: list[int], regions: list[dict], rows: list) -> d
             ACTIVITY_COVERAGE_SCHEMA, ACTIVITY_COVERAGE_SCHEMA_VERSION
         ),
         "seed_pages": seeds,
+        "discovered_pages": discovered,
         "regions": records,
     }
     coverage_errors(packet, seeds)
@@ -165,7 +192,7 @@ def coverage_errors(packet: object, seed_pages: list[int] | None) -> list[str]:
         ]
     if (
         not isinstance(packet, dict)
-        or set(packet) != {"schema", "seed_pages", "regions"}
+        or set(packet) != {"schema", "seed_pages", "discovered_pages", "regions"}
         or packet["schema"]
         != schema_ref(ACTIVITY_COVERAGE_SCHEMA, ACTIVITY_COVERAGE_SCHEMA_VERSION)
         or not isinstance(packet["seed_pages"], list)
@@ -174,6 +201,12 @@ def coverage_errors(packet: object, seed_pages: list[int] | None) -> list[str]:
             for page in packet["seed_pages"]
         )
         or packet["seed_pages"] != sorted(set(packet["seed_pages"]))
+        or not isinstance(packet["discovered_pages"], list)
+        or any(
+            type(page) is not int or not 0 <= page < 10000
+            for page in packet["discovered_pages"]
+        )
+        or packet["discovered_pages"] != sorted(set(packet["discovered_pages"]))
         or seed_pages is not None
         and packet["seed_pages"] != sorted(set(seed_pages))
         or not isinstance(packet["regions"], list)
@@ -191,6 +224,9 @@ def coverage_errors(packet: object, seed_pages: list[int] | None) -> list[str]:
             errors.append(
                 f"Unresolved activity source p{region['page_no']} ({region['reason']}, {region['region_id']})."
             )
-    if any(page + 1 not in pages for page in packet["seed_pages"]):
+    if any(
+        page + 1 not in pages
+        for page in set(packet["seed_pages"]) | set(packet["discovered_pages"])
+    ):
         raise ValueError("Activity seed page is absent from its coverage proof")
     return errors
