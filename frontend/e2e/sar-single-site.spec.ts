@@ -230,11 +230,14 @@ for (const width of [390, 800, 1672]) {
       .getByRole('button', { name: 'Close transformation preview', exact: true })
       .click();
     await expect(network.getByRole('button', { name: 'Compare 2', exact: true })).toBeFocused();
+    const selectedMatrix = await matrix.innerText();
     await network
       .getByRole('textbox', { name: 'Find a core ID', exact: true })
       .fill('not-a-source-id');
-    await expect(network.getByText('No core structures to show', { exact: true })).toBeVisible();
-    await expect(network.locator('.sar-network-layout')).toHaveCount(0);
+    await expect(network.getByText('No matching cores', { exact: true })).toBeVisible();
+    await expect(network.locator('.sar-core-card')).toHaveCount(0);
+    await expect(matrix).toBeVisible();
+    expect(await matrix.innerText()).toBe(selectedMatrix);
     await network.getByRole('textbox', { name: 'Find a core ID', exact: true }).fill('');
     await expect(network.getByRole('button', { name: 'Select core 1', exact: true })).toBeVisible();
     const downloading = page.waitForEvent('download');
