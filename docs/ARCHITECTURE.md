@@ -7,6 +7,20 @@ epochs are not product releases and do not retag old results as current.
 
 ## One workflow
 
+### Source-bound reanalysis setup
+
+`study/reanalysisDraft.ts` projects only safe form fields from a retained report:
+selected context IDs, losslessly represented grade labels and source-bound
+missing-condition declarations rechecked through `conditionDraft.ts`. Dataset
+revision/content/document identity binds the seed; `StudySetup` revalidates the
+current profile before explicit submission through the sole existing study API.
+Fixed legacy thresholds, old request IDs, region/core restrictions, unknown-
+condition confirmation and results are never copied. Current numeric direction
+and tenth-decade policies retain their existing shared authorities. A dirty form
+is revealed without replacement; pending/uncertain writes block reseeding and
+retain the existing exact-request retry. No new backend, queue, schema, scientific
+epoch, background job or source mutation is introduced.
+
 ### Unified task history navigation
 
 `JobsPage` composes `ExtractionJobs` and `SARHistoryPanel` behind the shared Tabs

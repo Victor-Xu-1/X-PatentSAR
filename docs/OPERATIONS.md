@@ -1,5 +1,19 @@
 # Operations and troubleshooting
 
+## Sparse historical SAR reports
+
+Check the report header's scope before interpreting a small comparison set.
+Manual-region reports are retained snapshots, not a live view of current automatic
+discovery. **New analysis** reuses selected endpoints and valid source-documented
+conditions in the normal setup form, with full-library discovery enabled. Review
+and explicitly run it to create a separate report; no PDF extraction or external
+model is triggered by opening this form. Existing unsaved settings appear as
+**Continue setup**. Stale sources, changed conditions and active/uncertain writes
+remain blocked; refresh/review the source rather than overriding acceptance.
+The original report and raw extraction remain unchanged. Deployment/browser
+acceptance may inspect a production prefilled form but must not start a new
+production study without authorization; native write checks use isolated inputs.
+
 ## Task records
 
 The Tasks page now has Patent extraction and SAR analysis tabs. SAR jobs were

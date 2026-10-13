@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { sarApi } from '../../../api/sarApi';
 import { sarStudyApi } from '../../../api/sarStudyApi';
 import type { Dataset } from '../../../api/sarTypes';
@@ -14,6 +14,8 @@ import { StudyReportView } from './StudyReportView';
 import { StudyReportInfo } from './StudyReportInfo';
 import { StudyReportHeader } from './StudyReportHeader';
 import { ContractError } from '../../../api/validation';
+import type { StudyReport } from '../../../api/sarStudyTypes';
+import { coreChoices } from './coreChoices';
 export function StudyResults({
   dataset,
   jobId,
@@ -21,6 +23,9 @@ export function StudyResults({
   disabled,
   scope,
   onJob,
+  onReanalyse,
+  reanalysisDisabled = true,
+  hasDraft = false,
 }: {
   dataset: Dataset;
   jobId: string;
@@ -28,6 +33,9 @@ export function StudyResults({
   disabled: boolean;
   scope: string;
   onJob: (id: string) => void;
+  onReanalyse?: ((report: StudyReport) => void) | undefined;
+  reanalysisDisabled?: boolean | undefined;
+  hasDraft?: boolean | undefined;
 }) {
   const { t } = useTranslation(),
     controller = useRef<AbortController | null>(null);
@@ -61,6 +69,17 @@ export function StudyResults({
     if (!active || disabled) controller.current?.abort();
   }, [active, disabled]);
   const ready = active && !disabled && job.validated;
+  const coverage = useMemo(
+    () =>
+      overview.data
+        ? {
+            automatic: Boolean(overview.data.report.discovery),
+            references: coreChoices(overview.data.report).length,
+            regions: overview.data.report.regions.length,
+          }
+        : null,
+    [overview.data],
+  );
   const current = Boolean(
     job.data &&
     !job.data.stale &&
@@ -81,6 +100,20 @@ export function StudyResults({
         disabled={!active || disabled}
         onRefresh={refresh}
         onDetails={overview.data ? () => setInfoOpen(true) : null}
+        coverage={coverage}
+        hasDraft={hasDraft}
+        newAnalysisDisabled={
+          reanalysisDisabled ||
+          !ready ||
+          !overview.validated ||
+          dataset.stale ||
+          overview.data?.report.dataset_revision !== dataset.revision
+        }
+        onNewAnalysis={
+          onReanalyse && overview.data && job.data?.status === 'complete'
+            ? () => onReanalyse(overview.data!.report)
+            : undefined
+        }
       />
       {job.loading && <Loading />}
       {job.error && <SARFailure error={job.error} onRetry={job.reload} />}

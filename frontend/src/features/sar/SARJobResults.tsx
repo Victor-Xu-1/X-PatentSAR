@@ -6,9 +6,13 @@ import { SARFailure } from './SARFailure';
 import { useSARResource } from './useSARResource';
 import { SARResults } from './SARResults';
 import { StudyResults } from './study/StudyResults';
+import type { StudyReport } from '../../api/sarStudyTypes';
 /** Dispatch from server-owned job kind, including a direct route absent from the list. */
 export function SARJobResults({
   known,
+  onReanalyse,
+  reanalysisDisabled,
+  hasDraft,
   ...props
 }: {
   known: SARJob | null;
@@ -19,6 +23,9 @@ export function SARJobResults({
   scope: string;
   reference?: Molecule | null;
   onJob: (id: string) => void;
+  onReanalyse?: ((report: StudyReport) => void) | undefined;
+  reanalysisDisabled?: boolean | undefined;
+  hasDraft?: boolean | undefined;
 }) {
   const load = useCallback(
     (signal: AbortSignal) => sarApi.job(props.jobId, props.dataset.id, signal),
@@ -39,5 +46,14 @@ export function SARJobResults({
         {resource.error && <SARFailure error={resource.error} onRetry={resource.reload} />}
       </>
     );
-  return kind === 'study' ? <StudyResults {...props} /> : <SARResults {...props} />;
+  return kind === 'study' ? (
+    <StudyResults
+      {...props}
+      onReanalyse={onReanalyse}
+      reanalysisDisabled={reanalysisDisabled}
+      hasDraft={hasDraft}
+    />
+  ) : (
+    <SARResults {...props} />
+  );
 }

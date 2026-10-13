@@ -1,5 +1,13 @@
 # X-PatentSAR
 
+SAR report headers distinguish full-library discovery from manually selected
+regions. **New analysis** opens the existing confirmation form with the report's
+selected endpoints and still-valid source-documented conditions. Automatic
+single-site discovery and current tenth-decade policies apply to the new study;
+old region limits, request identities and unknown-condition confirmations do not
+carry over. Opening the form never runs an analysis or replaces a report. An
+unsaved setup is continued instead of overwritten.
+
 Task history has separate Patent extraction and SAR analysis tabs. SAR history
 lists retained jobs across datasets with paging, dataset/status filters, direct
 report access and the existing confirmed soft-removal action. Opening history
