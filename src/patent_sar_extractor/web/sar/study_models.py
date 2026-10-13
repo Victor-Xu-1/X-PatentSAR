@@ -167,7 +167,9 @@ class StudyDiscovery(DTO):
     redundant_proved_sites: int = Field(default=0, ge=0, le=100000)
     max_cut_bonds: Literal[1, 2, 3] = 1
     aromatic_boundaries: bool = False
-    multiple_bond_boundaries: bool = False
+    multiple_bond_boundaries: bool = Field(
+        default=False, exclude_if=lambda value: not value
+    )
     excluded: dict[str, int]
     max_variable_atoms: Literal[32] = 32
     max_variable_fraction: Literal[0.4] = 0.4
@@ -197,7 +199,8 @@ class StudyDiscovery(DTO):
         ):
             raise ValueError("discovery_hydrogen_coverage")
         if self.aromatic_boundaries != (
-            self.method in {
+            self.method
+            in {
                 "single-region-three-port-aromatic-h-v5",
                 "single-region-three-port-multiple-h-v6",
             }

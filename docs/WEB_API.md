@@ -110,7 +110,7 @@ new webpage studies explicitly send true). The same study queue reserves its
 `discovery` with method, candidate/cut counts, exclusions and explicit limits.
 Region summaries add `origin:manual|single_site` and nullable `comparison_pool`;
 manual regions still compare the whole source pool, derived regions compare
-their complete indexed pool through the identical strict validator. SAR engine11
+their complete indexed pool through the identical strict validator. SAR engine12
 invalidates incompatible unfinished scientific work without retagging old reports.
 New study input5 and `candidate_policy:strict-context-pareto-units-v3` use exact
 open/closed interval boundary ordering in both comparisons and Pareto fronts.
@@ -138,9 +138,12 @@ cutoffs are strict. All colors and filters use server interval proof, not rounde
 browser ranks. Known unitless pActivity names may derive unit1 in input5 copies;
 raw saved datasets remain unchanged. Input4/older read adapters do not silently
 upgrade log-strength rules. No generic percentage thresholds are supplied.
-Discovery method is `single-region-three-port-aromatic-h-v5` with `max_cut_bonds:3`,
-explicit `aromatic_boundaries:true` and bounded `redundant_proved_sites`. Prior
-methods cannot claim aromatic coverage. Broader same-pool automatic sites are
+Discovery method is `single-region-three-port-multiple-h-v6` with `max_cut_bonds:3`,
+explicit `aromatic_boundaries:true`, `multiple_bond_boundaries:true` and bounded
+`redundant_proved_sites`. V5 retains aromatic-only boundary coverage; earlier
+methods cannot claim these newer capabilities. False multiple-bond markers are
+omitted for historical transport compatibility. Stereo-sensitive double-bond
+boundaries remain unsupported, not silently accepted. Broader same-pool automatic sites are
 removed only after a stricter connected region proves every candidate through
 the identical full matcher; raw proposal comparisons still obey75000 and
 retained sites4096. Failed/ambiguous strict proofs cannot remove a site.

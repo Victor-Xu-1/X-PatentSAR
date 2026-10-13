@@ -25,7 +25,7 @@ class HydrogenAPITests(WebFixture, unittest.TestCase):
             self.assertEqual(reply.status_code, 200, reply.text)
             report = reply.json()["report"]
             self.assertEqual(
-                report["discovery"]["method"], "single-region-three-port-aromatic-h-v5"
+                report["discovery"]["method"], "single-region-three-port-multiple-h-v6"
             )
             self.assertGreater(report["discovery"]["indexed_hydrogen_sites"], 0)
             source = client.get(path + "/export?format=json").json()

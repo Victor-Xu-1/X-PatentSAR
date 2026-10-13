@@ -22,7 +22,7 @@ class MultiportAPITests(WebFixture, unittest.TestCase):
             path = support.ROOT + "/jobs/" + job["id"] + "/study"
             report = client.get(path).json()["report"]
             self.assertEqual(
-                report["discovery"]["method"], "single-region-three-port-aromatic-h-v5"
+                report["discovery"]["method"], "single-region-three-port-multiple-h-v6"
             )
             self.assertEqual(report["discovery"]["max_cut_bonds"], 3)
             ids = {

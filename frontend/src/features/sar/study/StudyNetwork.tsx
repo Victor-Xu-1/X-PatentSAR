@@ -218,14 +218,14 @@ export function StudyNetwork({
               report.discovery?.method === 'single-region-three-port-multiple-h-v6'
                 ? '单一区域，最多三个连接点；支持芳香环、非立体多重键、氢位点与桥环变化。固定结构严格不变；氢与双键边界手性及更多连接点仍受限。'
                 : report.discovery?.method === 'single-region-three-port-aromatic-h-v5'
-                ? '单一区域，最多三个连接点；支持芳香环局部替换、氢位点、支链与桥环。固定结构严格不变；氢边界手性及更多连接点尚未自动枚举。'
-                : report.discovery?.method === 'single-region-one-to-three-cut-h-v4'
-                  ? '单一区域，最多三个连接点；支持氢位点、支链与非芳香桥环变化。固定结构严格不变；氢边界手性、芳香切割及更多连接点尚未自动枚举。'
-                  : report.discovery?.method === 'single-region-one-two-cut-h-v3'
-                    ? '单一变化区域，支持普通氢位点、一至两个连接点及非芳香环片段；其余结构严格不变。氢边界手性、芳香切割及更多连接点仍不支持自动枚举。'
-                    : report.discovery?.method === 'single-region-one-two-cut-v2'
-                      ? '单一变化区域，支持一至两个连接点及非芳香环片段；其余完整结构严格不变。隐式氢、芳香边界及更多连接点仍需手工区域。'
-                      : '自动枚举单个非环单键的连接点，其他完整结构由严格匹配器确认。隐式氢、环内和多连接点变化尚未自动枚举，可继续使用手工区域。',
+                  ? '单一区域，最多三个连接点；支持芳香环局部替换、氢位点、支链与桥环。固定结构严格不变；氢边界手性及更多连接点尚未自动枚举。'
+                  : report.discovery?.method === 'single-region-one-to-three-cut-h-v4'
+                    ? '单一区域，最多三个连接点；支持氢位点、支链与非芳香桥环变化。固定结构严格不变；氢边界手性、芳香切割及更多连接点尚未自动枚举。'
+                    : report.discovery?.method === 'single-region-one-two-cut-h-v3'
+                      ? '单一变化区域，支持普通氢位点、一至两个连接点及非芳香环片段；其余结构严格不变。氢边界手性、芳香切割及更多连接点仍不支持自动枚举。'
+                      : report.discovery?.method === 'single-region-one-two-cut-v2'
+                        ? '单一变化区域，支持一至两个连接点及非芳香环片段；其余完整结构严格不变。隐式氢、芳香边界及更多连接点仍需手工区域。'
+                        : '自动枚举单个非环单键的连接点，其他完整结构由严格匹配器确认。隐式氢、环内和多连接点变化尚未自动枚举，可继续使用手工区域。',
             )}
           </p>
         </details>

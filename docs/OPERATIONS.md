@@ -8,12 +8,14 @@ model installation or external API is required. The existing one-CPU/512MiB/
 180s study carrier and analysis lease remain authoritative. A complete search
 refuses rather than truncates at500000 examined boundary sets,100000 indexed cuts,
 4096 sites or75000 combined comparisons. Automatic enumeration covers up to three
-single/aromatic bond boundaries, including two-ended linkers, branched centres,
+single/double/triple/aromatic bond boundaries, including two-ended linkers, branched centres,
 bridged rings and partial aromatic substitutions, plus ordinary H sites. >3 ports remain manual-only;
-hydrogen-boundary stereo is unsupported. H sites bind original atom anchors;
+hydrogen-boundary stereo and cuts through potentially stereogenic double bonds
+are unsupported. Terminal multiple-bond substitutions use the smallest proved
+connected region; adjoining fixed carbon atoms need not be included. H sites bind original atom anchors;
 private expanded views do not rewrite the original molecule or public indices.
 Native input-bound plans and25-pair batches survive interruption. Changes to
-SAR engine11 make old unfinished engine10/older
+SAR engine12 make old unfinished engine11/older
 checkpoints incompatible; retain their artifacts or roll back the prior wheel,
 never rewrite scientific identities. Completed old reports remain readable.
 Parent verification separately bounds candidate-plan regeneration at30s and
@@ -49,7 +51,7 @@ never reuse or rewrite an old unfinished receipt as a compatible result.
 
 ## Activity-strength compatibility
 
-New engine11 studies use private input schema5 and candidate policy
+New engine12 studies retain private input schema5 and candidate policy
 `strict-context-pareto-units-v3`. Strict ordering includes a shared finite boundary
 when either side excludes that boundary: `<10` vs `>=10`, or `<=10` vs `>10`.
 `<=10` vs `>=10` can still be equal at10 and remains indeterminate. Intervals

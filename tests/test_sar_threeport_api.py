@@ -32,6 +32,7 @@ class ThreeportAPITests(WebFixture, unittest.TestCase):
                 "method": method,
                 "max_cut_bonds": ports,
                 "aromatic_boundaries": False,
+                "multiple_bond_boundaries": False,
             }
             self.assertEqual(
                 StudyDiscovery.model_validate(payload).max_cut_bonds, ports
@@ -63,7 +64,7 @@ class ThreeportAPITests(WebFixture, unittest.TestCase):
             path = support.ROOT + "/jobs/" + job["id"] + "/study"
             report = client.get(path).json()["report"]
             self.assertEqual(
-                report["discovery"]["method"], "single-region-three-port-aromatic-h-v5"
+                report["discovery"]["method"], "single-region-three-port-multiple-h-v6"
             )
             self.assertEqual(report["discovery"]["max_cut_bonds"], 3)
             originals = client.get(path + "/export?format=json").json()

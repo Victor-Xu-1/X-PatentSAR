@@ -10,6 +10,7 @@ from patent_sar_extractor.core.sar.cut_topology import boundary_regions
 from patent_sar_extractor.core.sar.discovery import discover_sites
 from patent_sar_extractor.core.sar.matching import compile_reference
 from patent_sar_extractor.core.sar.study_graphs import cut_identity, reference_cut
+from patent_sar_extractor.web.sar.assets import digest
 
 
 class MultipleBondTests(unittest.TestCase):
@@ -32,8 +33,11 @@ class MultipleBondTests(unittest.TestCase):
                                     mol, list(reversed(range(mol.GetNumAtoms())))
                                 )
                             )
+                            row["graph_sha256"] = digest(row["molfile"])
                     by_id = {row["id"]: row for row in rows}
-                    plans, _ = discover_sites(rows, {"id": "independent", "revision": 1})
+                    plans, _ = discover_sites(
+                        rows, {"id": "independent", "revision": 1}
+                    )
                     found = set()
                     for plan in plans:
                         region = plan["region"]
@@ -79,11 +83,19 @@ class MultipleBondTests(unittest.TestCase):
                         for component in Chem.GetMolFrags(fragmented):
                             originals = {index for index in component if index < count}
                             if originals and all(
-                                (mol.GetBondWithIdx(edge).GetBeginAtomIdx() in originals)
-                                != (mol.GetBondWithIdx(edge).GetEndAtomIdx() in originals)
+                                (
+                                    mol.GetBondWithIdx(edge).GetBeginAtomIdx()
+                                    in originals
+                                )
+                                != (
+                                    mol.GetBondWithIdx(edge).GetEndAtomIdx()
+                                    in originals
+                                )
                                 for edge in cuts
                             ):
-                                expected.add((cuts, sum(1 << index for index in originals)))
+                                expected.add(
+                                    (cuts, sum(1 << index for index in originals))
+                                )
                 actual = list(boundary_regions(mol, lambda: None))
                 self.assertEqual(len(actual), len(set(actual)))
                 self.assertEqual(set(actual), expected)

@@ -1,5 +1,11 @@
 # X-PatentSAR
 
+Automatic single-region discovery includes double/triple-bond boundaries, so
+terminal carbonyl/thiocarbonyl and nitrile/alkyne replacements can keep their
+neighbouring carbon fixed. The same full-graph matcher proves every comparison;
+potential double-bond stereochemistry across a cut remains refused. No new model,
+task queue or task-specific structure template is used.
+
 Activity strength uses the tenth-strongest identified compound in the complete
 comparable context, never the fifth record or page-relative thirds. New SAR
 studies and the extraction table also recognize pIC50/pEC50/pDC50/pKi/pKd:

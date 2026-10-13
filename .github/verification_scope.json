@@ -1,29 +1,65 @@
 {
   "schema_version": 1,
-  "base_sha": "fad8c5dfd429a3eb271dfc40d3a0a89fd894c543",
+  "base_sha": "48f7f074f4fbf7f4e713cd81ea3256c5ef9e3da9",
   "changed_paths": [
     ".github/verification_scope.json",
+    "README.md",
+    "docs/ARCHITECTURE.md",
+    "docs/OPERATIONS.md",
+    "docs/PROJECT_MANIFEST.md",
     "docs/WEB_API.md",
+    "frontend/e2e/sar-hydrogen.spec.ts",
+    "frontend/e2e/sar-multiple-bonds.spec.ts",
+    "frontend/e2e/sar-multiport.spec.ts",
+    "frontend/e2e/sar-single-site.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
+    "frontend/src/api/sarStudyDiscoveryDecoder.ts",
+    "frontend/src/api/sarStudyTypes.ts",
+    "frontend/src/features/sar/study/StudyNetwork.tsx",
+    "frontend/src/i18n/catalogs/sar.ts",
+    "frontend/tests/sar-discovery-contract.test.ts",
     "src/patent_sar_extractor/contracts.py",
-    "src/patent_sar_extractor/web/activity_rank_models.py",
-    "tests/test_log_potency_bands.py"
+    "src/patent_sar_extractor/core/sar/cut_topology.py",
+    "src/patent_sar_extractor/core/sar/discovery.py",
+    "src/patent_sar_extractor/web/sar/study_models.py",
+    "tests/test_sar_hydrogen_api.py",
+    "tests/test_sar_multiple_bonds.py",
+    "tests/test_sar_multiple_bonds_api.py",
+    "tests/test_sar_multiport_api.py",
+    "tests/test_sar_threeport_api.py",
+    "tools/browser_fixture_mode.py"
   ],
   "python_modules": [
-    "tests.test_log_potency_bands",
-    "tests.test_log_potency_workflow",
-    "tests.test_potency_bands",
-    "tests.test_sar_current_strength",
+    "tests.test_sar_multiple_bonds",
+    "tests.test_sar_multiple_bonds_api",
+    "tests.test_sar_discovery",
+    "tests.test_sar_site_reduction",
+    "tests.test_sar_aromatic",
+    "tests.test_sar_multiport",
+    "tests.test_sar_threeport",
+    "tests.test_sar_graph",
+    "tests.test_sar_aromatic_api",
+    "tests.test_sar_aromatic_worker",
+    "tests.test_sar_threeport_api",
+    "tests.test_sar_multiport_api",
+    "tests.test_sar_hydrogen_api",
+    "tests.test_sar_preview_alignment",
     "tests.test_sar_study_analysis.StudyAnalysisTests.test_native_subprocess_full_report_is_accepted_by_parent",
+    "tests.test_sar_study_analysis.StudyAnalysisTests.test_descriptor_checkpoint_order_and_engine_tampering_are_rejected",
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
-    "frontend/tests/activity-strength.test.tsx",
-    "frontend/tests/sar-policy-note.test.tsx"
+    "frontend/tests/sar-discovery-contract.test.ts",
+    "frontend/tests/sar-network-sites.test.ts",
+    "frontend/tests/sar-matrix.test.tsx",
+    "frontend/tests/sar-core-directions.test.tsx"
   ],
   "browser_tests": [
-    "frontend/e2e/sar-log-potency.spec.ts"
+    "frontend/e2e/sar-multiple-bonds.spec.ts",
+    "frontend/e2e/sar-single-site.spec.ts",
+    "frontend/e2e/sar-multiport.spec.ts",
+    "frontend/e2e/sar-hydrogen.spec.ts"
   ]
 }

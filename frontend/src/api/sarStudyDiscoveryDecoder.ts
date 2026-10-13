@@ -61,9 +61,11 @@ export const decodeStudyDiscovery: Decoder<NonNullable<StudyReport['discovery']>
   if (
     result.method !== 'single-non-ring-bond-v1' &&
     (result.max_cut_bonds !==
-      (['single-region-one-to-three-cut-h-v4', 'single-region-three-port-aromatic-h-v5', 'single-region-three-port-multiple-h-v6'].includes(
-        result.method,
-      )
+      ([
+        'single-region-one-to-three-cut-h-v4',
+        'single-region-three-port-aromatic-h-v5',
+        'single-region-three-port-multiple-h-v6',
+      ].includes(result.method)
         ? 3
         : 2) ||
       result.examined_boundaries === undefined ||
@@ -86,7 +88,9 @@ export const decodeStudyDiscovery: Decoder<NonNullable<StudyReport['discovery']>
   )
     throw new ContractError(path);
   if (
-    ['single-region-three-port-aromatic-h-v5', 'single-region-three-port-multiple-h-v6'].includes(result.method)
+    ['single-region-three-port-aromatic-h-v5', 'single-region-three-port-multiple-h-v6'].includes(
+      result.method,
+    )
       ? result.aromatic_boundaries !== true
       : result.aromatic_boundaries === true
   )
