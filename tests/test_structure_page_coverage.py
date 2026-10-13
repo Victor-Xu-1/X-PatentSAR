@@ -15,6 +15,13 @@ from patent_sar_extractor.core.structure_page_locator import locate_structure_pa
 
 
 class StructurePageCoverageTests(unittest.TestCase):
+    def test_every_page_is_nominated_even_without_text_ids_or_classification(self):
+        result = self.locate(["", "Unnumbered figure", "Example 19 NMR", ""], {}, [])
+        self.assertEqual(result["selected_pages"], [0, 1, 2, 3])
+        self.assertEqual(result["coverage_policy"], "all_document_pages")
+        self.assertEqual(result["page_count"], 4)
+        self.assertEqual(result["hint_pages"], [2])
+
     def test_catalog_start_after_long_prose_keeps_original_start_page(self):
         for title in ("Table 27. Compounds Table", "Table 92: Exemplary Structures"):
             with self.subTest(title=title):
@@ -29,7 +36,7 @@ class StructurePageCoverageTests(unittest.TestCase):
                     {"synthesis_pages": [], "activity_pages": []},
                     [],
                 )
-                self.assertEqual(result["selected_pages"], [0, 1])
+                self.assertEqual(result["hint_pages"], [0, 1])
 
     def test_catalog_reference_cannot_hide_assay_or_long_prose_as_a_table(self):
         texts = [
@@ -41,7 +48,7 @@ class StructurePageCoverageTests(unittest.TestCase):
             ),
             "Table 27. Compounds Table " + "Compound 31 " * 30,
         ]
-        self.assertEqual(self.locate(texts, {}, [])["selected_pages"], [])
+        self.assertEqual(self.locate(texts, {}, [])["hint_pages"], [])
 
     def test_mixed_catalog_and_formula_prose_keeps_dense_original_ids(self):
         from patent_sar_extractor.core.structure_page_evidence import (
@@ -74,7 +81,7 @@ class StructurePageCoverageTests(unittest.TestCase):
             {"synthesis_pages": [], "activity_pages": [1]},
             [],
         )
-        self.assertEqual(result["selected_pages"], [0])
+        self.assertEqual(result["hint_pages"], [0])
 
     def locate(self, texts: list[str], classification: dict, active: list[str]):
         with tempfile.TemporaryDirectory() as temporary:
@@ -105,6 +112,7 @@ class StructurePageCoverageTests(unittest.TestCase):
                     ocr_cache_path=str(cache),
                 )
             build.assert_not_called()
+            self.assertEqual(result["selected_pages"], list(range(len(texts))))
             return result
 
     def test_zero_activity_keeps_numbered_synthesis_and_structure_tables(self):
@@ -121,7 +129,7 @@ class StructurePageCoverageTests(unittest.TestCase):
             },
             [],
         )
-        self.assertEqual(result["selected_pages"], [0, 1])
+        self.assertEqual(result["hint_pages"], [0, 1])
         self.assertEqual(result["unmatched_cpds"], [])
         self.assertEqual(result["crop_regions"], {})
 
@@ -141,10 +149,10 @@ class StructurePageCoverageTests(unittest.TestCase):
             },
             ["Compound 1"],
         )
-        self.assertEqual(result["selected_pages"], [0, 2, 4])
+        self.assertEqual(result["hint_pages"], [0, 2, 4])
         self.assertEqual(result["matched_cpds"], {"Compound 1": [0]})
         self.assertEqual(result["crop_regions"], {})
-        self.assertEqual(set(result["ocr_text_map"]), {"0", "2", "4"})
+        self.assertEqual(set(result["ocr_text_map"]), {"0", "1", "2", "3", "4"})
 
     def test_small_disjoint_tables_survive_primary_active_catalog_selection(self):
         result = self.locate(
@@ -156,7 +164,7 @@ class StructurePageCoverageTests(unittest.TestCase):
             {"synthesis_pages": [2], "candidate_pages": [2]},
             [f"Compound {number}" for number in range(1, 7)],
         )
-        self.assertEqual(result["selected_pages"], [0, 2])
+        self.assertEqual(result["hint_pages"], [0, 2])
         self.assertEqual(result["structure_table_pages"], [2])
         self.assertEqual(result["structure_table_coverage_count"], 6)
 
@@ -166,9 +174,9 @@ class StructurePageCoverageTests(unittest.TestCase):
             {"synthesis_pages": [0], "candidate_pages": [0], "activity_pages": [0]},
             [],
         )
-        self.assertEqual(result["selected_pages"], [0])
+        self.assertEqual(result["hint_pages"], [0])
 
-    def test_generic_formula_and_assay_prose_do_not_trigger_a_whole_pool_scan(self):
+    def test_generic_formula_and_assay_prose_are_not_positive_structure_hints(self):
         result = self.locate(
             [
                 "A compound of formula (I) with variable R groups is claimed.",
@@ -182,7 +190,7 @@ class StructurePageCoverageTests(unittest.TestCase):
             },
             ["Compound 1"],
         )
-        self.assertEqual(result["selected_pages"], [])
+        self.assertEqual(result["hint_pages"], [])
         self.assertEqual(result["unmatched_cpds"], ["Compound 1"])
 
     def test_cached_numbered_tables_are_found_when_classification_pool_is_empty(self):
@@ -191,7 +199,7 @@ class StructurePageCoverageTests(unittest.TestCase):
             {"synthesis_pages": [], "candidate_pages": []},
             [],
         )
-        self.assertEqual(result["selected_pages"], [0])
+        self.assertEqual(result["hint_pages"], [0])
 
     def test_formula_prose_with_claim_numbers_and_atom_words_is_not_a_table(self):
         result = self.locate(
@@ -204,7 +212,7 @@ class StructurePageCoverageTests(unittest.TestCase):
             {"candidate_pages": [0, 1, 2, 3]},
             [],
         )
-        self.assertEqual(result["selected_pages"], [3])
+        self.assertEqual(result["hint_pages"], [3])
 
     def test_only_evidenced_synthesis_continuations_are_expanded(self):
         result = self.locate(
@@ -216,7 +224,7 @@ class StructurePageCoverageTests(unittest.TestCase):
             {"synthesis_pages": [0, 1, 2], "candidate_pages": [0, 1, 2]},
             [],
         )
-        self.assertEqual(result["selected_pages"], [0, 1])
+        self.assertEqual(result["hint_pages"], [0, 1])
 
     def test_numbered_captions_with_atom_labels_are_kept_without_activity(self):
         result = self.locate(
@@ -224,7 +232,7 @@ class StructurePageCoverageTests(unittest.TestCase):
             {"candidate_pages": [0, 1], "activity_pages": [1]},
             [],
         )
-        self.assertEqual(result["selected_pages"], [0])
+        self.assertEqual(result["hint_pages"], [0])
 
     def test_plain_numeric_lists_are_not_numbered_structure_evidence(self):
         result = self.locate(
@@ -236,7 +244,7 @@ class StructurePageCoverageTests(unittest.TestCase):
             {"candidate_pages": [0]},
             [],
         )
-        self.assertEqual(result["selected_pages"], [])
+        self.assertEqual(result["hint_pages"], [])
 
     def test_headerless_numbered_structure_cells_continue_the_catalog(self):
         result = self.locate(
@@ -248,7 +256,7 @@ class StructurePageCoverageTests(unittest.TestCase):
             {"candidate_pages": [0, 1, 2]},
             [],
         )
-        self.assertEqual(result["selected_pages"], [0, 1])
+        self.assertEqual(result["hint_pages"], [0, 1])
         self.assertEqual(
             result["structure_page_evidence"]["1"], "structure_table_continuation"
         )
@@ -284,7 +292,7 @@ class StructurePageCoverageTests(unittest.TestCase):
                 )
             self.assertEqual(build.call_count, 1)
             self.assertEqual(build.call_args.args[1], [0, 1])
-            self.assertEqual(result["selected_pages"], [0, 1])
+            self.assertEqual(result["hint_pages"], [0, 1])
 
 
 if __name__ == "__main__":

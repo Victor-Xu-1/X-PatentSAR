@@ -101,6 +101,14 @@ def execute_missing_windows(
             # A failed later chunk must not throw away earlier successful work.
             if not _fingerprint_matches(str(path), job["fingerprint"]):
                 continue
+            from patent_sar_extractor.core.structure_inventory import (
+                validate_structure_inventory,
+            )
+
+            try:
+                validate_structure_inventory(payload, expected_pages=job["pages"])
+            except (ValueError, TypeError, KeyError):
+                continue
             results[job["output"]] = payload
             if on_saved is not None:
                 on_saved(job["pages"])

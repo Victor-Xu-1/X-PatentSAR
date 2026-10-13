@@ -28,6 +28,7 @@ from patent_sar_extractor.application.structure_cache import (
 )
 from patent_sar_extractor.artifact_io import write_json_atomic
 from patent_sar_extractor.core.page_ocr_cache import build_cache_metadata
+from patent_sar_extractor.core.structure_inventory import inventory_packet
 from patent_sar_extractor.web.attempts import ARTIFACTS, OCR_PATH, seed_checkpoints
 from patent_sar_extractor.web.processes import RunSpec
 
@@ -113,6 +114,17 @@ class SourceOrderCheckpointTests(WebFixture, unittest.TestCase):
                 ),
                 "failed_pages": [],
                 "total_structures": 1,
+                "source_inventory": inventory_packet(
+                    3,
+                    [
+                        {
+                            "page_no": 1,
+                            "status": "detected",
+                            "scope": "full_page",
+                            "candidates": 1,
+                        }
+                    ],
+                ),
                 "structures": [
                     {
                         "structure_id": "S0000",
@@ -219,6 +231,18 @@ class SourceOrderCheckpointTests(WebFixture, unittest.TestCase):
                             core.STRUCTURES_SCHEMA, core.STRUCTURES_SCHEMA_VERSION
                         ),
                         "total_structures": 1,
+                        "source_inventory": inventory_packet(
+                            3,
+                            [
+                                {
+                                    "page_no": p + 1,
+                                    "status": "detected",
+                                    "scope": "full_page",
+                                    "candidates": 1,
+                                }
+                                for p in job["pages"]
+                            ],
+                        ),
                         "failed_pages": [],
                         "structures": [
                             {"structure_id": "S0000", "page_no": job["pages"][0] + 1}

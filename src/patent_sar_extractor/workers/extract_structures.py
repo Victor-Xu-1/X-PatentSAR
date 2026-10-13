@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Extract chemical structures from patent PDF using DECIMER Image Segmentation.
 Generates metadata.json for the structure binder.
@@ -135,7 +134,19 @@ def extract_structures_from_pdf(
     crop_regions = _load_crop_regions(crop_regions_path)
 
     doc = fitz.open(pdf_path)
+    from patent_sar_extractor.core.structure_inventory import inventory_packet
+
+    page_count = len(doc)
+    if (
+        not 1 <= page_count <= 10000
+        or not isinstance(target_pages, list)
+        or any(type(p) is not int or not 0 <= p < page_count for p in target_pages)
+        or len(set(target_pages)) != len(target_pages)
+    ):
+        doc.close()
+        raise ValueError("Segmentation request has invalid or duplicate original pages")
     structures = []
+    observations = []
     idx = 0
     failed_pages: list[tuple[int, str]] = []
 
@@ -166,32 +177,29 @@ def extract_structures_from_pdf(
         except Exception as exc:
             raise RuntimeError(f"DECIMER model initialization failed: {exc}") from exc
     for page_num in target_pages:
-        if page_num >= doc.page_count:
-            continue
-        # Render page as image at 150dpi
-        page = doc[page_num]
-        dpi = 150
-        mat = fitz.Matrix(dpi / 72, dpi / 72)
-        pix = page.get_pixmap(matrix=mat)
-        img_path = os.path.join(output_dir, f"page_{page_num + 1:03d}.png")
-        pix.save(img_path)
-
+        before_count = len(structures)
+        crop = crop_regions.get(str(page_num), crop_regions.get(str(page_num + 1), {}))
+        observation = {
+            "page_no": page_num + 1,
+            "status": "failed",
+            "scope": "region" if crop else "full_page",
+            "candidates": 0,
+        }
         try:
             from PIL import Image
 
-            img = Image.open(img_path).convert("RGB")
-            crop = crop_regions.get(
-                str(page_num), crop_regions.get(str(page_num + 1), {})
-            )
+            # Rendering failures are page failures too, never unobserved skips.
+            page = doc[page_num]
+            dpi = 150
+            pix = page.get_pixmap(matrix=fitz.Matrix(dpi / 72, dpi / 72), alpha=False)
+            # The retained original PDF is the page evidence. Do not persist a
+            # second full-page raster for every page when only crops are used.
+            img = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
             crop_x0, crop_y0, crop_x1, crop_y1 = _resolve_crop_pixels(
                 crop, page, dpi, img.width, img.height
             )
             if crop_x0 or crop_y0 or crop_x1 != img.width or crop_y1 != img.height:
                 img = img.crop((crop_x0, crop_y0, crop_x1, crop_y1))
-                img_path = os.path.join(
-                    output_dir, f"page_{page_num + 1:03d}_synthesis_crop.png"
-                )
-                img.save(img_path)
                 logger.info(
                     f"  Page {page_num + 1}: crop ({crop_x0},{crop_y0})-({crop_x1},{crop_y1})"
                 )
@@ -199,9 +207,17 @@ def extract_structures_from_pdf(
                 np.array(img),
                 return_bboxes=True,
             )
+            if len(segments) != len(bboxes):
+                raise ValueError(
+                    "Segmentation masks and source boxes have different counts"
+                )
             logger.info(f"  Page {page_num + 1}: found {len(segments)} structures")
 
             for box_idx, (y0, x0, y1, x1) in enumerate(bboxes):
+                if not (0 <= x0 < x1 <= img.width and 0 <= y0 < y1 <= img.height):
+                    raise ValueError(
+                        "Segmentation box is outside its original page region"
+                    )
                 x0_abs = x0 + crop_x0
                 y0_abs = y0 + crop_y0
                 x1_abs = x1 + crop_x0
@@ -241,12 +257,16 @@ def extract_structures_from_pdf(
                     }
                 )
                 idx += 1
+            observation["status"] = "detected"
         except Exception as e:  # noqa: BLE001 -- vendor page boundary; saved failures reject the stage
             err = str(e).replace("\n", " ")
             if "Got a model or layer" in err:
                 err = err.split("Got a model or layer", 1)[0].strip()
             logger.warning(f"  Page {page_num + 1}: DECIMER failed: {err[:500]}")
             failed_pages.append((page_num + 1, err[:500]))
+        finally:
+            observation["candidates"] = len(structures) - before_count
+            observations.append(observation)
 
     doc.close()
     logger.info(f"Extracted {len(structures)} structures total")
@@ -256,6 +276,7 @@ def extract_structures_from_pdf(
         "patent_number": patent_id,
         "total_structures": len(structures),
         "structures": structures,
+        "source_inventory": inventory_packet(page_count, observations),
         "failed_pages": [
             {"page_no": page_no, "error": error} for page_no, error in failed_pages
         ],

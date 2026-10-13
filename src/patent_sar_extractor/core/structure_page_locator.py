@@ -1,4 +1,4 @@
-"""Locate all evidenced structures; activity labels never gate page coverage."""
+"""Nominate every original page; text hints cannot exclude visual sources."""
 
 from __future__ import annotations
 
@@ -6,6 +6,8 @@ import logging
 import re
 from functools import lru_cache
 from pathlib import Path
+
+import fitz
 
 from patent_sar_extractor.artifact_io import write_json_atomic
 from patent_sar_extractor.contracts import (
@@ -25,7 +27,7 @@ from patent_sar_extractor.core.structure_page_evidence import (
 )
 
 logger = logging.getLogger(__name__)
-STRUCTURE_COVERAGE_POLICY = "all_evidence_backed_structures"
+STRUCTURE_COVERAGE_POLICY = "all_document_pages"
 
 
 def _normalize_cpd_label(value: str) -> str:
@@ -214,14 +216,20 @@ def locate_structure_pages(
     workers: int = 1,
     ocr_cache_path: str = "",
 ) -> dict:
-    """Select all evidenced pages from one shared OCR observation authority.
+    """Nominate every original page; text observations are hints, never a veto.
 
     Fetch missing OCR only for classified synthesis/candidate pages. The existing
     full-PDF cache supplies independent catalogs/examples outside that window.
-    No arbitrary full-PDF segmentation or chemistry binding is inferred here.
+    Whole-document visual discovery precedes printed-ID/role admission. This
+    does not declare every page chemical or every detected crop a compound.
     """
     count = classification.get("page_count")
-    page_count = count if type(count) is int and count > 0 else None
+    with fitz.open(pdf_path) as document:
+        page_count = len(document)
+    if not 1 <= page_count <= 10000:
+        raise ValueError("Original PDF page count exceeds the bounded discovery scope")
+    if count is not None and (type(count) is not int or count != page_count):
+        raise ValueError("Classified page count does not match the original PDF")
     synthesis = _valid_pages(classification.get("synthesis_pages", []), page_count)
     candidate_pool = sorted(
         synthesis | _valid_pages(classification.get("candidate_pages", []), page_count)
@@ -255,7 +263,7 @@ def locate_structure_pages(
         for page, text in texts.items():
             if any(pattern.search(text) for pattern in _singleton_structure_patterns()):
                 evidence.setdefault(page, "singleton_structure")
-    selected = sorted(evidence)
+    selected = list(range(page_count))
     tables = {
         page
         for page, reason in evidence.items()
@@ -268,7 +276,7 @@ def locate_structure_pages(
     unresolved = [
         cpd for cpd in active_cpds if _normalize_cpd_label(cpd) not in matched
     ]
-    matched.update(_covered_active_cpds(selected, texts, unresolved))
+    matched.update(_covered_active_cpds(sorted(evidence), texts, unresolved))
     for raw_cpd in unresolved:
         cpd = _normalize_cpd_label(raw_cpd)
         if not cpd or cpd in matched:
@@ -276,7 +284,7 @@ def locate_structure_pages(
         patterns = _cpd_ocr_confusable_patterns(cpd)
         hits = [
             page
-            for page in selected
+            for page in sorted(evidence)
             if any(pattern.search(texts[page]) for pattern in patterns)
         ]
         if hits:
@@ -289,17 +297,21 @@ def locate_structure_pages(
             STRUCTURE_LOCATION_SCHEMA, STRUCTURE_LOCATION_SCHEMA_VERSION
         ),
         "coverage_policy": STRUCTURE_COVERAGE_POLICY,
+        "page_count": page_count,
+        "hint_pages": sorted(evidence),
         "candidate_pool": candidate_pool,
         "expanded_pool": selected,
         "selected_pages": selected,
-        "structure_page_evidence": {str(page): evidence[page] for page in selected},
+        "structure_page_evidence": {
+            str(page): reason for page, reason in evidence.items()
+        },
         "structure_table_pages": primary_pages,
         "detected_structure_table_pages": sorted(tables),
         "structure_table_covered_cpds": sorted(primary_matches),
         "structure_table_priority": bool(primary_pages),
         "structure_table_coverage_count": len(primary_matches),
         "matched_cpds": matched,
-        "ocr_text_map": {str(page): texts[page] for page in selected},
+        "ocr_text_map": {str(page): texts.get(page, "") for page in selected},
         "ocr_line_map": {
             str(page): cached_lines[str(page)]
             for page in selected
@@ -309,9 +321,7 @@ def locate_structure_pages(
         # complete original pages. Strict downstream evidence/QC is unchanged.
         "crop_regions": {},
         "unmatched_cpds": unmatched,
-        "reason": "full_structure_evidence_coverage"
-        if selected
-        else "no_structure_evidence",
+        "reason": "full_document_visual_discovery",
         "broad_activity_table": len(active_cpds) >= 100 and unmatched_ratio >= 0.30,
         "unmatched_ratio": round(unmatched_ratio, 4),
     }

@@ -14,6 +14,7 @@ from patent_sar_extractor.application.structure_cache import (
     _structure_chunk_fingerprint,
 )
 from patent_sar_extractor.artifact_io import write_json_atomic
+from patent_sar_extractor.core.structure_inventory import inventory_packet
 from patent_sar_extractor.workers.segmentation_window import execute_window
 
 
@@ -60,7 +61,7 @@ class SegmentationCheckpointTests(WebFixture, unittest.TestCase):
         return spec, source, root, plan, jobs, fingerprints
 
     @staticmethod
-    def produced(output):
+    def produced(output, pages):
         write_json_atomic(
             Path(output) / "metadata.json",
             {
@@ -68,6 +69,18 @@ class SegmentationCheckpointTests(WebFixture, unittest.TestCase):
                     core.STRUCTURES_SCHEMA, core.STRUCTURES_SCHEMA_VERSION
                 ),
                 "total_structures": 0,
+                "source_inventory": inventory_packet(
+                    3,
+                    [
+                        {
+                            "page_no": p + 1,
+                            "status": "detected",
+                            "scope": "full_page",
+                            "candidates": 0,
+                        }
+                        for p in pages
+                    ],
+                ),
                 "structures": [],
                 "failed_pages": [],
             },
@@ -81,7 +94,7 @@ class SegmentationCheckpointTests(WebFixture, unittest.TestCase):
             initialized.append(kwargs["initialize_model"])
             if pages == [1]:
                 raise RuntimeError("Controlled later interruption")
-            self.produced(output)
+            self.produced(output, pages)
 
         with self.assertRaisesRegex(RuntimeError, "later interruption"):
             execute_window(extract, str(plan), spec.pdf_path, str(root), "", "CONTROL")
@@ -135,7 +148,7 @@ class SegmentationCheckpointTests(WebFixture, unittest.TestCase):
         spec, source, root, plan, jobs, _fingerprints = self.plan()
 
         def extract(_pdf, _pages, output, _regions, **kwargs):
-            self.produced(output)
+            self.produced(output, _pages)
             write_json_atomic(
                 source / "structure_pages/crop_regions.json", {"changed": {}}
             )

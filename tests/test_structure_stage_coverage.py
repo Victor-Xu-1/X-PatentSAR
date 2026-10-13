@@ -9,6 +9,8 @@ from pathlib import Path
 from subprocess import CompletedProcess
 from unittest.mock import patch
 
+import fitz
+
 from patent_sar_extractor.application.pipeline_context import PipelineContext
 from patent_sar_extractor.application.progress import PipelineProgress
 from patent_sar_extractor.application.stage_cache import (
@@ -24,12 +26,16 @@ from patent_sar_extractor.contracts import (
     STRUCTURES_SCHEMA_VERSION,
     artifact_identity,
 )
+from patent_sar_extractor.core.structure_inventory import inventory_packet
 
 
 class StructureStageCoverageTests(unittest.TestCase):
     def context(self, root: Path, pages: list[int]):
         pdf = root / "original.pdf"
-        pdf.write_bytes(b"controlled content for a stage fingerprint")
+        with fitz.open() as doc:
+            for _ in range(max(pages, default=0) + 1):
+                doc.new_page()
+            doc.save(pdf)
         locator = root / "locator.json"
         write_json_atomic(locator, {"selected_pages": pages, "crop_regions": {}})
         crops = root / "crop_regions.json"
@@ -62,6 +68,8 @@ class StructureStageCoverageTests(unittest.TestCase):
                     _env,
                     _script,
                     args=[
+                        "--pdf",
+                        args[args.index("--pdf") + 1],
                         "--output",
                         job["output"],
                         "--pages",
@@ -77,12 +85,26 @@ class StructureStageCoverageTests(unittest.TestCase):
             return CompletedProcess([], 0)
         output = Path(args[args.index("--output") + 1])
         pages = [int(page) for page in args[args.index("--pages") + 1 :]]
+        with fitz.open(args[args.index("--pdf") + 1]) as doc:
+            page_count = len(doc)
         write_json_atomic(
             output / "metadata.json",
             {
                 **artifact_identity(STRUCTURES_SCHEMA, STRUCTURES_SCHEMA_VERSION),
                 "patent_number": "CONTROLLED",
                 "total_structures": len(pages),
+                "source_inventory": inventory_packet(
+                    page_count,
+                    [
+                        {
+                            "page_no": p + 1,
+                            "status": "detected",
+                            "scope": "full_page",
+                            "candidates": 1,
+                        }
+                        for p in pages
+                    ],
+                ),
                 "structures": [
                     {
                         "structure_id": f"S{page}",
@@ -158,6 +180,43 @@ class StructureStageCoverageTests(unittest.TestCase):
             ):
                 execute_structures(state)
             self.assertFalse(Path(state.structures_json + ".manifest.json").exists())
+
+    def test_observed_empty_document_is_empty_not_an_environment_failure(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            state = self.context(Path(temporary), [0])
+
+            def worker(_env, _script, *, args, **kwargs):
+                write_json_atomic(
+                    Path(args[args.index("--output") + 1]) / "metadata.json",
+                    {
+                        **artifact_identity(
+                            STRUCTURES_SCHEMA, STRUCTURES_SCHEMA_VERSION
+                        ),
+                        "structures": [],
+                        "total_structures": 0,
+                        "source_inventory": inventory_packet(
+                            1,
+                            [
+                                {
+                                    "page_no": 1,
+                                    "status": "detected",
+                                    "scope": "full_page",
+                                    "candidates": 0,
+                                }
+                            ],
+                        ),
+                    },
+                )
+                return CompletedProcess([], 0)
+
+            with patch(
+                "patent_sar_extractor.application.stage_structures.run_in_env",
+                side_effect=worker,
+            ):
+                execute_structures(state)
+            self.assertEqual(
+                state.pipeline_log["steps"]["structures"]["status"], "empty"
+            )
 
     def test_activity_narrowed_locator_checkpoint_is_not_reused(self):
         with tempfile.TemporaryDirectory() as temporary:

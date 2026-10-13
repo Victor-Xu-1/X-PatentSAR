@@ -23,10 +23,13 @@ from .qa_files import (
     _worksheet_activity_value,
 )
 from .qa_inputs import QAInputs
+from .structure_inventory import structure_coverage_errors
 
 
 def _binding_checks(inputs: QAInputs, qa: dict):
-    hard_errors = []
+    hard_errors = structure_coverage_errors(
+        inputs.structures, inputs.profile.get("page_count")
+    )
     final_binding_order = [
         normalize_compound(binding.get("cpd", ""))
         for binding in inputs.bindings

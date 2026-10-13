@@ -19,6 +19,7 @@ from patent_sar_extractor.application.structure_cache import (
     _structure_chunk_fingerprint,
 )
 from patent_sar_extractor.artifact_io import write_json_atomic
+from patent_sar_extractor.core.structure_inventory import inventory_packet
 from patent_sar_extractor.web.attempts import ARTIFACTS, OCR_PATH, seed_checkpoints
 from patent_sar_extractor.web.jobs import JobQueue, decode_spec
 from patent_sar_extractor.web.models import JobRequest
@@ -53,7 +54,7 @@ class ChunkResumeTests(WebFixture, unittest.TestCase):
             },
         )
         dependencies = []
-        for stage in ("classify", "activity", "locate"):
+        for stage in ("classify", "locate", "activity"):
             path, schema, version = ARTIFACTS[stage]
             payload = {
                 **core.artifact_identity(schema, version),
@@ -99,6 +100,18 @@ class ChunkResumeTests(WebFixture, unittest.TestCase):
                 {
                     **core.artifact_identity(
                         core.STRUCTURES_SCHEMA, core.STRUCTURES_SCHEMA_VERSION
+                    ),
+                    "total_structures": 1,
+                    "source_inventory": inventory_packet(
+                        3,
+                        [
+                            {
+                                "page_no": index + 1,
+                                "status": "detected",
+                                "scope": "full_page",
+                                "candidates": 1,
+                            }
+                        ],
                     ),
                     "structures": [
                         {
@@ -174,6 +187,25 @@ class ChunkResumeTests(WebFixture, unittest.TestCase):
         target = self.root / "mismatch-attempt"
         seed_checkpoints(spec, target)
         self.assertFalse((target / "structures/.chunks/chunk_000").exists())
+        self.assertTrue(
+            (target / "structures/.chunks/chunk_002/metadata.json").exists()
+        )
+
+    def test_manifest_alone_cannot_promote_a_chunk_without_page_observations(self):
+        spec, source = self.prepare_source()
+        path = source / "structures/.chunks/chunk_000/metadata.json"
+        payload = json.loads(path.read_text())
+        payload.pop("source_inventory")
+        fingerprint = json.loads(Path(str(path) + ".manifest.json").read_text())[
+            "fingerprint"
+        ]
+        write_json_atomic(path, payload)
+        _write_step_manifest(str(path), fingerprint)
+        target = self.root / "missing-inventory-attempt"
+        seed_checkpoints(spec, target)
+        self.assertFalse(
+            (target / "structures/.chunks/chunk_000/metadata.json").exists()
+        )
         self.assertTrue(
             (target / "structures/.chunks/chunk_002/metadata.json").exists()
         )
