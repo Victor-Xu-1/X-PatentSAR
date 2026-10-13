@@ -225,24 +225,66 @@
   .sar-network-matrix-layout .sar-reference-map-image {
     margin-inline: auto;
   }
-  .sar-matrix-table :is(th, td):first-child {
-    width: 110px;
-    min-width: 110px;
-    max-width: 110px;
-    padding-inline: 10px;
-  }
-  .sar-matrix-table .sar-matrix-baseline {
-    position: static;
-    left: auto;
-    box-shadow: none;
-  }
-  .sar-matrix-table thead .sar-matrix-baseline {
-    position: sticky;
-  }
-  .sar-matrix-table :is(th, td) {
-    width: 220px;
-    min-width: 220px;
-    max-width: 220px;
-    padding-inline: 12px;
-  }
+}
+.sar-matrix-pair-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.sar-matrix-pair-controls select {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+}
+.sar-matrix-pair-controls button {
+  width: 40px;
+  min-height: 40px;
+  padding: 8px;
+}
+.sar-matrix-paired .sar-matrix-table,
+.sar-matrix-paired .sar-matrix-table :is(thead, tbody) {
+  display: block;
+  width: 100%;
+}
+.sar-matrix-paired .sar-matrix-table tr {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.sar-matrix-paired .sar-matrix-table :is(th, td) {
+  position: static;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  left: auto;
+  padding: 10px 8px;
+}
+.sar-matrix-paired .sar-matrix-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--surface);
+}
+.sar-matrix-paired .sar-matrix-table thead th:first-child {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  padding: 0;
+}
+.sar-matrix-paired .sar-matrix-table tbody th {
+  grid-column: 1 / -1;
+  border-right: 0;
+  padding: 6px 10px;
+}
+.sar-matrix-paired .sar-matrix-table .sar-matrix-baseline {
+  box-shadow: none;
+}
+.sar-matrix-paired .sar-matrix-identity {
+  gap: 2px;
+}
+.sar-matrix-paired .sar-matrix-identity .sar-network-compare {
+  gap: 2px;
+  padding-inline: 0;
 }

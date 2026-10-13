@@ -13,6 +13,19 @@ from tools.prepare_browser_fixture import prepare
 
 
 class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
+    def test_local_comparison_scope_uses_existing_isolated_sar_state(self):
+        from tools.browser_fixture_mode import fixture_mode
+
+        self.assertEqual(
+            fixture_mode(
+                {
+                    "frontend/e2e/sar-local-comparison.spec.ts",
+                    "frontend/e2e/sar-catalog.spec.ts",
+                }
+            ),
+            "sar",
+        )
+
     def test_catalog_scope_uses_existing_isolated_sar_state(self):
         selected = {PREFIX + "sar-catalog.spec.ts", PREFIX + "sar-reanalysis.spec.ts"}
         self.assertEqual(fixture_mode(selected), "sar")

@@ -20,6 +20,11 @@ COMMON = {
 MODES = (
     (
         "sar",
+        "sar-local-comparison.spec.ts",
+        COMMON | {"sar-local-comparison.spec.ts", "sar-catalog.spec.ts"},
+    ),
+    (
+        "sar",
         "sar-catalog.spec.ts",
         COMMON | {"sar-catalog.spec.ts", "sar-reanalysis.spec.ts"},
     ),

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compactNetworkSites } from '../src/features/sar/study/networkSites';
+import { compactNetworkSites, networkRowSites } from '../src/features/sar/study/networkSites';
 import { studyReport } from './sar-fixtures';
 import type { StudyRegionSummary } from '../src/api/sarStudyTypes';
 import { regionLabels } from '../src/features/sar/study/regionLabels';
@@ -16,6 +16,39 @@ function site(id: string, atoms: number[], members: string[]): StudyRegionSummar
   };
 }
 describe('compact chemical sites without lost comparisons or scientific rewrites', () => {
+  it('defaults to a smaller accepted automatic footprint without dropping options or mutating order', () => {
+    const choices = [
+      site('large', [1, 2, 3], ['a']),
+      site('small', [8], ['a']),
+      site('tie', [9], ['a']),
+    ];
+    for (const choice of choices) choice.fragments[0]!.is_reference = false;
+    const before = JSON.stringify(choices);
+    expect(networkRowSites(choices, 'a').map((s) => s.region.id)).toEqual([
+      'small',
+      'tie',
+      'large',
+    ]);
+    expect(networkRowSites(choices, 'absent')).toEqual([]);
+    expect(networkRowSites(choices, choices[0]!.region.molecule_id)).toEqual([]);
+    expect(JSON.stringify(choices)).toBe(before);
+  });
+  it('treats an ordinary-H view as one site and retains manual and legacy ordering', () => {
+    const large = site('large', [1, 2], ['a']),
+      atom = site('atom', [1], ['a']);
+    const hydrogen = {
+      ...site('H', [], ['a']),
+      region: { ...atom.region, id: 'H', atom_indices: [], hydrogen_anchor: 1 },
+    };
+    for (const choice of [large, atom, hydrogen]) choice.fragments[0]!.is_reference = false;
+    expect(networkRowSites([large, atom, hydrogen], 'a')).toEqual([atom, hydrogen, large]);
+    for (const origin of ['manual', undefined] as const) {
+      const manual = { ...large };
+      if (origin) manual.origin = origin;
+      else delete manual.origin;
+      expect(networkRowSites([manual, atom], 'a')).toEqual([manual, atom]);
+    }
+  });
   it('keeps distinct hydrogen anchors and only folds the broader containing region with identical comparisons', () => {
     const one = {
       ...site('h1', [], ['a']),

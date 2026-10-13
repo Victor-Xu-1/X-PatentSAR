@@ -1,5 +1,11 @@
 # X-PatentSAR
 
+Automatic SAR comparisons open on the smallest already-proved reference-side
+variable footprint, with stable ties and every alternative retained. Manual and
+legacy region order and explicit choices are preserved. At narrow widths the
+same matrix shows reference + one selectable candidate side by side; desktop
+retains all page columns. Neither action reruns science or changes raw results.
+
 SAR pages load a complete membership catalog first. Detailed fragment structures
 and distributions are read only when needed, while every reference, region,
 source member and comparison count stays available. The same receipt/coverage
