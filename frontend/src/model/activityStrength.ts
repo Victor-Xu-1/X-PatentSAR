@@ -49,7 +49,9 @@ export function strengthScaleText(scale: ActivityStrengthScale): string {
               : '该指标不适用浓度倍数分档',
       );
     return t(
-      '第十名数量级；强 <{strong}，中 {strong}–<{medium}，弱 ≥{medium}。全任务计算，筛选和翻页不改变分档。',
+      scale.basis === 'negative_log_molar'
+        ? '第十名对应浓度数量级；强 >{strong}，中 >{medium}–≤{strong}，弱 ≤{medium}。全任务计算，筛选和翻页不改变分档。'
+        : '第十名数量级；强 <{strong}，中 {strong}–<{medium}，弱 ≥{medium}。全任务计算，筛选和翻页不改变分档。',
       { strong: scale.strong_boundary!, medium: scale.medium_boundary! },
     );
   }

@@ -82,9 +82,13 @@ def render_report(job, report, by_id) -> bytes:
         policy = next(p for p in report.policies if p.context_id == context.id)
         if policy.strength_method == "tenth_decade":
             scale = policy.strength_scale
-            unit = " " + context.unit if context.unit else ""
+            unit = " " + context.unit if context.unit and context.unit != "1" else ""
             caption = (
-                f"Strong &lt;{esc(scale.strong_boundary)}{esc(unit)}; medium {esc(scale.strong_boundary)}{esc(unit)}–&lt;{esc(scale.medium_boundary)}{esc(unit)}; weak ≥{esc(scale.medium_boundary)}{esc(unit)}"
+                (
+                    f"Strong &gt;{esc(scale.strong_boundary)}{esc(unit)}; medium &gt;{esc(scale.medium_boundary)}{esc(unit)}–≤{esc(scale.strong_boundary)}{esc(unit)}; weak ≤{esc(scale.medium_boundary)}{esc(unit)}"
+                    if scale.basis == "negative_log_molar"
+                    else f"Strong &lt;{esc(scale.strong_boundary)}{esc(unit)}; medium {esc(scale.strong_boundary)}{esc(unit)}–&lt;{esc(scale.medium_boundary)}{esc(unit)}; weak ≥{esc(scale.medium_boundary)}{esc(unit)}"
+                )
                 if scale and scale.status == "ready"
                 else "Unclassified: insufficient or uncertain tenth measurement, or unsupported endpoint."
             )

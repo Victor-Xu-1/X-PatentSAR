@@ -105,7 +105,7 @@
   unchanged. Independent interval/endpoint inputs and full native publication
   checks must cover this shared rule, not one patent's expected result.
 
-- Measurement-unit authority: engine10/input4 use `core/sar/measurements.py` for
+- Measurement-unit authority: engine10/input4 introduced `core/sar/measurements.py` for
   exact molar-prefix/percent interpretation. Only immutable new-analysis copies
   may derive a missing basis from an explicit numeric suffix; raw stored records
   remain unchanged. `input_records.analysis_molecules` is shared by profile and
@@ -114,7 +114,15 @@
   Old input2/3 reads keep their captured parser semantics; no caller-facing unit
   override or alternative science path is introduced.
 
-- Single-site discovery ownership: SAR engine10 uses `core/sar/discovery.py` as
+- Activity-scale authority: engine11/input5 use `core/potency_axes.py` with the
+  existing `PotencyPool`, not a second ranking path. Explicit negative-log molar
+  potency maps exactly to concentration decades while retaining raw values;
+  all consumers carry its `negative_log_molar` basis. The shared immutable
+  analysis preparation may derive unit1 from a known pActivity name, never from
+  other rows or unknown log notation. Old input2/3/4 keep captured log-tier policy.
+  No percentage cutoff, fifth-anchor fallback or page-relative rank is added.
+
+- Single-site discovery ownership: SAR engine11 uses `core/sar/discovery.py` as
   the sole bounded candidate planner. `cut_topology.py` enumerates exact connected
   one/two/three-edge partitions and `site_cuts.py` indexes canonical backgrounds;
   neither is a proof authority. The existing strict compiled matcher freezes
@@ -178,7 +186,7 @@
   captured contracts. No lazy omission, extra API/cache, changed producer identity
   or model/scientific execution accompanies this allocation optimization.
 
-- SAR study evidence/craft ownership: engine10 uses `study_distributions.py` for one
+- SAR study evidence/craft ownership: engine11 uses `study_distributions.py` for one
   prepared full-context chart domain and disjoint source-ID accounting; observation
   repeats remain separate. `study_conditions.py` alone validates source-anchored
   missing-field declarations; source QA/known conditions/units remain unchanged.

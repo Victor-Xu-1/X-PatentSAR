@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ActivityStrengthScale } from '../src/api/types';
 import { decodeCompound } from '../src/api/decoders';
 import { decodeActivityColumns } from '../src/api/activityColumnDecoders';
-import { activityStrength } from '../src/model/activityStrength';
+import { activityStrength, strengthScaleText } from '../src/model/activityStrength';
 import { ResultsTable } from '../src/features/results/ResultsTable';
 import { compound } from './fixtures';
 
@@ -48,6 +48,52 @@ const potency: ActivityStrengthScale = {
 };
 
 describe('project-wide activity colors consume authoritative scores, never local-page ranks', () => {
+  it('accepts explicit log-potency basis and refuses raw-decade or direction substitution', () => {
+    const logged: ActivityStrengthScale = {
+      ...potency,
+      basis: 'negative_log_molar',
+      direction: 'higher',
+      anchor_lower: 9,
+      anchor_upper: 9,
+      anchor_exponent: -9,
+      strong_boundary: 8,
+      medium_boundary: 7,
+    };
+    expect(
+      decodeActivityColumns([{ ...column, strength_scale: logged }])[0]?.strength_scale,
+    ).toEqual(logged);
+    expect(strengthScaleText(logged)).toContain('>8');
+    expect(strengthScaleText(logged)).toContain('≤7');
+    for (const mutation of [
+      { basis: 'concentration' },
+      { basis: 'raw_log_decades' },
+      { direction: 'lower' },
+      { strong_boundary: 10, medium_boundary: 1 },
+      { anchor_rank: 5 },
+      { method: 'tied_terciles' },
+    ])
+      expect(() =>
+        decodeActivityColumns([{ ...column, strength_scale: { ...logged, ...mutation } }]),
+      ).toThrow();
+    expect(activityStrength(9, logged)).toBe('none'); // only server exact bands color cells
+    const row = {
+      ...compound,
+      activities: [{ ...compound.activities[0]!, value: '8' }],
+      activity_rank_values: [8],
+      activity_bands: ['medium' as const],
+    };
+    render(
+      <ResultsTable
+        {...callbacks()}
+        rows={[row]}
+        activityColumns={[{ ...column, strength_scale: logged }]}
+      />,
+    );
+    expect(document.querySelector('td.activity-value-column')).toHaveAttribute(
+      'data-activity-strength',
+      'medium',
+    );
+  });
   it('uses tenth potency decade boundaries exactly and never recalibrates on a displayed page', () => {
     // New potency tiers come from server Decimal bounds, never browser floats.
     expect(activityStrength(1, potency)).toBe('none');

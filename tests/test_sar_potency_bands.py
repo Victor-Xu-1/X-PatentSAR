@@ -12,7 +12,7 @@ class SARPotencyTests(WebFixture, unittest.TestCase):
     dataset = support.SARAPITests.dataset
     completed = support.SARAPITests.completed
 
-    def run_study(self, client, values, *, metric="IC50 (nM)"):
+    def run_study(self, client, values, *, metric="IC50 (nM)", direction="lower"):
         csv = f"id,smiles,{metric},target,assay,cell_line,duration\n" + "\n".join(
             f"S{index + 1},{'C' * (index + 1)}O,{raw},T,binding,C,2h"
             for index, raw in enumerate(values)
@@ -45,7 +45,7 @@ class SARPotencyTests(WebFixture, unittest.TestCase):
             "policies": [
                 {
                     "context_id": context["id"],
-                    "direction": "lower",
+                    "direction": direction,
                     "strength_method": "tenth_decade",
                 }
             ],

@@ -571,7 +571,7 @@ class StudyAnalysisTests(unittest.TestCase):
                     )
 
     def test_archived_input_schema_cannot_start_a_new_scientific_calculation(self):
-        for schema in (2, 3):
+        for schema in (2, 3, 4):
             with self.subTest(schema=schema):
                 packet = self.packet(regions=0)
                 packet["schema"] = schema

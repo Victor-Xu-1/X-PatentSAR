@@ -13,7 +13,7 @@ bridged rings and partial aromatic substitutions, plus ordinary H sites. >3 port
 hydrogen-boundary stereo is unsupported. H sites bind original atom anchors;
 private expanded views do not rewrite the original molecule or public indices.
 Native input-bound plans and25-pair batches survive interruption. Changes to
-SAR engine10 make old unfinished engine9/older
+SAR engine11 make old unfinished engine10/older
 checkpoints incompatible; retain their artifacts or roll back the prior wheel,
 never rewrite scientific identities. Completed old reports remain readable.
 Parent verification separately bounds candidate-plan regeneration at30s and
@@ -49,7 +49,7 @@ never reuse or rewrite an old unfinished receipt as a compatible result.
 
 ## Activity-strength compatibility
 
-New engine10 studies use private input schema4 and candidate policy
+New engine11 studies use private input schema5 and candidate policy
 `strict-context-pareto-units-v3`. Strict ordering includes a shared finite boundary
 when either side excludes that boundary: `<10` vs `>=10`, or `<=10` vs `>10`.
 `<=10` vs `>=10` can still be equal at10 and remains indeterminate. Intervals
@@ -72,6 +72,20 @@ edited; reimport is unnecessary. Contexts with different declared units or assay
 conditions are still separate. Old input2/3 views retain bare-value parsing and
 archived ranks. Inputs exceeding supported numeric limits or using mass units,
 unresolved suffixes/footnotes or ambiguous decimal separators are not coerced.
+
+Input5 additionally grades explicitly recognized negative-log molar potency.
+A tenth-strongest pIC50=9 means strong>8, medium>7–≤8, weak≤7, equivalent to
+1nM/10nM/100nM concentration-decade boundaries. A fractional anchor uses the
+underlying concentration decade, not ten times its p-value. This is not a rule
+for statistical p-values, logP, percentages, PK desirability or unknown transforms.
+The complete same-condition population determines the tenth compound once;
+duplicates of the same source ID, table paging and subgroup filters cannot move
+it. Bounds must prove a single decade; no guessed midpoint or fifth-rank fallback.
+Unit1 for an explicitly defined pActivity is derived only in new analysis copies;
+source dataset fields and text remain unchanged. Existing input4 and older
+studies keep their captured log-strength behavior; start a fresh analysis from
+the saved dataset to apply input5. Do not rewrite or relabel archived studies.
+Percentage/Dmax values retain raw comparisons but no invented automatic tiers.
 
 Large completed reports are not kept in a persistent in-process result cache.
 Concurrent current/drawing/preview readers may share one fully validated model

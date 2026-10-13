@@ -64,7 +64,7 @@ for (const scenario of cases)
       reportView.getByRole('button', { name: 'Variable regions', exact: true }),
     ).toBeVisible({ timeout: 20000 });
     const before = await (await page.request.get(path + '/export?format=json')).text();
-    expect(JSON.parse(before).input.schema).toBe(4);
+    expect(JSON.parse(before).input.schema).toBe(5);
     const report: StudyReport = (await (await page.request.get(path)).json()).report;
     expect(report.candidate_policy).toBe('strict-context-pareto-units-v3');
     const sources = (

@@ -45,6 +45,7 @@ export const newRequestId = () => crypto.randomUUID().replaceAll('-', '');
 /** One display-only label rule; source names/units and values remain unchanged. */
 export const contextLabel = (context: { name: string; unit: string | null }) =>
   context.unit &&
+  context.unit !== '1' &&
   !context.name.endsWith('(' + context.unit + ')') &&
   !context.name.endsWith(' ' + context.unit)
     ? context.name + ' · ' + context.unit

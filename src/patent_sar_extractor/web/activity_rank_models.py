@@ -35,23 +35,24 @@ class ActivityStrengthScale(DTO):
     anchor_lower: RankValue | None = None
     anchor_upper: RankValue | None = None
     anchor_exponent: int | None = Field(default=None, ge=-308, le=306, strict=True)
+    basis: Literal["concentration", "negative_log_molar"] = "concentration"
 
     @classmethod
     def from_potency(
-        cls, scale: PotencyScale, *, direction: RankDirection = "lower"
+        cls, scale: PotencyScale, *, direction: RankDirection | None = None
     ) -> ActivityStrengthScale:
         return cls(
             kind="numeric",
-            direction=direction,
+            direction=direction
+            or ("higher" if scale.basis == "negative_log_molar" else "lower"),
             rule="tenth_decade",
             method="tenth_decade",
             status=scale.status,
             boundary_inclusive=False,
             population=scale.population,
             anchor_rank=10,
-            anchor_exponent=scale.anchor_lower.adjusted()
-            if scale.anchor_lower is not None
-            else None,
+            anchor_exponent=scale.anchor_exponent,
+            basis=scale.basis,
             eligible=scale.eligible,
             excluded=scale.excluded,
             distinct=scale.distinct,
@@ -79,7 +80,11 @@ class ActivityStrengthScale(DTO):
                 or self.boundary_inclusive
                 or self.anchor_rank != 10
                 or self.population is None
-                or (self.status != "unsupported" and self.direction != "lower")
+                or (
+                    self.status != "unsupported"
+                    and self.direction
+                    != ("higher" if self.basis == "negative_log_molar" else "lower")
+                )
             ):
                 raise ValueError(
                     "Tenth-decade metadata must declare its complete positive-concentration population"
@@ -90,7 +95,8 @@ class ActivityStrengthScale(DTO):
                     or self.anchor_exponent is None
                     or self.anchor_lower is None
                     or self.anchor_upper is None
-                    or not 0 < self.anchor_lower <= self.anchor_upper
+                    or self.anchor_lower > self.anchor_upper
+                    or (self.basis == "concentration" and self.anchor_lower <= 0)
                 ):
                     raise ValueError(
                         "Available tenth-decade anchor requires its bounded tenth measurement"
@@ -111,6 +117,7 @@ class ActivityStrengthScale(DTO):
             or self.anchor_exponent is not None
             or self.population is not None
             or not self.boundary_inclusive
+            or self.basis != "concentration"
         ):
             raise ValueError(
                 "Legacy grade metadata cannot masquerade as tenth-decade potency"
@@ -129,13 +136,19 @@ class ActivityStrengthScale(DTO):
         if self.method == "tenth_decade" and self.status == "ready":
             from decimal import Decimal
 
-            base = Decimal(1).scaleb(self.anchor_exponent)
+            if self.basis == "negative_log_molar":
+                expected = (-self.anchor_exponent - 1, -self.anchor_exponent - 2)
+            else:
+                expected = (
+                    Decimal(1).scaleb(self.anchor_exponent + 1),
+                    Decimal(1).scaleb(self.anchor_exponent + 2),
+                )
             if (
-                Decimal(str(self.strong_boundary)) != base * 10
-                or Decimal(str(self.medium_boundary)) != base * 100
+                Decimal(str(self.strong_boundary)) != expected[0]
+                or Decimal(str(self.medium_boundary)) != expected[1]
             ):
                 raise ValueError(
-                    "Tenth-decade cutoffs must be the next two powers of ten"
+                    "Tenth-decade cutoffs must represent the next two concentration decades"
                 )
         if self.kind == "unknown" and self.direction != "unknown":
             raise ValueError("Unknown scalar type cannot have an ordering")

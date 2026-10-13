@@ -25,6 +25,10 @@ const scaleShape = object({
 export const decodeStrengthScale: Decoder<ActivityStrengthScale> = (input, path = '$') => {
   const scale: ActivityStrengthScale = scaleShape(input, path);
   const fields = input as Record<string, unknown>;
+  if (Object.hasOwn(fields, 'basis'))
+    scale.basis = oneOf(['concentration', 'negative_log_molar'])(fields.basis, path + '.basis');
+  const logarithmic = scale.basis === 'negative_log_molar';
+  if (logarithmic && fields.method !== 'tenth_decade') throw new ContractError(path);
   if (Object.hasOwn(fields, 'method')) {
     Object.assign(
       scale,
@@ -42,7 +46,8 @@ export const decodeStrengthScale: Decoder<ActivityStrengthScale> = (input, path 
     if (scale.method === 'tenth_decade') {
       if (
         scale.kind !== 'numeric' ||
-        (scale.status !== 'unsupported' && scale.direction !== 'lower') ||
+        (scale.status !== 'unsupported' &&
+          scale.direction !== (logarithmic ? 'higher' : 'lower')) ||
         scale.boundary_inclusive ||
         scale.anchor_rank !== 10 ||
         scale.population == null ||
@@ -58,11 +63,15 @@ export const decodeStrengthScale: Decoder<ActivityStrengthScale> = (input, path 
           scale.anchor_exponent > 306 ||
           scale.anchor_lower == null ||
           scale.anchor_upper == null ||
-          !(scale.anchor_lower > 0 && scale.anchor_lower <= scale.anchor_upper) ||
+          scale.anchor_lower > scale.anchor_upper ||
+          (!logarithmic && scale.anchor_lower <= 0) ||
           scale.strong_boundary === null ||
           scale.medium_boundary === null ||
-          Math.abs(Math.log10(scale.strong_boundary) - scale.anchor_exponent - 1) > 1e-10 ||
-          Math.abs(scale.medium_boundary / scale.strong_boundary - 10) > 1e-10
+          (logarithmic
+            ? scale.strong_boundary !== -scale.anchor_exponent - 1 ||
+              scale.medium_boundary !== -scale.anchor_exponent - 2
+            : Math.abs(Math.log10(scale.strong_boundary) - scale.anchor_exponent - 1) > 1e-10 ||
+              Math.abs(scale.medium_boundary / scale.strong_boundary - 10) > 1e-10)
         )
           throw new ContractError(path);
       } else if (

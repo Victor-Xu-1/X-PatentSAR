@@ -26,9 +26,9 @@ class ActivityView:
 
 
 def prepare_activity(packet: dict, captured: StudyReport) -> ActivityView:
-    if packet.get("schema") not in {2, 3, 4}:
+    if packet.get("schema") not in {2, 3, 4, 5}:
         raise WebError(409, "sar_input_changed", "Unknown study measurement policy.")
-    inline_units = packet["schema"] == 4
+    inline_units = packet["schema"] >= 4
     excluded = Counter()
     sources = []
     for row in packet["molecules"]:
@@ -87,6 +87,7 @@ def prepare_activity(packet: dict, captured: StudyReport) -> ActivityView:
         observations,
         assessments,
         inline_units=inline_units,
+        log_potency=packet["schema"] >= 5,
     )
     domains = {
         policy["context_id"]: DistributionContext(

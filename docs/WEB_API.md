@@ -110,9 +110,9 @@ new webpage studies explicitly send true). The same study queue reserves its
 `discovery` with method, candidate/cut counts, exclusions and explicit limits.
 Region summaries add `origin:manual|single_site` and nullable `comparison_pool`;
 manual regions still compare the whole source pool, derived regions compare
-their complete indexed pool through the identical strict validator. SAR engine10
+their complete indexed pool through the identical strict validator. SAR engine11
 invalidates incompatible unfinished scientific work without retagging old reports.
-New study input4 and `candidate_policy:strict-context-pareto-units-v3` use exact
+New study input5 and `candidate_policy:strict-context-pareto-units-v3` use exact
 open/closed interval boundary ordering in both comparisons and Pareto fronts.
 An excluded shared endpoint can prove direction; no interval fold/raw difference
 is generated. Existing request/response shapes remain, old archived input2
@@ -128,6 +128,14 @@ the context unit, whereas `reference_values`/`candidate_values` remain raw.
 Charts, tenth-dose bands and numeric sorting use that same interpretation.
 Input2/3 read adapters retain bare-value semantics. No request/response shape,
 database migration, environment, producer execution-on-read or LLM is added.
+Activity strength metadata adds `basis:concentration|negative_log_molar` (absent
+historical basis means concentration). For a log basis, the anchor and boundaries
+remain in original pActivity units; `anchor_exponent` denotes its underlying
+molar-concentration decade. Direction is higher and both strong/medium lower
+cutoffs are strict. All colors and filters use server interval proof, not rounded
+browser ranks. Known unitless pActivity names may derive unit1 in input5 copies;
+raw saved datasets remain unchanged. Input4/older read adapters do not silently
+upgrade log-strength rules. No generic percentage thresholds are supplied.
 Discovery method is `single-region-three-port-aromatic-h-v5` with `max_cut_bonds:3`,
 explicit `aromatic_boundaries:true` and bounded `redundant_proved_sites`. Prior
 methods cannot claim aromatic coverage. Broader same-pool automatic sites are

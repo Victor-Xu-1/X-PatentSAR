@@ -1,5 +1,14 @@
 # X-PatentSAR
 
+Activity strength uses the tenth-strongest identified compound in the complete
+comparable context, never the fifth record or page-relative thirds. New SAR
+studies and the extraction table also recognize pIC50/pEC50/pDC50/pKi/pKd:
+their tiers are exactly equivalent to the underlying molar-concentration decades.
+For a tenth pIC50 of9, strong is>8, medium is>7 through8, and weak is≤7.
+Raw measurements remain unchanged. Percent effects and unknown transformations
+do not acquire invented dose thresholds; fewer than ten or ambiguous anchors
+remain unclassified. Previously completed studies retain their scientific policy.
+
 SAR variable-region results provide reference-first multi-candidate structure
 comparisons: one metric row across independently proved single-site alternatives,
 all six properties, raw supporting readings and separate captured predictions.

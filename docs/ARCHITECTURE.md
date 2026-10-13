@@ -658,7 +658,7 @@ adapter disables open-touching order to preserve captured conclusions. Old
 reports, pairs, ranks and source data are never rewritten or re-executed on GET.
 This compatibility switch is not a second new-study execution path.
 
-Engine10/private input4 add `core/sar/measurements.py` as the single explicit-unit
+Engine10/private input4 introduced `core/sar/measurements.py` as the single explicit-unit
 interpretation authority. `input_records.analysis_molecules` prepares immutable
 new-analysis copies for both source kinds and both queue entry points; profile
 uses the same preparation. Absent unit metadata may use an explicit numeric
@@ -673,13 +673,28 @@ The internal current-record view carries its interpretation mode for sorting;
 there is no new user switch or competing source store. A fresh new analysis of
 an older dataset can interpret explicit suffixes without reimporting its data.
 
+Engine11/private input5 add an explicit `negative_log_molar` potency basis.
+`core/potency_axes.py` reflects exact Decimal intervals to log10 concentration
+coordinates; the existing bounded `PotencyPool` still owns source-identity
+aggregation, tenth-rank interval bounds and classification. Integer decade
+boundaries are computed without approximate exponentiation of pActivity values.
+Source values, censor operators and units remain untouched. Known negative-log
+endpoint names with absent units define dimensionless unit1 only in immutable
+new-analysis copies through the same `analysis_molecules` authority; conflicting
+declared units, ambiguous log names and missing assay conditions are not filled.
+Main-table scales/color filters and SAR rows/distributions/export captions consume
+the same basis. Inputs2/3/4 remain readable but do not gain log-strength tiers.
+No new provider, model, dependency, queue, persistent result cache or SQL migration.
+Percent-effect thresholds remain undefined unless separately supported by source
+rules; this release does not invent a universal Dmax/remaining-activity cutoff.
+
 A canonical cut index proposes sites; compiled full-fixed-graph/port/stereo proof
 remains mandatory. Exact comparison pools avoid regions×all-records work for
 automatically found families. Every numbered source is still in the report;
 unmatched/ambiguous sites and coverage limits are not hidden by positive matches.
 The input-bound plan and native 25-pair batches are preserved on interruption.
 The parent checks plan/coverage before one atomic result publication. Discovery
-was introduced in SAR engine8 and is retained in engine10, independently of extraction. Exact
+was introduced in SAR engine8 and is retained in engine11, independently of extraction. Exact
 one/two/three-edge topology partitions reuse original side bitmasks and bridge
 searches; three original bridges use intersections, mixed ring/bridge cuts use
 actual region sides, and three ring edges require a residual bridge after two
