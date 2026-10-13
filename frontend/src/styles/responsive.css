@@ -78,6 +78,7 @@
   .topbar-actions > button {
     flex: 0 0 auto;
     white-space: nowrap;
+    padding-inline: 6px;
   }
   .topbar-version {
     margin-left: auto;

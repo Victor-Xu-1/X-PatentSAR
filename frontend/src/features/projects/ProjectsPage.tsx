@@ -39,7 +39,7 @@ export function ProjectsPage({
       data-dialog-focus-scope
     >
       <header className="page-header">
-        <h1 id="recent-files-heading">{t('最近文件')}</h1>
+        <h1 id="recent-files-heading">{t('历史文件')}</h1>
         <button type="button" data-dialog-focus-fallback onClick={() => setTrashOpen(true)}>
           {t('回收站')}
         </button>
@@ -47,7 +47,7 @@ export function ProjectsPage({
       {resource.error ? (
         <ErrorNotice error={resource.error} onRetry={resource.reload} />
       ) : resource.loading && !resource.data ? (
-        <Loading label={t('正在读取最近文件…')} />
+        <Loading label={t('正在读取历史文件…')} />
       ) : !items.length ? (
         <Empty
           title={t('还没有文件')}
@@ -59,7 +59,7 @@ export function ProjectsPage({
           }
         />
       ) : (
-        <ul className="recent-files" aria-label={t('最近专利文件')}>
+        <ul className="recent-files" aria-label={t('历史专利文件')}>
           {items.map((project, index) => (
             <li key={project.id} className="recent-file-row">
               <button

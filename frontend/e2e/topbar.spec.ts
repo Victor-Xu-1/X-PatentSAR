@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
 
 const expectedVersion = packageMetadata.version;
 const projectId = process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID;
-const primary = ['上传 PDF', '最近文件', '环境管理', '任务记录', 'SAR 分析'];
+const primary = ['专利提取', 'SAR 分析', '任务记录', '历史文件', '环境管理'];
 
 // All routes remain exposed when the compact caption grid wraps.
 function headerHeightBudget(width: number) {
@@ -25,6 +25,11 @@ async function exposedNavigation(page: Page, nav: Locator) {
         .evaluate((element) => element.scrollWidth <= element.clientWidth),
       `Full product name remains visible in ${language}`,
     ).toBe(true);
+    const expected =
+      language === 'en'
+        ? ['Patent extraction', 'SAR analysis', 'Tasks', 'File history', 'Environment']
+        : primary;
+    expect((await nav.getByRole('button').allTextContents()).slice(0, 5)).toEqual(expected);
     const items = await nav.evaluate((element) => {
       const navBox = element.getBoundingClientRect();
       return [...element.querySelectorAll('button')].map((button) => {
@@ -92,13 +97,13 @@ for (const viewport of [
     for (const [name, hash, heading] of [
       ['环境管理', '#/settings', '环境管理'],
       ['任务记录', '#/jobs', '任务记录'],
-      ['最近文件', '#/projects', '最近文件'],
-      ['上传 PDF', '#/new-task', '上传专利 PDF'],
+      ['历史文件', '#/projects', '历史文件'],
+      ['专利提取', '#/new-task', '上传专利 PDF'],
     ]) {
       await nav.getByRole('button', { name: name!, exact: true }).click();
       await expect(page).toHaveURL(new RegExp(hash! + '$'));
       await expect(page.getByRole('heading', { name: heading!, exact: true })).toBeVisible();
-      if (name !== '上传 PDF')
+      if (name !== '专利提取')
         await expect(nav.getByRole('button', { name: name!, exact: true })).toHaveAttribute(
           'aria-current',
           'page',

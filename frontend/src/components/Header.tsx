@@ -35,7 +35,7 @@ export function Header({
         className="brand"
         href={disabled ? undefined : '#/new-task'}
         role={disabled ? 'link' : undefined}
-        aria-label={t('X-PatentSAR · 上传 PDF')}
+        aria-label={t('X-PatentSAR · 专利提取')}
         aria-disabled={disabled || undefined}
         tabIndex={disabled ? -1 : undefined}
         onClick={(event) => {
@@ -49,43 +49,13 @@ export function Header({
       <nav className="topbar-actions" aria-label={t('工作台导航')}>
         <button
           type="button"
-          aria-label={t('上传 PDF')}
+          aria-label={t('专利提取')}
           onClick={onUpload}
           disabled={disabled}
           aria-current={view === 'new-task' ? 'page' : undefined}
         >
           <Upload size={15} />
-          <span>{t('上传 PDF')}</span>
-        </button>
-        <button
-          type="button"
-          aria-label={t('最近文件')}
-          onClick={onRecent}
-          disabled={disabled}
-          aria-current={view === 'projects' ? 'page' : undefined}
-        >
-          <History size={15} />
-          <span>{t('最近文件')}</span>
-        </button>
-        <button
-          type="button"
-          aria-label={t('环境管理')}
-          disabled={disabled}
-          onClick={() => onNavigate('settings')}
-          aria-current={view === 'settings' ? 'page' : undefined}
-        >
-          <Settings size={15} />
-          <span>{t('环境管理')}</span>
-        </button>
-        <button
-          type="button"
-          aria-label={t('任务记录')}
-          disabled={disabled}
-          onClick={() => onNavigate('jobs')}
-          aria-current={view === 'jobs' ? 'page' : undefined}
-        >
-          <Clock3 size={15} />
-          <span>{t('任务记录')}</span>
+          <span>{t('专利提取')}</span>
         </button>
         <button
           type="button"
@@ -100,6 +70,36 @@ export function Header({
         >
           <FlaskConical size={15} />
           <span>{t('SAR 分析')}</span>
+        </button>
+        <button
+          type="button"
+          aria-label={t('任务记录')}
+          disabled={disabled}
+          onClick={() => onNavigate('jobs')}
+          aria-current={view === 'jobs' ? 'page' : undefined}
+        >
+          <Clock3 size={15} />
+          <span>{t('任务记录')}</span>
+        </button>
+        <button
+          type="button"
+          aria-label={t('历史文件')}
+          onClick={onRecent}
+          disabled={disabled}
+          aria-current={view === 'projects' ? 'page' : undefined}
+        >
+          <History size={15} />
+          <span>{t('历史文件')}</span>
+        </button>
+        <button
+          type="button"
+          aria-label={t('环境管理')}
+          disabled={disabled}
+          onClick={() => onNavigate('settings')}
+          aria-current={view === 'settings' ? 'page' : undefined}
+        >
+          <Settings size={15} />
+          <span>{t('环境管理')}</span>
         </button>
         {project && view === 'workspace' && (
           <>

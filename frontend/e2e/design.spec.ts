@@ -42,7 +42,7 @@ test('warm workspace style is consistent across navigation, management and the a
   page,
 }) => {
   await page.goto('/#/projects');
-  await expect(page.getByRole('heading', { name: '最近文件', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '历史文件', exact: true })).toBeVisible();
   await expect(page.locator('html')).toHaveCSS('background-color', palette.canvas);
   await expect(page.locator('.sidebar')).toHaveCount(0);
   await expect(page.locator('.user-avatar')).toHaveCount(0);
@@ -72,7 +72,7 @@ test('warm workspace style is consistent across navigation, management and the a
         .digest('hex'),
     ).toBe('1099f1a295921cc9e229995cd84aced5a2e1022e223bf6140f65d585f7b7d591');
   }
-  const active = page.getByRole('button', { name: '最近文件', exact: true });
+  const active = page.getByRole('button', { name: '历史文件', exact: true });
   await expect(active).toHaveAttribute('aria-current', 'page');
   await expect(active).toHaveCSS('background-color', palette.selected);
   await expectReadableText(active);
@@ -83,7 +83,7 @@ test('warm workspace style is consistent across navigation, management and the a
     'background-color',
     palette.subtle,
   );
-  await page.getByRole('button', { name: '上传 PDF', exact: true }).click();
+  await page.getByRole('button', { name: '专利提取', exact: true }).click();
   await expect(page).toHaveURL(/#\/new-task$/);
   await expect(page.getByRole('heading', { name: 'PDF → 结构与活性表格' })).toBeVisible();
   await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -94,8 +94,8 @@ test('warm workspace style is consistent across navigation, management and the a
   await expect(page.locator('.task-advanced')).toHaveCount(0);
   await expect(page.getByLabel('项目名称（可选）')).toHaveCount(0);
   await expect(page.getByLabel('专利标识（可选）')).toHaveCount(0);
-  await page.getByRole('button', { name: '最近文件', exact: true }).click();
-  await expect(page.getByRole('heading', { name: '最近文件', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '历史文件', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '历史文件', exact: true })).toBeVisible();
 });
 
 test('actual result tables, metrics and review controls use the same quiet palette', async ({
@@ -173,7 +173,7 @@ test('populated mobile workspace contains its table and keeps dialogs and naviga
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2),
   ).toBe(true);
   await page.screenshot({ path: test.info().outputPath('warm-mobile-runtime.png') });
-  await page.getByRole('button', { name: '上传 PDF', exact: true }).click();
+  await page.getByRole('button', { name: '专利提取', exact: true }).click();
   await expect(page).toHaveURL(/#\/new-task$/);
   await expect(page.getByLabel('原始专利 PDF 文件')).toBeFocused();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2)).toBe(

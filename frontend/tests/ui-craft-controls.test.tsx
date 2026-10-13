@@ -29,7 +29,7 @@ function emulateNativeDialogFocus() {
 describe('shared-control craft: connection boundary', () => {
   it('keeps the brand inert with the rest of navigation before connection is ready', async () => {
     render(<Header {...headerProps} />);
-    const brand = screen.getByRole('link', { name: 'X-PatentSAR · 上传 PDF' });
+    const brand = screen.getByRole('link', { name: 'X-PatentSAR · 专利提取' });
     expect(brand).toHaveAttribute('aria-disabled', 'true');
     expect(brand).not.toHaveAttribute('href');
     expect(brand).toHaveAttribute('tabindex', '-1');
@@ -43,7 +43,7 @@ describe('shared-control craft: connection boundary', () => {
   it('restores the existing brand destination and callback when connection becomes ready', async () => {
     const { rerender } = render(<Header {...headerProps} />);
     rerender(<Header {...headerProps} disabled={false} version="0.1.0" />);
-    const brand = screen.getByRole('link', { name: 'X-PatentSAR · 上传 PDF' });
+    const brand = screen.getByRole('link', { name: 'X-PatentSAR · 专利提取' });
     expect(brand).toHaveAttribute('href', '#/new-task');
     expect(brand).not.toHaveAttribute('aria-disabled');
     expect(brand).not.toHaveAttribute('tabindex', '-1');

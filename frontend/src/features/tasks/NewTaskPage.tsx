@@ -78,7 +78,7 @@ export function NewTaskPage({
           {task.uncertain && !task.created && (
             <p className="info-banner">
               {t('上传结果未知，请先在')}
-              <a href="#/projects">{t('最近文件')}</a>
+              <a href="#/projects">{t('历史文件')}</a>
               {t('核实，不要重复上传。')}
             </p>
           )}
