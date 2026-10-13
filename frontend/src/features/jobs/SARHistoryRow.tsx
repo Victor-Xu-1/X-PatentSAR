@@ -35,7 +35,7 @@ export function SARHistoryRow({
         >
           {title}
         </button>
-        <small>{item.dataset_title}</small>
+        {item.dataset_title !== title && <small>{item.dataset_title}</small>}
         <time dateTime={job.created_at}>{dateText(job.created_at)}</time>
       </div>
       <div className="sar-history-status">

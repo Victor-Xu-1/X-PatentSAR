@@ -204,7 +204,7 @@ describe('bounded reads and errors', () => {
     );
     await expect(
       new ApiClient(transport).mutate('/projects/id/jobs', 'POST', {}, decodeProject),
-    ).rejects.toMatchObject({ uncertain: true, code: 'invalid_write_response' });
+    ).rejects.toMatchObject({ status: 200, uncertain: true, code: 'response_limit' });
     expect(transport).toHaveBeenCalledTimes(2);
   });
   it('uses the full export limit when a validated filter query is present', async () => {

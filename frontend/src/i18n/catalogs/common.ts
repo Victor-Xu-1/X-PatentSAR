@@ -1,5 +1,7 @@
 /** Application-owned messages only. Patent/user data never enters the catalog. */
 export const common: Record<string, string> = {
+  '无内容响应包含异常正文，无法确认结果。':
+    'A bodyless response contained unexpected content; the result cannot be confirmed.',
   界面语言: 'Interface language',
   'X-PatentSAR · 上传 PDF': 'X-PatentSAR · Upload PDF',
   重新加载: 'Reload',

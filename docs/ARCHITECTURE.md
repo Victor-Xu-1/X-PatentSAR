@@ -21,6 +21,9 @@ dataset/job route; removal reuses `DeleteSARJob` and the existing ownership guar
 Extraction history and its recycle bin retain their existing authority. SAR soft
 removal is not presented as permanent file deletion or general recycle-bin restore.
 This navigation/read change does not alter scientific epochs or SQL schemas.
+Shared `api/response.ts` drains bodyless HTTP statuses under the original byte
+and time bounds, then rebuilds them with a null body. Empty native streams are
+not fabricated JSON; nonempty forbidden bodies stay explicit uncertain failures.
 
 ### Multi-candidate comparison presentation
 

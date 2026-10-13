@@ -44,7 +44,13 @@ export async function boundedResponse(response: Response, limit: number): Promis
       bytes.set(chunk, offset);
       offset += chunk.length;
     }
-    return new Response(bytes, {
+    // A native browser may expose an empty stream for a bodyless status.
+    // Response(bytes, {status: 204}) rejects even a zero-length buffer. Still
+    // drain under the caller's deadline/limit, and refuse an illegal real body.
+    const bodyless = [204, 205, 304].includes(response.status);
+    if (bodyless && size !== 0)
+      throw new ApiError(0, 'invalid_response_body', '无内容响应包含异常正文，无法确认结果。');
+    return new Response(bodyless ? null : bytes, {
       status: response.status,
       statusText: response.statusText,
       headers: response.headers,

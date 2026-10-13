@@ -12,6 +12,12 @@ removal and worker-cleanup checks. Sources, datasets and result bytes are retain
 SAR soft removal remains distinct from extraction recycle-bin permanent cleanup.
 No analysis starts by opening a tab, refreshing or changing the interface language.
 
+The shared bounded HTTP reader preserves a genuinely empty204/205/304 response,
+including browsers that expose an empty stream rather than a null body. A real
+unexpected body is rejected and uncertain writes remain nonretrying. This avoids
+misreporting a completed soft removal as a network failure without weakening
+body-size limits, deadlines or server-state confirmation.
+
 ## Single-site SAR discovery
 
 New webpage studies default to automatic single-site candidates; callers may
