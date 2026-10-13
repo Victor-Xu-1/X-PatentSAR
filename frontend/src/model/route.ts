@@ -19,6 +19,7 @@ export interface Route {
   operationId?: string;
   sarDatasetId?: string;
   sarJobId?: string;
+  jobModule?: 'patent' | 'sar';
   tableQuery?: TableQuery;
 }
 export const emptyRoute: Route = {
@@ -89,6 +90,7 @@ export function parseRoute(hash: string): Route {
   return {
     view,
     projectId,
+    ...(view === 'jobs' && params.get('module') === 'sar' ? { jobModule: 'sar' as const } : {}),
     page: validPage,
     tab: tab === 'text' || tab === 'annotations' ? tab : 'original',
     compoundId: params.get('compound'),
@@ -123,6 +125,7 @@ export function routeHash(route: Route): string {
         ? '/'
         : `/${route.view}`;
   const params = new URLSearchParams();
+  if (route.view === 'jobs' && route.jobModule === 'sar') params.set('module', 'sar');
   if (route.view === 'sar') {
     if (route.projectId) params.set('project', route.projectId);
     if (route.sarDatasetId) params.set('dataset', route.sarDatasetId);

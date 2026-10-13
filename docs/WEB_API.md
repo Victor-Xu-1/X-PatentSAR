@@ -1,5 +1,18 @@
 # X-PatentSAR Web API v1
 
+## Cross-dataset SAR task history
+
+Authenticated `GET /api/v1/sar/jobs?page=1&page_size=25&dataset_id=&status=`
+returns `{items,total,page,page_size,active_count}`. Omit unset filters, rather
+than sending empty values. Pages are1–2048, sizes1–100; dataset IDs are32 lowercase
+hex characters, and status is an existing SAR lifecycle enum. Each item contains
+the authoritative `job` DTO, original `dataset_title` and nullable original
+study/metric `title`. Sorting is newest created first with stable row-order ties.
+Only nonremoved tasks with a nonremoved parent are counted; no records are
+revived. Live job views can reflect a transition occurring after the list snapshot.
+No private paths, scientific reports or job submission are exposed by this read.
+Existing per-dataset jobs, cancel/resume, and DELETE soft-removal contracts remain.
+
 ## Strict SAR comparison matrix (read-only)
 
 Single-pair and matrix previews add optional `property_statuses` with at most6

@@ -1,5 +1,17 @@
 # Operations and troubleshooting
 
+## Task records
+
+The Tasks page now has Patent extraction and SAR analysis tabs. SAR jobs were
+previously reachable only inside a dataset's Research options/history section;
+they were not missing from storage. The new tab lists all retained visible SAR
+jobs with server paging, dataset/status filters and direct report navigation.
+`#/jobs?module=sar` preserves the module on refresh. Inactive modules do not poll.
+Running jobs are not removable; stopped jobs use the existing confirmed soft
+removal and worker-cleanup checks. Sources, datasets and result bytes are retained.
+SAR soft removal remains distinct from extraction recycle-bin permanent cleanup.
+No analysis starts by opening a tab, refreshing or changing the interface language.
+
 ## Single-site SAR discovery
 
 New webpage studies default to automatic single-site candidates; callers may
