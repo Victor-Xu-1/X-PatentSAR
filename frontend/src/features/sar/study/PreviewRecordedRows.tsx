@@ -1,11 +1,10 @@
 import type { StudyPreview, StudyReport } from '../../../api/sarStudyTypes';
-import { useTranslation } from '../../../i18n';
 import { contextLabel } from '../presentation';
 import { previewValueText } from './tablePresentation';
+import { RecordedDelta } from './RecordedDelta';
 
 /** Raw supporting endpoints/PK, without manufactured statistical conclusions. */
 export function PreviewRecordedRows({ data, report }: { data: StudyPreview; report: StudyReport }) {
-  const { t } = useTranslation();
   return (
     <>
       {(data.recorded_measurements ?? []).map((reading) => {
@@ -24,9 +23,7 @@ export function PreviewRecordedRows({ data, report }: { data: StudyPreview; repo
               </td>
             ))}
             <td className="sar-preview-change">
-              <span title={t('未纳入本次统计')} aria-label={t('未纳入本次统计')}>
-                —
-              </span>
+              <RecordedDelta difference={reading.difference} />
             </td>
           </tr>
         );

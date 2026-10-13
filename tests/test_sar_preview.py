@@ -6,10 +6,10 @@ import unittest
 import test_sar_api as support
 from test_web_support import WebFixture
 
+from patent_sar_extractor.core.sar.measurements import scalar_difference
 from patent_sar_extractor.core.sar.values import parse_value
 from patent_sar_extractor.web.sar.study_html_charts import ACTIVITY_COLORS, composition
 from patent_sar_extractor.web.sar.study_models import StudyBin
-from patent_sar_extractor.web.sar.study_preview import _scalar_difference
 
 
 class SARPreviewTests(WebFixture, unittest.TestCase):
@@ -56,7 +56,7 @@ class SARPreviewTests(WebFixture, unittest.TestCase):
 
     def test_display_difference_is_exact_or_explicitly_unrepresentable(self):
         def delta(a, b):
-            return _scalar_difference(parse_value(a, {}), parse_value(b, {}))
+            return scalar_difference(parse_value(a, {}), parse_value(b, {}))
 
         self.assertEqual(delta("1", "1." + "0" * 100 + "1"), 1e-101)
         self.assertEqual(delta("10", "1"), -9)

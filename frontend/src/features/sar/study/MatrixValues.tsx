@@ -4,6 +4,7 @@ import { contextLabel } from '../presentation';
 import { matrixDifference, matrixReadings } from './matrixReadings';
 import { propertyComparisonMessage } from './propertyComparisonMessage';
 import { propertyDelta } from './propertyDelta';
+import { RecordedDelta } from './RecordedDelta';
 import {
   differenceText,
   previewValueText,
@@ -53,6 +54,11 @@ export function MatrixValues({ data, report }: { data: StudyMatrix; report: Stud
                   }
                 >
                   <span>{previewValueText(reading?.candidate_values ?? [])}</span>
+                  {!analyzed && reading && 'difference' in reading && reading.difference && (
+                    <small className="sar-matrix-delta">
+                      <RecordedDelta difference={reading.difference} />
+                    </small>
+                  )}
                   {difference != null && (
                     <small className={'sar-matrix-delta is-' + assessed!.comparison}>
                       Δ {difference > 0 ? '+' : ''}

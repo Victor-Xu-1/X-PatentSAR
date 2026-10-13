@@ -28,7 +28,13 @@ export function portSite(
 const terminalCSV =
   'id,smiles,IC50 (nM),t_half (h),target,assay,cell_line,duration\n1,COc1ccc(Cl)cc1,10,1,T,controlled,C,1h\n2,CCOc1ccc(Cl)cc1,1,2,T,controlled,C,1h\n3,COc1ccc(Br)cc1,0.1,3,T,controlled,C,1h\n4,CCCOc1ccc(Cl)cc1,,4,T,controlled,C,1h\n,CO,0.00001,99,T,controlled,C,1h\nIntermediate 18,CCO,0.00001,99,T,controlled,C,1h\n';
 
-export async function createNetwork(page: Page, width: number, csv = terminalCSV, manual = false) {
+export async function createNetwork(
+  page: Page,
+  width: number,
+  csv = terminalCSV,
+  manual = false,
+  supporting = false,
+) {
   await page.goto('/#/sar');
   const imports = page.getByRole('region', { name: 'Import data', exact: true });
   await imports.getByRole('button', { name: 'CSV file', exact: true }).click();
@@ -57,13 +63,15 @@ export async function createNetwork(page: Page, width: number, csv = terminalCSV
   await expect(page).toHaveURL(/dataset=[a-f0-9]{32}/);
   const setup = page.getByRole('region', { name: 'Study setup', exact: true });
   await setup.getByRole('checkbox', { name: /IC50/ }).check();
-  await setup.getByRole('checkbox', { name: /t_half/ }).check();
+  if (supporting) await setup.getByRole('checkbox', { name: /t_half/ }).uncheck();
+  else await setup.getByRole('checkbox', { name: /t_half/ }).check();
   await expect(setup.getByRole('status', { name: 'Activity direction', exact: true })).toHaveText(
     'Automatic · Lower is stronger',
   );
-  await setup
-    .getByRole('combobox', { name: 'Activity direction', exact: true })
-    .selectOption('higher');
+  if (!supporting)
+    await setup
+      .getByRole('combobox', { name: 'Activity direction', exact: true })
+      .selectOption('higher');
   await setup.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(
     setup.getByRole('checkbox', { name: 'Find single-site changes', exact: true }),

@@ -89,7 +89,17 @@ fixed graph/stereo/ports and published member mapping. Unknown/foreign/unmatched
 members are rejected; intervals, grades, conflicted repeats and insufficient
 conditions never acquire invented scalar deltas. It is a bounded read-only view,
 not a new analysis job, molecular generator or acceptance authority. Scientific
-checkpoint/report schema and engine identity remain unchanged.
+reports remain immutable; these routes do not start a new analysis.
+
+New private input6 previews add `recorded_measurements[].difference` with
+`{status,value}`. Status is `comparable`, `missing`, `context_mismatch`,
+`indeterminate`, `not_scalar` or `not_representable`; only `comparable` has a
+finite numeric candidate-minus-reference value. These are descriptive changes
+in the recorded context unit, not a strength/efficacy claim. They require full
+recorded conditions, exact units and consistent repeats, with no borrowed
+selected-endpoint confirmation. Matrix uses the identical preview projection.
+Original exports/policies remain immutable; archived input2–5 omit this field.
+The shared gate refactor is engine13; input6 freezes this new read interpretation.
 
 Additive engine3 metadata: project Dataset includes `source_acceptance` and
 `source_page_count` (legacy absence is unknown). StudyReport carries source QA,
@@ -110,9 +120,9 @@ new webpage studies explicitly send true). The same study queue reserves its
 `discovery` with method, candidate/cut counts, exclusions and explicit limits.
 Region summaries add `origin:manual|single_site` and nullable `comparison_pool`;
 manual regions still compare the whole source pool, derived regions compare
-their complete indexed pool through the identical strict validator. SAR engine12
+their complete indexed pool through the identical strict validator. SAR engine13
 invalidates incompatible unfinished scientific work without retagging old reports.
-New study input5 and `candidate_policy:strict-context-pareto-units-v3` use exact
+New study input6 and `candidate_policy:strict-context-pareto-units-v3` use exact
 open/closed interval boundary ordering in both comparisons and Pareto fronts.
 An excluded shared endpoint can prove direction; no interval fold/raw difference
 is generated. Existing request/response shapes remain, old archived input2

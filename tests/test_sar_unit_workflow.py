@@ -119,7 +119,7 @@ class SARUnitWorkflowTests(WebFixture, unittest.TestCase):
                 client.get(path + "/export?format=json").content, original.content
             )
             archive = original.json()
-            self.assertEqual(archive["input"]["schema"], 5)
+            self.assertEqual(archive["input"]["schema"], 6)
             self.assertEqual(
                 [
                     row["observations"][0]["value"]

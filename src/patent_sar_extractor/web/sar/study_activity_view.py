@@ -26,7 +26,7 @@ class ActivityView:
 
 
 def prepare_activity(packet: dict, captured: StudyReport) -> ActivityView:
-    if packet.get("schema") not in {2, 3, 4, 5}:
+    if packet.get("schema") not in {2, 3, 4, 5, 6}:
         raise WebError(409, "sar_input_changed", "Unknown study measurement policy.")
     inline_units = packet["schema"] >= 4
     excluded = Counter()
