@@ -13,7 +13,7 @@ bridged rings and partial aromatic substitutions, plus ordinary H sites. >3 port
 hydrogen-boundary stereo is unsupported. H sites bind original atom anchors;
 private expanded views do not rewrite the original molecule or public indices.
 Native input-bound plans and25-pair batches survive interruption. Changes to
-SAR engine8 make old unfinished engine7/older
+SAR engine9 make old unfinished engine8/older
 checkpoints incompatible; retain their artifacts or roll back the prior wheel,
 never rewrite scientific identities. Completed old reports remain readable.
 Parent verification separately bounds candidate-plan regeneration at30s and
@@ -48,6 +48,18 @@ content-bound engine hash: start fresh native work from the existing dataset,
 never reuse or rewrite an old unfinished receipt as a compatible result.
 
 ## Activity-strength compatibility
+
+New engine9 studies use private input schema3 and candidate policy
+`strict-context-pareto-v2`. Strict ordering includes a shared finite boundary
+when either side excludes that boundary: `<10` vs `>=10`, or `<=10` vs `>10`.
+`<=10` vs `>=10` can still be equal at10 and remains indeterminate. Intervals
+never receive a fabricated midpoint, fold or numeric difference. Context/unit
+conflict, missing data, repeated-value conflict and explicit grade rules remain.
+The pair and candidate-priority paths share this mathematical proof. Archived
+input2 read previews retain the old positive-gap requirement and recorded ranks;
+reading/exporting old tasks does not rerun or rewrite science. Start a fresh SAR
+study from the retained dataset to use the new semantics; do not rehash an old
+checkpoint into compatibility. No SQL migration, model or environment install.
 
 Large completed reports are not kept in a persistent in-process result cache.
 Concurrent current/drawing/preview readers may share one fully validated model

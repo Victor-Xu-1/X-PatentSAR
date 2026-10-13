@@ -6,6 +6,7 @@ import hashlib
 import re
 from importlib.metadata import version
 
+from patent_sar_extractor.contracts import SAR_STUDY_INPUT_SCHEMA_VERSION
 from patent_sar_extractor.core.identifier_order import natural_identifier_key
 from patent_sar_extractor.core.sar.errors import SARInputError
 from patent_sar_extractor.core.sar.study_conditions import validate_declarations
@@ -37,7 +38,7 @@ def read_input(safe, input_sha256):
             "job_id",
             "engine_sha256",
         }
-        or packet["schema"] != 2
+        or packet["schema"] != SAR_STUDY_INPUT_SCHEMA_VERSION
         or digest(packet) != input_sha256
         or packet["engine_sha256"] != engine_identity()
         or packet["job_id"] != safe.root.name

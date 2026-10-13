@@ -5,6 +5,7 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
+from patent_sar_extractor.contracts import SAR_CANDIDATE_POLICY
 from patent_sar_extractor.core.sar.errors import SARInputError
 from patent_sar_extractor.core.sar.study_cores import confirmed_core_summaries
 from patent_sar_extractor.core.sar.study_distributions import DistributionContext
@@ -129,6 +130,7 @@ def analyse_study(root: Path, input_sha256: str) -> dict:
         dataset_revision=dataset["revision"],
         title=request["title"],
         counting_contract="unique-molecules-v2",
+        candidate_policy=SAR_CANDIDATE_POLICY,
         source_acceptance=dataset["source_acceptance"],
         context_declarations=request["context_declarations"],
         **identity,

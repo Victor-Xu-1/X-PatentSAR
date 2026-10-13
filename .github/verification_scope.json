@@ -1,38 +1,58 @@
 {
   "schema_version": 1,
-  "base_sha": "2a42e8ea6fe5c79d25906a62fcdfbdf11571c72a",
+  "base_sha": "6748c8b84856c29896c3f3da118f47ad8d434c3f",
   "changed_paths": [
     ".github/verification_scope.json",
     "README.md",
-    "docs/FRONTEND_QUALITY.md",
+    "docs/ARCHITECTURE.md",
+    "docs/OPERATIONS.md",
     "docs/PROJECT_MANIFEST.md",
-    "frontend/e2e/sar-preview-coverage.spec.ts",
+    "docs/WEB_API.md",
+    "frontend/e2e/sar-interval-boundaries.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/components/useInlineSelection.ts",
-    "frontend/src/features/sar/study/RegionMap.tsx",
-    "frontend/src/features/sar/study/StudyNetwork.tsx",
-    "frontend/src/i18n/catalogs/sar.ts",
-    "frontend/src/styles/sar-matrix.css",
-    "frontend/tests/sar-core-search.test.tsx",
-    "frontend/tests/sar-inline-selection.test.tsx",
-    "src/patent_sar_extractor/contracts.py"
+    "src/patent_sar_extractor/contracts.py",
+    "src/patent_sar_extractor/core/sar/statistics.py",
+    "src/patent_sar_extractor/core/sar/study_priority.py",
+    "src/patent_sar_extractor/core/sar/values.py",
+    "src/patent_sar_extractor/web/sar/admission.py",
+    "src/patent_sar_extractor/web/sar/preview_source.py",
+    "src/patent_sar_extractor/web/sar/study_preview.py",
+    "src/patent_sar_extractor/web/sar/study_publication.py",
+    "src/patent_sar_extractor/workers/sar_worker.py",
+    "src/patent_sar_extractor/workers/study_analysis.py",
+    "src/patent_sar_extractor/workers/study_inputs.py",
+    "tests/test_sar_interval_api.py",
+    "tests/test_sar_interval_boundaries.py",
+    "tests/test_sar_statistics.py",
+    "tests/test_sar_study_analysis.py",
+    "tools/browser_fixture_mode.py"
   ],
   "python_modules": [
+    "tests.test_sar_interval_boundaries",
+    "tests.test_sar_interval_api",
+    "tests.test_sar_statistics",
+    "tests.test_sar_study_analysis.StudyAnalysisTests.test_native_subprocess_full_report_is_accepted_by_parent",
+    "tests.test_sar_study_analysis.StudyAnalysisTests.test_interval_strength_and_numeric_bins_never_use_midpoints",
+    "tests.test_sar_study_analysis.StudyAnalysisTests.test_same_grade_is_priority_tie_not_numeric_pair_equality",
+    "tests.test_sar_study_analysis.StudyAnalysisTests.test_missing_conditions_confirmation_never_makes_priority_known",
+    "tests.test_sar_study_analysis.StudyAnalysisTests.test_exact_context_selection_does_not_mix_assays_or_units",
+    "tests.test_sar_study_analysis.StudyAnalysisTests.test_rehashed_pair_proof_tampering_is_rejected",
+    "tests.test_sar_study_analysis.StudyAnalysisTests.test_rehashed_report_count_and_context_tampering_is_rejected",
+    "tests.test_sar_study_analysis.StudyAnalysisTests.test_archived_input_schema_cannot_start_a_new_scientific_calculation",
+    "tests.test_sar_study_analysis.StudyAnalysisTests.test_descriptor_checkpoint_order_and_engine_tampering_are_rejected",
+    "tests.test_sar_network_worker",
+    "tests.test_sar_comparison_matrix",
+    "tests.test_sar_preview.SARPreviewTests.test_exact_values_deltas_graph_proof_and_immutable_input",
+    "tests.test_sar_api.SARAPITests.test_real_worker_csv_region_activity_and_exports_without_extraction_job",
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
-    "frontend/tests/sar-core-search.test.tsx",
-    "frontend/tests/sar-inline-selection.test.tsx",
-    "frontend/tests/sar-core-directions.test.tsx",
-    "frontend/tests/sar-region-map-interaction.test.tsx",
-    "frontend/tests/sar-core-order.test.ts",
     "frontend/tests/sar-matrix.test.tsx",
-    "frontend/tests/sar-preview-layout.test.tsx",
-    "frontend/tests/i18n-core.test.tsx"
+    "frontend/tests/sar-preview.test.tsx"
   ],
   "browser_tests": [
-    "frontend/e2e/sar-preview-coverage.spec.ts"
+    "frontend/e2e/sar-interval-boundaries.spec.ts"
   ]
 }

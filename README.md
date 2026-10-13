@@ -18,6 +18,13 @@ Core search filters the gallery without replacing the working reference or its
 selected site. Region choices use a bounded wrapping palette with all entries
 retained, keeping structures and comparison data close together.
 
+SAR measurement comparison uses exact interval endpoints: under comparable
+conditions, `<10 nM` is stronger than `>10 nM` for a lower-is-stronger endpoint.
+An excluded shared endpoint can prove direction, never a numerical fold or delta.
+Closed touching/overlapping intervals remain unresolved. The same rule drives
+new pair comparisons and Pareto priority; old study archives keep their captured
+semantics and cannot be resumed as a new scientific calculation.
+
 开源仓库：[Victor-Xu-1/X-PatentSAR](https://github.com/Victor-Xu-1/X-PatentSAR)。
 软件与仓库的对外名称统一为 **X-PatentSAR**；Python 发行包与 CLI 使用规范化技术标识
 `x-patentsar`。第一方源码采用 Apache-2.0，第三方许可和模型边界见 `NOTICE`。

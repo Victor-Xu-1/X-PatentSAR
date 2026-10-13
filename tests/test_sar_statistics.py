@@ -56,7 +56,7 @@ class StatisticsTests(unittest.TestCase):
         result = compare([observation(">10")], [observation("<2")])
         self.assertEqual(result["comparison"], "better")
         self.assertIsNone(result["fold_change"])
-        for left, right in (("<10", "<2"), ("[2,10]", "[1,3]"), (">10", "<10")):
+        for left, right in (("<10", "<2"), ("[2,10]", "[1,3]"), (">=10", "<=10")):
             with self.subTest(left=left, right=right):
                 result = compare([observation(left)], [observation(right)])
                 self.assertEqual(result["comparison"], "indeterminate")

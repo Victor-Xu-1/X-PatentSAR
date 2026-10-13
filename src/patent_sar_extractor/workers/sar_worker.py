@@ -7,6 +7,7 @@ import sys
 import time
 from pathlib import Path
 
+from patent_sar_extractor.contracts import SAR_STUDY_INPUT_SCHEMA_VERSION
 from patent_sar_extractor.core.sar.errors import SARInputError
 
 
@@ -73,7 +74,10 @@ def analyse(root: Path, input_sha256: str) -> dict:
 
     safe = SafeFiles(root)
     packet = safe.json("input.json", optional=False)
-    if isinstance(packet, dict) and packet.get("schema") == 2:
+    if (
+        isinstance(packet, dict)
+        and packet.get("schema") == SAR_STUDY_INPUT_SCHEMA_VERSION
+    ):
         from .study_analysis import analyse_study
 
         return analyse_study(root, input_sha256)

@@ -144,6 +144,9 @@ def verified_preview(
             policy.direction,
             policy.grade_order,
             packet["request"]["confirm_context"],
+            # Archived inputs keep their captured comparison semantics. This
+            # is a read adapter, never an alternative new-study engine.
+            open_bounds=packet["schema"] == 3,
         )
         if claim and compared["evidence_basis"] == "recorded_context":
             compared["evidence_basis"] = "source_declared"
