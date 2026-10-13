@@ -1,5 +1,17 @@
 # X-PatentSAR architecture
 
+Shared source-cell authority: `compound_caption.py` owns the exact whole-caption
+grammar, `cell_ocr_observation.py` retains raw/normalized line observations and
+identity confidence, and `cell_ocr_lines.py` resolves only physical overlapping
+fragments through the same OCR engine (up to eight lines/32 detections per cell).
+`table_cells.py` owns geometry and disagreement admission for structure and
+activity consumers. Neither two matching resolutions nor native evidence can
+erase another valid ID/value contradiction. Numbered proof rechecks this on
+deserialization. Unknown annotations remain unresolved; elution notes never
+assign stereochemistry. Binding3/activity2 retain old products as historical
+review; binder12/activity11/visible-label9 invalidate derived reuse independently
+of unchanged verified original-page OCR/structure assets and manual audit data.
+
 `api/localSession.ts` owns one ephemeral cached/single-flight same-origin session
 inside the existing ApiClient. Generation checks and serialized explicit reset
 prevent obsolete response/Set-Cookie races. Only GET +401 +session_required can

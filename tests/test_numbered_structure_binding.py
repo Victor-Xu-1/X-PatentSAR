@@ -227,6 +227,24 @@ class NumberedStructureBindingTests(unittest.TestCase):
         )
         self.assertEqual(bindings, [])
 
+    def test_serialized_proof_cannot_discard_a_valid_competing_source_read(self):
+        for observations in (
+            (
+                {"method": "page_ocr_cell", "text": "17"},
+                {"method": "cell_ocr_400dpi", "text": "11", "confidence": 0.99},
+                {"method": "cell_ocr_600dpi", "text": "11", "confidence": 0.99},
+            ),
+            (
+                {"method": "native_cell", "text": "11"},
+                {"method": "page_ocr_cell", "text": "17"},
+            ),
+        ):
+            with self.subTest(observations=observations):
+                candidate = replace(cell("11", 0), observations=observations)
+                self.assertEqual(
+                    self._pair([candidate], [structure(candidate)]).bindings, ()
+                )
+
     def test_strict_accuracy_accepts_validated_cell_evidence_only(self):
         from patent_sar_extractor.core.binding_spatial import (
             _extract_authoritative_structure_table_sequence_bindings,

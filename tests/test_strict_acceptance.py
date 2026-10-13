@@ -62,7 +62,6 @@ from patent_sar_extractor.contracts import (
     VISIBLE_LABEL_CACHE_SCHEMA_VERSION,
     artifact_identity,
     artifact_identity_matches,
-    ruleset_ref,
 )
 from patent_sar_extractor.core import (
     activity_coordinates as activity_coordinates_module,
@@ -1282,6 +1281,8 @@ class StrictAcceptanceTests(unittest.TestCase):
     def test_binding_cache_with_matching_manifest_is_rejected_when_strict_gate_fails(
         self,
     ) -> None:
+        from patent_sar_extractor.application.stage_cache import _step_fingerprint
+
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
             pdf = base / "WO123.pdf"
@@ -1322,14 +1323,7 @@ class StrictAcceptanceTests(unittest.TestCase):
                 "final_bindings": complete["final_bindings"][:1],
             }
             self._write_json(bind_json, stale_payload)
-            fingerprint = {
-                "step": "bind",
-                "pdf_sha256": "same",
-                "dependency_sha256": {},
-                "params_digest": "same",
-                "params": {},
-                "ruleset": ruleset_ref(),
-            }
+            fingerprint = _step_fingerprint("bind", pdf_path=str(pdf))
             _write_step_manifest(str(bind_json), fingerprint)
 
             self.assertIsNone(_load_reusable_bindings(str(bind_json), fingerprint, {}))

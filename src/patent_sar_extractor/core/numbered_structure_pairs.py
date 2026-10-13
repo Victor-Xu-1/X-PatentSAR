@@ -69,14 +69,14 @@ def _confirmed_observations(
 ) -> bool:
     methods: set[str] = set()
     for observation in observations:
-        if (
-            not isinstance(observation, Mapping)
-            or _label(observation.get("text")) != label
-        ):
+        if not isinstance(observation, Mapping):
+            return False
+        observed = _label(observation.get("text"))
+        if observed and observed != label:
+            return False
+        if observed != label:
             continue
         method = str(observation.get("method") or "")
-        if method == "native_cell":
-            return True
         if method.startswith("cell_ocr_"):
             if isinstance(observation.get("confidence"), bool):
                 continue
@@ -87,8 +87,9 @@ def _confirmed_observations(
             if not math.isfinite(score) or not 0.85 <= score <= 1:
                 continue
         methods.add(method)
-    return "cell_ocr_400dpi" in methods and bool(
-        methods & {"page_ocr_cell", "cell_ocr_600dpi"}
+    return "native_cell" in methods or (
+        "cell_ocr_400dpi" in methods
+        and bool(methods & {"page_ocr_cell", "cell_ocr_600dpi"})
     )
 
 
