@@ -1,5 +1,17 @@
 # Operations and troubleshooting
 
+## Large SAR reports
+
+Initial report browsing now requests a complete membership catalog rather than
+all fragment chemistry and chart leaves. Core/region inventory and comparison
+counts are not page samples. Opening a manual fragment region retrieves its
+full detail; loading/read failures remain explicit with Reload, never synthetic
+zero bins. API callers requiring the full representation can retain `/study`;
+exports and prior published bytes remain unchanged. The existing32MiB bounded
+report transport is not increased. Performance acceptance must compare the same
+retained input and complete memberships, in addition to actual packet size and
+rendered core/region/fragment interactions, without starting production science.
+
 ## Sparse historical SAR reports
 
 Check the report header's scope before interpreting a small comparison set.

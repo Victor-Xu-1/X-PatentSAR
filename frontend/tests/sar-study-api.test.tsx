@@ -11,6 +11,7 @@ import { decodeSARJob, decodePair } from '../src/api/sarJobDecoders';
 import { policyFromDraft, emptyPolicy } from '../src/features/sar/study/policyDraft';
 import { initialMapping, mappingValid } from '../src/features/sar/csvMapping';
 import { json, session } from './fixtures';
+import { catalogBody } from './sar-catalog-fixtures';
 import {
   coreRegion,
   csvPreview,
@@ -248,12 +249,13 @@ describe('authenticated, bounded study API adapter', () => {
       if (path.includes('/rows?'))
         return json({ items: [studyRow], total: 100, page: 2, page_size: 50, job: studyJob });
       if (path.includes('/drawing?')) return json({ id: 'fragment / 原文', svg: sarDrawing.svg });
-      return json({ job: studyJob, report: studyReport });
+      return json(catalogBody());
     });
     const api = createSARStudyApi(new ApiClient(transport), transport),
       signal = new AbortController().signal;
     await api.profile(sarDataset.id, 2, signal);
     await api.overview(studyJob.id, sarDataset.id, signal);
+    expect(String(transport.mock.calls.at(-1)?.[0])).toContain('/study/catalog');
     await api.rows(
       studyJob.id,
       sarDataset.id,
@@ -351,7 +353,7 @@ describe('authenticated, bounded study API adapter', () => {
   it('accepts a complete study report over the shared 8 MiB cap without truncation, bounded by the native 32 MiB limit', async () => {
     const report = { ...studyReport, warnings: ['x'.repeat(8 * 1024 * 1024 + 10)] };
     const transport = vi.fn<typeof fetch>(async (url) =>
-      String(url).endsWith('/session') ? json(session) : json({ job: studyJob, report }),
+      String(url).endsWith('/session') ? json(session) : json(catalogBody(report)),
     );
     const api = createSARStudyApi(new ApiClient(transport), transport);
     expect(

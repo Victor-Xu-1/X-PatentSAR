@@ -1,5 +1,6 @@
+import type { CatalogReport } from '../../../api/sarCatalogTypes';
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
-import type { StudyReport, StudyPreview } from '../../../api/sarStudyTypes';
+import type { StudyPreview } from '../../../api/sarStudyTypes';
 import { useTranslation } from '../../../i18n';
 import { differenceText, previewValueText, propertyText } from './tablePresentation';
 import { contextLabel } from '../presentation';
@@ -7,7 +8,13 @@ import { PreviewProperties } from './PreviewProperties';
 import { PreviewRecordedRows } from './PreviewRecordedRows';
 import { ContractError } from '../../../api/validation';
 import { SARFailure } from '../SARFailure';
-export function PreviewMeasurements({ data, report }: { data: StudyPreview; report: StudyReport }) {
+export function PreviewMeasurements({
+  data,
+  report,
+}: {
+  data: StudyPreview;
+  report: CatalogReport;
+}) {
   const { t } = useTranslation();
   if (
     data.recorded_measurements?.some(

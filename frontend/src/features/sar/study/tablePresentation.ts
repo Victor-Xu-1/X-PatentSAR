@@ -1,10 +1,11 @@
-import type { StudyContext, StudyReport } from '../../../api/sarStudyTypes';
+import type { CatalogReport } from '../../../api/sarCatalogTypes';
+import type { StudyContext } from '../../../api/sarStudyTypes';
 import { METRIC_SPECS } from '../../../api/predictionTypes';
 export const studyProperties = METRIC_SPECS;
 const countProperties: ReadonlySet<string> = new Set(
   METRIC_SPECS.filter((property) => property.unit === '#').map((property) => property.key),
 );
-export function selectedContexts(report: StudyReport): StudyContext[] {
+export function selectedContexts(report: CatalogReport): StudyContext[] {
   return report.policies.flatMap((policy) =>
     report.contexts.filter((context) => context.id === policy.context_id),
   );

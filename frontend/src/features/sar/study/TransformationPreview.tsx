@@ -1,6 +1,7 @@
+import type { CatalogRegion, CatalogReport } from '../../../api/sarCatalogTypes';
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
-import type { StudyRegionSummary, StudyReport } from '../../../api/sarStudyTypes';
+
 import { sarStudyApi } from '../../../api/sarStudyApi';
 import { useTranslation } from '../../../i18n';
 import { Loading } from '../../../components/Feedback';
@@ -20,8 +21,8 @@ export function TransformationPreview({
   onClose,
   requestId = 0,
 }: {
-  report: StudyReport;
-  summary: StudyRegionSummary;
+  report: CatalogReport;
+  summary: CatalogRegion;
   moleculeId: string;
   jobId: string;
   active: boolean;

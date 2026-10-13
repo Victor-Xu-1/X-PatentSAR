@@ -1,4 +1,5 @@
-import type { StudyFragment, StudyReport } from '../../../api/sarStudyTypes';
+import type { CatalogReport } from '../../../api/sarCatalogTypes';
+import type { StudyFragment } from '../../../api/sarStudyTypes';
 import { useTranslation } from '../../../i18n';
 import { StudyImage } from './StudyImage';
 import { StudyBars } from './StudyBars';
@@ -25,7 +26,7 @@ export function StudyFragmentCard({
   jobId: string;
   active: boolean;
   unit: CountingUnit;
-  report: StudyReport;
+  report: CatalogReport;
   onRows: (region: string, fragment: string) => void;
   onPreview: (id: string, trigger: HTMLButtonElement) => void;
 }) {

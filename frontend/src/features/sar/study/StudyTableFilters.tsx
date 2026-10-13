@@ -1,4 +1,5 @@
-import type { StudyFilter, StudyReport } from '../../../api/sarStudyTypes';
+import type { CatalogReport } from '../../../api/sarCatalogTypes';
+import type { StudyFilter } from '../../../api/sarStudyTypes';
 import { useTranslation } from '../../../i18n';
 
 export function StudyTableFilters({
@@ -6,7 +7,7 @@ export function StudyTableFilters({
   filter,
   onFilter,
 }: {
-  report: StudyReport;
+  report: CatalogReport;
   filter: StudyFilter;
   onFilter: (filter: StudyFilter) => void;
 }) {

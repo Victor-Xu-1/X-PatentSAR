@@ -1,5 +1,6 @@
+import type { CatalogRegion, CatalogReport } from '../../../api/sarCatalogTypes';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import type { StudyRegionSummary, StudyReport } from '../../../api/sarStudyTypes';
+
 import { sarStudyApi } from '../../../api/sarStudyApi';
 import { useTranslation } from '../../../i18n';
 import { Loading } from '../../../components/Feedback';
@@ -22,9 +23,9 @@ export function NetworkBranches({
   fragments = false,
   onSource,
 }: {
-  report: StudyReport;
-  summary?: StudyRegionSummary | undefined;
-  summaries?: StudyRegionSummary[];
+  report: CatalogReport;
+  summary?: CatalogRegion | undefined;
+  summaries?: CatalogRegion[];
   referenceId?: string;
   jobId: string;
   active: boolean;
@@ -37,7 +38,7 @@ export function NetworkBranches({
   const [preview, setPreview] = useState<{
     id: string;
     request: number;
-    summary: StudyRegionSummary;
+    summary: CatalogRegion;
   } | null>(null);
   const sites = summary ? [summary] : summaries;
   const siteOrder = useMemo(

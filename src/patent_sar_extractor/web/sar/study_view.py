@@ -27,7 +27,11 @@ def current_records(packet: dict, captured: StudyReport, pairs: list[dict]):
     )
 
 
-def current_report(packet: dict, captured: StudyReport, pairs: list[dict]):
+def current_report(
+    packet: dict, captured: StudyReport, pairs: list[dict], *, catalog=False
+):
+    from .study_catalog_models import CatalogReport
+
     activity = prepare_activity(packet, captured)
     primary = activity.policies[0].context_id
     scaffolds, regions = current_groups(
@@ -36,9 +40,11 @@ def current_report(packet: dict, captured: StudyReport, pairs: list[dict]):
         activity.domains[primary],
         activity.assessments[primary],
         pairs,
+        catalog=catalog,
     )
     by_id = {row.molecule_id: row for row in activity.rows}
-    current = CurrentStudyReport.model_validate(
+    report_model = CatalogReport if catalog else CurrentStudyReport
+    current = report_model.model_validate(
         {
             **captured.__dict__,
             "counting_contract": "unique-molecules-v2",

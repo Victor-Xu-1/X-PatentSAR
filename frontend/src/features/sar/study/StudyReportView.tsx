@@ -1,6 +1,7 @@
+import type { CatalogReport } from '../../../api/sarCatalogTypes';
 import { useEffect, useId, useRef, useState } from 'react';
 import type { Dataset } from '../../../api/sarTypes';
-import type { StudyFilter, StudyReport, StudyRow } from '../../../api/sarStudyTypes';
+import type { StudyFilter, StudyRow } from '../../../api/sarStudyTypes';
 import { useTranslation } from '../../../i18n';
 import { StudyOverview } from './StudyOverview';
 import { StudyScaffolds } from './StudyScaffolds';
@@ -27,7 +28,7 @@ export function StudyReportView({
   jobId,
   active,
 }: {
-  report: StudyReport;
+  report: CatalogReport;
   dataset: Dataset;
   jobId: string;
   active: boolean;

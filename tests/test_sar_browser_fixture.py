@@ -13,6 +13,13 @@ from tools.prepare_browser_fixture import prepare
 
 
 class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
+    def test_catalog_scope_uses_existing_isolated_sar_state(self):
+        selected = {PREFIX + "sar-catalog.spec.ts", PREFIX + "sar-reanalysis.spec.ts"}
+        self.assertEqual(fixture_mode(selected), "sar")
+        self.assertEqual(
+            fixture_mode(selected | {PREFIX + "real-workflow.spec.ts"}), "execution"
+        )
+
     def test_reanalysis_scope_uses_isolated_sar_without_extraction(self):
         selected = {PREFIX + "sar-reanalysis.spec.ts"}
         self.assertEqual(fixture_mode(selected), "sar")

@@ -1,4 +1,5 @@
-import type { StudyMatrix, StudyPreview, StudyReport } from '../../../api/sarStudyTypes';
+import type { CatalogReport } from '../../../api/sarCatalogTypes';
+import type { StudyMatrix, StudyPreview } from '../../../api/sarStudyTypes';
 import { useTranslation } from '../../../i18n';
 import { contextLabel } from '../presentation';
 import { matrixDifference, matrixReadings } from './matrixReadings';
@@ -21,7 +22,7 @@ const outcomeLabels: Record<string, string> = {
   context_mismatch: '条件不可比',
 };
 
-export function MatrixValues({ data, report }: { data: StudyMatrix; report: StudyReport }) {
+export function MatrixValues({ data, report }: { data: StudyMatrix; report: CatalogReport }) {
   const { t } = useTranslation();
   const rows = matrixReadings(data, report);
   const reference = data.previews[0]!.reference;

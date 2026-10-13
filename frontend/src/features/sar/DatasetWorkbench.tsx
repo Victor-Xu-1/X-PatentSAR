@@ -1,3 +1,4 @@
+import type { CatalogReport } from '../../api/sarCatalogTypes';
 import { useCallback, useState } from 'react';
 import { sarApi } from '../../api/sarApi';
 import type { JobList, Molecule, Region, SARJob } from '../../api/sarTypes';
@@ -15,7 +16,7 @@ import { SARJobResults } from './SARJobResults';
 import { StudySetup } from './study/StudySetup';
 import { SourceAcceptance } from './study/SourceAcceptance';
 import { DeleteDataset } from './DeleteDataset';
-import type { StudyReport } from '../../api/sarStudyTypes';
+
 import { reanalysisDraft } from './study/reanalysisDraft';
 import type { StudySetupSeed } from './study/reanalysisDraft';
 
@@ -61,7 +62,7 @@ export function DatasetWorkbench({
   });
   const ready = dataset.validated && jobs.validated;
   const busy = !ready || Boolean(jobs.data?.items.some(isActiveJob));
-  function prepareFromReport(report: StudyReport) {
+  function prepareFromReport(report: CatalogReport) {
     if (busy || setupLocked || !dataset.data) return;
     setSeedError(null);
     if (!setupDirty) {

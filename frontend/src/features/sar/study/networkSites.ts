@@ -1,7 +1,7 @@
-import type { StudyRegionSummary } from '../../../api/sarStudyTypes';
+import type { CatalogRegion } from '../../../api/sarCatalogTypes';
 
 /** Original accepted changed-fragment memberships; never infer a new match. */
-export function networkRowSites(sites: StudyRegionSummary[], moleculeId: string) {
+export function networkRowSites(sites: CatalogRegion[], moleculeId: string) {
   return sites.filter(
     (site) =>
       site.region.molecule_id !== moleculeId &&
@@ -14,7 +14,7 @@ export function networkRowSites(sites: StudyRegionSummary[], moleculeId: string)
 /** Only hide nested automatic views of the exact same accepted source pairs.
  * Manual selections and unique comparisons stay visible. Reports stay intact.
  */
-export function compactNetworkSites(sites: StudyRegionSummary[]): StudyRegionSummary[] {
+export function compactNetworkSites(sites: CatalogRegion[]): CatalogRegion[] {
   const prepared = sites.map((site) => ({
     site,
     atoms: new Set(site.region.atom_indices),

@@ -12,20 +12,27 @@ from .study_view_models import ActivityBasis
 
 
 def _derive(
-    source: bytes, report: bytes, pairs: bytes, *, captured=None, records_only=False
+    source: bytes,
+    report: bytes,
+    pairs: bytes,
+    *,
+    captured=None,
+    records_only=False,
+    catalog=False,
 ):
     project = current_records if records_only else current_report
     return project(
         json.loads(source),
         captured if captured is not None else StudyReport.model_validate_json(report),
         json.loads(pairs),
+        **({"catalog": catalog} if not records_only else {}),
     )
 
 
 _small_view = lru_cache(maxsize=2)(_derive)
 
 
-def projected(queue, identifier, job, captured, *, records_only=False):
+def projected(queue, identifier, job, captured, *, records_only=False, catalog=False):
     record = queue.jobs.record(identifier)
     safe = queue.service.assets.job_files(record["root"], identifier)
     source = safe.read("input.json", max_bytes=32 * 1024 * 1024)
@@ -56,7 +63,7 @@ def projected(queue, identifier, job, captured, *, records_only=False):
     pair_bytes = encode(compact).encode()
     if len(source) + len(report) + len(pair_bytes) <= 4 * 1024 * 1024:
         current, excluded = _small_view(
-            source, report, pair_bytes, records_only=records_only
+            source, report, pair_bytes, records_only=records_only, catalog=catalog
         )
     else:
         # load() already validated this captured model. Both subsequent byte
@@ -64,7 +71,12 @@ def projected(queue, identifier, job, captured, *, records_only=False):
         # hashes. Reuse it rather than parse a large report a second time; do
         # not retain large packets in a process-global cache.
         current, excluded = _derive(
-            source, report, pair_bytes, captured=captured, records_only=records_only
+            source,
+            report,
+            pair_bytes,
+            captured=captured,
+            records_only=records_only,
+            catalog=catalog,
         )
     basis = ActivityBasis(
         source_input_sha256=job.input_sha256,

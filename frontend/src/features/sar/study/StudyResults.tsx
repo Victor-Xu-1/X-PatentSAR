@@ -1,3 +1,4 @@
+import type { CatalogReport } from '../../../api/sarCatalogTypes';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { sarApi } from '../../../api/sarApi';
 import { sarStudyApi } from '../../../api/sarStudyApi';
@@ -14,7 +15,7 @@ import { StudyReportView } from './StudyReportView';
 import { StudyReportInfo } from './StudyReportInfo';
 import { StudyReportHeader } from './StudyReportHeader';
 import { ContractError } from '../../../api/validation';
-import type { StudyReport } from '../../../api/sarStudyTypes';
+
 import { coreChoices } from './coreChoices';
 export function StudyResults({
   dataset,
@@ -33,7 +34,7 @@ export function StudyResults({
   disabled: boolean;
   scope: string;
   onJob: (id: string) => void;
-  onReanalyse?: ((report: StudyReport) => void) | undefined;
+  onReanalyse?: ((report: CatalogReport) => void) | undefined;
   reanalysisDisabled?: boolean | undefined;
   hasDraft?: boolean | undefined;
 }) {

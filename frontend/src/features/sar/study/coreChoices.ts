@@ -1,18 +1,19 @@
-import type { StudyRegionSummary, StudyReport } from '../../../api/sarStudyTypes';
+import type { CatalogRegion, CatalogReport } from '../../../api/sarCatalogTypes';
+
 import { compactNetworkSites } from './networkSites';
 
 export type CoreOrder = 'alternatives' | 'identifier';
 export interface CoreChoice {
   id: string;
   label: string;
-  sites: StudyRegionSummary[];
-  compact: StudyRegionSummary[];
+  sites: CatalogRegion[];
+  compact: CatalogRegion[];
   alternativeCount: number;
 }
 
 /** View order of published strict alternatives, never a drug/efficacy score. */
-export function coreChoices(report: StudyReport): CoreChoice[] {
-  const groups = new Map<string, { label: string; sites: StudyRegionSummary[] }>();
+export function coreChoices(report: CatalogReport): CoreChoice[] {
+  const groups = new Map<string, { label: string; sites: CatalogRegion[] }>();
   for (const summary of report.regions) {
     const automatic =
       summary.origin === 'single_site' || (report.discovery && summary.origin !== 'manual');

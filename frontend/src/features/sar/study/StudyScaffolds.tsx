@@ -1,6 +1,7 @@
+import type { CatalogReport } from '../../../api/sarCatalogTypes';
 import { useCallback, useState } from 'react';
 import { sarStudyApi } from '../../../api/sarStudyApi';
-import type { StudyReport } from '../../../api/sarStudyTypes';
+
 import { useTranslation } from '../../../i18n';
 import { StudyImage } from './StudyImage';
 import { StudyBars } from './StudyBars';
@@ -13,7 +14,7 @@ export function StudyScaffolds({
   active,
   onRows,
 }: {
-  report: StudyReport;
+  report: CatalogReport;
   jobId: string;
   active: boolean;
   onRows: (id: string) => void;
@@ -30,7 +31,7 @@ export function StudyScaffolds({
     active,
     load,
   );
-  const labelFor = (scaffold: StudyReport['scaffolds'][number], index: number) =>
+  const labelFor = (scaffold: CatalogReport['scaffolds'][number], index: number) =>
     profile.data?.regions.find((region) => region.id === scaffold.core_region_id)?.name ??
     t('母核 {index}', { index: (page - 1) * 12 + index + 1 });
   return (

@@ -62,7 +62,9 @@ def _require_coverage(summary, selected, ids):
         )
 
 
-def _region(summary, selected, ids, states, bins):
+def _region(summary, selected, ids, states, bins, *, catalog=False):
+    from .study_catalog_models import CatalogFragment, CatalogRegion
+
     counts = Counter(pair["match_status"] for pair in selected)
     outcomes = defaultdict(Counter)
     for pair in selected:
@@ -74,6 +76,17 @@ def _region(summary, selected, ids, states, bins):
             identifier for identifier in original.molecule_ids if identifier in ids
         ]
         if not members:
+            continue
+        if catalog:
+            fragments.append(
+                CatalogFragment(
+                    id=original.id,
+                    molecule_ids=members,
+                    molecule_count=len(members),
+                    is_reference=original.is_reference,
+                    representation=original.representation,
+                )
+            )
             continue
         changes = outcomes[original.id]
         fragments.append(
@@ -92,7 +105,8 @@ def _region(summary, selected, ids, states, bins):
                 }
             )
         )
-    return CurrentStudyRegion.model_validate(
+    region_model = CatalogRegion if catalog else CurrentStudyRegion
+    return region_model.model_validate(
         {
             **summary.__dict__,
             **{
@@ -138,7 +152,7 @@ def source_groups(captured, ids, pairs) -> GroupScope:
     return GroupScope(scaffolds, regions, indexed)
 
 
-def current_groups(captured, ids, domain, states, pairs):
+def current_groups(captured, ids, domain, states, pairs, *, catalog=False):
     scope = source_groups(captured, ids, pairs)
     bins = GroupBins(domain)
     scaffolds = [
@@ -159,7 +173,9 @@ def current_groups(captured, ids, domain, states, pairs):
         for item in scope.scaffolds
     ]
     regions = [
-        _region(summary, scope.pairs[summary.region.id], ids, states, bins)
+        _region(
+            summary, scope.pairs[summary.region.id], ids, states, bins, catalog=catalog
+        )
         for summary in scope.regions
     ]
     return scaffolds, regions

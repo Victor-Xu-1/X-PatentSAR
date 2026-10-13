@@ -1,8 +1,9 @@
-import type { StudyReport, StudyBin } from './sarStudyTypes';
+import type { StudyBin, StudyFragment, StudyRegionSummary } from './sarStudyTypes';
+import type { CatalogReport } from './sarCatalogTypes';
 import { ContractError } from './validation';
 
 /** Legacy reports remain readable; only the current contract promises a partition. */
-export function verifyStudyConservation(report: StudyReport, path: string) {
+export function verifyStudyConservation(report: CatalogReport, path: string, catalog = false) {
   if (report.counting_contract !== 'unique-molecules-v2') return;
   const require = (valid: boolean) => {
     if (!valid) throw new ContractError(path + '.conservation');
@@ -81,7 +82,12 @@ export function verifyStudyConservation(report: StudyReport, path: string) {
       require(Boolean(pool?.every((id) => ids.has(id) && id !== summary.region.molecule_id)));
     } else require(summary.comparison_pool == null);
     for (const fragment of summary.fragments) {
-      binsValid(fragment.bins, fragment.molecule_ids);
+      if (!catalog) binsValid((fragment as StudyFragment).bins, fragment.molecule_ids);
+      else
+        require(
+          new Set(fragment.molecule_ids).size === fragment.molecule_ids.length &&
+            fragment.molecule_ids.every((id) => ids.has(id)),
+        );
       require(fragment.molecule_count === fragment.molecule_ids.length);
       fragmentMembers.push(...fragment.molecule_ids);
     }
@@ -131,4 +137,48 @@ export function verifyStudyConservation(report: StudyReport, path: string) {
   }
   require(new Set(declarations.map((claim) => claim.context_id)).size === declarations.length);
   require(declarations.every((claim) => policies.includes(claim.context_id)));
+}
+
+/** Region detail must be the exact indexed membership, with full-domain bins. */
+export function verifyRegionDetail(report: CatalogReport, region: StudyRegionSummary) {
+  const expected = report.regions.find((item) => item.region.id === region.region.id);
+  const compact = (value: typeof expected | StudyRegionSummary) =>
+    value && {
+      ...value,
+      fragments: value.fragments.map((item) => ({
+        id: item.id,
+        molecule_ids: item.molecule_ids,
+        molecule_count: item.molecule_count,
+        is_reference: item.is_reference,
+        representation: item.representation ?? 'port_fragment',
+      })),
+    };
+  const stable = (value: unknown): unknown =>
+    Array.isArray(value)
+      ? value.map(stable)
+      : value !== null && typeof value === 'object'
+        ? Object.fromEntries(
+            Object.entries(value)
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([key, item]) => [key, stable(item)]),
+          )
+        : value;
+  if (
+    !expected ||
+    JSON.stringify(stable(compact(region))) !== JSON.stringify(stable(compact(expected)))
+  )
+    throw new ContractError('$.region_catalog_identity');
+  if (report.counting_contract !== 'unique-molecules-v2') return;
+  const domain = new Set(
+    report.distributions[0]?.bins.map((bin) => JSON.stringify([bin.kind, bin.label])),
+  );
+  for (const fragment of region.fragments) {
+    const keys = fragment.bins.map((bin) => JSON.stringify([bin.kind, bin.label]));
+    if (
+      fragment.bins.reduce((sum, bin) => sum + bin.molecules, 0) !== fragment.molecule_count ||
+      new Set(keys).size !== keys.length ||
+      keys.some((key) => !domain.has(key))
+    )
+      throw new ContractError('$.region_bins');
+  }
 }

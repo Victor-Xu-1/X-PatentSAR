@@ -1,6 +1,7 @@
+import type { CatalogRegion, CatalogReport } from '../../../api/sarCatalogTypes';
 import { useState } from 'react';
 import { ArrowUpRight } from 'lucide-react';
-import type { StudyRegionSummary, StudyReport, StudyRow } from '../../../api/sarStudyTypes';
+import type { StudyRow } from '../../../api/sarStudyTypes';
 import { useTranslation } from '../../../i18n';
 import { StudyImage } from './StudyImage';
 import { NetworkBranchReadings } from './NetworkBranchReadings';
@@ -17,13 +18,13 @@ export function NetworkBranchCard({
   onCompare,
 }: {
   row: StudyRow;
-  report: StudyReport;
-  sites: StudyRegionSummary[];
+  report: CatalogReport;
+  sites: CatalogRegion[];
   siteOrder?: ReadonlyMap<string, number>;
   jobId: string;
   active: boolean;
   fragments: boolean;
-  onCompare: (site: StudyRegionSummary, molecule: string, trigger: HTMLButtonElement) => void;
+  onCompare: (site: CatalogRegion, molecule: string, trigger: HTMLButtonElement) => void;
 }) {
   const { t } = useTranslation();
   const [selected, setSelected] = useState('');
@@ -34,7 +35,7 @@ export function NetworkBranchCard({
       )
     : undefined;
   const available = !!site && (!fragments || !!fragment);
-  function marker(item: StudyRegionSummary, index: number) {
+  function marker(item: CatalogRegion, index: number) {
     return regionMarker(item.region, siteOrder?.get(item.region.id) ?? index);
   }
   return (

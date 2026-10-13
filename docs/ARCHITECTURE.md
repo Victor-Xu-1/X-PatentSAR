@@ -7,6 +7,24 @@ epochs are not product releases and do not retag old results as current.
 
 ## One workflow
 
+### Complete catalogs and lazy region details
+
+The default frontend overview reads `/study/catalog`. Its explicit catalog DTO
+retains all regions and exact fragment memberships/counts but omits fragment
+chemical strings and distribution bins. `study_view.current_report(catalog=True)`
+uses the same full source/report hashes, pair coverage and global activity
+preparation; `current_groups` avoids allocating unused fragment charts. No region,
+comparison, source ID, bound, scientific epoch or result is pruned to reduce size.
+The selected manual-region statistics load through `/study/regions/{region_id}`
+using the existing complete current-view authority. Frontend catalog types cannot
+pretend to contain full fragment statistics. The detail consumer rechecks source
+identity, indexed members and bin conservation before display, with abort/error/
+reload controlled by the existing resource hook. Core search, native matrix/pair
+previews, source editing and reanalysis use the same catalog memberships.
+The existing full `/study` API, full DTO validator (used by native scientific
+contract checks) and archive/export consumers remain supported; there is no
+second science executor, model, queue, mutable-result cache or data migration.
+
 ### Source-bound reanalysis setup
 
 `study/reanalysisDraft.ts` projects only safe form fields from a retained report:
