@@ -46,8 +46,11 @@ def bind(
             for page in observations.page_indices
             if page not in spatial.ownership.page_indices
         ]
+        source_sections = []
         blocks = (
-            observed_heading_blocks(doc, pages, observations.line_map)
+            observed_heading_blocks(
+                doc, pages, observations.line_map, source_sections=source_sections
+            )
             if generic
             else []
         )
@@ -89,6 +92,7 @@ def bind(
             catalog_bindings=[*original, *heading_bindings],
             catalog_sources=spatial.reprints,
             source_issues=issues,
+            source_sections=source_sections,
             detected_style="original_cell_caption_heading",
             include_intermediates=include_intermediates,
             total_structures=len(structures),

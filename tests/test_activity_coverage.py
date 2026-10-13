@@ -127,6 +127,55 @@ class ActivityCoverageTests(unittest.TestCase):
         payload = self.payload([], coverage_packet([], [], []))
         self.assertEqual(activity_evidence_errors(payload, []), [])
 
+    def test_missing_coverage_is_explicit_failure_not_a_missing_dict_crash(self):
+        row = ActivityRow(cpd="Compound 1", activity_values={"Ki (nM)": "5"}, page_no=1)
+        errors = activity_evidence_errors(self.payload([row], None), [])
+        self.assertTrue(any("coverage proof is missing" in item for item in errors))
+        self.assertTrue(any("contradict" in item for item in errors))
+
+    def test_method_context_is_not_a_generic_empty_or_parsed_grid_escape(self):
+        from patent_sar_extractor.core.activity_coverage import source_record
+
+        header = "Example 82: Binding assay\nCells were seeded. Reagent was added."
+        valid = source_record(
+            1, "page", None, "", header, "context", "observed_methods", 0
+        )
+        self.assertEqual(valid["row_count"], 0)
+        for kind, bbox, table, text, status, reason, count in (
+            ("grid", [10, 20, 30, 40], "", header, "context", "observed_methods", 0),
+            ("page", None, "Table 3", header, "context", "observed_methods", 0),
+            ("page", None, "", "Binding was strong", "context", "observed_methods", 0),
+            ("page", None, "", header, "parsed", "observed_methods", 1),
+            ("page", None, "", header, "empty", "observed_methods", 0),
+            ("page", None, "", header, "context", "no_original_rows", 0),
+        ):
+            with (
+                self.subTest(kind=kind, status=status, text=text),
+                self.assertRaises(ValueError),
+            ):
+                source_record(1, kind, bbox, table, text, status, reason, count)
+
+    def test_all_method_context_without_results_is_not_proof_of_absent_activity(self):
+        from patent_sar_extractor.core.activity_coverage import (
+            coverage_packet,
+            source_record,
+        )
+
+        region = source_record(
+            1,
+            "page",
+            None,
+            "",
+            "Example 82: Binding assay\nCells were seeded. Reagent was added.",
+            "context",
+            "observed_methods",
+            0,
+        )
+        errors = activity_evidence_errors(
+            self.payload([], coverage_packet([0], [region], [])), [0]
+        )
+        self.assertTrue(any("No activity rows" in item for item in errors))
+
     def test_foreign_seed_proof_and_duplicate_region_fail_closed(self):
         from patent_sar_extractor.core.activity_coverage import (
             coverage_packet,

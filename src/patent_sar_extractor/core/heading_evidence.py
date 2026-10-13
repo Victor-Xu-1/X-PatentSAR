@@ -5,22 +5,15 @@ from __future__ import annotations
 import hashlib
 import math
 import re
-import unicodedata
 from pathlib import Path
 
 import fitz
 from PIL import Image
 
-from .activity_identity import PRINTED_ID, printed_identifier_key
+from .activity_identity import printed_identifier_key
 from .page_ocr_cache import get_ocr_engine
+from .source_section_roles import section_heading
 
-_PARAGRAPH = r"(?:\[\s*\d{1,8}\s*\]\s*)?"
-_HEADING = re.compile(
-    rf"^{_PARAGRAPH}(?:(?:Synthesis|Preparation)\s+(?:of\s+)?)?"
-    r"(?:Compound|Cmpd|Cpd|Example|实施例|化合物)\s*[-:.：]?\s*"
-    rf"(?P<identifier>{PRINTED_ID})(?![\w/-])(?P<tail>.*)$",
-    re.IGNORECASE,
-)
 _BODY = re.compile(
     r"^(?:\[\s*\d{1,8}\s*\]|(?:Step|Stage|步骤|中间体|Intermediate)\b|"
     r"[A-Z][.)]\s|To\s+(?:a|an|the)\s|A\s+(?:solution|mixture)\b|"
@@ -30,21 +23,12 @@ _BODY = re.compile(
 
 
 def heading_identifier(text: object) -> str:
-    text = unicodedata.normalize("NFKC", str(text or "")).strip()
-    match = _HEADING.fullmatch(text)
-    if not match:
-        return ""
-    tail = match["tail"].strip()
-    # Prose/list references are not original section headings. Unknown styles
-    # remain unresolved rather than expanding an arbitrary regex search.
-    if tail and not (
-        tail[0] in ":.：)"
-        or re.match(r"^(?:Synthesis|Preparation|制备|合成)\b", tail, re.IGNORECASE)
-    ):
-        return ""
-    if re.match(r"^[.:：)]?\s*(?:and\b|to\s+\d|through\b|及|和)", tail, re.IGNORECASE):
-        return ""
-    return printed_identifier_key(match["identifier"])
+    observation = section_heading(text)
+    return (
+        observation["identifier"]
+        if observation and observation["role"] == "compound_heading"
+        else ""
+    )
 
 
 def original_heading_lines(page, cached_lines=()) -> list[dict]:
@@ -147,7 +131,8 @@ def standalone_heading_evidence(
     boundaries = [
         line["y0"]
         for line in lines
-        if line["y0"] > block["y0"] + 3 and _BODY.match(str(line["text"]).strip())
+        if line["y0"] > block["y0"] + 3
+        and (_BODY.match(str(line["text"]).strip()) or section_heading(line["text"]))
     ]
     end = min([end, *boundaries])
     candidates = [

@@ -2,6 +2,18 @@
 
 ## Original-source extraction repair
 
+Bindings now retain `source_sections` for literal assay Example observations.
+Those numbers do not become compound IDs; explicit Compound titles/captions
+still need their own proof. Ambiguous synthesis/assay headings remain unresolved.
+Activity coverage2 records both classifier `seed_pages` and native/cache
+`discovered_pages`. No extra OCR model scan is started for discovery. Every
+nominated page is physically inspected, and unsupported grids stay unresolved.
+A `context/observed_methods` record requires original explicit assay/procedure
+text and a no-grid observation. It is not a missing-table waiver, activity row,
+absence-of-activity certificate or SAR input. Original result/table/row claims
+prevent the method-only role. Preserve old artifacts and manual revisions;
+changed binder/activity stages must regenerate through a new frontend task.
+
 Every original page now receives visual detection, regardless of readable text.
 Inspect `structures/metadata.json` source_inventory when checking coverage:
 missing/failed/partial pages and mismatched crop counts cannot be accepted or
@@ -16,7 +28,7 @@ OCR variations can nominate a coordinate read, never numerical/chemical repair.
 An unknown scanned schema now gets one bounded header observation pair. Conflicting
 headers and unsupported source regions still fail QA and must remain visible.
 
-Current stages are classifier3, locator8, segmentation6, binder10 and activity9;
+Current stages are classifier3, locator8, segmentation6, binder11 and activity10;
 QA uses schema5. Preserve failed runs and raw observation caches. Old
 caption bindings must not be relabelled as current: a new run must re-prove source
 ownership, including whether labels precede drawings or cross a page boundary.
@@ -646,9 +658,10 @@ The complete-workflow environment preset includes both DECIMER and ADMET CPU
 components; reading existing results still does not require installing models.
 
 Locator epoch8 and segmentation epoch6 retain activity-independent source coverage. Binder
-epoch10 discovers numbered original cells across all selected source pages even
-when no table pages were pre-labelled. Activity epoch9 follows only geometrically
-proved adjacent continuations from classified seeds, preserving each cell's
+epoch11 discovers numbered original cells across all selected source pages even
+when no table pages were pre-labelled. Activity epoch10 independently nominates
+native/cached declared sources and follows geometrically proved adjacent
+continuations from the combined seeds, preserving each cell's
 actual source page. Missing/changed grids terminate continuation; no fixed patent
 page lists or inferred identifier sequence are used. An eligible continuation
 reuses valid OCR/segmentation checkpoints without `--force`; the changed binder
@@ -763,7 +776,7 @@ apply only to future installations and are not migrations or cleanup requests.
 
 ### Format repair and optional LLM evidence review
 
-Product release numbering follows the PR policy. Classifier3, binder10 and activity9 invalidate their old
+Product release numbering follows the PR policy. Classifier3, binder11 and activity10 invalidate their old
 derived checkpoints; exact-original compatible OCR/segmentation observations
 remain reusable under existing manifest checks. Start a fresh software attempt,
 not an edit of old generated files. Wide structure grids use actual header roles
@@ -807,7 +820,7 @@ rewriting the task's original semantic policy or science. A missing/corrupt
 control file cannot reset its budget or bypass authorization. No OOM/system fault
 triggers an API call or an unbounded retry. Evidence receipts remain separate;
 the same original-cell writer and strict QA own all measurements/acceptance.
-Activity epoch9 and the semantic API-policy fingerprint require fresh derived
+Activity epoch10 and the semantic API-policy fingerprint require fresh derived
 activity parsing after a relevant policy change, not a replay of old acceptance.
 Old whole-page VLM and key-only/free-form QA/batch paths are removed; historical
 files are preserved. Real provider and scientific acceptance remain separate
@@ -844,7 +857,7 @@ otherwise uncovered seed page. Unresolved regions cannot disappear because anoth
 table had valid rows. Inspect source/coverage proof, not only extracted-row count.
 QA schema5 rejects missing/unresolved coverage; old artifacts remain unchanged and
 their acceptance is rechecked as historical rather than silently promoted. Unchanged
-raw OCR and upstream manifests remain reusable; activity epoch9 reparses its own
+raw OCR and upstream manifests remain reusable; activity epoch10 reparses its own
 derived stage. Unknown metrics/units, no usable geometry/catalog and wrong OCR values
 still need supported source evidence or review. This is not all-format perfection.
 

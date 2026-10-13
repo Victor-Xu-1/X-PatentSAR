@@ -1,5 +1,18 @@
 # X-PatentSAR
 
+Numbered biological/assay Example sections are recorded as source sections, not
+automatically as compound IDs. Explicit compound titles on the same page retain
+their independent original ownership proof. Conflicting synthesis/assay titles
+remain unresolved, and every section boundary stops standalone diagram ownership.
+Activity source nomination also reads cheap original native text and existing OCR
+cache across the document, independently of classified seeds. Every nominated
+page receives geometry inspection before any cached-text veto. Method-only pages
+require an explicit assay title, procedure evidence and no grid/result/table/row
+claim; their original text is retained as context, never fabricated measurements.
+Unsupported sources and all-method/no-result corpora still fail strict acceptance.
+Binder11/activity10/coverage2 invalidate old derived role/completeness claims;
+original tasks, manual changes, upstream caches and fixed localhost remain intact.
+
 Every original PDF page now enters bounded visual structure detection, including
 pages with no readable labels. Text classification supplies hints, never a page
 exclusion gate. Page receipts distinguish completed zero-candidate observations

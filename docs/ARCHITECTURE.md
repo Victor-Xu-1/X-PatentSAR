@@ -1,5 +1,20 @@
 # X-PatentSAR architecture
 
+`source_section_roles.py` separates original numbered assay sections from compound
+headings. Binding retains source-section text/geometry, stops diagram ownership
+at every observed heading, and requires independent crop-label proof or a unique
+proved compound-heading diagram. Conflicting synthetic/assay roles stay unresolved.
+`activity_source_discovery.py` reads native text and reuses original OCR cache to
+nominate declared sources independently of classifier seeds. Every source receives
+the existing physical grid inspection; only selected sources need cell OCR.
+`activity_source_roles.py` can record explicit method-only pages after no grids
+are observed, never after failed parsing of a grid. Result/table/row claims or
+missing title/procedure proof block this context role. Coverage2 preserves seed
+and independently discovered page sets plus original context windows. Strict QA
+still refuses a classified all-method corpus without actual result observations.
+Historical raw producer bytes remain unchanged; current binder11/activity10
+epochs require fresh derived stages rather than retagging earlier evidence.
+
 ## Source extraction ownership
 
 Locator8 nominates every original PDF page, after checking its actual page count.
@@ -18,7 +33,7 @@ it. The hint never infers a missing label or suppresses another visual page.
 `source_table_markers.py` is the shared literal caption-token authority for
 catalogs and activity grids/text. It normalizes only Table-word typography for
 table identity, not source numbers, metric names, values or raw caption evidence.
-Activity9 permits the same bounded header observer to establish a missing scanned
+Activity10 permits the same bounded header observer to establish a missing scanned
 schema from two agreeing original clips (first three grid rows, at most250pt
 height/64columns); mismatching column roles, data boundaries or captions reject.
 Native grids never start OCR, and missing schemas have no per-column fallback.
@@ -26,14 +41,14 @@ Native grids never start OCR, and missing schemas have no per-column fallback.
 Classifier3 separates molar activity units from synthesis amounts, particle sizes
 and disease abbreviations. Catalog hints retain dense distinct printed captions,
 including catalog/formula transitions; hints are never binding proof.
-Binder10 uses `caption_grid_binding.py` to prove a ruled catalog's caption direction
+Binder11 uses `caption_grid_binding.py` to prove a ruled catalog's caption direction
 at its start, physical cell containment and adjacent-page column continuity.
 Split captions retain both label and drawing page identities. Recognized but
 unproved catalogs cannot fall back to nearest-label matching. Numbered-column and
 caption readers share one call-local grid/token observation cache per original
 PDF. Elution annotations are source labels, never absolute stereochemistry.
 
-Activity9 has one grid context, cell parser and continuation authority in separate
+Activity10 has one grid context, cell parser and continuation authority in separate
 small modules. Bounded fine-rule closing retains physical separators; partial
 vertical rules preserve merged headers without inventing value boundaries.
 Parallel panels borrow only proved compatible headers; transposed measurements
@@ -437,11 +452,11 @@ remain reusable. Historical results are not retagged as current.
 ## Completeness and accuracy
 
 Classifier epoch3 ignores prose examples and cover ISR boilerplate as section
-boundaries. Binder epoch10 parses exact paragraph-prefixed synthesis headings;
+boundaries. Binder epoch11 parses exact paragraph-prefixed synthesis headings;
 a standalone diagram needs a freshly observed original heading, unique geometry
 before the first procedure, and original/crop fingerprints. Wide/reordered grids
 carry literal header-role proof, not adjacency or a fixed number of columns.
-Activity epoch9 owns every physical column losslessly, retaining multiline raw
+Activity epoch10 owns every physical column losslessly, retaining multiline raw
 headers and distinct duplicate/unknown fields. Upright table OCR prevents per-token
 digit inversion; independent clipped-cell observations can prove ownership despite
 a padded detector box. Unknown/conflicting meaningful values remain rejected.
@@ -502,7 +517,7 @@ Activity coverage v1 inventories coordinate grids, declared text regions and
 otherwise uncovered classified seeds independently of returned rows. Unsupported
 headers and recognized regions without original rows remain unresolved, even if
 other tables succeeded. Only the existing writer publishes the additive proof;
-activity epoch9 invalidates old derived stage reuse, while unchanged upstream and
+activity epoch10 invalidates old derived stage reuse, while unchanged upstream and
 compatible raw observations remain reusable. QA v5 rejects missing/unresolved
 coverage. The read model rechecks only cached acceptance after a QA-schema change,
 preserving raw rows, source IDs, corrections and old producer artifacts. Optional
@@ -514,15 +529,16 @@ repair counters are observations, not estimates or another acceptance authority.
 - Original grid cells, captions and explicit synthesis headings are ownership
   evidence. Sequence, numerical proximity, molecular similarity or assay
   presence cannot fabricate an identifier or change42 to4-2.
-- Binder epoch10 discovers numbered grids across all selected structure-source
+- Binder epoch11 discovers numbered grids across all selected structure-source
   pages. Empty or partial classifier/locator table hints cannot exclude a
   proved original cell; only actually recognized grids are reported as table
   ownership. Headerless adjacent continuations retain independent ID evidence.
   An unused pair requires blank original pixels in both cells and no segment
   evidence. Proved selected reprints can retain multiple additional sources
   for one confirmed primary ID; novel or conflicting primary IDs stay withheld.
-- Activity epoch9 treats classified pages as seeds, not a complete table
-  inventory. Only a proven table can inspect its immediately adjacent next
+- Activity epoch10 treats classified pages as seeds, not a complete table
+  inventory. Native text and cached OCR independently nominate declared sources.
+  Only a proven table can inspect its immediately adjacent next
   page; missing grids, changed geometry or unrelated captions stop carry-over.
   An empty seed set never triggers an all-document OCR scan.
 - Missing activity is legitimate only with explicit classified-page coverage

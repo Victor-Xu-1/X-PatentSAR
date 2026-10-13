@@ -100,6 +100,62 @@ class GeneralHeadingBindingTests(unittest.TestCase):
             with self.subTest(text=text), self.document(text) as doc:
                 self.assertEqual(observed_heading_blocks(doc, [0], {}), [])
 
+    def test_numbered_biology_sections_cannot_own_a_compound_diagram(self):
+        for title in (
+            "Example 72. Compound binding to a target by HTRF assay",
+            "[0031] Example 93: Experimental for NanoBiT degradation",
+            "Example 8. Biological evaluation",
+            "Example 41: In vivo efficacy study",
+            "Example 15: Pharmacokinetic analysis",
+        ):
+            with self.subTest(title=title), self.document(title) as doc:
+                blocks = observed_heading_blocks(doc, [0], {})
+                self.assertEqual(blocks, [])
+                bindings, issues = self.select(doc, [self.structure(doc)])
+                self.assertEqual((bindings, issues), ([], []))
+
+    def test_biology_section_does_not_hide_explicit_compound_heading(self):
+        with self.document("Example 72: Biological evaluation") as doc:
+            doc[0].insert_text((60, 95), "Compound 209B: Binding ligand", fontsize=10)
+            self.assertEqual(
+                [b["cpd"] for b in observed_heading_blocks(doc, [0], {})],
+                ["Compound 209B"],
+            )
+            bindings, issues = self.select(
+                doc, [self.structure(doc, bounds=(125, 110, 285, 210))]
+            )
+            self.assertEqual(issues, [])
+            self.assertEqual([b["cpd"] for b in bindings], ["Compound 209B"])
+
+    def test_assay_title_observation_is_retained_with_source_geometry(self):
+        with self.document("Example 72: Biological evaluation") as doc:
+            sections = []
+            self.assertEqual(
+                observed_heading_blocks(doc, [0], {}, source_sections=sections), []
+            )
+            self.assertEqual(len(sections), 1)
+            self.assertEqual(sections[0]["role"], "assay_section")
+            self.assertEqual(sections[0]["identifier"], "72")
+            self.assertEqual(sections[0]["page_no"], 1)
+            self.assertEqual(
+                sections[0]["line_text"], "Example 72: Biological evaluation"
+            )
+            self.assertEqual(len(sections[0]["bbox"]), 4)
+
+    def test_assay_word_in_synthesis_title_is_ambiguous_not_an_assay_exemption(self):
+        with self.document("Example 64: Synthesis of an assay probe") as doc:
+            bindings, issues = self.select(doc, [self.structure(doc)])
+            self.assertEqual(bindings, [])
+            self.assertEqual(len(issues), 1)
+            self.assertEqual(issues[0]["cpd"], "Compound 64")
+
+    def test_assay_section_stops_prior_heading_diagram_ownership(self):
+        with self.document("Example 72: Biological evaluation") as doc:
+            doc[0].insert_text((60, 35), "Compound 90: Preparation", fontsize=10)
+            bindings, issues = self.select(doc, [self.structure(doc)])
+            self.assertEqual(bindings, [])
+            self.assertEqual([item["cpd"] for item in issues], ["Compound 90"])
+
     def test_single_standalone_diagram_uses_original_heading_without_caption_ocr(self):
         with self.document() as doc:
             bindings, issues = self.select(doc, [self.structure(doc)])
