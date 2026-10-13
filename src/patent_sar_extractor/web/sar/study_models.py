@@ -157,6 +157,7 @@ class StudyDiscovery(DTO):
         "single-region-one-two-cut-h-v3",
         "single-region-one-to-three-cut-h-v4",
         "single-region-three-port-aromatic-h-v5",
+        "single-region-three-port-multiple-h-v6",
     ]
     candidate_sites: int = Field(ge=0, le=4096)
     candidate_comparisons: int = Field(ge=0, le=75000)
@@ -166,6 +167,9 @@ class StudyDiscovery(DTO):
     redundant_proved_sites: int = Field(default=0, ge=0, le=100000)
     max_cut_bonds: Literal[1, 2, 3] = 1
     aromatic_boundaries: bool = False
+    multiple_bond_boundaries: bool = Field(
+        default=False, exclude_if=lambda value: not value
+    )
     excluded: dict[str, int]
     max_variable_atoms: Literal[32] = 32
     max_variable_fraction: Literal[0.4] = 0.4
@@ -180,6 +184,7 @@ class StudyDiscovery(DTO):
             "single-region-one-two-cut-h-v3": 2,
             "single-region-one-to-three-cut-h-v4": 3,
             "single-region-three-port-aromatic-h-v5": 3,
+            "single-region-three-port-multiple-h-v6": 3,
         }[self.method]
         if self.max_cut_bonds != expected:
             raise ValueError("discovery_method_coverage")
@@ -188,15 +193,23 @@ class StudyDiscovery(DTO):
             and not {"max_cut_bonds", "examined_boundaries"} <= self.model_fields_set
         ):
             raise ValueError("discovery_coverage_missing")
-        if self.method.endswith(("-h-v3", "-h-v4", "-h-v5")) and (
+        if self.method.endswith(("-h-v3", "-h-v4", "-h-v5", "-h-v6")) and (
             "indexed_hydrogen_sites" not in self.model_fields_set
             or self.indexed_hydrogen_sites > self.indexed_cuts
         ):
             raise ValueError("discovery_hydrogen_coverage")
         if self.aromatic_boundaries != (
-            self.method == "single-region-three-port-aromatic-h-v5"
+            self.method
+            in {
+                "single-region-three-port-aromatic-h-v5",
+                "single-region-three-port-multiple-h-v6",
+            }
         ):
             raise ValueError("discovery_aromatic_coverage")
+        if self.multiple_bond_boundaries != (
+            self.method == "single-region-three-port-multiple-h-v6"
+        ):
+            raise ValueError("discovery_multiple_bond_coverage")
         return self
 
 

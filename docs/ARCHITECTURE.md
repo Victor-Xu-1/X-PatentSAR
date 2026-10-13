@@ -694,7 +694,7 @@ automatically found families. Every numbered source is still in the report;
 unmatched/ambiguous sites and coverage limits are not hidden by positive matches.
 The input-bound plan and native 25-pair batches are preserved on interruption.
 The parent checks plan/coverage before one atomic result publication. Discovery
-was introduced in SAR engine8 and is retained in engine11, independently of extraction. Exact
+was introduced in SAR engine8 and is retained in engine12, independently of extraction. Exact
 one/two/three-edge topology partitions reuse original side bitmasks and bridge
 searches; three original bridges use intersections, mixed ring/bridge cuts use
 actual region sides, and three ring edges require a residual bridge after two
@@ -702,6 +702,13 @@ cuts. Original edge-block grouping excludes impossible cross-ring-block pairs
 without dropping connected cut regions. No unbounded all-edge triple fragmentation is performed. Only viable
 bounded regions enter RDKit canonical indexing. Connected three-port branches
 and bridged rings join existing linker/ring changes under the SAME strict proof.
+Engine12 also indexes double/triple boundaries through that same topology path.
+Carbonyl/thiocarbonyl and nitrile/alkyne terminal changes no longer require the
+neighbouring carbon to vary, including small six-membered fixed rings. Potential
+double-bond stereo at a boundary is still refused by `boundary_supported` on BOTH
+original molecules. Cut indexing never upgrades eligibility or weakens fixed
+atom, bond, charge, isotope, component or stereo proof. Method-v6 declares its
+multiple-bond capability; old reports retain their captured method and transport.
 `fragment_graphs.py` preserves labelled partial-aromatic graphs separately from
 standalone molecule SMILES. Passive drawing skips fragment kekulization, not
 original molecule validation or any fixed atom/bond/stereo key. Publication and

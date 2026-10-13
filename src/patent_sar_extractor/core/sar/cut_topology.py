@@ -44,6 +44,9 @@ def boundary_regions(mol, inspect):
     considered only when the third becomes a bridge after two cuts. Two original
     bridges plus one ring edge cannot separate a connected region. No arbitrary
     all-edge triple fragmentation; spectators never enter selected regions.
+    Single, double, triple and aromatic bonds are candidate boundaries. These
+    are topology proposals only; potential double-bond stereo is still refused
+    by the unchanged strict reference/candidate matcher.
     """
     adjacency = tuple(
         tuple(
@@ -59,7 +62,9 @@ def boundary_regions(mol, inspect):
     bonds = {
         bond.GetIdx(): (bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
         for bond in mol.GetBonds()
-        if bond.GetBondType() == Chem.BondType.SINGLE or bond.GetIsAromatic()
+        if bond.GetBondType()
+        in {Chem.BondType.SINGLE, Chem.BondType.DOUBLE, Chem.BondType.TRIPLE}
+        or bond.GetIsAromatic()
     }
     original_bridges = bridges(adjacency)
     sides = {}

@@ -20,6 +20,17 @@ COMMON = {
 MODES = (
     (
         "sar",
+        "sar-multiple-bonds.spec.ts",
+        COMMON
+        | {
+            "sar-multiple-bonds.spec.ts",
+            "sar-single-site.spec.ts",
+            "sar-multiport.spec.ts",
+            "sar-hydrogen.spec.ts",
+        },
+    ),
+    (
+        "sar",
         "sar-log-potency.spec.ts",
         COMMON | {"sar-log-potency.spec.ts", "sar-interval-boundaries.spec.ts"},
     ),

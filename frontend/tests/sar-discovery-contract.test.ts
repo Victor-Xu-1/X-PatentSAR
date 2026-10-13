@@ -25,6 +25,29 @@ const current = {
 };
 
 describe('explicit legacy and one/two-port discovery coverage', () => {
+  it('requires explicit multiple-bond coverage only for the new method', () => {
+    const multiple = {
+      ...current,
+      method: 'single-region-three-port-multiple-h-v6',
+      max_cut_bonds: 3,
+      indexed_hydrogen_sites: 1,
+      aromatic_boundaries: true,
+      multiple_bond_boundaries: true,
+    };
+    expect(decodeStudyDiscovery(multiple)).toEqual(multiple);
+    for (const mutation of [
+      { multiple_bond_boundaries: undefined },
+      { multiple_bond_boundaries: false },
+      { method: 'single-region-three-port-aromatic-h-v5' },
+      { aromatic_boundaries: false },
+      { max_cut_bonds: 2 },
+      { indexed_hydrogen_sites: undefined },
+    ])
+      expect(() => decodeStudyDiscovery({ ...multiple, ...mutation })).toThrow();
+    const { multiple_bond_boundaries: _capability, ...old } = multiple;
+    const historical = { ...old, method: 'single-region-three-port-aromatic-h-v5' };
+    expect(decodeStudyDiscovery(historical)).toEqual(historical);
+  });
   it('requires explicit aromatic capability and leaves earlier method claims unchanged', () => {
     const aromatic = {
       ...current,

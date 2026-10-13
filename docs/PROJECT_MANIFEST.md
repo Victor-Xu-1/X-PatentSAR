@@ -122,10 +122,15 @@
   other rows or unknown log notation. Old input2/3/4 keep captured log-tier policy.
   No percentage cutoff, fifth-anchor fallback or page-relative rank is added.
 
-- Single-site discovery ownership: SAR engine11 uses `core/sar/discovery.py` as
+- Single-site discovery ownership: SAR engine12 uses `core/sar/discovery.py` as
   the sole bounded candidate planner. `cut_topology.py` enumerates exact connected
   one/two/three-edge partitions and `site_cuts.py` indexes canonical backgrounds;
-  neither is a proof authority. The existing strict compiled matcher freezes
+  neither is a proof authority. The same background is frozen for
+  single/double/triple/aromatic cut proposals. Potential
+  stereogenic double-bond boundaries still fail the shared checker. Method-v6
+  requires explicit multiple-bond coverage; the default false marker is omitted
+  in old report transport, avoiding silent retrospective coverage upgrades.
+  The existing strict compiled matcher freezes
   fixed-anchor edges rather than the variable graph's internal vertex topology,
   transporting parity per anchor and refusing indistinguishable stereo ports.
   The old single-cut enumerator is removed; the sole retained matcher remains
@@ -186,7 +191,7 @@
   captured contracts. No lazy omission, extra API/cache, changed producer identity
   or model/scientific execution accompanies this allocation optimization.
 
-- SAR study evidence/craft ownership: engine11 uses `study_distributions.py` for one
+- SAR study evidence/craft ownership: engine12 uses `study_distributions.py` for one
   prepared full-context chart domain and disjoint source-ID accounting; observation
   repeats remain separate. `study_conditions.py` alone validates source-anchored
   missing-field declarations; source QA/known conditions/units remain unchanged.
