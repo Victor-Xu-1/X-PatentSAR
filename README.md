@@ -1,5 +1,14 @@
 # X-PatentSAR
 
+Original cell readings retain raw OCR text, line confidence and owned geometry
+alongside normalized values. Captions use one exact grammar; literal elution
+notes do not assign stereochemistry or borrow confidence for the printed ID.
+Overlapping detector fragments are re-read from a bounded physical line using
+the same OCR engine. Valid disagreements stay review-only, including serialized
+numbered-cell proof. Binding schema3/activity schema2 mark older derived proof
+historical without changing originals or manual edits; verified page OCR remains
+reusable. These engineering checks are not a perfect-extraction claim.
+
 Long-running workspaces recover an explicit same-origin session failure through
 one shared handshake and one safe GET re-read. Writes, uploads, downloads and
 readonly POSTs are never automatically replayed. Failed task reads retain the
@@ -739,8 +748,8 @@ x-patentsar run \
   自动准备、CI、安全边界及并发 PR 要求见[版本管理](docs/OPERATIONS.md#pr-版本管理)。
 - 流水线契约：`patentsar.structure-led` `3.0.0`。
 - 准确性规则集：`patentsar.accuracy-first` `2.1.1`；独立于产品发布号。
-- 产物/缓存 Schema 各自独立递增：页面分类、绑定与 SMILES 为 `2`，正式 QA 为 `4`；
-  活性区域覆盖清单为 `1`，API 逻辑任务快照为 `2`；其余当前科学产物与缓存为 `1`。
+- 产物/缓存 Schema 各自独立递增：页面分类、活性与 SMILES 为 `2`，绑定为 `3`，正式 QA 为 `5`；
+  活性区域覆盖清单为 `2`，API 逻辑任务快照为 `2`；其余当前科学产物与缓存为 `1`。
 
 唯一权威来源是 `src/patent_sar_extractor/contracts.py`。所有可复用缓存和正式 JSON 产物均使用 `schema`、`product`、`pipeline_contract`、`ruleset` 身份信封；旧插件缓存不会被当前版本误复用。
 
@@ -753,7 +762,7 @@ x-patentsar run \
 完整结构目录与明示的“选定化合物”重复子表分别归属；只有编号集合证明为
 完整目录子集且对应格内结构证明成立时，才作为同一编号的其他原文出处保留，
 真正的重复/冲突继续失败。编号目录的独立 schema 为 `patentsar.compound-catalog` v1，
-嵌入同一个绑定产物；绑定实现指纹为 8，独立于产品发布号。表外结构须有
+嵌入同一个绑定产物；绑定实现指纹为 12，独立于产品发布号。表外结构须有
 完整的原文图下注释与唯一空间归属，`8A` 等后缀不会退化成父编号。
 全部结构编号已有确定的原文空间证据时，软件跳过通用多轮补漏，而不是
 重复裁图 OCR。运行中已完成的检查点会展示为候选结果，正式通过仍以最终 QA

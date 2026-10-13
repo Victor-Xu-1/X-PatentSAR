@@ -1,5 +1,15 @@
 # Project governance manifest
 
+- Source-cell proof ownership: `core/compound_caption.py` is the exact caption
+  grammar; `cell_ocr_observation.py` owns normalized/raw parts and confidence;
+  `cell_ocr_lines.py` handles bounded physical detector overlap through the same
+  engine; `table_cells.py` is the shared geometry/admission entry point. No second
+  parser/engine/writer, string majority, label sequence fill or numeric rewrite.
+  `numbered_structure_pairs.py` rechecks all valid serialized observations.
+  Binding3/activity2 preserve old results as historical review. Binder12,
+  activity11 and visible-label9 invalidate derived proof while retaining raw
+  original inputs and manual history. No API/DB/environment installation.
+
 - Session/read-state ownership: `frontend/src/api/localSession.ts` owns the one
   ephemeral same-origin cache/handshake authority inside the existing ApiClient.
   Safe GET session faults admit one shared handshake/re-read; every write/POST
@@ -18,8 +28,8 @@
   adapter inspects every nomination and existing adjacent continuations.
   `activity_source_roles.py` proves only bounded method-only context after no-grid
   inspection; coverage2 keeps that role separate from parsed/empty/unresolved
-  measurements and all-method corpora cannot pass absent-activity QA. Binder11
-  and activity10 invalidate derived semantics, without rewriting old results or
+  measurements and all-method corpora cannot pass absent-activity QA. Binder12
+  and activity11 invalidate derived semantics, without rewriting old results or
   adding a parser, writer, queue, environment, provider or API/DB migration.
 
 - Full-page discovery ownership: `structure_page_locator.py` nominates every

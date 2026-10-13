@@ -16,6 +16,7 @@ from patent_sar_extractor.core.activity_extractor import (
 )
 from patent_sar_extractor.core.activity_models import ParsedActivity
 from patent_sar_extractor.core.activity_observations import merge_rows
+from patent_sar_extractor.core.cell_ocr_observation import OCRObservation
 from patent_sar_extractor.core.table_cells import read_cell
 
 
@@ -91,7 +92,10 @@ class BiologyActivityTableTests(unittest.TestCase):
             page.insert_text((90, 115), "31", fontsize=12)
             with patch(
                 "patent_sar_extractor.core.table_cells._ocr_cell",
-                side_effect=[("36", 0.99), ("37", 0.99)],
+                side_effect=[
+                    OCRObservation("36", 0.99, "36"),
+                    OCRObservation("37", 0.99, "37"),
+                ],
             ):
                 result = read_cell(
                     page,

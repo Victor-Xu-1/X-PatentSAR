@@ -1,5 +1,23 @@
 # Operations and troubleshooting
 
+## Original cell proof revisions
+
+Binding schema3/activity schema2 do not retag older scientific artifacts. Existing
+files and human correction history remain reviewable; old derived acceptance
+cannot become current merely by upgrading. Binder12/activity11/visible-label9
+checkpoint identities rerun affected source interpretation in the normal software
+workflow; original PDF, verified page OCR and structural discovery remain separate
+unchanged inputs. No database migration, manual artifact rewriting or extra queue
+is introduced. Actual user data is submitted only through the frontend.
+
+Cell evidence includes raw text, detector and recognized-line parts, confidence,
+original PDF cell bounds, render DPI, ink-crop pixels and border. Line boxes are
+in the declared cropped OCR-image coordinate system, not PDF coordinates. Every
+valid competing read stays a conflict. Detector overlap is handled by a bounded
+same-engine line crop, not deduplication of guessed digit strings. Literal
+elution notes can be retained separately from ID confidence, but cannot certify
+stereochemistry. Synthetic/native controls validate code, not full patent recall.
+
 ## Interrupted browser sessions during running tasks
 
 An explicit401/session_required on a safe GET uses the existing same-origin

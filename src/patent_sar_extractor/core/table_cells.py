@@ -11,6 +11,8 @@ import numpy as np
 
 from .activity_identity import is_value
 from .activity_values import is_explicit_missing_activity_value
+from .cell_ocr_observation import OCRObservation, observe_cell
+from .compound_caption import prefixed_label
 from .page_ocr_cache import get_ocr_engine
 
 _ID = re.compile(r"[1-9]\d{0,3}[A-Z]?", re.IGNORECASE)
@@ -22,16 +24,6 @@ class CellReading:
     bounds: tuple[float, float, float, float]
     observations: list[dict] = field(default_factory=list)
     needs_review: bool = False
-
-
-def prefixed_label(value: str) -> str:
-    match = re.fullmatch(
-        r"(?:Example|Compound|Cmpd|Cpd|实施例|化合物)[-:.]?([1-9]\d{0,3}[A-Z]?)"
-        r"(?:\*?(?:first|second)elutingisomer)?",
-        re.sub(r"\s+", "", value),
-        re.IGNORECASE,
-    )
-    return match.group(1).upper() if match else ""
 
 
 def _normalize(value: str, kind: str) -> str:
@@ -117,44 +109,13 @@ def _plus_count(image: np.ndarray, dpi: int) -> str:
     return "+" * counts[0] if counts[0] == counts[1] else ""
 
 
-def _ocr_cell(page, bounds, kind: str, dpi: int) -> tuple[str, float]:
+def _ocr_cell(page, bounds, kind: str, dpi: int) -> OCRObservation:
     engine = get_ocr_engine()
     if not engine or engine[0] != "rapidocr":
         raise RuntimeError(
             "Cell-owned scanned biology tables require a coordinate OCR engine (RapidOCR)"
         )
-    image = cell_image(page, bounds, dpi)
-    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-    ink_y, ink_x = np.where(gray < 180)
-    if not len(ink_x):
-        return "", 0.0
-    image = image[ink_y.min() : ink_y.max() + 1, ink_x.min() : ink_x.max() + 1]
-    image = cv2.copyMakeBorder(
-        image, 3, 3, 3, 3, cv2.BORDER_CONSTANT, value=(255, 255, 255)
-    )
-    # The grid already supplies detection. Re-running a whole-image detector
-    # for every tiny cell is both slower and less reliable for isolated digits.
-    multiline = kind == "label" and (ink_y.max() - ink_y.min() + 1) * 72 / dpi > 12
-    result, _ = engine[1](image, use_det=multiline, use_cls=False)
-    if multiline:
-        if not result:
-            return "", 0.0
-        ordered = sorted(
-            result,
-            key=lambda item: (
-                round(min(p[1] for p in item[0]) * 72 / dpi / 3),
-                min(p[0] for p in item[0]),
-            ),
-        )
-        raw = " ".join(str(item[1]) for item in ordered)
-        value = _normalize(raw, kind)
-        score = min(float(item[2]) for item in ordered)
-    else:
-        if len(result or []) != 1:
-            return "", 0.0
-        value = _normalize(str(result[0][0]), kind)
-        score = float(result[0][1])
-    return (value, score) if score >= 0.85 else ("", score)
+    return observe_cell(cell_image(page, bounds, dpi), kind, dpi, engine[1], _normalize)
 
 
 def read_cell(page, bounds, tokens: list[dict], kind: str, native: bool) -> CellReading:
@@ -173,17 +134,15 @@ def read_cell(page, bounds, tokens: list[dict], kind: str, native: bool) -> Cell
         value = _plus_count(cell_image(page, bounds, 450), 450)
         observations.append({"method": "printed_cross_components", "text": value})
         return CellReading(value, bounds, observations, not bool(value))
-    first, score = _ocr_cell(page, bounds, kind, 400)
-    observations.append(
-        {"method": "cell_ocr_400dpi", "text": first, "confidence": score}
-    )
+    first_read = _ocr_cell(page, bounds, kind, 400)
+    first = first_read.value
+    observations.append(first_read.evidence(400, bounds))
     if first and first == initial:
         return CellReading(first, bounds, observations)
-    second, score = _ocr_cell(page, bounds, kind, 600)
-    observations.append(
-        {"method": "cell_ocr_600dpi", "text": second, "confidence": score}
-    )
-    agreed = bool(first and first == second)
+    second_read = _ocr_cell(page, bounds, kind, 600)
+    second = second_read.value
+    observations.append(second_read.evidence(600, bounds))
+    agreed = bool(first and first == second and (not initial or first == initial))
     return CellReading(
         first if agreed else initial or first or second,
         bounds,
