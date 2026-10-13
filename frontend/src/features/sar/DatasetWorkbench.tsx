@@ -4,7 +4,7 @@ import type { JobList, Molecule, Region, SARJob } from '../../api/sarTypes';
 import { useSARResource } from './useSARResource';
 import { Loading } from '../../components/Feedback';
 import { SARFailure } from './SARFailure';
-import { useTranslation } from '../../i18n';
+import { UiError, useTranslation } from '../../i18n';
 import { isActiveJob } from './presentation';
 import { SourceLinks } from './SourceLinks';
 import { AnalysisForm } from './AnalysisForm';
@@ -15,6 +15,9 @@ import { SARJobResults } from './SARJobResults';
 import { StudySetup } from './study/StudySetup';
 import { SourceAcceptance } from './study/SourceAcceptance';
 import { DeleteDataset } from './DeleteDataset';
+import type { StudyReport } from '../../api/sarStudyTypes';
+import { reanalysisDraft } from './study/reanalysisDraft';
+import type { StudySetupSeed } from './study/reanalysisDraft';
 
 const activeList = (list: JobList) => list.items.some(isActiveJob);
 export function DatasetWorkbench({
@@ -39,6 +42,13 @@ export function DatasetWorkbench({
   const [setupOpen, setSetupOpen] = useState(!jobId);
   const setupVisible = !jobId || setupOpen;
   const [optionsOpen, setOptionsOpen] = useState(false);
+  const [setupSeed, setSetupSeed] = useState<StudySetupSeed>();
+  const [setupInstance, setSetupInstance] = useState(0);
+  const [revealRequest, setRevealRequest] = useState(0);
+  const [setupDirty, setSetupDirty] = useState(false);
+  const [setupLocked, setSetupLocked] = useState(false);
+  const [seedError, setSeedError] = useState<Error | null>(null);
+  const markDirty = useCallback(() => setSetupDirty(true), []);
   const load = useCallback((signal: AbortSignal) => sarApi.dataset(datasetId, signal), [datasetId]);
   const dataset = useSARResource(`sar:dataset:${datasetId}`, active, load);
   const loadJobs = useCallback(
@@ -50,7 +60,30 @@ export function DatasetWorkbench({
     while: activeList,
   });
   const ready = dataset.validated && jobs.validated;
+  const busy = !ready || Boolean(jobs.data?.items.some(isActiveJob));
+  function prepareFromReport(report: StudyReport) {
+    if (busy || setupLocked || !dataset.data) return;
+    setSeedError(null);
+    if (!setupDirty) {
+      try {
+        setSetupSeed(reanalysisDraft(dataset.data, report));
+        setSetupInstance((value) => value + 1);
+      } catch (error) {
+        setSeedError(
+          error instanceof Error
+            ? error
+            : new UiError('无法安全沿用这份报告的设置。请刷新数据集后核对指标与原文条件。'),
+        );
+        return;
+      }
+    }
+    setOptionsOpen(true);
+    setSetupOpen(true);
+    setRevealRequest((value) => value + 1);
+  }
   function createdJob(job: SARJob) {
+    setSetupDirty(false);
+    setSeedError(null);
     setOptionsOpen(false);
     setSetupOpen(false);
     jobs.reload();
@@ -123,6 +156,7 @@ export function DatasetWorkbench({
             </section>
           )}
           {jobs.error && <SARFailure error={jobs.error} onRetry={jobs.reload} />}
+          {seedError && <SARFailure error={seedError} />}
           {jobId && (
             <SARJobResults
               key={jobId}
@@ -133,6 +167,9 @@ export function DatasetWorkbench({
               disabled={!dataset.validated}
               scope={scope}
               reference={reference}
+              onReanalyse={prepareFromReport}
+              reanalysisDisabled={busy || setupLocked}
+              hasDraft={setupDirty}
               onJob={(id) => {
                 jobs.reload();
                 dataset.reload();
@@ -170,11 +207,16 @@ export function DatasetWorkbench({
               <summary hidden={!jobId}>{t('研究设置')}</summary>
               <div hidden={!setupVisible}>
                 <StudySetup
+                  key={setupInstance}
                   dataset={dataset.data}
                   active={active && setupVisible}
-                  disabled={!ready || Boolean(jobs.data?.items.some(isActiveJob))}
+                  disabled={busy}
                   scope={scope}
                   onJob={createdJob}
+                  initial={setupSeed}
+                  revealRequest={revealRequest}
+                  onDirty={markDirty}
+                  onLocked={setSetupLocked}
                 />
               </div>
             </details>

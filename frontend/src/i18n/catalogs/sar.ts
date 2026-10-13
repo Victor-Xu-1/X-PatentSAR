@@ -1,5 +1,15 @@
 /** UI copy only; source labels, grade values, issues and experiment data stay raw. */
 export const sar: Record<string, string> = {
+  新分析: 'New analysis',
+  继续设置: 'Continue setup',
+  '全库发现 · 1 个参考': 'Whole-library discovery · 1 reference',
+  '全库发现 · {count} 个参考': 'Whole-library discovery · {count} references',
+  '手工区域 · 1 个参考': 'Manual regions · 1 reference',
+  '手工区域 · {count} 个参考': 'Manual regions · {count} references',
+  未选择变化区域: 'No variable regions selected',
+  '来源已变化，请重新核对分析设置。': 'The source has changed. Review the analysis settings again.',
+  '无法安全沿用这份报告的设置。请刷新数据集后核对指标与原文条件。':
+    'These report settings cannot be safely reused. Refresh the dataset and review its measurements and source conditions.',
   '数值差，不代表优劣': 'Numeric change; not a ranking',
   仅精确数值可计算差值: 'A difference requires exact values',
   数值差超出显示范围: 'Difference outside display range',

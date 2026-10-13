@@ -10,6 +10,10 @@ export function StudyReportHeader({
   disabled,
   onRefresh,
   onDetails,
+  coverage,
+  onNewAnalysis,
+  newAnalysisDisabled = true,
+  hasDraft = false,
 }: {
   title: string | null;
   status: JobState | null;
@@ -18,6 +22,10 @@ export function StudyReportHeader({
   disabled: boolean;
   onRefresh: () => void;
   onDetails: (() => void) | null;
+  coverage?: { automatic: boolean; references: number; regions: number } | null;
+  onNewAnalysis?: (() => void) | undefined;
+  newAnalysisDisabled?: boolean | undefined;
+  hasDraft?: boolean | undefined;
 }) {
   const { t } = useTranslation();
   return (
@@ -39,9 +47,31 @@ export function StudyReportHeader({
               {t('研究预览')}
             </span>
           )}
+          {coverage && (
+            <span className="sar-study-coverage">
+              {coverage.automatic
+                ? t(
+                    coverage.references === 1 ? '全库发现 · 1 个参考' : '全库发现 · {count} 个参考',
+                    { count: coverage.references },
+                  )
+                : coverage.regions
+                  ? t(
+                      coverage.references === 1
+                        ? '手工区域 · 1 个参考'
+                        : '手工区域 · {count} 个参考',
+                      { count: coverage.references },
+                    )
+                  : t('未选择变化区域')}
+            </span>
+          )}
         </div>
       </div>
       <div className="sar-study-header-actions">
+        {onNewAnalysis && (
+          <button type="button" disabled={disabled || newAnalysisDisabled} onClick={onNewAnalysis}>
+            {t(hasDraft ? '继续设置' : '新分析')}
+          </button>
+        )}
         <button type="button" disabled={disabled} onClick={onRefresh}>
           {t('刷新')}
         </button>

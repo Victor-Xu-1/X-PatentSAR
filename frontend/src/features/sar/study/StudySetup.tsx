@@ -17,31 +17,51 @@ import type { ConditionDraft } from './conditionDraft';
 import { emptyPolicy, policyFromDraft } from './policyDraft';
 import type { PolicyDraft } from './policyDraft';
 import { StudyGuide } from './StudyGuide';
+import { datasetDraftOwner } from './reanalysisDraft';
+import type { StudySetupSeed } from './reanalysisDraft';
+import { preferredScrollBehavior } from '../../../model/motion';
 export function StudySetup({
   dataset,
   active,
   disabled,
   scope,
   onJob,
+  initial,
+  revealRequest = 0,
+  onDirty,
+  onLocked,
 }: {
   dataset: Dataset;
   active: boolean;
   disabled: boolean;
   scope: string;
   onJob: (job: SARJob) => void;
+  initial?: StudySetupSeed | undefined;
+  revealRequest?: number | undefined;
+  onDirty?: (() => void) | undefined;
+  onLocked?: ((locked: boolean) => void) | undefined;
 }) {
   const { t } = useTranslation();
-  const [step, setStep] = useState<2 | 3>(2);
+  const [step, setStep] = useState<2 | 3>(initial ? 3 : 2);
   const heading = useRef<HTMLHeadingElement>(null),
     previousStep = useRef(step);
   useEffect(() => {
     if (active && step !== previousStep.current) heading.current?.focus();
     previousStep.current = step;
   }, [active, step]);
-  const [title, setTitle] = useState(dataset.title),
-    [selected, setSelected] = useState<string[]>([]);
-  const [drafts, setDrafts] = useState<Record<string, PolicyDraft>>({});
-  const [conditionDrafts, setConditionDrafts] = useState<Record<string, ConditionDraft>>({});
+  const previousReveal = useRef(0);
+  useEffect(() => {
+    if (!active || revealRequest <= previousReveal.current) return;
+    previousReveal.current = revealRequest;
+    heading.current?.focus({ preventScroll: true });
+    heading.current?.scrollIntoView({ block: 'start', behavior: preferredScrollBehavior() });
+  }, [active, revealRequest]);
+  const [title, setTitle] = useState(initial?.title ?? dataset.title),
+    [selected, setSelected] = useState<string[]>(initial?.selected ?? []);
+  const [drafts, setDrafts] = useState<Record<string, PolicyDraft>>(initial?.policies ?? {});
+  const [conditionDrafts, setConditionDrafts] = useState<Record<string, ConditionDraft>>(
+    initial?.conditions ?? {},
+  );
   const [regionIds, setRegionIds] = useState<string[]>([]);
   const [coreIds, setCoreIds] = useState<string[]>([]);
   const [discover, setDiscover] = useState(true);
@@ -60,7 +80,9 @@ export function StudySetup({
     active,
     scope: JSON.stringify([scope, dataset.id, dataset.revision]),
   });
-  const ready = profile.validated && !disabled && !dataset.stale;
+  useEffect(() => onLocked?.(mutation.locked), [mutation.locked, onLocked]);
+  const seedCurrent = !initial || initial.owner === datasetDraftOwner(dataset);
+  const ready = profile.validated && !disabled && !dataset.stale && seedCurrent;
   const policies = selected.map((id) =>
     policyFromDraft(id, drafts[id] ?? emptyPolicy(), profile.data?.policy_defaults?.[id]),
   );
@@ -96,11 +118,12 @@ export function StudySetup({
   const reloadProfile = profile.reload;
   const saved = useCallback(
     (region: Region) => {
+      onDirty?.();
       reloadProfile();
       const update = region.kind === 'core' ? setCoreIds : setRegionIds;
       update((old) => (old.includes(region.id) ? old : [...old, region.id]));
     },
-    [reloadProfile],
+    [reloadProfile, onDirty],
   );
   return (
     <section className="sar-panel sar-study-setup" aria-label={t('研究设置')}>
@@ -115,7 +138,14 @@ export function StudySetup({
       <StudyGuide current={step} />
       {profile.loading && <Loading />}
       {profile.error && <SARFailure error={profile.error} onRetry={profile.reload} />}
+      {!seedCurrent && <p role="alert">{t('来源已变化，请重新核对分析设置。')}</p>}
+      {profile.validated &&
+        (selected.some((id) => !profile.data?.contexts.some((context) => context.id === id)) ||
+          declarations.some((item) => item.enabled && item.value === null)) && (
+          <p role="alert">{t('实验条件已变化，请重新确认选择。')}</p>
+        )}
       <form
+        onChangeCapture={onDirty}
         onSubmit={(event) => {
           event.preventDefault();
           if (!valid || mutation.locked) return;
@@ -169,11 +199,7 @@ export function StudySetup({
                     onChange={(draft) => setConditionDrafts((old) => ({ ...old, [id]: draft }))}
                   />
                 </div>
-              ) : (
-                <p key={id} role="alert">
-                  {t('实验条件已变化，请重新确认选择。')}
-                </p>
-              );
+              ) : null;
             })}
             <button type="button" className="primary" disabled={!valid} onClick={() => setStep(3)}>
               {t('下一步')}

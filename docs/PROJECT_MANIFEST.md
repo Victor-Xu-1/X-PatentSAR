@@ -1,5 +1,11 @@
 # Project governance manifest
 
+- Reanalysis ownership: `reanalysisDraft.ts` owns only source-bound form seeding;
+  `StudySetup`/`useSARMutation` and the existing study API remain the sole submission
+  and retry path. Report coverage reuses `coreChoices`, not a new scientific
+  metric. Old archives, policies, inputs and graph proofs are never rewritten.
+  No backend/schema/epoch/dependency/queue change accompanies this UI workflow.
+
 - Task history ownership: `features/jobs/JobsPage` owns only the two-module
   navigation; `ExtractionJobs` retains the original extraction/history controls.
   `SARHistoryPanel` and `job_history.py` expose the sole existing SAR database
