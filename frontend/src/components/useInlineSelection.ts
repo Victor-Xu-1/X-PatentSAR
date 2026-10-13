@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect } from 'react';
 import type { RefObject } from 'react';
 
-/** Shared inline navigation: reveal selection without scrolling the page or moving focus. */
-export function useInlineSelection(ref: RefObject<HTMLElement | null>, selector: string) {
+/** Reveal selection within its own strip, never scrolling the page or moving focus. */
+export function useInlineSelection(
+  ref: RefObject<HTMLElement | null>,
+  selector: string,
+  axes: 'inline' | 'both' = 'inline',
+) {
   const reveal = useCallback(() => {
     const strip = ref.current;
     const selected = strip?.querySelector<HTMLElement>(selector);
@@ -12,7 +16,11 @@ export function useInlineSelection(ref: RefObject<HTMLElement | null>, selector:
     if (bounds.width <= 0 || choice.width <= 0) return;
     if (choice.left < bounds.left) strip.scrollLeft -= bounds.left - choice.left;
     else if (choice.right > bounds.right) strip.scrollLeft += choice.right - bounds.right;
-  }, [ref, selector]);
+    if (axes === 'both' && bounds.height > 0 && choice.height > 0) {
+      if (choice.top < bounds.top) strip.scrollTop -= bounds.top - choice.top;
+      else if (choice.bottom > bounds.bottom) strip.scrollTop += choice.bottom - bounds.bottom;
+    }
+  }, [ref, selector, axes]);
   // Also handles source-driven selection and translated controls after render.
   useLayoutEffect(reveal);
   useEffect(() => {

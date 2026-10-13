@@ -120,3 +120,31 @@ it('does no work for a hidden or nonselected strip', () => {
   expect(strip.scrollLeft).toBe(0);
   expect(onSelect).not.toHaveBeenCalled();
 });
+
+it('reveals a selected region inside a bounded vertical palette without page scrolling or focus transfer', () => {
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    const strip = this.closest('ul');
+    return (
+      this.tagName === 'UL'
+        ? { left: 0, right: 240, width: 240, top: 0, bottom: 120, height: 120 }
+        : {
+            left: 0,
+            right: 120,
+            width: 120,
+            top: 360 - (strip?.scrollTop ?? 0),
+            bottom: 400 - (strip?.scrollTop ?? 0),
+            height: 40,
+          }
+    ) as DOMRect;
+  });
+  const onSelect = vi.fn();
+  render(<RegionLegend regions={[namedRegion]} selected={namedRegion.id} onSelect={onSelect} />);
+  const strip = screen.getByRole('button', { name: namedRegion.name! }).closest('ul')!;
+  expect(strip.scrollTop).toBe(280);
+  expect(strip.scrollLeft).toBe(0);
+  expect(document.activeElement).toBe(document.body);
+  expect(window.scrollY).toBe(0);
+  expect(onSelect).not.toHaveBeenCalled();
+});
