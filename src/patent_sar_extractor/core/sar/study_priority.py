@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from .errors import SARInputError
-from .values import Value, grade_ranks
+from .values import Value, grade_ranks, strictly_below
 
 MAX_RANKABLE = 5000
 
@@ -27,8 +27,8 @@ def _dominates(
             better |= ranks[a.grade] < ranks[b.grade]
         elif a.kind == b.kind == "scalar" and a.low == b.low:
             continue
-        elif (policy["direction"] == "lower" and a.high < b.low) or (
-            policy["direction"] == "higher" and a.low > b.high
+        elif (policy["direction"] == "lower" and strictly_below(a, b)) or (
+            policy["direction"] == "higher" and strictly_below(b, a)
         ):
             better = True
         else:

@@ -35,7 +35,7 @@ def load_source(queue, identifier: str) -> PreviewSource:
     packet = queue.service.assets.job_files(record["root"], identifier).json(
         "input.json", optional=False
     )
-    if digest(packet) != job.input_sha256:
+    if digest(packet) != job.input_sha256 or packet.get("schema") not in {2, 3}:
         raise WebError(
             409,
             "sar_input_changed",

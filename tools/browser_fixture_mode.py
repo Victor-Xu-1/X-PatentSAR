@@ -19,6 +19,11 @@ COMMON = {
 }
 MODES = (
     (
+        "sar",
+        "sar-interval-boundaries.spec.ts",
+        COMMON | {"sar-interval-boundaries.spec.ts"},
+    ),
+    (
         "history",
         "history-trash-clear.spec.ts",
         COMMON | {"history-trash-clear.spec.ts", "sar-preview-coverage.spec.ts"},

@@ -96,7 +96,16 @@
   refuses old-rule nominations without read-side recalculation or inference.
   No new queue, database, dependency, inference or acceptance authority is added.
 
-- Single-site discovery ownership: SAR engine8 uses `core/sar/discovery.py` as
+- SAR interval-order authority: `core/sar/values.py` supplies one exact numeric
+  separation proof to pair statistics and Pareto ordering. Engine9/private input3
+  include excluded touching endpoints, never fabricated interval magnitudes.
+  New admissions/workers/parent publication require the current schema and
+  candidate policy; old completed input2 has only a read adapter for captured
+  gap-only semantics. Raw archives, graph matching, queues and environments are
+  unchanged. Independent interval/endpoint inputs and full native publication
+  checks must cover this shared rule, not one patent's expected result.
+
+- Single-site discovery ownership: SAR engine9 uses `core/sar/discovery.py` as
   the sole bounded candidate planner. `cut_topology.py` enumerates exact connected
   one/two/three-edge partitions and `site_cuts.py` indexes canonical backgrounds;
   neither is a proof authority. The existing strict compiled matcher freezes
@@ -127,7 +136,7 @@
   `regions.py` owns exact prepared adjacency/port inventories; reference ports
   and at most64 per-comparison remainder topologies are reused, not embeddings
   or scientific results. Every full mapping retains its own anchor/stereo proof.
-  Preparation changes keep engine8 semantics but change its source-bound hash;
+  Preparation changes keep graph semantics but change its source-bound hash;
   old unfinished work must not be relabelled or resumed with that new hash.
 
 - Current SAR activity ownership: `source_scope.py` defines identified final
@@ -160,7 +169,7 @@
   captured contracts. No lazy omission, extra API/cache, changed producer identity
   or model/scientific execution accompanies this allocation optimization.
 
-- SAR study evidence/craft ownership: engine8 uses `study_distributions.py` for one
+- SAR study evidence/craft ownership: engine9 uses `study_distributions.py` for one
   prepared full-context chart domain and disjoint source-ID accounting; observation
   repeats remain separate. `study_conditions.py` alone validates source-anchored
   missing-field declarations; source QA/known conditions/units remain unchanged.

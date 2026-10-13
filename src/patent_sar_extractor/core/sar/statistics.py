@@ -39,6 +39,8 @@ def compare_observations(
     direction: str,
     grade_order: list[str],
     confirm_context: bool,
+    *,
+    open_bounds: bool = True,
 ) -> dict[str, Any]:
     """Compare only this metric, retaining every raw value in original order.
 
@@ -64,6 +66,7 @@ def compare_observations(
             or not isinstance(direction, str)
             or direction not in {"lower", "higher"}
             or type(confirm_context) is not bool
+            or type(open_bounds) is not bool
         ):
             raise SARInputError("invalid_statistics_input")
         ranks = grade_ranks(grade_order)
@@ -108,7 +111,7 @@ def compare_observations(
         if basis == "insufficient":
             return result
         comparison, reason = compare_values(
-            reference[0], candidate[0], direction, ranks
+            reference[0], candidate[0], direction, ranks, open_bounds=open_bounds
         )
         if reason:
             reasons.append(reason)

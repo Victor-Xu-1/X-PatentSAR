@@ -107,8 +107,30 @@ def parse_value(raw: str, ranks: dict[str, int]) -> Value:
     raise SARInputError("unsupported_measurement_value")
 
 
+def strictly_below(left: Value, right: Value, *, open_bounds: bool = True) -> bool:
+    """Every possible left value is less than every possible right value.
+
+    Touching finite endpoints prove strict order if either excludes that point.
+    The opt-out is only for read-only previews of archived pre-v3 study inputs;
+    new calculations and Pareto ordering always use the exact interval proof.
+    """
+    _, high = left.numeric_bounds()
+    low, _ = right.numeric_bounds()
+    return high < low or (
+        open_bounds
+        and high == low
+        and high.is_finite()
+        and not (left.upper_closed and right.lower_closed)
+    )
+
+
 def compare_values(
-    reference: Value, candidate: Value, direction: str, ranks: dict[str, int]
+    reference: Value,
+    candidate: Value,
+    direction: str,
+    ranks: dict[str, int],
+    *,
+    open_bounds: bool = True,
 ) -> tuple[str, str | None]:
     if reference.kind == "ordinal" or candidate.kind == "ordinal":
         if reference.kind != candidate.kind:
@@ -120,13 +142,12 @@ def compare_values(
         return (
             "better" if ranks[candidate.grade] < ranks[reference.grade] else "worse"
         ), None
-    reference_low, reference_high = reference.numeric_bounds()
-    candidate_low, candidate_high = candidate.numeric_bounds()
+    reference_low, _ = reference.numeric_bounds()
+    candidate_low, _ = candidate.numeric_bounds()
     if reference.kind == candidate.kind == "scalar" and reference_low == candidate_low:
         return "equal", None
-    # Even open intervals touching at one endpoint are not strictly separated.
-    if candidate_high < reference_low:
+    if strictly_below(candidate, reference, open_bounds=open_bounds):
         return ("better" if direction == "lower" else "worse"), None
-    if candidate_low > reference_high:
+    if strictly_below(reference, candidate, open_bounds=open_bounds):
         return ("better" if direction == "higher" else "worse"), None
     return "indeterminate", "intervals_not_strictly_separated"

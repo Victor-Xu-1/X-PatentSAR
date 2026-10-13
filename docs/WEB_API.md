@@ -110,8 +110,15 @@ new webpage studies explicitly send true). The same study queue reserves its
 `discovery` with method, candidate/cut counts, exclusions and explicit limits.
 Region summaries add `origin:manual|single_site` and nullable `comparison_pool`;
 manual regions still compare the whole source pool, derived regions compare
-their complete indexed pool through the identical strict validator. SAR engine8
+their complete indexed pool through the identical strict validator. SAR engine9
 invalidates incompatible unfinished scientific work without retagging old reports.
+New study input3 and `candidate_policy:strict-context-pareto-v2` use exact
+open/closed interval boundary ordering in both comparisons and Pareto fronts.
+An excluded shared endpoint can prove direction; no interval fold/raw difference
+is generated. Existing request/response shapes remain, old archived input2
+previews retain their captured positive-gap comparison semantics, and unknown
+input schemas cannot silently opt into a rule. UI language and source units do
+not select scientific policy. No old task is recomputed on a read.
 Discovery method is `single-region-three-port-aromatic-h-v5` with `max_cut_bonds:3`,
 explicit `aromatic_boundaries:true` and bounded `redundant_proved_sites`. Prior
 methods cannot claim aromatic coverage. Broader same-pool automatic sites are

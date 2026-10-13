@@ -5,6 +5,7 @@ from __future__ import annotations
 import time
 from collections import defaultdict
 
+from ...contracts import SAR_CANDIDATE_POLICY, SAR_STUDY_INPUT_SCHEMA_VERSION
 from ...core.sar.discovery import comparison_plan
 from ..errors import WebError
 from .assets import digest
@@ -67,13 +68,14 @@ def verify_study(
         if pair.match_status == "matched":
             matched_by_region[pair.region_id].append(pair)
     if (
-        packet.get("schema") != 2
+        packet.get("schema") != SAR_STUDY_INPUT_SCHEMA_VERSION
         or packet.get("job_id") != job.id
         or report.dataset_id != job.dataset_id
         or report.dataset_revision != dataset.revision
         or report.source_acceptance != dataset.source_acceptance
         or report.context_declarations != request.context_declarations
         or report.counting_contract != "unique-molecules-v2"
+        or report.candidate_policy != SAR_CANDIDATE_POLICY
         or report.discovery
         != (StudyDiscovery.model_validate(coverage) if coverage is not None else None)
         or job.total

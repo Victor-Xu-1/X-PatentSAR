@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from importlib.metadata import version
 
-from ...contracts import product_ref
+from ...contracts import SAR_STUDY_INPUT_SCHEMA_VERSION, product_ref
 from ..errors import WebError
 from ..storage import encode, now
 from .assets import MAX_PACKET_BYTES, atomic_json, digest
@@ -58,7 +58,7 @@ def publish(
 ):
     identifier, identity = uuid.uuid4().hex, engine_identity()
     packet = {
-        "schema": 2 if kind == "study" else 1,
+        "schema": SAR_STUDY_INPUT_SCHEMA_VERSION if kind == "study" else 1,
         "job_id": identifier,
         "engine_sha256": identity,
         "producer": {"product": product_ref(), "rdkit_version": version("rdkit")},

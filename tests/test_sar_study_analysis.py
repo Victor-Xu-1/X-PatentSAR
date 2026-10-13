@@ -13,7 +13,7 @@ from importlib.metadata import version
 from pathlib import Path
 from unittest.mock import patch
 
-from patent_sar_extractor.contracts import product_ref
+from patent_sar_extractor.contracts import SAR_STUDY_INPUT_SCHEMA_VERSION, product_ref
 from patent_sar_extractor.core.identifier_order import natural_identifier_key
 from patent_sar_extractor.core.sar.chemistry import prepare_structure
 from patent_sar_extractor.core.sar.errors import SARInputError
@@ -156,7 +156,7 @@ class StudyAnalysisTests(unittest.TestCase):
             candidate_count=5,
         )
         return {
-            "schema": 2,
+            "schema": SAR_STUDY_INPUT_SCHEMA_VERSION,
             "job_id": self.root.name,
             "engine_sha256": engine_identity(),
             "producer": {"product": product_ref(), "rdkit_version": version("rdkit")},
@@ -569,6 +569,14 @@ class StudyAnalysisTests(unittest.TestCase):
                         changed,
                         pairs,
                     )
+
+    def test_archived_input_schema_cannot_start_a_new_scientific_calculation(self):
+        packet = self.packet(regions=0)
+        packet["schema"] = 2
+        with self.assertRaises(SARInputError) as error:
+            study_analysis.analyse_study(self.root, self.write(packet))
+        self.assertEqual(error.exception.code, "study_input_identity")
+        self.assertFalse((self.root / "report.json").exists())
 
     def test_descriptor_checkpoint_order_and_engine_tampering_are_rejected(self):
         packet = self.packet(regions=0)
