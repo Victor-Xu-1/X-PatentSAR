@@ -99,7 +99,12 @@ def extract(
         pages, [*cells.coverage, *text.coverage], rows, discovered_pages=discovered
     )
     save_results(
-        rows, output, profile, coverage=coverage, unresolved_rows=cells.unresolved_rows
+        rows,
+        output,
+        profile,
+        coverage=coverage,
+        unresolved_rows=cells.unresolved_rows,
+        header_observations=cells.header_observations,
     )
     headers = list(dict.fromkeys([*cells.headers, *text.headers]))
     logger.info(

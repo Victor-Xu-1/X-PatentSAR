@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 
 import fitz
 
+from patent_sar_extractor.core.activity_header_columns import HeaderColumns
 from patent_sar_extractor.core.activity_header_observation import refine_scanned_header
 from patent_sar_extractor.core.activity_headers import context_from_text, grid_schema
 
@@ -20,16 +21,28 @@ class HeaderObservationTests(unittest.TestCase):
                 other = [["No.", "IC50 (uM)"]] if mismatch else headers
                 with (
                     patch(
+                        "patent_sar_extractor.core.activity_header_layout.ocr_tokens_with_positions",
+                        return_value=[],
+                    ),
+                    patch(
+                        "patent_sar_extractor.core.activity_header_layout.table_matrix",
+                        side_effect=[headers, other],
+                    ),
+                    patch(
+                        "patent_sar_extractor.core.activity_header_layout._prefix",
+                        return_value="Table 61. Binding assay",
+                    ),
+                    patch(
                         "patent_sar_extractor.core.activity_header_observation.ocr_tokens_with_positions",
                         return_value=[],
                     ),
                     patch(
-                        "patent_sar_extractor.core.activity_header_observation.table_matrix",
-                        side_effect=[headers, other],
-                    ),
-                    patch(
                         "patent_sar_extractor.core.activity_header_observation._prefix",
                         return_value="Table 61. Binding assay",
+                    ),
+                    patch(
+                        "patent_sar_extractor.core.activity_header_observation.observe_header_columns",
+                        return_value=HeaderColumns(headers, (), (True, True)),
                     ),
                 ):
                     result = refine_scanned_header(page, region, None)
@@ -67,8 +80,11 @@ class HeaderObservationTests(unittest.TestCase):
                 return_value=[],
             ),
             patch(
-                "patent_sar_extractor.core.activity_header_observation.table_matrix",
-                side_effect=rows,
+                "patent_sar_extractor.core.activity_header_observation.observe_header_columns",
+                side_effect=[
+                    HeaderColumns(matrix, (), tuple(True for _ in matrix[0]))
+                    for matrix in rows
+                ],
             ),
             patch(
                 "patent_sar_extractor.core.activity_header_observation._prefix",

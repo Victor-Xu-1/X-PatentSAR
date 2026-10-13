@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import csv
-from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -14,6 +13,7 @@ from patent_sar_extractor.contracts import (
     artifact_identity,
 )
 
+from .activity_header_evidence import serialize_header_evidence
 from .activity_identity import is_control
 from .activity_models import ActivityRow
 from .activity_observations import has_usable_values
@@ -26,6 +26,7 @@ def save_results(
     *,
     coverage: dict,
     unresolved_rows: list[dict] | None = None,
+    header_observations: list[dict] | None = None,
 ) -> None:
     value_keys = list(dict.fromkeys(k for r in rows for k in r.activity_values))
     cell_keys = list(dict.fromkeys(k for r in rows for k in r.cell_line_data))
@@ -54,6 +55,9 @@ def save_results(
             r.cpd for r in rows if not is_control(r.cpd) and has_usable_values(r)
         )
     )
+    serialized_rows, header_catalog = serialize_header_evidence(
+        rows, header_observations or []
+    )
     write_json_atomic(
         output_dir / "activity_data.json",
         {
@@ -66,7 +70,8 @@ def save_results(
                 "n_active_cpds": len(active),
             },
             "active_cpds": active,
-            "rows": [asdict(row) for row in rows],
+            "rows": serialized_rows,
+            "header_observations": header_catalog,
             "coverage": coverage,
             "unresolved_rows": unresolved_rows or [],
         },

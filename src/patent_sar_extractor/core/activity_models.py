@@ -42,6 +42,7 @@ class ParsedActivity:
     headers: list[str] = field(default_factory=list)
     coverage: list[dict] = field(default_factory=list)
     unresolved_rows: list[dict] = field(default_factory=list)
+    header_observations: list[dict] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

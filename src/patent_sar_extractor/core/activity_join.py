@@ -9,6 +9,7 @@ from patent_sar_extractor.contracts import (
 )
 
 from .activity_coverage import coverage_errors
+from .activity_header_evidence import validate_header_evidence
 from .activity_identity import is_control, is_value, normalize_compound
 
 
@@ -75,6 +76,7 @@ def activity_evidence_errors(
     rows = payload.get("rows")
     order, _ = activity_order_and_map(rows)
     errors = coverage_errors(payload.get("coverage"), classified_activity_pages)
+    errors.extend(validate_header_evidence(payload))
     if not rows:
         if classified_activity_pages != []:
             errors.append(

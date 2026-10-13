@@ -1,10 +1,28 @@
 # Operations and troubleshooting
 
+## Physical header evidence and currentness
+
+Activity schema3 keeps a `header_observations` map in `activity_data.json`.
+Each `activity_sources[].header_resolution` contains a small evidence reference
+and status; its full raw proof is stored once in that map, including rejected
+layouts with no rows. IDs are SHA-256 of canonical proof content, not a claim of
+OCR/scientific correctness. The shared QA validates catalog/reference identity
+and refuses unresolved referenced headers. Original cell text, raw headers,
+coordinates, caption/context and measurement values remain unchanged.
+The existing OCR engine reads only bounded physical header columns at400/600dpi.
+Missing header-role discovery is bounded, and valid endpoint/unit/context
+disagreement cannot be outvoted by matching reads. Unknown metadata remains
+explicit rather than being assigned an invented activity or condition role.
+Activity epoch12 reparses affected interpretation only in an authorized software
+task; older activity1/2 proof stays historical, not migrated or retagged in place.
+Original PDF/OCR/structure assets and manual history are retained. No new model
+installation, external request, independent patent probe or automatic rerun.
+
 ## Original cell proof revisions
 
-Binding schema3/activity schema2 do not retag older scientific artifacts. Existing
+Binding schema3/activity schema3 do not retag older scientific artifacts. Existing
 files and human correction history remain reviewable; old derived acceptance
-cannot become current merely by upgrading. Binder12/activity11/visible-label9
+cannot become current merely by upgrading. Binder12/activity12/visible-label9
 checkpoint identities rerun affected source interpretation in the normal software
 workflow; original PDF, verified page OCR and structural discovery remain separate
 unchanged inputs. No database migration, manual artifact rewriting or extra queue

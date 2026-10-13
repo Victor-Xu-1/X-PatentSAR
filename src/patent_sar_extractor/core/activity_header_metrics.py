@@ -18,7 +18,8 @@ METRIC = re.compile(
 UNITLESS = re.compile(r"^(?:p\s*value|Ratio|Grade|Ymin|Ymax)$", re.IGNORECASE)
 _POTENCY = re.compile(
     r"(?:pI[\s_]*C|(?<![A-Za-z0-9])p[\s_]+I[\s_]*C|I[\s_]*C|E[\s_]*C|"
-    r"D[\s_]*C|G[\s_]*I|C[\s_]*C)[\s_]*5[\s_]*[0O](?![A-Za-z0-9])",
+    r"D[\s_]*C|G[\s_]*I|C[\s_]*C)[\s_]*5[\s_]*[0O]"
+    r"(?=[fpnumµμ]?M(?![A-Za-z0-9])|[^A-Za-z0-9]|$)",
     re.IGNORECASE,
 )
 _SHORT = re.compile(
@@ -54,7 +55,12 @@ def normalize_metric_text(text: str) -> str:
         compact = re.sub(r"[\s_]", "", match.group()).upper().replace("O", "0")
         name = "pIC50" if compact == "PIC50" else compact
         prefix = " " if match.start() and text[match.start() - 1].isalnum() else ""
-        return prefix + name
+        # A literal complete molar unit may touch the printed endpoint. Insert
+        # only its separator, never infer a unit or rewrite measurement values.
+        suffix = (
+            " " if re.match(r"[fpnumµμ]?M(?![A-Za-z0-9])", text[match.end() :]) else ""
+        )
+        return prefix + name + suffix
 
     text = _POTENCY.sub(potency, text)
     text = _SHORT.sub(

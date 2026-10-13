@@ -1,13 +1,24 @@
 # Project governance manifest
 
+- Header-source ownership: `activity_header_observation.py` is the sole final
+  coordinator. `activity_header_layout.py` supplies bounded missing-role hints;
+  `activity_header_columns.py` proves fields using the shared cell observer;
+  `activity_header_identity.py` preserves valid endpoint/unit/context conflicts.
+  Production tokens and no-row observations flow through `activity_coordinates`.
+  `activity_header_evidence.py` uses the existing activity writer for one complete
+  proof catalog plus checked row references, not a competing cache/store/parser.
+  Activity3/epoch12 keep historical proof and manual/raw inputs unchanged; API,
+  database, dependencies, models, authentication and queue do not change.
+  Native-engine synthetic controls are not real-patent scientific acceptance.
+
 - Source-cell proof ownership: `core/compound_caption.py` is the exact caption
   grammar; `cell_ocr_observation.py` owns normalized/raw parts and confidence;
   `cell_ocr_lines.py` handles bounded physical detector overlap through the same
   engine; `table_cells.py` is the shared geometry/admission entry point. No second
   parser/engine/writer, string majority, label sequence fill or numeric rewrite.
   `numbered_structure_pairs.py` rechecks all valid serialized observations.
-  Binding3/activity2 preserve old results as historical review. Binder12,
-  activity11 and visible-label9 invalidate derived proof while retaining raw
+  Binding3/activity3 preserve old results as historical review. Binder12,
+  activity12 and visible-label9 invalidate derived proof while retaining raw
   original inputs and manual history. No API/DB/environment installation.
 
 - Session/read-state ownership: `frontend/src/api/localSession.ts` owns the one
