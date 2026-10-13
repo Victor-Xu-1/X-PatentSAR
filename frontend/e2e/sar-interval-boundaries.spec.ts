@@ -91,12 +91,13 @@ test('native interval directions reach the structure matrix without invented del
   await page
     .getByRole('combobox', { name: 'Interface language', exact: true })
     .selectOption('zh-CN');
+  const localized = page.getByRole('region', { name: '单点结构对比', exact: true });
   await expect(
-    network
+    localized
       .getByRole('table', { name: '结构对照', exact: true })
       .getByText('SAR 更强', { exact: true }),
   ).toHaveCount(2);
-  await network.screenshot({ path: testInfo.outputPath('interval-matrix-zh.png') });
+  await localized.screenshot({ path: testInfo.outputPath('interval-matrix-zh.png') });
   expect(await (await page.request.get(path + '/export?format=json')).text()).toBe(before);
   expect(errors).toEqual([]);
 });
