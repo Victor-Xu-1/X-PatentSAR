@@ -1,5 +1,13 @@
 # Project governance manifest
 
+- Core exploration context ownership: `StudyNetwork` chooses references from
+  the complete current inventory independently of gallery filtering. Only
+  deliberate different-core selection resets a site. Matrix-specific palette
+  geometry in `sar-matrix.css` keeps all entries and native drawing coordinates;
+  the shared `useInlineSelection` explicitly enables local two-axis reveal for
+  RegionLegend, preserving inline defaults elsewhere. No new cache/queue/model,
+  matcher/proof/source/epoch/API/schema or task-specific branch is introduced.
+
 - Property-number presentation ownership: `propertyDelta.ts` is the shared
   matrix/pair display authority. A source/status-bound native continuous-property
   machine-precision guard labels approximation, retaining the full raw delta.

@@ -1,20 +1,21 @@
 {
   "schema_version": 1,
-  "base_sha": "3ea1433b4185fb630e60952d96044d803b79ba21",
+  "base_sha": "2a42e8ea6fe5c79d25906a62fcdfbdf11571c72a",
   "changed_paths": [
     ".github/verification_scope.json",
     "README.md",
     "docs/FRONTEND_QUALITY.md",
     "docs/PROJECT_MANIFEST.md",
+    "frontend/e2e/sar-preview-coverage.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/features/sar/study/MatrixValues.tsx",
-    "frontend/src/features/sar/study/PreviewProperties.tsx",
-    "frontend/src/features/sar/study/propertyDelta.ts",
+    "frontend/src/components/useInlineSelection.ts",
+    "frontend/src/features/sar/study/RegionMap.tsx",
+    "frontend/src/features/sar/study/StudyNetwork.tsx",
     "frontend/src/i18n/catalogs/sar.ts",
-    "frontend/tests/sar-matrix.test.tsx",
-    "frontend/tests/sar-preview.test.tsx",
-    "frontend/tests/sar-property-delta.test.ts",
+    "frontend/src/styles/sar-matrix.css",
+    "frontend/tests/sar-core-search.test.tsx",
+    "frontend/tests/sar-inline-selection.test.tsx",
     "src/patent_sar_extractor/contracts.py"
   ],
   "python_modules": [
@@ -22,9 +23,12 @@
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
-    "frontend/tests/sar-property-delta.test.ts",
+    "frontend/tests/sar-core-search.test.tsx",
+    "frontend/tests/sar-inline-selection.test.tsx",
+    "frontend/tests/sar-core-directions.test.tsx",
+    "frontend/tests/sar-region-map-interaction.test.tsx",
+    "frontend/tests/sar-core-order.test.ts",
     "frontend/tests/sar-matrix.test.tsx",
-    "frontend/tests/sar-preview.test.tsx",
     "frontend/tests/sar-preview-layout.test.tsx",
     "frontend/tests/i18n-core.test.tsx"
   ],

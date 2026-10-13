@@ -157,7 +157,7 @@ export function RegionLegend({
   selected?: string | undefined;
 }) {
   const strip = useRef<HTMLUListElement>(null);
-  useInlineSelection(strip, 'button[aria-pressed="true"]');
+  useInlineSelection(strip, 'button[aria-pressed="true"]', 'both');
   return (
     <ul ref={strip} className="sar-region-legend" data-dense={regions.length > 8 || undefined}>
       {regions.map((region, order) => (

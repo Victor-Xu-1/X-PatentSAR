@@ -1,5 +1,18 @@
 # Product craft and acceptance
 
+Core-gallery search is navigation, not a new scientific subject choice. Another
+query, no-result query, clearing, reordering and locale changes must retain the
+current reference/selected site; repeating the same core choice is idempotent.
+Only an explicit different-core selection resets the site. Empty search results
+describe the gallery, not the absence of an existing comparison.
+Matrix region choices wrap inside a bounded palette; all source regions stay
+reachable by native scrolling/keyboard. The reference keeps its native aspect,
+coordinates and existing maximum drawing width. `useInlineSelection` defaults
+to existing inline-only behavior; RegionLegend explicitly reveals both axes
+inside its own box without moving page/focus. Verify dense/sparse/expanded
+palettes, original labels/counts, selected-control paint/hit, physical atom
+locations, loading/empty/error, raw source bytes and same-site pool paging.
+
 Matrix and paired-property panels share `propertyDelta.ts` for display only.
 Current comparable continuous RDKit descriptor deltas (`computed_rdkit` or
 `verified_project_descriptor`, identical origins) within four machine epsilons

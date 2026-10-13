@@ -38,7 +38,9 @@ export function StudyNetwork({
   const filtered = multiple
     ? centres.filter((centre) => centre.label.toLowerCase().includes(search.toLowerCase().trim()))
     : centres;
-  const selected = filtered.find((centre) => centre.id === reference) ?? filtered[0];
+  // Search is gallery navigation, not authority to replace a working reference
+  // or its selected site. Only explicit core selection changes that context.
+  const selected = centres.find((centre) => centre.id === reference) ?? centres[0];
   const compact = selected?.compact ?? [];
   const visibleSites = allSites ? (selected?.sites ?? []) : compact;
   const summary = visibleSites.find((item) => item.region.id === site);
@@ -125,7 +127,7 @@ export function StudyNetwork({
                 aria-pressed={selected?.id === centre.id}
                 onClick={() => {
                   setReference(centre.id);
-                  setSite('');
+                  if (centre.id !== selected?.id) setSite('');
                 }}
               >
                 <strong>{centre.label}</strong>
@@ -145,7 +147,9 @@ export function StudyNetwork({
           {t(
             !report.discovery && !report.regions.length
               ? '本研究未选择区域。保存区域后可明确运行新研究。'
-              : '没有可显示的核心结构',
+              : centres.length > 0 && search.trim()
+                ? '未找到匹配的核心'
+                : '没有可显示的核心结构',
           )}
         </p>
       )}

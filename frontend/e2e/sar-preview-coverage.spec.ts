@@ -131,6 +131,28 @@ for (const [width, reducedMotion] of [
     await expect(matrixPK).not.toContainText('Δ');
     for (const label of ['MW', 'LogP', 'TPSA', 'HBD', 'HBA', 'LogS'])
       await expect(matrix.getByRole('rowheader', { name: label, exact: true })).toHaveCount(1);
+    const coreSearch = network.getByRole('textbox', { name: 'Find a core ID', exact: true });
+    const regionBefore = await network
+      .locator('.sar-region-legend button[aria-pressed="true"]')
+      .textContent();
+    const poolReads: string[] = [];
+    const recordPoolRead = (request: import('@playwright/test').Request) => {
+      const current = new URL(request.url()).pathname;
+      if (current === path + '/rows' || current === path + '/matrix') poolReads.push(current);
+    };
+    page.on('request', recordPoolRead);
+    await coreSearch.fill('3');
+    await expect(network.getByRole('button', { name: 'Select core 3', exact: true })).toBeVisible();
+    await expect(matrix.locator('thead .sar-matrix-baseline strong')).toHaveText('1');
+    await coreSearch.fill('no-matching-core-query');
+    await expect(network.getByText('No matching cores', { exact: true })).toBeVisible();
+    await expect(matrix.locator('thead .sar-matrix-baseline strong')).toHaveText('1');
+    await coreSearch.fill('');
+    await expect(network.locator('.sar-region-legend button[aria-pressed="true"]')).toHaveText(
+      regionBefore!,
+    );
+    expect(poolReads).toEqual([]);
+    page.off('request', recordPoolRead);
     if (width < 1000) {
       await network.getByRole('button', { name: 'Next structures', exact: true }).click();
       await network

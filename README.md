@@ -14,6 +14,9 @@ their raw values but cannot manufacture a difference.
 Native comparable continuous-property roundoff is displayed as `≈ 0`, not an
 exact-zero scientific claim. Full raw deltas remain in hover details; meaningful
 small, imported, manual and model differences and all activity rules stay intact.
+Core search filters the gallery without replacing the working reference or its
+selected site. Region choices use a bounded wrapping palette with all entries
+retained, keeping structures and comparison data close together.
 
 开源仓库：[Victor-Xu-1/X-PatentSAR](https://github.com/Victor-Xu-1/X-PatentSAR)。
 软件与仓库的对外名称统一为 **X-PatentSAR**；Python 发行包与 CLI 使用规范化技术标识
