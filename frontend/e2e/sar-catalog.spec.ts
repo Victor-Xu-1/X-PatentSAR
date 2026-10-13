@@ -71,13 +71,14 @@ for (const width of [390, 800, 1672]) {
     await page
       .getByRole('combobox', { name: 'Interface language', exact: true })
       .selectOption('zh-CN');
-    await expect(network.getByRole('table', { name: '结构对照', exact: true })).toBeVisible();
+    const translated = page.getByRole('region', { name: '单点结构对比', exact: true });
+    await expect(translated.getByRole('table', { name: '结构对照', exact: true })).toBeVisible();
     await page.waitForFunction(() =>
       [...document.querySelectorAll<HTMLImageElement>('.sar-network img')]
         .filter((image) => image.checkVisibility())
         .every((image) => image.complete && image.naturalWidth > 0),
     );
-    await network.screenshot({
+    await translated.screenshot({
       path: test.info().outputPath(`catalog-matrix-chinese-${width}.png`),
     });
     expect(await (await page.request.get(path + '/export?format=json')).text()).toBe(captured);
