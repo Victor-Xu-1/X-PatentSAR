@@ -33,7 +33,11 @@ def resolve_overlapping_lines(image, parts, engine, border):
     groups = []
     for part in sorted(parts, key=lambda p: (bounds(p)[1], bounds(p)[0])):
         owners = [g for g in groups if any(_same_line(part, old) for old in g)]
-        if len(owners) > 1:
+        if (
+            len(owners) > 1
+            or owners
+            and not all(_same_line(part, old) for old in owners[0])
+        ):
             # A tall cross-line fragment has no unique physical line owner.
             return None
         if owners:
