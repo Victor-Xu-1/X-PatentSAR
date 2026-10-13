@@ -13,10 +13,8 @@ from .activity_header_metrics import (
 )
 from .activity_identity import ID_HEADER, is_id_header, is_value, normalize_value
 from .activity_models import ColumnGroup, GridSchema, TableContext
+from .source_table_markers import TABLE_MARKER, table_marker_identity
 
-TABLE_MARKER = re.compile(
-    r"\bTable\s+[A-Za-z]?\d+[A-Za-z]?\b|表\s*\d+[A-Za-z]?", re.IGNORECASE
-)
 _CAPTION_LINE = re.compile(
     rf"^[ \t]*(?:\[\d{{4,8}}\][ \t]*)?(?:{TABLE_MARKER.pattern})",
     re.IGNORECASE | re.MULTILINE,
@@ -113,7 +111,7 @@ def context_from_text(caption: str, surrounding: str = "") -> TableContext:
     caption = re.sub(r"^\[\d{4,8}\]\s*", "", raw_caption)
     caption = re.sub(r"\s+", " ", caption).strip()[:300]
     marker = TABLE_MARKER.search(caption)
-    table_id = marker.group() if marker else ""
+    table_id = table_marker_identity(marker.group()) if marker else ""
     raw_assay = TABLE_MARKER.sub("", caption, count=1).strip(" .:：")
     target = re.search(r"(?:Target|靶点)\s*[:：]\s*([\w-]+)", source, re.IGNORECASE)
     assay = re.search(

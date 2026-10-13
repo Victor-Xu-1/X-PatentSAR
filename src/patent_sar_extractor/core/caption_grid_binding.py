@@ -3,6 +3,7 @@
 import re
 from dataclasses import dataclass, field
 
+from .source_table_markers import TABLE_MARKER
 from .table_cells import prefixed_label, read_cell
 from .table_geometry import detect_ruled_table_regions, page_tokens
 
@@ -157,9 +158,7 @@ def bind_caption_grids(
             caption = " ".join(
                 t["text"] for t in tokens if max(0, ys[0] - 80) <= t["y"] < ys[0]
             )
-            new_table = bool(
-                re.search(r"\bTable\s+\d+|表\s*\d+", caption, re.IGNORECASE)
-            )
+            new_table = bool(TABLE_MARKER.search(caption))
             adjacent = bool(
                 carry
                 and carry[0] + 1 == page_no

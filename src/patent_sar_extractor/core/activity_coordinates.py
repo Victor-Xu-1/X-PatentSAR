@@ -107,9 +107,10 @@ def extract_coordinate_tables(
                 carry = None
                 continue
             schema: GridSchema | BiologySchema | None = grid_schema(context, matrix)
-            if isinstance(schema, GridSchema):
+            if schema is None or isinstance(schema, GridSchema):
                 schema = refine_scanned_header(page, region, schema)
-                context = schema.context
+                if schema is not None:
+                    context = schema.context
             # The existing biology authority owns its supported ratio/grade
             # schemas. It never competes with the generic scalar-header reader.
             if isinstance(schema, GridSchema):

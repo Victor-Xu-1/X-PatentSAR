@@ -15,6 +15,34 @@ from patent_sar_extractor.core.structure_page_locator import locate_structure_pa
 
 
 class StructurePageCoverageTests(unittest.TestCase):
+    def test_catalog_start_after_long_prose_keeps_original_start_page(self):
+        for title in ("Table 27. Compounds Table", "Table 92: Exemplary Structures"):
+            with self.subTest(title=title):
+                result = self.locate(
+                    [
+                        "Definitions and embodiments of the disclosure. " * 60
+                        + title
+                        + " "
+                        + " ".join(f"Compound {n}" for n in range(31, 43)),
+                        " ".join(f"Compound {n}" for n in range(43, 67)),
+                    ],
+                    {"synthesis_pages": [], "activity_pages": []},
+                    [],
+                )
+                self.assertEqual(result["selected_pages"], [0, 1])
+
+    def test_catalog_reference_cannot_hide_assay_or_long_prose_as_a_table(self):
+        texts = [
+            "Table 27. Compounds Table "
+            + " ".join(f"Compound {n} IC50 20 nM" for n in range(31, 43)),
+            "See Table 27 for compounds. "
+            + " ".join(
+                f"Compound {n} was discussed extensively. " * 20 for n in range(31, 43)
+            ),
+            "Table 27. Compounds Table " + "Compound 31 " * 30,
+        ]
+        self.assertEqual(self.locate(texts, {}, [])["selected_pages"], [])
+
     def test_mixed_catalog_and_formula_prose_keeps_dense_original_ids(self):
         from patent_sar_extractor.core.structure_page_evidence import (
             structure_page_evidence,

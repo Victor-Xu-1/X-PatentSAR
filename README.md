@@ -1,5 +1,13 @@
 # X-PatentSAR
 
+Catalog entry discovery evaluates an explicitly titled compound/structure section
+separately from preceding long prose, preserving the first physical page needed
+to prove caption direction. A shared literal table-marker reader recognizes
+bounded OCR typography without changing original captions or printed numbers.
+Scanned activity grids without an initial schema receive one bounded two-resolution
+header observation; only full header/row/caption agreement can establish a schema.
+Disagreement and all downstream coverage/chemical failures remain rejected.
+
 Structure extraction follows original ruled-cell ownership, including caption-above,
 caption-below and proved adjacent-page splits. Dense numbered catalogs are not
 excluded because small atom letters were missed by page OCR. Unproved labels,
