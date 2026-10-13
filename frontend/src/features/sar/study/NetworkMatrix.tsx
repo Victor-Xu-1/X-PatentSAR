@@ -1,7 +1,8 @@
+import type { CatalogRegion, CatalogReport } from '../../../api/sarCatalogTypes';
 import { useCallback, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { sarStudyApi } from '../../../api/sarStudyApi';
-import type { StudyRegionSummary, StudyReport, StudyRow } from '../../../api/sarStudyTypes';
+import type { StudyRow } from '../../../api/sarStudyTypes';
 import { ContractError } from '../../../api/validation';
 import { Loading } from '../../../components/Feedback';
 import { useScrollFocus } from '../../../components/useScrollFocus';
@@ -27,13 +28,13 @@ export function NetworkMatrix({
   onSource,
 }: {
   rows: StudyRow[];
-  report: StudyReport;
-  sites: StudyRegionSummary[];
+  report: CatalogReport;
+  sites: CatalogRegion[];
   siteOrder: ReadonlyMap<string, number>;
   referenceId: string;
   jobId: string;
   active: boolean;
-  onCompare: (site: StudyRegionSummary, molecule: string, button: HTMLButtonElement) => void;
+  onCompare: (site: CatalogRegion, molecule: string, button: HTMLButtonElement) => void;
   onSource: (id: string) => void;
 }) {
   const { t } = useTranslation();

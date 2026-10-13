@@ -1,5 +1,13 @@
 # Project governance manifest
 
+- Catalog ownership: `study_catalog_models.py` defines explicit read-only compact
+  fragment membership DTOs, reusing report/group projection and complete receipt
+  checks. The frontend catalog types and decoder keep every identity/count while
+  `StudyRegionContent` loads source-bound detailed bins through the existing read
+  authority. `StudyRegionGroup` is the extracted unchanged presentation consumer.
+  Full API/archive contracts remain supported, not a competing execution chain.
+  No new dependency, queue, schema, scientific epoch or retained large cache.
+
 - Reanalysis ownership: `reanalysisDraft.ts` owns only source-bound form seeding;
   `StudySetup`/`useSARMutation` and the existing study API remain the sole submission
   and retry path. Report coverage reuses `coreChoices`, not a new scientific

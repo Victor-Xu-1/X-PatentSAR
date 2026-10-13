@@ -33,6 +33,13 @@ import type {
   StudyRegionSummary,
 } from './sarStudyTypes';
 import { verifyStudyConservation } from './sarStudyIntegrity';
+import type {
+  CatalogFragment,
+  CatalogRegion,
+  CatalogReport,
+  StudyCatalog,
+  StudyRegionDetail,
+} from './sarCatalogTypes';
 const truth: Decoder<true> = (v, p = '$') => {
   if (v !== true) throw new ContractError(p);
   return true;
@@ -103,9 +110,10 @@ const fragment = (value: unknown, path = '$') => {
   if (result.representation === 'aromatic_graph') {
     if (result.smiles !== null || !result.graph_smiles) throw new ContractError(path);
   } else if (!result.smiles || result.graph_smiles != null) throw new ContractError(path);
+  if (result.strong_count > result.molecule_count) throw new ContractError(path);
   return result;
 };
-const regionSummaryBase = object({
+const regionFields = {
   region: decodeRegion,
   reference_label: string,
   reference_fragment_id: nullOr(string),
@@ -116,132 +124,162 @@ const regionSummaryBase = object({
   ineligible: count,
   comparable: count,
   no_variation: boolean,
-  fragments: array(fragment),
   independent_backgrounds: defaulted(one, 1),
-});
-const regionSummary: Decoder<StudyRegionSummary> = (value, path = '$') => ({
-  ...regionSummaryBase(value, path),
-  ...additions(
-    value,
-    {
-      origin: oneOf(['manual', 'single_site']),
-      comparison_pool: nullOr(array(string)),
-    },
-    path,
-  ),
-});
-export const decodeStudyReport: Decoder<StudyReport> = (v, p = '$') => {
-  const result = object({
-    schema_version: defaulted(one, 1),
-    dataset_id: string,
-    dataset_revision: positive,
-    title: string,
-    input_sha256: hex(64),
-    engine_sha256: hex(64),
-    research_only: defaulted(truth, true),
-    article_algorithm_reproduced: defaulted(falsehood, false),
-    molecule_count: count,
-    eligible_count: count,
-    observation_count: count,
-    strict_pair_count: count,
-    contexts: array(studyContext),
-    policies: array(studyPolicy),
-    distributions: array(
-      object({
-        context_id: hex(64),
-        bins: array(studyBin),
-        observed_molecules: count,
-        observations: count,
-        missing_molecules: count,
-        unresolved_molecules: count,
-        strong_molecules: count,
-      }),
-    ),
-    scaffolds: array(scaffold),
-    regions: array(regionSummary),
-    candidates: array(studyRow),
-    rows: array(studyRow),
-    warnings: array(string),
-    candidate_policy: defaulted(string, 'strict-context-pareto-v1'),
-  })(v, p);
-  const contextIds = result.contexts.map((c) => c.id);
-  unique(contextIds, p + '.contexts');
-  unique(
-    result.policies.map((c) => c.context_id),
-    p + '.policies',
-  );
-  unique(
-    result.regions.map((r) => r.region.id),
-    p + '.regions',
-  );
-  unique(
-    result.scaffolds.map((s) => s.id),
-    p + '.scaffolds',
-  );
-  if (
-    result.eligible_count > result.molecule_count ||
-    result.policies.length < 1 ||
-    result.policies.length > 8 ||
-    result.policies.some((c) => !contextIds.includes(c.context_id)) ||
-    result.distributions.some(
-      (d) => !contextIds.includes(d.context_id) || d.strong_molecules > d.observed_molecules,
-    ) ||
-    result.scaffolds.some((s) => s.strong_count > s.molecule_count) ||
-    result.regions.some(
-      (r) =>
-        r.region.dataset_id !== result.dataset_id ||
-        r.region.dataset_revision !== result.dataset_revision ||
-        r.fragments.some((f) => f.strong_count > f.molecule_count),
-    )
-  )
-    throw new ContractError(p);
-  const report = {
-    ...result,
+};
+function regionDecoder<F extends CatalogFragment>(decode: Decoder<F>) {
+  const base = object({ ...regionFields, fragments: array(decode) });
+  return (value: unknown, path = '$') => ({
+    ...base(value, path),
     ...additions(
+      value,
+      {
+        origin: oneOf(['manual', 'single_site']),
+        comparison_pool: nullOr(array(string)),
+      },
+      path,
+    ),
+  });
+}
+export const regionSummary: Decoder<StudyRegionSummary> = regionDecoder(fragment);
+const catalogFragment = object({
+  id: string,
+  molecule_ids: array(string),
+  molecule_count: count,
+  is_reference: boolean,
+  representation: defaulted(oneOf(['port_fragment', 'aromatic_graph']), 'port_fragment'),
+});
+const catalogRegion = regionDecoder(catalogFragment);
+function reportDecoder<R extends CatalogRegion>(
+  decodeRegionSummary: Decoder<R>,
+  catalog: boolean,
+): Decoder<Omit<StudyReport, 'regions'> & { regions: R[] }> {
+  return (v, p = '$') => {
+    const result = object({
+      schema_version: defaulted(one, 1),
+      dataset_id: string,
+      dataset_revision: positive,
+      title: string,
+      input_sha256: hex(64),
+      engine_sha256: hex(64),
+      research_only: defaulted(truth, true),
+      article_algorithm_reproduced: defaulted(falsehood, false),
+      molecule_count: count,
+      eligible_count: count,
+      observation_count: count,
+      strict_pair_count: count,
+      contexts: array(studyContext),
+      policies: array(studyPolicy),
+      distributions: array(
+        object({
+          context_id: hex(64),
+          bins: array(studyBin),
+          observed_molecules: count,
+          observations: count,
+          missing_molecules: count,
+          unresolved_molecules: count,
+          strong_molecules: count,
+        }),
+      ),
+      scaffolds: array(scaffold),
+      regions: array(decodeRegionSummary),
+      candidates: array(studyRow),
+      rows: array(studyRow),
+      warnings: array(string),
+      candidate_policy: defaulted(string, 'strict-context-pareto-v1'),
+    })(v, p);
+    const contextIds = result.contexts.map((c) => c.id);
+    unique(contextIds, p + '.contexts');
+    unique(
+      result.policies.map((c) => c.context_id),
+      p + '.policies',
+    );
+    unique(
+      result.regions.map((r) => r.region.id),
+      p + '.regions',
+    );
+    unique(
+      result.scaffolds.map((s) => s.id),
+      p + '.scaffolds',
+    );
+    if (
+      result.eligible_count > result.molecule_count ||
+      result.policies.length < 1 ||
+      result.policies.length > 8 ||
+      result.policies.some((c) => !contextIds.includes(c.context_id)) ||
+      result.distributions.some(
+        (d) => !contextIds.includes(d.context_id) || d.strong_molecules > d.observed_molecules,
+      ) ||
+      result.scaffolds.some((s) => s.strong_count > s.molecule_count) ||
+      result.regions.some(
+        (r) =>
+          r.region.dataset_id !== result.dataset_id ||
+          r.region.dataset_revision !== result.dataset_revision,
+      )
+    )
+      throw new ContractError(p);
+    const report = {
+      ...result,
+      ...additions(
+        v,
+        {
+          matched_pair_count: count,
+          comparable_pair_count: count,
+          counting_contract: oneOf(['legacy-per-bin-members', 'unique-molecules-v2']),
+          source_acceptance: nullOr(decodeSourceAcceptance),
+          context_declarations: array(decodeConditionDeclaration),
+          discovery: nullOr(decodeStudyDiscovery),
+        },
+        p,
+      ),
+    };
+    if (report.discovery && report.counting_contract !== 'unique-molecules-v2')
+      throw new ContractError(p + '.discovery');
+    verifyStudyConservation(report, p, catalog);
+    return report;
+  };
+}
+export const decodeStudyReport: Decoder<StudyReport> = reportDecoder(regionSummary, false);
+const decodeCatalogReport: Decoder<CatalogReport> = reportDecoder(catalogRegion, true);
+export const decodeActivityBasis = object({
+  rule: oneOf(['numbered-tenth-decades-v1']),
+  anchor_rank: (value, path = '$') => {
+    if (value !== 10) throw new ContractError(path);
+    return 10 as const;
+  },
+  source_input_sha256: hex(64),
+  source_report_sha256: hex(64),
+  retained_records: count,
+  excluded_records: recordOf(count, 8),
+});
+function overviewDecoder<R extends CatalogReport>(decode: Decoder<R>) {
+  return (v: unknown, p = '$') => {
+    const result = object({ job: decodeSARJob, report: decode })(v, p);
+    const extra = additions(
       v,
       {
-        matched_pair_count: count,
-        comparable_pair_count: count,
-        counting_contract: oneOf(['legacy-per-bin-members', 'unique-molecules-v2']),
-        source_acceptance: nullOr(decodeSourceAcceptance),
-        context_declarations: array(decodeConditionDeclaration),
-        discovery: nullOr(decodeStudyDiscovery),
+        activity_basis: decodeActivityBasis,
       },
       p,
-    ),
+    );
+    if (
+      extra.activity_basis &&
+      (extra.activity_basis.source_input_sha256 !== result.report.input_sha256 ||
+        extra.activity_basis.retained_records !== result.report.molecule_count)
+    )
+      throw new ContractError(p + '.activity_basis');
+    return { ...result, ...extra };
   };
-  if (report.discovery && report.counting_contract !== 'unique-molecules-v2')
-    throw new ContractError(p + '.discovery');
-  verifyStudyConservation(report, p);
-  return report;
+}
+export const decodeStudyOverview: Decoder<StudyOverview> = overviewDecoder(decodeStudyReport);
+export const decodeStudyCatalog: Decoder<StudyCatalog> = (v, p = '$') => {
+  object({ detail: oneOf(['catalog']), activity_basis: decodeActivityBasis })(v, p);
+  return overviewDecoder(decodeCatalogReport)(v, p);
 };
-export const decodeStudyOverview: Decoder<StudyOverview> = (v, p = '$') => {
-  const result = object({ job: decodeSARJob, report: decodeStudyReport })(v, p);
-  const extra = additions(
-    v,
-    {
-      activity_basis: object({
-        rule: oneOf(['numbered-tenth-decades-v1']),
-        anchor_rank: (value, path = '$') => {
-          if (value !== 10) throw new ContractError(path);
-          return 10 as const;
-        },
-        source_input_sha256: hex(64),
-        source_report_sha256: hex(64),
-        retained_records: count,
-        excluded_records: recordOf(count, 8),
-      }),
-    },
-    p,
-  );
-  if (
-    extra.activity_basis &&
-    (extra.activity_basis.source_input_sha256 !== result.report.input_sha256 ||
-      extra.activity_basis.retained_records !== result.report.molecule_count)
-  )
-    throw new ContractError(p + '.activity_basis');
-  return { ...result, ...extra };
-};
+export const decodeStudyRegionDetail: Decoder<StudyRegionDetail> = object({
+  job: decodeSARJob,
+  region: regionSummary,
+  activity_basis: decodeActivityBasis,
+});
 export const decodeStudyRows: Decoder<StudyRows> = (v, p = '$') => {
   const result = object({
     items: array(studyRow),

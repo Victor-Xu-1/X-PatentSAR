@@ -1,5 +1,6 @@
+import type { CatalogReport } from '../../../api/sarCatalogTypes';
 import { useMemo, useState } from 'react';
-import type { StudyReport } from '../../../api/sarStudyTypes';
+
 import { useTranslation } from '../../../i18n';
 import { GroupPager } from './GroupPager';
 import { StudyImage } from './StudyImage';
@@ -17,7 +18,7 @@ export function StudyNetwork({
   onSource,
   onRows,
 }: {
-  report: StudyReport;
+  report: CatalogReport;
   jobId: string;
   active: boolean;
   strongest?: boolean;

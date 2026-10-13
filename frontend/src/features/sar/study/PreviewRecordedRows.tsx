@@ -1,10 +1,17 @@
-import type { StudyPreview, StudyReport } from '../../../api/sarStudyTypes';
+import type { CatalogReport } from '../../../api/sarCatalogTypes';
+import type { StudyPreview } from '../../../api/sarStudyTypes';
 import { contextLabel } from '../presentation';
 import { previewValueText } from './tablePresentation';
 import { RecordedDelta } from './RecordedDelta';
 
 /** Raw supporting endpoints/PK, without manufactured statistical conclusions. */
-export function PreviewRecordedRows({ data, report }: { data: StudyPreview; report: StudyReport }) {
+export function PreviewRecordedRows({
+  data,
+  report,
+}: {
+  data: StudyPreview;
+  report: CatalogReport;
+}) {
   return (
     <>
       {(data.recorded_measurements ?? []).map((reading) => {

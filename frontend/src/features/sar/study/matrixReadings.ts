@@ -1,12 +1,8 @@
+import type { CatalogReport } from '../../../api/sarCatalogTypes';
 import { ContractError } from '../../../api/validation';
-import type {
-  StudyContext,
-  StudyMatrix,
-  StudyPreview,
-  StudyReport,
-} from '../../../api/sarStudyTypes';
+import type { StudyContext, StudyMatrix, StudyPreview } from '../../../api/sarStudyTypes';
 
-export function matrixReadings(matrix: StudyMatrix, report: StudyReport) {
+export function matrixReadings(matrix: StudyMatrix, report: CatalogReport) {
   const selected = report.policies.map((item) => item.context_id);
   const contexts = new Map(report.contexts.map((context) => [context.id, context]));
   const records = matrix.previews.map((preview) => {

@@ -48,12 +48,38 @@ class StudyResults:
             job=job, report=report.model_copy(update={"rows": []}), activity_basis=basis
         )
 
-    def current(self, identifier: str, *, records_only=False):
+    def catalog(self, identifier: str):
+        from .study_catalog_models import StudyCatalog
+
+        job, report, basis = self.current(identifier, catalog=True)
+        return StudyCatalog(
+            job=job, report=report.model_copy(update={"rows": []}), activity_basis=basis
+        )
+
+    def region(self, identifier: str, region_id: str):
+        from .study_catalog_models import StudyRegionDetail
+
+        if not region_id or len(region_id) > 200:
+            raise WebError(422, "sar_region", "Choose a retained region.")
+        job, report, basis = self.current(identifier)
+        region = next(
+            (item for item in report.regions if item.region.id == region_id), None
+        )
+        if region is None:
+            raise WebError(404, "sar_region", "Region is not part of this study.")
+        return StudyRegionDetail(job=job, region=region, activity_basis=basis)
+
+    def current(self, identifier: str, *, records_only=False, catalog=False):
         from .study_current import projected
 
         job, captured = self.load(identifier)
         report, basis = projected(
-            self.queue, identifier, job, captured, records_only=records_only
+            self.queue,
+            identifier,
+            job,
+            captured,
+            records_only=records_only,
+            catalog=catalog,
         )
         return job, report, basis
 

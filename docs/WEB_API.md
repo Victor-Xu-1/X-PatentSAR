@@ -1,5 +1,19 @@
 # X-PatentSAR Web API v1
 
+## Compact SAR read projections
+
+Authenticated, bounded reads; no task submission:
+
+- `GET /api/v1/sar/jobs/{id}/study/catalog`: `detail: "catalog"`, the same job and
+  activity source receipts, complete report metadata/regions, and fragment
+  membership leaves (`id`, `molecule_ids`, `molecule_count`, `is_reference`,
+  `representation`). Omitted chemical strings/bins are not empty measurements.
+- `GET /api/v1/sar/jobs/{id}/study/regions/{region_id}`: exact current detailed
+  region plus job/activity receipts; a foreign or absent region returns404.
+- The existing full `/study`, `/rows`, `/matrix`, `/preview` and exports retain
+  their contracts. Catalogs are an explicit smaller projection of the same
+  validated report, not a replacement scientific result or reduced search.
+
 ## Cross-dataset SAR task history
 
 Authenticated `GET /api/v1/sar/jobs?page=1&page_size=25&dataset_id=&status=`

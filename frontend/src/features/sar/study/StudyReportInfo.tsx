@@ -1,4 +1,5 @@
-import type { StudyReport } from '../../../api/sarStudyTypes';
+import type { CatalogReport } from '../../../api/sarCatalogTypes';
+
 import { Dialog } from '../../../components/Dialog';
 import { useTranslation } from '../../../i18n';
 import { SourceAcceptance } from './SourceAcceptance';
@@ -11,7 +12,7 @@ export function StudyReportInfo({
   historical,
   onClose,
 }: {
-  report: StudyReport;
+  report: CatalogReport;
   historical: boolean;
   onClose: () => void;
 }) {

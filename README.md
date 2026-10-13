@@ -1,5 +1,12 @@
 # X-PatentSAR
 
+SAR pages load a complete membership catalog first. Detailed fragment structures
+and distributions are read only when needed, while every reference, region,
+source member and comparison count stays available. The same receipt/coverage
+validation, activity rules and native preview proof remain authoritative. Full
+API reports and archived exports are retained unchanged; browsing never reruns
+a study or replaces missing measurements with empty statistics.
+
 SAR report headers distinguish full-library discovery from manually selected
 regions. **New analysis** opens the existing confirmation form with the report's
 selected endpoints and still-valid source-documented conditions. Automatic

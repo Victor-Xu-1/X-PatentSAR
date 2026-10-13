@@ -9,6 +9,7 @@ import { StudyReportView } from '../src/features/sar/study/StudyReportView';
 import { StudyImage } from '../src/features/sar/study/StudyImage';
 import { NetworkBranches } from '../src/features/sar/study/NetworkBranches';
 import { propertyText, selectedContexts } from '../src/features/sar/study/tablePresentation';
+import { catalogBody } from './sar-catalog-fixtures';
 import {
   sarDataset,
   sarDrawing,
@@ -25,6 +26,11 @@ beforeEach(() => {
   vi.spyOn(sarApi, 'job').mockResolvedValue(studyJob);
   vi.spyOn(sarStudyApi, 'profile').mockResolvedValue(studyProfile);
   vi.spyOn(sarStudyApi, 'overview').mockResolvedValue({ job: studyJob, report: studyReport });
+  vi.spyOn(sarStudyApi, 'region').mockResolvedValue({
+    job: studyJob,
+    region: studyReport.regions[0]!,
+    activity_basis: catalogBody().activity_basis,
+  });
   vi.spyOn(sarStudyApi, 'drawing').mockImplementation(async (_id, _kind, identifier) => ({
     id: identifier,
     svg: sarDrawing.svg,
@@ -61,7 +67,7 @@ describe('complete study report and lifecycle', () => {
     const panel = within(screen.getByRole('region', { name: 'Fragment summary' }));
     expect(panel.getByRole('checkbox', { name: 'Strong activity only' })).not.toBeChecked();
     expect(panel.getByRole('checkbox', { name: 'Strong activity only' })).toBeDisabled();
-    expect(panel.getByRole('heading', { name: /Fragment 1/ })).toBeVisible();
+    expect(await panel.findByRole('heading', { name: /Fragment 1/ })).toBeVisible();
   });
   it('shows source-bound variable graphs while keeping readings assigned to the full molecule', async () => {
     const row = { ...studyRow, molecule_id: 'candidate', label: 'Example 原文 2', strong: false };
@@ -179,7 +185,7 @@ describe('complete study report and lifecycle', () => {
     expect(regionView.queryByRole('button', { name: /^Compare / })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Fragment summary' }));
     const fragments = within(screen.getByRole('region', { name: 'Fragment summary' }));
-    expect(fragments.getByRole('heading', { name: /Fragment 1/ })).toBeVisible();
+    expect(await fragments.findByRole('heading', { name: /Fragment 1/ })).toBeVisible();
     const outcomes = fragments.getByRole('group', { name: 'Reference-comparison results' });
     expect(within(outcomes).getByText('Indeterminate')).toBeVisible();
     expect(within(outcomes).getByText('Weaker')).toBeVisible();
@@ -310,7 +316,7 @@ describe('compact activity-table presentation', () => {
       const search = screen.getByLabelText('Search identifiers or SMILES');
       await userEvent.type(search, '原文 007B');
       await userEvent.click(screen.getByRole('button', { name: viewName }));
-      await userEvent.click(screen.getByRole('button', { name: 'View molecules' }));
+      await userEvent.click(await screen.findByRole('button', { name: 'View molecules' }));
       const tablePanel = screen.getByRole('region', { name: 'Activity table' });
       await waitFor(() => expect(tablePanel).toHaveFocus());
       expect(scroll.mock.contexts.at(-1)).toBe(tablePanel);

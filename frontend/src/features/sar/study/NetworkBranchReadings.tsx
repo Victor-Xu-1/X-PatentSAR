@@ -1,8 +1,9 @@
-import type { StudyReport, StudyRow } from '../../../api/sarStudyTypes';
+import type { CatalogReport } from '../../../api/sarCatalogTypes';
+import type { StudyRow } from '../../../api/sarStudyTypes';
 import { useTranslation } from '../../../i18n';
 import { selectedContexts } from './tablePresentation';
 
-export function NetworkBranchReadings({ row, report }: { row: StudyRow; report: StudyReport }) {
+export function NetworkBranchReadings({ row, report }: { row: StudyRow; report: CatalogReport }) {
   const { t } = useTranslation();
   return (
     <dl className="sar-branch-readings" title={t('活性与理化值对应完整分子')}>

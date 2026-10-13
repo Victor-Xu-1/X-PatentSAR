@@ -1,6 +1,7 @@
+import type { CatalogReport } from '../../../api/sarCatalogTypes';
 import { useCallback, useMemo } from 'react';
 import type { Region } from '../../../api/sarTypes';
-import type { StudyReport } from '../../../api/sarStudyTypes';
+
 import { sarApi } from '../../../api/sarApi';
 import { useTranslation } from '../../../i18n';
 import { Loading } from '../../../components/Feedback';
@@ -81,7 +82,7 @@ export function StudyRegionMap({
   selected,
   onSelect,
 }: {
-  report: StudyReport;
+  report: CatalogReport;
   active: boolean;
   selected?: string | undefined;
   onSelect?: ((id: string) => void) | undefined;

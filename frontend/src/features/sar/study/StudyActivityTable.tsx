@@ -1,6 +1,7 @@
+import type { CatalogReport } from '../../../api/sarCatalogTypes';
 import { useCallback, useState } from 'react';
 import { sarStudyApi } from '../../../api/sarStudyApi';
-import type { StudyFilter, StudyReport, StudyRow } from '../../../api/sarStudyTypes';
+import type { StudyFilter, StudyRow } from '../../../api/sarStudyTypes';
 import { useDebounced } from '../../../hooks/useDebounced';
 import { useTranslation } from '../../../i18n';
 import { Loading } from '../../../components/Feedback';
@@ -20,7 +21,7 @@ export function StudyActivityTable({
   onSource,
 }: {
   jobId: string;
-  report: StudyReport;
+  report: CatalogReport;
   active: boolean;
   filter: StudyFilter;
   onFilter: (filter: StudyFilter) => void;

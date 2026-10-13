@@ -1,5 +1,6 @@
+import type { CatalogReport } from '../../../api/sarCatalogTypes';
 import type { Dataset } from '../../../api/sarTypes';
-import type { StudyReport } from '../../../api/sarStudyTypes';
+
 import { UiError } from '../../../i18n';
 import { gradeOrder } from '../presentation';
 import { declarationFromDraft } from './conditionDraft';
@@ -25,7 +26,7 @@ export const datasetDraftOwner = (dataset: Dataset) =>
 const sameFields = (a: Record<string, string>, b: Record<string, string>) =>
   JSON.stringify(Object.entries(a).sort()) === JSON.stringify(Object.entries(b).sort());
 
-export function reanalysisDraft(dataset: Dataset, report: StudyReport): StudySetupSeed {
+export function reanalysisDraft(dataset: Dataset, report: CatalogReport): StudySetupSeed {
   const fail = () => new UiError('无法安全沿用这份报告的设置。请刷新数据集后核对指标与原文条件。');
   if (
     dataset.stale ||

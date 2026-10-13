@@ -1,3 +1,4 @@
+import type { CatalogReport } from '../../api/sarCatalogTypes';
 import { useCallback } from 'react';
 import { sarApi } from '../../api/sarApi';
 import type { Dataset, Molecule, SARJob } from '../../api/sarTypes';
@@ -6,7 +7,7 @@ import { SARFailure } from './SARFailure';
 import { useSARResource } from './useSARResource';
 import { SARResults } from './SARResults';
 import { StudyResults } from './study/StudyResults';
-import type { StudyReport } from '../../api/sarStudyTypes';
+
 /** Dispatch from server-owned job kind, including a direct route absent from the list. */
 export function SARJobResults({
   known,
@@ -23,7 +24,7 @@ export function SARJobResults({
   scope: string;
   reference?: Molecule | null;
   onJob: (id: string) => void;
-  onReanalyse?: ((report: StudyReport) => void) | undefined;
+  onReanalyse?: ((report: CatalogReport) => void) | undefined;
   reanalysisDisabled?: boolean | undefined;
   hasDraft?: boolean | undefined;
 }) {

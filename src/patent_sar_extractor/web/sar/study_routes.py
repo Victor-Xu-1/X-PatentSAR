@@ -13,6 +13,7 @@ from .matrix_models import StudyMatrix
 from .models import SARJob
 from .preview_models import StudyPreview
 from .study_admission import profile
+from .study_catalog_models import StudyCatalog, StudyRegionDetail
 from .study_exports import export_study
 from .study_models import (
     StudyDrawing,
@@ -71,6 +72,20 @@ def study_routes(service, queue) -> APIRouter:
                 sort_by,
                 sort_direction,
                 reference_id,
+            )
+
+    @router.get("/jobs/{identifier}/study/catalog", response_model=StudyCatalog)
+    async def catalog(identifier: str):
+        async with reads:
+            return await asyncio.to_thread(StudyResults(queue()).catalog, identifier)
+
+    @router.get(
+        "/jobs/{identifier}/study/regions/{region_id}", response_model=StudyRegionDetail
+    )
+    async def region_detail(identifier: str, region_id: str):
+        async with reads:
+            return await asyncio.to_thread(
+                StudyResults(queue()).region, identifier, region_id
             )
 
     @router.get("/jobs/{job_id}/study/drawing", response_model=StudyDrawing)

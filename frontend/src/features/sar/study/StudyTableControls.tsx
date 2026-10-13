@@ -1,6 +1,7 @@
+import type { CatalogReport } from '../../../api/sarCatalogTypes';
 import { useId, useState } from 'react';
 import { Columns3, Search, SlidersHorizontal } from 'lucide-react';
-import type { StudyFilter, StudyReport } from '../../../api/sarStudyTypes';
+import type { StudyFilter } from '../../../api/sarStudyTypes';
 import { Dialog } from '../../../components/Dialog';
 import { ColumnChooser } from '../../results/ColumnChooser';
 import type { ResultColumn } from '../../../model/resultColumns';
@@ -17,7 +18,7 @@ export function StudyTableControls({
   sort,
   onSort,
 }: {
-  report: StudyReport;
+  report: CatalogReport;
   filter: StudyFilter;
   onFilter: (filter: StudyFilter) => void;
   columns: ResultColumn[];

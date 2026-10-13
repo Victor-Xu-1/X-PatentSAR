@@ -1,5 +1,6 @@
+import type { CatalogRegion } from '../../../api/sarCatalogTypes';
 import { ArrowUpRight, FileText } from 'lucide-react';
-import type { StudyMatrix, StudyRegionSummary } from '../../../api/sarStudyTypes';
+import type { StudyMatrix } from '../../../api/sarStudyTypes';
 import { useTranslation } from '../../../i18n';
 import { StudyImage } from './StudyImage';
 import { regionMarker } from './regionMarker';
@@ -15,12 +16,12 @@ export function MatrixHead({
   onSource,
 }: {
   data: StudyMatrix;
-  sites: StudyRegionSummary[][];
+  sites: CatalogRegion[][];
   siteOrder: ReadonlyMap<string, number>;
   jobId: string;
   active: boolean;
   onSelect: (molecule: string, region: string) => void;
-  onCompare: (site: StudyRegionSummary, molecule: string, button: HTMLButtonElement) => void;
+  onCompare: (site: CatalogRegion, molecule: string, button: HTMLButtonElement) => void;
   onSource: (id: string) => void;
 }) {
   const { t } = useTranslation();

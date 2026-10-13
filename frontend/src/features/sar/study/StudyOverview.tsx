@@ -1,11 +1,12 @@
-import type { StudyReport } from '../../../api/sarStudyTypes';
+import type { CatalogReport } from '../../../api/sarCatalogTypes';
+
 import { useTranslation } from '../../../i18n';
 import { StudyBars } from './StudyBars';
 import { contextLabel } from '../presentation';
 import { StudyPolicyNote, hasStrongRule } from './StudyPolicyNote';
 import { useState } from 'react';
 import type { CountingUnit } from './chartPresentation';
-export function StudyOverview({ report }: { report: StudyReport }) {
+export function StudyOverview({ report }: { report: CatalogReport }) {
   const { t } = useTranslation();
   const [unit, setUnit] = useState<CountingUnit>('molecules');
   return (

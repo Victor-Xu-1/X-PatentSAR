@@ -8,7 +8,8 @@ import { createSARMutation } from './sarMutation';
 import { sarTransport } from './sarTransport';
 import {
   decodeStudyDrawing,
-  decodeStudyOverview,
+  decodeStudyCatalog,
+  decodeStudyRegionDetail,
   decodeStudyProfile,
   decodeStudyRows,
 } from './sarStudyDecoders';
@@ -47,9 +48,9 @@ export function createSARStudyApi(shared: ApiClient, rawFetch?: typeof fetch) {
       }),
     overview: (id: string, dataset: string, signal: AbortSignal) =>
       raw.readReport(
-        path(id),
+        path(id) + '/catalog',
         (v) => {
-          const result = decodeStudyOverview(v);
+          const result = decodeStudyCatalog(v);
           checkJob(result.job, id, dataset);
           if (
             result.job.status !== 'complete' ||
@@ -58,6 +59,23 @@ export function createSARStudyApi(shared: ApiClient, rawFetch?: typeof fetch) {
             result.report.rows.length !== 0
           )
             throw new ContractError('$.study_report_identity');
+          return result;
+        },
+        signal,
+      ),
+    region: (id: string, dataset: string, region: string, signal: AbortSignal) =>
+      raw.readReport(
+        path(id) + '/regions/' + encodeURIComponent(region),
+        (value) => {
+          const result = decodeStudyRegionDetail(value);
+          checkJob(result.job, id, dataset);
+          if (
+            result.job.status !== 'complete' ||
+            result.region.region.id !== region ||
+            result.region.region.dataset_id !== dataset ||
+            result.activity_basis.source_input_sha256 !== result.job.input_sha256
+          )
+            throw new ContractError('$.region_detail_identity');
           return result;
         },
         signal,

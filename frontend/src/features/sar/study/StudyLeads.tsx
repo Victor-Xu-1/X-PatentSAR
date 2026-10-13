@@ -1,4 +1,5 @@
-import type { StudyReport } from '../../../api/sarStudyTypes';
+import type { CatalogReport } from '../../../api/sarCatalogTypes';
+
 import { useTranslation } from '../../../i18n';
 import { StudyImage } from './StudyImage';
 import { RowFacts } from './RowFacts';
@@ -9,7 +10,7 @@ export function StudyLeads({
   active,
   onSource,
 }: {
-  report: StudyReport;
+  report: CatalogReport;
   jobId: string;
   active: boolean;
   onSource: (id: string) => void;
