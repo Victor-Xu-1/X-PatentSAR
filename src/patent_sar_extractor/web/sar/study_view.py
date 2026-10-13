@@ -13,6 +13,7 @@ def current_records(packet: dict, captured: StudyReport, pairs: list[dict]):
     return (
         CurrentRecordView(
             inline_units=activity.inline_units,
+            declared_units=activity.declared_units,
             molecule_count=len(activity.sources),
             molecule_ids=activity.ids,
             policies=activity.policies,

@@ -41,6 +41,7 @@ def load_source(queue, identifier: str) -> PreviewSource:
         4,
         5,
         6,
+        7,
     }:
         raise WebError(
             409,

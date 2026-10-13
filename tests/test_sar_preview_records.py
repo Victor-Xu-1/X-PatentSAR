@@ -43,7 +43,9 @@ class SARPreviewRecordTests(WebFixture, unittest.TestCase):
             recorded_measurements(source, candidate, [], set())
         self.assertEqual(raised.exception.status, 409)
 
-    def prepare(self, client, repeated=False):
+    def prepare(
+        self, client, repeated=False, *, declared_units=False, metric="IC50 (nM)"
+    ):
         text = (
             "id,smiles,IC50 (nM),CL (mL/min/kg),Ymin,target,assay,cells,duration\n"
             "P1,COc1ccc(Cl)cc1,10,2,15,T,binding,C,2h\n"
@@ -53,6 +55,13 @@ class SARPreviewRecordTests(WebFixture, unittest.TestCase):
         )
         if repeated:
             text += "P3,CCCOc1ccc(Cl)cc1,0.1,>9,,T,binding,C,2h\n"
+        if declared_units:
+            lines = text.splitlines()
+            for index in range(1, len(lines)):
+                fields = lines[index].split(",")
+                fields[3] += " mL/min/kg"
+                lines[index] = ",".join(fields)
+            text = "\n".join(lines) + "\n"
         response = client.post(
             support.ROOT + "/csv/preview?filename=source-records.csv",
             content=text.encode(),
@@ -78,7 +87,7 @@ class SARPreviewRecordTests(WebFixture, unittest.TestCase):
         region = self.region(client, dataset)
         prefix = support.ROOT + "/datasets/" + dataset["id"]
         contexts = client.get(prefix + "/profile").json()["contexts"]
-        chosen = next(item for item in contexts if item["name"] == "IC50 (nM)")
+        chosen = next(item for item in contexts if item["name"] == metric)
         response = client.post(
             prefix + "/studies",
             json={

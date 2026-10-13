@@ -49,6 +49,7 @@ def order_rows(rows, report, column: str = "label", direction: str = "asc"):
                     grade_ranks(policy.grade_order),
                     units.get(policy.context_id),
                     inline_units=inline_units,
+                    declared_units=getattr(report, "declared_units", False),
                 )
                 for raw in values
             }

@@ -27,6 +27,7 @@ def comparable_observations(
     confirm_context: bool,
     *,
     inline_units: bool = True,
+    declared_units: bool = True,
 ) -> tuple[dict[str, Any], tuple[Value, Value] | None]:
     """Retain every source reading; never choose a best repeat or infer direction."""
     result = empty_comparison()
@@ -37,6 +38,7 @@ def comparable_observations(
             or len(metric_id) > 200
             or type(confirm_context) is not bool
             or type(inline_units) is not bool
+            or type(declared_units) is not bool
         ):
             raise SARInputError("invalid_statistics_input")
         ranks = grade_ranks(grade_order)
@@ -60,13 +62,21 @@ def comparable_observations(
             return result, None
         reference = [
             parse_measurement(
-                o["value"], ranks, o.get("unit"), inline_units=inline_units
+                o["value"],
+                ranks,
+                o.get("unit"),
+                inline_units=inline_units,
+                declared_units=declared_units,
             )
             for o in left
         ]
         candidate = [
             parse_measurement(
-                o["value"], ranks, o.get("unit"), inline_units=inline_units
+                o["value"],
+                ranks,
+                o.get("unit"),
+                inline_units=inline_units,
+                declared_units=declared_units,
             )
             for o in right
         ]
@@ -101,6 +111,8 @@ def recorded_difference(
     reference_obs: list[dict[str, Any]],
     candidate_obs: list[dict[str, Any]],
     metric_id: str,
+    *,
+    declared_units: bool = True,
 ) -> dict[str, Any]:
     """Descriptive arithmetic only; no ranking direction or inherited confirmation.
 
@@ -108,7 +120,12 @@ def recorded_difference(
     Only their complete recorded conditions can authorize a scalar subtraction.
     """
     assessment, values = comparable_observations(
-        reference_obs, candidate_obs, metric_id, [], False
+        reference_obs,
+        candidate_obs,
+        metric_id,
+        [],
+        False,
+        declared_units=declared_units,
     )
     if values is None:
         return {"status": assessment["comparison"], "value": None}

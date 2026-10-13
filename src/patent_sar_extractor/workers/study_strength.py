@@ -17,6 +17,7 @@ def resolve_strength(
     assessments,
     *,
     inline_units=True,
+    declared_units=True,
     log_potency=True,
 ):
     by_id = {item["id"]: item for item in contexts}
@@ -41,7 +42,11 @@ def resolve_strength(
                         raw = "unsupported" if state["status"] != "missing" else ""
                     try:
                         value = parse_measurement(
-                            raw, {}, observation.get("unit"), inline_units=inline_units
+                            raw,
+                            {},
+                            observation.get("unit"),
+                            inline_units=inline_units,
+                            declared_units=declared_units,
                         )
                     except ValueError:
                         value = Value("unsupported")

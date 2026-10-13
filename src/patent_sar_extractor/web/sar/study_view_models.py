@@ -43,3 +43,4 @@ class CurrentRecordView:
     scaffolds: list[StudyScaffold]
     regions: list[StudyRegionSummary]
     inline_units: bool = False
+    declared_units: bool = False

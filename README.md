@@ -9,7 +9,14 @@ SAR comparison previews automatically show neutral scalar changes for additional
 recorded PK/activity endpoints when units, conditions and repeated readings are
 comparable. They need not be selected as ranking objectives. This does not infer
 better/worse, percentage tiers or missing measurements; historic reports retain
-their captured interpretation. New analyses use SAR engine13/private input6.
+their captured interpretation. New analyses use SAR engine14/private input7.
+
+Numeric readings may also repeat their exact declared unit: for example a
+`CL (mL/min/kg)` column accepts both `2` and `2 mL/min/kg`. The same parser serves
+selected comparisons, neutral PK differences, distributions and numeric sorting.
+This is literal agreement, not a unit ontology: it does not infer absent PK units,
+convert hours to minutes, merge columns or assign PK desirability. Raw readings
+and archived input2–6 interpretations stay unchanged.
 
 Automatic single-region discovery includes double/triple-bond boundaries, so
 terminal carbonyl/thiocarbonyl and nitrile/alkyne replacements can keep their

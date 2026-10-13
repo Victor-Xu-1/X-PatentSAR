@@ -167,6 +167,15 @@ no strength color, better/worse arrow or priority score is added. Original strin
 reports and source labels stay unchanged. Input2–5 retain their old raw-only view,
 omitting the additive difference field. No new queue/store/dependency is added.
 
+Engine14/input7 extends the same measurement parser to literal declared-unit
+suffixes, including PK readings such as `2 mL/min/kg` in that exact column unit.
+It first preserves valid bare numbers and explicit grades, then checks the whole
+suffix without case folding, unit guessing, conversion or numeric rounding.
+Numeric-leading unit declarations require a separator. Selected pair/statistics,
+neutral differences, distributions and table ordering share the versioned rule;
+old input2–6 read adapters explicitly disable it. Original records, graph proof,
+chemical search, SQL/API contracts and percentage-tier policy remain unchanged.
+
 Paired transformation drawings are a read-only coordinate policy outside the
 scientific engine inventory. `preview_alignment.py` reuses the exact fixed-graph
 embedding/port/stereo primitives only AFTER the existing exhaustive member proof;
@@ -691,7 +700,7 @@ changed. Exact Decimal exponent shifts preserve coefficients and interval bounds
 only molar SI prefixes and percent are supported, not mass-dose conversion.
 Statistics, distribution parsing, typed potency-pool observations, sorting and
 preview differences consume the same values in the recorded/derived basis.
-Publication requires `strict-context-pareto-units-v3`. Old input2 keeps gap-only
+Publication requires `strict-context-pareto-units-v4`. Old input2 keeps gap-only
 ordering; input3 keeps open-boundary ordering but bare-value interpretation.
 The internal current-record view carries its interpretation mode for sorting;
 there is no new user switch or competing source store. A fresh new analysis of
@@ -718,7 +727,7 @@ automatically found families. Every numbered source is still in the report;
 unmatched/ambiguous sites and coverage limits are not hidden by positive matches.
 The input-bound plan and native 25-pair batches are preserved on interruption.
 The parent checks plan/coverage before one atomic result publication. Discovery
-was introduced in SAR engine8 and is retained in engine13, independently of extraction. Exact
+was introduced in SAR engine8 and is retained in engine14, independently of extraction. Exact
 one/two/three-edge topology partitions reuse original side bitmasks and bridge
 searches; three original bridges use intersections, mixed ring/bridge cuts use
 actual region sides, and three ring edges require a residual bridge after two
