@@ -32,6 +32,7 @@
     "tests/test_hybrid_source_cache.py",
     "tests/test_hybrid_source_native.py",
     "tests/test_source_first_contract.py"
+    ,"tests/test_standalone.py"
   ],
   "python_modules": [
     "tests.test_hybrid_source_native",
