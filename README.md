@@ -1,5 +1,18 @@
 # X-PatentSAR
 
+Experimental-method result references have an independent original-window
+inventory, including pages that also contain a different readable table. Literal
+links resolve only to one actual named region with the complete recorded row/cell
+proof; page success, matching row counts, locator-only readings or forged link
+status cannot resolve them. Reused table IDs and unproved multi-region chains
+remain ambiguous; unsupported reference syntax and native/cache disagreement
+remain explicit. The existing text row parser is now a pure shared lower module,
+not a duplicate parser. References do not inherit assay conditions, invent values
+or change potency bands. Activity6/epoch15 and coverage3 preserve older derived
+proof as historical review without changing original assets or manual history.
+This closes a bounded reference/presence defect, not all patent formats or the
+remaining implicit-ID/vector/chemical findings. No automatic real-task rerun.
+
 Original table/numbered-section boundaries scope activity source nomination;
 a later assay cannot lend endpoints to an earlier NMR/synthesis table. Caption-
 only unreadable activity sources still enter unresolved coverage, not absence.

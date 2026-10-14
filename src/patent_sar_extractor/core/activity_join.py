@@ -78,7 +78,9 @@ def activity_evidence_errors(
         raise ValueError("Malformed activity classification proof")
     rows = payload.get("rows")
     order, _ = activity_order_and_map(rows)
-    errors = coverage_errors(payload.get("coverage"), classified_activity_pages)
+    errors = coverage_errors(
+        payload.get("coverage"), classified_activity_pages, rows=rows
+    )
     errors.extend(validate_header_evidence(payload))
     errors.extend(metadata_evidence_errors(rows))
     if not rows:

@@ -18,6 +18,7 @@ def text_evidence(
     evidence = {
         "page_no": page_no,
         "table_id": context.table_id,
+        "raw_caption": context.raw_caption,
         "target": context.target,
         "assay": context.assay,
         "cell_line": context.cell_line,
@@ -29,7 +30,11 @@ def text_evidence(
                 "value": label,
                 "bbox": None,
                 "observations": [
-                    {"method": "declared_text_row", "text": raw_row[:10000]}
+                    {
+                        "method": "declared_text_row",
+                        "text": label,
+                        "raw_text": raw_row[:10000],
+                    }
                 ],
             },
             *[
@@ -38,7 +43,11 @@ def text_evidence(
                     "value": value,
                     "bbox": None,
                     "observations": [
-                        {"method": "declared_text_cell", "text": raw_row[:10000]}
+                        {
+                            "method": "declared_text_cell",
+                            "text": value,
+                            "raw_text": raw_row[:10000],
+                        }
                     ],
                 }
                 for key, value in zip(keys, values)

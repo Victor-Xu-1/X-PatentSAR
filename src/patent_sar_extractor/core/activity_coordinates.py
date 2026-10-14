@@ -20,6 +20,7 @@ from .activity_headers import (
     grid_schema,
 )
 from .activity_models import ActivityRow, GridSchema, ParsedActivity
+from .activity_reference_observation import observe_result_references
 from .activity_source_roles import method_page_evidence
 from .activity_transposed import extract_transposed
 from .biology_tables import BiologySchema, extract_tables, infer_schema
@@ -67,16 +68,17 @@ def extract_coordinate_tables(
             detect_ruled_table_regions(page, dpi=240),
             key=lambda r: (r["ys"][0], r["xs"][0]),
         )
+        native = page.get_text("text") if hasattr(page, "get_text") else ""
+        observed = [
+            text
+            for text in (
+                native,
+                str((page_texts or {}).get(str(page_index), "") or ""),
+            )
+            if text.strip()
+        ]
+        result.coverage.extend(observe_result_references(page_index + 1, observed))
         if not regions:
-            native = page.get_text("text") if hasattr(page, "get_text") else ""
-            observed = [
-                text
-                for text in (
-                    native,
-                    str((page_texts or {}).get(str(page_index), "") or ""),
-                )
-                if text.strip()
-            ]
             proofs = [method_page_evidence(text) for text in observed]
             method = proofs[0] if proofs and all(proofs) else ""
             if method:
@@ -306,16 +308,22 @@ def extract_coordinate_tables(
     )
     for page_index, regions in biology_grids.items():
         for region in regions:
-            count = sum(
-                record.page_no == page_index + 1
-                and any(
-                    isinstance(cell.get("bbox"), (list, tuple))
-                    and region["xs"][0] <= cell["bbox"][0] < region["xs"][-1]
-                    and region["ys"][0] <= cell["bbox"][1] < region["ys"][-1]
-                    for cell in record.evidence.get("cells", [])
-                )
+            owned_records = [
+                record
                 for record in records
-            )
+                if (
+                    record.page_no == page_index + 1
+                    and any(
+                        isinstance(cell.get("bbox"), (list, tuple))
+                        and region["xs"][0] <= cell["bbox"][0] < region["xs"][-1]
+                        and region["ys"][0] <= cell["bbox"][1] < region["ys"][-1]
+                        for cell in record.evidence.get("cells", [])
+                    )
+                )
+            ]
+            count = len(owned_records)
+            table_ids = {record.table_id for record in owned_records}
+            table_id = next(iter(table_ids)) if len(table_ids) == 1 else ""
             result.coverage.append(
                 source_record(
                     page_index + 1,
@@ -326,7 +334,7 @@ def extract_coordinate_tables(
                         region["xs"][-1],
                         region["ys"][-1],
                     ],
-                    "",
+                    table_id,
                     "",
                     "parsed" if count else "unresolved",
                     "original_cells" if count else "no_original_rows",

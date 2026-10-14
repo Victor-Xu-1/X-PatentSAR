@@ -1,5 +1,25 @@
 # Operations and troubleshooting
 
+## Original result references
+
+Activity6/epoch15 and coverage3 retain method-to-result links in
+`coverage.references` inside the same activity artifact. Known literal English
+result-in-table sentences and Chinese result/table mentions are proposed only
+within an explicit assay/procedure window. Unknown syntax, ranges, partial table
+lists, long unsupported windows and native/cache contradictions remain review.
+Inventory is independent of another grid succeeding on the same page. Targets
+require one actual named parsed region with original caption, complete row/cell
+ownership, literal qualified readings and current serialized proof. Reused table
+IDs or multiple regions without an exact continuation proof remain ambiguous;
+method-only targets/cycles cannot pass. Presence does not transfer conditions,
+change values or establish scientific correctness. The shared lower text reader
+revalidates original delimited rows; no alternative parser or execution path.
+Older activity5/coverage2 artifacts remain historical; never retag or modify them.
+Original PDF/OCR/structures/manual history and tenth-compound rules are unchanged.
+No queue/database/API migration, model installation, external LLM or auto-retry.
+Broader implicit-ID, source completeness/vector and chemistry work remains open;
+real original-PDF retry is allowed only from the frontend after related repairs.
+
 ## Original count-column roles
 
 Activity5/epoch14 separate literal count columns (`n`, sample-size and replicate-

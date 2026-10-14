@@ -1,5 +1,21 @@
 # X-PatentSAR architecture
 
+`activity_source_roles.py` nominates literal reported-method windows;
+`activity_source_discovery.py` reuses original table/section boundaries and
+`activity_reference_observation.py` joins original native/cached observations
+independently of grid success. Missing/unknown/conflicting references cannot be
+silently omitted on a page with other rows. `activity_result_references.py`
+recomputes coverage3 links from exact table identities, region geometry, original
+captions, row positions, literal observations and the full target row population.
+Reference nodes never resolve each other; a reused ID/multi-region continuation
+without its own exact proof remains ambiguous. Cell locators do not prove values.
+`activity_text_rows.py` is the extracted pure row reader shared by extraction and
+declared-row proof revalidation; the original implementation/unused caption helper
+are removed from the text coordinator. Dependencies remain acyclic. The same
+writer, core QA and Web/SAR source gates remain authoritative. Activity6/epoch15
+invalidate older derived reference proof; raw inputs, queues, API/SQL contracts,
+models, conditions and activity-strength policy stay unchanged. No external calls.
+
 `activity_source_discovery.py` nominates within original table/numbered-section
 spans instead of an overlapping character window. `activity_metadata.py` is the
 shared literal count-role and persisted observation authority; `ColumnGroup`
