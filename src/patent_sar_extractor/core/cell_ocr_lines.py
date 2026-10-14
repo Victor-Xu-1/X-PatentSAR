@@ -5,6 +5,8 @@ from itertools import combinations
 
 import cv2
 
+from .cell_line_coverage import complete_line_bounds
+
 
 def bounds(part):
     points = part["bbox"]
@@ -23,7 +25,9 @@ def _same_line(a, b):
     return height > 0 and overlap >= 0.5 * height
 
 
-def resolve_overlapping_lines(image, parts, engine, border):
+def resolve_overlapping_lines(
+    image, parts, engine, border, *, complete_lines=False, dpi=400
+):
     """No string overlap/ID guessing: only observed intersecting line boxes.
 
     Normal non-overlapping detections are untouched. At most eight line crops
@@ -52,7 +56,15 @@ def resolve_overlapping_lines(image, parts, engine, border):
         overlaps = any(
             min(a[2], b[2]) - max(a[0], b[0]) > 1 for a, b in combinations(boxes, 2)
         )
-        if not overlaps:
+        try:
+            complete = (
+                complete_line_bounds(image, boxes, border, dpi)
+                if complete_lines
+                else None
+            )
+        except (ValueError, TypeError, OverflowError):
+            return None
+        if not overlaps and complete is None:
             resolved.extend(sorted(group, key=lambda p: bounds(p)[0]))
             continue
         x0, y0 = (
@@ -63,6 +75,8 @@ def resolve_overlapping_lines(image, parts, engine, border):
             min(image.shape[1], math.ceil(max(b[2] for b in boxes))),
             min(image.shape[0], math.ceil(max(b[3] for b in boxes))),
         )
+        if complete is not None:
+            x0, y0, x1, y1 = complete
         if x1 <= x0 or y1 <= y0:
             return None
         clip = cv2.copyMakeBorder(
@@ -77,7 +91,12 @@ def resolve_overlapping_lines(image, parts, engine, border):
         result, _ = engine(clip, use_det=False, use_cls=False)
         if len(result or []) != 1:
             return None
-        confidence = float(result[0][1])
+        try:
+            if len(result[0]) != 2 or not isinstance(result[0][0], str):
+                return None
+            confidence = 0.0 if isinstance(result[0][1], bool) else float(result[0][1])
+        except (TypeError, ValueError, OverflowError):
+            return None
         resolved.append(
             {
                 "text": str(result[0][0]),
@@ -86,7 +105,9 @@ def resolve_overlapping_lines(image, parts, engine, border):
                 else 0.0,
                 "bbox": [[x0, y0], [x1, y0], [x1, y1], [x0, y1]],
                 "coordinate_space": "cell_ink_crop_pixels",
-                "method": "overlapping_line_recognition",
+                "method": "complete_line_recognition"
+                if complete is not None
+                else "overlapping_line_recognition",
             }
         )
     return resolved

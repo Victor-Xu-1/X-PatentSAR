@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import cv2
 import numpy as np
 
+from .cell_caption_identity import refined_caption_conflicts
 from .cell_ocr_lines import resolve_overlapping_lines
 from .compound_caption import caption_identity
 
@@ -95,7 +96,11 @@ def observe_cell(
         )
     detection_parts = tuple(parts) if detected else ()
     resolved = (
-        resolve_overlapping_lines(image, parts, engine, border) if detected else parts
+        resolve_overlapping_lines(
+            image, parts, engine, border, complete_lines=kind == "label", dpi=dpi
+        )
+        if detected
+        else parts
     )
     if resolved is not None:
         parts = resolved
@@ -112,6 +117,12 @@ def observe_cell(
         if resolved is not None and (detected or len(parts) == 1)
         else ""
     )
+    if (
+        kind == "label"
+        and value
+        and refined_caption_conflicts(value, parts, detection_parts)
+    ):
+        value = ""
     score = min((part["confidence"] for part in parts), default=0.0)
     if kind == "label" and value:
         _, identity_end = caption_identity(raw)
