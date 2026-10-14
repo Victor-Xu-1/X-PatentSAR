@@ -9,6 +9,7 @@ from .activity_grid_roles import (
     declared_measurement,
 )
 from .activity_headers import context_from_text
+from .cell_header_proof import physical_header_valid
 
 
 def valid_role_scope(record):
@@ -120,7 +121,7 @@ def valid_role_scope(record):
             elif method in {"cell_ocr_400dpi", "cell_ocr_600dpi"}:
                 confidence = cell.get("confidence")
                 if (
-                    set(cell)
+                    set(cell) - {"physical_header_lines"}
                     != {
                         "method",
                         "text",
@@ -158,7 +159,12 @@ def valid_role_scope(record):
                     for part in cell["parts"]
                 ):
                     return False
-                if " ".join(part["text"] for part in cell["parts"]) != cell["raw_text"]:
+                if "physical_header_lines" in cell:
+                    if not physical_header_valid(cell):
+                        return False
+                elif (
+                    " ".join(part["text"] for part in cell["parts"]) != cell["raw_text"]
+                ):
                     return False
                 if any(
                     not isinstance(part, dict)

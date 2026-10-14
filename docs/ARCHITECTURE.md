@@ -1,5 +1,20 @@
 # X-PatentSAR architecture
 
+`cell_header_lines` inventories complete physical pixel rows before header OCR
+and uses the same engine for bounded per-line recognition. It retains detector
+observations, original frame/hash/bounds/confidence and printed newline/unit
+identity, without resizing across rows or guessing endpoint words. The existing
+cell observer/column adapter remain the only production entry points.
+`cell_header_proof` rechecks that row envelope; `activity_header_proof` replays
+the existing schema/identity policy against every column, both original reads,
+caption and known detector/native/original conflicts. Producer and artifact
+validation share it; storage, core, Web and SAR do not gain a second acceptance
+path. Characterization roles reuse the same line proof for their original cells.
+Unqualified/over-bound rows remain explicit. Current activity12/epoch21/coverage8
+invalidate only derived source proof, not original/raw/manual/binding/recognition
+or SAR identities. No queue/model/dependency/API/SQL migration or task replay.
+
+
 `activity_grid_roles` owns literal complete-column characterization semantics;
 `activity_grid_role_observation` reuses shared original/native/cell/engine scope;
 `activity_grid_role_proof` is pure saved-proof replay through the same coverage

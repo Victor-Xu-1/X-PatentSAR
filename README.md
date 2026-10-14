@@ -1,5 +1,18 @@
 # X-PatentSAR
 
+Multiline activity headers preserve original physical rows and separate unit
+lines through the existing cell/OCR authority. Bounded pixel-row ownership,
+same-engine recognition, detector/native contradictions and full column/caption
+replay are retained in the existing artifact. Unknown, low-confidence, tall or
+over-bound inputs remain review-only; no guessed endpoints, units or values.
+Saved status flags and rehashed malformed rows/fields cannot bypass the same
+producer/core/Web/SAR proof. Eight lines/12pt line height/8million pixels per
+cell are explicit bounds, not silent truncation. Activity12/epoch21/coverage8
+invalidate derived header semantics; raw PDF/OCR/crops/model/manual audit,
+binding8/binder17/visible12/preparation1/rawOCSR2/SAR14/API/SQL remain unchanged.
+Controlled serif/sans/raster/hybrid checks are engineering evidence, not full
+patent scientific acceptance. Actual extraction/SAR remains frontend-only.
+
 Original coordinate grids now have positive characterization-role proof, separate
 from activity measurements. Same-page NMR/synthetic data cannot become assay
 results merely because a later biological section nominated that page. The same

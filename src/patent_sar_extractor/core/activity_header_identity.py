@@ -2,7 +2,12 @@
 
 import re
 
-from .activity_header_metrics import METRIC, explicit_unit, normalize_metric_text
+from .activity_header_metrics import (
+    METRIC,
+    explicit_unit,
+    literal_header_units,
+    normalize_metric_text,
+)
 from .activity_headers import infer_value_keys
 from .activity_metadata import metadata_role
 
@@ -50,3 +55,11 @@ def context_conflict(original, fresh) -> bool:
         for field in ("table_id", "target", "assay", "cell_line")
         for old, new in [(getattr(original, field), getattr(fresh, field))]
     )
+
+
+def detector_header_conflict(parts, fresh: str) -> bool:
+    """Keep valid detector claims alongside complete physical line rereads."""
+    original = "\n".join(part["text"] for part in parts)
+    return header_conflict(original, fresh) or not literal_header_units(
+        original
+    ).issubset(literal_header_units(fresh))

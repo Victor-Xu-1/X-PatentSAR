@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- Physical-header ownership: `cell_header_lines` supplies bounded original row
+  geometry and existing-engine observation under the shared cell reader;
+  `cell_header_proof` replays that envelope. `activity_header_proof` uses existing
+  schema/identity rules, shared by the producer and saved artifact validation.
+  Known original/detector/native/unit/endpoint/target conflicts cannot be voted
+  away; newline/unit identity and all original observations survive. No alternate
+  parser, engine, writer, queue, dependency or science edit. Activity12/epoch21/
+  coverage8 update derived semantics independently of binding8/binder17/visible12/
+  preparation1/rawObs2/rawOCSR2/SAR14/API/SQL/manual history. Bounds are eight lines,
+  12pt per line, 8million pixels/cell; unknown/over-bound sources require review.
+  Controlled checks do not prove universal patent or chemical acceptance.
+
 - Grid-role ownership: `activity_grid_roles` supplies only positive literal
   characterization semantics; `activity_grid_role_observation` reuses existing
   source geometry/native/cell/coordinate OCR; `activity_grid_role_proof` replays
