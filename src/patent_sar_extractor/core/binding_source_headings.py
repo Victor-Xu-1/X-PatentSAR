@@ -12,6 +12,11 @@ from .binding_observations import (
     _load_visible_label_cache,
     _refine_visible_label_cache_with_page_ocr,
 )
+from .binding_source_regions import (
+    identifier_references,
+    reference_cell,
+    reference_regions,
+)
 from .heading_evidence import (
     original_heading_lines,
     standalone_heading_evidence,
@@ -29,15 +34,69 @@ def _document_sha256(doc) -> str:
 
 
 def observed_heading_blocks(
-    doc, pages: list[int], line_map: dict, *, source_sections: list[dict] | None = None
+    doc,
+    pages: list[int],
+    line_map: dict,
+    *,
+    source_sections: list[dict] | None = None,
+    source_line_map: dict | None = None,
+    source_regions: dict | None = None,
+    grids_for_page=None,
+    tokens_for_page=None,
 ) -> list[dict]:
     """Coordinates and complete labels originate in the source, not an ID list."""
     blocks = []
+    document_sha256 = _document_sha256(doc)
     for page_index in sorted(set(pages)):
-        observed = original_heading_lines(doc[page_index], line_map.get(page_index, []))
+        regions = (source_regions or {}).get(page_index)
+        if regions is None:
+            page = doc[page_index]
+            grids = grids_for_page(page) if grids_for_page else None
+            tokens = (
+                tokens_for_page(page)
+                if tokens_for_page and (grids is None or grids)
+                else None
+            )
+            regions = reference_regions(
+                page, original_pdf_sha256=document_sha256, grids=grids, tokens=tokens
+            )
+        if source_sections is not None and source_regions is None:
+            source_sections.extend(
+                {
+                    "role": "characterization_region",
+                    "page_no": page_index + 1,
+                    "source_region": region,
+                }
+                for region in regions
+            )
+            source_sections.extend(
+                reference
+                for region in regions
+                for reference in identifier_references(region)
+            )
+        observed = original_heading_lines(
+            doc[page_index],
+            line_map.get(page_index, []),
+            (source_line_map or {}).get(page_index, []),
+        )
         for line in observed:
             observation = section_heading(line["text"])
             if observation:
+                reference = reference_cell(line, regions)
+                if reference is not None:
+                    if source_sections is not None:
+                        source_sections.append(
+                            {
+                                **observation,
+                                "role": "characterization_reference",
+                                "page_no": page_index + 1,
+                                "bbox": line["bbox"],
+                                "line_source": line["source"],
+                                "geometry_space": line["geometry_space"],
+                                **reference,
+                            }
+                        )
+                    continue
                 if source_sections is not None:
                     source_sections.append(
                         {**observation, "page_no": page_index + 1, "bbox": line["bbox"]}
@@ -64,6 +123,8 @@ def select_heading_bindings(
     line_map: dict,
     output_dir: str,
     profile: dict,
+    *,
+    source_line_map: dict | None = None,
 ) -> tuple[list[dict], list[dict]]:
     """Require mutually unique crop/printed-label proof in an observed interval."""
     if not structures or not blocks:
@@ -93,7 +154,11 @@ def select_heading_bindings(
             page,
             block,
             structures,
-            original_heading_lines(page, line_map.get(block["page_no"] - 1, [])),
+            original_heading_lines(
+                page,
+                line_map.get(block["page_no"] - 1, []),
+                (source_line_map or {}).get(block["page_no"] - 1, []),
+            ),
             end,
         )
         if direct and evidence:

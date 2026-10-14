@@ -5,11 +5,15 @@ from __future__ import annotations
 from typing import Any
 
 from patent_sar_extractor.contracts import (
+    BINDINGS_SCHEMA,
+    BINDINGS_SCHEMA_VERSION,
     COMPOUND_CATALOG_SCHEMA,
     COMPOUND_CATALOG_SCHEMA_VERSION,
     schema_ref,
+    schema_ref_matches,
 )
 
+from .binding_source_references import reference_issues
 from .pipeline_rules import _label_key, annotate_binding_accuracy
 
 MAX_CATALOG_RECORDS = 25000
@@ -102,4 +106,19 @@ def read_catalog_entries(
                     "Catalog source observations exceed their bound."
                 )
         output.append(checked)
+    try:
+        # Partial proved structures remain available for review. Completeness
+        # is rechecked independently by formal_structure, never saved flags.
+        reference_issues(
+            payload,
+            output,
+            required=schema_ref_matches(
+                payload.get("schema"),
+                schema_ref(BINDINGS_SCHEMA, BINDINGS_SCHEMA_VERSION),
+            ),
+        )
+    except (TypeError, ValueError, KeyError) as exc:
+        raise CatalogValidationError(
+            "Original source-reference proof is malformed."
+        ) from exc
     return output, alias_ids

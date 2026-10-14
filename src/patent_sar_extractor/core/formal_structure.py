@@ -11,6 +11,7 @@ from patent_sar_extractor.contracts import (
 )
 
 from .activity_identity import normalize_compound
+from .binding_source_references import reference_issues
 from .catalog_reader import read_catalog_entries
 from .pipeline_rules import annotate_binding_accuracy
 
@@ -83,6 +84,11 @@ def coverage_errors(payload: dict) -> list[str]:
     if issues:
         errors.append(
             f"Original printed-ID ownership has {len(issues)} unresolved observations."
+        )
+    reference_gaps = reference_issues(payload, catalog)
+    if reference_gaps:
+        errors.append(
+            f"Original characterization references have {len(reference_gaps)} unresolved structure observations."
         )
     return errors
 

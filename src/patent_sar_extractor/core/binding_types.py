@@ -58,6 +58,7 @@ class BindingObservations:
     line_map: dict[int, list[tuple[float, str]]]
     authoritative_table_pages: frozenset[int]
     workers: int
+    source_line_map: dict[int, list[dict[str, Any]]] = field(default_factory=dict)
 
 
 @dataclass

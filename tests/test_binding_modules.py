@@ -311,6 +311,10 @@ class BindingModuleTests(unittest.TestCase):
         return pdf, metadata, profile
 
     def test_complete_cells_and_suffix_caption_bypass_every_generic_phase(self):
+        from patent_sar_extractor.core.binding_source_headings import (
+            observed_heading_blocks,
+        )
+
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             pdf, metadata, profile = self.pdf_fixture(root, extra_caption=True)
@@ -318,14 +322,17 @@ class BindingModuleTests(unittest.TestCase):
             with (
                 patch(
                     "patent_sar_extractor.core.structure_binder.observed_heading_blocks",
-                    side_effect=AssertionError("Generic heading scan must not start"),
-                ),
+                    wraps=observed_heading_blocks,
+                ) as source_inventory,
                 patch(
                     "patent_sar_extractor.core.structure_binder.select_heading_bindings",
                     side_effect=AssertionError("Generic selection must not start"),
                 ),
             ):
                 result = bind(str(pdf), profile, str(root / "bindings"), str(metadata))
+            # Inventory is now mandatory beyond extracted-image pages; it may
+            # nominate source text but must never rebind already proved owners.
+            source_inventory.assert_called_once()
             self.assertEqual(
                 [binding["cpd"] for binding in result["bindings"]],
                 ["Compound 1", "Compound 2", "Compound 3A"],

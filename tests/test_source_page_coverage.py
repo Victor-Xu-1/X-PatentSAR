@@ -72,7 +72,7 @@ class SourcePageCoverageTests(unittest.TestCase):
                 )
                 with (
                     patch(
-                        "patent_sar_extractor.core.binding_preparation._get_ocr_line_coords",
+                        "patent_sar_extractor.core.binding_preparation._get_ocr_line_observations",
                         side_effect=AssertionError("native lines already supplied"),
                     ),
                     patch(

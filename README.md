@@ -1,5 +1,20 @@
 # X-PatentSAR
 
+Binding retains complete original OCR/native line boxes separately from classifier
+locators, validates the original PDF cache identity, and backfills only newly
+observed pages. Failed or misdirected parallel reads are explicit, not empty-page
+evidence. One document-wide characterization inventory reuses existing grid/token/
+cell authority: primary printed IDs require real proved structures; preparation
+references do not create molecules; explicit intermediate roles remain source
+records. The sole binding artifact retains source scope and exact references;
+producer/core/Web replay the same proof. Cleared issues, omitted cells, foreign
+claims and rehashed invalid roles cannot qualify a result. Unknown layouts remain
+unresolved. Current Binding9/binder18 are independent of activity12/epoch21/
+coverage8 and raw PDF/OCR/crops/model/manual/visible12/preparation1/SAR14/API/SQL.
+Earlier epoch notes below are release context, not additional execution paths.
+Controlled native/raster/hybrid checks are not universal recall or chemical
+certification; actual patent/SAR submissions remain frontend-only.
+
 Multiline activity headers preserve original physical rows and separate unit
 lines through the existing cell/OCR authority. Bounded pixel-row ownership,
 same-engine recognition, detector/native contradictions and full column/caption

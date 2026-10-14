@@ -163,6 +163,11 @@ def artifact_run(
         {"execution_mode": "production_structure_led", "final_bindings": bindings}
     )
     from patent_sar_extractor.core.binding_catalog import compound_catalog
+    from patent_sar_extractor.core.binding_source_references import reference_scope
+
+    payloads["bindings"].update(
+        source_sections=[], source_reference_scope=reference_scope([])
+    )
 
     payloads["bindings"]["compound_catalog"] = compound_catalog(bindings, [])
     # Formal source order uses the same catalog; these fixtures do not certify

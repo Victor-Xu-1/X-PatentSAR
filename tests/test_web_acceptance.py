@@ -82,6 +82,12 @@ def complete_payloads():
         execution_mode="production_structure_led",
         final_bindings=[binding],
         compound_catalog=compound_catalog([binding], []),
+        source_sections=[],
+        source_reference_scope={
+            "version": 1,
+            "original_pdf_sha256": "",
+            "region_ids": [],
+        },
     )
     payloads["smiles"].update(
         execution_mode="production_decimer",

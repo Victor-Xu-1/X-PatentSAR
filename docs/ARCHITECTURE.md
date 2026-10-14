@@ -1,5 +1,22 @@
 # X-PatentSAR architecture
 
+`binding_source_lines` retains original typed geometry, exposing legacy y/text
+only as a locator view. `binding_preparation` verifies cache/PDF identity and
+checkpoints only newly read pages. Sequential/parallel observers share page
+authority and reject failures, invalid types or wrong-page replies.
+`binding_source_regions` reuses call-local grid/token/cell proof across the
+document, including pages outside extracted-image candidates. Primary identifier
+cells and preparation references have distinct roles; exact primary IDs link only
+to the proved catalog, with missing/ambiguous ownership retained as errors.
+`binding_source_references` performs bounded pure serialized replay in the single
+binding artifact; writer, catalog reader and formal coverage share it. No second
+OCR model, queue, store, acceptance parser or private scientific computation.
+Regions retain original PDF identity and physical cell bounds; locator rectangles
+cannot grant reference exemptions. Current Binding9/binder18 change derived proof
+only; raw observation2/OCSR2/preparation1/visible12 and activity12/epoch21/coverage8/
+SAR14/manual/API/database stay separate. Prior epoch descriptions below retain
+release context, not competing current paths.
+
 `cell_header_lines` inventories complete physical pixel rows before header OCR
 and uses the same engine for bounded per-line recognition. It retains detector
 observations, original frame/hash/bounds/confidence and printed newline/unit

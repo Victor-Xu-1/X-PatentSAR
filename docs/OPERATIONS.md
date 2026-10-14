@@ -1,5 +1,25 @@
 # Operations and troubleshooting
 
+## Original lines and characterization references
+
+Current Binding9/binder18 require the source-reference scope from the unified
+binding writer. Old bindings remain historical/readable, never retagged. Keep
+original PDF/OCR/crops/model/manual data unchanged. Cache reuse needs the same PDF;
+foreign/malformed caches are rejected. Backfill cannot strip existing boxes or
+persist profile hints as observations. Worker failures/wrong-page replies fail
+explicitly. Characterization exclusion requires complete original role proof;
+unknown grids remain unresolved. Primary IDs need actual exact-ID source structures
+even on pages without detected molecules. Method references and explicit
+intermediates remain separate, never guessed into terminal products. Replay every
+primary cell after serialization; saved success or empty issues are insufficient.
+Bounds are25000source sections,96cells/region and existing bounded cell OCR;
+overflow fails, never truncate. Unscored text-only OCR can nominate, not qualify
+coordinate identity; boolean/string/nonfinite confidence cannot qualify titles.
+Raw2/preparation1/visible12/activity12/epoch21/coverage8/SAR14/API/SQL/dependencies
+are unchanged. Complete targeted/installed/PR/main/deployment checks before
+frontend-only real retry. Controlled checks do not certify universal formats or
+chemical identity. Earlier epoch sections below are retained release context.
+
 ## Narrow multiline headers and printed unit rows
 
 The existing cell observer inventories complete pixel rows before recognition,
