@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 
 from .cell_caption_identity import refined_caption_conflicts
+from .cell_header_lines import header_line_frame, observe_header_lines
 from .cell_ocr_lines import resolve_overlapping_lines
 from .cell_ocr_scores import confidence_score as _score
 from .compound_caption import caption_identity
@@ -21,6 +22,7 @@ class OCRObservation:
     ink_crop_pixels: tuple[int, int, int, int] | None = None
     border_pixels: int = 0
     detection_parts: tuple[dict, ...] = ()
+    physical_header_lines: dict | None = None
 
     def evidence(self, dpi: int, bounds) -> dict:
         return {
@@ -37,6 +39,11 @@ class OCRObservation:
             "border_pixels": self.border_pixels,
             "render_dpi": dpi,
             "detection_parts": list(self.detection_parts),
+            **(
+                {"physical_header_lines": self.physical_header_lines}
+                if self.physical_header_lines is not None
+                else {}
+            ),
         }
 
 
@@ -73,8 +80,10 @@ def observe_cell(
     # A bounded one-line header cell can be a single printed "n" or "%";
     # line detection routinely suppresses those legitimate tiny observations.
     # Multiline headers and every compound caption still use line detection.
+    header_frame = header_line_frame(image, border, dpi) if kind == "header" else None
     detected = kind == "label" or (
-        kind == "header" and (crop[3] - crop[1]) * 72 / dpi > 12
+        kind == "header"
+        and (header_frame is not None or (crop[3] - crop[1]) * 72 / dpi > 12)
     )
     result, _ = engine(image, use_det=detected, use_cls=False)
     parts = []
@@ -90,15 +99,23 @@ def observe_cell(
             }
         )
     detection_parts = tuple(parts) if detected else ()
+    header_lines = (
+        observe_header_lines(image, engine, border, dpi, frame=header_frame)
+        if header_frame is not None
+        else None
+    )
     resolved = (
         resolve_overlapping_lines(
             image, parts, engine, border, complete_lines=kind == "label", dpi=dpi
         )
-        if detected
+        if detected and header_frame is None
         else parts
     )
     if resolved is not None:
         parts = resolved
+    if header_lines is not None:
+        parts, physical = header_lines
+        resolved = parts if physical["status"] == "observed" else None
     if detected:
         parts.sort(
             key=lambda item: (
@@ -106,7 +123,9 @@ def observe_cell(
                 min(p[0] for p in item["bbox"]),
             )
         )
-    raw = " ".join(part["text"] for part in parts)
+    raw = ("\n" if header_lines is not None else " ").join(
+        part["text"] for part in parts
+    )
     value = (
         normalize(raw, kind)
         if resolved is not None and (detected or len(parts) == 1)
@@ -138,4 +157,5 @@ def observe_cell(
         crop,
         border,
         detection_parts,
+        header_lines[1] if header_lines is not None else None,
     )

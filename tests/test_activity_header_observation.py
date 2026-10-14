@@ -2,8 +2,8 @@ import unittest
 from unittest.mock import Mock, patch
 
 import fitz
+from header_support import observed_headers
 
-from patent_sar_extractor.core.activity_header_columns import HeaderColumns
 from patent_sar_extractor.core.activity_header_observation import refine_scanned_header
 from patent_sar_extractor.core.activity_headers import context_from_text, grid_schema
 
@@ -42,7 +42,9 @@ class HeaderObservationTests(unittest.TestCase):
                     ),
                     patch(
                         "patent_sar_extractor.core.activity_header_observation.observe_header_columns",
-                        return_value=HeaderColumns(headers, (), (True, True)),
+                        side_effect=lambda page, region, limit, dpi, tokens, matrix=headers: (
+                            observed_headers(matrix, region, limit, dpi)
+                        ),
                     ),
                 ):
                     result = refine_scanned_header(page, region, None)
@@ -82,8 +84,8 @@ class HeaderObservationTests(unittest.TestCase):
             patch(
                 "patent_sar_extractor.core.activity_header_observation.observe_header_columns",
                 side_effect=[
-                    HeaderColumns(matrix, (), tuple(True for _ in matrix[0]))
-                    for matrix in rows
+                    observed_headers(matrix, region, 1, dpi)
+                    for matrix, dpi in zip(rows, (400, 600))
                 ],
             ),
             patch(

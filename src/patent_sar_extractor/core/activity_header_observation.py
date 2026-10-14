@@ -6,6 +6,7 @@ from .activity_grid_context import _prefix
 from .activity_header_columns import observe_header_columns
 from .activity_header_identity import compact_header, context_conflict, header_conflict
 from .activity_header_layout import discover_header_layout, header_bounds
+from .activity_header_proof import valid_header_proof
 from .activity_headers import context_from_text, grid_schema
 from .activity_models import GridSchema
 from .source_geometry import native_region
@@ -56,6 +57,7 @@ def refine_scanned_header(
 
     def resolution(status, **extra):
         evidence = {
+            "column_contract": 1,
             "status": status,
             "original_headers": list(original.raw_headers) if original else [],
             "original_context": original.context.raw_context if original else "",
@@ -153,4 +155,6 @@ def refine_scanned_header(
         unverified_columns=[i for i, ok in enumerate(agreed) if not ok],
         context_conflict=caption_conflict,
     )
+    if complete and not valid_header_proof(proof):
+        proof.update(status="unresolved", reason="column_proof_replay_failed")
     return replace(selected, first_data_row=limit, header_resolution=proof)

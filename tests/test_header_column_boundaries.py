@@ -5,8 +5,8 @@ from dataclasses import replace
 from unittest.mock import Mock, patch
 
 import fitz
+from header_support import observed_headers
 
-from patent_sar_extractor.core.activity_header_columns import HeaderColumns
 from patent_sar_extractor.core.activity_header_observation import refine_scanned_header
 from patent_sar_extractor.core.activity_headers import context_from_text, grid_schema
 
@@ -66,7 +66,11 @@ class HeaderColumnBoundaryTests(unittest.TestCase):
             with (
                 patch(
                     "patent_sar_extractor.core.activity_header_observation.observe_header_columns",
-                    return_value=HeaderColumns([["No.", "IC50 (nM)"]], (), verified),
+                    side_effect=lambda page, region, limit, dpi, tokens, flags=verified: (
+                        observed_headers(
+                            [["No.", "IC50 (nM)"]], region, limit, dpi, flags
+                        )
+                    ),
                 ),
                 patch(
                     "patent_sar_extractor.core.activity_header_observation.ocr_tokens_with_positions",

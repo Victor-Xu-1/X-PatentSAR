@@ -10,7 +10,17 @@ import hashlib
 import json
 from dataclasses import fields
 
+from patent_sar_extractor.contracts import (
+    ACTIVITY_SCHEMA,
+    ACTIVITY_SCHEMA_VERSION,
+    schema_ref,
+    schema_ref_matches,
+)
+
+from .activity_header_identity import detector_header_conflict
+from .activity_header_proof import valid_header_proof
 from .activity_models import ActivityRow
+from .cell_header_proof import physical_header_valid
 
 _SUMMARY_FIELDS = (
     "status",
@@ -83,6 +93,32 @@ def validate_header_evidence(payload: dict) -> list[str]:
     for key, proof in catalog.items():
         if key != proof_id(proof):
             raise ValueError("Original header evidence identity differs")
+        if proof["status"] == "observed_header_consensus":
+            if (
+                "column_contract" in proof
+                or schema_ref_matches(
+                    payload.get("schema"),
+                    schema_ref(ACTIVITY_SCHEMA, ACTIVITY_SCHEMA_VERSION),
+                )
+            ) and not valid_header_proof(proof):
+                raise ValueError("Unproved original header column contract")
+            for observation in proof.get("observations", []):
+                for column in observation.get("columns", []):
+                    physical = "physical_header_lines" in column or any(
+                        isinstance(part, dict)
+                        and part.get("method") == "physical_header_line"
+                        for part in column.get("parts", [])
+                    )
+                    if physical and (
+                        not physical_header_valid(column)
+                        or detector_header_conflict(
+                            column.get("detection_parts", []),
+                            column.get("raw_text", ""),
+                        )
+                        or column.get("detector_conflict") is not False
+                        or column.get("crosses_boundary") is not False
+                    ):
+                        raise ValueError("Unproved original physical header lines")
     errors = []
     for row in payload.get("rows", []):
         sources = row.get("activity_sources", [])

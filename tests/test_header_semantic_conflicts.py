@@ -4,8 +4,8 @@ import unittest
 from unittest.mock import Mock, patch
 
 import fitz
+from header_support import observed_headers
 
-from patent_sar_extractor.core.activity_header_columns import HeaderColumns
 from patent_sar_extractor.core.activity_header_observation import refine_scanned_header
 from patent_sar_extractor.core.activity_headers import (
     context_from_text,
@@ -34,7 +34,9 @@ class HeaderSemanticConflictTests(unittest.TestCase):
             ),
             patch(
                 "patent_sar_extractor.core.activity_header_observation.observe_header_columns",
-                return_value=HeaderColumns([["No.", fresh]], (), (True, True)),
+                side_effect=lambda page, region, limit, dpi, tokens: observed_headers(
+                    [["No.", fresh]], region, limit, dpi
+                ),
             ),
             patch(
                 "patent_sar_extractor.core.activity_header_observation._prefix",

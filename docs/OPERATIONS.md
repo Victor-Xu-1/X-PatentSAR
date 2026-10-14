@@ -1,5 +1,22 @@
 # Operations and troubleshooting
 
+## Narrow multiline headers and printed unit rows
+
+The existing cell observer inventories complete pixel rows before recognition,
+retains the full detector output and reads at most eight physically owned rows
+using the same OCR engine at400/600dpi. A printed standalone unit remains a line;
+no unit is inferred from assay names, expected values or other tables. Valid
+detector/native/original endpoint, unit and target conflicts stay unresolved.
+Each line is bounded to12pt height and the original cell to8million pixels before
+rendering. Touching/tall/over-bound or failed reads cannot borrow a plausible
+detector result. All raw/frame/hash/coordinate/confidence evidence stays in the
+existing header catalog; producer/core/Web/SAR use the same saved-proof replay.
+Activity12/epoch21/coverage8 require fresh derived proof, while original PDF/OCR/
+crops/model outputs/manual audit/binding8/binder17/visible12/preparation1/rawOCSR2/
+SAR14/API/SQL remain separate. Do not rewrite historic artifacts, restart live
+work or promote a controlled source check to complete scientific acceptance.
+
+
 ## Physical grid roles and complete original boundaries
 
 A nominated source page may contain synthesis/characterization above a later

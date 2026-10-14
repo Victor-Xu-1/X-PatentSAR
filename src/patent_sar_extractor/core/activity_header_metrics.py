@@ -47,6 +47,17 @@ def explicit_unit(text: str) -> str | None:
     return compact if _UNIT.fullmatch(compact) else None
 
 
+def literal_header_units(text: str) -> set[str]:
+    """Complete printed header units with lexical boundaries, not defaults."""
+    normalized = normalize_metric_text(text)
+    return {
+        match.group().replace("µ", "u").replace("μ", "u")
+        for match in re.finditer(
+            rf"(?<![A-Za-z0-9])(?:{_UNIT.pattern})(?![A-Za-z0-9])", normalized
+        )
+    }
+
+
 def normalize_metric_text(text: str) -> str:
     """Normalize typography in headers only; callers retain the original text."""
     text = str(text or "").translate(_GLYPHS)
