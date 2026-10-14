@@ -20,7 +20,8 @@ and rotated controlled images do not certify every patent or full chemical graph
 
 The existing frontend `compoundLabel` renderer also recognizes the exact generated
 unconfirmed source namespace/flags, and localizes only its application-owned prefix.
-Table/details/image accessibility/copy share that same renderer. Original labels,
+Table/details/image accessibility share that same renderer; copied labels retain
+the stored source/temporary marker rather than translated interface copy. Original labels,
 user corrections and canonical route/join keys are not translated or rewritten;
 an unchanged correction draft still round-trips the original stored field.
 

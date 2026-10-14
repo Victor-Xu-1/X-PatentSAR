@@ -30,7 +30,8 @@
     "frontend/src/model/compoundLabel.ts",
     "frontend/tests/identifier-labels.test.tsx",
     "frontend/tests/record-coverage.test.tsx",
-    "frontend/e2e/product-version.spec.ts"
+    "frontend/e2e/product-version.spec.ts",
+    "frontend/src/model/tableCopy.ts"
   ],
   "python_modules": [
     "tests.test_ocsr_original_identity",

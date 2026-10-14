@@ -37,7 +37,9 @@ export function tableCopyText(
     );
     return columns
       .map((column) => {
-        if (column.id === 'compound') return safeTsvCell(compoundLabel(row));
+        // Stored source labels/temporary markers are data, not localized UI.
+        // Keep exclusion identity intact when copied data is imported into SAR.
+        if (column.id === 'compound') return safeTsvCell(compoundLabel(row, false));
         if (column.id === 'lead') return safeTsvCell(leadColumnValue(row.lead));
         if (column.id === 'structure')
           return safeTsvCell(

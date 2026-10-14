@@ -2,8 +2,9 @@ import type { Compound } from '../api/types';
 import { t } from '../i18n';
 
 /** The server owns original-label interpretation; IDs remain stable route/join keys. */
-export function compoundLabel(row: Compound): string {
+export function compoundLabel(row: Compound, localizeGenerated = true): string {
   if (
+    localizeGenerated &&
     row.identifier_label == null &&
     row.record_kind === 'structure_only' &&
     row.flags.includes('unassociated_structure') &&

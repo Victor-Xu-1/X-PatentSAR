@@ -24,6 +24,13 @@ describe('patent-owned presentation label and stable internal identity', () => {
     const before = structuredClone(pending);
     setLocale('en');
     expect(compoundLabel(pending)).toBe('Identifier unconfirmed S0007');
+    expect(
+      tableCopyText(
+        [pending],
+        resultColumns().filter((column) => column.id === 'compound'),
+        [],
+      ),
+    ).toBe('Original ID\n' + pending.display_id);
     const fields = {
       display_id: pending.display_id,
       smiles: null,
