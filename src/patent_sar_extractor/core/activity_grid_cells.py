@@ -13,8 +13,9 @@ from .activity_values import (
     is_explicit_missing_activity_value,
     normalize_activity_value_token,
 )
+from .cell_cross_observation import printed_cross_valid
 from .source_geometry import native_region
-from .table_cells import read_cell
+from .table_cells import activity_kind_matches, read_cell
 
 __all__ = [
     "cell_text",
@@ -106,39 +107,77 @@ def validate_grid(region: dict, schema: GridSchema) -> None:
                 raise ValueError("Activity count column has no original header proof")
     if owned != set(range(len(xs) - 1)):
         raise ValueError("Activity grid has unowned physical columns")
+    values = {col for group in schema.groups for col, _ in group.value_columns}
+    if (
+        schema.semantic_kind not in {"generic", "biology"}
+        or type(schema.needs_review) is not bool
+        or not isinstance(schema.value_kinds, tuple)
+        or any(
+            not isinstance(pair, tuple)
+            or len(pair) != 2
+            or type(pair[0]) is not int
+            or pair[0] not in values
+            or pair[1] not in {"number", "letter", "plus"}
+            for pair in schema.value_kinds
+        )
+        or len({col for col, _ in schema.value_kinds}) != len(schema.value_kinds)
+        or schema.semantic_kind == "generic"
+        and bool(schema.value_kinds)
+        or schema.semantic_kind == "biology"
+        and {col for col, _ in schema.value_kinds} != values
+    ):
+        raise ValueError("Activity grid has unproved original value roles")
 
 
 def read_activity_cell(
-    page, tokens: list[dict], bounds, *, identifier: bool, native: bool
+    page,
+    tokens: list[dict],
+    bounds,
+    *,
+    identifier: bool,
+    native: bool,
+    kind: str | None = None,
 ):
+    declared_kind = kind
     native = native_region(tokens, bounds, native)
     raw = cell_text(tokens, bounds)
     crossing = crosses_cell(tokens, bounds)
     if identifier:
         value = normalize_compound(raw)
-        kind = (
+        kind = kind or (
             "label"
             if re.match(r"Compound|Example|Cpd|Cmpd|实施例|化合物", raw, re.IGNORECASE)
             else "id"
         )
     else:
         value = normalize_value(raw)
-        kind = (
+        kind = kind or (
             "plus"
             if re.fullmatch(r"\+{1,3}", value)
             else (
-                "letter" if re.fullmatch(r"[A-D]", value, re.IGNORECASE) else "number"
+                "letter"
+                if re.fullmatch(r"[A-G](?:[12])?", value, re.IGNORECASE)
+                else "number"
             )
         )
     if native:
         # Shared lexical kinds do not support all printed suffixes, missing
         # markers or ranges. Original native tokens remain exact evidence.
         observations = [{"method": "native_cell", "text": raw}]
+        role_conflict = bool(
+            not identifier
+            and declared_kind
+            and not activity_kind_matches(value, declared_kind)
+        )
         return (
             value,
             observations,
-            crossing or not bool(value if identifier else is_value(value)),
+            crossing
+            or role_conflict
+            or not bool(value if identifier else is_value(value)),
         )
+    if not identifier and is_explicit_missing_activity_value(value):
+        kind = "number"
     reading = read_cell(page, bounds, tokens, kind, False)
     refined = (
         normalize_compound(reading.value)
@@ -182,15 +221,28 @@ def read_activity_cell(
     )
     if recovered:
         value, conflict = refined, False
+    crosses = any(printed_cross_valid(o, bounds, refined) for o in observations)
+    if (
+        not identifier
+        and crosses
+        and not reading.needs_review
+        and (re.fullmatch(r"\+{1,5}", value) or not is_value(value))
+    ):
+        # A page-level locator is not a count of the whole original cell.
+        # Complete printed components can qualify it; native conflicts remain.
+        value, conflict = refined, False
     cell_proved = (
         not conflict
         and not reading.needs_review
-        and any(
-            observation.get("method") in {"cell_ocr_400dpi", "cell_ocr_600dpi"}
-            and observation.get("text") == reading.value
-            and type(observation.get("confidence")) in (float, int)
-            and 0.85 <= observation["confidence"] <= 1
-            for observation in observations
+        and (
+            crosses
+            or any(
+                observation.get("method") in {"cell_ocr_400dpi", "cell_ocr_600dpi"}
+                and observation.get("text") == reading.value
+                and type(observation.get("confidence")) in (float, int)
+                and 0.85 <= observation["confidence"] <= 1
+                for observation in observations
+            )
         )
     )
     # A detector's padded box is not the value's ownership proof. Agreement

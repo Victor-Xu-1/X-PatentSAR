@@ -20,6 +20,7 @@ def parse_grid(
     xs, ys = region["xs"], region["ys"]
     native = bool(page.get_text("words"))
     output = []
+    value_kinds = dict(schema.value_kinds)
     column_groups = [
         (
             (group.id_column, "compound_id"),
@@ -35,12 +36,20 @@ def parse_grid(
         for pair, columns in enumerate(column_groups):
             metadata = dict(schema.groups[pair].metadata_columns)
             cells, values = [], {}
-            review = (schema.header_resolution or {}).get("status") == "unresolved"
+            review = (
+                schema.needs_review
+                or (schema.header_resolution or {}).get("status") == "unresolved"
+            )
             compound = ""
             for column, key in columns:
                 bounds = (xs[column], ys[row_index], xs[column + 1], ys[row_index + 1])
                 value, observations, withheld = read_activity_cell(
-                    page, tokens, bounds, identifier=key == "compound_id", native=native
+                    page,
+                    tokens,
+                    bounds,
+                    identifier=key == "compound_id",
+                    native=native,
+                    kind=value_kinds.get(column),
                 )
                 cell = {
                     "field": key,

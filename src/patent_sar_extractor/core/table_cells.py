@@ -5,12 +5,12 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-import cv2
 import fitz
 import numpy as np
 
 from .activity_identity import is_value
 from .activity_values import is_explicit_missing_activity_value
+from .cell_cross_observation import observe_printed_crosses
 from .cell_ocr_observation import OCRObservation, observe_cell
 from .compound_caption import prefixed_label
 from .page_ocr_cache import get_ocr_engine
@@ -48,10 +48,21 @@ def _normalize(value: str, kind: str) -> str:
         return prefixed_label(cleaned)
     pattern = {
         "id": _ID,
-        "letter": re.compile(r"[A-D]", re.IGNORECASE),
+        "letter": re.compile(r"[A-G](?:[12])?", re.IGNORECASE),
         "plus": re.compile(r"\+{1,3}"),
     }[kind]
     return cleaned.upper() if pattern.fullmatch(cleaned) else ""
+
+
+def activity_kind_matches(value: str, kind: str) -> bool:
+    """Original literal categories, not quantitative grade thresholds/direction."""
+    if not isinstance(value, str):
+        return False
+    if is_explicit_missing_activity_value(value):
+        return True
+    if kind == "plus":
+        return bool(re.fullmatch(r"\+{1,5}", str(value).strip()))
+    return kind in {"number", "letter"} and bool(_normalize(value, kind))
 
 
 def cell_image(page, bounds, dpi: int) -> np.ndarray:
@@ -66,48 +77,6 @@ def cell_image(page, bounds, dpi: int) -> np.ndarray:
     return np.frombuffer(pix.samples, dtype=np.uint8).reshape(
         pix.height, pix.width, pix.n
     )[:, :, :3]
-
-
-def _plus_count(image: np.ndarray, dpi: int) -> str:
-    """Count printed crosses; OCR often collapses +++ into + or ++.
-
-    Only isolated, cross-shaped, similarly sized components pass. Two binary
-    thresholds must agree; arbitrary letters/noise/connected marks are refused.
-    """
-    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-    counts = []
-    for threshold in (150, 200):
-        binary = cv2.threshold(gray, threshold, 255, cv2.THRESH_BINARY_INV)[1]
-        n, labels, stats, _ = cv2.connectedComponentsWithStats(binary)
-        crosses = []
-        for index in range(1, n):
-            x, y, w, h, area = map(int, stats[index])
-            if area < 8:
-                continue
-            if not (
-                1.5 <= w * 72 / dpi <= 12
-                and 1.5 <= h * 72 / dpi <= 12
-                and 0.5 <= w / h <= 2
-            ):
-                return ""
-            component = labels[y : y + h, x : x + w] == index
-            row_peak, col_peak = (
-                component.sum(axis=1).max(),
-                component.sum(axis=0).max(),
-            )
-            if row_peak < 0.7 * w or col_peak < 0.7 * h or area / (w * h) > 0.7:
-                return ""
-            crosses.append((x, y, w, h))
-        if not 1 <= len(crosses) <= 3:
-            return ""
-        if (
-            max(c[1] + c[3] / 2 for c in crosses)
-            - min(c[1] + c[3] / 2 for c in crosses)
-            > dpi / 72 * 2
-        ):
-            return ""
-        counts.append(len(crosses))
-    return "+" * counts[0] if counts[0] == counts[1] else ""
 
 
 def _ocr_cell(page, bounds, kind: str, dpi: int) -> OCRObservation:
@@ -137,8 +106,9 @@ def read_cell(page, bounds, tokens: list[dict], kind: str, native: bool) -> Cell
     if native:
         return CellReading(initial, bounds, observations, not bool(initial))
     if kind == "plus":
-        value = _plus_count(cell_image(page, bounds, 450), 450)
-        observations.append({"method": "printed_cross_components", "text": value})
+        proof = observe_printed_crosses(cell_image(page, bounds, 450), bounds)
+        value = proof["text"]
+        observations.append(proof)
         return CellReading(
             value,
             bounds,

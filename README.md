@@ -1,5 +1,19 @@
 # X-PatentSAR
 
+Biological ratio/grade tables now use the same header, continuation selector,
+cell reader, row writer and serialized source proof as scalar grids. The old
+independent biology reader/two carry sites are removed. Original A–G/ND values,
+caption/context and cell positions survive; explicit units, unknown/metadata and
+conflicting roles cannot be erased by a biology interpretation. Repeated/header-
+only/continued-caption grids require unique original ownership. Printed plus
+values retain bounded original component/geometry evidence and two pixel-level
+observations; T/star/noise/native disagreements cannot become a claimed count.
+This is source observation, not inferred potency thresholds or scientific ranking.
+Activity8/epoch17/coverage5 preserve prior products as historical review while raw
+inputs, binding5/binder14/visible11, OCSR, manual history and SAR14 stay unchanged.
+Unruled/implicit-ID/vector completeness and chemistry still require separate
+verification before a frontend-only real retry; no task is automatically started.
+
 Original scalar activity grids retain a bounded physical layout, header origin,
 literal caption context and boundary text. Headerless/repeated-header adjacent
 pages and compatible parallel panels share one source only after that proof is

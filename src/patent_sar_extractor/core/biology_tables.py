@@ -1,23 +1,19 @@
-"""Cell-owned biology table extraction, independent of PDF/OCR reading order.
-
-The existing ruled-grid detector is supplied by the activity adapter. This
-module owns only biology schemas and their cell evidence, not a second pipeline.
-"""
+"""Literal biology header semantics for the shared physical-grid reader."""
 
 from __future__ import annotations
 
-import logging
 import re
-from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
-import cv2
-
-from .activity_headers import context_from_text
-from .source_geometry import token_geometry_space
-from .table_cells import cell_image, read_cell
-
-logger = logging.getLogger(__name__)
+from .activity_continuation_policy import canonical_header
+from .activity_header_metrics import METRIC, explicit_unit, normalize_metric_text
+from .activity_models import ColumnGroup, GridSchema
+from .source_section_roles import section_heading
+from .source_table_markers import (
+    TABLE_CAPTION_START,
+    TABLE_MARKER,
+    table_marker_identity,
+)
 
 
 @dataclass(frozen=True)
@@ -31,25 +27,12 @@ class BiologySchema:
     cell_line: str | None = None
 
 
-@dataclass
-class BiologyRecord:
-    compound: str
-    values: dict[str, str]
-    page_no: int
-    table_id: str
-    evidence: dict
-    needs_review: bool = False
-    notes: str = ""
-
-
 def infer_schema(context: str, columns: int) -> BiologySchema | None:
     """Require observed biology/header semantics, never specific table numbers."""
-    matches = list(re.finditer(r"\bTable\s+(\d+)\b", context, re.IGNORECASE))
-    if not matches or not re.search(
-        r"Example\s*(?:ID|#)|Compound\s*(?:ID|No)", context, re.IGNORECASE
-    ):
+    matches = list(TABLE_MARKER.finditer(context))
+    if not matches:
         return None
-    table_id = f"Table {matches[-1].group(1)}"
+    table_id = table_marker_identity(matches[-1].group())
     if (
         columns == 3
         and re.search(r"\bHTRF\b", context, re.IGNORECASE)
@@ -105,112 +88,111 @@ def infer_schema(context: str, columns: int) -> BiologySchema | None:
     return None
 
 
-def extract_tables(
-    doc,
-    pages: list[int],
-    *,
-    tokens_for_page: Callable,
-    grids_for_page: Callable,
-) -> list[BiologyRecord]:
-    records: list[BiologyRecord] = []
-    carry: tuple[BiologySchema, list[float], int] | None = None
-    for page_idx in sorted(set(pages)):
-        if not 0 <= page_idx < len(doc):
-            continue
-        page = doc[page_idx]
-        grids = sorted(grids_for_page(page), key=lambda grid: grid["bbox"][1])
-        if not grids:
-            continue
-        tokens = tokens_for_page(page)
-        native = bool(page.get_text("words"))
-        for grid in grids:
-            xs, ys = grid["xs"], grid["ys"]
-            y0 = ys[0]
-            prefix = " ".join(
-                t["text"]
-                for t in sorted(tokens, key=lambda t: (round(t["y"] / 3), t["x"]))
-                if max(0, y0 - 310) <= t["y"] <= ys[1]
+def _context_window(text):
+    """Retain same-source pre-caption prose, never an earlier table/section."""
+    lines = text.splitlines()
+    captions = [
+        i for i, line in enumerate(lines) if TABLE_CAPTION_START.match(line.strip())
+    ]
+    if not captions:
+        return text
+    current = captions[-1]
+    start = current if len(captions) > 1 else 0
+    sections = [i for i, line in enumerate(lines[:current]) if section_heading(line)]
+    if sections and (len(captions) == 1 or sections[-1] > captions[-2]):
+        start = sections[-1]
+    return "\n".join(lines[start:])
+
+
+def biology_grid_schema(schema: GridSchema | None) -> GridSchema | None:
+    """Map observed known biology roles, not arbitrary positions or body numbers.
+
+    A generic original header supplies all physical columns. Unknown/metadata or
+    actual numeric endpoints cannot escape into a biological interpretation.
+    Every repeated pair must have the same printed header, never last-pair wins.
+    """
+    if schema is None or schema.semantic_kind == "biology":
+        return schema
+    if (
+        schema.needs_review
+        or (schema.header_resolution or {}).get("status") == "unresolved"
+    ):
+        return schema
+    header = " ".join(schema.raw_headers)
+    normalized = normalize_metric_text(header)
+    metrics = list(METRIC.finditer(normalized))
+    categorical = metrics and all(
+        re.fullmatch(
+            r"(?:Ratio|Grade)(?:\s+(?:grade|class))?", m.group().strip(), re.IGNORECASE
+        )
+        for m in metrics
+    )
+    if (
+        any(g.metadata_columns for g in schema.groups)
+        or any(
+            any(
+                explicit_unit(part)
+                for part in re.split(r"[\s()（）]+", schema.raw_headers[column])
+                if part
             )
-            schema = infer_schema(prefix, len(xs) - 1)
-            first_row = 1 if schema else 0
-            if schema is None and y0 < 130 and carry:
-                old, old_xs, old_page = carry
-                if (
-                    page_idx == old_page + 1
-                    and len(xs) == len(old_xs)
-                    and all(abs(a - b) <= 4 for a, b in zip(xs, old_xs))
-                ):
-                    schema = old
-            if schema is None:
-                continue
-            carry = schema, xs, page_idx
-            logger.info(
-                "Cell-owned %s on PDF page %s: %s data rows",
-                schema.table_id,
-                page_idx + 1,
-                len(ys) - 1 - first_row,
+            for group in schema.groups
+            for column, _ in group.value_columns
+        )
+        or re.search(r"\bunknown\b|\?", normalized, re.IGNORECASE)
+        or not (
+            categorical
+            or not metrics
+            and re.search(
+                r"\b(?:degradation|anti[-\s]?proliferation)\b",
+                normalized,
+                re.IGNORECASE,
             )
-            for ri in range(first_row, len(ys) - 1):
-                for pair in range(schema.pairs):
-                    start = pair * (1 + len(schema.keys))
-                    cells = []
-                    for offset, kind in enumerate(("id", *schema.kinds)):
-                        ci = start + offset
-                        cells.append(
-                            read_cell(
-                                page,
-                                (xs[ci], ys[ri], xs[ci + 1], ys[ri + 1]),
-                                tokens,
-                                kind,
-                                native,
-                            )
-                        )
-                    if all(
-                        not c.value and not c.observations[0]["text"] for c in cells
-                    ):
-                        # An unused last pair is not a silently dropped data row.
-                        image = cell_image(page, cells[0].bounds, 150)
-                        if (
-                            cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) < 160
-                        ).mean() < 0.001:
-                            continue
-                    if not cells[0].value:
-                        raise RuntimeError(
-                            f"Unresolved compound ID in {schema.table_id}, PDF page {page_idx + 1}, row {ri + 1}, pair {pair + 1}"
-                        )
-                    values = dict(zip(schema.keys, (c.value for c in cells[1:])))
-                    needs_review = any(c.needs_review for c in cells)
-                    evidence = {
-                        "geometry_space": token_geometry_space(tokens, native),
-                        "page_no": page_idx + 1,
-                        "table_id": schema.table_id,
-                        "raw_caption": context_from_text(prefix, prefix).raw_caption,
-                        "target": schema.target,
-                        "assay": schema.assay,
-                        "cell_line": schema.cell_line,
-                        "row": ri,
-                        "pair": pair,
-                        "cells": [
-                            {
-                                "field": key,
-                                "value": c.value,
-                                "bbox": list(c.bounds),
-                                "observations": c.observations,
-                            }
-                            for key, c in zip(("compound_id", *schema.keys), cells)
-                        ],
-                    }
-                    records.append(
-                        BiologyRecord(
-                            f"Compound {cells[0].value}",
-                            values,
-                            page_idx + 1,
-                            schema.table_id,
-                            evidence,
-                            needs_review,
-                            "Ambiguous cell observations require review."
-                            if needs_review
-                            else "Cell-owned source geometry; scanned values independently verified.",
-                        )
-                    )
-    return records
+        )
+    ):
+        return schema
+    context = schema.context
+    frame = _context_window(context.raw_context)
+    bio = infer_schema(f"{frame} {header}", len(schema.raw_headers))
+    if (
+        bio is None
+        or bio.table_id != context.table_id
+        or len(schema.groups) != bio.pairs
+    ):
+        return schema
+    groups, kinds, templates = [], [], set()
+    for pair, group in enumerate(schema.groups):
+        start = pair * (len(bio.keys) + 1)
+        expected = tuple(range(start + 1, start + len(bio.keys) + 1))
+        if (
+            group.id_column != start
+            or tuple(c for c, _ in group.value_columns) != expected
+        ):
+            return schema
+        templates.add(tuple(canonical_header(schema.raw_headers[c]) for c in expected))
+        groups.append(ColumnGroup(start, tuple(zip(expected, bio.keys))))
+        kinds.extend(zip(expected, bio.kinds))
+    if len(templates) != 1:
+        return schema
+    explicit_assay = bool(re.search(r"(?:Assay|实验)\s*[:：]", frame, re.IGNORECASE))
+    conflict = any(
+        old is not None and new is not None and old != new
+        for old, new in (
+            (context.target, bio.target),
+            (context.cell_line, bio.cell_line),
+            (context.assay if explicit_assay else None, bio.assay),
+        )
+    )
+    context = replace(
+        context,
+        target=context.target or bio.target,
+        assay=context.assay if explicit_assay else bio.assay or context.assay,
+        cell_line=context.cell_line or bio.cell_line,
+    )
+    return replace(
+        schema,
+        context=context,
+        groups=tuple(groups),
+        value_kinds=tuple(kinds),
+        semantic_kind="biology",
+        needs_review=conflict,
+    )

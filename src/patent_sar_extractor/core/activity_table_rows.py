@@ -4,6 +4,7 @@ from collections import defaultdict
 
 from .activity_metadata import metadata_field
 from .activity_result_references import _get, _source_matches
+from .table_cells import activity_kind_matches
 
 
 def source_layout_matches(source, region):
@@ -37,10 +38,14 @@ def source_layout_matches(source, region):
         *[(column, metadata_field(kind)) for column, kind in group[2]],
     ]
     cells = source.get("cells", [])
+    value_kinds = dict(layout["value_kinds"])
     if not isinstance(cells, list) or len(cells) != len(expected):
         return False
     for cell, (column, field) in zip(cells, expected):
         if not isinstance(cell, dict) or cell.get("field") != field:
+            return False
+        kind = value_kinds.get(column)
+        if kind and not activity_kind_matches(cell.get("value", ""), kind):
             return False
         if (
             type(cell.get("physical_column")) is not int

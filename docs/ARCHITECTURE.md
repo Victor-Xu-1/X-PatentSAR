@@ -1,5 +1,23 @@
 # X-PatentSAR architecture
 
+`biology_tables.py` now supplies only literal header semantics under the existing
+`GridSchema`. The independent biology row extractor/record, hint registry and
+two carry implementations are removed. Known biology roles require printed ID
+columns and matching repeated headers; declared units, metadata, unknown/conflict
+proof and independent table/section context cannot escape through this adapter.
+The same `activity_grid_continuations`, `parse_grid`, layout/family/row conservation,
+writer and core/Web/SAR source gate own scalar and biology observations. Repeated
+headers use the existing parser only after unique original continuation proof.
+`cell_cross_observation.py` is the extracted bounded original-glyph observer and
+pure serialized-proof validator, not another OCR/provider. Its two binary readings
+retain dimensions, pixel hash, components and centered thin-cross geometry; OCR
+locator fragments cannot prove counts, and valid native disagreement stays review.
+Letter/missing role checks share the original value grammar, not invented numeric
+bins. Activity8/epoch17/coverage5 invalidate this changed derived proof independently
+of unchanged raw assets/OCR, binding/visible observations, OCSR and manual history.
+API/SQL/queues/dependencies/SAR14 are unchanged. Existing-engine controlled raster
+checks are engineering evidence, not universal scientific validation or a real run.
+
 `activity_continuation_policy.py` is the one literal boundary/column authority.
 `activity_grid_continuations.py` chooses a unique compatible original panel for
 both repeated and missing headers; the obsolete separate repeated-header helper

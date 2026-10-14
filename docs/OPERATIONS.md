@@ -1,5 +1,26 @@
 # Operations and troubleshooting
 
+## Unified biology source observation
+
+Activity8/epoch17/coverage5 retain biology semantic/value roles within the same
+per-grid layout. Original captions, header origin, declared fields/units and every
+ID/value cell use the shared current source-family and row proof. A later assay
+cannot inherit a previous grade table's context, repeated headers cannot become
+identifiers, and header-only splits need connected real rows. Unsupported/mixed
+printed targets, explicit conflicting context, unknown units and scalar-versus-
+grade contradictions stay reviewable; neither values nor units are fabricated.
+G/ND remain their source strings. No grade midpoint, potency order, percent cutoff,
+experimental condition or extra independent replicate is inferred.
+Printed plus observations retain the original 450dpi cell/geometry, pixel hash and
+two threshold component readings. Centered thin-cross geometry distinguishes
+actual pluses from T/star/noise; valid native contradictions cannot be outvoted.
+The same current consumer rechecks stored evidence. This changes only derived
+activity source proof; old files remain historical and original assets/manual
+history/binding5/binder14/visible11/OCSR/SAR14 are unchanged. No new model/provider,
+environment install, API/SQL migration, task queue or automatic retry is introduced.
+The remaining unruled/implicit-ID/vector/chemical work stays open before another
+frontend-only original-PDF task; controlled source checks do not certify perfection.
+
 ## Original scalar-grid continuation proof
 
 Activity7/epoch16/coverage4 include `layout` on scalar-grid coverage records and

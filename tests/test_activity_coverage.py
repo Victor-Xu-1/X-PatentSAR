@@ -48,7 +48,6 @@ class ActivityCoverageTests(unittest.TestCase):
                 "_prefix",
                 side_effect=["Table 1. Binding activity", "Table 2. Binding activity"],
             ),
-            patch.object(coordinates, "extract_tables", return_value=[]),
             patch.object(coordinates, "parse_grid", return_value=rows),
             patch.object(
                 coordinates,

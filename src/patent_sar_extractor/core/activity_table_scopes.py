@@ -9,8 +9,8 @@ from .activity_continuation_policy import (
     continuation_prefix,
 )
 from .activity_headers import context_from_text, grid_schema
-from .activity_models import TableContext
 from .activity_table_layout import validate_layout
+from .biology_tables import biology_grid_schema
 
 
 def _anchor(layout):
@@ -24,7 +24,8 @@ def _root(record):
         return False
     xs, ys = layout["xs"], layout["ys"]
     expected = (record["page_no"], (xs[0], ys[0], xs[-1], ys[layout["data_start"]]))
-    schema = grid_schema(TableContext(**layout["context"]), [layout["raw_headers"]])
+    context = context_from_text(layout["prefix"], layout["prefix"])
+    schema = biology_grid_schema(grid_schema(context, [layout["raw_headers"]]))
     columns = (
         [
             [
@@ -40,8 +41,11 @@ def _root(record):
     return (
         _anchor(layout) == expected
         and layout["columns"] == columns
-        and layout["context"]
-        == asdict(context_from_text(layout["prefix"], layout["prefix"]))
+        and schema is not None
+        and not schema.needs_review
+        and layout["semantic_kind"] == schema.semantic_kind
+        and layout["value_kinds"] == list(map(list, schema.value_kinds))
+        and layout["context"] == asdict(schema.context)
     )
 
 
@@ -49,6 +53,8 @@ def _edge(parent, current, root):
     a, b, first = parent["layout"], current["layout"], root["layout"]
     if (
         b["context"] != first["context"]
+        or b["semantic_kind"] != first["semantic_kind"]
+        or b["value_kinds"] != first["value_kinds"]
         or b["columns"] != first["columns"]
         or (
             b["raw_headers"]

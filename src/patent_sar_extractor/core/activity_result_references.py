@@ -10,6 +10,7 @@ from .activity_identity import is_value, normalize_compound, normalize_value
 from .activity_metadata import metadata_role
 from .activity_source_roles import method_result_references
 from .activity_table_scopes import table_scope_groups
+from .cell_cross_observation import printed_cross_valid
 from .source_table_markers import TABLE_MARKER, table_marker_identity
 
 MAX_REFERENCES = 2048
@@ -54,11 +55,26 @@ def _observed(cell, identifier=False):
     if not isinstance(readings, list) or not 1 <= len(readings) <= 64:
         return False
     normalize = normalize_compound if identifier else normalize_value
+    cross = not identifier and any(
+        printed_cross_valid(o, cell.get("bbox"), cell.get("value")) for o in readings
+    )
     values, proved = set(), False
     for item in readings:
         if not isinstance(item, dict) or not isinstance(item.get("text"), str):
             return False
         method, confidence = item.get("method"), item.get("confidence")
+        if method == "printed_cross_components":
+            if not printed_cross_valid(item, cell.get("bbox"), cell.get("value")):
+                return False
+            values.add(normalize(item["text"]))
+            proved = True
+            continue
+        if (
+            cross
+            and method == "page_ocr_cell"
+            and re.fullmatch(r"\+{1,5}", item["text"])
+        ):
+            continue  # Locator fragment count is not the whole-cell observation.
         clipped = method in {"cell_ocr_400dpi", "cell_ocr_600dpi"}
         qualified = method in {"native_cell", "declared_text_cell", "declared_text_row"}
         if clipped:
