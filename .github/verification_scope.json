@@ -28,6 +28,7 @@
     "tests/test_general_heading_binding.py",
     "tests/test_heading_characterization_roles.py",
     "tests/test_source_page_coverage.py",
+    "tests/test_standalone.py",
     "tests/test_web_acceptance.py",
     "tests/test_web_support.py"
   ],
