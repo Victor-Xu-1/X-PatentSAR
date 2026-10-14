@@ -1,13 +1,28 @@
 # X-PatentSAR
 
+Original coordinate grids now have positive characterization-role proof, separate
+from activity measurements. Same-page NMR/synthetic data cannot become assay
+results merely because a later biological section nominated that page. The same
+native/cell OCR authority retains every physical cell and valid original conflict;
+unknown columns and genuine NMR binding endpoints remain activity/review sources.
+Coverage replays this proof, and characterization alone cannot cover an activity
+seed or satisfy a missing result reference. Header context and original boundary
+prefix are preserved separately; existing strict continuation checks remain.
+Shared OCR confidence accepts finite numeric values only, never booleans/strings;
+invalid scores keep raw text but cannot qualify a label, header or value.
+Binding8/binder17/activity11/epoch20/coverage7 invalidate derived proof only. Raw
+PDF/OCR/crops/model strings/manual audit, visible12/preparation1/rawOCSR2/SAR14 and
+API/database/dependencies remain separate. Controlled native/raster/mixed tests
+are not universal scientific acceptance; actual tasks remain frontend-only.
+
 Caption observation now checks physically omitted terminal ink within the same
 original cell. Only short bounded lines are re-read by the existing OCR engine;
 other rows and already-covered lines are unchanged. Original detector fragments
 remain evidence, not guessed number tokens. Complete valid competing captions,
 unsupported numeric fragments and nonfinal roles cannot be overwritten. The same
 pure conflict guard rechecks saved proof in binding/recognition consumers.
-Binding7/binder16 invalidate only derived ownership, not original PDF/OCR/crops,
-model strings, manual revisions, activity10/epoch19, visible12 or SAR14. Controlled
+Binding8/binder17 invalidate only derived ownership, not original PDF/OCR/crops,
+model strings, manual revisions, visible12 or SAR14. Controlled
 bold serif/sans renders reproduce and repair omitted-prefix/suffix cases; these
 checks are not all-format/scientific acceptance or permission to retry a live task.
 

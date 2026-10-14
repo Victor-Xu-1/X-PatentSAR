@@ -8,6 +8,11 @@ from .activity_grid_context import _suffix
 
 
 def prepare_layout(schema, page_no, region, tokens, prefix, regions):
+    confirmed_context = bool(
+        schema.first_data_row > 0
+        and schema.header_resolution
+        and schema.header_resolution.get("status") == "observed_header_consensus"
+    )
     layout = {
         "xs": list(region["xs"]),
         "ys": list(region["ys"]),
@@ -18,7 +23,8 @@ def prepare_layout(schema, page_no, region, tokens, prefix, regions):
         }
         if schema.header_region
         else None,
-        "prefix": prefix,
+        "prefix": schema.context.raw_context if confirmed_context else prefix,
+        "boundary_prefix": prefix,
         "suffix": _suffix(tokens, region, regions),
         "raw_headers": list(schema.raw_headers) if schema.first_data_row else [],
         "context": asdict(schema.context),
@@ -43,7 +49,7 @@ def validate_layout(record):
     if (
         record["kind"] != "grid"
         or not isinstance(layout, dict)
-        or set(layout)
+        or set(layout) - {"boundary_prefix"}
         != {
             "xs",
             "ys",
@@ -104,7 +110,11 @@ def validate_layout(record):
         or context["table_id"] != record["table_id"]
     ):
         raise ValueError("Malformed original table context")
-    for key in ("prefix", "suffix"):
+    for key in (
+        "prefix",
+        "suffix",
+        *(("boundary_prefix",) if "boundary_prefix" in layout else ()),
+    ):
         if not isinstance(layout[key], str) or len(layout[key]) > 10000:
             raise ValueError("Original table boundary text exceeds its bound")
     headers = layout["raw_headers"]

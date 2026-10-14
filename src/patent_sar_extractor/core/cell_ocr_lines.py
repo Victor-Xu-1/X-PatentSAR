@@ -6,6 +6,7 @@ from itertools import combinations
 import cv2
 
 from .cell_line_coverage import complete_line_bounds
+from .cell_ocr_scores import confidence_score
 
 
 def bounds(part):
@@ -94,7 +95,7 @@ def resolve_overlapping_lines(
         try:
             if len(result[0]) != 2 or not isinstance(result[0][0], str):
                 return None
-            confidence = 0.0 if isinstance(result[0][1], bool) else float(result[0][1])
+            confidence = confidence_score(result[0][1])
         except (TypeError, ValueError, OverflowError):
             return None
         resolved.append(

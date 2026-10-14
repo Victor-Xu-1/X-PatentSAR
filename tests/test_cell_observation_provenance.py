@@ -14,6 +14,14 @@ def detected(text, confidence, top=0):
 
 
 class CellObservationProvenanceTests(unittest.TestCase):
+    def test_invalid_original_confidence_does_not_become_a_qualified_number(self):
+        for confidence in (True, False, None, "0.99", float("nan"), float("inf")):
+            with self.subTest(confidence=confidence):
+                result, _ = self.observation([detected("Compound 73", confidence)])
+                self.assertEqual(result.value, "")
+                self.assertEqual(result.confidence, 0)
+                self.assertEqual(result.raw_text, "Compound 73")
+
     def observation(self, parts, kind="label"):
         engine = Mock(return_value=(parts, 0))
         with (

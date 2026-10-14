@@ -1,5 +1,25 @@
 # X-PatentSAR architecture
 
+`activity_grid_roles` owns literal complete-column characterization semantics;
+`activity_grid_role_observation` reuses shared original/native/cell/engine scope;
+`activity_grid_role_proof` is pure saved-proof replay through the same coverage
+validator, core and Web/SAR admission. No alternate measurement parser, queue,
+store or model is added. Every cell, raw OCR reading, confidence, native hint and
+column role survives; explicit measurement/native conflicts veto exclusion.
+`non_activity/observed_characterization` is a distinct grid observation, not
+whole-page absence, a zero measurement or a result-reference exemption. Unknown
+columns/roles stay unresolved, and genuine NMR binding is not excluded by a word.
+The existing layout stores a proved header-context prefix and its original
+boundary prefix separately; continuation edges still require compatible originals.
+`cell_ocr_scores` is the single numeric-only confidence boundary, shared by initial
+and line re-reading; malformed scores remain unqualified with original text.
+Binding8/binder17/activity11/epoch20/coverage7 invalidate affected derived claims;
+original assets, raw OCR/OCSR/model/manual and visible12/preparation1/SAR14/API/SQL
+stay intact. Role bounds:96physical cells,4096characters/cell,10000prefix characters,
+two same-engine400/600dpi observations and8million rendered pixels/cell. No patent
+is processed privately or automatically repeated; controlled tests are not recall
+or chemical correctness certification.
+
 `cell_line_coverage.py` supplies original image-frame envelopes for omitted caption
 ink. The existing `cell_ocr_lines` coordinator owns the single bounded detection /
 overlap / complete-line path; non-caption readers do not acquire a new fallback.
@@ -7,8 +27,8 @@ overlap / complete-line path; non-caption readers do not acquire a new fallback.
 serialized numbered proof. Intersecting partial detections do not become invented
 independent IDs; valid complete literal conflicts and nonfinal roles remain review.
 Each refinement keeps its raw text, confidence, rectangle and original detections.
-Binding7/binder16 invalidate derived ownership independently of unchanged original
-assets/raw OCR/OCSR, activity10/epoch19/visible12/SAR14 and manual history. At most
+Binding8/binder17 invalidate derived ownership independently of unchanged original
+assets/raw OCR/OCSR, visible12/SAR14 and manual history. At most
 eight reads,32detections,8million pixels and12pt line height; no provider, dependency,
 queue, SQL/API migration or actual-patent computation outside the frontend.
 

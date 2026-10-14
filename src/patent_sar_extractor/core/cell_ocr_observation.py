@@ -1,6 +1,5 @@
 """Bounded cell OCR observations, raw provenance and identity-only confidence."""
 
-import math
 import re
 from dataclasses import dataclass
 
@@ -9,6 +8,7 @@ import numpy as np
 
 from .cell_caption_identity import refined_caption_conflicts
 from .cell_ocr_lines import resolve_overlapping_lines
+from .cell_ocr_scores import confidence_score as _score
 from .compound_caption import caption_identity
 
 
@@ -38,11 +38,6 @@ class OCRObservation:
             "render_dpi": dpi,
             "detection_parts": list(self.detection_parts),
         }
-
-
-def _score(value) -> float:
-    score = float(value)
-    return score if math.isfinite(score) and 0 <= score <= 1 else 0.0
 
 
 def observe_cell(
