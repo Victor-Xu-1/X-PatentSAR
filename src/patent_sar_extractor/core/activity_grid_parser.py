@@ -110,6 +110,7 @@ def parse_grid(
                 "pair": pair,
                 "cells": cells,
                 "geometry_space": token_geometry_space(tokens, native),
+                "table_bbox": [xs[0], ys[0], xs[-1], ys[-1]],
                 "header_region": (
                     {
                         "page_no": schema.header_region[0],

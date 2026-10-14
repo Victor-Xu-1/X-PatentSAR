@@ -59,7 +59,10 @@ def detect_ruled_table_regions(page, dpi: int = 300) -> list[dict]:
         cv2.MORPH_RECT, (max(35, int(img.shape[1] * 0.06)), 1)
     )
     v_kernel = cv2.getStructuringElement(
-        cv2.MORPH_RECT, (1, max(35, int(img.shape[0] * 0.035)))
+        # A whole-page-relative kernel erases legitimate single-row/header-only
+        # grids. Rule length is physical, not proportional to page whitespace.
+        cv2.MORPH_RECT,
+        (1, max(12, round(12 / scale))),
     )
     # Scanned fine-dotted rules are still physical boundaries. Close only
     # sub-1.5pt axial gaps before detecting long rules; never bridge table gaps
@@ -91,7 +94,7 @@ def detect_ruled_table_regions(page, dpi: int = 300) -> list[dict]:
     contours = cv2.findContours(v_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
     for contour in contours:
         x, y, w, h = cv2.boundingRect(contour)
-        if h * scale >= 25:
+        if h * scale >= 12:
             v_segments.append(
                 {
                     "x": (x + w / 2.0) * scale,
@@ -138,10 +141,10 @@ def detect_ruled_table_regions(page, dpi: int = 300) -> list[dict]:
             if not current or seg["y"] - current[-1]["y"] <= 45 or bridged:
                 current.append(seg)
                 continue
-            if len(current) >= 3:
+            if len(current) >= 2:
                 regions.append({"h": current})
             current = [seg]
-        if len(current) >= 3:
+        if len(current) >= 2:
             regions.append({"h": current})
 
     tables: list[dict] = []
@@ -169,7 +172,22 @@ def detect_ruled_table_regions(page, dpi: int = 300) -> list[dict]:
             ],
             tolerance=2.0,
         )
-        if len(xs) < 3 or len(ys) < 3:
+        if len(xs) < 3 or len(ys) < 2:
+            continue
+        if len(ys) == 2 and not (
+            y1 - y0 >= 12
+            and all(
+                any(
+                    abs(seg["x"] - boundary) <= 4
+                    and seg["y0"] <= y0 + 4
+                    and seg["y1"] >= y1 - 4
+                    for seg in v_segments
+                )
+                for boundary in (x0, x1)
+            )
+        ):
+            # A short grid needs both complete original outer rules. Do not
+            # complete an underline/diagram/open frame with invented borders.
             continue
         if xs[0] > x0 + 8:
             xs = [x0, *xs]

@@ -1,5 +1,19 @@
 # X-PatentSAR
 
+Original scalar activity grids retain a bounded physical layout, header origin,
+literal caption context and boundary text. Headerless/repeated-header adjacent
+pages and compatible parallel panels share one source only after that proof is
+recomputed; changed experiments, units, columns, gaps and competing roots remain
+unresolved. Header-only splits require connected actual result rows. Every grid's
+row population and exact ID/value/metadata cell positions are checked even without
+a method-reference sentence. Shared original rule detection now preserves closed
+single-row grids independently of page size, without completing open frames.
+Activity7/epoch16/coverage4 and binding5/binder14/visible11 require fresh derived
+proof; original PDF/OCR/crops, manual history and raw recognition stay unchanged.
+This is controlled engineering coverage, not universal recall/chemical validation.
+Biology/text continuation scope, partial/vector text and chemical findings remain
+open; no automatic original-PDF or SAR task is triggered by the upgrade.
+
 Experimental-method result references have an independent original-window
 inventory, including pages that also contain a different readable table. Literal
 links resolve only to one actual named region with the complete recorded row/cell

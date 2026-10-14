@@ -9,6 +9,7 @@ from collections import defaultdict
 from .activity_identity import is_value, normalize_compound, normalize_value
 from .activity_metadata import metadata_role
 from .activity_source_roles import method_result_references
+from .activity_table_scopes import table_scope_groups
 from .source_table_markers import TABLE_MARKER, table_marker_identity
 
 MAX_REFERENCES = 2048
@@ -143,6 +144,8 @@ def _source_matches(row, source, region):
         return False
     if region["kind"] == "text" and not _original_text_row(source, cells):
         return False
+    if region.get("layout") and source.get("table_bbox") != region["bbox"]:
+        return False
     values = {**_get(row, "activity_values", {}), **_get(row, "cell_line_data", {})}
     identifiers, measurements = [], []
     for cell in cells:
@@ -178,8 +181,9 @@ def _source_matches(row, source, region):
 def result_references(regions, rows):
     """Recompute all links from original region and row evidence on every read.
 
-    A target is one exact parsed region. Reused IDs/continuations without a
-    separate exact continuation proof stay ambiguous, not nearest-page wins.
+    A target is one exact physical source family with complete row/cell proof.
+    Reused IDs without a connected original header/column/boundary proof stay
+    ambiguous, not nearest-page wins.
     Method/reference nodes never qualify as targets, so cycles cannot resolve.
     """
     if not any(region["status"] == "reference" for region in regions):
@@ -222,23 +226,36 @@ def result_references(regions, rows):
                         "Original reference target scope exceeds its bound"
                     )
                 status = "missing" if not targets else "ambiguous"
-                if len(targets) == 1:
-                    target = targets[0]
+                families, invalid = table_scope_groups(targets)
+                if len(families) == 1 and not invalid:
                     status = "unproved"
-                    if target["status"] == "parsed":
-                        observations = sources[(target["page_no"], key)]
+                    proved = any(item["row_count"] for item in families[0])
+                    for target in families[0]:
+                        if target["status"] == "header":
+                            continue
+                        observations = [
+                            pair
+                            for pair in sources[(target["page_no"], key)]
+                            if (
+                                pair[1].get("table_bbox") == target["bbox"]
+                                if target.get("layout")
+                                else True
+                            )
+                        ]
                         positions = [
                             (s.get("row"), s.get("pair", 0)) for _, s in observations
                         ]
-                        if (
-                            len(observations) == target["row_count"]
+                        proved &= bool(
+                            target["status"] == "parsed"
+                            and len(observations) == target["row_count"]
                             and len(set(positions)) == len(positions)
                             and all(
                                 _source_matches(row, source, target)
                                 for row, source in observations
                             )
-                        ):
-                            status = "resolved"
+                        )
+                    if proved:
+                        status = "resolved"
                 resolved[key] = status, [item["region_id"] for item in targets]
             status, target_ids = resolved[key]
             edge_count += len(target_ids)

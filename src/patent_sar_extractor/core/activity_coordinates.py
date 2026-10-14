@@ -6,7 +6,6 @@ import re
 from dataclasses import replace
 
 from .activity_coverage import source_record
-from .activity_grid_cells import continued_header_schema
 from .activity_grid_context import _prefix, table_matrix
 from .activity_grid_continuations import Panel, continued_panel
 from .activity_grid_parser import parse_grid
@@ -22,6 +21,7 @@ from .activity_headers import (
 from .activity_models import ActivityRow, GridSchema, ParsedActivity
 from .activity_reference_observation import observe_result_references
 from .activity_source_roles import method_page_evidence
+from .activity_table_layout import prepare_layout
 from .activity_transposed import extract_transposed
 from .biology_tables import BiologySchema, extract_tables, infer_schema
 from .table_geometry import detect_ruled_table_regions, page_tokens
@@ -148,15 +148,10 @@ def extract_coordinate_tables(
             # The existing biology authority owns its supported ratio/grade
             # schemas. It never competes with the generic scalar-header reader.
             if isinstance(schema, GridSchema):
-                if (
-                    carry
-                    and isinstance(carry[0], GridSchema)
-                    and carry[2] + 1 == page_index
-                    and region["ys"][0] < 130
-                ):
-                    schema = continued_header_schema(
-                        carry[0], schema, carry[1], region["xs"], prefix
-                    )
+                schema = (
+                    continued_panel(panels, page_index, region, context, prefix, schema)
+                    or schema
+                )
                 header = " ".join(schema.raw_headers)
             normalized_header = normalize_metric_text(header)
             metrics = list(METRIC.finditer(normalized_header))
@@ -261,6 +256,9 @@ def extract_coordinate_tables(
                             ),
                         ),
                     )
+                schema = prepare_layout(
+                    schema, page_index + 1, region, tokens, prefix, regions
+                )
                 generic_regions.append((page_index, region, schema))
                 panels.append(Panel(page_index, region, schema))
                 table_id = schema.context.table_id
@@ -373,9 +371,18 @@ def extract_coordinate_tables(
                 [region["xs"][0], region["ys"][0], region["xs"][-1], region["ys"][-1]],
                 schema.context.table_id,
                 " ".join(schema.raw_headers),
-                "parsed" if rows else "unresolved",
-                "original_cells" if rows else "no_original_rows",
+                "parsed"
+                if rows
+                else "header"
+                if schema.first_data_row == len(region["ys"]) - 1
+                else "unresolved",
+                "original_cells"
+                if rows
+                else "original_header_only"
+                if schema.first_data_row == len(region["ys"]) - 1
+                else "no_original_rows",
                 len(rows),
+                layout=schema.source_layout,
             )
         )
     result.coverage.sort(

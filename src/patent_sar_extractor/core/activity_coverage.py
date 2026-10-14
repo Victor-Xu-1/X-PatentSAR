@@ -17,9 +17,12 @@ from patent_sar_extractor.contracts import (
 
 from .activity_result_references import result_references
 from .activity_source_roles import method_page_evidence, method_result_references
+from .activity_table_layout import validate_layout
+from .activity_table_rows import table_row_errors
+from .activity_table_scopes import layout_scope_errors
 
 MAX_REGIONS = 25000
-STATUSES = {"parsed", "empty", "unresolved", "context", "reference"}
+STATUSES = {"parsed", "empty", "unresolved", "context", "reference", "header"}
 KINDS = {"grid", "text", "page"}
 REASONS = {
     "original_cells",
@@ -32,6 +35,7 @@ REASONS = {
     "observed_result_references",
     "unsupported_result_reference",
     "conflicting_result_references",
+    "original_header_only",
 }
 
 
@@ -44,6 +48,8 @@ def source_record(
     status: str,
     reason: str,
     row_count: int,
+    *,
+    layout: dict | None = None,
 ) -> dict[str, Any]:
     record = {
         "page_no": page_no,
@@ -59,6 +65,8 @@ def source_record(
     record["region_id"] = hashlib.sha256(
         json.dumps(identity, ensure_ascii=False, sort_keys=True).encode()
     ).hexdigest()[:32]
+    if layout is not None:
+        record["layout"] = layout
     _validate_region(record)
     return record
 
@@ -66,7 +74,7 @@ def source_record(
 def _validate_region(record: dict) -> None:
     if (
         not isinstance(record, dict)
-        or set(record)
+        or set(record) - {"layout"}
         != {
             "region_id",
             "page_no",
@@ -154,6 +162,17 @@ def _validate_region(record: dict) -> None:
         raise ValueError(
             "Activity source identity does not match its original observation"
         )
+    validate_layout(record)
+    if (
+        record["status"] == "header" or record["reason"] == "original_header_only"
+    ) and not (
+        record["status"] == "header"
+        and record["reason"] == "original_header_only"
+        and record["kind"] == "grid"
+        and record.get("layout")
+        and record["layout"]["data_start"] == len(record["layout"]["ys"]) - 1
+    ):
+        raise ValueError("Malformed original header-only source")
 
 
 def coverage_packet(
@@ -262,6 +281,8 @@ def coverage_errors(
         for page in set(packet["seed_pages"]) | set(packet["discovered_pages"])
     ):
         raise ValueError("Activity seed page is absent from its coverage proof")
+    errors.extend(layout_scope_errors(packet["regions"]))
+    errors.extend(table_row_errors(packet["regions"], rows))
     if packet["references"] and rows is None:
         errors.append(
             "Original result references require their current source rows for validation."

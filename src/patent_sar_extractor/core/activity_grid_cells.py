@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import re
-from dataclasses import replace
 from itertools import pairwise
 
-from .activity_header_metrics import normalize_metric_text
+from .activity_continuation_policy import continuation_prefix
 from .activity_identity import is_value, normalize_compound, normalize_value
 from .activity_metadata import metadata_role
 from .activity_models import GridSchema
@@ -17,42 +16,14 @@ from .activity_values import (
 from .source_geometry import native_region
 from .table_cells import read_cell
 
-
-def continuation_prefix(prefix: str) -> bool:
-    """Only document running headings, not new experimental prose, may pass."""
-    document_id = r"(?:WO|PCT|US|EP|CN|JP|KR)\s*/?(?:[A-Z]{1,4})?\d[\w/-]*"
-    running = re.compile(
-        rf"{document_id}(?:\s+{document_id})*|[-–—]?\s*\d+\s*[-–—]?", re.IGNORECASE
-    )
-    return all(
-        running.fullmatch(line.strip()) for line in prefix.splitlines() if line.strip()
-    )
-
-
-def continued_header_schema(
-    old: GridSchema,
-    current: GridSchema,
-    old_xs: list[float],
-    xs: list[float],
-    prefix: str,
-) -> GridSchema:
-    """Repeated header spacing cannot create a new metric on a proved continuation."""
-    if len(xs) != len(old_xs) or any(abs(a - b) > 4 for a, b in zip(xs, old_xs)):
-        return current
-
-    def canonical(text: str) -> str:
-        return re.sub(r"\s+", "", normalize_metric_text(text))
-
-    if not old.raw_headers or tuple(map(canonical, old.raw_headers)) != tuple(
-        map(canonical, current.raw_headers)
-    ):
-        return current
-    # A new caption/prose/assay is a new context, even with identical columns.
-    if not continuation_prefix(prefix):
-        return current
-    return replace(
-        current, context=old.context, groups=old.groups, header_region=old.header_region
-    )
+__all__ = [
+    "cell_text",
+    "cell_tokens",
+    "continuation_prefix",
+    "crosses_cell",
+    "read_activity_cell",
+    "validate_grid",
+]
 
 
 def cell_tokens(
