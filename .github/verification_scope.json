@@ -26,7 +26,11 @@
     "tests/test_job_attempts.py",
     "tests/test_ocsr_label_preservation.py",
     "tests/test_ocsr_original_identity.py",
-    "tests/test_strict_acceptance.py"
+    "tests/test_strict_acceptance.py",
+    "frontend/src/model/compoundLabel.ts",
+    "frontend/tests/identifier-labels.test.tsx",
+    "frontend/tests/record-coverage.test.tsx",
+    "frontend/e2e/product-version.spec.ts"
   ],
   "python_modules": [
     "tests.test_ocsr_original_identity",
@@ -60,7 +64,15 @@
     "tests.test_strict_acceptance.StrictAcceptanceTests.test_smiles_cache_non_clean_result_does_not_block_retry",
     "tests.test_strict_acceptance.StrictAcceptanceTests.test_smiles_runner_defaults_to_decimer_only"
   ],
-  "frontend_tests": [],
+  "frontend_tests": [
+    "frontend/tests/identifier-labels.test.tsx",
+    "frontend/tests/original-id-labels.test.tsx",
+    "frontend/tests/record-coverage.test.tsx",
+    "frontend/tests/i18n-workbench-chemistry.test.tsx",
+    "frontend/tests/corrections.test.tsx",
+    "frontend/tests/compound-column.test.tsx",
+    "frontend/tests/table-column-controls.test.tsx"
+  ],
   "browser_tests": [
     "frontend/e2e/product-version.spec.ts"
   ]

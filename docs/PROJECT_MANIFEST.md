@@ -12,6 +12,8 @@
   stay unchanged. Historical unproved masks remain unavailable, not promoted or
   rewritten; malformed current proof is rejected. No provider call or automatic
   real-task run. Controlled tests do not imply universal scientific acceptance.
+  The existing frontend compound-label helper localizes only known generated
+  placeholders; no raw/source/manual identifier, correction or data contract changes.
 
 - Literal-ID ownership: `printed_identifiers.py` owns bounded whole identifiers,
   wrapper/case/width equivalence and original fragment conflicts. Caption/cell/

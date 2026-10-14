@@ -13,6 +13,10 @@ OCSR observation2/model caches, original assets or manual audit. No model/queue/
 dependency/API/SQL change or automatic task replay. Controlled pixel/native/rotation
 tests are engineering evidence, not proof of universal recall or chemical accuracy.
 
+The shared UI label renderer localizes only the exact application-generated
+unconfirmed source placeholder. Original printed labels, explicit identifiers,
+user edits, internal routes/joins and correction payloads stay verbatim.
+
 One bounded literal-ID authority now serves structure captions/cells/native joins,
 numbered source proof, visible evidence and activity identity. Prefixes, suffixes,
 zeros and complete identifiers survive; case/one-to-one fullwidth normalization

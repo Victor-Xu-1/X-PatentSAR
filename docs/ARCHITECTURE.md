@@ -18,6 +18,12 @@ coordinate limits are explicit; missing geometry preserves the source unchanged.
 There is no new model/provider/queue/store/dependency or API/SQL migration. Native
 and rotated controlled images do not certify every patent or full chemical graphs.
 
+The existing frontend `compoundLabel` renderer also recognizes the exact generated
+unconfirmed source namespace/flags, and localizes only its application-owned prefix.
+Table/details/image accessibility/copy share that same renderer. Original labels,
+user corrections and canonical route/join keys are not translated or rewritten;
+an unchanged correction draft still round-trips the original stored field.
+
 `printed_identifiers.py` is the pure literal grammar/normalization/fragment-conflict
 authority. `activity_identity` re-exports its existing pattern names, not a second
 implementation. Caption, cell, native joined label, numbered row proof, visible

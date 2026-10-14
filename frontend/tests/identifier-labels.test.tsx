@@ -1,14 +1,82 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { decodeCompound } from '../src/api/decoders';
 import { CompoundCell } from '../src/features/results/CompoundCell';
 import { correctionDraft, draftFields } from '../src/features/results/correctionDraft';
+import { setLocale } from '../src/i18n';
 import { compoundLabel } from '../src/model/compoundLabel';
 import { resultColumns } from '../src/model/resultColumns';
 import { tableCopyText } from '../src/model/tableCopy';
 import { compound } from './fixtures';
 
 describe('patent-owned presentation label and stable internal identity', () => {
+  const pending = {
+    ...compound,
+    id: 'source-structure:' + 'a'.repeat(32),
+    display_id: '编号待确认 S0007',
+    structure_id: 'S0007',
+    record_kind: 'structure_only' as const,
+    activities: [],
+    flags: ['unassociated_structure', 'structure_number_unconfirmed'],
+  };
+
+  it('localizes only the generated unconfirmed source label and preserves correction identity', () => {
+    const before = structuredClone(pending);
+    setLocale('en');
+    expect(compoundLabel(pending)).toBe('Identifier unconfirmed S0007');
+    const fields = {
+      display_id: pending.display_id,
+      smiles: null,
+      structure_molfile: null,
+      activities: [],
+      property_overrides: {},
+      property_basis_smiles: null,
+    };
+    const draft = correctionDraft(fields, pending);
+    expect(draftFields(draft).display_id).toBe(pending.display_id);
+    setLocale('zh-CN');
+    expect(compoundLabel(pending)).toBe(pending.display_id);
+    expect(draftFields(draft).display_id).toBe(pending.display_id);
+    expect(pending).toEqual(before);
+  });
+
+  it('switches the real cell label and accessibility name without changing callbacks', () => {
+    const details = vi.fn();
+    render(
+      <table>
+        <tbody>
+          <tr>
+            <CompoundCell row={pending} onDetails={details} />
+          </tr>
+        </tbody>
+      </table>,
+    );
+    act(() => setLocale('en'));
+    const button = screen.getByRole('button', {
+      name: 'View Identifier unconfirmed S0007 structure details',
+    });
+    expect(button).toHaveTextContent('Identifier unconfirmed S0007');
+    fireEvent.click(button);
+    expect(details).toHaveBeenCalledWith(pending);
+    act(() => setLocale('zh-CN'));
+    expect(screen.getByRole('button', { name: '查看 编号待确认 S0007 结构详情' })).toBeVisible();
+  });
+
+  it('never translates an original or user-edited label that resembles generated copy', () => {
+    setLocale('en');
+    for (const row of [
+      { ...pending, identifier_label: pending.display_id },
+      { ...pending, id: 'Compound 7' },
+      { ...pending, flags: [] },
+      {
+        ...pending,
+        correction: { revision: 1, stale: false, has_changes: true, updated_at: '2026-10-01' },
+      },
+      { ...pending, display_id: '编号待确认 User label' },
+    ])
+      expect(compoundLabel(row)).toBe(row.identifier_label ?? row.display_id);
+  });
+
   it.each(['1', 'Example 008a', 'I-03B', '化合物 8B'])(
     'renders and copies %s without adding Compound',
     (label) => {
