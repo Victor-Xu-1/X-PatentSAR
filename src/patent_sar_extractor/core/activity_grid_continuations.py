@@ -7,7 +7,9 @@ from .activity_continuation_policy import (
     caption_prefix,
     continuation_allowed,
 )
+from .activity_headers import grid_schema
 from .activity_models import GridSchema, TableContext
+from .biology_tables import biology_grid_schema
 
 
 @dataclass(frozen=True)
@@ -24,12 +26,24 @@ def continued_panel(
     context: TableContext,
     prefix: str,
     current: GridSchema | None = None,
+    *,
+    matrix: list[list[str]] | None = None,
 ) -> GridSchema | None:
     xs, ys = region["xs"], region["ys"]
     candidates = []
     for old in previous:
         ox, oy = old.region["xs"], old.region["ys"]
         if len(ox) != len(xs):
+            continue
+        if (
+            old.schema.needs_review
+            or (old.schema.header_resolution or {}).get("status") == "unresolved"
+            or current
+            and (
+                current.needs_review
+                or (current.header_resolution or {}).get("status") == "unresolved"
+            )
+        ):
             continue
         if current and (
             tuple(map(canonical_header, current.raw_headers))
@@ -71,11 +85,18 @@ def continued_panel(
     ):
         return None
     old = candidates[0]
+    if current is None and matrix is not None:
+        repeated = biology_grid_schema(grid_schema(old.context, matrix))
+        if repeated is not None:
+            # Header rows require the same source selector, not a second carry.
+            return continued_panel(previous, page, region, context, prefix, repeated)
     if current:
         return replace(
             current,
             context=old.context,
             groups=old.groups,
             header_region=old.header_region,
+            semantic_kind=old.semantic_kind,
+            value_kinds=old.value_kinds,
         )
     return replace(old, first_data_row=0)

@@ -22,6 +22,8 @@ def prepare_layout(schema, page_no, region, tokens, prefix, regions):
         "suffix": _suffix(tokens, region, regions),
         "raw_headers": list(schema.raw_headers) if schema.first_data_row else [],
         "context": asdict(schema.context),
+        "semantic_kind": schema.semantic_kind,
+        "value_kinds": list(map(list, schema.value_kinds)),
         "columns": [
             [
                 group.id_column,
@@ -52,6 +54,8 @@ def validate_layout(record):
             "raw_headers",
             "columns",
             "context",
+            "semantic_kind",
+            "value_kinds",
         }
     ):
         raise ValueError("Malformed original table layout")
@@ -141,6 +145,27 @@ def validate_layout(record):
             used.add(column)
     if used != set(range(len(xs) - 1)):
         raise ValueError("Original table layout contains unowned columns")
+    kinds = layout["value_kinds"]
+    value_columns = {pair[0] for group in groups for pair in group[1]}
+    if (
+        layout["semantic_kind"] not in {"generic", "biology"}
+        or not isinstance(kinds, list)
+        or any(
+            not isinstance(pair, list)
+            or len(pair) != 2
+            or type(pair[0]) is not int
+            or pair[0] not in value_columns
+            or pair[1] not in {"number", "letter", "plus"}
+            for pair in kinds
+        )
+        or len({pair[0] for pair in kinds}) != len(kinds)
+        or (layout["semantic_kind"] == "generic" and bool(kinds))
+        or (
+            layout["semantic_kind"] == "biology"
+            and {pair[0] for pair in kinds} != value_columns
+        )
+    ):
+        raise ValueError("Malformed original table value roles")
     origin = layout["header_origin"]
     if origin is not None and (
         not isinstance(origin, dict)

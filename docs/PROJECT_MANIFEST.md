@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- Biology ownership: `biology_tables.py` supplies original header/context roles
+  into the same `GridSchema`; legacy independent extraction/records/hint storage
+  and both carry implementations are removed. `activity_grid_continuations` and
+  the same grid/cell/writer/layout/family/QA/Web/SAR authorities retain complete
+  original sources, reject role/context/unit conflicts and preserve missingness.
+  `cell_cross_observation.py` owns bounded printed-cross evidence and its pure
+  validator, extracted from the shared cell observer; it is not a model/parser/
+  queue. Activity8/epoch17/coverage5 invalidate changed derived source proof;
+  original assets, raw OCR/OCSR, binding5/binder14/visible11/manual audit andSAR14
+  are unchanged. No API/SQL/dependency/environment or automatic real-task change.
+  Controlled native/raster checks do not certify all formats or chemical graphs.
+
 - Continuation/row ownership: `activity_continuation_policy.py` owns literal
   boundaries and column equivalence. The existing `activity_grid_continuations`
   selector handles repeated and missing headers; the old separate helper is

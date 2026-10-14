@@ -260,7 +260,7 @@ class ActivityResultReferenceTests(unittest.TestCase):
                 doc.save(pdf)
             extract(str(pdf), {"activity_pages": [0]}, str(root / "output"))
             data = load_json(root / "output" / "activity_data.json", None)
-        self.assertEqual(data["rows"][0]["source"], "ocr_biology_cells")
+        self.assertEqual(data["rows"][0]["source"], "observed_grid_cells")
         self.assertEqual(activity_evidence_errors(data, [0]), [])
         self.assertEqual(data["coverage"]["references"][0]["status"], "resolved")
 

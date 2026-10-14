@@ -77,3 +77,6 @@ class GridSchema:
     header_region: tuple[int, tuple[float, float, float, float]] | None = None
     header_resolution: dict | None = None
     source_layout: dict | None = None
+    semantic_kind: str = "generic"
+    value_kinds: tuple[tuple[int, str], ...] = ()
+    needs_review: bool = False
