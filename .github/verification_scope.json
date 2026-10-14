@@ -25,6 +25,7 @@
     "src/patent_sar_extractor/core/table_geometry.py",
     "tests/test_activity_continuation_ownership.py",
     "tests/test_activity_header_continuation.py",
+    "tests/test_standalone.py",
     "tests/test_table_geometry.py"
   ],
   "python_modules": [
