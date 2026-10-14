@@ -8,7 +8,6 @@ from collections import Counter
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from .cell_caption_identity import refined_caption_conflicts
 from .numbered_structure_models import (
     Box,
     NumberedTableBinding,
@@ -70,10 +69,6 @@ def _confirmed_observations(
     methods: set[str] = set()
     for observation in observations:
         if not isinstance(observation, Mapping):
-            return False
-        if refined_caption_conflicts(
-            label, observation.get("parts"), observation.get("detection_parts")
-        ):
             return False
         if nonfinal_original_label(observation.get("text")):
             return False

@@ -1,20 +1,5 @@
 # Operations and troubleshooting
 
-## Complete physical caption lines
-
-Binding7/binder16 require current derived ownership proof. A detector may recognize
-only the word or digits of a complete printed caption. The existing cell observer
-checks actual terminal ink in the same original image frame and requests one
-complete-line read only where that detector lacks coverage. It retains raw detector
-fragments, whole-line coordinates/text/confidence and valid conflicts after saving.
-Other physical rows and already-covered lines are not re-read; whole cells cannot
-be squeezed across annotations. The same engine remains authoritative, with at most
-eight lines/32detections,8million pixels and12pt short-line height. Malformed rereads
-are unresolved, not invented IDs. Raw PDF/OCR/crops/model/manual history remain
-unchanged; activity10/epoch19, visible12, preparation1/rawOCSR2 andSAR14 are separate.
-Existing runs remain historical; no read/deploy auto-resumes or reprocesses patents.
-Native bold-font controls are engineering regressions, not full scientific coverage.
-
 ## Original-image recognition preparation
 
 Preparation epoch1 distinguishes a prepared DECIMER input from its original crop.
@@ -39,7 +24,7 @@ the frontend; never restart/replay a live attempt because observation timed out.
 
 ## Literal original identifiers and role admission
 
-Binding7/binder16/visible12/activity10/epoch19 require fresh derived identity and
+Binding6/binder15/visible12/activity10/epoch19 require fresh derived identity and
 role proof. The same grammar keeps complete source prefixes/suffixes/zeros, with
 only case/one-to-one printed-width equivalence. Raw text/cell observations stay
 unchanged. Limits are128characters,8digits per numeric component,12prefix and
