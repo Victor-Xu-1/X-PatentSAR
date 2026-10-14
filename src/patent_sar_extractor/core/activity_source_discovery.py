@@ -6,6 +6,7 @@ import re
 
 from .activity_header_metrics import METRIC, normalize_metric_text
 from .activity_headers import ACTIVITY_CONTEXT, context_from_text
+from .activity_source_roles import method_result_references, reported_method_source
 from .source_section_roles import section_heading
 from .source_table_markers import TABLE_MARKER
 
@@ -25,6 +26,8 @@ def declared_activity_source(text: str) -> bool:
     if not isinstance(text, str) or len(text) > 100000:
         raise ValueError("Original activity source text is outside bounds")
     for window in _original_windows(text):
+        if reported_method_source(window):
+            return True
         normalized = normalize_metric_text(window)
         if _ID_COLUMN.search(window) and METRIC.search(normalized):
             return True
@@ -37,6 +40,28 @@ def declared_activity_source(text: str) -> bool:
             ):
                 return True
     return False
+
+
+def reference_observations(text: str) -> list[dict]:
+    """Independent method/result windows, even when another grid shares the page."""
+    if not isinstance(text, str) or len(text) > 100000:
+        raise ValueError("Original reference source text is outside bounds")
+    result = []
+    for window in _original_windows(text):
+        if not reported_method_source(window):
+            continue
+        targets = method_result_references(window)
+        result.append(
+            {
+                "header": window.strip()[:1024],
+                "targets": targets,
+                "status": "reference" if targets else "unresolved",
+                "reason": "observed_result_references"
+                if targets
+                else "unsupported_result_reference",
+            }
+        )
+    return result
 
 
 def _original_windows(text: str):

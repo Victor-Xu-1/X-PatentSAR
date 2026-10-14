@@ -13,6 +13,7 @@ from dataclasses import dataclass
 
 import cv2
 
+from .activity_headers import context_from_text
 from .source_geometry import token_geometry_space
 from .table_cells import cell_image, read_cell
 
@@ -183,6 +184,7 @@ def extract_tables(
                         "geometry_space": token_geometry_space(tokens, native),
                         "page_no": page_idx + 1,
                         "table_id": schema.table_id,
+                        "raw_caption": context_from_text(prefix, prefix).raw_caption,
                         "target": schema.target,
                         "assay": schema.assay,
                         "cell_line": schema.cell_line,

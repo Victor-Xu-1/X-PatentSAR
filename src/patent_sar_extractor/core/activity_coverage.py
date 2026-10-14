@@ -12,12 +12,14 @@ from patent_sar_extractor.contracts import (
     ACTIVITY_COVERAGE_SCHEMA,
     ACTIVITY_COVERAGE_SCHEMA_VERSION,
     schema_ref,
+    schema_ref_matches,
 )
 
-from .activity_source_roles import method_page_evidence
+from .activity_result_references import result_references
+from .activity_source_roles import method_page_evidence, method_result_references
 
 MAX_REGIONS = 25000
-STATUSES = {"parsed", "empty", "unresolved", "context"}
+STATUSES = {"parsed", "empty", "unresolved", "context", "reference"}
 KINDS = {"grid", "text", "page"}
 REASONS = {
     "original_cells",
@@ -27,6 +29,9 @@ REASONS = {
     "no_supported_activity_table",
     "empty_original_cells",
     "observed_methods",
+    "observed_result_references",
+    "unsupported_result_reference",
+    "conflicting_result_references",
 }
 
 
@@ -98,6 +103,26 @@ def _validate_region(record: dict) -> None:
             and record["bbox"] is None
             and not record["table_id"]
             and method_page_evidence(record["header"])
+        )
+        or (
+            record["status"] == "reference"
+            or record["reason"] == "observed_result_references"
+        )
+        and not (
+            record["status"] == "reference"
+            and record["reason"] == "observed_result_references"
+            and record["kind"] == "page"
+            and record["bbox"] is None
+            and not record["table_id"]
+            and method_result_references(record["header"])
+        )
+        or record["reason"]
+        in {"unsupported_result_reference", "conflicting_result_references"}
+        and not (
+            record["status"] == "unresolved"
+            and record["kind"] == "page"
+            and record["bbox"] is None
+            and not record["table_id"]
         )
     ):
         raise ValueError("Malformed activity source inventory")
@@ -180,21 +205,27 @@ def coverage_packet(
         "seed_pages": seeds,
         "discovered_pages": discovered,
         "regions": records,
+        "references": result_references(records, rows),
     }
-    coverage_errors(packet, seeds)
+    coverage_errors(packet, seeds, rows=rows)
     return packet
 
 
-def coverage_errors(packet: object, seed_pages: list[int] | None) -> list[str]:
+def coverage_errors(
+    packet: object, seed_pages: list[int] | None, *, rows=None
+) -> list[str]:
     if packet is None:
         return [
             "Activity source coverage proof is missing; a fresh activity extraction is required."
         ]
     if (
         not isinstance(packet, dict)
-        or set(packet) != {"schema", "seed_pages", "discovered_pages", "regions"}
-        or packet["schema"]
-        != schema_ref(ACTIVITY_COVERAGE_SCHEMA, ACTIVITY_COVERAGE_SCHEMA_VERSION)
+        or set(packet)
+        != {"schema", "seed_pages", "discovered_pages", "regions", "references"}
+        or not schema_ref_matches(
+            packet["schema"],
+            schema_ref(ACTIVITY_COVERAGE_SCHEMA, ACTIVITY_COVERAGE_SCHEMA_VERSION),
+        )
         or not isinstance(packet["seed_pages"], list)
         or any(
             type(page) is not int or not 0 <= page < 10000
@@ -211,6 +242,8 @@ def coverage_errors(packet: object, seed_pages: list[int] | None) -> list[str]:
         and packet["seed_pages"] != sorted(set(seed_pages))
         or not isinstance(packet["regions"], list)
         or len(packet["regions"]) > MAX_REGIONS
+        or not isinstance(packet["references"], list)
+        or len(packet["references"]) > 2048
     ):
         raise ValueError("Malformed or foreign activity coverage proof")
     seen, pages, errors = set(), set(), []
@@ -229,4 +262,19 @@ def coverage_errors(packet: object, seed_pages: list[int] | None) -> list[str]:
         for page in set(packet["seed_pages"]) | set(packet["discovered_pages"])
     ):
         raise ValueError("Activity seed page is absent from its coverage proof")
+    if packet["references"] and rows is None:
+        errors.append(
+            "Original result references require their current source rows for validation."
+        )
+    else:
+        references = result_references(packet["regions"], rows)
+        if references != packet["references"]:
+            raise ValueError(
+                "Result-reference links do not match the original regions and cells"
+            )
+        errors.extend(
+            f"Unresolved original result reference {ref['table_id']} ({ref['status']}, {ref['source_region_id']})."
+            for ref in references
+            if ref["status"] != "resolved"
+        )
     return errors

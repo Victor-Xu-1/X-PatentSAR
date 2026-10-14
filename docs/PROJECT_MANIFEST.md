@@ -1,5 +1,18 @@
 # Project governance manifest
 
+- Result-reference ownership: `activity_reference_observation.py` inventories
+  original method windows independently of grid success; source discovery reuses
+  the one caption/section span authority. `activity_result_references.py` proves
+  literal targets from actual named regions and their complete row/cell evidence,
+  never another parsed page, fabricated conditions, locator-only consensus or
+  stored resolved flags. Coverage3 is rechecked by the same core/Web/SAR policy.
+  `activity_text_rows.py` is the extracted pure original reader, shared by one text
+  coordinator and proof validation; the old inline parser/unused helper is removed.
+  Activity6/epoch15 keep older derived artifacts historical; raw sources/manual
+  history/SAR engine14/queues/API/SQL/dependencies/strength rules stay unchanged.
+  Reused IDs/unproved continuations/unknown syntax remain explicit; wider source,
+  implicit-ID/vector and chemical work is not certified complete or re-run here.
+
 - Count/source-role ownership: `activity_metadata.py` owns literal count headers
   and checked persisted count evidence, not statistical replicate inference.
   Bare `n` is preserved as unspecified `reported_n`, without guessing its meaning.
