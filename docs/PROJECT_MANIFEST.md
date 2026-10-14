@@ -1,5 +1,14 @@
 # Project governance manifest
 
+- Caption-line ownership: `cell_line_coverage.py` provides bounded original-frame
+  ink coverage to the existing `cell_ocr_lines` coordinator, only for captions.
+  `cell_caption_identity.py` rechecks detector claims in observation and serialized
+  numbered proof; overlapping fragments are not independent complete labels.
+  Valid original conflicts/nonfinal roles remain explicit. Binder16/binding7 change
+  derived ownership only; original assets/OCR/model/manual history, activity10/
+  epoch19/visible12/preparation1/rawOCSR2/SAR14/API/SQL/dependencies/queues stay.
+  Controlled fonts/negative/resource cases are not real-patent scientific acceptance.
+
 - Recognition-preparation ownership: `core/ocsr/label_mask.py` uses whole IDs and
   original caption/crop point geometry; `label_mask_proof.py` replays serialized
   proof through the existing shared stereo gate. Bottom-cluster masking/private
@@ -23,8 +32,8 @@
   reference proof refuse original conflicts; raw observations remain immutable.
   Ruled series stay in the primary cell path; bare series keep their prefix and
   explicit unpaired/duplicate conflicts. Sequence gap repair/global zip/blanket
-  conflict waiver are deleted, not retained as parallel fallbacks. Binding6/
-  binder15/visible12/activity10/epoch19 invalidate only affected derived proof;
+  conflict waiver are deleted, not retained as parallel fallbacks. Binding7/
+  binder16/visible12/activity10/epoch19 invalidate only affected derived proof;
   rawObs2/OCSR/PDF/crops/manual/coverage6/SAR14/API/SQL/queues/dependencies stay.
   Broader mixed-role/implicit/vector/chemical completeness still requires original
   scientific verification. Real runs are frontend-only; no manual artifact repair.

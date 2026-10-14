@@ -1,5 +1,16 @@
 # X-PatentSAR
 
+Caption observation now checks physically omitted terminal ink within the same
+original cell. Only short bounded lines are re-read by the existing OCR engine;
+other rows and already-covered lines are unchanged. Original detector fragments
+remain evidence, not guessed number tokens. Complete valid competing captions,
+unsupported numeric fragments and nonfinal roles cannot be overwritten. The same
+pure conflict guard rechecks saved proof in binding/recognition consumers.
+Binding7/binder16 invalidate only derived ownership, not original PDF/OCR/crops,
+model strings, manual revisions, activity10/epoch19, visible12 or SAR14. Controlled
+bold serif/sans renders reproduce and repair omitted-prefix/suffix cases; these
+checks are not all-format/scientific acceptance or permission to retry a live task.
+
 Recognition now preserves complete printed IDs through the same source authority;
 the standalone runner no longer clips numeric prefixes/suffixes. Caption cleanup
 requires an exact original caption, metadata-owned crop geometry and an isolated
@@ -27,7 +38,7 @@ intermediate/assay role. Known nonfinal headings remain source inventory, not
 numbered final compounds. Ruled series use the same primary cell path; bare-series
 observations preserve their I-prefix, and missing/duplicate owners stay explicit.
 The old integer gap correction, numeric global zip and blanket conflict waiver
-are removed. Binding6/binder15/visible12/activity10/epoch19 invalidate changed
+are removed. Binding7/binder16/visible12/activity10/epoch19 invalidate changed
 derived proof independently of unchanged raw PDF/OCR/crops/model observations,
 manual history, coverage6 and SAR14. No API/SQL/queue/dependency change. Literal
 ID limits are128characters,8digits per component,12prefix letters and4suffix

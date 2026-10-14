@@ -1,5 +1,17 @@
 # X-PatentSAR architecture
 
+`cell_line_coverage.py` supplies original image-frame envelopes for omitted caption
+ink. The existing `cell_ocr_lines` coordinator owns the single bounded detection /
+overlap / complete-line path; non-caption readers do not acquire a new fallback.
+`cell_caption_identity.py` is the pure retained detector-claim guard, shared with
+serialized numbered proof. Intersecting partial detections do not become invented
+independent IDs; valid complete literal conflicts and nonfinal roles remain review.
+Each refinement keeps its raw text, confidence, rectangle and original detections.
+Binding7/binder16 invalidate derived ownership independently of unchanged original
+assets/raw OCR/OCSR, activity10/epoch19/visible12/SAR14 and manual history. At most
+eight reads,32detections,8million pixels and12pt line height; no provider, dependency,
+queue, SQL/API migration or actual-patent computation outside the frontend.
+
 `core/ocsr/label_mask.py` owns source-caption preparation, not chemical repair.
 It reuses literal IDs, original reading proof and a metadata-owned point/pixel
 frame. Only the confirmed, isolated caption rectangle may change. The old glyph
@@ -37,7 +49,7 @@ and I-namespaces are not excluded. Cell fast/reread admission and serialized
 numbered/reference proof cannot override that original role or fragment conflict.
 Ruled I-series rows use the existing physical-cell authority. Bare series retain
 literal prefixes and report unpaired/duplicate observations as source conflicts.
-Binding6/binder15/visible12/activity10/epoch19 are independent semantic revisions;
+Binding7/binder16/visible12/activity10/epoch19 are independent semantic revisions;
 raw observation2/PDF/crop/OCSR/manual/coverage6/SAR14/API/SQL/dependencies stay.
 Limits are128characters,8digits per component,12prefix and4suffix letters; failures
 stay explicit. Source exclusions across arbitrary mixed layouts and complete
