@@ -14,6 +14,7 @@
     "src/patent_sar_extractor/core/cell_ocr_observation.py",
     "src/patent_sar_extractor/core/numbered_structure_pairs.py",
     "tests/test_caption_cell_native.py",
+    "tests/test_standalone.py",
     "tests/test_cell_line_coverage.py"
   ],
   "python_modules": [
