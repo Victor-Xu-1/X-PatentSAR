@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "base_sha": "81a486e04b20b034265f2fd5dd5d585ee01e76a8",
+  "base_sha": "128345bbf1965f839f17c57cefa10ce0fe69a024",
   "changed_paths": [
     ".github/verification_scope.json",
     "README.md",
@@ -15,7 +15,9 @@
     "src/patent_sar_extractor/core/numbered_structure_pairs.py",
     "tests/test_caption_cell_native.py",
     "tests/test_standalone.py",
-    "tests/test_cell_line_coverage.py"
+    "tests/test_cell_line_coverage.py",
+    "frontend/package.json",
+    "frontend/package-lock.json"
   ],
   "python_modules": [
     "tests.test_cell_line_coverage",
