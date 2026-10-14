@@ -5,7 +5,8 @@ from __future__ import annotations
 import re
 
 from .activity_header_metrics import METRIC, normalize_metric_text
-from .activity_headers import ACTIVITY_CONTEXT
+from .activity_headers import ACTIVITY_CONTEXT, context_from_text
+from .source_section_roles import section_heading
 from .source_table_markers import TABLE_MARKER
 
 _CAPTION = re.compile(
@@ -14,7 +15,7 @@ _CAPTION = re.compile(
 )
 _ID_COLUMN = re.compile(
     r"(?:Compound|Cmpd|Cpd|Example|化合物|实施例)\s*(?:No\.?|ID|#|编号)|"
-    r"^\s*(?:No\.|ID|编号)(?=\s|$)",
+    r"^\s*(?:No\.|ID|编号)(?=\s|\||$)",
     re.IGNORECASE | re.MULTILINE,
 )
 
@@ -23,14 +24,35 @@ def declared_activity_source(text: str) -> bool:
     """Nomination is not parsing or completeness acceptance; no numeric repair."""
     if not isinstance(text, str) or len(text) > 100000:
         raise ValueError("Original activity source text is outside bounds")
-    normalized = normalize_metric_text(text)
-    if _ID_COLUMN.search(text) and METRIC.search(normalized):
-        return True
-    return any(
-        ACTIVITY_CONTEXT.search(window) or METRIC.search(normalize_metric_text(window))
-        for marker in _CAPTION.finditer(text)
-        for window in [text[marker.start() : marker.start() + 3000]]
-    )
+    for window in _original_windows(text):
+        normalized = normalize_metric_text(window)
+        if _ID_COLUMN.search(window) and METRIC.search(normalized):
+            return True
+        if _CAPTION.search(window):
+            # A caption/continued title may nominate an unreadable source;
+            # unrelated prose or a later assay must not rename its table.
+            caption = context_from_text(window).raw_caption
+            if ACTIVITY_CONTEXT.search(caption) or METRIC.search(
+                normalize_metric_text(caption)
+            ):
+                return True
+    return False
+
+
+def _original_windows(text: str):
+    """Original table/section spans, not arbitrary overlapping character cuts.
+
+    Nomination remains conservative and never certifies absence or completeness.
+    Unknown section styles still require the independent classified/physical
+    source checks. No rows, values or identifiers are manufactured here.
+    """
+    starts, offset = [0], 0
+    for line in text.splitlines(keepends=True):
+        if offset and (_CAPTION.match(line) or section_heading(line)):
+            starts.append(offset)
+        offset += len(line)
+    for start, end in zip(starts, [*starts[1:], len(text)]):
+        yield text[start:end]
 
 
 def discover_activity_sources(doc, text_map: dict[str, str]) -> list[int]:

@@ -114,11 +114,26 @@ class HeaderColumnNativeTests(unittest.TestCase):
 
     def test_count_metadata_column_cannot_become_an_activity_by_default(self):
         doc, page, region = self.render([["No."], ["IC50", "nM"], ["n"]])
+        with doc:
+            result = refine_scanned_header(page, region, None)
+        self.assertIsNotNone(result)
+        self.assertEqual(result.raw_headers[2].strip().lower(), "n")
+        self.assertEqual(len(result.groups[0].value_columns), 1)
+        self.assertEqual(result.groups[0].metadata_columns, ((2, "reported_n"),))
+        self.assertEqual(
+            result.header_resolution["status"], "observed_header_consensus"
+        )
+
+    def test_previously_unknown_field_cannot_be_silently_removed_as_metadata(self):
+        doc, page, region = self.render([["No."], ["IC50", "nM"], ["n"]])
         original = grid_schema(
             context_from_text("Table 91. Binding assay"), [["No.", "Noise", "Noise"]]
         )
         with doc:
             result = refine_scanned_header(page, region, original)
-        self.assertEqual(result.raw_headers[2].strip().lower(), "n")
+        self.assertEqual(result.raw_headers[2], "Noise")
+        self.assertEqual(result.header_resolution["status"], "unresolved")
+        self.assertIn(2, result.header_resolution["conflicting_columns"])
+        self.assertEqual(result.groups[0].metadata_columns, ())
         self.assertIn("unknown", result.groups[0].value_columns[1][1].lower())
         self.assertNotIn("IC50", result.groups[0].value_columns[1][1])

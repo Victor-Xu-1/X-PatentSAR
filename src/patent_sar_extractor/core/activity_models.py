@@ -62,6 +62,8 @@ class ColumnGroup:
     id_column: int
     # Each pair is an original physical column and its observed metric label.
     value_columns: tuple[tuple[int, str], ...]
+    # Original count columns are owned and retained, never activity endpoints.
+    metadata_columns: tuple[tuple[int, str], ...] = ()
 
 
 @dataclass(frozen=True)

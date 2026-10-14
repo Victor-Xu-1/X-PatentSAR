@@ -2,6 +2,7 @@
 
 from .activity_grid_cells import read_activity_cell, validate_grid
 from .activity_header_metrics import distinct_value_keys
+from .activity_metadata import mark_metadata, metadata_field
 from .activity_models import ActivityRow, GridSchema
 from .source_geometry import token_geometry_space
 
@@ -26,11 +27,13 @@ def parse_grid(
                 (col for col, _ in group.value_columns),
                 distinct_value_keys([key for _, key in group.value_columns]),
             ),
+            *[(col, metadata_field(kind)) for col, kind in group.metadata_columns],
         )
         for group in schema.groups
     ]
     for row_index in range(schema.first_data_row, len(ys) - 1):
         for pair, columns in enumerate(column_groups):
+            metadata = dict(schema.groups[pair].metadata_columns)
             cells, values = [], {}
             review = (schema.header_resolution or {}).get("status") == "unresolved"
             compound = ""
@@ -39,18 +42,24 @@ def parse_grid(
                 value, observations, withheld = read_activity_cell(
                     page, tokens, bounds, identifier=key == "compound_id", native=native
                 )
-                cells.append(
-                    {
-                        "field": key,
-                        "value": value,
-                        "physical_column": column,
-                        "raw_header": schema.raw_headers[column]
-                        if schema.raw_headers
-                        else "",
-                        "bbox": list(bounds),
-                        "observations": observations,
-                    }
-                )
+                cell = {
+                    "field": key,
+                    "value": value,
+                    "physical_column": column,
+                    "raw_header": schema.raw_headers[column]
+                    if schema.raw_headers
+                    else "",
+                    "bbox": list(bounds),
+                    "observations": observations,
+                }
+                if column in metadata:
+                    cell = mark_metadata(cell, metadata[column])
+                    if not value.strip() and cell["metadata_status"] == "missing":
+                        withheld = (
+                            False  # Proved original metadata blank, never potency.
+                        )
+                    withheld |= cell["metadata_status"] == "unresolved"
+                cells.append(cell)
                 review |= (
                     withheld
                     or "unknown" in key.lower()
@@ -58,7 +67,7 @@ def parse_grid(
                 )
                 if key == "compound_id":
                     compound = value
-                else:
+                elif column not in metadata:
                     values[key] = value
             if not compound:
                 if any(

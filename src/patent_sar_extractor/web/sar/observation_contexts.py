@@ -104,7 +104,7 @@ class ObservationContexts:
                 if owners and owners != {owner}:
                     continue
                 for cell in source.cells:
-                    if cell.name != "compound_id":
+                    if cell.name != "compound_id" and not cell.metadata:
                         self._add(
                             owner,
                             cell.name,

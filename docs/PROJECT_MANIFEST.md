@@ -1,5 +1,18 @@
 # Project governance manifest
 
+- Count/source-role ownership: `activity_metadata.py` owns literal count headers
+  and checked persisted count evidence, not statistical replicate inference.
+  Bare `n` is preserved as unspecified `reported_n`, without guessing its meaning.
+  Existing coordinate/cell/header/continuation/transposed readers retain every
+  owned column while separating metadata from measurement fields. The extracted
+  `activity_text_evidence.py` serves the one text reader; no duplicate parser or
+  writer remains. Core/Web/SAR consumers recheck proof and exclude counts from
+  endpoints/contexts/ranks. Source discovery respects original caption/numbered-
+  section boundaries and keeps unreadable declared sources unresolved.
+  Activity5/epoch14 invalidate prior derived role claims without changing raw
+  OCR/PDF/structures/manual history. All unrelated epochs stay unchanged. No
+  queue/model/SQL/API migration/dependency/provider/real-task activation.
+
 - Hybrid-source ownership: `source_geometry.py` owns original native/raster scope
   and rendered point projection without another engine/cache. The existing page
   and table observers share it, keep native/raster contradiction evidence apart
@@ -9,7 +22,7 @@
   `source_cache_policy.py` proves eligible old raw scope before transport; the sole
   cache writer preserves origin/validation receipts. Integer reference versions
   use `contracts.schema_ref_matches`, not bool/float equality. RawObs2/classifier4/
-  binder13/activity13/visible10 and binding4/activity4 invalidate derived claims.
+  binder13/activity14/visible10 and binding4/activity5 invalidate derived claims.
   No new model, dependency, queue, SQL/API migration or scientific fill/rewrite.
 
 - Header-source ownership: `activity_header_observation.py` is the sole final
@@ -19,7 +32,7 @@
   Production tokens and no-row observations flow through `activity_coordinates`.
   `activity_header_evidence.py` uses the existing activity writer for one complete
   proof catalog plus checked row references, not a competing cache/store/parser.
-  Activity4/epoch13 keep historical proof and manual/raw inputs unchanged; API,
+  Activity5/epoch14 keep historical proof and manual/raw inputs unchanged; API,
   database, dependencies, models, authentication and queue do not change.
   Native-engine synthetic controls are not real-patent scientific acceptance.
 

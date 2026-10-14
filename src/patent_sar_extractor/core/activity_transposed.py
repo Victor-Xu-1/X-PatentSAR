@@ -8,6 +8,7 @@ from .activity_header_identity import header_conflict
 from .activity_header_metrics import METRIC, distinct_value_keys, normalize_metric_text
 from .activity_headers import _key
 from .activity_identity import LABEL_PREFIX, is_control, normalize_compound
+from .activity_metadata import mark_metadata, metadata_role
 from .activity_models import ActivityRow, ParsedActivity
 from .source_geometry import native_cell_text, token_geometry_space
 
@@ -52,8 +53,10 @@ def extract_transposed(page, page_no, tokens, region, matrix, context):
             and i + 1 < len(matrix)
             and all(
                 len(list(METRIC.finditer(normalize_metric_text(r[0])))) == 1
+                or metadata_role(r[0])
                 for r in matrix[i + 1 :]
             )
+            and any(METRIC.search(normalize_metric_text(r[0])) for r in matrix[i + 1 :])
         ),
         None,
     )
@@ -108,6 +111,7 @@ def extract_transposed(page, page_no, tokens, region, matrix, context):
         ]
         values = {}
         for row, key in enumerate(keys, header_row + 1):
+            metadata = metadata_role(matrix[row][0])
             bounds = (xs[col], ys[row], xs[col + 1], ys[row + 1])
             native_header = native_cell_text(
                 tokens, (xs[0], ys[row], xs[1], ys[row + 1])
@@ -116,19 +120,28 @@ def extract_transposed(page, page_no, tokens, region, matrix, context):
             value, readings, withheld = read_activity_cell(
                 page, tokens, bounds, identifier=False, native=native
             )
-            review |= withheld or "unknown" in key.lower()
-            values[key] = value
-            cells.append(
-                {
-                    "field": key,
-                    "value": value,
-                    "bbox": list(bounds),
-                    "raw_header": matrix[row][0],
-                    "raw_native_header": native_header,
-                    "observations": readings,
-                    "metric_header_bbox": [xs[0], ys[row], xs[1], ys[row + 1]],
-                }
-            )
+            if not metadata:
+                review |= withheld or "unknown" in key.lower()
+            cell = {
+                "field": key,
+                "value": value,
+                "bbox": list(bounds),
+                "raw_header": matrix[row][0],
+                "raw_native_header": native_header,
+                "observations": readings,
+                "metric_header_bbox": [xs[0], ys[row], xs[1], ys[row + 1]],
+            }
+            if metadata:
+                cell["physical_column"] = col
+                cell = mark_metadata(cell, metadata)
+                review |= (
+                    cell["metadata_status"] == "unresolved"
+                    or withheld
+                    and not (not value.strip() and cell["metadata_status"] == "missing")
+                )
+            else:
+                values[key] = value
+            cells.append(cell)
         source = {
             "page_no": page_no,
             "table_id": context.table_id,
@@ -160,7 +173,7 @@ def extract_transposed(page, page_no, tokens, region, matrix, context):
                 activity_sources=[source],
             )
         )
-        output.headers.extend(keys)
+        output.headers.extend(values)
     output.coverage.append(
         source_record(
             page_no,

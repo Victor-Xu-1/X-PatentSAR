@@ -8,6 +8,7 @@ from itertools import pairwise
 
 from .activity_header_metrics import normalize_metric_text
 from .activity_identity import is_value, normalize_compound, normalize_value
+from .activity_metadata import metadata_role
 from .activity_models import GridSchema
 from .activity_values import (
     is_explicit_missing_activity_value,
@@ -108,9 +109,15 @@ def validate_grid(region: dict, schema: GridSchema) -> None:
         raise ValueError("Activity grid boundaries must be ordered")
     if not 0 <= schema.first_data_row <= len(ys) - 1:
         raise ValueError("Activity grid data-row boundary is invalid")
+    if schema.raw_headers and len(schema.raw_headers) != len(xs) - 1:
+        raise ValueError("Activity raw headers do not match physical columns")
     owned: set[int] = set()
     for group in schema.groups:
-        for column in (group.id_column, *(col for col, _ in group.value_columns)):
+        for column in (
+            group.id_column,
+            *(col for col, _ in group.value_columns),
+            *(col for col, _ in group.metadata_columns),
+        ):
             if (
                 type(column) is not int
                 or not 0 <= column < len(xs) - 1
@@ -120,10 +127,14 @@ def validate_grid(region: dict, schema: GridSchema) -> None:
                     "Activity grid has overlapping or invalid physical column ownership"
                 )
             owned.add(column)
+        for column, kind in group.metadata_columns:
+            if (
+                not schema.raw_headers
+                or metadata_role(schema.raw_headers[column]) != kind
+            ):
+                raise ValueError("Activity count column has no original header proof")
     if owned != set(range(len(xs) - 1)):
         raise ValueError("Activity grid has unowned physical columns")
-    if schema.raw_headers and len(schema.raw_headers) != len(xs) - 1:
-        raise ValueError("Activity raw headers do not match physical columns")
 
 
 def read_activity_cell(

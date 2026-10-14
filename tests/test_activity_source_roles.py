@@ -33,6 +33,77 @@ class ActivitySourceRoleTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             declared_activity_source("x" * 100001)
 
+    def test_later_assay_section_does_not_promote_previous_synthesis_table(self):
+        for boundary in (
+            "Example 9: Binding assay",
+            "[0057] 实施例 9：生物评价",
+            "Compound 91: Preparation",
+        ):
+            source = (
+                "Table 12. NMR characterization\n"
+                "Compound ID | Proton signals\n1 | 7.1 ppm\n"
+                f"{boundary}\nCells were seeded and incubated. IC50 was determined."
+            )
+            with self.subTest(boundary=boundary):
+                self.assertFalse(declared_activity_source(source))
+
+    def test_later_table_does_not_lend_metric_to_previous_identifier_header(self):
+        self.assertFalse(
+            declared_activity_source(
+                "Compound ID | Mass\n1 | 413\n"
+                "Table 14. Reagents\nPrepared an IC50 assay probe with solvent."
+            )
+        )
+
+    def test_real_result_table_after_section_boundary_remains_discoverable(self):
+        for source in (
+            (
+                "Table 12. NMR\nCompound ID | Mass\n1 | 413\n"
+                "Example 9: Binding assay\nCells were seeded and incubated.\n"
+                "Table 99. Results\nCompound No. | IC50 (nM)\n1 | 8"
+            ),
+            "Example 9: Binding assay\nCompound No. | IC50 (nM)\n1 | 8",
+            (
+                "Table 12. NMR\nCompound ID | Mass\n1 | 413\n"
+                "Table 98. Binding assay\nNo. | EC50 (nM)\n1 | 3"
+            ),
+        ):
+            with self.subTest(source=source):
+                self.assertTrue(declared_activity_source(source))
+
+    def test_caption_only_results_are_still_nominated_for_unresolved_inventory(self):
+        from patent_sar_extractor.core.activity_coverage import (
+            coverage_errors,
+            coverage_packet,
+        )
+
+        for source in (
+            "Table 44. Binding activity\nUnreadable body",
+            "[0049] Table 44\nBinding activity\nUnreadable body",
+            "表 44\n药代动力学\nUnreadable body",
+        ):
+            with self.subTest(source=source):
+                self.assertTrue(declared_activity_source(source))
+        packet = coverage_packet([], [], [], discovered_pages=[3])
+        self.assertTrue(any("p4" in error for error in coverage_errors(packet, [])))
+
+    def test_real_native_document_preserves_page_scope_and_source_numbers(self):
+        import fitz
+
+        sources = (
+            (
+                "Table 71. NMR characterization\nCompound ID | Signals\n2 | 7.1 ppm\n"
+                "Example 92: Binding assay\nCells were seeded and incubated. IC50 measured."
+            ),
+            "Table 87. Results\nCompound No. | IC50 (nM)\n73 | 12.4\n58 | 9.1",
+            "Table 38\nBinding activity\nUnreadable body",
+        )
+        with fitz.open() as doc:
+            for source in sources:
+                page = doc.new_page()
+                page.insert_text((40, 60), source, fontsize=11)
+            self.assertEqual(discover_activity_sources(doc, {}), [1, 2])
+
     def test_partial_native_text_cannot_hide_cached_original_source_evidence(self):
         pages = [SimpleNamespace(get_text=lambda mode: "WO 2000000000 header")]
         self.assertEqual(

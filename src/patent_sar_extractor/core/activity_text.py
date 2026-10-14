@@ -27,10 +27,12 @@ from .activity_identity import (
     normalize_value,
     value_tokens,
 )
-from .activity_models import ActivityRow, ParsedActivity, TableContext
+from .activity_metadata import metadata_role
+from .activity_models import ActivityRow, ParsedActivity
+from .activity_text_evidence import text_evidence
 
 _ROW = re.compile(
-    rf"^((?:{LABEL_PREFIX})?{PRINTED_ID}|{CONTROL.pattern})(?=\s|$)\s*(.*)$",
+    rf"^((?:{LABEL_PREFIX})?{PRINTED_ID}|{CONTROL.pattern})(?=\s|\||$)\s*(.*)$",
     re.IGNORECASE,
 )
 _PREFIXED_ROWS = re.compile(
@@ -41,7 +43,7 @@ _SERIES_ROWS = re.compile(
 )
 _HEADER_START = re.compile(
     r"(?:Compound|Cmpd|Cpd|Example)\s*(?:No\.?|ID|#)|化合物编号|实施例编号|"
-    r"\bNo\.(?=\s|$)|\bID\b|\b[A-Za-z]-#",
+    r"\bNo\.(?=\s|\||$)|\bID\b|\b[A-Za-z]-#",
     re.IGNORECASE,
 )
 _STOP = re.compile(
@@ -110,51 +112,11 @@ def _find_header(lines: list[str]) -> tuple[str, int]:
         start = _HEADER_START.search(line)
         if start:
             parts.append(line[start.start() :].strip())
-        elif parts and METRIC.search(normalize_metric_text(line)):
+        elif parts and (
+            METRIC.search(normalize_metric_text(line)) or metadata_role(line)
+        ):
             parts.append(line.strip())
     return " ".join(parts), first_row
-
-
-def _text_evidence(
-    context: TableContext,
-    page_no: int,
-    row_index: int,
-    label: str,
-    keys: list[str],
-    values: list[str],
-    raw_row: str,
-    raw_header: str,
-) -> dict:
-    return {
-        "page_no": page_no,
-        "table_id": context.table_id,
-        "target": context.target,
-        "assay": context.assay,
-        "cell_line": context.cell_line,
-        "row": row_index,
-        "raw_header": raw_header[:10000],
-        "cells": [
-            {
-                "field": "compound_id",
-                "value": label,
-                "bbox": None,
-                "observations": [
-                    {"method": "declared_text_row", "text": raw_row[:10000]}
-                ],
-            },
-            *[
-                {
-                    "field": key,
-                    "value": value,
-                    "bbox": None,
-                    "observations": [
-                        {"method": "declared_text_cell", "text": raw_row[:10000]}
-                    ],
-                }
-                for key, value in zip(keys, values)
-            ],
-        ],
-    }
 
 
 def parse_segment(
@@ -191,6 +153,17 @@ def parse_segment(
     # The legend itself is not another measurement column.
     if legend and metric_count == 0:
         metric_count = 1
+    metadata_headers = {}
+    if re.search(r"\t|\|", header):
+        columns = re.split(r"\t|\|", header.strip("|"))[1:]
+        metadata_headers = {
+            index: (raw, kind)
+            for index, raw in enumerate(columns)
+            if (kind := metadata_role(raw))
+        }
+    unpositioned_metadata = not re.search(r"\t|\|", header) and any(
+        metadata_role(line) for line in lines[:first_row]
+    )
     rows = []
     for row_index, line in enumerate(lines[first_row:], start=first_row):
         if _STOP.match(line.strip()):
@@ -219,19 +192,36 @@ def parse_segment(
         elif len(values) < len(keys):
             values += [""] * (len(keys) - len(values))
         raw_values = list(values)
-        if legend and len(keys) == 1:
-            values = [legend[1].get(values[0].upper(), values[0])]
-        review = ambiguous or any(not is_value(v) for v in raw_values)
-        review |= any("unknown" in key.lower() for key in keys)
-        evidence = _text_evidence(
-            context, page_no, row_index, label, keys, values, line, header
+        measured = [
+            index for index in range(len(keys)) if index not in metadata_headers
+        ]
+        if legend and len(measured) == 1:
+            index = measured[0]
+            values[index] = legend[1].get(values[index].upper(), values[index])
+        review = ambiguous or any(not is_value(raw_values[index]) for index in measured)
+        review |= unpositioned_metadata or any(
+            "unknown" in keys[index].lower() for index in measured
+        )
+        evidence = text_evidence(
+            context,
+            page_no,
+            row_index,
+            label,
+            keys,
+            values,
+            line,
+            header,
+            metadata_headers,
+        )
+        review |= any(
+            c.get("metadata_status") == "unresolved" for c in evidence["cells"]
         )
         if legend:
             evidence["legend"] = dict(legend[1])
         rows.append(
             ActivityRow(
                 cpd=compound,
-                activity_values=dict(zip(keys, values)),
+                activity_values={keys[index]: values[index] for index in measured},
                 page_no=page_no,
                 table_id=context.table_id,
                 source="observed_text_table",

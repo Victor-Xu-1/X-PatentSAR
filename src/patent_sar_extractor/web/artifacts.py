@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
+from patent_sar_extractor.core.activity_metadata import metadata_role
 from patent_sar_extractor.core.ocsr.recognition_inputs import (
     ordered_source_results,
     recognition_inputs,
@@ -80,6 +81,8 @@ def _activities(row: dict[str, Any], *, page_count: int = 0) -> list[Activity]:
                 raise WebError(
                     422, "invalid_artifact", "Activity metric name is invalid."
                 )
+            if name.startswith("metadata:") or metadata_role(name):
+                raise provenance_error()
             # Match exact field/value before presentation truncation; equal
             # grades in different tables must not borrow each other's sources.
             contexts = sources.get((name, text(value, limit=1001)), [fallback])
