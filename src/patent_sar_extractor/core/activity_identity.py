@@ -5,9 +5,22 @@ from __future__ import annotations
 import re
 
 from .activity_values import is_explicit_missing_activity_value
+from .printed_identifiers import LABEL_PREFIX, PRINTED_ID, identifier_key
 
-PRINTED_ID = r"(?:[A-Za-z]{1,12}-)?\d{1,8}(?:-\d{1,8})*[A-Za-z]{0,4}"
-LABEL_PREFIX = r"(?:Compound|Cmpd|Cpd|Example|实施例|化合物)\s*[-:.：]?\s*"
+__all__ = [
+    "CONTROL",
+    "ID_HEADER",
+    "LABEL_PREFIX",
+    "PRINTED_ID",
+    "is_control",
+    "is_id_header",
+    "is_value",
+    "normalize_compound",
+    "normalize_value",
+    "printed_identifier_key",
+    "value_tokens",
+]
+
 CONTROL = re.compile(
     r"(?:Ref\.?\s*\d+|Reference(?:\s+\S+)?|Vehicle|DMSO|Control|"
     r"Nab[-\s]?paclitaxel|Paclitaxel)",
@@ -18,7 +31,6 @@ ID_HEADER = re.compile(
     r"No\.?|ID|编号|受试物|药物名称|[A-Za-z]-#",
     re.IGNORECASE,
 )
-_LABEL = re.compile(rf"(?:{LABEL_PREFIX})?({PRINTED_ID})", re.IGNORECASE)
 _VALUE = re.compile(
     r"(?:[<>≤≥]=?\s*)?[-+]?\d+(?:[.,]\d+)?(?:[Ee][-+]?\d+)?%?"
     r"(?:\s*(?:±|\+/-)\s*\d+(?:\.\d+)?)?"
@@ -33,9 +45,9 @@ def normalize_compound(value: str) -> str:
     text = re.sub(r"\s+", " ", str(value or "")).strip()
     if CONTROL.fullmatch(text):
         return text
-    match = _LABEL.fullmatch(text)
-    if match:
-        return f"Compound {match.group(1)}"
+    key = identifier_key(text, wrapped=True)
+    if key:
+        return f"Compound {key}"
     return ""
 
 

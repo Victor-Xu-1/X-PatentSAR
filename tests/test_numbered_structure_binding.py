@@ -390,10 +390,12 @@ class NumberedTableObservationTests(unittest.TestCase):
         self.assertFalse(result.recognized)
         self.assertEqual(calls, [])
 
-    def test_series_labels_remain_owned_by_existing_series_rule(self):
+    def test_series_labels_use_same_original_cell_and_keep_prefix(self):
         page = self._page(["I-1", "I-2"])
         result, _ = self._observe([page], [0], {"1", "2"})
-        self.assertFalse(result.recognized)
+        self.assertTrue(result.recognized)
+        self.assertEqual(result.observed_keys, frozenset({"I-1", "I-2"}))
+        self.assertFalse(result.bindings)
 
     def test_header_without_readable_ids_still_blocks_global_zip(self):
         page = self._page(["unreadable", "unreadable"])

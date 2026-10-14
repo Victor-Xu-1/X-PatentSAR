@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import re
-import unicodedata
 
 from .activity_identity import PRINTED_ID, printed_identifier_key
+from .printed_identifiers import identifier_width
 
 _HEADING = re.compile(
     r"^(?:\[\s*\d{1,8}\s*\]\s*)?"
     r"(?P<preparation>(?:(?:Synthesis|Preparation)\s+(?:of\s+)?)?)"
-    r"(?P<kind>Compound|Cmpd|Cpd|Example|实施例|化合物)\s*[-:.：]?\s*"
+    r"(?P<kind>Compound|Cmpd|Cpd|Example|Intermediate|实施例|化合物|中间体)\s*[-:.：]?\s*"
     rf"(?P<identifier>{PRINTED_ID})(?![\w/-])(?P<tail>.*)$",
     re.IGNORECASE,
 )
@@ -25,6 +25,11 @@ _ASSAY_TITLE = re.compile(
 _PREPARATION = re.compile(
     r"^(?:Synthesis|Preparation|制备|合成)(?:\b|(?=[\u4e00-\u9fff]))", re.IGNORECASE
 )
+_INTERMEDIATE_TARGET = re.compile(
+    r"^(?:(?:Synthesis|Preparation|制备|合成)\s*(?:of\s+)?)?"
+    r"(?:Intermediate|中间体)(?=[\s:.：0-9-]|$)",
+    re.IGNORECASE,
+)
 
 
 def section_heading(text: object) -> dict[str, str] | None:
@@ -32,7 +37,7 @@ def section_heading(text: object) -> dict[str, str] | None:
     raw = str(text or "").strip()
     if len(raw) > 4096:
         return None
-    match = _HEADING.fullmatch(unicodedata.normalize("NFKC", raw))
+    match = _HEADING.fullmatch(identifier_width(raw))
     if not match:
         return None
     tail = match["tail"].strip()
@@ -43,7 +48,13 @@ def section_heading(text: object) -> dict[str, str] | None:
     title = tail.lstrip(".:：) ")
     kind = match["kind"].lower()
     role = "compound_heading"
-    if kind in {"example", "实施例"} and _ASSAY_TITLE.search(title):
+    if (
+        kind in {"intermediate", "中间体"}
+        or kind in {"example", "实施例"}
+        and _INTERMEDIATE_TARGET.match(title)
+    ):
+        role = "intermediate_section"
+    elif kind in {"example", "实施例"} and _ASSAY_TITLE.search(title):
         # A synthesis/probe title with an assay word is conflicting evidence,
         # not a free exemption from ownership validation.
         role = (
@@ -57,3 +68,23 @@ def section_heading(text: object) -> dict[str, str] | None:
         "role": role,
         "line_text": raw,
     }
+
+
+def nonfinal_original_label(text: object) -> bool:
+    """A literal nonfinal role may not be relabelled by matching OCR strings.
+
+    This is a role guard, not an intermediate-ID or I-prefix guess. Compound
+    namespaces and references to an intermediate in a final synthesis title do
+    not change the declared source role. Unrecognized titles remain unrecognized.
+    """
+    raw = str(text or "").strip()
+    if len(raw) > 4096:
+        return False
+    observed = section_heading(raw)
+    if observed:
+        return observed["role"] in {
+            "intermediate_section",
+            "assay_section",
+            "ambiguous_heading",
+        }
+    return bool(_INTERMEDIATE_TARGET.match(identifier_width(raw)))

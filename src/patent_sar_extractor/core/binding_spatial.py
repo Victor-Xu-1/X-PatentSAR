@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import logging
-import re
 from collections.abc import Sequence
 from dataclasses import dataclass
-from itertools import pairwise
 from types import MappingProxyType
 from typing import (
     Any,
@@ -27,9 +25,6 @@ from .binding_candidates import (
     _active_ordered_bindings,
     _build_binding_from_structure,
     _normalise_binding_to_compound,
-)
-from .binding_geometry import (
-    _group_structures_by_row,
 )
 from .binding_labels import (
     _active_label_keys,
@@ -310,6 +305,12 @@ def collect_spatial_bindings(
             BindingConflict(issue.label, issue.page_index, issue.reason)
             for issue in numbered.issues
         ),
+        *(
+            BindingConflict(
+                label, page_index, "unproved_or_duplicate_original_series_label"
+            )
+            for page_index, label in series.unresolved_sources
+        ),
     )
     ownership = SourceOwnership(
         page_indices=frozenset(recognized_pages),
@@ -456,17 +457,13 @@ def _extract_authoritative_structure_table_sequence_bindings(
             binding["authoritative_table_label_count"] = series.label_count
             binding["authoritative_table_structure_count"] = len(processed_structures)
             binding["authoritative_table_pages"] = page_indices
-            binding["authoritative_table_visible_label"] = f"I-{pair.label}"
+            binding["authoritative_table_visible_label"] = pair.label
             binding["authoritative_table_label_y0"] = round(pair.label_y, 2)
             binding["authoritative_table_pair_distance"] = round(
                 pair.center_distance, 2
             )
-            binding["authoritative_table_source_label"] = f"I-{pair.source_label}"
-            if pair.correction_reason:
-                binding["authoritative_table_label_corrected"] = True
-                binding["authoritative_table_label_correction_reason"] = (
-                    pair.correction_reason
-                )
+            binding["authoritative_table_source_label"] = pair.source_label
+            binding["authoritative_table_raw_source_label"] = pair.raw_source_label
             bindings.append(binding)
         logger.info(
             "   权威 I-NNN 结构表坐标绑定: %d active rows, labels=%d, structures=%d",
@@ -478,71 +475,6 @@ def _extract_authoritative_structure_table_sequence_bindings(
         # global-sequence rule, which cannot resolve its spatial uncertainty.
         return bindings
 
-    # The source-led coordinator never enters the legacy sequence adapter.
-    # Retained callers must explicitly supply their old activity-filter scope.
-    if not active_keys:
-        return []
-
-    # Only the numeric global zip requires a complete contiguous table. The
-    # I-series rule above pairs within each observed original-PDF page.
-    if any(b != a + 1 for a, b in pairwise(page_indices)):
-        return []
-    label_re = re.compile(
-        r"(?:Compound|Cpd|化合物|实施例)\s*[-:]?\s*([1-9]\d{0,3})(?![\dA-Za-z-])",
-        re.IGNORECASE,
-    )
-    labels = {
-        int(match.group(1))
-        for page_idx in page_indices
-        for match in label_re.finditer(str(pages_text.get(page_idx, "") or ""))
-    }
-    if len(labels) < 6:
-        return []
-    ordered_labels = sorted(labels)
-    if ordered_labels != list(range(ordered_labels[0], ordered_labels[-1] + 1)):
-        return []
-
-    table_structures: list[dict] = []
-    for page_idx in page_indices:
-        page_structs = [
-            struct
-            for struct in processed_structures
-            if int(struct.get("page_no") or 0) == page_idx + 1
-        ]
-        rows = _group_structures_by_row(page_structs, y_threshold=42.0)
-        table_structures.extend(
-            struct
-            for row in rows
-            for struct in sorted(row, key=lambda item: float(item.get("x0") or 0))
-        )
-    if len(table_structures) != len(ordered_labels):
-        logger.warning(
-            "   权威结构表全局序列未启用: labels=%d, structures=%d",
-            len(ordered_labels),
-            len(table_structures),
-        )
-        return []
-
-    bindings: list[dict] = []
-    for position, (compound_num, struct) in enumerate(
-        zip(ordered_labels, table_structures), start=1
-    ):
-        key = str(compound_num)
-        if key not in active_keys:
-            continue
-        binding = _build_binding_from_structure(struct, key)
-        binding["binding_rule"] = "authoritative_structure_table_sequence"
-        binding["authoritative_table_sequence_confirmed"] = True
-        binding["authoritative_table_sequence_position"] = position
-        binding["authoritative_table_label_count"] = len(ordered_labels)
-        binding["authoritative_table_structure_count"] = len(table_structures)
-        binding["authoritative_table_pages"] = page_indices
-        bindings.append(binding)
-    if bindings:
-        logger.info(
-            "   📋 权威结构表跨页全局顺序绑定: %d/%d active rows, pages=%s",
-            len(bindings),
-            len(ordered_labels),
-            page_indices,
-        )
-    return bindings
+    # Count/order equality never proves original ownership. Unsupported sources
+    # remain unresolved rather than falling through to a numeric global zip.
+    return []

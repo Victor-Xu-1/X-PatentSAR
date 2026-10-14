@@ -14,9 +14,9 @@ from .cell_cross_observation import observe_printed_crosses
 from .cell_ocr_observation import OCRObservation, observe_cell
 from .compound_caption import prefixed_label
 from .page_ocr_cache import get_ocr_engine
+from .printed_identifiers import identifier_fragments_conflict, identifier_key
 from .source_geometry import native_cell_text, native_region
-
-_ID = re.compile(r"[1-9]\d{0,3}[A-Z]?", re.IGNORECASE)
+from .source_section_roles import nonfinal_original_label
 
 
 @dataclass
@@ -41,13 +41,12 @@ def _normalize(value: str, kind: str) -> str:
             )
             else ""
         )
-    cleaned = re.sub(r"\s+", "", value).replace("＋", "+")
     if kind == "id":
-        cleaned = cleaned.removesuffix(".")
+        return identifier_key(value, wrapped=True, terminal_period=True)
     if kind == "label":
-        return prefixed_label(cleaned)
+        return prefixed_label(value)
+    cleaned = re.sub(r"\s+", "", value).replace("＋", "+")
     pattern = {
-        "id": _ID,
         "letter": re.compile(r"[A-G](?:[12])?", re.IGNORECASE),
         "plus": re.compile(r"\+{1,3}"),
     }[kind]
@@ -101,10 +100,18 @@ def read_cell(page, bounds, tokens: list[dict], kind: str, native: bool) -> Cell
     ]
     native_raw = native_cell_text(tokens, bounds)
     native_value = _normalize(native_raw, kind) if native_raw else ""
+    nonfinal = kind in {"id", "label"} and any(
+        nonfinal_original_label(text) for text in (raw, native_raw) if text
+    )
     if not native and native_raw:
         observations.append({"method": "native_cell", "text": native_raw})
     if native:
-        return CellReading(initial, bounds, observations, not bool(initial))
+        return CellReading(
+            "" if nonfinal else initial,
+            bounds,
+            observations,
+            nonfinal or not bool(initial),
+        )
     if kind == "plus":
         proof = observe_printed_crosses(cell_image(page, bounds, 450), bounds)
         value = proof["text"]
@@ -118,7 +125,27 @@ def read_cell(page, bounds, tokens: list[dict], kind: str, native: bool) -> Cell
     first_read = _ocr_cell(page, bounds, kind, 400)
     first = first_read.value
     observations.append(first_read.evidence(400, bounds))
-    if first and first == initial and (not native_value or first == native_value):
+
+    def original_id_conflict(candidate):
+        return (
+            nonfinal
+            or kind in {"id", "label"}
+            and any(
+                text
+                and not _normalize(text, kind)
+                and identifier_fragments_conflict(
+                    text, candidate, caption=kind == "label"
+                )
+                for text in (raw, native_raw)
+            )
+        )
+
+    if (
+        first
+        and first == initial
+        and (not native_value or first == native_value)
+        and not original_id_conflict(first)
+    ):
         return CellReading(first, bounds, observations)
     second_read = _ocr_cell(page, bounds, kind, 600)
     second = second_read.value
@@ -128,9 +155,13 @@ def read_cell(page, bounds, tokens: list[dict], kind: str, native: bool) -> Cell
         and first == second
         and (not initial or first == initial)
         and (not native_value or first == native_value)
+        and not original_id_conflict(first)
     )
+    value = first if agreed else initial or first or second
+    if kind in {"id", "label"} and not agreed:
+        value = ""  # Candidates stay in raw observations, not the ID universe.
     return CellReading(
-        first if agreed else initial or first or second,
+        value,
         bounds,
         observations,
         not agreed,

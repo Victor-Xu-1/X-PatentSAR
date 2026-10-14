@@ -1,5 +1,29 @@
 # Operations and troubleshooting
 
+## Literal original identifiers and role admission
+
+Binding6/binder15/visible12/activity10/epoch19 require fresh derived identity and
+role proof. The same grammar keeps complete source prefixes/suffixes/zeros, with
+only case/one-to-one printed-width equivalence. Raw text/cell observations stay
+unchanged. Limits are128characters,8digits per numeric component,12prefix and
+4suffix letters; excess is not truncated into another ID. Internal whitespace,
+decimal/hash fragments and superscript notes cannot manufacture a compound.
+Even agreeing OCR rereads cannot erase a valid original fragment/role conflict;
+unsupported ID candidates stay in observations, not the formal ID universe.
+Declared Intermediate headings and Example titles targeting an intermediate are
+source inventory rather than final compounds. A final title mentioning an
+intermediate, or a literal I-prefix, does not imply nonfinal identity. All original
+sections still stop diagram ownership. Ruled I-series use the same cell path;
+bare series keep I-prefixes, with missing/duplicate owners explicitly unresolved.
+Integer sequence repair, global numeric zip and blanket conflict suppression are
+removed. Raw PDF/OCR/crops/model strings/manual audit/coverage6/SAR14 stay intact;
+no schema migration in place, extra queue, provider or environment installation.
+This release does not certify arbitrary mixed-layout intermediate exclusion,
+implicit IDs, vector completeness or chemistry. Verify the remaining scientific
+requirements by submitting actual tasks through the frontend, retaining each
+attempt and export. Never script-compute the private patent, hand-edit its results,
+relax QA or restart/replay a live job merely because observation times out.
+
 ## Original unruled activity source proof
 
 Activity9/epoch18/coverage6 store one bounded original text observation catalog

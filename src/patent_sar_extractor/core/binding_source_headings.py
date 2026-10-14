@@ -42,7 +42,7 @@ def observed_heading_blocks(
                     source_sections.append(
                         {**observation, "page_no": page_index + 1, "bbox": line["bbox"]}
                     )
-                if observation["role"] == "assay_section":
+                if observation["role"] in {"assay_section", "intermediate_section"}:
                     continue
                 blocks.append(
                     {
