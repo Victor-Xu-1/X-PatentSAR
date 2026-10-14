@@ -148,7 +148,36 @@ def load_qa_inputs(output_dir: str, patent_id: str = "") -> QAInputs:
         if _suspicious_smiles_elements(r)
         or r.get("OCSR_quality_flag") == "suspicious_element"
     ]
-    stereo_findings = [stereo_record_error(record) for record in smiles]
+    binding_lookup = {
+        (
+            normalize_compound(binding.get("cpd", "")),
+            binding.get("structure_id"),
+        ): binding
+        for binding in bindings
+        if isinstance(binding, dict)
+    }
+    structure_lookup = {
+        item.get("structure_id"): item
+        for item in (
+            structures.get("structures", []) if isinstance(structures, dict) else []
+        )
+        if isinstance(item, dict)
+    }
+    stereo_findings = [
+        stereo_record_error(
+            record,
+            binding_lookup.get(
+                (
+                    normalize_compound(record.get("cpd_id", "")),
+                    record.get("structure_id"),
+                )
+            ),
+            structure_lookup.get(
+                record.get("ocsr_source_structure_id") or record.get("structure_id")
+            ),
+        )
+        for record in smiles
+    ]
     valid_smiles_records = [
         r
         for index, r in enumerate(smiles)

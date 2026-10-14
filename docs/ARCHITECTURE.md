@@ -1,5 +1,23 @@
 # X-PatentSAR architecture
 
+`core/ocsr/label_mask.py` owns source-caption preparation, not chemical repair.
+It reuses literal IDs, original reading proof and a metadata-owned point/pixel
+frame. Only the confirmed, isolated caption rectangle may change. The old glyph
+cluster heuristic and duplicated short-ID interpreter are deleted. The existing
+normalization module supplies one atomic prepared-image publisher. `label_mask_proof`
+is the pure serialized replay used by the shared stereo gate; runner/application,
+QA, export and Web compare original binding/crop facts independently. No saved
+mask flag or internally consistent moved rectangle can substitute those facts.
+Original source hash/stereo inspection is separate from the actual prepared model
+input. Preparation epoch1 belongs to stage fingerprints and observation metadata;
+raw OCSR observation2 remains exact image/model content, so safe raw reuse survives.
+Old unproved masks are historical/unavailable in Web, never current chemistry;
+current corrupt proof is still refused. Checkpoint relocation carries original and
+prepared paths without touching molecule strings/manual decisions. Byte/pixel/label/
+coordinate limits are explicit; missing geometry preserves the source unchanged.
+There is no new model/provider/queue/store/dependency or API/SQL migration. Native
+and rotated controlled images do not certify every patent or full chemical graphs.
+
 `printed_identifiers.py` is the pure literal grammar/normalization/fragment-conflict
 authority. `activity_identity` re-exports its existing pattern names, not a second
 implementation. Caption, cell, native joined label, numbered row proof, visible

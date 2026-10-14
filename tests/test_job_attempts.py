@@ -614,6 +614,7 @@ class AttemptTests(WebFixture, unittest.TestCase):
             "structure_image": str(source / paths[0]),
             "ocsr_structure_image": str(source / paths[1]),
             "ocsr_original_input": str(source / paths[1]),
+            "ocsr_label_mask_source": str(source / paths[0]),
             "engine_attempts": [
                 {
                     "input_image": str(source / paths[1]),
@@ -637,6 +638,7 @@ class AttemptTests(WebFixture, unittest.TestCase):
         self.assertEqual(moved["structure_image"], str(target / paths[0]))
         self.assertEqual(moved["ocsr_structure_image"], str(target / paths[1]))
         self.assertEqual(moved["ocsr_original_input"], str(target / paths[1]))
+        self.assertEqual(moved["ocsr_label_mask_source"], str(target / paths[0]))
         for index in range(2):
             self.assertEqual(
                 moved["engine_attempts"][index]["smiles"],

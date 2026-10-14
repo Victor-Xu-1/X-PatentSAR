@@ -5,18 +5,21 @@ Reads binding results, runs OCSR engines on structure images,
 performs RDKit QC, and produces comprehensive SMILES results.
 """
 
-import hashlib
 import os
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from patent_sar_extractor.contracts import OCSR_OBSERVATION_VERSION
+from patent_sar_extractor.contracts import (
+    OCSR_OBSERVATION_VERSION,
+    OCSR_PREPARATION_VERSION,
+)
 
 from .engines.base_engine import BaseOCSREngine
 from .engines.decimer_engine import DECIMEREngine
 from .image_preprocess import preprocess_structure_image
+from .label_mask import mask_visible_label as _mask_visible_label_for_ocsr
 from .smiles_cache import SmilesCache, compute_image_sha256
 from .smiles_qc import COMMON_FINAL_PRODUCT_ELEMENTS, qc_smiles
 from .stereo_evidence import observe_stereo_symbols, source_checked_qc
@@ -36,196 +39,6 @@ def _resolve_ocsr_image_path(item: dict) -> str:
                 continue  # Known page-render artifacts are not molecular crops.
             return path
     return ""  # Missing source files cannot be guessed from a basename/index.
-
-
-def _compound_label_for_ocsr_mask(item: dict) -> str:
-    """Return a short visible compound label that may contaminate OCSR crops."""
-    labels = []
-    for key in ("visible_label", "label"):
-        value = str(item.get(key) or "").strip()
-        if value:
-            labels.append(value)
-    for candidate in item.get("visible_label_candidates") or []:
-        if isinstance(candidate, dict):
-            value = str(candidate.get("label") or "").strip()
-            if value:
-                labels.append(value)
-    for key in ("cpd", "cpd_id", "compound_id", "example_id"):
-        value = str(item.get(key) or "").strip()
-        match = re.search(
-            r"(?:compound|cpd|example|实施例|化合物)?\s*[-:]?\s*(\d{1,4}[A-Z]?)",
-            value,
-            re.IGNORECASE,
-        )
-        if match:
-            labels.append(match.group(1).upper())
-    for label in labels:
-        label = re.sub(r"\s+", "", str(label or "")).upper()
-        if re.fullmatch(r"\d{1,4}[A-Z]?", label):
-            return label
-    return ""
-
-
-def _component_overlap(
-    a: tuple[int, int, int, int], b: tuple[int, int, int, int]
-) -> float:
-    _ax0, ay0, _ax1, ay1 = a
-    _bx0, by0, _bx1, by1 = b
-    overlap = max(0, min(ay1, by1) - max(ay0, by0))
-    return overlap / max(1, min(ay1 - ay0, by1 - by0))
-
-
-def _detect_visible_label_bbox(
-    image_path: str, label: str
-) -> tuple[int, int, int, int] | None:
-    """Locate a printed compound number inside a structure crop.
-
-    The detector is intentionally conservative: it only masks compact, isolated
-    glyph clusters in the lower half of the crop and near the horizontal center.
-    Chemical atom labels and bonds that are part of the molecular graph should
-    remain untouched and continue through strict QC.
-    """
-    if not label:
-        return None
-    try:
-        import cv2
-        import numpy as np
-        from PIL import Image
-    except ImportError:
-        return None
-
-    try:
-        image = Image.open(image_path).convert("L")
-    except (OSError, ValueError):
-        return None
-    width, height = image.size
-    if width < 40 or height < 28:
-        return None
-    arr = np.array(image)
-    binary = (arr < 145).astype("uint8")
-    count, _labels, stats, centroids = cv2.connectedComponentsWithStats(binary, 8)
-
-    components: list[dict] = []
-    for idx in range(1, count):
-        x, y, w, h, area = [int(v) for v in stats[idx]]
-        if area < 4 or h < 4 or w < 1:
-            continue
-        x1 = x + w
-        y1 = y + h
-        center_x, center_y = centroids[idx]
-        if y < height * 0.62 or center_y < height * 0.68:
-            continue
-        if h > max(26, height * 0.34) or w > max(40, width * 0.22):
-            continue
-        if abs(center_x - width / 2) > max(48, width * 0.32):
-            continue
-        fill = area / max(1, w * h)
-        if fill < 0.08:
-            continue
-        components.append(
-            {
-                "bbox": (x, y, x1, y1),
-                "center_x": float(center_x),
-                "center_y": float(center_y),
-                "area": area,
-            }
-        )
-
-    if not components:
-        return None
-
-    best: tuple[float, tuple[int, int, int, int]] | None = None
-    max_label_width = max(18, min(width * 0.24, 10 * len(label) + 18))
-    for seed in components:
-        cluster = [seed]
-        sx0, sy0, sx1, sy1 = seed["bbox"]
-        for comp in components:
-            if comp is seed:
-                continue
-            bx0, by0, bx1, by1 = comp["bbox"]
-            if _component_overlap((sx0, sy0, sx1, sy1), (bx0, by0, bx1, by1)) < 0.35:
-                continue
-            gap = max(0, max(bx0 - sx1, sx0 - bx1))
-            if gap > max(16, height * 0.18):
-                continue
-            cluster.append(comp)
-            sx0, sy0 = min(sx0, bx0), min(sy0, by0)
-            sx1, sy1 = max(sx1, bx1), max(sy1, by1)
-
-        bbox = (sx0, sy0, sx1, sy1)
-        bw, bh = sx1 - sx0, sy1 - sy0
-        if bw < 3 or bh < 5:
-            continue
-        if bw > max_label_width or bh > max(24, height * 0.26):
-            continue
-        if bw / max(1, len(label)) > 14:
-            continue
-        if len(label) > 1 and len(cluster) < min(2, len(label)):
-            continue
-        if len(cluster) > max(6, len(label) + 3):
-            continue
-        center_x = (sx0 + sx1) / 2
-        center_y = (sy0 + sy1) / 2
-        score = center_y / height
-        score += 0.35 * (
-            1.0 - min(1.0, abs(center_x - width / 2) / max(1.0, width / 2))
-        )
-        score += 0.15 * min(1.0, len(cluster) / max(1, len(label)))
-        if best is None or score > best[0]:
-            best = (score, bbox)
-
-    return best[1] if best else None
-
-
-def _mask_visible_label_for_ocsr(
-    image_path: str, item: dict, output_dir: str = ""
-) -> tuple[str, dict]:
-    """Create a cached OCSR-only image with the visible compound number removed."""
-    label = _compound_label_for_ocsr_mask(item)
-    bbox = _detect_visible_label_bbox(image_path, label)
-    if not bbox:
-        return image_path, {}
-    try:
-        from PIL import Image, ImageDraw
-    except ImportError:
-        return image_path, {}
-
-    try:
-        image = Image.open(image_path).convert("RGB")
-    except (OSError, ValueError):
-        return image_path, {}
-    width, height = image.size
-    x0, y0, x1, y1 = bbox
-    pad_x = max(3, int(width * 0.01))
-    pad_y = max(3, int(height * 0.025))
-    x0 = max(0, x0 - pad_x)
-    y0 = max(0, y0 - pad_y)
-    x1 = min(width, x1 + pad_x)
-    y1 = min(height, y1 + pad_y)
-    if x1 <= x0 or y1 <= y0:
-        return image_path, {}
-
-    source_hash = compute_image_sha256(image_path)[:16]
-    safe_label = re.sub(r"[^A-Z0-9_-]+", "_", label or "label")
-    if output_dir:
-        clean_dir = Path(output_dir) / "ocsr_label_masked"
-    else:
-        clean_dir = Path(image_path).resolve().parent / ".ocsr_label_masked"
-    clean_dir.mkdir(parents=True, exist_ok=True)
-    name_key = hashlib.sha1(
-        f"{image_path}|{source_hash}|{safe_label}|{x0},{y0},{x1},{y1}".encode()
-    ).hexdigest()[:12]
-    output_path = clean_dir / f"{Path(image_path).stem}_{safe_label}_{name_key}.png"
-
-    draw = ImageDraw.Draw(image)
-    draw.rectangle((x0, y0, x1, y1), fill="white")
-    image.save(output_path)
-    return str(output_path), {
-        "ocsr_label_masked": True,
-        "ocsr_label_mask_source": image_path,
-        "ocsr_label_mask_label": label,
-        "ocsr_label_mask_bbox": [x0, y0, x1, y1],
-    }
 
 
 def _qc_ocr_smiles(raw_smiles: str | None) -> tuple[str | None, dict, bool]:
@@ -388,6 +201,7 @@ class SmilesConverter:
         cpd_id = item.get("cpd", "")
         image_path = item.get("image_path", "")
         ocsr_image_path = _resolve_ocsr_image_path(item)
+        original_input = ocsr_image_path
         ocsr_label_mask_info: dict = {}
         if ocsr_image_path and os.path.isfile(ocsr_image_path):
             ocsr_image_path, ocsr_label_mask_info = _mask_visible_label_for_ocsr(
@@ -408,7 +222,9 @@ class SmilesConverter:
             "structure_id": structure_id,
             "structure_image": image_path,
             "ocsr_structure_image": ocsr_image_path,
-            "ocsr_original_input": ocsr_image_path,
+            "ocsr_original_input": original_input,
+            "OCSR_preparation_version": OCSR_PREPARATION_VERSION,
+            "ocsr_source_structure_id": item.get("source_structure_id") or structure_id,
             "source_image_path": str(item.get("source_image_path") or image_path),
             "bbox": f"{struct_x0},{struct_y0}" if struct_x0 is not None else "",
             "raw_smiles": None,
@@ -428,6 +244,8 @@ class SmilesConverter:
             "image_hash": None,
         }
         result.update(ocsr_label_mask_info)
+        if item.get("_ocsr_source_frame_unavailable"):
+            result["OCSR_source_frame_status"] = "unavailable"
 
         if not ocsr_image_path or not os.path.isfile(ocsr_image_path):
             result["OCSR_status"] = "image_missing"
@@ -453,7 +271,7 @@ class SmilesConverter:
                 return {"item": item, "result": result, "ready": False}
 
         try:
-            image_hash = compute_image_sha256(ocsr_image_path)
+            image_hash = compute_image_sha256(original_input)
             result["image_hash"] = image_hash
         except (OSError, ValueError) as e:
             result["OCSR_status"] = "image_missing"
@@ -462,7 +280,7 @@ class SmilesConverter:
 
         try:
             # Always inspect the source crop, never a model-normalized retry.
-            evidence = observe_stereo_symbols(ocsr_image_path)
+            evidence = observe_stereo_symbols(original_input)
         except (OSError, ValueError) as exc:
             result.update(
                 OCSR_status="review_required",

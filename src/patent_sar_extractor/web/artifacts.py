@@ -426,7 +426,12 @@ class ArtifactView:
                 smile.get("smiles") or smile.get("canonical_smiles"), limit=10000
             )
             recognition = recognition_status(
-                smile, current=current(p.get("smiles"), "smiles")
+                smile,
+                current=current(p.get("smiles"), "smiles"),
+                binding=binding,
+                source_record=structures.get(
+                    smile.get("ocsr_source_structure_id") or structure_id
+                ),
             )
             # A rejected supplemental candidate remains inspectable in its raw
             # artifact, but cannot feed descriptors or a determinate prediction.

@@ -85,6 +85,7 @@ IMAGE_KEYS = {
     "ocsr_image_path",
     "ocsr_structure_image",
     "ocsr_original_input",
+    "ocsr_label_mask_source",
     "structure_image",
     "input_image",
 }
