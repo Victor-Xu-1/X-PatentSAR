@@ -76,3 +76,4 @@ class GridSchema:
     raw_headers: tuple[str, ...] = ()
     header_region: tuple[int, tuple[float, float, float, float]] | None = None
     header_resolution: dict | None = None
+    source_layout: dict | None = None

@@ -15,6 +15,36 @@ def grid(page, xs, ys):
 
 
 class SharedTableGeometryTests(unittest.TestCase):
+    def test_single_row_grid_is_detected_independently_of_page_size(self):
+        for height in (400, 842, 1600):
+            with self.subTest(height=height), fitz.open() as doc:
+                page = doc.new_page(width=600, height=height)
+                grid(page, [40, 75, 140, 200], [100, 124])
+                found = detect_ruled_table_regions(page, dpi=240)
+                self.assertEqual(len(found), 1)
+                self.assertEqual(len(found[0]["xs"]), 4)
+                self.assertEqual(len(found[0]["ys"]), 2)
+
+    def test_short_open_frames_underlines_and_diagrams_are_not_completed(self):
+        for mode in ("left_missing", "right_missing", "marks", "underline"):
+            with self.subTest(mode=mode), fitz.open() as doc:
+                page = doc.new_page()
+                for y in (100, 124):
+                    page.draw_line((40, y), (200, y))
+                xs = [40, 75, 140, 200]
+                if mode == "left_missing":
+                    xs = xs[1:]
+                elif mode == "right_missing":
+                    xs = xs[:-1]
+                elif mode == "underline":
+                    xs = []
+                for x in xs:
+                    page.draw_line(
+                        (x, 106 if mode == "marks" else 100),
+                        (x, 118 if mode == "marks" else 124),
+                    )
+                self.assertEqual(detect_ruled_table_regions(page, dpi=240), [])
+
     def test_body_separators_below_merged_header_are_retained(self):
         with fitz.open() as doc:
             page = doc.new_page()

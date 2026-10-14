@@ -1,5 +1,24 @@
 # X-PatentSAR architecture
 
+`activity_continuation_policy.py` is the one literal boundary/column authority.
+`activity_grid_continuations.py` chooses a unique compatible original panel for
+both repeated and missing headers; the obsolete separate repeated-header helper
+is removed. `activity_table_layout.py` retains bounded original axes, header origin,
+context and prefix/suffix per scalar grid. `activity_table_scopes.py` rederives
+header semantics through the existing parser and validates connected parallel or
+immediately-adjacent families, not saved flags or table-number proximity.
+`activity_table_rows.py` conserves row/pair populations and exact physical cells
+for every such grid; it reuses the literal source reading proof used by result
+references. Core/application/Web/SAR source consumers keep one gate and writer.
+Header-only records require a connected parsed child, never an empty-table waiver.
+The shared `table_geometry.py` uses physical short-rule bounds and complete outer
+rules for a single-row grid; all structure/numbered-caption consumers share it.
+Activity7/epoch16/coverage4 and binding5/binder14/visible11 invalidate changed
+derived ownership, independently of unchanged raw OCR, page/crop assets, OCSR,
+manual history and SAR engine14. No new model, queue, API/SQL migration or real
+task execution. Biology/text continuations and wider scientific completeness are
+not certified by scalar-grid controls and remain separate open scope.
+
 `activity_source_roles.py` nominates literal reported-method windows;
 `activity_source_discovery.py` reuses original table/section boundaries and
 `activity_reference_observation.py` joins original native/cached observations

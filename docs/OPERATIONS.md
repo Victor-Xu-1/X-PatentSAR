@@ -1,5 +1,26 @@
 # Operations and troubleshooting
 
+## Original scalar-grid continuation proof
+
+Activity7/epoch16/coverage4 include `layout` on scalar-grid coverage records and
+`table_bbox` on their source packets. A source family requires one original header
+origin plus matching physical columns, repeated header roles, literal caption and
+boundary text. New experiments/conditions between grids, changed units/geometry,
+page gaps, independent repeated table IDs and ambiguity cannot borrow context.
+The connected family is recomputed after serialization and used for references;
+every scalar grid also conserves row/pair count and exact ID/value/metadata cells
+without a reference sentence. Header-only splits are legitimate only with actual
+connected result rows. Over-bound scopes fail explicitly, not truncate.
+Closed one-row tables now survive shared physical rule detection; open frames,
+underlines and incomplete short marks are not completed. Changed binding geometry
+uses binder14/binding5/visible11. Original PDFs, raw page OCR, crops, model outputs
+and manual revisions remain immutable, and earlier derived products remain
+historical review rather than being retagged. Unrelated scientific epochs stay.
+No additional model, local/private patent probe, external API, new task or automatic
+retry is performed. Broader biology/text continuation, implicit numbering, vector
+coverage and chemistry still need their own relevant validation before the real
+frontend-only original-PDF retry; this release does not claim all-format perfection.
+
 ## Original result references
 
 Activity6/epoch15 and coverage3 retain method-to-result links in

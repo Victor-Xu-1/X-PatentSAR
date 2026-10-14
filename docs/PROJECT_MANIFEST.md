@@ -1,5 +1,19 @@
 # Project governance manifest
 
+- Continuation/row ownership: `activity_continuation_policy.py` owns literal
+  boundaries and column equivalence. The existing `activity_grid_continuations`
+  selector handles repeated and missing headers; the old separate helper is
+  removed. `activity_table_layout`, `activity_table_scopes` and `activity_table_rows`
+  own bounded descriptor validation, connected original families and conserved
+  exact cell/row populations respectively, reusing existing header/value readers.
+  Result-reference and core/Web/SAR consumers share the same coverage4 gate, not
+  a second parser/acceptance path. Header-only spans need actual connected rows.
+  Shared short-rule geometry affects structure ownership too: activity7/epoch16
+  and binder14/binding5/visible11 invalidate derived proof, while raw original
+  assets/OCR/OCSR/manual audit and SAR engine14 remain unchanged. No API/SQL
+  migration, queue, provider or dependency is added. Scalar-grid controls do not
+  certify biology/text, vector/implicit-ID or all-format/chemical completeness.
+
 - Result-reference ownership: `activity_reference_observation.py` inventories
   original method windows independently of grid success; source discovery reuses
   the one caption/section span authority. `activity_result_references.py` proves
