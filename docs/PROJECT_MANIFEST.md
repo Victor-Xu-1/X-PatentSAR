@@ -1,5 +1,19 @@
 # Project governance manifest
 
+- Unruled-text ownership: `activity_text_plan.py` reuses the same original section/
+  table and continuation policy; `activity_text_proof.py` replays that plan and the
+  existing pure row reader on the stored original text catalog. Exact source spans,
+  root/parent identities, every row/cell/context and mandatory review survive and
+  are checked by the existing core/Web/SAR gate. The old page-global legend and
+  adjacency-only coordinator are removed. `activity_text_legend.py` owns bounded
+  literal declarations only; raw labels/repeated measurements are never converted
+  or confidence-selected. Header-only sources need connected actual rows. Unknown
+  boundaries/conflicting definitions/units stay explicit. Activity9/epoch18/
+  coverage6 invalidate derived proof independently of unchanged raw assets/OCR,
+  binding5/binder14/visible11/OCSR/manual audit/SAR14/API/SQL/dependencies. No second
+  parser/store/queue or automatic real-task run; limits fail visibly, not truncate.
+  Implicit-ID/vector/chemical completeness is not certified by this bounded work.
+
 - Biology ownership: `biology_tables.py` supplies original header/context roles
   into the same `GridSchema`; legacy independent extraction/records/hint storage
   and both carry implementations are removed. `activity_grid_continuations` and

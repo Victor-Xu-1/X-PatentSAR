@@ -20,6 +20,8 @@ from .activity_source_roles import method_page_evidence, method_result_reference
 from .activity_table_layout import validate_layout
 from .activity_table_rows import table_row_errors
 from .activity_table_scopes import layout_scope_errors
+from .activity_text_plan import validate_text_pages, validate_text_scope
+from .activity_text_proof import text_source_errors
 
 MAX_REGIONS = 25000
 STATUSES = {"parsed", "empty", "unresolved", "context", "reference", "header"}
@@ -50,6 +52,7 @@ def source_record(
     row_count: int,
     *,
     layout: dict | None = None,
+    text_scope: dict | None = None,
 ) -> dict[str, Any]:
     record = {
         "page_no": page_no,
@@ -62,6 +65,9 @@ def source_record(
         "row_count": row_count,
     }
     identity = [page_no, kind, bbox, record["table_id"], record["header"]]
+    if text_scope is not None:
+        identity.append(text_scope["span"])
+        record["text_scope"] = text_scope
     record["region_id"] = hashlib.sha256(
         json.dumps(identity, ensure_ascii=False, sort_keys=True).encode()
     ).hexdigest()[:32]
@@ -74,7 +80,7 @@ def source_record(
 def _validate_region(record: dict) -> None:
     if (
         not isinstance(record, dict)
-        or set(record) - {"layout"}
+        or set(record) - {"layout", "text_scope"}
         != {
             "region_id",
             "page_no",
@@ -155,6 +161,9 @@ def _validate_region(record: dict) -> None:
         record["table_id"],
         record["header"],
     ]
+    if "text_scope" in record:
+        validate_text_scope(record)
+        identity.append(record["text_scope"]["span"])
     expected = hashlib.sha256(
         json.dumps(identity, ensure_ascii=False, sort_keys=True).encode()
     ).hexdigest()[:32]
@@ -168,9 +177,14 @@ def _validate_region(record: dict) -> None:
     ) and not (
         record["status"] == "header"
         and record["reason"] == "original_header_only"
-        and record["kind"] == "grid"
-        and record.get("layout")
-        and record["layout"]["data_start"] == len(record["layout"]["ys"]) - 1
+        and (
+            record["kind"] == "grid"
+            and record.get("layout")
+            and record["layout"]["data_start"] == len(record["layout"]["ys"]) - 1
+            or record["kind"] == "text"
+            and record.get("text_scope")
+            and record["header"]
+        )
     ):
         raise ValueError("Malformed original header-only source")
 
@@ -181,6 +195,7 @@ def coverage_packet(
     rows: list,
     *,
     discovered_pages: list[int] | None = None,
+    text_pages: dict[str, str] | None = None,
 ) -> dict:
     """A missing seed cannot become success merely because another page has rows."""
     if not isinstance(seed_pages, list) or any(
@@ -225,6 +240,7 @@ def coverage_packet(
         "discovered_pages": discovered,
         "regions": records,
         "references": result_references(records, rows),
+        "text_pages": text_pages or {},
     }
     coverage_errors(packet, seeds, rows=rows)
     return packet
@@ -240,7 +256,14 @@ def coverage_errors(
     if (
         not isinstance(packet, dict)
         or set(packet)
-        != {"schema", "seed_pages", "discovered_pages", "regions", "references"}
+        != {
+            "schema",
+            "seed_pages",
+            "discovered_pages",
+            "regions",
+            "references",
+            "text_pages",
+        }
         or not schema_ref_matches(
             packet["schema"],
             schema_ref(ACTIVITY_COVERAGE_SCHEMA, ACTIVITY_COVERAGE_SCHEMA_VERSION),
@@ -265,6 +288,7 @@ def coverage_errors(
         or len(packet["references"]) > 2048
     ):
         raise ValueError("Malformed or foreign activity coverage proof")
+    validate_text_pages(packet["text_pages"])
     seen, pages, errors = set(), set(), []
     for region in packet["regions"]:
         _validate_region(region)
@@ -283,6 +307,7 @@ def coverage_errors(
         raise ValueError("Activity seed page is absent from its coverage proof")
     errors.extend(layout_scope_errors(packet["regions"]))
     errors.extend(table_row_errors(packet["regions"], rows))
+    errors.extend(text_source_errors(packet["text_pages"], packet["regions"], rows))
     if packet["references"] and rows is None:
         errors.append(
             "Original result references require their current source rows for validation."
