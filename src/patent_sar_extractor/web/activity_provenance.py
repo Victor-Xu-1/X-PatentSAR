@@ -7,6 +7,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Literal
 
+from ..core.activity_metadata import metadata_cell
 from .artifact_values import page_number, text
 from .errors import WebError
 
@@ -18,6 +19,7 @@ class CellEvidence:
     name: str
     value: str | None
     bbox: tuple[float, float, float, float] | None
+    metadata: bool = False
 
 
 @dataclass(frozen=True)
@@ -91,7 +93,11 @@ def cell_evidence(cell: object) -> CellEvidence:
         if bounds is not None
         else None
     )
-    return CellEvidence(name, value, coordinates)
+    try:
+        metadata = metadata_cell(cell)
+    except (ValueError, TypeError, KeyError) as error:
+        raise provenance_error() from error
+    return CellEvidence(name, value, coordinates, metadata)
 
 
 def source_evidence(
@@ -168,6 +174,8 @@ def activity_contexts(
     index: dict[tuple[str, str | None], dict[ActivityContext, None]] = {}
     for source in source_evidence(row, fallback, page_count=page_count):
         for cell in source.cells:
+            if cell.metadata:
+                continue
             # Multiple OCR attempts prove one cell, not extra measurements.
             index.setdefault((cell.name, cell.value), {})[source.context] = None
     return {key: list(contexts) for key, contexts in index.items()}

@@ -1,5 +1,23 @@
 # X-PatentSAR
 
+Original table/numbered-section boundaries scope activity source nomination;
+a later assay cannot lend endpoints to an earlier NMR/synthesis table. Caption-
+only unreadable activity sources still enter unresolved coverage, not absence.
+Literal `n`/sample-size/replicate-count columns are source metadata, not potency,
+Lead score inputs or additional independent measurements. Their raw headers,
+values, physical positions, geometry and existing-engine observations remain in
+the same activity artifact. Grid, delimited-text, transposed and adjacent-table
+readers share that role authority. Unknown roles and invalid/conflicting counts
+remain review; original missing counts stay missing rather than becoming zero.
+Persisted proof is rechecked by core, Web and SAR consumers; metadata cannot hide
+an endpoint or enter the measurement map. Duplicate metric physical ordinals stay
+unchanged. Activity schema5/epoch14 require fresh derived semantics while retaining
+old PDF/OCR/structures/manual history. Bare `n` remains an unspecified original
+parameter, never inferred as sample count or Hill slope; only explicit count
+headers use integer count rules. There is no new parser, model, writer,
+queue, dependency or API/SQL migration. Broader result-reference/implicit-ID/
+nonactivity/vector completeness and chemistry remain open; no perfect-patent claim.
+
 Hybrid PDF pages use one shared native/raster source geometry contract. A native
 footer cannot suppress observation of a scanned table. The existing OCR engine
 reads one bounded original raster window per hybrid page; native text outside
@@ -10,7 +28,7 @@ review-only and cannot fall through to another schema or optional API resolver.
 Raw OCR observation2 rejects older hybrid coverage. Unaffected older native or
 scanned observations may be transported after read-only original scope validation,
 with inherited provenance retained; original cache files and science are unchanged.
-Classifier4/binder13/activity13/visible-label10 and binding4/activity4 require
+Classifier4/binder13/activity14/visible-label10 and binding4/activity5 require
 fresh derived evidence. These controlled checks are not all-format/perfect recall
 or chemical acceptance; vector/partial layers and broader source roles remain open.
 
@@ -21,7 +39,7 @@ Known endpoint, unit and table-context conflicts stay unresolved even when two
 new reads agree. Literal endpoint/unit joins such as DC50nM are separated only
 when the complete unit is printed, never guessed. Raw column/crop/line evidence,
 including rejected no-row layouts, is retained once in the existing activity JSON;
-row references are identity-checked before acceptance. Activity schema4/epoch13
+row references are identity-checked before acceptance. Activity schema5/epoch14
 keep older derived proof historical and originals/manual revisions unchanged.
 Metadata roles, source-reference continuations, hybrid-PDF coverage and remaining
 chemical findings require separate validation; controlled checks do not establish

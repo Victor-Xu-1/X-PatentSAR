@@ -4,6 +4,7 @@ import re
 
 from .activity_header_metrics import METRIC, explicit_unit, normalize_metric_text
 from .activity_headers import infer_value_keys
+from .activity_metadata import metadata_role
 
 
 def compact_header(value: str) -> str:
@@ -14,6 +15,9 @@ def compact_header(value: str) -> str:
 
 
 def header_conflict(original: str, fresh: str) -> bool:
+    old_role, new_role = metadata_role(original), metadata_role(fresh)
+    if (old_role or new_role) and original.strip() and old_role != new_role:
+        return True
     old, new = normalize_metric_text(original), normalize_metric_text(fresh)
     before, after = list(METRIC.finditer(old)), list(METRIC.finditer(new))
     if not before:

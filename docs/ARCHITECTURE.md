@@ -1,5 +1,27 @@
 # X-PatentSAR architecture
 
+`activity_source_discovery.py` nominates within original table/numbered-section
+spans instead of an overlapping character window. `activity_metadata.py` is the
+shared literal count-role and persisted observation authority; `ColumnGroup`
+owns both metric and metadata positions. Bare `n` is `reported_n`, not an inferred
+sample count/Hill slope. Only explicit count labels require integer counts.
+Existing grid/cell/header/continuation
+and transposed readers keep original count evidence without publishing it as
+potency. Known role contradictions cannot be outvoted or escape through biology
+inference. `activity_text_evidence.py` is the extracted row serializer used only
+by the existing text reader, not another parser/writer. Text roles need original
+delimiters; unpositioned counts keep ambiguity, never shift measurement values.
+The shared join rejects metadata-as-measurement maps. Core and Web revalidate
+saved count role/value/status/physical position and qualified observations;
+SAR source contexts exclude count cells, with the original activity bytes still
+SHA-bound. Counts never multiply experimental observations or ranking evidence.
+Known original blanks/missing markers remain explicit; low-confidence or ink-
+containing unreadable cells cannot claim missingness. Activity5/epoch14 invalidate
+older derived source semantics; raw inputs/manual audit remain unchanged. No
+API/SQL migration, queue/model/provider/dependency change or automatic real task.
+Source-reference/nonactivity/implicit-ID/vector coverage and chemical findings
+remain independent open work, not implied solved by these role controls.
+
 `source_geometry.py` is the shared call-local original native/raster and rendered
 coordinate authority, without an engine/store/writer. `table_geometry.page_tokens`
 observes one bounded raster window with the existing engine, keeps native words
@@ -14,7 +36,7 @@ scope before transport, refusing native+raster omissions while preserving safe
 unchanged raw observations and immutable origin bytes. A persisted inherited
 contract/validation receipt survives later cache hits. Shared reference-version
 checks reject bool/float/string versions instead of Python numeric equality.
-Raw observation2, classifier4/binder13/activity13/visible10 and binding4/activity4
+Raw observation2, classifier4/binder13/activity14/visible10 and binding4/activity5
 invalidate affected derived acceptance. API/SQL/queue/model/dependencies stay.
 Earlier revision notes below retain their original epoch numbers; this source
 authority and `contracts.py` define currentness, not historical revision prose.

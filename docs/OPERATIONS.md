@@ -1,5 +1,30 @@
 # Operations and troubleshooting
 
+## Original count-column roles
+
+Activity5/epoch14 separate literal count columns (`n`, sample-size and replicate-
+count headers) from potency. Bare `n` remains an unspecified reported parameter,
+not an inferred sample count or Hill slope; explicit count labels alone require
+integer values. Their cells retain raw headers/values/positions/
+geometry and qualified source observations with `role=metadata`, a checked kind
+and observed/missing/unresolved status. They do not affect endpoint direction,
+potency bands, Lead score or independent-repeat counts. Metadata is not removed
+from original evidence, and unknown headers are never silently discarded.
+Native/declared-cell or qualified existing-engine observations are required;
+locator OCR alone cannot prove a count. Contradictions/unreadable ink remain
+unresolved even after serialization or a false review boolean. Original blank
+count cells/explicit missing markers stay missing, not zero; actual measurement
+missingness and all source completeness/chemical gates remain independent.
+Grid, transposed, delimited-text and proved adjacent continuations share roles;
+unpositioned text counts require review rather than fabricated column ownership.
+New table/numbered-section boundaries prevent unrelated source nomination, while
+caption-only unreadable activity still gets unresolved inventory. Older activity
+proof is historical, not retagged in place; new interpretation runs only inside
+an authorized normal frontend task. Original assets/manual changes are retained.
+No API/SQL migration, extra engine/cache/queue/provider/install or automatic task.
+Remaining result-reference/nonactivity/implicit-ID/vector and chemical repairs
+must finish separately before another original-PDF attempt.
+
 ## Hybrid PDF source observation
 
 A native footer or caption does not cover raster table contents. The shared
@@ -16,7 +41,7 @@ retain `inherited_observation_contract` and `source_policy_validation` when this
 transport occurs; repeated cache hits preserve those receipts. The historical
 source file remains unchanged. An incompatible optional frontend checkpoint is
 not reused; the normal new task observes its original source instead.
-Classifier4/binder13/activity13/visible10 and binding4/activity4 require current
+Classifier4/binder13/activity14/visible10 and binding4/activity5 require current
 derived proof; old scientific outputs are historical, never retagged in place.
 No automatic task, external call, model installation or WSL restart. Outlined/
 partial vector text, unreadable source completeness, metadata/results references

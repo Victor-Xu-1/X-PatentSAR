@@ -11,6 +11,7 @@ from patent_sar_extractor.contracts import (
 from .activity_coverage import coverage_errors
 from .activity_header_evidence import validate_header_evidence
 from .activity_identity import is_control, is_value, normalize_compound
+from .activity_metadata import metadata_evidence_errors, metadata_role
 
 
 def _measurement_fields(row: dict) -> list[tuple[str, str]]:
@@ -24,6 +25,8 @@ def _measurement_fields(row: dict) -> list[tuple[str, str]]:
             for key, value in bucket.items()
         ):
             raise ValueError("Malformed activity measurement fields")
+        if any(key.startswith("metadata:") or metadata_role(key) for key in bucket):
+            raise ValueError("Original count metadata cannot become a measurement")
         fields.extend(bucket.items())
     return fields
 
@@ -77,6 +80,7 @@ def activity_evidence_errors(
     order, _ = activity_order_and_map(rows)
     errors = coverage_errors(payload.get("coverage"), classified_activity_pages)
     errors.extend(validate_header_evidence(payload))
+    errors.extend(metadata_evidence_errors(rows))
     if not rows:
         if classified_activity_pages != []:
             errors.append(

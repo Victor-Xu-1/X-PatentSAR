@@ -12,6 +12,7 @@ from .activity_header_metrics import (
     normalize_metric_text,
 )
 from .activity_identity import ID_HEADER, is_id_header, is_value, normalize_value
+from .activity_metadata import metadata_role
 from .activity_models import ColumnGroup, GridSchema, TableContext
 from .source_table_markers import TABLE_MARKER, table_marker_identity
 
@@ -220,12 +221,21 @@ def grid_schema(
                 raise ValueError(
                     "Activity columns precede ambiguous repeated ID groups"
                 )
+            metadata = tuple(
+                (col, role)
+                for col in positions
+                if (role := metadata_role(raw_headers[col]))
+            )
             keys = distinct_value_keys(
                 [_key(raw_headers[col], i + 1) for i, col in enumerate(positions)]
             )
-            columns = tuple(zip(positions, keys))
+            columns = tuple(
+                (col, key)
+                for col, key in zip(positions, keys)
+                if not metadata_role(raw_headers[col])
+            )
             if columns:
-                groups.append(ColumnGroup(start, columns))
+                groups.append(ColumnGroup(start, columns, metadata))
         if groups and (
             any(METRIC.search(normalize_metric_text(cell)) for cell in raw_headers)
             or ACTIVITY_CONTEXT.search(context.caption)

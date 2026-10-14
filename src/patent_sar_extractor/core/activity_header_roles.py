@@ -12,6 +12,7 @@ from collections.abc import Callable
 
 from .activity_headers import grid_schema, is_id_header
 from .activity_identity import is_control, is_value, normalize_compound
+from .activity_metadata import metadata_value_status
 from .activity_models import GridSchema, TableContext
 
 HeaderResolver = Callable[[TableContext, list[list[str]], dict, int], GridSchema | None]
@@ -56,6 +57,12 @@ def candidate_schemas(
             not is_value(row[index])
             for row in matrix[schema.first_data_row :]
             for index, _ in fields
+        ):
+            continue
+        if any(
+            metadata_value_status(row[index], kind) != "observed"
+            for row in matrix[schema.first_data_row :]
+            for index, kind in schema.groups[0].metadata_columns
         ):
             continue
         output[column] = schema

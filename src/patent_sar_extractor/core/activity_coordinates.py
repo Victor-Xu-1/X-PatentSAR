@@ -174,11 +174,18 @@ def extract_coordinate_tables(
             explicit_unknown = re.search(
                 r"\bunknown\b|\?", normalized_header, re.IGNORECASE
             )
-            if not header_conflict and (
-                schema is None
-                or (
-                    not explicit_unknown
-                    and (categorical or not metrics and biology_header)
+            known_metadata = isinstance(schema, GridSchema) and any(
+                group.metadata_columns for group in schema.groups
+            )
+            if (
+                not header_conflict
+                and not known_metadata
+                and (
+                    schema is None
+                    or (
+                        not explicit_unknown
+                        and (categorical or not metrics and biology_header)
+                    )
                 )
             ):
                 schema = (
