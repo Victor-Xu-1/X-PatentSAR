@@ -6,19 +6,44 @@ import json
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from patent_sar_extractor.artifact_io import write_json_atomic
 
 from .binding_ocr import (
-    _extract_binder_page_lines,
     _extract_binder_page_text,
-    _get_ocr_line_coords,
+    _extract_binder_source_lines,
+    _get_ocr_line_observations,
 )
+from .binding_source_lines import line_locators, merged_source_lines, source_line_map
 from .binding_tables import _is_structure_table_context
 from .binding_types import BindingObservations
+from .page_ocr_cache import build_cache_metadata, cache_matches_pdf, page_text
 
 logger = logging.getLogger(__name__)
+
+
+def _worker_observation(future, page_index, kind):
+    try:
+        resolved, value = future.result()
+    except Exception as exc:
+        raise RuntimeError(
+            f"Original {kind} observer failed on page {page_index + 1}"
+        ) from exc
+    if type(resolved) is not int or resolved != page_index:
+        raise RuntimeError(f"Original {kind} observer returned a different page")
+    if kind == "text":
+        if not isinstance(value, str) or len(value) > 100000:
+            raise RuntimeError(
+                "Original page text observation is malformed or over-bound"
+            )
+        return value
+    try:
+        return source_line_map({page_index: value})[page_index]
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError(
+            "Original page line observation is malformed or over-bound"
+        ) from exc
 
 
 def load_binding_input(
@@ -73,11 +98,12 @@ def prepare_binding_observations(
             page_no = raw_struct.get("page_no", raw_struct.get("page_num", 0))
             try:
                 page_idx = int(page_no) - 1
-            except Exception:
+            except (ValueError, TypeError, OverflowError):
                 page_idx = None
         try:
             page_idx_int = int(page_idx)
-        except Exception:
+        except (ValueError, TypeError, OverflowError):
+            logger.debug("Structure has no valid original page coordinate")
             continue
         if 0 <= page_idx_int < len(doc):
             structure_page_indices.add(page_idx_int)
@@ -104,16 +130,17 @@ def prepare_binding_observations(
     if not page_ocr_cache_path:
         page_ocr_cache_path = out.parent / "page_classification" / "page_ocr_cache.json"
 
-    page_ocr_cache_payload: Dict[str, Any] = {}
+    page_ocr_cache_payload: dict[str, Any] = {}
     if page_ocr_cache_path.is_file():
         try:
             with open(page_ocr_cache_path, "r", encoding="utf-8") as f:
                 loaded_cache = json.load(f)
-            if isinstance(loaded_cache, dict):
-                page_ocr_cache_payload = loaded_cache
-                logger.info("   加载页面OCR缓存: %s", page_ocr_cache_path)
-        except Exception as exc:
-            logger.debug("Page OCR cache load failed %s: %s", page_ocr_cache_path, exc)
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError("Original page OCR cache cannot be read") from exc
+        if not cache_matches_pdf(loaded_cache, pdf_path, len(doc)):
+            raise ValueError("Page OCR cache does not prove the original PDF identity")
+        page_ocr_cache_payload = loaded_cache
+        logger.info("   加载页面OCR缓存: %s", page_ocr_cache_path)
 
     profile_line_map = profile.get("ocr_line_map", {}) or {}
     cached_page_texts = (
@@ -129,44 +156,21 @@ def prepare_binding_observations(
 
     cached_text_map = {
         int(k): v
-        for k, v in (profile.get("ocr_text_map", {}) or {}).items()
+        for k, v in (cached_page_texts or {}).items()
         if str(k).isdigit() and isinstance(v, str)
     }
-    for k, v in (cached_page_texts or {}).items():
-        if str(k).isdigit() and isinstance(v, str) and int(k) not in cached_text_map:
-            cached_text_map[int(k)] = v
+    for k, v in {
+        int(k): v
+        for k, v in (profile.get("ocr_text_map", {}) or {}).items()
+        if str(k).isdigit() and isinstance(v, str)
+    }.items():
+        cached_text_map.setdefault(k, v)
+    source_lines = merged_source_lines(profile_line_map, cached_page_lines)
     cached_line_map = {
-        int(k): [
-            (float(item.get("y0", 0)), str(item.get("text", "")))
-            for item in v
-            if str(item.get("text", "")).strip()
-        ]
-        for k, v in (profile_line_map or {}).items()
-        if str(k).isdigit() and isinstance(v, list)
+        page: line_locators(lines) for page, lines in source_lines.items() if lines
     }
-    for k, v in (cached_page_lines or {}).items():
-        if str(k).isdigit() and isinstance(v, list) and int(k) not in cached_line_map:
-            normalised_lines = []
-            for item in v:
-                try:
-                    if isinstance(item, dict):
-                        y0 = float(item.get("y0", 0))
-                        text = str(item.get("text", "")).strip()
-                    elif isinstance(item, (list, tuple)) and len(item) >= 2:
-                        y0 = float(item[0])
-                        text = str(item[1]).strip()
-                    else:
-                        continue
-                except Exception:
-                    continue
-                if text:
-                    normalised_lines.append((y0, text))
-            if normalised_lines:
-                cached_line_map[int(k)] = sorted(
-                    normalised_lines, key=lambda row: row[0]
-                )
 
-    pages_text: Dict[int, str] = {}
+    pages_text: dict[int, str] = {}
     missing_page_indices = []
     for i in page_indices:
         if i < 0 or i >= len(doc):
@@ -178,17 +182,7 @@ def prepare_binding_observations(
 
     if bind_workers <= 1 or len(missing_page_indices) <= 1:
         for i in missing_page_indices:
-            page = doc[i]
-            text = page.get_text("text")
-            if not text.strip():
-                try:
-                    from patent_sar_extractor.core.patent_profiler import (
-                        _ocr_page_fallback,
-                    )
-
-                    text = _ocr_page_fallback(page)
-                except Exception:
-                    pass
+            text = page_text(doc[i], min_native_chars=0)
             if text.strip():
                 pages_text[i] = text
     else:
@@ -200,17 +194,9 @@ def prepare_binding_observations(
             }
             for future in as_completed(future_map):
                 page_idx = future_map[future]
-                try:
-                    resolved_idx, text = future.result()
-                except Exception as exc:
-                    logger.debug(
-                        "Binder text extraction failed on page %s: %s",
-                        page_idx + 1,
-                        exc,
-                    )
-                    continue
+                text = _worker_observation(future, page_idx, "text")
                 if text.strip():
-                    pages_text[resolved_idx] = text
+                    pages_text[page_idx] = text
 
     if candidate_pages:
         logger.info(f"   使用结构候选页约束: {len(candidate_pages)} 页")
@@ -227,7 +213,10 @@ def prepare_binding_observations(
     for raw_page_idx in profile.get("authoritative_structure_table_pages", []) or []:
         try:
             page_idx = int(raw_page_idx)
-        except Exception:
+        except (ValueError, TypeError, OverflowError):
+            logger.debug(
+                "Declared structure table has no valid original page coordinate"
+            )
             continue
         if 0 <= page_idx < len(doc):
             authoritative_table_page_indices.add(page_idx)
@@ -245,27 +234,36 @@ def prepare_binding_observations(
             len(missing_line_indices),
         )
         completed_since_checkpoint = 0
+        fresh_source_pages = set()
 
         def _checkpoint_page_ocr_lines() -> None:
+            if not fresh_source_pages:
+                return
+            if not page_ocr_cache_payload:
+                page_ocr_cache_payload["metadata"] = build_cache_metadata(
+                    pdf_path, len(doc)
+                )
             page_ocr_cache_payload.setdefault("page_texts", {})
             page_ocr_cache_payload.setdefault("ocr_line_map", {})
-            for idx, text in cached_text_map.items():
-                page_ocr_cache_payload["page_texts"][str(idx)] = text
-            for idx, lines in cached_line_map.items():
+            for idx in fresh_source_pages:
+                lines = source_lines[idx]
                 if lines:
-                    page_ocr_cache_payload["ocr_line_map"][str(idx)] = [
-                        {"y0": round(float(y0), 2), "text": str(text)}
-                        for y0, text in lines
-                        if str(text).strip()
-                    ]
+                    if not page_ocr_cache_payload["ocr_line_map"].get(str(idx)):
+                        page_ocr_cache_payload["ocr_line_map"][str(idx)] = lines
+                    if not page_ocr_cache_payload["page_texts"].get(str(idx)):
+                        page_ocr_cache_payload["page_texts"][str(idx)] = "\n".join(
+                            line["text"] for line in lines
+                        )
             page_ocr_cache_path.parent.mkdir(parents=True, exist_ok=True)
             write_json_atomic(page_ocr_cache_path, page_ocr_cache_payload)
 
         if bind_workers <= 1 or len(missing_line_indices) <= 1:
             for idx in missing_line_indices:
-                lines = _get_ocr_line_coords(doc[idx]) or []
+                lines = _get_ocr_line_observations(doc[idx]) or []
                 if lines:
-                    cached_line_map[idx] = lines
+                    source_lines[idx] = lines
+                    cached_line_map[idx] = line_locators(lines)
+                    fresh_source_pages.add(idx)
                 completed_since_checkpoint += 1
                 if completed_since_checkpoint >= 10:
                     _checkpoint_page_ocr_lines()
@@ -275,21 +273,16 @@ def prepare_binding_observations(
             max_workers = min(bind_workers, len(missing_line_indices))
             with ThreadPoolExecutor(max_workers=max_workers) as pool:
                 future_map = {
-                    pool.submit(_extract_binder_page_lines, pdf_path, idx): idx
+                    pool.submit(_extract_binder_source_lines, pdf_path, idx): idx
                     for idx in missing_line_indices
                 }
                 for future in as_completed(future_map):
                     idx = future_map[future]
-                    try:
-                        resolved_idx, lines = future.result()
-                    except Exception as exc:
-                        logger.debug(
-                            "Binder line OCR failed on page %s: %s", idx + 1, exc
-                        )
-
-                        continue
+                    lines = _worker_observation(future, idx, "line")
                     if lines:
-                        cached_line_map[resolved_idx] = lines
+                        source_lines[idx] = lines
+                        cached_line_map[idx] = line_locators(lines)
+                        fresh_source_pages.add(idx)
                     completed_since_checkpoint += 1
                     if completed_since_checkpoint >= 10:
                         _checkpoint_page_ocr_lines()
@@ -302,7 +295,7 @@ def prepare_binding_observations(
         try:
             _checkpoint_page_ocr_lines()
             logger.info("   更新页面OCR缓存: %s", page_ocr_cache_path)
-        except Exception as exc:
+        except OSError as exc:
             logger.warning("   页面OCR缓存写入失败 %s: %s", page_ocr_cache_path, exc)
     return BindingObservations(
         page_indices,
@@ -310,4 +303,5 @@ def prepare_binding_observations(
         cached_line_map,
         frozenset(authoritative_table_page_indices),
         bind_workers,
+        source_lines,
     )

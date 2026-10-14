@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import (
     Any,
@@ -52,6 +52,8 @@ class SpatialBindings:
     numbered_recognized: bool
     reprints: tuple[dict[str, Any], ...] = ()
     recognized_table_pages: frozenset[int] = frozenset()
+    grids_for_page: Any = field(default=None, repr=False, compare=False)
+    tokens_for_page: Any = field(default=None, repr=False, compare=False)
 
     def ordered(self, active_cpds: list[str]) -> list[dict[str, Any]]:
         if not active_cpds:
@@ -334,6 +336,8 @@ def collect_spatial_bindings(
         numbered.recognized,
         tuple(reprints),
         frozenset(recognized_pages),
+        grids_for_page,
+        tokens_for_page,
     )
 
 

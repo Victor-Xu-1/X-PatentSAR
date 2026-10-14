@@ -7,7 +7,12 @@ from .binding_geometry import _process_structure
 from .binding_labels import _cpd_label_key
 from .binding_ocr import PYMUPDF_AVAILABLE, fitz
 from .binding_preparation import load_binding_input, prepare_binding_observations
-from .binding_source_headings import observed_heading_blocks, select_heading_bindings
+from .binding_source_headings import (
+    _document_sha256,
+    observed_heading_blocks,
+    select_heading_bindings,
+)
+from .binding_source_regions import collect_reference_regions
 from .binding_spatial import collect_spatial_bindings
 
 
@@ -41,17 +46,33 @@ def bind(
         )
         original = spatial.catalogue()
         generic = spatial.structures(processed)
+        source_sections = []
+        document_sha256 = _document_sha256(doc)
+        source_regions = collect_reference_regions(
+            doc,
+            range(len(doc)),
+            source_sections,
+            original_pdf_sha256=document_sha256,
+            grids_for_page=spatial.grids_for_page,
+            tokens_for_page=spatial.tokens_for_page,
+        )
         pages = [
             page
-            for page in observations.page_indices
+            for page in range(len(doc))
             if page not in spatial.ownership.page_indices
         ]
-        source_sections = []
         blocks = (
             observed_heading_blocks(
-                doc, pages, observations.line_map, source_sections=source_sections
+                doc,
+                pages,
+                observations.line_map,
+                source_sections=source_sections,
+                source_line_map=observations.source_line_map,
+                source_regions=source_regions,
+                grids_for_page=spatial.grids_for_page,
+                tokens_for_page=spatial.tokens_for_page,
             )
-            if generic
+            if pages
             else []
         )
         blocks = [
@@ -61,9 +82,15 @@ def bind(
         ]
         heading_bindings, heading_issues = (
             select_heading_bindings(
-                doc, generic, blocks, observations.line_map, output_dir, profile
+                doc,
+                generic,
+                blocks,
+                observations.line_map,
+                output_dir,
+                profile,
+                source_line_map=observations.source_line_map,
             )
-            if generic and blocks
+            if blocks
             else ([], [])
         )
         heading_bindings = [
@@ -93,6 +120,7 @@ def bind(
             catalog_sources=spatial.reprints,
             source_issues=issues,
             source_sections=source_sections,
+            original_pdf_sha256=document_sha256,
             detected_style="original_cell_caption_heading",
             include_intermediates=include_intermediates,
             total_structures=len(structures),

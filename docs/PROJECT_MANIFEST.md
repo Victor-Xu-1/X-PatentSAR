@@ -1,5 +1,16 @@
 # Project governance manifest
 
+- Original binding references: `binding_source_lines` is the lossless observation
+  view; existing preparation/page authority owns cache identity and fresh-page
+  publication. `binding_source_regions` reuses immutable-document grid/token/cell
+  proof; `binding_source_references` owns pure source-scope/primary-cell replay in
+  the sole writer/catalog/formal gate. No second cache, model, queue, writer or
+  scientific repair script. Primary IDs, method references and explicit nonfinal
+  roles stay distinct. Current Binding9/binder18 are separate from unchanged raw2/
+  OCSR2/preparation1/visible12/activity12/epoch21/coverage8/SAR14/manual/API/SQL/
+  dependencies. Document-wide reference inventory is not proof of detection recall
+  or chemical correctness. Older epoch entries below retain release context only.
+
 - Physical-header ownership: `cell_header_lines` supplies bounded original row
   geometry and existing-engine observation under the shared cell reader;
   `cell_header_proof` replays that envelope. `activity_header_proof` uses existing

@@ -17,6 +17,7 @@ from patent_sar_extractor.contracts import (
 
 from .activity_identity import normalize_compound
 from .binding_catalog import compound_catalog
+from .binding_source_references import reference_issues, reference_scope
 from .formal_structure import FORMAL_SCOPE, SOURCE_EXECUTION_MODE
 from .pipeline_rules import _label_key, summarise_binding_accuracy
 
@@ -78,6 +79,7 @@ def write_binding_result(
     catalog_sources: Sequence[dict[str, Any]] = (),
     source_issues: Sequence[dict[str, Any] | str] = (),
     source_sections: Sequence[dict[str, Any]] = (),
+    original_pdf_sha256: str = "",
 ) -> dict[str, Any]:
     issues = list(source_issues)
 
@@ -107,6 +109,11 @@ def write_binding_result(
     )
     catalog["formal_acceptance_scope"] = FORMAL_SCOPE
     bindings = [dict(binding) for binding in catalog["entries"]]
+    reference_payload = {
+        "source_sections": list(source_sections),
+        "source_reference_scope": reference_scope(source_sections, original_pdf_sha256),
+    }
+    issues.extend(reference_issues(reference_payload, bindings))
     directory.mkdir(parents=True, exist_ok=True)
     output_json = directory / "bindings.json"
     output_csv = directory / "bindings.csv"
@@ -128,7 +135,7 @@ def write_binding_result(
         "final_bindings": bindings,
         "compound_catalog": catalog,
         "source_issues": issues,
-        "source_sections": list(source_sections),
+        **reference_payload,
         "strict_coverage": {
             "expected_cpds": [binding["cpd"] for binding in bindings],
             "expected_structure_ids": [binding["structure_id"] for binding in bindings],

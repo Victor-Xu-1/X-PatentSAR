@@ -5,6 +5,7 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 import fitz
 
@@ -12,6 +13,7 @@ from patent_sar_extractor.core.binding_source_headings import (
     observed_heading_blocks,
     select_heading_bindings,
 )
+from patent_sar_extractor.core.heading_evidence import _read_heading
 from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
 
 
@@ -196,6 +198,45 @@ class GeneralHeadingBindingTests(unittest.TestCase):
             )
             Path(bindings[0]["image_path"]).write_bytes(b"not the original image")
             self.assertTrue(annotate_binding_accuracy(bindings[0])["fail_closed"])
+
+    def test_ocr_heading_confidence_is_numeric_complete_and_not_provider_assumed(self):
+        for score in (True, "0.99", None, float("nan"), 0.7):
+            with self.subTest(score=repr(score)), fitz.open() as doc:
+                page = doc.new_page()
+                engine = Mock(
+                    return_value=(
+                        [
+                            (
+                                [[0, 0], [100, 0], [100, 10], [0, 10]],
+                                "Compound 7A",
+                                score,
+                            )
+                        ],
+                        None,
+                    )
+                )
+                with patch(
+                    "patent_sar_extractor.core.heading_evidence.get_ocr_engine",
+                    return_value=("rapidocr", engine),
+                ):
+                    self.assertEqual(
+                        _read_heading(page, {"bbox": [40, 40, 180, 60]})[0], ""
+                    )
+        with fitz.open() as doc:
+            page = doc.new_page()
+            with (
+                patch(
+                    "patent_sar_extractor.core.heading_evidence.get_ocr_engine",
+                    return_value=("paddlex", None),
+                ),
+                patch(
+                    "patent_sar_extractor.core.page_ocr_cache._paddlex_payload_from_image",
+                    side_effect=AssertionError("Unscored text is only a locator"),
+                ),
+            ):
+                self.assertEqual(
+                    _read_heading(page, {"bbox": [40, 40, 180, 60]})[0], ""
+                )
 
 
 if __name__ == "__main__":

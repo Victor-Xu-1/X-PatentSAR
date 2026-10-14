@@ -11,6 +11,7 @@ import fitz
 from PIL import Image
 
 from .activity_identity import printed_identifier_key
+from .cell_ocr_scores import confidence_score
 from .page_ocr_cache import get_ocr_engine
 from .source_geometry import native_lines, overlaps, source_layout
 from .source_section_roles import section_heading
@@ -32,9 +33,36 @@ def heading_identifier(text: object) -> str:
     )
 
 
-def original_heading_lines(page, cached_lines=()) -> list[dict]:
+def original_heading_lines(page, cached_lines=(), source_lines=()) -> list[dict]:
     """Keep native columns separate; cached OCR lines do not invent x bounds."""
     layout = source_layout(page)
+    if source_lines:
+        from .binding_source_lines import source_line
+
+        observed, coarse = [], []
+        for item in source_lines:
+            line = source_line(item)
+            box = line.get("bbox")
+            if box is None:
+                coarse.append((line["y0"], line["text"]))
+                continue
+            if not (
+                0 <= box[0] < box[2] <= page.rect.width
+                and 0 <= box[1] < box[3] <= page.rect.height
+            ):
+                raise ValueError("Original heading line leaves the source page")
+            if line.get("source") == "page_ocr":
+                observed.append({**line, "y1": box[3]})
+        if observed:
+            if layout.native:
+                raster = layout.raster_bounds
+                observed.extend(
+                    {**line, "y1": line["bbox"][3]}
+                    for line in native_lines(layout, raster)
+                )
+            if coarse:
+                observed.extend(original_heading_lines(page, coarse))
+            return sorted(observed, key=lambda line: (line["y0"], line["bbox"][0]))
     if layout.native and layout.raster_bounds is not None:
         raster = layout.raster_bounds
         observed = [
@@ -91,6 +119,7 @@ def original_heading_lines(page, cached_lines=()) -> list[dict]:
                     "bbox": bbox,
                     "text": " ".join(w[4] for w in group),
                     "source": "native",
+                    "geometry_space": "rendered",
                 }
             )
     return lines
@@ -129,23 +158,38 @@ def _read_heading(page, block: dict) -> tuple[str, str]:
     if native.strip() and not raster:
         return heading_identifier(" ".join(native.split())), "native_heading"
     engine = get_ocr_engine()
-    if not engine or engine[0] not in {"rapidocr", "paddlex"}:
-        return "", ""
+    if not engine or engine[0] != "rapidocr":
+        # The text-only provider is useful for page nomination, not a scored
+        # coordinate/source proof. Do not invent its missing confidence.
+        return "", "unqualified_coordinate_heading"
     from io import BytesIO
 
     import numpy as np
 
-    from .page_ocr_cache import _paddlex_payload_from_image
-
+    if bounds.width * bounds.height * (250 / 72) ** 2 > 8_000_000:
+        return "", "heading_render_limit"
     pixmap = page.get_pixmap(
         matrix=fitz.Matrix(250 / 72, 250 / 72), clip=bounds, alpha=False
     )
     with Image.open(BytesIO(pixmap.tobytes("png"))) as image:
-        if engine[0] == "rapidocr":
-            result, _ = engine[1](np.array(image.convert("RGB")), use_cls=False)
-            texts = [str(row[1]) for row in result or [] if float(row[2]) >= 0.85]
-        else:
-            texts, _ = _paddlex_payload_from_image(image)
+        result, _ = engine[1](np.array(image.convert("RGB")), use_cls=False)
+        if result is None:
+            result = []
+        if not isinstance(result, (list, tuple)) or len(result) > 32:
+            return "", "unqualified_original_heading"
+        texts = []
+        for row in result:
+            if (
+                not isinstance(row, (list, tuple))
+                or len(row) != 3
+                or not isinstance(row[1], str)
+                or len(row[1]) > 4096
+            ):
+                return "", "unqualified_original_heading"
+            if row[1].strip():
+                if confidence_score(row[2]) < 0.85:
+                    return "", "unqualified_original_heading"
+                texts.append(row[1])
     label = heading_identifier(" ".join(texts))
     native_label = heading_identifier(" ".join(native.split()))
     if native_label and native_label != label:
