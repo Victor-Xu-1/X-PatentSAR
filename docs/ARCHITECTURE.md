@@ -1,5 +1,25 @@
 # X-PatentSAR architecture
 
+`activity_text_plan.py` reuses the existing original section/table and literal
+continuation authorities. The same pure row reader serves the producer and
+`activity_text_proof.py`; no second parser or acceptance implementation exists.
+`activity_text.py` is now a small coordinator rather than a page-global legend/
+adjacency carry. `coverage.text_pages` retains bounded original observations;
+`text_scope` on regions and rows binds exact text spans, root and parent identity.
+The shared family gate accepts header-only starts only with connected actual
+rows. Proof replay checks original row population/cells/context/review findings,
+not saved flags, row counts or table-number proximity. The existing page reader
+can inspect only the immediately-adjacent continuation; coordinate-owned pages,
+gaps, changed fields/units/experiments or unknown prose stop inheritance.
+`activity_text_legend.py` observes bounded literal grade definitions without
+replacing raw labels by numbers. Conflicts stay review; full original text remains
+evidence. Physical page identity cannot be overwritten by an embedded text marker.
+Activity9/epoch18/coverage6 change only derived activity proof. Raw PDF/OCR/crops,
+manual audit, binding/visible/OCSR/SAR contracts, API/SQL/queue/dependencies remain.
+The catalog has10,000page/100,000character-page/16MiB limits, declarations32 and
+connected families128; explicit limits fail, never silently truncate. Controlled
+native source checks do not certify implicit-ID/vector or chemical completeness.
+
 `biology_tables.py` now supplies only literal header semantics under the existing
 `GridSchema`. The independent biology row extractor/record, hint registry and
 two carry implementations are removed. Known biology roles require printed ID

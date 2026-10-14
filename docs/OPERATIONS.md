@@ -1,5 +1,26 @@
 # Operations and troubleshooting
 
+## Original unruled activity source proof
+
+Activity9/epoch18/coverage6 store one bounded original text observation catalog
+and exact spans/connected header roots in the existing activity JSON. Every
+consumer replays the same source planner and row reader: missing/changed rows,
+cells, context, parent identity and hidden review findings fail closed. Header-only
+starts need connected real results. Immediately-adjacent row-only/repeated-header/
+literal-continued-caption sources can share one table; page gaps, another owned
+grid, changed units, experiments and unknown boundary prose stop that borrowing.
+Original labels and repeated measurements survive; literal grade declarations
+never become numeric activity values. Duplicate conflicting definitions, different
+endpoints/declared units remain explicit review, not a winning definition. Older
+derived artifacts remain historical, with originals/manual revisions untouched.
+Binding5/binder14/visible11/rawObs2/OCSR2/SAR14/API/SQL stay unchanged.
+Catalog limits are10,000pages,100,000characters per page and16MiB UTF-8 total;
+declarations/definition entries32 and connected source families128. Excess is an
+explicit error, not a truncated successful dataset. No model installation or
+external call, alternate writer/queue or real-patent rerun occurs automatically.
+Implicit original numbering, mixed/vector completeness and chemical findings are
+still separate open scope; do not certify a real patent from controlled checks.
+
 ## Unified biology source observation
 
 Activity8/epoch17/coverage5 retain biology semantic/value roles within the same

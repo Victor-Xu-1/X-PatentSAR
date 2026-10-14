@@ -1,5 +1,22 @@
 # X-PatentSAR
 
+Unruled activity tables now retain one original text catalog plus exact source
+spans and connected header origins. The same pure planner/row reader rechecks
+every raw row, cell, context and population after serialization, including Web
+and SAR admission. Only proved immediately-adjacent sources can continue a table;
+new experiments, unknown prose, changed units, page gaps and competing captions
+cannot borrow its identity. Header-only starts require actual connected results,
+and equal/different repeated measurements remain separate original observations.
+Original A–G labels stay labels; scoped grade declarations are annotation only.
+Conflicting definitions/endpoints/units remain review and cannot be hidden by a
+saved acceptance flag. No page-global legend or independent carry remains.
+Activity9/epoch18/coverage6 invalidate old derived source proof, not raw PDF/OCR,
+structures, manual revisions, binding5/binder14/visible11 or SAR14. Original text
+is bounded to10,000pages/100,000characters per page/16MiB total; over-bound input
+fails visibly, not truncate. This is controlled source engineering, not universal
+format/chemical acceptance. Remaining implicit-ID/vector/chemical work stays open
+before another frontend-only real extraction; no automatic job is started.
+
 Biological ratio/grade tables now use the same header, continuation selector,
 cell reader, row writer and serialized source proof as scalar grids. The old
 independent biology reader/two carry sites are removed. Original A–G/ND values,

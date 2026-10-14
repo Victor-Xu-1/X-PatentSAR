@@ -10,6 +10,7 @@ from .activity_continuation_policy import (
 )
 from .activity_headers import context_from_text, grid_schema
 from .activity_table_layout import validate_layout
+from .activity_text_plan import validate_text_scope
 from .biology_tables import biology_grid_schema
 
 
@@ -99,11 +100,38 @@ def table_scope_groups(records):
         raise ValueError("Original table scope exceeds its bounded region inventory")
     for record in records:
         validate_layout(record)
+        validate_text_scope(record)
     families, invalid, anchors = [], [], {}
     for record in sorted(
         records,
         key=lambda r: (r["page_no"], (r["bbox"] or [0, 0])[1], (r["bbox"] or [0])[0]),
     ):
+        if record.get("text_scope"):
+            scope = record["text_scope"]
+            key = [record["page_no"], *scope["span"]]
+            if scope["origin"] == key and scope["parent"] is None:
+                families.append([record])
+            else:
+                options = [
+                    f
+                    for f in families
+                    if f[0].get("text_scope")
+                    and f[0]["text_scope"]["origin"] == scope["origin"]
+                    and any(
+                        [p["page_no"], *p["text_scope"]["span"]] == scope["parent"]
+                        and p["page_no"] + 1 == record["page_no"]
+                        for p in f
+                    )
+                ]
+                if len(options) == 1:
+                    if len(options[0]) >= 128:
+                        raise ValueError(
+                            "Connected original text table exceeds its bounded region inventory"
+                        )
+                    options[0].append(record)
+                else:
+                    invalid.append(record)
+            continue
         if not record.get("layout"):
             families.append([record])
             continue
@@ -131,8 +159,13 @@ def table_scope_groups(records):
 def layout_scope_errors(regions):
     grouped = {}
     for region in regions:
-        if region.get("layout"):
-            key = (region["table_id"].casefold(), _anchor(region["layout"]))
+        if region.get("layout") or region.get("text_scope"):
+            origin = (
+                tuple(region["text_scope"]["origin"])
+                if region.get("text_scope")
+                else _anchor(region["layout"])
+            )
+            key = (region["kind"], region["table_id"].casefold(), origin)
             grouped.setdefault(key, []).append(region)
     errors = []
     for records in grouped.values():

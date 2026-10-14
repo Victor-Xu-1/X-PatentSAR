@@ -77,8 +77,22 @@ def extract(
             header_resolver=header_resolver,
             page_texts=text_map,
         )
+
+        def text_for_page(index):
+            nonlocal dirty
+            observed = str(text_map.get(str(index), "") or "")
+            if not observed:
+                observed = page_text(doc[index], min_native_chars=1)
+                text_map[str(index)] = observed
+                dirty = True
+            return observed
+
         text = extract_text_tables(
-            [p for p in source_pages if p not in cells.owned_pages], text_map
+            [p for p in source_pages if p not in cells.owned_pages],
+            text_map,
+            page_count=len(doc),
+            blocked_pages=cells.owned_pages,
+            page_reader=text_for_page,
         )
     if dirty and cache_path:
         save_page_ocr_cache(cache_path, cache)
@@ -96,7 +110,11 @@ def extract(
     validate_rows(rows)
     tables = cells.tables + text.tables
     coverage = coverage_packet(
-        pages, [*cells.coverage, *text.coverage], rows, discovered_pages=discovered
+        pages,
+        [*cells.coverage, *text.coverage],
+        rows,
+        discovered_pages=discovered,
+        text_pages=text.text_pages,
     )
     save_results(
         rows,

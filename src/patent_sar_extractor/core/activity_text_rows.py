@@ -7,7 +7,6 @@ import re
 from .activity_headers import (
     ACTIVITY_CONTEXT,
     METRIC,
-    TABLE_MARKER,
     context_from_text,
     infer_value_keys,
     normalize_metric_text,
@@ -24,6 +23,8 @@ from .activity_identity import (
 from .activity_metadata import metadata_role
 from .activity_models import ActivityRow
 from .activity_text_evidence import text_evidence
+from .activity_text_legend import matching_legend, read_legend
+from .source_section_roles import section_heading
 
 _ROW = re.compile(
     rf"^((?:{LABEL_PREFIX})?{PRINTED_ID}|{CONTROL.pattern})(?=\s|\||$)\s*(.*)$",
@@ -45,26 +46,6 @@ _STOP = re.compile(
     r"What\s+is\s+claimed|EQUIVALENTS|\[\d{4,}\])",
     re.IGNORECASE,
 )
-
-
-def _legend(text: str) -> tuple[str, dict[str, str]] | None:
-    source = normalize_metric_text(re.sub(r"\s+", " ", text))
-    match = re.search(
-        r"letter\s+codes?\s+for\s+(.{1,80}?)\s+include\s*:", source, re.IGNORECASE
-    )
-    if not match or not METRIC.search(match.group(1)):
-        return None
-    tail = source[match.end() : match.end() + 700]
-    marker = TABLE_MARKER.search(tail)
-    if marker:
-        tail = tail[: marker.start()]
-    definitions = {
-        grade.upper(): definition.strip()
-        for grade, definition in re.findall(
-            r"\b([A-G])\s*\(\s*([^)]+)\)", tail, re.IGNORECASE
-        )
-    }
-    return (match.group(1).strip(), definitions) if len(definitions) >= 2 else None
 
 
 def _flat_lines(text: str) -> list[str]:
@@ -109,10 +90,11 @@ def parse_segment(
     page_no: int = 0,
     header: str = "",
     legend: tuple[str, dict[str, str]] | None = None,
+    legend_issues: tuple[str, ...] = (),
 ) -> list[ActivityRow]:
     """Read one declared table. Never consult its number to infer a schema."""
     marker = re.search(r"\[\[PAGE\s+(\d+)\]\]", segment)
-    if marker:
+    if marker and page_no == 0:
         page_no = int(marker.group(1))
     raw_lines = [line.rstrip() for line in segment.splitlines() if line.strip()]
     lines = []
@@ -124,7 +106,9 @@ def parse_segment(
         lines.extend(_flat_lines(line))
     observed_header, first_row = _find_header(lines)
     header = observed_header or header
-    legend = _legend(segment) or legend
+    original_legend, issues = read_legend(segment, header)
+    issues = list(dict.fromkeys([*issues, *legend_issues]))
+    legend = matching_legend(original_legend or legend, header) if not issues else None
     if not header and legend:
         header = legend[0]
     if not header or not (
@@ -150,6 +134,8 @@ def parse_segment(
     rows = []
     for row_index, line in enumerate(lines[first_row:], start=first_row):
         if _STOP.match(line.strip()):
+            break
+        if section_heading(line.strip()):
             break
         matched = _ROW.match(line.strip())
         if not matched:
@@ -178,10 +164,11 @@ def parse_segment(
         measured = [
             index for index in range(len(keys)) if index not in metadata_headers
         ]
-        if legend and len(measured) == 1:
-            index = measured[0]
-            values[index] = legend[1].get(values[index].upper(), values[index])
-        review = ambiguous or any(not is_value(raw_values[index]) for index in measured)
+        review = (
+            bool(issues)
+            or ambiguous
+            or any(not is_value(raw_values[index]) for index in measured)
+        )
         review |= unpositioned_metadata or any(
             "unknown" in keys[index].lower() for index in measured
         )
@@ -201,6 +188,8 @@ def parse_segment(
         )
         if legend:
             evidence["legend"] = dict(legend[1])
+        if issues:
+            evidence["legend_issues"] = issues
         rows.append(
             ActivityRow(
                 cpd=compound,
