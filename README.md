@@ -1,5 +1,25 @@
 # X-PatentSAR
 
+One bounded literal-ID authority now serves structure captions/cells/native joins,
+numbered source proof, visible evidence and activity identity. Prefixes, suffixes,
+zeros and complete identifiers survive; case/one-to-one fullwidth normalization
+keeps original raw observations. Internal whitespace cannot merge separate IDs,
+decimal/hash fragments are not labels and superscript footnotes are not digits.
+Matching OCR rereads cannot outvote ambiguous original tokens or a declared
+intermediate/assay role. Known nonfinal headings remain source inventory, not
+numbered final compounds. Ruled series use the same primary cell path; bare-series
+observations preserve their I-prefix, and missing/duplicate owners stay explicit.
+The old integer gap correction, numeric global zip and blanket conflict waiver
+are removed. Binding6/binder15/visible12/activity10/epoch19 invalidate changed
+derived proof independently of unchanged raw PDF/OCR/crops/model observations,
+manual history, coverage6 and SAR14. No API/SQL/queue/dependency change. Literal
+ID limits are128characters,8digits per component,12prefix letters and4suffix
+letters; unsupported inputs are retained for review rather than shortened.
+This is controlled engineering coverage, not all-format recall/chemical accuracy.
+Real frontend tasks must repeatedly verify actual extraction/SAR after deployment;
+no private scientific computation, manual output repair or automatic task replay.
+Broader mixed/implicit-ID/vector role completeness and chemistry stay open.
+
 Unruled activity tables now retain one original text catalog plus exact source
 spans and connected header origins. The same pure planner/row reader rechecks
 every raw row, cell, context and population after serialization, including Web

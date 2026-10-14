@@ -11,6 +11,8 @@ from .activity_metadata import metadata_role
 from .activity_source_roles import method_result_references
 from .activity_table_scopes import table_scope_groups
 from .cell_cross_observation import printed_cross_valid
+from .printed_identifiers import identifier_fragments_conflict, identifier_key
+from .source_section_roles import nonfinal_original_label
 from .source_table_markers import TABLE_MARKER, table_marker_identity
 
 MAX_REFERENCES = 2048
@@ -62,7 +64,17 @@ def _observed(cell, identifier=False):
     for item in readings:
         if not isinstance(item, dict) or not isinstance(item.get("text"), str):
             return False
+        if identifier and nonfinal_original_label(item["text"]):
+            return False
         method, confidence = item.get("method"), item.get("confidence")
+        if (
+            identifier
+            and not normalize(item["text"])
+            and identifier_fragments_conflict(
+                item["text"], identifier_key(cell.get("value"), wrapped=True)
+            )
+        ):
+            return False
         if method == "printed_cross_components":
             if not printed_cross_valid(item, cell.get("bbox"), cell.get("value")):
                 return False

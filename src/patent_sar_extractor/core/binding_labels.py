@@ -10,6 +10,7 @@ from typing import (
 
 logger = logging.getLogger(__name__)
 from .activity_identity import printed_identifier_key
+from .printed_identifiers import LABEL_PREFIX, PRINTED_ID, identifier_key
 
 _INTERMEDIATE_RE = re.compile(r"^Intermediate", re.IGNORECASE)
 
@@ -34,24 +35,22 @@ _CPD_LETTER_PAIR_RE = re.compile(
 
 
 _PRODUCT_VISIBLE_LABEL_RE = re.compile(
-    r"(?<![A-Za-z0-9])(?:examples?|cmpd|cpd|compound|实施例|化合物)\s*[-.:]?\s*([1-9]\d{0,2}[A-Z]?)(?![A-Za-z0-9-])",
+    rf"(?<![\w/-]){LABEL_PREFIX}({PRINTED_ID})(?![\w/-])",
     re.IGNORECASE,
 )
 
 
-_DIRECT_LABEL_RE = re.compile(
-    r"(?<![A-Za-z0-9])([1-9]\d{0,2}[A-Z]?)(?![A-Za-z0-9-])", re.IGNORECASE
-)
+_DIRECT_LABEL_RE = re.compile(rf"(?<![\w./-])({PRINTED_ID})(?![\w./-])", re.IGNORECASE)
 
 
 _ROUTE_STEP_LABEL_RE = re.compile(
-    r"(?<![A-Za-z0-9])(?:step|s)\s*[-.:]?\s*([1-9]\d{0,2})(?![A-Za-z0-9-])",
+    r"(?<![A-Za-z0-9])(?:step|s)\s*[-.:]?\s*([0-9]{1,8})(?![A-Za-z0-9-])",
     re.IGNORECASE,
 )
 
 
 _RACEMIC_LABEL_RE = re.compile(
-    r"(?<![A-Za-z0-9])(?:rac|racemic)\s*[-.:]?\s*(?:cmpd|cpd|compound)?\s*[-.:]?\s*([1-9]\d{0,2}[A-Z]?)(?![A-Za-z0-9-])",
+    rf"(?<![A-Za-z0-9])(?:rac|racemic)\s*[-.:]?\s*(?:{LABEL_PREFIX})?({PRINTED_ID})(?![A-Za-z0-9-])",
     re.IGNORECASE,
 )
 
@@ -280,14 +279,7 @@ def _int_or_default(value: Any, default: int = 999) -> int:
 
 
 def _normalise_compound_label(text: str) -> str:
-    text = text.strip()
-    text = text.strip("()[]{}.,;:，。；：")
-    text = text.replace("—", "-").replace("–", "-")
-    if re.fullmatch(r"[1-9]\d*(?:-\d+)?[A-Z]?", text, re.IGNORECASE):
-        text = text.upper()
-    # NOTE: Do NOT auto-split "42" → "4-2". This caused many misbindings.
-    # Only accept labels that already have hyphens (e.g. "1-1", "4-2").
-    return text
+    return identifier_key(text, wrapped=True, terminal_period=True)
 
 
 def _cpd_sort_key(value: str):

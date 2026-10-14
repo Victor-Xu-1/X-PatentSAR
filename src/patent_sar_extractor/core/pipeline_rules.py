@@ -17,6 +17,7 @@ from patent_sar_extractor.core.numbered_structure_binding import (
 
 from .activity_identity import printed_identifier_key
 from .heading_evidence import valid_heading_binding_evidence
+from .printed_identifiers import identifier_key
 
 STRICT_VISIBLE_SOURCES = {"page_strict", "direct", "pdf_clip"}
 VISUAL_LABEL_SOURCES = STRICT_VISIBLE_SOURCES | {"page_wide"}
@@ -175,13 +176,6 @@ def _is_internal_annotation_conflict(
             ).upper()
             if conflict_key in {target_key, partner, "1"}:
                 return True
-    if (
-        binding is not None
-        and str(binding.get("binding_rule") or "")
-        == "authoritative_structure_table_sequence"
-        and bool(binding.get("authoritative_table_sequence_confirmed"))
-    ):
-        return bool(conflict_key)
     if binding is not None and str(binding.get("binding_rule") or "") in {
         "visual_grid_label",
         "visual_grid_sequence_order",
@@ -371,6 +365,31 @@ def annotate_binding_accuracy(binding: dict[str, Any]) -> dict[str, Any]:
             "invalid or incomplete original structure-table cell evidence"
         ]
         item["fail_closed"] = True
+        return item
+
+    if rule == "authoritative_structure_table_sequence" and (
+        not target_key
+        or identifier_key(
+            item.get("authoritative_table_raw_source_label"), terminal_period=True
+        )
+        != target_key
+        or item.get("authoritative_table_label_corrected")
+        or any(
+            _label_key(item.get(name)) != target_key
+            for name in (
+                "authoritative_table_source_label",
+                "authoritative_table_visible_label",
+            )
+        )
+    ):
+        item.update(
+            accuracy_status="review_required",
+            evidence_tier="conflict",
+            fail_closed=True,
+            evidence_reasons=[
+                "sequence flags do not prove the complete original source identifier"
+            ],
+        )
         return item
 
     if exact_strict_visual:

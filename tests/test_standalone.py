@@ -167,7 +167,7 @@ class StandalonePackagingTests(unittest.TestCase):
         self.assertEqual(RULESET_VERSION, "2.1.1")
         self.assertEqual(RUN_SUMMARY_SCHEMA_VERSION, 1)
         self.assertEqual(PAGE_CLASSIFICATION_SCHEMA_VERSION, 2)
-        self.assertEqual(BINDINGS_SCHEMA_VERSION, 5)
+        self.assertEqual(BINDINGS_SCHEMA_VERSION, 6)
         self.assertEqual(SMILES_SCHEMA_VERSION, 2)
         self.assertEqual(QA_REPORT_SCHEMA_VERSION, 5)
         self.assertEqual(project["name"], DISTRIBUTION_NAME)

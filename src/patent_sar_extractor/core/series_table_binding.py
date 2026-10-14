@@ -7,16 +7,13 @@ It returns evidence; the binder owns serialization and the final accuracy gate.
 from __future__ import annotations
 
 import math
-import re
 from collections import Counter
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from typing import Any
 
-_LABEL_RE = re.compile(
-    r"(?<![A-Za-z0-9])(?:I|1|l)\s*[-\u2013\u2014]\s*([1-9]\d{0,4})(?!\d)",
-    re.IGNORECASE,
-)
+from .printed_identifiers import identifier_key
+
 _OCR_DUPLICATE_TOLERANCE = 2.0  # PDF points, anchored to the first observation.
 _MAX_OUTSIDE_DISTANCE = 36.0
 _MIN_TABLE_LABELS = 6
@@ -24,21 +21,22 @@ _MIN_TABLE_LABELS = 6
 
 @dataclass(frozen=True)
 class _Label:
-    number: int
+    number: str
     y: float
     position: int
+    raw_text: str
 
 
 @dataclass(frozen=True)
 class SeriesTableBinding:
     page_index: int
-    source_label: int
-    label: int
+    source_label: str
+    label: str
     structure: Mapping[str, Any]
     label_y: float
     center_distance: float
     evidence_position: int
-    correction_reason: str = ""
+    raw_source_label: str
 
 
 @dataclass(frozen=True)
@@ -49,6 +47,7 @@ class SeriesTableResult:
     ambiguous_pairings: int = 0
     observed_keys: frozenset[str] = frozenset()
     recognized_pages: frozenset[int] = frozenset()
+    unresolved_sources: tuple[tuple[int, str], ...] = ()
 
     @property
     def recognized(self) -> bool:
@@ -56,23 +55,22 @@ class SeriesTableResult:
 
 
 def _page_labels(lines: Sequence[tuple[float, str]], offset: int) -> list[_Label]:
-    observations: list[tuple[float, int]] = []
+    observations: list[tuple[float, str, str]] = []
     for raw_y, text in lines:
         try:
             y = float(raw_y)
         except (TypeError, ValueError, OverflowError):
             continue
-        if math.isfinite(y) and y >= 0:
-            observations.extend(
-                (y, int(match.group(1))) for match in _LABEL_RE.finditer(text)
-            )
+        label = identifier_key(text, terminal_period=True)
+        if math.isfinite(y) and y >= 0 and label.startswith("I-"):
+            observations.append((y, label, text))
     labels: list[_Label] = []
-    last_y: dict[int, float] = {}
-    for y, number in sorted(observations):
+    last_y: dict[str, float] = {}
+    for y, number, raw_text in sorted(observations):
         if number in last_y and y - last_y[number] <= _OCR_DUPLICATE_TOLERANCE:
             continue
         last_y[number] = y
-        labels.append(_Label(number, y, offset + len(labels)))
+        labels.append(_Label(number, y, offset + len(labels), raw_text))
     return labels
 
 
@@ -157,6 +155,7 @@ def _pair_page(
                 label_y=label.y,
                 center_distance=abs(label.y - (y0 + y1) / 2),
                 evidence_position=label.position,
+                raw_source_label=label.raw_text,
             )
         )
     return pairs, rejected, ambiguous
@@ -164,50 +163,17 @@ def _pair_page(
 
 def _resolve_labels(
     pairs: Sequence[SeriesTableBinding],
-    observed: Counter[int],
+    observed: Counter[str],
     active_keys: set[str] | None,
 ) -> tuple[SeriesTableBinding, ...]:
     ordered = sorted(pairs, key=lambda pair: pair.evidence_position)
-    proposals: dict[int, int] = {}
-    for index in range(1, len(ordered) - 1):
-        previous, current, following = ordered[index - 1 : index + 2]
-        expected = previous.source_label + 1
-        if (
-            observed[current.source_label] > 1
-            and observed[previous.source_label] == observed[following.source_label] == 1
-            and previous.evidence_position + 1 == current.evidence_position
-            and current.evidence_position + 1 == following.evidence_position
-            and current.page_index - previous.page_index in (0, 1)
-            and following.page_index - current.page_index in (0, 1)
-            and following.source_label == expected + 1
-            and expected not in observed
-            and active_keys is not None
-            and str(expected) in active_keys
-        ):
-            proposals[index] = expected
-    proposal_counts = Counter(proposals.values())
-    remaining = observed.copy()
-    resolved: list[SeriesTableBinding] = []
-    for index, current in enumerate(ordered):
-        proposed = proposals.get(index)
-        if proposed is not None and proposal_counts[proposed] == 1:
-            previous, following = ordered[index - 1], ordered[index + 1]
-            reason = (
-                f"Source label I-{current.source_label} is duplicated and out of sequence "
-                f"between I-{previous.source_label} and I-{following.source_label}; "
-                f"resolved as I-{proposed}."
-            )
-            remaining[current.source_label] -= 1
-            remaining[proposed] += 1
-            current = replace(current, label=proposed, correction_reason=reason)
-        resolved.append(current)
     # Count all observed rows, including ones with no segmented structure.
     # An unpaired duplicate is still competing evidence, not permission to bind.
     return tuple(
         pair
-        for pair in resolved
-        if remaining[pair.label] == 1
-        and (active_keys is None or str(pair.label) in active_keys)
+        for pair in ordered
+        if observed[pair.label] == 1
+        and (active_keys is None or pair.label in active_keys)
     )
 
 
@@ -219,10 +185,9 @@ def pair_series_table(
 ) -> SeriesTableResult:
     """Pair rows without inventing absent activity IDs or resolving ambiguity.
 
-    Source-print corrections require a repeated printed ID, unique adjacent
-    anchors proving a single missing integer, and that integer in the activity
-    set but nowhere in the observed table. Anchors cannot bridge an unobserved
-    page. Unresolved duplicates are withheld.
+    Preserve the entire printed I-series identifier. No missing integer,
+    confusable I/1/l glyph or parent/suffix identity is inferred. Unresolved
+    duplicates are withheld even when a plausible sequence is available.
     """
     by_page: dict[int, list[Mapping[str, Any]]] = {page: [] for page in page_indices}
     for structure in structures:
@@ -232,16 +197,18 @@ def pair_series_table(
             continue
         if page in by_page:
             by_page[page].append(structure)
-    observed: Counter[int] = Counter()
+    observed: Counter[str] = Counter()
     candidates: list[SeriesTableBinding] = []
     label_count = rejected = ambiguous = 0
     observed_pages: set[int] = set()
+    sources: list[tuple[int, str]] = []
     for page in sorted(by_page):
         labels = _page_labels(lines_by_page.get(page, ()), label_count)
         if labels:
             observed_pages.add(page)
         label_count += len(labels)
         observed.update(label.number for label in labels)
+        sources.extend((page, label.number) for label in labels)
         pairs, invalid, uncertain = _pair_page(page, by_page[page], labels)
         candidates.extend(pairs)
         rejected += invalid
@@ -251,6 +218,7 @@ def pair_series_table(
         if label_count >= _MIN_TABLE_LABELS
         else ()
     )
+    paired = {pair.label for pair in bindings}
     return SeriesTableResult(
         label_count,
         bindings,
@@ -258,4 +226,11 @@ def pair_series_table(
         ambiguous,
         frozenset(str(number) for number in observed),
         frozenset(observed_pages) if label_count >= _MIN_TABLE_LABELS else frozenset(),
+        tuple(
+            dict.fromkeys(
+                (page, label) for page, label in sources if label not in paired
+            )
+        )
+        if label_count >= _MIN_TABLE_LABELS
+        else (),
     )

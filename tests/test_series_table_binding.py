@@ -32,20 +32,21 @@ class SeriesTableBindingTests(unittest.TestCase):
 
     def _pair(self, structures, lines, active=range(1, 11)):
         return pair_series_table(
-            structures, [9], lines, {str(number) for number in active}
+            structures, [9], lines, {f"I-{number}" for number in active}
         )
 
-    def test_spatially_separate_duplicate_is_corrected_with_source_evidence(self):
+    def test_spatially_separate_duplicate_is_withheld_without_invented_correction(self):
         structures, lines = self._table([1, 2, 9, 4, 7, 8, 9, 10])
         original = deepcopy((structures, lines))
         result = self._pair(structures, lines)
         self.assertEqual(
-            [pair.label for pair in result.bindings], [1, 2, 3, 4, 7, 8, 9, 10]
+            [pair.label for pair in result.bindings],
+            ["I-1", "I-2", "I-4", "I-7", "I-8", "I-10"],
         )
-        corrected = result.bindings[2]
-        self.assertEqual(corrected.source_label, 9)
-        self.assertEqual(corrected.structure["id"], "S0002")
-        self.assertIn("duplicated and out of sequence", corrected.correction_reason)
+        self.assertTrue(
+            all(pair.label == pair.source_label for pair in result.bindings)
+        )
+        self.assertIn((9, "I-9"), result.unresolved_sources)
         self.assertEqual(
             (structures, lines), original, "Input evidence must remain immutable"
         )
@@ -55,52 +56,72 @@ class SeriesTableBindingTests(unittest.TestCase):
         lines[9].extend([(150.0, "1-1"), (151.5, "l-1")])
         result = self._pair(structures, lines)
         self.assertEqual(result.label_count, 6)
-        self.assertEqual([pair.label for pair in result.bindings], list(range(1, 7)))
-        self.assertTrue(all(not pair.correction_reason for pair in result.bindings))
+        self.assertEqual(
+            [pair.label for pair in result.bindings], [f"I-{n}" for n in range(1, 7)]
+        )
+        self.assertTrue(
+            all(pair.label == pair.source_label for pair in result.bindings)
+        )
 
     def test_missing_id_outside_activity_set_is_not_invented(self):
         structures, lines = self._table([1, 2, 9, 4, 7, 8, 9, 10])
         result = self._pair(structures, lines, active=[1, 2, 4, 7, 8, 9, 10])
-        self.assertEqual([pair.label for pair in result.bindings], [1, 2, 4, 7, 8, 10])
+        self.assertEqual(
+            [pair.label for pair in result.bindings],
+            ["I-1", "I-2", "I-4", "I-7", "I-8", "I-10"],
+        )
 
     def test_gap_id_already_printed_elsewhere_is_not_reassigned(self):
         structures, lines = self._table([1, 2, 9, 4, 7, 8, 9, 10, 3])
         result = self._pair(structures[:-1], lines)
-        self.assertEqual([pair.label for pair in result.bindings], [1, 2, 4, 7, 8, 10])
-        self.assertTrue(all(not pair.correction_reason for pair in result.bindings))
+        self.assertEqual(
+            [pair.label for pair in result.bindings],
+            ["I-1", "I-2", "I-4", "I-7", "I-8", "I-10"],
+        )
+        self.assertTrue(
+            all(pair.label == pair.source_label for pair in result.bindings)
+        )
 
     def test_duplicated_anchor_cannot_prove_a_correction(self):
         structures, lines = self._table([1, 2, 9, 4, 7, 8, 9, 10, 2])
         result = self._pair(structures, lines)
-        self.assertNotIn(3, [pair.label for pair in result.bindings])
-        self.assertNotIn(2, [pair.label for pair in result.bindings])
-        self.assertNotIn(9, [pair.label for pair in result.bindings])
+        self.assertNotIn("I-3", [pair.label for pair in result.bindings])
+        self.assertNotIn("I-2", [pair.label for pair in result.bindings])
+        self.assertNotIn("I-9", [pair.label for pair in result.bindings])
 
     def test_unsegmented_duplicate_remains_competing_evidence(self):
         structures, lines = self._table([1, 2, 3, 4, 5, 6, 3])
         result = self._pair(structures[:-1], lines)
-        self.assertEqual([pair.label for pair in result.bindings], [1, 2, 4, 5, 6])
+        self.assertEqual(
+            [pair.label for pair in result.bindings],
+            ["I-1", "I-2", "I-4", "I-5", "I-6"],
+        )
 
     def test_missing_segment_does_not_shift_later_rows(self):
         structures, lines = self._table([1, 2, 3, 4, 5, 6])
         result = self._pair([structures[0], structures[2]], lines)
         self.assertEqual(
             [(pair.label, pair.structure["id"]) for pair in result.bindings],
-            [(1, "S0000"), (3, "S0002")],
+            [("I-1", "S0000"), ("I-3", "S0002")],
         )
 
     def test_equal_distance_structures_are_withheld_not_tie_broken(self):
         structures, lines = self._table([1, 2, 3, 4, 5, 6])
         rival = {**structures[0], "id": "RIVAL", "x0": 400.0, "x1": 500.0}
         result = self._pair([*structures, rival], lines)
-        self.assertEqual([pair.label for pair in result.bindings], [2, 3, 4, 5, 6])
+        self.assertEqual(
+            [pair.label for pair in result.bindings],
+            ["I-2", "I-3", "I-4", "I-5", "I-6"],
+        )
         self.assertGreater(result.ambiguous_pairings, 0)
 
     def test_equal_distance_labels_are_withheld_not_tie_broken(self):
         structures, lines = self._table([1, 2, 3, 4, 5, 6])
         lines[9][1] = (150.0, "I-2")
         result = self._pair(structures, lines)
-        self.assertEqual([pair.label for pair in result.bindings], [3, 4, 5, 6])
+        self.assertEqual(
+            [pair.label for pair in result.bindings], ["I-3", "I-4", "I-5", "I-6"]
+        )
         self.assertGreater(result.ambiguous_pairings, 0)
 
     def test_invalid_geometry_is_rejected_without_unsafe_fallback(self):
@@ -116,7 +137,8 @@ class SeriesTableBindingTests(unittest.TestCase):
                 result = self._pair(structures, lines)
                 self.assertEqual(result.rejected_geometry, 1)
                 self.assertEqual(
-                    [pair.label for pair in result.bindings], [2, 3, 4, 5, 6]
+                    [pair.label for pair in result.bindings],
+                    ["I-2", "I-3", "I-4", "I-5", "I-6"],
                 )
 
     def test_nonfinite_ocr_coordinates_cannot_add_table_evidence(self):
@@ -144,13 +166,13 @@ class SeriesTableBindingTests(unittest.TestCase):
         bindings = _extract_authoritative_structure_table_sequence_bindings(
             structures,
             {},
-            [f"Compound {number}" for number in range(1, 7)],
+            [f"Compound I-{number}" for number in range(1, 7)],
             {"authoritative_structure_table_pages": [9, 11]},
             ocr_line_map=split_lines,
         )
         self.assertEqual(
             [row["cpd"] for row in bindings],
-            [f"Compound {number}" for number in range(1, 7)],
+            [f"Compound I-{number}" for number in range(1, 7)],
         )
 
     def test_correction_cannot_bridge_a_missing_table_page(self):
@@ -161,11 +183,14 @@ class SeriesTableBindingTests(unittest.TestCase):
             structures,
             [9, 11],
             {9: lines[9][:3], 11: lines[9][3:]},
-            {str(number) for number in range(1, 11)},
+            {f"I-{number}" for number in range(1, 11)},
         )
-        self.assertEqual([pair.label for pair in result.bindings], [1, 2, 4, 7, 8, 10])
+        self.assertEqual(
+            [pair.label for pair in result.bindings],
+            ["I-1", "I-2", "I-4", "I-7", "I-8", "I-10"],
+        )
 
-    def test_unique_correction_can_cross_an_observed_adjacent_page_boundary(self):
+    def test_adjacent_observed_pages_still_cannot_invent_a_gap_identifier(self):
         structures, lines = self._table([1, 2, 9, 4, 7, 8, 9, 10])
         for structure in structures[3:]:
             structure["page_no"] = 11
@@ -173,10 +198,11 @@ class SeriesTableBindingTests(unittest.TestCase):
             structures,
             [9, 10],
             {9: lines[9][:3], 10: lines[9][3:]},
-            {str(number) for number in range(1, 11)},
+            {f"I-{number}" for number in range(1, 11)},
         )
         self.assertEqual(
-            [pair.label for pair in result.bindings], [1, 2, 3, 4, 7, 8, 9, 10]
+            [pair.label for pair in result.bindings],
+            ["I-1", "I-2", "I-4", "I-7", "I-8", "I-10"],
         )
 
     def test_recognized_ambiguous_series_cannot_fall_back_to_numeric_zip(self):

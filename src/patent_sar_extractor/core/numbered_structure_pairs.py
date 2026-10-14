@@ -15,15 +15,14 @@ from .numbered_structure_models import (
     NumberedTableIssue,
     NumberedTableResult,
 )
+from .printed_identifiers import identifier_fragments_conflict, identifier_key
+from .source_section_roles import nonfinal_original_label
 from .structure_catalogs import repeated_selected_catalogs
 from .structure_table_headers import valid_column_ownership
 
-_ID_RE = re.compile(r"[1-9]\d{0,3}[A-Z]?\.?", re.IGNORECASE)
-
 
 def _label(value: Any) -> str:
-    text = re.sub(r"\s+", "", str(value or ""))
-    return text.removesuffix(".").upper() if _ID_RE.fullmatch(text) else ""
+    return identifier_key(value, wrapped=True, terminal_period=True)
 
 
 def _box(value: Any) -> Box | None:
@@ -71,7 +70,13 @@ def _confirmed_observations(
     for observation in observations:
         if not isinstance(observation, Mapping):
             return False
+        if nonfinal_original_label(observation.get("text")):
+            return False
         observed = _label(observation.get("text"))
+        if not observed and identifier_fragments_conflict(
+            str(observation.get("text") or ""), label
+        ):
+            return False
         if observed and observed != label:
             return False
         if observed != label:

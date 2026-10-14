@@ -1,5 +1,19 @@
 # Project governance manifest
 
+- Literal-ID ownership: `printed_identifiers.py` owns bounded whole identifiers,
+  wrapper/case/width equivalence and original fragment conflicts. Caption/cell/
+  native join/numbered/visible/activity consumers share it; `activity_identity`
+  re-exports old import names only. `source_section_roles` owns declared nonfinal
+  role guards and section inventory. Cell fast/re-read and serialized numbered/
+  reference proof refuse original conflicts; raw observations remain immutable.
+  Ruled series stay in the primary cell path; bare series keep their prefix and
+  explicit unpaired/duplicate conflicts. Sequence gap repair/global zip/blanket
+  conflict waiver are deleted, not retained as parallel fallbacks. Binding6/
+  binder15/visible12/activity10/epoch19 invalidate only affected derived proof;
+  rawObs2/OCSR/PDF/crops/manual/coverage6/SAR14/API/SQL/queues/dependencies stay.
+  Broader mixed-role/implicit/vector/chemical completeness still requires original
+  scientific verification. Real runs are frontend-only; no manual artifact repair.
+
 - Unruled-text ownership: `activity_text_plan.py` reuses the same original section/
   table and continuation policy; `activity_text_proof.py` replays that plan and the
   existing pure row reader on the stored original text catalog. Exact source spans,

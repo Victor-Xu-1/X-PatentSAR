@@ -10,14 +10,12 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .caption_grid_binding import bind_caption_grids
+from .printed_identifiers import LABEL_KIND, identifier_key
 from .table_cells import prefixed_label, read_cell
 from .table_geometry import page_tokens
 
 Box = tuple[float, float, float, float]
-_PREFIX = re.compile(
-    r"(?:Example|Compound|Cmpd|Cpd|实施例|化合物)[-:.]?", re.IGNORECASE
-)
-_ID = re.compile(r"[1-9]\d{0,3}[A-Z]?", re.IGNORECASE)
+_PREFIX = re.compile(rf"{LABEL_KIND}[-:.：]?", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -53,7 +51,7 @@ def _caption_tokens(tokens: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
             continue
         adjacent = []
         for other in tokens:
-            if not _ID.fullmatch(str(other["text"])):
+            if not identifier_key(other["text"]):
                 continue
             box = _box(other.get("bbox", []))
             if (

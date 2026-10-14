@@ -100,18 +100,18 @@ class BindingModuleTests(unittest.TestCase):
         self.assertEqual(spatial.candidates, ())
         self.assertEqual(spatial.ownership.page_indices, frozenset({0}))
         self.assertEqual(
-            spatial.ownership.label_keys, frozenset(str(n) for n in range(1, 7))
+            spatial.ownership.label_keys, frozenset(f"I-{n}" for n in range(1, 7))
         )
         self.assertEqual(
             spatial.restore(
                 [
                     {
-                        "cpd": "Compound 1",
+                        "cpd": "Compound I-1",
                         "structure_id": "synthetic-fallback",
                         "page_no": 2,
                     }
                 ],
-                ["Compound 1"],
+                ["Compound I-1"],
             ),
             [],
         )

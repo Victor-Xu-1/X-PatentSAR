@@ -1,5 +1,25 @@
 # X-PatentSAR architecture
 
+`printed_identifiers.py` is the pure literal grammar/normalization/fragment-conflict
+authority. `activity_identity` re-exports its existing pattern names, not a second
+implementation. Caption, cell, native joined label, numbered row proof, visible
+tokens and activity readers preserve full prefix/suffix/zeros and raw provenance.
+No whitespace digit join, decimal/hash mining, Unicode superscript conversion,
+I/1/l repair, integer gap correction or global numeric zip remains in this path.
+`source_section_roles.py` records declared intermediate targets and keeps them out
+of compound-heading publication; final titles merely referencing intermediates
+and I-namespaces are not excluded. Cell fast/reread admission and serialized
+numbered/reference proof cannot override that original role or fragment conflict.
+Ruled I-series rows use the existing physical-cell authority. Bare series retain
+literal prefixes and report unpaired/duplicate observations as source conflicts.
+Binding6/binder15/visible12/activity10/epoch19 are independent semantic revisions;
+raw observation2/PDF/crop/OCSR/manual/coverage6/SAR14/API/SQL/dependencies stay.
+Limits are128characters,8digits per component,12prefix and4suffix letters; failures
+stay explicit. Source exclusions across arbitrary mixed layouts and complete
+bare-series scientific proof remain broader work, not implied by these controls.
+Actual frontend patent/SAR runs are scientific acceptance evidence, independent
+from focused source/installed/browser engineering checks; no artifact is rewritten.
+
 `activity_text_plan.py` reuses the existing original section/table and literal
 continuation authorities. The same pure row reader serves the producer and
 `activity_text_proof.py`; no second parser or acceptance implementation exists.

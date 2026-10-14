@@ -8,7 +8,6 @@ Recognized table pages remain protected even when none of their cells bind.
 from __future__ import annotations
 
 import math
-import re
 from collections.abc import Callable, Mapping, Sequence
 from itertools import pairwise
 from typing import Any, Protocol
@@ -167,19 +166,8 @@ def bind_numbered_tables(
                 headers, pairs = carry[2], carry[3]
             first_row = 1 if has_header else 0
             catalog = catalog_at(marks, ys[0], prior_catalog)
-            # The existing I-series module owns labels with a series prefix.
-            if any(
-                re.fullmatch(
-                    r"(?:I|l)\s*[-–—]\s*[1-9]\d*",
-                    _cell_text(
-                        tokens, (xs[column], ys[r], xs[column + 1], ys[r + 1])
-                    ).strip(),
-                    re.IGNORECASE,
-                )
-                for r in range(first_row, len(ys) - 1)
-                for column, _ in pairs
-            ):
-                continue
+            # Every literal ID, including a series prefix, has the same cell
+            # authority. A weaker row-order adapter cannot take a ruled grid.
             recognized.add(page_index)
             carry = page_index, xs, headers, pairs
             for row in range(first_row, len(ys) - 1):
