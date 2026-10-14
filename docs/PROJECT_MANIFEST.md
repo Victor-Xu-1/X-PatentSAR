@@ -1,5 +1,20 @@
 # Project governance manifest
 
+- Recognition-preparation ownership: `core/ocsr/label_mask.py` uses whole IDs and
+  original caption/crop point geometry; `label_mask_proof.py` replays serialized
+  proof through the existing shared stereo gate. Bottom-cluster masking/private
+  short-ID parsing are deleted. `image_preprocess.publish_png` is the same bounded
+  atomic writer for caption cleanup and normalization. Core/application/export/
+  QA/Web consume original binding/metadata facts. Original source hash/stereo and
+  prepared model input stay separate; checkpoint copying relocates both without
+  chemical edits. Independent preparation epoch1 enters stage identity while raw
+  OCSR observation2 and other scientific epochs/API/SQL/dependencies/queues/models
+  stay unchanged. Historical unproved masks remain unavailable, not promoted or
+  rewritten; malformed current proof is rejected. No provider call or automatic
+  real-task run. Controlled tests do not imply universal scientific acceptance.
+  The existing frontend compound-label helper localizes only known generated
+  placeholders; no raw/source/manual identifier, correction or data contract changes.
+
 - Literal-ID ownership: `printed_identifiers.py` owns bounded whole identifiers,
   wrapper/case/width equivalence and original fragment conflicts. Caption/cell/
   native join/numbered/visible/activity consumers share it; `activity_identity`

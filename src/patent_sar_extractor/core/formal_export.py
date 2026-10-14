@@ -9,7 +9,7 @@ from .ocsr.smiles_qc import COMMON_FINAL_PRODUCT_ELEMENTS
 from .ocsr.stereo_gate import stereo_record_error
 
 
-def record_errors(record: dict) -> list[str]:
+def record_errors(record: dict, binding: dict | None = None) -> list[str]:
     if not isinstance(record, dict):
         raise ValueError("Malformed recognition record")  # noqa: TRY004 -- shared schema boundary
     errors = []
@@ -34,7 +34,7 @@ def record_errors(record: dict) -> list[str]:
     )
     if suspicious:
         errors.append(f"suspicious elements: {sorted(suspicious)}")
-    stereo = stereo_record_error(record)
+    stereo = stereo_record_error(record, binding)
     if stereo:
         errors.append(f"source stereochemistry: {stereo}")
     return errors
@@ -50,7 +50,7 @@ def qualified_records(
         )
     selected_bindings, selected_records, errors = [], [], []
     for binding, record in zip(bindings, records):
-        reasons = record_errors(record)
+        reasons = record_errors(record, binding)
         if not confirmed_binding(binding):
             reasons.append("original binding is not independently confirmed")
         if not image_exists(binding, root):

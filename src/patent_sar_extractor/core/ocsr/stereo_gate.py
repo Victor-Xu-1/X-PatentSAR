@@ -8,11 +8,16 @@ from typing import Any
 
 from patent_sar_extractor.contracts import STEREO_EVIDENCE_VERSION
 
+from .label_mask_proof import validate_mask_proof
 from .smiles_qc import qc_smiles
 from .stereo_evidence import check_source_stereochemistry
 
 
-def validate_stereo_record(record: dict[str, Any]) -> dict[str, Any]:
+def validate_stereo_record(
+    record: dict[str, Any],
+    binding: dict | None = None,
+    source_record: dict | None = None,
+) -> dict[str, Any]:
     evidence = record.get("stereochemistry")
     if (
         not isinstance(evidence, dict)
@@ -46,6 +51,7 @@ def validate_stereo_record(record: dict[str, Any]) -> dict[str, Any]:
             raise ValueError("Source unknown-bond geometry is invalid")
         if not 0 <= box[0] < box[2] <= size[0] or not 0 <= box[1] < box[3] <= size[1]:
             raise ValueError("Source unknown-bond geometry is outside its image")
+    validate_mask_proof(record, binding, source_record)
     raw = record.get("raw_smiles")
     if not isinstance(raw, str) or not 0 < len(raw) <= 10000:
         raise ValueError("Source stereochemistry has no bounded raw model observation")
@@ -73,9 +79,13 @@ def validate_stereo_record(record: dict[str, Any]) -> dict[str, Any]:
     return expected
 
 
-def stereo_record_error(record: dict[str, Any]) -> str | None:
+def stereo_record_error(
+    record: dict[str, Any],
+    binding: dict | None = None,
+    source_record: dict | None = None,
+) -> str | None:
     try:
-        evidence = validate_stereo_record(record)
+        evidence = validate_stereo_record(record, binding, source_record)
     except ValueError as exc:
         return str(exc)
     if evidence["status"] in {"conflict", "ambiguous"}:

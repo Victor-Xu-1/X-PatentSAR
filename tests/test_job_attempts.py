@@ -614,6 +614,7 @@ class AttemptTests(WebFixture, unittest.TestCase):
             "structure_image": str(source / paths[0]),
             "ocsr_structure_image": str(source / paths[1]),
             "ocsr_original_input": str(source / paths[1]),
+            "ocsr_label_mask_source": str(source / paths[0]),
             "engine_attempts": [
                 {
                     "input_image": str(source / paths[1]),
@@ -637,6 +638,7 @@ class AttemptTests(WebFixture, unittest.TestCase):
         self.assertEqual(moved["structure_image"], str(target / paths[0]))
         self.assertEqual(moved["ocsr_structure_image"], str(target / paths[1]))
         self.assertEqual(moved["ocsr_original_input"], str(target / paths[1]))
+        self.assertEqual(moved["ocsr_label_mask_source"], str(target / paths[0]))
         for index in range(2):
             self.assertEqual(
                 moved["engine_attempts"][index]["smiles"],
@@ -699,6 +701,7 @@ class AttemptTests(WebFixture, unittest.TestCase):
     def _assert_real_cli_resume_identity(self, filename, expected_patent_id):
         config = self.root / "operator-config"
         config.mkdir(mode=0o700)
+        unavailable_segmentation = str(config / "controlled-missing-decimer")
 
         class LocalCLI(CLIProcessRunner):
             def environment(self, spec):
@@ -707,6 +710,7 @@ class AttemptTests(WebFixture, unittest.TestCase):
                     {
                         "PATENTSAR_CONFIG_DIR": str(config),
                         "PATENTSAR_BASE_PYTHON": sys.executable,
+                        "DECIMER_PYTHON": unavailable_segmentation,
                         "PATENTSAR_PADDLEX_OCR_URL": "off",
                         "LLM_API_KEY": "",
                     }
@@ -758,8 +762,23 @@ class AttemptTests(WebFixture, unittest.TestCase):
             }
             self.assertEqual(after, before)
             observed = {stage["name"]: stage for stage in fresh["stages"]}
-            self.assertEqual(observed["qa"]["status"], "failed")
-            self.assertEqual(observed["locate"]["status"], "empty")
+            # All-page discovery may not silently skip the original page just
+            # because lexical classification saw no molecules. The deliberately
+            # absent controlled runtime stops the actual CLI at segmentation;
+            # QA was never run and must not be advertised as a failed QA result.
+            self.assertEqual(observed["qa"]["status"], "pending")
+            self.assertEqual(observed["locate"]["status"], "ok")
+            self.assertEqual(observed["structures"]["status"], "failed")
+            summary = json.loads((target / "pipeline_summary.json").read_text())
+            self.assertEqual(summary["status"], "failed")
+            self.assertEqual(summary["steps"]["locate"]["selected_pages"], 1)
+            self.assertEqual(
+                summary["steps"]["locate"]["coverage_policy"], "all_document_pages"
+            )
+            self.assertNotIn("qa", summary["steps"])
+            self.assertIn(
+                "controlled-missing-decimer", (target / "web-process.log").read_text()
+            )
             self.assertNotEqual(
                 client.get(f"/api/v1/projects/{project['id']}").json()["acceptance"][
                     "state"

@@ -1608,6 +1608,28 @@ class StrictAcceptanceTests(unittest.TestCase):
             image_path = self._labeled_structure_image(base, "structure_110.png", "110")
             binding = self._binding("Compound 110", "S0110", image_path)
             binding["visible_label"] = "110"
+            binding["page_no"] = 1
+            from PIL import Image, ImageDraw
+
+            from patent_sar_extractor.core.ocsr.label_mask import source_geometry
+
+            with Image.open(image_path) as source:
+                caption_box = ImageDraw.Draw(source).textbbox((108, 70), "110")
+            binding["_ocsr_source_geometry"] = source_geometry(
+                {
+                    "image_path": image_path,
+                    "structure_id": "S0110",
+                    "page_no": 1,
+                    "bbox_pdf": [0, 0, 240, 96],
+                    "bbox": [0, 0, 240, 96],
+                },
+                image_path,
+            )
+            binding["exact_caption_evidence"] = {
+                "page_no": 1,
+                "bbox": list(caption_box),
+                "observations": [{"method": "native_cell", "text": "110"}],
+            }
 
             with patch.dict(
                 smiles_converter_module.ENGINE_MAP, {"decimer": InspectingEngine}

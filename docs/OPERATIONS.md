@@ -1,5 +1,27 @@
 # Operations and troubleshooting
 
+## Original-image recognition preparation
+
+Preparation epoch1 distinguishes a prepared DECIMER input from its original crop.
+Source hash and stereo risk inspection must reference the unchanged original;
+model cache identity continues to reference exact actual input/model bytes under
+raw observation2. Stage fingerprints include preparation epoch independently.
+Only exact caption observations, same-page/structure metadata and a proved isolated
+point-to-pixel rectangle permit removal. Missing/ambiguous/foreign/rotated twice/
+touching geometry leaves pixels unchanged; do not revive the deleted bottom-glyph
+heuristic or replace Y/V/other atoms by guessed chemistry. A legitimate crop may
+still require scientific review; source preparation is not full graph validation.
+Saved masks are rechecked against original binding and available structure metadata.
+Legacy masks without preparation/proof remain inspectable with unavailable chemistry;
+current malformed proofs still fail closed. Original PDF/OCR/crops/raw predictions/
+manual revisions are not rewritten or retagged. Checkpoint copy relocates both
+original and derivative paths. Prepared PNG publication is atomic and source assets
+are never overwritten. Source16MiB/8million pixels, candidate256, source coordinates
+bounded to1million points and0.01–1000pixels/point fail/withhold explicitly, not trim.
+No external LLM/model install/new queue/API/SQL change. Finish actual tasks at their
+existing revision before switching deployment, then submit new validation only via
+the frontend; never restart/replay a live attempt because observation timed out.
+
 ## Literal original identifiers and role admission
 
 Binding6/binder15/visible12/activity10/epoch19 require fresh derived identity and

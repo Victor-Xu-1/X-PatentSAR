@@ -63,7 +63,7 @@ describe('complete information table presentation', () => {
   it('keeps structures without activity and labels the gap without a biological conclusion', () => {
     render(<ResultsTable {...callbacks()} rows={[structure]} />);
     expect(screen.getByText('Compound 2')).toBeVisible();
-    expect(screen.getByText('未关联活性')).toBeVisible();
+    expect(screen.getByText('暂无活性数据')).toBeVisible();
     expect(screen.queryByText(/^(无活性|阴性)$/)).not.toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Compound 2 结构裁图' })).toBeVisible();
     expect(screen.getByLabelText('MW 未计算')).toHaveTextContent('—');
@@ -114,7 +114,7 @@ describe('complete information table presentation', () => {
 
   it('does not suppress explicitly retained structure-only gaps when no metrics are selected', () => {
     render(<ResultsTable {...callbacks()} rows={[structure]} metrics={[]} />);
-    expect(screen.getByText('未关联活性')).toBeVisible();
+    expect(screen.getByText('暂无活性数据')).toBeVisible();
     expect(screen.getAllByRole('row')).toHaveLength(2);
   });
 

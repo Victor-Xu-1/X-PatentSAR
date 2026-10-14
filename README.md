@@ -1,5 +1,22 @@
 # X-PatentSAR
 
+Recognition now preserves complete printed IDs through the same source authority;
+the standalone runner no longer clips numeric prefixes/suffixes. Caption cleanup
+requires an exact original caption, metadata-owned crop geometry and an isolated
+pixel region. The old bottom-of-image shape guess is removed. Model-prepared
+images and unchanged source crops are separate: source hashes and stereo risk
+inspection use the original, never the cleaned derivative. Saved cleanup proof
+is checked against original bindings/metadata by core, export and Web consumers.
+Older unproved cleanup remains readable but cannot qualify current chemistry.
+Independent preparation epoch1 invalidates stage reuse without changing exact raw
+OCSR observation2/model caches, original assets or manual audit. No model/queue/
+dependency/API/SQL change or automatic task replay. Controlled pixel/native/rotation
+tests are engineering evidence, not proof of universal recall or chemical accuracy.
+
+The shared UI label renderer localizes only the exact application-generated
+unconfirmed source placeholder. Original printed labels, explicit identifiers,
+user edits, internal routes/joins and correction payloads stay verbatim.
+
 One bounded literal-ID authority now serves structure captions/cells/native joins,
 numbered source proof, visible evidence and activity identity. Prefixes, suffixes,
 zeros and complete identifiers survive; case/one-to-one fullwidth normalization

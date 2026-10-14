@@ -11,6 +11,27 @@ import numpy as np
 from PIL import Image
 
 
+def publish_png(target: Path, content: bytes) -> None:
+    """Atomically publish an owned derived image; never touch its source image."""
+    if not content or len(content) > 32 * 1024 * 1024:
+        raise ValueError("Prepared image exceeds its encoded byte bound")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            dir=target.parent, prefix=".prepare-", suffix=".png", delete=False
+        ) as stream:
+            temporary = Path(stream.name)
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, target)
+        temporary = None
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+
+
 def preprocess_structure_image(
     image_path: str, output_dir: str, padding: int = 20, long_edge: int = 1024
 ) -> str:
@@ -45,21 +66,6 @@ def preprocess_structure_image(
     encoded, pixels = cv2.imencode(".png", binary)
     if not encoded:
         raise ValueError("Normalized structure image encoding failed")
-    directory = Path(output_dir)
-    directory.mkdir(parents=True, exist_ok=True)
-    target = directory / f"{Path(image_path).stem}_preprocessed.png"
-    temporary = None
-    try:
-        with tempfile.NamedTemporaryFile(
-            dir=directory, prefix=".normalize-", suffix=".png", delete=False
-        ) as stream:
-            temporary = Path(stream.name)
-            stream.write(pixels.tobytes())
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(temporary, target)
-        temporary = None
-    finally:
-        if temporary is not None:
-            temporary.unlink(missing_ok=True)
+    target = Path(output_dir) / f"{Path(image_path).stem}_preprocessed.png"
+    publish_png(target, pixels.tobytes())
     return str(target)

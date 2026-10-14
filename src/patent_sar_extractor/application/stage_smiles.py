@@ -17,6 +17,7 @@ from patent_sar_extractor.artifact_io import load_json as _load_json
 from patent_sar_extractor.artifact_io import write_json_atomic as _write_json
 from patent_sar_extractor.contracts import (
     OCSR_OBSERVATION_VERSION,
+    OCSR_PREPARATION_VERSION,
     SMILES_SCHEMA_VERSION,
 )
 from patent_sar_extractor.core.env_runner import run_in_env
@@ -96,6 +97,7 @@ def execute_smiles(state: PipelineContext) -> None:
         params={
             **_production_smiles_ocr_options(),
             "ocsr_observation_version": OCSR_OBSERVATION_VERSION,
+            "ocsr_preparation_version": OCSR_PREPARATION_VERSION,
             "stereo_evidence_version": core_contracts.STEREO_EVIDENCE_VERSION,
             "smiles_schema_version": SMILES_SCHEMA_VERSION,
             "decimer_runtime_fingerprint": DECIMEREngine(

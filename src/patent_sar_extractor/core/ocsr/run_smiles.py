@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 PatentSAR SMILES engine runner.
 
@@ -42,6 +41,7 @@ from patent_sar_extractor.contracts import (
     artifact_identity_matches,
 )
 from patent_sar_extractor.core.cpd_filter import filter_examples_only
+from patent_sar_extractor.core.ocsr.label_mask import source_geometry
 from patent_sar_extractor.core.ocsr.observation_completion import (
     publish_scientific_findings,
     require_complete_source_results,
@@ -53,7 +53,10 @@ from patent_sar_extractor.core.ocsr.recognition_inputs import (
 )
 from patent_sar_extractor.core.ocsr.smiles_converter import SmilesConverter
 from patent_sar_extractor.core.ocsr.stereo_gate import stereo_record_error
-from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
+from patent_sar_extractor.core.pipeline_rules import (
+    _label_key,
+    annotate_binding_accuracy,
+)
 from patent_sar_extractor.smiles_artifact import (
     DIAGNOSTIC_SMILES_MODE,
     PRODUCTION_SMILES_MODE,
@@ -95,18 +98,6 @@ def load_bindings(input_path: str) -> list:
     raise ValueError(f"Cannot parse binding results from: {input_path}")
 
 
-def _normalize_cpd(value: str) -> str:
-    import re
-
-    text = re.sub(r"\s+", " ", str(value or "")).strip()
-    match = re.search(
-        r"(?:compound|cpd|example|实施例|化合物)\s*[-:]?\s*(\d+(?:-\d+)?[A-Z]?)",
-        text,
-        re.IGNORECASE,
-    )
-    return f"Compound {match.group(1).upper()}" if match else text
-
-
 def validate_strict_binding_input(input_path: str, bindings: list) -> list[str]:
     """Reject direct OCSR use on stale, unconfirmed, or duplicated final bindings."""
     if input_path.lower().endswith(".csv"):
@@ -139,7 +130,7 @@ def validate_strict_binding_input(input_path: str, bindings: list) -> list[str]:
             if isinstance(binding, dict)
             else {}
         )
-        cpd = _normalize_cpd(checked.get("cpd", "")) or "unknown compound"
+        cpd = _label_key(checked.get("cpd", "")) or "unknown compound"
         sid = str(checked.get("structure_id") or "")
         if checked.get("accuracy_status") != "confirmed" or checked.get("fail_closed"):
             errors.append(
@@ -159,7 +150,7 @@ def validate_strict_smiles_results(bindings: list, results: list) -> list[str]:
     """Require exactly one clean result for each confirmed structure in binding order."""
     expected = [
         (
-            _normalize_cpd(binding.get("cpd", binding.get("cpd_id", ""))),
+            _label_key(binding.get("cpd", binding.get("cpd_id", ""))),
             str(binding.get("structure_id") or ""),
         )
         for binding in bindings
@@ -167,24 +158,36 @@ def validate_strict_smiles_results(bindings: list, results: list) -> list[str]:
     ]
     actual = [
         (
-            _normalize_cpd(result.get("cpd_id", "")),
+            _label_key(result.get("cpd_id", "")),
             str(result.get("structure_id") or ""),
         )
         for result in results
         if isinstance(result, dict)
     ]
     errors = []
-    if len(actual) != len(results) or actual != expected:
+    if (
+        len(expected) != len(bindings)
+        or len(actual) != len(results)
+        or actual != expected
+        or any(not label or not image for label, image in expected)
+        or len({label for label, _ in expected}) != len(expected)
+        or len({image for _, image in expected}) != len(expected)
+    ):
         errors.append(
             "OCSR result records are not a one-to-one ordered match for confirmed structure bindings."
         )
-    for result in results:
+    for index, result in enumerate(results):
         if not isinstance(result, dict):
             errors.append("OCSR produced a malformed output record.")
             continue
-        cpd = _normalize_cpd(result.get("cpd_id", "")) or "unknown compound"
+        cpd = _label_key(result.get("cpd_id", "")) or "unknown compound"
         suspicious = result.get("suspicious_elements") or []
-        stereo_error = stereo_record_error(result)
+        binding = (
+            bindings[index]
+            if index < len(bindings) and isinstance(bindings[index], dict)
+            else None
+        )
+        stereo_error = stereo_record_error(result, binding)
         if stereo_error:
             errors.append(
                 f"{cpd}: source stereochemistry requires review: {stereo_error}"
@@ -294,6 +297,28 @@ def resolve_image_paths(bindings: list, base_dir: str = "") -> list:
     Try to resolve them relative to base_dir or the caller's working directory.
     """
     structure_lookup = _load_structure_image_lookup(base_dir)
+
+    def attach_source(item, image_path):
+        item["ocsr_image_path"] = os.path.abspath(image_path)
+        item.pop("_ocsr_source_geometry", None)
+        record = structure_lookup.get(
+            str(item.get("source_structure_id") or item.get("structure_id") or "")
+        )
+        if (
+            record is not None
+            and record.get("page_no") == item.get("page_no")
+            and isinstance(item.get("exact_caption_evidence"), dict)
+        ):
+            try:
+                frame = source_geometry(record, item["ocsr_image_path"])
+            except (OSError, ValueError):
+                # Optional caption removal may not erase/replace an unreadable
+                # source. The converter still records the original image error.
+                item["_ocsr_source_frame_unavailable"] = True
+                frame = None
+            if frame is not None:
+                item["_ocsr_source_geometry"] = frame
+
     resolved = []
     for item in bindings:
         item = dict(item)  # Copy
@@ -304,19 +329,19 @@ def resolve_image_paths(bindings: list, base_dir: str = "") -> list:
             if base_dir:
                 abs_path = os.path.join(base_dir, img_path)
                 if os.path.isfile(abs_path):
-                    item["ocsr_image_path"] = os.path.abspath(abs_path)
+                    attach_source(item, abs_path)
                     resolved.append(item)
                     continue
 
             # Try relative to the caller's working directory.
             abs_path = os.path.join(WORKING_ROOT, img_path)
             if os.path.isfile(abs_path):
-                item["ocsr_image_path"] = os.path.abspath(abs_path)
+                attach_source(item, abs_path)
                 resolved.append(item)
                 continue
 
         if img_path and os.path.isfile(img_path):
-            item["ocsr_image_path"] = os.path.abspath(img_path)
+            attach_source(item, img_path)
         resolved.append(item)
 
     return resolved

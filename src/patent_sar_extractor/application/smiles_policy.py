@@ -54,14 +54,21 @@ def _smiles_acceptance_errors(
         errors.append(
             "SMILES records are not tied to the exact confirmed structure images in order."
         )
-    for row in smiles_results:
+    for index, row in enumerate(smiles_results):
         if not isinstance(row, dict):
             errors.append("A SMILES output record is malformed.")
             continue
         cpd = _normalize_cpd_label(row.get("cpd_id", "")) or "unknown compound"
-        stereo_error = stereo_record_error(row)
+        binding = (
+            bindings[index]
+            if index < len(bindings) and isinstance(bindings[index], dict)
+            else None
+        )
+        stereo_error = stereo_record_error(row, binding)
         if stereo_error:
-            errors.append(f"{cpd}: source stereochemistry requires review: {stereo_error}")
+            errors.append(
+                f"{cpd}: source stereochemistry requires review: {stereo_error}"
+            )
         suspicious = {
             element
             for element in re.findall(
