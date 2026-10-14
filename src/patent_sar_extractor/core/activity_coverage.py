@@ -15,6 +15,7 @@ from patent_sar_extractor.contracts import (
     schema_ref_matches,
 )
 
+from .activity_grid_role_proof import valid_role_scope
 from .activity_result_references import result_references
 from .activity_source_roles import method_page_evidence, method_result_references
 from .activity_table_layout import validate_layout
@@ -24,7 +25,15 @@ from .activity_text_plan import validate_text_pages, validate_text_scope
 from .activity_text_proof import text_source_errors
 
 MAX_REGIONS = 25000
-STATUSES = {"parsed", "empty", "unresolved", "context", "reference", "header"}
+STATUSES = {
+    "parsed",
+    "empty",
+    "unresolved",
+    "context",
+    "reference",
+    "header",
+    "non_activity",
+}
 KINDS = {"grid", "text", "page"}
 REASONS = {
     "original_cells",
@@ -38,6 +47,7 @@ REASONS = {
     "unsupported_result_reference",
     "conflicting_result_references",
     "original_header_only",
+    "observed_characterization",
 }
 
 
@@ -53,6 +63,7 @@ def source_record(
     *,
     layout: dict | None = None,
     text_scope: dict | None = None,
+    role_scope: dict | None = None,
 ) -> dict[str, Any]:
     record = {
         "page_no": page_no,
@@ -73,6 +84,8 @@ def source_record(
     ).hexdigest()[:32]
     if layout is not None:
         record["layout"] = layout
+    if role_scope is not None:
+        record["role_scope"] = role_scope
     _validate_region(record)
     return record
 
@@ -80,7 +93,7 @@ def source_record(
 def _validate_region(record: dict) -> None:
     if (
         not isinstance(record, dict)
-        or set(record) - {"layout", "text_scope"}
+        or set(record) - {"layout", "text_scope", "role_scope"}
         != {
             "region_id",
             "page_no",
@@ -173,6 +186,20 @@ def _validate_region(record: dict) -> None:
         )
     validate_layout(record)
     if (
+        record["status"] == "non_activity"
+        or record["reason"] == "observed_characterization"
+        or "role_scope" in record
+    ) and not (
+        record["status"] == "non_activity"
+        and record["reason"] == "observed_characterization"
+        and record["kind"] == "grid"
+        and bbox is not None
+        and "layout" not in record
+        and "text_scope" not in record
+        and valid_role_scope(record)
+    ):
+        raise ValueError("Unproved original characterization grid role")
+    if (
         record["status"] == "header" or record["reason"] == "original_header_only"
     ) and not (
         record["status"] == "header"
@@ -211,7 +238,9 @@ def coverage_packet(
     ):
         raise ValueError("Malformed discovered activity source pages")
     discovered = sorted(set(discovered_pages or []))
-    observed = {region["page_no"] for region in regions}
+    observed = {
+        region["page_no"] for region in regions if region["status"] != "non_activity"
+    }
     records = list(regions)
     parsed_pages = {
         region["page_no"] for region in records if region["status"] == "parsed"

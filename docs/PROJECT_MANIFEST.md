@@ -1,12 +1,24 @@
 # Project governance manifest
 
+- Grid-role ownership: `activity_grid_roles` supplies only positive literal
+  characterization semantics; `activity_grid_role_observation` reuses existing
+  source geometry/native/cell/coordinate OCR; `activity_grid_role_proof` replays
+  all original cells and valid conflicts through the single coverage/core/Web/SAR
+  authority. Unknowns remain unresolved; no page-absence/result-reference waiver,
+  alternate parser/store/queue/model or scientific value rewrite. Header context
+  and original boundary prefixes share the same layout/continuation authority.
+  `cell_ocr_scores` is the sole initial/reread numeric confidence guard. Binding8/
+  binder17/activity11/epoch20/coverage7 change only derived proof; original/raw/
+  manual, visible12/preparation1/rawOCSR2/SAR14/API/SQL/dependencies stay intact.
+  Native/raster/mixed controls do not certify universal coverage or chemistry.
+
 - Caption-line ownership: `cell_line_coverage.py` provides bounded original-frame
   ink coverage to the existing `cell_ocr_lines` coordinator, only for captions.
   `cell_caption_identity.py` rechecks detector claims in observation and serialized
   numbered proof; overlapping fragments are not independent complete labels.
-  Valid original conflicts/nonfinal roles remain explicit. Binder16/binding7 change
-  derived ownership only; original assets/OCR/model/manual history, activity10/
-  epoch19/visible12/preparation1/rawOCSR2/SAR14/API/SQL/dependencies/queues stay.
+  Valid original conflicts/nonfinal roles remain explicit. Binder17/binding8 change
+  derived ownership only; original assets/OCR/model/manual history,
+  visible12/preparation1/rawOCSR2/SAR14/API/SQL/dependencies/queues stay.
   Controlled fonts/negative/resource cases are not real-patent scientific acceptance.
 
 - Recognition-preparation ownership: `core/ocsr/label_mask.py` uses whole IDs and

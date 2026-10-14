@@ -52,6 +52,11 @@ def _root(record):
 
 def _edge(parent, current, root):
     a, b, first = parent["layout"], current["layout"], root["layout"]
+    boundary = b.get("boundary_prefix", b["prefix"])
+    if b["prefix"] != boundary and (
+        not b["data_start"] or b["prefix"] != first["context"]["raw_context"]
+    ):
+        return False
     if (
         b["context"] != first["context"]
         or b["semantic_kind"] != first["semantic_kind"]
@@ -69,7 +74,9 @@ def _edge(parent, current, root):
         and abs(a["ys"][0] - b["ys"][0]) <= 4
         and a["xs"][-1] < b["xs"][0]
         and compatible_columns(a["xs"], b["xs"], relative=True)
-        and caption_prefix(b["prefix"], root["table_id"], first["prefix"])
+        and caption_prefix(
+            b.get("boundary_prefix", b["prefix"]), root["table_id"], first["prefix"]
+        )
     )
     adjacent = (
         parent["page_no"] + 1 == current["page_no"]
@@ -77,9 +84,9 @@ def _edge(parent, current, root):
         and compatible_columns(a["xs"], b["xs"])
         and continuation_prefix(a["suffix"])
         and (
-            continuation_prefix(b["prefix"])
+            continuation_prefix(b.get("boundary_prefix", b["prefix"]))
             or caption_prefix(
-                b["prefix"],
+                b.get("boundary_prefix", b["prefix"]),
                 root["table_id"],
                 first["context"]["raw_caption"],
                 continued=True,

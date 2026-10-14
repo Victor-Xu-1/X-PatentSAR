@@ -8,6 +8,7 @@ from .activity_coverage import source_record
 from .activity_grid_context import _prefix, table_matrix
 from .activity_grid_continuations import Panel, continued_panel
 from .activity_grid_parser import parse_grid
+from .activity_grid_role_observation import observe_characterization
 from .activity_header_observation import refine_scanned_header
 from .activity_header_roles import HeaderResolver
 from .activity_headers import context_from_text, grid_schema
@@ -91,6 +92,27 @@ def extract_coordinate_tables(
             prefix = _prefix(tokens, region)
             header = " ".join(matrix[0]) if matrix else ""
             context = context_from_text(prefix, prefix)
+            role_scope = observe_characterization(page, region, tokens, prefix)
+            if role_scope is not None:
+                result.coverage.append(
+                    source_record(
+                        page_index + 1,
+                        "grid",
+                        [
+                            region["xs"][0],
+                            region["ys"][0],
+                            region["xs"][-1],
+                            region["ys"][-1],
+                        ],
+                        context.table_id,
+                        header,
+                        "non_activity",
+                        "observed_characterization",
+                        0,
+                        role_scope=role_scope,
+                    )
+                )
+                continue
             transposed = extract_transposed(
                 page, page_index + 1, tokens, region, matrix, context
             )

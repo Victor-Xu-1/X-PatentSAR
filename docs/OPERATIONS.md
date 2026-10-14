@@ -1,8 +1,29 @@
 # Operations and troubleshooting
 
+## Physical grid roles and complete original boundaries
+
+A nominated source page may contain synthesis/characterization above a later
+biological section. Only a complete, positively observed identifier/preparation/
+NMR/mass-spectrometry grid receives the distinct characterization role; a keyword,
+unknown column or absent activity parse is insufficient. Native scope or paired
+400/600dpi existing-engine cell readings, with independent native conflict checks,
+are retained and revalidated. Characterization never covers an otherwise missing
+activity seed or resolves a reference to an unseen result table. Do not delete
+unknown source records or relax header/cell/continuation validation to pass a run.
+Bounds96cells/4096characters per cell/10000prefix characters/8million pixels per
+rendered cell remain explicit. Header context may be established by bounded
+original rereads, but the original page boundary text also survives. Current roots
+and continuation edges recheck their appropriate same-source representation.
+Boolean, string, missing and nonfinite OCR scores stay unqualified; raw recognized
+text remains inspectable instead of raising a score conversion exception.
+Binding8/binder17/activity11/epoch20/coverage7 require new derived proof; original
+PDF/OCR/crops/model/manual history, visible12/preparation1/rawOCSR2/SAR14/API/SQL
+are not rewritten. Deploy alone never starts or resumes a patent. Complete related
+checks, exact-main deployment and frontend-only real validation remain separate.
+
 ## Complete physical caption lines
 
-Binding7/binder16 require current derived ownership proof. A detector may recognize
+Binding8/binder17 require current derived ownership proof. A detector may recognize
 only the word or digits of a complete printed caption. The existing cell observer
 checks actual terminal ink in the same original image frame and requests one
 complete-line read only where that detector lacks coverage. It retains raw detector
