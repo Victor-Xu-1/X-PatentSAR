@@ -600,8 +600,10 @@ class CorrectionTests(WebFixture, unittest.TestCase):
                         for sql in statements
                     )
                 )
-        # Two constant Lead-cache metadata reads, never per-compound selection.
-        self.assertEqual(counts, [8, 8])
+        # Exact prior main used 11 (its old 8 expectation was stale). The shared
+        # source gate adds no query, and geometry reuses the same checked project
+        # snapshot instead of another two visibility/project reads.
+        self.assertEqual(counts, [9, 9], "\n".join(sql[:160] for sql in statements))
         # One indexed prediction and one descriptor batch, not per-molecule queries.
         self.assertEqual(sum("WITH wanted(" in sql for sql in statements), 2)
 

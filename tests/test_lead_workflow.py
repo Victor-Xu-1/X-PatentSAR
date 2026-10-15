@@ -198,6 +198,25 @@ class LeadWorkflowTests(PredictionFixture, unittest.TestCase):
             self.service.leads.refresh(self.project.id)
         self.assertEqual(error.exception.code, "lead_inputs_changed")
 
+    def test_live_failed_extraction_with_old_accepted_snapshot_never_returns_rank(self):
+        row, _, _ = self.execute()
+        spec = json.loads(row["spec"])
+        spec.update(admet_only=False, include_admet=False)
+        with self.service.store.connect(write=True) as connection:
+            connection.execute(
+                "UPDATE jobs SET status='failed',spec=? WHERE id=?",
+                (json.dumps(spec), row["id"]),
+            )
+        cached = json.loads(self.service.store.project(self.project.id)["snapshot"])
+        self.assertEqual(cached["acceptance"]["state"], "accepted")
+        self.assertEqual(
+            self.service.project(self.project.id).acceptance.state, "failed"
+        )
+        result = self.service.results(self.project.id).items[0]
+        self.assertEqual(result.lead.status, "unranked")
+        self.assertIsNone(result.lead.rank)
+        self.assertIsNone(result.lead.score)
+
     def test_failed_source_http_copy_filters_and_export_never_return_candidate_rank(
         self,
     ):

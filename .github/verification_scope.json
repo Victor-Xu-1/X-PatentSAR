@@ -23,6 +23,7 @@
     "tests/test_lead_workflow.py",
     "tests/test_prediction_identity.py",
     "tests/test_sar_browser_fixture.py",
+    "tests/test_web_corrections.py",
     "tests/test_web_results.py",
     "tests/test_web_support.py",
     "tools/browser_fixture_mode.py"
@@ -49,6 +50,10 @@
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
-  "frontend_tests": ["frontend/tests/lead-column.test.tsx"],
-  "browser_tests": ["frontend/e2e/lead-source-admission.spec.ts"]
+  "frontend_tests": [
+    "frontend/tests/lead-column.test.tsx"
+  ],
+  "browser_tests": [
+    "frontend/e2e/lead-source-admission.spec.ts"
+  ]
 }

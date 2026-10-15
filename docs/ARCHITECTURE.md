@@ -910,7 +910,10 @@ invoke recognition or inference; actual graph changes target only that compound.
 `WorkspaceService.project().acceptance`; it never grants acceptance or performs
 extraction. Only current accepted/error-free source corpora can be nominated.
 `ResultQueries` passes that live decision to the sole `LeadStore` before global
-filtering/pagination. Failed, not-run and historical sources receive unranked
+filtering/pagination. Latest job facts travel in the existing project query;
+project details and results share `_project_acceptance`, without building a second
+full project/review/history response. Geometry reuses that checked project snapshot.
+Failed, not-run and historical sources receive unranked
 assessments without rank/score; a read neither rescans science nor rewrites an old
 report. Source decision, relevant scientific contracts and nomination admission
 marker enter the existing input fingerprint; job authority enters the same SQLite
