@@ -1,20 +1,45 @@
 {
   "schema_version": 1,
-  "base_sha": "9e92690f241e2fedaae44f84661cf56a25787e9b",
+  "base_sha": "f50203b71e2f67655042ce6c71e4eec84ec5bd0e",
   "changed_paths": [
     ".github/verification_scope.json",
-    "README.md",
-    "docs/assets/readme-hero.png",
-    "docs/getting-started.md",
+    "docs/ARCHITECTURE.md",
+    "docs/PROJECT_MANIFEST.md",
+    "frontend/e2e/sar-network-actions.ts",
+    "frontend/e2e/sar-region-pointer.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "src/patent_sar_extractor/contracts.py"
+    "frontend/src/features/sar/study/RegionHotspots.tsx",
+    "frontend/src/features/sar/study/RegionMap.tsx",
+    "frontend/src/features/sar/study/StudyRegionMap.tsx",
+    "frontend/src/features/sar/study/regionPointerTargets.ts",
+    "frontend/src/i18n/catalogs/sar.ts",
+    "frontend/src/styles/sar-explorer.css",
+    "frontend/tests/sar-region-map-interaction.test.tsx",
+    "frontend/tests/sar-reference-pane.test.tsx",
+    "frontend/tests/sar-region-pointer-targets.test.ts",
+    "frontend/tests/sar-region-pointer.test.tsx",
+    "src/patent_sar_extractor/contracts.py",
+    "tests/test_sar_browser_fixture.py",
+    "tools/browser_fixture_mode.py"
   ],
   "python_modules": [
-    "tests.test_release_policy.ReleaseNumberTests",
-    "tests.test_standalone.StandalonePackagingTests.test_version_command_uses_product_version",
+    "tests.test_sar_browser_fixture.SARBrowserFixtureTests.test_region_pointer_scope_uses_native_sar_without_extraction",
+    "tests.test_sar_browser_fixture.SARBrowserFixtureTests.test_local_comparison_scope_uses_existing_isolated_sar_state",
+    "tests.test_sar_browser_fixture.SARBrowserFixtureTests.test_selected_scope_chooses_sar_without_changing_other_fixture_modes",
+    "tests.test_verification_scope",
+    "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
-  "frontend_tests": [],
-  "browser_tests": []
+  "frontend_tests": [
+    "frontend/tests/sar-region-pointer-targets.test.ts",
+    "frontend/tests/sar-region-pointer.test.tsx",
+    "frontend/tests/sar-region-map-interaction.test.tsx",
+    "frontend/tests/sar-reference-pane.test.tsx",
+    "frontend/tests/sar-study-results.test.tsx",
+    "frontend/tests/sar-matrix.test.tsx"
+  ],
+  "browser_tests": [
+    "frontend/e2e/sar-region-pointer.spec.ts"
+  ]
 }

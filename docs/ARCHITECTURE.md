@@ -390,6 +390,23 @@ not fabricated JSON; nonempty forbidden bodies stay explicit uncertain failures.
 
 ### Multi-candidate comparison presentation
 
+`regionPointerTargets` indexes all recorded region memberships by original atom,
+including explicit H anchors. Dense-map annotation reduction no longer removes
+pointer access. `RegionHotspots` gives each original atom one hit target and uses
+the existing `Dialog` to resolve overlapping region choices explicitly, never
+the stacking order or current selection. The same source-ID callback updates
+the existing view. Real pointer coordinates resolve adjacent hit-box overlap;
+pixel-indistinguishable original points retain all their recorded choices.
+This is visual hit ownership only, not chemical inference. No atom is moved.
+Source/coordinate/region changes reset the
+keyed chooser; cancellation and locale changes do not select or rewrite anything.
+The source drawing must be currently validated to expose map/legend controls.
+Deactivation, failed or returning reads keep the cached drawing read-only and
+unmount its chooser; a later valid read does not reopen a dismissed old choice.
+Original coordinates, graphs, raw labels, reports, matching/measurement rules,
+API/SQL/scientific epochs and extraction execution stay unchanged. Keyboard users
+retain one named legend route; duplicate atom Tab stops are not introduced.
+
 `networkRowSites` orders automatic-only accepted options by reference footprint
 (ordinary-H view counts as one site); ties retain published order. It is a
 presentation preference, not a unique chemical-minimum proof or new admission.

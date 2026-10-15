@@ -73,7 +73,7 @@ it('requests only the selected drawing and keeps that choice and source labels t
   expect(props.onSelect).not.toHaveBeenCalled();
 });
 
-it('keeps grouped original references selectable in one pane without relabelling or mixing regions', async () => {
+it('keeps inactive grouped references readable without relabelling, mixing or authorizing controls', async () => {
   const first = studyReport.regions[0]!;
   const report = {
     ...studyReport,
@@ -104,10 +104,9 @@ it('keeps grouped original references selectable in one pane without relabelling
   const pane = screen.getByRole('region', { name: 'Reference structures' });
   expect(pane).toHaveAttribute('tabindex', '-1');
   expect(container.querySelectorAll('.sar-reference-map-card')).toHaveLength(1);
-  expect(within(pane).getByRole('button', { name: 'Linker 原文' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
+  expect(within(pane).queryByRole('button', { name: 'Linker 原文' })).not.toBeInTheDocument();
+  expect(within(pane).getByRole('listitem')).toHaveTextContent('Linker 原文');
+  expect(within(pane).getByRole('combobox', { name: 'Choose reference molecule' })).toBeDisabled();
   expect(within(pane).queryByRole('button', { name: 'R2 原文' })).not.toBeInTheDocument();
   expect(within(pane).getByRole('option', { name: first.reference_label })).toBeInTheDocument();
   await act(() => setLocale('zh-CN'));

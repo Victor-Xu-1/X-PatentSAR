@@ -47,6 +47,9 @@ function ReferenceMap({
       return { image: null, error: error as Error };
     }
   }, [resource.data, regions]);
+  // A retained same-source drawing remains viewable, not authorization to use
+  // stale controls or leave a top-layer chooser open after deactivation.
+  const select = resource.validated && drawing.image && !drawing.error ? onSelect : undefined;
   return (
     <article className="sar-reference-map-card">
       <div className="sar-section-heading">
@@ -67,11 +70,11 @@ function ReferenceMap({
             atoms={resource.data.atoms}
             regions={regions}
             selected={selected}
-            onSelect={onSelect}
+            onSelect={select}
           />
         </div>
       )}
-      <RegionLegend regions={regions} selected={selected} onSelect={onSelect} />
+      <RegionLegend regions={regions} selected={selected} onSelect={select} />
     </article>
   );
 }
@@ -108,7 +111,7 @@ export function StudyRegionMap({
           {t('选择参考分子')}
           <select
             value={current.id}
-            disabled={!onSelect}
+            disabled={!active || !onSelect}
             onChange={(event) => {
               const next = groups.find((group) => group.id === event.target.value);
               if (next) onSelect?.(next.regions[0]!.id);

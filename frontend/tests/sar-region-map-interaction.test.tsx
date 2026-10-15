@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import userEvent from '@testing-library/user-event';
 import { expect, it, vi } from 'vitest';
@@ -87,7 +87,7 @@ it('keeps dense region controls at intrinsic width instead of splitting original
   }
 });
 
-it('keeps every dense region selectable while hit targets follow only the painted region', async () => {
+it('keeps every dense region selectable while all original atoms retain unambiguous hit targets', async () => {
   const many = Array.from({ length: 45 }, (_, index) => ({
     ...namedRegion,
     id: 'region-' + index,
@@ -104,14 +104,17 @@ it('keeps every dense region selectable while hit targets follow only the painte
   );
   expect(container.querySelectorAll('.sar-region-label')).toHaveLength(1);
   expect(container.querySelector('.sar-region-label')).toHaveTextContent('R13');
-  expect(container.querySelectorAll('.sar-region-hotspots button')).toHaveLength(1);
+  expect(container.querySelectorAll('.sar-region-hotspots > button')).toHaveLength(3);
   expect(container.querySelectorAll('.sar-region-legend button')).toHaveLength(45);
   expect(container.querySelector('.sar-region-legend')).toHaveAttribute('data-dense', 'true');
   const target = container.querySelector<HTMLButtonElement>('.sar-region-hotspots button')!;
-  expect(target).toHaveAttribute('data-region-id', many[12]!.id);
+  expect(target.getAttribute('data-region-ids')).toContain(many[12]!.id);
   await userEvent.hover(target);
   expect(container.querySelectorAll('.sar-region-label')).toHaveLength(1);
   await userEvent.click(target);
+  const chooser = screen.getByRole('dialog');
+  expect(within(chooser).getAllByRole('button', { name: /^R\d+$/ })).toHaveLength(15);
+  await userEvent.click(within(chooser).getByRole('button', { name: /^R13$/ }));
   expect(onSelect).toHaveBeenLastCalledWith(many[12]!.id);
   await userEvent.unhover(target);
   await userEvent.click(screen.getByRole('button', { name: /^R31$/ }));
@@ -124,11 +127,11 @@ it('keeps every dense region selectable while hit targets follow only the painte
   );
   expect(container.querySelectorAll('.sar-region-label')).toHaveLength(1);
   expect(container.querySelector('.sar-region-label')).toHaveTextContent('R31');
-  expect(container.querySelectorAll('.sar-region-hotspots button')).toHaveLength(1);
-  expect(container.querySelector('.sar-region-hotspots button')).toHaveAttribute(
-    'data-region-id',
-    many[30]!.id,
+  expect(container.querySelectorAll('.sar-region-hotspots > button')).toHaveLength(3);
+  const memberships = [...container.querySelectorAll('.sar-region-hotspots > button')].flatMap(
+    (button) => JSON.parse(button.getAttribute('data-region-ids')!) as string[],
   );
+  expect(new Set(memberships)).toEqual(new Set(many.map((region) => region.id)));
   expect(container.querySelectorAll('.sar-region-legend button')).toHaveLength(45);
   expect(JSON.stringify({ atoms, many })).toBe(original);
 });
