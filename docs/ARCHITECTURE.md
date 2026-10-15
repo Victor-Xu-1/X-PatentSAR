@@ -7,6 +7,10 @@ contiguous runs never bridge a missing/weak role. Caption/header conflict replay
 uses that one policy in producer and saved proof. It retains qualified bare IDs
 and literal context fragments even beside weak words; unrelated overlaps cannot
 exempt an independent original identity.
+Bare caption-detector pieces assert only literal characters, not full numbered-
+cell identity. Compatible pieces never construct or repair the complete ID;
+whole prefixed claims and incompatible characters still veto. Complete owned
+source reading proof remains mandatory, including suffixes and leading zeros.
 The cell observer marks invalid engine scores explicitly; numeric zero cannot
 erase that state before producer and saved-proof qualification.
 Original native/qualified

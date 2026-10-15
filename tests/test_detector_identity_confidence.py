@@ -91,6 +91,21 @@ class DetectorIdentityConfidenceTests(unittest.TestCase):
             refined_caption_conflicts("42", complete, [prefix, noise, number])
         )
 
+    def test_bare_character_fragment_never_claims_whole_caption_identity(self):
+        complete = [
+            {**part("Compound 126B", 0.99), "method": "complete_line_recognition"}
+        ]
+        for fragment in ("12", "6", "6B"):
+            with self.subTest(fragment=fragment):
+                self.assertFalse(
+                    refined_caption_conflicts("126B", complete, [part(fragment, 0.99)])
+                )
+        for literal in ("7", "012", "126.2", "Compound 12", "Compound 6B"):
+            with self.subTest(literal=literal):
+                self.assertTrue(
+                    refined_caption_conflicts("126B", complete, [part(literal, 0.99)])
+                )
+
     def test_invalid_engine_score_cannot_become_a_neutral_detector_hint(self):
         for raw_score in (True, "0.99", float("nan"), float("inf"), -1, 2):
             with self.subTest(raw_score=raw_score):

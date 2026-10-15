@@ -8,6 +8,10 @@ does not join across a weak/missing role, and refuses malformed score metadata.
 Qualified separate numbers/context words cannot disappear beside a weak prefix
 or endpoint. Invalid engine scores retain an explicit invalid marker in original
 cell observations; conversion to the legacy numeric zero cannot waive that fault.
+Bare caption-detector characters are not independently proved complete IDs. A
+literal partial match cannot publish a number; full original-caption proof is
+still required, and complete prefixed-ID contradictions always veto. Numbered
+table cells retain their stricter whole-cell ID role, with no substring admission.
 Complete source rereads still require normal pixel/row/column/scope proof; this
 policy never makes an unsupported header or conflicting qualified word pass.
 Native endpoints/units/context, qualified detector claims and original units

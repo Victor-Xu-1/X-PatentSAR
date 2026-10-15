@@ -7,7 +7,11 @@ from itertools import combinations
 
 from .compound_caption import prefixed_label
 from .ocr_claims import qualified_observation_runs
-from .printed_identifiers import LABEL_PREFIX, identifier_fragments_conflict
+from .printed_identifiers import (
+    LABEL_PREFIX,
+    identifier_fragments_conflict,
+    identifier_key,
+)
 from .source_section_roles import nonfinal_original_label
 
 
@@ -103,7 +107,7 @@ def refined_caption_conflicts(label, parts, detection_parts):
     # Only the intersecting qualified numeric fragments lack independent ID
     # ownership. Weak/unrelated boxes cannot exempt another original claim.
     if any(
-        index not in overlapping and identifier_fragments_conflict(part["text"], label)
+        index not in overlapping and _fragment_conflict(part["text"], label)
         for run in observed_runs
         for index, part in run
     ):
@@ -112,4 +116,23 @@ def refined_caption_conflicts(label, parts, detection_parts):
         not overlapping.intersection(index for index, _part in observed)
         and conflicts(" ".join(text))
         for observed, text in zip(observed_runs, runs, strict=True)
+    )
+
+
+def _fragment_conflict(text, label):
+    """Bare detector fragments preserve characters, not complete ID ownership.
+
+    A character fragment already present literally in the proved whole caption
+    is compatible evidence; it never constructs or repairs an ID. Complete
+    prefixed IDs are checked above and can never use this partial-fragment rule.
+    Bare numbered table cells do not call this caption-only guard.
+    """
+    complete = prefixed_label(text)
+    if complete:
+        return complete != label
+    literal = identifier_key(text, terminal_period=True)
+    if literal:
+        return literal not in label
+    return any(char.isnumeric() for char in text) or identifier_fragments_conflict(
+        text, label
     )
