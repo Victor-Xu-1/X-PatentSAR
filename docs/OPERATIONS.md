@@ -1,5 +1,23 @@
 # Operations and troubleshooting
 
+## Caption ink without detector boxes
+
+An empty caption detector response is not evidence of a blank original cell.
+The existing reader may observe one complete short pixel row with the same OCR
+engine, at most once at each existing400/600dpi resolution. It records original
+pixel identity, bounds, raw text, confidence and the empty detector packet. No
+number repair, voting or page/native conflict exemption occurs. Distinct rows,
+large diagrams/rules, malformed reads and resource limits remain unconfirmed.
+Producer and saved binding consumers replay the same text-frame/caption proof.
+New `original_caption_cell` bindings require readings and exact original ownership;
+saved confirmed flags cannot bypass missing or changed proof. Existing measured
+activity, raw observations, molecules and manual revisions are never rewritten.
+Binding10/binder19/visible13 make older derived bindings historical; safe original
+OCR/structure assets remain reusable through the normal frontend checkpoint policy.
+Complete focused/installed/PR/main/fixed-entry/browser gates before deployment.
+Do not retry a real patent just because this partial repair ships: other numbered
+source conflicts and unresolved activity sources still require generic diagnosis.
+
 ## Original lines and characterization references
 
 Current Binding9/binder18 require the source-reference scope from the unified

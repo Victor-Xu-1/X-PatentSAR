@@ -1,12 +1,13 @@
 """Bounded cell OCR observations, raw provenance and identity-only confidence."""
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import cv2
 import numpy as np
 
 from .cell_caption_identity import refined_caption_conflicts
+from .cell_caption_lines import observe_undetected_caption, physical_caption_valid
 from .cell_header_lines import header_line_frame, observe_header_lines
 from .cell_ocr_lines import resolve_overlapping_lines
 from .cell_ocr_scores import confidence_score as _score
@@ -23,6 +24,7 @@ class OCRObservation:
     border_pixels: int = 0
     detection_parts: tuple[dict, ...] = ()
     physical_header_lines: dict | None = None
+    physical_caption_line: dict | None = None
 
     def evidence(self, dpi: int, bounds) -> dict:
         return {
@@ -44,6 +46,11 @@ class OCRObservation:
                 if self.physical_header_lines is not None
                 else {}
             ),
+            **(
+                {"physical_caption_line": self.physical_caption_line}
+                if self.physical_caption_line is not None
+                else {}
+            ),
         }
 
 
@@ -52,7 +59,7 @@ def observe_cell(
 ) -> OCRObservation:
     """Use the existing coordinate OCR engine, never a second inference chain.
 
-    Labels always use line detection, including short one-line captions. Scalar
+    Labels start with line detection, including short one-line captions. Scalar
     cells retain direct recognition. Every returned reading includes original
     text, line confidence and crop coordinates even when normalization fails.
     """
@@ -99,6 +106,11 @@ def observe_cell(
             }
         )
     detection_parts = tuple(parts) if detected else ()
+    caption_line = (
+        observe_undetected_caption(image, engine, border, dpi)
+        if kind == "label" and not detection_parts
+        else None
+    )
     header_lines = (
         observe_header_lines(image, engine, border, dpi, frame=header_frame)
         if header_frame is not None
@@ -115,6 +127,9 @@ def observe_cell(
         parts = resolved
     if header_lines is not None:
         parts, physical = header_lines
+        resolved = parts if physical["status"] == "observed" else None
+    if caption_line is not None:
+        parts, physical = caption_line
         resolved = parts if physical["status"] == "observed" else None
     if detected:
         parts.sort(
@@ -149,7 +164,7 @@ def observe_cell(
                 identity_scores.append(part["confidence"])
             offset += length
         score = min(identity_scores, default=0.0)
-    return OCRObservation(
+    observation = OCRObservation(
         value if score >= 0.85 else "",
         score,
         raw,
@@ -158,4 +173,12 @@ def observe_cell(
         border,
         detection_parts,
         header_lines[1] if header_lines is not None else None,
+        caption_line[1] if caption_line is not None else None,
     )
+    # This replay owns the pixel frame only. The caller supplies and verifies
+    # actual original-PDF cell bounds; no point geometry is invented here.
+    if caption_line is not None and not physical_caption_valid(
+        observation.evidence(dpi, ())
+    ):
+        return replace(observation, value="")
+    return observation

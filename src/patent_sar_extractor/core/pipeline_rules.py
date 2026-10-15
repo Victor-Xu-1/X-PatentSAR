@@ -16,6 +16,7 @@ from patent_sar_extractor.core.numbered_structure_binding import (
 )
 
 from .activity_identity import printed_identifier_key
+from .caption_binding_proof import valid_caption_binding_evidence
 from .heading_evidence import valid_heading_binding_evidence
 from .printed_identifiers import identifier_key
 
@@ -23,6 +24,7 @@ STRICT_VISIBLE_SOURCES = {"page_strict", "direct", "pdf_clip"}
 VISUAL_LABEL_SOURCES = STRICT_VISIBLE_SOURCES | {"page_wide"}
 
 STRONG_BINDING_RULES = {
+    "original_caption_cell",
     "original_heading_standalone",
     "numbered_structure_table_cell",
     "direct_structure_label",
@@ -348,6 +350,17 @@ def annotate_binding_accuracy(binding: dict[str, Any]) -> dict[str, Any]:
     exact_original_heading = (
         rule == "original_heading_standalone" and valid_heading_binding_evidence(item)
     )
+    exact_original_caption = valid_caption_binding_evidence(item)
+    if (
+        rule == "original_caption_cell" or "exact_caption_evidence" in item
+    ) and not exact_original_caption:
+        item.update(
+            accuracy_status="review_required",
+            evidence_tier="weak",
+            fail_closed=True,
+            evidence_reasons=["invalid or incomplete original caption/structure proof"],
+        )
+        return item
     if rule == "original_heading_standalone" and not exact_original_heading:
         item.update(
             accuracy_status="review_required",
@@ -402,6 +415,10 @@ def annotate_binding_accuracy(binding: dict[str, Any]) -> dict[str, Any]:
     if exact_numbered_cell:
         reasons.append(
             "independently observed ID and unique segment in adjacent original-PDF cell"
+        )
+    if exact_original_caption:
+        reasons.append(
+            "complete original caption and unique spatial structure ownership"
         )
     elif exact_original_heading:
         reasons.append(
@@ -482,6 +499,7 @@ def annotate_binding_accuracy(binding: dict[str, Any]) -> dict[str, Any]:
 
     if rule in STRONG_BINDING_RULES and (
         exact_numbered_cell
+        or exact_original_caption
         or exact_original_heading
         or exact_strict_visual
         or exact_nearby_product_visual

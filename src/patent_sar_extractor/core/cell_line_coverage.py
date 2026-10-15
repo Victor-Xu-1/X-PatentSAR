@@ -24,7 +24,9 @@ def complete_line_bounds(image, boxes, border, dpi):
         or not 0 < border <= 32
     ):
         raise ValueError("Invalid bounded caption line image")
-    if not boxes or any(not all(math.isfinite(v) for v in box) for box in boxes):
+    if not boxes:
+        return _undetected_line_bounds(image, dpi)
+    if any(not all(math.isfinite(v) for v in box) for box in boxes):
         raise ValueError("Invalid detected caption line geometry")
     x0, y0 = min(box[0] for box in boxes), min(box[1] for box in boxes)
     x1, y1 = max(box[2] for box in boxes), max(box[3] for box in boxes)
@@ -50,3 +52,20 @@ def complete_line_bounds(image, boxes, border, dpi):
     if left >= x0 - 2 and right <= x1 + 2:
         return None
     return left, first, right, last
+
+
+def _undetected_line_bounds(image, dpi):
+    """Positive original ink only; an empty detector response is not a blank cell."""
+    ink = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) < 180
+    occupied = np.flatnonzero(ink.any(axis=1))
+    if not len(occupied):
+        return None
+    gap = max(1, math.ceil(dpi / 72 * 0.7))
+    if np.any(np.diff(occupied) > gap):
+        return None  # Distinct physical rows never become a single recognition input.
+    first, last = int(occupied[0]), int(occupied[-1]) + 1
+    components, _, _, _ = cv2.connectedComponentsWithStats(ink.astype(np.uint8), 8)
+    if last - first > 12 * dpi / 72 or not 3 <= components <= 513:
+        return None
+    horizontal = np.flatnonzero(ink[first:last].any(axis=0))
+    return int(horizontal[0]), first, int(horizontal[-1]) + 1, last

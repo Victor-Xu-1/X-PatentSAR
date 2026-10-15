@@ -1,5 +1,16 @@
 # Project governance manifest
 
+- Missing-caption ownership: `cell_caption_lines` uses the existing pixel-row
+  coverage and OCR engine for one bounded short-line observation when detection
+  returns no boxes. `cell_text_proof` is the sole shared serialized physical-row
+  validator; `cell_header_proof` and caption semantics are thin consumers. Original
+  hashes/geometry/readings/confidence remain, not invented IDs or scientific data.
+  `caption_binding_proof` replays the same literal reading and original spatial
+  owner through existing formal core/catalog/Web/SAR gates; `original_caption_cell`
+  cannot be confirmed by flags without proof. Binding10/binder19/visible13 invalidate
+  only derived ownership. Raw2/OCSR2/preparation1/activity12/21/8/SAR14/manual/API/
+  database/dependencies remain. No new model/queue/store or real task auto-replay.
+
 - Region-pointer ownership: `regionPointerTargets.ts` is a source-preserving
   presentation membership index, not a chemical matcher. `RegionHotspots.tsx`
   retains all original atom targets, including dense maps/H anchors, and resolves
