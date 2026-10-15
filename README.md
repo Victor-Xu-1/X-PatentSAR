@@ -1,5 +1,15 @@
 # X-PatentSAR
 
+Whole-page OCR uses one bounded source reader and checkpoint writer. Missing,
+wrong-page, malformed or failed observations cannot become empty/full-PDF success;
+completed original pages survive a later failure. Remote image results require
+complete matching text/coordinate arrays, and raster content without a backend
+remains unobserved. Fresh and reused classification recheck the complete original
+page cache. Classifier epoch5 invalidates older derived classification only;
+raw observation2, original files, bindings/activity/chemistry and manual history
+remain separate. This is source-completeness engineering, not proof of universal
+format recognition or chemical accuracy. Actual tasks remain frontend-only.
+
 Binding retains complete original OCR/native line boxes separately from classifier
 locators, validates the original PDF cache identity, and backfills only newly
 observed pages. Failed or misdirected parallel reads are explicit, not empty-page

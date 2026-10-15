@@ -21,6 +21,11 @@ from patent_sar_extractor.contracts import (
     schema_ref,
 )
 from patent_sar_extractor.core.page_classifier import classify_pdf
+from patent_sar_extractor.core.page_ocr_cache import (
+    load_page_ocr_cache,
+    validate_page_source,
+)
+from patent_sar_extractor.core.page_ocr_execution import PageObservationError
 
 from .pipeline_context import PipelineContext
 from .pipeline_io import (
@@ -66,10 +71,9 @@ def execute_classify(state: PipelineContext) -> None:
             ),
         },
     )
-    if not state.force and _fingerprint_matches(state.classify_json, classify_fp):
+    reused = not state.force and _fingerprint_matches(state.classify_json, classify_fp)
+    if reused:
         state.classification = _load_json(state.classify_json, {})
-        print(f"  ⏭ [{step}] 已存在，跳过")
-        state.progress.mark_checkpoint_reused()
     else:
         state.classification = classify_pdf(
             state.args.pdf, state.step_dirs[step], force_ocr_cache=state.force
@@ -78,6 +82,19 @@ def execute_classify(state: PipelineContext) -> None:
     state.ocr_cache_path = state.classification.get(
         "ocr_cache_path", os.path.join(state.step_dirs[step], "page_ocr_cache.json")
     )
+    total = validate_page_source(
+        state.args.pdf, load_page_ocr_cache(state.ocr_cache_path)
+    )
+    if (
+        type(state.classification.get("page_count")) is not int
+        or state.classification["page_count"] != total
+    ):
+        raise PageObservationError(
+            "Classification count does not match complete original page source"
+        )
+    if reused:
+        print(f"  ⏭ [{step}] 原文页来源完整，复用检查点")
+        state.progress.mark_checkpoint_reused()
     state.pipeline_log["steps"][step] = {
         "from_cache": state.progress.checkpoint_reused,
         "status": "ok",
