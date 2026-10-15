@@ -3,9 +3,10 @@
 - Detector-claim ownership: `ocr_claims` shares the existing numeric confidence
   boundary; valid low scores remain evidence, malformed scores are unresolved.
   Caption/header producer and saved-proof replay share contiguous qualified runs,
-  including isolated qualified IDs/context words and explicit malformed-engine
-  score markers; a weak neighbouring word never erases a valid literal conflict.
-  not a second parser or majority vote. Native/qualified endpoint/unit/target and
+  not a second parser or majority vote. Isolated qualified IDs/context words and
+  explicit malformed-engine score markers survive; weak neighbouring words and
+  unrelated overlaps never erase a valid literal conflict.
+  Native/qualified endpoint/unit/target and
   per-endpoint unit ownership remain protected. Missing context is not a claimed
   different context; original headers/values are never rewritten. Binding12/
   binder21/visible15/preparation3/activity13/22/9 revise derived proof only, not

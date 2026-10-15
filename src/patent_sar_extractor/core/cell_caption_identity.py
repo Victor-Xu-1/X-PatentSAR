@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from itertools import combinations
 
 from .compound_caption import prefixed_label
-from .ocr_claims import qualified_text_runs
+from .ocr_claims import qualified_observation_runs
 from .printed_identifiers import LABEL_PREFIX, identifier_fragments_conflict
 from .source_section_roles import nonfinal_original_label
 
@@ -43,9 +43,10 @@ def refined_caption_conflicts(label, parts, detection_parts):
             and identifier_fragments_conflict(text, label, caption=True)
         )
 
-    runs = qualified_text_runs(detection_parts)
-    if runs is None:
+    observed_runs = qualified_observation_runs(detection_parts)
+    if observed_runs is None:
         return True
+    runs = [tuple(part["text"] for _index, part in run) for run in observed_runs]
     if any(conflicts(text) for run in runs for text in run):
         return True
     # Intersecting detector fragments do not constitute another complete literal
@@ -82,11 +83,33 @@ def refined_caption_conflicts(label, parts, detection_parts):
                 return True
     except (KeyError, TypeError, ValueError, IndexError):
         return True
-    overlaps = any(
-        min(a[2], b[2]) - max(a[0], b[0]) > 1 and min(a[3], b[3]) - max(a[1], b[1]) > 1
-        for a, b in combinations(boxes, 2)
-    )
-    return not overlaps and any(
-        conflicts(" ".join(run)) or identifier_fragments_conflict(" ".join(run), label)
-        for run in runs
+    numeric_indices = [
+        index
+        for run in observed_runs
+        for index, part in run
+        if any(char.isnumeric() for char in part["text"])
+    ]
+    overlapping = {
+        index
+        for first, second in combinations(numeric_indices, 2)
+        if min(boxes[first][2], boxes[second][2])
+        - max(boxes[first][0], boxes[second][0])
+        > 1
+        and min(boxes[first][3], boxes[second][3])
+        - max(boxes[first][1], boxes[second][1])
+        > 1
+        for index in (first, second)
+    }
+    # Only the intersecting qualified numeric fragments lack independent ID
+    # ownership. Weak/unrelated boxes cannot exempt another original claim.
+    if any(
+        index not in overlapping and identifier_fragments_conflict(part["text"], label)
+        for run in observed_runs
+        for index, part in run
+    ):
+        return True
+    return any(
+        not overlapping.intersection(index for index, _part in observed)
+        and conflicts(" ".join(text))
+        for observed, text in zip(observed_runs, runs, strict=True)
     )

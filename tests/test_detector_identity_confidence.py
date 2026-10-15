@@ -78,6 +78,19 @@ class DetectorIdentityConfidenceTests(unittest.TestCase):
         number["text"] = "42"
         self.assertFalse(refined_caption_conflicts("42", complete, [prefix, number]))
 
+    def test_unqualified_overlaps_do_not_hide_a_separate_qualified_identifier(self):
+        complete = [
+            {**part("Compound 42", 0.99), "method": "complete_line_recognition"}
+        ]
+        prefix, noise = part("Compound", 0.2), part("Noise", 0.2)
+        for weak in (prefix, noise):
+            weak["bbox"] = [[8, 8], [120, 8], [120, 42], [8, 42]]
+        number = part("43", 0.99)
+        number["bbox"] = [[130, 8], [180, 8], [180, 42], [130, 42]]
+        self.assertTrue(
+            refined_caption_conflicts("42", complete, [prefix, noise, number])
+        )
+
     def test_invalid_engine_score_cannot_become_a_neutral_detector_hint(self):
         for raw_score in (True, "0.99", float("nan"), float("inf"), -1, 2):
             with self.subTest(raw_score=raw_score):
