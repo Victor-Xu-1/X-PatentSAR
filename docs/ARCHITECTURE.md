@@ -1,5 +1,25 @@
 # X-PatentSAR architecture
 
+Current `activity_context_geometry` records at most three original neighbouring
+grids and one independently replayable parallel caption span. Overlapping bounded
+header windows define column barriers even when grid heights differ. The pure
+`activity_caption_windows` selector replaces the old left-start caption filter;
+`activity_grid_context` re-exports it and remains the sole cell/prefix adapter.
+Centred titles and a sole title above aligned parallel panels retain whole raw
+captions. Local body conditions stay in their own column. Multiple titles remain
+separate; native/raster caption positions are considered together, not separately
+mistaken for global titles. Position deduplication is not field agreement or OCR
+voting. The existing exact header/column/continuation and conflict gates remain.
+Header contract4/source3 replay the same bounds, original tokens and native shadow;
+fake spans, removed grids/geometry and contract downgrades cannot become success.
+Unread-ID rows reference an exact registered parent and original adjacent row
+edges, rather than posing as additional detected grids. Parent edge indexes are
+built once per root; unresolved rows remain errors and never acquire guessed IDs.
+Characterization binding references use this same geometry rather than a second
+caption policy. Binding14/binder23/activity16/epoch25/coverage12 change derived
+source ownership only; visible16/preparation4/raw/graph/manual/SAR/API/SQL stay.
+No model/provider/dependency/queue, private patent processing or result edit.
+
 `activity_context_geometry` is the pure physical-window authority. The coordinate
 adapter records original grid axes and keeps the nearest overlapping preceding
 grid as a bounded context barrier; no page-global title inheritance crosses it.

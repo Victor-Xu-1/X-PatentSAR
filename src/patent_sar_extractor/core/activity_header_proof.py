@@ -79,19 +79,17 @@ def valid_header_proof(proof):
     """Recompute fields/units/columns/caption and original contradictions."""
     if type(proof.get("column_contract")) is not int or proof[
         "column_contract"
-    ] not in {1, 2, 3}:
+    ] not in {1, 2, 3, 4}:
         return False
     if proof["column_contract"] == 1 and "original_source" in proof:
         return False
-    if (
-        proof["column_contract"] == 2
-        and (proof.get("original_source") or {}).get("schema_version") == 2
-    ):
+    source = proof.get("original_source")
+    source_version = source.get("schema_version") if isinstance(source, dict) else None
+    if proof["column_contract"] == 2 and source_version in {2, 3}:
         return False
-    if (
-        proof["column_contract"] == 3
-        and (proof.get("original_source") or {}).get("schema_version") != 2
-    ):
+    if proof["column_contract"] == 3 and source_version != 2:
+        return False
+    if proof["column_contract"] == 4 and source_version != 3:
         return False
     if (
         proof.get("conflicting_columns") != []
@@ -160,7 +158,7 @@ def valid_header_proof(proof):
         or tuple(g.id_column for g in first.groups)
         != tuple(g.id_column for g in second.groups)
         or not first.context.table_id
-        and proof["column_contract"] != 3
+        and proof["column_contract"] not in {3, 4}
         or compact_header(first.context.raw_caption)
         != compact_header(second.context.raw_caption)
     ):
@@ -191,7 +189,7 @@ def valid_header_proof(proof):
             for candidate in candidates
         ):
             return False
-    if proof["column_contract"] in {2, 3}:
+    if proof["column_contract"] in {2, 3, 4}:
         for candidate in candidates:
             checked = header_source_conflicts(
                 proof.get("original_source"), band, originals, context, candidate

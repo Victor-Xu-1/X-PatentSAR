@@ -12,6 +12,7 @@ from .activity_header_sources import (
     capture_header_sources,
     header_source_conflicts,
     select_header_context,
+    source_context_region,
 )
 from .activity_headers import context_from_text, grid_schema
 from .activity_models import GridSchema
@@ -59,6 +60,14 @@ def refine_scanned_header(
         if source is not None:
             limit = source.first_data_row
     captured_sources = capture_header_sources(page, region, limit, tokens)
+    prefix_region = region
+    if captured_sources is not None:
+        prefix_region = source_context_region(
+            captured_sources,
+            [region["xs"][0], region["ys"][0], region["xs"][-1], region["ys"][limit]],
+        )
+        if prefix_region is None:
+            raise ValueError("Malformed original header context window")
     floor = (
         context_floor(region["context_geometry"]) if "context_geometry" in region else 0
     )
@@ -73,7 +82,7 @@ def refine_scanned_header(
 
     def resolution(status, **extra):
         evidence = {
-            "column_contract": 3 if captured_sources is not None else 1,
+            "column_contract": 4 if captured_sources is not None else 1,
             "status": status,
             "original_headers": list(original.raw_headers) if original else [],
             "original_context": original.context.raw_context if original else "",
@@ -112,7 +121,7 @@ def refine_scanned_header(
     for dpi in (400, 600):
         columns = observe_header_columns(page, region, limit, dpi, tokens)
         prefix_tokens = ocr_tokens_with_positions(page, dpi=dpi, bounds=prefix_bounds)
-        prefix = _prefix(prefix_tokens, region)
+        prefix = _prefix(prefix_tokens, prefix_region)
         candidate = grid_schema(context_from_text(prefix, prefix), columns.matrix)
         observations.append(
             {

@@ -1,6 +1,11 @@
 """Original token-scope replay for the existing header and context authority."""
 
-from .activity_context_geometry import grid_box, validate_context_geometry
+from .activity_caption_windows import shared_caption_allowed
+from .activity_context_geometry import (
+    context_region,
+    grid_box,
+    validate_context_geometry,
+)
 from .activity_grid_context import _prefix, prefix_parts
 from .activity_header_identity import (
     compact_header,
@@ -33,11 +38,11 @@ def capture_header_sources(page, region, limit, tokens):
     bounds = (0, max(0, ys[0] - 310), page.rect.width, ys[0])
     geometry = region.get(
         "context_geometry",
-        {"table_bbox": grid_box(region), "tables": [grid_box(region)]},
+        context_region(region, [grid_box(region)])["context_geometry"],
     )
     validate_context_geometry(geometry, grid_box(region))
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "context_geometry": geometry,
         "columns": columns,
         "prefix": source_cell_observation(
@@ -50,16 +55,24 @@ def capture_header_sources(page, region, limit, tokens):
 def source_context_region(snapshot, band):
     """Both observation domains share one proved current caption boundary."""
     region = {"xs": [band[0]], "ys": [band[1]]}
-    if snapshot.get("schema_version") == 2:
+    if snapshot.get("schema_version") in {2, 3}:
         geometry = snapshot.get("context_geometry")
         try:
             box = geometry["table_bbox"]
             validate_context_geometry(geometry, box)
+            if snapshot.get("schema_version") == 3 and "parallel_span" not in geometry:
+                return None
         except (TypeError, KeyError, ValueError):
             return None
         if box[:3] != band[:3] or box[3] < band[3]:
             return None
         region["context_geometry"] = geometry
+    packets = [snapshot.get("prefix"), snapshot.get("native_prefix")]
+    if any(source_claim_runs(packet) is None for packet in packets):
+        return None
+    region["allow_shared_caption"] = shared_caption_allowed(
+        (packet["tokens"] for packet in packets), region
+    )
     parts = _context_parts(snapshot.get("prefix"), region)
     if parts is None:
         return region  # Valid weak captions remain conflicts, not bad geometry.
@@ -134,7 +147,7 @@ def header_source_conflicts(snapshot, band, original_headers, original_context, 
     if (
         not isinstance(snapshot, dict)
         or type(snapshot.get("schema_version")) is not int
-        or snapshot["schema_version"] not in {1, 2}
+        or snapshot["schema_version"] not in {1, 2, 3}
         or not isinstance(snapshot.get("columns"), list)
         or len(snapshot["columns"]) != len(fresh.raw_headers)
     ):

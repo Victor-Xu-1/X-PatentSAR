@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import unittest
+from collections import Counter
 
 from test_prediction_support import PredictionFixture
 
@@ -13,7 +14,7 @@ from patent_sar_extractor.web.exports import export_json
 
 
 class StructureCorpusTests(PredictionFixture, unittest.TestCase):
-    def add_source(self, *, unavailable=False):
+    def add_source(self, *, unavailable=False, consistent_inventory=True):
         path = self.run / "structures/metadata.json"
         payload = json.loads(path.read_text())
         row = {**payload["structures"][0], "structure_id": "unassociated-observation"}
@@ -21,9 +22,25 @@ class StructureCorpusTests(PredictionFixture, unittest.TestCase):
             row.pop("image_path", None)
             row.pop("bbox_pdf", None)
         payload["structures"].append(row)
+        if consistent_inventory:
+            # This fixture declares a second controlled observation. Keep its
+            # full-page count envelope consistent; no real artifact is edited.
+            payload["total_structures"] = len(payload["structures"])
+            counts = Counter(item["page_no"] for item in payload["structures"])
+            for page in payload["source_inventory"]["pages"]:
+                page["candidates"] = counts[page["page_no"]]
         path.write_text(json.dumps(payload))
         self.service.refresh(self.project.id)
         return self.service.results(self.project.id)
+
+    def test_missing_candidate_inventory_is_rejected_without_discarding_observation(
+        self,
+    ):
+        result = self.add_source(consistent_inventory=False)
+        self.assertEqual(result.total, 2)
+        acceptance = self.service.project(self.project.id).acceptance
+        self.assertEqual(acceptance.state, "failed")
+        self.assertTrue(any("candidate count" in error for error in acceptance.errors))
 
     def test_actual_structure_with_no_activity_is_retained_and_not_called_inactive(
         self,

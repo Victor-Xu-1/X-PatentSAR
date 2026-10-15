@@ -66,6 +66,7 @@ def source_record(
     text_scope: dict | None = None,
     role_scope: dict | None = None,
     grid_axes: dict | None = None,
+    parent_grid: list | None = None,
 ) -> dict[str, Any]:
     record = {
         "page_no": page_no,
@@ -81,6 +82,9 @@ def source_record(
     if text_scope is not None:
         identity.append(text_scope["span"])
         record["text_scope"] = text_scope
+    if parent_grid is not None:
+        identity.append(parent_grid)
+        record["parent_grid"] = parent_grid
     record["region_id"] = hashlib.sha256(
         json.dumps(identity, ensure_ascii=False, sort_keys=True).encode()
     ).hexdigest()[:32]
@@ -97,7 +101,8 @@ def source_record(
 def _validate_region(record: dict) -> None:
     if (
         not isinstance(record, dict)
-        or set(record) - {"layout", "text_scope", "role_scope", "grid_axes"}
+        or set(record)
+        - {"layout", "text_scope", "role_scope", "grid_axes", "parent_grid"}
         != {
             "region_id",
             "page_no",
@@ -181,6 +186,25 @@ def _validate_region(record: dict) -> None:
     if "text_scope" in record:
         validate_text_scope(record)
         identity.append(record["text_scope"]["span"])
+    if "parent_grid" in record:
+        parent = record["parent_grid"]
+        if (
+            record["kind"] != "grid"
+            or record["status"] != "unresolved"
+            or record["reason"] != "no_original_rows"
+            or any(
+                key in record
+                for key in ("layout", "grid_axes", "role_scope", "text_scope")
+            )
+            or not isinstance(parent, list)
+            or len(parent) != 4
+            or any(type(v) not in {int, float} or not math.isfinite(v) for v in parent)
+            or bbox is None
+            or not 0 <= parent[0] <= bbox[0] < bbox[2] <= parent[2] <= 100000
+            or not 0 <= parent[1] <= bbox[1] < bbox[3] <= parent[3] <= 100000
+        ):
+            raise ValueError("Malformed unresolved original row parent")
+        identity.append(parent)
     expected = hashlib.sha256(
         json.dumps(identity, ensure_ascii=False, sort_keys=True).encode()
     ).hexdigest()[:32]
@@ -342,7 +366,13 @@ def coverage_errors(
         for page in set(packet["seed_pages"]) | set(packet["discovered_pages"])
     ):
         raise ValueError("Activity seed page is absent from its coverage proof")
-    validate_context_inventory(packet["regions"])
+    validate_context_inventory(
+        packet["regions"],
+        current=schema_ref_matches(
+            packet["schema"],
+            schema_ref(ACTIVITY_COVERAGE_SCHEMA, ACTIVITY_COVERAGE_SCHEMA_VERSION),
+        ),
+    )
     errors.extend(layout_scope_errors(packet["regions"]))
     errors.extend(table_row_errors(packet["regions"], rows))
     errors.extend(text_source_errors(packet["text_pages"], packet["regions"], rows))

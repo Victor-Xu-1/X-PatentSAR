@@ -1,5 +1,25 @@
 # Operations and troubleshooting
 
+## Two-dimensional caption ownership
+
+Current binding14/binder23/activity16/epoch25/coverage12 require fresh derived
+ownership; original PDF/OCR/structure/model/manual data are preserved. Context
+descriptors store the root, at most three neighbouring grids and a compact parallel
+caption span, replayed from the same complete original grid inventory. Missing
+current axes/geometry, invented spans or header4/source3 downgrades are rejected.
+Unread-number observations retain a validated parent grid/row instead of inventing
+extra tables. Missing/moved parents fail; unread numbers still require review.
+Centred and staggered titles retain their own table and conditions. A single
+physical title may label aligned panels, but it never waives exact column carry
+or original contradictions. Native and raster positions decide this together;
+matching field outputs are not a vote. Local body target/assay labels never cross
+columns. Characterization references use the same selector, with complete role
+proof; unknown or biological columns cannot be silently excluded. Only the normal
+authorized frontend retry recalculates older affected stages. No automatic task
+replay, external call, model install, database migration or scientific data edit.
+Focused source/installed/PR/main/exact-package/fixed18765/browser checks are needed
+for delivery; they do not establish universal-format scientific acceptance.
+
 ## Physical context windows and unnamed tables
 
 Current activity15/epoch24/coverage11 retain the original detected grid axes.

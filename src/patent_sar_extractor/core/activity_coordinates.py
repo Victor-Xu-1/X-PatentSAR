@@ -248,6 +248,7 @@ def extract_coordinate_tables(
                 "unresolved",
                 "no_original_rows",
                 0,
+                parent_grid=grid_box(region),
             )
             for item in unresolved
         )
