@@ -10,6 +10,7 @@ from .activity_header_metrics import (
 )
 from .activity_headers import infer_value_keys
 from .activity_metadata import metadata_role
+from .ocr_claims import qualified_text_runs
 
 
 def compact_header(value: str) -> str:
@@ -26,16 +27,32 @@ def header_conflict(original: str, fresh: str) -> bool:
     old, new = normalize_metric_text(original), normalize_metric_text(fresh)
     before, after = list(METRIC.finditer(old)), list(METRIC.finditer(new))
     if not before:
-        return False
+        return not literal_header_units(old).issubset(literal_header_units(new))
 
     def endpoints(matches):
         return tuple(m.group().split("(")[0].strip().casefold() for m in matches)
 
     if endpoints(before) != endpoints(after):
         return True
+    # Preserve unit ownership per printed endpoint, not just a global unit set.
+    # IC50(nM)/EC50(uM) cannot silently become IC50(uM)/EC50(nM).
+    for index, (old_metric, new_metric) in enumerate(zip(before, after, strict=True)):
+        old_end = before[index + 1].start() if index + 1 < len(before) else len(old)
+        new_end = after[index + 1].start() if index + 1 < len(after) else len(new)
+        units = literal_header_units(old[old_metric.start() : old_end])
+        if units and units != literal_header_units(new[new_metric.start() : new_end]):
+            return True
     key = infer_value_keys("", original, 1)[0]
     if "unknown" not in key.lower():
-        return compact_header(key) != compact_header(infer_value_keys("", fresh, 1)[0])
+        # An endpoint/unit fragment does not assert an absent target/assay.
+        # Project only that missing prefix for comparison; observed prefixes,
+        # units, endpoint order and trailing qualifiers remain unchanged.
+        compared = (
+            fresh if old[: before[0].start()].strip() else new[after[0].start() :]
+        )
+        return compact_header(key) != compact_header(
+            infer_value_keys("", compared, 1)[0]
+        )
     # A missing unit is not permission to change an observed target/condition.
     old_prefix, new_prefix = old[: before[0].start()], new[: after[0].start()]
     if old_prefix.strip() and compact_header(old_prefix) != compact_header(new_prefix):
@@ -59,7 +76,13 @@ def context_conflict(original, fresh) -> bool:
 
 def detector_header_conflict(parts, fresh: str) -> bool:
     """Keep valid detector claims alongside complete physical line rereads."""
-    original = "\n".join(part["text"] for part in parts)
-    return header_conflict(original, fresh) or not literal_header_units(
-        original
-    ).issubset(literal_header_units(fresh))
+    runs = qualified_text_runs(parts)
+    if runs is None:
+        return True
+    return any(
+        header_conflict("\n".join(run), fresh)
+        or not literal_header_units("\n".join(run)).issubset(
+            literal_header_units(fresh)
+        )
+        for run in runs
+    )

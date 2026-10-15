@@ -1,5 +1,17 @@
 # X-PatentSAR architecture
 
+`ocr_claims` qualifies retained detector text through the existing numeric-only
+`cell_ocr_scores` boundary. Unqualified words remain original evidence, not valid
+scientific identity claims; malformed metadata remains unresolved. Qualified
+contiguous runs never bridge a missing/weak role. Caption/header conflict replay
+uses that one policy in producer and saved proof. Original native/qualified
+endpoint/unit/target conflicts still veto, including ordered unit ownership.
+An absent prefix cannot claim a conflicting target; comparison does not rewrite
+any original header/value/context. Binding12/binder21/visible15/preparation3 and
+activity13/epoch22/coverage9 revise derived semantics only. Raw source/OCR/model/
+manual/SAR/API/SQL/assets stay. No new OCR engine, queue, writer, retry or private
+patent computation. Controlled fault injection is not scientific acceptance.
+
 Caption consumers explicitly select the existing `compound_caption` grammar
 for original native/page observations in the shared reading-proof validator.
 Bare numbered cells retain their literal ID grammar. The formal caption gate

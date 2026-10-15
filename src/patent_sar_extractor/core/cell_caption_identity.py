@@ -6,6 +6,7 @@ from collections.abc import Mapping
 from itertools import combinations
 
 from .compound_caption import prefixed_label
+from .ocr_claims import qualified_text_runs
 from .printed_identifiers import LABEL_PREFIX, identifier_fragments_conflict
 from .source_section_roles import nonfinal_original_label
 
@@ -42,7 +43,10 @@ def refined_caption_conflicts(label, parts, detection_parts):
             and identifier_fragments_conflict(text, label, caption=True)
         )
 
-    if any(conflicts(part["text"]) for part in detection_parts):
+    runs = qualified_text_runs(detection_parts)
+    if runs is None:
+        return True
+    if any(conflicts(text) for run in runs for text in run):
         return True
     # Intersecting detector fragments do not constitute another complete literal
     # caption: 13/37 is a physical overlap, not two independent compound IDs.
@@ -82,6 +86,4 @@ def refined_caption_conflicts(label, parts, detection_parts):
         min(a[2], b[2]) - max(a[0], b[0]) > 1 and min(a[3], b[3]) - max(a[1], b[1]) > 1
         for a, b in combinations(boxes, 2)
     )
-    return not overlaps and conflicts(
-        " ".join(part["text"] for part in detection_parts)
-    )
+    return not overlaps and any(conflicts(" ".join(run)) for run in runs)

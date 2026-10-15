@@ -1,5 +1,14 @@
 # Project governance manifest
 
+- Detector-claim ownership: `ocr_claims` shares the existing numeric confidence
+  boundary; valid low scores remain evidence, malformed scores are unresolved.
+  Caption/header producer and saved-proof replay share contiguous qualified runs,
+  not a second parser or majority vote. Native/qualified endpoint/unit/target and
+  per-endpoint unit ownership remain protected. Missing context is not a claimed
+  different context; original headers/values are never rewritten. Binding12/
+  binder21/visible15/preparation3/activity13/22/9 revise derived proof only, not
+  raw source/model/manual/SAR/API/SQL/queue/dependency identity or user assets.
+
 - Caption-semantic ownership: the shared original reading-proof validator selects
   `compound_caption` for actual captions and literal ID grammar for numbered cells.
   Formal source admission and OCSR preparation share it. Complete native/page

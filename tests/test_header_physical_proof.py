@@ -132,9 +132,17 @@ class HeaderPhysicalProofTests(unittest.TestCase):
             ("nM", "pM"),
         ):
             with self.subTest(old=old, fresh=fresh):
-                self.assertTrue(detector_header_conflict([{"text": old}], fresh))
+                self.assertTrue(
+                    detector_header_conflict([{"text": old, "confidence": 0.99}], fresh)
+                )
         self.assertFalse(
-            detector_header_conflict([{"text": "Dmax"}, {"text": "%"}], "Dmax %")
+            detector_header_conflict(
+                [
+                    {"text": "Dmax", "confidence": 0.99},
+                    {"text": "%", "confidence": 0.99},
+                ],
+                "Dmax %",
+            )
         )
 
     def test_rehashed_geometry_missing_rows_or_cleared_conflicts_remain_rejected(self):
