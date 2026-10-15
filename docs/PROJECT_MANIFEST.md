@@ -1,5 +1,16 @@
 # Project governance manifest
 
+- Two-dimensional context: `activity_context_geometry` owns original neighbouring
+  grids and compact parallel spans; `activity_caption_windows` owns one bounded
+  caption/column projection. The old prefix implementation is removed, not a
+  competing parser. Producer/header/source/layout/coverage and characterization
+  reference consumers share this authority. Header4/source3 guard original
+  inventory replay and combined native/raster positioning, without field voting.
+  Unread-ID row observations name exact original parents; root edge indexes are
+  reused, not reconstructed per row or recorded as competing grid detections.
+  Binding14/binder23/activity16/epoch25/coverage12 revise derived ownership only;
+  visible16/preparation4/raw/graph/manual/SAR/API/SQL/dependencies remain.
+
 - Physical context ownership: `activity_context_geometry` owns bounded original
   grid axes, the nearest overlapping context barrier and inventory replay. The
   existing coordinate/grid/header/layout/coverage writer chain remains unique.

@@ -3,6 +3,7 @@
 import re
 from itertools import pairwise
 
+from .activity_context_geometry import context_region, grid_box
 from .activity_grid_context import _prefix
 from .activity_grid_role_observation import observe_characterization
 from .activity_grid_role_proof import valid_role_scope
@@ -36,7 +37,9 @@ def reference_regions(page, *, original_pdf_sha256, grids=None, tokens=None):
         page_tokens(page, dpi=200, allow_tesseract=False) if tokens is None else tokens
     )
     regions = []
-    for grid in grids:
+    boxes = [grid_box(grid) for grid in grids]
+    for original_grid in grids:
+        grid = context_region(original_grid, boxes)
         scope = observe_characterization(page, grid, tokens, _prefix(tokens, grid))
         if scope is None:
             continue
