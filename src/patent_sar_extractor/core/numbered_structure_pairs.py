@@ -10,6 +10,7 @@ from typing import Any
 
 from .cell_caption_identity import refined_caption_conflicts
 from .cell_caption_lines import physical_caption_valid
+from .compound_caption import prefixed_label
 from .numbered_structure_models import (
     Box,
     NumberedTableBinding,
@@ -66,7 +67,7 @@ def _adjacent_cells(label_box: Box | None, structure_box: Box | None) -> bool:
 
 
 def _confirmed_observations(
-    label: str, observations: Sequence[Mapping[str, Any]]
+    label: str, observations: Sequence[Mapping[str, Any]], *, caption: bool = False
 ) -> bool:
     methods: set[str] = set()
     for observation in observations:
@@ -80,17 +81,28 @@ def _confirmed_observations(
             return False
         if nonfinal_original_label(observation.get("text")):
             return False
-        observed = _label(observation.get("text"))
+        method = str(observation.get("method") or "")
+        original_caption = caption and method in {"native_cell", "page_ocr_cell"}
+        observed = (
+            prefixed_label(str(observation.get("text") or ""))
+            if original_caption
+            else _label(observation.get("text"))
+        )
         if not observed and identifier_fragments_conflict(
-            str(observation.get("text") or ""), label
+            str(observation.get("text") or ""), label, caption=original_caption
         ):
             return False
         if observed and observed != label:
             return False
         if observed != label:
             continue
-        method = str(observation.get("method") or "")
         if method.startswith("cell_ocr_"):
+            if (
+                caption
+                and "raw_text" in observation
+                and prefixed_label(str(observation["raw_text"] or "")) != label
+            ):
+                return False
             if isinstance(observation.get("confidence"), bool):
                 continue
             try:

@@ -1,5 +1,15 @@
 # X-PatentSAR architecture
 
+Caption consumers explicitly select the existing `compound_caption` grammar
+for original native/page observations in the shared reading-proof validator.
+Bare numbered cells retain their literal ID grammar. The formal caption gate
+and recognition preparation use the same selector, not two parsers. Known
+first/second elution notes remain raw source information and never assign R/S;
+unknown prose and native identities cannot be bypassed by two matching raster
+reads. Normalized OCR claims also replay their retained whole raw caption when
+available. Binding11/binder20/visible14/preparation2 change derived semantic
+compatibility only; raw OCSR2 and original assets/manual data remain untouched.
+
 `cell_caption_lines` observes original short caption ink only when the existing
 detector returns no boxes. It makes at most one same-engine complete-row read per
 400/600dpi cell, retaining frame/hash/bounds/confidence and the empty detector

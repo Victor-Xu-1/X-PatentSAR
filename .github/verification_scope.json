@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "base_sha": "aefedbd30069d3d0bb9192c9ef47aa5cd1d2f04c",
+  "base_sha": "84ae8bb7093600b2b8d1f9815fa69b01ad07d0ab",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
@@ -9,20 +9,16 @@
     "frontend/package-lock.json",
     "frontend/package.json",
     "src/patent_sar_extractor/contracts.py",
-    "src/patent_sar_extractor/core/binding_spatial.py",
     "src/patent_sar_extractor/core/caption_binding_proof.py",
-    "src/patent_sar_extractor/core/cell_caption_lines.py",
-    "src/patent_sar_extractor/core/cell_header_proof.py",
-    "src/patent_sar_extractor/core/cell_line_coverage.py",
-    "src/patent_sar_extractor/core/cell_ocr_observation.py",
-    "src/patent_sar_extractor/core/cell_text_proof.py",
     "src/patent_sar_extractor/core/numbered_structure_pairs.py",
-    "src/patent_sar_extractor/core/pipeline_rules.py",
-    "tests/test_standalone.py",
-    "tests/test_undetected_caption_lines.py"
+    "src/patent_sar_extractor/core/ocsr/label_mask.py",
+    "tests/test_caption_reading_semantics.py",
+    "tests/test_ocsr_label_preservation.py",
+    "tests/test_standalone.py"
   ],
   "python_modules": [
     "tests.test_undetected_caption_lines",
+    "tests.test_caption_reading_semantics",
     "tests.test_cell_line_coverage",
     "tests.test_caption_cell_ocr",
     "tests.test_caption_cell_native",

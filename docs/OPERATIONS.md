@@ -1,5 +1,19 @@
 # Operations and troubleshooting
 
+## Native caption annotations and original conflict replay
+
+Printed captions and bare ID cells are different source roles. Native/page
+captions with literal first/second-eluting-isomer notes must use the existing
+whole-caption grammar for both producer and saved-proof consumers; the note is
+not part of the compound ID and does not specify absolute stereochemistry.
+Unknown prose/annotations, intermediate roles and differing original IDs remain
+review even if two high-resolution OCR values agree. Normalized caption values
+must agree with retained raw text, when present. Formal binding and mask preparation
+share that reading validator. Binding11/binder20/visible14/preparation2 invalidate
+old derived proof independently of unchanged raw model/image/source observations;
+safe raw reuse still needs exact input/model identity and current source QC.
+No old task, graph, activity or manual audit is rewritten or automatically run.
+
 ## Caption ink without detector boxes
 
 An empty caption detector response is not evidence of a blank original cell.
