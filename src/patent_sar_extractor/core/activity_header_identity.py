@@ -81,8 +81,32 @@ def detector_header_conflict(parts, fresh: str) -> bool:
         return True
     return any(
         header_conflict("\n".join(run), fresh)
+        or _missing_literal_fragment("\n".join(run), fresh)
         or not literal_header_units("\n".join(run)).issubset(
             literal_header_units(fresh)
         )
         for run in runs
     )
+
+
+def _missing_literal_fragment(original: str, fresh: str) -> bool:
+    """A qualified isolated context word is not lost beside a weak endpoint.
+
+    No role or target is inferred. Keep the whole literal fragment at token
+    boundaries, permitting only the existing metric typography/whitespace rules.
+    Endpoint and unit claims use their semantic guards above instead.
+    """
+    old, new = normalize_metric_text(original), normalize_metric_text(fresh)
+    if METRIC.search(old) or not old.strip():
+        return False
+    # A unit alongside a context word is not permission to ignore that word.
+    # Unit-only fragments use the existing unit guard, including micro glyphs.
+    words = [
+        word
+        for word in re.split(r"(\([^()]*\))|\s+", old)
+        if word and word.strip() and explicit_unit(word) is None
+    ]
+    if not words:
+        return False
+    literal = r"\s+".join(re.escape(word) for word in words)
+    return re.search(rf"(?<!\w){literal}(?!\w)", new, re.IGNORECASE) is None

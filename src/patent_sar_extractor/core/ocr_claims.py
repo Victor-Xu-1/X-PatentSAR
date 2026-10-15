@@ -20,6 +20,7 @@ def qualified_text_runs(parts):
             not isinstance(part, Mapping)
             or not isinstance(part.get("text"), str)
             or len(part["text"]) > 4096
+            or part.get("confidence_valid", True) is not True
             or confidence_value(part.get("confidence")) is None
         ):
             return None

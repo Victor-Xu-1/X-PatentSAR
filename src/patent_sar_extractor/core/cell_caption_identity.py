@@ -86,4 +86,7 @@ def refined_caption_conflicts(label, parts, detection_parts):
         min(a[2], b[2]) - max(a[0], b[0]) > 1 and min(a[3], b[3]) - max(a[1], b[1]) > 1
         for a, b in combinations(boxes, 2)
     )
-    return not overlaps and any(conflicts(" ".join(run)) for run in runs)
+    return not overlaps and any(
+        conflicts(" ".join(run)) or identifier_fragments_conflict(" ".join(run), label)
+        for run in runs
+    )

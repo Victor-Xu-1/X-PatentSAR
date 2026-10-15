@@ -11,6 +11,7 @@
     "src/patent_sar_extractor/contracts.py",
     "src/patent_sar_extractor/core/activity_header_identity.py",
     "src/patent_sar_extractor/core/cell_caption_identity.py",
+    "src/patent_sar_extractor/core/cell_ocr_observation.py",
     "src/patent_sar_extractor/core/cell_ocr_scores.py",
     "src/patent_sar_extractor/core/ocr_claims.py",
     "tests/test_detector_identity_confidence.py",

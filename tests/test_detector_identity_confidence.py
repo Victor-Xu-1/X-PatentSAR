@@ -1,8 +1,9 @@
 """Qualified literal conflicts are not the same as low-confidence OCR hints."""
 
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
+from test_cell_line_coverage import pixels
 from test_header_physical_lines import scanned_headers
 
 from patent_sar_extractor.core.activity_header_identity import detector_header_conflict
@@ -10,7 +11,10 @@ from patent_sar_extractor.core.activity_header_observation import refine_scanned
 from patent_sar_extractor.core.activity_header_proof import valid_header_proof
 from patent_sar_extractor.core.activity_headers import context_from_text, grid_schema
 from patent_sar_extractor.core.cell_caption_identity import refined_caption_conflicts
+from patent_sar_extractor.core.cell_ocr_observation import observe_cell
+from patent_sar_extractor.core.numbered_structure_pairs import _confirmed_observations
 from patent_sar_extractor.core.page_ocr_cache import get_ocr_engine
+from patent_sar_extractor.core.table_cells import _normalize
 
 
 def part(text, confidence):
@@ -48,6 +52,77 @@ class DetectorIdentityConfidenceTests(unittest.TestCase):
                 [part("TargetA IC50 (nM)", 0.99)], "TargetB IC50 (nM)"
             )
         )
+        self.assertTrue(
+            detector_header_conflict(
+                [part("IC50 (nM) EC50 (uM)", 0.99)], "IC50 (uM) EC50 (nM)"
+            )
+        )
+
+    def test_qualified_target_fragment_survives_a_weak_endpoint_word(self):
+        original = [part("TargetA", 0.99), part("IC50", 0.2), part("nM", 0.99)]
+        self.assertTrue(detector_header_conflict(original, "TargetB IC50 (nM)"))
+        self.assertFalse(detector_header_conflict(original, "TargetA IC50 (nM)"))
+        self.assertTrue(
+            detector_header_conflict([part("TargetA", 0.99)], "TargetAB IC50 (nM)")
+        )
+
+    def test_qualified_identifier_fragment_survives_an_unqualified_prefix(self):
+        complete = [
+            {**part("Compound 42", 0.99), "method": "complete_line_recognition"}
+        ]
+        prefix = part("Compound", 0.2)
+        prefix["bbox"] = [[8, 8], [120, 8], [120, 42], [8, 42]]
+        number = part("43", 0.99)
+        number["bbox"] = [[130, 8], [180, 8], [180, 42], [130, 42]]
+        self.assertTrue(refined_caption_conflicts("42", complete, [prefix, number]))
+        number["text"] = "42"
+        self.assertFalse(refined_caption_conflicts("42", complete, [prefix, number]))
+
+    def test_invalid_engine_score_cannot_become_a_neutral_detector_hint(self):
+        for raw_score in (True, "0.99", float("nan"), float("inf"), -1, 2):
+            with self.subTest(raw_score=raw_score):
+                engine = Mock(
+                    side_effect=[
+                        (
+                            (
+                                [
+                                    part("Compound", raw_score)["bbox"],
+                                    "Compound",
+                                    raw_score,
+                                ],
+                            ),
+                            0,
+                        ),
+                        ([["Compound 137", 0.99]], 0),
+                    ]
+                )
+                observed = observe_cell(pixels(), "label", 400, engine, _normalize)
+                self.assertEqual(observed.value, "")
+                self.assertEqual(observed.raw_text, "Compound 137")
+                self.assertIs(observed.detection_parts[0]["confidence_valid"], False)
+                packet = observed.evidence(400, [20, 30, 160, 45])
+                packet["text"] = "137"  # A saved success claim is not original proof.
+                self.assertFalse(
+                    _confirmed_observations(
+                        "137",
+                        [{"method": "page_ocr_cell", "text": "Compound 137"}, packet],
+                        caption=True,
+                    )
+                )
+
+    def test_qualified_context_with_a_unit_cannot_disappear(self):
+        for fragment in ("TargetA nM", "TargetA(nM)", "TargetA (nM)"):
+            with self.subTest(fragment=fragment):
+                self.assertTrue(
+                    detector_header_conflict(
+                        [part(fragment, 0.99)], "TargetB IC50 (nM)"
+                    )
+                )
+                self.assertFalse(
+                    detector_header_conflict(
+                        [part(fragment, 0.99)], "TargetA IC50 (nM)"
+                    )
+                )
 
 
 class DetectorIdentityNativeTests(unittest.TestCase):
@@ -90,11 +165,6 @@ class DetectorIdentityNativeTests(unittest.TestCase):
                 self.assertTrue(
                     all(part["confidence"] == 0.2 for part in column["detection_parts"])
                 )
-        self.assertTrue(
-            detector_header_conflict(
-                [part("IC50 (nM) EC50 (uM)", 0.99)], "IC50 (uM) EC50 (nM)"
-            )
-        )
 
     def test_low_confidence_whole_header_is_retained_but_not_a_valid_conflicting_claim(
         self,

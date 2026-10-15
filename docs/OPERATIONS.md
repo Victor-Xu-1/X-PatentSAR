@@ -5,6 +5,9 @@
 Retained detector words below the existing0.85confidence floor are not valid
 identity contradictions. The common claim qualifier keeps all original parts,
 does not join across a weak/missing role, and refuses malformed score metadata.
+Qualified separate numbers/context words cannot disappear beside a weak prefix
+or endpoint. Invalid engine scores retain an explicit invalid marker in original
+cell observations; conversion to the legacy numeric zero cannot waive that fault.
 Complete source rereads still require normal pixel/row/column/scope proof; this
 policy never makes an unsupported header or conflicting qualified word pass.
 Native endpoints/units/context, qualified detector claims and original units

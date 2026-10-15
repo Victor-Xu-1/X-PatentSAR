@@ -4,6 +4,9 @@
 `cell_ocr_scores` boundary. Unqualified words remain original evidence, not valid
 scientific identity claims; malformed metadata remains unresolved. Qualified
 contiguous runs never bridge a missing/weak role. Caption/header conflict replay
+retains qualified bare IDs and literal context fragments even beside weak words.
+The cell observer marks invalid engine scores explicitly; numeric zero cannot
+erase that state before producer and saved-proof qualification.
 uses that one policy in producer and saved proof. Original native/qualified
 endpoint/unit/target conflicts still veto, including ordered unit ownership.
 An absent prefix cannot claim a conflicting target; comparison does not rewrite
