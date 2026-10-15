@@ -672,7 +672,9 @@ def validate_page_source(pdf_path: str, cache: dict) -> int:
     with fitz.open(pdf_path) as document:
         total = len(document)
     if not cache_matches_pdf(cache, pdf_path, total):
-        raise PageObservationError("Page source does not match the original PDF identity")
+        raise PageObservationError(
+            "Page source does not match the original PDF identity"
+        )
     validate_cache(cache, total, required=list(range(total)))
     return total
 
