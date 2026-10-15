@@ -25,7 +25,7 @@ def valid_caption_binding_evidence(binding):
         and diagram
         and isinstance(observations, (list, tuple))
         and 1 <= len(observations) <= 3
-        and _confirmed_observations(label, observations)
+        and _confirmed_observations(label, observations, caption=True)
         and isinstance(ownership, Mapping)
     ):
         return False

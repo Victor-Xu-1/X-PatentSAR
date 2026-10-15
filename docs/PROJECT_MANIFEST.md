@@ -1,5 +1,14 @@
 # Project governance manifest
 
+- Caption-semantic ownership: the shared original reading-proof validator selects
+  `compound_caption` for actual captions and literal ID grammar for numbered cells.
+  Formal source admission and OCSR preparation share it. Complete native/page
+  elution notes are source annotations, never R/S assignments; unsupported prose
+  and valid differing IDs stay rejected. Retained raw OCR captions cannot disagree
+  with normalized claims. Binding11/binder20/visible14/preparation2 update derived
+  proof only; raw model2/source/image/manual/activity/SAR/API/SQL data stay intact.
+  No alternate parser, queue, model/provider, dependency or automatic task replay.
+
 - Missing-caption ownership: `cell_caption_lines` uses the existing pixel-row
   coverage and OCR engine for one bounded short-line observation when detection
   returns no boxes. `cell_text_proof` is the sole shared serialized physical-row

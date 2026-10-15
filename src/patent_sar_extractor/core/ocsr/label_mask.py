@@ -152,7 +152,7 @@ def _caption_box(item, label, frame, image_size, digest):
         not label_box
         or not isinstance(observations, list)
         or not 1 <= len(observations) <= 3
-        or not _confirmed_observations(label, observations)
+        or not _confirmed_observations(label, observations, caption=True)
         or not (bounds[0] <= label_box[0] < label_box[2] <= bounds[2])
         or not (bounds[1] <= label_box[1] < label_box[3] <= bounds[3])
     ):

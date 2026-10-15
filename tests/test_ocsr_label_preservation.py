@@ -184,12 +184,27 @@ class OCSRLabelPreservationTests(unittest.TestCase):
         self.assertFalse(info.get("ocsr_label_masked"))
 
     def test_actual_native_pdf_caption_reaches_preparation_through_metadata(self):
+        self.check_native_caption_preparation("Compound 123AB", masked=True)
+
+    def test_native_literal_elution_note_uses_the_same_caption_preparation_authority(
+        self,
+    ):
+        self.check_native_caption_preparation(
+            "Compound 123AB *first eluting isomer", masked=True
+        )
+
+    def test_native_unknown_annotation_cannot_be_masked_by_agreeing_values(self):
+        self.check_native_caption_preparation(
+            "Compound 123AB third unknown annotation", masked=False
+        )
+
+    def check_native_caption_preparation(self, text, *, masked):
         doc = fitz.open()
         self.addCleanup(doc.close)
-        page = doc.new_page(width=260, height=120)
+        page = doc.new_page(width=500, height=120)
         page.draw_line((30, 30), (80, 18))
         page.draw_line((80, 18), (130, 30))
-        page.insert_text((80, 94), "Compound 123AB", fontsize=12)
+        page.insert_text((80, 94), text, fontsize=12)
         caption = page.get_text("blocks")[0]
         pixmap = page.get_pixmap(matrix=fitz.Matrix(150 / 72, 150 / 72), alpha=False)
         pixmap.save(str(self.image))
@@ -217,11 +232,13 @@ class OCSRLabelPreservationTests(unittest.TestCase):
         }
         resolved = resolve_image_paths([item], str(self.root / "structure_bindings"))[0]
         self.assertIn("_ocsr_source_geometry", resolved)
+        before = self.image.read_bytes()
         output, info = _mask_visible_label_for_ocsr(
             str(self.image), resolved, str(self.root)
         )
-        self.assertNotEqual(output, str(self.image))
-        self.assertTrue(info["ocsr_label_masked"])
+        self.assertEqual(output != str(self.image), masked)
+        self.assertEqual(bool(info.get("ocsr_label_masked")), masked)
+        self.assertEqual(self.image.read_bytes(), before)
 
     def test_serialized_mask_cannot_hide_legacy_flag_or_source_projection_changes(self):
         item = self.proven()
