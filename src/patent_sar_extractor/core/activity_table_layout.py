@@ -4,6 +4,7 @@ import math
 from dataclasses import asdict, replace
 from itertools import pairwise
 
+from .activity_context_geometry import validate_context_geometry
 from .activity_grid_context import _suffix
 
 
@@ -39,6 +40,8 @@ def prepare_layout(schema, page_no, region, tokens, prefix, regions):
             for group in schema.groups
         ],
     }
+    if "context_geometry" in region:
+        layout["context_geometry"] = region["context_geometry"]
     return replace(schema, source_layout=layout)
 
 
@@ -49,7 +52,7 @@ def validate_layout(record):
     if (
         record["kind"] != "grid"
         or not isinstance(layout, dict)
-        or set(layout) - {"boundary_prefix"}
+        or set(layout) - {"boundary_prefix", "context_geometry"}
         != {
             "xs",
             "ys",
@@ -86,6 +89,8 @@ def validate_layout(record):
         or not 0 <= layout["data_start"] < len(ys)
     ):
         raise ValueError("Original table layout is not owned by its region")
+    if "context_geometry" in layout:
+        validate_context_geometry(layout["context_geometry"], record["bbox"])
     context = layout["context"]
     if (
         not isinstance(context, dict)

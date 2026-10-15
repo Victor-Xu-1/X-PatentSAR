@@ -4,6 +4,7 @@ import math
 from dataclasses import dataclass
 from itertools import pairwise
 
+from .activity_context_geometry import context_floor
 from .activity_grid_context import _prefix, table_matrix
 from .activity_header_identity import compact_header
 from .activity_headers import context_from_text, grid_schema
@@ -39,7 +40,10 @@ def header_bounds(page, region, original):
         return None
     if ys[limit] - max(0, ys[0] - 80) > 250:
         return None
-    return limit, (0, max(0, ys[0] - 80), page.rect.width, ys[limit])
+    floor = (
+        context_floor(region["context_geometry"]) if "context_geometry" in region else 0
+    )
+    return limit, (0, max(0, floor, ys[0] - 80), page.rect.width, ys[limit])
 
 
 def discover_header_layout(page, region, bounds, limit) -> HeaderLayout:
@@ -74,7 +78,6 @@ def discover_header_layout(page, region, bounds, limit) -> HeaderLayout:
         != tuple(g.id_column for g in second.groups)
         or tuple(map(compact_header, first.raw_headers))
         != tuple(map(compact_header, second.raw_headers))
-        or not first.context.table_id
         or compact_header(first.context.raw_caption)
         != compact_header(second.context.raw_caption)
     ):

@@ -1,5 +1,21 @@
 # Operations and troubleshooting
 
+## Physical context windows and unnamed tables
+
+Current activity15/epoch24/coverage11 retain the original detected grid axes.
+Context cannot cross the nearest preceding overlapping grid. Header/source
+contract3/2 and layout proof replay that same original inventory; adding a fake
+barrier, deleting a registered grid or downgrading the contract is refused.
+No table number is invented when the original has none: complete printed ID and
+measurement columns can still qualify the physical table. Known original titles
+and conditions survive shorter clips; unknown conditions never become confirmed
+SAR comparisons. Explicit characterization captions permit complete NMR/mass-only
+roles without requiring preparation plus both spectra, but unknown/biological
+columns are not excluded. Context descriptors store at most one physical barrier.
+Original PDF/OCR/crops/graphs/manual audit are not rewritten, and old derived
+activity stays historical. Only the authorized frontend rerun recalculates it.
+This is controlled engineering coverage, not universal scientific acceptance.
+
 ## Original source hints and qualified cell claims
 
 Current source cells retain original native/raster scope, token coordinates and

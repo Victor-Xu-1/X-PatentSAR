@@ -15,6 +15,7 @@ from patent_sar_extractor.contracts import (
     schema_ref_matches,
 )
 
+from .activity_context_geometry import validate_context_inventory, validate_grid_axes
 from .activity_grid_role_proof import valid_role_scope
 from .activity_result_references import result_references
 from .activity_source_roles import method_page_evidence, method_result_references
@@ -64,6 +65,7 @@ def source_record(
     layout: dict | None = None,
     text_scope: dict | None = None,
     role_scope: dict | None = None,
+    grid_axes: dict | None = None,
 ) -> dict[str, Any]:
     record = {
         "page_no": page_no,
@@ -86,6 +88,8 @@ def source_record(
         record["layout"] = layout
     if role_scope is not None:
         record["role_scope"] = role_scope
+    if grid_axes is not None:
+        record["grid_axes"] = grid_axes
     _validate_region(record)
     return record
 
@@ -93,7 +97,7 @@ def source_record(
 def _validate_region(record: dict) -> None:
     if (
         not isinstance(record, dict)
-        or set(record) - {"layout", "text_scope", "role_scope"}
+        or set(record) - {"layout", "text_scope", "role_scope", "grid_axes"}
         != {
             "region_id",
             "page_no",
@@ -185,6 +189,10 @@ def _validate_region(record: dict) -> None:
             "Activity source identity does not match its original observation"
         )
     validate_layout(record)
+    if "grid_axes" in record:
+        if record["kind"] != "grid":
+            raise ValueError("Original physical axes belong only to grids")
+        validate_grid_axes(record["grid_axes"], bbox)
     if (
         record["status"] == "non_activity"
         or record["reason"] == "observed_characterization"
@@ -334,6 +342,7 @@ def coverage_errors(
         for page in set(packet["seed_pages"]) | set(packet["discovered_pages"])
     ):
         raise ValueError("Activity seed page is absent from its coverage proof")
+    validate_context_inventory(packet["regions"])
     errors.extend(layout_scope_errors(packet["regions"]))
     errors.extend(table_row_errors(packet["regions"], rows))
     errors.extend(text_source_errors(packet["text_pages"], packet["regions"], rows))

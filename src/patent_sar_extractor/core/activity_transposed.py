@@ -2,6 +2,7 @@
 
 import re
 
+from .activity_context_geometry import grid_axes
 from .activity_coverage import source_record
 from .activity_grid_cells import cell_text, read_activity_cell
 from .activity_header_identity import header_conflict
@@ -184,6 +185,7 @@ def extract_transposed(page, page_no, tokens, region, matrix, context):
             "parsed" if output.rows else "unresolved",
             "original_cells" if output.rows else "no_original_rows",
             len(output.rows),
+            grid_axes=grid_axes(region),
         )
     )
     output.coverage.extend(
