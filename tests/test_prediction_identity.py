@@ -64,9 +64,15 @@ class PredictionIdentityStorageTests(PredictionFixture, unittest.TestCase):
             correction_prediction, self.service.store
         )
 
-    def seed(self):
+    def seed(self, *, full_overview=False):
         job, _, source = self.draft()
         summary = controlled_summary(source, "CCO", job["id"])
+        if full_overview:
+            from patent_sar_extractor.web.lead_endpoints import LEAD_ENDPOINTS
+
+            summary = summary.model_copy(
+                update={"endpoints": {key: 0.5 for key in LEAD_ENDPOINTS}}
+            )
         self.service.predictions.put(self.project.id, "Compound 1", summary)
         with self.service.store.connect(write=True) as connection:
             connection.execute(
@@ -133,7 +139,10 @@ class PredictionIdentityStorageTests(PredictionFixture, unittest.TestCase):
     def test_equivalent_graph_worker_reuses_verified_projection_without_model_work(
         self,
     ):
-        source, original = self.seed()
+        # Six-property legacy data cannot be a hit for the mandatory current
+        # eleven-endpoint overview. Seed the complete controlled transport here;
+        # no endpoint is inferred from missing legacy values.
+        source, original = self.seed(full_overview=True)
         self.save("OCC")
         job, root, _ = self.draft()
         analysis = Mock(spec=AnalysisService)

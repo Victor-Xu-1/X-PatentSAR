@@ -22,7 +22,7 @@ from .errors import WebError
 from .history_storage import ensure_project_visible
 from .identifier_labels import identifier_label
 from .lead_storage import LeadStore
-from .models import ActivityColumn, Compound, Results, Review
+from .models import Acceptance, ActivityColumn, Compound, Results, Review
 from .molecule_drawing import drawing_url
 from .pdf import open_pdf, rendered_box
 from .prediction_identity import source_stereo_blocked
@@ -48,12 +48,15 @@ class ResultQueries:
         predictions: PredictionStore | None = None,
         descriptors: DescriptorStore | None = None,
         leads: LeadStore | None = None,
+        *,
+        source_acceptance: Callable[[str], Acceptance] | None = None,
     ) -> None:
         self.store = store
         self.current_project = current_project
         self.predictions = predictions
         self.descriptors = descriptors
         self.leads = leads
+        self.source_acceptance = source_acceptance
 
     def _rows_and_project(
         self, project_id: str
@@ -208,7 +211,13 @@ class ResultQueries:
         if project_leads and self.leads is not None:
             if self.leads.has_report(project_id):
                 self._predictions(project_id, all_compounds, context)
-            self.leads.attach(project, all_compounds)
+            self.leads.attach(
+                project,
+                all_compounds,
+                acceptance=self.source_acceptance(project_id)
+                if self.source_acceptance
+                else None,
+            )
         if (
             choice_column.startswith("property:")
             or sort_column.startswith("property:")

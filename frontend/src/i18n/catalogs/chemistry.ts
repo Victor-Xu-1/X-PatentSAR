@@ -50,6 +50,10 @@ export const chemistry: Readonly<Record<string, string>> = {
   未入选研究候选: 'Not selected as a research candidate',
   '证据不足，未纳入候选排序': 'Insufficient evidence; excluded from candidate ranking',
   当前证据无法排序: 'Current evidence cannot be ranked',
+  '来源任务未通过当前验收，暂不生成 Lead 候选。':
+    'The source task has not passed current acceptance; automatic Lead candidates are withheld.',
+  '历史来源仅供复核，暂不生成 Lead 候选。':
+    'Historical sources are review-only; automatic Lead candidates are withheld.',
   '尚未评估 Lead 候选。': 'Lead candidates have not been evaluated.',
   '候选优先级 {score} / 100': 'Candidate priority {score} / 100',
   '可比活性覆盖 {coverage}%': 'Comparable activity coverage {coverage}%',

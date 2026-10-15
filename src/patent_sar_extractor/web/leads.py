@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from .activity_columns import ActivityColumnCatalog
 from .errors import WebError
+from .lead_source import blocked_assessment, source_ready
 from .lead_storage import input_fingerprint
 
 if TYPE_CHECKING:
@@ -29,11 +30,22 @@ class LeadService:
         # computed once in the owned worker, never during a GET/filter/export.
         from .lead_scoring import prioritize_leads
 
+        if cancel and cancel():
+            raise WebError(409, "lead_cancelled", "Lead evaluation was cancelled.")
         store = self.service.lead_store
+        acceptance = self.service.project(project_id).acceptance
         revision = store.revision(project_id)
         compounds = self.service.result_queries.research_compounds(project_id)
         project = self.service.store.project(project_id)
-        fingerprint = input_fingerprint(project, compounds)
+        fingerprint = input_fingerprint(project, compounds, acceptance)
+        if not source_ready(acceptance):
+            return store.publish(
+                project_id,
+                fingerprint,
+                revision,
+                {item.id: blocked_assessment(acceptance) for item in compounds},
+                job_id=job_id,
+            )
         catalog = ActivityColumnCatalog()
         for compound in compounds:
             catalog.observe(compound.activities, compound_id=compound.id)
@@ -84,13 +96,22 @@ class LeadService:
         """Read-only job gate, shared with table currentness; never recompute."""
         report = self.service.lead_store.report(project_id)
         project = self.service.store.project(project_id)
+        acceptance = self.service.project(project_id).acceptance
         compounds = self.service.result_queries.research_compounds(project_id)
         if (
             report is None
             or report["status"] != "complete"
             or report["job_id"] != job_id
-            or report["input_fingerprint"] != input_fingerprint(project, compounds)
+            or report["input_fingerprint"]
+            != input_fingerprint(project, compounds, acceptance)
             or set(report["items"]) != {value.id for value in compounds}
+            or (
+                not source_ready(acceptance)
+                and any(
+                    value["status"] != "unranked" or value["score"] is not None
+                    for value in report["items"].values()
+                )
+            )
         ):
             raise WebError(
                 502,

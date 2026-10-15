@@ -112,7 +112,10 @@ class ResultTests(WebFixture, unittest.TestCase):
         (run / "crop.png").unlink()
         path = run / "structure_bindings/bindings.json"
         bindings = json.loads(path.read_text())
-        for row in bindings["final_bindings"]:
+        for row in [
+            *bindings["final_bindings"],
+            *bindings["compound_catalog"]["entries"],
+        ]:
             for field in ("struct_x0", "struct_y0", "struct_x1", "struct_y1"):
                 row.pop(field)
         path.write_text(json.dumps(bindings))

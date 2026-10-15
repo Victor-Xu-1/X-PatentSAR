@@ -11,6 +11,11 @@ const statusLabels: Record<LeadAssessment['status'], string> = {
   unranked: '当前证据无法排序',
 };
 
+const sourceWarnings = new Set([
+  '来源任务未通过当前验收，暂不生成 Lead 候选。',
+  '历史来源仅供复核，暂不生成 Lead 候选。',
+]);
+
 function assessmentTitle(assessment: LeadAssessment | null | undefined): string {
   if (!assessment) return t('尚未评估 Lead 候选。');
   return [
@@ -21,7 +26,9 @@ function assessmentTitle(assessment: LeadAssessment | null | undefined): string 
     t('可比活性覆盖 {coverage}%', { coverage: (assessment.activity_coverage * 100).toFixed(0) }),
     assessment.risk_review_required ? t('高模型风险待复核，不代表已验证安全。') : '',
     ...assessment.reasons.map((reason) => t('依据：{reason}', { reason })),
-    ...assessment.warnings.map((warning) => t('注意：{warning}', { warning })),
+    ...assessment.warnings.map((warning) =>
+      t('注意：{warning}', { warning: sourceWarnings.has(warning) ? t(warning) : warning }),
+    ),
     t('仅供研究优先排序，不代表实验验证或安全、有效性结论。'),
   ]
     .filter(Boolean)

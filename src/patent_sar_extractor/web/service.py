@@ -67,6 +67,7 @@ class WorkspaceService:
             self.predictions,
             self.descriptors,
             self.lead_store,
+            source_acceptance=lambda project_id: self.project(project_id).acceptance,
         )
         self.leads = LeadService(self)
         self.corrections.after_save = self.leads.after_correction

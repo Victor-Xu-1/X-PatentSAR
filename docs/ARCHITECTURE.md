@@ -906,6 +906,21 @@ invoke recognition or inference; actual graph changes target only that compound.
 
 ## Lead nomination, not scientific acceptance
 
+`lead_source.py` delegates project-wide nomination eligibility to the existing
+`WorkspaceService.project().acceptance`; it never grants acceptance or performs
+extraction. Only current accepted/error-free source corpora can be nominated.
+`ResultQueries` passes that live decision to the sole `LeadStore` before global
+filtering/pagination. Failed, not-run and historical sources receive unranked
+assessments without rank/score; a read neither rescans science nor rewrites an old
+report. Source decision, relevant scientific contracts and nomination admission
+marker enter the existing input fingerprint; job authority enters the same SQLite
+publication CAS. A rejection during scoring cannot publish a selected packet.
+The existing qualified-row property tail may finish with an explicit all-unranked
+report while extraction remains rejected. Manual review/property work and the
+independent curated CSV/SAR admission remain separate, unchanged authorities.
+No raw artifact, scientific epoch, public API, database or dependency migration
+is needed; older nomination caches become stale/unranked, not recertified.
+
 Policy v2 treats model risk continuously (core safety combines mean and worst
 endpoint protection), not as an experimental veto. Probability >=0.8 requires
 explicit `risk_review_required` and an amber candidate marker, preserving raw
