@@ -9,6 +9,8 @@ from dataclasses import dataclass
 
 import fitz
 
+from .source_cell_tokens import cell_text
+
 
 def _box(value):
     if (
@@ -83,7 +85,7 @@ def native_region(tokens, bounds, fallback: bool) -> bool:
         # Caller-supplied legacy observations retain their explicit contract;
         # every current original-page producer supplies SourceTokens instead.
         return fallback
-    return bool(tokens.native_tokens) and not (
+    return bool(owned(tokens.native_tokens, bounds)) and not (
         tokens.scan_bounds is not None and overlaps(tokens.scan_bounds, bounds)
     )
 
@@ -91,13 +93,7 @@ def native_region(tokens, bounds, fallback: bool) -> bool:
 def native_cell_text(tokens, bounds) -> str:
     if not isinstance(tokens, SourceTokens):
         return ""
-    return " ".join(
-        t["text"]
-        for t in sorted(
-            owned(tokens.native_tokens, bounds),
-            key=lambda t: (round(t["y"] / 3), t["x"]),
-        )
-    )
+    return cell_text(tokens.native_tokens, bounds)
 
 
 def token_geometry_space(tokens, native: bool) -> str:

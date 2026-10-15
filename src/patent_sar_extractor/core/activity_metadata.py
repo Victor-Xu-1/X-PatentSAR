@@ -6,6 +6,7 @@ import re
 import unicodedata
 
 from .activity_values import is_explicit_missing_activity_value
+from .source_cell_claims import cell_source_conflict, cell_source_status
 
 _HEADERS = {
     "n": "reported_n",
@@ -69,6 +70,17 @@ def metadata_reading_status(cell: dict) -> str:
         if not isinstance(raw, str) or len(raw) > 10000:
             raise ValueError("Original count observation exceeds its bound")
         method = observation.get("method")
+        if (
+            method in {"native_cell", "page_ocr_cell"}
+            and "source_observation" in observation
+        ):
+            source_status = cell_source_status(observation)
+            if observation.get("bbox") != cell.get("bbox") or cell_source_conflict(
+                observation, cell.get("value", ""), "number"
+            ):
+                return "unresolved"
+            if source_status not in {"qualified", "legacy"}:
+                continue
         confidence = observation.get("confidence")
         clipped = method in {"cell_ocr_400dpi", "cell_ocr_600dpi"}
         empty_clip = clipped and (

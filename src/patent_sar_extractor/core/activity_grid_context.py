@@ -16,13 +16,14 @@ def table_matrix(tokens: list[dict], region: dict) -> list[list[str]]:
     ]
 
 
-def _prefix(tokens: list[dict], region: dict) -> str:
+def prefix_parts(tokens: list[dict], region: dict) -> list[list[dict]]:
+    """Retain the original token parts under the one caption-window policy."""
     top = region["ys"][0]
     selected = [t for t in tokens if max(0, top - 310) <= t["y"] < top]
     lines: dict[int, list[dict]] = {}
     for token in selected:
         lines.setdefault(round(token["y"] / 3), []).append(token)
-    text = []
+    output = []
     for _, row in sorted(lines.items()):
         parts: list[list[dict]] = [[]]
         for token in sorted(row, key=lambda t: t["x"]):
@@ -38,8 +39,15 @@ def _prefix(tokens: list[dict], region: dict) -> str:
                 and part[0].get("bbox", [part[0]["x"]])[0] > region["xs"][0] + 8
             ):
                 continue
-            text.append(line)
-    return "\n".join(text)
+            output.append(part)
+    return output
+
+
+def _prefix(tokens: list[dict], region: dict) -> str:
+    return "\n".join(
+        " ".join(token["text"] for token in part)
+        for part in prefix_parts(tokens, region)
+    )
 
 
 def _suffix(tokens: list[dict], region: dict, regions: list[dict]) -> str:

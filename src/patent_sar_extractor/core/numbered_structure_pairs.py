@@ -19,6 +19,7 @@ from .numbered_structure_models import (
     NumberedTableResult,
 )
 from .printed_identifiers import identifier_fragments_conflict, identifier_key
+from .source_cell_claims import cell_source_conflict, cell_source_status
 from .source_section_roles import nonfinal_original_label
 from .structure_catalogs import repeated_selected_catalogs
 from .structure_table_headers import valid_column_ownership
@@ -79,10 +80,19 @@ def _confirmed_observations(
             label, observation.get("parts"), observation.get("detection_parts")
         ):
             return False
-        if nonfinal_original_label(observation.get("text")):
-            return False
         method = str(observation.get("method") or "")
         original_caption = caption and method in {"native_cell", "page_ocr_cell"}
+        if (
+            method in {"native_cell", "page_ocr_cell"}
+            and "source_observation" in observation
+        ):
+            status = cell_source_status(observation)
+            if cell_source_conflict(observation, label, "label" if caption else "id"):
+                return False
+            if status not in {"qualified", "legacy"}:
+                continue
+        if nonfinal_original_label(observation.get("text")):
+            return False
         observed = (
             prefixed_label(str(observation.get("text") or ""))
             if original_caption

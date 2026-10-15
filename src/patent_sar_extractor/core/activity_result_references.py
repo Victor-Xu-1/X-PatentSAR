@@ -12,6 +12,7 @@ from .activity_source_roles import method_result_references
 from .activity_table_scopes import table_scope_groups
 from .cell_cross_observation import printed_cross_valid
 from .printed_identifiers import identifier_fragments_conflict, identifier_key
+from .source_cell_claims import cell_source_conflict, cell_source_status
 from .source_section_roles import nonfinal_original_label
 from .source_table_markers import TABLE_MARKER, table_marker_identity
 
@@ -64,9 +65,17 @@ def _observed(cell, identifier=False):
     for item in readings:
         if not isinstance(item, dict) or not isinstance(item.get("text"), str):
             return False
+        method, confidence = item.get("method"), item.get("confidence")
+        if method in {"native_cell", "page_ocr_cell"} and "source_observation" in item:
+            source_status = cell_source_status(item)
+            if item.get("bbox") != cell.get("bbox") or cell_source_conflict(
+                item, normalize(cell.get("value", "")), "id" if identifier else "number"
+            ):
+                return False
+            if source_status not in {"qualified", "legacy"}:
+                continue
         if identifier and nonfinal_original_label(item["text"]):
             return False
-        method, confidence = item.get("method"), item.get("confidence")
         if (
             identifier
             and not normalize(item["text"])

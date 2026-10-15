@@ -14,6 +14,7 @@ import fitz
 import numpy as np
 from PIL import Image
 
+from .cell_ocr_scores import confidence_value
 from .page_ocr_cache import _paddlex_payload_from_image, get_ocr_engine
 from .source_geometry import SourceTokens, overlaps, source_layout
 
@@ -255,13 +256,17 @@ def ocr_tokens_with_positions(
                 continue
             xs = [p[0] * scale + offset_x for p in points]
             ys = [p[1] * scale + offset_y for p in points]
+            score = confidence_value(confidence)
             tokens.append(
                 {
                     "text": str(text).strip(),
-                    "x": sum(xs) / len(xs),
-                    "y": sum(ys) / len(ys),
-                    "bbox": [min(xs), min(ys), max(xs), max(ys)],
-                    "confidence": float(confidence),
+                    "x": float(sum(xs) / len(xs)),
+                    "y": float(sum(ys) / len(ys)),
+                    "bbox": list(map(float, [min(xs), min(ys), max(xs), max(ys)])),
+                    "confidence": score if score is not None else 0.0,
+                    **({"confidence_valid": False} if score is None else {}),
+                    "source": "raster",
+                    "geometry_space": "rendered",
                 }
             )
         return tokens
@@ -279,6 +284,8 @@ def ocr_tokens_with_positions(
                     "x": (x0 + x1) / 2,
                     "y": (y0 + y1) / 2,
                     "bbox": [x0, y0, x1, y1],
+                    "source": "raster",
+                    "geometry_space": "rendered",
                 }
             )
         return tokens
@@ -313,6 +320,8 @@ def ocr_tokens_with_positions(
                 "y": y0 + height / 2,
                 "bbox": [x0, y0, x0 + width, y0 + height],
                 "confidence": confidence / 100,
+                "source": "raster",
+                "geometry_space": "rendered",
             }
         )
     return tokens

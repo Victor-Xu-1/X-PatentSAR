@@ -14,8 +14,11 @@ from .cell_cross_observation import observe_printed_crosses
 from .cell_ocr_observation import OCRObservation, observe_cell
 from .compound_caption import prefixed_label
 from .page_ocr_cache import get_ocr_engine
-from .printed_identifiers import identifier_fragments_conflict, identifier_key
-from .source_geometry import native_cell_text, native_region
+from .printed_identifiers import identifier_key
+from .source_cell_claims import cell_source_conflict, cell_source_status
+from .source_cell_tokens import cell_text
+from .source_geometry import SourceTokens, native_cell_text, native_region
+from .source_observations import source_cell_observation
 from .source_section_roles import nonfinal_original_label
 
 
@@ -70,9 +73,11 @@ def cell_image(page, bounds, dpi: int) -> np.ndarray:
     clip = fitz.Rect(x0 + 1.5, y0 + 1.2, x1 - 1.5, y1 - 1.2) & page.rect
     if clip.is_empty or clip.width <= 0 or clip.height <= 0:
         raise ValueError("Invalid activity cell bounds")
-    pix = page.get_pixmap(
-        matrix=fitz.Matrix(dpi / 72, dpi / 72), clip=clip, alpha=False
-    )
+    matrix = fitz.Matrix(dpi / 72, dpi / 72)
+    pixels = (clip * matrix).irect
+    if pixels.width * pixels.height > 8_000_000:
+        raise ValueError("Original cell exceeds its rendered pixel budget")
+    pix = page.get_pixmap(matrix=matrix, clip=clip, alpha=False)
     return np.frombuffer(pix.samples, dtype=np.uint8).reshape(
         pix.height, pix.width, pix.n
     )[:, :, :3]
@@ -89,29 +94,40 @@ def _ocr_cell(page, bounds, kind: str, dpi: int) -> OCRObservation:
 
 def read_cell(page, bounds, tokens: list[dict], kind: str, native: bool) -> CellReading:
     native = native_region(tokens, bounds, native)
-    x0, y0, x1, y1 = bounds
-    owned = [t for t in tokens if x0 + 0.5 < t["x"] < x1 - 0.5 and y0 < t["y"] < y1]
-    raw = " ".join(
-        t["text"] for t in sorted(owned, key=lambda t: (round(t["y"] / 3), t["x"]))
-    )
+    raw = cell_text(tokens, bounds)
     initial = _normalize(raw, kind)
-    observations = [
-        {"method": "native_cell" if native else "page_ocr_cell", "text": raw}
-    ]
+    original = {"method": "native_cell" if native else "page_ocr_cell", "text": raw}
+    profile = source_cell_observation(tokens, bounds, native=native)
+    if profile is not None:
+        original.update(bbox=list(bounds), source_observation=profile)
+    observations = [original]
     native_raw = native_cell_text(tokens, bounds)
     native_value = _normalize(native_raw, kind) if native_raw else ""
-    nonfinal = kind in {"id", "label"} and any(
-        nonfinal_original_label(text) for text in (raw, native_raw) if text
+    nonfinal = kind in {"id", "label"} and nonfinal_original_label(
+        native_raw if not native else raw
     )
     if not native and native_raw:
-        observations.append({"method": "native_cell", "text": native_raw})
+        shadow = {"method": "native_cell", "text": native_raw}
+        native_profile = source_cell_observation(tokens, bounds, native=True)
+        if native_profile is not None:
+            shadow.update(bbox=list(bounds), source_observation=native_profile)
+        observations.append(shadow)
     if native:
         return CellReading(
             "" if nonfinal else initial,
             bounds,
             observations,
-            nonfinal or not bool(initial),
+            nonfinal
+            or not bool(initial)
+            or cell_source_status(original) not in {"legacy", "qualified"},
         )
+    if isinstance(tokens, SourceTokens) and tokens.scan_bounds is None and not raw:
+        # A native page's empty region is not automatically a scanned cell.
+        # Check original pixels without invoking an OCR model; outlined/vector
+        # ink must still take the existing bounded cell path below.
+        image = cell_image(page, bounds, 400)
+        if not np.any(image < 180):
+            return CellReading("", bounds, observations, True)
     if kind == "plus":
         proof = observe_printed_crosses(cell_image(page, bounds, 450), bounds)
         value = proof["text"]
@@ -127,22 +143,16 @@ def read_cell(page, bounds, tokens: list[dict], kind: str, native: bool) -> Cell
     observations.append(first_read.evidence(400, bounds))
 
     def original_id_conflict(candidate):
-        return (
-            nonfinal
-            or kind in {"id", "label"}
-            and any(
-                text
-                and not _normalize(text, kind)
-                and identifier_fragments_conflict(
-                    text, candidate, caption=kind == "label"
-                )
-                for text in (raw, native_raw)
-            )
+        return nonfinal or any(
+            cell_source_conflict(o, candidate, kind)
+            for o in observations
+            if o.get("method") in {"native_cell", "page_ocr_cell"}
         )
 
     if (
         first
         and first == initial
+        and cell_source_status(original) in {"legacy", "qualified"}
         and (not native_value or first == native_value)
         and not original_id_conflict(first)
     ):
@@ -153,7 +163,11 @@ def read_cell(page, bounds, tokens: list[dict], kind: str, native: bool) -> Cell
     agreed = bool(
         first
         and first == second
-        and (not initial or first == initial)
+        and (
+            cell_source_status(original) not in {"legacy", "qualified"}
+            or not initial
+            or first == initial
+        )
         and (not native_value or first == native_value)
         and not original_id_conflict(first)
     )
