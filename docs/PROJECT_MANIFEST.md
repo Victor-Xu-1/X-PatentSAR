@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- Original-cell ownership: `source_cell_tokens` is the sole physical selector /
+  multiline formatter; original grid helpers re-export it. `source_observations`
+  stores bounded typed token scope and replays score/geometry/status; one existing
+  reading/writer chain remains. `source_cell_claims` serves reading and saved
+  numbered/activity/reference/metadata proof, not another parser or voting path.
+  `activity_header_sources` owns contract2 original columns/caption windows and
+  whole-context retention under existing semantic rules. Downgrade and malformed
+  flags cannot bypass replay. Native blanks do not load OCR and a footer cannot
+  grant regional coverage. Binding13/binder22/visible16/preparation4/activity14/
+  epoch23/coverage10 revise only derived proof; raw/model/manual/SAR/API/SQL and
+  assets remain. No dependency/provider, extra queue/store or private patent run.
+
 - Detector-claim ownership: `ocr_claims` shares the existing numeric confidence
   boundary; valid low scores remain evidence, malformed scores are unresolved.
   Caption/header producer and saved-proof replay share contiguous qualified runs,

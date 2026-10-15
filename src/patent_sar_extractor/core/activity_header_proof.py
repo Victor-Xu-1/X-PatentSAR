@@ -9,6 +9,7 @@ from .activity_header_identity import (
     detector_header_conflict,
     header_conflict,
 )
+from .activity_header_sources import header_source_conflicts, select_header_context
 from .activity_headers import context_from_text, grid_schema
 from .cell_header_proof import physical_header_valid
 
@@ -76,7 +77,11 @@ def _column(column, index, header, band, dpi):
 
 def valid_header_proof(proof):
     """Recompute fields/units/columns/caption and original contradictions."""
-    if type(proof.get("column_contract")) is not int or proof["column_contract"] != 1:
+    if type(proof.get("column_contract")) is not int or proof[
+        "column_contract"
+    ] not in {1, 2}:
+        return False
+    if proof["column_contract"] == 1 and "original_source" in proof:
         return False
     if (
         proof.get("conflicting_columns") != []
@@ -166,7 +171,7 @@ def valid_header_proof(proof):
             != tuple(g.id_column for g in first.groups)
         ):
             return False
-        if any(
+        if proof["column_contract"] == 1 and any(
             context_conflict(source.context, candidate.context)
             or any(
                 header_conflict(old, fresh)
@@ -174,5 +179,15 @@ def valid_header_proof(proof):
             )
             for candidate in candidates
         ):
+            return False
+    if proof["column_contract"] == 2:
+        for candidate in candidates:
+            checked = header_source_conflicts(
+                proof.get("original_source"), band, originals, context, candidate
+            )
+            if checked is None or any(checked[0]) or checked[1]:
+                return False
+        selected = select_header_context(proof["original_source"], band, first.context)
+        if selected is None or proof.get("resolved_context") != selected.raw_context:
             return False
     return True

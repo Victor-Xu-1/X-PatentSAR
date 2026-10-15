@@ -1,5 +1,25 @@
 # Operations and troubleshooting
 
+## Original source hints and qualified cell claims
+
+Current source cells retain original native/raster scope, token coordinates and
+confidence state, not only a flattened text hint. Unknown/weak layout hints need
+both normal owned400/600dpi reads and cannot count as an agreeing source. Valid
+conflicts, native shadows, numeric/unit/operator fragments and nonfinal roles
+remain explicit. Malformed source metadata is invalid, not a neutral low score.
+Saved numbered, activity/reference and count proof replays that same authority.
+Header contract2 retains original columns and context windows and cannot be
+downgraded to ignore them. A complete qualified longer context survives a shorter
+read; incompatible/disjoint observations cannot be merged into invented conditions.
+One shared half-open selector/layout replaces the duplicate caption selection.
+Native blank regions use a bounded original-pixel check without another model.
+Binding13/binder22/visible16/preparation4/activity14/epoch23/coverage10 make old
+derived proof historical; raw source/model bytes and manual revisions stay intact.
+Only normal explicit frontend runs recalculate affected stages. No automatic
+retry, provider/model install, external call, database/API migration or QA waiver.
+Complete scoped/installed/PR/main/fixed18765/browser gates before delivery; this
+source-contract improvement is not proof of complete scientific extraction.
+
 ## Detector hints versus qualified scientific claims
 
 Retained detector words below the existing0.85confidence floor are not valid

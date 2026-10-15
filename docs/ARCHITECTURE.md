@@ -1,5 +1,23 @@
 # X-PatentSAR architecture
 
+`source_cell_tokens` owns one half-open cell selection/multiline layout, extracted
+from the original grid reader rather than duplicated in caption/value consumers.
+`source_observations` retains bounded rendered native/raster token scope, text,
+confidence availability/validity and boxes; pure replay recomputes its status.
+`source_cell_claims` supplies the same literal source conflict policy to reading,
+formal numbered proof, activity result-reference and metadata consumers. Weak
+hints cannot count as source agreement; valid/native claims and qualifiers remain.
+`activity_header_sources` binds columns and caption windows to header contract2;
+producer and saved proof preserve qualified fragments in physical order without
+bridging weak words. A shorter read cannot erase a complete confirmed context;
+disjoint contexts remain unresolved, never a synthetic combination. Contract
+downgrade cannot omit source replay. Native empty regions check original pixels
+without an OCR call; a footer alone cannot claim regional text coverage.
+Binding13/binder22/visible16/preparation4 and activity14/epoch23/coverage10 change
+derived semantics only. Original PDF/OCR/crops/raw model/manual/SAR/API/SQL remain.
+No second parser, queue, writer, model or actual-patent diagnostic execution.
+Controlled-source acceptance is not universal-format or full graph validation.
+
 `ocr_claims` qualifies retained detector text through the existing numeric-only
 `cell_ocr_scores` boundary. Unqualified words remain original evidence, not valid
 scientific identity claims; malformed metadata remains unresolved. Qualified

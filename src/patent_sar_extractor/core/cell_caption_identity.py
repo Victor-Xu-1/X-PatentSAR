@@ -107,7 +107,7 @@ def refined_caption_conflicts(label, parts, detection_parts):
     # Only the intersecting qualified numeric fragments lack independent ID
     # ownership. Weak/unrelated boxes cannot exempt another original claim.
     if any(
-        index not in overlapping and _fragment_conflict(part["text"], label)
+        index not in overlapping and caption_fragment_conflict(part["text"], label)
         for run in observed_runs
         for index, part in run
     ):
@@ -119,7 +119,7 @@ def refined_caption_conflicts(label, parts, detection_parts):
     )
 
 
-def _fragment_conflict(text, label):
+def caption_fragment_conflict(text, label):
     """Bare detector fragments preserve characters, not complete ID ownership.
 
     A character fragment already present literally in the proved whole caption

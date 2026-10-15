@@ -7,6 +7,11 @@ from .activity_header_columns import observe_header_columns
 from .activity_header_identity import compact_header, context_conflict, header_conflict
 from .activity_header_layout import discover_header_layout, header_bounds
 from .activity_header_proof import valid_header_proof
+from .activity_header_sources import (
+    capture_header_sources,
+    header_source_conflicts,
+    select_header_context,
+)
 from .activity_headers import context_from_text, grid_schema
 from .activity_models import GridSchema
 from .source_geometry import native_region
@@ -52,12 +57,14 @@ def refine_scanned_header(
         source = layout.schema
         if source is not None:
             limit = source.first_data_row
+    captured_sources = capture_header_sources(page, region, limit, tokens)
     prefix_bounds = (0, max(0, region["ys"][0] - 80), page.rect.width, region["ys"][0])
     observations, candidates, verified = [], [], []
+    resolved_context = None
 
     def resolution(status, **extra):
         evidence = {
-            "column_contract": 1,
+            "column_contract": 2 if captured_sources is not None else 1,
             "status": status,
             "original_headers": list(original.raw_headers) if original else [],
             "original_context": original.context.raw_context if original else "",
@@ -69,6 +76,16 @@ def refine_scanned_header(
                 region["xs"][-1],
                 region["ys"][limit],
             ],
+            **(
+                {"original_source": captured_sources}
+                if captured_sources is not None
+                else {}
+            ),
+            **(
+                {"resolved_context": resolved_context.raw_context}
+                if resolved_context is not None
+                else {}
+            ),
             **extra,
         }
         if evidence_sink is not None:
@@ -108,8 +125,32 @@ def refine_scanned_header(
         for candidate in candidates
     ):
         return unresolved("conflicting_identifier_columns")
+    band = [region["xs"][0], region["ys"][0], region["xs"][-1], region["ys"][limit]]
+    source_checks = (
+        [
+            header_source_conflicts(
+                captured_sources,
+                band,
+                list(original.raw_headers) if original else [],
+                original.context.raw_context if original else "",
+                candidate,
+            )
+            for candidate in candidates
+        ]
+        if captured_sources is not None
+        else []
+    )
+    if source_checks and any(check is None for check in source_checks):
+        return unresolved("invalid_original_source_scope")
     conflicts = [
-        any(header_conflict(old, candidate.raw_headers[i]) for candidate in candidates)
+        (
+            any(check[0][i] for check in source_checks)
+            if source_checks
+            else any(
+                header_conflict(old, candidate.raw_headers[i])
+                for candidate in candidates
+            )
+        )
         or any(
             header_conflict(column.get("native_text", ""), candidate.raw_headers[i])
             for observed, candidate in zip(observations, candidates)
@@ -124,8 +165,10 @@ def refine_scanned_header(
         and not conflicts[i]
         for i, (a, b) in enumerate(zip(first.raw_headers, second.raw_headers))
     ]
-    caption_conflict = any(
-        context_conflict(source.context, c.context) for c in candidates
+    caption_conflict = (
+        any(check[1] for check in source_checks)
+        if source_checks
+        else any(context_conflict(source.context, c.context) for c in candidates)
     )
     caption_proved = bool(first.context.table_id) and compact_header(
         first.context.raw_caption
@@ -145,6 +188,11 @@ def refine_scanned_header(
     context = (
         first.context if caption_proved and not caption_conflict else source.context
     )
+    if caption_proved and not caption_conflict and captured_sources is not None:
+        resolved_context = select_header_context(captured_sources, band, first.context)
+        if resolved_context is None:
+            return unresolved("disjoint_qualified_context")
+        context = resolved_context
     selected = grid_schema(context, [list(headers)])
     if selected is None:
         return unresolved("unproved_resolved_header")
