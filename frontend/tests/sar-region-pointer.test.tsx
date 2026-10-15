@@ -1,9 +1,11 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { RegionMap } from '../src/features/sar/study/RegionMap';
 import { setLocale } from '../src/i18n';
-import { namedRegion } from './sar-fixtures';
+import { sarApi } from '../src/api/sarApi';
+import { StudyRegionMap } from '../src/features/sar/study/StudyRegionMap';
+import { namedRegion, sarDrawing, studyReport } from './sar-fixtures';
 
 const atoms = Array.from({ length: 10 }, (_, index) => ({
   index,
@@ -177,4 +179,70 @@ it('keeps pixel-indistinguishable original points explicit rather than choosing 
   const chooser = screen.getByRole('dialog', { name: 'Variable regions · 2 atoms' });
   await userEvent.click(within(chooser).getByRole('button', { name: /^R1$/ }));
   expect(onSelect).toHaveBeenCalledExactlyOnceWith(regions[0]!.id);
+});
+
+function sourceReport() {
+  return {
+    ...studyReport,
+    regions: overlapping.map((region, index) => ({
+      ...studyReport.regions[0]!,
+      reference_label: sarDrawing.molecule.label,
+      region: {
+        ...region,
+        atom_indices: index === 0 ? [0] : [0, 1],
+        molecule_id: sarDrawing.molecule.id,
+      },
+    })),
+  };
+}
+
+it('closes a chooser when its source view becomes inactive while keeping the last drawing read-only', async () => {
+  vi.spyOn(sarApi, 'drawing').mockResolvedValue(sarDrawing);
+  const onSelect = vi.fn(),
+    report = sourceReport();
+  const { container, rerender } = render(
+    <StudyRegionMap report={report} active onSelect={onSelect} />,
+  );
+  const point = await screen.findByRole('button', { name: 'Atom 0 (C) · 2 variable regions' });
+  await userEvent.click(point);
+  expect(screen.getByRole('dialog')).toBeInTheDocument();
+  rerender(<StudyRegionMap report={report} active={false} onSelect={onSelect} />);
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(container.querySelectorAll('.sar-region-hotspots > button')).toHaveLength(0);
+  expect(container.querySelectorAll('.sar-region-legend button')).toHaveLength(0);
+  expect(screen.getByRole('img', { name: sarDrawing.molecule.label })).toBeVisible();
+  expect(onSelect).not.toHaveBeenCalled();
+});
+
+it('does not authorize stale source interactions during a returning read or restore its old chooser', async () => {
+  const drawing = vi.spyOn(sarApi, 'drawing').mockResolvedValue(sarDrawing);
+  const onSelect = vi.fn(),
+    report = sourceReport();
+  const { container, rerender } = render(
+    <StudyRegionMap report={report} active onSelect={onSelect} />,
+  );
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Atom 0 (C) · 2 variable regions' }),
+  );
+  rerender(<StudyRegionMap report={report} active={false} onSelect={onSelect} />);
+  let resolve!: (value: typeof sarDrawing) => void;
+  drawing.mockImplementation(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  rerender(<StudyRegionMap report={report} active onSelect={onSelect} />);
+  await waitFor(() => expect(resolve).toBeTypeOf('function'));
+  expect(container.querySelectorAll('.sar-region-hotspots > button')).toHaveLength(0);
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  await act(async () => {
+    resolve(sarDrawing);
+    await Promise.resolve();
+  });
+  expect(
+    await screen.findByRole('button', { name: 'Atom 0 (C) · 2 variable regions' }),
+  ).toBeEnabled();
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(onSelect).not.toHaveBeenCalled();
 });

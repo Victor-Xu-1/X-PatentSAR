@@ -400,6 +400,9 @@ pixel-indistinguishable original points retain all their recorded choices.
 This is visual hit ownership only, not chemical inference. No atom is moved.
 Source/coordinate/region changes reset the
 keyed chooser; cancellation and locale changes do not select or rewrite anything.
+The source drawing must be currently validated to expose map/legend controls.
+Deactivation, failed or returning reads keep the cached drawing read-only and
+unmount its chooser; a later valid read does not reopen a dismissed old choice.
 Original coordinates, graphs, raw labels, reports, matching/measurement rules,
 API/SQL/scientific epochs and extraction execution stay unchanged. Keyboard users
 retain one named legend route; duplicate atom Tab stops are not introduced.

@@ -4,7 +4,9 @@
   presentation membership index, not a chemical matcher. `RegionHotspots.tsx`
   retains all original atom targets, including dense maps/H anchors, and resolves
   overlaps through the existing Dialog/locale/focus authority. Original source
-  changes reset the keyed chooser. One existing callback selects a recorded
+  changes reset the keyed chooser. The existing source validation gates controls
+  and removes the chooser during inactive/returning/failed reads, while cached
+  structures remain viewable. One existing callback selects a recorded
   region in the current comparison; no graph/coordinate/raw-label/report rewrite,
   scientific epoch/API/SQL/dependency/queue/model change or separate analysis path.
 

@@ -89,7 +89,14 @@ for (const width of [1672, 390]) {
     await expect(
       chooser.getByRole('button', { name: 'Expanded Linker 原文', exact: true }),
     ).toBeVisible();
-    await chooser.press('Escape');
+    const originalRoute = page.url();
+    // Same-document module navigation must deactivate retained source controls
+    // and remove their top-layer dialog, not merely hide its parent panel.
+    await page.goto('/#/jobs');
+    await expect(page.getByRole('dialog', { name: /变化区域.*原子/ })).toHaveCount(0);
+    await page.goto(originalRoute);
+    await expect(page.getByRole('region', { name: '研究报告', exact: true })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: /变化区域.*原子/ })).toHaveCount(0);
     const after = await (
       await page.request.get(`/api/v1/sar/jobs/${job}/study/export?format=json`)
     ).body();
