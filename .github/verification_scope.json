@@ -18,6 +18,7 @@
     "src/patent_sar_extractor/core/cell_text_proof.py",
     "src/patent_sar_extractor/core/numbered_structure_pairs.py",
     "src/patent_sar_extractor/core/pipeline_rules.py",
+    "tests/test_standalone.py",
     "tests/test_undetected_caption_lines.py"
   ],
   "python_modules": [
