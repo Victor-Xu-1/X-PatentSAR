@@ -13,6 +13,16 @@ from tools.prepare_browser_fixture import prepare
 
 
 class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
+    def test_lead_source_scope_is_read_only_without_extraction_or_model(self):
+        selected = {
+            PREFIX + "lead-source-admission.spec.ts",
+            PREFIX + "product-version.spec.ts",
+        }
+        self.assertEqual(fixture_mode(selected), "read-only")
+        self.assertEqual(
+            fixture_mode(selected | {PREFIX + "real-workflow.spec.ts"}), "execution"
+        )
+
     def test_local_comparison_scope_uses_existing_isolated_sar_state(self):
         from tools.browser_fixture_mode import fixture_mode
 

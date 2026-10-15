@@ -139,6 +139,34 @@ def artifact_run(
             ],
         }
     )
+    # Explicit declared adapter observations, not a claim that the red-square
+    # PDF was scientifically extracted. Current acceptance consumers require
+    # the full coverage envelope even for controlled transport fixtures.
+    from types import SimpleNamespace
+
+    from patent_sar_extractor.core.activity_coverage import (
+        coverage_packet,
+        source_record,
+    )
+
+    payloads["activity"]["coverage"] = coverage_packet(
+        [0],
+        [
+            source_record(
+                1,
+                "text",
+                None,
+                "Controlled adapter table",
+                "Declared IC50 (nM) readings",
+                "parsed",
+                "declared_text",
+                rows,
+            )
+        ]
+        if rows
+        else [],
+        [SimpleNamespace(page_no=1) for _ in ids],
+    )
     bindings = [
         {
             "cpd": cpd,

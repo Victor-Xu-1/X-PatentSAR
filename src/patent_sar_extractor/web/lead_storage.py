@@ -17,7 +17,13 @@ from pydantic import ValidationError
 from . import activity_rank_values, indicator_conventions
 from .errors import WebError
 from .lead_models import LEAD_POLICY_VERSION, LeadAssessment
-from .models import Compound
+from .lead_source import (
+    blocked_assessment,
+    source_acceptance,
+    source_identity,
+    source_ready,
+)
+from .models import Acceptance, Compound
 from .property_values import effective_property_values
 from .storage import Store, encode, now
 
@@ -37,7 +43,9 @@ def indicator_fingerprint() -> str:
     return digest.hexdigest()
 
 
-def input_fingerprint(project: dict, compounds: Sequence[Compound]) -> str:
+def input_fingerprint(
+    project: dict, compounds: Sequence[Compound], acceptance: Acceptance | None = None
+) -> str:
     """Exact effective inputs; no paging, filter, timestamp or page-render identity."""
     digest = hashlib.sha256()
     digest.update(
@@ -49,6 +57,7 @@ def input_fingerprint(project: dict, compounds: Sequence[Compound]) -> str:
                 project["id"],
                 project["sha256"],
                 project["run_root"],
+                source_identity(project, acceptance),
             ]
         ).encode()
     )
@@ -81,6 +90,9 @@ def source_revision(connection: sqlite3.Connection, project_id: str) -> str:
     used = 0
     queries = (
         "SELECT id,sha256,expected_sha256,run_root,snapshot FROM projects WHERE id=?",
+        # Live source admission also depends on the latest extraction owner.
+        # A new/failed/cancelled job must not race a corpus-wide nomination.
+        "SELECT id,status,cancel_requested,created_at,spec FROM jobs WHERE project_id=? ORDER BY created_at,rowid",
         "SELECT id,ordinal,payload,image_path,geometry_space FROM compounds WHERE project_id=? ORDER BY id",
         "SELECT compound_id,revision,fields,basis_fingerprint FROM corrections WHERE project_id=? ORDER BY compound_id",
         "SELECT compound_id,decision,revision FROM reviews WHERE project_id=? ORDER BY compound_id",
@@ -217,7 +229,18 @@ class LeadStore:
                 "Saved Lead evidence failed validation; retain it for recovery.",
             ) from exc
 
-    def attach(self, project: dict, compounds: Sequence[Compound]) -> None:
+    def attach(
+        self,
+        project: dict,
+        compounds: Sequence[Compound],
+        *,
+        acceptance: Acceptance | None = None,
+    ) -> None:
+        decision = acceptance if acceptance is not None else source_acceptance(project)
+        if not source_ready(decision):
+            for item in compounds:
+                item.lead = blocked_assessment(decision)
+            return
         try:
             report = self.report(project["id"])
         except WebError as exc:
@@ -237,7 +260,9 @@ class LeadStore:
             for item in compounds:
                 item.lead = LeadAssessment()
             return
-        current = report["input_fingerprint"] == input_fingerprint(project, compounds)
+        current = report["input_fingerprint"] == input_fingerprint(
+            project, compounds, decision
+        )
         for item in compounds:
             if not current:
                 item.lead = LeadAssessment(

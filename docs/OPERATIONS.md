@@ -852,6 +852,18 @@ controls. A second server must not share an active workspace.
 
 ### Automatic six-property workbench
 
+The default whole-project Lead tail requires current source acceptance without
+errors. Failed/not-run/historical sources remain inspectable and can retain
+individually eligible properties, but table/filter/copy/export must not show
+automatic Lead ranks or scores. Source acceptance is checked through the same
+workspace authority; do not edit QA or a saved acceptance flag to enable ranking.
+An explicit unranked research report can complete property bookkeeping without
+turning a rejected extraction into success. Old cache reads are non-mutating;
+accepted sources need normal current evaluation before old ranks can return.
+Audited corrections and independent curated SAR/CSV import retain their own
+existing admission. No automatic extraction/model task or scientific-data
+migration is performed by this repair; rollback retains original cache/artifacts.
+
 Default research work also nominates Leads after ADMET model cleanup, using
 existing predictions and RDKit CPU fingerprints. No extra runtime, download,
 LLM, GPU or manual setup is required. The Lead column reports target-eight

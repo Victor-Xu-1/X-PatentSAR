@@ -67,6 +67,7 @@ class WorkspaceService:
             self.predictions,
             self.descriptors,
             self.lead_store,
+            source_acceptance=self._project_acceptance,
         )
         self.leads = LeadService(self)
         self.corrections.after_save = self.leads.after_correction
@@ -470,6 +471,37 @@ class WorkspaceService:
             else (history.stage_order if history else None),
         )
 
+    def _project_acceptance(
+        self, row: dict[str, Any], latest: dict[str, Any] | None
+    ) -> Acceptance:
+        """One source decision for project details and batched effective results."""
+        snapshot = json.loads(row["snapshot"])
+        acceptance = Acceptance.model_validate(
+            snapshot.get("acceptance", {"state": "historical"})
+        )
+        if latest is None:
+            return acceptance
+        try:
+            spec = spec_record(latest["spec"])
+        except WebError:
+            spec = {}
+        core_completed = False
+        if spec.get("include_admet") and not spec.get("admet_only", False):
+            _, core_completed = read_admet_stage(
+                latest, self.attempts.output(latest), state_root=self.store.root
+            )
+        if (
+            not spec.get("admet_only", False)
+            and not core_completed
+            and latest["status"] != "complete"
+            and acceptance.state == "accepted"
+        ):
+            return Acceptance(
+                state="failed",
+                errors=["The latest job has not completed successfully."],
+            )
+        return acceptance
+
     def project(self, project_id: str) -> Project:
         row = self._current_project(project_id)
         snapshot = json.loads(row["snapshot"])
@@ -500,32 +532,7 @@ class WorkspaceService:
             first_structure = None
         retained_job = self._job(dict(latest)) if latest else None
         last_job = retained_job if not latest_deleted else None
-        acceptance = Acceptance.model_validate(
-            snapshot.get("acceptance", {"state": "historical"})
-        )
-        core_completed = False
-        if (
-            latest
-            and retained_job
-            and retained_job.include_admet
-            and not retained_job.admet_only
-        ):
-            _, core_completed = read_admet_stage(
-                dict(latest),
-                self.attempts.output(dict(latest)),
-                state_root=self.store.root,
-            )
-        if (
-            retained_job
-            and not retained_job.admet_only
-            and not core_completed
-            and retained_job.status != "complete"
-            and acceptance.state == "accepted"
-        ):
-            acceptance = Acceptance(
-                state="failed",
-                errors=["The latest job has not completed successfully."],
-            )
+        acceptance = self._project_acceptance(row, dict(latest) if latest else None)
         return Project(
             id=row["id"],
             title=row["title"],

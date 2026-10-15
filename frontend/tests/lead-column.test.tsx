@@ -9,6 +9,7 @@ import { leadStatuses } from '../src/api/leadTypes';
 import type { Compound } from '../src/api/types';
 import { ContractError } from '../src/api/validation';
 import { LeadCell } from '../src/features/results/LeadCell';
+import { setLocale } from '../src/i18n';
 import { ResultsPane } from '../src/features/results/ResultsPane';
 import { ResultsTable } from '../src/features/results/ResultsTable';
 import { columnCanFilter, columnCanSort, defaultColumnKind } from '../src/model/columnFilters';
@@ -170,6 +171,55 @@ describe('strict additive Lead assessment contract', () => {
 });
 
 describe('minimal backend-owned Lead column', () => {
+  it('translates source admission warnings only, never rewriting scientific observations', () => {
+    setLocale('en');
+    const raw = 'Measured assay: 原始条件; I-017; 0.4 nM';
+    render(
+      <ResultsTable
+        {...callbacks()}
+        rows={[
+          {
+            ...compound,
+            lead: {
+              ...assessment,
+              status: 'unranked',
+              rank: null,
+              score: null,
+              warnings: ['历史来源仅供复核，暂不生成 Lead 候选。', raw],
+            },
+          },
+        ]}
+      />,
+    );
+    const cell = document.querySelector('td[data-column="lead"]')!;
+    expect(cell.getAttribute('title')).toContain('Historical sources are review-only');
+    expect(cell.getAttribute('title')).toContain(raw);
+    expect(cell).toHaveTextContent('—');
+    expect(screen.queryByText(/Lead \d/)).not.toBeInTheDocument();
+  });
+  it('withholds rank and score for unaccepted source packets without changing rows', () => {
+    const blocked = {
+      ...assessment,
+      status: 'unranked' as const,
+      rank: null,
+      score: null,
+      activity_coverage: 0,
+      components: {},
+      warnings: ['来源任务未通过当前验收，暂不生成 Lead 候选。'],
+    };
+    render(<ResultsTable {...callbacks()} rows={[{ ...compound, lead: blocked }]} />);
+    expect(screen.queryByText(/Lead \d/)).not.toBeInTheDocument();
+    expect(document.querySelector('td[data-column="lead"]')).toHaveTextContent('—');
+    expect(document.querySelector('td[data-column="lead"]')).toHaveAttribute(
+      'data-lead-status',
+      'unranked',
+    );
+    expect(document.querySelector('td[data-column="lead"]')!.getAttribute('title')).toContain(
+      blocked.warnings[0],
+    );
+    const lead = resultColumns([]).find((column) => column.id === 'lead')!;
+    expect(tableCopyText([{ ...compound, lead: blocked }], [lead], [])).not.toContain('Lead 1');
+  });
   it('shows policy-two model-risk candidates as review-required without calling them safe', () => {
     const value = { ...assessment, policy_version: '2', risk_review_required: true };
     const decoded = decodeLeadAssessment(value);

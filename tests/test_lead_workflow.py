@@ -10,8 +10,11 @@ import unittest
 from contextlib import contextmanager
 from unittest.mock import patch
 
+import fitz
+from test_activity_spatial_roles import ruled
 from test_prediction_fields import controlled_prediction
 from test_prediction_support import PredictionFixture
+from test_web_support import WebFixture, artifact_run
 
 from patent_sar_extractor.web.admet_history import read_admet_stage, write_admet_stage
 from patent_sar_extractor.web.analysis_models import ADMETResponse, Property
@@ -71,6 +74,214 @@ class ControlledLeadAnalysis:
 
 
 class LeadWorkflowTests(PredictionFixture, unittest.TestCase):
+    def setUp(self):
+        WebFixture.setUp(self)
+        self.service = WorkspaceService(self.state)
+        # Actual native activity cells through the production extractor; the
+        # remaining transport chemistry stays explicitly synthetic, not OCSR.
+        with fitz.open() as doc:
+            page = doc.new_page(width=500, height=600)
+            page.draw_rect(fitz.Rect(20, 40, 120, 140), color=(1, 0, 0), fill=(1, 0, 0))
+            page.insert_text(
+                (40, 250), "Table 71. Target: Measured target; Assay: Measured assay"
+            )
+            ruled(
+                page,
+                [40, 170, 340],
+                [270, 300, 335],
+                [["Compound No.", "IC50 (nM)"], ["1", "1"]],
+            )
+            doc.save(self.pdf)
+        self.run = artifact_run(self.root / "controlled-lead-run", self.pdf, rows=1)
+        from patent_sar_extractor.core.activity_extractor import extract
+
+        extract(str(self.pdf), {"activity_pages": [0]}, str(self.run / "activity"))
+        self.project = self.service.import_run(self.run, pdf_path=self.pdf)
+        self.assertEqual(self.project.acceptance.state, "accepted")
+
+    def test_failed_source_cannot_reuse_or_recompute_a_selected_lead(self):
+        row, _root, analysis = self.execute()
+        qa_path = self.run / "final_qa_report.json"
+        qa = json.loads(qa_path.read_text())
+        qa["ok"] = False
+        qa["acceptance"] = {
+            "ok": False,
+            "hard_errors": ["Controlled incomplete source corpus"],
+        }
+        qa_path.write_text(json.dumps(qa), encoding="utf-8")
+        self.service.refresh(self.project.id)
+        self.assertEqual(
+            self.service.project(self.project.id).acceptance.state, "failed"
+        )
+        retained = self.service.lead_store.report(self.project.id)
+        self.assertEqual(retained["items"]["Compound 1"]["status"], "selected")
+        observed = self.service.results(self.project.id).items[0]
+        self.assertEqual(observed.lead.status, "unranked")
+        self.assertIsNone(observed.lead.rank)
+        self.assertIsNone(observed.lead.score)
+        self.assertEqual(self.service.lead_store.report(self.project.id), retained)
+        before = {
+            path: path.read_bytes() for path in self.run.rglob("*") if path.is_file()
+        }
+        with patch(
+            "patent_sar_extractor.web.lead_scoring.prioritize_leads",
+            side_effect=AssertionError("Failed source cannot enter scoring"),
+        ):
+            self.service.leads.refresh(self.project.id, job_id=row["id"])
+        self.assertEqual(
+            self.service.results(self.project.id).items[0].lead.status, "unranked"
+        )
+        self.assertEqual({path: path.read_bytes() for path in before}, before)
+        self.assertEqual(analysis.calls, 1)
+
+    def test_acceptance_transition_changes_lead_identity_without_changing_molecules(
+        self,
+    ):
+        self.execute()
+        from patent_sar_extractor.web.lead_storage import input_fingerprint
+
+        project = self.service.store.project(self.project.id)
+        compounds = self.service.result_queries.research_compounds(self.project.id)
+        original = input_fingerprint(project, compounds)
+        snapshot = json.loads(project["snapshot"])
+        snapshot["acceptance"] = {
+            "state": "failed",
+            "errors": ["Controlled incomplete original source"],
+        }
+        changed = {**project, "snapshot": json.dumps(snapshot)}
+        self.assertNotEqual(input_fingerprint(changed, compounds), original)
+
+    def test_unaccepted_tail_is_explicit_unranked_and_not_extraction_acceptance(self):
+        row, _, _ = self.execute()
+        path = self.run / "final_qa_report.json"
+        qa = json.loads(path.read_text())
+        qa["ok"] = False
+        qa["acceptance"] = {"ok": False, "hard_errors": ["Controlled missing source"]}
+        path.write_text(json.dumps(qa), encoding="utf-8")
+        self.service.refresh(self.project.id)
+        with self.assertRaises(WebError):
+            self.service.leads.confirm(self.project.id, row["id"])
+        self.service.leads.refresh(self.project.id, job_id=row["id"])
+        self.service.leads.confirm(self.project.id, row["id"])
+        self.assertEqual(
+            self.service.project(self.project.id).acceptance.state, "failed"
+        )
+        report = self.service.lead_store.report(self.project.id)
+        before = json.dumps(report, sort_keys=True)
+        with self.assertRaises(WebError) as error:
+            self.service.leads.refresh(self.project.id, cancel=lambda: True)
+        self.assertEqual(error.exception.code, "lead_cancelled")
+        self.assertEqual(
+            json.dumps(self.service.lead_store.report(self.project.id), sort_keys=True),
+            before,
+        )
+
+    def test_job_authority_change_during_scoring_rejects_publication(self):
+        row, _, _ = self.execute()
+        from patent_sar_extractor.web.lead_scoring import prioritize_leads
+
+        def changing(*args, **kwargs):
+            output = prioritize_leads(*args, **kwargs)
+            with self.service.store.connect(write=True) as connection:
+                connection.execute(
+                    "UPDATE jobs SET status='failed' WHERE id=?", (row["id"],)
+                )
+            return output
+
+        with (
+            patch(
+                "patent_sar_extractor.web.lead_scoring.prioritize_leads",
+                side_effect=changing,
+            ),
+            self.assertRaises(WebError) as error,
+        ):
+            self.service.leads.refresh(self.project.id)
+        self.assertEqual(error.exception.code, "lead_inputs_changed")
+
+    def test_live_failed_extraction_with_old_accepted_snapshot_never_returns_rank(self):
+        row, _, _ = self.execute()
+        spec = json.loads(row["spec"])
+        spec.update(admet_only=False, include_admet=False)
+        with self.service.store.connect(write=True) as connection:
+            connection.execute(
+                "UPDATE jobs SET status='failed',spec=? WHERE id=?",
+                (json.dumps(spec), row["id"]),
+            )
+        cached = json.loads(self.service.store.project(self.project.id)["snapshot"])
+        self.assertEqual(cached["acceptance"]["state"], "accepted")
+        self.assertEqual(
+            self.service.project(self.project.id).acceptance.state, "failed"
+        )
+        result = self.service.results(self.project.id).items[0]
+        self.assertEqual(result.lead.status, "unranked")
+        self.assertIsNone(result.lead.rank)
+        self.assertIsNone(result.lead.score)
+
+    def test_failed_source_http_copy_filters_and_export_never_return_candidate_rank(
+        self,
+    ):
+        self.execute()
+        qa_path = self.run / "final_qa_report.json"
+        qa = json.loads(qa_path.read_text())
+        qa["ok"] = False
+        qa["acceptance"] = {
+            "ok": False,
+            "hard_errors": ["Controlled missing original rows"],
+        }
+        qa_path.write_text(json.dumps(qa), encoding="utf-8")
+        self.service.refresh(self.project.id)
+        with self.client() as client:
+            path = f"/api/v1/projects/{self.project.id}"
+            result = client.get(f"{path}/results").json()
+            self.assertEqual(result["items"][0]["lead"]["status"], "unranked")
+            self.assertIsNone(result["items"][0]["lead"]["rank"])
+            choices = client.get(
+                f"{path}/filter-values", params={"column": "lead"}
+            ).json()
+            self.assertEqual(choices["items"], [])
+            selected = client.get(
+                f"{path}/results",
+                params={
+                    "column_filters": json.dumps(
+                        [{"column": "lead", "op": "not_empty"}]
+                    )
+                },
+            ).json()
+            self.assertEqual(selected["total"], 0)
+            exported = client.post(f"{path}/export", json={"format": "json"})
+            self.assertEqual(exported.status_code, 200, exported.text)
+            self.assertIsNone(exported.json()["items"][0]["lead"]["rank"])
+
+    def test_source_failure_during_scoring_cannot_publish_a_rank(self):
+        self.execute()
+        from patent_sar_extractor.web.lead_scoring import prioritize_leads
+
+        def changing(*args, **kwargs):
+            output = prioritize_leads(*args, **kwargs)
+            path = self.run / "final_qa_report.json"
+            qa = json.loads(path.read_text())
+            qa["ok"] = False
+            qa["acceptance"] = {
+                "ok": False,
+                "hard_errors": ["Controlled source CAS transition"],
+            }
+            path.write_text(json.dumps(qa), encoding="utf-8")
+            self.service.refresh(self.project.id)
+            return output
+
+        with (
+            patch(
+                "patent_sar_extractor.web.lead_scoring.prioritize_leads",
+                side_effect=changing,
+            ),
+            self.assertRaises(WebError) as error,
+        ):
+            self.service.leads.refresh(self.project.id)
+        self.assertEqual(error.exception.code, "lead_inputs_changed")
+        self.assertEqual(
+            self.service.results(self.project.id).items[0].lead.status, "unranked"
+        )
+
     def test_shared_indicator_rule_identity_invalidates_cache_without_inference(self):
         row, root, analysis = self.execute()
         original = {

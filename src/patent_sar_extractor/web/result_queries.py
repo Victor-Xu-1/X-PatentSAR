@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
 from typing import Any
 
@@ -22,7 +23,7 @@ from .errors import WebError
 from .history_storage import ensure_project_visible
 from .identifier_labels import identifier_label
 from .lead_storage import LeadStore
-from .models import ActivityColumn, Compound, Results, Review
+from .models import Acceptance, ActivityColumn, Compound, Results, Review
 from .molecule_drawing import drawing_url
 from .pdf import open_pdf, rendered_box
 from .prediction_identity import source_stereo_blocked
@@ -48,12 +49,15 @@ class ResultQueries:
         predictions: PredictionStore | None = None,
         descriptors: DescriptorStore | None = None,
         leads: LeadStore | None = None,
+        *,
+        source_acceptance: Callable[[dict, dict | None], Acceptance] | None = None,
     ) -> None:
         self.store = store
         self.current_project = current_project
         self.predictions = predictions
         self.descriptors = descriptors
         self.leads = leads
+        self.source_acceptance = source_acceptance
 
     def _rows_and_project(
         self, project_id: str
@@ -64,7 +68,12 @@ class ResultQueries:
             ensure_project_visible(connection, project_id)
             project = dict(
                 connection.execute(
-                    "SELECT * FROM projects WHERE id=?", (project_id,)
+                    "SELECT p.*,(SELECT json_object('id',j.id,'project_id',j.project_id,"
+                    "'status',j.status,'spec',j.spec,'finished_at',j.finished_at) "
+                    "FROM jobs j WHERE j.project_id=p.id "
+                    "ORDER BY j.created_at DESC,j.rowid DESC LIMIT 1) AS source_job "
+                    "FROM projects p WHERE p.id=?",
+                    (project_id,),
                 ).fetchone()
             )
             rows = [
@@ -208,7 +217,18 @@ class ResultQueries:
         if project_leads and self.leads is not None:
             if self.leads.has_report(project_id):
                 self._predictions(project_id, all_compounds, context)
-            self.leads.attach(project, all_compounds)
+            self.leads.attach(
+                project,
+                all_compounds,
+                acceptance=self.source_acceptance(
+                    project,
+                    json.loads(project["source_job"])
+                    if project["source_job"]
+                    else None,
+                )
+                if self.source_acceptance
+                else None,
+            )
         if (
             choice_column.startswith("property:")
             or sort_column.startswith("property:")
@@ -295,14 +315,13 @@ class ResultQueries:
 
     def _normalize_source_boxes(
         self,
-        project_id: str,
+        project: dict[str, Any],
         items: list[Compound],
         source_spaces: dict[str, str],
         *,
         checked: list[Compound] | None = None,
     ) -> list[Compound]:
         checked = checked if checked is not None else items
-        project = self.store.project(project_id)
         if project["pdf_rel"] and checked:
             with open_pdf(self.store.root, project) as document:
                 # Preserve global bounds and source-fingerprint validation, but
@@ -365,7 +384,7 @@ class ResultQueries:
         )
         return self._predictions(
             project_id,
-            self._normalize_source_boxes(project_id, items, source_spaces),
+            self._normalize_source_boxes(context[0], items, source_spaces),
             context,
         )
 
@@ -423,7 +442,7 @@ class ResultQueries:
             items=self._predictions(
                 project_id,
                 self._normalize_source_boxes(
-                    project_id,
+                    context[0],
                     visible,
                     source_spaces,
                     checked=compounds,
