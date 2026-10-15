@@ -11,6 +11,7 @@ from .cell_caption_lines import observe_undetected_caption, physical_caption_val
 from .cell_header_lines import header_line_frame, observe_header_lines
 from .cell_ocr_lines import resolve_overlapping_lines
 from .cell_ocr_scores import confidence_score as _score
+from .cell_ocr_scores import confidence_value
 from .compound_caption import caption_identity
 
 
@@ -95,10 +96,16 @@ def observe_cell(
     result, _ = engine(image, use_det=detected, use_cls=False)
     parts = []
     for item in result or []:
+        raw_confidence = item[2] if detected else item[1]
         parts.append(
             {
                 "text": str(item[1] if detected else item[0]),
-                "confidence": _score(item[2] if detected else item[1]),
+                "confidence": _score(raw_confidence),
+                **(
+                    {"confidence_valid": False}
+                    if confidence_value(raw_confidence) is None
+                    else {}
+                ),
                 "bbox": [[float(x), float(y)] for x, y in item[0]]
                 if detected
                 else None,

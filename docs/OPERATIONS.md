@@ -1,5 +1,27 @@
 # Operations and troubleshooting
 
+## Detector hints versus qualified scientific claims
+
+Retained detector words below the existing0.85confidence floor are not valid
+identity contradictions. The common claim qualifier keeps all original parts,
+does not join across a weak/missing role, and refuses malformed score metadata.
+Qualified separate numbers/context words cannot disappear beside a weak prefix
+or endpoint. Invalid engine scores retain an explicit invalid marker in original
+cell observations; conversion to the legacy numeric zero cannot waive that fault.
+Bare caption-detector characters are not independently proved complete IDs. A
+literal partial match cannot publish a number; full original-caption proof is
+still required, and complete prefixed-ID contradictions always veto. Numbered
+table cells retain their stricter whole-cell ID role, with no substring admission.
+Complete source rereads still require normal pixel/row/column/scope proof; this
+policy never makes an unsupported header or conflicting qualified word pass.
+Native endpoints/units/context, qualified detector claims and original units
+bound to each ordered endpoint cannot be changed by agreeing model outputs.
+An endpoint-only original does not claim an absent target prefix; only that
+absence is projected for comparison, not the stored source record or conditions.
+Binding12/binder21/visible15/preparation3/activity13/epoch22/coverage9 invalidate
+changed derived acceptance. Preserve raw model/source assets and manual audits;
+no read/update auto-reprocesses a patent or waives formal source completeness.
+
 ## Native caption annotations and original conflict replay
 
 Printed captions and bare ID cells are different source roles. Native/page
