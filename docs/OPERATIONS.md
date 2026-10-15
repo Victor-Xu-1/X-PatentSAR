@@ -1266,6 +1266,17 @@ refused. Do not edit old metadata or generated activity/binding/QA to force reus
 
 Current CPU OCR uses two intra-operation threads and one inter-operation thread
 per engine; the configured engine is shared by page, table and cell consumers.
+Page OCR has at most one pending request per worker. An unavailable/malformed
+source stops classification instead of claiming the missing page is empty or
+the full PDF was processed. Completed original observations are atomically saved
+even before the normal flush interval; resume uses the same exact-PDF/observation
+checks and does not invent missing page text or coordinates. An existing sealed
+classification file alone is insufficient when its original source cache is
+missing/incomplete. Classifier epoch5 requires fresh derived classification;
+valid older raw observation2 transport retains its original producer and fields.
+Do not fix protocol errors by editing scientific cache/artifacts or disabling QA.
+An external machine/WSL interruption remains an interrupted task, not a chemical
+failure; preserve logs and inspect current ownership before any frontend resume.
 DECIMER remains isolated and CPU-stable where the TensorFlow/GPU pair is unsupported.
 Model/resource limits and actual stage counts are not evidence of chemical QA:
 inspect final deterministic acceptance after the full run completes.

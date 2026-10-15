@@ -1,5 +1,16 @@
 # Project governance manifest
 
+- Whole-page source ownership: `page_ocr_execution` supplies bounded worker
+  execution and original index/text/coordinate/coverage validation;
+  `page_ocr_protocol` owns complete one-image response validation. The existing
+  `page_ocr_cache` remains the sole backend facade/atomic writer and preserves
+  completed pages, source extension fields and inherited provenance. Classification
+  and reused stage checkpoints require complete exact-original page collections.
+  No second model, queue, cache writer or scientific repair tool. Classifier5
+  changes derived stage fingerprints independently of raw observation2, original
+  PDF/OCR/crops, binding9/binder18/activity12/21/8/OCSR/manual/SAR/API/database.
+  Source/transport completeness is not universal recall or chemical acceptance.
+
 - Original binding references: `binding_source_lines` is the lossless observation
   view; existing preparation/page authority owns cache identity and fresh-page
   publication. `binding_source_regions` reuses immutable-document grid/token/cell
