@@ -1,5 +1,9 @@
 import { expect, it } from 'vitest';
-import { regionPointerTargets } from '../src/features/sar/study/regionPointerTargets';
+import {
+  closestRegionTargets,
+  regionPointerChoices,
+  regionPointerTargets,
+} from '../src/features/sar/study/regionPointerTargets';
 import { namedRegion } from './sar-fixtures';
 
 const atoms = [
@@ -47,4 +51,41 @@ it('bounds DOM targets to original atoms even when many region definitions overl
   expect(targets[1]!.choices.map((choice) => choice.region.id)).toEqual(
     regions.map((region) => region.id),
   );
+});
+
+it('uses displayed pixel geometry rather than data order in a moved non-square frame', () => {
+  const targets = regionPointerTargets(atoms, [{ ...namedRegion, atom_indices: [91, 3] }]);
+  const original = JSON.stringify(targets);
+  const bounds = { left: 37, top: 53, width: 1200, height: 400 };
+  expect(
+    closestRegionTargets(targets, bounds, 877, 173).map((target) => target.atom.index),
+  ).toEqual([91]);
+  expect(
+    closestRegionTargets(targets, bounds, 277, 373).map((target) => target.atom.index),
+  ).toEqual([3]);
+  expect(JSON.stringify(targets)).toBe(original);
+});
+
+it('retains indistinguishable points and deduplicates only identical recorded choice IDs', () => {
+  const near = atoms.map((atom) => ({ ...atom, x: 0.5, y: 0.5 }));
+  const regions = [
+    { ...namedRegion, id: 'both', atom_indices: [91, 3] },
+    { ...namedRegion, id: 'second', atom_indices: [3] },
+  ];
+  const targets = regionPointerTargets(near, regions);
+  const hit = closestRegionTargets(targets, { left: 0, top: 0, width: 100, height: 80 }, 50, 40);
+  expect(hit.map((target) => target.atom.index)).toEqual([91, 3]);
+  expect(regionPointerChoices(hit).map((choice) => [choice.region.id, choice.order])).toEqual([
+    ['both', 0],
+    ['second', 1],
+  ]);
+});
+
+it('does not manufacture a hit for a missing frame, empty source or invalid pointer', () => {
+  const targets = regionPointerTargets(atoms, [{ ...namedRegion, atom_indices: [91] }]);
+  const bounds = { left: 0, top: 0, width: 100, height: 80 };
+  expect(closestRegionTargets([], bounds, 70, 24)).toEqual([]);
+  expect(closestRegionTargets(targets, { ...bounds, width: 0 }, 70, 24)).toEqual([]);
+  expect(closestRegionTargets(targets, bounds, NaN, 24)).toEqual([]);
+  expect(closestRegionTargets(targets, { ...bounds, top: Infinity }, 70, 24)).toEqual([]);
 });

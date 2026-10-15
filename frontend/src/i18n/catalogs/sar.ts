@@ -378,6 +378,7 @@ export const sar: Record<string, string> = {
   'RDKit 参考结构': 'RDKit reference drawing',
   'RDKit 结构图加载失败。': 'The RDKit drawing could not be loaded.',
   '原子 {index}（{element}）': 'Atom {index} ({element})',
+  '{count} 个原子': '{count} atoms',
   '原子 {index}（{element}）· {count} 个变化区域':
     'Atom {index} ({element}) · {count} variable regions',
   '已选原子：{indices}': 'Selected atoms: {indices}',

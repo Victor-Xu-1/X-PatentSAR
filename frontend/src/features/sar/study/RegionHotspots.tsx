@@ -3,7 +3,11 @@ import type { Atom, Region } from '../../../api/sarTypes';
 import { Dialog } from '../../../components/Dialog';
 import { useTranslation } from '../../../i18n';
 import { regionMarker } from './regionMarker';
-import { regionPointerTargets } from './regionPointerTargets';
+import {
+  closestRegionTargets,
+  regionPointerChoices,
+  regionPointerTargets,
+} from './regionPointerTargets';
 
 type RegionHotspotProps = {
   atoms: Atom[];
@@ -24,9 +28,13 @@ export function RegionHotspots(props: RegionHotspotProps) {
 function RegionPointerControls({ atoms, regions, colors, selected, onSelect }: RegionHotspotProps) {
   const { t } = useTranslation();
   const targets = useMemo(() => regionPointerTargets(atoms, regions), [atoms, regions]);
-  const [choice, setChoice] = useState<number | null>(null);
-  const current = targets.find((target) => target.atom.index === choice);
-  const first = current?.choices.find((item) => item.region.id === selected) ?? current?.choices[0];
+  const [choice, setChoice] = useState<number[] | null>(null);
+  const current = useMemo(() => {
+    const indices = new Set(choice ?? []);
+    return targets.filter((target) => indices.has(target.atom.index));
+  }, [choice, targets]);
+  const options = useMemo(() => regionPointerChoices(current), [current]);
+  const first = options.find((item) => item.region.id === selected) ?? options[0];
   return (
     <>
       <div className="sar-region-hotspots">
@@ -54,10 +62,18 @@ function RegionPointerControls({ atoms, regions, colors, selected, onSelect }: R
               }
               aria-pressed={target.choices.some((item) => item.region.id === selected)}
               aria-haspopup={single ? undefined : 'dialog'}
-              aria-expanded={single ? undefined : current?.atom.index === target.atom.index}
-              onClick={() => {
-                if (single) onSelect(chosen.region.id);
-                else setChoice(target.atom.index);
+              aria-expanded={
+                single ? undefined : current.some((item) => item.atom.index === target.atom.index)
+              }
+              onClick={(event) => {
+                const bounds = event.currentTarget.parentElement!.getBoundingClientRect();
+                const points =
+                  event.detail > 0 && bounds.width > 0 && bounds.height > 0
+                    ? closestRegionTargets(targets, bounds, event.clientX, event.clientY)
+                    : [target];
+                const choices = regionPointerChoices(points);
+                if (choices.length === 1) onSelect(choices[0]!.region.id);
+                else if (choices.length > 1) setChoice(points.map((point) => point.atom.index));
               }}
               style={{
                 left: target.atom.x * 100 + '%',
@@ -68,21 +84,23 @@ function RegionPointerControls({ atoms, regions, colors, selected, onSelect }: R
           );
         })}
       </div>
-      {current && (
+      {current.length > 0 && (
         <Dialog
           title={
             t('变化区域') +
             ' · ' +
-            t('原子 {index}（{element}）', {
-              index: current.atom.index,
-              element: current.atom.element,
-            })
+            (current.length === 1
+              ? t('原子 {index}（{element}）', {
+                  index: current[0]!.atom.index,
+                  element: current[0]!.atom.element,
+                })
+              : t('{count} 个原子', { count: current.length }))
           }
           className="sar-region-choice-dialog"
           onClose={() => setChoice(null)}
         >
           <div className="dialog-body sar-region-choice-grid">
-            {current.choices.map((item) => {
+            {options.map((item) => {
               const marker = regionMarker(item.region, item.order);
               const label =
                 (item.region.name ?? marker.marker) +

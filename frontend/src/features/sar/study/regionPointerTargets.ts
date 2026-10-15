@@ -24,3 +24,37 @@ export function regionPointerTargets(
   });
   return targets.filter((target) => target.choices.length > 0);
 }
+
+// CSS-pixel hit ownership, not a chemical similarity or identity decision.
+// Indistinguishable points retain their complete choices instead of z-order wins.
+export function closestRegionTargets(
+  targets: readonly RegionPointerTarget[],
+  bounds: Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>,
+  clientX: number,
+  clientY: number,
+): RegionPointerTarget[] {
+  if (
+    bounds.width <= 0 ||
+    bounds.height <= 0 ||
+    ![bounds.left, bounds.top, bounds.width, bounds.height, clientX, clientY].every(Number.isFinite)
+  )
+    return [];
+  const distances = targets.map((target) =>
+    Math.hypot(
+      bounds.left + target.atom.x * bounds.width - clientX,
+      bounds.top + target.atom.y * bounds.height - clientY,
+    ),
+  );
+  const minimum = distances.reduce((lowest, distance) => Math.min(lowest, distance), Infinity);
+  return targets.filter((_, index) => distances[index]! - minimum <= 0.5);
+}
+
+export function regionPointerChoices(
+  targets: readonly RegionPointerTarget[],
+): RegionPointerChoice[] {
+  const choices = new Map<string, RegionPointerChoice>();
+  for (const target of targets)
+    for (const choice of target.choices)
+      if (!choices.has(choice.region.id)) choices.set(choice.region.id, choice);
+  return [...choices.values()].sort((left, right) => left.order - right.order);
+}

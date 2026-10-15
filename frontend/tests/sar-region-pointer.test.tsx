@@ -137,3 +137,44 @@ it('keeps pointer targets out of the repeated keyboard route and read-only maps 
   expect(screen.queryByRole('button')).not.toBeInTheDocument();
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
+
+it('routes a real pointer by the closest original coordinate when adjacent atom hit boxes overlap', () => {
+  const closeAtoms = [
+    { index: 0, element: 'C', x: 0.5, y: 0.5 },
+    { index: 1, element: 'N', x: 0.51, y: 0.5 },
+  ];
+  const regions = dense.slice(0, 2),
+    onSelect = vi.fn();
+  const { container } = render(
+    <RegionMap atoms={closeAtoms} regions={regions} onSelect={onSelect} />,
+  );
+  vi.spyOn(
+    container.querySelector('.sar-region-hotspots')!,
+    'getBoundingClientRect',
+  ).mockReturnValue(new DOMRect(0, 0, 100, 80));
+  const topmost = screen.getByRole('button', { name: 'R2 · N 1' });
+  fireEvent.click(topmost, { clientX: 50, clientY: 40, detail: 1 });
+  expect(onSelect).toHaveBeenCalledExactlyOnceWith(regions[0]!.id);
+});
+
+it('keeps pixel-indistinguishable original points explicit rather than choosing the last button', async () => {
+  const colocated = atoms.slice(0, 2).map((atom) => ({ ...atom, x: 0.5, y: 0.5 }));
+  const regions = dense.slice(0, 2),
+    onSelect = vi.fn();
+  const { container } = render(
+    <RegionMap atoms={colocated} regions={regions} onSelect={onSelect} />,
+  );
+  vi.spyOn(
+    container.querySelector('.sar-region-hotspots')!,
+    'getBoundingClientRect',
+  ).mockReturnValue(new DOMRect(0, 0, 100, 80));
+  fireEvent.click(screen.getByRole('button', { name: 'R2 · N 1' }), {
+    clientX: 50,
+    clientY: 40,
+    detail: 1,
+  });
+  expect(onSelect).not.toHaveBeenCalled();
+  const chooser = screen.getByRole('dialog', { name: 'Variable regions · 2 atoms' });
+  await userEvent.click(within(chooser).getByRole('button', { name: /^R1$/ }));
+  expect(onSelect).toHaveBeenCalledExactlyOnceWith(regions[0]!.id);
+});

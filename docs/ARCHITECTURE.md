@@ -395,7 +395,10 @@ including explicit H anchors. Dense-map annotation reduction no longer removes
 pointer access. `RegionHotspots` gives each original atom one hit target and uses
 the existing `Dialog` to resolve overlapping region choices explicitly, never
 the stacking order or current selection. The same source-ID callback updates
-the existing strict comparison view. Source/coordinate/region changes reset the
+the existing view. Real pointer coordinates resolve adjacent hit-box overlap;
+pixel-indistinguishable original points retain all their recorded choices.
+This is visual hit ownership only, not chemical inference. No atom is moved.
+Source/coordinate/region changes reset the
 keyed chooser; cancellation and locale changes do not select or rewrite anything.
 Original coordinates, graphs, raw labels, reports, matching/measurement rules,
 API/SQL/scientific epochs and extraction execution stay unchanged. Keyboard users

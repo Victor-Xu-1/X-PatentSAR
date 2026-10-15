@@ -80,7 +80,11 @@ for (const width of [1672, 390]) {
     await page
       .getByRole('combobox', { name: 'Interface language', exact: true })
       .selectOption('zh-CN');
-    await atom.click();
+    const localizedAtom = page
+      .getByRole('region', { name: '研究报告', exact: true })
+      .getByRole('region', { name: '单点结构对比', exact: true })
+      .locator('.sar-region-hotspots > button[data-atom-index="0"]');
+    await localizedAtom.click();
     chooser = page.getByRole('dialog', { name: '变化区域 · 原子 0（C）', exact: true });
     await expect(
       chooser.getByRole('button', { name: 'Expanded Linker 原文', exact: true }),
