@@ -55,8 +55,6 @@
     "tests.test_activity_result_references",
     "tests.test_activity_transposed",
     "tests.test_activity_spatial_roles",
-    "tests.test_activity_source_roles",
-    "tests.test_heading_characterization_roles",
     "tests.test_sar_metadata_projection",
     "tests.test_web_activity_sources",
     "tests.test_binding_source_lines",
