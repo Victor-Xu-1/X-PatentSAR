@@ -4,7 +4,9 @@ import packageMetadata from '../package.json' with { type: 'json' };
 // Real backend on the existing isolated historical adapter. No route interception,
 // scientific writer, extraction/model execution or fake successful source.
 for (const width of [1280, 390]) {
-  test(`historical sources never display automatic Lead ranks at ${width}px`, async ({ page }) => {
+  test(`historical sources never display automatic Lead ranks at ${width}px`, async ({
+    page,
+  }, testInfo) => {
     const project = process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID;
     expect(project).toBeTruthy();
     const errors: string[] = [],
@@ -67,5 +69,9 @@ for (const width of [1280, 390]) {
     ).toBeLessThanOrEqual(2);
     expect(writes).toEqual([]);
     expect(errors).toEqual([]);
+    await page.screenshot({
+      path: testInfo.outputPath(`lead-source-${width}.png`),
+      fullPage: true,
+    });
   });
 }
