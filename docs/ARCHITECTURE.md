@@ -1,5 +1,22 @@
 # X-PatentSAR architecture
 
+`activity_context_geometry` is the pure physical-window authority. The coordinate
+adapter records original grid axes and keeps the nearest overlapping preceding
+grid as a bounded context barrier; no page-global title inheritance crosses it.
+Producer, layout/coverage and saved header proof rederive that same window from
+the one original grid inventory. Each descriptor stores at most one barrier,
+not an all-table copy per row. Original native/raster observations remain intact.
+Header contract3/source snapshot2 uses one qualified current caption boundary for
+both domains. Earlier native titles cannot veto a newer raster table; same-window
+conflicts and weak boundaries remain unresolved. Anonymous physical grids can be
+proved by complete original column/cell evidence without inventing a table label.
+Known original titles/conditions cannot be downgraded into anonymity. Explicit
+characterization titles may prove complete NMR/mass-only column roles; unknown
+columns, measurements and biology still veto exclusion. Missing SAR conditions
+stay missing. Activity15/epoch24/coverage11 change derived activity semantics only;
+binding13/binder22/visible16/preparation4/raw/source/manual/SAR/API/SQL stay.
+No second OCR/provider, queue/store or private actual-patent execution is added.
+
 `source_cell_tokens` owns one half-open cell selection/multiline layout, extracted
 from the original grid reader rather than duplicated in caption/value consumers.
 `source_observations` retains bounded rendered native/raster token scope, text,

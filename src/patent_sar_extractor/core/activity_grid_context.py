@@ -1,5 +1,6 @@
 """Original cell matrices and local caption windows."""
 
+from .activity_context_geometry import context_floor
 from .activity_grid_cells import cell_text
 from .activity_headers import TABLE_MARKER
 from .source_table_markers import TABLE_CAPTION_START
@@ -19,7 +20,13 @@ def table_matrix(tokens: list[dict], region: dict) -> list[list[str]]:
 def prefix_parts(tokens: list[dict], region: dict) -> list[list[dict]]:
     """Retain the original token parts under the one caption-window policy."""
     top = region["ys"][0]
-    selected = [t for t in tokens if max(0, top - 310) <= t["y"] < top]
+    floor = (
+        context_floor(region["context_geometry"])
+        if "context_geometry" in region
+        else max(0, top - 310)
+    )
+    floor = max(floor, region.get("context_start", floor))
+    selected = [t for t in tokens if floor <= t["y"] < top]
     lines: dict[int, list[dict]] = {}
     for token in selected:
         lines.setdefault(round(token["y"] / 3), []).append(token)

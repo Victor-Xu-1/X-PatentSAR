@@ -1,5 +1,15 @@
 # Project governance manifest
 
+- Physical context ownership: `activity_context_geometry` owns bounded original
+  grid axes, the nearest overlapping context barrier and inventory replay. The
+  existing coordinate/grid/header/layout/coverage writer chain remains unique.
+  Header contract3/source2 can prove unnamed physical tables without fabricating
+  labels; shared native/raster windows retain valid known conflicts and conditions.
+  Explicit spectral-only characterization roles never erase unknown/bio columns.
+  Activity15/epoch24/coverage11 revise derived activity only; binding/raw/model/
+  manual/SAR/API/SQL/queue/dependency identities remain. Each descriptor holds at
+  most one prior physical barrier; no competing context store or task execution.
+
 - Original-cell ownership: `source_cell_tokens` is the sole physical selector /
   multiline formatter; original grid helpers re-export it. `source_observations`
   stores bounded typed token scope and replays score/geometry/status; one existing

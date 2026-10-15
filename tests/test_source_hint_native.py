@@ -8,6 +8,7 @@ from test_hybrid_source_native import hybrid_page
 
 from patent_sar_extractor.core import table_geometry
 from patent_sar_extractor.core.activity_coordinates import extract_coordinate_tables
+from patent_sar_extractor.core.activity_coverage import coverage_packet
 from patent_sar_extractor.core.activity_header_evidence import (
     serialize_header_evidence,
     validate_header_evidence,
@@ -52,7 +53,13 @@ class SourceHintNativeTests(unittest.TestCase):
             result.rows, result.header_observations
         )
         self.assertEqual(
-            validate_header_evidence({"rows": records, "header_observations": catalog}),
+            validate_header_evidence(
+                {
+                    "rows": records,
+                    "header_observations": catalog,
+                    "coverage": coverage_packet([0], result.coverage, result.rows),
+                }
+            ),
             [],
         )
         for record in records:

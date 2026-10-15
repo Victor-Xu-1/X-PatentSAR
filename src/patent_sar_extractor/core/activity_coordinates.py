@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 
+from .activity_context_geometry import context_region, grid_axes, grid_box
 from .activity_coverage import source_record
 from .activity_grid_context import _prefix, table_matrix
 from .activity_grid_continuations import Panel, continued_panel
@@ -87,7 +88,9 @@ def extract_coordinate_tables(
         # No persistent page-number-only cache: different PDFs cannot borrow tokens.
         tokens = page_tokens(page)
         token_map[page_index] = tokens
-        for region in regions:
+        context_tables = [grid_box(region) for region in regions]
+        for raw_region in regions:
+            region = context_region(raw_region, context_tables)
             matrix = table_matrix(tokens, region)
             prefix = _prefix(tokens, region)
             header = " ".join(matrix[0]) if matrix else ""
@@ -110,6 +113,7 @@ def extract_coordinate_tables(
                         "observed_characterization",
                         0,
                         role_scope=role_scope,
+                        grid_axes=grid_axes(region),
                     )
                 )
                 continue
@@ -188,6 +192,7 @@ def extract_coordinate_tables(
                         "unresolved",
                         "unsupported_header",
                         0,
+                        grid_axes=grid_axes(region),
                     )
                 )
                 continue
@@ -266,6 +271,7 @@ def extract_coordinate_tables(
                 else "no_original_rows",
                 len(rows),
                 layout=schema.source_layout,
+                grid_axes=grid_axes(region),
             )
         )
     result.coverage.sort(

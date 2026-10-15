@@ -17,6 +17,7 @@ from patent_sar_extractor.contracts import (
     schema_ref_matches,
 )
 
+from .activity_context_geometry import validate_header_context_geometry
 from .activity_header_identity import detector_header_conflict
 from .activity_header_proof import valid_header_proof
 from .activity_models import ActivityRow
@@ -93,6 +94,9 @@ def validate_header_evidence(payload: dict) -> list[str]:
     for key, proof in catalog.items():
         if key != proof_id(proof):
             raise ValueError("Original header evidence identity differs")
+        validate_header_context_geometry(
+            proof, (payload.get("coverage") or {}).get("regions")
+        )
         if proof["status"] == "observed_header_consensus":
             if (
                 "column_contract" in proof

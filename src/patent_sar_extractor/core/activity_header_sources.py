@@ -1,5 +1,6 @@
 """Original token-scope replay for the existing header and context authority."""
 
+from .activity_context_geometry import grid_box, validate_context_geometry
 from .activity_grid_context import _prefix, prefix_parts
 from .activity_header_identity import (
     compact_header,
@@ -30,14 +31,47 @@ def capture_header_sources(page, region, limit, tokens):
             )
         )
     bounds = (0, max(0, ys[0] - 310), page.rect.width, ys[0])
+    geometry = region.get(
+        "context_geometry",
+        {"table_bbox": grid_box(region), "tables": [grid_box(region)]},
+    )
+    validate_context_geometry(geometry, grid_box(region))
     return {
-        "schema_version": 1,
+        "schema_version": 2,
+        "context_geometry": geometry,
         "columns": columns,
         "prefix": source_cell_observation(
             tokens, bounds, native=native_region(tokens, bounds, False)
         ),
         "native_prefix": source_cell_observation(tokens, bounds, native=True),
     }
+
+
+def source_context_region(snapshot, band):
+    """Both observation domains share one proved current caption boundary."""
+    region = {"xs": [band[0]], "ys": [band[1]]}
+    if snapshot.get("schema_version") == 2:
+        geometry = snapshot.get("context_geometry")
+        try:
+            box = geometry["table_bbox"]
+            validate_context_geometry(geometry, box)
+        except (TypeError, KeyError, ValueError):
+            return None
+        if box[:3] != band[:3] or box[3] < band[3]:
+            return None
+        region["context_geometry"] = geometry
+    parts = _context_parts(snapshot.get("prefix"), region)
+    if parts is None:
+        return region  # Valid weak captions remain conflicts, not bad geometry.
+    raw = "\n".join(" ".join(t["text"] for t in part) for part in parts)
+    if (
+        parts
+        and context_from_text(raw, raw).table_id
+        and source_claim_runs(snapshot["prefix"], tokens=parts[0])
+        == (tuple(t["text"] for t in parts[0]),)
+    ):
+        region["context_start"] = min(t["bbox"][1] for t in parts[0])
+    return region
 
 
 def _column_conflict(packet, fresh):
@@ -100,7 +134,7 @@ def header_source_conflicts(snapshot, band, original_headers, original_context, 
     if (
         not isinstance(snapshot, dict)
         or type(snapshot.get("schema_version")) is not int
-        or snapshot["schema_version"] != 1
+        or snapshot["schema_version"] not in {1, 2}
         or not isinstance(snapshot.get("columns"), list)
         or len(snapshot["columns"]) != len(fresh.raw_headers)
     ):
@@ -132,7 +166,9 @@ def header_source_conflicts(snapshot, band, original_headers, original_context, 
         conflicts.append(conflict)
     if previous != band[2]:
         return None
-    region = {"xs": [band[0]], "ys": [band[1]]}
+    region = source_context_region(snapshot, band)
+    if region is None:
+        return None
     contexts = []
     for name in ("prefix", "native_prefix"):
         packet = snapshot.get(name)
@@ -166,7 +202,7 @@ def _context_choice(packet, region, fresh):
     parts = _context_parts(packet, region)
     if parts is None:
         return None
-    names = ("target", "assay", "cell_line")
+    names = ("table_id", "target", "assay", "cell_line")
     if any(
         source_claim_runs(packet, tokens=part) != (tuple(t["text"] for t in part),)
         for part in parts
@@ -181,8 +217,12 @@ def _context_choice(packet, region, fresh):
         return None if missing else fresh
     raw = "\n".join(" ".join(t["text"] for t in part) for part in parts)
     source = context_from_text(raw, raw)
-    if not source.table_id or source.table_id != fresh.table_id:
-        return fresh
+    if not source.table_id:
+        return (
+            None
+            if any(getattr(source, key) and not getattr(fresh, key) for key in names)
+            else fresh
+        )
     if not any(getattr(source, key) and not getattr(fresh, key) for key in names):
         return fresh
     if any(
@@ -197,7 +237,9 @@ def select_header_context(snapshot, band, fresh):
     """Keep one complete observed window; never synthesize a mixed context."""
     if snapshot is None:
         return fresh
-    region = {"xs": [band[0]], "ys": [band[1]]}
+    region = source_context_region(snapshot, band)
+    if region is None:
+        return None
     selected = fresh
     for name in ("prefix", "native_prefix"):
         if name not in snapshot:

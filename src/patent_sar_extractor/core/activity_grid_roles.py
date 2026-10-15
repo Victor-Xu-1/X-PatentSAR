@@ -23,6 +23,9 @@ _PREPARATION = re.compile(
 )
 _NMR = re.compile(r"\b(?:\d{1,3}\s*[HCFPN]\s*)?NMR\b", re.IGNORECASE)
 _SPECTRAL_UNIT = re.compile(r"\bMHz\b|\bppm\b", re.IGNORECASE)
+_CHARACTERIZATION_TITLE = re.compile(
+    r"\b(?:characterization|characterisation)\b|结构表征", re.IGNORECASE
+)
 _MASS = re.compile(r"\b(?:HRMS|MS)\b.*?m\s*/?\s*z\b", re.IGNORECASE)
 _ENDPOINT = re.compile(
     r"(?<![A-Za-z0-9])(?:p?IC50|EC50|DC50|GI50|CC50|Ki|Kd|Imax|Dmax|Ymin|Ymax|"
@@ -58,9 +61,7 @@ def nominate_characterization(matrix, prefix):
     return bool(
         _PREPARATION.search(text)
         and (_NMR.search(text) or _MASS.search(text))
-        or re.search(
-            r"\b(?:characterization|characterisation)\b|结构表征", prefix, re.IGNORECASE
-        )
+        or _CHARACTERIZATION_TITLE.search(prefix)
         and (_NMR.search(text) or _MASS.search(text))
     )
 
@@ -138,9 +139,13 @@ def characterization_roles(matrix, prefix):
             roles.append(
                 "characterization" if nmr and mass else "nmr" if nmr else "mass"
             )
-    if (
-        roles.count("identifier") != 1
-        or "preparation" not in roles
+    declared = bool(_CHARACTERIZATION_TITLE.search(context.raw_caption))
+    if roles.count("identifier") != 1 or not any(
+        role in {"nmr", "mass", "characterization"} for role in roles
+    ):
+        return None
+    if not declared and (
+        "preparation" not in roles
         or not any(role in {"nmr", "characterization"} for role in roles)
         or not any(role in {"mass", "characterization"} for role in roles)
     ):

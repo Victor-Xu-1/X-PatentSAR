@@ -2,6 +2,7 @@
 
 from dataclasses import replace
 
+from .activity_context_geometry import context_floor
 from .activity_grid_context import _prefix
 from .activity_header_columns import observe_header_columns
 from .activity_header_identity import compact_header, context_conflict, header_conflict
@@ -58,13 +59,21 @@ def refine_scanned_header(
         if source is not None:
             limit = source.first_data_row
     captured_sources = capture_header_sources(page, region, limit, tokens)
-    prefix_bounds = (0, max(0, region["ys"][0] - 80), page.rect.width, region["ys"][0])
+    floor = (
+        context_floor(region["context_geometry"]) if "context_geometry" in region else 0
+    )
+    prefix_bounds = (
+        0,
+        max(0, floor, region["ys"][0] - 80),
+        page.rect.width,
+        region["ys"][0],
+    )
     observations, candidates, verified = [], [], []
     resolved_context = None
 
     def resolution(status, **extra):
         evidence = {
-            "column_contract": 2 if captured_sources is not None else 1,
+            "column_contract": 3 if captured_sources is not None else 1,
             "status": status,
             "original_headers": list(original.raw_headers) if original else [],
             "original_context": original.context.raw_context if original else "",
@@ -170,9 +179,11 @@ def refine_scanned_header(
         if source_checks
         else any(context_conflict(source.context, c.context) for c in candidates)
     )
-    caption_proved = bool(first.context.table_id) and compact_header(
-        first.context.raw_caption
-    ) == compact_header(second.context.raw_caption)
+    caption_proved = (
+        bool(first.context.table_id) or captured_sources is not None
+    ) and compact_header(first.context.raw_caption) == compact_header(
+        second.context.raw_caption
+    )
     if original is None and (not all(agreed) or not caption_proved or caption_conflict):
         proof = resolution(
             "unresolved",
