@@ -16,7 +16,6 @@ import shutil
 import subprocess
 import tempfile
 import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import BytesIO
 from pathlib import Path
 
@@ -32,6 +31,14 @@ from patent_sar_extractor.contracts import (
 )
 
 logger = logging.getLogger(__name__)
+from .page_ocr_execution import (
+    PageObservationError,
+    original_pages,
+    page_observation,
+    parallel_pages,
+    validate_cache,
+)
+from .page_ocr_protocol import paddlex_page
 from .source_geometry import native_lines, source_layout
 
 _OCR_ENGINE = None
@@ -142,7 +149,7 @@ def _paddlex_payload_from_image(
 ) -> tuple[list[str], list[list[float]]]:
     url = _paddlex_ocr_url()
     if not url or url.lower() in {"off", "none", "0"}:
-        return [], []
+        raise PageObservationError("Selected PaddleX page source is unavailable")
     import requests
 
     try:
@@ -156,14 +163,17 @@ def _paddlex_payload_from_image(
             timeout=timeout,
         )
         response.raise_for_status()
-        data = response.json()
-        pruned = _paddlex_pruned_result(data)
-        texts = [str(text or "").strip() for text in (pruned.get("rec_texts") or [])]
-        boxes = pruned.get("rec_boxes") or []
-        pairs = [(text, box) for text, box in zip(texts, boxes) if text]
-        return [text for text, _box in pairs], [box for _text, box in pairs]
-    except (requests.RequestException, OSError, ValueError, TypeError, AttributeError):
-        return [], []
+        return paddlex_page(response.json())
+    except (
+        requests.RequestException,
+        OSError,
+        ValueError,
+        TypeError,
+        AttributeError,
+    ) as error:
+        raise PageObservationError(
+            "Selected PaddleX page request failed; no empty source was published"
+        ) from error
 
 
 def _build_ocr_engine():
@@ -204,7 +214,7 @@ def page_text(page, ocr_engine=None, min_native_chars: int = 40) -> str:
         return text
     engine = ocr_engine if ocr_engine is not None else get_ocr_engine()
     if not engine:
-        if layout.native and layout.raster_bounds is not None:
+        if layout.raster_bounds is not None:
             raise RuntimeError(
                 "Unobserved raster content cannot use a native-only page cache"
             )
@@ -331,7 +341,7 @@ def _page_payload(
         return native, []
     engine = ocr_engine if ocr_engine is not None else get_ocr_engine()
     if not engine:
-        if layout.native and layout.raster_bounds is not None:
+        if layout.raster_bounds is not None:
             raise RuntimeError(
                 "Unobserved raster content cannot use a native-only page cache"
             )
@@ -508,62 +518,45 @@ def inherit_page_ocr_cache(source: str, destination: str, pdf_path: str) -> bool
         cache.get("ocr_line_map"), dict
     ):
         raise TypeError("OCR observation cache collections are malformed")
+    validate_cache(cache, cache["metadata"]["page_count"])
     save_page_ocr_cache(destination, cache)
     return True
+
+
+def _page_observations(pdf_path, indices, workers, min_native_chars):
+    if workers <= 1:
+        with fitz.open(pdf_path) as document:
+            for index in indices:
+                text, lines = _page_payload(
+                    document[index], min_native_chars=min_native_chars
+                )
+                yield page_observation(index, (index, text, lines))
+    else:
+
+        def reader(index):
+            return _extract_page_payload(pdf_path, index, min_native_chars)
+
+        yield from parallel_pages(indices, reader, workers)
 
 
 def build_page_ocr_cache(
     pdf_path: str, page_indices: list[int], workers: int = 1, min_native_chars: int = 40
 ) -> dict:
-    doc = fitz.open(pdf_path)
-    try:
-        total_pages = len(doc)
-    finally:
-        doc.close()
+    with fitz.open(pdf_path) as document:
+        total_pages = len(document)
+    indices = original_pages(page_indices, total_pages)
     cache = {
         "metadata": build_cache_metadata(pdf_path, total_pages),
         "page_texts": {},
         "ocr_line_map": {},
     }
-    if not page_indices:
-        return cache
-
-    unique_indices = sorted({int(i) for i in page_indices if int(i) >= 0})
-    workers = max(1, int(workers or 1))
-
-    if workers <= 1 or len(unique_indices) <= 1:
-        doc = fitz.open(pdf_path)
-        try:
-            for idx in unique_indices:
-                if idx >= len(doc):
-                    continue
-                page = doc[idx]
-                text, lines = _page_payload(page, min_native_chars=min_native_chars)
-                cache["page_texts"][str(idx)] = text
-                if lines:
-                    cache["ocr_line_map"][str(idx)] = lines
-        finally:
-            doc.close()
-        return cache
-
-    max_workers = min(workers, len(unique_indices))
-    with ThreadPoolExecutor(max_workers=max_workers) as pool:
-        future_map = {
-            pool.submit(_extract_page_payload, pdf_path, idx, min_native_chars): idx
-            for idx in unique_indices
-        }
-        for future in as_completed(future_map):
-            idx = future_map[future]
-            try:
-                resolved_idx, text, lines = future.result()
-            except (OSError, RuntimeError, ValueError, TypeError, IndexError) as error:
-                logger.warning(
-                    "Page OCR observation %d failed (%s)", idx, type(error).__name__
-                )
-                continue
-            cache["page_texts"][str(resolved_idx)] = text
-            if lines:
-                cache["ocr_line_map"][str(resolved_idx)] = lines
+    for index, text, lines in _page_observations(
+        pdf_path, indices, max(1, int(workers or 1)), min_native_chars
+    ):
+        cache["page_texts"][str(index)] = text
+        if lines:
+            cache["ocr_line_map"][str(index)] = lines
+    validate_cache(cache, total_pages, required=indices)
     return cache
 
 
@@ -577,24 +570,19 @@ def update_page_ocr_cache(
     force: bool = False,
     retry_empty: bool = True,
 ) -> dict:
-    """Fill missing page OCR cache entries with progress and partial flushes."""
+    """One bounded source reader/writer; partial success is never full coverage."""
     cache = load_page_ocr_cache(cache_path)
     original_metadata = cache.get("metadata")
-    doc = fitz.open(pdf_path)
-    try:
-        total_pages = len(doc)
-    finally:
-        doc.close()
+    with fitz.open(pdf_path) as document:
+        total_pages = len(document)
+    indices = original_pages(page_indices, total_pages)
     expected_metadata = build_cache_metadata(pdf_path, total_pages)
     if force or not cache_matches_pdf(cache, pdf_path, total_pages):
         if cache.get("page_texts") or cache.get("metadata"):
             logger.info("Discarding page OCR cache for a different PDF: %s", cache_path)
-        cache = {
-            "metadata": expected_metadata,
-            "page_texts": {},
-            "ocr_line_map": {},
-        }
+        cache = {"metadata": expected_metadata, "page_texts": {}, "ocr_line_map": {}}
     else:
+        validate_cache(cache, total_pages)
         from .source_cache_policy import preserved_source_provenance
 
         expected_metadata.update(preserved_source_provenance(cache["metadata"]))
@@ -608,100 +596,34 @@ def update_page_ocr_cache(
             expected_metadata["inherited_observation_contract"] = previous_observation
             expected_metadata["source_policy_validation"] = receipt
         cache["metadata"] = expected_metadata
-        cache.setdefault("page_texts", {})
-        cache.setdefault("ocr_line_map", {})
-    unique_indices = [
-        idx
-        for idx in sorted({int(i) for i in page_indices if int(i) >= 0})
-        if idx < total_pages
-    ]
     missing = [
-        idx
-        for idx in unique_indices
-        if str(idx) not in cache.get("page_texts", {})
-        or not str(cache.get("page_texts", {}).get(str(idx), "")).strip()
+        index
+        for index in indices
+        if not cache["page_texts"].get(str(index), "").strip()
     ]
     if not missing:
         if cache.get("metadata") != original_metadata:
             save_page_ocr_cache(cache_path, cache)
         logger.info(
-            "Shared page OCR cache hit: %s/%s pages",
-            len(unique_indices),
-            len(unique_indices),
+            "Shared page OCR cache hit: %d/%d pages", len(indices), len(indices)
         )
         return cache
-
-    workers = max(1, int(workers or 1))
-    flush_every = max(1, int(flush_every or 1))
+    workers, flush_every = max(1, int(workers or 1)), max(1, int(flush_every or 1))
     logger.info(
         "Building shared page OCR cache: missing=%d/%d, workers=%d, path=%s",
         len(missing),
-        len(unique_indices),
+        len(indices),
         workers,
         cache_path,
     )
-
     completed = 0
-    if workers <= 1 or len(missing) <= 1:
-        doc = fitz.open(pdf_path)
-        try:
-            for idx in missing:
-                page = doc[idx]
-                text, lines = _page_payload(page, min_native_chars=min_native_chars)
-                cache["page_texts"][str(idx)] = text
-                if lines:
-                    cache["ocr_line_map"][str(idx)] = lines
-                completed += 1
-                if completed % flush_every == 0 or completed == len(missing):
-                    save_page_ocr_cache(cache_path, cache)
-                    logger.info(
-                        "Shared page OCR cache progress: %d/%d missing pages",
-                        completed,
-                        len(missing),
-                    )
-        finally:
-            doc.close()
-        if retry_empty:
-            empty_after = [
-                idx
-                for idx in unique_indices
-                if not str(cache.get("page_texts", {}).get(str(idx), "")).strip()
-            ]
-            if empty_after:
-                logger.info(
-                    "Retrying empty shared page OCR cache entries: %d pages",
-                    len(empty_after),
-                )
-                return update_page_ocr_cache(
-                    pdf_path,
-                    empty_after,
-                    cache_path,
-                    workers=1,
-                    min_native_chars=min_native_chars,
-                    flush_every=flush_every,
-                    force=False,
-                    retry_empty=False,
-                )
-        return cache
-
-    max_workers = min(workers, len(missing))
-    with ThreadPoolExecutor(max_workers=max_workers) as pool:
-        future_map = {
-            pool.submit(_extract_page_payload, pdf_path, idx, min_native_chars): idx
-            for idx in missing
-        }
-        for future in as_completed(future_map):
-            try:
-                resolved_idx, text, lines = future.result()
-            except (OSError, RuntimeError, ValueError, TypeError, IndexError) as error:
-                logger.warning(
-                    "Page OCR cache extraction failed (%s)", type(error).__name__
-                )
-                completed += 1
-                continue
-            cache["page_texts"][str(resolved_idx)] = text
+    try:
+        for index, text, lines in _page_observations(
+            pdf_path, missing, workers, min_native_chars
+        ):
+            cache["page_texts"][str(index)] = text
             if lines:
-                cache["ocr_line_map"][str(resolved_idx)] = lines
+                cache["ocr_line_map"][str(index)] = lines
             completed += 1
             if completed % flush_every == 0 or completed == len(missing):
                 save_page_ocr_cache(cache_path, cache)
@@ -710,25 +632,24 @@ def update_page_ocr_cache(
                     completed,
                     len(missing),
                 )
+    finally:
+        save_page_ocr_cache(cache_path, cache)
+    validate_cache(cache, total_pages, required=indices)
     if retry_empty:
-        empty_after = [
-            idx
-            for idx in unique_indices
-            if not str(cache.get("page_texts", {}).get(str(idx), "")).strip()
+        empty = [
+            index for index in indices if not cache["page_texts"][str(index)].strip()
         ]
-        if empty_after:
+        if empty:
             logger.info(
-                "Retrying empty shared page OCR cache entries: %d pages",
-                len(empty_after),
+                "Retrying empty shared page OCR cache entries: %d pages", len(empty)
             )
             return update_page_ocr_cache(
                 pdf_path,
-                empty_after,
+                empty,
                 cache_path,
                 workers=1,
                 min_native_chars=min_native_chars,
                 flush_every=flush_every,
-                force=False,
                 retry_empty=False,
             )
     return cache
@@ -739,11 +660,23 @@ def load_page_ocr_cache(path: str) -> dict:
         return {"metadata": {}, "page_texts": {}, "ocr_line_map": {}}
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
-    return {
-        "metadata": data.get("metadata", {}) if isinstance(data, dict) else {},
-        "page_texts": data.get("page_texts", {}) if isinstance(data, dict) else {},
-        "ocr_line_map": data.get("ocr_line_map", {}) if isinstance(data, dict) else {},
-    }
+    if not isinstance(data, dict):
+        raise PageObservationError("Saved original page cache is not an object")
+    for field in ("metadata", "page_texts", "ocr_line_map"):
+        data.setdefault(field, {})
+    return data
+
+
+def validate_page_source(pdf_path: str, cache: dict) -> int:
+    """Read-only replay for fresh and reused classification source collections."""
+    with fitz.open(pdf_path) as document:
+        total = len(document)
+    if not cache_matches_pdf(cache, pdf_path, total):
+        raise PageObservationError(
+            "Page source does not match the original PDF identity"
+        )
+    validate_cache(cache, total, required=list(range(total)))
+    return total
 
 
 def save_page_ocr_cache(path: str, cache: dict) -> None:

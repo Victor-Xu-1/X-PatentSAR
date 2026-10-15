@@ -960,6 +960,21 @@ QA and API v1 remain unchanged. Research progress uses
 
 ## Resource lifecycle
 
+- `page_ocr_execution` owns bounded original page indices, payload/coordinate
+  shapes and source coverage. At most one request per OCR worker is pending;
+  a failure stops new requests and drains already-owned successful observations
+  into the existing atomic checkpoint writer. Native fast paths remain model-free.
+  `page_ocr_protocol` validates the one-image transport; missing/ambiguous image
+  envelopes or unequal text/box arrays fail explicitly, never truncate or fall
+  back to a native footer. Valid empty observations remain distinct from failure.
+  `page_ocr_cache` is the sole backend facade/cache writer; build and update share
+  the same reader. Known source extension fields and inherited producer receipts
+  survive updates. Classification requires all original pages, and checkpoint
+  reuse rechecks original PDF identity and complete source before declaring reuse.
+  Classifier epoch5 changes derived execution compatibility; raw observation2 and
+  independent binding/activity/chemistry contracts remain unchanged. These bounds
+  do not prove detection recall, original value correctness or chemical identity.
+
 - One task owns its active heavy phase. Existing analysis lease prevents two
   owned inference consumers; no permanently resident parallel model servers.
 - Before loading, bounded admission measures `MemAvailable`. Default model

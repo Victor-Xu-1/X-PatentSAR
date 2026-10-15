@@ -15,6 +15,7 @@ from patent_sar_extractor.contracts import (
     artifact_identity,
 )
 from patent_sar_extractor.core.page_ocr_cache import update_page_ocr_cache
+from patent_sar_extractor.core.page_ocr_execution import validate_cache
 from patent_sar_extractor.core.review_excerpt import infer_candidate_page_window
 
 logger = logging.getLogger(__name__)
@@ -112,6 +113,7 @@ def classify_pdf(pdf_path: str, output_dir: str, force_ocr_cache: bool = False) 
         min_native_chars=30,
         force=force_ocr_cache,
     )
+    validate_cache(cache, total, required=list(range(total)))
     pages_text_map = {
         int(k): v for k, v in cache.get("page_texts", {}).items() if str(k).isdigit()
     }

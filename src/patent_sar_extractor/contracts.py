@@ -8,7 +8,7 @@ from typing import Final
 PRODUCT_NAME: Final = "X-PatentSAR"
 DISTRIBUTION_NAME: Final = "x-patentsar"
 COMMAND_NAME: Final = "x-patentsar"
-__version__: Final = "0.2.15"
+__version__: Final = "0.2.16"
 
 WEB_API_SCHEMA: Final = "patentsar.web-api"
 WEB_API_SCHEMA_VERSION: Final = 1
@@ -48,7 +48,7 @@ STEP_MANIFEST_SCHEMA: Final = "patentsar.step-manifest"
 STEP_MANIFEST_SCHEMA_VERSION: Final = 1
 PAGE_CLASSIFICATION_SCHEMA: Final = "patentsar.page-classification"
 PAGE_CLASSIFICATION_SCHEMA_VERSION: Final = 2
-PAGE_CLASSIFIER_VERSION: Final = "4"
+PAGE_CLASSIFIER_VERSION: Final = "5"
 REVIEW_EXCERPT_METADATA_SCHEMA: Final = "patentsar.review-excerpt-metadata"
 REVIEW_EXCERPT_METADATA_SCHEMA_VERSION: Final = 1
 ACTIVITY_SCHEMA: Final = "patentsar.activity"

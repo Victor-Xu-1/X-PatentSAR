@@ -233,7 +233,8 @@ class PatentBoundaryTests(unittest.TestCase):
             with patch(
                 "patent_sar_extractor.core.page_classifier.update_page_ocr_cache",
                 return_value={
-                    "page_texts": {str(i): text for i, text in enumerate(texts)}
+                    "page_texts": {str(i): text for i, text in enumerate(texts)},
+                    "ocr_line_map": {},
                 },
             ) as observations:
                 result = classify_pdf(str(pdf), str(root / "classification"))

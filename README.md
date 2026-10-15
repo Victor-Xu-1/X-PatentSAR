@@ -34,7 +34,7 @@ X-PatentSAR 是独立运行的专利化学结构、活性数据提取与 SAR 研
 
 ## 开始使用
 
-X-PatentSAR 支持 Linux / WSL2 x86-64，在自己的环境中运行。按[快速开始](docs/getting-started.md)启动工作台、准备科学运行环境，再上传原始 PDF；模型权重需单独安装。
+X-PatentSAR 支持 Linux / WSL2 x86-64，在自己的环境中运行。按[快速开始](docs/getting-started.md)启动工作台、准备科学运行环境，再上传原始 PDF；模型权重需单独安装。实际提取、复核与中断恢复均通过 Web 工作台操作。
 
 ## 使用边界
 

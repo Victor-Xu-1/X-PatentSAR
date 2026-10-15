@@ -22,22 +22,13 @@ uv run x-patentsar serve --port 8765
 
 环境就绪后，在新任务页选择原始 PDF，点击“开始提取”。详细安装、配置和恢复方法见 [使用与运维说明](OPERATIONS.md)。
 
-## 命令行
+## 实际任务与中断恢复
 
-科学环境配置完成后，可先运行检查，再处理一份 PDF：
+实际专利任务只通过 Web 工作台提交、查看与恢复。命令行入口仅用于环境和安装诊断，不用来处理真实专利任务。
 
-```bash
-uv run x-patentsar check-envs
-uv run x-patentsar health --no-gpu --output /tmp/patentsar-health.json
-uv run x-patentsar run \
-  --pdf /path/to/patent.pdf \
-  --output /path/to/dedicated-output \
-  --patent-id YOUR_PATENT_ID \
-  --gpu-mode off
-```
+原始页面的 OCR 或原生文本必须完整且与上传的 PDF 身份一致。缺失、错页、格式异常或失败的观察会明确停止分类，不会被当作空白页或“整份 PDF 已完成”。后续页面失败时，已经完成的原始页面观察仍会保留。
 
-每份专利使用独立输出目录。完整参数见 `uv run x-patentsar --help` 和 `uv run x-patentsar run --help`。
-
+中断后先检查当前任务状态与运行环境，再通过前端恢复。软件会重新核对完整原始页面缓存；单独存在的旧分类结果不代表能够继续。旧原始材料与人工修订仍然保留，不要编辑缓存、原始科学结果或关闭 QA 来强制复用。
 
 ## 配置与隐私
 
