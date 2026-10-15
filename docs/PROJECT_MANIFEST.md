@@ -8,7 +8,9 @@
   `activity_header_sources` owns contract2 original columns/caption windows and
   whole-context retention under existing semantic rules. Downgrade and malformed
   flags cannot bypass replay. Native blanks do not load OCR and a footer cannot
-  grant regional coverage. Binding13/binder22/visible16/preparation4/activity14/
+  grant regional coverage. Original control labels cannot become final structures;
+  measured claims retain decimal/sign/limit identity. Shared cell rendering enforces
+  the existing8million-pixel bound before allocation. Binding13/binder22/visible16/preparation4/activity14/
   epoch23/coverage10 revise only derived proof; raw/model/manual/SAR/API/SQL and
   assets remain. No dependency/provider, extra queue/store or private patent run.
 

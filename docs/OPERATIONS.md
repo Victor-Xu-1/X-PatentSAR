@@ -8,6 +8,10 @@ both normal owned400/600dpi reads and cannot count as an agreeing source. Valid
 conflicts, native shadows, numeric/unit/operator fragments and nonfinal roles
 remain explicit. Malformed source metadata is invalid, not a neutral low score.
 Saved numbered, activity/reference and count proof replays that same authority.
+Original control names stay literal activity entities, never final-structure IDs.
+Decimals, signs, censoring limits and uncertainty survive quantitative comparison;
+only explicit missing labels use missing-token cleanup. Cell rendering checks the
+existing8million-pixel envelope before allocation, including native blank probes.
 Header contract2 retains original columns and context windows and cannot be
 downgraded to ignore them. A complete qualified longer context survives a shorter
 read; incompatible/disjoint observations cannot be merged into invented conditions.

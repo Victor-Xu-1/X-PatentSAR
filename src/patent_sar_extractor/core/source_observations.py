@@ -142,7 +142,7 @@ def source_observation_status(packet, bounds, text):
     return status if packet.get("status") == status else "invalid"
 
 
-def source_claim_runs(packet):
+def source_claim_runs(packet, *, tokens=None):
     """Qualified original fragments, without borrowing cross-cell ownership."""
     if (
         not isinstance(packet, Mapping)
@@ -150,9 +150,16 @@ def source_claim_runs(packet):
         == "invalid"
     ):
         return None
+    selected = packet["tokens"] if tokens is None else tokens
+    if (
+        not isinstance(selected, (list, tuple))
+        or len(selected) > MAXIMUM_TOKENS
+        or any(not any(part is old for old in packet["tokens"]) for part in selected)
+    ):
+        return None
     parts = [
         {**part, "confidence": 0.0} if crosses_cell([part], packet["bbox"]) else part
-        for part in packet["tokens"]
+        for part in selected
     ]
     runs = []
     for line in cell_lines(parts, packet["bbox"]):

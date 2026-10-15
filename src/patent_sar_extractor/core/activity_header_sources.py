@@ -1,13 +1,13 @@
 """Original token-scope replay for the existing header and context authority."""
 
-from .activity_grid_context import _prefix
+from .activity_grid_context import _prefix, prefix_parts
 from .activity_header_identity import (
     compact_header,
     context_conflict,
     detector_header_conflict,
     header_conflict,
 )
-from .activity_headers import context_from_text
+from .activity_headers import context_from_text, context_source_text
 from .activity_identity import is_id_header
 from .source_geometry import SourceTokens, native_region
 from .source_observations import (
@@ -57,16 +57,41 @@ def _column_conflict(packet, fresh):
     )
 
 
+def _context_parts(packet, region):
+    if source_claim_runs(packet) is None:
+        return None
+    parts = prefix_parts(packet["tokens"], region)
+    raw = "\n".join(" ".join(t["text"] for t in part) for part in parts)
+    source = context_source_text(raw)
+    start, offset, first_offset, scoped = len(raw) - len(source), 0, None, []
+    for part in parts:
+        if offset >= start:
+            if first_offset is None:
+                first_offset = offset
+            scoped.append(part)
+        offset += len(" ".join(t["text"] for t in part)) + 1
+    if start and (
+        not scoped
+        or first_offset != start
+        or source_claim_runs(packet, tokens=scoped[0])
+        != (tuple(t["text"] for t in scoped[0]),)
+    ):
+        return None  # An unqualified caption cannot waive earlier known context.
+    return scoped
+
+
 def _context_conflict(packet, fresh, region):
-    runs = source_claim_runs(packet)
-    if runs is None:
+    parts = _context_parts(packet, region)
+    if parts is None:
         return True
     if packet["status"] == "qualified":
         raw = _prefix(packet["tokens"], region)
         return context_conflict(context_from_text(raw, raw), fresh)
     # Separate runs never bridge an unqualified word into a new table/condition.
     return any(
-        context_conflict(context_from_text(" ".join(run)), fresh) for run in runs
+        context_conflict(context_from_text("", " ".join(run)), fresh)
+        for part in parts
+        for run in source_claim_runs(packet, tokens=part)
     )
 
 
@@ -137,16 +162,27 @@ def header_source_conflicts(snapshot, band, original_headers, original_context, 
     return conflicts, any(contexts)
 
 
-def select_header_context(snapshot, band, fresh):
-    """Keep one complete observed window; never synthesize a mixed context."""
-    if snapshot is None or snapshot["prefix"]["status"] != "qualified":
-        return fresh
-    region = {"xs": [band[0]], "ys": [band[1]]}
-    raw = _prefix(snapshot["prefix"]["tokens"], region)
+def _context_choice(packet, region, fresh):
+    parts = _context_parts(packet, region)
+    if parts is None:
+        return None
+    names = ("target", "assay", "cell_line")
+    if any(
+        source_claim_runs(packet, tokens=part) != (tuple(t["text"] for t in part),)
+        for part in parts
+    ):
+        missing = any(
+            getattr(context_from_text("", " ".join(run)), key)
+            and not getattr(fresh, key)
+            for part in parts
+            for run in source_claim_runs(packet, tokens=part)
+            for key in names
+        )
+        return None if missing else fresh
+    raw = "\n".join(" ".join(t["text"] for t in part) for part in parts)
     source = context_from_text(raw, raw)
     if not source.table_id or source.table_id != fresh.table_id:
         return fresh
-    names = ("target", "assay", "cell_line")
     if not any(getattr(source, key) and not getattr(fresh, key) for key in names):
         return fresh
     if any(
@@ -155,3 +191,18 @@ def select_header_context(snapshot, band, fresh):
     ):
         return None
     return source
+
+
+def select_header_context(snapshot, band, fresh):
+    """Keep one complete observed window; never synthesize a mixed context."""
+    if snapshot is None:
+        return fresh
+    region = {"xs": [band[0]], "ys": [band[1]]}
+    selected = fresh
+    for name in ("prefix", "native_prefix"):
+        if name not in snapshot:
+            continue
+        selected = _context_choice(snapshot[name], region, selected)
+        if selected is None:
+            return None
+    return selected

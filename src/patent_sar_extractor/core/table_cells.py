@@ -73,9 +73,11 @@ def cell_image(page, bounds, dpi: int) -> np.ndarray:
     clip = fitz.Rect(x0 + 1.5, y0 + 1.2, x1 - 1.5, y1 - 1.2) & page.rect
     if clip.is_empty or clip.width <= 0 or clip.height <= 0:
         raise ValueError("Invalid activity cell bounds")
-    pix = page.get_pixmap(
-        matrix=fitz.Matrix(dpi / 72, dpi / 72), clip=clip, alpha=False
-    )
+    matrix = fitz.Matrix(dpi / 72, dpi / 72)
+    pixels = (clip * matrix).irect
+    if pixels.width * pixels.height > 8_000_000:
+        raise ValueError("Original cell exceeds its rendered pixel budget")
+    pix = page.get_pixmap(matrix=matrix, clip=clip, alpha=False)
     return np.frombuffer(pix.samples, dtype=np.uint8).reshape(
         pix.height, pix.width, pix.n
     )[:, :, :3]

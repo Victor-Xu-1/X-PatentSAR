@@ -7,12 +7,21 @@ confidence availability/validity and boxes; pure replay recomputes its status.
 `source_cell_claims` supplies the same literal source conflict policy to reading,
 formal numbered proof, activity result-reference and metadata consumers. Weak
 hints cannot count as source agreement; valid/native claims and qualifiers remain.
+Printed activity controls use the existing literal control grammar, with exact
+source scope and confidence replay; they do not become numbered final structures.
+Measured claims preserve decimals, signs, censoring limits and uncertainty;
+missing-token cleanup is never used to compare quantitative observations.
 `activity_header_sources` binds columns and caption windows to header contract2;
 producer and saved proof preserve qualified fragments in physical order without
 bridging weak words. A shorter read cannot erase a complete confirmed context;
 disjoint contexts remain unresolved, never a synthetic combination. Contract
 downgrade cannot omit source replay. Native empty regions check original pixels
 without an OCR call; a footer alone cannot claim regional text coverage.
+Caption-window token projection reuses the existing prefix geometry and last
+literal caption parser. Earlier tables cannot compete with a proved new caption;
+an unqualified boundary cannot waive prior claims. Complete native/raster context
+is retained as one source window; missing qualified conditions never disappear
+inside an incomplete window, and disjoint windows are not combined.
 Binding13/binder22/visible16/preparation4 and activity14/epoch23/coverage10 change
 derived semantics only. Original PDF/OCR/crops/raw model/manual/SAR/API/SQL remain.
 No second parser, queue, writer, model or actual-patent diagnostic execution.

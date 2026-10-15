@@ -177,6 +177,11 @@ def _context_parts(caption: str, surrounding: str) -> tuple[str, str, str]:
     return raw_caption, body, source
 
 
+def context_source_text(text: str) -> str:
+    """The same literal last-caption window used to interpret context fields."""
+    return _context_parts(text, text)[2]
+
+
 def grid_schema(
     context: TableContext,
     matrix: list[list[str]],

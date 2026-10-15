@@ -3,10 +3,8 @@
 import re
 
 from .activity_header_metrics import explicit_unit, literal_header_units
-from .activity_values import (
-    is_explicit_missing_activity_value,
-    normalize_activity_value_token,
-)
+from .activity_identity import is_control, is_value, normalize_compound, normalize_value
+from .activity_values import is_explicit_missing_activity_value
 from .cell_caption_identity import caption_fragment_conflict
 from .compound_caption import prefixed_label
 from .printed_identifiers import (
@@ -33,6 +31,10 @@ def cell_source_status(observation):
 
 
 def _identity_conflict(raw, candidate, kind, *, fragment=False):
+    if is_control(candidate):
+        # Printed controls are activity entities, not numbered final structures.
+        # Retain the existing literal grammar; do not alias control names/digits.
+        return normalize_compound(raw) != normalize_compound(candidate)
     candidate = identifier_key(candidate, wrapped=True, terminal_period=True)
     if not candidate:
         return bool(raw.strip())
@@ -62,19 +64,26 @@ def _value_conflict(raw, candidate, *, fragment=False):
         candidate
     ):
         return False
+    # Missing-token cleanup removes decimals and signs. It must never compare
+    # measured values, censoring limits, uncertainty or units.
     old, new = (
-        normalize_activity_value_token(raw),
-        normalize_activity_value_token(candidate),
+        re.sub(r"\s+", "", normalize_value(value)) for value in (raw, candidate)
     )
     if not fragment:
-        return bool(old and re.sub(r"\s+", "", old) != re.sub(r"\s+", "", new))
+        return bool(old and old != new)
     if not literal_header_units(raw).issubset(literal_header_units(candidate)):
         return True
-    if re.search(r"[<>≤≥%±*]", raw):
-        return any(symbol not in candidate for symbol in re.findall(r"[<>≤≥%±*]", raw))
     if explicit_unit(raw):
         return False
-    return bool(old and re.sub(r"\s+", "", old) not in re.sub(r"\s+", "", new))
+    if is_value(raw):
+        # An isolated number may be followed by a separately observed unit;
+        # that does not authorize a changed digit, decimal, sign or comparator.
+        return old != new and not (
+            new.startswith(old) and explicit_unit(new[len(old) :])
+        )
+    if re.search(r"[<>≤≥%±*]", raw):
+        return any(symbol not in candidate for symbol in re.findall(r"[<>≤≥%±*]", raw))
+    return bool(old and old not in new)
 
 
 def cell_source_conflict(observation, candidate, kind):
