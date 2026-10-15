@@ -9,6 +9,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 from .cell_caption_identity import refined_caption_conflicts
+from .cell_caption_lines import physical_caption_valid
 from .numbered_structure_models import (
     Box,
     NumberedTableBinding,
@@ -70,6 +71,8 @@ def _confirmed_observations(
     methods: set[str] = set()
     for observation in observations:
         if not isinstance(observation, Mapping):
+            return False
+        if not physical_caption_valid(observation):
             return False
         if refined_caption_conflicts(
             label, observation.get("parts"), observation.get("detection_parts")

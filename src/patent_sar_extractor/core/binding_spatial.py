@@ -256,7 +256,7 @@ def collect_spatial_bindings(
         binding = _build_binding_from_structure(pair.structure, pair.label)
         binding.update(
             {
-                "binding_rule": "direct_structure_label",
+                "binding_rule": "original_caption_cell",
                 "visible_label": pair.label,
                 "visible_label_candidates": [
                     {"label": pair.label, "source": "pdf_clip"}

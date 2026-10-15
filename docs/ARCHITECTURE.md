@@ -1,5 +1,19 @@
 # X-PatentSAR architecture
 
+`cell_caption_lines` observes original short caption ink only when the existing
+detector returns no boxes. It makes at most one same-engine complete-row read per
+400/600dpi cell, retaining frame/hash/bounds/confidence and the empty detector
+observation. Multiline, tall, solid or over-bound sources stay unresolved. The
+single `cell_text_proof` frame replay serves existing headers and captions;
+`cell_header_proof` remains the header-semantic adapter, not another validator.
+`caption_binding_proof` replays original readings and the same spatial ownership
+in formal core/catalog/Web/SAR admission. New captions use `original_caption_cell`;
+flags cannot substitute missing proof, and valid original conflicts remain errors.
+Binding10/binder19/visible13 change derived proof only. RawObs2/OCSR2/preparation1/
+activity12/epoch21/coverage8/SAR14/manual/API/SQL and original assets are unchanged.
+No second engine/queue/writer or private patent computation. Controlled checks do
+not certify universal detection recall, chemistry or real-patent acceptance.
+
 `binding_source_lines` retains original typed geometry, exposing legacy y/text
 only as a locator view. `binding_preparation` verifies cache/PDF identity and
 checkpoints only newly read pages. Sequential/parallel observers share page
