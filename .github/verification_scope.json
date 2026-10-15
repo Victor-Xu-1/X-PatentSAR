@@ -21,7 +21,8 @@
     "src/patent_sar_extractor/core/activity_header_sources.py",
     "src/patent_sar_extractor/core/activity_table_layout.py",
     "src/patent_sar_extractor/core/activity_transposed.py",
-    "tests/test_activity_context_windows.py"
+    "tests/test_activity_context_windows.py",
+    "tests/test_source_hint_native.py"
   ],
   "python_modules": [
     "tests.test_activity_context_windows",
