@@ -34,6 +34,7 @@ export async function createNetwork(
   csv = terminalCSV,
   manual = false,
   supporting = false,
+  options: { overlappingRegion?: boolean } = {},
 ) {
   await page.goto('/#/sar');
   const imports = page.getByRole('region', { name: 'Import data', exact: true });
@@ -80,10 +81,13 @@ export async function createNetwork(
     await setup.getByRole('checkbox', { name: 'Find single-site changes', exact: true }).uncheck();
     await setup.getByText('Add a named selection', { exact: true }).click();
     const browser = setup.getByRole('region', { name: 'Choose reference molecule', exact: true });
-    for (const [name, atom] of [
-      ['Linker 原文', 'Atom 0 (C)'],
-      ['Halogen 原文', /^Atom \d+ \(Cl\)$/],
-    ] as const) {
+    const selections: Array<[string, Array<string | RegExp>]> = [
+      ['Linker 原文', ['Atom 0 (C)']],
+      ['Halogen 原文', [/^Atom \d+ \(Cl\)$/]],
+    ];
+    if (options.overlappingRegion)
+      selections.push(['Expanded Linker 原文', ['Atom 0 (C)', 'Atom 1 (O)']]);
+    for (const [name, atoms] of selections) {
       await browser
         .getByRole('row')
         .filter({
@@ -94,7 +98,8 @@ export async function createNetwork(
       await setup.getByLabel('Selection name', { exact: true }).fill(name);
       const clear = setup.getByRole('button', { name: 'Clear selection', exact: true });
       if (await clear.isEnabled()) await clear.click();
-      await setup.getByRole('button', { name: atom, exact: true }).click();
+      for (const atom of atoms)
+        await setup.getByRole('button', { name: atom, exact: true }).click();
       await setup.getByRole('button', { name: 'Save region', exact: true }).click();
       await expect(
         setup.getByText('Region saved · 1 attachment points', { exact: true }),

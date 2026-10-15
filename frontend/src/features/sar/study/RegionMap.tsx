@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import { useInlineSelection } from '../../../components/useInlineSelection';
 import { regionLabels } from './regionLabels';
 import { regionMarker } from './regionMarker';
+import { RegionHotspots } from './RegionHotspots';
 const colors = [
   '#137e78',
   '#466ca4',
@@ -115,34 +116,13 @@ export function RegionMap({
         ))}
       </svg>
       {onSelect && (
-        <div className="sar-region-hotspots">
-          {visibleRegions.flatMap((region) => {
-            const order = regions.indexOf(region);
-            return atoms
-              .filter(
-                (atom) =>
-                  region.atom_indices.includes(atom.index) || atom.index === region.hydrogen_anchor,
-              )
-              .map((atom) => (
-                <button
-                  type="button"
-                  // The adjacent named legend is the single keyboard route.
-                  // Every atom remains a pointer target, without duplicate Tab stops.
-                  tabIndex={-1}
-                  key={region.id + ':' + atom.index}
-                  data-region-id={region.id}
-                  aria-label={markers[order]!.description + ' · ' + atom.element + ' ' + atom.index}
-                  aria-pressed={selected === region.id}
-                  onClick={() => onSelect(region.id)}
-                  style={{
-                    left: atom.x * 100 + '%',
-                    top: atom.y * 100 + '%',
-                    color: colors[order % colors.length],
-                  }}
-                />
-              ));
-          })}
-        </div>
+        <RegionHotspots
+          atoms={atoms}
+          regions={regions}
+          colors={colors}
+          selected={selected}
+          onSelect={onSelect}
+        />
       )}
     </>
   );

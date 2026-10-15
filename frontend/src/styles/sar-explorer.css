@@ -57,7 +57,7 @@
   inset: 0;
   pointer-events: none;
 }
-.sar-region-hotspots button {
+.sar-region-hotspots > button {
   position: absolute;
   width: 24px;
   height: 24px;
@@ -70,13 +70,43 @@
   pointer-events: auto;
   opacity: 0.1;
 }
-.sar-region-hotspots button:hover,
-.sar-region-hotspots button:focus-visible {
+.sar-region-hotspots > button:hover,
+.sar-region-hotspots > button:focus-visible {
   background: transparent;
   opacity: 0.9;
   border-width: 2px;
   border-color: currentColor;
   outline-offset: 2px;
+}
+.sar-region-choice-dialog {
+  max-width: min(480px, calc(100vw - 32px));
+}
+.sar-region-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: 8px;
+  max-height: 60dvh;
+  overflow: auto;
+}
+.sar-region-choice-grid > button {
+  justify-content: flex-start;
+  text-align: left;
+  font-size: 12px;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 10px;
+  overflow-wrap: anywhere;
+}
+.sar-region-choice-grid > button > span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+.sar-region-choice-grid > button[aria-pressed='true'] {
+  background: var(--accent-surface);
+  border-color: var(--accent-line);
+  color: var(--accent-strong);
 }
 .sar-region-legend {
   gap: 8px;
