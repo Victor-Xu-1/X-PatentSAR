@@ -1,5 +1,29 @@
 # Operations and troubleshooting
 
+## Original catalogue roles and bare identifiers
+
+Current binding16/binder25/visible18/preparation6 requires fresh derived catalogue
+ownership and OCSR preparation. A bare original ID is admitted only within a
+proved compound catalogue and its exact cell/structure relation; unknown titles,
+unsupported labels and qualified conflicts remain review. Nonfinal catalogues
+retain explicit source sections and original crops,not final entries. Reference
+inventory2 replays their content identities; deleting/downgrading an exclusion
+cannot produce completeness. Final captions outside a catalogue remain available
+on the same page. Mixed compound/intermediate categories,including wrapped title
+lines,remain review rather than disappearing as an all-intermediate catalogue.
+Known native/raster title/role conflicts cannot be bypassed by prefixed labels.
+Adjacent continuation uses exact original axes/windows and
+source ancestry,not compound counts/order. Missing pages,new/unknown titles,
+nonfinal changes and malformed geometry stop inheritance. Bounds are64role links,
+25000grid cells,50000tokens and25000candidates per page; overflow is an error.
+The existing OCR is used only through normal source/cell readers. Complete
+qualified page+400dpi evidence avoids redundant600dpi calls; weak/missing source
+still requires the existing independent high-resolution checks. No original PDF,
+raw OCR/model/crop/manual audit or historical task is edited. Activity,SAR,API,
+SQL and dependency identities stay unchanged. Only an authorized frontend retry
+recomputes affected stages after focused/install/CI/main/fixed18765 verification.
+This is bounded engineering coverage,not universal-format scientific acceptance.
+
 ## Fragmented caption rows and literal identity replay
 
 Current binding15/binder24/visible17/preparation5 require fresh derived caption

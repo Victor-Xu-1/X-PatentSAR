@@ -11,7 +11,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 from patent_sar_extractor.contracts import OCSR_PREPARATION_VERSION
-from patent_sar_extractor.core.numbered_structure_pairs import _confirmed_observations
+from patent_sar_extractor.core.caption_reading_proof import confirmed_caption_readings
 from patent_sar_extractor.core.printed_identifiers import identifier_key
 
 from .image_preprocess import publish_png
@@ -148,11 +148,14 @@ def _caption_box(item, label, frame, image_size, digest):
         return None
     label_box = _box(caption.get("bbox"))
     observations = caption.get("observations")
+    ownership = caption.get("ownership", {})
     if (
         not label_box
         or not isinstance(observations, list)
         or not 1 <= len(observations) <= 3
-        or not _confirmed_observations(label, observations, caption=True)
+        or not confirmed_caption_readings(
+            label, observations, ownership, item["page_no"], label_box
+        )
         or not (bounds[0] <= label_box[0] < label_box[2] <= bounds[2])
         or not (bounds[1] <= label_box[1] < label_box[3] <= bounds[3])
     ):

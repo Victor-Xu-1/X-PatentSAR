@@ -1,10 +1,16 @@
 """One ruled-caption ownership path, including split label/drawing page breaks."""
 
-import re
 from dataclasses import dataclass, field
 
+from .activity_context_geometry import context_region, grid_axes, grid_box
+from .activity_grid_context import _prefix
+from .caption_grid_rows import caption_rows
+from .caption_grid_rows import inside as _inside
+from .caption_role_links import role_link
+from .caption_role_observation import observe_caption_role
+from .caption_role_proof import caption_role_status
 from .source_table_markers import TABLE_MARKER
-from .table_cells import prefixed_label, read_cell
+from .table_cells import read_cell
 from .table_geometry import detect_ruled_table_regions, page_tokens
 
 
@@ -15,14 +21,9 @@ class CaptionGridResult:
     labels: set[str] = field(default_factory=set)
     issues: list[dict] = field(default_factory=list)
     tokens: dict[int, list[dict]] = field(default_factory=dict)
-
-
-def _inside(box, cell):
-    return (
-        box
-        and cell[0] - 2 <= box[0] < box[2] <= cell[2] + 2
-        and cell[1] - 2 <= box[1] < box[3] <= cell[3] + 2
-    )
+    exclusions: list[dict] = field(default_factory=list)
+    regions: dict[int, list[tuple]] = field(default_factory=dict)
+    protected_structure_ids: set[str] = field(default_factory=set)
 
 
 def bind_caption_grids(
@@ -42,7 +43,7 @@ def bind_caption_grids(
     )
     carry = None
     pending = []
-    catalog_boxes = {}
+    catalog_boxes = result.regions
 
     def reject(item, reason):
         result.issues.append(
@@ -100,6 +101,12 @@ def bind_caption_grids(
                     "label_cell": list(item["bbox"]),
                     "structure_cell": list(cell),
                     "structure_page_no": page_no,
+                    **(
+                        {"caption_role": item["caption_role"]}
+                        if item.get("caption_role")
+                        else {}
+                    ),
+                    **({"identifier_form": "bare"} if item.get("bare") else {}),
                 },
             }
         )
@@ -113,50 +120,8 @@ def bind_caption_grids(
         found = False
         for region in grids:
             xs, ys = region["xs"], region["ys"]
-            rows = []
-            kinds = []
-            for row in range(len(ys) - 1):
-                labels = []
-                drawing = False
-                for col in range(len(xs) - 1):
-                    cell = (xs[col], ys[row], xs[col + 1], ys[row + 1])
-                    own = [
-                        t
-                        for t in tokens
-                        if cell[0] <= t["x"] < cell[2] and cell[1] <= t["y"] < cell[3]
-                    ]
-                    raw = " ".join(
-                        t["text"]
-                        for t in sorted(own, key=lambda t: (round(t["y"] / 3), t["x"]))
-                    )
-                    label = prefixed_label(raw)
-                    caption_role = ys[row + 1] - ys[row] <= 45 and bool(
-                        re.match(
-                            r"^(?:Compound|Example|Cmpd|Cpd|实施例|化合物)\b",
-                            raw,
-                            re.IGNORECASE,
-                        )
-                    )
-                    if label or caption_role:
-                        labels.append((col, label, cell))
-                    drawing |= any(
-                        _inside(box, cell) for box in boxes_by_page.get(page_no, [])
-                    )
-                rows.append(labels)
-                kinds.append(
-                    "label"
-                    if labels and not drawing
-                    else "drawing"
-                    if drawing and not labels
-                    else "unknown"
-                )
-            if not any(rows) or "drawing" not in kinds:
-                continue
-            found = True
-            result.pages.add(page_no)
-            catalog_boxes.setdefault(page_no, []).append((xs[0], ys[0], xs[-1], ys[-1]))
-            caption = " ".join(
-                t["text"] for t in tokens if max(0, ys[0] - 80) <= t["y"] < ys[0]
+            caption = _prefix(
+                tokens, context_region(region, [grid_box(g) for g in grids])
             )
             new_table = bool(TABLE_MARKER.search(caption))
             adjacent = bool(
@@ -165,7 +130,72 @@ def bind_caption_grids(
                 and ys[0] < 150
                 and not new_table
                 and len(carry[1]) == len(xs)
-                and all(abs(a - b) <= 4 for a, b in zip(carry[1], xs))
+                and all(abs(a - b) <= 4 for a, b in zip(carry[1], xs, strict=True))
+            )
+            role = observe_caption_role(page, region, grids, tokens)
+            if (
+                not adjacent
+                and carry
+                and carry[0] + 1 == page_no
+                and ys[0] < 150
+                and len(carry[1]) == len(xs)
+                and all(abs(a - b) <= 4 for a, b in zip(carry[1], xs, strict=True))
+                and role
+                and carry[3]
+                and role["table_key"] == carry[3]["table_key"]
+            ):
+                adjacent = True
+            if role is not None and role["role"] == "unknown" and adjacent and carry[3]:
+                inherited = {
+                    **role,
+                    "role": carry[3]["role"],
+                    "table_key": carry[3]["table_key"],
+                    "continuation": role_link(carry[3], carry[4], region, carry[2]),
+                }
+                if caption_role_status(inherited, page_no, grid_box(region)):
+                    role = inherited
+            # The original grid frame is verified once here. Constructed child
+            # cells retain the same role; formal consumers replay every owner.
+            role_status = caption_role_status(role, page_no, grid_box(region))
+            if role_status == "nonfinal":
+                found = True
+                result.pages.add(page_no)
+                result.exclusions.append(
+                    {
+                        "role": "nonfinal_caption_catalog",
+                        "status": "observed_nonfinal_caption_catalog",
+                        "page_no": page_no,
+                        "bbox": grid_box(region),
+                        "caption_role": role,
+                        "structure_ids": [
+                            str(s.get("id") or "")
+                            for s, box in zip(
+                                by_page.get(page_no, []), boxes_by_page.get(page_no, [])
+                            )
+                            if _inside(box, grid_box(region))
+                        ],
+                    }
+                )
+                catalog_boxes.setdefault(page_no, []).append(tuple(grid_box(region)))
+                result.protected_structure_ids.update(
+                    result.exclusions[-1]["structure_ids"]
+                )
+                carry = page_no, xs, None, role, grid_axes(region)
+                continue
+            rows, kinds = caption_rows(
+                region, tokens, boxes_by_page.get(page_no, []), role
+            )
+            if not any(rows) or "drawing" not in kinds:
+                continue
+            found = True
+            result.pages.add(page_no)
+            catalog_boxes.setdefault(page_no, []).append((xs[0], ys[0], xs[-1], ys[-1]))
+            result.protected_structure_ids.update(
+                str(s.get("id") or "")
+                for s, box in zip(
+                    by_page.get(page_no, []), boxes_by_page.get(page_no, [])
+                )
+                if _inside(box, grid_box(region))
             )
             direction = (
                 carry[2]
@@ -188,18 +218,23 @@ def bind_caption_grids(
             for row, labels in enumerate(rows):
                 if kinds[row] != "label":
                     continue
-                observed = {col: label for col, label, _ in labels}
+                observed = {col: (label, bare) for col, label, _, bare in labels}
                 labels = [
                     (
                         col,
-                        observed.get(col, ""),
+                        observed.get(col, ("", False))[0],
                         (xs[col], ys[row], xs[col + 1], ys[row + 1]),
+                        observed.get(col, ("", False))[1],
                     )
                     for col in range(len(xs) - 1)
                 ]
-                for col, label, cell in labels:
+                for col, label, cell, bare in labels:
                     reading = read_cell(
-                        page, cell, tokens, "label", bool(page.get_text("words"))
+                        page,
+                        cell,
+                        tokens,
+                        "id" if bare else "label",
+                        bool(page.get_text("words")),
                     )
                     resolved = label or reading.value
                     if resolved:
@@ -211,9 +246,14 @@ def bind_caption_grids(
                         "column": col,
                         "review": reading.needs_review
                         or not resolved
-                        or bool(label and reading.value != label),
+                        or bool(label and reading.value != label)
+                        or role_status in {"mixed", "conflict"},
                         "observations": reading.observations,
+                        "bare": bare,
+                        "caption_role": role,
                     }
+                    if bare and role_status != "compound":
+                        item["review"] = True
                     target = row + 1 if direction == "above" else row - 1
                     if direction == "above" and target == len(rows):
                         pending.append(item)
@@ -230,14 +270,18 @@ def bind_caption_grids(
                             (xs[col], ys[target], xs[col + 1], ys[target + 1]),
                             direction,
                         )
-            carry = page_no, xs, direction
+            carry = page_no, xs, direction, role, grid_axes(region)
         if not found:
             for item in pending:
                 reject(item, "unproved_cross_page_caption")
             pending, carry = [], None
     for item in pending:
         reject(item, "unproved_cross_page_caption")
-    bound = {str(b["structure"].get("id") or "") for b in result.bindings}
+    bound = {str(b["structure"].get("id") or "") for b in result.bindings} | {
+        identity
+        for section in result.exclusions
+        for identity in section["structure_ids"]
+    }
     for page_no, grids in catalog_boxes.items():
         for structure, box in zip(
             by_page.get(page_no, []), boxes_by_page.get(page_no, [])

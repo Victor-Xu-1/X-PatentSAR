@@ -142,6 +142,31 @@ def source_observation_status(packet, bounds, text):
     return status if packet.get("status") == status else "invalid"
 
 
+def project_source_observation(packet, bounds):
+    """A smaller owned observation retains exact original tokens and status."""
+    if source_observation_status(
+        packet, packet.get("bbox"), packet.get("text")
+    ) == "invalid" or not _box(bounds):
+        raise ValueError("Invalid original observation projection")
+    parent = packet["bbox"]
+    if not (
+        parent[0] <= bounds[0] < bounds[2] <= parent[2]
+        and parent[1] <= bounds[1] < bounds[3] <= parent[3]
+    ):
+        raise ValueError("Projected source leaves its original observation")
+    retained = [dict(part) for part in cell_tokens(packet["tokens"], bounds)]
+    projected = {
+        "schema_version": 1,
+        "origin": packet["origin"],
+        "coordinate_space": packet["coordinate_space"],
+        "bbox": list(bounds),
+        "tokens": retained,
+        "text": cell_text(retained, bounds),
+    }
+    projected["status"] = _status(projected)
+    return projected
+
+
 def source_claim_runs(packet, *, tokens=None):
     """Qualified original fragments, without borrowing cross-cell ownership."""
     if (

@@ -1,5 +1,19 @@
 # Project governance manifest
 
+- Catalogue-role ownership: `caption_grid_rows` replaces private row selection;
+  `caption_role_titles` projects retained original contexts once for capture/replay.
+  Role semantics/links/proof remain responsibility modules,not competing parsers.
+  `caption_reading_proof` supplies one formal/preparation selector. Nonfinal source
+  sections join version2 of the existing reference inventory and cannot become
+  terminal structures or disappear by flags. Same-page out-of-grid sources stay
+  available. Mixed/wrapped roles and known original conflicts remain review;
+  prefixed IDs cannot waive them. Original grid roles are rederived once during
+  production and independently replayed by every saved owner. Adjacent original
+  axes/source windows carry roles without sequence
+  inference; gaps/unknown identities/conflicts remain unresolved. Binding16/binder25/
+  visible18/preparation6 change derived proof only; activity16/25/12,raw/manual/
+  graph/SAR/API/SQL/queue/dependencies stay. No new model/cache/asset store/writer.
+
 - Fragmented-caption ownership: `cell_ocr_line_groups` replaces the private row
   grouping implementation and serves producer/saved physical ordering. The
   existing cell reader uses one bounded same-engine original-row observation;

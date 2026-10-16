@@ -85,6 +85,8 @@ def bind_visible_captions(
     recognized_pages: set[int] | None = None,
     observed_labels: set[str] | None = None,
     issues: list[dict] | None = None,
+    source_exclusions: list[dict] | None = None,
+    protected_structure_ids: set[str] | None = None,
     grids_for_page=None,
     tokens_for_page=None,
 ) -> list[CaptionBinding]:
@@ -112,6 +114,10 @@ def bind_visible_captions(
         observed_labels.update(catalog.labels)
     if issues is not None:
         issues.extend(catalog.issues)
+    if source_exclusions is not None:
+        source_exclusions.extend(catalog.exclusions)
+    if protected_structure_ids is not None:
+        protected_structure_ids.update(catalog.protected_structure_ids)
     bindings = [
         CaptionBinding(**item)
         for item in catalog.bindings
@@ -120,7 +126,12 @@ def bind_visible_captions(
         and identities[str(item["structure"].get("id") or "")] == 1
     ]
     for page_no, page_structures in sorted(by_page.items()):
-        if page_no in catalog.pages:
+        page_structures = [
+            s
+            for s in page_structures
+            if str(s.get("id") or "") not in catalog.protected_structure_ids
+        ]
+        if not page_structures:
             continue
         boxes = [
             _box([s.get(k) for k in ("x0", "y0", "x1", "y1")]) for s in page_structures
@@ -149,6 +160,11 @@ def bind_visible_captions(
             ):
                 continue
             x, y = (bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2
+            if any(
+                cell[0] <= x < cell[2] and cell[1] <= y < cell[3]
+                for cell in catalog.regions.get(page_no, [])
+            ):
+                continue
             owners = [
                 s
                 for s, box in zip(page_structures, boxes)
