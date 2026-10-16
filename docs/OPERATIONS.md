@@ -1,5 +1,25 @@
 # Operations and troubleshooting
 
+## Fragmented caption rows and literal identity replay
+
+Current binding15/binder24/visible17/preparation5 require fresh derived caption
+ownership and recognition preparation. Original PDF,raw page OCR,structure crops,
+raw model predictions and manual audits are not rewritten. The existing engine
+may reread one short original caption row when non-overlapping detector pieces
+already cover all ink; no digit joining,sequence fill or confidence voting occurs.
+Every qualified numeric/series/suffix literal is consumed once in physical order.
+Independent complete-ID conflicts remain errors. A literal prefixed fragment can
+be incomplete only with a qualified exact-ID box crossing the same original
+right boundary on the same row. Weak/disjoint/contained/differing overlaps cannot
+waive it. Original detection packets survive and saved flags cannot bypass replay.
+Multiline first/second-eluting-isomer notes remain annotations,not R/S assignments.
+Limits stay8rows/32parts/8million pixels. Header/scalar protocols and activity
+epochs remain unchanged. Only an authorized frontend retry recalculates affected
+derived stages; no read,upgrade or cache refresh automatically reruns a patent.
+Focused source/installed/CI/main/exact-wheel/fixed18765/browser gates are required
+before delivery. Controlled OCR coverage is not complete scientific extraction;
+genuine native/raster disagreements and unresolved activity sources stay open.
+
 ## Two-dimensional caption ownership
 
 Current binding14/binder23/activity16/epoch25/coverage12 require fresh derived

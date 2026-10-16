@@ -6,12 +6,13 @@ import cv2
 import numpy as np
 
 
-def complete_line_bounds(image, boxes, border, dpi):
+def complete_line_bounds(image, boxes, border, dpi, *, fragmented=False):
     """Return an observed ink rectangle, never a number-dependent expansion.
 
     Only a short physical text line inside the same original cell is eligible.
-    Other rows, tall diagram envelopes and already covered pixels do not request
-    a second read. The returned coordinates use the unchanged OCR-image frame.
+    Other rows and tall diagram envelopes do not request a whole-caption read.
+    Fragmented captions may be reread even when boxes cover all original ink.
+    Coordinates use the unchanged OCR-image frame, without ID-based expansion.
     """
     if (
         image.ndim != 3
@@ -32,6 +33,12 @@ def complete_line_bounds(image, boxes, border, dpi):
     x1, y1 = max(box[2] for box in boxes), max(box[3] for box in boxes)
     if not (0 <= x0 < x1 <= image.shape[1] and 0 <= y0 < y1 <= image.shape[0]):
         raise ValueError("Detected caption line leaves its owned cell")
+    if fragmented:
+        # Fragment order/spacing is not a literal identifier. Observe the whole
+        # original short ink row even when detector boxes already cover it.
+        complete = _undetected_line_bounds(image, dpi)
+        if complete is not None:
+            return complete
     top, bottom = (
         max(0, math.floor(y0) - border),
         min(image.shape[0], math.ceil(y1) + border),

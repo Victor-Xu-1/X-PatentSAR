@@ -1,5 +1,29 @@
 # X-PatentSAR architecture
 
+`cell_ocr_line_groups` is the sole bounded physical-row grouping authority for
+detector rereads and serialized caption-fragment order. Non-overlapping fragmented
+captions can request one existing-engine whole-pixel-row read even when their boxes
+cover every glyph. Original detector words, confidence and coordinates survive;
+the reader never joins digits into identifiers. Eight rows,32parts and8million
+pixels remain hard limits. Scalar/header cells do not acquire caption refinement.
+`cell_caption_fragments` compares all qualified literal pieces, including leading
+zeros, series prefixes and letter suffixes, once in physical order against the
+independently read whole caption. It does not bridge weak words into identity
+claims. Shared row grouping retains literal multiline elution notes without
+assigning absolute stereochemistry. A prefixed detector fragment is incomplete
+only when its ID is a literal prefix and a qualified whole-number box crosses
+that exact right boundary on the same row; disjoint,contained,weak or differing
+numbers cannot waive complete identity conflicts. Separately overlapping letter
+pieces do not assert another complete ID. Native/nonfinal/whole-caption conflicts
+remain vetoes. Saved replay cannot erase retained contradictions by deleting a
+refinement marker or the original detection packet. Formal caption admission,
+visible-label reuse and OCSR caption-mask preparation share these semantics.
+Binding15/binder24/visible17/preparation5 invalidate changed derived proofs only;
+activity16/25/12,raw OCR/model,manual,SAR/API/SQL and original assets stay unchanged.
+There is no new engine,queue,provider,dependency or task-specific branch. Controlled
+checks do not establish universal patent recall,chemical correctness or real-run
+acceptance. Older source-ownership entries below retain release context.
+
 Current `activity_context_geometry` records at most three original neighbouring
 grids and one independently replayable parallel caption span. Overlapping bounded
 header windows define column barriers even when grid heights differ. The pure

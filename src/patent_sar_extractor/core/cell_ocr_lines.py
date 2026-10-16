@@ -6,50 +6,21 @@ from itertools import combinations
 import cv2
 
 from .cell_line_coverage import complete_line_bounds
+from .cell_ocr_line_groups import bounds, group_text_lines
 from .cell_ocr_scores import confidence_score
-
-
-def bounds(part):
-    points = part["bbox"]
-    return (
-        min(p[0] for p in points),
-        min(p[1] for p in points),
-        max(p[0] for p in points),
-        max(p[1] for p in points),
-    )
-
-
-def _same_line(a, b):
-    left, right = bounds(a), bounds(b)
-    overlap = min(left[3], right[3]) - max(left[1], right[1])
-    height = min(left[3] - left[1], right[3] - right[1])
-    return height > 0 and overlap >= 0.5 * height
 
 
 def resolve_overlapping_lines(
     image, parts, engine, border, *, complete_lines=False, dpi=400
 ):
-    """No string overlap/ID guessing: only observed intersecting line boxes.
+    """Observe overlapping or fragmented caption rows, never join identifier text.
 
-    Normal non-overlapping detections are untouched. At most eight line crops
-    are recognized through the same existing engine; original detections remain
-    available to the caller. Bounds are clipped to the same cell-owned image.
+    Non-caption non-overlapping detections are untouched. At most eight line
+    crops use the same existing engine; original detections remain available.
+    Every crop stays inside the same cell-owned image.
     """
-    groups = []
-    for part in sorted(parts, key=lambda p: (bounds(p)[1], bounds(p)[0])):
-        owners = [g for g in groups if any(_same_line(part, old) for old in g)]
-        if (
-            len(owners) > 1
-            or owners
-            and not all(_same_line(part, old) for old in owners[0])
-        ):
-            # A tall cross-line fragment has no unique physical line owner.
-            return None
-        if owners:
-            owners[0].append(part)
-        else:
-            groups.append([part])
-    if len(groups) > 8 or len(parts) > 32:
+    groups = group_text_lines(parts)
+    if groups is None:
         return None
     resolved = []
     for group in groups:
@@ -59,7 +30,9 @@ def resolve_overlapping_lines(
         )
         try:
             complete = (
-                complete_line_bounds(image, boxes, border, dpi)
+                complete_line_bounds(
+                    image, boxes, border, dpi, fragmented=len(group) > 1
+                )
                 if complete_lines
                 else None
             )

@@ -8,7 +8,7 @@ from typing import Final
 PRODUCT_NAME: Final = "X-PatentSAR"
 DISTRIBUTION_NAME: Final = "x-patentsar"
 COMMAND_NAME: Final = "x-patentsar"
-__version__: Final = "0.2.23"
+__version__: Final = "0.2.24"
 
 WEB_API_SCHEMA: Final = "patentsar.web-api"
 WEB_API_SCHEMA_VERSION: Final = 1
@@ -61,9 +61,9 @@ STRUCTURE_WORKER_VERSION: Final = "6"
 SEGMENTATION_WINDOW_SCHEMA: Final = "patentsar.segmentation-window"
 SEGMENTATION_WINDOW_SCHEMA_VERSION: Final = 2
 SEGMENTATION_INPUT_FINGERPRINT_FILE: Final = "input_fingerprint.json"
-STRUCTURE_BINDER_VERSION: Final = "23"
+STRUCTURE_BINDER_VERSION: Final = "24"
 OCSR_OBSERVATION_VERSION: Final = "2"
-OCSR_PREPARATION_VERSION: Final = 4
+OCSR_PREPARATION_VERSION: Final = 5
 STEREO_EVIDENCE_VERSION: Final = 3
 DECIMER_ADAPTER_VERSION: Final = "1"
 STRUCTURE_LOCATION_SCHEMA: Final = "patentsar.structure-location"
@@ -73,7 +73,7 @@ STRUCTURES_SCHEMA_VERSION: Final = 1
 STRUCTURE_INVENTORY_SCHEMA: Final = "patentsar.structure-page-inventory"
 STRUCTURE_INVENTORY_SCHEMA_VERSION: Final = 1
 BINDINGS_SCHEMA: Final = "patentsar.bindings"
-BINDINGS_SCHEMA_VERSION: Final = 14
+BINDINGS_SCHEMA_VERSION: Final = 15
 COMPOUND_CATALOG_SCHEMA: Final = "patentsar.compound-catalog"
 COMPOUND_CATALOG_SCHEMA_VERSION: Final = 1
 SMILES_SCHEMA: Final = "patentsar.smiles"
@@ -108,7 +108,7 @@ PAGE_OCR_COMPATIBLE_PIPELINES: Final = (
 )
 VISIBLE_LABEL_CACHE_SCHEMA: Final = "patentsar.visible-label-cache"
 VISIBLE_LABEL_CACHE_SCHEMA_VERSION: Final = 1
-VISIBLE_LABEL_OBSERVATION_VERSION: Final = 16
+VISIBLE_LABEL_OBSERVATION_VERSION: Final = 17
 
 
 def schema_ref(name: str, version: int) -> dict[str, object]:

@@ -68,6 +68,19 @@ class OCSRLabelPreservationTests(unittest.TestCase):
         self.assertEqual(output, str(self.image))
         self.assertFalse(info.get("ocsr_label_masked"))
 
+    def test_bare_native_number_does_not_invent_original_caption_role(self):
+        item = self.proven()
+        item["exact_caption_evidence"]["observations"] = [
+            {"method": "native_cell", "text": "38"}
+        ]
+        original = self.image.read_bytes()
+        output, info = _mask_visible_label_for_ocsr(
+            str(self.image), item, str(self.root)
+        )
+        self.assertEqual(output, str(self.image))
+        self.assertFalse(info.get("ocsr_label_masked"))
+        self.assertEqual(self.image.read_bytes(), original)
+
     def test_preparation_inspects_the_actual_original_source(self):
         item = self.drawing()
         converter = SmilesConverter(
