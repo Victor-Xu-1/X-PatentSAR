@@ -19,7 +19,7 @@ export function useJobs(
       milliseconds: 5000,
       while: pollList,
     },
-    { retainOnError: true },
+    { retainOnError: true, recoverGetErrors: true },
   );
   const latest = list.data
     ? ([...list.data.items].sort((a, b) => b.created_at.localeCompare(a.created_at))[0] ?? null)
@@ -33,7 +33,7 @@ export function useJobs(
       milliseconds: 3000,
       while: activeJob,
     },
-    { retainOnError: true },
+    { retainOnError: true, recoverGetErrors: true },
   );
   const reloadList = list.reload;
   const reloadDetail = detail.reload;

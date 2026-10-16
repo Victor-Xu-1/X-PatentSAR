@@ -7,7 +7,7 @@ export interface SARResource<T> extends Resource<T> {
   validated: boolean;
 }
 
-/** Retains one identity's last DTO, delegating reads, aborts and polling to the shared hook. */
+/** Audited GET readers retain one identity's DTO; polling uses bounded shared recovery. */
 export function useSARResource<T>(
   identity: string,
   active: boolean,
@@ -33,6 +33,7 @@ export function useSARResource<T>(
     active ? JSON.stringify([identity, generation]) : null,
     retain,
     poll,
+    { recoverGetErrors: poll !== undefined },
   );
   const reload = useCallback(() => {
     setCycle((old) => ({ ...old, generation: old.generation + 1 }));
