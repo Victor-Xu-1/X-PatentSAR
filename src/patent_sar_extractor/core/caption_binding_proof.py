@@ -3,7 +3,8 @@
 import math
 from collections.abc import Mapping
 
-from .numbered_structure_pairs import _box, _confirmed_observations, _label
+from .caption_reading_proof import confirmed_caption_readings
+from .numbered_structure_pairs import _box, _label
 
 
 def valid_caption_binding_evidence(binding):
@@ -25,7 +26,9 @@ def valid_caption_binding_evidence(binding):
         and diagram
         and isinstance(observations, (list, tuple))
         and 1 <= len(observations) <= 3
-        and _confirmed_observations(label, observations, caption=True)
+        and confirmed_caption_readings(
+            label, observations, ownership, label_page, label_box
+        )
         and isinstance(ownership, Mapping)
     ):
         return False

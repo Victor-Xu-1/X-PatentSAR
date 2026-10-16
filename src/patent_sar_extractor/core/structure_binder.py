@@ -46,7 +46,7 @@ def bind(
         )
         original = spatial.catalogue()
         generic = spatial.structures(processed)
-        source_sections = []
+        source_sections = list(spatial.source_exclusions)
         document_sha256 = _document_sha256(doc)
         source_regions = collect_reference_regions(
             doc,

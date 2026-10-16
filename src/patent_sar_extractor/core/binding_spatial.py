@@ -54,6 +54,7 @@ class SpatialBindings:
     recognized_table_pages: frozenset[int] = frozenset()
     grids_for_page: Any = field(default=None, repr=False, compare=False)
     tokens_for_page: Any = field(default=None, repr=False, compare=False)
+    source_exclusions: tuple[dict, ...] = ()
 
     def ordered(self, active_cpds: list[str]) -> list[dict[str, Any]]:
         if not active_cpds:
@@ -238,15 +239,18 @@ def collect_spatial_bindings(
         if int(structure["page_no"]) - 1 not in recognized_pages
     ]
     caption_issues = []
+    caption_pages, protected_caption_ids, source_exclusions = set(), set(), []
     captions = bind_visible_captions(
         doc,
         remaining,
         None,
         excluded=frozenset(observed_keys),
         source_pages=[p for p in candidate_pages if p not in recognized_pages],
-        recognized_pages=recognized_pages,
+        recognized_pages=caption_pages,
         observed_labels=observed_keys,
         issues=caption_issues,
+        source_exclusions=source_exclusions,
+        protected_structure_ids=protected_caption_ids,
         grids_for_page=grids_for_page,
         tokens_for_page=tokens_for_page,
     )
@@ -318,6 +322,7 @@ def collect_spatial_bindings(
         page_indices=frozenset(recognized_pages),
         structure_ids=frozenset(
             caption_ids
+            | protected_caption_ids
             | {candidate.structure_id for candidate in candidates}
             | {str(binding["structure_id"]) for binding in reprints}
         ),
@@ -335,9 +340,10 @@ def collect_spatial_bindings(
         tuple(conflicts),
         numbered.recognized,
         tuple(reprints),
-        frozenset(recognized_pages),
+        frozenset(recognized_pages | caption_pages),
         grids_for_page,
         tokens_for_page,
+        tuple(source_exclusions),
     )
 
 

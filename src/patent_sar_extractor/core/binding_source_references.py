@@ -5,6 +5,7 @@ import re
 from .activity_grid_role_proof import valid_role_scope
 from .activity_header_evidence import proof_id
 from .binding_source_regions import identifier_references, reference_cell
+from .caption_role_proof import validate_caption_exclusions
 from .printed_identifiers import identifier_key
 from .source_geometry import _box
 from .source_section_roles import section_heading
@@ -23,18 +24,28 @@ def reference_scope(sections, original_pdf_sha256=""):
     if not original_pdf_sha256 and len(origins) == 1:
         original_pdf_sha256 = next(iter(origins))
     return {
-        "version": 1,
+        "version": 2,
         "original_pdf_sha256": original_pdf_sha256,
         "region_ids": [region["region_id"] for region in regions],
+        "caption_region_ids": [
+            proof_id(section)
+            for section in sections
+            if section["role"] == "nonfinal_caption_catalog"
+        ],
     }
 
 
 def _regions(sections, scope):
     if (
         not isinstance(scope, dict)
-        or set(scope) != {"version", "original_pdf_sha256", "region_ids"}
+        or set(scope)
+        != (
+            {"version", "original_pdf_sha256", "region_ids", "caption_region_ids"}
+            if scope.get("version") == 2
+            else {"version", "original_pdf_sha256", "region_ids"}
+        )
         or type(scope["version"]) is not int
-        or scope["version"] != 1
+        or scope["version"] not in {1, 2}
         or not isinstance(scope["original_pdf_sha256"], str)
         or scope["original_pdf_sha256"]
         and not _SHA.fullmatch(scope["original_pdf_sha256"])
@@ -42,6 +53,21 @@ def _regions(sections, scope):
         or len(scope["region_ids"]) > MAX_SOURCE_SECTIONS
     ):
         raise ValueError("Malformed original binding reference scope")
+    captions = [
+        section
+        for section in sections
+        if section.get("role") == "nonfinal_caption_catalog"
+    ]
+    if (
+        scope["version"] == 1
+        and captions
+        or scope["version"] == 2
+        and scope.get("caption_region_ids")
+        != [proof_id(section) for section in captions]
+    ):
+        raise ValueError(
+            "Original nonfinal caption inventory differs or was downgraded"
+        )
     regions = {}
     for section in sections:
         if section.get("role") != "characterization_region":
@@ -93,6 +119,7 @@ def reference_issues(payload, entries, *, required=True):
     ):
         raise ValueError("Malformed bounded original binding sections")
     scope = payload.get("source_reference_scope")
+    validate_caption_exclusions(sections, entries)
     if (
         scope is None
         and not required

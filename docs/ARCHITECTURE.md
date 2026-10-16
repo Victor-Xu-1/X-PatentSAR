@@ -1,5 +1,28 @@
 # X-PatentSAR architecture
 
+Catalogue-title roles use the existing original grid/token/context authority.
+`caption_role_titles` projects one retained native/raster context; capture and
+`caption_role_proof` replay exactly the same title position,confidence,role and
+table identity. `caption_grid_rows` replaces private row nomination and indexes
+each original token once rather than rescanning the whole page for every cell.
+It retains short unsupported labels as unresolved sources. Proved compound
+catalogues may contain bare printed IDs; there is no numerical sequence fill or
+inferred suffix. Explicit nonfinal catalogues retain source sections and original
+assets,not formal terminal entries. Their content identities participate in the
+same source-reference inventory(version2),so removal/downgrade fails. Region-owned
+protection leaves final captions outside a grid on the same page available.
+`caption_reading_proof` is the single literal/prefixed selector shared by formal
+caption acceptance and OCSR image preparation; no duplicate role policy remains.
+Adjacent titleless/explicit-continued catalogues retain exact prior/current axes,
+source windows and role ancestry. Every link is replayed; gaps,new identities,
+nonfinal role changes,geometry changes and malformed/cyclic ancestry reject.
+Role inheritance is bounded to64links and grids to25000cells,50000tokens and
+25000candidates; overflow is explicit,never silently truncated. Binding16/binder25/
+visible18/preparation6 invalidate derived acceptance only. Activity16/25/12,
+original PDF/raw OCR/model/crops,manual audit,SAR/API/SQL and dependencies stay.
+No provider/model installation,private patent processing or automatic retry is
+introduced. Controlled coverage does not prove all formats or molecular graphs.
+
 `cell_ocr_line_groups` is the sole bounded physical-row grouping authority for
 detector rereads and serialized caption-fragment order. Non-overlapping fragmented
 captions can request one existing-engine whole-pixel-row read even when their boxes
