@@ -20,10 +20,13 @@
     "frontend/tests/read-recovery-policy.test.ts",
     "frontend/tests/resource-read-recovery.test.tsx",
     "frontend/tests/resource-recovery-cancellation.test.tsx",
-    "src/patent_sar_extractor/contracts.py"
+    "src/patent_sar_extractor/contracts.py",
+    "tests/test_read_observer_fixture.py",
+    "tools/browser_fixture_mode.py"
   ],
   "python_modules": [
     "tests.test_release_policy.ReleaseNumberTests",
+    "tests.test_read_observer_fixture.ReadObserverFixtureTests",
     "tests.test_verification_scope",
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
