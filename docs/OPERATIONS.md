@@ -9,7 +9,10 @@ unsupported labels and qualified conflicts remain review. Nonfinal catalogues
 retain explicit source sections and original crops,not final entries. Reference
 inventory2 replays their content identities; deleting/downgrading an exclusion
 cannot produce completeness. Final captions outside a catalogue remain available
-on the same page. Adjacent continuation uses exact original axes/windows and
+on the same page. Mixed compound/intermediate categories,including wrapped title
+lines,remain review rather than disappearing as an all-intermediate catalogue.
+Known native/raster title/role conflicts cannot be bypassed by prefixed labels.
+Adjacent continuation uses exact original axes/windows and
 source ancestry,not compound counts/order. Missing pages,new/unknown titles,
 nonfinal changes and malformed geometry stop inheritance. Bounds are64role links,
 25000grid cells,50000tokens and25000candidates per page; overflow is an error.

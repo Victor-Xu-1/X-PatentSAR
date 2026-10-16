@@ -11,6 +11,10 @@ inferred suffix. Explicit nonfinal catalogues retain source sections and origina
 assets,not formal terminal entries. Their content identities participate in the
 same source-reference inventory(version2),so removal/downgrade fails. Region-owned
 protection leaves final captions outside a grid on the same page available.
+Wrapped title lines retain their complete bounded role declaration. Mixed
+compound/intermediate categories and independently known title/role conflicts
+stay review,not whole-table exclusions or prefix-based acceptance. The producer
+replays each original grid role once; formal consumers recheck every saved owner.
 `caption_reading_proof` is the single literal/prefixed selector shared by formal
 caption acceptance and OCSR image preparation; no duplicate role policy remains.
 Adjacent titleless/explicit-continued catalogues retain exact prior/current axes,

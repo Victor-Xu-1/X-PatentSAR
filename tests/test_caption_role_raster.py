@@ -20,8 +20,8 @@ from patent_sar_extractor.core.table_geometry import (
 from tests.test_caption_source_roles import catalog
 
 
-def raster_catalog(title="Table 47. Compounds", *, shadow=None):
-    original, structures, boxes = catalog(title)
+def raster_catalog(title="Table 47. Compounds", *, shadow=None, prefixed=False):
+    original, structures, boxes = catalog(title, prefixed=prefixed)
     with original:
         pixmap = original[0].get_pixmap(matrix=fitz.Matrix(3, 3), alpha=False)
     doc = fitz.open()
@@ -82,6 +82,16 @@ class CaptionRoleRasterTests(unittest.TestCase):
                 with doc:
                     result = bind_caption_grids(doc, structures, boxes, [1])
                 self.assertEqual(result.bindings, [])
+                self.assertTrue(result.issues)
+
+    def test_prefixed_labels_cannot_bypass_a_known_original_catalogue_conflict(self):
+        for shadow in ("Table 48. Compounds", "Table 47. Intermediates"):
+            with self.subTest(shadow=shadow):
+                doc, structures, boxes = raster_catalog(shadow=shadow, prefixed=True)
+                with doc:
+                    result = bind_caption_grids(doc, structures, boxes, [1])
+                self.assertEqual(result.bindings, [])
+                self.assertEqual(result.exclusions, [])
                 self.assertTrue(result.issues)
 
     def test_original_source_packet_cannot_omit_or_change_title_after_serialization(

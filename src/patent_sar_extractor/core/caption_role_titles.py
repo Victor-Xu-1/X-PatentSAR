@@ -1,7 +1,6 @@
 """One original title projection for capture and saved catalogue-role replay."""
 
 from .activity_caption_windows import prefix_parts, shared_caption_allowed
-from .caption_role_semantics import catalog_title_role
 from .source_observations import project_source_observation, source_observation_status
 from .source_table_markers import TABLE_CAPTION_START, TABLE_MARKER
 
@@ -17,13 +16,12 @@ def _title_packet(packet, region):
     if not starts:
         return None
     start, title = starts[-1], list(parts[starts[-1]])
-    if catalog_title_role(" ".join(t["text"] for t in title)) == "unknown":
-        for part in parts[start + 1 : start + 3]:
-            if min(t["y"] for t in part) - max(t["y"] for t in title) > 18:
-                break
-            title.extend(part)
-            if catalog_title_role(" ".join(t["text"] for t in title)) != "unknown":
-                break
+    for part in parts[start + 1 : start + 3]:
+        if min(t["y"] for t in part) - max(
+            t["y"] for t in title
+        ) > 18 or TABLE_CAPTION_START.match(part[0]["text"]):
+            break
+        title.extend(part)
     if len(title) > 64:
         raise ValueError("Original caption title token budget exceeded")
     bounds = [

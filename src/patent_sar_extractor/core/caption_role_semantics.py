@@ -10,7 +10,9 @@ _NONFINAL = re.compile(
     re.IGNORECASE,
 )
 _COMPOUNDS = re.compile(
-    r"\b(?:compounds?|examples?)\b|化合物|实施例|実施例", re.IGNORECASE
+    r"\b(?:compounds?|examples?|(?:final|target|end)\s+products?)\b"
+    r"|化合物|实施例|実施例|终产物|最終生成物",
+    re.IGNORECASE,
 )
 
 
@@ -36,6 +38,19 @@ def catalog_title_role(text):
     if marker is None or text[: marker.start()].strip():
         return "unknown"
     title = text[marker.end() :]
-    if nonfinal_catalog_text(title):
+    nonfinal = tuple(_NONFINAL.finditer(title))
+    compounds = tuple(_COMPOUNDS.finditer(title))
+    if nonfinal:
+        # "Intermediate compounds" is one declared nonfinal category. Separate
+        # compound/product categories must not silently disappear with it.
+        if any(
+            not any(
+                part.end() <= compound.start()
+                and not title[part.end() : compound.start()].strip()
+                for part in nonfinal
+            )
+            for compound in compounds
+        ):
+            return "mixed"
         return "nonfinal"
-    return "compound" if _COMPOUNDS.search(title) else "unknown"
+    return "compound" if compounds else "unknown"

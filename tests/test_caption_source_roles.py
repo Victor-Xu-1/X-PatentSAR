@@ -126,6 +126,32 @@ class CaptionSourceRoleTests(unittest.TestCase):
                 result.exclusions, [{"structure_id": "original-0"}]
             )
 
+    def test_mixed_catalogue_roles_are_reviewed_not_silently_excluded(self):
+        for title in (
+            "Table 47. Compounds and intermediates",
+            "Table 47. Intermediates and compounds",
+        ):
+            for prefixed in (False, True):
+                with self.subTest(title=title, prefixed=prefixed):
+                    doc, structures, boxes = catalog(title, prefixed=prefixed)
+                    with doc:
+                        result = bind_caption_grids(doc, structures, boxes, [1])
+                    self.assertEqual(result.exclusions, [])
+                    self.assertEqual(result.bindings, [])
+                    self.assertEqual(result.pages, {1})
+                    self.assertTrue(result.issues)
+
+    def test_wrapped_mixed_title_cannot_drop_its_second_role(self):
+        doc, structures, boxes = catalog(None, prefixed=True)
+        page = doc[0]
+        page.insert_text((50, 70), "Table 47. Compounds", fontsize=10)
+        page.insert_text((50, 85), "and intermediates", fontsize=10)
+        with doc:
+            result = bind_caption_grids(doc, structures, boxes, [1])
+        self.assertEqual(result.exclusions, [])
+        self.assertEqual(result.bindings, [])
+        self.assertTrue(result.issues)
+
     def test_nonfinal_grid_does_not_hide_a_final_caption_outside_it_on_the_same_page(
         self,
     ):
@@ -187,6 +213,8 @@ class CaptionRoleProofTests(unittest.TestCase):
         for title, expected in (
             ("Table 47. Compounds", "compound"),
             ("Table 47. Intermediates", "nonfinal"),
+            ("Table 47. Intermediate compounds", "nonfinal"),
+            ("Table 47. Compounds and intermediates", "mixed"),
             ("Table 47. Structures", "unknown"),
         ):
             with self.subTest(title=title):

@@ -154,11 +154,10 @@ def bind_caption_grids(
                 }
                 if caption_role_status(inherited, page_no, grid_box(region)):
                     role = inherited
-            if (
-                role is not None
-                and caption_role_status(role, page_no, [xs[0], ys[0], xs[1], ys[1]])
-                == "nonfinal"
-            ):
+            # The original grid frame is verified once here. Constructed child
+            # cells retain the same role; formal consumers replay every owner.
+            role_status = caption_role_status(role, page_no, grid_box(region))
+            if role_status == "nonfinal":
                 found = True
                 result.pages.add(page_no)
                 result.exclusions.append(
@@ -247,12 +246,13 @@ def bind_caption_grids(
                         "column": col,
                         "review": reading.needs_review
                         or not resolved
-                        or bool(label and reading.value != label),
+                        or bool(label and reading.value != label)
+                        or role_status in {"mixed", "conflict"},
                         "observations": reading.observations,
                         "bare": bare,
                         "caption_role": role,
                     }
-                    if bare and caption_role_status(role, page_no, cell) != "compound":
+                    if bare and role_status != "compound":
                         item["review"] = True
                     target = row + 1 if direction == "above" else row - 1
                     if direction == "above" and target == len(rows):

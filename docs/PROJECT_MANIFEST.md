@@ -6,7 +6,10 @@
   `caption_reading_proof` supplies one formal/preparation selector. Nonfinal source
   sections join version2 of the existing reference inventory and cannot become
   terminal structures or disappear by flags. Same-page out-of-grid sources stay
-  available. Adjacent original axes/source windows carry roles without sequence
+  available. Mixed/wrapped roles and known original conflicts remain review;
+  prefixed IDs cannot waive them. Original grid roles are rederived once during
+  production and independently replayed by every saved owner. Adjacent original
+  axes/source windows carry roles without sequence
   inference; gaps/unknown identities/conflicts remain unresolved. Binding16/binder25/
   visible18/preparation6 change derived proof only; activity16/25/12,raw/manual/
   graph/SAR/API/SQL/queue/dependencies stay. No new model/cache/asset store/writer.

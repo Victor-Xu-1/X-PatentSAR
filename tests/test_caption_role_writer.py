@@ -120,3 +120,17 @@ class CaptionRoleWriterTests(unittest.TestCase):
         self.assertEqual(payload["final_bindings"], [])
         self.assertTrue(payload["source_issues"])
         self.assertTrue(coverage_errors(payload))
+
+    def test_mixed_role_never_becomes_a_complete_empty_terminal_catalog(self):
+        payload, _records = self.execute(
+            "Table 47. Compounds and intermediates", prefixed=True
+        )
+        self.assertEqual(payload["final_bindings"], [])
+        self.assertFalse(
+            any(
+                s["role"] == "nonfinal_caption_catalog"
+                for s in payload["source_sections"]
+            )
+        )
+        self.assertTrue(payload["source_issues"])
+        self.assertTrue(coverage_errors(payload))
