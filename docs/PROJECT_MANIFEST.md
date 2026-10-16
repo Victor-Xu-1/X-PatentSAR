@@ -1,5 +1,16 @@
 # Project governance manifest
 
+- Fragmented-caption ownership: `cell_ocr_line_groups` replaces the private row
+  grouping implementation and serves producer/saved physical ordering. The
+  existing cell reader uses one bounded same-engine original-row observation;
+  `cell_caption_fragments` compares retained numeric/alphabetic literals,not
+  reconstructed IDs or model votes. Exact qualified cross-boundary geometry can
+  prove a detector prefix incomplete; complete independent conflicts remain
+  errors. Formal source admission,visible-label cache and OCSR mask preparation
+  share replay. Binding15/binder24/visible17/preparation5 change derived proof
+  only; activity16/25/12,raw/manual/graph/SAR/API/SQL/dependencies remain. No second
+  parser,model,queue,store,private patent processing or automatic task replay.
+
 - Two-dimensional context: `activity_context_geometry` owns original neighbouring
   grids and compact parallel spans; `activity_caption_windows` owns one bounded
   caption/column projection. The old prefix implementation is removed, not a

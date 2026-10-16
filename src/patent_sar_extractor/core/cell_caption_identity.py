@@ -5,6 +5,11 @@ import re
 from collections.abc import Mapping
 from itertools import combinations
 
+from .cell_caption_fragments import (
+    complete_caption_text,
+    ordered_caption_fragments,
+    truncated_caption_boundary,
+)
 from .compound_caption import prefixed_label
 from .ocr_claims import qualified_observation_runs
 from .printed_identifiers import (
@@ -18,11 +23,29 @@ from .source_section_roles import nonfinal_original_label
 def refined_caption_conflicts(label, parts, detection_parts):
     if parts is not None and not isinstance(parts, (list, tuple)):
         return True
-    if not any(
+    refined = any(
         isinstance(part, Mapping) and part.get("method") == "complete_line_recognition"
         for part in parts or ()
+    )
+    raw = complete_caption_text(label, parts) if parts else ""
+    undetected = bool(parts) and all(
+        isinstance(part, Mapping) and part.get("method") == "undetected_caption_line"
+        for part in parts
+    )
+    original_detection = isinstance(detection_parts, (list, tuple)) and list(
+        parts or ()
+    ) == list(detection_parts)
+    if not refined and (
+        not raw
+        or undetected
+        or original_detection
+        or not any(
+            isinstance(part, Mapping) and part.get("bbox") is not None for part in parts
+        )
     ):
-        return False
+        return False  # Non-caption cells / separately replayed undetected row proof.
+    if not raw:
+        return True
     if (
         not isinstance(detection_parts, (list, tuple))
         or not 1 <= len(detection_parts) <= 32
@@ -51,8 +74,6 @@ def refined_caption_conflicts(label, parts, detection_parts):
     if observed_runs is None:
         return True
     runs = [tuple(part["text"] for _index, part in run) for run in observed_runs]
-    if any(conflicts(text) for run in runs for text in run):
-        return True
     # Intersecting detector fragments do not constitute another complete literal
     # caption: 13/37 is a physical overlap, not two independent compound IDs.
     boxes = []
@@ -87,6 +108,17 @@ def refined_caption_conflicts(label, parts, detection_parts):
                 return True
     except (KeyError, TypeError, ValueError, IndexError):
         return True
+    observed = [(index, part) for run in observed_runs for index, part in run]
+    truncated = {
+        index
+        for index, part in observed
+        if prefixed_label(part["text"])
+        and truncated_caption_boundary(label, index, observed, boxes)
+    }
+    if any(
+        conflicts(part["text"]) for index, part in observed if index not in truncated
+    ):
+        return True
     numeric_indices = [
         index
         for run in observed_runs
@@ -107,15 +139,37 @@ def refined_caption_conflicts(label, parts, detection_parts):
     # Only the intersecting qualified numeric fragments lack independent ID
     # ownership. Weak/unrelated boxes cannot exempt another original claim.
     if any(
-        index not in overlapping and caption_fragment_conflict(part["text"], label)
+        index not in overlapping | truncated
+        and caption_fragment_conflict(part["text"], label)
         for run in observed_runs
         for index, part in run
     ):
         return True
-    return any(
-        not overlapping.intersection(index for index, _part in observed)
-        and conflicts(" ".join(text))
-        for observed, text in zip(observed_runs, runs, strict=True)
+    alphabetic_indices = [
+        index
+        for run in observed_runs
+        for index, part in run
+        if any(char.isalpha() for char in part["text"])
+        and not any(char.isnumeric() for char in part["text"])
+    ]
+    overlapping_letters = {
+        index
+        for first, second in combinations(alphabetic_indices, 2)
+        if min(boxes[first][2], boxes[second][2])
+        - max(boxes[first][0], boxes[second][0])
+        > 1
+        and min(boxes[first][3], boxes[second][3])
+        - max(boxes[first][1], boxes[second][1])
+        > 1
+        for index in (first, second)
+    }
+    return any(nonfinal_original_label(" ".join(text)) for text in runs) or not (
+        ordered_caption_fragments(
+            raw,
+            observed,
+            boxes,
+            overlapping | overlapping_letters,
+        )
     )
 
 
