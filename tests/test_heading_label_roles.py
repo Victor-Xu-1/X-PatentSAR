@@ -181,6 +181,20 @@ class HeadingLabelRoleTests(unittest.TestCase):
             reference_issues(payload, payload["compound_catalog"]["entries"]), []
         )
 
+    def test_repeated_literal_cannot_close_a_different_missing_heading_occurrence(self):
+        _, _, payload = self.run_binding(extra_heading=True)
+        payload["source_issues"] = []
+        gaps = reference_issues(payload, payload["compound_catalog"]["entries"])
+        self.assertTrue(
+            any(
+                gap["reason"] == "original_heading_identifier_without_proved_structure"
+                and gap["cpd"] == "Compound 17"
+                for gap in gaps
+            ),
+            gaps,
+        )
+        self.assertTrue(coverage_errors(payload))
+
     def test_same_identifier_elsewhere_on_same_page_remains_a_heading_observation(self):
         source, _, payload = self.run_binding(extra_heading=True)
         with fitz.open(source) as document:

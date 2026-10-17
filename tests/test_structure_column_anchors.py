@@ -32,6 +32,30 @@ def ruled_first_then_ruled(page, structures, *, disjoint=False):
 
 
 class StructureColumnAnchorTests(UnruledStructureControls, unittest.TestCase):
+    def test_original_identifier_cells_do_not_become_separate_synthesis_headings(self):
+        for ruled in (False, True):
+
+            def with_grid(page, _structures, *, ruled=ruled):
+                if ruled:
+                    for x in (40, 175, 380):
+                        page.draw_line((x, 65), (x, 330))
+                    for y in (65, 100, 210, 330):
+                        page.draw_line((40, y), (380, y))
+
+            with self.subTest(ruled=ruled):
+                result, payload = self.run_binding(
+                    ["Compound 73", "Compound 28"],
+                    mutate_page=with_grid,
+                )
+                self.assertEqual(len(result["bindings"]), 2)
+                self.assertFalse(
+                    any(
+                        s["role"] == "compound_heading"
+                        for s in payload["source_sections"]
+                    )
+                )
+                self.assertEqual(coverage_errors(payload), [])
+
     def test_boxed_header_without_body_rules_uses_the_same_original_column_roles(self):
         def header_only(page, structures):
             for x in (40, 175, 380):
