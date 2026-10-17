@@ -225,7 +225,12 @@
   rewritten; malformed current proof is rejected. No provider call or automatic
   real-task run. Controlled tests do not imply universal scientific acceptance.
   The existing frontend compound-label helper localizes only known generated
-  placeholders; no raw/source/manual identifier, correction or data contract changes.
+  placeholders. `web/identifier_labels` owns their literal-label absence, while
+  the existing correction authority supplies additive read-only effective
+  `identifier_changed` metadata. Source/manual names and unknown legacy edits
+  remain literal; graph-only/stale overlays do not assert a source identifier.
+  No raw/source/manual identifier, stored correction/audit, scientific epoch,
+  SQL migration, SAR admission or dependency change is authorized by localization.
 
 - Literal-ID ownership: `printed_identifiers.py` owns bounded whole identifiers,
   wrapper/case/width equivalence and original fragment conflicts. Caption/cell/

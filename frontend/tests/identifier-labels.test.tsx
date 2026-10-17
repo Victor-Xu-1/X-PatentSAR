@@ -15,6 +15,7 @@ describe('patent-owned presentation label and stable internal identity', () => {
     id: 'source-structure:' + 'a'.repeat(32),
     display_id: '编号待确认 S0007',
     structure_id: 'S0007',
+    source: { ...compound.source, source_label: null },
     record_kind: 'structure_only' as const,
     activities: [],
     flags: ['unassociated_structure', 'structure_number_unconfirmed'],
@@ -69,10 +70,53 @@ describe('patent-owned presentation label and stable internal identity', () => {
     expect(screen.getByRole('button', { name: '查看 编号待确认 S0007 结构详情' })).toBeVisible();
   });
 
+  it('uses effective identifier changes rather than unrelated or stale correction edits', () => {
+    setLocale('en');
+    const metadata = {
+      revision: 1,
+      stale: false,
+      has_changes: true,
+      updated_at: '2026-10-01',
+    };
+    for (const correction of [
+      { ...metadata, identifier_changed: false },
+      { ...metadata, stale: true, identifier_changed: false },
+    ]) {
+      const row = decodeCompound({ ...pending, correction });
+      expect(compoundLabel(row)).toBe('Identifier unconfirmed S0007');
+      expect(row.correction).toEqual(correction);
+    }
+    const renamed = decodeCompound({
+      ...pending,
+      correction: { ...metadata, identifier_changed: true },
+    });
+    expect(compoundLabel(renamed)).toBe(pending.display_id);
+    expect(compoundLabel(decodeCompound({ ...pending, correction: metadata }))).toBe(
+      pending.display_id,
+    );
+  });
+
+  it('rejects a malformed effective-identifier marker instead of treating it as false', () => {
+    for (const identifier_changed of ['false', 0, [], {}])
+      expect(() =>
+        decodeCompound({
+          ...pending,
+          correction: {
+            revision: 1,
+            stale: false,
+            has_changes: true,
+            updated_at: '2026-10-01',
+            identifier_changed,
+          },
+        }),
+      ).toThrow();
+  });
+
   it('never translates an original or user-edited label that resembles generated copy', () => {
     setLocale('en');
     for (const row of [
       { ...pending, identifier_label: pending.display_id },
+      { ...pending, source: { ...pending.source, source_label: pending.display_id } },
       { ...pending, id: 'Compound 7' },
       { ...pending, flags: [] },
       {

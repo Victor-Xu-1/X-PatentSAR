@@ -68,6 +68,7 @@ def apply_correction(
         stale=stale,
         has_changes=changed,
         updated_at=saved["updated_at"],
+        identifier_changed=not stale and values.display_id != baseline.display_id,
     )
     if stale or not changed:
         return compound

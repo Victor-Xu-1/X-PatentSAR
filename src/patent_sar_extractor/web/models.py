@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import (
     Field,
+    StrictBool,
     ValidationInfo,
     field_validator,
     model_validator,
@@ -128,6 +129,9 @@ class CorrectionMetadata(DTO):
     stale: bool
     has_changes: bool
     updated_at: str
+    identifier_changed: StrictBool | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
 
 
 class Compound(DTO):
