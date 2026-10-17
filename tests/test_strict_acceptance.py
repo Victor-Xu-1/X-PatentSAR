@@ -431,7 +431,7 @@ class StrictAcceptanceTests(unittest.TestCase):
         self.assertEqual(list(rows[0].activity_values.values()), ["A"])
         self.assertEqual(list(rows[1].activity_values.values()), ["G"])
         self.assertEqual(list(rows[2].activity_values.values()), ["B"])
-        for row in rows:
+        for row in rows[:2]:
             self.assertEqual(
                 row.activity_sources[0]["legend"],
                 {
@@ -440,6 +440,9 @@ class StrictAcceptanceTests(unittest.TestCase):
                     "G": "not tested",
                 },
             )
+        # The abbreviated next-page header does not prove the same B8 assay
+        # context. Retain its literal B, but do not borrow a numeric meaning.
+        self.assertNotIn("legend", rows[2].activity_sources[0])
         self.assertTrue(has_usable_values(rows[0]))
         self.assertFalse(has_usable_values(rows[1]))
         self.assertIn("source label 1-2", rows[1].notes)

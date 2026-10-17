@@ -35,6 +35,12 @@ meaning, potency or concentrations. The row and mapping callers share the same
 activity-values authority, and an aggregate data cache cannot override an observed
 row's missingness. Data-only historical payloads retain their literal semantics.
 
+A literal grade declaration immediately before a table remains in that table's
+original text span, rather than disappearing at caption splitting. Qualification
+still checks the actual endpoint/units; conflicts stay review. A preceding
+independent header/result row or section prevents scope attachment. Adjacent-page
+continuations use the same original plan/replay, never a global legend cache.
+
 Original boundary derivation now lives in the pure `source_body_context` SDK;
 `unruled_body_scope` supplies its column adapters. Complete source inventory and
 positively trusted ownership have separate bottoms. Doubtful, conflicting,

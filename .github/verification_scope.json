@@ -15,6 +15,7 @@
     "src/patent_sar_extractor/core/activity_header_evidence.py",
     "src/patent_sar_extractor/core/activity_observations.py",
     "src/patent_sar_extractor/core/activity_table_rows.py",
+    "src/patent_sar_extractor/core/activity_text_plan.py",
     "src/patent_sar_extractor/core/activity_text_rows.py",
     "src/patent_sar_extractor/core/activity_transposed.py",
     "src/patent_sar_extractor/core/activity_transposed_rows.py",
@@ -172,7 +173,7 @@
     "tests.test_source_first_contract",
     "tests.test_heading_source_ownership",
     "tests.test_web_activity_sources",
-    "tests.test_wheel_source_inventory",
+    "tests.test_activity_text_ownership",
     "tests.test_heading_label_roles",
     "tests.test_structure_column_anchors"
   ],

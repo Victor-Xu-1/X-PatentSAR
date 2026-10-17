@@ -204,6 +204,39 @@ class TextOwnershipTests(unittest.TestCase):
         )
         self.assertEqual(activity_evidence_errors(data, [0]), [])
 
+    def test_pre_table_legend_keeps_original_span_and_only_proved_continuations(self):
+        result = extract_text_tables(
+            [0, 1],
+            {
+                "0": "letter codes for IC50 include: A (<1 nM) B (1-10 nM)\n"
+                "Table 73. Binding assay\nNo. | IC50 (nM)\n31 | A",
+                "1": "Table 73. Continued\nNo. | IC50 (nM)\n44 | B\n"
+                "Table 74. Another binding assay\nNo. | IC50 (nM)\n45 | B",
+            },
+        )
+        self.assertEqual(
+            [row.cpd for row in result.rows],
+            ["Compound 31", "Compound 44", "Compound 45"],
+        )
+        for row in result.rows[:2]:
+            self.assertEqual(
+                row.activity_sources[0]["legend"], {"A": "<1 nM", "B": "1-10 nM"}
+            )
+        self.assertEqual(result.rows[0].activity_sources[0]["text_scope"]["span"][0], 0)
+        self.assertNotIn("legend", result.rows[2].activity_sources[0])
+
+    def test_pre_table_legend_with_a_different_endpoint_is_retained_as_review(self):
+        result = extract_text_tables(
+            [0],
+            {
+                "0": "letter codes for IC50 include: A (<1 nM) B (1-10 nM)\n"
+                "Table 73. Degradation assay\nNo. | DC50 (nM)\n31 | A",
+            },
+        )
+        self.assertEqual(result.rows[0].activity_values, {"DC50 (nM)": "A"})
+        self.assertTrue(result.rows[0].needs_review)
+        self.assertTrue(result.rows[0].activity_sources[0]["legend_issues"])
+
     def test_conflicting_or_unit_mismatched_legend_preserves_raw_grade_and_refuses_acceptance(
         self,
     ):

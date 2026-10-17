@@ -60,9 +60,40 @@ def segments(text):
                 if _HEADER_START.search(window[m.end() : m.end() + 250])
             ]
         starts = sorted({0, *[m.start() for m in markers]})
+        legend_caption = None
+        if len(starts) > 1 and starts[0] == 0:
+            prefix = window[: starts[1]]
+            legend, issues = read_legend(prefix)
+            # A literal pre-table declaration belongs only to the immediately
+            # following table in this original section. An independent header
+            # or result row prevents attaching a preceding dataset to it.
+            if (
+                (legend or issues)
+                and not _HEADER_START.search(prefix)
+                and not any(
+                    (match := _ROW.match(line.strip()))
+                    and (
+                        value_tokens(match.group(2)) is not None
+                        or "|" in line
+                        or "\t" in line
+                    )
+                    for line in canonical_lines(prefix)
+                )
+            ):
+                legend_caption = starts[1]
+                starts.pop(1)
         for start, end in zip(starts, [*starts[1:], len(window)]):
             body = window[start:end]
-            first = body.splitlines()[0].strip() if body.splitlines() else ""
+            title_source = (
+                window[legend_caption:end]
+                if start == 0 and legend_caption is not None
+                else body
+            )
+            first = (
+                title_source.splitlines()[0].strip()
+                if title_source.splitlines()
+                else ""
+            )
             caption = first if TABLE_MARKER.match(first) else ""
             if caption and (header := _HEADER_START.search(caption)):
                 caption = caption[: header.start()].strip()
