@@ -8,6 +8,7 @@ from .activity_context_geometry import (
 )
 from .caption_role_proof import observed_role
 from .caption_role_titles import project_caption_titles
+from .caption_title_refinement import observe_title_refinement, refined_title_role
 from .source_geometry import SourceTokens, native_region
 from .source_observations import source_cell_observation
 
@@ -17,12 +18,14 @@ def owns_caption_frame(page, region, regions, tokens, boxes, *, original_role=No
     from .caption_grid_rows import caption_rows
     from .caption_role_proof import caption_role_status
 
-    role = observe_caption_role(page, region, regions, tokens)
+    role = observe_caption_role(
+        page, region, regions, tokens, refine=original_role is None
+    )
     if role is None:
         return False  # Untyped transport cannot prove a current caption owner.
     if original_role is not None:
         claimed = caption_role_status(original_role, page.number + 1, grid_box(region))
-        fields = {"role", "table_key", "continuation"}
+        fields = {"role", "table_key", "continuation", "refinement"}
         if claimed not in {"compound", "nonfinal"} or {
             key: value for key, value in original_role.items() if key not in fields
         } != {key: value for key, value in role.items() if key not in fields}:
@@ -37,8 +40,8 @@ def owns_caption_frame(page, region, regions, tokens, boxes, *, original_role=No
     return "label" in kinds and "drawing" in kinds
 
 
-def observe_caption_role(page, region, regions, tokens):
-    """No extra OCR: reuse the current original token and grid inventory."""
+def observe_caption_role(page, region, regions, tokens, *, refine=True):
+    """Reuse original context; unknown observed titles may use bounded cell reads."""
     if not isinstance(tokens, SourceTokens):
         return None
     geometry = context_region(region, [grid_box(item) for item in regions])[
@@ -53,7 +56,7 @@ def observe_caption_role(page, region, regions, tokens):
         sources.append(source_cell_observation(tokens, window, native=True))
     observed = project_caption_titles(sources, geometry)
     role, key = observed_role(observed)
-    return {
+    scope = {
         "version": 1,
         "page_no": page.number + 1,
         "table_bbox": grid_box(region),
@@ -65,3 +68,11 @@ def observe_caption_role(page, region, regions, tokens):
         "role": role,
         "table_key": key,
     }
+    if refine and role == "unknown":
+        reading = observe_title_refinement(page, scope, tokens)
+        if reading is not None:
+            scope["refinement"] = reading
+            selected = refined_title_role(scope)
+            if selected is not None:
+                scope["role"], scope["table_key"] = selected
+    return scope

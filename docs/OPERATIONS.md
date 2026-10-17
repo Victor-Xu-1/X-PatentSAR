@@ -15,6 +15,14 @@ drawing, unread/conflicting context, changed columns or missing page remains an
 explicit refusal. Saving/reloading rechecks the same proof, including both page
 frames and the retained context; a missing packet cannot become success.
 
+An observed unknown raster/vector catalogue title can be reread only inside its
+existing original caption window, using the normal bounded cell OCR. Both complete
+readings and rendered frames are retained beside the unchanged first observation.
+A known table number, intermediate/mixed role or contradictory source cannot be
+overwritten to force a result. A proved continued caption uses that same read;
+missing/weak/mutated evidence does not retain ownership. This is automatic software
+behavior, not a manual renumbering operation or whole-PDF reread.
+
 Parallel original catalogues keep separate carry state. One column's proved new
 section, shifted frame or invalid boundary does not erase a separately proved
 neighbouring continuation. An unscoped heading is not silently treated as a local

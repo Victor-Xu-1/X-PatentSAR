@@ -22,6 +22,12 @@
   exclusions require the same complete prior tail as split cells; saved role
   links replay it. No new per-checkpoint epoch or product bump is introduced
   within this unpublished Binding21/binder30/visible21/v0.2.34 candidate.
+  `caption_title_refinement` owns original-title bounded reads/replay through
+  the shared physical-cell authority. Unknown initial semantics may be resolved;
+  known role/table identity conflicts remain vetoes, mixed/unknown roles stay
+  explicit, and continuation consumes the same proved title. Raw source packets
+  are not rewritten. Fresh-frame admission reuse does not launch another read.
+  This remains within the same unpublished scientific epoch and product release.
 
 - `source_role_terms` owns the finite literal intermediate vocabulary consumed by
   original headings/captions/cell claims, characterization identity, record filters

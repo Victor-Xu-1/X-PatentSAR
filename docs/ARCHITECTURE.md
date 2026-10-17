@@ -17,6 +17,18 @@ result, without a second OCR/cell pass. Page-wide/header-key nomination cannot
 silently discard a proved caption claim; the existing shared claim resolver still
 decides any real ownership conflict.
 
+`caption_title_refinement` owns bounded rereads only when a complete observed
+original title has an unknown role. Its padded window is rederived from the same
+source tokens, stays inside the original prefix, and uses the existing physical
+cell reader at400/600dpi. Complete reads, original confidence/frames and every
+known table-ID/role conflict are replayed; no string repair or new OCR path is
+introduced. Mixed/unknown roles remain mixed/unknown. The same proved title feeds
+the existing continuation-word check, while all raw packets remain unchanged.
+Admission reuse checks fresh original facts without repeating those cell reads.
+Native-qualified titles, absent titles and known roles do not trigger extra OCR.
+Height/cell/pixel bounds refuse unsupported work explicitly; this is not a
+document-wide retry or a proof of chemical-graph accuracy.
+
 `caption_boundary_context` retains the complete original context after every
 frame, including an already completed catalogue, using the shared source-window
 and body/section authorities, without new

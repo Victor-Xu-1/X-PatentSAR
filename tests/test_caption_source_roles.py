@@ -2,6 +2,7 @@
 
 import copy
 import unittest
+from unittest.mock import patch
 
 import fitz
 
@@ -9,11 +10,15 @@ from patent_sar_extractor.core.caption_binding_proof import (
     valid_caption_binding_evidence,
 )
 from patent_sar_extractor.core.caption_grid_binding import bind_caption_grids
-from patent_sar_extractor.core.caption_role_observation import observe_caption_role
+from patent_sar_extractor.core.caption_role_observation import (
+    observe_caption_role,
+    owns_caption_frame,
+)
 from patent_sar_extractor.core.caption_role_proof import (
     caption_role_status,
     validate_caption_exclusions,
 )
+from patent_sar_extractor.core.source_geometry import SourceTokens, source_layout
 from patent_sar_extractor.core.table_geometry import (
     detect_ruled_table_regions,
     page_tokens,
@@ -237,6 +242,140 @@ class CaptionRoleProofTests(unittest.TestCase):
                 scope = copy.deepcopy(original)
                 scope[field] = value
                 self.assertIsNone(caption_role_status(scope, 1, cell))
+
+    def raster_frame(self, raw_title="Table 47. Finalproducts", *, physical_title=None):
+        drawing, _structures, _boxes = catalog(
+            physical_title or "Table 47. Final    products"
+        )
+        self.caption_boxes = _boxes[1]
+        with drawing:
+            pixels = drawing[0].get_pixmap(matrix=fitz.Matrix(3, 3), alpha=False)
+            png = pixels.tobytes("png")
+        doc = fitz.open()
+        self.addCleanup(doc.close)
+        page = doc.new_page()
+        page.insert_image(page.rect, stream=png)
+        grids = detect_ruled_table_regions(page, dpi=240)
+        tokens = page_tokens(page, dpi=200, allow_tesseract=False)
+        # Controlled first-pass error; physical source pixels remain untouched.
+        hint = {
+            "text": raw_title,
+            "x": 150,
+            "y": 79,
+            "bbox": [50, 70, 250, 88],
+            "confidence": 0.99,
+            "source": "raster",
+            "geometry_space": "rendered",
+        }
+        observed = SourceTokens(
+            [hint, *[t for t in tokens if t["y"] >= 100]],
+            source_layout(page),
+            tokens.scan_bounds,
+        )
+        return page, grids, observed
+
+    def test_bounded_original_title_read_resolves_unknown_first_pass_without_editing_it(
+        self,
+    ):
+        page, grids, tokens = self.raster_frame()
+        before = copy.deepcopy(list(tokens))
+        scope = observe_caption_role(page, grids[0], grids, tokens)
+        self.assertEqual(scope["role"], "compound", scope)
+        self.assertEqual(scope["table_key"], "TABLE47")
+        self.assertEqual(list(tokens), before)
+        self.assertIn("Finalproducts", scope["observations"][0]["text"])
+        self.assertEqual(caption_role_status(scope, 1, scope["table_bbox"]), "compound")
+        self.assertIn("refinement", scope)
+
+    def test_known_nonfinal_role_or_table_identity_cannot_be_overwritten(self):
+        for title, role in (
+            ("Table 47. Intermediates", "nonfinal"),
+            ("Table 93. Finalproducts", "unknown"),
+        ):
+            with self.subTest(title=title):
+                page, grids, tokens = self.raster_frame(title)
+                scope = observe_caption_role(page, grids[0], grids, tokens)
+                self.assertEqual(scope["role"], role)
+
+    def test_serialized_title_refinement_cannot_change_its_original_window(self):
+        page, grids, tokens = self.raster_frame()
+        scope = observe_caption_role(page, grids[0], grids, tokens)
+        self.assertEqual(scope["role"], "compound", scope)
+        altered = copy.deepcopy(scope)
+        altered["refinement"]["bbox"][0] += 1
+        self.assertIsNone(caption_role_status(altered, 1, altered["table_bbox"]))
+
+    def test_refined_unknown_and_mixed_titles_keep_their_declared_roles(self):
+        for title, expected in (
+            ("Table 47. Continued", "unknown"),
+            ("Table 47. Compounds and intermediates", "mixed"),
+        ):
+            with self.subTest(title=title):
+                page, grids, tokens = self.raster_frame(
+                    "Table 47. Productlisting", physical_title=title
+                )
+                scope = observe_caption_role(page, grids[0], grids, tokens)
+                self.assertEqual(scope["role"], expected, scope)
+                self.assertEqual(
+                    caption_role_status(scope, 1, scope["table_bbox"]), expected, scope
+                )
+
+    def test_proved_title_reuse_rechecks_original_facts_without_a_second_cell_pass(
+        self,
+    ):
+        page, grids, tokens = self.raster_frame()
+        scope = observe_caption_role(page, grids[0], grids, tokens)
+        self.assertEqual(scope["role"], "compound")
+        with patch(
+            "patent_sar_extractor.core.activity_grid_role_observation.observe_role_cells",
+            side_effect=AssertionError("A reused frame must not launch title OCR"),
+        ):
+            self.assertTrue(
+                owns_caption_frame(
+                    page,
+                    grids[0],
+                    grids,
+                    tokens,
+                    self.caption_boxes,
+                    original_role=scope,
+                )
+            )
+            changed = copy.deepcopy(tokens)
+            changed[0]["text"] = "Table 93. Finalproducts"
+            self.assertFalse(
+                owns_caption_frame(
+                    page,
+                    grids[0],
+                    grids,
+                    changed,
+                    self.caption_boxes,
+                    original_role=scope,
+                )
+            )
+
+    def test_refined_title_requires_both_complete_confident_original_readings(self):
+        page, grids, tokens = self.raster_frame()
+        scope = observe_caption_role(page, grids[0], grids, tokens)
+        self.assertEqual(scope["role"], "compound")
+        for change in ("missing_read", "weak_part", "changed_matrix", "missing_frame"):
+            with self.subTest(change=change):
+                altered = copy.deepcopy(scope)
+                reading = altered["refinement"]["role_cells"]
+                if change == "missing_read":
+                    reading["observations"].pop()
+                elif change == "weak_part":
+                    reading["observations"][0]["cells"][0]["parts"][0]["confidence"] = (
+                        0.2
+                    )
+                elif change == "changed_matrix":
+                    reading["observations"][1]["matrix"][0][0] = (
+                        "Table 47. Intermediates"
+                    )
+                else:
+                    reading["rendered_frames"].pop()
+                self.assertIsNone(
+                    caption_role_status(altered, 1, altered["table_bbox"])
+                )
 
     def test_weak_title_cannot_keep_a_previously_declared_compound_role(self):
         scope, cell = self.original_scope()

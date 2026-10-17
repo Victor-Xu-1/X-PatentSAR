@@ -11,6 +11,7 @@ from patent_sar_extractor.core.caption_binding_proof import (
 )
 from patent_sar_extractor.core.caption_grid_binding import bind_caption_grids
 from patent_sar_extractor.core.caption_role_observation import owns_caption_frame
+from patent_sar_extractor.core.source_geometry import SourceTokens, source_layout
 from patent_sar_extractor.core.table_geometry import page_tokens
 from patent_sar_extractor.core.visible_structure_binding import bind_visible_captions
 from tests.test_caption_role_continuation import binding
@@ -136,6 +137,71 @@ class CaptionPageBoundaryTests(unittest.TestCase):
         cross = next(pair for pair in result.bindings if pair["label"] == "7E")
         self.assertEqual(cross["structure"]["page_no"], 1)
         self.assertEqual(cross["label_page_no"], 2)
+
+    def test_original_title_rereads_survive_the_same_cross_page_binding_and_saved_gate(
+        self,
+    ):
+        native, structures, boxes, grids = below_pages(
+            role_title="Final    products", next_title="Table 47. Continued"
+        )
+        with native, fitz.open() as document:
+            for original in native:
+                page = document.new_page(
+                    width=original.rect.width, height=original.rect.height
+                )
+                page.insert_image(
+                    page.rect,
+                    stream=original.get_pixmap(
+                        matrix=fitz.Matrix(3, 3), alpha=False
+                    ).tobytes("png"),
+                )
+
+            def observed(page):
+                tokens = page_tokens(page, dpi=200, allow_tesseract=False)
+                first = page.number == 0
+                top = 70 if first else 20
+                hint = {
+                    "text": "Table 47. Finalproducts"
+                    if first
+                    else "Table 47. Contin-ued",
+                    "x": 150,
+                    "y": top + 9,
+                    "bbox": [50, top, 250, top + 18],
+                    "confidence": 0.99,
+                    "source": "raster",
+                    "geometry_space": "rendered",
+                }
+                return SourceTokens(
+                    [
+                        hint,
+                        *[
+                            t
+                            for t in tokens
+                            if t["y"] >= grids[page.number + 1][0]["ys"][0]
+                        ],
+                    ],
+                    source_layout(page),
+                    tuple(page.rect),
+                )
+
+            result = bind_caption_grids(
+                document,
+                structures,
+                boxes,
+                [1, 2],
+                grids_for_page=lambda page: grids[page.number + 1],
+                tokens_for_page=observed,
+            )
+        self.assertEqual(result.issues, [])
+        self.assertEqual(
+            {(pair["label"], pair["structure"]["id"]) for pair in result.bindings},
+            {
+                (label, f"original-{label}")
+                for label in ("41A", "89B", "7E", "8E", "73C", "104D")
+            },
+        )
+        for pair in result.bindings:
+            self.assertTrue(valid_caption_binding_evidence(binding(pair)))
 
     def test_continued_frame_role_is_shared_only_for_identical_current_source_facts(
         self,
