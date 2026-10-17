@@ -7,6 +7,7 @@ import json
 import re
 import threading
 from collections import OrderedDict
+from typing import cast
 
 from patent_sar_extractor.contracts import (
     SMILES_SCHEMA,
@@ -37,6 +38,20 @@ _observations: OrderedDict[tuple, tuple[Recognition, str | None, str | None]] = 
 _observation_lock = threading.Lock()
 
 
+def observation_text(record: object) -> str:
+    try:
+        content = encode(record) if isinstance(record, dict) else ""
+    except (ValueError, TypeError) as exc:
+        raise WebError(
+            422, "invalid_recognition", "Recognition observation is not valid JSON."
+        ) from exc
+    if not content or len(content.encode()) > MAX_COMPLETION_BYTES:
+        raise WebError(
+            422, "invalid_recognition", "Recognition observation exceeds its bound."
+        )
+    return content
+
+
 def checked_observation(
     record: object,
     compound_id: str,
@@ -44,13 +59,8 @@ def checked_observation(
     *,
     binding: dict | None = None,
 ) -> Recognition:
-    if (
-        not isinstance(record, dict)
-        or len(encode(record).encode()) > MAX_COMPLETION_BYTES
-    ):
-        raise WebError(
-            422, "invalid_recognition", "Recognition observation exceeds its bound."
-        )
+    observation_text(record)
+    record = cast(dict, record)  # The shared serializer requires an object mapping.
     if (
         record.get("cpd_id") != compound_id
         or record.get("structure_id") != structure_id
@@ -93,16 +103,18 @@ def checked_observation(
             result.status, result.quality_flag = "unavailable", REPRINT_REVIEW_FLAG
         else:
             plan = RecognitionPlan([binding], [], additional)
-            findings = reprint_findings(
-                plan, build_smiles_artifact([record], reprint_records=repeated)
-            )
+            try:
+                packet = build_smiles_artifact([record], reprint_records=repeated)
+                findings = reprint_findings(plan, packet)
+            except ValueError as exc:
+                raise WebError(
+                    422,
+                    "invalid_recognition",
+                    "Original source recognition is invalid.",
+                ) from exc
             if findings:
                 result.status = (
-                    "unavailable"
-                    if unavailable_reprints(
-                        plan, build_smiles_artifact([record], reprint_records=repeated)
-                    )
-                    else "invalid"
+                    "unavailable" if unavailable_reprints(plan, packet) else "invalid"
                 )
                 result.quality_flag = REPRINT_REVIEW_FLAG
     return result

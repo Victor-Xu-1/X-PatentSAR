@@ -126,9 +126,17 @@ class CompletionObservationSafetyTests(PredictionFixture, unittest.TestCase):
                 ).fetchone()
             )
         malformed = {**json.loads(baseline["observation"]), "reprint_records": None}
+        foreign = json.loads(baseline["observation"])
+        foreign["reprint_records"][0]["cpd_id"] = "Unrelated original"
+        nonfinite = {
+            **json.loads(baseline["observation"]),
+            "token_confidence": {"minimum": float("nan"), "mean": 1.0},
+        }
         for column in ("observation", "runtime_identity"):
-            for corrupt in ("{", "[]", "null", json.dumps(malformed)):
-                with self.subTest(column=column, corrupt=corrupt):
+            for index, corrupt in enumerate(
+                ("{", "[]", "null", *map(json.dumps, (malformed, foreign, nonfinite)))
+            ):
+                with self.subTest(column=column, case=index):
                     with self.service.store.connect(write=True) as connection:
                         connection.execute(
                             "UPDATE compound_recognitions SET observation=?,runtime_identity=? "

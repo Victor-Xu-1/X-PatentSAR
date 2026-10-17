@@ -18,7 +18,7 @@ from .files import SafeFiles
 from .models import Compound, Recognition
 from .molecule_drawing import drawing_url
 from .processes import runtime_identity, runtime_identity_matches
-from .recognition_observations import _saved_observation
+from .recognition_observations import _saved_observation, observation_text
 from .recognition_sources import (
     recognition_sources,
     source_context,
@@ -203,7 +203,7 @@ class RecognitionStore:
                 "recognition_source_changed",
                 "Recognition no longer has a proved original source owner.",
             )
-        encoded = encode(record)
+        encoded = observation_text(record)
         _saved_observation(
             encoded,
             compound_id,
