@@ -92,6 +92,16 @@ for (const width of [1672, 390]) {
       exact: true,
     });
     await expect(trigger).toBeVisible();
+    await expect(trigger).toHaveText('preview-source');
+    await expect(trigger).toHaveAttribute('title', 'Identifier unconfirmed preview-source');
+    const identity = trigger.locator('..');
+    const status = identity.getByText('Identifier unconfirmed', { exact: true });
+    await expect(status).toBeVisible();
+    const buttonBox = await trigger.boundingBox(),
+      statusBox = await status.boundingBox();
+    expect(buttonBox).toBeTruthy();
+    expect(statusBox).toBeTruthy();
+    expect(buttonBox!.y + buttonBox!.height + 3).toBeLessThanOrEqual(statusBox!.y);
     await expect(trigger).toHaveAttribute('data-focus-key', 'detail:' + source.id);
     await trigger.click();
     await expect(

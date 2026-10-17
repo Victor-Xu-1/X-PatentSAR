@@ -63,7 +63,8 @@ describe('patent-owned presentation label and stable internal identity', () => {
     const button = screen.getByRole('button', {
       name: 'View Identifier unconfirmed S0007 structure details',
     });
-    expect(button).toHaveTextContent('Identifier unconfirmed S0007');
+    expect(button).toHaveTextContent(/^S0007$/);
+    expect(screen.getByText('Identifier unconfirmed', { selector: 'small' })).toBeVisible();
     fireEvent.click(button);
     expect(details).toHaveBeenCalledWith(pending);
     act(() => setLocale('zh-CN'));

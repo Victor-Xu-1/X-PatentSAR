@@ -833,6 +833,8 @@ and CSV keeps that marker in `display_id` with an empty `identifier_label`.
 These references remain visible for review but are not literal-ID filter choices
 or identified final compounds for SAR. Original labels and effective manual
 renames stay verbatim; unknown legacy changed overlays are not translated.
+The table can show the generated source reference above its unconfirmed status;
+the full localized label remains in its tooltip, accessible detail name and dialog.
 `recognition`: `{status,quality_flag,model_fingerprint,token_confidence}`. Status
 is `not_run`, `valid`, `invalid` or `unavailable`; absent historical metadata is
 unavailable rather than reconstructed as model confidence. `token_confidence`

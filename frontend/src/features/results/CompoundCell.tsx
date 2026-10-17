@@ -1,6 +1,6 @@
 import { useTranslation } from '../../i18n';
 import type { Compound } from '../../api/types';
-import { compoundLabel } from '../../model/compoundLabel';
+import { compoundLabel, generatedCompoundReference } from '../../model/compoundLabel';
 
 export function CompoundCell({
   row,
@@ -12,12 +12,14 @@ export function CompoundCell({
   const { t } = useTranslation();
   const corrected = Boolean(row.correction?.has_changes && !row.correction.stale && row.smiles);
   const label = compoundLabel(row);
+  const reference = generatedCompoundReference(row);
   const displayLabel =
-    row.record_kind === 'structure_only' &&
+    reference ??
+    (row.record_kind === 'structure_only' &&
     label.startsWith('未关联结构 ') &&
     (!row.correction?.has_changes || row.correction.stale)
       ? label.replace(/ · p\.\d+$/, '')
-      : label;
+      : label);
   return (
     <td className="compound-column frozen-column frozen-compound">
       <div className="compound-identity">
@@ -29,7 +31,7 @@ export function CompoundCell({
           title={label}
           onClick={() => onDetails(row)}
         >
-          {displayLabel}
+          <span className="compound-detail-label">{displayLabel}</span>
         </button>
         {row.correction?.stale ? (
           <small className="correction">{t('待重核')}</small>

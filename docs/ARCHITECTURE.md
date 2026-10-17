@@ -360,6 +360,10 @@ Table/details/image accessibility share that same renderer; copied labels retain
 the stored source/temporary marker rather than translated interface copy. Original labels,
 user corrections and canonical route/join keys are not translated or rewritten;
 an unchanged correction draft still round-trips the original stored field.
+Within the narrow table column, only a proved generated reference is compacted
+to its source reference above the explicit unconfirmed status. The tooltip and
+accessible detail name retain its full localized meaning. A bounded text span
+and separate status row prevent flex text/focus clipping without renaming data.
 
 `printed_identifiers.py` is the pure literal grammar/normalization/fragment-conflict
 authority. `activity_identity` re-exports its existing pattern names, not a second
