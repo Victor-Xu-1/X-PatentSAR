@@ -1,5 +1,16 @@
 # Project governance manifest
 
+- Quantitative-figure reference roles use the existing heading inventory and
+  original source-window/cell SDK. `plot_reference_geometry` owns nomination,
+  `plot_reference_pixels` bounded mask transport, axes/marker modules pure
+  geometric replay, and `plot_reference` role observation/replay. A proved
+  numeric-axis figure label is a reference, never a new molecular declaration
+  or a plotted measurement. All source assets/independent structural inventory,
+  native conflicts, confidence and strict QA remain; no page/ID exceptions,
+  external engine, dependency, API/SQL or new artifact store. Heading proof2
+  stays under unpublished Binding21/binder30/v0.2.34. Controlled native/raster
+  and saved-consumer checks are not real-task scientific or deployment proof.
+
 - `source_role_observations` owns rejected-role diagnostic serialization/replay,
   using the existing source digest and the sole binding/activity artifact writers.
   Original partial/weak cell observations survive role/render refusal without

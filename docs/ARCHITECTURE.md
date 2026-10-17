@@ -1,5 +1,27 @@
 # X-PatentSAR architecture
 
+## Quantitative figure references versus molecular declarations
+
+The existing original-heading ledger retains quantitative plot labels as
+`figure_label_reference` only after one uniquely scoped original Figure caption,
+two ordered numeric axes, their observed perpendicular strokes, and a compact
+graphic legend key are proved. `plot_reference_geometry` nominates windows;
+the pixel/axes/marker modules retain bounded original masks through the existing
+cell renderer. `plot_reference` uses the sole source-window and physical-cell
+SDK for native text or complete 400/600dpi observations, including native/raster
+contradictions. Original raw text, masks and coordinate frames remain replayable.
+Heading proof v2 enters the same heading inventory and source digest, not a
+second store, queue, recognition engine or acceptance path. Binding21/binder30
+already describe this unpublished derived-source change; no extra product bump.
+
+A figure mention never supplies a molecule or a plotted numeric activity.
+Independent all-page structural discovery remains unchanged. Nearby synthesis
+titles, unqualified/ambiguous plots, missing axes/keys, malformed/omitted source
+packets and conflicting literals cannot obtain this reference role. No page,
+patent or compound-ID exemption is used. The bounded rectilinear-plot proof is
+not universal chart recognition, detector recall or chemical accuracy evidence;
+real frontend extraction/SAR and main/18765 delivery remain separate gates.
+
 ## Bidirectional original caption page breaks
 
 Binding21/binder30/visible-label21 preserve a diagram and its literal caption

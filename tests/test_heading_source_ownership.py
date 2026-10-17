@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import tempfile
 import unittest
@@ -23,6 +24,13 @@ from patent_sar_extractor.core.binding_source_headings import (
     observed_heading_blocks,
     select_heading_bindings,
 )
+from patent_sar_extractor.core.binding_source_references import (
+    reference_issues,
+    reference_scope,
+)
+from patent_sar_extractor.core.heading_evidence import original_heading_lines
+from patent_sar_extractor.core.heading_source_proof import proved_heading_declaration
+from patent_sar_extractor.core.table_geometry import page_tokens
 
 
 class HeadingSourceOwnershipTests(unittest.TestCase):
@@ -315,6 +323,219 @@ class HeadingSourceOwnershipTests(unittest.TestCase):
             ["42A"],
         )
         ocr.assert_not_called()
+
+
+class PlotLegendHeadingTests(unittest.TestCase):
+    @staticmethod
+    def document(
+        *, caption=True, ticks=True, axes=True, marker=True, label="Compound 77A"
+    ):
+        document = fitz.open()
+        page = document.new_page(width=520, height=420)
+        if axes:
+            page.draw_line((100, 90), (100, 250), width=0.8)
+            page.draw_line((100, 250), (290, 250), width=0.8)
+        if ticks:
+            for x, value in zip((100, 160, 220, 280), ("0.01", "0.1", "1", "10")):
+                page.insert_text((x - 6, 267), value, fontsize=9)
+            for y, value in zip((110, 170, 230), ("100", "50", "0")):
+                page.insert_text((75, y + 3), value, fontsize=9)
+        if marker:
+            page.draw_line((310, 119), (326, 119), width=1)
+            page.draw_circle((318, 119), 2, fill=(0, 0, 0))
+        page.insert_text((332, 122), label, fontsize=10)
+        if caption:
+            page.insert_text((180, 300), "FIG. 3B", fontsize=10)
+        return document
+
+    def test_quantitative_plot_legend_is_a_source_reference_not_a_missing_structure(
+        self,
+    ):
+        with self.document() as document:
+            sections = []
+            blocks = observed_heading_blocks(
+                document, [0], {}, source_sections=sections, source_regions={0: []}
+            )
+        self.assertEqual(blocks, [], "A plot legend does not declare a new structure")
+        self.assertEqual(len(sections), 1)
+        self.assertEqual(sections[0]["role"], "figure_label_reference")
+        self.assertEqual(sections[0]["line_text"], "Compound 77A")
+
+    def test_numbers_and_a_figure_caption_without_observed_axes_do_not_exempt(self):
+        with self.document(axes=False) as document:
+            sections = []
+            blocks = observed_heading_blocks(
+                document, [0], {}, source_sections=sections, source_regions={0: []}
+            )
+        self.assertEqual(len(blocks), 1)
+        self.assertEqual(sections[0]["role"], "compound_heading")
+
+    def observed(self):
+        with self.document() as document:
+            sections = []
+            observed_heading_blocks(
+                document, [0], {}, source_sections=sections, source_regions={0: []}
+            )
+        return json.loads(json.dumps(sections))
+
+    def test_ordinary_titles_and_unproved_graphs_keep_original_structure_obligations(
+        self,
+    ):
+        for options in (
+            {"caption": False},
+            {"ticks": False},
+            {"marker": False},
+            {"label": "Compound 77A: Synthesis"},
+        ):
+            with self.subTest(options=options), self.document(**options) as document:
+                blocks = observed_heading_blocks(
+                    document, [0], {}, source_regions={0: []}
+                )
+                self.assertEqual([b["cpd"] for b in blocks], ["Compound 77A"])
+
+    def test_nearby_true_synthesis_heading_is_not_closed_by_the_figure_reference(self):
+        with self.document() as document:
+            document[0].insert_text(
+                (50, 360), "Compound 008B: Preparation", fontsize=11
+            )
+            sections = []
+            blocks = observed_heading_blocks(
+                document, [0], {}, source_sections=sections, source_regions={0: []}
+            )
+        self.assertEqual([b["cpd"] for b in blocks], ["Compound 008B"])
+        payload = {
+            "source_sections": sections,
+            "source_reference_scope": reference_scope(sections),
+        }
+        self.assertEqual(
+            [p["cpd"] for p in reference_issues(payload, [])], ["Compound 008B"]
+        )
+
+    def test_saved_figure_reference_uses_the_existing_inventory_and_round_trip(self):
+        sections = self.observed()
+        payload = {
+            "source_sections": sections,
+            "source_reference_scope": reference_scope(sections),
+        }
+        self.assertEqual(reference_issues(payload, []), [])
+        payload["source_reference_scope"]["heading_ids"] = []
+        with self.assertRaises(ValueError):
+            reference_issues(payload, [])
+
+    def test_serialized_conflicts_omissions_and_pixel_corruption_cannot_grant_a_role(
+        self,
+    ):
+        baseline = self.observed()[0]["heading_observation"]
+        self.assertIsNotNone(proved_heading_declaration(baseline))
+        mutations = []
+        missing = copy.deepcopy(baseline)
+        missing["figure_source"]["literal_cells"].pop()
+        mutations.append(missing)
+        changed = copy.deepcopy(baseline)
+        changed["figure_source"]["axes"]["x"].reverse()
+        mutations.append(changed)
+        changed = copy.deepcopy(baseline)
+        changed["nomination"]["text"] = "Compound 77B"
+        mutations.append(changed)
+        changed = copy.deepcopy(baseline)
+        changed["figure_source"]["chunks"] = []
+        mutations.append(changed)
+        changed = copy.deepcopy(baseline)
+        changed["figure_source"]["axis_strokes"]["x"]["readings"][0]["mask_hex"] = "00"
+        mutations.append(changed)
+        changed = copy.deepcopy(baseline)
+        changed["figure_source"]["marker"]["readings"][1]["dpi"] = True
+        mutations.append(changed)
+        changed = copy.deepcopy(baseline)
+        changed["figure_source"]["literal_cells"][0]["reading"]["observations"][0][
+            "matrix"
+        ][0][0] = "FIG. 4"
+        mutations.append(changed)
+        changed = copy.deepcopy(baseline)
+        changed["figure_source"]["axes"]["x"][0]["role_scope"] = "compound"
+        mutations.append(changed)
+        for index, proof in enumerate(mutations):
+            with self.subTest(mutation=index):
+                proof["status"] = "confirmed"
+                self.assertIsNone(proved_heading_declaration(proof))
+
+    def test_real_scanned_plot_uses_existing_cell_ocr_and_preserves_saved_source(self):
+        with self.document() as original, fitz.open() as scanned:
+            lines = [
+                {**line, "source": "page_ocr"}
+                for line in original_heading_lines(original[0])
+            ]
+            page = scanned.new_page(width=520, height=420)
+            page.insert_image(
+                page.rect,
+                stream=original[0].get_pixmap(matrix=fitz.Matrix(3, 3)).tobytes("png"),
+            )
+            sections = []
+            blocks = observed_heading_blocks(
+                scanned,
+                [0],
+                {},
+                source_sections=sections,
+                source_regions={0: []},
+                source_line_map={0: lines},
+                tokens_for_page=lambda page: page_tokens(
+                    page, dpi=300, allow_tesseract=False
+                ),
+            )
+        details = [
+            {
+                "role": section["role"],
+                "status": section["status"],
+                "cells": [
+                    {
+                        "sources": [p["text"] for p in cell["sources"]],
+                        "reads": [
+                            r["matrix"]
+                            for r in (cell["reading"] or {}).get("observations", [])
+                        ],
+                    }
+                    for cell in section["heading_observation"]
+                    .get("figure_source", {})
+                    .get("literal_cells", [])
+                ],
+            }
+            for section in sections
+        ]
+        self.assertFalse(bool(blocks), details)
+        self.assertEqual(sections[0]["role"], "figure_label_reference")
+        proof = json.loads(json.dumps(sections[0]["heading_observation"]))
+        self.assertIsNotNone(proved_heading_declaration(proof))
+        self.assertEqual(
+            len(proof["figure_source"]["literal_cells"][0]["reading"]["observations"]),
+            2,
+        )
+
+    def test_hidden_native_conflict_in_a_raster_legend_is_not_an_exemption(self):
+        with self.document() as original, fitz.open() as scanned:
+            lines = [
+                {**line, "source": "page_ocr"}
+                for line in original_heading_lines(original[0])
+            ]
+            page = scanned.new_page(width=520, height=420)
+            page.insert_image(
+                page.rect,
+                stream=original[0].get_pixmap(matrix=fitz.Matrix(3, 3)).tobytes("png"),
+            )
+            page.insert_text((332, 122), "Compound 77B", fontsize=10, render_mode=3)
+            sections = []
+            blocks = observed_heading_blocks(
+                scanned,
+                [0],
+                {},
+                source_sections=sections,
+                source_regions={0: []},
+                source_line_map={0: lines},
+                tokens_for_page=lambda page: page_tokens(
+                    page, dpi=300, allow_tesseract=False
+                ),
+            )
+        self.assertEqual(len(blocks), 1)
+        self.assertTrue(all(s["role"] == "unproved_heading" for s in sections))
 
 
 if __name__ == "__main__":

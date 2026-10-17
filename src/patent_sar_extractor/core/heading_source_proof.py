@@ -28,6 +28,14 @@ def _identity(declaration):
 
 def heading_observation_status(proof):
     """Derive status from complete bounded observations; flags grant nothing."""
+    if (
+        isinstance(proof, dict)
+        and type(proof.get("version")) is int
+        and proof["version"] == 2
+    ):
+        from .plot_reference import plot_reference_status
+
+        return plot_reference_status(proof)
     if not isinstance(proof, dict) or (
         set(proof)
         - {

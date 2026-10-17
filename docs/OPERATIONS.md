@@ -1123,6 +1123,15 @@ wheel/state backup, preserving newer study records for forward recovery.
 
 ## Reproducible package construction
 
+Current unpublished quantitative-figure source roles distinguish a plot legend
+from a synthesis heading using original caption/axis/key pixels and the same
+bounded source/cell observations. They do not read activity values off a graph
+or close another structural occurrence of the same identifier. Unknown graphs,
+non-rectilinear layouts or resource refusals remain ordinary source obligations;
+never clear their QA to obtain a successful run. Existing PDFs/raw/manual edits
+are unchanged. Build, installed-consumer checks, reviewed main/18765 delivery and
+an actual frontend extraction remain required before claiming this is delivered.
+
 After building/checking the frontend, use `tools/build_wheel.py --work-root
 /srv/wsl/tmp --out-dir <new-output-directory>` rather than building in an old
 checkout's setuptools staging tree. The shared inventory contains current Git
