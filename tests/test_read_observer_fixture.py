@@ -33,6 +33,19 @@ class ReadObserverFixtureTests(unittest.TestCase):
             fixture_mode({"frontend/e2e/unregistered-control.spec.ts"}), "execution"
         )
 
+    def test_isolated_api_recovery_ui_uses_no_execution_fixture(self):
+        ui = "frontend/e2e/llm-recovery.spec.ts"
+        for extra, expected in (
+            (set(), "read-only"),
+            ({READ}, "read-only"),
+            ({"frontend/e2e/llm-recovery-stack.spec.ts"}, "llm-recovery"),
+            ({"frontend/e2e/llm-settings.spec.ts"}, "llm-settings"),
+            ({"frontend/e2e/real-workflow.spec.ts"}, "execution"),
+            ({"frontend/e2e/unregistered-control.spec.ts"}, "execution"),
+        ):
+            with self.subTest(extra=extra):
+                self.assertEqual(fixture_mode({ui, *extra}), expected)
+
 
 if __name__ == "__main__":
     unittest.main()

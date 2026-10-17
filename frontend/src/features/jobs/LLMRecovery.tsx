@@ -35,21 +35,23 @@ export function LLMRecovery({
   const recovery = job.llm_recovery;
   if (!recovery) return null;
   return (
-    <section className="llm-recovery" aria-label={t('LLM 局部修复')}>
+    <section className="llm-recovery" aria-label={t('LLM API 兜底')}>
       <h3>{t(llmRecoveryStatusLabels[recovery.status])}</h3>
       {recovery.reason !== null && <p>{llmReason(recovery.reason)}</p>}
-      <p>
-        {recovery.remaining_calls === null
-          ? t('剩余调用次数未知')
-          : t('剩余调用 {calls} 次', { calls: recovery.remaining_calls })}
-        {recovery.retry_after_seconds !== null &&
-          t(' · 本次重试等待 {seconds} 秒（服务端观察）', {
-            seconds: recovery.retry_after_seconds,
-          })}
-        {recovery.status === 'cooldown' &&
-          recovery.retry_after_seconds === null &&
-          t(' · 重试等待时间未知')}
-      </p>
+      {recovery.status !== 'disabled' && (
+        <p>
+          {recovery.remaining_calls === null
+            ? t('剩余调用次数未知')
+            : t('剩余调用 {calls} 次', { calls: recovery.remaining_calls })}
+          {recovery.retry_after_seconds !== null &&
+            t(' · 本次重试等待 {seconds} 秒（服务端观察）', {
+              seconds: recovery.retry_after_seconds,
+            })}
+          {recovery.status === 'cooldown' &&
+            recovery.retry_after_seconds === null &&
+            t(' · 重试等待时间未知')}
+        </p>
+      )}
       <p>
         <a href="#/settings">{t('配置 LLM API')}</a>
       </p>

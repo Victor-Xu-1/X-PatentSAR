@@ -26,6 +26,7 @@ const testReasons: Record<LLMTestReason, string> = {
 };
 const reasons: Record<string, string> = {
   ...testReasons,
+  off: '本任务不使用 API 兜底。',
   missing_endpoint: '尚未配置 API 地址。',
   missing_model: '尚未配置模型。',
   missing_key: '尚未配置密钥。',
@@ -51,12 +52,12 @@ const reasons: Record<string, string> = {
 };
 
 export const llmRecoveryStatusLabels: Record<JobLLMRecovery['status'], string> = {
-  disabled: '局部修复已关闭',
-  ready: '可尝试局部修复',
-  blocked: '局部修复受阻',
-  cooldown: '局部修复等待重试',
-  exhausted: '局部修复预算耗尽',
-  unavailable: '局部修复状态不可用',
+  disabled: 'API 兜底已关闭',
+  ready: '可尝试 API 兜底',
+  blocked: 'API 兜底受阻',
+  cooldown: 'API 兜底等待重试',
+  exhausted: 'API 兜底预算耗尽',
+  unavailable: 'API 兜底状态不可用',
 };
 
 export function llmAuthorizationError(error: unknown): Error {

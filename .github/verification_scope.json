@@ -1,43 +1,40 @@
 {
   "schema_version": 1,
-  "base_sha": "15101d998dba61531d1ff387b9455a3f8bf1d543",
+  "base_sha": "e6ef29fcfa074f10ffb546d1be325cea039668d0",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
     "docs/OPERATIONS.md",
     "docs/PROJECT_MANIFEST.md",
-    "frontend/e2e/source-completion.spec.ts",
+    "frontend/e2e/llm-recovery.fixture.tsx",
+    "frontend/e2e/llm-recovery.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/features/results/CropDialog.tsx",
-    "frontend/src/i18n/catalogs/chemistry.ts",
+    "frontend/src/features/jobs/LLMRecovery.tsx",
+    "frontend/src/features/llm/llmMessages.ts",
+    "frontend/src/i18n/catalogs/llm.ts",
+    "frontend/tests/i18n-operations-llm.test.tsx",
+    "frontend/tests/llm-recovery-display.test.tsx",
     "src/patent_sar_extractor/contracts.py",
-    "src/patent_sar_extractor/core/catalog_reader.py",
-    "src/patent_sar_extractor/web/artifacts.py",
-    "src/patent_sar_extractor/web/completion_inputs.py",
-    "src/patent_sar_extractor/web/compound_catalog.py",
-    "src/patent_sar_extractor/web/recognition_sources.py",
-    "src/patent_sar_extractor/web/service.py",
-    "tests/test_historical_source_read.py",
-    "tools/prepare_completion_fixture.py"
+    "tests/test_llm_app_integration.py",
+    "tests/test_read_observer_fixture.py",
+    "tools/browser_fixture_mode.py"
   ],
   "python_modules": [
-    "tests.test_historical_source_read",
-    "tests.test_compound_catalog_view",
-    "tests.test_source_epoch_guards",
-    "tests.test_web_acceptance",
-    "tests.test_existing_compound_completion",
-    "tests.test_reprint_projection",
-    "tests.test_reprint_recognition",
-    "tests.test_uniform_recognition",
-    "tests.test_recognition_metadata",
-    "tests.test_core_recognition_source",
-    "tests.test_source_led_export",
+    "tests.test_llm_app_integration.LLMAppIntegrationTests.test_default_off_job_read_has_neutral_frozen_policy_without_calls",
+    "tests.test_llm_app_integration.LLMAppIntegrationTests.test_default_service_off_does_not_initialize_configuration",
+    "tests.test_llm_credential_renewal.CredentialRenewalTests.test_busy_quota_lock_and_off_policy_reject_renewal",
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
     "tests.test_architecture",
-    "tests.test_source_first_contract",
-    "tests.test_strict_acceptance"
+    "tests.test_read_observer_fixture"
   ],
-  "frontend_tests": [],
-  "browser_tests": ["frontend/e2e/source-completion.spec.ts"]
+  "frontend_tests": [
+    "frontend/tests/llm-recovery-display.test.tsx",
+    "frontend/tests/i18n-operations-llm.test.tsx",
+    "frontend/tests/llm-recovery-contract.test.ts",
+    "frontend/tests/llm-recovery-actions.test.tsx",
+    "frontend/tests/llm-settings.test.tsx",
+    "frontend/tests/i18n-core.test.tsx"
+  ],
+  "browser_tests": ["frontend/e2e/llm-recovery.spec.ts"]
 }

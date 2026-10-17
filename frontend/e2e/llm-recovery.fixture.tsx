@@ -1,6 +1,8 @@
 import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { api } from '../src/api';
+import type { Job } from '../src/api/types';
+import { LanguageSwitch } from '../src/components/LanguageSwitch';
 import { JobActions } from '../src/features/jobs/JobActions';
 import { LLMApiPanel } from '../src/features/llm/LLMApiPanel';
 import { project } from '../tests/fixtures';
@@ -16,16 +18,30 @@ import '../src/styles/responsive.css';
 // A new test-only page/context: no application startup, patents, private state,
 // cookies or credentials are copied from the user's running workbench.
 function IsolatedRecoveryPage() {
-  const [job, setJob] = useState({
+  const query = new URLSearchParams(window.location.search);
+  const [job, setJob] = useState<Job>(() => ({
     ...recoveryJob,
     stages: recoveryJob.stages.map((stage) =>
       stage.name === 'bind' ? { ...stage, repair: { regions: 7, unresolved: 2 } } : stage,
     ),
-  });
-  const query = new URLSearchParams(window.location.search);
+    ...(query.has('off')
+      ? {
+          status: 'running',
+          can_resume: false,
+          llm_recovery: {
+            status: 'disabled',
+            reason: 'off',
+            remaining_calls: 8,
+            retry_after_seconds: null,
+            can_reauthorize: false,
+          },
+        }
+      : {}),
+  }));
   if (query.get('view') === 'settings') return <LLMApiPanel />;
   return (
     <main className="management-page jobs-page">
+      <LanguageSwitch />
       <h1>隔离的恢复界面验证</h1>
       <article className="job-card">
         <div className="job-card-body">
