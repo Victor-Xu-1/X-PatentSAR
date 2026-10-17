@@ -28,6 +28,7 @@ from .pipeline_io import (
     _write_accuracy_failure_marker,
 )
 from .scientific_status import retain_scientific_errors
+from .worker_diagnostics import worker_error_details
 
 WORKING_ROOT = Path.cwd()
 
@@ -82,7 +83,7 @@ def execute_final(state: PipelineContext) -> None:
         previous_receipt = _worker_output_state(receipt_path)
         proc = run_in_env("base", final_worker_script, args=final_args, timeout=600)
         if proc.returncode != 0:
-            err = (proc.stderr or proc.stdout or "").strip()[:1200]
+            err = worker_error_details(proc, "final export")
             final_errors = [
                 f"Final export failed strict validation or generation: {err}"
             ]

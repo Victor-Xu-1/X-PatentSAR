@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- Failed-worker diagnostics: `application/worker_diagnostics.py` supplies one
+  bounded head/tail excerpt for existing activity/recognition/final failure paths;
+  private logging and raised errors remain separate bounded views, not new stores
+  or acceptance authorities. Successful exits and strict QA remain unchanged.
+- Overlapping caption locators: `cell_caption_fragments` owns exact same-role,
+  nonalphanumeric trailing punctuation and qualified original right-edge geometry.
+  `cell_caption_identity` reuses it only with an independently read complete line.
+  Producer, saved binding and OCSR preparation use that same guard; no ID repair,
+  voting, hidden conflict removal or competing parser is added. Binding17/binder26/
+  visible19/preparation7 change derived compatibility only; raw page/model/crop,
+  activity16/25/12, manual/SAR/API/SQL/dependencies and all user assets stay intact.
+
 - Catalogue-role ownership: `caption_grid_rows` replaces private row selection;
   `caption_role_titles` projects retained original contexts once for capture/replay.
   Role semantics/links/proof remain responsibility modules,not competing parsers.

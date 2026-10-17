@@ -1,5 +1,27 @@
 # X-PatentSAR architecture
 
+The shared caption guard treats an exact same-role detector fragment containing
+only trailing punctuation as a locator only when a qualified, complete original
+identifier crosses that fragment's right boundary on the same physical row and
+agrees with the independently read whole caption. No number is joined, inferred
+or repaired. Weak, disjoint, contained, different-role, nonfinal and independently
+conflicting literal claims remain unresolved. Original detector packets survive;
+the producer, serialized formal binding and OCSR label-mask preparation replay the
+same guard. Binding17/binder26/visible19/preparation7 invalidate derived ownership
+only; original PDF/raw page OCR/crops/model observations, activity16/25/12, manual
+audit, SAR, API, SQL and dependencies stay unchanged.
+
+`application/worker_diagnostics.py` is the sole bounded failed-worker excerpt
+policy for activity, standalone/formal recognition and final export. Existing
+private logging retains at most65536 characters, while the existing raised error
+retains at most1200, preserving both caller context and the terminal exception.
+Whitespace-only stderr cannot hide stdout failure; nonzero empty failures retain
+their exit code. Successful workers and all acceptance gates are unchanged. The
+activity call is multiline rather than echoing a large profile on its call line.
+Controlled native/raster subprocess checks are not proof of a particular failed
+patent's cause, complete source association or chemical correctness. There is no
+new worker, queue, log store, provider/model or automatic retry.
+
 Catalogue-title roles use the existing original grid/token/context authority.
 `caption_role_titles` projects one retained native/raster context; capture and
 `caption_role_proof` replay exactly the same title position,confidence,role and

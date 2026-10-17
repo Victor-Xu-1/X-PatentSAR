@@ -8,6 +8,7 @@ from itertools import combinations
 from .cell_caption_fragments import (
     complete_caption_text,
     ordered_caption_fragments,
+    overlapping_role_locators,
     truncated_caption_boundary,
 )
 from .compound_caption import prefixed_label
@@ -168,7 +169,9 @@ def refined_caption_conflicts(label, parts, detection_parts):
             raw,
             observed,
             boxes,
-            overlapping | overlapping_letters,
+            overlapping
+            | overlapping_letters
+            | (overlapping_role_locators(raw, observed, boxes) if refined else set()),
         )
     )
 
