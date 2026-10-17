@@ -919,6 +919,8 @@
   and omits disabled quotas/waits. Unknown diagnostics and real fault budgets remain
   explicit. No provider/control/budget writer, external call, API/SQL/scientific
   contract or inference authority changes for this presentation correction.
+  Its self-contained browser spec is a common read-only consumer; explicit stack
+  and scientific-execution selections keep their existing fixture requirements.
 
 - History-removal ownership: the same history service owns recoverable daily-page deletion/restore and explicitly confirmed permanent whole-trash clearing. Revision/lifecycle/visibility and analysis-lease gates remain authoritative. Soft deletion retains files; permanent clear's separate sealed file-cleanup phase removes only verified unreferenced owned assets, preserves audit/ancestry/shared environment data and exposes incomplete cleanup. No uninstall, retention scheduler, model call, audit-trigger weakening or competing deletion chain. Product releases follow the PR policy; APIv1/private SQLitev1 stay unchanged.
 

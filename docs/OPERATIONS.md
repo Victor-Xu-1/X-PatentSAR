@@ -1612,6 +1612,9 @@ quota, transport or unknown-state fault still has its separate redacted diagnost
 opening details or changing interface language never changes authorization,
 restarts extraction or sends a model request. Configure only when API fallback is
 actually wanted; no local language-model deployment is offered.
+The self-contained recovery UI spec uses the existing read-only fixture when
+selected alone; an explicitly selected API-stack or execution scenario retains
+its own preparation gate. UI-only verification must not prepare a scientific run.
 
 Normal rule parsing has no API cost. The source-validated unknown-header fallback,
 bounded quality column review and advisory source-led QA share explicit consent,

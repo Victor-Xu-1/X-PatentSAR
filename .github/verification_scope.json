@@ -16,14 +16,17 @@
     "frontend/tests/i18n-operations-llm.test.tsx",
     "frontend/tests/llm-recovery-display.test.tsx",
     "src/patent_sar_extractor/contracts.py",
-    "tests/test_llm_app_integration.py"
+    "tests/test_llm_app_integration.py",
+    "tests/test_read_observer_fixture.py",
+    "tools/browser_fixture_mode.py"
   ],
   "python_modules": [
     "tests.test_llm_app_integration.LLMAppIntegrationTests.test_default_off_job_read_has_neutral_frozen_policy_without_calls",
     "tests.test_llm_app_integration.LLMAppIntegrationTests.test_default_service_off_does_not_initialize_configuration",
     "tests.test_llm_credential_renewal.CredentialRenewalTests.test_busy_quota_lock_and_off_policy_reject_renewal",
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
-    "tests.test_architecture"
+    "tests.test_architecture",
+    "tests.test_read_observer_fixture"
   ],
   "frontend_tests": [
     "frontend/tests/llm-recovery-display.test.tsx",
