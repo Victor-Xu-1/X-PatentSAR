@@ -1,5 +1,112 @@
 # Operations and troubleshooting
 
+## Characterization tables
+
+Long NMR/MS cells are not assay headers. The shared original-cell reader keeps
+every supported physical row through slices of at most32 rows for characterization
+and open fragments, while the assay-header limit remains8. Slice order, full
+source coverage and saved pixel frames must agree. Every line still needs qualified observation
+at400/600dpi. A missing line, weak confidence, biological endpoint, unknown role
+or excess source inventory stays unresolved. These bodies do not supply activity
+values or become new molecules from preparation-method references. Original
+primary IDs remain required even when the associated structure is missing.
+Rejected role attempts retain raw observations and explicit reasons in
+`source_role_observations` inside the normal binding/activity JSON. Even a
+completed400dpi reading remains available if the next resolution exceeds its
+render budget. These diagnostics are not accepted role evidence and cannot fix
+missing structures or results. Catalog tampering, foreign binding documents and
+over-budget data refuse; weak observations are preserved without being promoted.
+Cells exceeding the original8M-pixel render budget still need bounded original-point
+rendering; a missing/weak slice never produces a successful prefix. Real-task
+acceptance and arbitrary spectral typography remain unverified.
+
+## Result references
+
+Result sentences may explicitly name several tables, including letter/zero-padded
+IDs, plural "Tables" and wrapped references. The software retains all declared
+targets and links each to actual observed results. A missing or unproved target
+keeps the reference unresolved; it is not an exemption for an unreadable table.
+Unknown alternatives/ranges and local measured results cannot be treated as a
+methods-only page. Sentence/target/text limits refuse rather than truncate success.
+
+## Parallel activity tables
+
+The software can use one original header for multiple parallel panels only after
+confirming a unique shared original caption, compatible physical columns and
+complete conserved source observations. It does not match a nearby table merely
+because its title words or dimensions are the same. Unknown header fields stay
+under review and cannot supply another panel's endpoints or units.
+
+Shared columns do not mean shared experimental conditions. Explicit panel-local
+assay/cell-line conditions remain separate through saved output and SAR import;
+repeated compound numbers are not deduplicated across those experiments. A proved
+next-page continuation follows that panel's context. A new assay section stops
+automatic carry even if a later caption says "continued". No user matching step,
+extra OCR pass or external model call is added by this source-context check.
+
+Coverage15/Activity19/extractor28 validate the added original context proof. Old
+derived acceptance remains historical; raw source assets and human audit are not
+rewritten. This does not close remaining structure/number/source coverage or
+characterization-table issues, nor replace frontend scientific acceptance.
+
+## Captions separated from their original diagrams
+
+Binding21/binder30/visible-label21 support both an original caption followed by a
+next-page diagram and a bottom-of-page diagram followed by its next-page caption.
+The software keeps both page identities, actual row/column cells and independent
+source readings; it does not renumber by synthesis order. Caption-only pages must
+remain in the normal complete document inventory. A matching count alone does
+not prove the mapping or chemical graph.
+
+Continuation requires positive compatible original table roles and complete
+boundary context. A new table, intermediate/assay section, intervening grid or
+drawing, unread/conflicting context, changed columns or missing page remains an
+explicit refusal. Saving/reloading rechecks the same proof, including both page
+frames and the retained context; a missing packet cannot become success.
+
+An observed unknown raster/vector catalogue title can be reread only inside its
+existing original caption window, using the normal bounded cell OCR. Both complete
+readings and rendered frames are retained beside the unchanged first observation.
+A known table number, intermediate/mixed role or contradictory source cannot be
+overwritten to force a result. A proved continued caption uses that same read;
+missing/weak/mutated evidence does not retain ownership. This is automatic software
+behavior, not a manual renumbering operation or whole-PDF reread.
+
+Parallel original catalogues keep separate carry state. One column's proved new
+section, shifted frame or invalid boundary does not erase a separately proved
+neighbouring continuation. An unscoped heading is not silently treated as a local
+title merely to retain the old role. Completed tables also retain their complete
+page-tail context before lending a role to another page; this applies equally to
+intermediate exclusions. Saved role links require that context, and excess frame
+inventory fails explicitly rather than omitting some catalogues.
+
+Known intermediate-role spellings share one vocabulary from source inspection to
+SAR: `中间体`, `中間体` and `中間體` cannot become final compounds merely because a
+caption also contains “compounds”. Original labels are not translated or renamed;
+I-prefixed source numbers remain valid unless a separate explicit role excludes
+them. A title containing both intermediate and final categories stays mixed and
+unresolved, not an empty accepted final dataset or a blanket intermediate exclusion.
+Activity19/extractor28 rerun derived role interpretation, not raw OCR or
+manual audit. Original inputs and old reports are retained; no read retags old
+observations into a new scientific acceptance. Unknown wording is still unknown.
+
+Scientific-source upgrades mark old project-derived SAR snapshots stale even if
+their files have not changed or the project page has not been opened. Create a
+new snapshot through the normal frontend after current source verification;
+do not edit old datasets or reuse them as new acceptance. Cosmetic product-version
+updates alone do not force this scientific invalidation.
+
+An overlapping suffix detector is not automatically an extra printed letter:
+the complete independent caption and a qualified literal whole-ID box must agree,
+and the repeated letter must be inside that same physical box. Separate letters
+and known alternative identities still veto acceptance. Raw detector and complete
+line observations remain available rather than being edited or voted away.
+
+Only derived binding/visible-caption acceptance is revised. Preserve original
+PDFs, raw page and model observations, crops, historical failures and manual audit.
+Do not change a running attempt; deploy only after the owned run is terminal, then
+validate any new real attempt through the normal frontend.
+
 ## Historical extraction views
 
 After a proof-rule upgrade, valid old source records remain available for raw
@@ -1015,6 +1122,15 @@ Create a fresh study for new scientific calculations using the retained dataset.
 wheel/state backup, preserving newer study records for forward recovery.
 
 ## Reproducible package construction
+
+Current unpublished quantitative-figure source roles distinguish a plot legend
+from a synthesis heading using original caption/axis/key pixels and the same
+bounded source/cell observations. They do not read activity values off a graph
+or close another structural occurrence of the same identifier. Unknown graphs,
+non-rectilinear layouts or resource refusals remain ordinary source obligations;
+never clear their QA to obtain a successful run. Existing PDFs/raw/manual edits
+are unchanged. Build, installed-consumer checks, reviewed main/18765 delivery and
+an actual frontend extraction remain required before claiming this is delivered.
 
 After building/checking the frontend, use `tools/build_wheel.py --work-root
 /srv/wsl/tmp --out-dir <new-output-directory>` rather than building in an old

@@ -123,6 +123,7 @@ def extract(
         coverage=coverage,
         unresolved_rows=cells.unresolved_rows,
         header_observations=cells.header_observations,
+        role_observations=cells.role_observations,
     )
     headers = list(dict.fromkeys([*cells.headers, *text.headers]))
     logger.info(

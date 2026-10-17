@@ -17,6 +17,43 @@ _ROLE = re.compile(rf"{LABEL_PREFIX}", re.IGNORECASE)
 _KIND = re.compile(LABEL_KIND, re.IGNORECASE)
 
 
+def overlapping_literal_id_letters(raw, observed, boxes):
+    """A letter inside a qualified whole-ID detector box is not a second copy.
+
+    Only the already observed complete caption supplies the ID. The numeric
+    whole-ID detector must agree literally; separate letters, foreign characters,
+    complete prefixed claims and other rows retain their existing conflict gates.
+    Observations and boxes have already passed the shared qualification checks.
+    """
+    label = prefixed_label(raw)
+    duplicates = set()
+    if not label:
+        return duplicates
+    for index, part in observed:
+        letter = identifier_width(part["text"]).strip().upper().removesuffix(".")
+        if not re.fullmatch(r"[A-Z]+", letter) or letter not in label:
+            continue
+        small = boxes[index]
+        x, y = (small[0] + small[2]) / 2, (small[1] + small[3]) / 2
+        for other_index, other in observed:
+            if (
+                other_index == index
+                or not any(char.isnumeric() for char in other["text"])
+                or identifier_key(other["text"], terminal_period=True) != label
+            ):
+                continue
+            whole = boxes[other_index]
+            height = min(small[3] - small[1], whole[3] - whole[1])
+            if (
+                whole[0] <= x <= whole[2]
+                and whole[1] <= y <= whole[3]
+                and small[2] - small[0] <= whole[2] - whole[0]
+                and min(small[3], whole[3]) - max(small[1], whole[1]) >= height / 2
+            ):
+                duplicates.add(index)
+    return duplicates
+
+
 def overlapping_role_locators(raw, observed, boxes):
     """Same-role punctuation may be a detector boundary, never an identifier.
 

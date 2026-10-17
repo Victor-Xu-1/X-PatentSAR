@@ -1,5 +1,99 @@
 # Project governance manifest
 
+- Quantitative-figure reference roles use the existing heading inventory and
+  original source-window/cell SDK. `plot_reference_geometry` owns nomination,
+  `plot_reference_pixels` bounded mask transport, axes/marker modules pure
+  geometric replay, and `plot_reference` role observation/replay. A proved
+  numeric-axis figure label is a reference, never a new molecular declaration
+  or a plotted measurement. All source assets/independent structural inventory,
+  native conflicts, confidence and strict QA remain; no page/ID exceptions,
+  external engine, dependency, API/SQL or new artifact store. Heading proof2
+  stays under unpublished Binding21/binder30/v0.2.34. Controlled native/raster
+  and saved-consumer checks are not real-task scientific or deployment proof.
+
+- `source_role_observations` owns rejected-role diagnostic serialization/replay,
+  using the existing source digest and the sole binding/activity artifact writers.
+  Original partial/weak cell observations survive role/render refusal without
+  another OCR pass; every diagnostic remains unresolved and cannot supply source
+  acceptance, molecules or activities. Consumers validate document/page/grid and
+  hash identity with bounded JSON,4096attempts/64MiB and the existing1MiB region
+  limit. No API/SQL/dependency/raw/manual change or duplicate source store is
+  added within unpublished Binding21/Activity19/v0.2.34. Longer-cell chunking and
+  real scientific acceptance remain open, not certified by diagnostic retention.
+
+- Characterization body rows reuse the sole original physical-text/cell SDK.
+  `cell_text_chunks` owns bounded empty-row slice observation through that same
+  OCR authority; `cell_text_chunk_proof` owns whole-source row/pixel/order/ink
+  replay. Per-slice32rows and128slices do not replace the unchanged8-row assay
+  header default or original8M whole-cell render cap. The existing role and open
+  fragment consumers use the same nested detections and source replay. Complete
+  pixel inventories, original native/OCR text,0.85confidence,96cells and8Mpixel
+  bounds remain mandatory. Locator-only spectral hints nominate observation,
+  never an exclusion or a missing-result exemption. Known wording/typography
+  projection changes no original IDs/values/assets. No new runtime/dependency,
+  API/SQL or epoch bump beyond unpublished Activity19/extractor28/Binding21 is
+  introduced; controlled checks are distinct from real scientific acceptance.
+
+- `source_result_references` owns bounded literal result-link sentences, target
+  lists, original spans and reference limits, reusing the one table-ID grammar.
+  Discovery and method/result consumers use that authority; the former separate
+  single-target regex is removed. Every declared target still needs independent
+  observed results and cell proof. Unknown or over-budget syntax cannot become
+  accepted partial targets or a methods-only exemption. Raw source, API/SQL and
+  the same unpublished Activity19/extractor28/coverage15/v0.2.34 remain unchanged.
+
+- Shared-panel source ownership: `activity_parallel_context` uses the existing
+  bounded original observation/context SDK, no OCR/queue/store/model of its own.
+  Producer carry and saved table-family QA require unique actual caption positions,
+  complete source/geometry/confidence and overlapping-word conservation. Generic
+  shared headers retain each panel's own explicit conditions; separate captions
+  cannot merge by identical text. Adjacent pages keep their immediate parent,
+  and new sections still stop carry. The source-header identity authority owns
+  one unresolved-field policy shared by rows, carry and saved replay. Coverage15
+  stores the additional proof within unpublished Activity19/extractor28/v0.2.34;
+  original/raw/manual data, API/SQL, scientific engines and numerical SAR policies
+  remain unchanged. Controlled native/raster/writer/SAR checks do not prove full
+  original-compound recall or real-task scientific acceptance.
+
+- Bidirectional caption ownership: the existing `caption_grid_binding` path,
+  binder/writer and source ledger remain sole authorities. `caption_page_boundary`
+  owns transient adjacent-grid carry and two-page replay; `caption_boundary_context`
+  owns complete retained tail context through the existing source-window/body/
+  nonfinal-role SDK, without another OCR/parser/queue/store. Literal caption
+  fragments reuse `cell_caption_fragments`/`cell_caption_identity`; only an
+  overlapping letter inside a qualified matching whole-ID box loses independent
+  duplicate-character status. All observations and real conflicts remain. New
+  Binding21/binder30/visible21 invalidate derived ownership, not original assets,
+  raw observations or human audit. API/SQL, OCSR preparation8/raw2/stereo3,
+  SAR, models and dependencies do not change. Native/raster source controls,
+  installed consumers, review/main/18765 delivery and real scientific acceptance
+  remain separate gates, not an all-format or molecular-accuracy guarantee.
+  Formal spatial admission observes caption grids once before header nomination;
+  numbered/unruled admission rechecks shared roles against the same fresh source
+  facts. The later caption consumer reuses that result, and the existing claim
+  resolver retains genuine conflicts instead of hiding claims by page/header ID.
+  Call-local carry is per physical original frame, with unique qualified-parent
+  selection and explicit4096-frame bounds. Completed catalogues and nonfinal
+  exclusions require the same complete prior tail as split cells; saved role
+  links replay it. No new per-checkpoint epoch or product bump is introduced
+  within this unpublished Binding21/binder30/visible21/v0.2.34 candidate.
+  `caption_title_refinement` owns original-title bounded reads/replay through
+  the shared physical-cell authority. Unknown initial semantics may be resolved;
+  known role/table identity conflicts remain vetoes, mixed/unknown roles stay
+  explicit, and continuation consumes the same proved title. Raw source packets
+  are not rewritten. Fresh-frame admission reuse does not launch another read.
+  This remains within the same unpublished scientific epoch and product release.
+
+- `source_role_terms` owns the finite literal intermediate vocabulary consumed by
+  original headings/captions/cell claims, characterization identity, record filters
+  and SAR source scope. The binder delegates declared role fields to the same
+  filter, removing its duplicate regex implementation. Raw words/IDs remain;
+  neither I-prefixes nor a reference in a final synthesis title imply exclusion.
+  Activity19/extractor28 refresh derived source roles; original/raw/manual data,
+  API/SQL, SAR numerical policies, models and dependency authorities do not change.
+  Native generated CJK-source proof and SAR current-view/anchor checks remain
+  distinct from real-patent and broader language/scientific acceptance.
+
 - Historical source presentation: the shared catalogue reader's strict default
   remains the only scientific ownership authority. The Web artifact projection
   alone requests explicit unqualified historical review for non-current bindings;

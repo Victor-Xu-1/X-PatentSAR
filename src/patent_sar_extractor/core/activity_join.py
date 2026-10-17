@@ -12,6 +12,7 @@ from .activity_coverage import coverage_errors
 from .activity_header_evidence import validate_header_evidence
 from .activity_identity import is_control, is_value, normalize_compound
 from .activity_metadata import metadata_evidence_errors, metadata_role
+from .source_role_observations import validate_role_catalog
 
 
 def _measurement_fields(row: dict) -> list[tuple[str, str]]:
@@ -82,6 +83,7 @@ def activity_evidence_errors(
         payload.get("coverage"), classified_activity_pages, rows=rows
     )
     errors.extend(validate_header_evidence(payload))
+    validate_role_catalog(payload.get("source_role_observations", {}))
     errors.extend(metadata_evidence_errors(rows))
     if not rows:
         if classified_activity_pages != []:

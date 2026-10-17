@@ -55,9 +55,13 @@ def _reading_envelope(reading, xs, ys):
 
 
 def original_header_readings(
-    reading, xs, ys, sources, *, identity=structure_header_role
+    reading, xs, ys, sources, *, identity=structure_header_role, source_conflict=None
 ):
-    """Return full raw headers only after every original column has been checked."""
+    """Return full headers only after every original column has been checked.
+
+    The default keeps qualified original identities strict. The title-only caller
+    supplies a known-role/table veto; ID/column consumers keep the default.
+    """
     observations, frames, hints, native = _reading_envelope(reading, xs, ys)
     headers = []
     for col in range(len(xs) - 1):
@@ -98,7 +102,11 @@ def original_header_readings(
         if any(
             original["status"] == "qualified"
             and original["text"].strip()
-            and identity(original["text"]) != next(iter(roles))
+            and (
+                source_conflict(original["text"], texts[0])
+                if source_conflict is not None
+                else identity(original["text"]) != next(iter(roles))
+            )
             for original in raw
         ):
             return None

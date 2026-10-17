@@ -6,6 +6,7 @@ No extraction, model, LLM, production data or real worker process is used here.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import sqlite3
@@ -17,6 +18,7 @@ from unittest.mock import patch
 
 from test_web_support import WebFixture, artifact_run
 
+from patent_sar_extractor import contracts as core
 from patent_sar_extractor.web.analysis_process import BoundedAnalysisRunner
 from patent_sar_extractor.web.environment_models import EnvironmentSettingsRequest
 from patent_sar_extractor.web.errors import WebError
@@ -323,6 +325,55 @@ class SARRecoveryTests(WebFixture, unittest.TestCase):
             with self.assertRaises(WebError) as error:
                 service.current(dataset["id"])
             self.assertEqual(error.exception.code, "sar_dataset_stale")
+
+    def test_scientific_epoch_stales_snapshot_without_a_project_visit_or_source_rewrite(
+        self,
+    ):
+        run = artifact_run(self.root / "source", self.pdf, current=True)
+        before = {
+            str(path): hashlib.sha256(path.read_bytes()).hexdigest()
+            for path in run.rglob("*")
+            if path.is_file()
+        }
+        with self.client(import_runs=[run]) as client:
+            project_id = self.source_project(client, run)
+            response = client.post(
+                ROOT + "/datasets/project",
+                json={"project_id": project_id, "request_id": nonce()},
+            )
+            self.assertEqual(response.status_code, 201, response.text)
+            dataset_id = response.json()["id"]
+            service = client.app.state.sar
+            workspace = client.app.state.workspace
+            snapshot = workspace.store.project(project_id)["snapshot"]
+            observations = [
+                item.model_dump() for item in service.datasets.all(dataset_id)
+            ]
+            self.assertFalse(service.dataset(dataset_id).stale)
+            with patch.object(
+                core, "ACTIVITY_SCHEMA_VERSION", core.ACTIVITY_SCHEMA_VERSION + 1
+            ):
+                self.assertTrue(service.dataset(dataset_id).stale)
+                with self.assertRaises(WebError) as error:
+                    service.current(dataset_id)
+                self.assertEqual(error.exception.code, "sar_dataset_stale")
+                self.assertEqual(
+                    workspace.store.project(project_id)["snapshot"], snapshot
+                )
+                self.assertEqual(
+                    [item.model_dump() for item in service.datasets.all(dataset_id)],
+                    observations,
+                )
+            with patch.object(core, "__version__", "0.2.35"):
+                self.assertFalse(service.dataset(dataset_id).stale)
+        self.assertEqual(
+            before,
+            {
+                str(path): hashlib.sha256(path.read_bytes()).hexdigest()
+                for path in run.rglob("*")
+                if path.is_file()
+            },
+        )
 
     def test_condition_change_during_snapshot_refuses_partial_publication(self):
         run = artifact_run(self.root / "source", self.pdf, current=True)

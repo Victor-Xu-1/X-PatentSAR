@@ -3,7 +3,8 @@
 import re
 
 from .activity_header_metrics import normalize_metric_text
-from .source_table_markers import TABLE_MARKER, table_marker_identity
+from .activity_headers import context_source_text
+from .source_table_markers import caption_table_marker, table_marker_identity
 
 
 def continuation_prefix(prefix: str) -> bool:
@@ -23,18 +24,31 @@ def canonical_header(text: str) -> str:
 def caption_prefix(
     prefix: str, table_id: str, original_caption: str, *, continued=False
 ) -> bool:
-    lines = [
-        line.strip()
-        for line in prefix.splitlines()
-        if line.strip() and not continuation_prefix(line)
-    ]
-    text = " ".join(lines)
+    if continued:
+        boundary = "\n".join(
+            line.strip()
+            for line in prefix.splitlines()
+            if line.strip() and not continuation_prefix(line)
+        )
+        if caption_table_marker(boundary) is None:
+            return False  # A new section/procedure cannot disappear before carry.
+
+    def original_context(value):
+        # Use the same real-caption boundary that owns parsed assay fields.
+        # Earlier prose references are retained as provenance, not new titles.
+        return " ".join(
+            line.strip()
+            for line in context_source_text(value).splitlines()
+            if line.strip() and not continuation_prefix(line)
+        )
+
+    text = original_context(prefix)
     if not text:
-        return not continued
-    markers = list(TABLE_MARKER.finditer(text))
+        return False  # An absent caption does not prove a same-page shared table.
+    marker = caption_table_marker(text)
     if (
-        len(markers) != 1
-        or table_marker_identity(markers[0].group()).casefold() != table_id.casefold()
+        marker is None
+        or table_marker_identity(marker.group()).casefold() != table_id.casefold()
     ):
         return False
     term = re.compile(
@@ -43,7 +57,7 @@ def caption_prefix(
     if continued and not term.search(text):
         return False
     clean = term.sub("", text).strip(" .:：-()（）")
-    original = original_caption.strip(" .:：-()（）")
+    original = original_context(original_caption).strip(" .:：-()（）")
     return canonical_header(clean) in {
         canonical_header(original),
         canonical_header(table_id),

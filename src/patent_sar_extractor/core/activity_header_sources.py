@@ -73,7 +73,7 @@ def source_context_region(snapshot, band):
     region["allow_shared_caption"] = shared_caption_allowed(
         (packet["tokens"] for packet in packets), region
     )
-    parts = _context_parts(snapshot.get("prefix"), region)
+    parts = context_source_parts(snapshot.get("prefix"), region)
     if parts is None:
         return region  # Valid weak captions remain conflicts, not bad geometry.
     raw = "\n".join(" ".join(t["text"] for t in part) for part in parts)
@@ -104,7 +104,8 @@ def _column_conflict(packet, fresh):
     )
 
 
-def _context_parts(packet, region):
+def context_source_parts(packet, region):
+    """One complete qualified caption boundary for all source-context consumers."""
     if source_claim_runs(packet) is None:
         return None
     parts = prefix_parts(packet["tokens"], region)
@@ -128,7 +129,7 @@ def _context_parts(packet, region):
 
 
 def _context_conflict(packet, fresh, region):
-    parts = _context_parts(packet, region)
+    parts = context_source_parts(packet, region)
     if parts is None:
         return True
     if packet["status"] == "qualified":
@@ -212,7 +213,7 @@ def header_source_conflicts(snapshot, band, original_headers, original_context, 
 
 
 def _context_choice(packet, region, fresh):
-    parts = _context_parts(packet, region)
+    parts = context_source_parts(packet, region)
     if parts is None:
         return None
     names = ("table_id", "target", "assay", "cell_line")

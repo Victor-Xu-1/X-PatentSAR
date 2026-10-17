@@ -4,15 +4,15 @@ import re
 
 # Common OCR l/i/1 confusion affects the word Table, never the printed number.
 # Raw captions remain source evidence; this marker supplies discovery/identity.
-_TABLE_INDEX = r"(?:[A-Za-z][-–—]?)?\d+(?:[-–—]\d+)*[A-Za-z]?"
+TABLE_INDEX = r"(?:[A-Za-z][-–—]?)?\d+(?:[-–—]\d+)*[A-Za-z]?"
 TABLE_MARKER = re.compile(
-    rf"\bTab[li1]e(?:\s*{_TABLE_INDEX}|\s+[A-Za-z])\b(?![-–—])"
-    rf"|表\s*(?:{_TABLE_INDEX}|[A-Za-z])(?![A-Za-z0-9–—-])",
+    rf"\bTab[li1]e(?:\s*{TABLE_INDEX}|\s+[A-Za-z])\b(?![-–—])"
+    rf"|表\s*(?:{TABLE_INDEX}|[A-Za-z])(?![A-Za-z0-9–—-])",
     re.IGNORECASE,
 )
 TABLE_CAPTION_START = re.compile(
     r"^\s*(?:\[\s*\d{1,8}\s*\]\s*)?"
-    rf"(?:Tab[li1]e(?:\b|(?={_TABLE_INDEX}\b(?![-–—])))|"
+    rf"(?:Tab[li1]e(?:\b|(?={TABLE_INDEX}\b(?![-–—])))|"
     r"表(?=\s|[0-9A-Za-z一二三四五六七八九十甲乙丙丁]))",
     re.IGNORECASE,
 )

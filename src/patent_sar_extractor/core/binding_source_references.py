@@ -12,6 +12,7 @@ from .printed_identifiers import identifier_key
 from .source_fragment_links import resolved_fragments
 from .source_geometry import _box
 from .source_role_fragments import fragment_issues, validate_fragments
+from .source_role_observations import validate_role_catalog
 from .source_section_roles import section_heading
 from .structure_declaration_proof import declaration_ids, declaration_issues
 from .structure_declaration_scopes import PAGE_ROLE, REFERENCE_ROLE
@@ -192,6 +193,12 @@ def reference_issues(payload, entries, *, required=True):
     ):
         raise ValueError("Malformed bounded original binding sections")
     scope = payload.get("source_reference_scope")
+    validate_role_catalog(
+        payload.get("source_role_observations", {}),
+        original_pdf_sha256=scope.get("original_pdf_sha256")
+        if isinstance(scope, dict)
+        else None,
+    )
     validate_caption_exclusions(sections, entries)
     if (
         scope is None

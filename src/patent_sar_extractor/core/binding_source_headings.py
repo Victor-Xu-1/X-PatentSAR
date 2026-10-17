@@ -23,6 +23,7 @@ from .heading_line_windows import heading_line_windows
 from .heading_observation import observe_heading
 from .heading_source_proof import proved_heading_declaration
 from .pipeline_rules import _candidate_labels, annotate_binding_accuracy
+from .plot_reference import observe_plot_reference
 from .source_document import document_sha256 as _document_sha256
 from .source_geometry import source_layout
 from .source_section_roles import heading_list_hint, heading_members, section_heading
@@ -51,6 +52,7 @@ def observed_heading_blocks(
     declaration_roles = declaration_role_index(source_sections or [], document_sha256)
     for page_index in sorted(set(pages)):
         page = doc[page_index]
+        plot_cache = {}
         layout = source_layout(page)
         regions = (source_regions or {}).get(page_index)
         if regions is None:
@@ -121,7 +123,14 @@ def observed_heading_blocks(
                             }
                         )
                     continue
-                proof = observe_heading(page, line, document_sha256, layout=layout)
+                proof = observe_plot_reference(
+                    page,
+                    line,
+                    observed,
+                    document_sha256,
+                    cache=plot_cache,
+                    tokens_for_page=tokens_for_page,
+                ) or observe_heading(page, line, document_sha256, layout=layout)
                 declared = proved_heading_declaration(proof)
                 effective = declared or observation
                 if source_sections is not None:
@@ -140,6 +149,7 @@ def observed_heading_blocks(
                 if declared and declared["role"] in {
                     "assay_section",
                     "intermediate_section",
+                    "figure_label_reference",
                 }:
                     continue
                 for identifier in heading_members(effective):

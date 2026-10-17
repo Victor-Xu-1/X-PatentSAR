@@ -119,17 +119,27 @@ class CurrentStrengthTests(unittest.TestCase):
         self.assertEqual(excluded, {})
 
     def test_numberless_and_explicit_intermediate_records_do_not_set_the_anchor(self):
-        packet, captured = self.historical(["0.1"] * 9 + ["10", "100", "1000", ""])
-        # These records retain legitimate measured source values in the archive.
-        packet["molecules"][0]["source_compound_id"] = "source-structure:unconfirmed"
-        packet["molecules"][1]["label"] = "Intermediate 2"
-        captured.rows[1].label = "Intermediate 2"
-        current, excluded = current_report(packet, captured, [])
-        self.assertEqual(current.molecule_count, 11)
-        self.assertEqual(current.policies[0].strength_scale.strong_boundary, 10000)
-        self.assertEqual(excluded, {"unconfirmed_identifier": 1, "intermediate": 1})
-        self.assertFalse(any(row.label == "Intermediate 2" for row in current.rows))
-        self.assertEqual(len(packet["molecules"]), 13)
+        baseline, report = self.historical(["0.1"] * 9 + ["10", "100", "1000", ""])
+        for label in ("Intermediate 2", "中间体2", "中間体2", "中間體2"):
+            with self.subTest(label=label):
+                packet, captured = copy.deepcopy(baseline), report.model_copy(deep=True)
+                # Archive observations remain intact; the current population is scoped.
+                packet["molecules"][0]["source_compound_id"] = (
+                    "source-structure:unconfirmed"
+                )
+                packet["molecules"][1]["label"] = label
+                captured.rows[1].label = label
+                original = copy.deepcopy(packet)
+                current, excluded = current_report(packet, captured, [])
+                self.assertEqual(current.molecule_count, 11)
+                self.assertEqual(
+                    current.policies[0].strength_scale.strong_boundary, 10000
+                )
+                self.assertEqual(
+                    excluded, {"unconfirmed_identifier": 1, "intermediate": 1}
+                )
+                self.assertFalse(any(row.label == label for row in current.rows))
+                self.assertEqual(packet, original)
 
     def test_fewer_than_ten_and_uncertain_tenth_never_fall_back_to_fifth(self):
         packet, captured = self.historical(["1"] * 5 + ["10"] * 4)

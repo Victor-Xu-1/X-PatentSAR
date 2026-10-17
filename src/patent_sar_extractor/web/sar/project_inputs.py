@@ -7,6 +7,7 @@ import time
 
 from ..errors import WebError
 from ..history_storage import ensure_project_visible
+from ..lead_source import source_identity
 from ..models import Acceptance
 from ..prediction_identity import source_stereo_blocked
 from ..service import WorkspaceService
@@ -27,6 +28,7 @@ def project_revision(
 ) -> str:
     used = 0
     result = hashlib.sha256()
+    source_snapshot = None
     with service.store.connect() as connection:
         connection.execute("BEGIN")
         ensure_project_visible(connection, identifier)
@@ -39,14 +41,18 @@ def project_revision(
                 "sar_source_busy",
                 "Wait for extraction to stop before snapshotting its results.",
             )
-        for statement in (
-            "SELECT id,sha256,expected_sha256,run_root,snapshot FROM projects WHERE id=?",
-            "SELECT id,ordinal,payload,image_path,geometry_space FROM compounds WHERE project_id=? ORDER BY id",
-            "SELECT compound_id,revision,fields,basis_fingerprint FROM corrections WHERE project_id=? ORDER BY compound_id",
-            "SELECT compound_id,decision,revision FROM reviews WHERE project_id=? ORDER BY compound_id",
-            "SELECT compound_id,source_fingerprint,crop_sha256,observation FROM compound_recognitions WHERE project_id=? ORDER BY compound_id",
+        for source_index, statement in enumerate(
+            (
+                "SELECT id,sha256,expected_sha256,run_root,snapshot FROM projects WHERE id=?",
+                "SELECT id,ordinal,payload,image_path,geometry_space FROM compounds WHERE project_id=? ORDER BY id",
+                "SELECT compound_id,revision,fields,basis_fingerprint FROM corrections WHERE project_id=? ORDER BY compound_id",
+                "SELECT compound_id,decision,revision FROM reviews WHERE project_id=? ORDER BY compound_id",
+                "SELECT compound_id,source_fingerprint,crop_sha256,observation FROM compound_recognitions WHERE project_id=? ORDER BY compound_id",
+            )
         ):
             for row in connection.execute(statement, (identifier,)):
+                if source_index == 0:
+                    source_snapshot = row["snapshot"]
                 data = encode(list(row)).encode()
                 used += len(data)
                 if used > 64 * 1024 * 1024:
@@ -73,6 +79,10 @@ def project_revision(
                         )
                     result.update(data)
                     result.update(b"\n")
+    # Reuse the existing scientific-source authority, not the marketing version.
+    # A rules/schema upgrade must stale an old SAR snapshot even before any UI
+    # visit refreshes the source project's cached DTOs. No source is rewritten.
+    result.update(encode(source_identity({"snapshot": source_snapshot})).encode())
     result.update(
         (condition_sha or conditions_sha256(service.store.project(identifier))).encode()
     )

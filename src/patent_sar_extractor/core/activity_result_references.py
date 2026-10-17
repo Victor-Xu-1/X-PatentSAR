@@ -13,11 +13,10 @@ from .activity_table_scopes import table_scope_groups
 from .cell_cross_observation import printed_cross_valid
 from .printed_identifiers import identifier_fragments_conflict, identifier_key
 from .source_cell_claims import cell_source_conflict, cell_source_status
+from .source_result_references import MAX_REFERENCES, MAX_TARGETS_PER_REFERENCE
 from .source_section_roles import nonfinal_original_label
 from .source_table_markers import TABLE_MARKER, table_marker_identity
 
-MAX_REFERENCES = 2048
-MAX_TARGETS_PER_REFERENCE = 128
 MAX_REFERENCE_TARGETS = 8192
 MAX_SOURCE_PACKETS = 100000
 

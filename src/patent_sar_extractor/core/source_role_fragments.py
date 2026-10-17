@@ -3,8 +3,9 @@
 import math
 
 from .activity_grid_role_observation import observe_role_cells
-from .activity_grid_roles import declared_measurement
+from .activity_grid_roles import MAX_ROLE_TEXT_ROWS, declared_measurement
 from .cell_frame_proof import valid_cell_frame
+from .cell_text_chunk_proof import text_detection_parts
 from .cell_text_proof import valid_text_reading
 from .source_fragment_context import validate_fragment_context
 from .source_grid_edges import edge_intervals
@@ -22,7 +23,7 @@ def _known_role_conflict(cells):
         for cell in observed["cells"]:
             texts.extend(
                 part.get("text", "")
-                for part in cell.get("detection_parts", [])
+                for part in text_detection_parts(cell)
                 if isinstance(part, dict)
             )
     return any(
@@ -142,7 +143,7 @@ def validate_fragments(region):
                 else:
                     dpi = (400, 600)[index]
                     if (
-                        set(reading) - {"physical_header_lines"}
+                        set(reading) - {"physical_header_lines", "physical_text_chunks"}
                         != {
                             "method",
                             "text",
@@ -213,12 +214,16 @@ def fragment_texts(region, fragment, column):
             and reading.get("raw_text") == reading.get("text") == ""
             and reading.get("parts") == reading.get("detection_parts") == []
             and reading.get("ink_crop_pixels") is None
+            and "physical_text_chunks" not in reading
+            and "physical_header_lines" not in reading
             and type(reading.get("border_pixels")) is int
             and reading["border_pixels"] == 0
             and type(reading.get("confidence")) in {int, float}
             and reading["confidence"] == 0
         )
-        if not empty and not valid_text_reading(reading, bounds, dpi):
+        if not empty and not valid_text_reading(
+            reading, bounds, dpi, maximum_rows=MAX_ROLE_TEXT_ROWS, allow_chunks=True
+        ):
             return None
         texts.append(reading["raw_text"])
     hint = cells["native_hints"][0][column]
