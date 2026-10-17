@@ -441,6 +441,17 @@ mutation/POST retain existing explicit errors and non-replay semantics.
 Fresh list/detail validation is separate from last-known presentation. Workspace
 and task history pass required current-read verification to JobActions; unknown
 state disables task start/resume/cancel and does not imply an empty/not-started task.
+`api/readRecovery.ts` owns the pure transient-GET observation policy. Explicitly
+audited task list/detail, polled SAR and environment-progress readers opt in through
+the existing `useResource` scheduler: at most three delayed rereads (1/3/7 seconds)
+after network/timeouts or HTTP502/503/504. The existing ApiClient transport bounds
+remain per reread. Persistent auth/permission/contract errors, HTTP429, unknown
+failures and uncertain write outcomes do not enter this policy. The fault remains
+visible and retained data stays unverified until a fresh successful DTO; budget
+exhaustion requires explicit reload. Each observer owns one abort signal and timer,
+discarding cancelled or previous-key results. Success/manual reload resets the
+consecutive-failure budget. Default manual resources and all POST/write callers
+keep their non-replay behavior; no extra polling, cache or task authority is added.
 StageStrip marks unverified status unknown. Existing reload, queue, state store,
 locale and security authorities remain; no source/QA reinterpretation occurs.
 

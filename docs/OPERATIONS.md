@@ -472,7 +472,15 @@ An explicit401/session_required on a safe GET uses the existing same-origin
 bootstrap once and retries that read once. Persistent failure shows an error
 and unknown task status, keeping only source-bound last-known information.
 Start/resume/cancel remain disabled until both task and project reads are current.
-Use Reload to retry failed reads; it never starts or cancels a task. Writes,
+Task list/detail, polled SAR and environment-progress GET observers additionally
+admit at most three delayed rereads at1/3/7seconds for network/timeout or
+HTTP502/503/504 faults. These logical rereads retain the existing client's own
+transport bounds. The last observation remains unverified and the error remains
+visible during recovery. On exhaustion, use Reload to make a fresh check; leaving
+the page or changing its source cancels queued recovery and obsolete responses.
+Auth/permission failures, invalid DTOs, HTTP429 and unknown/uncertain errors require
+explicit action. Ordinary manual resources are unchanged. Use Reload to retry
+failed reads; it never starts or cancels a task. Writes,
 uploads, exports and chemistry POST reads are not replayed after auth failure.
 Explicit reconnect cannot publish an obsolete in-flight handshake. Server session
 lifetime remains8hours; a browser becoming disconnected does not prove expiry

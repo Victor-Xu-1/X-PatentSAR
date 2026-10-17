@@ -24,10 +24,12 @@ export function useEnvironmentWorkspace(
     (signal: AbortSignal) => api.environmentOperation(id ?? '', signal),
     [id],
   );
-  const operation = useResource(id ? `environment-operation:${id}` : null, loadOperation, {
-    milliseconds: 1500,
-    while: activeEnvironmentOperation,
-  });
+  const operation = useResource(
+    id ? `environment-operation:${id}` : null,
+    loadOperation,
+    { milliseconds: 1500, while: activeEnvironmentOperation },
+    { recoverGetErrors: true },
+  );
   const [lastKnown, setLastKnown] = useState(operation.data);
   if (operation.data && operation.data !== lastKnown) setLastKnown(operation.data);
   const selected =

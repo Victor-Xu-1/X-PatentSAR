@@ -10,6 +10,7 @@ PREFIX = "frontend/e2e/"
 COMMON = {
     "lead-source-admission.spec.ts",
     "session-job-recovery.spec.ts",
+    "read-poll-recovery.spec.ts",
     "topbar.spec.ts",
     "jobs-project-recovery.spec.ts",
     "product-version.spec.ts",
