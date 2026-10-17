@@ -9,7 +9,7 @@ import numpy as np
 from .cell_ocr_scores import confidence_score
 
 
-def header_line_frame(image, border, dpi, *, maximum_row_height=12):
+def header_line_frame(image, border, dpi, *, maximum_row_height=12, maximum_rows=8):
     """Read complete physical rows without endpoint dictionaries or text repair.
 
     Small gaps within glyphs/subscripts stay in one row. Every dark pixel must
@@ -29,6 +29,8 @@ def header_line_frame(image, border, dpi, *, maximum_row_height=12):
         or not 0 < border <= 32
         or type(maximum_row_height) is not int
         or not 0 < maximum_row_height <= 128
+        or type(maximum_rows) is not int
+        or not 2 <= maximum_rows <= 32
     ):
         raise ValueError("Invalid original header line frame")
     ink = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) < 180
@@ -52,7 +54,7 @@ def header_line_frame(image, border, dpi, *, maximum_row_height=12):
         "row_bounds": [],
         "ink_pixels": int(ink.sum()),
     }
-    if not 2 <= len(groups) <= 8:
+    if not 2 <= len(groups) <= maximum_rows:
         return packet
     for rows in groups:
         y0, y1 = int(rows[0]), int(rows[-1]) + 1

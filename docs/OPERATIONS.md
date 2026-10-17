@@ -1,5 +1,17 @@
 # Operations and troubleshooting
 
+## Characterization tables
+
+Long NMR/MS cells are not assay headers. The shared original-cell reader keeps
+up to32 physical text rows for characterization and open-row fragments, while
+the assay-header limit remains8. Every line still needs qualified observation
+at400/600dpi. A missing line, weak confidence, biological endpoint, unknown role
+or excess source inventory stays unresolved. These bodies do not supply activity
+values or become new molecules from preparation-method references. Original
+primary IDs remain required even when the associated structure is missing.
+Failed-role observation diagnostics and full real-task acceptance remain open;
+this bounded reader change does not certify arbitrary spectral typography.
+
 ## Result references
 
 Result sentences may explicitly name several tables, including letter/zero-padded

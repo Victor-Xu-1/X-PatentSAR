@@ -6,9 +6,13 @@ import re
 from .cell_ocr_scores import confidence_value
 
 
-def valid_text_reading(reading, bounds, dpi, *, maximum_row_height=12):
+def valid_text_reading(reading, bounds, dpi, *, maximum_row_height=12, maximum_rows=8):
     """Typed original text-cell reading, independent of its scientific role."""
-    if not isinstance(reading, dict) or (
+    if (
+        type(maximum_rows) is not int
+        or not 2 <= maximum_rows <= 32
+        or not isinstance(reading, dict)
+    ) or (
         reading.get("method") != f"cell_ocr_{dpi}dpi"
         or type(reading.get("render_dpi")) is not int
         or reading["render_dpi"] != dpi
@@ -45,7 +49,7 @@ def valid_text_reading(reading, bounds, dpi, *, maximum_row_height=12):
             packet_name="physical_header_lines",
             part_method="physical_header_line",
             minimum_rows=2,
-            maximum_rows=8,
+            maximum_rows=maximum_rows,
             maximum_row_height=maximum_row_height,
         )
     return " ".join(part["text"] for part in parts) == reading["raw_text"]

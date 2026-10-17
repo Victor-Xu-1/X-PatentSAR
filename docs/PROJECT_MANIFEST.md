@@ -1,5 +1,15 @@
 # Project governance manifest
 
+- Characterization body rows reuse the sole original physical-text/cell SDK,
+  with an explicit32-row caller budget and the unchanged8-row assay-header
+  default. Role replay and open-row consumers use the same body limit. Complete
+  pixel inventories, original native/OCR text,0.85confidence,96cells and8Mpixel
+  bounds remain mandatory. Locator-only spectral hints nominate observation,
+  never an exclusion or a missing-result exemption. Known wording/typography
+  projection changes no original IDs/values/assets. No new runtime/dependency,
+  API/SQL or epoch bump beyond unpublished Activity19/extractor28/Binding21 is
+  introduced; controlled checks are distinct from real scientific acceptance.
+
 - `source_result_references` owns bounded literal result-link sentences, target
   lists, original spans and reference limits, reusing the one table-ID grammar.
   Discovery and method/result consumers use that authority; the former separate

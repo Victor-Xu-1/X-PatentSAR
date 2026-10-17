@@ -4,11 +4,12 @@ import re
 
 from .activity_header_metrics import METRIC, normalize_metric_text
 from .activity_headers import ACTIVITY_CONTEXT, context_from_text
-from .printed_identifiers import PRINTED_ID, identifier_key
+from .printed_identifiers import LABEL_KIND, PRINTED_ID, identifier_key
 from .source_role_terms import INTERMEDIATE_SINGULAR
 from .source_section_roles import section_heading
 
 MAX_ROLE_CELLS = 96
+MAX_ROLE_TEXT_ROWS = 32
 _ID_HEADER = re.compile(
     rf"(?:Compound|Cmpd|Cpd|{INTERMEDIATE_SINGULAR}|Example|化合物|实施例)\s*(?:No\.?|ID|#|编号)?|No\.|ID|编号",
     re.IGNORECASE,
@@ -18,12 +19,14 @@ _ID_LABEL = re.compile(
     re.IGNORECASE,
 )
 _PREPARATION = re.compile(
-    r"\b(?:synthesized|prepared)\s+(?:in\s+analogy\s+to|according\s+to|by\s+the\s+(?:method|procedure))\b|"
+    r"\b(?:synthesized|prepared)\s*"
+    r"(?:in\s*analogy\s*to|according\s*to|by\s*the\s*(?:method|procedure))"
+    rf"(?:\b|(?={LABEL_KIND}(?=\s|\d)))|"
     r"(?:合成|制备)(?:方法)?(?:同|参照|按照)",
     re.IGNORECASE,
 )
-_NMR = re.compile(r"\b(?:\d{1,3}\s*[HCFPN]\s*)?NMR\b", re.IGNORECASE)
-_SPECTRAL_UNIT = re.compile(r"\bMHz\b|\bppm\b", re.IGNORECASE)
+_NMR = re.compile(r"(?<![A-Za-z])(?:\d{1,3}\s*[HCFPN]\s*)?NMR\b", re.IGNORECASE)
+_SPECTRAL_UNIT = re.compile(r"(?<![A-Za-z])(?:MHz|ppm)(?![A-Za-z])", re.IGNORECASE)
 _CHARACTERIZATION_TITLE = re.compile(
     r"\b(?:characterization|characterisation)\b|结构表征", re.IGNORECASE
 )
@@ -64,6 +67,11 @@ def nominate_characterization(matrix, prefix):
         and (_NMR.search(text) or _MASS.search(text))
         or _CHARACTERIZATION_TITLE.search(prefix)
         and (_NMR.search(text) or _MASS.search(text))
+        or matrix
+        and isinstance(matrix[0], (list, tuple))
+        and any(_ID_HEADER.fullmatch(compact(cell)) for cell in matrix[0])
+        and _NMR.search(text)
+        and _MASS.search(text)
     )
 
 

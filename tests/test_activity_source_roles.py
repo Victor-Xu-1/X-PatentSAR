@@ -3,6 +3,10 @@
 import unittest
 from types import SimpleNamespace
 
+from patent_sar_extractor.core.activity_grid_roles import (
+    characterization_roles,
+    nominate_characterization,
+)
 from patent_sar_extractor.core.activity_source_discovery import (
     declared_activity_source,
     discover_activity_sources,
@@ -20,6 +24,36 @@ from patent_sar_extractor.core.source_section_roles import section_heading
 
 
 class ActivitySourceRoleTests(unittest.TestCase):
+    def test_characterization_typography_keeps_literal_roles_without_id_repair(self):
+        matrix = [
+            ["Compound No.", "Preparation", "Characterization"],
+            [
+                "007B",
+                "PreparedinanalogytoCompound 091C",
+                "1HNMR (400MHz) 7.2ppm; MS(ESI)m/z 413.1",
+            ],
+        ]
+        self.assertTrue(nominate_characterization(matrix, ""))
+        self.assertEqual(
+            characterization_roles(matrix, ""),
+            {
+                "data_start": 1,
+                "columns": ["identifier", "preparation", "characterization"],
+            },
+        )
+        self.assertEqual(matrix[1][0], "007B")
+        self.assertIn("091C", matrix[1][1])
+        unread = [matrix[0], [matrix[1][0], "Unreadable original method", matrix[1][2]]]
+        self.assertTrue(nominate_characterization(unread, ""))
+        self.assertIsNone(characterization_roles(unread, ""))
+        for text in (
+            "1HNMR (400MHz) 7.2ppm; MS(ESI)m/z 413.1; IC50 = 5nM",
+            "Unknown original measurement",
+        ):
+            altered = [matrix[0], [*matrix[1][:2], text]]
+            with self.subTest(text=text):
+                self.assertIsNone(characterization_roles(altered, ""))
+
     def test_literal_result_reference_lists_preserve_every_declared_table(self):
         method = "Example 87: Binding assay\nCells were seeded. Reagent was added.\n"
         for sentence, expected in (

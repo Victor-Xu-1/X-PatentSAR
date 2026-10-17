@@ -96,6 +96,26 @@ can refresh cached views. Marketing-version-only changes do not alter that stamp
 Old inputs/reports/manual edits remain immutable; new analysis requires a current
 source snapshot. CSV independence and the existing SAR queue are unchanged.
 
+## Complete original characterization cells
+
+Characterization nomination remains separate from qualification. A literal ID
+header together with NMR/MS hints can request bounded original-cell observation
+even if the first low-resolution preparation wording is unreadable. Unknown
+methods, columns, native contradictions and biological endpoints still prevent
+role acceptance. Known function-word spacing and isotope/unit typography do not
+rewrite original strings or repair IDs, molecular graphs or measurements.
+
+The existing physical text-frame/cell reader supports an explicit caller-owned
+row budget: characterization bodies and their open-row fragments allow32 rows;
+actual assay headers keep8. Both400/600dpi observations, complete pixel-row
+inventories, cell bounds and minimum0.85 confidence are revalidated. Missing,
+weak, conflicting or over-budget lines stay unresolved, never truncated success.
+The original grid96-cell/8-million-pixel-per-cell limits remain. The historical
+packet key `physical_header_lines` still names this shared text frame; only the
+characterization consumers supply the larger body limit. No second OCR engine,
+model, store, queue or task-specific parser is added. This remains within the
+same unpublished Activity19/extractor28/Binding21/binder30 source contracts.
+
 ## Literal method and result references
 
 `source_result_references` owns one bounded literal result-sentence/list grammar

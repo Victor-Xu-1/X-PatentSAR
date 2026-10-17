@@ -23,12 +23,18 @@ from patent_sar_extractor.core.activity_header_sources import (
 )
 from patent_sar_extractor.core.activity_headers import context_from_text, grid_schema
 from patent_sar_extractor.core.activity_join import activity_evidence_errors
+from patent_sar_extractor.core.binding_source_regions import (
+    identifier_references,
+    reference_regions,
+)
+from patent_sar_extractor.core.cell_header_proof import physical_header_valid
 from patent_sar_extractor.core.sar.contexts import compare_context
 from patent_sar_extractor.core.source_cell_tokens import cell_text
 from patent_sar_extractor.core.source_geometry import SourceLayout, SourceTokens
 from patent_sar_extractor.web.models import Activity
 from patent_sar_extractor.web.sar.observation_contexts import ObservationContexts
 from tests.header_support import observed_headers
+from tests.test_activity_spatial_roles import ruled
 
 
 def token(text, x, y, *, native=False, confidence=0.99):
@@ -122,6 +128,92 @@ def parallel_activity_page(
 
 
 class ActivityContextWindowTests(unittest.TestCase):
+    def test_text_row_budget_is_role_scoped_and_never_truncates_the_pixel_inventory(
+        self,
+    ):
+        import numpy as np
+
+        from patent_sar_extractor.core.cell_header_lines import header_line_frame
+
+        for rows in (12, 32, 33):
+            image = np.full((rows * 20 + 20, 160, 3), 255, dtype=np.uint8)
+            for row in range(rows):
+                image[10 + row * 20 : 14 + row * 20, 30:120] = 0
+            header = header_line_frame(image, 8, 400)
+            self.assertEqual(header["row_bounds"], [])
+            body = header_line_frame(image, 8, 400, maximum_rows=32)
+            self.assertEqual(len(body["row_bounds"]), rows if rows <= 32 else 0)
+            self.assertEqual(body["status"], "unresolved")  # No OCR proof yet.
+        with self.assertRaisesRegex(ValueError, "line frame"):
+            header_line_frame(image, 8, 400, maximum_rows=True)
+
+    def test_dense_raster_characterization_keeps_every_line_and_primary_id(self):
+        from patent_sar_extractor.core.activity_grid_role_proof import valid_role_scope
+        from patent_sar_extractor.core.table_geometry import (
+            detect_ruled_table_regions,
+            page_tokens,
+        )
+
+        spectrum = "\n".join(
+            ["1H NMR (400 MHz)"]
+            + [f"{7 - index * 0.1:.2f} (m, 2H)" for index in range(10)]
+            + ["MS (ESI) m/z 413.1"]
+        )
+        with fitz.open() as native, fitz.open() as raster:
+            source = native.new_page(width=600, height=500)
+            source.insert_text(
+                (40, 70), "Table 17. Compound characterization", fontsize=9
+            )
+            ruled(
+                source,
+                [40, 140, 320, 560],
+                [90, 120, 380],
+                [
+                    ["Compound No.", "Preparation", "Characterization"],
+                    ["Compound 73", "Prepared in analogy to Compound 91", spectrum],
+                ],
+            )
+            pixels = source.get_pixmap(matrix=fitz.Matrix(4, 4), alpha=False)
+            page = raster.new_page(width=600, height=500)
+            page.insert_image(page.rect, stream=pixels.tobytes("png"))
+            tokens = page_tokens(page, dpi=240, allow_tesseract=False)
+            grids = detect_ruled_table_regions(page, dpi=240)
+            regions = reference_regions(
+                page, original_pdf_sha256="a" * 64, grids=grids, tokens=tokens
+            )
+        self.assertEqual(len(regions), 1)
+        record = regions[0]
+        self.assertTrue(valid_role_scope(record))
+        self.assertEqual(
+            [item["identifier"] for item in identifier_references(record)], ["73"]
+        )
+        observations = record["role_scope"]["observations"]
+        self.assertEqual(
+            [item["method"] for item in observations],
+            ["cell_ocr_400dpi", "cell_ocr_600dpi"],
+        )
+        for observed in observations:
+            cell = observed["cells"][-1]
+            self.assertEqual(len(cell["physical_header_lines"]["row_bounds"]), 12)
+            self.assertEqual(len(cell["parts"]), 12)
+            self.assertGreaterEqual(cell["confidence"], 0.85)
+            self.assertFalse(
+                physical_header_valid(cell)
+            )  # Actual headers still cap at8.
+        for change in ("missing_line", "weak_line", "endpoint"):
+            altered = copy.deepcopy(record)
+            observation = altered["role_scope"]["observations"][0]
+            cell = observation["cells"][-1]
+            if change == "missing_line":
+                cell["parts"].pop()
+            elif change == "weak_line":
+                cell["parts"][0]["confidence"] = 0.84
+            else:
+                cell["text"] += "; IC50 = 5 nM"
+                observation["matrix"][-1][-1] = cell["text"]
+            with self.subTest(change=change):
+                self.assertFalse(valid_role_scope(altered))
+
     def test_declared_reference_list_needs_every_actual_result_table_and_row_proof(
         self,
     ):

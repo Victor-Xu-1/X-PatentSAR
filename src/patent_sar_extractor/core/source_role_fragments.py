@@ -3,7 +3,7 @@
 import math
 
 from .activity_grid_role_observation import observe_role_cells
-from .activity_grid_roles import declared_measurement
+from .activity_grid_roles import MAX_ROLE_TEXT_ROWS, declared_measurement
 from .cell_frame_proof import valid_cell_frame
 from .cell_text_proof import valid_text_reading
 from .source_fragment_context import validate_fragment_context
@@ -218,7 +218,9 @@ def fragment_texts(region, fragment, column):
             and type(reading.get("confidence")) in {int, float}
             and reading["confidence"] == 0
         )
-        if not empty and not valid_text_reading(reading, bounds, dpi):
+        if not empty and not valid_text_reading(
+            reading, bounds, dpi, maximum_rows=MAX_ROLE_TEXT_ROWS
+        ):
             return None
         texts.append(reading["raw_text"])
     hint = cells["native_hints"][0][column]

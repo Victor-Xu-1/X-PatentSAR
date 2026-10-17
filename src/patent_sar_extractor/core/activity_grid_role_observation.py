@@ -9,6 +9,7 @@ from .activity_grid_context import table_matrix
 from .activity_grid_role_proof import valid_role_scope
 from .activity_grid_roles import (
     MAX_ROLE_CELLS,
+    MAX_ROLE_TEXT_ROWS,
     characterization_roles,
     declared_measurement,
     nominate_characterization,
@@ -91,6 +92,7 @@ def observe_role_cells(page, region, tokens, *, retain_frames=False):
                         dpi,
                         engine[1],
                         lambda text, _kind: text,
+                        maximum_text_rows=MAX_ROLE_TEXT_ROWS,
                     ).evidence(dpi, cell)
                 )
                 if retain_frames:
