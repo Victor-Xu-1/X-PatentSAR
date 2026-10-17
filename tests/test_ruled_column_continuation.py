@@ -19,12 +19,13 @@ from patent_sar_extractor.web.compound_catalog import read_compound_catalog
 def physical_parts(
     first, structures, *, gap=False, prefix="", offset=0, missing_first=False
 ):
+    document = first.parent
     for x in (40, 175, 380):
         first.draw_line((x, 65), (x, 330))
     for y in (65, 100, 210, 330):
         first.draw_line((40, y), (380, y))
     continued_page(first, structures, gap=gap, caption=prefix, offset=offset)
-    page = first.parent[-1]
+    page = document[-1]
     for x in (40, 175, 380):
         page.draw_line((x, 80 + offset), (x, 320 + offset))
     for y in (80, 200, 320):

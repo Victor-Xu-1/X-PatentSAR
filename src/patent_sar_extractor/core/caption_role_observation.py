@@ -18,6 +18,8 @@ def owns_caption_frame(page, region, regions, tokens, boxes):
     from .caption_role_proof import caption_role_status
 
     role = observe_caption_role(page, region, regions, tokens)
+    if role is None:
+        return False  # Untyped transport cannot prove a current caption owner.
     status = caption_role_status(role, page.number + 1, grid_box(region))
     if status == "nonfinal":
         return True
