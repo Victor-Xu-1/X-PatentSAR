@@ -1,5 +1,23 @@
 # Project governance manifest
 
+- Bidirectional caption ownership: the existing `caption_grid_binding` path,
+  binder/writer and source ledger remain sole authorities. `caption_page_boundary`
+  owns transient adjacent-grid carry and two-page replay; `caption_boundary_context`
+  owns complete retained tail context through the existing source-window/body/
+  nonfinal-role SDK, without another OCR/parser/queue/store. Literal caption
+  fragments reuse `cell_caption_fragments`/`cell_caption_identity`; only an
+  overlapping letter inside a qualified matching whole-ID box loses independent
+  duplicate-character status. All observations and real conflicts remain. New
+  Binding21/binder30/visible21 invalidate derived ownership, not original assets,
+  raw observations or human audit. API/SQL, OCSR preparation8/raw2/stereo3, activity,
+  SAR, models and dependencies do not change. Native/raster source controls,
+  installed consumers, review/main/18765 delivery and real scientific acceptance
+  remain separate gates, not an all-format or molecular-accuracy guarantee.
+  Formal spatial admission observes caption grids once before header nomination;
+  numbered/unruled admission rechecks shared roles against the same fresh source
+  facts. The later caption consumer reuses that result, and the existing claim
+  resolver retains genuine conflicts instead of hiding claims by page/header ID.
+
 - Historical source presentation: the shared catalogue reader's strict default
   remains the only scientific ownership authority. The Web artifact projection
   alone requests explicit unqualified historical review for non-current bindings;

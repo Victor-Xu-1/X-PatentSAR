@@ -9,7 +9,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-from .caption_grid_binding import bind_caption_grids
+from .caption_grid_binding import CaptionGridResult, bind_caption_grids
 from .printed_identifiers import LABEL_KIND, identifier_key
 from .table_cells import prefixed_label, read_cell
 from .table_geometry import page_tokens
@@ -90,6 +90,7 @@ def bind_visible_captions(
     withheld_structure_ids: frozenset[str] = frozenset(),
     grids_for_page=None,
     tokens_for_page=None,
+    grid_result: CaptionGridResult | None = None,
 ) -> list[CaptionBinding]:
     by_page: dict[int, list[Mapping[str, Any]]] = {}
     for structure in structures:
@@ -101,13 +102,19 @@ def bind_visible_captions(
         p: [_box([s.get(k) for k in ("x0", "y0", "x1", "y1")]) for s in items]
         for p, items in by_page.items()
     }
-    catalog = bind_caption_grids(
-        doc,
-        by_page,
-        boxes_by_page,
-        [p + 1 for p in source_pages] if source_pages is not None else sorted(by_page),
-        grids_for_page=grids_for_page,
-        tokens_for_page=tokens_for_page,
+    catalog = (
+        grid_result
+        if grid_result is not None
+        else bind_caption_grids(
+            doc,
+            by_page,
+            boxes_by_page,
+            [p + 1 for p in source_pages]
+            if source_pages is not None
+            else sorted(by_page),
+            grids_for_page=grids_for_page,
+            tokens_for_page=tokens_for_page,
+        )
     )
     if recognized_pages is not None:
         recognized_pages.update(p - 1 for p in catalog.pages)
@@ -122,7 +129,7 @@ def bind_visible_captions(
     bindings = [
         CaptionBinding(**item)
         for item in catalog.bindings
-        if item["label"] not in excluded
+        if (grid_result is not None or item["label"] not in excluded)
         and str(item["structure"].get("id") or "") not in withheld_structure_ids
         and (active is None or item["label"] in active)
         and identities[str(item["structure"].get("id") or "")] == 1

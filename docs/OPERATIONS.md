@@ -1,5 +1,31 @@
 # Operations and troubleshooting
 
+## Captions separated from their original diagrams
+
+Binding21/binder30/visible-label21 support both an original caption followed by a
+next-page diagram and a bottom-of-page diagram followed by its next-page caption.
+The software keeps both page identities, actual row/column cells and independent
+source readings; it does not renumber by synthesis order. Caption-only pages must
+remain in the normal complete document inventory. A matching count alone does
+not prove the mapping or chemical graph.
+
+Continuation requires positive compatible original table roles and complete
+boundary context. A new table, intermediate/assay section, intervening grid or
+drawing, unread/conflicting context, changed columns or missing page remains an
+explicit refusal. Saving/reloading rechecks the same proof, including both page
+frames and the retained context; a missing packet cannot become success.
+
+An overlapping suffix detector is not automatically an extra printed letter:
+the complete independent caption and a qualified literal whole-ID box must agree,
+and the repeated letter must be inside that same physical box. Separate letters
+and known alternative identities still veto acceptance. Raw detector and complete
+line observations remain available rather than being edited or voted away.
+
+Only derived binding/visible-caption acceptance is revised. Preserve original
+PDFs, raw page and model observations, crops, historical failures and manual audit.
+Do not change a running attempt; deploy only after the owned run is terminal, then
+validate any new real attempt through the normal frontend.
+
 ## Historical extraction views
 
 After a proof-rule upgrade, valid old source records remain available for raw

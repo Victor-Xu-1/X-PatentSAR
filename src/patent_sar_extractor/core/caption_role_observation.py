@@ -12,7 +12,7 @@ from .source_geometry import SourceTokens, native_region
 from .source_observations import source_cell_observation
 
 
-def owns_caption_frame(page, region, regions, tokens, boxes):
+def owns_caption_frame(page, region, regions, tokens, boxes, *, original_role=None):
     """A current original caption catalogue must not inherit unrelated columns."""
     from .caption_grid_rows import caption_rows
     from .caption_role_proof import caption_role_status
@@ -20,6 +20,14 @@ def owns_caption_frame(page, region, regions, tokens, boxes):
     role = observe_caption_role(page, region, regions, tokens)
     if role is None:
         return False  # Untyped transport cannot prove a current caption owner.
+    if original_role is not None:
+        claimed = caption_role_status(original_role, page.number + 1, grid_box(region))
+        fields = {"role", "table_key", "continuation"}
+        if claimed not in {"compound", "nonfinal"} or {
+            key: value for key, value in original_role.items() if key not in fields
+        } != {key: value for key, value in role.items() if key not in fields}:
+            return False
+        role = original_role
     status = caption_role_status(role, page.number + 1, grid_box(region))
     if status == "nonfinal":
         return True

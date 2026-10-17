@@ -1,5 +1,43 @@
 # X-PatentSAR architecture
 
+## Bidirectional original caption page breaks
+
+Binding21/binder30/visible-label21 preserve a diagram and its literal caption
+when either side ends an original page. The existing `caption_grid_binding`
+coordinator and writer remain authoritative. `caption_page_boundary` owns the
+same transient adjacent-grid carry and saved two-page proof; both original table
+roles, matching physical columns and first/last cells are replayed. A label-only
+continuation page remains part of the complete source inventory. No compound
+sequence, nearest-page guess or activity membership supplies an identity.
+
+The formal spatial coordinator observes these frames once before numbered-header
+admission and passes the same qualified roles to it. Fresh original frame facts
+must match before an inherited role is reused. Caption binding consumes that same
+result, without a second OCR/cell pass. Page-wide/header-key nomination cannot
+silently discard a proved caption claim; the existing shared claim resolver still
+decides any real ownership conflict.
+
+`caption_boundary_context` retains the complete original context after the first
+grid, using the shared source-window and body/section authorities, without new
+OCR. Intervening grids/drawings, new or nonfinal sections, uncertain/conflicting
+readings, gaps and malformed/omitted windows refuse continuation. Earlier and
+later caption directions share the same proof. The duplicated adjacency predicate
+is replaced with the established physical-column tolerance.
+
+Complete physical caption reads retain every detector observation. A qualified
+bare whole-ID box agreeing literally with that read can explain an overlapping
+letter inside that same box, not a second appended character. The common ordered
+fragment gate still rejects separate letters, wrong prefixes/suffixes/zeros and
+complete conflicting captions; it never joins characters into an identifier.
+Source image preparation continues to mask only a qualified caption on the same
+original page, so a following-page caption cannot erase diagram pixels.
+
+Old PDFs, raw OCR/model/crop observations and manual audit remain unchanged.
+Derived ownership uses the current schema/epochs; historical review does not gain
+current confirmation. API/SQL, models, scientific engines, activity/SAR contracts
+and dependencies are unchanged. Source-contract tests do not prove detector
+recall, molecular correctness or actual frontend scientific acceptance.
+
 ## Historical source review without current confirmation
 
 `catalog_reader.read_catalog_entries` retains strict scientific ownership by

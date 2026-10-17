@@ -52,6 +52,7 @@ def bind_numbered_tables(
     cell_reader: Callable[[Any, Box, list[dict[str, Any]], str, bool], _CellReading]
     | None = None,
     page_texts: Mapping[int, str] | None = None,
+    caption_roles: Mapping | None = None,
 ) -> NumberedTableResult:
     """Register original frames/roles, then build cells for the single matcher."""
     if not page_indices or (active_keys is not None and not active_keys):
@@ -79,6 +80,7 @@ def bind_numbered_tables(
         grids_for_page,
         shared_tokens,
         page_texts=page_texts,
+        caption_roles=caption_roles,
     )
     cells, cell_issues = observe_ruled_cells(
         doc, structures, sections, shared_tokens, cell_reader

@@ -15,34 +15,39 @@ from patent_sar_extractor.core.catalog_reader import (
 )
 from patent_sar_extractor.core.formal_structure import coverage_errors
 from patent_sar_extractor.core.structure_binder import bind
+from tests.test_caption_page_boundary import below_pages
 from tests.test_caption_source_roles import catalog
 
 
 class CaptionRoleWriterTests(unittest.TestCase):
     def execute(self, title="Table 47. Compounds", *, prefixed=False):
+        return self.execute_document(*catalog(title, prefixed=prefixed))
+
+    def execute_document(self, doc, structures, boxes):
         temporary = tempfile.TemporaryDirectory(prefix="patentsar-caption-role-")
         self.addCleanup(temporary.cleanup)
         root = Path(temporary.name)
         pdf, metadata = root / "original.pdf", root / "metadata.json"
-        doc, structures, boxes = catalog(title, prefixed=prefixed)
         records = []
         with doc:
             doc.save(pdf)
-            for index, (structure, box) in enumerate(
-                zip(structures[1], boxes[1], strict=True)
-            ):
-                image = root / f"original-{index}.png"
-                doc[0].get_pixmap(clip=box, alpha=False).save(image)
-                records.append(
-                    {
-                        "structure_id": structure["id"],
-                        "structure_index": index,
-                        "page_no": 1,
-                        "bbox_pdf": list(box),
-                        "bbox": list(box),
-                        "image_path": str(image),
-                    }
-                )
+            for page_no in sorted(structures):
+                for structure, box in zip(
+                    structures[page_no], boxes[page_no], strict=True
+                ):
+                    index = len(records)
+                    image = root / f"original-{index}.png"
+                    doc[page_no - 1].get_pixmap(clip=box, alpha=False).save(image)
+                    records.append(
+                        {
+                            "structure_id": structure["id"],
+                            "structure_index": index,
+                            "page_no": page_no,
+                            "bbox_pdf": list(box),
+                            "bbox": list(box),
+                            "image_path": str(image),
+                        }
+                    )
         metadata.write_text(
             json.dumps({"patent_number": "CONTROL-ROLE", "structures": records})
         )
@@ -63,6 +68,28 @@ class CaptionRoleWriterTests(unittest.TestCase):
         saved = json.loads(Path(result["output_files"]["json"]).read_text())
         self.assertEqual(saved["final_bindings"], result["final_bindings"])
         return saved, records
+
+    def test_actual_binder_writer_and_saved_catalogue_keep_later_page_captions(self):
+        doc, structures, boxes, _grids = below_pages()
+        payload, records = self.execute_document(doc, structures, boxes)
+        self.assertEqual(
+            len(payload["final_bindings"]),
+            6,
+            [
+                (issue.get("cpd"), issue.get("page_no"), issue.get("reason"))
+                for issue in payload["source_issues"]
+            ],
+        )
+        self.assertEqual(payload["source_issues"], [])
+        entries, _aliases = read_catalog_entries(
+            payload, {r["structure_id"] for r in records}
+        )
+        self.assertEqual(reference_issues(payload, entries), [])
+        self.assertEqual(coverage_errors(payload), [])
+        cross = next(row for row in entries if row["cpd"] == "Compound 7E")
+        self.assertEqual(cross["page_no"], 1)
+        self.assertEqual(cross["exact_caption_evidence"]["page_no"], 2)
+        self.assertTrue(all(Path(record["image_path"]).is_file() for record in records))
 
     def test_actual_binder_and_writer_publish_original_bare_ids_with_role_proof(self):
         payload, records = self.execute()
@@ -85,6 +112,60 @@ class CaptionRoleWriterTests(unittest.TestCase):
         owner["caption_role"]["observations"] = []
         with self.assertRaises(CatalogValidationError):
             read_catalog_entries(changed)
+
+    def add_numbered_table(self, doc, structures, boxes, label="82"):
+        page = doc[0]
+        xs, ys = [50, 180, 310], [300, 325, 405]
+        for x in xs:
+            page.draw_line((x, ys[0]), (x, ys[-1]))
+        for y in ys:
+            page.draw_line((xs[0], y), (xs[-1], y))
+        page.insert_text((50, 285), "Table 48. Compounds", fontsize=10)
+        page.insert_text((65, 317), "Compound No.", fontsize=9)
+        page.insert_text((195, 317), "Structure", fontsize=9)
+        page.insert_text((65, 350), label, fontsize=9)
+        box = (210, 340, 270, 380)
+        structures[1].append(
+            {
+                "id": "numbered-82",
+                "page_no": 1,
+                **dict(zip(("x0", "y0", "x1", "y1"), box)),
+            }
+        )
+        boxes[1].append(box)
+
+    def test_numbered_table_on_same_page_cannot_hide_a_proved_caption_frame(self):
+        doc, structures, boxes = catalog(prefixed=True)
+        self.add_numbered_table(doc, structures, boxes)
+        payload, records = self.execute_document(doc, structures, boxes)
+        self.assertEqual(
+            {row["cpd"] for row in payload["final_bindings"]},
+            {"Compound I-004A", "Compound I-009B", "Compound 82"},
+        )
+        self.assertEqual(payload["source_issues"], [])
+        self.assertEqual(coverage_errors(payload), [])
+        entries, _ = read_catalog_entries(
+            payload, {row["structure_id"] for row in records}
+        )
+        self.assertEqual(len(entries), 3)
+
+    def test_same_original_id_in_competing_frames_is_not_silently_filtered(self):
+        doc, structures, boxes = catalog(prefixed=True)
+        self.add_numbered_table(doc, structures, boxes, label="I-004A")
+        payload, records = self.execute_document(doc, structures, boxes)
+        self.assertFalse(
+            any(row["cpd"] == "Compound I-004A" for row in payload["final_bindings"])
+        )
+        self.assertTrue(
+            any(
+                issue.get("reason") == "ambiguous_compound_owner"
+                for issue in payload["source_issues"]
+            ),
+            payload["source_issues"],
+        )
+        self.assertTrue(coverage_errors(payload))
+        self.assertEqual(len(records), 3)
+        self.assertTrue(all(Path(record["image_path"]).is_file() for record in records))
 
     def test_actual_binder_retains_nonfinal_source_sections_and_raw_assets(self):
         payload, records = self.execute("Table 47. Intermediates", prefixed=True)
