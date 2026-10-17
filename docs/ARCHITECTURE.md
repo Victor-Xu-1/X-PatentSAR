@@ -1,5 +1,21 @@
 # X-PatentSAR architecture
 
+`core/process_capture` is the sole binary pipe collector behind `env_runner`'s
+script, snippet and interpreter/module probes. It replaces `capture_output` and
+blocking line reads, not the configured interpreter, bootstrap, worker or queue.
+Each diagnostic pipe retains at most65536 original bytes plus an explicit
+head/tail truncation marker; streaming also bounds a single non-newline line.
+Nonblocking fixed-size reads drain both pipes under the same monotonic deadline.
+Small machine-readable responses remain complete, stdout/stderr stay separate
+unless the caller requested the existing merged streaming mode, and final exit
+codes/exception tails survive. Timeout/cancellation kill and reap only the exact
+Popen child. No new session/group detaches it from the existing parent-owned
+descendant lifecycle. Original scientific files and strict acceptance still own
+results; no truncated stdout can stand in for a missing output artifact. This
+changes runtime resource handling only, not scientific epochs or prior artifacts.
+Real-child output/deadline controls do not establish the cause of a past patent
+failure or universal extraction accuracy.
+
 Caption nomination is not identifier-form proof. `caption_grid_rows` selects the
 shared literal prefix grammar and requests a caption reread for an unresolved
 source whose catalogue role is unknown. Only a literal bare original identifier

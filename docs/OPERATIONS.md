@@ -1,5 +1,22 @@
 # Operations and troubleshooting
 
+## Bounded environment-worker output
+
+All environment-runner scripts/snippets and readiness probes share the same
+nonblocking binary pipe collector. Diagnostics retain at most65536 original bytes
+per pipe plus an explicit truncation marker, not the whole output or an unbounded
+single line. Private error excerpts remain the existing separate audience-sized
+views. A child that never writes a newline still obeys its monotonic deadline;
+the runner kills/reaps only that exact child on timeout or cancellation, without
+creating a new process session or signalling unrelated applications. The existing
+parent process carrier retains descendant ownership/cancellation authority.
+Streaming keeps warning filtering and merged output; nonstreaming keeps separate
+stdout/stderr and unchanged small responses. No worker is retried automatically,
+scientific gate relaxed or original artifact edited. Explicit diagnostic
+truncation is not complete scientific output: normal file/schema/source coverage
+checks still apply. Do not infer a historical failure cause merely from this
+generic runtime repair. Native Linux/WSL pipe behavior is the supported boundary.
+
 ## Failed-worker details and overlapping caption locators
 
 An unread page hint does not prove that a caption uses bare identifiers. Unknown

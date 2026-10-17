@@ -6,13 +6,13 @@ Environment Runner — 多 conda 环境子进程调度
 
 import logging
 import os
-import selectors
 import subprocess
 import sys
 import tempfile
-import time
 
 from patent_sar_extractor.paths import PACKAGE_IMPORT_ROOT, config_files
+
+from .process_capture import run_bounded
 
 try:
     import yaml  # type: ignore
@@ -50,57 +50,14 @@ def _run_streamed_filtered(
     cwd: str,
     env: dict[str, str] | None,
 ) -> subprocess.CompletedProcess:
-    proc = subprocess.Popen(
+    return run_bounded(
         cmd,
+        timeout=timeout,
         cwd=cwd,
         env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        bufsize=1,
+        on_line=lambda line: print(line, end="", flush=True),
+        keep_line=_should_stream_child_line,
     )
-    output_tail: list[str] = []
-    deadline = time.monotonic() + timeout if timeout else None
-    selector = selectors.DefaultSelector()
-    if proc.stdout is not None:
-        selector.register(proc.stdout, selectors.EVENT_READ)
-    try:
-        while True:
-            if deadline is not None and time.monotonic() > deadline:
-                proc.kill()
-                raise subprocess.TimeoutExpired(cmd, timeout)
-            if proc.poll() is not None:
-                if proc.stdout is not None:
-                    rest = proc.stdout.read()
-                    if rest:
-                        for line in rest.splitlines(True):
-                            output_tail.append(line)
-                            output_tail = output_tail[-200:]
-                            if _should_stream_child_line(line):
-                                print(line, end="", flush=True)
-                break
-            events = selector.select(timeout=0.5)
-            for key, _mask in events:
-                line = key.fileobj.readline()
-                if not line:
-                    continue
-                output_tail.append(line)
-                output_tail = output_tail[-200:]
-                if _should_stream_child_line(line):
-                    print(line, end="", flush=True)
-        return subprocess.CompletedProcess(
-            cmd, proc.returncode, "".join(output_tail), ""
-        )
-    finally:
-        try:
-            selector.close()
-        except (OSError, ValueError) as error:
-            logger.warning("Owned selector cleanup failed: %s", type(error).__name__)
-        if proc.stdout is not None:
-            try:
-                proc.stdout.close()
-            except (OSError, ValueError) as error:
-                logger.warning("Owned output cleanup failed: %s", type(error).__name__)
 
 
 _DEFAULT_PYTHON = os.environ.get("PATENTSAR_PYTHON", sys.executable or "python3")
@@ -260,11 +217,8 @@ def run_in_env(
             env=run_env,
         )
 
-    return subprocess.run(
+    return run_bounded(
         cmd,
-        capture_output=True,
-        check=False,
-        text=True,
         timeout=timeout,
         cwd=cwd or os.getcwd(),
         env=run_env,
@@ -308,11 +262,8 @@ def run_snippet(
 
         run_env = _execution_env(env_extra)
 
-        return subprocess.run(
+        return run_bounded(
             cmd,
-            capture_output=True,
-            check=False,
-            text=True,
             timeout=timeout,
             cwd=cwd or os.getcwd(),
             env=run_env,
@@ -335,12 +286,10 @@ def check_env(env_name: str) -> dict:
     result = {"available": False, "python_path": python, "version": None, "error": None}
 
     try:
-        proc = subprocess.run(
+        proc = run_bounded(
             [python, "--version"],
-            capture_output=True,
-            check=False,
-            text=True,
             timeout=10,
+            cwd=None,
             env=_execution_env(),
         )
         if proc.returncode == 0:
@@ -367,12 +316,10 @@ def check_env(env_name: str) -> dict:
             "    sys.exit(1)\n"
         )
         try:
-            mod_proc = subprocess.run(
+            mod_proc = run_bounded(
                 [python, "-c", code],
-                capture_output=True,
-                check=False,
-                text=True,
                 timeout=30,
+                cwd=None,
                 env=_execution_env(),
             )
             if mod_proc.returncode != 0:
