@@ -20,6 +20,7 @@ from .activity_source_roles import method_page_evidence
 from .activity_table_layout import prepare_layout
 from .activity_transposed import extract_transposed
 from .biology_tables import biology_grid_schema
+from .source_role_observations import scope_observations
 from .table_geometry import detect_ruled_table_regions, page_tokens
 
 
@@ -99,7 +100,13 @@ def extract_coordinate_tables(
             prefix = _prefix(tokens, region)
             header = " ".join(matrix[0]) if matrix else ""
             context = context_from_text(prefix, prefix)
-            role_scope = observe_characterization(page, region, tokens, prefix)
+            role_observations = []
+            role_scope = observe_characterization(
+                page, region, tokens, prefix, evidence_sink=role_observations
+            )
+            result.role_observations.extend(
+                scope_observations(role_observations, page_index + 1)
+            )
             if role_scope is not None:
                 result.coverage.append(
                     source_record(

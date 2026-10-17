@@ -24,6 +24,100 @@ from patent_sar_extractor.core.source_section_roles import section_heading
 
 
 class ActivitySourceRoleTests(unittest.TestCase):
+    def test_role_diagnostic_buffer_bounds_live_collection_and_deduplicates(self):
+        from unittest.mock import patch
+
+        from patent_sar_extractor.core.source_role_observations import (
+            RoleObservationBuffer,
+            role_failure,
+            scope_observations,
+        )
+
+        failure = role_failure(
+            "cell_render_limit", {"xs": [0, 10], "ys": [0, 10]}, "Raw original title"
+        )
+        source = scope_observations([failure], 1)
+        buffer = RoleObservationBuffer()
+        buffer.extend(source * 2)
+        self.assertEqual(len(buffer), 1)
+        self.assertEqual(list(buffer), source)
+        with patch(
+            "patent_sar_extractor.core.source_role_observations.MAX_ROLE_ATTEMPTS", 1
+        ):
+            bounded = RoleObservationBuffer()
+            bounded.extend(source)
+            with self.assertRaisesRegex(ValueError, "inventory"):
+                bounded.extend(source)
+        with (
+            patch(
+                "patent_sar_extractor.core.source_role_observations.MAX_ROLE_CATALOG_BYTES",
+                1,
+            ),
+            self.assertRaisesRegex(ValueError, "byte budget"),
+        ):
+            RoleObservationBuffer().extend(source)
+
+    def test_failed_role_observations_preserve_raw_text_without_granting_roles(self):
+        from patent_sar_extractor.core.source_role_observations import (
+            role_failure,
+            scope_observations,
+            serialize_role_observations,
+            validate_role_catalog,
+        )
+
+        region = {"xs": [10, 80, 180], "ys": [20, 45]}
+        cells = {
+            **region,
+            "native_hints": [["007B", "1HNMR (400MHz)"]],
+            "observations": [
+                {
+                    "method": "cell_ocr_400dpi",
+                    "matrix": [],
+                    "cells": [{"text": "", "raw_text": "007B", "confidence": 0.7}],
+                }
+            ],
+        }
+        failed = role_failure(
+            "unqualified_role_observations", region, "Raw title", cells
+        )
+        scoped = scope_observations([failed, failed], 4, original_pdf_sha256="a" * 64)
+        catalog = serialize_role_observations(scoped)
+        self.assertEqual(len(catalog), 1)
+        self.assertEqual(next(iter(catalog.values()))["source_cells"], cells)
+        validate_role_catalog(catalog, original_pdf_sha256="a" * 64)
+        other = scope_observations([failed], 5, original_pdf_sha256="a" * 64)
+        two = serialize_role_observations([*scoped[:1], *other])
+        swapped = dict(zip(two.keys(), reversed(list(two.values()))))
+        with self.assertRaisesRegex(ValueError, "identity"):
+            validate_role_catalog(swapped)
+        observed = next(iter(catalog.values()))
+        self.assertEqual(observed["status"], "unresolved")
+        self.assertNotIn("roles", observed)
+        self.assertNotIn("role_scope", observed)
+        with self.assertRaisesRegex(ValueError, "document"):
+            validate_role_catalog(catalog, original_pdf_sha256="b" * 64)
+        observed["prefix"] = "Altered original title"
+        with self.assertRaisesRegex(ValueError, "identity"):
+            validate_role_catalog(catalog)
+
+    def test_role_diagnostic_bounds_reject_instead_of_truncating_observations(self):
+        from patent_sar_extractor.core.source_role_observations import (
+            MAX_ROLE_ATTEMPTS,
+            role_failure,
+            scope_observations,
+            serialize_role_observations,
+        )
+
+        failure = role_failure(
+            "cell_budget_exceeded", {"xs": [0, 10], "ys": [0, 10]}, ""
+        )
+        scoped = scope_observations([failure], 1)
+        with self.assertRaisesRegex(ValueError, "inventory"):
+            serialize_role_observations(scoped * (MAX_ROLE_ATTEMPTS + 1))
+        scoped[0]["status"] = "observed_characterization"
+        with self.assertRaisesRegex(ValueError, "diagnostic"):
+            serialize_role_observations(scoped)
+
     def test_characterization_typography_keeps_literal_roles_without_id_repair(self):
         matrix = [
             ["Compound No.", "Preparation", "Characterization"],

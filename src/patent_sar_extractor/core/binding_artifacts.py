@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import csv
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -20,6 +20,7 @@ from .binding_catalog import compound_catalog
 from .binding_source_references import reference_issues, reference_scope
 from .formal_structure import FORMAL_SCOPE, SOURCE_EXECUTION_MODE
 from .pipeline_rules import _label_key, summarise_binding_accuracy
+from .source_role_observations import serialize_role_observations
 
 _CSV_FIELDS = (
     "cpd",
@@ -80,6 +81,7 @@ def write_binding_result(
     source_issues: Sequence[dict[str, Any] | str] = (),
     source_sections: Sequence[dict[str, Any]] = (),
     original_pdf_sha256: str = "",
+    role_observations: Iterable[dict[str, Any]] = (),
 ) -> dict[str, Any]:
     issues = list(source_issues)
 
@@ -113,6 +115,9 @@ def write_binding_result(
     reference_payload = {
         "source_sections": list(source_sections),
         "source_reference_scope": reference_scope(source_sections, original_pdf_sha256),
+        "source_role_observations": serialize_role_observations(
+            list(role_observations)
+        ),
     }
     # Unruled layout findings are one pure source-reference replay, not two
     # independent observations from the spatial view and saved validator.

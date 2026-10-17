@@ -128,6 +128,115 @@ def parallel_activity_page(
 
 
 class ActivityContextWindowTests(unittest.TestCase):
+    def test_rejected_characterization_is_saved_without_becoming_a_result(self):
+        from patent_sar_extractor.core.binding_artifacts import write_binding_result
+        from patent_sar_extractor.core.source_role_observations import (
+            validate_role_catalog,
+        )
+
+        rejected = []
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            with fitz.open() as document:
+                page = document.new_page(width=600, height=400)
+                page.insert_text(
+                    (40, 70), "Table 17. Compound characterization", fontsize=9
+                )
+                ruled(
+                    page,
+                    [40, 160, 340, 560],
+                    [90, 120, 200],
+                    [
+                        ["Compound No.", "Preparation", "Characterization"],
+                        [
+                            "73",
+                            "Unknown original method",
+                            "1H NMR (400 MHz); MS (ESI) m/z 413.1",
+                        ],
+                    ],
+                )
+                document.save(root / "source.pdf")
+                source_sha = hashlib.sha256(
+                    (root / "source.pdf").read_bytes()
+                ).hexdigest()
+                self.assertEqual(
+                    reference_regions(
+                        page, original_pdf_sha256=source_sha, evidence_sink=rejected
+                    ),
+                    [],
+                )
+            self.assertEqual(len(rejected), 1)
+            self.assertEqual(rejected[0]["reason"], "unresolved_column_roles")
+            self.assertEqual(
+                rejected[0]["source_cells"]["observations"][0]["matrix"][1][1],
+                "Unknown original method",
+            )
+            extract(
+                str(root / "source.pdf"),
+                {"activity_pages": [0]},
+                str(root / "activity"),
+            )
+            activity = load_json(root / "activity/activity_data.json", {})
+            self.assertEqual(activity["rows"], [])
+            self.assertTrue(activity["source_role_observations"])
+            validate_role_catalog(activity["source_role_observations"])
+            self.assertTrue(activity_evidence_errors(activity, [0]))
+            write_binding_result(
+                root / "binding",
+                patent_id="controlled-source-roles",
+                bindings=[],
+                detected_style="original_cell_caption_heading",
+                include_intermediates=False,
+                total_structures=0,
+                total_compound_blocks=0,
+                table_pages=[],
+                table_covered_count=0,
+                no_binding=[],
+                unbound_pages=[],
+                original_pdf_sha256=source_sha,
+                role_observations=rejected,
+            )
+            binding = load_json(root / "binding/bindings.json", {})
+            self.assertEqual(binding["final_bindings"], [])
+            self.assertEqual(len(binding["source_role_observations"]), 1)
+            validate_role_catalog(
+                binding["source_role_observations"], original_pdf_sha256=source_sha
+            )
+
+    def test_later_cell_budget_refusal_keeps_the_completed_original_read(self):
+        import numpy as np
+
+        from patent_sar_extractor.core.activity_grid_role_observation import (
+            observe_role_cells,
+        )
+
+        page = Mock()
+        page.get_text.return_value = []
+        original = []
+        engine = Mock()
+        with (
+            patch(
+                "patent_sar_extractor.core.activity_grid_role_observation.get_ocr_engine",
+                return_value=("rapidocr", engine),
+            ),
+            patch(
+                "patent_sar_extractor.core.activity_grid_role_observation.cell_image",
+                return_value=np.full((30, 60, 3), 255, dtype=np.uint8),
+            ),
+        ):
+            result = observe_role_cells(
+                page, {"xs": [0, 500], "ys": [0, 500]}, [], evidence_sink=original
+            )
+        self.assertIsNone(result)
+        self.assertEqual(len(original), 1)
+        self.assertEqual(
+            [item["method"] for item in original[0]["observations"]],
+            ["cell_ocr_400dpi"],
+        )
+        self.assertEqual(len(original[0]["observations"][0]["cells"]), 1)
+        self.assertEqual(original[0]["observations"][0]["cells"][0]["confidence"], 0.0)
+        engine.assert_not_called()  # Blank-cell fault fixture, not OCR acceptance.
+
     def test_text_row_budget_is_role_scoped_and_never_truncates_the_pixel_inventory(
         self,
     ):

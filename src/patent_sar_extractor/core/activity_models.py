@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from .source_role_observations import RoleObservationBuffer
+
 
 @dataclass
 class ActivityRow:
@@ -43,6 +45,9 @@ class ParsedActivity:
     coverage: list[dict] = field(default_factory=list)
     unresolved_rows: list[dict] = field(default_factory=list)
     header_observations: list[dict] = field(default_factory=list)
+    role_observations: RoleObservationBuffer = field(
+        default_factory=RoleObservationBuffer
+    )
     text_pages: dict[str, str] = field(default_factory=dict)
 
 

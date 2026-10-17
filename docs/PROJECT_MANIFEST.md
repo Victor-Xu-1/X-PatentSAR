@@ -1,5 +1,15 @@
 # Project governance manifest
 
+- `source_role_observations` owns rejected-role diagnostic serialization/replay,
+  using the existing source digest and the sole binding/activity artifact writers.
+  Original partial/weak cell observations survive role/render refusal without
+  another OCR pass; every diagnostic remains unresolved and cannot supply source
+  acceptance, molecules or activities. Consumers validate document/page/grid and
+  hash identity with bounded JSON,4096attempts/64MiB and the existing1MiB region
+  limit. No API/SQL/dependency/raw/manual change or duplicate source store is
+  added within unpublished Binding21/Activity19/v0.2.34. Longer-cell chunking and
+  real scientific acceptance remain open, not certified by diagnostic retention.
+
 - Characterization body rows reuse the sole original physical-text/cell SDK,
   with an explicit32-row caller budget and the unchanged8-row assay-header
   default. Role replay and open-row consumers use the same body limit. Complete

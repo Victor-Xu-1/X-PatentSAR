@@ -17,10 +17,13 @@ from .activity_grid_roles import (
 from .cell_ocr_observation import observe_cell
 from .page_ocr_cache import get_ocr_engine
 from .source_geometry import native_cell_text, native_region
+from .source_role_observations import role_failure
 from .table_cells import CellRenderLimit, cell_image
 
 
-def observe_role_cells(page, region, tokens, *, retain_frames=False):
+def observe_role_cells(
+    page, region, tokens, *, retain_frames=False, evidence_sink=None
+):
     """One cell observation carrier for closed grids and visible row fragments."""
     xs, ys = region["xs"], region["ys"]
     if (len(xs) - 1) * (len(ys) - 1) > MAX_ROLE_CELLS:
@@ -40,6 +43,15 @@ def observe_role_cells(page, region, tokens, *, retain_frames=False):
     ]
     observations = []
     frames = []
+    carrier = {
+        "xs": list(xs),
+        "ys": list(ys),
+        "native_hints": hints,
+        "observations": observations,
+        **({"rendered_frames": frames} if retain_frames else {}),
+    }
+    if evidence_sink is not None:
+        evidence_sink.append(carrier)
     native = native_region(tokens, bounds, bool(page.get_text("words")))
     if native and retain_frames:
         for index, cell in enumerate(cells):
@@ -80,6 +92,14 @@ def observe_role_cells(page, region, tokens, *, retain_frames=False):
             ):
                 return None
             observed, rendered = [], []
+            observation = {
+                "method": f"cell_ocr_{dpi}dpi",
+                "matrix": [],
+                "cells": observed,
+            }
+            observations.append(observation)
+            if retain_frames:
+                frames.append(rendered)
             for cell in cells:
                 try:
                     image = cell_image(page, cell, dpi)
@@ -110,25 +130,20 @@ def observe_role_cells(page, region, tokens, *, retain_frames=False):
                 ]
                 for row in range(len(ys) - 1)
             ]
-            observations.append(
-                {"method": f"cell_ocr_{dpi}dpi", "matrix": matrix, "cells": observed}
-            )
-            if retain_frames:
-                frames.append(rendered)
-    return {
-        "xs": list(xs),
-        "ys": list(ys),
-        "native_hints": hints,
-        "observations": observations,
-        **({"rendered_frames": frames} if retain_frames else {}),
-    }
+            observation["matrix"] = matrix
+    return carrier
 
 
-def observe_characterization(page, region, tokens, prefix):
+def observe_characterization(page, region, tokens, prefix, *, evidence_sink=None):
     # Cheap nomination never accepts a role; only complete original observations do.
     xs, ys = region["xs"], region["ys"]
+
+    def refused(reason, cells=None):
+        if evidence_sink is not None:
+            evidence_sink.append(role_failure(reason, region, prefix, cells))
+
     if (len(xs) - 1) * (len(ys) - 1) > MAX_ROLE_CELLS:
-        return None
+        return refused("cell_budget_exceeded")
     initial = table_matrix(tokens, region)
     if not nominate_characterization(initial, prefix):
         return None
@@ -137,14 +152,15 @@ def observe_characterization(page, region, tokens, prefix):
         for x0, x1 in pairwise(xs)
         for y0, y1 in pairwise(ys)
     ):
-        return None
-    cells = observe_role_cells(page, region, tokens)
+        return refused("native_measurement_conflict")
+    attempted = []
+    cells = observe_role_cells(page, region, tokens, evidence_sink=attempted)
     if cells is None:
-        return None
+        return refused("cell_render_limit", attempted[0] if attempted else None)
     observations = cells["observations"]
     roles = characterization_roles(observations[0]["matrix"], prefix)
     if roles is None:
-        return None
+        return refused("unresolved_column_roles", cells)
     proof = {
         "version": 1,
         **cells,
@@ -152,4 +168,8 @@ def observe_characterization(page, region, tokens, prefix):
         "roles": roles,
     }
     bounds = [xs[0], ys[0], xs[-1], ys[-1]]
-    return proof if valid_role_scope({"bbox": bounds, "role_scope": proof}) else None
+    return (
+        proof
+        if valid_role_scope({"bbox": bounds, "role_scope": proof})
+        else refused("unqualified_role_observations", cells)
+    )

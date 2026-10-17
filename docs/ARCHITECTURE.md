@@ -98,6 +98,24 @@ source snapshot. CSV independence and the existing SAR queue are unchanged.
 
 ## Complete original characterization cells
 
+Rejected characterization probes retain their attempted original cells in the
+existing binding/activity artifacts. `source_role_observations` owns one bounded,
+content-addressed diagnostic catalog using the existing source digest. All entries
+are explicitly unresolved, never a role scope, a molecule or an activity row.
+Completed400dpi or partial-cell observations survive a later600dpi/render refusal;
+unknown roles, weak raw readings and native conflicts are not dropped or repaired.
+Successful role proof remains in its existing source ledger, without duplication.
+
+The current coordinators pass the same call-local observations to their sole
+writers; no extra OCR, retry, cache or queue is introduced. Saved activity and
+binding readers validate catalog identity, bounded literal JSON, page/grid source
+and the binding document digest. Diagnostics cannot exempt missing results or
+promote an unqualified structure, nor fail an otherwise independently valid assay
+merely because a characterization probe was rejected. The4096-attempt/64MiB
+aggregate is enforced during live collection as well as serialization; duplicates
+share one packet. Existing1MiB per-region digest bounds refuse rather than truncate.
+Original assets, manual audit and existing failed-task outputs remain immutable.
+
 Characterization nomination remains separate from qualification. A literal ID
 header together with NMR/MS hints can request bounded original-cell observation
 even if the first low-resolution preparation wording is unreadable. Unknown

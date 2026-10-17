@@ -9,8 +9,14 @@ at400/600dpi. A missing line, weak confidence, biological endpoint, unknown role
 or excess source inventory stays unresolved. These bodies do not supply activity
 values or become new molecules from preparation-method references. Original
 primary IDs remain required even when the associated structure is missing.
-Failed-role observation diagnostics and full real-task acceptance remain open;
-this bounded reader change does not certify arbitrary spectral typography.
+Rejected role attempts retain raw observations and explicit reasons in
+`source_role_observations` inside the normal binding/activity JSON. Even a
+completed400dpi reading remains available if the next resolution exceeds its
+render budget. These diagnostics are not accepted role evidence and cannot fix
+missing structures or results. Catalog tampering, foreign binding documents and
+over-budget data refuse; weak observations are preserved without being promoted.
+Longer-than-supported cells still need complete bounded chunking; real-task
+acceptance and arbitrary spectral typography remain unverified.
 
 ## Result references
 
