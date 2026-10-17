@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -76,6 +79,26 @@ class CompletionObservationSafetyTests(PredictionFixture, unittest.TestCase):
                     ).fetchone()[0],
                     0,
                 )
+
+    def test_fixture_cli_is_independent_of_callers_working_directory(self):
+        repository = Path(__file__).resolve().parents[1]
+        environment = {**os.environ, "PYTHONPATH": str(repository / "src")}
+        with tempfile.TemporaryDirectory() as temporary:
+            output = subprocess.check_output(
+                [
+                    sys.executable,
+                    str(repository / "tools/prepare_browser_fixture.py"),
+                    str(Path(temporary) / "state"),
+                    "--completion",
+                ],
+                cwd=temporary,
+                env=environment,
+                text=True,
+                timeout=30,
+            )
+        values = json.loads(output)
+        self.assertEqual(values["PATENTSAR_E2E_RUN_JOBS"], "0")
+        self.assertIn("PATENTSAR_E2E_COMPLETION_COMPLETE_PROJECT", values)
 
     def saved(self):
         row = self.pending_reprints()

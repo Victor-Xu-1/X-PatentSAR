@@ -33,7 +33,9 @@ def prepare(
         raise ValueError("Browser fixture workspace must be empty")
     workspace.mkdir(parents=True, exist_ok=True, mode=0o700)
     # Reuse explicit adapter fixtures rather than adding a production seed route.
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tests"))
+    repository = Path(__file__).resolve().parents[1]
+    sys.path.insert(0, str(repository))  # Namespaced test helpers, never src/.
+    sys.path.insert(0, str(repository / "tests"))
     from test_web_support import artifact_run, make_pdf
 
     pdf = make_pdf(
