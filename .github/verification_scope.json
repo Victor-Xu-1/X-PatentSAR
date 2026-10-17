@@ -81,6 +81,7 @@
     "src/patent_sar_extractor/core/unruled_structure_observation.py",
     "src/patent_sar_extractor/core/unruled_structure_proof.py",
     "src/patent_sar_extractor/core/unruled_structure_sources.py",
+    "src/patent_sar_extractor/core/visible_structure_binding.py",
     "tests/test_activity_column_inventory.py",
     "tests/test_activity_coverage.py",
     "tests/test_activity_metadata.py",

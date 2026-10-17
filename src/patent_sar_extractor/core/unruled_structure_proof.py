@@ -8,6 +8,7 @@ from .cell_identity_proof import confirmed_identity_readings
 from .printed_identifiers import identifier_key
 from .source_cell_claims import cell_source_status
 from .structure_column_anchor_proof import validate_column_anchors
+from .unruled_body_scope import trusted_column_diagrams
 from .unruled_continuation_links import (
     uncovered_continuation_issues,
     validate_continuation_links,
@@ -181,16 +182,15 @@ def unruled_source_inventory(sections, scope, entries):
             }
             for finding in findings
         )
-        if (
-            roles is not None
-            and roles["role"] == "nonfinal"
-            and any(d["id"] in by_id for d in region["diagrams"])
-        ):
-            raise ValueError(
-                "Original unruled intermediates were promoted to final compounds"
-            )
         if roles is not None and roles["role"] == "nonfinal":
-            nonfinal.update(d["id"] for d in region["diagrams"])
+            excluded = {
+                d["id"] for d in trusted_column_diagrams(region, region["diagrams"])
+            }
+            if excluded & by_id.keys():
+                raise ValueError(
+                    "Original unruled intermediates were promoted to final compounds"
+                )
+            nonfinal.update(excluded)
         for label, diagram in assignments:
             expected = pair_evidence(region, section["region_id"], label, diagram)
             expected_sources[section["region_id"]][expected["structure_id"]] = expected

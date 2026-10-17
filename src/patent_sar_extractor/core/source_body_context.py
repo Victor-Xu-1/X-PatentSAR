@@ -53,6 +53,15 @@ def contained_source_diagrams(diagrams, bounds):
     ]
 
 
+def box_inside_drawing(box, diagrams):
+    """Whole original text containment, not vertical overlap or proximity."""
+    return any(
+        d["bbox"][0] <= box[0] < box[2] <= d["bbox"][2]
+        and d["bbox"][1] <= box[1] < box[3] <= d["bbox"][3]
+        for d in diagrams
+    )
+
+
 def _boundary_identity(parts, window, *, column_boundaries):
     text = cell_text(parts, window)
     marker = caption_table_marker(text)
@@ -129,6 +138,17 @@ def original_context_extent(chunks, window, diagrams, *, column_boundaries=True)
                 or top <= window[1]
                 or (tuple(bounds), identity) in seen
             ):
+                continue
+            # A table reference wholly inside an observed drawing is not a
+            # page-level table title. Keep its original tokens, but do not let
+            # the annotation split or taint the surrounding source inventory.
+            line_box = [
+                min(p["bbox"][0] for p in line),
+                top,
+                max(p["bbox"][2] for p in line),
+                bottom,
+            ]
+            if identity[0] == "table" and box_inside_drawing(line_box, diagrams):
                 continue
             if len(events) >= 25000:
                 raise ValueError("Original body-boundary inventory exceeds its bound")

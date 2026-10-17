@@ -1,7 +1,11 @@
 """Pure two-dimensional unruled source population; no distances or number order."""
 
 from .structure_table_headers import structure_column_pairs
-from .unruled_body_scope import body_diagrams, original_body_bottom
+from .unruled_body_scope import (
+    body_diagrams,
+    column_body_extent,
+    column_boundary_issues,
+)
 from .unruled_scope import scope_axes, scope_headers, scope_roles
 from .unruled_structure_sources import label_population
 
@@ -44,9 +48,9 @@ def region_plan(region):
     bottom = region["body_bottom"]
     if type(bottom) not in {int, float} or not ys[1] < bottom <= scope["page_size"][1]:
         raise ValueError("Malformed original unruled body boundary")
-    if bottom != original_body_bottom(
-        scope, region["body_context"], region["page_diagrams"]
-    ):
+    extent = column_body_extent(region)
+    trusted = extent["trusted_bottom"]
+    if bottom != extent["body_bottom"]:
         raise ValueError(
             "Original unruled body boundary differs from its complete context"
         )
@@ -62,13 +66,13 @@ def region_plan(region):
     edges, reverse = [[] for _ in labels], [[] for _ in diagrams]
     if roles is not None and roles["role"] == "compound":
         for index, label in enumerate(labels):
-            if not qualified[index]:
+            if not qualified[index] or label["nomination"]["bbox"][3] > trusted:
                 continue
             box = label["nomination"]["bbox"]
             for number, diagram in enumerate(diagrams):
                 drawing = diagram["bbox"]
                 if original_column_overlap(
-                    box, drawing, xs, ys, roles["pairs"][label["pair"]], bottom
+                    box, drawing, xs, ys, roles["pairs"][label["pair"]], trusted
                 ):
                     edges[index].append(number)
                     reverse[number].append(index)
@@ -79,31 +83,33 @@ def region_plan(region):
     ]
     accepted_labels = {a for a, _ in pairs}
     accepted_diagrams = {b for _, b in pairs}
-    issues = []
+    issues = column_boundary_issues(extent)
     if roles is None:
         issues.append({"cpd": "", "reason": "unproved_original_unruled_header"})
     if scope.get("kind") == "continued_unruled_columns" and not labels and not diagrams:
         issues.append(
             {"cpd": "", "reason": "unproved_original_unruled_continuation_population"}
         )
-    if roles is None or roles["role"] != "nonfinal":
-        issues.extend(
-            {
-                "cpd": labels[index]["value"],
-                "reason": "unbound_original_unruled_identifier",
-            }
-            for index in range(len(labels))
-            if index not in accepted_labels
-        )
-        issues.extend(
-            {
-                "cpd": "",
-                "structure_id": diagrams[index]["id"],
-                "reason": "unlabelled_or_ambiguous_original_unruled_structure",
-            }
-            for index in range(len(diagrams))
-            if index not in accepted_diagrams
-        )
+    nonfinal = roles is not None and roles["role"] == "nonfinal"
+    issues.extend(
+        {
+            "cpd": labels[index]["value"],
+            "reason": "unbound_original_unruled_identifier",
+        }
+        for index in range(len(labels))
+        if index not in accepted_labels
+        and not (nonfinal and labels[index]["nomination"]["bbox"][3] <= trusted)
+    )
+    issues.extend(
+        {
+            "cpd": "",
+            "structure_id": diagrams[index]["id"],
+            "reason": "unlabelled_or_ambiguous_original_unruled_structure",
+        }
+        for index in range(len(diagrams))
+        if index not in accepted_diagrams
+        and not (nonfinal and diagrams[index]["bbox"][3] <= trusted)
+    )
     return roles, pairs, issues
 
 

@@ -64,13 +64,13 @@ def valid_ruled_header_binding(binding):
         return False
 
 
-def validate_ruled_source_reference(parent, binding):
+def validate_ruled_source_reference(parent, binding, *, trusted_bottom):
     if not valid_ruled_header_binding(binding):
         raise ValueError("Unproved original ruled column/header ownership")
     evidence, source = binding["numbered_table_cell_evidence"], parent["source"]
     if {"id": binding["structure_id"], "bbox": evidence["segment_bbox"]} not in source[
         "page_diagrams"
-    ] or evidence["label_bbox"][3] > source["body_bottom"]:
+    ] or evidence["label_bbox"][3] > trusted_bottom:
         raise ValueError(
             "Ruled binding differs from complete original diagram/body scope"
         )

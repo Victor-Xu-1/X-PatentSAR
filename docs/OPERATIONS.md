@@ -2,6 +2,17 @@
 
 ## Original unruled structure columns
 
+Complete source extent and positively trusted role extent are separate. An
+unproved new section preserves the original tokens, labels and diagrams; it
+blocks extending a compound/intermediate table role beyond that cue. Both ruled
+and logical columns replay this distinction. Do not remove the unresolved suffix
+or classify it as an intermediate to clear completeness. Fully contained drawing
+table annotations do not start a page table; partially overlapping section cues
+remain unresolved. Caption-grid source capture still records original nonfinal
+assets even when their promotion is withheld. A document containing only proved
+intermediates has no final structure available for formal processing; clean source
+role proof is not successful empty terminal-product extraction.
+
 Original row alignment follows word/drawing extents, not only their centres.
 Every match still needs exact column roles and reciprocal uniqueness. A disjoint
 word or two competing diagrams cannot use a distance-based fallback.

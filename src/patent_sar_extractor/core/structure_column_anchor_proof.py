@@ -10,6 +10,11 @@ from .structure_column_anchors import (
     column_anchor_roles,
 )
 from .structure_column_population import column_population_issues
+from .unruled_body_scope import (
+    column_body_extent,
+    column_boundary_issues,
+    trusted_column_diagrams,
+)
 
 
 def validate_column_anchors(sections, scope, entries):
@@ -21,6 +26,7 @@ def validate_column_anchors(sections, scope, entries):
     if scope.get("column_anchor_ids") != [s.get("region_id") for s in anchors]:
         raise ValueError("Original column anchors were omitted or changed")
     known, issues, roles_by_id, represented = {}, [], {}, defaultdict(list)
+    trusted_by_id = {}
     nonfinal = set()
     present = {
         row["structure_id"]
@@ -48,6 +54,16 @@ def validate_column_anchors(sections, scope, entries):
             raise ValueError("Foreign original column-anchor frame")
         known[section["region_id"]] = section
         roles_by_id[section["region_id"]] = roles
+        extent = column_body_extent(source)
+        trusted_by_id[section["region_id"]] = extent["trusted_bottom"]
+        issues.extend(
+            {
+                **finding,
+                "page_no": section["page_no"],
+                "source_region": section["region_id"],
+            }
+            for finding in column_boundary_issues(extent)
+        )
         if roles is None:
             issues.append(
                 {
@@ -58,7 +74,10 @@ def validate_column_anchors(sections, scope, entries):
                 }
             )
         if roles is None or roles["role"] == "nonfinal":
-            excluded = {d["id"] for d in column_anchor_diagrams(source)}
+            diagrams = column_anchor_diagrams(source)
+            if roles is not None:
+                diagrams = trusted_column_diagrams(source, diagrams)
+            excluded = {d["id"] for d in diagrams}
             if present & excluded:
                 raise ValueError(
                     "Unproved or nonfinal original grid was promoted to final structures"
@@ -87,7 +106,9 @@ def validate_column_anchors(sections, scope, entries):
                 or parent["source"]["grid_axes"] != ownership.get("grid_axes")
             ):
                 raise ValueError("Ruled binding has no exact original column anchor")
-            validate_ruled_source_reference(parent, row)
+            validate_ruled_source_reference(
+                parent, row, trusted_bottom=trusted_by_id[parent["region_id"]]
+            )
             represented[
                 (parent["region_id"], evidence["row"], evidence["pair"])
             ].append(row)

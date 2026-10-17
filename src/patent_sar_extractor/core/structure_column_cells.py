@@ -6,6 +6,7 @@ from itertools import pairwise
 
 from .numbered_structure_models import NumberedTableIssue
 from .structure_column_anchors import ANCHOR_ROLE, column_anchor_roles
+from .unruled_body_scope import column_body_extent
 
 
 def prepare_ruled_cells(cells, sections):
@@ -19,9 +20,10 @@ def prepare_ruled_cells(cells, sections):
                 section["source"]["grid_axes"],
             )
             start = int(scope.get("kind") == "original_ruled_columns")
+            trusted = column_body_extent(section["source"])["trusted_bottom"]
             for top, bottom in pairwise(grid["ys"][start:]):
                 by_row[(section["page_no"], tuple(grid["xs"]), top, bottom)].append(
-                    (section, roles)
+                    (section, roles, trusted)
                 )
     prepared, issues = [], []
     for cell in cells:
@@ -45,11 +47,9 @@ def prepare_ruled_cells(cells, sections):
                 )
             )
             continue
-        section, roles = matches[0]
-        if roles["role"] == "nonfinal":
-            continue
+        section, roles, trusted = matches[0]
         scope = section["source"]["header_scope"]
-        if cell.label_bounds[3] > section["source"]["body_bottom"]:
+        if cell.label_bounds[3] > trusted:
             issues.append(
                 NumberedTableIssue(
                     cell.page_index,
@@ -57,6 +57,8 @@ def prepare_ruled_cells(cells, sections):
                     "original_ruled_row_after_source_boundary",
                 )
             )
+            continue
+        if roles["role"] == "nonfinal":
             continue
         prepared.append(
             replace(

@@ -19,6 +19,25 @@ def original_body_bottom(scope, chunks, diagrams):
     return original_body_extent(scope, chunks, diagrams)["body_bottom"]
 
 
+def column_body_extent(source):
+    """Recompute inventory/trusted bounds from the same complete source facts."""
+    return original_body_extent(
+        source["header_scope"], source["body_context"], source["page_diagrams"]
+    )
+
+
+def column_boundary_issues(extent):
+    return [
+        {"cpd": "", "reason": "unproved_original_column_boundary", "boundary": boundary}
+        for boundary in extent["unproved_boundaries"]
+    ]
+
+
+def trusted_column_diagrams(source, diagrams):
+    bottom = column_body_extent(source)["trusted_bottom"]
+    return [diagram for diagram in diagrams if diagram["bbox"][3] <= bottom]
+
+
 def body_diagrams(scope, bottom, diagrams):
     xs, ys = scope_axes(scope)
     pairs = structure_column_pairs(scope_headers(scope))

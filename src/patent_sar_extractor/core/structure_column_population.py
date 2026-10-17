@@ -6,7 +6,7 @@ from collections import defaultdict
 from .printed_identifiers import identifier_key
 from .source_cell_tokens import cell_text, grid_token_index
 from .source_window_chunks import window_source_tokens
-from .unruled_body_scope import body_context_window
+from .unruled_body_scope import body_context_window, column_body_extent
 
 
 def _diagram_cell_index(diagrams, xs, ys):
@@ -40,6 +40,7 @@ def column_population_issues(section, roles, represented):
     ]
     diagrams = _diagram_cell_index(source["page_diagrams"], xs, ys)
     first = int(scope.get("kind") == "original_ruled_columns")
+    trusted = column_body_extent(source)["trusted_bottom"]
     for row in range(first, len(ys) - 1):
         for pair, (identifier, structure) in enumerate(roles["pairs"]):
             labels = [
@@ -52,10 +53,10 @@ def column_population_issues(section, roles, represented):
             candidates = diagrams.get((row, structure), [])
             if not candidates and not any(text.strip() for text in labels):
                 continue
-            if roles["role"] == "nonfinal" and ys[row + 1] <= source["body_bottom"]:
+            if roles["role"] == "nonfinal" and ys[row + 1] <= trusted:
                 continue
             consumers = represented.get((section["region_id"], row, pair), [])
-            outside = ys[row + 1] > source["body_bottom"]
+            outside = ys[row + 1] > trusted
             unique = (
                 len(candidates) == 1
                 and xs[structure]

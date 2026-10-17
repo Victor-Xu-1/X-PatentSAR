@@ -4,7 +4,11 @@ import re
 
 from .caption_role_semantics import catalog_title_role
 from .printed_identifiers import identifier_key
-from .source_body_context import original_context_extent, validate_page_diagrams
+from .source_body_context import (
+    box_inside_drawing,
+    original_context_extent,
+    validate_page_diagrams,
+)
 from .source_cell_tokens import cell_lines, cell_text
 from .source_evidence_identity import proof_id
 from .source_section_roles import section_heading
@@ -109,6 +113,8 @@ def declaration_scopes(source):
     page_source_id = proof_id(source)
     output = []
     for caption in table_caption_nominees(lanes[0], size, native_tokens=lanes[1]):
+        if box_inside_drawing(caption["bbox"], source["page_diagrams"]):
+            continue  # Drawing annotations do not introduce a page table role.
         title = _title_window(caption, lanes, size)
         if title[3] >= size[1]:
             continue

@@ -6,6 +6,7 @@ from unruled_structure_support import UnruledStructureControls
 
 from patent_sar_extractor.core.formal_structure import coverage_errors
 from patent_sar_extractor.core.source_section_roles import section_body_boundary
+from patent_sar_extractor.core.unruled_structure_proof import unruled_source_inventory
 
 
 def original_region(payload):
@@ -17,6 +18,44 @@ def original_region(payload):
 
 
 class UnruledSourceBoundaryTests(UnruledStructureControls, unittest.TestCase):
+    def test_uncertain_boundary_cannot_extend_nonfinal_ownership_in_either_layout(self):
+        for ruled in (False, True):
+
+            def doubtful_section(page, _structures, *, ruled=ruled):
+                if ruled:
+                    for x in (40, 175, 380):
+                        page.draw_line((x, 65), (x, 330))
+                    for y in (65, 100, 210, 330):
+                        page.draw_line((40, y), (380, y))
+                # An explicit section cue overlaps a known diagram. It cannot
+                # truncate original facts or extend the old nonfinal role.
+                page.insert_text((40, 260), "Compound 901: Preparation", fontsize=8)
+
+            with self.subTest(ruled=ruled):
+                _, payload = self.run_binding(
+                    ["73", "28"],
+                    title="Table 12. Intermediates",
+                    mutate_page=doubtful_section,
+                )
+                issues, nonfinal = unruled_source_inventory(
+                    payload["source_sections"], payload["source_reference_scope"], []
+                )
+                self.assertEqual(nonfinal, {"S0"})
+                self.assertTrue(
+                    any(
+                        issue["reason"] == "unproved_original_column_boundary"
+                        for issue in issues
+                    )
+                )
+                raw = next(
+                    s["source"]
+                    for s in payload["source_sections"]
+                    if s["role"]
+                    in {"unruled_structure_region", "structure_column_anchor"}
+                )
+                self.assertEqual({d["id"] for d in raw["page_diagrams"]}, {"S0", "S1"})
+                self.assertTrue(coverage_errors(payload))
+
     def test_section_boundary_requires_an_explicit_title_not_a_row_label_or_reference(
         self,
     ):
@@ -141,13 +180,18 @@ class UnruledSourceBoundaryTests(UnruledStructureControls, unittest.TestCase):
         self.assertEqual(coverage_errors(payload), [])
 
     def test_table_reference_inside_a_drawing_is_not_a_new_region_boundary(self):
-        def diagram_annotation(page, _structures):
-            page.insert_text((240, 170), "Table 22", fontsize=7)
+        for text in ("Table 22", "Table 22. Intermediates", "Table 22. Compounds"):
 
-        result, payload = self.run_binding(["73", "28"], mutate_page=diagram_annotation)
-        self.assertEqual(len(result["bindings"]), 2)
-        self.assertEqual(original_region(payload)["body_bottom"], 720)
-        self.assertEqual(coverage_errors(payload), [])
+            def diagram_annotation(page, _structures, *, text=text):
+                page.insert_text((240, 170), text, fontsize=7)
+
+            with self.subTest(text=text):
+                result, payload = self.run_binding(
+                    ["73", "28"], mutate_page=diagram_annotation
+                )
+                self.assertEqual(len(result["bindings"]), 2)
+                self.assertEqual(original_region(payload)["body_bottom"], 720)
+                self.assertEqual(coverage_errors(payload), [])
 
     def test_following_independent_product_is_not_lost_or_claimed_by_the_table(self):
         def next_product(page, structures):

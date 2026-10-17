@@ -1,5 +1,6 @@
 """Declared source completeness survives saved flags and result count edits."""
 
+import copy
 import json
 import unittest
 
@@ -8,6 +9,7 @@ from test_unruled_continuation import continued_page
 from unruled_structure_support import UnruledStructureControls
 
 from patent_sar_extractor.core.binding_source_references import reference_issues
+from patent_sar_extractor.core.caption_label_roles import caption_reference_ids
 from patent_sar_extractor.core.catalog_reader import read_catalog_entries
 from patent_sar_extractor.core.formal_structure import coverage_errors
 from patent_sar_extractor.web.compound_catalog import read_compound_catalog
@@ -37,6 +39,21 @@ class StructureDeclarationProofTests(UnruledStructureControls, unittest.TestCase
         payload["compound_catalog"]["numbered_compounds"] = 3
         payload["compound_catalog"]["source_observations"] = 3
         payload["final_bindings_count"] = 3
+        # Retained references to a removed owner are contradictory, not a
+        # missing-but-consistent inventory. That stronger rejection must stay.
+        with self.assertRaisesRegex(ValueError, "label-role reference ownership"):
+            reference_issues(payload, payload["compound_catalog"]["entries"])
+        # Even removing the dependent references and rebuilding their reported
+        # index cannot erase the original page's now unconsumed diagram.
+        payload = copy.deepcopy(payload)
+        payload["source_sections"] = [
+            section
+            for section in payload["source_sections"]
+            if section.get("role") != "structure_label_reference"
+        ]
+        payload["source_reference_scope"]["label_reference_ids"] = (
+            caption_reference_ids(payload["source_sections"])
+        )
         self.assertTrue(
             reference_issues(payload, payload["compound_catalog"]["entries"])
         )

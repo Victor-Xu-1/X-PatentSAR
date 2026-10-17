@@ -1,5 +1,14 @@
 # X-PatentSAR architecture
 
+Original column ownership uses the same source-body SDK for ruled-cell
+preparation, logical matching, serialized population and nonfinal exclusions.
+The complete context/diagram inventory is immutable; trusted ownership stops at
+the first unresolved boundary. A whole drawing-contained table annotation does
+not create an independent page declaration. Caption observation and admission
+are separate: withholding a nonfinal structure from publication does not remove
+it from the existing grid/source inventory. These projections share the current
+binder/ledger/writer and do not add an engine, store or acceptance path.
+
 Original boundary derivation now lives in the pure `source_body_context` SDK;
 `unruled_body_scope` supplies its column adapters. Complete source inventory and
 positively trusted ownership have separate bottoms. Doubtful, conflicting,

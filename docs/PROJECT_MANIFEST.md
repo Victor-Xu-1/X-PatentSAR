@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- Original column consumers distinguish complete inventory from independently
+  trusted ownership. The shared body-context SDK feeds physical-row preparation,
+  population replay, logical matching and nonfinal exclusion. A doubtful boundary
+  retains all facts but cannot extend the old role onto later structures. Extents
+  are prepared per source, not recomputed for each physical row. Whole text
+  containment inside an observed drawing identifies table annotations in both
+  boundary and declaration nomination; crossing section cues remain unresolved.
+  Caption capture receives the full remaining source inventory even when a
+  declaration withholds promotion, preserving nonfinal source assets/IDs. No
+  scientific acceptance gate, raw artifact, dependency, public API/SQL or separate
+  writer changes. Current native/serialized regressions must pass before delivery.
+
 - Shared source SDK: `source_body_context` owns body-boundary and observed-box
   selection; `unruled_body_scope` is its column adapter. Complete inventory and
   trusted ownership extents are distinct. `source_evidence_identity` preserves

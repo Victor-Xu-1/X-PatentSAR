@@ -219,7 +219,6 @@ def collect_spatial_bindings(
         for structure in processed_structures
         if int(structure["page_no"]) - 1 not in reserved_pages
         and str(structure["id"]) not in numbered.protected_structure_ids
-        and str(structure["id"]) not in nonfinal_declaration_ids
     ]
     caption_issues = []
     caption_pages, protected_caption_ids, source_exclusions = set(), set(), []
@@ -234,6 +233,7 @@ def collect_spatial_bindings(
         issues=caption_issues,
         source_exclusions=source_exclusions,
         protected_structure_ids=protected_caption_ids,
+        withheld_structure_ids=frozenset(nonfinal_declaration_ids),
         grids_for_page=grids_for_page,
         tokens_for_page=tokens_for_page,
     )

@@ -137,6 +137,18 @@ class SourceBodyContextTests(unittest.TestCase):
         self.assertEqual(result["trusted_bottom"], 480)
         self.assertEqual(len(result["unproved_boundaries"]), 1)
 
+    def test_a_table_reference_inside_a_drawing_does_not_become_a_page_boundary(self):
+        result = self.extent([token("Table 22", 480, x=240, width=50)])
+        self.assertEqual(result["body_bottom"], 720)
+        self.assertEqual(result["trusted_bottom"], 720)
+        self.assertEqual(result["unproved_boundaries"], [])
+
+    def test_a_table_title_crossing_a_drawing_edge_retains_boundary_uncertainty(self):
+        result = self.extent([token("Table 22. Compounds", 480, x=40, width=300)])
+        self.assertEqual(result["body_bottom"], 720)
+        self.assertEqual(result["trusted_bottom"], 480)
+        self.assertEqual(len(result["unproved_boundaries"]), 1)
+
     def test_actual_column_headers_share_the_existing_four_point_boundary(self):
         words = [
             token("Compound No.", 300, x=40, width=90),
