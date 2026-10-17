@@ -1,5 +1,18 @@
 # Project governance manifest
 
+- Shared-panel source ownership: `activity_parallel_context` uses the existing
+  bounded original observation/context SDK, no OCR/queue/store/model of its own.
+  Producer carry and saved table-family QA require unique actual caption positions,
+  complete source/geometry/confidence and overlapping-word conservation. Generic
+  shared headers retain each panel's own explicit conditions; separate captions
+  cannot merge by identical text. Adjacent pages keep their immediate parent,
+  and new sections still stop carry. The source-header identity authority owns
+  one unresolved-field policy shared by rows, carry and saved replay. Coverage15
+  stores the additional proof within unpublished Activity19/extractor28/v0.2.34;
+  original/raw/manual data, API/SQL, scientific engines and numerical SAR policies
+  remain unchanged. Controlled native/raster/writer/SAR checks do not prove full
+  original-compound recall or real-task scientific acceptance.
+
 - Bidirectional caption ownership: the existing `caption_grid_binding` path,
   binder/writer and source ledger remain sole authorities. `caption_page_boundary`
   owns transient adjacent-grid carry and two-page replay; `caption_boundary_context`

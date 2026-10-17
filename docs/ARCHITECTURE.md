@@ -96,6 +96,36 @@ can refresh cached views. Marketing-version-only changes do not alter that stamp
 Old inputs/reports/manual edits remain immutable; new analysis requires a current
 source snapshot. CSV independence and the existing SAR queue are unchanged.
 
+## Shared physical headers and independent panel conditions
+
+`activity_parallel_context` captures only the existing bounded native/raster
+prefix observations beside each parallel physical frame. It performs no OCR or
+value inference. The same original-source SDK replays page/column bounds,
+confidence, the complete qualified caption boundary, unique original caption
+positions and overlapping source conservation for live carry and saved-family QA.
+Two independent captions with identical wording cannot merge their sources or
+lend a far-away header. A paragraph locator is part of the complete caption line;
+the canonical `SourceTokens.native_tokens` domain remains independent evidence.
+
+Generic shared panels inherit only proved columns/header origin, retaining their
+own explicitly observed target, assay and cell-line context. Conditions are not
+filled from the left panel. Repeated compounds/measurements remain separate;
+ordinary SAR provenance consumes those same source conditions. Biology-specific
+categorical interpretations keep their stricter common-context rule. Adjacent
+pages preserve the immediate proved parent's context, not a different leftmost
+header source. A new section before a continued caption cannot be erased by
+caption-window normalization. Raw source text and original numeric values remain.
+
+`schema_requires_review` is the common unresolved-field policy for row review,
+header carry and source-family replay; unknown endpoints/units are never lent to
+other panels. The existing actual-caption context selector distinguishes earlier
+prose references from the real caption without discarding post-caption conditions.
+Activity coverage15 records the added parallel context proof, within unpublished
+Activity19/extractor28. Older derived evidence is not retagged as current; original
+PDF/raw caches/manual audit, API1/SQL1, numerical SAR rules and models are unchanged.
+This source-header improvement does not establish all-format recall, complete
+structure ownership, NMR classification or actual scientific acceptance.
+
 ## Historical source review without current confirmation
 
 `catalog_reader.read_catalog_entries` retains strict scientific ownership by

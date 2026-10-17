@@ -6,6 +6,7 @@ from itertools import pairwise
 
 from .activity_context_geometry import validate_context_geometry
 from .activity_grid_context import _suffix
+from .activity_parallel_context import validate_parallel_context
 
 
 def prepare_layout(schema, page_no, region, tokens, prefix, regions):
@@ -42,6 +43,8 @@ def prepare_layout(schema, page_no, region, tokens, prefix, regions):
     }
     if "context_geometry" in region:
         layout["context_geometry"] = region["context_geometry"]
+    if "parallel_context" in region:
+        layout["parallel_context"] = region["parallel_context"]
     return replace(schema, source_layout=layout)
 
 
@@ -52,7 +55,7 @@ def validate_layout(record):
     if (
         record["kind"] != "grid"
         or not isinstance(layout, dict)
-        or set(layout) - {"boundary_prefix", "context_geometry"}
+        or set(layout) - {"boundary_prefix", "context_geometry", "parallel_context"}
         != {
             "xs",
             "ys",
@@ -91,6 +94,7 @@ def validate_layout(record):
         raise ValueError("Original table layout is not owned by its region")
     if "context_geometry" in layout:
         validate_context_geometry(layout["context_geometry"], record["bbox"])
+    validate_parallel_context(layout, layout.get("boundary_prefix", layout["prefix"]))
     context = layout["context"]
     if (
         not isinstance(context, dict)

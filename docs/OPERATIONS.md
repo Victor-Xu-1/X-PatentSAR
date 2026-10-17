@@ -1,5 +1,25 @@
 # Operations and troubleshooting
 
+## Parallel activity tables
+
+The software can use one original header for multiple parallel panels only after
+confirming a unique shared original caption, compatible physical columns and
+complete conserved source observations. It does not match a nearby table merely
+because its title words or dimensions are the same. Unknown header fields stay
+under review and cannot supply another panel's endpoints or units.
+
+Shared columns do not mean shared experimental conditions. Explicit panel-local
+assay/cell-line conditions remain separate through saved output and SAR import;
+repeated compound numbers are not deduplicated across those experiments. A proved
+next-page continuation follows that panel's context. A new assay section stops
+automatic carry even if a later caption says "continued". No user matching step,
+extra OCR pass or external model call is added by this source-context check.
+
+Coverage15/Activity19/extractor28 validate the added original context proof. Old
+derived acceptance remains historical; raw source assets and human audit are not
+rewritten. This does not close remaining structure/number/source coverage or
+characterization-table issues, nor replace frontend scientific acceptance.
+
 ## Captions separated from their original diagrams
 
 Binding21/binder30/visible-label21 support both an original caption followed by a
