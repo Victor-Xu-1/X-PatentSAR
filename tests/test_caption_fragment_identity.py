@@ -26,6 +26,35 @@ def complete(label, raw=None):
 
 
 class CaptionFragmentIdentityTests(unittest.TestCase):
+    def test_literal_hyphenated_parts_are_not_independent_complete_identifiers(self):
+        for label, words in (
+            ("Q-028C", ("Compound", "Q", "-028C")),
+            ("AB-093", ("Compound", "AB", "-093")),
+        ):
+            with self.subTest(label=label):
+                self.assertFalse(
+                    refined_caption_conflicts(
+                        label,
+                        complete(label),
+                        [fragment(word, index) for index, word in enumerate(words)],
+                    )
+                )
+
+    def test_hyphen_fragment_cannot_remove_zeros_or_change_letters_or_digits(self):
+        for suffix in ("-28C", "-028D", "-029C", "-028C/1"):
+            with self.subTest(suffix=suffix):
+                self.assertTrue(
+                    refined_caption_conflicts(
+                        "Q-028C",
+                        complete("Q-028C"),
+                        [
+                            fragment("Compound", 0),
+                            fragment("Q", 1),
+                            fragment(suffix, 2),
+                        ],
+                    )
+                )
+
     def test_correct_literal_fragments_keep_suffixes_and_leading_zeros(self):
         for label, words in (
             ("47", ("Compound", "4", "7")),

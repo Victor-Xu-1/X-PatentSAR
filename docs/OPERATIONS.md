@@ -2,6 +2,16 @@
 
 ## Failed-worker details and overlapping caption locators
 
+An unread page hint does not prove that a caption uses bare identifiers. Unknown
+catalogue roles use the original caption reader; a bare printed ID still needs
+the independent compound-role proof. This is not fuzzy label repair. Both producer
+and saved reader use one original-cell conflict rule, preserving known differing
+IDs, nonfinal roles and unknown prose. Detector pieces starting at a hyphen must
+match literal complete-ID characters once in physical order; zeros and letter
+suffixes cannot be removed or changed. No page observation is rewritten. Binding17/
+binder26/visible19/preparation7 covers the complete unpublished repair, not a second
+epoch increment for its internal commits.
+
 Failure details now retain the terminal exception rather than only the start of
 a traceback. The same existing private logger records a head/tail excerpt bounded
 to65536characters, and the existing raised error is bounded to1200characters.

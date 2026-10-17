@@ -1,5 +1,15 @@
 # Project governance manifest
 
+- Caption nomination retains uncertainty: `caption_grid_rows` reuses the shared
+  prefix grammar and does not assign a bare form from an unread hint unless the
+  original catalogue's compound role is independently proved. Original-cell
+  conflicts use `source_cell_claims` once for producer and serialized consumer;
+  the duplicate prefix veto is removed. Literal series-hyphen pieces retain exact
+  characters/order in the shared caption guard, never ID reconstruction. This is
+  within Binding17/binder26/visible19/preparation7, not an extra release/epoch per
+  internal commit. Original observations, nonfinal/prose/ID conflicts and the
+  existing catalogue/QA authority remain intact.
+
 - Failed-worker diagnostics: `application/worker_diagnostics.py` supplies one
   bounded head/tail excerpt for existing activity/recognition/final failure paths;
   private logging and raised errors remain separate bounded views, not new stores

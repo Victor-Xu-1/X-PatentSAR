@@ -1,5 +1,20 @@
 # X-PatentSAR architecture
 
+Caption nomination is not identifier-form proof. `caption_grid_rows` selects the
+shared literal prefix grammar and requests a caption reread for an unresolved
+source whose catalogue role is unknown. Only a literal bare original identifier
+or an independently proved compound catalogue may select bare-ID semantics.
+The actual original cell still supplies the identifier; row position, spelling
+similarity and neighbouring IDs never do. Original-cell conflicts now use the
+existing `source_cell_claims` authority once in both producer and formal replay,
+rather than adding an inconsistent second caption-prefix veto. A bare label-kind
+word claims no number; complete differing IDs, nonfinal roles and unsupported
+prose remain vetoes. Literal detector pieces beginning at a series hyphen retain
+every digit/letter/hyphen and physical order against a separately read complete
+caption. They never become complete IDs or join into a new number. Controlled
+raster nomination faults, saved-proof replay and negative cases cover this path;
+current Binding17/binder26/visible19/preparation7 applies to the whole repair.
+
 The shared caption guard treats an exact same-role detector fragment containing
 only trailing punctuation as a locator only when a qualified, complete original
 identifier crosses that fragment's right boundary on the same physical row and
