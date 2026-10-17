@@ -1,5 +1,20 @@
 """One physical cell-token selection and literal multiline layout authority."""
 
+from bisect import bisect_right
+
+
+def grid_token_index(tokens, xs, ys):
+    """Index already-validated axes with the same half-open centre ownership."""
+    if len(tokens) > 50000:
+        raise ValueError("Original grid token inventory exceeds its bound")
+    selected = {}
+    for token in tokens:
+        column = bisect_right(xs, token["x"]) - 1
+        row = bisect_right(ys, token["y"]) - 1
+        if 0 <= column < len(xs) - 1 and 0 <= row < len(ys) - 1:
+            selected.setdefault((row, column), []).append(token)
+    return selected
+
 
 def cell_tokens(tokens, bounds):
     x0, y0, x1, y1 = bounds

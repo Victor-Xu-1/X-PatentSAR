@@ -62,7 +62,7 @@ def _has_activity_payload(row: dict) -> bool:
         bucket = row.get(bucket_name, {}) or {}
         if not isinstance(bucket, dict):
             continue
-        if has_usable_activity_values(bucket):
+        if has_usable_activity_values(bucket, sources=row.get("activity_sources", [])):
             return True
     return False
 
@@ -70,9 +70,12 @@ def _has_activity_payload(row: dict) -> bool:
 def _extract_active_cpds(activity_payload: dict) -> list[str]:
     active = []
     seen = set()
+    observed = set()
     if not isinstance(activity_payload, dict):
         return []
     for row in activity_payload.get("rows", []):
+        if isinstance(row, dict):
+            observed.update(_expand_cpd_labels(row.get("cpd", "")))
         if not _has_activity_payload(row):
             continue
         for cpd in _expand_cpd_labels(row.get("cpd", "")):
@@ -84,7 +87,7 @@ def _extract_active_cpds(activity_payload: dict) -> list[str]:
         for raw_cpd, values in data_map.items():
             if has_usable_activity_values(values):
                 for cpd in _expand_cpd_labels(raw_cpd):
-                    if cpd not in seen:
+                    if cpd not in seen and cpd not in observed:
                         active.append(cpd)
                         seen.add(cpd)
     return active

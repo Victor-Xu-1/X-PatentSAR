@@ -106,6 +106,7 @@ def write_binding_result(
     catalog = compound_catalog(
         lossless_sources([*catalog_bindings, *bindings]),
         lossless_sources(catalog_sources),
+        source_issues=issues,
     )
     catalog["formal_acceptance_scope"] = FORMAL_SCOPE
     bindings = [dict(binding) for binding in catalog["entries"]]
@@ -113,6 +114,18 @@ def write_binding_result(
         "source_sections": list(source_sections),
         "source_reference_scope": reference_scope(source_sections, original_pdf_sha256),
     }
+    # Unruled layout findings are one pure source-reference replay, not two
+    # independent observations from the spatial view and saved validator.
+    registered = set(reference_payload["source_reference_scope"]["unruled_region_ids"])
+    issues = [
+        issue
+        for issue in issues
+        if not (
+            isinstance(issue, dict)
+            and isinstance(issue.get("evidence"), dict)
+            and issue["evidence"].get("source_reference_region") in registered
+        )
+    ]
     issues.extend(reference_issues(reference_payload, bindings))
     directory.mkdir(parents=True, exist_ok=True)
     output_json = directory / "bindings.json"

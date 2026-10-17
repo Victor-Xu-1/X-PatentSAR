@@ -3,6 +3,7 @@
 from .activity_header_evidence import proof_id
 from .heading_source_proof import heading_observation_status
 from .printed_identifiers import identifier_key
+from .source_binding_proof import annotate_source_binding
 from .source_section_roles import heading_members
 
 HEADING_ROLES = {
@@ -18,15 +19,40 @@ def heading_sections(sections):
     return [section for section in sections if section.get("role") in HEADING_ROLES]
 
 
+def _heading_owners(entries, original_sha):
+    """Current declarations require the same original occurrence, not an ID hit."""
+    owners = set()
+    for entry in entries:
+        for source in [entry, *entry.get("additional_sources", [])]:
+            if source.get("binding_rule") != "original_heading_standalone":
+                continue
+            checked = annotate_source_binding(source)
+            if (
+                checked.get("accuracy_status") == "confirmed"
+                and not checked.get("fail_closed")
+                and checked.get("source_pdf_sha256") == original_sha
+            ):
+                proof = checked["original_heading_evidence"]["heading_observation"]
+                owners.add(
+                    (proof_id(proof), identifier_key(checked.get("cpd"), wrapped=True))
+                )
+    return owners
+
+
 def heading_inventory_issues(sections, scope, entries):
     headings = heading_sections(sections)
-    if scope["version"] not in {3, 4}:
+    if scope["version"] not in {3, 4, 5, 6}:
         if any("heading_observation" in section for section in headings):
             raise ValueError("Original heading inventory was downgraded")
         return []
     if scope.get("heading_ids") != [proof_id(section) for section in headings]:
         raise ValueError("Original heading inventory was omitted or changed")
     labels = {identifier_key(entry.get("cpd"), wrapped=True) for entry in entries}
+    owners = (
+        _heading_owners(entries, scope["original_pdf_sha256"])
+        if scope["version"] == 6
+        else set()
+    )
     issues = []
     for section in headings:
         proof = section.get("heading_observation")
@@ -59,7 +85,12 @@ def heading_inventory_issues(sections, scope, entries):
         if declaration["role"] in {"intermediate_section", "assay_section"}:
             continue
         for identifier in heading_members(declaration):
-            if declaration["role"] == "ambiguous_heading" or identifier not in labels:
+            present = (
+                (proof_id(proof), identifier) in owners
+                if scope["version"] == 6
+                else identifier in labels
+            )
+            if declaration["role"] == "ambiguous_heading" or not present:
                 issues.append(
                     {
                         "cpd": f"Compound {identifier}",

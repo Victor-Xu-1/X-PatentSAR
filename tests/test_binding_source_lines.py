@@ -112,53 +112,36 @@ class BindingSourceLineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             source_line_map({0: [(60, "Compound 41")], "0": [(70, "Compound 42")]})
 
-    def test_failed_or_misdirected_parallel_observer_is_not_an_empty_page(self):
-        for phase in ("text", "line"):
-            for outcome in (
-                RuntimeError("controlled source failure"),
-                (9, "foreign") if phase == "text" else (9, []),
-            ):
+    def test_incomplete_or_unlocated_original_source_is_not_an_empty_page(self):
+        for phase in ("missing_page", "unlocated_text"):
+            with self.subTest(phase=phase), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                original, path, cache = self.fixture(root)
+                cache["ocr_line_map"] = {}
+                if phase == "missing_page":
+                    cache["page_texts"] = {}
+                else:
+                    cache["page_texts"]["0"] = "Unlocated original text"
+                path.write_text(json.dumps(cache), encoding="utf-8")
+                before = path.read_bytes()
                 with (
-                    self.subTest(phase=phase, outcome=type(outcome).__name__),
-                    tempfile.TemporaryDirectory() as temporary,
-                ):
-                    root = Path(temporary)
-                    original, path, cache = self.fixture(root)
-                    cache["ocr_line_map"] = {}
-                    if phase == "text":
-                        cache["page_texts"] = {}
-                    path.write_text(json.dumps(cache), encoding="utf-8")
-                    before = path.read_bytes()
-                    observer = (
-                        "_extract_binder_page_text"
-                        if phase == "text"
-                        else "_extract_binder_source_lines"
-                    )
-                    config = (
-                        {"side_effect": outcome}
-                        if isinstance(outcome, Exception)
-                        else {"return_value": outcome}
-                    )
-                    with (
-                        fitz.open(original) as doc,
-                        patch(
-                            f"patent_sar_extractor.core.binding_preparation.{observer}",
-                            **config,
+                    fitz.open(original) as doc,
+                    patch(
+                        "patent_sar_extractor.core.binding_page_source.update_page_ocr_cache",
+                        side_effect=AssertionError(
+                            "Saved source cannot be overwritten"
                         ),
-                        self.assertRaises(RuntimeError),
-                    ):
-                        prepare_binding_observations(
-                            doc,
-                            str(original),
-                            {
-                                "ocr_cache_path": str(path),
-                                "bind_workers": 2,
-                                "authoritative_structure_table_pages": [0, 1],
-                            },
-                            root / "binding",
-                            [],
-                        )
-                    self.assertEqual(path.read_bytes(), before)
+                    ),
+                    self.assertRaises((ValueError, RuntimeError)),
+                ):
+                    prepare_binding_observations(
+                        doc,
+                        str(original),
+                        {"ocr_cache_path": str(path), "bind_workers": 2},
+                        root / "binding",
+                        [],
+                    )
+                self.assertEqual(path.read_bytes(), before)
 
 
 if __name__ == "__main__":

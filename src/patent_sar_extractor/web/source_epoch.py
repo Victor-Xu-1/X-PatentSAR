@@ -7,6 +7,9 @@ The existing strict source gate remains the validation authority.
 from __future__ import annotations
 
 from patent_sar_extractor import contracts as core
+from patent_sar_extractor.core.ocsr.recognition_policy import (
+    UNAVAILABLE_SOURCE_STATUSES,
+)
 
 from .models import Compound
 
@@ -28,8 +31,7 @@ def record_epoch_current(record: object, *, allow_unavailable: bool = False) -> 
         allow_unavailable
         and isinstance(record, dict)
         and evidence is None
-        and record.get("OCSR_status")
-        in {"image_missing", "engine_unavailable", "unavailable"}
+        and record.get("OCSR_status") in UNAVAILABLE_SOURCE_STATUSES
         and not record.get("canonical_smiles")
         and not record.get("smiles")
         and record.get("rdkit_valid") is not True
@@ -40,12 +42,14 @@ def smiles_epoch_current(payload: object, *, allow_unavailable: bool = False) ->
     if not isinstance(payload, dict):
         return False
     records, sources = payload.get("records"), payload.get("source_records", [])
+    reprints = payload.get("reprint_records", [])
     return (
         isinstance(records, list)
         and isinstance(sources, list)
+        and isinstance(reprints, list)
         and all(
             record_epoch_current(record, allow_unavailable=allow_unavailable)
-            for record in (*records, *sources)
+            for record in (*records, *sources, *reprints)
         )
     )
 

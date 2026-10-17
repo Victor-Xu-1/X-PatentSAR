@@ -7,6 +7,7 @@ from unittest.mock import patch
 from test_prediction_support import PredictionFixture
 
 from patent_sar_extractor.web.correction_models import CorrectionRequest
+from patent_sar_extractor.web.errors import WebError
 from patent_sar_extractor.web.service import WorkspaceService
 
 
@@ -70,7 +71,11 @@ class FirstStructurePageTests(PredictionFixture, unittest.TestCase):
                 self.service.project(self.project.id).first_structure_page, 1
             )
 
-    def test_missing_actual_structure_page_does_not_borrow_activity_fallback(self):
+    def test_missing_current_source_page_is_rejected_before_activity_fallback(self):
+        self.assertEqual(
+            self.service.compounds(self.project.id)[0].activities[0].page, 1
+        )
+        before = self.service.store.project(self.project.id)["snapshot"]
         for relative, key in (
             ("structure_bindings/bindings.json", "final_bindings"),
             ("structures/metadata.json", "structures"),
@@ -83,11 +88,15 @@ class FirstStructurePageTests(PredictionFixture, unittest.TestCase):
                 for entry in payload["compound_catalog"]["entries"]:
                     entry["page_no"] = None
             path.write_text(json.dumps(payload))
-        self.service.refresh(self.project.id)
-        row = self.service.compounds(self.project.id)[0]
-        self.assertEqual(row.activities[0].page, 1)
-        self.assertEqual(row.source.page, 1)
-        self.assertIsNone(self.service.project(self.project.id).first_structure_page)
+        # Current source admission cannot publish this malformed catalogue as
+        # accepted merely because its activity points at a real original page.
+        with self.assertRaises(WebError) as raised:
+            self.service.refresh(self.project.id)
+        self.assertEqual(raised.exception.code, "invalid_compound_catalog")
+        self.assertEqual(raised.exception.status, 422)
+        self.assertEqual(
+            self.service.store.project(self.project.id)["snapshot"], before
+        )
 
     def test_old_projection_is_rebuilt_once_before_prediction_enqueue(self):
         with self.service.store.connect(write=True) as connection:

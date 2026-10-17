@@ -142,7 +142,12 @@ class SourceGridFragmentTests(unittest.TestCase):
             )
             saved = json.loads((root / "binding/bindings.json").read_text())
             saved["source_issues"] = []
-            entries = [{"cpd": f"Compound {n}"} for n in (73, 84, 105)]
+            placeholders = [{"cpd": f"Compound {n}"} for n in (73, 84, 105)]
+            with self.assertRaisesRegex(ValueError, "label-role reference ownership"):
+                reference_issues(saved, placeholders)
+            # Retain the actual caption owners; added synthetic ID placeholders
+            # still cannot repair an unresolved original open-row continuation.
+            entries = [*saved["compound_catalog"]["entries"], *placeholders]
             self.assertTrue(
                 any(
                     issue["reason"] == "unresolved_original_open_row"

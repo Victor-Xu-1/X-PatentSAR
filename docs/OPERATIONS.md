@@ -1,5 +1,201 @@
 # Operations and troubleshooting
 
+## Repeated original structures (unpublished v0.2.32)
+
+A repeated printed identifier is not proof that its drawings are chemically
+identical. SMILES schema3 retains every proved additional depiction in
+`reprint_records`; the same recognition worker processes every source. One compound
+still occupies one table row. All source roles share the 25,000-observation cap,
+actual-work timeout and byte/proof-dependent checkpoint. Overflow, failed source
+execution or missing observations cannot be recorded as complete coverage.
+
+`source_reprint_review` means at least one original is unobserved, unqualified or
+chemically different. The owner remains visible with its original sources, but
+cannot enter qualified SDF, automatic properties or accepted formal output. There
+is no confidence-based winner. A changed reprint invalidates current source use
+even when its primary image did not change. Old schema2 results stay historical;
+do not retag them or delete original/manual evidence to pass the new gate.
+
+Existing-source completion now processes all proved originals for an unavailable
+owner in the same prediction job. No manual matching or separate extraction is
+needed merely to fill missing observations. All depictions must independently
+qualify and agree before a usable structure or property is shown. A known
+chemical conflict remains invalid; a later property request does not silently
+rerun it until an apparent agreement occurs. Manual graph/blank edits are kept.
+Partial work and errors retain raw checkpoints, not accepted primary overlays.
+Cancel before/during an owner, changed source bytes, removed original ownership,
+expired producer and malformed saved observations cannot publish chemistry.
+Progress counts attempted source images, including reprints, not invented
+compounds or unattempted failures. Per-owner packet/context is bounded16MiB;
+the saved-QC cache retains512 digest-keyed results. Missing execution remains
+explicitly unavailable and eligible for the existing frontend completion action;
+this does not make an unaccepted PDF extraction formally accepted.
+Production remains unchanged until the reviewed PR is merged, exact-main wheel is
+deployed at unchanged18765 and affected Chrome/API/frontend science is verified.
+
+## Original unruled structure columns
+
+Wrapped headers are inspected as complete original word windows,not corrected
+strings. The same bounded two-dimensional grouping runs during nomination and
+saved replay; original independent cell reads still qualify the column roles.
+Staggered/parallel header starts do not require user column matching. Unknown
+attached words, missing graphs/labels and conflicting native text remain review;
+do not remove a line or guess a role to obtain clean success. The8-line logical
+header bound is an explicit supported budget,not a claim of universal layout.
+
+Literal hyphenated letter suffixes are valid inside declared identifier cells or
+explicit labels. Do not turn `008-B` into `008B`, `08-B` or another source's ID.
+Original typography remains stored; no digit joining, whitespace repair or new
+unqualified prose-locator shortcut is allowed. Existing failed artifacts and
+manual edits remain unchanged; new extraction uses the current source contract.
+
+Independent literal titles and complete header-word groups can establish logical
+parallel columns without printed borders, including titles at different heights.
+Every logical scope retains the whole original row and complete bounded prefix;
+saved replay must reproduce its group selection and column band. These windows
+are not table rules. A crossing header or contradictory original role is review,
+not an excuse to discard words, infer an ID or exclude a final product. A single
+shared title remains global. The source inventory limit is4096, with explicit
+overflow rather than silent partial extraction.
+
+Same/adjacent-page continuations project prefix, gaps and diagram checks through
+the same original column adapter. Printed headerless frames retain actual rows;
+captioned unruled parts reread their own title band while retaining full leading
+page observations. An independent experiment in the other column does not end
+this column. An unknown headerless prefix, contradictory declared context,
+missing graph/label, crossing rival or unproved/foreign parent must remain
+unresolved. Do not bypass those failures or
+borrow a neighbouring table key. Generated native/scanned and serialized checks
+are still not the frontend-only original-patent acceptance attempt.
+
+Parallel physical tables retain independent titles, table IDs and source roles
+through the shared grid-context/caption SDK. Full original observations stay
+available. A native/raster conflict in one column stays unresolved without
+overruling it or poisoning an independent column. Do not replace original table
+keys from row order, locale or an adjacent title. Saved replay checks catalogue
+ID/title and the complete page-grid inventory. A single global intermediate title
+still excludes its proved intermediate sources; an all-intermediate document
+remains refused for formal terminal-product processing. Explicit selected reprints
+retain all source assets, not discarded data or chemical-equivalence certification.
+Other ambiguous partitions and unsupported layouts still require further
+verification before real-patent retry or delivery.
+
+Same-page headerless physical parts use their exact registered original gap.
+Do not bypass an intervening grid, drawing, assay or new experiment. The gap
+floor and overlapping source observations are revalidated after serialization.
+Logical header scopes retain current page grids and stop their own row ownership
+at a later actual frame; complete original context and page diagrams remain
+available. Qualified assay headers also end the old structural role through the
+shared header identity. Weak or conflicting headers cannot establish a clean
+boundary or extend nonfinal exclusion. Generated native/scanned checks do not
+certify arbitrary input or replace the required frontend-only real-patent repeat.
+
+Original source registration now precedes physical cell construction. There is no
+second inherited-cell producer or later header-repair path. Headerless pages with
+no detector hits can still be inspected against the immediately registered prior
+source using the complete existing page-text inventory, without rereading
+unrelated prose. A missing diagram remains a missing row, not a blank success or
+shifted association. Changed logical outer clipping bounds are allowed only when
+complete original header groups fit the actual physical columns; a column crossing
+those groups remains unproved. Known assay headers without diagrams use the shared
+independent original header reader; unknown or mixed chemical frames remain review.
+Generated original/native/raster checks are not actual-patent acceptance. Preserve
+old attempts; the remaining source/chemistry work, merged-main deployment and
+frontend-only real repeat must finish before claiming delivery.
+
+Headerless physical continuations retain their actual first row and full frame
+as `continued_ruled_columns`. Missing ancestry, page gaps, unknown intervening
+experimental text and ambiguous source ownership remain review; a page-position
+hint is not proof. Do not fill a header/caption or shift the surviving row to
+repair a missing diagram. Original columns and saved source links are replayed
+by the same consumers. The current draft still requires native and real-source
+acceptance before it is delivered.
+
+Complete source extent and positively trusted role extent are separate. An
+unproved new section preserves the original tokens, labels and diagrams; it
+blocks extending a compound/intermediate table role beyond that cue. Both ruled
+and logical columns replay this distinction. Do not remove the unresolved suffix
+or classify it as an intermediate to clear completeness. Fully contained drawing
+table annotations do not start a page table; partially overlapping section cues
+remain unresolved. Caption-grid source capture still records original nonfinal
+assets even when their promotion is withheld. A document containing only proved
+intermediates has no final structure available for formal processing; clean source
+role proof is not successful empty terminal-product extraction.
+
+Original row alignment follows word/drawing extents, not only their centres.
+Every match still needs exact column roles and reciprocal uniqueness. A disjoint
+word or two competing diagrams cannot use a distance-based fallback.
+
+The source region retains full post-header context and the complete page diagram
+collection. Original table/header/procedure/assay boundaries are replayed from
+these facts, and child columns/candidates must be conserved projections. Known
+native/raster disagreement or a caption overlapping a diagram does not shorten
+the region. Following independent products stay available to normal heading/
+caption association. Never edit a bottom or clear later rows to pass QA.
+
+Current reference scope6 includes every observed unruled source region. The
+normal binder reads actual header roles and complete original identifier columns,
+then associates each label only with a reciprocally unique original diagram in
+its column and vertical scope. A short two-row table, letter/zero/series IDs and
+reversed crop metadata use the same path. Missing labels/diagrams and overlapping
+candidates stay explicit; duplicate digits are never corrected into a gap ID.
+Explicit nonfinal catalogues retain source observations but no final entries.
+
+The saved reader independently replays original source packets, page/frame/hash,
+whole-region label conservation and canonical assignments. Do not clear issues,
+remove the source ledger or retag old scopes to force acceptance. Historical
+scope1–5 reads retain history only. The unused I-series distance/sequence producer
+and its private binding/enforcement helpers are removed; no second execution
+chain remains. Existing original/raw/crop/manual assets stay immutable.
+
+Complete existing page-text observations nominate even tables with zero detected
+diagrams. Every known diagram page is inspected; unrelated graph-free prose is
+not a reason for another coordinate OCR pass. Original-cell rereads reuse the
+same configured engine, native/raster ownership and bounded SDK. No new model,
+provider, dependency, queue, database or automatic real-task replay is added.
+
+Controlled source-layout tests do not establish universal recall, full molecular
+identity or chemistry. Vertically disjoint rows, unmarked subsequent prose,
+headerless continuation, figure roles and unread prefix evidence remain
+open before real frontend resubmission. Preserve failures and review exports;
+complete delivery still requires PR/main/exact-main fixed18765 deployment and
+the actual frontend acceptance attempt, never scripted private-patent processing.
+
+## Transposed column inventory and current source admission
+
+Current source ledger scope6 separates proved original caption-label references
+from independent synthesis headings. The exact current proof, original document,
+literal ID and contained physical window must all match; another title with the
+same ID elsewhere remains observed. Missing/changed/downgraded references and
+foreign or unproved sources fail replay. This is not an exemption for arbitrary
+figure legends, unread words or unruled layouts.
+
+Binding source preparation now requires complete shared page observations,
+including non-table pages. With no cache it uses the existing checkpointed page
+reader/writer once; native pages need no model. A present foreign/incomplete cache
+or unlocated scanned text is never overwritten into success. Original native
+coordinates may be projected read-only when the native text matches the saved
+observation. The private binder OCR worker and partial table-cache writer are
+removed. Normal frontend classification already supplies this shared source;
+no private patent is automatically replayed on read, startup or deployment.
+
+Binding20/binder29 require current original-cell/caption/heading admission, not
+historical sequence rules or saved success flags. Activity18/extractor27/coverage14
+retain each original cell in transposed tables once. Unknown headers and unread
+declared IDs have exact parent-bound column scopes, retaining raw values and
+confidence/position observations even when no rows can be published. Whole columns
+must not masquerade as adjacent-row scopes or invent child grid axes. Saved
+replay rechecks every physical column, resolved row/cell proof and unresolved
+child; deleting a review flag, column or root descriptor does not pass coverage.
+
+Original PDF, raw page/model observations, structure assets and manual audits
+are not rewritten or retagged. Old derived binding/activity evidence stays
+historical; only a normal authorized frontend retry recomputes affected proof.
+No new model, external API, task queue, dependency or SQL migration is introduced.
+Complete focused consumer checks, installed-package verification, PR/main and
+fixed18765 deployment before claiming delivery. This source contract does not
+prove universal patent recall, full molecular identity or stereochemistry.
+
 ## Open original rows and adjacent continuations
 
 Binding19/binder28 require reference scope4 and every original rule-edge/fragment
@@ -371,7 +567,8 @@ Declared Intermediate headings and Example titles targeting an intermediate are
 source inventory rather than final compounds. A final title mentioning an
 intermediate, or a literal I-prefix, does not imply nonfinal identity. All original
 sections still stop diagram ownership. Ruled I-series use the same cell path;
-bare series keep I-prefixes, with missing/duplicate owners explicitly unresolved.
+bare series now require the original unruled column proof above, retaining
+I-prefixes and explicit missing/duplicate owners without a sequence producer.
 Integer sequence repair, global numeric zip and blanket conflict suppression are
 removed. Raw PDF/OCR/crops/model strings/manual audit/coverage6/SAR14 stay intact;
 no schema migration in place, extra queue, provider or environment installation.
@@ -835,6 +1032,11 @@ PRs, model calls, additional credentials or published binary releases are used.
 The workflow token has only repository contents/actions writes and PR reads;
 ordinary CI stays read-only. Explicit CI dispatch verifies the new revision.
 
+Local preparation accepts LF or Windows CRLF input and writes the three version
+files as canonical UTF-8/LF on every platform. A repeated `--write` normalizes
+metadata without incrementing an already prepared next-PR version. The literal
+authority, raw-size bound and data-only parsing checks remain mandatory.
+
 Repeated events are idempotent: the same PR keeps the same next version. A
 closed/unmerged PR does not move main. Concurrent PRs must update their branch
 and scope to the latest main **before merging**, then pass current CI; old
@@ -1220,12 +1422,13 @@ and source jumps retain their chosen page after refresh. With no extracted
 structure source yet, use **浏览原文** only when deliberately opening page 1.
 
 The same recognition batch now includes confirmed numbered structures without
-activities. SMILES schema v2 keeps their source observations separate from the
+activities. Historical SMILES schema v2 kept their source observations separate from the
 formal association list; both use identical chemistry/source-stereo QC and the
 same six-property worker. Rejected recognized molecules cannot enter inference,
 including activity-associated ones. A historical activity-only SMILES checkpoint
 is not complete-catalog evidence: use the completion action for an existing
-verified printed-ID catalog. If source ownership is missing, a new extraction
+verified single-depiction printed-ID catalog. Repeated depictions require the
+complete source treatment described above. If source ownership is missing, a new extraction
 is needed; never assign anonymous crops guessed IDs. Product release numbering, API v1 and SQLite v1 remain unchanged. Software jobs establish
 new source-bound records without deleting old audit; expanding source coverage alone
 does not reset the independent ADMET cache/runtime identity. Do not populate

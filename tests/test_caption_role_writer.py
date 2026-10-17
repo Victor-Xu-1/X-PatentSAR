@@ -113,6 +113,18 @@ class CaptionRoleWriterTests(unittest.TestCase):
             with self.subTest(mutation=mutation), self.assertRaises(ValueError):
                 reference_issues(changed, [])
 
+    def test_original_paragraph_prefix_cannot_hide_a_caption_catalogue_role(self):
+        payload, records = self.execute(
+            "[0042] Table 47. Intermediate compounds", prefixed=True
+        )
+        self.assertEqual(payload["final_bindings"], [])
+        self.assertEqual(reference_issues(payload, []), [])
+        self.assertEqual(
+            coverage_errors(payload),
+            ["No proved printed-ID structure is available for formal processing."],
+        )
+        self.assertTrue(all(Path(record["image_path"]).is_file() for record in records))
+
     def test_unknown_role_is_retained_as_incomplete_source_not_accepted_empty_data(
         self,
     ):

@@ -70,13 +70,21 @@ def _find_header(lines: list[str]) -> tuple[str, int]:
     parts = []
     first_row = len(lines)
     for index, line in enumerate(lines):
-        if _ROW.match(line.strip()):
-            first_row = index
-            break
+        # An actual ID-column header establishes its role before a target or
+        # cell name with digits can be mistaken for a compound-row identifier.
         start = _HEADER_START.search(line)
         if start:
             parts.append(line[start.start() :].strip())
-        elif parts and (
+            continue
+        # A split original metric header can now also have an alphanumeric ID
+        # shape. Establish its declared column role before interpreting rows.
+        if parts and METRIC.fullmatch(normalize_metric_text(line.strip())):
+            parts.append(line.strip())
+            continue
+        if _ROW.match(line.strip()):
+            first_row = index
+            break
+        if parts and (
             METRIC.search(normalize_metric_text(line)) or metadata_role(line)
         ):
             parts.append(line.strip())

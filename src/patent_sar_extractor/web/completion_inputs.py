@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from patent_sar_extractor.contracts import MAX_RECOGNITION_SOURCES
+
 from .artifacts import ArtifactView
 from .compound_catalog import read_compound_catalog
 from .correction_recovery import saved_fields
@@ -34,6 +36,7 @@ def completion_inputs(project: dict, rows: dict, compounds: list) -> list[tuple]
         return []  # unproved anonymous crops are not assigned invented compound IDs
     by_id = {str(item.get("cpd") or item.get("compound_id")): item for item in catalog}
     output = []
+    total_sources = 0
     for compound in compounds:
         if compound.recognition.status in {
             "valid",
@@ -52,6 +55,13 @@ def completion_inputs(project: dict, rows: dict, compounds: list) -> list[tuple]
         owner = by_id.get(compound.id)
         if not owner or not row["image_path"] or not compound.structure_image_url:
             continue
+        total_sources += 1 + len(owner.get("additional_sources", []))
+        if total_sources > MAX_RECOGNITION_SOURCES:
+            raise WebError(
+                413,
+                "recognition_source_limit",
+                "Recognition source collection exceeds its bounded workload.",
+            )
         if owner.get("structure_id") != compound.structure_id:
             raise WebError(
                 422,
@@ -78,6 +88,21 @@ def completion_inputs(project: dict, rows: dict, compounds: list) -> list[tuple]
             "source_image_path": image,
             "ocsr_image_path": image,
         }
+        additional = []
+        for source in owner.get("additional_sources", []):
+            original = str(root / files.relative(source.get("image_path") or ""))
+            digest = crop_digest(root, original)
+            additional.append(
+                {
+                    **source,
+                    "cpd": compound.id,
+                    "image_path": original,
+                    "source_image_path": original,
+                    "ocsr_image_path": original,
+                    "_completion_source_sha256": digest,
+                }
+            )
+        binding["additional_sources"] = additional
         output.append((compound.id, binding, crop))
     return output
 

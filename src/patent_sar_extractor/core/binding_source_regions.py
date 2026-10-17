@@ -129,7 +129,9 @@ def _reference_cells(region):
             }
 
 
-def reference_cell(line, regions):
+def reference_cell(
+    line, regions, *, permitted_roles=frozenset({"identifier", "preparation"})
+):
     """Only a wholly owned original line, never a whole-page vertical hint."""
     if line.get("geometry_space") != "rendered" or line.get("source") not in {
         "native",
@@ -142,7 +144,7 @@ def reference_cell(line, regions):
         scope = region["role_scope"]
         for cell in _reference_cells(region):
             role = scope["roles"]["columns"][cell["grid_column"]]
-            if role not in {"identifier", "preparation"} or not cell["qualified"]:
+            if role not in permitted_roles or not cell["qualified"]:
                 continue
             x0, y0, x1, y1 = cell["bbox"]
             if x0 <= box.x0 < box.x1 <= x1 and y0 <= box.y0 < box.y1 <= y1:

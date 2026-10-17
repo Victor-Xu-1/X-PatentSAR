@@ -1,5 +1,253 @@
 # Project governance manifest
 
+- Original-depiction recognition ownership: `RecognitionPlan` is the single
+  source scheduling projection for the existing DECIMER/cache/QC worker. All
+  primaries and proved reprints count toward one 25,000-source cap and workload
+  budget. SMILES3 adds `reprint_records` to the same artifact, not a new store,
+  queue or compound universe. `recognition_policy` and `reprint_consistency` are
+  the shared acceptance/complete-graph authorities; coordinator, formal export,
+  QA, Web and prediction eligibility consume them. No confidence voting, salt/
+  tautomer stripping or raw-data repair. Current original-byte/proof fingerprints
+  and the bounded source-hash cache include additional depictions. The old local
+  acceptance and export-QC copies are removed in favor of that authority.
+  Historical SMILES/raw/manual artifacts stay unchanged. Existing-source completion
+  consumes every proved depiction in the same owned job/converter/cache/rescue
+  and compound_recognitions table. `completion_observations` owns independent raw
+  work; `recognition_sources` owns current thin frames/revisions/all-image digests;
+  `recognition_observations` owns saved full-source QC. Primary-only promotion is
+  removed. Cancel/timeout/source-change/unknown-owner/corrupt-packet cases withhold
+  chemistry; observed conflicts are not automatically resampled. Per-owner16MiB
+  limits and512 digest-only QC entries bound memory without a competing store.
+  The `completion` browser-fixture mode builds only isolated controlled saved
+  observations, then performs read-only installed UI checks; no real model/PDF
+  work or seed route is introduced. The explicit completion test family includes
+  its source-boundary controls without global discovery or a larger CI selector
+  budget. Product
+  v0.2.32 is still one unpublished PR, not a release per checkpoint. Source-stereo3,
+  raw observation2, public API1, SQLite1, models/dependencies and pipeline order
+  remain. Native checks are not universal chemistry/recall or deployed acceptance.
+
+- `structure_header_lines` is the single bounded original multiline grouping
+  authority used by logical nomination and saved proof. It composes existing
+  original-line/column primitives;complete windows still pass the unchanged
+  independent cell reader. Maximal raw word blocks retain unknown prefixes;
+  body IDs/explicit boundaries stop carry. The8-line/64-column/4096-block bounds
+  never become silent truncation. Full printed identity adds literal hyphenated
+  letter suffixes through `printed_identifiers`;the narrow prose-locator domain
+  does not widen. Hyphens/zeros/raw typography are conserved across source and
+  activity consumers. All remain inside unpublished v0.2.32/Binding20/binder29/
+  Activity18/epoch27,not a new per-checkpoint version,public API/SQL,raw/model,
+  manual-audit or dependency change. Existing reports are not recalculated.
+
+- `logical_column_partitions` is the one original-word/caption partition
+  nominator. Complete original rows/prefixes, selected group indices and literal
+  bands are replayable internal scope facts,not invented printed grids. It is
+  shared by frame nomination, source capture and independent declarations.
+  `structure_column_context` owns one horizontal adapter across original and
+  continued scopes; caption roles, body ownership, prefix/gap and saved parent
+  checks use that same band. Full raw observations remain retained. Logical
+  captioned continuations keep original bounded title reads plus complete page
+  prefixes. Source ambiguity, missing observations and4096-scope overflow remain
+  explicit; there is no second extractor, fallback matcher or source writer.
+  These changes remain inside unpublished Binding20/binder29/scope6/v0.2.32,
+  without public API/SQL, raw/model/manual, dependency or queue changes. Related
+  native/raster/saved/Web/CI checks,review/main/18765 deployment and actual
+  frontend scientific acceptance remain separate required gates.
+
+- Parallel physical original scopes reuse the existing context_geometry and
+  caption-role SDK; no new OCR/model/layout engine or second matcher is added.
+  Declaration pages carry current page_grids once and saved replay verifies
+  header neighbours against it. Full raw page observations remain. Source roles,
+  table keys and catalogue metadata use one qualified context projection;
+  per-token catalogue scraping and blind prior-page carry are removed. Literal
+  caption splitting is shared by both caption consumers, not duplicated. Typed
+  selected reprints preserve all original sources and never prove chemistry.
+  These additions remain within unpublished Binding20/binder29/scope6 and must
+  pass focused source/saved/API/browser checks and main/18765 delivery. Native
+  controls do not prove arbitrary layouts or model/chemical acceptance.
+
+- Same-page continuation within unpublished Binding20/binder29/scope6 uses an
+  exact original context_start and unique registered parent. Local scope checks
+  and global saved replay share the same gap derivation; intervening frames,
+  drawings and unqualified context cannot be skipped. New logical header scopes
+  retain actual page_grids, separating their own rows from later physical frames
+  without losing raw body/page facts. activity_header_identity owns the one
+  measurement-column identity used by frame inspection and body-boundary replay.
+  All affected original/native/raster/saved consumers require focused checking;
+  no public API/SQL, raw artifact, manual revision, model or dependency changes.
+
+- Source-first physical-cell migration: `structure_frame_observation` only
+  nominates existing original frames; the shared source observer registers roles
+  before the single `structure_column_cells` producer feeds the existing matcher.
+  The obsolete carried-header cell producer/preparator is removed. Full existing
+  page-text membership preserves headerless, zero-detector-hit continuations;
+  early prose filtering and call-local token reuse bound extra work. The common
+  original column SDK verifies logical header words against actual physical
+  columns, retaining strict printed-rule alignment. Known diagram-free assay
+  headers need shared independent source proof, not a classifier hint. No raw,
+  manual, model, API/SQL, queue, dependency or scientific acceptance change.
+  This remains within unpublished Binding20/binder29; actual frontend repeat,
+  scientific/source completeness and remaining ambiguous layouts are unverified.
+
+- Physical continuation draft:`continued_ruled_columns` is an additive internal
+  original-scope kind within unpublished Binding20/binder29. Three responsibility
+  modules own capture/local scope, qualified context and exact saved parent links.
+  They feed the existing column SDK/matcher/ledger/writer. Body-top is the actual
+  first data-row edge,not a fabricated header. A current independent caption
+  catalogue retains its existing owner. Unknown ancestry remains explicit with
+  raw frames/rows,not inferred from page order or a fixed top margin. No public
+  API/SQL/raw/model/manual/asset/dependency change; current native regression is
+  pending and universal/chemical completeness is not certified.
+
+- Occurrence-ownership draft:the existing caption/label role SDK now includes
+  current proved numbered ID cells. The binder's global-label heading skips are
+  removed, and current heading replay requires an exact original observation
+  digest and literal member. Older recorded scopes remain historical readers,
+  not current admission. This unfinished repair awaits native positive/negative
+  and saved/Web consumers; no production/scientific acceptance is asserted.
+
+- Original column consumers distinguish complete inventory from independently
+  trusted ownership. The shared body-context SDK feeds physical-row preparation,
+  population replay, logical matching and nonfinal exclusion. A doubtful boundary
+  retains all facts but cannot extend the old role onto later structures. Extents
+  are prepared per source, not recomputed for each physical row. Whole text
+  containment inside an observed drawing identifies table annotations in both
+  boundary and declaration nomination; crossing section cues remain unresolved.
+  Caption capture receives the full remaining source inventory even when a
+  declaration withholds promotion, preserving nonfinal source assets/IDs. No
+  scientific acceptance gate, raw artifact, dependency, public API/SQL or separate
+  writer changes. Current native/serialized regressions must pass before delivery.
+
+- Shared source SDK: `source_body_context` owns body-boundary and observed-box
+  selection; `unruled_body_scope` is its column adapter. Complete inventory and
+  trusted ownership extents are distinct. `source_evidence_identity` preserves
+  the existing bounded canonical digest, `source_table_roles` owns original
+  title-role observation and `structure_table_headers` owns header grouping.
+  Former symbols import/re-export the one implementation. PDF geometry and
+  environment readiness still require fitz; token replay no longer imports an
+  image engine. No new model, dependency, writer, store or acceptance authority.
+- Current original physical roots protect actual data frames, not whole pages;
+  header-only grids use the existing logical-body matcher with actual header
+  proof. Frame selection is shared by producer/replay. These I/O paths and the
+  complete column-consumer handoff still need native original/installed-runtime
+  validation before delivery. Portable SDK checks do not close scientific scope.
+
+- Independent declaration draft: `source_table_captions` is the shared original
+  caption nominator. `structure_declarations` captures existing source facts;
+  declaration scopes/roles/proof are responsibility modules within the same
+  binder/source ledger/writer, not a new extraction pipeline. The unpublished
+  scope6 inventory adds declaration_page_ids/declaration_reference_ids. Source
+  column replay returns verified findings and nonfinal diagrams in one pass.
+  Original raw/model/crops/manual/API/SQL/SAR/dependencies remain unchanged.
+  Native/raster PDF and saved-consumer regression is still pending; portable
+  grammar checks do not establish source/chemical acceptance. Graph-free unknown
+  roles and uncertain nonfinal boundaries remain open before delivery.
+
+- Current original columns: `structure_header_context` and
+  `structure_column_scopes` serve physical and logical header consumers;
+  `ruled_structure_headers` reuses existing cell/source/frame observation.
+  `structure_column_anchors` captures shared original facts,
+  `structure_column_cells` prepares indexed physical rows for the single
+  matcher, and `structure_column_anchor_proof`/`ruled_structure_proof` own saved
+  root/row/source projection replay. Source scope6 adds column_anchor_ids within
+  this unpublished feature. Explicit nonfinal/known conflicts cannot produce
+  current final compounds; raw observed IDs remain even when roles are rejected.
+  No competing OCR/queue/store/row matcher/writer or dependency is introduced.
+- `structure_column_population` rederives occupied original row/pair positions
+  from the same retained tokens/diagrams, not reported result counts. Removed
+  rows, changed totals, missing IDs/diagrams and retained competing assignments
+  cannot clear original coverage. Shared token and interval indexes are local
+  projections, not new stores or inference. Unknown detector/OCR recall remains
+  unproved rather than inferred from empty observations.
+- Ruled/logical explicitly captioned parts reuse the same registered original
+  anchor/current caption/leading context. Actual physical cells, not word
+  proximity, can prove disjoint caption/drawing extents. One established detector
+  alignment predicate is shared with existing role links. Binding20/binder29
+  already cover this unpublished semantic feature, not a new epoch per internal
+  checkpoint; raw/model/manual/SAR/API/SQL remain unchanged. Unsupported original
+  roles and real-source/chemical acceptance remain separate open requirements.
+
+- Original continuation ownership: `unruled_continuation_titles` nominates both
+  original source lanes without merging distinct literal/physical claims;
+  `unruled_continuation` owns bounded current caption observations and one
+  nonrecursive original anchor; `unruled_continuation_links` owns exact registered
+  same-page/adjacent-page links and complete shared-context replay.
+  `unruled_region_observation` is the sole capture adapter for both actual and
+  continued headers, reusing the same cell/window/matcher/writer. Actual repeated
+  headers remain independent originals. Missing/changed parents, original role
+  conflicts, gaps and earlier unowned diagrams retain explicit review.
+  Producer and saved consumers share one canonical source-finding replay.
+- Current unpublished semantic epochs: Binding20/binder29, activity18/extractor27/
+  coverage14, visible20/preparation8, locator9. The shared literal ID grammar now
+  retains adjacent letter prefixes within declared roles, not free-prose hashes
+  or metric fragments. Actual multiline activity headers keep their column role.
+  The shared table marker retains letter/numeric/hyphenated table identity.
+  Original/raw/model/manual/graph/SAR/API/SQL/dependency authorities do not change.
+  Earlier epoch entries below describe historical deliveries, not competing
+  current version sources. Source controls do not establish chemical accuracy or
+  every layout's coverage; broader source roles and real acceptance remain open.
+
+- Unruled body/row ownership: `unruled_body_scope` derives explicit original
+  boundaries and conserves owned diagrams against all page candidates. Complete
+  post-header context owns child ID-column/source-packet projections through
+  `source_window_chunks`; no arbitrary bottom or cropped-out source can grant
+  completeness. The shared section parser distinguishes actual procedure/assay
+  titles from bare labels/references. Original overlapping word/drawing extents
+  use one column predicate, retaining reciprocal uniqueness. Diagram-overlapped
+  captions or known native/raster conflicts cannot end a region. The existing
+  binder/writer/ledger remain sole authorities; Binding20/binder29 is unchanged
+  within this unpublished feature. Original/raw/model/manual/API/SQL/SAR assets
+  stay unchanged; source-layout controls are not chemical acceptance.
+
+- Unruled original columns: `unruled_structure_headers` and
+  `unruled_header_readings` own actual header/independent cell-frame evidence;
+  `unruled_structure_observation`, `unruled_structure_sources`,
+  `unruled_structure_layout` and `unruled_structure_proof` own bounded capture,
+  source conservation and pure
+  reciprocal2D/ledger replay. They join the single numbered-cell coordinator,
+  source scope6 and catalog writer. `cell_identity_proof`, `source_window_chunks`
+  and `source_document` centralize the existing predicates/windows/hash, not
+  competing OCR/parsers. Graph-free declared tables remain observable; unrelated
+  prose does not start coordinate OCR. Complete known source conflicts remain.
+  The retired `series_table_binding` and private sequence/enforcement helpers are
+  removed after varied original native/raster and negative controls; old protocol
+  fixtures keep historical reads, not obsolete execution. Binding20/binder29
+  already cover this unpublished feature. Original/raw/model/crop/manual/graph/
+  SAR/API/SQL/dependencies stay unchanged. Open alignment/source-boundary/recall
+  and chemical acceptance are not certified by these controls.
+
+- Complete binder source: `binding_page_source` reuses the sole shared original
+  page-cache reader/writer, requiring all pages rather than table-only positions.
+  Native coordinate projections are read-only; existing foreign/incomplete or
+  unlocated scanned caches remain unchanged and cannot claim completeness. The
+  private `binding_ocr` module/pools and partial cache writer are removed; their
+  consumer controls move to shared-source/SDK checks.
+- Caption source roles: `caption_label_roles` owns scope6 exact label references,
+  bound to current caption proof, original SHA, literal ID and original window.
+  Producer and saved ledger replay the same ownership. No page-wide/ID-list skip,
+  second source store, OCR engine or result writer. Binding20/binder29 includes
+  these semantics; original/raw/chemistry/manual/SAR/API/SQL remain unchanged.
+
+- Transposed original source: `activity_transposed_source` owns bounded original
+  cell snapshots, literal orientation and typed unresolved column scopes;
+  `activity_transposed_rows` replays column/row conservation in the existing
+  coverage authority. `activity_context_geometry` checks exact original adjacent
+  X/header-to-bottom geometry without changing row-slice proof. The single
+  activity writer retains unknown raw values even with zero result rows; no
+  repeated per-row unknown-column store, new OCR, queue or value parser. Binding20/
+  binder29 and activity18/extractor27/coverage14 revise derived proof independently
+  of product numbering. Raw observations/assets, manual/graph/SAR/API/SQL and
+  dependencies stay. Synthetic source verification is not real scientific QA.
+
+- Original binding admission: `core/source_binding_proof.py` owns current source
+  eligibility through the existing original-cell/caption/heading validators.
+  `binding_catalog` and its single artifact writer preserve rejected proposals
+  as source issues, and `catalog_reader` replays current-schema evidence rather
+  than trusting rule names or stored success flags. Historical schema reads keep
+  their recorded interpretation and cannot gain current scientific acceptance.
+  Unruled source layout coverage remains a separate original-proof requirement,
+  not a permit for one-dimensional numbering/structure sequence inference.
+
 - Open original rows: `source_grid_edges` consumes the existing physical detector,
   retaining exact raster frames and raw rules. `source_role_fragments`,
   `source_fragment_context` and `source_fragment_links` share one role-cell SDK,
@@ -671,7 +919,7 @@
 
 - Product/repository identity: `x-patentsar` / X-PatentSAR; current stable E-drive WSL source path `/srv/wsl/projects/patent-sar-extractor` (preserved through branding). Internal Python namespace remains `patent_sar_extractor`; it is not a competing product identity.
 - Product version authority: `src/patent_sar_extractor/contracts.py`; merged-PR numbering with patch 0-99 and minor 0-9; see `OPERATIONS.md`; release tags use `vMAJOR.MINOR.PATCH`.
-- Internal contract authority: the same `contracts.py` file separately owns pipeline `patentsar.structure-led` `3.0.0`, ruleset `2.1.1`, stage implementation epochs and artifact/cache/observation schema identities. SMILES schema v2 uses the complete proved printed-ID catalog for formal ordered associations; unproved source observations remain review-only. Older contracts are not retagged; product release numbering follows the PR policy.
+- Internal contract authority: the same `contracts.py` file separately owns pipeline `patentsar.structure-led` `3.0.0`, ruleset `2.1.1`, stage implementation epochs and artifact/cache/observation schema identities. SMILES schema3 uses the complete proved printed-ID catalog and separately recorded reprint observations; unproved or disagreeing originals remain review-only. Older contracts are not retagged; product release numbering follows the PR policy.
 - Supported source roots: `src/patent_sar_extractor`, `frontend`, `tools`, `examples`, `docs`, `tests`, `.github` and documented root metadata/launch files, including Apache-2.0 `LICENSE` and attribution `NOTICE`. `tools` owns reproducible build/packaging checks, not extraction logic.
 - Dependency authority: `pyproject.toml` plus generated `uv.lock`; uv 0.11.31 is the verified lock/sync tool, matching CI. The `web` extra adds FastAPI/Uvicorn; test and static-analysis dependencies are in the `dev` group. Frontend dependencies use npm and `frontend/package-lock.json` as their only lock authority. DECIMER is an external Python 3.10 runtime boundary and is not part of the Python 3.12 application lock.
 - Public contract: the `x-patentsar` CLI, `PATENTSAR_*` configuration variables and documented output files; Web API uses an independently versioned `patentsar.web-api` v1 contract. A Web result/review never overrides deterministic QA.
@@ -686,7 +934,7 @@
 - Observation completion: the source coordinator uses the same internal `--continue-on-scientific-errors` contract for OCSR and final export. Only current source scope with complete exact printed-ID/image coverage can use the OCSR completion mode; diagnostic/limited/unbound inputs cannot. Default standalone OCSR still rejects non-clean output. Complete findings remain rejected, preserve the shared failure marker, and flow to final QA so eligible records can enter the qualified research phase. Infrastructure exceptions and incomplete/misassigned observations still abort. Raw prediction caches remain identity-checked and independent; no algorithm/epoch/model/API/product version changes.
 - Review-workbook ownership: the main Excel sheet retains every proved identifier in source-catalog order, including original images and optional activity for unqualified chemistry. Only qualified chemistry maps populate molecular fields; pending rows stay blank there and carry a recognition-status column. SDF selection remains qualified-only and formal QA unchanged. The export receipt reports workbook IDs/review IDs separately from qualified molecular export IDs; no uncertain SMILES or placeholder molecule is promoted.
 - Verification ownership: the checked-in `.github/verification_scope.json` declares exact base/changed paths and bounded named Python/frontend/browser consumers. Small pure-validator/runner tools reject stale, unsafe, wildcard, overlapping or whole-inventory plans; no discovery/default-all fallback exists. Empty frontend/browser selections do not start their test engines. CI preserves builds/resources/fresh-wheel audit. Private real-patent and native-editor evidence stays on E, separate from public controlled CI cases.
-- Stage ownership: `application/pipeline.py` owns one eight-stage registry with an explicit `PipelineContext`; stage policies/cache helpers are single authorities, not private aliases in CLI commands. `core/structure_binder.py` owns source partitioning, including recognized-but-withheld I-series cells, and delegates to acyclic responsibility modules before one artifact writer.
+- Stage ownership: `application/pipeline.py` owns one eight-stage registry with an explicit `PipelineContext`; stage policies/cache helpers are single authorities, not private aliases in CLI commands. `core/structure_binder.py` owns source partitioning, including exact protected ruled/unruled original cells, and delegates to acyclic responsibility modules before one artifact writer. No private I-series sequence execution remains.
 - Recognition ownership: one verified printed-DECIMER adapter is shared by formal extraction, research and environment probes. The external runtime has bounded JSONL transport, serial model inference, CPU/resource limits and exact-content cache identity; no hand-drawn or single-image fallback is used in production.
 - QA ownership: `qa_inputs.py` gathers one immutable pass context; `qa_sources.py` and `qa_files.py` inspect source and output evidence; `qa_checks.py` owns source/recognition/output gates; `qa_report.py` only orchestrates and presents the report. No parallel acceptance implementation or fallback is retained.
 - Source-stereo ownership: bounded `core/ocsr/bond_strokes`, `stereo_evidence` and `stereo_gate` are one risk-observation/check/validation path used by new formal tasks, raw-cache reuse, export, QA and research recognition. Raw model strings and printed IDs remain unchanged. Ruleset2.1.1, source evidence v3 and QA v5 are independent of product release numbering and raw OCSR epoch2. Historical v1/v2 remain readable but cannot pass the current formal gate. Upstream classifier/locator/segment/binder/activity epochs stay unchanged for this source-risk-only correction; validated upstream checkpoints and exact raw observations may be reused, never historical acceptance. No raster hit or missing hit certifies absolute configuration; unsupported projection/enhanced/special stereo is not silently flattened.
@@ -708,7 +956,7 @@
 - Source coverage: `core/structure_page_locator.py` nominates every original page; `structure_page_evidence.py` supplies text hints only; locator epoch8 and segmentation epoch6 are current. Binder epoch11 discovers original numbered grids on all selected source pages, not only pre-labelled table hints, and reports only recognized table pages. It produces one proved printed-ID catalog (nested schema v1 in `contracts.py`) as the formal structure universe. Activity epoch10 treats classification as seeds and inspects only proven adjacent continuations, stopping at gaps or changed geometry/context; native text and cached OCR independently nominate additional declared sources without a new full-document OCR pass. Activities left-join by original identifier; proved reprints remain additional sources and unproved crops remain explicit. The single eight-stage registry is source-led; API v1 remains unchanged. Old derived stages/QA are not promoted, while unchanged OCR/segmentation may be safely reused.
 - Workbook ownership: bounded DTO/accessor/filter-sort modules serve full-project queries and exports through the existing `ResultQueries`. `table_filter_choices.py` owns authenticated on-demand choices for all data columns; it ignores only its own predicates and respects other/global filters, with bounded search/pagination. The eager activity-only choice producer is removed. `table_query_bands.py` consumes global rank profiles for color filter/sort. Blank-inclusive/exclusive checklists use the same bounded URL query; OK/Cancel drafts are presentation only. No new grid library, formula executor, model call, persisted query database or alternate page-local filtering is introduced.
 - Direct-edit ownership: one lazy local Ketcher frame and bounded serial bridge feed the existing correction overlay. Molfile/SMILES validation, compatibility preparation and manual property values are separate small modules. Model observations stay unchanged; all effective table/filter/copy/export consumers share manual-null precedence. `prediction_identity.py` owns canonical isomeric graph digests and exact-string-only legacy proof. Coordinate/value-only edits do not enqueue inference. API v1 and workspace SQLite v1 remain unchanged.
-- Existing-source completion: `completion_inputs.py` validates original/crop/printed-ID ownership; `completion_worker.py` uses the existing owned prediction carrier and one shared core DECIMER converter before six-property inference. `recognition_storage.py` owns the additive rebuildable `compound_recognitions` cache and effective base for table/detail/correction/export/publication. Raw observations may be safely transported but never acceptance. No new engine, endpoint, job type, poller, dependency or product version. Explicit manual graph/blanks and original audit/QA remain authoritative.
+- Existing-source completion: `completion_inputs.py` validates original/crop/printed-ID ownership for every proved depiction; `completion_worker.py` uses the existing owned prediction carrier and shared core DECIMER converter before six-property inference. `recognition_sources` supplies current original frames/revisions/digests, `recognition_observations` supplies one saved QC reader, and `recognition_storage.py` owns the same additive rebuildable `compound_recognitions` cache and transaction. Raw observations may be safely transported but never acceptance. No new engine, endpoint, job type, poller, dependency or per-checkpoint product version. Explicit manual graph/blanks and original audit/QA remain authoritative.
 - Raw observation reuse: `web/observation_cache.py` owns bounded atomic per-original raw-cache seed/publication and operator recovery, reusing `core/ocsr/cache_snapshot.py` as the only untrusted SQLite transport validator. The CLI `import-ocsr-cache` restores observations under the idle analysis lease, never compounds, manual edits, properties or QA. Exact image/model keys and current source QC still decide each new job; there is no post-failure fallback or extra model service. All cache and model data remain external on E.
 - Environment control: the existing `#/settings` route is the only environment management page. `web/environment_models.py` defines the additive API-v1 DTOs; `environment_specs.py` owns eight fixed CPU components, including both local rescue parts. Separate private environment SQLite v1 stores settings/operations, with no core workspace migration. Configuration publication reuses `env_paths.local.yaml`; process lifecycle reuses the same owned subprocess carrier. Approved storage and models are external, with no arbitrary installation API.
 - Environment recipe provenance: `defaults/environments/base-requirements.txt` and `base-runtime.json` are derived by `tools/build_environment_resources.py` from the sole application `uv.lock`; CI requires `--check`. Separate DECIMER, local-rescue and ADMET CPU recipes pin their scientific boundaries. Local rescue builds only its hash-pinned official source archive offline against hash-locked dependencies, and verifies SDK files, exact model hash and tensor shapes before use. Wheel audit requires every fixed recipe and rejects scientific model binaries.

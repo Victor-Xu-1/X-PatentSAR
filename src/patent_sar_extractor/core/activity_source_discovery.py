@@ -64,7 +64,7 @@ def reference_observations(text: str) -> list[dict]:
     return result
 
 
-def _original_windows(text: str):
+def _original_windows(text: str, *, split_tables=True):
     """Original table/section spans, not arbitrary overlapping character cuts.
 
     Nomination remains conservative and never certifies absence or completeness.
@@ -73,7 +73,9 @@ def _original_windows(text: str):
     """
     starts, offset = [0], 0
     for line in text.splitlines(keepends=True):
-        if offset and (_CAPTION.match(line) or section_heading(line)):
+        if offset and (
+            (split_tables and _CAPTION.match(line)) or section_heading(line)
+        ):
             starts.append(offset)
         offset += len(line)
     for start, end in zip(starts, [*starts[1:], len(text)]):

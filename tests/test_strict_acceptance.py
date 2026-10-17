@@ -66,10 +66,7 @@ from patent_sar_extractor.contracts import (
 from patent_sar_extractor.core import (
     activity_coordinates as activity_coordinates_module,
 )
-from patent_sar_extractor.core import (
-    binding_observations,
-    binding_spatial,
-)
+from patent_sar_extractor.core import binding_observations
 from patent_sar_extractor.core import env_runner as env_runner_module
 from patent_sar_extractor.core import page_ocr_cache as page_ocr_cache_module
 from patent_sar_extractor.core.activity_coordinates import (
@@ -86,9 +83,6 @@ from patent_sar_extractor.core.activity_text import extract_text_tables
 from patent_sar_extractor.core.binding_arbitration import _drop_fail_closed_bindings
 from patent_sar_extractor.core.binding_artifacts import write_binding_result
 from patent_sar_extractor.core.binding_candidates import _merge_binding_candidates
-from patent_sar_extractor.core.binding_spatial import (
-    _enforce_authoritative_structure_table_source,
-)
 from patent_sar_extractor.core.binding_tables import _extract_structure_table_bindings
 from patent_sar_extractor.core.formal_export import qualified_records
 from patent_sar_extractor.core.formal_structure import (
@@ -195,6 +189,20 @@ class StrictAcceptanceTests(unittest.TestCase):
             "accuracy_status": "confirmed",
             "evidence_tier": "strong",
             "fail_closed": False,
+        }
+
+    @staticmethod
+    def _source_binding(cpd: str, structure_id: str, image_path: str) -> dict:
+        from test_caption_reading_semantics import binding as caption_binding
+
+        # Declared current source-protocol fixture, not chemical extraction.
+        return {
+            **StrictAcceptanceTests._binding(cpd, structure_id, image_path),
+            **caption_binding(
+                [{"method": "native_cell", "text": cpd}],
+                cpd=cpd,
+                structure_id=structure_id,
+            ),
         }
 
     def test_merge_direct_visual_label_prefers_upper_final_product_over_lower_route_crop(
@@ -321,6 +329,9 @@ class StrictAcceptanceTests(unittest.TestCase):
             "chiral_centers": checked["chiral_centers"],
             "rdkit_valid": checked["rdkit_valid"],
             "OCSR_quality_flag": checked["quality_flag"],
+            "OCSR_status": "success"
+            if checked["quality_flag"] == "ok"
+            else "review_required",
             "suspicious_elements": checked["suspicious_elements"],
         }
 
@@ -420,12 +431,68 @@ class StrictAcceptanceTests(unittest.TestCase):
         self.assertEqual(
             [row.cpd for row in rows], ["Compound I-1", "Compound 1-2", "Compound I-3"]
         )
-        self.assertEqual(list(rows[0].activity_values.values()), ["<1 nM"])
-        self.assertEqual(list(rows[1].activity_values.values()), ["not tested"])
-        self.assertEqual(list(rows[2].activity_values.values()), ["1 - 10 nM"])
+        self.assertEqual(list(rows[0].activity_values.values()), ["A"])
+        self.assertEqual(list(rows[1].activity_values.values()), ["G"])
+        self.assertEqual(list(rows[2].activity_values.values()), ["B"])
+        for row in rows[:2]:
+            self.assertEqual(
+                row.activity_sources[0]["legend"],
+                {
+                    "A": "<1 nM",
+                    "B": "1 - 10 nM",
+                    "G": "not tested",
+                },
+            )
+        # The abbreviated next-page header does not prove the same B8 assay
+        # context. Retain its literal B, but do not borrow a numeric meaning.
+        self.assertNotIn("legend", rows[2].activity_sources[0])
         self.assertTrue(has_usable_values(rows[0]))
         self.assertFalse(has_usable_values(rows[1]))
         self.assertIn("source label 1-2", rows[1].notes)
+
+    def test_grade_missingness_needs_matching_cells_and_consistent_original_meanings(
+        self,
+    ):
+        from patent_sar_extractor.core.activity_values import has_usable_activity_values
+
+        values = {"DC50": "G"}
+        source = {
+            "cells": [{"field": "DC50", "value": "G"}],
+            "legend": {"G": "not tested"},
+        }
+        self.assertFalse(has_usable_activity_values(values, sources=[source]))
+        self.assertTrue(has_usable_activity_values(values))
+        for other in (
+            {**source, "cells": [{"field": "IC50", "value": "G"}]},
+            {**source, "cells": [{"field": "DC50", "value": "A"}]},
+        ):
+            self.assertTrue(has_usable_activity_values(values, sources=[other]))
+        for other in (
+            {**source, "legend": {"G": ">100 nM"}},
+            {"cells": source["cells"]},
+        ):
+            self.assertTrue(has_usable_activity_values(values, sources=[source, other]))
+        self.assertEqual(values, {"DC50": "G"})
+
+    def test_aggregate_activity_cache_cannot_override_original_row_missingness(self):
+        source = {
+            "cells": [{"field": "DC50", "value": "G"}],
+            "legend": {"G": "not tested"},
+        }
+        payload = {
+            "rows": [
+                {
+                    "cpd": "Compound 4",
+                    "activity_values": {"DC50": "G"},
+                    "activity_sources": [source],
+                }
+            ],
+            "data": {"Compound 4": {"DC50": "G"}},
+        }
+        self.assertEqual(_extract_active_cpds(payload), [])
+        self.assertEqual(
+            _extract_active_cpds({"data": payload["data"]}), ["Compound 4"]
+        )
 
     def test_explicit_not_tested_activity_is_excluded_across_command_annotation(
         self,
@@ -799,125 +866,6 @@ class StrictAcceptanceTests(unittest.TestCase):
             [("Compound 65", "S0111"), ("Compound 70", "S0115")],
         )
 
-    def test_authoritative_series_table_pairs_noncontiguous_labels_by_page_geometry(
-        self,
-    ) -> None:
-        structures = [
-            {
-                "id": "S0001",
-                "idx": 1,
-                "page_no": 10,
-                "x0": 150.0,
-                "y0": 100.0,
-                "x1": 360.0,
-                "y1": 200.0,
-                "image_path": "/tmp/s0001.png",
-            },
-            {
-                "id": "S0003",
-                "idx": 3,
-                "page_no": 10,
-                "x0": 150.0,
-                "y0": 300.0,
-                "x1": 360.0,
-                "y1": 400.0,
-                "image_path": "/tmp/s0003.png",
-            },
-        ]
-        ocr_line_map = {
-            9: [
-                {"y0": 150.0, "text": "1-1"},
-                {"y0": 250.0, "text": "I-2"},
-                {"y0": 350.0, "text": "I-3"},
-                {"y0": 450.0, "text": "I-4"},
-                {"y0": 550.0, "text": "I-5"},
-                {"y0": 650.0, "text": "I-6"},
-            ]
-        }
-
-        bindings = (
-            binding_spatial._extract_authoritative_structure_table_sequence_bindings(
-                structures,
-                {},
-                ["Compound 1", "Compound 3"],
-                {"authoritative_structure_table_pages": [9]},
-                ocr_line_map=ocr_line_map,
-            )
-        )
-
-        self.assertEqual(
-            [(binding["cpd"], binding["structure_id"]) for binding in bindings],
-            [("Compound 1", "S0001"), ("Compound 3", "S0003")],
-        )
-        self.assertTrue(
-            all(
-                binding["authoritative_table_sequence_confirmed"]
-                for binding in bindings
-            )
-        )
-
-    def test_authoritative_series_table_resolves_duplicated_out_of_sequence_source_label(
-        self,
-    ) -> None:
-        structures = []
-        lines = []
-        source_labels = [1254, 1255, 1266, 1257, 1265, 1266, 1267]
-        for idx, source_label in enumerate(source_labels):
-            y0 = 100.0 + idx * 120.0
-            structures.append(
-                {
-                    "id": f"S{idx:04d}",
-                    "idx": idx,
-                    "page_no": 10,
-                    "x0": 150.0,
-                    "y0": y0,
-                    "x1": 360.0,
-                    "y1": y0 + 100.0,
-                    "image_path": f"/tmp/s{idx:04d}.png",
-                }
-            )
-            lines.append({"y0": y0 + 50.0, "text": f"I-{source_label}"})
-
-        bindings = (
-            binding_spatial._extract_authoritative_structure_table_sequence_bindings(
-                structures,
-                {},
-                [
-                    "Compound 1254",
-                    "Compound 1255",
-                    "Compound 1256",
-                    "Compound 1257",
-                    "Compound 1265",
-                    "Compound 1266",
-                    "Compound 1267",
-                ],
-                {"authoritative_structure_table_pages": [9]},
-                ocr_line_map={9: lines},
-            )
-        )
-
-        self.assertEqual(
-            [binding["cpd"] for binding in bindings],
-            [
-                "Compound 1254",
-                "Compound 1255",
-                "Compound 1256",
-                "Compound 1257",
-                "Compound 1265",
-                "Compound 1266",
-                "Compound 1267",
-            ],
-        )
-        corrected = next(
-            binding for binding in bindings if binding["cpd"] == "Compound 1256"
-        )
-        self.assertEqual(corrected["authoritative_table_source_label"], "I-1266")
-        self.assertTrue(corrected["authoritative_table_label_corrected"])
-        self.assertIn(
-            "duplicated and out of sequence",
-            corrected["authoritative_table_label_correction_reason"],
-        )
-
     def test_binder_does_not_treat_synthesis_routes_as_flattened_tables(self) -> None:
         structures = [
             {
@@ -1122,21 +1070,6 @@ class StrictAcceptanceTests(unittest.TestCase):
         self.assertEqual(checked_direct["accuracy_status"], "review_required")
         self.assertTrue(checked_direct["fail_closed"])
 
-    def test_partial_authoritative_structure_table_does_not_delete_visual_fallbacks(
-        self,
-    ) -> None:
-        binding = self._binding("Compound 128", "S128", "/tmp/structure_128.png")
-        binding.update({"page_no": 199})
-        profile = {
-            "active_cpds": ["Compound 18", "Compound 121", "Compound 128"],
-            "authoritative_structure_table_pages": [200],
-            "authoritative_structure_table_cpds": ["Compound 128"],
-        }
-
-        kept = _enforce_authoritative_structure_table_source([binding], profile)
-
-        self.assertEqual([row["cpd"] for row in kept], ["Compound 128"])
-
     def test_structure_chunk_metadata_merge_reindexes_without_losing_image_paths(
         self,
     ) -> None:
@@ -1306,8 +1239,8 @@ class StrictAcceptanceTests(unittest.TestCase):
                 bind_json.parent,
                 patent_id="CONTROL",
                 bindings=[
-                    self._binding("Compound 1", "S0001", image),
-                    self._binding("Compound 2", "S0002", image),
+                    self._source_binding("Compound 1", "S0001", image),
+                    self._source_binding("Compound 2", "S0002", image),
                 ],
                 detected_style="control",
                 include_intermediates=False,
@@ -1833,9 +1766,14 @@ class StrictAcceptanceTests(unittest.TestCase):
                 self._smiles("Compound 2", "S1", "CCO"),
                 self._smiles("Compound 3", "S3", "CCN"),
             ]
-            self.assertIn(
-                "SMILES records do not map one-to-one to confirmed bindings in order.",
-                _smiles_acceptance_errors(smiles, binding_payload),
+            with self.assertRaisesRegex(ValueError, "ambiguous"):
+                _smiles_acceptance_errors(
+                    build_smiles_artifact(smiles), binding_payload
+                )
+            self.assertTrue(
+                _smiles_acceptance_errors(
+                    build_smiles_artifact(smiles), {"final_bindings": bindings[:1]}
+                )
             )
             smiles_path = base / "smiles.json"
             self._write_json(smiles_path, smiles)
@@ -1876,8 +1814,12 @@ class StrictAcceptanceTests(unittest.TestCase):
         clean = self._smiles("Compound 1", "S1", "CCCl")
         stale = self._smiles("Compound 1", "S1", "CC[Hg]")
 
-        clean_reusable, clean_errors = _smiles_results_can_be_reused([clean], payload)
-        stale_reusable, stale_errors = _smiles_results_can_be_reused([stale], payload)
+        clean_reusable, clean_errors = _smiles_results_can_be_reused(
+            build_smiles_artifact([clean]), payload
+        )
+        stale_reusable, stale_errors = _smiles_results_can_be_reused(
+            build_smiles_artifact([stale]), payload
+        )
 
         self.assertTrue(clean_reusable)
         self.assertEqual(clean_errors, [])
@@ -1969,6 +1911,8 @@ class StrictAcceptanceTests(unittest.TestCase):
     def test_clean_minimal_source_export_preserves_catalog_and_original_activity_order(
         self,
     ) -> None:
+        from patent_sar_extractor.core.structure_inventory import inventory_packet
+
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
             image_2 = self._image(base, "images/structure_2.png")
@@ -1993,8 +1937,8 @@ class StrictAcceptanceTests(unittest.TestCase):
                 ],
             }
             bindings = [
-                self._binding("Compound 2", "S2", image_2),
-                self._binding("Compound 1", "S1", image_1),
+                self._source_binding("Compound 2", "S2", image_2),
+                self._source_binding("Compound 1", "S1", image_1),
             ]
             binding_payload = write_binding_result(
                 base / "structure_bindings",
@@ -2047,7 +1991,27 @@ class StrictAcceptanceTests(unittest.TestCase):
                     "binding_execution_mode": SOURCE_EXECUTION_MODE,
                 },
             )
-            self._write_json(base / "structures/metadata.json", {"total_structures": 2})
+            self._write_json(
+                base / "structures/metadata.json",
+                {
+                    "total_structures": 2,
+                    "source_inventory": inventory_packet(
+                        1,
+                        [
+                            {
+                                "page_no": 1,
+                                "status": "detected",
+                                "scope": "full_page",
+                                "candidates": 2,
+                            }
+                        ],
+                    ),
+                    "structures": [
+                        {"structure_id": "S1", "page_no": 1, "image_path": image_1},
+                        {"structure_id": "S2", "page_no": 1, "image_path": image_2},
+                    ],
+                },
+            )
             self._write_json(base / "structure_pages/locator.json", {})
             self._write_json(
                 base / "page_classification/page_classification.json",

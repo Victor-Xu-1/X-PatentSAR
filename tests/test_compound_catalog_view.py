@@ -24,6 +24,10 @@ class CompoundCatalogViewTests(PredictionFixture, unittest.TestCase):
             "compound_id": "Compound 8",
             "structure_id": "numbered-without-activity",
             "authoritative_table_source_label": "Compound 8",
+            "exact_caption_evidence": {
+                **first["exact_caption_evidence"],
+                "observations": [{"method": "native_cell", "text": "Compound 8"}],
+            },
         }
         repeat = {**first, "structure_id": "proved-reprint"}
         payload["compound_catalog"] = compound_catalog([first, second], [repeat])

@@ -8,7 +8,7 @@ from typing import Final
 PRODUCT_NAME: Final = "X-PatentSAR"
 DISTRIBUTION_NAME: Final = "x-patentsar"
 COMMAND_NAME: Final = "x-patentsar"
-__version__: Final = "0.2.31"
+__version__: Final = "0.2.32"
 
 WEB_API_SCHEMA: Final = "patentsar.web-api"
 WEB_API_SCHEMA_VERSION: Final = 1
@@ -52,18 +52,18 @@ PAGE_CLASSIFIER_VERSION: Final = "5"
 REVIEW_EXCERPT_METADATA_SCHEMA: Final = "patentsar.review-excerpt-metadata"
 REVIEW_EXCERPT_METADATA_SCHEMA_VERSION: Final = 1
 ACTIVITY_SCHEMA: Final = "patentsar.activity"
-ACTIVITY_SCHEMA_VERSION: Final = 17
-ACTIVITY_EXTRACTOR_VERSION: Final = "26"
+ACTIVITY_SCHEMA_VERSION: Final = 18
+ACTIVITY_EXTRACTOR_VERSION: Final = "27"
 ACTIVITY_COVERAGE_SCHEMA: Final = "patentsar.activity-coverage"
-ACTIVITY_COVERAGE_SCHEMA_VERSION: Final = 13
-STRUCTURE_LOCATOR_VERSION: Final = "8"
+ACTIVITY_COVERAGE_SCHEMA_VERSION: Final = 14
+STRUCTURE_LOCATOR_VERSION: Final = "9"
 STRUCTURE_WORKER_VERSION: Final = "6"
 SEGMENTATION_WINDOW_SCHEMA: Final = "patentsar.segmentation-window"
 SEGMENTATION_WINDOW_SCHEMA_VERSION: Final = 2
 SEGMENTATION_INPUT_FINGERPRINT_FILE: Final = "input_fingerprint.json"
-STRUCTURE_BINDER_VERSION: Final = "28"
+STRUCTURE_BINDER_VERSION: Final = "29"
 OCSR_OBSERVATION_VERSION: Final = "2"
-OCSR_PREPARATION_VERSION: Final = 7
+OCSR_PREPARATION_VERSION: Final = 8
 STEREO_EVIDENCE_VERSION: Final = 3
 DECIMER_ADAPTER_VERSION: Final = "1"
 STRUCTURE_LOCATION_SCHEMA: Final = "patentsar.structure-location"
@@ -73,11 +73,12 @@ STRUCTURES_SCHEMA_VERSION: Final = 1
 STRUCTURE_INVENTORY_SCHEMA: Final = "patentsar.structure-page-inventory"
 STRUCTURE_INVENTORY_SCHEMA_VERSION: Final = 1
 BINDINGS_SCHEMA: Final = "patentsar.bindings"
-BINDINGS_SCHEMA_VERSION: Final = 19
+BINDINGS_SCHEMA_VERSION: Final = 20
 COMPOUND_CATALOG_SCHEMA: Final = "patentsar.compound-catalog"
 COMPOUND_CATALOG_SCHEMA_VERSION: Final = 1
 SMILES_SCHEMA: Final = "patentsar.smiles"
-SMILES_SCHEMA_VERSION: Final = 2
+SMILES_SCHEMA_VERSION: Final = 3
+MAX_RECOGNITION_SOURCES: Final = 25000
 QA_REPORT_SCHEMA: Final = "patentsar.qa-report"
 QA_REPORT_SCHEMA_VERSION: Final = 5
 LLM_QA_REPORT_SCHEMA: Final = "patentsar.llm-qa-report"
@@ -108,7 +109,7 @@ PAGE_OCR_COMPATIBLE_PIPELINES: Final = (
 )
 VISIBLE_LABEL_CACHE_SCHEMA: Final = "patentsar.visible-label-cache"
 VISIBLE_LABEL_CACHE_SCHEMA_VERSION: Final = 1
-VISIBLE_LABEL_OBSERVATION_VERSION: Final = 19
+VISIBLE_LABEL_OBSERVATION_VERSION: Final = 20
 
 
 def schema_ref(name: str, version: int) -> dict[str, object]:

@@ -18,6 +18,7 @@ from .formal_structure import (
     coverage_errors,
     proved_catalog,
 )
+from .ocsr.recognition_policy import recognition_acceptance_errors
 from .qa_files import (
     _sdf_record_count,
     _worksheet_activity_value,
@@ -47,6 +48,9 @@ def _binding_checks(inputs: QAInputs, qa: dict):
         activity_evidence_errors(inputs.activity, inputs.profile.get("activity_pages"))
     )
     hard_errors.extend(coverage_errors(inputs.bind_data))
+    hard_errors.extend(
+        recognition_acceptance_errors(inputs.smiles_payload, inputs.bind_data)
+    )
     source_catalog = proved_catalog(inputs.bind_data)
     expected_order = [normalize_compound(row["cpd"]) for row in source_catalog]
     if final_binding_order != expected_order:

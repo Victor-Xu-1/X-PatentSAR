@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
-from pathlib import Path
-
 from .activity_identity import normalize_compound
 from .binding_candidates import _build_binding_from_structure
 from .binding_observations import (
@@ -17,6 +14,7 @@ from .binding_source_regions import (
     reference_cell,
     reference_regions,
 )
+from .caption_label_roles import caption_label_index, caption_label_reference
 from .heading_evidence import (
     original_heading_lines,
     standalone_heading_evidence,
@@ -25,16 +23,13 @@ from .heading_line_windows import heading_line_windows
 from .heading_observation import observe_heading
 from .heading_source_proof import proved_heading_declaration
 from .pipeline_rules import _candidate_labels, annotate_binding_accuracy
+from .source_document import document_sha256 as _document_sha256
 from .source_geometry import source_layout
 from .source_section_roles import heading_list_hint, heading_members, section_heading
-
-
-def _document_sha256(doc) -> str:
-    """Label observations can include pixels outside the molecule crop."""
-    if doc.name and not doc.is_dirty:
-        with Path(doc.name).open("rb") as stream:
-            return hashlib.file_digest(stream, "sha256").hexdigest()
-    return hashlib.sha256(doc.tobytes(no_new_id=True)).hexdigest()
+from .structure_declaration_roles import (
+    declaration_label_reference,
+    declaration_role_index,
+)
 
 
 def observed_heading_blocks(
@@ -47,10 +42,13 @@ def observed_heading_blocks(
     source_regions: dict | None = None,
     grids_for_page=None,
     tokens_for_page=None,
+    source_bindings=(),
 ) -> list[dict]:
     """Coordinates and complete labels originate in the source, not an ID list."""
     blocks = []
     document_sha256 = _document_sha256(doc)
+    caption_labels = caption_label_index(source_bindings, document_sha256)
+    declaration_roles = declaration_role_index(source_sections or [], document_sha256)
     for page_index in sorted(set(pages)):
         page = doc[page_index]
         layout = source_layout(page)
@@ -94,6 +92,20 @@ def observed_heading_blocks(
                     "line_text": line["text"],
                 }
             if observation:
+                declaration_reference = declaration_label_reference(
+                    line, page_index + 1, declaration_roles
+                )
+                if declaration_reference is not None:
+                    if source_sections is not None:
+                        source_sections.append(declaration_reference)
+                    continue
+                label_reference = caption_label_reference(
+                    line, page_index + 1, caption_labels
+                )
+                if label_reference is not None:
+                    if source_sections is not None:
+                        source_sections.append(label_reference)
+                    continue
                 reference = reference_cell(line, regions)
                 if reference is not None:
                     if source_sections is not None:

@@ -151,9 +151,8 @@ def cmd_smiles(args):
         err = worker_error_details(proc, "smiles")
         raise RuntimeError(f"smiles failed: {err}")
     smiles_payload = _load_json(output_json, {})
-    smiles_results = smiles_records(smiles_payload)
     errors = _smiles_acceptance_errors(
-        smiles_results if isinstance(smiles_results, list) else [],
+        smiles_payload,
         bindings_payload
         if isinstance(bindings_payload, dict)
         else {"final_bindings": bindings_payload},

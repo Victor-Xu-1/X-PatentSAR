@@ -14,7 +14,7 @@ class CatalogOrderTests(unittest.TestCase):
             for label in labels
         ]
         with patch(
-            "patent_sar_extractor.core.binding_catalog.annotate_binding_accuracy",
+            "patent_sar_extractor.core.binding_catalog.annotate_source_binding",
             side_effect=lambda row: {
                 **row,
                 "accuracy_status": "confirmed",

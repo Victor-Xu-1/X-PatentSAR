@@ -55,6 +55,7 @@ def control_record(binding, raw="CCO"):
         "canonical_smiles": qc["canonical_smiles"],
         "rdkit_valid": qc["rdkit_valid"],
         "OCSR_quality_flag": qc["quality_flag"],
+        "OCSR_status": "success" if qc["quality_flag"] == "ok" else "review_required",
         "stereochemistry": evidence,
     }
 

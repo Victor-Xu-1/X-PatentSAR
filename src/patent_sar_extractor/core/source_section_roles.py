@@ -115,6 +115,25 @@ def heading_members(observation: dict | None) -> list[str]:
     return list(observation.get("identifiers", [observation["identifier"]]))
 
 
+def section_body_boundary(text: object) -> dict[str, Any] | None:
+    """An explicit procedure/assay title, not an ordinary printed row label."""
+    observed = section_heading(text)
+    if observed is None:
+        return None
+    source = " ".join(identifier_width(str(text or "").strip()).split())
+    match = _GROUP.fullmatch(source) or _HEADING.fullmatch(source)
+    title = match["tail"].lstrip(".:：) ")
+    return (
+        observed
+        if (
+            match["preparation"]
+            or _PREPARATION.match(title)
+            or observed["role"] == "assay_section"
+        )
+        else None
+    )
+
+
 def heading_list_hint(text: object) -> bool:
     """A bounded literal list/range locator, never a declaration or expansion."""
     raw = str(text or "").strip()

@@ -82,36 +82,39 @@ class BindingModuleTests(unittest.TestCase):
         self.assertEqual(selection, [])
         self.assertEqual(issues, [])
 
-    def test_recognized_series_with_zero_pairings_reserves_its_sources(self):
-        # Real series parser, no segmented molecules: withholding cannot give
-        # a generic strategy ownership of these printed labels or pages.
-        lines = {0: [(float(n * 80), f"I-{n}") for n in range(1, 7)]}
+    def test_original_unruled_table_with_zero_pairings_protects_observed_labels(self):
+        # Full original columns, no segmented molecules: generic strategies
+        # cannot invent an owner for these independently observed printed IDs.
         with fitz.open() as document:
-            document.new_page()
+            page = document.new_page()
+            page.insert_text((40, 45), "Table 9. Compounds", fontsize=10)
+            page.insert_text((50, 80), "Compound No.", fontsize=10)
+            page.insert_text((240, 80), "Structure", fontsize=10)
+            for row, label in enumerate(("I-73", "I-28")):
+                page.insert_text((60, 150 + row * 100), label, fontsize=10)
             spatial = collect_spatial_bindings(
                 document,
                 [],
-                {0: ""},
-                lines,
-                [f"Compound {n}" for n in range(1, 7)],
-                {"authoritative_structure_table_pages": [0]},
+                {0: page.get_text("text")},
+                {},
+                [],
+                {},
                 frozenset({0}),
             )
         self.assertEqual(spatial.candidates, ())
-        self.assertEqual(spatial.ownership.page_indices, frozenset({0}))
-        self.assertEqual(
-            spatial.ownership.label_keys, frozenset(f"I-{n}" for n in range(1, 7))
-        )
+        # Protection is exact, not page-wide; an unrelated source may coexist.
+        self.assertEqual(spatial.ownership.page_indices, frozenset())
+        self.assertEqual(spatial.ownership.label_keys, frozenset({"I-73", "I-28"}))
         self.assertEqual(
             spatial.restore(
                 [
                     {
-                        "cpd": "Compound I-1",
+                        "cpd": "Compound I-73",
                         "structure_id": "synthetic-fallback",
                         "page_no": 2,
                     }
                 ],
-                ["Compound I-1"],
+                ["Compound I-73"],
             ),
             [],
         )
@@ -120,6 +123,13 @@ class BindingModuleTests(unittest.TestCase):
         core = Path(__file__).resolve().parents[1] / "src/patent_sar_extractor/core"
         paths = [
             *core.glob("binding_*.py"),
+            *core.glob("unruled_*.py"),
+            *core.glob("ruled_structure_*.py"),
+            *core.glob("structure_column_*.py"),
+            core / "structure_header_context.py",
+            core / "source_window_chunks.py",
+            core / "source_document.py",
+            core / "cell_identity_proof.py",
             core / "visible_label_cache.py",
             core / "structure_binder.py",
         ]
@@ -157,7 +167,9 @@ class BindingModuleTests(unittest.TestCase):
         self.assertEqual(definitions["bind"], "structure_binder")
         self.assertEqual(definitions["write_binding_result"], "binding_artifacts")
         self.assertEqual(definitions["_merge_binding_candidates"], "binding_candidates")
-        self.assertEqual(definitions["_get_ocr_line_coords"], "binding_ocr")
+        self.assertEqual(definitions["binding_page_source"], "binding_page_source")
+        self.assertNotIn("_get_ocr_line_coords", definitions)
+        self.assertNotIn("_worker_observation", definitions)
         self.assertEqual(
             list(inspect.signature(bind).parameters),
             [

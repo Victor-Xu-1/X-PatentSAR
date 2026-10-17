@@ -18,6 +18,7 @@ from test_prediction_support import PredictionFixture
 
 from patent_sar_extractor.application.pipeline_context import PipelineContext
 from patent_sar_extractor.application.progress import PipelineProgress
+from patent_sar_extractor.application.recognition_budget import recognition_timeout
 from patent_sar_extractor.application.stage_cache import _bindings_ocsr_digest
 from patent_sar_extractor.application.stage_smiles import execute_smiles
 from patent_sar_extractor.artifact_io import write_json_atomic
@@ -43,6 +44,8 @@ def observation(binding, raw="CCO"):
         "structure_id": binding["structure_id"],
         "raw_smiles": raw,
         "image_hash": hashlib.sha256(image.read_bytes()).hexdigest(),
+        "ocsr_original_input": str(image),
+        "source_image_path": str(image),
         "OCSR_quality_flag": checked["quality_flag"],
         "OCSR_status": "success"
         if checked["quality_flag"] == "ok"
@@ -54,10 +57,11 @@ def observation(binding, raw="CCO"):
 class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
     def prepare(self, raw="CCO"):
         path, payload = catalog_tests.CompoundCatalogViewTests.catalog_run(self)
-        formal, sources = recognition_inputs(payload)
+        plan = recognition_inputs(payload)
         artifact = build_smiles_artifact(
-            [observation(item) for item in formal],
-            source_records=[observation(item, raw) for item in sources],
+            [observation(item) for item in plan.formal],
+            source_records=[observation(item, raw) for item in plan.supplemental],
+            reprint_records=[observation(item) for item in plan.reprints],
         )
         (self.run / ARTIFACTS["smiles"][0]).write_text(json.dumps(artifact))
         self.service.refresh(self.project.id)
@@ -141,15 +145,19 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
             self.service.refresh(self.project.id)
         self.assertEqual(rejected.exception.code, "invalid_source_recognition")
 
-    def test_catalog_union_preserves_formal_order_and_skips_reprint_inference(self):
+    def test_catalog_union_preserves_primary_order_and_recognizes_reprint_sources(self):
         _, payload = catalog_tests.CompoundCatalogViewTests.catalog_run(self)
-        formal, sources = recognition_inputs(payload)
+        plan = recognition_inputs(payload)
+        formal, sources = plan.formal, plan.supplemental
         self.assertEqual([item["cpd"] for item in formal], ["Compound 1"])
         self.assertEqual([item["cpd"] for item in sources], ["Compound 8"])
         self.assertNotIn("proved-reprint", [item["structure_id"] for item in sources])
+        self.assertEqual(
+            [item["structure_id"] for item in plan.reprints], ["proved-reprint"]
+        )
         payload["final_bindings"] = []
         self.assertEqual(
-            [item["cpd"] for item in recognition_inputs(payload)[1]],
+            [item["cpd"] for item in recognition_inputs(payload).supplemental],
             ["Compound 1", "Compound 8"],
         )
 
@@ -209,7 +217,7 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
             patch.object(run_smiles, "SmilesConverter", ControlledConverter),
         ):
             run_smiles.main()
-        self.assertEqual(batches, [["Compound 1", "Compound 8"]])
+        self.assertEqual(batches, [["Compound 1", "Compound 8", "Compound 1"]])
         artifact = json.loads(output.read_text())
         self.assertEqual(
             [row["cpd_id"] for row in smiles_records(artifact)], ["Compound 1"]
@@ -229,11 +237,13 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
 
     def test_pipeline_checks_complete_catalog_then_reuses_identical_checkpoint(self):
         path, payload, artifact = self.prepare()
-        formal, supplemental = recognition_inputs(payload)
+        plan = recognition_inputs(payload)
+        formal, supplemental = plan.formal, plan.supplemental
         payload["final_bindings"] = [*formal, *supplemental]
         write_json_atomic(path, payload)
         artifact = build_smiles_artifact(
-            [observation(item) for item in payload["final_bindings"]]
+            [observation(item) for item in payload["final_bindings"]],
+            reprint_records=[observation(item) for item in plan.reprints],
         )
         output = self.root / "stage-output"
         output.mkdir()
@@ -246,7 +256,7 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
             base_dir=str(output),
             pipeline_log=log,
             active_cpds=["Compound 1"],
-            n_bound=len(recognition_inputs(payload)[0]),
+            n_bound=len(recognition_inputs(payload).formal),
             bind_json=str(path),
             bind_payload=payload,
             step_dirs={"smiles": str(output)},
@@ -267,18 +277,25 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
                 "patent_sar_extractor.application.stage_smiles.run_in_env",
                 side_effect=produce,
             ) as worker,
+            patch(
+                "patent_sar_extractor.application.stage_smiles.recognition_timeout",
+                wraps=recognition_timeout,
+            ) as budget,
         ):
             execute_smiles(state)
-            self.assertEqual(log["steps"]["smiles"]["total"], 2)
+            self.assertEqual(log["steps"]["smiles"]["total"], 3)
+            self.assertEqual(log["steps"]["smiles"]["reprint_total"], 1)
             self.assertEqual(log["steps"]["smiles"]["source_total"], 0)
             self.assertEqual(log["steps"]["smiles"]["formal_total"], 2)
             execute_smiles(state)
             worker.assert_called_once()
+            budget.assert_called_once_with(3, state.started_monotonic)
             self.assertTrue(log["steps"]["smiles"]["from_cache"])
 
     def test_smiles_worker_cannot_omit_no_activity_catalog_results(self):
         path, payload, artifact = self.prepare()
-        formal, supplemental = recognition_inputs(payload)
+        plan = recognition_inputs(payload)
+        formal, supplemental = plan.formal, plan.supplemental
         payload["final_bindings"] = [*formal, *supplemental]
         write_json_atomic(path, payload)
         artifact = build_smiles_artifact(
@@ -302,7 +319,7 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
             base_dir=str(output),
             pipeline_log=log,
             active_cpds=["Compound 1"],
-            n_bound=len(recognition_inputs(payload)[0]),
+            n_bound=len(recognition_inputs(payload).formal),
             bind_json=str(path),
             bind_payload=payload,
             step_dirs={"smiles": str(output)},

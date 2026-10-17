@@ -1,9 +1,11 @@
 """Complete literal IDs across original source readers, not patent-specific data."""
 
 import unittest
+from dataclasses import asdict
 from unittest.mock import patch
 
 import fitz
+from unruled_structure_support import UnruledStructureControls
 
 from patent_sar_extractor.core.activity_identity import normalize_compound
 from patent_sar_extractor.core.activity_join import (
@@ -11,17 +13,16 @@ from patent_sar_extractor.core.activity_join import (
     activity_order_and_map,
 )
 from patent_sar_extractor.core.activity_result_references import _observed
+from patent_sar_extractor.core.activity_text_rows import parse_segment
 from patent_sar_extractor.core.binding_labels import _labels_from_ocr_text
 from patent_sar_extractor.core.binding_source_headings import observed_heading_blocks
+from patent_sar_extractor.core.cell_identity_proof import confirmed_identity_readings
 from patent_sar_extractor.core.cell_ocr_observation import OCRObservation
 from patent_sar_extractor.core.compound_caption import caption_identity
 from patent_sar_extractor.core.numbered_structure_binding import bind_numbered_tables
-from patent_sar_extractor.core.numbered_structure_pairs import (
-    _confirmed_observations,
-    _label,
-)
+from patent_sar_extractor.core.numbered_structure_pairs import _label
 from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
-from patent_sar_extractor.core.series_table_binding import pair_series_table
+from patent_sar_extractor.core.printed_identifiers import identifier_key
 from patent_sar_extractor.core.source_section_roles import (
     nonfinal_original_label,
     section_heading,
@@ -30,7 +31,53 @@ from patent_sar_extractor.core.table_cells import _normalize, read_cell
 from patent_sar_extractor.core.visible_structure_binding import bind_visible_captions
 
 
-class OriginalIdentifierGrammarTests(unittest.TestCase):
+class OriginalIdentifierGrammarTests(UnruledStructureControls, unittest.TestCase):
+    def test_literal_hyphen_letter_suffix_uses_one_structure_and_activity_identity(
+        self,
+    ):
+        for raw in ("008-B", "12-3-AA", "A-001-b", "００８－Ｂ"):
+            expected = identifier_key(raw)
+            with self.subTest(raw=raw):
+                self.assertTrue(expected)
+                self.assertEqual(caption_identity("Compound " + raw)[0], expected)
+                self.assertEqual(_normalize(raw, "id"), expected)
+                self.assertEqual(_label(raw), expected)
+                self.assertEqual(normalize_compound(raw), "Compound " + expected)
+                hints = _labels_from_ocr_text("Compound " + raw)
+                self.assertEqual(hints, [raw.upper()])
+                self.assertEqual([identifier_key(v) for v in hints], [expected])
+
+    def test_suffix_hyphen_and_leading_zeros_are_not_disposable_identity_punctuation(
+        self,
+    ):
+        identities = {identifier_key(v) for v in ("008-B", "008B", "08-B", "8-B")}
+        self.assertEqual(len(identities), 4)
+        self.assertNotIn("", identities)
+        for unsupported in ("008 - B", "008- B", "008--B", "008-", "008-ABCDE"):
+            with self.subTest(unsupported=unsupported):
+                self.assertEqual(identifier_key(unsupported), "")
+
+    def test_bare_prose_locator_does_not_gain_the_new_declared_cell_suffix_shape(self):
+        self.assertEqual(_labels_from_ocr_text("A value of 008-B was recorded."), [])
+        self.assertEqual(_labels_from_ocr_text("Compound 008-B"), ["008-B"])
+
+    def test_hyphenated_suffix_activity_join_keeps_other_literal_spellings_separate(
+        self,
+    ):
+        rows = parse_segment(
+            "Table 8. IC50 (nM)",
+            "Compound ID | IC50 (nM)\n008-B | 1\n008B | 9",
+            page_no=1,
+        )
+        self.assertEqual([r.cpd for r in rows], ["Compound 008-B", "Compound 008B"])
+        _, values = activity_order_and_map([asdict(r) for r in rows])
+        self.assertEqual(
+            activity_for_compound(values, "Compound 008-B"), {"IC50 (nM)": "1"}
+        )
+        self.assertEqual(
+            activity_for_compound(values, "Compound 008B"), {"IC50 (nM)": "9"}
+        )
+
     def test_series_prefix_is_not_an_intermediate_role_and_original_namespace_is_preserved(
         self,
     ):
@@ -75,7 +122,7 @@ class OriginalIdentifierGrammarTests(unittest.TestCase):
                 for dpi in (400, 600)
             ],
         ]
-        self.assertFalse(_confirmed_observations("73", packets))
+        self.assertFalse(confirmed_identity_readings("73", packets))
         self.assertFalse(
             _observed({"value": "73", "bbox": bounds, "observations": packets}, True)
         )
@@ -154,10 +201,11 @@ class OriginalIdentifierGrammarTests(unittest.TestCase):
     def test_visible_text_never_clips_a_series_prefix_or_matches_a_decimal_fragment(
         self,
     ):
-        for raw in ("I-44A", "A-001B", "10000AB", "1-2-3AB"):
+        for raw in ("I-44A", "A-001B", "10000AB", "1-2-3AB", "A17", "B80"):
             with self.subTest(raw=raw):
                 self.assertEqual(_labels_from_ocr_text("Compound " + raw), [raw])
         self.assertEqual(_labels_from_ocr_text("125.34 or source-hash:abc1234def"), [])
+        self.assertEqual(_labels_from_ocr_text("IC50 8.2 nM and DC50 0.4 nM"), [])
 
     def test_sequence_flags_cannot_erase_a_competing_original_identity(self):
         binding = {
@@ -179,12 +227,34 @@ class OriginalIdentifierGrammarTests(unittest.TestCase):
             ("A-001b", "A-001B"),
             ("0", "0"),
             ("1-2-3AB", "1-2-3AB"),
+            ("A17", "A17"),
+            ("b080AB", "B080AB"),
         ):
             with self.subTest(raw=raw):
                 self.assertEqual(caption_identity(f"Compound {raw}")[0], expected)
                 self.assertEqual(_normalize(raw, "id"), expected)
                 self.assertEqual(_label(raw + "."), expected)
                 self.assertEqual(normalize_compound(raw), f"Compound {expected}")
+
+    def test_adjacent_letter_prefixes_keep_declared_activity_rows_and_join_keys(self):
+        rows = parse_segment(
+            "Table 8. IC50 (nM)",
+            "Compound ID | IC50 (nM)\nA17 | 1\nB080AB | >10",
+            page_no=1,
+        )
+        self.assertEqual([r.cpd for r in rows], ["Compound A17", "Compound B080AB"])
+        _, values = activity_order_and_map([asdict(r) for r in rows])
+        self.assertTrue(activity_for_compound(values, "Compound A17"))
+        self.assertEqual(activity_for_compound(values, "Compound B80AB"), {})
+
+    def test_metric_shaped_identifier_requires_the_declared_row_context_not_a_whitelist(
+        self,
+    ):
+        rows = parse_segment(
+            "Table 9. Binding assay", "Compound ID | EC50 (nM)\nIC50 | 2.0", page_no=1
+        )
+        self.assertEqual([r.cpd for r in rows], ["Compound IC50"])
+        self.assertEqual(rows[0].activity_values, {"EC50 (nM)": "2.0"})
 
     def test_whitespace_cannot_merge_distinct_ids_or_suffix_tokens(self):
         for text in (
@@ -251,33 +321,19 @@ class OriginalIdentifierGrammarTests(unittest.TestCase):
 
     def test_series_retains_original_prefix_and_never_corrects_duplicate_digits(self):
         numbers = [1, 2, 9, 4, 7, 8, 9, 10]
-        structures = [
-            {
-                "id": f"S{index}",
-                "page_no": 1,
-                "x0": 150,
-                "x1": 360,
-                "y0": 100 + index * 120,
-                "y1": 200 + index * 120,
-            }
-            for index in range(len(numbers))
-        ]
-        lines = {
-            0: [
-                (150 + index * 120, f"I-{number}")
-                for index, number in enumerate(numbers)
-            ]
-        }
-        result = pair_series_table(
-            structures, [0], lines, {f"I-{n}" for n in range(1, 11)}
-        )
+        result, payload = self.run_binding([f"I-{number}" for number in numbers])
         self.assertEqual(
-            [binding.label for binding in result.bindings],
-            ["I-1", "I-2", "I-4", "I-7", "I-8", "I-10"],
+            {binding["cpd"] for binding in result["bindings"]},
+            {f"Compound I-{n}" for n in (1, 2, 4, 7, 8, 10)},
         )
         self.assertTrue(
-            all(binding.label == binding.source_label for binding in result.bindings)
+            all(
+                binding["cpd"]
+                == "Compound " + binding["numbered_table_cell_evidence"]["source_label"]
+                for binding in result["bindings"]
+            )
         )
+        self.assertTrue(payload["source_issues"])
 
     def test_case_and_wrapper_normalization_joins_only_the_same_literal_identity(self):
         rows = [

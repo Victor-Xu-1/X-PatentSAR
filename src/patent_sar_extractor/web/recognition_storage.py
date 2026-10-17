@@ -5,18 +5,26 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import re
 import threading
 from collections import OrderedDict
-from functools import lru_cache
 from pathlib import Path
+
+from patent_sar_extractor.core.ocsr.reprint_consistency import (
+    REPRINT_REVIEW_FLAG,
+)
 
 from .errors import WebError
 from .files import SafeFiles
 from .models import Compound, Recognition
 from .molecule_drawing import drawing_url
 from .processes import runtime_identity, runtime_identity_matches
-from .recognition import recognition_status
+from .recognition_observations import _saved_observation, observation_text
+from .recognition_sources import (
+    recognition_sources,
+    source_context,
+    source_image_digest,
+    source_revision,
+)
 from .storage import Store, encode, now
 
 RECOGNITION_COLUMNS = (
@@ -67,48 +75,6 @@ def crop_digest(root: Path, path: str) -> str:
     return digest
 
 
-def checked_observation(
-    record: object, compound_id: str, structure_id: str | None
-) -> Recognition:
-    if not isinstance(record, dict) or len(encode(record).encode()) > 128 * 1024:
-        raise WebError(
-            422, "invalid_recognition", "Recognition observation exceeds its bound."
-        )
-    if (
-        record.get("cpd_id") != compound_id
-        or record.get("structure_id") != structure_id
-    ):
-        raise WebError(
-            422, "recognition_owner", "Recognition belongs to another numbered source."
-        )
-    result = Recognition.model_validate(recognition_status(record, current=True))
-    if result.status == "valid" and (
-        record.get("OCSR_status") != "success"
-        or not re.fullmatch(r"[a-f0-9]{64}", record.get("model_fingerprint") or "")
-        or not isinstance(record.get("canonical_smiles"), str)
-        or not 1 <= len(record["canonical_smiles"]) <= 10000
-    ):
-        raise WebError(
-            422,
-            "invalid_recognition",
-            "Accepted observation lacks bounded producer chemistry.",
-        )
-    return result
-
-
-@lru_cache(maxsize=512)
-def _saved_observation(
-    content: str, compound_id: str, structure_id: str | None
-) -> tuple[Recognition, str | None]:
-    if len(content.encode()) > 128 * 1024:
-        raise WebError(
-            422, "invalid_recognition", "Saved recognition exceeds its bound."
-        )
-    record = json.loads(content)
-    result = checked_observation(record, compound_id, structure_id)
-    return result, record["canonical_smiles"] if result.status == "valid" else None
-
-
 def apply_recognition(project: dict, row: dict, compound: Compound) -> Compound:
     from .correction_storage import correction_source_fingerprint
 
@@ -123,14 +89,32 @@ def apply_recognition(project: dict, row: dict, compound: Compound) -> Compound:
                 status="unavailable", quality_flag="source_image_changed"
             )
         return compound
-    current = row["recognition_source"] == correction_source_fingerprint(
-        project, row
-    ) and runtime_identity_matches(json.loads(row["recognition_runtime"]))
+    try:
+        current = row["recognition_source"] == correction_source_fingerprint(
+            project, row
+        ) and runtime_identity_matches(json.loads(row["recognition_runtime"]))
+    except (ValueError, TypeError):
+        current = False
     if current:
         try:
             current = row["recognition_crop"] == crop_digest(
                 Path(project["run_root"]), row["image_path"]
             )
+            binding, revision = recognition_sources(project, compound.id)
+            if binding is None:
+                raise WebError(
+                    409,
+                    "recognition_source_changed",
+                    "Recognition no longer has a proved original source owner.",
+                )
+            context = source_context(binding, str(project["run_root"]))
+            recognition, smiles, digest = _saved_observation(
+                content, compound.id, compound.structure_id, context
+            )
+            current = current and (
+                digest is None or digest == source_image_digest(project, binding)
+            )
+            current = current and source_revision(project) == revision
         except WebError:
             current = False
     if not current:
@@ -140,17 +124,49 @@ def apply_recognition(project: dict, row: dict, compound: Compound) -> Compound:
             status="unavailable", quality_flag="completion_source_changed"
         )
         return compound
-    recognition, smiles = _saved_observation(
-        content, compound.id, compound.structure_id
-    )
     compound.recognition = recognition.model_copy(deep=True)
     compound.smiles = smiles
+    if recognition.status == "valid":
+        compound.flags = [
+            flag for flag in compound.flags if flag != REPRINT_REVIEW_FLAG
+        ]
+    elif (
+        recognition.quality_flag == REPRINT_REVIEW_FLAG
+        and REPRINT_REVIEW_FLAG not in compound.flags
+    ):
+        compound.flags.append(REPRINT_REVIEW_FLAG)
     compound.redraw_image_url = (
         drawing_url(project["id"], compound.id, compound.smiles)
         if compound.smiles
         else None
     )
     return compound
+
+
+def _require_active_producer(job, project_id: str, compound_id: str) -> None:
+    try:
+        spec = json.loads(job["spec"]) if job else {}
+    except (ValueError, TypeError):
+        spec = {}
+    if not isinstance(spec, dict):
+        spec = {}
+    selection = spec.get("admet_compounds", [])
+    if (
+        not job
+        or job["project_id"] != project_id
+        or job["status"] != "running"
+        or job["cancel_requested"]
+        or spec.get("job_id") != job["id"]
+        or spec.get("project_id") != project_id
+        or spec.get("include_admet") is not True
+        or not runtime_identity_matches(spec.get("runtime_identity"))
+        or not isinstance(selection, list)
+        or any(not isinstance(item, str) for item in selection)
+        or (selection and compound_id not in selection)
+    ):
+        raise WebError(
+            409, "recognition_cancelled", "Recognition job is no longer active."
+        )
 
 
 class RecognitionStore:
@@ -178,28 +194,28 @@ class RecognitionStore:
     ) -> None:
         from .correction_storage import correction_source_fingerprint
 
+        _require_active_producer(self.store.job(job_id), project_id, compound_id)
+        snapshot = self.store.project(project_id)
+        binding, revision = recognition_sources(snapshot, compound_id)
+        if binding is None:
+            raise WebError(
+                409,
+                "recognition_source_changed",
+                "Recognition no longer has a proved original source owner.",
+            )
+        encoded = observation_text(record)
+        _saved_observation(
+            encoded,
+            compound_id,
+            binding.get("structure_id"),
+            source_context(binding, str(snapshot["run_root"])),
+        )
+        digest = source_image_digest(snapshot, binding, record)
         with self.store.connect(write=True) as connection:
             job = connection.execute(
                 "SELECT * FROM jobs WHERE id=?", (job_id,)
             ).fetchone()
-            spec = json.loads(job["spec"]) if job else {}
-            if (
-                not job
-                or job["project_id"] != project_id
-                or job["status"] != "running"
-                or job["cancel_requested"]
-                or spec.get("job_id") != job_id
-                or spec.get("project_id") != project_id
-                or spec.get("include_admet") is not True
-                or not runtime_identity_matches(spec.get("runtime_identity"))
-                or (
-                    spec.get("admet_compounds")
-                    and compound_id not in spec["admet_compounds"]
-                )
-            ):
-                raise WebError(
-                    409, "recognition_cancelled", "Recognition job is no longer active."
-                )
+            _require_active_producer(job, project_id, compound_id)
             project = dict(
                 connection.execute(
                     "SELECT * FROM projects WHERE id=?", (project_id,)
@@ -216,16 +232,31 @@ class RecognitionStore:
                     "Numbered source is no longer present.",
                 )
             raw = dict(raw)
-            if source != correction_source_fingerprint(
-                project, raw
-            ) or crop != crop_digest(Path(project["run_root"]), raw["image_path"]):
+            if (
+                project["run_root"] != snapshot["run_root"]
+                or source_revision(project) != revision
+                or (
+                    digest is not None
+                    and digest != source_image_digest(project, binding)
+                )
+                or source != correction_source_fingerprint(project, raw)
+                or crop != crop_digest(Path(project["run_root"]), raw["image_path"])
+            ):
                 raise WebError(
                     409,
                     "recognition_source_changed",
                     "Recognition input changed before publication.",
                 )
             compound = Compound.model_validate_json(raw["payload"])
-            checked_observation(record, compound.id, compound.structure_id)
+            if (
+                record.get("cpd_id") != compound.id
+                or record.get("structure_id") != compound.structure_id
+            ):
+                raise WebError(
+                    422,
+                    "recognition_owner",
+                    "Recognition belongs to another numbered source.",
+                )
             connection.execute(
                 "INSERT INTO compound_recognitions VALUES(?,?,?,?,?,?,?,?) "
                 "ON CONFLICT(project_id,compound_id) DO UPDATE SET "
@@ -238,7 +269,7 @@ class RecognitionStore:
                     source,
                     crop,
                     encode(runtime_identity()),
-                    encode(record),
+                    encoded,
                     job_id,
                     now(),
                 ),

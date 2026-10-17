@@ -72,7 +72,7 @@ def main() -> None:
         if args.write:
             changes = prepare_versions(base, files)
             for name, content in changes.items():
-                (root / name).write_text(content, encoding="utf-8")
+                (root / name).write_text(content, encoding="utf-8", newline="\n")
         else:
             changes = {}
         version = verify_versions(base, local_files(root))

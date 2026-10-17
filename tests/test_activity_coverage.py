@@ -87,6 +87,7 @@ class ActivityCoverageTests(unittest.TestCase):
                 "parsed",
                 "original_cells",
                 1,
+                grid_axes={"xs": [20, 160, 300], "ys": [50, 125, 200]},
             ),
             source_record(
                 2,
@@ -97,6 +98,7 @@ class ActivityCoverageTests(unittest.TestCase):
                 "unresolved",
                 "unsupported_header",
                 0,
+                grid_axes={"xs": [20, 160, 300], "ys": [50, 125, 200]},
             ),
         ]
         coverage = coverage_packet([0, 1], regions, rows)

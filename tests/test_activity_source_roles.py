@@ -12,6 +12,22 @@ from patent_sar_extractor.core.source_section_roles import section_heading
 
 
 class ActivitySourceRoleTests(unittest.TestCase):
+    def test_letter_table_result_boundaries_and_method_references_remain_distinct(self):
+        self.assertTrue(
+            declared_activity_source("Table A. Binding activity\nUnreadable body")
+        )
+        self.assertFalse(
+            declared_activity_source(
+                "Table A. NMR\nCompound ID | Mass\n1 | 413\nTable B. Reagents\nIC50 assay probe"
+            )
+        )
+        self.assertEqual(
+            method_page_evidence(
+                "Example 5: Binding assay\nCells were seeded. Reagent was added.\nTable B. Results"
+            ),
+            "",
+        )
+
     def test_explicit_sources_are_independent_of_assay_and_table_numbers(self):
         for source in (
             "Table 98. Binding affinity\nNo.\nIC50 (nM)\n7\n9",

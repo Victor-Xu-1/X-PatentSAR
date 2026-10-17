@@ -1,5 +1,424 @@
 # X-PatentSAR architecture
 
+## Complete original-depiction recognition (unpublished v0.2.32)
+
+`RecognitionPlan` in `core/ocsr/recognition_inputs.py` is the sole bounded work
+projection: ordered formal compounds, supplemental primary compounds for library
+consumers, then every independently proved `additional_sources` image. All run
+in the existing DECIMER batch, raw cache, preparation, source-stereo and bounded
+rescue lifecycle. No second queue, source store, model vote or best-source picker
+is introduced. The shared 25,000-source bound counts all three roles together;
+overflow is refusal rather than truncated success. Timeouts count actual images,
+not just primary compounds. Input fingerprints include all original bytes and
+preparation/source proofs; stat identity includes ctime and reads detect mutation.
+`recognition_source_paths` owns the one original-image/metadata resolver shared
+by the worker and fingerprints. Relative paths use the same binding root and
+metadata frame changes invalidate reuse without pixel preparation in the cache
+reader. A formal row cannot redirect source/preparation fields while retaining
+the same catalog ID. Export helpers also refuse reprints without source findings.
+
+SMILES schema3 adds `reprint_records` in that same artifact. `records` still has
+one primary row per original compound; reprints never become duplicate molecules
+or independent activity measurements. `recognition_policy` owns ordered-result,
+explicit execution-success and fresh raw/source QC for CLI, coordinator, QA and
+export. `stereo_gate` performs one fresh evaluation and exposes its evidence/QC
+views, not separate chemistry implementations. An optional alternate molecular
+text cannot override the verified raw graph. Unknown/CX encodings stay refused.
+
+`reprint_consistency` compares full canonical isomeric graphs only after every
+source independently passes QC. Connectivity, assigned versus unspecified stereo,
+isotopes, charge and all components remain meaningful. It does not strip salts or
+tautomers, compare only scaffolds/InChIKeys, or use token confidence to resolve a
+disagreement. Matching recognitions still do not prove original-image chemistry.
+Missing/disagreeing reprints retain all raw observations and block the owner's
+qualified export, current chemistry and downstream properties. Other owners keep
+their independent review rows. Web currentness checks every recorded original
+crop through the existing bounded stat/hash cache, without inference on reads.
+
+Historical SMILES envelopes remain raw-readable, not current full-source proof.
+Original PDFs, raw OCR/OCSR, structures, manual audit, API1 and workspace SQLite1
+are not rewritten. Existing-source completion schedules the primary and every
+proved additional original inside the same owned prediction job, converter,
+raw cache and post-primary rescue boundary. `completion_observations` keeps raw
+records independent; only a complete per-owner packet can enter the existing
+`compound_recognitions` projection. Partial/cancelled/failed work retains raw
+checkpoints without promoting a primary alone. Current observed graph conflicts
+stay invalid and are not automatically resampled by a later property job.
+
+`recognition_sources` supplies bounded thin original frames, original catalogue/
+structure revisions and ordered all-image digests. `recognition_observations` is
+the single saved-projection QC reader, with16MiB per-owner packet/context limits
+and a512-entry digest-keyed cache, not retained raw blobs. Publication checks the
+active producer before source work and again in the existing SQLite transaction;
+current ownership, every image and source revision must still match. Reads do
+no inference. A missing owner, changed alias or corrupt saved packet withdraws
+that row's chemistry/properties without rewriting the original or failing other
+rows. Explicit user graphs/blanks and immutable correction audit remain separate.
+The per-original raw cache creates/checks its private `analysis` parent before
+its child; source-first initialization must not leave a755 parent that prevents
+the regular analysis service opening. Existing unsafe directories are refused,
+not automatically chmodded or adopted.
+Focused native/consumer checks, review, merged-main deployment and actual frontend
+scientific runs remain required; these contracts do not certify arbitrary recall.
+
+`structure_header_lines` owns one bounded two-dimensional original-word grouping
+step for logical header nomination and saved replay. Connected printed lines
+retain all original words and boxes; a shorter valid suffix cannot discard an
+unknown attached prefix. Original identifier rows and explicit table/section
+boundaries stop wrapping. Nomination supports staggered starts and wrapped
+parallel columns, but does not supply its own role proof: existing independent
+original-cell/native/raster readers still inspect the complete proposed window.
+Eight connected lines,64 columns and4096 candidate blocks are finite bounds;
+overflow is explicit,not truncated success. No invented words, printed rules,
+new OCR engine, source store or artifact writer is introduced.
+
+The shared printed-ID authority accepts literal numeric-hyphen-letter suffixes
+only in explicit label/declared-cell identity domains. Hyphens and leading zeros
+remain meaningful: `008-B`, `008B` and `08-B` are different keys. Fullwidth source
+glyphs remain in raw observations while their existing one-to-one typography
+normalization supplies canonical keys. The narrower unqualified prose locator
+is unchanged; spaces, incomplete suffixes or competing IDs are not repaired.
+Structure, original cells, headings and activity joins consume the same grammar.
+These are current unpublished producer semantics,not a rewrite of old artifacts.
+
+Logical parallel columns use `logical_column_partitions`, the sole literal
+header/caption nominator. Every scope keeps the complete original header row,
+its selected group indices and original caption-derived horizontal band. These
+are clipping domains, never fabricated printed grid axes. Partitioned scopes
+retain the complete bounded310-point original prefix, including independently
+positioned titles at different heights. Saved replay rederives the partition;
+an omitted neighbour, crossing group, changed band or missing context cannot
+retain a prior successful role. One global title retains the existing global
+interpretation. Overlapping/ambiguous titles and inventories beyond4096 scopes
+are not repaired by guessing or truncation. Independent declarations reuse the
+same nomination, not successful binding results.
+
+`structure_column_context` is the single horizontal adapter for original ruled,
+logical and continued scopes. Complete raw contexts remain unchanged while role,
+catalogue, body, running-prefix and parent-gap consumers project the same owned
+band. Headerless physical continuations still require actual rules and one
+registered parent; explicitly captioned logical continuations reread their own
+original caption window and conserve the full page prefix separately. Opposite
+column experiments/drawings cannot block a proved independent column, but any
+intersecting unowned drawing, unknown gap, missing row or foreign parent remains
+review. Repeated-header suppression also requires the exact original table key
+and caption column. Native/raster, saved-proof and Web-consumer checks cover these
+cases; they do not certify all layouts, chemical graphs or real-patent recall.
+
+Explicit parallel physical tables use the existing original-grid context SDK
+and caption projection, shared with activity/caption extraction. Each ruled
+header records bounded context_geometry; complete page text/grid/diagram facts
+remain in the existing source ledger. Column body ownership and independent
+declarations project the same original band, so a section or drawing in one
+column cannot end the other. A single shared caption retains global semantics.
+Literal caption starts split only after a genuine source gap; inline/prose
+references are not new tables. Source role, table key, catalogue and saved proof
+consume the same qualified original context. The obsolete per-word catalogue
+scraper/page carry is removed. Selected reprints retain their original sources
+and cannot erase novel IDs or override a qualified source disagreement; this
+does not establish chemical-graph identity. Declaration page_grids revalidate
+the header geometry after saving. This remains an unpublished Binding20/binder29
+scope6 repair, not universal layout, chemical, deployment or scientific acceptance.
+
+Physical-cell construction is source-first: `structure_frame_observation`
+nominates actual frames from the existing grid/token inventory; the shared source
+observer registers column roles before `structure_column_cells` constructs rows
+for the existing pair matcher. The former carried-header producer/preparator is
+removed. Call-local tokens are reused, not OCRed again for cell construction.
+Complete existing page-text membership permits checking a headerless next page
+even with no new declaration or detector hits; unrelated prose is filtered before
+coordinate OCR. Logical-to-physical columns require every complete original header
+word group inside its corresponding observed physical column; inferred logical
+outer clipping windows are not printed rules. Physical-to-physical alignment is
+unchanged. Diagram-free known activity frames require positive independent
+original header roles; unknown/conflicting columns or known chemical diagrams
+cannot be silently excluded. This is an unpublished repair, not scientific or
+deployed acceptance; ambiguous layouts remain explicit.
+
+Same-page physical parts require one registered original parent and an observed
+qualified gap, not nearest-frame inheritance. The internal continuation records
+its exact gap floor; saved replay rederives it from the parent's own rows and
+compares overlapping original contexts. Intervening grids, unowned drawings,
+new tables and experimental text block inheritance. Logical original headers
+retain the actual page-grid inventory: later physical rows have their own source
+owner, rather than first being published by a whole-page logical matcher. Full
+raw context and page-diagram facts remain retained. The shared activity-header
+identity also detects qualified assay-column boundaries; weak/conflicting
+endpoints retain uncertainty, never numerical or role corrections. All changes
+remain inside unpublished Binding20/binder29 and scope6. Real-patent/chemical
+acceptance and other unsupported layouts are still unverified.
+
+Headerless physical continuation draft: `ruled_column_continuation` captures
+actual grids and full leading/first-row context; `ruled_continuation_context`
+replays qualified running context and `ruled_continuation_links` checks one
+registered adjacent parent against the complete original source. The common
+column interface owns real body-start geometry, so a data row is never invented
+as a header or omitted. Pending frames remain typed unresolved sources when no
+parent can be proved. Original current caption catalogues retain their existing
+single matcher rather than inheriting unrelated prior columns. No extra OCR,
+queue, assets, writer or dependency. Ambiguous columns remain unproved;
+native/save/Web regression and actual frontend acceptance are required before delivery.
+
+Original column ownership uses the same source-body SDK for ruled-cell
+preparation, logical matching, serialized population and nonfinal exclusions.
+The complete context/diagram inventory is immutable; trusted ownership stops at
+the first unresolved boundary. A whole drawing-contained table annotation does
+not create an independent page declaration. Caption observation and admission
+are separate: withholding a nonfinal structure from publication does not remove
+it from the existing grid/source inventory. These projections share the current
+binder/ledger/writer and do not add an engine, store or acceptance path.
+
+Boundary nomination also retains exact original vertical-band subsets when a
+nearby row baseline overlaps a title. Those subsets cannot prove themselves:
+the complete original source projection still decides qualification/conflicts.
+No corrected strings, changed global line layout or guessed identifiers are used.
+
+Current heading coverage must match the same original heading observation and
+literal member, not merely find the number in another catalogue entry. The
+existing label-role SDK also recognizes independently proved numbered ID cells,
+so those cells do not masquerade as synthesis headings. The binder no longer
+skips a distinct heading because its label exists elsewhere. Historical scopes
+retain their recorded read interpretation; current scope6 cannot borrow it.
+
+Graph-free declarations retain each raw candidate line and its original box.
+The existing exact source-cell role resolver can identify qualified preparation
+or characterization cells; their wrapped compound references are not new final
+structure declarations. Unknown/conflicting roles are not exempt, and raw page
+observations/candidate literals remain available for replay. This is a role
+projection within the same source ledger, not a second extractor or ID blacklist.
+
+Grade usability retains original letters and their source-scoped legend. Only a
+matching original field/value cell with consistently explicit missing meanings
+can classify a grade as not measured. Missing/conflicting legends do not invent
+meaning, potency or concentrations. The row and mapping callers share the same
+activity-values authority, and an aggregate data cache cannot override an observed
+row's missingness. Data-only historical payloads retain their literal semantics.
+
+A literal grade declaration immediately before a table remains in that table's
+original text span, rather than disappearing at caption splitting. Qualification
+still checks the actual endpoint/units; conflicts stay review. A preceding
+independent header/result row or section prevents scope attachment. Adjacent-page
+continuations use the same original plan/replay, never a global legend cache.
+
+The shared original-window scanner retains section barriers for the text planner,
+which owns table splitting and exact preface attachment. Independent discovery
+keeps its default table barriers. Explicit ID-column headers take precedence over
+alphanumeric row nominations; the original leading experiment text is retained
+and can prevent inheritance. Actual alphanumeric IDs inside a declared ID column
+remain valid. A small renderer-free text-role regression module tests the real
+parser, not a substituted reader or model.
+
+Original boundary derivation now lives in the pure `source_body_context` SDK;
+`unruled_body_scope` supplies its column adapters. Complete source inventory and
+positively trusted ownership have separate bottoms. Doubtful, conflicting,
+native-only or diagram-overlapped section cues preserve raw facts and cannot
+extend the new declaration's nonfinal exclusion. Exact label references use
+that same trusted range; weak nonfinal title nominations remain explicit review.
+`source_evidence_identity` and `source_table_roles` hold the unchanged shared
+digest and original role semantics. Legacy module symbols re-export these same
+functions, not competing implementations. PDF geometry still requires PyMuPDF;
+its explicit environment probe is unchanged, while token replay alone does not
+load the renderer or an image engine. Portable token-SDK checks are not proof of
+native PDF, chemical or installed-runtime acceptance.
+
+Typed physical column sources protect their actual data frames, not an entire
+page. The producer and saved proof share `column_anchor_diagrams`; independent
+later source regions remain eligible. A physically boxed header without closed
+data rows uses its actual column proof with the existing logical-body matcher.
+These I/O changes have pending original-PDF/consumer regression, not delivered
+acceptance. Trusted-boundary handoff across all column consumers and independent
+original-proof resolution of doubtful cues remain unfinished integration work.
+
+The in-development independent table-declaration inventory reuses the existing
+source reader, binder ledger and sole writer. `source_table_captions` supplies
+literal native/raster nominations to both declarations and continuations;
+paragraph locators and joined letter-digit table names do not alter identifiers.
+`structure_declarations` captures complete original page contexts and observed
+diagrams, while `structure_declaration_scopes`, `structure_declaration_roles` and
+`structure_declaration_proof` derive declaration bodies, occurrence-specific
+nonfinal references and saved-source conservation. Scope6 adds
+`declaration_page_ids` and `declaration_reference_ids` inside this unpublished
+feature. No guessed columns, row-order assignment, new OCR/cache/model or result
+writer is introduced. Original column replay supplies positively proved nonfinal
+diagrams once; stored success flags cannot supply this role.
+
+This declaration draft is not yet integrated PDF/consumer or scientific
+acceptance. Graph-free metadata/measurement/footer roles and uncertain boundaries
+before later final products remain open verification and implementation work.
+Do not infer universal table/detector recall or chemical correctness from the
+portable caption-grammar checks or from previously accepted independent captions.
+
+`structure_header_context` and `structure_column_scopes` are the one original
+column-role interface across printed and logical tables. `ruled_structure_headers`
+uses the existing independent native/cell-OCR/frame reader for actual physical
+header cells, including wrapped headings and intervening metadata columns. A
+raw grid/text hint alone cannot supply current column authority or final-product
+eligibility. Explicit nonfinal and known native/raster conflicts remain intact.
+
+`structure_column_anchors` captures the actual header/full body/page diagrams in
+the existing source ledger; `structure_column_cells` indexes physical rows once
+before the sole numbered matcher. `structure_column_anchor_proof` and
+`ruled_structure_proof` recheck exact root/header/axes/row/source-packet ownership
+for current catalog/formal/Web consumers. Scope6's `column_anchor_ids` conserves
+those roots. Legacy untyped cells cannot gain current source authority; old
+historical artifacts keep their original interpretation and are never retagged.
+
+`structure_column_population` independently derives occupied physical row/pair
+positions from the retained original native/raster tokens and all observed page
+diagrams. The shared half-open grid-token index and diagram interval index avoid
+repeated full-table scans. An omitted original ID or known diagram remains an
+explicit gap even after result totals are changed and saved issues are cleared;
+a retained binding with a competing/crossing diagram is rejected. Empty source
+observations do not prove detector/OCR recall, and no missing ID/value is filled.
+
+Explicitly captioned ruled-to-logical and ruled-to-ruled continuations share the
+same current caption/leading context, registered parent and nonrecursive original
+anchor. Actual closed rows may prove vertically disjoint label/drawing ink;
+logical columns still require intersecting extents. The existing four-point
+physical edge tolerance is one shared predicate, never a digit/ID repair. These
+source controls do not prove uncaptioned/unanchored continuations, universal
+detector recall or complete chemical/OCSR correctness.
+
+Original headerless continuations share the numbered source coordinator and
+single writer. `unruled_continuation_titles` nominates literal table names from
+both original native/raster lanes; only a same-key/same-role caption physically
+overlapping the primary observation is one nomination. Distinct positions and
+known original disagreements remain. `unruled_continuation` retains the current
+caption/read frames/full leading context and one nonrecursive original column
+anchor. `unruled_continuation_links` replays the registered parent region, exact
+anchor and same-page/adjacent-page ownership. Same-page parents must end at the
+actual current caption boundary, and overlapping retained contexts must contain
+identical original facts. Gaps, new sections, earlier unowned diagrams and
+unproved/competing parents cannot borrow columns. Actual repeated headers keep
+their own independent header source.
+
+`unruled_region_observation` captures both actual-header and continuation bodies
+through the same bounded source-window/cell reader. No second row matcher,
+source store, OCR pass or artifact writer is introduced. Source-reference replay
+owns published findings once; registered spatial findings are not counted a
+second time. Full native/scanned/hybrid and serialized-consumer controls cover
+same-page, adjacent-page and chained parts, not universal layout/chemical recall.
+
+The shared printed-ID grammar preserves adjacent letter prefixes such as A17
+only within explicit original roles. Free-prose locator nomination stays narrower
+so endpoint/hash fragments do not become IDs. Multiline metric headers retain
+their column role before row parsing. Shared literal table markers cover letter,
+numeric and hyphenated original table names without correcting source numbers.
+Visible observation20/preparation8 invalidate derived ID interpretations, and
+locator9 refreshes changed table-title hints. Binding20/binder29 and
+activity18/extractor27/coverage14 are this unpublished source feature's prepared
+epochs, not separate product releases. Raw page/OCSR observations, models,
+original assets, manual audits, graph/SAR/API/SQL/dependencies remain unchanged.
+
+Unruled structure columns use the same numbered-cell coordinator, source ledger
+and artifact writer as ruled tables. `unruled_structure_headers` nominates actual
+separated original header words; `unruled_header_readings` independently replays
+the shared native/cell-OCR reads and their exact pixel frames. Column clipping
+windows are logical scopes, never asserted printed rules. Known original role or
+native/raster conflicts remain unresolved. An explicit nonfinal catalogue keeps
+its original labels/diagrams but cannot publish terminal products.
+
+`unruled_structure_observation` captures complete ID-column source windows and
+every overlapping candidate diagram. `unruled_structure_sources` replays full
+column/label/source-packet conservation; `unruled_structure_layout` accepts only
+reciprocal unique two-dimensional ownership. Metadata
+order, six-item minima, I-prefixes, count equality, distance ranking and missing
+number patterns cannot supply a match. Original page bounds and current source
+packets are mandatory. `cell_identity_proof`, `source_window_chunks` and
+`source_document` share existing identity/window/hash logic with other consumers,
+not another OCR/parser/cache/writer. Complete cached original page text also
+nominates declared tables with no detected diagram. Known diagram pages are
+always inspected; unrelated graph-free prose does not start coordinate OCR.
+
+`unruled_structure_proof` replays complete-region assignments through source
+ledger scope6. Rehashing a changed root or clearing findings cannot retain an
+old now-ambiguous binding. Removed source labels, foreign sources and missing
+ledger/canonical assignments fail current catalog, formal and Web consumers.
+Older scope1–5 ledgers remain historical, not current acceptance. The retired
+`series_table_binding` producer and private sequence/enforcement helpers are
+removed; synthetic old-protocol fixtures preserve historical-reader coverage
+without retaining the obsolete engine. No original, raw model, manual, molecular,
+SAR, API, SQL or dependency authority changes. Binding20/binder29 already cover
+this unpublished source revision; internal checkpoints are not product releases.
+
+These original-layout controls are not full chemical/OCSR acceptance. Vertically
+disjoint alignment without source row boundaries, unmarked following prose,
+unanchored/uncaptioned continuations and complete detector recall remain open scope.
+No new real patent run is implied by controlled native/raster tests.
+
+`unruled_body_scope` replays a complete original post-header text window and the
+original page-candidate collection. A proved later table caption, column header
+or explicit procedure/assay title ends the region; ordinary Compound labels,
+elution notes and method references do not. Original captions overlapping a
+diagram and qualified native/raster disagreements cannot shorten the region.
+The shared section-role parser owns title semantics. Owned diagrams and every
+identifier-column source are conserved projections of those full original facts.
+Changing a bottom, removing a child candidate, rehashing a root or changing a
+child token cannot conceal a later original observation. Following independent
+products remain in the existing heading/caption owner, not the table's pool.
+
+Unruled row matching uses actual original word/drawing extent intersection, not
+the word centre. Producer and local replay share that pure column predicate;
+complete-region replay still requires reciprocal uniqueness. Native and scanned
+top/bottom-aligned overlaps are supported; vertically disjoint or rival extents
+remain unresolved. No distance expansion, count pairing or source ID repair is
+introduced. The unpublished Binding20/binder29 scope includes these semantics,
+without another internal-commit epoch or raw/model/manual/artifact retagging.
+
+`binding_page_source` projects all original pages from the single shared page OCR
+cache. An absent cache uses the existing checkpointed source reader/writer once,
+including non-table/non-candidate pages. Existing saved source stays immutable:
+foreign/incomplete identity and unlocated scanned text fail explicitly. Matching
+original native text may supply a read-only coordinate projection, never a new
+raw-cache provenance claim. Profile text/line hints cannot replace observations.
+The former private `binding_ocr` adapters, independent text/line pools and partial
+table-only cache writer are removed. Native pages remain model-free.
+
+`caption_label_roles` records exact label references in source ledger scope6,
+backed by the current original caption proof and document SHA. A heading locator
+must have the same literal ID and lie inside one exact original caption window;
+all other headings on that page remain discoverable, including the same ID in
+another location. Source/page/geometry/legacy-rule conflicts supply no exemption.
+The ledger replays these references against current source entries, not saved
+success flags. Per-page/literal-ID indexing avoids scanning all captions for each
+title. This is within the prepared Binding20/binder29 semantic revision, not an
+additional internal-commit epoch. Figure legends, unread prefix fragments and
+remaining unruled layout boundaries remain separate open controls, not waived.
+
+`activity_transposed_source` retains each original transposed table cell once
+through the existing native/raster observation SDK. It owns literal orientation
+and typed column-slice descriptors, not a new OCR/value parser. Unknown headers,
+their raw values, token coordinates and confidences survive even if no compound
+row can be read. `activity_context_geometry` checks each column against adjacent
+original X edges and the exact header-to-bottom Y span; the existing row-parent
+contract is unchanged. No child invents its own grid axes.
+The existing caption half-open token index is shared in `source_cell_tokens`;
+the new snapshot indexes effective/native tokens once rather than rescanning a
+whole page for every cell. Source observations retain identical physical facts.
+
+`activity_transposed_rows` conserves all declared physical columns through the
+same coverage pass used by the producer and saved reader. Each original column
+has either one exactly owned row source or an explicit unresolved child. Current
+rows reuse the existing literal cell proof; removal/reassignment, foreign parents
+or clearing review flags cannot create completeness. The former duplicated raw
+unknown-column lists on every result row are removed in favor of this single
+source inventory. Binding20/binder29 invalidate the current source admission
+shortcut described below; activity18/extractor27/coverage14 invalidate derived
+transposed evidence. Original PDF/raw OCR/model/crop assets, manual audit,
+graph/SAR/API/SQL and dependencies remain unchanged; current prepared visible/
+preparation epochs are described above.
+These controls do not establish all-format recall or chemical accuracy.
+
+`source_binding_proof` is the current catalog/formal admission adapter over the
+shared original-cell, caption and heading validators. Historical rule names,
+one-dimensional sequence proposals and saved success flags cannot grant current
+ownership. The single catalog writer retains every rejected proposal as an
+explicit source issue instead of silently reducing the declared population.
+Current serialized catalogs independently replay this gate; an older catalog is
+read only through its historical schema path, never retagged as current proof.
+Unruled layout coverage still requires original two-dimensional role/ownership
+proof; rejecting the former sequence shortcut is not evidence of complete recall.
+
 Original open-row fragments remain in the same binding reference ledger(scope4),
 not a repair pipeline. `source_grid_edges` retains the existing rule detector's
 raw coordinates and exact rendered-page frame; visible page clipping never
@@ -375,8 +794,9 @@ I/1/l repair, integer gap correction or global numeric zip remains in this path.
 of compound-heading publication; final titles merely referencing intermediates
 and I-namespaces are not excluded. Cell fast/reread admission and serialized
 numbered/reference proof cannot override that original role or fragment conflict.
-Ruled I-series rows use the existing physical-cell authority. Bare series retain
-literal prefixes and report unpaired/duplicate observations as source conflicts.
+Ruled I-series rows use the existing physical-cell authority. Current unruled
+series require the original header/column source path above; literal prefixes,
+unpaired/duplicate observations and uncertainty are preserved, not sequence-filled.
 Binding7/binder16/visible12/activity10/epoch19 are independent semantic revisions;
 raw observation2/PDF/crop/OCSR/manual/coverage6/SAR14/API/SQL/dependencies stay.
 Limits are128characters,8digits per component,12prefix and4suffix letters; failures

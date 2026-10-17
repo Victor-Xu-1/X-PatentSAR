@@ -1,26 +1,20 @@
 """Cell-owned activity tables with printed compounds across columns."""
 
-import re
-
 from .activity_context_geometry import grid_axes
 from .activity_coverage import source_record
 from .activity_grid_cells import cell_text, read_activity_cell
 from .activity_header_identity import header_conflict
-from .activity_header_metrics import METRIC, distinct_value_keys, normalize_metric_text
+from .activity_header_metrics import distinct_value_keys
 from .activity_headers import _key
-from .activity_identity import LABEL_PREFIX, is_control, normalize_compound
 from .activity_metadata import mark_metadata, metadata_role
 from .activity_models import ActivityRow, ParsedActivity
+from .activity_transposed_source import (
+    capture_transposed_layout,
+    column_scope,
+    declared_compound,
+    transposed_header_row,
+)
 from .source_geometry import native_cell_text, token_geometry_space
-
-
-def _declared_compound(text):
-    # Bare numerical column headings may be dose/time groups, not compounds.
-    return (
-        normalize_compound(text)
-        if re.match(LABEL_PREFIX, text, re.IGNORECASE) or is_control(text)
-        else ""
-    )
 
 
 def _merged_heading(tokens, region, row, column):
@@ -43,47 +37,24 @@ def _merged_heading(tokens, region, row, column):
 
 def extract_transposed(page, page_no, tokens, region, matrix, context):
     """Recognize orientation from literal IDs and metric rows, never value order."""
-    if not matrix or len(matrix[0]) < 2:
-        return None
-    header_row = next(
-        (
-            i
-            for i, row in enumerate(matrix[:3])
-            if not row[0].strip()
-            and any(_declared_compound(v) for v in row[1:])
-            and i + 1 < len(matrix)
-            and all(
-                len(list(METRIC.finditer(normalize_metric_text(r[0])))) == 1
-                or metadata_role(r[0])
-                for r in matrix[i + 1 :]
-            )
-            and any(METRIC.search(normalize_metric_text(r[0])) for r in matrix[i + 1 :])
-        ),
-        None,
-    )
+    header_row = transposed_header_row(matrix)
     if header_row is None:
         return None
     xs, ys = region["xs"], region["ys"]
     native = bool(page.get_text("words"))
+    layout = capture_transposed_layout(tokens, region, header_row, native=native)
     output = ParsedActivity(owned_pages={page_no - 1})
-    unresolved = []
+    unresolved = {}
     for col in range(1, len(xs) - 1):
-        if not _declared_compound(matrix[header_row][col]):
-            unresolved.append(
-                {
-                    "label": matrix[header_row][col],
-                    "bbox": [xs[col], ys[header_row], xs[col + 1], ys[-1]],
-                    "raw_values": [r[col] for r in matrix[header_row + 1 :]],
-                }
-            )
-    for col in range(1, len(xs) - 1):
-        if not _declared_compound(matrix[header_row][col]):
+        if not declared_compound(matrix[header_row][col]):
+            unresolved[col] = "unsupported_header"
             continue
         id_bounds = (xs[col], ys[header_row], xs[col + 1], ys[header_row + 1])
         label, readings, review = read_activity_cell(
             page, tokens, id_bounds, identifier=True, native=native
         )
         if not label:
+            unresolved[col] = "no_original_rows"
             continue
         assay = " ".join(
             dict.fromkeys(
@@ -153,13 +124,14 @@ def extract_transposed(page, page_no, tokens, region, matrix, context):
             "raw_context": context.raw_context,
             "row": header_row,
             "pair": col,
+            "orientation": "transposed",
+            "table_bbox": list(region["bbox"]),
             "cells": cells,
             "geometry_space": token_geometry_space(tokens, native),
             "header_region": {
                 "page_no": page_no,
                 "bbox": [xs[0], ys[0], xs[-1], ys[header_row + 1]],
             },
-            "unresolved_columns": unresolved,
         }
         output.rows.append(
             ActivityRow(
@@ -186,20 +158,22 @@ def extract_transposed(page, page_no, tokens, region, matrix, context):
             "original_cells" if output.rows else "no_original_rows",
             len(output.rows),
             grid_axes=grid_axes(region),
+            transposed_layout=layout,
         )
     )
     output.coverage.extend(
         source_record(
             page_no,
             "grid",
-            item["bbox"],
+            [xs[col], ys[header_row], xs[col + 1], ys[-1]],
             context.table_id,
-            item["label"],
+            matrix[header_row][col],
             "unresolved",
-            "unsupported_header",
+            reason,
             0,
+            column_scope=column_scope(region, col, header_row),
         )
-        for item in unresolved
+        for col, reason in unresolved.items()
     )
     output.tables.append(
         {

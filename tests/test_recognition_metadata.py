@@ -38,6 +38,7 @@ class RecognitionMetadataTests(unittest.TestCase):
                 "rdkit_valid": True,
                 "OCSR_quality_flag": "ok",
                 "model_fingerprint": "a" * 64,
+                "OCSR_status": "success",
                 "token_confidence": {"minimum": 0.4, "mean": 0.8},
                 "raw_smiles": "CCO",
                 "canonical_smiles": "CCO",

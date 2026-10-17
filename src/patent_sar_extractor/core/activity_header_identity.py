@@ -9,8 +9,10 @@ from .activity_header_metrics import (
     normalize_metric_text,
 )
 from .activity_headers import infer_value_keys
+from .activity_identity import is_id_header
 from .activity_metadata import metadata_role
 from .ocr_claims import qualified_text_runs
+from .structure_table_headers import structure_header_role
 
 
 def compact_header(value: str) -> str:
@@ -18,6 +20,30 @@ def compact_header(value: str) -> str:
     # Micro-unit glyph equivalence is comparison only; original text survives.
     text = re.sub(r"(?<![A-Za-z0-9])[µμ]M(?![A-Za-z0-9])", "uM", text)
     return "".join(text.split()).casefold()
+
+
+def measurement_header_identity(text: str) -> str:
+    """One literal column identity for source boundaries and frame exclusion."""
+    if is_id_header(text):
+        return "identifier"
+    if structure_header_role(text) == "structure":
+        return "structure"
+    if METRIC.search(normalize_metric_text(text)):
+        return "measurement:" + compact_header(text)
+    role = metadata_role(text)
+    return "metadata:" + role if role else ""
+
+
+def measurement_header_roles(headers):
+    roles = tuple(measurement_header_identity(text) for text in headers)
+    return (
+        roles
+        if "identifier" in roles
+        and all(roles)
+        and "structure" not in roles
+        and any(role.startswith("measurement:") for role in roles)
+        else None
+    )
 
 
 def header_conflict(original: str, fresh: str) -> bool:

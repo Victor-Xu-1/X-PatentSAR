@@ -4,6 +4,7 @@ from .activity_context_geometry import validate_grid_axes
 from .activity_grid_context import _prefix
 from .caption_role_semantics import continuation_title, nonfinal_catalog_text
 from .source_observations import source_claim_runs
+from .structure_table_headers import aligned_column_edges
 
 MAX_CONTINUATION_DEPTH = 64
 
@@ -34,8 +35,7 @@ def valid_role_link(scope, link, prior_role, prior_key, local_key):
                 if prior_role == "compound"
                 else {"above", "below", None}
             )
-            and len(old["xs"]) == len(new["xs"])
-            and all(abs(a - b) <= 4 for a, b in zip(old["xs"], new["xs"], strict=True))
+            and aligned_column_edges(old["xs"], new["xs"])
             and (not local_key or local_key == prior_key)
         ):
             return False

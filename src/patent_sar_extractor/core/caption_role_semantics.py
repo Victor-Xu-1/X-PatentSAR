@@ -2,7 +2,7 @@
 
 import re
 
-from .source_table_markers import TABLE_MARKER
+from .source_table_markers import TABLE_CAPTION_START, caption_table_marker
 
 _NONFINAL = re.compile(
     r"\b(?:intermediates?|starting\s+materials?|building\s+blocks?|reactants?|reagents?)\b"
@@ -23,10 +23,20 @@ def nonfinal_catalog_text(text):
 def continuation_title(text):
     return bool(
         isinstance(text, str)
-        and TABLE_MARKER.search(text)
+        and caption_table_marker(text)
         and re.search(
-            r"\b(?:continued|continuation|cont\.)\b|续表|續表", text, re.IGNORECASE
+            r"\b(?:continued|continuation)\b|\bcont\.(?=\W|$)|续表|續表",
+            text,
+            re.IGNORECASE,
         )
+    )
+
+
+def has_continuation_caption(text):
+    """Page-text nomination only; qualified original windows still own roles."""
+    return isinstance(text, str) and (
+        continuation_title(text)
+        or any(continuation_title(line) for line in text.splitlines())
     )
 
 
@@ -34,10 +44,11 @@ def catalog_title_role(text):
     """A complete source title can declare a catalogue, never make up an ID."""
     if not isinstance(text, str) or len(text) > 2048:
         return "unknown"
-    marker = TABLE_MARKER.search(text)
-    if marker is None or text[: marker.start()].strip():
+    start = TABLE_CAPTION_START.match(text)
+    if start is None:
         return "unknown"
-    title = text[marker.end() :]
+    marker = caption_table_marker(text)
+    title = text[marker.end() if marker else start.end() :]
     nonfinal = tuple(_NONFINAL.finditer(title))
     compounds = tuple(_COMPOUNDS.finditer(title))
     if nonfinal:

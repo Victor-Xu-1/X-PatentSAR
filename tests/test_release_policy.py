@@ -34,6 +34,19 @@ def fixture(version="0.1.0"):
 
 
 class ReleaseNumberTests(unittest.TestCase):
+    def test_crlf_preparation_stays_idempotent_and_publishes_canonical_lf(self):
+        base = authority("0.2.31").replace("\n", "\r\n")
+        files = {
+            name: source.replace("\n", "\r\n")
+            for name, source in fixture("0.2.31").items()
+        }
+        before = dict(files)
+        final = {**files, **policy.prepare_versions(base, files)}
+        self.assertEqual(str(policy.verify_versions(base, final)), "0.2.32")
+        self.assertTrue(all("\r\n" not in source for source in final.values()))
+        self.assertEqual(policy.prepare_versions(base, final), {})
+        self.assertEqual(files, before)
+
     def test_increment_and_both_rollovers(self):
         for old, new in (
             ("0.1.0", "0.1.1"),

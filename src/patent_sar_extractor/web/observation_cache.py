@@ -26,7 +26,8 @@ def cache_path(state: Path, project: dict) -> Path:
         raise WebError(
             422, "source_identity", "Raw cache requires a verified original SHA."
         )
-    root = private_directory(state / "analysis" / "ocsr-observations")
+    analysis = private_directory(state / "analysis")
+    root = private_directory(analysis / "ocsr-observations")
     return root / f"{sha}.sqlite"
 
 

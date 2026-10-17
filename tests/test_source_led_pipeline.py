@@ -23,18 +23,23 @@ from patent_sar_extractor.core.binding_artifacts import write_binding_result
 from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
 from patent_sar_extractor.smiles_artifact import build_smiles_artifact
 from patent_sar_extractor.workers.final_data import load_data
+from tests.test_caption_reading_semantics import binding as caption_binding
 
 
 def proved_binding(label, structure_id, image=""):
     return annotate_binding_accuracy(
         {
-            "cpd": label,
+            **caption_binding(
+                [{"method": "native_cell", "text": label}],
+                cpd=label,
+                structure_id=structure_id,
+                diagram=(20, 40, 120, 140),
+            ),
             "compound_id": label,
             "prefix": "Compound",
             "structure_id": structure_id,
             "image_path": image,
             "page_no": 1,
-            "binding_rule": "direct_structure_label",
             "struct_area": 10000,
             "struct_width": 100,
             "struct_height": 100,

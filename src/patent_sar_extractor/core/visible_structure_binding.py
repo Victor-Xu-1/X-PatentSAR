@@ -87,6 +87,7 @@ def bind_visible_captions(
     issues: list[dict] | None = None,
     source_exclusions: list[dict] | None = None,
     protected_structure_ids: set[str] | None = None,
+    withheld_structure_ids: frozenset[str] = frozenset(),
     grids_for_page=None,
     tokens_for_page=None,
 ) -> list[CaptionBinding]:
@@ -122,6 +123,7 @@ def bind_visible_captions(
         CaptionBinding(**item)
         for item in catalog.bindings
         if item["label"] not in excluded
+        and str(item["structure"].get("id") or "") not in withheld_structure_ids
         and (active is None or item["label"] in active)
         and identities[str(item["structure"].get("id") or "")] == 1
     ]
@@ -130,6 +132,7 @@ def bind_visible_captions(
             s
             for s in page_structures
             if str(s.get("id") or "") not in catalog.protected_structure_ids
+            and str(s.get("id") or "") not in withheld_structure_ids
         ]
         if not page_structures:
             continue

@@ -59,7 +59,10 @@ class ReleaseWorkflowTests(unittest.TestCase):
             text for text in runs if "tools/prepare_browser_fixture.py" in text
         )
         self.assertIn("--read-only", prepare)
-        self.assertIn("product-version.spec.ts", prepare)
+        self.assertIn("tools/browser_fixture_mode.py", prepare)
+        self.assertIn(
+            'if [ "$mode" = completion ]; then args+=(--completion); fi', prepare
+        )
 
 
 if __name__ == "__main__":

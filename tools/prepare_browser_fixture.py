@@ -25,20 +25,30 @@ def prepare(
     llm_recovery: bool = False,
     sar: bool = False,
     history: bool = False,
+    completion: bool = False,
 ) -> dict[str, str]:
-    if sum((read_only, llm_settings, llm_recovery, sar, history)) > 1:
+    if sum((read_only, llm_settings, llm_recovery, sar, history, completion)) > 1:
         raise ValueError("Choose one isolated fixture mode")
     if workspace.exists() and any(workspace.iterdir()):
         raise ValueError("Browser fixture workspace must be empty")
     workspace.mkdir(parents=True, exist_ok=True, mode=0o700)
     # Reuse explicit adapter fixtures rather than adding a production seed route.
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tests"))
+    repository = Path(__file__).resolve().parents[1]
+    sys.path.insert(0, str(repository))  # Namespaced test helpers, never src/.
+    sys.path.insert(0, str(repository / "tests"))
     from test_web_support import artifact_run, make_pdf
 
     pdf = make_pdf(
         workspace / "controlled-native.pdf",
         text="Controlled browser protocol fixture; no chemistry or activity data.",
     )
+    if completion:
+        if __package__:
+            from .prepare_completion_fixture import prepare_completion
+        else:
+            from prepare_completion_fixture import prepare_completion
+
+        return prepare_completion(workspace, workspace / "web-state", pdf)
     if llm_recovery:
         from prepare_llm_recovery_fixture import prepare_recovery
 
@@ -250,6 +260,11 @@ def main() -> None:
         help="Read-only synthetic project plus empty isolated API settings; no CLI/model jobs",
     )
     parser.add_argument(
+        "--completion",
+        action="store_true",
+        help="Read-only synthetic saved-source observations; no model or extraction run",
+    )
+    parser.add_argument(
         "--read-only",
         action="store_true",
         help="Metadata/navigation only; no task or installer-history fixtures",
@@ -262,6 +277,7 @@ def main() -> None:
         llm_recovery=args.llm_recovery,
         sar=args.sar,
         history=args.history,
+        completion=args.completion,
     )
     if args.github_env:
         destination = os.environ.get("GITHUB_ENV")

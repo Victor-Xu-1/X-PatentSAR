@@ -33,6 +33,32 @@ def facade(folder, *pages):
 
 
 class TextOwnershipTests(unittest.TestCase):
+    def test_multiple_split_metric_headers_keep_every_endpoint_before_row_parsing(self):
+        result = extract_text_tables(
+            [0],
+            {
+                "0": "Table A. Binding activity\nCompound ID\nIC50 (nM)\nDC50 (pM)\nA17 0.8 2.4"
+            },
+        )
+        self.assertEqual([r.cpd for r in result.rows], ["Compound A17"])
+        self.assertEqual(
+            result.rows[0].activity_values, {"IC50 (nM)": "0.8", "DC50 (pM)": "2.4"}
+        )
+
+    def test_multiple_split_metric_headers_survive_actual_native_facade_and_replay(
+        self,
+    ):
+        with tempfile.TemporaryDirectory() as temp:
+            data = facade(
+                Path(temp),
+                "Table A. Binding activity\nCompound ID\nIC50 (nM)\nEC50 (nM)\nB80 0.7 3.1",
+            )
+        self.assertEqual([r["cpd"] for r in data["rows"]], ["Compound B80"])
+        self.assertEqual(
+            data["rows"][0]["activity_values"], {"IC50 (nM)": "0.7", "EC50 (nM)": "3.1"}
+        )
+        self.assertEqual(activity_evidence_errors(data, [0]), [])
+
     def test_new_experiment_stops_same_page_rows_and_next_page_context_borrow(self):
         texts = {
             "0": ROOT
@@ -177,6 +203,39 @@ class TextOwnershipTests(unittest.TestCase):
             [r["activity_values"]["IC50 (nM)"] for r in data["rows"]], ["9", "9", "4"]
         )
         self.assertEqual(activity_evidence_errors(data, [0]), [])
+
+    def test_pre_table_legend_keeps_original_span_and_only_proved_continuations(self):
+        result = extract_text_tables(
+            [0, 1],
+            {
+                "0": "letter codes for IC50 include: A (<1 nM) B (1-10 nM)\n"
+                "Table 73. Binding assay\nNo. | IC50 (nM)\n31 | A",
+                "1": "Table 73. Continued\nNo. | IC50 (nM)\n44 | B\n"
+                "Table 74. Another binding assay\nNo. | IC50 (nM)\n45 | B",
+            },
+        )
+        self.assertEqual(
+            [row.cpd for row in result.rows],
+            ["Compound 31", "Compound 44", "Compound 45"],
+        )
+        for row in result.rows[:2]:
+            self.assertEqual(
+                row.activity_sources[0]["legend"], {"A": "<1 nM", "B": "1-10 nM"}
+            )
+        self.assertEqual(result.rows[0].activity_sources[0]["text_scope"]["span"][0], 0)
+        self.assertNotIn("legend", result.rows[2].activity_sources[0])
+
+    def test_pre_table_legend_with_a_different_endpoint_is_retained_as_review(self):
+        result = extract_text_tables(
+            [0],
+            {
+                "0": "letter codes for IC50 include: A (<1 nM) B (1-10 nM)\n"
+                "Table 73. Degradation assay\nNo. | DC50 (nM)\n31 | A",
+            },
+        )
+        self.assertEqual(result.rows[0].activity_values, {"DC50 (nM)": "A"})
+        self.assertTrue(result.rows[0].needs_review)
+        self.assertTrue(result.rows[0].activity_sources[0]["legend_issues"])
 
     def test_conflicting_or_unit_mismatched_legend_preserves_raw_grade_and_refuses_acceptance(
         self,

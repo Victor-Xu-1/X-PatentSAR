@@ -6,7 +6,7 @@ from bisect import bisect_right
 from .activity_context_geometry import grid_box, validate_grid_axes
 from .activity_identity import is_id_header
 from .printed_identifiers import LABEL_PREFIX, identifier_key
-from .source_cell_tokens import cell_text
+from .source_cell_tokens import cell_text, grid_token_index
 from .table_cells import prefixed_label
 
 
@@ -27,11 +27,7 @@ def caption_rows(region, tokens, boxes, role):
         or len(boxes) > 25000
     ):
         raise ValueError("Original caption grid exceeds its resource bound")
-    selected, drawings = {}, set()
-    for token in tokens:
-        col, row = bisect_right(xs, token["x"]) - 1, bisect_right(ys, token["y"]) - 1
-        if 0 <= col < len(xs) - 1 and 0 <= row < len(ys) - 1:
-            selected.setdefault((row, col), []).append(token)
+    selected, drawings = grid_token_index(tokens, xs, ys), set()
     for box in boxes:
         if box is None:
             continue

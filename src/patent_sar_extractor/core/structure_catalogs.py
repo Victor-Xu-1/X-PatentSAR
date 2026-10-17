@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -15,40 +15,34 @@ class Catalog:
     selected_subset: bool = False
 
 
-def catalog_marks(tokens: Sequence[Mapping[str, Any]]) -> list[tuple[float, Catalog]]:
-    marks = []
-    ordered = sorted(tokens, key=lambda t: (float(t["y"]), float(t["x"])))
-    for index, token in enumerate(ordered):
-        match = re.search(
-            r"\bTable\s+([A-Z]|\d+)\s*[.:]\s*(.*)", str(token["text"]), re.I
-        )
-        if match is None:
-            continue
-        y = float(token["y"])
-        nearby = " ".join(
-            str(t["text"])
-            for t in ordered[index : index + 4]
-            if 0 <= float(t["y"]) - y <= 25
-        )
-        title = re.sub(r"\s+", " ", nearby).strip()[:500]
-        marks.append(
-            (
-                y,
-                Catalog(
-                    f"Table {match.group(1).upper()}",
-                    title,
-                    bool(re.search(r"\bselected\b|\bsubset\b|选定|选取", title, re.I)),
-                ),
-            )
-        )
-    return marks
+def catalog_for_scope(scope) -> Catalog:
+    """Use the same qualified original title as role and table-link consumers."""
+    from .source_table_markers import caption_table_marker, table_marker_identity
+    from .source_table_roles import observed_role
+    from .structure_column_scopes import original_column_context
+    from .unruled_continuation_titles import anchor_scope
 
-
-def catalog_at(
-    marks: Sequence[tuple[float, Catalog]], y: float, prior: Catalog
-) -> Catalog:
-    preceding = [catalog for location, catalog in marks if location < y]
-    return preceding[-1] if preceding else prior
+    anchor = anchor_scope(scope)
+    if anchor is None:
+        return Catalog()
+    packets = original_column_context(anchor)
+    role, key = observed_role(packets)
+    if role not in {"compound", "nonfinal"} or not key:
+        return Catalog()
+    texts = list(dict.fromkeys(packet["text"] for packet in packets))
+    marker = caption_table_marker(texts[0])
+    if marker is None:
+        return Catalog()
+    selected = {
+        bool(re.search(r"\bselected\b|\bsubset\b|选定|选取", text, re.IGNORECASE))
+        for text in texts
+    }
+    # A qualified original disagreement never grants selected-reprint exclusion.
+    return Catalog(
+        table_marker_identity(marker.group()),
+        texts[0][:500],
+        selected == {True},
+    )
 
 
 def repeated_selected_catalogs(cells: Sequence[Any]) -> set[str]:

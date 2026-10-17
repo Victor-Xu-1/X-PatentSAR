@@ -90,6 +90,8 @@ def table_row_errors(regions, rows):
         for source in sources:
             if not isinstance(source, dict):
                 raise TypeError("Malformed original grid source")
+            if source.get("orientation") == "transposed":
+                continue  # The same coverage pass checks its column inventory.
             box = source.get("table_bbox")
             if box is None:
                 unknown |= _get(row, "source") == "observed_grid_cells"

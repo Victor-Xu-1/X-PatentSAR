@@ -6,8 +6,6 @@ including rejected layouts without rows, are stored once and checked on read.
 
 from __future__ import annotations
 
-import hashlib
-import json
 from dataclasses import fields
 
 from patent_sar_extractor.contracts import (
@@ -22,6 +20,7 @@ from .activity_header_identity import detector_header_conflict
 from .activity_header_proof import valid_header_proof
 from .activity_models import ActivityRow
 from .cell_header_proof import physical_header_valid
+from .source_evidence_identity import proof_id
 
 _SUMMARY_FIELDS = (
     "status",
@@ -30,21 +29,6 @@ _SUMMARY_FIELDS = (
     "unverified_columns",
     "context_conflict",
 )
-
-
-def proof_id(proof: dict) -> str:
-    if not isinstance(proof, dict) or not isinstance(proof.get("status"), str):
-        raise TypeError("Malformed original header evidence")
-    encoded = json.dumps(
-        proof,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
-    ).encode("utf-8")
-    if len(encoded) > 1024 * 1024:
-        raise ValueError("Original header evidence exceeds its bounded region limit")
-    return hashlib.sha256(encoded).hexdigest()
 
 
 def _reference(key: str, proof: dict) -> dict:

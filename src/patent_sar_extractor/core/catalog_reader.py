@@ -9,21 +9,25 @@ from patent_sar_extractor.contracts import (
     BINDINGS_SCHEMA_VERSION,
     COMPOUND_CATALOG_SCHEMA,
     COMPOUND_CATALOG_SCHEMA_VERSION,
+    MAX_RECOGNITION_SOURCES,
     schema_ref,
     schema_ref_matches,
 )
 
 from .binding_source_references import reference_issues
 from .pipeline_rules import _label_key, annotate_binding_accuracy
+from .source_binding_proof import annotate_source_binding
 
-MAX_CATALOG_RECORDS = 25000
+MAX_CATALOG_RECORDS = MAX_RECOGNITION_SOURCES
 
 
 class CatalogValidationError(ValueError):
     """Invalid untrusted catalog value, including its serialized field types."""
 
 
-def _checked_source(source: dict[str, Any]) -> dict[str, Any]:
+def _checked_source(
+    source: dict[str, Any], *, original_required=False
+) -> dict[str, Any]:
     candidates = source.get("visible_label_candidates", [])
     if (
         not isinstance(candidates, list)
@@ -32,7 +36,11 @@ def _checked_source(source: dict[str, Any]) -> dict[str, Any]:
     ):
         raise CatalogValidationError("Printed-ID label observations are invalid.")
     try:
-        return annotate_binding_accuracy(dict(source))
+        return (
+            annotate_source_binding(dict(source))
+            if original_required
+            else annotate_binding_accuracy(dict(source))
+        )
     except (TypeError, ValueError, OverflowError, AttributeError) as exc:
         raise CatalogValidationError("Printed-ID source proof is malformed.") from exc
 
@@ -59,10 +67,13 @@ def read_catalog_entries(
         )
     labels, owned, alias_ids = set(), set(), set()
     output = []
+    original_required = schema_ref_matches(
+        payload.get("schema"), schema_ref(BINDINGS_SCHEMA, BINDINGS_SCHEMA_VERSION)
+    )
     for raw in entries:
         if not isinstance(raw, dict):
             raise CatalogValidationError("Printed-ID catalog row is invalid.")
-        checked = _checked_source(raw)
+        checked = _checked_source(raw, original_required=original_required)
         key = _label_key(str(checked.get("cpd") or checked.get("compound_id") or ""))
         structure_id = str(checked.get("structure_id") or "")
         if (
@@ -82,10 +93,11 @@ def read_catalog_entries(
         additional = checked.get("additional_sources", [])
         if not isinstance(additional, list) or len(additional) > 1000:
             raise CatalogValidationError("Additional source collection is invalid.")
+        checked_additional = []
         for source in additional:
             if not isinstance(source, dict):
                 raise CatalogValidationError("Additional source is invalid.")
-            proof = _checked_source(source)
+            proof = _checked_source(source, original_required=original_required)
             alias = str(proof.get("structure_id") or "")
             if (
                 _label_key(str(proof.get("cpd") or proof.get("compound_id") or ""))
@@ -101,10 +113,12 @@ def read_catalog_entries(
                 )
             owned.add(alias)
             alias_ids.add(alias)
+            checked_additional.append(proof)
             if len(owned) > MAX_CATALOG_RECORDS:
                 raise CatalogValidationError(
                     "Catalog source observations exceed their bound."
                 )
+        checked["additional_sources"] = checked_additional
         output.append(checked)
     try:
         # Partial proved structures remain available for review. Completeness
@@ -112,10 +126,7 @@ def read_catalog_entries(
         reference_issues(
             payload,
             output,
-            required=schema_ref_matches(
-                payload.get("schema"),
-                schema_ref(BINDINGS_SCHEMA, BINDINGS_SCHEMA_VERSION),
-            ),
+            required=original_required,
         )
     except (TypeError, ValueError, KeyError) as exc:
         raise CatalogValidationError(

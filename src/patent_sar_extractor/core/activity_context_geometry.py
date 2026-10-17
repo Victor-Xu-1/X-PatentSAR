@@ -175,7 +175,9 @@ def validate_context_inventory(regions, *, current=False):
         if (
             current
             and record["kind"] == "grid"
-            and not any(key in record for key in ("grid_axes", "parent_grid"))
+            and not any(
+                key in record for key in ("grid_axes", "parent_grid", "column_scope")
+            )
         ):
             raise ValueError("Missing current original physical grid inventory")
         if "grid_axes" in record:
@@ -202,6 +204,24 @@ def validate_context_inventory(regions, *, current=False):
                 or (child[1], child[3]) not in parent[2]
             ):
                 raise ValueError("Unresolved original row has no exact physical parent")
+        if "column_scope" in record:
+            scope = record["column_scope"]
+            parent = roots.get((record["page_no"], tuple(scope["parent_grid"])))
+            column, header = scope["column"], scope["header_row"]
+            if parent is None or not (
+                column + 1 < len(parent[0]["xs"])
+                and header + 1 < len(parent[0]["ys"])
+                and record["bbox"]
+                == [
+                    parent[0]["xs"][column],
+                    parent[0]["ys"][header],
+                    parent[0]["xs"][column + 1],
+                    parent[0]["ys"][-1],
+                ]
+            ):
+                raise ValueError(
+                    "Unresolved original column has no exact physical parent"
+                )
         geometry = (record.get("layout") or {}).get("context_geometry")
         if (
             current

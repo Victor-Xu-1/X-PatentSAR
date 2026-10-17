@@ -63,4 +63,12 @@ class TransposedActivityTests(unittest.TestCase):
         self.assertEqual(len(result.rows), 2)
         self.assertTrue(all(r.cpd == "Compound 17" for r in result.rows))
         self.assertEqual(sum(c["status"] == "unresolved" for c in result.coverage), 2)
-        self.assertIn("comparison-X", str(result.rows[0].activity_sources))
+        root = next(c for c in result.coverage if "transposed_layout" in c)
+        self.assertIn("comparison-X", str(root["transposed_layout"]))
+        self.assertTrue(
+            all(
+                "unresolved_columns" not in s
+                for r in result.rows
+                for s in r.activity_sources
+            )
+        )

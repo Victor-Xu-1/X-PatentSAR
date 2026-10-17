@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Protocol
 
 from .structure_catalogs import Catalog
 
@@ -34,6 +34,12 @@ class NumberedTableBinding:
 
     def evidence(self) -> dict[str, Any]:
         return {
+            **(
+                {"kind": "original_ruled_columns"}
+                if self.cell.column_ownership
+                and "source_anchor_id" in self.cell.column_ownership
+                else {}
+            ),
             "coordinate_space": "original_pdf_points",
             "page_no": self.cell.page_index + 1,
             "grid": self.cell.grid_index,
@@ -62,16 +68,35 @@ class NumberedTableIssue:
     page_index: int
     label: str
     reason: str
+    evidence: Mapping[str, Any] = field(default_factory=dict, hash=False)
+
+
+class OriginalTableBinding(Protocol):
+    label: str
+    structure: Mapping[str, Any]
+
+    def evidence(self) -> dict[str, Any]: ...
 
 
 @dataclass(frozen=True)
 class NumberedTableResult:
     recognized_pages: tuple[int, ...]
     observed_keys: frozenset[str]
-    bindings: tuple[NumberedTableBinding, ...]
+    bindings: tuple[OriginalTableBinding, ...]
     issues: tuple[NumberedTableIssue, ...]
 
     reprints: tuple[NumberedTableBinding, ...] = ()
+    source_sections: tuple[dict, ...] = ()
+    protected_structure_ids: frozenset[str] = frozenset()
+    reserved_pages: frozenset[int] | None = None
+
+    @property
+    def ownership_pages(self):
+        return (
+            frozenset(self.recognized_pages)
+            if self.reserved_pages is None
+            else self.reserved_pages
+        )
 
     @property
     def recognized(self) -> bool:

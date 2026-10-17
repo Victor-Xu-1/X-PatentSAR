@@ -11,7 +11,7 @@ from patent_sar_extractor.core.caption_binding_proof import (
 from patent_sar_extractor.core.caption_grid_binding import bind_caption_grids
 
 
-def two_pages(*, split=False, gap=False, new_title=None, shifted=False):
+def two_pages(*, split=False, gap=False, new_title=None, shifted=False, columns=2):
     doc = fitz.open()
     by_page, boxes, grids = {}, {}, {}
     pages = (1, 3) if gap else (1, 2)
@@ -21,7 +21,7 @@ def two_pages(*, split=False, gap=False, new_title=None, shifted=False):
             continue
         position = pages.index(number)
         offset = 12 if shifted and position else 0
-        xs = [x + offset for x in (50, 180, 310)]
+        xs = [x + offset for x in (50, 180, 310)[: columns + 1]]
         ys = (
             [100, 125, 205, 230]
             if split and not position
@@ -40,7 +40,7 @@ def two_pages(*, split=False, gap=False, new_title=None, shifted=False):
         labels = ("41A", "89B") if not position else ("73C", "104D")
         label_row = 1 if split and position else 0
         by_page[number], boxes[number] = [], []
-        for col, label in enumerate(labels):
+        for col, label in enumerate(labels[:columns]):
             page.insert_text((xs[col] + 15, ys[label_row] + 17), label, fontsize=9)
             top = ys[label_row + 1] + 14
             box = (xs[col] + 20, top, xs[col] + 80, top + 35)
@@ -90,6 +90,17 @@ def binding(pair):
 
 
 class CaptionRoleContinuationTests(unittest.TestCase):
+    def test_single_original_caption_column_keeps_existing_continuation_contract(self):
+        result = self.observe(columns=1)
+        self.assertEqual([b["label"] for b in result.bindings], ["41A", "73C"])
+        self.assertEqual(result.issues, [])
+        self.assertTrue(
+            all(
+                valid_caption_binding_evidence(binding(pair))
+                for pair in result.bindings
+            )
+        )
+
     def observe(self, **options):
         doc, structures, boxes, grids, pages = two_pages(**options)
         with doc:

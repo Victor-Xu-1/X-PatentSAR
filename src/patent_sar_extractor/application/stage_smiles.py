@@ -37,6 +37,7 @@ from patent_sar_extractor.smiles_artifact import (
     build_smiles_artifact,
     smiles_artifact_is_current,
     smiles_records,
+    smiles_reprint_records,
     smiles_source_records,
 )
 
@@ -70,8 +71,9 @@ def execute_smiles(state: PipelineContext) -> None:
     # Malformed ownership is technical failure; a known empty proved catalog
     # remains a scientific rejection and does not start a model.
     coverage_errors(state.bind_payload)
-    formal_inputs, supplemental = recognition_inputs(state.bind_payload)
-    if supplemental or len(formal_inputs) != state.n_bound:
+    plan = recognition_inputs(state.bind_payload)
+    formal_inputs = plan.formal
+    if plan.supplemental or len(formal_inputs) != state.n_bound:
         raise ValueError("Recognition must uniformly cover the entire proved catalog")
     if state.n_bound == 0:
         print(f"  ⏭ [{step}] 缺少已证实编号结构，识别未启动")
@@ -136,24 +138,20 @@ def execute_smiles(state: PipelineContext) -> None:
             and smiles_payload.get("formal_acceptance_scope") == FORMAL_SCOPE
         ):
             reuse_existing_smiles, reuse_errors = _smiles_results_can_be_reused(
-                smiles_results,
+                smiles_payload,
                 state.bind_payload,
             )
-            _, sources = recognition_inputs(state.bind_payload)
-            if not ordered_source_results(
-                sources, smiles_source_records(smiles_payload)
-            ):
-                reuse_existing_smiles = False
-                reuse_errors.append(
-                    "Source recognition does not cover the complete proved catalog."
-                )
         else:
             reuse_existing_smiles = False
             reuse_errors = [
                 "SMILES output does not match the current production artifact contract."
             ]
         if reuse_existing_smiles:
-            all_results = [*smiles_results, *smiles_source_records(smiles_payload)]
+            all_results = [
+                *smiles_results,
+                *smiles_source_records(smiles_payload),
+                *smiles_reprint_records(smiles_payload),
+            ]
             n_smiles = len(all_results)
             n_valid = sum(1 for r in all_results if r.get("OCSR_quality_flag") == "ok")
             print(f"  ⏭ [{step}] 已存在且通过当前严格规则，跳过")
@@ -202,7 +200,9 @@ def execute_smiles(state: PipelineContext) -> None:
                 "smiles_engine",
                 smiles_worker_script,
                 args=smiles_args,
-                timeout=recognition_timeout(state.n_bound, state.started_monotonic),
+                timeout=recognition_timeout(
+                    len(plan.work_items), state.started_monotonic
+                ),
                 env_extra=worker_environment,
                 stream_output=True,
             )
@@ -219,12 +219,23 @@ def execute_smiles(state: PipelineContext) -> None:
             raise RuntimeError(
                 "SMILES worker omitted or misassigned formal catalog observations"
             )
-        _, sources = recognition_inputs(state.bind_payload)
-        if not ordered_source_results(sources, smiles_source_records(smiles_payload)):
+        if not ordered_source_results(
+            plan.supplemental, smiles_source_records(smiles_payload)
+        ):
             raise RuntimeError(
                 "SMILES worker omitted or misassigned catalog observations."
             )
-        all_results = [*smiles_results, *smiles_source_records(smiles_payload)]
+        if not ordered_source_results(
+            plan.reprints, smiles_reprint_records(smiles_payload)
+        ):
+            raise RuntimeError(
+                "SMILES worker omitted or misassigned reprint observations."
+            )
+        all_results = [
+            *smiles_results,
+            *smiles_source_records(smiles_payload),
+            *smiles_reprint_records(smiles_payload),
+        ]
         n_smiles = len(all_results)
         n_valid = sum(1 for r in all_results if r.get("OCSR_quality_flag") == "ok")
         smiles_payload.update(
@@ -236,6 +247,9 @@ def execute_smiles(state: PipelineContext) -> None:
                     "expected_structure_ids": [
                         row["structure_id"] for row in formal_inputs
                     ],
+                    "reprint_structure_ids": [
+                        row["structure_id"] for row in plan.reprints
+                    ],
                 },
             }
         )
@@ -244,6 +258,7 @@ def execute_smiles(state: PipelineContext) -> None:
     smiles_payload = _load_json(state.smiles_json, {})
     smiles_results = smiles_records(smiles_payload)
     source_results = smiles_source_records(smiles_payload)
+    reprint_results = smiles_reprint_records(smiles_payload)
     state.pipeline_log["steps"][step] = {
         **state.pipeline_log["steps"].get(step, {}),
         "from_cache": state.progress.checkpoint_reused,
@@ -254,6 +269,7 @@ def execute_smiles(state: PipelineContext) -> None:
         "valid": n_valid,
         "formal_total": len(smiles_results),
         "source_total": len(source_results),
+        "reprint_total": len(reprint_results),
         "execution_status": "completed" if state.n_bound else "not_started",
         **({"blocked_by": "bind"} if not state.n_bound else {}),
         "binding_execution_mode": SOURCE_EXECUTION_MODE,
@@ -263,7 +279,7 @@ def execute_smiles(state: PipelineContext) -> None:
     }
     if n_smiles:
         print(f"     valid_smiles={n_valid}/{n_smiles}")
-    smiles_errors = _smiles_acceptance_errors(smiles_results, state.bind_payload)
+    smiles_errors = _smiles_acceptance_errors(smiles_payload, state.bind_payload)
     if not state.n_bound:
         smiles_errors.append(
             "No proved printed-ID structures; SMILES recognition was not started."
