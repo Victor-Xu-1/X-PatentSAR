@@ -13,8 +13,10 @@ known-image and cross-owner constraints remain. No original artifact is rewritte
 `ArtifactView` uses this raw review for display, but never a current recognition
 plan for old bindings. Even a separately current SMILES packet cannot give old
 ownership current chemistry/properties. Existing-source completion and saved
-overlay source lookup require a current binding artifact. `RAW_PROJECTION_LAYOUT`
-v3 rebuilds only the derived Web view; original/manual audit remains immutable.
+overlay source lookup require a current binding artifact. A private historical
+source-review marker1 rebuilds only old historical Web views. The current raw
+layout staysv2, so unchanged current sources do not stale valid manual edits for
+an archive-only repair. Original/manual audit remains immutable.
 Historical reference copy in the bilingual crop dialog says it is unvalidated,
 not that its old spatial proof is currently confirmed. Current malformed proof
 still refuses; this is not an acceptance fallback, schema retag or new extraction.

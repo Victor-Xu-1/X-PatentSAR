@@ -17,6 +17,7 @@
     "src/patent_sar_extractor/web/completion_inputs.py",
     "src/patent_sar_extractor/web/compound_catalog.py",
     "src/patent_sar_extractor/web/recognition_sources.py",
+    "src/patent_sar_extractor/web/service.py",
     "tests/test_historical_source_read.py",
     "tools/prepare_completion_fixture.py"
   ],

@@ -156,6 +156,59 @@ class HistoricalSourceReadTests(PredictionFixture, unittest.TestCase):
             )
         )
 
+    def test_unchanged_current_source_does_not_stale_manual_edits_for_history_upgrade(
+        self,
+    ):
+        uniform_tests.UniformRecognitionTests.prepare(self)
+        document = self.service.get_correction(self.project.id, "Compound 8")
+        self.service.put_correction(
+            self.project.id,
+            "Compound 8",
+            CorrectionRequest(
+                expected_revision=document.revision,
+                expected_source_fingerprint=document.source_fingerprint,
+                fields=EditableFields(
+                    **{
+                        **document.values.model_dump(),
+                        "display_id": "Retained current review",
+                    }
+                ),
+            ),
+        )
+        project = self.service.store.project(self.project.id)
+        snapshot = json.loads(project["snapshot"])
+        snapshot["raw_projection_layout"] = "compound-catalog-reprints-v2"
+        snapshot.pop("historical_source_review_version", None)
+        with self.service.store.connect(write=True) as connection:
+            connection.execute(
+                "UPDATE projects SET snapshot=? WHERE id=?",
+                (json.dumps(snapshot), self.project.id),
+            )
+        current = self.service.get_correction(self.project.id, "Compound 8")
+        self.assertFalse(current.stale)
+        self.assertEqual(current.values.display_id, "Retained current review")
+        self.assertEqual(current.revision, 1)
+
+    def test_old_cached_history_is_rebuilt_without_retaining_current_chemistry(self):
+        self.old_sources()
+        project = self.service.store.project(self.project.id)
+        snapshot = json.loads(project["snapshot"])
+        snapshot.update(
+            is_historical=True, raw_projection_layout="compound-catalog-reprints-v2"
+        )
+        snapshot.pop("historical_source_review_version", None)
+        with self.service.store.connect(write=True) as connection:
+            connection.execute(
+                "UPDATE projects SET snapshot=? WHERE id=?",
+                (json.dumps(snapshot), self.project.id),
+            )
+        self.service.project(self.project.id)
+        current = json.loads(self.service.store.project(self.project.id)["snapshot"])
+        self.assertEqual(current["historical_source_review_version"], 1)
+        first = self.service.results(self.project.id).items[0]
+        self.assertIsNone(first.smiles)
+        self.assertEqual(first.recognition.status, "unavailable")
+
     def test_old_schema_with_parseable_proof_cannot_schedule_or_revive_current_chemistry(
         self,
     ):

@@ -6,8 +6,9 @@
   bounded IDs/known images/raw aliases remain visible, never new confirmation.
   Current-invalid proof, structural/type/budget and cross-owner errors still
   refuse. Source completion and saved overlays require current bindings, including
-  when SMILES happens to have a current schema. Raw projection layoutv3 rebuilds
-  derived views only; original files/manual audit/API1/SQLite1/scientific epochs,
+  when SMILES happens to have a current schema. Private historical review marker1
+  refreshes old historical views only; raw layoutv2/current manual edits remain
+  stable. Original files/manual audit/API1/SQLite1/scientific epochs,
   primary engine and dependencies stay unchanged. The existing isolated browser
   fixture now includes a historical source case; no real patent/model processing
   or second source reader/store/queue is introduced.

@@ -10,7 +10,11 @@ from typing import Any
 from patent_sar_extractor import contracts as core
 
 from .admet_history import read_admet_stage
-from .artifacts import RAW_PROJECTION_LAYOUT, ArtifactView
+from .artifacts import (
+    HISTORICAL_SOURCE_REVIEW_VERSION,
+    RAW_PROJECTION_LAYOUT,
+    ArtifactView,
+)
 from .attempts import AttemptHistory, spec_record
 from .correction_models import CorrectionDocument, CorrectionRequest
 from .corrections import Corrections, CorrectionSaved
@@ -79,6 +83,14 @@ class WorkspaceService:
             not runtime_identity_matches(snapshot.get("read_model_identity"))
             or "first_structure_page" not in snapshot
             or snapshot.get("raw_projection_layout") != RAW_PROJECTION_LAYOUT
+            or (
+                snapshot.get("is_historical") is True
+                and (
+                    type(snapshot.get("historical_source_review_version")) is not int
+                    or snapshot["historical_source_review_version"]
+                    != HISTORICAL_SOURCE_REVIEW_VERSION
+                )
+            )
         ):
             # Projection data is rebuildable. Old cached acceptance must not
             # become current authority after a rules/software upgrade.

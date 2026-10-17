@@ -46,7 +46,8 @@ from .processes import runtime_identity
 from .recognition import recognition_status
 from .structure_corpus import unassociated_structures
 
-RAW_PROJECTION_LAYOUT = "compound-catalog-reprints-v3"
+RAW_PROJECTION_LAYOUT = "compound-catalog-reprints-v2"
+HISTORICAL_SOURCE_REVIEW_VERSION = 1
 
 
 def _index(
@@ -576,6 +577,7 @@ class ArtifactView:
         )
         snapshot = {
             "raw_projection_layout": RAW_PROJECTION_LAYOUT,
+            "historical_source_review_version": HISTORICAL_SOURCE_REVIEW_VERSION,
             "read_model_identity": runtime_identity(),
             "is_historical": historical,
             "acceptance": accepted.model_dump(),
