@@ -247,5 +247,13 @@ def bind_numbered_tables(
         ruled.reprints,
         tuple(sections),
         frozenset(protected),
-        frozenset(ruled.recognized_pages),
+        frozenset(
+            set(ruled.recognized_pages)
+            - {
+                section["page_no"] - 1
+                for section in sections
+                if section["role"]
+                in {"structure_column_anchor", "unruled_structure_region"}
+            }
+        ),
     )

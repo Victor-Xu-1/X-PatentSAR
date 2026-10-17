@@ -1,5 +1,30 @@
 # Project governance manifest
 
+- Shared source SDK: `source_body_context` owns body-boundary and observed-box
+  selection; `unruled_body_scope` is its column adapter. Complete inventory and
+  trusted ownership extents are distinct. `source_evidence_identity` preserves
+  the existing bounded canonical digest, `source_table_roles` owns original
+  title-role observation and `structure_table_headers` owns header grouping.
+  Former symbols import/re-export the one implementation. PDF geometry and
+  environment readiness still require fitz; token replay no longer imports an
+  image engine. No new model, dependency, writer, store or acceptance authority.
+- Current original physical roots protect actual data frames, not whole pages;
+  header-only grids use the existing logical-body matcher with actual header
+  proof. Frame selection is shared by producer/replay. These I/O paths and the
+  complete column-consumer handoff still need native original/installed-runtime
+  validation before delivery. Portable SDK checks do not close scientific scope.
+
+- Independent declaration draft: `source_table_captions` is the shared original
+  caption nominator. `structure_declarations` captures existing source facts;
+  declaration scopes/roles/proof are responsibility modules within the same
+  binder/source ledger/writer, not a new extraction pipeline. The unpublished
+  scope6 inventory adds declaration_page_ids/declaration_reference_ids. Source
+  column replay returns verified findings and nonfinal diagrams in one pass.
+  Original raw/model/crops/manual/API/SQL/SAR/dependencies remain unchanged.
+  Native/raster PDF and saved-consumer regression is still pending; portable
+  grammar checks do not establish source/chemical acceptance. Graph-free unknown
+  roles and uncertain nonfinal boundaries remain open before delivery.
+
 - Current original columns: `structure_header_context` and
   `structure_column_scopes` serve physical and logical header consumers;
   `ruled_structure_headers` reuses existing cell/source/frame observation.

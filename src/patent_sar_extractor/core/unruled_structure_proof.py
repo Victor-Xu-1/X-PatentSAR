@@ -136,13 +136,14 @@ def valid_unruled_binding(binding):
         return False
 
 
-def unruled_reference_issues(sections, scope, entries):
-    anchors, anchor_issues = validate_column_anchors(sections, scope, entries)
+def unruled_source_inventory(sections, scope, entries):
+    """One replay supplies findings and positively proved nonfinal diagrams."""
+    anchors, anchor_issues, nonfinal = validate_column_anchors(sections, scope, entries)
     regions = [s for s in sections if s.get("role") == "unruled_structure_region"]
     if scope["version"] < 6:
         if regions:
             raise ValueError("Original unruled source inventory was downgraded")
-        return anchor_issues
+        return anchor_issues, nonfinal
     if scope.get("unruled_region_ids") != [s.get("region_id") for s in regions]:
         raise ValueError("Original unruled source regions were omitted or changed")
     sources = [
@@ -188,6 +189,8 @@ def unruled_reference_issues(sections, scope, entries):
             raise ValueError(
                 "Original unruled intermediates were promoted to final compounds"
             )
+        if roles is not None and roles["role"] == "nonfinal":
+            nonfinal.update(d["id"] for d in region["diagrams"])
         for label, diagram in assignments:
             expected = pair_evidence(region, section["region_id"], label, diagram)
             expected_sources[section["region_id"]][expected["structure_id"]] = expected
@@ -221,4 +224,4 @@ def unruled_reference_issues(sections, scope, entries):
             != evidence
         ):
             raise ValueError("Unruled binding has no canonical original assignment")
-    return issues
+    return issues, nonfinal

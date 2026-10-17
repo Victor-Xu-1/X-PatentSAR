@@ -1,5 +1,45 @@
 # X-PatentSAR architecture
 
+Original boundary derivation now lives in the pure `source_body_context` SDK;
+`unruled_body_scope` supplies its column adapters. Complete source inventory and
+positively trusted ownership have separate bottoms. Doubtful, conflicting,
+native-only or diagram-overlapped section cues preserve raw facts and cannot
+extend the new declaration's nonfinal exclusion. Exact label references use
+that same trusted range; weak nonfinal title nominations remain explicit review.
+`source_evidence_identity` and `source_table_roles` hold the unchanged shared
+digest and original role semantics. Legacy module symbols re-export these same
+functions, not competing implementations. PDF geometry still requires PyMuPDF;
+its explicit environment probe is unchanged, while token replay alone does not
+load the renderer or an image engine. Portable token-SDK checks are not proof of
+native PDF, chemical or installed-runtime acceptance.
+
+Typed physical column sources protect their actual data frames, not an entire
+page. The producer and saved proof share `column_anchor_diagrams`; independent
+later source regions remain eligible. A physically boxed header without closed
+data rows uses its actual column proof with the existing logical-body matcher.
+These I/O changes have pending original-PDF/consumer regression, not delivered
+acceptance. Trusted-boundary handoff across all column consumers and independent
+original-proof resolution of doubtful cues remain unfinished integration work.
+
+The in-development independent table-declaration inventory reuses the existing
+source reader, binder ledger and sole writer. `source_table_captions` supplies
+literal native/raster nominations to both declarations and continuations;
+paragraph locators and joined letter-digit table names do not alter identifiers.
+`structure_declarations` captures complete original page contexts and observed
+diagrams, while `structure_declaration_scopes`, `structure_declaration_roles` and
+`structure_declaration_proof` derive declaration bodies, occurrence-specific
+nonfinal references and saved-source conservation. Scope6 adds
+`declaration_page_ids` and `declaration_reference_ids` inside this unpublished
+feature. No guessed columns, row-order assignment, new OCR/cache/model or result
+writer is introduced. Original column replay supplies positively proved nonfinal
+diagrams once; stored success flags cannot supply this role.
+
+This declaration draft is not yet integrated PDF/consumer or scientific
+acceptance. Graph-free metadata/measurement/footer roles and uncertain boundaries
+before later final products remain open verification and implementation work.
+Do not infer universal table/detector recall or chemical correctness from the
+portable caption-grammar checks or from previously accepted independent captions.
+
 `structure_header_context` and `structure_column_scopes` are the one original
 column-role interface across printed and logical tables. `ruled_structure_headers`
 uses the existing independent native/cell-OCR/frame reader for actual physical

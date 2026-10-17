@@ -4,13 +4,14 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 from .activity_header_evidence import proof_id
-from .caption_role_semantics import continuation_title
+from .caption_role_semantics import has_continuation_caption
 from .numbered_structure_models import NumberedTableIssue
 from .ruled_structure_headers import observe_ruled_header
 from .source_document import document_sha256
 from .source_geometry import SourceTokens
 from .structure_column_anchors import (
     ANCHOR_ROLE,
+    column_anchor_diagrams,
     column_anchor_roles,
     observe_column_anchor,
 )
@@ -88,7 +89,7 @@ def observe_unruled_tables(
             and page_texts is not None
             and not (
                 possible_structure_header(page_texts[page_index])
-                or continuation_title(page_texts[page_index])
+                or has_continuation_caption(page_texts[page_index])
             )
         ):
             continue
@@ -146,7 +147,10 @@ def observe_unruled_tables(
             observe_ruled_header(page, tokens, grid, original_sha) for grid in physical
         ]
         events = [(scope_axes(h)[1][0], h, None, False) for h in headers]
-        events.extend((scope_axes(h)[1][0], h, None, True) for h in anchors)
+        events.extend(
+            (scope_axes(h)[1][0], h, None, len(h["grid_axes"]["ys"]) > 2)
+            for h in anchors
+        )
         events.extend(
             (caption["bbox"][1], None, caption, False)
             for caption in captions
@@ -212,6 +216,7 @@ def observe_unruled_tables(
                 anchors_by_key[key].append(anchor_scope(header))
             recognized.add(page_index)
             if anchor_only:
+                protected.update(d["id"] for d in column_anchor_diagrams(region))
                 continue
             protected.update(d["id"] for d in region["diagrams"])
             observed.update(

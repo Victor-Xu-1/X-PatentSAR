@@ -26,6 +26,10 @@ from .pipeline_rules import _candidate_labels, annotate_binding_accuracy
 from .source_document import document_sha256 as _document_sha256
 from .source_geometry import source_layout
 from .source_section_roles import heading_list_hint, heading_members, section_heading
+from .structure_declaration_roles import (
+    declaration_label_reference,
+    declaration_role_index,
+)
 
 
 def observed_heading_blocks(
@@ -44,6 +48,7 @@ def observed_heading_blocks(
     blocks = []
     document_sha256 = _document_sha256(doc)
     caption_labels = caption_label_index(source_bindings, document_sha256)
+    declaration_roles = declaration_role_index(source_sections or [], document_sha256)
     for page_index in sorted(set(pages)):
         page = doc[page_index]
         layout = source_layout(page)
@@ -87,6 +92,13 @@ def observed_heading_blocks(
                     "line_text": line["text"],
                 }
             if observation:
+                declaration_reference = declaration_label_reference(
+                    line, page_index + 1, declaration_roles
+                )
+                if declaration_reference is not None:
+                    if source_sections is not None:
+                        source_sections.append(declaration_reference)
+                    continue
                 label_reference = caption_label_reference(
                     line, page_index + 1, caption_labels
                 )

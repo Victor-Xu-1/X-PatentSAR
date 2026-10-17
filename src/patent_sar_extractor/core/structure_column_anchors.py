@@ -1,6 +1,7 @@
 """Registered original column facts, separate from matching and publication."""
 
 from .activity_context_geometry import validate_grid_axes
+from .source_body_context import contained_source_diagrams
 from .structure_table_headers import aligned_column_edges
 from .unruled_body_scope import original_body_bottom
 from .unruled_region_observation import observe_column_body
@@ -17,6 +18,21 @@ def observe_column_anchor(tokens, header, diagrams, *, grid=None):
         "grid_axes": grid if grid is not None else header["grid_axes"],
         **observe_column_body(tokens, header, diagrams),
     }
+
+
+def column_anchor_diagrams(source):
+    """The registered physical grid owns its data frame, not other page regions."""
+    header, grid = source["header_scope"], source["grid_axes"]
+    start = int(header.get("kind") == "original_ruled_columns")
+    frame = [
+        grid["xs"][0],
+        grid["ys"][start],
+        grid["xs"][-1],
+        min(grid["ys"][-1], source["body_bottom"]),
+    ]
+    if frame[1] >= frame[3]:
+        return []  # A proved header-only frame has no closed data rows.
+    return contained_source_diagrams(source["page_diagrams"], frame)
 
 
 def column_anchor_roles(source):

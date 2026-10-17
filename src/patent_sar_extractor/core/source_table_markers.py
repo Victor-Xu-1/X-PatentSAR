@@ -11,8 +11,20 @@ TABLE_MARKER = re.compile(
     re.IGNORECASE,
 )
 TABLE_CAPTION_START = re.compile(
-    r"^(?:Tab[li1]e(?:\b|(?=\d))|表\s*(?:\d|[A-Za-z]))", re.IGNORECASE
+    r"^\s*(?:\[\s*\d{1,8}\s*\]\s*)?"
+    rf"(?:Tab[li1]e(?:\b|(?={_TABLE_INDEX}\b(?![-–—])))|"
+    r"表(?=\s|[0-9A-Za-z一二三四五六七八九十甲乙丙丁]))",
+    re.IGNORECASE,
 )
+
+
+def caption_table_marker(text):
+    """A paragraph locator may precede a real title, never arbitrary prose."""
+    if not isinstance(text, str):
+        return None
+    start = TABLE_CAPTION_START.match(text)
+    marker = TABLE_MARKER.search(text) if start else None
+    return marker if marker and marker.start() < start.end() <= marker.end() else None
 
 
 def table_marker_identity(marker: str) -> str:

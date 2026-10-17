@@ -912,6 +912,11 @@ PRs, model calls, additional credentials or published binary releases are used.
 The workflow token has only repository contents/actions writes and PR reads;
 ordinary CI stays read-only. Explicit CI dispatch verifies the new revision.
 
+Local preparation accepts LF or Windows CRLF input and writes the three version
+files as canonical UTF-8/LF on every platform. A repeated `--write` normalizes
+metadata without incrementing an already prepared next-PR version. The literal
+authority, raw-size bound and data-only parsing checks remain mandatory.
+
 Repeated events are idempotent: the same PR keeps the same next version. A
 closed/unmerged PR does not move main. Concurrent PRs must update their branch
 and scope to the latest main **before merging**, then pass current CI; old

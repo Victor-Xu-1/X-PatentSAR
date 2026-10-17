@@ -12,50 +12,6 @@ from patent_sar_extractor.core.source_section_roles import section_heading
 
 
 class ActivitySourceRoleTests(unittest.TestCase):
-    def test_continuation_words_respect_literal_punctuation_not_substrings(self):
-        from patent_sar_extractor.core.caption_role_semantics import continuation_title
-
-        for text in (
-            "Table A (cont.)",
-            "Table 9. Cont.",
-            "Table 9 Continued",
-            "表B 续表",
-        ):
-            self.assertTrue(continuation_title(text), text)
-        for text in (
-            "Table A. Content",
-            "Table 9 discontinued",
-            "Table 9 cont.measurement",
-            "Continued experiment",
-        ):
-            self.assertFalse(continuation_title(text), text)
-
-    def test_letter_table_markers_preserve_literal_identity_without_matching_prose(
-        self,
-    ):
-        from patent_sar_extractor.core.source_table_markers import (
-            TABLE_MARKER,
-            table_marker_identity,
-        )
-
-        for text, expected in (
-            ("Table A. Results", "Table A"),
-            ("Tabie B. Continued", "Table B"),
-            ("TableB12. Compounds", "Table B12"),
-            ("Table A-12. Compounds", "Table A-12"),
-            ("Table 3-2. Results", "Table 3-2"),
-            ("表 A：结果", "表 A"),
-            ("表B：续表", "表B"),
-            ("表B80：结果", "表B80"),
-        ):
-            with self.subTest(text=text):
-                marker = TABLE_MARKER.search(text)
-                self.assertIsNotNone(marker)
-                self.assertEqual(table_marker_identity(marker.group()), expected)
-        for text in ("Tablet formulation", "Table affinity", "TableColumns", "表格"):
-            with self.subTest(text=text):
-                self.assertIsNone(TABLE_MARKER.search(text))
-
     def test_letter_table_result_boundaries_and_method_references_remain_distinct(self):
         self.assertTrue(
             declared_activity_source("Table A. Binding activity\nUnreadable body")

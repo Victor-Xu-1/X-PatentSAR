@@ -32,6 +32,74 @@ def ruled_first_then_ruled(page, structures, *, disjoint=False):
 
 
 class StructureColumnAnchorTests(UnruledStructureControls, unittest.TestCase):
+    def test_boxed_header_without_body_rules_uses_the_same_original_column_roles(self):
+        def header_only(page, structures):
+            for x in (40, 175, 380):
+                page.draw_line((x, 65), (x, 100))
+            for y in (65, 100):
+                page.draw_line((40, y), (380, y))
+
+        result, payload = self.run_binding(["73", "28"], mutate_page=header_only)
+        self.assertEqual(len(result["bindings"]), 2)
+        self.assertEqual(coverage_errors(payload), [])
+
+    def test_boxed_header_can_anchor_a_later_original_headerless_part(self):
+        def header_and_part(page, structures):
+            for x in (40, 175, 380):
+                page.draw_line((x, 65), (x, 100))
+            for y in (65, 100):
+                page.draw_line((40, y), (380, y))
+            continued_page(page, structures)
+
+        result, payload = self.run_binding(["73", "28"], mutate_page=header_and_part)
+        self.assertEqual(len(result["bindings"]), 4)
+        self.assertEqual(coverage_errors(payload), [])
+
+    def test_independent_final_on_a_ruled_table_page_is_not_hidden_by_page_ownership(
+        self,
+    ):
+        def after_grid(page, structures):
+            for x in (40, 175, 380):
+                page.draw_line((x, 65), (x, 330))
+            for y in (65, 100, 210, 330):
+                page.draw_line((40, y), (380, y))
+            page.insert_text((40, 430), "Compound B80: Preparation", fontsize=10)
+            page.draw_polyline(
+                [
+                    (230, 485),
+                    (255, 470),
+                    (285, 485),
+                    (285, 515),
+                    (255, 530),
+                    (230, 515),
+                    (230, 485),
+                ]
+            )
+            structures.append(
+                {
+                    "structure_id": "INDEPENDENT",
+                    "structure_index": len(structures),
+                    "page_no": 1,
+                    "bbox_pdf": [215, 460, 355, 550],
+                }
+            )
+
+        result, payload = self.run_binding(["73", "28"], mutate_page=after_grid)
+        self.assertEqual(
+            {row["cpd"] for row in result["bindings"]},
+            {"Compound 73", "Compound 28", "Compound B80"},
+        )
+        self.assertEqual(coverage_errors(payload), [])
+
+    def test_original_paragraph_marker_cannot_hide_a_nonfinal_table_role(self):
+        result, payload = self.run_binding(
+            ["73", "28"],
+            title="[0042] Table 12. Intermediate compounds",
+            mutate_page=ruled_first_then_unruled,
+        )
+        self.assertEqual(result["bindings"], [])
+        self.assertEqual(payload["source_issues"], [])
+
     def test_scanned_closed_rows_prove_disjoint_caption_and_drawing(self):
         result, payload = self.run_binding(
             ["73", "28"],

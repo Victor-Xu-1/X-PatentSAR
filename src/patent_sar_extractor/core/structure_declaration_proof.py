@@ -1,0 +1,192 @@
+"""Independent declaration coverage in the existing original-source acceptance."""
+
+from collections import defaultdict
+
+from .activity_header_evidence import proof_id
+from .printed_identifiers import identifier_key
+from .source_binding_proof import annotate_source_binding
+from .source_window_chunks import validate_source_overlap
+from .structure_declaration_roles import (
+    declaration_label_reference,
+    declaration_role_index,
+)
+from .structure_declaration_scopes import (
+    PAGE_ROLE,
+    PAGE_STATUS,
+    REFERENCE_ROLE,
+    declaration_scopes,
+    nonfinal_declaration_diagrams,
+    validate_declaration_page,
+)
+from .unruled_body_scope import body_context_window
+
+
+def declaration_ids(sections, role):
+    return [
+        s.get("region_id") if role == PAGE_ROLE else proof_id(s)
+        for s in sections
+        if s.get("role") == role
+    ]
+
+
+def _pages(sections, scope):
+    pages = [s for s in sections if s.get("role") == PAGE_ROLE]
+    refs = [s for s in sections if s.get("role") == REFERENCE_ROLE]
+    if scope["version"] < 6:
+        if pages or refs:
+            raise ValueError("Original declaration inventory was downgraded")
+        return []
+    if scope.get("declaration_page_ids") != declaration_ids(
+        sections, PAGE_ROLE
+    ) or scope.get("declaration_reference_ids") != declaration_ids(
+        sections, REFERENCE_ROLE
+    ):
+        raise ValueError("Original declarations were omitted or changed")
+    if refs and not pages:
+        raise ValueError("Original declaration references have no source page")
+    parents_by_page = defaultdict(list)
+    for parent in sections:
+        if parent.get("role") in {
+            "unruled_structure_region",
+            "structure_column_anchor",
+        }:
+            parents_by_page[parent["page_no"]].append(parent)
+    seen = set()
+    for section in pages:
+        source = section.get("source")
+        validate_declaration_page(source)
+        if (
+            set(section) != {"role", "status", "page_no", "region_id", "source"}
+            or not isinstance(source, dict)
+            or section["region_id"] != proof_id(source)
+            or section["status"] != PAGE_STATUS
+            or type(section["page_no"]) is not int
+            or section["page_no"] != source.get("page_no")
+            or source.get("original_pdf_sha256") != scope["original_pdf_sha256"]
+            or section["page_no"] in seen
+        ):
+            raise ValueError("Malformed original declaration identity")
+        declaration_scopes(source)
+        seen.add(section["page_no"])
+        for parent in parents_by_page[section["page_no"]]:
+            old = parent["source"]
+            if old["page_diagrams"] != source["page_diagrams"]:
+                raise ValueError(
+                    "Original declaration dropped or changed page diagrams"
+                )
+            validate_source_overlap(
+                source["page_context"],
+                [0, 0, *source["page_size"]],
+                old["body_context"],
+                body_context_window(old["header_scope"]),
+            )
+    return pages
+
+
+def declaration_issues(sections, scope, entries, *, nonfinal_diagrams):
+    pages = _pages(sections, scope)
+    if not pages:
+        return []
+    roles = declaration_role_index(pages, scope["original_pdf_sha256"])
+    for reference in sections:
+        if reference.get("role") != REFERENCE_ROLE:
+            continue
+        expected = declaration_label_reference(
+            {
+                "text": reference.get("line_text"),
+                "source": reference.get("line_source"),
+                "geometry_space": reference.get("geometry_space"),
+                "bbox": reference.get("bbox"),
+            },
+            reference.get("page_no"),
+            roles,
+        )
+        if expected is None or reference != expected:
+            raise ValueError("Unproved nonfinal declaration reference")
+    accepted, identifiers = defaultdict(list), set()
+    for entry in entries:
+        for row in [entry, *entry.get("additional_sources", [])]:
+            checked = annotate_source_binding(row)
+            if (
+                checked.get("accuracy_status") == "confirmed"
+                and not checked.get("fail_closed")
+                and checked.get("source_pdf_sha256") == scope["original_pdf_sha256"]
+            ):
+                accepted[row["structure_id"]].append(row)
+                identifiers.add(identifier_key(row.get("cpd"), wrapped=True))
+    issues = []
+    for page in pages:
+        for original in declaration_scopes(page["source"]):
+            role = original["role"]
+            finding = {
+                "cpd": "",
+                "page_no": original["page_no"],
+                "source_region": original["source_region"],
+            }
+            issues.extend(
+                {
+                    **finding,
+                    "reason": "unproved_original_section_boundary",
+                    "boundary": boundary,
+                }
+                for boundary in original["unproved_boundaries"]
+            )
+            if original["unproved_nonfinal_role"]:
+                issues.append(
+                    {**finding, "reason": "unproved_original_nonfinal_declaration"}
+                )
+            excluded = {d["id"] for d in nonfinal_declaration_diagrams(original)}
+            for diagram in original["diagrams"]:
+                owners = [
+                    row
+                    for row in accepted[diagram["id"]]
+                    if row.get("page_no") == original["page_no"]
+                    and [row.get("struct_" + k) for k in ("x0", "y0", "x1", "y1")]
+                    == diagram["bbox"]
+                ]
+                nonfinal = diagram["id"] in excluded
+                if (nonfinal or role == "conflict") and owners:
+                    raise ValueError(
+                        "Original nonfinal or conflicting declaration was promoted"
+                    )
+                if (
+                    not nonfinal
+                    and diagram["id"] not in nonfinal_diagrams
+                    and not owners
+                ):
+                    issues.append(
+                        {
+                            **finding,
+                            "structure_id": diagram["id"],
+                            "reason": "declared_original_diagram_without_proved_identifier",
+                        }
+                    )
+            if role == "conflict":
+                issues.append(
+                    {**finding, "reason": "conflicting_original_table_declaration"}
+                )
+            lists = original["identifier_lists"]
+            if lists and (
+                any(
+                    not item["qualified"] or not all(item["identifiers"])
+                    for item in lists
+                )
+                or any(
+                    item["identifiers"] != lists[0]["identifiers"] for item in lists[1:]
+                )
+            ):
+                issues.append(
+                    {**finding, "reason": "conflicting_original_identifier_list"}
+                )
+            for key in sorted(
+                {key for item in lists for key in item["identifiers"] if key}
+                - identifiers
+            ):
+                issues.append(
+                    {
+                        **finding,
+                        "cpd": f"Compound {key}",
+                        "reason": "declared_original_identifier_without_proved_structure",
+                    }
+                )
+    return issues

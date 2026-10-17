@@ -43,6 +43,7 @@ def authority_version(source: str) -> ReleaseNumber:
     """Inspect source as data; never import or execute an incoming PR."""
     if len(source.encode()) > 1024 * 1024:
         raise ValueError("Product authority exceeds the bounded source limit")
+    source = source.replace("\r\n", "\n")
     try:
         tree = ast.parse(source)
     except (SyntaxError, RecursionError) as error:
@@ -96,7 +97,8 @@ def prepare_versions(base_source: str, files: dict[str, str]) -> dict[str, str]:
         raise ValueError("PR release is neither its base nor the next mainline number")
     output = dict(files)
     output[AUTHORITY] = ASSIGNMENT.sub(
-        lambda match: f'{match[1]}"{expected}"', files[AUTHORITY]
+        lambda match: f'{match[1]}"{expected}"',
+        files[AUTHORITY].replace("\r\n", "\n"),
     )
     package, lock = metadata(files[PACKAGE]), metadata(files[LOCK])
     if (

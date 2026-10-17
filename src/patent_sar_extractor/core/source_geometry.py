@@ -7,12 +7,12 @@ Native text remains separate evidence when raster pixels own layout discovery.
 import math
 from dataclasses import dataclass
 
-import fitz
-
 from .source_cell_tokens import cell_text
 
 
 def _box(value):
+    import fitz
+
     if (
         not isinstance(value, (list, tuple))
         or len(value) != 4
@@ -41,6 +41,8 @@ class SourceLayout:
 
 
 def source_layout(page) -> SourceLayout:
+    import fitz
+
     words = page.get_text("words")
     images = page.get_image_info()
     if len(words) > 50000 or len(images) > 4096:

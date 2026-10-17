@@ -4,7 +4,11 @@ from collections import defaultdict
 
 from .activity_header_evidence import proof_id
 from .ruled_structure_proof import validate_ruled_source_reference
-from .structure_column_anchors import ANCHOR_ROLE, column_anchor_roles
+from .structure_column_anchors import (
+    ANCHOR_ROLE,
+    column_anchor_diagrams,
+    column_anchor_roles,
+)
 from .structure_column_population import column_population_issues
 
 
@@ -13,10 +17,11 @@ def validate_column_anchors(sections, scope, entries):
     if scope["version"] < 6:
         if anchors:
             raise ValueError("Original column-anchor inventory was downgraded")
-        return [], []
+        return [], [], set()
     if scope.get("column_anchor_ids") != [s.get("region_id") for s in anchors]:
         raise ValueError("Original column anchors were omitted or changed")
     known, issues, roles_by_id, represented = {}, [], {}, defaultdict(list)
+    nonfinal = set()
     present = {
         row["structure_id"]
         for entry in entries
@@ -53,21 +58,13 @@ def validate_column_anchors(sections, scope, entries):
                 }
             )
         if roles is None or roles["role"] == "nonfinal":
-            grid = source["grid_axes"]
-            start = int(header.get("kind") == "original_ruled_columns")
-            excluded = {
-                d["id"]
-                for d in source["page_diagrams"]
-                if grid["xs"][0] <= d["bbox"][0] < d["bbox"][2] <= grid["xs"][-1]
-                and grid["ys"][start]
-                <= d["bbox"][1]
-                < d["bbox"][3]
-                <= min(grid["ys"][-1], source["body_bottom"])
-            }
+            excluded = {d["id"] for d in column_anchor_diagrams(source)}
             if present & excluded:
                 raise ValueError(
                     "Unproved or nonfinal original grid was promoted to final structures"
                 )
+            if roles is not None and roles["role"] == "nonfinal":
+                nonfinal.update(excluded)
     for entry in entries:
         for row in [entry, *entry.get("additional_sources", [])]:
             evidence = row.get("numbered_table_cell_evidence") or {}
@@ -100,4 +97,4 @@ def validate_column_anchors(sections, scope, entries):
                 section, roles_by_id[section["region_id"]], represented
             )
         )
-    return anchors, issues
+    return anchors, issues, nonfinal

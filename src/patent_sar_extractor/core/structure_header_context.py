@@ -1,9 +1,9 @@
 """One original title-context capture/replay for physical and logical columns."""
 
-from .caption_role_proof import observed_role
 from .source_cell_tokens import cell_lines, cell_text
 from .source_observations import source_observation_status
-from .source_table_markers import TABLE_MARKER
+from .source_table_markers import TABLE_CAPTION_START
+from .source_table_roles import observed_role
 from .source_window_chunks import observe_window_sources
 
 
@@ -13,7 +13,7 @@ def observe_header_context(tokens, size, top):
         titles = [
             line
             for line in cell_lines(lane, window)
-            if TABLE_MARKER.search(cell_text(line, window))
+            if TABLE_CAPTION_START.match(cell_text(line, window))
         ]
         if titles:
             starts.append(max(0, min(part["bbox"][1] for part in titles[-1]) - 2))

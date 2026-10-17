@@ -89,7 +89,10 @@ class UnruledSourceAdmissionTests(unittest.TestCase):
             },
             {"18B", "901"},
         )
-        self.assertEqual(len(result.source_sections), 1)
+        self.assertEqual(
+            [s["role"] for s in result.source_sections],
+            ["unruled_structure_region", "structure_declaration_page"],
+        )
 
 
 if __name__ == "__main__":

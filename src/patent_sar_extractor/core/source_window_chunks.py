@@ -107,13 +107,26 @@ def validate_source_overlap(chunks, bounds, other_chunks, other_bounds):
     ]
     if not valid_box(overlap):
         raise ValueError("Original source contexts have no common region")
+    selected = project_source_window(chunks, bounds, overlap)
+    validate_source_projection(selected, overlap, other_chunks, other_bounds)
+
+
+def project_source_window(chunks, bounds, window):
+    """Clip a validated retained window without another source read or store."""
+    validate_source_window(chunks, bounds)
+    if not (
+        valid_box(window)
+        and bounds[0] <= window[0] < window[2] <= bounds[2]
+        and bounds[1] <= window[1] < window[3] <= bounds[3]
+    ):
+        raise ValueError("Original source projection leaves its complete context")
     selected = []
     for chunk in chunks:
         clip = [
-            overlap[0],
-            max(overlap[1], chunk["bbox"][1]),
-            overlap[2],
-            min(overlap[3], chunk["bbox"][3]),
+            window[0],
+            max(window[1], chunk["bbox"][1]),
+            window[2],
+            min(window[3], chunk["bbox"][3]),
         ]
         if valid_box(clip):
             selected.append(
@@ -124,7 +137,7 @@ def validate_source_overlap(chunks, bounds, other_chunks, other_bounds):
                     ],
                 }
             )
-    validate_source_projection(selected, overlap, other_chunks, other_bounds)
+    return selected
 
 
 def validate_source_window(chunks, window, *, allow_legacy=False):

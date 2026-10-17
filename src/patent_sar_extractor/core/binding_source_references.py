@@ -13,7 +13,9 @@ from .source_fragment_links import resolved_fragments
 from .source_geometry import _box
 from .source_role_fragments import fragment_issues, validate_fragments
 from .source_section_roles import section_heading
-from .unruled_structure_proof import unruled_reference_issues
+from .structure_declaration_proof import declaration_ids, declaration_issues
+from .structure_declaration_scopes import PAGE_ROLE, REFERENCE_ROLE
+from .unruled_structure_proof import unruled_source_inventory
 
 MAX_SOURCE_SECTIONS = 25000
 _SHA = re.compile(r"[0-9a-f]{64}")
@@ -27,6 +29,11 @@ def reference_scope(sections, original_pdf_sha256=""):
     ]
     origins = (
         {region["original_pdf_sha256"] for region in regions}
+        | {
+            section["source"]["original_pdf_sha256"]
+            for section in sections
+            if section.get("role") == PAGE_ROLE
+        }
         | {
             section["heading_observation"]["original_pdf_sha256"]
             for section in heading_sections(sections)
@@ -68,6 +75,8 @@ def reference_scope(sections, original_pdf_sha256=""):
             for s in sections
             if s.get("role") == "structure_column_anchor"
         ],
+        "declaration_page_ids": declaration_ids(sections, PAGE_ROLE),
+        "declaration_reference_ids": declaration_ids(sections, REFERENCE_ROLE),
     }
 
 
@@ -85,7 +94,12 @@ def _regions(sections, scope):
             }
             | ({"label_reference_ids"} if scope.get("version") in {5, 6} else set())
             | (
-                {"unruled_region_ids", "column_anchor_ids"}
+                {
+                    "unruled_region_ids",
+                    "column_anchor_ids",
+                    "declaration_page_ids",
+                    "declaration_reference_ids",
+                }
                 if scope.get("version") == 6
                 else set()
             )
@@ -189,6 +203,8 @@ def reference_issues(payload, entries, *, required=True):
                 "unruled_structure_region",
                 "structure_label_reference",
                 "structure_column_anchor",
+                PAGE_ROLE,
+                REFERENCE_ROLE,
             }
             for section in sections
         )
@@ -253,7 +269,15 @@ def reference_issues(payload, entries, *, required=True):
             raise ValueError("Unproved original method-reference cell ownership")
     labels = {identifier_key(entry.get("cpd"), wrapped=True) for entry in entries}
     issues = heading_inventory_issues(sections, scope, entries)
-    issues.extend(unruled_reference_issues(sections, scope, entries))
+    column_issues, nonfinal_diagrams = unruled_source_inventory(
+        sections, scope, entries
+    )
+    issues.extend(column_issues)
+    issues.extend(
+        declaration_issues(
+            sections, scope, entries, nonfinal_diagrams=nonfinal_diagrams
+        )
+    )
     issues.extend(
         fragment_issues(regions.values(), resolved_fragments(regions.values()))
     )

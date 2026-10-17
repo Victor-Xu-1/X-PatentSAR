@@ -2,7 +2,7 @@
 
 from .activity_caption_windows import prefix_parts, shared_caption_allowed
 from .source_observations import project_source_observation, source_observation_status
-from .source_table_markers import TABLE_CAPTION_START, TABLE_MARKER
+from .source_table_markers import TABLE_CAPTION_START
 
 
 def _title_packet(packet, region):
@@ -10,8 +10,7 @@ def _title_packet(packet, region):
     starts = [
         index
         for index, part in enumerate(parts)
-        if TABLE_CAPTION_START.match(part[0]["text"])
-        and TABLE_MARKER.search(" ".join(t["text"] for t in part))
+        if TABLE_CAPTION_START.match(" ".join(t["text"] for t in part))
     ]
     if not starts:
         return None
@@ -19,7 +18,7 @@ def _title_packet(packet, region):
     for part in parts[start + 1 : start + 3]:
         if min(t["y"] for t in part) - max(
             t["y"] for t in title
-        ) > 18 or TABLE_CAPTION_START.match(part[0]["text"]):
+        ) > 18 or TABLE_CAPTION_START.match(" ".join(t["text"] for t in part)):
             break
         title.extend(part)
     if len(title) > 64:

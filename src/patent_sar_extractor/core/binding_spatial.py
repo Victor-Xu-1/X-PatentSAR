@@ -28,9 +28,8 @@ from .binding_types import (
     SourceKind,
     SourceOwnership,
 )
-from .caption_role_semantics import continuation_title
 from .source_binding_proof import annotate_source_binding
-from .structure_table_headers import possible_structure_header
+from .structure_declarations import declaration_page_hint, observe_declaration_pages
 from .table_geometry import detect_ruled_table_regions, page_tokens
 
 logger = logging.getLogger(__name__)
@@ -177,7 +176,7 @@ def collect_spatial_bindings(
                 *(
                     index
                     for index, text in pages_text.items()
-                    if possible_structure_header(text) or continuation_title(text)
+                    if declaration_page_hint(text)
                 ),
             )
             if type(page) is int and page >= 0
@@ -211,12 +210,16 @@ def collect_spatial_bindings(
     reserved_pages = set(numbered.ownership_pages)
     observed_keys = set(numbered.observed_keys)
     table_bindings = original_table_bindings(numbered)
+    declaration_pages, nonfinal_declaration_ids = observe_declaration_pages(
+        doc, processed_structures, candidate_pages, pages_text, tokens_for_page
+    )
     candidates = [_candidate(binding, "numbered_cell") for binding in table_bindings]
     remaining = [
         structure
         for structure in processed_structures
         if int(structure["page_no"]) - 1 not in reserved_pages
         and str(structure["id"]) not in numbered.protected_structure_ids
+        and str(structure["id"]) not in nonfinal_declaration_ids
     ]
     caption_issues = []
     caption_pages, protected_caption_ids, source_exclusions = set(), set(), []
@@ -292,6 +295,7 @@ def collect_spatial_bindings(
             | {candidate.structure_id for candidate in candidates}
             | {str(binding["structure_id"]) for binding in reprints}
             | numbered.protected_structure_ids
+            | nonfinal_declaration_ids
         ),
         label_keys=frozenset(
             observed_keys
@@ -310,7 +314,7 @@ def collect_spatial_bindings(
         frozenset(recognized_pages | caption_pages),
         grids_for_page,
         tokens_for_page,
-        (*source_exclusions, *numbered.source_sections),
+        (*source_exclusions, *numbered.source_sections, *declaration_pages),
     )
 
 
