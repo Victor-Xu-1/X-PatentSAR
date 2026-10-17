@@ -41,6 +41,14 @@ still checks the actual endpoint/units; conflicts stay review. A preceding
 independent header/result row or section prevents scope attachment. Adjacent-page
 continuations use the same original plan/replay, never a global legend cache.
 
+The shared original-window scanner retains section barriers for the text planner,
+which owns table splitting and exact preface attachment. Independent discovery
+keeps its default table barriers. Explicit ID-column headers take precedence over
+alphanumeric row nominations; the original leading experiment text is retained
+and can prevent inheritance. Actual alphanumeric IDs inside a declared ID column
+remain valid. A small renderer-free text-role regression module tests the real
+parser, not a substituted reader or model.
+
 Original boundary derivation now lives in the pure `source_body_context` SDK;
 `unruled_body_scope` supplies its column adapters. Complete source inventory and
 positively trusted ownership have separate bottoms. Doubtful, conflicting,

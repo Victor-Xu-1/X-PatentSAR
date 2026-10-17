@@ -49,7 +49,7 @@ def validate_text_pages(pages):
 def segments(text):
     """Reuse the original section/table authority, retaining physical text order."""
     offset = 0
-    for window in _original_windows(text):
+    for window in _original_windows(text, split_tables=False):
         markers = list(
             re.finditer(rf"(?m)^\s*{TABLE_MARKER.pattern}", window, re.IGNORECASE)
         )
