@@ -56,11 +56,8 @@ def bind(
             grids_for_page=spatial.grids_for_page,
             tokens_for_page=spatial.tokens_for_page,
         )
-        pages = [
-            page
-            for page in range(len(doc))
-            if page not in spatial.ownership.page_indices
-        ]
+        # A known catalogue owns its cells, not every other heading on that page.
+        pages = list(range(len(doc)))
         blocks = (
             observed_heading_blocks(
                 doc,

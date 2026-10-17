@@ -88,7 +88,7 @@ def coverage_errors(payload: dict) -> list[str]:
     reference_gaps = reference_issues(payload, catalog)
     if reference_gaps:
         errors.append(
-            f"Original characterization references have {len(reference_gaps)} unresolved structure observations."
+            f"Original source declarations and characterization references have {len(reference_gaps)} unresolved structure observations."
         )
     return errors
 

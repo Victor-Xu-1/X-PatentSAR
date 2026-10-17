@@ -83,7 +83,7 @@ class HeadingSourceOwnershipTests(unittest.TestCase):
                     "Native headings and retained cache are lazy"
                 ),
             ) as ocr,
-            patch("patent_sar_extractor.core.heading_evidence.get_ocr_engine", ocr),
+            patch("patent_sar_extractor.core.heading_observation.get_ocr_engine", ocr),
         ):
             if extra_source_text:
                 document[0].insert_text((72, 300), extra_source_text)

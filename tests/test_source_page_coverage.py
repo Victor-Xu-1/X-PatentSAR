@@ -11,6 +11,7 @@ from unittest.mock import patch
 import fitz
 
 from patent_sar_extractor.core.activity_coordinates import extract_coordinate_tables
+from patent_sar_extractor.core.binding_source_headings import observed_heading_blocks
 from patent_sar_extractor.core.structure_binder import bind
 from patent_sar_extractor.core.table_geometry import detect_ruled_table_regions
 
@@ -77,9 +78,11 @@ class SourcePageCoverageTests(unittest.TestCase):
                     ),
                     patch(
                         "patent_sar_extractor.core.structure_binder.observed_heading_blocks",
-                        side_effect=AssertionError(
-                            "numbered cells already own sources"
-                        ),
+                        wraps=observed_heading_blocks,
+                    ) as inventory,
+                    patch(
+                        "patent_sar_extractor.core.heading_observation.get_ocr_engine",
+                        side_effect=AssertionError("Native owned cells need no OCR"),
                     ),
                     patch(
                         "patent_sar_extractor.core.structure_binder.select_heading_bindings",
@@ -98,6 +101,7 @@ class SourcePageCoverageTests(unittest.TestCase):
                         str(root / "bound"),
                         str(metadata),
                     )
+                self.assertEqual(inventory.call_args.args[1], [0, 1])
                 self.assertEqual(
                     [row["cpd"] for row in result["bindings"]],
                     ["Compound 17", "Compound 18", "Compound 19"],

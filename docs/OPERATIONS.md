@@ -1,5 +1,29 @@
 # Operations and troubleshooting
 
+## Complete original heading declarations
+
+Current Binding18/binder27 require source-reference scope3, including every
+retained heading declaration. Group and wrapped titles retain their original
+rows, IDs, geometry and source observations. Titles declare members, not diagram
+order: numbered captions must independently prove each picture's owner. Known
+catalogue pages cannot hide other same-page headings. Missing members, duplicate
+or incomplete lists, ranges and native/raster contradictions stay unresolved;
+no range expansion, ID-character joining, confidence vote or manual filling.
+Native headings do not initialize OCR. Scanned/outlined text reuses the existing
+coordinate text-cell SDK at400/600dpi, with explicit128pt/eight-row/8million-pixel
+and32literal-member limits; overflow fails rather than silently truncating.
+Large title text uses the heading-window row profile, not the unchanged12pt
+assay-header profile. Both still use the same SDK, pixel/source and confidence
+contracts, preserving all raw lines instead of resizing/concatenating characters.
+Original page hints nominate only. The saved source ledger rechecks membership
+and source/frame types after serialization; saved empty issues are not success.
+Activity17/extractor26/coverage13 revise the shared section-boundary semantics.
+Keep raw PDF/OCR/model/crop assets and manual corrections unchanged. Earlier
+derived artifacts remain historical; reuse only independently compatible raw
+observations through normal software checks. Complete focused/installed/PR/main/
+fixed18765 checks before calling this delivered. Source-role verification is not
+full chemical accuracy or proof that every patent format is supported.
+
 ## Bounded environment-worker output
 
 All environment-runner scripts/snippets and readiness probes share the same

@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 import fitz
 
+from patent_sar_extractor.core.binding_source_headings import observed_heading_blocks
 from patent_sar_extractor.core.structure_binder import bind
 
 
@@ -48,7 +49,11 @@ class SpatialBindingAuthorityTests(unittest.TestCase):
             with (
                 patch(
                     "patent_sar_extractor.core.structure_binder.observed_heading_blocks",
-                    side_effect=AssertionError("redundant crop OCR"),
+                    wraps=observed_heading_blocks,
+                ) as inventory,
+                patch(
+                    "patent_sar_extractor.core.heading_observation.get_ocr_engine",
+                    side_effect=AssertionError("redundant native crop OCR"),
                 ),
                 patch(
                     "patent_sar_extractor.core.structure_binder.select_heading_bindings",
@@ -69,6 +74,7 @@ class SpatialBindingAuthorityTests(unittest.TestCase):
                     str(root / "bindings"),
                     str(metadata),
                 )
+            self.assertEqual(inventory.call_args.args[1], [0])
             self.assertEqual(result["bound"], 2)
             self.assertEqual(result["patent_id"], "controlled")
             self.assertTrue(

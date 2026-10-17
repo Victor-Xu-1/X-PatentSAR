@@ -88,10 +88,16 @@ def observe_cell(
     # A bounded one-line header cell can be a single printed "n" or "%";
     # line detection routinely suppresses those legitimate tiny observations.
     # Multiline headers and every compound caption still use line detection.
-    header_frame = header_line_frame(image, border, dpi) if kind == "header" else None
+    text_region = kind in {"header", "heading"}
+    row_height = 128 if kind == "heading" else 12
+    header_frame = (
+        header_line_frame(image, border, dpi, maximum_row_height=row_height)
+        if text_region
+        else None
+    )
     detected = kind == "label" or (
-        kind == "header"
-        and (header_frame is not None or (crop[3] - crop[1]) * 72 / dpi > 12)
+        text_region
+        and (header_frame is not None or (crop[3] - crop[1]) * 72 / dpi > row_height)
     )
     result, _ = engine(image, use_det=detected, use_cls=False)
     parts = []

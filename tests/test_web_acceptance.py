@@ -13,6 +13,7 @@ from PIL import Image
 from patent_sar_extractor import contracts
 from patent_sar_extractor.core.activity_coverage import coverage_packet, source_record
 from patent_sar_extractor.core.binding_catalog import compound_catalog
+from patent_sar_extractor.core.binding_source_references import reference_scope
 from patent_sar_extractor.core.ocsr.smiles_qc import qc_smiles
 from patent_sar_extractor.core.ocsr.stereo_evidence import (
     observe_stereo_symbols,
@@ -83,11 +84,7 @@ def complete_payloads():
         final_bindings=[binding],
         compound_catalog=compound_catalog([binding], []),
         source_sections=[],
-        source_reference_scope={
-            "version": 1,
-            "original_pdf_sha256": "",
-            "region_ids": [],
-        },
+        source_reference_scope=reference_scope([]),
     )
     payloads["smiles"].update(
         execution_mode="production_decimer",
