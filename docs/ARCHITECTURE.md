@@ -124,13 +124,25 @@ role acceptance. Known function-word spacing and isotope/unit typography do not
 rewrite original strings or repair IDs, molecular graphs or measurements.
 
 The existing physical text-frame/cell reader supports an explicit caller-owned
-row budget: characterization bodies and their open-row fragments allow32 rows;
-actual assay headers keep8. Both400/600dpi observations, complete pixel-row
+chunk budget: characterization bodies and their open-row fragments use at most32
+original rows per slice; actual assay headers keep8. `cell_text_chunks` partitions
+longer cells only at empty pixel rows and calls the same existing OCR observer.
+`cell_text_chunk_proof` replays every slice, its complete global row inventory,
+exact order, contiguous full-image coverage, ink totals and child pixel geometry.
+Each saved child's pixel frame stays in parent-render pixels, never fabricated
+PDF coordinates. Known endpoint detections in any child still veto a role. The
+same replay supports original open-row fragments and rejects omitted, reordered,
+weak or conflicting children. Both400/600dpi observations, complete pixel-row
 inventories, cell bounds and minimum0.85 confidence are revalidated. Missing,
 weak, conflicting or over-budget lines stay unresolved, never truncated success.
-The original grid96-cell/8-million-pixel-per-cell limits remain. The historical
+The original grid96-cell/8-million-pixel-per-cell limits remain. Up to128 slices
+are bounded per cell; input exceeding the whole-cell renderer still explicitly
+refuses and requires future bounded original-point rendering, not partial text.
+Existing aggregate literal-text and region-proof byte bounds also remain;
+slice support does not claim unlimited source size or arbitrary-format coverage.
+The historical
 packet key `physical_header_lines` still names this shared text frame; only the
-characterization consumers supply the larger body limit. No second OCR engine,
+characterization consumers opt into long-body replay. No second OCR engine,
 model, store, queue or task-specific parser is added. This remains within the
 same unpublished Activity19/extractor28/Binding21/binder30 source contracts.
 

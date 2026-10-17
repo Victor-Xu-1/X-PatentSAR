@@ -3,8 +3,9 @@
 ## Characterization tables
 
 Long NMR/MS cells are not assay headers. The shared original-cell reader keeps
-up to32 physical text rows for characterization and open-row fragments, while
-the assay-header limit remains8. Every line still needs qualified observation
+every supported physical row through slices of at most32 rows for characterization
+and open fragments, while the assay-header limit remains8. Slice order, full
+source coverage and saved pixel frames must agree. Every line still needs qualified observation
 at400/600dpi. A missing line, weak confidence, biological endpoint, unknown role
 or excess source inventory stays unresolved. These bodies do not supply activity
 values or become new molecules from preparation-method references. Original
@@ -15,7 +16,8 @@ completed400dpi reading remains available if the next resolution exceeds its
 render budget. These diagnostics are not accepted role evidence and cannot fix
 missing structures or results. Catalog tampering, foreign binding documents and
 over-budget data refuse; weak observations are preserved without being promoted.
-Longer-than-supported cells still need complete bounded chunking; real-task
+Cells exceeding the original8M-pixel render budget still need bounded original-point
+rendering; a missing/weak slice never produces a successful prefix. Real-task
 acceptance and arbitrary spectral typography remain unverified.
 
 ## Result references

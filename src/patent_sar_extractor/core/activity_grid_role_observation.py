@@ -14,7 +14,7 @@ from .activity_grid_roles import (
     declared_measurement,
     nominate_characterization,
 )
-from .cell_ocr_observation import observe_cell
+from .cell_text_chunks import observe_text_cell
 from .page_ocr_cache import get_ocr_engine
 from .source_geometry import native_cell_text, native_region
 from .source_role_observations import role_failure
@@ -106,13 +106,11 @@ def observe_role_cells(
                 except CellRenderLimit:
                     return None
                 observed.append(
-                    observe_cell(
+                    observe_text_cell(
                         image,
-                        "header",
                         dpi,
                         engine[1],
-                        lambda text, _kind: text,
-                        maximum_text_rows=MAX_ROLE_TEXT_ROWS,
+                        rows_per_chunk=MAX_ROLE_TEXT_ROWS,
                     ).evidence(dpi, cell)
                 )
                 if retain_frames:

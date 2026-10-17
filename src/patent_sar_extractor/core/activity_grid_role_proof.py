@@ -10,6 +10,7 @@ from .activity_grid_roles import (
     declared_measurement,
 )
 from .activity_headers import context_from_text
+from .cell_text_chunk_proof import text_detection_parts
 from .cell_text_proof import valid_text_reading
 
 
@@ -122,7 +123,7 @@ def valid_role_scope(record):
             elif method in {"cell_ocr_400dpi", "cell_ocr_600dpi"}:
                 confidence = cell.get("confidence")
                 if (
-                    set(cell) - {"physical_header_lines"}
+                    set(cell) - {"physical_header_lines", "physical_text_chunks"}
                     != {
                         "method",
                         "text",
@@ -146,6 +147,7 @@ def valid_role_scope(record):
                     or cell["raw_text"] != cell["text"]
                     or not isinstance(cell.get("parts"), list)
                     or not cell.get("parts")
+                    and "physical_text_chunks" not in cell
                     or len(cell["parts"]) > 32
                     or not isinstance(cell.get("detection_parts"), list)
                     or len(cell["detection_parts"]) > 32
@@ -165,6 +167,7 @@ def valid_role_scope(record):
                     cell["bbox"],
                     int(method[9:12]),
                     maximum_rows=MAX_ROLE_TEXT_ROWS,
+                    allow_chunks=True,
                 ):
                     return False
                 if any(
@@ -178,7 +181,7 @@ def valid_role_scope(record):
                     or not 0 <= part["confidence"] <= 1
                     or part["confidence"] >= 0.85
                     and declared_measurement(part["text"])
-                    for part in cell["detection_parts"]
+                    for part in text_detection_parts(cell)
                 ):
                     return False
             else:

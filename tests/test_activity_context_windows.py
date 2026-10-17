@@ -128,6 +128,151 @@ def parallel_activity_page(
 
 
 class ActivityContextWindowTests(unittest.TestCase):
+    def long_raster_characterization(self, count):
+        from patent_sar_extractor.core.activity_grid_role_observation import (
+            observe_characterization,
+        )
+        from patent_sar_extractor.core.table_geometry import (
+            detect_ruled_table_regions,
+            page_tokens,
+        )
+
+        spectrum = "\n".join(
+            ["1H NMR (400 MHz)"]
+            + [f"{7 - index * 0.1:.2f} (m, 2H)" for index in range(count - 2)]
+            + ["MS (ESI) m/z 413.1"]
+        )
+        with fitz.open() as native, fitz.open() as raster:
+            source = native.new_page(width=600, height=650)
+            source.insert_text(
+                (40, 70), "Table 17. Compound characterization", fontsize=9
+            )
+            ruled(
+                source,
+                [40, 140, 360, 560],
+                [90, 120, 600],
+                [
+                    ["Compound No.", "Preparation", "Characterization"],
+                    ["Compound 73", "Prepared in analogy to Compound 91", ""],
+                ],
+            )
+            self.assertGreaterEqual(
+                source.insert_textbox(
+                    fitz.Rect(364, 124, 556, 597), spectrum, fontsize=7
+                ),
+                0,
+            )
+            pixels = source.get_pixmap(matrix=fitz.Matrix(4, 4), alpha=False)
+            page = raster.new_page(width=600, height=650)
+            page.insert_image(page.rect, stream=pixels.tobytes("png"))
+            tokens = page_tokens(page, dpi=240, allow_tesseract=False)
+            grid = detect_ruled_table_regions(page, dpi=240)[0]
+            proof = observe_characterization(
+                page, grid, tokens, "Table 17. Compound characterization"
+            )
+        self.assertIsNotNone(proof)
+        return proof
+
+    def test_single_line_final_chunk_remains_part_of_the_complete_original(self):
+        from patent_sar_extractor.core.activity_grid_role_proof import valid_role_scope
+
+        proof = self.long_raster_characterization(33)
+        self.assertTrue(
+            valid_role_scope(
+                {
+                    "bbox": [
+                        proof["xs"][0],
+                        proof["ys"][0],
+                        proof["xs"][-1],
+                        proof["ys"][-1],
+                    ],
+                    "role_scope": proof,
+                }
+            )
+        )
+        for observation in proof["observations"]:
+            packet = observation["cells"][-1]["physical_text_chunks"]
+            self.assertEqual(
+                [len(chunk["row_bounds"]) for chunk in packet["chunks"]], [32, 1]
+            )
+
+    def test_long_raster_characterization_conserves_all_original_text_chunks(self):
+        from patent_sar_extractor.core.activity_grid_role_proof import valid_role_scope
+
+        proof = self.long_raster_characterization(40)
+        record = {
+            "bbox": [proof["xs"][0], proof["ys"][0], proof["xs"][-1], proof["ys"][-1]],
+            "role_scope": proof,
+        }
+        self.assertTrue(valid_role_scope(record))
+        from patent_sar_extractor.core.cell_frame_proof import valid_cell_frame
+        from patent_sar_extractor.core.source_role_fragments import fragment_texts
+
+        for observation in proof["observations"]:
+            cell = observation["cells"][-1]
+            packet = cell["physical_text_chunks"]
+            self.assertEqual(len(packet["row_bounds"]), 40)
+            self.assertEqual(
+                [len(chunk["row_bounds"]) for chunk in packet["chunks"]], [32, 8]
+            )
+            self.assertTrue(
+                valid_cell_frame(
+                    {
+                        "dpi": cell["render_dpi"],
+                        "shape": packet["image_shape"],
+                        "pixel_sha256": packet["pixel_sha256"],
+                    },
+                    cell,
+                    cell["bbox"],
+                    cell["render_dpi"],
+                )
+            )
+        fragment = {
+            "status": "observed_columns",
+            "source_cells": {
+                "xs": proof["xs"],
+                "ys": proof["ys"][1:],
+                "native_hints": [proof["native_hints"][1]],
+                "observations": [
+                    {
+                        "method": item["method"],
+                        "matrix": [item["matrix"][1]],
+                        "cells": item["cells"][3:],
+                    }
+                    for item in proof["observations"]
+                ],
+            },
+        }
+        self.assertEqual(
+            fragment_texts({"role_scope": proof}, fragment, 2),
+            [item["matrix"][1][2] for item in proof["observations"]],
+        )
+        for change in (
+            "missing",
+            "reordered",
+            "weak",
+            "nested_endpoint",
+            "foreign_fields",
+        ):
+            altered = copy.deepcopy(record)
+            packet = altered["role_scope"]["observations"][0]["cells"][-1][
+                "physical_text_chunks"
+            ]
+            if change == "missing":
+                packet["chunks"].pop()
+            elif change == "reordered":
+                packet["chunks"].reverse()
+            elif change == "weak":
+                packet["chunks"][-1]["reading"]["confidence"] = 0.84
+            elif change == "nested_endpoint":
+                packet["chunks"][0]["reading"]["detection_parts"] = [
+                    {"text": "IC50 (nM)", "confidence": 0.99, "bbox": None}
+                ]
+            else:
+                packet["chunks"][0]["reading"]["role_scope"] = {}
+            with self.subTest(change=change):
+                self.assertFalse(valid_role_scope(altered))
+
     def test_rejected_characterization_is_saved_without_becoming_a_result(self):
         from patent_sar_extractor.core.binding_artifacts import write_binding_result
         from patent_sar_extractor.core.source_role_observations import (

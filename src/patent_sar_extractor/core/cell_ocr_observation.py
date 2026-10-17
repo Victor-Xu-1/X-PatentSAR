@@ -26,6 +26,7 @@ class OCRObservation:
     detection_parts: tuple[dict, ...] = ()
     physical_header_lines: dict | None = None
     physical_caption_line: dict | None = None
+    physical_text_chunks: dict | None = None
 
     def evidence(self, dpi: int, bounds) -> dict:
         return {
@@ -50,6 +51,11 @@ class OCRObservation:
             **(
                 {"physical_caption_line": self.physical_caption_line}
                 if self.physical_caption_line is not None
+                else {}
+            ),
+            **(
+                {"physical_text_chunks": self.physical_text_chunks}
+                if self.physical_text_chunks is not None
                 else {}
             ),
         }

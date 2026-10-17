@@ -33,6 +33,18 @@ def valid_cell_frame(frame, reading, bounds, dpi):
     ):
         return False
     crop, border = reading.get("ink_crop_pixels"), reading.get("border_pixels")
+    chunks = reading.get("physical_text_chunks")
+    if chunks is not None:
+        return (
+            isinstance(chunks, dict)
+            and chunks.get("image_shape") == frame["shape"]
+            and chunks.get("pixel_sha256") == frame["pixel_sha256"]
+            and crop is None
+            and type(border) is int
+            and border == 0
+            and reading.get("parts") == []
+            and reading.get("detection_parts") == []
+        )
     if crop is None:
         return (
             reading.get("parts") == []

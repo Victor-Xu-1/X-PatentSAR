@@ -10,9 +10,12 @@
   added within unpublished Binding21/Activity19/v0.2.34. Longer-cell chunking and
   real scientific acceptance remain open, not certified by diagnostic retention.
 
-- Characterization body rows reuse the sole original physical-text/cell SDK,
-  with an explicit32-row caller budget and the unchanged8-row assay-header
-  default. Role replay and open-row consumers use the same body limit. Complete
+- Characterization body rows reuse the sole original physical-text/cell SDK.
+  `cell_text_chunks` owns bounded empty-row slice observation through that same
+  OCR authority; `cell_text_chunk_proof` owns whole-source row/pixel/order/ink
+  replay. Per-slice32rows and128slices do not replace the unchanged8-row assay
+  header default or original8M whole-cell render cap. The existing role and open
+  fragment consumers use the same nested detections and source replay. Complete
   pixel inventories, original native/OCR text,0.85confidence,96cells and8Mpixel
   bounds remain mandatory. Locator-only spectral hints nominate observation,
   never an exclusion or a missing-result exemption. Known wording/typography
