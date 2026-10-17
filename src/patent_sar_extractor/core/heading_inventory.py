@@ -20,7 +20,7 @@ def heading_sections(sections):
 
 def heading_inventory_issues(sections, scope, entries):
     headings = heading_sections(sections)
-    if scope["version"] not in {3, 4}:
+    if scope["version"] not in {3, 4, 5}:
         if any("heading_observation" in section for section in headings):
             raise ValueError("Original heading inventory was downgraded")
         return []

@@ -114,6 +114,9 @@ class OriginalSourceAdmissionTests(unittest.TestCase):
             "version": payload["schema"]["version"] - 1,
         }
         payload["compound_catalog"]["entries"] = legacy_series()
+        # Controlled old-ledger shape, not a retagged real scientific artifact.
+        payload["source_reference_scope"]["version"] = 4
+        payload["source_reference_scope"].pop("label_reference_ids")
         rows, _ = read_catalog_entries(payload)
         self.assertEqual(len(rows), 6)
         self.assertNotIn("exact_caption_evidence", rows[0])

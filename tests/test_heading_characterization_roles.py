@@ -332,7 +332,7 @@ class HeadingCharacterizationRoleTests(unittest.TestCase):
             self.assertEqual([region["page_no"] for region in regions], [3])
 
     def test_real_raster_and_native_footer_share_original_reference_authority(self):
-        from patent_sar_extractor.core.binding_ocr import _get_ocr_line_observations
+        from patent_sar_extractor.core.page_ocr_cache import _page_payload
 
         with fitz.open() as original:
             page = characterization_page(original)
@@ -345,7 +345,7 @@ class HeadingCharacterizationRoleTests(unittest.TestCase):
                 page.insert_image(fitz.Rect(0, 0, 560, 660), stream=raster)
                 if footer:
                     page.insert_text((40, 690), "Native footer only", fontsize=8)
-                lines = _get_ocr_line_observations(page)
+                _text, lines = _page_payload(page, min_native_chars=0)
                 self.assertTrue(
                     any(
                         line.get("source") == "page_ocr" and line.get("bbox")

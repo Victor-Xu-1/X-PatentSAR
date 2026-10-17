@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- Complete binder source: `binding_page_source` reuses the sole shared original
+  page-cache reader/writer, requiring all pages rather than table-only positions.
+  Native coordinate projections are read-only; existing foreign/incomplete or
+  unlocated scanned caches remain unchanged and cannot claim completeness. The
+  private `binding_ocr` module/pools and partial cache writer are removed; their
+  consumer controls move to shared-source/SDK checks.
+- Caption source roles: `caption_label_roles` owns scope5 exact label references,
+  bound to current caption proof, original SHA, literal ID and original window.
+  Producer and saved ledger replay the same ownership. No page-wide/ID-list skip,
+  second source store, OCR engine or result writer. Binding20/binder29 includes
+  these semantics; original/raw/chemistry/manual/SAR/API/SQL remain unchanged.
+
 - Transposed original source: `activity_transposed_source` owns bounded original
   cell snapshots, literal orientation and typed unresolved column scopes;
   `activity_transposed_rows` replays column/row conservation in the existing

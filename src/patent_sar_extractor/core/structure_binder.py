@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import fitz
+
 from .binding_artifacts import write_binding_result
 from .binding_geometry import _process_structure
 from .binding_labels import _cpd_label_key
-from .binding_ocr import PYMUPDF_AVAILABLE, fitz
 from .binding_preparation import load_binding_input, prepare_binding_observations
 from .binding_source_headings import (
     _document_sha256,
@@ -26,8 +27,6 @@ def bind(
 ) -> dict:
     """Prove printed IDs independently of activities; ambiguous sources stay withheld."""
     del cpd_prefix_pattern
-    if not PYMUPDF_AVAILABLE:
-        raise RuntimeError("PyMuPDF is required for original-PDF binding")
     out, structures, patent_id = load_binding_input(output_dir, structures_path)
     with fitz.open(pdf_path) as doc:
         observations = prepare_binding_observations(
@@ -44,10 +43,17 @@ def bind(
             observations.authoritative_table_pages,
             source_pages=observations.page_indices,
         )
-        original = spatial.catalogue()
+        document_sha256 = _document_sha256(doc)
+        original = [
+            {**binding, "source_pdf_sha256": document_sha256}
+            for binding in spatial.catalogue()
+        ]
+        reprints = [
+            {**binding, "source_pdf_sha256": document_sha256}
+            for binding in spatial.reprints
+        ]
         generic = spatial.structures(processed)
         source_sections = list(spatial.source_exclusions)
-        document_sha256 = _document_sha256(doc)
         source_regions = collect_reference_regions(
             doc,
             range(len(doc)),
@@ -68,6 +74,7 @@ def bind(
                 source_regions=source_regions,
                 grids_for_page=spatial.grids_for_page,
                 tokens_for_page=spatial.tokens_for_page,
+                source_bindings=[*original, *reprints],
             )
             if pages
             else []
@@ -114,7 +121,7 @@ def bind(
             patent_id=patent_id,
             bindings=[],
             catalog_bindings=[*original, *heading_bindings],
-            catalog_sources=spatial.reprints,
+            catalog_sources=reprints,
             source_issues=issues,
             source_sections=source_sections,
             original_pdf_sha256=document_sha256,

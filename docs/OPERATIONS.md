@@ -2,6 +2,22 @@
 
 ## Transposed column inventory and current source admission
 
+Current source ledger scope5 separates proved original caption-label references
+from independent synthesis headings. The exact current proof, original document,
+literal ID and contained physical window must all match; another title with the
+same ID elsewhere remains observed. Missing/changed/downgraded references and
+foreign or unproved sources fail replay. This is not an exemption for arbitrary
+figure legends, unread words or unruled layouts.
+
+Binding source preparation now requires complete shared page observations,
+including non-table pages. With no cache it uses the existing checkpointed page
+reader/writer once; native pages need no model. A present foreign/incomplete cache
+or unlocated scanned text is never overwritten into success. Original native
+coordinates may be projected read-only when the native text matches the saved
+observation. The private binder OCR worker and partial table-cache writer are
+removed. Normal frontend classification already supplies this shared source;
+no private patent is automatically replayed on read, startup or deployment.
+
 Binding20/binder29 require current original-cell/caption/heading admission, not
 historical sequence rules or saved success flags. Activity18/extractor27/coverage14
 retain each original cell in transposed tables once. Unknown headers and unread

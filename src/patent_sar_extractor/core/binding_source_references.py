@@ -5,6 +5,7 @@ import re
 from .activity_grid_role_proof import valid_role_scope
 from .activity_header_evidence import proof_id
 from .binding_source_regions import identifier_references, reference_cell
+from .caption_label_roles import caption_reference_ids, validate_caption_references
 from .caption_role_proof import validate_caption_exclusions
 from .heading_inventory import heading_inventory_issues, heading_sections
 from .printed_identifiers import identifier_key
@@ -23,15 +24,24 @@ def reference_scope(sections, original_pdf_sha256=""):
         for section in sections
         if section["role"] == "characterization_region"
     ]
-    origins = {region["original_pdf_sha256"] for region in regions} | {
-        section["heading_observation"]["original_pdf_sha256"]
-        for section in heading_sections(sections)
-        if isinstance(section.get("heading_observation"), dict)
-    }
+    origins = (
+        {region["original_pdf_sha256"] for region in regions}
+        | {
+            section["heading_observation"]["original_pdf_sha256"]
+            for section in heading_sections(sections)
+            if isinstance(section.get("heading_observation"), dict)
+        }
+        | {
+            section["original_pdf_sha256"]
+            for section in sections
+            if section.get("role") == "structure_label_reference"
+            and isinstance(section.get("original_pdf_sha256"), str)
+        }
+    )
     if not original_pdf_sha256 and len(origins) == 1:
         original_pdf_sha256 = next(iter(origins))
     return {
-        "version": 4,
+        "version": 5,
         "original_pdf_sha256": original_pdf_sha256,
         "region_ids": [region["region_id"] for region in regions],
         "caption_region_ids": [
@@ -40,6 +50,7 @@ def reference_scope(sections, original_pdf_sha256=""):
             if section["role"] == "nonfinal_caption_catalog"
         ],
         "heading_ids": [proof_id(section) for section in heading_sections(sections)],
+        "label_reference_ids": caption_reference_ids(sections),
     }
 
 
@@ -55,13 +66,14 @@ def _regions(sections, scope):
                 "caption_region_ids",
                 "heading_ids",
             }
-            if scope.get("version") in {3, 4}
+            | ({"label_reference_ids"} if scope.get("version") == 5 else set())
+            if scope.get("version") in {3, 4, 5}
             else {"version", "original_pdf_sha256", "region_ids", "caption_region_ids"}
             if scope.get("version") == 2
             else {"version", "original_pdf_sha256", "region_ids"}
         )
         or type(scope["version"]) is not int
-        or scope["version"] not in {1, 2, 3, 4}
+        or scope["version"] not in {1, 2, 3, 4, 5}
         or not isinstance(scope["original_pdf_sha256"], str)
         or scope["original_pdf_sha256"]
         and not _SHA.fullmatch(scope["original_pdf_sha256"])
@@ -77,7 +89,7 @@ def _regions(sections, scope):
     if (
         scope["version"] == 1
         and captions
-        or scope["version"] in {2, 3, 4}
+        or scope["version"] in {2, 3, 4, 5}
         and scope.get("caption_region_ids")
         != [proof_id(section) for section in captions]
     ):
@@ -104,7 +116,7 @@ def _regions(sections, scope):
                 }
                 | (
                     {"grid_edges", "row_fragments", "fragment_context"}
-                    if scope["version"] == 4
+                    if scope["version"] in {4, 5}
                     else set()
                 )
             )
@@ -124,7 +136,7 @@ def _regions(sections, scope):
         ):
             raise ValueError("Unproved original binding reference region")
         _box(region["bbox"])
-        if scope["version"] == 4:
+        if scope["version"] in {4, 5}:
             validate_fragments(region)
         regions[region["region_id"]] = region
     if scope["region_ids"] != list(regions):
@@ -155,8 +167,11 @@ def reference_issues(payload, entries, *, required=True):
     ):
         return []
     regions = _regions(sections, scope)
-    if required and scope["version"] != 4:
-        raise ValueError("Current original source inventory requires open-row coverage")
+    if required and scope["version"] != 5:
+        raise ValueError(
+            "Current original source inventory requires label-role coverage"
+        )
+    validate_caption_references(sections, scope, entries)
     expected = [
         reference
         for region in regions.values()

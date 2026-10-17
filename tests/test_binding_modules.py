@@ -157,7 +157,9 @@ class BindingModuleTests(unittest.TestCase):
         self.assertEqual(definitions["bind"], "structure_binder")
         self.assertEqual(definitions["write_binding_result"], "binding_artifacts")
         self.assertEqual(definitions["_merge_binding_candidates"], "binding_candidates")
-        self.assertEqual(definitions["_get_ocr_line_coords"], "binding_ocr")
+        self.assertEqual(definitions["binding_page_source"], "binding_page_source")
+        self.assertNotIn("_get_ocr_line_coords", definitions)
+        self.assertNotIn("_worker_observation", definitions)
         self.assertEqual(
             list(inspect.signature(bind).parameters),
             [

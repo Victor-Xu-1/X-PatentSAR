@@ -1,5 +1,25 @@
 # X-PatentSAR architecture
 
+`binding_page_source` projects all original pages from the single shared page OCR
+cache. An absent cache uses the existing checkpointed source reader/writer once,
+including non-table/non-candidate pages. Existing saved source stays immutable:
+foreign/incomplete identity and unlocated scanned text fail explicitly. Matching
+original native text may supply a read-only coordinate projection, never a new
+raw-cache provenance claim. Profile text/line hints cannot replace observations.
+The former private `binding_ocr` adapters, independent text/line pools and partial
+table-only cache writer are removed. Native pages remain model-free.
+
+`caption_label_roles` records exact label references in source ledger scope5,
+backed by the current original caption proof and document SHA. A heading locator
+must have the same literal ID and lie inside one exact original caption window;
+all other headings on that page remain discoverable, including the same ID in
+another location. Source/page/geometry/legacy-rule conflicts supply no exemption.
+The ledger replays these references against current source entries, not saved
+success flags. Per-page/literal-ID indexing avoids scanning all captions for each
+title. This is within the prepared Binding20/binder29 semantic revision, not an
+additional internal-commit epoch. Figure legends, unread prefix fragments and
+unruled layout coverage remain separate open controls, not waived by this change.
+
 `activity_transposed_source` retains each original transposed table cell once
 through the existing native/raster observation SDK. It owns literal orientation
 and typed column-slice descriptors, not a new OCR/value parser. Unknown headers,
