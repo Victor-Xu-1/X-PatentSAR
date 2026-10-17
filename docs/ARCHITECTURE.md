@@ -1,5 +1,49 @@
 # X-PatentSAR architecture
 
+## Complete original-depiction recognition (unpublished v0.2.32)
+
+`RecognitionPlan` in `core/ocsr/recognition_inputs.py` is the sole bounded work
+projection: ordered formal compounds, supplemental primary compounds for library
+consumers, then every independently proved `additional_sources` image. All run
+in the existing DECIMER batch, raw cache, preparation, source-stereo and bounded
+rescue lifecycle. No second queue, source store, model vote or best-source picker
+is introduced. The shared 25,000-source bound counts all three roles together;
+overflow is refusal rather than truncated success. Timeouts count actual images,
+not just primary compounds. Input fingerprints include all original bytes and
+preparation/source proofs; stat identity includes ctime and reads detect mutation.
+`recognition_source_paths` owns the one original-image/metadata resolver shared
+by the worker and fingerprints. Relative paths use the same binding root and
+metadata frame changes invalidate reuse without pixel preparation in the cache
+reader. A formal row cannot redirect source/preparation fields while retaining
+the same catalog ID. Export helpers also refuse reprints without source findings.
+
+SMILES schema3 adds `reprint_records` in that same artifact. `records` still has
+one primary row per original compound; reprints never become duplicate molecules
+or independent activity measurements. `recognition_policy` owns ordered-result,
+explicit execution-success and fresh raw/source QC for CLI, coordinator, QA and
+export. `stereo_gate` performs one fresh evaluation and exposes its evidence/QC
+views, not separate chemistry implementations. An optional alternate molecular
+text cannot override the verified raw graph. Unknown/CX encodings stay refused.
+
+`reprint_consistency` compares full canonical isomeric graphs only after every
+source independently passes QC. Connectivity, assigned versus unspecified stereo,
+isotopes, charge and all components remain meaningful. It does not strip salts or
+tautomers, compare only scaffolds/InChIKeys, or use token confidence to resolve a
+disagreement. Matching recognitions still do not prove original-image chemistry.
+Missing/disagreeing reprints retain all raw observations and block the owner's
+qualified export, current chemistry and downstream properties. Other owners keep
+their independent review rows. Web currentness checks every recorded original
+crop through the existing bounded stat/hash cache, without inference on reads.
+
+Historical SMILES envelopes remain raw-readable, not current full-source proof.
+Original PDFs, raw OCR/OCSR, structures, manual audit, API1 and workspace SQLite1
+are not rewritten. The existing primary-only online completion cannot establish
+multi-depiction equivalence: it explicitly requires full-source extraction for an
+unsettled repeated owner. Uniform multi-source completion in that same job/store
+remains an open usability integration, not a reason to accept only its primary.
+Focused native/consumer checks, review, merged-main deployment and actual frontend
+scientific runs remain required; these contracts do not certify arbitrary recall.
+
 `structure_header_lines` owns one bounded two-dimensional original-word grouping
 step for logical header nomination and saved replay. Connected printed lines
 retain all original words and boxes; a shorter valid suffix cannot discard an

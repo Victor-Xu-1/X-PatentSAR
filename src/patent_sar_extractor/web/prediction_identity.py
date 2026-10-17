@@ -5,6 +5,8 @@ from __future__ import annotations
 import hashlib
 from functools import lru_cache
 
+from patent_sar_extractor.core.ocsr.reprint_consistency import REPRINT_REVIEW_FLAG
+
 from .analysis_chemistry import MAX_SMILES, canonical_smiles
 from .correction_chemistry import molfile_representation, validate_structure
 from .errors import WebError
@@ -38,7 +40,11 @@ def source_stereo_blocked(compound: Compound) -> bool:
 
 def compound_prediction_eligible(compound: Compound) -> bool:
     return (
-        compound.recognition.status != "invalid"
+        compound.recognition.status == "valid"
+        and (
+            REPRINT_REVIEW_FLAG not in compound.flags
+            or compound.recognition.quality_flag == "manual_correction"
+        )
         and not source_stereo_blocked(compound)
         and prediction_eligible(compound.smiles, compound.structure_molfile)
     )

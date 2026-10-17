@@ -14,6 +14,10 @@ from patent_sar_extractor.core.ocsr.recognition_inputs import (
     ordered_source_results,
     recognition_inputs,
 )
+from patent_sar_extractor.core.ocsr.reprint_consistency import (
+    REPRINT_REVIEW_FLAG,
+    reprint_findings,
+)
 from patent_sar_extractor.core.pipeline_rules import (
     _label_key,
     annotate_binding_accuracy,
@@ -40,7 +44,7 @@ from .processes import runtime_identity
 from .recognition import recognition_status
 from .structure_corpus import unassociated_structures
 
-RAW_PROJECTION_LAYOUT = "compound-catalog-v1"
+RAW_PROJECTION_LAYOUT = "compound-catalog-reprints-v2"
 
 
 def _index(
@@ -234,7 +238,15 @@ class ArtifactView:
         structure_rows = records(p.get("structures"), "structures")
         catalog_rows, alias_ids = read_compound_catalog(binding_payload, structure_rows)
         source_labels: set[str] = set()
+        reprint_review: set[str] = set()
         try:
+            plan = recognition_inputs(binding_payload)
+            if current(smiles_payload, "smiles"):
+                reprint_review = set(reprint_findings(plan, smiles_payload))
+            else:
+                reprint_review = {
+                    _label_key(str(row.get("cpd") or "")) for row in plan.reprints
+                }
             source_smiles = smiles_source_records(smiles_payload)
             if len(source_smiles) > MAX_RECORDS:
                 raise ValueError("Source recognition collection exceeds its bound.")
@@ -250,8 +262,7 @@ class ArtifactView:
                         "Source recognition cannot change formal acceptance scope."
                     )
                 else:
-                    _, source_bindings = recognition_inputs(binding_payload)
-                    if not ordered_source_results(source_bindings, source_smiles):
+                    if not ordered_source_results(plan.supplemental, source_smiles):
                         raise ValueError(
                             "Source recognition does not match proved printed owners."
                         )
@@ -423,7 +434,10 @@ class ArtifactView:
             if source_page is None and activities:
                 source_page = activities[0].page
             smiles_text = text(
-                smile.get("smiles") or smile.get("canonical_smiles"), limit=10000
+                smile.get("canonical_smiles")
+                if current(p.get("smiles"), "smiles")
+                else smile.get("smiles") or smile.get("canonical_smiles"),
+                limit=10000,
             )
             recognition = recognition_status(
                 smile,
@@ -437,6 +451,13 @@ class ArtifactView:
             # artifact, but cannot feed descriptors or a determinate prediction.
             if key in source_labels and recognition["status"] != "valid":
                 smiles_text = None
+            if key in reprint_review:
+                smiles_text = None
+                recognition["status"] = (
+                    "invalid" if current(smiles_payload, "smiles") else "unavailable"
+                )
+                recognition["quality_flag"] = REPRINT_REVIEW_FLAG
+                flags.append(REPRINT_REVIEW_FLAG)
             dto = Compound(
                 id=compound_id,
                 display_id=compound_id,

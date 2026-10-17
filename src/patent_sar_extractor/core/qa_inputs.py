@@ -23,8 +23,14 @@ from .activity_join import (
     activity_for_compound,
     activity_order_and_map,
 )
+from .ocsr.recognition_inputs import recognition_inputs
+from .ocsr.reprint_consistency import reprint_findings
 from .ocsr.stereo_gate import stereo_record_error
-from .pipeline_rules import annotate_binding_accuracy, summarise_binding_accuracy
+from .pipeline_rules import (
+    _label_key,
+    annotate_binding_accuracy,
+    summarise_binding_accuracy,
+)
 from .qa_files import (
     _load_json,
     _read_xlsx_values,
@@ -178,6 +184,7 @@ def load_qa_inputs(output_dir: str, patent_id: str = "") -> QAInputs:
         )
         for record in smiles
     ]
+    reprint_errors = reprint_findings(recognition_inputs(bind_data), smiles_payload)
     valid_smiles_records = [
         r
         for index, r in enumerate(smiles)
@@ -186,6 +193,7 @@ def load_qa_inputs(output_dir: str, patent_id: str = "") -> QAInputs:
         and (not _suspicious_smiles_elements(r))
         and (r.get("OCSR_quality_flag", "ok") == "ok")
         and (stereo_findings[index] is None)
+        and _label_key(str(r.get("cpd_id") or "")) not in reprint_errors
     ]
     invalid_smiles_records = [r for r in smiles if not r.get("rdkit_valid")]
     valid_smiles_cpds = {

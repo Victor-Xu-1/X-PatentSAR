@@ -11,6 +11,8 @@ from collections import OrderedDict
 from functools import lru_cache
 from pathlib import Path
 
+from patent_sar_extractor.core.ocsr.reprint_consistency import REPRINT_REVIEW_FLAG
+
 from .errors import WebError
 from .files import SafeFiles
 from .models import Compound, Recognition
@@ -113,6 +115,10 @@ def apply_recognition(project: dict, row: dict, compound: Compound) -> Compound:
     from .correction_storage import correction_source_fingerprint
 
     content = row.get("recognition_observation")
+    if REPRINT_REVIEW_FLAG in compound.flags:
+        return (
+            compound  # A saved primary-only observation cannot settle other originals.
+        )
     if content is None:
         from .core_recognition_source import core_source_current
 

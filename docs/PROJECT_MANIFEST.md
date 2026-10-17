@@ -1,5 +1,22 @@
 # Project governance manifest
 
+- Original-depiction recognition ownership: `RecognitionPlan` is the single
+  source scheduling projection for the existing DECIMER/cache/QC worker. All
+  primaries and proved reprints count toward one 25,000-source cap and workload
+  budget. SMILES3 adds `reprint_records` to the same artifact, not a new store,
+  queue or compound universe. `recognition_policy` and `reprint_consistency` are
+  the shared acceptance/complete-graph authorities; coordinator, formal export,
+  QA, Web and prediction eligibility consume them. No confidence voting, salt/
+  tautomer stripping or raw-data repair. Current original-byte/proof fingerprints
+  and the bounded source-hash cache include additional depictions. The old local
+  acceptance and export-QC copies are removed in favor of that authority.
+  Historical SMILES/raw/manual artifacts stay unchanged. Unsettled reprints may
+  not bypass source work via primary-only online completion; its full multi-source
+  integration remains explicitly open before final usability acceptance. Product
+  v0.2.32 is still one unpublished PR, not a release per checkpoint. Source-stereo3,
+  raw observation2, public API1, SQLite1, models/dependencies and pipeline order
+  remain. Native checks are not universal chemistry/recall or deployed acceptance.
+
 - `structure_header_lines` is the single bounded original multiline grouping
   authority used by logical nomination and saved proof. It composes existing
   original-line/column primitives;complete windows still pass the unchanged
@@ -892,7 +909,7 @@
 
 - Product/repository identity: `x-patentsar` / X-PatentSAR; current stable E-drive WSL source path `/srv/wsl/projects/patent-sar-extractor` (preserved through branding). Internal Python namespace remains `patent_sar_extractor`; it is not a competing product identity.
 - Product version authority: `src/patent_sar_extractor/contracts.py`; merged-PR numbering with patch 0-99 and minor 0-9; see `OPERATIONS.md`; release tags use `vMAJOR.MINOR.PATCH`.
-- Internal contract authority: the same `contracts.py` file separately owns pipeline `patentsar.structure-led` `3.0.0`, ruleset `2.1.1`, stage implementation epochs and artifact/cache/observation schema identities. SMILES schema v2 uses the complete proved printed-ID catalog for formal ordered associations; unproved source observations remain review-only. Older contracts are not retagged; product release numbering follows the PR policy.
+- Internal contract authority: the same `contracts.py` file separately owns pipeline `patentsar.structure-led` `3.0.0`, ruleset `2.1.1`, stage implementation epochs and artifact/cache/observation schema identities. SMILES schema3 uses the complete proved printed-ID catalog and separately recorded reprint observations; unproved or disagreeing originals remain review-only. Older contracts are not retagged; product release numbering follows the PR policy.
 - Supported source roots: `src/patent_sar_extractor`, `frontend`, `tools`, `examples`, `docs`, `tests`, `.github` and documented root metadata/launch files, including Apache-2.0 `LICENSE` and attribution `NOTICE`. `tools` owns reproducible build/packaging checks, not extraction logic.
 - Dependency authority: `pyproject.toml` plus generated `uv.lock`; uv 0.11.31 is the verified lock/sync tool, matching CI. The `web` extra adds FastAPI/Uvicorn; test and static-analysis dependencies are in the `dev` group. Frontend dependencies use npm and `frontend/package-lock.json` as their only lock authority. DECIMER is an external Python 3.10 runtime boundary and is not part of the Python 3.12 application lock.
 - Public contract: the `x-patentsar` CLI, `PATENTSAR_*` configuration variables and documented output files; Web API uses an independently versioned `patentsar.web-api` v1 contract. A Web result/review never overrides deterministic QA.

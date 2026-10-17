@@ -237,6 +237,8 @@ def artifact_run(
     payloads["smiles"].update(
         {
             "execution_mode": "production_decimer",
+            "source_records": [],
+            "reprint_records": [],
             "records": [
                 {
                     "cpd_id": b["cpd"],

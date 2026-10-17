@@ -329,6 +329,9 @@ class StrictAcceptanceTests(unittest.TestCase):
             "chiral_centers": checked["chiral_centers"],
             "rdkit_valid": checked["rdkit_valid"],
             "OCSR_quality_flag": checked["quality_flag"],
+            "OCSR_status": "success"
+            if checked["quality_flag"] == "ok"
+            else "review_required",
             "suspicious_elements": checked["suspicious_elements"],
         }
 
@@ -1763,9 +1766,14 @@ class StrictAcceptanceTests(unittest.TestCase):
                 self._smiles("Compound 2", "S1", "CCO"),
                 self._smiles("Compound 3", "S3", "CCN"),
             ]
-            self.assertIn(
-                "SMILES records do not map one-to-one to confirmed bindings in order.",
-                _smiles_acceptance_errors(smiles, binding_payload),
+            with self.assertRaisesRegex(ValueError, "ambiguous"):
+                _smiles_acceptance_errors(
+                    build_smiles_artifact(smiles), binding_payload
+                )
+            self.assertTrue(
+                _smiles_acceptance_errors(
+                    build_smiles_artifact(smiles), {"final_bindings": bindings[:1]}
+                )
             )
             smiles_path = base / "smiles.json"
             self._write_json(smiles_path, smiles)
@@ -1806,8 +1814,12 @@ class StrictAcceptanceTests(unittest.TestCase):
         clean = self._smiles("Compound 1", "S1", "CCCl")
         stale = self._smiles("Compound 1", "S1", "CC[Hg]")
 
-        clean_reusable, clean_errors = _smiles_results_can_be_reused([clean], payload)
-        stale_reusable, stale_errors = _smiles_results_can_be_reused([stale], payload)
+        clean_reusable, clean_errors = _smiles_results_can_be_reused(
+            build_smiles_artifact([clean]), payload
+        )
+        stale_reusable, stale_errors = _smiles_results_can_be_reused(
+            build_smiles_artifact([stale]), payload
+        )
 
         self.assertTrue(clean_reusable)
         self.assertEqual(clean_errors, [])

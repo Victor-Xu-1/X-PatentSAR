@@ -52,6 +52,12 @@ def completion_inputs(project: dict, rows: dict, compounds: list) -> list[tuple]
         owner = by_id.get(compound.id)
         if not owner or not row["image_path"] or not compound.structure_image_url:
             continue
+        if owner.get("additional_sources"):
+            raise WebError(
+                409,
+                "source_reprints_require_extraction",
+                "Repeated original depictions require full-source extraction, not primary-only completion.",
+            )
         if owner.get("structure_id") != compound.structure_id:
             raise WebError(
                 422,

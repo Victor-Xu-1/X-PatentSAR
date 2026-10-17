@@ -39,10 +39,13 @@ def recognition_status(
     result["status"] = (
         "unavailable"
         if flag is None
+        or (flag == "ok" and record.get("OCSR_status") is None)
         or record.get("OCSR_status")
         in {"unavailable", "engine_unavailable", "image_missing"}
         else "valid"
-        if record.get("rdkit_valid") is True and flag == "ok"
+        if record.get("rdkit_valid") is True
+        and flag == "ok"
+        and record.get("OCSR_status") == "success"
         else "invalid"
     )
     if legacy_mask_record(record):

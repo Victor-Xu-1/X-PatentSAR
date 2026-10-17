@@ -25,6 +25,7 @@ from patent_sar_extractor.core.ocsr.smiles_converter import (
 from patent_sar_extractor.core.ocsr.smiles_qc import qc_smiles
 from patent_sar_extractor.core.ocsr.stereo_evidence import source_checked_qc
 from patent_sar_extractor.core.ocsr.stereo_gate import validate_stereo_record
+from patent_sar_extractor.smiles_artifact import build_smiles_artifact
 from patent_sar_extractor.web.errors import WebError
 from patent_sar_extractor.web.recognition import recognition_status
 
@@ -305,7 +306,9 @@ class OCSRLabelPreservationTests(unittest.TestCase):
         validate_stereo_record(changed)
         self.assertTrue(validate_strict_smiles_results([binding], [changed]))
         self.assertTrue(
-            _smiles_acceptance_errors([changed], {"final_bindings": [binding]})
+            _smiles_acceptance_errors(
+                build_smiles_artifact([changed]), {"final_bindings": [binding]}
+            )
         )
 
     def test_historical_cleanup_is_readable_but_never_current_chemistry(self):

@@ -40,12 +40,14 @@ def smiles_epoch_current(payload: object, *, allow_unavailable: bool = False) ->
     if not isinstance(payload, dict):
         return False
     records, sources = payload.get("records"), payload.get("source_records", [])
+    reprints = payload.get("reprint_records", [])
     return (
         isinstance(records, list)
         and isinstance(sources, list)
+        and isinstance(reprints, list)
         and all(
             record_epoch_current(record, allow_unavailable=allow_unavailable)
-            for record in (*records, *sources)
+            for record in (*records, *sources, *reprints)
         )
     )
 

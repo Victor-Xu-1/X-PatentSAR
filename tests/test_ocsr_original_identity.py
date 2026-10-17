@@ -22,6 +22,7 @@ class OCSROriginalIdentityTests(unittest.TestCase):
             "raw_smiles": "CCO",
             "image_hash": "a" * 64,
             "OCSR_quality_flag": checked["quality_flag"],
+            "OCSR_status": "success",
             "stereochemistry": check_source_stereochemistry(
                 checked,
                 {

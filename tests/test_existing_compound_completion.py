@@ -13,11 +13,14 @@ from test_corpus_predictions import ControlledAnalysis, CorpusPredictionTests
 from test_prediction_support import PredictionFixture
 from test_uniform_recognition import observation
 
+from patent_sar_extractor.core.ocsr.recognition_inputs import recognition_inputs
 from patent_sar_extractor.web.admet_history import read_admet_stage
+from patent_sar_extractor.web.analysis_models import Property
 from patent_sar_extractor.web.correction_models import CorrectionRequest, EditableFields
 from patent_sar_extractor.web.errors import WebError
 from patent_sar_extractor.web.exports import export_json
 from patent_sar_extractor.web.jobs import JobQueue, decode_spec
+from patent_sar_extractor.web.lead_endpoints import LEAD_ENDPOINTS
 from patent_sar_extractor.web.prediction_worker import run_predictions
 from patent_sar_extractor.web.processes import CLIProcessRunner
 from patent_sar_extractor.web.service import WorkspaceService
@@ -26,6 +29,23 @@ from patent_sar_extractor.web.service import WorkspaceService
 class CompletionAnalysis(ControlledAnalysis):
     def _operation(self, cancel=None):
         return nullcontext()
+
+    def admet(self, smiles, *, cancel=None):
+        response = super().admet(smiles, cancel=cancel)
+        # The production cache requires the full reviewed endpoint inventory.
+        # These explicit controlled probabilities are test data, not predictions.
+        for prediction in response.predictions:
+            prediction.properties.extend(
+                Property(
+                    key=key,
+                    label=key,
+                    value=0.5,
+                    unit="probability [0,1]",
+                    kind="prediction",
+                )
+                for key in LEAD_ENDPOINTS
+            )
+        return response
 
 
 class ControlledConverter:
@@ -57,7 +77,15 @@ class ControlledConverter:
 
 class ExistingCompoundCompletionTests(PredictionFixture, unittest.TestCase):
     def catalog(self):
-        CompoundCatalogViewTests.catalog_run(self)
+        _, payload = CompoundCatalogViewTests.catalog_run(self)
+        path = self.run / "smiles/smiles_results.json"
+        artifact = json.loads(path.read_text())
+        # These scenarios begin with an independently qualified active owner;
+        # incomplete/different reprints have separate source-consistency controls.
+        artifact["reprint_records"] = [
+            observation(source) for source in recognition_inputs(payload).reprints
+        ]
+        path.write_text(json.dumps(artifact))
         self.service.refresh(self.project.id)
         ControlledConverter.calls = []
         ControlledConverter.closed = False

@@ -34,6 +34,8 @@ from patent_sar_extractor.core.formal_structure import (
     SOURCE_EXECUTION_MODE,
     coverage_errors,
 )
+from patent_sar_extractor.core.ocsr.recognition_inputs import recognition_inputs
+from patent_sar_extractor.core.ocsr.reprint_consistency import reprint_findings
 from patent_sar_extractor.failures import write_failure_marker
 from patent_sar_extractor.smiles_artifact import (
     smiles_artifact_is_current,
@@ -89,10 +91,12 @@ def export_validation(
         ):
             raise ValueError("Malformed activity classification for export")
     errors.extend(activity_evidence_errors(activity, pages))
+    source_findings = reprint_findings(recognition_inputs(binding_payload), smiles)
     bindings, records, findings = qualified_records(
         binding_payload["final_bindings"],
         smiles_records(smiles),
         str(Path(bindings_path).parent.parent),
+        source_findings=source_findings,
     )
     errors.extend(findings)
     return bindings, records, list(dict.fromkeys(errors))

@@ -93,6 +93,9 @@ def complete_payloads():
     )
     payloads["smiles"].update(
         execution_mode="production_decimer",
+        formal_acceptance_scope="proved_printed_identifier_structure_corpus",
+        source_records=[],
+        reprint_records=[],
         records=[
             {
                 "cpd_id": "Compound 1",
@@ -100,6 +103,7 @@ def complete_payloads():
                 "canonical_smiles": "CCO",
                 "rdkit_valid": True,
                 "OCSR_quality_flag": "ok",
+                "OCSR_status": "success",
             }
         ],
     )

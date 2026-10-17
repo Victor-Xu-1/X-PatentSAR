@@ -1,5 +1,29 @@
 # Operations and troubleshooting
 
+## Repeated original structures (unpublished v0.2.32)
+
+A repeated printed identifier is not proof that its drawings are chemically
+identical. SMILES schema3 retains every proved additional depiction in
+`reprint_records`; the same recognition worker processes every source. One compound
+still occupies one table row. All source roles share the 25,000-observation cap,
+actual-work timeout and byte/proof-dependent checkpoint. Overflow, failed source
+execution or missing observations cannot be recorded as complete coverage.
+
+`source_reprint_review` means at least one original is unobserved, unqualified or
+chemically different. The owner remains visible with its original sources, but
+cannot enter qualified SDF, automatic properties or accepted formal output. There
+is no confidence-based winner. A changed reprint invalidates current source use
+even when its primary image did not change. Old schema2 results stay historical;
+do not retag them or delete original/manual evidence to pass the new gate.
+
+Until full-source completion is integrated into the existing prediction carrier,
+the primary-only completion action explicitly refuses an unsettled repeated
+owner (`source_reprints_require_extraction`). Resume/re-submit extraction through
+the frontend to obtain all original observations; do not independently fill a
+missing molecular record. This usability follow-up is open, not silently skipped.
+Production remains unchanged until the reviewed PR is merged, exact-main wheel is
+deployed at unchanged18765 and affected Chrome/API/frontend science is verified.
+
 ## Original unruled structure columns
 
 Wrapped headers are inspected as complete original word windows,not corrected
@@ -1389,12 +1413,13 @@ and source jumps retain their chosen page after refresh. With no extracted
 structure source yet, use **浏览原文** only when deliberately opening page 1.
 
 The same recognition batch now includes confirmed numbered structures without
-activities. SMILES schema v2 keeps their source observations separate from the
+activities. Historical SMILES schema v2 kept their source observations separate from the
 formal association list; both use identical chemistry/source-stereo QC and the
 same six-property worker. Rejected recognized molecules cannot enter inference,
 including activity-associated ones. A historical activity-only SMILES checkpoint
 is not complete-catalog evidence: use the completion action for an existing
-verified printed-ID catalog. If source ownership is missing, a new extraction
+verified single-depiction printed-ID catalog. Repeated depictions require the
+complete source treatment described above. If source ownership is missing, a new extraction
 is needed; never assign anonymous crops guessed IDs. Product release numbering, API v1 and SQLite v1 remain unchanged. Software jobs establish
 new source-bound records without deleting old audit; expanding source coverage alone
 does not reset the independent ADMET cache/runtime identity. Do not populate

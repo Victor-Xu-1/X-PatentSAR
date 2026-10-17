@@ -13,11 +13,11 @@ from .smiles_qc import qc_smiles
 from .stereo_evidence import check_source_stereochemistry
 
 
-def validate_stereo_record(
+def validate_stereo_observation(
     record: dict[str, Any],
     binding: dict | None = None,
     source_record: dict | None = None,
-) -> dict[str, Any]:
+) -> tuple[dict[str, Any], dict[str, Any]]:
     evidence = record.get("stereochemistry")
     if (
         not isinstance(evidence, dict)
@@ -76,7 +76,38 @@ def validate_stereo_record(
         raise ValueError(
             "Canonical molecule differs from the unmodified raw model observation"
         )
-    return expected
+    if record.get("rdkit_valid") is True and not qc.get("rdkit_valid"):
+        raise ValueError(
+            "Declared molecular validity contradicts the raw model observation"
+        )
+    if record.get("OCSR_quality_flag") == "ok" and qc.get("quality_flag") != "ok":
+        raise ValueError(
+            "Declared clean chemistry contradicts the raw model observation"
+        )
+    alternate = record.get("smiles")
+    if (
+        alternate is not None
+        and alternate not in (raw, qc.get("canonical_smiles"))
+        and (
+            not isinstance(alternate, str)
+            or not 0 < len(alternate) <= 10000
+            or qc_smiles(alternate).get("canonical_smiles")
+            != qc.get("canonical_smiles")
+        )
+    ):
+        raise ValueError(
+            "Alternate molecular text contradicts the original model graph"
+        )
+    return qc, expected
+
+
+def validate_stereo_record(
+    record: dict[str, Any],
+    binding: dict | None = None,
+    source_record: dict | None = None,
+) -> dict[str, Any]:
+    """Expose source evidence through the same single fresh-QC evaluation."""
+    return validate_stereo_observation(record, binding, source_record)[1]
 
 
 def stereo_record_error(

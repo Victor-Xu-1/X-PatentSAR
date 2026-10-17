@@ -7,6 +7,7 @@ from typing import Any
 
 from patent_sar_extractor import contracts as core
 from patent_sar_extractor.core.structure_inventory import structure_coverage_errors
+from patent_sar_extractor.smiles_artifact import smiles_artifact_is_current
 
 from .models import STAGES, Acceptance
 from .source_epoch import smiles_epoch_current
@@ -58,7 +59,11 @@ ARTIFACTS = {
 def current(payload: object, name: str) -> bool:
     _, schema, version = ARTIFACTS[name]
     return core.artifact_identity_matches(payload, schema, version) and (
-        name != "smiles" or smiles_epoch_current(payload, allow_unavailable=True)
+        name != "smiles"
+        or (
+            smiles_artifact_is_current(payload)
+            and smiles_epoch_current(payload, allow_unavailable=True)
+        )
     )
 
 
@@ -258,7 +263,7 @@ def authority(
     from patent_sar_extractor.application.smiles_policy import _smiles_acceptance_errors
 
     recognition_errors = _smiles_acceptance_errors(
-        payloads["smiles"]["records"], payloads["bindings"]
+        payloads["smiles"], payloads["bindings"]
     )
     if recognition_errors:
         return Acceptance(

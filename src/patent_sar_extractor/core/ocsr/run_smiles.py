@@ -41,7 +41,6 @@ from patent_sar_extractor.contracts import (
     artifact_identity_matches,
 )
 from patent_sar_extractor.core.cpd_filter import filter_examples_only
-from patent_sar_extractor.core.ocsr.label_mask import source_geometry
 from patent_sar_extractor.core.ocsr.observation_completion import (
     publish_scientific_findings,
     require_complete_source_results,
@@ -51,8 +50,12 @@ from patent_sar_extractor.core.ocsr.recognition_inputs import (
     ordered_source_results,
     recognition_inputs,
 )
+from patent_sar_extractor.core.ocsr.recognition_policy import (
+    recognition_acceptance_errors,
+    validate_strict_smiles_results,
+)
+from patent_sar_extractor.core.ocsr.recognition_source_paths import resolve_image_paths
 from patent_sar_extractor.core.ocsr.smiles_converter import SmilesConverter
-from patent_sar_extractor.core.ocsr.stereo_gate import stereo_record_error
 from patent_sar_extractor.core.pipeline_rules import (
     _label_key,
     annotate_binding_accuracy,
@@ -63,7 +66,7 @@ from patent_sar_extractor.smiles_artifact import (
     build_smiles_artifact,
 )
 
-WORKING_ROOT = str(Path.cwd())
+__all__ = ["resolve_image_paths", "validate_strict_smiles_results"]
 
 
 def load_bindings(input_path: str) -> list:
@@ -144,207 +147,6 @@ def validate_strict_binding_input(input_path: str, bindings: list) -> list[str]:
             )
         seen_structures.add(sid)
     return errors
-
-
-def validate_strict_smiles_results(bindings: list, results: list) -> list[str]:
-    """Require exactly one clean result for each confirmed structure in binding order."""
-    expected = [
-        (
-            _label_key(binding.get("cpd", binding.get("cpd_id", ""))),
-            str(binding.get("structure_id") or ""),
-        )
-        for binding in bindings
-        if isinstance(binding, dict)
-    ]
-    actual = [
-        (
-            _label_key(result.get("cpd_id", "")),
-            str(result.get("structure_id") or ""),
-        )
-        for result in results
-        if isinstance(result, dict)
-    ]
-    errors = []
-    if (
-        len(expected) != len(bindings)
-        or len(actual) != len(results)
-        or actual != expected
-        or any(not label or not image for label, image in expected)
-        or len({label for label, _ in expected}) != len(expected)
-        or len({image for _, image in expected}) != len(expected)
-    ):
-        errors.append(
-            "OCSR result records are not a one-to-one ordered match for confirmed structure bindings."
-        )
-    for index, result in enumerate(results):
-        if not isinstance(result, dict):
-            errors.append("OCSR produced a malformed output record.")
-            continue
-        cpd = _label_key(result.get("cpd_id", "")) or "unknown compound"
-        suspicious = result.get("suspicious_elements") or []
-        binding = (
-            bindings[index]
-            if index < len(bindings) and isinstance(bindings[index], dict)
-            else None
-        )
-        stereo_error = stereo_record_error(result, binding)
-        if stereo_error:
-            errors.append(
-                f"{cpd}: source stereochemistry requires review: {stereo_error}"
-            )
-        if (
-            not result.get("rdkit_valid")
-            or not result.get("canonical_smiles")
-            or result.get("OCSR_quality_flag", "ok") != "ok"
-            or suspicious
-        ):
-            errors.append(
-                f"{cpd}: no automatically acceptable SMILES "
-                f"(quality={result.get('OCSR_quality_flag')}, suspicious={suspicious})."
-            )
-    return errors
-
-
-def _load_structure_image_lookup(base_dir: str = "") -> dict[str, dict]:
-    lookup: dict[str, dict] = {}
-    if not base_dir:
-        return lookup
-    base = Path(base_dir).resolve()
-    candidate_roots = [base, base.parent, base.parent.parent]
-    candidates = [root / "structures" / "metadata.json" for root in candidate_roots]
-    for metadata_path in candidates:
-        if not metadata_path.is_file():
-            continue
-        try:
-            with open(metadata_path, "r", encoding="utf-8") as f:
-                payload = json.load(f)
-        except (OSError, ValueError) as exc:
-            raise ValueError("Structure metadata lookup is unreadable") from exc
-        records = payload.get("structures") if isinstance(payload, dict) else payload
-        if not isinstance(records, list):
-            continue
-        for rec in records:
-            if not isinstance(rec, dict):
-                continue
-            sid = str(rec.get("structure_id") or rec.get("id") or "").strip()
-            img = str(rec.get("image_path") or "").strip()
-            if sid and img:
-                lookup[sid] = rec
-        if lookup:
-            break
-    return lookup
-
-
-def _is_clean_segmented_structure(rec: dict) -> bool:
-    bbox = rec.get("bbox_pdf") or []
-    if len(bbox) != 4:
-        return False
-    width = max(0.0, float(bbox[2]) - float(bbox[0]))
-    height = max(0.0, float(bbox[3]) - float(bbox[1]))
-    area = width * height
-    aspect = width / max(height, 1.0)
-    return area >= 4200 and width >= 100 and height >= 28 and aspect <= 5.5
-
-
-def _choose_ocsr_image_path(
-    item: dict, structure_lookup: dict[str, dict] | None = None
-) -> str:
-    """Choose the cleanest available image for OCSR."""
-    ocsr_path = str(item.get("ocsr_image_path") or "").strip()
-    if ocsr_path and os.path.isfile(ocsr_path):
-        return ocsr_path
-
-    image_path = str(
-        item.get("image_path") or item.get("structure_image") or ""
-    ).strip()
-    rule = str(item.get("binding_rule") or "")
-    source_sid = str(item.get("source_structure_id") or "").strip()
-    if (
-        structure_lookup
-        and source_sid
-        and (
-            "expanded_strict_labels" in image_path
-            or "merged_fragment" not in rule
-            and str(item.get("expanded_from_fragment") or "")
-        )
-    ):
-        # Expanded strict-label crops are visual evidence crops; use the original
-        # segmented structure for OCSR when it is available.
-        source_rec = structure_lookup.get(source_sid) or {}
-        src_img = str(source_rec.get("image_path") or "").strip()
-        if (
-            _is_clean_segmented_structure(source_rec)
-            and src_img
-            and os.path.isfile(src_img)
-        ):
-            return src_img
-
-    source_path = str(item.get("source_image_path") or "").strip()
-    if source_path and os.path.isfile(source_path):
-        return source_path
-
-    if image_path and os.path.isfile(image_path):
-        return image_path
-    if image_path:
-        return image_path
-    return str(item.get("source_image_path") or item.get("ocsr_image_path") or "")
-
-
-def resolve_image_paths(bindings: list, base_dir: str = "") -> list:
-    """Resolve image paths to absolute paths.
-
-    Binding output may contain relative ``image_path`` values.
-    Try to resolve them relative to base_dir or the caller's working directory.
-    """
-    structure_lookup = _load_structure_image_lookup(base_dir)
-
-    def attach_source(item, image_path):
-        item["ocsr_image_path"] = os.path.abspath(image_path)
-        item.pop("_ocsr_source_geometry", None)
-        record = structure_lookup.get(
-            str(item.get("source_structure_id") or item.get("structure_id") or "")
-        )
-        if (
-            record is not None
-            and record.get("page_no") == item.get("page_no")
-            and isinstance(item.get("exact_caption_evidence"), dict)
-        ):
-            try:
-                frame = source_geometry(record, item["ocsr_image_path"])
-            except (OSError, ValueError):
-                # Optional caption removal may not erase/replace an unreadable
-                # source. The converter still records the original image error.
-                item["_ocsr_source_frame_unavailable"] = True
-                frame = None
-            if frame is not None:
-                item["_ocsr_source_geometry"] = frame
-
-    resolved = []
-    for item in bindings:
-        item = dict(item)  # Copy
-        img_path = _choose_ocsr_image_path(item, structure_lookup)
-
-        if img_path and not os.path.isabs(img_path):
-            # Try relative to base_dir
-            if base_dir:
-                abs_path = os.path.join(base_dir, img_path)
-                if os.path.isfile(abs_path):
-                    attach_source(item, abs_path)
-                    resolved.append(item)
-                    continue
-
-            # Try relative to the caller's working directory.
-            abs_path = os.path.join(WORKING_ROOT, img_path)
-            if os.path.isfile(abs_path):
-                attach_source(item, abs_path)
-                resolved.append(item)
-                continue
-
-        if img_path and os.path.isfile(img_path):
-            attach_source(item, img_path)
-        resolved.append(item)
-
-    return resolved
 
 
 def print_summary(results: list, output_json: str, output_csv: str, elapsed: float):
@@ -554,13 +356,16 @@ def main():
     # Formal QA keeps its ordered association view; no-activity rows are not
     # silently omitted or falsely labelled as formally accepted measurements.
     supplemental = []
+    reprints = []
     binding_payload = {}
     if not args.diagnostic_unvalidated_input:
         with open(args.input, "r", encoding="utf-8") as source:
             binding_payload = json.load(source)
-        _, supplemental = recognition_inputs(binding_payload)
+        plan = recognition_inputs(binding_payload)
+        supplemental, reprints = plan.supplemental, plan.reprints
         if not args.include_intermediates:
             supplemental = filter_examples_only(supplemental)
+            reprints = filter_examples_only(reprints)
     if args.continue_on_scientific_errors:
         validate_source_observation_mode(
             binding_payload,
@@ -570,13 +375,15 @@ def main():
             include_unbound=args.include_unbound,
         )
     formal_count = len(bindings)
-    all_inputs = [*bindings, *supplemental]
+    primary_count = formal_count + len(supplemental)
+    all_inputs = [*bindings, *supplemental, *reprints]
 
     # Resolve image paths
     base_dir = os.path.dirname(os.path.abspath(args.input))
     all_inputs = resolve_image_paths(all_inputs, base_dir)
     bindings = all_inputs[:formal_count]
-    supplemental = all_inputs[formal_count:]
+    supplemental = all_inputs[formal_count:primary_count]
+    reprints = all_inputs[primary_count:]
 
     # Check how many images are accessible
     images_found = sum(
@@ -646,7 +453,8 @@ def main():
 
     elapsed = time.time() - start_time
     formal_results = results[:formal_count]
-    source_results = results[formal_count:]
+    source_results = results[formal_count:primary_count]
+    reprint_results = results[primary_count:]
     if args.continue_on_scientific_errors:
         require_complete_source_results(bindings, formal_results)
     if not args.diagnostic_unvalidated_input and not ordered_source_results(
@@ -654,6 +462,12 @@ def main():
     ):
         raise RuntimeError(
             "Source recognition output does not match the proved catalog in order."
+        )
+    if not args.diagnostic_unvalidated_input and not ordered_source_results(
+        reprints, reprint_results
+    ):
+        raise RuntimeError(
+            "Reprint recognition omitted or misassigned original sources."
         )
 
     # Save one versioned JSON artifact; bare lists are intentionally rejected
@@ -663,12 +477,13 @@ def main():
         if args.diagnostic_unvalidated_input
         else PRODUCTION_SMILES_MODE
     )
-    write_json_atomic(
-        args.output,
-        build_smiles_artifact(
-            formal_results, execution_mode=execution_mode, source_records=source_results
-        ),
+    artifact = build_smiles_artifact(
+        formal_results,
+        execution_mode=execution_mode,
+        source_records=source_results,
+        reprint_records=reprint_results,
     )
+    write_json_atomic(args.output, artifact)
 
     # Save CSV output
     try:
@@ -693,7 +508,7 @@ def main():
             f"{stats['valid_entries']} valid"
         )
     if not args.diagnostic_unvalidated_input:
-        result_errors = validate_strict_smiles_results(bindings, formal_results)
+        result_errors = recognition_acceptance_errors(artifact, binding_payload)
         publish_scientific_findings(
             os.path.dirname(args.output) or ".",
             result_errors,
