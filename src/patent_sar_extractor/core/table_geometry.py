@@ -6,6 +6,7 @@ detector implementation may become an independent row-ownership authority.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
 from io import BytesIO
@@ -53,6 +54,11 @@ def detect_ruled_table_regions(page, dpi: int = 300) -> list[dict]:
 
     pix = page.get_pixmap(matrix=fitz.Matrix(dpi / 72, dpi / 72))
     img = np.array(Image.open(BytesIO(pix.tobytes("png"))).convert("L"))
+    rule_frame = {
+        "dpi": dpi,
+        "shape": list(img.shape),
+        "pixel_sha256": hashlib.sha256(img).hexdigest(),
+    }
     bw = cv2.threshold(img, 200, 255, cv2.THRESH_BINARY_INV)[1]
     scale = 72.0 / dpi
 
@@ -206,6 +212,7 @@ def detect_ruled_table_regions(page, dpi: int = 300) -> list[dict]:
                     and seg["y1"] >= y0
                     and seg["y0"] <= y1
                 ],
+                "rule_frame": rule_frame,
             }
         )
     return tables

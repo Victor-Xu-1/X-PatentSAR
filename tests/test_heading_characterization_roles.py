@@ -59,6 +59,34 @@ def characterization_page(doc, *, unknown=False, standalone=False):
 
 
 class HeadingCharacterizationRoleTests(unittest.TestCase):
+    def test_open_bottom_characterization_row_keeps_primary_and_method_roles(self):
+        with fitz.open() as doc:
+            page = characterization_page(doc)
+            # Original side/column rules continue below the last closed row.
+            # There is no invented bottom edge and no complete-cell QA claim.
+            for x in (40, 140, 315, 530):
+                page.draw_line((x, 250), (x, 340))
+            page.insert_text((48, 270), "Compound 105", fontsize=9)
+            page.insert_text(
+                (148, 270), "Prepared in analogy to\nCompound 118", fontsize=9
+            )
+            page.insert_text(
+                (325, 270), "1H NMR (400 MHz) 7.3 ppm;\nMS (ESI) m/z 441.1", fontsize=9
+            )
+            sections = []
+            blocks = observed_heading_blocks(doc, [0], {}, source_sections=sections)
+        with self.subTest(role="method reference"):
+            self.assertNotIn("Compound 118", [block["cpd"] for block in blocks])
+        with self.subTest(role="original primary identifier"):
+            self.assertTrue(
+                any(
+                    section["role"] == "characterization_identifier"
+                    and section["identifier"] == "105"
+                    for section in sections
+                ),
+                "The visible primary original identifier must not disappear with its open row",
+            )
+
     def test_native_preparation_references_remain_source_not_new_headings(self):
         with fitz.open() as doc:
             characterization_page(doc)

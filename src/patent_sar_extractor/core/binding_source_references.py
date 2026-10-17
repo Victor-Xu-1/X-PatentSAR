@@ -8,7 +8,9 @@ from .binding_source_regions import identifier_references, reference_cell
 from .caption_role_proof import validate_caption_exclusions
 from .heading_inventory import heading_inventory_issues, heading_sections
 from .printed_identifiers import identifier_key
+from .source_fragment_links import resolved_fragments
 from .source_geometry import _box
+from .source_role_fragments import fragment_issues, validate_fragments
 from .source_section_roles import section_heading
 
 MAX_SOURCE_SECTIONS = 25000
@@ -29,7 +31,7 @@ def reference_scope(sections, original_pdf_sha256=""):
     if not original_pdf_sha256 and len(origins) == 1:
         original_pdf_sha256 = next(iter(origins))
     return {
-        "version": 3,
+        "version": 4,
         "original_pdf_sha256": original_pdf_sha256,
         "region_ids": [region["region_id"] for region in regions],
         "caption_region_ids": [
@@ -53,13 +55,13 @@ def _regions(sections, scope):
                 "caption_region_ids",
                 "heading_ids",
             }
-            if scope.get("version") == 3
+            if scope.get("version") in {3, 4}
             else {"version", "original_pdf_sha256", "region_ids", "caption_region_ids"}
             if scope.get("version") == 2
             else {"version", "original_pdf_sha256", "region_ids"}
         )
         or type(scope["version"]) is not int
-        or scope["version"] not in {1, 2, 3}
+        or scope["version"] not in {1, 2, 3, 4}
         or not isinstance(scope["original_pdf_sha256"], str)
         or scope["original_pdf_sha256"]
         and not _SHA.fullmatch(scope["original_pdf_sha256"])
@@ -75,7 +77,7 @@ def _regions(sections, scope):
     if (
         scope["version"] == 1
         and captions
-        or scope["version"] in {2, 3}
+        or scope["version"] in {2, 3, 4}
         and scope.get("caption_region_ids")
         != [proof_id(section) for section in captions]
     ):
@@ -90,15 +92,22 @@ def _regions(sections, scope):
         if (
             not isinstance(region, dict)
             or set(region)
-            != {
-                "page_no",
-                "bbox",
-                "role_scope",
-                "status",
-                "original_pdf_sha256",
-                "geometry_space",
-                "region_id",
-            }
+            != (
+                {
+                    "page_no",
+                    "bbox",
+                    "role_scope",
+                    "status",
+                    "original_pdf_sha256",
+                    "geometry_space",
+                    "region_id",
+                }
+                | (
+                    {"grid_edges", "row_fragments", "fragment_context"}
+                    if scope["version"] == 4
+                    else set()
+                )
+            )
             or type(region["page_no"]) is not int
             or not 1 <= region["page_no"] <= 20000
             or type(section.get("page_no")) is not int
@@ -115,6 +124,8 @@ def _regions(sections, scope):
         ):
             raise ValueError("Unproved original binding reference region")
         _box(region["bbox"])
+        if scope["version"] == 4:
+            validate_fragments(region)
         regions[region["region_id"]] = region
     if scope["region_ids"] != list(regions):
         raise ValueError("Original binding reference region coverage differs")
@@ -144,8 +155,8 @@ def reference_issues(payload, entries, *, required=True):
     ):
         return []
     regions = _regions(sections, scope)
-    if required and scope["version"] != 3:
-        raise ValueError("Current original source inventory requires heading coverage")
+    if required and scope["version"] != 4:
+        raise ValueError("Current original source inventory requires open-row coverage")
     expected = [
         reference
         for region in regions.values()
@@ -199,6 +210,9 @@ def reference_issues(payload, entries, *, required=True):
             raise ValueError("Unproved original method-reference cell ownership")
     labels = {identifier_key(entry.get("cpd"), wrapped=True) for entry in entries}
     issues = heading_inventory_issues(sections, scope, entries)
+    issues.extend(
+        fragment_issues(regions.values(), resolved_fragments(regions.values()))
+    )
     for reference in expected:
         role = reference["source_role"]
         if (

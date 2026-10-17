@@ -1,13 +1,23 @@
 # Project governance manifest
 
+- Open original rows: `source_grid_edges` consumes the existing physical detector,
+  retaining exact raster frames and raw rules. `source_role_fragments`,
+  `source_fragment_context` and `source_fragment_links` share one role-cell SDK,
+  bounded full-context capture and pure unique-adjacent replay in the existing
+  reference ledger(scope4). No guessed edge/ID/cell or separate completion writer.
+  `cell_frame_proof` replaces the private heading frame validator. Binding19/
+  binder28 change derived ownership; activity17/26/13, raw observations/model,
+  visible19/preparation7, manual/graph/SAR/API/SQL/dependencies stay unchanged.
+  Unproved or missing fragments remain explicit; raw data are never retagged.
+
 - Original headings: shared literal section-role parsing plus bounded physical
   line windows feed the single source-binding coordinator/writer. Responsibility
   modules `heading_observation`, `heading_source_geometry`, `heading_source_proof`
   and `heading_inventory` capture/replay existing native/coordinate-cell facts;
   the private250dpi recognizer is removed. Groups do not assign diagram order.
-  Every page remains in the declaration inventory, and scope3 content addresses
+  Every page remains in the declaration inventory, and scope4 content addresses
   all members/roles. Producer/formal/catalog/Web/SAR share missing-member and
-  downgrade checks. Binding18/binder27/activity17/extractor26/coverage13 revise
+  downgrade checks. Binding19/binder28/activity17/extractor26/coverage13 revise
   derived semantics only; raw2/OCSR2/visible19/preparation7/manual/graph/SAR/API/
   SQL/dependencies stay. No second queue, model, asset store, API or acceptance
   authority. Controlled checks do not establish universal or chemical acceptance.

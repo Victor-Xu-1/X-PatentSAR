@@ -14,7 +14,10 @@ from .printed_identifiers import (
     identifier_key,
     identifier_width,
 )
+from .source_fragment_context import observe_fragment_context
 from .source_geometry import _box
+from .source_grid_edges import original_grid_edges
+from .source_role_fragments import fragment_texts, observe_fragments, validate_fragments
 from .source_section_roles import nonfinal_original_label, section_heading
 from .table_geometry import detect_ruled_table_regions, page_tokens
 
@@ -50,9 +53,15 @@ def reference_regions(page, *, original_pdf_sha256, grids=None, tokens=None):
             "status": "observed_characterization",
             "original_pdf_sha256": original_pdf_sha256,
             "geometry_space": "rendered",
+            "grid_edges": original_grid_edges(page, original_grid),
         }
+        record["row_fragments"] = observe_fragments(page, record["grid_edges"], tokens)
+        record["fragment_context"] = observe_fragment_context(
+            tokens, record["grid_edges"], record["row_fragments"]
+        )
         if not valid_role_scope(record):
             raise ValueError("Unproved original characterization region")
+        validate_fragments(record)
         regions.append({**record, "region_id": proof_id(record)})
     return regions
 
@@ -88,6 +97,38 @@ def collect_reference_regions(
     return output
 
 
+def _reference_cells(region):
+    scope = region["role_scope"]
+    for row, (y0, y1) in enumerate(pairwise(scope["ys"])):
+        if row < scope["roles"]["data_start"]:
+            continue
+        for column, (x0, x1) in enumerate(pairwise(scope["xs"])):
+            yield {
+                "grid_row": row,
+                "grid_column": column,
+                "bbox": [x0, y0, x1, y1],
+                "qualified": True,
+                "raw_texts": [o["matrix"][row][column] for o in scope["observations"]],
+                "hint": scope["native_hints"][row][column],
+            }
+    for index, fragment in enumerate(region.get("row_fragments", [])):
+        source = fragment["source_cells"]
+        if source is None:
+            continue
+        row = -1 if fragment["edge"] == "top" else len(scope["ys"]) - 1
+        for column, (x0, x1) in enumerate(pairwise(scope["xs"])):
+            qualified = fragment_texts(region, fragment, column)
+            yield {
+                "grid_row": row,
+                "grid_column": column,
+                "fragment_index": index,
+                "bbox": [x0, fragment["bbox"][1], x1, fragment["bbox"][3]],
+                "qualified": qualified is not None,
+                "raw_texts": [o["matrix"][0][column] for o in source["observations"]],
+                "hint": source["native_hints"][0][column],
+            }
+
+
 def reference_cell(line, regions):
     """Only a wholly owned original line, never a whole-page vertical hint."""
     if line.get("geometry_space") != "rendered" or line.get("source") not in {
@@ -99,32 +140,29 @@ def reference_cell(line, regions):
     owners = []
     for region in regions:
         scope = region["role_scope"]
-        for row, (y0, y1) in enumerate(pairwise(scope["ys"])):
-            if row < scope["roles"]["data_start"]:
+        for cell in _reference_cells(region):
+            role = scope["roles"]["columns"][cell["grid_column"]]
+            if role not in {"identifier", "preparation"} or not cell["qualified"]:
                 continue
-            for column, (x0, x1) in enumerate(pairwise(scope["xs"])):
-                role = scope["roles"]["columns"][column]
-                if role not in {"identifier", "preparation"}:
+            x0, y0, x1, y1 = cell["bbox"]
+            if x0 <= box.x0 < box.x1 <= x1 and y0 <= box.y0 < box.y1 <= y1:
+                text = _reference_text(line.get("text", ""))
+                if not text or not all(
+                    re.search(re.escape(text) + r"(?![\w/-])", _reference_text(raw))
+                    for raw in cell["raw_texts"]
+                ):
                     continue
-                if x0 <= box.x0 < box.x1 <= x1 and y0 <= box.y0 < box.y1 <= y1:
-                    text = _reference_text(line.get("text", ""))
-                    originals = [
-                        observation["matrix"][row][column]
-                        for observation in scope["observations"]
-                    ]
-                    if not text or not all(
-                        re.search(re.escape(text) + r"(?![\w/-])", _reference_text(raw))
-                        for raw in originals
-                    ):
-                        continue
-                    owners.append(
-                        {
-                            "source_region": region["region_id"],
-                            "grid_row": row,
-                            "grid_column": column,
-                            "reference_kind": role,
-                        }
-                    )
+                owners.append(
+                    {
+                        "source_region": region["region_id"],
+                        "reference_kind": role,
+                        **{
+                            k: cell[k]
+                            for k in ("grid_row", "grid_column", "fragment_index")
+                            if k in cell
+                        },
+                    }
+                )
     return owners[0] if len(owners) == 1 else None
 
 
@@ -133,10 +171,16 @@ def identifier_references(region):
     scope = region["role_scope"]
     column = scope["roles"]["columns"].index("identifier")
     references = []
-    for row in range(scope["roles"]["data_start"], len(scope["ys"]) - 1):
-        originals = [
-            observation["matrix"][row][column] for observation in scope["observations"]
-        ]
+    for cell in _reference_cells(region):
+        if cell["grid_column"] != column:
+            continue
+        originals = cell["raw_texts"]
+        if (
+            "fragment_index" in cell
+            and cell["qualified"]
+            and not any(text.strip() for text in [*originals, cell["hint"]])
+        ):
+            continue  # Retained blank fragment, never a fabricated compound or zero.
         keys, nonfinal = set(), set()
         for raw in originals:
             heading = section_heading(raw)
@@ -146,7 +190,7 @@ def identifier_references(region):
                 else identifier_key(raw, wrapped=True, terminal_period=True)
             )
             nonfinal.add(nonfinal_original_label(raw))
-        hint = scope["native_hints"][row][column]
+        hint = cell["hint"]
         if hint.strip():
             heading = section_heading(hint)
             keys.add(
@@ -171,7 +215,8 @@ def identifier_references(region):
             else "terminal_reference"
         )
         if (
-            len(keys) != 1
+            not cell["qualified"]
+            or len(keys) != 1
             or "" in keys
             or len(nonfinal) != 1
             or intermediate_header
@@ -183,17 +228,15 @@ def identifier_references(region):
                 "role": "characterization_identifier",
                 "page_no": region["page_no"],
                 "source_region": region["region_id"],
-                "grid_row": row,
-                "grid_column": column,
+                **{
+                    k: cell[k]
+                    for k in ("grid_row", "grid_column", "fragment_index")
+                    if k in cell
+                },
                 "identifier": next(iter(keys)) if len(keys) == 1 else "",
                 "source_role": role,
                 "raw_texts": originals,
-                "bbox": [
-                    scope["xs"][column],
-                    scope["ys"][row],
-                    scope["xs"][column + 1],
-                    scope["ys"][row + 1],
-                ],
+                "bbox": cell["bbox"],
             }
         )
     return references
