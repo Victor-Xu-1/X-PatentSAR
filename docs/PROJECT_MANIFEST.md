@@ -1,5 +1,12 @@
 # Project governance manifest
 
+- Occurrence-ownership draft:the existing caption/label role SDK now includes
+  current proved numbered ID cells. The binder's global-label heading skips are
+  removed, and current heading replay requires an exact original observation
+  digest and literal member. Older recorded scopes remain historical readers,
+  not current admission. This unfinished repair awaits native positive/negative
+  and saved/Web consumers; no production/scientific acceptance is asserted.
+
 - Original column consumers distinguish complete inventory from independently
   trusted ownership. The shared body-context SDK feeds physical-row preparation,
   population replay, logical matching and nonfinal exclusion. A doubtful boundary

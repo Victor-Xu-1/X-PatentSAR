@@ -14,6 +14,13 @@ nearby row baseline overlaps a title. Those subsets cannot prove themselves:
 the complete original source projection still decides qualification/conflicts.
 No corrected strings, changed global line layout or guessed identifiers are used.
 
+Current heading coverage must match the same original heading observation and
+literal member, not merely find the number in another catalogue entry. The
+existing label-role SDK also recognizes independently proved numbered ID cells,
+so those cells do not masquerade as synthesis headings. The binder no longer
+skips a distinct heading because its label exists elsewhere. Historical scopes
+retain their recorded read interpretation; current scope6 cannot borrow it.
+
 Original boundary derivation now lives in the pure `source_body_context` SDK;
 `unruled_body_scope` supplies its column adapters. Complete source inventory and
 positively trusted ownership have separate bottoms. Doubtful, conflicting,

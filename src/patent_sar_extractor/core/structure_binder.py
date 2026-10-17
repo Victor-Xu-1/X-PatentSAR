@@ -6,7 +6,6 @@ import fitz
 
 from .binding_artifacts import write_binding_result
 from .binding_geometry import _process_structure
-from .binding_labels import _cpd_label_key
 from .binding_preparation import load_binding_input, prepare_binding_observations
 from .binding_source_headings import (
     _document_sha256,
@@ -79,11 +78,6 @@ def bind(
             if pages
             else []
         )
-        blocks = [
-            block
-            for block in blocks
-            if _cpd_label_key(block["cpd"]) not in spatial.ownership.label_keys
-        ]
         heading_bindings, heading_issues = (
             select_heading_bindings(
                 doc,
@@ -97,15 +91,6 @@ def bind(
             if blocks
             else ([], [])
         )
-        heading_bindings = [
-            binding
-            for binding in heading_bindings
-            if not spatial.ownership.protects(
-                _cpd_label_key(binding["cpd"]),
-                str(binding["structure_id"]),
-                int(binding["page_no"]) - 1,
-            )
-        ]
         issues = [
             {
                 "cpd": conflict.label_key,

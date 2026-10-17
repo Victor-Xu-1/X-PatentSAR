@@ -1,4 +1,4 @@
-"""Exact original caption references in the existing source-role ledger."""
+"""Exact original caption/identifier-cell roles in the existing source ledger."""
 
 import re
 from collections import defaultdict
@@ -14,7 +14,7 @@ MAX_SOURCES = 25000
 
 
 def caption_label_index(bindings, original_pdf_sha256):
-    """Only full original caption proof supplies a role window, never flags/IDs."""
+    """Only full original cell proof supplies a role window, never flags/IDs."""
     output, count = defaultdict(dict), 0
     if not isinstance(bindings, (list, tuple)) or len(bindings) > MAX_SOURCES:
         raise ValueError("Original caption-role sources exceed their bound")
@@ -28,7 +28,8 @@ def caption_label_index(bindings, original_pdf_sha256):
             count += 1
             if count > MAX_SOURCES or not isinstance(binding, dict):
                 raise ValueError("Malformed or excessive original caption-role sources")
-            if binding.get("binding_rule") != "original_caption_cell":
+            rule = binding.get("binding_rule")
+            if rule not in {"original_caption_cell", "numbered_structure_table_cell"}:
                 continue
             if (
                 not isinstance(original_pdf_sha256, str)
@@ -41,11 +42,23 @@ def caption_label_index(bindings, original_pdf_sha256):
                 "fail_closed"
             ):
                 continue
-            evidence = checked["exact_caption_evidence"]
+            field = (
+                "exact_caption_evidence"
+                if rule == "original_caption_cell"
+                else "numbered_table_cell_evidence"
+            )
+            evidence = checked[field]
+            bounds = (
+                evidence["bbox"]
+                if field == "exact_caption_evidence"
+                else evidence["label_bbox"]
+            )
             identifier = identifier_key(checked.get("cpd"), wrapped=True)
             key = proof_id(
                 {
-                    "status": "observed_original_caption",
+                    "status": "observed_original_caption"
+                    if rule == "original_caption_cell"
+                    else "observed_original_identifier_cell",
                     "original_pdf_sha256": original_pdf_sha256,
                     "identifier": identifier,
                     "structure_id": checked["structure_id"],
@@ -53,13 +66,13 @@ def caption_label_index(bindings, original_pdf_sha256):
                     "structure_bbox": [
                         checked["struct_" + axis] for axis in ("x0", "y0", "x1", "y1")
                     ],
-                    "exact_caption_evidence": evidence,
+                    field: evidence,
                 }
             )
             output[(evidence["page_no"], identifier)][key] = {
                 "source_key": key,
                 "identifier": identifier,
-                "bbox": list(evidence["bbox"]),
+                "bbox": list(bounds),
                 "original_pdf_sha256": original_pdf_sha256,
             }
     return dict(output)
