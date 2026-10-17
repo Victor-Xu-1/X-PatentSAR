@@ -7,7 +7,11 @@ from .activity_header_evidence import proof_id
 from .cell_identity_proof import confirmed_identity_readings
 from .printed_identifiers import identifier_key
 from .source_cell_claims import cell_source_status
-from .unruled_structure_headers import unruled_header_roles
+from .unruled_continuation_links import (
+    uncovered_continuation_issues,
+    validate_continuation_links,
+)
+from .unruled_scope import scope_roles
 from .unruled_structure_layout import (
     original_column_overlap,
     pair_evidence,
@@ -35,7 +39,7 @@ def valid_unruled_binding(binding):
     }:
         return False
     try:
-        roles = unruled_header_roles(evidence["header_scope"])
+        roles = scope_roles(evidence["header_scope"])
         label = evidence["row_label"]
         if (
             roles is None
@@ -198,6 +202,8 @@ def unruled_reference_issues(sections, scope, entries):
                 raise ValueError(
                     "Unruled binding differs from its complete original source"
                 )
+    validate_continuation_links(regions)
+    issues.extend(uncovered_continuation_issues(regions))
     for source in sources:
         evidence = source.get("numbered_table_cell_evidence") or {}
         if (

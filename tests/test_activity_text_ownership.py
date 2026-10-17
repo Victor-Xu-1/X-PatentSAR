@@ -33,6 +33,32 @@ def facade(folder, *pages):
 
 
 class TextOwnershipTests(unittest.TestCase):
+    def test_multiple_split_metric_headers_keep_every_endpoint_before_row_parsing(self):
+        result = extract_text_tables(
+            [0],
+            {
+                "0": "Table A. Binding activity\nCompound ID\nIC50 (nM)\nDC50 (pM)\nA17 0.8 2.4"
+            },
+        )
+        self.assertEqual([r.cpd for r in result.rows], ["Compound A17"])
+        self.assertEqual(
+            result.rows[0].activity_values, {"IC50 (nM)": "0.8", "DC50 (pM)": "2.4"}
+        )
+
+    def test_multiple_split_metric_headers_survive_actual_native_facade_and_replay(
+        self,
+    ):
+        with tempfile.TemporaryDirectory() as temp:
+            data = facade(
+                Path(temp),
+                "Table A. Binding activity\nCompound ID\nIC50 (nM)\nEC50 (nM)\nB80 0.7 3.1",
+            )
+        self.assertEqual([r["cpd"] for r in data["rows"]], ["Compound B80"])
+        self.assertEqual(
+            data["rows"][0]["activity_values"], {"IC50 (nM)": "0.7", "EC50 (nM)": "3.1"}
+        )
+        self.assertEqual(activity_evidence_errors(data, [0]), [])
+
     def test_new_experiment_stops_same_page_rows_and_next_page_context_borrow(self):
         texts = {
             "0": ROOT

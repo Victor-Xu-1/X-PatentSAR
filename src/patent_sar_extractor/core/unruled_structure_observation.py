@@ -1,22 +1,33 @@
 """Unruled columns join the existing original-cell owner and artifact writer."""
 
+from collections import defaultdict
 from dataclasses import dataclass
 
 from .activity_header_evidence import proof_id
+from .caption_role_semantics import continuation_title
 from .numbered_structure_models import NumberedTableIssue
 from .source_document import document_sha256
-from .source_geometry import SourceTokens, native_region
-from .source_window_chunks import observe_source_window
-from .structure_table_headers import possible_structure_header, structure_column_pairs
-from .table_cells import read_cell
-from .unruled_body_scope import body_context_window, body_diagrams, original_body_bottom
+from .source_geometry import SourceTokens
+from .structure_table_headers import possible_structure_header
+from .unruled_continuation import observe_continuation
+from .unruled_continuation_links import (
+    compatible_diagram_scope,
+    eligible_parents,
+    repeated_header_covers,
+)
+from .unruled_continuation_titles import (
+    anchor_scope,
+    continuation_identity,
+    continuation_nominees,
+    nominated_table_keys,
+)
+from .unruled_region_observation import observe_region
+from .unruled_scope import scope_axes
 from .unruled_structure_headers import (
-    header_windows,
     nominate_unruled_headers,
     observe_unruled_header,
 )
 from .unruled_structure_layout import pair_evidence, region_plan
-from .unruled_structure_sources import label_windows
 
 
 @dataclass(frozen=True)
@@ -41,7 +52,7 @@ def observe_unruled_tables(
         set(),
     )
     original_sha = None
-    by_page = {}
+    by_page, sections_by_page, anchors_by_key = {}, defaultdict(list), defaultdict(list)
     for structure in structures:
         by_page.setdefault(structure["page_no"] - 1, []).append(structure)
     for page_index in sorted(set(pages)):
@@ -58,7 +69,10 @@ def observe_unruled_tables(
         if (
             page_index not in by_page
             and page_texts is not None
-            and not possible_structure_header(page_texts[page_index])
+            and not (
+                possible_structure_header(page_texts[page_index])
+                or continuation_title(page_texts[page_index])
+            )
         ):
             continue
         tokens = tokens_for_page(page)
@@ -79,7 +93,8 @@ def observe_unruled_tables(
                 for grid in physical
             )
         ]
-        if not nominees:
+        captions = continuation_nominees(tokens, size)
+        if not nominees and not captions:
             continue
         available = {str(s["id"]): s for s in by_page.get(page_index, [])}
         page_diagrams = sorted(
@@ -89,6 +104,7 @@ def observe_unruled_tables(
             ],
             key=lambda item: (item["bbox"][1], item["bbox"][0], item["id"]),
         )
+        headers = []
         for groups in nominees:
             if original_sha is None:
                 original_sha = document_sha256(doc)
@@ -97,60 +113,64 @@ def observe_unruled_tables(
                 raise ValueError(
                     "Original unruled header exceeds its observation budget"
                 )
-            xs, ys = header_windows(groups, size)
-            context = observe_source_window(tokens, body_context_window(header))
-            bottom = original_body_bottom(header, context, page_diagrams)
-            region = {
-                "status": "observed_original_unruled_columns",
-                "version": 1,
-                "header_scope": header,
-                "body_context": context,
-                "page_diagrams": page_diagrams,
-                "body_bottom": bottom,
-                "pair_sources": [],
-                "labels": [],
-                "diagrams": body_diagrams(header, bottom, page_diagrams),
-            }
-            pairs = structure_column_pairs([g["text"] for g in groups])
-            for pair, (identifier, _structure) in enumerate(pairs):
-                window = [xs[identifier], ys[1], xs[identifier + 1], bottom]
-                chunks = observe_source_window(tokens, window)
-                region["pair_sources"].append({"window": window, "chunks": chunks})
-                for line in label_windows(chunks, window):
-                    reading = read_cell(
-                        page,
-                        line["window"],
-                        tokens,
-                        "id",
-                        native_region(tokens, line["window"], False),
-                    )
-                    region["labels"].append(
-                        {
-                            "pair": pair,
-                            "nomination": line,
-                            "value": reading.value,
-                            "observations": reading.observations,
-                            "needs_review": reading.needs_review,
-                        }
-                    )
+            headers.append(header)
+        events = [(scope_axes(h)[1][0], h, None) for h in headers]
+        events.extend(
+            (caption["bbox"][1], None, caption)
+            for caption in captions
+            if not any(
+                repeated_header_covers(h, page_diagrams, caption) for h in headers
+            )
+        )
+        for _top, header, caption in sorted(events, key=lambda event: event[0]):
+            if header is None:
+                key = continuation_identity(caption["text"])[0]
+                anchors = anchors_by_key[key]
+                if not anchors:
+                    continue  # Unrelated biology continuations cannot borrow structure roles.
+                parents = eligible_parents(
+                    [*sections_by_page[page_index], *sections_by_page[page_index + 1]],
+                    page_index + 1,
+                    key,
+                    caption,
+                )
+                parent = parents[0] if len(parents) == 1 else None
+                anchor = (
+                    anchor_scope(parent["source"]["header_scope"])
+                    if parent
+                    else anchors[-1]
+                )
+                header = observe_continuation(page, tokens, caption, anchor, parent)
+                if parent and not compatible_diagram_scope(
+                    parent, header, page_diagrams
+                ):
+                    header["parent_region_id"], header["parent_page_no"] = "", None
+            region = observe_region(page, tokens, header, page_diagrams)
             _roles, assignments, findings = region_plan(region)
             region_id = proof_id(region)
-            sections.append(
-                {
-                    "role": "unruled_structure_region",
-                    "status": region["status"],
-                    "page_no": page_index + 1,
-                    "region_id": region_id,
-                    "source": region,
-                }
-            )
+            section = {
+                "role": "unruled_structure_region",
+                "status": region["status"],
+                "page_no": page_index + 1,
+                "region_id": region_id,
+                "source": region,
+            }
+            sections.append(section)
+            sections_by_page[page_index + 1].append(section)
+            for key in nominated_table_keys(header):
+                anchors_by_key[key].append(anchor_scope(header))
             recognized.add(page_index)
             protected.update(d["id"] for d in region["diagrams"])
             observed.update(
                 label["value"] for label in region["labels"] if label["value"]
             )
             issues.extend(
-                NumberedTableIssue(page_index, finding["cpd"], finding["reason"])
+                NumberedTableIssue(
+                    page_index,
+                    finding["cpd"],
+                    finding["reason"],
+                    {"source_reference_region": region_id},
+                )
                 for finding in findings
             )
             for label, diagram in assignments:

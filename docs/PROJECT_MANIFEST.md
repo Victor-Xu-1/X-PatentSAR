@@ -1,5 +1,25 @@
 # Project governance manifest
 
+- Original continuation ownership: `unruled_continuation_titles` nominates both
+  original source lanes without merging distinct literal/physical claims;
+  `unruled_continuation` owns bounded current caption observations and one
+  nonrecursive original anchor; `unruled_continuation_links` owns exact registered
+  same-page/adjacent-page links and complete shared-context replay.
+  `unruled_region_observation` is the sole capture adapter for both actual and
+  continued headers, reusing the same cell/window/matcher/writer. Actual repeated
+  headers remain independent originals. Missing/changed parents, original role
+  conflicts, gaps and earlier unowned diagrams retain explicit review.
+  Producer and saved consumers share one canonical source-finding replay.
+- Current unpublished semantic epochs: Binding20/binder29, activity18/extractor27/
+  coverage14, visible20/preparation8, locator9. The shared literal ID grammar now
+  retains adjacent letter prefixes within declared roles, not free-prose hashes
+  or metric fragments. Actual multiline activity headers keep their column role.
+  The shared table marker retains letter/numeric/hyphenated table identity.
+  Original/raw/model/manual/graph/SAR/API/SQL/dependency authorities do not change.
+  Earlier epoch entries below describe historical deliveries, not competing
+  current version sources. Source controls do not establish chemical accuracy or
+  every layout's coverage; broader source roles and real acceptance remain open.
+
 - Unruled body/row ownership: `unruled_body_scope` derives explicit original
   boundaries and conserves owned diagrams against all page candidates. Complete
   post-header context owns child ID-column/source-packet projections through

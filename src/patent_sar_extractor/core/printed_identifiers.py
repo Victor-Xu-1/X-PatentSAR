@@ -2,7 +2,13 @@
 
 import re
 
-PRINTED_ID = r"(?:[A-Za-zＡ-Ｚａ-ｚ]{1,12}[-－])?[0-9０-９]{1,8}(?:[-－][0-9０-９]{1,8})*[A-Za-zＡ-Ｚａ-ｚ]{0,4}"
+_SERIES_HEAD = r"[A-Za-zＡ-Ｚａ-ｚ]{1,12}"
+_ID_BODY = r"[0-9０-９]{1,8}(?:[-－][0-9０-９]{1,8})*[A-Za-zＡ-Ｚａ-ｚ]{0,4}"
+# Full identities are read only in a source role/cell or after an explicit label.
+# Unqualified prose locators keep the narrower shape; a hash or endpoint token
+# cannot nominate a compound merely because it is syntactically alphanumeric.
+PRINTED_ID = rf"(?:{_SERIES_HEAD}[-－]?)?{_ID_BODY}"
+LOCATOR_ID = rf"(?:{_SERIES_HEAD}[-－])?{_ID_BODY}"
 LABEL_KIND = r"(?:Compound|Cmpd|Cpd|Example|实施例|化合物)"
 LABEL_PREFIX = rf"{LABEL_KIND}\s*[-:.：]?\s*"
 _BARE = re.compile(PRINTED_ID, re.IGNORECASE)

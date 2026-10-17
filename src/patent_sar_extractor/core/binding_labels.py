@@ -10,7 +10,7 @@ from typing import (
 
 logger = logging.getLogger(__name__)
 from .activity_identity import printed_identifier_key
-from .printed_identifiers import LABEL_PREFIX, PRINTED_ID, identifier_key
+from .printed_identifiers import LABEL_PREFIX, LOCATOR_ID, PRINTED_ID, identifier_key
 
 _INTERMEDIATE_RE = re.compile(r"^Intermediate", re.IGNORECASE)
 
@@ -40,7 +40,7 @@ _PRODUCT_VISIBLE_LABEL_RE = re.compile(
 )
 
 
-_DIRECT_LABEL_RE = re.compile(rf"(?<![\w./-])({PRINTED_ID})(?![\w./-])", re.IGNORECASE)
+_DIRECT_LABEL_RE = re.compile(rf"(?<![\w./-])({LOCATOR_ID})(?![\w./-])", re.IGNORECASE)
 
 
 _ROUTE_STEP_LABEL_RE = re.compile(

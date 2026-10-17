@@ -6,7 +6,11 @@ from itertools import pairwise
 from .activity_context_geometry import valid_box
 from .source_cell_tokens import cell_lines, cell_tokens
 from .source_geometry import native_region
-from .source_observations import source_cell_observation, source_observation_status
+from .source_observations import (
+    project_source_observation,
+    source_cell_observation,
+    source_observation_status,
+)
 
 
 def window_chunks(tokens, window):
@@ -89,6 +93,38 @@ def validate_source_projection(chunks, bounds, parent_chunks, parent_bounds):
                 raise ValueError(
                     "Original source projection differs from complete context"
                 )
+
+
+def validate_source_overlap(chunks, bounds, other_chunks, other_bounds):
+    """Retained overlapping page contexts must conserve the same original facts."""
+    validate_source_window(chunks, bounds)
+    validate_source_window(other_chunks, other_bounds)
+    overlap = [
+        max(bounds[0], other_bounds[0]),
+        max(bounds[1], other_bounds[1]),
+        min(bounds[2], other_bounds[2]),
+        min(bounds[3], other_bounds[3]),
+    ]
+    if not valid_box(overlap):
+        raise ValueError("Original source contexts have no common region")
+    selected = []
+    for chunk in chunks:
+        clip = [
+            overlap[0],
+            max(overlap[1], chunk["bbox"][1]),
+            overlap[2],
+            min(overlap[3], chunk["bbox"][3]),
+        ]
+        if valid_box(clip):
+            selected.append(
+                {
+                    "bbox": clip,
+                    "sources": [
+                        project_source_observation(p, clip) for p in chunk["sources"]
+                    ],
+                }
+            )
+    validate_source_projection(selected, overlap, other_chunks, other_bounds)
 
 
 def validate_source_window(chunks, window, *, allow_legacy=False):

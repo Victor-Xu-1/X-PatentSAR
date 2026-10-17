@@ -25,7 +25,9 @@ def continuation_title(text):
         isinstance(text, str)
         and TABLE_MARKER.search(text)
         and re.search(
-            r"\b(?:continued|continuation|cont\.)\b|续表|續表", text, re.IGNORECASE
+            r"\b(?:continued|continuation)\b|\bcont\.(?=\W|$)|续表|續表",
+            text,
+            re.IGNORECASE,
         )
     )
 

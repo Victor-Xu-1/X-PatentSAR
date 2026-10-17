@@ -62,6 +62,7 @@ class NumberedTableIssue:
     page_index: int
     label: str
     reason: str
+    evidence: Mapping[str, Any] = field(default_factory=dict, hash=False)
 
 
 class OriginalTableBinding(Protocol):

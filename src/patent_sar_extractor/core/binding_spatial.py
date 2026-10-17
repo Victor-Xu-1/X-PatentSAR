@@ -28,6 +28,7 @@ from .binding_types import (
     SourceKind,
     SourceOwnership,
 )
+from .caption_role_semantics import continuation_title
 from .source_binding_proof import annotate_source_binding
 from .structure_table_headers import possible_structure_header
 from .table_geometry import detect_ruled_table_regions, page_tokens
@@ -176,7 +177,7 @@ def collect_spatial_bindings(
                 *(
                     index
                     for index, text in pages_text.items()
-                    if possible_structure_header(text)
+                    if possible_structure_header(text) or continuation_title(text)
                 ),
             )
             if type(page) is int and page >= 0
@@ -285,7 +286,9 @@ def collect_spatial_bindings(
             for issue in caption_issues
         ),
         *(
-            BindingConflict(issue.label, issue.page_index, issue.reason)
+            BindingConflict(
+                issue.label, issue.page_index, issue.reason, dict(issue.evidence)
+            )
             for issue in numbered.issues
         ),
     )

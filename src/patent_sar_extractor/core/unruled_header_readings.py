@@ -54,7 +54,9 @@ def _reading_envelope(reading, xs, ys):
     return observations, frames, hints[0], native
 
 
-def original_header_readings(reading, xs, ys, sources):
+def original_header_readings(
+    reading, xs, ys, sources, *, identity=structure_header_role
+):
     """Return full raw headers only after every original column has been checked."""
     observations, frames, hints, native = _reading_envelope(reading, xs, ys)
     headers = []
@@ -90,13 +92,13 @@ def original_header_readings(reading, xs, ys, sources):
             ):
                 return None
             texts.append(cell["text"])
-        roles = {structure_header_role(text) for text in texts}
+        roles = {identity(text) for text in texts}
         if len(roles) != 1:
             return None
         if any(
             original["status"] == "qualified"
             and original["text"].strip()
-            and structure_header_role(original["text"]) != next(iter(roles))
+            and identity(original["text"]) != next(iter(roles))
             for original in raw
         ):
             return None

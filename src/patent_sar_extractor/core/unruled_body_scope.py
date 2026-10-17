@@ -11,11 +11,12 @@ from .source_table_markers import (
 )
 from .source_window_chunks import validate_source_window, window_source_tokens
 from .structure_table_headers import structure_column_pairs, structure_header_role
-from .unruled_structure_headers import header_groups, header_windows
+from .unruled_scope import scope_axes, scope_headers
+from .unruled_structure_headers import header_groups
 
 
 def body_context_window(scope):
-    _xs, ys = header_windows(scope["nomination"], scope["page_size"])
+    _xs, ys = scope_axes(scope)
     return [0, ys[1], *scope["page_size"]]
 
 
@@ -108,8 +109,8 @@ def original_body_bottom(scope, chunks, diagrams):
 
 
 def body_diagrams(scope, bottom, diagrams):
-    xs, ys = header_windows(scope["nomination"], scope["page_size"])
-    pairs = structure_column_pairs([g["text"] for g in scope["nomination"]])
+    xs, ys = scope_axes(scope)
+    pairs = structure_column_pairs(scope_headers(scope))
     return [
         d
         for d in diagrams

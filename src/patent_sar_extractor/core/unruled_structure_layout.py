@@ -2,7 +2,7 @@
 
 from .structure_table_headers import structure_column_pairs
 from .unruled_body_scope import body_diagrams, original_body_bottom
-from .unruled_structure_headers import header_windows, unruled_header_roles
+from .unruled_scope import scope_axes, scope_headers, scope_roles
 from .unruled_structure_sources import label_population
 
 
@@ -39,8 +39,8 @@ def region_plan(region):
     ):
         raise ValueError("Malformed original unruled source region")
     scope = region["header_scope"]
-    roles = unruled_header_roles(scope)
-    xs, ys = header_windows(scope["nomination"], scope["page_size"])
+    roles = scope_roles(scope)
+    xs, ys = scope_axes(scope)
     bottom = region["body_bottom"]
     if type(bottom) not in {int, float} or not ys[1] < bottom <= scope["page_size"][1]:
         raise ValueError("Malformed original unruled body boundary")
@@ -52,7 +52,7 @@ def region_plan(region):
         )
     # Nomination is used only to retain unresolved source windows if full role
     # proof fails. It cannot authorize a binding.
-    nominated = structure_column_pairs([g["text"] for g in scope["nomination"]])
+    nominated = structure_column_pairs(scope_headers(scope))
     labels, qualified = label_population(region, xs, ys, bottom, nominated)
     diagrams = region["diagrams"]
     if diagrams != body_diagrams(scope, bottom, region["page_diagrams"]):
@@ -82,6 +82,10 @@ def region_plan(region):
     issues = []
     if roles is None:
         issues.append({"cpd": "", "reason": "unproved_original_unruled_header"})
+    if scope.get("kind") == "continued_unruled_columns" and not labels and not diagrams:
+        issues.append(
+            {"cpd": "", "reason": "unproved_original_unruled_continuation_population"}
+        )
     if roles is None or roles["role"] != "nonfinal":
         issues.extend(
             {

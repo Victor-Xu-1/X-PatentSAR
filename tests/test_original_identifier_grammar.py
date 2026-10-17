@@ -1,6 +1,7 @@
 """Complete literal IDs across original source readers, not patent-specific data."""
 
 import unittest
+from dataclasses import asdict
 from unittest.mock import patch
 
 import fitz
@@ -12,6 +13,7 @@ from patent_sar_extractor.core.activity_join import (
     activity_order_and_map,
 )
 from patent_sar_extractor.core.activity_result_references import _observed
+from patent_sar_extractor.core.activity_text_rows import parse_segment
 from patent_sar_extractor.core.binding_labels import _labels_from_ocr_text
 from patent_sar_extractor.core.binding_source_headings import observed_heading_blocks
 from patent_sar_extractor.core.cell_identity_proof import confirmed_identity_readings
@@ -152,10 +154,11 @@ class OriginalIdentifierGrammarTests(UnruledStructureControls, unittest.TestCase
     def test_visible_text_never_clips_a_series_prefix_or_matches_a_decimal_fragment(
         self,
     ):
-        for raw in ("I-44A", "A-001B", "10000AB", "1-2-3AB"):
+        for raw in ("I-44A", "A-001B", "10000AB", "1-2-3AB", "A17", "B80"):
             with self.subTest(raw=raw):
                 self.assertEqual(_labels_from_ocr_text("Compound " + raw), [raw])
         self.assertEqual(_labels_from_ocr_text("125.34 or source-hash:abc1234def"), [])
+        self.assertEqual(_labels_from_ocr_text("IC50 8.2 nM and DC50 0.4 nM"), [])
 
     def test_sequence_flags_cannot_erase_a_competing_original_identity(self):
         binding = {
@@ -177,12 +180,34 @@ class OriginalIdentifierGrammarTests(UnruledStructureControls, unittest.TestCase
             ("A-001b", "A-001B"),
             ("0", "0"),
             ("1-2-3AB", "1-2-3AB"),
+            ("A17", "A17"),
+            ("b080AB", "B080AB"),
         ):
             with self.subTest(raw=raw):
                 self.assertEqual(caption_identity(f"Compound {raw}")[0], expected)
                 self.assertEqual(_normalize(raw, "id"), expected)
                 self.assertEqual(_label(raw + "."), expected)
                 self.assertEqual(normalize_compound(raw), f"Compound {expected}")
+
+    def test_adjacent_letter_prefixes_keep_declared_activity_rows_and_join_keys(self):
+        rows = parse_segment(
+            "Table 8. IC50 (nM)",
+            "Compound ID | IC50 (nM)\nA17 | 1\nB080AB | >10",
+            page_no=1,
+        )
+        self.assertEqual([r.cpd for r in rows], ["Compound A17", "Compound B080AB"])
+        _, values = activity_order_and_map([asdict(r) for r in rows])
+        self.assertTrue(activity_for_compound(values, "Compound A17"))
+        self.assertEqual(activity_for_compound(values, "Compound B80AB"), {})
+
+    def test_metric_shaped_identifier_requires_the_declared_row_context_not_a_whitelist(
+        self,
+    ):
+        rows = parse_segment(
+            "Table 9. Binding assay", "Compound ID | EC50 (nM)\nIC50 | 2.0", page_no=1
+        )
+        self.assertEqual([r.cpd for r in rows], ["Compound IC50"])
+        self.assertEqual(rows[0].activity_values, {"EC50 (nM)": "2.0"})
 
     def test_whitespace_cannot_merge_distinct_ids_or_suffix_tokens(self):
         for text in (

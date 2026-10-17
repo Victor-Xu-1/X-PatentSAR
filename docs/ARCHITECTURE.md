@@ -1,5 +1,36 @@
 # X-PatentSAR architecture
 
+Original headerless continuations share the numbered source coordinator and
+single writer. `unruled_continuation_titles` nominates literal table names from
+both original native/raster lanes; only a same-key/same-role caption physically
+overlapping the primary observation is one nomination. Distinct positions and
+known original disagreements remain. `unruled_continuation` retains the current
+caption/read frames/full leading context and one nonrecursive original column
+anchor. `unruled_continuation_links` replays the registered parent region, exact
+anchor and same-page/adjacent-page ownership. Same-page parents must end at the
+actual current caption boundary, and overlapping retained contexts must contain
+identical original facts. Gaps, new sections, earlier unowned diagrams and
+unproved/competing parents cannot borrow columns. Actual repeated headers keep
+their own independent header source.
+
+`unruled_region_observation` captures both actual-header and continuation bodies
+through the same bounded source-window/cell reader. No second row matcher,
+source store, OCR pass or artifact writer is introduced. Source-reference replay
+owns published findings once; registered spatial findings are not counted a
+second time. Full native/scanned/hybrid and serialized-consumer controls cover
+same-page, adjacent-page and chained parts, not universal layout/chemical recall.
+
+The shared printed-ID grammar preserves adjacent letter prefixes such as A17
+only within explicit original roles. Free-prose locator nomination stays narrower
+so endpoint/hash fragments do not become IDs. Multiline metric headers retain
+their column role before row parsing. Shared literal table markers cover letter,
+numeric and hyphenated original table names without correcting source numbers.
+Visible observation20/preparation8 invalidate derived ID interpretations, and
+locator9 refreshes changed table-title hints. Binding20/binder29 and
+activity18/extractor27/coverage14 are this unpublished source feature's prepared
+epochs, not separate product releases. Raw page/OCSR observations, models,
+original assets, manual audits, graph/SAR/API/SQL/dependencies remain unchanged.
+
 Unruled structure columns use the same numbered-cell coordinator, source ledger
 and artifact writer as ruled tables. `unruled_structure_headers` nominates actual
 separated original header words; `unruled_header_readings` independently replays
@@ -33,7 +64,7 @@ this unpublished source revision; internal checkpoints are not product releases.
 
 These original-layout controls are not full chemical/OCSR acceptance. Vertically
 disjoint alignment without source row boundaries, unmarked following prose,
-headerless unruled continuations and complete detector recall remain open scope.
+ruled-first to headerless-unruled transitions and complete detector recall remain open scope.
 No new real patent run is implied by controlled native/raster tests.
 
 `unruled_body_scope` replays a complete original post-header text window and the
@@ -95,7 +126,8 @@ unknown-column lists on every result row are removed in favor of this single
 source inventory. Binding20/binder29 invalidate the current source admission
 shortcut described below; activity18/extractor27/coverage14 invalidate derived
 transposed evidence. Original PDF/raw OCR/model/crop assets, manual audit,
-visible19/preparation7, graph/SAR/API/SQL and dependencies remain unchanged.
+graph/SAR/API/SQL and dependencies remain unchanged; current prepared visible/
+preparation epochs are described above.
 These controls do not establish all-format recall or chemical accuracy.
 
 `source_binding_proof` is the current catalog/formal admission adapter over the

@@ -77,19 +77,24 @@ class UnruledStructureControls:
                 mutate_page(page, structures)
             for structure in structures:
                 image = self.root / (structure["structure_id"] + ".png")
-                page.get_pixmap(
+                document[structure["page_no"] - 1].get_pixmap(
                     matrix=fitz.Matrix(2, 2),
                     clip=fitz.Rect(structure["bbox_pdf"]),
                     alpha=False,
                 ).save(image)
                 structure["image_path"] = str(image)
             if raster:
-                pixels = page.get_pixmap(matrix=fitz.Matrix(4, 4), alpha=False)
                 with fitz.open() as scanned:
-                    target = scanned.new_page(width=520, height=page_height)
-                    target.insert_image(target.rect, stream=pixels.tobytes("png"))
-                    if native_overlay:
-                        native_overlay(target)
+                    for source in document:
+                        pixels = source.get_pixmap(
+                            matrix=fitz.Matrix(4, 4), alpha=False
+                        )
+                        target = scanned.new_page(
+                            width=source.rect.width, height=source.rect.height
+                        )
+                        target.insert_image(target.rect, stream=pixels.tobytes("png"))
+                        if native_overlay:
+                            native_overlay(target)
                     scanned.save(original)
             else:
                 document.save(original)
