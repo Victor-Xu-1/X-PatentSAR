@@ -9,6 +9,11 @@ are separate: withholding a nonfinal structure from publication does not remove
 it from the existing grid/source inventory. These projections share the current
 binder/ledger/writer and do not add an engine, store or acceptance path.
 
+Boundary nomination also retains exact original vertical-band subsets when a
+nearby row baseline overlaps a title. Those subsets cannot prove themselves:
+the complete original source projection still decides qualification/conflicts.
+No corrected strings, changed global line layout or guessed identifiers are used.
+
 Original boundary derivation now lives in the pure `source_body_context` SDK;
 `unruled_body_scope` supplies its column adapters. Complete source inventory and
 positively trusted ownership have separate bottoms. Doubtful, conflicting,

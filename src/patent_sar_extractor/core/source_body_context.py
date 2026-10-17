@@ -119,6 +119,22 @@ def _proved_boundary(chunks, window, expected, *, column_boundaries):
     return True
 
 
+def _boundary_lines(tokens, window):
+    """Nominate literal titles that overlap a neighbouring baseline.
+
+    These are original-token subsets, not corrected text. The ordinary complete
+    source projection still independently proves or refuses every nominated
+    window; a geometric subset never supplies its own acceptance evidence.
+    """
+    for line in cell_lines(tokens, window):
+        yield line
+        bands = {}
+        for part in line:
+            bands.setdefault((part["bbox"][1], part["bbox"][3]), []).append(part)
+        if len(bands) > 1:
+            yield from bands.values()
+
+
 def original_context_extent(chunks, window, diagrams, *, column_boundaries=True):
     """A doubtful boundary never trims facts or extends a nonfinal exclusion."""
     validate_source_window(chunks, window)
@@ -126,7 +142,7 @@ def original_context_extent(chunks, window, diagrams, *, column_boundaries=True)
     lanes = (False,) if all(len(c["sources"]) == 1 for c in chunks) else (False, True)
     for native in lanes:
         tokens = window_source_tokens(chunks, window, native=native)
-        for line in cell_lines(tokens, window):
+        for line in _boundary_lines(tokens, window):
             top = min(p["bbox"][1] for p in line)
             bottom = max(p["bbox"][3] for p in line)
             bounds = [window[0], top, window[2], bottom]

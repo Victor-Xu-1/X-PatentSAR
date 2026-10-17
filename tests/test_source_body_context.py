@@ -137,6 +137,26 @@ class SourceBodyContextTests(unittest.TestCase):
         self.assertEqual(result["trusted_bottom"], 480)
         self.assertEqual(len(result["unproved_boundaries"]), 1)
 
+    def test_neighbouring_baseline_cannot_hide_an_original_procedure_boundary(self):
+        result = self.extent(
+            [
+                token("Compound B80: Preparation", 480),
+                token("28", 487, x=60, width=14),
+            ]
+        )
+        self.assertEqual(result["body_bottom"], 720)
+        self.assertEqual(result["trusted_bottom"], 480)
+        self.assertTrue(result["unproved_boundaries"])
+
+    def test_a_nominated_baseline_subset_cannot_waive_a_complete_native_conflict(self):
+        result = self.extent(
+            [token("Compound B80: Preparation", 430), token("28", 437, x=60, width=14)],
+            [token("Table 13. Compounds", 430, native=True)],
+        )
+        self.assertEqual(result["body_bottom"], 720)
+        self.assertEqual(result["trusted_bottom"], 430)
+        self.assertTrue(result["unproved_boundaries"])
+
     def test_a_table_reference_inside_a_drawing_does_not_become_a_page_boundary(self):
         result = self.extent([token("Table 22", 480, x=240, width=50)])
         self.assertEqual(result["body_bottom"], 720)
