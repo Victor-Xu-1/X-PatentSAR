@@ -7,6 +7,7 @@ from .activity_continuation_policy import (
 )
 from .activity_grid_roles import characterization_roles
 from .activity_headers import context_from_text
+from .binding_source_regions import identifier_references
 from .printed_identifiers import identifier_key
 from .source_fragment_context import boundary_texts
 from .source_role_fragments import fragment_texts
@@ -18,6 +19,20 @@ def _row_complete(previous, bottom, current, top):
     roles = previous["role_scope"]["roles"]
     if roles["columns"] != current["role_scope"]["roles"]["columns"]:
         return False
+    prior_roles, current_roles = (
+        {
+            entry["source_role"]
+            for entry in identifier_references(region)
+            if "fragment_index" not in entry
+        }
+        for region in (previous, current)
+    )
+    if (
+        len(prior_roles) != 1
+        or prior_roles != current_roles
+        or "ambiguous" in prior_roles
+    ):
+        return False  # A blank continuation ID cannot hide a known role change.
     row = []
     for column, role in enumerate(roles["columns"]):
         a = fragment_texts(previous, bottom, column)

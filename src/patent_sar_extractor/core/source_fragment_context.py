@@ -18,19 +18,30 @@ def context_windows(edges, fragments):
 
 
 def _chunks(tokens, window):
-    combined = [*tokens, *getattr(tokens, "native_tokens", [])]
-    rows = cell_lines(combined, window)
-    cuts, count = [window[1]], 0
+    # Membership counts belong to each original view. Do not deduplicate source
+    # strings or charge a native token twice merely because two views share it.
+    members = {}
+    for source_index, source in enumerate(
+        (tokens, getattr(tokens, "native_tokens", []))
+    ):
+        for token in source:
+            _, counts = members.setdefault(id(token), (token, [0, 0]))
+            counts[source_index] += 1
+    rows = cell_lines([token for token, _ in members.values()], window)
+    cuts, count = [window[1]], [0, 0]
     for index, row in enumerate(rows):
-        if len(row) > 384:
+        row_count = [
+            sum(members[id(token)][1][source] for token in row) for source in (0, 1)
+        ]
+        if max(row_count) > 384:
             raise ValueError("Original boundary context row exceeds its token bound")
-        if count + len(row) > 384:
+        if any(count[source] + row_count[source] > 384 for source in (0, 1)):
             cut = (max(t["y"] for t in rows[index - 1]) + min(t["y"] for t in row)) / 2
             if not cuts[-1] < cut < window[3]:
                 raise ValueError("Unproved original boundary-context partition")
             cuts.append(cut)
-            count = 0
-        count += len(row)
+            count = [0, 0]
+        count = [count[source] + row_count[source] for source in (0, 1)]
     cuts.append(window[3])
     if len(cuts) > 513:
         raise ValueError("Original boundary context exceeds its chunk bound")

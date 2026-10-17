@@ -30,6 +30,8 @@ def split_row(
     missing_column=False,
     extra_title=False,
     tail_end=650,
+    right_kind="Compound",
+    show_right_id=True,
 ):
     doc = fitz.open()
     first = characterization_page(doc)
@@ -50,14 +52,14 @@ def split_row(
         xs,
         [125, 155, 220, 285],
         [
-            ["Compound No.", "Preparation", "Characterization"],
+            [f"{right_kind} No.", "Preparation", "Characterization"],
             [
-                "Compound 211",
+                f"{right_kind} 211",
                 "Prepared in analogy to Compound 213",
                 "1H NMR (400 MHz) 7.5 ppm; MS m/z 470.1",
             ],
             [
-                "Compound 212",
+                f"{right_kind} 212",
                 "Prepared in analogy to Compound 214",
                 "1H NMR (400 MHz) 7.6 ppm; MS m/z 484.1",
             ],
@@ -67,6 +69,8 @@ def split_row(
         page.draw_line((x, 50), (x, 125))
     if conflicting_id:
         page.insert_text((xs[0] + 8, 75), "Compound 106", fontsize=9)
+    elif right_kind != "Compound" and show_right_id:
+        page.insert_text((xs[0] + 8, 75), f"{right_kind} 105", fontsize=9)
     page.insert_text((xs[2] + 8, 75), "MS (ESI) m/z 441.1", fontsize=9)
     return doc
 
@@ -88,6 +92,30 @@ def observe(doc):
 
 
 class SourceGridFragmentTests(unittest.TestCase):
+    def test_same_number_with_changed_terminal_intermediate_role_never_links(self):
+        for repeat in (True, False):
+            with (
+                self.subTest(repeat=repeat),
+                split_row(right_kind="Intermediate", show_right_id=repeat) as doc,
+            ):
+                _, payload, regions = observe(doc)
+                self.assertEqual(resolved_fragments(regions), set())
+                self.assertTrue(
+                    any(
+                        issue["reason"] == "unresolved_original_open_row"
+                        for issue in reference_issues(payload, [])
+                    )
+                )
+
+    def test_shared_native_view_is_not_counted_twice_against_one_context_row(self):
+        with split_row(tail_end=350) as doc:
+            doc[0].insert_text((40, 375), "X " * 300, fontsize=1)
+            _, _, regions = observe(doc)
+        chunks = regions[0]["fragment_context"]["suffix"]
+        self.assertEqual(
+            sum(len(s["tokens"]) for chunk in chunks for s in chunk["sources"]), 300
+        )
+
     def test_actual_binding_writer_keeps_partial_products_and_replays_open_rows(self):
         import json
         import tempfile
