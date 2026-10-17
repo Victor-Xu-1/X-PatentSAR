@@ -428,12 +428,65 @@ class StrictAcceptanceTests(unittest.TestCase):
         self.assertEqual(
             [row.cpd for row in rows], ["Compound I-1", "Compound 1-2", "Compound I-3"]
         )
-        self.assertEqual(list(rows[0].activity_values.values()), ["<1 nM"])
-        self.assertEqual(list(rows[1].activity_values.values()), ["not tested"])
-        self.assertEqual(list(rows[2].activity_values.values()), ["1 - 10 nM"])
+        self.assertEqual(list(rows[0].activity_values.values()), ["A"])
+        self.assertEqual(list(rows[1].activity_values.values()), ["G"])
+        self.assertEqual(list(rows[2].activity_values.values()), ["B"])
+        for row in rows:
+            self.assertEqual(
+                row.activity_sources[0]["legend"],
+                {
+                    "A": "<1 nM",
+                    "B": "1 - 10 nM",
+                    "G": "not tested",
+                },
+            )
         self.assertTrue(has_usable_values(rows[0]))
         self.assertFalse(has_usable_values(rows[1]))
         self.assertIn("source label 1-2", rows[1].notes)
+
+    def test_grade_missingness_needs_matching_cells_and_consistent_original_meanings(
+        self,
+    ):
+        from patent_sar_extractor.core.activity_values import has_usable_activity_values
+
+        values = {"DC50": "G"}
+        source = {
+            "cells": [{"field": "DC50", "value": "G"}],
+            "legend": {"G": "not tested"},
+        }
+        self.assertFalse(has_usable_activity_values(values, sources=[source]))
+        self.assertTrue(has_usable_activity_values(values))
+        for other in (
+            {**source, "cells": [{"field": "IC50", "value": "G"}]},
+            {**source, "cells": [{"field": "DC50", "value": "A"}]},
+        ):
+            self.assertTrue(has_usable_activity_values(values, sources=[other]))
+        for other in (
+            {**source, "legend": {"G": ">100 nM"}},
+            {"cells": source["cells"]},
+        ):
+            self.assertTrue(has_usable_activity_values(values, sources=[source, other]))
+        self.assertEqual(values, {"DC50": "G"})
+
+    def test_aggregate_activity_cache_cannot_override_original_row_missingness(self):
+        source = {
+            "cells": [{"field": "DC50", "value": "G"}],
+            "legend": {"G": "not tested"},
+        }
+        payload = {
+            "rows": [
+                {
+                    "cpd": "Compound 4",
+                    "activity_values": {"DC50": "G"},
+                    "activity_sources": [source],
+                }
+            ],
+            "data": {"Compound 4": {"DC50": "G"}},
+        }
+        self.assertEqual(_extract_active_cpds(payload), [])
+        self.assertEqual(
+            _extract_active_cpds({"data": payload["data"]}), ["Compound 4"]
+        )
 
     def test_explicit_not_tested_activity_is_excluded_across_command_annotation(
         self,

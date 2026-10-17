@@ -7,7 +7,7 @@ from dataclasses import replace
 
 from .activity_identity import is_value, normalize_compound
 from .activity_models import ActivityRow, OCRFixRule
-from .activity_values import is_explicit_missing_activity_value
+from .activity_values import has_usable_activity_values
 
 # Default lexical parsing never substitutes digits, thresholds or identities.
 DEFAULT_OCR_FIXES: list[OCRFixRule] = []
@@ -15,9 +15,8 @@ DEFAULT_OCR_FIXES: list[OCRFixRule] = []
 
 def has_usable_values(row: ActivityRow) -> bool:
     return any(
-        str(value or "").strip() and not is_explicit_missing_activity_value(value)
+        has_usable_activity_values(bucket, sources=row.activity_sources)
         for bucket in (row.activity_values, row.cell_line_data)
-        for value in bucket.values()
     )
 
 

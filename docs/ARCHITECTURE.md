@@ -28,6 +28,13 @@ structure declarations. Unknown/conflicting roles are not exempt, and raw page
 observations/candidate literals remain available for replay. This is a role
 projection within the same source ledger, not a second extractor or ID blacklist.
 
+Grade usability retains original letters and their source-scoped legend. Only a
+matching original field/value cell with consistently explicit missing meanings
+can classify a grade as not measured. Missing/conflicting legends do not invent
+meaning, potency or concentrations. The row and mapping callers share the same
+activity-values authority, and an aggregate data cache cannot override an observed
+row's missingness. Data-only historical payloads retain their literal semantics.
+
 Original boundary derivation now lives in the pure `source_body_context` SDK;
 `unruled_body_scope` supplies its column adapters. Complete source inventory and
 positively trusted ownership have separate bottoms. Doubtful, conflicting,
