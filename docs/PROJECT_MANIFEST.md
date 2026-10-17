@@ -290,6 +290,12 @@
   Safe GET session faults admit one shared handshake/re-read; every write/POST
   keeps its non-replay boundary. `useResource` opt-in same-key retention serves
   only task presentation; `useJobs` separately verifies current list/detail state.
+  `api/readRecovery.ts` owns bounded transient GET observation recovery in the
+  same scheduler, explicitly enabled only for task and polled SAR/environment
+  progress reads. Three1/3/7second rereads retain existing per-request transport
+  limits; no auth/permission/DTO/unknown error or uncertain mutation is replayed.
+  One abort signal/timer per observer preserves key changes, manual reload and
+  exhaustion; retained DTOs never authorize actions until a fresh read succeeds.
   Workspace/history pass required read verification to JobActions. Unknown task
   reads cannot become launch/cancel/resume permission or a not-started claim.
   Source roles, scientific epochs, security/CSRF, queue and database stay intact.
