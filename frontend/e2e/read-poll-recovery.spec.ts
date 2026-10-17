@@ -83,11 +83,27 @@ for (const width of [390, 1672]) {
         path: info.outputPath('01-recovering-unknown.png'),
         animations: 'disabled',
       });
+      await page.evaluate(() => {
+        const sampling = window as Window & { headerRecoveryFrames?: Promise<number[]> };
+        sampling.headerRecoveryFrames = new Promise((resolve) => {
+          const positions: number[] = [];
+          function observe() {
+            positions.push(document.querySelector('.topbar')!.getBoundingClientRect().top);
+            if (positions.length < 60) requestAnimationFrame(observe);
+            else resolve(positions);
+          }
+          requestAnimationFrame(observe);
+        });
+      });
       releaseRecovery();
       mode = 'healthy';
       await expect(cancel).toBeEnabled();
       await expect(page.getByRole('alert')).toHaveCount(0);
-      await expect.poll(headerTop, { timeout: 2000 }).toBeGreaterThanOrEqual(0);
+      const recoveryPositions = await page.evaluate(async () => {
+        const sampling = window as Window & { headerRecoveryFrames: Promise<number[]> };
+        return sampling.headerRecoveryFrames;
+      });
+      expect(Math.min(...recoveryPositions)).toBeGreaterThanOrEqual(0);
       expect(faults).toBe(2);
       expect(handshakes).toBe(initialHandshakes);
       await page.screenshot({
