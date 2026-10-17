@@ -1,5 +1,7 @@
 """One original title-context capture/replay for physical and logical columns."""
 
+from .activity_context_geometry import context_floor
+from .caption_role_titles import project_caption_titles
 from .source_cell_tokens import cell_lines, cell_text
 from .source_observations import source_observation_status
 from .source_table_markers import TABLE_CAPTION_START
@@ -7,7 +9,14 @@ from .source_table_roles import observed_role
 from .source_window_chunks import observe_window_sources
 
 
-def observe_header_context(tokens, size, top):
+def observe_header_context(tokens, size, top, *, geometry=None):
+    if geometry is not None:
+        floor = context_floor(geometry)
+        return (
+            observe_window_sources(tokens, [0, floor, size[0], top])
+            if floor < top
+            else []
+        )
     window, starts = [0, 0, size[0], top], []
     for lane in (tokens, getattr(tokens, "native_tokens", ())):
         titles = [
@@ -21,7 +30,7 @@ def observe_header_context(tokens, size, top):
     return observe_window_sources(tokens, bounds) if bounds else []
 
 
-def original_header_context_role(contexts, top, width):
+def original_header_context_packets(contexts, top, width, *, geometry=None):
     if (
         not isinstance(contexts, list)
         or len(contexts) > 2
@@ -35,4 +44,21 @@ def original_header_context_role(contexts, top, width):
         )
     ):
         raise ValueError("Malformed original structure-header title context")
-    return observed_role([p for p in contexts if p["text"].strip()])
+    if geometry is not None:
+        floor = context_floor(geometry)
+        if floor < top:
+            expected = [0, floor, width, top]
+            if not contexts or any(p["bbox"] != expected for p in contexts):
+                raise ValueError(
+                    "Incomplete original structure-header context geometry"
+                )
+            return project_caption_titles(contexts, geometry)
+        if contexts:
+            raise ValueError("Original zero-height header context is not empty")
+    return [p for p in contexts if p["text"].strip()]
+
+
+def original_header_context_role(contexts, top, width, *, geometry=None):
+    return observed_role(
+        original_header_context_packets(contexts, top, width, geometry=geometry)
+    )

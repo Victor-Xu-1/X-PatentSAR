@@ -209,7 +209,12 @@ def collect_spatial_bindings(
     observed_keys = set(numbered.observed_keys)
     table_bindings = original_table_bindings(numbered)
     declaration_pages, nonfinal_declaration_ids = observe_declaration_pages(
-        doc, processed_structures, candidate_pages, pages_text, tokens_for_page
+        doc,
+        processed_structures,
+        candidate_pages,
+        pages_text,
+        tokens_for_page,
+        grids_for_page=grids_for_page,
     )
     candidates = [_candidate(binding, "numbered_cell") for binding in table_bindings]
     remaining = [

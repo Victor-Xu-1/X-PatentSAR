@@ -1,6 +1,12 @@
 """Column adapters over the sole original body-context and diagram authority."""
 
-from .source_body_context import original_context_extent, validate_page_diagrams
+from .activity_context_geometry import context_band, context_region, grid_box
+from .source_body_context import (
+    intersecting_source_diagrams,
+    original_context_extent,
+    validate_page_diagrams,
+)
+from .source_window_chunks import project_source_window
 from .structure_table_headers import structure_column_pairs
 from .unruled_scope import scope_axes, scope_body_top, scope_headers
 
@@ -9,9 +15,30 @@ def body_context_window(scope):
     return [0, scope_body_top(scope), *scope["page_size"]]
 
 
+def column_context_window(scope):
+    """Derive ownership from the shared original-grid context SDK, not page y."""
+    complete = body_context_window(scope)
+    geometry = scope.get("context_geometry")
+    if scope.get("kind") == "continued_ruled_columns":
+        geometry = context_region(
+            scope["grid_axes"], [grid_box(grid) for grid in scope["page_grids"]]
+        )["context_geometry"]
+    if geometry is None:
+        return complete
+    left, right = context_band(geometry)
+    return [max(0, left), complete[1], min(complete[2], right), complete[3]]
+
+
 def original_body_extent(scope, chunks, diagrams):
     validate_page_diagrams(diagrams, scope["page_size"])
-    extent = original_context_extent(chunks, body_context_window(scope), diagrams)
+    complete = body_context_window(scope)
+    window = column_context_window(scope)
+    projected = project_source_window(chunks, complete, window)
+    extent = original_context_extent(
+        projected,
+        window,
+        intersecting_source_diagrams(diagrams, window),
+    )
     if scope.get("kind") is None:
         # A later actual closed frame has its own row authority, even when its
         # columns or ancestry are unresolved. Keep full raw context, but do not

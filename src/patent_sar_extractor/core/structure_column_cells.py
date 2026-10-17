@@ -6,7 +6,7 @@ from itertools import pairwise
 from .numbered_structure_models import NumberedTableCell, NumberedTableIssue
 from .numbered_structure_pairs import _box, _overlaps
 from .source_cell_tokens import cell_text
-from .structure_catalogs import Catalog, catalog_at, catalog_marks
+from .structure_catalogs import catalog_for_scope
 from .structure_column_anchors import ANCHOR_ROLE, column_anchor_roles
 from .unruled_body_scope import column_body_extent
 
@@ -36,10 +36,9 @@ def observe_ruled_cells(doc, structures, sections, tokens_for_page, cell_reader)
     by_page = defaultdict(list)
     for section in sections:
         by_page[section["page_no"] - 1].append(section)
-    cells, issues, prior_catalog = [], [], Catalog()
+    cells, issues = [], []
     for page_index, page_sections in sorted(by_page.items()):
         page, tokens = doc[page_index], tokens_for_page(doc[page_index])
-        marks = catalog_marks(tokens)
         native = bool(page.get_text("words"))
         anchors = sorted(
             (s for s in page_sections if s["role"] == ANCHOR_ROLE),
@@ -59,7 +58,7 @@ def observe_ruled_cells(doc, structures, sections, tokens_for_page, cell_reader)
             xs, ys = grid["xs"], grid["ys"]
             start = int(scope.get("kind") == "original_ruled_columns")
             trusted = column_body_extent(source)["trusted_bottom"]
-            catalog = catalog_at(marks, ys[0], prior_catalog)
+            catalog = catalog_for_scope(scope)
             for row, (top, bottom) in enumerate(pairwise(ys), start=0):
                 if row < start:
                     continue
@@ -101,6 +100,4 @@ def observe_ruled_cells(doc, structures, sections, tokens_for_page, cell_reader)
                             },
                         )
                     )
-        if marks:
-            prior_catalog = marks[-1][1]
     return cells, issues

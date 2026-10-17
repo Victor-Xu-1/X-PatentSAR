@@ -1,5 +1,20 @@
 # X-PatentSAR architecture
 
+Explicit parallel physical tables use the existing original-grid context SDK
+and caption projection, shared with activity/caption extraction. Each ruled
+header records bounded context_geometry; complete page text/grid/diagram facts
+remain in the existing source ledger. Column body ownership and independent
+declarations project the same original band, so a section or drawing in one
+column cannot end the other. A single shared caption retains global semantics.
+Literal caption starts split only after a genuine source gap; inline/prose
+references are not new tables. Source role, table key, catalogue and saved proof
+consume the same qualified original context. The obsolete per-word catalogue
+scraper/page carry is removed. Selected reprints retain their original sources
+and cannot erase novel IDs or override a qualified source disagreement; this
+does not establish chemical-graph identity. Declaration page_grids revalidate
+the header geometry after saving. This remains an unpublished Binding20/binder29
+scope6 repair, not universal layout, chemical, deployment or scientific acceptance.
+
 Physical-cell construction is source-first: `structure_frame_observation`
 nominates actual frames from the existing grid/token inventory; the shared source
 observer registers column roles before `structure_column_cells` constructs rows

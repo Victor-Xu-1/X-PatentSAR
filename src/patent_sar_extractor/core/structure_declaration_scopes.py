@@ -2,17 +2,20 @@
 
 import re
 
+from .activity_context_geometry import context_band
 from .caption_role_semantics import catalog_title_role
 from .printed_identifiers import identifier_key
+from .ruled_continuation_context import validate_page_grid
 from .source_body_context import (
     box_inside_drawing,
+    intersecting_source_diagrams,
     original_context_extent,
     validate_page_diagrams,
 )
 from .source_cell_tokens import cell_lines, cell_text
 from .source_evidence_identity import proof_id
 from .source_section_roles import section_heading
-from .source_table_captions import table_caption_nominees
+from .source_table_captions import caption_context_geometry, table_caption_nominees
 from .source_table_markers import TABLE_CAPTION_START
 from .source_table_roles import observed_role
 from .source_window_chunks import (
@@ -27,15 +30,15 @@ PAGE_STATUS = "observed_original_structure_declarations"
 REFERENCE_ROLE = "structure_declaration_reference"
 
 
-def _title_window(caption, lanes, size):
+def _title_window(caption, lanes, size, band):
     """The existing short, adjacent title-wrap limit, before any row/heading."""
     end = caption["bbox"][3]
     for lane in lanes:
         tail, count = caption["bbox"][3], 0
-        for line in cell_lines(lane, [0, tail, *size]):
+        for line in cell_lines(lane, [band[0], tail, band[1], size[1]]):
             top = min(t["bbox"][1] for t in line)
             bottom = max(t["bbox"][3] for t in line)
-            text = cell_text(line, [0, top, size[0], bottom])
+            text = cell_text(line, [band[0], top, band[1], bottom])
             if (
                 count == 2
                 or top - tail > 18
@@ -47,7 +50,7 @@ def _title_window(caption, lanes, size):
                 break
             tail, count = bottom, count + 1
         end = max(end, tail)
-    return [0, caption["bbox"][1], size[0], min(size[1], end + 0.001)]
+    return [band[0], caption["bbox"][1], band[1], min(size[1], end + 0.001)]
 
 
 def validate_declaration_page(source):
@@ -62,6 +65,7 @@ def validate_declaration_page(source):
             "page_size",
             "page_context",
             "page_diagrams",
+            "page_grids",
         }
         or source["status"] != PAGE_STATUS
         or type(source["version"]) is not int
@@ -76,6 +80,10 @@ def validate_declaration_page(source):
         raise ValueError("Malformed original table-declaration page")
     validate_source_window(source["page_context"], [0, 0, *source["page_size"]])
     validate_page_diagrams(source["page_diagrams"], source["page_size"])
+    if not isinstance(source["page_grids"], list) or len(source["page_grids"]) > 4096:
+        raise ValueError("Malformed original declaration grid inventory")
+    for grid in source["page_grids"]:
+        validate_page_grid(grid, source["page_size"])
 
 
 def _identifier_lists(chunks, page, body, lanes):
@@ -129,10 +137,14 @@ def declaration_scopes(source):
     ]
     page_source_id = proof_id(source)
     output = []
-    for caption in table_caption_nominees(lanes[0], size, native_tokens=lanes[1]):
+    captions = table_caption_nominees(lanes[0], size, native_tokens=lanes[1])
+    for caption in captions:
         if box_inside_drawing(caption["bbox"], source["page_diagrams"]):
             continue  # Drawing annotations do not introduce a page table role.
-        title = _title_window(caption, lanes, size)
+        geometry = caption_context_geometry(caption, captions, source["page_grids"])
+        left, right = context_band(geometry) if geometry is not None else (0, size[0])
+        band = [max(0, left), min(size[0], right)]
+        title = _title_window(caption, lanes, size, band)
         if title[3] >= size[1]:
             continue
         title_chunks = project_source_window(chunks, page, title)
@@ -141,18 +153,21 @@ def declaration_scopes(source):
         unproved_nonfinal = role == "unknown" and any(
             catalog_title_role(p["text"]) in {"nonfinal", "mixed"} for p in packets
         )
-        body = [0, title[3], *size]
+        body = [band[0], title[3], band[1], size[1]]
         body_chunks = project_source_window(chunks, page, body)
         extent = original_context_extent(
-            body_chunks, body, source["page_diagrams"], column_boundaries=False
+            body_chunks,
+            body,
+            intersecting_source_diagrams(source["page_diagrams"], body),
+            column_boundaries=False,
         )
         bottom = extent["body_bottom"]
         body[3] = bottom
-        diagrams = [
-            d
-            for d in source["page_diagrams"]
-            if d["bbox"][3] > body[1] and d["bbox"][1] < bottom
-        ]
+        diagrams = (
+            intersecting_source_diagrams(source["page_diagrams"], body)
+            if body[1] < bottom
+            else []
+        )
         # These are raw reference candidates, not final structures or measured
         # values. Metadata/measurement/footer attribution remains explicit work.
         lists = (
@@ -196,5 +211,10 @@ def nonfinal_declaration_diagrams(scope):
     return [
         diagram
         for diagram in scope["diagrams"]
-        if scope["role"] == "nonfinal" and diagram["bbox"][3] <= scope["trusted_bottom"]
+        if scope["role"] == "nonfinal"
+        and diagram["bbox"][3] <= scope["trusted_bottom"]
+        and scope["bbox"][0]
+        <= diagram["bbox"][0]
+        < diagram["bbox"][2]
+        <= scope["bbox"][2]
     ]

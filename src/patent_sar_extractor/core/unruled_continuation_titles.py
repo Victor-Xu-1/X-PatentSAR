@@ -3,6 +3,7 @@
 from .caption_role_semantics import catalog_title_role, continuation_title
 from .source_table_captions import table_caption_nominees
 from .source_table_roles import observed_role, title_key
+from .structure_column_scopes import original_column_context
 
 
 def continuation_identity(text):
@@ -32,7 +33,7 @@ def nominated_table_keys(scope):
         return set()
     return {
         title_key(p["text"])
-        for p in anchor_scope(scope)["context_sources"]
+        for p in original_column_context(anchor_scope(scope))
         if title_key(p["text"])
     }
 
@@ -40,7 +41,5 @@ def nominated_table_keys(scope):
 def qualified_table_key(scope):
     if anchor_scope(scope) is None:
         return ""
-    _role, key = observed_role(
-        [p for p in anchor_scope(scope)["context_sources"] if p["text"].strip()]
-    )
+    _role, key = observed_role(original_column_context(anchor_scope(scope)))
     return key

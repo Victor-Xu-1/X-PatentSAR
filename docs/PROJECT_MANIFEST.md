@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- Parallel physical original scopes reuse the existing context_geometry and
+  caption-role SDK; no new OCR/model/layout engine or second matcher is added.
+  Declaration pages carry current page_grids once and saved replay verifies
+  header neighbours against it. Full raw page observations remain. Source roles,
+  table keys and catalogue metadata use one qualified context projection;
+  per-token catalogue scraping and blind prior-page carry are removed. Literal
+  caption splitting is shared by both caption consumers, not duplicated. Typed
+  selected reprints preserve all original sources and never prove chemistry.
+  These additions remain within unpublished Binding20/binder29/scope6 and must
+  pass focused source/saved/API/browser checks and main/18765 delivery. Native
+  controls do not prove arbitrary layouts or model/chemical acceptance.
+
 - Same-page continuation within unpublished Binding20/binder29/scope6 uses an
   exact original context_start and unique registered parent. Local scope checks
   and global saved replay share the same gap derivation; intervening frames,

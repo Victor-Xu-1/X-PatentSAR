@@ -2,6 +2,18 @@
 
 ## Original unruled structure columns
 
+Parallel physical tables retain independent titles, table IDs and source roles
+through the shared grid-context/caption SDK. Full original observations stay
+available. A native/raster conflict in one column stays unresolved without
+overruling it or poisoning an independent column. Do not replace original table
+keys from row order, locale or an adjacent title. Saved replay checks catalogue
+ID/title and the complete page-grid inventory. A single global intermediate title
+still excludes its proved intermediate sources; an all-intermediate document
+remains refused for formal terminal-product processing. Explicit selected reprints
+retain all source assets, not discarded data or chemical-equivalence certification.
+Unknown unruled lateral partitions and other unsupported layouts still require
+further verification before real-patent retry or delivery.
+
 Same-page headerless physical parts use their exact registered original gap.
 Do not bypass an intervening grid, drawing, assay or new experiment. The gap
 floor and overlapping source observations are revalidated after serialization.

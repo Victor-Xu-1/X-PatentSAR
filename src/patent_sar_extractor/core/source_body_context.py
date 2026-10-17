@@ -54,6 +54,18 @@ def contained_source_diagrams(diagrams, bounds):
     ]
 
 
+def intersecting_source_diagrams(diagrams, bounds):
+    """Retain crossing rivals, but not drawings in another original column."""
+    if not valid_box(bounds):
+        raise ValueError("Invalid original diagram-context frame")
+    return [
+        diagram
+        for diagram in diagrams
+        if min(bounds[2], diagram["bbox"][2]) > max(bounds[0], diagram["bbox"][0])
+        and min(bounds[3], diagram["bbox"][3]) > max(bounds[1], diagram["bbox"][1])
+    ]
+
+
 def box_inside_drawing(box, diagrams):
     """Whole original text containment, not vertical overlap or proximity."""
     return any(

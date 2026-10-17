@@ -1,6 +1,7 @@
 """One original caption/column selector for producers and stored source replay."""
 
 from .activity_context_geometry import context_band, context_floor
+from .source_table_captions import caption_line_parts
 from .source_table_markers import TABLE_CAPTION_START, TABLE_MARKER
 
 
@@ -15,12 +16,7 @@ def _window_parts(tokens, region):
             lines.setdefault(round(token["y"] / 3), []).append(token)
     output = []
     for _, row in sorted(lines.items()):
-        parts = [[]]
-        for token in sorted(row, key=lambda t: t["x"]):
-            if parts[-1] and TABLE_CAPTION_START.match(token["text"]):
-                parts.append([])
-            parts[-1].append(token)
-        output.extend(parts)
+        output.extend(caption_line_parts(sorted(row, key=lambda t: t["x"])))
     return output
 
 

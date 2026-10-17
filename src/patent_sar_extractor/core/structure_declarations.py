@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 
+from .activity_context_geometry import grid_axes
 from .activity_header_evidence import proof_id
 from .caption_role_semantics import catalog_title_role, has_continuation_caption
 from .source_document import document_sha256
@@ -28,7 +29,13 @@ def declaration_page_hint(text):
     )
 
 
-def observe_declaration_pages(doc, structures, pages, page_texts, tokens_for_page):
+def observe_declaration_pages(
+    doc, structures, pages, page_texts, tokens_for_page, *, grids_for_page=None
+):
+    if grids_for_page is None:
+        from .table_geometry import detect_ruled_table_regions
+
+        grids_for_page = detect_ruled_table_regions
     by_page, sections, withheld = defaultdict(list), [], set()
     for structure in structures:
         by_page[structure["page_no"] - 1].append(structure)
@@ -66,6 +73,7 @@ def observe_declaration_pages(doc, structures, pages, page_texts, tokens_for_pag
                 ],
                 key=lambda d: (d["bbox"][1], d["bbox"][0], d["id"]),
             ),
+            "page_grids": [grid_axes(grid) for grid in grids_for_page(page)],
         }
         scopes = declaration_scopes(source)
         if not scopes:

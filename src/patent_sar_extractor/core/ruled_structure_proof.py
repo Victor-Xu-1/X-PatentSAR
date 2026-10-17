@@ -5,6 +5,7 @@ import re
 from .activity_context_geometry import validate_grid_axes
 from .source_observations import source_observation_status
 from .source_window_chunks import source_packet_projection
+from .structure_catalogs import catalog_for_scope
 from .structure_table_headers import aligned_column_edges
 from .unruled_scope import scope_axes, scope_body_top, scope_roles
 
@@ -15,6 +16,7 @@ def valid_ruled_header_binding(binding):
         ownership = evidence["column_ownership"]
         scope = ownership["header_scope"]
         roles = scope_roles(scope)
+        catalog = catalog_for_scope(scope)
         row, pair, axes = evidence["row"], evidence["pair"], ownership["grid_axes"]
         validate_grid_axes(
             axes, [axes["xs"][0], axes["ys"][0], axes["xs"][-1], axes["ys"][-1]]
@@ -36,6 +38,8 @@ def valid_ruled_header_binding(binding):
                 "continued_ruled_columns",
             }
             or ownership["headers"] != roles["headers"]
+            or evidence.get("source_catalog", "") != catalog.identifier
+            or evidence.get("source_catalog_title", "") != catalog.title
             or ownership["grid_xs"] != axes["xs"]
             or first_row
             and axes != scope["grid_axes"]

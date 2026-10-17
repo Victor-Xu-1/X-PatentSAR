@@ -7,6 +7,10 @@ from patent_sar_extractor.core.caption_role_semantics import (
     continuation_title,
     has_continuation_caption,
 )
+from patent_sar_extractor.core.source_table_captions import (
+    caption_line_parts,
+    table_caption_nominees,
+)
 from patent_sar_extractor.core.source_table_markers import (
     TABLE_MARKER,
     caption_table_marker,
@@ -15,6 +19,46 @@ from patent_sar_extractor.core.source_table_markers import (
 
 
 class SourceTableCaptionSemanticsTests(unittest.TestCase):
+    @staticmethod
+    def word(text, left, width):
+        return {
+            "text": text,
+            "x": left + width / 2,
+            "y": 40,
+            "bbox": [left, 34, left + width, 46],
+        }
+
+    def test_independent_lateral_caption_positions_are_split_without_text_repair(self):
+        tokens = [
+            self.word("Table 11. Compounds", 40, 130),
+            self.word("Table B8. Intermediates", 360, 155),
+        ]
+        self.assertEqual(
+            [part["text"] for part in table_caption_nominees(tokens, [660, 720])],
+            [t["text"] for t in tokens],
+        )
+
+    def test_inline_table_reference_is_not_a_second_caption_start(self):
+        tokens = [
+            self.word("Table", 40, 24),
+            self.word("11.", 67, 14),
+            self.word("Compounds", 84, 52),
+            self.word("from", 139, 22),
+            self.word("Table", 164, 24),
+            self.word("B8.", 191, 16),
+        ]
+        self.assertEqual(caption_line_parts(tokens), [tokens])
+        self.assertEqual(len(table_caption_nominees(tokens, [660, 720])), 1)
+
+    def test_spaced_prose_references_cannot_drop_the_original_prose_prefix(self):
+        tokens = [
+            self.word("See", 40, 20),
+            self.word("Table 11.", 160, 70),
+            self.word("Table B8.", 360, 70),
+        ]
+        self.assertEqual(caption_line_parts(tokens), [tokens])
+        self.assertEqual(table_caption_nominees(tokens, [660, 720]), [])
+
     def test_source_table_roles_allow_only_a_real_caption_prefix(self):
         self.assertEqual(
             catalog_title_role("[0042] Table 12. Intermediate compounds"), "nonfinal"

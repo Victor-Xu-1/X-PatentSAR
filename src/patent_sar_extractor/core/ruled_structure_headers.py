@@ -2,7 +2,12 @@
 
 import re
 
-from .activity_context_geometry import validate_grid_axes
+from .activity_context_geometry import (
+    context_region,
+    grid_box,
+    validate_context_geometry,
+    validate_grid_axes,
+)
 from .activity_grid_role_observation import observe_role_cells
 from .source_cell_tokens import cell_text
 from .source_observations import source_observation_status
@@ -15,10 +20,13 @@ from .structure_table_headers import structure_column_pairs
 from .unruled_header_readings import original_header_readings
 
 
-def observe_ruled_header(page, tokens, grid, original_sha):
+def observe_ruled_header(page, tokens, grid, original_sha, *, grids=None):
     xs, ys = list(grid["xs"]), list(grid["ys"])
     bounds, size = [xs[0], ys[0], xs[-1], ys[1]], [page.rect.width, page.rect.height]
     sources = observe_window_sources(tokens, bounds)
+    geometry = context_region(grid, [grid_box(g) for g in (grids or [grid])])[
+        "context_geometry"
+    ]
     reading = observe_role_cells(
         page, {"xs": xs, "ys": ys[:2]}, tokens, retain_frames=True
     )
@@ -31,12 +39,15 @@ def observe_ruled_header(page, tokens, grid, original_sha):
         "page_no": page.number + 1,
         "page_size": size,
         "grid_axes": {"xs": xs, "ys": ys},
+        "context_geometry": geometry,
         "nomination": [
             cell_text(sources[0]["tokens"], [xs[c], ys[0], xs[c + 1], ys[1]])
             for c in range(len(xs) - 1)
         ],
         "source_observations": sources,
-        "context_sources": observe_header_context(tokens, size, ys[0]),
+        "context_sources": observe_header_context(
+            tokens, size, ys[0], geometry=geometry
+        ),
         "role_cells": reading,
     }
 
@@ -49,6 +60,7 @@ def ruled_header_roles(scope):
         "page_no",
         "page_size",
         "grid_axes",
+        "context_geometry",
         "nomination",
         "source_observations",
         "context_sources",
@@ -80,6 +92,7 @@ def ruled_header_roles(scope):
     ):
         raise ValueError("Invalid original structure-header grid size")
     validate_grid_axes(grid, [xs[0], ys[0], xs[-1], ys[-1]])
+    validate_context_geometry(scope["context_geometry"], grid_box(grid))
     if not 0 <= xs[0] < xs[-1] <= size[0] or not 0 <= ys[0] < ys[-1] <= size[1]:
         raise ValueError("Original structure-header grid leaves its page")
     bounds, sources = [xs[0], ys[0], xs[-1], ys[1]], scope["source_observations"]
@@ -102,7 +115,9 @@ def ruled_header_roles(scope):
     if scope["nomination"] != nomination:
         raise ValueError("Original ruled header nomination differs from its source")
     headers = original_header_readings(scope["role_cells"], xs, ys[:2], sources)
-    role, _key = original_header_context_role(scope["context_sources"], ys[0], size[0])
+    role, _key = original_header_context_role(
+        scope["context_sources"], ys[0], size[0], geometry=scope["context_geometry"]
+    )
     if headers is None or role in {"mixed", "conflict"}:
         return None
     pairs = structure_column_pairs(headers)

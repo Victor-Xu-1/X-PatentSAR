@@ -48,6 +48,7 @@ def original_page(*, weak_boundary=True, weak_title=False, native_boundary=None)
         "original_pdf_sha256": "a" * 64,
         "page_no": 1,
         "page_size": [520, 720],
+        "page_grids": [],  # This original token-only control has no printed rules.
         "page_context": observe_source_window(source_tokens, [0, 0, 520, 720]),
         "page_diagrams": [
             {"id": "BEFORE", "bbox": [215, 95, 355, 165]},
@@ -136,3 +137,9 @@ class DeclarationRoleReplayTests(unittest.TestCase):
     def test_a_foreign_source_cannot_supply_a_nonfinal_reference(self):
         with self.assertRaises(ValueError):
             declaration_role_index([section(original_page())], "b" * 64)
+
+    def test_missing_current_grid_observation_is_not_an_implicit_empty_inventory(self):
+        source = original_page()
+        source.pop("page_grids")
+        with self.assertRaises(ValueError):
+            declaration_scopes(source)

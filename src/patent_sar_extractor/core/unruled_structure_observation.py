@@ -126,14 +126,17 @@ def observe_unruled_tables(
         nominees = [
             groups
             for groups in nominate_unruled_headers(tokens, size)
-            if not any(
-                grid["xs"][0] <= groups[0]["bbox"][0]
-                and groups[-1]["bbox"][2] <= grid["xs"][-1]
-                and grid["ys"][0]
-                <= groups[0]["bbox"][1]
-                < groups[0]["bbox"][3]
-                <= grid["ys"][-1]
-                for grid in physical
+            if not all(
+                any(
+                    grid["xs"][0] <= group["bbox"][0]
+                    and group["bbox"][2] <= grid["xs"][-1]
+                    and grid["ys"][0]
+                    <= group["bbox"][1]
+                    < group["bbox"][3]
+                    <= grid["ys"][-1]
+                    for grid in physical
+                )
+                for group in groups
             )
         ]
         captions = continuation_nominees(tokens, size)
@@ -153,7 +156,8 @@ def observe_unruled_tables(
                 )
             headers.append(header)
         anchors = [
-            observe_ruled_header(page, tokens, grid, original_sha) for grid in physical
+            observe_ruled_header(page, tokens, grid, original_sha, grids=grids)
+            for grid in physical
         ]
         events = [(scope_axes(h)[1][0], h, None, False, None) for h in headers]
         events.extend(

@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 
+from .activity_context_geometry import context_region, grid_box
 from .activity_header_evidence import proof_id
 from .binding_source_regions import reference_cell
 from .printed_identifiers import identifier_key
@@ -71,6 +72,20 @@ def _pages(sections, scope):
         seen.add(section["page_no"])
         for parent in parents_by_page[section["page_no"]]:
             old = parent["source"]
+            header = old["header_scope"]
+            if header.get("kind") == "original_ruled_columns":
+                geometry = context_region(
+                    header["grid_axes"], [grid_box(g) for g in source["page_grids"]]
+                )["context_geometry"]
+                if header["context_geometry"] != geometry:
+                    raise ValueError(
+                        "Original header context differs from the page grid inventory"
+                    )
+            elif header.get("kind") in {None, "continued_ruled_columns"}:
+                if header["page_grids"] != source["page_grids"]:
+                    raise ValueError(
+                        "Original column scope changed the complete page grid inventory"
+                    )
             if old["page_diagrams"] != source["page_diagrams"]:
                 raise ValueError(
                     "Original declaration dropped or changed page diagrams"

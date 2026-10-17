@@ -1,6 +1,7 @@
 """Original header interface; continuations are consumers, never new anchors."""
 
 from .ruled_structure_headers import ruled_header_roles
+from .structure_header_context import original_header_context_packets
 from .structure_table_headers import aligned_column_edges
 from .unruled_structure_headers import header_windows, unruled_header_roles
 
@@ -24,6 +25,16 @@ def original_column_roles(scope):
         ruled_header_roles(scope)
         if scope.get("kind") == "original_ruled_columns"
         else unruled_header_roles(scope)
+    )
+
+
+def original_column_context(scope):
+    _xs, ys = original_column_axes(scope)
+    return original_header_context_packets(
+        scope["context_sources"],
+        ys[0],
+        scope["page_size"][0],
+        geometry=scope.get("context_geometry"),
     )
 
 
