@@ -2,6 +2,7 @@
 
 from .activity_context_geometry import validate_grid_axes
 from .activity_grid_context import _prefix
+from .caption_boundary_context import valid_caption_tail
 from .caption_role_semantics import continuation_title, nonfinal_catalog_text
 from .source_observations import source_claim_runs
 from .structure_table_headers import aligned_column_edges
@@ -15,6 +16,7 @@ def valid_role_link(scope, link, prior_role, prior_key, local_key):
         "previous_axes",
         "current_axes",
         "direction",
+        "previous_tail",
     }:
         return False
     previous = link["previous"]
@@ -23,6 +25,8 @@ def valid_role_link(scope, link, prior_role, prior_key, local_key):
         validate_grid_axes(link["current_axes"], scope["table_bbox"])
         old, new = link["previous_axes"], link["current_axes"]
         if old != previous.get("grid_axes") or new != scope.get("grid_axes"):
+            return False
+        if not valid_caption_tail(link["previous_tail"], previous):
             return False
         if not (
             scope["page_no"] == previous["page_no"] + 1
@@ -60,10 +64,11 @@ def valid_role_link(scope, link, prior_role, prior_key, local_key):
         return False
 
 
-def role_link(previous, previous_axes, region, direction):
+def role_link(previous, previous_axes, region, direction, previous_tail):
     return {
         "previous": previous,
         "previous_axes": previous_axes,
         "current_axes": {name: list(region[name]) for name in ("xs", "ys")},
         "direction": direction,
+        "previous_tail": previous_tail,
     }

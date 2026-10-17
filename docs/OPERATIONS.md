@@ -15,6 +15,14 @@ drawing, unread/conflicting context, changed columns or missing page remains an
 explicit refusal. Saving/reloading rechecks the same proof, including both page
 frames and the retained context; a missing packet cannot become success.
 
+Parallel original catalogues keep separate carry state. One column's proved new
+section, shifted frame or invalid boundary does not erase a separately proved
+neighbouring continuation. An unscoped heading is not silently treated as a local
+title merely to retain the old role. Completed tables also retain their complete
+page-tail context before lending a role to another page; this applies equally to
+intermediate exclusions. Saved role links require that context, and excess frame
+inventory fails explicitly rather than omitting some catalogues.
+
 An overlapping suffix detector is not automatically an extra printed letter:
 the complete independent caption and a qualified literal whole-ID box must agree,
 and the repeated letter must be inside that same physical box. Separate letters

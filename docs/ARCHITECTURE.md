@@ -17,12 +17,25 @@ result, without a second OCR/cell pass. Page-wide/header-key nomination cannot
 silently discard a proved caption claim; the existing shared claim resolver still
 decides any real ownership conflict.
 
-`caption_boundary_context` retains the complete original context after the first
-grid, using the shared source-window and body/section authorities, without new
+`caption_boundary_context` retains the complete original context after every
+frame, including an already completed catalogue, using the shared source-window
+and body/section authorities, without new
 OCR. Intervening grids/drawings, new or nonfinal sections, uncertain/conflicting
 readings, gaps and malformed/omitted windows refuse continuation. Earlier and
 later caption directions share the same proof. The duplicated adjacency predicate
 is replaced with the established physical-column tolerance.
+
+Call-local carry belongs to each proved original frame, not one page-global slot.
+Parallel catalogues retain independent pending captions/drawing rows. Only one
+qualified adjacent parent may own a continuation; earlier same-column frames are
+not eligible when their complete tail contains another frame. Tail qualification
+is computed once per prior frame within the document call. The existing4096-frame
+bound is explicit, not truncated success. Every saved role continuation also
+retains and replays its previous original tail, even when no cell pair straddles
+the page break. New sections cannot extend either final ownership or nonfinal
+exclusion. Explicit independent current titles remain necessary where one new
+heading could otherwise cover the whole parallel group; no role is guessed from
+row order, prior activity or the desired number of compounds.
 
 Complete physical caption reads retain every detector observation. A qualified
 bare whole-ID box agreeing literally with that read can explain an overlapping

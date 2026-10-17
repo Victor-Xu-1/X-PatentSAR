@@ -16,6 +16,7 @@
     "src/patent_sar_extractor/core/caption_grid_rows.py",
     "src/patent_sar_extractor/core/caption_page_boundary.py",
     "src/patent_sar_extractor/core/caption_role_observation.py",
+    "src/patent_sar_extractor/core/caption_role_links.py",
     "src/patent_sar_extractor/core/cell_caption_fragments.py",
     "src/patent_sar_extractor/core/cell_caption_identity.py",
     "src/patent_sar_extractor/core/numbered_structure_binding.py",
@@ -24,11 +25,13 @@
     "tests/test_caption_fragment_identity.py",
     "tests/test_caption_page_boundary.py",
     "tests/test_caption_role_writer.py",
+    "tests/test_parallel_caption_boundary.py",
     "tests/test_standalone.py"
   ],
   "python_modules": [
     "tests.test_caption_page_boundary",
     "tests.test_caption_role_writer",
+    "tests.test_parallel_caption_boundary",
     "tests.test_caption_fragment_identity",
     "tests.test_caption_prefix_overlap",
     "tests.test_detector_identity_confidence",

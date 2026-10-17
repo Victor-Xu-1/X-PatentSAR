@@ -17,6 +17,7 @@ from patent_sar_extractor.core.formal_structure import coverage_errors
 from patent_sar_extractor.core.structure_binder import bind
 from tests.test_caption_page_boundary import below_pages
 from tests.test_caption_source_roles import catalog
+from tests.test_parallel_caption_boundary import parallel_catalogues
 
 
 class CaptionRoleWriterTests(unittest.TestCase):
@@ -112,6 +113,24 @@ class CaptionRoleWriterTests(unittest.TestCase):
         owner["caption_role"]["observations"] = []
         with self.assertRaises(CatalogValidationError):
             read_catalog_entries(changed)
+
+    def test_actual_binder_writer_and_saved_consumers_keep_parallel_cross_page_sources(
+        self,
+    ):
+        doc, structures, boxes, _grids = parallel_catalogues()
+        payload, records = self.execute_document(doc, structures, boxes)
+        self.assertEqual(len(payload["final_bindings"]), 12, payload["source_issues"])
+        self.assertEqual(payload["source_issues"], [])
+        self.assertEqual(coverage_errors(payload), [])
+        entries, _aliases = read_catalog_entries(
+            payload, {row["structure_id"] for row in records}
+        )
+        self.assertEqual(reference_issues(payload, entries), [])
+        self.assertEqual(len(entries), 12)
+        for label in ("Compound 7E", "Compound 97E"):
+            row = next(entry for entry in entries if entry["cpd"] == label)
+            self.assertEqual(row["page_no"], 1)
+            self.assertEqual(row["exact_caption_evidence"]["page_no"], 2)
 
     def add_numbered_table(self, doc, structures, boxes, label="82"):
         page = doc[0]

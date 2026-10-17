@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 
-from .activity_context_geometry import context_region, grid_axes, grid_box
+from .activity_context_geometry import MAX_TABLES, context_region, grid_axes, grid_box
 from .activity_grid_context import _prefix
 from .caption_boundary_context import observe_caption_tail
 from .caption_grid_rows import caption_rows, numbered_header_nominee
@@ -11,6 +11,7 @@ from .caption_page_boundary import (
     CaptionGridCarry,
     adjacent_caption_grid,
     caption_boundary_proof,
+    qualified_caption_carries,
 )
 from .caption_role_links import role_link
 from .caption_role_observation import observe_caption_role
@@ -48,8 +49,7 @@ def bind_caption_grids(
     tokens_for_page = tokens_for_page or (
         lambda page: page_tokens(page, dpi=200, allow_tesseract=False)
     )
-    carry = None
-    pending = []
+    carries = []
     catalog_boxes = result.regions
 
     def reject(item, reason):
@@ -121,24 +121,32 @@ def bind_caption_grids(
 
     for page_no in sorted(set(pages)):
         page = doc[page_no - 1]
-        grids = sorted(grids_for_page(page), key=lambda g: (g["ys"][0], g["xs"][0]))
+        observed_grids = grids_for_page(page)
+        if len(observed_grids) > MAX_TABLES:
+            raise ValueError("Original caption page exceeds its frame resource bound")
+        grids = sorted(observed_grids, key=lambda g: (g["ys"][0], g["xs"][0]))
         tokens = tokens_for_page(page) if grids else []
         if grids:
             result.tokens[page_no] = tokens
-        found = False
+        prior_frames = qualified_caption_carries(carries)
+        next_carries, consumed = [], set()
         for region in grids:
             xs, ys = region["xs"], region["ys"]
             if numbered_header_nominee(region, tokens):
-                for item in pending:
-                    reject(item, "unproved_cross_page_caption")
-                pending, carry = [], None
                 continue
             caption = _prefix(
                 tokens, context_region(region, [grid_box(g) for g in grids])
             )
             new_table = bool(TABLE_MARKER.search(caption))
             role = observe_caption_role(page, region, grids, tokens)
-            adjacent = adjacent_caption_grid(carry, page_no, region, role, new_table)
+            matches = [
+                (index, prior)
+                for index, prior in prior_frames
+                if index not in consumed
+                and adjacent_caption_grid(prior, page_no, region, role, new_table)
+            ]
+            carry_index, carry = matches[0] if len(matches) == 1 else (None, None)
+            adjacent = carry is not None
             if (
                 role is not None
                 and role["role"] == "unknown"
@@ -150,7 +158,7 @@ def bind_caption_grids(
                     "role": carry.role["role"],
                     "table_key": carry.role["table_key"],
                     "continuation": role_link(
-                        carry.role, carry.axes, region, carry.direction
+                        carry.role, carry.axes, region, carry.direction, carry.tail
                     ),
                 }
                 if caption_role_status(inherited, page_no, grid_box(region)):
@@ -160,7 +168,10 @@ def bind_caption_grids(
             role_status = caption_role_status(role, page_no, grid_box(region))
             if role_status == "nonfinal":
                 result.roles[(page_no, tuple(grid_box(region)))] = role
-                found = True
+                if carry_index is not None:
+                    consumed.add(carry_index)
+                    for item in carry.pending:
+                        reject(item, "unproved_cross_page_caption")
                 result.pages.add(page_no)
                 result.exclusions.append(
                     {
@@ -182,7 +193,22 @@ def bind_caption_grids(
                 result.protected_structure_ids.update(
                     result.exclusions[-1]["structure_ids"]
                 )
-                carry = CaptionGridCarry(page_no, grid_axes(region), None, role)
+                next_carries.append(
+                    CaptionGridCarry(
+                        page_no,
+                        grid_axes(region),
+                        None,
+                        role,
+                        tail=observe_caption_tail(
+                            page,
+                            role,
+                            grids,
+                            tokens,
+                            by_page.get(page_no, []),
+                            boxes_by_page.get(page_no, []),
+                        ),
+                    )
+                )
                 continue
             rows, kinds = caption_rows(
                 region, tokens, boxes_by_page.get(page_no, []), role
@@ -192,7 +218,7 @@ def bind_caption_grids(
                 and kinds
                 and (
                     carry.direction == "above"
-                    and pending
+                    and carry.pending
                     and kinds[0] == "drawing"
                     or carry.direction == "below"
                     and carry.trailing_drawing
@@ -200,11 +226,9 @@ def bind_caption_grids(
                 )
             )
             if (not any(rows) or "drawing" not in kinds) and not bridge_only:
-                for item in pending:
-                    reject(item, "unproved_cross_page_caption")
-                pending, carry = [], None
                 continue
-            found = True
+            if carry_index is not None:
+                consumed.add(carry_index)
             if role_status == "compound":
                 result.roles[(page_no, tuple(grid_box(region)))] = role
             result.pages.add(page_no)
@@ -234,7 +258,7 @@ def bind_caption_grids(
                 if adjacent
                 else None
             )
-            for item in pending:
+            for item in carry.pending if carry else ():
                 if boundary and direction == "above" and kinds[0] == "drawing":
                     col = item["column"]
                     bind(
@@ -317,27 +341,33 @@ def bind_caption_grids(
                             direction,
                         )
             trailing = kinds[-1] == "drawing"
-            tail = (
-                observe_caption_tail(
-                    page,
+            tail = observe_caption_tail(
+                page,
+                role,
+                grids,
+                tokens,
+                by_page.get(page_no, []),
+                boxes_by_page.get(page_no, []),
+            )
+            next_carries.append(
+                CaptionGridCarry(
+                    page_no,
+                    grid_axes(region),
+                    direction,
                     role,
-                    grids,
-                    tokens,
-                    by_page.get(page_no, []),
-                    boxes_by_page.get(page_no, []),
+                    trailing,
+                    tail,
+                    tuple(pending),
                 )
-                if pending or direction == "below" and trailing
-                else None
             )
-            carry = CaptionGridCarry(
-                page_no, grid_axes(region), direction, role, trailing, tail
-            )
-        if not found:
-            for item in pending:
-                reject(item, "unproved_cross_page_caption")
-            pending, carry = [], None
-    for item in pending:
-        reject(item, "unproved_cross_page_caption")
+        for index, prior in enumerate(carries):
+            if index not in consumed:
+                for item in prior.pending:
+                    reject(item, "unproved_cross_page_caption")
+        carries = next_carries
+    for carry in carries:
+        for item in carry.pending:
+            reject(item, "unproved_cross_page_caption")
     bound = {str(b["structure"].get("id") or "") for b in result.bindings} | {
         identity
         for section in result.exclusions

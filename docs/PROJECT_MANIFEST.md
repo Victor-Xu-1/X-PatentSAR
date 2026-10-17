@@ -17,6 +17,11 @@
   numbered/unruled admission rechecks shared roles against the same fresh source
   facts. The later caption consumer reuses that result, and the existing claim
   resolver retains genuine conflicts instead of hiding claims by page/header ID.
+  Call-local carry is per physical original frame, with unique qualified-parent
+  selection and explicit4096-frame bounds. Completed catalogues and nonfinal
+  exclusions require the same complete prior tail as split cells; saved role
+  links replay it. No new per-checkpoint epoch or product bump is introduced
+  within this unpublished Binding21/binder30/visible21/v0.2.34 candidate.
 
 - Historical source presentation: the shared catalogue reader's strict default
   remains the only scientific ownership authority. The Web artifact projection

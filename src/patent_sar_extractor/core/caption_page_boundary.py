@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from itertools import pairwise
 
+from .activity_context_geometry import MAX_TABLES, grid_box
 from .caption_boundary_context import valid_caption_tail
 from .caption_role_links import role_link, valid_role_link
 from .caption_role_proof import caption_role_status
@@ -17,6 +18,7 @@ class CaptionGridCarry:
     role: dict | None
     trailing_drawing: bool = False
     tail: dict | None = None
+    pending: tuple[dict, ...] = ()
 
 
 def adjacent_caption_grid(carry, page_no, region, role, new_table):
@@ -35,6 +37,23 @@ def adjacent_caption_grid(carry, page_no, region, role, new_table):
     )
 
 
+def qualified_caption_carries(carries):
+    """Qualify each original frame once, not once per possible next-page frame.
+
+    These are call-local immutable observations, not saved scientific acceptance.
+    The formal role/cell consumers independently replay the retained proof.
+    """
+    if len(carries) > MAX_TABLES:
+        raise ValueError("Original caption page exceeds its frame resource bound")
+    return [
+        (index, carry)
+        for index, carry in enumerate(carries)
+        if caption_role_status(carry.role, carry.page_no, grid_box(carry.axes))
+        in {"compound", "nonfinal"}
+        and valid_caption_tail(carry.tail, carry.role)
+    ]
+
+
 def _proved_pair(previous, current, direction, tail):
     if direction not in {"above", "below"} or not all(
         isinstance(role, dict) for role in (previous, current)
@@ -49,7 +68,7 @@ def _proved_pair(previous, current, direction, tail):
         if current["window"][1] != 0 or not valid_caption_tail(tail, previous):
             return False
         link = role_link(
-            previous, previous["grid_axes"], current["grid_axes"], direction
+            previous, previous["grid_axes"], current["grid_axes"], direction, tail
         )
         if "continuation" in current and current["continuation"] != link:
             return False

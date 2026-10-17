@@ -26,6 +26,9 @@ def below_pages(
     label_only=False,
     extra_grid=False,
     unknown_rival=False,
+    label_prefix="",
+    table_number=47,
+    role_title="Compounds",
 ):
     doc = fitz.open()
     by_page, boxes, grids = {}, {}, {}
@@ -58,7 +61,9 @@ def below_pages(
         for y in ys:
             page.draw_line((xs[0], y), (xs[-1], y))
         if number == 1:
-            page.insert_text((50, 85), "Table 47. Compounds", fontsize=10)
+            page.insert_text(
+                (50, 85), f"Table {table_number}. {role_title}", fontsize=10
+            )
             if tail_text:
                 page.insert_text((50, 308), tail_text, fontsize=9)
         elif next_title:
@@ -66,7 +71,9 @@ def below_pages(
         for row, ids in labels:
             for col, label in enumerate(ids[:columns]):
                 page.insert_text(
-                    (xs[col] + 15, ys[row] + 17), f"Compound {label}", fontsize=9
+                    (xs[col] + 15, ys[row] + 17),
+                    f"Compound {label_prefix}{label}",
+                    fontsize=9,
                 )
         by_page[number], boxes[number] = [], []
         for row, ids in drawings:
@@ -74,7 +81,7 @@ def below_pages(
                 box = (xs[col] + 20, ys[row] + 15, xs[col] + 80, ys[row + 1] - 15)
                 by_page[number].append(
                     {
-                        "id": f"original-{label}",
+                        "id": f"original-{label_prefix}{label}",
                         "page_no": number,
                         **dict(zip(("x0", "y0", "x1", "y1"), box)),
                     }
