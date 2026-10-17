@@ -56,7 +56,16 @@ class UnruledSourceAdmissionTests(unittest.TestCase):
         ) as reader:
             observe_unruled_tables(
                 self.document,
-                [{"page_no": 1}],
+                [
+                    {
+                        "page_no": 1,
+                        "id": "diagram",
+                        "x0": 200,
+                        "y0": 150,
+                        "x1": 300,
+                        "y1": 230,
+                    }
+                ],
                 [0],
                 lambda _p: [],
                 reader,

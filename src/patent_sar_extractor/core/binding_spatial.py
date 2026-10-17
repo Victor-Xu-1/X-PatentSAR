@@ -29,7 +29,7 @@ from .binding_types import (
     SourceOwnership,
 )
 from .source_binding_proof import annotate_source_binding
-from .structure_declarations import declaration_page_hint, observe_declaration_pages
+from .structure_declarations import observe_declaration_pages
 from .table_geometry import detect_ruled_table_regions, page_tokens
 
 logger = logging.getLogger(__name__)
@@ -159,8 +159,10 @@ def collect_spatial_bindings(
     source_pages: Sequence[int] | None = None,
 ) -> SpatialBindings:
     # Locator/classifier hints are not a complete table inventory. Discover
-    # original numbered grids across every selected structure-source page;
-    # the grid/header/cell authority still decides ownership, never this set.
+    # original numbered grids across the complete existing page-text inventory.
+    # A headerless next page can lack both a new declaration and detector hits.
+    # The observer inspects adjacent registered sources but skips unrelated prose
+    # before coordinate OCR; membership in this set never authorizes ownership.
     if source_pages is None:
         source_pages = [
             structure["page_no"] - 1
@@ -173,11 +175,7 @@ def collect_spatial_bindings(
             for page in (
                 *table_pages,
                 *source_pages,
-                *(
-                    index
-                    for index, text in pages_text.items()
-                    if declaration_page_hint(text)
-                ),
+                *pages_text,
             )
             if type(page) is int and page >= 0
         }

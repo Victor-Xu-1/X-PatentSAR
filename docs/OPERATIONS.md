@@ -2,6 +2,19 @@
 
 ## Original unruled structure columns
 
+Original source registration now precedes physical cell construction. There is no
+second inherited-cell producer or later header-repair path. Headerless pages with
+no detector hits can still be inspected against the immediately registered prior
+source using the complete existing page-text inventory, without rereading
+unrelated prose. A missing diagram remains a missing row, not a blank success or
+shifted association. Changed logical outer clipping bounds are allowed only when
+complete original header groups fit the actual physical columns; a column crossing
+those groups remains unproved. Known assay headers without diagrams use the shared
+independent original header reader; unknown or mixed chemical frames remain review.
+Generated original/native/raster checks are not actual-patent acceptance. Preserve
+old attempts; the remaining source/chemistry work, merged-main deployment and
+frontend-only real repeat must finish before claiming delivery.
+
 Headerless physical continuations retain their actual first row and full frame
 as `continued_ruled_columns`. Missing ancestry, page gaps, unknown intervening
 experimental text and ambiguous source ownership remain review; a page-position

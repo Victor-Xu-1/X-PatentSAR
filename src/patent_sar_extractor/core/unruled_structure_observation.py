@@ -3,12 +3,15 @@
 from collections import defaultdict
 from dataclasses import dataclass
 
+from .activity_context_geometry import grid_axes
 from .activity_header_evidence import proof_id
+from .caption_role_observation import owns_caption_frame
 from .caption_role_semantics import has_continuation_caption
 from .numbered_structure_models import NumberedTableIssue
 from .ruled_column_continuation import observe_physical_continuation
 from .ruled_continuation_links import eligible_physical_parents
 from .ruled_structure_headers import observe_ruled_header
+from .source_body_context import contained_source_diagrams
 from .source_document import document_sha256
 from .source_geometry import SourceTokens
 from .structure_column_anchors import (
@@ -16,6 +19,10 @@ from .structure_column_anchors import (
     column_anchor_diagrams,
     column_anchor_roles,
     observe_column_anchor,
+)
+from .structure_frame_observation import (
+    known_measurement_frame,
+    nominate_physical_frames,
 )
 from .structure_table_headers import aligned_column_edges, possible_structure_header
 from .unruled_continuation import observe_continuation
@@ -57,8 +64,6 @@ def observe_unruled_tables(
     tokens_for_page,
     *,
     page_texts=None,
-    ruled_header_grids=None,
-    ruled_continuation_grids=None,
 ):
     bindings, sections, issues, protected, recognized, observed = (
         [],
@@ -69,8 +74,6 @@ def observe_unruled_tables(
         set(),
     )
     original_sha = None
-    ruled_header_grids = ruled_header_grids or {}
-    ruled_continuation_grids = ruled_continuation_grids or {}
     by_page, sections_by_page, anchors_by_key = {}, defaultdict(list), defaultdict(list)
     for structure in structures:
         by_page.setdefault(structure["page_no"] - 1, []).append(structure)
@@ -87,8 +90,7 @@ def observe_unruled_tables(
         # unrelated prose. Hints cannot authorize or suppress a known diagram.
         if (
             page_index not in by_page
-            and not ruled_header_grids.get(page_index)
-            and not ruled_continuation_grids.get(page_index)
+            and not sections_by_page.get(page_index)
             and page_texts is not None
             and not (
                 possible_structure_header(page_texts[page_index])
@@ -100,18 +102,24 @@ def observe_unruled_tables(
         if not isinstance(tokens, SourceTokens):
             continue
         size = [page.rect.width, page.rect.height]
-        physical = ruled_header_grids.get(page_index, [])
-        pending = ruled_continuation_grids.get(page_index, [])
-        if any(
-            not any(
-                grid["xs"] == found["xs"] and grid["ys"] == found["ys"]
-                for found in grids_for_page(page)
+        page_diagrams = sorted(
+            [
+                {"id": str(s["id"]), "bbox": [s[k] for k in ("x0", "y0", "x1", "y1")]}
+                for s in by_page.get(page_index, [])
+            ],
+            key=lambda item: (item["bbox"][1], item["bbox"][0], item["id"]),
+        )
+        grids = [grid_axes(grid) for grid in grids_for_page(page)]
+        physical, pending = nominate_physical_frames(
+            tokens, grids, page_diagrams, sections_by_page[page_index], size
+        )
+        pending = [
+            grid
+            for grid in pending
+            if not owns_caption_frame(
+                page, grid, grids, tokens, [d["bbox"] for d in page_diagrams]
             )
-            for grid in [*physical, *pending]
-        ):
-            raise ValueError(
-                "Original column anchor differs from detected physical grid"
-            )
+        ]
         nominees = [
             groups
             for groups in nominate_unruled_headers(tokens, size)
@@ -129,13 +137,6 @@ def observe_unruled_tables(
         if not nominees and not captions and not physical and not pending:
             continue
         available = {str(s["id"]): s for s in by_page.get(page_index, [])}
-        page_diagrams = sorted(
-            [
-                {"id": str(s["id"]), "bbox": [s[k] for k in ("x0", "y0", "x1", "y1")]}
-                for s in by_page.get(page_index, [])
-            ],
-            key=lambda item: (item["bbox"][1], item["bbox"][0], item["id"]),
-        )
         headers = []
         if original_sha is None and (nominees or physical or pending):
             original_sha = document_sha256(doc)
@@ -172,8 +173,16 @@ def observe_unruled_tables(
                     for s in sections_by_page[page_index + 1]
                 ):
                     continue
+                xs, ys = row_grid["xs"], row_grid["ys"]
+                diagrams = contained_source_diagrams(
+                    page_diagrams, [xs[0], ys[0], xs[-1], ys[-1]]
+                )
+                if not diagrams and known_measurement_frame(
+                    page, tokens, row_grid, original_sha
+                ):
+                    continue
                 header = observe_physical_continuation(
-                    page, tokens, row_grid, grids_for_page(page), original_sha
+                    page, tokens, row_grid, grids, original_sha
                 )
                 parents = eligible_physical_parents(
                     [*sections_by_page[page_index], *sections_by_page[page_index + 1]],
@@ -187,6 +196,8 @@ def observe_unruled_tables(
                         parent_region_id=parent["region_id"],
                         parent_page_no=parent["page_no"],
                     )
+                elif not parents and not diagrams:
+                    continue  # No chemical source nominated this independent frame.
             elif header is None:
                 key = continuation_identity(caption["text"])[0]
                 anchors = anchors_by_key[key]

@@ -314,37 +314,45 @@ class NumberedTableObservationTests(unittest.TestCase):
         )
 
     def _observe(self, pages, indices, active):
-        from types import SimpleNamespace
+        import fitz
 
         from patent_sar_extractor.core.numbered_structure_binding import (
             bind_numbered_tables,
         )
+        from patent_sar_extractor.core.table_geometry import page_tokens
 
-        calls = []
+        # These are original-observer checks, not pairing transport checks.
+        # Render the same literal IDs/geometry so source scope and saved proof
+        # execute on real original pages instead of an untyped fake Page.
+        document = fitz.open()
+        self.addCleanup(document.close)
+        for plan in pages:
+            page = document.new_page(width=400, height=400)
+            for grid in plan.grids:
+                xs, ys = grid["xs"], grid["ys"]
+                for x in xs:
+                    page.draw_line((x, ys[0]), (x, ys[-1]))
+                for y in ys:
+                    page.draw_line((xs[0], y), (xs[-1], y))
+            for token in plan.tokens:
+                page.insert_text(
+                    (token["x"] - 20, token["y"] + 3), token["text"], fontsize=8
+                )
+        calls, cache = [], {}
 
-        def reader(page, bounds, tokens, kind, native):
-            self.assertEqual(kind, "id")
-            self.assertTrue(native)
-            values = [
-                t["text"]
-                for t in tokens
-                if bounds[0] < t["x"] < bounds[2] and bounds[1] < t["y"] < bounds[3]
-            ]
-            text = " ".join(values)
-            return SimpleNamespace(
-                value=text.removesuffix("."),
-                needs_review=False,
-                observations=[{"method": "native_cell", "text": text}],
-            )
+        def tokens_for(page):
+            if page.number not in cache:
+                calls.append(page.number)
+                cache[page.number] = page_tokens(page)
+            return cache[page.number]
 
         result = bind_numbered_tables(
-            pages,
+            document,
             [],
             indices,
             active,
-            grids_for_page=lambda page: page.grids,
-            tokens_for_page=lambda page: calls.append(page) or page.tokens,
-            cell_reader=reader,
+            tokens_for_page=tokens_for,
+            page_texts={p.number: p.get_text("text") for p in document},
         )
         return result, calls
 
@@ -368,6 +376,7 @@ class NumberedTableObservationTests(unittest.TestCase):
     def test_no_grid_does_not_start_coordinate_ocr(self):
         page = self._page(["1.", "2."])
         page.grids = []
+        page.tokens = []  # No original structure header either.
         result, calls = self._observe([page], [0], {"1", "2"})
         self.assertFalse(result.recognized)
         self.assertEqual(calls, [])
@@ -385,6 +394,22 @@ class NumberedTableObservationTests(unittest.TestCase):
         self.assertTrue(result.recognized)
         self.assertEqual(result.bindings, ())
         self.assertEqual(result.observed_keys, frozenset())
+
+    def test_untyped_page_transport_cannot_prove_original_ownership(self):
+        from patent_sar_extractor.core.numbered_structure_binding import (
+            bind_numbered_tables,
+        )
+
+        page = self._page(["1.", "2."])
+        result = bind_numbered_tables(
+            [page],
+            [],
+            [0],
+            grids_for_page=lambda p: p.grids,
+            tokens_for_page=lambda p: p.tokens,
+        )
+        self.assertFalse(result.recognized)
+        self.assertEqual(result.bindings, ())
 
 
 if __name__ == "__main__":

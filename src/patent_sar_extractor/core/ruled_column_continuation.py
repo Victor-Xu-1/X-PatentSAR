@@ -9,8 +9,7 @@ from .source_window_chunks import (
     project_source_window,
     validate_source_window,
 )
-from .structure_column_scopes import original_column_axes, original_column_roles
-from .structure_table_headers import aligned_column_edges
+from .structure_column_scopes import original_column_roles, original_columns_fit_frame
 
 KIND = "continued_ruled_columns"
 
@@ -98,9 +97,7 @@ def physical_continuation_roles(scope):
     roles = original_column_roles(anchor)
     if not anchor["page_no"] <= scope["parent_page_no"] < scope["page_no"]:
         raise ValueError("Physical column ancestry does not precede its source")
-    if roles is None or not aligned_column_edges(
-        original_column_axes(anchor)[0], grid["xs"]
-    ):
+    if roles is None or not original_columns_fit_frame(anchor, grid["xs"]):
         return None
     prefix = (
         project_source_window(scope["leading_context"], leading, window)

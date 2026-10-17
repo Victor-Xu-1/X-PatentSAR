@@ -6,8 +6,7 @@ from .ruled_column_continuation import KIND, physical_continuation_roles
 from .ruled_continuation_context import qualified_running_window
 from .source_body_context import contained_source_diagrams
 from .source_window_chunks import project_source_window, validate_source_overlap
-from .structure_column_scopes import original_column_axes
-from .structure_table_headers import aligned_column_edges
+from .structure_column_scopes import original_columns_fit_frame
 from .unruled_body_scope import body_context_window, column_body_extent
 from .unruled_continuation_titles import anchor_scope
 from .unruled_scope import scope_roles
@@ -33,7 +32,7 @@ def eligible_physical_parents(sections, scope, diagrams):
             or anchor is None
             or prior["original_pdf_sha256"] != scope["original_pdf_sha256"]
             or prior["page_size"][0] != size[0]
-            or not aligned_column_edges(original_column_axes(anchor)[0], grid["xs"])
+            or not original_columns_fit_frame(anchor, grid["xs"])
         ):
             continue
         extent = column_body_extent(source)

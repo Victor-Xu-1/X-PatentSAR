@@ -1,5 +1,20 @@
 # X-PatentSAR architecture
 
+Physical-cell construction is source-first: `structure_frame_observation`
+nominates actual frames from the existing grid/token inventory; the shared source
+observer registers column roles before `structure_column_cells` constructs rows
+for the existing pair matcher. The former carried-header producer/preparator is
+removed. Call-local tokens are reused, not OCRed again for cell construction.
+Complete existing page-text membership permits checking a headerless next page
+even with no new declaration or detector hits; unrelated prose is filtered before
+coordinate OCR. Logical-to-physical columns require every complete original header
+word group inside its corresponding observed physical column; inferred logical
+outer clipping windows are not printed rules. Physical-to-physical alignment is
+unchanged. Diagram-free known activity frames require positive independent
+original header roles; unknown/conflicting columns or known chemical diagrams
+cannot be silently excluded. This is an unpublished repair, not scientific or
+deployed acceptance; same-page uncaptained/ambiguous layouts remain open.
+
 Headerless physical continuation draft: `ruled_column_continuation` captures
 actual grids and full leading/first-row context; `ruled_continuation_context`
 replays qualified running context and `ruled_continuation_links` checks one

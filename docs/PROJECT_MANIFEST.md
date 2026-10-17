@@ -1,5 +1,18 @@
 # Project governance manifest
 
+- Source-first physical-cell migration: `structure_frame_observation` only
+  nominates existing original frames; the shared source observer registers roles
+  before the single `structure_column_cells` producer feeds the existing matcher.
+  The obsolete carried-header cell producer/preparator is removed. Full existing
+  page-text membership preserves headerless, zero-detector-hit continuations;
+  early prose filtering and call-local token reuse bound extra work. The common
+  original column SDK verifies logical header words against actual physical
+  columns, retaining strict printed-rule alignment. Known diagram-free assay
+  headers need shared independent source proof, not a classifier hint. No raw,
+  manual, model, API/SQL, queue, dependency or scientific acceptance change.
+  This remains within unpublished Binding20/binder29; actual frontend repeat,
+  scientific/source completeness and remaining ambiguous layouts are unverified.
+
 - Physical continuation draft:`continued_ruled_columns` is an additive internal
   original-scope kind within unpublished Binding20/binder29. Three responsibility
   modules own capture/local scope, qualified context and exact saved parent links.

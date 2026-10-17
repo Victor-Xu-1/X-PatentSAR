@@ -77,6 +77,7 @@
     "src/patent_sar_extractor/core/structure_declaration_roles.py",
     "src/patent_sar_extractor/core/structure_declaration_scopes.py",
     "src/patent_sar_extractor/core/structure_declarations.py",
+    "src/patent_sar_extractor/core/structure_frame_observation.py",
     "src/patent_sar_extractor/core/structure_header_context.py",
     "src/patent_sar_extractor/core/structure_table_headers.py",
     "src/patent_sar_extractor/core/unruled_body_scope.py",

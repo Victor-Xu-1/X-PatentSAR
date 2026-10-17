@@ -89,8 +89,16 @@ class GeneralStructureTableTests(unittest.TestCase):
 
     def test_nonstructure_header_is_not_an_alias_for_a_molecular_column(self):
         result, _ = self.observe(["Ex #", "Procedures", "Name", "LCMS"])
-        self.assertFalse(result.recognized)
+        # Keep the detector's candidate source, but never reinterpret one of
+        # these original columns as molecular structure or allow fallback.
+        self.assertTrue(result.recognized)
         self.assertEqual(result.bindings, ())
+        self.assertEqual(result.protected_structure_ids, frozenset({"S17", "S18"}))
+        self.assertIn(
+            "unproved_original_ruled_header", {issue.reason for issue in result.issues}
+        )
+        scope = result.source_sections[0]["source"]["header_scope"]
+        self.assertIsNone(scope["anchor_scope"])
 
 
 if __name__ == "__main__":
