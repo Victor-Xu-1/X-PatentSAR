@@ -1,5 +1,16 @@
 # X-PatentSAR architecture
 
+Headerless physical continuation draft: `ruled_column_continuation` captures
+actual grids and full leading/first-row context; `ruled_continuation_context`
+replays qualified running context and `ruled_continuation_links` checks one
+registered adjacent parent against the complete original source. The common
+column interface owns real body-start geometry, so a data row is never invented
+as a header or omitted. Pending frames remain typed unresolved sources when no
+parent can be proved. Original current caption catalogues retain their existing
+single matcher rather than inheriting unrelated prior columns. No extra OCR,
+queue, assets, writer or dependency. Same-page/shifted-column ambiguous cases
+remain unproved; native/save/Web regression is required before delivery.
+
 Original column ownership uses the same source-body SDK for ruled-cell
 preparation, logical matching, serialized population and nonfinal exclusions.
 The complete context/diagram inventory is immutable; trusted ownership stops at

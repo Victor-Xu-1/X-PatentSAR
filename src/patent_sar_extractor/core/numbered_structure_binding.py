@@ -161,10 +161,36 @@ def bind_numbered_tables(
             has_header = bool(pairs)
             continuation = bool(
                 carry
-                and carry[0] + 1 == page_index
-                and ys[0] < 130
                 and aligned_column_edges(carry[1], xs)
+                and (
+                    carry[0] + 1 == page_index
+                    or any(
+                        structure.get("page_no") == page_index + 1
+                        and (
+                            observed_box := _box(
+                                [structure.get(k) for k in ("x0", "y0", "x1", "y1")]
+                            )
+                        )
+                        is not None
+                        and xs[0] <= observed_box[0] < observed_box[2] <= xs[-1]
+                        and ys[0] <= observed_box[1] < observed_box[3] <= ys[-1]
+                        for structure in structures
+                    )
+                )
             )
+            if continuation and not has_header:
+                from .caption_role_observation import owns_caption_frame
+
+                boxes = [
+                    _box([s.get(k) for k in ("x0", "y0", "x1", "y1")])
+                    for s in structures
+                    if s.get("page_no") == page_index + 1
+                ]
+                if owns_caption_frame(
+                    page, {"xs": xs, "ys": ys}, grids_for_page(page), tokens, boxes
+                ):
+                    carry = None
+                    continue
             if not has_header and not continuation:
                 continue
             if has_header:

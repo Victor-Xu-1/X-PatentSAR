@@ -2,6 +2,14 @@
 
 ## Original unruled structure columns
 
+Headerless physical continuations retain their actual first row and full frame
+as `continued_ruled_columns`. Missing ancestry, page gaps, unknown intervening
+experimental text and ambiguous source ownership remain review; a page-position
+hint is not proof. Do not fill a header/caption or shift the surviving row to
+repair a missing diagram. Original columns and saved source links are replayed
+by the same consumers. The current draft still requires native and real-source
+acceptance before it is delivered.
+
 Complete source extent and positively trusted role extent are separate. An
 unproved new section preserves the original tokens, labels and diagrams; it
 blocks extending a compound/intermediate table role beyond that cue. Both ruled

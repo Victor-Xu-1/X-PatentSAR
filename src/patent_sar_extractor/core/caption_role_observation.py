@@ -12,6 +12,21 @@ from .source_geometry import SourceTokens, native_region
 from .source_observations import source_cell_observation
 
 
+def owns_caption_frame(page, region, regions, tokens, boxes):
+    """A current original caption catalogue must not inherit unrelated columns."""
+    from .caption_grid_rows import caption_rows
+    from .caption_role_proof import caption_role_status
+
+    role = observe_caption_role(page, region, regions, tokens)
+    status = caption_role_status(role, page.number + 1, grid_box(region))
+    if status == "nonfinal":
+        return True
+    if status != "compound":
+        return False
+    _rows, kinds = caption_rows(region, tokens, boxes, role)
+    return "label" in kinds and "drawing" in kinds
+
+
 def observe_caption_role(page, region, regions, tokens):
     """No extra OCR: reuse the current original token and grid inventory."""
     if not isinstance(tokens, SourceTokens):

@@ -1,5 +1,15 @@
 # Project governance manifest
 
+- Physical continuation draft:`continued_ruled_columns` is an additive internal
+  original-scope kind within unpublished Binding20/binder29. Three responsibility
+  modules own capture/local scope, qualified context and exact saved parent links.
+  They feed the existing column SDK/matcher/ledger/writer. Body-top is the actual
+  first data-row edge,not a fabricated header. A current independent caption
+  catalogue retains its existing owner. Unknown ancestry remains explicit with
+  raw frames/rows,not inferred from page order or a fixed top margin. No public
+  API/SQL/raw/model/manual/asset/dependency change; current native regression is
+  pending and universal/chemical completeness is not certified.
+
 - Occurrence-ownership draft:the existing caption/label role SDK now includes
   current proved numbered ID cells. The binder's global-label heading skips are
   removed, and current heading replay requires an exact original observation

@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from .activity_header_evidence import proof_id
 from .caption_role_semantics import has_continuation_caption
 from .numbered_structure_models import NumberedTableIssue
+from .ruled_column_continuation import observe_physical_continuation
+from .ruled_continuation_links import eligible_physical_parents
 from .ruled_structure_headers import observe_ruled_header
 from .source_document import document_sha256
 from .source_geometry import SourceTokens
@@ -86,6 +88,7 @@ def observe_unruled_tables(
         if (
             page_index not in by_page
             and not ruled_header_grids.get(page_index)
+            and not ruled_continuation_grids.get(page_index)
             and page_texts is not None
             and not (
                 possible_structure_header(page_texts[page_index])
@@ -123,7 +126,7 @@ def observe_unruled_tables(
             )
         ]
         captions = continuation_nominees(tokens, size)
-        if not nominees and not captions and not physical:
+        if not nominees and not captions and not physical and not pending:
             continue
         available = {str(s["id"]): s for s in by_page.get(page_index, [])}
         page_diagrams = sorted(
@@ -134,7 +137,7 @@ def observe_unruled_tables(
             key=lambda item: (item["bbox"][1], item["bbox"][0], item["id"]),
         )
         headers = []
-        if original_sha is None and (nominees or physical):
+        if original_sha is None and (nominees or physical or pending):
             original_sha = document_sha256(doc)
         for groups in nominees:
             header = observe_unruled_header(page, tokens, groups, original_sha)
@@ -146,24 +149,45 @@ def observe_unruled_tables(
         anchors = [
             observe_ruled_header(page, tokens, grid, original_sha) for grid in physical
         ]
-        events = [(scope_axes(h)[1][0], h, None, False) for h in headers]
+        events = [(scope_axes(h)[1][0], h, None, False, None) for h in headers]
         events.extend(
-            (scope_axes(h)[1][0], h, None, len(h["grid_axes"]["ys"]) > 2)
+            (scope_axes(h)[1][0], h, None, len(h["grid_axes"]["ys"]) > 2, None)
             for h in anchors
         )
         events.extend(
-            (caption["bbox"][1], None, caption, False)
+            (caption["bbox"][1], None, caption, False, None)
             for caption in captions
             if not any(
                 repeated_header_covers(h, page_diagrams, caption)
                 for h in headers + anchors
             )
         )
-        for _top, header, caption, anchor_only in sorted(
+        events.extend((grid["ys"][0], None, None, True, grid) for grid in pending)
+        for _top, header, caption, anchor_only, row_grid in sorted(
             events, key=lambda event: event[0]
         ):
-            row_grid = None
-            if header is None:
+            if header is None and caption is None:
+                if any(
+                    s["role"] == ANCHOR_ROLE and s["source"]["grid_axes"] == row_grid
+                    for s in sections_by_page[page_index + 1]
+                ):
+                    continue
+                header = observe_physical_continuation(
+                    page, tokens, row_grid, grids_for_page(page), original_sha
+                )
+                parents = eligible_physical_parents(
+                    [*sections_by_page[page_index], *sections_by_page[page_index + 1]],
+                    header,
+                    page_diagrams,
+                )
+                if len(parents) == 1:
+                    parent = parents[0]
+                    header.update(
+                        anchor_scope=anchor_scope(parent["source"]["header_scope"]),
+                        parent_region_id=parent["region_id"],
+                        parent_page_no=parent["page_no"],
+                    )
+            elif header is None:
                 key = continuation_identity(caption["text"])[0]
                 anchors = anchors_by_key[key]
                 if not anchors:

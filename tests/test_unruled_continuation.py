@@ -16,6 +16,7 @@ def continued_page(
     caption="Table 12. Continued",
     labels=("901A", "I-003B"),
     label_baseline_offset=4,
+    offset=0,
 ):
     doc = first.parent
     if gap:
@@ -25,7 +26,7 @@ def continued_page(
     page = doc.new_page(width=520, height=720)
     page.insert_text((40, 45), caption, fontsize=10)
     for row, label in enumerate(labels):
-        centre = 130 + row * 115
+        centre = 130 + row * 115 + offset
         page.insert_text((60, centre + label_baseline_offset), label, fontsize=10)
         page.draw_polyline(
             [

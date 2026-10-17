@@ -5,7 +5,7 @@ from .source_body_context import contained_source_diagrams
 from .structure_table_headers import aligned_column_edges
 from .unruled_body_scope import original_body_bottom
 from .unruled_region_observation import observe_column_body
-from .unruled_scope import scope_axes, scope_roles
+from .unruled_scope import scope_axes, scope_body_top, scope_roles
 
 ANCHOR_ROLE = "structure_column_anchor"
 ANCHOR_STATUS = "observed_original_structure_columns"
@@ -70,7 +70,7 @@ def column_anchor_roles(source):
         or not 0 <= grid["ys"][0] < grid["ys"][-1] <= header["page_size"][1]
     ):
         raise ValueError("Original column-anchor grid leaves its page")
-    if header.get("kind") == "original_ruled_columns":
+    if header.get("kind") in {"original_ruled_columns", "continued_ruled_columns"}:
         if grid != header["grid_axes"]:
             raise ValueError("Original header and physical column-anchor grid differ")
     elif (
@@ -81,9 +81,7 @@ def column_anchor_roles(source):
         raise ValueError("Unproved original physical continuation columns")
     if (
         type(source["body_bottom"]) not in {int, float}
-        or not scope_axes(header)[1][1]
-        < source["body_bottom"]
-        <= header["page_size"][1]
+        or not scope_body_top(header) < source["body_bottom"] <= header["page_size"][1]
     ):
         raise ValueError("Invalid original column-anchor body extent")
     if source["body_bottom"] != original_body_bottom(

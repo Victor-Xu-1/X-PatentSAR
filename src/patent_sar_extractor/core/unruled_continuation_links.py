@@ -49,6 +49,9 @@ def compatible_diagram_scope(parent, scope, diagrams):
 
 
 def validate_continuation_links(sections):
+    from .ruled_continuation_links import validate_physical_links
+
+    validate_physical_links(sections)
     by_page = defaultdict(list)
     for section in sections:
         by_page[section["page_no"]].append(section)
@@ -88,7 +91,10 @@ def validate_continuation_links(sections):
 
 
 def repeated_header_covers(scope, diagrams, nomination):
-    if scope.get("kind") == "continued_unruled_columns" or scope_roles(scope) is None:
+    if (
+        scope.get("kind") in {"continued_unruled_columns", "continued_ruled_columns"}
+        or scope_roles(scope) is None
+    ):
         return False
     sources = scope["context_sources"]
     if not sources:
@@ -140,7 +146,8 @@ def uncovered_continuation_issues(sections):
             )
         sources = [(region["body_context"], body_context_window(scope))]
         if (
-            scope.get("kind") != "continued_unruled_columns"
+            scope.get("kind")
+            not in {"continued_unruled_columns", "continued_ruled_columns"}
             and scope["context_sources"]
         ):
             packets = scope["context_sources"]

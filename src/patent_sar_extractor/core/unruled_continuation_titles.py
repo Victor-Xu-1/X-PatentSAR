@@ -28,6 +28,8 @@ def anchor_scope(scope):
 
 
 def nominated_table_keys(scope):
+    if anchor_scope(scope) is None:
+        return set()
     return {
         title_key(p["text"])
         for p in anchor_scope(scope)["context_sources"]
@@ -36,6 +38,8 @@ def nominated_table_keys(scope):
 
 
 def qualified_table_key(scope):
+    if anchor_scope(scope) is None:
+        return ""
     _role, key = observed_role(
         [p for p in anchor_scope(scope)["context_sources"] if p["text"].strip()]
     )

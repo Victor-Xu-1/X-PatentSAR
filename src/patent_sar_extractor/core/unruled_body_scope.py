@@ -2,12 +2,11 @@
 
 from .source_body_context import original_context_extent, validate_page_diagrams
 from .structure_table_headers import structure_column_pairs
-from .unruled_scope import scope_axes, scope_headers
+from .unruled_scope import scope_axes, scope_body_top, scope_headers
 
 
 def body_context_window(scope):
-    _xs, ys = scope_axes(scope)
-    return [0, ys[1], *scope["page_size"]]
+    return [0, scope_body_top(scope), *scope["page_size"]]
 
 
 def original_body_extent(scope, chunks, diagrams):

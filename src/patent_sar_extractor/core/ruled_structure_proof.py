@@ -6,7 +6,7 @@ from .activity_context_geometry import validate_grid_axes
 from .source_observations import source_observation_status
 from .source_window_chunks import source_packet_projection
 from .structure_table_headers import aligned_column_edges
-from .unruled_scope import scope_axes, scope_roles
+from .unruled_scope import scope_axes, scope_body_top, scope_roles
 
 
 def valid_ruled_header_binding(binding):
@@ -30,7 +30,11 @@ def valid_ruled_header_binding(binding):
             or not isinstance(ownership["source_anchor_id"], str)
             or not re.fullmatch(r"[a-f0-9]{64}", ownership["source_anchor_id"])
             or scope.get("kind")
-            not in {"original_ruled_columns", "continued_unruled_columns"}
+            not in {
+                "original_ruled_columns",
+                "continued_unruled_columns",
+                "continued_ruled_columns",
+            }
             or ownership["headers"] != roles["headers"]
             or ownership["grid_xs"] != axes["xs"]
             or first_row
@@ -38,7 +42,7 @@ def valid_ruled_header_binding(binding):
             or not first_row
             and (
                 not aligned_column_edges(scope_axes(scope)[0], axes["xs"])
-                or axes["ys"][0] < scope_axes(scope)[1][1]
+                or axes["ys"][0] < scope_body_top(scope)
             )
             or type(row) is not int
             or not first_row <= row < len(axes["ys"]) - 1
