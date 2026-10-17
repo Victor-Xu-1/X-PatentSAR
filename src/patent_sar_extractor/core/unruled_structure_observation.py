@@ -3,7 +3,7 @@
 from collections import defaultdict
 from dataclasses import dataclass
 
-from .activity_context_geometry import grid_axes
+from .activity_context_geometry import grid_axes, grid_box
 from .activity_header_evidence import proof_id
 from .caption_role_observation import owns_caption_frame
 from .caption_role_semantics import has_continuation_caption
@@ -65,6 +65,7 @@ def observe_unruled_tables(
     tokens_for_page,
     *,
     page_texts=None,
+    caption_roles=None,
 ):
     bindings, sections, issues, protected, recognized, observed = (
         [],
@@ -118,7 +119,14 @@ def observe_unruled_tables(
             grid
             for grid in pending
             if not owns_caption_frame(
-                page, grid, grids, tokens, [d["bbox"] for d in page_diagrams]
+                page,
+                grid,
+                grids,
+                tokens,
+                [d["bbox"] for d in page_diagrams],
+                original_role=(caption_roles or {}).get(
+                    (page_index + 1, tuple(grid_box(grid)))
+                ),
             )
         ]
         nominees = [

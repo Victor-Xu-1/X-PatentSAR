@@ -7,8 +7,10 @@ from .activity_continuation_policy import (
     caption_prefix,
     continuation_allowed,
 )
+from .activity_header_identity import schema_requires_review
 from .activity_headers import grid_schema
 from .activity_models import GridSchema, TableContext
+from .activity_parallel_context import qualified_panel_context, shared_panel_context
 from .biology_tables import biology_grid_schema
 
 
@@ -35,25 +37,13 @@ def continued_panel(
         ox, oy = old.region["xs"], old.region["ys"]
         if len(ox) != len(xs):
             continue
-        if (
-            old.schema.needs_review
-            or (old.schema.header_resolution or {}).get("status") == "unresolved"
-            or current
-            and (
-                current.needs_review
-                or (current.header_resolution or {}).get("status") == "unresolved"
-            )
+        if schema_requires_review(old.schema) or (
+            current is not None and schema_requires_review(current)
         ):
             continue
         if current and (
             tuple(map(canonical_header, current.raw_headers))
             != tuple(map(canonical_header, old.schema.raw_headers))
-            or any(
-                (value := getattr(current.context, key)) is not None
-                and (prior := getattr(old.schema.context, key)) is not None
-                and value != prior
-                for key in ("target", "cell_line")
-            )
         ):
             continue
         same_columns = all(abs((a - ox[0]) - (b - xs[0])) <= 4 for a, b in zip(ox, xs))
@@ -63,19 +53,41 @@ def continued_panel(
             and ox[-1] < xs[0]
             and same_columns
             and bool(old.schema.context.table_id)
-            and caption_prefix(
-                prefix, old.schema.context.table_id, old.schema.context.raw_context
+            and shared_panel_context(
+                old.region,
+                (old.schema.source_layout or {}).get("boundary_prefix"),
+                region,
+                prefix,
+            )
+            and (
+                old.schema.semantic_kind == "generic"
+                or caption_prefix(
+                    prefix, old.schema.context.table_id, old.schema.context.raw_context
+                )
             )
         )
         adjacent = (
             old.page + 1 == page
             and ys[0] < 130
             and all(abs(a - b) <= 4 for a, b in zip(ox, xs))
+            and not (
+                current
+                and any(
+                    (value := getattr(current.context, key)) is not None
+                    and (prior := getattr(old.schema.context, key)) is not None
+                    and value != prior
+                    for key in ("target", "cell_line")
+                )
+            )
             and continuation_allowed(
                 prefix, old.schema.source_layout, old.schema.context
             )
         )
-        if parallel or adjacent:
+        if parallel and old.schema.semantic_kind == "generic":
+            owned_context = qualified_panel_context(region, prefix)
+            if owned_context is not None:
+                candidates.append(replace(old.schema, context=owned_context))
+        elif parallel or adjacent:
             candidates.append(old.schema)
     # Equally shaped competing assays must never arbitrarily win by order.
     if not candidates or any(

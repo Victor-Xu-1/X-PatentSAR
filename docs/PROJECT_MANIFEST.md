@@ -1,5 +1,57 @@
 # Project governance manifest
 
+- Shared-panel source ownership: `activity_parallel_context` uses the existing
+  bounded original observation/context SDK, no OCR/queue/store/model of its own.
+  Producer carry and saved table-family QA require unique actual caption positions,
+  complete source/geometry/confidence and overlapping-word conservation. Generic
+  shared headers retain each panel's own explicit conditions; separate captions
+  cannot merge by identical text. Adjacent pages keep their immediate parent,
+  and new sections still stop carry. The source-header identity authority owns
+  one unresolved-field policy shared by rows, carry and saved replay. Coverage15
+  stores the additional proof within unpublished Activity19/extractor28/v0.2.34;
+  original/raw/manual data, API/SQL, scientific engines and numerical SAR policies
+  remain unchanged. Controlled native/raster/writer/SAR checks do not prove full
+  original-compound recall or real-task scientific acceptance.
+
+- Bidirectional caption ownership: the existing `caption_grid_binding` path,
+  binder/writer and source ledger remain sole authorities. `caption_page_boundary`
+  owns transient adjacent-grid carry and two-page replay; `caption_boundary_context`
+  owns complete retained tail context through the existing source-window/body/
+  nonfinal-role SDK, without another OCR/parser/queue/store. Literal caption
+  fragments reuse `cell_caption_fragments`/`cell_caption_identity`; only an
+  overlapping letter inside a qualified matching whole-ID box loses independent
+  duplicate-character status. All observations and real conflicts remain. New
+  Binding21/binder30/visible21 invalidate derived ownership, not original assets,
+  raw observations or human audit. API/SQL, OCSR preparation8/raw2/stereo3,
+  SAR, models and dependencies do not change. Native/raster source controls,
+  installed consumers, review/main/18765 delivery and real scientific acceptance
+  remain separate gates, not an all-format or molecular-accuracy guarantee.
+  Formal spatial admission observes caption grids once before header nomination;
+  numbered/unruled admission rechecks shared roles against the same fresh source
+  facts. The later caption consumer reuses that result, and the existing claim
+  resolver retains genuine conflicts instead of hiding claims by page/header ID.
+  Call-local carry is per physical original frame, with unique qualified-parent
+  selection and explicit4096-frame bounds. Completed catalogues and nonfinal
+  exclusions require the same complete prior tail as split cells; saved role
+  links replay it. No new per-checkpoint epoch or product bump is introduced
+  within this unpublished Binding21/binder30/visible21/v0.2.34 candidate.
+  `caption_title_refinement` owns original-title bounded reads/replay through
+  the shared physical-cell authority. Unknown initial semantics may be resolved;
+  known role/table identity conflicts remain vetoes, mixed/unknown roles stay
+  explicit, and continuation consumes the same proved title. Raw source packets
+  are not rewritten. Fresh-frame admission reuse does not launch another read.
+  This remains within the same unpublished scientific epoch and product release.
+
+- `source_role_terms` owns the finite literal intermediate vocabulary consumed by
+  original headings/captions/cell claims, characterization identity, record filters
+  and SAR source scope. The binder delegates declared role fields to the same
+  filter, removing its duplicate regex implementation. Raw words/IDs remain;
+  neither I-prefixes nor a reference in a final synthesis title imply exclusion.
+  Activity19/extractor28 refresh derived source roles; original/raw/manual data,
+  API/SQL, SAR numerical policies, models and dependency authorities do not change.
+  Native generated CJK-source proof and SAR current-view/anchor checks remain
+  distinct from real-patent and broader language/scientific acceptance.
+
 - Historical source presentation: the shared catalogue reader's strict default
   remains the only scientific ownership authority. The Web artifact projection
   alone requests explicit unqualified historical review for non-current bindings;

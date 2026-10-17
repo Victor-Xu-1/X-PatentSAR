@@ -26,7 +26,7 @@ def _captions(parts, region):
         part
         for part in parts
         if span is not None
-        and TABLE_CAPTION_START.match(part[0]["text"])
+        and TABLE_CAPTION_START.match(" ".join(t["text"] for t in part))
         and TABLE_MARKER.search(" ".join(t["text"] for t in part))
         and span[0] <= part[0]["x"] < span[1]
     ]
@@ -56,7 +56,7 @@ def prefix_parts(tokens, region):
     original = _window_parts(tokens, region)
     allowed = region.get("allow_shared_caption")
     if allowed is None:
-        native = getattr(getattr(tokens, "layout", None), "native", ())
+        native = getattr(tokens, "native_tokens", ())
         allowed = shared_caption_allowed((tokens, native), region)
     captions = _captions(original, region) if allowed else []
     shared = captions[0] if len(captions) == 1 else None
@@ -65,7 +65,7 @@ def prefix_parts(tokens, region):
         if part is shared:
             output.append(part)
         elif band is not None:
-            if TABLE_CAPTION_START.match(part[0]["text"]):
+            if TABLE_CAPTION_START.match(" ".join(t["text"] for t in part)):
                 if band[0] <= part[0]["x"] < band[1]:
                     output.append(part)
             else:

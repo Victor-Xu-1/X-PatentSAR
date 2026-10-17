@@ -5,15 +5,16 @@ import re
 from .activity_header_metrics import METRIC, normalize_metric_text
 from .activity_headers import ACTIVITY_CONTEXT, context_from_text
 from .printed_identifiers import PRINTED_ID, identifier_key
+from .source_role_terms import INTERMEDIATE_SINGULAR
 from .source_section_roles import section_heading
 
 MAX_ROLE_CELLS = 96
 _ID_HEADER = re.compile(
-    r"(?:Compound|Cmpd|Cpd|Intermediate|Example|化合物|中间体|实施例)\s*(?:No\.?|ID|#|编号)?|No\.|ID|编号",
+    rf"(?:Compound|Cmpd|Cpd|{INTERMEDIATE_SINGULAR}|Example|化合物|实施例)\s*(?:No\.?|ID|#|编号)?|No\.|ID|编号",
     re.IGNORECASE,
 )
 _ID_LABEL = re.compile(
-    rf"(?:Compound|Cmpd|Cpd|Intermediate|Example|化合物|中间体|实施例)\s*({PRINTED_ID})",
+    rf"(?:Compound|Cmpd|Cpd|{INTERMEDIATE_SINGULAR}|Example|化合物|实施例)\s*({PRINTED_ID})",
     re.IGNORECASE,
 )
 _PREPARATION = re.compile(
