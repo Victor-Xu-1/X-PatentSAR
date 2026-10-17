@@ -197,6 +197,30 @@ class LLMAppIntegrationTests(unittest.TestCase):
         self.assertFalse(self.config.exists())
         self.post.assert_not_called()
 
+    def test_default_off_job_read_has_neutral_frozen_policy_without_calls(self):
+        client = self.app_client(default=True)
+        self.authenticate(client)
+        _, job, _, context, path = self.enqueue(client)
+        original_policy = path.read_bytes()
+        self.assertEqual(context.policy.mode, "off")
+        for _ in range(2):
+            response = client.get(f"/api/v1/jobs/{job}")
+            self.assertEqual(response.status_code, 200, response.text)
+            self.assertEqual(
+                response.json()["llm_recovery"],
+                {
+                    "status": "disabled",
+                    "reason": "off",
+                    "remaining_calls": 8,
+                    "retry_after_seconds": None,
+                    "can_reauthorize": False,
+                },
+            )
+        self.assertEqual(path.read_bytes(), original_policy)
+        self.assertFalse(self.config.exists())
+        self.runner.start.assert_not_called()
+        self.post.assert_not_called()
+
     def test_new_enqueue_captures_hot_immutable_private_profile(self):
         client = self.app_client()
         self.authenticate(client)

@@ -21,6 +21,37 @@ import {
 setupOperationsLocale();
 
 describe('operations locale: llm', () => {
+  it('relocalizes intentional API-off without remounting or starting any request', () => {
+    const transport = vi.fn();
+    vi.stubGlobal('fetch', transport);
+    render(
+      <LLMRecovery
+        job={{
+          ...recoveryJob,
+          llm_recovery: {
+            status: 'disabled',
+            reason: 'off',
+            remaining_calls: 8,
+            retry_after_seconds: null,
+            can_reauthorize: false,
+          },
+        }}
+      />,
+    );
+    const region = screen.getByRole('region', { name: 'LLM API fallback' });
+    expect(within(region).getByRole('heading', { name: 'API fallback is off' })).toBeVisible();
+    expect(region).toHaveTextContent('This task does not use API fallback.');
+    expect(region).not.toHaveTextContent(/Local repair|maintainer|Remaining calls|retry/i);
+    switchTo('zh-CN');
+    expect(screen.getByRole('region', { name: 'LLM API 兜底' })).toBe(region);
+    expect(within(region).getByRole('heading', { name: 'API 兜底已关闭' })).toBeVisible();
+    expect(region).not.toHaveTextContent(/维护者|检查配置|剩余调用|重试等待/);
+    switchTo('en');
+    expect(screen.getByRole('region', { name: 'LLM API fallback' })).toBe(region);
+    expect(region).toHaveTextContent('This task does not use API fallback.');
+    expect(transport).not.toHaveBeenCalled();
+  });
+
   it('switches an open LLM draft and accessible names without remounting or requests', async () => {
     const client = await openLLM();
     change('Model', '设置已保存。');
@@ -107,7 +138,7 @@ describe('operations locale: llm', () => {
     expect(screen.getByRole('dialog', { name: 'Renew this task’s API authorization?' })).toBe(
       dialog,
     );
-    expect(screen.getByRole('region', { name: 'LLM local repair' })).toHaveTextContent(
+    expect(screen.getByRole('region', { name: 'LLM API fallback' })).toHaveTextContent(
       'Remaining calls: 3',
     );
     expect(screen.getByText(/API authentication failed/)).toBeVisible();

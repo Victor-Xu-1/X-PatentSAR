@@ -1605,6 +1605,14 @@ sample, not a patent. Provider failures/nonce mismatches cannot mark it passed;
 a passed current test is connectivity/protocol proof, not extraction accuracy.
 There are no configured real credentials in the default installation.
 
+Task details show **API fallback is off / API 兜底已关闭** for an intentionally
+disabled task, without a maintenance warning or irrelevant remaining-call count.
+This is the task's frozen policy, not a live provider test. A real authentication,
+quota, transport or unknown-state fault still has its separate redacted diagnostic;
+opening details or changing interface language never changes authorization,
+restarts extraction or sends a model request. Configure only when API fallback is
+actually wanted; no local language-model deployment is offered.
+
 Normal rule parsing has no API cost. The source-validated unknown-header fallback,
 bounded quality column review and advisory source-led QA share explicit consent,
 one serial quota and cache. Default cap: eight HTTP attempts reserved durably
