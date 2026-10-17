@@ -23,6 +23,22 @@ page-tail context before lending a role to another page; this applies equally to
 intermediate exclusions. Saved role links require that context, and excess frame
 inventory fails explicitly rather than omitting some catalogues.
 
+Known intermediate-role spellings share one vocabulary from source inspection to
+SAR: `中间体`, `中間体` and `中間體` cannot become final compounds merely because a
+caption also contains “compounds”. Original labels are not translated or renamed;
+I-prefixed source numbers remain valid unless a separate explicit role excludes
+them. A title containing both intermediate and final categories stays mixed and
+unresolved, not an empty accepted final dataset or a blanket intermediate exclusion.
+Activity19/extractor28 rerun derived role interpretation, not raw OCR or
+manual audit. Original inputs and old reports are retained; no read retags old
+observations into a new scientific acceptance. Unknown wording is still unknown.
+
+Scientific-source upgrades mark old project-derived SAR snapshots stale even if
+their files have not changed or the project page has not been opened. Create a
+new snapshot through the normal frontend after current source verification;
+do not edit old datasets or reuse them as new acceptance. Cosmetic product-version
+updates alone do not force this scientific invalidation.
+
 An overlapping suffix detector is not automatically an extra printed letter:
 the complete independent caption and a qualified literal whole-ID box must agree,
 and the repeated letter must be inside that same physical box. Separate letters

@@ -21,7 +21,9 @@ from patent_sar_extractor.core.table_geometry import (
 from patent_sar_extractor.core.visible_structure_binding import bind_visible_captions
 
 
-def catalog(title="Table 47. Compounds", *, prefixed=False, below=False):
+def catalog(
+    title="Table 47. Compounds", *, prefixed=False, below=False, fontname="helv"
+):
     doc = fitz.open()
     page = doc.new_page()
     xs = [50, 180, 310]
@@ -31,7 +33,7 @@ def catalog(title="Table 47. Compounds", *, prefixed=False, below=False):
     for y in ys:
         page.draw_line((xs[0], y), (xs[-1], y))
     if title:
-        page.insert_text((50, 85), title, fontsize=10)
+        page.insert_text((50, 85), title, fontsize=10, fontname=fontname)
     label_y, diagram_y = (197, 120) if below else (117, 140)
     labels = ("I-004A", "I-009B")
     boxes, structures = [], []

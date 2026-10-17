@@ -47,9 +47,42 @@ original page, so a following-page caption cannot erase diagram pixels.
 
 Old PDFs, raw OCR/model/crop observations and manual audit remain unchanged.
 Derived ownership uses the current schema/epochs; historical review does not gain
-current confirmation. API/SQL, models, scientific engines, activity/SAR contracts
-and dependencies are unchanged. Source-contract tests do not prove detector
+current confirmation. API/SQL, models, scientific engines, SAR contracts
+and dependencies are unchanged. The derived activity source contract is
+described below. Source-contract tests do not prove detector
 recall, molecular correctness or actual frontend scientific acceptance.
+
+## Literal nonfinal source-role vocabulary
+
+`source_role_terms` owns the finite, explicitly supported intermediate spellings
+shared by original heading grammar, table-role projection, cell conflict guards,
+characterization-table identity, record filtering and SAR admission. Simplified,
+Traditional and Japanese character forms cannot diverge between those consumers.
+Context-specific boundaries remain in their existing parsers; this is not a new
+translation/parser/matcher or permission to infer roles from an I-prefix. The
+catalogue-only positive vocabulary also conserves explicitly mixed final/
+intermediate categories; it does not extend the molecular-ID heading grammar.
+Mixed catalogues cannot be blanket-excluded as intermediate sources. The
+binder's declared-field adapter delegates to the one record filter, not a second
+regular-expression implementation. Raw source words, IDs, leading zeros and
+punctuation remain unchanged. References to intermediates in a final compound's
+synthesis title do not reclassify that compound.
+
+Activity19/extractor28 invalidate old derived result/source-role interpretation;
+unpublished Binding21/binder30/visible21 cover the same original role change.
+Raw page observations, original assets/manual audit and numerical SAR/measurement
+policies remain unchanged. Current SAR views/exports scope through the same role
+consumer without rewriting archived results or admitting unconfirmed structures.
+Unsupported role wording remains unqualified, not automatically translated or
+classified. These bounded role checks do not certify arbitrary patent languages.
+
+Project-derived SAR revisions also bind the existing `lead_source.source_identity`
+scientific-source stamp, using acceptance captured in the same SQLite snapshot.
+This reuses the accepted-corpus authority without imposing Lead ranking policy.
+Scientific epoch changes stale prior project datasets before a project-page visit
+can refresh cached views. Marketing-version-only changes do not alter that stamp.
+Old inputs/reports/manual edits remain immutable; new analysis requires a current
+source snapshot. CSV independence and the existing SAR queue are unchanged.
 
 ## Historical source review without current confirmation
 

@@ -9,7 +9,7 @@
   overlapping letter inside a qualified matching whole-ID box loses independent
   duplicate-character status. All observations and real conflicts remain. New
   Binding21/binder30/visible21 invalidate derived ownership, not original assets,
-  raw observations or human audit. API/SQL, OCSR preparation8/raw2/stereo3, activity,
+  raw observations or human audit. API/SQL, OCSR preparation8/raw2/stereo3,
   SAR, models and dependencies do not change. Native/raster source controls,
   installed consumers, review/main/18765 delivery and real scientific acceptance
   remain separate gates, not an all-format or molecular-accuracy guarantee.
@@ -22,6 +22,16 @@
   exclusions require the same complete prior tail as split cells; saved role
   links replay it. No new per-checkpoint epoch or product bump is introduced
   within this unpublished Binding21/binder30/visible21/v0.2.34 candidate.
+
+- `source_role_terms` owns the finite literal intermediate vocabulary consumed by
+  original headings/captions/cell claims, characterization identity, record filters
+  and SAR source scope. The binder delegates declared role fields to the same
+  filter, removing its duplicate regex implementation. Raw words/IDs remain;
+  neither I-prefixes nor a reference in a final synthesis title imply exclusion.
+  Activity19/extractor28 refresh derived source roles; original/raw/manual data,
+  API/SQL, SAR numerical policies, models and dependency authorities do not change.
+  Native generated CJK-source proof and SAR current-view/anchor checks remain
+  distinct from real-patent and broader language/scientific acceptance.
 
 - Historical source presentation: the shared catalogue reader's strict default
   remains the only scientific ownership authority. The Web artifact projection

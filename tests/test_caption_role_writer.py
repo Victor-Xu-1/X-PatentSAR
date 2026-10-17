@@ -213,6 +213,46 @@ class CaptionRoleWriterTests(unittest.TestCase):
             with self.subTest(mutation=mutation), self.assertRaises(ValueError):
                 reference_issues(changed, [])
 
+    def test_native_multilingual_intermediate_titles_remain_nonfinal_after_saving(self):
+        for label in ("中间体", "中間体", "中間體"):
+            with self.subTest(label=label):
+                payload, records = self.execute_document(
+                    *catalog(
+                        f"Table 47. {label}化合物", prefixed=True, fontname="china-t"
+                    )
+                )
+                self.assertEqual(payload["final_bindings"], [])
+                self.assertEqual(reference_issues(payload, []), [])
+                self.assertTrue(coverage_errors(payload))
+                self.assertTrue(all(Path(r["image_path"]).is_file() for r in records))
+                sections = [
+                    s
+                    for s in payload["source_sections"]
+                    if s["role"] == "nonfinal_caption_catalog"
+                ]
+                self.assertEqual(len(sections), 1)
+                self.assertEqual(
+                    set(sections[0]["structure_ids"]),
+                    {r["structure_id"] for r in records},
+                )
+
+    def test_native_mixed_traditional_catalogue_does_not_exclude_its_final_category(
+        self,
+    ):
+        payload, records = self.execute_document(
+            *catalog("Table 47. 中間體及實施例", prefixed=True, fontname="china-t")
+        )
+        self.assertEqual(payload["final_bindings"], [])
+        self.assertTrue(payload["source_issues"])
+        self.assertTrue(coverage_errors(payload))
+        self.assertFalse(
+            any(
+                s["role"] == "nonfinal_caption_catalog"
+                for s in payload["source_sections"]
+            )
+        )
+        self.assertTrue(all(Path(r["image_path"]).is_file() for r in records))
+
     def test_original_paragraph_prefix_cannot_hide_a_caption_catalogue_role(self):
         payload, records = self.execute(
             "[0042] Table 47. Intermediate compounds", prefixed=True

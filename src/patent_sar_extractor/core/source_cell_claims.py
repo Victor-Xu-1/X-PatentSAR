@@ -13,6 +13,7 @@ from .printed_identifiers import (
     identifier_key,
 )
 from .source_observations import source_claim_runs, source_observation_status
+from .source_role_terms import INTERMEDIATE_TERM
 from .source_section_roles import nonfinal_original_label
 
 
@@ -39,7 +40,7 @@ def _identity_conflict(raw, candidate, kind, *, fragment=False):
     if not candidate:
         return bool(raw.strip())
     if nonfinal_original_label(raw) or re.fullmatch(
-        r"Intermediate|中间体", raw.strip(), re.IGNORECASE
+        INTERMEDIATE_TERM, raw.strip(), re.IGNORECASE
     ):
         return True
     observed = (

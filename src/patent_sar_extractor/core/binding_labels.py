@@ -10,10 +10,8 @@ from typing import (
 
 logger = logging.getLogger(__name__)
 from .activity_identity import printed_identifier_key
+from .cpd_filter import is_intermediate
 from .printed_identifiers import LABEL_PREFIX, LOCATOR_ID, PRINTED_ID, identifier_key
-
-_INTERMEDIATE_RE = re.compile(r"^Intermediate", re.IGNORECASE)
-
 
 _FINAL_COMPOUND_LABEL_RE = re.compile(r"^[1-9]\d*(?:-[12])$")
 
@@ -76,22 +74,18 @@ _ROUTE_TITLE_RE = re.compile(
 
 
 def _is_intermediate(item: dict) -> bool:
-    """判断一个化合物条目是否为 Intermediate（中间体）"""
-    for key in ("prefix", "cpd_id", "cpd"):
-        val = item.get(key, "")
-        if val and _INTERMEDIATE_RE.match(str(val)):
-            return True
-    return False
+    """The binder's declared role fields share the single literal role filter."""
+    return is_intermediate({key: item.get(key) for key in ("prefix", "cpd_id", "cpd")})
 
 
 def _filter_examples_only(items: list[dict]) -> list[dict]:
-    """过滤掉 Intermediate，只保留 Example"""
+    """Exclude declared intermediate records, not other numbering namespaces."""
     before = len(items)
     filtered = [item for item in items if not _is_intermediate(item)]
     removed = before - len(filtered)
     if removed > 0:
         logger.info(
-            f"  [filter] 去除 {removed} 个 Intermediate，保留 {len(filtered)} 个 Example "
+            f"  [filter] 去除 {removed} 个 Intermediate，保留 {len(filtered)} 条记录 "
             f"(总共 {before})"
         )
     return filtered
