@@ -1,5 +1,25 @@
 # X-PatentSAR architecture
 
+`structure_header_lines` owns one bounded two-dimensional original-word grouping
+step for logical header nomination and saved replay. Connected printed lines
+retain all original words and boxes; a shorter valid suffix cannot discard an
+unknown attached prefix. Original identifier rows and explicit table/section
+boundaries stop wrapping. Nomination supports staggered starts and wrapped
+parallel columns, but does not supply its own role proof: existing independent
+original-cell/native/raster readers still inspect the complete proposed window.
+Eight connected lines,64 columns and4096 candidate blocks are finite bounds;
+overflow is explicit,not truncated success. No invented words, printed rules,
+new OCR engine, source store or artifact writer is introduced.
+
+The shared printed-ID authority accepts literal numeric-hyphen-letter suffixes
+only in explicit label/declared-cell identity domains. Hyphens and leading zeros
+remain meaningful: `008-B`, `008B` and `08-B` are different keys. Fullwidth source
+glyphs remain in raw observations while their existing one-to-one typography
+normalization supplies canonical keys. The narrower unqualified prose locator
+is unchanged; spaces, incomplete suffixes or competing IDs are not repaired.
+Structure, original cells, headings and activity joins consume the same grammar.
+These are current unpublished producer semantics,not a rewrite of old artifacts.
+
 Logical parallel columns use `logical_column_partitions`, the sole literal
 header/caption nominator. Every scope keeps the complete original header row,
 its selected group indices and original caption-derived horizontal band. These

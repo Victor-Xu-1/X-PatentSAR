@@ -3,11 +3,9 @@
 from itertools import pairwise
 
 from .activity_context_geometry import MAX_TABLES
-from .source_cell_tokens import cell_lines
 from .source_table_captions import table_caption_nominees
-from .structure_table_headers import header_groups, structure_column_pairs
-
-MAX_COLUMNS = 64
+from .structure_header_lines import MAX_COLUMNS, original_header_groups
+from .structure_table_headers import structure_column_pairs
 
 
 def _preceding_captions(captions, top):
@@ -92,8 +90,7 @@ def context_captions(contexts, size):
 def nominate_unruled_headers(tokens, page_size, *, native_tokens=()):
     bounds, output = [0, 0, *page_size], []
     captions = table_caption_nominees(tokens, page_size, native_tokens=native_tokens)
-    for line in cell_lines(tokens, bounds):
-        groups = header_groups(line)
+    for groups in original_header_groups(tokens, bounds):
         if 2 <= len(groups) <= MAX_COLUMNS and structure_column_pairs(
             [g["text"] for g in groups]
         ):

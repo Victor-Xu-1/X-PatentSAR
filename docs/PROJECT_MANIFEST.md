@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- `structure_header_lines` is the single bounded original multiline grouping
+  authority used by logical nomination and saved proof. It composes existing
+  original-line/column primitives;complete windows still pass the unchanged
+  independent cell reader. Maximal raw word blocks retain unknown prefixes;
+  body IDs/explicit boundaries stop carry. The8-line/64-column/4096-block bounds
+  never become silent truncation. Full printed identity adds literal hyphenated
+  letter suffixes through `printed_identifiers`;the narrow prose-locator domain
+  does not widen. Hyphens/zeros/raw typography are conserved across source and
+  activity consumers. All remain inside unpublished v0.2.32/Binding20/binder29/
+  Activity18/epoch27,not a new per-checkpoint version,public API/SQL,raw/model,
+  manual-audit or dependency change. Existing reports are not recalculated.
+
 - `logical_column_partitions` is the one original-word/caption partition
   nominator. Complete original rows/prefixes, selected group indices and literal
   bands are replayable internal scope facts,not invented printed grids. It is

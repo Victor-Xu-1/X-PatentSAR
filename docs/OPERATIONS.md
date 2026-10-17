@@ -2,6 +2,20 @@
 
 ## Original unruled structure columns
 
+Wrapped headers are inspected as complete original word windows,not corrected
+strings. The same bounded two-dimensional grouping runs during nomination and
+saved replay; original independent cell reads still qualify the column roles.
+Staggered/parallel header starts do not require user column matching. Unknown
+attached words, missing graphs/labels and conflicting native text remain review;
+do not remove a line or guess a role to obtain clean success. The8-line logical
+header bound is an explicit supported budget,not a claim of universal layout.
+
+Literal hyphenated letter suffixes are valid inside declared identifier cells or
+explicit labels. Do not turn `008-B` into `008B`, `08-B` or another source's ID.
+Original typography remains stored; no digit joining, whitespace repair or new
+unqualified prose-locator shortcut is allowed. Existing failed artifacts and
+manual edits remain unchanged; new extraction uses the current source contract.
+
 Independent literal titles and complete header-word groups can establish logical
 parallel columns without printed borders, including titles at different heights.
 Every logical scope retains the whole original row and complete bounded prefix;

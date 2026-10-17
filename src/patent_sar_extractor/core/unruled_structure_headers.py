@@ -5,9 +5,8 @@ from itertools import pairwise
 
 from .activity_context_geometry import valid_box
 from .activity_grid_role_observation import observe_role_cells
-from .logical_column_partitions import MAX_COLUMNS, context_captions, header_partitions
+from .logical_column_partitions import context_captions, header_partitions
 from .ruled_continuation_context import validate_page_grid
-from .source_cell_tokens import cell_lines
 from .source_geometry import SourceTokens
 from .source_observations import source_observation_status
 from .source_window_chunks import observe_window_sources
@@ -15,7 +14,8 @@ from .structure_header_context import (
     observe_header_context,
     original_header_context_role,
 )
-from .structure_table_headers import header_groups, structure_column_pairs
+from .structure_header_lines import MAX_COLUMNS, original_header_groups
+from .structure_table_headers import structure_column_pairs
 from .unruled_header_readings import original_header_readings
 
 
@@ -151,9 +151,7 @@ def unruled_header_roles(scope):
         ["raster", "native"],
     ):
         raise ValueError("Foreign original unruled header source order")
-    observed_groups = [
-        header_groups(line) for line in cell_lines(sources[0]["tokens"], bounds)
-    ]
+    observed_groups = original_header_groups(sources[0]["tokens"], bounds)
     if groups not in observed_groups:
         raise ValueError("Original unruled header nomination differs from its source")
     role, _ = original_header_context_role(

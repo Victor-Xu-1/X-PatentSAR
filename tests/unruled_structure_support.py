@@ -25,6 +25,8 @@ class UnruledStructureControls:
         reverse=False,
         title="Table 12. Compounds",
         identifier_header="Compound No.",
+        structure_header="Structure",
+        header_baselines=(80, 80),
         label_baseline_offset=4,
         native_overlay=None,
         mutate_page=None,
@@ -36,8 +38,8 @@ class UnruledStructureControls:
         with fitz.open() as document:
             page = document.new_page(width=520, height=page_height)
             page.insert_text((40, 45), title, fontsize=10)
-            page.insert_text((50, 80), identifier_header, fontsize=10)
-            page.insert_text((240, 80), "Structure", fontsize=10)
+            page.insert_text((50, header_baselines[0]), identifier_header, fontsize=10)
+            page.insert_text((240, header_baselines[1]), structure_header, fontsize=10)
             for row, label in enumerate(labels):
                 centre = 150 + row * 115
                 if row != missing_label:

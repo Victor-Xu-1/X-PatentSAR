@@ -30,6 +30,7 @@ class LateralStructureControls:
         ruled=True,
         right_title_y=45,
         mutate_document=None,
+        headers_by_column=None,
     ):
         self.root = Path(tempfile.mkdtemp(prefix="case-", dir=self.temporary.name))
         original, records = self.root / "original.pdf", []
@@ -51,8 +52,13 @@ class LateralStructureControls:
                     page.insert_text(
                         (left, right_title_y if column else 45), title, fontsize=9
                     )
-                page.insert_text((left + 5, 80), "Compound No.", fontsize=8)
-                page.insert_text((left + 110, 80), "Structure", fontsize=8)
+                headers = (
+                    headers_by_column[column]
+                    if headers_by_column is not None
+                    else ("Compound No.", "Structure")
+                )
+                page.insert_text((left + 5, 80), headers[0], fontsize=8)
+                page.insert_text((left + 110, 80), headers[1], fontsize=8)
                 xs = [left, left + 80, left + 260]
                 ys = (
                     [65, 100, 210, 380, 600]
