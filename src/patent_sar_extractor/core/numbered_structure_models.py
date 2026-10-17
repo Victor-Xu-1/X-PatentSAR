@@ -34,6 +34,12 @@ class NumberedTableBinding:
 
     def evidence(self) -> dict[str, Any]:
         return {
+            **(
+                {"kind": "original_ruled_columns"}
+                if self.cell.column_ownership
+                and "source_anchor_id" in self.cell.column_ownership
+                else {}
+            ),
             "coordinate_space": "original_pdf_points",
             "page_no": self.cell.page_index + 1,
             "grid": self.cell.grid_index,

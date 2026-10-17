@@ -9,21 +9,28 @@ from .unruled_scope import scope_axes, scope_headers
 from .unruled_structure_sources import label_windows
 
 
-def observe_region(page, tokens, header, page_diagrams):
-    xs, ys = scope_axes(header)
+def observe_column_body(tokens, header, page_diagrams):
     context = observe_source_window(tokens, body_context_window(header))
     bottom = original_body_bottom(header, context, page_diagrams)
-    region = {
-        "status": "observed_original_unruled_columns",
-        "version": 1,
+    return {
         "header_scope": header,
         "body_context": context,
         "page_diagrams": page_diagrams,
         "body_bottom": bottom,
+    }
+
+
+def observe_region(page, tokens, header, page_diagrams):
+    xs, ys = scope_axes(header)
+    region = {
+        "status": "observed_original_unruled_columns",
+        "version": 1,
+        **observe_column_body(tokens, header, page_diagrams),
         "pair_sources": [],
         "labels": [],
-        "diagrams": body_diagrams(header, bottom, page_diagrams),
     }
+    bottom = region["body_bottom"]
+    region["diagrams"] = body_diagrams(header, bottom, page_diagrams)
     for pair, (identifier, _structure) in enumerate(
         structure_column_pairs(scope_headers(header))
     ):

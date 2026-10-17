@@ -5,12 +5,14 @@ from itertools import pairwise
 
 from .activity_context_geometry import valid_box
 from .activity_grid_role_observation import observe_role_cells
-from .caption_role_proof import observed_role
 from .source_cell_tokens import cell_lines
 from .source_geometry import SourceTokens
 from .source_observations import source_observation_status
-from .source_table_markers import TABLE_MARKER
 from .source_window_chunks import observe_window_sources
+from .structure_header_context import (
+    observe_header_context,
+    original_header_context_role,
+)
 from .structure_table_headers import structure_column_pairs
 from .unruled_header_readings import original_header_readings
 
@@ -88,16 +90,6 @@ def observe_unruled_header(page, tokens, groups, original_pdf_sha256):
     reading = observe_role_cells(page, {"xs": xs, "ys": ys}, tokens, retain_frames=True)
     if reading is None:
         return None
-    # Retain the nearest literal table-title context, including wrapped rows.
-    titles = [
-        line
-        for line in cell_lines(tokens, [0, 0, size[0], ys[0]])
-        if TABLE_MARKER.search(" ".join(part["text"] for part in line))
-    ]
-    title_top = (
-        max(0, min(part["bbox"][1] for part in titles[-1]) - 2) if titles else ys[0]
-    )
-    context_bounds = [0, title_top, size[0], ys[0]] if title_top < ys[0] else None
     return {
         "version": 1,
         "original_pdf_sha256": original_pdf_sha256,
@@ -105,9 +97,7 @@ def observe_unruled_header(page, tokens, groups, original_pdf_sha256):
         "page_size": size,
         "nomination": groups,
         "source_observations": observe_window_sources(tokens, bounds),
-        "context_sources": observe_window_sources(tokens, context_bounds)
-        if context_bounds
-        else [],
+        "context_sources": observe_header_context(tokens, size, ys[0]),
         "role_cells": reading,
     }
 
@@ -175,22 +165,7 @@ def unruled_header_roles(scope):
     headers = original_header_readings(scope["role_cells"], xs, ys, sources)
     if headers is None:
         return None
-    contexts = scope["context_sources"]
-    if (
-        not isinstance(contexts, list)
-        or len(contexts) > 2
-        or any(
-            not isinstance(p, dict)
-            or source_observation_status(p, p.get("bbox"), p.get("text")) == "invalid"
-            or p["bbox"][3] != ys[0]
-            or p["bbox"][0] != 0
-            or p["bbox"][2] != size[0]
-            for p in contexts
-        )
-    ):
-        raise ValueError("Malformed original unruled title context")
-    nonempty = [p for p in contexts if p["text"].strip()]
-    role, _ = observed_role(nonempty)
+    role, _ = original_header_context_role(scope["context_sources"], ys[0], size[0])
     if role in {"mixed", "conflict"}:
         return None
     pairs = structure_column_pairs(headers)

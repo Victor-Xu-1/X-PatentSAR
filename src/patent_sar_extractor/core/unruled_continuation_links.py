@@ -88,7 +88,7 @@ def validate_continuation_links(sections):
 
 
 def repeated_header_covers(scope, diagrams, nomination):
-    if scope.get("kind") or scope_roles(scope) is None:
+    if scope.get("kind") == "continued_unruled_columns" or scope_roles(scope) is None:
         return False
     sources = scope["context_sources"]
     if not sources:
@@ -139,7 +139,10 @@ def uncovered_continuation_issues(sections):
                 )
             )
         sources = [(region["body_context"], body_context_window(scope))]
-        if not scope.get("kind") and scope["context_sources"]:
+        if (
+            scope.get("kind") != "continued_unruled_columns"
+            and scope["context_sources"]
+        ):
             packets = scope["context_sources"]
             sources.append(
                 ([{"bbox": packets[0]["bbox"], "sources": packets}], packets[0]["bbox"])

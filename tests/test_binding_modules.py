@@ -124,6 +124,9 @@ class BindingModuleTests(unittest.TestCase):
         paths = [
             *core.glob("binding_*.py"),
             *core.glob("unruled_*.py"),
+            *core.glob("ruled_structure_*.py"),
+            *core.glob("structure_column_*.py"),
+            core / "structure_header_context.py",
             core / "source_window_chunks.py",
             core / "source_document.py",
             core / "cell_identity_proof.py",

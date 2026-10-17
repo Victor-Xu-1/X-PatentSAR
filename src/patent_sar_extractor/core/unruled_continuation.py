@@ -15,19 +15,17 @@ from .source_window_chunks import (
     validate_source_window,
     window_source_tokens,
 )
+from .structure_column_scopes import original_column_axes, original_column_roles
 from .unruled_continuation_titles import (
     continuation_identity,
     continuation_nominees,
     qualified_table_key,
 )
 from .unruled_header_readings import original_header_readings
-from .unruled_structure_headers import header_windows, unruled_header_roles
 
 
 def continuation_axes(scope):
-    xs, _ys = header_windows(
-        scope["anchor_scope"]["nomination"], scope["anchor_scope"]["page_size"]
-    )
+    xs, _ys = original_column_axes(scope["anchor_scope"])
     return xs, [scope["caption"]["bbox"][1], scope["caption"]["bbox"][3]]
 
 
@@ -81,9 +79,12 @@ def continuation_roles(scope):
     }:
         raise ValueError("Malformed original unruled continuation scope")
     anchor = scope["anchor_scope"]
-    if not isinstance(anchor, dict) or "kind" in anchor:
+    if not isinstance(anchor, dict) or anchor.get("kind") not in {
+        None,
+        "original_ruled_columns",
+    }:
         raise ValueError("A continuation must retain one nonrecursive original anchor")
-    roles = unruled_header_roles(anchor)
+    roles = original_column_roles(anchor)
     size = scope["page_size"]
     if (
         scope["kind"] != "continued_unruled_columns"
@@ -142,7 +143,7 @@ def continuation_roles(scope):
         raise ValueError("Original continuation caption clipping changed")
     if (
         anchor["page_no"] == scope["page_no"]
-        and header_windows(anchor["nomination"], anchor["page_size"])[1][1] >= bounds[1]
+        and original_column_axes(anchor)[1][1] >= bounds[1]
     ):
         raise ValueError("Original continuation cannot precede its own column anchor")
     validate_source_projection(

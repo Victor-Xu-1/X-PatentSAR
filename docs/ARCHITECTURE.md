@@ -1,5 +1,36 @@
 # X-PatentSAR architecture
 
+`structure_header_context` and `structure_column_scopes` are the one original
+column-role interface across printed and logical tables. `ruled_structure_headers`
+uses the existing independent native/cell-OCR/frame reader for actual physical
+header cells, including wrapped headings and intervening metadata columns. A
+raw grid/text hint alone cannot supply current column authority or final-product
+eligibility. Explicit nonfinal and known native/raster conflicts remain intact.
+
+`structure_column_anchors` captures the actual header/full body/page diagrams in
+the existing source ledger; `structure_column_cells` indexes physical rows once
+before the sole numbered matcher. `structure_column_anchor_proof` and
+`ruled_structure_proof` recheck exact root/header/axes/row/source-packet ownership
+for current catalog/formal/Web consumers. Scope6's `column_anchor_ids` conserves
+those roots. Legacy untyped cells cannot gain current source authority; old
+historical artifacts keep their original interpretation and are never retagged.
+
+`structure_column_population` independently derives occupied physical row/pair
+positions from the retained original native/raster tokens and all observed page
+diagrams. The shared half-open grid-token index and diagram interval index avoid
+repeated full-table scans. An omitted original ID or known diagram remains an
+explicit gap even after result totals are changed and saved issues are cleared;
+a retained binding with a competing/crossing diagram is rejected. Empty source
+observations do not prove detector/OCR recall, and no missing ID/value is filled.
+
+Explicitly captioned ruled-to-logical and ruled-to-ruled continuations share the
+same current caption/leading context, registered parent and nonrecursive original
+anchor. Actual closed rows may prove vertically disjoint label/drawing ink;
+logical columns still require intersecting extents. The existing four-point
+physical edge tolerance is one shared predicate, never a digit/ID repair. These
+source controls do not prove uncaptioned/unanchored continuations, universal
+detector recall or complete chemical/OCSR correctness.
+
 Original headerless continuations share the numbered source coordinator and
 single writer. `unruled_continuation_titles` nominates literal table names from
 both original native/raster lanes; only a same-key/same-role caption physically
@@ -64,7 +95,7 @@ this unpublished source revision; internal checkpoints are not product releases.
 
 These original-layout controls are not full chemical/OCSR acceptance. Vertically
 disjoint alignment without source row boundaries, unmarked following prose,
-ruled-first to headerless-unruled transitions and complete detector recall remain open scope.
+unanchored/uncaptioned continuations and complete detector recall remain open scope.
 No new real patent run is implied by controlled native/raster tests.
 
 `unruled_body_scope` replays a complete original post-header text window and the

@@ -1,5 +1,29 @@
 # Project governance manifest
 
+- Current original columns: `structure_header_context` and
+  `structure_column_scopes` serve physical and logical header consumers;
+  `ruled_structure_headers` reuses existing cell/source/frame observation.
+  `structure_column_anchors` captures shared original facts,
+  `structure_column_cells` prepares indexed physical rows for the single
+  matcher, and `structure_column_anchor_proof`/`ruled_structure_proof` own saved
+  root/row/source projection replay. Source scope6 adds column_anchor_ids within
+  this unpublished feature. Explicit nonfinal/known conflicts cannot produce
+  current final compounds; raw observed IDs remain even when roles are rejected.
+  No competing OCR/queue/store/row matcher/writer or dependency is introduced.
+- `structure_column_population` rederives occupied original row/pair positions
+  from the same retained tokens/diagrams, not reported result counts. Removed
+  rows, changed totals, missing IDs/diagrams and retained competing assignments
+  cannot clear original coverage. Shared token and interval indexes are local
+  projections, not new stores or inference. Unknown detector/OCR recall remains
+  unproved rather than inferred from empty observations.
+- Ruled/logical explicitly captioned parts reuse the same registered original
+  anchor/current caption/leading context. Actual physical cells, not word
+  proximity, can prove disjoint caption/drawing extents. One established detector
+  alignment predicate is shared with existing role links. Binding20/binder29
+  already cover this unpublished semantic feature, not a new epoch per internal
+  checkpoint; raw/model/manual/SAR/API/SQL remain unchanged. Unsupported original
+  roles and real-source/chemical acceptance remain separate open requirements.
+
 - Original continuation ownership: `unruled_continuation_titles` nominates both
   original source lanes without merging distinct literal/physical claims;
   `unruled_continuation` owns bounded current caption observations and one

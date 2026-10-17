@@ -262,15 +262,7 @@ def collect_spatial_bindings(
     accepted, conflicts = _resolve_claim_conflicts(candidates)
     reprints = []
     for pair in numbered.reprints:
-        binding = _build_binding_from_structure(pair.structure, pair.label)
-        binding.update(
-            {
-                "binding_rule": "numbered_structure_table_cell",
-                "numbered_table_cell_evidence": pair.evidence(),
-                "authoritative_table_source_label": pair.label,
-                "authoritative_table_pages": list(numbered.recognized_pages),
-            }
-        )
+        binding = _original_table_binding(pair, numbered.recognized_pages)
         reprints.append(
             annotate_source_binding(_normalise_binding_to_compound(binding, pair.label))
         )
@@ -323,21 +315,28 @@ def collect_spatial_bindings(
 
 
 def original_table_bindings(result: NumberedTableResult) -> list[dict[str, Any]]:
-    bindings = []
-    for pair in result.bindings:
-        binding = _build_binding_from_structure(pair.structure, pair.label)
-        evidence = pair.evidence()
-        binding.update(
-            {
-                "binding_rule": "numbered_structure_table_cell",
-                "numbered_table_cell_evidence": evidence,
-                "authoritative_table_source_label": pair.label,
-                "authoritative_table_pages": list(result.recognized_pages),
-            }
-        )
-        if evidence.get("kind") == "original_unruled_columns":
-            binding["source_pdf_sha256"] = evidence["header_scope"][
-                "original_pdf_sha256"
-            ]
-        bindings.append(binding)
-    return bindings
+    return [
+        _original_table_binding(pair, result.recognized_pages)
+        for pair in result.bindings
+    ]
+
+
+def _original_table_binding(pair, table_pages):
+    binding = _build_binding_from_structure(pair.structure, pair.label)
+    evidence = pair.evidence()
+    binding.update(
+        {
+            "binding_rule": "numbered_structure_table_cell",
+            "numbered_table_cell_evidence": evidence,
+            "authoritative_table_source_label": pair.label,
+            "authoritative_table_pages": list(table_pages),
+        }
+    )
+    header = (
+        evidence.get("header_scope")
+        if evidence.get("kind") == "original_unruled_columns"
+        else (evidence.get("column_ownership") or {}).get("header_scope")
+    )
+    if header:
+        binding["source_pdf_sha256"] = header["original_pdf_sha256"]
+    return binding

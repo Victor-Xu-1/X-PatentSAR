@@ -41,7 +41,8 @@ def reference_scope(sections, original_pdf_sha256=""):
         | {
             section["source"]["header_scope"]["original_pdf_sha256"]
             for section in sections
-            if section.get("role") == "unruled_structure_region"
+            if section.get("role")
+            in {"unruled_structure_region", "structure_column_anchor"}
         }
     )
     if not original_pdf_sha256 and len(origins) == 1:
@@ -62,6 +63,11 @@ def reference_scope(sections, original_pdf_sha256=""):
             for s in sections
             if s.get("role") == "unruled_structure_region"
         ],
+        "column_anchor_ids": [
+            s["region_id"]
+            for s in sections
+            if s.get("role") == "structure_column_anchor"
+        ],
     }
 
 
@@ -78,7 +84,11 @@ def _regions(sections, scope):
                 "heading_ids",
             }
             | ({"label_reference_ids"} if scope.get("version") in {5, 6} else set())
-            | ({"unruled_region_ids"} if scope.get("version") == 6 else set())
+            | (
+                {"unruled_region_ids", "column_anchor_ids"}
+                if scope.get("version") == 6
+                else set()
+            )
             if scope.get("version") in {3, 4, 5, 6}
             else {"version", "original_pdf_sha256", "region_ids", "caption_region_ids"}
             if scope.get("version") == 2
@@ -175,7 +185,11 @@ def reference_issues(payload, entries, *, required=True):
         and not any(
             section.get("role", "").startswith("characterization_")
             or section.get("role")
-            in {"unruled_structure_region", "structure_label_reference"}
+            in {
+                "unruled_structure_region",
+                "structure_label_reference",
+                "structure_column_anchor",
+            }
             for section in sections
         )
     ):

@@ -66,6 +66,21 @@ def structure_column_pairs(headers: Sequence[str]) -> tuple[tuple[int, int], ...
     return tuple(pairs) if len(pairs) == len(structures) else ()
 
 
+def aligned_column_edges(previous, current):
+    """Established four-point original detector tolerance, never ID inference."""
+    return (
+        isinstance(previous, list)
+        and isinstance(current, list)
+        and 2 <= len(previous) == len(current) <= 65
+        and all(
+            type(v) in {int, float} and math.isfinite(v) and v >= 0
+            for v in [*previous, *current]
+        )
+        and all(b > a for axis in (previous, current) for a, b in pairwise(axis))
+        and all(abs(a - b) <= 4 for a, b in zip(previous, current, strict=True))
+    )
+
+
 def valid_column_ownership(evidence: object, label_box, structure_box) -> bool:
     """A nonadjacent cell needs actual header roles, not same-y proximity."""
     if not isinstance(evidence, Mapping) or not label_box or not structure_box:

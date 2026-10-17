@@ -132,6 +132,7 @@ class OriginalSourceAdmissionTests(unittest.TestCase):
         payload["source_reference_scope"]["version"] = 4
         payload["source_reference_scope"].pop("label_reference_ids")
         payload["source_reference_scope"].pop("unruled_region_ids")
+        payload["source_reference_scope"].pop("column_anchor_ids")
         rows, _ = read_catalog_entries(payload)
         self.assertEqual(len(rows), 6)
         self.assertNotIn("exact_caption_evidence", rows[0])

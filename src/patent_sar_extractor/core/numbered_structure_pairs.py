@@ -72,6 +72,13 @@ def valid_cell_binding_evidence(binding: Mapping[str, Any]) -> bool:
         from .unruled_structure_proof import valid_unruled_binding
 
         return valid_unruled_binding(binding)
+    if evidence.get("kind") == "original_ruled_columns":
+        from .ruled_structure_proof import valid_ruled_header_binding
+
+        if not valid_ruled_header_binding(binding):
+            return False
+    elif evidence.get("kind") is not None:
+        return False
     source = _label(evidence.get("source_label"))
     target = re.sub(
         r"^(?:Compound|Cpd|Example)\s+",
@@ -129,6 +136,18 @@ def valid_cell_binding_evidence(binding: Mapping[str, Any]) -> bool:
         return False
 
 
+def numbered_observed_keys(cells):
+    keys = {_label(cell.label) for cell in cells if _label(cell.label)}
+    for cell in cells:
+        if not cell.label_confirmed:
+            keys.update(
+                _label(o.get("text"))
+                for o in cell.observations
+                if _label(o.get("text"))
+            )
+    return frozenset(keys)
+
+
 def _pair_cells(
     cells: Sequence[NumberedTableCell],
     structures: Sequence[Mapping[str, Any]],
@@ -139,13 +158,7 @@ def _pair_cells(
 ) -> NumberedTableResult:
     """Require one printed ID and one complete segment in its adjacent cell."""
     observed = Counter(_label(cell.label) for cell in cells if _label(cell.label))
-    observed_keys = set(observed)
-    for cell in cells:
-        if cell.label_confirmed:
-            continue
-        observed_keys.update(
-            _label(o.get("text")) for o in cell.observations if _label(o.get("text"))
-        )
+    observed_keys = numbered_observed_keys(cells)
     structure_ids = Counter(str(s.get("id") or "") for s in structures)
     by_page: dict[int, list[tuple[Mapping[str, Any], Box | None]]] = {}
     for segment in structures:

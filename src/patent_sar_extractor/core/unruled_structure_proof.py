@@ -7,6 +7,7 @@ from .activity_header_evidence import proof_id
 from .cell_identity_proof import confirmed_identity_readings
 from .printed_identifiers import identifier_key
 from .source_cell_claims import cell_source_status
+from .structure_column_anchor_proof import validate_column_anchors
 from .unruled_continuation_links import (
     uncovered_continuation_issues,
     validate_continuation_links,
@@ -136,11 +137,12 @@ def valid_unruled_binding(binding):
 
 
 def unruled_reference_issues(sections, scope, entries):
+    anchors, anchor_issues = validate_column_anchors(sections, scope, entries)
     regions = [s for s in sections if s.get("role") == "unruled_structure_region"]
     if scope["version"] < 6:
         if regions:
             raise ValueError("Original unruled source inventory was downgraded")
-        return []
+        return anchor_issues
     if scope.get("unruled_region_ids") != [s.get("region_id") for s in regions]:
         raise ValueError("Original unruled source regions were omitted or changed")
     sources = [
@@ -149,7 +151,7 @@ def unruled_reference_issues(sections, scope, entries):
         for source in [entry, *entry.get("additional_sources", [])]
     ]
     by_id = {s.get("structure_id"): s for s in sources}
-    known, issues, expected_sources = set(), [], {}
+    known, issues, expected_sources = set(), list(anchor_issues), {}
     for section in regions:
         if (
             set(section) != {"role", "status", "page_no", "region_id", "source"}
@@ -202,8 +204,8 @@ def unruled_reference_issues(sections, scope, entries):
                 raise ValueError(
                     "Unruled binding differs from its complete original source"
                 )
-    validate_continuation_links(regions)
-    issues.extend(uncovered_continuation_issues(regions))
+    validate_continuation_links([*anchors, *regions])
+    issues.extend(uncovered_continuation_issues([*anchors, *regions]))
     for source in sources:
         evidence = source.get("numbered_table_cell_evidence") or {}
         if (

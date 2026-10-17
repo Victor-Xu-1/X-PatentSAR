@@ -22,6 +22,7 @@ from .numbered_structure_models import (
 from .numbered_structure_pairs import (
     _box,
     _overlaps,
+    numbered_observed_keys,
     pair_numbered_table_cells,
     valid_cell_binding_evidence,
 )
@@ -30,7 +31,8 @@ from .structure_catalogs import (
     catalog_at,
     catalog_marks,
 )
-from .structure_table_headers import structure_column_pairs
+from .structure_column_cells import prepare_ruled_cells
+from .structure_table_headers import aligned_column_edges, structure_column_pairs
 from .unruled_structure_observation import observe_unruled_tables
 
 __all__ = [
@@ -133,6 +135,7 @@ def bind_numbered_tables(
     recognized: set[int] = set()
     carry: tuple[int, list[float], list[str], tuple[tuple[int, int], ...]] | None = None
     prior_catalog = Catalog()
+    ruled_headers, ruled_continuations = {}, {}
     for page_index in sorted(set(page_indices)):
         if not 0 <= page_index < len(doc):
             continue
@@ -160,11 +163,16 @@ def bind_numbered_tables(
                 carry
                 and carry[0] + 1 == page_index
                 and ys[0] < 130
-                and len(carry[1]) == len(xs)
-                and all(abs(a - b) <= 4 for a, b in zip(carry[1], xs))
+                and aligned_column_edges(carry[1], xs)
             )
             if not has_header and not continuation:
                 continue
+            if has_header:
+                ruled_headers.setdefault(page_index, []).append({"xs": xs, "ys": ys})
+            else:
+                ruled_continuations.setdefault(page_index, []).append(
+                    {"xs": xs, "ys": ys}
+                )
             if not has_header and carry:
                 headers, pairs = carry[2], carry[3]
             first_row = 1 if has_header else 0
@@ -214,9 +222,6 @@ def bind_numbered_tables(
                     )
         if marks:
             prior_catalog = marks[-1][1]
-    ruled = pair_numbered_table_cells(
-        cells, structures, active_keys, recognized_pages=recognized
-    )
     unruled, sections, issues, protected, pages, keys = observe_unruled_tables(
         doc,
         structures,
@@ -224,15 +229,21 @@ def bind_numbered_tables(
         grids_for_page,
         tokens_for_page,
         page_texts=page_texts,
+        ruled_header_grids=ruled_headers,
+        ruled_continuation_grids=ruled_continuations,
+    )
+    prepared, header_issues = prepare_ruled_cells(cells, sections)
+    ruled = pair_numbered_table_cells(
+        prepared, structures, active_keys, recognized_pages=recognized
     )
     return NumberedTableResult(
         tuple(sorted(set(ruled.recognized_pages) | pages)),
-        ruled.observed_keys | frozenset(keys),
+        ruled.observed_keys | numbered_observed_keys(cells) | frozenset(keys),
         (
             *ruled.bindings,
             *(b for b in unruled if active_keys is None or b.label in active_keys),
         ),
-        (*ruled.issues, *issues),
+        (*ruled.issues, *header_issues, *issues),
         ruled.reprints,
         tuple(sections),
         frozenset(protected),

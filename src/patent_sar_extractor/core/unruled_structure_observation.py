@@ -6,9 +6,15 @@ from dataclasses import dataclass
 from .activity_header_evidence import proof_id
 from .caption_role_semantics import continuation_title
 from .numbered_structure_models import NumberedTableIssue
+from .ruled_structure_headers import observe_ruled_header
 from .source_document import document_sha256
 from .source_geometry import SourceTokens
-from .structure_table_headers import possible_structure_header
+from .structure_column_anchors import (
+    ANCHOR_ROLE,
+    column_anchor_roles,
+    observe_column_anchor,
+)
+from .structure_table_headers import aligned_column_edges, possible_structure_header
 from .unruled_continuation import observe_continuation
 from .unruled_continuation_links import (
     compatible_diagram_scope,
@@ -41,7 +47,15 @@ class UnruledTableBinding:
 
 
 def observe_unruled_tables(
-    doc, structures, pages, grids_for_page, tokens_for_page, *, page_texts=None
+    doc,
+    structures,
+    pages,
+    grids_for_page,
+    tokens_for_page,
+    *,
+    page_texts=None,
+    ruled_header_grids=None,
+    ruled_continuation_grids=None,
 ):
     bindings, sections, issues, protected, recognized, observed = (
         [],
@@ -52,6 +66,8 @@ def observe_unruled_tables(
         set(),
     )
     original_sha = None
+    ruled_header_grids = ruled_header_grids or {}
+    ruled_continuation_grids = ruled_continuation_grids or {}
     by_page, sections_by_page, anchors_by_key = {}, defaultdict(list), defaultdict(list)
     for structure in structures:
         by_page.setdefault(structure["page_no"] - 1, []).append(structure)
@@ -68,6 +84,7 @@ def observe_unruled_tables(
         # unrelated prose. Hints cannot authorize or suppress a known diagram.
         if (
             page_index not in by_page
+            and not ruled_header_grids.get(page_index)
             and page_texts is not None
             and not (
                 possible_structure_header(page_texts[page_index])
@@ -79,7 +96,18 @@ def observe_unruled_tables(
         if not isinstance(tokens, SourceTokens):
             continue
         size = [page.rect.width, page.rect.height]
-        physical = grids_for_page(page)
+        physical = ruled_header_grids.get(page_index, [])
+        pending = ruled_continuation_grids.get(page_index, [])
+        if any(
+            not any(
+                grid["xs"] == found["xs"] and grid["ys"] == found["ys"]
+                for found in grids_for_page(page)
+            )
+            for grid in [*physical, *pending]
+        ):
+            raise ValueError(
+                "Original column anchor differs from detected physical grid"
+            )
         nominees = [
             groups
             for groups in nominate_unruled_headers(tokens, size)
@@ -94,7 +122,7 @@ def observe_unruled_tables(
             )
         ]
         captions = continuation_nominees(tokens, size)
-        if not nominees and not captions:
+        if not nominees and not captions and not physical:
             continue
         available = {str(s["id"]): s for s in by_page.get(page_index, [])}
         page_diagrams = sorted(
@@ -105,24 +133,32 @@ def observe_unruled_tables(
             key=lambda item: (item["bbox"][1], item["bbox"][0], item["id"]),
         )
         headers = []
+        if original_sha is None and (nominees or physical):
+            original_sha = document_sha256(doc)
         for groups in nominees:
-            if original_sha is None:
-                original_sha = document_sha256(doc)
             header = observe_unruled_header(page, tokens, groups, original_sha)
             if header is None:
                 raise ValueError(
                     "Original unruled header exceeds its observation budget"
                 )
             headers.append(header)
-        events = [(scope_axes(h)[1][0], h, None) for h in headers]
+        anchors = [
+            observe_ruled_header(page, tokens, grid, original_sha) for grid in physical
+        ]
+        events = [(scope_axes(h)[1][0], h, None, False) for h in headers]
+        events.extend((scope_axes(h)[1][0], h, None, True) for h in anchors)
         events.extend(
-            (caption["bbox"][1], None, caption)
+            (caption["bbox"][1], None, caption, False)
             for caption in captions
             if not any(
-                repeated_header_covers(h, page_diagrams, caption) for h in headers
+                repeated_header_covers(h, page_diagrams, caption)
+                for h in headers + anchors
             )
         )
-        for _top, header, caption in sorted(events, key=lambda event: event[0]):
+        for _top, header, caption, anchor_only in sorted(
+            events, key=lambda event: event[0]
+        ):
+            row_grid = None
             if header is None:
                 key = continuation_identity(caption["text"])[0]
                 anchors = anchors_by_key[key]
@@ -145,11 +181,26 @@ def observe_unruled_tables(
                     parent, header, page_diagrams
                 ):
                     header["parent_region_id"], header["parent_page_no"] = "", None
-            region = observe_region(page, tokens, header, page_diagrams)
-            _roles, assignments, findings = region_plan(region)
+                xs, ys = scope_axes(header)
+                matching = [
+                    g
+                    for g in pending
+                    if aligned_column_edges(xs, g["xs"]) and g["ys"][0] >= ys[1]
+                ]
+                if len(matching) == 1:
+                    anchor_only, row_grid = True, matching[0]
+            if anchor_only:
+                region = observe_column_anchor(
+                    tokens, header, page_diagrams, grid=row_grid
+                )
+                column_anchor_roles(region)
+                assignments, findings = [], []
+            else:
+                region = observe_region(page, tokens, header, page_diagrams)
+                _roles, assignments, findings = region_plan(region)
             region_id = proof_id(region)
             section = {
-                "role": "unruled_structure_region",
+                "role": ANCHOR_ROLE if anchor_only else "unruled_structure_region",
                 "status": region["status"],
                 "page_no": page_index + 1,
                 "region_id": region_id,
@@ -160,6 +211,8 @@ def observe_unruled_tables(
             for key in nominated_table_keys(header):
                 anchors_by_key[key].append(anchor_scope(header))
             recognized.add(page_index)
+            if anchor_only:
+                continue
             protected.update(d["id"] for d in region["diagrams"])
             observed.update(
                 label["value"] for label in region["labels"] if label["value"]
