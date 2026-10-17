@@ -106,6 +106,9 @@ for (const width of [1672, 390]) {
       fullPage: true,
     });
     await page.reload();
+    // Free-text search is local view state, separate from the persisted locale.
+    // Reopen the same source before checking its post-reload language and ID.
+    await page.getByRole('textbox', { name: 'Search results', exact: true }).fill('编号待确认');
     await expect(trigger).toBeVisible();
     await page
       .getByRole('combobox', { name: 'Interface language', exact: true })
