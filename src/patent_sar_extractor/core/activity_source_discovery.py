@@ -7,6 +7,7 @@ import re
 from .activity_header_metrics import METRIC, normalize_metric_text
 from .activity_headers import ACTIVITY_CONTEXT, context_from_text
 from .activity_source_roles import method_result_references, reported_method_source
+from .source_result_references import result_reference_sentences
 from .source_section_roles import section_heading
 from .source_table_markers import TABLE_MARKER
 
@@ -72,9 +73,23 @@ def _original_windows(text: str, *, split_tables=True):
     source checks. No rows, values or identifiers are manufactured here.
     """
     starts, offset = [0], 0
+    references = result_reference_sentences(text)
+    reference_index = 0
     for line in text.splitlines(keepends=True):
+        while (
+            reference_index < len(references)
+            and references[reference_index].end <= offset
+        ):
+            reference_index += 1
+        inside_reference = (
+            reference_index < len(references)
+            and references[reference_index].start
+            < offset
+            < references[reference_index].end
+        )
         if offset and (
-            (split_tables and _CAPTION.match(line)) or section_heading(line)
+            (split_tables and _CAPTION.match(line) and not inside_reference)
+            or section_heading(line)
         ):
             starts.append(offset)
         offset += len(line)

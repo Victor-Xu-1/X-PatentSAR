@@ -122,6 +122,45 @@ def parallel_activity_page(
 
 
 class ActivityContextWindowTests(unittest.TestCase):
+    def test_declared_reference_list_needs_every_actual_result_table_and_row_proof(
+        self,
+    ):
+        for include_second in (True, False):
+            with self.subTest(include_second=include_second), fitz.open() as document:
+                method = document.new_page(width=500, height=400)
+                method.insert_text(
+                    (40, 60),
+                    "Example 87: Binding assay\nCells were seeded. Reagent was added.\n"
+                    "Results are included in\nTables 71 and 88.",
+                    fontsize=10,
+                )
+                for table in (71, 88) if include_second else (71,):
+                    page = document.new_page(width=500, height=400)
+                    page.insert_text(
+                        (40, 80), f"Table {table}. Binding activity", fontsize=9
+                    )
+                    draw_grid(
+                        page, 100, [["Compound No.", "IC50 (nM)"], ["47", "12.4"]]
+                    )
+                pages = list(range(len(document)))
+                parsed = extract_coordinate_tables(document, pages)
+                packet = coverage_packet(pages, parsed.coverage, parsed.rows)
+                references = packet["references"]
+                self.assertEqual(
+                    {ref["table_id"] for ref in references}, {"Table 71", "Table 88"}
+                )
+                errors = coverage_errors(packet, pages, rows=parsed.rows)
+                if include_second:
+                    self.assertEqual(errors, [])
+                    self.assertTrue(
+                        all(ref["status"] == "resolved" for ref in references)
+                    )
+                else:
+                    self.assertTrue(errors)
+                    self.assertTrue(
+                        any(ref["status"] != "resolved" for ref in references)
+                    )
+
     def test_parallel_panels_keep_the_original_header_past_running_ids_and_references(
         self,
     ):

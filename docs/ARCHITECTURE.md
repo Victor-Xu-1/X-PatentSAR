@@ -96,6 +96,22 @@ can refresh cached views. Marketing-version-only changes do not alter that stamp
 Old inputs/reports/manual edits remain immutable; new analysis requires a current
 source snapshot. CSV independence and the existing SAR queue are unchanged.
 
+## Literal method and result references
+
+`source_result_references` owns one bounded literal result-sentence/list grammar
+and its original text spans. It reuses the original table-ID grammar and shared
+reference limits, preserving leading zeros and letter IDs. Explicit coordinated
+lists (including literal semicolon separators), plural table words and
+wrapped/space-joined function words do not create
+new data. Unknown/alternative/ambiguous dash syntax remains unresolved rather
+than accepting a recognized prefix of the target list. Discovery uses those same
+spans so a wrapped table mention is not a new caption, while a following actual
+caption still starts its own window. The old competing single-reference regex
+is removed. Method references require an otherwise qualified procedure and every
+target's actual parsed region/rows/cells; a reference never waives missing results.
+Raw text and measurements are unchanged, within the same unpublished Activity19/
+extractor28/coverage15 contract.
+
 ## Shared physical headers and independent panel conditions
 
 `activity_parallel_context` captures only the existing bounded native/raster

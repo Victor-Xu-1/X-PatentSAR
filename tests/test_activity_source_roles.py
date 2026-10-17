@@ -6,12 +6,86 @@ from types import SimpleNamespace
 from patent_sar_extractor.core.activity_source_discovery import (
     declared_activity_source,
     discover_activity_sources,
+    reference_observations,
 )
-from patent_sar_extractor.core.activity_source_roles import method_page_evidence
+from patent_sar_extractor.core.activity_source_roles import (
+    method_page_evidence,
+    method_result_references,
+)
+from patent_sar_extractor.core.source_result_references import (
+    MAX_TARGETS_PER_REFERENCE,
+    result_reference_sentences,
+)
 from patent_sar_extractor.core.source_section_roles import section_heading
 
 
 class ActivitySourceRoleTests(unittest.TestCase):
+    def test_literal_result_reference_lists_preserve_every_declared_table(self):
+        method = "Example 87: Binding assay\nCells were seeded. Reagent was added.\n"
+        for sentence, expected in (
+            (
+                "The results are included in Tables 71, 88 and Table 92.",
+                ["Table 71", "Table 88", "Table 92"],
+            ),
+            ("Results were summarised in Tables A and B.", ["Table A", "Table B"]),
+            ("Results are listed in Table 007 and 008B.", ["Table 007", "Table 008B"]),
+            ("Results are listed in Tables S1 and S2.", ["Table S1", "Table S2"]),
+            ("Results are listed in Tables 71; 88.", ["Table 71", "Table 88"]),
+            ("结果见表 007及表008B。", ["表 007", "表008B"]),
+        ):
+            with self.subTest(sentence=sentence):
+                self.assertEqual(method_result_references(method + sentence), expected)
+                self.assertEqual(method_page_evidence(method + sentence), "")
+
+    def test_reference_typography_and_wrapping_do_not_change_original_targets(self):
+        method = "Example 87: Binding assay\nCells were seeded. Reagent was added.\n"
+        for sentence in (
+            "Theresults are includedinTable71 and 88.",
+            "Results are reported in\nTables 71 and\n88.",
+        ):
+            with self.subTest(sentence=sentence):
+                self.assertEqual(
+                    method_result_references(method + sentence),
+                    ["Table 71", "Table 88"],
+                )
+
+    def test_unknown_reference_or_local_measurement_never_becomes_methods_only(self):
+        method = "Example 87: Binding assay\nCells were seeded. Reagent was added.\n"
+        for sentence in (
+            "Results are included in Table 71 or 88.",
+            "Results are included in Tables 71-88.",
+            "Results are included in Table 3.4.",
+            "Results are included in Tables71 and 88.",
+            "Results are included in Table 71. Compound 47 showed IC50 = 3 nM.",
+            "Results are included in Tables 71; or 88.",
+            "Results are included in Table 71; Compound 47 showed IC50 = 3 nM.",
+        ):
+            with self.subTest(sentence=sentence):
+                self.assertEqual(method_result_references(method + sentence), [])
+                self.assertEqual(method_page_evidence(method + sentence), "")
+
+    def test_wrapped_reference_does_not_absorb_a_following_actual_table_caption(self):
+        text = (
+            "Example 87: Binding assay\nCells were seeded. Reagent was added.\n"
+            "Results are included in\nTables 71 and 88.\n"
+            "Table 71. Binding activity\nCompound No. | IC50 (nM)\n47 | 8\n"
+        )
+        observations = reference_observations(text)
+        self.assertEqual(len(observations), 1)
+        self.assertEqual(observations[0]["targets"], ["Table 71", "Table 88"])
+        self.assertEqual(observations[0]["status"], "reference")
+
+    def test_reference_source_and_target_budgets_refuse_instead_of_truncating(self):
+        with self.assertRaisesRegex(ValueError, "text budget"):
+            result_reference_sentences("x" * 100001)
+        source = (
+            "Results are listed in Tables "
+            + ", ".join(["A"] * (MAX_TARGETS_PER_REFERENCE + 1))
+            + "."
+        )
+        with self.assertRaisesRegex(ValueError, "target budget"):
+            result_reference_sentences(source)
+
     def test_letter_table_result_boundaries_and_method_references_remain_distinct(self):
         self.assertTrue(
             declared_activity_source("Table A. Binding activity\nUnreadable body")

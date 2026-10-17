@@ -1,5 +1,13 @@
 # Project governance manifest
 
+- `source_result_references` owns bounded literal result-link sentences, target
+  lists, original spans and reference limits, reusing the one table-ID grammar.
+  Discovery and method/result consumers use that authority; the former separate
+  single-target regex is removed. Every declared target still needs independent
+  observed results and cell proof. Unknown or over-budget syntax cannot become
+  accepted partial targets or a methods-only exemption. Raw source, API/SQL and
+  the same unpublished Activity19/extractor28/coverage15/v0.2.34 remain unchanged.
+
 - Shared-panel source ownership: `activity_parallel_context` uses the existing
   bounded original observation/context SDK, no OCR/queue/store/model of its own.
   Producer carry and saved table-family QA require unique actual caption positions,

@@ -1,5 +1,14 @@
 # Operations and troubleshooting
 
+## Result references
+
+Result sentences may explicitly name several tables, including letter/zero-padded
+IDs, plural "Tables" and wrapped references. The software retains all declared
+targets and links each to actual observed results. A missing or unproved target
+keeps the reference unresolved; it is not an exemption for an unreadable table.
+Unknown alternatives/ranges and local measured results cannot be treated as a
+methods-only page. Sentence/target/text limits refuse rather than truncate success.
+
 ## Parallel activity tables
 
 The software can use one original header for multiple parallel panels only after
