@@ -3,6 +3,7 @@
 from collections import defaultdict
 
 from .activity_header_evidence import proof_id
+from .binding_source_regions import reference_cell
 from .printed_identifiers import identifier_key
 from .source_binding_proof import annotate_source_binding
 from .source_window_chunks import validate_source_overlap
@@ -115,6 +116,10 @@ def declaration_issues(sections, scope, entries, *, nonfinal_diagrams):
                 accepted[row["structure_id"]].append(row)
                 identifiers.add(identifier_key(row.get("cpd"), wrapped=True))
     issues = []
+    reference_regions = defaultdict(list)
+    for section in sections:
+        if section.get("role") == "characterization_region":
+            reference_regions[section["page_no"]].append(section["source_region"])
     for page in pages:
         for original in declaration_scopes(page["source"]):
             role = original["role"]
@@ -165,7 +170,29 @@ def declaration_issues(sections, scope, entries, *, nonfinal_diagrams):
                 issues.append(
                     {**finding, "reason": "conflicting_original_table_declaration"}
                 )
-            lists = original["identifier_lists"]
+            # The raw candidates stay in the complete original scope. A known
+            # method/characterization cell is not a new terminal declaration,
+            # even when a wrapped line happens to be just "Compound <ID>".
+            lists = [
+                {
+                    **item,
+                    "identifiers": [
+                        key
+                        for key, line in zip(
+                            item["identifiers"], item["lines"], strict=True
+                        )
+                        if reference_cell(
+                            line,
+                            reference_regions[original["page_no"]],
+                            permitted_roles=frozenset(
+                                {"preparation", "characterization"}
+                            ),
+                        )
+                        is None
+                    ],
+                }
+                for item in original["identifier_lists"]
+            ]
             if lists and (
                 any(
                     not item["qualified"] or not all(item["identifiers"])

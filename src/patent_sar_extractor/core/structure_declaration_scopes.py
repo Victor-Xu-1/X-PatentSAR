@@ -82,7 +82,8 @@ def _identifier_lists(chunks, page, body, lanes):
     """Keep uncertain raw lines; a footer/prose line cannot erase earlier IDs."""
     projected, lists = project_source_window(chunks, page, body), []
     for native, lane in zip((False, True), lanes, strict=True):
-        texts = [cell_text(line, body) for line in cell_lines(lane, body)]
+        lines = cell_lines(lane, body)
+        texts = [cell_text(line, body) for line in lines]
         keys = [identifier_key(text, wrapped=True) for text in texts]
         packets = [
             next(p for p in chunk["sources"] if p["origin"] == "native")
@@ -94,6 +95,22 @@ def _identifier_lists(chunks, page, body, lanes):
             lists.append(
                 {
                     "identifiers": keys,
+                    "lines": [
+                        {
+                            "text": text,
+                            "bbox": [
+                                min(p["bbox"][0] for p in line),
+                                min(p["bbox"][1] for p in line),
+                                max(p["bbox"][2] for p in line),
+                                max(p["bbox"][3] for p in line),
+                            ],
+                            "source": "native"
+                            if all(p["source"] == "native" for p in line)
+                            else "page_ocr",
+                            "geometry_space": "rendered",
+                        }
+                        for text, line in zip(texts, lines, strict=True)
+                    ],
                     "qualified": all(
                         p["status"] == "qualified" for p in packets if p["text"].strip()
                     ),

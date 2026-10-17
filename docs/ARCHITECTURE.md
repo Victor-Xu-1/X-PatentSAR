@@ -21,6 +21,13 @@ so those cells do not masquerade as synthesis headings. The binder no longer
 skips a distinct heading because its label exists elsewhere. Historical scopes
 retain their recorded read interpretation; current scope6 cannot borrow it.
 
+Graph-free declarations retain each raw candidate line and its original box.
+The existing exact source-cell role resolver can identify qualified preparation
+or characterization cells; their wrapped compound references are not new final
+structure declarations. Unknown/conflicting roles are not exempt, and raw page
+observations/candidate literals remain available for replay. This is a role
+projection within the same source ledger, not a second extractor or ID blacklist.
+
 Original boundary derivation now lives in the pure `source_body_context` SDK;
 `unruled_body_scope` supplies its column adapters. Complete source inventory and
 positively trusted ownership have separate bottoms. Doubtful, conflicting,
