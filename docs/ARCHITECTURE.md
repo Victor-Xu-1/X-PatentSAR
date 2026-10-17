@@ -1,5 +1,35 @@
 # X-PatentSAR architecture
 
+Original heading inventory uses the existing one source-binding writer and
+reference ledger, now version3. `source_section_roles` parses bounded literal
+single/group declarations; `heading_line_windows` retains up to eight adjacent
+original title rows without joining identifier characters. Ranges, duplicate
+members and incomplete titles remain unresolved, never inferred compounds.
+`heading_observation` reuses the existing text-cell/coordinate OCR SDK for native
+source or bounded400/600dpi clips. `heading_source_geometry` supplies one exact
+rendered-PDF arithmetic/window/frame replay; `heading_source_proof` rederives
+literal members and known native/detector conflicts. The old separate250dpi
+heading OCR path is removed. A page OCR line nominates a window, not an identity.
+Original hints, native shadows, all reads/scores/pixel frames and source hashes
+survive. The same physical-row reader has distinct trusted role bounds: large
+heading glyphs fit the128pt heading window; assay headers retain their12pt bound.
+No image is resized across rows and no assay constraint is widened. Two agreeing
+reads do not establish chemical correctness.
+
+Headings are inventoried on every original page, including outside a known
+catalogue on the same page. A group only declares membership; each picture still
+needs independent literal caption/ownership proof. No left/right or member-order
+assignment is permitted. `heading_inventory` replays the complete saved ledger
+through writer/formal/catalog/Web/SAR; removed declarations, downgraded scopes,
+changed roles or unmapped members cannot be cleared by deleting saved issues.
+Known unproved headings do not start unrelated crop-label refinement. Candidate
+structures and original lines are indexed/reused by page. Binding18/binder27 and
+activity17/extractor26/coverage13 invalidate derived ownership/section semantics
+only. Raw page/model/crop assets, visible19/preparation7, manual audit, scientific
+graphs, SAR/API/SQL and dependencies remain unchanged. Historic artifacts are
+not retagged. Controlled source checks do not prove universal patent recall,
+correct full molecular graphs/stereochemistry or real-run scientific acceptance.
+
 `core/process_capture` is the sole binary pipe collector behind `env_runner`'s
 script, snippet and interpreter/module probes. It replaces `capture_output` and
 blocking line reads, not the configured interpreter, bootstrap, worker or queue.

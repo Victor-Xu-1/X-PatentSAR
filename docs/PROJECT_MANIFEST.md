@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- Original headings: shared literal section-role parsing plus bounded physical
+  line windows feed the single source-binding coordinator/writer. Responsibility
+  modules `heading_observation`, `heading_source_geometry`, `heading_source_proof`
+  and `heading_inventory` capture/replay existing native/coordinate-cell facts;
+  the private250dpi recognizer is removed. Groups do not assign diagram order.
+  Every page remains in the declaration inventory, and scope3 content addresses
+  all members/roles. Producer/formal/catalog/Web/SAR share missing-member and
+  downgrade checks. Binding18/binder27/activity17/extractor26/coverage13 revise
+  derived semantics only; raw2/OCSR2/visible19/preparation7/manual/graph/SAR/API/
+  SQL/dependencies stay. No second queue, model, asset store, API or acceptance
+  authority. Controlled checks do not establish universal or chemical acceptance.
+
 - Environment-worker I/O: `core/process_capture.py` is the one bounded binary pipe
   collector for the existing `env_runner` script/snippet/readiness adapters.
   Blocking line reads and separate unbounded captures are removed. Independent

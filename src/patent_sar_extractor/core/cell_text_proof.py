@@ -3,11 +3,66 @@
 import math
 import re
 
+from .cell_ocr_scores import confidence_value
+
+
+def valid_text_reading(reading, bounds, dpi, *, maximum_row_height=12):
+    """Typed original text-cell reading, independent of its scientific role."""
+    if not isinstance(reading, dict) or (
+        reading.get("method") != f"cell_ocr_{dpi}dpi"
+        or type(reading.get("render_dpi")) is not int
+        or reading["render_dpi"] != dpi
+        or dpi not in {400, 600}
+        or reading.get("bbox") != list(bounds)
+        or reading.get("coordinate_space") != "original_pdf_points"
+        or not isinstance(reading.get("raw_text"), str)
+        or len(reading["raw_text"]) > 4096
+        or reading.get("text") != reading["raw_text"]
+    ):
+        return False
+    parts, detected = reading.get("parts"), reading.get("detection_parts")
+    if (
+        not isinstance(parts, list)
+        or not 1 <= len(parts) <= 32
+        or not isinstance(detected, list)
+        or len(detected) > 32
+        or any(
+            not isinstance(part, dict)
+            or not isinstance(part.get("text"), str)
+            or len(part["text"]) > 4096
+            or confidence_value(part.get("confidence")) is None
+            or part.get("confidence_valid", True) is not True
+            for part in [*parts, *detected]
+        )
+        or any(part["confidence"] < 0.85 for part in parts)
+        or type(reading.get("confidence")) not in {int, float}
+        or reading["confidence"] != min(part["confidence"] for part in parts)
+    ):
+        return False
+    if "physical_header_lines" in reading:
+        return physical_text_valid(
+            reading,
+            packet_name="physical_header_lines",
+            part_method="physical_header_line",
+            minimum_rows=2,
+            maximum_rows=8,
+            maximum_row_height=maximum_row_height,
+        )
+    return " ".join(part["text"] for part in parts) == reading["raw_text"]
+
 
 def physical_text_valid(
-    reading, *, packet_name, part_method, minimum_rows, maximum_rows
+    reading,
+    *,
+    packet_name,
+    part_method,
+    minimum_rows,
+    maximum_rows,
+    maximum_row_height=12,
 ):
     """One pure bounded pixel-frame replay shared by header and caption readers."""
+    if type(maximum_row_height) is not int or not 0 < maximum_row_height <= 128:
+        return False
     packet = reading.get(packet_name)
     if not isinstance(packet, dict) or set(packet) != {
         "version",
@@ -70,7 +125,7 @@ def physical_text_valid(
         if not (
             border <= x0 < x1 <= shape[1] - border
             and bottom < y0 < y1 <= shape[0] - border
-            and y1 - y0 <= 12 * dpi / 72
+            and y1 - y0 <= maximum_row_height * dpi / 72
         ):
             return False
         bottom, area = y1, area + (x1 - x0) * (y1 - y0)

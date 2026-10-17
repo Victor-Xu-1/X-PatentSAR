@@ -10,10 +10,12 @@ from unittest.mock import Mock, patch
 import fitz
 
 from patent_sar_extractor.core.binding_source_headings import (
+    _document_sha256,
     observed_heading_blocks,
     select_heading_bindings,
 )
-from patent_sar_extractor.core.heading_evidence import _read_heading
+from patent_sar_extractor.core.heading_observation import observe_heading
+from patent_sar_extractor.core.heading_source_proof import proved_heading_declaration
 from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
 
 
@@ -203,30 +205,43 @@ class GeneralHeadingBindingTests(unittest.TestCase):
         for score in (True, "0.99", None, float("nan"), 0.7):
             with self.subTest(score=repr(score)), fitz.open() as doc:
                 page = doc.new_page()
+                page.draw_line((50, 48), (150, 48), width=1)
                 engine = Mock(
-                    return_value=(
+                    side_effect=lambda _image, _score_value=score, **options: (
                         [
                             (
                                 [[0, 0], [100, 0], [100, 10], [0, 10]],
                                 "Compound 7A",
-                                score,
+                                _score_value,
                             )
-                        ],
+                        ]
+                        if options.get("use_det")
+                        else [("Compound 7A", _score_value)],
                         None,
                     )
                 )
                 with patch(
-                    "patent_sar_extractor.core.heading_evidence.get_ocr_engine",
+                    "patent_sar_extractor.core.heading_observation.get_ocr_engine",
                     return_value=("rapidocr", engine),
                 ):
-                    self.assertEqual(
-                        _read_heading(page, {"bbox": [40, 40, 180, 60]})[0], ""
+                    proof = observe_heading(
+                        page,
+                        {
+                            "bbox": [40, 40, 180, 60],
+                            "text": "Compound 7A",
+                            "source": "page_ocr",
+                        },
+                        _document_sha256(doc),
+                    )
+                    self.assertIsNone(proved_heading_declaration(proof))
+                    self.assertTrue(
+                        engine.called, "Exercise typed scored SDK output, not blank ink"
                     )
         with fitz.open() as doc:
             page = doc.new_page()
             with (
                 patch(
-                    "patent_sar_extractor.core.heading_evidence.get_ocr_engine",
+                    "patent_sar_extractor.core.heading_observation.get_ocr_engine",
                     return_value=("paddlex", None),
                 ),
                 patch(
@@ -234,9 +249,16 @@ class GeneralHeadingBindingTests(unittest.TestCase):
                     side_effect=AssertionError("Unscored text is only a locator"),
                 ),
             ):
-                self.assertEqual(
-                    _read_heading(page, {"bbox": [40, 40, 180, 60]})[0], ""
+                proof = observe_heading(
+                    page,
+                    {
+                        "bbox": [40, 40, 180, 60],
+                        "text": "Compound 7A",
+                        "source": "page_ocr",
+                    },
+                    _document_sha256(doc),
                 )
+                self.assertIsNone(proved_heading_declaration(proof))
 
 
 if __name__ == "__main__":

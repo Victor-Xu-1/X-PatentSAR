@@ -9,13 +9,14 @@ import numpy as np
 from .cell_ocr_scores import confidence_score
 
 
-def header_line_frame(image, border, dpi):
+def header_line_frame(image, border, dpi, *, maximum_row_height=12):
     """Read complete physical rows without endpoint dictionaries or text repair.
 
     Small gaps within glyphs/subscripts stay in one row. Every dark pixel must
     belong to the retained row inventory. Touching/tall/over-bound input cannot
     fall back to apparently qualified detector text. One-line cells retain the
     existing direct reader. All returned coordinates use its ink-crop frame.
+    The trusted caller supplies a text-role bound; assay headers keep12pt.
     """
     if (
         image.ndim != 3
@@ -26,6 +27,8 @@ def header_line_frame(image, border, dpi):
         or dpi not in {400, 600}
         or type(border) is not int
         or not 0 < border <= 32
+        or type(maximum_row_height) is not int
+        or not 0 < maximum_row_height <= 128
     ):
         raise ValueError("Invalid original header line frame")
     ink = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) < 180
@@ -36,7 +39,10 @@ def header_line_frame(image, border, dpi):
         occupied,
         np.flatnonzero(np.diff(occupied) > max(1, math.ceil(dpi / 72 * 0.7))) + 1,
     )
-    if len(groups) == 1 and (groups[0][-1] - groups[0][0] + 1) * 72 / dpi <= 12:
+    if (
+        len(groups) == 1
+        and (groups[0][-1] - groups[0][0] + 1) * 72 / dpi <= maximum_row_height
+    ):
         return None
     packet = {
         "version": 1,
@@ -53,7 +59,7 @@ def header_line_frame(image, border, dpi):
         x = np.flatnonzero(ink[y0:y1].any(axis=0))
         x0, x1 = int(x[0]), int(x[-1]) + 1
         packet["row_bounds"].append([x0, y0, x1, y1])
-        if y1 - y0 > 12 * dpi / 72:
+        if y1 - y0 > maximum_row_height * dpi / 72:
             packet["row_bounds"] = []
             return packet
     return packet

@@ -21,8 +21,12 @@ from .heading_evidence import (
     original_heading_lines,
     standalone_heading_evidence,
 )
+from .heading_line_windows import heading_line_windows
+from .heading_observation import observe_heading
+from .heading_source_proof import proved_heading_declaration
 from .pipeline_rules import _candidate_labels, annotate_binding_accuracy
-from .source_section_roles import section_heading
+from .source_geometry import source_layout
+from .source_section_roles import heading_list_hint, heading_members, section_heading
 
 
 def _document_sha256(doc) -> str:
@@ -48,9 +52,10 @@ def observed_heading_blocks(
     blocks = []
     document_sha256 = _document_sha256(doc)
     for page_index in sorted(set(pages)):
+        page = doc[page_index]
+        layout = source_layout(page)
         regions = (source_regions or {}).get(page_index)
         if regions is None:
-            page = doc[page_index]
             grids = grids_for_page(page) if grids_for_page else None
             tokens = (
                 tokens_for_page(page)
@@ -79,8 +84,15 @@ def observed_heading_blocks(
             line_map.get(page_index, []),
             (source_line_map or {}).get(page_index, []),
         )
-        for line in observed:
+        for line in heading_line_windows(observed):
             observation = section_heading(line["text"])
+            if observation is None and heading_list_hint(line["text"]):
+                observation = {
+                    "role": "unproved_heading",
+                    "identifier": "",
+                    "identifiers": [],
+                    "line_text": line["text"],
+                }
             if observation:
                 reference = reference_cell(line, regions)
                 if reference is not None:
@@ -97,22 +109,39 @@ def observed_heading_blocks(
                             }
                         )
                     continue
+                proof = observe_heading(page, line, document_sha256, layout=layout)
+                declared = proved_heading_declaration(proof)
+                effective = declared or observation
                 if source_sections is not None:
                     source_sections.append(
-                        {**observation, "page_no": page_index + 1, "bbox": line["bbox"]}
+                        {
+                            **effective,
+                            "page_no": page_index + 1,
+                            "bbox": line["bbox"],
+                            "heading_observation": proof,
+                            "status": proof["status"],
+                            "role": effective["role"]
+                            if declared
+                            else "unproved_heading",
+                        }
                     )
-                if observation["role"] in {"assay_section", "intermediate_section"}:
+                if declared and declared["role"] in {
+                    "assay_section",
+                    "intermediate_section",
+                }:
                     continue
-                blocks.append(
-                    {
-                        "cpd": f"Compound {observation['identifier']}",
-                        "page_no": page_index + 1,
-                        "y0": line["y0"],
-                        "y1": line["y1"],
-                        "bbox": line["bbox"],
-                        "line_text": line["text"],
-                    }
-                )
+                for identifier in heading_members(effective):
+                    blocks.append(
+                        {
+                            "cpd": f"Compound {identifier}",
+                            "page_no": page_index + 1,
+                            "y0": line["y0"],
+                            "y1": line["y1"],
+                            "bbox": line["bbox"],
+                            "line_text": effective["line_text"],
+                            "heading_observation": proof,
+                        }
+                    )
     return sorted(blocks, key=lambda block: (block["page_no"], block["y0"]))
 
 
@@ -133,32 +162,72 @@ def select_heading_bindings(
             for b in blocks
         ]
     document_sha256 = _document_sha256(doc)
+    proved_blocks = []
+    for block in blocks:
+        proof = block.get("heading_observation")
+        declaration = proved_heading_declaration(proof)
+        if (
+            declaration
+            and declaration["role"] == "compound_heading"
+            and proof["original_pdf_sha256"] == document_sha256
+            and proof["page_no"] == block["page_no"]
+            and proof["nomination"]["bbox"] == block["bbox"]
+        ):
+            proved_blocks.append((block, declaration))
+    if not proved_blocks:
+        return [], [
+            {
+                "cpd": block["cpd"],
+                "page_no": block["page_no"],
+                "reason": "ambiguous_or_unproved_original_heading",
+            }
+            for block in blocks
+        ]
+    first_heading = {}
+    for block, _ in proved_blocks:
+        page_no = block["page_no"]
+        first_heading[page_no] = min(
+            first_heading.get(page_no, block["y0"]), block["y0"]
+        )
     structures = [
-        {**structure, "source_pdf_sha256": document_sha256} for structure in structures
+        {**structure, "source_pdf_sha256": document_sha256}
+        for structure in structures
+        if structure["page_no"] in first_heading
+        and structure["y0"] >= first_heading[structure["page_no"]]
     ]
+    page_structures = {}
+    for structure in structures:
+        page_structures.setdefault(structure["page_no"], []).append(structure)
     cache = _load_visible_label_cache(output_dir, profile)
     cache = _refine_visible_label_cache_with_page_ocr(
         structures, cache, line_map, output_dir, profile
     )
     candidates = {}
-    for index, block in enumerate(blocks):
-        key = normalize_compound(block["cpd"]).removeprefix("Compound ")
-        next_block = blocks[index + 1] if index + 1 < len(blocks) else None
-        end = (
-            next_block["y0"]
-            if next_block and next_block["page_no"] == block["page_no"]
-            else doc[block["page_no"] - 1].rect.height
+    boundaries = sorted({(block["page_no"], block["y0"]) for block in blocks})
+    ends = {
+        (page_no, y): (
+            boundaries[index + 1][1]
+            if index + 1 < len(boundaries) and boundaries[index + 1][0] == page_no
+            else doc[page_no - 1].rect.height
         )
+        for index, (page_no, y) in enumerate(boundaries)
+    }
+    original_lines = {}
+    for block, declaration in proved_blocks:
+        key = normalize_compound(block["cpd"]).removeprefix("Compound ")
+        end = ends[block["page_no"], block["y0"]]
         page = doc[block["page_no"] - 1]
-        direct, evidence = standalone_heading_evidence(
-            page,
-            block,
-            structures,
-            original_heading_lines(
+        if block["page_no"] not in original_lines:
+            original_lines[block["page_no"]] = original_heading_lines(
                 page,
                 line_map.get(block["page_no"] - 1, []),
                 (source_line_map or {}).get(block["page_no"] - 1, []),
-            ),
+            )
+        direct, evidence = standalone_heading_evidence(
+            page,
+            block,
+            page_structures.get(block["page_no"], []),
+            original_lines[block["page_no"]],
             end,
         )
         if direct and evidence:
@@ -178,7 +247,7 @@ def select_heading_bindings(
             ):
                 candidates.setdefault(key, {})[str(checked["structure_id"])] = checked
                 continue
-        for structure in structures:
+        for structure in page_structures.get(block["page_no"], []):
             if not (
                 structure["page_no"] == block["page_no"]
                 and block["y0"] <= structure["y0"] < end

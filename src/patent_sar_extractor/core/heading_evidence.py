@@ -11,10 +11,9 @@ import fitz
 from PIL import Image
 
 from .activity_identity import printed_identifier_key
-from .cell_ocr_scores import confidence_score
-from .page_ocr_cache import get_ocr_engine
-from .source_geometry import native_lines, overlaps, source_layout
-from .source_section_roles import section_heading
+from .heading_source_proof import proved_heading_declaration
+from .source_geometry import native_lines, source_layout
+from .source_section_roles import heading_members, section_heading
 
 _BODY = re.compile(
     r"^(?:\[\s*\d{1,8}\s*\]|(?:Step|Stage|步骤|中间体|Intermediate)\b|"
@@ -145,62 +144,13 @@ def _has_drawing(path: str) -> bool:
         return False
 
 
-def _read_heading(page, block: dict) -> tuple[str, str]:
-    bounds = fitz.Rect(block["bbox"]) + (-2, -3, 2, 5)
-    bounds &= page.rect
-    if bounds.is_empty:
-        return "", ""
-    layout = source_layout(page)
-    raster = layout.raster_bounds is not None and overlaps(
-        layout.raster_bounds, tuple(bounds)
-    )
-    native = page.get_text("text", clip=bounds * page.derotation_matrix)
-    if native.strip() and not raster:
-        return heading_identifier(" ".join(native.split())), "native_heading"
-    engine = get_ocr_engine()
-    if not engine or engine[0] != "rapidocr":
-        # The text-only provider is useful for page nomination, not a scored
-        # coordinate/source proof. Do not invent its missing confidence.
-        return "", "unqualified_coordinate_heading"
-    from io import BytesIO
-
-    import numpy as np
-
-    if bounds.width * bounds.height * (250 / 72) ** 2 > 8_000_000:
-        return "", "heading_render_limit"
-    pixmap = page.get_pixmap(
-        matrix=fitz.Matrix(250 / 72, 250 / 72), clip=bounds, alpha=False
-    )
-    with Image.open(BytesIO(pixmap.tobytes("png"))) as image:
-        result, _ = engine[1](np.array(image.convert("RGB")), use_cls=False)
-        if result is None:
-            result = []
-        if not isinstance(result, (list, tuple)) or len(result) > 32:
-            return "", "unqualified_original_heading"
-        texts = []
-        for row in result:
-            if (
-                not isinstance(row, (list, tuple))
-                or len(row) != 3
-                or not isinstance(row[1], str)
-                or len(row[1]) > 4096
-            ):
-                return "", "unqualified_original_heading"
-            if row[1].strip():
-                if confidence_score(row[2]) < 0.85:
-                    return "", "unqualified_original_heading"
-                texts.append(row[1])
-    label = heading_identifier(" ".join(texts))
-    native_label = heading_identifier(" ".join(native.split()))
-    if native_label and native_label != label:
-        return "", "conflicting_native_raster_heading"
-    return label, f"{engine[0]}_heading"
-
-
 def standalone_heading_evidence(
     page, block: dict, structures: list[dict], lines: list[dict], end: float
 ) -> tuple[dict | None, dict | None]:
     """A unique original diagram before the first procedure, never nearest wins."""
+    declaration = proved_heading_declaration(block.get("heading_observation"))
+    if len(heading_members(declaration)) != 1:
+        return None, None
     boundaries = [
         line["y0"]
         for line in lines
@@ -218,12 +168,18 @@ def standalone_heading_evidence(
     if len(candidates) != 1:
         return None, None
     structure = candidates[0]
-    label, method = _read_heading(page, block)
+    label = heading_members(declaration)[0]
+    method = (
+        "rapidocr_heading"
+        if block["heading_observation"]["observations"]
+        else "native_heading"
+    )
     path = str(structure.get("image_path") or "")
     if label != printed_identifier_key(block["cpd"]) or not _has_drawing(path):
         return None, None
     return structure, {
-        "version": 1,
+        "version": 2,
+        "heading_source": block["heading_observation"],
         "label": label,
         "page_no": block["page_no"],
         "heading_text": block["line_text"],
@@ -242,11 +198,14 @@ def valid_heading_binding_evidence(binding: dict) -> bool:
     evidence = binding.get("original_heading_structure_evidence")
     if (
         not isinstance(evidence, dict)
-        or evidence.get("version") != 1
+        or evidence.get("version") != 2
         or type(evidence.get("version")) is not int
     ):
         return False
     label = printed_identifier_key(binding.get("compound_id") or binding.get("cpd"))
+    declaration = proved_heading_declaration(evidence.get("heading_source"))
+    if heading_members(declaration) != [label]:
+        return False
     try:
         heading = evidence["heading_bbox"]
         crop = evidence["structure_bbox"]
@@ -266,7 +225,11 @@ def valid_heading_binding_evidence(binding: dict) -> bool:
             == evidence["label"]
             == heading_identifier(evidence["heading_text"])
             and evidence["heading_observation"]
-            in {"native_heading", "rapidocr_heading", "paddlex_heading"}
+            == (
+                "rapidocr_heading"
+                if evidence["heading_source"]["observations"]
+                else "native_heading"
+            )
             and evidence["structure_id"] == binding.get("structure_id")
             and type(evidence["page_no"]) is int
             and evidence["page_no"] == binding.get("page_no")
@@ -274,6 +237,10 @@ def valid_heading_binding_evidence(binding: dict) -> bool:
             and type(evidence["candidate_count"]) is int
             and re.fullmatch(r"[a-f0-9]{64}", evidence["original_pdf_sha256"])
             and evidence["original_pdf_sha256"] == binding.get("source_pdf_sha256")
+            and evidence["heading_source"]["original_pdf_sha256"]
+            == evidence["original_pdf_sha256"]
+            and evidence["heading_source"]["page_no"] == evidence["page_no"]
+            and evidence["heading_source"]["nomination"]["bbox"] == heading
             and evidence["crop_sha256"]
             == _image_digest(str(binding.get("image_path") or ""))
             and re.fullmatch(r"[a-f0-9]{64}", evidence["crop_sha256"])

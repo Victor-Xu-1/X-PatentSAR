@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from typing import Any
 
 from .activity_identity import PRINTED_ID, printed_identifier_key
 from .printed_identifiers import identifier_width
@@ -10,8 +11,25 @@ from .printed_identifiers import identifier_width
 _HEADING = re.compile(
     r"^(?:\[\s*\d{1,8}\s*\]\s*)?"
     r"(?P<preparation>(?:(?:Synthesis|Preparation)\s+(?:of\s+)?)?)"
+    r"(?:Exemplary\s+)?"
     r"(?P<kind>Compound|Cmpd|Cpd|Example|Intermediate|实施例|化合物|中间体)\s*[-:.：]?\s*"
     rf"(?P<identifier>{PRINTED_ID})(?![\w/-])(?P<tail>.*)$",
+    re.IGNORECASE,
+)
+_SEPARATOR = r"\s*(?:,\s*(?:and\s+)?|and\s+|&\s*|和|及|、)\s*"
+_GROUP = re.compile(
+    r"^(?:\[\s*\d{1,8}\s*\]\s*)?"
+    r"(?P<preparation>(?:(?:Synthesis|Preparation)\s+(?:of\s+)?)?)"
+    r"(?:Exemplary\s+)?"
+    r"(?P<kind>Compounds|Cmpds|Cpds|Examples|Intermediates|实施例|化合物|中间体)\s*[-:.：]?\s*"
+    rf"(?P<members>{PRINTED_ID}(?:{_SEPARATOR}{PRINTED_ID}){{1,31}})"
+    r"(?![\w/-])(?P<tail>.*)$",
+    re.IGNORECASE,
+)
+_LIST_START = re.compile(
+    r"^(?:\[\s*\d{1,8}\s*\]\s*)?"
+    r"(?:(?:Synthesis|Preparation)\s+(?:of\s+)?)?(?:Exemplary\s+)?"
+    r"(?:Compounds?|Cmpds?|Cpds?|Examples?|Intermediates?|实施例|化合物|中间体)\s*[-:.：]?\s*",
     re.IGNORECASE,
 )
 _ASSAY_TITLE = re.compile(
@@ -32,21 +50,30 @@ _INTERMEDIATE_TARGET = re.compile(
 )
 
 
-def section_heading(text: object) -> dict[str, str] | None:
+def section_heading(text: object) -> dict[str, Any] | None:
     """Observe a bounded literal heading, never infer a role from its number."""
     raw = str(text or "").strip()
     if len(raw) > 4096:
         return None
-    match = _HEADING.fullmatch(identifier_width(raw))
+    source = " ".join(identifier_width(raw).split())
+    match = _GROUP.fullmatch(source) or _HEADING.fullmatch(source)
     if not match:
         return None
     tail = match["tail"].strip()
-    if tail and not (tail[0] in ":.：)" or _PREPARATION.match(tail)):
+    if match.re is _GROUP and re.match(
+        rf"^{_SEPARATOR}{PRINTED_ID}", tail, re.IGNORECASE
+    ):
+        raise ValueError("Original heading exceeds its 32 literal member bound")
+    if tail and not (
+        tail[0] in ":.：)" or _PREPARATION.match(tail) or _ASSAY_TITLE.match(tail)
+    ):
         return None
     if re.match(r"^[.:：)]?\s*(?:and\b|to\s+\d|through\b|及|和)", tail, re.IGNORECASE):
         return None
     title = tail.lstrip(".:：) ")
     kind = match["kind"].lower()
+    if match.re is _GROUP and kind.endswith("s"):
+        kind = kind[:-1]
     role = "compound_heading"
     if (
         kind in {"intermediate", "中间体"}
@@ -62,12 +89,67 @@ def section_heading(text: object) -> dict[str, str] | None:
             if match["preparation"] or _PREPARATION.match(title)
             else "assay_section"
         )
+    members = (
+        [
+            printed_identifier_key(item)
+            for item in re.split(_SEPARATOR, match["members"], flags=re.IGNORECASE)
+        ]
+        if match.re is _GROUP
+        else [printed_identifier_key(match["identifier"])]
+    )
+    if not all(members):
+        return None
     return {
-        "identifier": printed_identifier_key(match["identifier"]),
+        "identifier": members[0] if len(members) == 1 else "",
+        **({"identifiers": members} if len(members) > 1 else {}),
         "label_kind": kind,
         "role": role,
         "line_text": raw,
     }
+
+
+def heading_members(observation: dict | None) -> list[str]:
+    """Only explicit literal members; never infer a range or figure order."""
+    if not observation:
+        return []
+    return list(observation.get("identifiers", [observation["identifier"]]))
+
+
+def heading_list_hint(text: object) -> bool:
+    """A bounded literal list/range locator, never a declaration or expansion."""
+    raw = str(text or "").strip()
+    if len(raw) > 4096:
+        return False
+    raw = identifier_width(raw)
+    start = _LIST_START.match(raw)
+    if start is None:
+        return False
+    body = raw[start.end() :]
+    identifiers = list(re.finditer(rf"(?<![\w/-]){PRINTED_ID}(?![\w/-])", body))
+    if not identifiers:
+        return False
+    remainder = re.sub(rf"(?<![\w/-]){PRINTED_ID}(?![\w/-])", "", body)
+    remainder = re.sub(
+        r"\b(?:Compounds?|Cmpds?|Cpds?|Examples?|Intermediates?)\b|实施例|化合物|中间体",
+        "",
+        remainder,
+        flags=re.IGNORECASE,
+    )
+    return bool(
+        re.fullmatch(
+            r"(?:[\s,;:&、和及~\-–—]|\band\b|\bto\b|\bthrough\b)*",
+            remainder,
+            re.IGNORECASE,
+        )
+    )
+
+
+def heading_assay_tail(text: object) -> bool:
+    """A literal non-numbered assay-title line can continue an Example title."""
+    raw = str(text or "").strip()
+    return bool(
+        len(raw) <= 4096 and _ASSAY_TITLE.match(raw) and not re.search(r"\d", raw)
+    )
 
 
 def nonfinal_original_label(text: object) -> bool:

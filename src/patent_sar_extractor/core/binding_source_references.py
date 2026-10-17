@@ -6,6 +6,7 @@ from .activity_grid_role_proof import valid_role_scope
 from .activity_header_evidence import proof_id
 from .binding_source_regions import identifier_references, reference_cell
 from .caption_role_proof import validate_caption_exclusions
+from .heading_inventory import heading_inventory_issues, heading_sections
 from .printed_identifiers import identifier_key
 from .source_geometry import _box
 from .source_section_roles import section_heading
@@ -20,11 +21,15 @@ def reference_scope(sections, original_pdf_sha256=""):
         for section in sections
         if section["role"] == "characterization_region"
     ]
-    origins = {region["original_pdf_sha256"] for region in regions}
+    origins = {region["original_pdf_sha256"] for region in regions} | {
+        section["heading_observation"]["original_pdf_sha256"]
+        for section in heading_sections(sections)
+        if isinstance(section.get("heading_observation"), dict)
+    }
     if not original_pdf_sha256 and len(origins) == 1:
         original_pdf_sha256 = next(iter(origins))
     return {
-        "version": 2,
+        "version": 3,
         "original_pdf_sha256": original_pdf_sha256,
         "region_ids": [region["region_id"] for region in regions],
         "caption_region_ids": [
@@ -32,6 +37,7 @@ def reference_scope(sections, original_pdf_sha256=""):
             for section in sections
             if section["role"] == "nonfinal_caption_catalog"
         ],
+        "heading_ids": [proof_id(section) for section in heading_sections(sections)],
     }
 
 
@@ -40,12 +46,20 @@ def _regions(sections, scope):
         not isinstance(scope, dict)
         or set(scope)
         != (
-            {"version", "original_pdf_sha256", "region_ids", "caption_region_ids"}
+            {
+                "version",
+                "original_pdf_sha256",
+                "region_ids",
+                "caption_region_ids",
+                "heading_ids",
+            }
+            if scope.get("version") == 3
+            else {"version", "original_pdf_sha256", "region_ids", "caption_region_ids"}
             if scope.get("version") == 2
             else {"version", "original_pdf_sha256", "region_ids"}
         )
         or type(scope["version"]) is not int
-        or scope["version"] not in {1, 2}
+        or scope["version"] not in {1, 2, 3}
         or not isinstance(scope["original_pdf_sha256"], str)
         or scope["original_pdf_sha256"]
         and not _SHA.fullmatch(scope["original_pdf_sha256"])
@@ -61,7 +75,7 @@ def _regions(sections, scope):
     if (
         scope["version"] == 1
         and captions
-        or scope["version"] == 2
+        or scope["version"] in {2, 3}
         and scope.get("caption_region_ids")
         != [proof_id(section) for section in captions]
     ):
@@ -130,6 +144,8 @@ def reference_issues(payload, entries, *, required=True):
     ):
         return []
     regions = _regions(sections, scope)
+    if required and scope["version"] != 3:
+        raise ValueError("Current original source inventory requires heading coverage")
     expected = [
         reference
         for region in regions.values()
@@ -182,7 +198,7 @@ def reference_issues(payload, entries, *, required=True):
         ):
             raise ValueError("Unproved original method-reference cell ownership")
     labels = {identifier_key(entry.get("cpd"), wrapped=True) for entry in entries}
-    issues = []
+    issues = heading_inventory_issues(sections, scope, entries)
     for reference in expected:
         role = reference["source_role"]
         if (
