@@ -1,5 +1,16 @@
 # Project governance manifest
 
+- Environment-worker I/O: `core/process_capture.py` is the one bounded binary pipe
+  collector for the existing `env_runner` script/snippet/readiness adapters.
+  Blocking line reads and separate unbounded captures are removed. Independent
+  stdout/stderr and existing merged streaming retain their caller contracts,
+  fixed-size reads and byte-bounded head/tail keep terminal causes, and deadlines
+  do not wait for a newline. Cleanup owns only the exact Popen child; no detached
+  session or competing child/queue authority is introduced. The existing parent
+  carrier still owns descendants. No dependency, scientific epoch, original asset,
+  manual audit, API/SQL/SAR or acceptance change. Controlled subprocess evidence is
+  not real-patent or chemical acceptance.
+
 - Caption nomination retains uncertainty: `caption_grid_rows` reuses the shared
   prefix grammar and does not assign a bare form from an unread hint unless the
   original catalogue's compound role is independently proved. Original-cell
