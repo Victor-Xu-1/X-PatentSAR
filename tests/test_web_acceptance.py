@@ -21,6 +21,7 @@ from patent_sar_extractor.core.ocsr.stereo_evidence import (
 )
 from patent_sar_extractor.core.structure_inventory import inventory_packet
 from patent_sar_extractor.web.acceptance import ARTIFACTS, authority
+from tests.test_caption_reading_semantics import binding as caption_binding
 
 
 def complete_payloads():
@@ -50,7 +51,12 @@ def complete_payloads():
         ),
     )
     binding = {
-        "cpd": "Compound 1",
+        **caption_binding(
+            [{"method": "native_cell", "text": "Compound 1"}],
+            cpd="Compound 1",
+            structure_id="S0",
+            diagram=(20, 40, 120, 140),
+        ),
         "structure_id": "S0",
         "page_no": 1,
         "image_path": "controlled.png",
@@ -61,7 +67,6 @@ def complete_payloads():
         "struct_area": 10000,
         "struct_width": 100,
         "struct_height": 100,
-        "binding_rule": "structure_table_row_order",
         "authoritative_table_source_label": "Compound 1",
     }
     payloads["structures"]["structures"] = [binding]

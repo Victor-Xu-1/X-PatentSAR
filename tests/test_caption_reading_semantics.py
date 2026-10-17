@@ -7,19 +7,27 @@ from patent_sar_extractor.core.caption_binding_proof import (
 )
 
 
-def binding(observations):
+def binding(
+    observations,
+    *,
+    cpd="Compound 84B",
+    structure_id="controlled-annotated-source",
+    diagram=(20, 30, 160, 180),
+    page_no=1,
+):
+    """Declared source-protocol fixture, not a claim to extract a real image."""
     return {
-        "cpd": "Compound 84B",
-        "structure_id": "controlled-annotated-source",
-        "page_no": 1,
-        "struct_x0": 20,
-        "struct_y0": 30,
-        "struct_x1": 160,
-        "struct_y1": 180,
+        "cpd": cpd,
+        "structure_id": structure_id,
+        "page_no": page_no,
+        **{
+            "struct_" + axis: value
+            for axis, value in zip(("x0", "y0", "x1", "y1"), diagram, strict=True)
+        },
         "binding_rule": "original_caption_cell",
         "exact_caption_evidence": {
-            "bbox": [20, 180, 160, 196],
-            "page_no": 1,
+            "bbox": [diagram[0], diagram[3], diagram[2], diagram[3] + 16],
+            "page_no": page_no,
             "ownership": {},
             "observations": observations,
         },

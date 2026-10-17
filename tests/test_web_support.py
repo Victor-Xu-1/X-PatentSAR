@@ -97,6 +97,8 @@ def artifact_run(
     smiles_by_label: dict[str, str] | None = None,
 ) -> Path:
     """Small contract fixtures. These are NOT evidence of a successful core run."""
+    from tests.test_caption_reading_semantics import binding as caption_binding
+
     root.mkdir()
     ids = [f"Compound {number}" for number in range(rows, 0, -1)]
     bounds = [20, 40, 120, 140]
@@ -169,7 +171,12 @@ def artifact_run(
     )
     bindings = [
         {
-            "cpd": cpd,
+            **caption_binding(
+                [{"method": "native_cell", "text": cpd}],
+                cpd=cpd,
+                structure_id=f"S{i}",
+                diagram=bounds,
+            ),
             "compound_id": cpd,
             "structure_id": f"S{i}",
             "page_no": 1,
@@ -181,7 +188,6 @@ def artifact_run(
             "struct_area": 10000,
             "struct_width": 100,
             "struct_height": 100,
-            "binding_rule": "structure_table_row_order",
             "authoritative_table_source_label": cpd,
             "authoritative_table_correction_reason": "Original observed label",
         }

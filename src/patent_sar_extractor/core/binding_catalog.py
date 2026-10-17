@@ -13,15 +13,37 @@ from patent_sar_extractor.contracts import (
 
 from .binding_labels import _binding_label_key
 from .identifier_order import natural_identifier_key
-from .pipeline_rules import annotate_binding_accuracy
+from .source_binding_proof import annotate_source_binding
 
 
 def compound_catalog(
-    primary: Sequence[dict[str, Any]], additional: Sequence[dict[str, Any]]
+    primary: Sequence[dict[str, Any]],
+    additional: Sequence[dict[str, Any]],
+    *,
+    source_issues: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
+    def checked_source(binding):
+        checked = annotate_source_binding(dict(binding))
+        if source_issues is not None and (
+            checked.get("accuracy_status") != "confirmed" or checked.get("fail_closed")
+        ):
+            source_issues.append(
+                {
+                    "cpd": checked.get("cpd"),
+                    "structure_id": checked.get("structure_id"),
+                    "page_no": checked.get("page_no"),
+                    "reason": "unproved_original_binding",
+                    "evidence": {
+                        "binding_rule": checked.get("binding_rule"),
+                        "reasons": checked.get("evidence_reasons", []),
+                    },
+                }
+            )
+        return checked
+
     entries: dict[str, dict[str, Any]] = {}
     for binding in primary:
-        checked = annotate_binding_accuracy(dict(binding))
+        checked = checked_source(binding)
         label = _binding_label_key(checked)
         if (
             label
@@ -38,7 +60,7 @@ def compound_catalog(
             entries.setdefault(label, {**checked, "additional_sources": []})
     seen = {str(binding["structure_id"]) for binding in entries.values()}
     for binding in additional:
-        checked = annotate_binding_accuracy(dict(binding))
+        checked = checked_source(binding)
         label, structure_id = (
             _binding_label_key(checked),
             str(checked.get("structure_id") or ""),

@@ -1,5 +1,15 @@
 # X-PatentSAR architecture
 
+`source_binding_proof` is the current catalog/formal admission adapter over the
+shared original-cell, caption and heading validators. Historical rule names,
+one-dimensional sequence proposals and saved success flags cannot grant current
+ownership. The single catalog writer retains every rejected proposal as an
+explicit source issue instead of silently reducing the declared population.
+Current serialized catalogs independently replay this gate; an older catalog is
+read only through its historical schema path, never retagged as current proof.
+Unruled layout coverage still requires original two-dimensional role/ownership
+proof; rejecting the former sequence shortcut is not evidence of complete recall.
+
 Original open-row fragments remain in the same binding reference ledger(scope4),
 not a repair pipeline. `source_grid_edges` retains the existing rule detector's
 raw coordinates and exact rendered-page frame; visible page clipping never

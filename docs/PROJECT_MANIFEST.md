@@ -1,5 +1,14 @@
 # Project governance manifest
 
+- Original binding admission: `core/source_binding_proof.py` owns current source
+  eligibility through the existing original-cell/caption/heading validators.
+  `binding_catalog` and its single artifact writer preserve rejected proposals
+  as source issues, and `catalog_reader` replays current-schema evidence rather
+  than trusting rule names or stored success flags. Historical schema reads keep
+  their recorded interpretation and cannot gain current scientific acceptance.
+  Unruled source layout coverage remains a separate original-proof requirement,
+  not a permit for one-dimensional numbering/structure sequence inference.
+
 - Open original rows: `source_grid_edges` consumes the existing physical detector,
   retaining exact raster frames and raw rules. `source_role_fragments`,
   `source_fragment_context` and `source_fragment_links` share one role-cell SDK,

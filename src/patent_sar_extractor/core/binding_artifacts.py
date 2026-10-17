@@ -106,6 +106,7 @@ def write_binding_result(
     catalog = compound_catalog(
         lossless_sources([*catalog_bindings, *bindings]),
         lossless_sources(catalog_sources),
+        source_issues=issues,
     )
     catalog["formal_acceptance_scope"] = FORMAL_SCOPE
     bindings = [dict(binding) for binding in catalog["entries"]]

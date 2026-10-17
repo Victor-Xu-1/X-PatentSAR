@@ -13,7 +13,7 @@ from patent_sar_extractor.contracts import (
 from .activity_identity import normalize_compound
 from .binding_source_references import reference_issues
 from .catalog_reader import read_catalog_entries
-from .pipeline_rules import annotate_binding_accuracy
+from .source_binding_proof import annotate_source_binding
 
 SOURCE_EXECUTION_MODE = "production_structure_led"
 FORMAL_SCOPE = "proved_printed_identifier_structure_corpus"
@@ -104,7 +104,7 @@ def image_exists(binding: dict, root: str = "") -> bool:
 
 
 def confirmed_binding(binding: dict) -> bool:
-    checked = annotate_binding_accuracy(dict(binding))
+    checked = annotate_source_binding(dict(binding))
     return checked.get("accuracy_status") == "confirmed" and not checked.get(
         "fail_closed"
     )
