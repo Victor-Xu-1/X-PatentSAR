@@ -1,13 +1,16 @@
 """Conserve literal ID observations from complete original unruled columns."""
 
-import json
-
 from .activity_context_geometry import valid_box
 from .cell_identity_proof import confirmed_identity_readings
 from .printed_identifiers import identifier_key
-from .source_cell_tokens import cell_lines, cell_text, cell_tokens
+from .source_cell_tokens import cell_lines, cell_text
 from .source_observations import source_observation_status
-from .source_window_chunks import validate_source_window
+from .source_window_chunks import (
+    source_packet_projection,
+    validate_source_projection,
+    validate_source_window,
+)
+from .unruled_body_scope import body_context_window
 
 
 def label_windows(chunks, window):
@@ -39,19 +42,7 @@ def _original_label_source(observed, chunks, bounds):
     packet = observed["source_observation"]
     if source_observation_status(packet, bounds, observed.get("text")) == "invalid":
         return False
-    expected = []
-    for chunk in chunks:
-        source = (
-            next(p for p in chunk["sources"] if p["origin"] == "native")
-            if packet["origin"] == "native"
-            else chunk["sources"][0]
-        )
-        expected.extend(cell_tokens(source["tokens"], bounds))
-
-    def canonical(parts):
-        return sorted(json.dumps(p, sort_keys=True, allow_nan=False) for p in parts)
-
-    return canonical(packet["tokens"]) == canonical(expected)
+    return source_packet_projection(packet, chunks, bounds)
 
 
 def _qualified_label(label, original, sources):
@@ -107,6 +98,12 @@ def label_population(region, xs, ys, bottom, nominated):
             or source["window"] != window
         ):
             raise ValueError("Unruled original identifier column was changed")
+        validate_source_projection(
+            source["chunks"],
+            window,
+            region["body_context"],
+            body_context_window(region["header_scope"]),
+        )
         expected.extend(
             {"pair": pair, "nomination": line}
             for line in label_windows(source["chunks"], window)

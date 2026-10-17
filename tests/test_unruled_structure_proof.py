@@ -91,6 +91,7 @@ class UnruledStructureProofTests(UnruledStructureControls, unittest.TestCase):
         source["diagrams"].append(
             {**copy.deepcopy(source["diagrams"][0]), "id": "overlap"}
         )
+        source["page_diagrams"].append(copy.deepcopy(source["diagrams"][-1]))
         rehash_region(payload)
         self.assert_rejected(payload)
 
@@ -127,6 +128,7 @@ class UnruledStructureProofTests(UnruledStructureControls, unittest.TestCase):
         _, payload = self.run_binding(["73", "28"])
         source = region_section(payload)["source"]
         source["diagrams"][0]["bbox"][2] = 1000
+        source["page_diagrams"][0]["bbox"][2] = 1000
         with self.assertRaises(ValueError):
             region_plan(source)
 

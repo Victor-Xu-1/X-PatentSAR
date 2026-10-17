@@ -31,10 +31,29 @@ without retaining the obsolete engine. No original, raw model, manual, molecular
 SAR, API, SQL or dependency authority changes. Binding20/binder29 already cover
 this unpublished source revision; internal checkpoints are not product releases.
 
-These original-layout controls are not full chemical/OCSR acceptance. Top/bottom
-alignment without source row boundaries, following-prose limits, headerless
-unruled continuations and complete detector recall remain explicit open scope.
+These original-layout controls are not full chemical/OCSR acceptance. Vertically
+disjoint alignment without source row boundaries, unmarked following prose,
+headerless unruled continuations and complete detector recall remain open scope.
 No new real patent run is implied by controlled native/raster tests.
+
+`unruled_body_scope` replays a complete original post-header text window and the
+original page-candidate collection. A proved later table caption, column header
+or explicit procedure/assay title ends the region; ordinary Compound labels,
+elution notes and method references do not. Original captions overlapping a
+diagram and qualified native/raster disagreements cannot shorten the region.
+The shared section-role parser owns title semantics. Owned diagrams and every
+identifier-column source are conserved projections of those full original facts.
+Changing a bottom, removing a child candidate, rehashing a root or changing a
+child token cannot conceal a later original observation. Following independent
+products remain in the existing heading/caption owner, not the table's pool.
+
+Unruled row matching uses actual original word/drawing extent intersection, not
+the word centre. Producer and local replay share that pure column predicate;
+complete-region replay still requires reciprocal uniqueness. Native and scanned
+top/bottom-aligned overlaps are supported; vertically disjoint or rival extents
+remain unresolved. No distance expansion, count pairing or source ID repair is
+introduced. The unpublished Binding20/binder29 scope includes these semantics,
+without another internal-commit epoch or raw/model/manual/artifact retagging.
 
 `binding_page_source` projects all original pages from the single shared page OCR
 cache. An absent cache uses the existing checkpointed source reader/writer once,

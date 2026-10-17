@@ -1,9 +1,10 @@
 """Complete bounded native/raster source windows, without an OCR or writer."""
 
+import json
 from itertools import pairwise
 
 from .activity_context_geometry import valid_box
-from .source_cell_tokens import cell_lines
+from .source_cell_tokens import cell_lines, cell_tokens
 from .source_geometry import native_region
 from .source_observations import source_cell_observation, source_observation_status
 
@@ -50,6 +51,44 @@ def observe_source_window(tokens, window):
         {"bbox": box, "sources": observe_window_sources(tokens, box)}
         for box in window_chunks(tokens, window)
     ]
+
+
+def window_source_tokens(chunks, bounds, *, native=False):
+    """Project retained facts only; caller first validates the complete parent."""
+    selected = []
+    for chunk in chunks:
+        source = (
+            next(p for p in chunk["sources"] if p["origin"] == "native")
+            if native
+            else chunk["sources"][0]
+        )
+        selected.extend(cell_tokens(source["tokens"], bounds))
+    return selected
+
+
+def _canonical_tokens(parts):
+    return sorted(json.dumps(p, sort_keys=True, allow_nan=False) for p in parts)
+
+
+def source_packet_projection(packet, chunks, bounds):
+    expected = window_source_tokens(chunks, bounds, native=packet["origin"] == "native")
+    return _canonical_tokens(packet["tokens"]) == _canonical_tokens(expected)
+
+
+def validate_source_projection(chunks, bounds, parent_chunks, parent_bounds):
+    """A child cannot drop or invent facts from its validated complete parent."""
+    validate_source_window(chunks, bounds)
+    if not (
+        parent_bounds[0] <= bounds[0] < bounds[2] <= parent_bounds[2]
+        and parent_bounds[1] <= bounds[1] < bounds[3] <= parent_bounds[3]
+    ):
+        raise ValueError("Original source projection leaves its complete context")
+    for chunk in chunks:
+        for source in chunk["sources"]:
+            if not source_packet_projection(source, parent_chunks, chunk["bbox"]):
+                raise ValueError(
+                    "Original source projection differs from complete context"
+                )
 
 
 def validate_source_window(chunks, window, *, allow_legacy=False):

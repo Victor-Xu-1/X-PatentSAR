@@ -25,8 +25,11 @@ class UnruledStructureControls:
         reverse=False,
         title="Table 12. Compounds",
         identifier_header="Compound No.",
+        label_baseline_offset=4,
+        native_overlay=None,
         mutate_page=None,
     ):
+        self.root = Path(tempfile.mkdtemp(prefix="case-", dir=self.temporary.name))
         original = self.root / "original.pdf"
         structures = []
         page_height = max(720, 200 + max(0, len(labels) - 1) * 115)
@@ -38,7 +41,9 @@ class UnruledStructureControls:
             for row, label in enumerate(labels):
                 centre = 150 + row * 115
                 if row != missing_label:
-                    page.insert_text((60, centre + 4), label, fontsize=10)
+                    page.insert_text(
+                        (60, centre + label_baseline_offset), label, fontsize=10
+                    )
                 if row == missing_graph:
                     continue
                 bounds = (215, centre - 35, 355, centre + 35)
@@ -70,11 +75,21 @@ class UnruledStructureControls:
                 )
             if mutate_page:
                 mutate_page(page, structures)
+            for structure in structures:
+                image = self.root / (structure["structure_id"] + ".png")
+                page.get_pixmap(
+                    matrix=fitz.Matrix(2, 2),
+                    clip=fitz.Rect(structure["bbox_pdf"]),
+                    alpha=False,
+                ).save(image)
+                structure["image_path"] = str(image)
             if raster:
                 pixels = page.get_pixmap(matrix=fitz.Matrix(4, 4), alpha=False)
                 with fitz.open() as scanned:
                     target = scanned.new_page(width=520, height=page_height)
                     target.insert_image(target.rect, stream=pixels.tobytes("png"))
+                    if native_overlay:
+                        native_overlay(target)
                     scanned.save(original)
             else:
                 document.save(original)

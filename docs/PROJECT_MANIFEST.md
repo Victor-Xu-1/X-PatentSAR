@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- Unruled body/row ownership: `unruled_body_scope` derives explicit original
+  boundaries and conserves owned diagrams against all page candidates. Complete
+  post-header context owns child ID-column/source-packet projections through
+  `source_window_chunks`; no arbitrary bottom or cropped-out source can grant
+  completeness. The shared section parser distinguishes actual procedure/assay
+  titles from bare labels/references. Original overlapping word/drawing extents
+  use one column predicate, retaining reciprocal uniqueness. Diagram-overlapped
+  captions or known native/raster conflicts cannot end a region. The existing
+  binder/writer/ledger remain sole authorities; Binding20/binder29 is unchanged
+  within this unpublished feature. Original/raw/model/manual/API/SQL/SAR assets
+  stay unchanged; source-layout controls are not chemical acceptance.
+
 - Unruled original columns: `unruled_structure_headers` and
   `unruled_header_readings` own actual header/independent cell-frame evidence;
   `unruled_structure_observation`, `unruled_structure_sources`,

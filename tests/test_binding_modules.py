@@ -123,6 +123,10 @@ class BindingModuleTests(unittest.TestCase):
         core = Path(__file__).resolve().parents[1] / "src/patent_sar_extractor/core"
         paths = [
             *core.glob("binding_*.py"),
+            *core.glob("unruled_*.py"),
+            core / "source_window_chunks.py",
+            core / "source_document.py",
+            core / "cell_identity_proof.py",
             core / "visible_label_cache.py",
             core / "structure_binder.py",
         ]

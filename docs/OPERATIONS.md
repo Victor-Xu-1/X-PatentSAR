@@ -2,6 +2,17 @@
 
 ## Original unruled structure columns
 
+Original row alignment follows word/drawing extents, not only their centres.
+Every match still needs exact column roles and reciprocal uniqueness. A disjoint
+word or two competing diagrams cannot use a distance-based fallback.
+
+The source region retains full post-header context and the complete page diagram
+collection. Original table/header/procedure/assay boundaries are replayed from
+these facts, and child columns/candidates must be conserved projections. Known
+native/raster disagreement or a caption overlapping a diagram does not shorten
+the region. Following independent products stay available to normal heading/
+caption association. Never edit a bottom or clear later rows to pass QA.
+
 Current reference scope6 includes every observed unruled source region. The
 normal binder reads actual header roles and complete original identifier columns,
 then associates each label only with a reciprocally unique original diagram in
@@ -24,8 +35,8 @@ same configured engine, native/raster ownership and bounded SDK. No new model,
 provider, dependency, queue, database or automatic real-task replay is added.
 
 Controlled source-layout tests do not establish universal recall, full molecular
-identity or chemistry. Unproved row boundaries/top-bottom alignment, subsequent
-prose, headerless continuation, figure roles and unread prefix evidence remain
+identity or chemistry. Vertically disjoint rows, unmarked subsequent prose,
+headerless continuation, figure roles and unread prefix evidence remain
 open before real frontend resubmission. Preserve failures and review exports;
 complete delivery still requires PR/main/exact-main fixed18765 deployment and
 the actual frontend acceptance attempt, never scripted private-patent processing.

@@ -8,7 +8,11 @@ from .cell_identity_proof import confirmed_identity_readings
 from .printed_identifiers import identifier_key
 from .source_cell_claims import cell_source_status
 from .unruled_structure_headers import unruled_header_roles
-from .unruled_structure_layout import pair_evidence, region_plan
+from .unruled_structure_layout import (
+    original_column_overlap,
+    pair_evidence,
+    region_plan,
+)
 
 
 def valid_unruled_binding(binding):
@@ -84,10 +88,9 @@ def valid_unruled_binding(binding):
                 xs[identifier + 1],
                 min(bottom, box[3] + 4),
             ]
-            or not xs[identifier] <= box[0] < box[2] <= xs[identifier + 1]
-            or not xs[structure] <= diagram[0] < diagram[2] <= xs[structure + 1]
-            or not ys[1] <= diagram[1] < diagram[3] <= bottom
-            or not diagram[1] <= (box[1] + box[3]) / 2 <= diagram[3]
+            or not original_column_overlap(
+                box, diagram, xs, ys, (identifier, structure), bottom
+            )
         ):
             return False
         if (

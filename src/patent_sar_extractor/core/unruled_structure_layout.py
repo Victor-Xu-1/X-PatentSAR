@@ -1,21 +1,20 @@
 """Pure two-dimensional unruled source population; no distances or number order."""
 
-from .activity_context_geometry import valid_box
 from .structure_table_headers import structure_column_pairs
+from .unruled_body_scope import body_diagrams, original_body_bottom
 from .unruled_structure_headers import header_windows, unruled_header_roles
 from .unruled_structure_sources import label_population
 
 
-def _get_box(node, page_size):
-    box = node.get("bbox")
-    if (
-        not valid_box(box)
-        or not isinstance(box, list)
-        or not 0 <= box[0] < box[2] <= page_size[0]
-        or not 0 <= box[1] < box[3] <= page_size[1]
-    ):
-        raise ValueError("Malformed original unruled diagram geometry")
-    return box
+def original_column_overlap(label, drawing, xs, ys, pair, bottom):
+    """Actual word/drawing extents must intersect within their original roles."""
+    identifier, structure = pair
+    return (
+        xs[identifier] <= label[0] < label[2] <= xs[identifier + 1]
+        and xs[structure] <= drawing[0] < drawing[2] <= xs[structure + 1]
+        and ys[1] <= drawing[1] < drawing[3] <= bottom
+        and min(label[3], drawing[3]) > max(label[1], drawing[1])
+    )
 
 
 def region_plan(region):
@@ -27,6 +26,8 @@ def region_plan(region):
             "status",
             "version",
             "header_scope",
+            "body_context",
+            "page_diagrams",
             "body_bottom",
             "pair_sources",
             "labels",
@@ -43,42 +44,31 @@ def region_plan(region):
     bottom = region["body_bottom"]
     if type(bottom) not in {int, float} or not ys[1] < bottom <= scope["page_size"][1]:
         raise ValueError("Malformed original unruled body boundary")
+    if bottom != original_body_bottom(
+        scope, region["body_context"], region["page_diagrams"]
+    ):
+        raise ValueError(
+            "Original unruled body boundary differs from its complete context"
+        )
     # Nomination is used only to retain unresolved source windows if full role
     # proof fails. It cannot authorize a binding.
     nominated = structure_column_pairs([g["text"] for g in scope["nomination"]])
     labels, qualified = label_population(region, xs, ys, bottom, nominated)
     diagrams = region["diagrams"]
-    if (
-        not isinstance(diagrams, list)
-        or len(diagrams) > 25000
-        or any(
-            not isinstance(d, dict)
-            or set(d) != {"id", "bbox"}
-            or not isinstance(d["id"], str)
-            or not d["id"]
-            or len(d["id"]) > 256
-            for d in diagrams
+    if diagrams != body_diagrams(scope, bottom, region["page_diagrams"]):
+        raise ValueError(
+            "Original unruled diagrams differ from their complete page scope"
         )
-        or len({d["id"] for d in diagrams}) != len(diagrams)
-    ):
-        raise ValueError("Malformed original unruled diagram inventory")
-    for diagram in diagrams:
-        _get_box(diagram, scope["page_size"])
     edges, reverse = [[] for _ in labels], [[] for _ in diagrams]
     if roles is not None and roles["role"] == "compound":
         for index, label in enumerate(labels):
             if not qualified[index]:
                 continue
-            identifier, structure = roles["pairs"][label["pair"]]
             box = label["nomination"]["bbox"]
-            centre = (box[1] + box[3]) / 2
             for number, diagram in enumerate(diagrams):
                 drawing = diagram["bbox"]
-                if (
-                    xs[identifier] <= box[0] < box[2] <= xs[identifier + 1]
-                    and xs[structure] <= drawing[0] < drawing[2] <= xs[structure + 1]
-                    and ys[1] <= drawing[1] < drawing[3] <= bottom
-                    and drawing[1] <= centre <= drawing[3]
+                if original_column_overlap(
+                    box, drawing, xs, ys, roles["pairs"][label["pair"]], bottom
                 ):
                     edges[index].append(number)
                     reverse[number].append(index)

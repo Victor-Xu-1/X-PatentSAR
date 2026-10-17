@@ -9,6 +9,7 @@ from .source_geometry import SourceTokens, native_region
 from .source_window_chunks import observe_source_window
 from .structure_table_headers import possible_structure_header, structure_column_pairs
 from .table_cells import read_cell
+from .unruled_body_scope import body_context_window, body_diagrams, original_body_bottom
 from .unruled_structure_headers import (
     header_windows,
     nominate_unruled_headers,
@@ -78,7 +79,17 @@ def observe_unruled_tables(
                 for grid in physical
             )
         ]
-        for index, groups in enumerate(nominees):
+        if not nominees:
+            continue
+        available = {str(s["id"]): s for s in by_page.get(page_index, [])}
+        page_diagrams = sorted(
+            [
+                {"id": str(s["id"]), "bbox": [s[k] for k in ("x0", "y0", "x1", "y1")]}
+                for s in by_page.get(page_index, [])
+            ],
+            key=lambda item: (item["bbox"][1], item["bbox"][0], item["id"]),
+        )
+        for groups in nominees:
             if original_sha is None:
                 original_sha = document_sha256(doc)
             header = observe_unruled_header(page, tokens, groups, original_sha)
@@ -87,19 +98,18 @@ def observe_unruled_tables(
                     "Original unruled header exceeds its observation budget"
                 )
             xs, ys = header_windows(groups, size)
-            bottom = (
-                header_windows(nominees[index + 1], size)[1][0]
-                if index + 1 < len(nominees)
-                else size[1]
-            )
+            context = observe_source_window(tokens, body_context_window(header))
+            bottom = original_body_bottom(header, context, page_diagrams)
             region = {
                 "status": "observed_original_unruled_columns",
                 "version": 1,
                 "header_scope": header,
+                "body_context": context,
+                "page_diagrams": page_diagrams,
                 "body_bottom": bottom,
                 "pair_sources": [],
                 "labels": [],
-                "diagrams": [],
+                "diagrams": body_diagrams(header, bottom, page_diagrams),
             }
             pairs = structure_column_pairs([g["text"] for g in groups])
             for pair, (identifier, _structure) in enumerate(pairs):
@@ -123,27 +133,6 @@ def observe_unruled_tables(
                             "needs_review": reading.needs_review,
                         }
                     )
-            available = {}
-            for structure in by_page.get(page_index, []):
-                box = [structure[k] for k in ("x0", "y0", "x1", "y1")]
-                if (
-                    box[3] > ys[1]
-                    and box[1] < bottom
-                    and any(
-                        min(box[2], xs[s + 1]) > max(box[0], xs[s]) for _, s in pairs
-                    )
-                ):
-                    available[str(structure["id"])] = structure
-            region["diagrams"] = sorted(
-                [
-                    {
-                        "id": identity,
-                        "bbox": [item[k] for k in ("x0", "y0", "x1", "y1")],
-                    }
-                    for identity, item in available.items()
-                ],
-                key=lambda item: (item["bbox"][1], item["bbox"][0], item["id"]),
-            )
             _roles, assignments, findings = region_plan(region)
             region_id = proof_id(region)
             sections.append(
@@ -156,7 +145,7 @@ def observe_unruled_tables(
                 }
             )
             recognized.add(page_index)
-            protected.update(available)
+            protected.update(d["id"] for d in region["diagrams"])
             observed.update(
                 label["value"] for label in region["labels"] if label["value"]
             )
