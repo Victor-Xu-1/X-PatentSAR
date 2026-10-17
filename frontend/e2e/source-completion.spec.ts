@@ -18,6 +18,7 @@ for (const width of [390, 1672]) {
       ['PENDING', 'unavailable'],
       ['COMPLETE', 'valid'],
       ['CONFLICTING', 'invalid'],
+      ['HISTORICAL', 'unavailable'],
     ] as const) {
       const project = process.env[`PATENTSAR_E2E_COMPLETION_${kind}_PROJECT`];
       expect(project).toBeTruthy();
@@ -43,6 +44,19 @@ for (const width of [390, 1672]) {
       await expect(
         dialog.getByRole('link', { name: 'Original page 1', exact: true }),
       ).toBeVisible();
+      if (kind === 'HISTORICAL') {
+        await expect(
+          dialog.getByText('Historical source references; not validated under current rules.', {
+            exact: true,
+          }),
+        ).toBeVisible();
+        await expect(
+          dialog.getByText(
+            'These repeated sources are confirmed by identifier and spatial evidence, not treated as another unassociated compound.',
+            { exact: true },
+          ),
+        ).toHaveCount(0);
+      }
       if (status === 'valid') {
         await dialog.locator('.crop-smiles summary').click();
         await expect(dialog.getByLabel('Current SMILES', { exact: true })).toHaveValue('CCO');

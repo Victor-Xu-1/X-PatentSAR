@@ -11,6 +11,7 @@ from urllib.parse import quote
 
 from patent_sar_extractor.core.activity_metadata import metadata_role
 from patent_sar_extractor.core.ocsr.recognition_inputs import (
+    RecognitionPlan,
     ordered_source_results,
     recognition_inputs,
 )
@@ -45,7 +46,7 @@ from .processes import runtime_identity
 from .recognition import recognition_status
 from .structure_corpus import unassociated_structures
 
-RAW_PROJECTION_LAYOUT = "compound-catalog-reprints-v2"
+RAW_PROJECTION_LAYOUT = "compound-catalog-reprints-v3"
 
 
 def _index(
@@ -237,12 +238,22 @@ class ArtifactView:
             smiles_rows = records(smiles_payload, "records")
         smiles = _index(smiles_rows, ("cpd_id", "cpd", "compound_id"))
         structure_rows = records(p.get("structures"), "structures")
-        catalog_rows, alias_ids = read_compound_catalog(binding_payload, structure_rows)
+        bindings_current = current(binding_payload, "bindings")
+        # Historical raw sources remain reviewable; they cannot acquire current
+        # catalogue ownership simply by being read under newer proof semantics.
+        catalog_rows, alias_ids = read_compound_catalog(
+            binding_payload, structure_rows, historical_review=not bindings_current
+        )
+        chemistry_current = bindings_current and current(smiles_payload, "smiles")
         source_labels: set[str] = set()
         reprint_review: set[str] = set()
         try:
-            plan = recognition_inputs(binding_payload)
-            if current(smiles_payload, "smiles"):
+            plan = (
+                recognition_inputs(binding_payload)
+                if bindings_current
+                else RecognitionPlan([], [], [])
+            )
+            if chemistry_current:
                 reprint_review = set(reprint_findings(plan, smiles_payload))
                 reprint_unavailable = unavailable_reprints(plan, smiles_payload)
             else:
@@ -250,11 +261,13 @@ class ArtifactView:
                     _label_key(str(row.get("cpd") or "")) for row in plan.reprints
                 }
                 reprint_unavailable = reprint_review
-            source_smiles = smiles_source_records(smiles_payload)
+            source_smiles = (
+                smiles_source_records(smiles_payload) if bindings_current else []
+            )
             if len(source_smiles) > MAX_RECORDS:
                 raise ValueError("Source recognition collection exceeds its bound.")
             if source_smiles:
-                if not current(smiles_payload, "smiles"):
+                if not chemistry_current:
                     source_smiles = []  # historical observations remain unaccepted
                 elif (
                     not isinstance(smiles_payload, dict)
@@ -444,12 +457,18 @@ class ArtifactView:
             )
             recognition = recognition_status(
                 smile,
-                current=current(p.get("smiles"), "smiles"),
+                current=chemistry_current,
                 binding=binding,
                 source_record=structures.get(
                     smile.get("ocsr_source_structure_id") or structure_id
                 ),
             )
+            if not bindings_current and structure_id:
+                smiles_text = (
+                    None  # Original text remains in the immutable raw artifact.
+                )
+                recognition["status"] = "unavailable"
+                recognition["quality_flag"] = "historical_binding"
             # A rejected supplemental candidate remains inspectable in its raw
             # artifact, but cannot feed descriptors or a determinate prediction.
             if key in source_labels and recognition["status"] != "valid":

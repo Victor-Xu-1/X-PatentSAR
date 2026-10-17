@@ -1,6 +1,18 @@
 # Operations and troubleshooting
 
-## Repeated original structures (unpublished v0.2.32)
+## Historical extraction views
+
+After a proof-rule upgrade, valid old source records remain available for raw
+review and original-PDF navigation. Their IDs, images, activity observations and
+manual audit are retained, including numbered structures with no activity.
+Historical references do not acquire current confirmation. They cannot activate
+source completion or a saved current-chemistry overlay merely because old fields
+still parse. Use the normal frontend extraction workflow for new current proof;
+never retag old artifacts, fill a missing structure or weaken QA to open history.
+Malformed/cross-owned/over-limit catalogues remain refused rather than guessed.
+The derived view layout may rebuild; original and manual audit files do not.
+
+## Repeated original structures
 
 A repeated printed identifier is not proof that its drawings are chemically
 identical. SMILES schema3 retains every proved additional depiction in

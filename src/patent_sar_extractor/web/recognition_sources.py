@@ -12,6 +12,7 @@ from patent_sar_extractor.core.ocsr.recognition_inputs import ordered_source_res
 from patent_sar_extractor.core.pipeline_rules import _label_key
 from patent_sar_extractor.smiles_artifact import smiles_reprint_records
 
+from .acceptance import current
 from .compound_catalog import read_compound_catalog
 from .errors import WebError
 from .files import SafeFiles, records
@@ -68,8 +69,11 @@ def _frame(source: dict, *, additional: bool = True) -> dict:
 @lru_cache(maxsize=2)
 def _source_index(root: str, revision: tuple) -> dict:
     files = SafeFiles(Path(root))
+    payload = files.json(_SOURCE_FILES[0]) or {}
+    if not current(payload, "bindings"):
+        return {}  # A saved overlay cannot revive historical ownership.
     catalog, _ = read_compound_catalog(
-        files.json(_SOURCE_FILES[0]) or {},
+        payload,
         records(files.json(_SOURCE_FILES[1]), "structures"),
     )
     return {

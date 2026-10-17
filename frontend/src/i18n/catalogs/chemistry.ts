@@ -33,6 +33,8 @@ export const chemistry: Readonly<Record<string, string>> = {
   '原始裁图保留证据；重绘来自当前结构，不证明与原图一致。':
     'The original crop retains source evidence; the redraw uses the current structure and does not prove agreement with the original.',
   '同一编号的其他原文出处（{count}）': 'Other original sources for this identifier ({count})',
+  '历史原始记录的重复出处，尚未按当前规则核验。':
+    'Historical source references; not validated under current rules.',
   '这些是经过编号与空间证据确认的重复出处，不作为另一个未关联化合物。':
     'These repeated sources are confirmed by identifier and spatial evidence, not treated as another unassociated compound.',
   '原文第 {page} 页': 'Original page {page}',
