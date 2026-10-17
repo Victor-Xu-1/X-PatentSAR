@@ -1,8 +1,38 @@
 # Operations and troubleshooting
 
+## Original unruled structure columns
+
+Current reference scope6 includes every observed unruled source region. The
+normal binder reads actual header roles and complete original identifier columns,
+then associates each label only with a reciprocally unique original diagram in
+its column and vertical scope. A short two-row table, letter/zero/series IDs and
+reversed crop metadata use the same path. Missing labels/diagrams and overlapping
+candidates stay explicit; duplicate digits are never corrected into a gap ID.
+Explicit nonfinal catalogues retain source observations but no final entries.
+
+The saved reader independently replays original source packets, page/frame/hash,
+whole-region label conservation and canonical assignments. Do not clear issues,
+remove the source ledger or retag old scopes to force acceptance. Historical
+scope1–5 reads retain history only. The unused I-series distance/sequence producer
+and its private binding/enforcement helpers are removed; no second execution
+chain remains. Existing original/raw/crop/manual assets stay immutable.
+
+Complete existing page-text observations nominate even tables with zero detected
+diagrams. Every known diagram page is inspected; unrelated graph-free prose is
+not a reason for another coordinate OCR pass. Original-cell rereads reuse the
+same configured engine, native/raster ownership and bounded SDK. No new model,
+provider, dependency, queue, database or automatic real-task replay is added.
+
+Controlled source-layout tests do not establish universal recall, full molecular
+identity or chemistry. Unproved row boundaries/top-bottom alignment, subsequent
+prose, headerless continuation, figure roles and unread prefix evidence remain
+open before real frontend resubmission. Preserve failures and review exports;
+complete delivery still requires PR/main/exact-main fixed18765 deployment and
+the actual frontend acceptance attempt, never scripted private-patent processing.
+
 ## Transposed column inventory and current source admission
 
-Current source ledger scope5 separates proved original caption-label references
+Current source ledger scope6 separates proved original caption-label references
 from independent synthesis headings. The exact current proof, original document,
 literal ID and contained physical window must all match; another title with the
 same ID elsewhere remains observed. Missing/changed/downgraded references and
@@ -406,7 +436,8 @@ Declared Intermediate headings and Example titles targeting an intermediate are
 source inventory rather than final compounds. A final title mentioning an
 intermediate, or a literal I-prefix, does not imply nonfinal identity. All original
 sections still stop diagram ownership. Ruled I-series use the same cell path;
-bare series keep I-prefixes, with missing/duplicate owners explicitly unresolved.
+bare series now require the original unruled column proof above, retaining
+I-prefixes and explicit missing/duplicate owners without a sequence producer.
 Integer sequence repair, global numeric zip and blanket conflict suppression are
 removed. Raw PDF/OCR/crops/model strings/manual audit/coverage6/SAR14 stay intact;
 no schema migration in place, extra queue, provider or environment installation.

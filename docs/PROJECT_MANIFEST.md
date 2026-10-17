@@ -1,12 +1,29 @@
 # Project governance manifest
 
+- Unruled original columns: `unruled_structure_headers` and
+  `unruled_header_readings` own actual header/independent cell-frame evidence;
+  `unruled_structure_observation`, `unruled_structure_sources`,
+  `unruled_structure_layout` and `unruled_structure_proof` own bounded capture,
+  source conservation and pure
+  reciprocal2D/ledger replay. They join the single numbered-cell coordinator,
+  source scope6 and catalog writer. `cell_identity_proof`, `source_window_chunks`
+  and `source_document` centralize the existing predicates/windows/hash, not
+  competing OCR/parsers. Graph-free declared tables remain observable; unrelated
+  prose does not start coordinate OCR. Complete known source conflicts remain.
+  The retired `series_table_binding` and private sequence/enforcement helpers are
+  removed after varied original native/raster and negative controls; old protocol
+  fixtures keep historical reads, not obsolete execution. Binding20/binder29
+  already cover this unpublished feature. Original/raw/model/crop/manual/graph/
+  SAR/API/SQL/dependencies stay unchanged. Open alignment/source-boundary/recall
+  and chemical acceptance are not certified by these controls.
+
 - Complete binder source: `binding_page_source` reuses the sole shared original
   page-cache reader/writer, requiring all pages rather than table-only positions.
   Native coordinate projections are read-only; existing foreign/incomplete or
   unlocated scanned caches remain unchanged and cannot claim completeness. The
   private `binding_ocr` module/pools and partial cache writer are removed; their
   consumer controls move to shared-source/SDK checks.
-- Caption source roles: `caption_label_roles` owns scope5 exact label references,
+- Caption source roles: `caption_label_roles` owns scope6 exact label references,
   bound to current caption proof, original SHA, literal ID and original window.
   Producer and saved ledger replay the same ownership. No page-wide/ID-list skip,
   second source store, OCR engine or result writer. Binding20/binder29 includes
@@ -718,7 +735,7 @@
 - Observation completion: the source coordinator uses the same internal `--continue-on-scientific-errors` contract for OCSR and final export. Only current source scope with complete exact printed-ID/image coverage can use the OCSR completion mode; diagnostic/limited/unbound inputs cannot. Default standalone OCSR still rejects non-clean output. Complete findings remain rejected, preserve the shared failure marker, and flow to final QA so eligible records can enter the qualified research phase. Infrastructure exceptions and incomplete/misassigned observations still abort. Raw prediction caches remain identity-checked and independent; no algorithm/epoch/model/API/product version changes.
 - Review-workbook ownership: the main Excel sheet retains every proved identifier in source-catalog order, including original images and optional activity for unqualified chemistry. Only qualified chemistry maps populate molecular fields; pending rows stay blank there and carry a recognition-status column. SDF selection remains qualified-only and formal QA unchanged. The export receipt reports workbook IDs/review IDs separately from qualified molecular export IDs; no uncertain SMILES or placeholder molecule is promoted.
 - Verification ownership: the checked-in `.github/verification_scope.json` declares exact base/changed paths and bounded named Python/frontend/browser consumers. Small pure-validator/runner tools reject stale, unsafe, wildcard, overlapping or whole-inventory plans; no discovery/default-all fallback exists. Empty frontend/browser selections do not start their test engines. CI preserves builds/resources/fresh-wheel audit. Private real-patent and native-editor evidence stays on E, separate from public controlled CI cases.
-- Stage ownership: `application/pipeline.py` owns one eight-stage registry with an explicit `PipelineContext`; stage policies/cache helpers are single authorities, not private aliases in CLI commands. `core/structure_binder.py` owns source partitioning, including recognized-but-withheld I-series cells, and delegates to acyclic responsibility modules before one artifact writer.
+- Stage ownership: `application/pipeline.py` owns one eight-stage registry with an explicit `PipelineContext`; stage policies/cache helpers are single authorities, not private aliases in CLI commands. `core/structure_binder.py` owns source partitioning, including exact protected ruled/unruled original cells, and delegates to acyclic responsibility modules before one artifact writer. No private I-series sequence execution remains.
 - Recognition ownership: one verified printed-DECIMER adapter is shared by formal extraction, research and environment probes. The external runtime has bounded JSONL transport, serial model inference, CPU/resource limits and exact-content cache identity; no hand-drawn or single-image fallback is used in production.
 - QA ownership: `qa_inputs.py` gathers one immutable pass context; `qa_sources.py` and `qa_files.py` inspect source and output evidence; `qa_checks.py` owns source/recognition/output gates; `qa_report.py` only orchestrates and presents the report. No parallel acceptance implementation or fallback is retained.
 - Source-stereo ownership: bounded `core/ocsr/bond_strokes`, `stereo_evidence` and `stereo_gate` are one risk-observation/check/validation path used by new formal tasks, raw-cache reuse, export, QA and research recognition. Raw model strings and printed IDs remain unchanged. Ruleset2.1.1, source evidence v3 and QA v5 are independent of product release numbering and raw OCSR epoch2. Historical v1/v2 remain readable but cannot pass the current formal gate. Upstream classifier/locator/segment/binder/activity epochs stay unchanged for this source-risk-only correction; validated upstream checkpoints and exact raw observations may be reused, never historical acceptance. No raster hit or missing hit certifies absolute configuration; unsupported projection/enhanced/special stereo is not silently flattened.

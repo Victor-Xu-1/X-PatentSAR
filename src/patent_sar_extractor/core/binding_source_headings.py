@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
-from pathlib import Path
-
 from .activity_identity import normalize_compound
 from .binding_candidates import _build_binding_from_structure
 from .binding_observations import (
@@ -26,16 +23,9 @@ from .heading_line_windows import heading_line_windows
 from .heading_observation import observe_heading
 from .heading_source_proof import proved_heading_declaration
 from .pipeline_rules import _candidate_labels, annotate_binding_accuracy
+from .source_document import document_sha256 as _document_sha256
 from .source_geometry import source_layout
 from .source_section_roles import heading_list_hint, heading_members, section_heading
-
-
-def _document_sha256(doc) -> str:
-    """Label observations can include pixels outside the molecule crop."""
-    if doc.name and not doc.is_dirty:
-        with Path(doc.name).open("rb") as stream:
-            return hashlib.file_digest(stream, "sha256").hexdigest()
-    return hashlib.sha256(doc.tobytes(no_new_id=True)).hexdigest()
 
 
 def observed_heading_blocks(

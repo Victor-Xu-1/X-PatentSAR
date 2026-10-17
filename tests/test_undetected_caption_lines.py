@@ -10,8 +10,10 @@ import fitz
 import numpy as np
 
 from patent_sar_extractor.core.binding_spatial import collect_spatial_bindings
+from patent_sar_extractor.core.cell_identity_proof import (
+    confirmed_identity_readings as _confirmed_observations,
+)
 from patent_sar_extractor.core.cell_ocr_observation import observe_cell
-from patent_sar_extractor.core.numbered_structure_pairs import _confirmed_observations
 from patent_sar_extractor.core.page_ocr_cache import get_ocr_engine
 from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
 from patent_sar_extractor.core.table_cells import _normalize, read_cell

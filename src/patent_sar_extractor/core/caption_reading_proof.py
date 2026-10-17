@@ -3,7 +3,7 @@
 from collections.abc import Mapping
 
 from .caption_role_proof import caption_role_status
-from .numbered_structure_pairs import _confirmed_observations
+from .cell_identity_proof import confirmed_identity_readings
 
 
 def confirmed_caption_readings(label, observations, ownership, page_no, label_box):
@@ -21,5 +21,5 @@ def confirmed_caption_readings(label, observations, ownership, page_no, label_bo
     return bool(
         (not bare or role == "compound")
         and ("caption_role" not in ownership or role in {"compound", "unknown"})
-        and _confirmed_observations(label, observations, caption=not bare)
+        and confirmed_identity_readings(label, observations, caption=not bare)
     )

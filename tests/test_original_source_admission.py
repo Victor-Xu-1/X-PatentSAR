@@ -8,22 +8,36 @@ from test_caption_reading_semantics import binding as caption_binding
 
 from patent_sar_extractor.core.binding_artifacts import write_binding_result
 from patent_sar_extractor.core.binding_catalog import compound_catalog
-from patent_sar_extractor.core.binding_spatial import (
-    _extract_authoritative_structure_table_sequence_bindings,
-)
 from patent_sar_extractor.core.catalog_reader import read_catalog_entries
 from patent_sar_extractor.core.pipeline_rules import STRONG_BINDING_RULES
-from patent_sar_extractor.core.series_table_binding import pair_series_table
 
 
 def legacy_series():
-    from test_series_table_binding import SeriesTableBindingTests
-
-    structures, lines = SeriesTableBindingTests()._table([101, 102, 103, 104, 105, 106])
-    proposed = pair_series_table(structures, [9], lines, None)
-    return _extract_authoritative_structure_table_sequence_bindings(
-        structures, {}, [], {}, ocr_line_map=lines, series_result=proposed
-    )
+    """Recorded synthetic old-protocol fields, not a retained production engine."""
+    rows = []
+    for index in range(6):
+        label = f"I-{101 + index}"
+        rows.append(
+            {
+                "cpd": f"Compound {label}",
+                "compound_id": f"Compound {label}",
+                "structure_id": f"S{index:04d}",
+                "page_no": 10,
+                "image_path": f"/tmp/s{index:04d}.png",
+                "binding_rule": "authoritative_structure_table_sequence",
+                "authoritative_table_sequence_confirmed": True,
+                "authoritative_table_sequence_position": index + 1,
+                "authoritative_table_label_count": 6,
+                "authoritative_table_structure_count": 6,
+                "authoritative_table_pages": [9],
+                "authoritative_table_source_label": label,
+                "authoritative_table_visible_label": label,
+                "authoritative_table_raw_source_label": label,
+                "authoritative_table_label_y0": 150.0 + index * 120,
+                "authoritative_table_pair_distance": 0.0,
+            }
+        )
+    return rows
 
 
 def original_caption(label="I-008A"):
@@ -68,7 +82,7 @@ class OriginalSourceAdmissionTests(unittest.TestCase):
                 }
                 self.assertEqual(compound_catalog([row], [])["entries"], [])
 
-    def test_real_legacy_series_proposals_are_not_confirmed_current_sources(self):
+    def test_recorded_legacy_series_proposals_are_not_confirmed_current_sources(self):
         rows = legacy_series()
         self.assertEqual(len(rows), 6)
         self.assertTrue(all("exact_caption_evidence" not in row for row in rows))
@@ -117,6 +131,7 @@ class OriginalSourceAdmissionTests(unittest.TestCase):
         # Controlled old-ledger shape, not a retagged real scientific artifact.
         payload["source_reference_scope"]["version"] = 4
         payload["source_reference_scope"].pop("label_reference_ids")
+        payload["source_reference_scope"].pop("unruled_region_ids")
         rows, _ = read_catalog_entries(payload)
         self.assertEqual(len(rows), 6)
         self.assertNotIn("exact_caption_evidence", rows[0])

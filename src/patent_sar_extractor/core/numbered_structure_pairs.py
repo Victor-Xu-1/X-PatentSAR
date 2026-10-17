@@ -8,9 +8,7 @@ from collections import Counter
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from .cell_caption_identity import refined_caption_conflicts
-from .cell_caption_lines import physical_caption_valid
-from .compound_caption import prefixed_label
+from .cell_identity_proof import confirmed_identity_readings
 from .numbered_structure_models import (
     Box,
     NumberedTableBinding,
@@ -18,9 +16,7 @@ from .numbered_structure_models import (
     NumberedTableIssue,
     NumberedTableResult,
 )
-from .printed_identifiers import identifier_fragments_conflict, identifier_key
-from .source_cell_claims import cell_source_conflict, cell_source_status
-from .source_section_roles import nonfinal_original_label
+from .printed_identifiers import identifier_key
 from .structure_catalogs import repeated_selected_catalogs
 from .structure_table_headers import valid_column_ownership
 
@@ -67,74 +63,15 @@ def _adjacent_cells(label_box: Box | None, structure_box: Box | None) -> bool:
     )
 
 
-def _confirmed_observations(
-    label: str, observations: Sequence[Mapping[str, Any]], *, caption: bool = False
-) -> bool:
-    methods: set[str] = set()
-    for observation in observations:
-        if not isinstance(observation, Mapping):
-            return False
-        if not physical_caption_valid(observation):
-            return False
-        if refined_caption_conflicts(
-            label, observation.get("parts"), observation.get("detection_parts")
-        ):
-            return False
-        method = str(observation.get("method") or "")
-        original_cell = method in {"native_cell", "page_ocr_cell"}
-        original_caption = caption and original_cell
-        if original_cell:
-            status = cell_source_status(observation)
-            if cell_source_conflict(observation, label, "label" if caption else "id"):
-                return False
-            if status not in {"qualified", "legacy"}:
-                continue
-        if nonfinal_original_label(observation.get("text")):
-            return False
-        observed = (
-            prefixed_label(str(observation.get("text") or ""))
-            if original_caption
-            else _label(observation.get("text"))
-        )
-        if (
-            not observed
-            and not original_cell
-            and identifier_fragments_conflict(
-                str(observation.get("text") or ""), label, caption=original_caption
-            )
-        ):
-            return False
-        if observed and observed != label:
-            return False
-        if observed != label:
-            continue
-        if method.startswith("cell_ocr_"):
-            if (
-                caption
-                and "raw_text" in observation
-                and prefixed_label(str(observation["raw_text"] or "")) != label
-            ):
-                return False
-            if isinstance(observation.get("confidence"), bool):
-                continue
-            try:
-                score = float(observation.get("confidence", 0))
-            except (TypeError, ValueError, OverflowError):
-                continue
-            if not math.isfinite(score) or not 0.85 <= score <= 1:
-                continue
-        methods.add(method)
-    return "native_cell" in methods or (
-        "cell_ocr_400dpi" in methods
-        and bool(methods & {"page_ocr_cell", "cell_ocr_600dpi"})
-    )
-
-
 def valid_cell_binding_evidence(binding: Mapping[str, Any]) -> bool:
     """Recheck the serialized proof before the shared strict accuracy gate."""
     evidence = binding.get("numbered_table_cell_evidence")
     if not isinstance(evidence, Mapping):
         return False
+    if evidence.get("kind") == "original_unruled_columns":
+        from .unruled_structure_proof import valid_unruled_binding
+
+        return valid_unruled_binding(binding)
     source = _label(evidence.get("source_label"))
     target = re.sub(
         r"^(?:Compound|Cpd|Example)\s+",
@@ -186,7 +123,7 @@ def valid_cell_binding_evidence(binding: Mapping[str, Any]) -> bool:
             and _inside(segment, cell_box)
             and isinstance(observations, (list, tuple))
             and 1 <= len(observations) <= 3
-            and _confirmed_observations(source, observations)
+            and confirmed_identity_readings(source, observations)
         )
     except (TypeError, ValueError, OverflowError):
         return False
@@ -230,7 +167,7 @@ def _pair_cells(
         if (
             not label
             or not cell.label_confirmed
-            or not _confirmed_observations(label, cell.observations)
+            or not confirmed_identity_readings(label, cell.observations)
         ):
             reason = "unresolved_label"
         elif observed[label] != 1 and label not in repeatable_labels:

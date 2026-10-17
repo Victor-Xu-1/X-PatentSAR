@@ -1,5 +1,41 @@
 # X-PatentSAR architecture
 
+Unruled structure columns use the same numbered-cell coordinator, source ledger
+and artifact writer as ruled tables. `unruled_structure_headers` nominates actual
+separated original header words; `unruled_header_readings` independently replays
+the shared native/cell-OCR reads and their exact pixel frames. Column clipping
+windows are logical scopes, never asserted printed rules. Known original role or
+native/raster conflicts remain unresolved. An explicit nonfinal catalogue keeps
+its original labels/diagrams but cannot publish terminal products.
+
+`unruled_structure_observation` captures complete ID-column source windows and
+every overlapping candidate diagram. `unruled_structure_sources` replays full
+column/label/source-packet conservation; `unruled_structure_layout` accepts only
+reciprocal unique two-dimensional ownership. Metadata
+order, six-item minima, I-prefixes, count equality, distance ranking and missing
+number patterns cannot supply a match. Original page bounds and current source
+packets are mandatory. `cell_identity_proof`, `source_window_chunks` and
+`source_document` share existing identity/window/hash logic with other consumers,
+not another OCR/parser/cache/writer. Complete cached original page text also
+nominates declared tables with no detected diagram. Known diagram pages are
+always inspected; unrelated graph-free prose does not start coordinate OCR.
+
+`unruled_structure_proof` replays complete-region assignments through source
+ledger scope6. Rehashing a changed root or clearing findings cannot retain an
+old now-ambiguous binding. Removed source labels, foreign sources and missing
+ledger/canonical assignments fail current catalog, formal and Web consumers.
+Older scope1–5 ledgers remain historical, not current acceptance. The retired
+`series_table_binding` producer and private sequence/enforcement helpers are
+removed; synthetic old-protocol fixtures preserve historical-reader coverage
+without retaining the obsolete engine. No original, raw model, manual, molecular,
+SAR, API, SQL or dependency authority changes. Binding20/binder29 already cover
+this unpublished source revision; internal checkpoints are not product releases.
+
+These original-layout controls are not full chemical/OCSR acceptance. Top/bottom
+alignment without source row boundaries, following-prose limits, headerless
+unruled continuations and complete detector recall remain explicit open scope.
+No new real patent run is implied by controlled native/raster tests.
+
 `binding_page_source` projects all original pages from the single shared page OCR
 cache. An absent cache uses the existing checkpointed source reader/writer once,
 including non-table/non-candidate pages. Existing saved source stays immutable:
@@ -9,7 +45,7 @@ raw-cache provenance claim. Profile text/line hints cannot replace observations.
 The former private `binding_ocr` adapters, independent text/line pools and partial
 table-only cache writer are removed. Native pages remain model-free.
 
-`caption_label_roles` records exact label references in source ledger scope5,
+`caption_label_roles` records exact label references in source ledger scope6,
 backed by the current original caption proof and document SHA. A heading locator
 must have the same literal ID and lie inside one exact original caption window;
 all other headings on that page remain discoverable, including the same ID in
@@ -18,7 +54,7 @@ The ledger replays these references against current source entries, not saved
 success flags. Per-page/literal-ID indexing avoids scanning all captions for each
 title. This is within the prepared Binding20/binder29 semantic revision, not an
 additional internal-commit epoch. Figure legends, unread prefix fragments and
-unruled layout coverage remain separate open controls, not waived by this change.
+remaining unruled layout boundaries remain separate open controls, not waived.
 
 `activity_transposed_source` retains each original transposed table cell once
 through the existing native/raster observation SDK. It owns literal orientation
@@ -428,8 +464,9 @@ I/1/l repair, integer gap correction or global numeric zip remains in this path.
 of compound-heading publication; final titles merely referencing intermediates
 and I-namespaces are not excluded. Cell fast/reread admission and serialized
 numbered/reference proof cannot override that original role or fragment conflict.
-Ruled I-series rows use the existing physical-cell authority. Bare series retain
-literal prefixes and report unpaired/duplicate observations as source conflicts.
+Ruled I-series rows use the existing physical-cell authority. Current unruled
+series require the original header/column source path above; literal prefixes,
+unpaired/duplicate observations and uncertainty are preserved, not sequence-filled.
 Binding7/binder16/visible12/activity10/epoch19 are independent semantic revisions;
 raw observation2/PDF/crop/OCSR/manual/coverage6/SAR14/API/SQL/dependencies stay.
 Limits are128characters,8digits per component,12prefix and4suffix letters; failures

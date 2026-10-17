@@ -13,6 +13,7 @@ from .source_fragment_links import resolved_fragments
 from .source_geometry import _box
 from .source_role_fragments import fragment_issues, validate_fragments
 from .source_section_roles import section_heading
+from .unruled_structure_proof import unruled_reference_issues
 
 MAX_SOURCE_SECTIONS = 25000
 _SHA = re.compile(r"[0-9a-f]{64}")
@@ -37,11 +38,16 @@ def reference_scope(sections, original_pdf_sha256=""):
             if section.get("role") == "structure_label_reference"
             and isinstance(section.get("original_pdf_sha256"), str)
         }
+        | {
+            section["source"]["header_scope"]["original_pdf_sha256"]
+            for section in sections
+            if section.get("role") == "unruled_structure_region"
+        }
     )
     if not original_pdf_sha256 and len(origins) == 1:
         original_pdf_sha256 = next(iter(origins))
     return {
-        "version": 5,
+        "version": 6,
         "original_pdf_sha256": original_pdf_sha256,
         "region_ids": [region["region_id"] for region in regions],
         "caption_region_ids": [
@@ -51,6 +57,11 @@ def reference_scope(sections, original_pdf_sha256=""):
         ],
         "heading_ids": [proof_id(section) for section in heading_sections(sections)],
         "label_reference_ids": caption_reference_ids(sections),
+        "unruled_region_ids": [
+            s["region_id"]
+            for s in sections
+            if s.get("role") == "unruled_structure_region"
+        ],
     }
 
 
@@ -66,14 +77,15 @@ def _regions(sections, scope):
                 "caption_region_ids",
                 "heading_ids",
             }
-            | ({"label_reference_ids"} if scope.get("version") == 5 else set())
-            if scope.get("version") in {3, 4, 5}
+            | ({"label_reference_ids"} if scope.get("version") in {5, 6} else set())
+            | ({"unruled_region_ids"} if scope.get("version") == 6 else set())
+            if scope.get("version") in {3, 4, 5, 6}
             else {"version", "original_pdf_sha256", "region_ids", "caption_region_ids"}
             if scope.get("version") == 2
             else {"version", "original_pdf_sha256", "region_ids"}
         )
         or type(scope["version"]) is not int
-        or scope["version"] not in {1, 2, 3, 4, 5}
+        or scope["version"] not in {1, 2, 3, 4, 5, 6}
         or not isinstance(scope["original_pdf_sha256"], str)
         or scope["original_pdf_sha256"]
         and not _SHA.fullmatch(scope["original_pdf_sha256"])
@@ -89,7 +101,7 @@ def _regions(sections, scope):
     if (
         scope["version"] == 1
         and captions
-        or scope["version"] in {2, 3, 4, 5}
+        or scope["version"] in {2, 3, 4, 5, 6}
         and scope.get("caption_region_ids")
         != [proof_id(section) for section in captions]
     ):
@@ -116,7 +128,7 @@ def _regions(sections, scope):
                 }
                 | (
                     {"grid_edges", "row_fragments", "fragment_context"}
-                    if scope["version"] in {4, 5}
+                    if scope["version"] in {4, 5, 6}
                     else set()
                 )
             )
@@ -136,7 +148,7 @@ def _regions(sections, scope):
         ):
             raise ValueError("Unproved original binding reference region")
         _box(region["bbox"])
-        if scope["version"] in {4, 5}:
+        if scope["version"] in {4, 5, 6}:
             validate_fragments(region)
         regions[region["region_id"]] = region
     if scope["region_ids"] != list(regions):
@@ -162,14 +174,16 @@ def reference_issues(payload, entries, *, required=True):
         and not required
         and not any(
             section.get("role", "").startswith("characterization_")
+            or section.get("role")
+            in {"unruled_structure_region", "structure_label_reference"}
             for section in sections
         )
     ):
         return []
     regions = _regions(sections, scope)
-    if required and scope["version"] != 5:
+    if required and scope["version"] != 6:
         raise ValueError(
-            "Current original source inventory requires label-role coverage"
+            "Current original source inventory requires unruled-column coverage"
         )
     validate_caption_references(sections, scope, entries)
     expected = [
@@ -225,6 +239,7 @@ def reference_issues(payload, entries, *, required=True):
             raise ValueError("Unproved original method-reference cell ownership")
     labels = {identifier_key(entry.get("cpd"), wrapped=True) for entry in entries}
     issues = heading_inventory_issues(sections, scope, entries)
+    issues.extend(unruled_reference_issues(sections, scope, entries))
     issues.extend(
         fragment_issues(regions.values(), resolved_fragments(regions.values()))
     )

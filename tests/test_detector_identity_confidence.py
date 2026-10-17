@@ -11,8 +11,10 @@ from patent_sar_extractor.core.activity_header_observation import refine_scanned
 from patent_sar_extractor.core.activity_header_proof import valid_header_proof
 from patent_sar_extractor.core.activity_headers import context_from_text, grid_schema
 from patent_sar_extractor.core.cell_caption_identity import refined_caption_conflicts
+from patent_sar_extractor.core.cell_identity_proof import (
+    confirmed_identity_readings as _confirmed_observations,
+)
 from patent_sar_extractor.core.cell_ocr_observation import observe_cell
-from patent_sar_extractor.core.numbered_structure_pairs import _confirmed_observations
 from patent_sar_extractor.core.page_ocr_cache import get_ocr_engine
 from patent_sar_extractor.core.table_cells import _normalize
 

@@ -17,8 +17,10 @@ from patent_sar_extractor.core.activity_header_sources import (
 )
 from patent_sar_extractor.core.activity_headers import context_from_text, grid_schema
 from patent_sar_extractor.core.activity_result_references import _observed
+from patent_sar_extractor.core.cell_identity_proof import (
+    confirmed_identity_readings as _confirmed_observations,
+)
 from patent_sar_extractor.core.cell_ocr_observation import OCRObservation
-from patent_sar_extractor.core.numbered_structure_pairs import _confirmed_observations
 from patent_sar_extractor.core.source_observations import (
     source_cell_observation,
     source_claim_runs,

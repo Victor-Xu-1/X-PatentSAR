@@ -6,9 +6,11 @@ from unittest.mock import Mock
 
 import numpy as np
 
+from patent_sar_extractor.core.cell_identity_proof import (
+    confirmed_identity_readings as _confirmed_observations,
+)
 from patent_sar_extractor.core.cell_ocr_lines import resolve_overlapping_lines
 from patent_sar_extractor.core.cell_ocr_observation import observe_cell
-from patent_sar_extractor.core.numbered_structure_pairs import _confirmed_observations
 from patent_sar_extractor.core.table_cells import _normalize
 
 

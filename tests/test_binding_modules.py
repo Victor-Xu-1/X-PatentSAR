@@ -82,36 +82,39 @@ class BindingModuleTests(unittest.TestCase):
         self.assertEqual(selection, [])
         self.assertEqual(issues, [])
 
-    def test_recognized_series_with_zero_pairings_reserves_its_sources(self):
-        # Real series parser, no segmented molecules: withholding cannot give
-        # a generic strategy ownership of these printed labels or pages.
-        lines = {0: [(float(n * 80), f"I-{n}") for n in range(1, 7)]}
+    def test_original_unruled_table_with_zero_pairings_protects_observed_labels(self):
+        # Full original columns, no segmented molecules: generic strategies
+        # cannot invent an owner for these independently observed printed IDs.
         with fitz.open() as document:
-            document.new_page()
+            page = document.new_page()
+            page.insert_text((40, 45), "Table 9. Compounds", fontsize=10)
+            page.insert_text((50, 80), "Compound No.", fontsize=10)
+            page.insert_text((240, 80), "Structure", fontsize=10)
+            for row, label in enumerate(("I-73", "I-28")):
+                page.insert_text((60, 150 + row * 100), label, fontsize=10)
             spatial = collect_spatial_bindings(
                 document,
                 [],
-                {0: ""},
-                lines,
-                [f"Compound {n}" for n in range(1, 7)],
-                {"authoritative_structure_table_pages": [0]},
+                {0: page.get_text("text")},
+                {},
+                [],
+                {},
                 frozenset({0}),
             )
         self.assertEqual(spatial.candidates, ())
-        self.assertEqual(spatial.ownership.page_indices, frozenset({0}))
-        self.assertEqual(
-            spatial.ownership.label_keys, frozenset(f"I-{n}" for n in range(1, 7))
-        )
+        # Protection is exact, not page-wide; an unrelated source may coexist.
+        self.assertEqual(spatial.ownership.page_indices, frozenset())
+        self.assertEqual(spatial.ownership.label_keys, frozenset({"I-73", "I-28"}))
         self.assertEqual(
             spatial.restore(
                 [
                     {
-                        "cpd": "Compound I-1",
+                        "cpd": "Compound I-73",
                         "structure_id": "synthetic-fallback",
                         "page_no": 2,
                     }
                 ],
-                ["Compound I-1"],
+                ["Compound I-73"],
             ),
             [],
         )

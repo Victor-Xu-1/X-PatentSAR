@@ -7,7 +7,7 @@ import unittest
 import fitz
 
 from patent_sar_extractor.core.binding_spatial import (
-    _extract_authoritative_structure_table_sequence_bindings,
+    original_table_bindings,
 )
 from patent_sar_extractor.core.numbered_structure_binding import bind_numbered_tables
 from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
@@ -73,10 +73,8 @@ class GeneralStructureTableTests(unittest.TestCase):
         self.assertEqual(result.issues, ())
 
     def test_header_owned_nonadjacent_proof_is_rechecked_by_formal_gate(self):
-        result, structures = self.observe(["Ex #", "Procedures", "Structure", "LCMS"])
-        bindings = _extract_authoritative_structure_table_sequence_bindings(
-            structures, {}, [], {}, numbered_result=result
-        )
+        result, _ = self.observe(["Ex #", "Procedures", "Structure", "LCMS"])
+        bindings = original_table_bindings(result)
         self.assertEqual(len(bindings), 2)
         self.assertEqual(
             annotate_binding_accuracy(bindings[0])["accuracy_status"], "confirmed"

@@ -1,8 +1,8 @@
-"""Original-cell ownership for numbered, ruled compound/structure tables.
+"""One original-source owner for numbered ruled/unruled structure tables.
 
 Grid detection and cell OCR are shared with activity extraction. This module
 neither reconstructs a global sequence nor fills missing/letter-suffixed IDs.
-Recognized table pages remain protected even when none of their cells bind.
+Ruled pages and exact unruled regions remain protected even with no bindings.
 """
 
 from __future__ import annotations
@@ -31,6 +31,7 @@ from .structure_catalogs import (
     catalog_marks,
 )
 from .structure_table_headers import structure_column_pairs
+from .unruled_structure_observation import observe_unruled_tables
 
 __all__ = [
     "NumberedTableBinding",
@@ -109,11 +110,13 @@ def bind_numbered_tables(
     tokens_for_page: Callable[[Any], list[dict[str, Any]]] | None = None,
     cell_reader: Callable[[Any, Box, list[dict[str, Any]], str, bool], _CellReading]
     | None = None,
+    page_texts: Mapping[int, str] | None = None,
 ) -> NumberedTableResult:
     """Observe only proven candidate grids; adjacent continuation geometry carries.
 
     The original document is caller-owned. No PDF, crop, cache or result artifact
-    is rewritten here. Fresh coordinate OCR is restricted to detected grids.
+    is rewritten here. Original ruled cells and explicitly nominated unruled
+    columns share the same source observer, bounded cell reader and sole writer.
     """
     if not page_indices or (active_keys is not None and not active_keys):
         return NumberedTableResult((), frozenset(), (), ())
@@ -211,6 +214,27 @@ def bind_numbered_tables(
                     )
         if marks:
             prior_catalog = marks[-1][1]
-    return pair_numbered_table_cells(
+    ruled = pair_numbered_table_cells(
         cells, structures, active_keys, recognized_pages=recognized
+    )
+    unruled, sections, issues, protected, pages, keys = observe_unruled_tables(
+        doc,
+        structures,
+        page_indices,
+        grids_for_page,
+        tokens_for_page,
+        page_texts=page_texts,
+    )
+    return NumberedTableResult(
+        tuple(sorted(set(ruled.recognized_pages) | pages)),
+        ruled.observed_keys | frozenset(keys),
+        (
+            *ruled.bindings,
+            *(b for b in unruled if active_keys is None or b.label in active_keys),
+        ),
+        (*ruled.issues, *issues),
+        ruled.reprints,
+        tuple(sections),
+        frozenset(protected),
+        frozenset(ruled.recognized_pages),
     )

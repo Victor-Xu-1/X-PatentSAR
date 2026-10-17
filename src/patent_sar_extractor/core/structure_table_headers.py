@@ -18,13 +18,42 @@ _STRUCTURE = re.compile(
 )
 
 
+def structure_header_role(text):
+    if not isinstance(text, str):
+        return ""
+    text = re.sub(r"\s+", " ", unicodedata.normalize("NFKC", text)).strip()
+    return (
+        "identifier"
+        if _IDENTIFIER.fullmatch(text)
+        else "structure"
+        if _STRUCTURE.fullmatch(text)
+        else ""
+    )
+
+
+def possible_structure_header(text):
+    """Conservative nomination hint only; original column proof stays mandatory."""
+    if not isinstance(text, str) or len(text) > 1_000_000:
+        raise ValueError("Unbounded original structure-header hint")
+    text = unicodedata.normalize("NFKC", text)
+    return bool(_IDENTIFIER.search(text) and _STRUCTURE.search(text))
+
+
 def structure_column_pairs(headers: Sequence[str]) -> tuple[tuple[int, int], ...]:
     normalized = [
         re.sub(r"\s+", " ", unicodedata.normalize("NFKC", str(h))).strip()
         for h in headers
     ]
-    ids = [i for i, text in enumerate(normalized) if _IDENTIFIER.fullmatch(text)]
-    structures = [i for i, text in enumerate(normalized) if _STRUCTURE.fullmatch(text)]
+    ids = [
+        i
+        for i, text in enumerate(normalized)
+        if structure_header_role(text) == "identifier"
+    ]
+    structures = [
+        i
+        for i, text in enumerate(normalized)
+        if structure_header_role(text) == "structure"
+    ]
     if len(ids) == len(structures) == 1:
         return ((ids[0], structures[0]),)
     pairs = []

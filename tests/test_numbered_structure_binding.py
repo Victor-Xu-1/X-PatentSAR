@@ -212,19 +212,13 @@ class NumberedStructureBindingTests(unittest.TestCase):
 
     def test_empty_recognized_grid_does_not_fall_back_to_global_zip(self):
         from patent_sar_extractor.core.binding_spatial import (
-            _extract_authoritative_structure_table_sequence_bindings,
+            original_table_bindings,
         )
 
         c = cell("1", 0)
         result = self._pair([], [structure(c)], {"1"})
         self.assertTrue(result.recognized)
-        bindings = _extract_authoritative_structure_table_sequence_bindings(
-            [structure(c)],
-            {9: "\n".join(f"Compound {n}" for n in range(1, 7))},
-            [f"Compound {n}" for n in range(1, 7)],
-            {"authoritative_structure_table_pages": [9]},
-            numbered_result=result,
-        )
+        bindings = original_table_bindings(result)
         self.assertEqual(bindings, [])
 
     def test_serialized_proof_cannot_discard_a_valid_competing_source_read(self):
@@ -247,18 +241,12 @@ class NumberedStructureBindingTests(unittest.TestCase):
 
     def test_strict_accuracy_accepts_validated_cell_evidence_only(self):
         from patent_sar_extractor.core.binding_spatial import (
-            _extract_authoritative_structure_table_sequence_bindings,
+            original_table_bindings,
         )
 
         c = cell("11", 0)
         result = self._pair([c], [structure(c)])
-        binding = _extract_authoritative_structure_table_sequence_bindings(
-            [structure(c)],
-            {},
-            ["Compound 11"],
-            {"authoritative_structure_table_pages": [9]},
-            numbered_result=result,
-        )[0]
+        binding = original_table_bindings(result)[0]
         annotated = annotate_binding_accuracy(binding)
         self.assertEqual(annotated["accuracy_status"], "confirmed")
         self.assertFalse(annotated["fail_closed"])
@@ -291,18 +279,12 @@ class NumberedStructureBindingTests(unittest.TestCase):
 
     def test_strict_visible_conflict_is_not_waived_by_cell_binding(self):
         from patent_sar_extractor.core.binding_spatial import (
-            _extract_authoritative_structure_table_sequence_bindings,
+            original_table_bindings,
         )
 
         c = cell("11", 0)
         result = self._pair([c], [structure(c)])
-        binding = _extract_authoritative_structure_table_sequence_bindings(
-            [structure(c)],
-            {},
-            ["Compound 11"],
-            {"authoritative_structure_table_pages": [9]},
-            numbered_result=result,
-        )[0]
+        binding = original_table_bindings(result)[0]
         binding["visible_label_candidates"] = [{"label": "12", "source": "pdf_clip"}]
         self.assertEqual(
             annotate_binding_accuracy(binding)["evidence_tier"], "conflict"

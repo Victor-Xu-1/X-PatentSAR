@@ -14,11 +14,6 @@ from patent_sar_extractor.core.numbered_structure_binding import (
     NumberedTableResult,
     bind_numbered_tables,
 )
-from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
-from patent_sar_extractor.core.series_table_binding import (
-    SeriesTableResult,
-    pair_series_table,
-)
 from patent_sar_extractor.core.visible_structure_binding import bind_visible_captions
 
 from .binding_candidates import (
@@ -26,19 +21,15 @@ from .binding_candidates import (
     _build_binding_from_structure,
     _normalise_binding_to_compound,
 )
-from .binding_labels import (
-    _active_label_keys,
-    _binding_label_key,
-)
-from .binding_observations import (
-    _normalise_ocr_line_map,
-)
+from .binding_labels import _binding_label_key
 from .binding_types import (
     BindingCandidate,
     BindingConflict,
     SourceKind,
     SourceOwnership,
 )
+from .source_binding_proof import annotate_source_binding
+from .structure_table_headers import possible_structure_header
 from .table_geometry import detect_ruled_table_regions, page_tokens
 
 logger = logging.getLogger(__name__)
@@ -54,13 +45,13 @@ class SpatialBindings:
     recognized_table_pages: frozenset[int] = frozenset()
     grids_for_page: Any = field(default=None, repr=False, compare=False)
     tokens_for_page: Any = field(default=None, repr=False, compare=False)
-    source_exclusions: tuple[dict, ...] = ()
+    source_sections: tuple[dict, ...] = ()
 
     def ordered(self, active_cpds: list[str]) -> list[dict[str, Any]]:
         if not active_cpds:
             return []
         return [
-            annotate_binding_accuracy(binding)
+            annotate_source_binding(binding)
             for binding in _active_ordered_bindings(
                 [dict(candidate.binding) for candidate in self.candidates], active_cpds
             )
@@ -69,7 +60,7 @@ class SpatialBindings:
     def catalogue(self) -> list[dict[str, Any]]:
         """Primary source ownership is printed-ID based, never activity-filtered."""
         return [
-            annotate_binding_accuracy(
+            annotate_source_binding(
                 _normalise_binding_to_compound(
                     dict(candidate.binding), candidate.label_key
                 )
@@ -179,7 +170,15 @@ def collect_spatial_bindings(
     candidate_pages = sorted(
         {
             page
-            for page in (*table_pages, *source_pages)
+            for page in (
+                *table_pages,
+                *source_pages,
+                *(
+                    index
+                    for index, text in pages_text.items()
+                    if possible_structure_header(text)
+                ),
+            )
             if type(page) is int and page >= 0
         }
     )
@@ -205,38 +204,18 @@ def collect_spatial_bindings(
         None,
         grids_for_page=grids_for_page,
         tokens_for_page=tokens_for_page,
+        page_texts=pages_text,
     )
-    series = (
-        pair_series_table(
-            processed_structures,
-            candidate_pages,
-            _normalise_ocr_line_map(line_map),
-            None,
-        )
-        if not numbered.recognized
-        else SeriesTableResult(0, ())
-    )
-    recognized_pages = set(numbered.recognized_pages) | set(series.recognized_pages)
-    observed_keys = set(numbered.observed_keys) | (
-        set(series.observed_keys) if series.recognized else set()
-    )
-    table_bindings = _extract_authoritative_structure_table_sequence_bindings(
-        processed_structures,
-        pages_text,
-        active_cpds,
-        profile,
-        ocr_line_map=line_map,
-        numbered_result=numbered,
-        series_result=series,
-    )
-    candidates = [
-        _candidate(binding, "numbered_cell" if numbered.recognized else "legacy_table")
-        for binding in table_bindings
-    ]
+    recognized_pages = set(numbered.recognized_pages)
+    reserved_pages = set(numbered.ownership_pages)
+    observed_keys = set(numbered.observed_keys)
+    table_bindings = original_table_bindings(numbered)
+    candidates = [_candidate(binding, "numbered_cell") for binding in table_bindings]
     remaining = [
         structure
         for structure in processed_structures
-        if int(structure["page_no"]) - 1 not in recognized_pages
+        if int(structure["page_no"]) - 1 not in reserved_pages
+        and str(structure["id"]) not in numbered.protected_structure_ids
     ]
     caption_issues = []
     caption_pages, protected_caption_ids, source_exclusions = set(), set(), []
@@ -245,7 +224,7 @@ def collect_spatial_bindings(
         remaining,
         None,
         excluded=frozenset(observed_keys),
-        source_pages=[p for p in candidate_pages if p not in recognized_pages],
+        source_pages=[p for p in candidate_pages if p not in reserved_pages],
         recognized_pages=caption_pages,
         observed_labels=observed_keys,
         issues=caption_issues,
@@ -292,9 +271,7 @@ def collect_spatial_bindings(
             }
         )
         reprints.append(
-            annotate_binding_accuracy(
-                _normalise_binding_to_compound(binding, pair.label)
-            )
+            annotate_source_binding(_normalise_binding_to_compound(binding, pair.label))
         )
     conflicts = (
         *conflicts,
@@ -311,20 +288,15 @@ def collect_spatial_bindings(
             BindingConflict(issue.label, issue.page_index, issue.reason)
             for issue in numbered.issues
         ),
-        *(
-            BindingConflict(
-                label, page_index, "unproved_or_duplicate_original_series_label"
-            )
-            for page_index, label in series.unresolved_sources
-        ),
     )
     ownership = SourceOwnership(
-        page_indices=frozenset(recognized_pages),
+        page_indices=frozenset(reserved_pages),
         structure_ids=frozenset(
             caption_ids
             | protected_caption_ids
             | {candidate.structure_id for candidate in candidates}
             | {str(binding["structure_id"]) for binding in reprints}
+            | numbered.protected_structure_ids
         ),
         label_keys=frozenset(
             observed_keys
@@ -343,148 +315,26 @@ def collect_spatial_bindings(
         frozenset(recognized_pages | caption_pages),
         grids_for_page,
         tokens_for_page,
-        tuple(source_exclusions),
+        (*source_exclusions, *numbered.source_sections),
     )
 
 
-def _enforce_authoritative_structure_table_source(
-    final_bindings: list[dict], profile: dict | None
-) -> list[dict]:
-    """Reject synthesis-page competitors for compound IDs present in a structure table."""
-    raw_pages = (profile or {}).get("authoritative_structure_table_pages", []) or []
-    raw_cpds = (profile or {}).get("authoritative_structure_table_cpds", []) or []
-    table_page_nos = set()
-    for page_idx in raw_pages:
-        try:
-            table_page_nos.add(int(page_idx) + 1)
-        except (TypeError, ValueError, OverflowError) as exc:
-            logger.debug("Invalid authoritative table page: %s", type(exc).__name__)
-            continue
-    covered_keys = _active_label_keys([str(cpd) for cpd in raw_cpds])
-    if not table_page_nos or not covered_keys:
-        return final_bindings
-    active_keys = _active_label_keys((profile or {}).get("active_cpds", []) or [])
-    if active_keys and not active_keys.issubset(covered_keys):
-        # A partial structure table is useful evidence, but it is not a global
-        # authority. Do not delete clear visual bindings for active compounds
-        # merely because one incomplete table mentions the same number.
-        return final_bindings
-
-    kept: list[dict] = []
-    dropped: list[str] = []
-    for binding in final_bindings:
-        key = _binding_label_key(binding)
-        try:
-            page_no = int(binding.get("page_no") or 0)
-        except (TypeError, ValueError, OverflowError):
-            page_no = 0
-        if key in covered_keys and page_no not in table_page_nos:
-            dropped.append(key)
-            continue
-        kept.append(binding)
-    if dropped:
-        logger.info(
-            "   结构表权威来源保护: 删除 %d 个表外竞争绑定 (%s)",
-            len(dropped),
-            ", ".join(sorted(set(dropped), key=lambda value: (len(value), value))[:12]),
+def original_table_bindings(result: NumberedTableResult) -> list[dict[str, Any]]:
+    bindings = []
+    for pair in result.bindings:
+        binding = _build_binding_from_structure(pair.structure, pair.label)
+        evidence = pair.evidence()
+        binding.update(
+            {
+                "binding_rule": "numbered_structure_table_cell",
+                "numbered_table_cell_evidence": evidence,
+                "authoritative_table_source_label": pair.label,
+                "authoritative_table_pages": list(result.recognized_pages),
+            }
         )
-    return kept
-
-
-def _extract_authoritative_structure_table_sequence_bindings(
-    processed_structures: list[dict],
-    pages_text: dict[int, str],
-    active_cpds: list[str],
-    profile: dict | None,
-    ocr_line_map: dict[int, list[Any]] | None = None,
-    *,
-    numbered_result: NumberedTableResult | None = None,
-    series_result: SeriesTableResult | None = None,
-) -> list[dict]:
-    """Resolve authoritative cells before series or legacy sequence evidence.
-
-    Recognized numbered grids never enter global sequence inference. Existing
-    I-series geometry remains independent; the older complete-sequence rule is
-    restricted to tables not recognized by either spatial authority.
-    """
-    if numbered_result is not None and numbered_result.recognized:
-        bindings = []
-        for pair in numbered_result.bindings:
-            binding = _build_binding_from_structure(pair.structure, pair.label)
-            binding["binding_rule"] = "numbered_structure_table_cell"
-            binding["numbered_table_cell_evidence"] = pair.evidence()
-            binding["authoritative_table_source_label"] = pair.label
-            binding["authoritative_table_pages"] = list(
-                numbered_result.recognized_pages
-            )
-            bindings.append(binding)
-        if numbered_result.issues:
-            logger.warning(
-                "   编号结构表保留未确认单元格: %d (%s)",
-                len(numbered_result.issues),
-                ", ".join(sorted({issue.reason for issue in numbered_result.issues})),
-            )
-        # Recognition is authoritative even when every cell is unresolved.
-        # A numeric global zip cannot resolve missing/ambiguous cell evidence.
-        return bindings
-
-    raw_pages = (
-        series_result.recognized_pages
-        if series_result is not None and series_result.recognized
-        else (profile or {}).get("authoritative_structure_table_pages", []) or []
-    )
-    try:
-        page_indices = sorted({int(page) for page in raw_pages})
-    except (TypeError, ValueError, OverflowError):
-        return []
-    if not page_indices or page_indices[0] < 0:
-        return []
-
-    lines_by_page = _normalise_ocr_line_map(ocr_line_map)
-    active_keys = _active_label_keys(active_cpds)
-    series = (
-        series_result
-        if series_result is not None
-        else pair_series_table(
-            processed_structures, page_indices, lines_by_page, active_keys
-        )
-    )
-    if series.rejected_geometry or series.ambiguous_pairings:
-        logger.warning(
-            "   权威 I-NNN 表拒绝无效坐标=%d, 歧义配对=%d",
-            series.rejected_geometry,
-            series.ambiguous_pairings,
-        )
-    if series.recognized:
-        bindings: list[dict] = []
-        for pair in series.bindings:
-            binding = _build_binding_from_structure(pair.structure, str(pair.label))
-            binding["binding_rule"] = "authoritative_structure_table_sequence"
-            binding["authoritative_table_sequence_confirmed"] = True
-            binding["authoritative_table_sequence_position"] = (
-                pair.evidence_position + 1
-            )
-            binding["authoritative_table_label_count"] = series.label_count
-            binding["authoritative_table_structure_count"] = len(processed_structures)
-            binding["authoritative_table_pages"] = page_indices
-            binding["authoritative_table_visible_label"] = pair.label
-            binding["authoritative_table_label_y0"] = round(pair.label_y, 2)
-            binding["authoritative_table_pair_distance"] = round(
-                pair.center_distance, 2
-            )
-            binding["authoritative_table_source_label"] = pair.source_label
-            binding["authoritative_table_raw_source_label"] = pair.raw_source_label
-            bindings.append(binding)
-        logger.info(
-            "   权威 I-NNN 结构表坐标绑定: %d active rows, labels=%d, structures=%d",
-            len(bindings),
-            series.label_count,
-            len(processed_structures),
-        )
-        # A recognized but ambiguous series table must not enter the numeric
-        # global-sequence rule, which cannot resolve its spatial uncertainty.
-        return bindings
-
-    # Count/order equality never proves original ownership. Unsupported sources
-    # remain unresolved rather than falling through to a numeric global zip.
-    return []
+        if evidence.get("kind") == "original_unruled_columns":
+            binding["source_pdf_sha256"] = evidence["header_scope"][
+                "original_pdf_sha256"
+            ]
+        bindings.append(binding)
+    return bindings

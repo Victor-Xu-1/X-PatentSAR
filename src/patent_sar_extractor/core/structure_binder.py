@@ -53,7 +53,7 @@ def bind(
             for binding in spatial.reprints
         ]
         generic = spatial.structures(processed)
-        source_sections = list(spatial.source_exclusions)
+        source_sections = list(spatial.source_sections)
         source_regions = collect_reference_regions(
             doc,
             range(len(doc)),

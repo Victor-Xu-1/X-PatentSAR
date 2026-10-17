@@ -1,10 +1,7 @@
 """Retained original text outside a visible grid; no new OCR or caption guesses."""
 
-from itertools import pairwise
-
-from .source_cell_tokens import cell_lines
-from .source_geometry import native_region
-from .source_observations import source_cell_observation, source_observation_status
+from .source_observations import source_observation_status
+from .source_window_chunks import observe_source_window, validate_source_window
 
 
 def context_windows(edges, fragments):
@@ -17,37 +14,6 @@ def context_windows(edges, fragments):
     }
 
 
-def _chunks(tokens, window):
-    # Membership counts belong to each original view. Do not deduplicate source
-    # strings or charge a native token twice merely because two views share it.
-    members = {}
-    for source_index, source in enumerate(
-        (tokens, getattr(tokens, "native_tokens", []))
-    ):
-        for token in source:
-            _, counts = members.setdefault(id(token), (token, [0, 0]))
-            counts[source_index] += 1
-    rows = cell_lines([token for token, _ in members.values()], window)
-    cuts, count = [window[1]], [0, 0]
-    for index, row in enumerate(rows):
-        row_count = [
-            sum(members[id(token)][1][source] for token in row) for source in (0, 1)
-        ]
-        if max(row_count) > 384:
-            raise ValueError("Original boundary context row exceeds its token bound")
-        if any(count[source] + row_count[source] > 384 for source in (0, 1)):
-            cut = (max(t["y"] for t in rows[index - 1]) + min(t["y"] for t in row)) / 2
-            if not cuts[-1] < cut < window[3]:
-                raise ValueError("Unproved original boundary-context partition")
-            cuts.append(cut)
-            count = [0, 0]
-        count = [count[source] + row_count[source] for source in (0, 1)]
-    cuts.append(window[3])
-    if len(cuts) > 513:
-        raise ValueError("Original boundary context exceeds its chunk bound")
-    return [[window[0], y0, window[2], y1] for y0, y1 in pairwise(cuts)]
-
-
 def observe_fragment_context(tokens, edges, fragments):
     if not fragments:
         return None
@@ -56,13 +22,7 @@ def observe_fragment_context(tokens, edges, fragments):
         if window is None:
             result[name] = []
             continue
-        result[name] = []
-        for box in _chunks(tokens, window):
-            native = native_region(tokens, box, False)
-            sources = [source_cell_observation(tokens, box, native=native)]
-            if not native:
-                sources.append(source_cell_observation(tokens, box, native=True))
-            result[name].append({"bbox": box, "sources": sources})
+        result[name] = observe_source_window(tokens, window)
     return result
 
 
@@ -86,40 +46,7 @@ def validate_fragment_context(region):
             raise ValueError("Malformed original open-row boundary sources")
         if window is None:
             continue
-        bottom = window[1]
-        for chunk in chunks:
-            if not isinstance(chunk, dict) or set(chunk) != {"bbox", "sources"}:
-                raise ValueError("Invalid original boundary-context chunk")
-            box, sources = chunk["bbox"], chunk["sources"]
-            if (
-                not isinstance(box, list)
-                or len(box) != 4
-                or any(type(v) not in {int, float} for v in box)
-                or box[0] != window[0]
-                or box[2] != window[2]
-                or not bottom == box[1] < box[3] <= window[3]
-                or not isinstance(sources, list)
-                or not 1 <= len(sources) <= 2
-            ):
-                raise ValueError("Omitted or overlapping original context window")
-            bottom = box[3]
-            origins = []
-            for source in sources:
-                if source is None:
-                    origins.append(None)
-                    continue
-                if (
-                    source_observation_status(source, box, source.get("text"))
-                    == "invalid"
-                ):
-                    raise ValueError(
-                        "Invalid original open-row context coordinates or confidence"
-                    )
-                origins.append(source["origin"])
-            if origins not in (["native"], ["raster", "native"], [None, None]):
-                raise ValueError("Foreign original open-row context origin")
-        if bottom != window[3]:
-            raise ValueError("Incomplete original boundary-context coverage")
+        validate_source_window(chunks, window, allow_legacy=True)
 
 
 def boundary_texts(region, name):

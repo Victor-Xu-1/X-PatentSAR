@@ -4,6 +4,7 @@ import unittest
 from unittest.mock import patch
 
 import fitz
+from unruled_structure_support import UnruledStructureControls
 
 from patent_sar_extractor.core.activity_identity import normalize_compound
 from patent_sar_extractor.core.activity_join import (
@@ -13,15 +14,12 @@ from patent_sar_extractor.core.activity_join import (
 from patent_sar_extractor.core.activity_result_references import _observed
 from patent_sar_extractor.core.binding_labels import _labels_from_ocr_text
 from patent_sar_extractor.core.binding_source_headings import observed_heading_blocks
+from patent_sar_extractor.core.cell_identity_proof import confirmed_identity_readings
 from patent_sar_extractor.core.cell_ocr_observation import OCRObservation
 from patent_sar_extractor.core.compound_caption import caption_identity
 from patent_sar_extractor.core.numbered_structure_binding import bind_numbered_tables
-from patent_sar_extractor.core.numbered_structure_pairs import (
-    _confirmed_observations,
-    _label,
-)
+from patent_sar_extractor.core.numbered_structure_pairs import _label
 from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
-from patent_sar_extractor.core.series_table_binding import pair_series_table
 from patent_sar_extractor.core.source_section_roles import (
     nonfinal_original_label,
     section_heading,
@@ -30,7 +28,7 @@ from patent_sar_extractor.core.table_cells import _normalize, read_cell
 from patent_sar_extractor.core.visible_structure_binding import bind_visible_captions
 
 
-class OriginalIdentifierGrammarTests(unittest.TestCase):
+class OriginalIdentifierGrammarTests(UnruledStructureControls, unittest.TestCase):
     def test_series_prefix_is_not_an_intermediate_role_and_original_namespace_is_preserved(
         self,
     ):
@@ -75,7 +73,7 @@ class OriginalIdentifierGrammarTests(unittest.TestCase):
                 for dpi in (400, 600)
             ],
         ]
-        self.assertFalse(_confirmed_observations("73", packets))
+        self.assertFalse(confirmed_identity_readings("73", packets))
         self.assertFalse(
             _observed({"value": "73", "bbox": bounds, "observations": packets}, True)
         )
@@ -251,33 +249,19 @@ class OriginalIdentifierGrammarTests(unittest.TestCase):
 
     def test_series_retains_original_prefix_and_never_corrects_duplicate_digits(self):
         numbers = [1, 2, 9, 4, 7, 8, 9, 10]
-        structures = [
-            {
-                "id": f"S{index}",
-                "page_no": 1,
-                "x0": 150,
-                "x1": 360,
-                "y0": 100 + index * 120,
-                "y1": 200 + index * 120,
-            }
-            for index in range(len(numbers))
-        ]
-        lines = {
-            0: [
-                (150 + index * 120, f"I-{number}")
-                for index, number in enumerate(numbers)
-            ]
-        }
-        result = pair_series_table(
-            structures, [0], lines, {f"I-{n}" for n in range(1, 11)}
-        )
+        result, payload = self.run_binding([f"I-{number}" for number in numbers])
         self.assertEqual(
-            [binding.label for binding in result.bindings],
-            ["I-1", "I-2", "I-4", "I-7", "I-8", "I-10"],
+            {binding["cpd"] for binding in result["bindings"]},
+            {f"Compound I-{n}" for n in (1, 2, 4, 7, 8, 10)},
         )
         self.assertTrue(
-            all(binding.label == binding.source_label for binding in result.bindings)
+            all(
+                binding["cpd"]
+                == "Compound " + binding["numbered_table_cell_evidence"]["source_label"]
+                for binding in result["bindings"]
+            )
         )
+        self.assertTrue(payload["source_issues"])
 
     def test_case_and_wrapper_normalization_joins_only_the_same_literal_identity(self):
         rows = [
