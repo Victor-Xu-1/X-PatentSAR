@@ -2,16 +2,17 @@
 
 import re
 
+from .source_role_terms import CATALOG_COMPOUND_CJK, INTERMEDIATE_CJK
 from .source_table_markers import TABLE_CAPTION_START, caption_table_marker
 
 _NONFINAL = re.compile(
     r"\b(?:intermediates?|starting\s+materials?|building\s+blocks?|reactants?|reagents?)\b"
-    r"|中间体|中間体|起始原料|反应物|反応物|合成砌块",
+    rf"|{INTERMEDIATE_CJK}|起始原料|反应物|反応物|合成砌块",
     re.IGNORECASE,
 )
 _COMPOUNDS = re.compile(
     r"\b(?:compounds?|examples?|(?:final|target|end)\s+products?)\b"
-    r"|化合物|实施例|実施例|终产物|最終生成物",
+    rf"|{CATALOG_COMPOUND_CJK}",
     re.IGNORECASE,
 )
 

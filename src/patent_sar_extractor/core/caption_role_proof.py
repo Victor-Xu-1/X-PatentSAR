@@ -10,6 +10,7 @@ from .activity_context_geometry import (
 )
 from .caption_role_links import MAX_CONTINUATION_DEPTH, valid_role_link
 from .caption_role_titles import project_caption_titles
+from .caption_title_refinement import refined_title_role
 from .source_observations import source_observation_status
 from .source_table_roles import observed_role, title_key
 
@@ -27,7 +28,7 @@ def caption_role_status(scope, page_no, label_cell, *, _depth=0):
         _depth > MAX_CONTINUATION_DEPTH
         or type(page_no) is not int
         or not isinstance(scope, dict)
-        or set(scope) - {"continuation"}
+        or set(scope) - {"continuation", "refinement"}
         != {
             "version",
             "page_no",
@@ -104,6 +105,10 @@ def caption_role_status(scope, page_no, label_cell, *, _depth=0):
             return None
     except (ValueError, TypeError, KeyError, AttributeError):
         return None
+    if "refinement" in scope:
+        if role != "unknown" or (selected := refined_title_role(scope)) is None:
+            return None
+        role, key = selected
     if "continuation" in scope:
         if role != "unknown":
             return None

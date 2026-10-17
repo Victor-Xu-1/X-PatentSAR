@@ -26,6 +26,33 @@ def complete(label, raw=None):
 
 
 class CaptionFragmentIdentityTests(unittest.TestCase):
+    def test_a_repeated_letter_inside_a_qualified_whole_id_box_is_not_an_extra_suffix(
+        self,
+    ):
+        for label in ("R-052C", "47A", "AB-003Z"):
+            with self.subTest(label=label):
+                original = [
+                    fragment("Compound", 0),
+                    fragment(label, 1),
+                    fragment(label[-1], 2),
+                ]
+                original[0]["bbox"] = [[0, 8], [65, 8], [65, 42], [0, 42]]
+                original[1]["bbox"] = [[100, 8], [190, 8], [190, 42], [100, 42]]
+                original[2]["bbox"] = [[155, 8], [205, 8], [205, 42], [155, 42]]
+                self.assertFalse(
+                    refined_caption_conflicts(label, complete(label), original)
+                )
+                for text, box in (
+                    ("D", original[2]["bbox"]),
+                    (label[-1], [[210, 8], [240, 8], [240, 42], [210, 42]]),
+                    (label[-1], [[155, 50], [190, 50], [190, 80], [155, 80]]),
+                ):
+                    changed = json.loads(json.dumps(original))
+                    changed[2].update(text=text, bbox=box)
+                    self.assertTrue(
+                        refined_caption_conflicts(label, complete(label), changed)
+                    )
+
     def test_literal_hyphenated_parts_are_not_independent_complete_identifiers(self):
         for label, words in (
             ("Q-028C", ("Compound", "Q", "-028C")),

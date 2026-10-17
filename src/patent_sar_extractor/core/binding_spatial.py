@@ -28,6 +28,8 @@ from .binding_types import (
     SourceKind,
     SourceOwnership,
 )
+from .caption_grid_binding import bind_caption_grids
+from .numbered_structure_pairs import _box
 from .source_binding_proof import annotate_source_binding
 from .structure_declarations import observe_declaration_pages
 from .table_geometry import detect_ruled_table_regions, page_tokens
@@ -195,6 +197,25 @@ def collect_spatial_bindings(
             tokens[page.number] = page_tokens(page, dpi=200, allow_tesseract=False)
         return tokens[page.number]
 
+    # One complete caption observation precedes header-role admission. A continued
+    # caption frame must not become an unrelated unruled-header candidate first.
+    caption_structures = {}
+    for structure in processed_structures:
+        caption_structures.setdefault(structure["page_no"], []).append(structure)
+    caption_boxes = {
+        page: [
+            _box([row.get(axis) for axis in ("x0", "y0", "x1", "y1")]) for row in rows
+        ]
+        for page, rows in caption_structures.items()
+    }
+    caption_grids = bind_caption_grids(
+        doc,
+        caption_structures,
+        caption_boxes,
+        [page + 1 for page in candidate_pages],
+        grids_for_page=grids_for_page,
+        tokens_for_page=tokens_for_page,
+    )
     numbered = bind_numbered_tables(
         doc,
         processed_structures,
@@ -203,6 +224,7 @@ def collect_spatial_bindings(
         grids_for_page=grids_for_page,
         tokens_for_page=tokens_for_page,
         page_texts=pages_text,
+        caption_roles=caption_grids.roles,
     )
     recognized_pages = set(numbered.recognized_pages)
     reserved_pages = set(numbered.ownership_pages)
@@ -217,11 +239,15 @@ def collect_spatial_bindings(
         grids_for_page=grids_for_page,
     )
     candidates = [_candidate(binding, "numbered_cell") for binding in table_bindings]
+    caption_owned = {str(pair["structure"]["id"]) for pair in caption_grids.bindings}
     remaining = [
         structure
         for structure in processed_structures
-        if int(structure["page_no"]) - 1 not in reserved_pages
-        and str(structure["id"]) not in numbered.protected_structure_ids
+        if str(structure["id"]) in caption_owned
+        or (
+            int(structure["page_no"]) - 1 not in reserved_pages
+            and str(structure["id"]) not in numbered.protected_structure_ids
+        )
     ]
     caption_issues = []
     caption_pages, protected_caption_ids, source_exclusions = set(), set(), []
@@ -239,6 +265,7 @@ def collect_spatial_bindings(
         withheld_structure_ids=frozenset(nonfinal_declaration_ids),
         grids_for_page=grids_for_page,
         tokens_for_page=tokens_for_page,
+        grid_result=caption_grids,
     )
     caption_ids = set()
     caption_keys = set()

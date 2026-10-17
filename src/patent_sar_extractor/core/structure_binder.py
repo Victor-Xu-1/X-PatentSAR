@@ -14,6 +14,7 @@ from .binding_source_headings import (
 )
 from .binding_source_regions import collect_reference_regions
 from .binding_spatial import collect_spatial_bindings
+from .source_role_observations import RoleObservationBuffer
 
 
 def bind(
@@ -53,6 +54,7 @@ def bind(
         ]
         generic = spatial.structures(processed)
         source_sections = list(spatial.source_sections)
+        role_observations = RoleObservationBuffer()
         source_regions = collect_reference_regions(
             doc,
             range(len(doc)),
@@ -60,6 +62,7 @@ def bind(
             original_pdf_sha256=document_sha256,
             grids_for_page=spatial.grids_for_page,
             tokens_for_page=spatial.tokens_for_page,
+            role_observations=role_observations,
         )
         # A known catalogue owns its cells, not every other heading on that page.
         pages = list(range(len(doc)))
@@ -109,6 +112,7 @@ def bind(
             catalog_sources=reprints,
             source_issues=issues,
             source_sections=source_sections,
+            role_observations=role_observations,
             original_pdf_sha256=document_sha256,
             detected_style="original_cell_caption_heading",
             include_intermediates=include_intermediates,

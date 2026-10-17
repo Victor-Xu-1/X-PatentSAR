@@ -26,6 +26,7 @@ class OCRObservation:
     detection_parts: tuple[dict, ...] = ()
     physical_header_lines: dict | None = None
     physical_caption_line: dict | None = None
+    physical_text_chunks: dict | None = None
 
     def evidence(self, dpi: int, bounds) -> dict:
         return {
@@ -52,11 +53,16 @@ class OCRObservation:
                 if self.physical_caption_line is not None
                 else {}
             ),
+            **(
+                {"physical_text_chunks": self.physical_text_chunks}
+                if self.physical_text_chunks is not None
+                else {}
+            ),
         }
 
 
 def observe_cell(
-    image: np.ndarray, kind: str, dpi: int, engine, normalize
+    image: np.ndarray, kind: str, dpi: int, engine, normalize, *, maximum_text_rows=8
 ) -> OCRObservation:
     """Use the existing coordinate OCR engine, never a second inference chain.
 
@@ -91,7 +97,13 @@ def observe_cell(
     text_region = kind in {"header", "heading"}
     row_height = 128 if kind == "heading" else 12
     header_frame = (
-        header_line_frame(image, border, dpi, maximum_row_height=row_height)
+        header_line_frame(
+            image,
+            border,
+            dpi,
+            maximum_row_height=row_height,
+            maximum_rows=maximum_text_rows,
+        )
         if text_region
         else None
     )

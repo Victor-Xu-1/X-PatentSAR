@@ -4,17 +4,50 @@ import math
 import re
 
 from .cell_ocr_scores import confidence_value
+from .cell_text_chunk_proof import valid_text_chunks
 
 
-def valid_text_reading(reading, bounds, dpi, *, maximum_row_height=12):
+def valid_text_reading(
+    reading, bounds, dpi, *, maximum_row_height=12, maximum_rows=8, allow_chunks=False
+):
     """Typed original text-cell reading, independent of its scientific role."""
-    if not isinstance(reading, dict) or (
+    if (
+        type(maximum_rows) is not int
+        or not 2 <= maximum_rows <= 32
+        or not isinstance(reading, dict)
+    ) or (
         reading.get("method") != f"cell_ocr_{dpi}dpi"
         or type(reading.get("render_dpi")) is not int
         or reading["render_dpi"] != dpi
         or dpi not in {400, 600}
         or reading.get("bbox") != list(bounds)
         or reading.get("coordinate_space") != "original_pdf_points"
+        or not isinstance(reading.get("raw_text"), str)
+        or len(reading["raw_text"]) > 4096
+        or reading.get("text") != reading["raw_text"]
+    ):
+        return False
+    if "physical_text_chunks" in reading:
+        return allow_chunks and valid_text_chunks(
+            reading,
+            dpi,
+            component_validator=valid_text_components,
+            maximum_row_height=maximum_row_height,
+            maximum_rows=maximum_rows,
+        )
+    return valid_text_components(
+        reading, dpi, maximum_row_height=maximum_row_height, maximum_rows=maximum_rows
+    )
+
+
+def valid_text_components(reading, dpi, *, maximum_row_height=12, maximum_rows=8):
+    """Literal text/pixel components, with geometry owned by the calling frame."""
+    if (
+        not isinstance(reading, dict)
+        or "physical_text_chunks" in reading
+        or reading.get("method") != f"cell_ocr_{dpi}dpi"
+        or type(reading.get("render_dpi")) is not int
+        or reading.get("render_dpi") != dpi
         or not isinstance(reading.get("raw_text"), str)
         or len(reading["raw_text"]) > 4096
         or reading.get("text") != reading["raw_text"]
@@ -45,7 +78,7 @@ def valid_text_reading(reading, bounds, dpi, *, maximum_row_height=12):
             packet_name="physical_header_lines",
             part_method="physical_header_line",
             minimum_rows=2,
-            maximum_rows=8,
+            maximum_rows=maximum_rows,
             maximum_row_height=maximum_row_height,
         )
     return " ".join(part["text"] for part in parts) == reading["raw_text"]

@@ -1,5 +1,220 @@
 # X-PatentSAR architecture
 
+## Quantitative figure references versus molecular declarations
+
+The existing original-heading ledger retains quantitative plot labels as
+`figure_label_reference` only after one uniquely scoped original Figure caption,
+two ordered numeric axes, their observed perpendicular strokes, and a compact
+graphic legend key are proved. `plot_reference_geometry` nominates windows;
+the pixel/axes/marker modules retain bounded original masks through the existing
+cell renderer. `plot_reference` uses the sole source-window and physical-cell
+SDK for native text or complete 400/600dpi observations, including native/raster
+contradictions. Original raw text, masks and coordinate frames remain replayable.
+Heading proof v2 enters the same heading inventory and source digest, not a
+second store, queue, recognition engine or acceptance path. Binding21/binder30
+already describe this unpublished derived-source change; no extra product bump.
+
+A figure mention never supplies a molecule or a plotted numeric activity.
+Independent all-page structural discovery remains unchanged. Nearby synthesis
+titles, unqualified/ambiguous plots, missing axes/keys, malformed/omitted source
+packets and conflicting literals cannot obtain this reference role. No page,
+patent or compound-ID exemption is used. The bounded rectilinear-plot proof is
+not universal chart recognition, detector recall or chemical accuracy evidence;
+real frontend extraction/SAR and main/18765 delivery remain separate gates.
+
+## Bidirectional original caption page breaks
+
+Binding21/binder30/visible-label21 preserve a diagram and its literal caption
+when either side ends an original page. The existing `caption_grid_binding`
+coordinator and writer remain authoritative. `caption_page_boundary` owns the
+same transient adjacent-grid carry and saved two-page proof; both original table
+roles, matching physical columns and first/last cells are replayed. A label-only
+continuation page remains part of the complete source inventory. No compound
+sequence, nearest-page guess or activity membership supplies an identity.
+
+The formal spatial coordinator observes these frames once before numbered-header
+admission and passes the same qualified roles to it. Fresh original frame facts
+must match before an inherited role is reused. Caption binding consumes that same
+result, without a second OCR/cell pass. Page-wide/header-key nomination cannot
+silently discard a proved caption claim; the existing shared claim resolver still
+decides any real ownership conflict.
+
+`caption_title_refinement` owns bounded rereads only when a complete observed
+original title has an unknown role. Its padded window is rederived from the same
+source tokens, stays inside the original prefix, and uses the existing physical
+cell reader at400/600dpi. Complete reads, original confidence/frames and every
+known table-ID/role conflict are replayed; no string repair or new OCR path is
+introduced. Mixed/unknown roles remain mixed/unknown. The same proved title feeds
+the existing continuation-word check, while all raw packets remain unchanged.
+Admission reuse checks fresh original facts without repeating those cell reads.
+Native-qualified titles, absent titles and known roles do not trigger extra OCR.
+Height/cell/pixel bounds refuse unsupported work explicitly; this is not a
+document-wide retry or a proof of chemical-graph accuracy.
+
+`caption_boundary_context` retains the complete original context after every
+frame, including an already completed catalogue, using the shared source-window
+and body/section authorities, without new
+OCR. Intervening grids/drawings, new or nonfinal sections, uncertain/conflicting
+readings, gaps and malformed/omitted windows refuse continuation. Earlier and
+later caption directions share the same proof. The duplicated adjacency predicate
+is replaced with the established physical-column tolerance.
+
+Call-local carry belongs to each proved original frame, not one page-global slot.
+Parallel catalogues retain independent pending captions/drawing rows. Only one
+qualified adjacent parent may own a continuation; earlier same-column frames are
+not eligible when their complete tail contains another frame. Tail qualification
+is computed once per prior frame within the document call. The existing4096-frame
+bound is explicit, not truncated success. Every saved role continuation also
+retains and replays its previous original tail, even when no cell pair straddles
+the page break. New sections cannot extend either final ownership or nonfinal
+exclusion. Explicit independent current titles remain necessary where one new
+heading could otherwise cover the whole parallel group; no role is guessed from
+row order, prior activity or the desired number of compounds.
+
+Complete physical caption reads retain every detector observation. A qualified
+bare whole-ID box agreeing literally with that read can explain an overlapping
+letter inside that same box, not a second appended character. The common ordered
+fragment gate still rejects separate letters, wrong prefixes/suffixes/zeros and
+complete conflicting captions; it never joins characters into an identifier.
+Source image preparation continues to mask only a qualified caption on the same
+original page, so a following-page caption cannot erase diagram pixels.
+
+Old PDFs, raw OCR/model/crop observations and manual audit remain unchanged.
+Derived ownership uses the current schema/epochs; historical review does not gain
+current confirmation. API/SQL, models, scientific engines, SAR contracts
+and dependencies are unchanged. The derived activity source contract is
+described below. Source-contract tests do not prove detector
+recall, molecular correctness or actual frontend scientific acceptance.
+
+## Literal nonfinal source-role vocabulary
+
+`source_role_terms` owns the finite, explicitly supported intermediate spellings
+shared by original heading grammar, table-role projection, cell conflict guards,
+characterization-table identity, record filtering and SAR admission. Simplified,
+Traditional and Japanese character forms cannot diverge between those consumers.
+Context-specific boundaries remain in their existing parsers; this is not a new
+translation/parser/matcher or permission to infer roles from an I-prefix. The
+catalogue-only positive vocabulary also conserves explicitly mixed final/
+intermediate categories; it does not extend the molecular-ID heading grammar.
+Mixed catalogues cannot be blanket-excluded as intermediate sources. The
+binder's declared-field adapter delegates to the one record filter, not a second
+regular-expression implementation. Raw source words, IDs, leading zeros and
+punctuation remain unchanged. References to intermediates in a final compound's
+synthesis title do not reclassify that compound.
+
+Activity19/extractor28 invalidate old derived result/source-role interpretation;
+unpublished Binding21/binder30/visible21 cover the same original role change.
+Raw page observations, original assets/manual audit and numerical SAR/measurement
+policies remain unchanged. Current SAR views/exports scope through the same role
+consumer without rewriting archived results or admitting unconfirmed structures.
+Unsupported role wording remains unqualified, not automatically translated or
+classified. These bounded role checks do not certify arbitrary patent languages.
+
+Project-derived SAR revisions also bind the existing `lead_source.source_identity`
+scientific-source stamp, using acceptance captured in the same SQLite snapshot.
+This reuses the accepted-corpus authority without imposing Lead ranking policy.
+Scientific epoch changes stale prior project datasets before a project-page visit
+can refresh cached views. Marketing-version-only changes do not alter that stamp.
+Old inputs/reports/manual edits remain immutable; new analysis requires a current
+source snapshot. CSV independence and the existing SAR queue are unchanged.
+
+## Complete original characterization cells
+
+Rejected characterization probes retain their attempted original cells in the
+existing binding/activity artifacts. `source_role_observations` owns one bounded,
+content-addressed diagnostic catalog using the existing source digest. All entries
+are explicitly unresolved, never a role scope, a molecule or an activity row.
+Completed400dpi or partial-cell observations survive a later600dpi/render refusal;
+unknown roles, weak raw readings and native conflicts are not dropped or repaired.
+Successful role proof remains in its existing source ledger, without duplication.
+
+The current coordinators pass the same call-local observations to their sole
+writers; no extra OCR, retry, cache or queue is introduced. Saved activity and
+binding readers validate catalog identity, bounded literal JSON, page/grid source
+and the binding document digest. Diagnostics cannot exempt missing results or
+promote an unqualified structure, nor fail an otherwise independently valid assay
+merely because a characterization probe was rejected. The4096-attempt/64MiB
+aggregate is enforced during live collection as well as serialization; duplicates
+share one packet. Existing1MiB per-region digest bounds refuse rather than truncate.
+Original assets, manual audit and existing failed-task outputs remain immutable.
+
+Characterization nomination remains separate from qualification. A literal ID
+header together with NMR/MS hints can request bounded original-cell observation
+even if the first low-resolution preparation wording is unreadable. Unknown
+methods, columns, native contradictions and biological endpoints still prevent
+role acceptance. Known function-word spacing and isotope/unit typography do not
+rewrite original strings or repair IDs, molecular graphs or measurements.
+
+The existing physical text-frame/cell reader supports an explicit caller-owned
+chunk budget: characterization bodies and their open-row fragments use at most32
+original rows per slice; actual assay headers keep8. `cell_text_chunks` partitions
+longer cells only at empty pixel rows and calls the same existing OCR observer.
+`cell_text_chunk_proof` replays every slice, its complete global row inventory,
+exact order, contiguous full-image coverage, ink totals and child pixel geometry.
+Each saved child's pixel frame stays in parent-render pixels, never fabricated
+PDF coordinates. Known endpoint detections in any child still veto a role. The
+same replay supports original open-row fragments and rejects omitted, reordered,
+weak or conflicting children. Unresolved ink-bearing packets never qualify as
+observed empty fragments. Both400/600dpi observations, complete pixel-row
+inventories, cell bounds and minimum0.85 confidence are revalidated. Missing,
+weak, conflicting or over-budget lines stay unresolved, never truncated success.
+The original grid96-cell/8-million-pixel-per-cell limits remain. Up to128 slices
+are bounded per cell; input exceeding the whole-cell renderer still explicitly
+refuses and requires future bounded original-point rendering, not partial text.
+Existing aggregate literal-text and region-proof byte bounds also remain;
+slice support does not claim unlimited source size or arbitrary-format coverage.
+The historical
+packet key `physical_header_lines` still names this shared text frame; only the
+characterization consumers opt into long-body replay. No second OCR engine,
+model, store, queue or task-specific parser is added. This remains within the
+same unpublished Activity19/extractor28/Binding21/binder30 source contracts.
+
+## Literal method and result references
+
+`source_result_references` owns one bounded literal result-sentence/list grammar
+and its original text spans. It reuses the original table-ID grammar and shared
+reference limits, preserving leading zeros and letter IDs. Explicit coordinated
+lists (including literal semicolon separators), plural table words and
+wrapped/space-joined function words do not create
+new data. Unknown/alternative/ambiguous dash syntax remains unresolved rather
+than accepting a recognized prefix of the target list. Discovery uses those same
+spans so a wrapped table mention is not a new caption, while a following actual
+caption still starts its own window. The old competing single-reference regex
+is removed. Method references require an otherwise qualified procedure and every
+target's actual parsed region/rows/cells; a reference never waives missing results.
+Raw text and measurements are unchanged, within the same unpublished Activity19/
+extractor28/coverage15 contract.
+
+## Shared physical headers and independent panel conditions
+
+`activity_parallel_context` captures only the existing bounded native/raster
+prefix observations beside each parallel physical frame. It performs no OCR or
+value inference. The same original-source SDK replays page/column bounds,
+confidence, the complete qualified caption boundary, unique original caption
+positions and overlapping source conservation for live carry and saved-family QA.
+Two independent captions with identical wording cannot merge their sources or
+lend a far-away header. A paragraph locator is part of the complete caption line;
+the canonical `SourceTokens.native_tokens` domain remains independent evidence.
+
+Generic shared panels inherit only proved columns/header origin, retaining their
+own explicitly observed target, assay and cell-line context. Conditions are not
+filled from the left panel. Repeated compounds/measurements remain separate;
+ordinary SAR provenance consumes those same source conditions. Biology-specific
+categorical interpretations keep their stricter common-context rule. Adjacent
+pages preserve the immediate proved parent's context, not a different leftmost
+header source. A new section before a continued caption cannot be erased by
+caption-window normalization. Raw source text and original numeric values remain.
+
+`schema_requires_review` is the common unresolved-field policy for row review,
+header carry and source-family replay; unknown endpoints/units are never lent to
+other panels. The existing actual-caption context selector distinguishes earlier
+prose references from the real caption without discarding post-caption conditions.
+Activity coverage15 records the added parallel context proof, within unpublished
+Activity19/extractor28. Older derived evidence is not retagged as current; original
+PDF/raw caches/manual audit, API1/SQL1, numerical SAR rules and models are unchanged.
+This source-header improvement does not establish all-format recall, complete
+structure ownership, NMR classification or actual scientific acceptance.
+
 ## Historical source review without current confirmation
 
 `catalog_reader.read_catalog_entries` retains strict scientific ownership by

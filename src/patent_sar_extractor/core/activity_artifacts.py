@@ -17,6 +17,7 @@ from .activity_header_evidence import serialize_header_evidence
 from .activity_identity import is_control
 from .activity_models import ActivityRow
 from .activity_observations import has_usable_values
+from .source_role_observations import RoleObservationBuffer, serialize_role_observations
 
 
 def save_results(
@@ -27,6 +28,7 @@ def save_results(
     coverage: dict,
     unresolved_rows: list[dict] | None = None,
     header_observations: list[dict] | None = None,
+    role_observations: RoleObservationBuffer | list[dict] | None = None,
 ) -> None:
     value_keys = list(dict.fromkeys(k for r in rows for k in r.activity_values))
     cell_keys = list(dict.fromkeys(k for r in rows for k in r.cell_line_data))
@@ -72,6 +74,9 @@ def save_results(
             "active_cpds": active,
             "rows": serialized_rows,
             "header_observations": header_catalog,
+            "source_role_observations": serialize_role_observations(
+                role_observations or []
+            ),
             "coverage": coverage,
             "unresolved_rows": unresolved_rows or [],
         },

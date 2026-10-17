@@ -14,11 +14,13 @@ from .activity_header_observation import refine_scanned_header
 from .activity_header_roles import HeaderResolver
 from .activity_headers import context_from_text, grid_schema
 from .activity_models import GridSchema, ParsedActivity
+from .activity_parallel_context import observe_parallel_context
 from .activity_reference_observation import observe_result_references
 from .activity_source_roles import method_page_evidence
 from .activity_table_layout import prepare_layout
 from .activity_transposed import extract_transposed
 from .biology_tables import biology_grid_schema
+from .source_role_observations import scope_observations
 from .table_geometry import detect_ruled_table_regions, page_tokens
 
 
@@ -91,11 +93,20 @@ def extract_coordinate_tables(
         context_tables = [grid_box(region) for region in regions]
         for raw_region in regions:
             region = context_region(raw_region, context_tables)
+            parallel_context = observe_parallel_context(page, region, tokens)
+            if parallel_context is not None:
+                region["parallel_context"] = parallel_context
             matrix = table_matrix(tokens, region)
             prefix = _prefix(tokens, region)
             header = " ".join(matrix[0]) if matrix else ""
             context = context_from_text(prefix, prefix)
-            role_scope = observe_characterization(page, region, tokens, prefix)
+            role_observations = []
+            role_scope = observe_characterization(
+                page, region, tokens, prefix, evidence_sink=role_observations
+            )
+            result.role_observations.extend(
+                scope_observations(role_observations, page_index + 1)
+            )
             if role_scope is not None:
                 result.coverage.append(
                     source_record(

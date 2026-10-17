@@ -2,8 +2,11 @@
 
 import re
 
+from ...core.source_role_terms import INTERMEDIATE_CJK
+
 _INTERMEDIATE = re.compile(
-    r"^(?:intermediate(?=$|[\s_:.\-0-9])|interm[.\s_]|中间体)", re.IGNORECASE
+    rf"^(?:intermediate(?=$|[\s_:.\-0-9])|interm[.\s_]|{INTERMEDIATE_CJK})",
+    re.IGNORECASE,
 )
 _TEMPORARY = re.compile(
     r"^(?:source-structure:|编号待确认|未关联结构|关联结构\s+[a-f0-9]{6})",

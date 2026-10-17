@@ -3,6 +3,7 @@
 import math
 from collections.abc import Mapping
 
+from .caption_page_boundary import valid_caption_page_boundary
 from .caption_reading_proof import confirmed_caption_readings
 from .numbered_structure_pairs import _box, _label
 
@@ -21,7 +22,8 @@ def valid_caption_binding_evidence(binding):
         and binding.get("structure_id")
         and type(diagram_page) is int
         and type(label_page) is int
-        and 0 < label_page <= diagram_page
+        and 0 < label_page <= 20000
+        and 0 < diagram_page <= 20000
         and label_box
         and diagram
         and isinstance(observations, (list, tuple))
@@ -51,14 +53,19 @@ def valid_caption_binding_evidence(binding):
         and ownership["structure_page_no"] == diagram_page
         and original_label == label_box
         and cell
-        and all(math.isclose(cell[i], label_box[i], abs_tol=0.01) for i in (0, 2))
         and cell[0] - 2 <= diagram[0] < diagram[2] <= cell[2] + 2
         and cell[1] - 2 <= diagram[1] < diagram[3] <= cell[3] + 2
     ):
         return False
     direction = ownership.get("direction")
     if label_page != diagram_page:
-        return direction == "above" and label_page + 1 == diagram_page
+        return valid_caption_page_boundary(
+            ownership, label_page, diagram_page, label_box, cell
+        )
+    if "page_boundary" in ownership or not all(
+        math.isclose(cell[i], label_box[i], abs_tol=0.01) for i in (0, 2)
+    ):
+        return False
     return bool(
         direction == "above"
         and math.isclose(label_box[3], cell[1], abs_tol=0.01)

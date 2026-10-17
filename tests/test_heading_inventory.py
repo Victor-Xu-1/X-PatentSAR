@@ -86,7 +86,7 @@ class OriginalHeadingInventoryTests(unittest.TestCase):
             )
         )
 
-    def test_saved_source_replays_every_member_after_saved_issues_are_cleared(self):
+    def test_saved_source_replays_every_member_without_id_only_exemptions(self):
         payload = self.observed()
         payload["source_issues"] = []
         self.assertEqual(
@@ -94,13 +94,17 @@ class OriginalHeadingInventoryTests(unittest.TestCase):
                 row["cpd"]
                 for row in reference_issues(payload, [{"cpd": "Compound Q-72A"}])
             },
-            {"Compound Q-72C"},
+            {"Compound Q-72A", "Compound Q-72C"},
         )
         self.assertEqual(
-            reference_issues(
-                payload, [{"cpd": "Compound Q-72A"}, {"cpd": "Compound Q-72C"}]
-            ),
-            [],
+            {
+                row["cpd"]
+                for row in reference_issues(
+                    payload, [{"cpd": "Compound Q-72A"}, {"cpd": "Compound Q-72C"}]
+                )
+            },
+            {"Compound Q-72A", "Compound Q-72C"},
+            "Matching IDs are not proof of ownership of either original occurrence",
         )
 
     def test_removed_changed_or_downgraded_declarations_are_not_a_success(self):

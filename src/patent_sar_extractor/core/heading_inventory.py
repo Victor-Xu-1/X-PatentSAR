@@ -12,6 +12,7 @@ HEADING_ROLES = {
     "intermediate_section",
     "ambiguous_heading",
     "unproved_heading",
+    "figure_label_reference",
 }
 
 
@@ -82,7 +83,11 @@ def heading_inventory_issues(sections, scope, entries):
             raise ValueError(
                 "Original heading declaration differs from its observations"
             )
-        if declaration["role"] in {"intermediate_section", "assay_section"}:
+        if declaration["role"] in {
+            "intermediate_section",
+            "assay_section",
+            "figure_label_reference",
+        }:
             continue
         for identifier in heading_members(declaration):
             present = (

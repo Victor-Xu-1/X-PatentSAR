@@ -18,6 +18,7 @@ from .source_fragment_context import observe_fragment_context
 from .source_geometry import _box
 from .source_grid_edges import original_grid_edges
 from .source_role_fragments import fragment_texts, observe_fragments, validate_fragments
+from .source_role_observations import scope_observations
 from .source_section_roles import nonfinal_original_label, section_heading
 from .table_geometry import detect_ruled_table_regions, page_tokens
 
@@ -32,7 +33,9 @@ def _reference_text(text):
     return _WRAPPER_GAP.sub(r"\1 ", " ".join(identifier_width(text).split())).casefold()
 
 
-def reference_regions(page, *, original_pdf_sha256, grids=None, tokens=None):
+def reference_regions(
+    page, *, original_pdf_sha256, grids=None, tokens=None, evidence_sink=None
+):
     grids = detect_ruled_table_regions(page, dpi=240) if grids is None else grids
     if not grids:
         return []
@@ -43,7 +46,16 @@ def reference_regions(page, *, original_pdf_sha256, grids=None, tokens=None):
     boxes = [grid_box(grid) for grid in grids]
     for original_grid in grids:
         grid = context_region(original_grid, boxes)
-        scope = observe_characterization(page, grid, tokens, _prefix(tokens, grid))
+        rejected = []
+        scope = observe_characterization(
+            page, grid, tokens, _prefix(tokens, grid), evidence_sink=rejected
+        )
+        if evidence_sink is not None:
+            evidence_sink.extend(
+                scope_observations(
+                    rejected, page.number + 1, original_pdf_sha256=original_pdf_sha256
+                )
+            )
         if scope is None:
             continue
         record = {
@@ -67,7 +79,14 @@ def reference_regions(page, *, original_pdf_sha256, grids=None, tokens=None):
 
 
 def collect_reference_regions(
-    doc, pages, sections, *, original_pdf_sha256, grids_for_page, tokens_for_page
+    doc,
+    pages,
+    sections,
+    *,
+    original_pdf_sha256,
+    grids_for_page,
+    tokens_for_page,
+    role_observations=None,
 ):
     """One inventory reuses call-local grid/token ownership, not a repair chain."""
     output = {}
@@ -79,6 +98,7 @@ def collect_reference_regions(
             original_pdf_sha256=original_pdf_sha256,
             grids=grids,
             tokens=tokens_for_page(page) if grids else [],
+            evidence_sink=role_observations,
         )
         output[index] = regions
         sections.extend(

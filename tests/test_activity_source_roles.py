@@ -3,15 +3,217 @@
 import unittest
 from types import SimpleNamespace
 
+from patent_sar_extractor.core.activity_grid_roles import (
+    characterization_roles,
+    nominate_characterization,
+)
 from patent_sar_extractor.core.activity_source_discovery import (
     declared_activity_source,
     discover_activity_sources,
+    reference_observations,
 )
-from patent_sar_extractor.core.activity_source_roles import method_page_evidence
+from patent_sar_extractor.core.activity_source_roles import (
+    method_page_evidence,
+    method_result_references,
+)
+from patent_sar_extractor.core.source_result_references import (
+    MAX_TARGETS_PER_REFERENCE,
+    result_reference_sentences,
+)
 from patent_sar_extractor.core.source_section_roles import section_heading
 
 
 class ActivitySourceRoleTests(unittest.TestCase):
+    def test_role_diagnostic_buffer_bounds_live_collection_and_deduplicates(self):
+        from unittest.mock import patch
+
+        from patent_sar_extractor.core.source_role_observations import (
+            RoleObservationBuffer,
+            role_failure,
+            scope_observations,
+        )
+
+        failure = role_failure(
+            "cell_render_limit", {"xs": [0, 10], "ys": [0, 10]}, "Raw original title"
+        )
+        source = scope_observations([failure], 1)
+        buffer = RoleObservationBuffer()
+        buffer.extend(source * 2)
+        self.assertEqual(len(buffer), 1)
+        self.assertEqual(list(buffer), source)
+        with patch(
+            "patent_sar_extractor.core.source_role_observations.MAX_ROLE_ATTEMPTS", 1
+        ):
+            bounded = RoleObservationBuffer()
+            bounded.extend(source)
+            with self.assertRaisesRegex(ValueError, "inventory"):
+                bounded.extend(source)
+        with (
+            patch(
+                "patent_sar_extractor.core.source_role_observations.MAX_ROLE_CATALOG_BYTES",
+                1,
+            ),
+            self.assertRaisesRegex(ValueError, "byte budget"),
+        ):
+            RoleObservationBuffer().extend(source)
+
+    def test_failed_role_observations_preserve_raw_text_without_granting_roles(self):
+        from patent_sar_extractor.core.source_role_observations import (
+            role_failure,
+            scope_observations,
+            serialize_role_observations,
+            validate_role_catalog,
+        )
+
+        region = {"xs": [10, 80, 180], "ys": [20, 45]}
+        cells = {
+            **region,
+            "native_hints": [["007B", "1HNMR (400MHz)"]],
+            "observations": [
+                {
+                    "method": "cell_ocr_400dpi",
+                    "matrix": [],
+                    "cells": [{"text": "", "raw_text": "007B", "confidence": 0.7}],
+                }
+            ],
+        }
+        failed = role_failure(
+            "unqualified_role_observations", region, "Raw title", cells
+        )
+        scoped = scope_observations([failed, failed], 4, original_pdf_sha256="a" * 64)
+        catalog = serialize_role_observations(scoped)
+        self.assertEqual(len(catalog), 1)
+        self.assertEqual(next(iter(catalog.values()))["source_cells"], cells)
+        validate_role_catalog(catalog, original_pdf_sha256="a" * 64)
+        other = scope_observations([failed], 5, original_pdf_sha256="a" * 64)
+        two = serialize_role_observations([*scoped[:1], *other])
+        swapped = dict(zip(two.keys(), reversed(list(two.values()))))
+        with self.assertRaisesRegex(ValueError, "identity"):
+            validate_role_catalog(swapped)
+        observed = next(iter(catalog.values()))
+        self.assertEqual(observed["status"], "unresolved")
+        self.assertNotIn("roles", observed)
+        self.assertNotIn("role_scope", observed)
+        with self.assertRaisesRegex(ValueError, "document"):
+            validate_role_catalog(catalog, original_pdf_sha256="b" * 64)
+        observed["prefix"] = "Altered original title"
+        with self.assertRaisesRegex(ValueError, "identity"):
+            validate_role_catalog(catalog)
+
+    def test_role_diagnostic_bounds_reject_instead_of_truncating_observations(self):
+        from patent_sar_extractor.core.source_role_observations import (
+            MAX_ROLE_ATTEMPTS,
+            role_failure,
+            scope_observations,
+            serialize_role_observations,
+        )
+
+        failure = role_failure(
+            "cell_budget_exceeded", {"xs": [0, 10], "ys": [0, 10]}, ""
+        )
+        scoped = scope_observations([failure], 1)
+        with self.assertRaisesRegex(ValueError, "inventory"):
+            serialize_role_observations(scoped * (MAX_ROLE_ATTEMPTS + 1))
+        scoped[0]["status"] = "observed_characterization"
+        with self.assertRaisesRegex(ValueError, "diagnostic"):
+            serialize_role_observations(scoped)
+
+    def test_characterization_typography_keeps_literal_roles_without_id_repair(self):
+        matrix = [
+            ["Compound No.", "Preparation", "Characterization"],
+            [
+                "007B",
+                "PreparedinanalogytoCompound 091C",
+                "1HNMR (400MHz) 7.2ppm; MS(ESI)m/z 413.1",
+            ],
+        ]
+        self.assertTrue(nominate_characterization(matrix, ""))
+        self.assertEqual(
+            characterization_roles(matrix, ""),
+            {
+                "data_start": 1,
+                "columns": ["identifier", "preparation", "characterization"],
+            },
+        )
+        self.assertEqual(matrix[1][0], "007B")
+        self.assertIn("091C", matrix[1][1])
+        unread = [matrix[0], [matrix[1][0], "Unreadable original method", matrix[1][2]]]
+        self.assertTrue(nominate_characterization(unread, ""))
+        self.assertIsNone(characterization_roles(unread, ""))
+        for text in (
+            "1HNMR (400MHz) 7.2ppm; MS(ESI)m/z 413.1; IC50 = 5nM",
+            "Unknown original measurement",
+        ):
+            altered = [matrix[0], [*matrix[1][:2], text]]
+            with self.subTest(text=text):
+                self.assertIsNone(characterization_roles(altered, ""))
+
+    def test_literal_result_reference_lists_preserve_every_declared_table(self):
+        method = "Example 87: Binding assay\nCells were seeded. Reagent was added.\n"
+        for sentence, expected in (
+            (
+                "The results are included in Tables 71, 88 and Table 92.",
+                ["Table 71", "Table 88", "Table 92"],
+            ),
+            ("Results were summarised in Tables A and B.", ["Table A", "Table B"]),
+            ("Results are listed in Table 007 and 008B.", ["Table 007", "Table 008B"]),
+            ("Results are listed in Tables S1 and S2.", ["Table S1", "Table S2"]),
+            ("Results are listed in Tables 71; 88.", ["Table 71", "Table 88"]),
+            ("结果见表 007及表008B。", ["表 007", "表008B"]),
+        ):
+            with self.subTest(sentence=sentence):
+                self.assertEqual(method_result_references(method + sentence), expected)
+                self.assertEqual(method_page_evidence(method + sentence), "")
+
+    def test_reference_typography_and_wrapping_do_not_change_original_targets(self):
+        method = "Example 87: Binding assay\nCells were seeded. Reagent was added.\n"
+        for sentence in (
+            "Theresults are includedinTable71 and 88.",
+            "Results are reported in\nTables 71 and\n88.",
+        ):
+            with self.subTest(sentence=sentence):
+                self.assertEqual(
+                    method_result_references(method + sentence),
+                    ["Table 71", "Table 88"],
+                )
+
+    def test_unknown_reference_or_local_measurement_never_becomes_methods_only(self):
+        method = "Example 87: Binding assay\nCells were seeded. Reagent was added.\n"
+        for sentence in (
+            "Results are included in Table 71 or 88.",
+            "Results are included in Tables 71-88.",
+            "Results are included in Table 3.4.",
+            "Results are included in Tables71 and 88.",
+            "Results are included in Table 71. Compound 47 showed IC50 = 3 nM.",
+            "Results are included in Tables 71; or 88.",
+            "Results are included in Table 71; Compound 47 showed IC50 = 3 nM.",
+        ):
+            with self.subTest(sentence=sentence):
+                self.assertEqual(method_result_references(method + sentence), [])
+                self.assertEqual(method_page_evidence(method + sentence), "")
+
+    def test_wrapped_reference_does_not_absorb_a_following_actual_table_caption(self):
+        text = (
+            "Example 87: Binding assay\nCells were seeded. Reagent was added.\n"
+            "Results are included in\nTables 71 and 88.\n"
+            "Table 71. Binding activity\nCompound No. | IC50 (nM)\n47 | 8\n"
+        )
+        observations = reference_observations(text)
+        self.assertEqual(len(observations), 1)
+        self.assertEqual(observations[0]["targets"], ["Table 71", "Table 88"])
+        self.assertEqual(observations[0]["status"], "reference")
+
+    def test_reference_source_and_target_budgets_refuse_instead_of_truncating(self):
+        with self.assertRaisesRegex(ValueError, "text budget"):
+            result_reference_sentences("x" * 100001)
+        source = (
+            "Results are listed in Tables "
+            + ", ".join(["A"] * (MAX_TARGETS_PER_REFERENCE + 1))
+            + "."
+        )
+        with self.assertRaisesRegex(ValueError, "target budget"):
+            result_reference_sentences(source)
+
     def test_letter_table_result_boundaries_and_method_references_remain_distinct(self):
         self.assertTrue(
             declared_activity_source("Table A. Binding activity\nUnreadable body")

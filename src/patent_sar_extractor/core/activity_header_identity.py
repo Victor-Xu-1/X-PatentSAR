@@ -15,6 +15,19 @@ from .ocr_claims import qualified_text_runs
 from .structure_table_headers import structure_header_role
 
 
+def schema_requires_review(schema) -> bool:
+    """One unresolved-field policy for rows, header carry and source replay."""
+    return bool(
+        schema.needs_review
+        or (schema.header_resolution or {}).get("status") == "unresolved"
+        or any(
+            "unknown" in key.lower() or key.startswith("compound_id [")
+            for group in schema.groups
+            for _, key in group.value_columns
+        )
+    )
+
+
 def compact_header(value: str) -> str:
     text = normalize_metric_text(value)
     # Micro-unit glyph equivalence is comparison only; original text survives.

@@ -7,12 +7,19 @@ from typing import Any
 
 from .activity_identity import PRINTED_ID, printed_identifier_key
 from .printed_identifiers import identifier_width
+from .source_role_terms import (
+    INTERMEDIATE_CJK,
+    INTERMEDIATE_PLURAL,
+    INTERMEDIATE_SINGULAR,
+    INTERMEDIATE_TERM,
+    is_intermediate_kind,
+)
 
 _HEADING = re.compile(
     r"^(?:\[\s*\d{1,8}\s*\]\s*)?"
     r"(?P<preparation>(?:(?:Synthesis|Preparation)\s+(?:of\s+)?)?)"
     r"(?:Exemplary\s+)?"
-    r"(?P<kind>Compound|Cmpd|Cpd|Example|Intermediate|实施例|化合物|中间体)\s*[-:.：]?\s*"
+    rf"(?P<kind>Compound|Cmpd|Cpd|Example|{INTERMEDIATE_SINGULAR}|实施例|化合物)\s*[-:.：]?\s*"
     rf"(?P<identifier>{PRINTED_ID})(?![\w/-])(?P<tail>.*)$",
     re.IGNORECASE,
 )
@@ -21,7 +28,7 @@ _GROUP = re.compile(
     r"^(?:\[\s*\d{1,8}\s*\]\s*)?"
     r"(?P<preparation>(?:(?:Synthesis|Preparation)\s+(?:of\s+)?)?)"
     r"(?:Exemplary\s+)?"
-    r"(?P<kind>Compounds|Cmpds|Cpds|Examples|Intermediates|实施例|化合物|中间体)\s*[-:.：]?\s*"
+    rf"(?P<kind>Compounds|Cmpds|Cpds|Examples|{INTERMEDIATE_PLURAL}|实施例|化合物)\s*[-:.：]?\s*"
     rf"(?P<members>{PRINTED_ID}(?:{_SEPARATOR}{PRINTED_ID}){{1,31}})"
     r"(?![\w/-])(?P<tail>.*)$",
     re.IGNORECASE,
@@ -29,7 +36,7 @@ _GROUP = re.compile(
 _LIST_START = re.compile(
     r"^(?:\[\s*\d{1,8}\s*\]\s*)?"
     r"(?:(?:Synthesis|Preparation)\s+(?:of\s+)?)?(?:Exemplary\s+)?"
-    r"(?:Compounds?|Cmpds?|Cpds?|Examples?|Intermediates?|实施例|化合物|中间体)\s*[-:.：]?\s*",
+    rf"(?:Compounds?|Cmpds?|Cpds?|Examples?|{INTERMEDIATE_TERM}|实施例|化合物)\s*[-:.：]?\s*",
     re.IGNORECASE,
 )
 _ASSAY_TITLE = re.compile(
@@ -45,7 +52,7 @@ _PREPARATION = re.compile(
 )
 _INTERMEDIATE_TARGET = re.compile(
     r"^(?:(?:Synthesis|Preparation|制备|合成)\s*(?:of\s+)?)?"
-    r"(?:Intermediate|中间体)(?=[\s:.：0-9-]|$)",
+    rf"{INTERMEDIATE_SINGULAR}(?=[\s:.：0-9-]|$)",
     re.IGNORECASE,
 )
 
@@ -76,7 +83,7 @@ def section_heading(text: object) -> dict[str, Any] | None:
         kind = kind[:-1]
     role = "compound_heading"
     if (
-        kind in {"intermediate", "中间体"}
+        is_intermediate_kind(kind)
         or kind in {"example", "实施例"}
         and _INTERMEDIATE_TARGET.match(title)
     ):
@@ -149,7 +156,7 @@ def heading_list_hint(text: object) -> bool:
         return False
     remainder = re.sub(rf"(?<![\w/-]){PRINTED_ID}(?![\w/-])", "", body)
     remainder = re.sub(
-        r"\b(?:Compounds?|Cmpds?|Cpds?|Examples?|Intermediates?)\b|实施例|化合物|中间体",
+        rf"\b(?:Compounds?|Cmpds?|Cpds?|Examples?|Intermediates?)\b|实施例|化合物|{INTERMEDIATE_CJK}",
         "",
         remainder,
         flags=re.IGNORECASE,

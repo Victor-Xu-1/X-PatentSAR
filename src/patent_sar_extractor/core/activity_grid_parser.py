@@ -1,6 +1,7 @@
 """Read every value through the single physical-cell evidence authority."""
 
 from .activity_grid_cells import read_activity_cell, validate_grid
+from .activity_header_identity import schema_requires_review
 from .activity_header_metrics import distinct_value_keys
 from .activity_metadata import mark_metadata, metadata_field
 from .activity_models import ActivityRow, GridSchema
@@ -36,10 +37,7 @@ def parse_grid(
         for pair, columns in enumerate(column_groups):
             metadata = dict(schema.groups[pair].metadata_columns)
             cells, values = [], {}
-            review = (
-                schema.needs_review
-                or (schema.header_resolution or {}).get("status") == "unresolved"
-            )
+            review = schema_requires_review(schema)
             compound = ""
             for column, key in columns:
                 bounds = (xs[column], ys[row_index], xs[column + 1], ys[row_index + 1])
@@ -69,11 +67,7 @@ def parse_grid(
                         )
                     withheld |= cell["metadata_status"] == "unresolved"
                 cells.append(cell)
-                review |= (
-                    withheld
-                    or "unknown" in key.lower()
-                    or key.startswith("compound_id [")
-                )
+                review |= withheld
                 if key == "compound_id":
                     compound = value
                 elif column not in metadata:
