@@ -4,7 +4,7 @@ import copy
 import json
 import unittest
 
-from test_unruled_continuation import continued_page
+from test_unruled_continuation import continued_page, same_page_part
 from unruled_structure_support import UnruledStructureControls
 
 from patent_sar_extractor.core.binding_source_references import (
@@ -45,7 +45,131 @@ def physical_parts(
         ]
 
 
+def same_page_physical_parts(
+    page, structures, *, prefix="", missing_all=False, initial_ruled=True
+):
+    for x in (40, 175, 380):
+        if initial_ruled:
+            page.draw_line((x, 65), (x, 330))
+        page.draw_line((x, 460), (x, 690))
+    for top, bottom in ((65, 330), (460, 690)):
+        if top == 65 and not initial_ruled:
+            continue
+        for y in (top, 100, 210, bottom) if top == 65 else (top, 575, bottom):
+            page.draw_line((40, y), (380, y))
+    same_page_part(page, structures, caption=prefix)
+    if missing_all:
+        structures[:] = [s for s in structures if not s["structure_id"].startswith("P")]
+
+
+def refresh_child_projections(payload, child, old_region):
+    child["region_id"] = proof_id(child["source"])
+    for row in [
+        *payload["compound_catalog"]["entries"],
+        *payload["final_bindings"],
+    ]:
+        ownership = (row.get("numbered_table_cell_evidence") or {}).get(
+            "column_ownership", {}
+        )
+        if ownership.get("source_anchor_id") == old_region:
+            ownership.update(
+                source_anchor_id=child["region_id"],
+                header_scope=child["source"]["header_scope"],
+            )
+    payload["source_reference_scope"] = reference_scope(
+        payload["source_sections"],
+        payload["source_reference_scope"]["original_pdf_sha256"],
+    )
+    payload["source_issues"] = []
+
+
 class RuledColumnContinuationTests(UnruledStructureControls, unittest.TestCase):
+    def test_same_page_closed_parts_need_no_fabricated_continuation_caption(self):
+        for initial_ruled in (True, False):
+            with self.subTest(initial_ruled=initial_ruled):
+                result, payload = self.run_binding(
+                    ["73", "28"],
+                    mutate_page=lambda p, s, initial_ruled=initial_ruled: (
+                        same_page_physical_parts(p, s, initial_ruled=initial_ruled)
+                    ),
+                )
+                self.assertEqual(len(result["bindings"]), 4)
+                self.assertEqual(coverage_errors(payload), [])
+                saved = json.loads(json.dumps(payload))
+                self.assertEqual(
+                    len(read_compound_catalog(saved, saved["final_bindings"])[0]), 4
+                )
+
+    def test_same_page_unknown_gap_cannot_borrow_previous_physical_roles(self):
+        for prefix in (
+            "Compound B80: Preparation",
+            "A different experiment was performed.",
+            "Table 99. Compounds",
+        ):
+            with self.subTest(prefix=prefix):
+                result, payload = self.run_binding(
+                    ["73", "28"],
+                    mutate_page=lambda p, s, prefix=prefix: same_page_physical_parts(
+                        p, s, prefix=prefix
+                    ),
+                )
+                self.assertEqual(len(result["bindings"]), 2)
+                self.assertTrue(coverage_errors(payload))
+
+    def test_same_page_second_frame_keeps_missing_detector_rows_explicit(self):
+        result, payload = self.run_binding(
+            ["73", "28"],
+            mutate_page=lambda p, s: same_page_physical_parts(p, s, missing_all=True),
+        )
+        self.assertEqual(len(result["bindings"]), 2)
+        self.assertTrue(coverage_errors(payload))
+
+    def test_same_page_intervening_original_grid_is_not_skipped(self):
+        def intervening_frame(page, structures):
+            same_page_physical_parts(page, structures)
+            for x in (40, 175, 380):
+                page.draw_line((x, 350), (x, 410))
+            for y in (350, 380, 410):
+                page.draw_line((40, y), (380, y))
+            page.insert_text((50, 370), "Compound No.", fontsize=10)
+            page.insert_text((230, 370), "IC50 (nM)", fontsize=10)
+            page.insert_text((50, 400), "B80", fontsize=10)
+            page.insert_text((230, 400), "0.3", fontsize=10)
+
+        result, payload = self.run_binding(["73", "28"], mutate_page=intervening_frame)
+        self.assertEqual(len(result["bindings"]), 2)
+        self.assertTrue(coverage_errors(payload))
+
+    def test_scanned_same_page_parts_retain_the_same_original_gap(self):
+        for initial_ruled in (True, False):
+            with self.subTest(initial_ruled=initial_ruled):
+                result, payload = self.run_binding(
+                    ["73", "28"],
+                    raster=True,
+                    mutate_page=lambda p, s, initial_ruled=initial_ruled: (
+                        same_page_physical_parts(p, s, initial_ruled=initial_ruled)
+                    ),
+                )
+                self.assertEqual(len(result["bindings"]), 4)
+                self.assertEqual(coverage_errors(payload), [])
+
+    def test_rehashed_same_page_gap_is_rechecked_against_the_registered_parent(self):
+        _, payload = self.run_binding(
+            ["73", "28"], mutate_page=same_page_physical_parts
+        )
+        payload = copy.deepcopy(payload)
+        child = [
+            s
+            for s in payload["source_sections"]
+            if s["role"] == "structure_column_anchor"
+        ][-1]
+        old = child["region_id"]
+        scope = child["source"]["header_scope"]
+        scope["context_start"] = scope["grid_axes"]["ys"][0]
+        refresh_child_projections(payload, child, old)
+        with self.assertRaises(ValueError):
+            reference_issues(payload, payload["compound_catalog"]["entries"])
+
     def test_original_unruled_parent_can_continue_as_actual_ruled_rows(self):
         result, payload = self.run_binding(
             ["73", "28"],
@@ -228,23 +352,6 @@ class RuledColumnContinuationTests(UnruledStructureControls, unittest.TestCase):
         ][-1]
         old = child["region_id"]
         child["source"]["header_scope"]["parent_region_id"] = "e" * 64
-        child["region_id"] = proof_id(child["source"])
-        for row in [
-            *payload["compound_catalog"]["entries"],
-            *payload["final_bindings"],
-        ]:
-            ownership = (row.get("numbered_table_cell_evidence") or {}).get(
-                "column_ownership", {}
-            )
-            if ownership.get("source_anchor_id") == old:
-                ownership.update(
-                    source_anchor_id=child["region_id"],
-                    header_scope=child["source"]["header_scope"],
-                )
-        payload["source_reference_scope"] = reference_scope(
-            payload["source_sections"],
-            payload["source_reference_scope"]["original_pdf_sha256"],
-        )
-        payload["source_issues"] = []
+        refresh_child_projections(payload, child, old)
         with self.assertRaises(ValueError):
             reference_issues(payload, payload["compound_catalog"]["entries"])

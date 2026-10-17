@@ -11,7 +11,30 @@ def body_context_window(scope):
 
 def original_body_extent(scope, chunks, diagrams):
     validate_page_diagrams(diagrams, scope["page_size"])
-    return original_context_extent(chunks, body_context_window(scope), diagrams)
+    extent = original_context_extent(chunks, body_context_window(scope), diagrams)
+    if scope.get("kind") is None:
+        # A later actual closed frame has its own row authority, even when its
+        # columns or ancestry are unresolved. Keep full raw context, but do not
+        # let a logical matcher publish those same physical rows first.
+        bottom = min(
+            [
+                extent["body_bottom"],
+                *[
+                    grid["ys"][0]
+                    for grid in scope["page_grids"]
+                    if grid["ys"][0] >= scope_body_top(scope)
+                ],
+            ]
+        )
+        extent = {
+            **extent,
+            "body_bottom": bottom,
+            "trusted_bottom": min(extent["trusted_bottom"], bottom),
+            "unproved_boundaries": [
+                b for b in extent["unproved_boundaries"] if b["bbox"][1] < bottom
+            ],
+        }
+    return extent
 
 
 def original_body_bottom(scope, chunks, diagrams):

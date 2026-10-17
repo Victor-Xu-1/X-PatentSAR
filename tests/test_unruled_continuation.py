@@ -49,8 +49,10 @@ def continued_page(
         )
 
 
-def same_page_part(page, structures, *, labels=("901A", "I-003B")):
-    page.insert_text((40, 430), "Table 12. Continued", fontsize=10)
+def same_page_part(
+    page, structures, *, labels=("901A", "I-003B"), caption="Table 12. Continued"
+):
+    page.insert_text((40, 430), caption, fontsize=10)
     for row, label in enumerate(labels):
         centre = 510 + row * 115
         page.insert_text((60, centre + 4), label, fontsize=10)

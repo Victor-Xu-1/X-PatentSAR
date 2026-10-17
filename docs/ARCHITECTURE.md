@@ -13,7 +13,20 @@ outer clipping windows are not printed rules. Physical-to-physical alignment is
 unchanged. Diagram-free known activity frames require positive independent
 original header roles; unknown/conflicting columns or known chemical diagrams
 cannot be silently excluded. This is an unpublished repair, not scientific or
-deployed acceptance; same-page uncaptained/ambiguous layouts remain open.
+deployed acceptance; ambiguous layouts remain explicit.
+
+Same-page physical parts require one registered original parent and an observed
+qualified gap, not nearest-frame inheritance. The internal continuation records
+its exact gap floor; saved replay rederives it from the parent's own rows and
+compares overlapping original contexts. Intervening grids, unowned drawings,
+new tables and experimental text block inheritance. Logical original headers
+retain the actual page-grid inventory: later physical rows have their own source
+owner, rather than first being published by a whole-page logical matcher. Full
+raw context and page-diagram facts remain retained. The shared activity-header
+identity also detects qualified assay-column boundaries; weak/conflicting
+endpoints retain uncertainty, never numerical or role corrections. All changes
+remain inside unpublished Binding20/binder29 and scope6. Real-patent/chemical
+acceptance and other unsupported layouts are still unverified.
 
 Headerless physical continuation draft: `ruled_column_continuation` captures
 actual grids and full leading/first-row context; `ruled_continuation_context`
@@ -23,8 +36,8 @@ column interface owns real body-start geometry, so a data row is never invented
 as a header or omitted. Pending frames remain typed unresolved sources when no
 parent can be proved. Original current caption catalogues retain their existing
 single matcher rather than inheriting unrelated prior columns. No extra OCR,
-queue, assets, writer or dependency. Same-page/shifted-column ambiguous cases
-remain unproved; native/save/Web regression is required before delivery.
+queue, assets, writer or dependency. Ambiguous columns remain unproved;
+native/save/Web regression and actual frontend acceptance are required before delivery.
 
 Original column ownership uses the same source-body SDK for ruled-cell
 preparation, logical matching, serialized population and nonfinal exclusions.

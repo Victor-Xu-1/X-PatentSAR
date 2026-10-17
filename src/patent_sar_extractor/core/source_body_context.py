@@ -5,6 +5,7 @@ boundaries retain the full inventory while ending positively trusted ownership.
 """
 
 from .activity_context_geometry import valid_box
+from .activity_header_identity import measurement_header_roles
 from .source_cell_tokens import cell_lines, cell_text
 from .source_observations import project_source_observation
 from .source_section_roles import heading_members, section_body_boundary
@@ -83,6 +84,8 @@ def _boundary_identity(parts, window, *, column_boundaries):
     groups = header_groups(parts) if column_boundaries else []
     if 2 <= len(groups) <= 64 and structure_column_pairs([g["text"] for g in groups]):
         return "columns", tuple(structure_header_role(g["text"]) for g in groups)
+    if groups and (roles := measurement_header_roles([g["text"] for g in groups])):
+        return "columns", roles
     return None
 
 

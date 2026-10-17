@@ -28,6 +28,7 @@ def observe_physical_continuation(page, tokens, grid, grids, original_sha):
         "anchor_scope": None,
         "parent_region_id": "",
         "parent_page_no": None,
+        "context_start": 0,
     }
 
 
@@ -44,6 +45,7 @@ def physical_continuation_roles(scope):
         "anchor_scope",
         "parent_region_id",
         "parent_page_no",
+        "context_start",
     }:
         raise ValueError("Malformed original physical continuation scope")
     size, grid = scope["page_size"], scope["grid_axes"]
@@ -69,7 +71,10 @@ def physical_continuation_roles(scope):
         raise ValueError("Original physical continuation has no unique observed frame")
     leading = [0, 0, size[0], grid["ys"][1]]
     validate_source_window(scope["leading_context"], leading)
-    window = [0, 0, size[0], grid["ys"][0]]
+    floor = scope["context_start"]
+    if type(floor) not in {int, float} or not 0 <= floor <= grid["ys"][0]:
+        raise ValueError("Invalid original physical continuation gap")
+    window = [0, floor, size[0], grid["ys"][0]]
     anchor, parent = scope["anchor_scope"], scope["parent_region_id"]
     if (
         not isinstance(parent, str)
@@ -78,7 +83,7 @@ def physical_continuation_roles(scope):
     ):
         raise ValueError("Malformed original physical continuation parent")
     if anchor is None:
-        if parent or scope["parent_page_no"] is not None:
+        if parent or scope["parent_page_no"] is not None or floor:
             raise ValueError("Original physical continuation has no column anchor")
         return None
     if (
@@ -95,13 +100,18 @@ def physical_continuation_roles(scope):
     ):
         raise ValueError("Unproved original physical column ancestry")
     roles = original_column_roles(anchor)
-    if not anchor["page_no"] <= scope["parent_page_no"] < scope["page_no"]:
+    if not anchor["page_no"] <= scope["parent_page_no"] <= scope["page_no"]:
         raise ValueError("Physical column ancestry does not precede its source")
+    if scope["parent_page_no"] == scope["page_no"]:
+        if not floor:
+            raise ValueError("Same-page physical source has no original gap")
+    elif floor:
+        raise ValueError("Cross-page physical source changed its original prefix")
     if roles is None or not original_columns_fit_frame(anchor, grid["xs"]):
         return None
     prefix = (
         project_source_window(scope["leading_context"], leading, window)
-        if window[3]
+        if window[1] < window[3]
         else []
     )
     if not qualified_running_window(prefix, window, grid["xs"], roles["pairs"]):

@@ -5,6 +5,7 @@ from itertools import pairwise
 
 from .activity_context_geometry import valid_box
 from .activity_grid_role_observation import observe_role_cells
+from .ruled_continuation_context import validate_page_grid
 from .source_cell_tokens import cell_lines
 from .source_geometry import SourceTokens
 from .source_observations import source_observation_status
@@ -52,7 +53,7 @@ def header_windows(groups, page_size):
     return xs, ys
 
 
-def observe_unruled_header(page, tokens, groups, original_pdf_sha256):
+def observe_unruled_header(page, tokens, groups, original_pdf_sha256, *, grids=()):
     if not isinstance(tokens, SourceTokens):
         raise TypeError("Unruled columns require original source tokens")
     size = [page.rect.width, page.rect.height]
@@ -66,6 +67,7 @@ def observe_unruled_header(page, tokens, groups, original_pdf_sha256):
         "original_pdf_sha256": original_pdf_sha256,
         "page_no": page.number + 1,
         "page_size": size,
+        "page_grids": list(grids),
         "nomination": groups,
         "source_observations": observe_window_sources(tokens, bounds),
         "context_sources": observe_header_context(tokens, size, ys[0]),
@@ -80,6 +82,7 @@ def unruled_header_roles(scope):
         "original_pdf_sha256",
         "page_no",
         "page_size",
+        "page_grids",
         "nomination",
         "source_observations",
         "context_sources",
@@ -102,6 +105,10 @@ def unruled_header_roles(scope):
         or any(type(v) not in {int, float} or not 0 < v <= 100000 for v in size)
     ):
         raise ValueError("Invalid original unruled page frame")
+    if not isinstance(scope["page_grids"], list) or len(scope["page_grids"]) > 4096:
+        raise ValueError("Malformed original logical-column frame inventory")
+    for grid in scope["page_grids"]:
+        validate_page_grid(grid, size)
     groups = scope["nomination"]
     if not isinstance(groups, list) or any(
         not isinstance(g, dict)

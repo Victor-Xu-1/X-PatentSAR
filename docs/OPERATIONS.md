@@ -2,6 +2,16 @@
 
 ## Original unruled structure columns
 
+Same-page headerless physical parts use their exact registered original gap.
+Do not bypass an intervening grid, drawing, assay or new experiment. The gap
+floor and overlapping source observations are revalidated after serialization.
+Logical header scopes retain current page grids and stop their own row ownership
+at a later actual frame; complete original context and page diagrams remain
+available. Qualified assay headers also end the old structural role through the
+shared header identity. Weak or conflicting headers cannot establish a clean
+boundary or extend nonfinal exclusion. Generated native/scanned checks do not
+certify arbitrary input or replace the required frontend-only real-patent repeat.
+
 Original source registration now precedes physical cell construction. There is no
 second inherited-cell producer or later header-repair path. Headerless pages with
 no detector hits can still be inspected against the immediately registered prior

@@ -1,5 +1,15 @@
 # Project governance manifest
 
+- Same-page continuation within unpublished Binding20/binder29/scope6 uses an
+  exact original context_start and unique registered parent. Local scope checks
+  and global saved replay share the same gap derivation; intervening frames,
+  drawings and unqualified context cannot be skipped. New logical header scopes
+  retain actual page_grids, separating their own rows from later physical frames
+  without losing raw body/page facts. activity_header_identity owns the one
+  measurement-column identity used by frame inspection and body-boundary replay.
+  All affected original/native/raster/saved consumers require focused checking;
+  no public API/SQL, raw artifact, manual revision, model or dependency changes.
+
 - Source-first physical-cell migration: `structure_frame_observation` only
   nominates existing original frames; the shared source observer registers roles
   before the single `structure_column_cells` producer feeds the existing matcher.

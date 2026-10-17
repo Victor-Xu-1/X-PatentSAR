@@ -39,6 +39,58 @@ def context(primary, native=(), *, window=WINDOW):
 
 
 class SourceBodyContextTests(unittest.TestCase):
+    def test_original_measurement_headers_end_prior_structure_column_ownership(self):
+        result = self.extent(
+            [
+                token("Compound No.", 430, width=85),
+                token("IC50 (nM)", 430, x=240, width=90),
+            ]
+        )
+        self.assertEqual(result["body_bottom"], 426)
+        self.assertEqual(result["trusted_bottom"], 426)
+        self.assertEqual(result["unproved_boundaries"], [])
+
+    def test_weak_measurement_header_retains_raw_facts_without_borrowing_roles(self):
+        result = self.extent(
+            [
+                token("Compound No.", 430, width=85),
+                token("IC50 (nM)", 430, x=240, width=90, confidence=0.4),
+            ]
+        )
+        self.assertEqual(result["body_bottom"], 720)
+        self.assertEqual(result["trusted_bottom"], 426)
+        self.assertEqual(len(result["unproved_boundaries"]), 1)
+
+    def test_conflicting_original_endpoints_do_not_prove_a_new_table_boundary(self):
+        result = self.extent(
+            [
+                token("Compound No.", 430, width=85),
+                token("IC50 (nM)", 430, x=240, width=90),
+            ],
+            [
+                token("Compound No.", 430, width=85, native=True),
+                token("DC50 (nM)", 430, x=240, width=90, native=True),
+            ],
+        )
+        self.assertEqual(result["body_bottom"], 720)
+        self.assertEqual(result["trusted_bottom"], 426)
+        self.assertEqual(len(result["unproved_boundaries"]), 2)
+
+    def test_unknown_or_identifier_shaped_metric_cells_are_not_new_headers(self):
+        for identifier, value in (
+            ("Compound No.", "Unspecified result"),
+            ("901A", "IC50"),
+        ):
+            with self.subTest(identifier=identifier, value=value):
+                result = self.extent(
+                    [
+                        token(identifier, 430, width=85),
+                        token(value, 430, x=240, width=90),
+                    ]
+                )
+                self.assertEqual(result["trusted_bottom"], 720)
+                self.assertEqual(result["body_bottom"], 720)
+
     def test_one_native_packet_lane_is_not_an_independent_second_observation(self):
         words = [token("Compound B80: Preparation", 430, native=True)]
         source = SourceTokens(words, SourceLayout(tuple(words), None))

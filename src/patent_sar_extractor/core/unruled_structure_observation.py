@@ -9,7 +9,10 @@ from .caption_role_observation import owns_caption_frame
 from .caption_role_semantics import has_continuation_caption
 from .numbered_structure_models import NumberedTableIssue
 from .ruled_column_continuation import observe_physical_continuation
-from .ruled_continuation_links import eligible_physical_parents
+from .ruled_continuation_links import (
+    eligible_physical_parents,
+    physical_parent_context_start,
+)
 from .ruled_structure_headers import observe_ruled_header
 from .source_body_context import contained_source_diagrams
 from .source_document import document_sha256
@@ -141,7 +144,9 @@ def observe_unruled_tables(
         if original_sha is None and (nominees or physical or pending):
             original_sha = document_sha256(doc)
         for groups in nominees:
-            header = observe_unruled_header(page, tokens, groups, original_sha)
+            header = observe_unruled_header(
+                page, tokens, groups, original_sha, grids=grids
+            )
             if header is None:
                 raise ValueError(
                     "Original unruled header exceeds its observation budget"
@@ -195,9 +200,8 @@ def observe_unruled_tables(
                         anchor_scope=anchor_scope(parent["source"]["header_scope"]),
                         parent_region_id=parent["region_id"],
                         parent_page_no=parent["page_no"],
+                        context_start=physical_parent_context_start(parent, header),
                     )
-                elif not parents and not diagrams:
-                    continue  # No chemical source nominated this independent frame.
             elif header is None:
                 key = continuation_identity(caption["text"])[0]
                 anchors = anchors_by_key[key]
