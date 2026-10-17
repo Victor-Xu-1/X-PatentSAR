@@ -24,6 +24,11 @@ from .activity_table_rows import table_row_errors
 from .activity_table_scopes import layout_scope_errors
 from .activity_text_plan import validate_text_pages, validate_text_scope
 from .activity_text_proof import text_source_errors
+from .activity_transposed_rows import transposed_row_errors
+from .activity_transposed_source import (
+    validate_column_scope,
+    validate_transposed_layout,
+)
 
 MAX_REGIONS = 25000
 STATUSES = {
@@ -67,6 +72,8 @@ def source_record(
     role_scope: dict | None = None,
     grid_axes: dict | None = None,
     parent_grid: list | None = None,
+    column_scope: dict | None = None,
+    transposed_layout: dict | None = None,
 ) -> dict[str, Any]:
     record = {
         "page_no": page_no,
@@ -85,6 +92,13 @@ def source_record(
     if parent_grid is not None:
         identity.append(parent_grid)
         record["parent_grid"] = parent_grid
+    for key, value in (
+        ("column_scope", column_scope),
+        ("transposed_layout", transposed_layout),
+    ):
+        if value is not None:
+            identity.append(value)
+            record[key] = value
     record["region_id"] = hashlib.sha256(
         json.dumps(identity, ensure_ascii=False, sort_keys=True).encode()
     ).hexdigest()[:32]
@@ -102,7 +116,15 @@ def _validate_region(record: dict) -> None:
     if (
         not isinstance(record, dict)
         or set(record)
-        - {"layout", "text_scope", "role_scope", "grid_axes", "parent_grid"}
+        - {
+            "layout",
+            "text_scope",
+            "role_scope",
+            "grid_axes",
+            "parent_grid",
+            "column_scope",
+            "transposed_layout",
+        }
         != {
             "region_id",
             "page_no",
@@ -194,7 +216,14 @@ def _validate_region(record: dict) -> None:
             or record["reason"] != "no_original_rows"
             or any(
                 key in record
-                for key in ("layout", "grid_axes", "role_scope", "text_scope")
+                for key in (
+                    "layout",
+                    "grid_axes",
+                    "role_scope",
+                    "text_scope",
+                    "column_scope",
+                    "transposed_layout",
+                )
             )
             or not isinstance(parent, list)
             or len(parent) != 4
@@ -205,6 +234,11 @@ def _validate_region(record: dict) -> None:
         ):
             raise ValueError("Malformed unresolved original row parent")
         identity.append(parent)
+    validate_column_scope(record)
+    validate_transposed_layout(record)
+    for key in ("column_scope", "transposed_layout"):
+        if key in record:
+            identity.append(record[key])
     expected = hashlib.sha256(
         json.dumps(identity, ensure_ascii=False, sort_keys=True).encode()
     ).hexdigest()[:32]
@@ -375,6 +409,7 @@ def coverage_errors(
     )
     errors.extend(layout_scope_errors(packet["regions"]))
     errors.extend(table_row_errors(packet["regions"], rows))
+    errors.extend(transposed_row_errors(packet["regions"], rows))
     errors.extend(text_source_errors(packet["text_pages"], packet["regions"], rows))
     if packet["references"] and rows is None:
         errors.append(

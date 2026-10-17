@@ -1,5 +1,28 @@
 # X-PatentSAR architecture
 
+`activity_transposed_source` retains each original transposed table cell once
+through the existing native/raster observation SDK. It owns literal orientation
+and typed column-slice descriptors, not a new OCR/value parser. Unknown headers,
+their raw values, token coordinates and confidences survive even if no compound
+row can be read. `activity_context_geometry` checks each column against adjacent
+original X edges and the exact header-to-bottom Y span; the existing row-parent
+contract is unchanged. No child invents its own grid axes.
+The existing caption half-open token index is shared in `source_cell_tokens`;
+the new snapshot indexes effective/native tokens once rather than rescanning a
+whole page for every cell. Source observations retain identical physical facts.
+
+`activity_transposed_rows` conserves all declared physical columns through the
+same coverage pass used by the producer and saved reader. Each original column
+has either one exactly owned row source or an explicit unresolved child. Current
+rows reuse the existing literal cell proof; removal/reassignment, foreign parents
+or clearing review flags cannot create completeness. The former duplicated raw
+unknown-column lists on every result row are removed in favor of this single
+source inventory. Binding20/binder29 invalidate the current source admission
+shortcut described below; activity18/extractor27/coverage14 invalidate derived
+transposed evidence. Original PDF/raw OCR/model/crop assets, manual audit,
+visible19/preparation7, graph/SAR/API/SQL and dependencies remain unchanged.
+These controls do not establish all-format recall or chemical accuracy.
+
 `source_binding_proof` is the current catalog/formal admission adapter over the
 shared original-cell, caption and heading validators. Historical rule names,
 one-dimensional sequence proposals and saved success flags cannot grant current

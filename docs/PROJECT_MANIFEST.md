@@ -1,5 +1,16 @@
 # Project governance manifest
 
+- Transposed original source: `activity_transposed_source` owns bounded original
+  cell snapshots, literal orientation and typed unresolved column scopes;
+  `activity_transposed_rows` replays column/row conservation in the existing
+  coverage authority. `activity_context_geometry` checks exact original adjacent
+  X/header-to-bottom geometry without changing row-slice proof. The single
+  activity writer retains unknown raw values even with zero result rows; no
+  repeated per-row unknown-column store, new OCR, queue or value parser. Binding20/
+  binder29 and activity18/extractor27/coverage14 revise derived proof independently
+  of product numbering. Raw observations/assets, manual/graph/SAR/API/SQL and
+  dependencies stay. Synthetic source verification is not real scientific QA.
+
 - Original binding admission: `core/source_binding_proof.py` owns current source
   eligibility through the existing original-cell/caption/heading validators.
   `binding_catalog` and its single artifact writer preserve rejected proposals

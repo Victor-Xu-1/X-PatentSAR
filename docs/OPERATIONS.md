@@ -1,5 +1,24 @@
 # Operations and troubleshooting
 
+## Transposed column inventory and current source admission
+
+Binding20/binder29 require current original-cell/caption/heading admission, not
+historical sequence rules or saved success flags. Activity18/extractor27/coverage14
+retain each original cell in transposed tables once. Unknown headers and unread
+declared IDs have exact parent-bound column scopes, retaining raw values and
+confidence/position observations even when no rows can be published. Whole columns
+must not masquerade as adjacent-row scopes or invent child grid axes. Saved
+replay rechecks every physical column, resolved row/cell proof and unresolved
+child; deleting a review flag, column or root descriptor does not pass coverage.
+
+Original PDF, raw page/model observations, structure assets and manual audits
+are not rewritten or retagged. Old derived binding/activity evidence stays
+historical; only a normal authorized frontend retry recomputes affected proof.
+No new model, external API, task queue, dependency or SQL migration is introduced.
+Complete focused consumer checks, installed-package verification, PR/main and
+fixed18765 deployment before claiming delivery. This source contract does not
+prove universal patent recall, full molecular identity or stereochemistry.
+
 ## Open original rows and adjacent continuations
 
 Binding19/binder28 require reference scope4 and every original rule-edge/fragment

@@ -6,8 +6,10 @@ from dataclasses import asdict
 import fitz
 
 from patent_sar_extractor.core.activity_coordinates import extract_coordinate_tables
+from patent_sar_extractor.core.activity_coverage import coverage_packet
 from patent_sar_extractor.core.activity_header_identity import header_conflict
 from patent_sar_extractor.core.activity_headers import grid_schema
+from patent_sar_extractor.core.activity_join import activity_evidence_errors
 from patent_sar_extractor.core.activity_text import parse_segment
 from patent_sar_extractor.web.activity_columns import ActivityColumnCatalog
 from patent_sar_extractor.web.artifacts import _activities
@@ -159,7 +161,8 @@ class ActivityMetadataTests(unittest.TestCase):
                     ["n", "3", "2"],
                 ],
             )
-            rows = extract_coordinate_tables(doc, [0]).rows
+            parsed = extract_coordinate_tables(doc, [0])
+            rows = parsed.rows
         self.assertEqual([r.cpd for r in rows], ["Compound 73", "Compound 58"])
         self.assertEqual(
             [list(r.activity_values.values()) for r in rows], [["12.4"], ["9.1"]]
@@ -167,6 +170,23 @@ class ActivityMetadataTests(unittest.TestCase):
         self.assertFalse(any(r.needs_review for r in rows))
         self.assertEqual(
             [r.activity_sources[0]["cells"][-1]["value"] for r in rows], ["3", "2"]
+        )
+        from patent_sar_extractor.contracts import (
+            ACTIVITY_SCHEMA,
+            ACTIVITY_SCHEMA_VERSION,
+            artifact_identity,
+        )
+
+        self.assertEqual(
+            activity_evidence_errors(
+                {
+                    **artifact_identity(ACTIVITY_SCHEMA, ACTIVITY_SCHEMA_VERSION),
+                    "rows": [asdict(row) for row in rows],
+                    "coverage": coverage_packet([0], parsed.coverage, rows),
+                },
+                [0],
+            ),
+            [],
         )
 
     def test_persisted_count_disagreement_remains_failure_without_review_boolean(self):
