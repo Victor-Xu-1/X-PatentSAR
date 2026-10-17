@@ -1,6 +1,6 @@
 /** External LLM configuration, bounded recovery and generated safe errors. */
 export const llm: Readonly<Record<string, string>> = {
-  'LLM 局部修复': 'LLM local repair',
+  'LLM API 兜底': 'LLM API fallback',
   剩余调用次数未知: 'Remaining calls unknown',
   '剩余调用 {calls} 次': 'Remaining calls: {calls}',
   ' · 本次重试等待 {seconds} 秒（服务端观察）':
@@ -159,12 +159,13 @@ export const llm: Readonly<Record<string, string>> = {
     'The API redirect was rejected. Review the direct service URL; redirects are not followed.',
   '接口返回 HTTP 错误，请核对服务地址、权限和服务状态。':
     'The API returned an HTTP error. Review the service URL, permissions and service status.',
-  局部修复已关闭: 'Local repair disabled',
-  可尝试局部修复: 'Local repair available',
-  局部修复受阻: 'Local repair blocked',
-  局部修复等待重试: 'Local repair waiting for retry',
-  局部修复预算耗尽: 'Local repair budget exhausted',
-  局部修复状态不可用: 'Local repair status unavailable',
+  'API 兜底已关闭': 'API fallback is off',
+  '可尝试 API 兜底': 'API fallback available',
+  'API 兜底受阻': 'API fallback blocked',
+  'API 兜底等待重试': 'API fallback waiting for retry',
+  'API 兜底预算耗尽': 'API fallback budget exhausted',
+  'API 兜底状态不可用': 'API fallback status unavailable',
+  '本任务不使用 API 兜底。': 'This task does not use API fallback.',
   '授权写入结果尚未确认。请先刷新核对任务和配置，不要重复提交。':
     'The authorization write is unconfirmed. Refresh the task and settings first; do not resubmit.',
   '任务、配置或授权已改变。请先刷新核对，不会自动重试授权。':

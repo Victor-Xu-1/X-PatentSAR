@@ -1724,6 +1724,13 @@ remain authoritative. API/OOM/infrastructure failures never enter an escalation
 loop. No whole-PDF upload, numerical repair, local LLM or extra artifact writer is
 introduced; model/API correctness still requires consented real-provider testing.
 
+The existing on-demand task recovery view identifies this explicitly as an API
+fallback. A frozen OFF policy is a neutral disabled state, not a provider failure;
+it has no actionable quota or retry display. Actual blocked, cooldown, exhausted
+and unavailable states keep their redacted reasons and observed limits. Unknown
+reason codes remain explicit safe diagnostics, never raw provider text. Locale
+switching changes presentation only and cannot renew, enable, resume or call an API.
+
 The same client validates evidence content before caching and on cache hits;
 namespace identity includes the consumer validation contract. Rejected entries
 are removed only by key plus observed content, never a concurrent replacement.

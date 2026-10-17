@@ -40,6 +40,12 @@ test.afterAll(async () => {
   await fixtureServer?.close();
 });
 
+test.beforeEach(async ({ page }) => {
+  // Legacy consent scenarios intentionally exercise Chinese; the new off-policy
+  // checks switch the same live component through both supported languages.
+  await page.addInitScript(() => localStorage.setItem('x-patentsar.locale', 'zh-CN'));
+});
+
 async function transport(page: Page, failure?: 'conflict' | 'uncertain', syntheticFailure = false) {
   const writes: { path: string; body: unknown }[] = [];
   const reads: string[] = [];
@@ -137,6 +143,40 @@ async function noOverflow(page: Page) {
   }
 }
 
+for (const width of [390, 1672]) {
+  test(`intentional API-off stays neutral and bilingual at ${width}px`, async ({ page }, info) => {
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const protocol = await transport(page);
+    await page.setViewportSize({ width, height: 942 });
+    await page.goto(`${origin}/e2e/llm-recovery.fixture.html?off`);
+    await page.locator('summary[aria-label="任务详情"]').click();
+    const region = page.locator('.llm-recovery');
+    await expect(region.getByRole('heading', { name: 'API 兜底已关闭' })).toBeVisible();
+    await expect(region).toContainText('本任务不使用 API 兜底。');
+    await expect(region).not.toContainText(/维护者|检查配置|剩余调用|重试等待/);
+    await expect(region.getByRole('button')).toHaveCount(0);
+    await noOverflow(page);
+    await page.getByLabel('界面语言').selectOption('en');
+    await expect(page.getByRole('region', { name: 'LLM API fallback' })).toBeVisible();
+    await expect(region.getByRole('heading', { name: 'API fallback is off' })).toBeVisible();
+    await expect(region).toContainText('This task does not use API fallback.');
+    await expect(region).not.toContainText(/Local repair|maintainer|Remaining calls|retry/i);
+    await expect(region.getByRole('link', { name: 'Configure LLM API' })).toHaveAttribute(
+      'href',
+      '#/settings',
+    );
+    await noOverflow(page);
+    await page.screenshot({ path: info.outputPath(`api-off-${width}.png`), fullPage: true });
+    await page.getByLabel('Interface language').selectOption('zh-CN');
+    await expect(region.getByRole('heading', { name: 'API 兜底已关闭' })).toBeVisible();
+    expect(protocol.writes).toEqual([]);
+    expect(protocol.reads).toEqual([]);
+    expect(protocol.unexpected).toEqual([]);
+    expect(errors).toEqual([]);
+  });
+}
+
 for (const width of [390, 800, 1672]) {
   test(`isolated recovery consent/cancel/success at ${width}px without model or auto-resume`, async ({
     page,
@@ -146,10 +186,10 @@ for (const width of [390, 800, 1672]) {
     const protocol = await transport(page);
     await page.setViewportSize({ width, height: 942 });
     await page.goto(`${origin}/e2e/llm-recovery.fixture.html`);
-    await expect(page.getByRole('region', { name: 'LLM 局部修复' })).toBeHidden();
+    await expect(page.getByRole('region', { name: 'LLM API 兜底' })).toBeHidden();
     expect(protocol.reads).toEqual([]);
     await page.locator('summary[aria-label="任务详情"]').click();
-    await expect(page.getByRole('region', { name: 'LLM 局部修复' })).toContainText('剩余调用 3 次');
+    await expect(page.getByRole('region', { name: 'LLM API 兜底' })).toContainText('剩余调用 3 次');
     await expect(page.getByRole('link', { name: '配置 LLM API' })).toHaveAttribute(
       'href',
       '#/settings',

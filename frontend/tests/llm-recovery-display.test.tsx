@@ -11,15 +11,68 @@ import { job, project } from './fixtures';
 import { recoveryJob, recoverySettings } from './llm-recovery-fixtures';
 
 describe('source-backed LLM recovery details only', () => {
+  it('renders intentional API-off as a neutral policy without quota or repair advice', () => {
+    const transport = vi.fn();
+    vi.stubGlobal('fetch', transport);
+    render(
+      <JobRecord
+        expanded
+        job={{
+          ...recoveryJob,
+          status: 'running',
+          can_resume: false,
+          llm_recovery: {
+            status: 'disabled',
+            reason: 'off',
+            remaining_calls: 8,
+            retry_after_seconds: null,
+            can_reauthorize: false,
+          },
+        }}
+      />,
+    );
+    const region = screen.getByRole('region', { name: 'LLM API 兜底' });
+    expect(within(region).getByRole('heading', { name: 'API 兜底已关闭' })).toBeVisible();
+    expect(region).toHaveTextContent('本任务不使用 API 兜底。');
+    expect(region).not.toHaveTextContent(/维护者|检查配置|剩余调用|重试等待/);
+    expect(within(region).getByRole('link', { name: '配置 LLM API' })).toHaveAttribute(
+      'href',
+      '#/settings',
+    );
+    expect(within(region).queryByRole('button')).not.toBeInTheDocument();
+    expect(transport).not.toHaveBeenCalled();
+  });
+
+  it('keeps an unknown disabled-state reason explicit without echoing it as provider text', () => {
+    render(
+      <JobRecord
+        expanded
+        job={{
+          ...recoveryJob,
+          llm_recovery: {
+            ...recoveryJob.llm_recovery!,
+            status: 'disabled',
+            reason: 'synthetic-sensitive-unknown-reason',
+            can_reauthorize: false,
+          },
+        }}
+      />,
+    );
+    const region = screen.getByRole('region', { name: 'LLM API 兜底' });
+    expect(region).toHaveTextContent('请检查配置或联系服务维护者。');
+    expect(region).not.toHaveTextContent('synthetic-sensitive-unknown-reason');
+    expect(region).not.toHaveTextContent('本任务不使用 API 兜底。');
+  });
+
   it('shows no fabricated recovery or repair zeroes for an old DTO', () => {
     render(<JobRecord job={job} expanded />);
-    expect(screen.queryByRole('region', { name: 'LLM 局部修复' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'LLM API 兜底' })).not.toBeInTheDocument();
     expect(screen.queryByText(/剩余调用|来源区域|待修复/)).not.toBeInTheDocument();
   });
 
   it('keeps real failure/budget and settings link inside on-demand task details', async () => {
     render(<JobRecord job={recoveryJob} />);
-    const region = screen.getByRole('region', { name: 'LLM 局部修复', hidden: true });
+    const region = screen.getByRole('region', { name: 'LLM API 兜底', hidden: true });
     expect(region).not.toBeVisible();
     await userEvent.click(screen.getByText('任务详情', { selector: 'summary' }));
     expect(region).toBeVisible();
@@ -48,7 +101,7 @@ describe('source-backed LLM recovery details only', () => {
         }}
       />,
     );
-    const region = screen.getByRole('region', { name: 'LLM 局部修复' });
+    const region = screen.getByRole('region', { name: 'LLM API 兜底' });
     expect(region).toHaveTextContent('剩余调用次数未知');
     expect(region).toHaveTextContent('重试等待时间未知');
     expect(region).not.toHaveTextContent('0 次');
@@ -71,7 +124,7 @@ describe('source-backed LLM recovery details only', () => {
         }}
       />,
     );
-    const region = screen.getByRole('region', { name: 'LLM 局部修复' });
+    const region = screen.getByRole('region', { name: 'LLM API 兜底' });
     expect(region).toHaveTextContent('预算耗尽');
     expect(region).toHaveTextContent('剩余调用 0 次');
     expect(region).toHaveTextContent('本次重试等待 45 秒（服务端观察）');
@@ -93,8 +146,8 @@ describe('source-backed LLM recovery details only', () => {
         }}
       />,
     );
-    const region = screen.getByRole('region', { name: 'LLM 局部修复' });
-    expect(region).toHaveTextContent('可尝试局部修复');
+    const region = screen.getByRole('region', { name: 'LLM API 兜底' });
+    expect(region).toHaveTextContent('可尝试 API 兜底');
     expect(region).not.toHaveTextContent('synthetic-sensitive-provider-error');
     expect(region).not.toHaveTextContent(/已修复|已验收|模型可用|模型验证通过/);
   });
