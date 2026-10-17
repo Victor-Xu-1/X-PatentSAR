@@ -99,18 +99,18 @@ for (const width of [390, 1672]) {
       mode = 'healthy';
       await expect(cancel).toBeEnabled();
       await expect(page.getByRole('alert')).toHaveCount(0);
-      const recoveryPositions = await page.evaluate(async () => {
-        const sampling = window as Window & { headerRecoveryFrames?: Promise<number[]> };
-        if (!sampling.headerRecoveryFrames) throw new Error('Header sampling was not installed');
-        return sampling.headerRecoveryFrames;
-      });
-      expect(Math.min(...recoveryPositions)).toBeGreaterThanOrEqual(0);
       expect(faults).toBe(2);
       expect(handshakes).toBe(initialHandshakes);
       await page.screenshot({
         path: info.outputPath('02-automatically-recovered.png'),
         animations: 'disabled',
       });
+      const recoveryPositions = await page.evaluate(async () => {
+        const sampling = window as Window & { headerRecoveryFrames?: Promise<number[]> };
+        if (!sampling.headerRecoveryFrames) throw new Error('Header sampling was not installed');
+        return sampling.headerRecoveryFrames;
+      });
+      expect(Math.min(...recoveryPositions)).toBeGreaterThanOrEqual(0);
 
       // Four logical reads (initial plus three bounded recoveries), each with
       // the existing client's two gateway attempts. No further task operation.
