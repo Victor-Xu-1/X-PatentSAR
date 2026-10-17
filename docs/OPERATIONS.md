@@ -1,5 +1,38 @@
 # Operations and troubleshooting
 
+## Failed-worker details and overlapping caption locators
+
+An unread page hint does not prove that a caption uses bare identifiers. Unknown
+catalogue roles use the original caption reader; a bare printed ID still needs
+the independent compound-role proof. This is not fuzzy label repair. Both producer
+and saved reader use one original-cell conflict rule, preserving known differing
+IDs, nonfinal roles and unknown prose. Detector pieces starting at a hyphen must
+match literal complete-ID characters once in physical order; zeros and letter
+suffixes cannot be removed or changed. No page observation is rewritten. Binding17/
+binder26/visible19/preparation7 covers the complete unpublished repair, not a second
+epoch increment for its internal commits.
+
+Failure details now retain the terminal exception rather than only the start of
+a traceback. The same existing private logger records a head/tail excerpt bounded
+to65536characters, and the existing raised error is bounded to1200characters.
+Use the owned run's log for diagnosis; do not publish private paths, source text
+or provider data. Whitespace stderr can use actual stdout, and an empty nonzero
+failure records its exit code. This improves diagnosis, not scientific acceptance,
+and does not prove the cause of a historical failure whose ending was discarded.
+No read, launch, upgrade or diagnostic check reruns a patent automatically.
+
+Current binding17/binder26/visible19/preparation7 require fresh derived caption
+proof. Only an exact same-role punctuation locator with qualified complete-ID
+right-boundary overlap can be excluded from literal comparison. Complete whole
+caption reading remains mandatory. Different IDs, independent native claims,
+weak/contained/disjoint boxes, nonfinal roles and missing geometry remain errors.
+Original detector words, raw OCR, images, graphs and manual revisions survive;
+activity16/25/12, SAR/API/SQL and dependencies remain unchanged. Controlled native
+pixel and actual subprocess cases cover this boundary, not universal recall or
+complete molecular identity. Complete focused, installed-package, CI, main and
+fixed18765 delivery before any authorized frontend-only real retry. Other open
+source/worker/chemical defects are not waived by this partial repair.
+
 ## Original catalogue roles and bare identifiers
 
 Current binding16/binder25/visible18/preparation6 requires fresh derived catalogue

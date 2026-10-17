@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 
 import fitz
 
+from patent_sar_extractor.core.caption_reading_proof import confirmed_caption_readings
 from patent_sar_extractor.core.cell_ocr_observation import observe_cell
 from patent_sar_extractor.core.page_ocr_cache import get_ocr_engine
 from patent_sar_extractor.core.table_cells import _normalize, read_cell
@@ -71,6 +72,47 @@ class FragmentedCaptionLineTests(unittest.TestCase):
 
 
 class FragmentedCaptionNativeTests(unittest.TestCase):
+    def test_actual_whole_pixel_read_replays_overlapping_role_locator_not_wrong_id(
+        self,
+    ):
+        engine = get_ocr_engine()[1]
+        for original_number, accepted in (("126B", True), ("126C", False)):
+
+            def fragmented(image, original_number=original_number, **options):
+                if options.get("use_det", True):
+                    height, width = image.shape[:2]
+                    return [
+                        detection("Compound /", 1, width * 0.75, bottom=height - 1),
+                        detection(
+                            original_number, width * 0.65, width - 1, bottom=height - 1
+                        ),
+                    ], 0
+                return engine(image, **options)
+
+            with fitz.open() as document:
+                page = document.new_page()
+                page.insert_text(
+                    (90, 110), "Compound 126B", fontsize=10, fontname="hebo"
+                )
+                with patch(
+                    "patent_sar_extractor.core.table_cells.get_ocr_engine",
+                    return_value=("rapidocr", fragmented),
+                ):
+                    reading = read_cell(page, (70, 95, 265, 124), [], "label", False)
+            with self.subTest(original_number=original_number):
+                self.assertEqual(
+                    reading.value, "126B" if accepted else "", reading.observations
+                )
+                self.assertEqual(
+                    reading.needs_review, not accepted, reading.observations
+                )
+                self.assertEqual(
+                    confirmed_caption_readings(
+                        "126B", reading.observations, {}, 1, [70, 95, 265, 124]
+                    ),
+                    accepted,
+                )
+
     def test_existing_engine_reads_original_pixels_after_controlled_detector_fragmentation(
         self,
     ):

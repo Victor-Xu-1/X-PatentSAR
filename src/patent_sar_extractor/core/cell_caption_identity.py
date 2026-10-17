@@ -8,6 +8,7 @@ from itertools import combinations
 from .cell_caption_fragments import (
     complete_caption_text,
     ordered_caption_fragments,
+    overlapping_role_locators,
     truncated_caption_boundary,
 )
 from .compound_caption import prefixed_label
@@ -16,6 +17,7 @@ from .printed_identifiers import (
     LABEL_PREFIX,
     identifier_fragments_conflict,
     identifier_key,
+    identifier_text,
 )
 from .source_section_roles import nonfinal_original_label
 
@@ -168,7 +170,9 @@ def refined_caption_conflicts(label, parts, detection_parts):
             raw,
             observed,
             boxes,
-            overlapping | overlapping_letters,
+            overlapping
+            | overlapping_letters
+            | (overlapping_role_locators(raw, observed, boxes) if refined else set()),
         )
     )
 
@@ -187,6 +191,10 @@ def caption_fragment_conflict(text, label):
     literal = identifier_key(text, terminal_period=True)
     if literal:
         return literal not in label
-    return any(char.isnumeric() for char in text) or identifier_fragments_conflict(
-        text, label
-    )
+    if any(char.isnumeric() for char in text):
+        # A detector may start a literal piece at a series hyphen. It has no
+        # complete-ID authority, but every original character and its physical
+        # order must still occur in the independently read whole identifier.
+        fragment = identifier_text(text).upper().removesuffix(".")
+        return not bool(re.fullmatch(r"[A-Z0-9-]+", fragment) and fragment in label)
+    return identifier_fragments_conflict(text, label)

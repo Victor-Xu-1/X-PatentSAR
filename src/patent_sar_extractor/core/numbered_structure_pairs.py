@@ -81,11 +81,9 @@ def _confirmed_observations(
         ):
             return False
         method = str(observation.get("method") or "")
-        original_caption = caption and method in {"native_cell", "page_ocr_cell"}
-        if (
-            method in {"native_cell", "page_ocr_cell"}
-            and "source_observation" in observation
-        ):
+        original_cell = method in {"native_cell", "page_ocr_cell"}
+        original_caption = caption and original_cell
+        if original_cell:
             status = cell_source_status(observation)
             if cell_source_conflict(observation, label, "label" if caption else "id"):
                 return False
@@ -98,8 +96,12 @@ def _confirmed_observations(
             if original_caption
             else _label(observation.get("text"))
         )
-        if not observed and identifier_fragments_conflict(
-            str(observation.get("text") or ""), label, caption=original_caption
+        if (
+            not observed
+            and not original_cell
+            and identifier_fragments_conflict(
+                str(observation.get("text") or ""), label, caption=original_caption
+            )
         ):
             return False
         if observed and observed != label:

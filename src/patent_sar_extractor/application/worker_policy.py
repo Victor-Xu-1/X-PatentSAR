@@ -18,6 +18,8 @@ from patent_sar_extractor.core.runtime_env import (
     tensorflow_cuda_caps_support_gpu as _tf_cuda_caps_support_gpu,
 )
 
+from .worker_diagnostics import worker_error_details
+
 logger = logging.getLogger("patent_sar_extractor")
 WORKING_ROOT = Path.cwd()
 _DECIMER_TF_GPU_SAFE: bool | None = None
@@ -150,7 +152,14 @@ def _run_activity_rules(
         "from patent_sar_extractor.core.activity_extractor import extract\n"
         "from patent_sar_extractor.application.header_resolution import make_header_resolver\n"
         f"resolver = make_header_resolver({pdf_path!r}, {output_dir!r}, {bindings_path!r})\n"
-        f"extract(pdf_path={pdf_path!r}, profile={profile!r}, output_dir={output_dir!r}, include_intermediates={bool(include_intermediates)!r}, header_resolver=resolver)\n"
+        f"profile = {profile!r}\n"
+        "extract(\n"
+        f"    pdf_path={pdf_path!r},\n"
+        "    profile=profile,\n"
+        f"    output_dir={output_dir!r},\n"
+        f"    include_intermediates={bool(include_intermediates)!r},\n"
+        "    header_resolver=resolver,\n"
+        ")\n"
     )
     timeout_seconds = _activity_timeout_seconds(classification)
     logger.info(
@@ -166,7 +175,7 @@ def _run_activity_rules(
             f"{timeout_seconds}s for {len(profile['activity_pages'])} classified activity pages"
         ) from exc
     if proc.returncode != 0:
-        err = (proc.stderr or proc.stdout or "").strip()[:1200]
+        err = worker_error_details(proc, "activity extraction")
         raise RuntimeError(f"activity extraction failed: {err}")
 
 

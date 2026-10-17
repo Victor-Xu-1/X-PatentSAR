@@ -5,7 +5,7 @@ from bisect import bisect_right
 
 from .activity_context_geometry import grid_box, validate_grid_axes
 from .activity_identity import is_id_header
-from .printed_identifiers import identifier_key
+from .printed_identifiers import LABEL_PREFIX, identifier_key
 from .source_cell_tokens import cell_text
 from .table_cells import prefixed_label
 
@@ -57,20 +57,18 @@ def caption_rows(region, tokens, boxes, role):
                 and role.get("table_key")
                 and not is_id_header(raw)
             )
-            prefixed = short and bool(
-                re.match(
-                    r"^(?:Compound|Example|Cmpd|Cpd|实施例|化合物)\b",
-                    raw,
-                    re.IGNORECASE,
-                )
-            )
+            prefixed = short and bool(re.match(LABEL_PREFIX, raw, re.IGNORECASE))
             if label or prefixed or bare or unresolved:
                 labels.append(
                     (
                         col,
                         label or identifier_key(raw),
                         cell,
-                        bare or unresolved and not prefixed and not label,
+                        bare
+                        or unresolved
+                        and role.get("role") == "compound"
+                        and not prefixed
+                        and not label,
                     )
                 )
             drawing |= (row, col) in drawings

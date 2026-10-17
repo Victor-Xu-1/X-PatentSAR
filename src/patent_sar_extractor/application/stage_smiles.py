@@ -51,6 +51,7 @@ from .smiles_policy import (
     _smiles_acceptance_errors,
     _smiles_results_can_be_reused,
 )
+from .worker_diagnostics import worker_error_details
 from .worker_policy import (
     _gpu_env_extra,
     _production_smiles_ocr_options,
@@ -206,7 +207,7 @@ def execute_smiles(state: PipelineContext) -> None:
                 stream_output=True,
             )
             if proc.returncode != 0:
-                err = (proc.stderr or proc.stdout or "").strip()[:1200]
+                err = worker_error_details(proc, "smiles")
                 raise RuntimeError(f"smiles failed: {err}")
         smiles_payload = _load_json(state.smiles_json, {})
         if not smiles_artifact_is_current(smiles_payload):

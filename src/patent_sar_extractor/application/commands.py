@@ -31,6 +31,7 @@ from .pipeline_io import (
 from .smiles_policy import (
     _smiles_acceptance_errors,
 )
+from .worker_diagnostics import worker_error_details
 from .worker_policy import (
     _gpu_env_extra,
 )
@@ -147,7 +148,7 @@ def cmd_smiles(args):
         stream_output=True,
     )
     if proc.returncode != 0:
-        err = (proc.stderr or proc.stdout or "").strip()[:1200]
+        err = worker_error_details(proc, "smiles")
         raise RuntimeError(f"smiles failed: {err}")
     smiles_payload = _load_json(output_json, {})
     smiles_results = smiles_records(smiles_payload)

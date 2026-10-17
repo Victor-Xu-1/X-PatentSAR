@@ -6,9 +6,52 @@ from itertools import combinations
 
 from .cell_ocr_line_groups import bounds, group_text_lines
 from .compound_caption import prefixed_label
-from .printed_identifiers import LABEL_PREFIX, identifier_key, identifier_width
+from .printed_identifiers import (
+    LABEL_KIND,
+    LABEL_PREFIX,
+    identifier_key,
+    identifier_width,
+)
 
 _ROLE = re.compile(rf"{LABEL_PREFIX}", re.IGNORECASE)
+_KIND = re.compile(LABEL_KIND, re.IGNORECASE)
+
+
+def overlapping_role_locators(raw, observed, boxes):
+    """Same-role punctuation may be a detector boundary, never an identifier.
+
+    The independently read whole caption and a qualified complete identifier
+    across that exact right edge must agree. Only the nonnumeric role locator is
+    exempted; every independent numeric/letter/complete-caption claim remains.
+    """
+    role = _KIND.match(raw)
+    label = prefixed_label(raw)
+    if role is None or not label:
+        return set()
+    locators = set()
+    for index, part in observed:
+        detected = _KIND.match(part["text"])
+        if (
+            detected is None
+            or detected.group().casefold() != role.group().casefold()
+            or any(char.isalnum() for char in part["text"][detected.end() :])
+        ):
+            continue
+        left = boxes[index]
+        for other_index, other in observed:
+            if (
+                other_index == index
+                or identifier_key(other["text"], terminal_period=True) != label
+            ):
+                continue
+            right = boxes[other_index]
+            height = min(left[3] - left[1], right[3] - right[1])
+            if (
+                left[0] < right[0] < left[2] - 1 < right[2] - 1
+                and min(left[3], right[3]) - max(left[1], right[1]) >= height / 2
+            ):
+                locators.add(index)
+    return locators
 
 
 def truncated_caption_boundary(label, index, observed, boxes):
