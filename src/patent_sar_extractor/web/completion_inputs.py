@@ -6,6 +6,7 @@ from pathlib import Path
 
 from patent_sar_extractor.contracts import MAX_RECOGNITION_SOURCES
 
+from .acceptance import current
 from .artifacts import ArtifactView
 from .compound_catalog import read_compound_catalog
 from .correction_recovery import saved_fields
@@ -28,6 +29,8 @@ def completion_inputs(project: dict, rows: dict, compounds: list) -> list[tuple]
             "source_identity",
             "Structure completion requires the verified original PDF.",
         )
+    if not current(view.payloads.get("bindings"), "bindings"):
+        return []  # Historical review is not consent or current source ownership.
     catalog, _ = read_compound_catalog(
         view.payloads.get("bindings") or {},
         records(view.payloads.get("structures"), "structures"),

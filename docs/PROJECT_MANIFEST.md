@@ -1,5 +1,18 @@
 # Project governance manifest
 
+- Historical source presentation: the shared catalogue reader's strict default
+  remains the only scientific ownership authority. The Web artifact projection
+  alone requests explicit unqualified historical review for non-current bindings;
+  bounded IDs/known images/raw aliases remain visible, never new confirmation.
+  Current-invalid proof, structural/type/budget and cross-owner errors still
+  refuse. Source completion and saved overlays require current bindings, including
+  when SMILES happens to have a current schema. Private historical review marker1
+  refreshes old historical views only; raw layoutv2/current manual edits remain
+  stable. Original files/manual audit/API1/SQLite1/scientific epochs,
+  primary engine and dependencies stay unchanged. The existing isolated browser
+  fixture now includes a historical source case; no real patent/model processing
+  or second source reader/store/queue is introduced.
+
 - Original-depiction recognition ownership: `RecognitionPlan` is the single
   source scheduling projection for the existing DECIMER/cache/QC worker. All
   primaries and proved reprints count toward one 25,000-source cap and workload
@@ -22,8 +35,7 @@
   observations, then performs read-only installed UI checks; no real model/PDF
   work or seed route is introduced. The explicit completion test family includes
   its source-boundary controls without global discovery or a larger CI selector
-  budget. Product
-  v0.2.32 is still one unpublished PR, not a release per checkpoint. Source-stereo3,
+  budget. Product release numbering counts merged PRs, not local checkpoints. Source-stereo3,
   raw observation2, public API1, SQLite1, models/dependencies and pipeline order
   remain. Native checks are not universal chemistry/recall or deployed acceptance.
 

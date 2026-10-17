@@ -81,7 +81,9 @@ export function CropDialog({
               })}
             </summary>
             <p className="muted">
-              {t('这些是经过编号与空间证据确认的重复出处，不作为另一个未关联化合物。')}
+              {compound.flags.includes('historical_identity')
+                ? t('历史原始记录的重复出处，尚未按当前规则核验。')
+                : t('这些是经过编号与空间证据确认的重复出处，不作为另一个未关联化合物。')}
             </p>
             {compound.additional_sources.map(
               (source, index) =>

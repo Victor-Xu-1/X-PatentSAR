@@ -1,6 +1,27 @@
 # X-PatentSAR architecture
 
-## Complete original-depiction recognition (unpublished v0.2.32)
+## Historical source review without current confirmation
+
+`catalog_reader.read_catalog_entries` retains strict scientific ownership by
+default. Only the Web projection explicitly selects `historical_review` for a
+non-current binding artifact. It preserves bounded original IDs, known images
+and raw repeated-source references, including numbered sources without activity;
+every returned historical source is marked unconfirmed/fail-closed. It never
+replays old proof as current confirmation. Structural/type/budget, duplicate-ID,
+known-image and cross-owner constraints remain. No original artifact is rewritten.
+
+`ArtifactView` uses this raw review for display, but never a current recognition
+plan for old bindings. Even a separately current SMILES packet cannot give old
+ownership current chemistry/properties. Existing-source completion and saved
+overlay source lookup require a current binding artifact. A private historical
+source-review marker1 rebuilds only old historical Web views. The current raw
+layout staysv2, so unchanged current sources do not stale valid manual edits for
+an archive-only repair. Original/manual audit remains immutable.
+Historical reference copy in the bilingual crop dialog says it is unvalidated,
+not that its old spatial proof is currently confirmed. Current malformed proof
+still refuses; this is not an acceptance fallback, schema retag or new extraction.
+
+## Complete original-depiction recognition
 
 `RecognitionPlan` in `core/ocsr/recognition_inputs.py` is the sole bounded work
 projection: ordered formal compounds, supplemental primary compounds for library

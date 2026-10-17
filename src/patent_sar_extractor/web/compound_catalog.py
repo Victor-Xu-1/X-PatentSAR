@@ -10,11 +10,16 @@ from .errors import WebError
 
 
 def read_compound_catalog(
-    payload: dict[str, Any], structures: list[dict[str, Any]]
+    payload: dict[str, Any],
+    structures: list[dict[str, Any]],
+    *,
+    historical_review: bool = False,
 ) -> tuple[list[dict[str, Any]] | None, set[str]]:
     try:
         return read_catalog_entries(
-            payload, {str(item.get("structure_id") or "") for item in structures}
+            payload,
+            {str(item.get("structure_id") or "") for item in structures},
+            historical_review=historical_review,
         )
     except ValueError as exc:
         raise WebError(422, "invalid_compound_catalog", str(exc)) from exc
