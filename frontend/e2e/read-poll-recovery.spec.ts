@@ -62,6 +62,9 @@ for (const width of [390, 1672]) {
       await page.goto(`/#/projects/${projectId}`);
       const cancel = page.getByRole('button', { name: /^(Cancel task|取消任务)$/ });
       await expect(cancel).toBeEnabled();
+      const headerTop = () =>
+        page.locator('.topbar').evaluate((element) => element.getBoundingClientRect().top);
+      await expect.poll(headerTop).toBeGreaterThanOrEqual(0);
       const initialHandshakes = handshakes;
       mode = 'transient';
       await expect(page.getByRole('alert')).toContainText('Controlled task read unavailable');
@@ -84,6 +87,7 @@ for (const width of [390, 1672]) {
       mode = 'healthy';
       await expect(cancel).toBeEnabled();
       await expect(page.getByRole('alert')).toHaveCount(0);
+      await expect.poll(headerTop, { timeout: 2000 }).toBeGreaterThanOrEqual(0);
       expect(faults).toBe(2);
       expect(handshakes).toBe(initialHandshakes);
       await page.screenshot({
