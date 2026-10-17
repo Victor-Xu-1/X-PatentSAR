@@ -1,5 +1,10 @@
 """Positive grid roles through the existing native/cell/coordinate OCR authority."""
 
+import hashlib
+from itertools import pairwise
+
+import numpy as np
+
 from .activity_grid_context import table_matrix
 from .activity_grid_role_proof import valid_role_scope
 from .activity_grid_roles import (
@@ -11,16 +16,13 @@ from .activity_grid_roles import (
 from .cell_ocr_observation import observe_cell
 from .page_ocr_cache import get_ocr_engine
 from .source_geometry import native_cell_text, native_region
-from .table_cells import cell_image
+from .table_cells import CellRenderLimit, cell_image
 
 
-def observe_characterization(page, region, tokens, prefix):
+def observe_role_cells(page, region, tokens, *, retain_frames=False):
+    """One cell observation carrier for closed grids and visible row fragments."""
     xs, ys = region["xs"], region["ys"]
     if (len(xs) - 1) * (len(ys) - 1) > MAX_ROLE_CELLS:
-        return None
-    # Cheap nomination never accepts a role; only complete original observations do.
-    initial = table_matrix(tokens, region)
-    if not nominate_characterization(initial, prefix):
         return None
     bounds = [xs[0], ys[0], xs[-1], ys[-1]]
     cells = [
@@ -35,10 +37,21 @@ def observe_characterization(page, region, tokens, prefix):
         ]
         for row in range(len(ys) - 1)
     ]
-    if any(declared_measurement(text) for row in hints for text in row):
-        return None
     observations = []
-    if native_region(tokens, bounds, bool(page.get_text("words"))):
+    frames = []
+    native = native_region(tokens, bounds, bool(page.get_text("words")))
+    if native and retain_frames:
+        for index, cell in enumerate(cells):
+            row, column = divmod(index, len(xs) - 1)
+            if not hints[row][column].strip():
+                try:
+                    image = cell_image(page, cell, 400)
+                except CellRenderLimit:
+                    return None
+                if np.any(image < 180):
+                    native = False
+                    break
+    if native:
         observed = [
             {
                 "method": "native_cell",
@@ -65,16 +78,29 @@ def observe_characterization(page, region, tokens, prefix):
                 for cell in cells
             ):
                 return None
-            observed = [
-                observe_cell(
-                    cell_image(page, cell, dpi),
-                    "header",
-                    dpi,
-                    engine[1],
-                    lambda text, _kind: text,
-                ).evidence(dpi, cell)
-                for cell in cells
-            ]
+            observed, rendered = [], []
+            for cell in cells:
+                try:
+                    image = cell_image(page, cell, dpi)
+                except CellRenderLimit:
+                    return None
+                observed.append(
+                    observe_cell(
+                        image,
+                        "header",
+                        dpi,
+                        engine[1],
+                        lambda text, _kind: text,
+                    ).evidence(dpi, cell)
+                )
+                if retain_frames:
+                    rendered.append(
+                        {
+                            "dpi": dpi,
+                            "shape": list(image.shape),
+                            "pixel_sha256": hashlib.sha256(image).hexdigest(),
+                        }
+                    )
             matrix = [
                 [
                     observed[row * (len(xs) - 1) + column]["text"]
@@ -85,16 +111,43 @@ def observe_characterization(page, region, tokens, prefix):
             observations.append(
                 {"method": f"cell_ocr_{dpi}dpi", "matrix": matrix, "cells": observed}
             )
+            if retain_frames:
+                frames.append(rendered)
+    return {
+        "xs": list(xs),
+        "ys": list(ys),
+        "native_hints": hints,
+        "observations": observations,
+        **({"rendered_frames": frames} if retain_frames else {}),
+    }
+
+
+def observe_characterization(page, region, tokens, prefix):
+    # Cheap nomination never accepts a role; only complete original observations do.
+    xs, ys = region["xs"], region["ys"]
+    if (len(xs) - 1) * (len(ys) - 1) > MAX_ROLE_CELLS:
+        return None
+    initial = table_matrix(tokens, region)
+    if not nominate_characterization(initial, prefix):
+        return None
+    if any(
+        declared_measurement(native_cell_text(tokens, (x0, y0, x1, y1)))
+        for x0, x1 in pairwise(xs)
+        for y0, y1 in pairwise(ys)
+    ):
+        return None
+    cells = observe_role_cells(page, region, tokens)
+    if cells is None:
+        return None
+    observations = cells["observations"]
     roles = characterization_roles(observations[0]["matrix"], prefix)
     if roles is None:
         return None
     proof = {
         "version": 1,
-        "xs": list(xs),
-        "ys": list(ys),
+        **cells,
         "prefix": prefix,
         "roles": roles,
-        "native_hints": hints,
-        "observations": observations,
     }
+    bounds = [xs[0], ys[0], xs[-1], ys[-1]]
     return proof if valid_role_scope({"bbox": bounds, "role_scope": proof}) else None

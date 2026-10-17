@@ -1,7 +1,29 @@
 # X-PatentSAR architecture
 
+Original open-row fragments remain in the same binding reference ledger(scope4),
+not a repair pipeline. `source_grid_edges` retains the existing rule detector's
+raw coordinates and exact rendered-page frame; visible page clipping never
+invents a horizontal rule. `source_role_fragments` observes each supported
+physical column once through the same role-cell SDK. Closed columns prove roles,
+not row completeness. Literal primary IDs are retained independently of method
+references; unknown/missing columns remain unresolved. Native empty cells with
+vector ink require the existing original OCR, not an invented blank.
+
+`source_fragment_context` covers all original text before/after the visible grid
+in bounded contiguous token chunks, without another page OCR pass or silent
+cutoff. `source_fragment_links` recomputes unique adjacent-page links from axes,
+qualified context and complete literal characterization roles. Page gaps, new
+titles, measurement conflicts, mismatched IDs/columns and competing links fail
+closed. Open facts remain separate source observations, never fabricated cell
+contents. Clearing saved issues/flags cannot clear unresolved fragments.
+`cell_frame_proof` now owns one shared heading/fragment pixel-frame validator;
+the former heading-private implementation is removed. Binding19/binder28 revise
+derived ownership only. Activity17/26/13, original raw observations, molecular
+assets, manual audit, SAR/API/SQL and dependencies remain unchanged. Two-page
+controls do not establish every possible multi-page layout or chemical accuracy.
+
 Original heading inventory uses the existing one source-binding writer and
-reference ledger, now version3. `source_section_roles` parses bounded literal
+reference ledger, now version4. `source_section_roles` parses bounded literal
 single/group declarations; `heading_line_windows` retains up to eight adjacent
 original title rows without joining identifier characters. Ranges, duplicate
 members and incomplete titles remain unresolved, never inferred compounds.
@@ -23,7 +45,7 @@ assignment is permitted. `heading_inventory` replays the complete saved ledger
 through writer/formal/catalog/Web/SAR; removed declarations, downgraded scopes,
 changed roles or unmapped members cannot be cleared by deleting saved issues.
 Known unproved headings do not start unrelated crop-label refinement. Candidate
-structures and original lines are indexed/reused by page. Binding18/binder27 and
+structures and original lines are indexed/reused by page. Binding19/binder28 and
 activity17/extractor26/coverage13 invalidate derived ownership/section semantics
 only. Raw page/model/crop assets, visible19/preparation7, manual audit, scientific
 graphs, SAR/API/SQL and dependencies remain unchanged. Historic artifacts are

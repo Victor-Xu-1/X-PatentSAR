@@ -22,6 +22,10 @@ from .source_observations import source_cell_observation
 from .source_section_roles import nonfinal_original_label
 
 
+class CellRenderLimit(ValueError):
+    """A valid original cell cannot be rendered within the fixed pixel budget."""
+
+
 @dataclass
 class CellReading:
     value: str
@@ -76,7 +80,7 @@ def cell_image(page, bounds, dpi: int) -> np.ndarray:
     matrix = fitz.Matrix(dpi / 72, dpi / 72)
     pixels = (clip * matrix).irect
     if pixels.width * pixels.height > 8_000_000:
-        raise ValueError("Original cell exceeds its rendered pixel budget")
+        raise CellRenderLimit("Original cell exceeds its rendered pixel budget")
     pix = page.get_pixmap(matrix=matrix, clip=clip, alpha=False)
     return np.frombuffer(pix.samples, dtype=np.uint8).reshape(
         pix.height, pix.width, pix.n

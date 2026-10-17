@@ -1,8 +1,28 @@
 # Operations and troubleshooting
 
+## Open original rows and adjacent continuations
+
+Binding19/binder28 require reference scope4 and every original rule-edge/fragment
+inventory, including empty or unresolved windows. Partial rows do not acquire
+invented bottom rules, primary IDs or missing text. Proved column roles preserve
+literal visible products and method references separately. Large cell-render
+limits retain an unresolved fragment, not a successful empty cell. Original
+native/raster observations, scores, pixel frames and blank evidence survive.
+
+Continuation requires a unique adjacent-page partner, compatible columns and
+roles, no intervening original title/context conflict, and positive complete
+characterization roles from the separately retained cell strings. Full boundary
+context is chunked rather than truncated. Gaps/new tables/unknown columns,
+conflicting IDs/assays, malformed scores/frames or ambiguous links stay rejected.
+Pure saved-source replay rederives unresolved rows even after saved issues are
+cleared. Raw PDF/OCR/model/crops and manual audit are never rewritten. Activity
+epochs17/26/13 and raw/visible/preparation/SAR/API/SQL/dependencies are unchanged.
+The usual scoped/installed/PR/main/fixed18765 delivery gates still apply; these
+source controls do not certify complete molecular or stereochemical accuracy.
+
 ## Complete original heading declarations
 
-Current Binding18/binder27 require source-reference scope3, including every
+Current Binding19/binder28 require source-reference scope4, including every
 retained heading declaration. Group and wrapped titles retain their original
 rows, IDs, geometry and source observations. Titles declare members, not diagram
 order: numbered captions must independently prove each picture's owner. Known
