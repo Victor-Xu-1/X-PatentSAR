@@ -15,6 +15,7 @@ from .source_window_chunks import (
     validate_source_window,
     window_source_tokens,
 )
+from .structure_column_context import column_context_band
 from .structure_column_scopes import original_column_axes, original_column_roles
 from .unruled_continuation_titles import (
     continuation_identity,
@@ -31,15 +32,16 @@ def continuation_axes(scope):
 
 def observe_continuation(page, tokens, nomination, anchor, parent):
     size = [page.rect.width, page.rect.height]
+    left, right = column_context_band(anchor)
     bounds = [
-        0,
+        left,
         max(0, nomination["bbox"][1] - 4),
-        size[0],
+        right,
         min(size[1], nomination["bbox"][3] + 4),
     ]
     reading = observe_role_cells(
         page,
-        {"xs": [0, size[0]], "ys": [bounds[1], bounds[3]]},
+        {"xs": [left, right], "ys": [bounds[1], bounds[3]]},
         tokens,
         retain_frames=True,
     )
@@ -118,10 +120,11 @@ def continuation_roles(scope):
     }:
         raise ValueError("Malformed original continuation caption")
     bounds = caption["bbox"]
+    left, right = column_context_band(anchor)
     if (
         not valid_box(bounds)
-        or bounds[0] != 0
-        or bounds[2] != size[0]
+        or bounds[0] != left
+        or bounds[2] != right
         or not 0 <= bounds[1] < bounds[3] < size[1]
     ):
         raise ValueError("Original continuation caption leaves its page")
@@ -139,7 +142,7 @@ def continuation_roles(scope):
             "Continuation nomination differs from complete original leading context"
         )
     box = caption["nomination"]["bbox"]
-    if bounds != [0, max(0, box[1] - 4), size[0], min(size[1], box[3] + 4)]:
+    if bounds != [left, max(0, box[1] - 4), right, min(size[1], box[3] + 4)]:
         raise ValueError("Original continuation caption clipping changed")
     if (
         anchor["page_no"] == scope["page_no"]
@@ -154,7 +157,7 @@ def continuation_roles(scope):
     )
     texts = original_header_readings(
         caption["role_cells"],
-        [0, size[0]],
+        [left, right],
         [bounds[1], bounds[3]],
         caption["sources"],
         identity=continuation_identity,
@@ -178,7 +181,7 @@ def continuation_roles(scope):
         # Exact same-page boundary and full shared-source conservation are
         # independently replayed against the registered parent region.
         return {**roles, "xs": xs, "ys": ys}
-    prefix = [0, 0, size[0], bounds[1]]
+    prefix = [left, 0, right, bounds[1]]
     for native in (False, True):
         prefix_tokens = window_source_tokens(
             scope["leading_context"], prefix, native=native

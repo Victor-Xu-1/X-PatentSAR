@@ -6,10 +6,10 @@ import fitz
 from unruled_structure_support import UnruledStructureControls
 
 from patent_sar_extractor.core.formal_structure import coverage_errors
+from patent_sar_extractor.core.logical_column_partitions import nominate_unruled_headers
 from patent_sar_extractor.core.source_document import document_sha256
 from patent_sar_extractor.core.table_geometry import page_tokens
 from patent_sar_extractor.core.unruled_structure_headers import (
-    nominate_unruled_headers,
     observe_unruled_header,
     unruled_header_roles,
 )

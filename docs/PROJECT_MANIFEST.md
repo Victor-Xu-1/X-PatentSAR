@@ -1,5 +1,20 @@
 # Project governance manifest
 
+- `logical_column_partitions` is the one original-word/caption partition
+  nominator. Complete original rows/prefixes, selected group indices and literal
+  bands are replayable internal scope facts,not invented printed grids. It is
+  shared by frame nomination, source capture and independent declarations.
+  `structure_column_context` owns one horizontal adapter across original and
+  continued scopes; caption roles, body ownership, prefix/gap and saved parent
+  checks use that same band. Full raw observations remain retained. Logical
+  captioned continuations keep original bounded title reads plus complete page
+  prefixes. Source ambiguity, missing observations and4096-scope overflow remain
+  explicit; there is no second extractor, fallback matcher or source writer.
+  These changes remain inside unpublished Binding20/binder29/scope6/v0.2.32,
+  without public API/SQL, raw/model/manual, dependency or queue changes. Related
+  native/raster/saved/Web/CI checks,review/main/18765 deployment and actual
+  frontend scientific acceptance remain separate required gates.
+
 - Parallel physical original scopes reuse the existing context_geometry and
   caption-role SDK; no new OCR/model/layout engine or second matcher is added.
   Declaration pages carry current page_grids once and saved replay verifies

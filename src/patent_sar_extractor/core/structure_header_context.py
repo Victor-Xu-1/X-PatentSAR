@@ -9,7 +9,18 @@ from .source_table_roles import observed_role
 from .source_window_chunks import observe_window_sources
 
 
-def observe_header_context(tokens, size, top, *, geometry=None):
+def observe_header_context(tokens, size, top, *, geometry=None, logical_window=None):
+    if logical_window is not None:
+        if geometry is not None:
+            raise ValueError(
+                "Logical source capture cannot declare physical grid context"
+            )
+        floor = max(0, top - 310)
+        return (
+            observe_window_sources(tokens, [0, floor, size[0], top])
+            if floor < top
+            else []
+        )
     if geometry is not None:
         floor = context_floor(geometry)
         return (
@@ -30,7 +41,9 @@ def observe_header_context(tokens, size, top, *, geometry=None):
     return observe_window_sources(tokens, bounds) if bounds else []
 
 
-def original_header_context_packets(contexts, top, width, *, geometry=None):
+def original_header_context_packets(
+    contexts, top, width, *, geometry=None, logical_window=None
+):
     if (
         not isinstance(contexts, list)
         or len(contexts) > 2
@@ -44,6 +57,10 @@ def original_header_context_packets(contexts, top, width, *, geometry=None):
         )
     ):
         raise ValueError("Malformed original structure-header title context")
+    if geometry is not None and logical_window is not None:
+        raise ValueError(
+            "Original logical windows cannot declare printed-grid geometry"
+        )
     if geometry is not None:
         floor = context_floor(geometry)
         if floor < top:
@@ -55,10 +72,24 @@ def original_header_context_packets(contexts, top, width, *, geometry=None):
             return project_caption_titles(contexts, geometry)
         if contexts:
             raise ValueError("Original zero-height header context is not empty")
+    if logical_window is not None:
+        floor = max(0, top - 310)
+        if floor < top:
+            if not contexts or any(
+                p["bbox"] != [0, floor, width, top] for p in contexts
+            ):
+                raise ValueError("Incomplete original logical-header context window")
+            return project_caption_titles(contexts, None, logical_window=logical_window)
+        if contexts:
+            raise ValueError("Original zero-height logical context is not empty")
     return [p for p in contexts if p["text"].strip()]
 
 
-def original_header_context_role(contexts, top, width, *, geometry=None):
+def original_header_context_role(
+    contexts, top, width, *, geometry=None, logical_window=None
+):
     return observed_role(
-        original_header_context_packets(contexts, top, width, geometry=geometry)
+        original_header_context_packets(
+            contexts, top, width, geometry=geometry, logical_window=logical_window
+        )
     )

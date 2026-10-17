@@ -50,7 +50,9 @@ def shared_caption_allowed(domains, region):
 def prefix_parts(tokens, region):
     """Keep complete owned captions and column-local conditions unchanged."""
     geometry = region.get("context_geometry")
-    band = context_band(geometry) if geometry is not None else None
+    band = (
+        context_band(geometry) if geometry is not None else region.get("original_band")
+    )
     original = _window_parts(tokens, region)
     allowed = region.get("allow_shared_caption")
     if allowed is None:

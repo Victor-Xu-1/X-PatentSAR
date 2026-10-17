@@ -1,5 +1,29 @@
 # X-PatentSAR architecture
 
+Logical parallel columns use `logical_column_partitions`, the sole literal
+header/caption nominator. Every scope keeps the complete original header row,
+its selected group indices and original caption-derived horizontal band. These
+are clipping domains, never fabricated printed grid axes. Partitioned scopes
+retain the complete bounded310-point original prefix, including independently
+positioned titles at different heights. Saved replay rederives the partition;
+an omitted neighbour, crossing group, changed band or missing context cannot
+retain a prior successful role. One global title retains the existing global
+interpretation. Overlapping/ambiguous titles and inventories beyond4096 scopes
+are not repaired by guessing or truncation. Independent declarations reuse the
+same nomination, not successful binding results.
+
+`structure_column_context` is the single horizontal adapter for original ruled,
+logical and continued scopes. Complete raw contexts remain unchanged while role,
+catalogue, body, running-prefix and parent-gap consumers project the same owned
+band. Headerless physical continuations still require actual rules and one
+registered parent; explicitly captioned logical continuations reread their own
+original caption window and conserve the full page prefix separately. Opposite
+column experiments/drawings cannot block a proved independent column, but any
+intersecting unowned drawing, unknown gap, missing row or foreign parent remains
+review. Repeated-header suppression also requires the exact original table key
+and caption column. Native/raster, saved-proof and Web-consumer checks cover these
+cases; they do not certify all layouts, chemical graphs or real-patent recall.
+
 Explicit parallel physical tables use the existing original-grid context SDK
 and caption projection, shared with activity/caption extraction. Each ruled
 header records bounded context_geometry; complete page text/grid/diagram facts

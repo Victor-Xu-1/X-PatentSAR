@@ -1,6 +1,7 @@
 """One original title projection for capture and saved catalogue-role replay."""
 
 from .activity_caption_windows import prefix_parts, shared_caption_allowed
+from .activity_context_geometry import valid_box
 from .source_observations import project_source_observation, source_observation_status
 from .source_table_markers import TABLE_CAPTION_START
 
@@ -35,7 +36,7 @@ def _title_packet(packet, region):
     return projected
 
 
-def project_caption_titles(sources, geometry):
+def project_caption_titles(sources, geometry, *, logical_window=None):
     if not isinstance(sources, list) or not 1 <= len(sources) <= 2:
         raise ValueError("Malformed original caption context inventory")
     for packet in sources:
@@ -44,15 +45,22 @@ def project_caption_titles(sources, geometry):
             == "invalid"
         ):
             raise ValueError("Invalid original caption context observation")
-    box = geometry["table_bbox"]
+    if geometry is not None and logical_window is not None:
+        raise ValueError("Original logical windows are not printed-grid geometry")
+    box = geometry["table_bbox"] if geometry is not None else logical_window
+    if not valid_box(box):
+        raise ValueError("Invalid original caption projection window")
     region = {
         "xs": [box[0], box[2]],
         "ys": [box[1], box[3]],
-        "context_geometry": geometry,
     }
-    region["allow_shared_caption"] = shared_caption_allowed(
-        (packet["tokens"] for packet in sources), region
-    )
+    if geometry is None:
+        region.update(original_band=[box[0], box[2]], allow_shared_caption=False)
+    else:
+        region["context_geometry"] = geometry
+        region["allow_shared_caption"] = shared_caption_allowed(
+            (packet["tokens"] for packet in sources), region
+        )
     return [
         part
         for packet in sources

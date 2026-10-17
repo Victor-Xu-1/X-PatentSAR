@@ -9,6 +9,7 @@ from .source_window_chunks import (
     project_source_window,
     validate_source_window,
 )
+from .structure_column_context import column_context_band
 from .structure_column_scopes import original_column_roles, original_columns_fit_frame
 
 KIND = "continued_ruled_columns"
@@ -74,7 +75,8 @@ def physical_continuation_roles(scope):
     floor = scope["context_start"]
     if type(floor) not in {int, float} or not 0 <= floor <= grid["ys"][0]:
         raise ValueError("Invalid original physical continuation gap")
-    window = [0, floor, size[0], grid["ys"][0]]
+    left, right = column_context_band(scope)
+    window = [left, floor, right, grid["ys"][0]]
     anchor, parent = scope["anchor_scope"], scope["parent_region_id"]
     if (
         not isinstance(parent, str)

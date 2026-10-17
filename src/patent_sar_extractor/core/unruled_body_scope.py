@@ -1,12 +1,12 @@
 """Column adapters over the sole original body-context and diagram authority."""
 
-from .activity_context_geometry import context_band, context_region, grid_box
 from .source_body_context import (
     intersecting_source_diagrams,
     original_context_extent,
     validate_page_diagrams,
 )
 from .source_window_chunks import project_source_window
+from .structure_column_context import column_context_band
 from .structure_table_headers import structure_column_pairs
 from .unruled_scope import scope_axes, scope_body_top, scope_headers
 
@@ -18,15 +18,8 @@ def body_context_window(scope):
 def column_context_window(scope):
     """Derive ownership from the shared original-grid context SDK, not page y."""
     complete = body_context_window(scope)
-    geometry = scope.get("context_geometry")
-    if scope.get("kind") == "continued_ruled_columns":
-        geometry = context_region(
-            scope["grid_axes"], [grid_box(grid) for grid in scope["page_grids"]]
-        )["context_geometry"]
-    if geometry is None:
-        return complete
-    left, right = context_band(geometry)
-    return [max(0, left), complete[1], min(complete[2], right), complete[3]]
+    left, right = column_context_band(scope)
+    return [left, complete[1], right, complete[3]]
 
 
 def original_body_extent(scope, chunks, diagrams):
@@ -50,6 +43,7 @@ def original_body_extent(scope, chunks, diagrams):
                     grid["ys"][0]
                     for grid in scope["page_grids"]
                     if grid["ys"][0] >= scope_body_top(scope)
+                    and min(grid["xs"][-1], window[2]) > max(grid["xs"][0], window[0])
                 ],
             ]
         )

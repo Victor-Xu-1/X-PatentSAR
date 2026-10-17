@@ -5,6 +5,7 @@ from itertools import pairwise
 
 from .activity_context_geometry import valid_box
 from .activity_grid_role_observation import observe_role_cells
+from .logical_column_partitions import MAX_COLUMNS, context_captions, header_partitions
 from .ruled_continuation_context import validate_page_grid
 from .source_cell_tokens import cell_lines
 from .source_geometry import SourceTokens
@@ -17,22 +18,8 @@ from .structure_header_context import (
 from .structure_table_headers import header_groups, structure_column_pairs
 from .unruled_header_readings import original_header_readings
 
-MAX_COLUMNS = 64
 
-
-def nominate_unruled_headers(tokens, page_size):
-    bounds = [0, 0, *page_size]
-    output = []
-    for line in cell_lines(tokens, bounds):
-        groups = header_groups(line)
-        if 2 <= len(groups) <= MAX_COLUMNS and structure_column_pairs(
-            [g["text"] for g in groups]
-        ):
-            output.append(groups)
-    return output
-
-
-def header_windows(groups, page_size):
+def header_windows(groups, page_size, selection=None, band=None):
     if not 2 <= len(groups) <= MAX_COLUMNS:
         raise ValueError("Unruled original header exceeds its column bound")
     boxes = [group["bbox"] for group in groups]
@@ -40,7 +27,23 @@ def header_windows(groups, page_size):
         a[2] >= b[0] for a, b in pairwise(boxes)
     ):
         raise ValueError("Unruled original header columns overlap")
-    xs = [0, *[(a[2] + b[0]) / 2 for a, b in pairwise(boxes)], page_size[0]]
+    selection = [0, len(groups)] if selection is None else selection
+    band = [0, page_size[0]] if band is None else band
+    if (
+        not isinstance(selection, list)
+        or len(selection) != 2
+        or any(type(i) is not int for i in selection)
+        or not 0 <= selection[0] < selection[1] <= len(groups)
+        or not isinstance(band, list)
+        or len(band) != 2
+        or any(type(x) not in {int, float} for x in band)
+        or not 0 <= band[0] < band[1] <= page_size[0]
+    ):
+        raise ValueError("Invalid original logical column selection")
+    chosen = boxes[selection[0] : selection[1]]
+    if any(not band[0] <= box[0] < box[2] <= band[1] for box in chosen):
+        raise ValueError("Original logical header leaves its declared source band")
+    xs = [band[0], *[(a[2] + b[0]) / 2 for a, b in pairwise(chosen)], band[1]]
     ys = [
         max(0, min(b[1] for b in boxes) - 4),
         min(page_size[1], max(b[3] for b in boxes) + 4),
@@ -53,12 +56,13 @@ def header_windows(groups, page_size):
     return xs, ys
 
 
-def observe_unruled_header(page, tokens, groups, original_pdf_sha256, *, grids=()):
+def observe_unruled_header(page, tokens, nomination, original_pdf_sha256, *, grids=()):
     if not isinstance(tokens, SourceTokens):
         raise TypeError("Unruled columns require original source tokens")
     size = [page.rect.width, page.rect.height]
-    xs, ys = header_windows(groups, size)
-    bounds = [xs[0], ys[0], xs[-1], ys[-1]]
+    groups = nomination["groups"]
+    xs, ys = header_windows(groups, size, nomination["selection"], nomination["band"])
+    bounds = [0, ys[0], size[0], ys[-1]]
     reading = observe_role_cells(page, {"xs": xs, "ys": ys}, tokens, retain_frames=True)
     if reading is None:
         return None
@@ -69,8 +73,17 @@ def observe_unruled_header(page, tokens, groups, original_pdf_sha256, *, grids=(
         "page_size": size,
         "page_grids": list(grids),
         "nomination": groups,
+        "column_selection": nomination["selection"],
+        "column_band": nomination["band"],
         "source_observations": observe_window_sources(tokens, bounds),
-        "context_sources": observe_header_context(tokens, size, ys[0]),
+        "context_sources": observe_header_context(
+            tokens,
+            size,
+            ys[0],
+            logical_window=[xs[0], ys[0], xs[-1], ys[-1]]
+            if nomination["band"] != [0, size[0]]
+            else None,
+        ),
         "role_cells": reading,
     }
 
@@ -84,6 +97,8 @@ def unruled_header_roles(scope):
         "page_size",
         "page_grids",
         "nomination",
+        "column_selection",
+        "column_band",
         "source_observations",
         "context_sources",
         "role_cells",
@@ -117,8 +132,9 @@ def unruled_header_roles(scope):
         for g in groups
     ):
         raise ValueError("Malformed original header nomination")
-    xs, ys = header_windows(groups, size)
-    bounds = [xs[0], ys[0], xs[-1], ys[-1]]
+    selection, band = scope["column_selection"], scope["column_band"]
+    xs, ys = header_windows(groups, size, selection, band)
+    bounds = [0, ys[0], size[0], ys[-1]]
     sources = scope["source_observations"]
     if (
         not isinstance(sources, list)
@@ -140,10 +156,23 @@ def unruled_header_roles(scope):
     ]
     if groups not in observed_groups:
         raise ValueError("Original unruled header nomination differs from its source")
+    role, _ = original_header_context_role(
+        scope["context_sources"],
+        ys[0],
+        size[0],
+        logical_window=[xs[0], ys[0], xs[-1], ys[-1]] if band != [0, size[0]] else None,
+    )
+    if {
+        "groups": groups,
+        "selection": selection,
+        "band": band,
+    } not in header_partitions(
+        groups, context_captions(scope["context_sources"], size), size, ys[0]
+    ):
+        raise ValueError("Original logical partition differs from its complete source")
     headers = original_header_readings(scope["role_cells"], xs, ys, sources)
     if headers is None:
         return None
-    role, _ = original_header_context_role(scope["context_sources"], ys[0], size[0])
     if role in {"mixed", "conflict"}:
         return None
     pairs = structure_column_pairs(headers)

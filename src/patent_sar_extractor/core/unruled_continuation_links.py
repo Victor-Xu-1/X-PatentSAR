@@ -4,13 +4,14 @@ from collections import defaultdict
 
 from .activity_context_geometry import valid_box
 from .printed_identifiers import identifier_key
+from .source_body_context import intersecting_source_diagrams
 from .source_cell_tokens import cell_lines, cell_text
 from .source_window_chunks import (
     validate_source_overlap,
     validate_source_window,
     window_source_tokens,
 )
-from .unruled_body_scope import body_context_window
+from .unruled_body_scope import body_context_window, column_context_window
 from .unruled_continuation_titles import (
     anchor_scope,
     continuation_identity,
@@ -45,7 +46,13 @@ def compatible_diagram_scope(parent, scope, diagrams):
     prior = parent["source"]
     if parent["page_no"] == scope["page_no"]:
         return diagrams == prior["page_diagrams"]
-    return not any(d["bbox"][1] < scope_axes(scope)[1][1] for d in diagrams)
+    window = column_context_window(scope)
+    return not any(
+        d["bbox"][1] < scope_axes(scope)[1][1]
+        for d in intersecting_source_diagrams(
+            diagrams, [window[0], 0, window[2], window[3]]
+        )
+    )
 
 
 def validate_continuation_links(sections):
@@ -91,9 +98,12 @@ def validate_continuation_links(sections):
 
 
 def repeated_header_covers(scope, diagrams, nomination):
+    identity = continuation_identity(nomination["text"])
     if (
         scope.get("kind") in {"continued_unruled_columns", "continued_ruled_columns"}
         or scope_roles(scope) is None
+        or identity is None
+        or identity[0] != qualified_table_key(scope)
     ):
         return False
     sources = scope["context_sources"]
@@ -102,6 +112,9 @@ def repeated_header_covers(scope, diagrams, nomination):
     chunks = [{"bbox": sources[0]["bbox"], "sources": sources}]
     validate_source_window(chunks, sources[0]["bbox"])
     nom_box = nomination["bbox"]
+    owned = column_context_window(scope)
+    if not owned[0] <= nom_box[0] < nom_box[2] <= owned[2]:
+        return False
     if not sources[0]["bbox"][1] <= nom_box[1] < nom_box[3] <= sources[0]["bbox"][3]:
         return False
     tokens = window_source_tokens(chunks, sources[0]["bbox"])
@@ -112,10 +125,10 @@ def repeated_header_covers(scope, diagrams, nomination):
     ):
         return False
     xs, ys = scope_axes(scope)
-    gap = [0, nom_box[3], scope["page_size"][0], ys[0]]
+    gap = [owned[0], nom_box[3], owned[2], ys[0]]
     if not valid_box(gap):
         return False
-    if any(min(gap[3], d["bbox"][3]) > max(gap[1], d["bbox"][1]) for d in diagrams):
+    if intersecting_source_diagrams(diagrams, gap):
         return False
     for native in (False, True):
         parts = window_source_tokens(chunks, gap, native=native)

@@ -7,6 +7,7 @@ from .activity_context_geometry import grid_axes
 from .activity_header_evidence import proof_id
 from .caption_role_observation import owns_caption_frame
 from .caption_role_semantics import has_continuation_caption
+from .logical_column_partitions import nominate_unruled_headers, nomination_groups
 from .numbered_structure_models import NumberedTableIssue
 from .ruled_column_continuation import observe_physical_continuation
 from .ruled_continuation_links import (
@@ -42,10 +43,7 @@ from .unruled_continuation_titles import (
 )
 from .unruled_region_observation import observe_region
 from .unruled_scope import scope_axes
-from .unruled_structure_headers import (
-    nominate_unruled_headers,
-    observe_unruled_header,
-)
+from .unruled_structure_headers import observe_unruled_header
 from .unruled_structure_layout import pair_evidence, region_plan
 
 
@@ -124,8 +122,8 @@ def observe_unruled_tables(
             )
         ]
         nominees = [
-            groups
-            for groups in nominate_unruled_headers(tokens, size)
+            nomination
+            for nomination in nominate_unruled_headers(tokens, size)
             if not all(
                 any(
                     grid["xs"][0] <= group["bbox"][0]
@@ -136,7 +134,7 @@ def observe_unruled_tables(
                     <= grid["ys"][-1]
                     for grid in physical
                 )
-                for group in groups
+                for group in nomination_groups(nomination)
             )
         ]
         captions = continuation_nominees(tokens, size)
@@ -146,9 +144,9 @@ def observe_unruled_tables(
         headers = []
         if original_sha is None and (nominees or physical or pending):
             original_sha = document_sha256(doc)
-        for groups in nominees:
+        for nomination in nominees:
             header = observe_unruled_header(
-                page, tokens, groups, original_sha, grids=grids
+                page, tokens, nomination, original_sha, grids=grids
             )
             if header is None:
                 raise ValueError(

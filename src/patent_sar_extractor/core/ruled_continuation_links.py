@@ -4,10 +4,14 @@ from collections import defaultdict
 
 from .ruled_column_continuation import KIND, physical_continuation_roles
 from .ruled_continuation_context import qualified_running_window
-from .source_body_context import contained_source_diagrams
+from .source_body_context import contained_source_diagrams, intersecting_source_diagrams
 from .source_window_chunks import project_source_window, validate_source_overlap
 from .structure_column_scopes import original_columns_fit_frame
-from .unruled_body_scope import body_context_window, column_body_extent
+from .unruled_body_scope import (
+    body_context_window,
+    column_body_extent,
+    column_context_window,
+)
 from .unruled_continuation_titles import anchor_scope
 from .unruled_scope import scope_roles
 
@@ -38,6 +42,13 @@ def _qualified_parent_gap(section, scope, diagrams, roles):
     extent = column_body_extent(source)
     same_page = section["page_no"] == scope["page_no"]
     tail = _source_tail(source)
+    previous_window, current_window = (
+        column_context_window(prior),
+        column_context_window(scope),
+    )
+    current_diagrams = intersecting_source_diagrams(
+        diagrams, [current_window[0], 0, current_window[2], scope["page_size"][1]]
+    )
     if same_page:
         if tail > grid["ys"][0] or extent["trusted_bottom"] < grid["ys"][0]:
             return False
@@ -46,15 +57,18 @@ def _qualified_parent_gap(section, scope, diagrams, roles):
             observed != frame
             and observed["ys"][0] < grid["ys"][0]
             and observed["ys"][-1] > tail
+            and min(observed["xs"][-1], previous_window[2])
+            > max(observed["xs"][0], previous_window[0])
             for observed in scope["page_grids"]
         ) or any(
-            d["bbox"][1] < grid["ys"][0] and d["bbox"][3] > tail for d in diagrams
+            d["bbox"][1] < grid["ys"][0] and d["bbox"][3] > tail
+            for d in current_diagrams
         ):
             return False
-        window = [0, tail, prior["page_size"][0], grid["ys"][0]]
+        window = [previous_window[0], tail, previous_window[2], grid["ys"][0]]
     else:
         if extent["trusted_bottom"] != prior["page_size"][1] or any(
-            d["bbox"][1] < grid["ys"][0] for d in diagrams
+            d["bbox"][1] < grid["ys"][0] for d in current_diagrams
         ):
             return False
         if frame is None:
@@ -66,10 +80,12 @@ def _qualified_parent_gap(section, scope, diagrams, roles):
             )
         if any(
             d["bbox"][1] >= body_context_window(prior)[1] and d not in owned
-            for d in source["page_diagrams"]
+            for d in intersecting_source_diagrams(
+                source["page_diagrams"], previous_window
+            )
         ):
             return False
-        window = [0, tail, prior["page_size"][0], prior["page_size"][1]]
+        window = [previous_window[0], tail, previous_window[2], prior["page_size"][1]]
     chunks = (
         project_source_window(
             source["body_context"], body_context_window(prior), window

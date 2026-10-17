@@ -4,6 +4,7 @@ import re
 
 from .activity_context_geometry import context_band
 from .caption_role_semantics import catalog_title_role
+from .logical_column_partitions import caption_logical_band, nominate_unruled_headers
 from .printed_identifiers import identifier_key
 from .ruled_continuation_context import validate_page_grid
 from .source_body_context import (
@@ -138,11 +139,17 @@ def declaration_scopes(source):
     page_source_id = proof_id(source)
     output = []
     captions = table_caption_nominees(lanes[0], size, native_tokens=lanes[1])
+    logical_headers = nominate_unruled_headers(lanes[0], size, native_tokens=lanes[1])
     for caption in captions:
         if box_inside_drawing(caption["bbox"], source["page_diagrams"]):
             continue  # Drawing annotations do not introduce a page table role.
         geometry = caption_context_geometry(caption, captions, source["page_grids"])
-        left, right = context_band(geometry) if geometry is not None else (0, size[0])
+        left, right = (
+            context_band(geometry)
+            if geometry is not None
+            else caption_logical_band(caption, captions, logical_headers, size)
+            or [0, size[0]]
+        )
         band = [max(0, left), min(size[0], right)]
         title = _title_window(caption, lanes, size, band)
         if title[3] >= size[1]:

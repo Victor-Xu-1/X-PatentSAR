@@ -4,6 +4,7 @@ from .activity_header_identity import (
     measurement_header_identity,
     measurement_header_roles,
 )
+from .logical_column_partitions import nominate_unruled_headers, nomination_groups
 from .ruled_continuation_context import validate_page_grid
 from .ruled_structure_headers import observe_ruled_header
 from .source_body_context import contained_source_diagrams
@@ -15,7 +16,6 @@ from .structure_table_headers import (
 )
 from .unruled_continuation_titles import anchor_scope
 from .unruled_header_readings import original_header_readings
-from .unruled_structure_headers import nominate_unruled_headers
 
 
 def nominate_physical_frames(tokens, grids, diagrams, previous, size):
@@ -57,7 +57,8 @@ def nominate_physical_frames(tokens, grids, diagrams, previous, size):
                     left <= group["bbox"][0] < group["bbox"][2] <= right
                     for group, left, right in zip(groups, xs[:-1], xs[1:], strict=True)
                 )
-                for groups in logical_hints
+                for hint in logical_hints
+                for groups in [nomination_groups(hint)]
             )
         ):
             pending.append(grid)

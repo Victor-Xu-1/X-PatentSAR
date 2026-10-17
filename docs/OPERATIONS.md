@@ -2,6 +2,25 @@
 
 ## Original unruled structure columns
 
+Independent literal titles and complete header-word groups can establish logical
+parallel columns without printed borders, including titles at different heights.
+Every logical scope retains the whole original row and complete bounded prefix;
+saved replay must reproduce its group selection and column band. These windows
+are not table rules. A crossing header or contradictory original role is review,
+not an excuse to discard words, infer an ID or exclude a final product. A single
+shared title remains global. The source inventory limit is4096, with explicit
+overflow rather than silent partial extraction.
+
+Same/adjacent-page continuations project prefix, gaps and diagram checks through
+the same original column adapter. Printed headerless frames retain actual rows;
+captioned unruled parts reread their own title band while retaining full leading
+page observations. An independent experiment in the other column does not end
+this column. An unknown headerless prefix, contradictory declared context,
+missing graph/label, crossing rival or unproved/foreign parent must remain
+unresolved. Do not bypass those failures or
+borrow a neighbouring table key. Generated native/scanned and serialized checks
+are still not the frontend-only original-patent acceptance attempt.
+
 Parallel physical tables retain independent titles, table IDs and source roles
 through the shared grid-context/caption SDK. Full original observations stay
 available. A native/raster conflict in one column stays unresolved without
@@ -11,8 +30,8 @@ ID/title and the complete page-grid inventory. A single global intermediate titl
 still excludes its proved intermediate sources; an all-intermediate document
 remains refused for formal terminal-product processing. Explicit selected reprints
 retain all source assets, not discarded data or chemical-equivalence certification.
-Unknown unruled lateral partitions and other unsupported layouts still require
-further verification before real-patent retry or delivery.
+Other ambiguous partitions and unsupported layouts still require further
+verification before real-patent retry or delivery.
 
 Same-page headerless physical parts use their exact registered original gap.
 Do not bypass an intervening grid, drawing, assay or new experiment. The gap
