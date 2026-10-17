@@ -7,6 +7,7 @@ import json
 import os
 import sys
 import time
+from collections import Counter
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -67,6 +68,18 @@ def prepare(
                     "Example " + row["cpd"].split()[-1]
                 )
         binding_path.write_text(json.dumps(bindings))
+        # One explicitly unassociated adapter image exercises the REAL result
+        # projection. It is not a molecule or accepted extraction result.
+        structure_path = run / "structures/metadata.json"
+        structures = json.loads(structure_path.read_text())
+        structures["structures"].append(
+            {**structures["structures"][0], "structure_id": "preview-source"}
+        )
+        structures["total_structures"] = len(structures["structures"])
+        counts = Counter(row["page_no"] for row in structures["structures"])
+        for page in structures["source_inventory"]["pages"]:
+            page["candidates"] = counts[page["page_no"]]
+        structure_path.write_text(json.dumps(structures))
     state = workspace / "web-state"
     historical = import_run(
         state,

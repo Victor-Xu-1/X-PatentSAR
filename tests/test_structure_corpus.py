@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import csv
+import io
 import json
 import unittest
 from collections import Counter
@@ -11,6 +13,7 @@ from test_prediction_support import PredictionFixture
 from patent_sar_extractor.web.correction_models import CorrectionRequest
 from patent_sar_extractor.web.errors import WebError
 from patent_sar_extractor.web.exports import export_json
+from patent_sar_extractor.web.sar.project_inputs import project_inputs
 
 
 class StructureCorpusTests(PredictionFixture, unittest.TestCase):
@@ -32,6 +35,106 @@ class StructureCorpusTests(PredictionFixture, unittest.TestCase):
         path.write_text(json.dumps(payload))
         self.service.refresh(self.project.id)
         return self.service.results(self.project.id)
+
+    def test_generated_label_is_absent_from_identifier_choices_and_exports(self):
+        row = next(
+            item
+            for item in self.add_source().items
+            if item.record_kind == "structure_only"
+        )
+        files = {
+            path: path.read_bytes() for path in self.run.rglob("*") if path.is_file()
+        }
+        prefix = f"/api/v1/projects/{self.project.id}"
+        with self.client() as client:
+            rows = client.get(prefix + "/results").json()["items"]
+            actual = next(item for item in rows if item["id"] == row.id)
+            self.assertNotIn("identifier_label", actual)
+            self.assertEqual(actual["display_id"], row.display_id)
+            self.assertEqual(actual["structure_id"], row.structure_id)
+            choices = client.get(
+                prefix + "/filter-values", params={"column": "compound"}
+            )
+            self.assertEqual(choices.status_code, 200, choices.text)
+            self.assertNotIn(
+                row.display_id, {item["value"] for item in choices.json()["items"]}
+            )
+            response = client.post(
+                prefix + "/export", json={"format": "json", "compound_ids": [row.id]}
+            )
+            self.assertEqual(response.status_code, 200, response.text)
+            exported = response.json()["items"][0]
+            self.assertNotIn("identifier_label", exported)
+            self.assertEqual(exported["display_id"], row.display_id)
+            self.assertTrue(response.json()["review_only"])
+            csv_response = client.post(
+                prefix + "/export", json={"format": "csv", "compound_ids": [row.id]}
+            )
+            self.assertEqual(csv_response.status_code, 200, csv_response.text)
+            csv_row = next(
+                csv.DictReader(io.StringIO(csv_response.content.decode("utf-8-sig")))
+            )
+            self.assertEqual(csv_row["identifier_label"], "")
+            self.assertEqual(csv_row["compound_id"], row.id)
+            self.assertEqual(csv_row["display_id"], row.display_id)
+        self.assertEqual({path: path.read_bytes() for path in files}, files)
+
+    def test_effective_label_origin_survives_graph_edits_stale_renames_and_reset(self):
+        row = next(
+            item
+            for item in self.add_source().items
+            if item.record_kind == "structure_only"
+        )
+        self.service.corrections.on_save = None
+        files = {
+            path: path.read_bytes() for path in self.run.rglob("*") if path.is_file()
+        }
+
+        def save(**changes):
+            document = self.service.get_correction(self.project.id, row.id)
+            return self.service.put_correction(
+                self.project.id,
+                row.id,
+                CorrectionRequest(
+                    expected_revision=document.revision,
+                    expected_source_fingerprint=document.source_fingerprint,
+                    fields={**document.values.model_dump(), **changes},
+                ),
+            )
+
+        def current():
+            imported = project_inputs(self.service, self.project.id)[0]
+            self.assertNotIn(row.id, {item.source_compound_id for item in imported})
+            return next(
+                item
+                for item in self.service.compounds(self.project.id)
+                if item.id == row.id
+            )
+
+        save(smiles="CCO")
+        graph_edit = current()
+        self.assertTrue(graph_edit.correction.has_changes)
+        self.assertFalse(graph_edit.correction.identifier_changed)
+        self.assertIsNone(graph_edit.identifier_label)
+        self.assertEqual(graph_edit.display_id, row.display_id)
+        save(display_id="Reviewed original 008A")
+        renamed = current()
+        self.assertTrue(renamed.correction.identifier_changed)
+        self.assertEqual(renamed.identifier_label, "Reviewed original 008A")
+        self.service.refresh(self.project.id)
+        stale = current()
+        self.assertTrue(stale.correction.stale)
+        self.assertTrue(stale.correction.has_changes)
+        self.assertFalse(stale.correction.identifier_changed)
+        self.assertEqual(stale.display_id, row.display_id)
+        self.assertIsNone(stale.identifier_label)
+        document = self.service.get_correction(self.project.id, row.id)
+        save(**document.original.model_dump())
+        reset = current()
+        self.assertFalse(reset.correction.has_changes)
+        self.assertFalse(reset.correction.identifier_changed)
+        self.assertIsNone(reset.identifier_label)
+        self.assertEqual({path: path.read_bytes() for path in files}, files)
 
     def test_missing_candidate_inventory_is_rejected_without_discarding_observation(
         self,

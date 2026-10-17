@@ -9,10 +9,11 @@ import json
 import unittest
 from pathlib import Path
 
+from pydantic import ValidationError
 from test_web_support import WebFixture, artifact_run
 
 from patent_sar_extractor.web.identifier_labels import identifier_label
-from patent_sar_extractor.web.models import Compound
+from patent_sar_extractor.web.models import Compound, CorrectionMetadata
 from patent_sar_extractor.web.service import WorkspaceService, import_run
 from patent_sar_extractor.web.table_queries import matches
 from patent_sar_extractor.web.table_query_models import ColumnFilter
@@ -31,6 +32,73 @@ def compound(
 
 
 class IdentifierLabelTests(unittest.TestCase):
+    def pending(self, *, structure_id="S0192", suffix=""):
+        identity = "source-structure:" + "a" * 32 + suffix
+        reference = structure_id or identity.rsplit(":", 1)[-1][-8:]
+        return compound(identity, display=f"编号待确认 {reference}").model_copy(
+            update={
+                "structure_id": structure_id,
+                "record_kind": "structure_only",
+                "flags": ["unassociated_structure", "structure_number_unconfirmed"],
+            }
+        )
+
+    def test_generated_source_reference_is_not_a_literal_patent_identifier(self):
+        for structure_id, suffix in (("S0000", ""), (None, ""), (None, ":2")):
+            with self.subTest(structure_id=structure_id, suffix=suffix):
+                row = self.pending(structure_id=structure_id, suffix=suffix)
+                before = row.model_dump()
+                self.assertIsNone(identifier_label(row))
+                self.assertEqual(row.model_dump(), before)
+
+    def test_incomplete_generated_origin_and_literal_source_labels_are_preserved(self):
+        row = self.pending()
+        variants = (
+            {"id": "Compound 001A"},
+            {"id": "source-structure:" + "a" * 31},
+            {"record_kind": "activity_only"},
+            {"flags": ["unassociated_structure"]},
+            {"structure_id": "S0193"},
+            {"display_id": "编号待确认 User label"},
+            {"source": row.source.model_copy(update={"source_label": row.display_id})},
+        )
+        for updates in variants:
+            with self.subTest(updates=updates):
+                original = row.model_copy(update=updates)
+                self.assertEqual(identifier_label(original), original.display_id)
+
+    def test_unknown_legacy_manual_change_cannot_be_mistaken_for_generated_copy(self):
+        row = self.pending()
+        row.correction = CorrectionMetadata(
+            revision=1, stale=False, has_changes=True, updated_at="2026-10-01"
+        )
+        self.assertEqual(identifier_label(row), row.display_id)
+
+    def test_only_a_proved_effective_nonrename_can_localize_a_changed_overlay(self):
+        for renamed, expected in ((True, "编号待确认 S0192"), (False, None)):
+            row = self.pending()
+            row.correction = CorrectionMetadata(
+                revision=1,
+                stale=False,
+                has_changes=True,
+                updated_at="2026-10-01",
+                identifier_changed=renamed,
+            )
+            self.assertEqual(identifier_label(row), expected)
+
+    def test_effective_identifier_metadata_is_boolean_or_unknown_never_truthy_text(
+        self,
+    ):
+        for invalid in ("false", 0, [], {}):
+            with self.subTest(invalid=invalid), self.assertRaises(ValidationError):
+                CorrectionMetadata(
+                    revision=1,
+                    stale=False,
+                    has_changes=True,
+                    updated_at="2026-10-01",
+                    identifier_changed=invalid,
+                )
+
     def test_exact_source_label_preserves_patent_prefix_digits_case_and_suffix(self):
         for canonical, source, expected in (
             ("Compound 1", "1", "1"),

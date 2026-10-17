@@ -349,6 +349,16 @@ the frontend; never restart/replay a live attempt because observation timed out.
 
 ## Literal original identifiers and role admission
 
+Generated `编号待确认` references are interface copy, not printed identifiers.
+Only the exact reserved namespace/origin flags/reference and absent source label
+permit localization. The current correction reader distinguishes an effective
+rename from graph/value-only, reset or stale edits; unknown legacy changed
+metadata stays literal. Stored display fields, copy, raw observations and audit
+remain unchanged, and temporary sources are still excluded from SAR. This is a
+presentation/API-v1 additive change, not a scientific-epoch or SQL migration.
+Validate the actual result API plus Chinese/English table/detail consumers; do
+not deploy over a running extraction to make a label update visible.
+
 Binding7/binder16/visible12/activity10/epoch19 require fresh derived identity and
 role proof. The same grammar keeps complete source prefixes/suffixes/zeros, with
 only case/one-to-one printed-width equivalence. Raw text/cell observations stay

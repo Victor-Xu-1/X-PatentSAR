@@ -142,6 +142,8 @@ export interface CorrectionMetadata {
   stale: boolean;
   has_changes: boolean;
   updated_at: string;
+  /** Effective source-bound rename; absent/null means unknown legacy metadata. */
+  identifier_changed?: boolean | null;
 }
 export interface CompoundRecognition {
   status: 'not_run' | 'valid' | 'invalid' | 'unavailable';

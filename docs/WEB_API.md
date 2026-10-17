@@ -677,10 +677,14 @@ legacy callers, never a synthesized successful observation.
   references for proved selected-catalog reprints belonging to the same printed
   identifier. The source catalog is produced by the sole core binder, not by the
   Web/UI. Unproved sources remain distinct numbered-pending observations.
-- `Compound.correction`: null or `{revision,stale,has_changes,updated_at}`.
+- `Compound.correction`: null or `{revision,stale,has_changes,updated_at,identifier_changed?}`.
   Current effective values are presented only for a non-stale source-bound
   correction. Original extraction files/payloads, confidence/QC and source
   geometry remain unchanged.
+  Additive read-only `identifier_changed` is true only when the applied current
+  overlay changes its original display field. Graph/value-only edits, resets and
+  stale overlays report false; absent/null legacy metadata means unknown, not false.
+  This is derived on read, not a new correction request or persisted audit field.
 - GET `/api/v1/projects/{id}/structures/{compound}/correction` returns
   `{source_fingerprint,revision,basis_fingerprint,stale,has_changes,original,values,updated_at}`.
   Original/values contain `{display_id,smiles,activities,structure_molfile,
@@ -823,6 +827,14 @@ derived label; CSV retains `compound_id` and `display_id` for stable identity.
 Legacy exact canonical-ID filter aliases remain readable without merging zeroes,
 prefixes or A/B entities. The correction UI shows the label but round-trips the
 unchanged canonical value when only metrics or structure are edited.
+For an exact application-owned unconfirmed reference, `identifier_label` is
+absent: the UI localizes only its prefix, copy retains the stored display marker,
+and CSV keeps that marker in `display_id` with an empty `identifier_label`.
+These references remain visible for review but are not literal-ID filter choices
+or identified final compounds for SAR. Original labels and effective manual
+renames stay verbatim; unknown legacy changed overlays are not translated.
+The table can show the generated source reference above its unconfirmed status;
+the full localized label remains in its tooltip, accessible detail name and dialog.
 `recognition`: `{status,quality_flag,model_fingerprint,token_confidence}`. Status
 is `not_run`, `valid`, `invalid` or `unavailable`; absent historical metadata is
 unavailable rather than reconstructed as model confidence. `token_confidence`

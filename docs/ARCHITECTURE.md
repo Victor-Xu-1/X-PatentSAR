@@ -349,10 +349,21 @@ and rotated controlled images do not certify every patent or full chemical graph
 
 The existing frontend `compoundLabel` renderer also recognizes the exact generated
 unconfirmed source namespace/flags, and localizes only its application-owned prefix.
+The server's single `identifier_labels` authority leaves `identifier_label` absent
+only for that exact generated origin, never for an original source label or an
+effective manual rename. `apply_correction` derives additive read-only
+`identifier_changed` metadata from the original and effective source-bound fields;
+graph/value-only and stale overlays do not turn a placeholder into an original ID.
+Unknown legacy changed overlays remain literal. No saved correction/audit, original
+display field, scientific epoch, SQL schema or SAR admission is rewritten.
 Table/details/image accessibility share that same renderer; copied labels retain
 the stored source/temporary marker rather than translated interface copy. Original labels,
 user corrections and canonical route/join keys are not translated or rewritten;
 an unchanged correction draft still round-trips the original stored field.
+Within the narrow table column, only a proved generated reference is compacted
+to its source reference above the explicit unconfirmed status. The tooltip and
+accessible detail name retain its full localized meaning. A bounded text span
+and separate status row prevent flex text/focus clipping without renaming data.
 
 `printed_identifiers.py` is the pure literal grammar/normalization/fragment-conflict
 authority. `activity_identity` re-exports its existing pattern names, not a second

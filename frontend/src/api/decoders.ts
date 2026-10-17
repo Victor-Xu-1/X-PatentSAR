@@ -16,6 +16,7 @@ import type {
   Activity,
   Compound,
   CompoundRecognition,
+  CorrectionMetadata,
   Health,
   Job,
   Project,
@@ -141,12 +142,27 @@ export const activityDecoder: Decoder<Activity> = object({
   assay: nullable(string),
   page: nullable(positive),
 });
-const correctionMetadata = object({
+const correctionMetadataShape = object({
   revision: positive,
   stale: boolean,
   has_changes: boolean,
   updated_at: string,
 });
+const correctionMetadata: Decoder<CorrectionMetadata> = (input, path = '$') => {
+  const metadata = correctionMetadataShape(input, path);
+  const fields = input as Record<string, unknown>;
+  return {
+    ...metadata,
+    ...(Object.hasOwn(fields, 'identifier_changed')
+      ? {
+          identifier_changed: nullable(boolean)(
+            fields.identifier_changed,
+            `${path}.identifier_changed`,
+          ),
+        }
+      : {}),
+  };
+};
 const compoundShape = object({
   id: string,
   display_id: string,

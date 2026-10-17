@@ -96,6 +96,8 @@
 }
 .compound-identity {
   min-width: 0;
+  display: grid;
+  gap: 4px;
 }
 .compound-identity > small {
   display: block;
@@ -111,6 +113,13 @@
   width: 100%;
   max-width: 100%;
   text-align: center;
+  min-width: 0;
+  line-height: 1.35;
+}
+.compound-detail-label {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

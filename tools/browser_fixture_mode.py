@@ -221,6 +221,11 @@ MODES = (
     ),
     (
         "llm-settings",
+        "identifier-labels.spec.ts",
+        COMMON | {"identifier-labels.spec.ts"},
+    ),
+    (
+        "llm-settings",
         "llm-settings.spec.ts",
         COMMON
         | {
