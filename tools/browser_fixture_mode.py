@@ -22,6 +22,11 @@ COMMON = {
 }
 MODES = (
     (
+        "completion",
+        "source-completion.spec.ts",
+        COMMON | {"source-completion.spec.ts"},
+    ),
+    (
         "sar",
         "sar-region-pointer.spec.ts",
         COMMON | {"sar-region-pointer.spec.ts", "sar-local-comparison.spec.ts"},

@@ -16,11 +16,20 @@ is no confidence-based winner. A changed reprint invalidates current source use
 even when its primary image did not change. Old schema2 results stay historical;
 do not retag them or delete original/manual evidence to pass the new gate.
 
-Until full-source completion is integrated into the existing prediction carrier,
-the primary-only completion action explicitly refuses an unsettled repeated
-owner (`source_reprints_require_extraction`). Resume/re-submit extraction through
-the frontend to obtain all original observations; do not independently fill a
-missing molecular record. This usability follow-up is open, not silently skipped.
+Existing-source completion now processes all proved originals for an unavailable
+owner in the same prediction job. No manual matching or separate extraction is
+needed merely to fill missing observations. All depictions must independently
+qualify and agree before a usable structure or property is shown. A known
+chemical conflict remains invalid; a later property request does not silently
+rerun it until an apparent agreement occurs. Manual graph/blank edits are kept.
+Partial work and errors retain raw checkpoints, not accepted primary overlays.
+Cancel before/during an owner, changed source bytes, removed original ownership,
+expired producer and malformed saved observations cannot publish chemistry.
+Progress counts attempted source images, including reprints, not invented
+compounds or unattempted failures. Per-owner packet/context is bounded16MiB;
+the saved-QC cache retains512 digest-keyed results. Missing execution remains
+explicitly unavailable and eligible for the existing frontend completion action;
+this does not make an unaccepted PDF extraction formally accepted.
 Production remains unchanged until the reviewed PR is merged, exact-main wheel is
 deployed at unchanged18765 and affected Chrome/API/frontend science is verified.
 

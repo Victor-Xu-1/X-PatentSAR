@@ -18,6 +18,7 @@ from patent_sar_extractor.web.acceptance import ARTIFACTS
 from patent_sar_extractor.web.completion_inputs import completion_inputs
 from patent_sar_extractor.web.errors import WebError
 from patent_sar_extractor.web.prediction_worker import run_predictions
+from patent_sar_extractor.web.recognition_storage import RecognitionStore
 from patent_sar_extractor.workers.gen_final_results import export_validation
 
 
@@ -62,7 +63,7 @@ class ReprintProjectionTests(PredictionFixture, unittest.TestCase):
         items = self.service.results(self.project.id).items
         self.assertEqual([item.id for item in items], ["Compound 1", "Compound 8"])
         self.assertIsNone(items[0].smiles)
-        self.assertEqual(items[0].recognition.status, "invalid")
+        self.assertEqual(items[0].recognition.status, "unavailable")
 
     def test_no_current_reprint_field_cannot_keep_current_recognition(self):
         _, _, artifact = self.prepare()
@@ -105,16 +106,40 @@ class ReprintProjectionTests(PredictionFixture, unittest.TestCase):
         self.assertIsNone(changed.smiles)
         self.assertEqual(changed.recognition.quality_flag, "source_image_changed")
 
-    def test_primary_only_completion_cannot_bypass_required_full_source_work(self):
+    def test_completion_preserves_required_reprint_input_work(self):
         _, _, artifact = self.prepare()
         artifact.pop("reprint_records")
         self.publish(artifact)
         first = self.service.results(self.project.id).items[0]
         project = self.service.store.project(self.project.id)
         rows = {row["id"]: row for row in self.service.result_rows(self.project.id)}
-        with self.assertRaises(WebError) as rejected:
-            completion_inputs(project, rows, [first])
-        self.assertEqual(rejected.exception.code, "source_reprints_require_extraction")
+        inputs = completion_inputs(project, rows, [first])
+        self.assertEqual(len(inputs), 1)
+        self.assertEqual(inputs[0][0], first.id)
+        repeated = inputs[0][1]["additional_sources"]
+        self.assertEqual(
+            [source["structure_id"] for source in repeated], ["proved-reprint"]
+        )
+        self.assertTrue(all(source["cpd"] == first.id for source in repeated))
+
+    def test_old_primary_only_saved_overlay_cannot_settle_additional_originals(self):
+        _, payload, artifact = self.prepare()
+        artifact.pop("reprint_records")
+        self.publish(artifact)
+        row, _, source = self.draft()
+        record = observation(payload["final_bindings"][0])
+        RecognitionStore(self.service.store).put(
+            self.project.id,
+            "Compound 1",
+            source=source,
+            crop=record["image_hash"],
+            record=record,
+            job_id=row["id"],
+        )
+        item = self.service.effective_compound(self.project.id, "Compound 1")
+        self.assertEqual(item.recognition.status, "unavailable")
+        self.assertEqual(item.recognition.quality_flag, "source_reprint_review")
+        self.assertIsNone(item.smiles)
 
     def test_final_export_and_qa_withhold_only_the_disagreeing_owner(self):
         path, payload, artifact = self.prepare()

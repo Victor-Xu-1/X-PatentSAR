@@ -17,6 +17,7 @@ from patent_sar_extractor.core.ocsr.recognition_inputs import (
 from patent_sar_extractor.core.ocsr.reprint_consistency import (
     REPRINT_REVIEW_FLAG,
     reprint_findings,
+    unavailable_reprints,
 )
 from patent_sar_extractor.core.pipeline_rules import (
     _label_key,
@@ -243,10 +244,12 @@ class ArtifactView:
             plan = recognition_inputs(binding_payload)
             if current(smiles_payload, "smiles"):
                 reprint_review = set(reprint_findings(plan, smiles_payload))
+                reprint_unavailable = unavailable_reprints(plan, smiles_payload)
             else:
                 reprint_review = {
                     _label_key(str(row.get("cpd") or "")) for row in plan.reprints
                 }
+                reprint_unavailable = reprint_review
             source_smiles = smiles_source_records(smiles_payload)
             if len(source_smiles) > MAX_RECORDS:
                 raise ValueError("Source recognition collection exceeds its bound.")
@@ -454,7 +457,7 @@ class ArtifactView:
             if key in reprint_review:
                 smiles_text = None
                 recognition["status"] = (
-                    "invalid" if current(smiles_payload, "smiles") else "unavailable"
+                    "unavailable" if key in reprint_unavailable else "invalid"
                 )
                 recognition["quality_flag"] = REPRINT_REVIEW_FLAG
                 flags.append(REPRINT_REVIEW_FLAG)

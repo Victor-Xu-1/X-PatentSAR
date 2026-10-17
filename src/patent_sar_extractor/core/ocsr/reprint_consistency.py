@@ -10,9 +10,31 @@ from patent_sar_extractor.smiles_artifact import (
 )
 
 from .recognition_inputs import RecognitionPlan, ordered_source_results
-from .recognition_policy import record_errors
+from .recognition_policy import record_errors, source_observation_available
 
 REPRINT_REVIEW_FLAG = "source_reprint_review"
+
+
+def unavailable_reprints(plan: RecognitionPlan, payload: dict) -> set[str]:
+    """Missing execution can be completed; observed chemical conflicts are not retried."""
+    repeated = smiles_reprint_records(payload)
+    labels = {
+        _label_key(row.get("cpd") or row.get("compound_id")) for row in plan.reprints
+    }
+    if not ordered_source_results(plan.reprints, repeated):
+        return labels
+    primary = {
+        _label_key(row.get("cpd_id")): row
+        for row in [*smiles_records(payload), *smiles_source_records(payload)]
+    }
+    return {
+        _label_key(source.get("cpd") or source.get("compound_id"))
+        for source, record in zip(plan.reprints, repeated, strict=True)
+        if not source_observation_available(record)
+        or not source_observation_available(
+            primary.get(_label_key(source.get("cpd") or source.get("compound_id")), {})
+        )
+    }
 
 
 def reprint_findings(plan: RecognitionPlan, payload: dict) -> dict[str, list[str]]:

@@ -1,4 +1,4 @@
-"""Complete current source chemistry inside the existing owned prediction job."""
+"""Complete original source chemistry inside the existing owned prediction job."""
 
 from __future__ import annotations
 
@@ -7,14 +7,20 @@ import time
 from pathlib import Path
 
 from patent_sar_extractor.artifact_io import write_json_atomic
+from patent_sar_extractor.core.ocsr.recognition_inputs import ordered_source_results
+from patent_sar_extractor.core.ocsr.recognition_policy import (
+    UNAVAILABLE_SOURCE_STATUSES,
+)
 
 from .admet_history import write_admet_stage
 from .completion_inputs import completion_inputs, seed_observations
+from .completion_observations import SourceCompletion
 from .correction_storage import correction_source_fingerprint
 from .errors import WebError
 from .models import Stage, StageProgress
 from .observation_cache import publish_job_cache
-from .recognition_storage import RecognitionStore, checked_observation
+from .recognition_observations import checked_observation
+from .recognition_storage import RecognitionStore
 
 
 def complete_structures(
@@ -47,9 +53,16 @@ def complete_structures(
     output.mkdir(mode=0o700, exist_ok=True)
     cache = output / "raw-observations.sqlite"
     completed = hits = rejected = 0
+    attempted = 0
+    total_sources = sum(
+        1 + len(binding.get("additional_sources", [])) for _, binding, _ in inputs
+    )
     started = time.monotonic()
+    observations: list[SourceCompletion] = []
+    current: SourceCompletion | None = None
 
-    def publish(status="running", failure=0):
+    def publish(status="running"):
+        failure = max(0, attempted - completed) if status == "failed" else 0
         write_admet_stage(
             root,
             row,
@@ -61,7 +74,7 @@ def complete_structures(
                 duration_seconds=time.monotonic() - started,
                 progress=StageProgress(
                     completed=completed + failure,
-                    total=len(inputs),
+                    total=total_sources,
                     cache_hits=hits,
                     failures=failure,
                     device=None,
@@ -72,10 +85,6 @@ def complete_structures(
             core_completed=core_completed,
         )
 
-    publish()
-    storage = RecognitionStore(service.store)
-    observations = []
-
     def check_cancel():
         latest = service.store.job(row["id"])
         if latest["cancel_requested"] or (cancel is not None and cancel.is_set()):
@@ -83,48 +92,65 @@ def complete_structures(
                 409, "recognition_cancelled", "Structure completion was cancelled."
             )
 
-    def persist(record, compound_id, crop):
-        source = correction_source_fingerprint(project, rows[compound_id])
-        # Persist failed raw producer observations too. A failed
-        # attempt must remain diagnosable without becoming chemistry.
+    def checkpoint(owner: SourceCompletion) -> tuple[dict, str]:
+        source = correction_source_fingerprint(project, rows[owner.compound_id])
+        record = owner.packet()
         write_json_atomic(
             output / f"{source}.json",
             {
                 "source_fingerprint": source,
-                "crop_sha256": crop,
+                "crop_sha256": owner.crop_sha256,
                 "job_id": row["id"],
                 "observation": record,
             },
         )
-        if record.get("OCSR_status") in {
-            "engine_timeout",
-            "engine_unavailable",
-            "all_engines_failed",
-            "image_missing",
-            "preprocessing_failed",
-        }:
+        return record, source
+
+    storage = RecognitionStore(service.store)
+
+    def persist(owner: SourceCompletion):
+        record, source = checkpoint(owner)
+        if any(
+            item.get("OCSR_status") in UNAVAILABLE_SOURCE_STATUSES
+            for item in owner.records
+        ):
             raise WebError(
                 502,
                 "recognition_failed",
                 "Structure recognition did not produce a source-bound observation.",
             )
+        if not ordered_source_results(owner.sources, owner.records):
+            raise WebError(
+                422,
+                "recognition_owner",
+                "Recognition did not preserve all original source owners.",
+            )
+        for binding, observed in zip(owner.sources, owner.records, strict=True):
+            expected = binding.get("_completion_source_sha256") or owner.crop_sha256
+            if observed.get("image_hash") != expected:
+                raise WebError(
+                    409,
+                    "recognition_source_changed",
+                    "An approved original image changed during recognition.",
+                )
         checked = checked_observation(
-            record, compound_id, by_id[compound_id].structure_id
+            record,
+            owner.compound_id,
+            by_id[owner.compound_id].structure_id,
+            binding=owner.binding,
         )
         storage.put(
             spec.project_id,
-            compound_id,
+            owner.compound_id,
             source=source,
-            crop=crop,
+            crop=owner.crop_sha256,
             record=record,
             job_id=row["id"],
         )
         return checked
 
+    publish()
     try:
-        # This package-internal lease is the existing sole concurrency authority.
-        # Do not change AnalysisService's source/content cache epoch just to add
-        # a wrapper: the ADMET algorithm/model inputs have not changed.
         with analysis._operation(cancel):
             seed_observations(project, cache, state=service.store.root)
             converter = SmilesConverter(
@@ -137,39 +163,58 @@ def complete_structures(
             )
             try:
                 for compound_id, binding, crop in inputs:
-                    check_cancel()
-                    record = converter.convert_one(
-                        binding, preprocess_dir=str(output / "inputs")
-                    )
-                    checked = persist(record, compound_id, crop)
-                    observations.append((compound_id, crop, record, checked.status))
-                    completed += 1
-                    hits += int(
-                        any(
-                            attempt.get("from_cache") is True
-                            for attempt in record.get("engine_attempts", [])
+                    current = SourceCompletion(compound_id, binding, crop)
+                    for source in current.sources:
+                        check_cancel()
+                        attempted += 1
+                        observed = converter.convert_one(
+                            source, preprocess_dir=str(output / "inputs")
                         )
-                    )
+                        current.append(observed)
+                        if observed.get("OCSR_status") in UNAVAILABLE_SOURCE_STATUSES:
+                            persist(current)
+                        completed += 1
+                        hits += int(
+                            any(
+                                attempt.get("from_cache") is True
+                                for attempt in observed.get("engine_attempts", [])
+                            )
+                        )
+                        publish()
+                    checked = persist(current)
+                    current.prior_status = checked.status
+                    observations.append(current)
                     rejected += int(checked.status != "valid")
                     publish()
-                # Source completion shares the same post-primary queue; do not
-                # load a second resident model or re-run ordinary successful rows.
                 check_cancel()
+                # Raw records stay independent; nested projections never enter
+                # the existing bounded post-primary rescue queue.
                 converter.finalize_batch(
-                    [item[2] for item in observations], check_cancel=check_cancel
+                    [record for owner in observations for record in owner.records],
+                    check_cancel=check_cancel,
                 )
-                for compound_id, crop, record, prior_status in observations:
-                    if record.get("stereo_rescue_proof") or record.get(
-                        "local_stereo_rescue"
+                for owner in observations:
+                    if any(
+                        record.get("stereo_rescue_proof")
+                        or record.get("local_stereo_rescue")
+                        for record in owner.records
                     ):
-                        checked = persist(record, compound_id, crop)
+                        check_cancel()
+                        checked = persist(owner)
                         rejected += int(checked.status != "valid") - int(
-                            prior_status != "valid"
+                            owner.prior_status != "valid"
                         )
                 publish()
             finally:
                 converter.close()
                 publish_job_cache(service.store.root, project, cache)
-    except Exception:
-        publish("failed", int(completed < len(inputs)))
+    except Exception as exc:
+        if current is not None and current.primary is not None:
+            try:
+                checkpoint(current)  # Retain partial raw evidence, never publish it.
+            except (OSError, ValueError, TypeError) as snapshot_error:
+                exc.add_note(
+                    f"Partial source checkpoint failed: {type(snapshot_error).__name__}"
+                )
+        publish("failed")
         raise

@@ -12,6 +12,25 @@ from patent_sar_extractor.smiles_artifact import (
 from .recognition_inputs import ordered_source_results, recognition_inputs
 from .stereo_gate import validate_stereo_observation
 
+UNAVAILABLE_SOURCE_STATUSES = frozenset(
+    {
+        "unavailable",
+        "engine_timeout",
+        "engine_unavailable",
+        "all_engines_failed",
+        "image_missing",
+        "preprocessing_failed",
+        "not_processed",
+    }
+)
+
+
+def source_observation_available(record: dict) -> bool:
+    return (
+        bool(record.get("raw_smiles"))
+        and record.get("OCSR_status") not in UNAVAILABLE_SOURCE_STATUSES
+    )
+
 
 def record_errors(record: dict, binding: dict | None = None) -> list[str]:
     if not isinstance(record, dict):

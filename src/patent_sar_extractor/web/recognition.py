@@ -7,6 +7,9 @@ import re
 from typing import Any
 
 from patent_sar_extractor.core.ocsr.label_mask_proof import legacy_mask_record
+from patent_sar_extractor.core.ocsr.recognition_policy import (
+    UNAVAILABLE_SOURCE_STATUSES,
+)
 from patent_sar_extractor.core.ocsr.stereo_gate import validate_stereo_record
 
 from .errors import WebError
@@ -40,8 +43,7 @@ def recognition_status(
         "unavailable"
         if flag is None
         or (flag == "ok" and record.get("OCSR_status") is None)
-        or record.get("OCSR_status")
-        in {"unavailable", "engine_unavailable", "image_missing"}
+        or record.get("OCSR_status") in UNAVAILABLE_SOURCE_STATUSES
         else "valid"
         if record.get("rdkit_valid") is True
         and flag == "ok"

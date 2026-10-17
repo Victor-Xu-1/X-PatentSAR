@@ -3,6 +3,7 @@
 import json
 import threading
 import unittest
+from collections.abc import Callable
 from contextlib import nullcontext
 from pathlib import Path
 from typing import ClassVar
@@ -13,6 +14,7 @@ from test_corpus_predictions import ControlledAnalysis, CorpusPredictionTests
 from test_prediction_support import PredictionFixture
 from test_uniform_recognition import observation
 
+from patent_sar_extractor.core.ocsr import smiles_converter as converter_module
 from patent_sar_extractor.core.ocsr.recognition_inputs import recognition_inputs
 from patent_sar_extractor.web.admet_history import read_admet_stage
 from patent_sar_extractor.web.analysis_models import Property
@@ -50,6 +52,11 @@ class CompletionAnalysis(ControlledAnalysis):
 
 class ControlledConverter:
     calls: ClassVar[list] = []
+    source_calls: ClassVar[list] = []
+    raw_by_source: ClassVar[dict] = {}
+    failed_sources: ClassVar[set] = set()
+    after_source: ClassVar[Callable | None] = None
+    finalized_sources: ClassVar[list] = []
     closed = False
     raw = "CCO"
     foreign = False
@@ -60,17 +67,23 @@ class ControlledConverter:
 
     def convert_one(self, binding, **kwargs):
         self.calls.append(binding["cpd"])
-        result = observation(binding, self.raw)
+        self.source_calls.append(binding["structure_id"])
+        result = observation(
+            binding, self.raw_by_source.get(binding["structure_id"], self.raw)
+        )
         if self.foreign:
             result["cpd_id"] = "Compound 999"
-        if self.failed:
+        if self.failed or binding["structure_id"] in self.failed_sources:
             result["OCSR_status"] = "engine_timeout"
+        if type(self).after_source is not None:
+            type(self).after_source(binding)
         return result
 
     def close(self):
         type(self).closed = True
 
     def finalize_batch(self, records, **kwargs):
+        type(self).finalized_sources = records
         self.close()
         return records
 
@@ -88,6 +101,11 @@ class ExistingCompoundCompletionTests(PredictionFixture, unittest.TestCase):
         path.write_text(json.dumps(artifact))
         self.service.refresh(self.project.id)
         ControlledConverter.calls = []
+        ControlledConverter.source_calls = []
+        ControlledConverter.raw_by_source = {}
+        ControlledConverter.failed_sources = set()
+        ControlledConverter.after_source = None
+        ControlledConverter.finalized_sources = []
         ControlledConverter.closed = False
         ControlledConverter.raw = "CCO"
         ControlledConverter.foreign = False
@@ -135,6 +153,196 @@ class ExistingCompoundCompletionTests(PredictionFixture, unittest.TestCase):
             "CCO",
         )
         self.assertEqual({p: p.read_bytes() for p in before}, before)
+
+    def pending_reprints(self):
+        self.catalog()
+        path = self.run / "smiles/smiles_results.json"
+        artifact = json.loads(path.read_text())
+        artifact.pop("reprint_records")
+        path.write_text(json.dumps(artifact))
+        self.service.refresh(self.project.id)
+        return CorpusPredictionTests.job(self)[0]
+
+    def test_missing_reprints_complete_in_the_same_owned_job_and_source_cache(self):
+        row = self.pending_reprints()
+        before = {
+            path: path.read_bytes() for path in self.run.rglob("*") if path.is_file()
+        }
+        self.complete(row)
+        self.assertEqual(
+            ControlledConverter.source_calls,
+            ["S0", "proved-reprint", "numbered-without-activity"],
+        )
+        first, second = self.service.results(self.project.id).items
+        self.assertEqual(
+            (first.recognition.status, second.recognition.status), ("valid", "valid")
+        )
+        self.assertEqual(len(ControlledConverter.finalized_sources), 3)
+        self.assertTrue(
+            all(
+                "reprint_records" not in record
+                for record in ControlledConverter.finalized_sources
+            )
+        )
+        self.assertEqual((first.smiles, second.smiles), ("CCO", "CCO"))
+        self.assertEqual(
+            (first.admet.status, second.admet.status), ("complete", "complete")
+        )
+        self.assertEqual({path: path.read_bytes() for path in before}, before)
+        calls = list(ControlledConverter.source_calls)
+        self.assertEqual(self.complete(row).inputs, [])
+        self.assertEqual(ControlledConverter.source_calls, calls)
+
+    def test_completed_reprint_disagreement_cannot_promote_a_primary_overlay(self):
+        row = self.pending_reprints()
+        ControlledConverter.raw_by_source = {"proved-reprint": "CCC"}
+        analysis = self.complete(row)
+        self.assertEqual(analysis.inputs, [["CCO"]])
+        first, second = self.service.results(self.project.id).items
+        self.assertEqual(first.recognition.status, "invalid")
+        self.assertEqual(first.recognition.quality_flag, "source_reprint_review")
+        self.assertIsNone(first.smiles)
+        self.assertEqual(first.admet.properties, [])
+        self.assertEqual(second.recognition.status, "valid")
+        self.assertEqual(second.admet.status, "complete")
+
+    def test_native_converter_preserves_every_source_and_reuses_only_raw_cache(self):
+        row = self.pending_reprints()
+        calls, closed = [], []
+
+        class ObservedEngine:
+            def __init__(self, **kwargs):
+                pass
+
+            def runtime_identity(self):
+                return {"fingerprint": "a" * 64}
+
+            def predict(self, image, timeout=60):
+                calls.append(image)
+                return {
+                    "status": "success",
+                    "raw_smiles": "CCO",
+                    "model_fingerprint": "a" * 64,
+                }
+
+            def close(self):
+                closed.append(True)
+
+        with patch.dict(converter_module.ENGINE_MAP, {"decimer": ObservedEngine}):
+            run_predictions(self.service, CompletionAnalysis(), row)
+        # The generated source images have identical bytes, not identical IDs.
+        # The real converter reuses inference, then rechecks each original frame.
+        self.assertEqual(len(calls), 1)
+        self.assertTrue(closed)
+        self.service = WorkspaceService(self.state)
+        first, second = self.service.results(self.project.id).items
+        self.assertEqual((first.smiles, second.smiles), ("CCO", "CCO"))
+        self.assertEqual(len(first.additional_sources), 1)
+        with self.service.store.connect() as connection:
+            saved = connection.execute(
+                "SELECT observation FROM compound_recognitions "
+                "WHERE project_id=? AND compound_id=?",
+                (self.project.id, first.id),
+            ).fetchone()
+        record = json.loads(saved[0])
+        self.assertEqual(record["structure_id"], "S0")
+        self.assertEqual(record["reprint_records"][0]["structure_id"], "proved-reprint")
+        self.assertEqual(record["reprint_records"][0]["cpd_id"], first.id)
+        self.assertTrue(
+            record["reprint_records"][0]["engine_attempts"][0]["from_cache"]
+        )
+        self.assertEqual(
+            (first.admet.status, second.admet.status), ("complete", "complete")
+        )
+
+    def test_alias_timeout_keeps_raw_evidence_and_never_publishes_the_primary(self):
+        row = self.pending_reprints()
+        ControlledConverter.failed_sources = {"proved-reprint"}
+        with self.assertRaises(WebError) as failed:
+            self.complete(row)
+        self.assertEqual(failed.exception.code, "recognition_failed")
+        self.assertEqual(ControlledConverter.source_calls, ["S0", "proved-reprint"])
+        self.assertTrue(ControlledConverter.closed)
+        self.assertIsNone(
+            self.service.effective_compound(self.project.id, "Compound 1").smiles
+        )
+        output = Path(decode_spec(row["spec"]).output_dir)
+        snapshots = list((output / "recognition").glob("*.json"))
+        self.assertEqual(len(snapshots), 1)
+        saved = json.loads(snapshots[0].read_text())["observation"]
+        self.assertEqual(saved["raw_smiles"], "CCO")
+        self.assertEqual(saved["reprint_records"][0]["OCSR_status"], "engine_timeout")
+        stage, _ = read_admet_stage(row, output)
+        self.assertEqual(
+            (stage.status, stage.progress.total, stage.progress.failures),
+            ("failed", 3, 1),
+        )
+
+    def test_cancel_between_originals_keeps_partial_observations_without_publication(
+        self,
+    ):
+        row = self.pending_reprints()
+        event = threading.Event()
+        ControlledConverter.after_source = lambda binding: event.set()
+        with (
+            patch(
+                "patent_sar_extractor.core.ocsr.smiles_converter.SmilesConverter",
+                ControlledConverter,
+            ),
+            self.assertRaises(WebError) as cancelled,
+        ):
+            run_predictions(self.service, CompletionAnalysis(), row, event)
+        self.assertEqual(cancelled.exception.code, "recognition_cancelled")
+        self.assertEqual(ControlledConverter.source_calls, ["S0"])
+        self.assertTrue(ControlledConverter.closed)
+        output = Path(decode_spec(row["spec"]).output_dir)
+        saved = [
+            json.loads(path.read_text())["observation"]
+            for path in (output / "recognition").glob("*.json")
+        ]
+        self.assertEqual(len(saved), 1)
+        self.assertEqual(saved[0]["raw_smiles"], "CCO")
+        self.assertEqual(saved[0]["reprint_records"], [])
+        stage, _ = read_admet_stage(row, output)
+        self.assertEqual(
+            (stage.progress.completed, stage.progress.total, stage.progress.failures),
+            (1, 3, 0),
+        )
+        with self.service.store.connect() as connection:
+            self.assertEqual(
+                connection.execute(
+                    "SELECT COUNT(*) FROM compound_recognitions WHERE project_id=?",
+                    (self.project.id,),
+                ).fetchone()[0],
+                0,
+            )
+
+    def test_source_byte_change_during_recognition_refuses_publication(self):
+        row = self.pending_reprints()
+
+        def change_after_read(binding):
+            if binding["structure_id"] == "proved-reprint":
+                path = Path(binding["image_path"])
+                path.write_bytes(path.read_bytes() + b"changed after observation")
+
+        ControlledConverter.after_source = change_after_read
+        with self.assertRaises(WebError) as rejected:
+            self.complete(row)
+        self.assertEqual(rejected.exception.code, "recognition_source_changed")
+        with self.service.store.connect() as connection:
+            self.assertEqual(
+                connection.execute(
+                    "SELECT COUNT(*) FROM compound_recognitions WHERE project_id=?",
+                    (self.project.id,),
+                ).fetchone()[0],
+                0,
+            )
+        output = Path(decode_spec(row["spec"]).output_dir)
+        stage, _ = read_admet_stage(row, output)
+        self.assertEqual(
+            (stage.progress.completed, stage.progress.total, stage.progress.failures),
+            (2, 3, 0),
+        )
 
     def test_repeated_completion_reuses_current_saved_recognition_and_properties(self):
         row = self.prepare()
@@ -346,3 +554,21 @@ class ExistingCompoundCompletionTests(PredictionFixture, unittest.TestCase):
                 for x in result.items
             )
         )
+
+
+def load_tests(loader, _tests, _pattern):
+    # One explicit feature family, not imported unrelated TestCases or global
+    # discovery. The observation-boundary regressions share the same fixture.
+    from test_completion_observation_safety import CompletionObservationSafetyTests
+
+    suite = unittest.TestSuite(
+        loader.loadTestsFromTestCase(case)
+        for case in (ExistingCompoundCompletionTests, CompletionObservationSafetyTests)
+    )
+    suite.addTests(
+        loader.loadTestsFromName(
+            "test_release_workflows.ReleaseWorkflowTests."
+            "test_ci_version_check_precedes_dependencies_and_stays_read_only"
+        )
+    )
+    return suite

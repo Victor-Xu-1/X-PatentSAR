@@ -3,9 +3,11 @@
   "base_sha": "58875c94245e0a972b2217ccadfc5dd591de481d",
   "changed_paths": [
     ".github/verification_scope.json",
+    ".github/workflows/ci.yml",
     "docs/ARCHITECTURE.md",
     "docs/OPERATIONS.md",
     "docs/PROJECT_MANIFEST.md",
+    "frontend/e2e/source-completion.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
     "src/patent_sar_extractor/application/activity_policy.py",
@@ -116,8 +118,12 @@
     "src/patent_sar_extractor/web/acceptance.py",
     "src/patent_sar_extractor/web/artifacts.py",
     "src/patent_sar_extractor/web/completion_inputs.py",
+    "src/patent_sar_extractor/web/completion_observations.py",
+    "src/patent_sar_extractor/web/completion_worker.py",
     "src/patent_sar_extractor/web/core_recognition_source.py",
     "src/patent_sar_extractor/web/prediction_identity.py",
+    "src/patent_sar_extractor/web/recognition_observations.py",
+    "src/patent_sar_extractor/web/recognition_sources.py",
     "src/patent_sar_extractor/web/recognition_storage.py",
     "src/patent_sar_extractor/web/recognition.py",
     "src/patent_sar_extractor/web/source_epoch.py",
@@ -141,6 +147,7 @@
     "tests/test_catalog_order.py",
     "tests/test_cell_line_coverage.py",
     "tests/test_compound_catalog_view.py",
+    "tests/test_completion_observation_safety.py",
     "tests/test_declaration_role_replay.py",
     "tests/test_detector_identity_confidence.py",
     "tests/test_existing_compound_completion.py",
@@ -158,6 +165,7 @@
     "tests/test_original_source_admission.py",
     "tests/test_recognition_metadata.py",
     "tests/test_release_policy.py",
+    "tests/test_release_workflows.py",
     "tests/test_reprint_projection.py",
     "tests/test_reprint_recognition.py",
     "tests/test_ruled_column_continuation.py",
@@ -193,6 +201,9 @@
     "tests/test_web_support.py",
     "tests/test_wrapped_structure_headers.py",
     "tests/unruled_structure_support.py",
+    "tools/browser_fixture_mode.py",
+    "tools/prepare_browser_fixture.py",
+    "tools/prepare_completion_fixture.py",
     "tools/pr_version.py",
     "tools/version_policy.py"
   ],
@@ -200,7 +211,7 @@
     "tests.test_reprint_recognition",
     "tests.test_reprint_projection",
     "tests.test_uniform_recognition",
-    "tests.test_existing_compound_completion.ExistingCompoundCompletionTests",
+    "tests.test_existing_compound_completion",
     "tests.test_observation_completion",
     "tests.test_source_led_export",
     "tests.test_core_recognition_source",
@@ -231,5 +242,5 @@
     "tests.test_source_hint_authority"
   ],
   "frontend_tests": [],
-  "browser_tests": []
+  "browser_tests": ["frontend/e2e/source-completion.spec.ts"]
 }

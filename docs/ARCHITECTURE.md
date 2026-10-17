@@ -37,10 +37,23 @@ crop through the existing bounded stat/hash cache, without inference on reads.
 
 Historical SMILES envelopes remain raw-readable, not current full-source proof.
 Original PDFs, raw OCR/OCSR, structures, manual audit, API1 and workspace SQLite1
-are not rewritten. The existing primary-only online completion cannot establish
-multi-depiction equivalence: it explicitly requires full-source extraction for an
-unsettled repeated owner. Uniform multi-source completion in that same job/store
-remains an open usability integration, not a reason to accept only its primary.
+are not rewritten. Existing-source completion schedules the primary and every
+proved additional original inside the same owned prediction job, converter,
+raw cache and post-primary rescue boundary. `completion_observations` keeps raw
+records independent; only a complete per-owner packet can enter the existing
+`compound_recognitions` projection. Partial/cancelled/failed work retains raw
+checkpoints without promoting a primary alone. Current observed graph conflicts
+stay invalid and are not automatically resampled by a later property job.
+
+`recognition_sources` supplies bounded thin original frames, original catalogue/
+structure revisions and ordered all-image digests. `recognition_observations` is
+the single saved-projection QC reader, with16MiB per-owner packet/context limits
+and a512-entry digest-keyed cache, not retained raw blobs. Publication checks the
+active producer before source work and again in the existing SQLite transaction;
+current ownership, every image and source revision must still match. Reads do
+no inference. A missing owner, changed alias or corrupt saved packet withdraws
+that row's chemistry/properties without rewriting the original or failing other
+rows. Explicit user graphs/blanks and immutable correction audit remain separate.
 Focused native/consumer checks, review, merged-main deployment and actual frontend
 scientific runs remain required; these contracts do not certify arbitrary recall.
 
