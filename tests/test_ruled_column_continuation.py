@@ -17,13 +17,21 @@ from patent_sar_extractor.web.compound_catalog import read_compound_catalog
 
 
 def physical_parts(
-    first, structures, *, gap=False, prefix="", offset=0, missing_first=False
+    first,
+    structures,
+    *,
+    gap=False,
+    prefix="",
+    offset=0,
+    missing_first=False,
+    initial_ruled=True,
 ):
     document = first.parent
-    for x in (40, 175, 380):
-        first.draw_line((x, 65), (x, 330))
-    for y in (65, 100, 210, 330):
-        first.draw_line((40, y), (380, y))
+    if initial_ruled:
+        for x in (40, 175, 380):
+            first.draw_line((x, 65), (x, 330))
+        for y in (65, 100, 210, 330):
+            first.draw_line((40, y), (380, y))
     continued_page(first, structures, gap=gap, caption=prefix, offset=offset)
     page = document[-1]
     for x in (40, 175, 380):
@@ -37,6 +45,51 @@ def physical_parts(
 
 
 class RuledColumnContinuationTests(UnruledStructureControls, unittest.TestCase):
+    def test_original_unruled_parent_can_continue_as_actual_ruled_rows(self):
+        result, payload = self.run_binding(
+            ["73", "28"],
+            mutate_page=lambda p, s: physical_parts(p, s, initial_ruled=False),
+        )
+        self.assertEqual(
+            {r["cpd"] for r in result["bindings"]},
+            {
+                "Compound 73",
+                "Compound 28",
+                "Compound 901A",
+                "Compound I-003B",
+            },
+        )
+        self.assertEqual(coverage_errors(payload), [])
+
+    def test_known_activity_header_does_not_inherit_previous_structure_columns(self):
+        def activity_after_structure(first, _structures):
+            for x in (40, 175, 380):
+                first.draw_line((x, 65), (x, 330))
+            for y in (65, 100, 210, 330):
+                first.draw_line((40, y), (380, y))
+            document = first.parent
+            page = document.new_page(width=520, height=720)
+            page.insert_text((40, 45), "Table 13. Binding assay", fontsize=10)
+            for x in (40, 175, 380):
+                page.draw_line((x, 65), (x, 220))
+            for y in (65, 100, 160, 220):
+                page.draw_line((40, y), (380, y))
+            for top, values in (
+                (80, ("Compound No.", "IC50 (nM)")),
+                (135, ("901A", "0.3")),
+                (195, ("I-003B", "0.8")),
+            ):
+                page.insert_text((50, top), values[0], fontsize=10)
+                page.insert_text((230, top), values[1], fontsize=10)
+
+        result, payload = self.run_binding(
+            ["73", "28"], mutate_page=activity_after_structure
+        )
+        self.assertEqual(
+            {r["cpd"] for r in result["bindings"]}, {"Compound 73", "Compound 28"}
+        )
+        self.assertEqual(coverage_errors(payload), [])
+
     def test_headerless_first_row_survives_at_different_original_page_positions(self):
         for offset in (0, 150):
             with self.subTest(offset=offset):
