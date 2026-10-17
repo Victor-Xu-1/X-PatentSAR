@@ -100,7 +100,8 @@ for (const width of [390, 1672]) {
       await expect(cancel).toBeEnabled();
       await expect(page.getByRole('alert')).toHaveCount(0);
       const recoveryPositions = await page.evaluate(async () => {
-        const sampling = window as Window & { headerRecoveryFrames: Promise<number[]> };
+        const sampling = window as Window & { headerRecoveryFrames?: Promise<number[]> };
+        if (!sampling.headerRecoveryFrames) throw new Error('Header sampling was not installed');
         return sampling.headerRecoveryFrames;
       });
       expect(Math.min(...recoveryPositions)).toBeGreaterThanOrEqual(0);
