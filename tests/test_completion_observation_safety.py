@@ -20,6 +20,7 @@ from patent_sar_extractor.core.binding_catalog import compound_catalog
 from patent_sar_extractor.web.acceptance import ARTIFACTS
 from patent_sar_extractor.web.completion_inputs import completion_inputs
 from patent_sar_extractor.web.errors import WebError
+from patent_sar_extractor.web.observation_cache import cache_path
 from patent_sar_extractor.web.recognition_observations import (
     _saved_observation,
     checked_observation,
@@ -79,6 +80,20 @@ class CompletionObservationSafetyTests(PredictionFixture, unittest.TestCase):
                     ).fetchone()[0],
                     0,
                 )
+            from patent_sar_extractor.web.app import create_app
+
+            # A cached first observation must not create an unsafe parent that
+            # prevents the ordinary API/analysis service from opening the state.
+            app = create_app(service.store.root, host="127.0.0.1", port=18766)
+            self.assertEqual(app.state.workspace.store.root, service.store.root)
+
+    def test_existing_unsafe_cache_parent_is_not_silently_chmodded_or_used(self):
+        analysis = self.state / "analysis"
+        analysis.mkdir(mode=0o755)
+        with self.assertRaises(WebError) as refused:
+            cache_path(self.state, {"sha256": "a" * 64})
+        self.assertEqual(refused.exception.code, "unsafe_state")
+        self.assertEqual(analysis.stat().st_mode & 0o777, 0o755)
 
     def test_fixture_cli_is_independent_of_callers_working_directory(self):
         repository = Path(__file__).resolve().parents[1]

@@ -121,6 +121,7 @@
     "src/patent_sar_extractor/web/completion_observations.py",
     "src/patent_sar_extractor/web/completion_worker.py",
     "src/patent_sar_extractor/web/core_recognition_source.py",
+    "src/patent_sar_extractor/web/observation_cache.py",
     "src/patent_sar_extractor/web/prediction_identity.py",
     "src/patent_sar_extractor/web/recognition_observations.py",
     "src/patent_sar_extractor/web/recognition_sources.py",

@@ -54,6 +54,10 @@ current ownership, every image and source revision must still match. Reads do
 no inference. A missing owner, changed alias or corrupt saved packet withdraws
 that row's chemistry/properties without rewriting the original or failing other
 rows. Explicit user graphs/blanks and immutable correction audit remain separate.
+The per-original raw cache creates/checks its private `analysis` parent before
+its child; source-first initialization must not leave a755 parent that prevents
+the regular analysis service opening. Existing unsafe directories are refused,
+not automatically chmodded or adopted.
 Focused native/consumer checks, review, merged-main deployment and actual frontend
 scientific runs remain required; these contracts do not certify arbitrary recall.
 
