@@ -132,7 +132,8 @@ exact order, contiguous full-image coverage, ink totals and child pixel geometry
 Each saved child's pixel frame stays in parent-render pixels, never fabricated
 PDF coordinates. Known endpoint detections in any child still veto a role. The
 same replay supports original open-row fragments and rejects omitted, reordered,
-weak or conflicting children. Both400/600dpi observations, complete pixel-row
+weak or conflicting children. Unresolved ink-bearing packets never qualify as
+observed empty fragments. Both400/600dpi observations, complete pixel-row
 inventories, cell bounds and minimum0.85 confidence are revalidated. Missing,
 weak, conflicting or over-budget lines stay unresolved, never truncated success.
 The original grid96-cell/8-million-pixel-per-cell limits remain. Up to128 slices

@@ -214,6 +214,8 @@ def fragment_texts(region, fragment, column):
             and reading.get("raw_text") == reading.get("text") == ""
             and reading.get("parts") == reading.get("detection_parts") == []
             and reading.get("ink_crop_pixels") is None
+            and "physical_text_chunks" not in reading
+            and "physical_header_lines" not in reading
             and type(reading.get("border_pixels")) is int
             and reading["border_pixels"] == 0
             and type(reading.get("confidence")) in {int, float}

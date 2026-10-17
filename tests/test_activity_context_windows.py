@@ -128,6 +128,47 @@ def parallel_activity_page(
 
 
 class ActivityContextWindowTests(unittest.TestCase):
+    def test_unread_ink_fragment_cannot_become_an_observed_blank(self):
+        import numpy as np
+
+        from patent_sar_extractor.core.cell_text_chunks import observe_text_cell
+        from patent_sar_extractor.core.source_role_fragments import fragment_texts
+
+        bounds = [0, 0, 21, 20.4]
+        for ink in (False, True):
+            engine = Mock()
+            readings = [
+                observe_text_cell(
+                    np.full(
+                        (round(18 * dpi / 72), round(18 * dpi / 72), 3),
+                        0 if ink else 255,
+                        dtype=np.uint8,
+                    ),
+                    dpi,
+                    engine,
+                ).evidence(dpi, bounds)
+                for dpi in (400, 600)
+            ]
+            fragment = {
+                "status": "observed_columns",
+                "source_cells": {
+                    "xs": [0, 21],
+                    "ys": [0, 20.4],
+                    "native_hints": [[""]],
+                    "observations": [
+                        {"matrix": [[""]], "cells": [reading]} for reading in readings
+                    ],
+                },
+            }
+            with self.subTest(ink=ink):
+                self.assertEqual(
+                    fragment_texts(
+                        {"role_scope": {"roles": {"columns": ["nmr"]}}}, fragment, 0
+                    ),
+                    None if ink else ["", ""],
+                )
+            engine.assert_not_called()
+
     def long_raster_characterization(self, count):
         from patent_sar_extractor.core.activity_grid_role_observation import (
             observe_characterization,
