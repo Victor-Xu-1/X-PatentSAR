@@ -28,6 +28,7 @@ def prepare_completion(workspace: Path, state: Path, pdf: Path) -> dict[str, str
     }
     for kind in ("pending", "complete", "conflicting", "historical"):
         case = ExistingCompoundCompletionTests()
+        case.root, case.state, case.pdf = workspace, state, pdf
         case.run = artifact_run(workspace / f"controlled-{kind}", pdf, rows=1)
         case.service = WorkspaceService(state)
         case.project = case.service.import_run(

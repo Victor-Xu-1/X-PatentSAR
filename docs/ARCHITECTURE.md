@@ -13,19 +13,166 @@ acceptance, filter, source identity, retry or polling rule is manufactured.
 This client-only state distinction changes no scientific epoch, API, SQL,
 queue, model, dependency or original/manual artifact.
 
+## Bounded original text-row refinement
+
+`cell_text_row_readings` owns the same physical-cell reader's blank-border
+policy and pure saved replay. Qualified first observations remain byte-for-byte
+unchanged. A weak, empty or malformed row receives at most one compact-border
+view of the identical complete original ink rectangle, using the existing OCR
+engine. The margin is derived from that row's pixel height; no source pixels,
+characters, font labels, endpoints or units are invented or rewritten. This is
+not a model ensemble, highest-confidence vote or retry loop. Normal rows need
+no extra recognition, and the same8M rendering/8header-row and32body-row limits
+remain. Every malformed row still preserves later original rows rather than
+publishing or retaining only a successful prefix.
+Short-header responses pass through that same typed row boundary before any
+positional component access; malformed scalar/dictionary/short-tuple results
+stay invalid observations within the same two-view limit, not parser crashes.
+
+Physical text-frame2 retains both attempts, their exact borders, literal outputs,
+confidence validity and unchanged original frame/row coordinates. Pure replay
+requires the complete deterministic one/two-attempt policy and the selected
+literal/score; omitted/extra/reordered attempts, changed margins or invalid scores
+refuse. Older frame1 remains structurally readable in historical source packets.
+Short single-row headers retain `single_row_readings` only when that same compact
+view is actually needed; the same policy replays crop height/borders/outputs.
+Scalar measurements and printed compound-number readers do not use this branch.
+Role/body/fragment/header and quantitative-axis word consumers delegate to this
+same text proof rather than keeping parallel permissive readers.
+Independent detector/native/source conflicts and both400/600dpi complete-field
+checks are unchanged. Resolving a short unit never authorizes a conflicting
+target/endpoint or lends an unresolved source reading to parallel/adjacent tables.
+The existing continuation authority distinguishes a lexical parser unknown from
+an unqualified original observation: a complete repeated header may reuse an
+already-qualified root's roles only when every physical header matches under
+the existing typography policy and ID/value/metadata column topology is equal.
+The current raw header is preserved. A missing character, changed endpoint/unit,
+unknown root, explicit review or unresolved reading proof still refuses carry.
+Saved original-layout replay checks that same complete header and root columns;
+neither a guessed suffix nor adjacent position alone can supply a field role.
+
+Binding24/binder33 andActivity20/extractor29 refresh derived text-source proof.
+Raw PDFs/OCR/model/crop assets, manual audit, numerical SAR, OCSR/preparation/
+stereochemistry, API/SQL and scientific dependencies remain independent. Native
+font/coordinate/facade/reader tests are coverage evidence, not universal OCR or
+chemical correctness. Low-resolution italic glyphs and independently conflicting
+source literals remain explicit open acceptance cases, not certified inputs.
+
+## Complete caption sources and one document-wide claim decision
+
+Binding23/binder32 use one `binding_source_claims` authority for numbered and
+caption-source primary/reprint ownership, including saved-catalogue replay.
+The earlier document-wide caption-only duplicate filter is removed. Literal
+same-ID observations alone never choose a primary: competing complete tables,
+selected-only tables, novel selected IDs, unknown roles and conflicting owners
+remain unresolved. Explicit selected subsets require independently revalidated
+original titles and a complete catalogue covering every observed selected ID.
+Both refined title readings and qualified original variants participate; known
+negation/mixed selection or selected/full disagreement cannot erase a source.
+Every additional depiction still goes through the existing DECIMER/cache/QC and
+complete isomeric-graph consistency checks. These are sources, not new compounds.
+
+The sole physical-grid detector accepts a bounded caller policy. Activity retains
+its two-column default; source binding requests one-column frames only with both
+complete original outer rules. Missing edges are not invented from inner rules.
+No alternate parser/model, queue, cache authority or private-data repair is added.
+
+Rejected caption/cell/ownership proposals retain complete original context and
+structure IDs in variant2 of the existing `source_role_observations` catalog.
+`binding_source_diagnostics` owns that unresolved-only carrier and its issue
+projection, not acceptance. Clearing saved issue flags cannot erase these
+observations. The same source digest, 1MiB region,4096 attempts/64MiB aggregate
+and200k-node bounds remain. Variant1 role attempts keep their16-depth limit;
+variant2 allows208 levels to retain the existing64-link source-role chain, never
+to qualify a longer chain. Coordinate tuples serialize as literal JSON arrays.
+Missing/foreign/mutated references, invalid values and budgets refuse explicitly.
+The single binding writer deduplicates references rather than copying raw proof
+into every issue. Activity's variant1, raw source/model/manual data, API/SQL,
+OCSR/preparation/stereo and SAR numerical contracts remain independent.
+
+Controlled native/raster/facade/reader/recognition checks are not universal patent
+recall, chemical accuracy or real frontend scientific acceptance. Existing old
+derived ownership remains historical; original assets and human audit are kept.
+
+## One original catalogue role across layout, identity and heading inventory
+
+`caption_grid_binding` uses the same revalidated original role for table-start
+direction and adjacent continuation. An absent layout-lane caption cannot erase
+a title already proved by independent native evidence or the bounded title
+reader. Raw new-table hints still stop inappropriate carry; saved role flags,
+unknown titles and known conflicts do not acquire catalogue authority.
+
+The shared caption-fragment replay conserves literal physical order. A qualified
+role-edge glyph must overlap the matching edge of its qualified whole role;
+partial role observations must cover that whole literal. A suffix may share
+characters only at a uniquely mapped, same-row crossing detector boundary while
+extending the separately read complete caption. Blanket overlapping-letter
+exemptions are removed. Different IDs, detached/foreign characters, nonfinal
+roles, invalid scores and source conflicts remain vetoes. No characters are
+joined to construct a new identifier, and original detections remain retained.
+
+`caption_label_roles` aliases layout locators through the existing cell SDK's
+half-open centre ownership and one-point edge budget, only after current exact
+document/page/ID/caption proof. It does not expand scientific source windows.
+Wide, outside, ambiguous or foreign locators remain independent observations;
+the same ID elsewhere cannot close a missing structure. Saved source-reference
+replay uses this same authority, avoiding redundant heading OCR for proved cells.
+These changes remain within unpublished Binding22/binder31, without raw/model,
+activity/SAR, OCSR image/preparation, API/SQL or dependency changes. Controlled
+native/raster/writer tests do not establish actual-patent or chemical acceptance.
+
 ## Quantitative figure references versus molecular declarations
 
 The existing original-heading ledger retains quantitative plot labels as
 `figure_label_reference` only after one uniquely scoped original Figure caption,
-two ordered numeric axes, their observed perpendicular strokes, and a compact
-graphic legend key are proved. `plot_reference_geometry` nominates windows;
-the pixel/axes/marker modules retain bounded original masks through the existing
-cell renderer. `plot_reference` uses the sole source-window and physical-cell
-SDK for native text or complete 400/600dpi observations, including native/raster
-contradictions. Original raw text, masks and coordinate frames remain replayable.
-Heading proof v2 enters the same heading inventory and source digest, not a
-second store, queue, recognition engine or acceptance path. Binding21/binder30
-already describe this unpublished derived-source change; no extra product bump.
+two complete ordered numeric axes, their observed perpendicular strokes, and a
+compact graphic key are proved. Edge/centre nominations conserve the complete
+physical numeric family before ordering; a convenient monotonic subset cannot
+discard a conflicting or unread member. The same maximal alignment families
+include unread first/last members outside that subset's numeric envelope and
+independently retained native words. Unaligned notes do not join an axis; excess
+physical inventory refuses rather than selecting a bounded successful prefix.
+Vertical families retain the already-required boundary before the horizontal
+tick row, so later aligned synthesis text cannot poison or borrow a figure role.
+The original inner-envelope conflict veto remains mandatory even for unaligned
+or shifted-font words; extending a family does not replace that source guard.
+The refined x-axis nomination must retain every observed word in the complete
+strip, including displaced numeric/unknown members, not merely read then omit it.
+
+`plot_legend_locator` may nominate the literal compound suffix of an original
+OCR line containing its graphic key. Complete original line text/bounds and its
+exact literal range remain recorded. Source masks at400/600dpi must reproduce
+the whole compact key and all remaining text; the shared cell inset supplies a
+reading window, not a string-prefix deletion. Known synthesis roles and multiple
+identifiers cannot enter this refinement. Ordinary original-cell observations
+still qualify every literal. Missing/weak/conflicting evidence stays unproved.
+
+When low-resolution rotated axis text is incomplete, `plot_axis_refinement`
+coordinates one bounded original strip below the observed x axis and above its
+lower caption. Detected words do not define the first/last retained pixels.
+`cell_word_orientation` inventories every retained ink component and derives one
+unambiguous physical orientation; `plot_axis_words` observes every complete word
+with the existing OCR engine at both resolutions. Exact transforms, view hashes,
+pixel coverage, original-point backprojection, literal agreement and qualified
+original-source conflicts are replayed. No OCR characters are joined or repaired.
+Global upright table OCR and angle-classifier policy remain unchanged.
+The shared cell renderer enforces each caller's equal or smaller pixel budget
+before allocating a pixmap; its default8M ceiling is unchanged.
+
+`plot_reference` is the observer; `plot_reference_proof` owns the sole saved replay.
+Heading proof3 records complete axis words; proof4 additionally binds an original
+graphic/text locator. Both use the existing source-window/cell SDK and binding
+writer, not another model, queue, store or acceptance path. Thresholded masks use
+one lossless zlib-packbits encoding with bounded decompression, exact EOF/length
+and zero padding; original PDFs/raw images remain unchanged. Existing8M cell,
+32-word and1MiB source-digest limits remain explicit. Unsupported geometry,
+multiple plausible panels or excess/ambiguous source stays unresolved.
+
+Binding22/binder31 invalidate derived ownership only. RawOCR2, visible-label21,
+OCSR/preparation/stereo, activity/SAR, models, manual audit, API and SQL retain
+their own contracts. Earlier section numbers describe previous module deliveries,
+not a second current ownership authority. Two-resolution OCR agreement is not
+statistical independence or a guarantee of original chemical identity.
 
 A figure mention never supplies a molecule or a plotted numeric activity.
 Independent all-page structural discovery remains unchanged. Nearby synthesis

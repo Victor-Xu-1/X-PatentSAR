@@ -48,12 +48,12 @@ def scope_observations(observations, page_no, *, original_pdf_sha256=""):
     ]
 
 
-def _bounded_tree(value):
+def _bounded_tree(value, *, coordinate_tuples=False, max_depth=16):
     pending, count = [(value, 0)], 0
     while pending:
         item, depth = pending.pop()
         count += 1
-        if depth > 16 or count > 200000:
+        if depth > max_depth or count > 200000:
             raise ValueError(
                 "Original role diagnostic node inventory exceeds its budget"
             )
@@ -61,7 +61,7 @@ def _bounded_tree(value):
             if len(item) > 128 or any(type(k) is not str or len(k) > 128 for k in item):
                 raise ValueError("Malformed original role diagnostic object")
             pending.extend((child, depth + 1) for child in item.values())
-        elif isinstance(item, list):
+        elif isinstance(item, list) or coordinate_tuples and isinstance(item, tuple):
             if len(item) > 4096:
                 raise ValueError("Original role diagnostic array exceeds its budget")
             pending.extend((child, depth + 1) for child in item)
@@ -80,6 +80,21 @@ def _bounded_tree(value):
 
 
 def _validate(observation, *, original_pdf_sha256=None):
+    if isinstance(observation, dict) and observation.get("version") == 2:
+        from .binding_source_diagnostics import validate_binding_diagnostic
+        from .caption_role_links import MAX_CONTINUATION_DEPTH
+
+        validate_binding_diagnostic(
+            observation, original_pdf_sha256=original_pdf_sha256
+        )
+        # A rejected proposal can contain the existing bounded64-page role chain.
+        # Only this diagnostic variant has that depth; source acceptance does not.
+        _bounded_tree(
+            observation,
+            coordinate_tuples=True,
+            max_depth=16 + 3 * MAX_CONTINUATION_DEPTH,
+        )
+        return
     keys = {
         "version",
         "status",

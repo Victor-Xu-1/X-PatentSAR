@@ -2,10 +2,11 @@
 
 import math
 import re
-from itertools import pairwise
+from itertools import chain, pairwise
 
 from .cell_frame_proof import inside_box
 from .compound_caption import caption_identity
+from .source_geometry import overlaps
 from .source_section_roles import section_heading
 
 _FIGURE = re.compile(
@@ -69,13 +70,15 @@ def marker_bounds(box, size):
     ]
 
 
-def context_bounds(caption, axes, label, size):
+def context_bounds(caption, axes, label, size, *, row_bounds=None, locator_bounds=None):
     boxes = [
         caption["bbox"],
         label,
         marker_bounds(label, size),
         *(p["bbox"] for group in axes.values() for p in group),
         *axis_bounds(axes).values(),
+        *([row_bounds] if row_bounds is not None else []),
+        *([locator_bounds] if locator_bounds is not None else []),
     ]
     return [
         max(0, min(b[0] for b in boxes) - 3),
@@ -112,7 +115,80 @@ def _ordered(parts, axis):
     return [source_literal(p) for p in parts]
 
 
-def plot_axes(tokens, caption, label, size):
+def _aligned_groups(parts, axis):
+    """Conserve complete edge-aligned families, not convenient numeric subsets.
+
+    Rotated labels with different lengths need not have aligned centres. Their
+    original top/bottom (or left/right) edges still nominate one literal family.
+    Overlapping nominations are joined before checking numerical order, so a
+    contradictory member cannot disappear by choosing another anchor/edge.
+    """
+    groups = []
+    for position in (axis, axis + 2, None):
+        coordinates = [
+            p["bbox"][position] if position is not None else sum(p["bbox"][axis::2]) / 2
+            for p in parts
+        ]
+        for coordinate in coordinates:
+            group = {
+                i for i, value in enumerate(coordinates) if abs(value - coordinate) <= 3
+            }
+            for previous in groups[:]:
+                if group & previous:
+                    group |= previous
+                    groups.remove(previous)
+            groups.append(group)
+    return [[parts[i] for i in sorted(group)] for group in groups]
+
+
+def _complete_axis(parts, tokens, independent_tokens, alignment_axis, *, before=None):
+    # An unread first/last member can be outside the numeric envelope. Reuse the
+    # same complete physical alignment families for both observed origins before
+    # checking literals; the successful numeric subset cannot choose its bounds.
+    low = min(p["bbox"][alignment_axis] for p in parts) - 3
+    high = max(p["bbox"][alignment_axis + 2] for p in parts) + 3
+    order_axis = 1 - alignment_axis
+    original = [*tokens, *independent_tokens]
+    nearby = [
+        token
+        for token in original
+        if token["text"].strip()
+        and token["bbox"][alignment_axis] <= high
+        and token["bbox"][alignment_axis + 2] >= low
+        and (before is None or token["bbox"][order_axis + 2] < before)
+    ]
+    if len(nearby) > 256:
+        return False  # Excess original inventory is not a successful prefix.
+    seeds = {id(part) for part in parts}
+    families = (
+        group
+        for group in _aligned_groups([*parts, *nearby], alignment_axis)
+        if any(id(part) in seeds for part in group)
+    )
+    envelope = [
+        min(part["bbox"][0] for part in parts),
+        min(part["bbox"][1] for part in parts),
+        max(part["bbox"][2] for part in parts),
+        max(part["bbox"][3] for part in parts),
+    ]
+    # Preserve the original inner-envelope veto too: a shifted/unread font may
+    # overlap that frame without aligning to an otherwise complete tick family.
+    inner = (
+        token
+        for token in original
+        if token["text"].strip() and overlaps(token["bbox"], envelope)
+    )
+    return all(
+        any(
+            literal(token["text"]) == literal(part["text"])
+            and overlaps(token["bbox"], part["bbox"])
+            for part in parts
+        )
+        for token in chain(chain.from_iterable(families), inner)
+    )
+
+
+def _axis_candidates(tokens, caption, label, size, independent_tokens, *, unread=False):
     """Two independently ordered numeric axes, not a nearby Figure-word guess.
 
     This nominates original windows only. All selected literals and the graphic
@@ -134,32 +210,53 @@ def plot_axes(tokens, caption, label, size):
             seen.add(key)
     if len(numbers) > 256:
         return None
-    candidates = {}
-    for anchor in numbers:
-        row = [
+    row_members = numbers
+    if unread:
+        row_members = [
             p
-            for p in numbers
-            if abs(sum(p["bbox"][1::2]) - sum(anchor["bbox"][1::2])) <= 6
+            for p in tokens
+            if isinstance(p.get("text"), str)
+            and p["text"].strip()
+            and inside_box(p.get("bbox"), [0, 0, *size])
+            and label[3] + 2 < p["bbox"][1] < label[3] + 360
         ]
-        xs = _ordered(row, 0)
-        if xs is None:
+        if len(row_members) > 256:
+            return None
+    candidates = {}
+    for row in _aligned_groups(row_members, 1):
+        xs = (
+            [source_literal(p) for p in sorted(row, key=lambda p: sum(p["bbox"][::2]))]
+            if unread and 3 <= len(row) <= 32
+            else _ordered(row, 0)
+            if not unread
+            else None
+        )
+        if (
+            xs is None
+            or not unread
+            and not _complete_axis(xs, tokens, independent_tokens, 1)
+        ):
             continue
         left, right = xs[0]["bbox"], xs[-1]["bbox"]
         span = (right[0] + right[2] - left[0] - left[2]) / 2
         if span < 45:
             continue
-        for head in numbers:
-            column = [
-                p
-                for p in numbers
-                if p["bbox"][3] < min(x["bbox"][1] for x in xs)
-                and (
-                    abs(p["bbox"][0] - head["bbox"][0]) <= 3
-                    or abs(p["bbox"][2] - head["bbox"][2]) <= 3
-                )
-            ]
+        above = [p for p in numbers if p["bbox"][3] < min(x["bbox"][1] for x in xs)]
+        for column in _aligned_groups(above, 0):
             ys = _ordered(column, 1)
-            if ys is None or ys[-1]["bbox"][1] - ys[0]["bbox"][1] < 40:
+            if (
+                ys is None
+                # Preserve the existing cross-axis boundary: later aligned
+                # synthesis text is not a member of this vertical tick column.
+                or not _complete_axis(
+                    ys,
+                    tokens,
+                    independent_tokens,
+                    0,
+                    before=min(p["bbox"][1] for p in xs),
+                )
+                or ys[-1]["bbox"][1] - ys[0]["bbox"][1] < 40
+            ):
                 continue
             edge = max(p["bbox"][2] for p in ys)
             cap = caption["bbox"]
@@ -182,3 +279,14 @@ def plot_axes(tokens, caption, label, size):
             )
             candidates[key] = axes
     return next(iter(candidates.values())) if len(candidates) == 1 else None
+
+
+def plot_axes(tokens, caption, label, size, *, independent_tokens=()):
+    return _axis_candidates(tokens, caption, label, size, independent_tokens)
+
+
+def plot_axis_nomination(tokens, caption, label, size, *, independent_tokens=()):
+    """Original geometry only; unread words require bounded original-image proof."""
+    return _axis_candidates(
+        tokens, caption, label, size, independent_tokens, unread=True
+    )

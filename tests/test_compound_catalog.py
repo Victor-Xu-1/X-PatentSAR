@@ -64,6 +64,17 @@ class CompoundCatalogTests(unittest.TestCase):
             any(issue.reason == "duplicate_label" for issue in result.issues)
         )
 
+    def test_selected_full_disagreement_in_one_table_cannot_erase_that_source(self):
+        selected, x = source("1", 1, "Table A", True)
+        original, y = source("1", 2, "Table A", False)
+        complete, z = source("1", 3, "Table B", False)
+        for cells in ([selected, original, complete], [original, selected, complete]):
+            with self.subTest(first_selected=cells[0].catalog.selected_subset):
+                result = pair_numbered_table_cells(cells, [x, y, z], None)
+                self.assertEqual(result.bindings, ())
+                self.assertEqual(result.reprints, ())
+                self.assertTrue(result.issues)
+
     def test_unproved_or_cross_boundary_source_never_inherits_a_printed_number(self):
         a, x = source("1", 1)
         x["x0"] = 10

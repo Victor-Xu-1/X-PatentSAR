@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+from dataclasses import replace
 
 from patent_sar_extractor.core.activity_grid_continuations import Panel, continued_panel
 from patent_sar_extractor.core.activity_headers import context_from_text, grid_schema
@@ -54,6 +55,40 @@ class ActivityHeaderContinuationTests(unittest.TestCase):
         self.assertIs(
             self.continuation(first, second, axes, [20, 80, 160, 260], ""), second
         )
+
+    def test_complete_repetition_never_overrides_original_review_or_column_roles(self):
+        first, second = self.schemas()
+        axes = [20, 60, 160, 260]
+        group = second.groups[0]
+        for current in (
+            replace(second, needs_review=True),
+            replace(second, header_resolution={"status": "unresolved"}),
+            replace(second, raw_headers=()),
+            replace(second, raw_headers=(*second.raw_headers[:2], "CellineYmin")),
+            replace(
+                second,
+                groups=(
+                    replace(group, value_columns=tuple(reversed(group.value_columns))),
+                ),
+            ),
+            replace(
+                second,
+                groups=(
+                    replace(
+                        group,
+                        value_columns=group.value_columns[:1],
+                        metadata_columns=((2, "count"),),
+                    ),
+                ),
+            ),
+        ):
+            with self.subTest(current=current):
+                self.assertIs(
+                    self.continuation(first, current, axes, axes, ""), current
+                )
+        unknown, _ = self.schemas()
+        unknown = replace(unknown, groups=second.groups, raw_headers=second.raw_headers)
+        self.assertIs(self.continuation(unknown, second, axes, axes, ""), second)
 
 
 if __name__ == "__main__":

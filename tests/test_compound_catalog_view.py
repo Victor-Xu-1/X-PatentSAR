@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import json
+import tempfile
 import unittest
+from pathlib import Path
 
+from catalog_source_support import original_catalogue
 from test_prediction_support import PredictionFixture
+from test_web_support import artifact_run
 
-from patent_sar_extractor.core.binding_catalog import compound_catalog
 from patent_sar_extractor.web.acceptance import ARTIFACTS
 from patent_sar_extractor.web.errors import WebError
 from patent_sar_extractor.web.exports import export_json
@@ -15,31 +18,19 @@ from patent_sar_extractor.web.exports import export_json
 
 class CompoundCatalogViewTests(PredictionFixture, unittest.TestCase):
     def catalog_run(self):
-        binding_path = self.run / ARTIFACTS["bindings"][0]
-        payload = json.loads(binding_path.read_text())
-        first = payload["final_bindings"][0]
-        second = {
-            **first,
-            "cpd": "Compound 8",
-            "compound_id": "Compound 8",
-            "structure_id": "numbered-without-activity",
-            "authoritative_table_source_label": "Compound 8",
-            "exact_caption_evidence": {
-                **first["exact_caption_evidence"],
-                "observations": [{"method": "native_cell", "text": "Compound 8"}],
-            },
-        }
-        repeat = {**first, "structure_id": "proved-reprint"}
-        payload["compound_catalog"] = compound_catalog([first, second], [repeat])
+        root = Path(tempfile.mkdtemp(prefix="catalogue-", dir=self.root))
+        self.run = artifact_run(root / "run", self.pdf, rows=1)
+        self.pdf, binding_path, payload = original_catalogue(root, self.run)
+        # Exercise a partial formal transport view while retaining the complete
+        # proved original catalogue. The same worker must still observe the
+        # unmeasured numbered source and its reprints, not silently omit them.
+        payload["final_bindings"] = payload["final_bindings"][:1]
+        payload["final_bindings_count"] = 1
         binding_path.write_text(json.dumps(payload))
-        path = self.run / ARTIFACTS["structures"][0]
-        structures = json.loads(path.read_text())
-        original = structures["structures"][0]
-        structures["structures"].extend(
-            {**original, "structure_id": item["structure_id"]}
-            for item in (second, repeat)
+        # The saved source and project PDF must be the same actual controlled file.
+        self.project = self.service.import_run(
+            self.run, pdf_path=self.pdf, title=self.project.title
         )
-        path.write_text(json.dumps(structures))
         return binding_path, payload
 
     def test_numbered_source_without_activity_is_a_primary_row_reprint_is_not(self):

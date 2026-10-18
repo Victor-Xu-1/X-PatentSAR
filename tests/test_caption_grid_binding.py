@@ -4,6 +4,7 @@ from unittest.mock import patch
 import fitz
 
 from patent_sar_extractor.core.caption_grid_binding import bind_caption_grids
+from patent_sar_extractor.core.source_geometry import SourceTokens, source_layout
 from patent_sar_extractor.core.table_cells import CellReading
 
 
@@ -49,6 +50,31 @@ class CaptionGridBoundaryTests(unittest.TestCase):
         with doc:
             result = bind_caption_grids(doc, structures, boxes, [1])
         self.assertEqual([b["label"] for b in result.bindings], ["5", "6"])
+
+    def test_original_title_starts_catalog_even_when_layout_lane_omits_it(self):
+        for direction in ("above", "below"):
+            with self.subTest(direction=direction):
+                doc, structures, boxes = self.control(direction=direction)
+                with doc:
+                    page = doc[0]
+                    layout = source_layout(page)
+                    tokens = SourceTokens(
+                        [token for token in layout.native if token["y"] >= 100],
+                        layout,
+                    )
+                    result = bind_caption_grids(
+                        doc,
+                        structures,
+                        boxes,
+                        [1],
+                        tokens_for_page=lambda _page, tokens=tokens: tokens,
+                    )
+                self.assertEqual(
+                    [pair["label"] for pair in result.bindings],
+                    ["5", "6"],
+                    result.issues,
+                )
+                self.assertEqual(result.issues, [])
 
     def test_unlocated_rival_prevents_false_unique_owner(self):
         doc, structures, boxes = self.control(rival=True)

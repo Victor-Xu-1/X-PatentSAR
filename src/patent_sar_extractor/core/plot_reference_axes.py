@@ -44,9 +44,9 @@ def observe_axes(page, axes, size):
     return result if valid_axes(result, axes, size) else None
 
 
-def valid_axes(packet, axes, size):
+def axis_strokes(packet, axes, size):
     if not isinstance(packet, dict) or set(packet) != {"x", "y"}:
-        return False
+        return None
     strokes = {}
     for axis, box in axis_bounds(axes).items():
         observed = packet[axis]
@@ -58,21 +58,47 @@ def valid_axes(packet, axes, size):
             or not isinstance(observed["readings"], list)
             or len(observed["readings"]) != 2
         ):
-            return False
+            return None
         found = []
         for reading, dpi in zip(observed["readings"], (400, 600)):
             mask = retained_pixels(reading, box, dpi, MAX_AXIS_PIXELS)
             if mask is None:
-                return False
+                return None
             stroke = _stroke(mask, axis, box, dpi)
             if stroke is None:
-                return False
+                return None
             found.append(stroke)
         if any(abs(a - b) > 1.2 for a, b in zip(*found)):
-            return False
+            return None
         strokes[axis] = found[0]
     x, y = strokes["x"], strokes["y"]
     return (
-        x[0] - 2.5 <= (y[0] + y[2]) / 2 <= x[2] + 2.5
-        and y[1] - 2.5 <= (x[1] + x[3]) / 2 <= y[3] + 2.5
+        strokes
+        if (
+            x[0] - 2.5 <= (y[0] + y[2]) / 2 <= x[2] + 2.5
+            and y[1] - 2.5 <= (x[1] + x[3]) / 2 <= y[3] + 2.5
+        )
+        else None
+    )
+
+
+def valid_axes(packet, axes, size):
+    return axis_strokes(packet, axes, size) is not None
+
+
+def axis_word_window(packet, axes, caption, size):
+    """Complete page-width original strip, below the axis and above its caption.
+
+    Word detections cannot define the first/last retained ink. Unsupported or
+    overlapping layouts refuse rather than accepting only the detected prefix.
+    """
+    strokes = axis_strokes(packet, axes, size)
+    if strokes is None:
+        return None
+    top, bottom = strokes["x"][3] + 0.5, caption["bbox"][1]
+    bounds = [0, top, size[0], bottom]
+    return (
+        bounds
+        if 0 < bottom - top <= 128 and inside_box(bounds, [0, 0, *size])
+        else None
     )

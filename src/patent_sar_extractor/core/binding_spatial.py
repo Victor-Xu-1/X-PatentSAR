@@ -22,6 +22,7 @@ from .binding_candidates import (
     _normalise_binding_to_compound,
 )
 from .binding_labels import _binding_label_key
+from .binding_source_claims import resolve_source_claims
 from .binding_types import (
     BindingCandidate,
     BindingConflict,
@@ -120,35 +121,6 @@ def _candidate(binding: dict[str, Any], source: SourceKind) -> BindingCandidate:
     )
 
 
-def _resolve_claim_conflicts(
-    candidates: list[BindingCandidate],
-) -> tuple[tuple[BindingCandidate, ...], tuple[BindingConflict, ...]]:
-    labels: dict[str, set[str]] = {}
-    structures: dict[str, set[str]] = {}
-    for candidate in candidates:
-        labels.setdefault(candidate.label_key, set()).add(candidate.structure_id)
-        structures.setdefault(candidate.structure_id, set()).add(candidate.label_key)
-    accepted: dict[tuple[str, str], BindingCandidate] = {}
-    conflicts = []
-    for candidate in candidates:
-        reason = (
-            "ambiguous_compound_owner"
-            if len(labels[candidate.label_key]) > 1
-            else "ambiguous_structure_owner"
-            if len(structures[candidate.structure_id]) > 1
-            else None
-        )
-        if reason:
-            conflicts.append(
-                BindingConflict(candidate.label_key, candidate.page_index, reason)
-            )
-        else:
-            accepted.setdefault(
-                (candidate.label_key, candidate.structure_id), candidate
-            )
-    return tuple(accepted.values()), tuple(conflicts)
-
-
 def collect_spatial_bindings(
     doc: Any,
     processed_structures: list[dict[str, Any]],
@@ -189,7 +161,9 @@ def collect_spatial_bindings(
 
     def grids_for_page(page):
         if page.number not in grids:
-            grids[page.number] = detect_ruled_table_regions(page, dpi=240)
+            grids[page.number] = detect_ruled_table_regions(
+                page, dpi=240, minimum_columns=1
+            )
         return grids[page.number]
 
     def tokens_for_page(page):
@@ -229,7 +203,13 @@ def collect_spatial_bindings(
     recognized_pages = set(numbered.recognized_pages)
     reserved_pages = set(numbered.ownership_pages)
     observed_keys = set(numbered.observed_keys)
-    table_bindings = original_table_bindings(numbered)
+    table_bindings = [
+        *original_table_bindings(numbered),
+        *(
+            _original_table_binding(pair, numbered.recognized_pages)
+            for pair in numbered.reprints
+        ),
+    ]
     declaration_pages, nonfinal_declaration_ids = observe_declaration_pages(
         doc,
         processed_structures,
@@ -292,12 +272,15 @@ def collect_spatial_bindings(
         candidates.append(_candidate(binding, "exact_caption"))
         caption_ids.add(str(pair.structure["id"]))
         caption_keys.add(_binding_label_key(binding))
-    accepted, conflicts = _resolve_claim_conflicts(candidates)
+    claims = resolve_source_claims(candidates)
+    accepted, conflicts = claims.primary, claims.conflicts
     reprints = []
-    for pair in numbered.reprints:
-        binding = _original_table_binding(pair, numbered.recognized_pages)
+    for candidate in claims.reprints:
+        binding = dict(candidate.binding)
         reprints.append(
-            annotate_source_binding(_normalise_binding_to_compound(binding, pair.label))
+            annotate_source_binding(
+                _normalise_binding_to_compound(binding, candidate.label_key)
+            )
         )
     conflicts = (
         *conflicts,
@@ -306,7 +289,14 @@ def collect_spatial_bindings(
                 issue["cpd"],
                 issue["page_no"] - 1,
                 issue["reason"],
-                issue.get("evidence", {}),
+                {
+                    **issue.get("evidence", {}),
+                    **(
+                        {"structure_id": issue["structure_id"]}
+                        if issue.get("structure_id")
+                        else {}
+                    ),
+                },
             )
             for issue in caption_issues
         ),

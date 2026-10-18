@@ -1,10 +1,11 @@
 {
   "schema_version": 1,
-  "base_sha": "707ba1f86e8efde2aa467d8a5fe30bd624feb7e7",
+  "base_sha": "6bf180fa5a7622db9aaa53d488477380f22a6c0a",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
     "docs/OPERATIONS.md",
+    "docs/PROJECT_MANIFEST.md",
     "frontend/e2e/source-completion.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",

@@ -100,17 +100,19 @@ for (const width of [390, 1672]) {
       const table = page.locator('.results-table');
       await expect(table.locator('tbody tr')).toHaveCount(2);
       const row = table.locator('tbody tr').first();
-      await expect(row.locator('.frozen-compound')).toContainText('Compound 1');
+      // Real original-source fixtures expose the printed identifier, not a
+      // fabricated display prefix. Internal owner/chemical gates stay unchanged.
+      await expect(row.locator('.frozen-compound button')).toHaveText('1');
       if (status !== 'valid') await expect(row.locator('.prediction-value')).toHaveCount(0);
       const opener = row.locator('.frozen-compound button');
       await opener.click();
       const dialog = page.getByRole('dialog', {
-        name: 'Structure details · Compound 1',
+        name: 'Structure details · 1',
         exact: true,
       });
       await expect(dialog).toBeVisible();
       await expect(
-        dialog.getByRole('img', { name: 'Original structure crop for Compound 1', exact: true }),
+        dialog.getByRole('img', { name: 'Original structure crop for 1', exact: true }),
       ).toBeVisible();
       await dialog
         .getByText('Other original sources for this identifier (1)', { exact: true })

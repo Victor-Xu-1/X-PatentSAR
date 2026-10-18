@@ -9,7 +9,7 @@ from .plot_reference_pixels import observe_pixels, retained_pixels
 MAX_MARKER_PIXELS = 50000
 
 
-def _extent(mask, dpi, heading_height):
+def marker_extent(mask, dpi, heading_height):
     y, x = np.nonzero(mask)
     if not len(x):
         return None
@@ -49,7 +49,7 @@ def valid_marker(packet, label, size):
         mask = retained_pixels(reading, bounds, dpi, MAX_MARKER_PIXELS)
         if mask is None:
             return False
-        extent = _extent(mask, dpi, label[3] - label[1])
+        extent = marker_extent(mask, dpi, label[3] - label[1])
         if extent is None:
             return False
         extents.append(extent)

@@ -15,6 +15,35 @@ def grid(page, xs, ys):
 
 
 class SharedTableGeometryTests(unittest.TestCase):
+    def test_invalid_column_policy_fails_before_any_page_render(self):
+        for value in (True, False, 0, -1, 65, 1.0, "1", None):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                detect_ruled_table_regions(object(), minimum_columns=value)
+
+    def test_caption_consumer_can_request_a_complete_single_column_grid(self):
+        for ys in ([100, 125], [100, 125, 205]):
+            with self.subTest(ys=ys), fitz.open() as doc:
+                page = doc.new_page()
+                grid(page, [40, 200], ys)
+                self.assertEqual(detect_ruled_table_regions(page, dpi=240), [])
+                found = detect_ruled_table_regions(page, dpi=240, minimum_columns=1)
+                self.assertEqual(len(found), 1)
+                self.assertEqual(len(found[0]["xs"]), 2)
+                self.assertEqual(len(found[0]["ys"]), len(ys))
+
+    def test_single_column_nomination_never_completes_an_open_outer_edge(self):
+        for missing in (40, 200):
+            with self.subTest(missing=missing), fitz.open() as doc:
+                page = doc.new_page()
+                for y in (100, 125, 205):
+                    page.draw_line((40, y), (200, y))
+                for x in (40, 110, 200):
+                    if x != missing:
+                        page.draw_line((x, 100), (x, 205))
+                self.assertEqual(
+                    detect_ruled_table_regions(page, dpi=240, minimum_columns=1), []
+                )
+
     def test_single_row_grid_is_detected_independently_of_page_size(self):
         for height in (400, 842, 1600):
             with self.subTest(height=height), fitz.open() as doc:

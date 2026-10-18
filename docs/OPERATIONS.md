@@ -11,6 +11,82 @@ actual read errors remain visible. Filtered zero matches and an empty page of
 a nonempty query retain their own messages. Language switches do not change
 original source labels or numeric values. No task is started by this display.
 
+## Weak short text rows inside original headers
+
+Small unit or context rows can lose recognizer resolution when a fixed physical
+blank border dominates their ink height. The normal reader preserves a qualified
+first reading; only a weak/empty/malformed row gets one further original-ink view
+with a deterministic compact blank border. No new PDF render, OCR instance,
+model installation, external call, dictionary correction or confidence threshold
+change is introduced. Both attempts stay in the same saved text-frame proof.
+
+A clearer unit is not permission to overwrite a different valid original target,
+endpoint, table or unit. Some degraded serif/monospace inputs still cannot be
+qualified. Keep them unresolved and retain all original observations; never turn
+them into guessed values, accepted partial coverage or a clean empty dataset.
+An unresolved original reading still cannot lend meaning to a later data panel.
+Native repeated headers with compact whitespace may use the already-proved
+original table's roles only if the complete physical headers and column roles
+match. The raw current label remains visible. This does not guess a standalone
+unknown metric, overwrite count metadata or remove review/source conflicts.
+These scientific coverage cases remain open even if refusal tests pass.
+
+Binding24/binder33 andActivity20/extractor29 require normal current derived
+observation through frontend execution. Preserve old inputs/raw observations,
+failed tasks and human audit. Older original text frames remain inspectable as
+historical evidence, not retagged current acceptance. Bounded source checks,
+installed package/CI/main/fixed18765 delivery and actual frontend extraction/SAR
+are separate gates. Do not rerun or edit a private input outside that frontend.
+
+## Single-column catalogues and selected repeat sources
+
+One-column caption grids use the normal source-binding path after complete outer
+edges and original caption/diagram ownership are verified. Activity-table geometry
+still defaults to at least two columns. An open frame is not repaired by guessing
+an edge. Numbered tables and caption catalogues share one complete primary/reprint
+decision; saving/reloading cannot promote a selected repeat over the complete
+original catalogue. Negated/mixed selected titles, unknown scope, two complete
+catalogues or novel selected identifiers do not grant a merge exemption.
+
+All proved repeat depictions remain queued to the same existing recognition/QC
+worker. Their graphs must agree under the existing stereo/isotope/charge/component
+rules before chemistry is qualified. Additional source count is not compound count
+or an independent experimental replicate. No extra model/environment is installed.
+
+Rejected proposals now remain as unresolved variant2 diagnostic observations in
+the existing binding JSON, including original role/cell/ownership context and IDs.
+They cannot produce chemistry, activities, an exclusion or successful coverage.
+Saved issue lists are not the source of truth: pure source replay restores each
+retained unresolved diagnostic. Missing/hash-mismatched/foreign diagnostic packets
+or budgets fail visibly; do not delete them to make a run pass. Existing variant1
+role observations remain readable under their own unchanged constraints.
+
+Binding23/binder32 refresh only derived source ownership through an ordinary
+frontend run. Preserve old PDFs, raw page/model/crop observations, manual edits,
+failed tasks and rollback packages. Never retag old results as accepted, rerun a
+private input outside the frontend, or interrupt a running attempt for deployment.
+Source/unit/native package and browser/PR/main/fixed18765 delivery gates remain
+separate from complete real extraction/SAR and broader scientific acceptance.
+
+## Proved catalogue labels reported again as missing headings
+
+Layout nominations and original cell proof have different responsibilities.
+The original qualified catalogue title, not just a layout-lane string, supplies
+the existing start/direction decision. Caption references reuse the cell SDK's
+centre ownership and one-point detector-edge budget; source windows, original
+IDs and exact diagram ownership are not enlarged. An out-of-cell centre, excess
+padding, duplicate owner, known conflict or foreign source still refuses.
+
+The same physical fragment replay is used by cell observation and saved identity
+consumers. Overlapping role letters and shared suffix characters require qualified
+matching literal/geometry; broad alphabetic overlap exemptions are not retained.
+Independent characters, alternate IDs and insufficient confidence must remain
+visible and unresolved. Do not suppress these issues or edit a failed run's
+bindings. Binding22/binder31 refresh derived ownership through normal frontend
+execution; original PDFs, raw observations, images and manual audits remain.
+Focused source/writer/consumer, package, PR/main and fixed18765 checks are separate
+from accepted real extraction/SAR and any broad-format accuracy claim.
+
 ## Characterization tables
 
 Long NMR/MS cells are not assay headers. The shared original-cell reader keeps
@@ -1134,14 +1210,33 @@ wheel/state backup, preserving newer study records for forward recovery.
 
 ## Reproducible package construction
 
-Current unpublished quantitative-figure source roles distinguish a plot legend
-from a synthesis heading using original caption/axis/key pixels and the same
-bounded source/cell observations. They do not read activity values off a graph
-or close another structural occurrence of the same identifier. Unknown graphs,
-non-rectilinear layouts or resource refusals remain ordinary source obligations;
-never clear their QA to obtain a successful run. Existing PDFs/raw/manual edits
-are unchanged. Build, installed-consumer checks, reviewed main/18765 delivery and
-an actual frontend extraction remain required before claiming this is delivered.
+Quantitative-figure source roles distinguish a plot legend from a synthesis
+heading using complete original caption/axis/key pixels and the existing bounded
+source/cell observations. A graphic key merged into an OCR line can be separated
+only through retained original masks and independent literal reads; raw text and
+coordinates are not edited. Rotated tick refinement preserves every original ink
+component in the complete bounded strip. Both400/600dpi readings and their saved
+transforms, coordinates, source conflicts and inventory must revalidate. Missing,
+unread, reordered, contradictory or oversized observations cannot qualify a
+preferred numeric subset. Outer unread members and independent native words
+remain in the same complete physical alignment family even when outside the
+readable numbers' envelope; unrelated unaligned notes are not axis members.
+The original cross-axis boundary separates later aligned synthesis sections.
+Unaligned unread ink inside the numeric envelope still vetoes qualification.
+Refinement must keep every observed word in the final axis, not just its reads.
+The global table OCR orientation policy is unchanged.
+
+Derived heading proofs3/4 use Binding22/binder31. Old ownership remains historical;
+original PDF/raw observations/manual audit and independent scientific contracts
+are not rewritten. Lossless thresholded-mask compression retains the existing
+1MiB source-digest and8M cell limits, with bounded decompression and strict stream
+validation. Caller-specific equal or smaller render budgets are checked before
+pixmap allocation. It is not a new image store or permission to install another engine.
+These roles do not read activity values off graphs or close another structural
+occurrence of the same identifier. Unsupported/non-rectilinear/ambiguous panels
+and resource refusals remain source obligations; never clear QA to pass a run.
+Build, installed-consumer checks, reviewed main/18765 delivery and actual frontend
+scientific acceptance remain separate requirements, not claims from OCR agreement.
 
 After building/checking the frontend, use `tools/build_wheel.py --work-root
 /srv/wsl/tmp --out-dir <new-output-directory>` rather than building in an old

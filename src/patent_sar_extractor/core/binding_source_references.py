@@ -4,6 +4,7 @@ import re
 
 from .activity_grid_role_proof import valid_role_scope
 from .activity_header_evidence import proof_id
+from .binding_source_diagnostics import binding_diagnostic_issues
 from .binding_source_regions import identifier_references, reference_cell
 from .caption_label_roles import caption_reference_ids, validate_caption_references
 from .caption_role_proof import validate_caption_exclusions
@@ -195,9 +196,12 @@ def reference_issues(payload, entries, *, required=True):
     scope = payload.get("source_reference_scope")
     validate_role_catalog(
         payload.get("source_role_observations", {}),
-        original_pdf_sha256=scope.get("original_pdf_sha256")
+        original_pdf_sha256=(scope.get("original_pdf_sha256") or None)
         if isinstance(scope, dict)
         else None,
+    )
+    diagnostic_issues = binding_diagnostic_issues(
+        payload.get("source_role_observations", {}), payload.get("source_issues", ())
     )
     validate_caption_exclusions(sections, entries)
     if (
@@ -216,7 +220,7 @@ def reference_issues(payload, entries, *, required=True):
             for section in sections
         )
     ):
-        return []
+        return diagnostic_issues
     regions = _regions(sections, scope)
     if required and scope["version"] != 6:
         raise ValueError(
@@ -275,7 +279,7 @@ def reference_issues(payload, entries, *, required=True):
         ):
             raise ValueError("Unproved original method-reference cell ownership")
     labels = {identifier_key(entry.get("cpd"), wrapped=True) for entry in entries}
-    issues = heading_inventory_issues(sections, scope, entries)
+    issues = [*diagnostic_issues, *heading_inventory_issues(sections, scope, entries)]
     column_issues, nonfinal_diagrams = unruled_source_inventory(
         sections, scope, entries
     )

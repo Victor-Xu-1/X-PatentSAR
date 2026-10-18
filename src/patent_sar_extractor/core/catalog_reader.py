@@ -14,6 +14,7 @@ from patent_sar_extractor.contracts import (
     schema_ref_matches,
 )
 
+from .binding_source_claims import validate_catalog_claims
 from .binding_source_references import reference_issues
 from .pipeline_rules import _label_key, annotate_binding_accuracy
 from .source_binding_proof import annotate_source_binding
@@ -156,6 +157,13 @@ def read_catalog_entries(
                 )
         checked["additional_sources"] = checked_additional
         output.append(checked)
+    if original_required:
+        try:
+            validate_catalog_claims(output)
+        except (TypeError, ValueError, KeyError, AttributeError) as exc:
+            raise CatalogValidationError(
+                "Original source claims are inconsistent."
+            ) from exc
     try:
         # Partial proved structures remain available for review. Completeness
         # is rechecked independently by formal_structure, never saved flags.

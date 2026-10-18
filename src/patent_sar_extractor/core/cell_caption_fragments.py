@@ -8,13 +8,50 @@ from .cell_ocr_line_groups import bounds, group_text_lines
 from .compound_caption import prefixed_label
 from .printed_identifiers import (
     LABEL_KIND,
-    LABEL_PREFIX,
     identifier_key,
     identifier_width,
 )
 
-_ROLE = re.compile(rf"{LABEL_PREFIX}", re.IGNORECASE)
 _KIND = re.compile(LABEL_KIND, re.IGNORECASE)
+
+
+def _boundary_overlap(left, right):
+    height = min(left[3] - left[1], right[3] - right[1])
+    return bool(
+        left[0] < right[0] < left[2] - 1 < right[2] - 1
+        and min(left[3], right[3]) - max(left[1], right[1]) >= height / 2
+    )
+
+
+def overlapping_literal_role_fragments(raw, observed, boxes):
+    """Retain an overlapping literal edge glyph as part of its known role word.
+
+    Both original detections must be qualified. The whole role must agree with
+    the separately read caption, and the shorter prefix/suffix must cross its
+    corresponding physical edge. Foreign, separate, numeric and whole-ID claims
+    are not exempted. Nothing is deleted from the original evidence packet.
+    """
+    role = _KIND.match(raw)
+    if role is None:
+        return set()
+    literal = identifier_width(role.group()).upper()
+    duplicates = set()
+    for index, part in observed:
+        fragment = identifier_width(part["text"]).strip().upper().removesuffix(".")
+        if not fragment.isalpha() or not 0 < len(fragment) < len(literal):
+            continue
+        for other_index, other in observed:
+            whole = identifier_width(other["text"]).strip().upper().removesuffix(".")
+            if other_index == index or whole != literal:
+                continue
+            if (
+                literal.startswith(fragment)
+                and _boundary_overlap(boxes[index], boxes[other_index])
+                or literal.endswith(fragment)
+                and _boundary_overlap(boxes[other_index], boxes[index])
+            ):
+                duplicates.add(index)
+    return duplicates
 
 
 def overlapping_literal_id_letters(raw, observed, boxes):
@@ -82,11 +119,7 @@ def overlapping_role_locators(raw, observed, boxes):
             ):
                 continue
             right = boxes[other_index]
-            height = min(left[3] - left[1], right[3] - right[1])
-            if (
-                left[0] < right[0] < left[2] - 1 < right[2] - 1
-                and min(left[3], right[3]) - max(left[1], right[1]) >= height / 2
-            ):
+            if _boundary_overlap(left, right):
                 locators.add(index)
     return locators
 
@@ -104,12 +137,10 @@ def truncated_caption_boundary(label, index, observed, boxes):
     left = boxes[index]
     for other_index, part in observed:
         right = boxes[other_index]
-        height = min(left[3] - left[1], right[3] - right[1])
         if (
             other_index != index
             and identifier_key(part["text"], terminal_period=True) == label
-            and left[0] < right[0] < left[2] - 1 < right[2] - 1
-            and min(left[3], right[3]) - max(left[1], right[1]) >= height / 2
+            and _boundary_overlap(left, right)
         ):
             return True
     return False
@@ -131,8 +162,10 @@ def complete_caption_text(label, parts):
 def ordered_caption_fragments(raw, observed, boxes, overlapping):
     """Every qualified literal is consumed once, in original physical order.
 
-    Overlapping numeric detector pieces are not independent complete IDs. Other
-    pieces, including series prefixes and letter suffixes, cannot disappear.
+    Overlapping numeric detector pieces are not independent complete IDs. A
+    literal suffix/prefix may share characters only across that same physical
+    boundary, while extending one unique span of the independently read caption.
+    Other pieces, including series prefixes and letter suffixes, cannot disappear.
     Weak words do not become claims or reset the one-use cursor. The target is
     already read from original pixels; no digit/suffix joining publishes an ID.
     """
@@ -142,7 +175,6 @@ def ordered_caption_fragments(raw, observed, boxes, overlapping):
         if (
             index in overlapping
             or prefixed_label(text)
-            or _ROLE.fullmatch(text)
             or not any(char.isalnum() for char in text)
         ):
             continue
@@ -162,10 +194,30 @@ def ordered_caption_fragments(raw, observed, boxes, overlapping):
     if groups is None:
         return False
     cursor = 0
+    role = _KIND.match(raw)
+    role_coverage = set()
+    observed_role_fragment = False
     for group in groups:
+        previous = None
         for part in sorted(group, key=lambda item: bounds(item)[0]):
             position = raw.find(part["text"], cursor)
             if position < 0:
-                return False
+                if previous is None or not _boundary_overlap(
+                    bounds(previous[0]), bounds(part)
+                ):
+                    return False
+                shared = [
+                    start
+                    for start in range(previous[1] + 1, cursor)
+                    if raw.startswith(part["text"], start)
+                    and start + len(part["text"]) > cursor
+                ]
+                if len(shared) != 1:
+                    return False
+                position = shared[0]
             cursor = position + len(part["text"])
-    return True
+            if role is not None and position < role.end():
+                observed_role_fragment = True
+                role_coverage.update(range(position, min(cursor, role.end())))
+            previous = part, position
+    return not observed_role_fragment or role_coverage == set(range(role.end()))

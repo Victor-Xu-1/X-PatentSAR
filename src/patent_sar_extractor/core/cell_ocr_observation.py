@@ -12,6 +12,12 @@ from .cell_header_lines import header_line_frame, observe_header_lines
 from .cell_ocr_lines import resolve_overlapping_lines
 from .cell_ocr_scores import confidence_score as _score
 from .cell_ocr_scores import confidence_value
+from .cell_text_row_readings import (
+    qualified_row,
+    row_observation,
+    row_recognition_border,
+    selected_row_reading,
+)
 from .compound_caption import caption_identity
 
 
@@ -27,6 +33,7 @@ class OCRObservation:
     physical_header_lines: dict | None = None
     physical_caption_line: dict | None = None
     physical_text_chunks: dict | None = None
+    single_row_readings: list[dict] | None = None
 
     def evidence(self, dpi: int, bounds) -> dict:
         return {
@@ -56,6 +63,11 @@ class OCRObservation:
             **(
                 {"physical_text_chunks": self.physical_text_chunks}
                 if self.physical_text_chunks is not None
+                else {}
+            ),
+            **(
+                {"single_row_readings": self.single_row_readings}
+                if self.single_row_readings is not None
                 else {}
             ),
         }
@@ -112,8 +124,15 @@ def observe_cell(
         and (header_frame is not None or (crop[3] - crop[1]) * 72 / dpi > row_height)
     )
     result, _ = engine(image, use_det=detected, use_cls=False)
+    # The same bounded row parser owns short headers before any positional
+    # indexing. A malformed response is an invalid observation, not a crash or
+    # permission to coerce a dictionary/scalar into apparently recognized text.
+    first = (
+        row_observation(result, border) if kind == "header" and not detected else None
+    )
+    components = [[first["text"], first["confidence"]]] if first is not None else result
     parts = []
-    for item in result or []:
+    for item in components or []:
         raw_confidence = item[2] if detected else item[1]
         parts.append(
             {
@@ -131,6 +150,30 @@ def observe_cell(
             }
         )
     detection_parts = tuple(parts) if detected else ()
+    single_readings = None
+    if first is not None:
+        compact = row_recognition_border(crop[3] - crop[1], border)
+        if not qualified_row(first) and compact != border:
+            view = cv2.copyMakeBorder(
+                image[border:-border, border:-border],
+                compact,
+                compact,
+                compact,
+                compact,
+                cv2.BORDER_CONSTANT,
+                value=(255, 255, 255),
+            )
+            extra, _ = engine(view, use_det=False, use_cls=False)
+            single_readings = [first, row_observation(extra, compact)]
+            selected = selected_row_reading(single_readings, crop[3] - crop[1], border)
+            parts = [
+                {
+                    "text": selected["text"],
+                    "confidence": selected["confidence"],
+                    "bbox": None,
+                    "coordinate_space": "cell_ink_crop_pixels",
+                }
+            ]
     caption_line = (
         observe_undetected_caption(image, engine, border, dpi)
         if kind == "label" and not detection_parts
@@ -199,6 +242,7 @@ def observe_cell(
         detection_parts,
         header_lines[1] if header_lines is not None else None,
         caption_line[1] if caption_line is not None else None,
+        single_row_readings=single_readings,
     )
     # This replay owns the pixel frame only. The caller supplies and verifies
     # actual original-PDF cell bounds; no point geometry is invented here.

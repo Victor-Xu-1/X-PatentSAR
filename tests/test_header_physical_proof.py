@@ -16,6 +16,9 @@ from patent_sar_extractor.core.activity_header_identity import detector_header_c
 from patent_sar_extractor.core.cell_header_lines import header_line_frame
 from patent_sar_extractor.core.cell_header_proof import physical_header_valid
 from patent_sar_extractor.core.cell_ocr_observation import observe_cell
+from patent_sar_extractor.core.cell_ocr_scores import confidence_value
+from patent_sar_extractor.core.cell_text_proof import valid_text_components
+from patent_sar_extractor.core.cell_text_row_readings import row_recognition_border
 
 
 def controlled_image(lines=3):
@@ -34,12 +37,12 @@ def controlled_image(lines=3):
 
 
 def reading(scores=(0.99, 0.99, 0.99), returned=("Target", "IC50", "nM")):
-    engine = Mock(
-        side_effect=[
-            ([], 0),
-            *[([[text, score]], 0) for text, score in zip(returned, scores)],
-        ]
-    )
+    responses = [([], 0)]
+    for text, score in zip(returned, scores, strict=True):
+        responses.append(([[text, score]], 0))
+        if confidence_value(score) is None or score < 0.85 or not text.strip():
+            responses.append(([[text, score]], 0))
+    engine = Mock(side_effect=responses)
     result = observe_cell(
         controlled_image(), "header", 400, engine, lambda text, kind: text.strip()
     )
@@ -55,6 +58,143 @@ def column_proof(column):
 
 
 class HeaderPhysicalProofTests(unittest.TestCase):
+    def test_malformed_single_row_is_bounded_by_the_same_observation_policy(self):
+        for malformed in (None, [], [["No."]], 17, "foreign", [{"text": "No."}]):
+            with self.subTest(malformed=malformed):
+                engine = Mock(side_effect=[(malformed, 0), ([["No.", 0.99]], 0)])
+                result = observe_cell(
+                    controlled_image(1),
+                    "header",
+                    400,
+                    engine,
+                    lambda text, _: text.strip(),
+                )
+                evidence = result.evidence(400, [30, 40, 90, 85])
+                self.assertEqual(result.value, "No.")
+                self.assertEqual(engine.call_count, 2)
+                self.assertFalse(evidence["single_row_readings"][0]["confidence_valid"])
+                self.assertTrue(valid_text_components(evidence, 400))
+
+    def test_two_malformed_single_row_observations_never_create_a_value(self):
+        engine = Mock(side_effect=[([["No."]], 0), ([{"text": "No."}], 0)])
+        result = observe_cell(
+            controlled_image(1), "header", 400, engine, lambda text, _: text.strip()
+        )
+        self.assertEqual(result.value, "")
+        self.assertEqual(engine.call_count, 2)
+        evidence = result.evidence(400, [30, 40, 90, 85])
+        self.assertTrue(
+            all(
+                not reading["confidence_valid"]
+                for reading in evidence["single_row_readings"]
+            )
+        )
+        self.assertFalse(valid_text_components(evidence, 400))
+
+    def test_single_short_header_keeps_both_original_views_not_a_guessed_value(self):
+        engine = Mock(side_effect=[([["No.", 0.7]], 0), ([["No.", 0.99]], 0)])
+        result = observe_cell(
+            controlled_image(1), "header", 400, engine, lambda text, _: text.strip()
+        )
+        self.assertEqual(result.value, "No.")
+        evidence = result.evidence(400, [30, 40, 90, 85])
+        self.assertEqual(
+            [row["confidence"] for row in evidence["single_row_readings"]], [0.7, 0.99]
+        )
+        self.assertEqual(engine.call_count, 2)
+        self.assertTrue(valid_text_components(evidence, 400))
+        for mutate in (
+            lambda item: item["single_row_readings"].reverse(),
+            lambda item: item["single_row_readings"].pop(0),
+            lambda item: item["single_row_readings"][0].update(confidence=0.99),
+            lambda item: item["single_row_readings"][1].update(border_pixels=31),
+            lambda item: item.update(
+                detection_parts=[{"text": "Foreign", "confidence": 0.99}]
+            ),
+        ):
+            with self.subTest(mutate=mutate):
+                changed = copy.deepcopy(evidence)
+                mutate(changed)
+                self.assertFalse(valid_text_components(changed, 400))
+
+    def test_invalid_compact_view_policy_is_rejected_without_model_calls(self):
+        for height, border in (
+            (True, 8),
+            (0, 8),
+            (-1, 8),
+            (1068, 8),
+            (20, True),
+            (20, 0),
+            (20, 33),
+        ):
+            with (
+                self.subTest(height=height, border=border),
+                self.assertRaises(ValueError),
+            ):
+                row_recognition_border(height, border)
+
+    def test_only_weak_original_row_gets_one_compact_view_and_keeps_both_reads(self):
+        engine = Mock(
+            side_effect=[
+                ([], 0),
+                ([["Target", 0.99]], 0),
+                ([["IC5O", 0.65]], 0),
+                ([["IC50", 0.99]], 0),
+                ([["nM", 0.99]], 0),
+            ]
+        )
+        observed = observe_cell(
+            controlled_image(), "header", 400, engine, lambda text, _: text.strip()
+        )
+        evidence = observed.evidence(400, [30, 40, 90, 85])
+        self.assertTrue(physical_header_valid(evidence))
+        self.assertEqual(evidence["raw_text"], "Target\nIC50\nnM")
+        readings = evidence["physical_header_lines"]["row_readings"]
+        self.assertEqual(list(map(len, readings)), [1, 2, 1])
+        self.assertEqual([reading["text"] for reading in readings[1]], ["IC5O", "IC50"])
+        self.assertEqual(engine.call_count, 5)
+        row = evidence["physical_header_lines"]["row_bounds"][1]
+        tight = row_recognition_border(row[3] - row[1], evidence["border_pixels"])
+        self.assertEqual(readings[1][1]["border_pixels"], tight)
+        self.assertEqual(
+            engine.call_args_list[3].args[0].shape[:2],
+            (row[3] - row[1] + 2 * tight, row[2] - row[0] + 2 * tight),
+        )
+        for mutate in (
+            lambda packet: packet["row_readings"][1].pop(0),
+            lambda packet: packet["row_readings"][1].append(
+                dict(packet["row_readings"][1][-1])
+            ),
+            lambda packet: packet["row_readings"][0].append(
+                dict(packet["row_readings"][0][0])
+            ),
+            lambda packet: packet["row_readings"][1][0].update(confidence=0.99),
+        ):
+            with self.subTest(mutate=mutate):
+                changed = copy.deepcopy(evidence)
+                mutate(changed["physical_header_lines"])
+                self.assertFalse(physical_header_valid(changed))
+
+    def test_malformed_row_keeps_later_original_rows_without_a_successful_prefix(self):
+        engine = Mock(
+            side_effect=[
+                ([], 0),
+                (None, 0),
+                ([], 0),
+                ([["IC50", 0.99]], 0),
+                ([["nM", 0.99]], 0),
+            ]
+        )
+        result = observe_cell(
+            controlled_image(), "header", 400, engine, lambda text, _: text.strip()
+        )
+        self.assertEqual(result.value, "")
+        self.assertEqual([part["text"] for part in result.parts], ["", "IC50", "nM"])
+        self.assertEqual(
+            list(map(len, result.physical_header_lines["row_readings"])), [2, 1, 1]
+        )
+        self.assertFalse(physical_header_valid(result.evidence(400, [30, 40, 90, 85])))
+
     def test_render_limit_precedes_engine_and_page_rendering(self):
         for region, dpi in (
             ({"xs": [0, 90000, 91000], "ys": [0, 150]}, 600),
@@ -78,6 +218,21 @@ class HeaderPhysicalProofTests(unittest.TestCase):
         self.assertTrue(physical_header_valid(result))
         self.assertEqual(result["raw_text"], "Target\nIC50\nnM")
         self.assertEqual(engine.call_count, 4)
+        packet = result["physical_header_lines"]
+        self.assertEqual(packet["version"], 2)
+        for call, row, readings in zip(
+            engine.call_args_list[1:],
+            packet["row_bounds"],
+            packet["row_readings"],
+            strict=True,
+        ):
+            self.assertEqual(len(readings), 1)
+            border = readings[0]["border_pixels"]
+            self.assertEqual(border, result["border_pixels"])
+            self.assertEqual(
+                call.args[0].shape[:2],
+                (row[3] - row[1] + 2 * border, row[2] - row[0] + 2 * border),
+            )
         self.assertTrue(engine.call_args_list[0].kwargs["use_det"])
         self.assertTrue(
             all(not call.kwargs["use_det"] for call in engine.call_args_list[1:])
@@ -157,6 +312,13 @@ class HeaderPhysicalProofTests(unittest.TestCase):
             lambda column: column.update(crosses_boundary=True),
             lambda column: column.update(detection_parts=[{"text": "EC50 (nM)"}]),
             lambda column: column.update(confidence=True),
+            lambda column: column["physical_header_lines"]["row_readings"][0][0].update(
+                border_pixels=True
+            ),
+            lambda column: column["physical_header_lines"]["row_readings"][0][0].update(
+                border_pixels=31
+            ),
+            lambda column: column["physical_header_lines"].pop("row_readings"),
         )
         for mutate in mutations:
             proof = column_proof(copy.deepcopy(result))
