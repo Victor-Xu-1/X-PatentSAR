@@ -131,7 +131,7 @@ describe('one slim observed job state with disclosed detail', () => {
       };
       rerender(<StageStrip job={failed} compact />);
       expect(document.querySelector('.stage-current')).toHaveTextContent(
-        `${stageLabels[name]} · 失败`,
+        `运行失败 · ${stageLabels[name]}`,
       );
       expect(container.querySelector('.stage:last-child')).not.toHaveClass('failed');
     },
@@ -162,7 +162,7 @@ describe('one slim observed job state with disclosed detail', () => {
       expect(observedStages(current)).toHaveLength(9);
       render(<StageStrip job={current} compact />);
       expect(document.querySelector('.stage-current')).toHaveTextContent(
-        status === 'failed' ? 'ADMET / 指标 · 失败' : 'ADMET / 指标 · 等待',
+        status === 'failed' ? '运行失败 · ADMET / 指标' : 'ADMET / 指标 · 等待',
       );
     },
   );
@@ -316,9 +316,13 @@ describe('one slim observed job state with disclosed detail', () => {
         compact
       />,
     );
-    expect(document.querySelector('.stage-current')).toHaveTextContent(
+    expect(document.querySelector('.stage-current')).toHaveTextContent('运行失败 · 结构补齐');
+    expect(document.querySelector('.stage-current')).toHaveAttribute(
+      'title',
       '结构补齐 · 失败 · 已处理 12 / 100',
     );
+    fireEvent.click(screen.getByLabelText('提取阶段详情'));
+    expect(screen.getByText('结构补齐').closest('li')).toHaveTextContent('已处理 12 / 100');
     expect(container.querySelector('.spin')).toBeNull();
   });
 });

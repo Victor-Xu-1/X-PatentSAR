@@ -136,7 +136,9 @@ for (const width of [390, 800, 1672]) {
     terminal = true;
     completed = total = 73567;
     await expect(current).toHaveClass(/is-failed/);
-    await expect(current).toContainText('Identifier binding · Failed');
+    await expect(current.locator('.stage-current-text')).toHaveText(
+      'Run failed · Identifier binding',
+    );
     await expect(current).toHaveAttribute(
       'title',
       /Checking identifier ownership · 73567 \/ 73567 items/,
@@ -153,20 +155,29 @@ for (const width of [390, 800, 1672]) {
       ).toBe(true);
     }
     await page.screenshot({
-      path: info.outputPath('03-source-failed-en.png'),
+      path: info.outputPath('02-source-failed-en.png'),
       animations: 'disabled',
     });
+    await page.locator('.stage-current-line').click();
+    await expect(disclosure).toHaveAttribute('open', '');
+    await expect(source).toContainText('Checking identifier ownership · 73567 / 73567 items');
+    await page.screenshot({
+      path: info.outputPath('04-source-failed-details-en.png'),
+      animations: 'disabled',
+    });
+    await page.keyboard.press('Escape');
     await page
       .getByRole('combobox', { name: 'Interface language', exact: true })
       .selectOption('zh-CN');
-    await expect(current).toContainText('核对编号归属 · 73567 / 73567 项');
+    await expect(current.locator('.stage-current-text')).toHaveText('运行失败 · 编号绑定');
+    await expect(current).toHaveAttribute('title', /核对编号归属 · 73567 \/ 73567 项/);
     await expect(current).toHaveClass(/is-failed/);
     expect((await current.boundingBox())!.height).toBeLessThanOrEqual(36);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
       true,
     );
     await page.screenshot({
-      path: info.outputPath('02-source-work-zh.png'),
+      path: info.outputPath('03-source-failed-zh.png'),
       animations: 'disabled',
     });
     expect(errors).toEqual([]);

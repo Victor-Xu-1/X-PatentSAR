@@ -131,6 +131,10 @@ export function StageStrip({
     ? `${t(stageStatusText(job, current, currentName!))} · ${sourceWork}`
     : label;
   const summaryText = `${stoppedPrefix}${currentText}${reviewCount !== null ? ` · ${t('{count} 条结构', { count: reviewCount })}` : ''}${progressText ? ` · ${progressText}` : ''}`;
+  const compactText =
+    known && job?.status === 'failed' && job.error?.code !== 'core_not_accepted' && currentName
+      ? `${jobStatusText(job)} · ${t(stageLabel(currentName, current))}`
+      : summaryText;
   return (
     <details className="stage-overview stage-disclosure" ref={disclosure}>
       <summary className="stage-current-line" aria-label={t('提取阶段详情')}>
@@ -144,7 +148,7 @@ export function StageStrip({
           {known && job?.status === 'failed' && (
             <CircleAlert size={16} className="stage-state-icon" aria-hidden="true" />
           )}
-          <span className="stage-current-text">{summaryText}</span>
+          <span className="stage-current-text">{compactText}</span>
         </span>
         <ChevronDown size={14} className="stage-disclosure-chevron" aria-hidden="true" />
       </summary>

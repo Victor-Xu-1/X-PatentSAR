@@ -11,6 +11,8 @@
     "frontend/src/styles/responsive.css",
     "frontend/src/styles/workflow.css",
     "frontend/tests/compact-progress.test.tsx",
+    "frontend/tests/stage-review-presentation.test.tsx",
+    "frontend/tests/workflow-chain.test.tsx",
     "src/patent_sar_extractor/contracts.py"
   ],
   "python_modules": [

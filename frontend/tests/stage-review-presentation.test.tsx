@@ -99,9 +99,13 @@ describe('processed work is not a failure count', () => {
           : stage,
     );
     render(<StageStrip job={current} compact />);
-    expect(document.querySelector('.stage-current')).toHaveTextContent(
+    expect(document.querySelector('.stage-current')).toHaveTextContent('运行失败 · SMILES 识别');
+    expect(document.querySelector('.stage-current')).toHaveAttribute(
+      'title',
       'SMILES 识别 · 失败 · 已处理 12 / 37',
     );
+    fireEvent.click(screen.getByLabelText('提取阶段详情'));
+    expect(screen.getByText('SMILES 识别').closest('li')).toHaveTextContent('已处理 12 / 37');
     expect(document.querySelector('.stage-current')).not.toHaveTextContent('需复核');
     expect(screen.getByText('SMILES 识别').closest('li')).toHaveClass('failed');
     expect(screen.getByText('SMILES 识别').closest('li')).not.toHaveClass('needs-review');
