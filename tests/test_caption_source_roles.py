@@ -27,25 +27,43 @@ from patent_sar_extractor.core.visible_structure_binding import bind_visible_cap
 
 
 def catalog(
-    title="Table 47. Compounds", *, prefixed=False, below=False, fontname="helv"
+    title="Table 47. Compounds",
+    *,
+    prefixed=False,
+    below=False,
+    fontname="helv",
+    label_height=25,
+    labels=("I-004A", "I-009B"),
+    label_fontname="helv",
 ):
     doc = fitz.open()
     page = doc.new_page()
-    xs = [50, 180, 310]
-    ys = [100, 180, 205] if below else [100, 125, 205]
+    xs = [50 + 130 * index for index in range(len(labels) + 1)]
+    ys = (
+        [100, 180, 180 + label_height]
+        if below
+        else [
+            100,
+            100 + label_height,
+            180 + label_height,
+        ]
+    )
     for x in xs:
         page.draw_line((x, ys[0]), (x, ys[-1]))
     for y in ys:
         page.draw_line((xs[0], y), (xs[-1], y))
     if title:
         page.insert_text((50, 85), title, fontsize=10, fontname=fontname)
-    label_y, diagram_y = (197, 120) if below else (117, 140)
-    labels = ("I-004A", "I-009B")
+    label_y = (180 if below else 100) + min(17, label_height - 3)
+    diagram_y = 120 if below else ys[1] + 15
     boxes, structures = [], []
     for index, label in enumerate(labels):
         left = 70 + index * 130
         page.insert_text(
-            (left, label_y), f"Compound {label}" if prefixed else label, fontsize=9
+            (left, label_y),
+            f"Compound {label}" if prefixed else label,
+            fontsize=9,
+            fontname=label_fontname,
         )
         box = (left + 10, diagram_y, left + 70, diagram_y + 35)
         page.draw_line((box[0], box[1] + 12), (box[0] + 30, box[1]))

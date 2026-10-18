@@ -2,6 +2,7 @@
 
 import hashlib
 import re
+import zlib
 
 import numpy as np
 
@@ -12,7 +13,7 @@ def observe_pixels(page, bounds, maximum_pixels):
     readings = []
     for dpi in (400, 600):
         try:
-            image = cell_image(page, bounds, dpi)
+            image = cell_image(page, bounds, dpi, maximum_pixels=maximum_pixels)
         except CellRenderLimit:
             return None
         if image.shape[0] * image.shape[1] > maximum_pixels:
@@ -22,7 +23,10 @@ def observe_pixels(page, bounds, maximum_pixels):
                 "dpi": dpi,
                 "shape": list(image.shape),
                 "pixel_sha256": hashlib.sha256(image.tobytes()).hexdigest(),
-                "mask_hex": np.packbits(np.min(image, axis=2) < 180).tobytes().hex(),
+                "mask_encoding": "zlib-packbits-v1",
+                "mask_hex": zlib.compress(
+                    np.packbits(np.min(image, axis=2) < 180).tobytes()
+                ).hex(),
             }
         )
     return {"bbox": bounds, "readings": readings}
@@ -33,6 +37,7 @@ def retained_pixels(reading, bounds, dpi, maximum_pixels):
         "dpi",
         "shape",
         "pixel_sha256",
+        "mask_encoding",
         "mask_hex",
     }:
         return None
@@ -50,12 +55,24 @@ def retained_pixels(reading, bounds, dpi, maximum_pixels):
         or not isinstance(reading["pixel_sha256"], str)
         or not re.fullmatch(r"[a-f0-9]{64}", reading["pixel_sha256"])
         or not isinstance(reading["mask_hex"], str)
-        or len(reading["mask_hex"]) != 2 * ((shape[0] * shape[1] + 7) // 8)
+        or reading["mask_encoding"] != "zlib-packbits-v1"
+        or len(reading["mask_hex"]) > 2 * (((shape[0] * shape[1] + 7) // 8) + 512)
         or not re.fullmatch(r"[a-f0-9]+", reading["mask_hex"])
     ):
         return None
-    bits = np.unpackbits(
-        np.frombuffer(bytes.fromhex(reading["mask_hex"]), dtype=np.uint8)
-    )
     count = shape[0] * shape[1]
+    byte_count = (count + 7) // 8
+    try:
+        decoder = zlib.decompressobj()
+        raw = decoder.decompress(bytes.fromhex(reading["mask_hex"]), byte_count + 1)
+    except (ValueError, zlib.error):
+        return None
+    if (
+        len(raw) != byte_count
+        or not decoder.eof
+        or decoder.unconsumed_tail
+        or decoder.unused_data
+    ):
+        return None
+    bits = np.unpackbits(np.frombuffer(raw, dtype=np.uint8))
     return bits[:count].reshape(shape[:2]) if not np.any(bits[count:]) else None

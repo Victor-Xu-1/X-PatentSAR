@@ -31,7 +31,7 @@ def heading_observation_status(proof):
     if (
         isinstance(proof, dict)
         and type(proof.get("version")) is int
-        and proof["version"] == 2
+        and proof["version"] in {3, 4}
     ):
         from .plot_reference import plot_reference_status
 

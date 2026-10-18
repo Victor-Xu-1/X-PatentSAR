@@ -9,6 +9,7 @@ from .cell_caption_fragments import (
     complete_caption_text,
     ordered_caption_fragments,
     overlapping_literal_id_letters,
+    overlapping_literal_role_fragments,
     overlapping_role_locators,
     truncated_caption_boundary,
 )
@@ -139,40 +140,25 @@ def refined_caption_conflicts(label, parts, detection_parts):
         > 1
         for index in (first, second)
     }
+    role_fragments = (
+        overlapping_literal_role_fragments(raw, observed, boxes) if refined else set()
+    )
     # Only the intersecting qualified numeric fragments lack independent ID
     # ownership. Weak/unrelated boxes cannot exempt another original claim.
     if any(
-        index not in overlapping | truncated
+        index not in overlapping | truncated | role_fragments
         and caption_fragment_conflict(part["text"], label)
         for run in observed_runs
         for index, part in run
     ):
         return True
-    alphabetic_indices = [
-        index
-        for run in observed_runs
-        for index, part in run
-        if any(char.isalpha() for char in part["text"])
-        and not any(char.isnumeric() for char in part["text"])
-    ]
-    overlapping_letters = {
-        index
-        for first, second in combinations(alphabetic_indices, 2)
-        if min(boxes[first][2], boxes[second][2])
-        - max(boxes[first][0], boxes[second][0])
-        > 1
-        and min(boxes[first][3], boxes[second][3])
-        - max(boxes[first][1], boxes[second][1])
-        > 1
-        for index in (first, second)
-    }
     return any(nonfinal_original_label(" ".join(text)) for text in runs) or not (
         ordered_caption_fragments(
             raw,
             observed,
             boxes,
             overlapping
-            | overlapping_letters
+            | role_fragments
             | (
                 overlapping_literal_id_letters(raw, observed, boxes)
                 if refined

@@ -1,18 +1,84 @@
 # X-PatentSAR architecture
 
+## One original catalogue role across layout, identity and heading inventory
+
+`caption_grid_binding` uses the same revalidated original role for table-start
+direction and adjacent continuation. An absent layout-lane caption cannot erase
+a title already proved by independent native evidence or the bounded title
+reader. Raw new-table hints still stop inappropriate carry; saved role flags,
+unknown titles and known conflicts do not acquire catalogue authority.
+
+The shared caption-fragment replay conserves literal physical order. A qualified
+role-edge glyph must overlap the matching edge of its qualified whole role;
+partial role observations must cover that whole literal. A suffix may share
+characters only at a uniquely mapped, same-row crossing detector boundary while
+extending the separately read complete caption. Blanket overlapping-letter
+exemptions are removed. Different IDs, detached/foreign characters, nonfinal
+roles, invalid scores and source conflicts remain vetoes. No characters are
+joined to construct a new identifier, and original detections remain retained.
+
+`caption_label_roles` aliases layout locators through the existing cell SDK's
+half-open centre ownership and one-point edge budget, only after current exact
+document/page/ID/caption proof. It does not expand scientific source windows.
+Wide, outside, ambiguous or foreign locators remain independent observations;
+the same ID elsewhere cannot close a missing structure. Saved source-reference
+replay uses this same authority, avoiding redundant heading OCR for proved cells.
+These changes remain within unpublished Binding22/binder31, without raw/model,
+activity/SAR, OCSR image/preparation, API/SQL or dependency changes. Controlled
+native/raster/writer tests do not establish actual-patent or chemical acceptance.
+
 ## Quantitative figure references versus molecular declarations
 
 The existing original-heading ledger retains quantitative plot labels as
 `figure_label_reference` only after one uniquely scoped original Figure caption,
-two ordered numeric axes, their observed perpendicular strokes, and a compact
-graphic legend key are proved. `plot_reference_geometry` nominates windows;
-the pixel/axes/marker modules retain bounded original masks through the existing
-cell renderer. `plot_reference` uses the sole source-window and physical-cell
-SDK for native text or complete 400/600dpi observations, including native/raster
-contradictions. Original raw text, masks and coordinate frames remain replayable.
-Heading proof v2 enters the same heading inventory and source digest, not a
-second store, queue, recognition engine or acceptance path. Binding21/binder30
-already describe this unpublished derived-source change; no extra product bump.
+two complete ordered numeric axes, their observed perpendicular strokes, and a
+compact graphic key are proved. Edge/centre nominations conserve the complete
+physical numeric family before ordering; a convenient monotonic subset cannot
+discard a conflicting or unread member. The same maximal alignment families
+include unread first/last members outside that subset's numeric envelope and
+independently retained native words. Unaligned notes do not join an axis; excess
+physical inventory refuses rather than selecting a bounded successful prefix.
+Vertical families retain the already-required boundary before the horizontal
+tick row, so later aligned synthesis text cannot poison or borrow a figure role.
+The original inner-envelope conflict veto remains mandatory even for unaligned
+or shifted-font words; extending a family does not replace that source guard.
+The refined x-axis nomination must retain every observed word in the complete
+strip, including displaced numeric/unknown members, not merely read then omit it.
+
+`plot_legend_locator` may nominate the literal compound suffix of an original
+OCR line containing its graphic key. Complete original line text/bounds and its
+exact literal range remain recorded. Source masks at400/600dpi must reproduce
+the whole compact key and all remaining text; the shared cell inset supplies a
+reading window, not a string-prefix deletion. Known synthesis roles and multiple
+identifiers cannot enter this refinement. Ordinary original-cell observations
+still qualify every literal. Missing/weak/conflicting evidence stays unproved.
+
+When low-resolution rotated axis text is incomplete, `plot_axis_refinement`
+coordinates one bounded original strip below the observed x axis and above its
+lower caption. Detected words do not define the first/last retained pixels.
+`cell_word_orientation` inventories every retained ink component and derives one
+unambiguous physical orientation; `plot_axis_words` observes every complete word
+with the existing OCR engine at both resolutions. Exact transforms, view hashes,
+pixel coverage, original-point backprojection, literal agreement and qualified
+original-source conflicts are replayed. No OCR characters are joined or repaired.
+Global upright table OCR and angle-classifier policy remain unchanged.
+The shared cell renderer enforces each caller's equal or smaller pixel budget
+before allocating a pixmap; its default8M ceiling is unchanged.
+
+`plot_reference` is the observer; `plot_reference_proof` owns the sole saved replay.
+Heading proof3 records complete axis words; proof4 additionally binds an original
+graphic/text locator. Both use the existing source-window/cell SDK and binding
+writer, not another model, queue, store or acceptance path. Thresholded masks use
+one lossless zlib-packbits encoding with bounded decompression, exact EOF/length
+and zero padding; original PDFs/raw images remain unchanged. Existing8M cell,
+32-word and1MiB source-digest limits remain explicit. Unsupported geometry,
+multiple plausible panels or excess/ambiguous source stays unresolved.
+
+Binding22/binder31 invalidate derived ownership only. RawOCR2, visible-label21,
+OCSR/preparation/stereo, activity/SAR, models, manual audit, API and SQL retain
+their own contracts. Earlier section numbers describe previous module deliveries,
+not a second current ownership authority. Two-resolution OCR agreement is not
+statistical independence or a guarantee of original chemical identity.
 
 A figure mention never supplies a molecule or a plotted numeric activity.
 Independent all-page structural discovery remains unchanged. Nearby synthesis

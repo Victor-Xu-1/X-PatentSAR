@@ -17,11 +17,14 @@ from patent_sar_extractor.core.table_geometry import (
     detect_ruled_table_regions,
     page_tokens,
 )
+from tests.test_caption_role_continuation import binding
 from tests.test_caption_source_roles import catalog
 
 
-def raster_catalog(title="Table 47. Compounds", *, shadow=None, prefixed=False):
-    original, structures, boxes = catalog(title, prefixed=prefixed)
+def raster_catalog(
+    title="Table 47. Compounds", *, shadow=None, prefixed=False, **layout
+):
+    original, structures, boxes = catalog(title, prefixed=prefixed, **layout)
     with original:
         pixmap = original[0].get_pixmap(matrix=fitz.Matrix(3, 3), alpha=False)
     doc = fitz.open()
@@ -33,6 +36,50 @@ def raster_catalog(title="Table 47. Compounds", *, shadow=None, prefixed=False):
 
 
 class CaptionRoleRasterTests(unittest.TestCase):
+    def test_prefixed_scanned_catalogue_reaches_formal_admission(self):
+        doc, structures, boxes = raster_catalog(prefixed=True)
+        with doc:
+            result = bind_caption_grids(doc, structures, boxes, [1])
+        self.assertEqual(
+            [pair["label"] for pair in result.bindings],
+            ["I-004A", "I-009B"],
+            result.issues,
+        )
+        for pair in result.bindings:
+            self.assertTrue(
+                valid_caption_binding_evidence(json.loads(json.dumps(binding(pair)))),
+                [
+                    (item.get("method"), item.get("raw_text"), item.get("text"))
+                    for item in pair["observations"]
+                ],
+            )
+
+    def test_dense_scanned_catalogues_preserve_all_formally_proved_cell_owners(self):
+        labels = ("17B", "172", "902AB")
+        for height, font in ((14, "hebo"), (15, "helv"), (22, "tiro")):
+            with self.subTest(height=height, font=font):
+                doc, structures, boxes = raster_catalog(
+                    prefixed=True,
+                    labels=labels,
+                    label_height=height,
+                    label_fontname=font,
+                )
+                with doc:
+                    result = bind_caption_grids(doc, structures, boxes, [1])
+                self.assertEqual(
+                    [pair["label"] for pair in result.bindings],
+                    list(labels),
+                    result.issues,
+                )
+                self.assertEqual(result.issues, [])
+                for pair in result.bindings:
+                    self.assertTrue(
+                        valid_caption_binding_evidence(
+                            json.loads(json.dumps(binding(pair)))
+                        ),
+                        pair["observations"],
+                    )
+
     def test_original_raster_title_and_number_rows_have_real_independent_readings(self):
         doc, structures, boxes = raster_catalog()
         with doc:

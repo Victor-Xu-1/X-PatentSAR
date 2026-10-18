@@ -10,10 +10,92 @@ from unittest.mock import patch
 import fitz
 
 from patent_sar_extractor.core.binding_source_headings import observed_heading_blocks
+from patent_sar_extractor.core.catalog_reader import read_catalog_entries
+from patent_sar_extractor.core.formal_structure import coverage_errors
+from patent_sar_extractor.core.heading_observation import observe_heading
 from patent_sar_extractor.core.structure_binder import bind
+from tests.test_caption_role_raster import raster_catalog
 
 
 class SpatialBindingAuthorityTests(unittest.TestCase):
+    def test_dense_scanned_caption_catalogue_reaches_writer_without_activity_hints(
+        self,
+    ):
+        labels = ("17B", "172", "902AB")
+        with tempfile.TemporaryDirectory(prefix="dense-source-writer-") as temporary:
+            root = Path(temporary)
+            pdf = root / "controlled.pdf"
+            original, observed, _boxes = raster_catalog(
+                prefixed=True,
+                labels=labels,
+                label_height=14,
+                label_fontname="hebo",
+            )
+            structures = []
+            with original:
+                for index, diagram in enumerate(observed[1]):
+                    bounds = [diagram[axis] for axis in ("x0", "y0", "x1", "y1")]
+                    image = root / f"diagram-{index}.png"
+                    original[0].get_pixmap(clip=fitz.Rect(bounds)).save(image)
+                    structures.append(
+                        {
+                            "structure_id": diagram["id"],
+                            "structure_index": index,
+                            "page_no": 1,
+                            "bbox_pdf": bounds,
+                            "image_path": str(image),
+                        }
+                    )
+                original.save(pdf)
+            metadata = root / "metadata.json"
+            metadata.write_text(
+                json.dumps({"patent_number": "controlled", "structures": structures})
+            )
+            with patch(
+                "patent_sar_extractor.core.binding_source_headings.observe_heading",
+                wraps=observe_heading,
+            ) as heading_reader:
+                result = bind(
+                    str(pdf),
+                    {"active_cpds": [], "structure_candidate_pages": [0]},
+                    str(root / "bindings"),
+                    str(metadata),
+                )
+            saved = json.loads(Path(result["output_files"]["json"]).read_text())
+        self.assertEqual(
+            {row["cpd"] for row in saved["final_bindings"]},
+            {f"Compound {label}" for label in labels},
+            saved["source_issues"],
+        )
+        self.assertEqual(
+            saved["source_issues"],
+            [],
+            {
+                "issues": saved["source_issues"],
+                "captions": [
+                    (row["cpd"], row["exact_caption_evidence"]["bbox"])
+                    for row in saved["final_bindings"]
+                ],
+                "headings": [
+                    (section.get("identifier"), section.get("bbox"))
+                    for section in saved["source_sections"]
+                    if "heading_observation" in section
+                ],
+            },
+        )
+        self.assertEqual(
+            len(saved["source_reference_scope"]["label_reference_ids"]), len(labels)
+        )
+        self.assertEqual(heading_reader.call_count, 0)
+        self.assertEqual(coverage_errors(saved), [])
+        entries, _ = read_catalog_entries(saved)
+        self.assertEqual(len(entries), len(labels))
+        self.assertTrue(
+            all(
+                row["accuracy_status"] == "confirmed" for row in saved["final_bindings"]
+            )
+        )
+
     def test_complete_original_cells_bypass_all_competing_repair_paths(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

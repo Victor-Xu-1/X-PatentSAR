@@ -137,8 +137,15 @@ def bind_caption_grids(
             caption = _prefix(
                 tokens, context_region(region, [grid_box(g) for g in grids])
             )
-            new_table = bool(TABLE_MARKER.search(caption))
             role = observe_caption_role(page, region, grids, tokens)
+            role_status = caption_role_status(role, page_no, grid_box(region))
+            # A qualified original title may come from independent native text
+            # or the existing bounded title reader, not the layout lane. Keep
+            # raw marker hints as boundaries, but never let their absence erase
+            # the same proved title used by formal admission and continuation.
+            new_table = bool(TABLE_MARKER.search(caption)) or bool(
+                role_status in {"compound", "nonfinal"} and role["table_key"]
+            )
             matches = [
                 (index, prior)
                 for index, prior in prior_frames
@@ -161,11 +168,13 @@ def bind_caption_grids(
                         carry.role, carry.axes, region, carry.direction, carry.tail
                     ),
                 }
-                if caption_role_status(inherited, page_no, grid_box(region)):
-                    role = inherited
+                inherited_status = caption_role_status(
+                    inherited, page_no, grid_box(region)
+                )
+                if inherited_status:
+                    role, role_status = inherited, inherited_status
             # The original grid frame is verified once here. Constructed child
             # cells retain the same role; formal consumers replay every owner.
-            role_status = caption_role_status(role, page_no, grid_box(region))
             if role_status == "nonfinal":
                 result.roles[(page_no, tuple(grid_box(region)))] = role
                 if carry_index is not None:
