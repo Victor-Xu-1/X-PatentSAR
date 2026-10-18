@@ -234,6 +234,9 @@ class PhysicalPlotNominationTests(unittest.TestCase):
             ("n/a", "0"),
             ("NaN", "0"),
             ("1,000", "1000"),
+            ("number:1e-5", "0.00001"),
+            ("figure:9b", "Fig. 9B"),
+            ("text:0.1", "0.1"),
         ):
             with self.subTest(first=first, second=second):
                 self.assertNotEqual(literal(first), literal(second))

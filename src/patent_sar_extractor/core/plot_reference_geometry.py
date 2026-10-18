@@ -22,7 +22,7 @@ def literal(text):
     if figure:
         return "figure:" + re.sub(r"[\s()]", "", figure["identity"]).casefold()
     number = axis_literal(text)
-    return number if number is not None else " ".join(text.split()).casefold()
+    return number if number is not None else "text:" + " ".join(text.split()).casefold()
 
 
 def figure_caption(text):
