@@ -8,6 +8,11 @@ boundary-crossing drawings stay ambiguous. No page OCR/model is started here.
 import math
 import re
 
+from .heading_column_sources import (
+    ambiguous_column_flow,
+    foreign_column_line,
+    independent_columns,
+)
 from .source_evidence_identity import proof_id
 from .source_section_roles import (
     heading_list_hint,
@@ -30,7 +35,7 @@ def _box(value, size):
     )
 
 
-def _stop(page, heading):
+def _stop(page, heading, columns=()):
     same_page = page["page_no"] == heading["page_no"]
     start = heading["nomination"]["bbox"]
     boundaries = []
@@ -41,6 +46,12 @@ def _stop(page, heading):
             or section_heading(text)
             or heading_list_hint(text)
         ):
+            continue
+        lane = foreign_column_line(box, columns)
+        if lane == "contained":
+            continue
+        if lane == "closing":
+            boundaries.append((box[1], "foreign_column_boundary"))
             continue
         if same_page and box[1] <= start[1] + 3:
             # A simultaneous independent title has no established column lane.
@@ -113,10 +124,11 @@ def declaration_candidates(scope, heading):
             "heading_source_id",
             "document_page_count",
             "pages",
+            "column_sources",
             "stop",
         }
         or type(scope["version"]) is not int
-        or scope["version"] != 1
+        or scope["version"] != 2
         or scope["status"] != "observed_declaration"
         or not isinstance(scope["original_pdf_sha256"], str)
         or not _SHA.fullmatch(scope["original_pdf_sha256"])
@@ -129,7 +141,11 @@ def declaration_candidates(scope, heading):
     ):
         raise ValueError("Malformed original heading declaration scope")
     proof_id(scope)  # Keep the existing one-MiB original-region bound unchanged.
-    candidates, identities, expected_stop = [], set(), None
+    if not _page_valid(scope["pages"][0]):
+        raise ValueError("Malformed original heading first page")
+    columns = independent_columns(scope["column_sources"], scope["pages"][0], heading)
+    excluded = {d["id"] for column in columns for d in column["diagrams"]}
+    candidates, identities, expected_stop, ambiguous_flow = [], set(), None, False
     for offset, page in enumerate(scope["pages"]):
         number = heading["page_no"] + offset
         if (
@@ -141,7 +157,7 @@ def declaration_candidates(scope, heading):
             raise ValueError("Original heading declaration page inventory differs")
         if offset == 0 and page["page_size"] != heading["page_size"]:
             raise ValueError("Original heading declaration geometry differs")
-        boundary = _stop(page, heading)
+        boundary = _stop(page, heading, columns if offset == 0 else ())
         lower = heading["nomination"]["bbox"][3] if offset == 0 else 0
         upper = boundary[0] if boundary else page["page_size"][1]
         for structure in page["structures"]:
@@ -153,7 +169,14 @@ def declaration_candidates(scope, heading):
                 raise ValueError(
                     "Original heading structure inventory exceeds its bound"
                 )
-            if box[3] > lower and box[1] < upper:
+            if (
+                box[3] > lower
+                and box[1] < upper
+                and not (offset == 0 and sid in excluded)
+            ):
+                ambiguous_flow |= offset == 0 and ambiguous_column_flow(
+                    box, heading, columns
+                )
                 candidates.append(
                     {
                         **structure,
@@ -182,4 +205,8 @@ def declaration_candidates(scope, heading):
         or type(stop.get("y")) not in {int, float}
     ):
         raise ValueError("Malformed original heading declaration stop")
-    return candidates, stop["kind"] not in {"page_limit", "parallel_heading"}
+    return candidates, not ambiguous_flow and stop["kind"] not in {
+        "page_limit",
+        "parallel_heading",
+        "foreign_column_boundary",
+    }

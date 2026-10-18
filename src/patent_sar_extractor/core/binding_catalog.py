@@ -12,6 +12,7 @@ from patent_sar_extractor.contracts import (
 )
 
 from .binding_labels import _binding_label_key
+from .binding_source_claims import resolve_source_claims, source_candidate
 from .identifier_order import natural_identifier_key
 from .source_binding_proof import annotate_source_binding
 
@@ -42,39 +43,38 @@ def compound_catalog(
             )
         return checked
 
-    entries: dict[str, dict[str, Any]] = {}
-    for binding in primary:
+    # Caller placement is not another ownership authority. Resolve the complete
+    # proved collection with the SAME policy used by spatial capture/saved replay.
+    candidates = []
+    for binding in (*primary, *additional):
         checked = checked_source(binding)
-        label = _binding_label_key(checked)
         if (
-            label
+            _binding_label_key(checked)
             and checked.get("accuracy_status") == "confirmed"
             and not checked.get("fail_closed")
         ):
-            if (
-                label in entries
-                and entries[label]["structure_id"] != checked["structure_id"]
-            ):
-                raise ValueError(
-                    "Conflicting primary structures cannot share a printed compound ID"
-                )
-            entries.setdefault(label, {**checked, "additional_sources": []})
-    seen = {str(binding["structure_id"]) for binding in entries.values()}
-    for binding in additional:
-        checked = checked_source(binding)
-        label, structure_id = (
-            _binding_label_key(checked),
-            str(checked.get("structure_id") or ""),
+            candidates.append(source_candidate(checked))
+    claims = resolve_source_claims(candidates)
+    if source_issues is not None:
+        source_issues.extend(
+            {
+                "cpd": conflict.label_key,
+                "page_no": conflict.page_index + 1,
+                "reason": conflict.reason,
+                "evidence": conflict.evidence,
+            }
+            for conflict in claims.conflicts
         )
-        if (
-            label in entries
-            and structure_id
-            and structure_id not in seen
-            and checked.get("accuracy_status") == "confirmed"
-            and not checked.get("fail_closed")
-        ):
-            entries[label]["additional_sources"].append(checked)
-            seen.add(structure_id)
+    entries = {
+        candidate.label_key: {**candidate.binding, "additional_sources": []}
+        for candidate in claims.primary
+    }
+    seen = {candidate.structure_id for candidate in claims.primary}
+    for candidate in claims.reprints:
+        entries[candidate.label_key]["additional_sources"].append(
+            dict(candidate.binding)
+        )
+        seen.add(candidate.structure_id)
 
     return {
         "schema": schema_ref(COMPOUND_CATALOG_SCHEMA, COMPOUND_CATALOG_SCHEMA_VERSION),

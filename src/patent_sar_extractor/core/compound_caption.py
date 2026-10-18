@@ -2,7 +2,12 @@
 
 import re
 
-from .printed_identifiers import LABEL_PREFIX, PRINTED_ID, identifier_text
+from .printed_identifiers import (
+    LABEL_PREFIX,
+    PRINTED_ID,
+    identifier_text,
+    label_kind_namespace,
+)
 
 _CAPTION = re.compile(
     rf"(?P<identity>{LABEL_PREFIX}(?P<number>{PRINTED_ID}))"
@@ -31,3 +36,13 @@ def caption_identity(value: str) -> tuple[str, int]:
 
 def prefixed_label(value: str) -> str:
     return caption_identity(value)[0]
+
+
+def caption_namespace(value: str) -> str:
+    """Use the same whole-caption grammar, including literal elution annotations."""
+    text = identifier_text(value)
+    match = _CAPTION.fullmatch(text)
+    if match is None:
+        return ""
+    kind = re.sub(r"[\s:：.\-]", "", text[: match.start("number")])
+    return label_kind_namespace(kind)

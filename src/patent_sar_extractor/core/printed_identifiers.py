@@ -23,6 +23,18 @@ _WIDTH = str.maketrans(
 )
 
 
+def label_kind_namespace(kind: str) -> str:
+    """Only existing literal label kinds; equal digits do not alias namespaces."""
+    return {
+        "compound": "compound",
+        "cmpd": "compound",
+        "cpd": "compound",
+        "化合物": "compound",
+        "example": "example",
+        "实施例": "example",
+    }.get(kind.lower(), "")
+
+
 def identifier_width(value: str) -> str:
     return value.translate(_WIDTH)
 

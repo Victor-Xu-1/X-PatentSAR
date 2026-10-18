@@ -154,7 +154,12 @@ def standalone_heading_evidence(
     from .heading_declaration_scope import declaration_candidates
 
     declaration = proved_heading_declaration(block.get("heading_observation"))
-    if len(heading_members(declaration)) != 1:
+    if (
+        not declaration
+        or declaration["role"] != "compound_heading"
+        or len(heading_members(declaration)) != 1
+        or block.get("line_text") != declaration["line_text"]
+    ):
         return None, None
     candidates, complete = declaration_candidates(scope, block["heading_observation"])
     if not complete or len(candidates) != 1 or not candidates[0]["inside"]:
@@ -172,7 +177,7 @@ def standalone_heading_evidence(
     if label != printed_identifier_key(block["cpd"]) or not _has_drawing(path):
         return None, None
     return structure, {
-        "version": 3,
+        "version": 4,
         "heading_source": block["heading_observation"],
         "label": label,
         "page_no": structure["page_no"],
@@ -211,7 +216,7 @@ def valid_heading_binding_evidence(binding: dict) -> bool:
     if (
         isinstance(evidence, dict)
         and type(evidence.get("version")) is int
-        and evidence["version"] == 3
+        and evidence["version"] == 4
     ):
         return _valid_scoped_heading(binding, evidence)
     # Old packets remain readable history, not current ownership authority.
@@ -242,7 +247,10 @@ def _valid_scoped_heading(binding, evidence):
         proof = evidence["heading_source"]
         declaration = proved_heading_declaration(proof)
         if (
-            heading_members(declaration) != [label]
+            not declaration
+            or declaration["role"] != "compound_heading"
+            or heading_members(declaration) != [label]
+            or evidence["heading_text"] != declaration["line_text"]
             or any(
                 printed_identifier_key(binding[name]) != label
                 for name in ("cpd", "compound_id", "example_id")

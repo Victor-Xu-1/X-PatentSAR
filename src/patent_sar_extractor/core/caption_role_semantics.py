@@ -90,3 +90,21 @@ def catalog_title_role(text):
             return "mixed"
         return "nonfinal"
     return "compound" if compounds else "unknown"
+
+
+def catalog_title_namespace(text):
+    """A qualified catalogue's literal ID vocabulary, never a default namespace.
+
+    Role "compound" also admits Example tables; it does not prove that Example7
+    and Compound7 name the same entity. Generic product/structure words and mixed
+    vocabularies deliberately provide no cross-source alias authority.
+    """
+    if catalog_title_role(text) != "compound":
+        return ""
+    words = _role_words(text)
+    namespaces = set()
+    if re.search(r"\bcompounds?\b|化合物", words, re.IGNORECASE):
+        namespaces.add("compound")
+    if re.search(r"\bexamples?\b|实施例|實施例|実施例", words, re.IGNORECASE):
+        namespaces.add("example")
+    return next(iter(namespaces)) if len(namespaces) == 1 else ""

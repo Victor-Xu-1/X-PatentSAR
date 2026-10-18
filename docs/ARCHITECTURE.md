@@ -1,5 +1,44 @@
 # X-PatentSAR architecture
 
+## Preparation depictions in the one source-claim decision
+
+`binding_catalog` now resolves the complete proved primary/additional collection
+through `binding_source_claims`, the same authority used by spatial capture and
+saved replay. Caller placement is not a second ownership decision. A proved
+standalone preparation heading can repeat one qualified primary catalogue's
+original label only when the original PDF and literal identifier namespace agree.
+`catalog_title_namespace` uses the existing title-role/case-boundary projection;
+`caption_namespace` uses the existing whole-caption grammar. Qualified cell prefix
+contradictions veto a header-derived namespace. Example17 and Compound17 are not
+aliases merely because the numeric part matches. Generic/mixed/unknown titles
+and incompatible preparation occurrences cannot grant
+that relation. Known physical catalogue anchors stay retained; the separate
+unresolved heading diagnostic and exact occurrence gap still block final QA.
+Two competing complete catalogues retain their existing conflict policy.
+An explicitly selected catalogue remains eligible as its own primary when the
+same existing policy has not classified it as a reprint of another catalogue;
+the heading relation does not invent a requirement for an absent larger table.
+
+The accepted preparation depiction remains an `additional_sources` observation,
+not a second compound or a source-selected winning molecule. Every retained
+depiction goes through the same bounded DECIMER/raw-image/source-QC worker and
+complete isomeric graph comparator. Missing execution, connectivity, stereo,
+isotope, charge and component differences remain refusals. No confidence vote,
+salt stripping, alternate-model winner, copied molecular result or QA waiver is
+introduced. `recognition_inputs` now also compares both original-heading packets
+and the PDF identity against the canonical source before execution.
+Heading capture/replay also requires the qualified original declaration's actual
+compound role and complete text; locator/ledger metadata cannot rename an assay
+or rewrite the observed heading while keeping the same numeric ID.
+
+The selected-title qualifier reuses the same literal case-boundary projection;
+raw titles/IDs are unchanged, and unknown joined lower-case text is not guessed.
+Binding32/binder42 refresh derived ownership only. Raw source/
+chemical observations, manual audit, activity/SAR numerical policies, API/SQL and
+dependencies remain unchanged. Controlled source/graph-record checks are not a
+real recognizer benchmark, multi-step terminal-role solution or real-patent
+scientific acceptance. Old products stay immutable historical evidence.
+
 ## Complete original heading declaration windows
 
 `heading_declaration_index` captures a call-local shared inventory from an exact
@@ -14,14 +53,14 @@ a proved column scope and spans exceeding64pages remain unresolved. The existing
 one-MiB regional proof and25000structure bounds are unchanged; excess is refused,
 never silently truncated into an accepted singleton.
 
-Heading/structure proof3 retains the heading page separately from the drawing
+Heading/structure proof4 retains the heading page separately from the drawing
 page, the complete declaration window, exact original/crop identity and every
 candidate's geometry. The same packet is referenced by the original heading
 ledger and the accepted binding. Saved completeness replays that exact occurrence
 and scope, not an equal ID elsewhere. The old page-only proof2 and cached-label
 `heading_range_fallback` producer no longer confer current source authority;
-old artifacts remain retained/readable as history. Binding31/binder41 refresh
-only derived ownership. Raw OCR/segmentation/chemical observations, manual audit,
+old artifacts remain retained/readable as history. Current Binding32/binder42
+refresh only derived ownership. Raw OCR/segmentation/chemical observations, manual audit,
 activity/SAR numerical policy, API/SQL/dependencies and DECIMER remain unchanged.
 
 This inventory is a prerequisite, not a solved reaction graph. It neither chooses
@@ -31,6 +70,21 @@ and complete chemical/identity verification in the one extraction chain. Native
 and controlled scanned-source checks are not arbitrary-patent, molecular-graph
 or real frontend scientific acceptance. No additional OCR/model or private-data
 processing is started by the declaration index.
+
+`heading_column_sources` replays the existing registered ruled/unruled role and
+complete body-boundary authorities. Declaration scope2 retains full raw page
+inventories plus original column witnesses. Only a positively trusted independent
+column active alongside this same-page heading can exclude its own contained
+drawings/lines; no page half, y cutoff or ownership flag is guessed. Foreign
+closing procedures remain an ambiguous stop, never manufactured singleton proof.
+Packets retain exact original document/page/full-diagram inventory and registered
+source hashes. Missing/changed witnesses, own-column rivals and crossing drawings
+cannot acquire exclusion authority. No column is projected to another page or
+beyond its trusted body extent. Earlier scope1/heading3 are retained history,
+not current source admission. This bounded layout relation is not a reaction graph.
+Closed historical columns supply an ambiguity veto only; they never claim later
+drawings or extend body ownership. Unproved new full-width/continued flow remains
+explicit rather than assigning a new left-column title to a sole right-column crop.
 
 ## One lossless binding-artifact transport
 

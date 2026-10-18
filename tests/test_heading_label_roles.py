@@ -32,12 +32,14 @@ class HeadingLabelRoleTests(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
 
-    def run_binding(self, *, raster=False, extra_heading=False):
+    def run_binding(
+        self, *, raster=False, extra_heading=False, catalog_title="Table 47. Compounds"
+    ):
         source = self.root / "original.pdf"
         structures = []
         with fitz.open() as document:
             page = document.new_page(width=500, height=600)
-            page.insert_text((40, 75), "Table 47. Compounds", fontsize=10)
+            page.insert_text((40, 75), catalog_title, fontsize=10)
             for x in (40, 180, 320):
                 page.draw_line((x, 95), (x, 225))
             for y in (95, 125, 225):

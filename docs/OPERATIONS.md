@@ -1,5 +1,39 @@
 # Operations and troubleshooting
 
+## A compound repeated in a preparation chapter
+
+An independently proved standalone preparation drawing no longer causes a
+competing-primary write exception merely because the original catalogue already
+contains its label. The one source-claim policy can retain it as an additional
+depiction when the exact document, literal namespace and unique primary catalogue
+owner are proved. Every such image is still scheduled in the normal chemical
+recognition phase, and all qualified full graphs must agree before acceptance.
+Missing/reordered recognition, stereo/charge/isotope/component/connectivity
+disagreement and failed source QC remain hard refusals, not warnings.
+The stored heading text and role must also match the qualified original
+declaration; changing locator metadata cannot turn an assay number into a molecule.
+
+Equal digits in Example/Compound namespaces are not an automatic cross-reference.
+Unknown/mixed catalogue vocabulary and explicit cell/title prefix contradictions
+leave the separate occurrence unresolved. Original physical
+anchors and rejected proposals remain available; their original ledger gaps and
+diagnostics still fail final acceptance. No task/source ID, page, expected count
+or rightmost-structure shortcut supplies authority. Multiple competing complete
+catalogues are not silently coalesced.
+A selected-only catalogue can still be the primary under the existing policy;
+there is no invented need to supply a larger missing table before a preparation
+depiction can be checked. Proved selected reprints never displace their primary.
+
+Binding32/binder42 require fresh derived binding under the normal producer.
+Original PDFs, raw OCR/crops/model outputs and manual history are not edited;
+unchanged raw recognition can still be reused through its existing exact-image
+and model contract, never as cached acceptance. Older products are history, not
+relabelled current proof. Preserve newer state separately for deliberate rollback.
+This change does not solve unlabelled multi-node reaction schemes or establish
+arbitrary-patent chemical accuracy. Continue real acceptance through the frontend
+after the coherent repair set; do not manually fill structures or rerun only
+because a partial source release is available.
+
 ## A heading and its structure on different pages
 
 The shared binder now examines the consecutive original declaration window,
@@ -11,8 +45,8 @@ the next page. Unknown ranges and independent simultaneous headings do not
 lend an implicit order or column scope. Limits64pages/25000structures and the
 existing one-MiB regional proof refuse rather than truncate accepted coverage.
 
-`declaration_scope` is retained with the heading and structure proof3 for exact
-saved replay. Binding31/binder41 invalidate prior derived binding ownership,
+`declaration_scope` is retained with the heading and structure proof4 for exact
+saved replay. Binding32/binder42 invalidate prior derived binding ownership,
 not original PDFs, raw OCR, crops, original model outputs or manual corrections.
 Old page-only heading proof2 remains historical and does not pass current source
 admission. The obsolete cache-label heading proposal producer was removed;
@@ -26,6 +60,15 @@ identity from a matching ID elsewhere, or waive source/chemistry QA. Whole-windo
 inventory is not a guarantee of detector recall, OCSR correctness or scientific
 acceptance. Optional new reaction parsers require separate dependency/weight/
 license/resource evaluation and explicit installation authority.
+
+Scope2 also retains registered original column witnesses alongside the complete
+raw diagram inventory. A trusted foreign column active beside the same-page
+heading can exclude only its own contained diagrams/lines, through the existing
+role/body replay. An unassigned own-column rival remains ambiguous. A foreign
+closing procedure cannot truncate the window into accepted uniqueness. Unknown
+columns, changed/omitted evidence, cross-page lane projection and extending beyond
+the original trusted body never supply that permission. Prior scope1/heading3
+remain immutable history. This does not infer multi-step terminal product roles.
 
 ## Weak caption nominations and competing frame hypotheses
 

@@ -282,6 +282,7 @@ def select_heading_bindings(
             (source_line_map or {}).get(number - 1, []),
         ),
         document_sha256,
+        source_sections=source_sections or (),
     )
     scopes = {}
     for block, _ in pending:

@@ -305,7 +305,7 @@ class HeadingDocumentSpanTests(unittest.TestCase):
         self.page().insert_text((45, 60), "Compound 141B", fontsize=12)
         bindings, issues = self.select([self.drawing(1, "S1")])
         self.assertEqual(issues, [])
-        for version in (2, True, 3.0, "3"):
+        for version in (2, 3, True, 4.0, "4"):
             changed = copy.deepcopy(bindings[0])
             changed["original_heading_structure_evidence"]["version"] = version
             with self.subTest(version=version):

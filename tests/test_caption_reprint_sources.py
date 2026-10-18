@@ -163,6 +163,14 @@ class CaptionReprintSourcesTests(unittest.TestCase):
         )
         self.assertEqual(coverage_errors(payload), [])
 
+    def test_literal_joined_selected_title_uses_the_same_catalogue_role_projection(
+        self,
+    ):
+        payload = self.observe(second="Table48.SelectedCompounds")
+        self.assertEqual(payload["source_issues"], [])
+        self.assertEqual(len(recognition_inputs(payload).reprints), 2)
+        self.assertEqual(coverage_errors(payload), [])
+
     def test_single_column_original_catalogue_uses_the_same_complete_source_chain(self):
         payload = self.observe(single_column=True)
         self.assertEqual(payload["source_issues"], [])
