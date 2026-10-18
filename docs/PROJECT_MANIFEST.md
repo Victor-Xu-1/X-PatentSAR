@@ -1,5 +1,16 @@
 # Project governance manifest
 
+- Caption page hints remain nominations under `table_cells.read_cell`; the
+  qualified physical value, not a weak hint, supplies a final identifier.
+  `caption_frame_index` groups the same current pairs without another store.
+  `owns_caption_frame` replays the existing formal caption proof for every
+  explicit prefixed cell before an unknown-title closed label/drawing frame
+  can displace a competing unheaded-column hypothesis. Unknown bare/partial/
+  conflicting or mutated sources remain withheld. One observed title context
+  is reused. Binder40 refreshes only derived implementation/cache identity;
+  Binding30/source proofs/raw/manual/activity/OCSR/SAR numerical/API/SQL and
+  dependency contracts stay unchanged. No private scientific product is edited.
+
 - `cell_caption_lines` owns positive complete-row source selection before OCR
   detection for short single-line captions. The same engine observes each DPI
   once; unknown/weak/malformed results cannot start another winner-selection

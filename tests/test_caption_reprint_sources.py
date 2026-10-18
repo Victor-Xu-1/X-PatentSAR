@@ -8,6 +8,7 @@ from pathlib import Path
 
 import fitz
 
+from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.core.catalog_reader import (
     CatalogValidationError,
     read_catalog_entries,
@@ -125,7 +126,10 @@ class CaptionReprintSourcesTests(unittest.TestCase):
             str(root / "bindings"),
             str(metadata),
         )
-        return json.loads(Path(result["output_files"]["json"]).read_text())
+        saved = load_json(Path(result["output_files"]["json"]), None)
+        self.assertIsInstance(saved, dict)
+        self.assertEqual(saved["final_bindings"], result["final_bindings"])
+        return saved
 
     def test_explicit_selected_caption_reprint_is_retained_and_scheduled(self):
         payload = self.observe()

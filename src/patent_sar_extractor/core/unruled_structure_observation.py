@@ -67,6 +67,7 @@ def observe_unruled_tables(
     *,
     page_texts=None,
     caption_roles=None,
+    caption_frames=None,
     progress=None,
 ):
     bindings, sections, issues, protected, recognized, observed = (
@@ -128,6 +129,9 @@ def observe_unruled_tables(
                 [d["bbox"] for d in page_diagrams],
                 original_role=(caption_roles or {}).get(
                     (page_index + 1, tuple(grid_box(grid)))
+                ),
+                original_bindings=(caption_frames or {}).get(
+                    (page_index + 1, tuple(grid_box(grid))), ()
                 ),
             )
         ]

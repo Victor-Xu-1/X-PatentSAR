@@ -1,5 +1,32 @@
 # Operations and troubleshooting
 
+## Weak caption nominations and competing frame hypotheses
+
+When a page-level hint disagrees with a qualified original-cell value, inspect
+the complete preserved observations. The sole cell reader still decides which
+readings qualify and vetoes native/qualified conflicts. The caption coordinator
+must not put an unqualified page hint back ahead of that accepted value. There
+is no new confidence threshold, prefix spelling repair, digit/ID substitution,
+winner-selection retry or independent recognition service.
+
+An ordinary title such as a structure-table title need not itself declare a
+compound catalogue when every original label/drawing cell already carries a
+complete, explicitly prefixed caption proof. The same call-local pairs now let
+the unheaded-column observer reuse that frame classification instead of creating
+a competing unproved anchor. All cells must be represented without changed IDs,
+bounds, bare forms or duplicates. Bare/partial/unknown or contradictory frames
+remain incomplete; this does not waive their source inventory or final QA.
+The existing title observation is reused without another model pass.
+
+Binder40 invalidates implementation-derived binding checkpoints for future
+normal frontend attempts. Binding30, raw observation/proof formats, original
+PDF/OCR/crops, human revisions, activity/OCSR/ADMET and SAR rules remain unchanged.
+Old observations and failed products are not retagged or rewritten. Source,
+writer/reprint/catalogue/recognition and cache checks are separate from installed
+delivery and a real frontend scientific run. Synthetic recovery is not universal
+patent/chemical accuracy; do not re-submit a private patent solely because this
+bounded repair ships while other original-source failures remain open.
+
 ## Complete short caption rows before fragment detection
 
 An owned caption cell can contain one complete printed line even when the text
