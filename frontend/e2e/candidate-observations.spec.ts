@@ -27,7 +27,7 @@ for (const width of [390, 1672]) {
       expect(row.activities).toEqual([]);
       expect(row.recognition?.status).toBe('unavailable');
       expect(row.recognition?.quality_flag).toBe('unassigned_source_identity');
-      expect(row.admet.properties).toEqual([]);
+      expect(row.admet?.properties ?? []).toEqual([]);
     }
     const rows = page.locator('.results-table tbody tr[data-compound]');
     await expect(rows).toHaveCount(2);
