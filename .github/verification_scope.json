@@ -1,36 +1,48 @@
 {
   "schema_version": 1,
-  "base_sha": "273d793beaf1393ca72b0fa0ab8cc3b5d31de634",
+  "base_sha": "63662d77796aa7cff8c64a0a39def7da161374a9",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
-    "frontend/e2e/binding-source-progress.spec.ts",
+    "docs/OPERATIONS.md",
+    "docs/PROJECT_MANIFEST.md",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/features/jobs/StageStrip.tsx",
-    "frontend/src/features/jobs/WorkflowGroups.tsx",
-    "frontend/src/styles/responsive.css",
-    "frontend/src/styles/workflow.css",
-    "frontend/tests/compact-progress.test.tsx",
-    "frontend/tests/stage-review-presentation.test.tsx",
-    "frontend/tests/workflow-chain.test.tsx",
-    "src/patent_sar_extractor/contracts.py"
+    "src/patent_sar_extractor/contracts.py",
+    "src/patent_sar_extractor/core/binding_spatial.py",
+    "src/patent_sar_extractor/core/caption_grid_binding.py",
+    "src/patent_sar_extractor/core/caption_role_observation.py",
+    "src/patent_sar_extractor/core/numbered_structure_binding.py",
+    "src/patent_sar_extractor/core/unruled_structure_observation.py",
+    "tests/test_caption_nomination_forms.py",
+    "tests/test_caption_reprint_sources.py",
+    "tests/test_caption_role_writer.py"
   ],
   "python_modules": [
     "tests.test_verification_scope",
     "tests.test_release_policy.ReleaseNumberTests",
     "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
     "tests.test_standalone.StandalonePackagingTests.test_version_command_uses_product_version",
-    "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
+    "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority",
+    "tests.test_caption_nomination_forms",
+    "tests.test_caption_grid_binding",
+    "tests.test_caption_cell_native",
+    "tests.test_caption_cell_ocr",
+    "tests.test_caption_reading_semantics",
+    "tests.test_caption_page_boundary",
+    "tests.test_parallel_caption_boundary",
+    "tests.test_caption_reprint_sources",
+    "tests.test_caption_role_writer",
+    "tests.test_binding_source_diagnostics",
+    "tests.test_structure_column_anchors",
+    "tests.test_structure_column_anchor_proof",
+    "tests.test_unruled_source_admission",
+    "tests.test_unruled_structure_binding",
+    "tests.test_numbered_structure_binding",
+    "tests.test_ruled_column_continuation",
+    "tests.test_binding_cache_identity",
+    "tests.test_source_order_checkpoints"
   ],
-  "frontend_tests": [
-    "frontend/tests/compact-progress.test.tsx",
-    "frontend/tests/stage-review-presentation.test.tsx",
-    "frontend/tests/binding-progress.test.tsx",
-    "frontend/tests/evidence-studio-workflow.test.tsx",
-    "frontend/tests/workflow-chain.test.tsx"
-  ],
-  "browser_tests": [
-    "frontend/e2e/binding-source-progress.spec.ts"
-  ]
+  "frontend_tests": [],
+  "browser_tests": []
 }

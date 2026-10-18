@@ -312,6 +312,19 @@ derived ownership remains historical; original assets and human audit are kept.
 
 ## One original catalogue role across layout, identity and heading inventory
 
+Page-level caption text nominates cells; it never replaces the value already
+qualified by the shared `table_cells.read_cell` authority. Qualified/native
+contradictions still veto, and all raw readings remain. `caption_frame_index`
+is a call-local index of those same original pairs, not a second store or OCR
+pass. An unknown title role can exclude a competing unheaded-column hypothesis
+only when every cell of its complete label/drawing frame has unchanged explicit
+prefixed caption proof through `valid_caption_binding_evidence`. Missing cells,
+bare identifiers, duplicate or changed owners/bounds and genuine role conflicts
+cannot borrow this frame classification. Unknown title context is reused, not
+re-read until a preferred outcome appears. Formal catalogue/coverage/recognition
+consumers retain their existing gates. Binder40 refreshes implementation-derived
+ownership; Binding30 and the original-source proof shapes are unchanged.
+
 `caption_grid_binding` uses the same revalidated original role for table-start
 direction and adjacent continuation. An absent layout-lane caption cannot erase
 a title already proved by independent native evidence or the bounded title

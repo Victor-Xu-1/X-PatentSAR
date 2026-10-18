@@ -30,7 +30,7 @@ from .binding_types import (
     SourceKind,
     SourceOwnership,
 )
-from .caption_grid_binding import bind_caption_grids
+from .caption_grid_binding import bind_caption_grids, caption_frame_index
 from .numbered_structure_pairs import _box
 from .source_binding_proof import annotate_source_binding
 from .structure_declarations import observe_declaration_pages
@@ -202,6 +202,7 @@ def collect_spatial_bindings(
         tokens_for_page=tokens_for_page,
         page_texts=pages_text,
         caption_roles=caption_grids.roles,
+        caption_frames=caption_frame_index(caption_grids.bindings),
         progress=progress,
     )
     recognized_pages = set(numbered.recognized_pages)

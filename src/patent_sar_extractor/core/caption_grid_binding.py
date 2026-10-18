@@ -35,6 +35,17 @@ class CaptionGridResult:
     roles: dict[tuple[int, tuple], dict] = field(default_factory=dict)
 
 
+def caption_frame_index(bindings):
+    """Call-local index of the same observed pairs, never another source store."""
+    frames = {}
+    for pair in bindings:
+        role = pair["ownership"].get("caption_role")
+        if role is not None:
+            key = pair["label_page_no"], tuple(role["table_bbox"])
+            frames.setdefault(key, []).append(pair)
+    return frames
+
+
 def bind_caption_grids(
     doc,
     by_page,
@@ -251,7 +262,9 @@ def bind_caption_grids(
                 continue
             if carry_index is not None:
                 consumed.add(carry_index)
-            if role_status == "compound":
+            # Reuse the same observed unknown title too; only complete prefixed
+            # cell proof may establish its frame kind downstream.
+            if role_status in {"compound", "unknown"}:
                 result.roles[(page_no, tuple(grid_box(region)))] = role
             result.pages.add(page_no)
             catalog_boxes.setdefault(page_no, []).append((xs[0], ys[0], xs[-1], ys[-1]))
@@ -314,7 +327,10 @@ def bind_caption_grids(
                         "id" if bare else "label",
                         bool(page.get_text("words")),
                     )
-                    resolved = label or reading.value
+                    # Page text nominates the cell; the shared reader alone
+                    # qualifies its value and retains native/qualified conflicts.
+                    # A weak hint must not replace an accepted original reading.
+                    resolved = reading.value or label
                     if resolved:
                         result.labels.add(resolved)
                     item = {
@@ -324,7 +340,6 @@ def bind_caption_grids(
                         "column": col,
                         "review": reading.needs_review
                         or not resolved
-                        or bool(label and reading.value != label)
                         or role_status in {"mixed", "conflict"},
                         "observations": reading.observations,
                         "bare": bare,

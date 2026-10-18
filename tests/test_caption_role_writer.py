@@ -17,6 +17,11 @@ from patent_sar_extractor.core.catalog_reader import (
 )
 from patent_sar_extractor.core.formal_structure import coverage_errors
 from patent_sar_extractor.core.structure_binder import bind
+from patent_sar_extractor.core.table_geometry import (
+    detect_ruled_table_regions,
+    page_tokens,
+)
+from tests.test_caption_nomination_forms import changed_caption_hints
 from tests.test_caption_page_boundary import below_pages
 from tests.test_caption_role_raster import raster_catalog
 from tests.test_caption_source_roles import catalog
@@ -27,7 +32,9 @@ class CaptionRoleWriterTests(unittest.TestCase):
     def execute(self, title="Table 47. Compounds", *, prefixed=False):
         return self.execute_document(*catalog(title, prefixed=prefixed))
 
-    def execute_document(self, doc, structures, boxes, *, native=True):
+    def execute_document(
+        self, doc, structures, boxes, *, native=True, token_reader=None
+    ):
         temporary = tempfile.TemporaryDirectory(prefix="patentsar-caption-role-")
         self.addCleanup(temporary.cleanup)
         root = Path(temporary.name)
@@ -62,7 +69,15 @@ class CaptionRoleWriterTests(unittest.TestCase):
                 "Controlled native catalogue must not invoke OCR"
             ),
         )
-        with native_guard if native else nullcontext():
+        source_reader = (
+            patch(
+                "patent_sar_extractor.core.binding_spatial.page_tokens",
+                side_effect=token_reader,
+            )
+            if token_reader
+            else nullcontext()
+        )
+        with native_guard if native else nullcontext(), source_reader:
             result = bind(
                 str(pdf),
                 {"bind_workers": 1},
@@ -73,6 +88,51 @@ class CaptionRoleWriterTests(unittest.TestCase):
         saved = load_json(Path(result["output_files"]["json"]), None)
         self.assertEqual(saved["final_bindings"], result["final_bindings"])
         return saved, records
+
+    def test_page_hint_authority_is_preserved_through_writer_and_catalogue(self):
+        for confidence in (0.01, 0.99):
+            with self.subTest(confidence=confidence):
+
+                def source_reader(page, _confidence=confidence, **kwargs):
+                    tokens = page_tokens(page, **kwargs)
+                    grid = detect_ruled_table_regions(page, dpi=240)[0]
+                    return changed_caption_hints(
+                        tokens, grid, "Compound I-099Z", _confidence
+                    )
+
+                payload, records = self.execute_document(
+                    *raster_catalog("Table 47. Structures", prefixed=True),
+                    native=False,
+                    token_reader=source_reader,
+                )
+                if confidence == 0.99:
+                    self.assertEqual(payload["final_bindings"], [])
+                    self.assertTrue(payload["source_issues"])
+                    self.assertTrue(coverage_errors(payload))
+                    continue
+                entries, _ = read_catalog_entries(
+                    payload, {record["structure_id"] for record in records}
+                )
+                self.assertEqual(
+                    {entry["cpd"] for entry in entries},
+                    {"Compound I-004A", "Compound I-009B"},
+                )
+                self.assertEqual(payload["source_issues"], [])
+                self.assertEqual(coverage_errors(payload), [])
+
+    def test_prefixed_captions_with_unknown_title_role_keep_one_frame_authority(self):
+        payload, records = self.execute_document(
+            *raster_catalog("Table 47. Structures", prefixed=True), native=False
+        )
+        entries, _ = read_catalog_entries(
+            payload, {record["structure_id"] for record in records}
+        )
+        self.assertEqual(
+            {entry["cpd"] for entry in entries},
+            {"Compound I-004A", "Compound I-009B"},
+        )
+        self.assertEqual(payload["source_issues"], [])
+        self.assertEqual(coverage_errors(payload), [])
 
     def test_actual_raster_caption_frame_survives_writer_and_strict_saved_reader(self):
         payload, records = self.execute_document(

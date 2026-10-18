@@ -54,6 +54,7 @@ def bind_numbered_tables(
     | None = None,
     page_texts: Mapping[int, str] | None = None,
     caption_roles: Mapping | None = None,
+    caption_frames: Mapping | None = None,
     progress: BindingObserver | None = None,
 ) -> NumberedTableResult:
     """Register original frames/roles, then build cells for the single matcher."""
@@ -83,6 +84,7 @@ def bind_numbered_tables(
         shared_tokens,
         page_texts=page_texts,
         caption_roles=caption_roles,
+        caption_frames=caption_frames,
         progress=progress,
     )
     cells, cell_issues = observe_ruled_cells(
