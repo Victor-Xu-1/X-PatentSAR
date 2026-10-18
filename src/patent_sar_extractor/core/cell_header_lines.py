@@ -6,7 +6,12 @@ import math
 import cv2
 import numpy as np
 
-from .cell_ocr_scores import confidence_score
+from .cell_text_row_readings import (
+    qualified_row,
+    row_observation,
+    row_recognition_border,
+    selected_row_reading,
+)
 
 
 def header_line_frame(image, border, dpi, *, maximum_row_height=12, maximum_rows=8):
@@ -89,28 +94,30 @@ def physical_line_frame(
 def observe_header_lines(image, engine, border, dpi, *, frame):
     """Recognize every inventoried row with the same engine, no text repair."""
     packet = frame
+    packet.update(version=2, row_readings=[])
     parts = []
     for x0, y0, x1, y1 in packet["row_bounds"]:
-        clip = cv2.copyMakeBorder(
-            image[y0:y1, x0:x1],
-            border,
-            border,
-            border,
-            border,
-            cv2.BORDER_CONSTANT,
-            value=(255, 255, 255),
-        )
-        result, _ = engine(clip, use_det=False, use_cls=False)
-        if (
-            len(result or []) != 1
-            or len(result[0]) != 2
-            or not isinstance(result[0][0], str)
-        ):
-            return parts, packet
+        readings = []
+        for padding in dict.fromkeys((border, row_recognition_border(y1 - y0, border))):
+            if readings and qualified_row(readings[0]):
+                break
+            clip = cv2.copyMakeBorder(
+                image[y0:y1, x0:x1],
+                padding,
+                padding,
+                padding,
+                padding,
+                cv2.BORDER_CONSTANT,
+                value=(255, 255, 255),
+            )
+            result, _ = engine(clip, use_det=False, use_cls=False)
+            readings.append(row_observation(result, padding))
+        packet["row_readings"].append(readings)
+        selected = selected_row_reading(readings, y1 - y0, border)
         parts.append(
             {
-                "text": result[0][0],
-                "confidence": confidence_score(result[0][1]),
+                "text": selected["text"],
+                "confidence": selected["confidence"],
                 "bbox": [[x0, y0], [x1, y0], [x1, y1], [x0, y1]],
                 "coordinate_space": "cell_ink_crop_pixels",
                 "method": "physical_header_line",

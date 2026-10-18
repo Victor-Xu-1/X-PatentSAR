@@ -1,5 +1,28 @@
 # Operations and troubleshooting
 
+## Weak short text rows inside original headers
+
+Small unit or context rows can lose recognizer resolution when a fixed physical
+blank border dominates their ink height. The normal reader preserves a qualified
+first reading; only a weak/empty/malformed row gets one further original-ink view
+with a deterministic compact blank border. No new PDF render, OCR instance,
+model installation, external call, dictionary correction or confidence threshold
+change is introduced. Both attempts stay in the same saved text-frame proof.
+
+A clearer unit is not permission to overwrite a different valid original target,
+endpoint, table or unit. Some degraded serif/monospace inputs still cannot be
+qualified. Keep them unresolved and retain all original observations; never turn
+them into guessed values, accepted partial coverage or a clean empty dataset.
+An unresolved original header still cannot lend meaning to a later data panel.
+These scientific coverage cases remain open even if refusal tests pass.
+
+Binding24/binder33 andActivity20/extractor29 require normal current derived
+observation through frontend execution. Preserve old inputs/raw observations,
+failed tasks and human audit. Older original text frames remain inspectable as
+historical evidence, not retagged current acceptance. Bounded source checks,
+installed package/CI/main/fixed18765 delivery and actual frontend extraction/SAR
+are separate gates. Do not rerun or edit a private input outside that frontend.
+
 ## Single-column catalogues and selected repeat sources
 
 One-column caption grids use the normal source-binding path after complete outer

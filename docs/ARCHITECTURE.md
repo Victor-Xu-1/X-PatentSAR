@@ -1,5 +1,39 @@
 # X-PatentSAR architecture
 
+## Bounded original text-row refinement
+
+`cell_text_row_readings` owns the same physical-cell reader's blank-border
+policy and pure saved replay. Qualified first observations remain byte-for-byte
+unchanged. A weak, empty or malformed row receives at most one compact-border
+view of the identical complete original ink rectangle, using the existing OCR
+engine. The margin is derived from that row's pixel height; no source pixels,
+characters, font labels, endpoints or units are invented or rewritten. This is
+not a model ensemble, highest-confidence vote or retry loop. Normal rows need
+no extra recognition, and the same8M rendering/8header-row and32body-row limits
+remain. Every malformed row still preserves later original rows rather than
+publishing or retaining only a successful prefix.
+
+Physical text-frame2 retains both attempts, their exact borders, literal outputs,
+confidence validity and unchanged original frame/row coordinates. Pure replay
+requires the complete deterministic one/two-attempt policy and the selected
+literal/score; omitted/extra/reordered attempts, changed margins or invalid scores
+refuse. Older frame1 remains structurally readable in historical source packets.
+Short single-row headers retain `single_row_readings` only when that same compact
+view is actually needed; the same policy replays crop height/borders/outputs.
+Scalar measurements and printed compound-number readers do not use this branch.
+Role/body/fragment/header and quantitative-axis word consumers delegate to this
+same text proof rather than keeping parallel permissive readers.
+Independent detector/native/source conflicts and both400/600dpi complete-field
+checks are unchanged. Resolving a short unit never authorizes a conflicting
+target/endpoint or lends an unresolved schema to parallel/adjacent tables.
+
+Binding24/binder33 andActivity20/extractor29 refresh derived text-source proof.
+Raw PDFs/OCR/model/crop assets, manual audit, numerical SAR, OCSR/preparation/
+stereochemistry, API/SQL and scientific dependencies remain independent. Native
+font/coordinate/facade/reader tests are coverage evidence, not universal OCR or
+chemical correctness. Low-resolution italic glyphs and independently conflicting
+source literals remain explicit open acceptance cases, not certified inputs.
+
 ## Complete caption sources and one document-wide claim decision
 
 Binding23/binder32 use one `binding_source_claims` authority for numbered and

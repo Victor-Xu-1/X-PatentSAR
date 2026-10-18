@@ -88,7 +88,7 @@ def _word_reading(word, mask, box, angle, dpi):
     if (
         word["view_sha256"] != hashlib.sha256(view.tobytes()).hexdigest()
         or not isinstance(reading, dict)
-        or set(reading) != _READING_FIELDS
+        or set(reading) - {"single_row_readings"} != _READING_FIELDS
         or not _same_box(
             reading["bbox"], [0, 0, view.shape[1], view.shape[0]], pixels=True
         )

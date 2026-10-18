@@ -123,7 +123,12 @@ def valid_role_scope(record):
             elif method in {"cell_ocr_400dpi", "cell_ocr_600dpi"}:
                 confidence = cell.get("confidence")
                 if (
-                    set(cell) - {"physical_header_lines", "physical_text_chunks"}
+                    set(cell)
+                    - {
+                        "physical_header_lines",
+                        "physical_text_chunks",
+                        "single_row_readings",
+                    }
                     != {
                         "method",
                         "text",

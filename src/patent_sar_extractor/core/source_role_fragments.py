@@ -143,7 +143,12 @@ def validate_fragments(region):
                 else:
                     dpi = (400, 600)[index]
                     if (
-                        set(reading) - {"physical_header_lines", "physical_text_chunks"}
+                        set(reading)
+                        - {
+                            "physical_header_lines",
+                            "physical_text_chunks",
+                            "single_row_readings",
+                        }
                         != {
                             "method",
                             "text",
