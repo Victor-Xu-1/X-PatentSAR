@@ -18,8 +18,14 @@ for (const width of [390, 1672]) {
     });
     await page.setViewportSize({ width, height: width === 390 ? 844 : 1060 });
     await page.goto('/#/projects/' + project);
+    const rows = page.locator('.results-table tbody tr[data-compound]');
+    // Wait for the normal UI session and source read, not a fixed delay or an
+    // unauthenticated API request racing initial navigation.
+    await expect(rows).toHaveCount(2);
     const endpoint = `/api/v1/projects/${project}/results`;
-    const before = decodeResults(await (await page.request.get(endpoint)).json());
+    const response = await page.request.get(endpoint);
+    expect(response.ok(), await response.text()).toBeTruthy();
+    const before = decodeResults(await response.json());
     expect(before.total).toBe(2);
     for (const row of before.items) {
       expect(row.identifier_label ?? null).toBeNull();
@@ -29,8 +35,6 @@ for (const width of [390, 1672]) {
       expect(row.recognition?.quality_flag).toBe('unassigned_source_identity');
       expect(row.admet?.properties ?? []).toEqual([]);
     }
-    const rows = page.locator('.results-table tbody tr[data-compound]');
-    await expect(rows).toHaveCount(2);
     const opener = rows.first().locator('.frozen-compound button');
     await opener.click();
     const dialog = page.getByRole('dialog');
