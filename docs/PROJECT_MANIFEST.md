@@ -1,5 +1,20 @@
 # Project governance manifest
 
+- `heading_declaration_index` owns call-local shared original page inventory;
+  `heading_declaration_scope` owns one bounded capture/replay boundary policy.
+  All detected candidates participate before a unique standalone association,
+  including other interpreters' reserved drawings and boundary-crossing crops.
+  Heading proof3 and the same ledger scope preserve cross-page original
+  occurrence, source/crop identity and complete candidate geometry. Limits64
+  pages/25000structures/the existing one-MiB regional proof remain finite.
+  Old page-only proof2 and the cached-label heading fallback no longer supply
+  current authority; history/raw/manual data remain. Binding31/binder41 change
+  derived ownership only, not activity/chemical observations, numerical SAR,
+  API/SQL/dependencies or DECIMER. There is no second parser/model/store/queue,
+  rightmost-product guess, private reprocessing or QA waiver. Multi-step terminal
+  reaction roles, detector/chemical accuracy and real frontend extraction/SAR
+  acceptance remain separate open work, not conclusions of singleton checks.
+
 - Caption page hints remain nominations under `table_cells.read_cell`; the
   qualified physical value, not a weak hint, supplies a final identifier.
   `caption_frame_index` groups the same current pairs without another store.

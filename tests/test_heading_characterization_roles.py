@@ -6,6 +6,7 @@ import unittest
 import fitz
 from test_activity_spatial_roles import ruled
 
+from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.core.binding_source_headings import observed_heading_blocks
 from patent_sar_extractor.core.binding_source_references import (
     reference_issues,
@@ -259,7 +260,6 @@ class HeadingCharacterizationRoleTests(unittest.TestCase):
             reference_issues({"source_sections": [{"role": "unknown"}] * 25001}, [])
 
     def test_core_and_web_replay_omitted_references_after_issues_are_cleared(self):
-        import json
         import tempfile
         from pathlib import Path
 
@@ -271,9 +271,7 @@ class HeadingCharacterizationRoleTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             run_fixture(root)
-            payload = json.loads(
-                (root / "structure_bindings/bindings.json").read_text()
-            )
+            payload = load_json(root / "structure_bindings/bindings.json", {})
             payload.update(self.observed())
             payload["source_issues"] = []
             self.assertTrue(

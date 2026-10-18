@@ -55,6 +55,17 @@ _INTERMEDIATE_TARGET = re.compile(
     rf"{INTERMEDIATE_SINGULAR}(?=[\s:.：0-9-]|$)",
     re.IGNORECASE,
 )
+_PROCEDURE = re.compile(
+    r"^(?:\[\s*\d{1,8}\s*\]|(?:Step|Stage|步骤|中间体|Intermediate)\b|"
+    r"[A-Z][.)]\s|To\s+(?:a|an|the)\s|A\s+(?:solution|mixture)\b|"
+    r"The\s+(?:reaction|mixture)\b)",
+    re.IGNORECASE,
+)
+
+
+def procedure_heading_boundary(text):
+    """One literal procedure stop shared by single/plural original declarations."""
+    return bool(_PROCEDURE.match(str(text).strip()))
 
 
 def section_heading(text: object) -> dict[str, Any] | None:

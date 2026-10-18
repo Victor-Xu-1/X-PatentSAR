@@ -1,5 +1,37 @@
 # X-PatentSAR architecture
 
+## Complete original heading declaration windows
+
+`heading_declaration_index` captures a call-local shared inventory from an exact
+proved heading through the first literal procedure/other-heading boundary,
+including consecutive original pages. `heading_declaration_scope` is the sole
+capture/replay policy. Every detected structure participates, including candidates
+reserved by other spatial interpreters and candidates crossing the boundary.
+Empty continuation pages cannot disappear. One genuinely standalone drawing can
+belong to a preceding-page heading; a multi-page reaction scheme cannot become
+unique merely because only its first page was considered. Parallel titles without
+a proved column scope and spans exceeding64pages remain unresolved. The existing
+one-MiB regional proof and25000structure bounds are unchanged; excess is refused,
+never silently truncated into an accepted singleton.
+
+Heading/structure proof3 retains the heading page separately from the drawing
+page, the complete declaration window, exact original/crop identity and every
+candidate's geometry. The same packet is referenced by the original heading
+ledger and the accepted binding. Saved completeness replays that exact occurrence
+and scope, not an equal ID elsewhere. The old page-only proof2 and cached-label
+`heading_range_fallback` producer no longer confer current source authority;
+old artifacts remain retained/readable as history. Binding31/binder41 refresh
+only derived ownership. Raw OCR/segmentation/chemical observations, manual audit,
+activity/SAR numerical policy, API/SQL/dependencies and DECIMER remain unchanged.
+
+This inventory is a prerequisite, not a solved reaction graph. It neither chooses
+the rightmost/last/largest molecule nor identifies an unlabelled terminal product
+inside a multi-step route. Such routes still require source-bound reaction roles
+and complete chemical/identity verification in the one extraction chain. Native
+and controlled scanned-source checks are not arbitrary-patent, molecular-graph
+or real frontend scientific acceptance. No additional OCR/model or private-data
+processing is started by the declaration index.
+
 ## One lossless binding-artifact transport
 
 `artifact_catalog` and `artifact_nodes` own shared JSON version1, independently

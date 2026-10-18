@@ -16,6 +16,7 @@ from .binding_source_regions import (
     reference_regions,
 )
 from .caption_label_roles import caption_label_index, caption_label_reference
+from .heading_declaration_index import HeadingDeclarationIndex
 from .heading_evidence import (
     original_heading_lines,
     standalone_heading_evidence,
@@ -24,10 +25,11 @@ from .heading_group_scope import group_heading_members, observe_group_context
 from .heading_line_windows import heading_line_windows
 from .heading_observation import observe_heading
 from .heading_source_proof import proved_heading_declaration
-from .pipeline_rules import _candidate_labels, annotate_binding_accuracy
+from .pipeline_rules import annotate_binding_accuracy
 from .plot_legend_locator import legend_candidate
 from .plot_reference import observe_plot_reference
 from .source_document import document_sha256 as _document_sha256
+from .source_evidence_identity import proof_id
 from .source_geometry import source_layout
 from .source_section_roles import heading_list_hint, heading_members, section_heading
 from .structure_declaration_roles import (
@@ -216,10 +218,12 @@ def select_heading_bindings(
     profile: dict,
     *,
     source_line_map: dict | None = None,
+    all_structures: list[dict] | None = None,
+    source_sections: list[dict] | None = None,
     progress=None,
 ) -> tuple[list[dict], list[dict]]:
     """Require mutually unique crop/printed-label proof in an observed interval."""
-    if not structures or not blocks:
+    if (not structures and all_structures is None) or not blocks:
         return [], [
             {"cpd": b["cpd"], "page_no": b["page_no"], "reason": "no_heading_structure"}
             for b in blocks
@@ -246,53 +250,52 @@ def select_heading_bindings(
             }
             for block in blocks
         ]
-    first_heading = {}
-    for block, _ in proved_blocks:
-        page_no = block["page_no"]
-        first_heading[page_no] = min(
-            first_heading.get(page_no, block["y0"]), block["y0"]
-        )
+    inventory = all_structures if all_structures is not None else structures
+    if any(
+        s.get("source_pdf_sha256", document_sha256) != document_sha256
+        for s in inventory
+    ):
+        return [], [
+            {
+                "cpd": b["cpd"],
+                "page_no": b["page_no"],
+                "reason": "foreign_original_heading_structure",
+            }
+            for b in blocks
+        ]
     structures = [
-        {**structure, "source_pdf_sha256": document_sha256}
-        for structure in structures
-        if structure["page_no"] in first_heading
-        and structure["y0"] >= first_heading[structure["page_no"]]
+        {**structure, "source_pdf_sha256": document_sha256} for structure in structures
     ]
-    page_structures = {}
-    for structure in structures:
-        page_structures.setdefault(structure["page_no"], []).append(structure)
+    structure_index = {str(s["id"]): s for s in structures}
     pending = observed_items("heading_bindings", proved_blocks, progress)
     cache = _load_visible_label_cache(output_dir, profile)
     cache = _refine_visible_label_cache_with_page_ocr(
         structures, cache, line_map, output_dir, profile
     )
     candidates = {}
-    boundaries = sorted({(block["page_no"], block["y0"]) for block in blocks})
-    ends = {
-        (page_no, y): (
-            boundaries[index + 1][1]
-            if index + 1 < len(boundaries) and boundaries[index + 1][0] == page_no
-            else doc[page_no - 1].rect.height
-        )
-        for index, (page_no, y) in enumerate(boundaries)
-    }
-    original_lines = {}
-    for block, declaration in pending:
+    index = HeadingDeclarationIndex(
+        doc,
+        inventory,
+        lambda number: original_heading_lines(
+            doc[number - 1],
+            line_map.get(number - 1, []),
+            (source_line_map or {}).get(number - 1, []),
+        ),
+        document_sha256,
+    )
+    scopes = {}
+    for block, _ in pending:
         key = normalize_compound(block["cpd"]).removeprefix("Compound ")
-        end = ends[block["page_no"], block["y0"]]
-        page = doc[block["page_no"] - 1]
-        if block["page_no"] not in original_lines:
-            original_lines[block["page_no"]] = original_heading_lines(
-                page,
-                line_map.get(block["page_no"] - 1, []),
-                (source_line_map or {}).get(block["page_no"] - 1, []),
-            )
+        heading = block["heading_observation"]
+        identity = proof_id(heading)
+        if identity not in scopes:
+            scopes[identity] = index.observe(heading)
+        scope = scopes[identity]
+        block = {**block, "declaration_scope": scope}
         direct, evidence = standalone_heading_evidence(
-            page,
             block,
-            page_structures.get(block["page_no"], []),
-            original_lines[block["page_no"]],
-            end,
+            structure_index,
+            scope,
         )
         if direct and evidence:
             binding = _build_binding_from_structure(direct, key)
@@ -310,29 +313,10 @@ def select_heading_bindings(
                 "fail_closed"
             ):
                 candidates.setdefault(key, {})[str(checked["structure_id"])] = checked
-                continue
-        for structure in page_structures.get(block["page_no"], []):
-            if not (
-                structure["page_no"] == block["page_no"]
-                and block["y0"] <= structure["y0"] < end
-            ):
-                continue
-            binding = _build_binding_from_structure(structure, key)
-            if normalize_compound(binding["cpd"]) != normalize_compound(block["cpd"]):
-                # The shared builder cannot yet represent every printed-ID form.
-                # Preserve the observation as unresolved, never shorten its owner.
-                continue
-            binding["binding_rule"] = "heading_range_fallback"
-            binding["original_heading_evidence"] = dict(block)
-            binding = _annotate_bindings_with_visible_labels([binding], cache)[0]
-            # No parent/suffix matching and no confidence-selected winner.
-            if _candidate_labels(binding, strict_only=True) != {key}:
-                continue
-            checked = annotate_binding_accuracy(binding)
-            if checked.get("accuracy_status") == "confirmed" and not checked.get(
-                "fail_closed"
-            ):
-                candidates.setdefault(key, {})[str(checked["structure_id"])] = checked
+    for section in source_sections or ():
+        heading = section.get("heading_observation")
+        if isinstance(heading, dict) and proof_id(heading) in scopes:
+            section["declaration_scope"] = scopes[proof_id(heading)]
     owners = {}
     for label, images in candidates.items():
         for image in images:
