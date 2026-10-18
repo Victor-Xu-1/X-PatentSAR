@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import threading
 import time
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from test_web_support import SleepRunner, WebFixture, wait_job
@@ -121,34 +121,30 @@ class LiveCheckpointTests(WebFixture, unittest.TestCase):
         root.mkdir(mode=0o700)
         path = root / "smiles/progress.json"
         write_json_atomic(path, self.progress_payload())
-        done = threading.Event()
-        failures = []
 
         def writer():
-            try:
-                for number in range(80):
-                    write_json_atomic(
-                        path,
-                        self.progress_payload(
-                            completed=3 + number % 7, device=None, peak_rss_mb=None
-                        ),
-                    )
-            except BaseException as exc:
-                failures.append(exc)
-            finally:
-                done.set()
+            for number in range(80):
+                write_json_atomic(
+                    path,
+                    self.progress_payload(
+                        completed=3 + number % 7, device=None, peak_rss_mb=None
+                    ),
+                )
 
-        thread = threading.Thread(target=writer)
-        thread.start()
         samples = []
-        try:
-            while not done.is_set():
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            future = pool.submit(writer)
+            deadline = time.monotonic() + 5
+            while True:
                 progress = read_progress(SafeFiles(root))
                 self.assertIsNotNone(progress)
                 samples.append(progress)
-        finally:
-            thread.join(timeout=5)
-        self.assertFalse(failures)
+                if future.done():
+                    break
+                self.assertLess(time.monotonic(), deadline)
+            # Future.result propagates worker-thread failures (including an
+            # assertion/SystemExit) instead of swallowing them in a callback.
+            future.result(timeout=5)
         self.assertTrue(samples)
         self.assertIsNone(read_progress(SafeFiles(root)).device)
         self.assertIsNone(read_progress(SafeFiles(root)).peak_rss_mb)

@@ -64,6 +64,7 @@
     "tests.test_job_attempts.AttemptTests.test_nested_first_crop_creates_every_target_ancestor_privately",
     "tests.test_job_attempts.AttemptTests.test_smiles_input_image_cannot_escape_or_follow_a_symlink",
     "tests.test_web_checkpoints.LiveCheckpointTests.test_real_progress_and_cache_facts_are_visible_and_terminal_history_is_frozen",
+    "tests.test_web_checkpoints.LiveCheckpointTests.test_atomic_progress_replaces_and_null_metrics_are_read_without_prediction",
     "tests.test_storage_locations.StorageLocationTests.test_safe_file_root_cannot_resolve_an_ancestor_symlink",
     "tests.test_verification_scope",
     "tests.test_release_policy.ReleaseNumberTests",
