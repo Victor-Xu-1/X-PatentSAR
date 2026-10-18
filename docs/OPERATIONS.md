@@ -1,5 +1,24 @@
 # Operations and troubleshooting
 
+## Extreme source strips and zero-size OCR resize
+
+RapidOCR's pinned resize floors then rounds dimensions to multiples of 32. A
+very long, thin physical text/graphic row could previously collapse a short side
+to zero before the minimum-side step ran, aborting numbering or another source
+consumer. The shared adapter now adds bounded white padding only below/right of
+that otherwise-fatal input. All original ink, origin, rows and observations stay;
+the existing engine, confidence checks and source proof still decide the result.
+It does not turn an unread separator, ambiguous label or conflict into acceptance.
+
+The padding canvas cannot exceed 8M pixels. An over-budget request remains a
+visible error with original/planned dimensions, not a partial successful result.
+Normal source images remain byte-identical through the old SDK path, and no
+model/environment is installed. Original assets, raw/derived schema/epochs and
+manual audit are not modified. Preserve failed runs; after exact-main deployment,
+use the frontend's ordinary resume/new-attempt action. Software-owned checkpoint
+validation may reuse completed original OCR/segmentation, never failed acceptance.
+Do not re-OCR private inputs in an operator script or copy their outputs by hand.
+
 ## Empty results during extraction
 
 A verified queued/running task for the current project may not have published

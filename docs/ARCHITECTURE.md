@@ -1,5 +1,31 @@
 # X-PatentSAR architecture
 
+## Lossless OCR canvas safety
+
+`rapidocr_adapter` owns the source pipeline's one optional RapidOCR constructor,
+shared by page/thread workers, original cells/headings/words and diagnostic
+excerpts. The pinned SDK remains the only inference, confidence and resize/box
+authority. Before its normal preprocess step, the adapter detects exactly the
+floor-then-nearest-32 dimension collapse that makes extreme horizontal/vertical
+source strips fail. Only those otherwise-fatal inputs receive trailing white
+padding, within the existing 8M-cell-pixel budget. Original pixels and top-left
+origin are unchanged; the SDK records/inverts its own resized padded dimensions
+and clips to the original input bounds. Ordinary inputs retain the exact object,
+including already-valid full pages above that additional-padding budget.
+
+No source line, underline, unknown result or low confidence is removed. The same
+physical-row proof retains every row and later text; unqualified content still
+refuses. There is no additional inference/view/retry, resampling before the SDK,
+model/weight installation, SDK modification or threshold change. Unsafe resource
+requests and unrelated engine failures remain explicit errors. Constructor policy,
+thread limits, lazy optional imports and the independent environment probe remain.
+
+This corrects previously-fatal execution, not any previously-successful raw or
+derived semantics: unchanged SDK pixels/outputs/scores/coordinates are checked.
+Scientific epochs, original assets, manual audit, source/chemical acceptance,
+API/SQL and dependencies are unchanged; failed tasks are not retagged successful.
+Controlled SDK/source tests do not establish complete real-patent extraction.
+
 ## Truthful unpublished-result presentation
 
 `Workspace` passes its existing verified job observation to `ResultsPane`.

@@ -1,38 +1,37 @@
 {
   "schema_version": 1,
-  "base_sha": "6bf180fa5a7622db9aaa53d488477380f22a6c0a",
+  "base_sha": "e4c03be99acb549a0adf41e1b53bd64c4288d2c4",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
     "docs/OPERATIONS.md",
     "docs/PROJECT_MANIFEST.md",
-    "frontend/e2e/source-completion.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/features/results/CompoundCell.tsx",
-    "frontend/src/features/results/ResultsPane.tsx",
-    "frontend/src/features/results/ResultsTable.tsx",
-    "frontend/src/features/workspace/Workspace.tsx",
-    "frontend/src/i18n/catalogs/table.ts",
-    "frontend/src/styles/table-interactions.css",
-    "frontend/tests/identifier-labels.test.tsx",
-    "frontend/tests/results-empty-state.test.tsx",
-    "src/patent_sar_extractor/contracts.py"
+    "src/patent_sar_extractor/contracts.py",
+    "src/patent_sar_extractor/core/page_ocr_cache.py",
+    "src/patent_sar_extractor/core/rapidocr_adapter.py",
+    "src/patent_sar_extractor/core/review_excerpt.py",
+    "tests/test_rapidocr_canvas.py"
   ],
   "python_modules": [
-    "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
+    "tests.test_rapidocr_canvas",
+    "tests.test_header_reading_views",
+    "tests.test_header_physical_lines",
+    "tests.test_header_physical_proof",
+    "tests.test_heading_observation",
+    "tests.test_heading_source_ownership",
+    "tests.test_cell_word_orientation",
+    "tests.test_cell_observation_provenance",
+    "tests.test_cell_observation_epochs",
+    "tests.test_classify_source_checkpoint",
+    "tests.test_source_page_coverage",
+    "tests.test_ocr_cache_inheritance",
+    "tests.test_phase_resources",
     "tests.test_architecture",
-    "tests.test_verification_scope"
+    "tests.test_verification_scope",
+    "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent"
   ],
-  "frontend_tests": [
-    "frontend/tests/results-empty-state.test.tsx",
-    "frontend/tests/results-workspace.test.tsx",
-    "frontend/tests/results.test.tsx",
-    "frontend/tests/live-results.test.tsx",
-    "frontend/tests/identifier-labels.test.tsx",
-    "frontend/tests/original-id-labels.test.tsx"
-  ],
-  "browser_tests": [
-    "frontend/e2e/source-completion.spec.ts"
-  ]
+  "frontend_tests": [],
+  "browser_tests": []
 }

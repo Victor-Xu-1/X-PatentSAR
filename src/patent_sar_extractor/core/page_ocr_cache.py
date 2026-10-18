@@ -180,11 +180,14 @@ def _build_ocr_engine():
     if _paddlex_ocr_url().lower() not in {"", "off", "none", "0"}:
         return ("paddlex", None)
     try:
-        from rapidocr_onnxruntime import RapidOCR
+        from .rapidocr_adapter import create_rapidocr
 
         # ONNX defaults to a large per-session pool on many-core hosts. Four
         # page workers then multiply three SDK pools, wasting CPU and memory.
-        return ("rapidocr", RapidOCR(intra_op_num_threads=2, inter_op_num_threads=1))
+        return (
+            "rapidocr",
+            create_rapidocr(intra_op_num_threads=2, inter_op_num_threads=1),
+        )
     except (ImportError, OSError, RuntimeError, ValueError):
         if not _allow_tesseract_fallback():
             return False
