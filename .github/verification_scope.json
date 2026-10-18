@@ -13,6 +13,7 @@
     "frontend/src/features/results/ResultsTable.tsx",
     "frontend/src/features/workspace/Workspace.tsx",
     "frontend/src/i18n/catalogs/table.ts",
+    "frontend/src/styles/table-interactions.css",
     "frontend/tests/results-empty-state.test.tsx",
     "src/patent_sar_extractor/contracts.py"
   ],

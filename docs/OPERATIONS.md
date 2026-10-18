@@ -10,6 +10,9 @@ stopped worker. Unknown/unverified task state keeps neutral no-result wording;
 actual read errors remain visible. Filtered zero matches and an empty page of
 a nonempty query retain their own messages. Language switches do not change
 original source labels or numeric values. No task is started by this display.
+Empty-state text remains within the table's
+visible area, including narrow screens and horizontal scrolling; it does not
+require scrolling across all metric columns to find a centered message.
 
 ## Weak short text rows inside original headers
 

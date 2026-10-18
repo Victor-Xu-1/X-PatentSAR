@@ -8,7 +8,11 @@ cached, unknown or foreign task facts do not claim active result preparation.
 An empty restricted query, an empty page within a nonempty result set and an
 unpublished extraction have distinct localized messages. Known active empty
 results announce that rows appear when ready, using the existing stage-fact
-refresh only. Existing rows remain visible as delivered. No row, count, stage,
+refresh only. The native status output is sized to the visible scrollport and
+stays readable during horizontal scrolling, independent of the full column width.
+The inline-size container applies only while that empty status exists, so actual
+row/column geometry keeps its existing authority without another resize observer.
+Existing rows remain visible as delivered. No row, count, stage,
 acceptance, filter, source identity, retry or polling rule is manufactured.
 This client-only state distinction changes no scientific epoch, API, SQL,
 queue, model, dependency or original/manual artifact.

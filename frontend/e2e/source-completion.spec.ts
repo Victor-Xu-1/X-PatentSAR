@@ -48,13 +48,19 @@ for (const width of [390, 1672]) {
     const pending = page.getByText('Results will appear automatically when ready', { exact: true });
     await expect(pending).toBeVisible();
     await expect(pending).toBeInViewport({ ratio: 1 });
+    const scrollport = page.locator('.table-scroll');
+    await scrollport.evaluate((element) => (element.scrollLeft = element.scrollWidth));
+    await expect(pending).toBeInViewport({ ratio: 1 });
+    await scrollport.evaluate((element) => (element.scrollLeft = 0));
     await expect(page.getByRole('button', { name: 'Export results', exact: true })).toBeDisabled();
     await expect(
       page.getByLabel('Select all compounds on this page', { exact: true }),
     ).toBeDisabled();
     const search = page.getByRole('textbox', { name: 'Search results', exact: true });
     await search.fill('no-such-original-id');
-    await expect(page.getByText('No matching extraction results', { exact: true })).toBeVisible();
+    await expect(page.getByText('No matching extraction results', { exact: true })).toBeInViewport({
+      ratio: 1,
+    });
     await search.fill('');
     await expect(pending).toBeVisible();
     await page

@@ -4,7 +4,10 @@
   current-project verified job observation from `Workspace` and sharing
   `activeJob`. `ResultsTable` renders one native status output. Query-empty,
   page-empty, active unpublished and neutral states remain distinct; real rows,
-  errors, source identity and scientific acceptance are not rewritten. No extra
+  errors, source identity and scientific acceptance are not rewritten. The empty
+  output uses the current scrollport's inline size, not the complete column width;
+  CSS containment is empty-only, with no new observer or change to actual rows.
+  No extra
   poller, request replay, data/model/API/SQL/epoch or dependency authority is added.
 
 - `cell_text_row_readings` owns one shared bounded physical-row refinement and

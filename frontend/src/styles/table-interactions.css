@@ -266,7 +266,22 @@
 .results-table .frozen-compound:not(:has(+ .frozen-structure)) {
   box-shadow: 1px 0 0 var(--line);
 }
+.table-scroll:has(.empty-table-message) {
+  /* Size unpublished/query-empty messages to the visible scrollport, not all columns. */
+  container-type: inline-size;
+}
 .results-table .empty-table-cell {
-  padding: 24px 12px;
+  padding: 24px 0;
   color: var(--muted);
+  text-align: start;
+}
+.empty-table-message {
+  display: block;
+  position: sticky;
+  inset-inline-start: 12px;
+  inline-size: calc(100cqi - 24px);
+  max-inline-size: calc(100% - 24px);
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
