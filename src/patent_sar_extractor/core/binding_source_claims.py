@@ -84,6 +84,12 @@ def _heading_references(claims, repeated):
     catalogue must actually contain that label. Chemistry is checked downstream
     for EVERY retained depiction; this relation does not certify any molecule.
     """
+    headings = [
+        claim for claim in claims if claim.candidate.source == "original_heading"
+    ]
+    if not headings:
+        return set(), set()
+    wanted = {claim.label for claim in headings}
     catalogues, known_labels = defaultdict(set), set()
     for claim in claims:
         catalog, candidate = claim.catalog, claim.candidate
@@ -92,6 +98,7 @@ def _heading_references(claims, repeated):
         original = candidate.binding.get("source_pdf_sha256")
         if (
             catalog.identifier
+            and claim.label in wanted
             and catalog.identifier not in repeated
             and catalog.namespace
             and original
@@ -101,11 +108,9 @@ def _heading_references(claims, repeated):
                 catalog.identifier
             )
     references, unresolved = set(), set()
-    for claim in claims:
+    for claim in headings:
         candidate, binding = claim.candidate, claim.candidate.binding
-        if candidate.source != "original_heading" or not valid_heading_binding_evidence(
-            binding
-        ):
+        if not valid_heading_binding_evidence(binding):
             continue
         declaration = proved_heading_declaration(
             binding["original_heading_structure_evidence"]["heading_source"]
@@ -128,7 +133,12 @@ def _consistent_cell_namespace(candidate, expected):
         if candidate.source == "exact_caption"
         else "numbered_table_cell_evidence"
     )
-    observations = candidate.binding[field]["observations"]
+    evidence = candidate.binding[field]
+    observations = (
+        evidence["row_label"]["observations"]
+        if evidence.get("kind") == "original_unruled_columns"
+        else evidence["observations"]
+    )
     for observation in observations:
         method = observation.get("method", "")
         if method in {"native_cell", "page_ocr_cell"}:

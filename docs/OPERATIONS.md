@@ -45,8 +45,8 @@ the next page. Unknown ranges and independent simultaneous headings do not
 lend an implicit order or column scope. Limits64pages/25000structures and the
 existing one-MiB regional proof refuse rather than truncate accepted coverage.
 
-`declaration_scope` is retained with the heading and structure proof3 for exact
-saved replay. Binding31/binder41 invalidate prior derived binding ownership,
+`declaration_scope` is retained with the heading and structure proof4 for exact
+saved replay. Binding32/binder42 invalidate prior derived binding ownership,
 not original PDFs, raw OCR, crops, original model outputs or manual corrections.
 Old page-only heading proof2 remains historical and does not pass current source
 admission. The obsolete cache-label heading proposal producer was removed;
@@ -60,6 +60,15 @@ identity from a matching ID elsewhere, or waive source/chemistry QA. Whole-windo
 inventory is not a guarantee of detector recall, OCSR correctness or scientific
 acceptance. Optional new reaction parsers require separate dependency/weight/
 license/resource evaluation and explicit installation authority.
+
+Scope2 also retains registered original column witnesses alongside the complete
+raw diagram inventory. A trusted foreign column active beside the same-page
+heading can exclude only its own contained diagrams/lines, through the existing
+role/body replay. An unassigned own-column rival remains ambiguous. A foreign
+closing procedure cannot truncate the window into accepted uniqueness. Unknown
+columns, changed/omitted evidence, cross-page lane projection and extending beyond
+the original trusted body never supply that permission. Prior scope1/heading3
+remain immutable history. This does not infer multi-step terminal product roles.
 
 ## Weak caption nominations and competing frame hypotheses
 

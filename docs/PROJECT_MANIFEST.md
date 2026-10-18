@@ -17,6 +17,17 @@
   Native controlled checks/delivery do not prove unlabelled multi-step terminal
   roles, OCSR accuracy or complete real frontend scientific acceptance.
 
+- `heading_column_sources` adapts only registered original ruled/unruled role and
+  complete body proof. Scope2/heading-structure4 retain all raw candidates plus
+  exact document/page/complete-diagram/region witnesses. Trusted foreign columns
+  active alongside a same-page heading can exclude their own contained ink;
+  own-column/crossing rivals stay, and foreign closing boundaries cannot create
+  complete singleton proof. No page split, unproved column, cross-page projection
+  or extended body is inferred. Binding32/binder42 cover these derived changes;
+  historical closed columns can veto ambiguous later flow but never claim it.
+  older scope1/heading3 stay historical, not promoted. Raw/model/manual/activity/
+  numericalSAR/API/SQL/dependency authorities remain unchanged.
+
 - `heading_declaration_index` owns call-local shared original page inventory;
   `heading_declaration_scope` owns one bounded capture/replay boundary policy.
   All detected candidates participate before a unique standalone association,
