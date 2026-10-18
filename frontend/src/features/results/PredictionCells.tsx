@@ -88,6 +88,16 @@ export function PredictionEvidence({ row }: { row: Compound }) {
   const { t } = useTranslation();
   const prediction = row.admet;
   const descriptors = row.descriptors;
+  const hasValues = Boolean(
+    row.smiles?.trim() ||
+    Object.keys(row.property_overrides ?? {}).length ||
+    prediction?.properties.length ||
+    descriptors?.properties.length,
+  );
+  const hasWork = [prediction, descriptors].some(
+    (value) => value && value.status !== 'not_run' && value.status !== 'unavailable',
+  );
+  if (!hasValues && !hasWork && !prediction?.warnings.length) return null;
   return (
     <details className="prediction-evidence">
       <summary>

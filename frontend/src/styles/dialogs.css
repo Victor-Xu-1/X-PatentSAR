@@ -215,6 +215,18 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
 }
+.crop-comparison--source-only {
+  grid-template-columns: minmax(0, 1fr);
+}
+.crop-redraw-note {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-control);
+  background: var(--surface-subtle);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
 .crop-comparison figure {
   min-width: 0;
   margin: 0;

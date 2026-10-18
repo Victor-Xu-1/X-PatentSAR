@@ -54,6 +54,20 @@ export const confidenceLabels: Record<ConfidenceLevel, string> = {
   review: '待核验',
   unknown: '未知',
 };
+const confidenceReasons: Record<string, string> = {
+  '已保留结构原图；尚未证实原文编号，不能猜测或按活性集合分配编号。':
+    '原图已保留，原文编号待核验。',
+  'Historical artifact identity; not current confirmation.': '历史结果，尚未按当前规则核验。',
+  'Current core binding evidence.': '当前核心绑定证据。',
+  'Core binding requires review.': '核心绑定需复核。',
+  'No unique current core binding evidence.': '未提供唯一的当前核心绑定证据。',
+};
+
+/** Only known application-owned status copy is localized; unknown content stays literal. */
+export function confidenceReasonText(reason: string | null | undefined): string {
+  if (!reason) return t('依据未提供');
+  return Object.hasOwn(confidenceReasons, reason) ? t(confidenceReasons[reason]!) : reason;
+}
 export const reviewLabels: Record<ReviewDecision, string> = {
   approved: '复核通过',
   rejected: '复核不通过',

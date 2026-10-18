@@ -24,7 +24,21 @@ export function recognitionText(recognition: CompoundRecognition | null): string
   return recognition ? t(recognitionLabels[recognition.status]) : t('识别状态未知');
 }
 
+export function availableRedraw(compound: Compound): string | null {
+  if (
+    !compound.smiles?.trim() ||
+    (compound.recognition?.status === 'invalid' &&
+      !(compound.correction?.has_changes && !compound.correction.stale))
+  )
+    return null;
+  return compound.redraw_image_url ?? null;
+}
+
 export function redrawPlaceholder(compound: Compound): string {
+  if (compound.recognition?.quality_flag === 'unassigned_source_identity')
+    return t('候选结构编号待确认，暂不重绘');
+  if (compound.recognition?.quality_flag === 'unassigned_source_unverified')
+    return t('来源观察待核验，暂不重绘');
   if (!compound.smiles?.trim()) return t('未提供 SMILES，无法重绘');
   if (compound.recognition?.quality_flag?.startsWith('stereo_source_'))
     return t('原图手性与模型结果未能一致，需修正后重绘');

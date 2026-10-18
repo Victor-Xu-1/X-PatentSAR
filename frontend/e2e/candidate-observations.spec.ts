@@ -40,6 +40,11 @@ for (const width of [390, 1672]) {
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
     await expect(dialog).toHaveAccessibleName(/^Structure details/);
+    await expect(dialog.locator('.crop-comparison figure')).toHaveCount(1);
+    await expect(dialog.locator('.prediction-evidence')).toHaveCount(0);
+    await expect(dialog.getByRole('status')).toHaveText(
+      'Candidate identifier unconfirmed; redraw withheld',
+    );
     await expect(dialog.locator('img')).toHaveCount(1);
     await expect
       .poll(() =>
@@ -58,6 +63,7 @@ for (const width of [390, 1672]) {
       .selectOption('zh-CN');
     await expect(dialog).toHaveAccessibleName(/^结构详情/);
     await expect(dialog.getByText('已观察 · 编号待确认', { exact: true })).toBeVisible();
+    await expect(dialog.getByText(/原图已保留，原文编号待核验。/)).toBeVisible();
     await expect(dialog.getByLabel('当前 SMILES', { exact: true })).toHaveCount(0);
     await dialog.screenshot({ path: test.info().outputPath(`candidate-zh-${width}.png`) });
     await page.getByRole('combobox', { name: '界面语言', exact: true }).selectOption('en');

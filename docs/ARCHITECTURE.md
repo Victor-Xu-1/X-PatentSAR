@@ -42,6 +42,11 @@ molecular field, guessed original ID, measurement or automatic property input.
 Existing review exports and SAR/Lead gates preserve that separation. English and
 Chinese badges distinguish observed-but-unassigned, unverified and unexecuted
 inputs without translating source labels or scientific data.
+The shared structure detail shows two previews only when a redraw is usable;
+otherwise the original remains the single preview with a compact withholding
+status. Empty not-run property blocks are omitted, but actual values, warnings,
+progress and failures remain available. Only registered application-owned
+confidence messages are localized; unknown source/scientific text stays literal.
 
 Complete observations are a prerequisite, not a solved reaction-role layer.
 A graph matching a known catalogue may occur as a reactant inside a route; graph

@@ -1,10 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import { availableMetrics, recognitionText, redrawPlaceholder } from '../src/model/results';
-import { activityValueText } from '../src/model/presentation';
+import { activityValueText, confidenceReasonText } from '../src/model/presentation';
 import { compound } from './fixtures';
 import { getLocale, setLocale } from '../src/i18n';
 
 describe('result projection preserves measurements and independent state', () => {
+  it('localizes only known system reasons, leaving original scientific content literal', () => {
+    const literal = 'I-255 / Sample 7: 原文条件 retained';
+    const previous = getLocale();
+    try {
+      for (const locale of ['en', 'zh-CN'] as const) {
+        setLocale(locale);
+        expect(confidenceReasonText(literal)).toBe(literal);
+      }
+    } finally {
+      setLocale(previous);
+    }
+  });
   it('keeps catalog order and includes metrics absent from the server metric catalog', () => {
     expect(availableMetrics(['IC50', 'IC50'], [compound])).toEqual(['IC50', '抑制等级']);
     expect(availableMetrics([], [])).toEqual([]);
