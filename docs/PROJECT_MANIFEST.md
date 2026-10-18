@@ -1,15 +1,22 @@
 # Project governance manifest
 
-- Quantitative-figure reference roles use the existing heading inventory and
-  original source-window/cell SDK. `plot_reference_geometry` owns nomination,
-  `plot_reference_pixels` bounded mask transport, axes/marker modules pure
-  geometric replay, and `plot_reference` role observation/replay. A proved
-  numeric-axis figure label is a reference, never a new molecular declaration
-  or a plotted measurement. All source assets/independent structural inventory,
-  native conflicts, confidence and strict QA remain; no page/ID exceptions,
-  external engine, dependency, API/SQL or new artifact store. Heading proof2
-  stays under unpublished Binding21/binder30/v0.2.34. Controlled native/raster
-  and saved-consumer checks are not real-task scientific or deployment proof.
+- Quantitative-figure roles remain in the existing heading inventory, source/cell
+  SDK and binding writer. `plot_reference` coordinates observation and
+  `plot_reference_proof` owns saved replay. `plot_reference_geometry` conserves
+  complete axis families; shared axes/marker modules prove original strokes.
+  `plot_legend_locator` retains original graphic/text line boundaries, not a
+  stripped prefix. `cell_word_orientation` owns bounded physical word views;
+  `plot_axis_words` observes/replays them with the existing OCR and
+  `plot_axis_refinement` coordinates the same original strip for both consumers.
+  `plot_reference_pixels` is the sole lossless thresholded-mask codec, with bounded
+  zlib output/EOF/padding validation. Heading proofs3/4 and Binding22/binder31
+  change derived ownership only. RawOCR2/visible21/OCSR/preparation/stereo,
+  Activity/SAR/manual/API/SQL/models/dependencies remain independent. Existing
+  source-digest/cell/word limits are not raised. No plotted measurement, new
+  molecular declaration, page/ID exception, second store/queue/model or acceptance
+  fallback is introduced. Controlled native/raster/full-observer/mutation checks
+  do not prove arbitrary-format or chemical accuracy, deployed identity or real
+  frontend scientific acceptance. Older entries retain historical contract notes.
 
 - `source_role_observations` owns rejected-role diagnostic serialization/replay,
   using the existing source digest and the sole binding/activity artifact writers.

@@ -1123,14 +1123,27 @@ wheel/state backup, preserving newer study records for forward recovery.
 
 ## Reproducible package construction
 
-Current unpublished quantitative-figure source roles distinguish a plot legend
-from a synthesis heading using original caption/axis/key pixels and the same
-bounded source/cell observations. They do not read activity values off a graph
-or close another structural occurrence of the same identifier. Unknown graphs,
-non-rectilinear layouts or resource refusals remain ordinary source obligations;
-never clear their QA to obtain a successful run. Existing PDFs/raw/manual edits
-are unchanged. Build, installed-consumer checks, reviewed main/18765 delivery and
-an actual frontend extraction remain required before claiming this is delivered.
+Quantitative-figure source roles distinguish a plot legend from a synthesis
+heading using complete original caption/axis/key pixels and the existing bounded
+source/cell observations. A graphic key merged into an OCR line can be separated
+only through retained original masks and independent literal reads; raw text and
+coordinates are not edited. Rotated tick refinement preserves every original ink
+component in the complete bounded strip. Both400/600dpi readings and their saved
+transforms, coordinates, source conflicts and inventory must revalidate. Missing,
+unread, reordered, contradictory or oversized observations cannot qualify a
+preferred numeric subset. The global table OCR orientation policy is unchanged.
+
+Derived heading proofs3/4 use Binding22/binder31. Old ownership remains historical;
+original PDF/raw observations/manual audit and independent scientific contracts
+are not rewritten. Lossless thresholded-mask compression retains the existing
+1MiB source-digest and8M cell limits, with bounded decompression and strict stream
+validation. Caller-specific equal or smaller render budgets are checked before
+pixmap allocation. It is not a new image store or permission to install another engine.
+These roles do not read activity values off graphs or close another structural
+occurrence of the same identifier. Unsupported/non-rectilinear/ambiguous panels
+and resource refusals remain source obligations; never clear QA to pass a run.
+Build, installed-consumer checks, reviewed main/18765 delivery and actual frontend
+scientific acceptance remain separate requirements, not claims from OCR agreement.
 
 After building/checking the frontend, use `tools/build_wheel.py --work-root
 /srv/wsl/tmp --out-dir <new-output-directory>` rather than building in an old

@@ -71,7 +71,11 @@ def activity_kind_matches(value: str, kind: str) -> bool:
     return kind in {"number", "letter"} and bool(_normalize(value, kind))
 
 
-def cell_image(page, bounds, dpi: int) -> np.ndarray:
+def cell_image(
+    page, bounds, dpi: int, *, maximum_pixels: int = 8_000_000
+) -> np.ndarray:
+    if type(maximum_pixels) is not int or not 0 < maximum_pixels <= 8_000_000:
+        raise ValueError("Invalid original-cell pixel budget")
     x0, y0, x1, y1 = bounds
     # Exclude printed grid rules, while retaining the entire cell's contents.
     clip = fitz.Rect(x0 + 1.5, y0 + 1.2, x1 - 1.5, y1 - 1.2) & page.rect
@@ -79,7 +83,7 @@ def cell_image(page, bounds, dpi: int) -> np.ndarray:
         raise ValueError("Invalid activity cell bounds")
     matrix = fitz.Matrix(dpi / 72, dpi / 72)
     pixels = (clip * matrix).irect
-    if pixels.width * pixels.height > 8_000_000:
+    if pixels.width * pixels.height > maximum_pixels:
         raise CellRenderLimit("Original cell exceeds its rendered pixel budget")
     pix = page.get_pixmap(matrix=matrix, clip=clip, alpha=False)
     return np.frombuffer(pix.samples, dtype=np.uint8).reshape(

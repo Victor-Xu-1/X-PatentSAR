@@ -4,15 +4,45 @@
 
 The existing original-heading ledger retains quantitative plot labels as
 `figure_label_reference` only after one uniquely scoped original Figure caption,
-two ordered numeric axes, their observed perpendicular strokes, and a compact
-graphic legend key are proved. `plot_reference_geometry` nominates windows;
-the pixel/axes/marker modules retain bounded original masks through the existing
-cell renderer. `plot_reference` uses the sole source-window and physical-cell
-SDK for native text or complete 400/600dpi observations, including native/raster
-contradictions. Original raw text, masks and coordinate frames remain replayable.
-Heading proof v2 enters the same heading inventory and source digest, not a
-second store, queue, recognition engine or acceptance path. Binding21/binder30
-already describe this unpublished derived-source change; no extra product bump.
+two complete ordered numeric axes, their observed perpendicular strokes, and a
+compact graphic key are proved. Edge/centre nominations conserve the complete
+physical numeric family before ordering; a convenient monotonic subset cannot
+discard a conflicting or unread member. Independent native facts remain vetoes.
+
+`plot_legend_locator` may nominate the literal compound suffix of an original
+OCR line containing its graphic key. Complete original line text/bounds and its
+exact literal range remain recorded. Source masks at400/600dpi must reproduce
+the whole compact key and all remaining text; the shared cell inset supplies a
+reading window, not a string-prefix deletion. Known synthesis roles and multiple
+identifiers cannot enter this refinement. Ordinary original-cell observations
+still qualify every literal. Missing/weak/conflicting evidence stays unproved.
+
+When low-resolution rotated axis text is incomplete, `plot_axis_refinement`
+coordinates one bounded original strip below the observed x axis and above its
+lower caption. Detected words do not define the first/last retained pixels.
+`cell_word_orientation` inventories every retained ink component and derives one
+unambiguous physical orientation; `plot_axis_words` observes every complete word
+with the existing OCR engine at both resolutions. Exact transforms, view hashes,
+pixel coverage, original-point backprojection, literal agreement and qualified
+original-source conflicts are replayed. No OCR characters are joined or repaired.
+Global upright table OCR and angle-classifier policy remain unchanged.
+The shared cell renderer enforces each caller's equal or smaller pixel budget
+before allocating a pixmap; its default8M ceiling is unchanged.
+
+`plot_reference` is the observer; `plot_reference_proof` owns the sole saved replay.
+Heading proof3 records complete axis words; proof4 additionally binds an original
+graphic/text locator. Both use the existing source-window/cell SDK and binding
+writer, not another model, queue, store or acceptance path. Thresholded masks use
+one lossless zlib-packbits encoding with bounded decompression, exact EOF/length
+and zero padding; original PDFs/raw images remain unchanged. Existing8M cell,
+32-word and1MiB source-digest limits remain explicit. Unsupported geometry,
+multiple plausible panels or excess/ambiguous source stays unresolved.
+
+Binding22/binder31 invalidate derived ownership only. RawOCR2, visible-label21,
+OCSR/preparation/stereo, activity/SAR, models, manual audit, API and SQL retain
+their own contracts. Earlier section numbers describe previous module deliveries,
+not a second current ownership authority. Two-resolution OCR agreement is not
+statistical independence or a guarantee of original chemical identity.
 
 A figure mention never supplies a molecule or a plotted numeric activity.
 Independent all-page structural discovery remains unchanged. Nearby synthesis
