@@ -43,14 +43,6 @@
     padding-inline: 8px;
   }
 }
-@media (max-width: 1279px) {
-  .workflow-groups {
-    display: none;
-  }
-  .stage-current-line {
-    justify-content: flex-end;
-  }
-}
 @media (max-width: 899px) {
   .workspace-toolbar {
     flex-wrap: wrap;
@@ -130,6 +122,14 @@
   }
 }
 @media (max-width: 540px) {
+  /* Mobile detail is viewport-fixed; do not create a containing block for it. */
+  .workflow-panel .stage-overview {
+    container-type: normal;
+    container-name: none;
+  }
+  .workflow-groups {
+    display: none;
+  }
   .topbar {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto auto;
