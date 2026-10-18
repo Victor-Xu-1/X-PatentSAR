@@ -26,7 +26,8 @@
     "tests/test_plot_legend_locator.py",
     "tests/test_plot_reference_layout.py",
     "tests/test_plot_reference_pixels.py",
-    "tests/test_plot_refinement_proof.py"
+    "tests/test_plot_refinement_proof.py",
+    "tests/test_standalone.py"
   ],
   "python_modules": [
     "tests.test_plot_legend_locator",
