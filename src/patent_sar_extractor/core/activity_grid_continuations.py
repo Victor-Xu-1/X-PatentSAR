@@ -21,6 +21,36 @@ class Panel:
     schema: GridSchema
 
 
+def _repeated_header(current: GridSchema, original: GridSchema) -> bool:
+    """Carry roles only across a complete literal repeat, not a guessed metric.
+
+    A compact native label can be lexically unknown in isolation. Its entire
+    physical header still proves the same column when it repeats a qualified
+    original. Explicit reading review and metadata/ID/value-role changes cannot
+    be resolved by that repetition. Raw current headers remain unchanged.
+    """
+    if (
+        current.needs_review
+        or (current.header_resolution or {}).get("status") == "unresolved"
+        or not current.raw_headers
+        or tuple(map(canonical_header, current.raw_headers))
+        != tuple(map(canonical_header, original.raw_headers))
+    ):
+        return False
+
+    def roles(schema):
+        return tuple(
+            (
+                group.id_column,
+                tuple(col for col, _ in group.value_columns),
+                group.metadata_columns,
+            )
+            for group in schema.groups
+        )
+
+    return roles(current) == roles(original)
+
+
 def continued_panel(
     previous: list[Panel],
     page: int,
@@ -37,14 +67,9 @@ def continued_panel(
         ox, oy = old.region["xs"], old.region["ys"]
         if len(ox) != len(xs):
             continue
-        if schema_requires_review(old.schema) or (
-            current is not None and schema_requires_review(current)
-        ):
+        if schema_requires_review(old.schema):
             continue
-        if current and (
-            tuple(map(canonical_header, current.raw_headers))
-            != tuple(map(canonical_header, old.schema.raw_headers))
-        ):
+        if current is not None and not _repeated_header(current, old.schema):
             continue
         same_columns = all(abs((a - ox[0]) - (b - xs[0])) <= 4 for a, b in zip(ox, xs))
         parallel = (

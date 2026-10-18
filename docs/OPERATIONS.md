@@ -13,7 +13,11 @@ A clearer unit is not permission to overwrite a different valid original target,
 endpoint, table or unit. Some degraded serif/monospace inputs still cannot be
 qualified. Keep them unresolved and retain all original observations; never turn
 them into guessed values, accepted partial coverage or a clean empty dataset.
-An unresolved original header still cannot lend meaning to a later data panel.
+An unresolved original reading still cannot lend meaning to a later data panel.
+Native repeated headers with compact whitespace may use the already-proved
+original table's roles only if the complete physical headers and column roles
+match. The raw current label remains visible. This does not guess a standalone
+unknown metric, overwrite count metadata or remove review/source conflicts.
 These scientific coverage cases remain open even if refusal tests pass.
 
 Binding24/binder33 andActivity20/extractor29 require normal current derived

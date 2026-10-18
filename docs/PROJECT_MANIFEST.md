@@ -7,6 +7,11 @@
   adding readings. Needed short single-row headers use the same policy through
   `single_row_readings`; scalar measurements/compound-ID readers stay unchanged.
   Role/body/fragment/header/axis consumers use the one shared text replay.
+  The existing grid-continuation authority carries only complete literal
+  repeated headers with identical ID/value/metadata column topology and a
+  qualified root; lexical spacing alone need not create a new unknown field.
+  Current raw labels and source review remain, and saved scope replay verifies
+  the same root/header/column contract. There is no new metric inference path.
   Original frame/row/budget and known semantic conflict gates
   remain. Binding24/binder33/Activity20/extractor29 refresh derived source proof,
   not raw/model/manual/SAR numerical/API/SQL or dependency authorities. There is

@@ -25,7 +25,15 @@ Role/body/fragment/header and quantitative-axis word consumers delegate to this
 same text proof rather than keeping parallel permissive readers.
 Independent detector/native/source conflicts and both400/600dpi complete-field
 checks are unchanged. Resolving a short unit never authorizes a conflicting
-target/endpoint or lends an unresolved schema to parallel/adjacent tables.
+target/endpoint or lends an unresolved source reading to parallel/adjacent tables.
+The existing continuation authority distinguishes a lexical parser unknown from
+an unqualified original observation: a complete repeated header may reuse an
+already-qualified root's roles only when every physical header matches under
+the existing typography policy and ID/value/metadata column topology is equal.
+The current raw header is preserved. A missing character, changed endpoint/unit,
+unknown root, explicit review or unresolved reading proof still refuses carry.
+Saved original-layout replay checks that same complete header and root columns;
+neither a guessed suffix nor adjacent position alone can supply a field role.
 
 Binding24/binder33 andActivity20/extractor29 refresh derived text-source proof.
 Raw PDFs/OCR/model/crop assets, manual audit, numerical SAR, OCSR/preparation/

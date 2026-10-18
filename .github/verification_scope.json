@@ -9,6 +9,7 @@
     "frontend/package-lock.json",
     "frontend/package.json",
     "src/patent_sar_extractor/contracts.py",
+    "src/patent_sar_extractor/core/activity_grid_continuations.py",
     "src/patent_sar_extractor/core/activity_grid_role_proof.py",
     "src/patent_sar_extractor/core/activity_header_proof.py",
     "src/patent_sar_extractor/core/cell_header_lines.py",
@@ -18,6 +19,8 @@
     "src/patent_sar_extractor/core/cell_text_row_readings.py",
     "src/patent_sar_extractor/core/plot_axis_words.py",
     "src/patent_sar_extractor/core/source_role_fragments.py",
+    "tests/test_activity_continuation_ownership.py",
+    "tests/test_activity_header_continuation.py",
     "tests/test_header_physical_proof.py",
     "tests/test_header_reading_views.py",
     "tests/test_standalone.py"
