@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { expect, it, vi } from 'vitest';
 import { api } from '../src/api';
@@ -170,6 +170,33 @@ it('keeps initial query loading separate from a known active extraction', () => 
   expect(screen.queryByRole('table')).not.toBeInTheDocument();
   expect(screen.getByText('结果就绪后将自动显示')).not.toBeVisible();
 });
+
+it.each([true, false])(
+  'does not invent a zero count before any result exists (loading=%s)',
+  (loading) => {
+    const props = paneProps();
+    const { rerender } = render(
+      <ResultsPane
+        {...props}
+        resource={{
+          ...props.resource,
+          data: null,
+          loading,
+          error: loading ? null : new Error('controlled read failure'),
+        }}
+      />,
+    );
+    expect(screen.getByText('记录数未知')).toBeVisible();
+    expect(screen.queryByText('共 0 条记录')).not.toBeInTheDocument();
+    const paging = within(screen.getByRole('navigation', { name: '结果分页' }));
+    for (const control of paging.getAllByRole('button')) expect(control).toBeDisabled();
+    expect(paging.getByRole('combobox', { name: '每页记录数量' })).toBeDisabled();
+    rerender(<ResultsPane {...props} />);
+    expect(screen.getByText('共 0 条记录')).toBeVisible();
+    expect(screen.queryByText('记录数未知')).not.toBeInTheDocument();
+    expect(props.onFilters).not.toHaveBeenCalled();
+  },
+);
 
 it.each([
   ['en', 'Results will appear automatically when ready', 'No extraction results yet'],

@@ -9,12 +9,13 @@ export function Pagination({
 }: {
   page: number;
   pageSize: number;
-  total: number;
+  total: number | null;
   disabled: boolean;
   onChange: (page: number, size: number) => void;
 }) {
   const { t } = useTranslation();
-  const last = Math.max(1, Math.ceil(total / pageSize));
+  const unavailable = disabled || total === null;
+  const last = total === null ? 1 : Math.max(1, Math.ceil(total / pageSize));
   const pages = Array.from(
     { length: Math.min(5, last) },
     (_, index) => Math.min(Math.max(1, page - 2), Math.max(1, last - 4)) + index,
@@ -22,15 +23,17 @@ export function Pagination({
   return (
     <footer className="pagination">
       <span className="muted">
-        {t('共 {total} 条结构/活性记录', { total })}
-        {total > 0 && ` · ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)}`}
+        {total === null ? t('记录数未知') : t('共 {total} 条记录', { total })}
+        {total !== null &&
+          total > 0 &&
+          ` · ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)}`}
       </span>
       <nav aria-label={t('结果分页')}>
         <button
           type="button"
           className="icon-button"
           aria-label={t('上一页结果')}
-          disabled={disabled || page <= 1}
+          disabled={unavailable || page <= 1}
           onClick={() => onChange(page - 1, pageSize)}
         >
           <ChevronLeft size={16} />
@@ -43,7 +46,7 @@ export function Pagination({
             aria-current={n === page ? 'page' : undefined}
             className={n === page ? 'page-button active' : 'page-button'}
             onClick={() => onChange(n, pageSize)}
-            disabled={disabled}
+            disabled={unavailable}
           >
             {n}
           </button>
@@ -52,15 +55,15 @@ export function Pagination({
           type="button"
           className="icon-button"
           aria-label={t('下一页结果')}
-          disabled={disabled || page >= last}
+          disabled={unavailable || page >= last}
           onClick={() => onChange(page + 1, pageSize)}
         >
           <ChevronRight size={16} />
         </button>
         <select
-          aria-label={t('每页化合物数量')}
+          aria-label={t('每页记录数量')}
           value={pageSize}
-          disabled={disabled}
+          disabled={unavailable}
           onChange={(e) => onChange(1, Number(e.target.value))}
         >
           {[10, 25, 50, 100].map((size) => (

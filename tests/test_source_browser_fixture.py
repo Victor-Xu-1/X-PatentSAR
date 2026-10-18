@@ -6,6 +6,14 @@ from tools.browser_fixture_mode import fixture_mode
 
 
 class SourceBrowserFixtureTests(unittest.TestCase):
+    def test_record_counts_need_only_the_existing_read_only_source_adapter(self):
+        selected = {"frontend/e2e/record-count.spec.ts"}
+        self.assertEqual(fixture_mode(selected), "read-only")
+        self.assertEqual(
+            fixture_mode(selected | {"frontend/e2e/source-completion.spec.ts"}),
+            "completion",
+        )
+
     def test_structure_reading_uses_existing_current_completion_adapters(self):
         selected = {"frontend/e2e/structure-details.spec.ts"}
         self.assertEqual(fixture_mode(selected), "completion")

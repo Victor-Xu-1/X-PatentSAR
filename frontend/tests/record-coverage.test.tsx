@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { Compound } from '../src/api/types';
@@ -7,6 +7,7 @@ import { Metrics } from '../src/features/results/Metrics';
 import { Pagination } from '../src/features/results/Pagination';
 import { ResultsTable } from '../src/features/results/ResultsTable';
 import { compound, project } from './fixtures';
+import { setLocale } from '../src/i18n';
 
 const structure: Compound = {
   ...compound,
@@ -185,9 +186,36 @@ describe('minimal source-provided coverage information', () => {
     expect(screen.getByLabelText('记录覆盖数量')).not.toHaveTextContent('结构待定位');
   });
 
-  it('counts table rows without claiming they are chemically unique molecules', () => {
+  it('counts records without promoting unbound candidates or partial rows to structure-activity results', () => {
     render(<Pagination page={1} pageSize={10} total={31} disabled={false} onChange={vi.fn()} />);
-    expect(screen.getByText('共 31 条结构/活性记录 · 1–10')).toBeVisible();
+    expect(screen.getByText('共 31 条记录 · 1–10')).toBeVisible();
+    expect(screen.getByLabelText('每页记录数量')).toBeVisible();
+    expect(screen.queryByText(/结构\/活性记录|个化合物/)).not.toBeInTheDocument();
+  });
+
+  it('keeps the full returned record total and page range across language changes', async () => {
+    setLocale('en');
+    render(<Pagination page={2} pageSize={25} total={2033} disabled={false} onChange={vi.fn()} />);
+    expect(screen.getByText('2033 records · 26–50')).toBeVisible();
+    expect(screen.getByLabelText('Records per page')).toBeVisible();
+    expect(screen.queryByText(/structure\/activity|compounds/)).not.toBeInTheDocument();
+    await act(() => setLocale('zh-CN'));
+    expect(screen.getByText('共 2033 条记录 · 26–50')).toBeVisible();
+    expect(screen.getByLabelText('每页记录数量')).toBeVisible();
+  });
+
+  it('does not show a fabricated page range or molecule count for an empty result', () => {
+    render(<Pagination page={1} pageSize={25} total={0} disabled={false} onChange={vi.fn()} />);
+    expect(screen.getByText('共 0 条记录')).toBeVisible();
+    expect(screen.queryByText(/1–0|化合物|结构\/活性记录/)).not.toBeInTheDocument();
+  });
+
+  it('does not convert an unprovided record count to an empty result in English', () => {
+    setLocale('en');
+    render(<Pagination page={1} pageSize={25} total={null} disabled={false} onChange={vi.fn()} />);
+    expect(screen.getByText('Record count unknown')).toBeVisible();
+    expect(screen.queryByText(/0 records|1–0/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Records per page')).toBeDisabled();
   });
 
   it('does not promote supplemental structures through original QA acceptance', () => {

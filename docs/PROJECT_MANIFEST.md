@@ -1,5 +1,15 @@
 # Project governance manifest
 
+- Results pagination names the returned population as records in both languages,
+  not accepted structures, measured pairs or chemically unique compounds. The
+  same neutral label includes unbound candidate crops and partial observations;
+  totals/ranges stay owned by the existing filtered Results DTO, not page rows or
+  inferred acceptance. An absent result total is explicitly unknown, never a
+  fabricated zero; paging stays disabled until a count is provided. Raw IDs/data,
+  QA, APIs, schemas and scientific epochs are
+  unchanged. The read-only record-count browser scope uses the existing adapter,
+  never a scientific task or separate counting/classification authority.
+
 - `activity_header_metrics` owns complete standalone unit-fragment typography
   through the existing explicit-unit grammar. Raw source/detector text is not
   rewritten; unknown/inline scientific content and known scientific conflicts
