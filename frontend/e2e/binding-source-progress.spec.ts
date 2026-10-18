@@ -102,6 +102,13 @@ for (const width of [390, 1672]) {
     }
     expect(resultReads).toBe(count);
     await page.locator('.stage-current-line').click();
+    const disclosure = page.locator('.stage-disclosure');
+    await expect(disclosure).toHaveAttribute('open', '');
+    await page.keyboard.press('Escape');
+    await expect(disclosure).not.toHaveAttribute('open');
+    await page.locator('.stage-current-line').focus();
+    await page.keyboard.press('Enter');
+    await expect(disclosure).toHaveAttribute('open', '');
     const source = page
       .locator('.stage-observation')
       .filter({ hasText: 'Checking identifier ownership' });

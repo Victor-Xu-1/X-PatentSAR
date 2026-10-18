@@ -31,6 +31,10 @@ unchanged; the two cannot coexist. Old clients ignore the additive field and old
 servers omit binding telemetry. One bilingual formatter serves both existing
 task presentations. Source counter/phase changes do not reload scientific rows
 or create another poller, queue, store, request replay or acceptance authority.
+The compact summary uses a non-interactive polite/atomic live `span`, preserving
+complete status announcements without Chromium's form-control interception of native details
+activation. Redundant stage names stay in the full detail/hover caption, leaving
+room for complete workflow group labels; pointer/keyboard disclosure remains native.
 Full pass counts still leave an actually running task running. Controlled
 native/raster/serialized/writer/browser checks are not full-patent or chemical
 scientific acceptance; unknown formats, original ink/ruling ambiguity and real

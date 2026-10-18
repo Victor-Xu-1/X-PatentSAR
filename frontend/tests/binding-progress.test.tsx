@@ -60,6 +60,9 @@ describe('recorded binding source work without acceptance or extra requests', ()
     expect(bindingProgressText(stage)).toBe('Checking identifier ownership · 7 / 7 items');
     const { container } = render(<StageStrip job={task} compact />);
     expect(container.querySelector('.stage-current')).toHaveClass('is-running');
+    expect(container.querySelector('.stage-current')?.tagName).toBe('SPAN');
+    expect(container.querySelector('.stage-current')).toHaveAttribute('aria-live', 'polite');
+    expect(container.querySelector('.stage-current')).toHaveAttribute('aria-atomic', 'true');
     expect(container.querySelector('.stage-current')).not.toHaveClass('is-complete');
     expect(container.querySelector('.stage-current')).toHaveTextContent('7 / 7 items');
     expect(container.querySelector('.stage-current')).not.toHaveTextContent('Identifier binding');

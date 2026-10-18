@@ -20,6 +20,9 @@ visited pages/items. It is not a chemical structure count or acceptance score.
 The details distinguish source checks from recognition/device observations;
 missing telemetry stays missing rather than being estimated. Cancel or a worker
 failure preserves the last completed loop item, not a fictional finished pass.
+Clicking the progress text itself or pressing Enter on its summary opens details;
+Escape closes them. The live status is not an interactive form output that can
+intercept the native summary action. Full stage names remain in details/hover.
 The optional API-v1 `source_phase` is additive; no database migration or changes
 to the old progress phase enum are needed. A rollback hides this telemetry and
 retains all scientific history. A fresh producer clears copied progress before

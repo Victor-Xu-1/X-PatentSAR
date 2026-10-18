@@ -122,9 +122,10 @@ export function StageStrip({
     <details className="stage-overview stage-disclosure" ref={disclosure}>
       <summary className="stage-current-line" aria-label={t('提取阶段详情')}>
         <WorkflowGroups job={job} />
-        <output
+        <span
           className={`stage-current ${!verified ? 'is-unknown' : completedCoreRejection(job) ? 'is-review' : `is-${job?.status ?? 'idle'}`}`}
           aria-live="polite"
+          aria-atomic="true"
           title={sourceWork ? `${label} · ${sourceWork}` : undefined}
         >
           {job && ['cancelled', 'interrupted'].includes(job.status) && `${jobStatusText(job)} · `}
@@ -139,7 +140,7 @@ export function StageStrip({
             progress.total > 0 && (
               <span className="stage-progress"> · {jobStageProgressText(current)}</span>
             )}
-        </output>
+        </span>
         <ChevronDown size={14} className="stage-disclosure-chevron" aria-hidden="true" />
       </summary>
       <div className="stage-detail-surface">
