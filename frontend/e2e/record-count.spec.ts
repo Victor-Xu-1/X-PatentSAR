@@ -51,16 +51,25 @@ for (const width of [390, 1672]) {
     await expect(footer.locator('span.muted')).toHaveText(
       `${initial.total} records${range(initial)}`,
     );
-    const changedResponse = page.waitForResponse((result) => {
-      const url = new URL(result.url());
-      return (
-        result.request().method() === 'GET' &&
-        url.pathname === `/api/v1/projects/${source}/results` &&
-        url.searchParams.get('page_size') === '100'
-      );
-    });
+    const changedResponse = page
+      .waitForResponse((result) => {
+        const url = new URL(result.url());
+        return (
+          result.request().method() === 'GET' &&
+          url.pathname === `/api/v1/projects/${source}/results` &&
+          url.searchParams.get('page_size') === '100'
+        );
+      })
+      .then((response) => response.ok());
     await footer.getByRole('combobox', { name: 'Records per page' }).selectOption('100');
-    const changed = decodeResults(await (await changedResponse).json());
+    expect(await changedResponse).toBe(true);
+    // A normal job hydration can retire an earlier CDP body handle. Observe the
+    // UI fetch, then read the same query through the authenticated GET context.
+    const persisted = await page.request.get(
+      `/api/v1/projects/${source}/results?page=1&page_size=100`,
+    );
+    expect(persisted.ok()).toBe(true);
+    const changed = decodeResults(await persisted.json());
     expect(changed.total).toBe(initial.total);
     expect(changed.page).toBe(1);
     expect(changed.page_size).toBe(100);
