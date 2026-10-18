@@ -1,5 +1,44 @@
 # X-PatentSAR architecture
 
+## Preparation depictions in the one source-claim decision
+
+`binding_catalog` now resolves the complete proved primary/additional collection
+through `binding_source_claims`, the same authority used by spatial capture and
+saved replay. Caller placement is not a second ownership decision. A proved
+standalone preparation heading can repeat one qualified primary catalogue's
+original label only when the original PDF and literal identifier namespace agree.
+`catalog_title_namespace` uses the existing title-role/case-boundary projection;
+`caption_namespace` uses the existing whole-caption grammar. Qualified cell prefix
+contradictions veto a header-derived namespace. Example17 and Compound17 are not
+aliases merely because the numeric part matches. Generic/mixed/unknown titles
+and incompatible preparation occurrences cannot grant
+that relation. Known physical catalogue anchors stay retained; the separate
+unresolved heading diagnostic and exact occurrence gap still block final QA.
+Two competing complete catalogues retain their existing conflict policy.
+An explicitly selected catalogue remains eligible as its own primary when the
+same existing policy has not classified it as a reprint of another catalogue;
+the heading relation does not invent a requirement for an absent larger table.
+
+The accepted preparation depiction remains an `additional_sources` observation,
+not a second compound or a source-selected winning molecule. Every retained
+depiction goes through the same bounded DECIMER/raw-image/source-QC worker and
+complete isomeric graph comparator. Missing execution, connectivity, stereo,
+isotope, charge and component differences remain refusals. No confidence vote,
+salt stripping, alternate-model winner, copied molecular result or QA waiver is
+introduced. `recognition_inputs` now also compares both original-heading packets
+and the PDF identity against the canonical source before execution.
+Heading capture/replay also requires the qualified original declaration's actual
+compound role and complete text; locator/ledger metadata cannot rename an assay
+or rewrite the observed heading while keeping the same numeric ID.
+
+The selected-title qualifier reuses the same literal case-boundary projection;
+raw titles/IDs are unchanged, and unknown joined lower-case text is not guessed.
+Binding32/binder42 refresh derived ownership only. Heading proof3, raw source/
+chemical observations, manual audit, activity/SAR numerical policies, API/SQL and
+dependencies remain unchanged. Controlled source/graph-record checks are not a
+real recognizer benchmark, multi-step terminal-role solution or real-patent
+scientific acceptance. Old products stay immutable historical evidence.
+
 ## Complete original heading declaration windows
 
 `heading_declaration_index` captures a call-local shared inventory from an exact

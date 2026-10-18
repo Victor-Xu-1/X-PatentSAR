@@ -1,5 +1,39 @@
 # Operations and troubleshooting
 
+## A compound repeated in a preparation chapter
+
+An independently proved standalone preparation drawing no longer causes a
+competing-primary write exception merely because the original catalogue already
+contains its label. The one source-claim policy can retain it as an additional
+depiction when the exact document, literal namespace and unique primary catalogue
+owner are proved. Every such image is still scheduled in the normal chemical
+recognition phase, and all qualified full graphs must agree before acceptance.
+Missing/reordered recognition, stereo/charge/isotope/component/connectivity
+disagreement and failed source QC remain hard refusals, not warnings.
+The stored heading text and role must also match the qualified original
+declaration; changing locator metadata cannot turn an assay number into a molecule.
+
+Equal digits in Example/Compound namespaces are not an automatic cross-reference.
+Unknown/mixed catalogue vocabulary and explicit cell/title prefix contradictions
+leave the separate occurrence unresolved. Original physical
+anchors and rejected proposals remain available; their original ledger gaps and
+diagnostics still fail final acceptance. No task/source ID, page, expected count
+or rightmost-structure shortcut supplies authority. Multiple competing complete
+catalogues are not silently coalesced.
+A selected-only catalogue can still be the primary under the existing policy;
+there is no invented need to supply a larger missing table before a preparation
+depiction can be checked. Proved selected reprints never displace their primary.
+
+Binding32/binder42 require fresh derived binding under the normal producer.
+Original PDFs, raw OCR/crops/model outputs and manual history are not edited;
+unchanged raw recognition can still be reused through its existing exact-image
+and model contract, never as cached acceptance. Older products are history, not
+relabelled current proof. Preserve newer state separately for deliberate rollback.
+This change does not solve unlabelled multi-node reaction schemes or establish
+arbitrary-patent chemical accuracy. Continue real acceptance through the frontend
+after the coherent repair set; do not manually fill structures or rerun only
+because a partial source release is available.
+
 ## A heading and its structure on different pages
 
 The shared binder now examines the consecutive original declaration window,

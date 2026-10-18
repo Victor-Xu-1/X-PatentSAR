@@ -13,9 +13,13 @@ class Catalog:
     identifier: str = ""
     title: str = ""
     selected_subset: bool = False
+    namespace: str = ""
 
 
 def _selected_title(text):
+    from .caption_role_semantics import _role_words
+
+    text = _role_words(text)
     if not re.search(
         r"\bselected\b|\bsubset\b|选定|選定|选取|選取", text, re.IGNORECASE
     ):
@@ -30,6 +34,7 @@ def _selected_title(text):
 
 
 def _catalog_from_titles(texts) -> Catalog:
+    from .caption_role_semantics import catalog_title_namespace
     from .source_table_markers import caption_table_marker, table_marker_identity
     from .source_table_roles import title_key
 
@@ -40,8 +45,12 @@ def _catalog_from_titles(texts) -> Catalog:
     if marker is None:
         return Catalog()
     selected = {_selected_title(text) for text in texts}
+    namespaces = {catalog_title_namespace(text) for text in texts}
     return Catalog(
-        table_marker_identity(marker.group()), texts[0][:500], selected == {True}
+        table_marker_identity(marker.group()),
+        texts[0][:500],
+        selected == {True},
+        next(iter(namespaces)) if len(namespaces) == 1 else "",
     )
 
 

@@ -26,6 +26,9 @@ _SOURCE_INPUT_FIELDS = (
     "binding_rule",
     "expanded_from_fragment",
     "exact_caption_evidence",
+    "original_heading_evidence",
+    "original_heading_structure_evidence",
+    "source_pdf_sha256",
     "visible_label",
     "visible_label_candidates",
 )
