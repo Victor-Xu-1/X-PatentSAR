@@ -95,6 +95,8 @@ def bind(
                 output_dir,
                 profile,
                 source_line_map=observations.source_line_map,
+                all_structures=processed,
+                source_sections=source_sections,
                 progress=progress,
             )
             if blocks

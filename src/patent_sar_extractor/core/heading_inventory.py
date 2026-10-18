@@ -1,6 +1,7 @@
 """Original heading membership replay in the existing source-reference ledger."""
 
 from .activity_header_evidence import proof_id
+from .heading_declaration_scope import declaration_candidates
 from .heading_group_scope import group_heading_members
 from .heading_source_proof import heading_observation_status
 from .printed_identifiers import identifier_key
@@ -36,7 +37,15 @@ def _heading_owners(entries, original_sha):
             ):
                 proof = checked["original_heading_structure_evidence"]["heading_source"]
                 owners.add(
-                    (proof_id(proof), identifier_key(checked.get("cpd"), wrapped=True))
+                    (
+                        proof_id(proof),
+                        proof_id(
+                            checked["original_heading_structure_evidence"][
+                                "declaration_scope"
+                            ]
+                        ),
+                        identifier_key(checked.get("cpd"), wrapped=True),
+                    )
                 )
     return owners
 
@@ -69,6 +78,9 @@ def heading_inventory_issues(sections, scope, entries):
             or section.get("bbox") != proof["nomination"]["bbox"]
         ):
             raise ValueError("Malformed original heading source proof")
+        declaration_scope = section.get("declaration_scope")
+        if declaration_scope is not None:
+            declaration_candidates(declaration_scope, proof)
         if status == "unresolved":
             if "group_context" in section:
                 raise ValueError("Unproved heading cannot assert a local group context")
@@ -99,7 +111,17 @@ def heading_inventory_issues(sections, scope, entries):
             continue
         for identifier in heading_members(declaration):
             present = (
-                ((proof_id(proof), identifier) in owners or identifier in group_members)
+                (
+                    (
+                        proof_id(proof),
+                        proof_id(declaration_scope)
+                        if declaration_scope is not None
+                        else "",
+                        identifier,
+                    )
+                    in owners
+                    or identifier in group_members
+                )
                 if scope["version"] == 6
                 else identifier in labels
             )

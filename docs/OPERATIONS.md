@@ -1,5 +1,32 @@
 # Operations and troubleshooting
 
+## A heading and its structure on different pages
+
+The shared binder now examines the consecutive original declaration window,
+not only the page containing the heading. A unique standalone drawing before
+the first procedure can be on a later page. All detected drawings, including
+reserved and boundary-crossing candidates, remain in the inventory. A reagent
+on page one cannot acquire the final product's ID when the scheme continues on
+the next page. Unknown ranges and independent simultaneous headings do not
+lend an implicit order or column scope. Limits64pages/25000structures and the
+existing one-MiB regional proof refuse rather than truncate accepted coverage.
+
+`declaration_scope` is retained with the heading and structure proof3 for exact
+saved replay. Binding31/binder41 invalidate prior derived binding ownership,
+not original PDFs, raw OCR, crops, original model outputs or manual corrections.
+Old page-only heading proof2 remains historical and does not pass current source
+admission. The obsolete cache-label heading proposal producer was removed;
+cached labels cannot create a missing original drawing. A new attempt remains
+an explicit frontend action after the complete repair set, never a background
+replay of writes or an edit to prior failed products.
+
+Multiple unlabelled structures before a procedure still require reaction-role
+verification. The software does not choose the rightmost molecule, infer product
+identity from a matching ID elsewhere, or waive source/chemistry QA. Whole-window
+inventory is not a guarantee of detector recall, OCSR correctness or scientific
+acceptance. Optional new reaction parsers require separate dependency/weight/
+license/resource evaluation and explicit installation authority.
+
 ## Weak caption nominations and competing frame hypotheses
 
 When a page-level hint disagrees with a qualified original-cell value, inspect

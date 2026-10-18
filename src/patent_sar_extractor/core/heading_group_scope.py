@@ -5,13 +5,16 @@ from collections import defaultdict
 from .activity_context_geometry import valid_box
 from .cell_frame_proof import inside_box
 from .compound_caption import prefixed_label
-from .heading_evidence import procedure_heading_boundary
 from .heading_source_proof import proved_heading_declaration
 from .printed_identifiers import identifier_key
 from .source_binding_proof import annotate_source_binding
 from .source_body_context import box_inside_drawing
 from .source_cell_tokens import cell_lines, cell_text, cell_tokens
-from .source_section_roles import heading_members, section_heading
+from .source_section_roles import (
+    heading_members,
+    procedure_heading_boundary,
+    section_heading,
+)
 from .source_table_markers import TABLE_CAPTION_START
 from .source_window_chunks import (
     observe_source_window,

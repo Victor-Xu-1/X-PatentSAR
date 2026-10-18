@@ -13,13 +13,9 @@ from PIL import Image
 from .activity_identity import printed_identifier_key
 from .heading_source_proof import proved_heading_declaration
 from .source_geometry import native_lines, source_layout
-from .source_section_roles import heading_members, section_heading
-
-_BODY = re.compile(
-    r"^(?:\[\s*\d{1,8}\s*\]|(?:Step|Stage|步骤|中间体|Intermediate)\b|"
-    r"[A-Z][.)]\s|To\s+(?:a|an|the)\s|A\s+(?:solution|mixture)\b|"
-    r"The\s+(?:reaction|mixture)\b)",
-    re.IGNORECASE,
+from .source_section_roles import (
+    heading_members,
+    section_heading,
 )
 
 
@@ -30,11 +26,6 @@ def heading_identifier(text: object) -> str:
         if observation and observation["role"] == "compound_heading"
         else ""
     )
-
-
-def procedure_heading_boundary(text):
-    """The same original procedure stop for single and plural declarations."""
-    return bool(_BODY.match(str(text).strip()))
 
 
 def original_heading_lines(page, cached_lines=(), source_lines=()) -> list[dict]:
@@ -72,7 +63,7 @@ def original_heading_lines(page, cached_lines=(), source_lines=()) -> list[dict]
         observed = [
             {
                 "y0": float(y),
-                "y1": float(y) + 14,
+                "y1": min(float(y) + 14, raster[3]),
                 "text": str(text),
                 "bbox": [raster[0], float(y), raster[2], min(float(y) + 14, raster[3])],
                 "source": "page_ocr",
@@ -90,13 +81,20 @@ def original_heading_lines(page, cached_lines=(), source_lines=()) -> list[dict]
         return [
             {
                 "y0": float(y),
-                "y1": float(y) + 14,
+                "y1": min(float(y) + 14, page.rect.height),
                 "text": str(text),
-                "bbox": [0, float(y), page.rect.width, float(y) + 14],
+                "bbox": [
+                    0,
+                    float(y),
+                    page.rect.width,
+                    min(float(y) + 14, page.rect.height),
+                ],
                 "source": "page_ocr",
             }
             for y, text in cached_lines
-            if str(text).strip() and math.isfinite(float(y))
+            if str(text).strip()
+            and math.isfinite(float(y))
+            and 0 <= float(y) < page.rect.height
         ]
     rows = {}
     for word in words:
@@ -150,29 +148,20 @@ def _has_drawing(path: str) -> bool:
 
 
 def standalone_heading_evidence(
-    page, block: dict, structures: list[dict], lines: list[dict], end: float
+    block: dict, structures: dict[str, dict], scope: dict
 ) -> tuple[dict | None, dict | None]:
-    """A unique original diagram before the first procedure, never nearest wins."""
+    """One complete original declaration window, including adjacent source pages."""
+    from .heading_declaration_scope import declaration_candidates
+
     declaration = proved_heading_declaration(block.get("heading_observation"))
     if len(heading_members(declaration)) != 1:
         return None, None
-    boundaries = [
-        line["y0"]
-        for line in lines
-        if line["y0"] > block["y0"] + 3
-        and (procedure_heading_boundary(line["text"]) or section_heading(line["text"]))
-    ]
-    end = min([end, *boundaries])
-    candidates = [
-        structure
-        for structure in structures
-        if structure["page_no"] == block["page_no"]
-        and block["y1"] <= float(structure["y0"])
-        and float(structure["y1"]) <= end
-    ]
-    if len(candidates) != 1:
+    candidates, complete = declaration_candidates(scope, block["heading_observation"])
+    if not complete or len(candidates) != 1 or not candidates[0]["inside"]:
         return None, None
-    structure = candidates[0]
+    structure = structures.get(candidates[0]["structure_id"])
+    if structure is None:
+        return None, None  # Another current source interpreter owns this candidate.
     label = heading_members(declaration)[0]
     method = (
         "rapidocr_heading"
@@ -183,10 +172,10 @@ def standalone_heading_evidence(
     if label != printed_identifier_key(block["cpd"]) or not _has_drawing(path):
         return None, None
     return structure, {
-        "version": 2,
+        "version": 3,
         "heading_source": block["heading_observation"],
         "label": label,
-        "page_no": block["page_no"],
+        "page_no": structure["page_no"],
         "heading_text": block["line_text"],
         "heading_bbox": block["bbox"],
         "heading_observation": method,
@@ -194,7 +183,7 @@ def standalone_heading_evidence(
         "crop_sha256": _image_digest(path),
         "structure_id": str(structure["id"]),
         "structure_bbox": [structure[key] for key in ("x0", "y0", "x1", "y1")],
-        "procedure_boundary_y": end,
+        "declaration_scope": scope,
         "candidate_count": 1,
     }
 
@@ -210,7 +199,7 @@ def _same_heading_occurrence(binding, evidence, label):
         isinstance(block, dict)
         and printed_identifier_key(block.get("cpd")) == label
         and type(block.get("page_no")) is int
-        and block["page_no"] == evidence.get("page_no")
+        and block["page_no"] == evidence["heading_source"]["page_no"]
         and block.get("line_text") == evidence.get("heading_text")
         and block.get("bbox") == evidence.get("heading_bbox")
         and block.get("heading_observation") == evidence.get("heading_source")
@@ -220,61 +209,80 @@ def _same_heading_occurrence(binding, evidence, label):
 def valid_heading_binding_evidence(binding: dict) -> bool:
     evidence = binding.get("original_heading_structure_evidence")
     if (
-        not isinstance(evidence, dict)
-        or evidence.get("version") != 2
-        or type(evidence.get("version")) is not int
+        isinstance(evidence, dict)
+        and type(evidence.get("version")) is int
+        and evidence["version"] == 3
     ):
-        return False
-    label = printed_identifier_key(binding.get("compound_id") or binding.get("cpd"))
-    declaration = proved_heading_declaration(evidence.get("heading_source"))
-    if heading_members(declaration) != [label] or not _same_heading_occurrence(
-        binding, evidence, label
-    ):
+        return _valid_scoped_heading(binding, evidence)
+    # Old packets remain readable history, not current ownership authority.
+    return False
+
+
+def _valid_scoped_heading(binding, evidence):
+    from .heading_declaration_scope import declaration_candidates
+
+    if set(evidence) != {
+        "version",
+        "heading_source",
+        "label",
+        "page_no",
+        "heading_text",
+        "heading_bbox",
+        "heading_observation",
+        "original_pdf_sha256",
+        "crop_sha256",
+        "structure_id",
+        "structure_bbox",
+        "candidate_count",
+        "declaration_scope",
+    }:
         return False
     try:
-        heading = evidence["heading_bbox"]
-        crop = evidence["structure_bbox"]
-        values = [*heading, *crop, evidence["procedure_boundary_y"]]
+        label = printed_identifier_key(binding.get("compound_id") or binding.get("cpd"))
+        proof = evidence["heading_source"]
+        declaration = proved_heading_declaration(proof)
         if (
-            len(heading) != 4
-            or len(crop) != 4
+            heading_members(declaration) != [label]
             or any(
-                type(v) not in (int, float) or not math.isfinite(v) or v < 0
-                for v in values
+                printed_identifier_key(binding[name]) != label
+                for name in ("cpd", "compound_id", "example_id")
+                if binding.get(name)
             )
+            or not _same_heading_occurrence(binding, evidence, label)
+            or binding["original_heading_evidence"].get("declaration_scope")
+            != evidence["declaration_scope"]
         ):
             return False
+        candidates, complete = declaration_candidates(
+            evidence["declaration_scope"], proof
+        )
+        if not complete or len(candidates) != 1 or not candidates[0]["inside"]:
+            return False
+        candidate = candidates[0]
         return bool(
             label
             and label
             == evidence["label"]
             == heading_identifier(evidence["heading_text"])
             and evidence["heading_observation"]
-            == (
-                "rapidocr_heading"
-                if evidence["heading_source"]["observations"]
-                else "native_heading"
-            )
-            and evidence["structure_id"] == binding.get("structure_id")
-            and type(evidence["page_no"]) is int
-            and evidence["page_no"] == binding.get("page_no")
-            and evidence["candidate_count"] == 1
+            == ("rapidocr_heading" if proof["observations"] else "native_heading")
             and type(evidence["candidate_count"]) is int
-            and re.fullmatch(r"[a-f0-9]{64}", evidence["original_pdf_sha256"])
-            and evidence["original_pdf_sha256"] == binding.get("source_pdf_sha256")
-            and evidence["heading_source"]["original_pdf_sha256"]
-            == evidence["original_pdf_sha256"]
-            and evidence["heading_source"]["page_no"] == evidence["page_no"]
-            and evidence["heading_source"]["nomination"]["bbox"] == heading
+            and evidence["candidate_count"] == 1
+            and evidence["structure_id"]
+            == candidate["structure_id"]
+            == binding.get("structure_id")
+            and type(evidence["page_no"]) is int
+            and evidence["page_no"] == candidate["page_no"] == binding.get("page_no")
+            and evidence["structure_bbox"]
+            == candidate["bbox"]
+            == [binding.get("struct_" + k) for k in ("x0", "y0", "x1", "y1")]
+            and evidence["heading_bbox"] == proof["nomination"]["bbox"]
+            and evidence["original_pdf_sha256"]
+            == proof["original_pdf_sha256"]
+            == binding.get("source_pdf_sha256")
+            and re.fullmatch(r"[a-f0-9]{64}", evidence["crop_sha256"])
             and evidence["crop_sha256"]
             == _image_digest(str(binding.get("image_path") or ""))
-            and re.fullmatch(r"[a-f0-9]{64}", evidence["crop_sha256"])
-            and crop
-            == [binding.get(f"struct_{key}") for key in ("x0", "y0", "x1", "y1")]
-            and heading[0] < heading[2]
-            and heading[1] < heading[3] <= crop[1]
-            and crop[0] < crop[2]
-            and crop[1] < crop[3] <= evidence["procedure_boundary_y"]
         )
     except (KeyError, TypeError, ValueError, OSError):
         return False

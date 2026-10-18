@@ -253,19 +253,13 @@ class HeadingSourceOwnershipTests(unittest.TestCase):
         self.assertEqual(loaded, cache)
         self.assertEqual(path.read_bytes(), original)
 
-    def test_unique_exact_suffix_owner_is_confirmed_without_activity_filter(self):
+    def test_cached_exact_suffix_cannot_supply_a_missing_original_diagram(self):
         structure = self._structure()
         bindings, issues, ocr, _ = self._select(
             [structure], {"S1": self._cache_entry(structure, ["42A"])}
         )
-        self.assertEqual(issues, [])
-        self.assertEqual([row["cpd"] for row in bindings], ["Compound 42A"])
-        self.assertEqual(bindings[0]["structure_id"], "S1")
-        self.assertEqual(bindings[0]["accuracy_status"], "confirmed")
-        self.assertFalse(bindings[0]["fail_closed"])
-        self.assertEqual(
-            bindings[0]["original_heading_evidence"]["cpd"], "Compound 42A"
-        )
+        self.assertEqual(bindings, [], "The retained fixture crop is blank")
+        self.assertEqual([row["cpd"] for row in issues], ["Compound 42A"])
         ocr.assert_not_called()
 
     def test_duplicate_exact_crops_are_withheld_instead_of_ranked(self):
@@ -315,9 +309,10 @@ class HeadingSourceOwnershipTests(unittest.TestCase):
             {"S1": self._cache_entry(structure, ["42"])},
             {0: [(210.0, "Compound 42A")]},
         )
-        self.assertEqual(issues, [])
-        self.assertEqual([row["cpd"] for row in bindings], ["Compound 42A"])
-        self.assertEqual(bindings[0]["visible_labels"], ["42A"])
+        self.assertEqual(
+            bindings, [], "Refining a cached label cannot create a diagram"
+        )
+        self.assertEqual([row["cpd"] for row in issues], ["Compound 42A"])
         self.assertEqual(
             json.loads(path.read_text(encoding="utf-8"))["S1"]["visible_labels"],
             ["42A"],

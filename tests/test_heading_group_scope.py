@@ -1,13 +1,13 @@
 """Real source/binder controls for local plural references, not ID-only skips."""
 
 import copy
-import json
 import tempfile
 import unittest
 from pathlib import Path
 
 import fitz
 
+from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.core.binding_source_references import (
     reference_issues,
     reference_scope,
@@ -55,7 +55,7 @@ class HeadingGroupScopeTests(unittest.TestCase):
         result = bind(
             str(pdf), {"bind_workers": 1}, str(root / "bindings"), str(metadata)
         )
-        payload = json.loads(Path(result["output_files"]["json"]).read_text())
+        payload = load_json(Path(result["output_files"]["json"]), {})
         section = next(
             section
             for section in payload["source_sections"]
