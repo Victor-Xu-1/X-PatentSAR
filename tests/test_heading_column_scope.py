@@ -7,10 +7,27 @@ from lateral_structure_support import LateralStructureControls
 
 from patent_sar_extractor.core.formal_structure import coverage_errors
 from patent_sar_extractor.core.heading_declaration_scope import declaration_candidates
+from patent_sar_extractor.core.ocsr.recognition_inputs import recognition_inputs
 from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
 
 
 class HeadingColumnScopeTests(LateralStructureControls, unittest.TestCase):
+    def test_unruled_catalogue_preparation_uses_its_actual_row_observation_contract(
+        self,
+    ):
+        def preparation(document, records):
+            page = document.new_page(width=660, height=720)
+            page.insert_text((40, 60), "Compound 73: Preparation", fontsize=11)
+            self.add_drawing(page, records, 40, 190, "PREPARATION-73")
+            page.insert_text((40, 350), "Step 1: Preparation", fontsize=11)
+
+        _, payload = self.run_case(ruled=False, mutate_document=preparation)
+        self.assertEqual(payload["source_issues"], [])
+        self.assertEqual(coverage_errors(payload), [])
+        plan = recognition_inputs(payload)
+        self.assertEqual(len(plan.formal), 4)
+        self.assertEqual([r["structure_id"] for r in plan.reprints], ["PREPARATION-73"])
+
     def test_native_and_scanned_parallel_columns_keep_all_original_candidates(self):
         for ruled in (False, True):
             for raster in (False, True):
