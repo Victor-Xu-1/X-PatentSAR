@@ -173,6 +173,20 @@ class ActivityHeaderGridTests(unittest.TestCase):
         self.assertEqual(list(rows[0].activity_values.values()), ["A2"])
         self.assertTrue(rows[0].needs_review)
 
+    def test_shared_review_policy_checks_value_roles_not_the_original_id_column(self):
+        from patent_sar_extractor.core.activity_header_identity import (
+            schema_requires_review,
+        )
+
+        for label, expected in (
+            ("compound_id", True),
+            ("compound_id [column 2]", True),
+            ("IC50 (nM)", False),
+        ):
+            schema = GridSchema(CONTEXT, (ColumnGroup(0, ((1, label),)),), 1)
+            with self.subTest(label=label):
+                self.assertEqual(schema_requires_review(schema), expected)
+
     def test_unknown_multiline_unit_is_kept_as_header_not_guessed_metric(self):
         schema, rows = observed_grid(
             [["No.", "Unknown signal"], ["", "(n M)"], ["10B", "< 2"]]
