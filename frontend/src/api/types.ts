@@ -188,8 +188,20 @@ export const stageNames = [
 export type CoreStageName = (typeof stageNames)[number];
 export type StageName = CoreStageName | 'admet';
 export type StageStatus = 'pending' | 'running' | 'ok' | 'empty' | 'failed' | 'warnings';
+export const bindingSourcePhases = [
+  'caption_sources',
+  'numbered_sources',
+  'numbered_cells',
+  'declaration_sources',
+  'visible_captions',
+  'reference_sources',
+  'heading_sources',
+  'heading_bindings',
+] as const;
+export type BindingSourcePhase = (typeof bindingSourcePhases)[number];
 export interface StageProgress {
   phase?: 'recognition' | 'properties' | 'lead' | null;
+  source_phase?: BindingSourcePhase | null;
   completed: number;
   total: number;
   cache_hits: number;

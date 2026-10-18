@@ -33,7 +33,7 @@ def observed_role(packets):
     if (
         len(known_roles) > 1
         or len(known_keys) > 1
-        or known_roles & {"mixed", "nonfinal"}
+        or known_roles & {"mixed", "nonfinal", "conflict"}
     ):
         return "conflict", ""
     return "unknown", ""

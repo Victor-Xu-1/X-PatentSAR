@@ -8,6 +8,63 @@ import { compound, job, project, results } from './fixtures';
 import { descriptorSummary, predictionSummary } from './descriptor-fixtures';
 
 describe('current-run result ownership and stage synchronization', () => {
+  it('does not reload scientific rows or project data on binding work counters or phase changes', async () => {
+    const read = vi.spyOn(api, 'results').mockResolvedValue(results);
+    const reloadProject = vi.fn();
+    const current: Job = {
+      ...job,
+      history_available: true,
+      stages: job.stages.map((stage) =>
+        stage.name === 'bind'
+          ? {
+              ...stage,
+              status: 'running',
+              progress: {
+                phase: null,
+                source_phase: 'caption_sources',
+                completed: 1,
+                total: 7,
+                cache_hits: 0,
+                failures: 0,
+                device: null,
+                peak_rss_mb: null,
+              },
+            }
+          : stage,
+      ),
+    };
+    const { result, rerender } = renderHook(
+      ({ current }) => useResultsState(project.id, '', vi.fn(), current, reloadProject),
+      { initialProps: { current } },
+    );
+    await waitFor(() => expect(result.current.resource.data).toBe(results));
+    read.mockClear();
+    reloadProject.mockClear();
+    const inspected: Job = {
+      ...current,
+      stages: current.stages.map((stage) =>
+        stage.name === 'bind'
+          ? {
+              ...stage,
+              progress: { ...stage.progress!, source_phase: 'heading_sources', completed: 3 },
+            }
+          : stage,
+      ),
+    };
+    rerender({ current: inspected });
+    expect(read).not.toHaveBeenCalled();
+    expect(reloadProject).not.toHaveBeenCalled();
+    rerender({
+      current: {
+        ...inspected,
+        stages: inspected.stages.map((stage) =>
+          stage.name === 'bind' ? { ...stage, status: 'ok', count: 4 } : stage,
+        ),
+      },
+    });
+    await waitFor(() => expect(read).toHaveBeenCalledOnce());
+    expect(reloadProject).toHaveBeenCalledOnce();
+  });
   it('refreshes independent completed descriptors on existing job facts, never resource-wait ticks', async () => {
     let data = results;
     const read = vi.spyOn(api, 'results').mockImplementation(async () => data);

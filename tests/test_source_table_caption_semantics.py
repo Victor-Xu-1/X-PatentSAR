@@ -38,6 +38,19 @@ class SourceTableCaptionSemanticsTests(unittest.TestCase):
             [t["text"] for t in tokens],
         )
 
+    def test_shared_structure_and_activity_nomination_preserves_case_delimited_roles(
+        self,
+    ):
+        primary = [self.word("Table 91.CompoundsTable", 40, 170)]
+        same = [self.word("Table 91. Compounds Table", 40, 170)]
+        conflict = [self.word("Table 91.IntermediateCompounds", 40, 170)]
+        observed = table_caption_nominees(primary, [660, 720], native_tokens=same)
+        self.assertEqual([row["text"] for row in observed], [primary[0]["text"]])
+        disputed = table_caption_nominees(primary, [660, 720], native_tokens=conflict)
+        self.assertEqual(
+            [row["text"] for row in disputed], [primary[0]["text"], conflict[0]["text"]]
+        )
+
     def test_inline_table_reference_is_not_a_second_caption_start(self):
         tokens = [
             self.word("Table", 40, 24),

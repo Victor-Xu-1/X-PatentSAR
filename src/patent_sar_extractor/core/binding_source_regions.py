@@ -8,6 +8,7 @@ from .activity_grid_context import _prefix
 from .activity_grid_role_observation import observe_characterization
 from .activity_grid_role_proof import valid_role_scope
 from .activity_header_evidence import proof_id
+from .binding_progress import observed_items
 from .printed_identifiers import (
     LABEL_KIND,
     PRINTED_ID,
@@ -87,10 +88,11 @@ def collect_reference_regions(
     grids_for_page,
     tokens_for_page,
     role_observations=None,
+    progress=None,
 ):
     """One inventory reuses call-local grid/token ownership, not a repair chain."""
     output = {}
-    for index in pages:
+    for index in observed_items("reference_sources", pages, progress):
         page = doc[index]
         grids = grids_for_page(page)
         regions = reference_regions(

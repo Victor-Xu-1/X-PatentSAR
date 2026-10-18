@@ -1,5 +1,18 @@
 # X-PatentSAR Web API v1
 
+## Optional binding source-work observations
+
+Existing job/stage GET DTOs may provide `progress.source_phase` for `bind`:
+`caption_sources`, `numbered_sources`, `numbered_cells`, `declaration_sources`,
+`visible_captions`, `reference_sources`, `heading_sources`, `heading_bindings`.
+`completed`/`total` mean actual visited pages, except heading bindings use items.
+They are not compound/accepted counts or an overall completion percentage.
+The old optional `phase` enum remains recognition/properties/lead and must be
+null/absent when `source_phase` is present. Other stages cannot borrow a source
+phase. Missing/malformed telemetry is unavailable, never an execution command.
+The field is additive in API-v1; old clients ignore it. No new endpoint, poller,
+authentication bypass, database migration or scientific authority is introduced.
+
 ## Compact SAR read projections
 
 Authenticated, bounded reads; no task submission:

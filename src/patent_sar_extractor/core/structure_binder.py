@@ -7,6 +7,7 @@ import fitz
 from .binding_artifacts import write_binding_result
 from .binding_geometry import _process_structure
 from .binding_preparation import load_binding_input, prepare_binding_observations
+from .binding_progress import BindingObserver
 from .binding_source_headings import (
     _document_sha256,
     observed_heading_blocks,
@@ -24,6 +25,7 @@ def bind(
     structures_path: str | None = None,
     include_intermediates: bool = False,
     cpd_prefix_pattern: str | None = None,
+    progress: BindingObserver | None = None,
 ) -> dict:
     """Prove printed IDs independently of activities; ambiguous sources stay withheld."""
     del cpd_prefix_pattern
@@ -42,6 +44,7 @@ def bind(
             {key: value for key, value in profile.items() if key != "active_cpds"},
             observations.authoritative_table_pages,
             source_pages=observations.page_indices,
+            progress=progress,
         )
         document_sha256 = _document_sha256(doc)
         original = [
@@ -63,6 +66,7 @@ def bind(
             grids_for_page=spatial.grids_for_page,
             tokens_for_page=spatial.tokens_for_page,
             role_observations=role_observations,
+            progress=progress,
         )
         # A known catalogue owns its cells, not every other heading on that page.
         pages = list(range(len(doc)))
@@ -77,6 +81,7 @@ def bind(
                 grids_for_page=spatial.grids_for_page,
                 tokens_for_page=spatial.tokens_for_page,
                 source_bindings=[*original, *reprints],
+                progress=progress,
             )
             if pages
             else []
@@ -90,6 +95,7 @@ def bind(
                 output_dir,
                 profile,
                 source_line_map=observations.source_line_map,
+                progress=progress,
             )
             if blocks
             else ([], [])

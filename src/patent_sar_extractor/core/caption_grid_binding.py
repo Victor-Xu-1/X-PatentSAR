@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 
 from .activity_context_geometry import MAX_TABLES, context_region, grid_axes, grid_box
 from .activity_grid_context import _prefix
+from .binding_progress import observed_items
 from .caption_boundary_context import observe_caption_tail
 from .caption_grid_rows import caption_rows, numbered_header_nominee
 from .caption_grid_rows import inside as _inside
@@ -35,7 +36,14 @@ class CaptionGridResult:
 
 
 def bind_caption_grids(
-    doc, by_page, boxes_by_page, pages, *, grids_for_page=None, tokens_for_page=None
+    doc,
+    by_page,
+    boxes_by_page,
+    pages,
+    *,
+    grids_for_page=None,
+    tokens_for_page=None,
+    progress=None,
 ):
     """A catalog direction is proved at its start and carried only adjacent grids.
 
@@ -124,7 +132,7 @@ def bind_caption_grids(
             }
         )
 
-    for page_no in sorted(set(pages)):
+    for page_no in observed_items("caption_sources", sorted(set(pages)), progress):
         page = doc[page_no - 1]
         observed_grids = grids_for_page(page)
         if len(observed_grids) > MAX_TABLES:

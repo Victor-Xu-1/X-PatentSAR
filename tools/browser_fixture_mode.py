@@ -8,6 +8,7 @@ from pathlib import Path
 PREFIX = "frontend/e2e/"
 # Read-only specs can accompany any controlled feature fixture.
 COMMON = {
+    "binding-source-progress.spec.ts",
     "llm-recovery.spec.ts",  # Self-contained frontend transport; no backend execution.
     "lead-source-admission.spec.ts",
     "session-job-recovery.spec.ts",

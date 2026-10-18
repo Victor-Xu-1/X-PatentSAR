@@ -3,6 +3,7 @@
 from collections import defaultdict
 from itertools import pairwise
 
+from .binding_progress import observed_items
 from .numbered_structure_models import NumberedTableCell, NumberedTableIssue
 from .numbered_structure_pairs import _box, _overlaps
 from .source_cell_tokens import cell_text
@@ -31,13 +32,17 @@ def _unused_pair(page, label_bounds, structure_bounds, structures, page_index):
     return True
 
 
-def observe_ruled_cells(doc, structures, sections, tokens_for_page, cell_reader):
+def observe_ruled_cells(
+    doc, structures, sections, tokens_for_page, cell_reader, *, progress=None
+):
     """One producer feeds the existing matcher; no carried or repaired headers."""
     by_page = defaultdict(list)
     for section in sections:
         by_page[section["page_no"] - 1].append(section)
     cells, issues = [], []
-    for page_index, page_sections in sorted(by_page.items()):
+    for page_index, page_sections in observed_items(
+        "numbered_cells", sorted(by_page.items()), progress
+    ):
         page, tokens = doc[page_index], tokens_for_page(doc[page_index])
         native = bool(page.get_text("words"))
         anchors = sorted(

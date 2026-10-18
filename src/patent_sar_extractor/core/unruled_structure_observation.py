@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from .activity_context_geometry import grid_axes, grid_box
 from .activity_header_evidence import proof_id
+from .binding_progress import observed_items
 from .caption_role_observation import owns_caption_frame
 from .caption_role_semantics import has_continuation_caption
 from .logical_column_partitions import nominate_unruled_headers, nomination_groups
@@ -66,6 +67,7 @@ def observe_unruled_tables(
     *,
     page_texts=None,
     caption_roles=None,
+    progress=None,
 ):
     bindings, sections, issues, protected, recognized, observed = (
         [],
@@ -79,7 +81,7 @@ def observe_unruled_tables(
     by_page, sections_by_page, anchors_by_key = {}, defaultdict(list), defaultdict(list)
     for structure in structures:
         by_page.setdefault(structure["page_no"] - 1, []).append(structure)
-    for page_index in sorted(set(pages)):
+    for page_index in observed_items("numbered_sources", sorted(set(pages)), progress):
         if type(page_index) is not int or not 0 <= page_index < len(doc):
             continue
         page = doc[page_index]

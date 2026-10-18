@@ -1,5 +1,36 @@
 # Operations and troubleshooting
 
+## Joined catalogue titles and visible binding source work
+
+A qualified original title such as `CompoundsTable`, `IntermediateCompounds` or
+`CompoundsAndIntermediates` can lose PDF/OCR word spacing. The shared role reader
+now recognizes literal case boundaries without changing the observed text or
+using identifiers/expected counts to infer a catalogue. Unknown lower-case
+strings stay unknown. Negative or mixed category claims cannot grant final
+admission or an intermediate-only exclusion; a qualified contradiction is not
+outvoted by another weak reading. Ordinary and split-page continuations consume
+that same original title proof. Binding25/binder34 and Activity21/extractor30
+require a fresh derived source pass; keep original/raw observations, prior
+failures, manual audit and rollback intact. This does not repair every source
+layout or certify a private patent from controlled examples.
+
+During binding the existing task view shows the actual current source pass and
+visited pages/items. It is not a chemical structure count or acceptance score.
+`7 / 7 items` may still accompany an in-progress task while later work/gates run.
+The details distinguish source checks from recognition/device observations;
+missing telemetry stays missing rather than being estimated. Cancel or a worker
+failure preserves the last completed loop item, not a fictional finished pass.
+The optional API-v1 `source_phase` is additive; no database migration or changes
+to the old progress phase enum are needed. A rollback hides this telemetry and
+retains all scientific history. A fresh producer clears copied progress before
+publishing its own work; checkpoints/QA never trust it as scientific proof.
+
+Relevant source, writer/replay, cache-compatibility and API/UI checks, installed
+wheel/CI/main/fixed18765 delivery and real frontend extraction/SAR remain separate
+gates. Do not reprocess private inputs in diagnostic scripts or rerun merely
+because one partial repair has shipped. Preserve unresolved ruling/text,
+activity/header and chemical findings until their own repairs and real acceptance.
+
 ## Extreme source strips and zero-size OCR resize
 
 RapidOCR's pinned resize floors then rounds dimensions to multiples of 32. A

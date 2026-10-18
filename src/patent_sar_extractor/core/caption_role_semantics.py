@@ -15,10 +15,29 @@ _COMPOUNDS = re.compile(
     rf"|{CATALOG_COMPOUND_CJK}",
     re.IGNORECASE,
 )
+_CASE_BOUNDARY = re.compile(r"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
+_NEGATION = re.compile(
+    r"\b(?:not|no|without|except|excluding)\s+"
+    r"(?:(?:a|an|any|the|these|those|such)\s+)?$"
+    r"|\bnon[-\s]+$|\bnon[-\s]*final[-\s]*$"
+    r"|(?:非|不含|不包括|不包含|不是|并非|並非)\s*$",
+    re.IGNORECASE,
+)
+
+
+def _role_words(text):
+    """Expose literal case boundaries; never replace characters or source text.
+
+    PDF word extraction and OCR may join title words without changing their
+    case. Only observable lower/upper or acronym/title-case boundaries qualify;
+    unknown lower-case strings are not segmented with a guessed vocabulary.
+    This projection is catalogue-only, not identifier or measurement repair.
+    """
+    return _CASE_BOUNDARY.sub(" ", text)
 
 
 def nonfinal_catalog_text(text):
-    return bool(isinstance(text, str) and _NONFINAL.search(text))
+    return bool(isinstance(text, str) and _NONFINAL.search(_role_words(text)))
 
 
 def continuation_title(text):
@@ -49,9 +68,14 @@ def catalog_title_role(text):
     if start is None:
         return "unknown"
     marker = caption_table_marker(text)
-    title = text[marker.end() if marker else start.end() :]
+    title = _role_words(text[marker.end() if marker else start.end() :])
     nonfinal = tuple(_NONFINAL.finditer(title))
     compounds = tuple(_COMPOUNDS.finditer(title))
+    # A negative category is not positive evidence for either admission or
+    # exclusion. Keep it as an explicit conflict, including prefixed captions;
+    # returning unknown would permit them to bypass the title veto.
+    if any(_NEGATION.search(title[: part.start()]) for part in (*nonfinal, *compounds)):
+        return "conflict"
     if nonfinal:
         # "Intermediate compounds" is one declared nonfinal category. Separate
         # compound/product categories must not silently disappear with it.

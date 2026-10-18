@@ -11,7 +11,15 @@ from patent_sar_extractor.core.caption_binding_proof import (
 from patent_sar_extractor.core.caption_grid_binding import bind_caption_grids
 
 
-def two_pages(*, split=False, gap=False, new_title=None, shifted=False, columns=2):
+def two_pages(
+    *,
+    split=False,
+    gap=False,
+    new_title=None,
+    shifted=False,
+    columns=2,
+    first_title="Table 47. Compounds",
+):
     doc = fitz.open()
     by_page, boxes, grids = {}, {}, {}
     pages = (1, 3) if gap else (1, 2)
@@ -34,7 +42,7 @@ def two_pages(*, split=False, gap=False, new_title=None, shifted=False, columns=
         if not position or new_title:
             page.insert_text(
                 (xs[0], ys[0] - 15),
-                new_title if position else "Table 47. Compounds",
+                new_title if position else first_title,
                 fontsize=10,
             )
         labels = ("41A", "89B") if not position else ("73C", "104D")
