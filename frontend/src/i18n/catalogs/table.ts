@@ -158,6 +158,8 @@ export const table: Readonly<Record<string, string>> = {
   结果与验收详情: 'Results and acceptance details',
   刷新真实提取结果: 'Refresh actual extraction results',
   当前页暂无结果: 'No results on this page',
+  结果就绪后将自动显示: 'Results will appear automatically when ready',
+  暂无提取结果: 'No extraction results yet',
   暂无匹配的提取结果: 'No matching extraction results',
   '正在查询真实结构与活性结果…': 'Loading actual structure and activity results…',
   开始探索专利中的结构与活性: 'Explore structures and activity in a patent',

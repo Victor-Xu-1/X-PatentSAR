@@ -1,5 +1,18 @@
 # X-PatentSAR architecture
 
+## Truthful unpublished-result presentation
+
+`Workspace` passes its existing verified job observation to `ResultsPane`.
+The pane reuses the shared `activeJob` predicate and exact project ownership;
+cached, unknown or foreign task facts do not claim active result preparation.
+An empty restricted query, an empty page within a nonempty result set and an
+unpublished extraction have distinct localized messages. Known active empty
+results announce that rows appear when ready, using the existing stage-fact
+refresh only. Existing rows remain visible as delivered. No row, count, stage,
+acceptance, filter, source identity, retry or polling rule is manufactured.
+This client-only state distinction changes no scientific epoch, API, SQL,
+queue, model, dependency or original/manual artifact.
+
 ## Quantitative figure references versus molecular declarations
 
 The existing original-heading ledger retains quantitative plot labels as

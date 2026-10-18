@@ -196,7 +196,9 @@ export function ResultsTable({
           {!rows.length && headers.length > 0 && (
             <tr>
               <td colSpan={headers.length} className="empty-table-cell">
-                {t(emptyMessage)}
+                <span className="empty-table-message" role="status">
+                  {t(emptyMessage)}
+                </span>
               </td>
             </tr>
           )}

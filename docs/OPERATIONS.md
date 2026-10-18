@@ -1,5 +1,16 @@
 # Operations and troubleshooting
 
+## Empty results during extraction
+
+A verified queued/running task for the current project may not have published
+result rows yet. With no restrictive filters, the table says results appear
+automatically when ready; the existing job-stage observer refreshes those rows.
+Do not treat the empty table as a failed match, zero chemical structures or a
+stopped worker. Unknown/unverified task state keeps neutral no-result wording;
+actual read errors remain visible. Filtered zero matches and an empty page of
+a nonempty query retain their own messages. Language switches do not change
+original source labels or numeric values. No task is started by this display.
+
 ## Characterization tables
 
 Long NMR/MS cells are not assay headers. The shared original-cell reader keeps
