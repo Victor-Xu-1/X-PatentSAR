@@ -44,7 +44,7 @@ def bind_caption_grids(
     """
     result = CaptionGridResult()
     grids_for_page = grids_for_page or (
-        lambda page: detect_ruled_table_regions(page, dpi=240)
+        lambda page: detect_ruled_table_regions(page, dpi=240, minimum_columns=1)
     )
     tokens_for_page = tokens_for_page or (
         lambda page: page_tokens(page, dpi=200, allow_tesseract=False)
@@ -59,9 +59,7 @@ def bind_caption_grids(
                 "page_no": item["page"],
                 "reason": reason,
                 "evidence": {
-                    key: item[key]
-                    for key in ("bbox", "observations", "structure_cell")
-                    if key in item
+                    "proposal": dict(item),
                 },
             }
         )
@@ -87,7 +85,14 @@ def bind_caption_grids(
             or item["review"]
         ):
             reject(
-                {**item, "structure_cell": list(cell)},
+                {
+                    **item,
+                    "structure_cell": list(cell),
+                    "structure_page_no": page_no,
+                    "direction": direction,
+                    "candidate_structure_ids": [s.get("id") for s in owners],
+                    **({"page_boundary": boundary} if boundary is not None else {}),
+                },
                 "unread_or_conflicting_caption"
                 if item["review"]
                 else "missing_caption_structure"
@@ -395,6 +400,14 @@ def bind_caption_grids(
                         "page_no": page_no,
                         "reason": "unbound_caption_structure",
                         "structure_id": structure.get("id"),
+                        "evidence": {
+                            "proposal": {
+                                "structure": dict(structure),
+                                "caption_cells": [
+                                    list(cell) for cell in grids if _inside(box, cell)
+                                ],
+                            }
+                        },
                     }
                 )
     return result

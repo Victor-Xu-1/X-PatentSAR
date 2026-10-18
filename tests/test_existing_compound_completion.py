@@ -16,6 +16,7 @@ from test_uniform_recognition import observation
 
 from patent_sar_extractor.core.ocsr import smiles_converter as converter_module
 from patent_sar_extractor.core.ocsr.recognition_inputs import recognition_inputs
+from patent_sar_extractor.web.acceptance import ARTIFACTS
 from patent_sar_extractor.web.admet_history import read_admet_stage
 from patent_sar_extractor.web.analysis_models import Property
 from patent_sar_extractor.web.correction_models import CorrectionRequest, EditableFields
@@ -541,8 +542,17 @@ class ExistingCompoundCompletionTests(PredictionFixture, unittest.TestCase):
     def test_changed_source_crop_cannot_keep_old_smiles_or_properties(self):
         row = self.prepare()
         self.complete(row)
-        crop = self.run / "crop.png"
-        crop.write_bytes(crop.read_bytes() + b"changed source")
+        catalog = json.loads((self.run / ARTIFACTS["bindings"][0]).read_text())[
+            "compound_catalog"
+        ]["entries"]
+        crops = {
+            source["image_path"]
+            for entry in catalog
+            for source in [entry, *entry["additional_sources"]]
+        }
+        for image in crops:
+            crop = Path(image)
+            crop.write_bytes(crop.read_bytes() + b"changed source")
         result = self.service.results(self.project.id)
         self.assertTrue(
             all(x.smiles is None and not x.admet.properties for x in result.items)

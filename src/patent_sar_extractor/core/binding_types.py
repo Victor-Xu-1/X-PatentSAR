@@ -17,7 +17,7 @@ class BinderConfig:
     cluster_y_threshold: int = 50
 
 
-SourceKind = Literal["numbered_cell", "exact_caption"]
+SourceKind = Literal["numbered_cell", "exact_caption", "original_heading"]
 
 
 @dataclass(frozen=True)

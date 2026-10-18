@@ -15,9 +15,38 @@ class Catalog:
     selected_subset: bool = False
 
 
+def _selected_title(text):
+    if not re.search(
+        r"\bselected\b|\bsubset\b|选定|選定|选取|選取", text, re.IGNORECASE
+    ):
+        return False
+    return not re.search(
+        r"\b(?:not\s+|non[-\s]+|un)selected\b|\bnot\s+(?:a\s+)?subset\b"
+        r"|\b(?:and|or|versus|vs\.?|with)\s+(?:the\s+)?(?:remaining|other|unselected|all)\b"
+        r"|(?:未|非)(?:选定|選定|选取|選取)|(?:和|与|與|及).*(?:其余|其餘|其他|其它|全部)",
+        text,
+        re.IGNORECASE,
+    )
+
+
+def _catalog_from_titles(texts) -> Catalog:
+    from .source_table_markers import caption_table_marker, table_marker_identity
+    from .source_table_roles import title_key
+
+    texts = tuple(dict.fromkeys(texts))
+    if not texts or len({title_key(text) for text in texts}) != 1:
+        return Catalog()
+    marker = caption_table_marker(texts[0])
+    if marker is None:
+        return Catalog()
+    selected = {_selected_title(text) for text in texts}
+    return Catalog(
+        table_marker_identity(marker.group()), texts[0][:500], selected == {True}
+    )
+
+
 def catalog_for_scope(scope) -> Catalog:
     """Use the same qualified original title as role and table-link consumers."""
-    from .source_table_markers import caption_table_marker, table_marker_identity
     from .source_table_roles import observed_role
     from .structure_column_scopes import original_column_context
     from .unruled_continuation_titles import anchor_scope
@@ -29,20 +58,43 @@ def catalog_for_scope(scope) -> Catalog:
     role, key = observed_role(packets)
     if role not in {"compound", "nonfinal"} or not key:
         return Catalog()
-    texts = list(dict.fromkeys(packet["text"] for packet in packets))
-    marker = caption_table_marker(texts[0])
-    if marker is None:
-        return Catalog()
-    selected = {
-        bool(re.search(r"\bselected\b|\bsubset\b|选定|选取", text, re.IGNORECASE))
-        for text in texts
-    }
     # A qualified original disagreement never grants selected-reprint exclusion.
-    return Catalog(
-        table_marker_identity(marker.group()),
-        texts[0][:500],
-        selected == {True},
-    )
+    return _catalog_from_titles(packet["text"] for packet in packets)
+
+
+def catalog_for_caption_scope(scope) -> Catalog:
+    """Revalidate the complete original role before using selected-table words."""
+    from .caption_role_links import MAX_CONTINUATION_DEPTH
+    from .caption_role_proof import caption_role_status
+    from .source_observations import source_observation_status
+
+    if (
+        not isinstance(scope, dict)
+        or caption_role_status(scope, scope.get("page_no"), scope.get("table_bbox"))
+        != "compound"
+    ):
+        return Catalog()
+    # The role replay above already validates every linked boundary and title.
+    for _ in range(MAX_CONTINUATION_DEPTH + 1):
+        if "continuation" not in scope:
+            break
+        scope = scope["continuation"]["previous"]
+    else:
+        return Catalog()
+    texts = [
+        packet["text"]
+        for packet in scope["observations"]
+        if source_observation_status(packet, packet["bbox"], packet["text"])
+        == "qualified"
+    ]
+    if "refinement" in scope:
+        # Role/key agreement does not imply that both readings say "selected".
+        # Retain both original-resolution variants and qualified original titles.
+        texts.extend(
+            observation["matrix"][0][0]
+            for observation in scope["refinement"]["role_cells"]["observations"]
+        )
+    return _catalog_from_titles(texts)
 
 
 def repeated_selected_catalogs(cells: Sequence[Any]) -> set[str]:
@@ -51,22 +103,21 @@ def repeated_selected_catalogs(cells: Sequence[Any]) -> set[str]:
     Two full catalogs remain competing evidence. A selected table with novel IDs
     also remains independent evidence; title wording alone cannot erase it.
     """
-    catalogs: dict[str, tuple[Catalog, set[str]]] = {}
+    catalogs: dict[str, tuple[set[bool], set[str]]] = {}
     for cell in cells:
         catalog = cell.catalog
         label = str(cell.label).removesuffix(".").upper()
         if not catalog.identifier or not label:
             continue
         if catalog.identifier not in catalogs:
-            catalogs[catalog.identifier] = catalog, set()
+            catalogs[catalog.identifier] = set(), set()
+        catalogs[catalog.identifier][0].add(catalog.selected_subset)
         catalogs[catalog.identifier][1].add(label)
-    complete = [
-        labels for catalog, labels in catalogs.values() if not catalog.selected_subset
-    ]
+    complete = [labels for roles, labels in catalogs.values() if roles == {False}]
     return {
         name
-        for name, (catalog, labels) in catalogs.items()
-        if catalog.selected_subset
+        for name, (roles, labels) in catalogs.items()
+        if roles == {True}
         and labels
         and any(labels.issubset(full) for full in complete)
     }

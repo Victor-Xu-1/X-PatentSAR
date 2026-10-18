@@ -1,5 +1,35 @@
 # Operations and troubleshooting
 
+## Single-column catalogues and selected repeat sources
+
+One-column caption grids use the normal source-binding path after complete outer
+edges and original caption/diagram ownership are verified. Activity-table geometry
+still defaults to at least two columns. An open frame is not repaired by guessing
+an edge. Numbered tables and caption catalogues share one complete primary/reprint
+decision; saving/reloading cannot promote a selected repeat over the complete
+original catalogue. Negated/mixed selected titles, unknown scope, two complete
+catalogues or novel selected identifiers do not grant a merge exemption.
+
+All proved repeat depictions remain queued to the same existing recognition/QC
+worker. Their graphs must agree under the existing stereo/isotope/charge/component
+rules before chemistry is qualified. Additional source count is not compound count
+or an independent experimental replicate. No extra model/environment is installed.
+
+Rejected proposals now remain as unresolved variant2 diagnostic observations in
+the existing binding JSON, including original role/cell/ownership context and IDs.
+They cannot produce chemistry, activities, an exclusion or successful coverage.
+Saved issue lists are not the source of truth: pure source replay restores each
+retained unresolved diagnostic. Missing/hash-mismatched/foreign diagnostic packets
+or budgets fail visibly; do not delete them to make a run pass. Existing variant1
+role observations remain readable under their own unchanged constraints.
+
+Binding23/binder32 refresh only derived source ownership through an ordinary
+frontend run. Preserve old PDFs, raw page/model/crop observations, manual edits,
+failed tasks and rollback packages. Never retag old results as accepted, rerun a
+private input outside the frontend, or interrupt a running attempt for deployment.
+Source/unit/native package and browser/PR/main/fixed18765 delivery gates remain
+separate from complete real extraction/SAR and broader scientific acceptance.
+
 ## Proved catalogue labels reported again as missing headings
 
 Layout nominations and original cell proof have different responsibilities.

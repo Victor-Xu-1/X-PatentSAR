@@ -13,9 +13,9 @@ from unittest.mock import patch
 
 import fitz
 
+from patent_sar_extractor.core.binding_source_claims import resolve_source_claims
 from patent_sar_extractor.core.binding_spatial import (
     SpatialBindings,
-    _resolve_claim_conflicts,
     collect_spatial_bindings,
 )
 from patent_sar_extractor.core.binding_types import (
@@ -212,7 +212,8 @@ class BindingModuleTests(unittest.TestCase):
                 ),
             ),
         ]
-        accepted, conflicts = _resolve_claim_conflicts(candidates)
+        result = resolve_source_claims(candidates)
+        accepted, conflicts = result.primary, result.conflicts
         self.assertEqual([candidate.label_key for candidate in accepted], ["8"])
         self.assertEqual(
             {conflict.reason for conflict in conflicts}, {"ambiguous_compound_owner"}
@@ -232,7 +233,8 @@ class BindingModuleTests(unittest.TestCase):
             )
             for label in ("7A", "7B")
         ]
-        accepted, conflicts = _resolve_claim_conflicts(candidates)
+        result = resolve_source_claims(candidates)
+        accepted, conflicts = result.primary, result.conflicts
         self.assertEqual(accepted, ())
         self.assertEqual(
             {conflict.reason for conflict in conflicts}, {"ambiguous_structure_owner"}

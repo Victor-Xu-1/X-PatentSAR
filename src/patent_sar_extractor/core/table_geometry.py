@@ -34,13 +34,17 @@ def cluster_positions(values: list[float], tolerance: float = 2.0) -> list[float
     return [sum(group) / len(group) for group in groups]
 
 
-def detect_ruled_table_regions(page, dpi: int = 300) -> list[dict]:
+def detect_ruled_table_regions(
+    page, dpi: int = 300, *, minimum_columns: int = 2
+) -> list[dict]:
     """Detect line-ruled table grids on a scanned page.
 
     The extractor intentionally works from the table lines first, then assigns
     OCR tokens to cells. This is much safer than flattening a multi-column
     activity table into plain text and trying to regex the result back apart.
     """
+    if type(minimum_columns) is not int or not 1 <= minimum_columns <= 64:
+        raise ValueError("Invalid original-grid minimum column count")
     try:
         from io import BytesIO
 
@@ -179,9 +183,9 @@ def detect_ruled_table_regions(page, dpi: int = 300) -> list[dict]:
             ],
             tolerance=2.0,
         )
-        if len(xs) < 3 or len(ys) < 2:
+        if len(xs) < minimum_columns + 1 or len(ys) < 2:
             continue
-        if len(ys) == 2 and not (
+        if (len(ys) == 2 or len(xs) == 2) and not (
             y1 - y0 >= 12
             and all(
                 any(
@@ -193,8 +197,8 @@ def detect_ruled_table_regions(page, dpi: int = 300) -> list[dict]:
                 for boundary in (x0, x1)
             )
         ):
-            # A short grid needs both complete original outer rules. Do not
-            # complete an underline/diagram/open frame with invented borders.
+            # Single-row or single-column frames need both complete original
+            # outer rules. Never complete an open edge from another inner rule.
             continue
         if xs[0] > x0 + 8:
             xs = [x0, *xs]
