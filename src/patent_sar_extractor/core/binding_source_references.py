@@ -196,7 +196,7 @@ def reference_issues(payload, entries, *, required=True):
     scope = payload.get("source_reference_scope")
     validate_role_catalog(
         payload.get("source_role_observations", {}),
-        original_pdf_sha256=scope.get("original_pdf_sha256")
+        original_pdf_sha256=(scope.get("original_pdf_sha256") or None)
         if isinstance(scope, dict)
         else None,
     )

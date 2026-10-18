@@ -11,7 +11,7 @@ from patent_sar_extractor.core.source_role_observations import validate_role_cat
 
 
 class BindingSourceDiagnosticsTests(unittest.TestCase):
-    def observe(self):
+    def observe(self, *, document="a" * 64):
         proposal = {
             "cpd": "Compound 007B",
             "structure_id": "source-x",
@@ -45,7 +45,7 @@ class BindingSourceDiagnosticsTests(unittest.TestCase):
             table_covered_count=0,
             no_binding=[],
             unbound_pages=[],
-            original_pdf_sha256="a" * 64,
+            original_pdf_sha256=document,
         )
         return payload, proposal
 
@@ -68,6 +68,21 @@ class BindingSourceDiagnosticsTests(unittest.TestCase):
         self.assertTrue(payload["strict_coverage"]["unresolved_sources"])
         validate_role_catalog(
             payload["source_role_observations"], original_pdf_sha256="a" * 64
+        )
+
+    def test_unknown_document_keeps_unresolved_proposal_without_inventing_a_hash(self):
+        payload, proposal = self.observe(document="")
+        observed = next(iter(payload["source_role_observations"].values()))
+        self.assertEqual(observed["status"], "unresolved")
+        self.assertNotIn("original_pdf_sha256", observed)
+        self.assertEqual(
+            observed["proposal"]["exact_caption_evidence"],
+            proposal["exact_caption_evidence"],
+        )
+        self.assertEqual(payload["final_bindings"], [])
+        self.assertEqual(
+            [issue["reason"] for issue in reference_issues(payload, [], required=True)],
+            ["unproved_original_binding"],
         )
 
     def test_diagnostic_mutation_foreign_source_and_promotion_are_rejected(self):

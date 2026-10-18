@@ -113,14 +113,15 @@ def write_binding_result(
     )
     catalog["formal_acceptance_scope"] = FORMAL_SCOPE
     bindings = [dict(binding) for binding in catalog["entries"]]
+    source_scope = reference_scope(source_sections, original_pdf_sha256)
     diagnostics = RoleObservationBuffer()
     diagnostics.extend(role_observations)
     issues = retain_binding_diagnostics(
-        issues, diagnostics, original_pdf_sha256=original_pdf_sha256
+        issues, diagnostics, original_pdf_sha256=source_scope["original_pdf_sha256"]
     )
     reference_payload = {
         "source_sections": list(source_sections),
-        "source_reference_scope": reference_scope(source_sections, original_pdf_sha256),
+        "source_reference_scope": source_scope,
         "source_role_observations": serialize_role_observations(list(diagnostics)),
     }
     # Unruled layout findings are one pure source-reference replay, not two
