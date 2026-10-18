@@ -67,6 +67,7 @@
     "tests/test_source_led_export.py",
     "tests/test_source_led_pipeline.py",
     "tests/test_source_led_stages.py",
+    "tests/test_standalone.py",
     "tests/test_strict_acceptance.py",
     "tests/test_structure_corpus.py",
     "tests/test_structure_inventory.py",

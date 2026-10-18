@@ -73,11 +73,7 @@ export function CropDialog({
             </figure>
           )}
         </div>
-        {!redraw && (
-          <output className="crop-redraw-note">
-            {redrawPlaceholder(compound)}
-          </output>
-        )}
+        {!redraw && <output className="crop-redraw-note">{redrawPlaceholder(compound)}</output>}
         {compound.additional_sources?.length ? (
           <details>
             <summary>
