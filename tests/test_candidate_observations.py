@@ -60,9 +60,14 @@ class ControlledDecimer:
 
 class CandidateSourceControls:
     def setUp(self):
-        temporary = tempfile.TemporaryDirectory()
-        self.addCleanup(temporary.cleanup)
-        self.root = Path(temporary.name)
+        workspace = getattr(self, "source_workspace", None)
+        if workspace is None:
+            temporary = tempfile.TemporaryDirectory()
+            self.addCleanup(temporary.cleanup)
+            self.root = Path(temporary.name)
+        else:
+            self.root = Path(workspace)
+            self.root.mkdir(mode=0o700, parents=True, exist_ok=False)
         self.original_sha = "a" * 64
         self.metadata = {
             **artifact_identity(STRUCTURES_SCHEMA, STRUCTURES_SCHEMA_VERSION),

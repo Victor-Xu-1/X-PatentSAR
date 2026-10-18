@@ -26,6 +26,11 @@ COMMON = {
 }
 MODES = (
     (
+        "candidate-observations",
+        "candidate-observations.spec.ts",
+        COMMON | {"candidate-observations.spec.ts"},
+    ),
+    (
         "completion",
         "structure-details.spec.ts",
         COMMON,

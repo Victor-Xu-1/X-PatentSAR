@@ -27,8 +27,22 @@ def prepare(
     sar: bool = False,
     history: bool = False,
     completion: bool = False,
+    candidate_observations: bool = False,
 ) -> dict[str, str]:
-    if sum((read_only, llm_settings, llm_recovery, sar, history, completion)) > 1:
+    if (
+        sum(
+            (
+                read_only,
+                llm_settings,
+                llm_recovery,
+                sar,
+                history,
+                completion,
+                candidate_observations,
+            )
+        )
+        > 1
+    ):
         raise ValueError("Choose one isolated fixture mode")
     if workspace.exists() and any(workspace.iterdir()):
         raise ValueError("Browser fixture workspace must be empty")
@@ -37,6 +51,12 @@ def prepare(
     repository = Path(__file__).resolve().parents[1]
     sys.path.insert(0, str(repository))  # Namespaced test helpers, never src/.
     sys.path.insert(0, str(repository / "tests"))
+    if candidate_observations:
+        if __package__:
+            from .prepare_candidate_fixture import prepare_candidates
+        else:
+            from prepare_candidate_fixture import prepare_candidates
+        return prepare_candidates(workspace, workspace / "web-state")
     from test_web_support import artifact_run, make_pdf
 
     pdf = make_pdf(
@@ -273,6 +293,11 @@ def main() -> None:
         help="Read-only synthetic saved-source observations; no model or extraction run",
     )
     parser.add_argument(
+        "--candidate-observations",
+        action="store_true",
+        help="Native synthetic source/controlled worker observations, read-only browser; no real model or patent task",
+    )
+    parser.add_argument(
         "--read-only",
         action="store_true",
         help="Metadata/navigation only; no task or installer-history fixtures",
@@ -286,6 +311,7 @@ def main() -> None:
         sar=args.sar,
         history=args.history,
         completion=args.completion,
+        candidate_observations=args.candidate_observations,
     )
     if args.github_env:
         destination = os.environ.get("GITHUB_ENV")
