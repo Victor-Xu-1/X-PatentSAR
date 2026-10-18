@@ -32,6 +32,11 @@ def heading_identifier(text: object) -> str:
     )
 
 
+def procedure_heading_boundary(text):
+    """The same original procedure stop for single and plural declarations."""
+    return bool(_BODY.match(str(text).strip()))
+
+
 def original_heading_lines(page, cached_lines=(), source_lines=()) -> list[dict]:
     """Keep native columns separate; cached OCR lines do not invent x bounds."""
     layout = source_layout(page)
@@ -155,7 +160,7 @@ def standalone_heading_evidence(
         line["y0"]
         for line in lines
         if line["y0"] > block["y0"] + 3
-        and (_BODY.match(str(line["text"]).strip()) or section_heading(line["text"]))
+        and (procedure_heading_boundary(line["text"]) or section_heading(line["text"]))
     ]
     end = min([end, *boundaries])
     candidates = [
@@ -194,6 +199,24 @@ def standalone_heading_evidence(
     }
 
 
+def _same_heading_occurrence(binding, evidence, label):
+    """The ledger locator and primary structure proof name one original source.
+
+    Both representations are retained for audit/coverage, not competing
+    authorities. A valid primary cannot legitimize changed locator metadata.
+    """
+    block = binding.get("original_heading_evidence")
+    return bool(
+        isinstance(block, dict)
+        and printed_identifier_key(block.get("cpd")) == label
+        and type(block.get("page_no")) is int
+        and block["page_no"] == evidence.get("page_no")
+        and block.get("line_text") == evidence.get("heading_text")
+        and block.get("bbox") == evidence.get("heading_bbox")
+        and block.get("heading_observation") == evidence.get("heading_source")
+    )
+
+
 def valid_heading_binding_evidence(binding: dict) -> bool:
     evidence = binding.get("original_heading_structure_evidence")
     if (
@@ -204,7 +227,9 @@ def valid_heading_binding_evidence(binding: dict) -> bool:
         return False
     label = printed_identifier_key(binding.get("compound_id") or binding.get("cpd"))
     declaration = proved_heading_declaration(evidence.get("heading_source"))
-    if heading_members(declaration) != [label]:
+    if heading_members(declaration) != [label] or not _same_heading_occurrence(
+        binding, evidence, label
+    ):
         return False
     try:
         heading = evidence["heading_bbox"]

@@ -1,5 +1,26 @@
 # Project governance manifest
 
+- `heading_cell_source` owns unique original grid-cell selection; the existing
+  call-local grid cache remains the only nomination authority. `source_cell_pixels`
+  owns four-edge original-ink conservation through the existing lossless pixel
+  codec, renderer and bounded gap policy. `heading_detector_identity` reuses the
+  literal caption-boundary guard; it cannot repair IDs, discard prior conflicts
+  or infer stereochemistry from elution notes. `heading_source_proof` coordinates
+  version1/2 replay; `heading_evidence` ties ledger metadata to the same primary
+  occurrence. Physical source selection precedes new OCR, avoiding a redundant
+  contaminated locator-window read. Known originals and unsafe/ambiguous sources
+  remain explicit. `heading_group_scope` resolves plural references against
+  already proved local caption/cell owners using the existing complete source
+  window and shared procedure boundary. Capture and saved completeness use one
+  scope replay, never title order, remaining-ID elimination or page-level ID
+  exemption. Unknown columns/words and every missing member remain explicit.
+  Binding26/binder35 change derived ownership only; no raw,
+  Activity21/extractor30, manual, numerical SAR, API/SQL, model or dependency
+  authority changes. Original 8M-pixel/128pt/codec/geometry limits stay bounded.
+  There is no parallel detector, parser, source store, queue, private reprocessing
+  or acceptance waiver. Controlled checks and exact-main deployment remain
+  distinct from real frontend extraction/SAR and scientific acceptance.
+
 - `caption_role_semantics` owns one literal case-boundary projection for original
   catalogue titles and their saved replay. Raw text/IDs stay verbatim; unknown
   strings are not completed, negative claims veto admission/exclusion and known

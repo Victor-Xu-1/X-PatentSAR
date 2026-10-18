@@ -28,7 +28,9 @@ class HeadingMappingTests(unittest.TestCase):
             {row["cpd"] for row in result["bindings"]}, {"Compound 1", "Compound 2"}
         )
         self.assertEqual(
-            {row["cpd"] for row in result["source_issues"]}, {"Compound 72C"}
+            {row["cpd"] for row in result["source_issues"]},
+            {"Compound 1", "Compound 72C"},
+            "A matching ID above this separate declaration cannot discharge its occurrence",
         )
         self.assertTrue(
             any(

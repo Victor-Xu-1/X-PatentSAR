@@ -1,6 +1,7 @@
 """Original heading membership replay in the existing source-reference ledger."""
 
 from .activity_header_evidence import proof_id
+from .heading_group_scope import group_heading_members
 from .heading_source_proof import heading_observation_status
 from .printed_identifiers import identifier_key
 from .source_binding_proof import annotate_source_binding
@@ -33,7 +34,7 @@ def _heading_owners(entries, original_sha):
                 and not checked.get("fail_closed")
                 and checked.get("source_pdf_sha256") == original_sha
             ):
-                proof = checked["original_heading_evidence"]["heading_observation"]
+                proof = checked["original_heading_structure_evidence"]["heading_source"]
                 owners.add(
                     (proof_id(proof), identifier_key(checked.get("cpd"), wrapped=True))
                 )
@@ -69,6 +70,8 @@ def heading_inventory_issues(sections, scope, entries):
         ):
             raise ValueError("Malformed original heading source proof")
         if status == "unresolved":
+            if "group_context" in section:
+                raise ValueError("Unproved heading cannot assert a local group context")
             if section["role"] != "unproved_heading":
                 raise ValueError("Unproved original heading has an asserted role")
             issues.append(
@@ -83,6 +86,11 @@ def heading_inventory_issues(sections, scope, entries):
             raise ValueError(
                 "Original heading declaration differs from its observations"
             )
+        group_members = (
+            group_heading_members(section, entries, scope["original_pdf_sha256"])
+            if "group_context" in section
+            else set()
+        )
         if declaration["role"] in {
             "intermediate_section",
             "assay_section",
@@ -91,7 +99,7 @@ def heading_inventory_issues(sections, scope, entries):
             continue
         for identifier in heading_members(declaration):
             present = (
-                (proof_id(proof), identifier) in owners
+                ((proof_id(proof), identifier) in owners or identifier in group_members)
                 if scope["version"] == 6
                 else identifier in labels
             )

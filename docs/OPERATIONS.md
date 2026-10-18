@@ -1,5 +1,54 @@
 # Operations and troubleshooting
 
+## Ruled heading cells and exact original occurrence
+
+A page-OCR locator is not a chemical identifier authority. A padded word window
+can include table rules that the recognizer reports as blank text rows or false
+digits. The source reader now first checks the existing physical grid inventory:
+only a unique complete original cell with four witnessed edges may supply a
+full-cell text window. Each existing resolution is read once. Missing edges,
+crossing cells, unexplained edge ink, low scores, native contradictions and
+independent original ID/annotation conflicts remain unresolved, not warnings.
+All prior observations, if any, remain part of saved replay. No guessed digits,
+negative-word removal, confidence lowering or arbitrary successful-token crop
+is used. This is a generic source-window repair, not a patent/page/ID exception.
+
+The primary heading/structure evidence and its ledger locator must agree on the
+same original source, label, literal text and bounds. Mutating one copy cannot
+leave the other copy's confirmation usable by recognition, coverage, export or
+the Web catalog reader. The existing writer and source ledger remain authoritative;
+no second task, store or acceptance path is introduced.
+
+Literal multi-compound titles retain every original member in the ledger.
+Existing independently proved captions/cells can satisfy a member only below
+that exact declaration in its source context, not elsewhere on the page or in
+title order. The existing complete page tokens are retained without another OCR;
+the same saved replay checks procedure/assay/title boundaries, native conflicts
+and weak/unknown words. One missing caption stays missing even if only one
+unassigned diagram/ID remains. An independent simultaneous column without a
+proved boundary remains a review gap, not an automatically chosen scope.
+
+Binding26/binder35 require a fresh software-owned derived binding pass. Preserve
+original PDFs, raw OCR, structure crops, manual audit, all failed products and
+rollback. Activity21/extractor30, molecular models/QC, numerical SAR, API and SQL
+versions are unchanged. Old products remain available as historical review,
+never rewritten or relabelled current. A running scientific task must finish
+before deployment or a new attempt. Real patents are resubmitted only through
+the ordinary frontend after related P0 source repairs and deployment checks;
+diagnostic scripts must not re-OCR or complete private data.
+
+Controlled native/raster solid/dotted-cell, unknown-ink, boundary, serialization,
+full-binder and downstream checks do not prove arbitrary-format recall or correct
+chemical recognition. In particular, unresolved small activity-header words or
+percent signs cannot lend unproved meaning to another table panel. Keep those
+and the complete real frontend extraction/SAR acceptance open independently.
+
+Browser structure-preview/read-error checks use the existing isolated completion
+adapter, with explicitly controlled current molecular observations. A historical
+review fixture correctly withholds SMILES and cannot be used as if it supplied
+a valid molecule. No historical/private product is rewritten to satisfy a UI
+check; synthetic adapters are not extraction or model-accuracy evidence.
+
 ## Joined catalogue titles and visible binding source work
 
 A qualified original title such as `CompoundsTable`, `IntermediateCompounds` or

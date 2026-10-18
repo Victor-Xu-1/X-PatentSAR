@@ -20,6 +20,7 @@ from .heading_evidence import (
     original_heading_lines,
     standalone_heading_evidence,
 )
+from .heading_group_scope import group_heading_members, observe_group_context
 from .heading_line_windows import heading_line_windows
 from .heading_observation import observe_heading
 from .heading_source_proof import proved_heading_declaration
@@ -56,6 +57,7 @@ def observed_heading_blocks(
     for page_index in observed_items("heading_sources", sorted(set(pages)), progress):
         page = doc[page_index]
         plot_cache = {}
+        group_context = None
         layout = source_layout(page)
         regions = (source_regions or {}).get(page_index)
         if regions is None:
@@ -148,23 +150,40 @@ def observed_heading_blocks(
                         cache=plot_cache,
                         tokens_for_page=tokens_for_page,
                     )
-                    or observe_heading(page, line, document_sha256, layout=layout)
+                    or observe_heading(
+                        page,
+                        line,
+                        document_sha256,
+                        layout=layout,
+                        grids=grids_for_page(page) if grids_for_page else None,
+                    )
                 )
                 declared = proved_heading_declaration(proof)
                 effective = declared or observation
+                section = {
+                    **effective,
+                    "page_no": page_index + 1,
+                    "bbox": proof["nomination"]["bbox"],
+                    "heading_observation": proof,
+                    "status": proof["status"],
+                    "role": effective["role"] if declared else "unproved_heading",
+                }
+                if (
+                    declared
+                    and declared["role"] == "compound_heading"
+                    and len(heading_members(declared)) > 1
+                    and tokens_for_page
+                ):
+                    if group_context is None:
+                        group_context = observe_group_context(
+                            page, tokens_for_page(page), document_sha256
+                        )
+                    section["group_context"] = group_context
+                covered_members = group_heading_members(
+                    section, source_bindings, document_sha256
+                )
                 if source_sections is not None:
-                    source_sections.append(
-                        {
-                            **effective,
-                            "page_no": page_index + 1,
-                            "bbox": proof["nomination"]["bbox"],
-                            "heading_observation": proof,
-                            "status": proof["status"],
-                            "role": effective["role"]
-                            if declared
-                            else "unproved_heading",
-                        }
-                    )
+                    source_sections.append(section)
                 if declared and declared["role"] in {
                     "assay_section",
                     "intermediate_section",
@@ -172,6 +191,8 @@ def observed_heading_blocks(
                 }:
                     continue
                 for identifier in heading_members(effective):
+                    if identifier in covered_members:
+                        continue
                     blocks.append(
                         {
                             "cpd": f"Compound {identifier}",

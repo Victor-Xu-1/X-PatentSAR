@@ -71,7 +71,16 @@ def valid_heading_geometry(proof):
     hint, raster = proof.get("nomination"), proof.get("raster_bounds")
     if not _nomination(hint, bounds):
         return False
-    if bounds != list(heading_bounds(hint["bbox"], size)):
+    if proof.get("version") == 2:
+        from .heading_cell_source import valid_cell_geometry
+
+        packet = proof.get("cell_source")
+        if (
+            not valid_cell_geometry(packet, hint["bbox"], size, MAX_HEADING_HEIGHT)
+            or bounds != packet["cell"]
+        ):
+            return False
+    elif bounds != list(heading_bounds(hint["bbox"], size)):
         return False
     if raster is not None and not _inside(raster, [0, 0, *size]):
         return False

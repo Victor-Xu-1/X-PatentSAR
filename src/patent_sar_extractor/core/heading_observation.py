@@ -2,7 +2,10 @@
 
 import hashlib
 
+import fitz
+
 from .cell_ocr_observation import observe_cell
+from .heading_cell_source import observe_cell_source
 from .heading_source_geometry import MAX_HEADING_HEIGHT, heading_bounds
 from .heading_source_proof import heading_observation_status
 from .page_ocr_cache import get_ocr_engine
@@ -12,7 +15,7 @@ from .source_section_roles import section_heading
 from .table_cells import cell_image
 
 
-def observe_heading(page, line, original_pdf_sha256, *, layout=None):
+def observe_heading(page, line, original_pdf_sha256, *, layout=None, grids=None):
     bounds = heading_bounds(line["bbox"], [page.rect.width, page.rect.height])
     if bounds.is_empty or bounds.height > MAX_HEADING_HEIGHT:
         raise ValueError("Original heading exceeds its physical source bounds")
@@ -38,6 +41,39 @@ def observe_heading(page, line, original_pdf_sha256, *, layout=None):
         "observations": [],
         "rendered_frames": [],
     }
+    # Resolve the physical source before OCR. Reading an arbitrary locator's
+    # padded rectangle first can turn a ruling stroke into a spurious digit.
+    # The original native window remains retained, never promoted by geometry.
+    proof["status"], _ = heading_observation_status(proof)
+    if proof["status"] != "unresolved":
+        return proof
+    if grids is None:
+        from .table_geometry import detect_ruled_table_regions
+
+        grids = detect_ruled_table_regions(page, dpi=240, minimum_columns=1)
+    cell_source = observe_cell_source(page, line["bbox"], grids, MAX_HEADING_HEIGHT)
+    if cell_source is None:
+        _observe_window(page, proof, layout)
+        return proof
+    candidate = {
+        **proof,
+        "version": 2,
+        "bbox": cell_source["cell"],
+        "native_source": source_cell_observation(
+            SourceTokens(layout.native, layout), tuple(cell_source["cell"]), native=True
+        ),
+        "original_heading": proof,
+        "cell_source": cell_source,
+        "observations": [],
+        "rendered_frames": [],
+    }
+    _observe_window(page, candidate, layout)
+    return candidate
+
+
+def _observe_window(page, proof, layout):
+    bounds = fitz.Rect(proof["bbox"])
+    native = proof["native_source"]
     status, _ = heading_observation_status(proof)
     raster = layout.raster_bounds is not None and overlaps(layout.raster_bounds, bounds)
     if status != "confirmed" and (raster or not native["text"].strip()):
@@ -61,4 +97,3 @@ def observe_heading(page, line, original_pdf_sha256, *, layout=None):
                     }
                 )
     proof["status"], _ = heading_observation_status(proof)
-    return proof
