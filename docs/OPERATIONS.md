@@ -1,5 +1,25 @@
 # Operations and troubleshooting
 
+## Complete short caption rows before fragment detection
+
+An owned caption cell can contain one complete printed line even when the text
+detector fragments its prefix or misses the last digit. The source reader now
+first checks the unchanged bounded pixel-row predicate, before interpreting any
+text, and reads that entire row once with the existing OCR engine. It records
+physical-caption frame3, not invented detector boxes. No digits, suffixes or
+roles are assembled from fragments. Weak or malformed direct output remains
+unresolved without a detector retry; multirow/unproved cells keep the existing
+bounded detection path. All actual independent source contradictions still veto.
+
+Binding28/binder37 require fresh derived ownership through the ordinary frontend;
+do not retag old bindings or change original PDFs, raw OCR, crops or manual audit.
+Legacy caption frame1 remains readable under its own proof, and header frame2's
+all-attempt policy cannot be replaced by caption frame3. Activity22/extractor31,
+visible21, OCSR/preparation8, numerical SAR, API/SQL and dependencies do not change.
+Preserve a compatible rollback and deploy only while scientific work is idle.
+Focused source/serialized consumers, installed package and real-browser checks
+remain separate from complete real frontend extraction/SAR and chemical accuracy.
+
 ## Large binding evidence without dropped records
 
 Repeated complete source proofs can inflate a binding artifact past the shared

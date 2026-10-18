@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- `cell_caption_lines` owns positive complete-row source selection before OCR
+  detection for short single-line captions. The same engine observes each DPI
+  once; unknown/weak/malformed results cannot start another winner-selection
+  path. Multiline/unproved inputs retain the existing bounded detector, and its
+  genuine saved conflicts remain vetoes. Physical-caption frame3 uses the sole
+  `cell_text_proof` replay; legacy frame1 stays readable, while header frame2's
+  row-attempt contract remains separate. The obsolete empty-detector recovery
+  producer is removed. Binding28/binder37 refresh derived ownership; raw assets,
+  visible21/OCSR/preparation8/Activity22/extractor31/manual/API/SQL/dependencies
+  and numerical SAR stay unchanged. Controlled native/raster/writer/preparation
+  evidence is not universal-format, chemical or real-patent acceptance.
+
 - Shared artifact transport: `artifact_nodes` owns ordered typed JSON identities
   and finite resource accounting; `artifact_catalog` owns shared JSON version1
   from `contracts.SHARED_JSON_VERSION`. `artifact_io` remains the sole atomic

@@ -5,9 +5,11 @@ import hashlib
 import json
 import tempfile
 import unittest
+from contextlib import nullcontext
 from pathlib import Path
 from unittest.mock import patch
 
+from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.core.binding_source_references import reference_issues
 from patent_sar_extractor.core.catalog_reader import (
     CatalogValidationError,
@@ -16,6 +18,7 @@ from patent_sar_extractor.core.catalog_reader import (
 from patent_sar_extractor.core.formal_structure import coverage_errors
 from patent_sar_extractor.core.structure_binder import bind
 from tests.test_caption_page_boundary import below_pages
+from tests.test_caption_role_raster import raster_catalog
 from tests.test_caption_source_roles import catalog
 from tests.test_parallel_caption_boundary import parallel_catalogues
 
@@ -24,7 +27,7 @@ class CaptionRoleWriterTests(unittest.TestCase):
     def execute(self, title="Table 47. Compounds", *, prefixed=False):
         return self.execute_document(*catalog(title, prefixed=prefixed))
 
-    def execute_document(self, doc, structures, boxes):
+    def execute_document(self, doc, structures, boxes, *, native=True):
         temporary = tempfile.TemporaryDirectory(prefix="patentsar-caption-role-")
         self.addCleanup(temporary.cleanup)
         root = Path(temporary.name)
@@ -53,12 +56,13 @@ class CaptionRoleWriterTests(unittest.TestCase):
             json.dumps({"patent_number": "CONTROL-ROLE", "structures": records})
         )
         before = hashlib.sha256(pdf.read_bytes()).hexdigest()
-        with patch(
+        native_guard = patch(
             "patent_sar_extractor.core.page_ocr_cache.get_ocr_engine",
             side_effect=AssertionError(
                 "Controlled native catalogue must not invoke OCR"
             ),
-        ):
+        )
+        with native_guard if native else nullcontext():
             result = bind(
                 str(pdf),
                 {"bind_workers": 1},
@@ -66,9 +70,42 @@ class CaptionRoleWriterTests(unittest.TestCase):
                 structures_path=str(metadata),
             )
         self.assertEqual(hashlib.sha256(pdf.read_bytes()).hexdigest(), before)
-        saved = json.loads(Path(result["output_files"]["json"]).read_text())
+        saved = load_json(Path(result["output_files"]["json"]), None)
         self.assertEqual(saved["final_bindings"], result["final_bindings"])
         return saved, records
+
+    def test_actual_raster_caption_frame_survives_writer_and_strict_saved_reader(self):
+        payload, records = self.execute_document(
+            *raster_catalog(prefixed=True, labels=("42", "581"), label_fontname="hebo"),
+            native=False,
+        )
+        entries, _ = read_catalog_entries(
+            payload, {record["structure_id"] for record in records}
+        )
+        self.assertEqual(
+            {entry["cpd"] for entry in entries}, {"Compound 42", "Compound 581"}
+        )
+        self.assertEqual(payload["source_issues"], [])
+        self.assertEqual(coverage_errors(payload), [])
+        for entry in entries:
+            readings = entry["exact_caption_evidence"]["observations"]
+            self.assertTrue(
+                any(
+                    reading.get("physical_caption_line", {}).get("version") == 3
+                    for reading in readings
+                )
+            )
+        changed = copy.deepcopy(payload)
+        reading = next(
+            reading
+            for reading in changed["compound_catalog"]["entries"][0][
+                "exact_caption_evidence"
+            ]["observations"]
+            if "physical_caption_line" in reading
+        )
+        reading["physical_caption_line"]["version"] = 1
+        with self.assertRaises(CatalogValidationError):
+            read_catalog_entries(changed)
 
     def test_actual_binder_writer_and_saved_catalogue_keep_later_page_captions(self):
         doc, structures, boxes, _grids = below_pages()

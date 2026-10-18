@@ -7,7 +7,7 @@ import cv2
 import numpy as np
 
 from .cell_caption_identity import refined_caption_conflicts
-from .cell_caption_lines import observe_undetected_caption, physical_caption_valid
+from .cell_caption_lines import observe_single_caption, physical_caption_valid
 from .cell_header_lines import header_line_frame, observe_header_lines
 from .cell_ocr_lines import resolve_overlapping_lines
 from .cell_ocr_scores import confidence_score as _score
@@ -73,14 +73,35 @@ class OCRObservation:
         }
 
 
+def _single_caption_observation(image, crop, border, dpi, engine, normalize):
+    source = observe_single_caption(image, engine, border, dpi)
+    if source is None:
+        return None
+    parts, physical = source
+    raw = " ".join(part["text"] for part in parts)
+    score = min((part["confidence"] for part in parts), default=0.0)
+    observation = OCRObservation(
+        normalize(raw, "label") if score >= 0.85 else "",
+        score,
+        raw,
+        tuple(parts),
+        crop,
+        border,
+        physical_caption_line=physical,
+    )
+    if not physical_caption_valid(observation.evidence(dpi, ())):
+        return replace(observation, value="")
+    return observation
+
+
 def observe_cell(
     image: np.ndarray, kind: str, dpi: int, engine, normalize, *, maximum_text_rows=8
 ) -> OCRObservation:
     """Use the existing coordinate OCR engine, never a second inference chain.
 
-    Labels start with line detection, including short one-line captions. Scalar
-    cells retain direct recognition. Every returned reading includes original
-    text, line confidence and crop coordinates even when normalization fails.
+    Captions first select a complete short original ink row, then use the same
+    engine without fragment detection. Other layouts retain bounded detection;
+    scalar cells keep direct recognition. All observations remain source-bound.
     """
     gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     ink_y, ink_x = np.where(gray < 180)
@@ -103,9 +124,15 @@ def observe_cell(
         cv2.BORDER_CONSTANT,
         value=(255, 255, 255),
     )
+    if kind == "label":
+        caption = _single_caption_observation(
+            image, crop, border, dpi, engine, normalize
+        )
+        if caption is not None:
+            return caption
     # A bounded one-line header cell can be a single printed "n" or "%";
     # line detection routinely suppresses those legitimate tiny observations.
-    # Multiline headers and every compound caption still use line detection.
+    # Multiline headers/captions and unproved physical rows retain detection.
     text_region = kind in {"header", "heading"}
     row_height = 128 if kind == "heading" else 12
     header_frame = (
@@ -174,11 +201,6 @@ def observe_cell(
                     "coordinate_space": "cell_ink_crop_pixels",
                 }
             ]
-    caption_line = (
-        observe_undetected_caption(image, engine, border, dpi)
-        if kind == "label" and not detection_parts
-        else None
-    )
     header_lines = (
         observe_header_lines(image, engine, border, dpi, frame=header_frame)
         if header_frame is not None
@@ -195,9 +217,6 @@ def observe_cell(
         parts = resolved
     if header_lines is not None:
         parts, physical = header_lines
-        resolved = parts if physical["status"] == "observed" else None
-    if caption_line is not None:
-        parts, physical = caption_line
         resolved = parts if physical["status"] == "observed" else None
     if detected:
         parts.sort(
@@ -241,13 +260,7 @@ def observe_cell(
         border,
         detection_parts,
         header_lines[1] if header_lines is not None else None,
-        caption_line[1] if caption_line is not None else None,
+        None,
         single_row_readings=single_readings,
     )
-    # This replay owns the pixel frame only. The caller supplies and verifies
-    # actual original-PDF cell bounds; no point geometry is invented here.
-    if caption_line is not None and not physical_caption_valid(
-        observation.evidence(dpi, ())
-    ):
-        return replace(observation, value="")
     return observation

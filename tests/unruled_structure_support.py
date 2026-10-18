@@ -6,6 +6,7 @@ from pathlib import Path
 
 import fitz
 
+from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.core.structure_binder import bind
 
 
@@ -114,5 +115,5 @@ class UnruledStructureControls:
             str(self.root / "bindings"),
             str(metadata),
         )
-        payload = json.loads(Path(result["output_files"]["json"]).read_text())
+        payload = load_json(Path(result["output_files"]["json"]), None)
         return result, payload
