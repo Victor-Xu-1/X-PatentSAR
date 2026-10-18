@@ -1,6 +1,6 @@
 import { useTranslation } from '../../i18n';
 import { useEffect, useRef } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, CircleAlert } from 'lucide-react';
 import type { Job } from '../../api/types';
 import { jobStatusText } from '../../model/presentation';
 import { jobStageProgressText } from '../../model/jobPresentation';
@@ -60,6 +60,8 @@ export function StageStrip({
           ? t('历史阶段不可用：本次任务的阶段记录无法可靠读取。')
           : t('历史阶段可用性未知')}
       </output>
+    ) : !verified && job ? (
+      <output className="stage-history-notice">{t('阶段状态未知')}</output>
     ) : null;
   const list =
     !verified && !job ? (
@@ -117,29 +119,38 @@ export function StageStrip({
     !waitingResources(job, current)
       ? jobStageProgressText(current)
       : null;
-  const reviewCount = recognitionReviewCount(job);
+  const known = verified && (!job || job.history_available === true);
+  const reviewCount = known ? recognitionReviewCount(job) : null;
+  const progressText =
+    verified && !completedCoreRejection(job) && !sourceWork && progress && progress.total > 0
+      ? jobStageProgressText(current)
+      : null;
+  const stoppedPrefix =
+    verified && job && ['cancelled', 'interrupted'].includes(job.status)
+      ? `${jobStatusText(job)} · `
+      : '';
+  const currentText = sourceWork
+    ? `${t(stageStatusText(job, current, currentName!))} · ${sourceWork}`
+    : label;
+  const summaryText = `${stoppedPrefix}${currentText}${reviewCount !== null ? ` · ${t('{count} 条结构', { count: reviewCount })}` : ''}${progressText ? ` · ${progressText}` : ''}`;
+  const compactText =
+    known && job?.status === 'failed' && job.error?.code !== 'core_not_accepted' && currentName
+      ? `${jobStatusText(job)} · ${t(stageLabel(currentName, current))}`
+      : summaryText;
   return (
     <details className="stage-overview stage-disclosure" ref={disclosure}>
       <summary className="stage-current-line" aria-label={t('提取阶段详情')}>
-        <WorkflowGroups job={job} />
+        <WorkflowGroups job={job} verified={verified} />
         <span
-          className={`stage-current ${!verified ? 'is-unknown' : completedCoreRejection(job) ? 'is-review' : `is-${job?.status ?? 'idle'}`}`}
+          className={`stage-current ${!known ? 'is-unknown' : completedCoreRejection(job) ? 'is-review' : `is-${job?.status ?? 'idle'}`}`}
           aria-live="polite"
           aria-atomic="true"
-          title={sourceWork ? `${label} · ${sourceWork}` : undefined}
+          title={sourceWork ? `${label} · ${sourceWork}` : summaryText}
         >
-          {job && ['cancelled', 'interrupted'].includes(job.status) && `${jobStatusText(job)} · `}
-          {sourceWork ? `${t(stageStatusText(job, current, currentName!))} · ${sourceWork}` : label}
-          {reviewCount !== null && (
-            <span className="stage-progress"> · {t('{count} 条结构', { count: reviewCount })}</span>
+          {known && job?.status === 'failed' && (
+            <CircleAlert size={16} className="stage-state-icon" aria-hidden="true" />
           )}
-          {verified &&
-            !completedCoreRejection(job) &&
-            !sourceWork &&
-            progress &&
-            progress.total > 0 && (
-              <span className="stage-progress"> · {jobStageProgressText(current)}</span>
-            )}
+          <span className="stage-current-text">{compactText}</span>
         </span>
         <ChevronDown size={14} className="stage-disclosure-chevron" aria-hidden="true" />
       </summary>

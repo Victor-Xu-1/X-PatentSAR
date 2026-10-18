@@ -22,9 +22,14 @@
 }
 .workflow-panel .stage-overview {
   flex: 1;
+  container-type: inline-size;
+  container-name: workflow-status;
 }
 .stage-disclosure {
   position: relative;
+}
+.stage-disclosure[open] {
+  z-index: 30;
 }
 .stage-current-line {
   display: flex;
@@ -40,8 +45,11 @@
   display: none;
 }
 .stage-current {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
   margin-left: auto;
   padding: 6px 9px;
   border-radius: var(--radius-control);
@@ -49,6 +57,16 @@
   color: var(--muted);
   font-size: 13px;
   line-height: 1.4;
+}
+.stage-current-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stage-state-icon {
+  flex: 0 0 auto;
+  margin-right: 6px;
 }
 .stage-current.is-review,
 .stage-current.is-queued {
@@ -75,7 +93,19 @@
   align-items: center;
   gap: 16px;
   min-width: 0;
-  flex: 1 1 auto;
+  flex: 0 0 auto;
+}
+@container workflow-status (max-width: 600px) {
+  .workflow-groups {
+    display: none;
+  }
+  .stage-current-line {
+    justify-content: flex-end;
+  }
+  .stage-detail-surface {
+    left: 0;
+    right: auto;
+  }
 }
 .workflow-group {
   display: inline-flex;

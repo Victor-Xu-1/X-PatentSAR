@@ -184,7 +184,13 @@ describe('actual core then source-completion/six-property task chain', () => {
       const last = stages.at(-1)!;
       expect(last).toHaveClass('pending');
       expect(within(last).getByText('未执行')).toBeVisible();
-      expect(document.querySelector('.stage-current')).toHaveTextContent('文档解析 · 停止时进行中');
+      expect(document.querySelector('.stage-current')).toHaveTextContent(
+        status === 'failed' ? '运行失败 · 文档解析' : '文档解析 · 停止时进行中',
+      );
+      expect(document.querySelector('.stage-current')).toHaveAttribute(
+        'title',
+        expect.stringContaining('文档解析 · 停止时进行中'),
+      );
       expect(last).not.toHaveClass('failed');
     },
   );

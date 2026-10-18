@@ -30,6 +30,84 @@ const withAdmet: Job = {
   admet_stage: phase,
 };
 describe('one slim observed job state with disclosed detail', () => {
+  it('keeps the full failed source text available on the compact trigger without changing recorded progress', () => {
+    const failed: Job = {
+      ...job,
+      status: 'failed',
+      history_available: true,
+      error: { code: 'extraction_failed', message: 'Controlled transport error.' },
+      stages: job.stages.map((stage) => ({
+        ...stage,
+        status:
+          stage.name === 'bind'
+            ? 'failed'
+            : ['classify', 'locate', 'structures'].includes(stage.name)
+              ? 'ok'
+              : 'pending',
+        progress:
+          stage.name === 'bind'
+            ? {
+                source_phase: 'heading_bindings',
+                completed: 73567,
+                total: 73567,
+                cache_hits: 0,
+                failures: 0,
+                device: null,
+                peak_rss_mb: null,
+              }
+            : null,
+      })),
+    };
+    const original = JSON.stringify(failed);
+    const { container } = render(<StageStrip job={failed} compact />);
+    const current = container.querySelector('.stage-current')!;
+    expect(current).toHaveAttribute('title', expect.stringContaining('编号绑定 · 失败'));
+    expect(current).toHaveAttribute(
+      'title',
+      expect.stringContaining('核对编号归属 · 73567 / 73567 项'),
+    );
+    expect(current.querySelector('.stage-state-icon')).toHaveAttribute('aria-hidden', 'true');
+    fireEvent.click(screen.getByLabelText('提取阶段详情'));
+    expect(screen.getByRole('list', { name: '任务运行链路' })).toBeVisible();
+    expect(JSON.stringify(failed)).toBe(original);
+  });
+  it.each([false, null])('does not color unknown history %s as a current failure', (history) => {
+    const { container } = render(
+      <StageStrip job={{ ...job, status: 'failed', history_available: history }} compact />,
+    );
+    const current = container.querySelector('.stage-current')!;
+    expect(current).toHaveClass('is-unknown');
+    expect(current).not.toHaveClass('is-failed');
+    expect(current.querySelector('.stage-state-icon')).toBeNull();
+    expect(current).toHaveAttribute('title', history === false ? '历史阶段不可用' : '阶段状态未知');
+  });
+  it('does not borrow a stopped prefix or review counter while the observation is unverified', () => {
+    const { container } = render(
+      <StageStrip job={{ ...withAdmet, status: 'interrupted' }} compact verified={false} />,
+    );
+    const current = container.querySelector('.stage-current')!;
+    expect(current).toHaveTextContent(/^阶段状态未知$/);
+    expect(current).toHaveAttribute('title', '阶段状态未知');
+    expect(current).toHaveClass('is-unknown');
+    expect(current.querySelector('.stage-state-icon')).toBeNull();
+  });
+  it('keeps compact groups neutral and labels retained detail while the observation is unverified', () => {
+    const cached = { ...withAdmet, status: 'complete' as const };
+    const original = JSON.stringify(cached);
+    const { container } = render(<StageStrip job={cached} compact verified={false} />);
+    const groups = [...container.querySelectorAll('.workflow-group')];
+    expect(groups.length).toBeGreaterThan(0);
+    for (const group of groups) {
+      expect(group).toHaveClass('unknown');
+      expect(group).not.toHaveClass('ok', 'running', 'failed');
+      expect(group).toHaveAttribute('title', '阶段状态未知');
+    }
+    fireEvent.click(screen.getByLabelText('提取阶段详情'));
+    expect(
+      container.querySelector('.stage-detail-surface .stage-history-notice'),
+    ).toHaveTextContent('阶段状态未知');
+    expect(JSON.stringify(cached)).toBe(original);
+  });
   it.each(stageNames)(
     'keeps an interrupted upstream %s visible instead of an unstarted terminal ADMET failure',
     (name) => {
@@ -70,7 +148,7 @@ describe('one slim observed job state with disclosed detail', () => {
       };
       rerender(<StageStrip job={failed} compact />);
       expect(document.querySelector('.stage-current')).toHaveTextContent(
-        `${stageLabels[name]} · 失败`,
+        `运行失败 · ${stageLabels[name]}`,
       );
       expect(container.querySelector('.stage:last-child')).not.toHaveClass('failed');
     },
@@ -101,7 +179,7 @@ describe('one slim observed job state with disclosed detail', () => {
       expect(observedStages(current)).toHaveLength(9);
       render(<StageStrip job={current} compact />);
       expect(document.querySelector('.stage-current')).toHaveTextContent(
-        status === 'failed' ? 'ADMET / 指标 · 失败' : 'ADMET / 指标 · 等待',
+        status === 'failed' ? '运行失败 · ADMET / 指标' : 'ADMET / 指标 · 等待',
       );
     },
   );
@@ -255,9 +333,13 @@ describe('one slim observed job state with disclosed detail', () => {
         compact
       />,
     );
-    expect(document.querySelector('.stage-current')).toHaveTextContent(
+    expect(document.querySelector('.stage-current')).toHaveTextContent('运行失败 · 结构补齐');
+    expect(document.querySelector('.stage-current')).toHaveAttribute(
+      'title',
       '结构补齐 · 失败 · 已处理 12 / 100',
     );
+    fireEvent.click(screen.getByLabelText('提取阶段详情'));
+    expect(screen.getByText('结构补齐').closest('li')).toHaveTextContent('已处理 12 / 100');
     expect(container.querySelector('.spin')).toBeNull();
   });
 });

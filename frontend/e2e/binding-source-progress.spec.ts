@@ -4,7 +4,7 @@ import { job } from '../tests/fixtures';
 
 // Installed application over an owned isolated service. Only synthetic GET
 // telemetry is varied; no extraction, patent, correction, model or task write.
-for (const width of [390, 1672]) {
+for (const width of [390, 800, 1672]) {
   test(`binding source passes stay truthful and compact at ${width}px`, async ({ page }, info) => {
     const origin = new URL(process.env.PATENTSAR_E2E_BASE_URL!);
     expect(['127.0.0.1', 'localhost', '[::1]']).toContain(origin.hostname);
@@ -14,6 +14,10 @@ for (const width of [390, 1672]) {
     const project = process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID!;
     let phase: BindingSourcePhase = 'caption_sources';
     let completed = 2;
+    let total = 7;
+    let terminal = false;
+    let unavailable = false;
+    let unavailableReads = 0;
     let resultReads = 0;
     const writes: string[] = [],
       errors: string[] = [];
@@ -29,10 +33,27 @@ for (const width of [390, 1672]) {
       const list = url.pathname === '/api/v1/jobs';
       const detail = url.pathname === '/api/v1/jobs/controlled-binding-work';
       if (list || detail) {
+        if (unavailable) {
+          unavailableReads++;
+          return route.fulfill({
+            status: 503,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              error: {
+                code: 'service_unavailable',
+                message: 'Controlled unavailable task observation.',
+              },
+            }),
+          });
+        }
         const current = {
           ...job,
           id: 'controlled-binding-work',
           project_id: project,
+          status: terminal ? 'failed' : 'running',
+          error: terminal
+            ? { code: 'extraction_failed', message: 'Controlled source transport failure.' }
+            : null,
           // Observe the current recorded source-first chain. Legacy order
           // remains covered independently by the existing task unit checks.
           stage_order: [
@@ -49,7 +70,9 @@ for (const width of [390, 1672]) {
             ...stage,
             status:
               stage.name === 'bind'
-                ? 'running'
+                ? terminal
+                  ? 'failed'
+                  : 'running'
                 : ['classify', 'locate', 'structures'].includes(stage.name)
                   ? 'ok'
                   : 'pending',
@@ -59,7 +82,7 @@ for (const width of [390, 1672]) {
                     phase: null,
                     source_phase: phase,
                     completed,
-                    total: 7,
+                    total,
                     cache_hits: 0,
                     failures: 0,
                     device: null,
@@ -104,6 +127,9 @@ for (const width of [390, 1672]) {
     await page.locator('.stage-current-line').click();
     const disclosure = page.locator('.stage-disclosure');
     await expect(disclosure).toHaveAttribute('open', '');
+    const detailBounds = await disclosure.locator('.stage-detail-surface').boundingBox();
+    expect(detailBounds!.x).toBeGreaterThanOrEqual(8);
+    expect(detailBounds!.x + detailBounds!.width).toBeLessThanOrEqual(width - 8);
     await page.keyboard.press('Escape');
     await expect(disclosure).not.toHaveAttribute('open');
     await page.locator('.stage-current-line').focus();
@@ -121,16 +147,77 @@ for (const width of [390, 1672]) {
       path: info.outputPath('01-source-work-en.png'),
       animations: 'disabled',
     });
+    await page.keyboard.press('Escape');
+    // Fault the existing live polling path, not a terminal job whose reads
+    // correctly stop. Retain its recorded stages without presenting them as
+    // current, and recover through the same safe GET retry authority.
+    unavailable = true;
+    await expect.poll(() => unavailableReads).toBeGreaterThan(0);
+    await expect(current).toHaveClass(/is-unknown/);
+    await expect(current).toHaveText('Stage status unknown');
+    await expect(current.locator('.stage-state-icon')).toHaveCount(0);
+    await expect(page.locator('.workflow-group.unknown')).toHaveCount(4);
+    await expect(page.getByRole('button', { name: 'Cancel task', exact: true })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Run extraction', exact: true })).toHaveCount(0);
+    await page.locator('.stage-current-line').click();
+    await expect(disclosure.locator('.stage-history-notice')).toHaveText('Stage status unknown');
+    await expect(source).toContainText('Checking identifier ownership · 7 / 7 items');
+    await page.screenshot({
+      path: info.outputPath('05-source-unknown-en.png'),
+      animations: 'disabled',
+    });
+    await page.keyboard.press('Escape');
+    unavailable = false;
+    await expect(current).toHaveClass(/is-running/);
+    await expect(current).toContainText('Checking identifier ownership · 7 / 7 items');
+    await expect(page.getByRole('button', { name: 'Cancel task', exact: true })).toBeEnabled();
+    await expect(page.locator('.workflow-group.running')).toHaveCount(1);
+    await expect(page.locator('.stage-history-notice')).toHaveCount(0);
+    terminal = true;
+    completed = total = 73567;
+    await expect(current).toHaveClass(/is-failed/);
+    await expect(current.locator('.stage-current-text')).toHaveText(
+      'Run failed · Identifier binding',
+    );
+    await expect(current).toHaveAttribute(
+      'title',
+      /Checking identifier ownership · 73567 \/ 73567 items/,
+    );
+    await expect(current.locator('.stage-state-icon')).toBeVisible();
+    const bounds = await current.boundingBox();
+    expect(bounds!.height).toBeLessThanOrEqual(36);
+    if (width >= 1280) {
+      await expect(page.locator('.workflow-groups')).toBeVisible();
+      expect(
+        await page
+          .locator('.workflow-group > span')
+          .evaluateAll((nodes) => nodes.every((node) => node.scrollWidth <= node.clientWidth + 1)),
+      ).toBe(true);
+    }
+    await page.screenshot({
+      path: info.outputPath('02-source-failed-en.png'),
+      animations: 'disabled',
+    });
+    await page.locator('.stage-current-line').click();
+    await expect(disclosure).toHaveAttribute('open', '');
+    await expect(source).toContainText('Checking identifier ownership · 73567 / 73567 items');
+    await page.screenshot({
+      path: info.outputPath('04-source-failed-details-en.png'),
+      animations: 'disabled',
+    });
+    await page.keyboard.press('Escape');
     await page
       .getByRole('combobox', { name: 'Interface language', exact: true })
       .selectOption('zh-CN');
-    await expect(current).toContainText('核对编号归属 · 7 / 7 项');
-    await expect(current).toHaveClass(/is-running/);
+    await expect(current.locator('.stage-current-text')).toHaveText('运行失败 · 编号绑定');
+    await expect(current).toHaveAttribute('title', /核对编号归属 · 73567 \/ 73567 项/);
+    await expect(current).toHaveClass(/is-failed/);
+    expect((await current.boundingBox())!.height).toBeLessThanOrEqual(36);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
       true,
     );
     await page.screenshot({
-      path: info.outputPath('02-source-work-zh.png'),
+      path: info.outputPath('03-source-failed-zh.png'),
       animations: 'disabled',
     });
     expect(errors).toEqual([]);
