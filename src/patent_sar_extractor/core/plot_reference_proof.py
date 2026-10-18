@@ -35,10 +35,22 @@ ROLE = "figure_label_reference"
 
 
 def figure_parts(figure, nomination):
+    refinement = figure["axis_refinement"]
+    refined = (
+        set(refinement["word_observations"])
+        if isinstance(refinement, dict) and "word_observations" in refinement
+        else {"x"}
+        if refinement is not None
+        else set()
+    )
     return [
         figure["caption"],
-        *(figure["axes"]["x"] if figure["axis_refinement"] is None else []),
-        *figure["axes"]["y"],
+        *(
+            part
+            for axis, parts in figure["axes"].items()
+            if axis not in refined
+            for part in parts
+        ),
         nomination,
     ]
 
@@ -56,6 +68,11 @@ def _confirmed(figure, hint, size, locator=None, *, version):
     }:
         return False
     caption, axes, window = figure["caption"], figure["axes"], figure["window"]
+    refinement = figure["axis_refinement"]
+    if (version == PLOT_REFERENCE_VERSION) != (
+        isinstance(refinement, dict) and "word_observations" in refinement
+    ):
+        return False
     if (
         not isinstance(caption, dict)
         or set(caption) != {"text", "bbox"}
@@ -115,7 +132,7 @@ def _confirmed(figure, hint, size, locator=None, *, version):
     refinement = figure["axis_refinement"]
     anchor = (
         {"axes": refinement["nomination"], "pixels": refinement["axis_strokes"]}
-        if version == PLOT_REFERENCE_VERSION and refinement is not None
+        if version in (5, PLOT_REFERENCE_VERSION) and refinement is not None
         else None
     )
     if not valid_axes(figure["axis_strokes"], axes, size, anchor=anchor):
@@ -189,7 +206,7 @@ def plot_reference_status(proof):
         }
         | (
             {"original_locator"}
-            if proof.get("version") in (4, PLOT_REFERENCE_VERSION)
+            if proof.get("version") in (4, 5, PLOT_REFERENCE_VERSION)
             else set()
         )
     ):
@@ -197,7 +214,7 @@ def plot_reference_status(proof):
     size, hint = proof["page_size"], proof["nomination"]
     if (
         type(proof["version"]) is not int
-        or proof["version"] not in {3, 4, PLOT_REFERENCE_VERSION}
+        or proof["version"] not in {3, 4, 5, PLOT_REFERENCE_VERSION}
         or not isinstance(proof["original_pdf_sha256"], str)
         or not re.fullmatch(r"[a-f0-9]{64}", proof["original_pdf_sha256"])
         or type(proof["page_no"]) is not int
@@ -220,7 +237,7 @@ def plot_reference_status(proof):
         locator = proof.get("original_locator")
         if (
             proof["version"] == 4
-            or proof["version"] == PLOT_REFERENCE_VERSION
+            or proof["version"] in (5, PLOT_REFERENCE_VERSION)
             and locator is not None
         ) and locator_nomination(locator, size) != hint:
             return "unresolved", None

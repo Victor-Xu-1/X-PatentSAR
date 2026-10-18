@@ -37,6 +37,7 @@ def dose_plot(
     directory,
     *,
     font_size=7,
+    vertical_font_size=None,
     angle=45,
     axes=True,
     unknown_tick=False,
@@ -58,7 +59,13 @@ def dose_plot(
                 origin, value, fontsize=font_size, morph=(origin, fitz.Matrix(angle))
             )
         for index, value in enumerate(("150", "125", "100", "75", "50", "25", "0")):
-            page.insert_text((106, 90 + index * 26), value, fontsize=font_size)
+            page.insert_text(
+                (106, 90 + index * 26),
+                value,
+                fontsize=font_size
+                if vertical_font_size is None
+                else vertical_font_size,
+            )
         page.draw_polyline(
             [
                 (140, 100),
@@ -131,7 +138,7 @@ class PhysicalPlotNominationTests(unittest.TestCase):
                     if section["role"] == "figure_label_reference"
                 ]
                 self.assertEqual(len(figures), 1)
-                self.assertEqual(figures[0]["heading_observation"]["version"], 5)
+                self.assertEqual(figures[0]["heading_observation"]["version"], 6)
 
     def test_refined_anchor_and_all_original_words_are_mandatory_in_saved_proof(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -142,7 +149,7 @@ class PhysicalPlotNominationTests(unittest.TestCase):
             for section in sections
             if section["role"] == "figure_label_reference"
         )
-        self.assertEqual(baseline["version"], 5)
+        self.assertEqual(baseline["version"], 6)
         self.assertIsNotNone(proved_heading_declaration(baseline))
         for mutation in (
             "missing_anchor",
@@ -169,7 +176,7 @@ class PhysicalPlotNominationTests(unittest.TestCase):
             elif mutation == "cut_final_extent":
                 figure["axis_strokes"]["x"]["bbox"][2] -= 10
             elif mutation == "missing_word":
-                refinement["word_observation"]["readings"][0]["words"].pop()
+                refinement["word_observations"]["x"]["readings"][0]["words"].pop()
             elif mutation == "extra_axis_field":
                 figure["axis_strokes"]["accepted"] = True
             elif mutation == "changed_literal_owner":
@@ -179,7 +186,7 @@ class PhysicalPlotNominationTests(unittest.TestCase):
             changed["status"] = "confirmed"
             with self.subTest(mutation=mutation):
                 self.assertIsNone(proved_heading_declaration(changed))
-        for version in (True, 5.0, "5", [], {}):
+        for version in (True, 6.0, "6", [], {}):
             changed = {**baseline, "version": version, "status": "confirmed"}
             with self.subTest(version=version):
                 self.assertEqual(plot_reference_status(changed), ("invalid", None))

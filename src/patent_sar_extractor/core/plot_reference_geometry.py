@@ -6,6 +6,7 @@ from itertools import chain, pairwise
 from .cell_frame_proof import inside_box
 from .compound_caption import caption_identity
 from .plot_axis_identity import axis_literal, axis_number
+from .printed_identifiers import identifier_key
 from .source_geometry import overlaps
 from .source_section_roles import section_heading
 
@@ -22,7 +23,12 @@ def literal(text):
     if figure:
         return "figure:" + re.sub(r"[\s()]", "", figure["identity"]).casefold()
     number = axis_literal(text)
-    return number if number is not None else "text:" + " ".join(text.split()).casefold()
+    if number is not None:
+        return number
+    identity = identifier_key(text, wrapped=True)
+    if identity and legend_heading(text):
+        return "label-id:" + identity
+    return "text:" + " ".join(text.split()).casefold()
 
 
 def figure_caption(text):
@@ -245,14 +251,34 @@ def _axis_candidates(tokens, caption, label, size, independent_tokens, *, unread
         span = (right[0] + right[2] - left[0] - left[2]) / 2
         if span < 45:
             continue
-        above = [p for p in numbers if p["bbox"][3] < min(x["bbox"][1] for x in xs)]
+        above = [
+            p
+            for p in (tokens if unread else numbers)
+            if isinstance(p.get("text"), str)
+            and p["text"].strip()
+            and inside_box(p.get("bbox"), [0, 0, *size])
+            and p["bbox"][3] < min(x["bbox"][1] for x in xs)
+            and abs((p["bbox"][1] + p["bbox"][3]) / 2 - label[1]) <= 360
+        ]
+        if len(above) > 256:
+            continue
         for column in _aligned_groups(above, 0):
-            ys = _ordered(column, 1)
+            ys = (
+                [
+                    source_literal(p)
+                    for p in sorted(column, key=lambda p: sum(p["bbox"][1::2]))
+                ]
+                if unread and 3 <= len(column) <= 32
+                else _ordered(column, 1)
+                if not unread
+                else None
+            )
             if (
                 ys is None
                 # Preserve the existing cross-axis boundary: later aligned
                 # synthesis text is not a member of this vertical tick column.
-                or not _complete_axis(
+                or not unread
+                and not _complete_axis(
                     ys,
                     tokens,
                     independent_tokens,
@@ -266,7 +292,8 @@ def _axis_candidates(tokens, caption, label, size, independent_tokens, *, unread
             cap = caption["bbox"]
             if not (
                 -4 <= (left[0] + left[2]) / 2 - edge <= 48
-                and 0 < min(p["bbox"][1] for p in xs) - ys[-1]["bbox"][3] <= 80
+                and 0 < min(p["bbox"][1] for p in xs) - ys[-1]["bbox"][3]
+                and (unread or min(p["bbox"][1] for p in xs) - ys[-1]["bbox"][3] <= 80)
                 and ys[0]["bbox"][1] - 20 <= label[1] < label[3] <= ys[-1]["bbox"][3]
                 and edge + 3 < label[0] < label[2]
                 # A coarse row can omit its right-hand words. Nomination only

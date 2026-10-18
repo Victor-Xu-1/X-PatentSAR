@@ -75,7 +75,7 @@ class PlotRefinementProofTests(unittest.TestCase):
                 self.assertEqual(blocks, [])
                 self.assertEqual(len(sections), 1)
                 proof = sections[0]["heading_observation"]
-                self.assertEqual(proof["version"], 5)
+                self.assertEqual(proof["version"], 6)
                 self.assertIn("original_locator", proof)
                 if proof["original_locator"] is not None:
                     locator = proof["original_locator"]
@@ -87,7 +87,9 @@ class PlotRefinementProofTests(unittest.TestCase):
                 self.assertIsNotNone(proved_heading_declaration(proof))
                 refinement = proof["figure_source"]["axis_refinement"]
                 self.assertIsNotNone(refinement)
-                self.assertEqual(refinement["word_observation"]["bbox"][::2], [0, 540])
+                self.assertEqual(
+                    refinement["word_observations"]["x"]["bbox"][::2], [0, 540]
+                )
                 self.assertLess(len(json.dumps(sections[0])), 1024 * 1024)
                 self.assertEqual(len(proof_id(sections[0])), 64)
                 payload = {
@@ -126,7 +128,7 @@ class PlotRefinementProofTests(unittest.TestCase):
             with self.subTest(mutation=mutation):
                 changed = copy.deepcopy(baseline)
                 refinement = changed["figure_source"]["axis_refinement"]
-                packet = refinement["word_observation"]
+                packet = refinement["word_observations"]["x"]
                 row = packet["readings"][0]
                 word = row["words"][0]
                 if mutation == "omit_word":

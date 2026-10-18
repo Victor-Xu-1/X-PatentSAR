@@ -40,7 +40,13 @@ def _windows(axes, size, anchor):
             return None
         # The source is the already-owned original nomination, not another
         # successful window search. Its base packet cannot contain an anchor.
-        original = axis_strokes(anchor["pixels"], anchor["axes"], size)
+        original = axis_strokes(
+            anchor["pixels"],
+            anchor["axes"],
+            size,
+            nomination=isinstance(anchor["pixels"], dict)
+            and "nominal_dpi" in anchor["pixels"],
+        )
         if original is None:
             return None
         stroke = original["x"]
@@ -57,19 +63,34 @@ def _windows(axes, size, anchor):
     return windows
 
 
-def observe_axes(page, axes, size, *, anchor=None):
+def observe_axes(page, axes, size, *, anchor=None, nomination=False):
     windows = _windows(axes, size, anchor)
     if windows is None:
         return None
     result = {
-        axis: observe_pixels(page, box, MAX_AXIS_PIXELS)
+        axis: observe_pixels(
+            page, box, MAX_AXIS_PIXELS, resolutions=(400,) if nomination else (400, 600)
+        )
         for axis, box in windows.items()
     }
-    return result if valid_axes(result, axes, size, anchor=anchor) else None
+    if nomination:
+        result["nominal_dpi"] = 400
+    return (
+        result
+        if axis_strokes(result, axes, size, anchor=anchor, nomination=nomination)
+        is not None
+        else None
+    )
 
 
-def axis_strokes(packet, axes, size, *, anchor=None):
-    if not isinstance(packet, dict) or set(packet) != {"x", "y"}:
+def axis_strokes(packet, axes, size, *, anchor=None, nomination=False):
+    if not isinstance(packet, dict) or set(packet) != (
+        {"x", "y"} | ({"nominal_dpi"} if nomination else set())
+    ):
+        return None
+    if nomination and (
+        type(packet["nominal_dpi"]) is not int or packet["nominal_dpi"] != 400
+    ):
         return None
     windows = _windows(axes, size, anchor)
     if windows is None:
@@ -83,11 +104,13 @@ def axis_strokes(packet, axes, size, *, anchor=None):
             or set(observed) != {"bbox", "readings"}
             or observed["bbox"] != box
             or not isinstance(observed["readings"], list)
-            or len(observed["readings"]) != 2
+            or len(observed["readings"]) != (1 if nomination else 2)
         ):
             return None
         found = []
-        for reading, dpi in zip(observed["readings"], (400, 600)):
+        for reading, dpi in zip(
+            observed["readings"], (400,) if nomination else (400, 600)
+        ):
             mask = retained_pixels(reading, box, dpi, MAX_AXIS_PIXELS)
             if mask is None:
                 return None
@@ -95,7 +118,7 @@ def axis_strokes(packet, axes, size, *, anchor=None):
             if stroke is None:
                 return None
             found.append(stroke)
-        if any(abs(a - b) > 1.2 for a, b in zip(*found)):
+        if len(found) == 2 and any(abs(a - b) > 1.2 for a, b in zip(*found)):
             return None
         strokes[axis] = found[0]
     x, y = strokes["x"], strokes["y"]
@@ -127,5 +150,31 @@ def axis_word_window(packet, axes, caption, size):
     return (
         bounds
         if 0 < bottom - top <= 128 and inside_box(bounds, [0, 0, *size])
+        else None
+    )
+
+
+def complete_axis_windows(packet, axes, caption, size):
+    """Both full source strips from observed strokes, never detected tick ends."""
+    strokes = axis_strokes(packet, axes, size, nomination=True)
+    if strokes is None:
+        return None
+    x, y = strokes["x"], strokes["y"]
+    windows = {
+        "x": [0, x[3] + 0.5, size[0], caption["bbox"][1]],
+        "y": [
+            0,
+            max(0, y[1] - AXIS_MARGIN),
+            y[0] - 0.5,
+            min(size[1], x[3] + AXIS_MARGIN),
+        ],
+    }
+    return (
+        windows
+        if (
+            all(inside_box(box, [0, 0, *size]) for box in windows.values())
+            and 0 < windows["x"][3] - windows["x"][1] <= 128
+            and 0 < windows["y"][2] - windows["y"][0] <= 360
+        )
         else None
     )

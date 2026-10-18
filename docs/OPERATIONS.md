@@ -1422,14 +1422,29 @@ make unequal values agree. Raw labels stay unchanged and tiny finite values do
 not become zero through float underflow. Partial coarse rows only nominate the
 complete strip; they never satisfy final quantified extent on their own.
 
-Heading proof5 uses the existing nominal stroke witness to bound the final
+Heading proof6 always observes both complete original axes, rather than using
+an apparently ordered coarse numeric subset as a coverage certificate. The
+bounded400dpi physical nomination only locates the source; complete words and
+final strokes still need400/600dpi proof. A one-reading nomination promoted to
+final acceptance is rejected. Vertical physical row-frame2 conserves every word
+in the nearest repeated original ink lane and retains other ink in its full
+source mask; isolated lower horizontal fragments cannot nominate a y family.
+Lane bounds, word order, masks, confidence and all qualified independent native/
+raster conflicts are replayed. Even two agreeing reads do not erase a confident
+conflicting original observation; such a source remains unresolved.
+
+Complete compound-prefix spacing/aliases use the existing literal identifier
+grammar, not digit repair. Leading zeros, internal hyphens, suffixes and unknown
+annotations cannot disappear. Raw original labels and activity data stay verbatim.
+
+The existing nominal stroke witness bounds the final
 horizontal stroke band with the same12pt margin. Complete outer-word horizontal
 bounds and every original strip word remain mandatory. This avoids rendering
 large empty gaps without raising the1M-axis/8M-word limits, adding inference or
 choosing a successful crop. Missing/changed anchors, masks, bounds or words refuse.
 The optional original graphic/text locator is explicit even when absent.
 
-Derived heading proof5 uses Binding29/binder38. Old ownership remains historical;
+Derived heading proof6 uses Binding30/binder39. Proofs3/4/5 and old ownership remain historical;
 original PDF/raw observations/manual audit and independent scientific contracts
 are not rewritten. Lossless thresholded-mask compression retains the existing
 1MiB source-digest and8M cell limits, with bounded decompression and strict stream

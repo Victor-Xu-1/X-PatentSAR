@@ -9,9 +9,15 @@ import numpy as np
 from .table_cells import CellRenderLimit, cell_image
 
 
-def observe_pixels(page, bounds, maximum_pixels):
+def observe_pixels(page, bounds, maximum_pixels, *, resolutions=(400, 600)):
+    if (
+        not isinstance(resolutions, tuple)
+        or any(type(dpi) is not int for dpi in resolutions)
+        or resolutions not in ((400,), (400, 600))
+    ):
+        raise ValueError("Unsupported original-pixel observation resolutions")
     readings = []
-    for dpi in (400, 600):
+    for dpi in resolutions:
         try:
             image = cell_image(page, bounds, dpi, maximum_pixels=maximum_pixels)
         except CellRenderLimit:

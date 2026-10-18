@@ -39,7 +39,7 @@ def _same_box(value, expected, *, pixels=False):
     )
 
 
-def observe_axis_words(page, bounds):
+def observe_axis_words(page, bounds, *, layout="columns"):
     pixels = observe_pixels(page, bounds, MAX_ROW_PIXELS)
     packet = {"bbox": bounds, "pixels": pixels, "readings": []}
     if pixels is None:
@@ -49,7 +49,7 @@ def observe_axis_words(page, bounds):
         return packet
     for original, dpi in zip(pixels["readings"], (400, 600)):
         mask = retained_pixels(original, bounds, dpi, MAX_ROW_PIXELS)
-        frame = word_frame(mask, dpi)
+        frame = word_frame(mask, dpi, layout=layout)
         reading = {"dpi": dpi, "frame": frame, "words": []}
         packet["readings"].append(reading)
         if frame is None:
@@ -114,7 +114,7 @@ def _point_box(box, bounds, dpi):
     return [v * 72 / dpi + origin[i % 2] for i, v in enumerate(box)]
 
 
-def axis_word_parts(packet, bounds):
+def axis_word_parts(packet, bounds, *, layout="columns", with_scope=False):
     """Literal words only after full mask/order/transform/confidence replay."""
     if (
         not isinstance(packet, dict)
@@ -140,7 +140,7 @@ def axis_word_parts(packet, bounds):
             or set(reading) != {"dpi", "frame", "words"}
             or type(reading["dpi"]) is not int
             or reading["dpi"] != dpi
-            or not valid_word_frame(reading["frame"], mask, dpi)
+            or not valid_word_frame(reading["frame"], mask, dpi, layout=layout)
             or not isinstance(reading["words"], list)
             or len(reading["words"]) != len(reading["frame"]["word_bounds"])
         ):
@@ -171,7 +171,19 @@ def axis_word_parts(packet, bounds):
                 ],
             }
         )
-    return result
+    scope = bounds
+    if layout == "rows":
+        lanes = [
+            _point_box(reading["frame"]["lane_bounds"], bounds, dpi)
+            for reading, dpi in zip(packet["readings"], (400, 600))
+        ]
+        scope = [
+            min(box[0] for box in lanes),
+            bounds[1],
+            max(box[2] for box in lanes),
+            bounds[3],
+        ]
+    return (result, scope) if with_scope else result
 
 
 def refined_axis_tokens(tokens, independent_tokens, parts, bounds):

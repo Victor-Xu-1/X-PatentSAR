@@ -27,7 +27,7 @@ def _mask(mask, dpi):
         raise ValueError("Invalid bounded original-word pixel frame")
 
 
-def _word_angles(mask, words):
+def _word_angles(mask, words, *, minimum_aspect=1.4):
     angles = []
     for left, top, right, bottom in words:
         points = np.column_stack(np.nonzero(mask[top:bottom, left:right])[::-1]).astype(
@@ -36,7 +36,7 @@ def _word_angles(mask, words):
         corners = cv2.boxPoints(cv2.minAreaRect(points))
         edges = [corners[(i + 1) % 4] - corners[i] for i in range(4)]
         lengths = [float(np.linalg.norm(edge)) for edge in edges]
-        if min(lengths) < 1 or max(lengths) / min(lengths) < 1.4:
+        if min(lengths) < 1 or max(lengths) / min(lengths) < minimum_aspect:
             continue
         edge = edges[int(np.argmax(lengths))]
         angle = math.degrees(math.atan2(float(edge[1]), float(edge[0])))
@@ -71,9 +71,30 @@ def _orientation(angles, words, dpi):
     return angle
 
 
-def word_frame(mask, dpi):
+def _row_lane(mask, columns, gap, dpi):
+    lanes = np.split(columns, np.flatnonzero(np.diff(columns) > gap) + 1)
+    for ink in reversed(lanes):
+        left, right = int(ink[0]), int(ink[-1]) + 1
+        positions = np.flatnonzero(mask[:, left:right].any(axis=1))
+        groups = np.split(positions, np.flatnonzero(np.diff(positions) > gap) + 1)
+        # An isolated lower horizontal-axis fragment is not a vertical family.
+        # Select the nearest complete repeated lane before any OCR is called.
+        if len(groups) >= 3 and int(positions[-1]) - int(positions[0]) >= 40 * dpi / 72:
+            # Excess in the nearest family is not permission to use a smaller
+            # family farther away. No prefix or second lane is retried.
+            return (
+                ([left, 0, right, mask.shape[0]], groups)
+                if len(groups) <= MAX_WORDS
+                else None
+            )
+    return None
+
+
+def word_frame(mask, dpi, *, layout="columns"):
     """Retain all column-separated words before selecting a reading direction."""
     _mask(mask, dpi)
+    if layout not in ("columns", "rows"):
+        raise ValueError("Unknown original-word inventory layout")
     columns = np.flatnonzero(mask.any(axis=0))
     if not len(columns):
         return None
@@ -85,29 +106,64 @@ def word_frame(mask, dpi):
     # frame, and no character strings are concatenated into a number.
     glyph_extent = float(np.median(np.max(stats[1:, 2:4], axis=1)))
     gap = math.ceil(max(2 * dpi / 72, min(12 * dpi / 72, glyph_extent * 0.5)))
-    groups = np.split(
-        columns,
-        np.flatnonzero(np.diff(columns) > gap) + 1,
-    )
+    lane = None
+    if layout == "rows":
+        # The nearest complete ink lane is a geometric choice, made before
+        # recognition. Other original lanes remain in the retained full mask.
+        selected = _row_lane(mask, columns, gap, dpi)
+        if selected is None:
+            return None
+        lane, groups = selected
+    else:
+        groups = np.split(columns, np.flatnonzero(np.diff(columns) > gap) + 1)
     if not 3 <= len(groups) <= MAX_WORDS:
         return None
     words = []
     for group in groups:
-        left, right = int(group[0]), int(group[-1]) + 1
-        rows = np.flatnonzero(mask[:, left:right].any(axis=1))
-        words.append([left, int(rows[0]), right, int(rows[-1]) + 1])
-    angle = _orientation(_word_angles(mask, words), words, dpi)
+        if layout == "rows":
+            top, bottom = int(group[0]), int(group[-1]) + 1
+            ink = np.flatnonzero(mask[top:bottom, lane[0] : lane[2]].any(axis=0))
+            words.append(
+                [lane[0] + int(ink[0]), top, lane[0] + int(ink[-1]) + 1, bottom]
+            )
+        else:
+            left, right = int(group[0]), int(group[-1]) + 1
+            rows = np.flatnonzero(mask[:, left:right].any(axis=1))
+            words.append([left, int(rows[0]), right, int(rows[-1]) + 1])
+    # Short upright two-glyph ticks can be wider than tall without reaching the
+    # oblique-row elongation threshold. They still need two agreeing physical
+    # word directions and an unambiguous majority; a lone oval cannot choose it.
+    angle = _orientation(
+        _word_angles(mask, words, minimum_aspect=1.15 if layout == "rows" else 1.4),
+        words,
+        dpi,
+    )
     if angle is None:
         return None
-    return {"version": 1, "word_bounds": words, "angle": angle}
+    return {
+        "version": 1 if layout == "columns" else 2,
+        "word_bounds": words,
+        "angle": angle,
+        **({"lane_bounds": lane} if lane is not None else {}),
+    }
 
 
-def valid_word_frame(frame, mask, dpi):
+def valid_word_frame(frame, mask, dpi, *, layout="columns"):
     if (
         not isinstance(frame, dict)
-        or set(frame) != {"version", "word_bounds", "angle"}
+        or set(frame)
+        != (
+            {"version", "word_bounds", "angle"}
+            | ({"lane_bounds"} if layout == "rows" else set())
+        )
         or type(frame["version"]) is not int
-        or frame["version"] != 1
+        or frame["version"] != (2 if layout == "rows" else 1)
+        or layout == "rows"
+        and (
+            not isinstance(frame["lane_bounds"], list)
+            or len(frame["lane_bounds"]) != 4
+            or any(type(value) is not int for value in frame["lane_bounds"])
+        )
         or type(frame["angle"]) not in (int, float)
         or not math.isfinite(frame["angle"])
         or not isinstance(frame["word_bounds"], list)
@@ -121,7 +177,7 @@ def valid_word_frame(frame, mask, dpi):
     ):
         return False
     try:
-        return frame == word_frame(mask, dpi)
+        return frame == word_frame(mask, dpi, layout=layout)
     except (ValueError, TypeError, OverflowError):
         return False
 

@@ -16,6 +16,25 @@ from patent_sar_extractor.core.table_cells import cell_image
 
 
 class OriginalPlotPixelTests(unittest.TestCase):
+    def test_single_source_nomination_is_explicit_and_retains_the_same_pixel_contract(
+        self,
+    ):
+        with fitz.open() as document:
+            page = document.new_page(width=140, height=110)
+            page.draw_line((20, 28), (100, 28), width=0.8)
+            bounds = [12, 12, 112, 90]
+            packet = observe_pixels(page, bounds, 1_000_000, resolutions=(400,))
+            self.assertEqual([reading["dpi"] for reading in packet["readings"]], [400])
+            self.assertIsNotNone(
+                retained_pixels(packet["readings"][0], bounds, 400, 1_000_000)
+            )
+            for resolutions in ((True,), (600,), (400, 400), (400.0,), [400]):
+                with (
+                    self.subTest(resolutions=resolutions),
+                    self.assertRaises((TypeError, ValueError)),
+                ):
+                    observe_pixels(page, bounds, 1_000_000, resolutions=resolutions)
+
     def test_the_caller_pixel_bound_is_enforced_before_render_allocation(self):
         with fitz.open() as document:
             page = document.new_page(width=140, height=110)
