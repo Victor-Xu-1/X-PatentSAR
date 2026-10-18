@@ -70,7 +70,7 @@ for (const width of [390, 1672]) {
     // The existing job observer sees one new stage fact and refreshes results.
     // This does not submit a task or add a second result poller.
     await expect(page.locator('.results-table tbody tr')).toHaveCount(2);
-    await expect(page.locator('.frozen-compound').first()).toContainText('Compound 1');
+    await expect(page.locator('.frozen-compound button').first()).toHaveText('1');
     await expect(page.getByText('结果就绪后将自动显示', { exact: true })).toHaveCount(0);
     await page.screenshot({ path: test.info().outputPath(`published-result-${width}.png`) });
     expect(errors).toEqual([]);
