@@ -9,6 +9,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
+from .binding_progress import observed_items
 from .caption_grid_binding import CaptionGridResult, bind_caption_grids
 from .printed_identifiers import LABEL_KIND, identifier_key
 from .table_cells import prefixed_label, read_cell
@@ -91,6 +92,7 @@ def bind_visible_captions(
     grids_for_page=None,
     tokens_for_page=None,
     grid_result: CaptionGridResult | None = None,
+    progress=None,
 ) -> list[CaptionBinding]:
     by_page: dict[int, list[Mapping[str, Any]]] = {}
     for structure in structures:
@@ -114,6 +116,7 @@ def bind_visible_captions(
             else sorted(by_page),
             grids_for_page=grids_for_page,
             tokens_for_page=tokens_for_page,
+            progress=progress,
         )
     )
     if recognized_pages is not None:
@@ -134,7 +137,9 @@ def bind_visible_captions(
         and (active is None or item["label"] in active)
         and identities[str(item["structure"].get("id") or "")] == 1
     ]
-    for page_no, page_structures in sorted(by_page.items()):
+    for page_no, page_structures in observed_items(
+        "visible_captions", sorted(by_page.items()), progress
+    ):
         page_structures = [
             s
             for s in page_structures

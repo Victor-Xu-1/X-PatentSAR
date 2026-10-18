@@ -4,6 +4,7 @@ from collections import defaultdict
 
 from .activity_context_geometry import grid_axes
 from .activity_header_evidence import proof_id
+from .binding_progress import observed_items
 from .caption_role_semantics import catalog_title_role, has_continuation_caption
 from .source_document import document_sha256
 from .source_geometry import SourceTokens
@@ -30,7 +31,14 @@ def declaration_page_hint(text):
 
 
 def observe_declaration_pages(
-    doc, structures, pages, page_texts, tokens_for_page, *, grids_for_page=None
+    doc,
+    structures,
+    pages,
+    page_texts,
+    tokens_for_page,
+    *,
+    grids_for_page=None,
+    progress=None,
 ):
     if grids_for_page is None:
         from .table_geometry import detect_ruled_table_regions
@@ -40,7 +48,7 @@ def observe_declaration_pages(
     for structure in structures:
         by_page[structure["page_no"] - 1].append(structure)
     original_sha = None
-    for index in sorted(set(pages)):
+    for index in observed_items("declaration_sources", sorted(set(pages)), progress):
         if type(index) is not int or not 0 <= index < len(doc):
             continue
         page = doc[index]

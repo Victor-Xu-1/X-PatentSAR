@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any, Protocol
 
+from .binding_progress import BindingObserver
 from .numbered_structure_models import (
     Box,
     NumberedTableBinding,
@@ -53,6 +54,7 @@ def bind_numbered_tables(
     | None = None,
     page_texts: Mapping[int, str] | None = None,
     caption_roles: Mapping | None = None,
+    progress: BindingObserver | None = None,
 ) -> NumberedTableResult:
     """Register original frames/roles, then build cells for the single matcher."""
     if not page_indices or (active_keys is not None and not active_keys):
@@ -81,9 +83,10 @@ def bind_numbered_tables(
         shared_tokens,
         page_texts=page_texts,
         caption_roles=caption_roles,
+        progress=progress,
     )
     cells, cell_issues = observe_ruled_cells(
-        doc, structures, sections, shared_tokens, cell_reader
+        doc, structures, sections, shared_tokens, cell_reader, progress=progress
     )
     ruled = pair_numbered_table_cells(
         cells, structures, active_keys, recognized_pages=pages

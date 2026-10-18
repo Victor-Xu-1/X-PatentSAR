@@ -18,6 +18,11 @@ from .models import STAGES, ActivityRepair, Stage, StageProgress
 
 logger = logging.getLogger(__name__)
 MAX_PROGRESS_BYTES = 8192
+PROGRESS_PATHS = {
+    "smiles": "smiles/progress.json",
+    "structures": "structures/progress.json",
+    "bind": "structure_bindings/progress.json",
+}
 STAGE_STATUSES = {"pending", "running", "ok", "empty", "failed", "warnings"}
 SUMMARY_STATUSES = {
     "running",
@@ -103,11 +108,11 @@ def read_summary(run_root: Path) -> dict[str, Any] | None:
 
 
 def read_progress(files: SafeFiles, stage: str = "smiles") -> StageProgress | None:
-    if stage not in {"smiles", "structures"}:
+    if stage not in PROGRESS_PATHS:
         return None
     try:
         payload = json.loads(
-            files.read(f"{stage}/progress.json", max_bytes=MAX_PROGRESS_BYTES)
+            files.read(PROGRESS_PATHS[stage], max_bytes=MAX_PROGRESS_BYTES)
         )
         schema = payload.get("schema") if isinstance(payload, dict) else None
         if (
@@ -128,6 +133,8 @@ def read_progress(files: SafeFiles, stage: str = "smiles") -> StageProgress | No
         ) not in {int, float}:
             return None
         progress = StageProgress.model_validate(payload)
+        if (stage == "bind") != (progress.source_phase is not None):
+            return None
         return progress
     except (WebError, ValueError, RecursionError, UnicodeError, ValidationError):
         # Progress is optional observation, not an execution or acceptance gate.
@@ -185,7 +192,7 @@ def stages_from_summary(
                 progress=(
                     read_progress(files, name)
                     if files is not None
-                    and name in {"smiles", "structures"}
+                    and name in PROGRESS_PATHS
                     and status != "pending"
                     else None
                 ),

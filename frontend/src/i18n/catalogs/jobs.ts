@@ -1,5 +1,17 @@
 /** Jobs, recorded stages and observations. */
 export const jobs: Readonly<Record<string, string>> = {
+  核对图注: 'Checking captions',
+  核对表格来源: 'Checking table sources',
+  核对编号单元格: 'Checking ID cells',
+  核对原文声明: 'Checking source declarations',
+  核对图中编号: 'Checking diagram labels',
+  核对表征引用: 'Checking characterization references',
+  核对原文标题: 'Checking source headings',
+  核对编号归属: 'Checking identifier ownership',
+  '{phase} · {completed} / {total} 页': '{phase} · {completed} / {total} pages',
+  '{phase} · {completed} / {total} 项': '{phase} · {completed} / {total} items',
+  '原文检查进度，不代表编号或结构已通过验收。':
+    'Source-check progress does not certify identifiers or chemical structures.',
   任务模块: 'Task modules',
   专利提取: 'Patent extraction',
   专利提取任务: 'Patent extraction tasks',

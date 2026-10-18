@@ -1,5 +1,19 @@
 # Project governance manifest
 
+- `caption_role_semantics` owns one literal case-boundary projection for original
+  catalogue titles and their saved replay. Raw text/IDs stay verbatim; unknown
+  strings are not completed, negative claims veto admission/exclusion and known
+  conflicts survive weak alternative reads. Caption/numbered/unruled/declaration
+  roles and the shared activity column nominator use this authority. Binding25/
+  binder34 and Activity21/extractor30 refresh derived proof only; raw/model/crop/
+  manual/SAR numerical/API/SQL/dependency authorities are unchanged. Optional
+  `core.binding_progress` observes actual post-body work in the existing binder;
+  `application.binding_progress` validates/throttles the sole owned progress file.
+  API-v1's additive `source_phase` leaves the old phase enum unchanged. One shared
+  bilingual frontend formatter consumes it without another poller, scientific
+  row refetch or acceptance path. Controlled checks and deployed software are
+  distinct from complete real frontend extraction/SAR and chemical acceptance.
+
 - `rapidocr_adapter` owns one lazy optional SDK constructor and bounded lossless
   trailing canvas guard for otherwise-zero-dimension resize. Existing page/thread,
   physical-source and diagnostic consumers share it; inference, scores and inverse

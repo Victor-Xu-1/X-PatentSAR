@@ -1,5 +1,6 @@
 import { t } from '../i18n';
 import type { Job, Stage } from '../api/types';
+import { bindingProgressText } from './bindingProgress';
 import {
   observedStages,
   pageProgressStage,
@@ -10,6 +11,8 @@ import {
 
 /** Numeric observations stay unchanged; only their application-owned caption varies. */
 export function jobStageProgressText(stage: Stage | undefined): string | null {
+  const sourceWork = bindingProgressText(stage);
+  if (sourceWork !== null) return sourceWork;
   const progress = stage?.progress;
   if (!stage || !progress) return null;
   const values = { completed: progress.completed, total: progress.total };

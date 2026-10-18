@@ -11,6 +11,7 @@ from patent_sar_extractor.core.binding_artifacts import write_binding_result
 from patent_sar_extractor.core.formal_structure import SOURCE_EXECUTION_MODE
 
 from .binding_policy import _binding_acceptance_errors, _load_reusable_bindings
+from .binding_progress import BindingProgress
 from .pipeline_context import PipelineContext
 from .pipeline_io import _elapsed_since
 from .scientific_status import retain_scientific_errors
@@ -68,6 +69,7 @@ def execute_bind(state: PipelineContext) -> None:
             directory,
             state.structures_json,
             include_intermediates=getattr(state.args, "include_intermediates", False),
+            progress=BindingProgress(directory),
         )
         _write_step_manifest(state.bind_json, fingerprint)
     else:

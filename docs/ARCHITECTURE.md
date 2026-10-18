@@ -1,5 +1,45 @@
 # X-PatentSAR architecture
 
+## Literal catalogue typography and binding work observations
+
+`caption_role_semantics` remains the one original catalogue role authority for
+caption grids, numbered/unruled columns, declarations, continuation and saved
+replay. It exposes only literal case-delimited word boundaries in a temporary
+title projection, including acronym/title-case transitions. Original characters,
+source packets, table IDs and compound identifiers remain unchanged. Unknown
+unsegmented strings are not dictionary-completed. Nonfinal modifiers and mixed
+categories keep their distinct roles. Negated categories remain conflicts, even
+beside an unqualified second observation; neither prefixed labels nor a clearer
+reading can bypass a known original veto. The shared table-caption nominator
+also supplies logical activity column scopes, so both derived consumers refresh:
+Binding25/binder34 and Activity21/extractor30. Raw OCR/crops/model observations,
+manual audit, numerical SAR and API/SQL schemas remain independent. Old derived
+products remain historical, never rewritten or retagged as accepted.
+
+The existing binder's optional `binding_progress.observed_items` emits a phase
+start and counts an item only after its loop body returns. No observer preserves
+the identical sequence and scientific path. Eight bounded source passes use the
+same observer; page counts and heading-item counts are work, not accepted
+compounds, accuracy or estimated time. Application `BindingProgress` resets only
+the owned stage telemetry, validates monotonic phase/counters, and atomically
+publishes at most twice per second plus phase/completion transitions. Failures,
+early exit and cancellation do not complete unobserved work.
+
+The existing stage reader loads `structure_bindings/progress.json`. API-v1 adds
+optional `source_phase`, leaving the old recognition/property/lead `phase` enum
+unchanged; the two cannot coexist. Old clients ignore the additive field and old
+servers omit binding telemetry. One bilingual formatter serves both existing
+task presentations. Source counter/phase changes do not reload scientific rows
+or create another poller, queue, store, request replay or acceptance authority.
+The compact summary uses a non-interactive polite/atomic live `span`, preserving
+complete status announcements without Chromium's form-control interception of native details
+activation. Redundant stage names stay in the full detail/hover caption, leaving
+room for complete workflow group labels; pointer/keyboard disclosure remains native.
+Full pass counts still leave an actually running task running. Controlled
+native/raster/serialized/writer/browser checks are not full-patent or chemical
+scientific acceptance; unknown formats, original ink/ruling ambiguity and real
+extraction/SAR acceptance remain independent open gates.
+
 ## Lossless OCR canvas safety
 
 `rapidocr_adapter` owns the source pipeline's one optional RapidOCR constructor,

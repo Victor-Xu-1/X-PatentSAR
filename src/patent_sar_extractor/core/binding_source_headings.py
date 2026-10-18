@@ -9,6 +9,7 @@ from .binding_observations import (
     _load_visible_label_cache,
     _refine_visible_label_cache_with_page_ocr,
 )
+from .binding_progress import observed_items
 from .binding_source_regions import (
     identifier_references,
     reference_cell,
@@ -45,13 +46,14 @@ def observed_heading_blocks(
     grids_for_page=None,
     tokens_for_page=None,
     source_bindings=(),
+    progress=None,
 ) -> list[dict]:
     """Coordinates and complete labels originate in the source, not an ID list."""
     blocks = []
     document_sha256 = _document_sha256(doc)
     caption_labels = caption_label_index(source_bindings, document_sha256)
     declaration_roles = declaration_role_index(source_sections or [], document_sha256)
-    for page_index in sorted(set(pages)):
+    for page_index in observed_items("heading_sources", sorted(set(pages)), progress):
         page = doc[page_index]
         plot_cache = {}
         layout = source_layout(page)
@@ -193,6 +195,7 @@ def select_heading_bindings(
     profile: dict,
     *,
     source_line_map: dict | None = None,
+    progress=None,
 ) -> tuple[list[dict], list[dict]]:
     """Require mutually unique crop/printed-label proof in an observed interval."""
     if not structures or not blocks:
@@ -237,6 +240,7 @@ def select_heading_bindings(
     page_structures = {}
     for structure in structures:
         page_structures.setdefault(structure["page_no"], []).append(structure)
+    pending = observed_items("heading_bindings", proved_blocks, progress)
     cache = _load_visible_label_cache(output_dir, profile)
     cache = _refine_visible_label_cache_with_page_ocr(
         structures, cache, line_map, output_dir, profile
@@ -252,7 +256,7 @@ def select_heading_bindings(
         for index, (page_no, y) in enumerate(boundaries)
     }
     original_lines = {}
-    for block, declaration in proved_blocks:
+    for block, declaration in pending:
         key = normalize_compound(block["cpd"]).removeprefix("Compound ")
         end = ends[block["page_no"], block["y0"]]
         page = doc[block["page_no"] - 1]

@@ -22,6 +22,7 @@ from .binding_candidates import (
     _normalise_binding_to_compound,
 )
 from .binding_labels import _binding_label_key
+from .binding_progress import BindingObserver
 from .binding_source_claims import resolve_source_claims
 from .binding_types import (
     BindingCandidate,
@@ -131,6 +132,7 @@ def collect_spatial_bindings(
     table_pages: frozenset[int],
     *,
     source_pages: Sequence[int] | None = None,
+    progress: BindingObserver | None = None,
 ) -> SpatialBindings:
     # Locator/classifier hints are not a complete table inventory. Discover
     # original numbered grids across the complete existing page-text inventory.
@@ -189,6 +191,7 @@ def collect_spatial_bindings(
         [page + 1 for page in candidate_pages],
         grids_for_page=grids_for_page,
         tokens_for_page=tokens_for_page,
+        progress=progress,
     )
     numbered = bind_numbered_tables(
         doc,
@@ -199,6 +202,7 @@ def collect_spatial_bindings(
         tokens_for_page=tokens_for_page,
         page_texts=pages_text,
         caption_roles=caption_grids.roles,
+        progress=progress,
     )
     recognized_pages = set(numbered.recognized_pages)
     reserved_pages = set(numbered.ownership_pages)
@@ -217,6 +221,7 @@ def collect_spatial_bindings(
         pages_text,
         tokens_for_page,
         grids_for_page=grids_for_page,
+        progress=progress,
     )
     candidates = [_candidate(binding, "numbered_cell") for binding in table_bindings]
     caption_owned = {str(pair["structure"]["id"]) for pair in caption_grids.bindings}
@@ -246,6 +251,7 @@ def collect_spatial_bindings(
         grids_for_page=grids_for_page,
         tokens_for_page=tokens_for_page,
         grid_result=caption_grids,
+        progress=progress,
     )
     caption_ids = set()
     caption_keys = set()

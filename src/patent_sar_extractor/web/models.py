@@ -12,6 +12,8 @@ from pydantic import (
     model_validator,
 )
 
+from patent_sar_extractor.core.binding_progress import BindingSourcePhase
+
 from .activity_focus_models import ActivityFocus, ActivitySourceKey
 from .activity_rank_models import ActivityStrengthScale, RankValue
 from .descriptor_models import DescriptorSummary
@@ -228,6 +230,7 @@ class Acceptance(DTO):
 
 class StageProgress(DTO):
     phase: Literal["recognition", "properties", "lead"] | None = None
+    source_phase: BindingSourcePhase | None = None
     completed: int = Field(ge=0, le=1_000_000, strict=True)
     total: int = Field(ge=0, le=1_000_000, strict=True)
     cache_hits: int = Field(ge=0, le=1_000_000, strict=True)
@@ -241,6 +244,8 @@ class StageProgress(DTO):
             self.completed > self.total
             or self.cache_hits > self.completed
             or self.failures > self.completed
+            or self.phase is not None
+            and self.source_phase is not None
         ):
             raise ValueError("Stage progress counters are inconsistent")
         return self

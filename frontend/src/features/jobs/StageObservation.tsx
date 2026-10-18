@@ -73,6 +73,8 @@ export function StageObservation({
         )}
         {!progress ? (
           <p>{t('进度未提供')}</p>
+        ) : name === 'bind' && progress.source_phase ? (
+          <p>{t('原文检查进度，不代表编号或结构已通过验收。')}</p>
         ) : (
           <>
             <p>
