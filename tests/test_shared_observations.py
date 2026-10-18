@@ -4,12 +4,12 @@ import hashlib
 from pathlib import Path
 from unittest.mock import patch
 
+from recognition_source_support import observation
 from test_existing_compound_completion import (
     CompletionAnalysis,
     ControlledConverter,
     ExistingCompoundCompletionTests,
 )
-from test_uniform_recognition import observation
 
 from patent_sar_extractor.cli import build_parser
 from patent_sar_extractor.core.ocsr.smiles_cache import SmilesCache

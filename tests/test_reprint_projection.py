@@ -8,8 +8,8 @@ import unittest
 
 import test_corpus_predictions as corpus_tests
 import test_uniform_recognition as uniform_tests
+from recognition_source_support import observation
 from test_prediction_support import PredictionFixture
-from test_uniform_recognition import observation
 
 from patent_sar_extractor.core.ocsr.recognition_inputs import recognition_inputs
 from patent_sar_extractor.core.qa_inputs import load_qa_inputs

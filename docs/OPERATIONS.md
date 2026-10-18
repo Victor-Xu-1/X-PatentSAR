@@ -1,5 +1,21 @@
 # Operations and troubleshooting
 
+## Native source checks without Web test transport
+
+The synthetic original-image QC record factory lives in the single
+`tests/recognition_source_support.py` helper. Native heading/reprint controls
+import it directly rather than importing a Web integration test module and its
+test client. This keeps deployment controls runnable with the actual production
+interpreter without installing a development-only HTTP test transport. The real
+Web integration tests retain their own development dependencies and assertions.
+The helper uses the unchanged image/stereo/QC functions and preserves every
+record field; it is controlled test evidence, not a recognizer/model result.
+
+Product53 labels this verification-only correction. Binding32/binder42 and all
+scientific/source/raw/manual/API/SQL/dependency contracts are unchanged. Keep
+the original failed post-deployment check log; do not convert an import failure
+into a passing run or add test dependencies to production to conceal it.
+
 ## A compound repeated in a preparation chapter
 
 An independently proved standalone preparation drawing no longer causes a
