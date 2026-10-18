@@ -16,6 +16,7 @@
     "src/patent_sar_extractor/core/plot_reference_axes.py",
     "src/patent_sar_extractor/core/plot_reference_geometry.py",
     "src/patent_sar_extractor/core/plot_reference_proof.py",
+    "tests/test_heading_inventory.py",
     "tests/test_heading_ruled_binding.py",
     "tests/test_plot_refinement_proof.py",
     "tests/test_plot_source_nomination.py",
