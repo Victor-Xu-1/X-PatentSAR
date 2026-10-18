@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 
 import fitz
+
 from patent_sar_extractor.core.binding_page_source import binding_page_source
 from patent_sar_extractor.core.binding_source_headings import observed_heading_blocks
 from patent_sar_extractor.core.binding_source_references import (
@@ -16,7 +17,6 @@ from patent_sar_extractor.core.binding_source_references import (
 from patent_sar_extractor.core.heading_source_proof import proved_heading_declaration
 from patent_sar_extractor.core.source_evidence_identity import proof_id
 from patent_sar_extractor.core.table_geometry import page_tokens
-
 from tests.test_plot_reference_layout import plot_document
 
 

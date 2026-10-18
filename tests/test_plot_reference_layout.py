@@ -4,6 +4,7 @@ import json
 import unittest
 
 import fitz
+
 from patent_sar_extractor.core.binding_source_headings import observed_heading_blocks
 from patent_sar_extractor.core.binding_source_references import (
     reference_issues,

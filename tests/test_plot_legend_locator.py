@@ -9,7 +9,6 @@ from patent_sar_extractor.core.plot_legend_locator import (
     locator_nomination,
     observe_legend_locator,
 )
-
 from tests.test_heading_source_ownership import PlotLegendHeadingTests
 
 

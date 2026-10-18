@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 import fitz
 import numpy as np
+
 from patent_sar_extractor.core.plot_reference_pixels import (
     observe_pixels,
     retained_pixels,

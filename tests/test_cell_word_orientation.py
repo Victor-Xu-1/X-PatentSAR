@@ -6,6 +6,7 @@ import unittest
 
 import cv2
 import numpy as np
+
 from patent_sar_extractor.core.cell_ocr_observation import observe_cell
 from patent_sar_extractor.core.cell_text_proof import valid_text_components
 from patent_sar_extractor.core.cell_word_orientation import (
@@ -15,7 +16,6 @@ from patent_sar_extractor.core.cell_word_orientation import (
 )
 from patent_sar_extractor.core.page_ocr_cache import get_ocr_engine
 from patent_sar_extractor.core.table_cells import cell_image
-
 from tests.test_plot_reference_layout import plot_document
 
 
