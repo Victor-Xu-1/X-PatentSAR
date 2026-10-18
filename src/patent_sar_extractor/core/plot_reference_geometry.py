@@ -148,9 +148,10 @@ def _complete_axis(parts, tokens, independent_tokens, alignment_axis, *, before=
     low = min(p["bbox"][alignment_axis] for p in parts) - 3
     high = max(p["bbox"][alignment_axis + 2] for p in parts) + 3
     order_axis = 1 - alignment_axis
+    original = [*tokens, *independent_tokens]
     nearby = [
         token
-        for token in chain(tokens, independent_tokens)
+        for token in original
         if token["text"].strip()
         and token["bbox"][alignment_axis] <= high
         and token["bbox"][alignment_axis + 2] >= low
@@ -164,13 +165,26 @@ def _complete_axis(parts, tokens, independent_tokens, alignment_axis, *, before=
         for group in _aligned_groups([*parts, *nearby], alignment_axis)
         if any(id(part) in seeds for part in group)
     )
+    envelope = [
+        min(part["bbox"][0] for part in parts),
+        min(part["bbox"][1] for part in parts),
+        max(part["bbox"][2] for part in parts),
+        max(part["bbox"][3] for part in parts),
+    ]
+    # Preserve the original inner-envelope veto too: a shifted/unread font may
+    # overlap that frame without aligning to an otherwise complete tick family.
+    inner = (
+        token
+        for token in original
+        if token["text"].strip() and overlaps(token["bbox"], envelope)
+    )
     return all(
         any(
             literal(token["text"]) == literal(part["text"])
             and overlaps(token["bbox"], part["bbox"])
             for part in parts
         )
-        for token in chain.from_iterable(families)
+        for token in chain(chain.from_iterable(families), inner)
     )
 
 

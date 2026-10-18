@@ -63,6 +63,20 @@ def observe(document):
 
 
 class PlotLayoutTests(unittest.TestCase):
+    def test_unaligned_unread_ink_inside_the_numeric_envelope_remains_a_veto(self):
+        with plot_document() as baseline:
+            blocks, sections = observe(baseline)
+            self.assertEqual(blocks, [], sections)
+            self.assertEqual(sections[0]["role"], "figure_label_reference")
+        for value in ("n/a", "7"):
+            with self.subTest(value=value), plot_document() as document:
+                document[0].insert_text((260, 285), value, fontsize=9)
+                blocks, sections = observe(document)
+                self.assertEqual([b["cpd"] for b in blocks], ["Compound 062-C"])
+                self.assertTrue(
+                    all(s["role"] != "figure_label_reference" for s in sections)
+                )
+
     def test_unread_outer_y_member_stays_in_the_original_axis_column(self):
         with plot_document() as baseline:
             blocks, sections = observe(baseline)

@@ -61,7 +61,19 @@ def replay_axis_tokens(figure, tokens, native, hint, size):
     projected = refined_axis_tokens(tokens, native, parts, bounds)
     if projected is None:
         return None
-    return projected, [p for p in native if not overlaps(p["bbox"], bounds)]
+    remaining = [p for p in native if not overlaps(p["bbox"], bounds)]
+    axes = plot_axes(
+        projected,
+        figure["caption"],
+        hint["bbox"],
+        size,
+        independent_tokens=remaining,
+    )
+    # Reading every word is not enough if the final numeric nomination can omit
+    # one again. Every retained original word must belong to the proved x axis.
+    if axes is None or axes["x"] != parts:
+        return None
+    return projected, remaining
 
 
 def observe_reference_axes(page, tokens, captions, line, size):

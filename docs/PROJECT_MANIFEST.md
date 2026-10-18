@@ -6,6 +6,8 @@
   complete axis families, including unread outer members and independent native
   facts rather than a successful numeric envelope. The same alignment authority
   retains original inventory bounds; shared axes/marker modules prove strokes.
+  Extending these families preserves the original inner-envelope conflict guard.
+  The sole refined-axis replay conserves every retained word in the final x axis.
   `plot_legend_locator` retains original graphic/text line boundaries, not a
   stripped prefix. `cell_word_orientation` owns bounded physical word views;
   `plot_axis_words` observes/replays them with the existing OCR and

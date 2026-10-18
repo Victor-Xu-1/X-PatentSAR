@@ -1135,6 +1135,8 @@ preferred numeric subset. Outer unread members and independent native words
 remain in the same complete physical alignment family even when outside the
 readable numbers' envelope; unrelated unaligned notes are not axis members.
 The original cross-axis boundary separates later aligned synthesis sections.
+Unaligned unread ink inside the numeric envelope still vetoes qualification.
+Refinement must keep every observed word in the final axis, not just its reads.
 The global table OCR orientation policy is unchanged.
 
 Derived heading proofs3/4 use Binding22/binder31. Old ownership remains historical;

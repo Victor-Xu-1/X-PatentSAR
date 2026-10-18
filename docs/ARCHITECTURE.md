@@ -13,6 +13,10 @@ independently retained native words. Unaligned notes do not join an axis; excess
 physical inventory refuses rather than selecting a bounded successful prefix.
 Vertical families retain the already-required boundary before the horizontal
 tick row, so later aligned synthesis text cannot poison or borrow a figure role.
+The original inner-envelope conflict veto remains mandatory even for unaligned
+or shifted-font words; extending a family does not replace that source guard.
+The refined x-axis nomination must retain every observed word in the complete
+strip, including displaced numeric/unknown members, not merely read then omit it.
 
 `plot_legend_locator` may nominate the literal compound suffix of an original
 OCR line containing its graphic key. Complete original line text/bounds and its
