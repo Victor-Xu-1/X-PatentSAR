@@ -25,6 +25,11 @@ COMMON = {
 MODES = (
     (
         "completion",
+        "structure-details.spec.ts",
+        COMMON,
+    ),  # Drawing/read-error checks need explicit current molecular observations.
+    (
+        "completion",
         "source-completion.spec.ts",
         COMMON | {"source-completion.spec.ts"},
     ),

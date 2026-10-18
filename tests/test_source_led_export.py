@@ -177,14 +177,11 @@ def run_fixture(root, *, activities=None, invalid_second=False, classified_pages
 
 
 def export(root, *, continue_scientific=False):
-    worker = (
-        Path(__file__).parents[1]
-        / "src/patent_sar_extractor/workers/gen_final_results.py"
-    )
     command = [
         sys.executable,
         "-B",
-        str(worker),
+        "-m",
+        "patent_sar_extractor.workers.gen_final_results",
         "--bindings",
         str(root / "structure_bindings/bindings.json"),
         "--smiles",

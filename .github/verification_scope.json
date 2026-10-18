@@ -25,13 +25,17 @@
     "tests/test_heading_mapping.py",
     "tests/test_heading_ruled_binding.py",
     "tests/test_heading_ruled_source.py",
-    "tests/test_standalone.py"
+    "tests/test_source_browser_fixture.py",
+    "tests/test_source_led_export.py",
+    "tests/test_standalone.py",
+    "tools/browser_fixture_mode.py"
   ],
   "python_modules": [
     "tests.test_heading_ruled_source",
     "tests.test_heading_cell_witness",
     "tests.test_heading_ruled_binding",
     "tests.test_heading_group_scope",
+    "tests.test_source_browser_fixture",
     "tests.test_heading_observation",
     "tests.test_heading_inventory",
     "tests.test_heading_source_ownership.HeadingSourceOwnershipTests",

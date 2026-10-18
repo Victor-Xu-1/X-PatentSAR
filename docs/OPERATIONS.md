@@ -43,6 +43,12 @@ chemical recognition. In particular, unresolved small activity-header words or
 percent signs cannot lend unproved meaning to another table panel. Keep those
 and the complete real frontend extraction/SAR acceptance open independently.
 
+Browser structure-preview/read-error checks use the existing isolated completion
+adapter, with explicitly controlled current molecular observations. A historical
+review fixture correctly withholds SMILES and cannot be used as if it supplied
+a valid molecule. No historical/private product is rewritten to satisfy a UI
+check; synthetic adapters are not extraction or model-accuracy evidence.
+
 ## Joined catalogue titles and visible binding source work
 
 A qualified original title such as `CompoundsTable`, `IntermediateCompounds` or
