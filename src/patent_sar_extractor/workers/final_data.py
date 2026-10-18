@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import json
-
+from patent_sar_extractor.artifact_catalog import read_artifact_json
 from patent_sar_extractor.core.activity_identity import normalize_compound
 from patent_sar_extractor.core.activity_join import activity_order_and_map
 from patent_sar_extractor.core.formal_structure import binding_pairs, proved_catalog
@@ -47,18 +46,18 @@ def get_smiles_for_binding(
 
 def load_data(bindings_path, smiles_path, activity_data=None, activity_path=None):
     with open(bindings_path, encoding="utf-8") as stream:
-        payload = json.load(stream)
+        payload = read_artifact_json(stream)
     bindings = payload.get("final_bindings")
     catalog = proved_catalog(payload)
     if binding_pairs(bindings) != binding_pairs(catalog):
         raise ValueError("Formal export does not cover the complete proved catalog")
     with open(smiles_path, encoding="utf-8") as stream:
-        records = smiles_records(json.load(stream))
+        records = smiles_records(read_artifact_json(stream))
     maps = build_smiles_maps(records)
     activities = {}
     if activity_path:
         with open(activity_path, encoding="utf-8") as stream:
-            activity_payload = json.load(stream)
+            activity_payload = read_artifact_json(stream)
         _, activities = activity_order_and_map(activity_payload["rows"])
     elif activity_data is not None:
         if not isinstance(activity_data, dict):

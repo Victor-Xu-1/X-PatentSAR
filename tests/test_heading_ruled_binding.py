@@ -8,6 +8,7 @@ from pathlib import Path
 
 import fitz
 
+from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.core.binding_source_references import reference_issues
 from patent_sar_extractor.core.formal_structure import coverage_errors
 from patent_sar_extractor.core.structure_binder import bind
@@ -15,9 +16,10 @@ from patent_sar_extractor.web.compound_catalog import read_compound_catalog
 from patent_sar_extractor.web.errors import WebError
 
 
-def run_original(root, *, raster):
+def run_original(root, *, raster, image_directory=None):
     source = root / "original.pdf"
-    image = root / "structure.png"
+    image = (image_directory or root) / "structure.png"
+    image.parent.mkdir(parents=True, exist_ok=True)
     with fitz.open() as document:
         page = document.new_page(width=360, height=360)
         page.insert_text((70, 90), "Compound 82A", fontsize=9.5)
@@ -75,7 +77,7 @@ def run_original(root, *, raster):
         str(root / "bindings"),
         str(metadata),
     )
-    return result, json.loads(Path(result["output_files"]["json"]).read_text())
+    return result, load_json(Path(result["output_files"]["json"]), {})
 
 
 class HeadingRuledBindingTests(unittest.TestCase):

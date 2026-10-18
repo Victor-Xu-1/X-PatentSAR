@@ -13,6 +13,7 @@ from unittest.mock import patch
 
 import fitz
 
+from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.core.binding_source_claims import resolve_source_claims
 from patent_sar_extractor.core.binding_spatial import (
     SpatialBindings,
@@ -179,8 +180,10 @@ class BindingModuleTests(unittest.TestCase):
                 "structures_path",
                 "include_intermediates",
                 "cpd_prefix_pattern",
+                "progress",
             ],
         )
+        self.assertIsNone(inspect.signature(bind).parameters["progress"].default)
 
     def test_observed_conflicts_are_withheld_instead_of_ranked_as_success(self):
         candidates = [
@@ -359,7 +362,7 @@ class BindingModuleTests(unittest.TestCase):
                     for binding in result["bindings"]
                 )
             )
-            saved = json.loads(Path(result["output_files"]["json"]).read_text())
+            saved = load_json(Path(result["output_files"]["json"]), {})
             self.assertEqual(saved["final_bindings"], result["bindings"])
 
     def test_unsegmented_observed_cell_cannot_be_filled_by_generic_recovery(self):

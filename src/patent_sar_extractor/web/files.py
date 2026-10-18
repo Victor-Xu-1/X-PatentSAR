@@ -2,16 +2,17 @@
 
 from __future__ import annotations
 
-import json
 import os
 import stat
 import sysconfig
 from pathlib import Path
 from typing import Any, BinaryIO
 
+from patent_sar_extractor.artifact_catalog import read_artifact_json
+from patent_sar_extractor.artifact_nodes import MAX_ARTIFACT_BYTES
+
 from .errors import WebError
 
-MAX_ARTIFACT_BYTES = 32 * 1024 * 1024
 MAX_RECORDS = 25000
 
 
@@ -123,6 +124,11 @@ class SafeFiles:
             raise WebError(413, "asset_limit", "Asset exceeds its size limit.")
         return content
 
+    def byte_size(self, value: str | Path) -> int:
+        """Inspect one safe regular file without reading/allocating its content."""
+        with self.open(value, max_bytes=(1 << 63) - 1) as stream:
+            return os.fstat(stream.fileno()).st_size
+
     def json(self, value: str | Path, *, optional: bool = True) -> Any:
         try:
             content = self.read(value, max_bytes=MAX_ARTIFACT_BYTES)
@@ -131,15 +137,11 @@ class SafeFiles:
                 return None
             raise
         try:
-            return json.loads(content, parse_constant=_invalid_constant)
+            return read_artifact_json(content, strict_numbers=True)
         except (ValueError, RecursionError, UnicodeError) as exc:
             raise WebError(
                 422, "invalid_artifact", "Run artifact contains invalid JSON."
             ) from exc
-
-
-def _invalid_constant(value: str) -> None:
-    raise ValueError("Non-finite JSON number")
 
 
 def records(payload: object, key: str) -> list[dict[str, Any]]:

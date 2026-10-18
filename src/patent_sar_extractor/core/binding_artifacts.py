@@ -170,7 +170,7 @@ def write_binding_result(
             "unresolved_sources": issues,
         },
     }
-    write_json_atomic(output_json, payload)
+    write_json_atomic(output_json, payload, shared=True)
     with output_csv.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=_CSV_FIELDS, extrasaction="ignore")
         writer.writeheader()

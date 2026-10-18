@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
@@ -17,6 +16,7 @@ if __package__ in (None, ""):
         run_name="__main__",
     )
 
+from patent_sar_extractor.artifact_catalog import read_artifact_json
 from patent_sar_extractor.artifact_io import write_json_atomic
 from patent_sar_extractor.contracts import (
     ACTIVITY_SCHEMA,
@@ -55,14 +55,14 @@ def export_validation(
 ) -> tuple[list[dict], list[dict], list[str]]:
     """Technical errors raise; scientific errors retain all expected source IDs."""
     with open(bindings_path, encoding="utf-8") as stream:
-        binding_payload = json.load(stream)
+        binding_payload = read_artifact_json(stream)
     if not artifact_identity_matches(
         binding_payload, BINDINGS_SCHEMA, BINDINGS_SCHEMA_VERSION
     ):
         raise ValueError("Incompatible binding artifact for export")
     errors = coverage_errors(binding_payload)
     with open(smiles_path, encoding="utf-8") as stream:
-        smiles = json.load(stream)
+        smiles = read_artifact_json(stream)
     if not smiles_artifact_is_current(smiles) or smiles_source_records(smiles):
         raise ValueError("Incompatible or nonuniform recognition artifact")
     if smiles.get("formal_acceptance_scope") != FORMAL_SCOPE:
@@ -70,7 +70,7 @@ def export_validation(
             "Recognition artifact does not declare source-led formal coverage"
         )
     with open(activity_path, encoding="utf-8") as stream:
-        activity = json.load(stream)
+        activity = read_artifact_json(stream)
     if not artifact_identity_matches(
         activity, ACTIVITY_SCHEMA, ACTIVITY_SCHEMA_VERSION
     ):
@@ -78,7 +78,7 @@ def export_validation(
     pages = None
     if classification_path:
         with open(classification_path, encoding="utf-8") as stream:
-            classification = json.load(stream)
+            classification = read_artifact_json(stream)
         if not artifact_identity_matches(
             classification,
             PAGE_CLASSIFICATION_SCHEMA,
@@ -128,7 +128,7 @@ def main():
         args.bindings, args.smiles, activity_path=args.activity
     )
     with open(args.bindings, encoding="utf-8") as stream:
-        expected = json.load(stream)["final_bindings"]
+        expected = read_artifact_json(stream)["final_bindings"]
     qualified_structure_ids = {row["structure_id"] for row in bindings}
     receipt = {
         "execution_mode": SOURCE_EXECUTION_MODE,
@@ -161,7 +161,7 @@ def main():
             )
     maps = build_smiles_maps(records)
     with open(args.activity, encoding="utf-8") as stream:
-        activity_rows = json.load(stream)["rows"]
+        activity_rows = read_artifact_json(stream)["rows"]
     workbook = output / f"{args.patent}_final.xlsx"
     sdf = output / f"{args.patent}_final.sdf"
     generate_excel(

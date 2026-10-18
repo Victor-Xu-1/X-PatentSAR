@@ -34,6 +34,7 @@ runpy.run_path(
     run_name="__main__",
 )
 
+from patent_sar_extractor.artifact_catalog import read_artifact_json
 from patent_sar_extractor.artifact_io import write_json_atomic
 from patent_sar_extractor.contracts import (
     BINDINGS_SCHEMA,
@@ -85,7 +86,7 @@ def load_bindings(input_path: str) -> list:
         return df.to_dict("records")
 
     with open(input_path, "r") as f:
-        data = json.load(f)
+        data = read_artifact_json(f)
 
     if isinstance(data, list):
         return data
@@ -107,7 +108,7 @@ def validate_strict_binding_input(input_path: str, bindings: list) -> list[str]:
         return ["Strict OCSR requires current-version bindings JSON, not CSV input."]
     try:
         with open(input_path, "r", encoding="utf-8") as source:
-            payload = json.load(source)
+            payload = read_artifact_json(source)
     except (OSError, ValueError) as exc:
         return [f"Strict OCSR could not read binding payload: {exc}"]
     if not artifact_identity_matches(payload, BINDINGS_SCHEMA, BINDINGS_SCHEMA_VERSION):
@@ -360,7 +361,7 @@ def main():
     binding_payload = {}
     if not args.diagnostic_unvalidated_input:
         with open(args.input, "r", encoding="utf-8") as source:
-            binding_payload = json.load(source)
+            binding_payload = read_artifact_json(source)
         plan = recognition_inputs(binding_payload)
         supplemental, reprints = plan.supplemental, plan.reprints
         if not args.include_intermediates:

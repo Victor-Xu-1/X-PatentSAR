@@ -1,5 +1,39 @@
 # Operations and troubleshooting
 
+## Large binding evidence without dropped records
+
+Repeated complete source proofs can inflate a binding artifact past the shared
+32MiB reader limit. The binding writer now uses a versioned in-file shared JSON
+catalogue; the common native/Web reader restores the original logical record
+tree before source/chemical QA. This neither increases that wire limit nor
+removes records, original text, coordinates, uncertainty or rejected proposals.
+References, content hashes, traversal/depth and logical-expansion bounds are
+validated before use. Transport integrity does not qualify scientific evidence.
+Unsupported or intrinsically over-budget evidence still fails explicitly.
+
+Existing readable plain artifacts remain supported under their original
+scientific identities. An oversized legacy binding checkpoint cannot be reused;
+the normal frontend-submitted producer must create a new bounded attempt, not
+an operator script flattening, truncating or editing old products. Other raw
+checkpoints may be reused only through their existing verified contracts.
+Deployment must wait for extraction/SAR/environment operations to be idle.
+Preserve originals, failed attempts, manual audit, configuration and rollback.
+
+Shared JSON version1 is a private transport contract, independent of unchanged
+Binding27/binder36/Activity22/extractor31 and API/SQL. Older wheels do not decode
+this wire. On rollback keep the newer complete state/evidence separately and
+deliberately restore the compatible pre-upgrade workspace backup; do not rewrite
+newer scientific artifacts or infer acceptance from an older reader. Native
+producer summaries are last observations: a parent-initiated owned-process stop
+may preserve a running-stage snapshot while the Web job/history is terminal.
+Use the actual job and verified kernel identity, not that snapshot, to decide
+whether another submission/deployment is safe.
+
+Related serialization/source/cache/worker/export/QA/Web and installed-browser
+checks are separate from complete real frontend extraction/SAR acceptance.
+Do not rerun a private patent merely because this operational fix shipped;
+independently unresolved original ownership and chemical findings remain open.
+
 ## Complete unit fragments and identifier-role review
 
 A source detector can split a correct `Dmax (%)` line into `Dmax` and `((%)`.

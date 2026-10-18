@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
+from patent_sar_extractor.artifact_catalog import read_artifact_json
 from patent_sar_extractor.artifact_io import load_json
+from patent_sar_extractor.artifact_nodes import MAX_ARTIFACT_BYTES
 from patent_sar_extractor.contracts import (
     BINDINGS_SCHEMA,
     BINDINGS_SCHEMA_VERSION,
@@ -24,7 +25,7 @@ WORKING_ROOT = Path.cwd()
 
 def _load_bindings_from_json(path: str) -> tuple[dict, list[dict]]:
     with open(path, encoding="utf-8") as source:
-        payload = json.load(source)
+        payload = read_artifact_json(source)
     if not isinstance(payload, dict) or not isinstance(
         payload.get("final_bindings"), list
     ):
@@ -58,6 +59,14 @@ def _binding_acceptance_errors(
 def _load_reusable_bindings(
     bind_json: str, fingerprint: dict, locator: dict | None = None
 ) -> dict | None:
+    # A readable native cache must also fit the shared Web/activity contract.
+    # Regenerate oversized legacy output through the ordinary producer; never
+    # rewrite/retag its evidence in place or carry its prior acceptance forward.
+    if (
+        Path(bind_json).is_file()
+        and Path(bind_json).stat().st_size > MAX_ARTIFACT_BYTES
+    ):
+        return None
     if not _fingerprint_matches(bind_json, fingerprint):
         return None
     payload = load_json(bind_json, {})

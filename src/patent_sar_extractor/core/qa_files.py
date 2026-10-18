@@ -2,21 +2,19 @@
 
 from __future__ import annotations
 
-import json
 import re
 import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
 from typing import Any
 
+from patent_sar_extractor.artifact_io import load_json
+
 from .activity_identity import normalize_compound
 
 
 def _load_json(path: Path, default: Any):
-    if not path.is_file():
-        return default
-    with open(path, encoding="utf-8") as f:
-        return json.load(f)
+    return load_json(path, default)
 
 
 def _excel_column_index(reference: str) -> int:

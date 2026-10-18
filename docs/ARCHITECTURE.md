@@ -1,5 +1,50 @@
 # X-PatentSAR architecture
 
+## One lossless binding-artifact transport
+
+`artifact_catalog` and `artifact_nodes` own shared JSON version1, independently
+of scientific schema/implementation epochs. The sole binding writer opts into
+the same atomic artifact writer: substantial repeated source/catalogue values
+are content-addressed within `bindings.json`, not copied per row and per view.
+There is no external reference, second source store or extra scientific path.
+Ordered typed Merkle identities preserve literal JSON values, original order,
+numbers and proof packets; reserved-looking literal objects are escaped, not
+interpreted as references. Hashes establish transport integrity, not chemistry.
+
+`read_artifact_json` is the one native/Web parser. Before existing source and
+scientific validation, it verifies catalog version, references, identities,
+cycles, duplicate wire keys and complete reachability. It restores ordinary
+independent mutable JSON containers; editing one row cannot mutate another
+row or its catalogue proof through an interned Python alias. Legacy plain JSON
+keeps its previous parsing behavior. Web reads retain strict finite numbers.
+Binding policy/cache, activity-header catalogue, OCSR input, export, QA and
+SafeFiles delegate to this decoder rather than implementing private readers.
+
+The wire bound remains32MiB. Independent guards cap unique nodes500k, traversal
+edges2M, shared entries100k, expanded nodes2M, logical bytes512MiB and depth256.
+The latter retains the already-supported208-level rejected source diagnostics
+plus their artifact envelope, without qualifying their scientific meaning.
+Subtree memoization rechecks full height at every occurrence; amplification is
+rejected before materialization. Over-budget publication leaves prior bytes
+intact and cannot truncate rows or evidence. Oversized legacy binding caches
+are not reusable; the ordinary producer must regenerate a new bounded output.
+Current readable plain caches still require the unchanged identity, manifest
+and complete scientific acceptance. No original artifact is rewritten in place.
+
+Verified checkpoint relocation uses the same shared writer for binding and
+recomputes its existing manifest dependency bytes. It cannot re-inflate shared
+proof into an unreadable ordinary file. Only binding uses the256-depth transport
+budget; unchanged checkpoint families keep40. A no-follow regular-file size
+preflight declines an oversized legacy binding before parsing or copying it,
+so earlier verified raw/structure checkpoints can seed a fresh producer binding
+pass. Unsafe files remain errors, not cache misses or approved proof.
+
+Binding27/binder36, Activity22/extractor31, raw/model/manual data, API-v1, SQL,
+numerical SAR and dependencies are unchanged. Older binaries cannot consume
+shared-wire artifacts; rollback preserves newer state separately and deliberately
+uses its compatible pre-upgrade state. Controlled transport/binder/consumer/UI
+checks do not establish complete real-patent extraction or chemical correctness.
+
 ## Literal unit fragments and reserved header roles
 
 `activity_header_metrics.normalize_metric_text` uses the existing complete

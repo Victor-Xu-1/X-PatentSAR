@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 import fitz
 
+from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.core.binding_source_headings import observed_heading_blocks
 from patent_sar_extractor.core.catalog_reader import read_catalog_entries
 from patent_sar_extractor.core.formal_structure import coverage_errors
@@ -61,7 +62,7 @@ class SpatialBindingAuthorityTests(unittest.TestCase):
                     str(root / "bindings"),
                     str(metadata),
                 )
-            saved = json.loads(Path(result["output_files"]["json"]).read_text())
+            saved = load_json(Path(result["output_files"]["json"]), {})
         self.assertEqual(
             {row["cpd"] for row in saved["final_bindings"]},
             {f"Compound {label}" for label in labels},
@@ -169,7 +170,7 @@ class SpatialBindingAuthorityTests(unittest.TestCase):
             self.assertTrue(
                 all(b["accuracy_status"] == "confirmed" for b in result["bindings"])
             )
-            serialized = json.loads(Path(result["output_files"]["json"]).read_text())
+            serialized = load_json(Path(result["output_files"]["json"]), {})
             self.assertEqual(serialized["final_bindings"], result["bindings"])
             with Path(result["output_files"]["csv"]).open(newline="") as stream:
                 self.assertEqual(
