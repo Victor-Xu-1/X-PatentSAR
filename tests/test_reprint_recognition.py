@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 from lateral_structure_support import LateralStructureControls
 from PIL import Image
-from test_uniform_recognition import observation
+from recognition_source_support import observation
 
 from patent_sar_extractor.application.smiles_policy import _smiles_acceptance_errors
 from patent_sar_extractor.application.stage_cache import _bindings_ocsr_digest

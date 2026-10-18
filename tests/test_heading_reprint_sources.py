@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 import fitz
+from recognition_source_support import observation
 
 from patent_sar_extractor.application.binding_policy import _binding_acceptance_errors
 from patent_sar_extractor.application.smiles_policy import _smiles_acceptance_errors
@@ -27,7 +28,6 @@ from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
 from patent_sar_extractor.core.structure_binder import bind
 from patent_sar_extractor.smiles_artifact import build_smiles_artifact
 from tests import test_heading_label_roles as label_controls
-from tests.test_uniform_recognition import observation
 
 
 class HeadingReprintSourceTests(unittest.TestCase):

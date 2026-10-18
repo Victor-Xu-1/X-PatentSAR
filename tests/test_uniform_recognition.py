@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import sys
 import tempfile
@@ -14,6 +13,7 @@ from unittest.mock import patch
 
 import test_compound_catalog_view as catalog_tests
 import test_corpus_predictions as corpus_tests
+from recognition_source_support import observation
 from test_prediction_support import PredictionFixture
 
 from patent_sar_extractor.application.pipeline_context import PipelineContext
@@ -23,35 +23,11 @@ from patent_sar_extractor.application.stage_cache import _bindings_ocsr_digest
 from patent_sar_extractor.application.stage_smiles import execute_smiles
 from patent_sar_extractor.artifact_io import write_json_atomic
 from patent_sar_extractor.core.ocsr.recognition_inputs import recognition_inputs
-from patent_sar_extractor.core.ocsr.smiles_qc import qc_smiles
-from patent_sar_extractor.core.ocsr.stereo_evidence import (
-    observe_stereo_symbols,
-    source_checked_qc,
-)
 from patent_sar_extractor.smiles_artifact import build_smiles_artifact, smiles_records
 from patent_sar_extractor.web.acceptance import ARTIFACTS
 from patent_sar_extractor.web.errors import WebError
 from patent_sar_extractor.web.exports import export_json
 from patent_sar_extractor.web.prediction_worker import run_predictions
-
-
-def observation(binding, raw="CCO"):
-    image = Path(binding["image_path"])
-    checked = source_checked_qc(qc_smiles(raw), observe_stereo_symbols(image))
-    return {
-        **checked,
-        "cpd_id": binding["cpd"],
-        "structure_id": binding["structure_id"],
-        "raw_smiles": raw,
-        "image_hash": hashlib.sha256(image.read_bytes()).hexdigest(),
-        "ocsr_original_input": str(image),
-        "source_image_path": str(image),
-        "OCSR_quality_flag": checked["quality_flag"],
-        "OCSR_status": "success"
-        if checked["quality_flag"] == "ok"
-        else "review_required",
-        "model_fingerprint": "a" * 64,
-    }
 
 
 class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
