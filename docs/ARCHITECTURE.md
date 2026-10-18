@@ -1,5 +1,32 @@
 # X-PatentSAR architecture
 
+## One original catalogue role across layout, identity and heading inventory
+
+`caption_grid_binding` uses the same revalidated original role for table-start
+direction and adjacent continuation. An absent layout-lane caption cannot erase
+a title already proved by independent native evidence or the bounded title
+reader. Raw new-table hints still stop inappropriate carry; saved role flags,
+unknown titles and known conflicts do not acquire catalogue authority.
+
+The shared caption-fragment replay conserves literal physical order. A qualified
+role-edge glyph must overlap the matching edge of its qualified whole role;
+partial role observations must cover that whole literal. A suffix may share
+characters only at a uniquely mapped, same-row crossing detector boundary while
+extending the separately read complete caption. Blanket overlapping-letter
+exemptions are removed. Different IDs, detached/foreign characters, nonfinal
+roles, invalid scores and source conflicts remain vetoes. No characters are
+joined to construct a new identifier, and original detections remain retained.
+
+`caption_label_roles` aliases layout locators through the existing cell SDK's
+half-open centre ownership and one-point edge budget, only after current exact
+document/page/ID/caption proof. It does not expand scientific source windows.
+Wide, outside, ambiguous or foreign locators remain independent observations;
+the same ID elsewhere cannot close a missing structure. Saved source-reference
+replay uses this same authority, avoiding redundant heading OCR for proved cells.
+These changes remain within unpublished Binding22/binder31, without raw/model,
+activity/SAR, OCSR image/preparation, API/SQL or dependency changes. Controlled
+native/raster/writer tests do not establish actual-patent or chemical acceptance.
+
 ## Quantitative figure references versus molecular declarations
 
 The existing original-heading ledger retains quantitative plot labels as

@@ -1,5 +1,24 @@
 # Operations and troubleshooting
 
+## Proved catalogue labels reported again as missing headings
+
+Layout nominations and original cell proof have different responsibilities.
+The original qualified catalogue title, not just a layout-lane string, supplies
+the existing start/direction decision. Caption references reuse the cell SDK's
+centre ownership and one-point detector-edge budget; source windows, original
+IDs and exact diagram ownership are not enlarged. An out-of-cell centre, excess
+padding, duplicate owner, known conflict or foreign source still refuses.
+
+The same physical fragment replay is used by cell observation and saved identity
+consumers. Overlapping role letters and shared suffix characters require qualified
+matching literal/geometry; broad alphabetic overlap exemptions are not retained.
+Independent characters, alternate IDs and insufficient confidence must remain
+visible and unresolved. Do not suppress these issues or edit a failed run's
+bindings. Binding22/binder31 refresh derived ownership through normal frontend
+execution; original PDFs, raw observations, images and manual audits remain.
+Focused source/writer/consumer, package, PR/main and fixed18765 checks are separate
+from accepted real extraction/SAR and any broad-format accuracy claim.
+
 ## Characterization tables
 
 Long NMR/MS cells are not assay headers. The shared original-cell reader keeps

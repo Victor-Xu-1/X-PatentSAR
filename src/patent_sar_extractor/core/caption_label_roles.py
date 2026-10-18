@@ -7,6 +7,7 @@ from .activity_header_evidence import proof_id
 from .numbered_structure_pairs import _box
 from .printed_identifiers import identifier_key
 from .source_binding_proof import annotate_source_binding
+from .source_cell_tokens import cell_tokens, crosses_cell
 from .source_section_roles import heading_members, section_heading
 
 ROLE = "structure_label_reference"
@@ -78,8 +79,19 @@ def caption_label_index(bindings, original_pdf_sha256):
     return dict(output)
 
 
+def _owned_locator(box, cell):
+    """Use the original cell SDK's centre and one-point locator edge budget.
+
+    A layout detector's padding is not another original heading. This aliases
+    only a locator to an already proved source; it never expands that source's
+    observation window or accepts its molecule from a nearby label.
+    """
+    token = {"x": (box[0] + box[2]) / 2, "y": (box[1] + box[3]) / 2, "bbox": box}
+    return bool(cell_tokens([token], cell)) and not crosses_cell([token], cell)
+
+
 def caption_label_reference(line, page_no, index):
-    """A matching literal must be inside one exact proved label window."""
+    """A matching literal must belong to one exact proved label window."""
     if (
         type(page_no) is not int
         or not isinstance(line.get("source"), str)
@@ -103,8 +115,7 @@ def caption_label_reference(line, page_no, index):
     options = [
         source
         for source in index.get((page_no, members[0]), {}).values()
-        if source["bbox"][0] <= box[0] < box[2] <= source["bbox"][2]
-        and source["bbox"][1] <= box[1] < box[3] <= source["bbox"][3]
+        if _owned_locator(box, source["bbox"])
     ]
     if len(options) != 1:
         return None

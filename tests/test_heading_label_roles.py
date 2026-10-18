@@ -320,6 +320,35 @@ class HeadingLabelRoleTests(unittest.TestCase):
                     caption_label_reference({**line, field: value}, 1, index)
                 )
 
+    def test_caption_locators_share_existing_cell_edge_and_centre_ownership(self):
+        _, _, payload = self.run_binding()
+        index = caption_label_index(
+            payload["compound_catalog"]["entries"],
+            payload["source_reference_scope"]["original_pdf_sha256"],
+        )
+        source = next(iter(index[(1, "17")].values()))
+        cell = source["bbox"]
+        inside = [cell[0] + 5, cell[1] + 3, cell[2] - 5, cell[3] - 3]
+        line = {
+            "text": "Compound 17",
+            "source": "page_ocr",
+            "geometry_space": "rendered",
+        }
+        for axis in range(4):
+            for slack, accepted in ((0.8, True), (1.01, False)):
+                box = list(inside)
+                box[axis] = cell[axis] + (slack if axis >= 2 else -slack)
+                with self.subTest(axis=axis, slack=slack):
+                    reference = caption_label_reference({**line, "bbox": box}, 1, index)
+                    self.assertEqual(reference is not None, accepted)
+        outside = [inside[0], cell[3] + 0.1, inside[2], cell[3] + 0.9]
+        self.assertIsNone(caption_label_reference({**line, "bbox": outside}, 1, index))
+        ambiguous = copy.deepcopy(index)
+        ambiguous[(1, "17")]["f" * 64] = {**source, "source_key": "f" * 64}
+        self.assertIsNone(
+            caption_label_reference({**line, "bbox": inside}, 1, ambiguous)
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

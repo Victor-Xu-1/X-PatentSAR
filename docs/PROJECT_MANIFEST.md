@@ -1,5 +1,20 @@
 # Project governance manifest
 
+- Original catalogue direction, literal identity and heading references use the
+  existing caption coordinator and source/cell SDK. The same revalidated title
+  supplies start/continuation, not a second layout-only decision. Shared caption
+  fragment replay requires qualified original role-edge geometry and unique
+  literal boundary overlap; blanket alphabetic overlap exemptions are removed.
+  `caption_label_roles` reuses existing half-open cell centres and the one-point
+  locator edge budget without expanding scientific observation bounds. Exact
+  source identity, complete formal proof, ambiguity and foreign/independent
+  heading rejection remain mandatory in producer and saved replay. The same
+  unpublished Binding22/binder31 covers these ownership changes; raw source,
+  OCSR image/preparation, activity/SAR/manual/API/SQL/model/dependency contracts
+  stay independent. No task-specific branch, second execution path/store or
+  private-data repair is introduced. Controlled native/raster/writer acceptance
+  is not real-patent, universal-format or chemical accuracy evidence.
+
 - Quantitative-figure roles remain in the existing heading inventory, source/cell
   SDK and binding writer. `plot_reference` coordinates observation and
   `plot_reference_proof` owns saved replay. `plot_reference_geometry` conserves

@@ -26,6 +26,56 @@ def complete(label, raw=None):
 
 
 class CaptionFragmentIdentityTests(unittest.TestCase):
+    @staticmethod
+    def overlapping_role_and_suffix(role="Compound", label="935AB"):
+        parts = [
+            fragment(role[:1], 0),
+            fragment(role, 1),
+            fragment(label[:-1], 2),
+            fragment(label[-2:], 3),
+        ]
+        for part, (left, right) in zip(
+            parts, ((2, 28), (14, 142), (132, 210), (194, 238)), strict=True
+        ):
+            part["bbox"] = [[left, 8], [right, 8], [right, 48], [left, 48]]
+        return parts
+
+    def test_overlapping_role_glyph_and_id_boundary_preserve_the_complete_literal(self):
+        for role, label in (
+            ("Compound", "935AB"),
+            ("Example", "81YZ"),
+            ("Cmpd", "64AB"),
+        ):
+            with self.subTest(role=role, label=label):
+                packet = json.loads(
+                    json.dumps(self.overlapping_role_and_suffix(role, label))
+                )
+                self.assertFalse(
+                    refined_caption_conflicts(
+                        label, complete(label, f"{role} {label}"), packet
+                    )
+                )
+
+    def test_overlapping_literal_projection_cannot_hide_a_different_or_separate_glyph(
+        self,
+    ):
+        original = self.overlapping_role_and_suffix()
+        for index, update in (
+            (0, {"text": "D"}),
+            (0, {"bbox": [[2, 55], [28, 55], [28, 88], [2, 88]]}),
+            (0, {"bbox": [[0, 8], [10, 8], [10, 48], [0, 48]]}),
+            (1, {"confidence": 0.84}),
+            (3, {"text": "AC"}),
+            (3, {"bbox": [[220, 8], [255, 8], [255, 48], [220, 48]]}),
+            (3, {"bbox": [[150, 8], [180, 8], [180, 48], [150, 48]]}),
+        ):
+            changed = json.loads(json.dumps(original))
+            changed[index].update(update)
+            with self.subTest(index=index, update=update):
+                self.assertTrue(
+                    refined_caption_conflicts("935AB", complete("935AB"), changed)
+                )
+
     def test_a_repeated_letter_inside_a_qualified_whole_id_box_is_not_an_extra_suffix(
         self,
     ):
