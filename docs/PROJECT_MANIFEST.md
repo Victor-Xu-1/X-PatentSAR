@@ -1,5 +1,10 @@
 # Project governance manifest
 
+- Current derived contracts for this upgrade: Binding33/binder43, heading
+  structure evidence5, SMILES4/QA6. Compatible raw OCSR2/preparation8, original
+  assets/model files, manual audit, numerical SAR, API-v1/SQL and dependencies
+  remain unchanged. Old derived packets stay historical, not relabelled.
+
 - Native reaction source roles: `reaction_vectors` owns bounded original vector/
   raster/text observations; `reaction_arrows` owns explicit open-head geometry;
   `reaction_graph` conserves all declaration nodes/edges; `heading_reaction`

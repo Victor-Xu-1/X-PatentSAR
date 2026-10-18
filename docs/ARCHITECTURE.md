@@ -2,6 +2,11 @@
 
 ## Native reaction direction before product ownership
 
+Binding33/binder43 version this derived heading-role/source upgrade. SMILES4/QA6
+separately version complete-image accounting. Raw OCSR2/preparation8, original
+assets, model weights, manual audit, numerical SAR and API-v1/SQL are unchanged;
+older Binding32/heading4/SMILES3/QA5 remain history, never retagged as current.
+
 `reaction_vectors` conserves bounded original native paths in rendered PDF point
 coordinates. Text, raster content, fills, curves, clipping and unsupported strokes
 remain blocking observations; they cannot become missing ink. `reaction_arrows`

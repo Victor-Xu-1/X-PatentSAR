@@ -20,9 +20,11 @@ Web read-side acceptance requires the verified original attachment through the
 existing safe PDF reader. Removing or rehashing a source packet cannot disable
 that replay; missing original evidence withholds acceptance without repairing,
 resubmitting or changing a scientific artifact. Preserve failed/raw/manual data.
-Related source/schema/binder epochs and the next PR label must be prepared with
-the coherent release scope before delivery; a development checkpoint is not a
-deployed upgrade. Synthetic native controls are not patent/model validation.
+Binding33/binder43 and SMILES4/QA6 invalidate only the derived source/observation
+proofs. Raw OCSR2/preparation8, original assets/model files and manual audit stay
+unchanged. The next PR label and coherent release scope are independently prepared;
+a development checkpoint is not a deployed upgrade. Synthetic native controls
+are not patent/model validation.
 
 ## Unassigned images still receive source observations
 
