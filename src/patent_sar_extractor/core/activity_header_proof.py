@@ -12,6 +12,7 @@ from .activity_header_identity import (
 from .activity_header_sources import header_source_conflicts, select_header_context
 from .activity_headers import context_from_text, grid_schema
 from .cell_header_proof import physical_header_valid
+from .cell_text_proof import valid_text_components
 
 
 def _score(value):
@@ -72,6 +73,8 @@ def _column(column, index, header, band, dpi):
             and column.get("detector_conflict") is False
             and not detector_header_conflict(detected, header)
         )
+    if "single_row_readings" in column and not valid_text_components(column, dpi):
+        return False
     return " ".join(part["text"] for part in parts) == header
 
 

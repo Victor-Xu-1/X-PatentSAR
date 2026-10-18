@@ -123,7 +123,8 @@ def valid_text_chunks(
             or type(chunk["ink_pixels"]) is not int
             or not 0 < chunk["ink_pixels"] <= (box[3] - box[1]) * shape[1]
             or not isinstance(child, dict)
-            or set(child) - {"physical_header_lines"} != _CELL_READING_FIELDS
+            or set(child) - {"physical_header_lines", "single_row_readings"}
+            != _CELL_READING_FIELDS
             or child.get("bbox") != box
             or child.get("coordinate_space") != "cell_render_pixels"
             or not component_validator(

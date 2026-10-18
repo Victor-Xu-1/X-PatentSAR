@@ -1,5 +1,24 @@
 # Project governance manifest
 
+- `cell_text_row_readings` owns one shared bounded physical-row refinement and
+  its saved replay. Qualified originals are unchanged; only weak rows get one
+  same-ink compact-border reading through the existing engine. Physical frame2
+  retains all attempts/margins/validity and cannot be promoted by deleting or
+  adding readings. Needed short single-row headers use the same policy through
+  `single_row_readings`; scalar measurements/compound-ID readers stay unchanged.
+  Role/body/fragment/header/axis consumers use the one shared text replay.
+  The existing grid-continuation authority carries only complete literal
+  repeated headers with identical ID/value/metadata column topology and a
+  qualified root; lexical spacing alone need not create a new unknown field.
+  Current raw labels and source review remain, and saved scope replay verifies
+  the same root/header/column contract. There is no new metric inference path.
+  Original frame/row/budget and known semantic conflict gates
+  remain. Binding24/binder33/Activity20/extractor29 refresh derived source proof,
+  not raw/model/manual/SAR numerical/API/SQL or dependency authorities. There is
+  no competing parser/store/queue or private-patent repair. Real extraction,
+  all-font source coverage and chemical/scientific acceptance remain separate;
+  refusing ambiguous input does not certify complete automatic extraction.
+
 - `binding_source_claims` is the document-wide original primary/reprint authority
   reused by spatial binding and strict saved-catalogue replay; the caption-only
   document counter is removed. `structure_catalogs` owns literal selected scope

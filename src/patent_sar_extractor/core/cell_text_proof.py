@@ -5,6 +5,7 @@ import re
 
 from .cell_ocr_scores import confidence_value
 from .cell_text_chunk_proof import valid_text_chunks
+from .cell_text_row_readings import selected_row_reading, valid_single_row
 
 
 def valid_text_reading(
@@ -72,6 +73,8 @@ def valid_text_components(reading, dpi, *, maximum_row_height=12, maximum_rows=8
         or reading["confidence"] != min(part["confidence"] for part in parts)
     ):
         return False
+    if "single_row_readings" in reading and not valid_single_row(reading, dpi):
+        return False
     if "physical_header_lines" in reading:
         return physical_text_valid(
             reading,
@@ -97,19 +100,24 @@ def physical_text_valid(
     if type(maximum_row_height) is not int or not 0 < maximum_row_height <= 128:
         return False
     packet = reading.get(packet_name)
-    if not isinstance(packet, dict) or set(packet) != {
+    fields = {
         "version",
         "status",
         "image_shape",
         "pixel_sha256",
         "row_bounds",
         "ink_pixels",
-    }:
+    }
+    if not isinstance(packet, dict) or set(packet) not in (
+        fields,
+        fields | {"row_readings"},
+    ):
         return False
     if (
         type(packet["version"]) is not int
-        or packet["version"] != 1
+        or packet["version"] not in {1, 2}
         or packet["status"] != "observed"
+        or (packet["version"] == 2) != ("row_readings" in packet)
     ):
         return False
     shape, dpi, border = (
@@ -146,8 +154,14 @@ def physical_text_valid(
         or not 0 < packet["ink_pixels"] <= shape[0] * shape[1]
     ):
         return False
+    if packet["version"] == 2 and (
+        packet_name != "physical_header_lines"
+        or not isinstance(packet["row_readings"], list)
+        or len(packet["row_readings"]) != len(rows)
+    ):
+        return False
     bottom, area, scores = border - 1, 0, []
-    for row, part in zip(rows, parts):
+    for index, (row, part) in enumerate(zip(rows, parts)):
         if (
             not isinstance(row, list)
             or len(row) != 4
@@ -162,6 +176,16 @@ def physical_text_valid(
         ):
             return False
         bottom, area = y1, area + (x1 - x0) * (y1 - y0)
+        if packet["version"] == 2:
+            selected = selected_row_reading(
+                packet["row_readings"][index], y1 - y0, border
+            )
+            if (
+                selected is None
+                or not isinstance(part, dict)
+                or any(part.get(key) != selected[key] for key in ("text", "confidence"))
+            ):
+                return False
         if (
             not isinstance(part, dict)
             or set(part) != {"text", "confidence", "bbox", "coordinate_space", "method"}

@@ -56,6 +56,54 @@ def facade(root, mode="rows", *, header_only=False):
 
 
 class ContinuationOwnershipTests(unittest.TestCase):
+    def test_original_repeated_whitespace_header_keeps_proved_roles_on_saved_replay(
+        self,
+    ):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            pdf = root / "original.pdf"
+            with fitz.open() as doc:
+                page = doc.new_page()
+                page.insert_text(
+                    (40, 80), "Table 71. Target: JAK; Assay: binding", fontsize=9
+                )
+                panel(
+                    page,
+                    40,
+                    100,
+                    [["No.", "IC50 (nM)", "Cell line Ymin"], ["7", "3", "90"]],
+                )
+                page = doc.new_page()
+                panel(
+                    page,
+                    40,
+                    90,
+                    [["No.", "IC50(nM)", "CelllineYmin"], ["19", "4", "80"]],
+                )
+                doc.save(pdf)
+            extract(str(pdf), {"activity_pages": [0]}, str(root / "output"))
+            data = load_json(root / "output" / "activity_data.json", None)
+        self.assertEqual(activity_evidence_errors(data, [0]), [])
+        self.assertEqual(
+            [row["cpd"] for row in data["rows"]], ["Compound 7", "Compound 19"]
+        )
+        self.assertEqual(
+            data["rows"][1]["activity_values"],
+            {"IC50 (nM)": "4", "Cell line Ymin": "80"},
+        )
+        source = data["rows"][1]["activity_sources"][0]
+        self.assertEqual(source["cells"][2]["raw_header"], "CelllineYmin")
+        self.assertEqual(source["header_region"]["page_no"], 1)
+        self.assertEqual(source["assay"], "binding")
+        altered = copy.deepcopy(data)
+        continued = next(
+            region
+            for region in altered["coverage"]["regions"]
+            if region.get("layout") and region["page_no"] == 2
+        )
+        continued["layout"]["raw_headers"][2] = "CelllineYmax"
+        self.assertTrue(activity_evidence_errors(altered, [0]))
+
     def test_all_legal_adjacent_modes_share_one_proved_scope(self):
         for mode in ("rows", "header", "caption"):
             with self.subTest(mode=mode), tempfile.TemporaryDirectory() as temp:
