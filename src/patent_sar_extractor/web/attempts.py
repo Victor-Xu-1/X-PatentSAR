@@ -21,6 +21,8 @@ from typing import Any
 from pydantic import ValidationError
 
 from patent_sar_extractor import contracts as core
+from patent_sar_extractor.artifact_io import artifact_json_bytes
+from patent_sar_extractor.artifact_nodes import MAX_DEPTH, JsonGraph
 
 from .errors import WebError
 from .files import MAX_ARTIFACT_BYTES, MAX_RECORDS, SafeFiles, private_directory
@@ -500,8 +502,15 @@ class CheckpointCopy:
     def raw(self, relative: str) -> bytes:
         return self.files.read(relative, max_bytes=MAX_ARTIFACT_BYTES)
 
-    def relocate(self, value: Any, *, depth: int = 0, path_field: bool = False) -> Any:
-        if depth > 40:
+    def relocate(
+        self,
+        value: Any,
+        *,
+        depth: int = 0,
+        path_field: bool = False,
+        max_depth: int = 40,
+    ) -> Any:
+        if depth > max_depth:
             raise WebError(
                 422, "checkpoint_limit", "Checkpoint nesting exceeds its limit."
             )
@@ -514,18 +523,26 @@ class CheckpointCopy:
             ):
                 return str(self.target / self.files.relative(value))
         if isinstance(value, list):
-            return [self.relocate(item, depth=depth + 1) for item in value]
+            return [
+                self.relocate(item, depth=depth + 1, max_depth=max_depth)
+                for item in value
+            ]
         if isinstance(value, dict):
             # Only declared path fields move. Chemical strings, raw model
             # observations, model fingerprints and other provenance stay exact.
             return {
-                key: self.relocate(item, depth=depth + 1, path_field=key in PATH_KEYS)
+                key: self.relocate(
+                    item,
+                    depth=depth + 1,
+                    path_field=key in PATH_KEYS,
+                    max_depth=max_depth,
+                )
                 for key, item in value.items()
             }
         return value
 
-    def images(self, payload: Any, *, depth: int = 0) -> None:
-        if depth > 40:
+    def images(self, payload: Any, *, depth: int = 0, max_depth: int = 40) -> None:
+        if depth > max_depth:
             raise WebError(
                 422, "checkpoint_limit", "Checkpoint nesting exceeds its limit."
             )
@@ -559,10 +576,10 @@ class CheckpointCopy:
                     if str(relative) not in self.content:
                         self.put(str(relative), self.raw(str(relative)))
                 else:
-                    self.images(value, depth=depth + 1)
+                    self.images(value, depth=depth + 1, max_depth=max_depth)
         elif isinstance(payload, list):
             for value in payload:
-                self.images(value, depth=depth + 1)
+                self.images(value, depth=depth + 1, max_depth=max_depth)
 
     def verify(
         self, stage: str, spec: RunSpec, *, chunk_path: str | None = None
@@ -580,6 +597,17 @@ class CheckpointCopy:
                     "Chunk checkpoint path is outside its approved stage.",
                 )
             path = chunk_path
+        if stage == "bind":
+            try:
+                if self.files.byte_size(path) > MAX_ARTIFACT_BYTES:
+                    # Preserve oversized legacy proof as historical output.
+                    # Earlier verified checkpoints survive; the CLI regenerates
+                    # binding through the normal producer, never this copier.
+                    return None
+            except WebError as exc:
+                if exc.code == "asset_unavailable":
+                    return None
+                raise
         payload = self.files.json(path)
         manifest = self.files.json(path + ".manifest.json")
         if not core.artifact_identity_matches(
@@ -670,8 +698,19 @@ class CheckpointCopy:
             _stable_digest,
         )
 
-        self.images(verified.payload)
-        self.put(verified.path, checkpoint_json(self.relocate(verified.payload)))
+        shared = verified.stage == "bind"
+        if shared:
+            # Retain the existing long original-role packets under the same
+            # finite transport limits; this does not approve a checkpoint.
+            JsonGraph().visit(verified.payload)
+        depth_limit = MAX_DEPTH if shared else 40
+        self.images(verified.payload, max_depth=depth_limit)
+        self.put(
+            verified.path,
+            checkpoint_json(
+                self.relocate(verified.payload, max_depth=depth_limit), shared=shared
+            ),
+        )
         manifest = self.relocate(verified.manifest)
         fp = manifest["fingerprint"]
         fp["dependency_sha256"] = {
@@ -708,10 +747,10 @@ class CheckpointCopy:
         self.put(relative, snapshot)
 
 
-def checkpoint_json(payload: Any) -> bytes:
-    # Use the canonical writer's serialization: the CLI hashes dependency bytes
-    # and writes annotations again, so compact JSON would force needless misses.
-    return json.dumps(payload, ensure_ascii=False, allow_nan=False, indent=2).encode()
+def checkpoint_json(payload: Any, *, shared: bool = False) -> bytes:
+    # Match the canonical stage writer: dependency hashes bind exact bytes.
+    # Binding uses shared compact JSON; unchanged stages keep pretty JSON.
+    return artifact_json_bytes(payload, shared=shared)
 
 
 def seed_checkpoints(

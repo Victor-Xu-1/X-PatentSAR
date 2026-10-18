@@ -8,10 +8,34 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from .artifact_catalog import pack_shared_json, read_artifact_json
+from .artifact_nodes import MAX_ARTIFACT_BYTES
 
-def write_json_atomic(path: str | Path, payload: Any) -> None:
+
+def _shared_parts(encoded):
+    encoder = json.JSONEncoder(
+        ensure_ascii=False, separators=(",", ":"), allow_nan=False
+    )
+    written = 0
+    for part in encoder.iterencode(encoded):
+        written += len(part.encode("utf-8"))
+        if written > MAX_ARTIFACT_BYTES:
+            raise ValueError("Shared JSON artifact exceeds its byte bound")
+        yield part
+
+
+def artifact_json_bytes(payload: Any, *, shared: bool = False) -> bytes:
+    """Canonical checkpoint bytes; shared output uses the atomic writer's codec."""
+    if shared:
+        return "".join(_shared_parts(pack_shared_json(payload))).encode("utf-8")
+    return json.dumps(payload, ensure_ascii=False, allow_nan=False, indent=2).encode()
+
+
+def write_json_atomic(path: str | Path, payload: Any, *, shared: bool = False) -> None:
     """Write JSON atomically so interrupted stages never expose partial data."""
 
+    if shared:
+        payload = pack_shared_json(payload)
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
     temporary = ""
@@ -25,7 +49,11 @@ def write_json_atomic(path: str | Path, payload: Any) -> None:
             delete=False,
         ) as handle:
             temporary = handle.name
-            json.dump(payload, handle, indent=2, ensure_ascii=False)
+            if shared:
+                for part in _shared_parts(payload):
+                    handle.write(part)
+            else:
+                json.dump(payload, handle, indent=2, ensure_ascii=False)
             handle.flush()
             os.fsync(handle.fileno())
         os.replace(temporary, target)
@@ -41,4 +69,4 @@ def load_json(path: str | Path, default: Any) -> Any:
     if not target.is_file():
         return default
     with target.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
+        return read_artifact_json(handle)

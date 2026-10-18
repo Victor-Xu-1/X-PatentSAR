@@ -4,6 +4,7 @@ import json
 
 import fitz
 
+from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.core.structure_binder import bind
 from patent_sar_extractor.core.structure_inventory import inventory_packet
 
@@ -84,7 +85,7 @@ def original_catalogue(root, run):
         str(metadata),
     )
     path = run / "structure_bindings" / "bindings.json"
-    payload = json.loads(path.read_text())
+    payload = load_json(path, {})
     if (
         payload["source_issues"]
         or payload["compound_catalog"]["source_observations"] != 3

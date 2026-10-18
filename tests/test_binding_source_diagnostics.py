@@ -5,9 +5,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from patent_sar_extractor.artifact_io import load_json, write_json_atomic
 from patent_sar_extractor.core.binding_artifacts import write_binding_result
 from patent_sar_extractor.core.binding_source_references import reference_issues
 from patent_sar_extractor.core.source_role_observations import validate_role_catalog
+from patent_sar_extractor.web.attempts import CheckpointCopy, VerifiedCheckpoint
+from patent_sar_extractor.web.files import SafeFiles
 
 
 class BindingSourceDiagnosticsTests(unittest.TestCase):
@@ -137,6 +140,23 @@ class BindingSourceDiagnosticsTests(unittest.TestCase):
         buffer = RoleObservationBuffer()
         buffer.extend([observation])
         self.assertEqual(next(iter(buffer))["status"], "unresolved")
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "diagnostics.json"
+            catalog = {"rejected": list(buffer)}
+            write_json_atomic(path, catalog, shared=True)
+            self.assertEqual(load_json(path, {}), catalog)
+            # Copy transport must retain the same long rejected source packet;
+            # no source identity, rejection or original text is approved here.
+            transport = CheckpointCopy(Path(temporary), Path(temporary) / "next")
+            transport.checkpoint(
+                VerifiedCheckpoint(
+                    "bind",
+                    "diagnostics.json",
+                    catalog,
+                    {"fingerprint": {"params": {}, "dependency_sha256": {}}},
+                )
+            )
+            self.assertEqual(SafeFiles(transport.target).json(path.name), catalog)
         oversized = copy.deepcopy(observation)
         oversized["proposal"]["raw_lines"] = ["q" * 4096] * 256
         with self.assertRaisesRegex(ValueError, "bounded region limit"):

@@ -15,7 +15,9 @@ import stat
 from dataclasses import replace
 from pathlib import Path
 
+from patent_sar_extractor.artifact_catalog import read_artifact_json
 from patent_sar_extractor.artifact_io import write_json_atomic
+from patent_sar_extractor.artifact_nodes import MAX_ARTIFACT_BYTES
 from patent_sar_extractor.contracts import (
     BINDINGS_SCHEMA,
     BINDINGS_SCHEMA_VERSION,
@@ -52,9 +54,9 @@ def make_header_resolver(
             descriptor = os.open(catalog, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
             with os.fdopen(descriptor, "rb") as stream:
                 info = os.fstat(stream.fileno())
-                if not stat.S_ISREG(info.st_mode) or info.st_size > 32 * 1024 * 1024:
+                if not stat.S_ISREG(info.st_mode) or info.st_size > MAX_ARTIFACT_BYTES:
                     raise ValueError("Unbounded source catalog")
-                payload = json.loads(stream.read(32 * 1024 * 1024 + 1))
+                payload = read_artifact_json(stream.read(MAX_ARTIFACT_BYTES + 1))
             if not artifact_identity_matches(
                 payload, BINDINGS_SCHEMA, BINDINGS_SCHEMA_VERSION
             ):

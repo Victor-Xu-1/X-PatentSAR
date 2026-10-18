@@ -20,6 +20,7 @@ from patent_sar_extractor.application.recognition_budget import (
 from patent_sar_extractor.application.scientific_status import CoreNotAcceptedError
 from patent_sar_extractor.application.stage_qa import execute_qa
 from patent_sar_extractor.application.stage_smiles import execute_smiles
+from patent_sar_extractor.artifact_io import load_json
 from tests.test_source_led_export import run_fixture
 from tests.test_source_led_pipeline import state_for
 
@@ -32,7 +33,7 @@ class SourceLedStageTests(unittest.TestCase):
             state = state_for(root, "smiles")
             state.step_dirs["smiles"] = str(root / "smiles")
             state.bind_json = str(root / "structure_bindings/bindings.json")
-            payload = json.loads(Path(state.bind_json).read_text())
+            payload = load_json(Path(state.bind_json), {})
             payload["final_bindings"] = []
             payload["compound_catalog"].update(
                 entries=[], numbered_compounds=0, source_observations=0
@@ -74,7 +75,7 @@ class SourceLedStageTests(unittest.TestCase):
             state = state_for(root, "smiles")
             state.step_dirs["smiles"] = str(root / "smiles")
             state.bind_json = str(root / "structure_bindings/bindings.json")
-            state.bind_payload = json.loads(Path(state.bind_json).read_text())
+            state.bind_payload = load_json(Path(state.bind_json), {})
             state.n_bound = 2
             state.active_cpds = []
             state.force = True
@@ -122,7 +123,7 @@ class SourceLedStageTests(unittest.TestCase):
             state = state_for(root, "smiles")
             state.step_dirs["smiles"] = str(root / "smiles")
             state.bind_json = str(root / "structure_bindings/bindings.json")
-            state.bind_payload = json.loads(Path(state.bind_json).read_text())
+            state.bind_payload = load_json(Path(state.bind_json), {})
             state.n_bound = 2
             state.force = True
             prior = (root / "smiles/smiles_results.json").read_bytes()

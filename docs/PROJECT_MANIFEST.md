@@ -1,5 +1,27 @@
 # Project governance manifest
 
+- Shared artifact transport: `artifact_nodes` owns ordered typed JSON identities
+  and finite resource accounting; `artifact_catalog` owns shared JSON version1
+  from `contracts.SHARED_JSON_VERSION`. `artifact_io` remains the sole atomic
+  writer and binding opts into the in-file catalogue. One decoder serves native
+  binding/cache, activity header, OCSR, export/QA and SafeFiles before unchanged
+  scientific validators. No source values, mutable record identities, order or
+  evidence are lost; hashes are not acceptance. Wire32MiB/depth256/unique500k/
+  traversal2M/shared100k/expanded2Mnodes/512MiB are independent transport bounds.
+  Existing208-level rejected source packets remain supported. Ordinary JSON is
+  backward-readable; oversized old caches regenerate only through the producer.
+  Scientific epochs, raw/manual data, API/SQL/dependencies and numerical SAR
+  stay unchanged. There is no second store/queue/model. Older readers cannot
+  consume the new wire; preserve newer state and use the deliberate compatible
+  rollback backup. The isolated read-only browser adapter exercises shared wire
+  without creating extraction/model/scientific acceptance evidence.
+  `CheckpointCopy` reuses this serialization after its existing path relocation
+  and manifest rehash; a safe size-only preflight declines oversized legacy
+  bindings without reading/mutating them. Unchanged checkpoint families retain
+  their40-depth boundary; binding retains its256-depth transport bound. The
+  normal producer, not checkpoint transport, regenerates unavailable bindings
+  and remains the cache/scientific acceptance authority.
+
 - Results pagination names the returned population as records in both languages,
   not accepted structures, measured pairs or chemically unique compounds. The
   same neutral label includes unbound candidate crops and partial observations;

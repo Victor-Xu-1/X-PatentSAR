@@ -18,6 +18,7 @@ from patent_sar_extractor.application.pipeline_context import PipelineContext
 from patent_sar_extractor.application.progress import PipelineProgress
 from patent_sar_extractor.application.stage_activity import execute_activity
 from patent_sar_extractor.application.stage_locate import execute_locate
+from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.core.activity_join import activity_for_compound
 from patent_sar_extractor.core.binding_artifacts import write_binding_result
 from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
@@ -201,7 +202,7 @@ print(json.dumps({'attempt': os.environ.get('PATENTSAR_API_ATTEMPT_ID')}))
                 unbound_pages=[],
                 catalog_bindings=bindings,
             )
-            payload = json.loads((output / "bindings.json").read_text())
+            payload = load_json(output / "bindings.json", {})
             self.assertEqual(
                 [r["cpd"] for r in payload["final_bindings"]],
                 ["Compound 42", "Compound 42A"],

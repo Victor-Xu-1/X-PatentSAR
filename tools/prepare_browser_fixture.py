@@ -12,6 +12,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
+from patent_sar_extractor.artifact_io import load_json, write_json_atomic
 from patent_sar_extractor.web.app import create_app
 from patent_sar_extractor.web.service import import_run
 from patent_sar_extractor.web.storage import now
@@ -90,6 +91,11 @@ def prepare(
         for page in structures["source_inventory"]["pages"]:
             page["candidates"] = counts[page["page_no"]]
         structure_path.write_text(json.dumps(structures))
+    if read_only:
+        # The same controlled historical adapter, serialized by the production
+        # transport. This does not create current source or chemical acceptance.
+        binding_path = run / "structure_bindings/bindings.json"
+        write_json_atomic(binding_path, load_json(binding_path, {}), shared=True)
     state = workspace / "web-state"
     historical = import_run(
         state,
@@ -107,6 +113,8 @@ def prepare(
             "PATENTSAR_CONFIG_DIR": str(workspace / "config"),
             "PATENTSAR_E2E_BASE_URL": "http://127.0.0.1:18766",
         }
+        if read_only:
+            values["PATENTSAR_E2E_BINDING_TRANSPORT"] = "shared-json-1"
         if llm_settings:
             values.update(
                 PATENTSAR_E2E_ALLOW_LLM_SETTINGS="isolated-state",
