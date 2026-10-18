@@ -9,6 +9,7 @@ _ORIGINAL_RULES = frozenset(
         "numbered_structure_table_cell",
         "original_caption_cell",
         "original_heading_standalone",
+        "original_heading_reaction_product",
     }
 )
 

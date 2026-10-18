@@ -1,5 +1,42 @@
 # X-PatentSAR architecture
 
+## Native reaction direction before product ownership
+
+`reaction_vectors` conserves bounded original native paths in rendered PDF point
+coordinates. Text, raster content, fills, curves, clipping and unsupported strokes
+remain blocking observations; they cannot become missing ink. `reaction_arrows`
+requires an explicit shaft and two joined, opposite-side head strokes outside
+chemical drawing bounds. It does not rank figures by rightmost/last/largest
+position, model confidence or a known molecule's presence. Endpoint rays require
+one local unobstructed drawing. `reaction_graph` includes EVERY declaration
+candidate and observed arrow; orphan/cross-boundary figures, competing strokes,
+unconnected routes, cycles and multiple sinks refuse product ownership.
+
+`heading_reaction` composes the same complete original declaration scope with
+this source packet. A qualified single literal compound heading and one complete
+native route with a unique terminal may supply the existing heading source claim.
+The common heading evidence5 supports both standalone and native-route assignment;
+old packets remain historical, never upgraded by a rule name or saved flag.
+Catalogue namespace/primary/reprint policy and full chemical QC remain unchanged.
+A matching graph may be a reactant: recognition identity is not a role witness.
+
+`heading_original_replay` checks literal native source plus visible paint order,
+or the captured original raster frames without repeating OCR. The shared
+`source_paint_visibility` uses actual line/rectangle/quad stroke ink, not a cell
+frame's filled bounding box; hidden/covered headings and strokes across text
+remain rejected. Standalone and reaction headings share this original gate.
+The normal source plan, checkpoint reuse and final QA reopen the original native
+ink and recompute the source packet. Web snapshot and source-epoch assessment use
+the SAME replay through the existing verified `open_pdf` attachment reader; a hash
+argument alone, missing original, self-rehashed packet or foreign native ink cannot
+supply acceptance. This is bounded source interpretation, not another model,
+execution queue, raw cache, API/SQL migration or scientific correctness claim.
+Bounds are256 diagrams per route,512 arrows and20000 segments/10000 blockers per
+page within the existing64-page/one-MiB declaration evidence limits. Overflow is
+explicit refusal, not truncation. Filled/curved/dashed or raster reaction arrows,
+unproved page connectors and unsupported reaction roles remain unresolved. Native
+synthetic controls do not establish real patent coverage or chemical accuracy.
+
 ## Complete detected-image observations, before chemical identity admission
 
 `candidate_inputs` composes one source plan from the original PDF, the complete
@@ -48,7 +85,7 @@ status. Empty not-run property blocks are omitted, but actual values, warnings,
 progress and failures remain available. Only registered application-owned
 confidence messages are localized; unknown source/scientific text stays literal.
 
-Complete observations are a prerequisite, not a solved reaction-role layer.
+Complete observations alone are a prerequisite, not a solved general reaction-role layer.
 A graph matching a known catalogue may occur as a reactant inside a route; graph
 presence alone cannot discharge a product declaration. Existing ownership errors
 and historical observations remain retained until complete current source/role

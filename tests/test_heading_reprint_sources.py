@@ -20,8 +20,8 @@ from patent_sar_extractor.core.catalog_reader import (
 from patent_sar_extractor.core.formal_structure import coverage_errors
 from patent_sar_extractor.core.heading_declaration_index import HeadingDeclarationIndex
 from patent_sar_extractor.core.heading_evidence import (
+    heading_structure_evidence,
     original_heading_lines,
-    standalone_heading_evidence,
 )
 from patent_sar_extractor.core.ocsr.recognition_inputs import recognition_inputs
 from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
@@ -325,7 +325,9 @@ class HeadingReprintSourceTests(unittest.TestCase):
                 s["id"]: {**s, "source_pdf_sha256": proof["original_pdf_sha256"]}
                 for s in structures
             }
-            selected, evidence = standalone_heading_evidence(block, by_id, scope)
+            selected, evidence = heading_structure_evidence(
+                block, by_id, scope, document=document
+            )
         self.assertIsNone(selected)
         self.assertIsNone(evidence)
 

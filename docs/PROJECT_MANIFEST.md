@@ -1,5 +1,21 @@
 # Project governance manifest
 
+- Native reaction source roles: `reaction_vectors` owns bounded original vector/
+  raster/text observations; `reaction_arrows` owns explicit open-head geometry;
+  `reaction_graph` conserves all declaration nodes/edges; `heading_reaction`
+  composes and replays current original ink. Heading evidence5 carries standalone
+  or native reaction assignment through the SAME heading/catalogue authority.
+  Numbering requires the qualified original heading; graph presence or position
+  alone cannot assign terminal identity. Coordinator/worker/reuse/final QA and
+  Web snapshot/epoch share original replay; Web uses the existing safe verified
+  PDF attachment reader, not an artifact-supplied filesystem path. No new model,
+  package, queue, API or SQL authority. Unsupported raster/filled/curved arrows,
+  dangling sources, cycles and ambiguous terminals stay refused. Focused native
+  controls are not real OCSR or universal-format scientific acceptance.
+  `heading_original_replay` is shared by standalone/route claims and checks the
+  actual native text/paint or captured raster frames; `source_paint_visibility`
+  distinguishes actual stroke ink from an empty cell border's bounding box.
+
 - Complete-image observations: `candidate_inputs` composes original/manifest/
   proved inputs; `candidate_inventory` owns bounded original crop descriptors;
   `candidate_scope` owns saved accounting and `candidate_observations` owns exact

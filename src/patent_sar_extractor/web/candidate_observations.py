@@ -71,7 +71,7 @@ class _SourceDigests:
             return value
 
 
-def read_source_observations(files, payloads, original_sha):
+def read_source_observations(files, payloads, original_sha, *, open_original=None):
     """Revalidate original metadata/producer/all outputs using one shared policy."""
     payload = payloads.get("smiles")
     if not smiles_artifact_is_current(payload, require_all_candidates=True):
@@ -92,6 +92,17 @@ def read_source_observations(files, payloads, original_sha):
             read_digest=digest,
         )
         validate_candidate_observations(plan, payload, read_digest=digest)
+        from patent_sar_extractor.core.heading_original_replay import (
+            heading_sources,
+            original_heading_source_errors,
+        )
+
+        if heading_sources(plan.proven.work_items):
+            if open_original is None:
+                raise ValueError("Original PDF is required for heading/source replay")
+            with open_original() as document:
+                if original_heading_source_errors(document, plan.proven.work_items):
+                    raise ValueError("Original heading/source replay failed")
     except (OSError, ValueError, TypeError, KeyError, OverflowError, WebError):
         return SourceObservations(
             {},

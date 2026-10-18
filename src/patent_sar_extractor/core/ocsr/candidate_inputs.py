@@ -15,7 +15,7 @@ def load_source_observation_plan(
     if not original_sha or binding_pdf_sha256 not in ("", original_sha):
         raise ValueError("Recognition inputs belong to another original document")
     source = Path(structures_json)
-    return build_candidate_plan(
+    plan = build_candidate_plan(
         load_json(str(source), {}),
         load_json(str(source) + ".manifest.json", {}),
         proven,
@@ -23,3 +23,18 @@ def load_source_observation_plan(
         metadata_dir=source.resolve().parent,
         binding_dir=binding_dir,
     )
+    from ..heading_original_replay import (
+        heading_sources,
+        original_heading_source_errors,
+    )
+
+    if heading_sources(plan.proven.work_items):
+        import fitz
+
+        with fitz.open(pdf_path) as document:
+            errors = original_heading_source_errors(document, plan.proven.work_items)
+        if errors:
+            raise ValueError(
+                "Original heading/source replay failed: " + "; ".join(errors[:3])
+            )
+    return plan

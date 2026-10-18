@@ -18,8 +18,8 @@ from .binding_source_regions import (
 from .caption_label_roles import caption_label_index, caption_label_reference
 from .heading_declaration_index import HeadingDeclarationIndex
 from .heading_evidence import (
+    heading_structure_evidence,
     original_heading_lines,
-    standalone_heading_evidence,
 )
 from .heading_group_scope import group_heading_members, observe_group_context
 from .heading_line_windows import heading_line_windows
@@ -293,16 +293,19 @@ def select_heading_bindings(
             scopes[identity] = index.observe(heading)
         scope = scopes[identity]
         block = {**block, "declaration_scope": scope}
-        direct, evidence = standalone_heading_evidence(
+        direct, evidence = heading_structure_evidence(
             block,
             structure_index,
             scope,
+            document=doc,
         )
         if direct and evidence:
             binding = _build_binding_from_structure(direct, key)
             binding.update(
                 {
-                    "binding_rule": "original_heading_standalone",
+                    "binding_rule": "original_heading_reaction_product"
+                    if evidence["reaction_source"] is not None
+                    else "original_heading_standalone",
                     "original_heading_evidence": dict(block),
                     "original_heading_structure_evidence": evidence,
                     "source_pdf_sha256": document_sha256,

@@ -1,5 +1,29 @@
 # Operations and troubleshooting
 
+## A multi-drawing route under one original compound heading
+
+Current source capture can qualify an explicit native open-arrow route only
+when every diagram belongs to one complete directed graph with one terminal.
+The arrow can point left/up or turn between steps: page order and figure size
+are not product rules. Orphan drawings, reversible/cyclic routes, multiple
+terminals, obstructing raster/text or unsupported arrow ink remain unresolved.
+This does not install RxnScribe or another model and does not infer reaction roles
+from matching OCSR graphs. Raster/filled/curved arrows and unproved cross-page
+connectors still need separate validated capabilities; do not waive their QA.
+
+Heading evidence5 is derived source proof; old standalone evidence4 remains
+history. Normal source-plan reuse/final QA reopen the actual original vectors.
+Standalone and route headings share literal/visible original replay. Native
+hidden text, overpainting and a stroke across the identifier are not printed-ID
+proof. Actual cell border strokes remain distinct from a filled rectangle.
+Web read-side acceptance requires the verified original attachment through the
+existing safe PDF reader. Removing or rehashing a source packet cannot disable
+that replay; missing original evidence withholds acceptance without repairing,
+resubmitting or changing a scientific artifact. Preserve failed/raw/manual data.
+Related source/schema/binder epochs and the next PR label must be prepared with
+the coherent release scope before delivery; a development checkpoint is not a
+deployed upgrade. Synthetic native controls are not patent/model validation.
+
 ## Unassigned images still receive source observations
 
 The normal extraction worker now requires both the original PDF and its complete
@@ -25,7 +49,7 @@ attempts, manual audit and the compatible rollback package/state. A failed
 source replay must not trigger poll-time inference, a duplicate task, automatic
 numbering, another recognizer or an external LLM call.
 
-All-crop observations do not solve unlabelled multi-step reaction schemes. A
+All-crop observations alone do not solve unlabelled multi-step reaction schemes. A
 matching known molecule may be a reactant, not the heading's product. Continue
 source/role/chemical verification without clearing prior rejection or selecting
 the rightmost/largest/last drawing. Optional parser environments require separate

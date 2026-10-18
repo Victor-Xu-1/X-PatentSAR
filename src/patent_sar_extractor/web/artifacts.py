@@ -176,7 +176,7 @@ class ArtifactView:
             root, payloads, ocr, next(iter(hashes)).lower() if hashes else None, count
         )
 
-    def assessment(self, *, pdf_sha256, payloads=None):
+    def assessment(self, *, pdf_sha256, payloads=None, open_original=None):
         """Both projection and cached-epoch review replay the same source policy."""
         from .acceptance import authority
         from .stages import completed_stage_payloads
@@ -196,7 +196,10 @@ class ArtifactView:
             payloads.get("smiles"), "smiles"
         ):
             observations = read_source_observations(
-                files, payloads, pdf_sha256 if verified else None
+                files,
+                payloads,
+                pdf_sha256 if verified else None,
+                open_original=open_original,
             )
             if observations.errors and not historical:
                 accepted = Acceptance(
@@ -208,7 +211,7 @@ class ArtifactView:
         return accepted, historical, observations
 
     def snapshot(
-        self, project_id: str, *, pdf_sha256: str | None
+        self, project_id: str, *, pdf_sha256: str | None, open_original=None
     ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
         from .stages import completed_stage_payloads
 
@@ -217,7 +220,7 @@ class ArtifactView:
         verified = bool(pdf_sha256 and pdf_sha256 == self.expected_sha256)
         marker = files.json("STRICT_ACCEPTANCE_FAILED.json")
         accepted, historical, source_observations = self.assessment(
-            pdf_sha256=pdf_sha256, payloads=p
+            pdf_sha256=pdf_sha256, payloads=p, open_original=open_original
         )
         steps = (p.get("summary") or {}).get("steps", {})
         structure_step = steps.get("structures", {}) if isinstance(steps, dict) else {}

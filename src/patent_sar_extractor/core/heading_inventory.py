@@ -27,7 +27,10 @@ def _heading_owners(entries, original_sha):
     owners = set()
     for entry in entries:
         for source in [entry, *entry.get("additional_sources", [])]:
-            if source.get("binding_rule") != "original_heading_standalone":
+            if source.get("binding_rule") not in {
+                "original_heading_standalone",
+                "original_heading_reaction_product",
+            }:
                 continue
             checked = annotate_source_binding(source)
             if (
