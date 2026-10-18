@@ -66,6 +66,19 @@ for (const width of [390, 1672]) {
     expect(persisted.ok()).toBe(true);
     expect(decodeResults(await persisted.json()).items).toEqual(original.items);
     await expect(trigger).toBeVisible();
+    if (width > 390) {
+      const originalPage = page.locator('.page-canvas img');
+      await expect(originalPage).toBeVisible();
+      await expect
+        .poll(() =>
+          originalPage.evaluate(
+            (image) =>
+              (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth > 0,
+          ),
+        )
+        .toBe(true);
+      await expect(page.locator('.page-loading')).toHaveCount(0);
+    }
     await page.screenshot({ path: test.info().outputPath(`binding-source-zh-${width}.png`) });
     expect(errors).toEqual([]);
     expect(writes).toEqual([]);
