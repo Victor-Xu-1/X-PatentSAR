@@ -20,7 +20,6 @@ from .correction_models import CorrectionDocument, CorrectionRequest
 from .corrections import Corrections, CorrectionSaved
 from .descriptor_storage import DescriptorStore
 from .errors import WebError
-from .files import SafeFiles
 from .history_storage import (
     ensure_job_visible,
     ensure_project_visible,
@@ -40,7 +39,7 @@ from .models import (
     Results,
     Summary,
 )
-from .pdf import UploadedPDF, copy_original, filename_title
+from .pdf import UploadedPDF, copy_original, filename_title, open_pdf
 from .prediction_storage import PredictionStore
 from .processes import runtime_identity_matches
 from .result_queries import ResultQueries
@@ -109,17 +108,11 @@ class WorkspaceService:
         self, project: dict[str, Any], snapshot: dict[str, Any]
     ) -> None:
         """Recheck cached acceptance without changing raw rows/manual audit basis."""
-        from .acceptance import authority
-        from .stages import completed_stage_payloads
-
         root = Path(project["run_root"])
         view = ArtifactView.read(root)
-        accepted, _ = authority(
-            completed_stage_payloads(view.payloads),
-            pdf_verified=bool(
-                project["sha256"] and project["sha256"] == view.expected_sha256
-            ),
-            marker=SafeFiles(root).json("STRICT_ACCEPTANCE_FAILED.json"),
+        accepted, _, _ = view.assessment(
+            pdf_sha256=project["sha256"],
+            open_original=lambda: open_pdf(self.store.root, project),
         )
         updated = {
             **snapshot,
@@ -320,8 +313,20 @@ class WorkspaceService:
                     "source_mismatch",
                     "Original PDF does not match the imported run's source fingerprint.",
                 )
+            original = (
+                {
+                    "pdf_rel": self.store.locations.pdf_record(uploaded.path),
+                    "sha256": uploaded.sha256,
+                }
+                if uploaded
+                else dict(existing)
+                if existing
+                else {}
+            )
             snapshot, compounds = view.snapshot(
-                project_id, pdf_sha256=uploaded.sha256 if uploaded else attached_sha
+                project_id,
+                pdf_sha256=uploaded.sha256 if uploaded else attached_sha,
+                open_original=lambda: open_pdf(self.store.root, original),
             )
             snapshot["correction_projection_id"] = uuid.uuid4().hex
             with self.store.connect(write=True) as connection:
@@ -400,7 +405,11 @@ class WorkspaceService:
         view = view or ArtifactView.read(Path(project["run_root"]))
         if view.root.resolve() != Path(project["run_root"]).resolve():
             return  # A supplied old view must never be rebound to a new attempt.
-        snapshot, compounds = view.snapshot(project_id, pdf_sha256=project["sha256"])
+        snapshot, compounds = view.snapshot(
+            project_id,
+            pdf_sha256=project["sha256"],
+            open_original=lambda: open_pdf(self.store.root, project),
+        )
         snapshot["correction_projection_id"] = uuid.uuid4().hex
         snapshot[EPOCH_MARKER] = core.STEREO_EVIDENCE_VERSION
         snapshot["core_qa_schema_version"] = core.QA_REPORT_SCHEMA_VERSION

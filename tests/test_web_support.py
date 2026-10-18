@@ -239,6 +239,9 @@ def artifact_run(
             "execution_mode": "production_decimer",
             "source_records": [],
             "reprint_records": [],
+            "candidate_records": [],
+            "candidate_inventory": None,
+            "recognition_input_scope": "proved_sources_only",
             "records": [
                 {
                     "cpd_id": b["cpd"],

@@ -42,7 +42,7 @@ class HeadingColumnScopeTests(LateralStructureControls, unittest.TestCase):
                         if r["cpd"] == "Compound B80"
                     )
                     evidence = binding["original_heading_structure_evidence"]
-                    self.assertEqual(evidence["version"], 4)
+                    self.assertEqual(evidence["version"], 5)
                     scope = evidence["declaration_scope"]
                     self.assertEqual(scope["version"], 2)
                     self.assertIn(
@@ -89,6 +89,25 @@ class HeadingColumnScopeTests(LateralStructureControls, unittest.TestCase):
         _, payload = self.run_case(later_product=True, mutate_document=extra)
         self.assertNotIn("Compound B80", {r["cpd"] for r in payload["final_bindings"]})
         self.assertTrue(coverage_errors(payload))
+
+    def test_registered_foreign_diagram_ink_is_not_an_own_reaction_arrow(self):
+        def route(document, records):
+            page = document[0]
+            self.add_drawing(page, records, 360, 650, "TERMINAL-B80")
+            page.draw_line((520, 565), (520, 590))
+            page.draw_polyline([(516, 583), (520, 590), (524, 583)])
+            # Arrow-like source ink inside an independently proved foreign
+            # molecular drawing is retained, not a reaction edge in this lane.
+            page.draw_line((160, 510), (215, 510))
+            page.draw_polyline([(208, 506), (215, 510), (208, 514)])
+
+        _, payload = self.run_case(later_product=True, mutate_document=route)
+        binding = next(
+            (r for r in payload["final_bindings"] if r["cpd"] == "Compound B80"), None
+        )
+        self.assertIsNotNone(binding)
+        self.assertEqual(binding["structure_id"], "TERMINAL-B80")
+        self.assertEqual(coverage_errors(payload), [])
 
     def test_a_foreign_closing_procedure_does_not_manufacture_a_singleton(self):
         def close_other_column(document, records):

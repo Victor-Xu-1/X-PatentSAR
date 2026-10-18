@@ -1,5 +1,46 @@
 # Project governance manifest
 
+- Current derived contracts for this upgrade: Binding33/binder43, heading
+  structure evidence5, SMILES4/QA6. Compatible raw OCSR2/preparation8, original
+  assets/model files, manual audit, numerical SAR, API-v1/SQL and dependencies
+  remain unchanged. Old derived packets stay historical, not relabelled.
+
+- Native reaction source roles: `reaction_vectors` owns bounded original vector/
+  raster/text observations; `reaction_arrows` owns explicit open-head geometry;
+  `reaction_graph` conserves all declaration nodes/edges; `heading_reaction`
+  composes and replays current original ink. Heading evidence5 carries standalone
+  or native reaction assignment through the SAME heading/catalogue authority.
+  Numbering requires the qualified original heading; graph presence or position
+  alone cannot assign terminal identity. Coordinator/worker/reuse/final QA and
+  Web snapshot/epoch share original replay; Web uses the existing safe verified
+  PDF attachment reader, not an artifact-supplied filesystem path. No new model,
+  package, queue, API or SQL authority. Unsupported raster/filled/curved arrows,
+  dangling sources, cycles and ambiguous terminals stay refused. Focused native
+  controls are not real OCSR or universal-format scientific acceptance.
+  `heading_original_replay` is shared by standalone/route claims and checks the
+  actual native text/paint or captured raster frames; `source_paint_visibility`
+  distinguishes actual stroke ink from an empty cell border's bounding box.
+
+- Complete-image observations: `candidate_inputs` composes original/manifest/
+  proved inputs; `candidate_inventory` owns bounded original crop descriptors;
+  `candidate_scope` owns saved accounting and `candidate_observations` owns exact
+  replay. One DECIMER queue/cache observes formal, supplemental, reprint and
+  otherwise-unassigned images, including zero-proved-ID runs. Source-only
+  component artifacts cannot represent complete pipeline coverage. SMILES4/QA6
+  refresh only derived observation/acceptance contracts, not raw OCSR2,
+  preparation8, Binding32/binder42, manual audit, API-v1/SQL, dependencies or
+  numerical SAR. Candidates have no original ID, automatic property, activity,
+  Lead or SAR eligibility; they cannot consume the <=8 stereo rescue budget.
+  Web uses the same replay behind SafeFiles and one call-local stat/hash memo.
+  `ArtifactView.assessment` serves both projection and source-epoch review;
+  current rows/exports preserve observation versus chemical admission. Projection
+  layout v3 is rebuildable, not a raw-data or manual-audit migration. No second
+  parser/model/store/queue, copied winner or private-patent repair is introduced.
+  Complete detection accounting does not prove recall, terminal reaction roles
+  or chemistry. A known graph may be a reactant; it cannot by itself resolve a
+  product heading or clear source rejection. Delivery and real frontend
+  scientific acceptance remain separate gates.
+
 - `binding_source_claims` remains the sole original source decision for spatial
   capture, complete catalogue writing and saved replay. Literal qualified title/
   cell namespace plus exact document/label/unique primary catalogue can admit a

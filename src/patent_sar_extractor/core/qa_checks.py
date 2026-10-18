@@ -18,6 +18,7 @@ from .formal_structure import (
     coverage_errors,
     proved_catalog,
 )
+from .ocsr.candidate_coverage import candidate_coverage_errors
 from .ocsr.recognition_policy import recognition_acceptance_errors
 from .qa_files import (
     _sdf_record_count,
@@ -30,6 +31,15 @@ from .structure_inventory import structure_coverage_errors
 def _binding_checks(inputs: QAInputs, qa: dict):
     hard_errors = structure_coverage_errors(
         inputs.structures, inputs.profile.get("page_count")
+    )
+    hard_errors.extend(
+        candidate_coverage_errors(
+            inputs.base,
+            inputs.summary,
+            inputs.structures,
+            inputs.bind_data,
+            inputs.smiles_payload,
+        )
     )
     final_binding_order = [
         normalize_compound(binding.get("cpd", ""))

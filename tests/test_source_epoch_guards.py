@@ -386,7 +386,7 @@ class SourceEpochProjectionTests(PredictionFixture, unittest.TestCase):
 
         with (
             patch.object(core, "STEREO_EVIDENCE_VERSION", self.next_epoch),
-            patch.object(acceptance, "authority", side_effect=simultaneous),
+            patch.object(acceptance, "authority", side_effect=simultaneous) as gate,
             ThreadPoolExecutor(max_workers=2) as pool,
         ):
             futures = [
@@ -394,6 +394,7 @@ class SourceEpochProjectionTests(PredictionFixture, unittest.TestCase):
                 for _ in range(2)
             ]
             rows = [future.result(timeout=10) for future in futures]
+        self.assertEqual(gate.call_count, 2)
         self.assertEqual(rows[0]["snapshot"], rows[1]["snapshot"])
         self.assertEqual(json.loads(rows[0]["snapshot"])[EPOCH_MARKER], self.next_epoch)
 

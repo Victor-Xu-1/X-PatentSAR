@@ -13,6 +13,7 @@ from patent_sar_extractor.application.stage_bind import execute_bind
 from patent_sar_extractor.application.stage_cache import _bindings_ocsr_digest
 from patent_sar_extractor.application.stage_smiles import execute_smiles
 from patent_sar_extractor.application.stage_structures import execute_structures
+from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.smiles_artifact import build_smiles_artifact
 from tests.test_source_led_export import run_fixture
 
@@ -82,8 +83,8 @@ class PipelineStageTests(unittest.TestCase):
                 pdf.write_bytes(b"controlled original hash input")
                 binding = root / "bindings.json"
                 run_fixture(root)
-                binding_payload = json.loads(
-                    (root / "structure_bindings/bindings.json").read_text()
+                binding_payload = load_json(
+                    root / "structure_bindings/bindings.json", {}
                 )
                 binding.write_text(json.dumps(binding_payload))
                 smiles = root / "smiles_results.json"
@@ -115,6 +116,7 @@ class PipelineStageTests(unittest.TestCase):
                     n_bound=2,
                     bind_json=str(binding),
                     bind_payload=binding_payload,
+                    structures_json=str(root / "structures/metadata.json"),
                 )
                 with (
                     patch(

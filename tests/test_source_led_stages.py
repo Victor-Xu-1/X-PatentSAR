@@ -26,30 +26,6 @@ from tests.test_source_led_pipeline import state_for
 
 
 class SourceLedStageTests(unittest.TestCase):
-    def test_empty_proved_catalog_does_not_report_success_or_start_recognition(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            run_fixture(root)
-            state = state_for(root, "smiles")
-            state.step_dirs["smiles"] = str(root / "smiles")
-            state.bind_json = str(root / "structure_bindings/bindings.json")
-            payload = load_json(Path(state.bind_json), {})
-            payload["final_bindings"] = []
-            payload["compound_catalog"].update(
-                entries=[], numbered_compounds=0, source_observations=0
-            )
-            state.bind_payload = payload
-            state.n_bound = 0
-            with patch(
-                "patent_sar_extractor.application.stage_smiles.run_in_env"
-            ) as worker:
-                execute_smiles(state)
-            worker.assert_not_called()
-            stage = state.pipeline_log["steps"]["smiles"]
-            self.assertEqual(stage["total"], 0)
-            self.assertEqual(stage["status"], "failed")
-            self.assertTrue(stage["acceptance_errors"])
-
     def test_workload_budget_is_finite_and_capped_by_parent_remaining_lifetime(self):
         with patch(
             "patent_sar_extractor.application.recognition_budget.time.monotonic",
@@ -105,7 +81,9 @@ class SourceLedStageTests(unittest.TestCase):
             self.assertIn(
                 "--continue-on-scientific-errors", worker.call_args.kwargs["args"]
             )
-            budget.assert_called_once_with(2, state.started_monotonic)
+            budget.assert_called_once_with(
+                2 + len(payload["candidate_records"]), state.started_monotonic
+            )
             self.assertEqual(state.pipeline_log["steps"]["smiles"]["formal_total"], 2)
             self.assertEqual(state.pipeline_log["steps"]["smiles"]["source_total"], 0)
             fingerprint = json.loads(

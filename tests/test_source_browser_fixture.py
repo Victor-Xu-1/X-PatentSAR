@@ -11,6 +11,44 @@ from tools.browser_fixture_mode import fixture_mode
 
 
 class SourceBrowserFixtureTests(unittest.TestCase):
+    def test_candidate_observation_scope_never_selects_unrelated_execution(self):
+        selected = {"frontend/e2e/candidate-observations.spec.ts"}
+        self.assertEqual(fixture_mode(selected), "candidate-observations")
+        self.assertEqual(
+            fixture_mode(selected | {"frontend/e2e/product-version.spec.ts"}),
+            "candidate-observations",
+        )
+
+    def test_native_candidate_fixture_stays_persistent_read_only_and_unaccepted(self):
+        from patent_sar_extractor.web.service import WorkspaceService
+        from tools.prepare_browser_fixture import prepare
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "isolated"
+            values = prepare(root, candidate_observations=True)
+            self.assertEqual(values["PATENTSAR_E2E_RUN_JOBS"], "0")
+            proof = json.loads((root / "browser-fixture.json").read_text())
+            self.assertFalse(proof["real_model_execution"])
+            self.assertFalse(proof["scientific_acceptance_evidence"])
+            service = WorkspaceService(Path(values["PATENTSAR_WEB_STATE_DIR"]))
+            project = service.project(values["PATENTSAR_E2E_CANDIDATE_PROJECT_ID"])
+            self.assertEqual(project.acceptance.state, "failed")
+            rows = service.results(project.id).items
+            self.assertEqual(len(rows), 2)
+            self.assertTrue(
+                all(row.smiles is None and not row.activities for row in rows)
+            )
+            self.assertTrue(
+                all(
+                    row.recognition.quality_flag == "unassigned_source_identity"
+                    for row in rows
+                )
+            )
+            with service.store.connect() as connection:
+                self.assertEqual(
+                    connection.execute("SELECT COUNT(*) FROM jobs").fetchone()[0], 0
+                )
+
     def test_shared_artifact_scope_uses_only_lossless_read_only_adapter_transport(self):
         from tools.prepare_browser_fixture import prepare
 

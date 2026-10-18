@@ -2,8 +2,8 @@ import { useTranslation } from '../../i18n';
 import type { Compound } from '../../api/types';
 import { AssetImage } from '../../components/AssetImage';
 import { Dialog } from '../../components/Dialog';
-import { confidenceLabels, reviewLabels } from '../../model/presentation';
-import { redrawPlaceholder } from '../../model/results';
+import { confidenceLabels, confidenceReasonText, reviewLabels } from '../../model/presentation';
+import { availableRedraw, redrawPlaceholder } from '../../model/results';
 import { RecognitionDetails } from './RecognitionDetails';
 import { cropPlaceholder } from '../../model/extraction';
 import { PredictionEvidence } from './PredictionCells';
@@ -28,6 +28,7 @@ export function CropDialog({
 }) {
   const { t } = useTranslation();
   const original = sourceHref(projectId, compound.id, compound.source.page);
+  const redraw = availableRedraw(compound);
   return (
     <Dialog
       title={t('结构详情 · {label}', { label: compoundLabel(compound) })}
@@ -35,7 +36,10 @@ export function CropDialog({
       wide
     >
       <div className="dialog-body crop-detail">
-        <div className="crop-comparison" aria-label={t('原始裁图与 SMILES 重绘对照')}>
+        <div
+          className={`crop-comparison${redraw ? '' : ' crop-comparison--source-only'}`}
+          aria-label={t(redraw ? '原始裁图与 SMILES 重绘对照' : '原始 PDF 裁图')}
+        >
           <figure>
             <figcaption>
               <span>{t('原始 PDF 裁图')}</span>
@@ -53,26 +57,23 @@ export function CropDialog({
               unavailableLabel={cropPlaceholder(compound)}
             />
           </figure>
-          <figure>
-            <figcaption title={t('原始裁图保留证据；重绘来自当前结构，不证明与原图一致。')}>
-              {compound.structure_molfile ? t('结构重绘（非原图）') : t('SMILES 重绘（非原图）')}
-            </figcaption>
-            <AssetImage
-              url={
-                compound.smiles?.trim() &&
-                (compound.recognition?.status !== 'invalid' ||
-                  (compound.correction?.has_changes && !compound.correction.stale))
-                  ? compound.redraw_image_url
-                  : null
-              }
-              alt={t('{label} 的 SMILES 重绘（非原图）', { label: compoundLabel(compound) })}
-              className="crop-large"
-              unavailableLabel={redrawPlaceholder(compound)}
-              invalidLabel={t('重绘地址无效')}
-              errorLabel={t('重绘加载失败')}
-            />
-          </figure>
+          {redraw && (
+            <figure>
+              <figcaption title={t('原始裁图保留证据；重绘来自当前结构，不证明与原图一致。')}>
+                {compound.structure_molfile ? t('结构重绘（非原图）') : t('SMILES 重绘（非原图）')}
+              </figcaption>
+              <AssetImage
+                url={redraw}
+                alt={t('{label} 的 SMILES 重绘（非原图）', { label: compoundLabel(compound) })}
+                className="crop-large"
+                unavailableLabel={redrawPlaceholder(compound)}
+                invalidLabel={t('重绘地址无效')}
+                errorLabel={t('重绘加载失败')}
+              />
+            </figure>
+          )}
         </div>
+        {!redraw && <output className="crop-redraw-note">{redrawPlaceholder(compound)}</output>}
         {compound.additional_sources?.length ? (
           <details>
             <summary>
@@ -117,7 +118,7 @@ export function CropDialog({
             <dt>{t('绑定证据')}</dt>
             <dd>
               {t(confidenceLabels[compound.confidence.level])} ·{' '}
-              {compound.confidence.reason ?? t('依据未提供')}
+              {confidenceReasonText(compound.confidence.reason)}
             </dd>
             <dt>{t('人工复核')}</dt>
             <dd>{compound.review ? t(reviewLabels[compound.review.decision]) : t('未复核')}</dd>

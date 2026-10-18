@@ -26,6 +26,7 @@ _SOURCE_KINDS: dict[str, SourceKind] = {
     "numbered_structure_table_cell": "numbered_cell",
     "original_caption_cell": "exact_caption",
     "original_heading_standalone": "original_heading",
+    "original_heading_reaction_product": "original_heading",
 }
 
 

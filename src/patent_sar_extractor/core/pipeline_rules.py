@@ -26,6 +26,7 @@ VISUAL_LABEL_SOURCES = STRICT_VISIBLE_SOURCES | {"page_wide"}
 STRONG_BINDING_RULES = {
     "original_caption_cell",
     "original_heading_standalone",
+    "original_heading_reaction_product",
     "numbered_structure_table_cell",
     "direct_structure_label",
     "direct_structure_label_merged_fragment",
@@ -347,9 +348,10 @@ def annotate_binding_accuracy(binding: dict[str, Any]) -> dict[str, Any]:
     exact_numbered_cell = (
         rule == "numbered_structure_table_cell" and valid_cell_binding_evidence(item)
     )
-    exact_original_heading = (
-        rule == "original_heading_standalone" and valid_heading_binding_evidence(item)
-    )
+    exact_original_heading = rule in {
+        "original_heading_standalone",
+        "original_heading_reaction_product",
+    } and valid_heading_binding_evidence(item)
     exact_original_caption = valid_caption_binding_evidence(item)
     if (
         rule == "original_caption_cell" or "exact_caption_evidence" in item
@@ -361,13 +363,16 @@ def annotate_binding_accuracy(binding: dict[str, Any]) -> dict[str, Any]:
             evidence_reasons=["invalid or incomplete original caption/structure proof"],
         )
         return item
-    if rule == "original_heading_standalone" and not exact_original_heading:
+    if (
+        rule in {"original_heading_standalone", "original_heading_reaction_product"}
+        and not exact_original_heading
+    ):
         item.update(
             accuracy_status="review_required",
             evidence_tier="weak",
             fail_closed=True,
             evidence_reasons=[
-                "invalid or incomplete original heading/standalone structure proof"
+                "invalid or incomplete original heading/structure role proof"
             ],
         )
         return item
@@ -422,7 +427,9 @@ def annotate_binding_accuracy(binding: dict[str, Any]) -> dict[str, Any]:
         )
     elif exact_original_heading:
         reasons.append(
-            "exact original heading and unique standalone diagram before procedure"
+            "exact original heading and complete native reaction terminal proof"
+            if rule == "original_heading_reaction_product"
+            else "exact original heading and unique standalone diagram before procedure"
         )
     elif rule in {
         "structure_table_row_order",

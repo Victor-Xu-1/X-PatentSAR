@@ -1,7 +1,7 @@
 """
 PatentSAR SMILES engine runner.
 
-Converts bound structure images to SMILES, InChIKey and molecular formula
+Observes proved and detected unassigned structure images with separate identities
 using DECIMER as the only accepted production OCSR engine.
 
 Default strict chain: DECIMER only, no fallback.  This avoids accepting
@@ -11,14 +11,15 @@ deterministic.
 Usage:
     python -m patent_sar_extractor.core.ocsr.run_smiles \
         --input outputs/example/structure_bindings/bindings.json \
-        --output outputs/WO2026067249/smiles_results.json \
-        --csv-output outputs/WO2026067249/smiles_results.csv \
+        --structures outputs/example/structures/metadata.json \
+        --source-pdf inputs/example.pdf \
+        --output outputs/example/smiles_results.json \
+        --csv-output outputs/example/smiles_results.csv \
         --engine decimer \
         --fallback "" \
         --cache outputs/cache/smiles_cache.sqlite \
-        --preprocess \
-        --timeout 300 \
-        --limit 20
+        --no-preprocess \
+        --timeout 300
 """
 
 import argparse
@@ -42,6 +43,10 @@ from patent_sar_extractor.contracts import (
     artifact_identity_matches,
 )
 from patent_sar_extractor.core.cpd_filter import filter_examples_only
+from patent_sar_extractor.core.ocsr.candidate_inputs import load_source_observation_plan
+from patent_sar_extractor.core.ocsr.candidate_observations import (
+    validate_candidate_observations,
+)
 from patent_sar_extractor.core.ocsr.observation_completion import (
     publish_scientific_findings,
     require_complete_source_results,
@@ -102,7 +107,9 @@ def load_bindings(input_path: str) -> list:
     raise ValueError(f"Cannot parse binding results from: {input_path}")
 
 
-def validate_strict_binding_input(input_path: str, bindings: list) -> list[str]:
+def validate_strict_binding_input(
+    input_path: str, bindings: list, *, allow_empty_catalog: bool = False
+) -> list[str]:
     """Reject direct OCSR use on stale, unconfirmed, or duplicated final bindings."""
     if input_path.lower().endswith(".csv"):
         return ["Strict OCSR requires current-version bindings JSON, not CSV input."]
@@ -122,6 +129,7 @@ def validate_strict_binding_input(input_path: str, bindings: list) -> list[str]:
         not isinstance(final_bindings, list)
         or final_bindings != bindings
         or not final_bindings
+        and not allow_empty_catalog
     ):
         return [
             "Strict OCSR processes only the complete final_bindings list without substitution."
@@ -215,6 +223,12 @@ def main():
         help="Output JSON path (default: auto-generated)",
     )
     parser.add_argument(
+        "--structures", default="", help="Current complete structure metadata JSON"
+    )
+    parser.add_argument(
+        "--source-pdf", default="", help="The original PDF for source-input identity"
+    )
+    parser.add_argument(
         "--csv-output",
         default="",
         help="Output CSV path (default: auto-generated)",
@@ -272,12 +286,12 @@ def main():
         "--only-bound",
         action="store_true",
         default=True,
-        help="Only process bound structures (default: True)",
+        help="Use proved sources and typed original candidates; arbitrary unbound rows are excluded (default).",
     )
     parser.add_argument(
         "--include-unbound",
         action="store_true",
-        help="Also process unbound structures",
+        help="Diagnostic only: also process arbitrary unbound rows, never production acceptance.",
     )
     parser.add_argument(
         "--preprocess-long-edge",
@@ -294,7 +308,7 @@ def main():
     parser.add_argument(
         "--include-intermediates",
         action="store_true",
-        help="Include Intermediate (中间体) compounds (default: filter them out, keep only Examples)",
+        help="Diagnostic label filtering only; production uses the proved source roles and retains all detected candidates.",
     )
     parser.add_argument(
         "--diagnostic-unvalidated-input",
@@ -308,6 +322,14 @@ def main():
     )
 
     args = parser.parse_args()
+    if not args.diagnostic_unvalidated_input and (
+        not args.structures or not args.source_pdf
+    ):
+        raise ValueError(
+            "Production source observations require the complete structures input and original PDF"
+        )
+    if bool(args.structures) != bool(args.source_pdf):
+        raise ValueError("Structures and original PDF must be supplied together")
 
     # Parse engine lists
     primary_engines = [e.strip() for e in args.engine.split(",") if e.strip()]
@@ -342,15 +364,10 @@ def main():
     print(f"Loading bindings from: {args.input}")
     bindings = load_bindings(args.input)
     print(f"Loaded {len(bindings)} binding records")
-    if not args.diagnostic_unvalidated_input:
-        input_errors = validate_strict_binding_input(args.input, bindings)
-        if input_errors:
-            raise RuntimeError(
-                "Strict OCSR input gate failed: " + "; ".join(input_errors[:12])
-            )
-
     # Filter out Intermediate (中间体), keep only Example (实施例)
-    if not args.include_intermediates:
+    # Production is already source-led; a lexical filter must not shrink its
+    # exact proved corpus, or the independently retained raw candidate inventory.
+    if args.diagnostic_unvalidated_input and not args.include_intermediates:
         bindings = filter_examples_only(bindings)
 
     # One model process and one QC authority cover the complete proved catalog.
@@ -358,15 +375,37 @@ def main():
     # silently omitted or falsely labelled as formally accepted measurements.
     supplemental = []
     reprints = []
+    candidates = []
+    candidate_plan = None
     binding_payload = {}
     if not args.diagnostic_unvalidated_input:
         with open(args.input, "r", encoding="utf-8") as source:
             binding_payload = read_artifact_json(source)
         plan = recognition_inputs(binding_payload)
-        supplemental, reprints = plan.supplemental, plan.reprints
-        if not args.include_intermediates:
-            supplemental = filter_examples_only(supplemental)
-            reprints = filter_examples_only(reprints)
+        candidate_plan = load_source_observation_plan(
+            plan,
+            structures_json=args.structures,
+            pdf_path=args.source_pdf,
+            binding_dir=Path(args.input).resolve().parent,
+            binding_pdf_sha256=(
+                binding_payload.get("source_reference_scope") or {}
+            ).get("original_pdf_sha256", ""),
+        )
+        plan = candidate_plan.proven
+        supplemental, reprints, candidates = (
+            plan.supplemental,
+            plan.reprints,
+            candidate_plan.candidates,
+        )
+        input_errors = validate_strict_binding_input(
+            args.input,
+            bindings,
+            allow_empty_catalog=args.continue_on_scientific_errors and bool(candidates),
+        )
+        if input_errors:
+            raise RuntimeError(
+                "Strict OCSR input gate failed: " + "; ".join(input_errors[:12])
+            )
     if args.continue_on_scientific_errors:
         validate_source_observation_mode(
             binding_payload,
@@ -374,17 +413,20 @@ def main():
             diagnostic=args.diagnostic_unvalidated_input,
             limit=args.limit,
             include_unbound=args.include_unbound,
+            candidate_plan=candidate_plan,
         )
     formal_count = len(bindings)
     primary_count = formal_count + len(supplemental)
-    all_inputs = [*bindings, *supplemental, *reprints]
+    reprint_count = primary_count + len(reprints)
+    all_inputs = [*bindings, *supplemental, *reprints, *candidates]
 
     # Resolve image paths
     base_dir = os.path.dirname(os.path.abspath(args.input))
     all_inputs = resolve_image_paths(all_inputs, base_dir)
     bindings = all_inputs[:formal_count]
     supplemental = all_inputs[formal_count:primary_count]
-    reprints = all_inputs[primary_count:]
+    reprints = all_inputs[primary_count:reprint_count]
+    candidates = all_inputs[reprint_count:]
 
     # Check how many images are accessible
     images_found = sum(
@@ -455,7 +497,8 @@ def main():
     elapsed = time.time() - start_time
     formal_results = results[:formal_count]
     source_results = results[formal_count:primary_count]
-    reprint_results = results[primary_count:]
+    reprint_results = results[primary_count:reprint_count]
+    candidate_results = results[reprint_count:]
     if args.continue_on_scientific_errors:
         require_complete_source_results(bindings, formal_results)
     if not args.diagnostic_unvalidated_input and not ordered_source_results(
@@ -483,7 +526,13 @@ def main():
         execution_mode=execution_mode,
         source_records=source_results,
         reprint_records=reprint_results,
+        candidate_records=candidate_results,
+        candidate_inventory=candidate_plan.inventory
+        if candidate_plan is not None
+        else None,
     )
+    if candidate_plan is not None:
+        validate_candidate_observations(candidate_plan, artifact)
     write_json_atomic(args.output, artifact)
 
     # Save CSV output

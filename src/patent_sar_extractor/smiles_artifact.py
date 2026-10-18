@@ -24,6 +24,8 @@ def build_smiles_artifact(
     execution_mode: str = PRODUCTION_SMILES_MODE,
     source_records: Iterable[dict[str, Any]] = (),
     reprint_records: Iterable[dict[str, Any]] = (),
+    candidate_records: Iterable[dict[str, Any]] = (),
+    candidate_inventory: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     groups = {}
     remaining = MAX_RECOGNITION_SOURCES
@@ -31,6 +33,7 @@ def build_smiles_artifact(
         ("records", records),
         ("source_records", source_records),
         ("reprint_records", reprint_records),
+        ("candidate_records", candidate_records),
     ):
         rows = list(islice(source, remaining + 1))
         if len(rows) > remaining or any(not isinstance(row, dict) for row in rows):
@@ -39,10 +42,15 @@ def build_smiles_artifact(
             )
         groups[field] = [dict(row) for row in rows]
         remaining -= len(rows)
+    _validate_candidate_group(groups, candidate_inventory)
     return {
         **artifact_identity(SMILES_SCHEMA, SMILES_SCHEMA_VERSION),
         "execution_mode": execution_mode,
         **groups,
+        "candidate_inventory": candidate_inventory,
+        "recognition_input_scope": "all_detected_images"
+        if candidate_inventory is not None
+        else "proved_sources_only",
         "formal_acceptance_scope": "proved_printed_identifier_structure_corpus",
     }
 
@@ -64,6 +72,34 @@ def smiles_reprint_records(payload: Any) -> list[dict[str, Any]]:
     return _source_records(payload, "reprint_records")
 
 
+def smiles_candidate_records(payload: Any) -> list[dict[str, Any]]:
+    return _source_records(payload, "candidate_records")
+
+
+def smiles_observations(payload: Any) -> list[dict[str, Any]]:
+    """All model observations; this is deliberately not a compound selector."""
+    return [
+        *smiles_records(payload),
+        *smiles_source_records(payload),
+        *smiles_reprint_records(payload),
+        *smiles_candidate_records(payload),
+    ]
+
+
+def _validate_candidate_group(groups, inventory):
+    from .core.ocsr.candidate_scope import (
+        validate_inventory_records,
+    )
+
+    if inventory is None:
+        if groups["candidate_records"]:
+            raise ValueError(
+                "Unassigned observations require a complete original inventory"
+            )
+        return
+    validate_inventory_records(inventory, groups)
+
+
 def _source_records(payload: Any, field: str) -> list[dict[str, Any]]:
     if not isinstance(payload, dict):
         return []
@@ -78,7 +114,10 @@ def _source_records(payload: Any, field: str) -> list[dict[str, Any]]:
 
 
 def smiles_artifact_is_current(
-    payload: Any, *, require_production: bool = True
+    payload: Any,
+    *,
+    require_production: bool = True,
+    require_all_candidates: bool = False,
 ) -> bool:
     if not artifact_identity_matches(payload, SMILES_SCHEMA, SMILES_SCHEMA_VERSION):
         return False
@@ -95,11 +134,37 @@ def smiles_artifact_is_current(
     ):
         return False
     if (
+        not isinstance(payload.get("candidate_records"), list)
+        or any(not isinstance(row, dict) for row in payload["candidate_records"])
+        or "candidate_inventory" not in payload
+    ):
+        return False
+    if (
         sum(
             len(payload.get(field, []))
-            for field in ("records", "source_records", "reprint_records")
+            for field in (
+                "records",
+                "source_records",
+                "reprint_records",
+                "candidate_records",
+            )
         )
         > MAX_RECOGNITION_SOURCES
+    ):
+        return False
+    try:
+        _validate_candidate_group(payload, payload["candidate_inventory"])
+    except (ValueError, TypeError, KeyError, OverflowError):
+        return False
+    expected_scope = (
+        "all_detected_images"
+        if payload["candidate_inventory"] is not None
+        else "proved_sources_only"
+    )
+    if (
+        payload.get("recognition_input_scope") != expected_scope
+        or require_all_candidates
+        and payload["candidate_inventory"] is None
     ):
         return False
     return (

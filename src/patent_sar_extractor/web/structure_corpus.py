@@ -11,6 +11,7 @@ from .artifact_values import box, page_number, text
 from .errors import WebError
 from .files import MAX_RECORDS, SafeFiles
 from .models import Compound, Confidence, Recognition, Source
+from .recognition import recognition_status
 
 
 def unassociated_structures(
@@ -23,6 +24,8 @@ def unassociated_structures(
     verified_original: bool,
     page_count: int,
     crop_revision: str,
+    observations: dict[str, dict] | None = None,
+    observation_errors: bool = False,
 ) -> tuple[list[dict[str, Any]], set[int]]:
     rows: list[dict[str, Any]] = []
     pages: set[int] = set()
@@ -77,6 +80,22 @@ def unassociated_structures(
         # Internal source ID is not a guessed printed compound/example number.
         reference = record_id.rsplit(":", 1)[-1][-8:]
         display_id = f"编号待确认 {structure_id or reference}"
+        observed = (observations or {}).get(structure_id)
+        recognition = Recognition(status="not_run")
+        if observed is not None:
+            projected = recognition_status(
+                observed, current=True, source_record=structure
+            )
+            if projected["status"] == "valid":
+                projected.update(
+                    status="unavailable", quality_flag="unassigned_source_identity"
+                )
+            recognition = Recognition.model_validate(projected)
+            flags.append("unassigned_source_observation")
+        elif observation_errors:
+            recognition = Recognition(
+                status="unavailable", quality_flag="unassigned_source_unverified"
+            )
         dto = Compound(
             id=record_id,
             display_id=display_id,
@@ -92,7 +111,7 @@ def unassociated_structures(
                 level="review",
                 reason="已保留结构原图；尚未证实原文编号，不能猜测或按活性集合分配编号。",
             ),
-            recognition=Recognition(status="not_run"),
+            recognition=recognition,
             flags=flags,
             record_kind="structure_only",
         )

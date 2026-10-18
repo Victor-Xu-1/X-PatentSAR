@@ -11,6 +11,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
+from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.core.ocsr import run_smiles
 from patent_sar_extractor.core.ocsr.observation_completion import (
     publish_scientific_findings,
@@ -19,7 +20,7 @@ from patent_sar_extractor.core.ocsr.observation_completion import (
 )
 from patent_sar_extractor.failures import failure_marker_path
 from patent_sar_extractor.resource_admission import ResourceAdmissionError
-from patent_sar_extractor.smiles_artifact import smiles_records
+from patent_sar_extractor.smiles_artifact import smiles_observations, smiles_records
 from tests.test_source_led_export import run_fixture
 
 
@@ -30,11 +31,11 @@ class ObservationCompletionTests(unittest.TestCase):
         self.root = Path(temporary.name)
         run_fixture(self.root)
         self.input_path = self.root / "structure_bindings/bindings.json"
-        self.payload = json.loads(self.input_path.read_text())
+        self.payload = load_json(self.input_path, {})
         self.bindings = self.payload["final_bindings"]
-        self.records = smiles_records(
-            json.loads((self.root / "smiles/smiles_results.json").read_text())
-        )
+        seeded = load_json(self.root / "smiles/smiles_results.json", {})
+        self.records = smiles_records(seeded)
+        self.auxiliary = smiles_observations(seeded)[len(self.records) :]
 
     def _validate(self, **kwargs):
         options = {"diagnostic": False, "limit": 0, "include_unbound": False, **kwargs}
@@ -117,6 +118,10 @@ class ObservationCompletionTests(unittest.TestCase):
             "run_smiles.py",
             "--input",
             str(self.input_path),
+            "--structures",
+            str(self.root / "structures/metadata.json"),
+            "--source-pdf",
+            str(self.root / "original.pdf"),
             "--output",
             str(output),
             "--csv-output",
@@ -132,7 +137,7 @@ class ObservationCompletionTests(unittest.TestCase):
         converter.cache = None
         converter.engines = {"decimer": SimpleNamespace(is_available=lambda: True)}
         converter.convert_batch.return_value = copy.deepcopy(
-            self.records if records is None else records
+            [*(self.records if records is None else records), *self.auxiliary]
         )
         if infrastructure:
             converter.convert_batch.side_effect = ResourceAdmissionError(
@@ -148,7 +153,7 @@ class ObservationCompletionTests(unittest.TestCase):
     def _review_records(self):
         records = copy.deepcopy(self.records)
         records[0].update(
-            status="review_required",
+            OCSR_status="review_required",
             OCSR_quality_flag="review_required",
             error="controlled source chemistry review",
         )

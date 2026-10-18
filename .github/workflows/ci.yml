@@ -97,6 +97,7 @@ jobs:
           if [ "$mode" = sar ]; then args+=(--sar); fi
           if [ "$mode" = history ]; then args+=(--history); fi
           if [ "$mode" = completion ]; then args+=(--completion); fi
+          if [ "$mode" = candidate-observations ]; then args+=(--candidate-observations); fi
           .venv/bin/python tools/prepare_browser_fixture.py "$RUNNER_TEMP/browser-fixture" --github-env "${args[@]}"
       - name: Real browser workflow against installed wheel
         if: steps.scope.outputs.browser_count != '0'

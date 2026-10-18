@@ -1,5 +1,105 @@
 # X-PatentSAR architecture
 
+## Native reaction direction before product ownership
+
+Binding33/binder43 version this derived heading-role/source upgrade. SMILES4/QA6
+separately version complete-image accounting. Raw OCSR2/preparation8, original
+assets, model weights, manual audit, numerical SAR and API-v1/SQL are unchanged;
+older Binding32/heading4/SMILES3/QA5 remain history, never retagged as current.
+
+`reaction_vectors` conserves bounded original native paths in rendered PDF point
+coordinates. Text, raster content, fills, curves, clipping and unsupported strokes
+remain blocking observations; they cannot become missing ink. `reaction_arrows`
+requires an explicit shaft and two joined, opposite-side head strokes outside
+chemical drawing bounds. It does not rank figures by rightmost/last/largest
+position, model confidence or a known molecule's presence. Endpoint rays require
+one local unobstructed drawing. `reaction_graph` includes EVERY declaration
+candidate and observed arrow; orphan/cross-boundary figures, competing strokes,
+unconnected routes, cycles and multiple sinks refuse product ownership.
+
+`heading_reaction` composes the same complete original declaration scope with
+this source packet. A qualified single literal compound heading and one complete
+native route with a unique terminal may supply the existing heading source claim.
+The common heading evidence5 supports both standalone and native-route assignment;
+old packets remain historical, never upgraded by a rule name or saved flag.
+Catalogue namespace/primary/reprint policy and full chemical QC remain unchanged.
+A matching graph may be a reactant: recognition identity is not a role witness.
+
+`heading_original_replay` checks literal native source plus visible paint order,
+or the captured original raster frames without repeating OCR. The shared
+`source_paint_visibility` uses actual line/rectangle/quad stroke ink, not a cell
+frame's filled bounding box; hidden/covered headings and strokes across text
+remain rejected. Standalone and reaction headings share this original gate.
+The normal source plan, checkpoint reuse and final QA reopen the original native
+ink and recompute the source packet. Web snapshot and source-epoch assessment use
+the SAME replay through the existing verified `open_pdf` attachment reader; a hash
+argument alone, missing original, self-rehashed packet or foreign native ink cannot
+supply acceptance. This is bounded source interpretation, not another model,
+execution queue, raw cache, API/SQL migration or scientific correctness claim.
+Bounds are256 diagrams per route,512 arrows and20000 segments/10000 blockers per
+page within the existing64-page/one-MiB declaration evidence limits. Overflow is
+explicit refusal, not truncation. Filled/curved/dashed or raster reaction arrows,
+unproved page connectors and unsupported reaction roles remain unresolved. Native
+synthetic controls do not establish real patent coverage or chemical accuracy.
+
+## Complete detected-image observations, before chemical identity admission
+
+`candidate_inputs` composes one source plan from the original PDF, the complete
+segmentation metadata/worker manifest and the existing proved recognition plan.
+`candidate_inventory` conserves all original page observations, including pages
+with zero detected crops. Each detected crop names its original document, source
+ID, page, geometry and image digest. Exact raw asset/page/geometry identity can
+reuse one already-scheduled proved source observation; equal labels, similar
+graphs or row order cannot. Missing assets remain explicit unavailable inputs.
+This is declared producer/input provenance, not independent detector-recall or
+chemical-identity certification.
+
+All remaining images enter the SAME bounded serial DECIMER worker/cache as typed
+unassigned candidates, with an empty original compound label. Even a document
+without a proved numbered molecule receives these observations. An actually
+empty complete detector inventory starts no model and cannot claim compounds.
+Candidates cannot consume the optional maximum-eight stereo-rescue queue, acquire
+activity/Lead/SAR membership, or become numbered products through RDKit parsing.
+No second default recognizer, source store, execution queue or resident model is
+introduced. Existing raw image/model observations are reused by their existing
+exact-image/model keys, never as inherited acceptance.
+
+SMILES schema4 retains distinct formal, supplemental, reprint and candidate
+groups plus one complete `candidate_inventory`. `candidate_scope` owns the pure
+saved-accounting/source-marker/model-shape boundary; `candidate_observations`
+owns replay against the original current inputs. Every referenced result must
+retain its actual raw source ID, page, crop and processed observation. The
+unassigned source marker cannot be moved to a numbered record. Source-only
+component artifacts remain readable but explicitly lack whole-detection scope.
+The coordinator, worker, checkpoint reuse and final QA6 consume this same policy.
+Whole QA independently replays original input identity and current source bytes;
+a saved success flag cannot replace omitted observations or changed metadata.
+
+The Web adapter uses the same replay through existing `SafeFiles` no-follow,
+bounded reads. Its stat-bound digest memo exists only during one read, is not a
+scientific result cache, and ignores ordinary access-time changes. Projection
+and cached source-epoch assessment share `ArtifactView.assessment`. Unassigned
+rows retain original images and accurate observation status without a usable
+molecular field, guessed original ID, measurement or automatic property input.
+Existing review exports and SAR/Lead gates preserve that separation. English and
+Chinese badges distinguish observed-but-unassigned, unverified and unexecuted
+inputs without translating source labels or scientific data.
+The shared structure detail shows two previews only when a redraw is usable;
+otherwise the original remains the single preview with a compact withholding
+status. Empty not-run property blocks are omitted, but actual values, warnings,
+progress and failures remain available. Only registered application-owned
+confidence messages are localized; unknown source/scientific text stays literal.
+
+Complete observations alone are a prerequisite, not a solved general reaction-role layer.
+A graph matching a known catalogue may occur as a reactant inside a route; graph
+presence alone cannot discharge a product declaration. Existing ownership errors
+and historical observations remain retained until complete current source/role
+proof is independently revalidated. Native/controlled protocol checks do not
+establish real OCSR accuracy, all-format terminal coverage, chemical correctness
+or accepted real frontend extraction/SAR. Raw OCSR2, preparation8, Binding32/
+binder42, manual history, API-v1/SQL, scientific model dependencies and numerical
+SAR policies remain independent and unchanged by this observation format.
+
 ## Preparation depictions in the one source-claim decision
 
 `binding_catalog` now resolves the complete proved primary/additional collection

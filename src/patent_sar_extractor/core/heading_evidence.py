@@ -147,11 +147,13 @@ def _has_drawing(path: str) -> bool:
         return False
 
 
-def standalone_heading_evidence(
-    block: dict, structures: dict[str, dict], scope: dict
+def heading_structure_evidence(
+    block: dict, structures: dict[str, dict], scope: dict, *, document
 ) -> tuple[dict | None, dict | None]:
-    """One complete original declaration window, including adjacent source pages."""
+    """One complete original window; multiple drawings need actual reaction roles."""
     from .heading_declaration_scope import declaration_candidates
+    from .heading_original_replay import validate_original_heading
+    from .heading_reaction import observe_reaction_source
 
     declaration = proved_heading_declaration(block.get("heading_observation"))
     if (
@@ -162,9 +164,26 @@ def standalone_heading_evidence(
     ):
         return None, None
     candidates, complete = declaration_candidates(scope, block["heading_observation"])
-    if not complete or len(candidates) != 1 or not candidates[0]["inside"]:
+    if not complete or not candidates or not all(c["inside"] for c in candidates):
         return None, None
-    structure = structures.get(candidates[0]["structure_id"])
+    try:
+        validate_original_heading(
+            document[block["page_no"] - 1], block["heading_observation"]
+        )
+    except (ValueError, RuntimeError):
+        return None, None
+    reaction = None
+    if len(candidates) == 1:
+        chosen = candidates[0]["structure_id"]
+    else:
+        try:
+            reaction = observe_reaction_source(
+                document, scope, block["heading_observation"]
+            )
+        except (ValueError, RuntimeError):
+            return None, None  # No source-role proof, not an invitation to rank.
+        chosen = reaction["terminal_structure_id"]
+    structure = structures.get(chosen)
     if structure is None:
         return None, None  # Another current source interpreter owns this candidate.
     label = heading_members(declaration)[0]
@@ -177,7 +196,7 @@ def standalone_heading_evidence(
     if label != printed_identifier_key(block["cpd"]) or not _has_drawing(path):
         return None, None
     return structure, {
-        "version": 4,
+        "version": 5,
         "heading_source": block["heading_observation"],
         "label": label,
         "page_no": structure["page_no"],
@@ -189,7 +208,8 @@ def standalone_heading_evidence(
         "structure_id": str(structure["id"]),
         "structure_bbox": [structure[key] for key in ("x0", "y0", "x1", "y1")],
         "declaration_scope": scope,
-        "candidate_count": 1,
+        "candidate_count": len(candidates),
+        "reaction_source": reaction,
     }
 
 
@@ -216,7 +236,7 @@ def valid_heading_binding_evidence(binding: dict) -> bool:
     if (
         isinstance(evidence, dict)
         and type(evidence.get("version")) is int
-        and evidence["version"] == 4
+        and evidence["version"] == 5
     ):
         return _valid_scoped_heading(binding, evidence)
     # Old packets remain readable history, not current ownership authority.
@@ -240,6 +260,7 @@ def _valid_scoped_heading(binding, evidence):
         "structure_bbox",
         "candidate_count",
         "declaration_scope",
+        "reaction_source",
     }:
         return False
     try:
@@ -264,9 +285,25 @@ def _valid_scoped_heading(binding, evidence):
         candidates, complete = declaration_candidates(
             evidence["declaration_scope"], proof
         )
-        if not complete or len(candidates) != 1 or not candidates[0]["inside"]:
+        if not complete or not candidates or not all(c["inside"] for c in candidates):
             return False
-        candidate = candidates[0]
+        reaction = evidence["reaction_source"]
+        if reaction is None:
+            if (
+                len(candidates) != 1
+                or binding.get("binding_rule") != "original_heading_standalone"
+            ):
+                return False
+            candidate = candidates[0]
+        else:
+            from .heading_reaction import reaction_source_status
+
+            if binding.get("binding_rule") != "original_heading_reaction_product":
+                return False
+            terminal = reaction_source_status(
+                reaction, evidence["declaration_scope"], proof
+            )
+            candidate = next(c for c in candidates if c["structure_id"] == terminal)
         return bool(
             label
             and label
@@ -275,7 +312,7 @@ def _valid_scoped_heading(binding, evidence):
             and evidence["heading_observation"]
             == ("rapidocr_heading" if proof["observations"] else "native_heading")
             and type(evidence["candidate_count"]) is int
-            and evidence["candidate_count"] == 1
+            and evidence["candidate_count"] == len(candidates)
             and evidence["structure_id"]
             == candidate["structure_id"]
             == binding.get("structure_id")

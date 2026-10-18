@@ -8,12 +8,11 @@ import unittest
 
 import test_corpus_predictions as corpus_tests
 import test_uniform_recognition as uniform_tests
-from recognition_source_support import observation
+from recognition_source_support import complete_observation_artifact, observation
 from test_prediction_support import PredictionFixture
 
 from patent_sar_extractor.core.ocsr.recognition_inputs import recognition_inputs
 from patent_sar_extractor.core.qa_inputs import load_qa_inputs
-from patent_sar_extractor.smiles_artifact import build_smiles_artifact
 from patent_sar_extractor.web.acceptance import ARTIFACTS
 from patent_sar_extractor.web.completion_inputs import completion_inputs
 from patent_sar_extractor.web.errors import WebError
@@ -86,6 +85,8 @@ class ReprintProjectionTests(PredictionFixture, unittest.TestCase):
         image = self.run / "separate-reprint.png"
         shutil.copyfile(alias["image_path"], image)
         alias["image_path"] = str(image)
+        alias["source_image_path"] = str(image)
+        alias["ocsr_image_path"] = str(image)
         path.write_text(json.dumps(payload))
         metadata_path = self.run / ARTIFACTS["structures"][0]
         metadata = json.loads(metadata_path.read_text())
@@ -93,7 +94,9 @@ class ReprintProjectionTests(PredictionFixture, unittest.TestCase):
             if source["structure_id"] == alias["structure_id"]:
                 source["image_path"] = str(image)
         metadata_path.write_text(json.dumps(metadata))
-        artifact["reprint_records"][0] = observation(alias)
+        artifact = complete_observation_artifact(
+            payload, pdf=self.pdf, structures=metadata_path, binding_dir=path.parent
+        )
         self.publish(artifact)
         self.assertEqual(
             self.service.effective_compound(
@@ -146,10 +149,15 @@ class ReprintProjectionTests(PredictionFixture, unittest.TestCase):
         plan = recognition_inputs(payload)
         payload["final_bindings"] = [*plan.formal, *plan.supplemental]
         path.write_text(json.dumps(payload))
-        artifact = build_smiles_artifact(
-            [observation(source) for source in payload["final_bindings"]],
-            reprint_records=[observation(source, "CCC") for source in plan.reprints],
+        artifact = complete_observation_artifact(
+            payload,
+            pdf=self.pdf,
+            structures=self.run / ARTIFACTS["structures"][0],
+            binding_dir=path.parent,
         )
+        artifact["reprint_records"] = [
+            observation(source, "CCC") for source in plan.reprints
+        ]
         self.publish(artifact)
         bindings, records, errors = export_validation(
             str(path),

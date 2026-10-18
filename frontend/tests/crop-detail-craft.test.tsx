@@ -70,3 +70,59 @@ it('keeps invalid-chemistry and missing-source reasons visible while raw technic
   expect(screen.queryByRole('img')).not.toBeInTheDocument();
   expect(screen.getByLabelText('Current SMILES')).not.toBeVisible();
 });
+
+it('uses one source preview rather than a full empty redraw panel when no redraw is usable', async () => {
+  const reason = '已保留结构原图；尚未证实原文编号，不能猜测或按活性集合分配编号。';
+  const { container } = render(
+    <CropDialog
+      compound={{
+        ...row,
+        smiles: null,
+        redraw_image_url: null,
+        confidence: { ...row.confidence, reason },
+      }}
+      projectId="source"
+      onClose={vi.fn()}
+    />,
+  );
+  expect(container.querySelector('.crop-comparison')).toHaveClass('crop-comparison--source-only');
+  expect(container.querySelectorAll('.crop-comparison figure')).toHaveLength(1);
+  expect(container.querySelector('.prediction-evidence')).toBeNull();
+  expect(screen.getByText('SMILES not provided; redraw unavailable')).toBeVisible();
+  await userEvent.click(
+    screen.getByText('Original extraction evidence / validation', { selector: 'summary' }),
+  );
+  expect(
+    screen.getByText(/Source image retained; original identifier unconfirmed[.]/),
+  ).toBeVisible();
+  await act(() => setLocale('zh-CN'));
+  expect(screen.getByText(/原图已保留，原文编号待核验。/)).toBeVisible();
+});
+
+it('keeps real prediction failures visible even when the molecular preview is unavailable', async () => {
+  render(
+    <CropDialog
+      compound={{
+        ...row,
+        smiles: null,
+        redraw_image_url: null,
+        admet: {
+          status: 'failed',
+          properties: [],
+          warnings: [],
+          review_only: true,
+          source_fingerprint: null,
+          smiles_sha256: null,
+          engine: null,
+          generated_at: null,
+          job_id: null,
+          error: { code: 'controlled_failure', message: 'Controlled prediction failure' },
+        },
+      }}
+      projectId="source"
+      onClose={vi.fn()}
+    />,
+  );
+  await userEvent.click(screen.getByText(/Six properties/, { selector: 'summary' }));
+  expect(screen.getByText('Controlled prediction failure')).toBeVisible();
+});

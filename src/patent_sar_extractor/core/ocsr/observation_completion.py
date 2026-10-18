@@ -27,6 +27,7 @@ def validate_source_observation_mode(
     diagnostic: bool,
     limit: int | None,
     include_unbound: bool,
+    candidate_plan=None,
 ) -> None:
     if (
         diagnostic
@@ -41,12 +42,22 @@ def validate_source_observation_mode(
         raise ValueError(
             "Complete source observations require the current formal source scope"
         )
-    if not bindings or binding_pairs(bindings) != binding_pairs(
-        proved_catalog(payload)
-    ):
+    if binding_pairs(bindings) != binding_pairs(proved_catalog(payload)):
         raise ValueError(
             "Complete source observations must cover the exact proved catalog"
         )
+    if not bindings:
+        from .candidate_scope import validate_candidate_scope
+
+        if candidate_plan is None or not candidate_plan.candidates:
+            raise ValueError(
+                "Empty printed-ID catalog requires complete detected-image inputs"
+            )
+        validate_candidate_scope(candidate_plan.inventory)
+        if candidate_plan.proven.work_items:
+            raise ValueError(
+                "Empty printed-ID inputs cannot borrow a proved source collection"
+            )
 
 
 def require_complete_source_results(
