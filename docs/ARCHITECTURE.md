@@ -1,5 +1,41 @@
 # X-PatentSAR architecture
 
+## Complete caption sources and one document-wide claim decision
+
+Binding23/binder32 use one `binding_source_claims` authority for numbered and
+caption-source primary/reprint ownership, including saved-catalogue replay.
+The earlier document-wide caption-only duplicate filter is removed. Literal
+same-ID observations alone never choose a primary: competing complete tables,
+selected-only tables, novel selected IDs, unknown roles and conflicting owners
+remain unresolved. Explicit selected subsets require independently revalidated
+original titles and a complete catalogue covering every observed selected ID.
+Both refined title readings and qualified original variants participate; known
+negation/mixed selection or selected/full disagreement cannot erase a source.
+Every additional depiction still goes through the existing DECIMER/cache/QC and
+complete isomeric-graph consistency checks. These are sources, not new compounds.
+
+The sole physical-grid detector accepts a bounded caller policy. Activity retains
+its two-column default; source binding requests one-column frames only with both
+complete original outer rules. Missing edges are not invented from inner rules.
+No alternate parser/model, queue, cache authority or private-data repair is added.
+
+Rejected caption/cell/ownership proposals retain complete original context and
+structure IDs in variant2 of the existing `source_role_observations` catalog.
+`binding_source_diagnostics` owns that unresolved-only carrier and its issue
+projection, not acceptance. Clearing saved issue flags cannot erase these
+observations. The same source digest, 1MiB region,4096 attempts/64MiB aggregate
+and200k-node bounds remain. Variant1 role attempts keep their16-depth limit;
+variant2 allows208 levels to retain the existing64-link source-role chain, never
+to qualify a longer chain. Coordinate tuples serialize as literal JSON arrays.
+Missing/foreign/mutated references, invalid values and budgets refuse explicitly.
+The single binding writer deduplicates references rather than copying raw proof
+into every issue. Activity's variant1, raw source/model/manual data, API/SQL,
+OCSR/preparation/stereo and SAR numerical contracts remain independent.
+
+Controlled native/raster/facade/reader/recognition checks are not universal patent
+recall, chemical accuracy or real frontend scientific acceptance. Existing old
+derived ownership remains historical; original assets and human audit are kept.
+
 ## One original catalogue role across layout, identity and heading inventory
 
 `caption_grid_binding` uses the same revalidated original role for table-start

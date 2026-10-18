@@ -36,6 +36,7 @@ def compound_catalog(
                     "evidence": {
                         "binding_rule": checked.get("binding_rule"),
                         "reasons": checked.get("evidence_reasons", []),
+                        "proposal": dict(binding),
                     },
                 }
             )

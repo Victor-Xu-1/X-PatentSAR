@@ -207,15 +207,6 @@ def bind_visible_captions(
             for b in candidates
             if labels[b.label] == 1 and owner_counts[str(b.structure["id"])] == 1
         )
-    counts = Counter(b.label for b in bindings)
-    if issues is not None:
-        issues.extend(
-            {
-                "cpd": b.label,
-                "page_no": b.label_page_no or b.structure["page_no"],
-                "reason": "ambiguous_caption_label",
-            }
-            for b in bindings
-            if counts[b.label] > 1
-        )
-    return [b for b in bindings if counts[b.label] == 1]
+    # Keep independently proved cell observations. The sole document-wide source
+    # claim authority distinguishes selected reprints from competing catalogues.
+    return bindings

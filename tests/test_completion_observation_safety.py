@@ -185,10 +185,13 @@ class CompletionObservationSafetyTests(PredictionFixture, unittest.TestCase):
         )
         payload["final_bindings"] = []
         path.write_text(json.dumps(payload))
-        binding, _ = recognition_sources(
-            self.service.store.project(self.project.id), "Compound 1"
-        )
-        self.assertIsNone(binding)
+        # The actual original ledger still contains this owner. Removing only
+        # derived rows is now a malformed current catalogue, not valid absence.
+        with self.assertRaises(WebError) as invalid:
+            recognition_sources(
+                self.service.store.project(self.project.id), "Compound 1"
+            )
+        self.assertEqual(invalid.exception.code, "invalid_compound_catalog")
         first = self.service.results(self.project.id).items[0]
         self.assertIsNone(first.smiles)
         self.assertEqual(first.recognition.status, "unavailable")
@@ -210,10 +213,11 @@ class CompletionObservationSafetyTests(PredictionFixture, unittest.TestCase):
             [first], first["additional_sources"]
         )
         path.write_text(json.dumps(payload))
-        binding, _ = recognition_sources(
-            self.service.store.project(self.project.id), "Compound 8"
-        )
-        self.assertIsNone(binding)
+        with self.assertRaises(WebError) as invalid:
+            recognition_sources(
+                self.service.store.project(self.project.id), "Compound 8"
+            )
+        self.assertEqual(invalid.exception.code, "invalid_compound_catalog")
         single = self.service.results(self.project.id).items[1]
         self.assertIsNone(single.smiles)
         self.assertEqual(single.recognition.status, "unavailable")
@@ -226,7 +230,7 @@ class CompletionObservationSafetyTests(PredictionFixture, unittest.TestCase):
                 record=json.loads(saved["observation"]),
                 job_id=row["id"],
             )
-        self.assertEqual(rejected.exception.code, "recognition_source_changed")
+        self.assertEqual(rejected.exception.code, "invalid_compound_catalog")
 
     def test_changed_additional_crop_only_invalidates_its_completed_owner(self):
         row = self.pending_reprints()

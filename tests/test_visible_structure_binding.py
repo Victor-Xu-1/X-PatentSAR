@@ -4,6 +4,7 @@ import unittest
 
 import fitz
 
+from patent_sar_extractor.core.binding_spatial import collect_spatial_bindings
 from patent_sar_extractor.core.visible_structure_binding import bind_visible_captions
 
 
@@ -113,11 +114,25 @@ class VisibleStructureBindingTests(unittest.TestCase):
         with fitz.open() as doc:
             for _ in range(2):
                 doc.new_page().insert_text((90, 165), "Example 8A", fontsize=10)
+            structures = [
+                {**segment("one"), "idx": 0, "image_path": "one.png"},
+                {**segment("two", page=2), "idx": 0, "image_path": "two.png"},
+            ]
+            observed = bind_visible_captions(doc, structures, {"8A"})
+            self.assertEqual(len(observed), 2)  # Neither source observation is lost.
+            result = collect_spatial_bindings(
+                doc,
+                structures,
+                {0: doc[0].get_text(), 1: doc[1].get_text()},
+                {},
+                ["Compound 8A"],
+                {},
+                frozenset(),
+            )
+            self.assertEqual(result.candidates, ())
+            self.assertEqual(result.reprints, ())
             self.assertEqual(
-                bind_visible_captions(
-                    doc, [segment("one"), segment("two", page=2)], {"8A"}
-                ),
-                [],
+                {c.reason for c in result.conflicts}, {"ambiguous_compound_owner"}
             )
 
     def test_two_captions_cannot_own_the_same_segment(self):

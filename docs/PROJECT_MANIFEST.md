@@ -1,5 +1,23 @@
 # Project governance manifest
 
+- `binding_source_claims` is the document-wide original primary/reprint authority
+  reused by spatial binding and strict saved-catalogue replay; the caption-only
+  document counter is removed. `structure_catalogs` owns literal selected scope
+  across numbered/caption variants and all qualified title readings. One-column
+  source frames reuse the sole detector with complete original outer edges;
+  activity's two-column default is unchanged. Reprints stay in the same standard
+  DECIMER/source-QC worker and require complete chemical-graph agreement.
+  `binding_source_diagnostics` owns unresolved variant2 proposals within the same
+  bounded role-diagnostic catalog/writer and source replay, including original
+  structure IDs and failed context. It never supplies acceptance or missing values.
+  Existing1MiB/4096/64MiB/200k-node bounds remain; variant2's208-depth budget covers
+  existing64-link original roles, while variant1 remains16. Binding23/binder32
+  invalidate derived ownership, not raw assets/manual audit/chemistry engines,
+  activity/SAR numerical/API/SQL/dependency contracts. No second queue/store/parser,
+  task-specific rule, private reprocessing or acceptance waiver is introduced.
+  Consumer fixtures now use actual controlled original-source proofs, not renamed
+  source copies; such checks do not establish private-patent scientific acceptance.
+
 - Original catalogue direction, literal identity and heading references use the
   existing caption coordinator and source/cell SDK. The same revalidated title
   supplies start/continuation, not a second layout-only decision. Shared caption

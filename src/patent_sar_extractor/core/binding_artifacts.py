@@ -17,10 +17,11 @@ from patent_sar_extractor.contracts import (
 
 from .activity_identity import normalize_compound
 from .binding_catalog import compound_catalog
+from .binding_source_diagnostics import retain_binding_diagnostics
 from .binding_source_references import reference_issues, reference_scope
 from .formal_structure import FORMAL_SCOPE, SOURCE_EXECUTION_MODE
 from .pipeline_rules import _label_key, summarise_binding_accuracy
-from .source_role_observations import serialize_role_observations
+from .source_role_observations import RoleObservationBuffer, serialize_role_observations
 
 _CSV_FIELDS = (
     "cpd",
@@ -112,12 +113,16 @@ def write_binding_result(
     )
     catalog["formal_acceptance_scope"] = FORMAL_SCOPE
     bindings = [dict(binding) for binding in catalog["entries"]]
+    source_scope = reference_scope(source_sections, original_pdf_sha256)
+    diagnostics = RoleObservationBuffer()
+    diagnostics.extend(role_observations)
+    issues = retain_binding_diagnostics(
+        issues, diagnostics, original_pdf_sha256=source_scope["original_pdf_sha256"]
+    )
     reference_payload = {
         "source_sections": list(source_sections),
-        "source_reference_scope": reference_scope(source_sections, original_pdf_sha256),
-        "source_role_observations": serialize_role_observations(
-            list(role_observations)
-        ),
+        "source_reference_scope": source_scope,
+        "source_role_observations": serialize_role_observations(list(diagnostics)),
     }
     # Unruled layout findings are one pure source-reference replay, not two
     # independent observations from the spatial view and saved validator.
@@ -128,7 +133,11 @@ def write_binding_result(
         if not (
             isinstance(issue, dict)
             and isinstance(issue.get("evidence"), dict)
-            and issue["evidence"].get("source_reference_region") in registered
+            and (
+                issue["evidence"].get("source_reference_region") in registered
+                or issue["evidence"].get("source_diagnostic")
+                in reference_payload["source_role_observations"]
+            )
         )
     ]
     issues.extend(reference_issues(reference_payload, bindings))
