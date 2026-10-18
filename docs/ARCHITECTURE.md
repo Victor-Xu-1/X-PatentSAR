@@ -1,5 +1,32 @@
 # X-PatentSAR architecture
 
+## Literal unit fragments and reserved header roles
+
+`activity_header_metrics.normalize_metric_text` uses the existing complete
+`explicit_unit` grammar equally for standalone wrapped and unwrapped unit lines.
+The comparison projection of `((%)` is `(%)`, without altering any original
+detector/text/source packet. A qualified complete physical row is not rejected
+just because overlapping detector pieces duplicated an otherwise-transparent
+unit wrapper. Unknown strings, context words and inline scientific labels are
+not completed or repaired. Per-endpoint unit, target, assay and condition
+conflicts keep the same independent guards. There is no additional OCR view,
+model call, threshold change or numeric/chemical data transformation.
+
+`activity_header_identity.schema_requires_review` remains the single unresolved
+field policy. A legacy value column named exactly `compound_id` needs review,
+as does its already-supported collision-renamed form; neither can substitute
+for the original ID column. Values and the original identifier remain lossless.
+The same policy serves header carry, rows and saved source replay.
+
+These shared header semantics feed activity fields and binding source-table
+roles. Binding27/binder36 and Activity22/extractor31 refresh only derived
+ownership/observations. Raw OCR, classifier, crop/OCSR/visible-label observations,
+manual audit, numerical SAR, API-v1, SQL and dependency authorities are unchanged.
+Historical products remain historical, not retagged accepted. Native/raster,
+serialized/writer/Web and installed/CI/deployment checks remain distinct from
+complete private-patent extraction/SAR and scientific correctness. Truly unread
+words, units and chemical depictions still require their own evidence.
+
 ## Physical heading source before text recognition
 
 `heading_cell_source` selects a heading window from the existing original grid

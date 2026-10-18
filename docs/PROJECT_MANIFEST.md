@@ -1,5 +1,18 @@
 # Project governance manifest
 
+- `activity_header_metrics` owns complete standalone unit-fragment typography
+  through the existing explicit-unit grammar. Raw source/detector text is not
+  rewritten; unknown/inline scientific content and known scientific conflicts
+  remain protected. `activity_header_identity.schema_requires_review` owns
+  reserved value-role review, including exact `compound_id` and its collision
+  spelling, without replacing original IDs or removing values. Header/row/carry/
+  saved replay use the same authorities. Binding27/binder36 and Activity22/
+  extractor31 change derived semantics only; raw/classifier/crop/OCSR/visible/
+  manual/numericalSAR/API/SQL/dependency authorities and existing resource limits
+  are unchanged. No second parser/store/queue/model/view, guessing, private-data
+  processing or acceptance waiver is introduced. Controlled checks and deployed
+  software do not establish arbitrary-format or real-patent scientific success.
+
 - `heading_cell_source` owns unique original grid-cell selection; the existing
   call-local grid cache remains the only nomination authority. `source_cell_pixels`
   owns four-edge original-ink conservation through the existing lossless pixel

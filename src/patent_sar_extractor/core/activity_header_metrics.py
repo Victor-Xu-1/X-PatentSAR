@@ -80,11 +80,12 @@ def normalize_metric_text(text: str) -> str:
     text = _PARENS.sub(
         lambda m: f"({explicit_unit(m.group(1)) or m.group(1).strip()})", text
     )
-    # A separate printed unit line is a same-header fragment, not a default.
+    # A complete separate unit fragment uses the existing whole-unit grammar,
+    # including its transparent wrappers. Original observations remain verbatim.
     pieces = text.splitlines()
     for index, piece in enumerate(pieces):
         unit = explicit_unit(piece)
-        if unit and not piece.strip().startswith("("):
+        if unit:
             pieces[index] = f"({unit})"
     return "\n".join(pieces)
 

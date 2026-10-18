@@ -1,5 +1,29 @@
 # Operations and troubleshooting
 
+## Complete unit fragments and identifier-role review
+
+A source detector can split a correct `Dmax (%)` line into `Dmax` and `((%)`.
+The existing complete-unit grammar now normalizes a standalone unit fragment's
+transparent wrappers consistently, so this alone is not a scientific conflict.
+Both actual source resolutions, their original frames and every raw observation
+remain required. A wrong unit, endpoint, target or condition still refuses;
+unknown strings such as `%/o` or `2/0` are not converted into `%`. Nothing repairs
+an inline scientific label or assigns a missing unit from an assay name.
+
+A legacy value field named `compound_id` is kept as data but marked for review;
+it cannot replace the separate original identifier. The same applies to its
+collision-renamed form. This changes neither the source ID nor any measured
+value, and cannot turn a partial table into complete acceptance.
+
+Binding27/binder36 and Activity22/extractor31 require current derived observation
+through the ordinary frontend. Preserve original/raw assets, old failed products,
+manual corrections and rollback; do not edit or retag old artifacts. No database,
+API, model, dependency or numerical SAR policy migration is needed. A unit-format
+repair does not approve arbitrary percentage/logarithmic strength thresholds.
+Related source/continuation/text-role/writer/Web/cache checks, clean installed
+package and exact-main18765 deployment remain separate from real patent/SAR
+acceptance. Never reprocess private inputs in an operator script to fill gaps.
+
 ## Ruled heading cells and exact original occurrence
 
 A page-OCR locator is not a chemical identifier authority. A padded word window

@@ -21,7 +21,9 @@ def schema_requires_review(schema) -> bool:
         schema.needs_review
         or (schema.header_resolution or {}).get("status") == "unresolved"
         or any(
-            "unknown" in key.lower() or key.startswith("compound_id [")
+            "unknown" in key.lower()
+            or key == "compound_id"
+            or key.startswith("compound_id [")
             for group in schema.groups
             for _, key in group.value_columns
         )
