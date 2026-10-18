@@ -43,6 +43,7 @@
     "tests/test_caption_role_continuation.py",
     "tests/test_caption_title_spacing.py",
     "tests/test_source_table_caption_semantics.py",
+    "tests/test_standalone.py",
     "tools/browser_fixture_mode.py"
   ],
   "python_modules": [
