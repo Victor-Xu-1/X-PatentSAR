@@ -67,7 +67,7 @@ class CaptionGridBoundaryTests(unittest.TestCase):
                         structures,
                         boxes,
                         [1],
-                        tokens_for_page=lambda _page: tokens,
+                        tokens_for_page=lambda _page, tokens=tokens: tokens,
                     )
                 self.assertEqual(
                     [pair["label"] for pair in result.bindings],
