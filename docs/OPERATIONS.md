@@ -1,5 +1,30 @@
 # Operations and troubleshooting
 
+## Recognition input preparation
+
+The normal converter, standalone worker, formal extraction coordinator and
+existing-record completion now share a source-preserving first input. The
+verified DECIMER SDK already prepares that image for its model; an extra Otsu
+threshold/rescale is not a general quality improvement. A controlled original
+halogen image was read correctly without the extra transform and incorrectly
+with it. This fixes an inconsistent constructor/standalone default, not the
+source failures of an already source-preserving formal patent task.
+
+`--no-preprocess` remains an explicit spelling of the default. `--preprocess`
+opts in to the existing extra lossy transform; supplying both flags is an error
+before outputs or model execution. The old unused `core/ocsr/config.yaml` has
+been removed; runtime configuration remains the existing operator configuration.
+Do not infer that editing that historical template changed previous jobs.
+The optional single normalization retry still retains both raw observations and
+uses exact derivative-image/cache identities; no model/weights are changed.
+
+Run the opt-in `test_ocsr_gold.OCSROracleTests.test_default_converter_retains_the_declared_halogen_graph`
+only with the configured existing scientific runtime. It proves one declared
+native optical regression, not all chemistry. Keep the separate six-molecule
+oracle's unresolved CCO/CCCO failure and orientation sensitivity visible. Do not
+rotate images until a plausible graph appears, rewrite raw SMILES, or use these
+synthetic inputs to replace normal frontend patent/SAR acceptance.
+
 ## A multi-drawing route under one original compound heading
 
 Current source capture can qualify an explicit native open-arrow route only

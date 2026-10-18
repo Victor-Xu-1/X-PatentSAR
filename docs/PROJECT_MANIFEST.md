@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- Recognition preparation defaults have one code authority:
+  `smiles_converter.DEFAULT_EXTRA_PREPROCESS=False`. The standalone CLI consumes
+  it and refuses simultaneous enable/disable flags. Formal extraction and Web
+  completion already explicitly preserve the first input. The unused
+  `core/ocsr/config.yaml` template is removed, not migrated to another config.
+  Explicit legacy normalization and the bounded same-engine retry remain;
+  upstream SDK transforms, exact-image/model caches and raw/source/manual/
+  scientific acceptance contracts are unchanged. A real controlled halogen
+  regression verifies this consistency repair; ethanol and orientation model
+  failures remain open, not waived. No dependency, recognizer, schema or SQL
+  migration is introduced.
+
 - Current derived contracts for this upgrade: Binding33/binder43, heading
   structure evidence5, SMILES4/QA6. Compatible raw OCSR2/preparation8, original
   assets/model files, manual audit, numerical SAR, API-v1/SQL and dependencies
