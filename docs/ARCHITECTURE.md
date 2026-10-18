@@ -7,7 +7,12 @@ The existing original-heading ledger retains quantitative plot labels as
 two complete ordered numeric axes, their observed perpendicular strokes, and a
 compact graphic key are proved. Edge/centre nominations conserve the complete
 physical numeric family before ordering; a convenient monotonic subset cannot
-discard a conflicting or unread member. Independent native facts remain vetoes.
+discard a conflicting or unread member. The same maximal alignment families
+include unread first/last members outside that subset's numeric envelope and
+independently retained native words. Unaligned notes do not join an axis; excess
+physical inventory refuses rather than selecting a bounded successful prefix.
+Vertical families retain the already-required boundary before the horizontal
+tick row, so later aligned synthesis text cannot poison or borrow a figure role.
 
 `plot_legend_locator` may nominate the literal compound suffix of an original
 OCR line containing its graphic key. Complete original line text/bounds and its

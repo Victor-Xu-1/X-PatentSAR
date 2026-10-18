@@ -141,22 +141,36 @@ def _aligned_groups(parts, axis):
     return [[parts[i] for i in sorted(group)] for group in groups]
 
 
-def _complete_axis(parts, tokens, independent_tokens):
-    bounds = [
-        min(p["bbox"][0] for p in parts),
-        min(p["bbox"][1] for p in parts),
-        max(p["bbox"][2] for p in parts),
-        max(p["bbox"][3] for p in parts),
+def _complete_axis(parts, tokens, independent_tokens, alignment_axis, *, before=None):
+    # An unread first/last member can be outside the numeric envelope. Reuse the
+    # same complete physical alignment families for both observed origins before
+    # checking literals; the successful numeric subset cannot choose its bounds.
+    low = min(p["bbox"][alignment_axis] for p in parts) - 3
+    high = max(p["bbox"][alignment_axis + 2] for p in parts) + 3
+    order_axis = 1 - alignment_axis
+    nearby = [
+        token
+        for token in chain(tokens, independent_tokens)
+        if token["text"].strip()
+        and token["bbox"][alignment_axis] <= high
+        and token["bbox"][alignment_axis + 2] >= low
+        and (before is None or token["bbox"][order_axis + 2] < before)
     ]
+    if len(nearby) > 256:
+        return False  # Excess original inventory is not a successful prefix.
+    seeds = {id(part) for part in parts}
+    families = (
+        group
+        for group in _aligned_groups([*parts, *nearby], alignment_axis)
+        if any(id(part) in seeds for part in group)
+    )
     return all(
-        not token["text"].strip()
-        or not overlaps(token["bbox"], bounds)
-        or any(
+        any(
             literal(token["text"]) == literal(part["text"])
             and overlaps(token["bbox"], part["bbox"])
             for part in parts
         )
-        for token in chain(tokens, independent_tokens)
+        for token in chain.from_iterable(families)
     )
 
 
@@ -206,7 +220,7 @@ def _axis_candidates(tokens, caption, label, size, independent_tokens, *, unread
         if (
             xs is None
             or not unread
-            and not _complete_axis(xs, tokens, independent_tokens)
+            and not _complete_axis(xs, tokens, independent_tokens, 1)
         ):
             continue
         left, right = xs[0]["bbox"], xs[-1]["bbox"]
@@ -218,7 +232,15 @@ def _axis_candidates(tokens, caption, label, size, independent_tokens, *, unread
             ys = _ordered(column, 1)
             if (
                 ys is None
-                or not _complete_axis(ys, tokens, independent_tokens)
+                # Preserve the existing cross-axis boundary: later aligned
+                # synthesis text is not a member of this vertical tick column.
+                or not _complete_axis(
+                    ys,
+                    tokens,
+                    independent_tokens,
+                    0,
+                    before=min(p["bbox"][1] for p in xs),
+                )
                 or ys[-1]["bbox"][1] - ys[0]["bbox"][1] < 40
             ):
                 continue

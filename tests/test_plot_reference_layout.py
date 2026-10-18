@@ -18,7 +18,14 @@ from patent_sar_extractor.core.table_geometry import page_tokens
 
 
 def plot_document(
-    angle=0, *, axes=True, extra_tick=None, extra_y=None, synthesis=False
+    angle=0,
+    *,
+    axes=True,
+    extra_tick=None,
+    extra_y=None,
+    synthesis=False,
+    last_tick="100",
+    legend_x=347,
 ):
     """Synthetic source geometry only, without private patent content."""
     document = fitz.open()
@@ -26,7 +33,7 @@ def plot_document(
     if axes:
         page.draw_line((110, 80), (110, 250), width=0.8)
         page.draw_line((110, 250), (300, 250), width=0.8)
-    for x, value in zip((110, 170, 230, 290), ("0.001", "0.1", "1", "100")):
+    for x, value in zip((110, 170, 230, 290), ("0.001", "0.1", "1", last_tick)):
         origin = fitz.Point(x, 295)
         page.insert_text(origin, value, fontsize=9, morph=(origin, fitz.Matrix(angle)))
     if extra_tick:
@@ -38,9 +45,9 @@ def plot_document(
         page.insert_text((78, y + 3), value, fontsize=9)
     if extra_y:
         page.insert_text((78, 198), extra_y, fontsize=9)
-    page.draw_line((325, 116), (341, 116), width=1)
-    page.draw_circle((333, 116), 2, fill=(0, 0, 0))
-    page.insert_text((347, 119), "Compound 062-C", fontsize=10)
+    page.draw_line((legend_x - 22, 116), (legend_x - 6, 116), width=1)
+    page.draw_circle((legend_x - 14, 116), 2, fill=(0, 0, 0))
+    page.insert_text((legend_x, 119), "Compound 062-C", fontsize=10)
     page.insert_text((185, 365), "FIGURE 8A", fontsize=10)
     if synthesis:
         page.insert_text((54, 415), "Compound 29: Synthesis", fontsize=11)
@@ -56,6 +63,61 @@ def observe(document):
 
 
 class PlotLayoutTests(unittest.TestCase):
+    def test_unread_outer_y_member_stays_in_the_original_axis_column(self):
+        with plot_document() as baseline:
+            blocks, sections = observe(baseline)
+            self.assertEqual(blocks, [], sections)
+            self.assertEqual(sections[0]["role"], "figure_label_reference")
+        for value in ("n/a", "7x", "?"):
+            with self.subTest(value=value), plot_document() as document:
+                document[0].insert_text((78, 244), value, fontsize=9)
+                blocks, sections = observe(document)
+                self.assertEqual([b["cpd"] for b in blocks], ["Compound 062-C"])
+                self.assertTrue(
+                    all(s["role"] != "figure_label_reference" for s in sections)
+                )
+
+    def test_unaligned_original_note_does_not_poison_a_complete_axis(self):
+        with plot_document(legend_x=250) as document:
+            document[0].insert_text((460, 440), "n/a", fontsize=9)
+            blocks, sections = observe(document)
+            self.assertEqual(blocks, [], sections)
+            self.assertEqual(sections[0]["role"], "figure_label_reference")
+
+    def test_independent_outer_member_vetoes_an_incomplete_primary_numeric_row(self):
+        with plot_document(legend_x=250, last_tick="n/a") as document:
+            lines = original_heading_lines(document[0])
+            label = next(line for line in lines if line["text"].startswith("Compound"))
+            caption = next(line for line in lines if figure_caption(line["text"]))
+            original = source_layout(document[0]).native
+            primary = [token for token in original if token["text"] != "n/a"]
+            self.assertIsNotNone(plot_axes(primary, caption, label["bbox"], [540, 480]))
+            self.assertIsNone(
+                plot_axes(
+                    primary,
+                    caption,
+                    label["bbox"],
+                    [540, 480],
+                    independent_tokens=original,
+                )
+            )
+
+    def test_unread_outer_tick_cannot_be_removed_by_a_shorter_numeric_envelope(self):
+        with plot_document(legend_x=250) as baseline:
+            blocks, sections = observe(baseline)
+            self.assertEqual(blocks, [], sections)
+            self.assertEqual(sections[0]["role"], "figure_label_reference")
+        for last_tick in ("n/a", "7x", "?"):
+            with (
+                self.subTest(last_tick=last_tick),
+                plot_document(legend_x=250, last_tick=last_tick) as document,
+            ):
+                blocks, sections = observe(document)
+                self.assertEqual([b["cpd"] for b in blocks], ["Compound 062-C"])
+                self.assertTrue(
+                    all(s["role"] != "figure_label_reference" for s in sections)
+                )
+
     def test_independent_native_axis_addition_vetoes_an_otherwise_qualified_plot(self):
         with plot_document(45) as document:
             page = document[0]

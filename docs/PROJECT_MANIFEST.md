@@ -3,7 +3,9 @@
 - Quantitative-figure roles remain in the existing heading inventory, source/cell
   SDK and binding writer. `plot_reference` coordinates observation and
   `plot_reference_proof` owns saved replay. `plot_reference_geometry` conserves
-  complete axis families; shared axes/marker modules prove original strokes.
+  complete axis families, including unread outer members and independent native
+  facts rather than a successful numeric envelope. The same alignment authority
+  retains original inventory bounds; shared axes/marker modules prove strokes.
   `plot_legend_locator` retains original graphic/text line boundaries, not a
   stripped prefix. `cell_word_orientation` owns bounded physical word views;
   `plot_axis_words` observes/replays them with the existing OCR and

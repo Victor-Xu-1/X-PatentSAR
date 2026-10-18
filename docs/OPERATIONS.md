@@ -1131,7 +1131,11 @@ coordinates are not edited. Rotated tick refinement preserves every original ink
 component in the complete bounded strip. Both400/600dpi readings and their saved
 transforms, coordinates, source conflicts and inventory must revalidate. Missing,
 unread, reordered, contradictory or oversized observations cannot qualify a
-preferred numeric subset. The global table OCR orientation policy is unchanged.
+preferred numeric subset. Outer unread members and independent native words
+remain in the same complete physical alignment family even when outside the
+readable numbers' envelope; unrelated unaligned notes are not axis members.
+The original cross-axis boundary separates later aligned synthesis sections.
+The global table OCR orientation policy is unchanged.
 
 Derived heading proofs3/4 use Binding22/binder31. Old ownership remains historical;
 original PDF/raw observations/manual audit and independent scientific contracts
