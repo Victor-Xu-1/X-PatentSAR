@@ -6,6 +6,8 @@ role observation remains an unproved heading; ordinary headings stay unchanged.
 
 import re
 
+from patent_sar_extractor.contracts import PLOT_REFERENCE_VERSION
+
 from .cell_frame_proof import inside_box
 from .plot_axis_refinement import refinement_bounds, replay_axis_tokens
 from .plot_legend_locator import locator_nomination
@@ -41,7 +43,7 @@ def figure_parts(figure, nomination):
     ]
 
 
-def _confirmed(figure, hint, size, locator=None):
+def _confirmed(figure, hint, size, locator=None, *, version):
     if not isinstance(figure, dict) or set(figure) != {
         "caption",
         "axes",
@@ -110,7 +112,13 @@ def _confirmed(figure, hint, size, locator=None):
         return False
     if not valid_marker(figure["marker"], hint["bbox"], size):
         return False
-    if not valid_axes(figure["axis_strokes"], axes, size):
+    refinement = figure["axis_refinement"]
+    anchor = (
+        {"axes": refinement["nomination"], "pixels": refinement["axis_strokes"]}
+        if version == PLOT_REFERENCE_VERSION and refinement is not None
+        else None
+    )
+    if not valid_axes(figure["axis_strokes"], axes, size, anchor=anchor):
         return False
     key_box = marker_bounds(hint["bbox"], size)
     if any(
@@ -179,13 +187,17 @@ def plot_reference_status(proof):
             "figure_source",
             "status",
         }
-        | ({"original_locator"} if proof.get("version") == 4 else set())
+        | (
+            {"original_locator"}
+            if proof.get("version") in (4, PLOT_REFERENCE_VERSION)
+            else set()
+        )
     ):
         return "invalid", None
     size, hint = proof["page_size"], proof["nomination"]
     if (
         type(proof["version"]) is not int
-        or proof["version"] not in {3, 4}
+        or proof["version"] not in {3, 4, PLOT_REFERENCE_VERSION}
         or not isinstance(proof["original_pdf_sha256"], str)
         or not re.fullmatch(r"[a-f0-9]{64}", proof["original_pdf_sha256"])
         or type(proof["page_no"]) is not int
@@ -206,9 +218,15 @@ def plot_reference_status(proof):
         return "invalid", None
     try:
         locator = proof.get("original_locator")
-        if proof["version"] == 4 and locator_nomination(locator, size) != hint:
+        if (
+            proof["version"] == 4
+            or proof["version"] == PLOT_REFERENCE_VERSION
+            and locator is not None
+        ) and locator_nomination(locator, size) != hint:
             return "unresolved", None
-        confirmed = _confirmed(proof["figure_source"], hint, size, locator)
+        confirmed = _confirmed(
+            proof["figure_source"], hint, size, locator, version=proof["version"]
+        )
     except (KeyError, ValueError, TypeError, AttributeError, IndexError):
         confirmed = False
     declaration = {**section_heading(hint["text"]), "role": ROLE}

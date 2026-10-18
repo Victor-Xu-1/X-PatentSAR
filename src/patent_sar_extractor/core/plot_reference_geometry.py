@@ -1,26 +1,28 @@
 """Original quantitative-axis and legend nomination; no molecular ownership."""
 
-import math
 import re
 from itertools import chain, pairwise
 
 from .cell_frame_proof import inside_box
 from .compound_caption import caption_identity
+from .plot_axis_identity import axis_literal, axis_number
 from .source_geometry import overlaps
 from .source_section_roles import section_heading
+
+AXIS_MARGIN = 12
 
 _FIGURE = re.compile(
     r"(?:fig(?:ure)?\.?\s*)(?P<identity>\d{1,6}(?:\s*[A-Z]|\s*\([A-Z]\))?)",
     re.IGNORECASE,
 )
-_NUMBER = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d{1,3})?%?")
 
 
 def literal(text):
     figure = _FIGURE.fullmatch(text.strip())
     if figure:
         return "figure:" + re.sub(r"[\s()]", "", figure["identity"]).casefold()
-    return " ".join(text.split()).casefold()
+    number = axis_literal(text)
+    return number if number is not None else " ".join(text.split()).casefold()
 
 
 def figure_caption(text):
@@ -38,13 +40,7 @@ def legend_heading(text):
 
 
 def tick_value(text):
-    if not isinstance(text, str) or len(text) > 64:
-        return None
-    raw = text.strip().replace("−", "-")
-    if not _NUMBER.fullmatch(raw):
-        return None
-    value = float(raw.rstrip("%"))
-    return value if math.isfinite(value) else None
+    return axis_number(text)
 
 
 def source_literal(part):
@@ -90,15 +86,21 @@ def context_bounds(caption, axes, label, size, *, row_bounds=None, locator_bound
 
 def axis_bounds(axes):
     xs, ys = axes["x"], axes["y"]
-    first_x = sum(xs[0]["bbox"][::2]) / 2
-    last_x = sum(xs[-1]["bbox"][::2]) / 2
+    # A rotated word centre is not the position of its tick. Conserve the
+    # complete original outer-word extents with the unchanged source margin.
+    first_x, last_x = xs[0]["bbox"], xs[-1]["bbox"]
     tick_top = min(p["bbox"][1] for p in xs)
     return {
-        "x": [first_x - 12, ys[-1]["bbox"][3] + 2, last_x + 12, tick_top - 1],
+        "x": [
+            first_x[0] - AXIS_MARGIN,
+            ys[-1]["bbox"][3] + 2,
+            last_x[2] + AXIS_MARGIN,
+            tick_top - 1,
+        ],
         "y": [
             max(p["bbox"][2] for p in ys) + 2,
-            ys[0]["bbox"][1] - 12,
-            first_x + 12,
+            ys[0]["bbox"][1] - AXIS_MARGIN,
+            first_x[2] + AXIS_MARGIN,
             tick_top - 1,
         ],
     }
@@ -109,8 +111,10 @@ def _ordered(parts, axis):
     if not 3 <= len(parts) <= 32:
         return None
     values = [tick_value(p["text"]) for p in parts]
-    differences = [b - a for a, b in pairwise(values)]
-    if not (all(v > 0 for v in differences) or all(v < 0 for v in differences)):
+    if any(value is None for value in values) or not (
+        all(b > a for a, b in pairwise(values))
+        or all(b < a for a, b in pairwise(values))
+    ):
         return None
     return [source_literal(p) for p in parts]
 
@@ -264,7 +268,12 @@ def _axis_candidates(tokens, caption, label, size, independent_tokens, *, unread
                 -4 <= (left[0] + left[2]) / 2 - edge <= 48
                 and 0 < min(p["bbox"][1] for p in xs) - ys[-1]["bbox"][3] <= 80
                 and ys[0]["bbox"][1] - 20 <= label[1] < label[3] <= ys[-1]["bbox"][3]
-                and edge + 3 < label[0] < label[2] <= right[2] + span
+                and edge + 3 < label[0] < label[2]
+                # A coarse row can omit its right-hand words. Nomination only
+                # requests the existing complete page-width pixel strip; its
+                # provisional last token cannot bound the unobserved legend.
+                # Final plot_axes still requires the full quantified extent.
+                and (unread or label[2] <= right[2] + span)
                 and min(p["bbox"][0] for p in ys)
                 <= (cap[0] + cap[2]) / 2
                 <= max(right[2], label[2])

@@ -75,8 +75,9 @@ class PlotRefinementProofTests(unittest.TestCase):
                 self.assertEqual(blocks, [])
                 self.assertEqual(len(sections), 1)
                 proof = sections[0]["heading_observation"]
-                self.assertIn(proof["version"], {3, 4})
-                if proof["version"] == 4:
+                self.assertEqual(proof["version"], 5)
+                self.assertIn("original_locator", proof)
+                if proof["original_locator"] is not None:
                     locator = proof["original_locator"]
                     start, end = locator["literal_range"]
                     self.assertEqual(

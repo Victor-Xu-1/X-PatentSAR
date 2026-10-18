@@ -137,7 +137,12 @@ def observe_reference_axes(page, tokens, captions, line, size):
             return attempt
     else:
         caption, axes = options[0]
-    strokes = observe_axes(page, axes, size)
+    anchor = (
+        {"axes": refinement["nomination"], "pixels": refinement["axis_strokes"]}
+        if refinement is not None
+        else None
+    )
+    strokes = observe_axes(page, axes, size, anchor=anchor)
     if strokes is None:
         return attempt if refinement is not None else None
     return {
