@@ -33,6 +33,18 @@ for (const width of [390, 1672]) {
           ...job,
           id: 'controlled-binding-work',
           project_id: project,
+          // Observe the current recorded source-first chain. Legacy order
+          // remains covered independently by the existing task unit checks.
+          stage_order: [
+            'classify',
+            'locate',
+            'structures',
+            'bind',
+            'activity',
+            'smiles',
+            'final',
+            'qa',
+          ],
           stages: job.stages.map((stage) => ({
             ...stage,
             status:
