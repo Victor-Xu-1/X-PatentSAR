@@ -91,6 +91,15 @@ for (const width of [390, 1672]) {
     await expect(current).toContainText('Checking identifier ownership · 7 / 7 items');
     await expect(current).toHaveClass(/is-running/);
     await expect(current).not.toContainText('Run complete');
+    if (width >= 1280) {
+      const groups = page.locator('.workflow-group > span');
+      await expect(groups).toHaveCount(4);
+      expect(
+        await groups.evaluateAll((nodes) =>
+          nodes.every((node) => node.scrollWidth <= node.clientWidth + 1),
+        ),
+      ).toBe(true);
+    }
     expect(resultReads).toBe(count);
     await page.locator('.stage-current-line').click();
     const source = page

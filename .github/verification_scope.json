@@ -13,6 +13,7 @@
     "frontend/src/api/stageDecoders.ts",
     "frontend/src/api/types.ts",
     "frontend/src/features/jobs/StageObservation.tsx",
+    "frontend/src/features/jobs/StageStrip.tsx",
     "frontend/src/i18n/catalogs/jobs.ts",
     "frontend/src/model/bindingProgress.ts",
     "frontend/src/model/extraction.ts",

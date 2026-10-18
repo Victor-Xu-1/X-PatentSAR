@@ -62,6 +62,11 @@ describe('recorded binding source work without acceptance or extra requests', ()
     expect(container.querySelector('.stage-current')).toHaveClass('is-running');
     expect(container.querySelector('.stage-current')).not.toHaveClass('is-complete');
     expect(container.querySelector('.stage-current')).toHaveTextContent('7 / 7 items');
+    expect(container.querySelector('.stage-current')).not.toHaveTextContent('Identifier binding');
+    expect(container.querySelector('.stage-current')).toHaveAttribute(
+      'title',
+      expect.stringContaining('Identifier binding'),
+    );
     expect(task.status).toBe('running');
     expect(stage.status).toBe('running');
     expect(stage.count).toBeNull();

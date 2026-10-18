@@ -108,6 +108,15 @@ export function StageStrip({
               ? `${t(stageLabel(currentName, current))} · ${t(stageStatusText(job, current, currentName))}`
               : jobStatusText(job);
   const progress = current?.progress;
+  const sourceWork =
+    verified &&
+    job?.status === 'running' &&
+    current?.status === 'running' &&
+    current.name === 'bind' &&
+    progress?.source_phase &&
+    !waitingResources(job, current)
+      ? jobStageProgressText(current)
+      : null;
   const reviewCount = recognitionReviewCount(job);
   return (
     <details className="stage-overview stage-disclosure" ref={disclosure}>
@@ -116,15 +125,20 @@ export function StageStrip({
         <output
           className={`stage-current ${!verified ? 'is-unknown' : completedCoreRejection(job) ? 'is-review' : `is-${job?.status ?? 'idle'}`}`}
           aria-live="polite"
+          title={sourceWork ? `${label} · ${sourceWork}` : undefined}
         >
           {job && ['cancelled', 'interrupted'].includes(job.status) && `${jobStatusText(job)} · `}
-          {label}
+          {sourceWork ? `${t(stageStatusText(job, current, currentName!))} · ${sourceWork}` : label}
           {reviewCount !== null && (
             <span className="stage-progress"> · {t('{count} 条结构', { count: reviewCount })}</span>
           )}
-          {verified && !completedCoreRejection(job) && progress && progress.total > 0 && (
-            <span className="stage-progress"> · {jobStageProgressText(current)}</span>
-          )}
+          {verified &&
+            !completedCoreRejection(job) &&
+            !sourceWork &&
+            progress &&
+            progress.total > 0 && (
+              <span className="stage-progress"> · {jobStageProgressText(current)}</span>
+            )}
         </output>
         <ChevronDown size={14} className="stage-disclosure-chevron" aria-hidden="true" />
       </summary>
