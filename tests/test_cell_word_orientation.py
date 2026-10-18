@@ -5,6 +5,7 @@ import hashlib
 import unittest
 
 import cv2
+import fitz
 import numpy as np
 
 from patent_sar_extractor.core.cell_ocr_observation import observe_cell
@@ -20,6 +21,57 @@ from tests.test_plot_reference_layout import plot_document
 
 
 class OriginalWordOrientationTests(unittest.TestCase):
+    def test_excess_nearest_vertical_words_cannot_fall_back_to_a_smaller_lane(self):
+        mask = np.zeros((1600, 300), dtype=np.uint8)
+        for top in range(20, 20 + 33 * 45, 45):
+            mask[top : top + 8, 220:250] = 1
+        for top in (100, 700, 1300):
+            mask[top : top + 8, 20:60] = 1
+        self.assertIsNone(word_frame(mask, 400, layout="rows"))
+
+    def test_complete_row_lane_keeps_all_short_ticks_and_retains_other_original_ink(
+        self,
+    ):
+        with fitz.open() as document:
+            page = document.new_page(width=160, height=260)
+            for y, value in ((55, "90"), (125, "45"), (195, "0")):
+                page.insert_text((100, y), value, fontsize=9)
+                page.insert_text((15, y), "other", fontsize=9)
+            page.insert_text((118, 235), "1", fontsize=9)
+            for dpi in (400, 600):
+                image = cell_image(page, [0, 15, 125, 245], dpi)
+                mask = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) < 180
+                frame = word_frame(mask, dpi, layout="rows")
+                self.assertIsNotNone(frame)
+                self.assertEqual(len(frame["word_bounds"]), 3)
+                self.assertTrue(valid_word_frame(frame, mask, dpi, layout="rows"))
+                self.assertFalse(valid_word_frame(frame, mask, dpi))
+                coverage = np.zeros_like(mask)
+                for left, top, right, bottom in frame["word_bounds"]:
+                    coverage[top:bottom, left:right] = True
+                left, top, right, bottom = frame["lane_bounds"]
+                self.assertFalse(
+                    np.any(
+                        mask[top:bottom, left:right] & ~coverage[top:bottom, left:right]
+                    )
+                )
+                self.assertTrue(np.any(mask & ~coverage))
+                for mutation in ("bool", "float", "bounds", "omit", "extra"):
+                    changed = copy.deepcopy(frame)
+                    if mutation == "bool":
+                        changed["lane_bounds"][0] = True
+                    elif mutation == "float":
+                        changed["lane_bounds"][0] = float(changed["lane_bounds"][0])
+                    elif mutation == "bounds":
+                        changed["lane_bounds"][0] -= 1
+                    elif mutation == "omit":
+                        changed["word_bounds"].pop()
+                    else:
+                        changed["accepted"] = True
+                    self.assertFalse(
+                        valid_word_frame(changed, mask, dpi, layout="rows")
+                    )
+
     def test_complete_original_masks_replay_at_both_resolutions_and_different_angles(
         self,
     ):
