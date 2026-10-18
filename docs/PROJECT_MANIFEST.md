@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- `rapidocr_adapter` owns one lazy optional SDK constructor and bounded lossless
+  trailing canvas guard for otherwise-zero-dimension resize. Existing page/thread,
+  physical-source and diagnostic consumers share it; inference, scores and inverse
+  geometry remain in the unchanged SDK. Safe inputs retain exact pixels/object,
+  extra padding is capped at the existing 8M-cell budget, and all original rows/
+  uncertainty/conflicts remain. No alternate model, retries, SDK patch, guessed
+  text or acceptance waiver. Valid source semantics and scientific epochs/raw/
+  manual/API/SQL/dependencies are unchanged; only previously-fatal execution is
+  repaired. Independent dependency probing stays a raw-SDK availability check.
+  Native controlled regressions, delivery and real frontend extraction/SAR remain
+  distinct gates; no claim of arbitrary-patent or chemical accuracy is implied.
+
 - Unpublished-result presentation stays in `ResultsPane`, receiving the existing
   current-project verified job observation from `Workspace` and sharing
   `activeJob`. `ResultsTable` renders one native status output. Query-empty,

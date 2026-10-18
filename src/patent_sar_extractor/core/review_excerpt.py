@@ -418,9 +418,9 @@ def _page_lines_tesseract_cli(page, dpi: int) -> list[OcrLine]:
 
 def _load_ocr_engine():
     try:
-        from rapidocr_onnxruntime import RapidOCR
+        from .rapidocr_adapter import create_rapidocr
 
-        return RapidOCR()
+        return create_rapidocr()
     # Optional diagnostic OCR can fail with vendor-specific exception classes;
     # this excerpt helper never certifies formal source ownership or chemistry.
     except Exception as e:  # noqa: BLE001
