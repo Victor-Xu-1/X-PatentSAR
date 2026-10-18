@@ -12,6 +12,9 @@ not a model ensemble, highest-confidence vote or retry loop. Normal rows need
 no extra recognition, and the same8M rendering/8header-row and32body-row limits
 remain. Every malformed row still preserves later original rows rather than
 publishing or retaining only a successful prefix.
+Short-header responses pass through that same typed row boundary before any
+positional component access; malformed scalar/dictionary/short-tuple results
+stay invalid observations within the same two-view limit, not parser crashes.
 
 Physical text-frame2 retains both attempts, their exact borders, literal outputs,
 confidence validity and unchanged original frame/row coordinates. Pure replay

@@ -58,6 +58,39 @@ def column_proof(column):
 
 
 class HeaderPhysicalProofTests(unittest.TestCase):
+    def test_malformed_single_row_is_bounded_by_the_same_observation_policy(self):
+        for malformed in (None, [], [["No."]], 17, "foreign", [{"text": "No."}]):
+            with self.subTest(malformed=malformed):
+                engine = Mock(side_effect=[(malformed, 0), ([["No.", 0.99]], 0)])
+                result = observe_cell(
+                    controlled_image(1),
+                    "header",
+                    400,
+                    engine,
+                    lambda text, _: text.strip(),
+                )
+                evidence = result.evidence(400, [30, 40, 90, 85])
+                self.assertEqual(result.value, "No.")
+                self.assertEqual(engine.call_count, 2)
+                self.assertFalse(evidence["single_row_readings"][0]["confidence_valid"])
+                self.assertTrue(valid_text_components(evidence, 400))
+
+    def test_two_malformed_single_row_observations_never_create_a_value(self):
+        engine = Mock(side_effect=[([["No."]], 0), ([{"text": "No."}], 0)])
+        result = observe_cell(
+            controlled_image(1), "header", 400, engine, lambda text, _: text.strip()
+        )
+        self.assertEqual(result.value, "")
+        self.assertEqual(engine.call_count, 2)
+        evidence = result.evidence(400, [30, 40, 90, 85])
+        self.assertTrue(
+            all(
+                not reading["confidence_valid"]
+                for reading in evidence["single_row_readings"]
+            )
+        )
+        self.assertFalse(valid_text_components(evidence, 400))
+
     def test_single_short_header_keeps_both_original_views_not_a_guessed_value(self):
         engine = Mock(side_effect=[([["No.", 0.7]], 0), ([["No.", 0.99]], 0)])
         result = observe_cell(

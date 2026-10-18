@@ -124,8 +124,15 @@ def observe_cell(
         and (header_frame is not None or (crop[3] - crop[1]) * 72 / dpi > row_height)
     )
     result, _ = engine(image, use_det=detected, use_cls=False)
+    # The same bounded row parser owns short headers before any positional
+    # indexing. A malformed response is an invalid observation, not a crash or
+    # permission to coerce a dictionary/scalar into apparently recognized text.
+    first = (
+        row_observation(result, border) if kind == "header" and not detected else None
+    )
+    components = [[first["text"], first["confidence"]]] if first is not None else result
     parts = []
-    for item in result or []:
+    for item in components or []:
         raw_confidence = item[2] if detected else item[1]
         parts.append(
             {
@@ -144,8 +151,7 @@ def observe_cell(
         )
     detection_parts = tuple(parts) if detected else ()
     single_readings = None
-    if kind == "header" and not detected:
-        first = row_observation(result, border)
+    if first is not None:
         compact = row_recognition_border(crop[3] - crop[1], border)
         if not qualified_row(first) and compact != border:
             view = cv2.copyMakeBorder(
