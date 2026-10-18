@@ -107,7 +107,9 @@ def load_qa_inputs(output_dir: str, patent_id: str = "") -> QAInputs:
     bind_data = _load_json(base / "structure_bindings" / "bindings.json", {})
     smiles_payload = _load_json(base / "smiles" / "smiles_results.json", {})
     smiles = smiles_records(smiles_payload)
-    smiles_identity_ok = smiles_artifact_is_current(smiles_payload)
+    smiles_identity_ok = smiles_artifact_is_current(
+        smiles_payload, require_all_candidates=True
+    )
     activity = _load_json(base / "activity" / "activity_data.json", {})
     bindings = [
         annotate_binding_accuracy(dict(binding))

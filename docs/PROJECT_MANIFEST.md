@@ -1,5 +1,25 @@
 # Project governance manifest
 
+- Complete-image observations: `candidate_inputs` composes original/manifest/
+  proved inputs; `candidate_inventory` owns bounded original crop descriptors;
+  `candidate_scope` owns saved accounting and `candidate_observations` owns exact
+  replay. One DECIMER queue/cache observes formal, supplemental, reprint and
+  otherwise-unassigned images, including zero-proved-ID runs. Source-only
+  component artifacts cannot represent complete pipeline coverage. SMILES4/QA6
+  refresh only derived observation/acceptance contracts, not raw OCSR2,
+  preparation8, Binding32/binder42, manual audit, API-v1/SQL, dependencies or
+  numerical SAR. Candidates have no original ID, automatic property, activity,
+  Lead or SAR eligibility; they cannot consume the <=8 stereo rescue budget.
+  Web uses the same replay behind SafeFiles and one call-local stat/hash memo.
+  `ArtifactView.assessment` serves both projection and source-epoch review;
+  current rows/exports preserve observation versus chemical admission. Projection
+  layout v3 is rebuildable, not a raw-data or manual-audit migration. No second
+  parser/model/store/queue, copied winner or private-patent repair is introduced.
+  Complete detection accounting does not prove recall, terminal reaction roles
+  or chemistry. A known graph may be a reactant; it cannot by itself resolve a
+  product heading or clear source rejection. Delivery and real frontend
+  scientific acceptance remain separate gates.
+
 - `binding_source_claims` remains the sole original source decision for spatial
   capture, complete catalogue writing and saved replay. Literal qualified title/
   cell namespace plus exact document/label/unique primary catalogue can admit a

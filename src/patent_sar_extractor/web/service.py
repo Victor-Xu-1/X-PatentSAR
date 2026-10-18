@@ -20,7 +20,6 @@ from .correction_models import CorrectionDocument, CorrectionRequest
 from .corrections import Corrections, CorrectionSaved
 from .descriptor_storage import DescriptorStore
 from .errors import WebError
-from .files import SafeFiles
 from .history_storage import (
     ensure_job_visible,
     ensure_project_visible,
@@ -109,18 +108,9 @@ class WorkspaceService:
         self, project: dict[str, Any], snapshot: dict[str, Any]
     ) -> None:
         """Recheck cached acceptance without changing raw rows/manual audit basis."""
-        from .acceptance import authority
-        from .stages import completed_stage_payloads
-
         root = Path(project["run_root"])
         view = ArtifactView.read(root)
-        accepted, _ = authority(
-            completed_stage_payloads(view.payloads),
-            pdf_verified=bool(
-                project["sha256"] and project["sha256"] == view.expected_sha256
-            ),
-            marker=SafeFiles(root).json("STRICT_ACCEPTANCE_FAILED.json"),
-        )
+        accepted, _, _ = view.assessment(pdf_sha256=project["sha256"])
         updated = {
             **snapshot,
             "acceptance": accepted.model_dump(),

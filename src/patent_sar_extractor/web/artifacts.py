@@ -26,13 +26,15 @@ from patent_sar_extractor.core.pipeline_rules import (
 )
 from patent_sar_extractor.smiles_artifact import smiles_source_records
 
-from .acceptance import ARTIFACTS, authority, current
+from .acceptance import ARTIFACTS, current
 from .activity_provenance import activity_contexts, metric_unit, provenance_error
 from .artifact_values import box, page_number, text
+from .candidate_observations import SourceObservations, read_source_observations
 from .compound_catalog import read_compound_catalog
 from .errors import WebError
 from .files import MAX_RECORDS, SafeFiles, records
 from .models import (
+    Acceptance,
     Activity,
     Compound,
     Confidence,
@@ -46,7 +48,7 @@ from .processes import runtime_identity
 from .recognition import recognition_status
 from .structure_corpus import unassociated_structures
 
-RAW_PROJECTION_LAYOUT = "compound-catalog-reprints-v2"
+RAW_PROJECTION_LAYOUT = "compound-catalog-complete-observations-v3"
 HISTORICAL_SOURCE_REVIEW_VERSION = 1
 
 
@@ -174,6 +176,37 @@ class ArtifactView:
             root, payloads, ocr, next(iter(hashes)).lower() if hashes else None, count
         )
 
+    def assessment(self, *, pdf_sha256, payloads=None):
+        """Both projection and cached-epoch review replay the same source policy."""
+        from .acceptance import authority
+        from .stages import completed_stage_payloads
+
+        payloads = (
+            completed_stage_payloads(self.payloads) if payloads is None else payloads
+        )
+        files = SafeFiles(self.root)
+        verified = bool(pdf_sha256 and pdf_sha256 == self.expected_sha256)
+        accepted, historical = authority(
+            payloads,
+            pdf_verified=verified,
+            marker=files.json("STRICT_ACCEPTANCE_FAILED.json"),
+        )
+        observations = SourceObservations({}, [])
+        if current(payloads.get("bindings"), "bindings") and current(
+            payloads.get("smiles"), "smiles"
+        ):
+            observations = read_source_observations(
+                files, payloads, pdf_sha256 if verified else None
+            )
+            if observations.errors and not historical:
+                accepted = Acceptance(
+                    state="failed",
+                    errors=list(
+                        dict.fromkeys([*accepted.errors, *observations.errors])
+                    )[:100],
+                )
+        return accepted, historical, observations
+
     def snapshot(
         self, project_id: str, *, pdf_sha256: str | None
     ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
@@ -183,7 +216,9 @@ class ArtifactView:
         files = SafeFiles(self.root)
         verified = bool(pdf_sha256 and pdf_sha256 == self.expected_sha256)
         marker = files.json("STRICT_ACCEPTANCE_FAILED.json")
-        accepted, historical = authority(p, pdf_verified=verified, marker=marker)
+        accepted, historical, source_observations = self.assessment(
+            pdf_sha256=pdf_sha256, payloads=p
+        )
         steps = (p.get("summary") or {}).get("steps", {})
         structure_step = steps.get("structures", {}) if isinstance(steps, dict) else {}
         structure_failed = (
@@ -555,6 +590,8 @@ class ArtifactView:
             verified_original=verified,
             page_count=self.page_count,
             crop_revision=crop_revision,
+            observations=source_observations.records,
+            observation_errors=bool(source_observations.errors),
         )
         compounds.extend(supplemental)
         structure_pages.update(supplemental_pages)

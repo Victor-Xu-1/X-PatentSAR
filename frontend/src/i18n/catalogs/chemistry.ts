@@ -140,6 +140,8 @@ export const chemistry: Readonly<Record<string, string>> = {
   'RDKit 可解析': 'RDKit parsable',
   'RDKit 无效': 'Invalid for RDKit',
   识别不可用: 'Recognition unavailable',
+  '已观察 · 编号待确认': 'Observed · unassigned',
+  来源观察待核验: 'Source observation unverified',
   手性冲突: 'Stereochemistry conflict',
   手性待核对: 'Stereochemistry needs review',
   手性证据不可用: 'Stereochemistry evidence unavailable',

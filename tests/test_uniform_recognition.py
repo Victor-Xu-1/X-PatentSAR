@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 import test_compound_catalog_view as catalog_tests
 import test_corpus_predictions as corpus_tests
-from recognition_source_support import observation
+from recognition_source_support import complete_observation_artifact, observation
 from test_prediction_support import PredictionFixture
 
 from patent_sar_extractor.application.pipeline_context import PipelineContext
@@ -23,7 +23,10 @@ from patent_sar_extractor.application.stage_cache import _bindings_ocsr_digest
 from patent_sar_extractor.application.stage_smiles import execute_smiles
 from patent_sar_extractor.artifact_io import write_json_atomic
 from patent_sar_extractor.core.ocsr.recognition_inputs import recognition_inputs
-from patent_sar_extractor.smiles_artifact import build_smiles_artifact, smiles_records
+from patent_sar_extractor.smiles_artifact import (
+    smiles_artifact_is_current,
+    smiles_records,
+)
 from patent_sar_extractor.web.acceptance import ARTIFACTS
 from patent_sar_extractor.web.errors import WebError
 from patent_sar_extractor.web.exports import export_json
@@ -33,11 +36,12 @@ from patent_sar_extractor.web.prediction_worker import run_predictions
 class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
     def prepare(self, raw="CCO"):
         path, payload = catalog_tests.CompoundCatalogViewTests.catalog_run(self)
-        plan = recognition_inputs(payload)
-        artifact = build_smiles_artifact(
-            [observation(item) for item in plan.formal],
-            source_records=[observation(item, raw) for item in plan.supplemental],
-            reprint_records=[observation(item) for item in plan.reprints],
+        artifact = complete_observation_artifact(
+            payload,
+            pdf=self.pdf,
+            structures=self.run / "structures/metadata.json",
+            binding_dir=path.parent,
+            source_raw=raw,
         )
         (self.run / ARTIFACTS["smiles"][0]).write_text(json.dumps(artifact))
         self.service.refresh(self.project.id)
@@ -86,12 +90,19 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
     def test_missing_image_retains_explicit_unavailable_recognition(self):
         _, _, artifact = self.prepare()
         artifact["source_records"][0] = {
+            **artifact["source_records"][0],
             "cpd_id": "Compound 8",
             "structure_id": "numbered-without-activity",
             "OCSR_status": "image_missing",
             "OCSR_quality_flag": "empty_prediction",
             "rdkit_valid": False,
+            "raw_smiles": None,
+            "canonical_smiles": None,
+            "image_hash": None,
+            "model_fingerprint": None,
+            "OCSR_engine": None,
         }
+        artifact["source_records"][0].pop("stereochemistry", None)
         (self.run / ARTIFACTS["smiles"][0]).write_text(json.dumps(artifact))
         self.service.refresh(self.project.id)
         item = self.service.results(self.project.id).items[1]
@@ -181,6 +192,10 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
                     "run_smiles",
                     "--input",
                     str(path),
+                    "--structures",
+                    str(self.run / "structures/metadata.json"),
+                    "--source-pdf",
+                    str(self.pdf),
                     "--output",
                     str(output),
                     "--csv-output",
@@ -193,7 +208,8 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
             patch.object(run_smiles, "SmilesConverter", ControlledConverter),
         ):
             run_smiles.main()
-        self.assertEqual(batches, [["Compound 1", "Compound 8", "Compound 1"]])
+        self.assertEqual(batches[0][:3], ["Compound 1", "Compound 8", "Compound 1"])
+        self.assertTrue(all(not label for label in batches[0][3:]))
         artifact = json.loads(output.read_text())
         self.assertEqual(
             [row["cpd_id"] for row in smiles_records(artifact)], ["Compound 1"]
@@ -217,9 +233,11 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
         formal, supplemental = plan.formal, plan.supplemental
         payload["final_bindings"] = [*formal, *supplemental]
         write_json_atomic(path, payload)
-        artifact = build_smiles_artifact(
-            [observation(item) for item in payload["final_bindings"]],
-            reprint_records=[observation(item) for item in plan.reprints],
+        artifact = complete_observation_artifact(
+            payload,
+            pdf=self.pdf,
+            structures=self.run / "structures/metadata.json",
+            binding_dir=path.parent,
         )
         output = self.root / "stage-output"
         output.mkdir()
@@ -235,6 +253,7 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
             n_bound=len(recognition_inputs(payload).formal),
             bind_json=str(path),
             bind_payload=payload,
+            structures_json=str(self.run / "structures/metadata.json"),
             step_dirs={"smiles": str(output)},
         )
 
@@ -259,13 +278,14 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
             ) as budget,
         ):
             execute_smiles(state)
-            self.assertEqual(log["steps"]["smiles"]["total"], 3)
+            total = 3 + len(artifact["candidate_records"])
+            self.assertEqual(log["steps"]["smiles"]["total"], total)
             self.assertEqual(log["steps"]["smiles"]["reprint_total"], 1)
             self.assertEqual(log["steps"]["smiles"]["source_total"], 0)
             self.assertEqual(log["steps"]["smiles"]["formal_total"], 2)
             execute_smiles(state)
             worker.assert_called_once()
-            budget.assert_called_once_with(3, state.started_monotonic)
+            budget.assert_called_once_with(total, state.started_monotonic)
             self.assertTrue(log["steps"]["smiles"]["from_cache"])
 
     def test_smiles_worker_cannot_omit_no_activity_catalog_results(self):
@@ -274,15 +294,17 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
         formal, supplemental = plan.formal, plan.supplemental
         payload["final_bindings"] = [*formal, *supplemental]
         write_json_atomic(path, payload)
-        artifact = build_smiles_artifact(
-            [observation(item) for item in payload["final_bindings"]]
+        artifact = complete_observation_artifact(
+            payload,
+            pdf=self.pdf,
+            structures=self.run / "structures/metadata.json",
+            binding_dir=path.parent,
         )
-        artifact = build_smiles_artifact(
-            [
-                record
-                for record in artifact["records"]
-                if record["cpd_id"] != "Compound 8"
-            ]
+        artifact["records"] = [
+            record for record in artifact["records"] if record["cpd_id"] != "Compound 8"
+        ]
+        self.assertFalse(
+            smiles_artifact_is_current(artifact, require_all_candidates=True)
         )
         output = self.root / "stage-output"
         output.mkdir()
@@ -298,6 +320,7 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
             n_bound=len(recognition_inputs(payload).formal),
             bind_json=str(path),
             bind_payload=payload,
+            structures_json=str(self.run / "structures/metadata.json"),
             step_dirs={"smiles": str(output)},
         )
 
@@ -316,7 +339,7 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
                 "patent_sar_extractor.application.stage_smiles.run_in_env",
                 side_effect=produce,
             ),
-            self.assertRaisesRegex(RuntimeError, "omitted"),
+            self.assertRaisesRegex(RuntimeError, "incompatible"),
         ):
             execute_smiles(state)
         self.assertFalse(Path(state.smiles_json + ".manifest.json").exists())

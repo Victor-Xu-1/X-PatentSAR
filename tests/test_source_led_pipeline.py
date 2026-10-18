@@ -54,7 +54,8 @@ def proved_binding(label, structure_id, image=""):
 
 def state_for(root, stage):
     original = root / "original.pdf"
-    original.write_bytes(b"controlled fingerprint input, not a patent")
+    if not original.exists():
+        original.write_bytes(b"controlled fingerprint input, not a patent")
     classification = root / "classification.json"
     classification.write_text("{}")
     progress = PipelineProgress()
@@ -69,6 +70,7 @@ def state_for(root, stage):
         classify_json=str(classification),
         pipeline_log=log,
         classification={"activity_pages": []},
+        structures_json=str(root / "structures/metadata.json"),
     )
 
 

@@ -1,5 +1,58 @@
 # X-PatentSAR architecture
 
+## Complete detected-image observations, before chemical identity admission
+
+`candidate_inputs` composes one source plan from the original PDF, the complete
+segmentation metadata/worker manifest and the existing proved recognition plan.
+`candidate_inventory` conserves all original page observations, including pages
+with zero detected crops. Each detected crop names its original document, source
+ID, page, geometry and image digest. Exact raw asset/page/geometry identity can
+reuse one already-scheduled proved source observation; equal labels, similar
+graphs or row order cannot. Missing assets remain explicit unavailable inputs.
+This is declared producer/input provenance, not independent detector-recall or
+chemical-identity certification.
+
+All remaining images enter the SAME bounded serial DECIMER worker/cache as typed
+unassigned candidates, with an empty original compound label. Even a document
+without a proved numbered molecule receives these observations. An actually
+empty complete detector inventory starts no model and cannot claim compounds.
+Candidates cannot consume the optional maximum-eight stereo-rescue queue, acquire
+activity/Lead/SAR membership, or become numbered products through RDKit parsing.
+No second default recognizer, source store, execution queue or resident model is
+introduced. Existing raw image/model observations are reused by their existing
+exact-image/model keys, never as inherited acceptance.
+
+SMILES schema4 retains distinct formal, supplemental, reprint and candidate
+groups plus one complete `candidate_inventory`. `candidate_scope` owns the pure
+saved-accounting/source-marker/model-shape boundary; `candidate_observations`
+owns replay against the original current inputs. Every referenced result must
+retain its actual raw source ID, page, crop and processed observation. The
+unassigned source marker cannot be moved to a numbered record. Source-only
+component artifacts remain readable but explicitly lack whole-detection scope.
+The coordinator, worker, checkpoint reuse and final QA6 consume this same policy.
+Whole QA independently replays original input identity and current source bytes;
+a saved success flag cannot replace omitted observations or changed metadata.
+
+The Web adapter uses the same replay through existing `SafeFiles` no-follow,
+bounded reads. Its stat-bound digest memo exists only during one read, is not a
+scientific result cache, and ignores ordinary access-time changes. Projection
+and cached source-epoch assessment share `ArtifactView.assessment`. Unassigned
+rows retain original images and accurate observation status without a usable
+molecular field, guessed original ID, measurement or automatic property input.
+Existing review exports and SAR/Lead gates preserve that separation. English and
+Chinese badges distinguish observed-but-unassigned, unverified and unexecuted
+inputs without translating source labels or scientific data.
+
+Complete observations are a prerequisite, not a solved reaction-role layer.
+A graph matching a known catalogue may occur as a reactant inside a route; graph
+presence alone cannot discharge a product declaration. Existing ownership errors
+and historical observations remain retained until complete current source/role
+proof is independently revalidated. Native/controlled protocol checks do not
+establish real OCSR accuracy, all-format terminal coverage, chemical correctness
+or accepted real frontend extraction/SAR. Raw OCSR2, preparation8, Binding32/
+binder42, manual history, API-v1/SQL, scientific model dependencies and numerical
+SAR policies remain independent and unchanged by this observation format.
+
 ## Preparation depictions in the one source-claim decision
 
 `binding_catalog` now resolves the complete proved primary/additional collection

@@ -4,11 +4,28 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 
 from .label_mask import source_geometry
 
 WORKING_ROOT = str(Path.cwd())
+
+
+def resolve_ocsr_image_path(item: dict) -> str:
+    """Choose an available molecular input, never a whole-page render."""
+    for key in (
+        "ocsr_image_path",
+        "source_image_path",
+        "image_path",
+        "structure_image",
+    ):
+        path = str(item.get(key) or "").strip()
+        if path and os.path.isfile(path):
+            if re.fullmatch(r"page_\d+(?:_synthesis_crop)?\.png", Path(path).name):
+                continue
+            return path
+    return ""
 
 
 def _resolved_path(value: str, base_dir: str) -> str:

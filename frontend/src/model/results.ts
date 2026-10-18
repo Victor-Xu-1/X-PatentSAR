@@ -19,6 +19,8 @@ export function recognitionText(recognition: CompoundRecognition | null): string
   if (recognition?.stereochemistry?.status === 'conflict') return t('手性冲突');
   if (recognition?.stereochemistry?.status === 'ambiguous') return t('手性待核对');
   if (recognition?.quality_flag === 'stereo_source_unavailable') return t('手性证据不可用');
+  if (recognition?.quality_flag === 'unassigned_source_identity') return t('已观察 · 编号待确认');
+  if (recognition?.quality_flag === 'unassigned_source_unverified') return t('来源观察待核验');
   return recognition ? t(recognitionLabels[recognition.status]) : t('识别状态未知');
 }
 

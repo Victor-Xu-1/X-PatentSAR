@@ -1,5 +1,38 @@
 # Operations and troubleshooting
 
+## Unassigned images still receive source observations
+
+The normal extraction worker now requires both the original PDF and its complete
+structures metadata/producer manifest. Missing page coverage is an error, not a
+zero. A known empty numbered catalogue no longer prevents otherwise-detected
+images from being observed by the same serial DECIMER process and raw cache.
+Only a genuinely empty full detector inventory avoids starting that model.
+
+SMILES4 keeps unassigned `candidate_records` separate from numbered results.
+Missing/rejected images retain explicit observations; the UI must not call
+observed candidates unexecuted or accepted products. Their original labels,
+activities and usable molecular fields remain empty, and existing property,
+Lead and SAR gates exclude them. Raw observations remain in the versioned output;
+review table/CSV/JSON exports do not invent numbered chemistry. Whole QA6
+requires complete original-source replay, not just the new field or a success
+flag. Source-only component/diagnostic artifacts cannot supply this guarantee.
+
+Checkpoint reuse includes metadata, manifest and complete source-plan identity.
+Older SMILES3/QA5 products stay historical and are not retagged; compatible raw
+model observations can still be reused through the existing exact-image/model
+cache in a normal new producer. Preserve original PDFs, raw assets, failed
+attempts, manual audit and the compatible rollback package/state. A failed
+source replay must not trigger poll-time inference, a duplicate task, automatic
+numbering, another recognizer or an external LLM call.
+
+All-crop observations do not solve unlabelled multi-step reaction schemes. A
+matching known molecule may be a reactant, not the heading's product. Continue
+source/role/chemical verification without clearing prior rejection or selecting
+the rightmost/largest/last drawing. Optional parser environments require separate
+license/dependency/resource review and installation authority; no such model is
+installed or made default by this format change. Real patents remain frontend-
+submitted acceptance work, after coherent repair and merged-main deployment.
+
 ## Native source checks without Web test transport
 
 The synthetic original-image QC record factory lives in the single

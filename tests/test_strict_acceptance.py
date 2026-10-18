@@ -1911,12 +1911,16 @@ class StrictAcceptanceTests(unittest.TestCase):
     def test_clean_minimal_source_export_preserves_catalog_and_original_activity_order(
         self,
     ) -> None:
-        from patent_sar_extractor.core.structure_inventory import inventory_packet
+        from catalog_source_support import original_catalogue
+        from recognition_source_support import observation
+
+        from patent_sar_extractor.core.ocsr.candidate_inputs import (
+            load_source_observation_plan,
+        )
+        from patent_sar_extractor.core.ocsr.recognition_inputs import recognition_inputs
 
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
-            image_2 = self._image(base, "images/structure_2.png")
-            image_1 = self._image(base, "images/structure_1.png")
             activity = {
                 **artifact_identity(ACTIVITY_SCHEMA, ACTIVITY_SCHEMA_VERSION),
                 "metadata": {},
@@ -1936,27 +1940,38 @@ class StrictAcceptanceTests(unittest.TestCase):
                     },
                 ],
             }
-            bindings = [
-                self._source_binding("Compound 2", "S2", image_2),
-                self._source_binding("Compound 1", "S1", image_1),
-            ]
-            binding_payload = write_binding_result(
-                base / "structure_bindings",
-                patent_id="TEST",
-                bindings=bindings,
-                detected_style="control",
-                include_intermediates=False,
-                total_structures=2,
-                total_compound_blocks=0,
-                table_pages=[],
-                table_covered_count=0,
-                no_binding=[],
-                unbound_pages=[],
+            raw_by_source = {"S2": "CCCl", "S1": "CCO"}
+            self._write_json(base / "structures/metadata.json", {})
+            original, binding_path, binding_payload = original_catalogue(
+                base,
+                base,
+                labels=("2", "1"),
+                identities=("S2", "S1"),
+                selected=False,
+                molecule=raw_by_source,
             )
-            smiles = [
-                self._smiles("Compound 2", "S2", "CCCl"),
-                self._smiles("Compound 1", "S1", "CCO"),
-            ]
+            plan = load_source_observation_plan(
+                recognition_inputs(binding_payload),
+                structures_json=base / "structures/metadata.json",
+                pdf_path=original,
+                binding_dir=binding_path.parent,
+                binding_pdf_sha256=binding_payload["source_reference_scope"][
+                    "original_pdf_sha256"
+                ],
+            )
+            # Controlled raw graphs agree with the actual native depictions;
+            # neither this oracle nor its source QC is an OCSR accuracy claim.
+            smiles = build_smiles_artifact(
+                [
+                    observation(row, raw_by_source[row["structure_id"]])
+                    for row in plan.proven.formal
+                ],
+                candidate_records=[
+                    observation(row, raw_by_source[row["structure_id"]])
+                    for row in plan.candidates
+                ],
+                candidate_inventory=plan.inventory,
+            )
             from types import SimpleNamespace
 
             from patent_sar_extractor.core.activity_coverage import (
@@ -1986,30 +2001,9 @@ class StrictAcceptanceTests(unittest.TestCase):
             self._write_json(
                 base / "smiles/smiles_results.json",
                 {
-                    **build_smiles_artifact(list(reversed(smiles))),
+                    **smiles,
                     "formal_acceptance_scope": FORMAL_SCOPE,
                     "binding_execution_mode": SOURCE_EXECUTION_MODE,
-                },
-            )
-            self._write_json(
-                base / "structures/metadata.json",
-                {
-                    "total_structures": 2,
-                    "source_inventory": inventory_packet(
-                        1,
-                        [
-                            {
-                                "page_no": 1,
-                                "status": "detected",
-                                "scope": "full_page",
-                                "candidates": 2,
-                            }
-                        ],
-                    ),
-                    "structures": [
-                        {"structure_id": "S1", "page_no": 1, "image_path": image_1},
-                        {"structure_id": "S2", "page_no": 1, "image_path": image_2},
-                    ],
                 },
             )
             self._write_json(base / "structure_pages/locator.json", {})
@@ -2025,7 +2019,7 @@ class StrictAcceptanceTests(unittest.TestCase):
             )
             self._write_json(
                 base / "pipeline_summary.json",
-                {"status": "complete", "patent_id": "TEST"},
+                {"status": "complete", "patent_id": "TEST", "input_pdf": str(original)},
             )
 
             result = subprocess.run(

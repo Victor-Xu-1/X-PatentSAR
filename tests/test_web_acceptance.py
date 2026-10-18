@@ -6,6 +6,7 @@ import copy
 import hashlib
 import io
 import unittest
+from pathlib import Path
 from types import SimpleNamespace
 
 from PIL import Image
@@ -14,12 +15,17 @@ from patent_sar_extractor import contracts
 from patent_sar_extractor.core.activity_coverage import coverage_packet, source_record
 from patent_sar_extractor.core.binding_catalog import compound_catalog
 from patent_sar_extractor.core.binding_source_references import reference_scope
+from patent_sar_extractor.core.ocsr.candidate_inventory import (
+    inventory_digest,
+    original_candidate_inventory,
+)
 from patent_sar_extractor.core.ocsr.smiles_qc import qc_smiles
 from patent_sar_extractor.core.ocsr.stereo_evidence import (
     observe_stereo_symbols,
     source_checked_qc,
 )
 from patent_sar_extractor.core.structure_inventory import inventory_packet
+from patent_sar_extractor.smiles_artifact import build_smiles_artifact
 from patent_sar_extractor.web.acceptance import ARTIFACTS, authority
 from tests.test_caption_reading_semantics import binding as caption_binding
 
@@ -59,7 +65,9 @@ def complete_payloads():
         ),
         "structure_id": "S0",
         "page_no": 1,
-        "image_path": "controlled.png",
+        "image_path": "/controlled-source/controlled.png",
+        "bbox_pdf": [20, 40, 120, 140],
+        "source_pdf_sha256": "a" * 64,
         "struct_x0": 20,
         "struct_y0": 40,
         "struct_x1": 120,
@@ -89,7 +97,7 @@ def complete_payloads():
         final_bindings=[binding],
         compound_catalog=compound_catalog([binding], []),
         source_sections=[],
-        source_reference_scope=reference_scope([]),
+        source_reference_scope=reference_scope([], "a" * 64),
     )
     payloads["smiles"].update(
         execution_mode="production_decimer",
@@ -100,6 +108,7 @@ def complete_payloads():
             {
                 "cpd_id": "Compound 1",
                 "structure_id": "S0",
+                "ocsr_source_structure_id": "S0",
                 "canonical_smiles": "CCO",
                 "rdkit_valid": True,
                 "OCSR_quality_flag": "ok",
@@ -117,6 +126,39 @@ def complete_payloads():
         screened,
         raw_smiles="CCO",
         image_hash=hashlib.sha256(image.getvalue()).hexdigest(),
+        ocsr_original_input=binding["image_path"],
+        page_no=1,
+        OCSR_engine="decimer",
+        model_fingerprint="b" * 64,
+    )
+    # Explicit scalar/protocol controls for this pure decision unit. Native
+    # filesystem replay is independently covered by test_candidate_projection;
+    # these declared values are not a PDF/recognizer/scientific acceptance.
+    inventory, entries = original_candidate_inventory(
+        payloads["structures"],
+        {
+            **contracts.artifact_identity(
+                contracts.STEP_MANIFEST_SCHEMA, contracts.STEP_MANIFEST_SCHEMA_VERSION
+            ),
+            "fingerprint": {
+                "step": "structures",
+                "pdf_sha256": "a" * 64,
+                "params": {
+                    "structure_pages": [0],
+                    "structure_worker_contract_version": contracts.STRUCTURE_WORKER_VERSION,
+                },
+            },
+        },
+        "a" * 64,
+        Path("/controlled-source"),
+        read_digest=lambda _path: hashlib.sha256(image.getvalue()).hexdigest(),
+    )
+    inventory["entries"] = [
+        {**entries[0], "observation": {"role": "formal", "index": 0}}
+    ]
+    inventory["identity"] = inventory_digest(inventory)
+    payloads["smiles"] = build_smiles_artifact(
+        payloads["smiles"]["records"], candidate_inventory=inventory
     )
     payloads["qa"].update(ok=True, acceptance={"ok": True, "hard_errors": []})
     return payloads
@@ -134,6 +176,22 @@ def partial_payloads(status="running"):
 
 
 class AcceptanceTests(unittest.TestCase):
+    def test_saved_qa_cannot_replace_or_omit_the_complete_original_inventory(self):
+        for mutation in ("scope", "metadata"):
+            payloads = complete_payloads()
+            if mutation == "scope":
+                payloads["smiles"].update(
+                    candidate_inventory=None,
+                    recognition_input_scope="proved_sources_only",
+                )
+            else:
+                payloads["structures"]["changed_input"] = True
+            with self.subTest(mutation=mutation):
+                result, historical = authority(payloads, pdf_verified=True, marker=None)
+                self.assertEqual(result.state, "failed")
+                self.assertFalse(historical)
+                self.assertIn("detected-image", str(result.errors))
+
     def test_successful_qa_cannot_hide_a_missing_original_page_inventory(self):
         payloads = complete_payloads()
         payloads["structures"].pop("source_inventory")

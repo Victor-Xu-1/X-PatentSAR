@@ -83,6 +83,13 @@ class StructureInventoryTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_structure_inventory(value, full_document=True)
 
+    def test_inventory_schema_version_requires_an_integer_not_equal_coercions(self):
+        for version in (True, 1.0, "1"):
+            value = self.payload()
+            value["source_inventory"]["schema"]["version"] = version
+            with self.subTest(version=version), self.assertRaises(ValueError):
+                validate_structure_inventory(value, full_document=True)
+
     def test_outside_boolean_or_duplicate_request_is_rejected(self):
         for pages in ([0, 1, 3], [False, 1, 2], [0, 1, 1]):
             with self.subTest(pages=pages), self.assertRaises(ValueError):

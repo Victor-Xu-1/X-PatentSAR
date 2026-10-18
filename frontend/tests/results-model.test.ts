@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { availableMetrics, recognitionText, redrawPlaceholder } from '../src/model/results';
 import { activityValueText } from '../src/model/presentation';
 import { compound } from './fixtures';
+import { getLocale, setLocale } from '../src/i18n';
 
 describe('result projection preserves measurements and independent state', () => {
   it('keeps catalog order and includes metrics absent from the server metric catalog', () => {
@@ -25,6 +26,25 @@ describe('result projection preserves measurements and independent state', () =>
         token_confidence: null,
       }),
     ).toBe('RDKit 可解析');
+  });
+  it('distinguishes an observed unassigned image from an unexecuted or accepted molecule', () => {
+    const previous = getLocale();
+    const observation = {
+      status: 'unavailable' as const,
+      quality_flag: 'unassigned_source_identity',
+      model_fingerprint: 'a'.repeat(64),
+      token_confidence: null,
+    };
+    try {
+      setLocale('zh-CN');
+      expect(recognitionText(observation)).toBe('已观察 · 编号待确认');
+      setLocale('en');
+      expect(recognitionText(observation)).toBe('Observed · unassigned');
+      expect(observation.status).toBe('unavailable');
+      expect(observation.model_fingerprint).toBe('a'.repeat(64));
+    } finally {
+      setLocale(previous);
+    }
   });
   it('distinguishes no-SMILES, invalid-SMILES and unknown redraw generation', () => {
     expect(redrawPlaceholder(compound)).toBe('未提供 SMILES，无法重绘');

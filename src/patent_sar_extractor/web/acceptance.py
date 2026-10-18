@@ -6,6 +6,9 @@ import re
 from typing import Any
 
 from patent_sar_extractor import contracts as core
+from patent_sar_extractor.core.ocsr.candidate_coverage import (
+    saved_candidate_coverage_errors,
+)
 from patent_sar_extractor.core.structure_inventory import structure_coverage_errors
 from patent_sar_extractor.smiles_artifact import smiles_artifact_is_current
 
@@ -269,6 +272,14 @@ def authority(
         return Acceptance(
             state="failed",
             errors=[public_error_text(error) for error in recognition_errors[:100]],
+        ), False
+    observation_errors = saved_candidate_coverage_errors(
+        payloads["structures"], payloads["smiles"]
+    )
+    if observation_errors:
+        return Acceptance(
+            state="failed",
+            errors=[public_error_text(error) for error in observation_errors[:100]],
         ), False
     qa = payloads["qa"]
     decision = qa.get("acceptance")

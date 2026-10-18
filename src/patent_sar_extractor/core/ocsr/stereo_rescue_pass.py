@@ -22,7 +22,8 @@ class RescueProofRefusal(ValueError):
 def eligible(record: dict) -> bool:
     evidence = record.get("stereochemistry")
     return (
-        record.get("OCSR_engine") == "decimer"
+        not record.get("candidate_source_id")
+        and record.get("OCSR_engine") == "decimer"
         and record.get("OCSR_status") == "review_required"
         and record.get("OCSR_quality_flag") == "stereochemistry_not_retained"
         and isinstance(evidence, dict)

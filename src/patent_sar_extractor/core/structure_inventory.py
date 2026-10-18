@@ -28,6 +28,8 @@ def _validate_packet(packet: object) -> None:
     if (
         not isinstance(packet, dict)
         or set(packet) != {"schema", "page_count", "pages"}
+        or not isinstance(packet["schema"], dict)
+        or type(packet["schema"].get("version")) is not int
         or packet["schema"]
         != schema_ref(STRUCTURE_INVENTORY_SCHEMA, STRUCTURE_INVENTORY_SCHEMA_VERSION)
         or type(packet["page_count"]) is not int

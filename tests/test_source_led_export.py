@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import subprocess
 import sys
@@ -11,22 +10,22 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
+from catalog_source_support import original_catalogue
 from openpyxl import load_workbook
 from PIL import Image
+from recognition_source_support import observation
 
 from patent_sar_extractor import contracts
 from patent_sar_extractor.core.activity_coverage import coverage_packet, source_record
-from patent_sar_extractor.core.binding_artifacts import write_binding_result
 from patent_sar_extractor.core.formal_structure import (
     FORMAL_SCOPE,
     SOURCE_EXECUTION_MODE,
 )
-from patent_sar_extractor.core.ocsr.smiles_qc import qc_smiles
-from patent_sar_extractor.core.ocsr.stereo_evidence import check_source_stereochemistry
+from patent_sar_extractor.core.ocsr.candidate_inputs import load_source_observation_plan
+from patent_sar_extractor.core.ocsr.recognition_inputs import recognition_inputs
 from patent_sar_extractor.core.qa_report import build_qa_report
-from patent_sar_extractor.core.structure_inventory import inventory_packet
 from patent_sar_extractor.smiles_artifact import build_smiles_artifact
-from tests.test_source_led_pipeline import proved_binding
+from patent_sar_extractor.workers.final_workbook import resolve_display_image_path
 
 
 def save(path, data):
@@ -36,28 +35,7 @@ def save(path, data):
 
 def control_record(binding, raw="CCO"):
     # An explicit synthetic graph oracle, never a pretend recognizer inference.
-    digest = hashlib.sha256(Path(binding["image_path"]).read_bytes()).hexdigest()
-    qc = qc_smiles(raw)
-    evidence = check_source_stereochemistry(
-        qc,
-        {
-            "version": contracts.STEREO_EVIDENCE_VERSION,
-            "image_sha256": digest,
-            "image_size": [20, 20],
-            "unknown_bond_boxes": [],
-        },
-    )
-    return {
-        "cpd_id": binding["cpd"],
-        "structure_id": binding["structure_id"],
-        "image_hash": digest,
-        "raw_smiles": raw,
-        "canonical_smiles": qc["canonical_smiles"],
-        "rdkit_valid": qc["rdkit_valid"],
-        "OCSR_quality_flag": qc["quality_flag"],
-        "OCSR_status": "success" if qc["quality_flag"] == "ok" else "review_required",
-        "stereochemistry": evidence,
-    }
+    return observation(binding, raw)
 
 
 def run_fixture(root, *, activities=None, invalid_second=False, classified_pages=None):
@@ -86,33 +64,37 @@ def run_fixture(root, *, activities=None, invalid_second=False, classified_pages
     coverage = coverage_packet(
         seeds, regions, [SimpleNamespace(page_no=1) for _ in activities or []]
     )
-    for number in (1, 2):
-        Image.new("RGB", (20, 20), "white").save(root / f"control-{number}.png")
-    bindings = [
-        proved_binding("Compound 42", "S42", str(root / "control-1.png")),
-        proved_binding("Compound 42A", "S42A", str(root / "control-2.png")),
-    ]
-    payload = write_binding_result(
-        root / "structure_bindings",
-        patent_id="CONTROL",
-        bindings=bindings,
-        detected_style="synthetic_control",
-        include_intermediates=False,
-        total_structures=2,
-        total_compound_blocks=0,
-        table_pages=[],
-        table_covered_count=0,
-        no_binding=[],
-        unbound_pages=[],
+    save(root / "structures/metadata.json", {})
+    original, _, payload = original_catalogue(
+        root,
+        root,
+        labels=("42", "42A"),
+        identities=("S42", "S42A"),
+        selected=False,
+        source=root / "original.pdf",
+        molecule="CCO",
     )
     bindings = payload["final_bindings"]
-    records = [control_record(binding) for binding in bindings]
+    plan = load_source_observation_plan(
+        recognition_inputs(payload),
+        structures_json=root / "structures/metadata.json",
+        pdf_path=original,
+        binding_dir=root / "structure_bindings",
+        binding_pdf_sha256=payload["source_reference_scope"]["original_pdf_sha256"],
+    )
+    records = [control_record(binding) for binding in plan.proven.formal]
     if invalid_second:
         records[1]["OCSR_quality_flag"] = "stereo_source_conflict"
     save(
         root / "smiles/smiles_results.json",
         {
-            **build_smiles_artifact(records),
+            **build_smiles_artifact(
+                records,
+                source_records=[control_record(r) for r in plan.proven.supplemental],
+                reprint_records=[control_record(r) for r in plan.proven.reprints],
+                candidate_records=[control_record(r) for r in plan.candidates],
+                candidate_inventory=plan.inventory,
+            ),
             "formal_acceptance_scope": FORMAL_SCOPE,
             "binding_execution_mode": SOURCE_EXECUTION_MODE,
         },
@@ -140,26 +122,6 @@ def run_fixture(root, *, activities=None, invalid_second=False, classified_pages
             else ([] if not activities else [0]),
         },
     )
-    save(
-        root / "structures/metadata.json",
-        {
-            "total_structures": 2,
-            "structures": [
-                {"structure_id": b["structure_id"], "page_no": 1} for b in bindings
-            ],
-            "source_inventory": inventory_packet(
-                1,
-                [
-                    {
-                        "page_no": 1,
-                        "status": "detected",
-                        "scope": "full_page",
-                        "candidates": 2,
-                    }
-                ],
-            ),
-        },
-    )
     save(root / "structure_pages/locator.json", {})
     save(
         root / "pipeline_summary.json",
@@ -170,6 +132,7 @@ def run_fixture(root, *, activities=None, invalid_second=False, classified_pages
             "status": "qa_pending",
             "main_chain": list(contracts.CORE_STAGE_ORDER),
             "patent_id": "CONTROL",
+            "input_pdf": str(original),
             "steps": {},
         },
     )
@@ -214,7 +177,7 @@ class SourceLedExportTests(unittest.TestCase):
                 {"cpd": "Compound 42", "activity_values": {"IC50 (nM)": "17"}},
                 {"cpd": "Compound 42A", "activity_values": {"IC50 (nM)": "29"}},
             ]
-            run_fixture(root, activities=activities, invalid_second=True)
+            bindings = run_fixture(root, activities=activities, invalid_second=True)
             result = export(root, continue_scientific=True)
             self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
             workbook = load_workbook(root / "final_results/CONTROL_final.xlsx")
@@ -228,14 +191,20 @@ class SourceLedExportTests(unittest.TestCase):
             self.assertEqual([row[activity_column] for row in rows[1:]], ["17", "29"])
             self.assertEqual(rows[1][status_column], "当前规则通过")
             self.assertEqual(rows[2][status_column], "待复核")
-            self.assertTrue(all(value is None for value in rows[2][5:10]))
-            self.assertEqual(len(sheet._images), 2)
             self.assertTrue(
-                all(
-                    image.anchor.ext.cx == image.anchor.ext.cy
-                    for image in sheet._images
-                )
+                all(value is None for value in rows[2][5:10]),
+                dict(zip(rows[0], rows[2], strict=True)),
             )
+            self.assertEqual(len(sheet._images), 2)
+            for image, binding in zip(sheet._images, bindings, strict=True):
+                with Image.open(
+                    resolve_display_image_path(binding, str(root))
+                ) as source:
+                    self.assertAlmostEqual(
+                        image.anchor.ext.cx / image.anchor.ext.cy,
+                        source.width / source.height,
+                        places=5,
+                    )
             self.assertEqual(sheet.freeze_panes, "F2")
             self.assertEqual(sheet.auto_filter.ref, sheet.dimensions)
             receipt = json.loads(

@@ -9,36 +9,21 @@ import os
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
 
 from patent_sar_extractor.contracts import (
     OCSR_OBSERVATION_VERSION,
     OCSR_PREPARATION_VERSION,
 )
 
+from .candidate_inventory import validate_candidate_input
 from .engines.base_engine import BaseOCSREngine
 from .engines.decimer_engine import DECIMEREngine
 from .image_preprocess import preprocess_structure_image
 from .label_mask import mask_visible_label as _mask_visible_label_for_ocsr
+from .recognition_source_paths import resolve_ocsr_image_path
 from .smiles_cache import SmilesCache, compute_image_sha256
 from .smiles_qc import COMMON_FINAL_PRODUCT_ELEMENTS, qc_smiles
 from .stereo_evidence import observe_stereo_symbols, source_checked_qc
-
-
-def _resolve_ocsr_image_path(item: dict) -> str:
-    """Prefer a clean OCSR input image over the display/visual crop."""
-    for key in (
-        "ocsr_image_path",
-        "source_image_path",
-        "image_path",
-        "structure_image",
-    ):
-        path = str(item.get(key) or "").strip()
-        if path and os.path.isfile(path):
-            if re.fullmatch(r"page_\d+(?:_synthesis_crop)?\.png", Path(path).name):
-                continue  # Known page-render artifacts are not molecular crops.
-            return path
-    return ""  # Missing source files cannot be guessed from a basename/index.
 
 
 def _qc_ocr_smiles(raw_smiles: str | None) -> tuple[str | None, dict, bool]:
@@ -198,10 +183,11 @@ class SmilesConverter:
                 self.engines[name] = ENGINE_MAP[name](**config)
 
     def _prepare_input(self, item: dict, preprocess_dir: str = "") -> dict:
+        candidate = validate_candidate_input(item)
         cpd_id = item.get("cpd", "")
         image_path = item.get("image_path", "")
-        ocsr_image_path = _resolve_ocsr_image_path(item)
-        original_input = ocsr_image_path
+        ocsr_image_path = resolve_ocsr_image_path(item)
+        original_input = ocsr_image_path or (item["image_path"] if candidate else "")
         ocsr_label_mask_info: dict = {}
         if ocsr_image_path and os.path.isfile(ocsr_image_path):
             ocsr_image_path, ocsr_label_mask_info = _mask_visible_label_for_ocsr(
@@ -244,6 +230,8 @@ class SmilesConverter:
             "image_hash": None,
         }
         result.update(ocsr_label_mask_info)
+        if candidate:
+            result["candidate_source_id"] = item["candidate_source_id"]
         if item.get("_ocsr_source_frame_unavailable"):
             result["OCSR_source_frame_status"] = "unavailable"
 
@@ -277,6 +265,9 @@ class SmilesConverter:
             result["OCSR_status"] = "image_missing"
             result["OCSR_failure_reason"] = f"Cannot compute image hash: {e}"
             return {"item": item, "result": result, "ready": False}
+
+        if candidate and image_hash != item["candidate_source"]["image_sha256"]:
+            raise ValueError("Detected-image source changed before model execution")
 
         try:
             # Always inspect the source crop, never a model-normalized retry.
@@ -591,11 +582,15 @@ class SmilesConverter:
         """Bounded parallel image preparation feeding one owned model queue."""
         from .conversion_progress import ConversionProgress
 
-        filtered = [
-            item
-            for item in items
-            if not only_bound or item.get("bind_status", "bound") == "bound"
-        ]
+        filtered = []
+        for item in items:
+            candidate = validate_candidate_input(item)
+            if (
+                candidate
+                or not only_bound
+                or item.get("bind_status", "bound") == "bound"
+            ):
+                filtered.append(item)
         if limit > 0:
             filtered = filtered[:limit]
         jobs = max(1, min(int(jobs or 1), 8))
@@ -630,7 +625,7 @@ class SmilesConverter:
                                 "OCSR infrastructure is unavailable; clean observation checkpoints retained for resume"
                             )
                         print(
-                            f"  [{len(results)}/{len(filtered)}] {result.get('cpd_id')}: "
+                            f"  [{len(results)}/{len(filtered)}] {result.get('cpd_id') or result.get('structure_id')}: "
                             f"{result.get('OCSR_status')} engine={result.get('OCSR_engine')} "
                             f"(total {time.monotonic() - started:.0f}s)",
                             flush=True,
