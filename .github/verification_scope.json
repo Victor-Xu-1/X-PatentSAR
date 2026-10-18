@@ -1,53 +1,38 @@
 {
   "schema_version": 1,
-  "base_sha": "1a5dc67fc4765e23c95e58946fd1a9d7b97b905e",
+  "base_sha": "8bdf15dc1fe8070f4901c331031fddd57d56cbe8",
   "changed_paths": [
     ".github/verification_scope.json",
-    "docs/ARCHITECTURE.md",
-    "docs/OPERATIONS.md",
     "docs/PROJECT_MANIFEST.md",
+    "frontend/e2e/record-count.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
+    "frontend/src/features/results/Pagination.tsx",
+    "frontend/src/features/results/ResultsPane.tsx",
+    "frontend/src/i18n/catalogs/table.ts",
+    "frontend/tests/record-coverage.test.tsx",
+    "frontend/tests/results-empty-state.test.tsx",
+    "frontend/tests/results.test.tsx",
     "src/patent_sar_extractor/contracts.py",
-    "src/patent_sar_extractor/core/activity_header_identity.py",
-    "src/patent_sar_extractor/core/activity_header_metrics.py",
-    "tests/test_activity_header_grid.py",
-    "tests/test_header_inline_source.py",
-    "tests/test_standalone.py"
+    "tests/test_source_browser_fixture.py",
+    "tools/browser_fixture_mode.py"
   ],
   "python_modules": [
-    "tests.test_header_inline_source",
-    "tests.test_header_physical_proof",
-    "tests.test_header_semantic_conflicts",
-    "tests.test_header_column_boundaries",
-    "tests.test_header_physical_lines",
-    "tests.test_activity_header_grid",
-    "tests.test_activity_metadata",
-    "tests.test_activity_header_observation",
-    "tests.test_activity_header_continuation",
-    "tests.test_header_evidence_catalog",
-    "tests.test_activity_metadata_native",
-    "tests.test_activity_source_roles",
-    "tests.test_source_led_export",
-    "tests.test_unruled_structure_binding",
-    "tests.test_structure_header_lines",
-    "tests.test_wrapped_structure_headers",
-    "tests.test_header_column_native",
-    "tests.test_header_reading_views",
-    "tests.test_activity_text_roles",
-    "tests.test_activity_text_ownership",
-    "tests.test_activity_transposed",
-    "tests.test_web_activity_sources",
-    "tests.test_cell_observation_epochs",
-    "tests.test_source_led_stages",
+    "tests.test_source_browser_fixture",
     "tests.test_verification_scope",
-    "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
     "tests.test_release_policy.ReleaseNumberTests",
+    "tests.test_standalone.StandalonePackagingTests.test_product_identity_is_consistent",
     "tests.test_standalone.StandalonePackagingTests.test_version_command_uses_product_version",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
-  "frontend_tests": [],
+  "frontend_tests": [
+    "frontend/tests/record-coverage.test.tsx",
+    "frontend/tests/results.test.tsx",
+    "frontend/tests/results-empty-state.test.tsx",
+    "frontend/tests/i18n-core.test.tsx",
+    "frontend/tests/i18n-workbench-table.test.tsx"
+  ],
   "browser_tests": [
-    "frontend/e2e/product-version.spec.ts"
+    "frontend/e2e/record-count.spec.ts"
   ]
 }

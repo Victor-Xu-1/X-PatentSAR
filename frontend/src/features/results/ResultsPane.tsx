@@ -181,7 +181,7 @@ export function ResultsPane({
       <Pagination
         page={result?.page ?? filters.page}
         pageSize={result?.page_size ?? filters.page_size}
-        total={result?.total ?? 0}
+        total={result?.total ?? null}
         disabled={!project || resource.loading}
         onChange={(page, page_size) => onFilters({ page, page_size })}
       />

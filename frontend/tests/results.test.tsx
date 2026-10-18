@@ -91,7 +91,7 @@ describe('real-value presentation and selection', () => {
     expect(screen.getByLabelText('上一页结果')).toBeDisabled();
     fireEvent.click(screen.getByLabelText('下一页结果'));
     expect(onChange).toHaveBeenLastCalledWith(2, 10);
-    fireEvent.change(screen.getByLabelText('每页化合物数量'), { target: { value: '25' } });
+    fireEvent.change(screen.getByLabelText('每页记录数量'), { target: { value: '25' } });
     expect(onChange).toHaveBeenLastCalledWith(1, 25);
   });
   it('empty metrics contain no invented counts', () => {
