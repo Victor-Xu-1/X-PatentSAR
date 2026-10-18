@@ -17,6 +17,13 @@ acceptance, filter, source identity, retry or polling rule is manufactured.
 This client-only state distinction changes no scientific epoch, API, SQL,
 queue, model, dependency or original/manual artifact.
 
+Generated candidate references use the existing `generatedCompoundReference`
+authority. Their primary cell reads Unassigned with a separate Candidate marker;
+the internal tracking token is not presented as an original patent identifier.
+Full accessible labels, stable keys, callbacks, copy/export and correction values
+remain unchanged. Literal source/manual identifiers, including similar-looking
+S-number or status-like text, remain verbatim and never use prefix heuristics.
+
 ## Bounded original text-row refinement
 
 `cell_text_row_readings` owns the same physical-cell reader's blank-border

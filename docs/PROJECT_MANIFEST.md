@@ -7,6 +7,9 @@
   errors, source identity and scientific acceptance are not rewritten. The empty
   output uses the current scrollport's inline size, not the complete column width;
   CSS containment is empty-only, with no new observer or change to actual rows.
+  `generatedCompoundReference` remains the sole system-owned tracking-reference
+  classifier. Its cells say Unassigned/Candidate; original/manual labels, stable
+  keys, accessible descriptions, copy/export and correction data stay unchanged.
   No extra
   poller, request replay, data/model/API/SQL/epoch or dependency authority is added.
 

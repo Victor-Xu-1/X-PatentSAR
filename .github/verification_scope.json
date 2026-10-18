@@ -9,11 +9,13 @@
     "frontend/e2e/source-completion.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
+    "frontend/src/features/results/CompoundCell.tsx",
     "frontend/src/features/results/ResultsPane.tsx",
     "frontend/src/features/results/ResultsTable.tsx",
     "frontend/src/features/workspace/Workspace.tsx",
     "frontend/src/i18n/catalogs/table.ts",
     "frontend/src/styles/table-interactions.css",
+    "frontend/tests/identifier-labels.test.tsx",
     "frontend/tests/results-empty-state.test.tsx",
     "src/patent_sar_extractor/contracts.py"
   ],
@@ -26,7 +28,9 @@
     "frontend/tests/results-empty-state.test.tsx",
     "frontend/tests/results-workspace.test.tsx",
     "frontend/tests/results.test.tsx",
-    "frontend/tests/live-results.test.tsx"
+    "frontend/tests/live-results.test.tsx",
+    "frontend/tests/identifier-labels.test.tsx",
+    "frontend/tests/original-id-labels.test.tsx"
   ],
   "browser_tests": [
     "frontend/e2e/source-completion.spec.ts"

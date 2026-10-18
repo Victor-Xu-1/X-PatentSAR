@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { job as lifecycleJob } from '../tests/fixtures';
+import { compound as controlledCompound, job as lifecycleJob } from '../tests/fixtures';
 
 // Explicit isolated saved-observation adapters; not extraction/chemical evidence.
 // The browser reads the real installed projection and never submits a model job.
@@ -10,6 +10,7 @@ for (const width of [390, 1672]) {
     const errors: string[] = [],
       writes: string[] = [];
     let published = false;
+    let unassigned = false;
     const observedJob = {
       ...lifecycleJob,
       id: 'controlled-empty-result-job',
@@ -30,17 +31,34 @@ for (const width of [390, 1672]) {
       const current = {
         ...observedJob,
         stages: observedJob.stages.map((stage) =>
-          published && stage.name === 'classify' ? { ...stage, count: 1 } : stage,
+          published && stage.name === 'classify' ? { ...stage, count: unassigned ? 2 : 1 } : stage,
         ),
       };
       if (url.pathname === '/api/v1/jobs' && url.searchParams.get('project_id') === project) {
         await route.fulfill({ json: { items: [current] } });
       } else if (url.pathname === '/api/v1/jobs/' + observedJob.id) {
         await route.fulfill({ json: current });
-      } else if (url.pathname === `/api/v1/projects/${project}/results` && !published) {
+      } else if (
+        url.pathname === `/api/v1/projects/${project}/results` &&
+        (!published || unassigned)
+      ) {
         const response = await route.fetch();
         const value = await response.json();
-        await route.fulfill({ response, json: { ...value, items: [], total: 0 } });
+        const candidate = {
+          ...controlledCompound,
+          id: 'source-structure:' + 'a'.repeat(32),
+          display_id: '编号待确认 S0007',
+          structure_id: 'S0007',
+          structure_image_url: null,
+          activities: [],
+          record_kind: 'structure_only',
+          source: { ...controlledCompound.source, page: 1, source_label: null, bbox: null },
+          flags: ['unassociated_structure', 'structure_number_unconfirmed'],
+        };
+        await route.fulfill({
+          response,
+          json: { ...value, items: unassigned ? [candidate] : [], total: unassigned ? 1 : 0 },
+        });
       } else await route.continue();
     });
     await page.setViewportSize({ width, height: width === 390 ? 844 : 1060 });
@@ -81,6 +99,21 @@ for (const width of [390, 1672]) {
     ).toHaveText('1');
     await expect(page.getByText('结果就绪后将自动显示', { exact: true })).toHaveCount(0);
     await page.screenshot({ path: test.info().outputPath(`published-result-${width}.png`) });
+    // The lifecycle may publish an unassigned candidate before binding completes.
+    // This controlled GET DTO supplies no molecule or accepted source identifier.
+    unassigned = true;
+    const candidateRow = page.locator('.results-table tbody tr');
+    await expect(candidateRow).toHaveCount(1);
+    await expect(candidateRow.locator('.compound-detail-label')).toHaveText('待编号');
+    await expect(candidateRow.getByText('候选 S0007', { exact: true })).toBeVisible();
+    await page.getByRole('combobox', { name: '界面语言', exact: true }).selectOption('en');
+    await expect(candidateRow.locator('.compound-detail-label')).toHaveText('Unassigned');
+    await expect(candidateRow.getByText('Candidate S0007', { exact: true })).toBeVisible();
+    await expect(candidateRow).toHaveAttribute(
+      'data-compound',
+      'source-structure:' + 'a'.repeat(32),
+    );
+    await page.screenshot({ path: test.info().outputPath(`unassigned-result-${width}.png`) });
     expect(errors).toEqual([]);
     expect(writes).toEqual([]);
   });
