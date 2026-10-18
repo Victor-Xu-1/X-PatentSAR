@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 import fitz
 
+from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.core.binding_source_headings import observed_heading_blocks
 from patent_sar_extractor.core.binding_source_references import (
     reference_issues,
@@ -102,7 +103,7 @@ class HeadingLabelRoleTests(unittest.TestCase):
         return (
             source,
             result,
-            json.loads(Path(result["output_files"]["json"]).read_text()),
+            load_json(Path(result["output_files"]["json"]), {}),
         )
 
     def test_full_binder_preserves_true_heading_but_reuses_exact_label_cell_roles(self):

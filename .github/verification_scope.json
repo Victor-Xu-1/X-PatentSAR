@@ -18,8 +18,11 @@
     "src/patent_sar_extractor/core/source_section_roles.py",
     "src/patent_sar_extractor/core/structure_binder.py",
     "tests/test_heading_document_span.py",
+    "tests/test_heading_characterization_roles.py",
     "tests/test_heading_group_scope.py",
-    "tests/test_heading_source_ownership.py"
+    "tests/test_heading_label_roles.py",
+    "tests/test_heading_source_ownership.py",
+    "tests/test_standalone.py"
   ],
   "python_modules": [
     "tests.test_verification_scope",
