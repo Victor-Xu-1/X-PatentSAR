@@ -1415,7 +1415,21 @@ Unaligned unread ink inside the numeric envelope still vetoes qualification.
 Refinement must keep every observed word in the final axis, not just its reads.
 The global table OCR orientation policy is unchanged.
 
-Derived heading proofs3/4 use Binding22/binder31. Old ownership remains historical;
+Graph-only numeric comparison uses exact bounded Decimal coefficients: `.00001`,
+`0.0000100` and `1e-5` represent the same tick value, not different source claims.
+This does not normalize chemical IDs, erase percent units, change activities or
+make unequal values agree. Raw labels stay unchanged and tiny finite values do
+not become zero through float underflow. Partial coarse rows only nominate the
+complete strip; they never satisfy final quantified extent on their own.
+
+Heading proof5 uses the existing nominal stroke witness to bound the final
+horizontal stroke band with the same12pt margin. Complete outer-word horizontal
+bounds and every original strip word remain mandatory. This avoids rendering
+large empty gaps without raising the1M-axis/8M-word limits, adding inference or
+choosing a successful crop. Missing/changed anchors, masks, bounds or words refuse.
+The optional original graphic/text locator is explicit even when absent.
+
+Derived heading proof5 uses Binding29/binder38. Old ownership remains historical;
 original PDF/raw observations/manual audit and independent scientific contracts
 are not rewritten. Lossless thresholded-mask compression retains the existing
 1MiB source-digest and8M cell limits, with bounded decompression and strict stream

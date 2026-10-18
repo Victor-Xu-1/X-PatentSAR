@@ -181,8 +181,14 @@
   stripped prefix. `cell_word_orientation` owns bounded physical word views;
   `plot_axis_words` observes/replays them with the existing OCR and
   `plot_axis_refinement` coordinates the same original strip for both consumers.
+  `plot_axis_identity` owns exact bounded Decimal tick identity/order only, not
+  chemical IDs, activity values or units. Nomination's incomplete right edge
+  cannot qualify a legend; formal proof still requires complete observed axes.
+  Proof5 binds final stroke bounds to the existing nominal source witness with
+  the same12pt margin, full outer-word extent and complete word strip. The
+ 1M-axis/8M-word render limits and all conflict gates stay; no anchor is duplicated.
   `plot_reference_pixels` is the sole lossless thresholded-mask codec, with bounded
-  zlib output/EOF/padding validation. Heading proofs3/4 and Binding22/binder31
+  zlib output/EOF/padding validation. Heading proof5 and Binding29/binder38
   change derived ownership only. RawOCR2/visible21/OCSR/preparation/stereo,
   Activity/SAR/manual/API/SQL/models/dependencies remain independent. Existing
   source-digest/cell/word limits are not raised. No plotted measurement, new

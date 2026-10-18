@@ -2,6 +2,8 @@
 
 import re
 
+from patent_sar_extractor.contracts import PLOT_REFERENCE_VERSION
+
 from .cell_text_proof import valid_text_reading
 from .heading_detector_identity import declaration_identity as _identity
 from .heading_detector_identity import detector_conflicts
@@ -72,7 +74,7 @@ def heading_observation_status(proof):
     if (
         isinstance(proof, dict)
         and type(proof.get("version")) is int
-        and proof["version"] in {3, 4}
+        and proof["version"] in {3, 4, PLOT_REFERENCE_VERSION}
     ):
         from .plot_reference import plot_reference_status
 

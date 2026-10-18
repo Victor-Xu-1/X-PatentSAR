@@ -16,7 +16,7 @@ from patent_sar_extractor.web.compound_catalog import read_compound_catalog
 from patent_sar_extractor.web.errors import WebError
 
 
-def run_original(root, *, raster, image_directory=None):
+def run_original(root, *, raster, image_directory=None, extra_pdf=None):
     source = root / "original.pdf"
     image = (image_directory or root) / "structure.png"
     image.parent.mkdir(parents=True, exist_ok=True)
@@ -54,6 +54,12 @@ def run_original(root, *, raster, image_directory=None):
                 scanned.save(source)
         else:
             document.save(source)
+    if extra_pdf is not None:
+        with fitz.open(source) as expanded, fitz.open(extra_pdf) as extra:
+            expanded.insert_pdf(extra)
+            combined = root / "expanded-original.pdf"
+            expanded.save(combined)
+        source = combined
     metadata = root / "structures.json"
     metadata.write_text(
         json.dumps(

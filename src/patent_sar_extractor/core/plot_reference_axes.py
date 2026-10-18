@@ -5,7 +5,7 @@ import math
 import numpy as np
 
 from .cell_frame_proof import inside_box
-from .plot_reference_geometry import axis_bounds
+from .plot_reference_geometry import AXIS_MARGIN, axis_bounds
 from .plot_reference_pixels import observe_pixels, retained_pixels
 
 MAX_AXIS_PIXELS = 1_000_000
@@ -33,22 +33,49 @@ def _stroke(mask, axis, bounds, dpi):
     return [v * 72 / dpi + origin[i % 2] for i, v in enumerate(box)]
 
 
-def observe_axes(page, axes, size):
+def _windows(axes, size, anchor):
     windows = axis_bounds(axes)
+    if anchor is not None:
+        if not isinstance(anchor, dict) or set(anchor) != {"axes", "pixels"}:
+            return None
+        # The source is the already-owned original nomination, not another
+        # successful window search. Its base packet cannot contain an anchor.
+        original = axis_strokes(anchor["pixels"], anchor["axes"], size)
+        if original is None:
+            return None
+        stroke = original["x"]
+        window = windows["x"]
+        top, bottom = (
+            max(window[1], stroke[1] - AXIS_MARGIN),
+            min(window[3], stroke[3] + AXIS_MARGIN),
+        )
+        if not top <= stroke[1] < stroke[3] <= bottom:
+            return None
+        windows["x"] = [window[0], top, window[2], bottom]
     if any(not inside_box(b, [0, 0, *size]) for b in windows.values()):
+        return None
+    return windows
+
+
+def observe_axes(page, axes, size, *, anchor=None):
+    windows = _windows(axes, size, anchor)
+    if windows is None:
         return None
     result = {
         axis: observe_pixels(page, box, MAX_AXIS_PIXELS)
         for axis, box in windows.items()
     }
-    return result if valid_axes(result, axes, size) else None
+    return result if valid_axes(result, axes, size, anchor=anchor) else None
 
 
-def axis_strokes(packet, axes, size):
+def axis_strokes(packet, axes, size, *, anchor=None):
     if not isinstance(packet, dict) or set(packet) != {"x", "y"}:
         return None
+    windows = _windows(axes, size, anchor)
+    if windows is None:
+        return None
     strokes = {}
-    for axis, box in axis_bounds(axes).items():
+    for axis, box in windows.items():
         observed = packet[axis]
         if (
             not inside_box(box, [0, 0, *size])
@@ -82,8 +109,8 @@ def axis_strokes(packet, axes, size):
     )
 
 
-def valid_axes(packet, axes, size):
-    return axis_strokes(packet, axes, size) is not None
+def valid_axes(packet, axes, size, *, anchor=None):
+    return axis_strokes(packet, axes, size, anchor=anchor) is not None
 
 
 def axis_word_window(packet, axes, caption, size):

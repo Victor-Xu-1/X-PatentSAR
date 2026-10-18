@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 import fitz
 
+from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.core.binding_source_headings import (
     observed_heading_blocks,
     select_heading_bindings,
@@ -223,9 +224,7 @@ class OriginalHeadingInventoryTests(unittest.TestCase):
         ) as temporary:
             root = Path(temporary)
             run_fixture(root)
-            payload = json.loads(
-                (root / "structure_bindings/bindings.json").read_text()
-            )
+            payload = load_json(root / "structure_bindings/bindings.json", {})
             payload.update(self.observed("Compounds 42 and 42A and 72C"))
             payload["source_issues"] = []
             self.assertTrue(coverage_errors(payload))

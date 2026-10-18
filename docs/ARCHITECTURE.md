@@ -352,25 +352,39 @@ still qualify every literal. Missing/weak/conflicting evidence stays unproved.
 When low-resolution rotated axis text is incomplete, `plot_axis_refinement`
 coordinates one bounded original strip below the observed x axis and above its
 lower caption. Detected words do not define the first/last retained pixels.
+The partial nomination's last word is not a final legend boundary: only complete
+quantified axes can establish that relation after the original strip is read.
 `cell_word_orientation` inventories every retained ink component and derives one
 unambiguous physical orientation; `plot_axis_words` observes every complete word
 with the existing OCR engine at both resolutions. Exact transforms, view hashes,
 pixel coverage, original-point backprojection, literal agreement and qualified
 original-source conflicts are replayed. No OCR characters are joined or repaired.
 Global upright table OCR and angle-classifier policy remain unchanged.
+`plot_axis_identity` compares finite numeric tick spellings with exact Decimal
+coefficients, independent of ambient rounding. Equivalent leading/trailing zeros
+or exponent notation do not invent a conflict; percent presence, signs, unequal
+values, unknown strings and compound-label identities remain distinct. Original
+text stays verbatim, and no measurement, chemical ID or activity-band rule uses
+this graph-only projection. Ordering cannot underflow into fabricated zero.
 The shared cell renderer enforces each caller's equal or smaller pixel budget
 before allocating a pixmap; its default8M ceiling is unchanged.
 
 `plot_reference` is the observer; `plot_reference_proof` owns the sole saved replay.
-Heading proof3 records complete axis words; proof4 additionally binds an original
-graphic/text locator. Both use the existing source-window/cell SDK and binding
-writer, not another model, queue, store or acceptance path. Thresholded masks use
+Current heading proof5 retains an optional original graphic/text locator and
+the complete existing axis-refinement packet. The final horizontal stroke band
+is constrained by that already-witnessed nominal stroke and the same12pt margin,
+not by an OCR-success search; full outer-word horizontal bounds and the complete
+word strip are retained. Producer and saved replay derive the same window from
+the same owned anchor. No duplicated anchor or raised1M-axis/8M-word render cap
+is needed. Prior proofs3/4 remain historical, never retagged as current ownership.
+All use the existing source-window/cell SDK and binding writer, not another
+model, queue, store or acceptance path. Thresholded masks use
 one lossless zlib-packbits encoding with bounded decompression, exact EOF/length
 and zero padding; original PDFs/raw images remain unchanged. Existing8M cell,
 32-word and1MiB source-digest limits remain explicit. Unsupported geometry,
 multiple plausible panels or excess/ambiguous source stays unresolved.
 
-Binding22/binder31 invalidate derived ownership only. RawOCR2, visible-label21,
+Binding29/binder38 invalidate derived ownership only. RawOCR2, visible-label21,
 OCSR/preparation/stereo, activity/SAR, models, manual audit, API and SQL retain
 their own contracts. Earlier section numbers describe previous module deliveries,
 not a second current ownership authority. Two-resolution OCR agreement is not
