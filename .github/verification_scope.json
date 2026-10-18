@@ -34,6 +34,7 @@
     "tests/test_source_led_pipeline.py",
     "tests/test_source_led_stages.py",
     "tests/test_spatial_binding_authority.py",
+    "tests/test_web_checkpoints.py",
     "tools/browser_fixture_mode.py",
     "tools/prepare_browser_fixture.py"
   ],

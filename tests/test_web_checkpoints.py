@@ -62,6 +62,7 @@ class LiveCheckpointTests(WebFixture, unittest.TestCase):
                 result["stages"][5]["progress"],
                 {
                     "phase": None,
+                    "source_phase": None,
                     **{
                         key: value
                         for key, value in self.progress_payload().items()

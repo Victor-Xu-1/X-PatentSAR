@@ -31,6 +31,7 @@ for (const width of [390, 1672]) {
     // All are controlled historical review rows, never model/extraction proof.
     expect(original.items.every((row) => row.confidence.level !== 'high')).toBe(true);
     const first = original.items[0];
+    if (!first) throw new Error('The controlled shared-artifact fixture has no result rows');
     const trigger = page.locator(`tr[data-compound="${first.id}"] .frozen-compound button`);
     await expect(trigger).toBeVisible();
     await trigger.click();
