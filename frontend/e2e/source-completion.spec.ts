@@ -1,8 +1,123 @@
 import { expect, test } from '@playwright/test';
+import { compound as controlledCompound, job as lifecycleJob } from '../tests/fixtures';
 
 // Explicit isolated saved-observation adapters; not extraction/chemical evidence.
 // The browser reads the real installed projection and never submits a model job.
 for (const width of [390, 1672]) {
+  test(`pending source results remain truthful and localized at ${width}px`, async ({ page }) => {
+    const project = process.env.PATENTSAR_E2E_COMPLETION_PENDING_PROJECT;
+    expect(project).toBeTruthy();
+    const errors: string[] = [],
+      writes: string[] = [];
+    let published = false;
+    let unassigned = false;
+    const observedJob = {
+      ...lifecycleJob,
+      id: 'controlled-empty-result-job',
+      project_id: project!,
+    };
+    page.on('pageerror', (error) => errors.push(error.message));
+    // Lifecycle/zero-row observations are controlled GET projections only.
+    // Published rows still come from the real installed saved-source reader.
+    // No worker, scientific task or production state is created or modified.
+    await page.route('**/api/v1/**', async (route) => {
+      const request = route.request();
+      if (request.method() !== 'GET') {
+        writes.push(request.url());
+        await route.abort();
+        return;
+      }
+      const url = new URL(request.url());
+      const current = {
+        ...observedJob,
+        stages: observedJob.stages.map((stage) =>
+          published && stage.name === 'classify' ? { ...stage, count: unassigned ? 2 : 1 } : stage,
+        ),
+      };
+      if (url.pathname === '/api/v1/jobs' && url.searchParams.get('project_id') === project) {
+        await route.fulfill({ json: { items: [current] } });
+      } else if (url.pathname === '/api/v1/jobs/' + observedJob.id) {
+        await route.fulfill({ json: current });
+      } else if (
+        url.pathname === `/api/v1/projects/${project}/results` &&
+        (!published || unassigned)
+      ) {
+        const response = await route.fetch();
+        const value = await response.json();
+        const candidate = {
+          ...controlledCompound,
+          id: 'source-structure:' + 'a'.repeat(32),
+          display_id: '编号待确认 S0007',
+          structure_id: 'S0007',
+          structure_image_url: null,
+          activities: [],
+          record_kind: 'structure_only',
+          source: { ...controlledCompound.source, page: 1, source_label: null, bbox: null },
+          flags: ['unassociated_structure', 'structure_number_unconfirmed'],
+        };
+        await route.fulfill({
+          response,
+          json: { ...value, items: unassigned ? [candidate] : [], total: unassigned ? 1 : 0 },
+        });
+      } else await route.continue();
+    });
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 1060 });
+    await page.goto('/#/projects/' + project);
+    const pending = page.getByText('Results will appear automatically when ready', { exact: true });
+    await expect(pending).toBeVisible();
+    await expect(pending).toBeInViewport({ ratio: 1 });
+    const scrollport = page.locator('.table-scroll');
+    await scrollport.evaluate((element) => (element.scrollLeft = element.scrollWidth));
+    await expect(pending).toBeInViewport({ ratio: 1 });
+    await scrollport.evaluate((element) => (element.scrollLeft = 0));
+    await expect(page.getByRole('button', { name: 'Export results', exact: true })).toBeDisabled();
+    await expect(
+      page.getByLabel('Select all compounds on this page', { exact: true }),
+    ).toBeDisabled();
+    const search = page.getByRole('textbox', { name: 'Search results', exact: true });
+    await search.fill('no-such-original-id');
+    await expect(page.getByText('No matching extraction results', { exact: true })).toBeInViewport({
+      ratio: 1,
+    });
+    await search.fill('');
+    await expect(pending).toBeVisible();
+    await page
+      .getByRole('combobox', { name: 'Interface language', exact: true })
+      .selectOption('zh-CN');
+    await expect(page.getByText('结果就绪后将自动显示', { exact: true })).toBeInViewport({
+      ratio: 1,
+    });
+    await page.reload();
+    await expect(page.getByText('结果就绪后将自动显示', { exact: true })).toBeVisible();
+    await page.screenshot({ path: test.info().outputPath(`pending-result-${width}.png`) });
+    published = true;
+    // The existing job observer sees one new stage fact and refreshes results.
+    // This does not submit a task or add a second result poller.
+    await expect(page.locator('.results-table tbody tr')).toHaveCount(2);
+    await expect(
+      page.locator('.results-table tbody tr').first().locator('.frozen-compound button'),
+    ).toHaveText('1');
+    await expect(page.getByText('结果就绪后将自动显示', { exact: true })).toHaveCount(0);
+    await page.screenshot({ path: test.info().outputPath(`published-result-${width}.png`) });
+    // The lifecycle may publish an unassigned candidate before binding completes.
+    // This controlled GET DTO supplies no molecule or accepted source identifier.
+    unassigned = true;
+    const candidateRow = page.locator('.results-table tbody tr');
+    await expect(candidateRow).toHaveCount(1);
+    await expect(candidateRow.locator('.compound-detail-label')).toHaveText('待编号');
+    await expect(candidateRow.getByText('候选 S0007', { exact: true })).toBeVisible();
+    await page.getByRole('combobox', { name: '界面语言', exact: true }).selectOption('en');
+    await expect(candidateRow.locator('.compound-detail-label')).toHaveText('Unassigned');
+    await expect(candidateRow.getByText('Candidate S0007', { exact: true })).toBeVisible();
+    await expect(candidateRow).toHaveAttribute(
+      'data-compound',
+      'source-structure:' + 'a'.repeat(32),
+    );
+    await page.screenshot({ path: test.info().outputPath(`unassigned-result-${width}.png`) });
+    expect(errors).toEqual([]);
+    expect(writes).toEqual([]);
+  });
+
   test(`all-original source projection at ${width}px`, async ({ page }) => {
     const errors: string[] = [],
       writes: string[] = [];

@@ -63,13 +63,50 @@ describe('patent-owned presentation label and stable internal identity', () => {
     const button = screen.getByRole('button', {
       name: 'View Identifier unconfirmed S0007 structure details',
     });
-    expect(button).toHaveTextContent(/^S0007$/);
-    expect(screen.getByText('Identifier unconfirmed', { selector: 'small' })).toBeVisible();
+    expect(button).toHaveTextContent(/^Unassigned$/);
+    expect(screen.getByText('Candidate S0007', { selector: 'small' })).toBeVisible();
     fireEvent.click(button);
     expect(details).toHaveBeenCalledWith(pending);
     act(() => setLocale('zh-CN'));
     expect(screen.getByRole('button', { name: '查看 编号待确认 S0007 结构详情' })).toBeVisible();
   });
+
+  it.each([
+    ['en', 'Unassigned', 'Candidate S0007'],
+    ['zh-CN', '待编号', '候选 S0007'],
+  ] as const)(
+    'does not present a generated reference as an original identifier in %s',
+    (locale, title, marker) => {
+      setLocale(locale);
+      const before = structuredClone(pending);
+      const details = vi.fn();
+      render(
+        <table>
+          <tbody>
+            <tr>
+              <CompoundCell row={pending} onDetails={details} />
+            </tr>
+          </tbody>
+        </table>,
+      );
+      const button = screen.getByRole('button');
+      expect(button).toHaveTextContent(new RegExp('^' + title + '$'));
+      expect(screen.getByText(marker, { selector: 'small' })).toBeVisible();
+      expect(screen.queryByText('S0007', { exact: true })).not.toBeInTheDocument();
+      fireEvent.click(button);
+      expect(details).toHaveBeenCalledExactlyOnceWith(pending);
+      expect(
+        tableCopyText(
+          [pending],
+          resultColumns().filter((column) => column.id === 'compound'),
+          [],
+        )
+          .split('\n')
+          .at(-1),
+      ).toBe(pending.display_id);
+      expect(pending).toEqual(before);
+    },
+  );
 
   it('uses effective identifier changes rather than unrelated or stale correction edits', () => {
     setLocale('en');
@@ -129,7 +166,7 @@ describe('patent-owned presentation label and stable internal identity', () => {
       expect(compoundLabel(row)).toBe(row.identifier_label ?? row.display_id);
   });
 
-  it.each(['1', 'Example 008a', 'I-03B', '化合物 8B'])(
+  it.each(['1', 'Example 008a', 'I-03B', '化合物 8B', 'S0007', '待编号'])(
     'renders and copies %s without adding Compound',
     (label) => {
       const row = {

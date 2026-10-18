@@ -11,10 +11,12 @@ import { Pagination } from './Pagination';
 import { ResultToolbar } from './ResultToolbar';
 import { tableActivityColumns } from '../../model/activityColumns';
 import { resultColumns } from '../../model/resultColumns';
+import { activeJob } from '../../model/presentation';
 
 export function ResultsPane({
   project,
   job = null,
+  jobVerified = false,
   resource,
   filters,
   selected,
@@ -33,6 +35,7 @@ export function ResultsPane({
 }: {
   project: Project | null;
   job?: Job | null;
+  jobVerified?: boolean;
   resource: Resource<Results>;
   filters: Filters;
   selected: Set<string>;
@@ -68,6 +71,23 @@ export function ResultsPane({
   const activities = tableActivityColumns(result?.activity_columns, metrics);
   const columns = resultColumns(activities);
   const visibleColumns = columns.filter((column) => !hidden.includes(column.id));
+  const filtered = Boolean(
+    filters.q.trim() ||
+    filters.confidence ||
+    filters.review ||
+    filters.target ||
+    filters.column_filters?.length,
+  );
+  const awaitingResults = Boolean(
+    jobVerified && project && job && job.project_id === project.id && activeJob(job),
+  );
+  const emptyMessage = result?.total
+    ? t('当前页暂无结果')
+    : filtered
+      ? t('暂无匹配的提取结果')
+      : awaitingResults
+        ? t('结果就绪后将自动显示')
+        : t('暂无提取结果');
   return (
     <div className="result-data-view">
       <ResultToolbar
@@ -108,7 +128,7 @@ export function ResultsPane({
             hidden={Boolean(
               resource.error || (resource.loading && !result) || !visibleColumns.length,
             )}
-            emptyMessage={result?.total ? t('当前页暂无结果') : t('暂无匹配的提取结果')}
+            emptyMessage={emptyMessage}
             rows={result?.items ?? []}
             metrics={metrics}
             hiddenColumns={hidden}

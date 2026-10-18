@@ -1,5 +1,18 @@
 # Project governance manifest
 
+- Unpublished-result presentation stays in `ResultsPane`, receiving the existing
+  current-project verified job observation from `Workspace` and sharing
+  `activeJob`. `ResultsTable` renders one native status output. Query-empty,
+  page-empty, active unpublished and neutral states remain distinct; real rows,
+  errors, source identity and scientific acceptance are not rewritten. The empty
+  output uses the current scrollport's inline size, not the complete column width;
+  CSS containment is empty-only, with no new observer or change to actual rows.
+  `generatedCompoundReference` remains the sole system-owned tracking-reference
+  classifier. Its cells say Unassigned/Candidate; original/manual labels, stable
+  keys, accessible descriptions, copy/export and correction data stay unchanged.
+  No extra
+  poller, request replay, data/model/API/SQL/epoch or dependency authority is added.
+
 - `cell_text_row_readings` owns one shared bounded physical-row refinement and
   its saved replay. Qualified originals are unchanged; only weak rows get one
   same-ink compact-border reading through the existing engine. Physical frame2

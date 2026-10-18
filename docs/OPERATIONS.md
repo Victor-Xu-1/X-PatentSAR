@@ -1,5 +1,25 @@
 # Operations and troubleshooting
 
+## Empty results during extraction
+
+A verified queued/running task for the current project may not have published
+result rows yet. With no restrictive filters, the table says results appear
+automatically when ready; the existing job-stage observer refreshes those rows.
+Do not treat the empty table as a failed match, zero chemical structures or a
+stopped worker. Unknown/unverified task state keeps neutral no-result wording;
+actual read errors remain visible. Filtered zero matches and an empty page of
+a nonempty query retain their own messages. Language switches do not change
+original source labels or numeric values. No task is started by this display.
+Empty-state text remains within the table's
+visible area, including narrow screens and horizontal scrolling; it does not
+require scrolling across all metric columns to find a centered message.
+
+Before identifier binding finishes, candidate crops can appear in the table.
+They are labelled Unassigned with a Candidate tracking marker, not a claimed
+patent identifier or final product. Their stable internal key remains available
+for source review; original/user labels and stored correction/export values are
+not renamed by this presentation. Candidate counts are not accepted compounds.
+
 ## Weak short text rows inside original headers
 
 Small unit or context rows can lose recognizer resolution when a fixed physical

@@ -145,6 +145,7 @@ export function Workspace({
             resultProps={{
               project,
               job,
+              jobVerified,
               resource: results.resource,
               filters: { ...results.filters, q: query },
               selected: results.selected,

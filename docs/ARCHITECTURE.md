@@ -1,5 +1,29 @@
 # X-PatentSAR architecture
 
+## Truthful unpublished-result presentation
+
+`Workspace` passes its existing verified job observation to `ResultsPane`.
+The pane reuses the shared `activeJob` predicate and exact project ownership;
+cached, unknown or foreign task facts do not claim active result preparation.
+An empty restricted query, an empty page within a nonempty result set and an
+unpublished extraction have distinct localized messages. Known active empty
+results announce that rows appear when ready, using the existing stage-fact
+refresh only. The native status output is sized to the visible scrollport and
+stays readable during horizontal scrolling, independent of the full column width.
+The inline-size container applies only while that empty status exists, so actual
+row/column geometry keeps its existing authority without another resize observer.
+Existing rows remain visible as delivered. No row, count, stage,
+acceptance, filter, source identity, retry or polling rule is manufactured.
+This client-only state distinction changes no scientific epoch, API, SQL,
+queue, model, dependency or original/manual artifact.
+
+Generated candidate references use the existing `generatedCompoundReference`
+authority. Their primary cell reads Unassigned with a separate Candidate marker;
+the internal tracking token is not presented as an original patent identifier.
+Full accessible labels, stable keys, callbacks, copy/export and correction values
+remain unchanged. Literal source/manual identifiers, including similar-looking
+S-number or status-like text, remain verbatim and never use prefix heuristics.
+
 ## Bounded original text-row refinement
 
 `cell_text_row_readings` owns the same physical-cell reader's blank-border
