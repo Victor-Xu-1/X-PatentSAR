@@ -3,13 +3,15 @@
 import re
 
 from .cell_text_proof import valid_text_reading
+from .heading_detector_identity import declaration_identity as _identity
+from .heading_detector_identity import detector_conflicts
 from .heading_source_geometry import MAX_HEADING_HEIGHT, valid_heading_geometry
-from .printed_identifiers import identifier_key, identifier_width
+from .printed_identifiers import identifier_width
+from .source_cell_pixels import cell_readings_conserve_ink, closed_cell_masks
 from .source_geometry import overlaps
 from .source_observations import source_observation_status
 from .source_section_roles import (
     heading_members,
-    nonfinal_original_label,
     section_heading,
 )
 
@@ -18,12 +20,51 @@ def _text(value):
     return " ".join(identifier_width(value).split()).casefold()
 
 
-def _identity(declaration):
-    return (
-        declaration["label_kind"],
-        declaration["role"],
-        heading_members(declaration),
+def _matching_original_window(proof, prior):
+    return bool(
+        isinstance(prior, dict)
+        and prior.get("version") == 1
+        and all(
+            prior.get(key) == proof.get(key)
+            for key in (
+                "original_pdf_sha256",
+                "page_no",
+                "page_size",
+                "nomination",
+                "raster_bounds",
+            )
+        )
+        and heading_observation_status(prior)[0] == "unresolved"
+        and prior.get("status") == "unresolved"
     )
+
+
+def _known_original_agrees(prior, declaration, text):
+    original = prior["native_source"]
+    known = (
+        [original["text"]]
+        if source_observation_status(original, prior["bbox"], original["text"])
+        == "qualified"
+        else []
+    )
+    known.extend(
+        reading["raw_text"]
+        for reading, dpi in zip(prior["observations"], (400, 600))
+        if valid_text_reading(
+            reading, prior["bbox"], dpi, maximum_row_height=MAX_HEADING_HEIGHT
+        )
+    )
+    for literal in known:
+        earlier = section_heading(literal)
+        if earlier is None:
+            if _text(literal) != _text(text):
+                return False
+        elif (
+            _identity(earlier) != _identity(declaration)
+            or "".join(literal.split()).casefold() != "".join(text.split()).casefold()
+        ):
+            return False
+    return True
 
 
 def heading_observation_status(proof):
@@ -38,21 +79,28 @@ def heading_observation_status(proof):
         return plot_reference_status(proof)
     if not isinstance(proof, dict) or (
         set(proof)
-        - {
-            "version",
-            "original_pdf_sha256",
-            "page_no",
-            "page_size",
-            "bbox",
-            "nomination",
-            "native_source",
-            "raster_bounds",
-            "observations",
-            "rendered_frames",
-            "status",
-        }
+        - (
+            {
+                "version",
+                "original_pdf_sha256",
+                "page_no",
+                "page_size",
+                "bbox",
+                "nomination",
+                "native_source",
+                "raster_bounds",
+                "observations",
+                "rendered_frames",
+                "status",
+            }
+            | (
+                {"original_heading", "cell_source"}
+                if proof.get("version") == 2
+                else set()
+            )
+        )
         or type(proof.get("version")) is not int
-        or proof["version"] != 1
+        or proof["version"] not in {1, 2}
         or not isinstance(proof.get("original_pdf_sha256"), str)
         or not re.fullmatch(r"[a-f0-9]{64}", proof["original_pdf_sha256"])
         or type(proof.get("page_no")) is not int
@@ -60,6 +108,16 @@ def heading_observation_status(proof):
     ):
         return "invalid", None
     if not valid_heading_geometry(proof):
+        return "invalid", None
+    cell_masks = None
+    if proof["version"] == 2:
+        cell_masks = closed_cell_masks(
+            proof["cell_source"]["pixels"], proof["bbox"], proof["page_size"]
+        )
+        if cell_masks is None:
+            return "invalid", None
+    prior = proof.get("original_heading")
+    if proof["version"] == 2 and not _matching_original_window(proof, prior):
         return "invalid", None
     bounds, hint = proof["bbox"], proof["nomination"]
     native, readings, raster = (
@@ -74,6 +132,10 @@ def heading_observation_status(proof):
         return "invalid", None
     texts = [native["text"]]
     if readings:
+        if proof["version"] == 2 and not cell_readings_conserve_ink(
+            cell_masks, readings
+        ):
+            return "unresolved", None
         for reading, dpi in zip(readings, (400, 600)):
             if not valid_text_reading(
                 reading, bounds, dpi, maximum_row_height=MAX_HEADING_HEIGHT
@@ -98,21 +160,14 @@ def heading_observation_status(proof):
         return "unresolved", None
     if hint["source"] == "native" and _text(hint["text"]) != _text(texts[0]):
         return "unresolved", None
-    for reading in readings:
-        for part in reading["detection_parts"]:
-            if part["confidence"] < 0.85:
-                continue
-            observed = section_heading(part["text"])
-            literal = identifier_key(part["text"], terminal_period=True)
-            if (
-                observed
-                and _identity(observed) != _identity(declaration)
-                or literal
-                and literal not in heading_members(declaration)
-                or not observed
-                and nonfinal_original_label(part["text"])
-            ):
-                return "unresolved", None
+    if prior is not None and not _known_original_agrees(prior, declaration, texts[0]):
+        return "unresolved", None
+    if (
+        detector_conflicts(readings, declaration)
+        or prior is not None
+        and detector_conflicts(prior["observations"], declaration, whole_cell=texts[0])
+    ):
+        return "unresolved", None
     return "confirmed", declaration
 
 

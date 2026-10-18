@@ -20,6 +20,7 @@ from .page_ocr_cache import _paddlex_payload_from_image, get_ocr_engine
 from .source_geometry import SourceTokens, overlaps, source_layout
 
 logger = logging.getLogger(__name__)
+RULE_GAP_PT = 1.5
 
 
 def cluster_positions(values: list[float], tolerance: float = 2.0) -> list[float]:
@@ -78,7 +79,7 @@ def detect_ruled_table_regions(
     # Scanned fine-dotted rules are still physical boundaries. Close only
     # sub-1.5pt axial gaps before detecting long rules; never bridge table gaps
     # or infer missing separators from numeric values or expected row counts.
-    gap = max(2, round(1.5 / scale))
+    gap = max(2, round(RULE_GAP_PT / scale))
     h_rule = cv2.morphologyEx(
         bw, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_RECT, (gap, 1))
     )

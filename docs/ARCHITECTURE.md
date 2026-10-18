@@ -1,5 +1,58 @@
 # X-PatentSAR architecture
 
+## Physical heading source before text recognition
+
+`heading_cell_source` selects a heading window from the existing original grid
+inventory, not from identifier content or the nearest cell centre. The whole
+locator must belong to one unique adjacent cell; crossing or ambiguous grids
+cannot choose an owner. Production reuses the binder's call-local grid cache.
+The existing detector's bounded 1.5pt axial-gap policy is shared, not replaced.
+
+`source_cell_pixels` verifies all four edges at the existing 400/600dpi using
+the lossless `plot_reference_pixels` codec. Only actual axial rule pixels and
+one-pixel corner joins with independent original ink in both rules belong to
+ruling context. Unexplained inset ink prevents refinement. The full original
+cell interior and its complete ink envelope must survive the existing renderer
+and text-cell SDK. This does not erase blank/weak OCR rows, paint missing edges,
+strip negative text, guess characters, or raise the 8M-pixel/128pt-heading bounds.
+The same replay decodes each original mask once, without a second source store.
+
+Native-qualified headings retain their original version1 path and do not start
+OCR. For a raster heading with a proved closed cell, physical selection happens
+before recognition: one complete cell is read at each existing resolution, not
+an arbitrary padded word window followed by a second OCR pass. This avoids
+manufacturing competing digit claims from nearby ruling strokes. Without a
+proved cell the original window path remains. Version2 retains that original
+native/locator window, complete grid axes and original pixel witness. Existing
+prior text observations, if present, remain intact: qualified full text, native
+conflicts, independent ID claims and literal elution annotations cannot vanish.
+The shared `heading_detector_identity` reuses the existing exact literal boundary
+guard only for an already-proved whole-cell context, never a foreign-ID waiver.
+
+`heading_source_proof` replays both source versions; plotted-source versions3/4
+remain independent. `heading_evidence` requires the audit locator and primary
+heading/structure proof to name the identical original occurrence, label, text
+and bounds. The one binder/writer/catalog reader supplies recognition, formal
+coverage, export and Web consumers.
+
+`heading_group_scope` resolves literal plural declarations against independently
+proved local caption/cell owners, never by diagram order or ID hits elsewhere.
+It retains the existing complete native/raster page-token window in the same
+source ledger, reusing the call-local token cache without another OCR. The
+same pure scope replay serves capture and saved completeness: an anchor must
+follow this exact declaration on its original page, with no intervening
+procedure, assay, independent heading/table or unknown/weak source words.
+Original caption literals are checked before their windows are recognized as
+references; native contradictions are not outvoted. Missing captions cannot
+acquire a leftover title identifier. Simultaneous independent columns without
+a proved boundary stay unresolved. Original declarations still remain in the
+ledger, including every unmatched member. Binding26/binder35 refresh derived source
+ownership; raw OCR/crops, Activity21/extractor30, chemical engines, manual audit,
+numerical SAR, API-v1, SQL and dependencies are unchanged. Historical products
+are not retagged current. Native/raster synthetic binder/serialized/consumer
+checks do not prove complete private-patent extraction or chemical accuracy.
+Small-header word/percent fidelity and real frontend extraction/SAR remain open.
+
 ## Literal catalogue typography and binding work observations
 
 `caption_role_semantics` remains the one original catalogue role authority for
