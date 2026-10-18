@@ -165,8 +165,11 @@ a failure pictogram remains visible when the text must be ellipsized.
 Technical failures put the observed failure before the stage in the short badge;
 the original complete status and processed counts stay in its hover/full detail.
 Unavailable stage history and unverified observations use neutral unknown presentation, not
-a borrowed failure color, stopped prefix or review counter. Recorded state,
-scientific counters and the full disclosed stage list remain unchanged.
+a borrowed failure color, stopped prefix or review counter.
+All compact group icons follow that same verification gate. Retained full stage
+records are accompanied by an unknown-state notice while their current observation
+is unverified. Recorded state, scientific counters, raw history and the full
+disclosed stage list remain unchanged.
 Workflow group visibility follows the actual600px status-container budget rather
 than viewport width. Small absolute disclosures align to their available edge;
 mobile viewport-fixed detail explicitly disables size containment on its parent.

@@ -16,6 +16,8 @@ for (const width of [390, 800, 1672]) {
     let completed = 2;
     let total = 7;
     let terminal = false;
+    let unavailable = false;
+    let unavailableReads = 0;
     let resultReads = 0;
     const writes: string[] = [],
       errors: string[] = [];
@@ -31,6 +33,19 @@ for (const width of [390, 800, 1672]) {
       const list = url.pathname === '/api/v1/jobs';
       const detail = url.pathname === '/api/v1/jobs/controlled-binding-work';
       if (list || detail) {
+        if (unavailable) {
+          unavailableReads++;
+          return route.fulfill({
+            status: 503,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              error: {
+                code: 'service_unavailable',
+                message: 'Controlled unavailable task observation.',
+              },
+            }),
+          });
+        }
         const current = {
           ...job,
           id: 'controlled-binding-work',
@@ -133,6 +148,31 @@ for (const width of [390, 800, 1672]) {
       animations: 'disabled',
     });
     await page.keyboard.press('Escape');
+    // Fault the existing live polling path, not a terminal job whose reads
+    // correctly stop. Retain its recorded stages without presenting them as
+    // current, and recover through the same safe GET retry authority.
+    unavailable = true;
+    await expect.poll(() => unavailableReads).toBeGreaterThan(0);
+    await expect(current).toHaveClass(/is-unknown/);
+    await expect(current).toHaveText('Stage status unknown');
+    await expect(current.locator('.stage-state-icon')).toHaveCount(0);
+    await expect(page.locator('.workflow-group.unknown')).toHaveCount(4);
+    await expect(page.getByRole('button', { name: 'Cancel task', exact: true })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Run extraction', exact: true })).toHaveCount(0);
+    await page.locator('.stage-current-line').click();
+    await expect(disclosure.locator('.stage-history-notice')).toHaveText('Stage status unknown');
+    await expect(source).toContainText('Checking identifier ownership · 7 / 7 items');
+    await page.screenshot({
+      path: info.outputPath('05-source-unknown-en.png'),
+      animations: 'disabled',
+    });
+    await page.keyboard.press('Escape');
+    unavailable = false;
+    await expect(current).toHaveClass(/is-running/);
+    await expect(current).toContainText('Checking identifier ownership · 7 / 7 items');
+    await expect(page.getByRole('button', { name: 'Cancel task', exact: true })).toBeEnabled();
+    await expect(page.locator('.workflow-group.running')).toHaveCount(1);
+    await expect(page.locator('.stage-history-notice')).toHaveCount(0);
     terminal = true;
     completed = total = 73567;
     await expect(current).toHaveClass(/is-failed/);

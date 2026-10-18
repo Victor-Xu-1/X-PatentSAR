@@ -8,6 +8,7 @@
     "frontend/package-lock.json",
     "frontend/package.json",
     "frontend/src/features/jobs/StageStrip.tsx",
+    "frontend/src/features/jobs/WorkflowGroups.tsx",
     "frontend/src/styles/responsive.css",
     "frontend/src/styles/workflow.css",
     "frontend/tests/compact-progress.test.tsx",

@@ -60,6 +60,8 @@ export function StageStrip({
           ? t('历史阶段不可用：本次任务的阶段记录无法可靠读取。')
           : t('历史阶段可用性未知')}
       </output>
+    ) : !verified && job ? (
+      <output className="stage-history-notice">{t('阶段状态未知')}</output>
     ) : null;
   const list =
     !verified && !job ? (
@@ -138,7 +140,7 @@ export function StageStrip({
   return (
     <details className="stage-overview stage-disclosure" ref={disclosure}>
       <summary className="stage-current-line" aria-label={t('提取阶段详情')}>
-        <WorkflowGroups job={job} />
+        <WorkflowGroups job={job} verified={verified} />
         <span
           className={`stage-current ${!known ? 'is-unknown' : completedCoreRejection(job) ? 'is-review' : `is-${job?.status ?? 'idle'}`}`}
           aria-live="polite"

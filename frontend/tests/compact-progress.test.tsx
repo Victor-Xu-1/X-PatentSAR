@@ -91,6 +91,23 @@ describe('one slim observed job state with disclosed detail', () => {
     expect(current).toHaveClass('is-unknown');
     expect(current.querySelector('.stage-state-icon')).toBeNull();
   });
+  it('keeps compact groups neutral and labels retained detail while the observation is unverified', () => {
+    const cached = { ...withAdmet, status: 'complete' as const };
+    const original = JSON.stringify(cached);
+    const { container } = render(<StageStrip job={cached} compact verified={false} />);
+    const groups = [...container.querySelectorAll('.workflow-group')];
+    expect(groups.length).toBeGreaterThan(0);
+    for (const group of groups) {
+      expect(group).toHaveClass('unknown');
+      expect(group).not.toHaveClass('ok', 'running', 'failed');
+      expect(group).toHaveAttribute('title', '阶段状态未知');
+    }
+    fireEvent.click(screen.getByLabelText('提取阶段详情'));
+    expect(
+      container.querySelector('.stage-detail-surface .stage-history-notice'),
+    ).toHaveTextContent('阶段状态未知');
+    expect(JSON.stringify(cached)).toBe(original);
+  });
   it.each(stageNames)(
     'keeps an interrupted upstream %s visible instead of an unstarted terminal ADMET failure',
     (name) => {
