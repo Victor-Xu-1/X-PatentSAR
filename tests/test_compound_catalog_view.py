@@ -28,7 +28,9 @@ class CompoundCatalogViewTests(PredictionFixture, unittest.TestCase):
         payload["final_bindings_count"] = 1
         binding_path.write_text(json.dumps(payload))
         # The saved source and project PDF must be the same actual controlled file.
-        self.project = self.service.import_run(self.run, pdf_path=self.pdf)
+        self.project = self.service.import_run(
+            self.run, pdf_path=self.pdf, title=self.project.title
+        )
         return binding_path, payload
 
     def test_numbered_source_without_activity_is_a_primary_row_reprint_is_not(self):

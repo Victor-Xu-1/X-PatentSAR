@@ -6,6 +6,7 @@
     "docs/ARCHITECTURE.md",
     "docs/OPERATIONS.md",
     "docs/PROJECT_MANIFEST.md",
+    "frontend/e2e/source-completion.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
     "src/patent_sar_extractor/contracts.py",
