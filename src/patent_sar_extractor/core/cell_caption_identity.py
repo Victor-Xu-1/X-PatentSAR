@@ -32,8 +32,9 @@ def refined_caption_conflicts(label, parts, detection_parts):
         for part in parts or ()
     )
     raw = complete_caption_text(label, parts) if parts else ""
-    undetected = bool(parts) and all(
-        isinstance(part, Mapping) and part.get("method") == "undetected_caption_line"
+    physical = bool(parts) and all(
+        isinstance(part, Mapping)
+        and part.get("method") in {"undetected_caption_line", "physical_caption_line"}
         for part in parts
     )
     original_detection = isinstance(detection_parts, (list, tuple)) and list(
@@ -41,13 +42,13 @@ def refined_caption_conflicts(label, parts, detection_parts):
     ) == list(detection_parts)
     if not refined and (
         not raw
-        or undetected
+        or physical
         or original_detection
         or not any(
             isinstance(part, Mapping) and part.get("bbox") is not None for part in parts
         )
     ):
-        return False  # Non-caption cells / separately replayed undetected row proof.
+        return False  # Non-caption cells / independently replayed physical row proof.
     if not raw:
         return True
     if (

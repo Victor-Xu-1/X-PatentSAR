@@ -1,4 +1,4 @@
-"""Missing detector observations cannot erase bounded original caption ink."""
+"""Complete original caption rows precede detection; conflicts still veto."""
 
 import copy
 import tempfile
@@ -14,6 +14,7 @@ from patent_sar_extractor.core.cell_identity_proof import (
     confirmed_identity_readings as _confirmed_observations,
 )
 from patent_sar_extractor.core.cell_ocr_observation import observe_cell
+from patent_sar_extractor.core.cell_text_proof import physical_text_valid
 from patent_sar_extractor.core.page_ocr_cache import get_ocr_engine
 from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
 from patent_sar_extractor.core.table_cells import _normalize, read_cell
@@ -33,7 +34,10 @@ def caption_pixels(*, multiline=False, solid=False):
 
 
 def missed_engine(text="Compound 42", score=0.99):
-    return Mock(side_effect=[([], 0), ([[text, score]], 0)])
+    def observe(image, **options):
+        return ([], 0) if options["use_det"] else ([[text, score]], 0)
+
+    return Mock(side_effect=observe)
 
 
 class UndetectedCaptionTests(unittest.TestCase):
@@ -48,20 +52,82 @@ class UndetectedCaptionTests(unittest.TestCase):
         )
         return reading, engine
 
-    def test_original_single_line_is_observed_even_when_detector_finds_nothing(self):
-        for text, expected in (("Compound 42", "42"), ("Example 008B", "008B")):
+    def test_original_single_line_is_selected_before_fragment_detection(self):
+        for text, expected in (
+            ("Compound 42", "42"),
+            ("Example 008B", "008B"),
+            ("Compound : 42", "42"),
+            ("Cpd - 008B", "008B"),
+            ("化合物：42", "42"),
+        ):
             with self.subTest(text=text):
                 reading, engine = self.observe(text=text)
                 self.assertEqual(reading.value, expected)
                 self.assertEqual(reading.raw_text, text)
                 self.assertEqual(reading.detection_parts, ())
-                self.assertEqual(engine.call_count, 2)
+                self.assertEqual(engine.call_count, 1)
                 self.assertFalse(engine.call_args.kwargs["use_det"])
                 evidence = reading.evidence(400, (10, 10, 100, 30))
                 self.assertEqual(
                     evidence["physical_caption_line"]["status"], "observed"
                 )
-                self.assertEqual(reading.parts[0]["method"], "undetected_caption_line")
+                self.assertEqual(evidence["physical_caption_line"]["version"], 3)
+                self.assertEqual(reading.parts[0]["method"], "physical_caption_line")
+
+    def test_saved_legacy_source_stays_readable_without_retagging(self):
+        reading, _ = self.observe()
+        evidence = reading.evidence(400, (10, 10, 100, 30))
+        page = {"method": "page_ocr_cell", "text": "Compound 42"}
+        legacy = copy.deepcopy(evidence)
+        legacy["physical_caption_line"]["version"] = 1
+        legacy["parts"][0]["method"] = "undetected_caption_line"
+        self.assertTrue(_confirmed_observations("42", [page, legacy]))
+        for source, version, method in (
+            (legacy, 3, "undetected_caption_line"),
+            (evidence, 1, "physical_caption_line"),
+            (evidence, 2, "physical_caption_line"),
+            (evidence, True, "physical_caption_line"),
+            (evidence, 3.0, "physical_caption_line"),
+            (evidence, "3", "physical_caption_line"),
+        ):
+            changed = copy.deepcopy(source)
+            changed["physical_caption_line"]["version"] = version
+            changed["parts"][0]["method"] = method
+            with self.subTest(version=version, method=method):
+                self.assertFalse(_confirmed_observations("42", [page, changed]))
+        self.assertEqual(legacy["physical_caption_line"]["version"], 1)
+        self.assertEqual(evidence["physical_caption_line"]["version"], 3)
+
+    def test_caption_protocol_does_not_bypass_header_row_reading_proof(self):
+        reading, _ = self.observe()
+        evidence = reading.evidence(400, (10, 10, 100, 30))
+        evidence["physical_header_lines"] = evidence.pop("physical_caption_line")
+        evidence["parts"][0]["method"] = "physical_header_line"
+        self.assertFalse(
+            physical_text_valid(
+                evidence,
+                packet_name="physical_header_lines",
+                part_method="physical_header_line",
+                minimum_rows=2,
+                maximum_rows=8,
+            )
+        )
+
+    def test_malformed_direct_read_stays_unresolved_without_detector_retry(self):
+        for result in (
+            [],
+            [["Compound 42", 0.99], ["Compound 43", 0.99]],
+            [["Compound 42"]],
+            [[42, 0.99]],
+            [["x" * 4097, 0.99]],
+        ):
+            engine = Mock(return_value=(result, 0))
+            observed = observe_cell(caption_pixels(), "label", 400, engine, _normalize)
+            with self.subTest(result_type=type(result), length=len(result)):
+                self.assertEqual(observed.value, "")
+                self.assertEqual(observed.physical_caption_line["status"], "unresolved")
+                self.assertEqual(engine.call_count, 1)
+                self.assertFalse(engine.call_args.kwargs["use_det"])
 
     def test_saved_source_proof_rechecks_complete_line_and_all_original_conflicts(self):
         reading, _ = self.observe()
@@ -152,8 +218,10 @@ class UndetectedCaptionTests(unittest.TestCase):
             ("Compound 42; Intermediate 43", 0.99),
         ):
             with self.subTest(text=text, score=score):
-                reading, _ = self.observe(text=text, score=score)
+                reading, engine = self.observe(text=text, score=score)
                 self.assertEqual(reading.value, "")
+                self.assertEqual(reading.raw_text, text)
+                self.assertEqual(engine.call_count, 1)
 
     def test_blank_and_noncaption_sources_do_not_start_the_recovery_read(self):
         engine = Mock(return_value=([], 0))
@@ -209,7 +277,8 @@ class UndetectedCaptionNativeTests(unittest.TestCase):
                     reading = read_cell(page, (70, 95, 265, 125), [], "label", False)
                 self.assertEqual(reading.value, expected, reading.observations)
                 self.assertFalse(reading.needs_review)
-                self.assertEqual(len(calls), 4)
+                self.assertEqual(len(calls), 2)
+                self.assertTrue(all(not call["use_det"] for call in calls))
                 self.assertTrue(_confirmed_observations(expected, reading.observations))
 
     def test_raster_catalog_keeps_exact_caption_proof_through_the_real_source_gate(

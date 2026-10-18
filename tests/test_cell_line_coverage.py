@@ -67,17 +67,22 @@ class CellLineCoverageTests(unittest.TestCase):
         self.assertEqual(engine.call_count, 1)
 
     def test_valid_detected_identity_conflict_stays_unresolved(self):
-        detected = [line("Compound 138")]
+        detected = [
+            line("Compound 138"),
+            line("first eluting isomer", top=72, bottom=96),
+        ]
         engine = Mock(
             side_effect=[
                 ([(p["bbox"], p["text"], p["confidence"]) for p in detected], 0),
                 ([["Compound 137", 0.99]], 0),
             ]
         )
-        observed = observe_cell(pixels(), "label", 400, engine, _normalize)
+        observed = observe_cell(pixels(True), "label", 400, engine, _normalize)
         self.assertEqual(observed.value, "")
         self.assertEqual(observed.detection_parts[0]["text"], "Compound 138")
-        self.assertEqual(observed.raw_text, "Compound 137")
+        self.assertEqual(observed.raw_text, "Compound 137 first eluting isomer")
+        self.assertEqual(engine.call_count, 2)
+        self.assertTrue(engine.call_args_list[0].kwargs["use_det"])
 
     def test_invalid_or_multiple_line_reread_is_not_admitted(self):
         for returned in ([], [["Compound 137", 0.98], ["Compound 138", 0.99]]):
@@ -94,16 +99,17 @@ class CellLineCoverageTests(unittest.TestCase):
         engine.assert_not_called()
 
     def test_unrecognised_original_fragment_cannot_be_silently_replaced(self):
+        detected = [
+            line("Compound 137.2"),
+            line("first eluting isomer", top=72, bottom=96),
+        ]
         engine = Mock(
             side_effect=[
-                (
-                    ([[[8, 8], [180, 8], [180, 48], [8, 48]], "Compound 137.2", 0.99],),
-                    0,
-                ),
+                ([(p["bbox"], p["text"], p["confidence"]) for p in detected], 0),
                 ([["Compound 137", 0.99]], 0),
             ]
         )
-        observed = observe_cell(pixels(), "label", 400, engine, _normalize)
+        observed = observe_cell(pixels(True), "label", 400, engine, _normalize)
         self.assertEqual(observed.value, "")
         self.assertEqual(observed.detection_parts[0]["text"], "Compound 137.2")
 
@@ -149,13 +155,17 @@ class CellLineCoverageTests(unittest.TestCase):
                 self.assertFalse(_confirmed_observations("137", [page, packet]))
 
     def test_bool_line_confidence_does_not_prove_an_identity(self):
+        detected = [
+            line("Compound"),
+            line("first eluting isomer", top=72, bottom=96),
+        ]
         engine = Mock(
             side_effect=[
-                (([[[8, 8], [180, 8], [180, 48], [8, 48]], "Compound", 0.99],), 0),
+                ([(p["bbox"], p["text"], p["confidence"]) for p in detected], 0),
                 ([["Compound 137", True]], 0),
             ]
         )
-        observed = observe_cell(pixels(), "label", 400, engine, _normalize)
+        observed = observe_cell(pixels(True), "label", 400, engine, _normalize)
         self.assertEqual(observed.value, "")
         self.assertEqual(observed.confidence, 0)
 

@@ -1268,17 +1268,23 @@ reads. Normalized OCR claims also replay their retained whole raw caption when
 available. Binding11/binder20/visible14/preparation2 change derived semantic
 compatibility only; raw OCSR2 and original assets/manual data remain untouched.
 
-`cell_caption_lines` observes original short caption ink only when the existing
-detector returns no boxes. It makes at most one same-engine complete-row read per
-400/600dpi cell, retaining frame/hash/bounds/confidence and the empty detector
-observation. Multiline, tall, solid or over-bound sources stay unresolved. The
+`cell_caption_lines` selects a positively complete short original ink row before
+semantic detection, then makes one same-engine complete-row read per400/600dpi
+cell. Physical-caption frame3 retains the whole frame/hash/bounds/confidence and
+explicitly no detector observations. A weak, malformed or unknown direct result
+stays unresolved, without a detector retry. Multiline, tall, solid or otherwise
+unproved rows retain the existing bounded detected-caption path. The old
+empty-detector recovery producer is removed, not kept as a competing route. The
 single `cell_text_proof` frame replay serves existing headers and captions;
 `cell_header_proof` remains the header-semantic adapter, not another validator.
+Header frame2's complete row-attempt proof remains separate; frame3 cannot bypass
+it. Legacy caption frame1 is read without retagging, and all independently
+observed native/page/detector conflicts remain vetoes in their original packets.
 `caption_binding_proof` replays original readings and the same spatial ownership
 in formal core/catalog/Web/SAR admission. New captions use `original_caption_cell`;
 flags cannot substitute missing proof, and valid original conflicts remain errors.
-Binding10/binder19/visible13 change derived proof only. RawObs2/OCSR2/preparation1/
-activity12/epoch21/coverage8/SAR14/manual/API/SQL and original assets are unchanged.
+Binding28/binder37 change derived caption ownership only. RawObs2/OCSR2/preparation8/
+visible21/Activity22/extractor31/numericalSAR/manual/API/SQL stay independent.
 No second engine/queue/writer or private patent computation. Controlled checks do
 not certify universal detection recall, chemistry or real-patent acceptance.
 

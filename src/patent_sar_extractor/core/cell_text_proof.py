@@ -3,6 +3,8 @@
 import math
 import re
 
+from patent_sar_extractor.contracts import PHYSICAL_CAPTION_LINE_VERSION
+
 from .cell_ocr_scores import confidence_value
 from .cell_text_chunk_proof import valid_text_chunks
 from .cell_text_row_readings import selected_row_reading, valid_single_row
@@ -115,9 +117,17 @@ def physical_text_valid(
         return False
     if (
         type(packet["version"]) is not int
-        or packet["version"] not in {1, 2}
+        or packet["version"] not in {1, 2, PHYSICAL_CAPTION_LINE_VERSION}
         or packet["status"] != "observed"
         or (packet["version"] == 2) != ("row_readings" in packet)
+    ):
+        return False
+    if packet["version"] == PHYSICAL_CAPTION_LINE_VERSION and (
+        packet_name != "physical_caption_line"
+        or part_method != "physical_caption_line"
+        or minimum_rows != 1
+        or maximum_rows != 1
+        or maximum_row_height != 12
     ):
         return False
     shape, dpi, border = (

@@ -25,6 +25,7 @@ from patent_sar_extractor.core.ocsr.smiles_converter import (
 from patent_sar_extractor.core.ocsr.smiles_qc import qc_smiles
 from patent_sar_extractor.core.ocsr.stereo_evidence import source_checked_qc
 from patent_sar_extractor.core.ocsr.stereo_gate import validate_stereo_record
+from patent_sar_extractor.core.table_cells import read_cell
 from patent_sar_extractor.smiles_artifact import build_smiles_artifact
 from patent_sar_extractor.web.errors import WebError
 from patent_sar_extractor.web.recognition import recognition_status
@@ -212,7 +213,12 @@ class OCSRLabelPreservationTests(unittest.TestCase):
             "Compound 123AB third unknown annotation", masked=False
         )
 
-    def check_native_caption_preparation(self, text, *, masked):
+    def test_actual_physical_caption_reaches_preparation_with_source_bytes_intact(self):
+        self.check_native_caption_preparation(
+            "Compound 123AB", masked=True, physical=True
+        )
+
+    def check_native_caption_preparation(self, text, *, masked, physical=False):
         doc = fitz.open()
         self.addCleanup(doc.close)
         page = doc.new_page(width=500, height=120)
@@ -244,6 +250,22 @@ class OCSRLabelPreservationTests(unittest.TestCase):
                 "observations": [{"method": "native_cell", "text": caption[4].strip()}],
             },
         }
+        if physical:
+            bounds = list(caption[:4])
+            bounds[1] -= 2
+            bounds[3] += 2
+            reading = read_cell(page, bounds, [], "label", False)
+            self.assertEqual(reading.value, "123AB", reading.observations)
+            self.assertFalse(reading.needs_review)
+            self.assertTrue(
+                all(
+                    observation["physical_caption_line"]["version"] == 3
+                    for observation in reading.observations[1:]
+                )
+            )
+            item["exact_caption_evidence"].update(
+                bbox=bounds, observations=reading.observations
+            )
         resolved = resolve_image_paths([item], str(self.root / "structure_bindings"))[0]
         self.assertIn("_ocsr_source_geometry", resolved)
         before = self.image.read_bytes()
@@ -253,6 +275,17 @@ class OCSRLabelPreservationTests(unittest.TestCase):
         self.assertEqual(output != str(self.image), masked)
         self.assertEqual(bool(info.get("ocsr_label_masked")), masked)
         self.assertEqual(self.image.read_bytes(), before)
+        if physical:
+            changed = copy.deepcopy(resolved)
+            changed["exact_caption_evidence"]["observations"][1][
+                "physical_caption_line"
+            ]["version"] = 1
+            rejected, rejection = _mask_visible_label_for_ocsr(
+                str(self.image), changed, str(self.root)
+            )
+            self.assertEqual(rejected, str(self.image))
+            self.assertFalse(rejection.get("ocsr_label_masked"))
+            self.assertEqual(self.image.read_bytes(), before)
 
     def test_serialized_mask_cannot_hide_legacy_flag_or_source_projection_changes(self):
         item = self.proven()

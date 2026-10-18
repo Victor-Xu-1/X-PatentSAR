@@ -1,8 +1,10 @@
-"""Bounded original caption ink when the existing detector returns no boxes."""
+"""Bounded single original caption row selected before text detection."""
 
 import hashlib
 
 import cv2
+
+from patent_sar_extractor.contracts import PHYSICAL_CAPTION_LINE_VERSION
 
 from .cell_line_coverage import complete_line_bounds
 from .cell_ocr_scores import confidence_score
@@ -10,8 +12,8 @@ from .cell_text_proof import physical_text_valid
 from .compound_caption import prefixed_label
 
 
-def observe_undetected_caption(image, engine, border, dpi):
-    """One extra same-engine read, only for a complete short physical ink row."""
+def observe_single_caption(image, engine, border, dpi):
+    """One same-engine read only after positive complete-row pixel selection."""
     try:
         bounds = complete_line_bounds(image, [], border, dpi)
     except (ValueError, TypeError, OverflowError):
@@ -20,7 +22,7 @@ def observe_undetected_caption(image, engine, border, dpi):
         return None
     x0, y0, x1, y1 = bounds
     packet = {
-        "version": 1,
+        "version": PHYSICAL_CAPTION_LINE_VERSION,
         "status": "unresolved",
         "image_shape": list(image.shape),
         "pixel_sha256": hashlib.sha256(image.tobytes()).hexdigest(),
@@ -51,7 +53,7 @@ def observe_undetected_caption(image, engine, border, dpi):
         "confidence": confidence_score(result[0][1]),
         "bbox": [[x0, y0], [x1, y0], [x1, y1], [x0, y1]],
         "coordinate_space": "cell_ink_crop_pixels",
-        "method": "undetected_caption_line",
+        "method": "physical_caption_line",
     }
     if part["text"].strip() and part["confidence"] >= 0.85:
         packet["status"] = "observed"
@@ -62,18 +64,27 @@ def physical_caption_valid(reading):
     """Producer and serialized binding consumers replay exactly the same proof."""
     parts = reading.get("parts")
     used = isinstance(parts, (list, tuple)) and any(
-        isinstance(part, dict) and part.get("method") == "undetected_caption_line"
+        isinstance(part, dict)
+        and part.get("method") in {"undetected_caption_line", "physical_caption_line"}
         for part in parts
     )
     if "physical_caption_line" not in reading and not used:
         return True  # Existing native/detected observations keep their own guards.
+    packet = reading.get("physical_caption_line")
+    if not isinstance(packet, dict) or type(packet.get("version")) is not int:
+        return False
+    method = {
+        1: "undetected_caption_line",
+        PHYSICAL_CAPTION_LINE_VERSION: "physical_caption_line",
+    }.get(packet["version"])
     return bool(
         used
+        and method is not None
         and reading.get("detection_parts") == []
         and physical_text_valid(
             reading,
             packet_name="physical_caption_line",
-            part_method="undetected_caption_line",
+            part_method=method,
             minimum_rows=1,
             maximum_rows=1,
         )
