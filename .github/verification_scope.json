@@ -49,7 +49,6 @@
     "tests.test_web_acceptance",
     "tests.test_candidate_observations",
     "tests.test_candidate_stage",
-    "tests.test_source_epoch_actual",
     "tests.test_auxiliary_activity_compatibility",
     "tests.test_release_policy.ReleaseNumberTests",
     "tests.test_standalone.StandalonePackagingTests.test_version_command_uses_product_version",
