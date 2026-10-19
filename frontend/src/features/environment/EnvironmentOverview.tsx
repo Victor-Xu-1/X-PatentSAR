@@ -14,12 +14,14 @@ export function EnvironmentOverview({
   onSetup,
   onInspect,
   onDetails,
+  onReuse,
 }: {
   catalog: EnvironmentCatalog;
   disabled: boolean;
   onSetup: () => void;
   onInspect: (ids: EnvironmentComponentId[]) => void;
   onDetails: () => void;
+  onReuse?: () => void;
 }) {
   const { t } = useTranslation();
   let plan = null;
@@ -85,6 +87,14 @@ export function EnvironmentOverview({
       </div>
       <div className="environment-overview-footer">
         <p className="muted">{t('PDF 提取 · 结构识别 · 六项指标')}</p>
+        {onReuse &&
+          ['text-ocr', 'text-ocr-models'].every((id) =>
+            catalog.components.some((item) => item.id === id),
+          ) && (
+            <button type="button" disabled={disabled} onClick={onReuse}>
+              {t('复用现有文字 OCR')}
+            </button>
+          )}
         <button type="button" className="environment-details-trigger" onClick={onDetails}>
           {t('环境详情')}
         </button>

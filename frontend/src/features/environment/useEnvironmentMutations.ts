@@ -8,6 +8,7 @@ import type {
   EnvironmentOperation,
   EnvironmentSettings,
   EnvironmentStorageLocations,
+  EnvironmentReuseSource,
 } from '../../api/environmentTypes';
 import { activeEnvironmentOperation } from '../../model/environment';
 import {
@@ -101,15 +102,22 @@ export function useEnvironmentMutations(onOperation: (id: string) => void, onRef
     }
   }
   async function start(
-    action: 'inspect' | 'install',
+    action: 'inspect' | 'install' | 'reuse',
     component_ids: EnvironmentComponentId[],
     expected_revision: number,
+    reuse_source?: EnvironmentReuseSource,
   ) {
     if (pending || storageError || lock.current) return null;
     try {
       return await dispatch({
         kind: 'operation',
-        request: { action, component_ids, expected_revision, request_id: crypto.randomUUID() },
+        request: {
+          action,
+          component_ids,
+          expected_revision,
+          request_id: crypto.randomUUID(),
+          ...(reuse_source ? { reuse_source } : {}),
+        },
       });
     } catch {
       setError(

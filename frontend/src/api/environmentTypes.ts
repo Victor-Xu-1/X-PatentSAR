@@ -76,15 +76,21 @@ export interface EnvironmentPreset {
   component_ids: EnvironmentComponentId[];
 }
 export interface EnvironmentOperationRequest {
-  action: 'inspect' | 'install';
+  action: 'inspect' | 'install' | 'reuse';
+  reuse_source?: EnvironmentReuseSource;
   component_ids: EnvironmentComponentId[];
   request_id: string;
   expected_revision: number;
 }
+export interface EnvironmentReuseSource {
+  python: string;
+  models: string;
+}
 export interface EnvironmentOperation {
   id: string;
   request_id: string;
-  action: 'inspect' | 'install';
+  action: 'inspect' | 'install' | 'reuse';
+  reuse_source?: EnvironmentReuseSource | null;
   component_ids: EnvironmentComponentId[];
   status: 'queued' | 'running' | 'complete' | 'failed' | 'cancelled' | 'interrupted';
   created_at: string;

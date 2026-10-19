@@ -334,3 +334,7 @@
     min-height: 44px;
   }
 }
+.environment-reuse-form {
+  display: grid;
+  gap: 16px;
+}

@@ -15,6 +15,7 @@ import { EnvironmentProgress } from './EnvironmentProgress';
 import type { HistoryEntry } from '../../api/historyTypes';
 import { HistoryDialog } from '../history/HistoryDialog';
 import { LLMApiPanel } from '../llm/LLMApiPanel';
+import { ReuseTextOCRDialog } from './ReuseTextOCRDialog';
 
 export function EnvironmentPage({
   operationId,
@@ -30,6 +31,7 @@ export function EnvironmentPage({
   const { catalog, mutations } = workspace;
   const data = catalog.data;
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [reuseOpen, setReuseOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [trashOpen, setTrashOpen] = useState(false);
   function historyChanged(entry: HistoryEntry) {
@@ -109,6 +111,7 @@ export function EnvironmentPage({
               onSetup={installation.setup}
               onInspect={(ids) => void mutations.start('inspect', ids, data.settings.revision)}
               onDetails={() => setDetailsOpen(true)}
+              onReuse={() => setReuseOpen(true)}
             />
           </>
         )
@@ -126,6 +129,25 @@ export function EnvironmentPage({
         onReload={workspace.operation.reload}
       />
       <LLMApiPanel />
+      {reuseOpen && data && (
+        <ReuseTextOCRDialog
+          catalog={data}
+          busy={mutations.busy}
+          disabled={disabled}
+          error={mutations.error}
+          recovery={<RecoveryNotice mutations={mutations} />}
+          onClose={() => setReuseOpen(false)}
+          onConfirm={async (source, revision) => {
+            const result = await mutations.start(
+              'reuse',
+              ['text-ocr', 'text-ocr-models'],
+              revision,
+              source,
+            );
+            if (result) setReuseOpen(false);
+          }}
+        />
+      )}
       {data && detailsOpen && (
         <EnvironmentDetails
           catalog={data}

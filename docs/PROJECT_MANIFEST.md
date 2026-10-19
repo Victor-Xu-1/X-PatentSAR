@@ -51,6 +51,13 @@
   `text-ocr`/`text-ocr-models` use the same managed setup, fixed75-wheel requirement
   recipe, verified pair-only atomic activation and shared bilingual component
   view. No competing installer, queue or manually assembled runtime is added.
+  Explicit existing-runtime reuse is a typed operation of that same manager:
+  `core/text_ocr/reuse_sources.py` owns its pure source contract and
+  `workers/text_ocr_reuse.py` performs only pinned local-model copying and the
+  existing native probes. No dependency installation or download fallback is
+  allowed. Native interpreter, private managed destination, unchanged source,
+  pair-only configuration publication, request ownership and cancellation remain
+  mandatory. The bilingual reuse dialog is separate from installation consent.
   Original/raw/manual artifacts, DECIMER and numerical SAR remain unchanged;
   derived compatibility is Activity23/extractor33 (no original/raw/manual rewrite);
   installation does not activate it until both components verify together.

@@ -11,6 +11,10 @@ const copy = {
     model: 'Auxiliary text OCR model',
     unconfigured: 'No path is configured for this component.',
     missing: 'The configured path does not exist.',
+    reuse: 'Reuse existing text OCR',
+    python: 'Existing Linux Python interpreter',
+    models: 'Existing model directory',
+    confirm: 'Verify and reuse',
   },
   'zh-CN': {
     language: '界面语言',
@@ -21,6 +25,10 @@ const copy = {
     model: '辅助文字识别模型',
     unconfigured: '未配置该组件路径。',
     missing: '配置路径不存在。',
+    reuse: '复用现有文字 OCR',
+    python: '现有 Linux Python 解释器',
+    models: '现有权重目录',
+    confirm: '验证并复用',
   },
 } as const;
 
@@ -83,6 +91,32 @@ for (const locale of ['en', 'zh-CN'] as const) {
       await expect(
         page.getByRole('button', { name: copy[locale].details, exact: true }),
       ).toBeFocused();
+      const reuse = page.getByRole('button', { name: copy[locale].reuse, exact: true });
+      await reuse.click();
+      const reuseDialog = page.getByRole('dialog', { name: copy[locale].reuse, exact: true });
+      await expect(
+        reuseDialog.getByRole('button', { name: copy[locale].confirm, exact: true }),
+      ).toBeDisabled();
+      await reuseDialog
+        .getByLabel(copy[locale].python, { exact: true })
+        .fill('/srv/existing-text/bin/python');
+      await reuseDialog
+        .getByLabel(copy[locale].models, { exact: true })
+        .fill('/mnt/e/existing-text/models');
+      await reuseDialog.getByRole('checkbox').check();
+      await expect(
+        reuseDialog.getByRole('button', { name: copy[locale].confirm, exact: true }),
+      ).toBeEnabled();
+      expect(await reuseDialog.evaluate((node) => node.scrollWidth <= node.clientWidth + 2)).toBe(
+        true,
+      );
+      await page.screenshot({
+        path: test.info().outputPath(`ordinary-text-reuse-${locale}-${width}.png`),
+        fullPage: true,
+      });
+      await page.keyboard.press('Escape');
+      await expect(reuseDialog).toHaveCount(0);
+      await expect(reuse).toBeFocused();
       await page.reload();
       await expect(
         page.getByRole('combobox', { name: copy[locale].language, exact: true }),

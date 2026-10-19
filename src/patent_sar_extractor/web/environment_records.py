@@ -8,6 +8,8 @@ import re
 from pathlib import Path
 from typing import Any
 
+from patent_sar_extractor.core.text_ocr.reuse_sources import reuse_plan_source
+
 from .environment_models import COMPONENT_IDS, MAX_COMPONENTS
 from .errors import WebError
 from .processes import RunSpec
@@ -57,7 +59,7 @@ def environment_spec(
             or value.get("operation_id") != identifier
             or not _native(row["install_root"])
             or value.get("install_root") != row["install_root"]
-            or row["action"] not in {"inspect", "install"}
+            or row["action"] not in {"inspect", "install", "reuse"}
             or value.get("action") != row["action"]
             or value.get("component_ids") != components
             or not isinstance(components, list)
@@ -80,8 +82,10 @@ def environment_spec(
             "requires_owner_ack",
             "config_fingerprint",
             "source_key",
+            "reuse_source",
         }:
             raise ValueError("Unknown environment plan fields")
+        reuse_plan_source(value)
         if "bindings" in value:
             bindings = value["bindings"]
             # Earlier plans legitimately predate added component IDs. Keep

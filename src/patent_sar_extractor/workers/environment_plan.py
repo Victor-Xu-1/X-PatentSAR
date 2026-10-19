@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from patent_sar_extractor.core.text_ocr.reuse_sources import reuse_plan_source
 from patent_sar_extractor.web.environment_models import COMPONENT_IDS, MAX_COMPONENTS
 
 from .environment_files import checked_directory, load_json
@@ -26,6 +27,7 @@ class EnvironmentPlan:
     operation_dir: Path
     bindings: dict[str, str | None]
     requires_owner_ack: bool
+    reuse_source: dict[str, str] | None = None
 
 
 def read_plan(path: Path) -> EnvironmentPlan:
@@ -49,7 +51,12 @@ def read_plan(path: Path) -> EnvironmentPlan:
         "bindings",
         "cache_root",
     }
-    optional = {"requires_owner_ack", "config_fingerprint", "source_key"}
+    optional = {
+        "requires_owner_ack",
+        "config_fingerprint",
+        "source_key",
+        "reuse_source",
+    }
     if set(value) - required - optional or not required <= set(value):
         raise ValueError("Unknown/missing environment plan fields")
     if type(value["schema_version"]) is not int or value["schema_version"] != 1:
@@ -57,7 +64,11 @@ def read_plan(path: Path) -> EnvironmentPlan:
     identifier = value["operation_id"]
     if not isinstance(identifier, str) or not re.fullmatch(r"[0-9a-f]{32}", identifier):
         raise ValueError("Invalid operation identity")
-    if directory.name != identifier or value["action"] not in {"inspect", "install"}:
+    if directory.name != identifier or value["action"] not in {
+        "inspect",
+        "install",
+        "reuse",
+    }:
         raise ValueError("Operation directory/action differs")
     ids = value["component_ids"]
     if (
@@ -78,7 +89,7 @@ def read_plan(path: Path) -> EnvironmentPlan:
     for parent in (root, *root.parents):
         if parent.is_symlink():
             raise ValueError("Linked installation parent")
-    if value["action"] == "install":
+    if value["action"] in {"install", "reuse"}:
         checked_directory(root, private=True)
         marker = load_json(root / ".x-patentsar-environments.json", 4096)
         if marker != {
@@ -104,8 +115,17 @@ def read_plan(path: Path) -> EnvironmentPlan:
     ack = value.get("requires_owner_ack", False)
     if type(ack) is not bool:
         raise ValueError("Owner handshake flag must be boolean")
+    reuse_source = reuse_plan_source(value)
     return EnvironmentPlan(
-        identifier, value["action"], ids, root, cache, directory, bindings, ack
+        identifier,
+        value["action"],
+        ids,
+        root,
+        cache,
+        directory,
+        bindings,
+        ack,
+        reuse_source,
     )
 
 

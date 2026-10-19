@@ -49,10 +49,10 @@ export function EnvironmentProgress({
             <div className="environment-progress-heading">
               <strong>
                 {selected.status === 'queued'
-                  ? selected.action === 'install'
+                  ? selected.action !== 'inspect'
                     ? t('等待配置环境')
                     : t('等待检测环境')
-                  : selected.action === 'install'
+                  : selected.action !== 'inspect'
                     ? t('正在配置环境')
                     : t('正在检测环境')}
               </strong>
@@ -75,7 +75,7 @@ export function EnvironmentProgress({
       )}
       {selected.error && <output className="error-notice">{selected.error.message}</output>}
       {!active &&
-        selected.action === 'install' &&
+        selected.action !== 'inspect' &&
         selected.status === 'complete' &&
         !selected.applied && (
           <output className="info-banner">{t('配置尚未应用，请重新检测或部署。')}</output>

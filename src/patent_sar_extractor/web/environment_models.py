@@ -6,6 +6,11 @@ from typing import Literal, get_args
 
 from pydantic import Field, StrictStr, model_validator
 
+from patent_sar_extractor.core.text_ocr.reuse_sources import (
+    TEXT_OCR_PAIR,
+    validate_reuse_source,
+)
+
 from .dto import DTO, Error
 from .models import JobStatus
 
@@ -111,7 +116,8 @@ class EnvironmentPreset(DTO):
 
 
 class EnvironmentOperationRequest(DTO):
-    action: Literal["inspect", "install"]
+    action: Literal["inspect", "install", "reuse"]
+    reuse_source: dict[str, StrictStr] | None = None
     component_ids: list[ComponentId] = Field(min_length=1, max_length=MAX_COMPONENTS)
     request_id: StrictStr = Field(
         min_length=16, max_length=64, pattern=r"^[A-Za-z0-9_-]+$"
@@ -122,13 +128,20 @@ class EnvironmentOperationRequest(DTO):
     def unique_components(self) -> EnvironmentOperationRequest:
         if len(set(self.component_ids)) != len(self.component_ids):
             raise ValueError("Repeated component IDs are not an installation plan")
+        if self.action == "reuse":
+            if set(self.component_ids) != TEXT_OCR_PAIR:
+                raise ValueError("Existing text OCR requires both components")
+            validate_reuse_source(self.reuse_source)
+        elif self.reuse_source is not None:
+            raise ValueError("Existing sources are only valid for reuse")
         return self
 
 
 class EnvironmentOperation(DTO):
     id: str
     request_id: str
-    action: Literal["inspect", "install"]
+    action: Literal["inspect", "install", "reuse"]
+    reuse_source: dict[str, str] | None = None
     component_ids: list[ComponentId] = Field(max_length=MAX_COMPONENTS)
     status: JobStatus
     created_at: str
