@@ -1,4 +1,4 @@
-"""Original-pixel replay of auxiliary text; no OCR, model import, or saved paths."""
+"""Original-pixel replay of activity text; no OCR, model import, or saved paths."""
 
 from collections.abc import Callable
 from contextlib import AbstractContextManager
@@ -126,5 +126,5 @@ def original_activity_source_errors(
                         "Auxiliary activity text differs from its original page pixels."
                     ]
     except (OSError, ValueError, TypeError, KeyError, IndexError, RuntimeError):
-        return ["Auxiliary activity text original replay is unavailable."]
+        return ["Original activity text replay is unavailable."]
     return []

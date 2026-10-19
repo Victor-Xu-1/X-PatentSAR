@@ -106,6 +106,17 @@ class PrimaryActivitySourceTests(unittest.TestCase):
         payload = self.payload("row", {"method": "native_cell", "text": "0.4"})
         self.assertEqual(original_activity_source_errors(payload), [])
 
+    def test_source_open_failure_is_not_a_model_failure_or_exception_disclosure(self):
+        def unavailable():
+            raise OSError("controlled private filesystem detail")
+
+        self.assertEqual(
+            original_activity_source_errors(
+                self.payload("header", self.reading()), open_original=unavailable
+            ),
+            ["Original activity text replay is unavailable."],
+        )
+
     def test_relabelled_optical_cell_and_incomplete_frame_cannot_hide_ownership(self):
         reading = self.reading()
         reading["method"] = "native_cell"
