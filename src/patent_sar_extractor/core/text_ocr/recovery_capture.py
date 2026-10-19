@@ -13,7 +13,7 @@ from .identity import recipe
 from .process import TextOCRCancelled
 from .recovery_primary import complete_primary, source_metadata
 from .recovery_proof import RECOVERY_VERSION, effective_recovery_cells
-from .recovery_rows import RecoveryRowEngine
+from .recovery_rows import RecoveryRowEngine, UnqualifiedRecoveryRow
 
 
 def recover_complete_pair(
@@ -86,6 +86,16 @@ def recover_complete_pair(
             fingerprint = engine.fingerprint
         except TextOCRCancelled:
             raise
+        except UnqualifiedRecoveryRow:
+            if evidence_sink is not None:
+                evidence_sink.append(
+                    {
+                        "status": "rejected",
+                        "code": "unqualified_original_row",
+                        "views": views,
+                    }
+                )
+            return None
         except (OSError, TimeoutError, WorkerProtocolError, ValueError) as error:
             if evidence_sink is not None:
                 evidence_sink.append(

@@ -7,6 +7,10 @@ from .cell_frames import MIN_AUXILIARY_SCORE
 from .protocol import frame_digest, validate_reply
 
 
+class UnqualifiedRecoveryRow(ValueError):
+    """A valid source-owned reply was read but did not satisfy text quality."""
+
+
 def checked_row(observed, fingerprint=None, *, pixels=None, require_quality=True):
     if not isinstance(observed, dict) or type(observed.get("cache_hit")) is not bool:
         raise ValueError("Malformed auxiliary recovery row")
@@ -31,7 +35,7 @@ def checked_row(observed, fingerprint=None, *, pixels=None, require_quality=True
         request["pixel_sha256"] = frame_digest(pixels)
     result = validate_reply(response, request)
     if require_quality and not qualified(result):
-        raise ValueError("Auxiliary recovery row remains unqualified")
+        raise UnqualifiedRecoveryRow("Auxiliary recovery row remains unqualified")
     return result
 
 

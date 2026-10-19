@@ -1,5 +1,15 @@
 # X-PatentSAR architecture
 
+## Auxiliary text quality is not runtime availability
+
+`recovery_rows.UnqualifiedRecoveryRow` identifies a protocol-valid source-owned
+reply that fails the existing nonempty/quality rule. The single capture adapter
+records a rejected attempt with partial observations instead of calling it an
+unavailable runtime. Other source/protocol errors, timeout and cancellation retain
+their paths. Primaries, bounded retries and scientific acceptance are unchanged;
+this is diagnostic provenance, not an additional recognition chain or a reason
+to retag historical attempts.
+
 ## Caller-owned typography for complete characterization text
 
 `cell_text_scope` owns the bounded physical typography claim. Characterization
