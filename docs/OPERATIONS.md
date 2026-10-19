@@ -1,5 +1,30 @@
 # Operations and troubleshooting
 
+## A closed source table exceeds one observation work unit
+
+Current characterization-role2 preserves an exact full-grid inventory and
+deterministic continuous row windows. Each uses the existing cell observer and
+at most96physical cells; all columns, both optical views, native hints and tail
+rows remain represented. The full role is decided only after complete coverage,
+not from a header or sampled successful window. Whole tables are separately
+bounded at4096cells/64columns under existing source artifact and worker limits;
+larger/unsupported sources stay explicitly unresolved rather than truncated.
+
+Inspect `role_scope.work_windows`, original xs/ys, matrices/cells and existing
+`source_role_observations`. A missing/duplicate/reordered window or last-row
+unknown/measurement contradiction cannot become non-activity. A late render
+refusal retains preceding/partial observations but grants no whole-table role.
+No new OCR engine, dependency, service or private calculation is involved.
+Controlled native and optical-carrier checks prove transport/coverage, not
+OCR/chemical accuracy or complete patent acceptance.
+
+Binding43/binder53 and Activity26/extractor36 require normal frontend-derived
+regeneration; raw observations, model policy, manual audit and numerical SAR are
+unchanged. Legacy role1 stays readable inside its original96cell bound only;
+never edit its version/window fields or cached results to upgrade history.
+Use exact changed/consumer checks and the affected installed-wheel/browser path,
+then merge/deploy exact main at the existing origin with a preserved rollback.
+
 ## An unread original number or synthesis heading
 
 The explicitly enabled on-demand text adapter can now serve unresolved numbered
@@ -350,7 +375,7 @@ because a partial source release is available.
 
 ## Caption locator versus original recognition window
 
-Current Binding42/binder52 captions retain two explicit scopes: `bbox` locates
+Current Binding43/binder53 captions retain two explicit scopes: `bbox` locates
 the printed ID for ownership, while required `reading_bbox` records the actual
 window used by all retained attempts. Loose-caption padding remains4points with
 exact original-page clipping; ruled table captions keep the original cell.
@@ -468,7 +493,7 @@ remain separate from complete real frontend extraction/SAR and chemical accuracy
 
 ## Large binding evidence without dropped records
 
-Current bindings42/binder52 retain one complete `compound_catalog.entries`
+Current bindings43/binder53 retain one complete `compound_catalog.entries`
 collection, with no root `final_bindings` or `bindings` copies. All scientific
 and presentation consumers use the bounded common accessor; a competing current
 collection or contradictory count is invalid, not a success/partial-cache

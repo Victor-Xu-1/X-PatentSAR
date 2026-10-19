@@ -1,14 +1,27 @@
 # Project governance manifest
 
+- Closed-grid role authority: `role_grid_windows` owns deterministic complete
+  row windows, at most96cells per work unit,64columns and4096cells per whole
+  inventory. `role_grid_capture` composes the same cell observer into one ordered
+  matrix/cell carrier; it preserves the parent's native/raster decision and all
+  attempts. Characterization-role2 requires exact work-window coverage in the
+  shared pure role validator. Omitted/duplicate/reordered/malformed windows,
+  tail unknowns and native/endpoint conflicts refuse; no sampling or earlier
+  confidence borrowing. Existing role diagnostics keep partial failures.
+  Binding43/binder53 and Activity26/extractor36 invalidate affected derived
+  stages; old role1 is bounded historical reading, never a large-grid assertion.
+  Raw PDF/OCR/OCSR2, preparation12, manual audit, API/SQL/numerical SAR, model
+  runtime and dependencies remain unchanged. No second source parser/store/queue.
+
 - Single binding-record authority: `core/binding_records` selects the one
   bounded current `compound_catalog.entries`, requires integer counts and rejects
   obsolete competing root collections. `binding_artifacts` is the only writer;
   binding/header/cache/recognition/export/QA/Web/resume consumers share it.
-  Current Binding42/binder52 refresh derived records only. Independent original
+  Current Binding43/binder53 refresh derived records only. Independent original
   claims/reference/role/pixel completeness remains mandatory, with explicit
   historical review rather than old scientific promotion. Web graphs require
   current valid recognition for every owner, measured or unmeasured. Shared
-  JSON1 and its wire/node/byte/depth guards, Activity25/extractor35,
+  JSON1 and its wire/node/byte/depth guards, Activity26/extractor36,
   preparation12, raw PDF/OCR/OCSR2/assets/manual audit, numerical SAR, API/SQL and
   dependencies remain unchanged. No second store, queue, result writer, fallback
   authority, limit increase or private-data repair is introduced. Rollback uses

@@ -5,10 +5,11 @@ from itertools import pairwise
 
 import numpy as np
 
+from patent_sar_extractor.contracts import CHARACTERIZATION_ROLE_SCHEMA_VERSION
+
 from .activity_grid_context import table_matrix
 from .activity_grid_role_proof import valid_role_scope
 from .activity_grid_roles import (
-    MAX_ROLE_CELLS,
     MAX_ROLE_TEXT_ROWS,
     characterization_roles,
     declared_measurement,
@@ -16,6 +17,7 @@ from .activity_grid_roles import (
 )
 from .cell_text_chunks import observe_text_cell
 from .page_ocr_cache import get_ocr_engine
+from .role_grid_windows import MAX_ROLE_CELLS, role_grid_shape, role_work_windows
 from .source_geometry import native_cell_text, native_region
 from .source_role_observations import role_failure
 from .table_cells import CellRenderLimit, cell_image
@@ -26,9 +28,24 @@ def observe_role_cells(
 ):
     """One cell observation carrier for closed grids and visible row fragments."""
     xs, ys = region["xs"], region["ys"]
+    bounds = [xs[0], ys[0], xs[-1], ys[-1]]
+    return _observe_role_cells(
+        page,
+        region,
+        tokens,
+        native=native_region(tokens, bounds, bool(page.get_text("words"))),
+        retain_frames=retain_frames,
+        evidence_sink=evidence_sink,
+    )
+
+
+def _observe_role_cells(
+    page, region, tokens, *, native, retain_frames=False, evidence_sink=None
+):
+    """Same observer with the original parent's source decision conserved."""
+    xs, ys = region["xs"], region["ys"]
     if (len(xs) - 1) * (len(ys) - 1) > MAX_ROLE_CELLS:
         return None
-    bounds = [xs[0], ys[0], xs[-1], ys[-1]]
     cells = [
         (xs[column], ys[row], xs[column + 1], ys[row + 1])
         for row in range(len(ys) - 1)
@@ -52,7 +69,6 @@ def observe_role_cells(
     }
     if evidence_sink is not None:
         evidence_sink.append(carrier)
-    native = native_region(tokens, bounds, bool(page.get_text("words")))
     if native and retain_frames:
         for index, cell in enumerate(cells):
             row, column = divmod(index, len(xs) - 1)
@@ -140,7 +156,7 @@ def observe_characterization(page, region, tokens, prefix, *, evidence_sink=None
         if evidence_sink is not None:
             evidence_sink.append(role_failure(reason, region, prefix, cells))
 
-    if (len(xs) - 1) * (len(ys) - 1) > MAX_ROLE_CELLS:
+    if role_grid_shape(list(xs), list(ys)) is None:
         return refused("cell_budget_exceeded")
     initial = table_matrix(tokens, region)
     if not nominate_characterization(initial, prefix):
@@ -152,7 +168,9 @@ def observe_characterization(page, region, tokens, prefix, *, evidence_sink=None
     ):
         return refused("native_measurement_conflict")
     attempted = []
-    cells = observe_role_cells(page, region, tokens, evidence_sink=attempted)
+    from .role_grid_capture import observe_complete_role_grid
+
+    cells = observe_complete_role_grid(page, region, tokens, evidence_sink=attempted)
     if cells is None:
         return refused("cell_render_limit", attempted[0] if attempted else None)
     observations = cells["observations"]
@@ -160,8 +178,9 @@ def observe_characterization(page, region, tokens, prefix, *, evidence_sink=None
     if roles is None:
         return refused("unresolved_column_roles", cells)
     proof = {
-        "version": 1,
+        "version": CHARACTERIZATION_ROLE_SCHEMA_VERSION,
         **cells,
+        "work_windows": role_work_windows(list(xs), list(ys)),
         "prefix": prefix,
         "roles": roles,
     }
