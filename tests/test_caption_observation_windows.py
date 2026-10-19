@@ -14,6 +14,7 @@ from patent_sar_extractor.core.caption_original_replay import (
     original_caption_source_errors,
 )
 from patent_sar_extractor.core.caption_source_windows import (
+    caption_read_window,
     caption_windows,
     original_caption_read_window,
 )
@@ -129,6 +130,7 @@ class CaptionObservationWindowTests(unittest.TestCase):
             "move_anchor",
             "bool",
             "nan",
+            "huge_integer",
             "mixed_attempt",
             "malformed_method",
         ):
@@ -145,6 +147,8 @@ class CaptionObservationWindowTests(unittest.TestCase):
                     packet["reading_bbox"][0] = True
                 elif mutation == "nan":
                     packet["reading_bbox"][2] = float("nan")
+                elif mutation == "huge_integer":
+                    packet["reading_bbox"][2] = 10**400
                 elif mutation == "mixed_attempt":
                     packet["observations"][0]["bbox"][0] += 1
                 else:
@@ -190,3 +194,11 @@ class CaptionObservationWindowTests(unittest.TestCase):
         source["tokens"][0]["x"] += 0.25
         self.assertTrue(valid_caption_binding_evidence(binding))
         self.assertTrue(original_caption_source_errors(document, [binding]))
+
+    def test_untrusted_anchor_and_page_coordinates_refuse_without_overflow(self):
+        for value in (10**400, -(10**400), float("nan"), float("inf"), True):
+            with self.subTest(value_type=type(value).__name__):
+                with self.assertRaises(ValueError):
+                    caption_read_window([value, 10, 20, 30], (100, 100))
+                with self.assertRaises(ValueError):
+                    caption_read_window([10, 10, 20, 30], (value, 100))

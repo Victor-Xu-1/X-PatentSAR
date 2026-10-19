@@ -15,8 +15,8 @@ def _box(value):
         or len(value) != 4
         or any(
             type(v) not in {int, float}
-            or not math.isfinite(v)
             or not 0 <= v <= 1_000_000
+            or not math.isfinite(v)
             for v in value
         )
         or not value[0] < value[2]
@@ -35,8 +35,8 @@ def caption_read_window(anchor, page_size):
         or len(page_size) != 2
         or any(
             type(v) not in {int, float}
-            or not math.isfinite(v)
             or not 0 < v <= 1_000_000
+            or not math.isfinite(v)
             for v in page_size
         )
         or box[2] > page_size[0]
