@@ -1,5 +1,14 @@
 # Project governance manifest
 
+- Chunk source authority: `cell_text_chunk_pixels` replays the original physical
+  row/slice inventory, exact hashes and ink/child frames for both observed and
+  unresolved captures. `cell_frame_proof.valid_ink_extent` is the sole shared
+  pixel-crop geometry check. `cell_text_proof` / `valid_text_chunks` remain the
+  independent strict text qualification authority. Rejected role observations
+  stay in the same binding/activity/QA/Web source inventory, never molecule work
+  or scientific acceptance. No schema/epoch, raw output, model, dependency,
+  activation, API, database or numerical SAR policy change is implied.
+
 - Continued measurement context authority: `continued_context_prefix` composes
   the single literal declaration reader with existing continued-title, parent,
   geometry and original-source rules. Only complete repeats of known parent

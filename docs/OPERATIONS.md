@@ -1,5 +1,22 @@
 # Operations and troubleshooting
 
+## A retained unresolved role observation reports changed pixels
+
+Original-cell replay and text qualification are different checks. The chunk
+replayer verifies the exact original source and every physical slice, including
+an honestly retained failed row segmentation or weak transcript. It does not
+require rejected text to become qualified first. These records remain unresolved
+and cannot prove a compound ID, characterization role or activity measurement.
+Changed pixels, omitted/reordered slices, altered crop geometry or mismatched
+source frames still fail closed; no OCR/model is loaded during readback.
+
+Inspect the original failure and retained source observations, not just whether
+SMILES can start. This correction does not resolve independent missing/ambiguous
+IDs, unsupported assay tables or chemical recognition failures. It changes no
+scientific schema/epoch or original output, and does not retag history. Preserve
+failed tasks and review exports. Any genuine private retry remains a normal
+frontend action only after the planned related repairs and exact-main deployment.
+
 ## A genuine continued table repeats its experimental conditions
 
 A literal `Table ... continued` may restate known assay/target/cell-line/

@@ -46,6 +46,12 @@ def valid_cell_frame(frame, reading, bounds, dpi):
             and reading.get("parts") == []
             and reading.get("detection_parts") == []
         )
+    return valid_ink_extent(reading, frame["shape"])
+
+
+def valid_ink_extent(reading, shape):
+    """Pixel-crop ownership, not a claim that the captured text is qualified."""
+    crop, border = reading.get("ink_crop_pixels"), reading.get("border_pixels")
     if crop is None:
         return (
             reading.get("parts") == []
@@ -57,7 +63,7 @@ def valid_cell_frame(frame, reading, bounds, dpi):
     if (
         type(border) is not int
         or not 0 < border <= 32
-        or not inside_box(crop, [0, 0, frame["shape"][1], frame["shape"][0]])
+        or not inside_box(crop, [0, 0, shape[1], shape[0]])
         or any(type(v) is not int for v in crop)
     ):
         return False
@@ -130,7 +136,7 @@ def original_cell_frame_matches(reading, page):
     ):
         return False
     if "physical_text_chunks" in reading:
-        from .cell_text_chunk_proof import original_text_chunk_pixels
+        from .cell_text_chunk_pixels import original_text_chunk_pixels
 
         return original_text_chunk_pixels(image, reading, dpi)
     ys, xs = np.where(cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) < 180)

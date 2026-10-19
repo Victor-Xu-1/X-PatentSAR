@@ -1,5 +1,24 @@
 # X-PatentSAR architecture
 
+## Rejected text observations are not changed original pixels
+
+`cell_text_chunk_pixels` owns original pixel replay for the existing chunk
+carrier. It recomputes full-cell physical rows, every deterministic complete
+slice, hashes, ink extents and child row frames without loading an OCR/model.
+An unsegmentable original region or weak complete transcript remains a retained
+unresolved observation, not a false pixel-tampering failure. Missing, reordered,
+changed or invented slices still refuse. `cell_frame_proof.valid_ink_extent`
+is the common crop/coordinate authority for ordinary and child pixel frames.
+
+Text qualification remains exclusively `cell_text_proof` / `valid_text_chunks`:
+source identity is not permission to use rejected text for IDs, activities or a
+characterization role. Binding plans retain these sources separately from
+molecule work; binding/activity/QA/Web use the same original replay. There is
+no new fallback, source cache, inference or scientific writer. Existing derived
+schemas/epochs, raw observations, accepted-role rules, manual audit, numerical
+SAR policy, models and OCR activation are unchanged; history is not rewritten.
+Generated source-conservation checks are not private-patent/scientific acceptance.
+
 ## Literal repeated conditions on continued measurement tables
 
 `activity_continuation_policy.continued_context_prefix` is the shared live-grid,
