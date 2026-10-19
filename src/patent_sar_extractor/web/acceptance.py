@@ -270,9 +270,14 @@ def authority(
         ), False
     from patent_sar_extractor.application.smiles_policy import _smiles_acceptance_errors
 
-    recognition_errors = _smiles_acceptance_errors(
-        payloads["smiles"], payloads["bindings"]
-    )
+    try:
+        recognition_errors = _smiles_acceptance_errors(
+            payloads["smiles"], payloads["bindings"]
+        )
+    except (ValueError, TypeError, KeyError) as exc:
+        # Untrusted ownership/record shapes remain a failed scientific contract,
+        # not an uncaught server error or an accepted partial recognition.
+        recognition_errors = [str(exc)]
     if recognition_errors:
         return Acceptance(
             state="failed",

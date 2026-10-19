@@ -67,6 +67,9 @@ class CorrectionTests(WebFixture, unittest.TestCase):
         self,
     ):
         raw = self.raw()
+        # The declared red-tile adapter is not a scientifically accepted run.
+        # A correct manual overlay must never promote its original QA status.
+        self.assertEqual(self.project.acceptance.state, "failed")
         originals = {
             p: hashlib.sha256(p.read_bytes()).hexdigest()
             for p in self.run.rglob("*")
@@ -112,7 +115,7 @@ class CorrectionTests(WebFixture, unittest.TestCase):
                 set(json.loads(raw["payload"])["flags"]).issubset(row["flags"])
             )
             self.assertEqual(
-                client.get(self.prefix).json()["acceptance"]["state"], "accepted"
+                client.get(self.prefix).json()["acceptance"]["state"], "failed"
             )
         with self.client() as client:
             restored = client.get(self.path).json()
@@ -122,7 +125,7 @@ class CorrectionTests(WebFixture, unittest.TestCase):
             self.assertEqual(reset.json()["revision"], 2)
             self.assertFalse(reset.json()["has_changes"])
             row = client.get(self.prefix + "/results?q=Compound%201").json()["items"][0]
-            self.assertEqual(row["smiles"], "CCO")
+            self.assertEqual(row["smiles"], json.loads(raw["payload"])["smiles"])
             self.assertEqual(row["display_id"], "Compound 1")
         self.assertEqual(self.raw(), raw)
         self.assertEqual(

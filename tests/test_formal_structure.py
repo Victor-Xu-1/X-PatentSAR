@@ -8,6 +8,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.core.formal_structure import (
     binding_pairs,
     coverage_errors,
@@ -31,11 +32,7 @@ class FormalStructureTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             run_fixture(root)
-            import json
-
-            payload = json.loads(
-                (root / "structure_bindings/bindings.json").read_text()
-            )
+            payload = load_json(root / "structure_bindings/bindings.json", {})
             before = copy.deepcopy(payload)
             self.assertEqual(coverage_errors(payload), [])
             self.assertEqual(payload, before)
