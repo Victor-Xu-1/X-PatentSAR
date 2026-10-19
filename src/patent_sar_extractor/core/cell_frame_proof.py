@@ -129,6 +129,10 @@ def original_cell_frame_matches(reading, page):
         or frame["pixel_sha256"] != hashlib.sha256(image.tobytes()).hexdigest()
     ):
         return False
+    if "physical_text_chunks" in reading:
+        from .cell_text_chunk_proof import original_text_chunk_pixels
+
+        return original_text_chunk_pixels(image, reading, dpi)
     ys, xs = np.where(cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) < 180)
     crop = (
         [int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1]

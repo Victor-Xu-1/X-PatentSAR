@@ -116,6 +116,7 @@ def bind(
                 source_line_map=observations.source_line_map,
                 all_structures=processed,
                 source_sections=source_sections,
+                source_cells=spatial.numbered_cells,
                 progress=progress,
             )
             if blocks

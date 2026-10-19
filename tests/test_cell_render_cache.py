@@ -1,5 +1,6 @@
 """Original cell pixels must not depend on prior PDF decoder tile caching."""
 
+import copy
 import hashlib
 import io
 import json
@@ -17,6 +18,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 from patent_sar_extractor.core.cell_frame_proof import original_cell_frame_matches
 from patent_sar_extractor.core.cell_rendering import isolated_original_page
+from patent_sar_extractor.core.cell_text_chunks import observe_text_cell
+from patent_sar_extractor.core.cell_text_proof import valid_text_reading
 from patent_sar_extractor.core.table_cells import (
     CellRenderLimit,
     cell_image,
@@ -40,6 +43,56 @@ def scanned_source(mode="1"):
 
 
 class CellRenderCacheTests(unittest.TestCase):
+    def test_complete_chunked_text_replays_original_pixels_without_a_false_ink_crop(
+        self,
+    ):
+        with fitz.open() as document:
+            page = document.new_page(width=200, height=150)
+            for index in range(5):
+                page.insert_text((25, 35 + 20 * index), "Original source", fontsize=8)
+            bounds = [20, 20, 180, 130]
+
+            def reader(image, **kwargs):
+                if kwargs.get("use_det"):
+                    return [], None
+                return [["Original source", 0.99]], None
+
+            for dpi in (400, 600):
+                with self.subTest(dpi=dpi):
+                    image = cell_image(page, bounds, dpi)
+                    reading = observe_text_cell(
+                        image, dpi, reader, rows_per_chunk=2
+                    ).evidence(dpi, bounds)
+                    reading["source_frame"] = {
+                        "dpi": dpi,
+                        "shape": list(image.shape),
+                        "pixel_sha256": hashlib.sha256(image.tobytes()).hexdigest(),
+                    }
+                    self.assertTrue(
+                        valid_text_reading(
+                            reading, bounds, dpi, maximum_rows=2, allow_chunks=True
+                        )
+                    )
+                    self.assertTrue(original_cell_frame_matches(reading, page))
+                    for mutation in ("row_bounds", "pixel_sha256", "missing_chunk"):
+                        with self.subTest(mutation=mutation):
+                            changed = copy.deepcopy(reading)
+                            chunks = changed["physical_text_chunks"]
+                            if mutation == "row_bounds":
+                                chunks["row_bounds"][0][0] += 1
+                            elif mutation == "pixel_sha256":
+                                chunks["chunks"][0]["pixel_sha256"] = "0" * 64
+                            else:
+                                chunks["chunks"].pop()
+                            self.assertFalse(original_cell_frame_matches(changed, page))
+                    with fitz.open(
+                        stream=document.tobytes(), filetype="pdf"
+                    ) as changed:
+                        changed[0].insert_text((50, 125), "Added ink", fontsize=8)
+                        self.assertFalse(
+                            original_cell_frame_matches(reading, changed[0])
+                        )
+
     def test_one_bit_scan_cells_survive_prior_full_page_render(self):
         source = scanned_source()
         # Deliberately noninteger source transform and cell origin. This is an

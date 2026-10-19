@@ -230,6 +230,7 @@ def select_heading_bindings(
     source_line_map: dict | None = None,
     all_structures: list[dict] | None = None,
     source_sections: list[dict] | None = None,
+    source_cells=(),
     progress=None,
 ) -> tuple[list[dict], list[dict]]:
     """Require mutually unique crop/printed-label proof in an observed interval."""
@@ -293,6 +294,7 @@ def select_heading_bindings(
         ),
         document_sha256,
         source_sections=source_sections or (),
+        source_cells=source_cells,
     )
     scopes = {}
     for block, _ in pending:

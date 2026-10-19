@@ -13,6 +13,7 @@ from .heading_column_sources import (
     foreign_column_line,
     independent_columns,
 )
+from .heading_page_columns import later_page_columns
 from .source_evidence_identity import proof_id
 from .source_section_roles import (
     heading_list_hint,
@@ -125,10 +126,11 @@ def declaration_candidates(scope, heading):
             "document_page_count",
             "pages",
             "column_sources",
+            "later_columns",
             "stop",
         }
         or type(scope["version"]) is not int
-        or scope["version"] != 2
+        or scope["version"] != 3
         or scope["status"] != "observed_declaration"
         or not isinstance(scope["original_pdf_sha256"], str)
         or not _SHA.fullmatch(scope["original_pdf_sha256"])
@@ -138,13 +140,14 @@ def declaration_candidates(scope, heading):
         or not 1 <= scope["document_page_count"] <= 20000
         or not isinstance(scope["pages"], list)
         or not 1 <= len(scope["pages"]) <= MAX_DECLARATION_PAGES
+        or not isinstance(scope.get("later_columns"), list)
+        or len(scope["later_columns"]) != len(scope["pages"]) - 1
     ):
         raise ValueError("Malformed original heading declaration scope")
     proof_id(scope)  # Keep the existing one-MiB original-region bound unchanged.
     if not _page_valid(scope["pages"][0]):
         raise ValueError("Malformed original heading first page")
     columns = independent_columns(scope["column_sources"], scope["pages"][0], heading)
-    excluded = {d["id"] for column in columns for d in column["diagrams"]}
     candidates, identities, expected_stop, ambiguous_flow = [], set(), None, False
     for offset, page in enumerate(scope["pages"]):
         number = heading["page_no"] + offset
@@ -157,7 +160,19 @@ def declaration_candidates(scope, heading):
             raise ValueError("Original heading declaration page inventory differs")
         if offset == 0 and page["page_size"] != heading["page_size"]:
             raise ValueError("Original heading declaration geometry differs")
-        boundary = _stop(page, heading, columns if offset == 0 else ())
+        current_columns = columns
+        if offset:
+            witness = scope["later_columns"][offset - 1]
+            if (
+                not isinstance(witness, dict)
+                or set(witness) != {"page_no", "sources"}
+                or type(witness["page_no"]) is not int
+                or witness["page_no"] != number
+            ):
+                raise ValueError("Original later-column page identity differs")
+            current_columns = later_page_columns(witness["sources"], page, heading)
+        excluded = {d["id"] for column in current_columns for d in column["diagrams"]}
+        boundary = _stop(page, heading, current_columns)
         lower = heading["nomination"]["bbox"][3] if offset == 0 else 0
         upper = boundary[0] if boundary else page["page_size"][1]
         for structure in page["structures"]:
@@ -169,11 +184,7 @@ def declaration_candidates(scope, heading):
                 raise ValueError(
                     "Original heading structure inventory exceeds its bound"
                 )
-            if (
-                box[3] > lower
-                and box[1] < upper
-                and not (offset == 0 and sid in excluded)
-            ):
+            if box[3] > lower and box[1] < upper and sid not in excluded:
                 ambiguous_flow |= offset == 0 and ambiguous_column_flow(
                     box, heading, columns
                 )

@@ -50,6 +50,7 @@ class SpatialBindings:
     grids_for_page: Any = field(default=None, repr=False, compare=False)
     tokens_for_page: Any = field(default=None, repr=False, compare=False)
     source_sections: tuple[dict, ...] = ()
+    numbered_cells: tuple = ()
 
     def ordered(self, active_cpds: list[str]) -> list[dict[str, Any]]:
         if not active_cpds:
@@ -342,6 +343,7 @@ def collect_spatial_bindings(
         grids_for_page,
         tokens_for_page,
         (*source_exclusions, *numbered.source_sections, *declaration_pages),
+        numbered.source_cells,
     )
 
 
