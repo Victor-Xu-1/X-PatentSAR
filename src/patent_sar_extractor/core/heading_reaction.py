@@ -52,7 +52,7 @@ def reaction_source_status(observation, scope, heading):
             "identity",
         }
         or type(observation["version"]) is not int
-        or observation["version"] != 1
+        or observation["version"] != 2
         or observation["status"] != "observed_native_reaction"
         or observation["original_pdf_sha256"] != heading["original_pdf_sha256"]
         or observation["declaration_scope_id"] != proof_id(scope)
@@ -90,7 +90,7 @@ def observe_reaction_source(document, scope, heading):
         for p in scope["pages"]
     ]
     observation = {
-        "version": 1,
+        "version": 2,
         "status": "observed_native_reaction",
         "original_pdf_sha256": heading["original_pdf_sha256"],
         "declaration_scope_id": proof_id(scope),

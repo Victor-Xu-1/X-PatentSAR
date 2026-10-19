@@ -27,14 +27,22 @@ synthetic inputs to replace normal frontend patent/SAR acceptance.
 
 ## A multi-drawing route under one original compound heading
 
-Current source capture can qualify an explicit native open-arrow route only
+Current source capture can qualify an explicit native open/opaque-filled-arrow route only
 when every diagram belongs to one complete directed graph with one terminal.
 The arrow can point left/up or turn between steps: page order and figure size
 are not product rules. Orphan drawings, reversible/cyclic routes, multiple
 terminals, obstructing raster/text or unsupported arrow ink remain unresolved.
 This does not install RxnScribe or another model and does not infer reaction roles
-from matching OCSR graphs. Raster/filled/curved arrows and unproved cross-page
+from matching OCSR graphs. Raster/curved/dashed arrows and unproved cross-page
 connectors still need separate validated capabilities; do not waive their QA.
+
+The filled-head reader preserves original triangular vertices, fill/outline ink
+and rendered-page coordinates, not a raster approximation. An attached explicit
+shaft is required. Solid wedges inside complete chemical drawings cannot become
+reaction arrows. Unattached triangles stay in source observations and block any
+intersecting arrow/connection; they never create a product by themselves. Exact
+overdrawing/closed outlines retain all source ink. Resource limits refuse excess
+instead of dropping observations to obtain a unique terminal.
 
 Heading evidence5 is derived source proof; old standalone evidence4 remains
 history. Normal source-plan reuse/final QA reopen the actual original vectors.
@@ -45,7 +53,7 @@ Web read-side acceptance requires the verified original attachment through the
 existing safe PDF reader. Removing or rehashing a source packet cannot disable
 that replay; missing original evidence withholds acceptance without repairing,
 resubmitting or changing a scientific artifact. Preserve failed/raw/manual data.
-Binding33/binder43 and SMILES4/QA6 invalidate only the derived source/observation
+Binding34/binder44 (native-vector2/native-route2) and SMILES4/QA6 invalidate only the derived source/observation
 proofs. Raw OCSR2/preparation8, original assets/model files and manual audit stay
 unchanged. The next PR label and coherent release scope are independently prepared;
 a development checkpoint is not a deployed upgrade. Synthetic native controls

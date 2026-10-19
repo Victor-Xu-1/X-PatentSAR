@@ -25,20 +25,32 @@ recall or proof that a syntactically valid SMILES matches its original image.
 
 ## Native reaction direction before product ownership
 
-Binding33/binder43 version this derived heading-role/source upgrade. SMILES4/QA6
+Binding34/binder44 version this derived heading-role/source upgrade. SMILES4/QA6
 separately version complete-image accounting. Raw OCSR2/preparation8, original
 assets, model weights, manual audit, numerical SAR and API-v1/SQL are unchanged;
-older Binding32/heading4/SMILES3/QA5 remain history, never retagged as current.
+older Binding33/native-vector1/native-route1 and earlier proofs remain history,
+never retagged as current.
 
 `reaction_vectors` conserves bounded original native paths in rendered PDF point
-coordinates. Text, raster content, fills, curves, clipping and unsupported strokes
-remain blocking observations; they cannot become missing ink. `reaction_arrows`
-requires an explicit shaft and two joined, opposite-side head strokes outside
+coordinates. `reaction_heads` conserves an opaque, dark, literal three-vertex
+fill and its actual outline. Other fills, curves, clipping, text, raster content
+and unsupported strokes remain blockers; they cannot become missing ink.
+`reaction_arrows` requires an explicit shaft and either two joined opposite-side
+head strokes or a geometrically attached original triangular fill, outside
 chemical drawing bounds. It does not rank figures by rightmost/last/largest
 position, model confidence or a known molecule's presence. Endpoint rays require
 one local unobstructed drawing. `reaction_graph` includes EVERY declaration
 candidate and observed arrow; orphan/cross-boundary figures, competing strokes,
 unconnected routes, cycles and multiple sinks refuse product ownership.
+
+Native-vector2/native-route2 retain every qualified fill, including chemical
+wedges in protected drawings and unattached symbols. A triangle alone supplies
+no direction. Unused ink still blocks intersecting arrows and connectors without
+vetoing an unrelated complete route. Exact separately painted/closed outlines
+and repeated identical fills conserve all original paint observations under one
+arrow; differing geometry and foreign strokes are not merged. PDF implicit fill
+closure never supplies a missing reaction shaft. Rendered-page rotation is the
+same coordinate authority for every original point.
 
 `heading_reaction` composes the same complete original declaration scope with
 this source packet. A qualified single literal compound heading and one complete
@@ -59,11 +71,22 @@ the SAME replay through the existing verified `open_pdf` attachment reader; a ha
 argument alone, missing original, self-rehashed packet or foreign native ink cannot
 supply acceptance. This is bounded source interpretation, not another model,
 execution queue, raw cache, API/SQL migration or scientific correctness claim.
-Bounds are256 diagrams per route,512 arrows and20000 segments/10000 blockers per
+Bounds are256 diagrams per route,512 arrows,2048 triangular fills and20000 segments/10000 blockers per
 page within the existing64-page/one-MiB declaration evidence limits. Overflow is
-explicit refusal, not truncation. Filled/curved/dashed or raster reaction arrows,
+explicit refusal, not truncation. Curved/dashed or raster reaction arrows,
 unproved page connectors and unsupported reaction roles remain unresolved. Native
 synthetic controls do not establish real patent coverage or chemical accuracy.
+
+RxnScribe remains a separately authorized experimental role candidate, not an
+installed default dependency or source-proof authority. Its public/synthetic
+CPU evaluation is external to this repository, including exact upstream/model
+revisions, dependency/wheel hashes and the isolated lazy-loading changes. Those
+controls show useful role proposals but also missed/extra steps and unaccounted
+isolated drawings. A model cannot replace the independent complete source
+inventory, literal identifier association, original chemical graph checks or
+final acceptance. No model weight, public evaluation image, private patent or
+derived scientific product is committed here. DECIMER remains primary OCSR;
+there is no new default queue, resident model or local LLM.
 
 ## Complete detected-image observations, before chemical identity admission
 

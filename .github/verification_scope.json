@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "base_sha": "47f048ef07670d396e660607f711680c2f713fb1",
+  "base_sha": "f14d991e479fea24185cb2051536c7108e659adb",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
@@ -9,21 +9,28 @@
     "frontend/package-lock.json",
     "frontend/package.json",
     "src/patent_sar_extractor/contracts.py",
-    "src/patent_sar_extractor/core/ocsr/config.yaml",
-    "src/patent_sar_extractor/core/ocsr/run_smiles.py",
-    "src/patent_sar_extractor/core/ocsr/smiles_converter.py",
-    "tests/test_observation_completion.py",
-    "tests/test_ocsr_gold.py",
-    "tests/test_raw_ocsr_observations.py"
+    "src/patent_sar_extractor/core/heading_reaction.py",
+    "src/patent_sar_extractor/core/reaction_arrows.py",
+    "src/patent_sar_extractor/core/reaction_filled_arrows.py",
+    "src/patent_sar_extractor/core/reaction_graph.py",
+    "src/patent_sar_extractor/core/reaction_heads.py",
+    "src/patent_sar_extractor/core/reaction_vectors.py",
+    "tests/native_reaction_consumers.py",
+    "tests/native_reaction_support.py",
+    "tests/test_filled_reaction_heading.py",
+    "tests/test_native_reaction_heading.py"
   ],
   "python_modules": [
-    "tests.test_raw_ocsr_observations",
-    "tests.test_observation_completion",
-    "tests.test_ocsr_gold",
-    "tests.test_ocsr_label_preservation",
-    "tests.test_source_stereochemistry",
-    "tests.test_decimer_process",
-    "tests.test_uniform_recognition"
+    "tests.test_filled_reaction_heading",
+    "tests.test_native_reaction_heading",
+    "tests.test_heading_document_span",
+    "tests.test_heading_column_scope",
+    "tests.test_heading_reprint_sources",
+    "tests.test_source_epoch_guards",
+    "tests.test_core_recognition_source",
+    "tests.test_candidate_stage",
+    "tests.test_candidate_observations",
+    "tests.test_web_acceptance"
   ],
   "frontend_tests": [],
   "browser_tests": []

@@ -4,6 +4,7 @@ import math
 from collections import defaultdict, deque
 
 from .reaction_arrows import contained, segment_bounds, vector_arrows
+from .reaction_heads import head_bounds
 from .reaction_vectors import validate_vectors
 from .source_geometry import overlaps
 
@@ -77,6 +78,15 @@ def _page_edges(observation, diagrams, protected_regions):
                 for i, segment in enumerate(observation["segments"])
             ):
                 raise ValueError("Native arrow connection has competing source strokes")
+            if any(
+                i not in arrow["heads"]
+                and overlaps(connector, head_bounds(head))
+                and not any(contained(head_bounds(head), d["bbox"]) for d in diagrams)
+                for i, head in enumerate(observation["filled_heads"])
+            ):
+                raise ValueError(
+                    "Native arrow connection has competing filled source ink"
+                )
         edges.append((start, end))
     return edges
 
