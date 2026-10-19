@@ -13,6 +13,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 from patent_sar_extractor.application.smiles_policy import _smiles_acceptance_errors
+from patent_sar_extractor.core.caption_source_windows import caption_read_window
 from patent_sar_extractor.core.ocsr.label_mask import MAX_BYTES, source_geometry
 from patent_sar_extractor.core.ocsr.run_smiles import (
     resolve_image_paths,
@@ -73,7 +74,11 @@ class OCSRLabelPreservationTests(unittest.TestCase):
     def test_bare_native_number_does_not_invent_original_caption_role(self):
         item = self.proven()
         item["exact_caption_evidence"]["observations"] = [
-            {"method": "native_cell", "text": "38"}
+            {
+                "method": "native_cell",
+                "text": "38",
+                "bbox": list(item["exact_caption_evidence"]["reading_bbox"]),
+            }
         ]
         original = self.image.read_bytes()
         output, info = _mask_visible_label_for_ocsr(
@@ -96,6 +101,7 @@ class OCSRLabelPreservationTests(unittest.TestCase):
         self.assertEqual(prepared["stereo_evidence"]["image_sha256"], expected)
 
     def proven(self, label="38"):
+        """Declared source carrier; the mask mutation checks use actual PNG pixels."""
         item = self.drawing(label)
         item["cpd"] = f"Compound {label}"
         item["visible_label"] = label
@@ -109,10 +115,19 @@ class OCSRLabelPreservationTests(unittest.TestCase):
             "bbox": [0, 0, 260, 120],
         }
         item["_ocsr_source_geometry"] = source_geometry(record, str(self.image))
+        reading = list(caption_read_window(bounds, (260, 120)))
         item["exact_caption_evidence"] = {
             "page_no": 1,
             "bbox": list(bounds),
-            "observations": [{"method": "native_cell", "text": f"Compound {label}"}],
+            "reading_bbox": reading,
+            "ownership": {},
+            "observations": [
+                {
+                    "method": "native_cell",
+                    "text": f"Compound {label}",
+                    "bbox": list(reading),
+                }
+            ],
         }
         return item
 
@@ -162,11 +177,21 @@ class OCSRLabelPreservationTests(unittest.TestCase):
             ("_ocsr_source_geometry", "bbox", [0, 0, float("nan"), 120]),
             ("exact_caption_evidence", "page_no", 2),
             ("exact_caption_evidence", "page_no", True),
+            ("exact_caption_evidence", "reading_bbox", None),
+            ("exact_caption_evidence", "reading_bbox", [True, 0, 260, 120]),
             ("exact_caption_evidence", "bbox", [0, 0, 500, 120]),
             (
                 "exact_caption_evidence",
                 "observations",
-                [{"method": "native_cell", "text": "Compound 39"}],
+                [
+                    {
+                        "method": "native_cell",
+                        "text": "Compound 39",
+                        "bbox": list(
+                            original["exact_caption_evidence"]["reading_bbox"]
+                        ),
+                    }
+                ],
             ),
         )
         for field, key, value in mutations:
@@ -247,13 +272,19 @@ class OCSRLabelPreservationTests(unittest.TestCase):
             "exact_caption_evidence": {
                 "page_no": 1,
                 "bbox": list(caption[:4]),
-                "observations": [{"method": "native_cell", "text": caption[4].strip()}],
+                "reading_bbox": list(caption_read_window(caption[:4], (500, 120))),
+                "ownership": {},
+                "observations": [
+                    {
+                        "method": "native_cell",
+                        "text": caption[4].strip(),
+                        "bbox": list(caption_read_window(caption[:4], (500, 120))),
+                    }
+                ],
             },
         }
         if physical:
-            bounds = list(caption[:4])
-            bounds[1] -= 2
-            bounds[3] += 2
+            bounds = list(caption_read_window(caption[:4], (500, 120)))
             reading = read_cell(page, bounds, [], "label", False)
             self.assertEqual(reading.value, "123AB", reading.observations)
             self.assertFalse(reading.needs_review)
@@ -264,7 +295,7 @@ class OCSRLabelPreservationTests(unittest.TestCase):
                 )
             )
             item["exact_caption_evidence"].update(
-                bbox=bounds, observations=reading.observations
+                reading_bbox=bounds, observations=reading.observations
             )
         resolved = resolve_image_paths([item], str(self.root / "structure_bindings"))[0]
         self.assertIn("_ocsr_source_geometry", resolved)
@@ -334,6 +365,10 @@ class OCSRLabelPreservationTests(unittest.TestCase):
         record = self.recognition_record(binding)
         changed = copy.deepcopy(record)
         changed["ocsr_label_mask_proof"]["caption"]["bbox"] = [120, 50, 134, 60]
+        moved = changed["ocsr_label_mask_proof"]["caption"]
+        moved["reading_bbox"] = list(caption_read_window(moved["bbox"], (260, 120)))
+        for reading in moved["observations"]:
+            reading["bbox"] = list(moved["reading_bbox"])
         changed["ocsr_label_mask_bbox"] = [119, 49, 135, 61]
         # This is internally consistent but disagrees with original saved source.
         validate_stereo_record(changed)
@@ -417,6 +452,11 @@ class OCSRLabelPreservationTests(unittest.TestCase):
                     },
                     str(self.image),
                 )
+                reading = list(
+                    caption_read_window(
+                        list(bounds), (page.rect.width, page.rect.height)
+                    )
+                )
                 item = {
                     "cpd": "Example I-073AB",
                     "structure_id": "source-a",
@@ -425,8 +465,14 @@ class OCSRLabelPreservationTests(unittest.TestCase):
                     "exact_caption_evidence": {
                         "page_no": 1,
                         "bbox": list(bounds),
+                        "reading_bbox": reading,
+                        "ownership": {},
                         "observations": [
-                            {"method": "native_cell", "text": caption[4].strip()}
+                            {
+                                "method": "native_cell",
+                                "text": caption[4].strip(),
+                                "bbox": list(reading),
+                            }
                         ],
                     },
                 }

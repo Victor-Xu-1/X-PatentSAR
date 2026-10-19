@@ -3,6 +3,7 @@
 import hashlib
 
 from .caption_binding_proof import valid_caption_binding_evidence
+from .caption_source_windows import original_caption_read_window
 from .caption_word_observation import replay_caption_word_form
 from .caption_word_proof import WORD_FORM_METHOD
 from .cell_frame_proof import valid_cell_frame
@@ -29,8 +30,11 @@ def original_caption_source_errors(document, bindings):
             if not valid_caption_binding_evidence(binding):
                 raise ValueError("Original caption assignment is invalid")
             packet = binding["exact_caption_evidence"]
-            page_no, bounds = packet["page_no"], packet["bbox"]
+            page_no = packet["page_no"]
             page = document[page_no - 1]
+            bounds = original_caption_read_window(
+                packet, (page.rect.width, page.rect.height)
+            )
             observations = packet["observations"]
             for observation in observations:
                 if observation.get("method") == WORD_FORM_METHOD:
@@ -69,9 +73,14 @@ def original_caption_source_errors(document, bindings):
                     original = source_cell_observation(
                         SourceTokens(layout.native, layout), tuple(bounds), native=True
                     )
-                    if original["text"] != observation.get(
-                        "text"
-                    ) or not visible_native_tokens(page, original):
+                    if (
+                        original["text"] != observation.get("text")
+                        or not visible_native_tokens(page, original)
+                        or (
+                            "source_observation" in observation
+                            and observation["source_observation"] != original
+                        )
+                    ):
                         raise ValueError(
                             "Original native caption text is missing, changed or covered"
                         )

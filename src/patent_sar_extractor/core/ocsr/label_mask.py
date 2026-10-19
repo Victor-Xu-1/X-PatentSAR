@@ -12,6 +12,7 @@ from PIL import Image, ImageDraw
 
 from patent_sar_extractor.contracts import OCSR_PREPARATION_VERSION
 from patent_sar_extractor.core.caption_reading_proof import confirmed_caption_readings
+from patent_sar_extractor.core.caption_source_windows import caption_windows
 from patent_sar_extractor.core.printed_identifiers import identifier_key
 
 from .image_preprocess import publish_png
@@ -151,6 +152,7 @@ def _caption_box(item, label, frame, image_size, digest):
     ownership = caption.get("ownership", {})
     if (
         not label_box
+        or caption_windows(caption) is None
         or not isinstance(observations, list)
         or not confirmed_caption_readings(
             label, observations, ownership, item["page_no"], label_box

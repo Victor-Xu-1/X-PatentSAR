@@ -348,6 +348,25 @@ arbitrary-patent chemical accuracy. Continue real acceptance through the fronten
 after the coherent repair set; do not manually fill structures or rerun only
 because a partial source release is available.
 
+## Caption locator versus original recognition window
+
+Current Binding42/binder52 captions retain two explicit scopes: `bbox` locates
+the printed ID for ownership, while required `reading_bbox` records the actual
+window used by all retained attempts. Loose-caption padding remains4points with
+exact original-page clipping; ruled table captions keep the original cell.
+The normal producer records these facts before writing. Never repair an old
+artifact by copying a chosen reading's bbox into it or by enlarging ownership.
+
+Saved/native/optical source replay and OCSR label cleanup share this geometry
+gate. Missing, mixed, malformed, moved and wrongly clipped frames remain invalid;
+readback does not call OCR. Cleanup uses only the original tight isolated caption
+anchor, not its larger reading window, and must preserve nearby bonds/atoms.
+Old source proof remains historical; the normal producer regenerates stale
+derived bindings only through an explicit frontend task. Raw files, observations,
+manual audit, activity/numerical policies, API/SQL and dependencies do not change.
+A geometry repair alone does not resolve unrelated source-role, assay-continuation
+or chemical-identity failures and is not full scientific acceptance.
+
 ## A heading and its structure on different pages
 
 The shared binder now examines the consecutive original declaration window,
@@ -389,7 +408,7 @@ unknown or borrowed header, unowned rival and boundary-crossing diagrams retain
 their obligations. Without a proved partition, a full-width logical region is
 not silently split. A later table does not lend the previous page's coordinates.
 
-Heading-structure6/Binding41/binder51 refresh derived proof only. Original replay
+Heading-structure6/Binding42/binder52 refresh derived proof only. Original replay
 checks the actual native line inventory, original grids and400/600dpi title/cell
 frames; cached source observations do not prove OCR semantics or chemical identity.
 Readback never starts OCR. Long physical-text carriers use the same full-frame
@@ -449,7 +468,7 @@ remain separate from complete real frontend extraction/SAR and chemical accuracy
 
 ## Large binding evidence without dropped records
 
-Current bindings41/binder51 retain one complete `compound_catalog.entries`
+Current bindings42/binder52 retain one complete `compound_catalog.entries`
 collection, with no root `final_bindings` or `bindings` copies. All scientific
 and presentation consumers use the bounded common accessor; a competing current
 collection or contradictory count is invalid, not a success/partial-cache

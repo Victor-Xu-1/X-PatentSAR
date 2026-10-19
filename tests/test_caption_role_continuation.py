@@ -90,6 +90,7 @@ def binding(pair):
         },
         "exact_caption_evidence": {
             "bbox": list(pair["label_bbox"]),
+            "reading_bbox": list(pair["label_bbox"]),
             "page_no": pair["label_page_no"],
             "observations": pair["observations"],
             "ownership": pair["ownership"],

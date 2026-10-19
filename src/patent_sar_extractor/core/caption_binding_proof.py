@@ -5,12 +5,13 @@ from collections.abc import Mapping
 
 from .caption_page_boundary import valid_caption_page_boundary
 from .caption_reading_proof import confirmed_caption_readings
+from .caption_source_windows import caption_windows
 from .numbered_structure_pairs import _box, _label
 
 
 def valid_caption_binding_evidence(binding):
     packet = binding.get("exact_caption_evidence")
-    if not isinstance(packet, Mapping):
+    if not isinstance(packet, Mapping) or caption_windows(packet) is None:
         return False
     label = _label(binding.get("cpd") or binding.get("compound_id"))
     diagram_page, label_page = binding.get("page_no"), packet.get("page_no")
