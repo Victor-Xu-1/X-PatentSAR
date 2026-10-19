@@ -6,6 +6,8 @@ from itertools import pairwise
 
 import fitz
 
+from .role_grid_windows import role_grid_shape
+
 
 def _frame_bounds(frame, page_size, has_rules):
     if frame is None and not has_rules:
@@ -37,7 +39,10 @@ def _numbers(values, size, *, increasing=False):
     return (
         isinstance(values, list)
         and len(values) == size
-        and all(type(v) in {int, float} and math.isfinite(v) for v in values)
+        and all(
+            type(v) in {int, float} and -100000 <= v <= 100000 and math.isfinite(v)
+            for v in values
+        )
         and (not increasing or all(b > a for a, b in pairwise(values)))
     )
 
@@ -68,7 +73,7 @@ def edge_intervals(packet):
         or not 3 <= len(xs) <= 65
         or not _numbers(xs, len(xs), increasing=True)
         or not isinstance(ys, list)
-        or not 2 <= len(ys) <= 97
+        or role_grid_shape(xs, ys) is None
         or not _numbers(ys, len(ys), increasing=True)
         or not 0 <= xs[0] < xs[-1] <= size[0]
         or not 0 <= ys[0] < ys[-1] <= size[1]

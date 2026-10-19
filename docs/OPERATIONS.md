@@ -1,5 +1,35 @@
 # Operations and troubleshooting
 
+## A saved ordinary characterization table lacks original readback
+
+Current role4 optical cells retain `source_frame` from the same producer render.
+Native and ordinary OCR observations, accepted or rejected, now enter the same
+role inventory as auxiliary observations. Open-row fragments conserve their
+existing separate rendered frames through a call-local adapter, not rewritten
+artifacts. Every actual original page must be available. Changed pixels/native
+words, missing frames, foreign pages or clipping windows refuse. Readback never
+starts OCR, an OCSR engine or an LLM. Known scientific conflicts remain failures.
+
+The original edge ledger now shares the bounded whole-grid shape validator; it
+cannot reject an otherwise admitted table using an old97-axis limit. This is not
+permission to raise96cell work units, ignore open rows, truncate an inventory or
+invent missing records. The existing shared source-cell bound still fails
+explicitly if exceeded; larger held-out datasets need bounded full-coverage
+engineering rather than a saved-complete flag.
+
+Use role-original replay/consumer/boundary/Web regressions and the related role,
+fragment, binding, activity, epoch and export consumers. The synthetic Web path
+uses normal binder output and worker-plan validation for both native and scanned
+role pages; a controlled molecular record is not OCSR accuracy evidence. Only
+changed/directly related checks are authorized, not global tests.
+
+Binding45/binder55, Activity28/extractor38, role4 invalidate derived checkpoints.
+Preserve old sources/tasks/human revisions and matching code/config/state
+rollback; never relabel a historical packet. Formal real-patent extraction/SAR
+must still be submitted from the existing frontend after coherent source/assay
+repairs and exact-main deployment. This source closure alone is not full
+scientific acceptance or authorization for private CLI processing.
+
 ## Weak complete source text in role tables
 
 The same on-demand ordinary OCR can refine unresolved complete role cells.

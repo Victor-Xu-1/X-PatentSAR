@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .activity_header_layout_proof import physical_discovery_views
 from .cell_frame_proof import original_cell_frame_matches
+from .role_original_replay import original_role_source_errors
 from .role_text_sources import role_text_cells
 from .source_evidence_identity import proof_id
 from .text_ocr.cell_proof import replay_auxiliary_cell
@@ -83,12 +84,16 @@ def original_activity_source_errors(
     """A saved consensus never substitutes for the actual immutable original."""
     columns = list(auxiliary_columns(payload))
     primary = list(original_discovery_columns(payload))
-    if not columns and not primary:
+    role_sources = list(role_text_cells(payload))
+    if not columns and not primary and not role_sources:
         return []
     if open_original is None:
-        return ["Original PDF is required for auxiliary activity text replay."]
+        return ["Original PDF is required for activity text replay."]
     try:
         with open_original() as document:
+            role_errors = original_role_source_errors(document, role_sources)
+            if role_errors:
+                return role_errors
             for page_no, column in primary:
                 if page_no > len(document) or not original_cell_frame_matches(
                     column, document[page_no - 1]

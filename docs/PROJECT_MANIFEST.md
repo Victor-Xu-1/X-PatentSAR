@@ -1,5 +1,21 @@
 # Project governance manifest
 
+- Complete ordinary-role authority: `role_text_sources` inventories the same
+  native/optical/auxiliary role owners and their explicit open-row carriers.
+  `role_original_replay` composes literal native/raster-ownership checks and the
+  existing full cell-frame/chunk replayer; auxiliary packets remain governed by
+  their sole existing replayer. The normal complete-role observer captures each
+  optical frame from its existing render, not a second parser/model. Fragment
+  frames adapt call-locally without persisted duplication or changed roles.
+  Binding plans/worker/QA/Web and activity keep all sources separate from molecule
+  work. Role4 requires optical frames; source_grid_edges reuses the same bounded
+  whole-grid shape instead of its obsolete97-axis limit. Current derived proof:
+  Binding45/binder55, Activity28/extractor38, role4. Raw sources/OCR/OCSR2,
+  preparation12/assets/manual audit, numerical SAR, API/SQL, model/runtime policy
+  and dependencies stay unchanged. No new verification cache/queue/store, read-
+  side model or historical scientific promotion. Larger source inventories still
+  require complete bounded work, never truncation or bypassed acceptance.
+
 - Complete auxiliary text authority: `text_ocr/recovery_capture` and
   `recovery_proof` compose the SAME physical text observer through one row-only
   live/cached adapter. Recovery2 is the only current producer; recovery1 is

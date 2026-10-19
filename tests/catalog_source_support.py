@@ -27,6 +27,7 @@ def original_catalogue(
     molecule=None,
     raster=False,
     token_reader=None,
+    extra_pages=None,
 ):
     """Produce original source proofs, not copies with renamed crop IDs."""
     source = source or root / "catalog-original.pdf"
@@ -87,13 +88,17 @@ def original_catalogue(
                         "image_path": str(image),
                     }
                 )
+        if extra_pages is not None:
+            extra_pages(document)
+        page_count = len(document)
         if raster:
-            pixels = document[0].get_pixmap(matrix=fitz.Matrix(3, 3), alpha=False)
             with fitz.open() as flattened:
-                page = flattened.new_page(
-                    width=document[0].rect.width, height=document[0].rect.height
-                )
-                page.insert_image(page.rect, stream=pixels.tobytes("png"))
+                for original in document:
+                    pixels = original.get_pixmap(matrix=fitz.Matrix(3, 3), alpha=False)
+                    page = flattened.new_page(
+                        width=original.rect.width, height=original.rect.height
+                    )
+                    page.insert_image(page.rect, stream=pixels.tobytes("png"))
                 flattened.save(source)
         else:
             document.save(source)
@@ -104,14 +109,15 @@ def original_catalogue(
         structures=records,
         total_structures=len(records),
         source_inventory=inventory_packet(
-            1,
+            page_count,
             [
                 {
-                    "page_no": 1,
+                    "page_no": number,
                     "status": "detected",
                     "scope": "full_page",
-                    "candidates": len(records),
+                    "candidates": len(records) if number == 1 else 0,
                 }
+                for number in range(1, page_count + 1)
             ],
         ),
     )
@@ -122,7 +128,7 @@ def original_catalogue(
             "structures",
             pdf_path=str(source),
             params={
-                "structure_pages": [0],
+                "structure_pages": list(range(page_count)),
                 "structure_worker_contract_version": STRUCTURE_WORKER_VERSION,
             },
         ),

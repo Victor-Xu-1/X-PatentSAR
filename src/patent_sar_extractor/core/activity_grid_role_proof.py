@@ -10,6 +10,7 @@ from .activity_grid_roles import (
     declared_measurement,
 )
 from .activity_headers import context_from_text
+from .cell_frame_proof import valid_cell_frame
 from .cell_text_chunk_proof import text_detection_parts
 from .cell_text_proof import valid_text_reading
 from .role_grid_windows import valid_role_windows
@@ -27,7 +28,7 @@ def valid_role_scope(record):
         "observations",
     } | (
         {"work_windows"}
-        if proof.get("version") in (2, CHARACTERIZATION_ROLE_SCHEMA_VERSION)
+        if proof.get("version") in (2, 3, CHARACTERIZATION_ROLE_SCHEMA_VERSION)
         else set()
     ):
         return False
@@ -129,7 +130,8 @@ def valid_role_scope(record):
                                 "auxiliary_text_attempts",
                                 "detector_conflict",
                             }
-                            if proof["version"] == CHARACTERIZATION_ROLE_SCHEMA_VERSION
+                            if proof["version"]
+                            in (3, CHARACTERIZATION_ROLE_SCHEMA_VERSION)
                             else set()
                         ),
                     }
@@ -153,6 +155,10 @@ def valid_role_scope(record):
                     or cell.get("coordinate_space") != "original_pdf_points"
                     or cell.get("render_dpi") != int(method[9:12])
                     or cell.get("detector_conflict", False) is not False
+                    or proof["version"] == CHARACTERIZATION_ROLE_SCHEMA_VERSION
+                    and not valid_cell_frame(
+                        cell.get("source_frame"), cell, cell["bbox"], int(method[9:12])
+                    )
                     or not isinstance(cell.get("raw_text"), str)
                     or cell["raw_text"] != cell["text"]
                     or not isinstance(cell.get("parts"), list)
