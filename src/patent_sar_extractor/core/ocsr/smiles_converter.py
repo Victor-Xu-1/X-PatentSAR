@@ -25,6 +25,8 @@ from .smiles_cache import SmilesCache, compute_image_sha256
 from .smiles_qc import COMMON_FINAL_PRODUCT_ELEMENTS, qc_smiles
 from .stereo_evidence import observe_stereo_symbols, source_checked_qc
 
+DEFAULT_EXTRA_PREPROCESS = False
+
 
 def _qc_ocr_smiles(raw_smiles: str | None) -> tuple[str | None, dict, bool]:
     """Observe the exact engine string; syntactic/chemical edits are forbidden."""
@@ -127,11 +129,11 @@ class SmilesConverter:
 
     Workflow for each bound structure:
     1. Check if structure is bound and image exists
-    2. Optionally preprocess the image
+    2. Preserve the source pixels by default; the verified SDK prepares its input
     3. Compute image hash for caching
     4. Try configured engine list
     5. Apply RDKit QC to each raw SMILES
-    6. Stop at first rdkit_valid=True result
+    6. Require clean molecular and source-symbol QC (not proof of exact chemistry)
     7. Record all engine attempts
     """
 
@@ -140,7 +142,7 @@ class SmilesConverter:
         engines: list[str],
         fallback_engines: list[str],
         cache_path: str = "",
-        preprocess: bool = True,
+        preprocess: bool = DEFAULT_EXTRA_PREPROCESS,
         timeout: int = 60,
         preprocess_long_edge: int = 1024,
         preprocess_padding: int = 20,
@@ -153,7 +155,8 @@ class SmilesConverter:
             engines: List of primary engine names (tried in order).
             fallback_engines: List of fallback engine names.
             cache_path: Path to SQLite cache file. Empty string disables caching.
-            preprocess: Whether to preprocess images before OCSR.
+            preprocess: Explicit extra lossy normalization before SDK preprocessing.
+                        Disabled by default, as in the formal coordinator.
             timeout: Timeout in seconds per prediction per engine (default: 60).
             preprocess_long_edge: Target long edge for preprocessing.
             preprocess_padding: Padding for preprocessing.

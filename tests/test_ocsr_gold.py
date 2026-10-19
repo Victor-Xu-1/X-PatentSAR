@@ -12,6 +12,7 @@ import unittest
 from pathlib import Path
 
 from patent_sar_extractor.core.ocsr.engines.decimer_engine import DECIMEREngine
+from patent_sar_extractor.core.ocsr.smiles_converter import SmilesConverter
 
 GOLD = (
     "CCO",
@@ -28,6 +29,35 @@ GOLD = (
     "Real DECIMER oracle requires an explicitly configured scientific runtime",
 )
 class OCSROracleTests(unittest.TestCase):
+    def test_default_converter_retains_the_declared_halogen_graph(self):
+        from rdkit import Chem
+        from rdkit.Chem import Draw
+
+        expected = Chem.MolFromSmiles("Fc1ccc(Cl)cc1")
+        converter = SmilesConverter(["decimer"], [], timeout=180)
+        self.addCleanup(converter.close)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            image = root / "original.png"
+            Draw.MolToImage(expected, size=(700, 500)).save(image)
+            original = image.read_bytes()
+            result = converter.convert_one(
+                {
+                    "cpd": "Example 17",
+                    "structure_id": "synthetic-halogen-control",
+                    "image_path": str(image),
+                    "page_no": 1,
+                },
+                preprocess_dir=str(root / "prepared"),
+            )
+            self.assertEqual(result["OCSR_status"], "success", result)
+            self.assertEqual(
+                result["canonical_smiles"],
+                Chem.MolToSmiles(expected, isomericSmiles=True),
+            )
+            self.assertEqual(result["ocsr_structure_image"], str(image))
+            self.assertEqual(image.read_bytes(), original)
+
     def test_actual_model_matches_declared_atom_bond_and_stereo_truth(self):
         from rdkit import Chem
         from rdkit.Chem import Draw

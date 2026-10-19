@@ -24,7 +24,7 @@ class RawOCSRObservationTests(unittest.TestCase):
         canvas.save(image)
         return {"cpd": "Compound 1", "structure_id": "S0001", "image_path": str(image)}
 
-    def converter(self, outputs, *, cache="", retry=False):
+    def converter(self, outputs, *, cache="", retry=False, preprocess=False):
         calls = []
 
         class BoundaryEngine:
@@ -43,14 +43,45 @@ class RawOCSRObservationTests(unittest.TestCase):
                 }
 
         with patch.dict(converter_module.ENGINE_MAP, {"decimer": BoundaryEngine}):
+            options = {} if preprocess is None else {"preprocess": preprocess}
             converter = converter_module.SmilesConverter(
                 ["decimer"],
                 [],
                 cache_path=cache,
-                preprocess=False,
                 retry_normalization=retry,
+                **options,
             )
         return converter, calls
+
+    def test_default_converter_preserves_pixels_for_the_sdk_preprocessor(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            item = self.fixture(root)
+            original = Path(item["image_path"]).read_bytes()
+            converter, calls = self.converter(["CCO"], preprocess=None)
+            result = converter.convert_one(item, preprocess_dir=str(root / "inputs"))
+            self.assertEqual(calls, [item["image_path"]])
+            self.assertEqual(result["ocsr_structure_image"], item["image_path"])
+            self.assertEqual(
+                result["engine_attempts"][0]["input_image_sha256"],
+                compute_image_sha256(item["image_path"]),
+            )
+            self.assertEqual(Path(item["image_path"]).read_bytes(), original)
+            self.assertFalse(list((root / "inputs").glob("*_preprocessed.png")))
+
+    def test_explicit_presentation_normalization_is_not_a_default_or_cached_alias(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            item = self.fixture(root)
+            original = Path(item["image_path"]).read_bytes()
+            converter, calls = self.converter(["CCO"], preprocess=True)
+            result = converter.convert_one(item, preprocess_dir=str(root / "inputs"))
+            self.assertNotEqual(calls, [item["image_path"]])
+            self.assertNotEqual(
+                result["engine_attempts"][0]["input_image_sha256"],
+                result["image_hash"],
+            )
+            self.assertEqual(Path(item["image_path"]).read_bytes(), original)
 
     def test_legacy_clean_cache_has_no_raw_provenance_and_is_not_promoted(self):
         with tempfile.TemporaryDirectory() as temporary:

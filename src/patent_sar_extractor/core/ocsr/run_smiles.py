@@ -61,7 +61,10 @@ from patent_sar_extractor.core.ocsr.recognition_policy import (
     validate_strict_smiles_results,
 )
 from patent_sar_extractor.core.ocsr.recognition_source_paths import resolve_image_paths
-from patent_sar_extractor.core.ocsr.smiles_converter import SmilesConverter
+from patent_sar_extractor.core.ocsr.smiles_converter import (
+    DEFAULT_EXTRA_PREPROCESS,
+    SmilesConverter,
+)
 from patent_sar_extractor.core.pipeline_rules import (
     _label_key,
     annotate_binding_accuracy,
@@ -248,16 +251,18 @@ def main():
         default="",
         help="SQLite cache path (default: auto-generated)",
     )
-    parser.add_argument(
+    preparation = parser.add_mutually_exclusive_group()
+    preparation.add_argument(
         "--preprocess",
         action="store_true",
-        default=True,
-        help="Enable image preprocessing (default: True)",
+        default=DEFAULT_EXTRA_PREPROCESS,
+        help="Opt in to extra lossy normalization before the SDK's own preprocessing",
     )
-    parser.add_argument(
+    preparation.add_argument(
         "--no-preprocess",
-        action="store_true",
-        help="Disable image preprocessing",
+        dest="preprocess",
+        action="store_false",
+        help="Preserve source pixels before SDK preprocessing (default)",
     )
     parser.add_argument(
         "--retry-normalization",
@@ -341,8 +346,9 @@ def main():
             f"and fallback entries. requested={requested}"
         )
 
-    # Handle preprocess flags
-    preprocess = args.preprocess and not args.no_preprocess
+    # One policy/flag value: the default preserves the same input as the
+    # coordinator, with the SDK owning its required image transforms.
+    preprocess = args.preprocess
     only_bound = args.only_bound and not args.include_unbound
 
     # Auto-generate output paths

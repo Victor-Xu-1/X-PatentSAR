@@ -1,5 +1,28 @@
 # X-PatentSAR architecture
 
+## One source-preserving recognition default
+
+`smiles_converter.DEFAULT_EXTRA_PREPROCESS` is the shared/standalone default.
+It preserves the model-source pixels after any separately proved caption mask;
+the verified DECIMER SDK performs its own required input transforms. The formal
+coordinator and existing-record completion already explicitly selected this
+policy. The constructor and standalone worker now agree with them instead of
+silently adding a second Otsu/resize transform. The unused OCSR `config.yaml`
+template was not loaded by any consumer and has been removed; it is not another
+configuration authority. Operator `--preprocess` remains an explicit extra lossy
+presentation transform, mutually exclusive with `--no-preprocess`. Existing
+same-engine bounded normalization retry and exact-input raw-cache keys remain
+unchanged. Neither path edits atoms/bonds or chooses a graph from expected data.
+
+No raw/model/source/manual/acceptance epoch changes: the formal path already
+preserved these pixels, and actual derivative images have separate exact hashes.
+The real opt-in halogen oracle in `test_ocsr_gold` detects the former duplicate
+normalization regression. Its original six-molecule exact-graph oracle still
+contains an unresolved ethanol failure. Orthogonal image rotations also cause
+real element/ring/stereo errors on that controlled corpus; rotation voting is
+not a correction policy. These controls are not all-patent accuracy, detector
+recall or proof that a syntactically valid SMILES matches its original image.
+
 ## Native reaction direction before product ownership
 
 Binding33/binder43 version this derived heading-role/source upgrade. SMILES4/QA6

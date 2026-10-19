@@ -128,7 +128,6 @@ class ObservationCompletionTests(unittest.TestCase):
             str(output.with_suffix(".csv")),
             "--cache",
             str(output.with_suffix(".sqlite")),
-            "--no-preprocess",
             *extra,
         ]
         if continuation:
@@ -145,10 +144,31 @@ class ObservationCompletionTests(unittest.TestCase):
             )
         with (
             patch.object(sys, "argv", argv),
-            patch.object(run_smiles, "SmilesConverter", return_value=converter),
+            patch.object(
+                run_smiles, "SmilesConverter", return_value=converter
+            ) as constructor,
         ):
             run_smiles.main()
+        self.converter_options = constructor.call_args.kwargs
         return output, converter
+
+    def test_standalone_default_uses_the_same_unmodified_input_policy(self):
+        self._cli()
+        self.assertIs(self.converter_options["preprocess"], False)
+
+    def test_explicit_legacy_disable_matches_the_unmodified_default(self):
+        self._cli(extra=("--no-preprocess",))
+        self.assertIs(self.converter_options["preprocess"], False)
+
+    def test_explicit_normalization_remains_an_operator_choice(self):
+        self._cli(extra=("--preprocess",))
+        self.assertIs(self.converter_options["preprocess"], True)
+
+    def test_conflicting_preparation_flags_are_refused_before_output(self):
+        with self.assertRaises(SystemExit) as stopped:
+            self._cli(extra=("--preprocess", "--no-preprocess"))
+        self.assertEqual(stopped.exception.code, 2)
+        self.assertFalse((self.root / "worker-output").exists())
 
     def _review_records(self):
         records = copy.deepcopy(self.records)
