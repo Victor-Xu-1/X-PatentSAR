@@ -1,5 +1,24 @@
 # X-PatentSAR architecture
 
+## Complete ordinary activity source replay
+
+`activity_auxiliary_replay.measurement_text_cells` owns one inventory for final
+and discovery headers plus accepted/unresolved row cells. Every ordinary optical
+entry uses the existing model-free `original_cell_frame_matches`; paired
+auxiliary packets and role cells retain their existing independent replay paths.
+Optical markers cannot disappear through a method-only relabel. Equal repeated
+observations replay once in the call-local bounded inventory (1,000,000 ordinary
+cells, independently of the sparse auxiliary/model-request budget). Native/page-token
+observations are not fabricated into optical crops. This reuses recorded frames
+and does not recognize text, write scientific outputs or certify literal accuracy.
+
+Activity34/extractor44 refresh affected derived proof through normal frontend
+resume. Binding49/binder59, role5/recovery4, coverage18, raw OCR/OCSR/preparation,
+manual audit, API/SQL/SAR numerical/graph rules and environment policy remain
+unchanged. Existing runtime/source identities invalidate derived Web admissions
+and project SAR snapshots; no competing cache/layout epoch is added. Old producer
+evidence remains historical, never retagged or supplied with invented frames.
+
 ## Auxiliary text quality is not runtime availability
 
 `recovery_rows.UnqualifiedRecoveryRow` identifies a protocol-valid source-owned

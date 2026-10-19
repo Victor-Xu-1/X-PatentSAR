@@ -1,5 +1,26 @@
 # Operations and troubleshooting
 
+## Ordinary activity OCR also requires the actual original PDF
+
+Final headers and accepted/unresolved measured cells now share the same original
+pixel replay gate as discovery cells. Missing/changed frames, another source page,
+invalid crop ownership or altered original ink refuse admission in activity join,
+deterministic QA, export and Web acceptance. Inspect these errors against the
+original source; do not replace them with saved success flags or a model rerun
+during readback. No OCR/model is loaded by replay. A weak observation with matching
+pixels remains weak: source validity is not scientific text qualification.
+
+Activity34/extractor44 make previous derived evidence historical and require
+normal frontend resume, preserving raw assets and manual audit. Existing shared
+runtime/source identities refresh Web/Lead/SAR admission; binding/role/recovery/
+coverage versions and all models/thresholds/activation remain unchanged. Duplicate
+identical source cells replay once; the full ordinary inventory has an explicit
+1,000,000-cell ceiling, separate from the smaller sparse auxiliary/model budget.
+An over-bound inventory refuses rather than truncating. Multi-metric observations
+are not cut at the auxiliary limit. No private off-platform processing
+is authorized. Original boundary, semantic conflicts and chemical accuracy remain
+independent acceptance requirements.
+
 ## An auxiliary OCR attempt was read but remains unqualified
 
 Inspect the saved attempt before repairing or reinstalling an OCR environment.

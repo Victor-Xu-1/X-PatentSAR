@@ -1,5 +1,15 @@
 # Project governance manifest
 
+- Ordinary activity replay authority: `measurement_text_cells` unifies final and
+  discovery headers with accepted/unresolved scalar observations. Existing primary
+  frame, paired auxiliary and role-source replayers each keep their ownership;
+  no second recognizer or writer is added. Identical cells deduplicate within the
+  bounded call (1,000,000 ordinary cells, not the sparse auxiliary budget).
+  Activity34/extractor44 invalidate affected derived proof through
+  the existing Web/project source identities; old outputs/manual audit/raw assets,
+  binding49/binder59/role5/recovery4/coverage18, API/SQL/SAR policies and environments
+  remain unchanged. Matching original pixels alone never qualifies weak OCR text.
+
 - Auxiliary recovery failure authority: `recovery_rows.UnqualifiedRecoveryRow`
   identifies only a protocol-valid source-owned reply that fails the existing
   text quality filter. The sole `recovery_capture` records this as rejected and
