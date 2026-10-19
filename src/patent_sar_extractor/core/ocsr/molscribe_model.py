@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import contextlib
 import math
-import resource
 import sys
 from pathlib import Path
+
+from .resource_budget import process_peak_resident_mb
 
 
 class PinnedMolScribeModel:
@@ -43,7 +44,7 @@ class PinnedMolScribeModel:
 
     @property
     def peak_rss_mb(self) -> float:
-        return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
+        return process_peak_resident_mb()
 
     def predict(self, image_path: str) -> dict:
         from PIL import Image

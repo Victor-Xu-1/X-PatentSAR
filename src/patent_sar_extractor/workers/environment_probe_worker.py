@@ -102,6 +102,10 @@ def probe(request: dict[str, object]) -> dict[str, object]:
         from patent_sar_extractor.workers.molscribe_probe import probe_local_rescue
 
         return probe_local_rescue(request, result)
+    elif role in {"text-ocr", "text-ocr-models"}:
+        from patent_sar_extractor.workers.text_ocr_setup import probe_text_runtime
+
+        return probe_text_runtime(request, result)
     elif role in {"admet", "admet-models"}:
         import torch
         from admet_ai import ADMETModel

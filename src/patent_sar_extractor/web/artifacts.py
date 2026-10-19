@@ -190,6 +190,7 @@ class ArtifactView:
             payloads,
             pdf_verified=verified,
             marker=files.json("STRICT_ACCEPTANCE_FAILED.json"),
+            open_original=open_original if verified else None,
         )
         observations = SourceObservations({}, [])
         if current(payloads.get("bindings"), "bindings") and current(

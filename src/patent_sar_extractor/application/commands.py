@@ -91,7 +91,11 @@ def cmd_activity(args):
         else []
     )
     payload = _load_json(activity_json, {}) if os.path.isfile(activity_json) else {}
-    errors = _activity_acceptance_errors(payload, active_cpds)
+    from patent_sar_extractor.core.activity_auxiliary_replay import original_pdf_reader
+
+    errors = _activity_acceptance_errors(
+        payload, active_cpds, open_original=original_pdf_reader(args.pdf)
+    )
     if errors:
         _write_accuracy_failure_marker(output_dir, "activity", errors)
         raise RuntimeError(
@@ -236,7 +240,11 @@ def cmd_qa(args):
     from patent_sar_extractor.core.qa_report import write_qa_report
 
     print(f"🔎 [PatentSAR] qa: {args.output}")
-    result = write_qa_report(args.output, patent_id=getattr(args, "patent_id", ""))
+    result = write_qa_report(
+        args.output,
+        patent_id=getattr(args, "patent_id", ""),
+        original_pdf=getattr(args, "original_pdf", None),
+    )
     print(
         f"  {'✅ ACCEPTED' if result.get('acceptance', {}).get('ok') else '❌ STRICT ACCEPTANCE FAILED'}"
     )

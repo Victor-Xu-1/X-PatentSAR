@@ -321,7 +321,8 @@ class EnvironmentManager:
             location = Path(raw)
             if (
                 not location.exists()
-                or identifier in {"installer", "base", "decimer", "admet", "molscribe"}
+                or identifier
+                in {"installer", "base", "decimer", "admet", "molscribe", "text-ocr"}
                 and not os.access(location, os.X_OK)
             ):
                 raise WebError(

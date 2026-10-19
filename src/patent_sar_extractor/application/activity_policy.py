@@ -121,10 +121,13 @@ def _activity_acceptance_errors(
     active_cpds: list[str],
     *,
     classified_activity_pages: list[int] | None = None,
+    open_original=None,
 ) -> list[str]:
     """Compatibility facade; the shared source evidence policy is authority."""
     try:
-        errors = activity_evidence_errors(activity_payload, classified_activity_pages)
+        errors = activity_evidence_errors(
+            activity_payload, classified_activity_pages, open_original=open_original
+        )
     except (ValueError, TypeError) as exc:
         return [str(exc)]
     if active_cpds != _extract_active_cpds(activity_payload):

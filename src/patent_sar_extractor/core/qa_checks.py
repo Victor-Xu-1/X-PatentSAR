@@ -28,7 +28,7 @@ from .qa_inputs import QAInputs
 from .structure_inventory import structure_coverage_errors
 
 
-def _binding_checks(inputs: QAInputs, qa: dict):
+def _binding_checks(inputs: QAInputs, qa: dict, *, open_original=None):
     hard_errors = structure_coverage_errors(
         inputs.structures, inputs.profile.get("page_count")
     )
@@ -55,7 +55,11 @@ def _binding_checks(inputs: QAInputs, qa: dict):
         if normalize_compound(binding.get("cpd", ""))
     ]
     hard_errors.extend(
-        activity_evidence_errors(inputs.activity, inputs.profile.get("activity_pages"))
+        activity_evidence_errors(
+            inputs.activity,
+            inputs.profile.get("activity_pages"),
+            open_original=open_original,
+        )
     )
     hard_errors.extend(coverage_errors(inputs.bind_data))
     hard_errors.extend(
@@ -267,9 +271,15 @@ def _output_checks(
     return hard_errors
 
 
-def finish_qa(inputs: QAInputs, qa: dict, ignore_previous_failure_marker: bool) -> dict:
+def finish_qa(
+    inputs: QAInputs,
+    qa: dict,
+    ignore_previous_failure_marker: bool,
+    *,
+    open_original=None,
+) -> dict:
     hard_errors, expected_order, final_binding_order, final_binding_pairs = (
-        _binding_checks(inputs, qa)
+        _binding_checks(inputs, qa, open_original=open_original)
     )
     hard_errors.extend(_recognition_checks(inputs, final_binding_pairs))
     hard_errors.extend(

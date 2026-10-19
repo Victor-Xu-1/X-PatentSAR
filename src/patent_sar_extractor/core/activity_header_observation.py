@@ -5,8 +5,14 @@ from dataclasses import replace
 from .activity_context_geometry import context_floor
 from .activity_grid_context import _prefix
 from .activity_header_columns import observe_header_columns
-from .activity_header_identity import compact_header, context_conflict, header_conflict
+from .activity_header_identity import (
+    compact_header,
+    context_conflict,
+    header_conflict,
+    schema_requires_review,
+)
 from .activity_header_layout import discover_header_layout, header_bounds
+from .activity_header_pair import observe_header_pair
 from .activity_header_proof import valid_header_proof
 from .activity_header_sources import (
     capture_header_sources,
@@ -18,6 +24,7 @@ from .activity_headers import context_from_text, grid_schema
 from .activity_models import GridSchema
 from .source_geometry import native_region
 from .table_geometry import ocr_tokens_with_positions
+from .text_ocr import configuration
 
 
 def refine_scanned_header(
@@ -53,10 +60,22 @@ def refine_scanned_header(
     limit, discovery_bounds = bounds
     discovery = ()
     source = original
-    if source is None:
-        layout = discover_header_layout(page, region, discovery_bounds, limit)
+    if source is None or (
+        schema_requires_review(source)
+        and configuration.get_auxiliary_text_runtime() is not None
+    ):
+        if source is not None:
+            expanded = header_bounds(page, region, None)
+            if expanded is None:
+                expanded = bounds
+            discovery_limit, discovery_bounds = expanded
+        else:
+            discovery_limit = limit
+        layout = discover_header_layout(
+            page, region, discovery_bounds, discovery_limit, tokens=tokens
+        )
         discovery = layout.observations
-        source = layout.schema
+        source = layout.schema or source
         if source is not None:
             limit = source.first_data_row
     captured_sources = capture_header_sources(page, region, limit, tokens)
@@ -118,8 +137,10 @@ def refine_scanned_header(
         return unresolved("unproved_header_roles")
     if len(source.raw_headers) != len(region["xs"]) - 1:
         return unresolved("header_column_count_mismatch")
-    for dpi in (400, 600):
-        columns = observe_header_columns(page, region, limit, dpi, tokens)
+    paired_columns = observe_header_pair(
+        page, region, limit, tokens, observe_header_columns
+    )
+    for dpi, columns in zip((400, 600), paired_columns):
         prefix_tokens = ocr_tokens_with_positions(page, dpi=dpi, bounds=prefix_bounds)
         prefix = _prefix(prefix_tokens, prefix_region)
         candidate = grid_schema(context_from_text(prefix, prefix), columns.matrix)

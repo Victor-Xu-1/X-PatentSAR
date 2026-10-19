@@ -50,7 +50,7 @@ def _checks(result: Mapping[str, object]) -> list[EnvironmentCheck]:
     return output
 
 
-def _molscribe_result(
+def _native_result(
     result: Mapping[str, object],
 ) -> tuple[list[EnvironmentCheck], str]:
     """The native helper owns verification; this adapter validates its receipt."""
@@ -64,7 +64,7 @@ def _molscribe_result(
         EnvironmentCheck(
             name="probe_result",
             ok=result["ok"] is True,
-            message="Native MolScribe probe outcome; not recognition accuracy acceptance",
+            message="Native probe outcome; not recognition accuracy acceptance",
         )
     )
     return checks, version
@@ -80,6 +80,8 @@ class InspectionContext:
     admet_models: Path | None = None
     molscribe: Path | None = None
     molscribe_models: Path | None = None
+    text_ocr: Path | None = None
+    text_ocr_models: Path | None = None
 
     @classmethod
     def from_bindings(cls, bindings: Mapping[str, str | None]) -> InspectionContext:
@@ -113,6 +115,8 @@ class InspectionContext:
                 ("admet-models", self.admet_models),
                 ("molscribe", self.molscribe),
                 ("molscribe-models", self.molscribe_models),
+                ("text-ocr", self.text_ocr),
+                ("text-ocr-models", self.text_ocr_models),
             )
         }
 
@@ -156,6 +160,8 @@ def inspect_components(
                     model_root=bindings["molscribe-models"],
                     recipe=str(recipe_path("molscribe-runtime.json")),
                 )
+            if role in {"text-ocr", "text-ocr-models"}:
+                payload["model_root"] = bindings["text-ocr-models"]
             if role in {"decimer-ocsrc", "decimer-segmentation"}:
                 payload.update(
                     model_root=str(context.decimer_models),
@@ -166,6 +172,13 @@ def inspect_components(
             env = child_environment(
                 AnalysisSettings(pystow_home=context.decimer_models), python, op_dir
             )
+            if role in {"text-ocr", "text-ocr-models"}:
+                env.update(
+                    PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK="True",
+                    HF_HUB_OFFLINE="1",
+                    HF_HUB_DISABLE_TELEMETRY="1",
+                    DO_NOT_TRACK="1",
+                )
             results[key] = runner.run(
                 [str(python), "-I", str(_PROBE)],
                 payload,
@@ -247,18 +260,28 @@ def inspect_components(
                         result = run("decimer-segmentation", context.decimer)
                         checks.extend(_checks(result))
                         detected = "OCSR V2 + segmentation 1.5.0"
-                    elif component_id in {"molscribe", "molscribe-models"}:
-                        if component_id == "molscribe":
+                    elif component_id in {
+                        "molscribe",
+                        "molscribe-models",
+                        "text-ocr",
+                        "text-ocr-models",
+                    }:
+                        if component_id in {"molscribe", "text-ocr"}:
                             if not path.is_file() or not os.access(path, os.X_OK):
                                 raise ValueError("Interpreter is not executable")
                             python = path
                         else:
-                            if not path.is_dir() or context.molscribe is None:
+                            runtime = (
+                                context.molscribe
+                                if component_id == "molscribe-models"
+                                else context.text_ocr
+                            )
+                            if not path.is_dir() or runtime is None:
                                 raise ValueError(
-                                    "MolScribe runtime and model directory are required"
+                                    "The selected native runtime and model directory are required"
                                 )
-                            python = context.molscribe
-                        checks, detected = _molscribe_result(run(component_id, python))
+                            python = runtime
+                        checks, detected = _native_result(run(component_id, python))
                     else:
                         manifest = existing_bundle(path)
                         checks.append(

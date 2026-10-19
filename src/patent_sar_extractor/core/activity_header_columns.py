@@ -6,10 +6,9 @@ from itertools import pairwise
 
 from .activity_grid_cells import crosses_cell
 from .activity_header_identity import detector_header_conflict
-from .cell_ocr_observation import observe_cell
 from .page_ocr_cache import get_ocr_engine
 from .source_geometry import native_cell_text
-from .table_cells import cell_image
+from .table_cells import observe_original_cell
 
 
 @dataclass(frozen=True)
@@ -53,8 +52,9 @@ def observe_header_columns(
     columns, headers, verified = [], [], []
     for column in range(len(xs) - 1):
         bounds = (xs[column], ys[0], xs[column + 1], ys[limit])
-        reading = observe_cell(
-            cell_image(page, bounds, dpi),
+        reading = observe_original_cell(
+            page,
+            bounds,
             "header",
             dpi,
             engine[1],

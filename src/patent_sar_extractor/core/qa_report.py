@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Deterministic QA report orchestration and output presentation."""
 
 from __future__ import annotations
@@ -15,6 +14,7 @@ from patent_sar_extractor.contracts import (
     ruleset_ref,
 )
 
+from .activity_auxiliary_replay import original_pdf_reader
 from .formal_structure import FORMAL_SCOPE, SOURCE_EXECUTION_MODE
 from .qa_checks import finish_qa, finish_warnings
 from .qa_inputs import QAInputs, load_qa_inputs
@@ -109,21 +109,35 @@ def _report_fields(inputs: QAInputs) -> dict:
 
 
 def build_qa_report(
-    output_dir: str, patent_id: str = "", ignore_previous_failure_marker: bool = False
+    output_dir: str,
+    patent_id: str = "",
+    ignore_previous_failure_marker: bool = False,
+    *,
+    original_pdf: str | Path | None = None,
 ) -> dict:
     inputs = load_qa_inputs(output_dir, patent_id)
     qa = _report_fields(inputs)
-    finish_qa(inputs, qa, ignore_previous_failure_marker)
+    finish_qa(
+        inputs,
+        qa,
+        ignore_previous_failure_marker,
+        open_original=original_pdf_reader(original_pdf),
+    )
     return finish_warnings(inputs, qa)
 
 
 def write_qa_report(
-    output_dir: str, patent_id: str = "", ignore_previous_failure_marker: bool = False
+    output_dir: str,
+    patent_id: str = "",
+    ignore_previous_failure_marker: bool = False,
+    *,
+    original_pdf: str | Path | None = None,
 ) -> dict:
     qa = build_qa_report(
         output_dir,
         patent_id=patent_id,
         ignore_previous_failure_marker=ignore_previous_failure_marker,
+        original_pdf=original_pdf,
     )
     base = Path(output_dir)
     json_path = base / "final_qa_report.json"
@@ -201,6 +215,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", required=True)
+    parser.add_argument("--original-pdf")
     parser.add_argument("--patent-id", default="")
     parser.add_argument(
         "--allow-failed",
@@ -208,7 +223,9 @@ def main():
         help="Write report but return success when strict acceptance fails.",
     )
     args = parser.parse_args()
-    qa = write_qa_report(args.output_dir, patent_id=args.patent_id)
+    qa = write_qa_report(
+        args.output_dir, patent_id=args.patent_id, original_pdf=args.original_pdf
+    )
     print(
         json.dumps(
             {

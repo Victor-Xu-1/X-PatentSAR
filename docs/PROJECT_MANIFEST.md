@@ -1,5 +1,35 @@
 # Project governance manifest
 
+- Auxiliary text boundary (integration in progress): `core/text_ocr` owns only
+  finite literal-row observations over the existing owned JSONL carrier and
+  offline worker bootstrap. It has no queue, PDF parser, result writer or
+  acceptance authority. `text-ocr-runtime.json` pins the fixed ordinary-text
+  model/SDK; `text-ocr-sdk.json` is generated only from the reviewed official
+  wheels by `tools/build_text_ocr_resources.py`. No scientific binaries, third
+  party source, second application lock or SDK is vendored. The runtime's
+  explicit paths do not change operator configuration or enable a provider.
+  Scores are explicitly uncalibrated; model/pixel identity, bounded requests,
+  deadlines/cancel/RSS and finite owned-process cleanup precede any future
+  shared-cell consumer. Under-development activity-header capture and
+  `activity_auxiliary_replay` now compose the existing scientific activity gate,
+  QA/export/Web and original-pixel readback, without read-side inference.
+  Rejected/failed observations survive alongside primary text. Optional
+  `text-ocr`/`text-ocr-models` use the same managed setup, fixed75-wheel requirement
+  recipe, verified pair-only atomic activation and shared bilingual component
+  view. No competing installer, queue or manually assembled runtime is added.
+  Original/raw/manual artifacts, DECIMER and numerical SAR remain unchanged;
+  derived compatibility is Activity23/extractor33 (no original/raw/manual rewrite);
+  release, held-out source accuracy, installed/browser
+  verification and mainline delivery are still pending, not implied complete.
+  The same header locator can use at most three complete physical rows only
+  after missing/unknown primary layout; `activity_header_layout_proof` validates
+  original grid/header extent, literal roles/units and blank continuations.
+  Locator body words do not become measured values. Final columns are independently
+  reread; `observe_original_cell` is the common scalar/text frame producer.
+  Original activity replay covers all locator pixels/ink, not just auxiliary
+  successes. Cache-hit native observations are counted once and may not conflict
+  under the same request identity. Parent-death/copy checks do not certify chemistry.
+
 - Original text raster extent: `cell_text_limits.row_pixel_limit` solely owns
   `ceil(height_pt*dpi/72)+1`, including the unknown render-origin phase. Capture,
   chunks, scalar/padding replay, caption coverage and words consume it; no
@@ -1411,7 +1441,7 @@
 - Direct-edit ownership: one lazy local Ketcher frame and bounded serial bridge feed the existing correction overlay. Molfile/SMILES validation, compatibility preparation and manual property values are separate small modules. Model observations stay unchanged; all effective table/filter/copy/export consumers share manual-null precedence. `prediction_identity.py` owns canonical isomeric graph digests and exact-string-only legacy proof. Coordinate/value-only edits do not enqueue inference. API v1 and workspace SQLite v1 remain unchanged.
 - Existing-source completion: `completion_inputs.py` validates original/crop/printed-ID ownership for every proved depiction; `completion_worker.py` uses the existing owned prediction carrier and shared core DECIMER converter before six-property inference. `recognition_sources` supplies current original frames/revisions/digests, `recognition_observations` supplies one saved QC reader, and `recognition_storage.py` owns the same additive rebuildable `compound_recognitions` cache and transaction. Raw observations may be safely transported but never acceptance. No new engine, endpoint, job type, poller, dependency or per-checkpoint product version. Explicit manual graph/blanks and original audit/QA remain authoritative.
 - Raw observation reuse: `web/observation_cache.py` owns bounded atomic per-original raw-cache seed/publication and operator recovery, reusing `core/ocsr/cache_snapshot.py` as the only untrusted SQLite transport validator. The CLI `import-ocsr-cache` restores observations under the idle analysis lease, never compounds, manual edits, properties or QA. Exact image/model keys and current source QC still decide each new job; there is no post-failure fallback or extra model service. All cache and model data remain external on E.
-- Environment control: the existing `#/settings` route is the only environment management page. `web/environment_models.py` defines the additive API-v1 DTOs; `environment_specs.py` owns eight fixed CPU components, including both local rescue parts. Separate private environment SQLite v1 stores settings/operations, with no core workspace migration. Configuration publication reuses `env_paths.local.yaml`; process lifecycle reuses the same owned subprocess carrier. Approved storage and models are external, with no arbitrary installation API.
+- Environment control: the existing `#/settings` route is the only environment management page. `web/environment_models.py` defines the additive API-v1 DTOs; `environment_specs.py` owns the fixed CPU catalog, including local rescue and on-demand ordinary-text parts. Separate private environment SQLite v1 stores settings/operations, with no core workspace migration. Configuration publication reuses `env_paths.local.yaml`; process lifecycle reuses the same owned subprocess carrier. Approved storage and models are external, with no arbitrary installation API.
 - Environment recipe provenance: `defaults/environments/base-requirements.txt` and `base-runtime.json` are derived by `tools/build_environment_resources.py` from the sole application `uv.lock`; CI requires `--check`. Separate DECIMER, local-rescue and ADMET CPU recipes pin their scientific boundaries. Local rescue builds only its hash-pinned official source archive offline against hash-locked dependencies, and verifies SDK files, exact model hash and tensor shapes before use. Wheel audit requires every fixed recipe and rejects scientific model binaries.
 - Constrained rescue ownership: `stereo_rescue` is one pure bounded graph/stereo guard; `stereo_rescue_pass` owns the maximum-eight-item post-primary queue and immutable primary/candidate proof. `stereo_gate` independently revalidates proof for all formal/research consumers. `owned_engine` is the single native JSONL lifecycle for DECIMER and the optional rescue adapter. No general competing engine ensemble, raw-string editing or automatic external LLM disclosure is introduced.
 - Recovery baseline: commit `186fd0ef4d923104dcd4754282bb434ba9758b34` preserves the recovered, tested core and Apache-2.0 branding/API contract. Source archives and historical data remain external on E. The authorized open-source remote is `https://github.com/Victor-Xu-1/X-PatentSAR`; publication is validated through its actual visibility, exact remote revision and CI, not inferred from repository creation. The product and repository use the exact display name `X-PatentSAR`; Python distribution and CLI identifiers are the normalized technical name `x-patentsar`.

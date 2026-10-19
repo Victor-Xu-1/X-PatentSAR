@@ -71,7 +71,7 @@ _ENV_OVERRIDES = {
     ),
     "decimer": ("DECIMER_PYTHON", "PATENTSAR_DECIMER_PYTHON"),
     "molscribe": ("PATENTSAR_MOLSCRIBE_PYTHON",),
-    "paddleocr": ("PADDLEOCR_PYTHON", "PATENTSAR_PADDLEOCR_PYTHON", "PATENTSAR_PYTHON"),
+    "paddleocr": ("PADDLEOCR_PYTHON", "PATENTSAR_PADDLEOCR_PYTHON"),
     "pymupdf": ("PYMUPDF_PYTHON", "PATENTSAR_PYMUPDF_PYTHON", "PATENTSAR_PYTHON"),
     "ocrmypdf": ("OCRMYPDF_PYTHON", "PATENTSAR_OCRMYPDF_PYTHON", "PATENTSAR_PYTHON"),
 }
@@ -151,6 +151,8 @@ def configured_model_environment() -> dict[str, str]:
         "PATENTSAR_ADMET_PYTHON": "admet",
         "PATENTSAR_ADMET_MODEL_DIR": "admet_models",
         "PATENTSAR_MOLSCRIBE_MODEL_DIR": "molscribe_models",
+        "PATENTSAR_TEXT_OCR_MODEL_DIR": "paddleocr_models",
+        "PATENTSAR_TEXT_OCR_MODE": "paddleocr_mode",
     }
     return {
         variable: value

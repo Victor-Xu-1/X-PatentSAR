@@ -1,7 +1,11 @@
 import { useTranslation } from '../../i18n';
 import { CheckCircle2, Download, Package, ScanLine } from 'lucide-react';
 import type { EnvironmentComponent, EnvironmentComponentId } from '../../api/environmentTypes';
-import { environmentComponentName, environmentGroups } from '../../model/environment';
+import {
+  environmentComponentName,
+  environmentDiagnostic,
+  environmentGroups,
+} from '../../model/environment';
 import {
   environmentComponentAction,
   environmentComponentBadge,
@@ -111,7 +115,9 @@ export function ComponentLibrary({
                           t('时间未知')
                         )}
                       </p>
-                      {problem && <p className="component-problem">{problem}</p>}
+                      {problem && (
+                        <p className="component-problem">{environmentDiagnostic(problem)}</p>
+                      )}
                       <ComponentDetails component={component} components={components} />
                     </div>
                     <div className="component-actions">

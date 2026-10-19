@@ -27,6 +27,7 @@ from patent_sar_extractor.contracts import (
     PAGE_CLASSIFICATION_SCHEMA_VERSION,
     artifact_identity_matches,
 )
+from patent_sar_extractor.core.activity_auxiliary_replay import original_pdf_reader
 from patent_sar_extractor.core.activity_join import activity_evidence_errors
 from patent_sar_extractor.core.formal_export import qualified_records
 from patent_sar_extractor.core.formal_structure import (
@@ -52,6 +53,8 @@ def export_validation(
     smiles_path: str,
     activity_path: str,
     classification_path: str | None = None,
+    *,
+    original_pdf: str | None = None,
 ) -> tuple[list[dict], list[dict], list[str]]:
     """Technical errors raise; scientific errors retain all expected source IDs."""
     with open(bindings_path, encoding="utf-8") as stream:
@@ -90,7 +93,11 @@ def export_validation(
             type(page) is not int or page < 0 for page in pages
         ):
             raise ValueError("Malformed activity classification for export")
-    errors.extend(activity_evidence_errors(activity, pages))
+    errors.extend(
+        activity_evidence_errors(
+            activity, pages, open_original=original_pdf_reader(original_pdf)
+        )
+    )
     source_findings = reprint_findings(recognition_inputs(binding_payload), smiles)
     bindings, records, findings = qualified_records(
         binding_payload["final_bindings"],
@@ -110,6 +117,9 @@ def main():
     parser.add_argument("--smiles", required=True)
     parser.add_argument("--activity", required=True)
     parser.add_argument("--classification")
+    parser.add_argument(
+        "--original-pdf", help="Caller-owned original for auxiliary text source replay"
+    )
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--patent", default="")
     parser.add_argument("--rdkit-python", default=sys.executable)
@@ -122,7 +132,11 @@ def main():
     output = Path(args.output_dir)
     output.mkdir(parents=True, exist_ok=True)
     bindings, records, errors = export_validation(
-        args.bindings, args.smiles, args.activity, args.classification
+        args.bindings,
+        args.smiles,
+        args.activity,
+        args.classification,
+        original_pdf=args.original_pdf,
     )
     _, _, _, _, activity, assays = load_data(
         args.bindings, args.smiles, activity_path=args.activity

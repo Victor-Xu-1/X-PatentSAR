@@ -27,11 +27,13 @@ from .activity_observations import (
 from .activity_source_discovery import discover_activity_sources
 from .activity_text import extract_text_tables
 from .page_ocr_cache import load_page_ocr_cache, page_text, save_page_ocr_cache
+from .text_ocr.configuration import owns_auxiliary_text
 
 logger = logging.getLogger(__name__)
 __all__ = ["ActivityRow", "OCRFixRule", "extract"]
 
 
+@owns_auxiliary_text
 def extract(
     pdf_path: str,
     profile: dict,

@@ -139,7 +139,7 @@ def _failure_messages(payloads: dict[str, Any], marker: object) -> list[str] | N
 
 
 def authority(
-    payloads: dict[str, Any], *, pdf_verified: bool, marker: object
+    payloads: dict[str, Any], *, pdf_verified: bool, marker: object, open_original=None
 ) -> tuple[Acceptance, bool]:
     present = [name for name in ARTIFACTS if payloads.get(name) is not None]
     if not present:
@@ -230,6 +230,7 @@ def authority(
         payloads["activity"],
         payloads["activity"]["active_cpds"],
         classified_activity_pages=classification.get("activity_pages"),
+        open_original=open_original if pdf_verified else None,
     )
     if activity_errors:
         return Acceptance(

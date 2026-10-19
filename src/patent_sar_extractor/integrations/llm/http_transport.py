@@ -8,11 +8,9 @@ deadline and reaps only its Popen child, without a background thread or fallback
 from __future__ import annotations
 
 import base64
-import ctypes
 import json as wire_json
 import os
 import selectors
-import signal
 import subprocess
 import sys
 import time
@@ -35,6 +33,9 @@ from patent_sar_extractor.integrations.llm.api_failures import (
 from patent_sar_extractor.integrations.llm.external_api import (
     PublicHTTPSConnection,
     validate_external_endpoint,
+)
+from patent_sar_extractor.worker_lifecycle import (
+    arm_parent_death as _parent_death_guard,
 )
 
 MAX_INPUT_BYTES = 512 * 1024
@@ -246,15 +247,6 @@ def bounded_post(
     finally:
         if process is not None:
             _stop_child(process)
-
-
-def _parent_death_guard(parent_pid: int) -> None:
-    """A killed CLI cannot leave an HTTP worker behind, even outside its group."""
-    if sys.platform != "linux" or parent_pid <= 1 or os.getppid() != parent_pid:
-        raise OSError("HTTP worker has no current owned parent")
-    libc = ctypes.CDLL(None, use_errno=True)
-    if libc.prctl(1, signal.SIGKILL, 0, 0, 0) != 0 or os.getppid() != parent_pid:
-        raise OSError("HTTP parent-death protection is unavailable")
 
 
 def _worker_request(packet: dict[str, Any]) -> bytes:

@@ -1,4 +1,4 @@
-"""Eight-component contracts and injected dispatch only; no native SDK/network."""
+"""Complete catalog contracts and injected dispatch; no native SDK/network."""
 
 from __future__ import annotations
 
@@ -34,12 +34,14 @@ ALL_IDS = [
     "base",
     "decimer",
     "decimer-models",
+    "text-ocr",
+    "text-ocr-models",
     "admet",
     "admet-models",
     "molscribe",
     "molscribe-models",
 ]
-MOLSCRIBE_IDS = ALL_IDS[-2:]
+MOLSCRIBE_IDS = ["molscribe", "molscribe-models"]
 
 
 class WiringFixture(recipe_tests.RecipeFixture):
@@ -99,7 +101,7 @@ class WiringFixture(recipe_tests.RecipeFixture):
 
 
 class MolScribeContractTests(WiringFixture):
-    def test_all_eight_request_and_schema_keep_optional_structure_components(self):
+    def test_complete_request_and_schema_keep_optional_structure_components(self):
         request = EnvironmentOperationRequest(
             action="install",
             component_ids=ALL_IDS,
@@ -110,7 +112,7 @@ class MolScribeContractTests(WiringFixture):
         schema = EnvironmentOperationRequest.model_json_schema()["properties"][
             "component_ids"
         ]
-        self.assertEqual(schema["maxItems"], 8)
+        self.assertEqual(schema["maxItems"], len(ALL_IDS))
         self.assertEqual(set(schema["items"]["enum"]), set(ALL_IDS))
         optional = [card for card in self.cards if card["id"] in MOLSCRIBE_IDS]
         self.assertEqual([card["kind"] for card in optional], ["runtime", "models"])
@@ -128,7 +130,7 @@ class MolScribeContractTests(WiringFixture):
                     expected_revision=0,
                 )
 
-    def test_context_round_trips_eight_captured_bindings_and_rejects_unknown(self):
+    def test_context_round_trips_complete_captured_bindings_and_rejects_unknown(self):
         context = InspectionContext.from_bindings(self.bindings)
         self.assertEqual(context.bindings(), self.bindings)
         with self.assertRaises(ValueError):
@@ -239,7 +241,7 @@ class MolScribeDispatchTests(WiringFixture):
 
 
 class MolScribeDurableWiringTests(WiringFixture):
-    def test_private_plan_captures_all_eight_and_rejects_missing_or_unknown_binding(
+    def test_private_plan_captures_complete_catalog_and_rejects_missing_or_unknown_binding(
         self,
     ):
         plan = self.plan(component_ids=ALL_IDS, bindings=self.bindings)
@@ -252,7 +254,9 @@ class MolScribeDurableWiringTests(WiringFixture):
             with self.subTest(bindings=bindings), self.assertRaises(ValueError):
                 self.plan(component_ids=ALL_IDS, bindings=bindings)
 
-    def test_queue_accepts_eight_progress_and_reports_but_not_duplicate_progress(self):
+    def test_queue_accepts_complete_progress_and_reports_but_not_duplicate_progress(
+        self,
+    ):
         queue = EnvironmentQueue(Mock(), Mock(), 10, Mock())
         spec = RunSpec(
             self.identifier,
@@ -292,7 +296,7 @@ class MolScribeDurableWiringTests(WiringFixture):
         with self.assertRaises(WebError):
             queue._progress(spec)
 
-    def test_report_storage_retains_all_eight_with_fixed_overflow_bound(self):
+    def test_report_storage_retains_complete_catalog_with_fixed_overflow_bound(self):
         store = EnvironmentStore(self.root / "state", self.install)
         store.publish_reports("controlled-source", self.reports())
         self.assertEqual(set(store.report_records()), set(ALL_IDS))

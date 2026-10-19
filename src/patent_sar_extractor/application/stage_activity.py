@@ -15,7 +15,9 @@ from patent_sar_extractor.artifact_io import load_json as _load_json
 from patent_sar_extractor.contracts import (
     ACTIVITY_EXTRACTOR_VERSION,
 )
+from patent_sar_extractor.core.activity_auxiliary_replay import original_pdf_reader
 from patent_sar_extractor.core.activity_join import activity_evidence_errors
+from patent_sar_extractor.core.text_ocr.configuration import text_ocr_policy_identity
 from patent_sar_extractor.integrations.llm.config import get_evidence_resolution_config
 from patent_sar_extractor.integrations.llm.evidence_protocol import (
     EVIDENCE_PROTOCOL_VERSION,
@@ -70,6 +72,7 @@ def execute_activity(state: PipelineContext) -> None:
             "activity_pages": state.classification.get("activity_pages", []),
             "ocr_cache_path": state.ocr_cache_path,
             "activity_extractor_version": ACTIVITY_EXTRACTOR_VERSION,
+            "auxiliary_text_policy": text_ocr_policy_identity(),
             "llm_evidence_policy": evidence_policy_identity(),
             "patent_id": state.patent_id,
         },
@@ -97,6 +100,7 @@ def execute_activity(state: PipelineContext) -> None:
     activity_errors = activity_evidence_errors(
         state.activity_payload,
         classified_activity_pages=state.classification.get("activity_pages"),
+        open_original=original_pdf_reader(state.args.pdf),
     )
     # Producer-owned metadata is read only. It cannot admit/relabel compounds or
     # turn the source-led structure universe back into a numeric activity filter.

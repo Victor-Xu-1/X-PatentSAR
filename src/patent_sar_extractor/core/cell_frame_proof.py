@@ -1,5 +1,6 @@
 """Pure shared pixel/crop frame validation for bounded original cell readers."""
 
+import hashlib
 import math
 import re
 
@@ -101,3 +102,37 @@ def valid_cell_frame(frame, reading, bounds, dpi):
             ):
                 return False
     return True
+
+
+def original_cell_frame_matches(reading, page):
+    """Replay complete original pixels and ink extent, never text recognition."""
+    import cv2
+    import numpy as np
+
+    from .table_cells import cell_image
+
+    bounds, dpi, frame = (
+        reading.get("bbox"),
+        reading.get("render_dpi"),
+        reading.get("source_frame"),
+    )
+    if (
+        not inside_box(bounds, [0, 0, page.rect.width, page.rect.height])
+        or type(dpi) is not int
+        or dpi not in (400, 600)
+        or not valid_cell_frame(frame, reading, bounds, dpi)
+    ):
+        return False
+    image = cell_image(page, bounds, dpi)
+    if (
+        frame["shape"] != list(image.shape)
+        or frame["pixel_sha256"] != hashlib.sha256(image.tobytes()).hexdigest()
+    ):
+        return False
+    ys, xs = np.where(cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) < 180)
+    crop = (
+        [int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1]
+        if len(xs)
+        else None
+    )
+    return reading.get("ink_crop_pixels") == crop

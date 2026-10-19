@@ -7,6 +7,11 @@ import {
 } from '../src/api/environmentDecoders';
 import { normalizeInstallRoot } from '../src/model/environment';
 import {
+  environmentComponentName,
+  environmentComponentDescription,
+} from '../src/model/environment';
+import { setLocale } from '../src/i18n';
+import {
   environmentCatalog,
   environmentOperation,
   molscribeEnvironmentCatalog,
@@ -15,6 +20,46 @@ import { json, session } from './fixtures';
 
 beforeEach(() => client.resetSession());
 describe('environment management exact contract', () => {
+  it('accepts auxiliary text dependencies in the same complete setup without adding task options', () => {
+    const catalog = molscribeEnvironmentCatalog();
+    const template = catalog.components.find((item) => item.id === 'base')!;
+    const components = [
+      ...catalog.components,
+      {
+        ...template,
+        id: 'text-ocr',
+        name: '辅助文字识别环境',
+        required: false,
+        dependencies: ['installer'],
+      },
+      {
+        ...template,
+        id: 'text-ocr-models',
+        name: '辅助文字识别模型',
+        kind: 'models',
+        required: false,
+        dependencies: ['text-ocr'],
+      },
+    ];
+    const decoded = decodeEnvironmentCatalog({
+      ...catalog,
+      components,
+      setup_component_ids: components.map((c) => c.id),
+    });
+    expect(decoded.setup_component_ids).toHaveLength(10);
+    const text = decoded.components.find((item) => item.id === 'text-ocr')!;
+    setLocale('en');
+    expect(environmentComponentName(text)).toBe('Auxiliary text OCR runtime');
+    expect(environmentComponentDescription(text)).toContain('Loaded on demand');
+    expect(
+      decodeEnvironmentRequest({
+        action: 'install',
+        component_ids: decoded.setup_component_ids,
+        request_id: environmentOperation.request_id,
+        expected_revision: 3,
+      }).component_ids,
+    ).toHaveLength(10);
+  });
   it('decodes all eight components, optional structure models and one complete request/receipt', () => {
     const catalog = molscribeEnvironmentCatalog();
     const decoded = decodeEnvironmentCatalog(catalog);

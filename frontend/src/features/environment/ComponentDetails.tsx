@@ -3,6 +3,7 @@ import type { EnvironmentComponent } from '../../api/environmentTypes';
 import {
   environmentBytes,
   environmentComponentDescription,
+  environmentDiagnostic,
   environmentComponentName,
   environmentStatusLabels,
   safeEnvironmentSource,
@@ -15,7 +16,8 @@ function ComponentChecks({ checks }: { checks: EnvironmentComponent['checks'] })
     <ul>
       {checks.map((check, index) => (
         <li key={index}>
-          {check.ok ? t('通过') : t('未通过')} · {check.name}：{check.message}
+          {check.ok ? t('通过') : t('未通过')} · {check.name}：
+          {environmentDiagnostic(check.message)}
         </li>
       ))}
     </ul>
@@ -106,7 +108,9 @@ export function ComponentDetails({
               t('时间未知')
             )}
           </p>
-          {lastCheck.problem && <p className="component-problem">{lastCheck.problem}</p>}
+          {lastCheck.problem && (
+            <p className="component-problem">{environmentDiagnostic(lastCheck.problem)}</p>
+          )}
           <ComponentChecks checks={lastCheck.checks} />
         </section>
       )}

@@ -74,6 +74,8 @@ def execute_final(state: PipelineContext) -> None:
             state.patent_id,
             "--classification",
             state.classify_json,
+            "--original-pdf",
+            state.args.pdf,
             "--continue-on-scientific-errors",
         ]
         if os.path.isfile(state.act_json):

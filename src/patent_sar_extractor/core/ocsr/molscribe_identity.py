@@ -75,6 +75,7 @@ def molscribe_identity(model_root: Path | None = None) -> dict:
             "molscribe_identity.py",
             "molscribe_model.py",
             "wrapper_molscribe_batch.py",
+            "resource_budget.py",
         )
     ]
     content = {

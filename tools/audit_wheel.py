@@ -82,6 +82,9 @@ def audit(wheel: Path, *, source_root: Path | None = None) -> dict[str, object]:
             "molscribe-requirements.txt",
             "molscribe-runtime.json",
             "molscribe-sdk.json",
+            "text-ocr-requirements.txt",
+            "text-ocr-runtime.json",
+            "text-ocr-sdk.json",
         ):
             if not archive.read(resources + recipe).strip():
                 raise ValueError("Wheel is missing a managed environment recipe")

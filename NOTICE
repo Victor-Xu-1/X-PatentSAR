@@ -62,3 +62,15 @@ OpenNMT-py (MIT) and RDKit (BSD-3-Clause). Source, third-party runtime and model
 weights are not bundled in this application wheel. Model confidence, loaded
 weights and a graph-compatible candidate are not experimental validation or a
 universal scientific-accuracy guarantee.
+
+Optional ordinary-text assistance uses PaddleOCR 3.7.0, PaddleX 3.7.2 and
+CPU PaddlePaddle 3.3.1 (Apache-2.0), in a separate pinned Python 3.10 environment.
+The PP-OCRv6_small_rec model is pinned to official revision
+bd619643acac4b9650c040234da8d944476ee3f1 (Apache-2.0):
+https://huggingface.co/PaddlePaddle/PP-OCRv6_small_rec/tree/bd619643acac4b9650c040234da8d944476ee3f1
+This wheel contains adapter code, hash inventories and installation recipes,
+not the third-party runtime or weights. All dependency notices still apply;
+the python-bidi wheel includes COPYING, COPYING.LESSER and third-party notices.
+Commercial redistribution of a separately prepared environment requires review
+of those upstream obligations. A confidence score, agreement or successful
+model load is not a guarantee of literal or scientific correctness.
