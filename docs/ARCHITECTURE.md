@@ -1,5 +1,97 @@
 # X-PatentSAR architecture
 
+## Auxiliary literal-text runtime boundary (integration in progress)
+
+`core/text_ocr` implements one optional, finite ordinary-text observation SDK.
+It reuses the existing owned `JsonLineWorker` transport and offline native-worker
+bootstrap; it is not a parser, second queue, LLM, page OCR replacement, or
+scientific acceptance authority. Integration remains owned development, not a
+released or enabled production provider. The adapter covers unresolved physical
+activity-header columns and the bounded first-three-row locator when initial
+roles/units are unread. Other compound-caption roles are not silently rerouted.
+
+`activity_header_layout` keeps BOTH primary locator clips even on failure. When
+enabled, the same original-column reader can observe each of the first three
+physical rows; `activity_header_layout_proof` only nominates matching ID columns,
+literal fields and a header boundary. Blank merged-header continuations require
+their actual empty original pixels. Known endpoints/units/context are protected.
+The final entire header is independently reread through the existing two-view
+column authority; locator body text never becomes activity data. Primary,
+blank and auxiliary scout cells all replay against the actual original, including
+ink extent. `table_cells.observe_original_cell` is the shared scalar/text frame
+producer; no private duplicate image renderer or value parser is added.
+
+`activity_header_pair` captures both complete original400/600dpi columns through
+the existing primary observer. Only unqualified, noncrossing/nonconflicting
+columns may request auxiliary rows. `text_ocr/cell_*` keeps complete row geometry,
+primary observations, immutable model identity and uncalibrated scores. The .99
+auxiliary quality filter is not a calibrated accuracy probability. Two views
+must agree literally apart from whitespace; qualified original/native roles,
+endpoints, units and conditions still veto changes. Rejected/disagreeing reads
+and partial failed observations stay beside the unresolved primary; cancellation
+propagates, without an automatic request replay or scientific success flag.
+
+`activity_auxiliary_replay` composes the one shared activity evidence gate for
+the producer, deterministic QA, final export and safe Web authority. It rerenders
+the original physical cells and compares all source/row pixels without inference.
+Missing actual originals, altered pixels or stripped version4 evidence refuse;
+no artifact-supplied path is opened. The existing shared JSON catalog retains
+both DPI views once. Cache-hit occurrences share their immutable native request
+identity, so they do not incorrectly consume the2048new-model-row allowance;
+conflicting replies under one request refuse. Each original replay inventory
+is separately bounded to16384sources. An explicit producer phase owns the lazy runtime; readback
+cannot acquire one, and a refused concurrent phase cannot release another owner.
+
+The same transactional environment manager now owns optional `text-ocr` and
+`text-ocr-models`, pinned75-wheel CPU requirements and the fixed three-file model.
+Only one operation actually verifying both may publish `paddleocr_mode:on_demand`;
+runtime-only publication leaves it off. Recipe/model selection enters the task
+cache fingerprint without loading an SDK. Native model checks generate their
+own text and do not prove recognition accuracy. No new parser/store/queue or
+LLM provider is introduced; DECIMER remains primary. Installed/mainline/browser,
+held-out source accuracy and real frontend acceptance remain pending.
+
+The parent accepts only explicit runtime/model/workspace paths. It submits
+bounded original RGB rows (at most4096x256 and1million pixels) through an owned
+private directory. PNG size, original pixel digest, request identity and fixed
+model fingerprint are validated on both sides. The fixed PP-OCRv6 small recipe
+checks all three model files and the actual installed SDK against reviewed
+official-wheel hashes before native imports. `text-ocr-sdk.json` is generated
+from those exact wheels by `tools/build_text_ocr_resources.py`, not handwritten
+SDK code or bundled weights. Minimal child environment, offline sockets and
+isolated bytecode/cache paths prevent parent credentials/package leakage.
+
+The result is literal text with an explicitly `uncalibrated_model` score, never
+an acceptance flag. Exact model/pixel-bound reuse is bounded to128independently
+returned observations. One owner serializes calls; request deadlines include
+queueing/startup/admission, the child is supervised at1024MiB RSS, and actual
+low-headroom admission cannot start a model. A native process serves at most256
+rows, expires after30seconds without a complete request, and has bounded partial
+input. Task-owned sessions stop after2048new observations or two consecutive
+faults. Infrastructure failures are not automatically replayed. Cancellation,
+including between reads before a cache hit, releases the prior loaded worker.
+The shared `worker_lifecycle` kernel parent-death guard also prevents a killed
+owner leaving this model (or the existing HTTP carrier) alive outside its group.
+No other application's process or environment is modified.
+
+`ocsr/resource_budget.process_peak_resident_mb` is the common native memory
+reporter for DECIMER, the constrained MolScribe pass and literal-text OCR.
+It reads the current address space's kernel `VmHWM`: Linux `ru_maxrss` can retain
+the much larger parent's pre-exec high-water mark and falsely reject a small
+child after long source processing. Missing or malformed telemetry refuses;
+neither zero nor inherited rusage is a fallback. Existing live `VmRSS` supervision,
+headroom admission and memory caps stay unchanged. Adapter fingerprints bind
+this helper; historical raw observations are retained, not relabelled.
+
+Public/synthetic SDK/identity/lifecycle checks do not certify OCR accuracy on a
+patent. Repeated views or model agreement cannot replace independent source
+proof, role/condition checks or chemical QA. Original observations, labels,
+default DECIMER and protected scientific artifacts remain unchanged at this
+development checkpoint. Derived compatibility preparation is Activity23/extractor33;
+previous derived activity stays historical, not retagged. Binding36/binder46,
+original PDF/raw OCR/OCSR2/manual audit and numerical SAR remain unchanged.
+Release/installed/browser/mainline delivery remains pending.
+
 ## Quantized original text-row coverage
 
 `cell_text_limits.row_pixel_limit` is the single integer raster-envelope

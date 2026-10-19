@@ -18,6 +18,8 @@ ComponentId = Literal[
     "admet-models",
     "molscribe",
     "molscribe-models",
+    "text-ocr",
+    "text-ocr-models",
 ]
 COMPONENT_IDS: frozenset[ComponentId] = frozenset(get_args(ComponentId))
 MAX_COMPONENTS = len(COMPONENT_IDS)

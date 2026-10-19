@@ -1,5 +1,59 @@
 # Operations and troubleshooting
 
+## Auxiliary text runtime development boundary
+
+The optional `core/text_ocr` runtime is under integration, not a configured
+production OCR provider. Merely finding a Paddle interpreter/model directory
+does not enable it. It only reads software-owned bounded RGB text rows, returns
+literal observations with uncalibrated scores, and never processes a PDF itself.
+Do not point isolated checks at private patent crops or use model confidence to
+rewrite saved identifiers, values, assay conditions or historical artifacts.
+
+For targeted development checks, run the named `test_auxiliary_text_identity`,
+`test_auxiliary_text_protocol`, `test_auxiliary_text_runtime` and
+`test_auxiliary_text_requests` modules. Actual native tests additionally require
+explicit `PATENTSAR_TEST_TEXT_OCR_PYTHON` and `PATENTSAR_TEST_TEXT_OCR_MODELS`
+paths and select `tests.test_auxiliary_text_native`; they generate their own
+synthetic text. Missing opt-in is a skipped native check, never a scientific pass.
+`tools/build_text_ocr_resources.py --wheels <approved-wheel-directory> --check`
+rechecks the SDK inventory using the Python3.12 development environment without
+downloading/installing anything. Native inference uses isolated Python3.10 CPU,
+fixed local model files, denied sockets and private caches. Missing `ccache` is
+an SDK advisory, not permission to install compilation tools or download models.
+
+Shared activity-header capture, original-only replay and managed setup now have
+development implementations. They are not deployed/activated. Reuse inspection
+of the isolated runtime and model is distinct from a cold full install. No
+third-party binaries or weights are added to the application wheel. A verified
+runtime/model pair from one managed operation selects on-demand mode; a partial
+runtime-only repair disables it. Never activate by writing loose environment
+variables as an alternative installer. The ordinary page shows the same one
+setup action; two text components and license details live in the existing
+component/consent view, not the scientific task wizard.
+
+The source adapter includes unresolved activity-header columns and bounded
+first-three-row physical discovery for missing roles/units. Discovery-body text
+only locates a header; it never supplies measurements. Blank continuations,
+primary and auxiliary locator frames require original pixel/ink replay. Failed,
+low-quality and disagreeing auxiliary observations remain unresolved, alongside
+their primary text, without splicing/voting. Readback/export/QA only replay
+actual original pixels, never OCR. Standalone QA requires an explicitly supplied
+`--original-pdf` when auxiliary source proof exists; saved artifact paths are
+not trusted. Real private patent/SAR work is still frontend-only by user policy.
+Derived compatibility is Activity23/extractor33, leaving original/raw/manual and
+independent chemistry/structure contracts untouched. Previous derived activity is
+historical, not rewritten. Actual native owner-death and pinned model-file copy/
+hash/cancel checks are distinct from cold complete setup and OCR accuracy.
+Native peak-memory reports now use the common post-exec kernel `VmHWM` reader;
+Linux rusage may retain a large parent's earlier peak. This removes false memory
+rejections without increasing any cap or changing recognition/chemical rules.
+Missing/malformed telemetry refuses rather than fabricating zero. All three
+native adapter fingerprints include the reader; old raw observations stay
+historical and are not retagged with the current fingerprint.
+Installed-wheel/browser validation, held-out accuracy, release preparation,
+PR/main and unchanged18765 deployment remain pending. Do not call
+targeted native/source checks scientific acceptance or a delivered upgrade.
+
 ## A dense original text cell is empty at one render scale
 
 Inspect its retained physical frame before assuming OCR failed. If row geometry
@@ -2201,8 +2255,9 @@ without hiding captions; there is no Header More menu. Use **一键部署全部�
 PDF/structure/activity/six-property workflow, not manual component assembly. One
 complete CPU/download/license confirmation creates one durable operation. It
 rechecks/reuses qualified components, provisions deficient ones in owned prefixes
-and activates only after all eight are verified. ADMET and constrained local
-stereo-rescue runtimes/models are included. The latter stays CPU-only and is
+and activates only after all catalog components are verified. ADMET, constrained
+local stereo rescue and optional on-demand ordinary-text runtime/model are
+included in the complete plan. The stereo rescue stays CPU-only and is
 loaded only after primary cleanup for at most eight eligible lost-stereo items.
 Use the same operator `env_paths.local.yaml` roles `molscribe` and
 `molscribe_models`; never copy models into the application or guess parity.

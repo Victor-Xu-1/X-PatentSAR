@@ -1,5 +1,11 @@
 /** Environment overview, details, storage and explicit consent. */
 export const environment: Readonly<Record<string, string>> = {
+  辅助文字识别环境: 'Auxiliary text OCR runtime',
+  辅助文字识别模型: 'Auxiliary text OCR model',
+  '仅在主文字识别未通过时按需加载；CPU、离线、不常驻，不替换结构识别。':
+    'Loaded on demand only when primary text reading is unqualified. CPU, offline, no resident service; structure recognition is unchanged.',
+  '固定 PP-OCRv6 small；保留原始读取及冲突，加载检查不代表准确性验收。':
+    'Pinned PP-OCRv6 small. Original readings and conflicts are retained; loading is not accuracy acceptance.',
   通过: 'Passed',
   未通过: 'Not passed',
   '尚未报告检查结果。': 'No check results reported yet.',

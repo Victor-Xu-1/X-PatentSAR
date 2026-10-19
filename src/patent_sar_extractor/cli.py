@@ -141,6 +141,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     command = sub.add_parser("qa", help="重新运行确定性正式 QA")
     command.add_argument("--output", required=True)
+    command.add_argument(
+        "--original-pdf", help="Explicit original for read-only auxiliary text replay"
+    )
     command.add_argument("--patent-id", default="")
     command.add_argument("--allow-failed", action="store_true")
 

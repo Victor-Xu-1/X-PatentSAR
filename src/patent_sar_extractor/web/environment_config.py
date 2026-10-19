@@ -33,6 +33,8 @@ CONFIG_KEYS = {
     "admet-models": ("admet_models",),
     "molscribe": ("molscribe",),
     "molscribe-models": ("molscribe_models",),
+    "text-ocr": ("paddleocr",),
+    "text-ocr-models": ("paddleocr_models",),
 }
 
 
@@ -113,6 +115,15 @@ class EnvironmentConfig:
             if "molscribe" in ENV_ROLES
             else None,
             "molscribe-models": molscribe_models,
+            "text-ocr": executable(
+                os.environ.get("PADDLEOCR_PYTHON")
+                or os.environ.get("PATENTSAR_PADDLEOCR_PYTHON")
+                or loaded.get("paddleocr")
+            ),
+            "text-ocr-models": configured_model_environment().get(
+                "PATENTSAR_TEXT_OCR_MODEL_DIR"
+            )
+            or None,
         }
 
     def publish(
@@ -143,6 +154,14 @@ class EnvironmentConfig:
                 )
             for key in CONFIG_KEYS[component]:
                 loaded[key] = location
+        if {"text-ocr", "text-ocr-models"} & bindings.keys():
+            # Only the one operation that actually verified both native parts may
+            # enable on-demand use. A runtime-only repair leaves it disabled.
+            loaded["paddleocr_mode"] = (
+                "on_demand"
+                if {"text-ocr", "text-ocr-models"} <= bindings.keys()
+                else "off"
+            )
         for key, value in (additional or {}).items():
             if key != "decimer_segmentation_models" or not Path(value).is_absolute():
                 raise WebError(

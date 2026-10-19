@@ -7,6 +7,8 @@ export const environmentComponentIds = [
   'admet-models',
   'molscribe',
   'molscribe-models',
+  'text-ocr',
+  'text-ocr-models',
 ] as const;
 export type EnvironmentComponentId = (typeof environmentComponentIds)[number];
 export type EnvironmentComponentStatus =

@@ -8,6 +8,7 @@ from patent_sar_extractor.contracts import (
     artifact_identity_matches,
 )
 
+from .activity_auxiliary_replay import original_activity_source_errors
 from .activity_coverage import coverage_errors
 from .activity_header_evidence import validate_header_evidence
 from .activity_identity import is_control, is_value, normalize_compound
@@ -62,7 +63,10 @@ def activity_for_compound(data: dict, compound: str) -> dict:
 
 
 def activity_evidence_errors(
-    payload: dict, classified_activity_pages: list[int] | None = None
+    payload: dict,
+    classified_activity_pages: list[int] | None = None,
+    *,
+    open_original=None,
 ) -> list[str]:
     """Validate observed rows, not measured/numeric membership.
 
@@ -83,6 +87,7 @@ def activity_evidence_errors(
         payload.get("coverage"), classified_activity_pages, rows=rows
     )
     errors.extend(validate_header_evidence(payload))
+    errors.extend(original_activity_source_errors(payload, open_original=open_original))
     validate_role_catalog(payload.get("source_role_observations", {}))
     errors.extend(metadata_evidence_errors(rows))
     if not rows:

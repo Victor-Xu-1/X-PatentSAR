@@ -12,8 +12,9 @@ import importlib.util
 import math
 import os
 import pickle
-import resource
 from pathlib import Path
+
+from .resource_budget import process_peak_resident_mb
 
 
 def _sdk_module(directory: Path, name: str):
@@ -67,7 +68,7 @@ class PrintedDecimerModel:
 
     @property
     def peak_rss_mb(self) -> float:
-        return round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024, 2)
+        return round(process_peak_resident_mb(), 2)
 
     def predict(self, image: str) -> dict:
         from PIL import Image

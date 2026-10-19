@@ -39,6 +39,7 @@ def execute_qa(state: PipelineContext) -> dict:
         state.base_dir,
         patent_id=state.patent_id,
         ignore_previous_failure_marker=True,
+        original_pdf=state.args.pdf,
     )
     llm_qa = run_advisory_qa(
         state.base_dir, enabled=not getattr(state.args, "skip_advisory_qa", False)

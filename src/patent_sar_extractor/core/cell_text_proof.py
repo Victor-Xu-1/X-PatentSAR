@@ -3,7 +3,10 @@
 import math
 import re
 
-from patent_sar_extractor.contracts import PHYSICAL_CAPTION_LINE_VERSION
+from patent_sar_extractor.contracts import (
+    AUXILIARY_TEXT_CELL_VERSION,
+    PHYSICAL_CAPTION_LINE_VERSION,
+)
 
 from .cell_ocr_scores import confidence_value
 from .cell_text_chunk_proof import valid_text_chunks
@@ -46,6 +49,14 @@ def valid_text_reading(
 
 def valid_text_components(reading, dpi, *, maximum_row_height=12, maximum_rows=8):
     """Literal text/pixel components, with geometry owned by the calling frame."""
+    if not isinstance(reading, dict):
+        return False
+    if _auxiliary_marker(reading, "physical_header_lines"):
+        from .text_ocr.cell_proof import valid_auxiliary_cell
+
+        return _auxiliary_limits(
+            reading, 1, maximum_rows, maximum_row_height
+        ) and valid_auxiliary_cell(reading, dpi)
     if (
         not isinstance(reading, dict)
         or "physical_text_chunks" in reading
@@ -100,6 +111,19 @@ def physical_text_valid(
     maximum_row_height=12,
 ):
     """One pure bounded pixel-frame replay shared by header and caption readers."""
+    if not isinstance(reading, dict):
+        return False
+    if _auxiliary_marker(reading, packet_name):
+        from .text_ocr.cell_proof import valid_auxiliary_cell
+
+        return (
+            packet_name == "physical_header_lines"
+            and part_method == "physical_header_line"
+            and _auxiliary_limits(
+                reading, minimum_rows, maximum_rows, maximum_row_height
+            )
+            and valid_auxiliary_cell(reading, reading.get("render_dpi"))
+        )
     if type(maximum_row_height) is not int or not 0 < maximum_row_height <= 128:
         return False
     packet = reading.get(packet_name)
@@ -217,4 +241,26 @@ def physical_text_valid(
         and reading.get("raw_text") == "\n".join(part["text"] for part in parts)
         and type(reading.get("confidence")) in {int, float}
         and reading["confidence"] == min(scores)
+    )
+
+
+def _auxiliary_marker(reading, packet_name):
+    packet = reading.get(packet_name)
+    return "auxiliary_text" in reading or (
+        isinstance(packet, dict)
+        and packet.get("version") == AUXILIARY_TEXT_CELL_VERSION
+    )
+
+
+def _auxiliary_limits(reading, minimum_rows, maximum_rows, maximum_row_height):
+    """An auxiliary packet cannot bypass a caller's stricter physical scope."""
+    parts = reading.get("parts")
+    return (
+        type(minimum_rows) is int
+        and type(maximum_rows) is int
+        and 1 <= minimum_rows <= maximum_rows <= 32
+        and type(maximum_row_height) is int
+        and 12 <= maximum_row_height <= 128
+        and isinstance(parts, list)
+        and minimum_rows <= len(parts) <= maximum_rows
     )

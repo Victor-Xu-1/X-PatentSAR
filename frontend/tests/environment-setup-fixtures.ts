@@ -3,6 +3,24 @@ import { molscribeEnvironmentCatalog } from './environment-fixtures';
 
 export function completeEnvironmentCatalog(): EnvironmentCatalog {
   const environmentCatalog = molscribeEnvironmentCatalog();
+  const template = environmentCatalog.components.find((component) => component.id === 'base')!;
+  environmentCatalog.components.push(
+    {
+      ...template,
+      id: 'text-ocr',
+      name: '辅助文字识别环境',
+      required: false,
+      dependencies: ['installer'],
+    },
+    {
+      ...template,
+      id: 'text-ocr-models',
+      name: '辅助文字识别模型',
+      kind: 'models',
+      required: false,
+      dependencies: ['text-ocr'],
+    },
+  );
   return {
     ...environmentCatalog,
     setup_component_ids: environmentCatalog.components.map((component) => component.id),

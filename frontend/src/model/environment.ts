@@ -57,6 +57,14 @@ const componentCopy: Record<EnvironmentComponentId, { name: string; description:
     name: '本地手性兜底模型',
     description: '固定官方模型，加载检查不等于预测准确性验收。',
   },
+  'text-ocr': {
+    name: '辅助文字识别环境',
+    description: '仅在主文字识别未通过时按需加载；CPU、离线、不常驻，不替换结构识别。',
+  },
+  'text-ocr-models': {
+    name: '辅助文字识别模型',
+    description: '固定 PP-OCRv6 small；保留原始读取及冲突，加载检查不代表准确性验收。',
+  },
 };
 export function environmentComponentName(component: EnvironmentComponent): string {
   return getLocale() !== 'zh-CN' && Object.hasOwn(componentCopy, component.id)

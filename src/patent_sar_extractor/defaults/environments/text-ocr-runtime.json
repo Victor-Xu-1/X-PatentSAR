@@ -1,0 +1,18 @@
+{
+  "adapter_version": "literal-row-v1",
+  "model_name": "PP-OCRv6_small_rec",
+  "model_revision": "bd619643acac4b9650c040234da8d944476ee3f1",
+  "license": "Apache-2.0; dependencies retain their own notices",
+  "sdk_inventory": {"generator": "tools/build_text_ocr_resources.py", "sha256": "a4845863f5f666a7cfc475d0c716423732d48a202b2a334237383e02cf37ea69"},
+  "distributions": {"paddleocr": "3.7.0", "paddlex": "3.7.2", "paddlepaddle": "3.3.1", "numpy": "2.2.6", "Pillow": "12.3.0"},
+  "models": [
+    {"file": "inference.json", "size": 208004, "sha256": "f0bf53c853937a917affdd74467472167727f8ab0f0f7bded01c4a16c27e46e6"},
+    {"file": "inference.pdiparams", "size": 21074618, "sha256": "406e1e689c9a7fbb04178007a3fe10cf852afe7bf8bb3bc6dbb9d532b13bd907"},
+    {"file": "inference.yml", "size": 150579, "sha256": "ab078671bb49f06228eadccd34f1bb501e157f7a047095ffb943ba81512c77d1"}
+  ],
+  "sdk_wheels": [
+    {"name": "paddleocr", "prefix": "paddleocr", "file": "paddleocr-3.7.0-py3-none-any.whl", "sha256": "c0f0a81ad4112727f30c6fcf986ac0ef6a120d31ee0991a01fae0357ee32d338"},
+    {"name": "paddlex", "prefix": "paddlex", "file": "paddlex-3.7.2-py3-none-any.whl", "sha256": "f1678bf650bbaccfd8f0d4e49d0ae631b4685c829fdae6e802ccd90d4fcb9a7f"},
+    {"name": "paddlepaddle", "prefix": "paddle", "file": "paddlepaddle-3.3.1-cp310-cp310-manylinux1_x86_64.whl", "sha256": "6747e81b4ab46c9caaae248f7b9999ccd4d5bb3ca9083173b0ce4c14e4a68db5"}
+  ]
+}

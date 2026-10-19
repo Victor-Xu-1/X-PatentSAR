@@ -11,6 +11,14 @@ from tools.browser_fixture_mode import fixture_mode
 
 
 class SourceBrowserFixtureTests(unittest.TestCase):
+    def test_auxiliary_environment_metadata_needs_only_read_only_fixture(self):
+        selected = {"frontend/e2e/auxiliary-text-environment.spec.ts"}
+        self.assertEqual(fixture_mode(selected), "read-only")
+        self.assertEqual(
+            fixture_mode(selected | {"frontend/e2e/product-version.spec.ts"}),
+            "read-only",
+        )
+
     def test_candidate_observation_scope_never_selects_unrelated_execution(self):
         selected = {"frontend/e2e/candidate-observations.spec.ts"}
         self.assertEqual(fixture_mode(selected), "candidate-observations")

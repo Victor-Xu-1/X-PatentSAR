@@ -88,6 +88,32 @@ _SPECS = (
         download_bytes=571312633,
     ),
     ComponentSpec(
+        "text-ocr",
+        "辅助文字识别环境",
+        "仅在主文字识别未通过时按需加载；CPU、离线、不常驻，不替换结构识别。",
+        "PP-OCR 3.7.0 / PaddleX 3.7.2 / CPU 3.3.1",
+        "runtime",
+        "base",
+        False,
+        "Apache-2.0; mixed dependencies including python-bidi LGPL-3.0; see NOTICE",
+        "https://pypi.org/project/paddleocr/3.7.0/",
+        ("installer",),
+        "text-ocr-requirements.txt",
+    ),
+    ComponentSpec(
+        "text-ocr-models",
+        "辅助文字识别模型",
+        "固定 PP-OCRv6 small；保留原始读取及冲突，加载检查不代表准确性验收。",
+        "PP-OCRv6 small / bd619643",
+        "models",
+        "base",
+        False,
+        "Apache-2.0",
+        "https://huggingface.co/PaddlePaddle/PP-OCRv6_small_rec/tree/bd619643acac4b9650c040234da8d944476ee3f1",
+        ("text-ocr",),
+        download_bytes=21433201,
+    ),
+    ComponentSpec(
         "admet",
         "ADMET CPU 环境",
         "独立 Python 3.12 / ADMET-AI 2.0.1 / Chemprop 2 / CPU Torch；不是实验测量。",
@@ -191,6 +217,9 @@ def recipe_path(name: str) -> Path:
         "molscribe-requirements.txt",
         "molscribe-runtime.json",
         "molscribe-sdk.json",
+        "text-ocr-requirements.txt",
+        "text-ocr-runtime.json",
+        "text-ocr-sdk.json",
     }:
         raise ValueError("Unknown packaged recipe")
     return Path(
@@ -207,6 +236,8 @@ def catalog_fingerprint() -> str:
             "base-runtime.json",
             "molscribe-runtime.json",
             "molscribe-sdk.json",
+            "text-ocr-runtime.json",
+            "text-ocr-sdk.json",
         }
     ):
         path = recipe_path(name)

@@ -98,8 +98,13 @@ def _ocr_cell(page, bounds, kind: str, dpi: int) -> OCRObservation:
         raise RuntimeError(
             "Cell-owned scanned biology tables require a coordinate OCR engine (RapidOCR)"
         )
+    return observe_original_cell(page, bounds, kind, dpi, engine[1], _normalize)
+
+
+def observe_original_cell(page, bounds, kind, dpi, engine, normalize) -> OCRObservation:
+    """One original rendering/observation envelope for scalar and text readers."""
     image = cell_image(page, bounds, dpi)
-    observed = observe_cell(image, kind, dpi, engine[1], _normalize)
+    observed = observe_cell(image, kind, dpi, engine, normalize)
     return replace(
         observed,
         source_frame={

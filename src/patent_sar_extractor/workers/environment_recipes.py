@@ -143,6 +143,8 @@ class EnvironmentProvisioner:
             "admet-models": "2.0.1",
             "molscribe": "1.1.1-cpu-py31020",
             "molscribe-models": "1m680k",
+            "text-ocr": "v6-py31020-cpu",
+            "text-ocr-models": "v6-small-bd619643",
         }[identifier]
         prefix = (
             self.plan.install_root / f"{identifier}-{version}-{self.plan.operation_id}"
@@ -151,7 +153,7 @@ class EnvironmentProvisioner:
         prefix.mkdir(mode=0o700, exist_ok=False)
         if identifier == "installer":
             binding = self._installer(prefix)
-        elif identifier in {"base", "admet", "decimer", "molscribe"}:
+        elif identifier in {"base", "admet", "decimer", "molscribe", "text-ocr"}:
             binding = self._runtime(identifier, prefix)
         elif identifier == "admet-models":
             wheel = download(
@@ -164,6 +166,12 @@ class EnvironmentProvisioner:
             )
             binding = prefix / "models"
             prepare(wheel, binding)
+        elif identifier == "text-ocr-models":
+            from .text_ocr_setup import install_text_models
+
+            binding = install_text_models(
+                prefix, self.plan.cache_root, self.cancel, self.download_progress
+            )
         elif identifier == "molscribe-models":
             from .molscribe_setup import install_models
 
@@ -221,7 +229,7 @@ class EnvironmentProvisioner:
         ):
             raise ValueError("A verified owned installer is required")
         python = Path(sys.executable)
-        if identifier in {"decimer", "molscribe"}:
+        if identifier in {"decimer", "molscribe", "text-ocr"}:
             # uv's pinned release carries the official python-build-standalone
             # source/checksum table. No custom mirror/URL or global registration.
             managed = prefix / "python"

@@ -9,6 +9,7 @@ from .activity_header_identity import (
     detector_header_conflict,
     header_conflict,
 )
+from .activity_header_layout_proof import valid_physical_discovery
 from .activity_header_sources import header_source_conflicts, select_header_context
 from .activity_headers import context_from_text, grid_schema
 from .cell_header_proof import physical_header_valid
@@ -19,7 +20,7 @@ def _score(value):
     return type(value) in {int, float} and math.isfinite(value) and 0.85 <= value <= 1
 
 
-def _column(column, index, header, band, dpi):
+def valid_header_column(column, index, header, band, dpi):
     if (
         not isinstance(column, dict)
         or type(column.get("physical_column")) is not int
@@ -80,6 +81,8 @@ def _column(column, index, header, band, dpi):
 
 def valid_header_proof(proof):
     """Recompute fields/units/columns/caption and original contradictions."""
+    if not valid_physical_discovery(proof, valid_header_column):
+        return False
     if type(proof.get("column_contract")) is not int or proof[
         "column_contract"
     ] not in {1, 2, 3, 4}:
@@ -139,7 +142,7 @@ def valid_header_proof(proof):
             or not isinstance(columns, list)
             or len(columns) != len(matrix[-1])
             or any(
-                not _column(column, i, matrix[-1][i], band, dpi)
+                not valid_header_column(column, i, matrix[-1][i], band, dpi)
                 for i, column in enumerate(columns)
             )
             or columns[0]["bbox"][0] != band[0]

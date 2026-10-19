@@ -64,6 +64,8 @@ class CompleteEnvironmentAPITests(EnvironmentAPITests):
             "admet_models": str(models),
             "molscribe": sys.executable,
             "molscribe_models": str(models),
+            "paddleocr": sys.executable,
+            "paddleocr_models": str(models),
         }
         self.config.joinpath("env_paths.local.yaml").write_text(yaml.safe_dump(config))
         self.config.joinpath("env_paths.local.yaml").chmod(0o600)
