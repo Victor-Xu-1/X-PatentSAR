@@ -9,31 +9,12 @@ import { pendingEnvironmentKey } from '../src/model/environmentRecovery';
 import { environmentCatalog, environmentOperation } from './environment-fixtures';
 import { completeEnvironmentCatalog } from './environment-setup-fixtures';
 import { health } from './fixtures';
+import { disabledLLMSettings } from './llm-settings-fixture';
 
 beforeEach(() => {
   // Isolate installation/storage assertions from the separate optional module;
   // its real settings transport and errors have their own focused suite/E2E.
-  vi.spyOn(llmApi, 'settings').mockResolvedValue({
-    revision: 0,
-    endpoint: '',
-    model: '',
-    protocol: 'openai-compatible',
-    response_mode: 'json-schema',
-    mode: 'off',
-    data_consent: false,
-    key_configured: false,
-    editable: true,
-    status: 'disabled',
-    reason: null,
-    limits: {
-      max_calls: 8,
-      timeout_seconds: 30,
-      max_input_chars: 12000,
-      max_output_chars: 8192,
-      max_tokens: 1024,
-    },
-    last_test: null,
-  });
+  vi.spyOn(llmApi, 'settings').mockResolvedValue(disabledLLMSettings());
   sessionStorage.removeItem(pendingEnvironmentKey);
   vi.spyOn(api, 'environments').mockResolvedValue(completeEnvironmentCatalog());
   vi.spyOn(api, 'environmentOperation').mockResolvedValue(environmentOperation);

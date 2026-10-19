@@ -2,6 +2,7 @@ import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { api } from '../src/api';
+import { llmApi } from '../src/api/llmApi';
 import { ApiError } from '../src/api/errors';
 import { decodeEnvironmentCatalog } from '../src/api/environmentDecoders';
 import { EnvironmentPage } from '../src/features/environment/EnvironmentPage';
@@ -9,8 +10,10 @@ import { pendingEnvironmentKey } from '../src/model/environmentRecovery';
 import { environmentOperation } from './environment-fixtures';
 import { completeEnvironmentCatalog, readyEnvironmentCatalog } from './environment-setup-fixtures';
 import { health } from './fixtures';
+import { disabledLLMSettings } from './llm-settings-fixture';
 
 beforeEach(() => {
+  vi.spyOn(llmApi, 'settings').mockResolvedValue(disabledLLMSettings());
   sessionStorage.removeItem(pendingEnvironmentKey);
   vi.spyOn(api, 'environments').mockResolvedValue(completeEnvironmentCatalog());
   vi.spyOn(api, 'runtime').mockResolvedValue({
