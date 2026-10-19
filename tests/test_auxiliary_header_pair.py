@@ -109,7 +109,7 @@ class AuxiliaryHeaderPairTests(unittest.TestCase):
                 reader = cell_fixture.ControlledAuxiliary()
                 original = reader.observe
 
-                def weak(image):
+                def weak(image, *, original=original, score=score, text=text):
                     return {**original(image), "confidence": score, "text": text}
 
                 reader.observe = weak
