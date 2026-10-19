@@ -122,7 +122,7 @@ class HeaderPhysicalProofTests(unittest.TestCase):
             (True, 8),
             (0, 8),
             (-1, 8),
-            (1068, 8),
+            (1069, 8),  # One beyond the128pt/600dpi raster-origin envelope.
             (20, True),
             (20, 0),
             (20, 33),

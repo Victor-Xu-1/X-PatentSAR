@@ -1,5 +1,16 @@
 # Project governance manifest
 
+- Original text raster extent: `cell_text_limits.row_pixel_limit` solely owns
+  `ceil(height_pt*dpi/72)+1`, including the unknown render-origin phase. Capture,
+  chunks, scalar/padding replay, caption coverage and words consume it; no
+  competing fractional height checks remain. Row gaps/ink/confidence/identity
+  and conflicting source policies are unchanged. Native exact-point phases and
+  actual controlled OCR/characterization consumers verify the boundary, not
+  all-format chemistry. Current derived contracts: Binding36/binder46,
+  activity-extractor32, visible22, preparation10. Original PDF/raw OCR/OCSR2,
+  assets/manual audit, activity schema22, numerical SAR, API/SQL and dependencies
+  stay unchanged. Historical packets are preserved, not upgraded by a saved flag.
+
 - Original caption form: `caption_cell_reading` extends the SAME cell authority
   only for a proved compound catalogue's merged role/ID nomination.
   `caption_word_geometry` retains all bounded source partitions;
@@ -31,7 +42,7 @@
   failures remain open, not waived. No dependency, recognizer, schema or SQL
   migration is introduced.
 
-- Current derived contracts for this upgrade: Binding35/binder45/word-form1, native-vector2/
+- Previous caption-source upgrade (preserved): Binding35/binder45/word-form1, native-vector2/
   native-route2, heading
   structure evidence5, SMILES4/QA6, preparation9. Raw OCSR2, original assets/model
   files, manual audit, numerical SAR, API-v1/SQL and dependencies remain unchanged.

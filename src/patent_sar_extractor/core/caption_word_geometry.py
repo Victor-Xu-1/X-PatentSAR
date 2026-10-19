@@ -4,6 +4,8 @@ import math
 
 import numpy as np
 
+from .cell_text_limits import row_pixel_limit
+
 MAX_CAPTION_WORD_PIXELS = 1_000_000
 MAX_CAPTION_WORD_PARTITIONS = 4
 
@@ -21,7 +23,7 @@ def caption_word_partitions(mask, dpi):
     rows = np.flatnonzero(mask.any(axis=1))
     if (
         not len(rows)
-        or rows[-1] - rows[0] + 1 > 12 * dpi / 72
+        or rows[-1] - rows[0] + 1 > row_pixel_limit(dpi)
         or np.any(np.diff(rows) > max(1, math.ceil(dpi / 72 * 0.7)))
     ):
         return None

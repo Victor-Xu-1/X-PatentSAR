@@ -5,6 +5,8 @@ import math
 import cv2
 import numpy as np
 
+from .cell_text_limits import row_pixel_limit
+
 
 def complete_line_bounds(image, boxes, border, dpi, *, fragmented=False):
     """Return an observed ink rectangle, never a number-dependent expansion.
@@ -54,7 +56,7 @@ def complete_line_bounds(image, boxes, border, dpi, *, fragmented=False):
         return None
     left, right = int(ink_x.min()), int(ink_x.max()) + 1
     first, last = int(ink_y.min()) + top, int(ink_y.max()) + top + 1
-    if last - first > 12 * dpi / 72:
+    if last - first > row_pixel_limit(dpi):
         return None
     if left >= x0 - 2 and right <= x1 + 2:
         return None
@@ -72,7 +74,7 @@ def _undetected_line_bounds(image, dpi):
         return None  # Distinct physical rows never become a single recognition input.
     first, last = int(occupied[0]), int(occupied[-1]) + 1
     components, _, _, _ = cv2.connectedComponentsWithStats(ink.astype(np.uint8), 8)
-    if last - first > 12 * dpi / 72 or not 3 <= components <= 513:
+    if last - first > row_pixel_limit(dpi) or not 3 <= components <= 513:
         return None
     horizontal = np.flatnonzero(ink[first:last].any(axis=0))
     return int(horizontal[0]), first, int(horizontal[-1]) + 1, last

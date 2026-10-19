@@ -3,6 +3,8 @@
 import math
 import re
 
+from .cell_text_limits import row_pixel_limit
+
 MAX_TEXT_CHUNKS = 128
 _CELL_READING_FIELDS = {
     "method",
@@ -98,7 +100,8 @@ def valid_text_chunks(
         if (
             not _box(row, shape[1], shape[0])
             or row[1] <= bottom
-            or row[3] - row[1] > maximum_row_height * dpi / 72
+            or row[3] - row[1]
+            > row_pixel_limit(dpi, maximum_row_height=maximum_row_height)
         ):
             return False
         bottom = row[3]

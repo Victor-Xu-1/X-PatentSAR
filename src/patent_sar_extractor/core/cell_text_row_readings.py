@@ -1,8 +1,9 @@
 """One bounded original text-row observation policy, independent of semantics."""
 
 from .cell_ocr_scores import confidence_value
+from .cell_text_limits import row_pixel_limit
 
-MAX_ROW_PIXELS = (128 * 600 + 71) // 72  # Existing maximum128pt at600dpi.
+MAX_ROW_PIXELS = row_pixel_limit(600, maximum_row_height=128)
 
 
 def row_recognition_border(height, border):
@@ -90,7 +91,7 @@ def valid_single_row(reading, dpi):
         or any(type(v) is not int or v < 0 for v in crop)
         or not crop[0] < crop[2]
         or not crop[1] < crop[3]
-        or (crop[3] - crop[1]) * 72 / dpi > 12
+        or crop[3] - crop[1] > row_pixel_limit(dpi)
         or type(border) is not int
         or border != max(3, round(dpi / 72 * 1.5))
         or reading.get("detection_parts") != []

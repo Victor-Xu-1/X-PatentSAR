@@ -1,5 +1,23 @@
 # Operations and troubleshooting
 
+## A dense original text cell is empty at one render scale
+
+Inspect its retained physical frame before assuming OCR failed. If row geometry
+was refused, no recognition call may have occurred. A fractional point-to-pixel
+cap incorrectly rejected valid67pixel rows at400dpi. Original render phase also
+means a simpleceil is insufficient. The one `cell_text_limits` authority uses
+`ceil(height_pt * dpi / 72) + 1`; every producer and pure consumer shares it.
+Row gaps, original ink/digests, coordinates, confidence and known conflicts stay
+strict. Unknown/oversized inputs are not silently routed around the source gate.
+
+Rebuild only derived binding/activity/visible/preparation observations through
+the normal producer (Binding36/binder46/activity-extractor32/visible22/preparation10).
+Do not edit a workbook, source carrier or old QA flag. Raw observations/assets,
+exact-image/model cache and manual audit stay intact. A characterization table's
+primary IDs still require proved structures, while procedure references do not
+become additional terminal molecules. Related native/raster and source-consumer
+checks do not replace a real frontend extraction-to-SAR acceptance run.
+
 ## A caption's role word was merged into its ID
 
 Inspect the original cell and all preserved page/whole/word observations. Do not
