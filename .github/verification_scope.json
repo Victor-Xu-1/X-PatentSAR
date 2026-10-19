@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "base_sha": "fed9085e4aa587aa41ec01bc2996d4667a0fd3b6",
+  "base_sha": "af771cdafd0fc807cb060dd56a98bb76c6a30716",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
@@ -9,20 +9,23 @@
     "frontend/package-lock.json",
     "frontend/package.json",
     "src/patent_sar_extractor/contracts.py",
-    "src/patent_sar_extractor/core/text_ocr/recovery_capture.py",
-    "src/patent_sar_extractor/core/text_ocr/recovery_rows.py",
-    "tests/test_auxiliary_header_pair.py"
+    "src/patent_sar_extractor/core/activity_auxiliary_replay.py",
+    "tests/test_activity_primary_source.py",
+    "tests/test_auxiliary_activity_consumers.py"
   ],
   "python_modules": [
-    "tests.test_auxiliary_header_pair",
-    "tests.test_auxiliary_cell_evidence",
-    "tests.test_auxiliary_row_padding",
-    "tests.test_auxiliary_legacy_reading",
-    "tests.test_source_text_chunk_recovery",
-    "tests.test_role_text_recovery",
-    "tests.test_auxiliary_binding_consumers",
+    "tests.test_activity_primary_source",
+    "tests.test_auxiliary_source_replay",
+    "tests.test_auxiliary_header_discovery",
     "tests.test_auxiliary_activity_consumers",
     "tests.test_auxiliary_activity_compatibility",
+    "tests.test_role_original_replay",
+    "tests.test_role_text_source_replay",
+    "tests.test_source_led_export",
+    "tests.test_cell_observation_epochs",
+    "tests.test_source_epoch_guards",
+    "tests.test_source_context_projection",
+    "tests.test_sar_source_contexts",
     "tests.test_release_policy.ReleaseNumberTests",
     "tests.test_standalone.StandalonePackagingTests.test_version_command_uses_product_version",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
