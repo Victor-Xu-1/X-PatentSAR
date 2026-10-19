@@ -25,7 +25,8 @@ class HeadingMappingTests(unittest.TestCase):
                 document.saveIncr()
             result = bind(str(pdf), profile, str(root / "bindings"), str(metadata))
         self.assertEqual(
-            {row["cpd"] for row in result["bindings"]}, {"Compound 1", "Compound 2"}
+            {row["cpd"] for row in result["compound_catalog"]["entries"]},
+            {"Compound 1", "Compound 2"},
         )
         self.assertEqual(
             {row["cpd"] for row in result["source_issues"]},
@@ -95,7 +96,10 @@ class HeadingMappingTests(unittest.TestCase):
             )
         self.assertEqual(result["source_issues"], [])
         self.assertEqual(
-            {row["cpd"]: row["structure_id"] for row in result["bindings"]},
+            {
+                row["cpd"]: row["structure_id"]
+                for row in result["compound_catalog"]["entries"]
+            },
             {"Compound 18": "S1", "Compound 17": "S2"},
         )
 
@@ -108,7 +112,7 @@ class HeadingMappingTests(unittest.TestCase):
             result = bind(
                 str(pdf), {"bind_workers": 1}, str(root / "bindings"), str(metadata)
             )
-        self.assertEqual(result["bindings"], [])
+        self.assertEqual(result["compound_catalog"]["entries"], [])
         self.assertEqual(
             {row["cpd"] for row in result["source_issues"]},
             {"Compound 17", "Compound 18"},

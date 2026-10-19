@@ -55,10 +55,7 @@ def assert_web_original(test, *, filled=False):
         [],
     )
     changed = copy.deepcopy(bindings)
-    for source in [
-        *changed["final_bindings"],
-        *changed["compound_catalog"]["entries"],
-    ]:
+    for source in changed["compound_catalog"]["entries"]:
         packet = source["original_heading_structure_evidence"]["reaction_source"]
         if filled:
             packet["pages"][0]["filled_heads"][0]["points"][0][0] += 1
@@ -70,7 +67,9 @@ def assert_web_original(test, *, filled=False):
     # Pure packet shape validation isn't original source truth. The common
     # normal/final/Web replay must still discover a self-rehashed contradiction.
     test.assertEqual(
-        annotate_binding_accuracy(changed["final_bindings"][0])["accuracy_status"],
+        annotate_binding_accuracy(changed["compound_catalog"]["entries"][0])[
+            "accuracy_status"
+        ],
         "confirmed",
     )
     test.assertTrue(

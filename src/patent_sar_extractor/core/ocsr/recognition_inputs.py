@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from patent_sar_extractor.core.binding_records import binding_records
 from patent_sar_extractor.core.catalog_reader import (
     MAX_CATALOG_RECORDS,
     read_catalog_entries,
@@ -46,7 +47,7 @@ class RecognitionPlan:
 
 
 def recognition_inputs(payload: dict[str, Any]) -> RecognitionPlan:
-    formal = payload.get("final_bindings", [])
+    formal = binding_records(payload, legacy=True)
     if (
         not isinstance(formal, list)
         or len(formal) > MAX_CATALOG_RECORDS

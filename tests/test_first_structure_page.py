@@ -77,16 +77,18 @@ class FirstStructurePageTests(PredictionFixture, unittest.TestCase):
         )
         before = self.service.store.project(self.project.id)["snapshot"]
         for relative, key in (
-            ("structure_bindings/bindings.json", "final_bindings"),
+            ("structure_bindings/bindings.json", "catalogue"),
             ("structures/metadata.json", "structures"),
         ):
             path = self.run / relative
             payload = json.loads(path.read_text())
-            for entry in payload[key]:
+            entries = (
+                payload["compound_catalog"]["entries"]
+                if key == "catalogue"
+                else payload[key]
+            )
+            for entry in entries:
                 entry["page_no"] = None
-            if key == "final_bindings":
-                for entry in payload["compound_catalog"]["entries"]:
-                    entry["page_no"] = None
             path.write_text(json.dumps(payload))
         # Current source admission cannot publish this malformed catalogue as
         # accepted merely because its activity points at a real original page.

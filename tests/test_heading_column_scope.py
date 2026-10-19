@@ -38,7 +38,7 @@ class HeadingColumnScopeTests(LateralStructureControls, unittest.TestCase):
                     self.assertEqual(coverage_errors(payload), [])
                     binding = next(
                         r
-                        for r in payload["final_bindings"]
+                        for r in payload["compound_catalog"]["entries"]
                         if r["cpd"] == "Compound B80"
                     )
                     evidence = binding["original_heading_structure_evidence"]
@@ -60,7 +60,9 @@ class HeadingColumnScopeTests(LateralStructureControls, unittest.TestCase):
     def test_omitted_foreign_or_changed_column_packets_cannot_grant_uniqueness(self):
         _, payload = self.run_case(later_product=True)
         source = next(
-            r for r in payload["final_bindings"] if r["cpd"] == "Compound B80"
+            r
+            for r in payload["compound_catalog"]["entries"]
+            if r["cpd"] == "Compound B80"
         )
         for mutation in ("omitted", "identity", "document", "raw_inventory"):
             changed = copy.deepcopy(source)
@@ -87,7 +89,9 @@ class HeadingColumnScopeTests(LateralStructureControls, unittest.TestCase):
             self.add_drawing(document[0], records, 360, 625, "OWN-COLUMN-RIVAL")
 
         _, payload = self.run_case(later_product=True, mutate_document=extra)
-        self.assertNotIn("Compound B80", {r["cpd"] for r in payload["final_bindings"]})
+        self.assertNotIn(
+            "Compound B80", {r["cpd"] for r in payload["compound_catalog"]["entries"]}
+        )
         self.assertTrue(coverage_errors(payload))
 
     def test_registered_foreign_diagram_ink_is_not_an_own_reaction_arrow(self):
@@ -103,7 +107,12 @@ class HeadingColumnScopeTests(LateralStructureControls, unittest.TestCase):
 
         _, payload = self.run_case(later_product=True, mutate_document=route)
         binding = next(
-            (r for r in payload["final_bindings"] if r["cpd"] == "Compound B80"), None
+            (
+                r
+                for r in payload["compound_catalog"]["entries"]
+                if r["cpd"] == "Compound B80"
+            ),
+            None,
         )
         self.assertIsNotNone(binding)
         self.assertEqual(binding["structure_id"], "TERMINAL-B80")
@@ -117,7 +126,9 @@ class HeadingColumnScopeTests(LateralStructureControls, unittest.TestCase):
         _, payload = self.run_case(
             later_product=True, mutate_document=close_other_column
         )
-        self.assertNotIn("Compound B80", {r["cpd"] for r in payload["final_bindings"]})
+        self.assertNotIn(
+            "Compound B80", {r["cpd"] for r in payload["compound_catalog"]["entries"]}
+        )
         section = next(
             s for s in payload["source_sections"] if s.get("identifier") == "B80"
         )
@@ -150,4 +161,6 @@ class HeadingColumnScopeTests(LateralStructureControls, unittest.TestCase):
         self.assertEqual(
             {r["structure_id"] for r in candidates}, {"LATER-B80", "AFTER-OTHER-STEP"}
         )
-        self.assertNotIn("Compound B80", {r["cpd"] for r in payload["final_bindings"]})
+        self.assertNotIn(
+            "Compound B80", {r["cpd"] for r in payload["compound_catalog"]["entries"]}
+        )

@@ -67,8 +67,10 @@ class SourceBrowserFixtureTests(unittest.TestCase):
             root = Path(temporary) / "isolated"
             values = prepare(root, read_only=True)
             path = root / "controlled-history/structure_bindings/bindings.json"
-            self.assertIn(MARKER, json.loads(path.read_text()))
-            self.assertEqual(len(load_json(path, {})["final_bindings"]), 30)
+            self.assertIn(MARKER, list(json.loads(path.read_text())))
+            self.assertEqual(
+                len(load_json(path, {})["compound_catalog"]["entries"]), 30
+            )
             self.assertEqual(values["PATENTSAR_E2E_RUN_JOBS"], "0")
             self.assertEqual(values["PATENTSAR_E2E_BINDING_TRANSPORT"], "shared-json-1")
 

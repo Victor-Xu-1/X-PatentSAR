@@ -42,6 +42,7 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
             structures=self.run / "structures/metadata.json",
             binding_dir=path.parent,
             source_raw=raw,
+            raw_by_owner={"Compound 8": raw},
         )
         (self.run / ARTIFACTS["smiles"][0]).write_text(json.dumps(artifact))
         self.service.refresh(self.project.id)
@@ -89,8 +90,8 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
 
     def test_missing_image_retains_explicit_unavailable_recognition(self):
         _, _, artifact = self.prepare()
-        artifact["source_records"][0] = {
-            **artifact["source_records"][0],
+        artifact["records"][1] = {
+            **artifact["records"][1],
             "cpd_id": "Compound 8",
             "structure_id": "numbered-without-activity",
             "OCSR_status": "image_missing",
@@ -102,7 +103,7 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
             "model_fingerprint": None,
             "OCSR_engine": None,
         }
-        artifact["source_records"][0].pop("stereochemistry", None)
+        artifact["records"][1].pop("stereochemistry", None)
         (self.run / ARTIFACTS["smiles"][0]).write_text(json.dumps(artifact))
         self.service.refresh(self.project.id)
         item = self.service.results(self.project.id).items[1]
@@ -111,7 +112,9 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
 
     def test_rejected_active_source_uses_the_same_no_prediction_standard(self):
         _, payload, artifact = self.prepare()
-        artifact["records"][0] = observation(payload["final_bindings"][0], "CC*")
+        artifact["records"][0] = observation(
+            payload["compound_catalog"]["entries"][0], "CC*"
+        )
         (self.run / ARTIFACTS["smiles"][0]).write_text(json.dumps(artifact))
         self.service.refresh(self.project.id)
         row, _ = corpus_tests.CorpusPredictionTests.job(self)
@@ -126,7 +129,7 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
 
     def test_foreign_source_cannot_borrow_another_compounds_molecule(self):
         _, _, artifact = self.prepare()
-        artifact["source_records"][0]["structure_id"] = "S0"
+        artifact["records"][1]["structure_id"] = "S0"
         (self.run / ARTIFACTS["smiles"][0]).write_text(json.dumps(artifact))
         with self.assertRaises(WebError) as rejected:
             self.service.refresh(self.project.id)
@@ -136,22 +139,20 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
         _, payload = catalog_tests.CompoundCatalogViewTests.catalog_run(self)
         plan = recognition_inputs(payload)
         formal, sources = plan.formal, plan.supplemental
-        self.assertEqual([item["cpd"] for item in formal], ["Compound 1"])
-        self.assertEqual([item["cpd"] for item in sources], ["Compound 8"])
+        self.assertEqual([item["cpd"] for item in formal], ["Compound 1", "Compound 8"])
+        self.assertEqual(sources, [])
         self.assertNotIn("proved-reprint", [item["structure_id"] for item in sources])
         self.assertEqual(
             [item["structure_id"] for item in plan.reprints], ["proved-reprint"]
         )
         payload["final_bindings"] = []
-        self.assertEqual(
-            [item["cpd"] for item in recognition_inputs(payload).supplemental],
-            ["Compound 1", "Compound 8"],
-        )
+        with self.assertRaisesRegex(ValueError, "authority"):
+            recognition_inputs(payload)
 
     def test_conflicting_catalog_formal_owner_is_rejected_before_inference(self):
         _, payload = catalog_tests.CompoundCatalogViewTests.catalog_run(self)
-        payload["final_bindings"][0]["structure_id"] = "wrong"
-        with self.assertRaisesRegex(ValueError, "conflicts"):
+        payload["final_bindings"] = [{"cpd": "Compound 1", "structure_id": "wrong"}]
+        with self.assertRaisesRegex(ValueError, "authority"):
             recognition_inputs(payload)
 
     def test_source_only_image_content_changes_invalidate_recognition_checkpoint(self):
@@ -212,11 +213,10 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
         self.assertTrue(all(not label for label in batches[0][3:]))
         artifact = json.loads(output.read_text())
         self.assertEqual(
-            [row["cpd_id"] for row in smiles_records(artifact)], ["Compound 1"]
+            [row["cpd_id"] for row in smiles_records(artifact)],
+            ["Compound 1", "Compound 8"],
         )
-        self.assertEqual(
-            [row["cpd_id"] for row in artifact["source_records"]], ["Compound 8"]
-        )
+        self.assertEqual(artifact["source_records"], [])
 
     def test_old_schema_observations_are_not_promoted_to_current_source_chemistry(self):
         _, _, artifact = self.prepare()
@@ -229,9 +229,6 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
 
     def test_pipeline_checks_complete_catalog_then_reuses_identical_checkpoint(self):
         path, payload, artifact = self.prepare()
-        plan = recognition_inputs(payload)
-        formal, supplemental = plan.formal, plan.supplemental
-        payload["final_bindings"] = [*formal, *supplemental]
         write_json_atomic(path, payload)
         artifact = complete_observation_artifact(
             payload,
@@ -290,9 +287,6 @@ class UniformRecognitionTests(PredictionFixture, unittest.TestCase):
 
     def test_smiles_worker_cannot_omit_no_activity_catalog_results(self):
         path, payload, artifact = self.prepare()
-        plan = recognition_inputs(payload)
-        formal, supplemental = plan.formal, plan.supplemental
-        payload["final_bindings"] = [*formal, *supplemental]
         write_json_atomic(path, payload)
         artifact = complete_observation_artifact(
             payload,

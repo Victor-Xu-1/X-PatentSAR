@@ -433,6 +433,14 @@ remain separate from complete real frontend extraction/SAR and chemical accuracy
 
 ## Large binding evidence without dropped records
 
+Current bindings40/binder50 retain one complete `compound_catalog.entries`
+collection, with no root `final_bindings` or `bindings` copies. All scientific
+and presentation consumers use the bounded common accessor; a competing current
+collection or contradictory count is invalid, not a success/partial-cache
+fallback. Older files remain unchanged and available for historical review;
+they are not current acceptance. Resume may reuse only independently verified
+compatible raw checkpoints and must run the normal producer for stale bindings.
+
 Repeated complete source proofs can inflate a binding artifact past the shared
 32MiB reader limit. The binding writer now uses a versioned in-file shared JSON
 catalogue; the common native/Web reader restores the original logical record
@@ -441,6 +449,13 @@ removes records, original text, coordinates, uncertainty or rejected proposals.
 References, content hashes, traversal/depth and logical-expansion bounds are
 validated before use. Transport integrity does not qualify scientific evidence.
 Unsupported or intrinsically over-budget evidence still fails explicitly.
+
+Do not increase node/byte/depth limits or discard proof to make a task pass.
+Single-copy representation removes duplicate expansion; it is not a guarantee
+that an arbitrarily large/complex source fits the bounded format. Controlled
+large-catalogue checks prove transport completeness only, not OCR/chemical
+accuracy or complete private-patent extraction. Retain the exact terminal
+failure and preceding artifacts when any guard refuses publication.
 
 Existing readable plain artifacts remain supported under their original
 scientific identities. An oversized legacy binding checkpoint cannot be reused;

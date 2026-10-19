@@ -12,6 +12,7 @@ from patent_sar_extractor.contracts import (
     BINDINGS_SCHEMA_VERSION,
     artifact_identity_matches,
 )
+from patent_sar_extractor.core.binding_records import binding_records
 from patent_sar_extractor.core.formal_structure import (
     confirmed_binding,
     coverage_errors,
@@ -26,11 +27,7 @@ WORKING_ROOT = Path.cwd()
 def _load_bindings_from_json(path: str) -> tuple[dict, list[dict]]:
     with open(path, encoding="utf-8") as source:
         payload = read_artifact_json(source)
-    if not isinstance(payload, dict) or not isinstance(
-        payload.get("final_bindings"), list
-    ):
-        raise ValueError("Malformed formal binding artifact")  # noqa: TRY004 -- shared schema boundary
-    return payload, payload["final_bindings"]
+    return payload, binding_records(payload)
 
 
 def _binding_acceptance_errors(
@@ -43,7 +40,7 @@ def _binding_acceptance_errors(
     ):
         raise ValueError("Binding producer returned an incompatible artifact")
     errors = coverage_errors(bindings_payload)
-    bindings = bindings_payload["final_bindings"]
+    bindings = binding_records(bindings_payload)
     missing = [
         row.get("cpd") for row in bindings if not image_exists(row, str(WORKING_ROOT))
     ]

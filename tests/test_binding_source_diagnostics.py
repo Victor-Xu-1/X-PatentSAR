@@ -54,7 +54,7 @@ class BindingSourceDiagnosticsTests(unittest.TestCase):
 
     def test_unproved_original_proposal_is_retained_not_promoted_or_erased(self):
         payload, proposal = self.observe()
-        self.assertEqual(payload["final_bindings"], [])
+        self.assertEqual(payload["compound_catalog"]["entries"], [])
         issue = next(
             i
             for i in payload["source_issues"]
@@ -82,7 +82,7 @@ class BindingSourceDiagnosticsTests(unittest.TestCase):
             observed["proposal"]["exact_caption_evidence"],
             proposal["exact_caption_evidence"],
         )
-        self.assertEqual(payload["final_bindings"], [])
+        self.assertEqual(payload["compound_catalog"]["entries"], [])
         self.assertEqual(
             [issue["reason"] for issue in reference_issues(payload, [], required=True)],
             ["unproved_original_binding"],

@@ -21,13 +21,14 @@ class LateralStructureSourceTests(LateralStructureControls, unittest.TestCase):
     def test_two_original_tables_keep_separate_titles_and_all_rows(self):
         result, payload = self.run_case()
         self.assertEqual(
-            {r["cpd"] for r in result["bindings"]},
+            {r["cpd"] for r in result["compound_catalog"]["entries"]},
             {"Compound 73", "Compound 28", "Compound 901A", "Compound I-003B"},
         )
         self.assertEqual(coverage_errors(payload), [])
         saved = json.loads(json.dumps(payload))
         self.assertEqual(
-            len(read_compound_catalog(saved, saved["final_bindings"])[0]), 4
+            len(read_compound_catalog(saved, saved["compound_catalog"]["entries"])[0]),
+            4,
         )
         self.assertEqual(
             {
@@ -37,7 +38,7 @@ class LateralStructureSourceTests(LateralStructureControls, unittest.TestCase):
             },
             {"TABLE11", "TABLEB8"},
         )
-        for row in payload["final_bindings"]:
+        for row in payload["compound_catalog"]["entries"]:
             evidence = row["numbered_table_cell_evidence"]
             expected = (
                 "Table 11" if row["structure_id"].startswith("C0-") else "Table B8"
@@ -48,7 +49,7 @@ class LateralStructureSourceTests(LateralStructureControls, unittest.TestCase):
     def test_unruled_parallel_tables_keep_independent_original_sources(self):
         result, payload = self.run_case(ruled=False)
         self.assertEqual(
-            {r["cpd"] for r in result["bindings"]},
+            {r["cpd"] for r in result["compound_catalog"]["entries"]},
             {"Compound 73", "Compound 28", "Compound 901A", "Compound I-003B"},
         )
         self.assertEqual(coverage_errors(payload), [])
@@ -68,13 +69,15 @@ class LateralStructureSourceTests(LateralStructureControls, unittest.TestCase):
         )
         saved = json.loads(json.dumps(payload))
         self.assertEqual(
-            len(read_compound_catalog(saved, saved["final_bindings"])[0]), 4
+            len(read_compound_catalog(saved, saved["compound_catalog"]["entries"])[0]),
+            4,
         )
 
     def test_unruled_nonfinal_column_does_not_hide_independent_final_compounds(self):
         result, payload = self.run_case(ruled=False, nonfinal=True)
         self.assertEqual(
-            {r["cpd"] for r in result["bindings"]}, {"Compound 73", "Compound 28"}
+            {r["cpd"] for r in result["compound_catalog"]["entries"]},
+            {"Compound 73", "Compound 28"},
         )
         self.assertEqual(coverage_errors(payload), [])
         declarations = [
@@ -102,7 +105,7 @@ class LateralStructureSourceTests(LateralStructureControls, unittest.TestCase):
                     ruled=False, nonfinal=True, right_title_y=right_title_y
                 )
                 self.assertEqual(
-                    {r["cpd"] for r in result["bindings"]},
+                    {r["cpd"] for r in result["compound_catalog"]["entries"]},
                     {"Compound 73", "Compound 28"},
                 )
                 self.assertEqual(coverage_errors(payload), [])
@@ -114,7 +117,7 @@ class LateralStructureSourceTests(LateralStructureControls, unittest.TestCase):
                     ruled=False, raster=True, nonfinal=True, right_title_y=right_title_y
                 )
                 self.assertEqual(
-                    {r["cpd"] for r in result["bindings"]},
+                    {r["cpd"] for r in result["compound_catalog"]["entries"]},
                     {"Compound 73", "Compound 28"},
                 )
                 self.assertEqual(coverage_errors(payload), [])
@@ -147,7 +150,9 @@ class LateralStructureSourceTests(LateralStructureControls, unittest.TestCase):
                 result, payload = self.run_case(
                     ruled=False, raster=True, nonfinal=nonfinal
                 )
-                self.assertEqual(len(result["bindings"]), 2 if nonfinal else 4)
+                self.assertEqual(
+                    len(result["compound_catalog"]["entries"]), 2 if nonfinal else 4
+                )
                 self.assertEqual(coverage_errors(payload), [])
 
     def test_native_conflict_in_unruled_scan_cannot_exclude_or_promote_the_wrong_column(
@@ -157,7 +162,8 @@ class LateralStructureSourceTests(LateralStructureControls, unittest.TestCase):
             ruled=False, raster=True, nonfinal=True, native_conflict=True
         )
         self.assertEqual(
-            {r["cpd"] for r in result["bindings"]}, {"Compound 73", "Compound 28"}
+            {r["cpd"] for r in result["compound_catalog"]["entries"]},
+            {"Compound 73", "Compound 28"},
         )
         self.assertTrue(coverage_errors(payload))
 
@@ -165,7 +171,7 @@ class LateralStructureSourceTests(LateralStructureControls, unittest.TestCase):
         self,
     ):
         result, payload = self.run_case(ruled=False, shared_title=True)
-        self.assertEqual(result["bindings"], [])
+        self.assertEqual(result["compound_catalog"]["entries"], [])
         self.assertEqual(payload["source_issues"], [])
         self.assertEqual(
             coverage_errors(payload),
@@ -181,7 +187,7 @@ class LateralStructureSourceTests(LateralStructureControls, unittest.TestCase):
                     ruled=False, later_product=True, left_later_centre=centre
                 )
                 self.assertEqual(
-                    {r["cpd"] for r in result["bindings"]},
+                    {r["cpd"] for r in result["compound_catalog"]["entries"]},
                     {
                         "Compound 73",
                         "Compound 28",
@@ -196,7 +202,8 @@ class LateralStructureSourceTests(LateralStructureControls, unittest.TestCase):
     def test_original_nonfinal_role_in_one_column_does_not_change_the_other(self):
         result, payload = self.run_case(nonfinal=True)
         self.assertEqual(
-            {r["cpd"] for r in result["bindings"]}, {"Compound 73", "Compound 28"}
+            {r["cpd"] for r in result["compound_catalog"]["entries"]},
+            {"Compound 73", "Compound 28"},
         )
         self.assertEqual(coverage_errors(payload), [])
         declarations = [
@@ -218,7 +225,7 @@ class LateralStructureSourceTests(LateralStructureControls, unittest.TestCase):
                     later_product=True, left_later_centre=centre
                 )
                 self.assertEqual(
-                    {r["cpd"] for r in result["bindings"]},
+                    {r["cpd"] for r in result["compound_catalog"]["entries"]},
                     {
                         "Compound 73",
                         "Compound 28",
@@ -232,7 +239,7 @@ class LateralStructureSourceTests(LateralStructureControls, unittest.TestCase):
 
     def test_one_original_shared_nonfinal_title_keeps_the_existing_global_role(self):
         result, payload = self.run_case(shared_title=True)
-        self.assertEqual(result["bindings"], [])
+        self.assertEqual(result["compound_catalog"]["entries"], [])
         self.assertEqual(payload["source_issues"], [])
         self.assertEqual(
             coverage_errors(payload),
@@ -243,7 +250,9 @@ class LateralStructureSourceTests(LateralStructureControls, unittest.TestCase):
         for nonfinal in (False, True):
             with self.subTest(nonfinal=nonfinal):
                 result, payload = self.run_case(raster=True, nonfinal=nonfinal)
-                self.assertEqual(len(result["bindings"]), 2 if nonfinal else 4)
+                self.assertEqual(
+                    len(result["compound_catalog"]["entries"]), 2 if nonfinal else 4
+                )
                 self.assertEqual(coverage_errors(payload), [])
 
     def test_native_conflict_in_one_scanned_column_does_not_poison_the_other(self):
@@ -251,7 +260,8 @@ class LateralStructureSourceTests(LateralStructureControls, unittest.TestCase):
             raster=True, nonfinal=True, native_conflict=True
         )
         self.assertEqual(
-            {r["cpd"] for r in result["bindings"]}, {"Compound 73", "Compound 28"}
+            {r["cpd"] for r in result["compound_catalog"]["entries"]},
+            {"Compound 73", "Compound 28"},
         )
         self.assertTrue(coverage_errors(payload))
 
@@ -288,7 +298,8 @@ class LateralStructureSourceTests(LateralStructureControls, unittest.TestCase):
     def test_selected_reprint_retains_all_original_source_observations(self):
         result, payload = self.run_case(selected=True)
         self.assertEqual(
-            {r["cpd"] for r in result["bindings"]}, {"Compound 73", "Compound 28"}
+            {r["cpd"] for r in result["compound_catalog"]["entries"]},
+            {"Compound 73", "Compound 28"},
         )
         entries = payload["compound_catalog"]["entries"]
         self.assertEqual(len(entries), 2)
@@ -297,7 +308,7 @@ class LateralStructureSourceTests(LateralStructureControls, unittest.TestCase):
 
     def test_selected_title_cannot_erase_novel_original_identifiers(self):
         result, payload = self.run_case(selected=True, selected_novel=True)
-        labels = {r["cpd"] for r in result["bindings"]}
+        labels = {r["cpd"] for r in result["compound_catalog"]["entries"]}
         self.assertIn("Compound I-003B", labels)
         self.assertNotIn("Compound 73", labels)
         self.assertTrue(coverage_errors(payload))
@@ -306,12 +317,16 @@ class LateralStructureSourceTests(LateralStructureControls, unittest.TestCase):
         result, payload = self.run_case(
             selected=True, raster=True, native_conflict=True
         )
-        self.assertNotIn("Compound 73", {r["cpd"] for r in result["bindings"]})
+        self.assertNotIn(
+            "Compound 73", {r["cpd"] for r in result["compound_catalog"]["entries"]}
+        )
         self.assertTrue(coverage_errors(payload))
 
     def test_duplicate_numbers_in_distinct_full_tables_remain_ambiguous(self):
         result, payload = self.run_case(duplicate=True)
-        self.assertNotIn("Compound 73", {r["cpd"] for r in result["bindings"]})
+        self.assertNotIn(
+            "Compound 73", {r["cpd"] for r in result["compound_catalog"]["entries"]}
+        )
         self.assertTrue(coverage_errors(payload))
 
 

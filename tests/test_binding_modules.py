@@ -351,7 +351,7 @@ class BindingModuleTests(unittest.TestCase):
             # nominate source text but must never rebind already proved owners.
             source_inventory.assert_called_once()
             self.assertEqual(
-                [binding["cpd"] for binding in result["bindings"]],
+                [binding["cpd"] for binding in result["compound_catalog"]["entries"]],
                 ["Compound 1", "Compound 2", "Compound 3A"],
             )
             self.assertEqual(result["detected_style"], "original_cell_caption_heading")
@@ -359,11 +359,14 @@ class BindingModuleTests(unittest.TestCase):
             self.assertTrue(
                 all(
                     binding["accuracy_status"] == "confirmed"
-                    for binding in result["bindings"]
+                    for binding in result["compound_catalog"]["entries"]
                 )
             )
             saved = load_json(Path(result["output_files"]["json"]), {})
-            self.assertEqual(saved["final_bindings"], result["bindings"])
+            self.assertEqual(
+                saved["compound_catalog"]["entries"],
+                result["compound_catalog"]["entries"],
+            )
 
     def test_unsegmented_observed_cell_cannot_be_filled_by_generic_recovery(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -376,7 +379,8 @@ class BindingModuleTests(unittest.TestCase):
             ):
                 result = bind(str(pdf), profile, str(root / "bindings"), str(metadata))
             self.assertEqual(
-                [binding["cpd"] for binding in result["bindings"]], ["Compound 1"]
+                [binding["cpd"] for binding in result["compound_catalog"]["entries"]],
+                ["Compound 1"],
             )
             self.assertEqual(result["bound"], 1)
 
@@ -432,6 +436,6 @@ class BindingModuleTests(unittest.TestCase):
                 [block["cpd"] for block in selected.call_args.args[2]], ["Compound 3"]
             )
             self.assertEqual(
-                [binding["cpd"] for binding in result["bindings"]],
+                [binding["cpd"] for binding in result["compound_catalog"]["entries"]],
                 ["Compound 1", "Compound 2"],
             )

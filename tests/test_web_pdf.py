@@ -140,10 +140,7 @@ class PDFTests(WebFixture, unittest.TestCase):
             # Remove stored crop to prove the real PDF geometry crop path.
             binding_path = run / "structure_bindings/bindings.json"
             bindings = json.loads(binding_path.read_text())
-            for binding in [
-                *bindings["final_bindings"],
-                *bindings["compound_catalog"]["entries"],
-            ]:
+            for binding in bindings["compound_catalog"]["entries"]:
                 binding.pop("image_path", None)
             binding_path.write_text(json.dumps(bindings))
             structure_path = run / "structures/metadata.json"

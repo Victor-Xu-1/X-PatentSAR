@@ -179,6 +179,6 @@ def original_catalogue(
     # this is not an OCSR/model or chemical-accuracy claim for these line drawings.
     write_json_atomic(
         run / "smiles" / "smiles_results.json",
-        build_smiles_artifact([observation(payload["final_bindings"][0])]),
+        build_smiles_artifact([observation(payload["compound_catalog"]["entries"][0])]),
     )
     return source, path, payload

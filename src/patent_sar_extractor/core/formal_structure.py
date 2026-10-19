@@ -11,6 +11,7 @@ from patent_sar_extractor.contracts import (
 )
 
 from .activity_identity import normalize_compound
+from .binding_records import binding_records
 from .binding_source_references import reference_issues
 from .catalog_reader import read_catalog_entries
 from .source_binding_proof import annotate_source_binding
@@ -59,7 +60,7 @@ def coverage_errors(payload: dict) -> list[str]:
             "Binding artifact does not match the current source-led identity"
         )
     catalog = proved_catalog(payload)
-    actual = binding_pairs(payload.get("final_bindings"))
+    binding_records(payload)  # One current collection; duplicate authorities refuse.
     expected = binding_pairs(catalog)
     errors = []
     if payload.get("execution_mode") != SOURCE_EXECUTION_MODE:
@@ -71,10 +72,6 @@ def coverage_errors(payload: dict) -> list[str]:
     if not expected:
         errors.append(
             "No proved printed-ID structure is available for formal processing."
-        )
-    if actual != expected:
-        errors.append(
-            "Formal binding order/coverage differs from the proved printed-ID catalog."
         )
     issues = payload.get("source_issues", [])
     if not isinstance(issues, list) or any(

@@ -14,13 +14,17 @@ from patent_sar_extractor.web.compound_catalog import read_compound_catalog
 class WrappedStructureHeaderTests(UnruledStructureControls, unittest.TestCase):
     def assert_complete(self, result, payload):
         self.assertEqual(
-            {r["cpd"]: r["structure_id"] for r in result["bindings"]},
+            {
+                r["cpd"]: r["structure_id"]
+                for r in result["compound_catalog"]["entries"]
+            },
             {"Compound A17": "S0", "Compound 008-B": "S1"},
         )
         self.assertEqual(coverage_errors(payload), [])
         saved = json.loads(json.dumps(payload))
         self.assertEqual(
-            len(read_compound_catalog(saved, saved["final_bindings"])[0]), 2
+            len(read_compound_catalog(saved, saved["compound_catalog"]["entries"])[0]),
+            2,
         )
 
     def test_same_literal_identifiers_in_unwrapped_original_control_remain_valid(self):
@@ -94,7 +98,10 @@ class WrappedStructureHeaderTests(UnruledStructureControls, unittest.TestCase):
             missing_graph=1,
         )
         self.assertEqual(
-            {r["cpd"]: r["structure_id"] for r in result["bindings"]},
+            {
+                r["cpd"]: r["structure_id"]
+                for r in result["compound_catalog"]["entries"]
+            },
             {"Compound A17": "S0"},
         )
         self.assertTrue(coverage_errors(payload))
@@ -106,7 +113,7 @@ class WrappedStructureHeaderTests(UnruledStructureControls, unittest.TestCase):
             structure_header="Chemical\nStructure",
             mutate_page=lambda _p, rows: rows.clear(),
         )
-        self.assertEqual(result["bindings"], [])
+        self.assertEqual(result["compound_catalog"]["entries"], [])
         self.assertTrue(coverage_errors(payload))
         regions = [
             s
@@ -122,7 +129,7 @@ class WrappedStructureHeaderTests(UnruledStructureControls, unittest.TestCase):
             identifier_header="Compound\nNo.",
             structure_header="Chemical\nStructure",
         )
-        self.assertEqual(result["bindings"], [])
+        self.assertEqual(result["compound_catalog"]["entries"], [])
         self.assertTrue(coverage_errors(payload))
 
     def test_unknown_original_header_word_cannot_be_dropped_to_claim_clean_success(
@@ -148,7 +155,7 @@ class WrappedStructureHeaderTests(UnruledStructureControls, unittest.TestCase):
         result, payload = self.run_binding(
             ["A17", "008-B"], structure_header="Not a\nStructure"
         )
-        self.assertEqual(result["bindings"], [])
+        self.assertEqual(result["compound_catalog"]["entries"], [])
         self.assertTrue(coverage_errors(payload))
 
     def test_saved_header_cannot_drop_its_original_first_line_and_keep_success(self):
@@ -180,7 +187,7 @@ class WrappedStructureHeaderTests(UnruledStructureControls, unittest.TestCase):
             identifier_header="Compound\nNo.",
             structure_header="Chemical\nStructure",
         )
-        self.assertEqual(result["bindings"], [])
+        self.assertEqual(result["compound_catalog"]["entries"], [])
         self.assertTrue(coverage_errors(payload))
 
     def test_wrapped_generic_headers_cannot_invent_a_final_role_without_source_context(
@@ -192,7 +199,7 @@ class WrappedStructureHeaderTests(UnruledStructureControls, unittest.TestCase):
             identifier_header="No.",
             structure_header="Chemical\nStructure",
         )
-        self.assertEqual(result["bindings"], [])
+        self.assertEqual(result["compound_catalog"]["entries"], [])
         self.assertTrue(coverage_errors(payload))
 
 
@@ -204,7 +211,9 @@ class WrappedLateralHeaderTests(LateralStructureControls, unittest.TestCase):
         expected = {"Compound 73", "Compound 28"}
         if not nonfinal:
             expected |= {"Compound 901A", "Compound I-003B"}
-        self.assertEqual({r["cpd"] for r in result["bindings"]}, expected)
+        self.assertEqual(
+            {r["cpd"] for r in result["compound_catalog"]["entries"]}, expected
+        )
         self.assertEqual(coverage_errors(payload), [])
 
     def test_both_original_parallel_headers_wrap_inside_their_own_source_columns(self):

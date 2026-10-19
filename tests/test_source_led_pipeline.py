@@ -154,7 +154,9 @@ print(json.dumps({'attempt': os.environ.get('PATENTSAR_API_ATTEMPT_ID')}))
                 no_binding=[],
                 unbound_pages=[],
             )
-            self.assertEqual(payload["final_bindings"][0]["cpd"], "Compound 1-2-3AB")
+            self.assertEqual(
+                payload["compound_catalog"]["entries"][0]["cpd"], "Compound 1-2-3AB"
+            )
             self.assertEqual(payload["source_issues"], [])
 
     def test_registry_executes_exact_controller_order(self):
@@ -206,7 +208,7 @@ print(json.dumps({'attempt': os.environ.get('PATENTSAR_API_ATTEMPT_ID')}))
             )
             payload = load_json(output / "bindings.json", {})
             self.assertEqual(
-                [r["cpd"] for r in payload["final_bindings"]],
+                [r["cpd"] for r in payload["compound_catalog"]["entries"]],
                 ["Compound 42", "Compound 42A"],
             )
             self.assertEqual(payload["execution_mode"], "production_structure_led")

@@ -63,12 +63,15 @@ class LateralColumnContinuationTests(LateralStructureControls, unittest.TestCase
                 "Compound 009",
             }
         self.assertEqual(
-            {r["cpd"] for r in result["bindings"]}, expected, payload["source_issues"]
+            {r["cpd"] for r in result["compound_catalog"]["entries"]},
+            expected,
+            payload["source_issues"],
         )
         self.assertEqual(coverage_errors(payload), [])
         saved = json.loads(json.dumps(payload))
         self.assertEqual(
-            len(read_compound_catalog(saved, saved["final_bindings"])[0]), len(expected)
+            len(read_compound_catalog(saved, saved["compound_catalog"]["entries"])[0]),
+            len(expected),
         )
         children = [
             s
@@ -139,7 +142,7 @@ class LateralColumnContinuationTests(LateralStructureControls, unittest.TestCase
             )
         )
         self.assertEqual(
-            {r["cpd"] for r in result["bindings"]},
+            {r["cpd"] for r in result["compound_catalog"]["entries"]},
             {
                 "Compound 73",
                 "Compound 28",
@@ -158,7 +161,7 @@ class LateralColumnContinuationTests(LateralStructureControls, unittest.TestCase
             )
         )
         self.assertEqual(
-            {r["cpd"] for r in result["bindings"]},
+            {r["cpd"] for r in result["compound_catalog"]["entries"]},
             {
                 "Compound 73",
                 "Compound 28",
@@ -196,7 +199,7 @@ class LateralColumnContinuationTests(LateralStructureControls, unittest.TestCase
             )
         )
         self.assertEqual(
-            {r["cpd"] for r in result["bindings"]},
+            {r["cpd"] for r in result["compound_catalog"]["entries"]},
             {
                 "Compound 73",
                 "Compound 28",
@@ -215,7 +218,7 @@ class LateralColumnContinuationTests(LateralStructureControls, unittest.TestCase
 
         result, payload = self.run_case(mutate_document=prefix)
         self.assertEqual(
-            {r["cpd"] for r in result["bindings"]},
+            {r["cpd"] for r in result["compound_catalog"]["entries"]},
             {
                 "Compound 73",
                 "Compound 28",
@@ -234,7 +237,7 @@ class LateralColumnContinuationTests(LateralStructureControls, unittest.TestCase
 
         result, payload = self.run_case(mutate_document=prefix)
         self.assertEqual(
-            {r["cpd"] for r in result["bindings"]},
+            {r["cpd"] for r in result["compound_catalog"]["entries"]},
             {
                 "Compound 73",
                 "Compound 28",
@@ -252,12 +255,14 @@ class LateralColumnContinuationTests(LateralStructureControls, unittest.TestCase
             records[:] = [r for r in records if r["structure_id"] != "FOLLOW-0-44"]
 
         result, payload = self.run_case(mutate_document=missed)
-        self.assertEqual(len(result["bindings"]), 7)
-        self.assertNotIn("Compound 44", {r["cpd"] for r in result["bindings"]})
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 7)
+        self.assertNotIn(
+            "Compound 44", {r["cpd"] for r in result["compound_catalog"]["entries"]}
+        )
         self.assertEqual(
             next(
                 r["structure_id"]
-                for r in result["bindings"]
+                for r in result["compound_catalog"]["entries"]
                 if r["cpd"] == "Compound 2-1"
             ),
             "FOLLOW-0-2-1",
@@ -272,7 +277,7 @@ class LateralColumnContinuationTests(LateralStructureControls, unittest.TestCase
             ]
 
         result, payload = self.run_case(mutate_document=missed)
-        self.assertEqual(len(result["bindings"]), 6)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 6)
         self.assertTrue(coverage_errors(payload))
         self.assertEqual(
             len(
@@ -307,7 +312,7 @@ class LateralColumnContinuationTests(LateralStructureControls, unittest.TestCase
             parent_region_id=roots[1]["region_id"],
         )
         child["region_id"] = proof_id(child["source"])
-        for row in [*saved["compound_catalog"]["entries"], *saved["final_bindings"]]:
+        for row in saved["compound_catalog"]["entries"]:
             owner = (row.get("numbered_table_cell_evidence") or {}).get(
                 "column_ownership", {}
             )

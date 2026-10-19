@@ -28,6 +28,7 @@ from patent_sar_extractor.core.activity_header_roles import (
     header_identity,
 )
 from patent_sar_extractor.core.activity_models import TableContext
+from patent_sar_extractor.core.binding_records import binding_records
 from patent_sar_extractor.core.page_ocr_cache import _pdf_sha256
 from patent_sar_extractor.integrations.llm.config import get_evidence_resolution_config
 from patent_sar_extractor.integrations.llm.evidence_resolution import (
@@ -61,9 +62,7 @@ def make_header_resolver(
                 payload, BINDINGS_SCHEMA, BINDINGS_SCHEMA_VERSION
             ):
                 raise ValueError("Foreign source catalog")
-            entries = payload.get("final_bindings", [])
-            if not isinstance(entries, list) or len(entries) > 25000:
-                raise ValueError("Invalid source catalog")
+            entries = binding_records(payload)
             catalog = tuple(entry["cpd"] for entry in entries)
         if any(not isinstance(label, str) or len(label) > 128 for label in catalog):
             raise ValueError("Invalid source identifier")

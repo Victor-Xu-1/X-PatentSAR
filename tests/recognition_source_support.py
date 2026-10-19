@@ -42,7 +42,7 @@ def observation(binding, raw="CCO"):
 
 
 def complete_observation_artifact(
-    payload, *, pdf, structures, binding_dir, source_raw="CCO"
+    payload, *, pdf, structures, binding_dir, source_raw="CCO", raw_by_owner=None
 ):
     """Controlled full-input worker output; never an OCSR accuracy claim."""
     from patent_sar_extractor.core.ocsr.candidate_inputs import (
@@ -59,7 +59,10 @@ def complete_observation_artifact(
         binding_pdf_sha256=payload["source_reference_scope"]["original_pdf_sha256"],
     )
     return build_smiles_artifact(
-        [observation(item) for item in plan.proven.formal],
+        [
+            observation(item, (raw_by_owner or {}).get(item["cpd"], "CCO"))
+            for item in plan.proven.formal
+        ],
         source_records=[
             observation(item, source_raw) for item in plan.proven.supplemental
         ],

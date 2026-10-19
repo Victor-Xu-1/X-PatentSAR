@@ -86,7 +86,9 @@ class CaptionRoleWriterTests(unittest.TestCase):
             )
         self.assertEqual(hashlib.sha256(pdf.read_bytes()).hexdigest(), before)
         saved = load_json(Path(result["output_files"]["json"]), None)
-        self.assertEqual(saved["final_bindings"], result["final_bindings"])
+        self.assertEqual(
+            saved["compound_catalog"]["entries"], result["compound_catalog"]["entries"]
+        )
         return saved, records
 
     def test_page_hint_authority_is_preserved_through_writer_and_catalogue(self):
@@ -106,7 +108,7 @@ class CaptionRoleWriterTests(unittest.TestCase):
                     token_reader=source_reader,
                 )
                 if confidence == 0.99:
-                    self.assertEqual(payload["final_bindings"], [])
+                    self.assertEqual(payload["compound_catalog"]["entries"], [])
                     self.assertTrue(payload["source_issues"])
                     self.assertTrue(coverage_errors(payload))
                     continue
@@ -171,7 +173,7 @@ class CaptionRoleWriterTests(unittest.TestCase):
         doc, structures, boxes, _grids = below_pages()
         payload, records = self.execute_document(doc, structures, boxes)
         self.assertEqual(
-            len(payload["final_bindings"]),
+            len(payload["compound_catalog"]["entries"]),
             6,
             [
                 (issue.get("cpd"), issue.get("page_no"), issue.get("reason"))
@@ -192,7 +194,7 @@ class CaptionRoleWriterTests(unittest.TestCase):
     def test_actual_binder_and_writer_publish_original_bare_ids_with_role_proof(self):
         payload, records = self.execute()
         self.assertEqual(
-            [b["cpd"] for b in payload["final_bindings"]],
+            [b["cpd"] for b in payload["compound_catalog"]["entries"]],
             ["Compound I-004A", "Compound I-009B"],
         )
         self.assertEqual(payload["source_issues"], [])
@@ -216,7 +218,9 @@ class CaptionRoleWriterTests(unittest.TestCase):
     ):
         doc, structures, boxes, _grids = parallel_catalogues()
         payload, records = self.execute_document(doc, structures, boxes)
-        self.assertEqual(len(payload["final_bindings"]), 12, payload["source_issues"])
+        self.assertEqual(
+            len(payload["compound_catalog"]["entries"]), 12, payload["source_issues"]
+        )
         self.assertEqual(payload["source_issues"], [])
         self.assertEqual(coverage_errors(payload), [])
         entries, _aliases = read_catalog_entries(
@@ -255,7 +259,7 @@ class CaptionRoleWriterTests(unittest.TestCase):
         self.add_numbered_table(doc, structures, boxes)
         payload, records = self.execute_document(doc, structures, boxes)
         self.assertEqual(
-            {row["cpd"] for row in payload["final_bindings"]},
+            {row["cpd"] for row in payload["compound_catalog"]["entries"]},
             {"Compound I-004A", "Compound I-009B", "Compound 82"},
         )
         self.assertEqual(payload["source_issues"], [])
@@ -270,7 +274,10 @@ class CaptionRoleWriterTests(unittest.TestCase):
         self.add_numbered_table(doc, structures, boxes, label="I-004A")
         payload, records = self.execute_document(doc, structures, boxes)
         self.assertFalse(
-            any(row["cpd"] == "Compound I-004A" for row in payload["final_bindings"])
+            any(
+                row["cpd"] == "Compound I-004A"
+                for row in payload["compound_catalog"]["entries"]
+            )
         )
         self.assertTrue(
             any(
@@ -285,7 +292,7 @@ class CaptionRoleWriterTests(unittest.TestCase):
 
     def test_actual_binder_retains_nonfinal_source_sections_and_raw_assets(self):
         payload, records = self.execute("Table 47. Intermediates", prefixed=True)
-        self.assertEqual(payload["final_bindings"], [])
+        self.assertEqual(payload["compound_catalog"]["entries"], [])
         sections = [
             s
             for s in payload["source_sections"]
@@ -318,7 +325,7 @@ class CaptionRoleWriterTests(unittest.TestCase):
                         f"Table 47. {label}化合物", prefixed=True, fontname="china-t"
                     )
                 )
-                self.assertEqual(payload["final_bindings"], [])
+                self.assertEqual(payload["compound_catalog"]["entries"], [])
                 self.assertEqual(reference_issues(payload, []), [])
                 self.assertTrue(coverage_errors(payload))
                 self.assertTrue(all(Path(r["image_path"]).is_file() for r in records))
@@ -339,7 +346,7 @@ class CaptionRoleWriterTests(unittest.TestCase):
         payload, records = self.execute_document(
             *catalog("Table 47. 中間體及實施例", prefixed=True, fontname="china-t")
         )
-        self.assertEqual(payload["final_bindings"], [])
+        self.assertEqual(payload["compound_catalog"]["entries"], [])
         self.assertTrue(payload["source_issues"])
         self.assertTrue(coverage_errors(payload))
         self.assertFalse(
@@ -354,7 +361,7 @@ class CaptionRoleWriterTests(unittest.TestCase):
         payload, records = self.execute(
             "[0042] Table 47. Intermediate compounds", prefixed=True
         )
-        self.assertEqual(payload["final_bindings"], [])
+        self.assertEqual(payload["compound_catalog"]["entries"], [])
         self.assertEqual(reference_issues(payload, []), [])
         self.assertEqual(
             coverage_errors(payload),
@@ -366,7 +373,7 @@ class CaptionRoleWriterTests(unittest.TestCase):
         self,
     ):
         payload, _records = self.execute("Table 47. Structures")
-        self.assertEqual(payload["final_bindings"], [])
+        self.assertEqual(payload["compound_catalog"]["entries"], [])
         self.assertTrue(payload["source_issues"])
         self.assertTrue(coverage_errors(payload))
 
@@ -374,7 +381,7 @@ class CaptionRoleWriterTests(unittest.TestCase):
         payload, _records = self.execute(
             "Table 47. Compounds and intermediates", prefixed=True
         )
-        self.assertEqual(payload["final_bindings"], [])
+        self.assertEqual(payload["compound_catalog"]["entries"], [])
         self.assertFalse(
             any(
                 s["role"] == "nonfinal_caption_catalog"

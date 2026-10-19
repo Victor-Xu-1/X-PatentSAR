@@ -6,6 +6,7 @@ import re
 from typing import Any
 
 from patent_sar_extractor import contracts as core
+from patent_sar_extractor.core.binding_records import binding_records
 from patent_sar_extractor.core.ocsr.candidate_coverage import (
     saved_candidate_coverage_errors,
 )
@@ -188,6 +189,10 @@ def authority(
                 + "."
             ],
         ), False
+    try:
+        source_records = binding_records(payloads["bindings"])
+    except (ValueError, TypeError, KeyError) as exc:
+        return Acceptance(state="failed", errors=[public_error_text(str(exc))]), False
     modes = (
         isinstance(payloads.get("bindings"), dict)
         and payloads["bindings"].get("execution_mode") == "production_structure_led"
@@ -199,7 +204,6 @@ def authority(
         and isinstance(payloads["activity"].get("active_cpds"), list)
         and isinstance(payloads["activity"].get("rows"), list)
         and isinstance(payloads.get("bindings"), dict)
-        and isinstance(payloads["bindings"].get("final_bindings"), list)
         and isinstance(payloads.get("smiles"), dict)
         and isinstance(payloads["smiles"].get("records"), list)
         and isinstance(payloads.get("structures"), dict)
@@ -252,7 +256,7 @@ def authority(
         ) + structure_coverage_errors(
             payloads["structures"], classification.get("page_count")
         )
-        if binding_pairs(payloads["bindings"]["final_bindings"]) != binding_pairs(
+        if binding_pairs(source_records) != binding_pairs(
             payloads["smiles"]["records"], "cpd_id"
         ):
             source_errors.append(
@@ -266,9 +270,14 @@ def authority(
         ), False
     from patent_sar_extractor.application.smiles_policy import _smiles_acceptance_errors
 
-    recognition_errors = _smiles_acceptance_errors(
-        payloads["smiles"], payloads["bindings"]
-    )
+    try:
+        recognition_errors = _smiles_acceptance_errors(
+            payloads["smiles"], payloads["bindings"]
+        )
+    except (ValueError, TypeError, KeyError) as exc:
+        # Untrusted ownership/record shapes remain a failed scientific contract,
+        # not an uncaught server error or an accepted partial recognition.
+        recognition_errors = [str(exc)]
     if recognition_errors:
         return Acceptance(
             state="failed",

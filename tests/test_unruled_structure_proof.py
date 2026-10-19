@@ -28,7 +28,7 @@ def rehash_region(payload):
     section = region_section(payload)
     old = section["region_id"]
     section["region_id"] = proof_id(section["source"])
-    for row in [*payload["compound_catalog"]["entries"], *payload["final_bindings"]]:
+    for row in payload["compound_catalog"]["entries"]:
         evidence = row.get("numbered_table_cell_evidence", {})
         if evidence.get("source_region_id") == old:
             evidence["source_region_id"] = section["region_id"]
@@ -49,7 +49,7 @@ class UnruledStructureProofTests(UnruledStructureControls, unittest.TestCase):
         with self.assertRaises(ValueError):
             coverage_errors(payload)
         with self.assertRaises(WebError):
-            read_compound_catalog(payload, payload["final_bindings"])
+            read_compound_catalog(payload, payload["compound_catalog"]["entries"])
 
     def test_serialized_complete_source_replays_without_success_flags(self):
         _, payload = self.run_binding(["I-009A", "28"])
@@ -61,7 +61,12 @@ class UnruledStructureProofTests(UnruledStructureControls, unittest.TestCase):
         self.assertEqual(reference_issues(payload, entries), [])
         self.assertEqual(coverage_errors(payload), [])
         self.assertEqual(
-            len(read_compound_catalog(payload, payload["final_bindings"])[0]), 2
+            len(
+                read_compound_catalog(payload, payload["compound_catalog"]["entries"])[
+                    0
+                ]
+            ),
+            2,
         )
 
     def test_unruled_only_scope_infers_the_same_document_identity(self):

@@ -43,16 +43,6 @@ class ControlledAnalysis:
 
 
 class CorpusPredictionTests(PredictionFixture, unittest.TestCase):
-    def setUp(self):
-        super().setUp()
-        # These cases exercise anonymous/unproved source eligibility, not the
-        # separate proved-ID recognition-completion producer.
-        path = self.run / "structure_bindings/bindings.json"
-        payload = json.loads(path.read_text())
-        payload.pop("compound_catalog", None)
-        path.write_text(json.dumps(payload))
-        self.service.refresh(self.project.id)
-
     def job(self):
         with self.service.store.connect(write=True) as connection:
             job_id = enqueue_prediction(self.service.store, connection, self.project.id)
@@ -104,13 +94,17 @@ class CorpusPredictionTests(PredictionFixture, unittest.TestCase):
 
         for name, keys in (
             ("activity", ("rows", "active_cpds")),
-            ("bindings", ("final_bindings",)),
+            ("bindings", ()),
             ("smiles", ("records",)),
         ):
             path = self.run / ARTIFACTS[name][0]
             packet = json.loads(path.read_text())
             for key in keys:
                 packet[key] = []
+            if name == "bindings":
+                packet["compound_catalog"].update(
+                    entries=[], numbered_compounds=0, source_observations=0
+                )
             path.write_text(json.dumps(packet))
         self.service.refresh(self.project.id)
         row, spec = self.job()

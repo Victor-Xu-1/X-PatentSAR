@@ -80,9 +80,13 @@ class UnresolvedCaptionRoleTests(unittest.TestCase):
         ]
         self.assertEqual(len(pending), 1)
         self.assertEqual(pending[0]["status"], "unresolved")
-        self.assertTrue(reference_issues(payload, payload["final_bindings"]))
+        self.assertTrue(
+            reference_issues(payload, payload["compound_catalog"]["entries"])
+        )
         self.assertTrue(coverage_errors(payload))
-        self.assertNotIn("Compound 17", [b["cpd"] for b in payload["final_bindings"]])
+        self.assertNotIn(
+            "Compound 17", [b["cpd"] for b in payload["compound_catalog"]["entries"]]
+        )
 
     def test_scanned_closed_catalogue_retains_missing_drawing_error_and_occurrence(
         self,
@@ -125,7 +129,9 @@ class UnresolvedCaptionRoleTests(unittest.TestCase):
             ],
             ["19"],
         )
-        self.assertNotIn("Compound 17", [b["cpd"] for b in payload["final_bindings"]])
+        self.assertNotIn(
+            "Compound 17", [b["cpd"] for b in payload["compound_catalog"]["entries"]]
+        )
         self.assertTrue(coverage_errors(payload))
 
     def test_same_identifier_outside_the_caption_cell_is_still_a_separate_heading(self):
@@ -143,7 +149,9 @@ class UnresolvedCaptionRoleTests(unittest.TestCase):
                 p.get("cpd") == "Compound 17"
                 and p["reason"]
                 == "original_heading_identifier_without_proved_structure"
-                for p in reference_issues(payload, payload["final_bindings"])
+                for p in reference_issues(
+                    payload, payload["compound_catalog"]["entries"]
+                )
             )
         )
 
@@ -175,7 +183,9 @@ class UnresolvedCaptionRoleTests(unittest.TestCase):
         self.assertTrue(
             any(
                 p["reason"] == "missing_caption_structure"
-                for p in reference_issues(payload, payload["final_bindings"])
+                for p in reference_issues(
+                    payload, payload["compound_catalog"]["entries"]
+                )
             )
         )
         self.assertTrue(coverage_errors(payload))
@@ -217,7 +227,7 @@ class UnresolvedCaptionRoleTests(unittest.TestCase):
                 altered["source_reference_scope"]["original_pdf_sha256"],
             )
             with self.subTest(fault=fault), self.assertRaises(ValueError):
-                reference_issues(altered, altered["final_bindings"])
+                reference_issues(altered, altered["compound_catalog"]["entries"])
 
     def test_pending_references_require_the_same_original_raw_locator(self):
         _source, _result, payload = self.missing_structure()

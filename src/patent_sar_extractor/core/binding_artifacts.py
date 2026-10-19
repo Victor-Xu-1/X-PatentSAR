@@ -159,7 +159,6 @@ def write_binding_result(
         "authoritative_structure_table_pages": list(table_pages),
         "authoritative_structure_table_covered_count": table_covered_count,
         "no_binding": list(no_binding),
-        "final_bindings": bindings,
         "compound_catalog": catalog,
         "source_issues": issues,
         **reference_payload,
@@ -178,7 +177,6 @@ def write_binding_result(
     return {
         **payload,
         "patent_id": patent_id,
-        "bindings": bindings,
         "total": total_compound_blocks,
         "bound": len(bindings),
         "detected_style": detected_style,

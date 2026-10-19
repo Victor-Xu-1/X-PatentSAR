@@ -10,6 +10,7 @@ from typing import Any
 from urllib.parse import quote
 
 from patent_sar_extractor.core.activity_metadata import metadata_role
+from patent_sar_extractor.core.binding_records import binding_records
 from patent_sar_extractor.core.ocsr.recognition_inputs import (
     RecognitionPlan,
     ordered_source_results,
@@ -259,12 +260,13 @@ class ArtifactView:
                 422, "invalid_artifact", "Activity compound identifiers are not unique."
             )
         binding_payload = p.get("bindings") or {}
-        binding_key = (
-            "final_bindings" if "final_bindings" in binding_payload else "bindings"
-        )
-        bindings = _index(
-            records(binding_payload, binding_key), ("compound_id", "cpd", "cpd_id")
-        )
+        try:
+            source_records = binding_records(binding_payload, legacy=True)
+        except (ValueError, TypeError) as exc:
+            raise WebError(
+                422, "invalid_artifact", "Binding record collection is invalid."
+            ) from exc
+        bindings = _index(source_records, ("compound_id", "cpd", "cpd_id"))
         smiles_payload = p.get("smiles")
         if isinstance(smiles_payload, list):
             if len(smiles_payload) > MAX_RECORDS or any(
@@ -285,7 +287,6 @@ class ArtifactView:
             binding_payload, structure_rows, historical_review=not bindings_current
         )
         chemistry_current = bindings_current and current(smiles_payload, "smiles")
-        source_labels: set[str] = set()
         reprint_review: set[str] = set()
         try:
             plan = (
@@ -322,10 +323,6 @@ class ArtifactView:
                         raise ValueError(
                             "Source recognition does not match proved printed owners."
                         )
-                    source_labels = {
-                        _label_key(str(row.get("cpd_id") or ""))
-                        for row in source_smiles
-                    }
                     smiles = _index(
                         [*smiles_rows, *source_smiles], ("cpd_id", "cpd", "compound_id")
                     )
@@ -509,9 +506,10 @@ class ArtifactView:
                 )
                 recognition["status"] = "unavailable"
                 recognition["quality_flag"] = "historical_binding"
-            # A rejected supplemental candidate remains inspectable in its raw
-            # artifact, but cannot feed descriptors or a determinate prediction.
-            if key in source_labels and recognition["status"] != "valid":
+            # All owners use the same chemical admission, with or without
+            # measured activity. Rejected/history predictions remain in the raw
+            # artifact, not a determinate graph for drawings or calculations.
+            if recognition["status"] != "valid":
                 smiles_text = None
             if key in reprint_review:
                 smiles_text = None

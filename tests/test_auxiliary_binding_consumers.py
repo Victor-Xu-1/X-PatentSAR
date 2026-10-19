@@ -68,10 +68,10 @@ class AuxiliaryBindingConsumerTests(unittest.TestCase):
         self,
     ):
         self.assertEqual(
-            [b["cpd"] for b in self.bindings["final_bindings"]],
+            [b["cpd"] for b in self.bindings["compound_catalog"]["entries"]],
             ["Compound 27B", "Compound 73"],
         )
-        for binding in self.bindings["final_bindings"]:
+        for binding in self.bindings["compound_catalog"]["entries"]:
             observations = binding["exact_caption_evidence"]["observations"]
             self.assertEqual(sum("auxiliary_text" in o for o in observations), 2)
         self.assertEqual(
@@ -104,7 +104,7 @@ class AuxiliaryBindingConsumerTests(unittest.TestCase):
                 [],
             )
             changed = copy.deepcopy(self.bindings)
-            for binding in changed["final_bindings"]:
+            for binding in changed["compound_catalog"]["entries"]:
                 binding["exact_caption_evidence"]["observations"][-1]["auxiliary_text"][
                     "views"
                 ][0]["rows"][0]["observation"]["pixel_sha256"] = "f" * 64

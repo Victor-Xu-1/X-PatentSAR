@@ -76,6 +76,10 @@ class SourceEpochAuthorityTests(WebFixture, unittest.TestCase):
                 collections[stage]: [0] if stage == "locate" else [],
             }
             if stage == "bind":
+                from patent_sar_extractor.core.binding_catalog import compound_catalog
+
+                payload.pop(collections[stage])
+                payload["compound_catalog"] = compound_catalog([], [])
                 payload["execution_mode"] = "production_structure_led"
             write_json_atomic(root / relative, payload)
             _write_step_manifest(

@@ -157,9 +157,7 @@ def cmd_smiles(args):
     smiles_payload = _load_json(output_json, {})
     errors = _smiles_acceptance_errors(
         smiles_payload,
-        bindings_payload
-        if isinstance(bindings_payload, dict)
-        else {"final_bindings": bindings_payload},
+        bindings_payload,
     )
     if errors:
         _write_accuracy_failure_marker(

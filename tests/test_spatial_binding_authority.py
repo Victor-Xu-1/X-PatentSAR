@@ -64,7 +64,7 @@ class SpatialBindingAuthorityTests(unittest.TestCase):
                 )
             saved = load_json(Path(result["output_files"]["json"]), {})
         self.assertEqual(
-            {row["cpd"] for row in saved["final_bindings"]},
+            {row["cpd"] for row in saved["compound_catalog"]["entries"]},
             {f"Compound {label}" for label in labels},
             saved["source_issues"],
         )
@@ -75,7 +75,7 @@ class SpatialBindingAuthorityTests(unittest.TestCase):
                 "issues": saved["source_issues"],
                 "captions": [
                     (row["cpd"], row["exact_caption_evidence"]["bbox"])
-                    for row in saved["final_bindings"]
+                    for row in saved["compound_catalog"]["entries"]
                 ],
                 "headings": [
                     (section.get("identifier"), section.get("bbox"))
@@ -93,7 +93,8 @@ class SpatialBindingAuthorityTests(unittest.TestCase):
         self.assertEqual(len(entries), len(labels))
         self.assertTrue(
             all(
-                row["accuracy_status"] == "confirmed" for row in saved["final_bindings"]
+                row["accuracy_status"] == "confirmed"
+                for row in saved["compound_catalog"]["entries"]
             )
         )
 
@@ -161,17 +162,27 @@ class SpatialBindingAuthorityTests(unittest.TestCase):
             self.assertEqual(result["bound"], 2)
             self.assertEqual(result["patent_id"], "controlled")
             self.assertTrue(
-                all(b["patent_id"] == "controlled" for b in result["bindings"])
+                all(
+                    b["patent_id"] == "controlled"
+                    for b in result["compound_catalog"]["entries"]
+                )
             )
             self.assertEqual(result["detected_style"], "original_cell_caption_heading")
             self.assertEqual(
-                [b["cpd"] for b in result["bindings"]], ["Compound 1", "Compound 2"]
+                [b["cpd"] for b in result["compound_catalog"]["entries"]],
+                ["Compound 1", "Compound 2"],
             )
             self.assertTrue(
-                all(b["accuracy_status"] == "confirmed" for b in result["bindings"])
+                all(
+                    b["accuracy_status"] == "confirmed"
+                    for b in result["compound_catalog"]["entries"]
+                )
             )
             serialized = load_json(Path(result["output_files"]["json"]), {})
-            self.assertEqual(serialized["final_bindings"], result["bindings"])
+            self.assertEqual(
+                serialized["compound_catalog"]["entries"],
+                result["compound_catalog"]["entries"],
+            )
             with Path(result["output_files"]["csv"]).open(newline="") as stream:
                 self.assertEqual(
                     [r["cpd"] for r in csv.DictReader(stream)],

@@ -128,7 +128,9 @@ class CaptionReprintSourcesTests(unittest.TestCase):
         )
         saved = load_json(Path(result["output_files"]["json"]), None)
         self.assertIsInstance(saved, dict)
-        self.assertEqual(saved["final_bindings"], result["final_bindings"])
+        self.assertEqual(
+            saved["compound_catalog"]["entries"], result["compound_catalog"]["entries"]
+        )
         return saved
 
     def test_explicit_selected_caption_reprint_is_retained_and_scheduled(self):
@@ -140,7 +142,7 @@ class CaptionReprintSourcesTests(unittest.TestCase):
                 "issues": payload["source_issues"],
                 "bindings": [
                     (row["cpd"], row["page_no"], row["binding_rule"])
-                    for row in payload["final_bindings"]
+                    for row in payload["compound_catalog"]["entries"]
                 ],
                 "sections": [
                     (row["role"], row.get("page_no"))
@@ -206,13 +208,12 @@ class CaptionReprintSourcesTests(unittest.TestCase):
         selected = original.pop("additional_sources")[0]
         promoted = {**selected, "additional_sources": [original]}
         payload["compound_catalog"]["entries"] = [promoted]
-        payload["final_bindings"] = [promoted]
         with self.assertRaisesRegex(CatalogValidationError, "claim"):
             read_catalog_entries(payload)
 
     def test_competing_complete_caption_catalogues_are_not_merged(self):
         payload = self.observe(second="Table 48. Compounds")
-        self.assertEqual(payload["final_bindings"], [])
+        self.assertEqual(payload["compound_catalog"]["entries"], [])
         self.assertTrue(payload["source_issues"])
         conflicts = [
             issue
@@ -239,7 +240,7 @@ class CaptionReprintSourcesTests(unittest.TestCase):
     def test_selected_word_cannot_hide_novel_original_identifiers(self):
         payload = self.observe(novel=True)
         self.assertEqual(
-            {row["cpd"] for row in payload["final_bindings"]},
+            {row["cpd"] for row in payload["compound_catalog"]["entries"]},
             {"Compound 53R", "Compound 61R"},
         )
         self.assertTrue(payload["source_issues"])
@@ -247,7 +248,7 @@ class CaptionReprintSourcesTests(unittest.TestCase):
 
     def test_two_selected_caption_tables_cannot_invent_a_complete_primary(self):
         payload = self.observe(selected_first=True)
-        self.assertEqual(payload["final_bindings"], [])
+        self.assertEqual(payload["compound_catalog"]["entries"], [])
         self.assertTrue(payload["source_issues"])
 
     def test_negated_or_mixed_selected_title_cannot_hide_competing_sources(self):
@@ -258,7 +259,9 @@ class CaptionReprintSourcesTests(unittest.TestCase):
         ):
             with self.subTest(title=title):
                 payload = self.observe(second=title)
-                self.assertEqual([row["cpd"] for row in payload["final_bindings"]], [])
+                self.assertEqual(
+                    [row["cpd"] for row in payload["compound_catalog"]["entries"]], []
+                )
                 self.assertTrue(payload["source_issues"])
 
 

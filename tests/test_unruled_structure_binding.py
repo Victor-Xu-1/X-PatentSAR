@@ -22,7 +22,10 @@ class UnruledStructureBindingTests(UnruledStructureControls, unittest.TestCase):
         labels = ["I-007B", "3-2", "001A"]
         result, payload = self.run_binding(labels, reverse=True)
         self.assertEqual(
-            {row["cpd"]: row["structure_id"] for row in result["bindings"]},
+            {
+                row["cpd"]: row["structure_id"]
+                for row in result["compound_catalog"]["entries"]
+            },
             {f"Compound {label}": f"S{i}" for i, label in enumerate(labels)},
         )
         self.assertEqual(payload["source_issues"], [])
@@ -30,21 +33,23 @@ class UnruledStructureBindingTests(UnruledStructureControls, unittest.TestCase):
         self.assertTrue(
             all(
                 row["binding_rule"] == "numbered_structure_table_cell"
-                for row in payload["final_bindings"]
+                for row in payload["compound_catalog"]["entries"]
             )
         )
 
     def test_two_original_numeric_rows_are_not_an_i_series_special_case(self):
         result, payload = self.run_binding(["73", "18B"])
         self.assertEqual(
-            {row["cpd"] for row in result["bindings"]}, {"Compound 73", "Compound 18B"}
+            {row["cpd"] for row in result["compound_catalog"]["entries"]},
+            {"Compound 73", "Compound 18B"},
         )
         self.assertEqual(coverage_errors(payload), [])
 
     def test_prefixed_row_labels_do_not_become_independent_synthesis_headings(self):
         result, payload = self.run_binding(["Compound 73", "Compound 28"])
         self.assertEqual(
-            {b["cpd"] for b in result["bindings"]}, {"Compound 73", "Compound 28"}
+            {b["cpd"] for b in result["compound_catalog"]["entries"]},
+            {"Compound 73", "Compound 28"},
         )
         self.assertEqual(coverage_errors(payload), [])
 
@@ -54,7 +59,7 @@ class UnruledStructureBindingTests(UnruledStructureControls, unittest.TestCase):
             identifier_header="No.",
             title="Table 12. Intermediates",
         )
-        self.assertEqual(result["bindings"], [])
+        self.assertEqual(result["compound_catalog"]["entries"], [])
         self.assertEqual(payload["source_issues"], [])
         source = next(
             s["source"]
@@ -86,7 +91,10 @@ class UnruledStructureBindingTests(UnruledStructureControls, unittest.TestCase):
     ):
         result, payload = self.run_binding(["73", "18B", "901A"], missing_graph=1)
         self.assertEqual(
-            {b["cpd"]: b["structure_id"] for b in result["bindings"]},
+            {
+                b["cpd"]: b["structure_id"]
+                for b in result["compound_catalog"]["entries"]
+            },
             {"Compound 73": "S0", "Compound 901A": "S2"},
         )
         self.assertTrue(
@@ -102,7 +110,10 @@ class UnruledStructureBindingTests(UnruledStructureControls, unittest.TestCase):
     ):
         result, payload = self.run_binding(["73", "18B", "901A"], missing_label=1)
         self.assertEqual(
-            {b["cpd"]: b["structure_id"] for b in result["bindings"]},
+            {
+                b["cpd"]: b["structure_id"]
+                for b in result["compound_catalog"]["entries"]
+            },
             {"Compound 73": "S0", "Compound 901A": "S2"},
         )
         self.assertTrue(
@@ -119,7 +130,7 @@ class UnruledStructureBindingTests(UnruledStructureControls, unittest.TestCase):
         result, payload = self.run_binding(
             ["73", "18B"], title="Table 12. Intermediates"
         )
-        self.assertEqual(result["bindings"], [])
+        self.assertEqual(result["compound_catalog"]["entries"], [])
         self.assertEqual(payload["source_issues"], [])
         source = next(
             s["source"]
@@ -133,13 +144,16 @@ class UnruledStructureBindingTests(UnruledStructureControls, unittest.TestCase):
         result, payload = self.run_binding(
             ["73", "18B"], title="Table 12. Compounds and intermediates"
         )
-        self.assertEqual(result["bindings"], [])
+        self.assertEqual(result["compound_catalog"]["entries"], [])
         self.assertTrue(payload["source_issues"])
 
     def test_generated_scan_uses_the_same_original_columns_and_saved_proof(self):
         result, payload = self.run_binding(["73", "28"], raster=True, reverse=True)
         self.assertEqual(
-            {row["cpd"]: row["structure_id"] for row in result["bindings"]},
+            {
+                row["cpd"]: row["structure_id"]
+                for row in result["compound_catalog"]["entries"]
+            },
             {"Compound 73": "S0", "Compound 28": "S1"},
         )
         self.assertEqual(coverage_errors(payload), [])
@@ -147,7 +161,10 @@ class UnruledStructureBindingTests(UnruledStructureControls, unittest.TestCase):
     def test_repeated_literal_series_ids_are_not_corrected_into_missing_digits(self):
         result, payload = self.run_binding(["I-1", "I-9", "I-9", "I-4"])
         self.assertEqual(
-            {b["cpd"]: b["structure_id"] for b in result["bindings"]},
+            {
+                b["cpd"]: b["structure_id"]
+                for b in result["compound_catalog"]["entries"]
+            },
             {"Compound I-1": "S0", "Compound I-4": "S3"},
         )
         self.assertTrue(payload["source_issues"])
@@ -159,7 +176,10 @@ class UnruledStructureBindingTests(UnruledStructureControls, unittest.TestCase):
 
         result, payload = self.run_binding(["I-007B", "3-2"], mutate_page=distractor)
         self.assertEqual(
-            {b["cpd"]: b["structure_id"] for b in result["bindings"]},
+            {
+                b["cpd"]: b["structure_id"]
+                for b in result["compound_catalog"]["entries"]
+            },
             {"Compound I-007B": "S0", "Compound 3-2": "S1"},
         )
         self.assertEqual(coverage_errors(payload), [])
@@ -170,7 +190,10 @@ class UnruledStructureBindingTests(UnruledStructureControls, unittest.TestCase):
 
         result, payload = self.run_binding(["73", "28"], mutate_page=conflicting_label)
         self.assertEqual(
-            {b["cpd"]: b["structure_id"] for b in result["bindings"]},
+            {
+                b["cpd"]: b["structure_id"]
+                for b in result["compound_catalog"]["entries"]
+            },
             {"Compound 28": "S1"},
         )
         self.assertTrue(coverage_errors(payload))
@@ -183,7 +206,10 @@ class UnruledStructureBindingTests(UnruledStructureControls, unittest.TestCase):
 
         result, payload = self.run_binding(["73", "28"], mutate_page=rival)
         self.assertEqual(
-            {b["cpd"]: b["structure_id"] for b in result["bindings"]},
+            {
+                b["cpd"]: b["structure_id"]
+                for b in result["compound_catalog"]["entries"]
+            },
             {"Compound 28": "S1"},
         )
         self.assertTrue(coverage_errors(payload))

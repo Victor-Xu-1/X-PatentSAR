@@ -510,6 +510,35 @@ explicit rather than assigning a new left-column title to a sole right-column cr
 
 ## One lossless binding-artifact transport
 
+### Single source-record authority
+
+Bindings40/binder50 store complete current records only in
+`compound_catalog.entries`. The obsolete root `final_bindings` and returned
+`bindings` copies are removed, not replaced with another store or lazy object.
+`core.binding_records` owns bounded shape selection and exact integer count
+checks. Current artifacts containing either competing root collection refuse,
+even if it is empty. `final_bindings_count` remains a scalar diagnostic, not a
+second record collection. One original catalogue supplies binding statistics,
+header ID hints, recognition, cache identity, exports, QA, Web and resume.
+
+The accessor does not qualify scientific records. Original source claims,
+declaration/reference completeness, geometry and original-pixel replay retain
+their independent gates. Removing a catalogue row cannot erase its original
+reference obligation. Recognition still compares saved results with the entire
+source plan, including unmeasured owners, reprints and raw candidates. Every
+Web owner uses the same current recognition status before its graph can feed
+drawings, descriptors or predictions; raw rejected/history observations remain
+available in their immutable artifacts.
+
+Explicit historical/diagnostic readers can select old flat records, but formal
+processing requires current identity and original proof. Older binding caches
+are not relabelled or rewritten. The ordinary producer recreates derived
+bindings under the new epoch while independently verified raw checkpoints and
+manual audit remain intact. API-v1/SQL, raw PDF/OCR/OCSR2, Activity25/extractor35,
+preparation12 and numerical SAR policies do not change.
+
+### Bounded lossless wire format
+
 `artifact_catalog` and `artifact_nodes` own shared JSON version1, independently
 of scientific schema/implementation epochs. The sole binding writer opts into
 the same atomic artifact writer: substantial repeated source/catalogue values
