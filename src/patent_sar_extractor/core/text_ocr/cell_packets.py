@@ -45,6 +45,8 @@ def primary_structure(primary, frame, bounds, dpi):
             and p.get("confidence_valid", True) is True
             for p in primary["parts"] + primary["detection_parts"]
         )
+        and literal(primary["raw_text"])
+        == literal(" ".join(p["text"] for p in primary["parts"]))
     )
 
 

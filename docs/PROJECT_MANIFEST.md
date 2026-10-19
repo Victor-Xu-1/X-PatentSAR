@@ -1,5 +1,23 @@
 # Project governance manifest
 
+- Numbered-source auxiliary integration: the SAME `table_cells` and
+  `heading_observation` use `text_ocr/source_capture` only for unresolved complete
+  primary views. `structure_binder` owns the optional phase; bind cache selection
+  includes explicit runtime/model policy. `text_ocr/source_inventory` solely
+  owns bounded paired requests across original binding and activity readback.
+  `binding_auxiliary_replay` adapts explicit numbered/caption/heading owners to
+  the existing `binding_original_replay`, not another acceptance path. Original
+  native/page/detector/role conflicts, literal complete ID grammar, source pixels,
+  current model/protocol and cancellation/cleanup remain mandatory. Activity
+  accepted/unresolved cells share the header inventory; numerical/scientific
+  endpoint rules do not change. Binding39/binder49, Activity25/extractor35 and
+  preparation12 refresh derived proof/replay only. Raw PDF/page OCR/OCSR2,
+  visible23, model files, manual audit, numerical SAR, API/SQL and dependencies
+  stay unchanged. There is no second reader, queue, installer, confidence vote,
+  scientific result writer, private-data repair or automatic historical promotion.
+  Exact product/mainline/deployment evidence remains external. Generated-source
+  native integration is not universal source/chemical or real-task acceptance.
+
 - Unresolved original occurrence ownership: `caption_pending_roles` replays an
   existing positive catalogue role and original cell carrier from the same
   retained rejected-proposal catalogue. `structure_binder` retains proposals

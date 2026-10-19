@@ -24,8 +24,19 @@ def confirmed_identity_readings(label, observations, *, caption=False):
             return False
         if observation.get("method") == WORD_FORM_METHOD:
             continue  # Word scope verifies form; it is not another ID observation.
+        from .text_ocr.cell_proof import has_auxiliary_text
+
+        original = observation
+        if has_auxiliary_text(observation):
+            # Physical-caption validation above replays the full paired packet.
+            # Preserve the primary's role and detector veto, not only fresh text.
+            original = observation["auxiliary_text"]["views"][
+                (400, 600).index(observation["render_dpi"])
+            ]["primary"]
+            if nonfinal_original_label(original.get("raw_text")):
+                return False
         if refined_caption_conflicts(
-            label, observation.get("parts"), observation.get("detection_parts")
+            label, original.get("parts"), original.get("detection_parts")
         ):
             return False
         method = str(observation.get("method") or "")

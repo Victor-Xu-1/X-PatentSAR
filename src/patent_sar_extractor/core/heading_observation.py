@@ -97,3 +97,8 @@ def _observe_window(page, proof, layout):
                     }
                 )
     proof["status"], _ = heading_observation_status(proof)
+    if proof["status"] == "unresolved" and len(proof["observations"]) == 2:
+        from .text_ocr.source_capture import refine_source_text
+
+        proof["observations"] = refine_source_text(page, bounds, proof["observations"])
+        proof["status"], _ = heading_observation_status(proof)

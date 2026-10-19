@@ -64,6 +64,17 @@ def _observed(cell, identifier=False):
     for item in readings:
         if not isinstance(item, dict) or not isinstance(item.get("text"), str):
             return False
+        from .text_ocr.cell_proof import has_auxiliary_text, valid_auxiliary_cell
+
+        if has_auxiliary_text(item) and not valid_auxiliary_cell(
+            item, item.get("render_dpi")
+        ):
+            return False
+        if identifier:
+            from .cell_caption_lines import physical_caption_valid
+
+            if not physical_caption_valid(item):
+                return False
         method, confidence = item.get("method"), item.get("confidence")
         if method in {"native_cell", "page_ocr_cell"} and "source_observation" in item:
             source_status = cell_source_status(item)

@@ -1,5 +1,37 @@
 # Operations and troubleshooting
 
+## An unread original number or synthesis heading
+
+The explicitly enabled on-demand text adapter can now serve unresolved numbered
+cells and original synthesis headings, through the same bounded literal-row
+protocol as activity headers. It is still off on a fresh/default configuration.
+Reuse or setup enables only subsequent producer phases, not an existing task or
+resident service. Normal clear text takes no auxiliary call. Conflicting known
+native/page/detector text, nonfinal roles, extra caption rows, mismatched views,
+unbounded source ink or missing original proof stay refused, not corrected from
+the surrounding sequence. The model does not infer structure/product roles.
+
+Inspect the retained primary400/600dpi observations, auxiliary packet or failed
+attempt, original cell bounds and source role. Do not rewrite an ID or confidence
+in a saved JSON/CSV. Worker-plan/QA/export/Web acceptance replay actual original
+pixels without OCR. Activity row IDs retain literal prefixes in observations
+while using the unchanged canonical ID key for joining; scalar values, grades,
+conditions, units and tenth-strongest SAR rules are not modified here.
+
+Use `test_auxiliary_identifiers`, `test_auxiliary_identifier_consumers` and
+`test_auxiliary_binding_consumers` for differing controlled raster source,
+known-conflict/downgrade/tamper, complete worker-plan and safe Web checks.
+The native generated-number check requires the already documented explicit
+runtime/model opt-in; missing opt-in is a skip, not native/scientific acceptance.
+Select related heading/caption/identity/activity/header/cache/preparation
+consumers, never the global test suite. No private PDF processing is authorized
+outside the normal frontend. Existing failed tasks, raw sources and human audit
+remain untouched. Binding39/binder49, Activity25/extractor35 and preparation12
+require normal regeneration; visible23/raw OCSR2 are unchanged. Keep matching
+code/configuration/environment-state rollback snapshots, including the previous
+reviewed reuse operation. Release delivery is separate from full extraction/SAR
+scientific acceptance.
+
 ## A failed catalogue label appears again as a synthesis heading
 
 Inspect the retained proposal's original cell role and native/page-OCR carrier,

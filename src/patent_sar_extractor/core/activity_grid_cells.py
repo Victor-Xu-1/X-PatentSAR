@@ -212,7 +212,12 @@ def read_activity_cell(
             crosses
             or any(
                 observation.get("method") in {"cell_ocr_400dpi", "cell_ocr_600dpi"}
-                and observation.get("text") == reading.value
+                and (
+                    normalize_compound(observation.get("text", ""))
+                    == normalize_compound(reading.value)
+                    if identifier
+                    else observation.get("text") == reading.value
+                )
                 and type(observation.get("confidence")) in (float, int)
                 and 0.85 <= observation["confidence"] <= 1
                 for observation in observations

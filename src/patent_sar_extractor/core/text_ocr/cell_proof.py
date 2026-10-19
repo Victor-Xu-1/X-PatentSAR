@@ -2,12 +2,23 @@
 
 import re
 
+from patent_sar_extractor.contracts import AUXILIARY_TEXT_CELL_VERSION
 from patent_sar_extractor.core.table_cells import cell_image
 
 from .cell_frames import literal, source_rows
 from .cell_packets import view_summary
 from .identity import recipe
 from .protocol import frame_digest
+
+
+def has_auxiliary_text(reading):
+    if not isinstance(reading, dict):
+        return False
+    physical = reading.get("physical_header_lines")
+    return "auxiliary_text" in reading or (
+        isinstance(physical, dict)
+        and physical.get("version") == AUXILIARY_TEXT_CELL_VERSION
+    )
 
 
 def effective_cells(packet):
@@ -50,7 +61,11 @@ def effective_cells(packet):
         raise ValueError("Auxiliary original views disagree")
     return tuple(
         {
-            **{k: v for k, v in view["primary"].items() if k != "single_row_readings"},
+            **{
+                k: v
+                for k, v in view["primary"].items()
+                if k not in {"single_row_readings", "physical_caption_line"}
+            },
             **selected,
             "auxiliary_text": packet,
         }

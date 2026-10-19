@@ -109,7 +109,7 @@ class AuxiliarySourceReplayTests(unittest.TestCase):
 
     def test_cached_native_rows_are_not_charged_again_per_physical_occurrence(self):
         self.payload["header_observations"]["second"] = self.second_locator()
-        with patch("patent_sar_extractor.core.activity_auxiliary_replay._MAX_ROWS", 4):
+        with patch("patent_sar_extractor.core.text_ocr.source_inventory._MAX_ROWS", 4):
             self.assertEqual(len(list(auxiliary_columns(self.payload))), 2)
 
     def test_one_cached_request_identity_cannot_claim_conflicting_outputs(self):

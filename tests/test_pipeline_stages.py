@@ -44,9 +44,7 @@ class PipelineStageTests(unittest.TestCase):
                 ocr_cache_path=str(dependency),
             )
             run_fixture(root)
-            producer_payload = json.loads(
-                (root / "structure_bindings/bindings.json").read_text()
-            )
+            producer_payload = load_json(root / "structure_bindings/bindings.json", {})
 
             def producer(*args, **kwargs):
                 path = Path(context.bind_json)
@@ -59,16 +57,25 @@ class PipelineStageTests(unittest.TestCase):
                     "patent_sar_extractor.core.structure_binder.bind",
                     side_effect=producer,
                 ) as binder,
+                patch(
+                    "patent_sar_extractor.application.stage_bind.text_ocr_policy_identity",
+                    return_value={"mode": "on_demand", "models": ["controlled-model"]},
+                ),
             ):
                 execute_bind(context)
             binder.assert_called_once()
-            serialized = json.loads(Path(context.bind_json).read_text())
+            serialized = load_json(context.bind_json, {})
             self.assertEqual(
                 serialized["compound_catalog"], producer_payload["compound_catalog"]
             )
             self.assertEqual(context.n_bound, 2)
             self.assertEqual(log["steps"]["bind"]["status"], "ok")
             self.assertEqual(context.source_cpds, ["Compound 42", "Compound 42A"])
+            manifest = json.loads(
+                Path(context.bind_json + ".manifest.json").read_text()
+            )
+            self.assertIn("auxiliary_text_policy", json.dumps(manifest))
+            self.assertIn("controlled-model", json.dumps(manifest))
 
     def test_old_output_cannot_hide_nonzero_worker_exit_or_missing_current_output(self):
         from subprocess import CompletedProcess

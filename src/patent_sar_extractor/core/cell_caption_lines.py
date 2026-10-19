@@ -62,7 +62,25 @@ def observe_single_caption(image, engine, border, dpi):
 
 def physical_caption_valid(reading):
     """Producer and serialized binding consumers replay exactly the same proof."""
+    from .text_ocr.cell_proof import has_auxiliary_text
+
     parts = reading.get("parts")
+    auxiliary_row = isinstance(parts, (list, tuple)) and any(
+        isinstance(part, dict) and part.get("method") == "physical_header_line"
+        for part in parts
+    )
+    if (
+        has_auxiliary_text(reading)
+        or "physical_header_lines" in reading
+        or auxiliary_row
+    ):
+        return has_auxiliary_text(reading) and physical_text_valid(
+            reading,
+            packet_name="physical_header_lines",
+            part_method="physical_header_line",
+            minimum_rows=1,
+            maximum_rows=1,
+        )
     used = isinstance(parts, (list, tuple)) and any(
         isinstance(part, dict)
         and part.get("method") in {"undetected_caption_line", "physical_caption_line"}
