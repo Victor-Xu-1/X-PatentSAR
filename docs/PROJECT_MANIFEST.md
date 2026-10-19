@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- Qualified header-fragment authority: the existing `activity_header_identity`
+  distinguishes partial detector claims from complete original/native headers.
+  Only comparison adds missing prefix context; known words must survive
+  contiguously and in order at full token boundaries. Ordered endpoints/units
+  and suffix/construct/time qualifiers remain mandatory even for unwrapped
+  unit forms. Raw source/model text and scores are unchanged. The existing
+  source/physical/auxiliary/binding/activity/QA/Web consumers share one guard,
+  not a new parser or acceptance path. Binding47/binder57, Activity30/extractor40
+  refresh derived proof; role4/recovery3/raw/preparation/manual/API/SQL/SAR,
+  model/runtime policy and dependencies stay unchanged. Full source/chemical
+  acceptance and preserved rollback remain required.
+
 - Complete ordinary-role authority: `role_text_sources` inventories the same
   native/optical/auxiliary role owners and their explicit open-row carriers.
   `role_original_replay` composes literal native/raster-ownership checks and the
@@ -10,7 +22,7 @@
   Binding plans/worker/QA/Web and activity keep all sources separate from molecule
   work. Role4 requires optical frames; source_grid_edges reuses the same bounded
   whole-grid shape instead of its obsolete97-axis limit. Current derived proof:
-  Binding46/binder56, Activity29/extractor39, role4. Raw sources/OCR/OCSR2,
+  Binding47/binder57, Activity30/extractor40, role4. Raw sources/OCR/OCSR2,
   preparation12/assets/manual audit, numerical SAR, API/SQL, model/runtime policy
   and dependencies stay unchanged. No new verification cache/queue/store, read-
   side model or historical scientific promotion. Larger source inventories still
@@ -28,7 +40,7 @@
   same source replay, not molecule work. Existing row/chunk/pixel/request budgets
   and primary/native/detector conflicts remain; only six known recovery-envelope
   links are admitted in physical-cell diagnostics, not arbitrary deeper JSON.
-  Current derived contracts are Binding46/binder56 and Activity29/extractor39.
+  Current derived contracts are Binding47/binder57 and Activity30/extractor40.
   PDF/raw OCR/OCSR2, preparation12/assets/human audit, API/SQL, numerical SAR,
   model files, dependency recipes and activation policy remain unchanged.
   Historical evidence is preserved without scientific promotion. No second

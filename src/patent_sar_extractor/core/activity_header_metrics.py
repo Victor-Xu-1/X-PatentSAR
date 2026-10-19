@@ -38,6 +38,7 @@ _UNIT = re.compile(
 )
 _PARENS = re.compile(r"\(([^()]*)\)")
 _GLYPHS = str.maketrans("₀₁₂₃₄₅₆₇₈₉⁰¹²³⁴⁵⁶⁷⁸⁹（）", "01234567890123456789()")
+_LITERAL_UNIT = re.compile(rf"(?<![A-Za-z0-9])(?:{_UNIT.pattern})(?![A-Za-z0-9])")
 
 
 def explicit_unit(text: str) -> str | None:
@@ -52,10 +53,19 @@ def literal_header_units(text: str) -> set[str]:
     normalized = normalize_metric_text(text)
     return {
         match.group().replace("µ", "u").replace("μ", "u")
-        for match in re.finditer(
-            rf"(?<![A-Za-z0-9])(?:{_UNIT.pattern})(?![A-Za-z0-9])", normalized
-        )
+        for match in _LITERAL_UNIT.finditer(normalized)
     }
+
+
+def header_qualifier_text(text: str) -> str:
+    """Comparison-only non-unit observations; no endpoint/value interpretation.
+
+    Units have their own per-endpoint guard. Ignore only those exact unit
+    tokens and wrappers left empty by them, not numbers, timing words,
+    construct annotations or unknown strings.
+    """
+    literal = _LITERAL_UNIT.sub(" ", normalize_metric_text(text))
+    return re.sub(r"\(\s*\)", " ", literal).strip()
 
 
 def normalize_metric_text(text: str) -> str:
