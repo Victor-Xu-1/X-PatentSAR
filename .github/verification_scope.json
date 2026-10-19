@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "base_sha": "11cb4e3e2b9f314c6cd5468ed74a8c039653c37d",
+  "base_sha": "99ffc12c040a0df40cabf3ffa4a2a3d01f336e9d",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
@@ -8,13 +8,27 @@
     "docs/PROJECT_MANIFEST.md",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "src/patent_sar_extractor/contracts.py"
+    "src/patent_sar_extractor/contracts.py",
+    "src/patent_sar_extractor/core/cell_rendering.py",
+    "src/patent_sar_extractor/core/table_cells.py",
+    "tests/test_cell_render_cache.py"
   ],
   "python_modules": [
+    "tests.test_cell_render_cache",
+    "tests.test_cell_observation_provenance",
+    "tests.test_cell_observation_epochs",
+    "tests.test_caption_word_ownership",
+    "tests.test_caption_word_consumers",
+    "tests.test_heading_observation",
+    "tests.test_biology_cell_observations",
+    "tests.test_plot_reference_pixels",
+    "tests.test_text_row_pixel_bounds",
+    "tests.test_auxiliary_cell_evidence",
+    "tests.test_auxiliary_activity_consumers",
     "tests.test_release_policy.ReleaseNumberTests",
     "tests.test_standalone.StandalonePackagingTests.test_version_command_uses_product_version",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [],
-  "browser_tests": []
+  "browser_tests": ["frontend/e2e/source-completion.spec.ts"]
 }

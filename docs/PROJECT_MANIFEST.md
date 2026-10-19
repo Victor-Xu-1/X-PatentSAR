@@ -1,5 +1,22 @@
 # Project governance manifest
 
+- Original cell rendering ownership: `table_cells` retains the single inset/DPI/
+  pixel-budget admission authority; `cell_rendering` only opens a call-local
+  complete PDF context for its admitted clip. Fresh decoders eliminate full/
+  partial-image cache-order differences without global cache eviction, warming,
+  image rewriting or a second parser. File sources stay lazy; byte sources reuse
+  their input; only edited/authenticated contexts serialize in memory. Original
+  hidden-layer state, annotations/forms, crop/rotation survive and mismatching
+  context refuses. Temporary documents close on normal/exceptional exits.
+  Encryption detection is inert trailer metadata, not an active password probe;
+  isolated observation must preserve an authenticated caller's readable source.
+  Caption/heading/header/value/plot/label-preparation capture and replay consume
+  the same renderer. Current derived contracts: Binding37/binder47,
+  Activity24/extractor34, visible23/preparation11. Epoch entries below retain
+  historical feature context. Raw PDF/page OCR/OCSR2/assets/manual audit,
+  numerical SAR, API/SQL and dependencies remain unchanged. Exact original
+  pixel/ink checks stay strict; no historical result is promoted or rewritten.
+
 - Optional auxiliary text boundary: `core/text_ocr` owns only
   finite literal-row observations over the existing owned JSONL carrier and
   offline worker bootstrap. It has no queue, PDF parser, result writer or

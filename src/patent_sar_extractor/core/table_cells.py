@@ -13,6 +13,7 @@ from .activity_identity import is_value
 from .activity_values import is_explicit_missing_activity_value
 from .cell_cross_observation import observe_printed_crosses
 from .cell_ocr_observation import OCRObservation, observe_cell
+from .cell_rendering import original_cell_pixmap
 from .compound_caption import prefixed_label
 from .page_ocr_cache import get_ocr_engine
 from .printed_identifiers import identifier_key
@@ -86,7 +87,7 @@ def cell_image(
     pixels = (clip * matrix).irect
     if pixels.width * pixels.height > maximum_pixels:
         raise CellRenderLimit("Original cell exceeds its rendered pixel budget")
-    pix = page.get_pixmap(matrix=matrix, clip=clip, alpha=False)
+    pix = original_cell_pixmap(page, matrix=matrix, clip=clip)
     return np.frombuffer(pix.samples, dtype=np.uint8).reshape(
         pix.height, pix.width, pix.n
     )[:, :, :3]

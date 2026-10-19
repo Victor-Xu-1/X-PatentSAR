@@ -1,5 +1,37 @@
 # X-PatentSAR architecture
 
+## Cache-order-independent original cell rendering
+
+`table_cells.cell_image` retains the sole source-cell inset, requested DPI and
+eight-million-pixel admission cap. After admission, `cell_rendering` opens a
+call-local decoder over the complete original PDF context and renders exactly
+that clip. MuPDF can reuse a prior full-image or partial-image decoded tile;
+on controlled one-bit CCITT scans this changed the same400dpi cell's pixels
+after a full-page observation. Producer and replay now use the same fresh
+decoder, not a hash tolerance, image resize or cache-dependent warm-up.
+
+Unmodified file sources reopen lazily, without serializing the whole PDF or
+writing a second source. Immutable stream inputs reuse their bytes. An edited
+in-memory/authenticated source serializes its current context only in memory.
+The complete context preserves optional-content visibility, annotations/forms,
+crop/MediaBox and rotation; a simple single-page graft would lose hidden-layer
+configuration. A changed geometry/OCG context refuses. All temporary documents
+close on success and exception. No process-global cache eviction, rendering
+setting, extra model, persistent decoder cache, queue or result writer is added.
+Encrypted-source detection reads inert trailer metadata, never a password probe
+on an already authenticated decoder. Controlled protected-source replay verifies
+that both the isolated clip and the caller's original remain readable.
+
+Caption, heading, activity-header/value, plot-reference and label-preparation
+observers/replayers continue through the shared cell renderer. Actual original
+pixels/ink remain mandatory and modified frames still refuse. Current derived
+contracts are Binding37/binder47, Activity24/extractor34, visible23 and
+preparation11. Earlier epoch numbers below record their feature's historical
+delivery, not competing current authorities. Original PDF/raw OCR/OCSR2,
+scientific assets/manual audit, numerical SAR, API/SQL and dependencies stay
+unchanged. Historical source frames are not rewritten or relabelled. Controlled
+rendering/replay correctness is not real-patent extraction or chemical acceptance.
+
 ## Optional auxiliary literal-text runtime boundary
 
 `core/text_ocr` implements one optional, finite ordinary-text observation SDK.
