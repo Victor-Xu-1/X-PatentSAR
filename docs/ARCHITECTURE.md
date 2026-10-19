@@ -7,7 +7,8 @@ and discovery headers plus accepted/unresolved row cells. Every ordinary optical
 entry uses the existing model-free `original_cell_frame_matches`; paired
 auxiliary packets and role cells retain their existing independent replay paths.
 Optical markers cannot disappear through a method-only relabel. Equal repeated
-observations replay once in the call-local bounded inventory. Native/page-token
+observations replay once in the call-local bounded inventory (1,000,000 ordinary
+cells, independently of the sparse auxiliary/model-request budget). Native/page-token
 observations are not fabricated into optical crops. This reuses recorded frames
 and does not recognize text, write scientific outputs or certify literal accuracy.
 

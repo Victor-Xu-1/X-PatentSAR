@@ -11,7 +11,11 @@ from .role_original_replay import original_role_source_errors
 from .role_text_sources import role_text_cells
 from .source_evidence_identity import proof_id
 from .text_ocr.cell_proof import has_auxiliary_text, replay_auxiliary_cell
-from .text_ocr.source_inventory import MAX_SOURCE_CELLS, auxiliary_source_cells
+from .text_ocr.source_inventory import auxiliary_source_cells
+
+# Ordinary observations cover the full dataset, unlike sparse auxiliary rescue.
+# This bounds replay work without reusing the smaller model-request inventory.
+MAX_PRIMARY_SOURCE_CELLS = 1_000_000
 
 OriginalReader = Callable[[], AbstractContextManager]
 
@@ -84,7 +88,7 @@ def original_primary_cells(payload):
         key = page_no, proof_id({"status": "original_activity_cell", "cell": column})
         if key not in seen:
             seen.add(key)
-            if len(seen) > MAX_SOURCE_CELLS:
+            if len(seen) > MAX_PRIMARY_SOURCE_CELLS:
                 raise ValueError(
                     "Original activity cells exceed their bounded inventory"
                 )

@@ -14,8 +14,10 @@ Activity34/extractor44 make previous derived evidence historical and require
 normal frontend resume, preserving raw assets and manual audit. Existing shared
 runtime/source identities refresh Web/Lead/SAR admission; binding/role/recovery/
 coverage versions and all models/thresholds/activation remain unchanged. Duplicate
-identical source cells replay once; the existing 16,384-cell limit still refuses
-an over-bound inventory rather than truncating. No private off-platform processing
+identical source cells replay once; the full ordinary inventory has an explicit
+1,000,000-cell ceiling, separate from the smaller sparse auxiliary/model budget.
+An over-bound inventory refuses rather than truncating. Multi-metric observations
+are not cut at the auxiliary limit. No private off-platform processing
 is authorized. Original boundary, semantic conflicts and chemical accuracy remain
 independent acceptance requirements.
 

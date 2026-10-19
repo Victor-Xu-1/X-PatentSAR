@@ -121,9 +121,43 @@ class PrimaryActivitySourceTests(unittest.TestCase):
         payload.update(self.payload("row", other))
         with (
             patch(
-                "patent_sar_extractor.core.activity_auxiliary_replay.MAX_SOURCE_CELLS",
+                "patent_sar_extractor.core.activity_auxiliary_replay.MAX_PRIMARY_SOURCE_CELLS",
                 1,
             ),
             self.assertRaisesRegex(ValueError, "bounded inventory"),
         ):
             original_activity_source_errors(payload)
+
+    def test_complete_multi_metric_inventory_does_not_borrow_auxiliary_budget(self):
+        from patent_sar_extractor.core.activity_auxiliary_replay import (
+            original_primary_cells,
+        )
+
+        rows = []
+        for index in range(1191):
+            cells = []
+            for column in range(12):
+                cells.append(
+                    {
+                        "observations": [
+                            {
+                                "method": f"cell_ocr_{dpi}dpi",
+                                "render_dpi": dpi,
+                                "bbox": [
+                                    20 + column * 35,
+                                    20 + index % 40 * 14,
+                                    52 + column * 35,
+                                    30 + index % 40 * 14,
+                                ],
+                            }
+                            for dpi in (400, 600)
+                        ]
+                    }
+                )
+            rows.append(
+                {"activity_sources": [{"page_no": 1 + index // 40, "cells": cells}]}
+            )
+        payload = {"rows": rows}
+        self.assertEqual(sum(1 for _ in original_primary_cells(payload)), 1191 * 12 * 2)
+        # Capacity is not admission: these locators lack actual captured frames.
+        self.assertTrue(original_activity_source_errors(payload))
