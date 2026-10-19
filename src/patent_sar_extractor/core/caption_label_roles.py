@@ -11,6 +11,7 @@ from .source_cell_tokens import cell_tokens, crosses_cell
 from .source_section_roles import heading_members, section_heading
 
 ROLE = "structure_label_reference"
+PENDING_ROLE = "unresolved_structure_label_reference"
 MAX_SOURCES = 25000
 
 
@@ -79,7 +80,7 @@ def caption_label_index(bindings, original_pdf_sha256):
     return dict(output)
 
 
-def _owned_locator(box, cell):
+def owns_label_locator(box, cell):
     """Use the original cell SDK's centre and one-point locator edge budget.
 
     A layout detector's padding is not another original heading. This aliases
@@ -115,7 +116,7 @@ def caption_label_reference(line, page_no, index):
     options = [
         source
         for source in index.get((page_no, members[0]), {}).values()
-        if _owned_locator(box, source["bbox"])
+        if owns_label_locator(box, source["bbox"])
     ]
     if len(options) != 1:
         return None
@@ -134,13 +135,19 @@ def caption_label_reference(line, page_no, index):
 
 
 def caption_reference_ids(sections):
-    return [proof_id(section) for section in sections if section.get("role") == ROLE]
+    return [
+        proof_id(section)
+        for section in sections
+        if section.get("role") in {ROLE, PENDING_ROLE}
+    ]
 
 
 def validate_caption_references(sections, scope, entries):
     references = [section for section in sections if section.get("role") == ROLE]
     if scope["version"] < 5:
-        if references:
+        if references or any(
+            section.get("role") == PENDING_ROLE for section in sections
+        ):
             raise ValueError("Original label-role reference inventory was downgraded")
         return
     if scope.get("label_reference_ids") != caption_reference_ids(sections):

@@ -1,5 +1,18 @@
 # Project governance manifest
 
+- Unresolved original occurrence ownership: `caption_pending_roles` replays an
+  existing positive catalogue role and original cell carrier from the same
+  retained rejected-proposal catalogue. `structure_binder` retains proposals
+  before heading discovery; no second collector/writer or inference path is
+  added. A uniquely owned raw locator becomes an unresolved label occurrence,
+  never an identifier or molecule. Original failure/attempts remain mandatory.
+  `caption_label_roles` owns the shared locator geometry and both occurrence
+  kinds' inventory; `binding_source_references` replays carriers and regenerates
+  failures. Outside headings, unknown/nonfinal contexts and conflicting/changed/
+  foreign/downgraded sources cannot be suppressed or confirmed. Binding38/binder48
+  refresh derived occurrence semantics only; activity24/extractor34, raw source/
+  models/manual audit, numerical SAR, API/SQL and dependencies remain unchanged.
+
 - Original cell rendering ownership: `table_cells` retains the single inset/DPI/
   pixel-budget admission authority; `cell_rendering` only opens a call-local
   complete PDF context for its admitted clip. Fresh decoders eliminate full/
@@ -15,7 +28,7 @@
   Encryption detection is inert trailer metadata, not an active password probe;
   isolated observation must preserve an authenticated caller's readable source.
   Caption/heading/header/value/plot/label-preparation capture and replay consume
-  the same renderer. Current derived contracts: Binding37/binder47,
+  the same renderer. Current derived contracts: Binding38/binder48,
   Activity24/extractor34, visible23/preparation11. Epoch entries below retain
   historical feature context. Raw PDF/page OCR/OCSR2/assets/manual audit,
   numerical SAR, API/SQL and dependencies remain unchanged. Exact original

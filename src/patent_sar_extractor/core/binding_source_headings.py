@@ -16,6 +16,7 @@ from .binding_source_regions import (
     reference_regions,
 )
 from .caption_label_roles import caption_label_index, caption_label_reference
+from .caption_pending_roles import pending_caption_index, pending_caption_reference
 from .heading_declaration_index import HeadingDeclarationIndex
 from .heading_evidence import (
     heading_structure_evidence,
@@ -49,12 +50,14 @@ def observed_heading_blocks(
     grids_for_page=None,
     tokens_for_page=None,
     source_bindings=(),
+    source_diagnostics=None,
     progress=None,
 ) -> list[dict]:
     """Coordinates and complete labels originate in the source, not an ID list."""
     blocks = []
     document_sha256 = _document_sha256(doc)
     caption_labels = caption_label_index(source_bindings, document_sha256)
+    pending_captions = pending_caption_index(source_diagnostics or {}, document_sha256)
     declaration_roles = declaration_role_index(source_sections or [], document_sha256)
     for page_index in observed_items("heading_sources", sorted(set(pages)), progress):
         page = doc[page_index]
@@ -126,6 +129,13 @@ def observed_heading_blocks(
                 if label_reference is not None:
                     if source_sections is not None:
                         source_sections.append(label_reference)
+                    continue
+                pending_reference = pending_caption_reference(
+                    line, page_index + 1, pending_captions, document_sha256
+                )
+                if pending_reference is not None:
+                    if source_sections is not None:
+                        source_sections.append(pending_reference)
                     continue
                 reference = reference_cell(line, regions)
                 if reference is not None:
