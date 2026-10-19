@@ -26,7 +26,7 @@ def extract_text_tables(
         page_no, _, _ = item["key"]
         scope = scope_descriptor(item)
         rows = item["rows"]
-        context = context_from_text(item["caption"])
+        context = item.get("context") or context_from_text(item["caption"])
         for row in rows:
             for source in row.activity_sources:
                 source["text_scope"] = scope

@@ -8,6 +8,7 @@ from .activity_header_metrics import distinct_value_keys
 from .activity_headers import _key
 from .activity_metadata import mark_metadata, metadata_role
 from .activity_models import ActivityRow, ParsedActivity
+from .activity_transposed_context import transposed_context_matches
 from .activity_transposed_source import (
     capture_transposed_layout,
     column_scope,
@@ -42,7 +43,10 @@ def extract_transposed(page, page_no, tokens, region, matrix, context):
         return None
     xs, ys = region["xs"], region["ys"]
     native = bool(page.get_text("words"))
-    layout = capture_transposed_layout(tokens, region, header_row, native=native)
+    layout = capture_transposed_layout(
+        page, tokens, region, header_row, context, native=native
+    )
+    context_review = not transposed_context_matches(layout, grid_axes(region))
     output = ParsedActivity(owned_pages={page_no - 1})
     unresolved = {}
     for col in range(1, len(xs) - 1):
@@ -53,6 +57,7 @@ def extract_transposed(page, page_no, tokens, region, matrix, context):
         label, readings, review = read_activity_cell(
             page, tokens, id_bounds, identifier=True, native=native
         )
+        review |= context_review
         if not label:
             unresolved[col] = "no_original_rows"
             continue
@@ -117,10 +122,9 @@ def extract_transposed(page, page_no, tokens, region, matrix, context):
         source = {
             "page_no": page_no,
             "table_id": context.table_id,
-            "target": context.target,
-            "assay": context.assay,
-            "cell_line": context.cell_line,
+            **context.scientific_values(),
             "raw_caption": context.raw_caption,
+            "body_text": context.body_text,
             "raw_context": context.raw_context,
             "row": header_row,
             "pair": col,

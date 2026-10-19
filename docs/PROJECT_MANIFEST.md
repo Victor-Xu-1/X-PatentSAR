@@ -1,5 +1,19 @@
 # Project governance manifest
 
+- Scientific context declaration authority: `activity_context_values` owns eight
+  bounded literal fields, existing typography comparison and the shared duration
+  alias/unknown markers. `activity_headers` retains one last-caption scope; prose
+  does not become an assay name. Header/native/partial/parallel consumers protect
+  actual declarations without model voting. Ordinary/text/transposed writers and
+  their replay retain all declared fields; transposed context uses the same header
+  source snapshot and keeps merged rows. Biological metric-method interpretation
+  cannot rename an explicit assay, and shares cell-name/ambiguity extraction.
+  Binding48/binder58, Activity31/extractor41/coverage16, projectionv5 and project
+  scope digestv2 refresh derived proof/views/admissions. Raw originals/OCR/OCSR2/
+  preparation12/manual audit, APIv1/SQL/SARDB2, numerical bands/strict graph rules,
+  dependencies/models/providers/activation remain unchanged. History is retained,
+  not promoted. Earlier version entries below are prior-release records.
+
 - Original context identity authority: `web/activity_scope` reuses original grid
   header or text continuation anchors, frame/table identity and recorded condition
   pairs. Shared additive `activity_scope_models` fields reach table/catalog/scale/

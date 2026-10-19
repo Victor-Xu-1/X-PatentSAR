@@ -83,7 +83,7 @@ def project_revision(
     # A rules/schema upgrade must stale an old SAR snapshot even before any UI
     # visit refreshes the source project's cached DTOs. No source is rewritten.
     result.update(encode(source_identity({"snapshot": source_snapshot})).encode())
-    result.update(b"original-activity-context-scope-v1")
+    result.update(b"original-activity-context-scope-v2")
     result.update(
         (condition_sha or conditions_sha256(service.store.project(identifier))).encode()
     )

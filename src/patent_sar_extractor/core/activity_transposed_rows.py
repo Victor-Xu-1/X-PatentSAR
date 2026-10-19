@@ -2,7 +2,9 @@
 
 from collections import defaultdict
 
+from .activity_context_values import CONTEXT_IDENTITY_FIELDS, CONTEXT_TEXT_FIELDS
 from .activity_result_references import _get, _source_matches
+from .activity_transposed_context import transposed_context_matches
 from .activity_transposed_source import declared_compound
 from .source_cell_claims import cell_source_conflict
 
@@ -26,6 +28,12 @@ def _source_geometry_matches(row, source, region, column):
     cells = source.get("cells")
     if (
         source.get("orientation") != "transposed"
+        or not transposed_context_matches(layout, region["grid_axes"])
+        or any(
+            source.get(key) != layout["context"][key]
+            for key in (*CONTEXT_IDENTITY_FIELDS, *CONTEXT_TEXT_FIELDS)
+            if key != "caption"
+        )
         or source.get("row") != header
         or not isinstance(cells, list)
         or len(cells) != len(ys) - header - 1

@@ -2,6 +2,11 @@
 
 import re
 
+from .activity_context_values import (
+    CONTEXT_IDENTITY_FIELDS,
+    partial_context_value_matches,
+)
+from .activity_context_values import compact_context_value as compact_header
 from .activity_header_metrics import (
     METRIC,
     explicit_unit,
@@ -20,6 +25,7 @@ def schema_requires_review(schema) -> bool:
     """One unresolved-field policy for rows, header carry and source replay."""
     return bool(
         schema.needs_review
+        or schema.context.claim_conflicts
         or (schema.header_resolution or {}).get("status") == "unresolved"
         or any(
             "unknown" in key.lower()
@@ -29,13 +35,6 @@ def schema_requires_review(schema) -> bool:
             for _, key in group.value_columns
         )
     )
-
-
-def compact_header(value: str) -> str:
-    text = normalize_metric_text(value)
-    # Micro-unit glyph equivalence is comparison only; original text survives.
-    text = re.sub(r"(?<![A-Za-z0-9])[µμ]M(?![A-Za-z0-9])", "uM", text)
-    return "".join(text.split()).casefold()
 
 
 def measurement_header_identity(text: str) -> str:
@@ -120,10 +119,18 @@ def header_conflict(original: str, fresh: str) -> bool:
     return bool(old_units and old_units != new_units)
 
 
-def context_conflict(original, fresh) -> bool:
-    return any(
-        old and new and compact_header(old) != compact_header(new)
-        for field in ("table_id", "target", "assay", "cell_line")
+def context_conflict(original, fresh, *, partial=False) -> bool:
+    issues = original.claim_conflicts
+    if partial:
+        issues = tuple(item for item in issues if not item.endswith(":missing"))
+    return bool(issues or fresh.claim_conflicts) or any(
+        old
+        and new
+        and compact_header(old) != compact_header(new)
+        and not (
+            partial and field != "table_id" and partial_context_value_matches(old, new)
+        )
+        for field in CONTEXT_IDENTITY_FIELDS
         for old, new in [(getattr(original, field), getattr(fresh, field))]
     )
 

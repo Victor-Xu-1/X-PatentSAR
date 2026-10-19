@@ -1,5 +1,36 @@
 # Operations and troubleshooting
 
+## A caption spelling difference becomes an assay conflict
+
+Descriptions such as a comparison of compound activities remain original text,
+not an assay identifier. Only an explicitly declared assay is stored by the
+generic context reader. Known biological methods can still label their existing
+metric roles, but cannot replace a declared assay name. Inspect raw caption/body,
+literal declarations and the same original physical/text root; do not fuzzy-match
+titles, change scientific strings manually, or pool independent unknown contexts.
+
+Target/assay/cell line/construct/duration/treatment duration/timepoint/batch travel
+through ordinary, text and transposed source rows. Same-value repeated labels
+are not extra experiments; conflicting known values, incomplete complete-window
+declarations and bounded-limit failures remain review. Optional absent fields
+stay absent. The shared duration alias uses recorded literal values only, never
+converts hours/days or invents a condition. Generic words before "cells" are not
+cell identifiers. Unsupported names remain original text, not guessed entities.
+
+Complete primary native ownership and partial native hints are different. A few
+native words on a scanned page do not close its context. Conversely, OCR agreement
+cannot add a field missing from a complete original native window. Header source
+selection preserves that native wording and its conditions; partial field text
+does not assert unobserved suffixes or cast a vote for an absent value.
+
+Binding48/binder58, Activity31/extractor41 and coverage16 refresh derived source
+proof. Projectionv5 and the project-scope-v2 digest invalidate disposable old views
+and project snapshots while retaining manual audit/overlays and old reports for
+review. Never edit saved epochs/proofs or raw outputs to upgrade history. Normal
+frontend resume owns compatible reuse/regeneration. Preserve matching rollback
+code/config/state and all original/failure evidence; no raw OCR/OCSR/model reset,
+new dependencies, private alternate processing or global test is implied.
+
 ## Identical activity labels appear in different original tables
 
 Result columns and SAR contexts now conserve original table/header/text-origin

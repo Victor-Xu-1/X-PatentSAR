@@ -5,6 +5,7 @@ from dataclasses import asdict, replace
 from itertools import pairwise
 
 from .activity_context_geometry import validate_context_geometry
+from .activity_context_values import validate_context_record
 from .activity_grid_context import _suffix
 from .activity_parallel_context import validate_parallel_context
 
@@ -95,30 +96,7 @@ def validate_layout(record):
     if "context_geometry" in layout:
         validate_context_geometry(layout["context_geometry"], record["bbox"])
     validate_parallel_context(layout, layout.get("boundary_prefix", layout["prefix"]))
-    context = layout["context"]
-    if (
-        not isinstance(context, dict)
-        or set(context)
-        != {
-            "table_id",
-            "caption",
-            "target",
-            "assay",
-            "cell_line",
-            "raw_caption",
-            "body_text",
-            "raw_context",
-        }
-        or any(
-            value is None
-            and key not in {"target", "assay", "cell_line"}
-            or value is not None
-            and (not isinstance(value, str) or len(value) > 10000)
-            for key, value in context.items()
-        )
-        or context["table_id"] != record["table_id"]
-    ):
-        raise ValueError("Malformed original table context")
+    validate_context_record(layout["context"], record["table_id"])
     for key in (
         "prefix",
         "suffix",

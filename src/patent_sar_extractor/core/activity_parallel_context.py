@@ -2,6 +2,7 @@
 
 from .activity_caption_windows import shared_caption_allowed
 from .activity_context_geometry import grid_box, valid_box, validate_context_geometry
+from .activity_context_values import CONTEXT_IDENTITY_FIELDS
 from .activity_grid_context import _prefix
 from .activity_header_sources import context_source_parts, source_context_region
 from .activity_headers import context_from_text
@@ -117,9 +118,14 @@ def _qualified(region, prefix):
         raw = "\n".join(" ".join(t["text"] for t in part) for part in parts)
         contexts.append(context_from_text("", raw))
     primary, native = contexts[0], contexts[-1]
-    if not primary.table_id or any(
-        getattr(native, key) and getattr(native, key) != getattr(primary, key)
-        for key in ("table_id", "target", "assay", "cell_line")
+    if (
+        not primary.table_id
+        or primary.claim_conflicts
+        or native.claim_conflicts
+        or any(
+            getattr(native, key) and getattr(native, key) != getattr(primary, key)
+            for key in CONTEXT_IDENTITY_FIELDS
+        )
     ):
         return None
     sources = [scope["prefix"]]

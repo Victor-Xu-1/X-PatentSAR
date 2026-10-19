@@ -3,9 +3,11 @@
 import re
 
 from .activity_context_geometry import grid_box, valid_box, validate_grid_axes
+from .activity_context_values import validate_context_record
 from .activity_header_metrics import METRIC, normalize_metric_text
 from .activity_identity import LABEL_PREFIX, is_control, normalize_compound
 from .activity_metadata import metadata_role
+from .activity_transposed_context import capture_transposed_context
 from .source_cell_tokens import grid_token_index
 from .source_geometry import SourceLayout, SourceTokens, native_region
 from .source_observations import source_cell_observation, source_observation_status
@@ -46,7 +48,7 @@ def transposed_header_row(matrix):
     )
 
 
-def capture_transposed_layout(tokens, region, header_row, *, native):
+def capture_transposed_layout(page, tokens, region, header_row, context, *, native):
     """Retain each original cell once, including unknown headers and raw values."""
     xs, ys = region["xs"], region["ys"]
     validate_grid_axes({"xs": list(xs), "ys": list(ys)}, grid_box(region))
@@ -71,7 +73,11 @@ def capture_transposed_layout(tokens, region, header_row, *, native):
             )
             cells.append(observed)
         columns.append(cells)
-    return {"header_row": header_row, "columns": columns}
+    return {
+        "header_row": header_row,
+        "columns": columns,
+        **capture_transposed_context(page, tokens, region, header_row, context),
+    }
 
 
 def validate_transposed_layout(record):
@@ -95,12 +101,15 @@ def validate_transposed_layout(record):
         or record["reason"]
         != ("original_cells" if record["status"] == "parsed" else "no_original_rows")
         or not isinstance(layout, dict)
-        or set(layout) != {"header_row", "columns"}
+        or set(layout) != {"header_row", "columns", "context", "context_sources"}
         or type(layout["header_row"]) is not int
     ):
         raise ValueError("Malformed original transposed layout")
     axes = record["grid_axes"]
     validate_grid_axes(axes, record["bbox"])
+    validate_context_record(layout["context"], record["table_id"])
+    if not isinstance(layout["context_sources"], dict):
+        raise TypeError("Missing original transposed context observations")
     xs, ys = axes["xs"], axes["ys"]
     columns = layout["columns"]
     if (

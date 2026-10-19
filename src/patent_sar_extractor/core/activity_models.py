@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from .activity_context_values import SCIENTIFIC_CONTEXT_FIELDS, context_values
 from .source_role_observations import RoleObservationBuffer
 
 
@@ -61,6 +62,28 @@ class TableContext:
     raw_caption: str = ""
     body_text: str = ""
     raw_context: str = ""
+    construct: str | None = None
+    duration: str | None = None
+    treatment_duration: str | None = None
+    timepoint: str | None = None
+    batch: str | None = None
+
+    @property
+    def claim_conflicts(self) -> tuple[str, ...]:
+        # raw_context retains earlier tables too; raw_caption/body_text are the
+        # same existing last-caption scope selected by context_from_text.
+        source = "\n".join(part for part in (self.raw_caption, self.body_text) if part)
+        return context_values(source if source.strip() else self.raw_context)[1]
+
+    def scientific_values(self) -> dict[str, str | None]:
+        # Do not invent optional unknown keys: they would turn a recorded SAR
+        # context into a different, artificially incomplete experiment. The
+        # existing three source fields retain their legacy nullable shape.
+        return {
+            key: getattr(self, key)
+            for key in SCIENTIFIC_CONTEXT_FIELDS
+            if getattr(self, key) is not None or key in ("target", "assay", "cell_line")
+        }
 
 
 @dataclass(frozen=True)

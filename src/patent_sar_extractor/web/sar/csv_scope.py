@@ -5,6 +5,7 @@ import re
 
 from pydantic import ValidationError
 
+from ...core.activity_context_values import normalized_context_conditions
 from ...core.sar.study_conditions import missing_condition
 from ..activity_scope_models import ActivityScopeFields
 from ..errors import WebError
@@ -76,18 +77,12 @@ def native_scope_fields(row):
 
 def native_conditions(context, fields):
     result = dict(context)
-    conditions = dict(fields.get("source_conditions", {}))
-    duration = conditions.get("treatment_duration")
-    if not missing_condition(duration):
-        explicit = conditions.get("duration")
-        if not missing_condition(explicit) and explicit != duration:
-            raise WebError(
-                422,
-                "sar_csv_context_conflict",
-                "Original duration conditions conflict.",
-            )
-        conditions["duration"] = duration
-        conditions.pop("treatment_duration")
+    try:
+        conditions = normalized_context_conditions(fields.get("source_conditions", {}))
+    except ValueError as error:
+        raise WebError(
+            422, "sar_csv_context_conflict", "Original duration conditions conflict."
+        ) from error
     for name, value in conditions.items():
         if (
             not missing_condition(result.get(name))
@@ -101,6 +96,9 @@ def native_conditions(context, fields):
             )
         if name not in result or missing_condition(result[name]):
             result[name] = value
-    if result.get("duration") is None and result.get("treatment_duration") is not None:
-        result["duration"] = result.pop("treatment_duration")
-    return result
+    try:
+        return normalized_context_conditions(result)
+    except ValueError as error:
+        raise WebError(
+            422, "sar_csv_context_conflict", "Mapped duration conditions conflict."
+        ) from error

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 
+from .activity_context_values import context_values
 from .activity_header_metrics import (
     METRIC,
     UNITLESS,
@@ -105,7 +106,9 @@ def infer_value_keys(caption: str, header: str, value_count: int) -> list[str]:
     return distinct_value_keys(keys[:value_count])
 
 
-def context_from_text(caption: str, surrounding: str = "") -> TableContext:
+def context_from_text(
+    caption: str, surrounding: str = "", *, partial=False
+) -> TableContext:
     """Store local source language; scientific identity requires explicit labels."""
     raw_context = str(surrounding or caption)
     raw_caption, body_text, source = _context_parts(str(caption), str(surrounding))
@@ -113,21 +116,11 @@ def context_from_text(caption: str, surrounding: str = "") -> TableContext:
     caption = re.sub(r"\s+", " ", caption).strip()[:300]
     marker = TABLE_MARKER.search(caption)
     table_id = table_marker_identity(marker.group()) if marker else ""
-    raw_assay = TABLE_MARKER.sub("", caption, count=1).strip(" .:：")
-    target = re.search(r"(?:Target|靶点)\s*[:：]\s*([\w-]+)", source, re.IGNORECASE)
-    assay = re.search(
-        r"(?:Assay|实验)\s*[:：]\s*([^;\n]{1,120})", source, re.IGNORECASE
-    )
-    cells = re.findall(
-        r"\b([A-Za-z][A-Za-z0-9-]{1,20})\s+cells\b|([A-Za-z][A-Za-z0-9-]{1,20})细胞",
-        source,
-    )
+    values, _ = context_values(source, partial=partial)
     return TableContext(
         table_id=table_id,
         caption=caption,
-        target=target.group(1) if target else None,
-        assay=assay.group(1).strip() if assay else raw_assay or None,
-        cell_line=next((a or b for a, b in reversed(cells)), None),
+        **values,
         raw_caption=raw_caption,
         body_text=body_text,
         raw_context=raw_context,

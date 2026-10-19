@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 
+from .activity_context_values import SCIENTIFIC_CONTEXT_FIELDS
 from .activity_headers import context_from_text
 from .activity_text_plan import scope_descriptor, source_plan, validate_text_scope
 
@@ -57,7 +58,7 @@ def text_source_errors(pages, regions, rows):
     for item in expected:
         key = tuple(item["key"])
         region = indexed[key]
-        context = context_from_text(item["caption"])
+        context = item.get("context") or context_from_text(item["caption"])
         if (
             region["text_scope"] != scope_descriptor(item)
             or region["table_id"] != context.table_id
@@ -92,9 +93,9 @@ def text_source_errors(pages, regions, rows):
                     for k in (
                         "table_id",
                         "raw_caption",
-                        "target",
-                        "assay",
-                        "cell_line",
+                        "body_text",
+                        "raw_context",
+                        *SCIENTIFIC_CONTEXT_FIELDS,
                         "raw_header",
                         "cells",
                         "legend",

@@ -6,6 +6,7 @@ from .activity_context_geometry import (
     grid_box,
     validate_context_geometry,
 )
+from .activity_context_values import CONTEXT_IDENTITY_FIELDS
 from .activity_grid_context import _prefix, prefix_parts
 from .activity_header_identity import (
     compact_header,
@@ -128,16 +129,26 @@ def context_source_parts(packet, region):
     return scoped
 
 
-def _context_conflict(packet, fresh, region):
+def _context_conflict(packet, fresh, region, *, complete_native=False):
     parts = context_source_parts(packet, region)
     if parts is None:
         return True
     if packet["status"] == "qualified":
         raw = _prefix(packet["tokens"], region)
-        return context_conflict(context_from_text(raw, raw), fresh)
+        source = context_from_text(raw, raw)
+        return (
+            context_conflict(source, fresh)
+            or complete_native
+            and any(
+                getattr(fresh, key) and not getattr(source, key)
+                for key in CONTEXT_IDENTITY_FIELDS
+            )
+        )
     # Separate runs never bridge an unqualified word into a new table/condition.
     return any(
-        context_conflict(context_from_text("", " ".join(run)), fresh)
+        context_conflict(
+            context_from_text("", " ".join(run), partial=True), fresh, partial=True
+        )
         for part in parts
         for run in source_claim_runs(packet, tokens=part)
     )
@@ -199,7 +210,14 @@ def header_source_conflicts(snapshot, band, original_headers, original_context, 
             and packet.get("origin") != "native"
         ):
             return None
-        contexts.append(_context_conflict(packet, fresh.context, region))
+        contexts.append(
+            _context_conflict(
+                packet,
+                fresh.context,
+                region,
+                complete_native=name == "prefix" and packet.get("origin") == "native",
+            )
+        )
     captured = _prefix(snapshot["prefix"]["tokens"], region)
     if original_context and compact_header(original_context) != compact_header(
         captured
@@ -212,17 +230,19 @@ def header_source_conflicts(snapshot, band, original_headers, original_context, 
     return conflicts, any(contexts)
 
 
-def _context_choice(packet, region, fresh):
+def _context_choice(packet, region, fresh, *, complete_native=False):
     parts = context_source_parts(packet, region)
     if parts is None:
         return None
-    names = ("table_id", "target", "assay", "cell_line")
+    names = CONTEXT_IDENTITY_FIELDS
+    if fresh.claim_conflicts:
+        return None
     if any(
         source_claim_runs(packet, tokens=part) != (tuple(t["text"] for t in part),)
         for part in parts
     ):
         missing = any(
-            getattr(context_from_text("", " ".join(run)), key)
+            getattr(context_from_text("", " ".join(run), partial=True), key)
             and not getattr(fresh, key)
             for part in parts
             for run in source_claim_runs(packet, tokens=part)
@@ -231,6 +251,14 @@ def _context_choice(packet, region, fresh):
         return None if missing else fresh
     raw = "\n".join(" ".join(t["text"] for t in part) for part in parts)
     source = context_from_text(raw, raw)
+    if source.claim_conflicts:
+        return None
+    if complete_native and packet["status"] == "qualified":
+        if context_conflict(source, fresh) or any(
+            getattr(fresh, key) and not getattr(source, key) for key in names
+        ):
+            return None
+        return source
     if not source.table_id:
         return (
             None
@@ -258,7 +286,13 @@ def select_header_context(snapshot, band, fresh):
     for name in ("prefix", "native_prefix"):
         if name not in snapshot:
             continue
-        selected = _context_choice(snapshot[name], region, selected)
+        selected = _context_choice(
+            snapshot[name],
+            region,
+            selected,
+            complete_native=name == "prefix"
+            and snapshot[name].get("origin") == "native",
+        )
         if selected is None:
             return None
     return selected
