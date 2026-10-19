@@ -14,8 +14,8 @@ def isolated_original_page(page: fitz.Page) -> Iterator[fitz.Page]:
 
     File sources stay lazy; immutable byte sources share their existing input.
     Only an edited/in-memory PDF needs serialization of its current contents.
-    No copy is written to disk, no original is edited, and no process-global
-    MuPDF cache, antialias setting or optional-content configuration is changed.
+    No copy is written to disk, no original is edited, and no antialias setting
+    or optional-content configuration is changed.
     """
     source = page.parent
     if not source.is_pdf:
@@ -50,5 +50,13 @@ def original_cell_pixmap(
     page: fitz.Page, *, matrix: fitz.Matrix, clip: fitz.Rect
 ) -> fitz.Pixmap:
     """Exactly one bounded clip on a fresh source decoder, closed on all exits."""
-    with isolated_original_page(page) as original:
-        return original.get_pixmap(matrix=matrix, clip=clip, alpha=False)
+    try:
+        with isolated_original_page(page) as original:
+            return original.get_pixmap(matrix=matrix, clip=clip, alpha=False)
+    finally:
+        # Closing a PDF does not reclaim every decoded image-tile store entry.
+        # Fresh document identities otherwise retain one cache per observation.
+        # Reclaim this Python process's recoverable MuPDF store only AFTER the
+        # owned decoder closes. Live references and returned pixels stay valid;
+        # no source, disk/OS cache, rendering option or other process is changed.
+        fitz.TOOLS.store_shrink(100)

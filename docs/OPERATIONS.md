@@ -7,8 +7,14 @@ Do not waive a mismatch because the text appears similar. Controlled one-bit
 CCITT scans reproduced different400dpi clip pixels after whole-page decoding.
 The shared cell renderer now opens a fresh complete source context per admitted
 clip, preserving hidden layers/forms/annotations and geometry without full-page
-rasterization, cache warming or global cache eviction. File inputs stay lazy;
+rasterization or cache warming. File inputs stay lazy;
 no source copy is written to disk and temporary documents close on every exit.
+Closing alone can retain decoded tiles under each fresh source identity. The
+renderer therefore reclaims the current Python process's recoverable MuPDF
+store after its decoder closes, on success and failure. This is not disk/OS
+cache eviction, source deletion, another process's cleanup or a rendering-option
+change. Native repeated-cell RSS and decoder-close ordering controls cover it;
+returned pixels, live caller documents and strict source checks stay unchanged.
 Already authenticated sources are detected from trailer metadata: do not call a
 password probe during isolation and accidentally replace their active key.
 

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "base_sha": "99ffc12c040a0df40cabf3ffa4a2a3d01f336e9d",
+  "base_sha": "555ce9fa6ca3d326a6cb093b0da9feb5d6a668b5",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
@@ -10,11 +10,11 @@
     "frontend/package.json",
     "src/patent_sar_extractor/contracts.py",
     "src/patent_sar_extractor/core/cell_rendering.py",
-    "src/patent_sar_extractor/core/table_cells.py",
     "tests/test_cell_render_cache.py"
   ],
   "python_modules": [
     "tests.test_cell_render_cache",
+    "tests.test_phase_resources",
     "tests.test_cell_observation_provenance",
     "tests.test_cell_observation_epochs",
     "tests.test_caption_word_ownership",
