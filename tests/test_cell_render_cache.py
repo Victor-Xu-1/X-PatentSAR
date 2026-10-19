@@ -2,6 +2,10 @@
 
 import hashlib
 import io
+import json
+import os
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -199,16 +203,33 @@ class CellRenderCacheTests(unittest.TestCase):
             ):
                 cell_image(document[0], [70.35, 460.35, 216.75, 475.05], 400)
 
-    def test_no_process_global_cache_eviction_is_needed(self):
-        with (
-            fitz.open(stream=scanned_source(), filetype="pdf") as document,
-            patch.object(
-                fitz.TOOLS, "store_shrink", side_effect=AssertionError("No global trim")
-            ),
-        ):
-            self.assertTrue(
-                cell_image(document[0], [70.35, 460.35, 216.75, 475.05], 400).size
-            )
+    def test_process_cache_reclaim_follows_decoder_close_and_keeps_the_caller_live(
+        self,
+    ):
+        opened = []
+        original_open, original_trim = fitz.open, fitz.TOOLS.store_shrink
+
+        def open_decoder(*args, **kwargs):
+            decoder = original_open(*args, **kwargs)
+            opened.append(decoder)
+            return decoder
+
+        def reclaim(percent):
+            self.assertEqual(len(opened), 1)
+            self.assertTrue(opened[0].is_closed)
+            self.assertFalse(document.is_closed)
+            return original_trim(percent)
+
+        with fitz.open(stream=scanned_source(), filetype="pdf") as document:
+            with (
+                patch("fitz.open", side_effect=open_decoder),
+                patch.object(fitz.TOOLS, "store_shrink", side_effect=reclaim) as trim,
+            ):
+                self.assertTrue(
+                    cell_image(document[0], [70.35, 460.35, 216.75, 475.05], 400).size
+                )
+                trim.assert_called_once_with(100)
+            self.assertTrue(len(document[0].get_images()) == 1)
 
     def test_changed_source_context_refuses_and_closes_its_decoder(self):
         data = scanned_source()
@@ -240,6 +261,37 @@ class CellRenderCacheTests(unittest.TestCase):
             self.assertTrue(np.any(image < 180))
             self.assertFalse(source.is_encrypted)
             self.assertEqual(source[0].get_text(), "Original 14A\n")
+
+    @unittest.skipUnless(sys.platform.startswith("linux"), "Native Linux RSS control")
+    def test_repeated_rgb_cells_do_not_retain_a_decoder_cache_per_open(self):
+        code = """
+import json, tempfile
+from pathlib import Path
+import fitz
+from test_cell_render_cache import scanned_source
+from patent_sar_extractor.core.table_cells import cell_image
+def rss():
+    return next(int(x.split()[1]) for x in Path('/proc/self/status').read_text().splitlines() if x.startswith('VmRSS:'))
+with tempfile.TemporaryDirectory() as directory:
+    source = Path(directory) / 'generated.pdf'
+    source.write_bytes(scanned_source('RGB'))
+    with fitz.open(source) as document:
+        for _ in range(16):
+            cell_image(document[0], [70.35, 460.35, 216.75, 475.05], 400)
+        before = rss()
+        for _ in range(192):
+            cell_image(document[0], [70.35, 460.35, 216.75, 475.05], 400)
+        print(json.dumps({'growth_kb': rss() - before}))
+"""
+        result = subprocess.run(
+            [sys.executable, "-c", code],
+            env=dict(os.environ),
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=45,
+        )
+        self.assertLess(json.loads(result.stdout)["growth_kb"], 48 * 1024)
 
 
 if __name__ == "__main__":

@@ -16,8 +16,13 @@ in-memory/authenticated source serializes its current context only in memory.
 The complete context preserves optional-content visibility, annotations/forms,
 crop/MediaBox and rotation; a simple single-page graft would lose hidden-layer
 configuration. A changed geometry/OCG context refuses. All temporary documents
-close on success and exception. No process-global cache eviction, rendering
-setting, extra model, persistent decoder cache, queue or result writer is added.
+close on success and exception. Closing alone does not reclaim every image-tile
+store entry: a controlled192cell repeat retained about79MiB. After each decoder
+closes, the same renderer reclaims the current Python process's recoverable
+MuPDF store. Returned pixels/live references remain valid. This deliberate
+resource ownership does not evict disk/OS caches, change rendering settings,
+delete sources or affect another process. No extra model, persistent decoder
+cache, queue or result writer is added.
 Encrypted-source detection reads inert trailer metadata, never a password probe
 on an already authenticated decoder. Controlled protected-source replay verifies
 that both the isolated clip and the caller's original remain readable.
@@ -29,7 +34,8 @@ contracts are Binding37/binder47, Activity24/extractor34, visible23 and
 preparation11. Earlier epoch numbers below record their feature's historical
 delivery, not competing current authorities. Original PDF/raw OCR/OCSR2,
 scientific assets/manual audit, numerical SAR, API/SQL and dependencies stay
-unchanged. Historical source frames are not rewritten or relabelled. Controlled
+unchanged. Resource reclamation preserves exact pixels without a new scientific
+epoch. Historical source frames are not rewritten or relabelled. Controlled
 rendering/replay correctness is not real-patent extraction or chemical acceptance.
 
 ## Optional auxiliary literal-text runtime boundary

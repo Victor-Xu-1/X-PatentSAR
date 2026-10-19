@@ -3,11 +3,15 @@
 - Original cell rendering ownership: `table_cells` retains the single inset/DPI/
   pixel-budget admission authority; `cell_rendering` only opens a call-local
   complete PDF context for its admitted clip. Fresh decoders eliminate full/
-  partial-image cache-order differences without global cache eviction, warming,
+  partial-image cache-order differences without cache warming,
   image rewriting or a second parser. File sources stay lazy; byte sources reuse
   their input; only edited/authenticated contexts serialize in memory. Original
   hidden-layer state, annotations/forms, crop/rotation survive and mismatching
   context refuses. Temporary documents close on normal/exceptional exits.
+  The renderer then reclaims this Python process's recoverable MuPDF store;
+  closing alone retained a new image-tile cache per observation. No disk/OS
+  cache, live source, rendering setting or other process is changed. Native RSS
+  and cleanup-order regressions cover ownership without a new scientific epoch.
   Encryption detection is inert trailer metadata, not an active password probe;
   isolated observation must preserve an authenticated caller's readable source.
   Caption/heading/header/value/plot/label-preparation capture and replay consume
