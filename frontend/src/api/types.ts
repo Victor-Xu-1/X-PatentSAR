@@ -1,4 +1,5 @@
 import type { DescriptorSummary, PredictionSummary } from './predictionTypes';
+import type { ActivityScopeFields } from './activityScopeDecoders';
 import type { PropertyOverrides } from './manualPropertyTypes';
 import type { LeadAssessment } from './leadTypes';
 
@@ -49,7 +50,7 @@ export interface Review {
 }
 export type ConfidenceLevel = 'high' | 'medium' | 'review' | 'unknown';
 export type BBox = [number, number, number, number];
-export interface Activity {
+export interface Activity extends ActivityScopeFields {
   name: string;
   value: string | number | null;
   unit: string | null;
@@ -57,7 +58,7 @@ export interface Activity {
   assay: string | null;
   page: number | null;
 }
-export interface ActivityColumn {
+export interface ActivityColumn extends ActivityScopeFields {
   id: string;
   name: string;
   unit: string | null;

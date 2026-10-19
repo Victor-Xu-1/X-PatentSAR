@@ -1,3 +1,4 @@
+import { decodeActivityScope } from './activityScopeDecoders';
 import {
   array,
   boolean,
@@ -57,12 +58,16 @@ export function checkPage<T>(
     throw new ContractError(path);
   return value;
 }
-const metric = object({
+const metricShape = object({
   id: string,
   name: string,
   unit: nullOr(string),
   target: nullOr(string),
   assay: nullOr(string),
+});
+const metric = (input: unknown, path = '$') => ({
+  ...metricShape(input, path),
+  ...decodeActivityScope(input, path),
 });
 export const decodeSourceAcceptance = object({
   state: oneOf(['not_run', 'accepted', 'failed', 'historical']),

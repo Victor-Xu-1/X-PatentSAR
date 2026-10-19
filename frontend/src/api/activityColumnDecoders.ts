@@ -2,11 +2,14 @@ import type { Activity, ActivityColumn } from './types';
 import { array, boolean, ContractError, count, nullable, object, string } from './validation';
 import type { Decoder } from './validation';
 import { decodeStrengthScale } from './activityRankDecoders';
+import { decodeActivityScope } from './activityScopeDecoders';
 
 export function activityContextKey(
-  value: Pick<Activity, 'name' | 'unit' | 'target' | 'assay'>,
+  value: Pick<Activity, 'name' | 'unit' | 'target' | 'assay' | 'source_scope'>,
 ): string {
-  return JSON.stringify([value.name, value.unit, value.target, value.assay]);
+  const identity = [value.name, value.unit, value.target, value.assay];
+  if (value.source_scope != null) identity.push(value.source_scope);
+  return JSON.stringify(identity);
 }
 const shape = object({
   id: string,
@@ -31,6 +34,7 @@ export const decodeActivityColumns: Decoder<ActivityColumn[]> = (input, path = '
     const fields = input[index] as Record<string, unknown>;
     return {
       ...column,
+      ...decodeActivityScope(fields, `${path}[${index}]`),
       ...(Object.hasOwn(fields, 'filter_values')
         ? { filter_values: choices(fields.filter_values, `${path}[${index}].filter_values`) }
         : {}),

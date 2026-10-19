@@ -1,5 +1,20 @@
 # Project governance manifest
 
+- Original context identity authority: `web/activity_scope` reuses original grid
+  header or text continuation anchors, frame/table identity and recorded condition
+  pairs. Shared additive `activity_scope_models` fields reach table/catalog/scale/
+  Lead/focus, audited corrections, project SAR and native CSV exports/imports.
+  Readonly metadata cannot be reassigned/stripped; known project contexts authorize
+  manual values only, not original measurements. `sar/csv_scope` owns the native
+  signature and bounded metadata/condition conflicts; generic aliases stay strict.
+  A single frontend decoder and short citation helper retain exact original data.
+  Projectionv4/project-input digest and SARengine15/input8 refresh disposable views
+  and admissions, retaining stale datasets/overlays and readable historical reports.
+  Extraction epochs/raw assets/manual audit/APIv1/SQL/SARDB2, numerical grading,
+  strict graph/acceptance gates, dependencies and model/OCR policy stay unchanged.
+  No extra queue, scientific writer, private calculation or automatic historical
+  promotion exists; complete real frontend extraction/SAR acceptance remains open.
+
 - Qualified header-fragment authority: the existing `activity_header_identity`
   distinguishes partial detector claims from complete original/native headers.
   Only comparison adds missing prefix context; known words must survive

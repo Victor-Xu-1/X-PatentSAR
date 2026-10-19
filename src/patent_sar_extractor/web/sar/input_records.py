@@ -81,9 +81,16 @@ class InputBudget:
 
 
 def metric_key(
-    name: str, unit: str | None, target: str | None, assay: str | None
+    name: str,
+    unit: str | None,
+    target: str | None,
+    assay: str | None,
+    source_scope: str | None = None,
 ) -> str:
-    return hashlib.sha256(encode([name, unit, target, assay]).encode()).hexdigest()
+    identity = [name, unit, target, assay]
+    if source_scope is not None:
+        identity.append(source_scope)
+    return hashlib.sha256(encode(identity).encode()).hexdigest()
 
 
 def molecule_record(

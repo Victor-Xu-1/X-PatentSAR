@@ -269,6 +269,14 @@ class Corrections:
                     before.structure_molfile,
                     fields.structure_molfile,
                 )
+            from .activity_scope import validate_scope_edits
+
+            validate_scope_edits(
+                fields.activities,
+                original.activities,
+                connection=connection,
+                project_id=project_id,
+            )
             original_pages = {a.page for a in original.activities if a.page}
             if fields.activities != original.activities and any(
                 a.page

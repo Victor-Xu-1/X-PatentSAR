@@ -11,6 +11,11 @@ from tools.browser_fixture_mode import fixture_mode
 
 
 class SourceBrowserFixtureTests(unittest.TestCase):
+    def test_original_context_csv_check_uses_only_existing_isolated_sar_import(self):
+        self.assertEqual(
+            fixture_mode({"frontend/e2e/sar-source-context.spec.ts"}), "sar"
+        )
+
     def test_auxiliary_environment_metadata_needs_only_read_only_fixture(self):
         selected = {"frontend/e2e/auxiliary-text-environment.spec.ts"}
         self.assertEqual(fixture_mode(selected), "read-only")

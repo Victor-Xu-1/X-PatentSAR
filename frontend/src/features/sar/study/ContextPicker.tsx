@@ -16,7 +16,7 @@ export function ContextPicker({
   const [query, setQuery] = useState(''),
     [page, setPage] = useState(1);
   const visible = contexts.filter((c) =>
-    [c.name, c.unit, ...Object.entries(c.context).flat()].some((v) => v?.includes(query)),
+    [contextLabel(c), c.unit, ...Object.entries(c.context).flat()].some((v) => v?.includes(query)),
   );
   return (
     <fieldset className="sar-context-picker">

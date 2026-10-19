@@ -8,7 +8,7 @@ from typing import Final
 PRODUCT_NAME: Final = "X-PatentSAR"
 DISTRIBUTION_NAME: Final = "x-patentsar"
 COMMAND_NAME: Final = "x-patentsar"
-__version__: Final = "0.2.73"
+__version__: Final = "0.2.74"
 SHARED_JSON_VERSION: Final = 1
 PHYSICAL_CAPTION_LINE_VERSION: Final = 3
 CHARACTERIZATION_ROLE_SCHEMA_VERSION: Final = 4
@@ -20,8 +20,17 @@ WEB_API_SCHEMA_VERSION: Final = 1
 
 # Independent research domain; never changes the formal extraction stage order.
 SAR_ENGINE_NAME: Final = "patentsar.strict-reference-sar"
-SAR_ENGINE_VERSION: Final = 14
-SAR_STUDY_INPUT_SCHEMA_VERSION: Final = 7
+SAR_ENGINE_VERSION: Final = 15
+SAR_STUDY_INPUT_SCHEMA_VERSION: Final = 8
+SAR_STUDY_READABLE_INPUT_VERSIONS: Final = (
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    SAR_STUDY_INPUT_SCHEMA_VERSION,
+)
 SAR_CANDIDATE_POLICY: Final = "strict-context-pareto-units-v4"
 SAR_DATABASE_VERSION: Final = 2
 SAR_REPORT_SCHEMA: Final = "patentsar.reference-sar-report"

@@ -1,7 +1,8 @@
 /** Authorities: web/sar/study_models.py and study_view_models.py; no local grading. */
 import type { Pair, Region, SARJob } from './sarTypes';
+import type { ActivityScopeFields } from './activityScopeDecoders';
 import type { ActivityStrengthScale, Project } from './types';
-export interface StudyContext {
+export interface StudyContext extends ActivityScopeFields {
   id: string;
   metric_id: string;
   name: string;

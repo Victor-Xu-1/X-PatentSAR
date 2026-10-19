@@ -9,6 +9,7 @@ from ...core.activity_header_metrics import METRIC
 from ..indicator_conventions import numeric_direction
 from ..lead_endpoints import LEAD_ENDPOINTS
 from .csv_preview_models import CSVMappingDefaults
+from .csv_scope import native_headers
 
 _PREFERRED_ID = {"identifierlabel", "displayid", "label", "原文编号"}
 _ID = _PREFERRED_ID | {
@@ -83,13 +84,20 @@ def mapping_defaults(headers: list[str]):
         )
 
     preferred = [header for header in headers if normalized(header) in _PREFERRED_ID]
-    identity = unique("id_column", preferred) if preferred else named("id_column", _ID)
+    native = native_headers(headers)
+    identity = (
+        ("identifier_label" if "identifier_label" in headers else "compound_id")
+        if native
+        else (unique("id_column", preferred) if preferred else named("id_column", _ID))
+    )
     smiles = named("smiles_column", _SMILES)
     columns = {
         role: column
         for role, names in _COLUMNS.items()
         if (column := named(role, names)) is not None
     }
+    if native and "activity_page" in headers:
+        columns["source_page_column"] = "activity_page"
     properties = {
         role: column
         for role, (names, units) in _PROPERTIES.items()

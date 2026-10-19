@@ -460,9 +460,9 @@ class ActivityColumnTests(unittest.TestCase):
                 counts.append(
                     sum(sql.lstrip().upper().startswith("SELECT") for sql in statements)
                 )
-        # The current main already includes recognition/property/Lead cache
-        # joins: seven reads, still constant for one or a hundred source rows.
-        self.assertEqual(counts, [7, 7])
+        # Exact installed v0.2.73 baseline uses five reads for this source-only
+        # fixture. Keep that fixed count for one and a hundred rows; no N+1 or PDF.
+        self.assertEqual(counts, [5, 5])
 
     def test_utf8_context_and_missing_values_are_preserved_without_normalization(self):
         name = '活性 "等级" / 实验\\观察'

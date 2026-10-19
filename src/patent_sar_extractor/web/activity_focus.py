@@ -62,10 +62,16 @@ def matching_cells(
         for cell in source.cells
         if cell.name == "compound_id"
     }
-    if owner_ids != {owner} or source.context != (
-        activity.page,
-        activity.target,
-        activity.assay,
+    if (
+        owner_ids != {owner}
+        or (source.scope.identity if source.scope is not None else None)
+        != activity.source_scope
+        or source.context
+        != (
+            activity.page,
+            activity.target,
+            activity.assay,
+        )
     ):
         return []
     return [
@@ -122,7 +128,10 @@ def resolve_focus(
                 text(original.get("assay")),
             )
             for source in source_evidence(
-                original, fallback, page_count=project["page_count"]
+                original,
+                fallback,
+                page_count=project["page_count"],
+                document_sha256=project["expected_sha256"],
             ):
                 for cell in matching_cells(source, owner, activity):
                     if cell not in collected:

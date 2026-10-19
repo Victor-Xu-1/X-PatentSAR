@@ -45,6 +45,16 @@ def context_catalog(molecules: list[dict], metrics: list[dict]) -> list[dict]:
                     "name": metric["name"],
                     "unit": observation.get("unit"),
                     "context": observation.get("context", {}),
+                    **{
+                        name: metric[name]
+                        for name in (
+                            "source_scope",
+                            "source_table",
+                            "source_context_page",
+                            "source_conditions",
+                        )
+                        if metric.get(name) is not None
+                    },
                 }
                 values[key], ids[key] = Counter(), set()
             values[key][observation["value"]] += 1

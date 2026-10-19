@@ -6,6 +6,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field, model_validator
 
+from ..activity_scope_models import ActivityScopeFields
 from ..dto import DTO
 from ..models import Acceptance
 
@@ -18,7 +19,7 @@ Comparison = Literal[
 ]
 
 
-class Metric(DTO):
+class Metric(ActivityScopeFields):
     id: str
     name: str
     unit: str | None = None

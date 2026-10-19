@@ -1,5 +1,6 @@
 import type { Activity, ActivityColumn, Compound } from '../api/types';
 import { activityContextKey } from '../api/activityColumnDecoders';
+import { activityScopeLabel } from './activityScope';
 
 export interface TableActivityColumn extends ActivityColumn {
   legacy?: true;
@@ -28,7 +29,12 @@ export function activityColumnLabel(column: TableActivityColumn): string {
     : column.name;
 }
 export function activityColumnContext(column: TableActivityColumn): string {
-  return [column.target, column.assay]
+  return [
+    column.target,
+    column.assay,
+    ...Object.values(column.source_conditions ?? {}),
+    activityScopeLabel(column),
+  ]
     .filter((value): value is string => Boolean(value))
     .join(' · ');
 }

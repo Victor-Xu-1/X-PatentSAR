@@ -1,4 +1,5 @@
 import type { CorrectionDocument, EditableFields } from './correctionTypes';
+import { decodeActivityScope } from './activityScopeDecoders';
 import type { PropertyOverrides } from './manualPropertyTypes';
 import { METRIC_KEYS } from './predictionTypes';
 import {
@@ -28,13 +29,17 @@ const fingerprint = (value: unknown, path = '$') => {
   if (!/^[a-f0-9]{64}$/.test(text)) throw new ContractError(path);
   return text;
 };
-const measurement = object({
+const measurementShape = object({
   name: boundedText(300, true),
   value: nullable(scalar),
   unit: nullable(boundedText(100)),
   target: nullable(boundedText(300)),
   assay: nullable(boundedText(1000)),
   page: nullable(positive),
+});
+const measurement = (input: unknown, path = '$') => ({
+  ...measurementShape(input, path),
+  ...decodeActivityScope(input, path),
 });
 export const decodeMolfile = (value: unknown, path = '$'): string => {
   const text = string(value, path);

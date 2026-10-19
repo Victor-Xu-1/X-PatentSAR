@@ -10,19 +10,28 @@ from .activity_ranking import RankBudget, RankDistribution
 from .errors import WebError
 from .models import Activity, ActivityColumn
 
-ActivityContext = tuple[str, str | None, str | None, str | None]
+ActivityContext = tuple[str, str | None, str | None, str | None, str | None]
 MAX_ACTIVITY_COLUMNS = 1000
 
 
-def activity_context(activity: Activity) -> ActivityContext:
-    return activity.name, activity.unit, activity.target, activity.assay
+def activity_context(activity: Activity | ActivityColumn) -> ActivityContext:
+    return (
+        activity.name,
+        activity.unit,
+        activity.target,
+        activity.assay,
+        activity.source_scope,
+    )
 
 
 def activity_column_id(context: ActivityContext) -> str:
     """Match a compact JSON array without normalizing any source field."""
     try:
         serialized = json.dumps(
-            context, ensure_ascii=False, allow_nan=False, separators=(",", ":")
+            context[:4] if len(context) == 5 and context[4] is None else context,
+            ensure_ascii=False,
+            allow_nan=False,
+            separators=(",", ":"),
         ).encode("utf-8")
     except UnicodeEncodeError as exc:
         raise WebError(
@@ -52,13 +61,17 @@ class ActivityColumnCatalog:
                     "activity_column_limit",
                     "Activity columns exceed the limit of 1000 distinct contexts.",
                 )
-            name, unit, target, assay = context
+            name, unit, target, assay, scope = context
             self._columns[context] = ActivityColumn(
                 id=activity_column_id(context),
                 name=name,
                 unit=unit,
                 target=target,
                 assay=assay,
+                source_scope=scope,
+                source_table=activity.source_table,
+                source_context_page=activity.source_context_page,
+                source_conditions=activity.source_conditions,
             )
             distribution = self._ranks[context] = RankDistribution(self._rank_budget)
             distribution.observe(activity.value, compound_id)

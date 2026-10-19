@@ -49,7 +49,7 @@ from .processes import runtime_identity
 from .recognition import recognition_status
 from .structure_corpus import unassociated_structures
 
-RAW_PROJECTION_LAYOUT = "compound-catalog-complete-observations-v3"
+RAW_PROJECTION_LAYOUT = "compound-catalog-complete-observations-v4"
 HISTORICAL_SOURCE_REVIEW_VERSION = 1
 
 
@@ -68,7 +68,9 @@ def _index(
     return index
 
 
-def _activities(row: dict[str, Any], *, page_count: int = 0) -> list[Activity]:
+def _activities(
+    row: dict[str, Any], *, page_count: int = 0, document_sha256: str | None = None
+) -> list[Activity]:
     fallback = (
         page_number(row.get("page_no")),
         text(row.get("target")),
@@ -76,7 +78,9 @@ def _activities(row: dict[str, Any], *, page_count: int = 0) -> list[Activity]:
     )
     if fallback[0] and page_count and fallback[0] > page_count:
         raise provenance_error()
-    sources = activity_contexts(row, fallback, page_count=page_count)
+    sources = activity_contexts(
+        row, fallback, page_count=page_count, document_sha256=document_sha256
+    )
     output = []
     for field in ("activity_values", "cell_line_data"):
         values = row.get(field) or {}
@@ -95,8 +99,8 @@ def _activities(row: dict[str, Any], *, page_count: int = 0) -> list[Activity]:
                 raise provenance_error()
             # Match exact field/value before presentation truncation; equal
             # grades in different tables must not borrow each other's sources.
-            contexts = sources.get((name, text(value, limit=1001)), [fallback])
-            for page, target, assay in contexts:
+            contexts = sources.get((name, text(value, limit=1001)), [(fallback, None)])
+            for (page, target, assay), scope in contexts:
                 output.append(
                     Activity(
                         name=name,
@@ -105,6 +109,7 @@ def _activities(row: dict[str, Any], *, page_count: int = 0) -> list[Activity]:
                         target=target,
                         assay=assay,
                         page=page,
+                        **(scope.fields() if scope is not None else {}),
                     )
                 )
                 if len(output) > 2000:
@@ -435,7 +440,11 @@ class ArtifactView:
             activities = [
                 entry
                 for row in activity_index.get(key, [])
-                for entry in _activities(row, page_count=self.page_count)
+                for entry in _activities(
+                    row,
+                    page_count=self.page_count,
+                    document_sha256=self.expected_sha256,
+                )
             ]
             if len(activities) > 2000:
                 raise WebError(

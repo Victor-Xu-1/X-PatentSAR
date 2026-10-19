@@ -83,6 +83,7 @@ def project_revision(
     # A rules/schema upgrade must stale an old SAR snapshot even before any UI
     # visit refreshes the source project's cached DTOs. No source is rewritten.
     result.update(encode(source_identity({"snapshot": source_snapshot})).encode())
+    result.update(b"original-activity-context-scope-v1")
     result.update(
         (condition_sha or conditions_sha256(service.store.project(identifier))).encode()
     )
@@ -136,7 +137,11 @@ def project_inputs(
         observations = []
         for activity in item.activities:
             key = metric_key(
-                activity.name, activity.unit, activity.target, activity.assay
+                activity.name,
+                activity.unit,
+                activity.target,
+                activity.assay,
+                activity.source_scope,
             )
             metrics.setdefault(
                 key,
@@ -146,6 +151,10 @@ def project_inputs(
                     unit=activity.unit,
                     target=activity.target,
                     assay=activity.assay,
+                    source_scope=activity.source_scope,
+                    source_table=activity.source_table,
+                    source_context_page=activity.source_context_page,
+                    source_conditions=activity.source_conditions,
                 ),
             )
             for recorded_context in rich_contexts.contexts(item.id, activity):

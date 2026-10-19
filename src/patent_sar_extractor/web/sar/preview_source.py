@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 
+from ...contracts import SAR_STUDY_READABLE_INPUT_VERSIONS
 from ..errors import WebError
 from .assets import digest
 from .models import SARJob
@@ -35,14 +36,11 @@ def load_source(queue, identifier: str) -> PreviewSource:
     packet = queue.service.assets.job_files(record["root"], identifier).json(
         "input.json", optional=False
     )
-    if digest(packet) != job.input_sha256 or packet.get("schema") not in {
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-    }:
+    if (
+        digest(packet) != job.input_sha256
+        or type(packet.get("schema")) is not int
+        or packet["schema"] not in SAR_STUDY_READABLE_INPUT_VERSIONS
+    ):
         raise WebError(
             409,
             "sar_input_changed",
