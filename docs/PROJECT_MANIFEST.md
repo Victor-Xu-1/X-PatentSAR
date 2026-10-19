@@ -1,5 +1,24 @@
 # Project governance manifest
 
+- Original caption form: `caption_cell_reading` extends the SAME cell authority
+  only for a proved compound catalogue's merged role/ID nomination.
+  `caption_word_geometry` retains all bounded source partitions;
+  `caption_word_observation` captures existing same-engine word observations;
+  `caption_word_proof` owns the pure unique full/word/ID decision. Word-form1,
+  Binding35/binder45 preserve literal ID/series/suffix and native/known-prefixed/
+  nonfinal contradictions. No spelling repair, sequence fill, confidence vote,
+  alternate model/store/queue or private-data branch. Limits4partitions/frame,
+  1Mpx/frame,400/600dpi and16extra word reads refuse overflow, not truncate.
+  Every optical cell reading retains an original frame. The one
+  `binding_original_replay` composes heading and ALL caption source readback for
+  worker/reuse/final QA/safe Web reads; pure saved flags cannot bypass actual
+  original pixels or visible native text. Word raw/missing/refused evidence stays
+  in existing source diagnostics. Raw assets/caches/manual audit, activity,
+  numerical SAR, default DECIMER, API/SQL and dependencies remain unchanged.
+  Preparation9 consumes the same caption reading/budget authority, removing the
+  competing label-mask three-reading limit; old preparation8 stays historical.
+  Controlled source/protocol recovery is not universal scientific acceptance.
+
 - Recognition preparation defaults have one code authority:
   `smiles_converter.DEFAULT_EXTRA_PREPROCESS=False`. The standalone CLI consumes
   it and refuses simultaneous enable/disable flags. Formal extraction and Web
@@ -12,11 +31,11 @@
   failures remain open, not waived. No dependency, recognizer, schema or SQL
   migration is introduced.
 
-- Current derived contracts for this upgrade: Binding34/binder44, native-vector2/
+- Current derived contracts for this upgrade: Binding35/binder45/word-form1, native-vector2/
   native-route2, heading
-  structure evidence5, SMILES4/QA6. Compatible raw OCSR2/preparation8, original
-  assets/model files, manual audit, numerical SAR, API-v1/SQL and dependencies
-  remain unchanged. Old derived packets stay historical, not relabelled.
+  structure evidence5, SMILES4/QA6, preparation9. Raw OCSR2, original assets/model
+  files, manual audit, numerical SAR, API-v1/SQL and dependencies remain unchanged.
+  Old derived packets stay historical, not relabelled.
 
 - Native reaction source roles: `reaction_vectors` owns bounded original vector/
   raster/text observations; `reaction_heads` conserves qualified opaque original

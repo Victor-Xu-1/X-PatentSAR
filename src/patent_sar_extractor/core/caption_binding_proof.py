@@ -27,7 +27,6 @@ def valid_caption_binding_evidence(binding):
         and label_box
         and diagram
         and isinstance(observations, (list, tuple))
-        and 1 <= len(observations) <= 3
         and confirmed_caption_readings(
             label, observations, ownership, label_page, label_box
         )

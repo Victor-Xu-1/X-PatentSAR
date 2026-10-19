@@ -34,6 +34,7 @@ class OCRObservation:
     physical_caption_line: dict | None = None
     physical_text_chunks: dict | None = None
     single_row_readings: list[dict] | None = None
+    source_frame: dict | None = None
 
     def evidence(self, dpi: int, bounds) -> dict:
         return {
@@ -50,6 +51,11 @@ class OCRObservation:
             "border_pixels": self.border_pixels,
             "render_dpi": dpi,
             "detection_parts": list(self.detection_parts),
+            **(
+                {"source_frame": self.source_frame}
+                if self.source_frame is not None
+                else {}
+            ),
             **(
                 {"physical_header_lines": self.physical_header_lines}
                 if self.physical_header_lines is not None

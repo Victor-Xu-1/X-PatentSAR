@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 import fitz
 import numpy as np
@@ -97,7 +98,16 @@ def _ocr_cell(page, bounds, kind: str, dpi: int) -> OCRObservation:
         raise RuntimeError(
             "Cell-owned scanned biology tables require a coordinate OCR engine (RapidOCR)"
         )
-    return observe_cell(cell_image(page, bounds, dpi), kind, dpi, engine[1], _normalize)
+    image = cell_image(page, bounds, dpi)
+    observed = observe_cell(image, kind, dpi, engine[1], _normalize)
+    return replace(
+        observed,
+        source_frame={
+            "dpi": dpi,
+            "shape": list(image.shape),
+            "pixel_sha256": hashlib.sha256(image.tobytes()).hexdigest(),
+        },
+    )
 
 
 def read_cell(page, bounds, tokens: list[dict], kind: str, native: bool) -> CellReading:

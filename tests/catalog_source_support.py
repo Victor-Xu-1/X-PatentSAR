@@ -1,6 +1,8 @@
 """Small original-PDF catalogue controls for Web/recognition consumer tests."""
 
 import json
+from contextlib import nullcontext
+from unittest.mock import patch
 
 import fitz
 
@@ -23,6 +25,8 @@ def original_catalogue(
     selected=True,
     source=None,
     molecule=None,
+    raster=False,
+    token_reader=None,
 ):
     """Produce original source proofs, not copies with renamed crop IDs."""
     source = source or root / "catalog-original.pdf"
@@ -83,7 +87,16 @@ def original_catalogue(
                         "image_path": str(image),
                     }
                 )
-        document.save(source)
+        if raster:
+            pixels = document[0].get_pixmap(matrix=fitz.Matrix(3, 3), alpha=False)
+            with fitz.open() as flattened:
+                page = flattened.new_page(
+                    width=document[0].rect.width, height=document[0].rect.height
+                )
+                page.insert_image(page.rect, stream=pixels.tobytes("png"))
+                flattened.save(source)
+        else:
+            document.save(source)
     metadata = run / "structures" / "metadata.json"
     envelope = json.loads(metadata.read_text())
     envelope.update(
@@ -120,18 +133,44 @@ def original_catalogue(
     adapter_cache = run / "page_classification" / "page_ocr_cache.json"
     if adapter_cache.exists():
         adapter_cache.rename(root / "preserved-adapter-page-cache.json")
-    bind(
-        str(source),
-        {"structure_candidate_pages": [0]},
-        str(run / "structure_bindings"),
-        str(metadata),
+    reader = (
+        patch(
+            "patent_sar_extractor.core.binding_spatial.page_tokens",
+            side_effect=token_reader,
+        )
+        if token_reader
+        else nullcontext()
     )
+    with reader:
+        bind(
+            str(source),
+            {"structure_candidate_pages": [0]},
+            str(run / "structure_bindings"),
+            str(metadata),
+        )
     path = run / "structure_bindings" / "bindings.json"
     payload = load_json(path, {})
     if payload["source_issues"] or payload["compound_catalog"][
         "source_observations"
     ] != len(records):
-        raise AssertionError("Controlled original catalogue did not prove every source")
+        diagnostics = [
+            {
+                "reason": item.get("reason"),
+                "readings": [
+                    {
+                        k: observation.get(k)
+                        for k in ("method", "raw_text", "text", "caption_word_form")
+                    }
+                    for observation in item.get("proposal", {}).get("observations", [])
+                ],
+            }
+            for item in payload.get("source_role_observations", {}).values()
+            if item.get("reason") == "unread_or_conflicting_caption"
+        ]
+        raise AssertionError(
+            "Controlled original catalogue did not prove every source: "
+            + json.dumps(diagnostics, ensure_ascii=False)[:6000]
+        )
     from recognition_source_support import observation
 
     from patent_sar_extractor.smiles_artifact import build_smiles_artifact

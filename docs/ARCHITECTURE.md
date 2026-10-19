@@ -1,5 +1,49 @@
 # X-PatentSAR architecture
 
+## Original caption word form before identifier ownership
+
+Binding35/binder45 add a bounded word-form source witness. A closed caption
+catalogue's page token can merge a role word and ID into a syntactically valid
+bare series code. That nomination cannot alone choose a bare reading mode.
+`caption_cell_reading` reconciles only the already-read original cell, under a
+proved compound-catalogue role. The ordinary shared cell reader remains the
+first path; no spelling correction, digit substitution, nearby-ID sequence,
+confidence winner or alternative OCR service is introduced.
+
+`caption_word_geometry` retains every eligible positive white-column partition,
+up to four per original400/600dpi cell within one million pixels. A narrow digit
+can have an internal gap as wide as the word space; a fixed cap-height ratio or
+largest-gap choice is not source evidence. `caption_word_observation` records
+all partitions' role/ID words through the SAME existing RapidOCR, at most16word
+reads for a previously unresolved cell, without changing any source pixels.
+`caption_word_proof` requires exactly one literal role/complete-ID partition at
+each scale, aligned original coordinates and both complete-cell readings.
+All original ID/series/suffix characters must survive. Only a single page OCR
+token physically spanning both words can be classified as that merged form;
+native, known prefixed, nonfinal and different-ID claims still veto. Unknown,
+malformed, ambiguous or over-bound observations remain explicit and retained.
+The word witness qualifies form, not a new identifier or chemical identity.
+
+Every optical cell observation now retains its exact original RGB source frame.
+`binding_original_replay` is the one normal source entry: existing heading replay
+plus `caption_original_replay` for ALL caption bindings. Coordinator/worker,
+checkpoint reuse, final QA and safe Web reads use it. Native captions must match
+visible literal original text; raster captions must match their actual rendered
+cell frames. Word masks/partitions and every crop hash replay against the original
+PDF without OCR at read time. Stripping a word packet cannot disable the general
+caption source requirement. Call-local frame facts are reused, not a second
+source store, parser, queue or model process.
+
+Older Binding34 and preparation8 proofs remain historical. Preparation9 lets
+the existing source-owned label mask consume the SAME caption reading selector
+and observation budget, not a competing three-reading limit. Unmodified inputs
+keep exact-image/model raw-cache reuse. Raw PDF/page OCR/OCSR2, manual audit,
+activity/SMILES/QA shapes, numerical SAR, API/SQL and default DECIMER are unchanged.
+Word-form1 is an internal source contract,
+not scientific certification: repeated views of one OCR engine are not
+independent ground truth. Controlled real-OCR source recovery and pipeline
+protocol tests do not prove all-patent extraction or chemical graph accuracy.
+
 ## One source-preserving recognition default
 
 `smiles_converter.DEFAULT_EXTRA_PREPROCESS` is the shared/standalone default.
@@ -25,9 +69,10 @@ recall or proof that a syntactically valid SMILES matches its original image.
 
 ## Native reaction direction before product ownership
 
-Binding34/binder44 version this derived heading-role/source upgrade. SMILES4/QA6
-separately version complete-image accounting. Raw OCSR2/preparation8, original
-assets, model weights, manual audit, numerical SAR and API-v1/SQL are unchanged;
+Binding35/binder45 retain this derived heading-role/source upgrade. SMILES4/QA6
+separately version complete-image accounting. Raw OCSR2, original assets, model
+weights, manual audit, numerical SAR and API-v1/SQL are unchanged; preparation9
+uses the shared caption reading budget described above;
 older Binding33/native-vector1/native-route1 and earlier proofs remain history,
 never retagged as current.
 
