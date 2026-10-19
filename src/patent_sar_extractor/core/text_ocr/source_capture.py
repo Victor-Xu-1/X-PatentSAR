@@ -5,11 +5,16 @@ from .configuration import get_auxiliary_text_runtime
 from .recovery_primary import complete_primary
 
 
-def refine_source_text(page, bounds, readings, *, maximum_rows=8, allow_chunks=False):
+def refine_source_text(
+    page, bounds, readings, *, maximum_rows=8, allow_chunks=False, maximum_row_height=12
+):
     """Keep failures in the same raw source; only a full paired proof can refine."""
     if len(readings) != 2:
         raise ValueError("Original text recovery requires both primary views")
-    if all(complete_primary(p, d) for p, d in zip(readings, (400, 600))):
+    if all(
+        complete_primary(p, d, maximum_row_height=maximum_row_height)
+        for p, d in zip(readings, (400, 600))
+    ):
         return readings
     auxiliary = get_auxiliary_text_runtime()
     if auxiliary is None:
@@ -25,6 +30,7 @@ def refine_source_text(page, bounds, readings, *, maximum_rows=8, allow_chunks=F
         evidence_sink=attempts,
         maximum_rows=maximum_rows,
         allow_chunks=allow_chunks,
+        maximum_row_height=maximum_row_height,
     )
     if selected is not None:
         return list(selected)

@@ -9,6 +9,7 @@ from patent_sar_extractor.contracts import (
 )
 from patent_sar_extractor.core.cell_text_chunks import observe_text_cell
 from patent_sar_extractor.core.cell_text_proof import valid_text_reading
+from patent_sar_extractor.core.cell_text_scope import text_scope
 
 from .cell_frames import literal
 from .identity import recipe
@@ -23,11 +24,18 @@ def effective_recovery_cells(packet):
         not isinstance(packet, dict)
         or set(packet)
         != {"version", "model", "views", "rows_per_chunk", "allow_chunks"}
+        | (
+            {"maximum_row_height"}
+            if packet.get("version") == RECOVERY_VERSION
+            else set()
+        )
         or type(packet["version"]) is not int
-        or packet["version"] not in (2, RECOVERY_VERSION)
+        or packet["version"] not in (2, 3, RECOVERY_VERSION)
     ):
         raise ValueError("Unknown complete auxiliary recovery evidence")
     maximum, allow = packet["rows_per_chunk"], packet["allow_chunks"]
+    height = packet.get("maximum_row_height", 12)
+    text_scope(maximum, height)
     model, spec, views = packet["model"], recipe(), packet["views"]
     if (
         type(maximum) is not int
@@ -69,18 +77,29 @@ def effective_recovery_cells(packet):
             or selected.get("source_frame") != view["frame"]
         ):
             raise ValueError("Nested or missing complete recovery source")
+        expected_scope = text_scope(maximum, height) if height != 12 else None
+        if (
+            selected.get("text_scope") != expected_scope
+            or primary.get("text_scope") != expected_scope
+        ):
+            raise ValueError(
+                "Recovery typography differs from its captured original scope"
+            )
         if not valid_text_reading(
             selected,
             selected.get("bbox", []),
             dpi,
             maximum_rows=maximum,
             allow_chunks=allow,
-        ) or not compatible_primary(primary, selected, view["frame"], dpi, maximum):
+            maximum_row_height=height,
+        ) or not compatible_primary(
+            primary, selected, view["frame"], dpi, maximum, maximum_row_height=height
+        ):
             raise ValueError("Recovery changed qualified original text or scope")
         requests = view["requests"]
         if not isinstance(requests, list) or not requests or len(requests) > _MAX_ROWS:
             raise ValueError("Missing or unbounded recovery row inventory")
-        grouped = packet["version"] == 3
+        grouped = packet["version"] in (3, RECOVERY_VERSION)
         selected_requests = [
             (checked_group if grouped else checked_row)(observed, model["fingerprint"])
             for observed in requests
@@ -115,6 +134,7 @@ def effective_recovery_cells(packet):
             dpi,
             maximum_rows=maximum,
             allow_chunks=allow,
+            maximum_row_height=height,
         )
         for view, dpi in zip(views, (400, 600), strict=True)
     ):
@@ -164,7 +184,11 @@ def replay_recovery_cell(reading, page):
         observed = {
             **source_metadata(primary),
             **observe_text_cell(
-                image, dpi, engine, rows_per_chunk=packet["rows_per_chunk"]
+                image,
+                dpi,
+                engine,
+                rows_per_chunk=packet["rows_per_chunk"],
+                maximum_row_height=packet.get("maximum_row_height", 12),
             ).evidence(dpi, primary["bbox"]),
         }
         observed["source_frame"] = view["frame"]

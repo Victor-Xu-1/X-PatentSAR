@@ -31,6 +31,7 @@ def observe_role_cells(
     retain_frames=False,
     attach_source_frames=False,
     evidence_sink=None,
+    maximum_row_height=12,
 ):
     """One cell observation carrier for closed grids and visible row fragments."""
     xs, ys = region["xs"], region["ys"]
@@ -43,6 +44,7 @@ def observe_role_cells(
         retain_frames=retain_frames,
         attach_source_frames=attach_source_frames,
         evidence_sink=evidence_sink,
+        maximum_row_height=maximum_row_height,
     )
 
 
@@ -55,6 +57,7 @@ def _observe_role_cells(
     retain_frames=False,
     attach_source_frames=False,
     evidence_sink=None,
+    maximum_row_height=12,
 ):
     """Same observer with the original parent's source decision conserved."""
     xs, ys = region["xs"], region["ys"]
@@ -140,6 +143,7 @@ def _observe_role_cells(
                     dpi,
                     engine[1],
                     rows_per_chunk=MAX_ROLE_TEXT_ROWS,
+                    maximum_row_height=maximum_row_height,
                 ).evidence(dpi, cell)
                 if retain_frames or attach_source_frames:
                     frame = {

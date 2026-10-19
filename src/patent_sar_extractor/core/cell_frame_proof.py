@@ -110,12 +110,28 @@ def valid_ink_extent(reading, shape):
     return True
 
 
-def original_cell_frame_matches(reading, page):
+def original_cell_frame_matches(
+    reading, page, *, maximum_row_height=12, maximum_rows=None
+):
     """Replay complete original pixels and ink extent, never text recognition."""
     import cv2
     import numpy as np
 
+    from .cell_text_scope import scoped_height
     from .table_cells import cell_image
+
+    try:
+        height = (
+            scoped_height(
+                reading,
+                maximum_row_height=maximum_row_height,
+                maximum_rows=maximum_rows,
+            )
+            if "text_scope" in reading
+            else 12
+        )
+    except (TypeError, ValueError):
+        return False
 
     bounds, dpi, frame = (
         reading.get("bbox"),
@@ -138,11 +154,26 @@ def original_cell_frame_matches(reading, page):
     if "physical_text_chunks" in reading:
         from .cell_text_chunk_pixels import original_text_chunk_pixels
 
-        return original_text_chunk_pixels(image, reading, dpi)
+        return original_text_chunk_pixels(
+            image, reading, dpi, maximum_row_height=height
+        )
     ys, xs = np.where(cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) < 180)
     crop = (
         [int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1]
         if len(xs)
         else None
     )
-    return reading.get("ink_crop_pixels") == crop
+    if reading.get("ink_crop_pixels") != crop:
+        return False
+    if "text_scope" in reading:
+        from .cell_text_frame import original_text_row_frame
+
+        return original_text_row_frame(
+            image,
+            reading,
+            dpi,
+            maximum_rows=reading["text_scope"]["maximum_rows"],
+            maximum_row_height=height,
+        )
+    # Historical unmarked ordinary cells keep their original pixel/crop contract.
+    return True

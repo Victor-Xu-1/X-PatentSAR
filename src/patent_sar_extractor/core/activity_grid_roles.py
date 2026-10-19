@@ -10,6 +10,7 @@ from .source_role_terms import INTERMEDIATE_SINGULAR
 from .source_section_roles import section_heading
 
 MAX_ROLE_TEXT_ROWS = 32
+MAX_ROLE_ROW_HEIGHT = 32
 _ID_HEADER = re.compile(
     rf"(?:Compound|Cmpd|Cpd|{INTERMEDIATE_SINGULAR}|Example|化合物|实施例)\s*(?:No\.?|ID|#|编号)?|No\.|ID|编号",
     re.IGNORECASE,

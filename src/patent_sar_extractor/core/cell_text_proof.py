@@ -5,6 +5,7 @@ import re
 
 from patent_sar_extractor.contracts import (
     AUXILIARY_TEXT_CELL_VERSION,
+    AUXILIARY_TEXT_RECOVERY_VERSION,
     PHYSICAL_CAPTION_LINE_VERSION,
 )
 
@@ -12,6 +13,7 @@ from .cell_ocr_scores import confidence_value
 from .cell_text_chunk_proof import valid_text_chunks
 from .cell_text_limits import row_pixel_limit
 from .cell_text_row_readings import selected_row_reading, valid_single_row
+from .cell_text_scope import scoped_height
 
 
 def valid_text_reading(
@@ -28,6 +30,14 @@ def valid_text_reading(
             maximum_rows=maximum_rows,
             allow_chunks=allow_chunks,
         )
+    if not isinstance(reading, dict):
+        return False
+    try:
+        maximum_row_height = scoped_height(
+            reading, maximum_row_height=maximum_row_height, maximum_rows=maximum_rows
+        )
+    except (TypeError, ValueError):
+        return False
     if (
         type(maximum_rows) is not int
         or not 2 <= maximum_rows <= 32
@@ -68,6 +78,12 @@ def valid_text_components(reading, dpi, *, maximum_row_height=12, maximum_rows=8
             maximum_rows=maximum_rows,
         )
     if not isinstance(reading, dict):
+        return False
+    try:
+        maximum_row_height = scoped_height(
+            reading, maximum_row_height=maximum_row_height, maximum_rows=maximum_rows
+        )
+    except (TypeError, ValueError):
         return False
     if _auxiliary_marker(reading, "physical_header_lines"):
         from .text_ocr.cell_proof import valid_auxiliary_cell
@@ -282,7 +298,7 @@ def _recovery_marker(reading):
         "auxiliary_text_version" in reading
         or isinstance(packet, dict)
         and type(packet.get("version")) is int
-        and packet["version"] in (2, 3)
+        and packet["version"] in (2, 3, AUXILIARY_TEXT_RECOVERY_VERSION)
     )
 
 

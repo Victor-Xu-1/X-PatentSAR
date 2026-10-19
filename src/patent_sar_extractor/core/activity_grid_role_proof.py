@@ -5,6 +5,7 @@ import math
 from patent_sar_extractor.contracts import CHARACTERIZATION_ROLE_SCHEMA_VERSION
 
 from .activity_grid_roles import (
+    MAX_ROLE_ROW_HEIGHT,
     MAX_ROLE_TEXT_ROWS,
     characterization_roles,
     declared_measurement,
@@ -13,6 +14,7 @@ from .activity_headers import context_from_text
 from .cell_frame_proof import valid_cell_frame
 from .cell_text_chunk_proof import text_detection_parts
 from .cell_text_proof import valid_text_reading
+from .cell_text_scope import text_scope
 from .role_grid_windows import valid_role_windows
 
 
@@ -116,12 +118,23 @@ def valid_role_scope(record):
                     return False
             elif method in {"cell_ocr_400dpi", "cell_ocr_600dpi"}:
                 confidence = cell.get("confidence")
+                if proof[
+                    "version"
+                ] == CHARACTERIZATION_ROLE_SCHEMA_VERSION and cell.get(
+                    "text_scope"
+                ) != text_scope(MAX_ROLE_TEXT_ROWS, MAX_ROLE_ROW_HEIGHT):
+                    return False
                 if (
                     set(cell)
                     - {
                         "physical_header_lines",
                         "physical_text_chunks",
                         "single_row_readings",
+                        *(
+                            {"text_scope"}
+                            if proof["version"] == CHARACTERIZATION_ROLE_SCHEMA_VERSION
+                            else set()
+                        ),
                         *(
                             {
                                 "source_frame",
@@ -183,6 +196,9 @@ def valid_role_scope(record):
                     cell["bbox"],
                     int(method[9:12]),
                     maximum_rows=MAX_ROLE_TEXT_ROWS,
+                    maximum_row_height=MAX_ROLE_ROW_HEIGHT
+                    if proof["version"] == CHARACTERIZATION_ROLE_SCHEMA_VERSION
+                    else 12,
                     allow_chunks=True,
                 ):
                     return False

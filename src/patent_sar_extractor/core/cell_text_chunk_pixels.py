@@ -9,8 +9,7 @@ from .cell_frame_proof import valid_ink_extent
 from .cell_header_lines import physical_line_frame
 from .cell_ocr_scores import confidence_value
 from .cell_text_chunk_proof import _CELL_READING_FIELDS, MAX_TEXT_CHUNKS
-
-_SOURCE_FIELDS = ("image_shape", "pixel_sha256", "row_bounds", "ink_pixels")
+from .cell_text_frame import SOURCE_FRAME_FIELDS, original_text_row_frame
 
 
 def _literal_reading(reading):
@@ -23,7 +22,7 @@ def _literal_reading(reading):
     )
 
 
-def _original_child(strip, child, box, dpi, maximum):
+def _original_child(strip, child, box, dpi, maximum, maximum_row_height):
     if (
         not _literal_reading(child)
         or set(child) - {"physical_header_lines", "single_row_readings"}
@@ -42,34 +41,12 @@ def _original_child(strip, child, box, dpi, maximum):
     crop = [int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1]
     if child["ink_crop_pixels"] != crop:
         return False
-    frame = child.get("physical_header_lines")
-    border = child["border_pixels"]
-    padded = cv2.copyMakeBorder(
-        strip[crop[1] : crop[3], crop[0] : crop[2]],
-        border,
-        border,
-        border,
-        border,
-        cv2.BORDER_CONSTANT,
-        value=(255, 255, 255),
+    return original_text_row_frame(
+        strip, child, dpi, maximum_rows=maximum, maximum_row_height=maximum_row_height
     )
-    actual = physical_line_frame(padded, border, dpi, maximum_rows=maximum)
-    if frame is None:
-        return actual is None
-    if not isinstance(frame, dict) or (
-        set(frame) != {"version", "status", *_SOURCE_FIELDS, "row_readings"}
-        or type(frame["version"]) is not int
-        or frame["version"] != 2
-        or frame["status"] not in {"observed", "unresolved"}
-        or not isinstance(frame["row_readings"], list)
-        or not isinstance(frame["row_bounds"], list)
-        or len(frame["row_readings"]) != len(frame["row_bounds"])
-    ):
-        return False
-    return actual is not None and all(frame[k] == actual[k] for k in _SOURCE_FIELDS)
 
 
-def original_text_chunk_pixels(image, reading, dpi):
+def original_text_chunk_pixels(image, reading, dpi, *, maximum_row_height=12):
     """Unresolved observations stay unresolved, but are not pixel-tampering errors.
 
     Text consumers still require valid_text_reading. Every source inventory,
@@ -82,7 +59,7 @@ def original_text_chunk_pixels(image, reading, dpi):
         or not isinstance(packet, dict)
         or (
             set(packet)
-            != {"version", "status", *_SOURCE_FIELDS, "rows_per_chunk", "chunks"}
+            != {"version", "status", *SOURCE_FRAME_FIELDS, "rows_per_chunk", "chunks"}
             or type(packet["version"]) is not int
             or packet["version"] != 1
             or packet["status"] not in {"observed", "unresolved"}
@@ -100,8 +77,14 @@ def original_text_chunk_pixels(image, reading, dpi):
     ):
         return False
     maximum = packet["rows_per_chunk"]
-    actual = physical_line_frame(image, 0, dpi, maximum_rows=maximum * MAX_TEXT_CHUNKS)
-    if actual is None or any(packet[k] != actual[k] for k in _SOURCE_FIELDS):
+    actual = physical_line_frame(
+        image,
+        0,
+        dpi,
+        maximum_rows=maximum * MAX_TEXT_CHUNKS,
+        maximum_row_height=maximum_row_height,
+    )
+    if actual is None or any(packet[k] != actual[k] for k in SOURCE_FRAME_FIELDS):
         return False
     rows, chunks = actual["row_bounds"], packet["chunks"]
     if not rows:
@@ -130,7 +113,9 @@ def original_text_chunk_pixels(image, reading, dpi):
             or type(chunk["ink_pixels"]) is not int
             or chunk["ink_pixels"]
             != int((cv2.cvtColor(strip, cv2.COLOR_RGB2GRAY) < 180).sum())
-            or not _original_child(strip, chunk["reading"], box, dpi, maximum)
+            or not _original_child(
+                strip, chunk["reading"], box, dpi, maximum, maximum_row_height
+            )
         ):
             return False
         child = chunk["reading"]
@@ -151,6 +136,11 @@ def original_text_chunk_pixels(image, reading, dpi):
         from .cell_text_proof import valid_text_reading
 
         return valid_text_reading(
-            reading, reading["bbox"], dpi, maximum_rows=maximum, allow_chunks=True
+            reading,
+            reading["bbox"],
+            dpi,
+            maximum_rows=maximum,
+            allow_chunks=True,
+            maximum_row_height=maximum_row_height,
         )
     return True

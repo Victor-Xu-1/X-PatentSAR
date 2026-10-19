@@ -11,6 +11,7 @@ def refine_text_pair(
     evidence_sink=None,
     maximum_rows=8,
     allow_chunks=False,
+    maximum_row_height=12,
 ):
     return recover_complete_pair(
         images,
@@ -19,4 +20,5 @@ def refine_text_pair(
         evidence_sink=evidence_sink,
         maximum_rows=maximum_rows,
         allow_chunks=allow_chunks,
+        maximum_row_height=maximum_row_height,
     )

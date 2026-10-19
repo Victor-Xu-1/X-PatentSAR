@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- Physical text authority: `cell_text_scope` records caller-owned integer row
+  limits. Characterization complete grids/open rows use 32pt/32-row chunks;
+  generic/assay/plot literal readers keep 12pt. The same observer, strict text
+  qualifier, marked full-cell/chunk pixel replayer and auxiliary recovery retain
+  this scope. `cell_text_frame` owns physical row-frame replay; no competing
+  masked/trimmed OCR chain or source writer exists. Role5/recovery4,
+  Binding49/binder59, Activity33/extractor43/coverage18 and disposable
+  projectionv7/project-scope-v4 refresh derived proofs/views/admissions only.
+  Legacy recovery1/2/3, originals/raw OCR/OCSR2/preparation12/manual audit and
+  historical reports remain preserved. API/SQL/SAR schemas, numerical/strict
+  graph policy, dependencies/models/providers and activation stay unchanged.
+
 - Chunk source authority: `cell_text_chunk_pixels` replays the original physical
   row/slice inventory, exact hashes and ink/child frames for both observed and
   unresolved captures. `cell_frame_proof.valid_ink_extent` is the sole shared

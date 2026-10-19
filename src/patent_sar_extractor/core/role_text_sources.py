@@ -2,6 +2,10 @@
 
 from itertools import pairwise
 
+from patent_sar_extractor.contracts import CHARACTERIZATION_ROLE_SCHEMA_VERSION
+
+from .activity_grid_roles import MAX_ROLE_ROW_HEIGHT, MAX_ROLE_TEXT_ROWS
+from .cell_text_scope import scoped_height, text_scope
 from .role_grid_windows import MAX_ROLE_GRID_CELLS, role_grid_shape
 from .source_evidence_identity import proof_id
 from .text_ocr.cell_proof import has_auxiliary_text, valid_auxiliary_cell
@@ -133,6 +137,21 @@ def role_text_cells(payload):
                 ):
                     raise ValueError("Original text leaves its original role cell")
                 cell = _framed_cell(scope, view_index, cell_index, cell)
+                if (
+                    scope.get("version") == CHARACTERIZATION_ROLE_SCHEMA_VERSION
+                    and method != "native_cells"
+                ):
+                    if cell.get("text_scope") != text_scope(
+                        MAX_ROLE_TEXT_ROWS, MAX_ROLE_ROW_HEIGHT
+                    ):
+                        raise ValueError(
+                            "Missing or changed original role typography scope"
+                        )
+                    scoped_height(
+                        cell,
+                        maximum_row_height=MAX_ROLE_ROW_HEIGHT,
+                        maximum_rows=MAX_ROLE_TEXT_ROWS,
+                    )
                 if has_auxiliary_text(cell):
                     if not valid_auxiliary_cell(cell, cell.get("render_dpi")):
                         raise ValueError("Unproved auxiliary original role-text cell")

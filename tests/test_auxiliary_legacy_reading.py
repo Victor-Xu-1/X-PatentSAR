@@ -1,8 +1,9 @@
-"""Historical V1/V2 packets stay readable; only V3 is produced live."""
+"""Historical V1/V2/V3 packets stay read-only; live evidence records its limits."""
 
 import copy
 import unittest
 
+from patent_sar_extractor.contracts import AUXILIARY_TEXT_RECOVERY_VERSION
 from patent_sar_extractor.core.text_ocr.cell_capture import refine_text_pair
 from patent_sar_extractor.core.text_ocr.cell_frames import source_rows
 from patent_sar_extractor.core.text_ocr.cell_proof import (
@@ -56,11 +57,25 @@ class LegacyAuxiliaryReadingTests(unittest.TestCase):
         current = refine_text_pair(
             fixture.images, fixture.primaries, fixture_module.ControlledAuxiliary()
         )
-        self.assertEqual(current[0]["auxiliary_text"]["version"], 3)
+        self.assertEqual(
+            current[0]["auxiliary_text"]["version"], AUXILIARY_TEXT_RECOVERY_VERSION
+        )
+        v3 = copy.deepcopy(current[0]["auxiliary_text"])
+        v3["version"] = 3
+        del v3["maximum_row_height"]
+        saved_v3 = copy.deepcopy(v3)
+        self.assertTrue(
+            all(
+                replay_auxiliary_cell(cell, fixture.page)
+                for cell in effective_cells(v3)
+            )
+        )
+        self.assertEqual(v3, saved_v3)
         # A V2 packet is the retained ordinary selection with one raw SDK
         # response per physical row. Only the test serializes this old shape.
         v2 = copy.deepcopy(current[0]["auxiliary_text"])
         v2["version"] = 2
+        del v2["maximum_row_height"]
         for view in v2["views"]:
             view["requests"] = [row["observations"][0] for row in view["requests"]]
         saved_v2 = copy.deepcopy(v2)

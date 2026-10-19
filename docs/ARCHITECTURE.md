@@ -1,5 +1,33 @@
 # X-PatentSAR architecture
 
+## Caller-owned typography for complete characterization text
+
+`cell_text_scope` owns the bounded physical typography claim. Characterization
+grids and their open-row fragments use 32 rows per work chunk and a 32pt ink-row
+extent, rather than borrowing the ordinary assay-header 12pt limit. The generic
+cell observer still defaults to 12pt; plot literals and ordinary assay headers
+do not acquire the larger scope. Existing heading-title policy is unchanged.
+New optical role cells retain `text_scope` with exact integer limits. Capture,
+qualification and original replay consume the same claim, bounded by the trusted
+caller's authority. It cannot be stripped or enlarged to bypass role validation.
+
+`cell_text_frame` is the sole model-free physical-row frame replayer for marked
+whole cells and chunk children. Complete source pixels, crop, rows and hashes
+stay conserved; no border/glyph masking, ink deletion or confidence reduction is
+introduced. Complete qualified primary text cannot load an auxiliary model to
+vote. Recovery4 records its row-height limit and deterministically replays the
+same complete observer/request inventory. Legacy recovery1/2/3 remains bounded
+read-only; an old packet is not rewritten to claim new typography.
+
+Only a fully proved whole-table characterization role makes its label a table
+reference instead of a procedure heading. Unknown content, weak/contradictory
+text, biological endpoints and missing reference IDs still refuse. This neither
+exempts unknown tables nor solves raster reaction-product or chemical identity
+ambiguity. Binding49/binder59, Activity33/extractor43/coverage18 and role5 refresh
+derived evidence; projectionv7/project-scope-v4 refresh disposable read views and
+project SAR snapshots. Raw OCR/OCSR2/preparation12, original assets, manual audit,
+API/SQL/SAR schemas, numerical SAR/graph rules, models and activation are unchanged.
+
 ## Rejected text observations are not changed original pixels
 
 `cell_text_chunk_pixels` owns original pixel replay for the existing chunk

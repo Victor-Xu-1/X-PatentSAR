@@ -1,5 +1,6 @@
 """Actual native/pixel replay for the sole explicit role-text source inventory."""
 
+from .activity_grid_roles import MAX_ROLE_ROW_HEIGHT, MAX_ROLE_TEXT_ROWS
 from .cell_frame_proof import inside_box, original_cell_frame_matches
 from .source_geometry import (
     SourceTokens,
@@ -49,7 +50,12 @@ def original_role_source_errors(document, sources):
                 ):
                     return ["Native role text differs from its actual original source."]
             elif method in ("cell_ocr_400dpi", "cell_ocr_600dpi"):
-                if not original_cell_frame_matches(cell, page):
+                if not original_cell_frame_matches(
+                    cell,
+                    page,
+                    maximum_row_height=MAX_ROLE_ROW_HEIGHT,
+                    maximum_rows=MAX_ROLE_TEXT_ROWS,
+                ):
                     return ["Original role text differs from its original page pixels."]
             else:
                 return ["Original role-text source method is unavailable."]
