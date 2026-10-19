@@ -12,6 +12,7 @@ from .cell_header_lines import header_line_frame, observe_header_lines
 from .cell_ocr_lines import resolve_overlapping_lines
 from .cell_ocr_scores import confidence_score as _score
 from .cell_ocr_scores import confidence_value
+from .cell_text_limits import row_pixel_limit
 from .cell_text_row_readings import (
     qualified_row,
     row_observation,
@@ -154,7 +155,10 @@ def observe_cell(
     )
     detected = kind == "label" or (
         text_region
-        and (header_frame is not None or (crop[3] - crop[1]) * 72 / dpi > row_height)
+        and (
+            header_frame is not None
+            or crop[3] - crop[1] > row_pixel_limit(dpi, maximum_row_height=row_height)
+        )
     )
     result, _ = engine(image, use_det=detected, use_cls=False)
     # The same bounded row parser owns short headers before any positional

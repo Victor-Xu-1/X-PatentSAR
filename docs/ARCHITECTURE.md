@@ -1,5 +1,30 @@
 # X-PatentSAR architecture
 
+## Quantized original text-row coverage
+
+`cell_text_limits.row_pixel_limit` is the single integer raster-envelope
+authority for capture and saved replay: `ceil(height_pt * dpi / 72) + 1`.
+The final pixel accounts for an unknown fractional render-origin phase;
+it is not a confidence tolerance. Exact12pt native intervals can cover68pixels
+at400dpi or101at600dpi. Comparing an integer height directly with66.67/100,
+or merely rounding that length upward, can discard an entire valid text cell
+before OCR. Native exact-point/phase controls establish this boundary.
+
+Physical header/heading rows, long text chunks, single-row/padding replay,
+caption coverage and caption words share this same cap. The original row-gap,
+ink conservation, coordinate/digest, .85 confidence, literal identity and
+known-conflict rules do not change. One pixel beyond the integer envelope still
+refuses, without repair inference. There is no image resize, semantic spelling
+repair, data-dependent row extent or confidence winner. Characterization-role
+and primary/method reference consumers use the existing complete source proof;
+an analytical table never proves a missing chemical structure.
+
+Binding36/binder46, activity-extractor32, visible-label22 and preparation10
+refresh derived observations. Raw PDF/page OCR/OCSR2, original assets, manual
+audit, activity schema22, numerical SAR, API/SQL and model/dependency authorities
+remain unchanged. Earlier derived proofs stay historical, not retagged. Synthetic
+source recovery is not full real-patent or chemical accuracy acceptance.
+
 ## Original caption word form before identifier ownership
 
 Binding35/binder45 add a bounded word-form source witness. A closed caption

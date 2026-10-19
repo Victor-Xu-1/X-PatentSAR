@@ -6,6 +6,7 @@ import math
 import cv2
 import numpy as np
 
+from .cell_text_limits import row_pixel_limit
 from .cell_text_row_readings import (
     qualified_row,
     row_observation,
@@ -65,9 +66,8 @@ def physical_line_frame(
         occupied,
         np.flatnonzero(np.diff(occupied) > max(1, math.ceil(dpi / 72 * 0.7))) + 1,
     )
-    if (
-        len(groups) == 1
-        and (groups[0][-1] - groups[0][0] + 1) * 72 / dpi <= maximum_row_height
+    if len(groups) == 1 and groups[0][-1] - groups[0][0] + 1 <= row_pixel_limit(
+        dpi, maximum_row_height=maximum_row_height
     ):
         return None
     packet = {
@@ -85,7 +85,7 @@ def physical_line_frame(
         x = np.flatnonzero(ink[y0:y1].any(axis=0))
         x0, x1 = int(x[0]), int(x[-1]) + 1
         packet["row_bounds"].append([x0, y0, x1, y1])
-        if y1 - y0 > maximum_row_height * dpi / 72:
+        if y1 - y0 > row_pixel_limit(dpi, maximum_row_height=maximum_row_height):
             packet["row_bounds"] = []
             return packet
     return packet

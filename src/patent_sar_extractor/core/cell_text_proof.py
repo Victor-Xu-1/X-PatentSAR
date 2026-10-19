@@ -7,6 +7,7 @@ from patent_sar_extractor.contracts import PHYSICAL_CAPTION_LINE_VERSION
 
 from .cell_ocr_scores import confidence_value
 from .cell_text_chunk_proof import valid_text_chunks
+from .cell_text_limits import row_pixel_limit
 from .cell_text_row_readings import selected_row_reading, valid_single_row
 
 
@@ -182,7 +183,7 @@ def physical_text_valid(
         if not (
             border <= x0 < x1 <= shape[1] - border
             and bottom < y0 < y1 <= shape[0] - border
-            and y1 - y0 <= maximum_row_height * dpi / 72
+            and y1 - y0 <= row_pixel_limit(dpi, maximum_row_height=maximum_row_height)
         ):
             return False
         bottom, area = y1, area + (x1 - x0) * (y1 - y0)
