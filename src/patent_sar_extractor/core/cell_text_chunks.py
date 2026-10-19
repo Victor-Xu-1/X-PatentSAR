@@ -1,19 +1,31 @@
 """Long original text cells partitioned at empty pixel rows, using the sole OCR."""
 
 import hashlib
+from dataclasses import replace
 
 import cv2
 
 from .cell_header_lines import physical_line_frame
 from .cell_ocr_observation import OCRObservation, observe_cell
 from .cell_text_chunk_proof import MAX_TEXT_CHUNKS
+from .cell_text_scope import text_scope
 
 
-def observe_text_cell(image, dpi, engine, *, rows_per_chunk=32):
+def observe_text_cell(image, dpi, engine, *, rows_per_chunk=32, maximum_row_height=12):
+    scope = text_scope(rows_per_chunk, maximum_row_height)
+    result = _observe_text_cell(image, dpi, engine, rows_per_chunk, maximum_row_height)
+    return replace(result, text_scope=scope) if maximum_row_height != 12 else result
+
+
+def _observe_text_cell(image, dpi, engine, rows_per_chunk, maximum_row_height):
     if type(rows_per_chunk) is not int or not 2 <= rows_per_chunk <= 32:
         raise ValueError("Invalid original text chunk budget")
     frame = physical_line_frame(
-        image, 0, dpi, maximum_rows=rows_per_chunk * MAX_TEXT_CHUNKS
+        image,
+        0,
+        dpi,
+        maximum_rows=rows_per_chunk * MAX_TEXT_CHUNKS,
+        maximum_row_height=maximum_row_height,
     )
     if frame is None or 0 < len(frame["row_bounds"]) <= rows_per_chunk:
         return observe_cell(
@@ -23,6 +35,7 @@ def observe_text_cell(image, dpi, engine, *, rows_per_chunk=32):
             engine,
             lambda text, _kind: text,
             maximum_text_rows=rows_per_chunk,
+            maximum_row_height=maximum_row_height,
         )
     packet = {
         **frame,
@@ -45,6 +58,7 @@ def observe_text_cell(image, dpi, engine, *, rows_per_chunk=32):
             engine,
             lambda text, _kind: text,
             maximum_text_rows=rows_per_chunk,
+            maximum_row_height=maximum_row_height,
         )
         box = [0, top, image.shape[1], bottom]
         reading = child.evidence(dpi, box)

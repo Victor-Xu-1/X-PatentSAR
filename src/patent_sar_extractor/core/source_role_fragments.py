@@ -2,11 +2,18 @@
 
 import math
 
+from patent_sar_extractor.contracts import CHARACTERIZATION_ROLE_SCHEMA_VERSION
+
 from .activity_grid_role_observation import observe_role_cells
-from .activity_grid_roles import MAX_ROLE_TEXT_ROWS, declared_measurement
+from .activity_grid_roles import (
+    MAX_ROLE_ROW_HEIGHT,
+    MAX_ROLE_TEXT_ROWS,
+    declared_measurement,
+)
 from .cell_frame_proof import valid_cell_frame
 from .cell_text_chunk_proof import text_detection_parts
 from .cell_text_proof import valid_text_reading
+from .cell_text_scope import text_scope
 from .source_fragment_context import validate_fragment_context
 from .source_grid_edges import edge_intervals
 from .source_section_roles import section_heading
@@ -45,6 +52,7 @@ def observe_fragments(page, grid_edges, tokens):
                 {"xs": xs, "ys": [bounds[1], bounds[3]]},
                 tokens,
                 retain_frames=True,
+                maximum_row_height=MAX_ROLE_ROW_HEIGHT,
             )
             if interval["status"] == "observed_columns"
             else None
@@ -142,12 +150,19 @@ def validate_fragments(region):
                         raise ValueError("Malformed native open-row cell")
                 else:
                     dpi = (400, 600)[index]
+                    if scope[
+                        "version"
+                    ] == CHARACTERIZATION_ROLE_SCHEMA_VERSION and reading.get(
+                        "text_scope"
+                    ) != text_scope(MAX_ROLE_TEXT_ROWS, MAX_ROLE_ROW_HEIGHT):
+                        raise ValueError("Missing original fragment typography scope")
                     if (
                         set(reading)
                         - {
                             "physical_header_lines",
                             "physical_text_chunks",
                             "single_row_readings",
+                            "text_scope",
                         }
                         != {
                             "method",
@@ -227,7 +242,14 @@ def fragment_texts(region, fragment, column):
             and reading["confidence"] == 0
         )
         if not empty and not valid_text_reading(
-            reading, bounds, dpi, maximum_rows=MAX_ROLE_TEXT_ROWS, allow_chunks=True
+            reading,
+            bounds,
+            dpi,
+            maximum_rows=MAX_ROLE_TEXT_ROWS,
+            allow_chunks=True,
+            maximum_row_height=MAX_ROLE_ROW_HEIGHT
+            if region["role_scope"]["version"] == CHARACTERIZATION_ROLE_SCHEMA_VERSION
+            else 12,
         ):
             return None
         texts.append(reading["raw_text"])

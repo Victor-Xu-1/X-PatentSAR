@@ -16,8 +16,15 @@ from .cell_frames import literal
 from .cell_packets import primary_structure
 
 
-def complete_primary(reading, dpi):
-    if valid_text_components(reading, dpi):
+def complete_primary(reading, dpi, *, maximum_row_height=12):
+    rows = (
+        reading.get("text_scope", {}).get("maximum_rows", 8)
+        if isinstance(reading, dict) and isinstance(reading.get("text_scope", {}), dict)
+        else 8
+    )
+    if valid_text_components(
+        reading, dpi, maximum_rows=rows, maximum_row_height=maximum_row_height
+    ):
         return True
     if not isinstance(reading, dict):
         return False
@@ -32,6 +39,7 @@ def complete_primary(reading, dpi):
             dpi,
             maximum_rows=chunks.get("rows_per_chunk"),
             allow_chunks=True,
+            maximum_row_height=maximum_row_height,
         )
     )
 
@@ -83,7 +91,9 @@ def parts(reading):
     return result
 
 
-def compatible_primary(primary, selected, frame, dpi, maximum_rows):
+def compatible_primary(
+    primary, selected, frame, dpi, maximum_rows, *, maximum_row_height=12
+):
     if source_metadata(primary) != source_metadata(selected):
         return False
     bounds = selected["bbox"]
@@ -150,5 +160,10 @@ def compatible_primary(primary, selected, frame, dpi, maximum_rows):
     elif any(part["confidence"] >= 0.85 for part in original):
         return False
     return valid_text_reading(
-        selected, bounds, dpi, maximum_rows=maximum_rows, allow_chunks=True
+        selected,
+        bounds,
+        dpi,
+        maximum_rows=maximum_rows,
+        allow_chunks=True,
+        maximum_row_height=maximum_row_height,
     )

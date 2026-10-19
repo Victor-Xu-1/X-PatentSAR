@@ -2,7 +2,10 @@
 
 import re
 
-from patent_sar_extractor.contracts import AUXILIARY_TEXT_CELL_VERSION
+from patent_sar_extractor.contracts import (
+    AUXILIARY_TEXT_CELL_VERSION,
+    AUXILIARY_TEXT_RECOVERY_VERSION,
+)
 from patent_sar_extractor.core.table_cells import cell_image
 
 from .cell_frames import literal, source_rows
@@ -31,7 +34,7 @@ def effective_cells(packet):
     if (
         isinstance(packet, dict)
         and type(packet.get("version")) is int
-        and packet["version"] in (2, 3)
+        and packet["version"] in (2, 3, AUXILIARY_TEXT_RECOVERY_VERSION)
     ):
         from .recovery_proof import effective_recovery_cells
 
@@ -100,7 +103,7 @@ def replay_auxiliary_cell(reading, page):
     """Render the same original windows, without models, paths from artifacts or edits."""
     if not valid_auxiliary_cell(reading, reading.get("render_dpi")):
         return False
-    if reading["auxiliary_text"]["version"] in (2, 3):
+    if reading["auxiliary_text"]["version"] in (2, 3, AUXILIARY_TEXT_RECOVERY_VERSION):
         from .recovery_proof import replay_recovery_cell
 
         try:

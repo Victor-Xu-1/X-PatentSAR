@@ -1,6 +1,6 @@
 """Unresolved complete role cells use the shared paired original-text recovery."""
 
-from .activity_grid_roles import MAX_ROLE_TEXT_ROWS
+from .activity_grid_roles import MAX_ROLE_ROW_HEIGHT, MAX_ROLE_TEXT_ROWS
 from .role_grid_windows import role_grid_shape
 from .text_ocr.source_capture import refine_source_text
 
@@ -27,7 +27,12 @@ def refine_role_text(page, cells):
         if any(reading.get("bbox") != bounds for reading in readings):
             raise ValueError("Role text recovery cannot move a physical source cell")
         selected = refine_source_text(
-            page, bounds, readings, maximum_rows=MAX_ROLE_TEXT_ROWS, allow_chunks=True
+            page,
+            bounds,
+            readings,
+            maximum_rows=MAX_ROLE_TEXT_ROWS,
+            allow_chunks=True,
+            maximum_row_height=MAX_ROLE_ROW_HEIGHT,
         )
         for view, reading in zip(views, selected, strict=True):
             view["cells"][index] = reading

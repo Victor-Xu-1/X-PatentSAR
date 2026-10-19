@@ -6,6 +6,7 @@ import hashlib
 from patent_sar_extractor.core.cell_header_lines import physical_line_frame
 from patent_sar_extractor.core.cell_text_chunk_proof import MAX_TEXT_CHUNKS
 from patent_sar_extractor.core.cell_text_chunks import observe_text_cell
+from patent_sar_extractor.core.cell_text_scope import text_scope
 from patent_sar_extractor.core.ocsr.worker_process import WorkerProtocolError
 
 from .identity import recipe
@@ -22,8 +23,10 @@ def recover_complete_pair(
     *,
     maximum_rows=32,
     allow_chunks=True,
+    maximum_row_height=12,
     evidence_sink=None,
 ):
+    text_scope(maximum_rows, maximum_row_height)
     if (
         len(images) != 2
         or len(primaries) != 2
@@ -33,7 +36,7 @@ def recover_complete_pair(
     ):
         raise ValueError("Invalid complete source recovery limits")
     if all(
-        complete_primary(primary, dpi)
+        complete_primary(primary, dpi, maximum_row_height=maximum_row_height)
         for primary, dpi in zip(primaries, (400, 600), strict=True)
     ):
         return None
@@ -44,6 +47,7 @@ def recover_complete_pair(
             0,
             dpi,
             maximum_rows=maximum_rows * (MAX_TEXT_CHUNKS if allow_chunks else 1),
+            maximum_row_height=maximum_row_height,
         )
         if physical is not None and not physical["row_bounds"]:
             if evidence_sink is not None:
@@ -71,7 +75,11 @@ def recover_complete_pair(
             view["selected"] = {
                 **source_metadata(primary),
                 **observe_text_cell(
-                    image, dpi, engine, rows_per_chunk=maximum_rows
+                    image,
+                    dpi,
+                    engine,
+                    rows_per_chunk=maximum_rows,
+                    maximum_row_height=maximum_row_height,
                 ).evidence(dpi, primary["bbox"]),
             }
             view["selected"]["source_frame"] = frame
@@ -102,6 +110,7 @@ def recover_complete_pair(
         "views": views,
         "rows_per_chunk": maximum_rows,
         "allow_chunks": allow_chunks,
+        "maximum_row_height": maximum_row_height,
     }
     try:
         return effective_recovery_cells(packet)

@@ -36,6 +36,7 @@ class OCRObservation:
     physical_text_chunks: dict | None = None
     single_row_readings: list[dict] | None = None
     source_frame: dict | None = None
+    text_scope: dict | None = None
 
     def evidence(self, dpi: int, bounds) -> dict:
         return {
@@ -52,6 +53,7 @@ class OCRObservation:
             "border_pixels": self.border_pixels,
             "render_dpi": dpi,
             "detection_parts": list(self.detection_parts),
+            **({"text_scope": self.text_scope} if self.text_scope is not None else {}),
             **(
                 {"source_frame": self.source_frame}
                 if self.source_frame is not None
@@ -102,7 +104,14 @@ def _single_caption_observation(image, crop, border, dpi, engine, normalize):
 
 
 def observe_cell(
-    image: np.ndarray, kind: str, dpi: int, engine, normalize, *, maximum_text_rows=8
+    image: np.ndarray,
+    kind: str,
+    dpi: int,
+    engine,
+    normalize,
+    *,
+    maximum_text_rows=8,
+    maximum_row_height=None,
 ) -> OCRObservation:
     """Use the existing coordinate OCR engine, never a second inference chain.
 
@@ -141,7 +150,11 @@ def observe_cell(
     # line detection routinely suppresses those legitimate tiny observations.
     # Multiline headers/captions and unproved physical rows retain detection.
     text_region = kind in {"header", "heading"}
-    row_height = 128 if kind == "heading" else 12
+    row_height = (
+        (128 if kind == "heading" else 12)
+        if maximum_row_height is None
+        else maximum_row_height
+    )
     header_frame = (
         header_line_frame(
             image,

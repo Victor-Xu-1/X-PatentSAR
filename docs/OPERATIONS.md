@@ -1,5 +1,28 @@
 # Operations and troubleshooting
 
+## Characterization table labels are mistaken for synthesis headings
+
+Inspect the complete original table role and physical text scope before changing
+an ID parser. A genuine NMR/MS/preparation row can contain larger typography than
+an assay header. Characterization callers now own a 32pt row/32-row chunk scope;
+assay headers and plot literal readers retain 12pt. Scope metadata is captured
+with the original cell and checked during replay, including auxiliary recovery.
+Unknown/weak cells or an activity endpoint still prevent characterization proof.
+Neither a same-number hit nor a detected table rectangle alone grants exemption
+from source completeness. No pixels, known native text or measurement values are
+removed or repaired to make the role pass.
+
+Role5/recovery4, Binding49/binder59 and Activity33/extractor43/coverage18 require
+fresh derived evidence through normal frontend resume. Projectionv7 and the
+project-scope-v4 digest invalidate disposable views/datasets, not raw observations
+or manual audit. Legacy auxiliary1/2/3 packets remain read-only with their original
+12pt scope. Preserve old failed tasks and rollback code/config/data together;
+never retag a saved role or rerun a private patent outside the frontend. Existing
+model weights, dependency recipes, on-demand activation, numerical activity bands
+and strict chemical graph/QA rules do not change. Larger-text controls do not
+establish universal recognition, raster reaction understanding or real scientific
+extraction-to-SAR acceptance.
+
 ## A retained unresolved role observation reports changed pixels
 
 Original-cell replay and text qualification are different checks. The chunk

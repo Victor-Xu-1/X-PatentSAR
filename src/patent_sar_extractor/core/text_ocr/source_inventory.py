@@ -1,5 +1,6 @@
 """One bounded auxiliary-source inventory shared by binding and activity replay."""
 
+from patent_sar_extractor.contracts import AUXILIARY_TEXT_RECOVERY_VERSION
 from patent_sar_extractor.core.source_evidence_identity import proof_id
 
 from .cell_proof import has_auxiliary_text, valid_auxiliary_cell
@@ -40,7 +41,8 @@ def auxiliary_source_cells(sources):
                         for row in view["requests"]
                         for observed in row["observations"]
                     ]
-                    if cell["auxiliary_text"]["version"] == 3
+                    if cell["auxiliary_text"]["version"]
+                    in (3, AUXILIARY_TEXT_RECOVERY_VERSION)
                     else view["requests"]
                 )
             )

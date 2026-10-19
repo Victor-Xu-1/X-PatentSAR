@@ -1,5 +1,6 @@
 """Batch the existing cell observer; retain one complete physical source carrier."""
 
+from .activity_grid_roles import MAX_ROLE_ROW_HEIGHT
 from .role_grid_windows import role_work_windows
 from .source_geometry import native_region
 
@@ -13,7 +14,12 @@ def observe_complete_role_grid(page, region, tokens, *, evidence_sink=None):
         return None
     if len(windows) == 1:
         return observe_role_cells(
-            page, region, tokens, attach_source_frames=True, evidence_sink=evidence_sink
+            page,
+            region,
+            tokens,
+            attach_source_frames=True,
+            evidence_sink=evidence_sink,
+            maximum_row_height=MAX_ROLE_ROW_HEIGHT,
         )
     carrier = {"xs": xs, "ys": ys, "native_hints": [], "observations": []}
     if evidence_sink is not None:
@@ -33,6 +39,7 @@ def observe_complete_role_grid(page, region, tokens, *, evidence_sink=None):
             native=native,
             attach_source_frames=True,
             evidence_sink=attempted,
+            maximum_row_height=MAX_ROLE_ROW_HEIGHT,
         )
         observed = result if result is not None else attempted[0] if attempted else None
         if observed is not None:
