@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 
 from .activity_identity import normalize_compound
+from .binding_records import binding_records
 from .identifier_order import natural_identifier_key
 
 
@@ -36,6 +37,8 @@ def _items_from_bindings(data):
     if isinstance(data, list):
         return data
     if isinstance(data, dict):
+        if "compound_catalog" in data:
+            return binding_records(data, legacy=True)
         for key in ("final_bindings", "bindings", "results", "structures"):
             if isinstance(data.get(key), list):
                 return data[key]

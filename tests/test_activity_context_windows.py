@@ -383,7 +383,7 @@ class ActivityContextWindowTests(unittest.TestCase):
                 role_observations=rejected,
             )
             binding = load_json(root / "binding/bindings.json", {})
-            self.assertEqual(binding["final_bindings"], [])
+            self.assertEqual(binding["compound_catalog"]["entries"], [])
             self.assertEqual(len(binding["source_role_observations"]), 1)
             validate_role_catalog(
                 binding["source_role_observations"], original_pdf_sha256=source_sha

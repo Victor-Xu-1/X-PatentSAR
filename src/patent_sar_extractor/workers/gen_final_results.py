@@ -29,6 +29,7 @@ from patent_sar_extractor.contracts import (
 )
 from patent_sar_extractor.core.activity_auxiliary_replay import original_pdf_reader
 from patent_sar_extractor.core.activity_join import activity_evidence_errors
+from patent_sar_extractor.core.binding_records import binding_records
 from patent_sar_extractor.core.formal_export import qualified_records
 from patent_sar_extractor.core.formal_structure import (
     FORMAL_SCOPE,
@@ -100,7 +101,7 @@ def export_validation(
     )
     source_findings = reprint_findings(recognition_inputs(binding_payload), smiles)
     bindings, records, findings = qualified_records(
-        binding_payload["final_bindings"],
+        binding_records(binding_payload),
         smiles_records(smiles),
         str(Path(bindings_path).parent.parent),
         source_findings=source_findings,
@@ -142,7 +143,7 @@ def main():
         args.bindings, args.smiles, activity_path=args.activity
     )
     with open(args.bindings, encoding="utf-8") as stream:
-        expected = read_artifact_json(stream)["final_bindings"]
+        expected = binding_records(read_artifact_json(stream))
     qualified_structure_ids = {row["structure_id"] for row in bindings}
     receipt = {
         "execution_mode": SOURCE_EXECUTION_MODE,

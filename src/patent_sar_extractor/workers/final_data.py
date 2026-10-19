@@ -5,7 +5,8 @@ from __future__ import annotations
 from patent_sar_extractor.artifact_catalog import read_artifact_json
 from patent_sar_extractor.core.activity_identity import normalize_compound
 from patent_sar_extractor.core.activity_join import activity_order_and_map
-from patent_sar_extractor.core.formal_structure import binding_pairs, proved_catalog
+from patent_sar_extractor.core.binding_records import binding_records
+from patent_sar_extractor.core.formal_structure import proved_catalog
 from patent_sar_extractor.smiles_artifact import smiles_records
 
 
@@ -47,10 +48,8 @@ def get_smiles_for_binding(
 def load_data(bindings_path, smiles_path, activity_data=None, activity_path=None):
     with open(bindings_path, encoding="utf-8") as stream:
         payload = read_artifact_json(stream)
-    bindings = payload.get("final_bindings")
-    catalog = proved_catalog(payload)
-    if binding_pairs(bindings) != binding_pairs(catalog):
-        raise ValueError("Formal export does not cover the complete proved catalog")
+    binding_records(payload)
+    bindings = proved_catalog(payload)
     with open(smiles_path, encoding="utf-8") as stream:
         records = smiles_records(read_artifact_json(stream))
     maps = build_smiles_maps(records)

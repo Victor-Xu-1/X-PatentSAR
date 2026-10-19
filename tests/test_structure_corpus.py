@@ -270,13 +270,17 @@ class StructureCorpusTests(PredictionFixture, unittest.TestCase):
 
         for name, keys in (
             ("activity", ("rows", "active_cpds")),
-            ("bindings", ("final_bindings",)),
+            ("bindings", ()),
             ("smiles", ("records",)),
         ):
             path = self.run / ARTIFACTS[name][0]
             payload = json.loads(path.read_text())
             for key in keys:
                 payload[key] = []
+            if name == "bindings":
+                payload["compound_catalog"].update(
+                    entries=[], numbered_compounds=0, source_observations=0
+                )
             path.write_text(json.dumps(payload))
         self.service.refresh(self.project.id)
         result = self.service.results(self.project.id)

@@ -92,7 +92,7 @@ class OriginalSourceAdmissionTests(unittest.TestCase):
         rows = legacy_series()
         with tempfile.TemporaryDirectory(prefix="source-admission-") as temporary:
             payload = publish(Path(temporary), rows)
-        self.assertEqual(payload["final_bindings"], [])
+        self.assertEqual(payload["compound_catalog"]["entries"], [])
         self.assertEqual(
             {issue["cpd"] for issue in payload["source_issues"]},
             {row["cpd"] for row in rows},
@@ -108,7 +108,7 @@ class OriginalSourceAdmissionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="source-admission-") as temporary:
             payload = publish(Path(temporary), [original_caption()])
         payload["compound_catalog"]["entries"] = legacy_series()
-        payload["final_bindings"] = list(payload["compound_catalog"]["entries"])
+        payload["compound_catalog"]["numbered_compounds"] = len(legacy_series())
         payload["source_issues"] = []
         with self.assertRaises(ValueError):
             read_catalog_entries(payload)

@@ -147,14 +147,10 @@ class IdentifierAPITests(WebFixture, unittest.TestCase):
         run = artifact_run(self.root / "run", self.pdf)
         binding_path = run / "structure_bindings/bindings.json"
         binding = json.loads(binding_path.read_text())
-        for records in (
-            binding["final_bindings"],
-            binding["compound_catalog"]["entries"],
-        ):
-            for row in records:
-                row["authoritative_table_source_label"] = (
-                    "Example " + row["cpd"].split()[-1]
-                )
+        for row in binding["compound_catalog"]["entries"]:
+            row["authoritative_table_source_label"] = (
+                "Example " + row["cpd"].split()[-1]
+            )
         binding_path.write_text(json.dumps(binding))
         original_files = {
             str(path): hashlib.sha256(path.read_bytes()).hexdigest()

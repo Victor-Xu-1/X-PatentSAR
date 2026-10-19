@@ -115,7 +115,11 @@ class HeadingReprintSourceTests(unittest.TestCase):
         _, payload = self.original(heading="Example 17: Preparation")
         self.assertTrue(payload["source_issues"])
         self.assertTrue(coverage_errors(payload))
-        owner = next(r for r in payload["final_bindings"] if r["cpd"] == "Compound 17")
+        owner = next(
+            r
+            for r in payload["compound_catalog"]["entries"]
+            if r["cpd"] == "Compound 17"
+        )
         self.assertEqual(owner["structure_id"], "S17")
         self.assertEqual(owner["additional_sources"], [])
         self.assertTrue(
@@ -157,7 +161,9 @@ class HeadingReprintSourceTests(unittest.TestCase):
                     )
                 )
                 owner = next(
-                    r for r in payload["final_bindings"] if r["cpd"] == "Compound 17"
+                    r
+                    for r in payload["compound_catalog"]["entries"]
+                    if r["cpd"] == "Compound 17"
                 )
                 self.assertEqual(owner["additional_sources"], [])
 
@@ -250,15 +256,15 @@ class HeadingReprintSourceTests(unittest.TestCase):
 
     def test_formal_recognition_cannot_redirect_only_the_heading_proof(self):
         _, payload = self.original()
-        for index, row in enumerate(payload["final_bindings"]):
+        for index, row in enumerate(payload["compound_catalog"]["entries"]):
             if row["cpd"] != "Compound 19":
                 continue
             row = copy.deepcopy(row)
             row["original_heading_structure_evidence"]["declaration_scope"][
                 "document_page_count"
             ] += 1
-            payload["final_bindings"][index] = row
-        with self.assertRaisesRegex(ValueError, "source"):
+            payload["compound_catalog"]["entries"][index] = row
+        with self.assertRaises(CatalogValidationError):
             recognition_inputs(payload)
 
     def test_heading_depictions_use_the_existing_complete_chemical_graph_gate(self):
@@ -285,7 +291,7 @@ class HeadingReprintSourceTests(unittest.TestCase):
     def test_clean_primary_graphs_do_not_accept_an_unexecuted_heading_depiction(self):
         _, payload = self.original()
         artifact = build_smiles_artifact(
-            [observation(row) for row in payload["final_bindings"]]
+            [observation(row) for row in payload["compound_catalog"]["entries"]]
         )
         self.assertTrue(_smiles_acceptance_errors(artifact, payload))
 

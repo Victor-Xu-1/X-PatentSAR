@@ -42,6 +42,7 @@ from patent_sar_extractor.contracts import (
     BINDINGS_SCHEMA_VERSION,
     artifact_identity_matches,
 )
+from patent_sar_extractor.core.binding_records import binding_records
 from patent_sar_extractor.core.cpd_filter import filter_examples_only
 from patent_sar_extractor.core.ocsr.candidate_inputs import load_source_observation_plan
 from patent_sar_extractor.core.ocsr.candidate_observations import (
@@ -82,10 +83,10 @@ def load_bindings(input_path: str) -> list:
     """Load binding results from JSON.
 
     Handles two formats:
-    1. Dict with a ``final_bindings`` key (standard output)
+    1. Current artifact with the single ``compound_catalog`` record collection
     2. List of binding dicts directly
 
-    Also supports CSV input.
+    Also supports explicit diagnostic CSV and historical JSON input.
     """
     if input_path.endswith(".csv"):
         import pandas as pd
@@ -99,6 +100,8 @@ def load_bindings(input_path: str) -> list:
     if isinstance(data, list):
         return data
     elif isinstance(data, dict):
+        if "compound_catalog" in data:
+            return binding_records(data, legacy=True)
         # Look for common keys
         for key in ("final_bindings", "bindings", "results", "structures"):
             if key in data and isinstance(data[key], list):
@@ -127,7 +130,10 @@ def validate_strict_binding_input(
         return [
             "Binding input was not produced by the production structure-led pipeline."
         ]
-    final_bindings = payload.get("final_bindings", [])
+    try:
+        final_bindings = binding_records(payload)
+    except ValueError as exc:
+        return [str(exc)]
     if (
         not isinstance(final_bindings, list)
         or final_bindings != bindings
@@ -135,7 +141,7 @@ def validate_strict_binding_input(
         and not allow_empty_catalog
     ):
         return [
-            "Strict OCSR processes only the complete final_bindings list without substitution."
+            "Strict OCSR processes only the complete source catalogue without substitution."
         ]
     errors = []
     seen_structures = set()

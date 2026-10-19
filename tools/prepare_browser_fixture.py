@@ -91,7 +91,7 @@ def prepare(
         binding_path = run / "structure_bindings/bindings.json"
         bindings = json.loads(binding_path.read_text())
         for records in (
-            bindings["final_bindings"],
+            bindings["compound_catalog"]["entries"],
             bindings["compound_catalog"]["entries"],
         ):
             for row in records:
@@ -115,7 +115,16 @@ def prepare(
         # The same controlled historical adapter, serialized by the production
         # transport. This does not create current source or chemical acceptance.
         binding_path = run / "structure_bindings/bindings.json"
-        write_json_atomic(binding_path, load_json(binding_path, {}), shared=True)
+        payload = load_json(binding_path, {})
+        # Exercise shared wire decoding even after duplicate root records have
+        # been removed. This labelled transport-only payload is not source proof.
+        repeated = {
+            "purpose": "controlled transport repetition, not scientific evidence",
+            "text": "Controlled literal transport observation. " * 20,
+        }
+        for row in payload["compound_catalog"]["entries"]:
+            row["controlled_transport_observation"] = repeated
+        write_json_atomic(binding_path, payload, shared=True)
     state = workspace / "web-state"
     historical = import_run(
         state,

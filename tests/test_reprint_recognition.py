@@ -35,11 +35,12 @@ class ReprintRecognitionTests(LateralStructureControls, unittest.TestCase):
 
     def test_formal_row_cannot_redirect_an_unchanged_original_owner(self):
         _, payload = self.run_case(selected=True)
+        payload["final_bindings"] = list(payload["compound_catalog"]["entries"])
         payload["final_bindings"][0] = {
             **payload["final_bindings"][0],
             "image_path": payload["final_bindings"][1]["image_path"],
         }
-        with self.assertRaisesRegex(ValueError, "source"):
+        with self.assertRaisesRegex(ValueError, "authority"):
             recognition_inputs(payload)
 
     def test_relative_reprint_crop_uses_the_same_binding_root_as_the_worker(self):
@@ -102,7 +103,7 @@ class ReprintRecognitionTests(LateralStructureControls, unittest.TestCase):
 
     def test_clean_primary_results_cannot_accept_unobserved_reprints(self):
         _, payload = self.run_case(selected=True)
-        formal = payload["final_bindings"]
+        formal = payload["compound_catalog"]["entries"]
         records = [observation(row) for row in formal]
         self.assertTrue(
             _smiles_acceptance_errors(build_smiles_artifact(records), payload)
@@ -110,7 +111,7 @@ class ReprintRecognitionTests(LateralStructureControls, unittest.TestCase):
 
     def test_export_helper_also_requires_original_reprint_findings(self):
         _, payload = self.run_case(selected=True)
-        bindings = payload["final_bindings"]
+        bindings = payload["compound_catalog"]["entries"]
         with self.assertRaisesRegex(ValueError, "[Rr]eprint"):
             qualified_records(bindings, [observation(row) for row in bindings])
 

@@ -274,21 +274,24 @@ class HeadingDocumentSpanTests(unittest.TestCase):
         )
         self.assertEqual(result["source_issues"], [])
         self.assertEqual(
-            [(r["cpd"], r["page_no"]) for r in result["bindings"]],
+            [(r["cpd"], r["page_no"]) for r in result["compound_catalog"]["entries"]],
             [("Compound 131B", 2)],
         )
         saved = load_json(self.root / "bound" / "bindings.json", {})
-        self.assertEqual(reference_issues(saved, saved["final_bindings"]), [])
+        self.assertEqual(
+            reference_issues(saved, saved["compound_catalog"]["entries"]), []
+        )
         self.assertEqual(_binding_acceptance_errors(saved), [])
         self.assertEqual(
             validate_strict_binding_input(
-                str(self.root / "bound" / "bindings.json"), saved["final_bindings"]
+                str(self.root / "bound" / "bindings.json"),
+                saved["compound_catalog"]["entries"],
             ),
             [],
         )
         self.assertEqual(recognition_inputs(saved).formal[0]["page_no"], 2)
         web = SafeFiles(self.root / "bound").json("bindings.json", optional=False)
-        entries, _ = read_compound_catalog(web, web["final_bindings"])
+        entries, _ = read_compound_catalog(web, web["compound_catalog"]["entries"])
         self.assertEqual(entries[0]["page_no"], 2)
         changed = copy.deepcopy(saved)
         section = next(
@@ -297,7 +300,7 @@ class HeadingDocumentSpanTests(unittest.TestCase):
         section.pop("declaration_scope")
         changed["source_reference_scope"] = reference_scope(changed["source_sections"])
         self.assertTrue(
-            reference_issues(changed, changed["final_bindings"]),
+            reference_issues(changed, changed["compound_catalog"]["entries"]),
             "An ID elsewhere cannot discharge the missing exact source scope",
         )
 

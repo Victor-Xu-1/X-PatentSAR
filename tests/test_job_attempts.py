@@ -17,7 +17,7 @@ from patent_sar_extractor.application.stage_cache import (
     _step_fingerprint,
     _write_step_manifest,
 )
-from patent_sar_extractor.artifact_io import write_json_atomic
+from patent_sar_extractor.artifact_io import load_json, write_json_atomic
 from patent_sar_extractor.core.page_ocr_cache import build_cache_metadata
 from patent_sar_extractor.web.attempts import ARTIFACTS, OCR_PATH, CheckpointCopy
 from patent_sar_extractor.web.errors import WebError
@@ -426,6 +426,10 @@ class AttemptTests(WebFixture, unittest.TestCase):
                 collection: [0] if stage == "locate" else [],
             }
             if stage == "bind":
+                from patent_sar_extractor.core.binding_catalog import compound_catalog
+
+                payload.pop(collection)
+                payload["compound_catalog"] = compound_catalog([], [])
                 payload["execution_mode"] = "production_structure_led"
             write_json_atomic(root / relative, payload)
             _write_step_manifest(
@@ -749,9 +753,9 @@ class AttemptTests(WebFixture, unittest.TestCase):
             fresh = wait_job(client, response.json()["id"], "failed", timeout=60)
             target = Path(client.app.state.queue._spec(fresh["id"]).output_dir)
             self.assertNotEqual(target, old_root)
-            self.assertIn(
-                "[classify] 已存在，跳过", (target / "web-process.log").read_text()
-            )
+            summary = load_json(target / "pipeline_summary.json", {})
+            self.assertTrue(summary["steps"]["classify"]["from_cache"])
+            self.assertTrue(summary["steps"]["locate"]["from_cache"])
             self.assertEqual(client.get(f"/api/v1/jobs/{first['id']}").json(), original)
             after = {
                 str(path.relative_to(old_root)): hashlib.sha256(

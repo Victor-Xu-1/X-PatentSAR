@@ -64,7 +64,12 @@ def run_fixture(root, *, activities=None, invalid_second=False, classified_pages
     coverage = coverage_packet(
         seeds, regions, [SimpleNamespace(page_no=1) for _ in activities or []]
     )
-    save(root / "structures/metadata.json", {})
+    save(
+        root / "structures/metadata.json",
+        contracts.artifact_identity(
+            contracts.STRUCTURES_SCHEMA, contracts.STRUCTURES_SCHEMA_VERSION
+        ),
+    )
     original, _, payload = original_catalogue(
         root,
         root,
@@ -74,7 +79,7 @@ def run_fixture(root, *, activities=None, invalid_second=False, classified_pages
         source=root / "original.pdf",
         molecule="CCO",
     )
-    bindings = payload["final_bindings"]
+    bindings = payload["compound_catalog"]["entries"]
     plan = load_source_observation_plan(
         recognition_inputs(payload),
         structures_json=root / "structures/metadata.json",

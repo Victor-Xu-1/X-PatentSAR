@@ -23,6 +23,7 @@ from pydantic import ValidationError
 from patent_sar_extractor import contracts as core
 from patent_sar_extractor.artifact_io import artifact_json_bytes
 from patent_sar_extractor.artifact_nodes import MAX_DEPTH, JsonGraph
+from patent_sar_extractor.core.binding_records import binding_records
 
 from .errors import WebError
 from .files import MAX_ARTIFACT_BYTES, MAX_RECORDS, SafeFiles, private_directory
@@ -625,9 +626,13 @@ class CheckpointCopy:
             "activity": "rows",
             "locate": "selected_pages",
             "structures": "structures",
-            "bind": "final_bindings",
             "smiles": "records",
         }.get(stage)
+        if stage == "bind":
+            try:
+                binding_records(payload)
+            except ValueError:
+                return None  # Malformed current sources never become a checkpoint.
         if collection:
             items = payload.get(collection)
             if not isinstance(items, list) or len(items) > MAX_RECORDS:

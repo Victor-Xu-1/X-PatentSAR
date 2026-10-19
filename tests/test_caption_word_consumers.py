@@ -65,7 +65,7 @@ class CaptionWordConsumersTests(unittest.TestCase):
 
     def test_binder_writer_and_core_final_qa_keep_the_same_original_ids(self):
         self.assertEqual(
-            [b["cpd"] for b in self.bindings["final_bindings"]],
+            [b["cpd"] for b in self.bindings["compound_catalog"]["entries"]],
             ["Compound 53Q", "Compound 61R"],
         )
         self.assertEqual(
@@ -99,10 +99,7 @@ class CaptionWordConsumersTests(unittest.TestCase):
             [],
         )
         changed = copy.deepcopy(self.bindings)
-        for item in [
-            *changed["final_bindings"],
-            *changed["compound_catalog"]["entries"],
-        ]:
+        for item in changed["compound_catalog"]["entries"]:
             proof = item["exact_caption_evidence"]["observations"][-1][
                 "caption_word_form"
             ]

@@ -59,7 +59,7 @@ class BindingArtifactConsumerTests(unittest.TestCase):
         self.assertEqual(plan.supplemental, [])
         self.assertEqual(plan.reprints, [])
         web = SafeFiles(self.path.parent).json(self.path.name, optional=False)
-        entries, _ = read_compound_catalog(web, web["final_bindings"])
+        entries, _ = read_compound_catalog(web, web["compound_catalog"]["entries"])
         self.assertEqual([entry["cpd"] for entry in entries], ["Compound 82A"])
 
     def test_current_shared_and_legacy_plain_caches_replay_without_mutating_evidence(
@@ -81,18 +81,19 @@ class BindingArtifactConsumerTests(unittest.TestCase):
 
     def test_valid_transport_cannot_qualify_changed_scientific_ownership(self):
         changed = copy.deepcopy(self.payload)
-        changed["final_bindings"][0]["cpd"] = "Compound 83B"
+        changed["compound_catalog"]["entries"][0]["cpd"] = "Compound 83B"
         path = self.path.with_name("changed-original-owner.json")
         write_json_atomic(path, changed, shared=True)
         web = SafeFiles(path.parent).json(path.name, optional=False)
         self.assertEqual(web, changed)  # Transport integrity alone is not science.
-        self.assertTrue(_binding_acceptance_errors(web))
+        with self.assertRaises(ValueError):
+            _binding_acceptance_errors(web)
         # The worker's composed admission checks the complete original plan,
         # not only the earlier per-row quality/status check.
         with self.assertRaises(ValueError):
             recognition_inputs(web)
-        entries, _ = read_compound_catalog(web, web["final_bindings"])
-        self.assertEqual([entry["cpd"] for entry in entries], ["Compound 82A"])
+        with self.assertRaises(WebError):
+            read_compound_catalog(web, web["compound_catalog"]["entries"])
 
         changed["compound_catalog"]["entries"][0]["original_heading_evidence"][
             "heading_observation"
@@ -104,7 +105,7 @@ class BindingArtifactConsumerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             recognition_inputs(web)
         with self.assertRaises((ValueError, WebError)):
-            read_compound_catalog(web, web["final_bindings"])
+            read_compound_catalog(web, web["compound_catalog"]["entries"])
 
     def test_real_source_checkpoint_relocation_is_readable_by_the_native_cache(self):
         source = self.root / "structure_bindings/bindings.json"
@@ -133,11 +134,11 @@ class BindingArtifactConsumerTests(unittest.TestCase):
         self.assertIn(MARKER, json.loads(target.read_text()))
         current = _load_reusable_bindings(str(target), fingerprint)
         self.assertIsNotNone(current)
-        binding = current["final_bindings"][0]
+        binding = current["compound_catalog"]["entries"][0]
         self.assertEqual(binding["cpd"], "Compound 82A")
         self.assertEqual(
             binding["original_heading_evidence"],
-            self.payload["final_bindings"][0]["original_heading_evidence"],
+            self.payload["compound_catalog"]["entries"][0]["original_heading_evidence"],
         )
         copied_image = Path(binding["image_path"])
         self.assertTrue(copied_image.is_relative_to(transport.target))

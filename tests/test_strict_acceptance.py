@@ -1230,11 +1230,6 @@ class StrictAcceptanceTests(unittest.TestCase):
             self._write_json(ocr_cache, {})
             image = self._image(base, "structures/s1.png")
             bind_json = base / "structure_bindings/bindings.json"
-            stale_payload = {
-                **artifact_identity(BINDINGS_SCHEMA, BINDINGS_SCHEMA_VERSION),
-                "execution_mode": SOURCE_EXECUTION_MODE,
-                "final_bindings": [self._binding("Compound 1", "S0001", image)],
-            }
             complete = write_binding_result(
                 bind_json.parent,
                 patent_id="CONTROL",
@@ -1253,19 +1248,23 @@ class StrictAcceptanceTests(unittest.TestCase):
             )
             stale_payload = {
                 **complete,
-                "final_bindings": complete["final_bindings"][:1],
+                "compound_catalog": {
+                    **complete["compound_catalog"],
+                    "entries": complete["compound_catalog"]["entries"][:1],
+                },
             }
             self._write_json(bind_json, stale_payload)
             fingerprint = _step_fingerprint("bind", pdf_path=str(pdf))
             _write_step_manifest(str(bind_json), fingerprint)
 
-            self.assertIsNone(_load_reusable_bindings(str(bind_json), fingerprint, {}))
+            with self.assertRaisesRegex(ValueError, "record count"):
+                _load_reusable_bindings(str(bind_json), fingerprint, {})
 
             self._write_json(bind_json, complete)
             reusable = _load_reusable_bindings(str(bind_json), fingerprint, {})
             self.assertIsNotNone(reusable)
             self.assertEqual(
-                [row["cpd"] for row in reusable.get("final_bindings", [])],
+                [row["cpd"] for row in reusable["compound_catalog"]["entries"]],
                 ["Compound 1", "Compound 2"],
             )
 

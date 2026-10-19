@@ -12,6 +12,8 @@ from unittest.mock import patch
 from test_web_support import WebFixture, artifact_run, make_pdf
 
 from patent_sar_extractor import contracts
+from patent_sar_extractor.artifact_io import load_json, write_json_atomic
+from patent_sar_extractor.core.qa_report import build_qa_report
 from patent_sar_extractor.web.acceptance import ARTIFACTS
 from patent_sar_extractor.web.errors import WebError
 from patent_sar_extractor.web.models import ReviewRequest
@@ -21,6 +23,47 @@ from patent_sar_extractor.web.service import WorkspaceService, import_run
 
 
 class ResultTests(WebFixture, unittest.TestCase):
+    def complete_source_run(self, name):
+        # Actual generated source/asset/QA contracts, with explicitly controlled
+        # chemical graphs. The older red-tile UI fixture is not source acceptance.
+        from test_source_led_export import export, run_fixture
+
+        run = artifact_run(self.root / name, self.pdf)
+        run_fixture(run)
+        write_json_atomic(
+            run / ARTIFACTS["locator"][0],
+            {
+                **contracts.artifact_identity(
+                    contracts.STRUCTURE_LOCATION_SCHEMA,
+                    contracts.STRUCTURE_LOCATION_SCHEMA_VERSION,
+                ),
+                "selected_pages": [0],
+            },
+        )
+        result = export(run)
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        activity_path = run / ARTIFACTS["activity"][0]
+        activity = load_json(activity_path, {})
+        activity["active_cpds"] = []
+        write_json_atomic(activity_path, activity)
+        qa = build_qa_report(str(run), patent_id="CONTROL")
+        self.assertTrue(qa["acceptance"]["ok"], qa["acceptance"]["hard_errors"])
+        write_json_atomic(run / "final_qa_report.json", qa)
+        summary_path = run / "pipeline_summary.json"
+        summary = load_json(summary_path, {})
+        summary.update(
+            status="complete",
+            steps={name: {"status": "ok"} for name in contracts.CORE_STAGE_ORDER},
+        )
+        write_json_atomic(summary_path, summary)
+        for artifact_name, (path, schema, version) in ARTIFACTS.items():
+            payload = load_json(run / path, {})
+            self.assertTrue(
+                contracts.artifact_identity_matches(payload, schema, version),
+                (artifact_name, payload.get("_schema"), schema, version),
+            )
+        return run, run / "original.pdf"
+
     def partial_run(self, name, *, failed_stage="activity"):
         run = artifact_run(self.root / name, self.pdf)
         for artifact in ("locator", "structures", "bindings", "smiles", "qa"):
@@ -108,14 +151,15 @@ class ResultTests(WebFixture, unittest.TestCase):
     def test_generated_crop_without_file_or_pdf_geometry_is_explicitly_unavailable(
         self,
     ):
-        run = artifact_run(self.root / "missing-generated-crop", self.pdf)
+        # Without geometry this is archived review, never a current proved
+        # owner. Its unavailable preview must still be explained explicitly.
+        run = artifact_run(
+            self.root / "missing-generated-crop", self.pdf, current=False
+        )
         (run / "crop.png").unlink()
         path = run / "structure_bindings/bindings.json"
         bindings = json.loads(path.read_text())
-        for row in [
-            *bindings["final_bindings"],
-            *bindings["compound_catalog"]["entries"],
-        ]:
+        for row in bindings["compound_catalog"]["entries"]:
             for field in ("struct_x0", "struct_y0", "struct_x1", "struct_y1"):
                 row.pop(field)
         path.write_text(json.dumps(bindings))
@@ -252,7 +296,7 @@ class ResultTests(WebFixture, unittest.TestCase):
             "bare_smiles",
             "bad_mode",
         ):
-            run = artifact_run(self.root / mode, self.pdf)
+            run, original = self.complete_source_run(mode)
             if mode == "old_rules":
                 path = run / "activity/activity_data.json"
                 data = json.loads(path.read_text())
@@ -274,7 +318,7 @@ class ResultTests(WebFixture, unittest.TestCase):
                 data = json.loads(path.read_text())
                 data["execution_mode"] = "diagnostic_unvalidated"
                 path.write_text(json.dumps(data))
-            project = import_run(self.state, run, pdf_path=self.pdf)
+            project = import_run(self.state, run, pdf_path=original)
             expected = (
                 "accepted"
                 if mode == "accepted"
@@ -282,7 +326,9 @@ class ResultTests(WebFixture, unittest.TestCase):
                 if mode in {"bad_qa", "marker", "missing_qa", "bad_mode"}
                 else "historical"
             )
-            self.assertEqual(project.acceptance.state, expected, mode)
+            self.assertEqual(
+                project.acceptance.state, expected, (mode, project.acceptance.errors)
+            )
 
     def test_review_conflict_audit_and_core_artifacts_unchanged(self):
         run = artifact_run(self.root / "run", self.pdf, current=False)

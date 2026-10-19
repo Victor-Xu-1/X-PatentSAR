@@ -104,13 +104,17 @@ class CorpusPredictionTests(PredictionFixture, unittest.TestCase):
 
         for name, keys in (
             ("activity", ("rows", "active_cpds")),
-            ("bindings", ("final_bindings",)),
+            ("bindings", ()),
             ("smiles", ("records",)),
         ):
             path = self.run / ARTIFACTS[name][0]
             packet = json.loads(path.read_text())
             for key in keys:
                 packet[key] = []
+            if name == "bindings":
+                packet["compound_catalog"].update(
+                    entries=[], numbered_compounds=0, source_observations=0
+                )
             path.write_text(json.dumps(packet))
         self.service.refresh(self.project.id)
         row, spec = self.job()

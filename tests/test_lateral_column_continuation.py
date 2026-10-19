@@ -68,7 +68,8 @@ class LateralColumnContinuationTests(LateralStructureControls, unittest.TestCase
         self.assertEqual(coverage_errors(payload), [])
         saved = json.loads(json.dumps(payload))
         self.assertEqual(
-            len(read_compound_catalog(saved, saved["final_bindings"])[0]), len(expected)
+            len(read_compound_catalog(saved, saved["compound_catalog"]["entries"])[0]),
+            len(expected),
         )
         children = [
             s
@@ -307,7 +308,7 @@ class LateralColumnContinuationTests(LateralStructureControls, unittest.TestCase
             parent_region_id=roots[1]["region_id"],
         )
         child["region_id"] = proof_id(child["source"])
-        for row in [*saved["compound_catalog"]["entries"], *saved["final_bindings"]]:
+        for row in saved["compound_catalog"]["entries"]:
             owner = (row.get("numbered_table_cell_evidence") or {}).get(
                 "column_ownership", {}
             )

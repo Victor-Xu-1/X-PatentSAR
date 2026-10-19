@@ -64,10 +64,7 @@ def same_page_physical_parts(
 
 def refresh_child_projections(payload, child, old_region):
     child["region_id"] = proof_id(child["source"])
-    for row in [
-        *payload["compound_catalog"]["entries"],
-        *payload["final_bindings"],
-    ]:
+    for row in payload["compound_catalog"]["entries"]:
         ownership = (row.get("numbered_table_cell_evidence") or {}).get(
             "column_ownership", {}
         )
@@ -97,7 +94,12 @@ class RuledColumnContinuationTests(UnruledStructureControls, unittest.TestCase):
                 self.assertEqual(coverage_errors(payload), [])
                 saved = json.loads(json.dumps(payload))
                 self.assertEqual(
-                    len(read_compound_catalog(saved, saved["final_bindings"])[0]), 4
+                    len(
+                        read_compound_catalog(
+                            saved, saved["compound_catalog"]["entries"]
+                        )[0]
+                    ),
+                    4,
                 )
 
     def test_same_page_unknown_gap_cannot_borrow_previous_physical_roles(self):
@@ -298,7 +300,12 @@ class RuledColumnContinuationTests(UnruledStructureControls, unittest.TestCase):
                 )
                 saved = json.loads(json.dumps(payload))
                 self.assertEqual(
-                    len(read_compound_catalog(saved, saved["final_bindings"])[0]), 4
+                    len(
+                        read_compound_catalog(
+                            saved, saved["compound_catalog"]["entries"]
+                        )[0]
+                    ),
+                    4,
                 )
 
     def test_gap_and_unrelated_original_prefix_cannot_borrow_column_roles(self):

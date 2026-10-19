@@ -21,11 +21,8 @@ class CompoundCatalogViewTests(PredictionFixture, unittest.TestCase):
         root = Path(tempfile.mkdtemp(prefix="catalogue-", dir=self.root))
         self.run = artifact_run(root / "run", self.pdf, rows=1)
         self.pdf, binding_path, payload = original_catalogue(root, self.run)
-        # Exercise a partial formal transport view while retaining the complete
-        # proved original catalogue. The same worker must still observe the
-        # unmeasured numbered source and its reprints, not silently omit them.
-        payload["final_bindings"] = payload["final_bindings"][:1]
-        payload["final_bindings_count"] = 1
+        # The saved recognition observes only the first source; the single
+        # complete catalogue must still expose unmeasured owners and reprints.
         binding_path.write_text(json.dumps(payload))
         # The saved source and project PDF must be the same actual controlled file.
         self.project = self.service.import_run(
@@ -65,7 +62,6 @@ class CompoundCatalogViewTests(PredictionFixture, unittest.TestCase):
 
     def test_zero_activity_still_retains_confirmed_printed_identifiers(self):
         path, payload = self.catalog_run()
-        payload["final_bindings"] = []
         path.write_text(json.dumps(payload))
         activity_path = self.run / ARTIFACTS["activity"][0]
         activity = json.loads(activity_path.read_text())

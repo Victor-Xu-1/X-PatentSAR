@@ -114,11 +114,9 @@ class BindingTransportBudgetTests(unittest.TestCase):
             )
             resumed = SafeFiles(transport.target).json("bindings.json", optional=False)
             self.assertEqual(resumed, restored)
-        self.assertEqual(len(restored["final_bindings"]), len(rows))
-        self.assertEqual(
-            restored["final_bindings"], restored["compound_catalog"]["entries"]
-        )
-        for row in restored["final_bindings"]:
+        self.assertEqual(len(restored["compound_catalog"]["entries"]), len(rows))
+        self.assertNotIn("final_bindings", restored)
+        for row in restored["compound_catalog"]["entries"]:
             self.assertEqual(row["original_label_evidence"], original)
         self.assertEqual(proof, original)
 

@@ -137,7 +137,9 @@ class HeadingLabelRoleTests(unittest.TestCase):
             reference_issues(payload, payload["compound_catalog"]["entries"]), []
         )
         self.assertEqual(coverage_errors(payload), [])
-        entries, _ = read_compound_catalog(payload, payload["final_bindings"])
+        entries, _ = read_compound_catalog(
+            payload, payload["compound_catalog"]["entries"]
+        )
         self.assertEqual(
             [e["cpd"] for e in entries], ["Compound 17", "Compound 18", "Compound 19"]
         )
@@ -272,7 +274,7 @@ class HeadingLabelRoleTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 coverage_errors(payload)
             with self.assertRaises(WebError):
-                read_compound_catalog(payload, payload["final_bindings"])
+                read_compound_catalog(payload, payload["compound_catalog"]["entries"])
 
     def test_cleared_removed_or_downgraded_role_references_are_not_success(self):
         _, _, original = self.run_binding()

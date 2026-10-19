@@ -94,7 +94,6 @@ def complete_payloads():
     )
     payloads["bindings"].update(
         execution_mode="production_structure_led",
-        final_bindings=[binding],
         compound_catalog=compound_catalog([binding], []),
         source_sections=[],
         source_reference_scope=reference_scope([], "a" * 64),

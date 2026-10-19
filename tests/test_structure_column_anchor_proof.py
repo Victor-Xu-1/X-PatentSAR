@@ -27,7 +27,10 @@ def column_anchor(payload):
 def rehash_column_anchor(payload, section):
     old = section["region_id"]
     section["region_id"] = proof_id(section["source"])
-    for row in [*payload["compound_catalog"]["entries"], *payload["final_bindings"]]:
+    for row in [
+        *payload["compound_catalog"]["entries"],
+        *payload["compound_catalog"]["entries"],
+    ]:
         ownership = (row.get("numbered_table_cell_evidence") or {}).get(
             "column_ownership", {}
         )
@@ -74,16 +77,18 @@ class StructureColumnAnchorProofTests(UnruledStructureControls, unittest.TestCas
         _, payload = self.run_binding(
             ["73", "28"], mutate_page=ruled_first_then_unruled
         )
-        for rows in (payload["compound_catalog"]["entries"], payload["final_bindings"]):
-            rows[:] = [row for row in rows if row["cpd"] != "Compound 73"]
+        rows = payload["compound_catalog"]["entries"]
+        rows[:] = [row for row in rows if row["cpd"] != "Compound 73"]
         payload["source_issues"] = []
         payload["compound_catalog"]["numbered_compounds"] = 3
         payload["compound_catalog"]["source_observations"] = 3
         payload["final_bindings_count"] = 3
         payload["strict_coverage"] = {
-            "expected_cpds": [row["cpd"] for row in payload["final_bindings"]],
+            "expected_cpds": [
+                row["cpd"] for row in payload["compound_catalog"]["entries"]
+            ],
             "expected_structure_ids": [
-                row["structure_id"] for row in payload["final_bindings"]
+                row["structure_id"] for row in payload["compound_catalog"]["entries"]
             ],
             "catalog_count": 3,
             "unresolved_sources": [],
@@ -101,7 +106,7 @@ class StructureColumnAnchorProofTests(UnruledStructureControls, unittest.TestCas
         with self.assertRaises(ValueError):
             coverage_errors(payload)
         with self.assertRaises(WebError):
-            read_compound_catalog(payload, payload["final_bindings"])
+            read_compound_catalog(payload, payload["compound_catalog"]["entries"])
 
     def test_serialized_physical_and_logical_sources_share_real_saved_consumers(self):
         _, payload = self.run_binding(
@@ -110,7 +115,12 @@ class StructureColumnAnchorProofTests(UnruledStructureControls, unittest.TestCas
         payload = json.loads(json.dumps(payload))
         self.assertEqual(len(read_catalog_entries(payload)[0]), 4)
         self.assertEqual(
-            len(read_compound_catalog(payload, payload["final_bindings"])[0]), 4
+            len(
+                read_compound_catalog(payload, payload["compound_catalog"]["entries"])[
+                    0
+                ]
+            ),
+            4,
         )
         self.assertEqual(coverage_errors(payload), [])
 
@@ -145,7 +155,7 @@ class StructureColumnAnchorProofTests(UnruledStructureControls, unittest.TestCas
         )
         for row in [
             *payload["compound_catalog"]["entries"],
-            *payload["final_bindings"],
+            *payload["compound_catalog"]["entries"],
         ]:
             evidence = row["numbered_table_cell_evidence"]
             if evidence.get("kind") == "original_ruled_columns":
@@ -158,7 +168,7 @@ class StructureColumnAnchorProofTests(UnruledStructureControls, unittest.TestCas
         )
         for row in [
             *payload["compound_catalog"]["entries"],
-            *payload["final_bindings"],
+            *payload["compound_catalog"]["entries"],
         ]:
             evidence = row["numbered_table_cell_evidence"]
             if evidence.get("kind") == "original_ruled_columns":

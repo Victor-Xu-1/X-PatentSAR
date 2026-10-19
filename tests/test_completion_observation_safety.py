@@ -183,7 +183,6 @@ class CompletionObservationSafetyTests(PredictionFixture, unittest.TestCase):
         payload["compound_catalog"] = compound_catalog(
             payload["compound_catalog"]["entries"][1:], []
         )
-        payload["final_bindings"] = []
         path.write_text(json.dumps(payload))
         # The actual original ledger still contains this owner. Removing only
         # derived rows is now a malformed current catalogue, not valid absence.

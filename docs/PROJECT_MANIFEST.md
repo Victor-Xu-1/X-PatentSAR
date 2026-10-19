@@ -1,5 +1,19 @@
 # Project governance manifest
 
+- Single binding-record authority: `core/binding_records` selects the one
+  bounded current `compound_catalog.entries`, requires integer counts and rejects
+  obsolete competing root collections. `binding_artifacts` is the only writer;
+  binding/header/cache/recognition/export/QA/Web/resume consumers share it.
+  Current Binding40/binder50 refresh derived records only. Independent original
+  claims/reference/role/pixel completeness remains mandatory, with explicit
+  historical review rather than old scientific promotion. Web graphs require
+  current valid recognition for every owner, measured or unmeasured. Shared
+  JSON1 and its wire/node/byte/depth guards, Activity25/extractor35,
+  preparation12, raw PDF/OCR/OCSR2/assets/manual audit, numerical SAR, API/SQL and
+  dependencies remain unchanged. No second store, queue, result writer, fallback
+  authority, limit increase or private-data repair is introduced. Rollback uses
+  its compatible code/config/state snapshot; release evidence remains external.
+
 - Numbered-source auxiliary integration: the SAME `table_cells` and
   `heading_observation` use `text_ocr/source_capture` only for unresolved complete
   primary views. `structure_binder` owns the optional phase; bind cache selection

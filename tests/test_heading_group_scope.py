@@ -80,7 +80,7 @@ class HeadingGroupScopeTests(unittest.TestCase):
                 self.assertEqual(
                     {
                         row["cpd"]: row["structure_id"]
-                        for row in payload["final_bindings"]
+                        for row in payload["compound_catalog"]["entries"]
                     },
                     {"Compound 18": "S1", "Compound 17": "S2"},
                 )
@@ -113,7 +113,8 @@ class HeadingGroupScopeTests(unittest.TestCase):
         payload, section = self.original(only_one_caption=True)
         self.assertEqual(self.members(payload, section), {"17"})
         self.assertEqual(
-            [row["cpd"] for row in payload["final_bindings"]], ["Compound 17"]
+            [row["cpd"] for row in payload["compound_catalog"]["entries"]],
+            ["Compound 17"],
         )
         self.assertEqual(
             {issue["cpd"] for issue in payload["source_issues"]}, {"Compound 18"}

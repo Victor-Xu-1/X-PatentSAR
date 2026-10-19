@@ -69,11 +69,10 @@ def _stable_digest(payload) -> str:
 def _bindings_ocsr_digest(path: str) -> str:
     payload = _load_json(path, {})
     if isinstance(payload, dict):
+        from patent_sar_extractor.core.binding_records import binding_records
         from patent_sar_extractor.core.ocsr.recognition_inputs import recognition_inputs
 
-        bindings = payload.get("final_bindings")
-        if not isinstance(bindings, list):
-            bindings = payload.get("bindings", [])
+        bindings = binding_records(payload, legacy=True)
         if "compound_catalog" in payload:
             bindings = recognition_inputs(payload).work_items
     elif isinstance(payload, list):

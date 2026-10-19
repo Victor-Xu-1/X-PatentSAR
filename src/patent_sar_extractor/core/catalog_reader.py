@@ -14,6 +14,7 @@ from patent_sar_extractor.contracts import (
     schema_ref_matches,
 )
 
+from .binding_records import binding_records
 from .binding_source_claims import validate_catalog_claims
 from .binding_source_references import reference_issues
 from .pipeline_rules import _label_key, annotate_binding_accuracy
@@ -89,6 +90,11 @@ def read_catalog_entries(
     original_required = not historical_review and schema_ref_matches(
         payload.get("schema"), schema_ref(BINDINGS_SCHEMA, BINDINGS_SCHEMA_VERSION)
     )
+    if original_required:
+        try:
+            entries = binding_records(payload)
+        except ValueError as exc:
+            raise CatalogValidationError(str(exc)) from exc
     for raw in entries:
         if not isinstance(raw, dict):
             raise CatalogValidationError("Printed-ID catalog row is invalid.")

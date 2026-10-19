@@ -33,8 +33,8 @@ class StructureDeclarationProofTests(UnruledStructureControls, unittest.TestCase
         _, payload = self.run_binding(
             ["73", "28"], mutate_page=independent_caption_page
         )
-        for rows in (payload["compound_catalog"]["entries"], payload["final_bindings"]):
-            rows[:] = [row for row in rows if row["structure_id"] != "CAP1"]
+        rows = payload["compound_catalog"]["entries"]
+        rows[:] = [row for row in rows if row["structure_id"] != "CAP1"]
         payload["source_issues"] = []
         payload["compound_catalog"]["numbered_compounds"] = 3
         payload["compound_catalog"]["source_observations"] = 3
@@ -66,7 +66,12 @@ class StructureDeclarationProofTests(UnruledStructureControls, unittest.TestCase
         payload = json.loads(json.dumps(payload))
         self.assertEqual(len(read_catalog_entries(payload)[0]), 4)
         self.assertEqual(
-            len(read_compound_catalog(payload, payload["final_bindings"])[0]), 4
+            len(
+                read_compound_catalog(payload, payload["compound_catalog"]["entries"])[
+                    0
+                ]
+            ),
+            4,
         )
         self.assertEqual(coverage_errors(payload), [])
 

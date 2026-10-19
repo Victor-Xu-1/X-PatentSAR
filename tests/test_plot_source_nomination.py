@@ -126,7 +126,9 @@ class PhysicalPlotNominationTests(unittest.TestCase):
                 self.assertEqual(payload["source_issues"], [])
                 self.assertEqual(_binding_acceptance_errors(payload), [])
                 self.assertEqual(coverage_errors(payload), [])
-                entries, _ = read_compound_catalog(payload, payload["final_bindings"])
+                entries, _ = read_compound_catalog(
+                    payload, payload["compound_catalog"]["entries"]
+                )
                 self.assertEqual([entry["cpd"] for entry in entries], ["Compound 82A"])
                 self.assertEqual(
                     [entry["cpd"] for entry in recognition_inputs(payload).formal],

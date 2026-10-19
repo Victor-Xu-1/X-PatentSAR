@@ -32,7 +32,7 @@ class ObservationCompletionTests(unittest.TestCase):
         run_fixture(self.root)
         self.input_path = self.root / "structure_bindings/bindings.json"
         self.payload = load_json(self.input_path, {})
-        self.bindings = self.payload["final_bindings"]
+        self.bindings = self.payload["compound_catalog"]["entries"]
         seeded = load_json(self.root / "smiles/smiles_results.json", {})
         self.records = smiles_records(seeded)
         self.auxiliary = smiles_observations(seeded)[len(self.records) :]

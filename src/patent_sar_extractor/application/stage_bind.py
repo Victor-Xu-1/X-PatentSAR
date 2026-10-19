@@ -8,6 +8,7 @@ from pathlib import Path
 
 from patent_sar_extractor.contracts import STRUCTURE_BINDER_VERSION
 from patent_sar_extractor.core.binding_artifacts import write_binding_result
+from patent_sar_extractor.core.binding_records import binding_records
 from patent_sar_extractor.core.formal_structure import SOURCE_EXECUTION_MODE
 from patent_sar_extractor.core.text_ocr.configuration import text_ocr_policy_identity
 
@@ -89,8 +90,9 @@ def execute_bind(state: PipelineContext) -> None:
             unbound_pages=[],
         )
         _write_step_manifest(state.bind_json, fingerprint)
-    state.n_bound = len(state.bind_payload["final_bindings"])
-    state.source_cpds = [row["cpd"] for row in state.bind_payload["final_bindings"]]
+    records = binding_records(state.bind_payload)
+    state.n_bound = len(records)
+    state.source_cpds = [row["cpd"] for row in records]
     state.pipeline_log["steps"][step] = {
         "from_cache": state.progress.checkpoint_reused,
         "status": "ok" if state.n_bound else "empty",

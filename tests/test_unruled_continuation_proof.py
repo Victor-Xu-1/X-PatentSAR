@@ -42,7 +42,7 @@ def rewrite_continuation(payload, section):
         for a, b in assignments
         for p in [pair_evidence(section["source"], section["region_id"], a, b)]
     }
-    for row in [*payload["compound_catalog"]["entries"], *payload["final_bindings"]]:
+    for row in payload["compound_catalog"]["entries"]:
         evidence = row.get("numbered_table_cell_evidence", {})
         if evidence.get("source_region_id") == old:
             row["numbered_table_cell_evidence"] = copy.deepcopy(
@@ -90,7 +90,7 @@ class UnruledContinuationProofTests(UnruledStructureControls, unittest.TestCase)
         with self.assertRaises(ValueError):
             coverage_errors(payload)
         with self.assertRaises(WebError):
-            read_compound_catalog(payload, payload["final_bindings"])
+            read_compound_catalog(payload, payload["compound_catalog"]["entries"])
 
     def test_serialized_same_and_adjacent_page_sources_replay_in_real_consumers(self):
         for mutation in (same_page_part, continued_page):
@@ -98,7 +98,12 @@ class UnruledContinuationProofTests(UnruledStructureControls, unittest.TestCase)
             payload = json.loads(json.dumps(payload))
             self.assertEqual(len(read_catalog_entries(payload)[0]), 4)
             self.assertEqual(
-                len(read_compound_catalog(payload, payload["final_bindings"])[0]), 4
+                len(
+                    read_compound_catalog(
+                        payload, payload["compound_catalog"]["entries"]
+                    )[0]
+                ),
+                4,
             )
             self.assertEqual(coverage_errors(payload), [])
 

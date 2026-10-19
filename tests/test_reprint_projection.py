@@ -130,7 +130,7 @@ class ReprintProjectionTests(PredictionFixture, unittest.TestCase):
         artifact.pop("reprint_records")
         self.publish(artifact)
         row, _, source = self.draft()
-        record = observation(payload["final_bindings"][0])
+        record = observation(payload["compound_catalog"]["entries"][0])
         RecognitionStore(self.service.store).put(
             self.project.id,
             "Compound 1",
@@ -147,7 +147,6 @@ class ReprintProjectionTests(PredictionFixture, unittest.TestCase):
     def test_final_export_and_qa_withhold_only_the_disagreeing_owner(self):
         path, payload, artifact = self.prepare()
         plan = recognition_inputs(payload)
-        payload["final_bindings"] = [*plan.formal, *plan.supplemental]
         path.write_text(json.dumps(payload))
         artifact = complete_observation_artifact(
             payload,
