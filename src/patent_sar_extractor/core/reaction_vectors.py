@@ -1,11 +1,13 @@
 """Bounded native vector observations in the original rendered PDF frame.
 
-Unsupported curves, fills, clipping, raster ink and text remain blockers. This
+Unsupported curves/fills, clipping, raster ink and text remain blockers. This
 reader neither recognizes chemistry nor assigns a compound or reaction role.
 """
 
 import math
+from itertools import pairwise
 
+from .reaction_heads import MAX_FILLED_HEADS, observe_triangle, validate_heads
 from .source_geometry import overlaps
 
 MAX_VECTOR_SEGMENTS = 20000
@@ -29,13 +31,14 @@ def validate_vectors(observation):
         "page_size",
         "bounds",
         "segments",
+        "filled_heads",
         "blockers",
     }:
         raise ValueError("Malformed native reaction observation")
     size = observation["page_size"]
     if (
         type(observation["version"]) is not int
-        or observation["version"] != 1
+        or observation["version"] != 2
         or type(observation["page_no"]) is not int
         or not 1 <= observation["page_no"] <= 20000
         or not isinstance(size, list)
@@ -62,6 +65,7 @@ def validate_vectors(observation):
             raise ValueError("Malformed native reaction segment")
     if any(not valid_rectangle(box, size) for box in observation["blockers"]):
         raise ValueError("Malformed native reaction blocker")
+    validate_heads(observation["filled_heads"], size)
 
 
 def observe_vectors(page, bounds):
@@ -71,7 +75,7 @@ def observe_vectors(page, bounds):
     size = [page.rect.width, page.rect.height]
     if not valid_rectangle(bounds, size):
         raise ValueError("Invalid native reaction source window")
-    segments, blockers = [], []
+    segments, blockers, heads = [], [], []
 
     def block(rectangle):
         box = (fitz.Rect(rectangle) * page.rotation_matrix) & page.rect
@@ -93,6 +97,15 @@ def observe_vectors(page, bounds):
         raise ValueError("Native reaction path bound exceeded")
     for path in paths:
         items, color = path.get("items", []), path.get("color")
+        triangle = observe_triangle(path, page.rotation_matrix)
+        if triangle is not None:
+            from .reaction_heads import head_bounds
+
+            if overlaps(head_bounds(triangle), bounds):
+                heads.append(triangle)
+                if len(heads) > MAX_FILLED_HEADS:
+                    raise ValueError("Native filled-head source bound exceeded")
+            continue
         plain = (
             path.get("type") == "s"
             and path.get("stroke_opacity") == 1
@@ -100,7 +113,6 @@ def observe_vectors(page, bounds):
             and color
             and max(color) <= 0.45
             and 0 < path.get("width", 0) <= 4
-            and not path.get("closePath")
             and path.get("dashes") == "[] 0"
             and items
             and all(item[0] == "l" for item in items)
@@ -108,7 +120,15 @@ def observe_vectors(page, bounds):
         if not plain:
             block(path.get("rect") or page.rect)
             continue
-        for _, first, last in items:
+        observed_lines = list(items)
+        if path.get("closePath"):
+            if any(
+                math.dist(left[2], right[1]) > 1e-6 for left, right in pairwise(items)
+            ):
+                block(path.get("rect") or page.rect)
+                continue
+            observed_lines.append(("l", items[-1][2], items[0][1]))
+        for _, first, last in observed_lines:
             a, b = first * page.rotation_matrix, last * page.rotation_matrix
             if a == b:
                 continue
@@ -131,11 +151,12 @@ def observe_vectors(page, bounds):
     for image in images:
         block(image["bbox"])
     observation = {
-        "version": 1,
+        "version": 2,
         "page_no": page.number + 1,
         "page_size": size,
         "bounds": list(bounds),
         "segments": segments,
+        "filled_heads": heads,
         "blockers": blockers,
     }
     validate_vectors(observation)

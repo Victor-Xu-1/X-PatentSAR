@@ -1,8 +1,10 @@
-"""Explicit open vector-arrow heads, not left/right or largest-figure ranking."""
+"""Explicit native arrow heads/shafts, never positional product ranking."""
 
 import math
 from collections import defaultdict
 
+from .reaction_filled_arrows import coalesce_arrow_ink, filled_arrows, filled_head_index
+from .reaction_heads import head_bounds
 from .source_geometry import overlaps
 
 JOIN_TOLERANCE = 0.3
@@ -57,6 +59,7 @@ def _head(shaft, tip, tail, neighbors, segments):
         "tail": list(tail),
         "tip": list(tip),
         "segments": sorted(indexes),
+        "heads": [],
         "bounds": [
             min(b[0] for b in extents),
             min(b[1] for b in extents),
@@ -69,12 +72,19 @@ def _head(shaft, tip, tail, neighbors, segments):
 def vector_arrows(observation, protected_regions):
     """Every local visible arrow is retained, including reverse/dangling arrows."""
     segments = observation["segments"]
+    heads = observation["filled_heads"]
     eligible = []
     for index, segment in enumerate(segments):
         box = segment_bounds(segment, 0)
         if not any(contained(box, region) for region in protected_regions):
             eligible.append(index)
     grid = defaultdict(list)
+    eligible_heads = [
+        i
+        for i, head in enumerate(heads)
+        if not any(contained(head_bounds(head), region) for region in protected_regions)
+    ]
+    filled_grid = filled_head_index(heads, eligible_heads, JOIN_TOLERANCE)
     for index in eligible:
         for point, other in [
             (segments[index][:2], segments[index][2:]),
@@ -98,21 +108,42 @@ def vector_arrows(observation, protected_regions):
             if len(neighbors) > 8:
                 raise ValueError("Ambiguous native arrow junction")
             arrow = _head(index, tip, tail, neighbors, segments)
-            if arrow is None:
-                continue
-            if not contained(arrow["bounds"], observation["bounds"]):
-                raise ValueError("Native arrow crosses the original declaration")
-            if any(overlaps(arrow["bounds"], region) for region in protected_regions):
-                raise ValueError("Native arrow overlaps an independently owned source")
-            if any(overlaps(arrow["bounds"], b) for b in observation["blockers"]):
-                raise ValueError("Native arrow contains unsupported or raster ink")
-            if any(
-                i not in arrow["segments"]
-                and overlaps(arrow["bounds"], segment_bounds(segments[i]))
-                for i in eligible
-            ):
-                raise ValueError("Native arrow has competing original strokes")
-            arrows.append(arrow)
+            if arrow is not None:
+                arrows.append(arrow)
+            arrows.extend(
+                filled_arrows(
+                    index,
+                    tip,
+                    tail,
+                    segments,
+                    heads,
+                    filled_grid,
+                    eligible,
+                    JOIN_TOLERANCE,
+                )
+            )
             if len(arrows) > MAX_ARROW_COUNT:
                 raise ValueError("Native arrow count bound exceeded")
+    arrows = coalesce_arrow_ink(arrows, heads, JOIN_TOLERANCE)
+    for arrow in arrows:
+        if not contained(arrow["bounds"], observation["bounds"]):
+            raise ValueError("Native arrow crosses the original declaration")
+        if any(overlaps(arrow["bounds"], region) for region in protected_regions):
+            raise ValueError("Native arrow overlaps an independently owned source")
+        if any(overlaps(arrow["bounds"], b) for b in observation["blockers"]):
+            raise ValueError("Native arrow contains unsupported or raster ink")
+        if any(
+            i not in arrow["segments"]
+            and overlaps(arrow["bounds"], segment_bounds(segments[i]))
+            for i in eligible
+        ):
+            raise ValueError("Native arrow has competing original strokes")
+        if any(
+            i not in arrow["heads"] and overlaps(arrow["bounds"], head_bounds(heads[i]))
+            for i in eligible_heads
+        ):
+            raise ValueError("Native arrow has competing original filled heads")
+    # A triangle by itself is not an arrow (nor a named compound). All such ink
+    # stays in the original packet and blocks intersecting arrows/connectors.
+    # Only an explicitly attached shaft supplies a directed reaction role.
     return arrows
