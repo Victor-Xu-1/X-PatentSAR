@@ -3,6 +3,7 @@
 import math
 from collections.abc import Mapping
 
+from .caption_word_proof import WORD_FORM_METHOD, caption_form_aliases
 from .cell_caption_identity import refined_caption_conflicts
 from .cell_caption_lines import physical_caption_valid
 from .compound_caption import prefixed_label
@@ -12,12 +13,17 @@ from .source_section_roles import nonfinal_original_label
 
 
 def confirmed_identity_readings(label, observations, *, caption=False):
+    aliases = caption_form_aliases(label, observations)
+    if aliases is None or aliases and not caption:
+        return False
     methods = set()
-    for observation in observations:
+    for index, observation in enumerate(observations):
         if not isinstance(observation, Mapping) or not physical_caption_valid(
             observation
         ):
             return False
+        if observation.get("method") == WORD_FORM_METHOD:
+            continue  # Word scope verifies form; it is not another ID observation.
         if refined_caption_conflicts(
             label, observation.get("parts"), observation.get("detection_parts")
         ):
@@ -27,7 +33,9 @@ def confirmed_identity_readings(label, observations, *, caption=False):
         original_caption = caption and original_cell
         if original_cell:
             status = cell_source_status(observation)
-            if cell_source_conflict(observation, label, "label" if caption else "id"):
+            if index not in aliases and cell_source_conflict(
+                observation, label, "label" if caption else "id"
+            ):
                 return False
             if status not in {"qualified", "legacy"}:
                 continue

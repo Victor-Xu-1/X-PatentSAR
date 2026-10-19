@@ -9,6 +9,19 @@ import numpy as np
 from .table_cells import CellRenderLimit, cell_image
 
 
+def pixel_reading(image, dpi):
+    """One exact RGB digest and bounded binary-ink encoding for source readers."""
+    return {
+        "dpi": dpi,
+        "shape": list(image.shape),
+        "pixel_sha256": hashlib.sha256(image.tobytes()).hexdigest(),
+        "mask_encoding": "zlib-packbits-v1",
+        "mask_hex": zlib.compress(
+            np.packbits(np.min(image, axis=2) < 180).tobytes()
+        ).hex(),
+    }
+
+
 def observe_pixels(page, bounds, maximum_pixels, *, resolutions=(400, 600)):
     if (
         not isinstance(resolutions, tuple)
@@ -24,17 +37,7 @@ def observe_pixels(page, bounds, maximum_pixels, *, resolutions=(400, 600)):
             return None
         if image.shape[0] * image.shape[1] > maximum_pixels:
             return None
-        readings.append(
-            {
-                "dpi": dpi,
-                "shape": list(image.shape),
-                "pixel_sha256": hashlib.sha256(image.tobytes()).hexdigest(),
-                "mask_encoding": "zlib-packbits-v1",
-                "mask_hex": zlib.compress(
-                    np.packbits(np.min(image, axis=2) < 180).tobytes()
-                ).hex(),
-            }
-        )
+        readings.append(pixel_reading(image, dpi))
     return {"bbox": bounds, "readings": readings}
 
 

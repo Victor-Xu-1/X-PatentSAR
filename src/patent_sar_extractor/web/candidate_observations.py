@@ -92,17 +92,17 @@ def read_source_observations(files, payloads, original_sha, *, open_original=Non
             read_digest=digest,
         )
         validate_candidate_observations(plan, payload, read_digest=digest)
-        from patent_sar_extractor.core.heading_original_replay import (
-            heading_sources,
-            original_heading_source_errors,
+        from patent_sar_extractor.core.binding_original_replay import (
+            original_binding_source_errors,
+            original_binding_sources,
         )
 
-        if heading_sources(plan.proven.work_items):
+        if original_binding_sources(plan.proven.work_items):
             if open_original is None:
-                raise ValueError("Original PDF is required for heading/source replay")
+                raise ValueError("Original PDF is required for binding/source replay")
             with open_original() as document:
-                if original_heading_source_errors(document, plan.proven.work_items):
-                    raise ValueError("Original heading/source replay failed")
+                if original_binding_source_errors(document, plan.proven.work_items):
+                    raise ValueError("Original binding/source replay failed")
     except (OSError, ValueError, TypeError, KeyError, OverflowError, WebError):
         return SourceObservations(
             {},

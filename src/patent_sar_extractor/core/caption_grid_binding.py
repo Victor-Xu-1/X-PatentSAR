@@ -6,6 +6,7 @@ from .activity_context_geometry import MAX_TABLES, context_region, grid_axes, gr
 from .activity_grid_context import _prefix
 from .binding_progress import observed_items
 from .caption_boundary_context import observe_caption_tail
+from .caption_cell_reading import reconcile_caption_form
 from .caption_grid_rows import caption_rows, numbered_header_nominee
 from .caption_grid_rows import inside as _inside
 from .caption_page_boundary import (
@@ -326,6 +327,9 @@ def bind_caption_grids(
                         tokens,
                         "id" if bare else "label",
                         bool(page.get_text("words")),
+                    )
+                    reading, bare = reconcile_caption_form(
+                        page, cell, reading, bare=bare, role=role_status
                     )
                     # Page text nominates the cell; the shared reader alone
                     # qualifies its value and retains native/qualified conflicts.

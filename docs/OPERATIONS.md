@@ -1,5 +1,37 @@
 # Operations and troubleshooting
 
+## A caption's role word was merged into its ID
+
+Inspect the original cell and all preserved page/whole/word observations. Do not
+repair a misspelling in a table of replacements or copy an ID from neighbours.
+A proved compound catalogue can use a bounded physical-word witness only when
+all complete readings and exactly one retained role/ID partition agree while
+preserving the original ID/series/suffix. The same existing OCR is used; no new
+runtime, model or network permission is needed. At most four source partitions
+per400/600dpi frame, one million pixels per frame and16extra word reads are
+allowed. Overflow/unknown/malformed/conflicting sources stay unresolved, not
+truncated to a successful partition. Failed word observations are retained in
+the existing source diagnostic catalogue.
+
+Binding35/binder45/word-form1 refresh derived source ownership. The general
+original-binding replay now checks all caption sources, not only headings.
+Optical readings need their actual cell frame; native readings need visible
+literal original text. Polling/reuse does not repeat OCR. Saved masks, crop
+hashes or self-rehashed claims do not replace the actual original PDF. Existing
+raw caches and human audit are preserved; old derived products stay historical.
+Preparation9 shares the same caption observation budget with source-owned label
+masking. Old preparation8 markers cannot become current input proof. Unmodified
+images still use their exact image/model raw-cache keys; no model is replaced.
+Do not edit a failed workbook/source artifact or waive the final QA. A measured
+ID absent from the proved structure catalogue is an association gap, not
+permission to invent its structure or remove its activity.
+
+Source-level controlled OCR and worker/reuse/QA/Web tests are distinct from
+deployed acceptance and a real frontend extraction/SAR. Raster reaction roles,
+chemical exactness, other source conflicts and unverified assay conditions remain
+separate open work. Never resubmit a private PDF merely for this incremental
+repair while its coherent source/chemistry prerequisites remain unresolved.
+
 ## Recognition input preparation
 
 The normal converter, standalone worker, formal extraction coordinator and
@@ -53,9 +85,10 @@ Web read-side acceptance requires the verified original attachment through the
 existing safe PDF reader. Removing or rehashing a source packet cannot disable
 that replay; missing original evidence withholds acceptance without repairing,
 resubmitting or changing a scientific artifact. Preserve failed/raw/manual data.
-Binding34/binder44 (native-vector2/native-route2) and SMILES4/QA6 invalidate only the derived source/observation
-proofs. Raw OCSR2/preparation8, original assets/model files and manual audit stay
-unchanged. The next PR label and coherent release scope are independently prepared;
+Binding35/binder45 retain native-vector2/native-route2 and SMILES4/QA6 for derived source/observation
+proofs. Raw OCSR2, original assets/model files and manual audit stay unchanged;
+preparation9 uses the shared caption reading budget described above. The next
+PR label and coherent release scope are independently prepared;
 a development checkpoint is not a deployed upgrade. Synthetic native controls
 are not patent/model validation.
 

@@ -152,7 +152,6 @@ def _caption_box(item, label, frame, image_size, digest):
     if (
         not label_box
         or not isinstance(observations, list)
-        or not 1 <= len(observations) <= 3
         or not confirmed_caption_readings(
             label, observations, ownership, item["page_no"], label_box
         )

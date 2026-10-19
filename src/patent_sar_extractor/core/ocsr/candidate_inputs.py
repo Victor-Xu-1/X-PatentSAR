@@ -23,18 +23,18 @@ def load_source_observation_plan(
         metadata_dir=source.resolve().parent,
         binding_dir=binding_dir,
     )
-    from ..heading_original_replay import (
-        heading_sources,
-        original_heading_source_errors,
+    from ..binding_original_replay import (
+        original_binding_source_errors,
+        original_binding_sources,
     )
 
-    if heading_sources(plan.proven.work_items):
+    if original_binding_sources(plan.proven.work_items):
         import fitz
 
         with fitz.open(pdf_path) as document:
-            errors = original_heading_source_errors(document, plan.proven.work_items)
+            errors = original_binding_source_errors(document, plan.proven.work_items)
         if errors:
             raise ValueError(
-                "Original heading/source replay failed: " + "; ".join(errors[:3])
+                "Original binding/source replay failed: " + "; ".join(errors[:3])
             )
     return plan
