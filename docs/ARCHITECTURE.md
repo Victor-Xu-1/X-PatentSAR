@@ -1,5 +1,36 @@
 # X-PatentSAR architecture
 
+## Literal repeated conditions on continued measurement tables
+
+`activity_continuation_policy.continued_context_prefix` is the shared live-grid,
+saved-family and text-plan rule for genuine continued measurement tables. A
+literal continued title may repeat explicitly labelled conditions only when every
+claim is already known and literally equal to its immediate proved parent. The
+single declaration reader consumes the whole suffix; unknown labels, trailing
+prose, new chapters, empty/conflicting/over-limit clauses and newly introduced
+conditions refuse. The existing duration alias applies without time conversion.
+Raw text, physical header origins, original cell proof and confidence/geometry
+limits are unchanged; it neither guesses a missing header nor erases a section.
+Same-page panel rules and structural-characterization fragment rules are unchanged.
+
+Every adjacent physical carry, including plain/running/continued boundaries, now
+retains `continuation_context` from the SAME native/raster boundary observer and
+validator used by parallel panels. Known source text must remain qualified in
+its actual owned caption window; partial native hints cannot outvote primary
+text. Missing/malformed packets, weak current declarations and altered prefixes
+refuse both live carry and saved-family replay. Parallel/adjacent captures reuse
+one packet when their source window is identical, without OCR/model calls.
+
+Ordinary and text continuations use the same parent context, preserving one SAR
+namespace with distinct measurement pages. Source plans and saved-family replay
+recompute that relationship; a changed raw declaration cannot borrow the original
+parent. Activity32/extractor42/coverage17 refresh affected derived evidence;
+projectionv6 and project-scope-v3 refresh disposable views/datasets. Binding48/
+binder58, raw PDF/OCR/OCSR/preparation, manual audit, API/SQL/SAR schemas,
+numerical bands/strict graphs, models and activation remain unchanged. Historical
+proof is retained, not retagged. Generated source conservation is not real-patent,
+universal recall or chemical/scientific acceptance. Earlier epoch notes are history.
+
 ## Literal scientific declarations, not narrative assay names
 
 `activity_context_values` is the single bounded reader for eight literal context

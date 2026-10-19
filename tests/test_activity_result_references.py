@@ -94,7 +94,8 @@ class ActivityResultReferenceTests(unittest.TestCase):
         # This link proves presence, not assay conditions inherited from prose.
         self.assertTrue(
             all(
-                r["activity_sources"][0]["assay"] == "Binding activity"
+                r["activity_sources"][0]["assay"] is None
+                and "Binding activity" in r["activity_sources"][0]["raw_caption"]
                 for r in data["rows"]
             )
         )

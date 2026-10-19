@@ -49,7 +49,7 @@ from .processes import runtime_identity
 from .recognition import recognition_status
 from .structure_corpus import unassociated_structures
 
-RAW_PROJECTION_LAYOUT = "compound-catalog-complete-observations-v5"
+RAW_PROJECTION_LAYOUT = "compound-catalog-complete-observations-v6"
 HISTORICAL_SOURCE_REVIEW_VERSION = 1
 
 

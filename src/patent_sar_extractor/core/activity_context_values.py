@@ -129,6 +129,42 @@ def partial_context_value_matches(original: str, fresh: str) -> bool:
     )
 
 
+def _declaration_value(content):
+    if content.startswith(("\n", "\r\n")):
+        content = content.removeprefix("\r").removeprefix("\n")
+    parts = re.split(r"[;；\r\n]", content, maxsplit=1)
+    return parts[0].strip(" \t,"), parts[1] if len(parts) == 2 else ""
+
+
+def declared_context_suffix(source):
+    """Separate only fully consumed literal declarations after a printed title.
+
+    Free prose, unknown labels, missing values and conflicting declarations are
+    not removable context. Callers must still prove the actual continued title,
+    source confidence, physical ancestry and equality to known parent values.
+    """
+    if len(source) > 10000:
+        return None
+    declarations = list(islice(_DECLARATION.finditer(source), 33))
+    if not declarations:
+        return source, {}
+    if len(declarations) > 32:
+        return None
+    for index, declaration in enumerate(declarations):
+        end = (
+            declarations[index + 1].start()
+            if index + 1 < len(declarations)
+            else len(source)
+        )
+        _, remaining = _declaration_value(source[declaration.end() : end])
+        if remaining.strip(" \t\r\n;；,"):
+            return None
+    values, issues = context_values(source[declarations[0].start() :])
+    if issues:
+        return None
+    return source[: declarations[0].start()].rstrip(" \t;；,"), values
+
+
 def context_values(
     source: str, *, partial=False
 ) -> tuple[dict[str, str | None], tuple[str, ...]]:
@@ -157,9 +193,7 @@ def context_values(
         # A labelled value may start on the immediately following printed line.
         # The next declaration is already excluded by `end`; no earlier table
         # or later free paragraph is searched to fill an empty value.
-        if content.startswith(("\n", "\r\n")):
-            content = content.removeprefix("\r").removeprefix("\n")
-        value = re.split(r"[;；\r\n]", content, maxsplit=1)[0].strip(" \t,")
+        value, _ = _declaration_value(content)
         if not value:
             errors.add(key + ":missing")
             if not partial:

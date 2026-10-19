@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, replace
 
+from .activity_continuation_context import continuation_context_proved
 from .activity_continuation_policy import (
     canonical_header,
     caption_prefix,
@@ -107,6 +108,7 @@ def continued_panel(
             and continuation_allowed(
                 prefix, old.schema.source_layout, old.schema.context
             )
+            and continuation_context_proved(region, prefix)
         )
         if parallel and old.schema.semantic_kind == "generic":
             owned_context = qualified_panel_context(region, prefix)
