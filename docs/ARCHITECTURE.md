@@ -27,7 +27,7 @@ safe Web and activity acceptance compose the SAME original gate, without model
 loading, supplied artifact paths, a new queue/store or a saved-success shortcut.
 An unchanged pure-qualified transcript can still fail actual original replay.
 
-Binding45/binder55, Activity28/extractor38 and characterization-role4 refresh
+Binding46/binder56, Activity29/extractor39 and characterization-role4 refresh
 affected derived proof. Old roles1/2/3 stay historical; raw PDF/OCR/OCSR2,
 preparation12, human audit, API/SQL, numerical SAR, dependencies and activation
 policy remain unchanged. The existing read-model snapshot avoids rerunning source
@@ -37,7 +37,7 @@ are not private-patent, universal recall, chemical or full SAR acceptance.
 
 ## Complete auxiliary text recovery and original-role replay
 
-The optional `text_ocr` adapter now produces recovery2 through one row-only
+The optional `text_ocr` adapter now produces recovery3 through one row-only
 `RecoveryRowEngine` and the SAME `observe_text_cell` geometry. Trusted role
 callers allow32rows per chunk; ordinary scalar/header callers retain8rows and
 no chunks. Existing128chunk,8Mcell-pixel,1Mrow-pixel and2048session-request
@@ -47,11 +47,22 @@ adapter to vote. Qualified native/detector/primary claims and source metadata
 cannot be replaced; unknown column semantics remain unknown.
 
 `recovery_capture` retains both400/600dpi primary views, full frame digests,
-selected complete observations and every literal row response. `recovery_proof`
+selected complete observations and every literal row response. A well-formed
+response below the unchanged0.99 auxiliary threshold may use exactly one
+compact blank-padding alternative from `row_preparation`, governed by the SAME
+original row-border rule. No resizing, rotation, text substitution, unit repair
+or confidence inflation occurs. First-qualified responses never trigger voting;
+two weak responses remain rejected. Malformed/foreign replies abort rather than
+retry. Every actual request, including weak/cached replies, spends the unchanged
+2048session budget. Each logical row retains its original pixel/shape/ink bounds
+and both raw observations when used; the global inventory checks losing replies
+for request/model conflicts too. `recovery_proof`
 replays the same physical observer with recorded pixel-keyed responses, without
 a model or SDK on reads. The existing auxiliary physical marker remains even
-if outer packet fields are stripped. The old recovery1 producer is removed;
-only bounded historical reading remains. No new recognizer, dependency,
+if outer packet fields are stripped. Recovery1/2 have only bounded historical
+readers; neither has a live producer. Original replay reconstructs every compact
+pixel view without a model, and missing/extra/reordered requests refuse.
+No new recognizer, dependency,
 installer, queue or source store is introduced.
 
 `role_text_capture` composes this unresolved-only pass into the normal complete
@@ -63,7 +74,7 @@ readback conserve them through the same original replay. Role diagnostics allow
 six additional envelope links only at physical-cell recovery/attempt paths;
 unrelated nesting, node/array/scalar/catalog budgets remain unchanged.
 
-Binding44/binder54 and Activity27/extractor37 refresh affected derived evidence.
+Binding46/binder56 and Activity29/extractor39 refresh affected derived evidence.
 Original PDF/raw OCR/OCSR2, preparation12, structures, human audit, numerical SAR,
 API/SQL, model files and activation policy remain unchanged. Old role1/2 and
 recovery1 evidence remains historical, never retagged as current acceptance.

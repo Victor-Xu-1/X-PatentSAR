@@ -89,13 +89,15 @@ class AuxiliaryCellEvidenceTests(unittest.TestCase):
             elif change == "primary":
                 packet["views"][0]["primary"] = {}
             elif change == "model":
-                packet["views"][0]["requests"][0]["model_fingerprint"] = "c" * 64
+                packet["views"][0]["requests"][0]["observations"][0][
+                    "model_fingerprint"
+                ] = "c" * 64
             elif change == "row":
                 packet["views"][0]["requests"].pop()
             elif change == "pixels":
                 packet["views"][0]["frame"]["pixel_sha256"] = "c" * 64
             else:
-                packet["views"][0]["requests"][0]["confidence"] = 0.9
+                packet["views"][0]["requests"][0]["observations"][0]["confidence"] = 0.9
             self.assertFalse(
                 valid_auxiliary_cell(reading, 400)
                 and replay_auxiliary_cell(reading, self.page),
