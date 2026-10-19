@@ -3,6 +3,7 @@ import { decodeEnvironmentCatalog } from '../src/api/environmentDecoders';
 
 const copy = {
   en: {
+    language: 'Interface language',
     heading: 'Complete runtime environment',
     details: 'Environment details',
     components: 'Component details',
@@ -10,6 +11,7 @@ const copy = {
     model: 'Auxiliary text OCR model',
   },
   'zh-CN': {
+    language: '界面语言',
     heading: '完整运行环境',
     details: '环境详情',
     components: '组件详情',
@@ -73,7 +75,9 @@ for (const locale of ['en', 'zh-CN'] as const) {
         page.getByRole('button', { name: copy[locale].details, exact: true }),
       ).toBeFocused();
       await page.reload();
-      await expect(language).toHaveValue(locale);
+      await expect(
+        page.getByRole('combobox', { name: copy[locale].language, exact: true }),
+      ).toHaveValue(locale);
       await expect(
         page.getByRole('heading', { name: copy[locale].heading, exact: true }),
       ).toBeVisible();

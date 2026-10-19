@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Deterministic QA report orchestration and output presentation."""
 
 from __future__ import annotations
