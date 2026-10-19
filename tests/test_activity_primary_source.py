@@ -119,8 +119,11 @@ class PrimaryActivitySourceTests(unittest.TestCase):
         other["bbox"][0] += 1
         payload = self.payload("header", reading)
         payload.update(self.payload("row", other))
-        with patch(
-            "patent_sar_extractor.core.activity_auxiliary_replay.MAX_SOURCE_CELLS", 1
+        with (
+            patch(
+                "patent_sar_extractor.core.activity_auxiliary_replay.MAX_SOURCE_CELLS",
+                1,
+            ),
+            self.assertRaisesRegex(ValueError, "bounded inventory"),
         ):
-            with self.assertRaisesRegex(ValueError, "bounded inventory"):
-                original_activity_source_errors(payload)
+            original_activity_source_errors(payload)

@@ -32,7 +32,6 @@ class AuxiliaryActivityConsumerTests(unittest.TestCase):
         self.fixture = fixture
         fixture.page.insert_text((3, 45), "No.", fontsize=4)
         headers = [["No.", "HTRF\nEC50"]]
-        region = {"xs": [0, 15, 140], "ys": [25, 80, 100]}
         columns = []
         primaries = [
             {
