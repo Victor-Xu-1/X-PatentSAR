@@ -49,7 +49,9 @@ class CorpusPredictionTests(PredictionFixture, unittest.TestCase):
         # separate proved-ID recognition-completion producer.
         path = self.run / "structure_bindings/bindings.json"
         payload = json.loads(path.read_text())
-        payload.pop("compound_catalog", None)
+        payload["compound_catalog"].update(
+            entries=[], numbered_compounds=0, source_observations=0
+        )
         path.write_text(json.dumps(payload))
         self.service.refresh(self.project.id)
 

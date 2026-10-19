@@ -103,14 +103,14 @@ class SourcePageCoverageTests(unittest.TestCase):
                     )
                 self.assertEqual(inventory.call_args.args[1], [0, 1])
                 self.assertEqual(
-                    [row["cpd"] for row in result["bindings"]],
+                    [row["cpd"] for row in result["compound_catalog"]["entries"]],
                     ["Compound 17", "Compound 18", "Compound 19"],
                 )
                 self.assertEqual(result["bound"], 3)
                 self.assertTrue(
                     all(
                         row["accuracy_status"] == "confirmed"
-                        for row in result["bindings"]
+                        for row in result["compound_catalog"]["entries"]
                     )
                 )
                 artifact = json.loads(Path(result["output_files"]["json"]).read_text())

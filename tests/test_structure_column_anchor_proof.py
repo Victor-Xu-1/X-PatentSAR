@@ -27,10 +27,7 @@ def column_anchor(payload):
 def rehash_column_anchor(payload, section):
     old = section["region_id"]
     section["region_id"] = proof_id(section["source"])
-    for row in [
-        *payload["compound_catalog"]["entries"],
-        *payload["compound_catalog"]["entries"],
-    ]:
+    for row in payload["compound_catalog"]["entries"]:
         ownership = (row.get("numbered_table_cell_evidence") or {}).get(
             "column_ownership", {}
         )
@@ -153,10 +150,7 @@ class StructureColumnAnchorProofTests(UnruledStructureControls, unittest.TestCas
         _, payload = self.run_binding(
             ["73", "28"], mutate_page=ruled_first_then_unruled
         )
-        for row in [
-            *payload["compound_catalog"]["entries"],
-            *payload["compound_catalog"]["entries"],
-        ]:
+        for row in payload["compound_catalog"]["entries"]:
             evidence = row["numbered_table_cell_evidence"]
             if evidence.get("kind") == "original_ruled_columns":
                 evidence["observations"][0]["source_observation"]["tokens"][0]["x"] += 1
@@ -166,10 +160,7 @@ class StructureColumnAnchorProofTests(UnruledStructureControls, unittest.TestCas
         _, payload = self.run_binding(
             ["73", "28"], mutate_page=ruled_first_then_unruled
         )
-        for row in [
-            *payload["compound_catalog"]["entries"],
-            *payload["compound_catalog"]["entries"],
-        ]:
+        for row in payload["compound_catalog"]["entries"]:
             evidence = row["numbered_table_cell_evidence"]
             if evidence.get("kind") == "original_ruled_columns":
                 evidence["column_ownership"].pop("source_anchor_id")

@@ -81,7 +81,7 @@ class UnruledSourceBoundaryTests(UnruledStructureControls, unittest.TestCase):
                     ["73", "28"], raster=True, label_baseline_offset=offset
                 )
                 self.assertEqual(
-                    {b["cpd"] for b in result["bindings"]},
+                    {b["cpd"] for b in result["compound_catalog"]["entries"]},
                     {"Compound 73", "Compound 28"},
                 )
                 self.assertEqual(coverage_errors(payload), [])
@@ -91,7 +91,10 @@ class UnruledSourceBoundaryTests(UnruledStructureControls, unittest.TestCase):
     ):
         result, payload = self.run_binding(["73", "28"], label_baseline_offset=-34)
         self.assertEqual(
-            {b["cpd"]: b["structure_id"] for b in result["bindings"]},
+            {
+                b["cpd"]: b["structure_id"]
+                for b in result["compound_catalog"]["entries"]
+            },
             {"Compound 73": "S0", "Compound 28": "S1"},
         )
         self.assertEqual(coverage_errors(payload), [])
@@ -101,14 +104,17 @@ class UnruledSourceBoundaryTests(UnruledStructureControls, unittest.TestCase):
     ):
         result, payload = self.run_binding(["73", "28"], label_baseline_offset=42)
         self.assertEqual(
-            {b["cpd"]: b["structure_id"] for b in result["bindings"]},
+            {
+                b["cpd"]: b["structure_id"]
+                for b in result["compound_catalog"]["entries"]
+            },
             {"Compound 73": "S0", "Compound 28": "S1"},
         )
         self.assertEqual(coverage_errors(payload), [])
 
     def test_disjoint_label_is_not_stretched_or_distance_matched_to_a_drawing(self):
         result, payload = self.run_binding(["73", "28"], label_baseline_offset=-60)
-        self.assertEqual(result["bindings"], [])
+        self.assertEqual(result["compound_catalog"]["entries"], [])
         self.assertTrue(coverage_errors(payload))
 
     def test_a_word_overlapping_two_drawing_extents_remains_ambiguous(self):
@@ -125,7 +131,9 @@ class UnruledSourceBoundaryTests(UnruledStructureControls, unittest.TestCase):
         result, payload = self.run_binding(
             ["73", "28"], label_baseline_offset=42, mutate_page=rival
         )
-        self.assertEqual({b["cpd"] for b in result["bindings"]}, {"Compound 28"})
+        self.assertEqual(
+            {b["cpd"] for b in result["compound_catalog"]["entries"]}, {"Compound 28"}
+        )
         self.assertTrue(coverage_errors(payload))
 
     def test_following_original_table_title_and_text_are_not_identifier_rows(self):
@@ -136,7 +144,7 @@ class UnruledSourceBoundaryTests(UnruledStructureControls, unittest.TestCase):
             )
 
         result, payload = self.run_binding(["73", "28"], mutate_page=next_table)
-        self.assertEqual(len(result["bindings"]), 2)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 2)
         self.assertEqual(len(original_region(payload)["labels"]), 2)
         self.assertEqual(coverage_errors(payload), [])
 
@@ -148,7 +156,7 @@ class UnruledSourceBoundaryTests(UnruledStructureControls, unittest.TestCase):
             )
 
         result, payload = self.run_binding(["73", "28"], mutate_page=next_section)
-        self.assertEqual(len(result["bindings"]), 2)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 2)
         self.assertEqual(len(original_region(payload)["labels"]), 2)
         self.assertTrue(
             any(
@@ -175,7 +183,7 @@ class UnruledSourceBoundaryTests(UnruledStructureControls, unittest.TestCase):
         result, payload = self.run_binding(
             ["73", "28"], raster=True, mutate_page=next_table
         )
-        self.assertEqual(len(result["bindings"]), 2)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 2)
         self.assertEqual(len(original_region(payload)["labels"]), 2)
         self.assertEqual(coverage_errors(payload), [])
 
@@ -189,7 +197,7 @@ class UnruledSourceBoundaryTests(UnruledStructureControls, unittest.TestCase):
                 result, payload = self.run_binding(
                     ["73", "28"], mutate_page=diagram_annotation
                 )
-                self.assertEqual(len(result["bindings"]), 2)
+                self.assertEqual(len(result["compound_catalog"]["entries"]), 2)
                 self.assertEqual(original_region(payload)["body_bottom"], 720)
                 self.assertEqual(coverage_errors(payload), [])
 
@@ -228,7 +236,11 @@ class UnruledSourceBoundaryTests(UnruledStructureControls, unittest.TestCase):
                     ["73", "28"], mutate_page=next_product, title=title
                 )
                 self.assertEqual(
-                    {b["cpd"]: b["structure_id"] for b in result["bindings"]}, expected
+                    {
+                        b["cpd"]: b["structure_id"]
+                        for b in result["compound_catalog"]["entries"]
+                    },
+                    expected,
                 )
                 source = original_region(payload)
                 self.assertEqual([d["id"] for d in source["diagrams"]], ["S0", "S1"])
@@ -252,6 +264,6 @@ class UnruledSourceBoundaryTests(UnruledStructureControls, unittest.TestCase):
             mutate_page=next_table,
             native_overlay=known_different_title,
         )
-        self.assertEqual(len(result["bindings"]), 2)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 2)
         self.assertEqual(original_region(payload)["body_bottom"], 720)
         self.assertTrue(coverage_errors(payload))

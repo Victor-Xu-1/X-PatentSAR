@@ -50,7 +50,7 @@ class StructureDeclarationTests(UnruledStructureControls, unittest.TestCase):
                 page, structures, caption="Table 13. Continued"
             ),
         )
-        self.assertEqual(len(result["bindings"]), 2)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 2)
         self.assertTrue(coverage_errors(payload))
 
     def test_scanned_new_key_source_keeps_the_same_completeness_requirement(self):
@@ -61,7 +61,7 @@ class StructureDeclarationTests(UnruledStructureControls, unittest.TestCase):
                 page, structures, caption="Table 13. Continued"
             ),
         )
-        self.assertEqual(len(result["bindings"]), 2)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 2)
         self.assertTrue(coverage_errors(payload))
 
     def test_independent_original_caption_proof_resolves_a_new_table_without_fake_columns(
@@ -70,7 +70,7 @@ class StructureDeclarationTests(UnruledStructureControls, unittest.TestCase):
         result, payload = self.run_binding(
             ["73", "28"], mutate_page=independent_caption_page
         )
-        self.assertEqual(len(result["bindings"]), 4)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 4)
         self.assertEqual(coverage_errors(payload), [])
 
     def test_explicit_nonfinal_declaration_overrides_standalone_caption_default(self):
@@ -81,7 +81,8 @@ class StructureDeclarationTests(UnruledStructureControls, unittest.TestCase):
             ),
         )
         self.assertEqual(
-            {b["cpd"] for b in result["bindings"]}, {"Compound 73", "Compound 28"}
+            {b["cpd"] for b in result["compound_catalog"]["entries"]},
+            {"Compound 73", "Compound 28"},
         )
         self.assertEqual(coverage_errors(payload), [])
 
@@ -102,7 +103,8 @@ class StructureDeclarationTests(UnruledStructureControls, unittest.TestCase):
             ),
         )
         self.assertEqual(
-            {b["cpd"] for b in result["bindings"]}, {"Compound 73", "Compound 28"}
+            {b["cpd"] for b in result["compound_catalog"]["entries"]},
+            {"Compound 73", "Compound 28"},
         )
         self.assertEqual(coverage_errors(payload), [])
 
@@ -145,7 +147,7 @@ class StructureDeclarationTests(UnruledStructureControls, unittest.TestCase):
 
         result, payload = self.run_binding(["73", "28"], mutate_page=later)
         self.assertEqual(
-            {b["cpd"] for b in result["bindings"]},
+            {b["cpd"] for b in result["compound_catalog"]["entries"]},
             {"Compound 73", "Compound 28", "Compound B80"},
         )
         self.assertEqual(coverage_errors(payload), [])
@@ -158,5 +160,5 @@ class StructureDeclarationTests(UnruledStructureControls, unittest.TestCase):
             page.insert_text((50, 130), "73         0.5", fontsize=10)
 
         result, payload = self.run_binding(["73", "28"], mutate_page=biology)
-        self.assertEqual(len(result["bindings"]), 2)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 2)
         self.assertEqual(coverage_errors(payload), [])

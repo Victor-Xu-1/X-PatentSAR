@@ -323,14 +323,14 @@ class OriginalIdentifierGrammarTests(UnruledStructureControls, unittest.TestCase
         numbers = [1, 2, 9, 4, 7, 8, 9, 10]
         result, payload = self.run_binding([f"I-{number}" for number in numbers])
         self.assertEqual(
-            {binding["cpd"] for binding in result["bindings"]},
+            {binding["cpd"] for binding in result["compound_catalog"]["entries"]},
             {f"Compound I-{n}" for n in (1, 2, 4, 7, 8, 10)},
         )
         self.assertTrue(
             all(
                 binding["cpd"]
                 == "Compound " + binding["numbered_table_cell_evidence"]["source_label"]
-                for binding in result["bindings"]
+                for binding in result["compound_catalog"]["entries"]
             )
         )
         self.assertTrue(payload["source_issues"])

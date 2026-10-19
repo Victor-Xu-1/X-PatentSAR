@@ -47,7 +47,7 @@ class StructureColumnAnchorTests(UnruledStructureControls, unittest.TestCase):
                     ["Compound 73", "Compound 28"],
                     mutate_page=with_grid,
                 )
-                self.assertEqual(len(result["bindings"]), 2)
+                self.assertEqual(len(result["compound_catalog"]["entries"]), 2)
                 self.assertFalse(
                     any(
                         s["role"] == "compound_heading"
@@ -64,7 +64,7 @@ class StructureColumnAnchorTests(UnruledStructureControls, unittest.TestCase):
                 page.draw_line((40, y), (380, y))
 
         result, payload = self.run_binding(["73", "28"], mutate_page=header_only)
-        self.assertEqual(len(result["bindings"]), 2)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 2)
         self.assertEqual(coverage_errors(payload), [])
 
     def test_boxed_header_can_anchor_a_later_original_headerless_part(self):
@@ -76,7 +76,7 @@ class StructureColumnAnchorTests(UnruledStructureControls, unittest.TestCase):
             continued_page(page, structures)
 
         result, payload = self.run_binding(["73", "28"], mutate_page=header_and_part)
-        self.assertEqual(len(result["bindings"]), 4)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 4)
         self.assertEqual(coverage_errors(payload), [])
 
     def test_independent_final_on_a_ruled_table_page_is_not_hidden_by_page_ownership(
@@ -110,7 +110,7 @@ class StructureColumnAnchorTests(UnruledStructureControls, unittest.TestCase):
 
         result, payload = self.run_binding(["73", "28"], mutate_page=after_grid)
         self.assertEqual(
-            {row["cpd"] for row in result["bindings"]},
+            {row["cpd"] for row in result["compound_catalog"]["entries"]},
             {"Compound 73", "Compound 28", "Compound B80"},
         )
         self.assertEqual(coverage_errors(payload), [])
@@ -121,7 +121,7 @@ class StructureColumnAnchorTests(UnruledStructureControls, unittest.TestCase):
             title="[0042] Table 12. Intermediate compounds",
             mutate_page=ruled_first_then_unruled,
         )
-        self.assertEqual(result["bindings"], [])
+        self.assertEqual(result["compound_catalog"]["entries"], [])
         self.assertEqual(payload["source_issues"], [])
 
     def test_scanned_closed_rows_prove_disjoint_caption_and_drawing(self):
@@ -132,7 +132,7 @@ class StructureColumnAnchorTests(UnruledStructureControls, unittest.TestCase):
                 page, structures, disjoint=True
             ),
         )
-        self.assertEqual(len(result["bindings"]), 4)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 4)
         self.assertEqual(coverage_errors(payload), [])
 
     def test_nonfinal_role_survives_a_headerless_physical_continuation(self):
@@ -141,7 +141,7 @@ class StructureColumnAnchorTests(UnruledStructureControls, unittest.TestCase):
             title="Table 12. Intermediate compounds",
             mutate_page=ruled_first_then_ruled,
         )
-        self.assertEqual(result["bindings"], [])
+        self.assertEqual(result["compound_catalog"]["entries"], [])
         self.assertEqual(payload["source_issues"], [])
 
     def test_ruled_and_logical_parts_keep_one_nonrecursive_original_anchor(self):
@@ -151,14 +151,14 @@ class StructureColumnAnchorTests(UnruledStructureControls, unittest.TestCase):
             continued_page(doc[0], structures, labels=("A17", "B80"))
 
         result, payload = self.run_binding(["73", "28"], mutate_page=chain)
-        self.assertEqual(len(result["bindings"]), 6)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 6)
         self.assertEqual(coverage_errors(payload), [])
 
     def test_headerless_ruled_continuation_keeps_original_cell_row_ownership(self):
         result, payload = self.run_binding(
             ["73", "28"], mutate_page=ruled_first_then_ruled
         )
-        self.assertEqual(len(result["bindings"]), 4)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 4)
         self.assertEqual(coverage_errors(payload), [])
 
     def test_original_physical_row_can_prove_disjoint_label_and_drawing_extents(self):
@@ -168,7 +168,7 @@ class StructureColumnAnchorTests(UnruledStructureControls, unittest.TestCase):
                 page, structures, disjoint=True
             ),
         )
-        self.assertEqual(len(result["bindings"]), 4)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 4)
         self.assertEqual(coverage_errors(payload), [])
 
     def test_actual_wrapped_grid_header_is_not_reconstructed_from_line_order(self):
@@ -177,7 +177,7 @@ class StructureColumnAnchorTests(UnruledStructureControls, unittest.TestCase):
             identifier_header="Compound\nNo.",
             mutate_page=ruled_first_then_unruled,
         )
-        self.assertEqual(len(result["bindings"]), 4)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 4)
         self.assertEqual(coverage_errors(payload), [])
 
     def test_intervening_metadata_column_does_not_become_an_identifier_or_structure(
@@ -195,7 +195,7 @@ class StructureColumnAnchorTests(UnruledStructureControls, unittest.TestCase):
 
         result, payload = self.run_binding(["73", "28"], mutate_page=with_metadata)
         self.assertEqual(
-            {b["cpd"] for b in result["bindings"]},
+            {b["cpd"] for b in result["compound_catalog"]["entries"]},
             {"Compound 73", "Compound 28", "Compound 901A", "Compound I-003B"},
         )
         self.assertEqual(coverage_errors(payload), [])
@@ -211,7 +211,7 @@ class StructureColumnAnchorTests(UnruledStructureControls, unittest.TestCase):
             mutate_page=ruled_first_then_unruled,
             native_overlay=conflicting_header,
         )
-        self.assertEqual(result["bindings"], [])
+        self.assertEqual(result["compound_catalog"]["entries"], [])
         self.assertTrue(coverage_errors(payload))
 
     def test_an_independent_final_product_survives_after_nonfinal_continuation(self):
@@ -246,7 +246,10 @@ class StructureColumnAnchorTests(UnruledStructureControls, unittest.TestCase):
             mutate_page=following,
         )
         self.assertEqual(
-            {b["cpd"]: b["structure_id"] for b in result["bindings"]},
+            {
+                b["cpd"]: b["structure_id"]
+                for b in result["compound_catalog"]["entries"]
+            },
             {"Compound 800": "FINAL"},
         )
         self.assertEqual(coverage_errors(payload), [])
@@ -256,7 +259,10 @@ class StructureColumnAnchorTests(UnruledStructureControls, unittest.TestCase):
             ["73", "28"], mutate_page=ruled_first_then_unruled
         )
         self.assertEqual(
-            {b["cpd"]: b["structure_id"] for b in result["bindings"]},
+            {
+                b["cpd"]: b["structure_id"]
+                for b in result["compound_catalog"]["entries"]
+            },
             {
                 "Compound 73": "S0",
                 "Compound 28": "S1",
@@ -273,7 +279,7 @@ class StructureColumnAnchorTests(UnruledStructureControls, unittest.TestCase):
             mutate_page=ruled_first_then_unruled,
             reverse=True,
         )
-        self.assertEqual(len(result["bindings"]), 4)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 4)
         self.assertEqual(coverage_errors(payload), [])
 
     def test_explicit_nonfinal_role_does_not_become_final_when_table_rules_change(self):
@@ -282,5 +288,5 @@ class StructureColumnAnchorTests(UnruledStructureControls, unittest.TestCase):
             title="Table 12. Intermediate compounds",
             mutate_page=ruled_first_then_unruled,
         )
-        self.assertEqual(result["bindings"], [])
+        self.assertEqual(result["compound_catalog"]["entries"], [])
         self.assertTrue(payload["source_sections"])

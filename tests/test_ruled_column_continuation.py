@@ -90,7 +90,7 @@ class RuledColumnContinuationTests(UnruledStructureControls, unittest.TestCase):
                         same_page_physical_parts(p, s, initial_ruled=initial_ruled)
                     ),
                 )
-                self.assertEqual(len(result["bindings"]), 4)
+                self.assertEqual(len(result["compound_catalog"]["entries"]), 4)
                 self.assertEqual(coverage_errors(payload), [])
                 saved = json.loads(json.dumps(payload))
                 self.assertEqual(
@@ -115,7 +115,7 @@ class RuledColumnContinuationTests(UnruledStructureControls, unittest.TestCase):
                         p, s, prefix=prefix
                     ),
                 )
-                self.assertEqual(len(result["bindings"]), 2)
+                self.assertEqual(len(result["compound_catalog"]["entries"]), 2)
                 self.assertTrue(coverage_errors(payload))
 
     def test_same_page_second_frame_keeps_missing_detector_rows_explicit(self):
@@ -123,7 +123,7 @@ class RuledColumnContinuationTests(UnruledStructureControls, unittest.TestCase):
             ["73", "28"],
             mutate_page=lambda p, s: same_page_physical_parts(p, s, missing_all=True),
         )
-        self.assertEqual(len(result["bindings"]), 2)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 2)
         self.assertTrue(coverage_errors(payload))
 
     def test_same_page_intervening_original_grid_is_not_skipped(self):
@@ -139,7 +139,7 @@ class RuledColumnContinuationTests(UnruledStructureControls, unittest.TestCase):
             page.insert_text((230, 400), "0.3", fontsize=10)
 
         result, payload = self.run_binding(["73", "28"], mutate_page=intervening_frame)
-        self.assertEqual(len(result["bindings"]), 2)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 2)
         self.assertTrue(coverage_errors(payload))
 
     def test_scanned_same_page_parts_retain_the_same_original_gap(self):
@@ -152,7 +152,7 @@ class RuledColumnContinuationTests(UnruledStructureControls, unittest.TestCase):
                         same_page_physical_parts(p, s, initial_ruled=initial_ruled)
                     ),
                 )
-                self.assertEqual(len(result["bindings"]), 4)
+                self.assertEqual(len(result["compound_catalog"]["entries"]), 4)
                 self.assertEqual(coverage_errors(payload), [])
 
     def test_rehashed_same_page_gap_is_rechecked_against_the_registered_parent(self):
@@ -178,7 +178,7 @@ class RuledColumnContinuationTests(UnruledStructureControls, unittest.TestCase):
             mutate_page=lambda p, s: physical_parts(p, s, initial_ruled=False),
         )
         self.assertEqual(
-            {r["cpd"] for r in result["bindings"]},
+            {r["cpd"] for r in result["compound_catalog"]["entries"]},
             {
                 "Compound 73",
                 "Compound 28",
@@ -220,7 +220,7 @@ class RuledColumnContinuationTests(UnruledStructureControls, unittest.TestCase):
                     ["73", "28"], mutate_page=activity_after_structure
                 )
                 self.assertEqual(
-                    {r["cpd"] for r in result["bindings"]},
+                    {r["cpd"] for r in result["compound_catalog"]["entries"]},
                     {"Compound 73", "Compound 28"},
                 )
                 self.assertEqual(coverage_errors(payload), [])
@@ -229,7 +229,7 @@ class RuledColumnContinuationTests(UnruledStructureControls, unittest.TestCase):
         result, payload = self.run_binding(
             ["73", "28"], mutate_page=activity_after_structure
         )
-        self.assertEqual(len(result["bindings"]), 2)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 2)
         self.assertTrue(coverage_errors(payload))
 
     def test_logical_to_physical_columns_keep_original_header_word_ownership(self):
@@ -242,7 +242,7 @@ class RuledColumnContinuationTests(UnruledStructureControls, unittest.TestCase):
                     ),
                 )
                 self.assertEqual(
-                    len(result["bindings"]),
+                    len(result["compound_catalog"]["entries"]),
                     4 if accepted else 2,
                     payload["source_issues"],
                 )
@@ -254,7 +254,7 @@ class RuledColumnContinuationTests(UnruledStructureControls, unittest.TestCase):
             raster=True,
             mutate_page=lambda p, s: physical_parts(p, s, initial_ruled=False),
         )
-        self.assertEqual(len(result["bindings"]), 4)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 4)
         self.assertEqual(coverage_errors(payload), [])
 
     def test_measurement_shaped_header_cannot_hide_an_observed_chemical_frame(self):
@@ -284,7 +284,7 @@ class RuledColumnContinuationTests(UnruledStructureControls, unittest.TestCase):
                         p, s, offset=offset
                     ),
                 )
-                self.assertEqual(len(result["bindings"]), 4)
+                self.assertEqual(len(result["compound_catalog"]["entries"]), 4)
                 self.assertEqual(coverage_errors(payload), [])
                 roots = [
                     s
@@ -321,7 +321,7 @@ class RuledColumnContinuationTests(UnruledStructureControls, unittest.TestCase):
                         p, s, **options
                     ),
                 )
-                self.assertEqual(len(result["bindings"]), 2)
+                self.assertEqual(len(result["compound_catalog"]["entries"]), 2)
                 self.assertTrue(coverage_errors(payload))
 
     def test_missing_first_diagram_is_a_gap_not_a_shifted_second_row(self):
@@ -329,8 +329,10 @@ class RuledColumnContinuationTests(UnruledStructureControls, unittest.TestCase):
             ["73", "28"],
             mutate_page=lambda p, s: physical_parts(p, s, missing_first=True),
         )
-        self.assertEqual(len(result["bindings"]), 3)
-        self.assertNotIn("Compound 901A", [r["cpd"] for r in result["bindings"]])
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 3)
+        self.assertNotIn(
+            "Compound 901A", [r["cpd"] for r in result["compound_catalog"]["entries"]]
+        )
         self.assertTrue(coverage_errors(payload))
 
     def test_no_detector_hits_do_not_erase_the_next_original_closed_rows(self):
@@ -339,7 +341,7 @@ class RuledColumnContinuationTests(UnruledStructureControls, unittest.TestCase):
             structures[:] = [s for s in structures if s["page_no"] == 1]
 
         result, payload = self.run_binding(["73", "28"], mutate_page=missed_page)
-        self.assertEqual(len(result["bindings"]), 2)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 2)
         self.assertTrue(coverage_errors(payload))
         children = [
             s

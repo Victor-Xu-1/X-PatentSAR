@@ -89,7 +89,7 @@ class UnruledContinuationTests(UnruledStructureControls, unittest.TestCase):
                         continued_page(page, structures, caption=caption)
                     ),
                 )
-                self.assertEqual(len(result["bindings"]), 4)
+                self.assertEqual(len(result["compound_catalog"]["entries"]), 4)
                 self.assertEqual(coverage_errors(payload), [])
 
     def test_a_later_same_page_part_keeps_the_original_previous_page_anchor(self):
@@ -100,7 +100,7 @@ class UnruledContinuationTests(UnruledStructureControls, unittest.TestCase):
 
         result, payload = self.run_binding(["73", "28"], mutate_page=chain)
         self.assertEqual(
-            {b["cpd"] for b in result["bindings"]},
+            {b["cpd"] for b in result["compound_catalog"]["entries"]},
             {
                 "Compound 73",
                 "Compound 28",
@@ -127,7 +127,7 @@ class UnruledContinuationTests(UnruledStructureControls, unittest.TestCase):
             mutate_page=continued_page,
             native_overlay=original_caption,
         )
-        self.assertEqual(len(result["bindings"]), 4)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 4)
         self.assertEqual(coverage_errors(payload), [])
 
     def test_native_only_continuation_claim_cannot_be_silently_ignored(self):
@@ -146,14 +146,18 @@ class UnruledContinuationTests(UnruledStructureControls, unittest.TestCase):
             native_overlay=original_caption,
         )
         self.assertEqual(
-            {b["cpd"] for b in result["bindings"]}, {"Compound 73", "Compound 28"}
+            {b["cpd"] for b in result["compound_catalog"]["entries"]},
+            {"Compound 73", "Compound 28"},
         )
         self.assertTrue(coverage_errors(payload))
 
     def test_same_page_headerless_part_retains_all_original_rows(self):
         result, payload = self.run_binding(["73", "28"], mutate_page=same_page_part)
         self.assertEqual(
-            {b["cpd"]: b["structure_id"] for b in result["bindings"]},
+            {
+                b["cpd"]: b["structure_id"]
+                for b in result["compound_catalog"]["entries"]
+            },
             {
                 "Compound 73": "S0",
                 "Compound 28": "S1",
@@ -167,7 +171,7 @@ class UnruledContinuationTests(UnruledStructureControls, unittest.TestCase):
         result, payload = self.run_binding(
             ["73", "28"], raster=True, reverse=True, mutate_page=same_page_part
         )
-        self.assertEqual(len(result["bindings"]), 4)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 4)
         self.assertEqual(coverage_errors(payload), [])
 
     def test_earlier_diagram_is_retained_as_review_not_a_publish_exception(self):
@@ -186,7 +190,8 @@ class UnruledContinuationTests(UnruledStructureControls, unittest.TestCase):
 
         result, payload = self.run_binding(["73", "28"], mutate_page=earlier)
         self.assertEqual(
-            {b["cpd"] for b in result["bindings"]}, {"Compound 73", "Compound 28"}
+            {b["cpd"] for b in result["compound_catalog"]["entries"]},
+            {"Compound 73", "Compound 28"},
         )
         self.assertTrue(coverage_errors(payload))
 
@@ -204,7 +209,9 @@ class UnruledContinuationTests(UnruledStructureControls, unittest.TestCase):
 
     def test_a_same_page_later_part_cannot_disappear_as_clean_partial_success(self):
         result, payload = self.run_binding(["73", "28"], mutate_page=same_page_part)
-        self.assertTrue(len(result["bindings"]) == 4 or coverage_errors(payload))
+        self.assertTrue(
+            len(result["compound_catalog"]["entries"]) == 4 or coverage_errors(payload)
+        )
 
     def test_repeated_actual_headers_are_not_an_unresolved_headerless_part(self):
         def repeated(first, structures):
@@ -214,17 +221,22 @@ class UnruledContinuationTests(UnruledStructureControls, unittest.TestCase):
             doc[-1].insert_text((240, 80), "Structure", fontsize=10)
 
         result, payload = self.run_binding(["73", "28"], mutate_page=repeated)
-        self.assertEqual(len(result["bindings"]), 4)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 4)
         self.assertEqual(coverage_errors(payload), [])
 
     def test_declared_continuation_cannot_be_clean_when_source_rows_are_missing(self):
         result, payload = self.run_binding(["73", "28"], mutate_page=continued_page)
-        self.assertTrue(len(result["bindings"]) == 4 or coverage_errors(payload))
+        self.assertTrue(
+            len(result["compound_catalog"]["entries"]) == 4 or coverage_errors(payload)
+        )
 
     def test_adjacent_same_original_table_without_repeated_headers_keeps_all_rows(self):
         result, payload = self.run_binding(["73", "28"], mutate_page=continued_page)
         self.assertEqual(
-            {b["cpd"]: b["structure_id"] for b in result["bindings"]},
+            {
+                b["cpd"]: b["structure_id"]
+                for b in result["compound_catalog"]["entries"]
+            },
             {
                 "Compound 73": "S0",
                 "Compound 28": "S1",
@@ -239,7 +251,7 @@ class UnruledContinuationTests(UnruledStructureControls, unittest.TestCase):
             ["73", "28"], raster=True, mutate_page=continued_page
         )
         self.assertEqual(
-            {b["cpd"] for b in result["bindings"]},
+            {b["cpd"] for b in result["compound_catalog"]["entries"]},
             {"Compound 73", "Compound 28", "Compound 901A", "Compound I-003B"},
         )
         self.assertEqual(coverage_errors(payload), [])
@@ -252,7 +264,7 @@ class UnruledContinuationTests(UnruledStructureControls, unittest.TestCase):
                 page, structures, caption="Table A. Continued"
             ),
         )
-        self.assertEqual(len(result["bindings"]), 4)
+        self.assertEqual(len(result["compound_catalog"]["entries"]), 4)
         self.assertEqual(coverage_errors(payload), [])
 
     def test_page_gap_preserves_unresolved_rows_without_borrowing_columns(self):
@@ -263,7 +275,8 @@ class UnruledContinuationTests(UnruledStructureControls, unittest.TestCase):
             ),
         )
         self.assertEqual(
-            {b["cpd"] for b in result["bindings"]}, {"Compound 73", "Compound 28"}
+            {b["cpd"] for b in result["compound_catalog"]["entries"]},
+            {"Compound 73", "Compound 28"},
         )
         self.assertTrue(coverage_errors(payload))
 
@@ -274,7 +287,8 @@ class UnruledContinuationTests(UnruledStructureControls, unittest.TestCase):
 
         result, payload = self.run_binding(["73", "28"], mutate_page=stopped)
         self.assertEqual(
-            {b["cpd"] for b in result["bindings"]}, {"Compound 73", "Compound 28"}
+            {b["cpd"] for b in result["compound_catalog"]["entries"]},
+            {"Compound 73", "Compound 28"},
         )
         self.assertTrue(coverage_errors(payload))
 
@@ -288,7 +302,7 @@ class UnruledContinuationTests(UnruledStructureControls, unittest.TestCase):
             ["73", "28"], mutate_page=chain, reverse=True
         )
         self.assertEqual(
-            {b["cpd"] for b in result["bindings"]},
+            {b["cpd"] for b in result["compound_catalog"]["entries"]},
             {
                 "Compound 73",
                 "Compound 28",
@@ -322,7 +336,8 @@ class UnruledContinuationTests(UnruledStructureControls, unittest.TestCase):
             native_overlay=original_section,
         )
         self.assertEqual(
-            {b["cpd"] for b in result["bindings"]}, {"Compound 73", "Compound 28"}
+            {b["cpd"] for b in result["compound_catalog"]["entries"]},
+            {"Compound 73", "Compound 28"},
         )
         self.assertTrue(coverage_errors(payload))
 
