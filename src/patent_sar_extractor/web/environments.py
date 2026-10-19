@@ -219,6 +219,8 @@ class EnvironmentManager:
             )
         root = self.storage.validate(selected.install_root)
         bindings, fingerprint, source_key = self._snapshot()
+        if request.reuse_source is not None:
+            bindings = {**bindings, "text-ocr": request.reuse_source["python"]}
         ordered = (
             complete_components() if ids == set(complete_components()) else sorted(ids)
         )
@@ -234,9 +236,12 @@ class EnvironmentManager:
             "cache_root": str(self.store.root / "downloads"),
             "config_fingerprint": fingerprint,
             "source_key": source_key,
+            **({"reuse_source": request.reuse_source} if request.reuse_source else {}),
         }
         fingerprint = hashlib.sha256(
-            encode({**request.model_dump(), "component_ids": sorted(ids)}).encode()
+            encode(
+                {**request.model_dump(exclude_none=True), "component_ids": sorted(ids)}
+            ).encode()
         ).hexdigest()
         operation, created = self.store.enqueue(
             request.request_id, fingerprint, payload, request.expected_revision
@@ -286,7 +291,7 @@ class EnvironmentManager:
                 "environment_record",
                 "Environment cache must belong to its private controller.",
             )
-        if plan["action"] == "install":
+        if plan["action"] in {"install", "reuse"}:
             self.storage.prepare(str(root))
         private_directory(self.store.root / "downloads")
 
@@ -299,6 +304,13 @@ class EnvironmentManager:
         self, plan: dict[str, Any], result: dict[str, Any]
     ) -> dict[str, str]:
         bindings = result["bindings"]
+        if plan["action"] == "reuse" and set(bindings) != {
+            "text-ocr",
+            "text-ocr-models",
+        }:
+            raise WebError(
+                409, "environment_result", "Reuse cannot change unrelated components."
+            )
         if not set(bindings) <= set(CONFIG_KEYS) or not set(
             plan["component_ids"]
         ) <= set(bindings):
@@ -367,9 +379,15 @@ class EnvironmentManager:
                 "environment_inspection_changed",
                 "Runtime configuration or recipes changed during inspection; historical results were preserved but not published as current. Refresh and inspect again.",
             )
-        if plan["action"] == "install":
+        if plan["action"] in {"install", "reuse"}:
             bindings = self._verified_bindings(plan, result)
             additional = result.get("additional_config") or {}
+            if plan["action"] == "reuse" and additional:
+                raise WebError(
+                    409,
+                    "environment_result",
+                    "Reuse cannot change unrelated model configuration.",
+                )
             if not isinstance(additional, dict):
                 raise WebError(
                     409,

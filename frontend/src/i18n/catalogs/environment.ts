@@ -1,5 +1,17 @@
 /** Environment overview, details, storage and explicit consent. */
 export const environment: Readonly<Record<string, string>> = {
+  '复用现有文字 OCR': 'Reuse existing text OCR',
+  '现有 Linux Python 解释器': 'Existing Linux Python interpreter',
+  现有权重目录: 'Existing model directory',
+  '仅验证现有环境并复制固定权重到受管目录；不下载、不安装依赖。失败即停止，全部通过才按需启用。':
+    'Verify the existing runtime and copy pinned weights into managed storage. No downloads or dependency installation. Stop on failure; enable on-demand use only after all checks pass.',
+  允许本地复制权重并在验证通过后按需启用:
+    'Allow a local weight copy and on-demand activation after verification',
+  '环境配置已变化，请关闭后重新确认。': 'Environment settings changed. Close and confirm again.',
+  '请填写有效的 Linux 解释器和本地权重目录，不接受命令或路径跳转。':
+    'Enter a valid Linux interpreter and local model directory, without commands or path traversal.',
+  验证并复用: 'Verify and reuse',
+  '验证中…': 'Verifying…',
   '未配置该组件路径。': 'No path is configured for this component.',
   '配置路径不存在。': 'The configured path does not exist.',
   辅助文字识别环境: 'Auxiliary text OCR runtime',

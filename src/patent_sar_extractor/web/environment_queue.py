@@ -179,7 +179,7 @@ class EnvironmentQueue:
                 "environment_result",
                 "Worker result is missing requested components.",
             )
-        if plan["action"] == "install" and any(
+        if plan["action"] in {"install", "reuse"} and any(
             report.status != "ready"
             for report in reports
             if report.id in plan["component_ids"]

@@ -262,6 +262,13 @@ class EnvironmentStore:
         return dict(row)
 
     def operation(self, row: dict[str, Any]) -> EnvironmentOperation:
+        from .environment_records import environment_spec
+
+        reuse_source = (
+            environment_spec(row, self.root.parent)[1]["reuse_source"]
+            if row["action"] == "reuse"
+            else None
+        )
         selected = json.loads(row["component_ids"])
         executed = self.resolver(selected) if row["action"] == "install" else selected
         completed = json.loads(row["completed_components"])
@@ -287,6 +294,7 @@ class EnvironmentStore:
             log_tail=json.loads(row["log_tail"]),
             error=json.loads(row["error"]) if row["error"] else None,
             applied=bool(row["applied"]),
+            reuse_source=reuse_source,
         )
 
     def public_row(self, operation_id: str) -> dict[str, Any]:

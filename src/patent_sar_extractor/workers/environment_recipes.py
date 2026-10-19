@@ -62,6 +62,11 @@ class EnvironmentProvisioner:
     def execute(self) -> dict[str, object]:
         from patent_sar_extractor.web.environment_inspection import InspectionContext
 
+        if self.plan.action == "reuse":
+            from .text_ocr_reuse import reuse_existing_text_ocr
+
+            return reuse_existing_text_ocr(self)
+
         ids = (
             resolved_components(self.plan.component_ids)
             if self.plan.action == "install"

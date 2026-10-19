@@ -82,6 +82,23 @@ variables as an alternative installer. The ordinary page shows the same one
 setup action; two text components and license details live in the existing
 component/consent view, not the scientific task wizard.
 
+When the reviewed CPU runtime and fixed weights already exist, choose
+**Environment → Reuse existing text OCR**. Enter the existing native Linux Python
+executable and local model directory, and explicitly consent to a local copy.
+This operation verifies the selected runtime/SDK, copies only the fixed files
+into a new private managed prefix, checks every size/SHA and actually loads the
+copied model on generated text. It downloads nothing and installs no Python or
+dependencies. A failed reuse never silently becomes a full installation.
+The source directory is preserved; a Windows-mounted model directory may be a
+copy input, while executable/published model paths remain on native Linux.
+Successful pair verification enables on-demand use only for subsequent tasks;
+it does not start or resume patent/SAR work. Refresh/recovery uses the same
+request identity and exact selected sources, with no automatic request replay.
+Keep the pre-release code/configuration/environment SQLite snapshot together:
+older binaries do not understand a retained `reuse` operation. A downgrade
+requires the matching environment-state/configuration snapshot, not only an old
+wheel; preserve the newer operation directory/history as recovery evidence.
+
 The source adapter includes unresolved activity-header columns and bounded
 first-three-row physical discovery for missing roles/units. Discovery-body text
 only locates a header; it never supplies measurements. Blank continuations,

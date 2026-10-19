@@ -120,6 +120,17 @@ LLM provider is introduced; DECIMER remains primary. Installed native/browser
 checks on controlled inputs do not certify held-out source accuracy or real
 frontend extraction-to-SAR acceptance.
 
+The same environment operation contract also accepts explicit `reuse` of the
+complete text pair. `text_ocr/reuse_sources` validates captured source paths;
+`workers/text_ocr_reuse` reuses the native inspection authority and copies only
+the pinned model files into a fresh private managed prefix. Mounted model
+directories are read-only copy inputs, never execution roots or published model
+bindings. Runtime/SDK mismatch, missing/hash-changed files, cancellation or
+probe failure stop without falling back to a dependency installer or download.
+The existing queue/owner acknowledgement, settings revision, request identity,
+configuration fingerprint, result validation and atomic publication all remain
+authoritative. No scientific contract, data model or recognition rule changes.
+
 The parent accepts only explicit runtime/model/workspace paths. It submits
 bounded original RGB rows (at most4096x256 and1million pixels) through an owned
 private directory. PNG size, original pixel digest, request identity and fixed
