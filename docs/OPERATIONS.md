@@ -1,5 +1,21 @@
 # Operations and troubleshooting
 
+## An auxiliary OCR attempt was read but remains unqualified
+
+Inspect the saved attempt before repairing or reinstalling an OCR environment.
+`rejected / unqualified_original_row` means a valid source-owned reply arrived,
+but its literal text was empty or below the unchanged quality filter, including
+after the existing bounded padding alternative. It is not a missing-runtime
+diagnosis. Partial requests, replies and original primaries are retained. No new
+row, view or retry is started to vote for a preferred answer.
+
+Timeouts remain `unavailable / request_timeout`; malformed replies, altered pixel
+ownership and other runtime/source failures remain `unavailable /
+runtime_or_source_failure`. Cancellation still propagates. A quality rejection
+does not qualify a header, role or measured value. This diagnostic distinction
+does not lower thresholds, change scientific schemas/epochs, retag old attempts
+or resolve independent boundary, detector or original-source contradictions.
+
 ## Characterization table labels are mistaken for synthesis headings
 
 Inspect the complete original table role and physical text scope before changing

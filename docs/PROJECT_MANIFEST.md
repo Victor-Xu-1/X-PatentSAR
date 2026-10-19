@@ -1,5 +1,12 @@
 # Project governance manifest
 
+- Auxiliary recovery failure authority: `recovery_rows.UnqualifiedRecoveryRow`
+  identifies only a protocol-valid source-owned reply that fails the existing
+  text quality filter. The sole `recovery_capture` records this as rejected and
+  preserves partial requests/primaries; malformed/foreign-source replies and
+  unavailable runtimes remain separate failures. No retry, threshold, schema,
+  scientific epoch, model, provider, activation or acceptance change is implied.
+
 - Physical text authority: `cell_text_scope` records caller-owned integer row
   limits. Characterization complete grids/open rows use 32pt/32-row chunks;
   generic/assay/plot literal readers keep 12pt. The same observer, strict text
