@@ -11,6 +11,7 @@ from typing import Any
 
 from .binding_progress import observed_items
 from .caption_grid_binding import CaptionGridResult, bind_caption_grids
+from .caption_source_windows import caption_read_window
 from .printed_identifiers import LABEL_KIND, identifier_key
 from .table_cells import prefixed_label, read_cell
 from .table_geometry import page_tokens
@@ -27,6 +28,7 @@ class CaptionBinding:
     observations: list[dict[str, Any]]
     label_page_no: int | None = None
     ownership: dict = field(default_factory=dict)
+    reading_bbox: Box | None = None
 
 
 def _box(values: Sequence[Any]) -> Box | None:
@@ -192,17 +194,17 @@ def bind_visible_captions(
             identity = str(owners[0].get("id") or "")
             if not identity or identities[identity] != 1:
                 continue
-            expanded = (
-                max(0, bounds[0] - 4),
-                max(0, bounds[1] - 4),
-                min(page.rect.width, bounds[2] + 4),
-                min(page.rect.height, bounds[3] + 4),
-            )
+            expanded = caption_read_window(bounds, (page.rect.width, page.rect.height))
             reading = read_cell(page, expanded, tokens, "label", native)
             if not reading.needs_review and reading.value == label:
                 candidates.append(
                     CaptionBinding(
-                        label, owners[0], bounds, reading.observations, page_no
+                        label,
+                        owners[0],
+                        bounds,
+                        reading.observations,
+                        page_no,
+                        reading_bbox=expanded,
                     )
                 )
         labels = Counter(b.label for b in candidates)

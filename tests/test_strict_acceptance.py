@@ -1545,6 +1545,9 @@ class StrictAcceptanceTests(unittest.TestCase):
             binding["page_no"] = 1
             from PIL import Image, ImageDraw
 
+            from patent_sar_extractor.core.caption_source_windows import (
+                caption_read_window,
+            )
             from patent_sar_extractor.core.ocsr.label_mask import source_geometry
 
             with Image.open(image_path) as source:
@@ -1559,10 +1562,19 @@ class StrictAcceptanceTests(unittest.TestCase):
                 },
                 image_path,
             )
+            reading_box = list(caption_read_window(caption_box, (240, 96)))
             binding["exact_caption_evidence"] = {
                 "page_no": 1,
                 "bbox": list(caption_box),
-                "observations": [{"method": "native_cell", "text": "Compound 110"}],
+                "reading_bbox": reading_box,
+                "ownership": {},
+                "observations": [
+                    {
+                        "method": "native_cell",
+                        "text": "Compound 110",
+                        "bbox": reading_box,
+                    }
+                ],
             }
 
             with patch.dict(

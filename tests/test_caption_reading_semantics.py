@@ -5,6 +5,7 @@ import unittest
 from patent_sar_extractor.core.caption_binding_proof import (
     valid_caption_binding_evidence,
 )
+from patent_sar_extractor.core.caption_source_windows import caption_read_window
 
 
 def binding(
@@ -16,6 +17,8 @@ def binding(
     page_no=1,
 ):
     """Declared source-protocol fixture, not a claim to extract a real image."""
+    anchor = [diagram[0], diagram[3], diagram[2], diagram[3] + 16]
+    window = list(caption_read_window(anchor, (1000, 1000)))
     return {
         "cpd": cpd,
         "structure_id": structure_id,
@@ -26,10 +29,13 @@ def binding(
         },
         "binding_rule": "original_caption_cell",
         "exact_caption_evidence": {
-            "bbox": [diagram[0], diagram[3], diagram[2], diagram[3] + 16],
+            "bbox": anchor,
+            "reading_bbox": window,
             "page_no": page_no,
             "ownership": {},
-            "observations": observations,
+            "observations": [
+                {**reading, "bbox": list(window)} for reading in observations
+            ],
         },
     }
 

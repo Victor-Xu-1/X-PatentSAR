@@ -120,10 +120,14 @@ def read_cell(page, bounds, tokens: list[dict], kind: str, native: bool) -> Cell
     native = native_region(tokens, bounds, native)
     raw = cell_text(tokens, bounds)
     initial = _normalize(raw, kind)
-    original = {"method": "native_cell" if native else "page_ocr_cell", "text": raw}
+    original = {
+        "method": "native_cell" if native else "page_ocr_cell",
+        "text": raw,
+        "bbox": list(bounds),
+    }
     profile = source_cell_observation(tokens, bounds, native=native)
     if profile is not None:
-        original.update(bbox=list(bounds), source_observation=profile)
+        original.update(source_observation=profile)
     observations = [original]
     native_raw = native_cell_text(tokens, bounds)
     native_value = _normalize(native_raw, kind) if native_raw else ""
@@ -131,10 +135,10 @@ def read_cell(page, bounds, tokens: list[dict], kind: str, native: bool) -> Cell
         native_raw if not native else raw
     )
     if not native and native_raw:
-        shadow = {"method": "native_cell", "text": native_raw}
+        shadow = {"method": "native_cell", "text": native_raw, "bbox": list(bounds)}
         native_profile = source_cell_observation(tokens, bounds, native=True)
         if native_profile is not None:
-            shadow.update(bbox=list(bounds), source_observation=native_profile)
+            shadow.update(source_observation=native_profile)
         observations.append(shadow)
     if native:
         return CellReading(

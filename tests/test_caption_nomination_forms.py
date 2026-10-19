@@ -30,6 +30,7 @@ def formal_binding(pair):
         "exact_caption_evidence": {
             "page_no": pair["label_page_no"],
             "bbox": list(pair["label_bbox"]),
+            "reading_bbox": list(pair["label_bbox"]),
             "observations": pair["observations"],
             "ownership": pair["ownership"],
         },

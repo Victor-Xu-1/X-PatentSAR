@@ -4,7 +4,7 @@
   bounded current `compound_catalog.entries`, requires integer counts and rejects
   obsolete competing root collections. `binding_artifacts` is the only writer;
   binding/header/cache/recognition/export/QA/Web/resume consumers share it.
-  Current Binding41/binder51 refresh derived records only. Independent original
+  Current Binding42/binder52 refresh derived records only. Independent original
   claims/reference/role/pixel completeness remains mandatory, with explicit
   historical review rather than old scientific promotion. Web graphs require
   current valid recognition for every owner, measured or unmeasured. Shared
@@ -13,6 +13,18 @@
   dependencies remain unchanged. No second store, queue, result writer, fallback
   authority, limit increase or private-data repair is introduced. Rollback uses
   its compatible code/config/state snapshot; release evidence remains external.
+
+- Caption window authority: `caption_source_windows` distinguishes the tight
+  ownership locator from mandatory actual `reading_bbox`. Normal loose captions
+  use the existing4point clipped read; ruled cells retain identical windows.
+  All attempts must conserve that same scope. `visible_structure_binding` and
+  `binding_spatial` publish it; pure admission, original readback and existing
+  OCSR mask proof consume it. Padding never expands source ownership or erasure.
+  Missing/mixed/foreign/changed/legacy windows refuse, never infer a rectangle
+  from the winning reading or rewrite history. `table_cells` conserves its known
+  input bbox even without a source-token carrier; it adds no provenance/score.
+  Binding42/binder52 invalidate derived binding proof, not raw observations,
+  activity/preparation/numericalSAR/API/SQL/dependencies/manual audit.
 
 - Numbered-source auxiliary integration: the SAME `table_cells` and
   `heading_observation` use `text_ocr/source_capture` only for unresolved complete
@@ -229,7 +241,7 @@
   Call-local source/page caching is not another scientific authority. The shared
   `cell_frame_proof` replays complete long-text row/slice pixels through
   `cell_text_chunk_proof`, not a false single ink crop or skipped gate.
-  Binding41/binder51 cover these derived changes;
+  Binding42/binder52 cover these derived changes;
   historical closed columns can veto ambiguous later flow but never claim it.
   older scope1/2 and heading-structure1–5 stay historical, not promoted. Raw/model/manual/activity/
   numericalSAR/API/SQL/dependency authorities remain unchanged.

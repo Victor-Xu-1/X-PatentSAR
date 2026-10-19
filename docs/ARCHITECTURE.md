@@ -231,6 +231,31 @@ audit, activity schema22, numerical SAR, API/SQL and model/dependency authoritie
 remain unchanged. Earlier derived proofs stay historical, not retagged. Synthetic
 source recovery is not full real-patent or chemical accuracy acceptance.
 
+## Caption location and actual reading window
+
+`caption_source_windows` is the single geometry contract for current captions.
+`exact_caption_evidence.bbox` remains the printed locator/ownership anchor;
+the required `reading_bbox` is the actual original window seen by EVERY retained
+reading, including weak attempts, native shadows, optical and word-form evidence.
+The normal loose-caption producer records its existing4point padded window,
+clipped against the actual original page. A ruled caption reads its exact cell,
+so both boxes coincide. A chosen reading cannot invent/resize either scope.
+
+Pure admission rejects missing, mixed, malformed or impossible windows. Original
+replay verifies exact actual-page clipping, native text/token geometry and the
+same full optical frames without another OCR pass. The original ownership
+relation is unchanged: padding cannot acquire a rival structure or enlarge an
+identifier locator. Source-reference aliases and isolated OCSR label cleanup
+continue to use the TIGHT anchor, through the same source-reading gate; the
+padded window is never an instruction to erase extra molecular pixels.
+
+Binding42/binder52 refresh this derived contract. Old bindings without an explicit
+window stay history and cannot be upgraded from a stored success flag. Raw PDF/
+page OCR/OCSR2, activity25/extractor35, preparation12, manual audit, numerical SAR,
+API/SQL and dependencies are unchanged. The shared cell observer now conserves
+its known input bbox even for untyped legacy token carriers, without inventing
+source-token confidence or native/raster provenance. Legacy text remains legacy.
+
 ## Original caption word form before identifier ownership
 
 Binding35/binder45 add a bounded word-form source witness. A closed caption
@@ -518,7 +543,7 @@ axes, native source/cell observations and optical cell/title frames. Saved OCR
 observations remain observations, not a fresh independent recognition or proof of
 semantic correctness. The call-local index/replayer memoizes page inventories and
 proved source frames, and groups existing cells by source identity; no second
-parser, store, queue or model is introduced. Heading-structure6/Binding41/binder51
+parser, store, queue or model is introduced. Heading-structure6/Binding42/binder52
 invalidate derived ownership. Scope1/2 and heading-structure1–5 remain immutable
 history, not current admission. This bounded layout relation is not a reaction graph.
 Closed historical columns supply an ambiguity veto only; they never claim later
@@ -529,7 +554,7 @@ explicit rather than assigning a new left-column title to a sole right-column cr
 
 ### Single source-record authority
 
-Bindings41/binder51 store complete current records only in
+Bindings42/binder52 store complete current records only in
 `compound_catalog.entries`. The obsolete root `final_bindings` and returned
 `bindings` copies are removed, not replaced with another store or lazy object.
 `core.binding_records` owns bounded shape selection and exact integer count

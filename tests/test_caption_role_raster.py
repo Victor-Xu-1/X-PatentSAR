@@ -116,6 +116,7 @@ class CaptionRoleRasterTests(unittest.TestCase):
                 "exact_caption_evidence": {
                     "page_no": 1,
                     "bbox": list(pair["label_bbox"]),
+                    "reading_bbox": list(pair["label_bbox"]),
                     "observations": observed,
                     "ownership": pair["ownership"],
                 },

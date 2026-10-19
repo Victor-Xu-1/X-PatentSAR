@@ -271,6 +271,11 @@ def collect_spatial_bindings(
                 "product_context_distance": 0,
                 "exact_caption_evidence": {
                     "bbox": list(pair.label_bbox),
+                    "reading_bbox": list(
+                        pair.reading_bbox
+                        if pair.reading_bbox is not None
+                        else pair.label_bbox
+                    ),
                     "page_no": pair.label_page_no,
                     "ownership": pair.ownership,
                     "observations": pair.observations,

@@ -92,6 +92,7 @@ class CaptionPrefixOverlapTests(unittest.TestCase):
                 "text": "71",
                 "raw_text": "Compound 71",
                 "confidence": 0.98,
+                "bbox": [16, 176, 164, 200],
                 "parts": [part("Compound 71", method="complete_line_recognition")],
                 "detection_parts": [part("Compound /", 0, 120), part("71", 90, 150)],
             }
@@ -108,6 +109,7 @@ class CaptionPrefixOverlapTests(unittest.TestCase):
             "binding_rule": "original_caption_cell",
             "exact_caption_evidence": {
                 "bbox": [20, 180, 160, 196],
+                "reading_bbox": [16, 176, 164, 200],
                 "page_no": 1,
                 "ownership": {},
                 "observations": observations,
@@ -122,7 +124,12 @@ class CaptionPrefixOverlapTests(unittest.TestCase):
 
         stored = json.loads(json.dumps(packet))
         stored["exact_caption_evidence"]["observations"].insert(
-            0, {"method": "native_cell", "text": "Compound 72"}
+            0,
+            {
+                "method": "native_cell",
+                "text": "Compound 72",
+                "bbox": [16, 176, 164, 200],
+            },
         )
         self.assertFalse(valid_caption_binding_evidence(stored))
 

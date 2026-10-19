@@ -168,11 +168,16 @@ class UndetectedCaptionTests(unittest.TestCase):
             "binding_rule": "direct_structure_label",
             "visible_label_candidates": [{"label": "42", "source": "pdf_clip"}],
             "exact_caption_evidence": {
-                "bbox": [10, 180, 160, 195],
+                "bbox": [14, 184, 156, 191],
+                "reading_bbox": [10, 180, 160, 195],
                 "page_no": 1,
                 "ownership": {},
                 "observations": [
-                    {"method": "page_ocr_cell", "text": "Compound 42"},
+                    {
+                        "method": "page_ocr_cell",
+                        "text": "Compound 42",
+                        "bbox": [10, 180, 160, 195],
+                    },
                     packet,
                 ],
             },
