@@ -31,10 +31,13 @@ def auxiliary_source_cells(sources):
             continue
         seen.add(key)
         for view in cell["auxiliary_text"]["views"]:
-            for row in view["rows"]:
-                observed = {
-                    k: v for k, v in row["observation"].items() if k != "cache_hit"
-                }
+            observations = (
+                [row["observation"] for row in view["rows"]]
+                if cell["auxiliary_text"]["version"] == 1
+                else view["requests"]
+            )
+            for row in observations:
+                observed = {k: v for k, v in row.items() if k != "cache_hit"}
                 identity = observed["model_fingerprint"], observed["id"]
                 if identity in rows and rows[identity] != observed:
                     raise ValueError(

@@ -28,11 +28,15 @@ def load_source_observation_plan(
         original_binding_sources,
     )
 
-    if original_binding_sources(plan.proven.work_items):
+    if original_binding_sources(
+        plan.proven.work_items, role_text=plan.proven.role_text
+    ):
         import fitz
 
         with fitz.open(pdf_path) as document:
-            errors = original_binding_source_errors(document, plan.proven.work_items)
+            errors = original_binding_source_errors(
+                document, plan.proven.work_items, role_text=plan.proven.role_text
+            )
         if errors:
             raise ValueError(
                 "Original binding/source replay failed: " + "; ".join(errors[:3])

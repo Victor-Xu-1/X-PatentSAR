@@ -31,8 +31,8 @@ def primary_structure(primary, frame, bounds, dpi):
         and primary["text"] in ("", primary["raw_text"])
         and primary.get("source_frame", frame) == frame
         and type(primary.get("confidence")) in {int, float}
-        and math.isfinite(primary["confidence"])
         and 0 <= primary["confidence"] <= 1
+        and math.isfinite(primary["confidence"])
         and primary.get("crosses_boundary", False) is False
         and primary.get("detector_conflict", False) is False
         and valid_cell_frame(frame, primary, bounds, dpi)
@@ -40,8 +40,8 @@ def primary_structure(primary, frame, bounds, dpi):
             isinstance(p.get("text"), str)
             and len(p["text"]) <= 4096
             and type(p.get("confidence")) in {int, float}
-            and math.isfinite(p["confidence"])
             and 0 <= p["confidence"] <= 1
+            and math.isfinite(p["confidence"])
             and p.get("confidence_valid", True) is True
             for p in primary["parts"] + primary["detection_parts"]
         )

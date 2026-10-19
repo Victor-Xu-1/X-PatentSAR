@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .activity_header_layout_proof import physical_discovery_views
 from .cell_frame_proof import original_cell_frame_matches
+from .role_text_sources import role_text_cells
 from .source_evidence_identity import proof_id
 from .text_ocr.cell_proof import replay_auxiliary_cell
 from .text_ocr.source_inventory import MAX_SOURCE_CELLS, auxiliary_source_cells
@@ -42,6 +43,7 @@ def activity_text_cells(payload):
             yield from _row_text_cells(source)
     for source in payload.get("unresolved_rows", []):
         yield from _row_text_cells(source)
+    yield from role_text_cells(payload)
 
 
 def _row_text_cells(source):

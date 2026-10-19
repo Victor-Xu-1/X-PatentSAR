@@ -27,7 +27,7 @@ def valid_role_scope(record):
         "observations",
     } | (
         {"work_windows"}
-        if proof.get("version") == CHARACTERIZATION_ROLE_SCHEMA_VERSION
+        if proof.get("version") in (2, CHARACTERIZATION_ROLE_SCHEMA_VERSION)
         else set()
     ):
         return False
@@ -121,6 +121,17 @@ def valid_role_scope(record):
                         "physical_header_lines",
                         "physical_text_chunks",
                         "single_row_readings",
+                        *(
+                            {
+                                "source_frame",
+                                "auxiliary_text",
+                                "auxiliary_text_version",
+                                "auxiliary_text_attempts",
+                                "detector_conflict",
+                            }
+                            if proof["version"] == CHARACTERIZATION_ROLE_SCHEMA_VERSION
+                            else set()
+                        ),
                     }
                     != {
                         "method",
@@ -141,6 +152,7 @@ def valid_role_scope(record):
                     or not math.isfinite(confidence)
                     or cell.get("coordinate_space") != "original_pdf_points"
                     or cell.get("render_dpi") != int(method[9:12])
+                    or cell.get("detector_conflict", False) is not False
                     or not isinstance(cell.get("raw_text"), str)
                     or cell["raw_text"] != cell["text"]
                     or not isinstance(cell.get("parts"), list)

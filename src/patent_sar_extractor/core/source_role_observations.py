@@ -48,23 +48,37 @@ def scope_observations(observations, page_no, *, original_pdf_sha256=""):
     ]
 
 
-def _bounded_tree(value, *, coordinate_tuples=False, max_depth=16):
-    pending, count = [(value, 0)], 0
+def _bounded_tree(value, *, coordinate_tuples=False, max_depth=16, text_carriers=False):
+    # A paired recovery wraps the existing reading in packet/views/selected;
+    # failed attempts additionally wrap packet in attempts/list. Only this
+    # explicit physical-cell owner gets the six carrier links, never an
+    # arbitrary nested dictionary or another nested recovery. All node, array,
+    # scalar and whole-catalog byte bounds remain shared and unchanged.
+    owner = ("source_cells", "observations", "[]", "cells", "[]")
+    pending, count = [(value, 0, max_depth, ())], 0
     while pending:
-        item, depth = pending.pop()
+        item, depth, limit, path = pending.pop()
         count += 1
-        if depth > max_depth or count > 200000:
+        if depth > limit or count > 200000:
             raise ValueError(
                 "Original role diagnostic node inventory exceeds its budget"
             )
         if isinstance(item, dict):
             if len(item) > 128 or any(type(k) is not str or len(k) > 128 for k in item):
                 raise ValueError("Malformed original role diagnostic object")
-            pending.extend((child, depth + 1) for child in item.values())
+            for key, child in item.items():
+                child_limit = (
+                    max_depth + 6
+                    if text_carriers
+                    and path == owner
+                    and key in {"auxiliary_text", "auxiliary_text_attempts"}
+                    else limit
+                )
+                pending.append((child, depth + 1, child_limit, path + (key,)))
         elif isinstance(item, list) or coordinate_tuples and isinstance(item, tuple):
             if len(item) > 4096:
                 raise ValueError("Original role diagnostic array exceeds its budget")
-            pending.extend((child, depth + 1) for child in item)
+            pending.extend((child, depth + 1, limit, path + ("[]",)) for child in item)
         elif item is None or type(item) in {bool, int, str, float}:
             if (
                 type(item) is str
@@ -155,7 +169,7 @@ def _validate(observation, *, original_pdf_sha256=None):
         or cells["ys"] != ys
     ):
         raise ValueError("Original role diagnostic cell carrier differs")
-    _bounded_tree(observation)
+    _bounded_tree(observation, text_carriers=True)
 
 
 def _catalog(observations, *, expected_keys=None, original_pdf_sha256=None):

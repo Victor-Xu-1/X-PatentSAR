@@ -132,7 +132,9 @@ def validate_reply(reply: dict, request: dict) -> dict:
         or len(reply["text"]) > 4096
         or any(ord(c) < 32 or ord(c) == 127 for c in reply["text"])
         or any(
-            type(reply[key]) not in {int, float} or not math.isfinite(reply[key])
+            type(reply[key]) not in {int, float}
+            or not 0 <= reply[key] <= (1 if key == "confidence" else MAX_RSS_MB)
+            or not math.isfinite(reply[key])
             for key in ("confidence", "peak_rss_mb")
         )
         or not 0 <= reply["confidence"] <= 1

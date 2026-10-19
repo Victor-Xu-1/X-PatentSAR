@@ -23,6 +23,7 @@ class AuxiliarySourceReplayTests(unittest.TestCase):
         fixture.setUp()
         self.addCleanup(fixture.doCleanups)
         self.page, self.document = fixture.page, fixture.document
+        self.images, self.primaries = fixture.images, fixture.primaries
         pair = refine_text_pair(
             fixture.images, fixture.primaries, cell_fixture.ControlledAuxiliary()
         )
@@ -96,11 +97,18 @@ class AuxiliarySourceReplayTests(unittest.TestCase):
     def second_locator(self, *, changed_text=False):
         proof = self.payload["header_observations"]["controlled"]
         packet = copy.deepcopy(proof["observations"][0]["columns"][0]["auxiliary_text"])
+        if changed_text:
+            changed = refine_text_pair(
+                self.images,
+                self.primaries,
+                cell_fixture.ControlledAuxiliary(("Noise", "EC50")),
+            )
+            packet = copy.deepcopy(changed[0]["auxiliary_text"])
         for view in packet["views"]:
             view["primary"]["bbox"][0] += 1
             view["primary"]["bbox"][2] += 1
-            if changed_text:
-                view["rows"][0]["observation"]["text"] = "Noise"
+            view["selected"]["bbox"][0] += 1
+            view["selected"]["bbox"][2] += 1
         pair = effective_cells(packet)
         return {
             "page_no": 1,

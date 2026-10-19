@@ -18,7 +18,10 @@ import numpy as np
 from patent_sar_extractor.core.activity_header_layout import discover_header_layout
 from patent_sar_extractor.core.activity_header_observation import refine_scanned_header
 from patent_sar_extractor.core.cell_header_proof import physical_header_valid
+from patent_sar_extractor.core.cell_text_chunks import observe_text_cell
+from patent_sar_extractor.core.cell_text_proof import valid_text_reading
 from patent_sar_extractor.core.ocsr.worker_process import WorkerProtocolError
+from patent_sar_extractor.core.table_cells import cell_image
 from patent_sar_extractor.core.text_ocr.cell_capture import refine_text_pair
 from patent_sar_extractor.core.text_ocr.cell_proof import replay_auxiliary_cell
 from patent_sar_extractor.core.text_ocr.process import TextOCRCancelled
@@ -52,6 +55,37 @@ def original_row(text):
     PYTHON and MODELS, "Explicit isolated text OCR runtime/model required"
 )
 class NativeAuxiliaryTextTests(unittest.TestCase):
+    def test_native_long_original_preserves_all_rows_across_the_work_boundary(self):
+        with fitz.open() as document, tempfile.TemporaryDirectory() as temporary:
+            page = document.new_page(width=220, height=200)
+            for index in range(9):
+                page.insert_text(
+                    (25, 35 + 16 * index), "Compound 27B", fontsize=10, fontname="hebo"
+                )
+            bounds = [10, 20, 200, 180]
+            images = tuple(cell_image(page, bounds, dpi) for dpi in (400, 600))
+            primaries = tuple(
+                observe_text_cell(
+                    image, dpi, cell_fixture.primary, rows_per_chunk=8
+                ).evidence(dpi, bounds)
+                for image, dpi in zip(images, (400, 600))
+            )
+            with AuxiliaryTextRuntime(
+                Path(PYTHON), Path(MODELS), Path(temporary)
+            ) as reader:
+                pair = refine_text_pair(
+                    images, primaries, reader, maximum_rows=8, allow_chunks=True
+                )
+                self.assertIsNotNone(pair, reader.last_diagnostic)
+                for cell, dpi in zip(pair, (400, 600)):
+                    self.assertEqual(cell["text"].splitlines(), ["Compound 27B"] * 9)
+                    self.assertTrue(
+                        valid_text_reading(
+                            cell, bounds, dpi, maximum_rows=8, allow_chunks=True
+                        )
+                    )
+                    self.assertTrue(replay_auxiliary_cell(cell, page))
+
     def test_actual_model_cannot_outlive_its_abruptly_killed_owner(self):
         from patent_sar_extractor.web.analysis_children import alive, read_child, send
 
