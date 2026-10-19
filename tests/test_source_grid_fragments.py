@@ -117,10 +117,10 @@ class SourceGridFragmentTests(unittest.TestCase):
         )
 
     def test_actual_binding_writer_keeps_partial_products_and_replays_open_rows(self):
-        import json
         import tempfile
         from pathlib import Path
 
+        from patent_sar_extractor.artifact_io import load_json
         from patent_sar_extractor.core.structure_binder import bind
         from tests import test_binding_modules as controls
 
@@ -140,7 +140,7 @@ class SourceGridFragmentTests(unittest.TestCase):
             self.assertNotIn(
                 "Compound 118", [issue["cpd"] for issue in result["source_issues"]]
             )
-            saved = json.loads((root / "binding/bindings.json").read_text())
+            saved = load_json(root / "binding/bindings.json", {})
             saved["source_issues"] = []
             placeholders = [{"cpd": f"Compound {n}"} for n in (73, 84, 105)]
             with self.assertRaisesRegex(ValueError, "label-role reference ownership"):

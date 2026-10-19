@@ -1,10 +1,10 @@
 """Pure replay of complete original characterization-cell observations."""
 
 import math
-from itertools import pairwise
+
+from patent_sar_extractor.contracts import CHARACTERIZATION_ROLE_SCHEMA_VERSION
 
 from .activity_grid_roles import (
-    MAX_ROLE_CELLS,
     MAX_ROLE_TEXT_ROWS,
     characterization_roles,
     declared_measurement,
@@ -12,6 +12,7 @@ from .activity_grid_roles import (
 from .activity_headers import context_from_text
 from .cell_text_chunk_proof import text_detection_parts
 from .cell_text_proof import valid_text_reading
+from .role_grid_windows import valid_role_windows
 
 
 def valid_role_scope(record):
@@ -24,28 +25,18 @@ def valid_role_scope(record):
         "roles",
         "native_hints",
         "observations",
-    }:
+    } | (
+        {"work_windows"}
+        if proof.get("version") == CHARACTERIZATION_ROLE_SCHEMA_VERSION
+        else set()
+    ):
         return False
-    if type(proof["version"]) is not int or proof["version"] != 1:
+    if not valid_role_windows(proof):
         return False
     xs, ys = proof["xs"], proof["ys"]
-    if any(
-        not isinstance(edges, list)
-        or len(edges) < 2
-        or len(edges) > MAX_ROLE_CELLS + 1
-        or any(
-            type(value) not in {int, float}
-            or not math.isfinite(value)
-            or not 0 <= value <= 100000
-            for value in edges
-        )
-        or any(b <= a for a, b in pairwise(edges))
-        for edges in (xs, ys)
-    ) or record.get("bbox") != [xs[0], ys[0], xs[-1], ys[-1]]:
+    if record.get("bbox") != [xs[0], ys[0], xs[-1], ys[-1]]:
         return False
     rows, columns = len(ys) - 1, len(xs) - 1
-    if rows * columns > MAX_ROLE_CELLS:
-        return False
     roles = proof["roles"]
     if (
         not isinstance(roles, dict)
@@ -103,6 +94,8 @@ def valid_role_scope(record):
         ):
             return False
         method = observation["method"]
+        if not isinstance(method, str):
+            return False
         methods.append(method)
         for index, cell in enumerate(cells):
             row, column = divmod(index, columns)
@@ -144,8 +137,8 @@ def valid_role_scope(record):
                     }
                     or cell.get("method") != method
                     or type(confidence) not in {int, float}
-                    or not math.isfinite(confidence)
                     or not 0.85 <= confidence <= 1
+                    or not math.isfinite(confidence)
                     or cell.get("coordinate_space") != "original_pdf_points"
                     or cell.get("render_dpi") != int(method[9:12])
                     or not isinstance(cell.get("raw_text"), str)
@@ -162,8 +155,8 @@ def valid_role_scope(record):
                     not isinstance(part, dict)
                     or not isinstance(part.get("text"), str)
                     or type(part.get("confidence")) not in {int, float}
-                    or not math.isfinite(part["confidence"])
                     or not 0.85 <= part["confidence"] <= 1
+                    or not math.isfinite(part["confidence"])
                     for part in cell["parts"]
                 ):
                     return False
@@ -182,8 +175,8 @@ def valid_role_scope(record):
                     or not isinstance(part.get("text"), str)
                     or len(part["text"]) > 4096
                     or type(part.get("confidence")) not in {int, float}
-                    or not math.isfinite(part["confidence"])
                     or not 0 <= part["confidence"] <= 1
+                    or not math.isfinite(part["confidence"])
                     or part["confidence"] >= 0.85
                     and declared_measurement(part["text"])
                     for part in text_detection_parts(cell)

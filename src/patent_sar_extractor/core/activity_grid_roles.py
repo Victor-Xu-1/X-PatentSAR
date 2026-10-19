@@ -5,10 +5,10 @@ import re
 from .activity_header_metrics import METRIC, normalize_metric_text
 from .activity_headers import ACTIVITY_CONTEXT, context_from_text
 from .printed_identifiers import LABEL_KIND, PRINTED_ID, identifier_key
+from .role_grid_windows import MAX_ROLE_COLUMNS, MAX_ROLE_GRID_CELLS
 from .source_role_terms import INTERMEDIATE_SINGULAR
 from .source_section_roles import section_heading
 
-MAX_ROLE_CELLS = 96
 MAX_ROLE_TEXT_ROWS = 32
 _ID_HEADER = re.compile(
     rf"(?:Compound|Cmpd|Cpd|{INTERMEDIATE_SINGULAR}|Example|化合物|实施例)\s*(?:No\.?|ID|#|编号)?|No\.|ID|编号",
@@ -89,7 +89,7 @@ def characterization_roles(matrix, prefix):
     ):
         return None
     width = len(matrix[0]) if isinstance(matrix[0], (list, tuple)) else 0
-    if not 1 <= width <= 64 or len(matrix) * width > MAX_ROLE_CELLS:
+    if not 1 <= width <= MAX_ROLE_COLUMNS or len(matrix) * width > MAX_ROLE_GRID_CELLS:
         return None
     if any(
         not isinstance(row, (list, tuple))

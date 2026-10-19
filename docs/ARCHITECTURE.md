@@ -1,5 +1,39 @@
 # X-PatentSAR architecture
 
+## Complete closed-grid role coverage with bounded work units
+
+`role_grid_windows` owns one physical grid inventory and deterministic continuous
+row windows. `role_grid_capture` invokes the SAME `activity_grid_role_observation`
+cell observer with at most96cells per window, all physical columns intact. It
+conserves the original whole-grid native/raster source decision, paired optical
+views and native hints; blank child windows cannot invent a different source.
+The sole returned source carrier remains complete ordered matrices/cells, so
+binding references, open-row links and activity coverage consume one authority.
+No separate extraction, parser, queue, scoring or role-voting chain is added.
+
+Characterization-role2 records the exact `work_windows`. The pure shared validator
+reconstructs that partition and requires every row/cell, exact bounds, full column
+roles, native contradictions and each complete optical view. Missing/duplicate/
+reordered windows, omitted tail observations and source/method/score corruption
+remain invalid. Unknown tail cells and measurement/assay contradictions cannot
+be sampled away or classified from a successful earlier window. Failed rendering
+retains all completed/partial observations in the existing diagnostic carrier;
+it never publishes a whole-grid role.
+
+The original96cell work limit and pixel/text bounds remain. A complete closed
+grid is separately bounded at4096cells and64columns; exceeding that inventory
+remains explicit unresolved work, never truncation. Observations still use the
+existing artifact byte/node and worker/process lifecycle bounds. This is complete
+partitioned work, not a raised single-render budget or a guarantee of text/model
+accuracy. Optical text recovery and unsupported column semantics remain separate
+acceptance obligations.
+
+Binding43/binder53 and Activity26/extractor36 invalidate affected derived
+ownership/exclusion checkpoints. Historical role1 proof remains readable only
+within its original96cell whole-grid bound; it cannot assert a large grid or
+promote a historical task. Original PDF/OCR/OCSR2, preparation12, human audit,
+model/runtime policy, numerical SAR, API/SQL and dependencies stay unchanged.
+
 ## Unresolved numbered cells and original synthesis headings
 
 `table_cells.read_cell` and `heading_observation` compose the same optional
@@ -554,7 +588,7 @@ explicit rather than assigning a new left-column title to a sole right-column cr
 
 ### Single source-record authority
 
-Bindings42/binder52 store complete current records only in
+Bindings43/binder53 store complete current records only in
 `compound_catalog.entries`. The obsolete root `final_bindings` and returned
 `bindings` copies are removed, not replaced with another store or lazy object.
 `core.binding_records` owns bounded shape selection and exact integer count
