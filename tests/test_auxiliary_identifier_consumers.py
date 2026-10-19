@@ -88,14 +88,12 @@ class AuxiliaryIdentifierConsumerTests(unittest.TestCase):
             self.assertFalse(_observed(cell, identifier=identifier))
 
     def test_same_observation_identity_cannot_acquire_a_second_literal(self):
-        from patent_sar_extractor.core.text_ocr.cell_proof import effective_cells
-
         cell = copy.deepcopy(self.cell)
-        packet = cell["observations"][-1]["auxiliary_text"]
-        for view in packet["views"]:
-            view["rows"][0]["observation"]["text"] = "Compound 41B"
+        fixture = identifier_fixture.AuxiliaryIdentifierTests()
+        self.addCleanup(fixture.doCleanups)
+        _page, _runtime, observed = fixture.read("Compound 41B", kind="label")
         cell["value"] = "41B"
-        cell["observations"][-2:] = list(effective_cells(packet))
+        cell["observations"] = observed.observations
         payload = {
             "rows": [{"activity_sources": [{"page_no": 1, "cells": [self.cell, cell]}]}]
         }

@@ -1,5 +1,32 @@
 # Operations and troubleshooting
 
+## Weak complete source text in role tables
+
+The same on-demand ordinary OCR can refine unresolved complete role cells.
+Inspect retained primary views, selected physical rows/chunks, original-frame
+digests and row responses. Each physical row needs a response in both400/600dpi
+views. Long role text uses32row work chunks, not an eight-row truncation; scalar
+and header scopes do not inherit this permission. Unknown/contradictory roles,
+missing tails, unavailable runtime, exhausted budgets and cancelled requests
+remain refused with observations, not fabricated values or successful tables.
+
+Recovery2 is the sole current producer. Historical recovery1 stays read-only.
+Original readback uses cached row observations plus actual original pixels, not
+model inference. Source native text, physical column identity, boundaries and
+all request/model identities must survive serialization. Removing packet/outer
+markers cannot turn an auxiliary reading into primary evidence. The existing
+role diagnostic catalog preserves bounded recovery envelopes and failure
+attempts without loosening its global node/array/byte bounds.
+
+Focused checks: source-text chunk recovery, role-text recovery/source replay,
+auxiliary cell/header/discovery/identifier/binding/activity consumers, source
+epochs and safe Web/export consumers. Native generated-text checks require the
+existing explicit runtime/model opt-in; no downloads or dependency changes.
+These are not private-patent processing or universal scientific acceptance.
+Binding44/binder54, Activity27/extractor37 and characterization-role3 require
+normal frontend regeneration. Preserve old tasks/manual audit and matching
+rollback code/config/state; never upgrade saved proof fields manually.
+
 ## A closed source table exceeds one observation work unit
 
 Current characterization-role2 preserves an exact full-grid inventory and

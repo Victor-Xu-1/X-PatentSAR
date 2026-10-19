@@ -14,6 +14,7 @@ from .activity_header_sources import header_source_conflicts, select_header_cont
 from .activity_headers import context_from_text, grid_schema
 from .cell_header_proof import physical_header_valid
 from .cell_text_proof import valid_text_components
+from .text_ocr.cell_proof import has_auxiliary_text
 
 
 def _score(value):
@@ -65,8 +66,10 @@ def valid_header_column(column, index, header, band, dpi):
         or column["confidence"] != min(part["confidence"] for part in parts)
     ):
         return False
-    physical = "physical_header_lines" in column or any(
-        part.get("method") == "physical_header_line" for part in parts
+    physical = (
+        has_auxiliary_text(column)
+        or "physical_header_lines" in column
+        or any(part.get("method") == "physical_header_line" for part in parts)
     )
     if physical:
         return (

@@ -107,7 +107,7 @@ class AuxiliaryBindingConsumerTests(unittest.TestCase):
             for binding in changed["compound_catalog"]["entries"]:
                 binding["exact_caption_evidence"]["observations"][-1]["auxiliary_text"][
                     "views"
-                ][0]["rows"][0]["observation"]["pixel_sha256"] = "f" * 64
+                ][0]["requests"][0]["pixel_sha256"] = "f" * 64
             payloads["bindings"] = changed
             self.assertTrue(
                 read_source_observations(

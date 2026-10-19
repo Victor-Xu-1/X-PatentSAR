@@ -1,16 +1,11 @@
 """Original header semantics over the shared physical text-frame proof."""
 
-from patent_sar_extractor.contracts import AUXILIARY_TEXT_CELL_VERSION
-
 from .cell_text_proof import physical_text_valid
+from .text_ocr.cell_proof import has_auxiliary_text
 
 
 def physical_header_valid(reading):
-    packet = reading.get("physical_header_lines") if isinstance(reading, dict) else None
-    auxiliary = (
-        isinstance(packet, dict)
-        and packet.get("version") == AUXILIARY_TEXT_CELL_VERSION
-    )
+    auxiliary = has_auxiliary_text(reading)
     return physical_text_valid(
         reading,
         packet_name="physical_header_lines",

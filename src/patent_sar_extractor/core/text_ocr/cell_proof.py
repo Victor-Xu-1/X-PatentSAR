@@ -14,14 +14,28 @@ from .protocol import frame_digest
 def has_auxiliary_text(reading):
     if not isinstance(reading, dict):
         return False
-    physical = reading.get("physical_header_lines")
-    return "auxiliary_text" in reading or (
-        isinstance(physical, dict)
-        and physical.get("version") == AUXILIARY_TEXT_CELL_VERSION
+    return (
+        "auxiliary_text" in reading
+        or "auxiliary_text_version" in reading
+        or (
+            any(
+                isinstance(reading.get(name), dict)
+                and reading[name].get("version") == AUXILIARY_TEXT_CELL_VERSION
+                for name in ("physical_header_lines", "physical_text_chunks")
+            )
+        )
     )
 
 
 def effective_cells(packet):
+    if (
+        isinstance(packet, dict)
+        and type(packet.get("version")) is int
+        and packet["version"] == 2
+    ):
+        from .recovery_proof import effective_recovery_cells
+
+        return effective_recovery_cells(packet)
     if (
         not isinstance(packet, dict)
         or set(packet) != {"version", "model", "views"}
@@ -86,6 +100,13 @@ def replay_auxiliary_cell(reading, page):
     """Render the same original windows, without models, paths from artifacts or edits."""
     if not valid_auxiliary_cell(reading, reading.get("render_dpi")):
         return False
+    if reading["auxiliary_text"]["version"] == 2:
+        from .recovery_proof import replay_recovery_cell
+
+        try:
+            return replay_recovery_cell(reading, page)
+        except (TypeError, ValueError, KeyError, IndexError, RuntimeError):
+            return False
     for view in reading["auxiliary_text"]["views"]:
         image = cell_image(page, view["primary"]["bbox"], view["dpi"])
         actual = source_rows(image, view["dpi"])

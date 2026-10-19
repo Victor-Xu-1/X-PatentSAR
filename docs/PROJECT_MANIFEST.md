@@ -1,5 +1,21 @@
 # Project governance manifest
 
+- Complete auxiliary text authority: `text_ocr/recovery_capture` and
+  `recovery_proof` compose the SAME physical text observer through one row-only
+  live/cached adapter. Recovery2 is the only current producer; recovery1 is
+  bounded historical reading. `role_text_capture` refines unresolved whole role
+  cells before classification; characterization-role3 admits the paired proof.
+  `role_text_sources` inventories explicit accepted/rejected owners; binding
+  recognition/candidate/worker/QA/Web and activity readback conserve them in the
+  same source replay, not molecule work. Existing row/chunk/pixel/request budgets
+  and primary/native/detector conflicts remain; only six known recovery-envelope
+  links are admitted in physical-cell diagnostics, not arbitrary deeper JSON.
+  Current derived contracts are Binding44/binder54 and Activity27/extractor37.
+  PDF/raw OCR/OCSR2, preparation12/assets/human audit, API/SQL, numerical SAR,
+  model files, dependency recipes and activation policy remain unchanged.
+  Historical evidence is preserved without scientific promotion. No second
+  execution/store/queue, read-side model loading or private-data repair exists.
+
 - Closed-grid role authority: `role_grid_windows` owns deterministic complete
   row windows, at most96cells per work unit,64columns and4096cells per whole
   inventory. `role_grid_capture` composes the same cell observer into one ordered

@@ -89,15 +89,13 @@ class AuxiliaryCellEvidenceTests(unittest.TestCase):
             elif change == "primary":
                 packet["views"][0]["primary"] = {}
             elif change == "model":
-                packet["views"][0]["rows"][0]["observation"]["model_fingerprint"] = (
-                    "c" * 64
-                )
+                packet["views"][0]["requests"][0]["model_fingerprint"] = "c" * 64
             elif change == "row":
-                packet["views"][0]["rows"].pop()
+                packet["views"][0]["requests"].pop()
             elif change == "pixels":
                 packet["views"][0]["frame"]["pixel_sha256"] = "c" * 64
             else:
-                packet["views"][0]["rows"][0]["observation"]["confidence"] = 0.9
+                packet["views"][0]["requests"][0]["confidence"] = 0.9
             self.assertFalse(
                 valid_auxiliary_cell(reading, 400)
                 and replay_auxiliary_cell(reading, self.page),
@@ -107,6 +105,27 @@ class AuxiliaryCellEvidenceTests(unittest.TestCase):
     def test_disagreeing_complete_reads_are_not_voted_or_spliced(self):
         reader = ControlledAuxiliary(("HTRF", "EC50", "HTRF", "IC50"))
         self.assertIsNone(refine_text_pair(self.images, self.primaries, reader))
+
+    def test_original_native_and_physical_column_metadata_cannot_be_rewritten(self):
+        from patent_sar_extractor.core.text_ocr.cell_proof import effective_cells
+
+        primaries = copy.deepcopy(self.primaries)
+        for primary in primaries:
+            primary.update(
+                native_text="Original source", physical_column=2, crosses_boundary=False
+            )
+        recovered = refine_text_pair(self.images, primaries, ControlledAuxiliary())
+        self.assertIsNotNone(recovered)
+        for field, changed in (
+            ("native_text", ""),
+            ("physical_column", 3),
+            ("crosses_boundary", True),
+        ):
+            with self.subTest(field=field):
+                packet = copy.deepcopy(recovered[0]["auxiliary_text"])
+                packet["views"][0]["selected"][field] = changed
+                with self.assertRaises(ValueError):
+                    effective_cells(packet)
 
     def test_extra_source_ink_cannot_reuse_an_old_proof(self):
         pair = refine_text_pair(self.images, self.primaries, ControlledAuxiliary())

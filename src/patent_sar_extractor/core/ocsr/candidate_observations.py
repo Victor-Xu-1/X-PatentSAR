@@ -118,7 +118,9 @@ def build_candidate_plan(
     inventory["entries"] = observed
     inventory["identity"] = inventory_digest(inventory)
     validate_candidate_scope(inventory)
-    return CandidatePlan(RecognitionPlan(*groups), candidates, inventory)
+    return CandidatePlan(
+        RecognitionPlan(*groups, role_text=proven.role_text), candidates, inventory
+    )
 
 
 def validate_candidate_observations(plan, payload, *, read_digest=asset_digest):

@@ -41,6 +41,7 @@ def valid_role_windows(proof):
     version = proof.get("version")
     if type(version) is not int or version not in {
         1,
+        2,
         CHARACTERIZATION_ROLE_SCHEMA_VERSION,
     }:
         return False

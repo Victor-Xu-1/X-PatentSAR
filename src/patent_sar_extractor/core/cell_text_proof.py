@@ -18,6 +18,16 @@ def valid_text_reading(
     reading, bounds, dpi, *, maximum_row_height=12, maximum_rows=8, allow_chunks=False
 ):
     """Typed original text-cell reading, independent of its scientific role."""
+    if _recovery_marker(reading):
+        selected = _recovery_selected(reading, dpi)
+        return selected is not None and valid_text_reading(
+            selected,
+            bounds,
+            dpi,
+            maximum_row_height=maximum_row_height,
+            maximum_rows=maximum_rows,
+            allow_chunks=allow_chunks,
+        )
     if (
         type(maximum_rows) is not int
         or not 2 <= maximum_rows <= 32
@@ -49,6 +59,14 @@ def valid_text_reading(
 
 def valid_text_components(reading, dpi, *, maximum_row_height=12, maximum_rows=8):
     """Literal text/pixel components, with geometry owned by the calling frame."""
+    if _recovery_marker(reading):
+        selected = _recovery_selected(reading, dpi)
+        return selected is not None and valid_text_components(
+            selected,
+            dpi,
+            maximum_row_height=maximum_row_height,
+            maximum_rows=maximum_rows,
+        )
     if not isinstance(reading, dict):
         return False
     if _auxiliary_marker(reading, "physical_header_lines"):
@@ -246,10 +264,33 @@ def physical_text_valid(
 
 def _auxiliary_marker(reading, packet_name):
     packet = reading.get(packet_name)
-    return "auxiliary_text" in reading or (
-        isinstance(packet, dict)
-        and packet.get("version") == AUXILIARY_TEXT_CELL_VERSION
+    return (
+        "auxiliary_text" in reading
+        or "auxiliary_text_version" in reading
+        or (
+            isinstance(packet, dict)
+            and packet.get("version") == AUXILIARY_TEXT_CELL_VERSION
+        )
     )
+
+
+def _recovery_marker(reading):
+    if not isinstance(reading, dict):
+        return False
+    packet = reading.get("auxiliary_text")
+    return (
+        "auxiliary_text_version" in reading
+        or isinstance(packet, dict)
+        and packet.get("version") == 2
+    )
+
+
+def _recovery_selected(reading, dpi):
+    from .text_ocr.cell_proof import valid_auxiliary_cell
+
+    if not valid_auxiliary_cell(reading, dpi):
+        return None
+    return reading["auxiliary_text"]["views"][(400, 600).index(dpi)]["selected"]
 
 
 def _auxiliary_limits(reading, minimum_rows, maximum_rows, maximum_row_height):

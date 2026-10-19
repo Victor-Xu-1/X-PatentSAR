@@ -173,6 +173,9 @@ def observe_characterization(page, region, tokens, prefix, *, evidence_sink=None
     cells = observe_complete_role_grid(page, region, tokens, evidence_sink=attempted)
     if cells is None:
         return refused("cell_render_limit", attempted[0] if attempted else None)
+    from .role_text_capture import refine_role_text
+
+    refine_role_text(page, cells)
     observations = cells["observations"]
     roles = characterization_roles(observations[0]["matrix"], prefix)
     if roles is None:

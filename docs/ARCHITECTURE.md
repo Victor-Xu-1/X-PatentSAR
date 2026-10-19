@@ -1,5 +1,40 @@
 # X-PatentSAR architecture
 
+## Complete auxiliary text recovery and original-role replay
+
+The optional `text_ocr` adapter now produces recovery2 through one row-only
+`RecoveryRowEngine` and the SAME `observe_text_cell` geometry. Trusted role
+callers allow32rows per chunk; ordinary scalar/header callers retain8rows and
+no chunks. Existing128chunk,8Mcell-pixel,1Mrow-pixel and2048session-request
+bounds remain. Missing/extra/conflicting rows, budget exhaustion and cancellation
+cannot publish partial success. Complete qualified primary text never loads the
+adapter to vote. Qualified native/detector/primary claims and source metadata
+cannot be replaced; unknown column semantics remain unknown.
+
+`recovery_capture` retains both400/600dpi primary views, full frame digests,
+selected complete observations and every literal row response. `recovery_proof`
+replays the same physical observer with recorded pixel-keyed responses, without
+a model or SDK on reads. The existing auxiliary physical marker remains even
+if outer packet fields are stripped. The old recovery1 producer is removed;
+only bounded historical reading remains. No new recognizer, dependency,
+installer, queue or source store is introduced.
+
+`role_text_capture` composes this unresolved-only pass into the normal complete
+grid producer before positive role classification. Characterization-role3
+admits its proof, not arbitrary extra metadata. `role_text_sources` inventories
+only explicit accepted/rejected role owners. Binding plans carry these sources
+separately from molecule work items, and candidate/worker/QA/Web and activity
+readback conserve them through the same original replay. Role diagnostics allow
+six additional envelope links only at physical-cell recovery/attempt paths;
+unrelated nesting, node/array/scalar/catalog budgets remain unchanged.
+
+Binding44/binder54 and Activity27/extractor37 refresh affected derived evidence.
+Original PDF/raw OCR/OCSR2, preparation12, structures, human audit, numerical SAR,
+API/SQL, model files and activation policy remain unchanged. Old role1/2 and
+recovery1 evidence remains historical, never retagged as current acceptance.
+Generated controlled/native checks establish integration, not universal patent
+recall, structure correctness or successful real extraction-to-SAR acceptance.
+
 ## Complete closed-grid role coverage with bounded work units
 
 `role_grid_windows` owns one physical grid inventory and deterministic continuous

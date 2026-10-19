@@ -11,6 +11,8 @@ from patent_sar_extractor.core.catalog_reader import (
     read_catalog_entries,
 )
 from patent_sar_extractor.core.pipeline_rules import _label_key
+from patent_sar_extractor.core.role_text_sources import role_text_cells
+from patent_sar_extractor.core.text_ocr.source_inventory import auxiliary_source_cells
 
 _SOURCE_INPUT_FIELDS = (
     "image_path",
@@ -40,6 +42,7 @@ class RecognitionPlan:
     formal: list[dict]
     supplemental: list[dict]
     reprints: list[dict]
+    role_text: tuple[tuple[int, dict], ...] = ()
 
     @property
     def work_items(self) -> list[dict]:
@@ -96,7 +99,12 @@ def recognition_inputs(payload: dict[str, Any]) -> RecognitionPlan:
             used_images.add(source["structure_id"])
     if len(formal) + len(supplemental) + len(reprints) > MAX_CATALOG_RECORDS:
         raise ValueError("Recognition source collection exceeds its bound.")
-    return RecognitionPlan(formal, supplemental, reprints)
+    return RecognitionPlan(
+        formal,
+        supplemental,
+        reprints,
+        role_text=tuple(auxiliary_source_cells(role_text_cells(payload))),
+    )
 
 
 def ordered_source_results(bindings: list[dict], results: list[dict]) -> bool:

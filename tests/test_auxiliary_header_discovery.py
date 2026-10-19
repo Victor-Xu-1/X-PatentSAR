@@ -14,6 +14,7 @@ from patent_sar_extractor.core.activity_header_layout import discover_header_lay
 from patent_sar_extractor.core.activity_header_observation import refine_scanned_header
 from patent_sar_extractor.core.activity_header_proof import valid_header_proof
 from patent_sar_extractor.core.activity_headers import context_from_text, grid_schema
+from patent_sar_extractor.core.cell_text_chunks import observe_text_cell
 from patent_sar_extractor.core.table_cells import cell_image
 from patent_sar_extractor.core.text_ocr.cell_frames import source_rows
 from patent_sar_extractor.core.text_ocr.protocol import frame_digest
@@ -48,6 +49,25 @@ class PixelOracle:
                                 digest = frame_digest(image)
                                 assert self.values.get(digest, text) == text
                                 self.values[digest] = text
+                            position = 0
+
+                            def literal_row(image, *, use_det, use_cls, texts=texts):
+                                nonlocal position
+                                if use_det:
+                                    return [], None
+                                text = texts[position % len(texts)]
+                                position += 1
+                                digest = frame_digest(image)
+                                assert self.values.get(digest, text) == text
+                                self.values[digest] = text
+                                return [[text, 0.999]], None
+
+                            observe_text_cell(
+                                cell_image(page, bounds, dpi),
+                                dpi,
+                                literal_row,
+                                rows_per_chunk=8,
+                            )
 
     def observe(self, image):
         self.calls += 1
