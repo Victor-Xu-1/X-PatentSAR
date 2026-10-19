@@ -81,6 +81,28 @@ class AuxiliaryConfigurationTests(unittest.TestCase):
         self.assertEqual(owner.closed, 1)
         self.assertIsNone(configured.get_auxiliary_text_runtime())
 
+    def test_binding_owns_and_releases_its_optional_reader_on_source_failure(self):
+        from patent_sar_extractor.core.structure_binder import bind
+
+        owners = []
+
+        def failing_source(*args):
+            owners.append(configured.get_auxiliary_text_runtime())
+            raise ValueError("controlled original-source failure")
+
+        with (
+            patch(
+                "patent_sar_extractor.core.structure_binder.load_binding_input",
+                side_effect=failing_source,
+            ),
+            self.assertRaisesRegex(ValueError, "controlled original"),
+        ):
+            bind("unused.pdf", {}, "unused-output")
+        self.assertEqual(len(owners), 1)
+        self.assertIsNotNone(owners[0])
+        self.assertEqual(owners[0].closed, 1)
+        self.assertIsNone(configured.get_auxiliary_text_runtime())
+
     def test_refused_concurrent_phase_never_closes_first_owner(self):
         def competing():
             with configured.auxiliary_text_phase():

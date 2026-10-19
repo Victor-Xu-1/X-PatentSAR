@@ -52,6 +52,14 @@ def validate_original_heading(page, proof):
             raise ValueError(
                 "Original heading pixels differ from the recorded observation"
             )
+    from .text_ocr.cell_proof import replay_auxiliary_cell
+    from .text_ocr.source_inventory import auxiliary_source_cells
+
+    for _, reading in auxiliary_source_cells(
+        (proof["page_no"], reading) for reading in proof["observations"]
+    ):
+        if not replay_auxiliary_cell(reading, page):
+            raise ValueError("Auxiliary heading row differs from its original pixels")
 
 
 def heading_sources(bindings):

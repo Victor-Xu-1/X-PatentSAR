@@ -195,6 +195,20 @@ def read_cell(page, bounds, tokens: list[dict], kind: str, native: bool) -> Cell
         and (not native_value or first == native_value)
         and not original_id_conflict(first)
     )
+    if kind in {"id", "label"} and not agreed and not nonfinal:
+        from .cell_identity_proof import confirmed_identity_readings
+        from .text_ocr.source_capture import refine_source_text
+
+        observations[-2:] = refine_source_text(page, bounds, observations[-2:])
+        candidate = _normalize(observations[-2]["text"], kind)
+        if (
+            candidate
+            and not original_id_conflict(candidate)
+            and confirmed_identity_readings(
+                candidate, observations, caption=kind == "label"
+            )
+        ):
+            return CellReading(candidate, bounds, observations)
     value = first if agreed else initial or first or second
     if kind in {"id", "label"} and not agreed:
         value = ""  # Candidates stay in raw observations, not the ID universe.

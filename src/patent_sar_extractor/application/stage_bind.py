@@ -9,6 +9,7 @@ from pathlib import Path
 from patent_sar_extractor.contracts import STRUCTURE_BINDER_VERSION
 from patent_sar_extractor.core.binding_artifacts import write_binding_result
 from patent_sar_extractor.core.formal_structure import SOURCE_EXECUTION_MODE
+from patent_sar_extractor.core.text_ocr.configuration import text_ocr_policy_identity
 
 from .binding_policy import _binding_acceptance_errors, _load_reusable_bindings
 from .binding_progress import BindingProgress
@@ -47,6 +48,7 @@ def execute_bind(state: PipelineContext) -> None:
         params={
             **profile,
             "structure_binder_version": STRUCTURE_BINDER_VERSION,
+            "auxiliary_text_policy": text_ocr_policy_identity(),
             "include_intermediates": bool(
                 getattr(state.args, "include_intermediates", False)
             ),

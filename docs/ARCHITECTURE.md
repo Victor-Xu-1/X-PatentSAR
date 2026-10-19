@@ -1,5 +1,38 @@
 # X-PatentSAR architecture
 
+## Unresolved numbered cells and original synthesis headings
+
+`table_cells.read_cell` and `heading_observation` compose the same optional
+`text_ocr/source_capture` only after their primary original views remain
+unresolved. The bound producer phase owns the lazy runtime and always releases
+it; viewing results never loads a model. Complete qualified primary cells,
+including conflicting qualified reads, never trigger auxiliary voting.
+Both400/600dpi primary observations stay inside the paired proof. The fresh
+literal text is not spelling-corrected or assembled from fragments. ID grammar,
+original native/page carrier conflicts, detector claims and nonfinal roles
+remain authoritative. An auxiliary caption must cover exactly one complete
+physical row. Synthesis headings retain their separate original declaration,
+native visibility, scope and reaction-role gates.
+
+`text_ocr/source_inventory` is the single bounded paired-packet/request inventory
+for binding and activity source readback. It conserves cached requests once and
+rejects conflicting outputs under one identity. `binding_original_replay`
+includes bare numbered cells as well as captions/headings. Activity readback
+includes accepted and unresolved row cells, not just headers. Worker plans,
+QA/export and safe Web consumers reopen the caller-owned original PDF and replay
+row/frame pixels; saved paths, flags or model scores cannot grant acceptance.
+Literal prefix normalization for the existing activity ID key does not change
+the raw observation or measured values. Unknown/conflicting auxiliary output
+and request failures stay in the original source diagnostics.
+
+Binding39/binder49, Activity25/extractor35 and preparation12 refresh only these
+derived observations and consumers. Bind cache fingerprints include the same
+explicit text-runtime/model policy as activity. Raw PDF/page OCR/OCSR2, visible23,
+manual revisions, default DECIMER, numerical SAR, API/SQL and dependencies stay
+unchanged. Historical derived proofs remain historical; normal frontend task
+regeneration is required. Controlled and native generated-source tests are not
+held-out patent accuracy, complete recall or chemical acceptance.
+
 ## Original occurrence role is independent of successful binding
 
 `structure_binder` retains rejected spatial proposals in the SAME bounded

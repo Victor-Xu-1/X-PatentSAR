@@ -5,16 +5,13 @@ from contextlib import AbstractContextManager
 from functools import partial
 from pathlib import Path
 
-from patent_sar_extractor.contracts import AUXILIARY_TEXT_CELL_VERSION
-
 from .activity_header_layout_proof import physical_discovery_views
 from .cell_frame_proof import original_cell_frame_matches
 from .source_evidence_identity import proof_id
-from .text_ocr.cell_proof import replay_auxiliary_cell, valid_auxiliary_cell
+from .text_ocr.cell_proof import replay_auxiliary_cell
+from .text_ocr.source_inventory import MAX_SOURCE_CELLS, auxiliary_source_cells
 
 OriginalReader = Callable[[], AbstractContextManager]
-_MAX_ROWS = 2048
-_MAX_SOURCE_CELLS = 16384
 
 
 def original_pdf_reader(path: str | Path | None) -> OriginalReader | None:
@@ -27,8 +24,11 @@ def original_pdf_reader(path: str | Path | None) -> OriginalReader | None:
 
 
 def auxiliary_columns(payload):
-    """Yield bounded unique paired packets, after the shared header shape gate."""
-    seen, rows = set(), {}
+    """Headers and actual row cells share one original observation inventory."""
+    return auxiliary_source_cells(activity_text_cells(payload))
+
+
+def activity_text_cells(payload):
     for proof in payload.get("header_observations", {}).values():
         observed_columns = [
             *proof.get("observations", []),
@@ -36,47 +36,18 @@ def auxiliary_columns(payload):
         ]
         for observed in observed_columns:
             for column in observed.get("columns", []):
-                physical = column.get("physical_header_lines")
-                if "auxiliary_text" not in column and not (
-                    isinstance(physical, dict)
-                    and physical.get("version") == AUXILIARY_TEXT_CELL_VERSION
-                ):
-                    continue
-                if not valid_auxiliary_cell(column, column.get("render_dpi")):
-                    raise ValueError("Unproved auxiliary original text cell")
-                page_no = proof.get("page_no")
-                if type(page_no) is not int or not 1 <= page_no <= 20000:
-                    raise ValueError("Missing auxiliary original page ownership")
-                key = (
-                    page_no,
-                    proof_id(
-                        {
-                            "status": "auxiliary_text_observations",
-                            "packet": column["auxiliary_text"],
-                        }
-                    ),
-                )
-                if key in seen:
-                    continue
-                seen.add(key)
-                for view in column["auxiliary_text"]["views"]:
-                    for row in view["rows"]:
-                        observed = {
-                            k: v
-                            for k, v in row["observation"].items()
-                            if k != "cache_hit"
-                        }
-                        identity = observed["model_fingerprint"], observed["id"]
-                        if identity in rows and rows[identity] != observed:
-                            raise ValueError(
-                                "One auxiliary observation identity has conflicting outputs"
-                            )
-                        rows[identity] = observed
-                if len(rows) > _MAX_ROWS or len(seen) > _MAX_SOURCE_CELLS:
-                    raise ValueError(
-                        "Auxiliary original row inventory exceeds its session bound"
-                    )
-                yield page_no, column
+                yield proof.get("page_no"), column
+    for row in payload.get("rows", []):
+        for source in row.get("activity_sources", []):
+            yield from _row_text_cells(source)
+    for source in payload.get("unresolved_rows", []):
+        yield from _row_text_cells(source)
+
+
+def _row_text_cells(source):
+    for cell in source.get("cells", []):
+        for reading in cell.get("observations", []):
+            yield source.get("page_no"), reading
 
 
 def original_discovery_columns(payload):
@@ -97,7 +68,7 @@ def original_discovery_columns(payload):
                     )
                     if key not in seen:
                         seen.add(key)
-                        if len(seen) > _MAX_SOURCE_CELLS:
+                        if len(seen) > MAX_SOURCE_CELLS:
                             raise ValueError(
                                 "Original discovery cells exceed their bounded inventory"
                             )

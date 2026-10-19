@@ -17,8 +17,10 @@ from .binding_source_headings import (
 from .binding_source_regions import collect_reference_regions
 from .binding_spatial import collect_spatial_bindings
 from .source_role_observations import RoleObservationBuffer, serialize_role_observations
+from .text_ocr.configuration import owns_auxiliary_text
 
 
+@owns_auxiliary_text
 def bind(
     pdf_path: str,
     profile: dict,
