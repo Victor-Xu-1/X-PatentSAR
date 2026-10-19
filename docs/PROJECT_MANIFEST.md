@@ -1,5 +1,16 @@
 # Project governance manifest
 
+- Continued measurement context authority: `continued_context_prefix` composes
+  the single literal declaration reader with existing continued-title, parent,
+  geometry and original-source rules. Only complete repeats of known parent
+  values may carry across a genuine continued caption; unknown/new/conflicting
+  conditions or prose never disappear. The same live-grid/text/saved-family rule
+  retains root SAR namespace and each measurement page. No structural-role,
+  numeric, model or QA waiver. Current Activity32/extractor42/coverage17,
+  projectionv6/project-scope-v3; Binding48/binder58 and all raw/manual/API/SQL/SAR/
+  model/activation contracts unchanged. Historical epoch entries below are prior
+  release notes, not authority to promote old proof or scientific acceptance.
+
 - Scientific context declaration authority: `activity_context_values` owns eight
   bounded literal fields, existing typography comparison and the shared duration
   alias/unknown markers. `activity_headers` retains one last-caption scope; prose

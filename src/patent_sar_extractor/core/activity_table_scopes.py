@@ -7,9 +7,11 @@ from .activity_continuation_policy import (
     caption_prefix,
     compatible_columns,
     continuation_prefix,
+    continued_context_prefix,
 )
 from .activity_header_identity import schema_requires_review
 from .activity_headers import context_from_text, grid_schema
+from .activity_models import TableContext
 from .activity_parallel_context import qualified_panel_context, shared_panel_context
 from .activity_table_layout import validate_layout
 from .activity_text_plan import validate_text_scope
@@ -90,14 +92,8 @@ def _edge(parent, current, root):
         and b["ys"][0] < 130
         and compatible_columns(a["xs"], b["xs"])
         and continuation_prefix(a["suffix"])
-        and (
-            continuation_prefix(b.get("boundary_prefix", b["prefix"]))
-            or caption_prefix(
-                b.get("boundary_prefix", b["prefix"]),
-                root["table_id"],
-                first["context"]["raw_caption"],
-                continued=True,
-            )
+        and continued_context_prefix(
+            b.get("boundary_prefix", b["prefix"]), TableContext(**a["context"])
         )
     )
     return same_page or adjacent

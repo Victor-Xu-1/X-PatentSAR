@@ -4,15 +4,14 @@ import re
 
 from .activity_continuation_policy import (
     canonical_header,
-    caption_prefix,
     continuation_prefix,
+    continued_context_prefix,
 )
 from .activity_headers import (
     ACTIVITY_CONTEXT,
     ID_HEADER,
     METRIC,
     TABLE_MARKER,
-    context_from_text,
     normalize_metric_text,
 )
 from .activity_identity import value_tokens
@@ -174,18 +173,15 @@ def source_plan(pages, *, page_count=None, page_reader=None, blocked=()):
                 and previous["key"][0] + 1 == page_no
                 and start == 0
                 and previous["closed"]
-                and continuation_prefix(leading)
                 and (
                     not header
                     or canonical_header(header) == canonical_header(previous["header"])
                 )
                 and (
-                    not printed_caption
-                    or caption_prefix(
-                        printed_caption,
-                        context_from_text(previous["caption"]).table_id,
-                        previous["caption"],
-                        continued=True,
+                    continuation_prefix(leading)
+                    if not printed_caption
+                    else continued_context_prefix(
+                        f"{printed_caption}\n{leading}", previous["context"]
                     )
                 )
             )

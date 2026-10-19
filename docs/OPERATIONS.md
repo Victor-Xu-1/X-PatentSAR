@@ -1,5 +1,26 @@
 # Operations and troubleshooting
 
+## A genuine continued table repeats its experimental conditions
+
+A literal `Table ... continued` may restate known assay/target/cell-line/
+construct/duration/timepoint/batch declarations. Inspect the actual caption and
+the immediate original parent's recorded conditions. Every declaration must be
+fully consumed, qualified and identical to an already known value. Unknown
+labels, new experiments, arbitrary extra prose, conflicting or incomplete values
+and changed units/conditions do not inherit a header; absent parent conditions
+cannot be filled from the next page. Duration aliases use the existing literal
+rule, not conversion between hours/days. Existing source/geometry/confidence and
+complete-row gates remain strict. Original raw text is never edited.
+
+The same policy is used by live physical extraction, saved-family replay and text
+planning/readback. A proved continuation retains its original SAR header namespace
+while each measurement keeps its own page. Activity32/extractor42/coverage17,
+projectionv6 and the project-scope-v3 digest invalidate affected derived views/
+snapshots only. Originals, binding48/binder58, manual audit and historical reports
+remain intact. Normal frontend resume owns regeneration; do not rewrite saved
+epochs/results or run an alternative private calculation. Exact-main deployment,
+rollback and related installed/browser checks precede a real frontend attempt.
+
 ## A caption spelling difference becomes an assay conflict
 
 Descriptions such as a comparison of compound activities remain original text,

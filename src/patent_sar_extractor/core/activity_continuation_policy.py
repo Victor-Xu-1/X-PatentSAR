@@ -2,6 +2,12 @@
 
 import re
 
+from .activity_context_values import (
+    SCIENTIFIC_CONTEXT_FIELDS,
+    compact_context_value,
+    declared_context_suffix,
+    normalized_context_conditions,
+)
 from .activity_header_metrics import normalize_metric_text
 from .activity_headers import context_source_text
 from .source_table_markers import caption_table_marker, table_marker_identity
@@ -73,10 +79,34 @@ def compatible_columns(a, b, *, relative=False) -> bool:
     )
 
 
-def continuation_allowed(prefix, previous_layout, context) -> bool:
-    explicit = caption_prefix(
-        prefix, context.table_id, context.raw_caption, continued=True
+def continued_context_prefix(prefix, context) -> bool:
+    """A literal continued title may repeat, never invent, known conditions."""
+    if len(prefix) > 10000 or context.claim_conflicts:
+        return False
+    if continuation_prefix(prefix):
+        return True
+    checked = declared_context_suffix(prefix)
+    if checked is None:
+        return False
+    title, declarations = checked
+    if not caption_prefix(title, context.table_id, context.raw_caption, continued=True):
+        return False
+    try:
+        original = normalized_context_conditions(
+            {key: getattr(context, key) for key in SCIENTIFIC_CONTEXT_FIELDS}
+        )
+        declared = normalized_context_conditions(declarations)
+    except ValueError:
+        return False  # Contradictory aliases cannot grant a continuation edge.
+    return all(
+        original.get(key) is not None
+        and compact_context_value(value) == compact_context_value(original[key])
+        for key, value in declared.items()
+        if value is not None
     )
-    return (continuation_prefix(prefix) or explicit) and (
+
+
+def continuation_allowed(prefix, previous_layout, context) -> bool:
+    return continued_context_prefix(prefix, context) and (
         previous_layout is None or continuation_prefix(previous_layout["suffix"])
     )
