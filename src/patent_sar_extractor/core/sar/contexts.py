@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from ..activity_context_values import UNKNOWN_CONTEXT
 from .errors import SARInputError
 from .limits import (
     MAX_CONTEXT_CHARS,
@@ -15,7 +16,6 @@ from .limits import (
 # DTO has no context-complete flag. Require these common conditions; callers
 # must explicitly record not-applicable fields or request user confirmation.
 REQUIRED_CONTEXT = frozenset({"target", "assay", "cell_line", "duration"})
-UNKNOWN_CONTEXT = {"", "unknown", "not recorded", "not specified"}
 
 
 def select_observations(raw: object, metric_id: str) -> list[dict[str, Any]]:

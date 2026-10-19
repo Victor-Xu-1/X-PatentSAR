@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, replace
 
+from .activity_context_values import context_values
 from .activity_continuation_policy import canonical_header
 from .activity_header_metrics import METRIC, explicit_unit, normalize_metric_text
 from .activity_models import ColumnGroup, GridSchema
@@ -25,6 +26,7 @@ class BiologySchema:
     target: str | None = None
     assay: str | None = None
     cell_line: str | None = None
+    context_conflicts: bool = False
 
 
 def infer_schema(context: str, columns: int) -> BiologySchema | None:
@@ -33,6 +35,7 @@ def infer_schema(context: str, columns: int) -> BiologySchema | None:
     if not matches:
         return None
     table_id = table_marker_identity(matches[-1].group())
+    recorded, issues = context_values(context)
     if (
         columns == 3
         and re.search(r"\bHTRF\b", context, re.IGNORECASE)
@@ -48,9 +51,10 @@ def infer_schema(context: str, columns: int) -> BiologySchema | None:
             ("number", "plus"),
             target=target.group(1) if target else None,
             assay="HTRF",
+            context_conflicts=bool(issues),
         )
     if columns in {2, 4} and re.search(r"degradation", context, re.IGNORECASE):
-        cell_lines = re.findall(r"\b([A-Za-z][A-Za-z0-9-]{1,14})\s+cells\b", context)
+        cell_line = recorded["cell_line"]
         protein = re.search(
             r"Ranking\s+of\s+([A-Za-z][A-Za-z0-9-]*)", context, re.IGNORECASE
         )
@@ -66,7 +70,7 @@ def infer_schema(context: str, columns: int) -> BiologySchema | None:
             if protein and protein.group(1).lower() != "protein"
             else "Protein"
         )
-        prefix = f"{cell_lines[-1]} " if cell_lines else ""
+        prefix = f"{cell_line} " if cell_line else ""
         return BiologySchema(
             table_id,
             (f"{prefix}{target} degradation grade",),
@@ -76,7 +80,8 @@ def infer_schema(context: str, columns: int) -> BiologySchema | None:
             assay="Western blot"
             if re.search(r"Western\s+blot", context, re.IGNORECASE)
             else None,
-            cell_line=cell_lines[-1] if cell_lines else None,
+            cell_line=cell_line,
+            context_conflicts=bool(issues),
         )
     if columns == 2 and re.search(r"anti[-\s]?proliferation", context, re.IGNORECASE):
         return BiologySchema(
@@ -84,6 +89,7 @@ def infer_schema(context: str, columns: int) -> BiologySchema | None:
             ("Anti-proliferation activity grade",),
             ("plus",),
             assay="Anti-proliferation",
+            context_conflicts=bool(issues),
         )
     return None
 
@@ -173,19 +179,20 @@ def biology_grid_schema(schema: GridSchema | None) -> GridSchema | None:
         kinds.extend(zip(expected, bio.kinds))
     if len(templates) != 1:
         return schema
-    explicit_assay = bool(re.search(r"(?:Assay|实验)\s*[:：]", frame, re.IGNORECASE))
     conflict = any(
         old is not None and new is not None and old != new
         for old, new in (
             (context.target, bio.target),
             (context.cell_line, bio.cell_line),
-            (context.assay if explicit_assay else None, bio.assay),
         )
     )
     context = replace(
         context,
         target=context.target or bio.target,
-        assay=context.assay if explicit_assay else bio.assay or context.assay,
+        # A declared assay NAME and an inferred readout METHOD are not the same
+        # field. The method already survives in observed biological metric keys;
+        # it cannot rename, or alone contradict, an original assay declaration.
+        assay=context.assay if context.assay is not None else bio.assay,
         cell_line=context.cell_line or bio.cell_line,
     )
     return replace(
@@ -194,5 +201,5 @@ def biology_grid_schema(schema: GridSchema | None) -> GridSchema | None:
         groups=tuple(groups),
         value_kinds=tuple(kinds),
         semantic_kind="biology",
-        needs_review=conflict,
+        needs_review=conflict or bio.context_conflicts or bool(context.claim_conflicts),
     )

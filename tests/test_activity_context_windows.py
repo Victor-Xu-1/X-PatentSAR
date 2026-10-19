@@ -31,7 +31,7 @@ from patent_sar_extractor.core.cell_header_proof import physical_header_valid
 from patent_sar_extractor.core.sar.contexts import compare_context
 from patent_sar_extractor.core.source_cell_tokens import cell_text
 from patent_sar_extractor.core.source_geometry import SourceLayout, SourceTokens
-from patent_sar_extractor.web.models import Activity
+from patent_sar_extractor.web.artifacts import _activities
 from patent_sar_extractor.web.sar.observation_contexts import ObservationContexts
 from tests.header_support import observed_headers
 from tests.test_activity_spatial_roles import ruled
@@ -740,11 +740,22 @@ class ActivityContextWindowTests(unittest.TestCase):
             )
             self.assertTrue(current.exact)
             for assay, cell_line in zip(assays, cells):
+                original_row = next(
+                    row
+                    for row in payload["rows"]
+                    if row["cpd"] == "Compound 41"
+                    and row["activity_sources"][0]["assay"] == assay
+                )
+                activity = next(
+                    value
+                    for value in _activities(
+                        original_row, page_count=1, document_sha256=sha256
+                    )
+                    if value.name == "IC50 (nM)"
+                )
                 conditions = current.contexts(
                     "Compound 41",
-                    Activity(
-                        name="IC50 (nM)", value="1", unit="nM", page=1, assay=assay
-                    ),
+                    activity,
                 )
                 self.assertEqual(len(conditions), 1)
                 self.assertEqual(conditions[0]["assay"], assay)

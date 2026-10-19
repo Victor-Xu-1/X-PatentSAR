@@ -19,9 +19,9 @@ def text_evidence(
         "page_no": page_no,
         "table_id": context.table_id,
         "raw_caption": context.raw_caption,
-        "target": context.target,
-        "assay": context.assay,
-        "cell_line": context.cell_line,
+        "body_text": context.body_text,
+        "raw_context": context.raw_context,
+        **context.scientific_values(),
         "row": row_index,
         "raw_header": raw_header[:10000],
         "cells": [

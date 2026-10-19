@@ -103,9 +103,7 @@ def parse_grid(
             evidence = {
                 "page_no": page_no,
                 "table_id": context.table_id,
-                "target": context.target,
-                "assay": context.assay,
-                "cell_line": context.cell_line,
+                **context.scientific_values(),
                 "raw_caption": context.raw_caption,
                 "body_text": context.body_text,
                 "raw_context": context.raw_context,

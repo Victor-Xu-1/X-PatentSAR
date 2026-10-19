@@ -1,5 +1,47 @@
 # X-PatentSAR architecture
 
+## Literal scientific declarations, not narrative assay names
+
+`activity_context_values` is the single bounded reader for eight literal context
+fields (target, assay, cell_line, construct, duration, treatment_duration,
+timepoint, batch). `context_from_text` keeps the existing last-owned-caption
+boundary and all raw caption/body/window text; arbitrary title prose is not an
+assay name. Label values retain original language and full multiword text, with
+adjacent labels, Chinese punctuation and one immediately following value line.
+Conflicting/repeated-empty/over-limit declarations remain unresolved rather than
+selecting the first/last reading or truncating a name. Named-cell token extraction
+is shared with the biological interpreter; generic modifiers are not cell lines
+and multiple different named cells cannot become the final one in a paragraph.
+An explicit assay name is not overwritten or deemed contradictory merely because
+a recognized biological readout uses a different method name in its metric keys.
+
+All known fields share header/source/parallel conflicts and original-value
+preservation. Qualified partial runs own literal prefixes, not absent words or
+empty-value contradictions; complete known source claims remain strict. Only a
+qualified PRIMARY native-owned window can prove a declaration absent. Native
+hints in a raster-owned window cannot close the whole context. A complete native
+window owns its actual wording; matching OCR cannot add unprinted fields.
+
+Ordinary grids, delimited text and transposed grids call the same scientific
+field transport. Optional undeclared fields are omitted, not added as unknown
+dimensions. Text context comes only from its owned pre-header window; literal
+adjacent continuations keep the same complete original parent context. Transposed
+layouts retain context plus the existing bounded header/source snapshot; their
+row replay checks all context fields and all original merged header rows. Neither
+a changed row nor a self-rehashed context can replace the original declaration.
+The shared existing treatment-duration alias and unknown-marker policy is used
+by source validation, project SAR and native CSV, preserving raw carriers and
+rejecting differing known values without time/unit conversion.
+
+Current derived proof is Binding48/binder58, Activity31/extractor41 and coverage16.
+Projectionv5 refreshes disposable read views and the project-scope-v2 input digest
+makes old project datasets stale. Old originals, OCR/OCSR2/preparation12, human
+audit and reports are retained, not retagged; APIv1/SQL/SARDB2, numerical band
+policy, strict graphs, runtime/models/providers and on-demand activation stay
+unchanged. Earlier proof-version statements below describe previous releases,
+not permission to accept their history under current rules. Controlled source
+conservation is not universal OCR/chemical or real extraction-to-SAR acceptance.
+
 ## Original experimental context namespaces from results to SAR
 
 `web/activity_scope` derives one project-local namespace from an existing original

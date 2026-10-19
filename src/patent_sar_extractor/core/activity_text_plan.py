@@ -23,6 +23,7 @@ from .activity_text_rows import (
     _ROW,
     _find_header,
     _flat_lines,
+    declared_text_context,
     parse_segment,
 )
 
@@ -190,6 +191,11 @@ def source_plan(pages, *, page_count=None, page_reader=None, blocked=()):
             )
             caption = previous["caption"] if inherited else printed_caption
             header = header or (previous["header"] if inherited else "")
+            context = (
+                previous["context"]
+                if inherited
+                else declared_text_context(caption, lines, first_row)
+            )
             legend, issues = read_legend(body, header)
             if inherited and legend is None and not issues:
                 legend, issues = previous["legend"], previous["legend_issues"]
@@ -200,6 +206,7 @@ def source_plan(pages, *, page_count=None, page_reader=None, blocked=()):
                 header=header,
                 legend=legend,
                 legend_issues=tuple(issues),
+                context=context,
             )
             declared = recognized(header, caption)
             if not rows and not declared:
@@ -239,6 +246,7 @@ def source_plan(pages, *, page_count=None, page_reader=None, blocked=()):
             )
             item = {
                 "key": key,
+                "context": context,
                 "caption": caption,
                 "header": header,
                 "body": body,

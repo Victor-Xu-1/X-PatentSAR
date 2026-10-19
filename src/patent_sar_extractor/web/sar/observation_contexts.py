@@ -6,6 +6,7 @@ import hashlib
 import json
 from pathlib import Path
 
+from ...core.activity_context_values import normalized_context_conditions
 from ...core.pipeline_rules import _label_key
 from ..activity_provenance import metric_unit, source_evidence
 from ..artifact_values import page_number, text
@@ -130,11 +131,12 @@ class ObservationContexts:
             "duration": None,
             **conditions,
         }
-        if (
-            packet.get("duration") is None
-            and packet.get("treatment_duration") is not None
-        ):
-            packet["duration"] = packet.pop("treatment_duration")
+        try:
+            packet = normalized_context_conditions(packet)
+        except ValueError as error:
+            raise WebError(
+                422, "invalid_artifact", "Original activity conditions conflict."
+            ) from error
         key = (
             owner,
             context[0],

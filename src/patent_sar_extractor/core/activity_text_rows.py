@@ -21,7 +21,7 @@ from .activity_identity import (
     value_tokens,
 )
 from .activity_metadata import metadata_role
-from .activity_models import ActivityRow
+from .activity_models import ActivityRow, TableContext
 from .activity_text_evidence import text_evidence
 from .activity_text_legend import matching_legend, read_legend
 from .source_section_roles import section_heading
@@ -91,6 +91,20 @@ def _find_header(lines: list[str]) -> tuple[str, int]:
     return " ".join(parts), first_row
 
 
+def declared_text_context(
+    caption: str, lines: list[str], first_row: int
+) -> TableContext:
+    """Only the original caption/pre-header declarations own this table context."""
+    start = next(
+        (i for i, line in enumerate(lines[:first_row]) if _HEADER_START.search(line)),
+        first_row,
+    )
+    prefix = "\n".join(lines[:start])
+    if caption and not prefix.startswith(caption):
+        prefix = caption + "\n" + prefix
+    return context_from_text(caption, prefix)
+
+
 def parse_segment(
     caption: str,
     segment: str,
@@ -99,6 +113,7 @@ def parse_segment(
     header: str = "",
     legend: tuple[str, dict[str, str]] | None = None,
     legend_issues: tuple[str, ...] = (),
+    context: TableContext | None = None,
 ) -> list[ActivityRow]:
     """Read one declared table. Never consult its number to infer a schema."""
     marker = re.search(r"\[\[PAGE\s+(\d+)\]\]", segment)
@@ -123,7 +138,11 @@ def parse_segment(
         METRIC.search(normalize_metric_text(header)) or ACTIVITY_CONTEXT.search(caption)
     ):
         return []
-    context = context_from_text(caption)
+    context = (
+        context
+        if context is not None
+        else declared_text_context(caption, lines, first_row)
+    )
     metric_count = len(list(METRIC.finditer(normalize_metric_text(header))))
     # The legend itself is not another measurement column.
     if legend and metric_count == 0:
@@ -174,6 +193,7 @@ def parse_segment(
         ]
         review = (
             bool(issues)
+            or bool(context.claim_conflicts)
             or ambiguous
             or any(not is_value(raw_values[index]) for index in measured)
         )

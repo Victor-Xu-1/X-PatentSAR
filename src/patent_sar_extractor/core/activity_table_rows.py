@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 
+from .activity_context_values import CONTEXT_IDENTITY_FIELDS
 from .activity_metadata import metadata_field
 from .activity_result_references import _get, _source_matches
 from .table_cells import activity_kind_matches
@@ -20,10 +21,7 @@ def source_layout_matches(source, region):
         or any(
             source.get(key) != layout["context"][key]
             for key in (
-                "table_id",
-                "target",
-                "assay",
-                "cell_line",
+                *CONTEXT_IDENTITY_FIELDS,
                 "raw_caption",
                 "body_text",
                 "raw_context",
