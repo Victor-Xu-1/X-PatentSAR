@@ -15,14 +15,9 @@ from .source_observations import (
 from .source_window_chunks import validate_source_overlap
 
 
-def observe_parallel_context(page, region, tokens):
-    geometry = region.get("context_geometry", {})
-    span = geometry.get("parallel_span")
-    if (
-        not isinstance(tokens, SourceTokens)
-        or not span
-        or span == [region["xs"][0], region["xs"][-1]]
-    ):
+def observe_context_boundary(page, region, tokens):
+    """One original prefix packet for parallel and adjacent physical boundaries."""
+    if not isinstance(tokens, SourceTokens):
         return None
     bounds = [0, max(0, region["ys"][0] - 310), page.rect.width, region["ys"][0]]
     if not valid_box(bounds):
@@ -37,8 +32,14 @@ def observe_parallel_context(page, region, tokens):
     }
 
 
-def validate_parallel_context(region, prefix=None):
-    scope = region.get("parallel_context")
+def observe_parallel_context(page, region, tokens):
+    span = region.get("context_geometry", {}).get("parallel_span")
+    if not span or span == [region["xs"][0], region["xs"][-1]]:
+        return None
+    return observe_context_boundary(page, region, tokens)
+
+
+def validate_context_boundary(region, scope, prefix=None):
     if scope is None:
         return None
     if (
@@ -83,6 +84,10 @@ def validate_parallel_context(region, prefix=None):
     ):
         raise ValueError("Original shared-panel boundary differs from retained facts")
     return scope, bounds, shared
+
+
+def validate_parallel_context(region, prefix=None):
+    return validate_context_boundary(region, region.get("parallel_context"), prefix)
 
 
 def _qualified(region, prefix):

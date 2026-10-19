@@ -13,6 +13,14 @@ Raw text, physical header origins, original cell proof and confidence/geometry
 limits are unchanged; it neither guesses a missing header nor erases a section.
 Same-page panel rules and structural-characterization fragment rules are unchanged.
 
+Every adjacent physical carry, including plain/running/continued boundaries, now
+retains `continuation_context` from the SAME native/raster boundary observer and
+validator used by parallel panels. Known source text must remain qualified in
+its actual owned caption window; partial native hints cannot outvote primary
+text. Missing/malformed packets, weak current declarations and altered prefixes
+refuse both live carry and saved-family replay. Parallel/adjacent captures reuse
+one packet when their source window is identical, without OCR/model calls.
+
 Ordinary and text continuations use the same parent context, preserving one SAR
 namespace with distinct measurement pages. Source plans and saved-family replay
 recompute that relationship; a changed raw declaration cannot borrow the original

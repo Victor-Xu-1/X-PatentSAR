@@ -12,6 +12,13 @@ cannot be filled from the next page. Duration aliases use the existing literal
 rule, not conversion between hours/days. Existing source/geometry/confidence and
 complete-row gates remain strict. Original raw text is never edited.
 
+Physical adjacent continuations also require their own retained boundary packet,
+even for a plain or running prefix. The same existing native/raster observer,
+source-window qualification and validator are reused; a saved complete flag or
+matching OCR string is insufficient. Weak current text, absent/foreign/malformed
+observations or altered boundary facts refuse. This capture performs no OCR or
+model loading. Historical packets are not manually supplied with new evidence.
+
 The same policy is used by live physical extraction, saved-family replay and text
 planning/readback. A proved continuation retains its original SAR header namespace
 while each measurement keeps its own page. Activity32/extractor42/coverage17,

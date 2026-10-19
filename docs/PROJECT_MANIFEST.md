@@ -10,6 +10,11 @@
   projectionv6/project-scope-v3; Binding48/binder58 and all raw/manual/API/SQL/SAR/
   model/activation contracts unchanged. Historical epoch entries below are prior
   release notes, not authority to promote old proof or scientific acceptance.
+  Every adjacent physical carry retains `continuation_context`; live and saved
+  consumers compose the single native/raster boundary observer/validator and
+  qualified source-window reader. Missing/weak/changed evidence refuses, including
+  bare/running prefixes. Parallel sources are reused, not observed twice; no OCR,
+  model, queue or private alternative computation is added.
 
 - Scientific context declaration authority: `activity_context_values` owns eight
   bounded literal fields, existing typography comparison and the shared duration

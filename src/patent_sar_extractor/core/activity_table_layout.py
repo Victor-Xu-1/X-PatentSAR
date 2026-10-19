@@ -7,7 +7,10 @@ from itertools import pairwise
 from .activity_context_geometry import validate_context_geometry
 from .activity_context_values import validate_context_record
 from .activity_grid_context import _suffix
-from .activity_parallel_context import validate_parallel_context
+from .activity_parallel_context import (
+    validate_context_boundary,
+    validate_parallel_context,
+)
 
 
 def prepare_layout(schema, page_no, region, tokens, prefix, regions):
@@ -46,6 +49,8 @@ def prepare_layout(schema, page_no, region, tokens, prefix, regions):
         layout["context_geometry"] = region["context_geometry"]
     if "parallel_context" in region:
         layout["parallel_context"] = region["parallel_context"]
+    if region.get("continuation_context") is not None:
+        layout["continuation_context"] = region["continuation_context"]
     return replace(schema, source_layout=layout)
 
 
@@ -56,7 +61,13 @@ def validate_layout(record):
     if (
         record["kind"] != "grid"
         or not isinstance(layout, dict)
-        or set(layout) - {"boundary_prefix", "context_geometry", "parallel_context"}
+        or set(layout)
+        - {
+            "boundary_prefix",
+            "context_geometry",
+            "parallel_context",
+            "continuation_context",
+        }
         != {
             "xs",
             "ys",
@@ -96,6 +107,11 @@ def validate_layout(record):
     if "context_geometry" in layout:
         validate_context_geometry(layout["context_geometry"], record["bbox"])
     validate_parallel_context(layout, layout.get("boundary_prefix", layout["prefix"]))
+    validate_context_boundary(
+        layout,
+        layout.get("continuation_context"),
+        layout.get("boundary_prefix", layout["prefix"]),
+    )
     validate_context_record(layout["context"], record["table_id"])
     for key in (
         "prefix",

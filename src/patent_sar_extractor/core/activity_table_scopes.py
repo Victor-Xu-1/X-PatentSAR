@@ -2,6 +2,7 @@
 
 from dataclasses import asdict
 
+from .activity_continuation_context import continuation_context_proved
 from .activity_continuation_policy import (
     canonical_header,
     caption_prefix,
@@ -95,6 +96,7 @@ def _edge(parent, current, root):
         and continued_context_prefix(
             b.get("boundary_prefix", b["prefix"]), TableContext(**a["context"])
         )
+        and continuation_context_proved(b, b.get("boundary_prefix", b["prefix"]))
     )
     return same_page or adjacent
 

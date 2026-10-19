@@ -36,12 +36,12 @@ ORIGINAL = "Table 71. Binding activity\n" + "\n".join(
 CONTINUED = "Table 71 (continued)\nAssay: HTRF binding\nDuration: 24 h"
 
 
-def draw_document(document):
+def draw_document(document, *, continued=CONTINUED):
     page = document.new_page(width=500, height=600)
     page.insert_text((40, 40), ORIGINAL, fontsize=8)
     draw_grid(page, 300, [["No.", "IC50 (nM)"], ["7", "3"]])
     page = document.new_page(width=500, height=600)
-    page.insert_text((40, 40), CONTINUED, fontsize=8)
+    page.insert_text((40, 40), continued, fontsize=8)
     draw_grid(page, 100, [["19", "4"]])
 
 
@@ -119,7 +119,8 @@ class DeclaredTableContinuationTests(unittest.TestCase):
             if item.get("layout") and item["page_no"] == 2
         )
         continuation["layout"]["boundary_prefix"] = CONTINUED.replace("24 h", "48 h")
-        self.assertTrue(coverage_errors(altered, [0], rows=parsed.rows))
+        with self.assertRaisesRegex(ValueError, "boundary differs"):
+            coverage_errors(altered, [0], rows=parsed.rows)
 
     def test_delimited_text_continuation_uses_the_same_known_condition_rule(self):
         parsed = extract_text_tables(

@@ -14,7 +14,10 @@ from .activity_header_observation import refine_scanned_header
 from .activity_header_roles import HeaderResolver
 from .activity_headers import context_from_text, grid_schema
 from .activity_models import GridSchema, ParsedActivity
-from .activity_parallel_context import observe_parallel_context
+from .activity_parallel_context import (
+    observe_context_boundary,
+    observe_parallel_context,
+)
 from .activity_reference_observation import observe_result_references
 from .activity_source_roles import method_page_evidence
 from .activity_table_layout import prepare_layout
@@ -96,6 +99,10 @@ def extract_coordinate_tables(
             parallel_context = observe_parallel_context(page, region, tokens)
             if parallel_context is not None:
                 region["parallel_context"] = parallel_context
+            if any(panel.page + 1 == page_index for panel in panels):
+                region["continuation_context"] = (
+                    parallel_context or observe_context_boundary(page, region, tokens)
+                )
             matrix = table_matrix(tokens, region)
             prefix = _prefix(tokens, region)
             header = " ".join(matrix[0]) if matrix else ""
