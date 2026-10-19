@@ -1,5 +1,30 @@
 # Operations and troubleshooting
 
+## Original cell replay fails only after a different observation order
+
+First compare retained cell geometry, dimensions and original pixel digests.
+Do not waive a mismatch because the text appears similar. Controlled one-bit
+CCITT scans reproduced different400dpi clip pixels after whole-page decoding.
+The shared cell renderer now opens a fresh complete source context per admitted
+clip, preserving hidden layers/forms/annotations and geometry without full-page
+rasterization, cache warming or global cache eviction. File inputs stay lazy;
+no source copy is written to disk and temporary documents close on every exit.
+
+Use `tests.test_cell_render_cache` for cold/warm real-render, file/byte/edited
+source, visibility/rotation/crop, pixel-tamper, pixel-budget and cleanup controls.
+Then select affected caption/heading/header/activity/plot consumers. This is
+related validation, not authorization for a global suite or private OCR script.
+Rebuild affected derived observations through the normal frontend producer:
+Binding37/binder47, Activity24/extractor34, visible23, preparation11. Raw PDF,
+page OCR/OCSR, structure assets and manual audit remain unchanged. Keep failed
+runs and old frames as historical evidence; do not manually fix their hashes,
+reuse saved acceptance flags or bypass the pre-recognition source replay.
+
+These are the current derived contracts; lower sections retain earlier feature
+context. Auxiliary OCR stays off until its separately authorized managed
+activation. A focused source test or installed release does not certify complete
+real extraction-to-SAR acceptance.
+
 ## Optional auxiliary text runtime and activation boundary
 
 The packaged `core/text_ocr` runtime is optional and disabled by default.
