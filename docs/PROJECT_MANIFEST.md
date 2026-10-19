@@ -1,6 +1,6 @@
 # Project governance manifest
 
-- Auxiliary text boundary (integration in progress): `core/text_ocr` owns only
+- Optional auxiliary text boundary: `core/text_ocr` owns only
   finite literal-row observations over the existing owned JSONL carrier and
   offline worker bootstrap. It has no queue, PDF parser, result writer or
   acceptance authority. `text-ocr-runtime.json` pins the fixed ordinary-text
@@ -9,8 +9,8 @@
   party source, second application lock or SDK is vendored. The runtime's
   explicit paths do not change operator configuration or enable a provider.
   Scores are explicitly uncalibrated; model/pixel identity, bounded requests,
-  deadlines/cancel/RSS and finite owned-process cleanup precede any future
-  shared-cell consumer. Under-development activity-header capture and
+  deadlines/cancel/RSS and finite owned-process cleanup govern each bounded
+  shared-cell consumer. Activity-header capture and
   `activity_auxiliary_replay` now compose the existing scientific activity gate,
   QA/export/Web and original-pixel readback, without read-side inference.
   Rejected/failed observations survive alongside primary text. Optional
@@ -19,8 +19,10 @@
   view. No competing installer, queue or manually assembled runtime is added.
   Original/raw/manual artifacts, DECIMER and numerical SAR remain unchanged;
   derived compatibility is Activity23/extractor33 (no original/raw/manual rewrite);
-  release, held-out source accuracy, installed/browser
-  verification and mainline delivery are still pending, not implied complete.
+  installation does not activate it until both components verify together.
+  Native/browser verification on controlled inputs is not held-out source accuracy
+  or complete real-patent acceptance. Release/mainline/deployment/rollback receipts
+  are external operator evidence, not permanent development-status prose.
   The same header locator can use at most three complete physical rows only
   after missing/unknown primary layout; `activity_header_layout_proof` validates
   original grid/header extent, literal roles/units and blank continuations.

@@ -1,12 +1,12 @@
 # X-PatentSAR architecture
 
-## Auxiliary literal-text runtime boundary (integration in progress)
+## Optional auxiliary literal-text runtime boundary
 
 `core/text_ocr` implements one optional, finite ordinary-text observation SDK.
 It reuses the existing owned `JsonLineWorker` transport and offline native-worker
 bootstrap; it is not a parser, second queue, LLM, page OCR replacement, or
-scientific acceptance authority. Integration remains owned development, not a
-released or enabled production provider. The adapter covers unresolved physical
+scientific acceptance authority. The packaged adapter is disabled until a managed
+operation verifies and publishes both components. It covers unresolved physical
 activity-header columns and the bounded first-three-row locator when initial
 roles/units are unread. Other compound-caption roles are not silently rerouted.
 
@@ -48,8 +48,9 @@ Only one operation actually verifying both may publish `paddleocr_mode:on_demand
 runtime-only publication leaves it off. Recipe/model selection enters the task
 cache fingerprint without loading an SDK. Native model checks generate their
 own text and do not prove recognition accuracy. No new parser/store/queue or
-LLM provider is introduced; DECIMER remains primary. Installed/mainline/browser,
-held-out source accuracy and real frontend acceptance remain pending.
+LLM provider is introduced; DECIMER remains primary. Installed native/browser
+checks on controlled inputs do not certify held-out source accuracy or real
+frontend extraction-to-SAR acceptance.
 
 The parent accepts only explicit runtime/model/workspace paths. It submits
 bounded original RGB rows (at most4096x256 and1million pixels) through an owned
@@ -87,10 +88,11 @@ Public/synthetic SDK/identity/lifecycle checks do not certify OCR accuracy on a
 patent. Repeated views or model agreement cannot replace independent source
 proof, role/condition checks or chemical QA. Original observations, labels,
 default DECIMER and protected scientific artifacts remain unchanged at this
-development checkpoint. Derived compatibility preparation is Activity23/extractor33;
+integration. Derived compatibility is Activity23/extractor33;
 previous derived activity stays historical, not retagged. Binding36/binder46,
 original PDF/raw OCR/OCSR2/manual audit and numerical SAR remain unchanged.
-Release/installed/browser/mainline delivery remains pending.
+Release/build/deployment receipts are external operator evidence, not scientific
+acceptance flags. Cold full setup and source accuracy require separate validation.
 
 ## Quantized original text-row coverage
 
