@@ -8,6 +8,7 @@ import time
 
 from ..errors import WebError
 from .csv_reader import parse_csv
+from .csv_scope import native_conditions, native_headers, native_scope_fields
 from .input_records import (
     InputBudget,
     check_deadline,
@@ -30,6 +31,17 @@ def clean_optional(value: str | None, limit: int = 1000) -> str | None:
             422, "sar_csv_cell", "A mapped CSV cell is invalid or exceeds its limit."
         )
     return value
+
+
+def original_page(raw):
+    if raw is None or not raw.strip():
+        return None
+    raw = raw.strip()
+    if not re.fullmatch(r"[0-9]{1,5}", raw) or not 1 <= int(raw) <= 20000:
+        raise WebError(
+            422, "sar_csv_page", "Original PDF page must be an integer from 1 to 20000."
+        )
+    return int(raw)
 
 
 def mapped_inputs(
@@ -75,38 +87,21 @@ def mapped_inputs(
             "sar_csv_mapping",
             "A long-format metric-name column requires one value column.",
         )
-    native = {
-        "review_only",
-        "acceptance_state",
-        "compound_id",
-        "smiles",
-        "metric",
-        "value",
-        "structure_molfile_json",
-    }.issubset(headers)
+    native = native_headers(headers)
     started = time.monotonic()
     records = []
     metrics: dict[str, Metric] = {}
     observations_used = 0
     budget = InputBudget()
+    known_source_scopes = {}
     for ordinal, row in enumerate(rows, 1):
         check_deadline(started)
         if source_exclusion(row[mapping.id_column]):
             continue
-        page_column = mapping.source_page_column or ("source_page" if native else None)
-        source_page = None
-        if page_column and row.get(page_column, "").strip():
-            raw_page = row[page_column].strip()
-            if (
-                not re.fullmatch(r"[0-9]{1,5}", raw_page)
-                or not 1 <= int(raw_page) <= 20000
-            ):
-                raise WebError(
-                    422,
-                    "sar_csv_page",
-                    "Original PDF page must be an integer from 1 to 20000.",
-                )
-            source_page = int(raw_page)
+        native_page = "activity_page" if "activity_page" in headers else "source_page"
+        page_column = mapping.source_page_column or (native_page if native else None)
+        source_page = original_page(row.get(page_column)) if page_column else None
+        molecule_page = original_page(row.get("source_page")) if native else source_page
         if len(row[mapping.id_column]) > 200 or len(row[mapping.smiles_column]) > 8192:
             raise WebError(
                 413,
@@ -128,6 +123,19 @@ def mapped_inputs(
             else None
         )
         observations = []
+        source_fields = native_scope_fields(row) if native else {}
+        if (scope := source_fields.get("source_scope")) is not None:
+            if (
+                scope in known_source_scopes
+                and known_source_scopes[scope] != source_fields
+            ):
+                raise WebError(
+                    422,
+                    "sar_csv_context_conflict",
+                    "One original context has conflicting metadata.",
+                )
+            known_source_scopes[scope] = source_fields
+        context = native_conditions(context, source_fields)
         for column in mapping.activity_columns:
             name = (
                 clean_optional(row.get(mapping.metric_column), 300)
@@ -144,7 +152,13 @@ def mapped_inputs(
             if not unit:
                 suffix = re.search(r"\(([^()]{1,100})\)\s*$", name)
                 unit = suffix.group(1) if suffix else None
-            key = metric_key(name, unit, context["target"], context["assay"])
+            key = metric_key(
+                name,
+                unit,
+                context["target"],
+                context["assay"],
+                source_fields.get("source_scope"),
+            )
             metrics.setdefault(
                 key,
                 Metric(
@@ -153,6 +167,7 @@ def mapped_inputs(
                     unit=unit,
                     target=context["target"],
                     assay=context["assay"],
+                    **source_fields,
                 ),
             )
             value = row[column]
@@ -206,7 +221,7 @@ def mapped_inputs(
             row[mapping.smiles_column] or None,
             observations,
             molfile,
-            source_page=source_page,
+            source_page=molecule_page,
             **csv_evidence(row, mapping),
         )
         budget.add(record[0])

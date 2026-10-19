@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Any, Literal
 
 from ..core.activity_metadata import metadata_cell
+from .activity_scope import ActivityScope, observed_scope
 from .artifact_values import page_number, text
 from .errors import WebError
 
@@ -28,6 +29,7 @@ class SourceEvidence:
     cells: tuple[CellEvidence, ...]
     geometry_space: Literal["rendered", "unrotated"] | None
     conditions: tuple[tuple[str, str | None], ...] = ()
+    scope: ActivityScope | None = None
 
 
 def provenance_error() -> WebError:
@@ -101,7 +103,11 @@ def cell_evidence(cell: object) -> CellEvidence:
 
 
 def source_evidence(
-    row: dict[str, Any], fallback: ActivityContext, *, page_count: int = 0
+    row: dict[str, Any],
+    fallback: ActivityContext,
+    *,
+    page_count: int = 0,
+    document_sha256: str | None = None,
 ) -> list[SourceEvidence]:
     sources = row.get("activity_sources")
     if sources is None:
@@ -142,7 +148,10 @@ def source_evidence(
             )
             if key in source
         )
-        provenance_text(source.get("table_id"), limit=300)
+        table = provenance_text(source.get("table_id"), limit=300)
+        scope = observed_scope(
+            source, page, table, conditions, document_sha256=document_sha256
+        )
         for field in ("row", "pair"):
             number = source.get(field)
             if number is not None and (
@@ -162,20 +171,34 @@ def source_evidence(
             raise provenance_error()
         result.append(
             SourceEvidence(
-                context, tuple(cell_evidence(cell) for cell in cells), space, conditions
+                context,
+                tuple(cell_evidence(cell) for cell in cells),
+                space,
+                conditions,
+                scope,
             )
         )
     return result
 
 
 def activity_contexts(
-    row: dict[str, Any], fallback: ActivityContext, *, page_count: int
-) -> dict[tuple[str, str | None], list[ActivityContext]]:
-    index: dict[tuple[str, str | None], dict[ActivityContext, None]] = {}
-    for source in source_evidence(row, fallback, page_count=page_count):
+    row: dict[str, Any],
+    fallback: ActivityContext,
+    *,
+    page_count: int,
+    document_sha256: str | None = None,
+) -> dict[tuple[str, str | None], list[tuple[ActivityContext, ActivityScope | None]]]:
+    index: dict[
+        tuple[str, str | None], dict[tuple[ActivityContext, ActivityScope | None], None]
+    ] = {}
+    for source in source_evidence(
+        row, fallback, page_count=page_count, document_sha256=document_sha256
+    ):
         for cell in source.cells:
             if cell.metadata:
                 continue
             # Multiple OCR attempts prove one cell, not extra measurements.
-            index.setdefault((cell.name, cell.value), {})[source.context] = None
+            index.setdefault((cell.name, cell.value), {})[
+                (source.context, source.scope)
+            ] = None
     return {key: list(contexts) for key, contexts in index.items()}

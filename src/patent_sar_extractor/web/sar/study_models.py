@@ -12,12 +12,13 @@ from pydantic import Field, model_validator
 
 from ...contracts import SAR_STUDY_REPORT_SCHEMA_VERSION
 from ..activity_rank_models import ActivityStrengthScale
+from ..activity_scope_models import ActivityScopeFields
 from ..dto import DTO
 from ..models import Acceptance
 from .models import Region, SARJob
 
 
-class StudyContext(DTO):
+class StudyContext(ActivityScopeFields):
     id: str
     metric_id: str
     name: str

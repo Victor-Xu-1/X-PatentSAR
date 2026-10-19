@@ -60,6 +60,14 @@ export function correctionDraft(
             assay: column.assay,
             value: null,
             page: null,
+            ...(column.source_scope
+              ? {
+                  source_scope: column.source_scope,
+                  source_table: column.source_table ?? null,
+                  source_context_page: column.source_context_page,
+                  source_conditions: column.source_conditions,
+                }
+              : {}),
           },
           true,
         ),

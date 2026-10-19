@@ -1,5 +1,36 @@
 # Operations and troubleshooting
 
+## Identical activity labels appear in different original tables
+
+Result columns and SAR contexts now conserve original table/header/text-origin
+namespaces and recorded conditions. Different tables are kept distinct unless
+they already share a recorded continuation root; equal target/assay/value text is
+not sufficient to pool them. Inspect the literal table/page label and original
+cell, not the opaque source_scope hash. The complete comparable population in
+that context still owns tenth-strongest decade grading; a filtered page, core or
+duplicate measurement is not a new reference population. Percentage/log policies
+and unknown experimental conditions are not invented by this change.
+
+Native CSV round trips select the original identifier_label and measurement
+activity_page automatically while preserving the structure source_page. Readonly
+scope/table/header-page/condition fields are appended, not inserted into existing
+CSV positions. A malformed source namespace, conflicting known condition (including
+duration aliases), or reuse of one namespace with different metadata is rejected.
+Imported records remain imported even when the CSV carries an original citation.
+Numeric corrections are audited; copying a known project column does not invent
+an original measurement row. Forging or removing a retained context is refused.
+
+Projectionv4 refreshes disposable Web views; changed source fingerprints retain
+old manual overlays as stale rather than overwriting their audit. Existing project
+SAR snapshots become stale via the input policy digest. Create a new dataset from
+the normal frontend when ready; never edit historical metrics/reports to upgrade
+them. SARengine15/input8 refresh new admission identities, without SQL migration
+or extraction/raw OCR/OCSR epoch changes. Rollback requires the preserved matching
+code/config/state snapshot. Keep existing private PDFs, failed outputs and manual
+audit unchanged. Relevant controlled checks cover source/catalog/focus/correction,
+SQLite/API, CSV/project SAR, ranking and bilingual installed-browser import; they
+do not establish complete real extraction-to-SAR acceptance.
+
 ## A saved ordinary characterization table lacks original readback
 
 Current role4 optical cells retain `source_frame` from the same producer render.

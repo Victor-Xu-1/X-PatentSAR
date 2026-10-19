@@ -42,7 +42,7 @@ def check_cancel(cancel: Callable[[], bool] | None) -> None:
 
 
 def _direction(context: ActivityContext, kind: RankKind) -> tuple[RankDirection, str]:
-    name, unit, target, assay = context
+    name, unit, target, assay = context[:4]
     description = " ".join(value or "" for value in (name, target, assay))
     normalized_unit = (
         (unit or "").strip().casefold().replace("μ", "u").replace("µ", "u")
@@ -152,7 +152,7 @@ def activity_evidence(
     columns: dict[ActivityContext, _Column] = {}
     for column in activity_columns:
         check_cancel(cancel)
-        context = column.name, column.unit, column.target, column.assay
+        context = activity_context(column)
         if (
             context in columns
             or any(value is not None and len(value) > 1000 for value in context)

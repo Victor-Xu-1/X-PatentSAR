@@ -3,6 +3,7 @@
 from collections import Counter
 from dataclasses import dataclass
 
+from ...contracts import SAR_STUDY_READABLE_INPUT_VERSIONS
 from ...core.sar.study_contexts import context_catalog
 from ...core.sar.study_distributions import DistributionContext
 from ...workers.study_candidates import collect_activities
@@ -27,7 +28,10 @@ class ActivityView:
 
 
 def prepare_activity(packet: dict, captured: StudyReport) -> ActivityView:
-    if packet.get("schema") not in {2, 3, 4, 5, 6, 7}:
+    if (
+        type(packet.get("schema")) is not int
+        or packet["schema"] not in SAR_STUDY_READABLE_INPUT_VERSIONS
+    ):
         raise WebError(409, "sar_input_changed", "Unknown study measurement policy.")
     inline_units = packet["schema"] >= 4
     declared_units = packet["schema"] >= 7

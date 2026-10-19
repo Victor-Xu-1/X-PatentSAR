@@ -1,3 +1,4 @@
+import { decodeActivityScope } from './activityScopeDecoders';
 import {
   array,
   boolean,
@@ -134,13 +135,17 @@ export const decodeReview: Decoder<Review> = object({
   revision: count,
   updated_at: string,
 });
-export const activityDecoder: Decoder<Activity> = object({
+const activityShape = object({
   name: string,
   value: nullable(scalar),
   unit: nullable(string),
   target: nullable(string),
   assay: nullable(string),
   page: nullable(positive),
+});
+export const activityDecoder: Decoder<Activity> = (input, path = '$') => ({
+  ...activityShape(input, path),
+  ...decodeActivityScope(input, path),
 });
 const correctionMetadataShape = object({
   revision: positive,

@@ -104,6 +104,7 @@ MODES = (
     ),
     ("sar", "sar-preview-coverage.spec.ts", COMMON | {"sar-preview-coverage.spec.ts"}),
     ("sar", "sar-csv-defaults.spec.ts", COMMON | {"sar-csv-defaults.spec.ts"}),
+    ("sar", "sar-source-context.spec.ts", COMMON | {"sar-source-context.spec.ts"}),
     (
         "sar",
         "sar-indicator-defaults.spec.ts",

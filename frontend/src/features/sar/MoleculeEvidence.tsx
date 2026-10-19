@@ -1,7 +1,7 @@
 import type { Dataset, Molecule } from '../../api/sarTypes';
 import { SourceLinks } from './SourceLinks';
 import { useTranslation } from '../../i18n';
-import { contextLabel } from './presentation';
+import { observationLabel } from './presentation';
 export function MoleculeEvidence({
   dataset,
   molecule,
@@ -23,13 +23,7 @@ export function MoleculeEvidence({
         {molecule.observations.map((observation, index) => (
           <li key={index}>
             <span>
-              {contextLabel({
-                name:
-                  dataset.metrics.find((metric) => metric.id === observation.metric_id)?.name ??
-                  observation.metric_id,
-                unit: observation.unit,
-              })}
-              : {observation.value}
+              {observationLabel(dataset.metrics, observation)}: {observation.value}
             </span>
             <dl>
               <div>

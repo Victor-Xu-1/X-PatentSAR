@@ -1,5 +1,45 @@
 # X-PatentSAR architecture
 
+## Original experimental context namespaces from results to SAR
+
+`web/activity_scope` derives one project-local namespace from an existing original
+grid header anchor or text continuation origin, original document digest when
+available, coordinate frame, literal table
+identifier and recorded condition pairs. It is provenance transport, not source,
+chemical or scientific acceptance. A continuation keeps its original root;
+independent tables and differing known conditions never merge because endpoint,
+assay prose and values happen to match. Malformed present anchors refuse; legacy
+missing anchors remain absent rather than inferred from titles or body pages.
+
+The shared additive `ActivityScopeFields` carries source_scope, source_table,
+source_context_page and source_conditions through activity DTOs, complete-project
+columns, sorting/filtering/strength scales/Lead, original-cell focus, project SAR
+metrics, study contexts and exports. Legacy column/metric hashes retain their
+four-field bytes; scoped identities append the namespace. This prevents unrelated
+tables from sharing a tenth-strongest population without changing the numerical
+band policy. Raw observations, exact condition text and missingness are conserved.
+Manual values may use an existing project context, but readonly context metadata
+must match original read-model cells, never another overlay. Stripping an existing
+scope cannot turn a numeric edit into an unscoped measurement.
+
+Native result CSV appends these four fields (conditions as JSON). Its exact native
+header signature owns identifier_label and activity_page defaults: original IDs
+are not internal compound IDs, and molecule source_page remains distinct from the
+measurement page. Import preserves namespaces/known conditions, rejects malformed
+or conflicting metadata, and always remains imported evidence, not original proof.
+Generic ambiguous CSV aliases remain explicit. No second parser, execution queue,
+scientific writer or dependency is introduced. The frontend uses one decoder and
+short literal table/page labels; opaque IDs do not become user-facing names.
+
+Read projection v4 and a project-input policy digest refresh derived views and
+invalidate old project datasets. SARengine15/input8 prevent new requests from using
+old admission receipts. Historical reports stay readable; raw artifacts, human
+audit, extraction epochs, APIv1, SQL/SAR database versions, numerical/strict graph
+rules, models and on-demand OCR policy are unchanged. Existing manual overlays
+remain retained; a changed source fingerprint requires explicit review/re-entry,
+not silent rebasing. Generated integration/browser checks are not private patent
+or universal extraction/scientific acceptance.
+
 ## One original-role inventory for native, optical and auxiliary observations
 
 `role_text_sources` enumerates only the existing characterization-region,

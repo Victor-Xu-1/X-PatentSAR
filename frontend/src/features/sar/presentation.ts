@@ -1,5 +1,16 @@
 import { emptyRoute, routeHash } from '../../model/route';
-import type { Comparison, Dataset, JobState, MatchState, Molecule, Pair } from '../../api/sarTypes';
+import { activityScopeLabel } from '../../model/activityScope';
+import type { ActivityScopeFields } from '../../api/activityScopeDecoders';
+import type {
+  Comparison,
+  Dataset,
+  JobState,
+  MatchState,
+  Molecule,
+  Pair,
+  Metric,
+  Observation,
+} from '../../api/sarTypes';
 
 export const jobLabels: Record<JobState, string> = {
   queued: 'SAR 排队中',
@@ -43,13 +54,26 @@ export function sourceHash(dataset: Dataset, molecule?: Molecule, page: number |
 }
 export const newRequestId = () => crypto.randomUUID().replaceAll('-', '');
 /** One display-only label rule; source names/units and values remain unchanged. */
-export const contextLabel = (context: { name: string; unit: string | null }) =>
-  context.unit &&
-  context.unit !== '1' &&
-  !context.name.endsWith('(' + context.unit + ')') &&
-  !context.name.endsWith(' ' + context.unit)
-    ? context.name + ' · ' + context.unit
-    : context.name;
+export const contextLabel = (
+  context: { name: string; unit: string | null } & ActivityScopeFields,
+) => {
+  const label =
+    context.unit &&
+    context.unit !== '1' &&
+    !context.name.endsWith('(' + context.unit + ')') &&
+    !context.name.endsWith(' ' + context.unit)
+      ? context.name + ' · ' + context.unit
+      : context.name;
+  return [label, activityScopeLabel(context)].filter(Boolean).join(' · ');
+};
+export function observationLabel(metrics: Metric[], observation: Observation): string {
+  const metric = metrics.find((item) => item.id === observation.metric_id);
+  return contextLabel({
+    ...metric,
+    name: metric?.name ?? observation.metric_id,
+    unit: observation.unit,
+  });
+}
 export function gradeOrder(text: string) {
   const values = text
     .split(/\r?\n/)

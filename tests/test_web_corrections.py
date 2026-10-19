@@ -374,7 +374,9 @@ class CorrectionTests(WebFixture, unittest.TestCase):
                 json={"format": "json", "compound_ids": ["Compound 1"]},
             ).json()
             self.assertTrue(exported["review_only"])
-            self.assertEqual(exported["acceptance"]["state"], "accepted")
+            # The historical adapter lacks current whole-source proof. A manual
+            # correction must not promote it (also verified on installed main).
+            self.assertEqual(exported["acceptance"]["state"], "failed")
             self.assertEqual(exported["items"][0]["correction"]["revision"], 1)
             self.assertEqual(exported["items"][0]["display_id"], "  =CUSTOM()")
             exported_csv = client.post(
@@ -606,7 +608,7 @@ class CorrectionTests(WebFixture, unittest.TestCase):
         # Exact prior main used 11 (its old 8 expectation was stale). The shared
         # source gate adds no query, and geometry reuses the same checked project
         # snapshot instead of another two visibility/project reads.
-        self.assertEqual(counts, [9, 9], "\n".join(sql[:160] for sql in statements))
+        self.assertEqual(counts, [8, 8], "\n".join(sql[:160] for sql in statements))
         # One indexed prediction and one descriptor batch, not per-molecule queries.
         self.assertEqual(sum("WITH wanted(" in sql for sql in statements), 2)
 
@@ -669,7 +671,10 @@ class CorrectionTests(WebFixture, unittest.TestCase):
             exported = client.post(
                 self.prefix + "/export", json={"format": "json", "compound_ids": []}
             ).json()
-            self.assertFalse(exported["review_only"])
+            # Stale overlays do not apply, but absent current original proof
+            # still makes this historical adapter review-only after reset.
+            self.assertTrue(exported["review_only"])
+            self.assertEqual(exported["acceptance"]["state"], "failed")
             self.assertEqual(exported["manual_corrections"], 0)
             original = next(
                 item for item in exported["items"] if item["id"] == "Compound 1"

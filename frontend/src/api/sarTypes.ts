@@ -1,6 +1,7 @@
 /** Mirror of web/sar/models.py; optional additive fields permit staged controller integration. */
 import type { Project } from './types';
-export interface Metric {
+import type { ActivityScopeFields } from './activityScopeDecoders';
+export interface Metric extends ActivityScopeFields {
   id: string;
   name: string;
   unit: string | null;

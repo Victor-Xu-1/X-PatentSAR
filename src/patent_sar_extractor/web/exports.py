@@ -235,7 +235,15 @@ def export_csv(project: Project, rows: list[Compound]) -> Iterator[bytes]:
         + ADMET_COLUMNS
         + DESCRIPTOR_COLUMNS
         + LEAD_COLUMNS
-        + ["manual_property_keys", "property_basis_smiles", "structure_molfile_json"]
+        + [
+            "manual_property_keys",
+            "property_basis_smiles",
+            "structure_molfile_json",
+            "source_scope",
+            "source_table",
+            "source_context_page",
+            "source_conditions_json",
+        ]
     )
     review_only = project.acceptance.state != "accepted" or any(
         _manual_change(row) or _research_prediction(row) or _unassociated(row)
@@ -280,7 +288,7 @@ def export_csv(project: Project, rows: list[Compound]) -> Iterator[bytes]:
             ]
         )
         if not row.activities:
-            yield line(prefix + [None] * 6 + provenance)
+            yield line(prefix + [None] * 6 + provenance + [None] * 4)
         for activity in row.activities:
             yield line(
                 prefix
@@ -293,4 +301,12 @@ def export_csv(project: Project, rows: list[Compound]) -> Iterator[bytes]:
                     activity.page,
                 ]
                 + provenance
+                + [
+                    activity.source_scope,
+                    activity.source_table,
+                    activity.source_context_page,
+                    json.dumps(
+                        activity.source_conditions, ensure_ascii=False, allow_nan=False
+                    ),
+                ]
             )

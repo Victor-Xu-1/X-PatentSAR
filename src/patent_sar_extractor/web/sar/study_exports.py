@@ -69,7 +69,21 @@ def _csv(job, report, by_id):
         return buffer.getvalue().encode()
 
     contexts = [policy.context_id for policy in report.policies]
-    names = {item.id: item.name for item in report.contexts}
+    names = {
+        item.id: " · ".join(
+            filter(
+                None,
+                (
+                    item.name,
+                    item.source_table,
+                    f"p. {item.source_context_page}"
+                    if item.source_context_page
+                    else None,
+                ),
+            )
+        )
+        for item in report.contexts
+    }
     yield b"\xef\xbb\xbf"
     yield line(
         [

@@ -16,6 +16,7 @@ from patent_sar_extractor.core.binding_progress import BindingSourcePhase
 
 from .activity_focus_models import ActivityFocus, ActivitySourceKey
 from .activity_rank_models import ActivityStrengthScale, RankValue
+from .activity_scope_models import ActivityScopeFields
 from .descriptor_models import DescriptorSummary
 from .dto import DTO, Error
 from .lead_models import LeadAssessment
@@ -56,7 +57,7 @@ class ReviewRequest(DTO):
     expected_revision: int = Field(ge=0)
 
 
-class Activity(DTO):
+class Activity(ActivityScopeFields):
     name: str
     value: str | float | int | None
     unit: str | None = None
@@ -70,7 +71,7 @@ class FilterChoice(DTO):
     count: int = Field(ge=0, le=50_000_000, strict=True)
 
 
-class ActivityColumn(DTO):
+class ActivityColumn(ActivityScopeFields):
     id: str = Field(
         min_length=64, max_length=64, pattern=r"^[a-f0-9]{64}$", strict=True
     )

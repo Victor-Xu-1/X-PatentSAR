@@ -1,3 +1,4 @@
+import { decodeActivityScope } from './activityScopeDecoders';
 import {
   array,
   boolean,
@@ -13,7 +14,7 @@ import { additions, hex, nullOr, recordOf } from './sarDecoders';
 import { decodeStrengthScale } from './activityRankDecoders';
 import type { Decoder } from './validation';
 import type { StudyContext, StudyPolicy, StudyRow } from './sarStudyTypes';
-export const studyContext: Decoder<StudyContext> = object({
+const contextShape = object({
   id: hex(64),
   metric_id: string,
   name: string,
@@ -23,6 +24,10 @@ export const studyContext: Decoder<StudyContext> = object({
   observation_count: count,
   distinct_value_count: count,
   value_samples: array(string),
+});
+export const studyContext: Decoder<StudyContext> = (input, path = '$') => ({
+  ...contextShape(input, path),
+  ...decodeActivityScope(input, path),
 });
 const policyShape = object({
   context_id: hex(64),

@@ -51,6 +51,7 @@ class ObservationContexts:
     def __init__(self, project: dict):
         self.exact: dict[tuple, dict[str, dict]] = {}
         self.metric: dict[tuple, dict[str, dict]] = {}
+        self.scopes: dict[tuple, dict[str, dict]] = {}
         data, self.source_sha256 = _condition_bytes(project)
         if data is None:
             return
@@ -67,7 +68,12 @@ class ObservationContexts:
                 text(row.get("target")),
                 text(row.get("assay")),
             )
-            sources = source_evidence(row, fallback, page_count=project["page_count"])
+            sources = source_evidence(
+                row,
+                fallback,
+                page_count=project["page_count"],
+                document_sha256=project["expected_sha256"],
+            )
             if not sources:
                 conditions = {
                     key: row.get(key)
@@ -111,9 +117,10 @@ class ObservationContexts:
                             cell.value,
                             source.context,
                             dict(source.conditions),
+                            source.scope.identity if source.scope is not None else None,
                         )
 
-    def _add(self, owner, name, value, context, conditions) -> None:
+    def _add(self, owner, name, value, context, conditions, source_scope=None) -> None:
         if not owner or not name:
             return
         packet = {
@@ -128,9 +135,20 @@ class ObservationContexts:
             and packet.get("treatment_duration") is not None
         ):
             packet["duration"] = packet.pop("treatment_duration")
-        key = (owner, context[0], name, metric_unit(name), context[1], context[2])
+        key = (
+            owner,
+            context[0],
+            name,
+            metric_unit(name),
+            context[1],
+            context[2],
+            source_scope,
+        )
         self.exact.setdefault((*key, value), {})[digest(packet)] = packet
         self.metric.setdefault(key, {})[digest(packet)] = packet
+        if source_scope is not None:
+            scoped = (name, metric_unit(name), context[1], context[2], source_scope)
+            self.scopes.setdefault(scoped, {})[digest(packet)] = packet
 
     def contexts(self, identifier: str, activity: Activity) -> list[dict]:
         key = (
@@ -140,12 +158,23 @@ class ObservationContexts:
             activity.unit,
             activity.target,
             activity.assay,
+            activity.source_scope,
         )
         # A numeric-only audited edit retains its metric-owned known conditions.
         # Multiple possible conditions stay separate, never averaged into unknown.
         values = self.exact.get(
             (*key, text(activity.value, limit=1001))
         ) or self.metric.get(key)
+        if not values and activity.source_scope is not None:
+            values = self.scopes.get(
+                (
+                    activity.name,
+                    activity.unit,
+                    activity.target,
+                    activity.assay,
+                    activity.source_scope,
+                )
+            )
         return (
             list(values.values())
             if values
