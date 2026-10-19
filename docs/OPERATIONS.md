@@ -23,7 +23,7 @@ uses normal binder output and worker-plan validation for both native and scanned
 role pages; a controlled molecular record is not OCSR accuracy evidence. Only
 changed/directly related checks are authorized, not global tests.
 
-Binding45/binder55, Activity28/extractor38, role4 invalidate derived checkpoints.
+Binding46/binder56, Activity29/extractor39, role4 invalidate derived checkpoints.
 Preserve old sources/tasks/human revisions and matching code/config/state
 rollback; never relabel a historical packet. Formal real-patent extraction/SAR
 must still be submitted from the existing frontend after coherent source/assay
@@ -40,7 +40,14 @@ and header scopes do not inherit this permission. Unknown/contradictory roles,
 missing tails, unavailable runtime, exhausted budgets and cancelled requests
 remain refused with observations, not fabricated values or successful tables.
 
-Recovery2 is the sole current producer. Historical recovery1 stays read-only.
+Recovery3 is the sole current producer. Historical recovery1/2 stay read-only.
+An otherwise valid SDK reply below0.99 can try one compact blank-padding view of
+the same complete ink row. Inspect grouped `requests[].observations`: both weak
+and selected replies remain, with original shape/crop/pixel identity. No quality
+threshold is lowered; two weak replies, malformed transport, budget exhaustion
+or cancellation cannot publish success. Clear first replies have no extra call.
+All requests count, not just the winning replies. Padding does not repair units,
+conditions, unknown semantics or contradictory native/detector claims.
 Original readback uses cached row observations plus actual original pixels, not
 model inference. Source native text, physical column identity, boundaries and
 all request/model identities must survive serialization. Removing packet/outer
@@ -53,7 +60,7 @@ auxiliary cell/header/discovery/identifier/binding/activity consumers, source
 epochs and safe Web/export consumers. Native generated-text checks require the
 existing explicit runtime/model opt-in; no downloads or dependency changes.
 These are not private-patent processing or universal scientific acceptance.
-Binding44/binder54, Activity27/extractor37 and characterization-role3 require
+Binding46/binder56, Activity29/extractor39 and characterization-role4 require
 normal frontend regeneration. Preserve old tasks/manual audit and matching
 rollback code/config/state; never upgrade saved proof fields manually.
 

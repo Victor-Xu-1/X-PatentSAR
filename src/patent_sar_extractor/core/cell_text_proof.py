@@ -281,7 +281,8 @@ def _recovery_marker(reading):
     return (
         "auxiliary_text_version" in reading
         or isinstance(packet, dict)
-        and packet.get("version") == 2
+        and type(packet.get("version")) is int
+        and packet["version"] in (2, 3)
     )
 
 

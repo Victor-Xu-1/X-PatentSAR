@@ -1,4 +1,4 @@
-"""Historical V1 packets stay readable; only V2 is produced by the live adapter."""
+"""Historical V1/V2 packets stay readable; only V3 is produced live."""
 
 import copy
 import unittest
@@ -56,6 +56,18 @@ class LegacyAuxiliaryReadingTests(unittest.TestCase):
         current = refine_text_pair(
             fixture.images, fixture.primaries, fixture_module.ControlledAuxiliary()
         )
-        self.assertEqual(current[0]["auxiliary_text"]["version"], 2)
+        self.assertEqual(current[0]["auxiliary_text"]["version"], 3)
+        # A V2 packet is the retained ordinary selection with one raw SDK
+        # response per physical row. Only the test serializes this old shape.
+        v2 = copy.deepcopy(current[0]["auxiliary_text"])
+        v2["version"] = 2
+        for view in v2["views"]:
+            view["requests"] = [row["observations"][0] for row in view["requests"]]
+        saved_v2 = copy.deepcopy(v2)
+        historical_v2 = effective_cells(v2)
+        self.assertTrue(
+            all(replay_auxiliary_cell(c, fixture.page) for c in historical_v2)
+        )
+        self.assertEqual(v2, saved_v2)
         fixture.page.insert_text((30, 76), "new ink", fontsize=6)
         self.assertFalse(replay_auxiliary_cell(historical[0], fixture.page))

@@ -10,7 +10,7 @@
   Binding plans/worker/QA/Web and activity keep all sources separate from molecule
   work. Role4 requires optical frames; source_grid_edges reuses the same bounded
   whole-grid shape instead of its obsolete97-axis limit. Current derived proof:
-  Binding45/binder55, Activity28/extractor38, role4. Raw sources/OCR/OCSR2,
+  Binding46/binder56, Activity29/extractor39, role4. Raw sources/OCR/OCSR2,
   preparation12/assets/manual audit, numerical SAR, API/SQL, model/runtime policy
   and dependencies stay unchanged. No new verification cache/queue/store, read-
   side model or historical scientific promotion. Larger source inventories still
@@ -18,15 +18,17 @@
 
 - Complete auxiliary text authority: `text_ocr/recovery_capture` and
   `recovery_proof` compose the SAME physical text observer through one row-only
-  live/cached adapter. Recovery2 is the only current producer; recovery1 is
-  bounded historical reading. `role_text_capture` refines unresolved whole role
-  cells before classification; characterization-role3 admits the paired proof.
+  live/cached adapter. Recovery3 is the only current producer; recovery1/2 are
+  bounded historical reading. `row_preparation` owns exactly one compact-padding
+  alternative after a valid below0.99 reply, keeping every raw observation and
+  unchanged source pixels/quality/request limits. `role_text_capture` refines
+  unresolved whole role cells before classification; role4 admits paired proof.
   `role_text_sources` inventories explicit accepted/rejected owners; binding
   recognition/candidate/worker/QA/Web and activity readback conserve them in the
   same source replay, not molecule work. Existing row/chunk/pixel/request budgets
   and primary/native/detector conflicts remain; only six known recovery-envelope
   links are admitted in physical-cell diagnostics, not arbitrary deeper JSON.
-  Current derived contracts are Binding44/binder54 and Activity27/extractor37.
+  Current derived contracts are Binding46/binder56 and Activity29/extractor39.
   PDF/raw OCR/OCSR2, preparation12/assets/human audit, API/SQL, numerical SAR,
   model files, dependency recipes and activation policy remain unchanged.
   Historical evidence is preserved without scientific promotion. No second

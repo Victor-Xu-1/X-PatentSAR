@@ -141,9 +141,9 @@ class SourceTextChunkRecoveryTests(unittest.TestCase):
                 elif mutation == "extra":
                     requests.append(copy.deepcopy(requests[0]))
                 elif mutation == "pixels":
-                    requests[0]["pixel_sha256"] = "f" * 64
+                    requests[0]["observations"][0]["pixel_sha256"] = "f" * 64
                 elif mutation == "model":
-                    requests[0]["model_fingerprint"] = "f" * 64
+                    requests[0]["observations"][0]["model_fingerprint"] = "f" * 64
                 elif mutation == "selected":
                     packet["views"][0]["selected"]["raw_text"] += " changed"
                 elif mutation == "marker":
@@ -154,7 +154,7 @@ class SourceTextChunkRecoveryTests(unittest.TestCase):
                     del reading["auxiliary_text"]
                     del reading["auxiliary_text_version"]
                 else:
-                    requests[0]["confidence"] = 10**400
+                    requests[0]["observations"][0]["confidence"] = 10**400
                 self.assertFalse(
                     valid_auxiliary_cell(reading, 400)
                     and replay_auxiliary_cell(reading, self.page)

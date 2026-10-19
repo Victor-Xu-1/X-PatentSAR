@@ -77,7 +77,9 @@ class AuxiliaryHeaderPairTests(unittest.TestCase):
         )
         self.assertEqual(saved["auxiliary_attempt"]["status"], "rejected")
         packet = saved["auxiliary_attempt"]["packet"]
-        self.assertEqual(packet["views"][1]["requests"][-1]["text"], "IC50")
+        self.assertEqual(
+            packet["views"][1]["requests"][-1]["observations"][-1]["text"], "IC50"
+        )
 
     def test_failed_auxiliary_keeps_primary_and_partial_observations(self):
         reader = cell_fixture.ControlledAuxiliary()
@@ -95,6 +97,8 @@ class AuxiliaryHeaderPairTests(unittest.TestCase):
         self.assertEqual(saved["raw_text"], self.columns[0]["raw_text"])
         self.assertEqual(saved["auxiliary_attempt"]["code"], "request_timeout")
         self.assertEqual(
-            saved["auxiliary_attempt"]["views"][0]["requests"][0]["text"],
+            saved["auxiliary_attempt"]["views"][0]["requests"][0]["observations"][0][
+                "text"
+            ],
             "HTRF",
         )

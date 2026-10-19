@@ -34,7 +34,15 @@ def auxiliary_source_cells(sources):
             observations = (
                 [row["observation"] for row in view["rows"]]
                 if cell["auxiliary_text"]["version"] == 1
-                else view["requests"]
+                else (
+                    [
+                        observed
+                        for row in view["requests"]
+                        for observed in row["observations"]
+                    ]
+                    if cell["auxiliary_text"]["version"] == 3
+                    else view["requests"]
+                )
             )
             for row in observations:
                 observed = {k: v for k, v in row.items() if k != "cache_hit"}

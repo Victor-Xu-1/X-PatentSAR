@@ -31,7 +31,7 @@ def effective_cells(packet):
     if (
         isinstance(packet, dict)
         and type(packet.get("version")) is int
-        and packet["version"] == 2
+        and packet["version"] in (2, 3)
     ):
         from .recovery_proof import effective_recovery_cells
 
@@ -100,7 +100,7 @@ def replay_auxiliary_cell(reading, page):
     """Render the same original windows, without models, paths from artifacts or edits."""
     if not valid_auxiliary_cell(reading, reading.get("render_dpi")):
         return False
-    if reading["auxiliary_text"]["version"] == 2:
+    if reading["auxiliary_text"]["version"] in (2, 3):
         from .recovery_proof import replay_recovery_cell
 
         try:
