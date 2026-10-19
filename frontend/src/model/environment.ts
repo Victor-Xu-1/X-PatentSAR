@@ -76,6 +76,11 @@ export function environmentComponentDescription(component: EnvironmentComponent)
     ? t(componentCopy[component.id].description)
     : component.description;
 }
+const ownedDiagnostics = new Set(['未配置该组件路径。', '配置路径不存在。']);
+/** Localize only fixed application copy; keep native observations and paths verbatim. */
+export function environmentDiagnostic(message: string): string {
+  return ownedDiagnostics.has(message) ? t(message) : message;
+}
 export function hasEnvironmentControlCharacters(value: string): boolean {
   return Array.from(value).some(
     (character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127,

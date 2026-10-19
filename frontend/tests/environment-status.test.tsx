@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { EnvironmentComponent } from '../src/api/environmentTypes';
 import { decodeEnvironmentCatalog } from '../src/api/environmentDecoders';
 import { ComponentLibrary } from '../src/features/environment/ComponentLibrary';
+import { setLocale } from '../src/i18n';
 import { environmentCatalog } from './environment-fixtures';
 
 function component(overrides: Partial<EnvironmentComponent> = {}): EnvironmentComponent {
@@ -28,6 +29,54 @@ function library(value: EnvironmentComponent) {
 }
 
 describe('truthful component presence and verification', () => {
+  it.each(['en', 'zh-CN'] as const)(
+    'localizes only known application-owned component diagnostics at %s',
+    async (locale) => {
+      setLocale(locale);
+      const raw = 'External probe: /data/化合物{task}.pdf <actual observation>';
+      const { row } = library(
+        component({
+          status: 'unconfigured',
+          presence: 'unconfigured',
+          problem: '未配置该组件路径。',
+          checks: [
+            { name: 'configured_path', ok: false, message: '配置路径不存在。' },
+            { name: 'native_detail', ok: false, message: raw },
+          ],
+        }),
+      );
+      expect(row.querySelector('.component-problem')).toHaveTextContent(
+        locale === 'en' ? 'No path is configured for this component.' : '未配置该组件路径。',
+      );
+      await userEvent.click(
+        within(row).getByText(locale === 'en' ? 'Versions, sources & checks' : '版本、来源与检查'),
+      );
+      expect(row).toHaveTextContent(
+        locale === 'en' ? 'The configured path does not exist.' : '配置路径不存在。',
+      );
+      expect(row).toHaveTextContent(raw);
+    },
+  );
+  it('localizes a known stale diagnostic without rewriting its raw check details', async () => {
+    setLocale('en');
+    const { row } = library(
+      component({
+        status: 'unchecked',
+        verification: 'stale',
+        last_check: {
+          status: 'missing',
+          checked_at: null,
+          detected_version: null,
+          problem: '配置路径不存在。',
+          checks: [{ name: 'observed', ok: false, message: '原始诊断，不翻译' }],
+        },
+      }),
+    );
+    await userEvent.click(within(row).getByText('Versions, sources & checks'));
+    const history = within(row).getByLabelText('Previous check results');
+    expect(history).toHaveTextContent('The configured path does not exist.');
+    expect(history).toHaveTextContent('原始诊断，不翻译');
+  });
   it('shows the binding path, separate target/measured versions and current time before opening details', async () => {
     const value = component();
     const { row, onInstall } = library(value);

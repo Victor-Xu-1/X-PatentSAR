@@ -9,6 +9,8 @@ const copy = {
     components: 'Component details',
     runtime: 'Auxiliary text OCR runtime',
     model: 'Auxiliary text OCR model',
+    unconfigured: 'No path is configured for this component.',
+    missing: 'The configured path does not exist.',
   },
   'zh-CN': {
     language: '界面语言',
@@ -17,6 +19,8 @@ const copy = {
     components: '组件详情',
     runtime: '辅助文字识别环境',
     model: '辅助文字识别模型',
+    unconfigured: '未配置该组件路径。',
+    missing: '配置路径不存在。',
   },
 } as const;
 
@@ -60,6 +64,11 @@ for (const locale of ['en', 'zh-CN'] as const) {
         await expect(row).toContainText(
           catalog.components.find((component) => component.id === id)!.version,
         );
+        const problem = catalog.components.find((component) => component.id === id)!.problem;
+        if (problem === '未配置该组件路径。' || problem === '配置路径不存在。')
+          await expect(row.locator('.component-problem').first()).toHaveText(
+            problem === '未配置该组件路径。' ? copy[locale].unconfigured : copy[locale].missing,
+          );
       }
       expect(await dialog.evaluate((node) => node.scrollWidth <= node.clientWidth + 2)).toBe(true);
       expect(

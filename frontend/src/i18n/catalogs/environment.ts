@@ -1,5 +1,7 @@
 /** Environment overview, details, storage and explicit consent. */
 export const environment: Readonly<Record<string, string>> = {
+  '未配置该组件路径。': 'No path is configured for this component.',
+  '配置路径不存在。': 'The configured path does not exist.',
   辅助文字识别环境: 'Auxiliary text OCR runtime',
   辅助文字识别模型: 'Auxiliary text OCR model',
   '仅在主文字识别未通过时按需加载；CPU、离线、不常驻，不替换结构识别。':
