@@ -1,9 +1,9 @@
 # Operations and troubleshooting
 
-## Auxiliary text runtime development boundary
+## Optional auxiliary text runtime and activation boundary
 
-The optional `core/text_ocr` runtime is under integration, not a configured
-production OCR provider. Merely finding a Paddle interpreter/model directory
+The packaged `core/text_ocr` runtime is optional and disabled by default.
+Merely finding a Paddle interpreter/model directory
 does not enable it. It only reads software-owned bounded RGB text rows, returns
 literal observations with uncalibrated scores, and never processes a PDF itself.
 Do not point isolated checks at private patent crops or use model confidence to
@@ -21,8 +21,8 @@ downloading/installing anything. Native inference uses isolated Python3.10 CPU,
 fixed local model files, denied sockets and private caches. Missing `ccache` is
 an SDK advisory, not permission to install compilation tools or download models.
 
-Shared activity-header capture, original-only replay and managed setup now have
-development implementations. They are not deployed/activated. Reuse inspection
+Shared activity-header capture, original-only replay and managed setup use this
+same adapter; deployment alone does not activate it. Reuse inspection
 of the isolated runtime and model is distinct from a cold full install. No
 third-party binaries or weights are added to the application wheel. A verified
 runtime/model pair from one managed operation selects on-demand mode; a partial
@@ -50,9 +50,10 @@ rejections without increasing any cap or changing recognition/chemical rules.
 Missing/malformed telemetry refuses rather than fabricating zero. All three
 native adapter fingerprints include the reader; old raw observations stay
 historical and are not retagged with the current fingerprint.
-Installed-wheel/browser validation, held-out accuracy, release preparation,
-PR/main and unchanged18765 deployment remain pending. Do not call
-targeted native/source checks scientific acceptance or a delivered upgrade.
+Installed-wheel/browser checks use controlled inputs; held-out accuracy and cold
+complete setup are separate gates. Keep release/mainline/deployment and rollback
+receipts outside source. A delivered software adapter is not scientific acceptance
+or proof of complete real-patent extraction.
 
 ## A dense original text cell is empty at one render scale
 
