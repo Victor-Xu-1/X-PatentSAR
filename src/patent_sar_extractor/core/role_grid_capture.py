@@ -12,7 +12,9 @@ def observe_complete_role_grid(page, region, tokens, *, evidence_sink=None):
     if windows is None:
         return None
     if len(windows) == 1:
-        return observe_role_cells(page, region, tokens, evidence_sink=evidence_sink)
+        return observe_role_cells(
+            page, region, tokens, attach_source_frames=True, evidence_sink=evidence_sink
+        )
     carrier = {"xs": xs, "ys": ys, "native_hints": [], "observations": []}
     if evidence_sink is not None:
         evidence_sink.append(carrier)
@@ -29,6 +31,7 @@ def observe_complete_role_grid(page, region, tokens, *, evidence_sink=None):
             {"xs": xs, "ys": ys[start : stop + 1]},
             tokens,
             native=native,
+            attach_source_frames=True,
             evidence_sink=attempted,
         )
         observed = result if result is not None else attempted[0] if attempted else None

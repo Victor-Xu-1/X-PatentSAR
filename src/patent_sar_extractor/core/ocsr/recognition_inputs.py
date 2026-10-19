@@ -12,7 +12,6 @@ from patent_sar_extractor.core.catalog_reader import (
 )
 from patent_sar_extractor.core.pipeline_rules import _label_key
 from patent_sar_extractor.core.role_text_sources import role_text_cells
-from patent_sar_extractor.core.text_ocr.source_inventory import auxiliary_source_cells
 
 _SOURCE_INPUT_FIELDS = (
     "image_path",
@@ -103,7 +102,7 @@ def recognition_inputs(payload: dict[str, Any]) -> RecognitionPlan:
         formal,
         supplemental,
         reprints,
-        role_text=tuple(auxiliary_source_cells(role_text_cells(payload))),
+        role_text=tuple(role_text_cells(payload)),
     )
 
 

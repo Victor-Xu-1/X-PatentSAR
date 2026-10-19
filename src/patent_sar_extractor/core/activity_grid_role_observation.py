@@ -24,7 +24,13 @@ from .table_cells import CellRenderLimit, cell_image
 
 
 def observe_role_cells(
-    page, region, tokens, *, retain_frames=False, evidence_sink=None
+    page,
+    region,
+    tokens,
+    *,
+    retain_frames=False,
+    attach_source_frames=False,
+    evidence_sink=None,
 ):
     """One cell observation carrier for closed grids and visible row fragments."""
     xs, ys = region["xs"], region["ys"]
@@ -35,12 +41,20 @@ def observe_role_cells(
         tokens,
         native=native_region(tokens, bounds, bool(page.get_text("words"))),
         retain_frames=retain_frames,
+        attach_source_frames=attach_source_frames,
         evidence_sink=evidence_sink,
     )
 
 
 def _observe_role_cells(
-    page, region, tokens, *, native, retain_frames=False, evidence_sink=None
+    page,
+    region,
+    tokens,
+    *,
+    native,
+    retain_frames=False,
+    attach_source_frames=False,
+    evidence_sink=None,
 ):
     """Same observer with the original parent's source decision conserved."""
     xs, ys = region["xs"], region["ys"]
@@ -121,22 +135,23 @@ def _observe_role_cells(
                     image = cell_image(page, cell, dpi)
                 except CellRenderLimit:
                     return None
-                observed.append(
-                    observe_text_cell(
-                        image,
-                        dpi,
-                        engine[1],
-                        rows_per_chunk=MAX_ROLE_TEXT_ROWS,
-                    ).evidence(dpi, cell)
-                )
-                if retain_frames:
-                    rendered.append(
-                        {
-                            "dpi": dpi,
-                            "shape": list(image.shape),
-                            "pixel_sha256": hashlib.sha256(image).hexdigest(),
-                        }
-                    )
+                reading = observe_text_cell(
+                    image,
+                    dpi,
+                    engine[1],
+                    rows_per_chunk=MAX_ROLE_TEXT_ROWS,
+                ).evidence(dpi, cell)
+                if retain_frames or attach_source_frames:
+                    frame = {
+                        "dpi": dpi,
+                        "shape": list(image.shape),
+                        "pixel_sha256": hashlib.sha256(image).hexdigest(),
+                    }
+                    if attach_source_frames:
+                        reading["source_frame"] = frame
+                    if retain_frames:
+                        rendered.append(frame)
+                observed.append(reading)
             matrix = [
                 [
                     observed[row * (len(xs) - 1) + column]["text"]

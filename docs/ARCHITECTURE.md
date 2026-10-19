@@ -1,5 +1,40 @@
 # X-PatentSAR architecture
 
+## One original-role inventory for native, optical and auxiliary observations
+
+`role_text_sources` enumerates only the existing characterization-region,
+coverage-region and rejected-role owners, including their explicit top/bottom
+open-row carriers. It never recursively searches JSON, invents a cell, merges
+different pages/DPI views or grants a role. Auxiliary pairs retain the existing
+model/request validation and deduplication. Ordinary cells use the same bounded
+source inventory; malformed/foreign/excess work refuses rather than truncates.
+
+Characterization-role4 requires a complete source frame for every optical cell.
+The existing cell observer attaches that digest from its already-rendered image,
+only when the complete-role caller requests it. Native roles keep literal native
+words. Existing fragment frames are adapted into the same call-local cell shape,
+without rewriting their saved carriers or changing partial-row qualification.
+`source_grid_edges` consumes the SAME whole-grid shape authority instead of a
+competing97-axis limit;96cell work units,64columns/4096whole cells and actual
+top/bottom rule/ink requirements remain authoritative.
+
+`role_original_replay` reopens caller-owned original pages: native words and
+raster ownership are checked against the original source layout once per page;
+ordinary optical cells use `original_cell_frame_matches`, including complete
+chunks. Existing auxiliary replay remains its sole authority. Binding plans
+carry all these sources separately from molecule work. Coordinator/worker/QA/
+safe Web and activity acceptance compose the SAME original gate, without model
+loading, supplied artifact paths, a new queue/store or a saved-success shortcut.
+An unchanged pure-qualified transcript can still fail actual original replay.
+
+Binding45/binder55, Activity28/extractor38 and characterization-role4 refresh
+affected derived proof. Old roles1/2/3 stay historical; raw PDF/OCR/OCSR2,
+preparation12, human audit, API/SQL, numerical SAR, dependencies and activation
+policy remain unchanged. The existing read-model snapshot avoids rerunning source
+verification for ordinary result pagination; no new persistent verification
+cache or weakened invalidation is introduced. Generated source/consumer checks
+are not private-patent, universal recall, chemical or full SAR acceptance.
+
 ## Complete auxiliary text recovery and original-role replay
 
 The optional `text_ocr` adapter now produces recovery2 through one row-only

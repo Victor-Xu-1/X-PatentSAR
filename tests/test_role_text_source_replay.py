@@ -107,24 +107,31 @@ class RoleTextSourceReplayTests(unittest.TestCase):
         self.assertTrue(original_activity_source_errors(payload))
 
     def test_a_native_role_source_does_not_load_auxiliary_ocr(self):
-        payload = self.diagnostic()
-        cells = next(iter(payload["source_role_observations"].values()))["source_cells"]
-        cells["observations"] = [
-            {
-                "method": "native_cells",
-                "matrix": [[""]],
-                "cells": [
-                    {"method": "native_cell", "text": "", "bbox": self.source.bounds}
-                ],
-            }
-        ]
+        from patent_sar_extractor.core.activity_grid_role_observation import (
+            observe_characterization,
+        )
+        from tests import test_role_grid_coverage as native_controls
+
+        fixture = native_controls.RoleGridCoverageTests()
+        self.addCleanup(fixture.doCleanups)
+        page, grid, tokens, _ids = fixture.original(1)
+        scope = observe_characterization(
+            page, grid, tokens, "Table J. Compound characterization"
+        )
+        payload = {"coverage": {"regions": [{"page_no": 1, "role_scope": scope}]}}
         with patch(
             "patent_sar_extractor.core.text_ocr.source_capture.get_auxiliary_text_runtime",
             side_effect=AssertionError(
                 "Native source reads must not load auxiliary OCR"
             ),
         ):
-            self.assertEqual(original_activity_source_errors(payload), [])
+            self.assertTrue(original_activity_source_errors(payload))
+            self.assertEqual(
+                original_activity_source_errors(
+                    payload, open_original=lambda: nullcontext(page.parent)
+                ),
+                [],
+            )
 
     def test_same_packet_in_known_role_owners_is_replayed_once(self):
         payload = self.diagnostic()
