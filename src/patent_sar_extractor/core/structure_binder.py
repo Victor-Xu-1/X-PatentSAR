@@ -8,6 +8,7 @@ from .binding_artifacts import write_binding_result
 from .binding_geometry import _process_structure
 from .binding_preparation import load_binding_input, prepare_binding_observations
 from .binding_progress import BindingObserver
+from .binding_source_diagnostics import retain_binding_diagnostics
 from .binding_source_headings import (
     _document_sha256,
     observed_heading_blocks,
@@ -15,7 +16,7 @@ from .binding_source_headings import (
 )
 from .binding_source_regions import collect_reference_regions
 from .binding_spatial import collect_spatial_bindings
-from .source_role_observations import RoleObservationBuffer
+from .source_role_observations import RoleObservationBuffer, serialize_role_observations
 
 
 def bind(
@@ -68,6 +69,21 @@ def bind(
             role_observations=role_observations,
             progress=progress,
         )
+        # Retain rejected spatial evidence before heading discovery. Its proved
+        # cell role survives a failed ID/image association, never its success.
+        issues = retain_binding_diagnostics(
+            [
+                {
+                    "cpd": conflict.label_key,
+                    "page_no": conflict.page_index + 1,
+                    "reason": conflict.reason,
+                    "evidence": conflict.evidence,
+                }
+                for conflict in spatial.conflicts
+            ],
+            role_observations,
+            original_pdf_sha256=document_sha256,
+        )
         # A known catalogue owns its cells, not every other heading on that page.
         pages = list(range(len(doc)))
         blocks = (
@@ -81,6 +97,7 @@ def bind(
                 grids_for_page=spatial.grids_for_page,
                 tokens_for_page=spatial.tokens_for_page,
                 source_bindings=[*original, *reprints],
+                source_diagnostics=serialize_role_observations(role_observations),
                 progress=progress,
             )
             if pages
@@ -102,15 +119,6 @@ def bind(
             if blocks
             else ([], [])
         )
-        issues = [
-            {
-                "cpd": conflict.label_key,
-                "page_no": conflict.page_index + 1,
-                "reason": conflict.reason,
-                "evidence": conflict.evidence,
-            }
-            for conflict in spatial.conflicts
-        ]
         issues.extend(heading_issues)
         return write_binding_result(
             out,

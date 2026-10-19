@@ -6,7 +6,12 @@ from .activity_grid_role_proof import valid_role_scope
 from .activity_header_evidence import proof_id
 from .binding_source_diagnostics import binding_diagnostic_issues
 from .binding_source_regions import identifier_references, reference_cell
-from .caption_label_roles import caption_reference_ids, validate_caption_references
+from .caption_label_roles import (
+    PENDING_ROLE,
+    caption_reference_ids,
+    validate_caption_references,
+)
+from .caption_pending_roles import validate_pending_caption_references
 from .caption_role_proof import validate_caption_exclusions
 from .heading_inventory import heading_inventory_issues, heading_sections
 from .printed_identifiers import identifier_key
@@ -44,7 +49,7 @@ def reference_scope(sections, original_pdf_sha256=""):
         | {
             section["original_pdf_sha256"]
             for section in sections
-            if section.get("role") == "structure_label_reference"
+            if section.get("role") in {"structure_label_reference", PENDING_ROLE}
             and isinstance(section.get("original_pdf_sha256"), str)
         }
         | {
@@ -213,6 +218,7 @@ def reference_issues(payload, entries, *, required=True):
             in {
                 "unruled_structure_region",
                 "structure_label_reference",
+                PENDING_ROLE,
                 "structure_column_anchor",
                 PAGE_ROLE,
                 REFERENCE_ROLE,
@@ -227,6 +233,9 @@ def reference_issues(payload, entries, *, required=True):
             "Current original source inventory requires unruled-column coverage"
         )
     validate_caption_references(sections, scope, entries)
+    validate_pending_caption_references(
+        sections, scope, payload.get("source_role_observations", {})
+    )
     expected = [
         reference
         for region in regions.values()

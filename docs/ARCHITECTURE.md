@@ -1,5 +1,35 @@
 # X-PatentSAR architecture
 
+## Original occurrence role is independent of successful binding
+
+`structure_binder` retains rejected spatial proposals in the SAME bounded
+`source_role_observations` catalogue before discovering synthesis headings.
+`caption_pending_roles` independently replays their existing positive compound-
+catalogue title/grid/cell evidence and original native/page-OCR carrier. A
+missing drawing or unread label does not turn that exact cell into a new
+synthesis title. The role is `unresolved_structure_label_reference`, always
+unresolved, with all matching diagnostic references and NO admitted identifier
+or molecule. Raw source text, proposed values and failed readings stay intact.
+
+The call-local index uses document, page, carrier and literal locator text plus
+the existing half-open cell ownership rule. It does not skip a page/ID, choose
+a rejected attempt or repair a character. The same label outside that cell
+remains an independent heading. Unknown/nonfinal/conflicting context cannot
+borrow this role. Positive source-role evidence is rederived; a rejection flag
+alone is never evidence. Whitespace/case compaction aliases only a raw locator,
+not a scientific ID. Prefixes, leading zeros and suffixes remain verbatim.
+
+`binding_source_references` conserves both qualified and unresolved occurrence
+IDs, validates their actual diagnostic carriers, and regenerates unresolved
+issues even if saved flags are removed. References cannot acquire confirmed
+status or an identifier field. Missing/foreign/mutated/downgraded proof refuses.
+One writer/catalogue/QA remains authoritative; no extra OCR/model, cache/store,
+queue or acceptance path is introduced. Binding38/binder48 refresh derived
+occurrence semantics only. Original PDF/raw OCR/structures/OCSR/manual audit,
+activity24/extractor34, numerical SAR, API/SQL and dependencies stay unchanged.
+Controlled occurrence accounting does not certify full patent or chemistry
+acceptance, and unresolved scientific data still blocks the formal result.
+
 ## Cache-order-independent original cell rendering
 
 `table_cells.cell_image` retains the sole source-cell inset, requested DPI and
@@ -30,7 +60,7 @@ that both the isolated clip and the caller's original remain readable.
 Caption, heading, activity-header/value, plot-reference and label-preparation
 observers/replayers continue through the shared cell renderer. Actual original
 pixels/ink remain mandatory and modified frames still refuse. Current derived
-contracts are Binding37/binder47, Activity24/extractor34, visible23 and
+contracts are Binding38/binder48, Activity24/extractor34, visible23 and
 preparation11. Earlier epoch numbers below record their feature's historical
 delivery, not competing current authorities. Original PDF/raw OCR/OCSR2,
 scientific assets/manual audit, numerical SAR, API/SQL and dependencies stay

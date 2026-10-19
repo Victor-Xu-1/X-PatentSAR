@@ -1,5 +1,23 @@
 # Operations and troubleshooting
 
+## A failed catalogue label appears again as a synthesis heading
+
+Inspect the retained proposal's original cell role and native/page-OCR carrier,
+not just its proposed number. The shared binder now retains that proposal before
+heading discovery. A revalidated positive compound-catalogue cell can be recorded
+as an unresolved label occurrence rather than another synthesis title. It does
+not supply an accepted number/structure and does not remove the original missing-
+drawing, unclear-text or conflicting-source error. A same-ID heading elsewhere
+still needs its own evidence. Unknown/nonfinal catalogue context is not waived.
+
+Use `tests.test_unresolved_caption_roles` for native/scanned missing drawings,
+unqualified reads, outside headings, prefixed/suffixed IDs, unchanged errors,
+carrier/geometry/role mutations and downgrade controls; then select the existing
+heading-role, diagnostic, source-led consumer and cache-compatibility modules.
+No global suite or independent private-patent OCR/association is authorized by
+these controlled checks. Binding38/binder48 require normal producer regeneration;
+historical observations and raw/manual files are preserved, not relabelled.
+
 ## Original cell replay fails only after a different observation order
 
 First compare retained cell geometry, dimensions and original pixel digests.
@@ -23,7 +41,7 @@ source, visibility/rotation/crop, pixel-tamper, pixel-budget and cleanup control
 Then select affected caption/heading/header/activity/plot consumers. This is
 related validation, not authorization for a global suite or private OCR script.
 Rebuild affected derived observations through the normal frontend producer:
-Binding37/binder47, Activity24/extractor34, visible23, preparation11. Raw PDF,
+Binding38/binder48, Activity24/extractor34, visible23, preparation11. Raw PDF,
 page OCR/OCSR, structure assets and manual audit remain unchanged. Keep failed
 runs and old frames as historical evidence; do not manually fix their hashes,
 reuse saved acceptance flags or bypass the pre-recognition source replay.
