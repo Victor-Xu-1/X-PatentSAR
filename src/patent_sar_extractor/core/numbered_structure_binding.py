@@ -113,4 +113,5 @@ def bind_numbered_tables(
                 in {"structure_column_anchor", "unruled_structure_region"}
             }
         ),
+        tuple(cells),
     )

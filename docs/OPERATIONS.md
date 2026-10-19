@@ -375,14 +375,30 @@ inventory is not a guarantee of detector recall, OCSR correctness or scientific
 acceptance. Optional new reaction parsers require separate dependency/weight/
 license/resource evaluation and explicit installation authority.
 
-Scope2 also retains registered original column witnesses alongside the complete
+Scope3 also retains registered original column witnesses alongside the complete
 raw diagram inventory. A trusted foreign column active beside the same-page
 heading can exclude only its own contained diagrams/lines, through the existing
 role/body replay. An unassigned own-column rival remains ambiguous. A foreign
 closing procedure cannot truncate the window into accepted uniqueness. Unknown
 columns, changed/omitted evidence, cross-page lane projection and extending beyond
 the original trusted body never supply that permission. Prior scope1/heading3
-remain immutable history. This does not infer multi-step terminal product roles.
+remain immutable history. Later-page exclusions require that page's independently
+qualified local title/header/body, complete current numbered observations and the
+same unique physical row matcher. Own-ID, unread/missing/blank-unproved cells,
+unknown or borrowed header, unowned rival and boundary-crossing diagrams retain
+their obligations. Without a proved partition, a full-width logical region is
+not silently split. A later table does not lend the previous page's coordinates.
+
+Heading-structure6/Binding41/binder51 refresh derived proof only. Original replay
+checks the actual native line inventory, original grids and400/600dpi title/cell
+frames; cached source observations do not prove OCR semantics or chemical identity.
+Readback never starts OCR. Long physical-text carriers use the same full-frame
+pixel gate with conserved row/slice inventory and each slice's hash/ink count;
+they must not be compared to a nonexistent single ink crop or bypassed as trusted.
+Raw PDF/OCR/OCSR2, Activity25/extractor35, preparation12, manual audit, SAR numerical
+policy, API/SQL and dependencies remain unchanged. Prior derived evidence is not
+retagged, old tasks are not auto-run, and scientific acceptance is not relaxed.
+This does not infer multi-step terminal product roles or guarantee100% recall.
 
 ## Weak caption nominations and competing frame hypotheses
 
@@ -433,7 +449,7 @@ remain separate from complete real frontend extraction/SAR and chemical accuracy
 
 ## Large binding evidence without dropped records
 
-Current bindings40/binder50 retain one complete `compound_catalog.entries`
+Current bindings41/binder51 retain one complete `compound_catalog.entries`
 collection, with no root `final_bindings` or `bindings` copies. All scientific
 and presentation consumers use the bounded common accessor; a competing current
 collection or contradictory count is invalid, not a success/partial-cache

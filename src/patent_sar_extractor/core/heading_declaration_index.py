@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 
+from .heading_column_captions import capture_caption_frames, column_caption_boxes
 from .heading_column_sources import COLUMN_SOURCE_ROLES, independent_columns
 from .heading_declaration_scope import (
     MAX_DECLARATION_PAGES,
@@ -11,6 +12,7 @@ from .heading_declaration_scope import (
     declaration_candidates,
 )
 from .heading_line_windows import heading_line_windows
+from .heading_page_columns import capture_column_cells, later_page_columns
 from .source_evidence_identity import proof_id
 
 
@@ -18,7 +20,14 @@ class HeadingDeclarationIndex:
     """Shared original pages; no new store, OCR, queue or identifier guess."""
 
     def __init__(
-        self, doc, structures, lines_for_page, original_sha, *, source_sections=()
+        self,
+        doc,
+        structures,
+        lines_for_page,
+        original_sha,
+        *,
+        source_sections=(),
+        source_cells=(),
     ):
         self.doc, self.lines_for_page, self.original_sha = (
             doc,
@@ -27,6 +36,13 @@ class HeadingDeclarationIndex:
         )
         self.structures, self.pages = defaultdict(list), {}
         self.column_sources = defaultdict(list)
+        self.later_witnesses = {}
+        self.source_cells = defaultdict(list)
+        for cell in source_cells:
+            if cell.column_ownership is not None:
+                self.source_cells[cell.column_ownership.get("source_anchor_id")].append(
+                    cell
+                )
         for section in source_sections:
             if section.get("role") in COLUMN_SOURCE_ROLES:
                 self.column_sources[section["page_no"]].append(section)
@@ -71,7 +87,7 @@ class HeadingDeclarationIndex:
         return self.pages[page_no]
 
     def observe(self, heading):
-        pages, stop = [], None
+        pages, later_columns, stop = [], [], None
         column_sources = self.column_sources[heading["page_no"]]
         columns = independent_columns(
             column_sources, self._page(heading["page_no"]), heading
@@ -82,9 +98,30 @@ class HeadingDeclarationIndex:
         ):
             page = self._page(number)
             pages.append(page)
-            boundary = _stop(
-                page, heading, columns if number == heading["page_no"] else ()
-            )
+            if number != heading["page_no"]:
+                if number not in self.later_witnesses:
+                    self.later_witnesses[number] = [
+                        {
+                            "section": section,
+                            "cells": capture_column_cells(
+                                self.source_cells[section["region_id"]], section
+                            ),
+                            "caption_frames": capture_caption_frames(
+                                self.doc[number - 1],
+                                column_caption_boxes(
+                                    section["source"]["header_scope"], page
+                                ),
+                                page["page_size"],
+                            ),
+                        }
+                        for section in self.column_sources[number]
+                    ]
+                witnesses = self.later_witnesses[number]
+                later_columns.append({"page_no": number, "sources": witnesses})
+                current_columns = later_page_columns(witnesses, page, heading)
+            else:
+                current_columns = columns
+            boundary = _stop(page, heading, current_columns)
             if boundary:
                 stop = {"kind": boundary[1], "page_no": number, "y": boundary[0]}
             elif number == len(self.doc):
@@ -103,13 +140,14 @@ class HeadingDeclarationIndex:
                 "y": page["page_size"][1],
             }
         scope = {
-            "version": 2,
+            "version": 3,
             "status": "observed_declaration",
             "original_pdf_sha256": self.original_sha,
             "heading_source_id": proof_id(heading),
             "document_page_count": len(self.doc),
             "pages": pages,
             "column_sources": column_sources,
+            "later_columns": later_columns,
             "stop": stop,
         }
         declaration_candidates(scope, heading)

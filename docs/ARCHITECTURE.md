@@ -494,7 +494,7 @@ or real frontend scientific acceptance. No additional OCR/model or private-data
 processing is started by the declaration index.
 
 `heading_column_sources` replays the existing registered ruled/unruled role and
-complete body-boundary authorities. Declaration scope2 retains full raw page
+complete body-boundary authorities. Declaration scope3 retains full raw page
 inventories plus original column witnesses. Only a positively trusted independent
 column active alongside this same-page heading can exclude its own contained
 drawings/lines; no page half, y cutoff or ownership flag is guessed. Foreign
@@ -502,8 +502,25 @@ closing procedures remain an ambiguous stop, never manufactured singleton proof.
 Packets retain exact original document/page/full-diagram inventory and registered
 source hashes. Missing/changed witnesses, own-column rivals and crossing drawings
 cannot acquire exclusion authority. No column is projected to another page or
-beyond its trusted body extent. Earlier scope1/heading3 are retained history,
-not current source admission. This bounded layout relation is not a reaction graph.
+beyond its trusted body extent. Each later page instead has its OWN registered
+column sources, existing complete numbered-cell observations and locally qualified
+catalogue title. `heading_page_columns` delegates to the same numbered-cell matcher
+and source-reference validators: every physical row/pair and contained diagram
+must be accounted for, with no own identifier, unresolved cell or rival. An exact
+local title must agree in non-whitespace characters and have at least80% mutual
+physical coverage with the page line. Only that line, header and trusted body
+can be excluded, never the intervening prose or a guessed page half. Borrowed
+continuation headers and unproved full-width logical columns confer no new lane.
+
+`heading_column_captions` retains original title400/600dpi frames without another
+model. `heading_page_replay` checks original native line inventories, printed grid
+axes, native source/cell observations and optical cell/title frames. Saved OCR
+observations remain observations, not a fresh independent recognition or proof of
+semantic correctness. The call-local index/replayer memoizes page inventories and
+proved source frames, and groups existing cells by source identity; no second
+parser, store, queue or model is introduced. Heading-structure6/Binding41/binder51
+invalidate derived ownership. Scope1/2 and heading-structure1–5 remain immutable
+history, not current admission. This bounded layout relation is not a reaction graph.
 Closed historical columns supply an ambiguity veto only; they never claim later
 drawings or extend body ownership. Unproved new full-width/continued flow remains
 explicit rather than assigning a new left-column title to a sole right-column crop.
@@ -512,7 +529,7 @@ explicit rather than assigning a new left-column title to a sole right-column cr
 
 ### Single source-record authority
 
-Bindings40/binder50 store complete current records only in
+Bindings41/binder51 store complete current records only in
 `compound_catalog.entries`. The obsolete root `final_bindings` and returned
 `bindings` copies are removed, not replaced with another store or lazy object.
 `core.binding_records` owns bounded shape selection and exact integer count

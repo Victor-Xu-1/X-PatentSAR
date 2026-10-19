@@ -74,14 +74,17 @@ def heading_sources(bindings):
 
 def original_heading_source_errors(document, bindings):
     """One original readback for both standalone and reaction-heading consumers."""
+    from .heading_page_replay import HeadingPageReplay
     from .heading_reaction import observe_reaction_source
 
     errors = []
+    original_pages = HeadingPageReplay(document)
     for binding in heading_sources(bindings):
         evidence = binding.get("original_heading_structure_evidence") or {}
         try:
             heading = evidence["heading_source"]
             validate_original_heading(document[heading["page_no"] - 1], heading)
+            original_pages.check(evidence["declaration_scope"], heading)
             reaction = evidence.get("reaction_source")
             if (
                 reaction is None

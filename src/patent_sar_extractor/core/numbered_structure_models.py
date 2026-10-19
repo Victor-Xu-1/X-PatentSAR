@@ -89,6 +89,7 @@ class NumberedTableResult:
     source_sections: tuple[dict, ...] = ()
     protected_structure_ids: frozenset[str] = frozenset()
     reserved_pages: frozenset[int] | None = None
+    source_cells: tuple[NumberedTableCell, ...] = ()
 
     @property
     def ownership_pages(self):

@@ -4,7 +4,7 @@
   bounded current `compound_catalog.entries`, requires integer counts and rejects
   obsolete competing root collections. `binding_artifacts` is the only writer;
   binding/header/cache/recognition/export/QA/Web/resume consumers share it.
-  Current Binding40/binder50 refresh derived records only. Independent original
+  Current Binding41/binder51 refresh derived records only. Independent original
   claims/reference/role/pixel completeness remains mandatory, with explicit
   historical review rather than old scientific promotion. Web graphs require
   current valid recognition for every owner, measured or unmeasured. Shared
@@ -215,14 +215,23 @@
   roles, OCSR accuracy or complete real frontend scientific acceptance.
 
 - `heading_column_sources` adapts only registered original ruled/unruled role and
-  complete body proof. Scope2/heading-structure4 retain all raw candidates plus
+  complete body proof. Scope3/heading-structure6 retain all raw candidates plus
   exact document/page/complete-diagram/region witnesses. Trusted foreign columns
   active alongside a same-page heading can exclude their own contained ink;
   own-column/crossing rivals stay, and foreign closing boundaries cannot create
   complete singleton proof. No page split, unproved column, cross-page projection
-  or extended body is inferred. Binding32/binder42 cover these derived changes;
+  or extended body is inferred. Later pages use their OWN qualified local title,
+  role/body and complete existing cell observations. `heading_page_columns`
+  delegates to the same numbered-cell matcher/source replay; unknown/unread/own-ID/
+  rival/crossing cases never gain exclusion. `heading_column_captions` owns exact
+  whitespace-only title reconciliation, physical overlap and source pixel frames;
+  `heading_page_replay` owns actual native/grid/cell/title readback without OCR.
+  Call-local source/page caching is not another scientific authority. The shared
+  `cell_frame_proof` replays complete long-text row/slice pixels through
+  `cell_text_chunk_proof`, not a false single ink crop or skipped gate.
+  Binding41/binder51 cover these derived changes;
   historical closed columns can veto ambiguous later flow but never claim it.
-  older scope1/heading3 stay historical, not promoted. Raw/model/manual/activity/
+  older scope1/2 and heading-structure1–5 stay historical, not promoted. Raw/model/manual/activity/
   numericalSAR/API/SQL/dependency authorities remain unchanged.
 
 - `heading_declaration_index` owns call-local shared original page inventory;

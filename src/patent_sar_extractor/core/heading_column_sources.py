@@ -10,6 +10,50 @@ from .unruled_structure_layout import region_plan
 COLUMN_SOURCE_ROLES = {"structure_column_anchor", "unruled_structure_region"}
 
 
+def checked_column_source(section, page, original_sha, expected):
+    """Recheck one registered original region without projecting a heading lane."""
+    if (
+        not isinstance(section, dict)
+        or set(section) != {"role", "status", "page_no", "region_id", "source"}
+        or section["role"] not in COLUMN_SOURCE_ROLES
+        or type(section["page_no"]) is not int
+        or section["page_no"] != page["page_no"]
+    ):
+        raise ValueError("Malformed original heading column source")
+    source = section["source"]
+    if not isinstance(source, dict) or section["region_id"] != proof_id(source):
+        raise ValueError("Changed original heading column identity")
+    if section["role"] == "structure_column_anchor":
+        roles = column_anchor_roles(source)
+        diagrams = column_anchor_diagrams(source)
+        xs = source["grid_axes"]["xs"]
+        top = scope_body_top(source["header_scope"])
+        bottom = min(
+            source["grid_axes"]["ys"][-1],
+            column_body_extent(source)["trusted_bottom"],
+        )
+    else:
+        roles, pairs, _ = region_plan(source)
+        diagrams = (
+            [source["diagrams"][i] for _, i in pairs]
+            if roles is not None and roles["role"] == "compound"
+            else source["diagrams"]
+        )
+        xs, _ = scope_axes(source["header_scope"])
+        top = scope_body_top(source["header_scope"])
+        bottom = column_body_extent(source)["trusted_bottom"]
+    header = source["header_scope"]
+    if (
+        header["original_pdf_sha256"] != original_sha
+        or header["page_no"] != page["page_no"]
+        or header["page_size"] != page["page_size"]
+        or section["status"] != source["status"]
+        or {s["id"]: s["bbox"] for s in source["page_diagrams"]} != expected
+    ):
+        raise ValueError("Heading column has foreign or incomplete original inventory")
+    return roles, [xs[0], top, xs[-1], bottom], diagrams
+
+
 def independent_columns(sections, page, heading):
     """Replay the same original role/body policies used by the source catalogue.
 
@@ -32,48 +76,18 @@ def independent_columns(sections, page, heading):
             or section["region_id"] in known
         ):
             raise ValueError("Malformed original heading column source")
-        source = section["source"]
-        if not isinstance(source, dict) or section["region_id"] != proof_id(source):
-            raise ValueError("Changed original heading column identity")
         known.add(section["region_id"])
-        if section["role"] == "structure_column_anchor":
-            roles = column_anchor_roles(source)
-            diagrams = column_anchor_diagrams(source)
-            xs = source["grid_axes"]["xs"]
-            top = scope_body_top(source["header_scope"])
-            bottom = min(
-                source["grid_axes"]["ys"][-1],
-                column_body_extent(source)["trusted_bottom"],
-            )
-        else:
-            roles, pairs, _ = region_plan(source)
-            diagrams = (
-                [source["diagrams"][i] for _, i in pairs]
-                if roles is not None and roles["role"] == "compound"
-                else source["diagrams"]
-            )
-            xs, _ = scope_axes(source["header_scope"])
-            top = scope_body_top(source["header_scope"])
-            bottom = column_body_extent(source)["trusted_bottom"]
-        header = source["header_scope"]
-        if (
-            header["original_pdf_sha256"] != heading["original_pdf_sha256"]
-            or header["page_no"] != page["page_no"]
-            or header["page_size"] != page["page_size"]
-            or section["status"] != source["status"]
-            or {s["id"]: s["bbox"] for s in source["page_diagrams"]} != expected
-        ):
-            raise ValueError(
-                "Heading column has foreign or incomplete original inventory"
-            )
+        roles, bounds, diagrams = checked_column_source(
+            section, page, heading["original_pdf_sha256"], expected
+        )
+        left, top, right, bottom = bounds
         if (
             roles is None
             or roles["role"] not in {"compound", "nonfinal"}
             or not top < bottom
-            or not (box[2] <= xs[0] or xs[-1] <= box[0])
+            or not (box[2] <= left or right <= box[0])
         ):
             continue
-        bounds = [xs[0], top, xs[-1], bottom]
         contained = contained_source_diagrams(diagrams, bounds)
         if contained:
             active = top <= box[1] < box[3] <= bottom
@@ -96,6 +110,11 @@ def foreign_column_line(box, columns):
     for column in columns:
         if not column["active"]:
             continue
+        if any(
+            b[0] <= box[0] < box[2] <= b[2] and b[1] <= box[1] < box[3] <= b[3]
+            for b in column.get("caption_boxes", ())
+        ):
+            return "contained"
         left, top, right, bottom = column["bbox"]
         if not left <= box[0] < box[2] <= right:
             continue

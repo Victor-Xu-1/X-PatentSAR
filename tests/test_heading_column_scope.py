@@ -42,9 +42,9 @@ class HeadingColumnScopeTests(LateralStructureControls, unittest.TestCase):
                         if r["cpd"] == "Compound B80"
                     )
                     evidence = binding["original_heading_structure_evidence"]
-                    self.assertEqual(evidence["version"], 5)
+                    self.assertEqual(evidence["version"], 6)
                     scope = evidence["declaration_scope"]
-                    self.assertEqual(scope["version"], 2)
+                    self.assertEqual(scope["version"], 3)
                     self.assertIn(
                         "C0-A17",
                         {r["structure_id"] for r in scope["pages"][0]["structures"]},

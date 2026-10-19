@@ -196,7 +196,7 @@ def heading_structure_evidence(
     if label != printed_identifier_key(block["cpd"]) or not _has_drawing(path):
         return None, None
     return structure, {
-        "version": 5,
+        "version": 6,
         "heading_source": block["heading_observation"],
         "label": label,
         "page_no": structure["page_no"],
@@ -236,7 +236,7 @@ def valid_heading_binding_evidence(binding: dict) -> bool:
     if (
         isinstance(evidence, dict)
         and type(evidence.get("version")) is int
-        and evidence["version"] == 5
+        and evidence["version"] == 6
     ):
         return _valid_scoped_heading(binding, evidence)
     # Old packets remain readable history, not current ownership authority.
