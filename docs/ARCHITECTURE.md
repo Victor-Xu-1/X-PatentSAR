@@ -27,7 +27,7 @@ safe Web and activity acceptance compose the SAME original gate, without model
 loading, supplied artifact paths, a new queue/store or a saved-success shortcut.
 An unchanged pure-qualified transcript can still fail actual original replay.
 
-Binding46/binder56, Activity29/extractor39 and characterization-role4 refresh
+Binding47/binder57, Activity30/extractor40 and characterization-role4 refresh
 affected derived proof. Old roles1/2/3 stay historical; raw PDF/OCR/OCSR2,
 preparation12, human audit, API/SQL, numerical SAR, dependencies and activation
 policy remain unchanged. The existing read-model snapshot avoids rerunning source
@@ -45,6 +45,18 @@ bounds remain. Missing/extra/conflicting rows, budget exhaustion and cancellatio
 cannot publish partial success. Complete qualified primary text never loads the
 adapter to vote. Qualified native/detector/primary claims and source metadata
 cannot be replaced; unknown column semantics remain unknown.
+
+Qualified detector runs assert literal fragments, not complete absent header
+prefixes. The SAME shared header identity authority projects additional prefix
+words for fragment comparison only when the entire known prefix remains a
+contiguous, ordered token-boundary match. Complete original/native identities
+retain strict comparison. Endpoint order, per-endpoint units and every known
+suffix/construct/time qualifier remain protected. Comparison-only qualifier
+extraction ignores exact unit tokens and empty wrappers, never numbers or
+unknown words; nM-at24h cannot silently become nM-at48h. Raw observations,
+confidence floors, paired physical/source proof and numerical values do not
+change. All producer and read-side auxiliary/header/source consumers share this
+authority; no extra parser, repair engine or model vote is introduced.
 
 `recovery_capture` retains both400/600dpi primary views, full frame digests,
 selected complete observations and every literal row response. A well-formed
@@ -74,7 +86,7 @@ readback conserve them through the same original replay. Role diagnostics allow
 six additional envelope links only at physical-cell recovery/attempt paths;
 unrelated nesting, node/array/scalar/catalog budgets remain unchanged.
 
-Binding46/binder56 and Activity29/extractor39 refresh affected derived evidence.
+Binding47/binder57 and Activity30/extractor40 refresh affected derived evidence.
 Original PDF/raw OCR/OCSR2, preparation12, structures, human audit, numerical SAR,
 API/SQL, model files and activation policy remain unchanged. Old role1/2 and
 recovery1 evidence remains historical, never retagged as current acceptance.

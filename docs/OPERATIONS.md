@@ -23,7 +23,7 @@ uses normal binder output and worker-plan validation for both native and scanned
 role pages; a controlled molecular record is not OCSR accuracy evidence. Only
 changed/directly related checks are authorized, not global tests.
 
-Binding46/binder56, Activity29/extractor39, role4 invalidate derived checkpoints.
+Binding47/binder57, Activity30/extractor40, role4 invalidate derived checkpoints.
 Preserve old sources/tasks/human revisions and matching code/config/state
 rollback; never relabel a historical packet. Formal real-patent extraction/SAR
 must still be submitted from the existing frontend after coherent source/assay
@@ -60,7 +60,7 @@ auxiliary cell/header/discovery/identifier/binding/activity consumers, source
 epochs and safe Web/export consumers. Native generated-text checks require the
 existing explicit runtime/model opt-in; no downloads or dependency changes.
 These are not private-patent processing or universal scientific acceptance.
-Binding46/binder56, Activity29/extractor39 and characterization-role4 require
+Binding47/binder57, Activity30/extractor40 and characterization-role4 require
 normal frontend regeneration. Preserve old tasks/manual audit and matching
 rollback code/config/state; never upgrade saved proof fields manually.
 
@@ -1357,6 +1357,19 @@ Native endpoints/units/context, qualified detector claims and original units
 bound to each ordered endpoint cannot be changed by agreeing model outputs.
 An endpoint-only original does not claim an absent target prefix; only that
 absence is projected for comparison, not the stored source record or conditions.
+Likewise, a partial qualified detector run is not a complete physical header.
+Additional independently observed prefix words are compatible only when the
+entire known prefix survives contiguously, in order and at token boundaries.
+This does not relax complete original/native header identity, change units or
+erase a qualified assay/target. Known trailing time/construct qualifiers are
+compared even if the unit was not parenthesized. A weak locator cannot grant
+success: full current physical/source/paired-view proof is still required.
+Inspect retained detector parts and source tokens; neither low-score words nor
+source text/casing is overwritten. Use qualified-fragment/source, physical and
+semantic header, auxiliary/source-hint/role/worker/Web regressions. Current
+derived versions are Binding47/binder57 and Activity30/extractor40; original
+sources, raw OCR/OCSR, manual audit, API/SQL and numerical SAR remain unchanged.
+The following vector is the original historical rollout note, not currentness:
 Binding12/binder21/visible15/preparation3/activity13/epoch22/coverage9 invalidate
 changed derived acceptance. Preserve raw model/source assets and manual audits;
 no read/update auto-reprocesses a patent or waives formal source completeness.

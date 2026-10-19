@@ -5,6 +5,7 @@ import re
 from .activity_header_metrics import (
     METRIC,
     explicit_unit,
+    header_qualifier_text,
     literal_header_units,
     normalize_metric_text,
 )
@@ -83,6 +84,18 @@ def header_conflict(original: str, fresh: str) -> bool:
         units = literal_header_units(old[old_metric.start() : old_end])
         if units and units != literal_header_units(new[new_metric.start() : new_end]):
             return True
+        old_name = old_metric.group().split("(")[0].strip()
+        new_name = new_metric.group().split("(")[0].strip()
+        old_qualifier = header_qualifier_text(
+            old[old_metric.start() + len(old_name) : old_end]
+        )
+        new_qualifier = header_qualifier_text(
+            new[new_metric.start() + len(new_name) : new_end]
+        )
+        if old_qualifier and compact_header(old_qualifier) != compact_header(
+            new_qualifier
+        ):
+            return True
     key = infer_value_keys("", original, 1)[0]
     if "unknown" not in key.lower():
         # An endpoint/unit fragment does not assert an absent target/assay.
@@ -121,13 +134,37 @@ def detector_header_conflict(parts, fresh: str) -> bool:
     if runs is None:
         return True
     return any(
-        header_conflict("\n".join(run), fresh)
+        header_conflict("\n".join(run), _fragment_comparison("\n".join(run), fresh))
         or _missing_literal_fragment("\n".join(run), fresh)
         or not literal_header_units("\n".join(run)).issubset(
             literal_header_units(fresh)
         )
         for run in runs
     )
+
+
+def _fragment_comparison(original: str, fresh: str) -> str:
+    """A detector run owns literal fragments, never absent surrounding words.
+
+    Project only additional prefix words for the existing strict comparison.
+    The entire observed prefix must survive contiguously, in order and at
+    token boundaries. Endpoint order, per-endpoint units and every trailing
+    qualifier remain in the original comparison; no scientific text is edited.
+    Complete header identities do not use this projection.
+    """
+    old, new = normalize_metric_text(original), normalize_metric_text(fresh)
+    before, after = METRIC.search(old), METRIC.search(new)
+    if before is None or after is None:
+        return fresh
+    prefix = old[: before.start()].strip()
+    if not prefix:
+        return fresh
+    pattern = r"\s+".join(re.escape(word) for word in prefix.split())
+    if re.search(
+        rf"(?<![\w/+-]){pattern}(?![\w/+-])", new[: after.start()], re.IGNORECASE
+    ):
+        return prefix + " " + new[after.start() :]
+    return fresh
 
 
 def _missing_literal_fragment(original: str, fresh: str) -> bool:
