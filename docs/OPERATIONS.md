@@ -9,6 +9,8 @@ The shared cell renderer now opens a fresh complete source context per admitted
 clip, preserving hidden layers/forms/annotations and geometry without full-page
 rasterization, cache warming or global cache eviction. File inputs stay lazy;
 no source copy is written to disk and temporary documents close on every exit.
+Already authenticated sources are detected from trailer metadata: do not call a
+password probe during isolation and accidentally replace their active key.
 
 Use `tests.test_cell_render_cache` for cold/warm real-render, file/byte/edited
 source, visibility/rotation/crop, pixel-tamper, pixel-budget and cleanup controls.

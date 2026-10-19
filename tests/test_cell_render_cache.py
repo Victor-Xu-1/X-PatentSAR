@@ -238,7 +238,8 @@ class CellRenderCacheTests(unittest.TestCase):
             self.assertTrue(source.authenticate("controlled-reader"))
             image = cell_image(source[0], [20, 20, 190, 70], 144)
             self.assertTrue(np.any(image < 180))
-            self.assertTrue(source.needs_pass)
+            self.assertFalse(source.is_encrypted)
+            self.assertEqual(source[0].get_text(), "Original 14A\n")
 
 
 if __name__ == "__main__":

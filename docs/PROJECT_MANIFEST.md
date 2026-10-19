@@ -8,6 +8,8 @@
   their input; only edited/authenticated contexts serialize in memory. Original
   hidden-layer state, annotations/forms, crop/rotation survive and mismatching
   context refuses. Temporary documents close on normal/exceptional exits.
+  Encryption detection is inert trailer metadata, not an active password probe;
+  isolated observation must preserve an authenticated caller's readable source.
   Caption/heading/header/value/plot/label-preparation capture and replay consume
   the same renderer. Current derived contracts: Binding37/binder47,
   Activity24/extractor34, visible23/preparation11. Epoch entries below retain

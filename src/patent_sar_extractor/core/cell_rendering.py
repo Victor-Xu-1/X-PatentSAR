@@ -20,7 +20,11 @@ def isolated_original_page(page: fitz.Page) -> Iterator[fitz.Page]:
     source = page.parent
     if not source.is_pdf:
         raise ValueError("Original cell rendering requires a PDF source")
-    if source.is_dirty or source.needs_pass:
+    # needs_pass delegates to MuPDF's password probe, which can replace the
+    # active decryption key after authentication. Inspect inert trailer metadata
+    # instead; never probe credentials while rendering an already loaded page.
+    encrypted = source.xref_get_key(-1, "Encrypt")[0] != "null"
+    if source.is_dirty or encrypted:
         original = fitz.open(stream=source.tobytes(), filetype="pdf")
     elif source.stream is not None:
         original = fitz.open(stream=source.stream, filetype="pdf")

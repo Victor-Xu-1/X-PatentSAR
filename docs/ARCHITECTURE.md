@@ -18,6 +18,9 @@ crop/MediaBox and rotation; a simple single-page graft would lose hidden-layer
 configuration. A changed geometry/OCG context refuses. All temporary documents
 close on success and exception. No process-global cache eviction, rendering
 setting, extra model, persistent decoder cache, queue or result writer is added.
+Encrypted-source detection reads inert trailer metadata, never a password probe
+on an already authenticated decoder. Controlled protected-source replay verifies
+that both the isolated clip and the caller's original remain readable.
 
 Caption, heading, activity-header/value, plot-reference and label-preparation
 observers/replayers continue through the shared cell renderer. Actual original
