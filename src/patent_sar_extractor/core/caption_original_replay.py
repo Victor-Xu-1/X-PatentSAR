@@ -8,9 +8,9 @@ from .caption_word_observation import replay_caption_word_form
 from .caption_word_proof import WORD_FORM_METHOD
 from .cell_frame_proof import valid_cell_frame
 from .cell_raster import cell_window_identity, original_reading_image
-from .source_geometry import SourceTokens, source_layout
-from .source_observations import source_cell_observation
-from .source_paint_visibility import visible_native_tokens
+from .native_cell_replay import original_native_cell_matches
+from .source_geometry import source_layout
+from .source_paint_visibility import native_paint_view
 
 
 def caption_sources(bindings):
@@ -24,7 +24,7 @@ def caption_sources(bindings):
 
 def original_caption_source_errors(document, bindings):
 
-    frames, layouts, errors = {}, {}, []
+    frames, layouts, paints, errors = {}, {}, {}, []
     for binding in caption_sources(bindings):
         try:
             if not valid_caption_binding_evidence(binding):
@@ -79,14 +79,12 @@ def original_caption_source_errors(document, bindings):
                 elif method == "native_cell":
                     if page_no not in layouts:
                         layouts[page_no] = source_layout(page)
-                    layout = layouts[page_no]
-                    original = source_cell_observation(
-                        SourceTokens(layout.native, layout), tuple(bounds), native=True
-                    )
-                    if (
-                        original["text"] != observation.get("text")
-                        or not visible_native_tokens(page, original)
-                        or (observation.get("source_observation") != original)
+                        paints[page_no] = native_paint_view(page)
+                    if not original_native_cell_matches(
+                        page,
+                        observation,
+                        layout=layouts[page_no],
+                        paint_view=paints[page_no],
                     ):
                         raise ValueError(
                             "Original native caption text is missing, changed or covered"

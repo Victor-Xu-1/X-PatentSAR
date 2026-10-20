@@ -7,6 +7,7 @@ from pathlib import Path
 
 import fitz
 
+from patent_sar_extractor.core.activity_auxiliary_replay import original_pdf_reader
 from patent_sar_extractor.core.activity_coordinates import extract_coordinate_tables
 from patent_sar_extractor.core.activity_extractor import extract
 from patent_sar_extractor.core.activity_join import activity_evidence_errors
@@ -49,7 +50,13 @@ class ActivityMetadataNativeTests(unittest.TestCase):
             result = extract(str(path), {"activity_pages": [0]}, str(root / "out"))
             payload = json.loads((root / "out/activity_data.json").read_text())
             self.assertEqual(result["n_rows"], 2)
-            self.assertEqual(activity_evidence_errors(payload, [0]), [])
+            self.assertTrue(activity_evidence_errors(payload, [0]))
+            self.assertEqual(
+                activity_evidence_errors(
+                    payload, [0], open_original=original_pdf_reader(path)
+                ),
+                [],
+            )
             self.assertEqual(
                 [
                     r["activity_sources"][0]["cells"][-1]["metadata_kind"]
@@ -63,6 +70,8 @@ class ActivityMetadataNativeTests(unittest.TestCase):
             )
 
     def test_empty_original_raster_count_is_proved_missing_not_invented(self):
+        from patent_sar_extractor.core.cell_empty_proof import valid_empty_grid_cell
+
         doc, index = raster_counts(second_count="")
         with doc:
             result = extract_coordinate_tables(doc, [index])
@@ -72,13 +81,7 @@ class ActivityMetadataNativeTests(unittest.TestCase):
         count = row.activity_sources[0]["cells"][-1]
         self.assertEqual(count["value"], "")
         self.assertEqual(count["metadata_status"], "missing")
-        self.assertTrue(
-            any(
-                o.get("method") == "cell_ocr_400dpi"
-                and o.get("ink_crop_pixels", "unobserved") is None
-                for o in count["observations"]
-            )
-        )
+        self.assertTrue(any(valid_empty_grid_cell(o) for o in count["observations"]))
 
     def test_actual_raster_count_is_not_an_endpoint_with_native_footer(self):
         doc, index = raster_counts()

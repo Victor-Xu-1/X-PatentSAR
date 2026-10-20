@@ -6,10 +6,10 @@ from .heading_column_captions import caption_frame_at
 from .heading_evidence import original_heading_lines
 from .heading_line_windows import heading_line_windows
 from .heading_page_columns import later_page_columns
+from .native_cell_replay import original_native_cell_matches
 from .source_evidence_identity import proof_id
 from .source_geometry import SourceTokens, source_layout
 from .source_observations import source_cell_observation
-from .source_paint_visibility import visible_native_tokens
 from .structure_column_scopes import original_column_roles
 from .structure_table_headers import aligned_column_edges
 from .table_geometry import detect_ruled_table_regions
@@ -52,16 +52,10 @@ class HeadingPageReplay:
             raise ValueError("Later-column reading leaves its original cell")
         if method == "native_cell":
             layout = self._layout(number)
-            actual = source_cell_observation(
-                SourceTokens(layout.native, layout), tuple(bounds), native=True
-            )
-            if actual["text"] != reading.get("text") or (
-                actual["text"] and not visible_native_tokens(page, actual)
+            if not original_native_cell_matches(
+                page, {**reading, "bbox": bounds}, layout=layout
             ):
                 raise ValueError("Later-column native cell is changed or invisible")
-            saved = reading.get("source_observation")
-            if saved is not None and saved != actual:
-                raise ValueError("Later-column native cell geometry was changed")
         elif method in {"cell_ocr_400dpi", "cell_ocr_600dpi"}:
             dpi = 400 if method == "cell_ocr_400dpi" else 600
             if not original_cell_frame_matches(

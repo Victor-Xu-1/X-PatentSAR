@@ -12,7 +12,7 @@ from .activity_source_roles import method_result_references
 from .activity_table_scopes import table_scope_groups
 from .cell_cross_observation import printed_cross_valid
 from .printed_identifiers import identifier_fragments_conflict, identifier_key
-from .source_cell_claims import cell_source_conflict, cell_source_status
+from .source_cell_claims import cell_source_conflict, cell_source_status, native_witness
 from .source_result_references import MAX_REFERENCES, MAX_TARGETS_PER_REFERENCE
 from .source_section_roles import nonfinal_original_label
 from .source_table_markers import TABLE_MARKER, table_marker_identity
@@ -107,7 +107,11 @@ def _observed(cell, identifier=False):
         ):
             continue  # Locator fragment count is not the whole-cell observation.
         clipped = method in {"cell_ocr_400dpi", "cell_ocr_600dpi"}
-        qualified = method in {"native_cell", "declared_text_cell", "declared_text_row"}
+        qualified = method in {
+            "native_cell",
+            "declared_text_cell",
+            "declared_text_row",
+        } and not native_witness(item)
         if clipped:
             qualified = (
                 type(confidence) in (int, float)

@@ -124,7 +124,12 @@ def read_cell(page, bounds, tokens: list[dict], kind: str, native: bool) -> Cell
         native_raw if not native else raw
     )
     if not native and native_raw:
-        shadow = {"method": "native_cell", "text": native_raw, "bbox": list(bounds)}
+        shadow = {
+            "method": "native_cell",
+            "native_role": "witness",
+            "text": native_raw,
+            "bbox": list(bounds),
+        }
         native_profile = source_cell_observation(tokens, bounds, native=True)
         if native_profile is not None:
             shadow.update(source_observation=native_profile)

@@ -1,5 +1,28 @@
 # Operations and troubleshooting
 
+## Native text or metadata differs from the original
+
+Native value/header/condition admission reopens the caller-owned original PDF.
+Missing/changed source observations, covered positive native text and conflicting
+original endpoint/condition identities remain explicit findings. Do not repair
+them by changing a saved status, confidence, endpoint, value or source path.
+An independent `native_role: witness` layer remains visible in raw observations
+and vetoes contradictions, but is not a native-only read vote.
+
+Blank count metadata uses `original_empty_grid_cell`: paired original closed
+grid views with complete windows and explicit nonwhite masks. Missing stays
+unknown, not zero. Faint text, changed pixels, legacy/dark-only masks or forged
+bounds cannot provide current absence proof. Ordinary plot masks are unchanged.
+Do not erase table borders/ink or reinstall OCR merely because a count is blank.
+
+Binding51/binder61, Activity36/extractor46/coverage19 and visible-label25 refresh
+derived stages through the normal frontend workflow. Unchanged original/raw
+assets and manual audit are retained; no historical producer is retagged.
+Capture/readback paint caches are call-local immutable-page facts, not disk or
+cross-task caches. No new model/environment/download/LLM service is required.
+Acceptance still requires the complete source and chemical gates; this release
+does not certify every format, model output, or saved unanchored text record.
+
 ## Complete cell-window evidence
 
 New cell-window work retains the complete source separately from a text reading

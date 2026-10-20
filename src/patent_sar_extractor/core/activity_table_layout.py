@@ -7,13 +7,14 @@ from itertools import pairwise
 from .activity_context_geometry import validate_context_geometry
 from .activity_context_values import validate_context_record
 from .activity_grid_context import _suffix
+from .activity_header_sources import capture_header_sources
 from .activity_parallel_context import (
     validate_context_boundary,
     validate_parallel_context,
 )
 
 
-def prepare_layout(schema, page_no, region, tokens, prefix, regions):
+def prepare_layout(schema, page_no, region, tokens, prefix, regions, *, page=None):
     confirmed_context = bool(
         schema.first_data_row > 0
         and schema.header_resolution
@@ -51,6 +52,14 @@ def prepare_layout(schema, page_no, region, tokens, prefix, regions):
         layout["parallel_context"] = region["parallel_context"]
     if region.get("continuation_context") is not None:
         layout["continuation_context"] = region["continuation_context"]
+    if page is not None and schema.first_data_row > 0:
+        snapshot = (schema.header_resolution or {}).get("original_source")
+        if snapshot is None:
+            snapshot = capture_header_sources(
+                page, region, schema.first_data_row, tokens
+            )
+        if snapshot is not None:
+            layout["original_source"] = snapshot
     return replace(schema, source_layout=layout)
 
 
@@ -67,6 +76,7 @@ def validate_layout(record):
             "context_geometry",
             "parallel_context",
             "continuation_context",
+            "original_source",
         }
         != {
             "xs",

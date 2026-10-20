@@ -1,5 +1,6 @@
 """Conservative original text visibility using paint order and actual stroke ink."""
 
+from dataclasses import dataclass
 from itertools import pairwise
 
 from .source_geometry import overlaps
@@ -53,7 +54,30 @@ def _stroke_hits(page, path, box):
     )
 
 
-def visible_native_tokens(page, native):
+@dataclass(frozen=True)
+class NativePaintView:
+    """Call-local immutable source facts, never serialized or globally cached."""
+
+    owner: tuple
+    visible: tuple
+    paints: tuple
+    paths: dict
+
+
+def _owner(page):
+    return (
+        id(page.parent),
+        page.number,
+        page.xref,
+        page.rotation,
+        tuple(page.rect),
+        tuple(page.cropbox),
+        tuple(page.get_contents()),
+    )
+
+
+def native_paint_view(page):
+    """Observe the existing bounded paint inventory once for a read-only page."""
     import fitz
 
     traces, paints, drawings = (
@@ -63,17 +87,6 @@ def visible_native_tokens(page, native):
     )
     if len(traces) > 50000 or len(paints) > 100000 or len(drawings) > 20000:
         raise ValueError("Native heading paint inventory exceeds its bound")
-    paths = {path["seqno"]: path for path in drawings}
-
-    def covers(order, kind, bounds, box):
-        if kind == "ignore-text" or not overlaps(
-            list(fitz.Rect(bounds) * page.rotation_matrix), box
-        ):
-            return False
-        if kind == "stroke-path":
-            return _stroke_hits(page, paths.get(order), box)
-        return True
-
     visible = []
     for span in traces:
         color = span.get("color")
@@ -92,9 +105,39 @@ def visible_native_tokens(page, native):
                 span["seqno"],
             )
         )
+    return NativePaintView(
+        _owner(page),
+        tuple(visible),
+        tuple(paints),
+        {path["seqno"]: path for path in drawings},
+    )
+
+
+def visible_native_tokens(page, native, *, paint_view=None):
+    import fitz
+
+    # A writable/edited document cannot reuse a previous paint observation,
+    # including in-place stream edits that leave the contents xref unchanged.
+    # Normal original-file readers are immutable for this bounded call only.
+    if paint_view is not None and (
+        not isinstance(paint_view, NativePaintView) or paint_view.owner != _owner(page)
+    ):
+        return False
+    if paint_view is None or page.parent.is_dirty:
+        paint_view = native_paint_view(page)
+
+    def covers(order, kind, bounds, box):
+        if kind == "ignore-text" or not overlaps(
+            list(fitz.Rect(bounds) * page.rotation_matrix), box
+        ):
+            return False
+        if kind == "stroke-path":
+            return _stroke_hits(page, paint_view.paths.get(order), box)
+        return True
+
     for token in native["tokens"]:
         witnesses = []
-        for bounds, text, order in visible:
+        for bounds, text, order in paint_view.visible:
             if not (
                 bounds[0] <= token["x"] <= bounds[2]
                 and bounds[1] <= token["y"] <= bounds[3]
@@ -103,7 +146,9 @@ def visible_native_tokens(page, native):
                 continue
             if not any(
                 covers(i, kind, box, token["bbox"])
-                for i, (kind, box) in enumerate(paints[order + 1 :], order + 1)
+                for i, (kind, box) in enumerate(
+                    paint_view.paints[order + 1 :], order + 1
+                )
             ):
                 witnesses.append(order)
         if not witnesses:

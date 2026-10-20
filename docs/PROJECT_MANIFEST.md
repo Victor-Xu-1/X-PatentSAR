@@ -1,5 +1,20 @@
 # Project governance manifest
 
+- Native source authority: `native_cell_replay` composes original ownership,
+  complete profiles and actual paint visibility for ordinary/role/caption/later
+  native cells. Independent `native_role: witness` layers retain contradictions
+  but cannot count as read votes. `activity_native_sources` reuses the same
+  header/context selectors and original snapshots for generic/transposed claims.
+  `NativePaintView` is bounded call-local immutable-page work, not persisted data
+  or a second engine/cache. `cell_empty_proof` shares original closed-grid views
+  and the single existing noise bound, with explicit nonwhite masks preserving
+  faint ink. Metadata blanks never become zeros or activities. Default plots,
+  models/environments, raw data, APIs/SQL/SAR/manual audits remain unchanged.
+  `activity_region_proof` owns the moved region validator; coverage construction
+  and reconciliation remain one inventory. Current derived versions are
+  Binding51/binder61, Activity36/extractor46/coverage19 and visible-label25.
+  Earlier notes below are historical, not competing version authorities.
+
 - Cell geometry authority: `cell_raster`/`cell_window` own complete
   source/view coordinates and `cell_rule_pixels` owns the shared existing literal
   rule policy. Existing OCR, auxiliary, role, caption and plot consumers share

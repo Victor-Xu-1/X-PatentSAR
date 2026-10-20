@@ -10,21 +10,29 @@ from .cell_raster import original_reading_image, render_cell_raster, valid_sourc
 from .cell_rendering import CellRenderLimit
 
 
-def pixel_reading(image, dpi, *, source_window=None):
+def pixel_reading(image, dpi, *, source_window=None, ink_mode=None):
     """One exact RGB digest and bounded binary-ink encoding for source readers."""
+    if ink_mode not in (None, "nonwhite"):
+        raise ValueError("Unknown original-pixel ink policy")
+    mask = (
+        np.any(image != 255, axis=2)
+        if ink_mode == "nonwhite"
+        else np.min(image, axis=2) < 180
+    )
     return {
         "dpi": dpi,
         "shape": list(image.shape),
         "pixel_sha256": hashlib.sha256(image.tobytes()).hexdigest(),
         "mask_encoding": "zlib-packbits-v1",
-        "mask_hex": zlib.compress(
-            np.packbits(np.min(image, axis=2) < 180).tobytes()
-        ).hex(),
+        "mask_hex": zlib.compress(np.packbits(mask).tobytes()).hex(),
         **({"source_window": source_window} if source_window is not None else {}),
+        **({"ink_mode": ink_mode} if ink_mode is not None else {}),
     }
 
 
-def observe_pixels(page, bounds, maximum_pixels, *, resolutions=(400, 600)):
+def observe_pixels(
+    page, bounds, maximum_pixels, *, resolutions=(400, 600), ink_mode=None
+):
     if (
         not isinstance(resolutions, tuple)
         or any(type(dpi) is not int for dpi in resolutions)
@@ -42,18 +50,30 @@ def observe_pixels(page, bounds, maximum_pixels, *, resolutions=(400, 600)):
         image = raster.image
         if image.shape[0] * image.shape[1] > maximum_pixels:
             return None
-        readings.append(pixel_reading(image, dpi, source_window=raster.source_window))
+        readings.append(
+            pixel_reading(
+                image,
+                dpi,
+                source_window=raster.source_window,
+                **({"ink_mode": ink_mode} if ink_mode is not None else {}),
+            )
+        )
     return {"bbox": bounds, "readings": readings}
 
 
 def retained_pixels(reading, bounds, dpi, maximum_pixels):
-    if not isinstance(reading, dict) or set(reading) - {"source_window"} != {
+    if not isinstance(reading, dict) or set(reading) - {
+        "source_window",
+        "ink_mode",
+    } != {
         "dpi",
         "shape",
         "pixel_sha256",
         "mask_encoding",
         "mask_hex",
     }:
+        return None
+    if "ink_mode" in reading and reading["ink_mode"] != "nonwhite":
         return None
     shape = reading["shape"]
     if (
@@ -117,7 +137,12 @@ def replay_pixels(page, bounds, reading, *, maximum_pixels=8_000_000):
         ),
     }
     image = original_reading_image(page, bounds, dpi, primary)
-    observed = pixel_reading(image, dpi, source_window=reading.get("source_window"))
+    observed = pixel_reading(
+        image,
+        dpi,
+        source_window=reading.get("source_window"),
+        **({"ink_mode": reading["ink_mode"]} if "ink_mode" in reading else {}),
+    )
     if observed != reading:
         raise ValueError("Retained original pixels differ from the actual source")
     return image

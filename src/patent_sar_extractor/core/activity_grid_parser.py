@@ -4,6 +4,7 @@ from .activity_grid_cells import read_activity_cell, validate_grid
 from .activity_header_identity import schema_requires_review
 from .activity_header_metrics import distinct_value_keys
 from .activity_metadata import mark_metadata, metadata_field
+from .activity_metadata_source import observe_metadata_blank
 from .activity_models import ActivityRow, GridSchema
 from .source_geometry import token_geometry_space
 
@@ -60,6 +61,7 @@ def parse_grid(
                     "observations": observations,
                 }
                 if column in metadata:
+                    cell = observe_metadata_blank(page, cell, metadata[column])
                     cell = mark_metadata(cell, metadata[column])
                     if not value.strip() and cell["metadata_status"] == "missing":
                         withheld = (

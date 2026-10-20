@@ -17,7 +17,19 @@ from .source_role_terms import INTERMEDIATE_TERM
 from .source_section_roles import nonfinal_original_label
 
 
+def native_witness(observation):
+    """An independent native layer is a retained contradiction, not a read vote."""
+    return (
+        observation.get("method") == "native_cell"
+        and observation.get("native_role") == "witness"
+    )
+
+
 def cell_source_status(observation):
+    if "native_role" in observation and (
+        not native_witness(observation) or "source_observation" not in observation
+    ):
+        return "invalid"
     if "source_observation" not in observation:
         return "legacy"
     packet = observation["source_observation"]

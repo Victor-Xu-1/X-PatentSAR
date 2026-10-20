@@ -7,6 +7,7 @@ from .activity_header_identity import header_conflict
 from .activity_header_metrics import distinct_value_keys
 from .activity_headers import _key
 from .activity_metadata import mark_metadata, metadata_role
+from .activity_metadata_source import observe_metadata_blank
 from .activity_models import ActivityRow, ParsedActivity
 from .activity_transposed_context import transposed_context_matches
 from .activity_transposed_source import (
@@ -110,6 +111,7 @@ def extract_transposed(page, page_no, tokens, region, matrix, context):
             }
             if metadata:
                 cell["physical_column"] = col
+                cell = observe_metadata_blank(page, cell, metadata)
                 cell = mark_metadata(cell, metadata)
                 review |= (
                     cell["metadata_status"] == "unresolved"

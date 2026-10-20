@@ -18,6 +18,7 @@ from .source_cell_claims import cell_source_conflict, cell_source_status
 from .source_cell_tokens import cell_text, cell_tokens, crosses_cell
 from .source_geometry import native_region
 from .source_observations import source_cell_observation
+from .source_paint_visibility import native_paint_view, visible_native_tokens
 from .table_cells import activity_kind_matches, read_cell
 
 __all__ = [
@@ -125,8 +126,14 @@ def read_activity_cell(
         # markers or ranges. Original native tokens remain exact evidence.
         observations = [{"method": "native_cell", "text": raw}]
         profile = source_cell_observation(tokens, bounds, native=True)
+        visible = True
         if profile is not None:
             observations[0].update(bbox=list(bounds), source_observation=profile)
+            if tokens.native_paint_view is None:
+                tokens.native_paint_view = native_paint_view(page)
+            visible = visible_native_tokens(
+                page, profile, paint_view=tokens.native_paint_view
+            )
         role_conflict = bool(
             not identifier
             and declared_kind
@@ -137,6 +144,7 @@ def read_activity_cell(
             observations,
             crossing
             or role_conflict
+            or not visible
             or cell_source_status(observations[0])
             not in {"legacy", "qualified", "empty"}
             or not bool(value if identifier else is_value(value)),
