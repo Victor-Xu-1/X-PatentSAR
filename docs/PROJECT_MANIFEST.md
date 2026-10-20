@@ -1,5 +1,13 @@
 # Project governance manifest
 
+- Caption-tail source v2 retains unchanged body packets and qualified last-row
+  caption-cell owners for exact same-origin neighbour witnesses. The ordinary
+  caption and auxiliary inventories replay every retained owner, including
+  inherited contexts without an earlier bound molecule. Binding52/binder62 and
+  visible-label26 refresh derived ownership only; raw/scientific activity,
+  models, activation and human audit remain unchanged. The existing grid/caption
+  writer is the sole producer, without another OCR pass or fallback matcher.
+
 - Web activity transport keeps a finite32-field observation envelope for the
   current primary/physical/paired-auxiliary producer. The single provenance
   reader serves projection, exact-cell focus and SAR contexts without removing

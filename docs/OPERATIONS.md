@@ -1,5 +1,24 @@
 # Operations and troubleshooting
 
+## A footer breaks an otherwise proved caption-table continuation
+
+Original page OCR can pad the last closed caption's word box across the outer
+grid line. That neighbour witness plus an ordinary footer must not taint the
+whole after-grid body lane; an empty body must not silently hide an unknown
+boundary witness either. Caption-tail source v2 retains both the untouched raw
+window and only the needed, already-qualified last-row caption cells. Exact
+same-origin original tokens can resolve the external witness only through those
+cell readings. Body text, competing diagrams/grids, new roles/titles, direction,
+adjacency and column alignment remain independently mandatory.
+
+The sole caption/pixel and auxiliary replayers also inventory these cells through
+each retained role link, even when the consumer receives only a later molecule.
+No extra OCR/model, inferred identifier sequence, trimming, nearest-caption
+fallback or separate writer is added. Binding52/binder62 and visible-label26
+invalidate derived source ownership; original PDF/raw OCR/OCSR, human revisions,
+activity contracts, models and activation remain unchanged. Preserve earlier
+failed attempts as history, not current scientific acceptance.
+
 ## Activity evidence is rejected at the Web transport boundary
 
 The shared Web activity provenance reader admits at most32 fields per cell

@@ -2,6 +2,7 @@
 
 from itertools import chain
 
+from .caption_tail_sources import caption_tail_text_cells
 from .text_ocr.cell_proof import has_auxiliary_text, replay_auxiliary_cell
 from .text_ocr.source_inventory import auxiliary_source_cells
 
@@ -22,6 +23,7 @@ def binding_text_cells(bindings):
             if isinstance(source, dict):
                 for reading in source.get("observations", []):
                     yield source.get("page_no"), reading
+    yield from caption_tail_text_cells(bindings)
 
 
 def has_binding_auxiliary(bindings, *, role_text=()):

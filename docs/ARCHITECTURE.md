@@ -1,5 +1,15 @@
 # X-PatentSAR architecture
 
+## Caption-tail witnesses retain their exact original cell owners
+
+`caption_tail_owners` composes exact original neighbour witnesses with the
+existing qualified closed-cell identity reader; `caption_tail_sources`
+inventories only those explicit owners along bounded caption-role links. The
+ordinary caption/pixel and paired auxiliary replayers remain the single
+original-read authority. Raw window status is never rewritten and no new
+inference path is added. Current derived source contracts are
+Binding52/binder62/visible-label26; older epoch notes below remain history.
+
 ## Declared text tables share actual original-source admission
 
 The sole `activity_text` planner/parser now receives a physical `text_sources`
