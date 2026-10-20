@@ -2,6 +2,7 @@ import { expect, type Page } from '@playwright/test';
 import type { Dataset, Molecule } from '../src/api/sarTypes';
 import type { StudyRow } from '../src/api/sarStudyTypes';
 import { studyJob, studyReport, studyRow } from '../tests/sar-fixtures';
+import { catalogBody } from '../tests/sar-catalog-fixtures';
 
 /** Layout-only report DTOs; no fake record is inserted into a server job store.
  * Drawings come from the real installed RDKit dataset endpoint. Scientific
@@ -51,6 +52,7 @@ export async function cardProtocol(
   report.regions[0]!.fragments[0]!.smiles = molecule.smiles!;
   report.regions[0]!.fragments[0]!.molecule_ids = [molecule.id];
   const drawings: Array<{ kind: string; identifier: string }> = [];
+  const catalog = { ...catalogBody(report), job };
   const rowRequests: Array<Record<string, string>> = [];
   await page.route(`**/api/v1/sar/datasets/${dataset.id}/jobs`, (route) =>
     route.fulfill({ json: { items: [job], total: 1 } }),
@@ -80,6 +82,14 @@ export async function cardProtocol(
           })),
         },
       });
+    } else if (url.pathname.endsWith('/study/catalog')) {
+      await route.fulfill({ json: catalog });
+    } else if (url.pathname.includes('/study/regions/')) {
+      const region = report.regions.find(
+        (item) => item.region.id === decodeURIComponent(url.pathname.split('/').at(-1)!),
+      );
+      expect(region).toBeDefined();
+      await route.fulfill({ json: { job, region, activity_basis: catalog.activity_basis } });
     } else if (url.pathname.endsWith('/study/rows')) {
       const filters = Object.fromEntries(url.searchParams);
       rowRequests.push(filters);
