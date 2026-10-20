@@ -3645,3 +3645,23 @@ final reader. Failed validation never enters the weak pool. Captured objects are
 read-only inputs; current projections retain their own group/count models. This
 does not change scientific epochs, report/API/SQL contracts, file-size limits,
 publication or graph proofs, and introduces no store, task or persisted cache.
+# Structure-column header text recovery
+
+Ruled/unruled original structure-header producers capture exact original cell
+frames and then call the same unresolved-only paired text recovery used for
+roles. `refine_role_text` accepts trusted caller limits; characterization keeps
+its32-row/32pt defaults, while column headers retain the existing8-row/12pt
+validator and disallow chunks. Neither caller can widen its scientific role
+proof with a saved flag. Complete primaries and native text require no auxiliary
+runtime; unknown/low-score/conflicting reads remain unproved. The existing binder
+phase owns optional child cleanup through `owns_auxiliary_text`.
+
+`role_text_sources` explicitly includes structure-column anchors and unruled
+regions. A carried scope points to its original anchor page, not the current
+body page; identical original claims deduplicate. The shared native/ordinary/
+auxiliary source replayers independently reopen original pixels and word paint
+without recognizing text. Worker-plan admission, QA and Web/SAR source gates
+consume this same inventory. Missing owners, inconsistent frames and foreign
+page claims refuse rather than disappear. Binding53/binder63 invalidate derived
+admission; original PDFs, raw observations, chemical outputs/manual audit and
+activity/visible-label/API/SQL/model/environment policies remain unchanged.

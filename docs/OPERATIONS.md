@@ -3267,3 +3267,23 @@ private workspace and analysis cache separately; do not strip fields from jobs
 or alter output files to make an older binary accept them.
 
 The restored source is `/srv/wsl/projects/patent-sar-extractor`; the external source archive and pre-optimization snapshot are preserved on E. Stop only PatentSAR jobs before restoring that snapshot or switching its entry point. The historical plugin path is not a verified active deployment in this recovered environment. Outputs are not schema-migrated in place; preserve each run directory before changing versions. Never shut down all WSL distributions merely to roll back this application.
+# Optional OCR for original structure-column headers
+
+The already-configured on-demand auxiliary text runtime is consulted only for
+unresolved physical structure-header cells. It does not replace DECIMER or the
+default text recognizer, enable a provider/LLM, install anything, or start a
+resident service. Disabled/unavailable recovery leaves the original source
+unresolved. Header reads keep8 rows/12pt and the existing paired confidence,
+native/known-conflict and complete-original-frame checks; no larger
+characterization window is borrowed to force a match.
+
+Binding53/binder63 refresh affected derived artifacts/checkpoints through the
+existing source identities. Historical bindings are not retagged, and original
+PDF/raw OCR/OCSR/manual corrections remain preserved. Original header cells,
+including carried anchors, enter the existing source replay on their actual
+original page. Acceptance must include generated scans with weak/normal/native
+reads, disabled/low-score/conflicting recovery, cross-page ownership, frame
+tamper and the actual worker-plan reader without OCR on replay. Candidate tests
+do not establish performance or accuracy on an unrerun private patent. Do not
+deploy over a live producer; merge/current-main/rollback/18765 acceptance and
+subsequent frontend-only private retry remain separate delivery gates.

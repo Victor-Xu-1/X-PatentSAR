@@ -1,5 +1,19 @@
 # Project governance manifest
 
+- Original structure-column headers (ruled and unruled) use the existing
+  unresolved-only `role_text_capture` / paired `source_capture` path. Their
+  caller authority stays8 rows/12pt without chunk admission, distinct from
+  characterization defaults32 rows/32pt. Native/qualified primary observations
+  do not load auxiliary OCR. Retained cell frames accompany unchanged original
+  windows; known primary/native conflicts and low auxiliary scores still refuse.
+  `role_text_sources` explicitly inventories original header owners and the
+  retained anchor page of continuations, alongside existing accepted/rejected
+  characterization owners. The same original/native/auxiliary replayers and
+  worker/Web/SAR consumers remain authoritative; no recursive artifact search,
+  second recognizer, parser, writer or queue is introduced. Binding53/binder63
+  refresh derived source admission only; Activity37/extractor48, visible26, raw
+  OCR/OCSR, manual/history assets, SQL/API, environments and activation are unchanged.
+
 - Declared-line recovery uses the existing unresolved-only paired source helper
   in `activity_text_capture`; no second OCR/parser/writer is introduced. Native
   witnesses and known primary conflicts remain protected, original replay is

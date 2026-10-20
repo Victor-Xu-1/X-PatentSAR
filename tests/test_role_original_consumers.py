@@ -85,6 +85,12 @@ class RoleOriginalConsumerTests(unittest.TestCase):
         scope["observations"][0]["matrix"][1][2] = replacement
         scope["observations"][0]["cells"][5]["text"] = replacement
         scope["native_hints"][1][2] = replacement
+        # Keep the forged claim internally consistent with the now-retained
+        # native source packet. Actual original replay must still reject it.
+        packet = scope["observations"][0]["cells"][5]["source_observation"]
+        packet["text"] = replacement
+        for token in packet["tokens"]:
+            token["text"] = token["text"].replace("7.2", "8.4")
         self.assertTrue(
             valid_role_scope(record),
             "This remains pure qualified text; original replay must independently refuse it",
