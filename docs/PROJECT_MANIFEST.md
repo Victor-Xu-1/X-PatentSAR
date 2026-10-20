@@ -1,5 +1,19 @@
 # Project governance manifest
 
+- Physical multi-row header authority: `activity_header_cells` composes at most
+  three complete physical row children per column. `activity_header_columns` uses
+  the existing ordinary observer, `activity_header_pair` retains its sole optional
+  unresolved-only adapter, and the explicit leaf inventory feeds ordinary,
+  auxiliary and paired absence source replayers. `cell_empty_proof` additionally
+  owns complete unruled-white rectangles through the existing original-pixel
+  codec/replayer: zero nonwhite ink, no ruling mask/noise bound, and unchanged
+  closed-grid count-metadata policy. Every unknown/weak child stays
+  retained; original absence is not inferred from missing OCR text. No second
+  parser/model/writer or source trimming is added. Activity38/extractor49 refresh
+  derived evidence only; coverage20/bindings/raw original observations/manual
+  audit/API/SQL/SAR/model dependencies/activation are unchanged. Existing unsupported
+  bounds remain unqualified. Earlier version entries below are release history.
+
 - Declared-line recovery uses the existing unresolved-only paired source helper
   in `activity_text_capture`; no second OCR/parser/writer is introduced. Native
   witnesses and known primary conflicts remain protected, original replay is

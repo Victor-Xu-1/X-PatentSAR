@@ -82,7 +82,10 @@ class ActivityHeaderGridTests(unittest.TestCase):
         self.assertEqual(context.table_id, "Table 83")
         self.assertEqual(context.caption, "Table 83. Cellular activity")
         self.assertIsNone(context.target)
-        self.assertEqual(context.assay, "Cellular activity")
+        self.assertIsNone(
+            context.assay,
+            "A caption and old table reference cannot supply a missing assay",
+        )
         self.assertEqual(context.raw_context, source)
 
     def test_paragraph_number_alone_is_not_an_assay_or_target(self):
@@ -97,7 +100,10 @@ class ActivityHeaderGridTests(unittest.TestCase):
         self.assertEqual(context.caption, "Table 83. Cellular binding activity")
         self.assertEqual(context.raw_caption, "Table 83.\nCellular binding activity")
         self.assertEqual(context.body_text, "[00831] Local experimental body")
-        self.assertEqual(context.assay, "Cellular binding activity")
+        self.assertIsNone(
+            context.assay,
+            "Keep the caption literal without inventing an assay declaration",
+        )
 
     def test_attached_metric_suffixes_keep_both_values_and_contexts(self):
         headers = ["No.", "METHiBiTEC50 (nM)", "LU-7ProlifEC50 (nM)"]
@@ -453,7 +459,9 @@ class ActivityHeaderGridTests(unittest.TestCase):
             row = extract_coordinate_tables(doc, [0]).rows[0]
         source = row.activity_sources[0]
         self.assertEqual(source["table_id"], "Table 83")
-        self.assertEqual(source["assay"], "MET cellular binding")
+        self.assertIsNone(
+            source["assay"], "Caption provenance is not an explicit assay declaration"
+        )
         self.assertEqual(source["raw_caption"], "Table 83. MET cellular binding")
         self.assertIn("[00831]", source["body_text"])
         self.assertIn("[00831]", source["raw_context"])
