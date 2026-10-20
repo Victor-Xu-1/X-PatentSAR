@@ -3645,3 +3645,20 @@ final reader. Failed validation never enters the weak pool. Captured objects are
 read-only inputs; current projections retain their own group/count models. This
 does not change scientific epochs, report/API/SQL contracts, file-size limits,
 publication or graph proofs, and introduces no store, task or persisted cache.
+# Passive study drawing reads
+
+`StudyResults.drawings` validates one receipt-bound report for at most32 distinct
+selectors. `study_drawings.draw_one` is the sole molecule/scaffold/fragment
+renderer, also used by the retained single-drawing GET. Per-item404/422 errors
+stay explicit; report/source/receipt failures reject the entire request. A6MiB
+response budget refuses with413 rather than silently truncating SVGs.
+`sarDrawingBatch` combines pending same-job/kind/region frontend reads into
+groups of32 with at most two active GETs, deduplicating pending selectors only.
+Subscriber cancellation does not cancel other consumers; all-abandoned cohorts
+abort. No result or large-report cache, scientific queue, renderer, analysis or
+model path is added. Only explicit response-budget refusals subdivide into
+strictly smaller batches; singletons and other errors remain errors. Existing
+API client session recovery, source identity and safe-SVG display remain intact.
+This reduces repeated parsing but does not certify extraction/SAR accuracy or
+solve large catalog payloads. Numerical/scientific/raw/environment contracts
+and historical/manual assets remain unchanged.

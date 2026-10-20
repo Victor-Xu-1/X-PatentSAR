@@ -58,14 +58,28 @@ export async function cardProtocol(
   await page.route(`**/api/v1/sar/jobs/${job.id}**`, async (route) => {
     expect(route.request().method()).toBe('GET');
     const url = new URL(route.request().url());
-    if (url.pathname.endsWith('/study/drawing')) {
-      const identifier = url.searchParams.get('identifier')!;
-      drawings.push({ kind: url.searchParams.get('kind')!, identifier });
+    if (url.pathname.endsWith('/study/drawings')) {
+      const identifiers = url.searchParams.getAll('identifier');
+      identifiers.forEach((identifier) =>
+        drawings.push({ kind: url.searchParams.get('kind')!, identifier }),
+      );
       const response = await page.request.get(
         `/api/v1/sar/datasets/${dataset.id}/molecules/${molecule.id}/drawing`,
       );
       expect(response.ok()).toBe(true);
-      await route.fulfill({ json: { id: identifier, svg: (await response.json()).svg } });
+      const svg = (await response.json()).svg;
+      await route.fulfill({
+        json: {
+          job,
+          kind: url.searchParams.get('kind'),
+          region_id: url.searchParams.get('region_id') ?? '',
+          items: identifiers.map((identifier) => ({
+            identifier,
+            result: { id: identifier, svg },
+            error: null,
+          })),
+        },
+      });
     } else if (url.pathname.endsWith('/study/rows')) {
       const filters = Object.fromEntries(url.searchParams);
       rowRequests.push(filters);

@@ -6,23 +6,29 @@ import { decodeStudyMatrix } from './sarMatrixDecoder';
 import { decodeSARJob } from './sarJobDecoders';
 import { createSARMutation } from './sarMutation';
 import { sarTransport } from './sarTransport';
+import { createDrawingBatch } from './sarDrawingBatch';
+import { drawingBatchDecoder } from './sarDrawingBatchDecoder';
 import {
-  decodeStudyDrawing,
   decodeStudyCatalog,
   decodeStudyRegionDetail,
   decodeStudyProfile,
   decodeStudyRows,
 } from './sarStudyDecoders';
-import type {
-  StudyDrawingKind,
-  StudyExportFormat,
-  StudyFilter,
-  StudyRequest,
-} from './sarStudyTypes';
+import type { StudyExportFormat, StudyFilter, StudyRequest } from './sarStudyTypes';
 export function createSARStudyApi(shared: ApiClient, rawFetch?: typeof fetch) {
   const mutate = createSARMutation(shared),
     raw = sarTransport(shared, rawFetch);
   const path = (id: string) => '/sar/jobs/' + encodeURIComponent(id) + '/study';
+  const drawing = createDrawingBatch((selection, keys, signal) => {
+    const query = new URLSearchParams({ kind: selection.kind });
+    if (selection.region) query.set('region_id', selection.region);
+    keys.forEach((key) => query.append('identifier', key));
+    return shared.get(
+      path(selection.job) + '/drawings?' + query,
+      drawingBatchDecoder(selection, keys),
+      signal,
+    );
+  });
   const checkJob = (job: ReturnType<typeof decodeSARJob>, id: string, dataset: string) => {
     if (job.id !== id || job.dataset_id !== dataset || job.kind !== 'study')
       throw new ContractError('$.study_job_identity');
@@ -120,24 +126,7 @@ export function createSARStudyApi(shared: ApiClient, rawFetch?: typeof fetch) {
         signal,
       );
     },
-    drawing: (
-      id: string,
-      kind: StudyDrawingKind,
-      identifier: string,
-      signal: AbortSignal,
-      regionId = '',
-    ) =>
-      shared.get(
-        path(id) +
-          '/drawing?' +
-          new URLSearchParams({ kind, identifier, ...(regionId ? { region_id: regionId } : {}) }),
-        (v) => {
-          const result = decodeStudyDrawing(v);
-          if (result.id !== identifier) throw new ContractError('$.study_drawing_identity');
-          return result;
-        },
-        signal,
-      ),
+    drawing,
     preview: (
       id: string,
       dataset: string,

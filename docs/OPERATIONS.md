@@ -3267,3 +3267,23 @@ private workspace and analysis cache separately; do not strip fields from jobs
 or alter output files to make an older binary accept them.
 
 The restored source is `/srv/wsl/projects/patent-sar-extractor`; the external source archive and pre-optimization snapshot are preserved on E. Stop only PatentSAR jobs before restoring that snapshot or switching its entry point. The historical plugin path is not a verified active deployment in this recovered environment. Outputs are not schema-migrated in place; preserve each run directory before changing versions. Never shut down all WSL distributions merely to roll back this application.
+# Bounded study image transport
+
+The frontend reads `GET /api/v1/sar/jobs/{job}/study/drawings` with `kind`,
+repeated `identifier` (1–32 unique nonempty IDs, each≤200 characters), and an
+optional `region_id` (≤200 characters). The reply binds the complete study job,
+kind, region and ordered items; each item has either a matching `{id, svg}` or
+an explicit `{status, code, message}`404/422 error. Existing single-image GET
+clients still use the same renderer, not a second execution chain. Unsupported
+or missing structures do not get placeholders. Authentication, exact report
+receipt checks and the two-slot read limit are unchanged. Responses over6MiB
+fail with413 `sar_drawing_batch_large`; only that code may trigger bounded
+frontend subdivision. No report-modification, auth or other error is hidden.
+
+Acceptance uses generated large receipt-checked reports, normal HTTP reads and
+isolated frontend CSV studies. It must prove cancellation/late-result ownership,
+32/two bounds, unchanged vectors, per-item errors and receipt-tamper refusal.
+It does not rerun a private patent or revise published scientific outputs.
+Keep catalog size/performance findings open separately. Delivery still requires
+current reviewed main, a fresh wheel, rollback and unchanged18765 deployment;
+never deploy over a live extraction producer just to publish this optimization.

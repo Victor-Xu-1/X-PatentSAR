@@ -14,6 +14,7 @@ from .models import SARJob
 from .preview_models import StudyPreview
 from .study_admission import profile
 from .study_catalog_models import StudyCatalog, StudyRegionDetail
+from .study_drawing_models import MAX_DRAWING_BATCH, StudyDrawingBatch
 from .study_exports import export_study
 from .study_models import (
     StudyDrawing,
@@ -93,6 +94,20 @@ def study_routes(service, queue) -> APIRouter:
         async with reads:
             return await asyncio.to_thread(
                 StudyResults(queue()).drawing, job_id, kind, identifier, region_id
+            )
+
+    @router.get("/jobs/{job_id}/study/drawings", response_model=StudyDrawingBatch)
+    async def drawings(
+        job_id: str,
+        kind: str,
+        identifier: Annotated[
+            list[str], Query(min_length=1, max_length=MAX_DRAWING_BATCH)
+        ],
+        region_id: str = "",
+    ):
+        async with reads:
+            return await asyncio.to_thread(
+                StudyResults(queue()).drawings, job_id, kind, identifier, region_id
             )
 
     @router.get("/jobs/{identifier}/study/preview", response_model=StudyPreview)

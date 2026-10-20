@@ -27,6 +27,11 @@ COMMON = {
 }
 MODES = (
     (
+        "sar",
+        "sar-drawing-batch.spec.ts",
+        COMMON | {"sar-drawing-batch.spec.ts", "sar-card-inspection.spec.ts"},
+    ),
+    (
         "candidate-observations",
         "candidate-observations.spec.ts",
         COMMON | {"candidate-observations.spec.ts"},

@@ -248,7 +248,19 @@ describe('authenticated, bounded study API adapter', () => {
       if (path.endsWith('/profile')) return json(studyProfile);
       if (path.includes('/rows?'))
         return json({ items: [studyRow], total: 100, page: 2, page_size: 50, job: studyJob });
-      if (path.includes('/drawing?')) return json({ id: 'fragment / 原文', svg: sarDrawing.svg });
+      if (path.includes('/drawings?'))
+        return json({
+          job: studyJob,
+          kind: 'fragment',
+          region_id: 'region',
+          items: [
+            {
+              identifier: 'fragment / 原文',
+              result: { id: 'fragment / 原文', svg: sarDrawing.svg },
+              error: null,
+            },
+          ],
+        });
       return json(catalogBody());
     });
     const api = createSARStudyApi(new ApiClient(transport), transport),

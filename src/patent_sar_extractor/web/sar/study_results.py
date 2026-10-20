@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import json
 
-from ...core.sar.drawing import draw_fragment, draw_molecule_preview
 from ..errors import WebError
-from .models import Pair
 from .report_preparation import report_preparation
 from .study_models import StudyDrawing, StudyOverview, StudyRows
 from .study_row_scope import selected_members
@@ -161,58 +159,28 @@ class StudyResults:
                 422, "sar_study_drawing", "Drawing selector exceeds its bound."
             )
         job, report = self.load(identifier)
-        try:
-            if kind == "molecule":
-                molecule = self.queue.service.datasets.molecule(job.dataset_id, key)
-                if not molecule.eligible or not molecule.molfile:
-                    raise ValueError("unavailable")
-                atoms = []
-                hydrogen_anchor = None
-                if region_id:
-                    region = next(
-                        (
-                            item.region
-                            for item in report.regions
-                            if item.region.id == region_id
-                        ),
-                        None,
-                    )
-                    if region is None:
-                        raise ValueError("unavailable")
-                    if region.molecule_id == key:
-                        atoms = region.atom_indices
-                        hydrogen_anchor = region.hydrogen_anchor
-                    else:
-                        with self.queue.service.store.connect() as connection:
-                            saved = connection.execute(
-                                "SELECT payload FROM pairs WHERE job_id=? AND json_extract(payload,'$.region_id')=? AND json_extract(payload,'$.molecule_id')=? LIMIT 1",
-                                (identifier, region_id, key),
-                            ).fetchone()
-                        if saved:
-                            pair = Pair.model_validate_json(saved[0])
-                            if pair.match_status == "matched":
-                                atoms = pair.variable_atom_indices
-                                hydrogen_anchor = pair.candidate_hydrogen_anchor
-                svg = draw_molecule_preview(
-                    molecule.molfile,
-                    highlighted_atoms=atoms,
-                    hydrogen_anchor=hydrogen_anchor,
-                )
-            elif kind == "scaffold":
-                scaffold = next(item for item in report.scaffolds if item.id == key)
-                svg = draw_fragment(scaffold.smiles or "")
-            elif kind == "fragment":
-                region = next(
-                    item for item in report.regions if item.region.id == region_id
-                )
-                fragment = next(item for item in region.fragments if item.id == key)
-                svg = draw_fragment(fragment.smiles, graph_smiles=fragment.graph_smiles)
-            else:
-                raise ValueError("unavailable")
-        except (StopIteration, ValueError, RuntimeError) as error:
+        from .study_drawings import draw_one
+
+        return draw_one(self.queue, identifier, job, report, kind, key, region_id)
+
+    def drawings(
+        self, identifier: str, kind: str, keys: list[str], region_id: str = ""
+    ):
+        from .study_drawing_models import MAX_DRAWING_BATCH
+        from .study_drawings import draw_batch
+
+        if (
+            not isinstance(kind, str)
+            or kind not in {"molecule", "scaffold", "fragment"}
+            or not isinstance(keys, list)
+            or not 1 <= len(keys) <= MAX_DRAWING_BATCH
+            or any(not isinstance(key, str) or not 1 <= len(key) <= 200 for key in keys)
+            or len(set(keys)) != len(keys)
+            or not isinstance(region_id, str)
+            or len(region_id) > 200
+        ):
             raise WebError(
-                422,
-                "sar_structure_unavailable",
-                "Study drawing is unavailable; no placeholder molecule was substituted.",
-            ) from error
-        return StudyDrawing(id=key, svg=svg)
+                422, "sar_study_drawing", "Drawing batch exceeds its bounded selection."
+            )
+        job, report = self.load(identifier)
+        return draw_batch(self.queue, identifier, job, report, kind, keys, region_id)
