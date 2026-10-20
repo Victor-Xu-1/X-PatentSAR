@@ -22,6 +22,17 @@ ROOT = "Table 73. Target: JAK; Assay: binding\nNo. | IC50 (nM)\n31 | 9"
 METHOD = "Example 84: Binding assay\nCells were seeded. Reagent was added.\nResults are shown in Table 73."
 
 
+class OriginalTextPayload(dict):
+    """Keep the actual generated original alive beyond the temporary directory."""
+
+    def __init__(self, payload, original_bytes):
+        super().__init__(payload)
+        self.original_bytes = original_bytes
+
+    def open_original(self):
+        return fitz.open(stream=self.original_bytes, filetype="pdf")
+
+
 def facade(folder, *pages):
     path = folder / "original.pdf"
     with fitz.open() as doc:
@@ -29,7 +40,9 @@ def facade(folder, *pages):
             doc.new_page().insert_text((40, 60), text, fontsize=9)
         doc.save(path)
     extract(str(path), {"activity_pages": [0]}, str(folder / "output"))
-    return load_json(folder / "output/activity_data.json", None)
+    return OriginalTextPayload(
+        load_json(folder / "output/activity_data.json", None), path.read_bytes()
+    )
 
 
 class TextOwnershipTests(unittest.TestCase):
@@ -57,7 +70,10 @@ class TextOwnershipTests(unittest.TestCase):
         self.assertEqual(
             data["rows"][0]["activity_values"], {"IC50 (nM)": "0.7", "EC50 (nM)": "3.1"}
         )
-        self.assertEqual(activity_evidence_errors(data, [0]), [])
+        self.assertTrue(activity_evidence_errors(data, [0]))
+        self.assertEqual(
+            activity_evidence_errors(data, [0], open_original=data.open_original), []
+        )
 
     def test_new_experiment_stops_same_page_rows_and_next_page_context_borrow(self):
         texts = {
@@ -83,7 +99,12 @@ class TextOwnershipTests(unittest.TestCase):
                 self.assertEqual(
                     [r["cpd"] for r in data["rows"]], ["Compound 31", "Compound 44"]
                 )
-                self.assertEqual(activity_evidence_errors(data, [0]), [])
+                self.assertEqual(
+                    activity_evidence_errors(
+                        data, [0], open_original=data.open_original
+                    ),
+                    [],
+                )
                 self.assertEqual(
                     data["coverage"]["references"][0]["status"], "resolved"
                 )
@@ -136,7 +157,9 @@ class TextOwnershipTests(unittest.TestCase):
                 cell["observations"][0]["raw_text"] = "31 | 99"
             with self.subTest(mode=mode):
                 try:
-                    errors = activity_evidence_errors(data, [0])
+                    errors = activity_evidence_errors(
+                        data, [0], open_original=data.open_original
+                    )
                 except (ValueError, TypeError):
                     continue
                 self.assertTrue(errors)
@@ -170,7 +193,9 @@ class TextOwnershipTests(unittest.TestCase):
                 data["rows"][-1]["activity_sources"][0]["page_no"] = None
             with self.subTest(mode=mode):
                 try:
-                    errors = activity_evidence_errors(data, [0])
+                    errors = activity_evidence_errors(
+                        data, [0], open_original=data.open_original
+                    )
                 except (ValueError, TypeError):
                     continue
                 self.assertTrue(errors)
@@ -183,13 +208,20 @@ class TextOwnershipTests(unittest.TestCase):
             ):
                 data = facade(Path(temp), METHOD, ROOT.rsplit("\n", 1)[0], continuation)
                 self.assertEqual([r["cpd"] for r in data["rows"]], ["Compound 44"])
-                self.assertEqual(activity_evidence_errors(data, [0]), [])
+                self.assertEqual(
+                    activity_evidence_errors(
+                        data, [0], open_original=data.open_original
+                    ),
+                    [],
+                )
                 self.assertEqual(
                     data["coverage"]["references"][0]["status"], "resolved"
                 )
         with tempfile.TemporaryDirectory() as temp:
             data = facade(Path(temp), METHOD, ROOT.rsplit("\n", 1)[0])
-        self.assertTrue(activity_evidence_errors(data, [0]))
+        self.assertTrue(
+            activity_evidence_errors(data, [0], open_original=data.open_original)
+        )
 
     def test_repeated_measurements_and_disjoint_fields_keep_original_population(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -202,7 +234,9 @@ class TextOwnershipTests(unittest.TestCase):
         self.assertEqual(
             [r["activity_values"]["IC50 (nM)"] for r in data["rows"]], ["9", "9", "4"]
         )
-        self.assertEqual(activity_evidence_errors(data, [0]), [])
+        self.assertEqual(
+            activity_evidence_errors(data, [0], open_original=data.open_original), []
+        )
 
     def test_pre_table_legend_keeps_original_span_and_only_proved_continuations(self):
         result = extract_text_tables(
@@ -273,7 +307,9 @@ class TextOwnershipTests(unittest.TestCase):
             )
         self.assertTrue(data["rows"][0]["needs_review"])
         data["rows"][0]["needs_review"] = False
-        self.assertTrue(activity_evidence_errors(data, [0]))
+        self.assertTrue(
+            activity_evidence_errors(data, [0], open_original=data.open_original)
+        )
 
     def test_multiline_header_only_continuation_and_original_inventory_bounds(self):
         result = extract_text_tables(

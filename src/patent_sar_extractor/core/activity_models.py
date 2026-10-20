@@ -50,6 +50,7 @@ class ParsedActivity:
         default_factory=RoleObservationBuffer
     )
     text_pages: dict[str, str] = field(default_factory=dict)
+    text_sources: dict[str, dict] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

@@ -1,5 +1,22 @@
 # Operations and troubleshooting
 
+## An unruled text table has no qualified original source
+
+Inspect `coverage.text_sources` alongside `text_pages`. The page cache is a
+location nomination, not another vote for measured values. Current native lines
+must match the actual original membership and visibility; scan/mixed rectangles
+need the existing paired literal text reads and original frames. Raw nominations
+and all readings are retained. Missing coordinates, partial/changed inventories,
+unknown geometry, weak/disagreeing reads and covered native text must not be
+fixed by changing saved status, text, confidence or values. An unproved parent
+header keeps its continued rows in review. Source readback does not load OCR.
+
+Activity37/extractor47/coverage20 refresh these derived stages through normal
+frontend resume. The adapter does not edit the original raw cache, install or
+activate environments, call an external LLM, change binding/chemical policy, or
+retag historical outputs/manual audit. A qualified observed text inventory is
+not proof of complete detector recall across all patent formats.
+
 ## Native text or metadata differs from the original
 
 Native value/header/condition admission reopens the caller-owned original PDF.
@@ -15,7 +32,7 @@ unknown, not zero. Faint text, changed pixels, legacy/dark-only masks or forged
 bounds cannot provide current absence proof. Ordinary plot masks are unchanged.
 Do not erase table borders/ink or reinstall OCR merely because a count is blank.
 
-Binding51/binder61, Activity36/extractor46/coverage19 and visible-label25 refresh
+Binding51/binder61, Activity37/extractor47/coverage20 and visible-label25 refresh
 derived stages through the normal frontend workflow. Unchanged original/raw
 assets and manual audit are retained; no historical producer is retagged.
 Capture/readback paint caches are call-local immutable-page facts, not disk or

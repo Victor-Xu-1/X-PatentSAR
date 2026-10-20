@@ -26,6 +26,7 @@ from .activity_observations import (
 )
 from .activity_source_discovery import discover_activity_sources
 from .activity_text import extract_text_tables
+from .activity_text_capture import capture_text_page
 from .page_ocr_cache import load_page_ocr_cache, page_text, save_page_ocr_cache
 from .text_ocr.configuration import owns_auxiliary_text
 
@@ -95,6 +96,9 @@ def extract(
             page_count=len(doc),
             blocked_pages=cells.owned_pages,
             page_reader=text_for_page,
+            source_reader=lambda index, observed: capture_text_page(
+                doc[index], observed, cache.get("ocr_line_map", {}).get(str(index), [])
+            ),
         )
     if dirty and cache_path:
         save_page_ocr_cache(cache_path, cache)
@@ -117,6 +121,7 @@ def extract(
         rows,
         discovered_pages=discovered,
         text_pages=text.text_pages,
+        text_sources=text.text_sources,
     )
     save_results(
         rows,

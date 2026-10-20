@@ -87,6 +87,7 @@ def coverage_packet(
     *,
     discovered_pages: list[int] | None = None,
     text_pages: dict[str, str] | None = None,
+    text_sources: dict[str, dict] | None = None,
 ) -> dict:
     """A missing seed cannot become success merely because another page has rows."""
     if not isinstance(seed_pages, list) or any(
@@ -134,6 +135,7 @@ def coverage_packet(
         "regions": records,
         "references": result_references(records, rows),
         "text_pages": text_pages or {},
+        "text_sources": text_sources or {},
     }
     coverage_errors(packet, seeds, rows=rows)
     return packet
@@ -156,6 +158,7 @@ def coverage_errors(
             "regions",
             "references",
             "text_pages",
+            "text_sources",
         }
         or not schema_ref_matches(
             packet["schema"],
@@ -182,6 +185,10 @@ def coverage_errors(
     ):
         raise ValueError("Malformed or foreign activity coverage proof")
     validate_text_pages(packet["text_pages"])
+    if not isinstance(packet["text_sources"], dict) or set(
+        packet["text_sources"]
+    ) - set(packet["text_pages"]):
+        raise ValueError("Malformed declared activity source catalog")
     seen, pages, errors = set(), set(), []
     for region in packet["regions"]:
         validate_region(region)

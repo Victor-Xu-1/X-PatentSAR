@@ -1,5 +1,31 @@
 # X-PatentSAR architecture
 
+## Declared text tables share actual original-source admission
+
+The sole `activity_text` planner/parser now receives a physical `text_sources`
+catalog from `activity_text_capture` before parsing. Native pages retain original
+extraction order and complete native line membership, including display rotation.
+Located scan/mixed page-cache lines nominate rectangles only. The existing
+400/600dpi text observer supplies agreeing qualified literal text; every cache
+nomination and differing reading stays in the catalog. Unknown coordinates,
+partial inventories, weak/conflicting reads and invisible native text remain
+unqualified. Bad parent headers also keep continued rows in review.
+
+`source_page_lines` reuses the shared physical-row geometry; no second chemical,
+activity parser, page OCR, model selection, queue or artifact writer is added.
+`activity_text_sources` conserves complete nominations and the actual parser text.
+Its native/ordinary optical readings join the same `measurement_text_cells`
+inventory and original replayers as grid cells. Readback reopens only the
+caller-owned original PDF, never starts OCR, and cannot use saved strings as a
+substitute for changed source pixels/geometry/native membership.
+
+Activity37/extractor47/coverage20 invalidate affected derived evidence. Original
+PDF/raw OCR/OCSR, binding51/binder61/visible-label25, manual audit, SQL/API/SAR,
+models, dependencies and activation stay unchanged. Raw cache files are not
+rewritten by this adapter. This proves source attachment within the observed
+inventory, not universal model recall or chemical/scientific acceptance.
+Earlier epoch entries below describe prior releases unless explicitly updated.
+
 ## Native measurement, header and context admission
 
 `native_cell_replay` is the shared original native-cell authority for activity,
@@ -36,7 +62,7 @@ Original readback loads no OCR or other scientific model.
 `activity_coverage` constructs and reconciles the same inventory. The moved
 validator retains its original identities and gates; no competing writer exists.
 
-Current derived proof: Binding51/binder61, Activity36/extractor46/coverage19 and
+Current derived proof: Binding51/binder61, Activity37/extractor47/coverage20 and
 visible-label25. Raw PDF/OCR/OCSR2, preparation12, role5/recovery4, SQL/API/SAR and
 model/environment policies are unchanged. Old proof and manual audit stay
 historical, not retagged. Earlier epoch notes below describe prior releases.
