@@ -1,6 +1,5 @@
 """Positive grid roles through the existing native/cell/coordinate OCR authority."""
 
-import hashlib
 from itertools import pairwise
 
 import numpy as np
@@ -15,10 +14,13 @@ from .activity_grid_roles import (
     declared_measurement,
     nominate_characterization,
 )
+from .cell_raster import cell_pixel_rect, render_cell_raster
 from .cell_text_chunks import observe_text_cell
 from .page_ocr_cache import get_ocr_engine
 from .role_grid_windows import MAX_ROLE_CELLS, role_grid_shape, role_work_windows
+from .source_cell_pixels import original_grid_cell_is_empty
 from .source_geometry import native_cell_text, native_region
+from .source_observations import source_cell_observation
 from .source_role_observations import role_failure
 from .table_cells import CellRenderLimit, cell_image
 
@@ -94,7 +96,7 @@ def _observe_role_cells(
                     image = cell_image(page, cell, 400)
                 except CellRenderLimit:
                     return None
-                if np.any(image < 180):
+                if np.any(image < 180) and not original_grid_cell_is_empty(page, cell):
                     native = False
                     break
     if native:
@@ -103,6 +105,9 @@ def _observe_role_cells(
                 "method": "native_cell",
                 "text": native_cell_text(tokens, cell),
                 "bbox": list(cell),
+                "source_observation": source_cell_observation(
+                    tokens, cell, native=True
+                ),
             }
             for cell in cells
         ]
@@ -117,9 +122,7 @@ def _observe_role_cells(
             )
         for dpi in (400, 600):
             if any(
-                max(0, cell[2] - cell[0] - 3)
-                * max(0, cell[3] - cell[1] - 2.4)
-                * (dpi / 72) ** 2
+                cell_pixel_rect(cell, dpi).width * cell_pixel_rect(cell, dpi).height
                 > 8_000_000
                 for cell in cells
             ):
@@ -135,9 +138,10 @@ def _observe_role_cells(
                 frames.append(rendered)
             for cell in cells:
                 try:
-                    image = cell_image(page, cell, dpi)
+                    raster = render_cell_raster(page, cell, dpi, purpose="text")
                 except CellRenderLimit:
                     return None
+                image = raster.image
                 reading = observe_text_cell(
                     image,
                     dpi,
@@ -145,12 +149,9 @@ def _observe_role_cells(
                     rows_per_chunk=MAX_ROLE_TEXT_ROWS,
                     maximum_row_height=maximum_row_height,
                 ).evidence(dpi, cell)
+                reading["source_window"] = raster.source_window
                 if retain_frames or attach_source_frames:
-                    frame = {
-                        "dpi": dpi,
-                        "shape": list(image.shape),
-                        "pixel_sha256": hashlib.sha256(image).hexdigest(),
-                    }
+                    frame = raster.frame
                     if attach_source_frames:
                         reading["source_frame"] = frame
                     if retain_frames:

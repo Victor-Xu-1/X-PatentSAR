@@ -1,6 +1,7 @@
 """Lossless bounded original masks, including corrupt/oversized zlib streams."""
 
 import copy
+import math
 import unittest
 import zlib
 from unittest.mock import patch
@@ -8,14 +9,77 @@ from unittest.mock import patch
 import fitz
 import numpy as np
 
+from patent_sar_extractor.core.cell_raster import render_cell_raster
+from patent_sar_extractor.core.plot_reference_axes import _stroke
 from patent_sar_extractor.core.plot_reference_pixels import (
     observe_pixels,
+    replay_pixels,
     retained_pixels,
 )
 from patent_sar_extractor.core.table_cells import cell_image
 
 
 class OriginalPlotPixelTests(unittest.TestCase):
+    def test_fractional_device_padding_does_not_change_physical_axis_coverage(self):
+        # Pure geometry fixture, not a claim of original ink or scientific truth.
+        # The integration tests separately exercise actual generated PDF axes.
+        bounds = [2.02, 3.01, 42.17, 43.14]
+        with fitz.open() as document:
+            page = document.new_page(width=100, height=100)
+            for dpi in (400, 600):
+                raster = render_cell_raster(page, bounds, dpi)
+                reading = {**raster.frame, "source_window": raster.source_window}
+                for axis in ("x", "y"):
+                    coordinate = 0 if axis == "x" else 1
+                    physical = (bounds[coordinate + 2] - bounds[coordinate]) * dpi / 72
+                    count = math.ceil(physical * 0.8)
+                    mask = np.zeros(raster.image.shape[:2], dtype=np.uint8)
+                    if axis == "x":
+                        mask[10, 1 : count + 1] = 1
+                    else:
+                        mask[1 : count + 1, 10] = 1
+                    with self.subTest(dpi=dpi, axis=axis):
+                        self.assertIsNotNone(_stroke(mask, axis, bounds, dpi, reading))
+                        if axis == "x":
+                            mask[10, count] = 0
+                        else:
+                            mask[count, 10] = 0
+                        self.assertIsNone(_stroke(mask, axis, bounds, dpi, reading))
+
+    def test_current_full_window_replays_source_and_rejects_faint_pixel_changes(self):
+        with fitz.open() as document:
+            page = document.new_page(width=140, height=110)
+            page.insert_text((13, 40), "<0.5 nM", fontsize=9)
+            bounds = [12, 12, 112, 90]
+            packet = observe_pixels(page, bounds, 1_000_000)
+            for reading in packet["readings"]:
+                with self.subTest(dpi=reading["dpi"]):
+                    expected = cell_image(page, bounds, reading["dpi"])
+                    np.testing.assert_array_equal(
+                        replay_pixels(page, bounds, reading, maximum_pixels=1_000_000),
+                        expected,
+                    )
+                    bad = copy.deepcopy(reading)
+                    bad["source_window"]["source_pixel_sha256"] = "0" * 64
+                    with self.assertRaises(ValueError):
+                        replay_pixels(page, bounds, bad, maximum_pixels=1_000_000)
+                    changed = copy.deepcopy(reading)
+                    changed.pop("source_window")
+                    self.assertIsNone(
+                        retained_pixels(changed, bounds, reading["dpi"], 1_000_000)
+                    )
+            with fitz.open(stream=document.tobytes(), filetype="pdf") as altered:
+                altered[0].draw_rect(
+                    fitz.Rect(50, 60, 52, 62), fill=(0.99, 0.99, 0.99), color=None
+                )
+                with self.assertRaises(ValueError):
+                    replay_pixels(
+                        altered[0],
+                        bounds,
+                        packet["readings"][0],
+                        maximum_pixels=1_000_000,
+                    )
+
     def test_single_source_nomination_is_explicit_and_retains_the_same_pixel_contract(
         self,
     ):

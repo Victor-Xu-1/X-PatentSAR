@@ -16,6 +16,7 @@ from .cell_text_chunk_proof import text_detection_parts
 from .cell_text_proof import valid_text_reading
 from .cell_text_scope import text_scope
 from .role_grid_windows import valid_role_windows
+from .source_cell_claims import cell_source_status
 
 
 def valid_role_scope(record):
@@ -111,9 +112,10 @@ def valid_role_scope(record):
                 return False
             if method == "native_cells":
                 if (
-                    set(cell) != {"method", "text", "bbox"}
+                    set(cell) - {"source_observation"} != {"method", "text", "bbox"}
                     or cell.get("method") != "native_cell"
                     or cell["text"] != hints[row][column]
+                    or cell_source_status(cell) not in {"legacy", "qualified", "empty"}
                 ):
                     return False
             elif method in {"cell_ocr_400dpi", "cell_ocr_600dpi"}:
@@ -131,7 +133,7 @@ def valid_role_scope(record):
                         "physical_text_chunks",
                         "single_row_readings",
                         *(
-                            {"text_scope"}
+                            {"text_scope", "source_window"}
                             if proof["version"] == CHARACTERIZATION_ROLE_SCHEMA_VERSION
                             else set()
                         ),

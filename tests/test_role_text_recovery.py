@@ -7,7 +7,7 @@ from unittest.mock import patch
 import fitz
 
 from patent_sar_extractor.core import activity_grid_role_observation as observer
-from patent_sar_extractor.core import table_cells
+from patent_sar_extractor.core import cell_raster
 from patent_sar_extractor.core.activity_grid_role_proof import valid_role_scope
 from patent_sar_extractor.core.role_text_sources import role_text_cells
 from patent_sar_extractor.core.source_geometry import (
@@ -77,15 +77,15 @@ class RoleTextRecoveryTests(unittest.TestCase):
     def observe(self, lines=1, *, enabled=True, unexpected=False, qualified=False):
         page, grid, tokens, original = self.source(lines)
         current = {"text": ""}
-        render_original = table_cells.cell_image
+        render_original = cell_raster.render_cell_raster
         auxiliary = ControlledAuxiliary()
         observe_original = auxiliary.observe
 
-        def render(source, bounds, dpi):
+        def render(source, bounds, dpi, **options):
             current["text"] = native_cell_text(original, bounds)
             auxiliary.texts = tuple(current["text"].splitlines())
             auxiliary.position = 0
-            return render_original(source, bounds, dpi)
+            return render_original(source, bounds, dpi, **options)
 
         def rows(image):
             text = auxiliary.texts[auxiliary.position % len(auxiliary.texts)]
@@ -108,8 +108,8 @@ class RoleTextRecoveryTests(unittest.TestCase):
             patch.object(
                 observer, "get_ocr_engine", return_value=("rapidocr", primary)
             ),
-            patch.object(observer, "cell_image", render),
-            patch.object(table_cells, "cell_image", render),
+            patch.object(observer, "render_cell_raster", render),
+            patch.object(cell_raster, "render_cell_raster", render),
             patch(
                 "patent_sar_extractor.core.text_ocr.source_capture.get_auxiliary_text_runtime",
                 return_value=auxiliary if enabled else None,

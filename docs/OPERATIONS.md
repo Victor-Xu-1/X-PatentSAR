@@ -1,5 +1,34 @@
 # Operations and troubleshooting
 
+## Complete cell-window evidence
+
+New cell-window work retains the complete source separately from a text reading
+view. A refusal to separate border-connected ink is not an absent OCR runtime;
+do not reinstall models, lower confidence, erase border pixels, or edit the saved
+readings. Inspect source/view bounds and original hashes. Plot/word projections
+must use the retained device origin, not the historical fixed inset. Old unmarked
+frames remain historical and are not retagged as new window observations.
+
+`source_window.support` is an original600dpi geometric separation witness, not
+another model vote. Missing/changed/recursive support must refuse original
+replay. A `support_limit` records that the source pixel budget prevented the
+optional higher-resolution allocation; the full lower image stays available,
+and original readback must use that same budget. Do not replace this refusal by
+cropping a fixed inward margin, increasing OCR confidence or ignoring faint ink.
+
+Optional native paint envelopes preserve metric word boxes. They may resolve
+padding only when the entire uniquely matched opaque filled-text operation fits
+the cell. They do not prove paint-order visibility and do not override hidden,
+stroked, ambiguous, raster or actual glyph-crossing evidence.
+
+Schema2 source observations retain neighbour intersections in `boundary_tokens`.
+An empty owned-text string with such witnesses is unqualified, not a blank cell.
+Do not drop those witnesses during refresh, projection or source-claim extraction.
+Binding50/binder60, Activity35/extractor45 and visible-label24 refresh derived
+proof only. Original observations and manual audit are retained, not retagged.
+Historical epoch notes below do not supersede these current contract versions.
+An upgrade still requires exact-main packaging and installed/frontend acceptance.
+
 ## Ordinary activity OCR also requires the actual original PDF
 
 Final headers and accepted/unresolved measured cells now share the same original

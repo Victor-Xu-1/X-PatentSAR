@@ -1,7 +1,7 @@
 """Both original header views share one optional, unresolved-only auxiliary pass."""
 
 from .activity_header_columns import HeaderColumns
-from .table_cells import cell_image
+from .cell_raster import original_reading_image
 from .text_ocr.cell_capture import refine_text_pair
 from .text_ocr.configuration import get_auxiliary_text_runtime
 
@@ -25,7 +25,8 @@ def observe_header_pair(page, region, limit, tokens, observer):
         if primaries[0].get("bbox") != primaries[1].get("bbox"):
             continue
         images = tuple(
-            cell_image(page, p["bbox"], dpi) for p, dpi in zip(primaries, (400, 600))
+            original_reading_image(page, p["bbox"], dpi, p)
+            for p, dpi in zip(primaries, (400, 600))
         )
         attempts = []
         changed = refine_text_pair(images, primaries, auxiliary, evidence_sink=attempts)

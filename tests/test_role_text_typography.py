@@ -8,7 +8,7 @@ from unittest.mock import patch
 import fitz
 
 from patent_sar_extractor.core import activity_grid_role_observation as observer
-from patent_sar_extractor.core import table_cells
+from patent_sar_extractor.core import cell_raster
 from patent_sar_extractor.core.activity_grid_role_proof import valid_role_scope
 from patent_sar_extractor.core.binding_source_regions import reference_cell
 from patent_sar_extractor.core.cell_text_proof import valid_text_reading
@@ -70,18 +70,18 @@ class RoleTextTypographyTests(unittest.TestCase):
         )
         originals = SourceTokens(original.native, original)
         current = {"lines": [], "index": 0}
-        render_original = table_cells.cell_image
+        render_original = cell_raster.render_cell_raster
         from tests.test_auxiliary_cell_evidence import ControlledAuxiliary
 
         auxiliary_reader = ControlledAuxiliary()
         observe_auxiliary = auxiliary_reader.observe
         auxiliary_index = {"value": 0}
 
-        def render(source, bounds, dpi):
+        def render(source, bounds, dpi, **options):
             current["lines"] = native_cell_text(originals, bounds).splitlines()
             current["index"] = 0
             auxiliary_index["value"] = 0
-            return render_original(source, bounds, dpi)
+            return render_original(source, bounds, dpi, **options)
 
         def recovered(image):
             lines = current["lines"]
@@ -103,8 +103,8 @@ class RoleTextTypographyTests(unittest.TestCase):
 
         failures = []
         with (
-            patch.object(observer, "cell_image", render),
-            patch.object(table_cells, "cell_image", render),
+            patch.object(observer, "render_cell_raster", render),
+            patch.object(cell_raster, "render_cell_raster", render),
             patch.object(observer, "get_ocr_engine", return_value=("rapidocr", reader)),
             patch(
                 "patent_sar_extractor.core.text_ocr.source_capture.get_auxiliary_text_runtime",

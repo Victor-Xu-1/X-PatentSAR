@@ -199,6 +199,9 @@ class HeadingRuledSourceTests(unittest.TestCase):
                         bbox=[[10.0, 20.0], [90.0, 20.0], [90.0, 50.0], [10.0, 50.0]],
                     )
                 elif mutation == "weak_whole":
+                    # Preserve the intended strong partial-ID claim even if
+                    # the full-window renderer changes upstream tokenization.
+                    parts[0].update(text="Compound 8", confidence=0.99)
                     parts[-1]["confidence"] = 0.3
                 elif mutation == "foreign_whole":
                     parts[-1]["text"] = "83B"

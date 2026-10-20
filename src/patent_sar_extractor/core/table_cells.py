@@ -2,18 +2,17 @@
 
 from __future__ import annotations
 
-import hashlib
 import re
 from dataclasses import dataclass, field, replace
 
-import fitz
 import numpy as np
 
 from .activity_identity import is_value
 from .activity_values import is_explicit_missing_activity_value
 from .cell_cross_observation import observe_printed_crosses
 from .cell_ocr_observation import OCRObservation, observe_cell
-from .cell_rendering import original_cell_pixmap
+from .cell_raster import render_cell_raster
+from .cell_rendering import CellRenderLimit
 from .compound_caption import prefixed_label
 from .page_ocr_cache import get_ocr_engine
 from .printed_identifiers import identifier_key
@@ -23,9 +22,14 @@ from .source_geometry import SourceTokens, native_cell_text, native_region
 from .source_observations import source_cell_observation
 from .source_section_roles import nonfinal_original_label
 
-
-class CellRenderLimit(ValueError):
-    """A valid original cell cannot be rendered within the fixed pixel budget."""
+__all__ = [
+    "CellReading",
+    "CellRenderLimit",
+    "activity_kind_matches",
+    "cell_image",
+    "observe_original_cell",
+    "read_cell",
+]
 
 
 @dataclass
@@ -76,21 +80,9 @@ def activity_kind_matches(value: str, kind: str) -> bool:
 def cell_image(
     page, bounds, dpi: int, *, maximum_pixels: int = 8_000_000
 ) -> np.ndarray:
-    if type(maximum_pixels) is not int or not 0 < maximum_pixels <= 8_000_000:
-        raise ValueError("Invalid original-cell pixel budget")
-    x0, y0, x1, y1 = bounds
-    # Exclude printed grid rules, while retaining the entire cell's contents.
-    clip = fitz.Rect(x0 + 1.5, y0 + 1.2, x1 - 1.5, y1 - 1.2) & page.rect
-    if clip.is_empty or clip.width <= 0 or clip.height <= 0:
-        raise ValueError("Invalid activity cell bounds")
-    matrix = fitz.Matrix(dpi / 72, dpi / 72)
-    pixels = (clip * matrix).irect
-    if pixels.width * pixels.height > maximum_pixels:
-        raise CellRenderLimit("Original cell exceeds its rendered pixel budget")
-    pix = original_cell_pixmap(page, matrix=matrix, clip=clip)
-    return np.frombuffer(pix.samples, dtype=np.uint8).reshape(
-        pix.height, pix.width, pix.n
-    )[:, :, :3]
+    return render_cell_raster(
+        page, bounds, dpi, maximum_pixels=maximum_pixels, purpose="pixels"
+    ).image
 
 
 def _ocr_cell(page, bounds, kind: str, dpi: int) -> OCRObservation:
@@ -104,15 +96,12 @@ def _ocr_cell(page, bounds, kind: str, dpi: int) -> OCRObservation:
 
 def observe_original_cell(page, bounds, kind, dpi, engine, normalize) -> OCRObservation:
     """One original rendering/observation envelope for scalar and text readers."""
-    image = cell_image(page, bounds, dpi)
-    observed = observe_cell(image, kind, dpi, engine, normalize)
+    raster = render_cell_raster(page, bounds, dpi, purpose="text")
+    observed = observe_cell(raster.image, kind, dpi, engine, normalize)
     return replace(
         observed,
-        source_frame={
-            "dpi": dpi,
-            "shape": list(image.shape),
-            "pixel_sha256": hashlib.sha256(image.tobytes()).hexdigest(),
-        },
+        source_frame=raster.frame,
+        source_window=raster.source_window,
     )
 
 
@@ -157,7 +146,9 @@ def read_cell(page, bounds, tokens: list[dict], kind: str, native: bool) -> Cell
         if not np.any(image < 180):
             return CellReading("", bounds, observations, True)
     if kind == "plus":
-        proof = observe_printed_crosses(cell_image(page, bounds, 450), bounds)
+        proof = observe_printed_crosses(
+            render_cell_raster(page, bounds, 450, purpose="text").image, bounds
+        )
         value = proof["text"]
         observations.append(proof)
         return CellReading(

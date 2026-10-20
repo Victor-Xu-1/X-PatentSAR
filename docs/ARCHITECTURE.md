@@ -1,5 +1,65 @@
 # X-PatentSAR architecture
 
+## Complete cell geometry and retained boundary witnesses
+
+The shared `cell_raster` captures the complete original cell once, with separate
+source and reading-view hashes. `cell_window` defaults to preserving every pixel.
+Only an explicitly text-owned caller may exclude a disconnected, fully witnessed
+closed ruling frame. Chemical/pixel callers retain complete rectangles. Attached,
+faint, irregular or unexplained edge ink prevents exclusion; no fixed inward crop,
+paint repair, recognition vote or confidence change establishes a text boundary.
+`cell_rule_pixels` is the single literal rule-band/joint implementation shared
+with existing closed-grid conservation. Source windows record device geometry,
+purpose and read bounds; exact original replay does not invoke OCR or qualify text.
+
+Ordinary cells, role/header/heading readers, word-caption evidence, auxiliary
+recovery and plot point projections consume this same window. Historical unmarked
+frames have explicit bounded historical replay, never a new production fallback.
+Current saved window metadata is validated before use and replayed against both
+the full original source and its retained view.
+Current ordinary, heading/caption and auxiliary admission requires complete-cell
+window provenance; the historical inset renderer is a read-only display adapter,
+not a way to retag old optical proof. Native role/caption replay also retains and
+rechecks its complete current source observation and original paint visibility.
+
+`native_paint_geometry` may retain a uniquely matched complete original filled
+text-paint envelope alongside the unchanged metric word box. Only whole-paint
+containment resolves metric padding; it never changes centre ownership or uses
+small-glyph metric guesses. Stroked/artificial-bold/hidden/nonopaque companions
+and ambiguous memberships cannot select a convenient smaller envelope. Original
+native replay and paint-order visibility remain independent requirements.
+For a neighbour whose metric centre is outside, a complete original paint
+envelope disjoint from the cell also proves a metric-only overlap. It does not
+move the word into another cell; an owned centre contradicting disjoint original
+paint remains unqualified.
+
+For connected400dpi text-owned ruling proposals only, `cell_frame_support` may
+use the same original600dpi renderer to prove a disconnected closed frame and
+conservation of every high-resolution nonwhite content pixel in the lower window.
+No OCR/model result chooses the region. Both full/view source hashes are retained
+in `source_window.support`; original replay repeats the paired geometry. A pixel
+budget refusal retains the full lower source and records `support_limit`, so
+readback cannot silently apply a larger budget and choose a different window.
+Unknown/pixel/chemical rectangles remain complete and no unbounded DPI search
+is introduced. The existing literal rule and confidence policies are unchanged.
+
+`source_observations` schema2 additionally retains `boundary_tokens`: positive
+intersections whose centres do not belong to the cell. They cannot become owned
+text, identifiers or activities; they keep the observation unqualified and survive
+serialization and subcell projection. Touching/disjoint neighbours do not qualify
+as intersections. Schema1 remains readable as historical evidence, not permission
+to remove schema2 witnesses from a current producer.
+
+Axis coverage uses the original physical window length for current full-source
+packets, not outward-rounded device padding; the existing80% rule is unchanged.
+Historical unmarked packets retain their original device denominator.
+
+Binding50/binder60, Activity35/extractor45 and visible-label24 refresh affected
+derived proof, never raw observations, original assets or manual audit. Earlier
+epoch descriptions below are retained historical notes; `contracts.py` owns
+current versions. Installed/browser delivery follows the project release gates.
+Pixel conservation alone does not prove chemical accuracy or full source recall.
+
 ## Complete ordinary activity source replay
 
 `activity_auxiliary_replay.measurement_text_cells` owns one inventory for final

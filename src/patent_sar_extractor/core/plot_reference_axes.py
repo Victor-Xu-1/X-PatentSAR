@@ -1,19 +1,24 @@
 """Observed perpendicular plot strokes; numeric layout alone proves no figure."""
 
-import math
-
 import numpy as np
 
 from .cell_frame_proof import inside_box
+from .cell_raster import retained_pixel_origin
 from .plot_reference_geometry import AXIS_MARGIN, axis_bounds
 from .plot_reference_pixels import observe_pixels, retained_pixels
 
 MAX_AXIS_PIXELS = 1_000_000
 
 
-def _stroke(mask, axis, bounds, dpi):
+def _stroke(mask, axis, bounds, dpi, reading):
     projection = mask.sum(axis=1 if axis == "x" else 0)
     length = mask.shape[1 if axis == "x" else 0]
+    if "source_window" in reading:
+        # MuPDF rounds the device frame outward. Its fractional outer padding
+        # is not extra original axis length. Keep the same 80% physical rule;
+        # historical unmarked masks retain their historical device denominator.
+        coordinate = 0 if axis == "x" else 1
+        length = (bounds[coordinate + 2] - bounds[coordinate]) * dpi / 72
     indexes = np.flatnonzero(projection >= length * 0.8)
     if (
         not len(indexes)
@@ -26,10 +31,7 @@ def _stroke(mask, axis, bounds, dpi):
     box = [int(along[0]), int(indexes[0]), int(along[-1]) + 1, int(indexes[-1]) + 1]
     if axis == "y":
         box = [box[1], box[0], box[3], box[2]]
-    origin = [
-        math.floor((bounds[0] + 1.5) * dpi / 72) * 72 / dpi,
-        math.floor((bounds[1] + 1.2) * dpi / 72) * 72 / dpi,
-    ]
+    origin = retained_pixel_origin(reading, bounds, dpi)
     return [v * 72 / dpi + origin[i % 2] for i, v in enumerate(box)]
 
 
@@ -114,7 +116,7 @@ def axis_strokes(packet, axes, size, *, anchor=None, nomination=False):
             mask = retained_pixels(reading, box, dpi, MAX_AXIS_PIXELS)
             if mask is None:
                 return None
-            stroke = _stroke(mask, axis, box, dpi)
+            stroke = _stroke(mask, axis, box, dpi, reading)
             if stroke is None:
                 return None
             found.append(stroke)

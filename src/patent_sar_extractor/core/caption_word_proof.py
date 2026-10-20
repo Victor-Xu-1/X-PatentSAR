@@ -11,6 +11,7 @@ from patent_sar_extractor.contracts import CAPTION_WORD_FORM_VERSION
 from .caption_word_geometry import MAX_CAPTION_WORD_PIXELS, caption_word_partitions
 from .cell_frame_proof import valid_cell_frame
 from .cell_ocr_scores import confidence_value
+from .cell_raster import retained_pixel_origin
 from .compound_caption import prefixed_label
 from .printed_identifiers import LABEL_KIND, identifier_key, identifier_text
 from .source_observations import source_observation_status
@@ -142,6 +143,7 @@ def word_form_readings(label, packet, observations):
             expected is None
             or reading.get("bbox") != packet["bbox"]
             or reading.get("source_frame") != frame
+            or pixels.get("source_window") != reading.get("source_window")
             or not valid_cell_frame(frame, reading, packet["bbox"], dpi)
         ):
             return None
@@ -160,29 +162,17 @@ def word_form_readings(label, packet, observations):
         if selected is None:
             return None
         result.append((mask, selected))
+    origins = [
+        retained_pixel_origin(item["pixels"], packet["bbox"], dpi)
+        for item, dpi in zip(packet["readings"], (400, 600), strict=True)
+    ]
     for first, second in zip(result[0][1], result[1][1], strict=True):
         if any(
             abs(
-                (
-                    math.floor(
-                        (packet["bbox"][axis % 2] + (1.5 if axis % 2 == 0 else 1.2))
-                        * 400
-                        / 72
-                    )
-                    + first[axis]
-                )
-                * 72
-                / 400
-                - (
-                    math.floor(
-                        (packet["bbox"][axis % 2] + (1.5 if axis % 2 == 0 else 1.2))
-                        * 600
-                        / 72
-                    )
-                    + second[axis]
-                )
-                * 72
-                / 600
+                origins[0][axis % 2]
+                + first[axis] * 72 / 400
+                - origins[1][axis % 2]
+                - second[axis] * 72 / 600
             )
             > 1
             for axis in range(4)
@@ -221,16 +211,15 @@ def caption_form_aliases(label, observations):
             continue
         # The page token must actually span BOTH independent original words,
         # not an isolated known series/suffix or a different neighbouring cell.
-        for (_mask, words), dpi in zip(frames, (400, 600), strict=True):
+        for (_mask, words), item, dpi in zip(
+            frames, packet["readings"], (400, 600), strict=True
+        ):
             scale = dpi / 72
-            origin = [
-                math.floor((packet["bbox"][0] + 1.5) * scale),
-                math.floor((packet["bbox"][1] + 1.2) * scale),
-            ]
+            origin = retained_pixel_origin(item["pixels"], packet["bbox"], dpi)
             if any(
                 not (
-                    box[0] <= (origin[0] + (w[0] + w[2]) / 2) / scale <= box[2]
-                    and box[1] <= (origin[1] + (w[1] + w[3]) / 2) / scale <= box[3]
+                    box[0] <= origin[0] + (w[0] + w[2]) / 2 / scale <= box[2]
+                    and box[1] <= origin[1] + (w[1] + w[3]) / 2 / scale <= box[3]
                 )
                 for w in words
             ):

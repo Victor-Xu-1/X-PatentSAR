@@ -4,6 +4,8 @@ import hashlib
 import math
 import re
 
+from .cell_raster import original_reading_image, valid_source_window
+
 
 def inside_box(box, outer):
     return (
@@ -27,10 +29,18 @@ def valid_cell_frame(frame, reading, bounds, dpi):
         or any(type(v) is not int or v <= 0 for v in frame["shape"])
         or frame["shape"][2] != 3
         or frame["shape"][0] * frame["shape"][1] > 8_000_000
-        or abs(frame["shape"][1] - (bounds[2] - bounds[0] - 3) * dpi / 72) > 2
-        or abs(frame["shape"][0] - (bounds[3] - bounds[1] - 2.4) * dpi / 72) > 2
         or not isinstance(frame["pixel_sha256"], str)
         or not re.fullmatch(r"[a-f0-9]{64}", frame["pixel_sha256"])
+    ):
+        return False
+    if "source_window" in reading:
+        if not valid_source_window(
+            reading["source_window"], bounds, dpi, frame["shape"]
+        ):
+            return False
+    elif (
+        abs(frame["shape"][1] - (bounds[2] - bounds[0] - 3) * dpi / 72) > 2
+        or abs(frame["shape"][0] - (bounds[3] - bounds[1] - 2.4) * dpi / 72) > 2
     ):
         return False
     crop, border = reading.get("ink_crop_pixels"), reading.get("border_pixels")
@@ -118,7 +128,6 @@ def original_cell_frame_matches(
     import numpy as np
 
     from .cell_text_scope import scoped_height
-    from .table_cells import cell_image
 
     try:
         height = (
@@ -139,13 +148,17 @@ def original_cell_frame_matches(
         reading.get("source_frame"),
     )
     if (
-        not inside_box(bounds, [0, 0, page.rect.width, page.rect.height])
+        "source_window" not in reading
+        or not inside_box(bounds, [0, 0, page.rect.width, page.rect.height])
         or type(dpi) is not int
         or dpi not in (400, 600)
         or not valid_cell_frame(frame, reading, bounds, dpi)
     ):
         return False
-    image = cell_image(page, bounds, dpi)
+    try:
+        image = original_reading_image(page, bounds, dpi, reading)
+    except (TypeError, ValueError, KeyError, RuntimeError, OverflowError):
+        return False
     if (
         frame["shape"] != list(image.shape)
         or frame["pixel_sha256"] != hashlib.sha256(image.tobytes()).hexdigest()

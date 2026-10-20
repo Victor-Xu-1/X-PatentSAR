@@ -64,6 +64,9 @@ def source_layout(page) -> SourceLayout:
                 "line": list(word[5:7]),
             }
         )
+    from .native_paint_geometry import attach_native_paints
+
+    attach_native_paints(page, native)
     union = fitz.Rect()
     for image in images:
         rectangle = (_box(list(image["bbox"])) * page.rotation_matrix) & page.rect
