@@ -1,5 +1,12 @@
 # Project governance manifest
 
+- Task-read presentation is owned by the existing resource/job hooks. A successful
+  same-key background read may retain its display confirmation while pending,
+  but the existing stricter `verified` mutation gate is unchanged. Explicit
+  refresh/source changes/errors revoke display confirmation. No extra queue,
+  session policy, task API, scientific epoch, model/dependency or stored record
+  changes. Delayed GET/error recovery uses read-only synthetic browser fixtures.
+
 - Declared-line recovery uses the existing unresolved-only paired source helper
   in `activity_text_capture`; no second OCR/parser/writer is introduced. Native
   witnesses and known primary conflicts remain protected, original replay is

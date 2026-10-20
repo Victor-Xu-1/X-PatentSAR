@@ -26,6 +26,7 @@ export function Workspace({
   capabilities = null,
   job,
   jobVerified,
+  jobPresentationVerified = jobVerified,
   onJobChange,
   onProjectReload,
   onUpload,
@@ -40,6 +41,7 @@ export function Workspace({
   capabilities?: Health['capabilities'] | null;
   job: Job | null;
   jobVerified: boolean;
+  jobPresentationVerified?: boolean;
   onJobChange: () => void;
   onProjectReload: () => void;
   onUpload: () => void;
@@ -103,12 +105,13 @@ export function Workspace({
             <h1 className="workflow-document" title={project?.title}>
               {project?.title ?? t('正在打开文件…')}
             </h1>
-            <StageStrip job={job} verified={jobVerified} compact />
+            <StageStrip job={job} verified={jobPresentationVerified} compact />
             <JobActions
               project={project}
               job={job}
               ready={ready}
               verified={jobVerified}
+              presentationVerified={jobPresentationVerified}
               onChange={onJobChange}
               compact
             />

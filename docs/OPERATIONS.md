@@ -1,5 +1,16 @@
 # Operations and troubleshooting
 
+## Progress flashes unknown during an otherwise healthy task poll
+
+Normal same-source background GET polling retains the last confirmed progress
+presentation. Task controls remain disabled until required reads finish. Actual
+read errors, explicit refresh, a new source/task and unknown history retain their
+unknown/error presentation; no write is replayed during session/read recovery.
+The view is a server observation, not proof of scientific progress or acceptance.
+Delayed-read and denied-session regressions use isolated synthetic browser state
+only. Deploy this presentation correction only after real producers are idle;
+never restart a real extraction merely to update its presentation.
+
 ## A weak declared-text line does not use the enabled auxiliary OCR
 
 The declared-text line producer now reuses the same optional paired recovery as
