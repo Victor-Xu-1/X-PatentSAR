@@ -20,7 +20,8 @@
     "tests/test_activity_header_continuation.py",
     "tests/test_empty_text_region.py",
     "tests/test_header_grid_cell_rows.py",
-    "tests/test_header_grid_consumers.py"
+    "tests/test_header_grid_consumers.py",
+    "tests/test_header_physical_lines.py"
   ],
   "python_modules": [
     "tests.test_header_grid_cell_rows",
@@ -48,7 +49,5 @@
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [],
-  "browser_tests": [
-    "frontend/e2e/source-completion.spec.ts"
-  ]
+  "browser_tests": ["frontend/e2e/source-completion.spec.ts"]
 }
