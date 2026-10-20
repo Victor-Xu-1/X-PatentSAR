@@ -1,5 +1,16 @@
 # X-PatentSAR architecture
 
+## Declared text shares the unresolved-only auxiliary source path
+
+`activity_text_capture` submits its two ordinary physical line observations to
+the existing `text_ocr.source_capture.refine_source_text`, retaining independent
+native text as a contradiction witness. Complete primary readings and native
+fast paths do not load auxiliary models. The existing text qualifier, sole
+parser/writer and original-pixel/auxiliary inventories remain authoritative.
+Extractor48 refreshes derived work; source/activity schemas and admission quality
+rules are unchanged. A correctly spelled low-score auxiliary reply still does
+not satisfy the current quality gate or become a scientific measurement.
+
 ## Caption-tail witnesses retain their exact original cell owners
 
 `caption_tail_owners` composes exact original neighbour witnesses with the

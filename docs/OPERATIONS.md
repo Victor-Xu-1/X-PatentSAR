@@ -1,5 +1,24 @@
 # Operations and troubleshooting
 
+## A weak declared-text line does not use the enabled auxiliary OCR
+
+The declared-text line producer now reuses the same optional paired recovery as
+ordinary physical cells. It supplies both current primary frames before any
+auxiliary request; independent native text remains a veto, not a third read vote.
+No additional recognizer, installation, external provider, full-page OCR pass or
+alternative parser is added. Off/unavailable modes remain unresolved; known
+primary contradictions are not voted away. Cancellation propagates and the
+existing producer-phase owner closes its child on every exit.
+
+All raw nominations, differing primary reads and rejected auxiliary attempts stay
+in the source inventory. Original readback remains model-free and checks the
+retained paired pixels. The existing auxiliary0.99 quality filter is unchanged
+and is not a calibrated accuracy probability: short numbers, separators or units
+can still fail it even when their observed text looks right. Do not lower that
+gate, select one DPI or edit saved observations to manufacture acceptance.
+Extractor48 refreshes derived work; Activity37/coverage20/declared-source1,
+bindings, raw OCR/OCSR, models, activation and human audit stay unchanged.
+
 ## A footer breaks an otherwise proved caption-table continuation
 
 Original page OCR can pad the last closed caption's word box across the outer
