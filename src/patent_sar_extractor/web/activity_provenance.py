@@ -14,6 +14,13 @@ from .errors import WebError
 
 ActivityContext = tuple[int | None, str | None, str | None]
 
+# The current cell producer can retain source-window/frame, physical rows,
+# detector metadata and a paired auxiliary packet together. Sixteen fields was
+# a legacy transport bound, not a scientific qualification rule. Keep a finite
+# envelope budget without stripping those original observations; core source
+# replay remains the sole authority for whether their claims are qualified.
+MAX_CELL_OBSERVATION_FIELDS = 32
+
 
 @dataclass(frozen=True)
 class CellEvidence:
@@ -79,7 +86,10 @@ def cell_evidence(cell: object) -> CellEvidence:
     if not isinstance(observations, list) or len(observations) > 20:
         raise provenance_error()
     for observation in observations:
-        if not isinstance(observation, dict) or len(observation) > 16:
+        if (
+            not isinstance(observation, dict)
+            or len(observation) > MAX_CELL_OBSERVATION_FIELDS
+        ):
             raise provenance_error()
         provenance_text(observation.get("method"), limit=300)
         provenance_text(observation.get("text"), limit=10000)

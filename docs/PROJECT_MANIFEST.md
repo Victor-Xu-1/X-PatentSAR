@@ -1,5 +1,11 @@
 # Project governance manifest
 
+- Web activity transport keeps a finite32-field observation envelope for the
+  current primary/physical/paired-auxiliary producer. The single provenance
+  reader serves projection, exact-cell focus and SAR contexts without removing
+  original fields; scientific qualification remains with existing core replay.
+  No raw/scientific schema, epoch, activation or dependency change is implied.
+
 - Declared-text source authority: `activity_text_capture` attaches original
   native/located physical lines to the sole `activity_text` planner/parser and
   artifact writer. `source_page_lines` owns original native order and shared
