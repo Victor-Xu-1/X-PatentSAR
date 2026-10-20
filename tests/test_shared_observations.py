@@ -12,6 +12,8 @@ from test_existing_compound_completion import (
 )
 
 from patent_sar_extractor.cli import build_parser
+from patent_sar_extractor.contracts import OCSR_OBSERVATION_VERSION
+from patent_sar_extractor.core.ocsr.generation import observe_generation
 from patent_sar_extractor.core.ocsr.smiles_cache import SmilesCache
 from patent_sar_extractor.web.errors import WebError
 from patent_sar_extractor.web.observation_cache import (
@@ -29,8 +31,13 @@ class SharedObservationTests(ExistingCompoundCompletionTests):
         cache = SmilesCache(str(path))
         cache.save_result(
             "b" * 64,
-            "decimer:raw-v2:" + "a" * 64,
-            {"status": "success", "raw_smiles": raw, "model_fingerprint": "a" * 64},
+            f"decimer:raw-v{OCSR_OBSERVATION_VERSION}:" + "a" * 64,
+            {
+                "status": "success",
+                "raw_smiles": raw,
+                "model_fingerprint": "a" * 64,
+                "generation": observe_generation(["<start>", *raw, "<end>"])[1],
+            },
         )
         return path
 
@@ -44,6 +51,42 @@ class SharedObservationTests(ExistingCompoundCompletionTests):
             self.service.store.compound(self.project.id, "Compound 1"), before
         )
         self.assertEqual(self.service.store.project(self.project.id), project)
+
+    def test_legacy_raw_is_retained_at_source_but_never_promoted_to_current_cache(self):
+        import sqlite3
+
+        path = self.raw_cache()
+        with sqlite3.connect(path) as connection:
+            connection.execute(
+                "UPDATE smiles_observations SET engine=?",
+                ("decimer:raw-v2:" + "a" * 64,),
+            )
+        before = path.read_bytes()
+        result = import_observations(self.service, self.project.id, path)
+        self.assertEqual(result["raw_observations"], 0)
+        self.assertEqual(path.read_bytes(), before)
+
+    def test_current_raw_cache_cannot_self_attest_missing_or_other_molecule_tokens(
+        self,
+    ):
+        for packet in (None, observe_generation(["<start>", "N", "<end>"])[1]):
+            with self.subTest(packet=packet):
+                path = self.raw_cache()
+                cache = SmilesCache(str(path))
+                cache.save_result(
+                    "b" * 64,
+                    f"decimer:raw-v{OCSR_OBSERVATION_VERSION}:" + "a" * 64,
+                    {
+                        "status": "success",
+                        "raw_smiles": "CCO",
+                        "model_fingerprint": "a" * 64,
+                        "generation": packet,
+                    },
+                )
+                before = path.read_bytes()
+                with self.assertRaises(WebError):
+                    safe_snapshot(path)
+                self.assertEqual(path.read_bytes(), before)
 
     def test_exact_key_conflict_cannot_overwrite_existing_raw_observation(self):
         target = self.root / "target.sqlite"
@@ -61,7 +104,7 @@ class SharedObservationTests(ExistingCompoundCompletionTests):
         cache = SmilesCache(str(path))
         cache.save_result(
             "b" * 64,
-            "decimer:raw-v2:" + "a" * 64,
+            f"decimer:raw-v{OCSR_OBSERVATION_VERSION}:" + "a" * 64,
             {"status": "success", "raw_smiles": "CCO", "model_fingerprint": "c" * 64},
         )
         with self.assertRaises(WebError):
@@ -108,10 +151,11 @@ class SharedObservationTests(ExistingCompoundCompletionTests):
                 result = super().convert_one(binding, **kwargs)
                 self.cache.save_result(
                     result["image_hash"],
-                    "decimer:raw-v2:" + "a" * 64,
+                    f"decimer:raw-v{OCSR_OBSERVATION_VERSION}:" + "a" * 64,
                     {
                         "status": "success",
                         "raw_smiles": result["raw_smiles"],
+                        "generation": result["generation"],
                         "model_fingerprint": "a" * 64,
                     },
                 )
@@ -141,7 +185,7 @@ class SharedObservationTests(ExistingCompoundCompletionTests):
                     hashlib.sha256(
                         Path(binding["image_path"]).read_bytes()
                     ).hexdigest(),
-                    "decimer:raw-v2:" + "a" * 64,
+                    f"decimer:raw-v{OCSR_OBSERVATION_VERSION}:" + "a" * 64,
                 )
                 if raw is None:
                     raise AssertionError("A repeat must not load a model")

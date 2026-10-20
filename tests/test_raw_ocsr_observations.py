@@ -8,6 +8,7 @@ from unittest.mock import patch
 from PIL import Image, ImageDraw
 
 from patent_sar_extractor.core.ocsr import smiles_converter as converter_module
+from patent_sar_extractor.core.ocsr.generation import observe_generation
 from patent_sar_extractor.core.ocsr.smiles_cache import (
     SmilesCache,
     compute_image_sha256,
@@ -24,7 +25,9 @@ class RawOCSRObservationTests(unittest.TestCase):
         canvas.save(image)
         return {"cpd": "Compound 1", "structure_id": "S0001", "image_path": str(image)}
 
-    def converter(self, outputs, *, cache="", retry=False, preprocess=False):
+    def converter(
+        self, outputs, *, cache="", retry=False, preprocess=False, completion="complete"
+    ):
         calls = []
 
         class BoundaryEngine:
@@ -36,10 +39,20 @@ class RawOCSRObservationTests(unittest.TestCase):
 
             def predict(self, image, timeout=60):
                 calls.append(image)
+                raw = outputs[min(len(calls) - 1, len(outputs) - 1)]
+                words = [
+                    "<start>",
+                    *(raw or ""),
+                    *(["<end>"] if completion == "complete" else []),
+                ]
+                generation = observe_generation(words)[1] if raw else None
+                if completion == "forged":
+                    generation = {**generation, "status": "complete", "reason": None}
                 return {
                     "status": "success",
-                    "raw_smiles": outputs[min(len(calls) - 1, len(outputs) - 1)],
+                    "raw_smiles": raw,
                     "model_fingerprint": self.fingerprint,
+                    **({"generation": generation} if completion != "missing" else {}),
                 }
 
         with patch.dict(converter_module.ENGINE_MAP, {"decimer": BoundaryEngine}):
@@ -52,6 +65,62 @@ class RawOCSRObservationTests(unittest.TestCase):
                 **options,
             )
         return converter, calls
+
+    def test_parseable_incomplete_output_keeps_raw_but_cannot_be_success(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            item = self.fixture(Path(temporary))
+            converter, calls = self.converter(["CCO"], completion="incomplete")
+            result = converter.convert_one(item)
+            self.assertEqual(result["raw_smiles"], "CCO")
+            self.assertTrue(result["rdkit_valid"])
+            self.assertEqual(result["OCSR_status"], "all_engines_failed")
+            self.assertEqual(result["generation"]["reason"], "missing_end")
+            self.assertEqual(
+                result["engine_attempts"][0]["generation"], result["generation"]
+            )
+            self.assertEqual(len(calls), 1)
+
+    def test_missing_or_self_attested_completion_is_not_a_success(self):
+        for completion in ("missing", "forged"):
+            with (
+                self.subTest(completion=completion),
+                tempfile.TemporaryDirectory() as temporary,
+            ):
+                converter, _ = self.converter(["CCO"], completion=completion)
+                result = converter.convert_one(self.fixture(Path(temporary)))
+                self.assertEqual(result["OCSR_status"], "all_engines_failed")
+                self.assertEqual(result["raw_smiles"], "CCO")
+
+    def test_cached_missing_or_forged_completion_is_reinferred_not_promoted(self):
+        from patent_sar_extractor.contracts import OCSR_OBSERVATION_VERSION
+
+        for fault in ("missing", "forged", "another_raw"):
+            with self.subTest(fault=fault), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                item = self.fixture(root)
+                converter, calls = self.converter(
+                    ["CCO", "CCN"], cache=str(root / "cache.sqlite")
+                )
+                converter.convert_one(item)
+                image_hash = compute_image_sha256(item["image_path"])
+                key = f"decimer:raw-v{OCSR_OBSERVATION_VERSION}:" + "a" * 64
+                cached = converter.cache.get_cached_result(image_hash, key)
+                if fault == "missing":
+                    cached.pop("generation")
+                elif fault == "forged":
+                    cached["generation"]["tokens"].pop()
+                else:
+                    cached["generation"] = observe_generation(
+                        ["<start>", "C", "N", "<end>"]
+                    )[1]
+                converter.cache.save_result(image_hash, key, cached)
+                result = converter.convert_one(item)
+                self.assertEqual(result["raw_smiles"], "CCN")
+                self.assertEqual(result["OCSR_status"], "success")
+                self.assertEqual(len(calls), 2)
+                self.assertTrue(
+                    result["engine_attempts"][0]["ignored_cached_non_clean"]
+                )
 
     def test_default_converter_preserves_pixels_for_the_sdk_preprocessor(self):
         with tempfile.TemporaryDirectory() as temporary:

@@ -12,12 +12,12 @@ runpy.run_path(
     run_name="__main__",
 )
 from patent_sar_extractor.core.ocsr.model_identity import (
-    printed_model_identity,  # noqa: E402
+    printed_model_identity,
 )
 from patent_sar_extractor.core.ocsr.printed_model import (
-    PrintedDecimerModel,  # noqa: E402
+    PrintedDecimerModel,
 )
-from patent_sar_extractor.workers.analysis_protocol import (  # noqa: E402
+from patent_sar_extractor.workers.analysis_protocol import (
     emit,
     prepare,
     read_request,
@@ -36,7 +36,10 @@ def recognize(request: dict[str, object]) -> dict[str, object]:
         raise ValueError("Invalid bounded crop")
     identity = printed_model_identity()
     prediction = PrintedDecimerModel(identity).predict(str(image))
+    from patent_sar_extractor.core.ocsr.generation import validate_generated_raw
+
     smiles = prediction["smiles"]
+    validate_generated_raw(prediction.get("generation"), smiles)
     if len(smiles) > 2048:
         raise ValueError("Research SMILES exceeds its size limit")
     return {
@@ -51,7 +54,7 @@ def main() -> None:
         result = recognize(read_request())
     except (ImportError, importlib.metadata.PackageNotFoundError):
         emit(output, {"ok": False, "code": "runtime_unavailable"})
-    except (Exception, SystemExit) as exc:
+    except (Exception, SystemExit) as exc:  # noqa: BLE001 -- owned child boundary returns a bounded failure, never a molecule
         print(f"DECIMER analysis failed type={type(exc).__name__}", file=sys.stderr)
         emit(output, {"ok": False, "code": "inference_failed"})
     else:

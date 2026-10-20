@@ -1,5 +1,29 @@
 # X-PatentSAR architecture
 
+## Generated-token completion is separate from chemical correctness
+
+The sole printed DECIMER adapter retains the bounded original token stream,
+including actual outer start/end sentinels and incomplete-generation reasons.
+Only those outer sentinels are removed before the unchanged installed SDK
+decoder. Confidence uses the actual content slice; a missing end sentinel must
+not discard the final chemical token's score. The literal SDK digit alphabet,
+including its non-ASCII digit symbols, remains in the raw token inventory.
+
+`ocsr.generation` owns bounded grammar and literal decoded-output readback.
+Native JSONL, the converter, exact-image/model cache transport, saved source QC,
+Web currentness and the research-only adapter share this contract. A parseable
+prefix is not a completed generation. Valid incomplete observations retain raw
+SMILES and tokens with failed execution; they neither supply accepted molecules
+nor enter restricted stereo rescue. Malformed/mismatched metadata refuses.
+Rescue proof2 retains the complete primary generation separately from the
+MolScribe candidate; the original eight-item/graph/source rules remain in force.
+
+Adapter2, raw observation3 and SMILES schema5 invalidate affected reuse. Legacy
+raw/derived results remain historical at their original sources, never retagged
+with fabricated tokens or a new fingerprint. Original assets and human audit
+are untouched. Generation completion is not evidence of correct atoms, bonds,
+stereochemistry, terminal-product role, source recall or scientific acceptance.
+
 ## Declared text shares the unresolved-only auxiliary source path
 
 `activity_text_capture` submits its two ordinary physical line observations to

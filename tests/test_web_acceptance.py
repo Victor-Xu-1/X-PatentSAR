@@ -19,6 +19,7 @@ from patent_sar_extractor.core.ocsr.candidate_inventory import (
     inventory_digest,
     original_candidate_inventory,
 )
+from patent_sar_extractor.core.ocsr.generation import observe_generation
 from patent_sar_extractor.core.ocsr.smiles_qc import qc_smiles
 from patent_sar_extractor.core.ocsr.stereo_evidence import (
     observe_stereo_symbols,
@@ -124,6 +125,7 @@ def complete_payloads():
     payloads["smiles"]["records"][0].update(
         screened,
         raw_smiles="CCO",
+        generation=observe_generation(["<start>", "C", "C", "O", "<end>"])[1],
         image_hash=hashlib.sha256(image.getvalue()).hexdigest(),
         ocsr_original_input=binding["image_path"],
         page_no=1,

@@ -23,6 +23,19 @@ class DecimerProcessTests(unittest.TestCase):
         self.addCleanup(headroom.stop)
 
     def engine(self, root: Path, behavior: str = "success"):
+        words = ["<start>", "C", "C", "O"] + (
+            [] if behavior == "incomplete" else ["<end>"]
+        )
+        generation = {
+            "version": 1,
+            "tokens": words,
+            "status": "incomplete" if behavior == "incomplete" else "complete",
+            "reason": "missing_end" if behavior == "incomplete" else None,
+        }
+        if behavior == "missing_generation":
+            generation = None
+        elif behavior == "forged_generation":
+            generation["tokens"].pop()
         script = root / "worker.py"
         script.write_text(
             "import json,sys,time,os\n"
@@ -39,7 +52,7 @@ class DecimerProcessTests(unittest.TestCase):
                 if behavior == "oversized"
                 else " print(json.dumps({'id':'wrong','status':'success','smiles':'CCO'}),flush=True)\n"
                 if behavior == "wrong_id"
-                else " print(json.dumps({'id':r['id'],'status':'success','smiles':'CCO','model_fingerprint':'a'*64,'peak_rss_mb':10}),flush=True)\n"
+                else f" print(json.dumps({{'id':r['id'],'status':'success','smiles':'CCO','model_fingerprint':'a'*64,'peak_rss_mb':10,'generation':{generation!r}}}),flush=True)\n"
             ),
             encoding="utf-8",
         )
@@ -73,6 +86,30 @@ class DecimerProcessTests(unittest.TestCase):
             self.assertEqual(result["status"], "timeout")
             self.assertLess(time.monotonic() - started, 2)
             self.assertIsNone(engine.worker_process)
+
+    def test_parseable_incomplete_output_keeps_raw_and_reuses_healthy_process(self):
+        with tempfile.TemporaryDirectory() as temp:
+            engine, image = self.engine(Path(temp), "incomplete")
+            self.addCleanup(engine.close)
+            first = engine.predict(str(image), timeout=2)
+            process = engine.worker_process
+            second = engine.predict(str(image), timeout=2)
+            self.assertEqual(first["status"], "failed")
+            self.assertEqual(first["raw_smiles"], "CCO")
+            self.assertEqual(first["generation"]["reason"], "missing_end")
+            self.assertEqual(second["status"], "failed")
+            self.assertIs(engine.worker_process, process)
+            self.assertFalse(engine.session_exhausted)
+
+    def test_invalid_completion_packet_refuses_and_preserves_bounded_raw_reply(self):
+        for behavior in ("missing_generation", "forged_generation"):
+            with self.subTest(behavior=behavior), tempfile.TemporaryDirectory() as temp:
+                engine, image = self.engine(Path(temp), behavior)
+                self.addCleanup(engine.close)
+                result = engine.predict(str(image), timeout=2)
+                self.assertEqual(result["status"], "failed")
+                self.assertEqual(result["raw_smiles"], "CCO")
+                self.assertIsNone(engine.worker_process)
 
     def test_oversized_and_mismatched_packets_fail_closed(self):
         for behavior in ("oversized", "wrong_id"):

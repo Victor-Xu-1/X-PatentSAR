@@ -1,5 +1,15 @@
 # Project governance manifest
 
+- Generated-token authority: `core/ocsr/generation.py` is the single bounded
+  completion/literal-readback contract shared by the existing printed adapter,
+  JSONL/converter/cache, strict saved-source QC and Web currentness. It does not
+  write or repair molecules; the verified installed SDK decoder remains the
+  writer. DECIMER adapter2/raw observation3/SMILES5 and stereo rescue proof2
+  invalidate affected reuse without rewriting original assets, old raw results,
+  human audit or scientific acceptance. A complete sequence is not chemical
+  correctness. No model, dependency, environment, external call, activation,
+  queue, SQL/API schema or SAR ranking rule is introduced or changed.
+
 - Declared-line recovery uses the existing unresolved-only paired source helper
   in `activity_text_capture`; no second OCR/parser/writer is introduced. Native
   witnesses and known primary conflicts remain protected, original replay is

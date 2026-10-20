@@ -219,10 +219,15 @@ class ExistingCompoundCompletionTests(PredictionFixture, unittest.TestCase):
                 return {"fingerprint": "a" * 64}
 
             def predict(self, image, timeout=60):
+                from patent_sar_extractor.core.ocsr.generation import observe_generation
+
                 calls.append(image)
                 return {
                     "status": "success",
                     "raw_smiles": "CCO",
+                    "generation": observe_generation(
+                        ["<start>", "C", "C", "O", "<end>"]
+                    )[1],
                     "model_fingerprint": "a" * 64,
                 }
 

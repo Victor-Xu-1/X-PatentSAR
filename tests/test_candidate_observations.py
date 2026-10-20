@@ -25,6 +25,7 @@ from patent_sar_extractor.core.ocsr.candidate_observations import (
     build_candidate_plan,
     validate_candidate_observations,
 )
+from patent_sar_extractor.core.ocsr.generation import observe_generation
 from patent_sar_extractor.core.ocsr.recognition_inputs import RecognitionPlan
 from patent_sar_extractor.core.ocsr.smiles_converter import SmilesConverter
 from patent_sar_extractor.core.ocsr.stereo_rescue_pass import eligible
@@ -52,7 +53,12 @@ class ControlledDecimer:
         if self.closed:
             raise RuntimeError("Primary model was used after cleanup")
         self.calls.append(image)
-        return {"status": "success", "raw_smiles": "CCO", "model_fingerprint": "a" * 64}
+        return {
+            "status": "success",
+            "raw_smiles": "CCO",
+            "model_fingerprint": "a" * 64,
+            "generation": observe_generation(["<start>", "C", "C", "O", "<end>"])[1],
+        }
 
     def close(self):
         self.closed = True
@@ -332,6 +338,10 @@ class CandidateObservationTests(CandidateSourceControls, unittest.TestCase):
 
     def test_unassigned_candidates_cannot_consume_the_bounded_stereo_rescue(self):
         result = {
+            "raw_smiles": "C[C@H]1CC(C)(O)C1",
+            "generation": observe_generation(
+                ["<start>", *"C[C@H]1CC(C)(O)C1", "<end>"]
+            )[1],
             "OCSR_engine": "decimer",
             "OCSR_status": "review_required",
             "OCSR_quality_flag": "stereochemistry_not_retained",
