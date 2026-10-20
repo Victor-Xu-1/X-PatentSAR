@@ -22,14 +22,12 @@ def _unused_pair(page, label_bounds, structure_bounds, structures, page_index):
         box = _box([structure.get(key) for key in ("x0", "y0", "x1", "y1")])
         if box is None or _overlaps(box, structure_bounds):
             return False
-    from .table_cells import cell_image
+    from .source_cell_pixels import original_grid_cell_is_empty
 
-    for bounds in (label_bounds, structure_bounds):
-        image = cell_image(page, bounds, 150)
-        # Fixed tiny noise allowance; never erase a small molecule in a large cell.
-        if int((image.min(axis=2) < 200).sum()) > 4:
-            return False
-    return True
+    return all(
+        original_grid_cell_is_empty(page, bounds)
+        for bounds in (label_bounds, structure_bounds)
+    )
 
 
 def observe_ruled_cells(

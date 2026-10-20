@@ -47,8 +47,9 @@ def _word_read(engine, image, box, dpi):
 
 
 def observe_caption_word_form(page, bounds):
+    from .cell_raster import render_cell_raster
+    from .cell_rendering import CellRenderLimit
     from .plot_reference_pixels import pixel_reading
-    from .table_cells import CellRenderLimit, cell_image
 
     backend = get_ocr_engine()
     if not backend or backend[0] != "rapidocr":
@@ -63,21 +64,27 @@ def observe_caption_word_form(page, bounds):
     evidence = {"method": WORD_FORM_METHOD, "caption_word_form": packet}
     for dpi in (400, 600):
         try:
-            image = cell_image(
-                page, bounds, dpi, maximum_pixels=MAX_CAPTION_WORD_PIXELS
+            raster = render_cell_raster(
+                page,
+                bounds,
+                dpi,
+                maximum_pixels=MAX_CAPTION_WORD_PIXELS,
+                purpose="text",
             )
         except CellRenderLimit:
             return None
+        image = raster.image
+        retained = pixel_reading(image, dpi, source_window=raster.source_window)
         partitions = caption_word_partitions(np.min(image, axis=2) < 180, dpi)
         if partitions is None:
-            readings.append({"pixels": pixel_reading(image, dpi), "partitions": []})
+            readings.append({"pixels": retained, "partitions": []})
             packet["reason"] = "unresolved_original_word_partitions"
             return evidence
         observed = [
             {"words": [_word_read(backend[1], image, box, dpi) for box in boxes]}
             for boxes in partitions
         ]
-        readings.append({"pixels": pixel_reading(image, dpi), "partitions": observed})
+        readings.append({"pixels": retained, "partitions": observed})
         if any(word is None for partition in observed for word in partition["words"]):
             packet["reason"] = "malformed_original_word_read"
             return evidence
@@ -94,16 +101,13 @@ def observe_caption_word_form(page, bounds):
 
 def replay_caption_word_form(page, packet):
     """Reopen original pixels only: no OCR, inferred text or saved success flag."""
-    from .plot_reference_pixels import pixel_reading
-    from .table_cells import cell_image
+    from .plot_reference_pixels import replay_pixels
 
     frames = {}
     for item, dpi in zip(packet["readings"], (400, 600), strict=True):
-        image = cell_image(
-            page, packet["bbox"], dpi, maximum_pixels=MAX_CAPTION_WORD_PIXELS
+        image = replay_pixels(
+            page, packet["bbox"], item["pixels"], maximum_pixels=MAX_CAPTION_WORD_PIXELS
         )
-        if pixel_reading(image, dpi) != item["pixels"]:
-            raise ValueError("Original caption word pixels differ")
         frames[dpi] = {
             key: item["pixels"][key] for key in ("dpi", "shape", "pixel_sha256")
         }

@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 import numpy as np
+from cell_ocr_support import controlled_cell_pixels
 
 from patent_sar_extractor.core.table_cells import _ocr_cell
 
@@ -32,7 +33,8 @@ class CaptionCellOCRTests(unittest.TestCase):
                 return_value=("rapidocr", engine),
             ),
             patch(
-                "patent_sar_extractor.core.table_cells.cell_image", return_value=image
+                "patent_sar_extractor.core.table_cells.render_cell_raster",
+                side_effect=controlled_cell_pixels(image),
             ),
         ):
             reading = _ocr_cell(None, (0, 0, 100, 30), "label", 400)
@@ -55,8 +57,10 @@ class CaptionCellOCRTests(unittest.TestCase):
                 return_value=("rapidocr", engine),
             ),
             patch(
-                "patent_sar_extractor.core.table_cells.cell_image",
-                return_value=np.zeros((120, 320, 3), dtype=np.uint8),
+                "patent_sar_extractor.core.table_cells.render_cell_raster",
+                side_effect=controlled_cell_pixels(
+                    np.zeros((120, 320, 3), dtype=np.uint8)
+                ),
             ),
         ):
             self.assertEqual(_ocr_cell(None, (0, 0, 100, 30), "label", 400).value, "")

@@ -14,6 +14,7 @@ from .cell_frame_proof import valid_cell_frame
 from .cell_text_chunk_proof import text_detection_parts
 from .cell_text_proof import valid_text_reading
 from .cell_text_scope import text_scope
+from .source_cell_claims import cell_source_status
 from .source_fragment_context import validate_fragment_context
 from .source_grid_edges import edge_intervals
 from .source_section_roles import section_heading
@@ -143,9 +144,15 @@ def validate_fragments(region):
                         "Original open-row cell differs from its physical owner"
                     )
                 if native:
-                    if set(reading) != {"method", "text", "bbox"} or (
+                    if set(reading) - {"source_observation"} != {
+                        "method",
+                        "text",
+                        "bbox",
+                    } or (
                         reading["method"] != "native_cell"
                         or reading["text"] != cells["native_hints"][0][column]
+                        or cell_source_status(reading)
+                        not in {"legacy", "qualified", "empty"}
                     ):
                         raise ValueError("Malformed native open-row cell")
                 else:
@@ -163,6 +170,7 @@ def validate_fragments(region):
                             "physical_text_chunks",
                             "single_row_readings",
                             "text_scope",
+                            "source_window",
                         }
                         != {
                             "method",

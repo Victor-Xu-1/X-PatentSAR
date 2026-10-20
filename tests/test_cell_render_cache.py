@@ -17,6 +17,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 from patent_sar_extractor.core.cell_frame_proof import original_cell_frame_matches
+from patent_sar_extractor.core.cell_raster import render_cell_raster
 from patent_sar_extractor.core.cell_rendering import isolated_original_page
 from patent_sar_extractor.core.cell_text_chunks import observe_text_cell
 from patent_sar_extractor.core.cell_text_proof import valid_text_reading
@@ -59,7 +60,8 @@ class CellRenderCacheTests(unittest.TestCase):
 
             for dpi in (400, 600):
                 with self.subTest(dpi=dpi):
-                    image = cell_image(page, bounds, dpi)
+                    raster = render_cell_raster(page, bounds, dpi, purpose="text")
+                    image = raster.image
                     reading = observe_text_cell(
                         image, dpi, reader, rows_per_chunk=2
                     ).evidence(dpi, bounds)
@@ -68,6 +70,7 @@ class CellRenderCacheTests(unittest.TestCase):
                         "shape": list(image.shape),
                         "pixel_sha256": hashlib.sha256(image.tobytes()).hexdigest(),
                     }
+                    reading["source_window"] = raster.source_window
                     self.assertTrue(
                         valid_text_reading(
                             reading, bounds, dpi, maximum_rows=2, allow_chunks=True
@@ -117,7 +120,7 @@ class CellRenderCacheTests(unittest.TestCase):
         for mode in ("L", "RGB"):
             with fitz.open(stream=scanned_source(mode), filetype="pdf") as document:
                 bounds = [70.35, 460.35, 216.75, 475.05]
-                clip = fitz.Rect(71.85, 461.55, 215.25, 473.85)
+                clip = fitz.Rect(bounds)
                 expected = document[0].get_pixmap(
                     matrix=fitz.Matrix(400 / 72, 400 / 72), clip=clip, alpha=False
                 )
@@ -155,7 +158,7 @@ class CellRenderCacheTests(unittest.TestCase):
                 document[0].insert_text((30, 90), "Current source 26B")
                 expected = document[0].get_pixmap(
                     matrix=fitz.Matrix(2, 2),
-                    clip=fitz.Rect(21.5, 66.2, 198.5, 108.8),
+                    clip=fitz.Rect(20, 65, 200, 110),
                     alpha=False,
                 )
                 np.testing.assert_array_equal(
@@ -191,7 +194,7 @@ class CellRenderCacheTests(unittest.TestCase):
                 bounds = [0, 0, page.rect.width, page.rect.height]
                 expected = page.get_pixmap(
                     matrix=fitz.Matrix(2, 2),
-                    clip=fitz.Rect(1.5, 1.2, bounds[2] - 1.5, bounds[3] - 1.2),
+                    clip=fitz.Rect(bounds),
                     alpha=False,
                 )
                 with self.subTest(rotation=rotation):
@@ -242,7 +245,7 @@ class CellRenderCacheTests(unittest.TestCase):
         with fitz.open(stream=scanned_source(), filetype="pdf") as document:
             with (
                 patch(
-                    "patent_sar_extractor.core.table_cells.original_cell_pixmap",
+                    "patent_sar_extractor.core.cell_raster.original_cell_pixmap",
                     side_effect=AssertionError("Budget must refuse first"),
                 ),
                 self.assertRaises(CellRenderLimit),

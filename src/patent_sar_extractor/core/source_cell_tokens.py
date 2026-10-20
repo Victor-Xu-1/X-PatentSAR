@@ -2,6 +2,8 @@
 
 from bisect import bisect_right
 
+from .native_paint_geometry import native_paint_disjoint, native_paint_within
+
 
 def grid_token_index(tokens, xs, ys):
     """Index already-validated axes with the same half-open centre ownership."""
@@ -19,6 +21,22 @@ def grid_token_index(tokens, xs, ys):
 def cell_tokens(tokens, bounds):
     x0, y0, x1, y1 = bounds
     return [t for t in tokens if x0 <= t["x"] < x1 and y0 <= t["y"] < y1]
+
+
+def cell_intersections(tokens, bounds):
+    """Positive-area witnesses, not ownership of neighbouring text."""
+    x0, y0, x1, y1 = bounds
+    return [
+        token
+        for token in tokens
+        if (box := token.get("bbox"))
+        and min(box[2], x1) > max(box[0], x0)
+        and min(box[3], y1) > max(box[1], y0)
+        and not (
+            native_paint_disjoint(token, bounds)
+            and not (x0 <= token["x"] < x1 and y0 <= token["y"] < y1)
+        )
+    ]
 
 
 def cell_lines(tokens, bounds):
@@ -52,7 +70,13 @@ def cell_text(tokens, bounds):
 def crosses_cell(tokens, bounds):
     x0, y0, x1, y1 = bounds
     return any(
-        (box := token.get("bbox"))
-        and (box[0] < x0 - 1 or box[1] < y0 - 1 or box[2] > x1 + 1 or box[3] > y1 + 1)
-        for token in cell_tokens(tokens, bounds)
+        native_paint_disjoint(token, bounds)
+        or (
+            (box := token.get("bbox"))
+            and (
+                box[0] < x0 - 1 or box[1] < y0 - 1 or box[2] > x1 + 1 or box[3] > y1 + 1
+            )
+            and not native_paint_within(token, bounds)
+        )
+        for token in cell_intersections(tokens, bounds)
     )

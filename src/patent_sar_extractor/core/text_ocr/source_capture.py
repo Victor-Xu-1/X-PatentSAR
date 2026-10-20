@@ -19,9 +19,12 @@ def refine_source_text(
     auxiliary = get_auxiliary_text_runtime()
     if auxiliary is None:
         return readings
-    from patent_sar_extractor.core.table_cells import cell_image
+    from patent_sar_extractor.core.cell_raster import original_reading_image
 
-    images = tuple(cell_image(page, bounds, dpi) for dpi in (400, 600))
+    images = tuple(
+        original_reading_image(page, bounds, dpi, primary)
+        for primary, dpi in zip(readings, (400, 600), strict=True)
+    )
     attempts = []
     selected = refine_text_pair(
         images,

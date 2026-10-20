@@ -9,6 +9,8 @@ import unittest
 from contextlib import nullcontext
 from unittest.mock import patch
 
+import fitz
+
 from patent_sar_extractor.core.activity_auxiliary_replay import (
     original_activity_source_errors,
 )
@@ -18,6 +20,52 @@ from tests import test_role_text_recovery as raster
 
 
 class PrimaryRoleReplayTests(unittest.TestCase):
+    def test_native_blank_requires_original_empty_grid_pixels_not_only_missing_text(
+        self,
+    ):
+        from patent_sar_extractor.core.activity_grid_role_observation import (
+            observe_role_cells,
+        )
+        from patent_sar_extractor.core.role_original_replay import (
+            original_role_source_errors,
+        )
+        from patent_sar_extractor.core.source_geometry import (
+            SourceTokens,
+            source_layout,
+        )
+
+        with fitz.open() as document:
+            page = document.new_page(width=180, height=100)
+            for x in (10, 80, 150):
+                page.draw_line((x, 10), (x, 50))
+            for y in (10, 50):
+                page.draw_line((10, y), (150, y))
+            page.insert_text((20, 32), "NMR", fontsize=9)
+            layout = source_layout(page)
+            cells = observe_role_cells(
+                page,
+                {"xs": [10, 80, 150], "ys": [10, 50]},
+                SourceTokens(layout.native, layout),
+            )
+            blank = cells["observations"][0]["cells"][1]
+            self.assertEqual(blank["method"], "native_cell")
+            self.assertEqual(blank["text"], "")
+            self.assertEqual(original_role_source_errors(document, [(1, blank)]), [])
+            page.draw_line((95, 25), (125, 40), width=1)
+            self.assertTrue(original_role_source_errors(document, [(1, blank)]))
+
+    def test_current_native_role_cannot_drop_its_complete_source_observation(self):
+        page, payload = self.source("native")
+        scope = payload["coverage"]["regions"][0]["role_scope"]
+        for reading in scope["observations"][0]["cells"]:
+            self.assertEqual(reading["source_observation"]["schema_version"], 2)
+            del reading["source_observation"]
+        self.assertTrue(
+            original_activity_source_errors(
+                payload, open_original=lambda: nullcontext(page.parent)
+            )
+        )
+
     def source(self, method):
         if method == "native":
             fixture = native.RoleGridCoverageTests()

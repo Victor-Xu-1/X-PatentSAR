@@ -1,12 +1,12 @@
 """Original quantitative-axis word observation and exact saved-source replay."""
 
 import hashlib
-import math
 
 import numpy as np
 
 from .cell_ocr_observation import observe_cell
 from .cell_ocr_scores import confidence_value
+from .cell_raster import retained_pixel_origin
 from .cell_text_proof import valid_text_components
 from .cell_word_orientation import rectified_word, valid_word_frame, word_frame
 from .page_ocr_cache import get_ocr_engine
@@ -106,11 +106,8 @@ def _word_reading(word, mask, box, angle, dpi):
     return reading["text"]
 
 
-def _point_box(box, bounds, dpi):
-    origin = [
-        math.floor((bounds[0] + 1.5) * dpi / 72) * 72 / dpi,
-        math.floor((bounds[1] + 1.2) * dpi / 72) * 72 / dpi,
-    ]
+def _point_box(box, bounds, dpi, reading):
+    origin = retained_pixel_origin(reading, bounds, dpi)
     return [v * 72 / dpi + origin[i % 2] for i, v in enumerate(box)]
 
 
@@ -150,7 +147,7 @@ def axis_word_parts(packet, bounds, *, layout="columns", with_scope=False):
             text = _word_reading(word, mask, box, reading["frame"]["angle"], dpi)
             if text is None:
                 return None
-            parts.append({"text": text, "bbox": _point_box(box, bounds, dpi)})
+            parts.append({"text": text, "bbox": _point_box(box, bounds, dpi, pixels)})
         observations.append(parts)
     if len(observations[0]) != len(observations[1]):
         return None
@@ -174,8 +171,13 @@ def axis_word_parts(packet, bounds, *, layout="columns", with_scope=False):
     scope = bounds
     if layout == "rows":
         lanes = [
-            _point_box(reading["frame"]["lane_bounds"], bounds, dpi)
-            for reading, dpi in zip(packet["readings"], (400, 600))
+            _point_box(reading["frame"]["lane_bounds"], bounds, dpi, original)
+            for reading, original, dpi in zip(
+                packet["readings"],
+                packet["pixels"]["readings"],
+                (400, 600),
+                strict=True,
+            )
         ]
         scope = [
             min(box[0] for box in lanes),

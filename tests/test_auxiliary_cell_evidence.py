@@ -6,11 +6,12 @@ import unittest
 import fitz
 
 from patent_sar_extractor.core.cell_ocr_observation import observe_cell
+from patent_sar_extractor.core.cell_raster import render_cell_raster
 from patent_sar_extractor.core.cell_text_proof import (
     physical_text_valid,
     valid_text_components,
 )
-from patent_sar_extractor.core.table_cells import cell_image
+from patent_sar_extractor.core.table_cells import observe_original_cell
 from patent_sar_extractor.core.text_ocr.cell_capture import refine_text_pair
 from patent_sar_extractor.core.text_ocr.cell_proof import (
     replay_auxiliary_cell,
@@ -56,12 +57,15 @@ class AuxiliaryCellEvidenceTests(unittest.TestCase):
         self.page.insert_text((25, 45), "HTRF", fontsize=9)
         self.page.insert_text((25, 65), "EC50", fontsize=9)
         self.bounds = [15, 25, 140, 80]
-        self.images = tuple(cell_image(self.page, self.bounds, d) for d in (400, 600))
+        self.images = tuple(
+            render_cell_raster(self.page, self.bounds, d, purpose="text").image
+            for d in (400, 600)
+        )
         self.primaries = tuple(
-            observe_cell(i, "header", d, primary, lambda t, _k: t).evidence(
-                d, self.bounds
-            )
-            for i, d in zip(self.images, (400, 600))
+            observe_original_cell(
+                self.page, self.bounds, "header", d, primary, lambda t, _k: t
+            ).evidence(d, self.bounds)
+            for d in (400, 600)
         )
 
     def test_whole_original_pair_and_weak_primaries_are_preserved(self):

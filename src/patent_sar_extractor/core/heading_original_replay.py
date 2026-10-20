@@ -2,6 +2,7 @@
 
 import hashlib
 
+from .cell_raster import original_reading_image
 from .heading_source_proof import proved_heading_declaration
 from .source_geometry import SourceTokens, source_layout
 from .source_observations import source_cell_observation
@@ -14,7 +15,6 @@ HEADING_RULES = frozenset(
 
 def validate_original_heading(page, proof):
     """The caller owns the already verified original document and PDF lock."""
-    import fitz
 
     if (
         proved_heading_declaration(proof) is None
@@ -37,13 +37,18 @@ def validate_original_heading(page, proof):
                 "Original native heading is invisible, covered or unproved"
             )
         return
-    from .table_cells import cell_image
 
     frames = proof["rendered_frames"]
     if not isinstance(frames, list) or len(frames) != 2:
         raise ValueError("Original heading raster observations are incomplete")
-    for frame, dpi in zip(frames, (400, 600), strict=True):
-        image = cell_image(page, fitz.Rect(proof["bbox"]), dpi)
+    for frame, reading, dpi in zip(
+        frames, proof["observations"], (400, 600), strict=True
+    ):
+        if "source_window" not in reading:
+            raise ValueError(
+                "Current heading requires its complete original cell window"
+            )
+        image = original_reading_image(page, proof["bbox"], dpi, reading)
         if frame != {
             "dpi": dpi,
             "shape": list(image.shape),

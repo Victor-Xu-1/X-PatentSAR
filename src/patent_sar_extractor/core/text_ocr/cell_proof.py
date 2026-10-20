@@ -6,7 +6,7 @@ from patent_sar_extractor.contracts import (
     AUXILIARY_TEXT_CELL_VERSION,
     AUXILIARY_TEXT_RECOVERY_VERSION,
 )
-from patent_sar_extractor.core.table_cells import cell_image
+from patent_sar_extractor.core.cell_raster import original_reading_image
 
 from .cell_frames import literal, source_rows
 from .cell_packets import view_summary
@@ -103,6 +103,11 @@ def replay_auxiliary_cell(reading, page):
     """Render the same original windows, without models, paths from artifacts or edits."""
     if not valid_auxiliary_cell(reading, reading.get("render_dpi")):
         return False
+    if any(
+        "source_window" not in view["primary"]
+        for view in reading["auxiliary_text"]["views"]
+    ):
+        return False  # Legacy parsing/display is not complete-source admission.
     if reading["auxiliary_text"]["version"] in (2, 3, AUXILIARY_TEXT_RECOVERY_VERSION):
         from .recovery_proof import replay_recovery_cell
 
@@ -111,7 +116,8 @@ def replay_auxiliary_cell(reading, page):
         except (TypeError, ValueError, KeyError, IndexError, RuntimeError):
             return False
     for view in reading["auxiliary_text"]["views"]:
-        image = cell_image(page, view["primary"]["bbox"], view["dpi"])
+        primary = view["primary"]
+        image = original_reading_image(page, primary["bbox"], view["dpi"], primary)
         actual = source_rows(image, view["dpi"])
         if actual is None:
             return False

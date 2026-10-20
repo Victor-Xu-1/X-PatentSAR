@@ -1,5 +1,22 @@
 # Project governance manifest
 
+- Cell geometry authority: `cell_raster`/`cell_window` own complete
+  source/view coordinates and `cell_rule_pixels` owns the shared existing literal
+  rule policy. Existing OCR, auxiliary, role, caption and plot consumers share
+  those frames; no second recognizer, masking path or chemical writer is added.
+  `source_observations` schema2 separates centre-owned tokens from intersecting
+  neighbour conflict witnesses; historical schema1 is not current evidence.
+  Optional original native paint envelopes retain unchanged word metrics; only
+  uniquely matched whole opaque fill-paint containment resolves padding.
+  `cell_frame_support` owns the bounded same-original600dpi geometric witness
+  for connected400dpi ruled text proposals. `support_limit` preserves an original
+  allocation refusal across readback; neither option is an OCR/model policy.
+  Binding50/binder60, Activity35/extractor45 and visible-label24 own current
+  derived proof; historical notes below are not current version authorities.
+  Focused producer/consumer checks and installed delivery remain release gates.
+  No environment,
+  model, activation, numerical SAR, API or SQL schema change is implied.
+
 - Ordinary activity replay authority: `measurement_text_cells` unifies final and
   discovery headers with accepted/unresolved scalar observations. Existing primary
   frame, paired auxiliary and role-source replayers each keep their ownership;

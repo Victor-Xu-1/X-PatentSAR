@@ -9,9 +9,10 @@ from patent_sar_extractor.core.activity_auxiliary_replay import (
     auxiliary_columns,
     original_activity_source_errors,
 )
+from patent_sar_extractor.core.cell_raster import render_cell_raster
+from patent_sar_extractor.core.table_cells import observe_original_cell
 from patent_sar_extractor.core.text_ocr.cell_capture import refine_text_pair
 from patent_sar_extractor.core.text_ocr.cell_proof import (
-    effective_cells,
     replay_auxiliary_cell,
 )
 from tests import test_auxiliary_cell_evidence as cell_fixture
@@ -95,21 +96,29 @@ class AuxiliarySourceReplayTests(unittest.TestCase):
             original_activity_source_errors(bad)
 
     def second_locator(self, *, changed_text=False):
-        proof = self.payload["header_observations"]["controlled"]
-        packet = copy.deepcopy(proof["observations"][0]["columns"][0]["auxiliary_text"])
-        if changed_text:
-            changed = refine_text_pair(
-                self.images,
-                self.primaries,
-                cell_fixture.ControlledAuxiliary(("Noise", "EC50")),
-            )
-            packet = copy.deepcopy(changed[0]["auxiliary_text"])
-        for view in packet["views"]:
-            view["primary"]["bbox"][0] += 1
-            view["primary"]["bbox"][2] += 1
-            view["selected"]["bbox"][0] += 1
-            view["selected"]["bbox"][2] += 1
-        pair = effective_cells(packet)
+        # A genuine second physical occurrence, not moved saved coordinates.
+        # 72pt is an exact device translation at BOTH existing resolutions.
+        self.page.insert_text((25, 117), "HTRF", fontsize=9)
+        self.page.insert_text((25, 137), "EC50", fontsize=9)
+        bounds = [15, 97, 140, 152]
+        images = tuple(
+            render_cell_raster(self.page, bounds, d, purpose="text").image
+            for d in (400, 600)
+        )
+        primaries = tuple(
+            observe_original_cell(
+                self.page, bounds, "header", d, cell_fixture.primary, lambda t, _k: t
+            ).evidence(d, bounds)
+            for d in (400, 600)
+        )
+        pair = refine_text_pair(
+            images,
+            primaries,
+            cell_fixture.ControlledAuxiliary(
+                ("Noise", "EC50") if changed_text else ("HTRF", "EC50")
+            ),
+        )
+        self.assertIsNotNone(pair)
         return {
             "page_no": 1,
             "observations": [{"columns": [pair[0]]}, {"columns": [pair[1]]}],
@@ -119,6 +128,12 @@ class AuxiliarySourceReplayTests(unittest.TestCase):
         self.payload["header_observations"]["second"] = self.second_locator()
         with patch("patent_sar_extractor.core.text_ocr.source_inventory._MAX_ROWS", 4):
             self.assertEqual(len(list(auxiliary_columns(self.payload))), 2)
+            self.assertEqual(
+                original_activity_source_errors(
+                    self.payload, open_original=lambda: nullcontext(self.document)
+                ),
+                [],
+            )
 
     def test_one_cached_request_identity_cannot_claim_conflicting_outputs(self):
         self.payload["header_observations"]["second"] = self.second_locator(

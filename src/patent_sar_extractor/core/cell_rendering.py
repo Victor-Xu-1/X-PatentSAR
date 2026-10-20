@@ -6,6 +6,29 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 
 import fitz
+import numpy as np
+
+
+class CellRenderLimit(ValueError):
+    """A valid original cell cannot fit its caller-owned pixel budget."""
+
+
+def historical_cell_image(page, bounds, dpi, *, maximum_pixels=8_000_000):
+    """Read-only v1 pixel replay; never a current observation producer."""
+    if type(maximum_pixels) is not int or not 0 < maximum_pixels <= 8_000_000:
+        raise ValueError("Invalid original-cell pixel budget")
+    x0, y0, x1, y1 = bounds
+    clip = fitz.Rect(x0 + 1.5, y0 + 1.2, x1 - 1.5, y1 - 1.2) & page.rect
+    if clip.is_empty:
+        raise ValueError("Invalid historical cell bounds")
+    matrix = fitz.Matrix(dpi / 72, dpi / 72)
+    extent = (clip * matrix).irect
+    if extent.width * extent.height > maximum_pixels:
+        raise CellRenderLimit("Original cell exceeds its rendered pixel budget")
+    pixmap = original_cell_pixmap(page, matrix=matrix, clip=clip)
+    return np.frombuffer(pixmap.samples, np.uint8).reshape(
+        pixmap.height, pixmap.width, pixmap.n
+    )[:, :, :3]
 
 
 @contextmanager

@@ -4,12 +4,12 @@ An OCR prefix nominates observation only. It is never removed from raw data or
 used to assert a molecule; text and the complete graphic key need pixel proof.
 """
 
-import math
 import re
 
 import numpy as np
 
 from .cell_frame_proof import inside_box
+from .cell_raster import retained_pixel_origin
 from .plot_reference_geometry import legend_heading, literal_bounds
 from .plot_reference_marker import marker_extent
 from .plot_reference_pixels import observe_pixels, retained_pixels
@@ -45,15 +45,12 @@ def _window(line, size):
     ]
 
 
-def _point_box(box, bounds, dpi):
-    origin = [
-        math.floor((bounds[0] + 1.5) * dpi / 72) * 72 / dpi,
-        math.floor((bounds[1] + 1.2) * dpi / 72) * 72 / dpi,
-    ]
+def _point_box(box, bounds, dpi, reading):
+    origin = retained_pixel_origin(reading, bounds, dpi)
     return [v * 72 / dpi + origin[i % 2] for i, v in enumerate(box)]
 
 
-def _separate(mask, bounds, dpi, height):
+def _separate(mask, bounds, dpi, height, reading):
     columns = np.flatnonzero(mask.any(axis=0))
     if not len(columns):
         return None
@@ -71,8 +68,8 @@ def _separate(mask, bounds, dpi, height):
     # Every non-key ink pixel belongs to the one retained complete text window.
     # Neither a preferred word subset nor the compound number chooses the cut.
     return {
-        "key": _point_box([left, top, right, bottom], bounds, dpi),
-        "text": _point_box(text_box, bounds, dpi),
+        "key": _point_box([left, top, right, bottom], bounds, dpi, reading),
+        "text": _point_box(text_box, bounds, dpi, reading),
     }
 
 
@@ -119,7 +116,7 @@ def locator_nomination(packet, size):
         mask = retained_pixels(reading, bounds, dpi, MAX_LOCATOR_PIXELS)
         if mask is None:
             return None
-        split = _separate(mask, bounds, dpi, line["bbox"][3] - line["bbox"][1])
+        split = _separate(mask, bounds, dpi, line["bbox"][3] - line["bbox"][1], reading)
         if split is None:
             return None
         results.append(split)

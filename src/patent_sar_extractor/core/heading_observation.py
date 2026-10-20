@@ -1,10 +1,11 @@
 """One bounded native/raster heading observer using the existing text-cell SDK."""
 
-import hashlib
+from dataclasses import replace
 
 import fitz
 
 from .cell_ocr_observation import observe_cell
+from .cell_raster import render_cell_raster
 from .heading_cell_source import observe_cell_source
 from .heading_source_geometry import MAX_HEADING_HEIGHT, heading_bounds
 from .heading_source_proof import heading_observation_status
@@ -12,7 +13,6 @@ from .page_ocr_cache import get_ocr_engine
 from .source_geometry import SourceTokens, overlaps, source_layout
 from .source_observations import source_cell_observation
 from .source_section_roles import section_heading
-from .table_cells import cell_image
 
 
 def observe_heading(page, line, original_pdf_sha256, *, layout=None, grids=None):
@@ -80,22 +80,21 @@ def _observe_window(page, proof, layout):
         engine = get_ocr_engine()
         if engine and engine[0] == "rapidocr":
             for dpi in (400, 600):
-                image = cell_image(page, bounds, dpi)
+                raster = render_cell_raster(page, list(bounds), dpi, purpose="text")
                 reading = observe_cell(
-                    image,
+                    raster.image,
                     "heading",
                     dpi,
                     engine[1],
                     lambda raw, _kind: raw if section_heading(raw) else "",
                 )
-                proof["observations"].append(reading.evidence(dpi, bounds))
-                proof["rendered_frames"].append(
-                    {
-                        "dpi": dpi,
-                        "shape": list(image.shape),
-                        "pixel_sha256": hashlib.sha256(image.tobytes()).hexdigest(),
-                    }
+                reading = replace(
+                    reading,
+                    source_frame=raster.frame,
+                    source_window=raster.source_window,
                 )
+                proof["observations"].append(reading.evidence(dpi, bounds))
+                proof["rendered_frames"].append(raster.frame)
     proof["status"], _ = heading_observation_status(proof)
     if proof["status"] == "unresolved" and len(proof["observations"]) == 2:
         from .text_ocr.source_capture import refine_source_text

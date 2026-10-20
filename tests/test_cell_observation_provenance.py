@@ -5,6 +5,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 import numpy as np
+from cell_ocr_support import controlled_cell_pixels
 
 from patent_sar_extractor.core.table_cells import _ocr_cell, read_cell
 
@@ -30,8 +31,10 @@ class CellObservationProvenanceTests(unittest.TestCase):
                 return_value=("rapidocr", engine),
             ),
             patch(
-                "patent_sar_extractor.core.table_cells.cell_image",
-                return_value=np.zeros((120, 320, 3), dtype=np.uint8),
+                "patent_sar_extractor.core.table_cells.render_cell_raster",
+                side_effect=controlled_cell_pixels(
+                    np.zeros((120, 320, 3), dtype=np.uint8)
+                ),
             ),
         ):
             result = _ocr_cell(None, (0, 0, 100, 30), kind, 400)
@@ -93,8 +96,10 @@ class CellObservationProvenanceTests(unittest.TestCase):
                         return_value=("rapidocr", engine),
                     ),
                     patch(
-                        "patent_sar_extractor.core.table_cells.cell_image",
-                        return_value=np.zeros((120, 320, 3), dtype=np.uint8),
+                        "patent_sar_extractor.core.table_cells.render_cell_raster",
+                        side_effect=controlled_cell_pixels(
+                            np.zeros((120, 320, 3), dtype=np.uint8)
+                        ),
                     ),
                 ):
                     result = read_cell(
@@ -124,7 +129,8 @@ class CellObservationProvenanceTests(unittest.TestCase):
                 return_value=("rapidocr", engine),
             ),
             patch(
-                "patent_sar_extractor.core.table_cells.cell_image", return_value=image
+                "patent_sar_extractor.core.table_cells.render_cell_raster",
+                side_effect=controlled_cell_pixels(image),
             ),
         ):
             _ocr_cell(None, (0, 0, 100, 10), "label", 400)
@@ -142,8 +148,10 @@ class CellObservationProvenanceTests(unittest.TestCase):
                 return_value=("rapidocr", engine),
             ),
             patch(
-                "patent_sar_extractor.core.table_cells.cell_image",
-                return_value=np.zeros((120, 320, 3), dtype=np.uint8),
+                "patent_sar_extractor.core.table_cells.render_cell_raster",
+                side_effect=controlled_cell_pixels(
+                    np.zeros((120, 320, 3), dtype=np.uint8)
+                ),
             ),
         ):
             result = _ocr_cell(None, (0, 0, 100, 30), "label", 400)

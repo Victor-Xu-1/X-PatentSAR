@@ -2,6 +2,7 @@
 
 from .activity_grid_roles import MAX_ROLE_ROW_HEIGHT, MAX_ROLE_TEXT_ROWS
 from .cell_frame_proof import inside_box, original_cell_frame_matches
+from .source_cell_pixels import original_grid_cell_is_empty
 from .source_geometry import (
     SourceTokens,
     native_cell_text,
@@ -9,6 +10,8 @@ from .source_geometry import (
     overlaps,
     source_layout,
 )
+from .source_observations import source_cell_observation
+from .source_paint_visibility import visible_native_tokens
 from .text_ocr.cell_proof import has_auxiliary_text
 
 
@@ -39,6 +42,7 @@ def original_role_source_errors(document, sources):
                 layout = layouts[page_no]
                 tokens = SourceTokens(layout.native, layout, layout.raster_bounds)
                 text = cell.get("text")
+                profile = source_cell_observation(tokens, bounds, native=True)
                 if (
                     not isinstance(text, str)
                     or len(text) > 4096
@@ -47,6 +51,11 @@ def original_role_source_errors(document, sources):
                     and not native_region(tokens, bounds, False)
                     or layout.raster_bounds is not None
                     and overlaps(layout.raster_bounds, bounds)
+                    or cell.get("source_observation") != profile
+                    or bool(text and text.strip())
+                    and not visible_native_tokens(page, profile)
+                    or not bool(text and text.strip())
+                    and not original_grid_cell_is_empty(page, bounds)
                 ):
                     return ["Native role text differs from its actual original source."]
             elif method in ("cell_ocr_400dpi", "cell_ocr_600dpi"):

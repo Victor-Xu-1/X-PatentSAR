@@ -36,6 +36,7 @@ class OCRObservation:
     physical_text_chunks: dict | None = None
     single_row_readings: list[dict] | None = None
     source_frame: dict | None = None
+    source_window: dict | None = None
     text_scope: dict | None = None
 
     def evidence(self, dpi: int, bounds) -> dict:
@@ -57,6 +58,11 @@ class OCRObservation:
             **(
                 {"source_frame": self.source_frame}
                 if self.source_frame is not None
+                else {}
+            ),
+            **(
+                {"source_window": self.source_window}
+                if self.source_window is not None
                 else {}
             ),
             **(

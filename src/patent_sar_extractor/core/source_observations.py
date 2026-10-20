@@ -4,8 +4,15 @@ import math
 from collections.abc import Mapping
 
 from .cell_ocr_scores import confidence_value
+from .native_paint_geometry import valid_native_paint
 from .ocr_claims import qualified_text_runs
-from .source_cell_tokens import cell_lines, cell_text, cell_tokens, crosses_cell
+from .source_cell_tokens import (
+    cell_intersections,
+    cell_lines,
+    cell_text,
+    cell_tokens,
+    crosses_cell,
+)
 from .source_geometry import SourceTokens
 
 MAXIMUM_TOKENS = 512
@@ -32,15 +39,24 @@ def source_cell_observation(tokens, bounds, *, native=False):
         return None
     if not _box(bounds):
         raise ValueError("Invalid original source-cell bounds")
-    selected = cell_tokens(tokens.native_tokens if native else tokens, bounds)
-    if len(selected) > MAXIMUM_TOKENS:
+    inventory = tokens.native_tokens if native else tokens
+    selected = cell_tokens(inventory, bounds)
+    owned_ids = {id(part) for part in selected}
+    boundary = [
+        part
+        for part in cell_intersections(inventory, bounds)
+        if id(part) not in owned_ids
+    ]
+    if len(selected) + len(boundary) > MAXIMUM_TOKENS:
         raise ValueError("Original source-cell token budget exceeded")
     retained = []
-    for part in selected:
+    for part in [*selected, *boundary]:
         if (
             not isinstance(part.get("text"), str)
             or len(part["text"]) > 4096
             or not _box(part.get("bbox"), original=True)
+            or "native_paint" in part
+            and not valid_native_paint(part)
             or any(
                 type(part.get(k)) not in {int, float} or not math.isfinite(part[k])
                 for k in ("x", "y")
@@ -61,15 +77,26 @@ def source_cell_observation(tokens, bounds, *, native=False):
                 "confidence_available": available,
                 "confidence_valid": score is not None
                 and part.get("confidence_valid", True) is True,
+                **(
+                    {
+                        "native_paint": {
+                            **part["native_paint"],
+                            "bbox": list(part["native_paint"]["bbox"]),
+                        }
+                    }
+                    if valid_native_paint(part)
+                    else {}
+                ),
             }
         )
     packet = {
-        "schema_version": 1,
+        "schema_version": 2,
         "origin": "native" if native else "raster",
         "coordinate_space": "rendered_pdf_points",
         "bbox": list(bounds),
-        "tokens": retained,
-        "text": cell_text(retained, bounds),
+        "tokens": retained[: len(selected)],
+        "boundary_tokens": retained[len(selected) :],
+        "text": cell_text(retained[: len(selected)], bounds),
     }
     packet["status"] = _status(packet)
     return packet
@@ -77,8 +104,11 @@ def source_cell_observation(tokens, bounds, *, native=False):
 
 def _status(packet):
     parts = packet["tokens"]
-    if any(part["confidence_valid"] is not True for part in parts):
+    boundary = packet.get("boundary_tokens", [])
+    if any(part["confidence_valid"] is not True for part in [*parts, *boundary]):
         return "invalid"
+    if boundary:
+        return "unqualified"
     if not parts:
         return "empty"
     if crosses_cell(parts, packet["bbox"]):
@@ -98,7 +128,11 @@ def source_observation_status(packet, bounds, text):
     if (
         not isinstance(packet, Mapping)
         or type(packet.get("schema_version")) is not int
-        or packet["schema_version"] != 1
+        or packet["schema_version"] not in {1, 2}
+        or packet["schema_version"] == 1
+        and "boundary_tokens" in packet
+        or packet["schema_version"] == 2
+        and not isinstance(packet.get("boundary_tokens"), list)
         or packet.get("coordinate_space") != "rendered_pdf_points"
         or packet.get("origin") not in {"native", "raster"}
         or not _box(packet.get("bbox"))
@@ -106,10 +140,11 @@ def source_observation_status(packet, bounds, text):
         or tuple(packet["bbox"]) != tuple(bounds)
         or packet.get("text") != text
         or not isinstance(packet.get("tokens"), list)
-        or len(packet["tokens"]) > MAXIMUM_TOKENS
+        or len(packet["tokens"]) + len(packet.get("boundary_tokens", []))
+        > MAXIMUM_TOKENS
     ):
         return "invalid"
-    for part in packet["tokens"]:
+    for part in [*packet["tokens"], *packet.get("boundary_tokens", [])]:
         if (
             not isinstance(part, Mapping)
             or not isinstance(part.get("text"), str)
@@ -120,14 +155,14 @@ def source_observation_status(packet, bounds, text):
             or type(part.get("confidence_available")) is not bool
             or type(part.get("confidence_valid")) is not bool
             or confidence_value(part.get("confidence")) is None
+            or "native_paint" in part
+            and not valid_native_paint(part)
             or not part["confidence_available"]
             and part["confidence"] != 0
             or any(
                 type(part.get(k)) not in {int, float} or not math.isfinite(part[k])
                 for k in ("x", "y")
             )
-            or not packet["bbox"][0] <= part["x"] < packet["bbox"][2]
-            or not packet["bbox"][1] <= part["y"] < packet["bbox"][3]
             or packet["origin"] == "native"
             and (
                 part["source"] != "native"
@@ -136,10 +171,29 @@ def source_observation_status(packet, bounds, text):
             )
         ):
             return "invalid"
+    if len(cell_tokens(packet["tokens"], bounds)) != len(packet["tokens"]):
+        return "invalid"
+    boundary = packet.get("boundary_tokens", [])
+    if (
+        cell_tokens(boundary, bounds)
+        or len(cell_intersections(boundary, bounds)) != len(boundary)
+        or any(part in packet["tokens"] for part in boundary)
+    ):
+        return "invalid"
     if cell_text(packet["tokens"], bounds) != text:
         return "invalid"
     status = _status(packet)
     return status if packet.get("status") == status else "invalid"
+
+
+def _copy_token(part):
+    copied = {**part, "bbox": list(part["bbox"])}
+    if "native_paint" in part:
+        copied["native_paint"] = {
+            **part["native_paint"],
+            "bbox": list(part["native_paint"]["bbox"]),
+        }
+    return copied
 
 
 def project_source_observation(packet, bounds):
@@ -154,14 +208,21 @@ def project_source_observation(packet, bounds):
         and parent[1] <= bounds[1] < bounds[3] <= parent[3]
     ):
         raise ValueError("Projected source leaves its original observation")
-    retained = [dict(part) for part in cell_tokens(packet["tokens"], bounds)]
+    inventory = [*packet["tokens"], *packet.get("boundary_tokens", [])]
+    retained = [_copy_token(part) for part in cell_tokens(inventory, bounds)]
+    boundary = [
+        _copy_token(part)
+        for part in cell_intersections(inventory, bounds)
+        if not cell_tokens([part], bounds)
+    ]
     projected = {
-        "schema_version": 1,
+        "schema_version": packet["schema_version"],
         "origin": packet["origin"],
         "coordinate_space": packet["coordinate_space"],
         "bbox": list(bounds),
         "tokens": retained,
         "text": cell_text(retained, bounds),
+        **({"boundary_tokens": boundary} if packet["schema_version"] == 2 else {}),
     }
     projected["status"] = _status(projected)
     return projected
@@ -182,6 +243,8 @@ def source_claim_runs(packet, *, tokens=None):
         or any(not any(part is old for old in packet["tokens"]) for part in selected)
     ):
         return None
+    if packet.get("boundary_tokens"):
+        return ()  # A retained neighbour witness cannot authorize a partial claim.
     parts = [
         {**part, "confidence": 0.0} if crosses_cell([part], packet["bbox"]) else part
         for part in selected

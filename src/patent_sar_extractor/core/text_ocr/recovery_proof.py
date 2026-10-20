@@ -164,12 +164,14 @@ def _source_marker(selected):
 
 
 def replay_recovery_cell(reading, page):
-    from patent_sar_extractor.core.table_cells import cell_image
+    from patent_sar_extractor.core.cell_raster import original_reading_image
 
     packet = reading["auxiliary_text"]
     for view in packet["views"]:
         dpi, primary = view["dpi"], view["primary"]
-        image = cell_image(page, primary["bbox"], dpi)
+        if "source_window" not in primary:
+            return False
+        image = original_reading_image(page, primary["bbox"], dpi, primary)
         if view["frame"] != {
             "dpi": dpi,
             "shape": list(image.shape),

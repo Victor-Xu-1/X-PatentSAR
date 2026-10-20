@@ -16,11 +16,11 @@ import numpy as np
 from PIL import Image
 
 from .cell_ocr_scores import confidence_value
+from .cell_rule_pixels import RULE_GAP_PT
 from .page_ocr_cache import _paddlex_payload_from_image, get_ocr_engine
 from .source_geometry import SourceTokens, overlaps, source_layout
 
 logger = logging.getLogger(__name__)
-RULE_GAP_PT = 1.5
 
 
 def cluster_positions(values: list[float], tolerance: float = 2.0) -> list[float]:

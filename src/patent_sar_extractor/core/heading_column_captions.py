@@ -1,9 +1,9 @@
 """Exact local catalogue titles and their original pixel frames, never a lane."""
 
-import hashlib
 import math
 import re
 
+from .cell_raster import render_cell_raster, valid_source_window
 from .heading_source_geometry import heading_bounds
 from .source_cell_tokens import cell_lines, cell_text
 from .source_observations import source_observation_status
@@ -64,16 +64,14 @@ def column_caption_boxes(scope, page):
 
 def caption_frame_at(original, bounds):
     """Retain one caller-owned original frame through the shared renderer."""
-    from .table_cells import cell_image
 
     rendered = []
     for dpi in (400, 600):
-        image = cell_image(original, bounds, dpi)
+        raster = render_cell_raster(original, bounds, dpi)
         rendered.append(
             {
-                "dpi": dpi,
-                "shape": list(image.shape),
-                "pixel_sha256": hashlib.sha256(image.tobytes()).hexdigest(),
+                **raster.frame,
+                "source_window": raster.source_window,
             }
         )
     return {"bbox": bounds, "rendered_frames": rendered}
@@ -103,7 +101,7 @@ def valid_caption_frames(frames, boxes, page_size):
         for frame, dpi in zip(saved["rendered_frames"], (400, 600), strict=True):
             if (
                 not isinstance(frame, dict)
-                or set(frame) != {"dpi", "shape", "pixel_sha256"}
+                or set(frame) - {"source_window"} != {"dpi", "shape", "pixel_sha256"}
                 or type(frame["dpi"]) is not int
                 or frame["dpi"] != dpi
                 or not isinstance(frame["shape"], list)
@@ -113,7 +111,15 @@ def valid_caption_frames(frames, boxes, page_size):
                 or math.prod(frame["shape"][:2]) > 8_000_000
                 or not isinstance(frame["pixel_sha256"], str)
                 or not re.fullmatch(r"[a-f0-9]{64}", frame["pixel_sha256"])
-                or abs(frame["shape"][1] - (bounds[2] - bounds[0] - 3) * dpi / 72) > 2
+            ):
+                return False
+            if "source_window" in frame:
+                if not valid_source_window(
+                    frame["source_window"], bounds, dpi, frame["shape"]
+                ):
+                    return False
+            elif (
+                abs(frame["shape"][1] - (bounds[2] - bounds[0] - 3) * dpi / 72) > 2
                 or abs(frame["shape"][0] - (bounds[3] - bounds[1] - 2.4) * dpi / 72) > 2
             ):
                 return False
