@@ -1,5 +1,17 @@
 # Operations and troubleshooting
 
+## Activity evidence is rejected at the Web transport boundary
+
+The shared Web activity provenance reader admits at most32 fields per cell
+observation. The prior16-field bound could reject current source-window/frame,
+physical-row, detector and paired auxiliary evidence before result projection,
+original-cell focus or SAR context reading. Do not strip those source fields or
+edit saved scientific artifacts to fit the old envelope. The existing20-read,
+cell/source/text/coordinate limits remain in force; core original replay and
+scientific acceptance are unchanged. A transport-readable record may still be
+unqualified or rejected scientifically. No OCR model/environment, activation,
+source epoch, SQL/API schema or historical acceptance is changed by this fix.
+
 ## An unruled text table has no qualified original source
 
 Inspect `coverage.text_sources` alongside `text_pages`. The page cache is a
