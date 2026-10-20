@@ -3,6 +3,7 @@
 import json
 import tempfile
 import unittest
+from contextlib import nullcontext
 from pathlib import Path
 
 import fitz
@@ -18,8 +19,8 @@ from patent_sar_extractor.core.activity_join import activity_evidence_errors
 class HeaderColumnNativeTests(unittest.TestCase):
     def test_actual_scanned_adapter_writer_and_qa_preserve_first_measurement(self):
         doc, _page, _region = self.render([["No."], ["IC50", "nM"], ["Dmax", "%"]])
-        with doc:
-            result = extract_coordinate_tables(doc, [1])
+        self.addCleanup(doc.close)
+        result = extract_coordinate_tables(doc, [1])
         self.assertEqual(len(result.rows), 1)
         self.assertEqual(result.rows[0].cpd, "Compound 79")
         self.assertEqual(
@@ -37,7 +38,13 @@ class HeaderColumnNativeTests(unittest.TestCase):
             )
             payload = json.loads((Path(root) / "activity_data.json").read_text())
         self.assertEqual(len(payload["header_observations"]), 1)
-        self.assertEqual(activity_evidence_errors(payload, [1]), [])
+        self.assertTrue(activity_evidence_errors(payload, [1]))
+        self.assertEqual(
+            activity_evidence_errors(
+                payload, [1], open_original=lambda: nullcontext(doc)
+            ),
+            [],
+        )
 
     def render(self, headers):
         doc = fitz.open()

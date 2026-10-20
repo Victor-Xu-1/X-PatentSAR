@@ -102,9 +102,16 @@ class PrimaryActivitySourceTests(unittest.TestCase):
             self.assertEqual(self.check(payload), [])
             self.assertEqual(replay.call_count, 1)
 
-    def test_native_only_observations_do_not_acquire_an_optical_requirement(self):
+    def test_legacy_native_cell_cannot_supply_current_original_admission(self):
         payload = self.payload("row", {"method": "native_cell", "text": "0.4"})
-        self.assertEqual(original_activity_source_errors(payload), [])
+        # A native cell needs native source identity, never an invented optical
+        # frame. Bare legacy dictionaries stay history, not current acceptance.
+        self.assertTrue(original_activity_source_errors(payload))
+        with patch(
+            "patent_sar_extractor.core.activity_auxiliary_replay.original_cell_frame_matches",
+            side_effect=AssertionError("Native observations are not optical crops"),
+        ):
+            self.assertTrue(self.check(payload))
 
     def test_source_open_failure_is_not_a_model_failure_or_exception_disclosure(self):
         def unavailable():

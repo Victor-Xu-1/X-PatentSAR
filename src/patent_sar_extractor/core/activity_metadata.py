@@ -6,7 +6,8 @@ import re
 import unicodedata
 
 from .activity_values import is_explicit_missing_activity_value
-from .source_cell_claims import cell_source_conflict, cell_source_status
+from .cell_empty_proof import valid_empty_grid_cell
+from .source_cell_claims import cell_source_conflict, cell_source_status, native_witness
 
 _HEADERS = {
     "n": "reported_n",
@@ -62,13 +63,24 @@ def metadata_reading_status(cell: dict) -> str:
     observations = cell.get("observations", [])
     if not isinstance(observations, list) or len(observations) > 20:
         raise ValueError("Malformed original count observations")
+    if any(not isinstance(observation, dict) for observation in observations):
+        raise TypeError("Malformed original count observation")
+    if any(
+        not isinstance(observation.get("text", ""), str)
+        or len(observation.get("text", "")) > 10000
+        for observation in observations
+    ):
+        raise ValueError("Original count observation exceeds its bound")
+    if not cell["value"].strip() and any(
+        isinstance(observation, dict)
+        and observation.get("bbox") == cell.get("bbox")
+        and valid_empty_grid_cell(observation)
+        for observation in observations
+    ):
+        return "missing"  # Original absence, never an invented numeric value.
     values, proved = set(), False
     for observation in observations:
-        if not isinstance(observation, dict):
-            raise TypeError("Malformed original count observation")
         raw = observation.get("text", "")
-        if not isinstance(raw, str) or len(raw) > 10000:
-            raise ValueError("Original count observation exceeds its bound")
         method = observation.get("method")
         if (
             method in {"native_cell", "page_ocr_cell"}
@@ -92,6 +104,7 @@ def metadata_reading_status(cell: dict) -> str:
         )
         qualified = (
             method in {"native_cell", "declared_text_count_cell"}
+            and not native_witness(observation)
             or (
                 clipped and type(confidence) in (int, float) and 0.85 <= confidence <= 1
             )

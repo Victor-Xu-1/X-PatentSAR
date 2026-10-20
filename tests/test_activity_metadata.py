@@ -152,17 +152,20 @@ class ActivityMetadataTests(unittest.TestCase):
         self.assertFalse(any(r.needs_review for r in result.rows))
 
     def test_real_native_transposed_count_row_is_not_an_endpoint(self):
-        with fitz.open() as doc:
-            draw_grid(
-                doc.new_page(),
-                [
-                    ["", "Compound 73", "Compound 58"],
-                    ["IC50 (nM)", "12.4", "9.1"],
-                    ["n", "3", "2"],
-                ],
-            )
-            parsed = extract_coordinate_tables(doc, [0])
-            rows = parsed.rows
+        from contextlib import nullcontext
+
+        doc = fitz.open()
+        self.addCleanup(doc.close)
+        draw_grid(
+            doc.new_page(),
+            [
+                ["", "Compound 73", "Compound 58"],
+                ["IC50 (nM)", "12.4", "9.1"],
+                ["n", "3", "2"],
+            ],
+        )
+        parsed = extract_coordinate_tables(doc, [0])
+        rows = parsed.rows
         self.assertEqual([r.cpd for r in rows], ["Compound 73", "Compound 58"])
         self.assertEqual(
             [list(r.activity_values.values()) for r in rows], [["12.4"], ["9.1"]]
@@ -185,6 +188,7 @@ class ActivityMetadataTests(unittest.TestCase):
                     "coverage": coverage_packet([0], parsed.coverage, rows),
                 },
                 [0],
+                open_original=lambda: nullcontext(doc),
             ),
             [],
         )

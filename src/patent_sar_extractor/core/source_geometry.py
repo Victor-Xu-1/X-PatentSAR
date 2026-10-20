@@ -83,6 +83,7 @@ class SourceTokens(list):
         self.native_tokens = layout.native
         self.scan_bounds = scan_bounds
         self.geometry_space = "rendered"
+        self.native_paint_view = None  # Call-local original facts, never evidence JSON.
 
 
 def native_region(tokens, bounds, fallback: bool) -> bool:

@@ -1,5 +1,48 @@
 # X-PatentSAR architecture
 
+## Native measurement, header and context admission
+
+`native_cell_replay` is the shared original native-cell authority for activity,
+roles, captions and later-page readings. Current primary native text requires
+its complete original observation, actual native ownership and paint visibility;
+empty primary cells additionally require original closed-grid absence. A
+`native_role: witness` observation retains an independent native layer without
+claiming exclusive raster-free ownership or another recognition vote. Literal
+contradictions remain vetoes. Such a witness alone cannot prove an identifier,
+measurement, metadata count or missing value.
+
+`activity_native_sources` inventories the same generic/transposed header and
+context owners. Generic layouts retain `capture_header_sources` once; native
+conditions and endpoint identities reuse the existing header/conflict/context
+selectors, then actual original replay. A saved internally consistent target or
+endpoint cannot rename original evidence. Native words that supply conditions
+must be visible; an independent layer that supplies no condition remains a raw
+constraint, not another positive claim. No new condition parser is introduced.
+
+`NativePaintView` keeps bounded call-local facts from the caller's immutable
+original page, never a serialized/global cache. Different document/geometry or
+contents refuse reuse; edited documents rebuild even after same-xref writes.
+Repeated ordinary native cells share the same capture/readback inventory.
+
+`cell_empty_proof` reuses the closed-grid mask/frame replayer for blank metadata.
+It preserves both400/600dpi original views, requires complete source windows
+and the pixel codec's explicit `nonwhite` mode. The existing paired closed-grid
+noise bound has one owner in `source_cell_pixels`; faint ink is not discarded
+by the ordinary plot's unchanged dark-ink policy. Known blank count metadata is
+missing/unknown, never zero or potency. Raw reads remain alongside this proof.
+Original readback loads no OCR or other scientific model.
+
+`activity_region_proof` owns region shape/identity/role validation while
+`activity_coverage` constructs and reconciles the same inventory. The moved
+validator retains its original identities and gates; no competing writer exists.
+
+Current derived proof: Binding51/binder61, Activity36/extractor46/coverage19 and
+visible-label25. Raw PDF/OCR/OCSR2, preparation12, role5/recovery4, SQL/API/SAR and
+model/environment policies are unchanged. Old proof and manual audit stay
+historical, not retagged. Earlier epoch notes below describe prior releases.
+These controls do not certify universal chemical accuracy, unanchored declared
+text, model recall or completion of real frontend extraction-to-SAR acceptance.
+
 ## Complete cell geometry and retained boundary witnesses
 
 The shared `cell_raster` captures the complete original cell once, with separate

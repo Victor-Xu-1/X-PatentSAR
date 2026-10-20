@@ -9,6 +9,7 @@ from .cell_rule_pixels import include_original_rule_joints, original_rule_band
 from .plot_reference_pixels import observe_pixels, retained_pixels
 
 MAX_CELL_PIXELS = 8_000_000
+EMPTY_GRID_MAXIMUM_PIXELS = 4
 
 
 def source_window(cell, size):
@@ -105,18 +106,32 @@ def original_grid_cell_is_empty(page, cell):
     if not isinstance(cell, (list, tuple)):
         return False
     cell = list(cell)
-    packet = observe_closed_cell(page, cell)
+    packet = observe_closed_cell(page, cell, ink_mode="nonwhite")
     if packet is None:
         return False
     masks = closed_cell_masks(
         packet, cell, [page.rect.width, page.rect.height], content_only=True
     )
-    return masks is not None and all(int(mask.sum()) <= 4 for mask in masks)
+    return closed_masks_are_empty(masks)
 
 
-def observe_closed_cell(page, cell):
+def closed_masks_are_empty(masks):
+    """The existing paired-resolution closed-grid noise bound has one owner."""
+    return (
+        isinstance(masks, list)
+        and len(masks) == 2
+        and all(int(mask.sum()) <= EMPTY_GRID_MAXIMUM_PIXELS for mask in masks)
+    )
+
+
+def observe_closed_cell(page, cell, *, ink_mode=None):
     size = [page.rect.width, page.rect.height]
-    packet = observe_pixels(page, source_window(cell, size), MAX_CELL_PIXELS)
+    packet = observe_pixels(
+        page,
+        source_window(cell, size),
+        MAX_CELL_PIXELS,
+        **({"ink_mode": ink_mode} if ink_mode is not None else {}),
+    )
     return (
         packet
         if packet is not None and closed_cell_masks(packet, cell, size) is not None

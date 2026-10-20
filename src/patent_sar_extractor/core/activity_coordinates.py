@@ -229,7 +229,7 @@ def extract_coordinate_tables(
                     ),
                 )
             schema = prepare_layout(
-                schema, page_index + 1, region, tokens, prefix, regions
+                schema, page_index + 1, region, tokens, prefix, regions, page=page
             )
             generic_regions.append((page_index, region, schema))
             panels.append(Panel(page_index, region, schema))

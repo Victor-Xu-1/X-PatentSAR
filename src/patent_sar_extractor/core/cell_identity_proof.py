@@ -8,7 +8,7 @@ from .cell_caption_identity import refined_caption_conflicts
 from .cell_caption_lines import physical_caption_valid
 from .compound_caption import prefixed_label
 from .printed_identifiers import identifier_fragments_conflict, identifier_key
-from .source_cell_claims import cell_source_conflict, cell_source_status
+from .source_cell_claims import cell_source_conflict, cell_source_status, native_witness
 from .source_section_roles import nonfinal_original_label
 
 
@@ -86,7 +86,8 @@ def confirmed_identity_readings(label, observations, *, caption=False):
                 continue
             if not math.isfinite(score) or not 0.85 <= score <= 1:
                 continue
-        methods.add(method)
+        if not native_witness(observation):
+            methods.add(method)
     return (
         "native_cell" in methods
         or "cell_ocr_400dpi" in methods
