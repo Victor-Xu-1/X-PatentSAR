@@ -46,6 +46,10 @@ def original_caption_source_errors(document, bindings):
             bounds = original_caption_read_window(
                 packet, (page.rect.width, page.rect.height)
             )
+            if "closed_scope" in packet:
+                from .caption_cell_pixels import replay_closed_caption_scope
+
+                replay_closed_caption_scope(page, bounds, packet["closed_scope"])
             observations = packet["observations"]
             for observation in observations:
                 if observation.get("method") == WORD_FORM_METHOD:
