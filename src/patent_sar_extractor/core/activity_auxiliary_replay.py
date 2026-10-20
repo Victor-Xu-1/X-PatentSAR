@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .activity_header_layout_proof import physical_discovery_views
 from .activity_native_sources import original_native_contexts
+from .activity_text_sources import declared_text_cells, original_text_pages_errors
 from .cell_empty_proof import EMPTY_GRID_METHOD, replay_empty_grid_cell
 from .cell_frame_proof import original_cell_frame_matches
 from .native_cell_replay import original_native_cell_matches
@@ -59,6 +60,7 @@ def measurement_text_cells(payload):
             yield from _row_text_cells(source)
     for source in payload.get("unresolved_rows", []):
         yield from _row_text_cells(source)
+    yield from declared_text_cells(payload)
 
 
 def _row_text_cells(source):
@@ -118,13 +120,25 @@ def original_activity_source_errors(
         proof.get("original_source")
         for proof in payload.get("header_observations", {}).values()
     )
-    if not columns and not primary and not role_sources and not has_layouts:
+    has_declared = bool((payload.get("coverage") or {}).get("text_pages"))
+    if (
+        not columns
+        and not primary
+        and not role_sources
+        and not has_layouts
+        and not has_declared
+    ):
         return []
     if open_original is None:
         return ["Original PDF is required for activity text replay."]
     layouts, paints = {}, {}
     try:
         with open_original() as document:
+            text_errors = original_text_pages_errors(
+                payload.get("coverage") or {}, document
+            )
+            if text_errors:
+                return text_errors
             role_errors = original_role_source_errors(document, role_sources)
             if role_errors:
                 return role_errors

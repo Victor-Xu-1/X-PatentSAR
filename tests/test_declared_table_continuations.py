@@ -10,6 +10,7 @@ from pathlib import Path
 import fitz
 
 from patent_sar_extractor.artifact_io import load_json
+from patent_sar_extractor.core.activity_auxiliary_replay import original_pdf_reader
 from patent_sar_extractor.core.activity_continuation_policy import continuation_allowed
 from patent_sar_extractor.core.activity_coordinates import extract_coordinate_tables
 from patent_sar_extractor.core.activity_coverage import coverage_errors, coverage_packet
@@ -157,7 +158,13 @@ class DeclaredTableContinuationTests(unittest.TestCase):
                 document.save(original)
             extract(str(original), {"activity_pages": [0]}, str(root / "activity"))
             data = load_json(root / "activity/activity_data.json", None)
-            self.assertEqual(activity_evidence_errors(data, [0]), [])
+            self.assertTrue(activity_evidence_errors(data, [0]))
+            self.assertEqual(
+                activity_evidence_errors(
+                    data, [0], open_original=original_pdf_reader(original)
+                ),
+                [],
+            )
             self.assertEqual(
                 [row["cpd"] for row in data["rows"]], ["Compound 7", "Compound 19"]
             )

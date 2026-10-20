@@ -1,5 +1,15 @@
 # Project governance manifest
 
+- Declared-text source authority: `activity_text_capture` attaches original
+  native/located physical lines to the sole `activity_text` planner/parser and
+  artifact writer. `source_page_lines` owns original native order and shared
+  physical-row presentation; `activity_text_sources` owns literal conservation.
+  Ordinary native/optical source replayers remain the single readback path.
+  Cache locations never vote as measurements; original raw assets/manual audit,
+  environments, API/SQL/SAR and chemical/binding policy are unchanged.
+  Current derived activity contracts are Activity37/extractor47/coverage20.
+  Earlier entries below are release history, not permission to promote old proof.
+
 - Native source authority: `native_cell_replay` composes original ownership,
   complete profiles and actual paint visibility for ordinary/role/caption/later
   native cells. Independent `native_role: witness` layers retain contradictions
@@ -12,7 +22,7 @@
   models/environments, raw data, APIs/SQL/SAR/manual audits remain unchanged.
   `activity_region_proof` owns the moved region validator; coverage construction
   and reconciliation remain one inventory. Current derived versions are
-  Binding51/binder61, Activity36/extractor46/coverage19 and visible-label25.
+  Binding51/binder61, Activity37/extractor47/coverage20 and visible-label25.
   Earlier notes below are historical, not competing version authorities.
 
 - Cell geometry authority: `cell_raster`/`cell_window` own complete
