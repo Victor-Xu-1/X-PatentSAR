@@ -1,6 +1,14 @@
 """Complete original context after a caption grid, without another source read."""
 
+from patent_sar_extractor.contracts import CAPTION_TAIL_SOURCE_VERSION
+
 from .activity_context_geometry import MAX_TABLES, context_band, valid_box
+from .caption_tail_owners import (
+    caption_witness_keys,
+    observe_tail_caption_cells,
+    qualified_tail_source,
+    validated_tail_caption_cells,
+)
 from .source_body_context import (
     intersecting_source_diagrams,
     original_context_extent,
@@ -17,7 +25,9 @@ def _window(role, size):
     return [max(0, left), role["table_bbox"][3], min(size[0], right), size[1]]
 
 
-def observe_caption_tail(page, role, regions, tokens, structures, boxes):
+def observe_caption_tail(
+    page, role, regions, tokens, structures, boxes, *, captions=()
+):
     if not isinstance(role, dict) or any(box is None for box in boxes):
         return None
     size = [page.rect.width, page.rect.height]
@@ -27,11 +37,14 @@ def observe_caption_tail(page, role, regions, tokens, structures, boxes):
         for structure, box in zip(structures, boxes, strict=True)
     ]
     validate_page_diagrams(diagrams, size)
+    chunks = observe_source_window(tokens, window) if valid_box(window) else []
     return {
+        "version": CAPTION_TAIL_SOURCE_VERSION,
         "page_no": page.number + 1,
         "page_size": size,
         "window": window,
-        "chunks": observe_source_window(tokens, window) if valid_box(window) else [],
+        "chunks": chunks,
+        "caption_cells": observe_tail_caption_cells(captions, role, chunks),
         "page_grids": [
             [grid["xs"][0], grid["ys"][0], grid["xs"][-1], grid["ys"][-1]]
             for grid in regions
@@ -43,18 +56,24 @@ def observe_caption_tail(page, role, regions, tokens, structures, boxes):
 def valid_caption_tail(context, role):
     """A new/uncertain body boundary, intervening grid or diagram stops carry."""
     if not isinstance(context, dict) or set(context) != {
+        "version",
         "page_no",
         "page_size",
         "window",
         "chunks",
         "page_grids",
         "diagrams",
+        "caption_cells",
     }:
         return False
     try:
         size, grids = context["page_size"], context["page_grids"]
+        cells = validated_tail_caption_cells(context["caption_cells"], role)
+        witnesses = caption_witness_keys(cells)
         if not (
-            type(context["page_no"]) is int
+            type(context["version"]) is int
+            and context["version"] == CAPTION_TAIL_SOURCE_VERSION
+            and type(context["page_no"]) is int
             and context["page_no"] == role["page_no"]
             and isinstance(size, list)
             and len(size) == 2
@@ -90,7 +109,10 @@ def valid_caption_tail(context, role):
             ]
             nonempty = [reading for reading in readings if reading["text"].strip()]
             if (
-                any(reading["status"] != "qualified" for reading in nonempty)
+                any(
+                    not qualified_tail_source(reading, witnesses)
+                    for reading in readings
+                )
                 or len({" ".join(reading["text"].split()) for reading in nonempty}) > 1
             ):
                 return False

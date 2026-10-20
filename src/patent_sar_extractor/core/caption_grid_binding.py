@@ -306,7 +306,7 @@ def bind_caption_grids(
                     )
                 else:
                     reject(item, "unproved_cross_page_caption")
-            pending = []
+            pending, observed_captions = [], []
             for row, labels in enumerate(rows):
                 if kinds[row] != "label":
                     continue
@@ -351,6 +351,7 @@ def bind_caption_grids(
                     }
                     if bare and role_status != "compound":
                         item["review"] = True
+                    observed_captions.append(item)
                     target = row + 1 if direction == "above" else row - 1
                     if direction == "above" and target == len(rows):
                         pending.append(item)
@@ -389,6 +390,7 @@ def bind_caption_grids(
                 tokens,
                 by_page.get(page_no, []),
                 boxes_by_page.get(page_no, []),
+                captions=observed_captions,
             )
             next_carries.append(
                 CaptionGridCarry(
