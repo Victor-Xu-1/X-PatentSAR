@@ -18,6 +18,7 @@ from .source_observations import source_cell_observation
 from .source_page_lines import native_page_lines
 from .source_paint_visibility import native_paint_view
 from .table_cells import CellRenderLimit
+from .text_ocr.source_capture import refine_source_text
 
 
 def _line_readings(page, bounds, tokens, layout, paints):
@@ -50,8 +51,10 @@ def _line_readings(page, bounds, tokens, layout, paints):
         ).evidence(dpi, bounds)
         reading.update(source_frame=raster.frame, source_window=raster.source_window)
         readings.append(reading)
-    # Original optical order is fixed; the independent native layer is no vote.
-    return [r for r in readings if r.get("native_role") != "witness"] + [
+    # Reuse the same unresolved-only paired recovery as ordinary physical cells.
+    # The independent native layer remains a contradiction witness, not a vote.
+    primary = [r for r in readings if r.get("native_role") != "witness"]
+    return list(refine_source_text(page, bounds, primary, maximum_rows=8)) + [
         r for r in readings if r.get("native_role") == "witness"
     ]
 

@@ -1,5 +1,14 @@
 # Project governance manifest
 
+- Declared-line recovery uses the existing unresolved-only paired source helper
+  in `activity_text_capture`; no second OCR/parser/writer is introduced. Native
+  witnesses and known primary conflicts remain protected, original replay is
+  model-free and the producer-phase lifecycle owns the optional child. Only
+  extractor48 refreshes implementation-dependent work; Activity37/coverage20/
+  declared-source1 and all other scientific, raw, API/SQL and activation contracts
+  remain unchanged. The auxiliary quality gate is necessary, not calibrated
+  scientific accuracy, and rejected reads remain unresolved.
+
 - Caption-tail source v2 retains unchanged body packets and qualified last-row
   caption-cell owners for exact same-origin neighbour witnesses. The ordinary
   caption and auxiliary inventories replay every retained owner, including

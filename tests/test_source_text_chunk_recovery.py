@@ -6,9 +6,9 @@ from unittest.mock import patch
 
 import fitz
 
+from patent_sar_extractor.core.cell_raster import render_cell_raster
 from patent_sar_extractor.core.cell_text_chunks import observe_text_cell
 from patent_sar_extractor.core.cell_text_proof import valid_text_reading
-from patent_sar_extractor.core.table_cells import cell_image
 from patent_sar_extractor.core.text_ocr.cell_proof import (
     replay_auxiliary_cell,
     valid_auxiliary_cell,
@@ -16,6 +16,17 @@ from patent_sar_extractor.core.text_ocr.cell_proof import (
 from patent_sar_extractor.core.text_ocr.process import TextOCRCancelled
 from patent_sar_extractor.core.text_ocr.source_capture import refine_source_text
 from tests.test_auxiliary_cell_evidence import ControlledAuxiliary
+
+
+def original_text_reading(page, bounds, dpi, engine, *, rows):
+    """Use current physical source windows, not an unowned image-only fixture."""
+    raster = render_cell_raster(page, bounds, dpi, purpose="text")
+    reading = observe_text_cell(raster.image, dpi, engine, rows_per_chunk=rows)
+    return {
+        **reading.evidence(dpi, bounds),
+        "source_frame": raster.frame,
+        "source_window": raster.source_window,
+    }
 
 
 class SourceTextChunkRecoveryTests(unittest.TestCase):
@@ -31,9 +42,7 @@ class SourceTextChunkRecoveryTests(unittest.TestCase):
             return ([], None) if use_det else ([["1H NMR", 0.99]], None)
 
         self.readings = [
-            observe_text_cell(
-                cell_image(self.page, self.bounds, dpi), dpi, reader, rows_per_chunk=32
-            ).evidence(dpi, self.bounds)
+            original_text_reading(self.page, self.bounds, dpi, reader, rows=32)
             for dpi in (400, 600)
         ]
         for reading, dpi in zip(self.readings, (400, 600)):
@@ -73,9 +82,7 @@ class SourceTextChunkRecoveryTests(unittest.TestCase):
             return ([], None) if use_det else ([["1H NMR", 0.2]], None)
 
         readings = [
-            observe_text_cell(
-                cell_image(self.page, self.bounds, dpi), dpi, weak, rows_per_chunk=32
-            ).evidence(dpi, self.bounds)
+            original_text_reading(self.page, self.bounds, dpi, weak, rows=32)
             for dpi in (400, 600)
         ]
         reader = ControlledAuxiliary(("1H NMR",)) if reader is None else reader
@@ -202,9 +209,7 @@ class SourceTextChunkRecoveryTests(unittest.TestCase):
                     return ([], None) if use_det else ([["weak", 0.2]], None)
 
                 readings = [
-                    observe_text_cell(
-                        cell_image(page, bounds, dpi), dpi, weak, rows_per_chunk=maximum
-                    ).evidence(dpi, bounds)
+                    original_text_reading(page, bounds, dpi, weak, rows=maximum)
                     for dpi in (400, 600)
                 ]
                 reader = ControlledAuxiliary(labels)
