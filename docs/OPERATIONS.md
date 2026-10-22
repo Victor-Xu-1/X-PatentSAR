@@ -1305,11 +1305,13 @@ Empty-state text remains within the table's
 visible area, including narrow screens and horizontal scrolling; it does not
 require scrolling across all metric columns to find a centered message.
 
-Before identifier binding finishes, candidate crops can appear in the table.
-They are labelled Unassigned with a Candidate tracking marker, not a claimed
+Before identifier binding finishes, detected candidate crops remain in the
+original-page annotations and complete source inventory, not the product table.
+Unassigned annotations use a compact localized tracking marker, never a claimed
 patent identifier or final product. Their stable internal key remains available
-for source review; original/user labels and stored correction/export values are
-not renamed by this presentation. Candidate counts are not accepted compounds.
+for source review; selecting one does not search for a nonexistent product row
+or alter table filters. Original/user labels and stored source observations are
+not renamed. Candidate counts are not accepted compounds.
 
 ## Weak short text rows inside original headers
 
