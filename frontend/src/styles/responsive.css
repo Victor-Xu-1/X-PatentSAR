@@ -89,6 +89,24 @@
   .workspace-source {
     order: 1;
   }
+  .workspace-results,
+  .workspace-source {
+    /* Their fixed-height contents must not paint across a shrunken flex item. */
+    flex: 0 0 auto;
+  }
+  .layout-toolbar .workspace-source-toggle {
+    display: none;
+  }
+  .layout-toolbar .workspace-source-link {
+    display: inline-flex;
+    min-height: 44px;
+  }
+  .pdf-toolbar .workspace-results-link {
+    display: inline-flex;
+    width: 44px;
+    min-height: 44px;
+    flex: 0 0 auto;
+  }
   .workspace-divider {
     display: none;
   }

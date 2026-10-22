@@ -11,6 +11,18 @@ from tools.browser_fixture_mode import fixture_mode
 
 
 class SourceBrowserFixtureTests(unittest.TestCase):
+    def test_source_review_navigation_uses_only_read_only_original_fixture(self):
+        selected = {"frontend/e2e/source-review-navigation.spec.ts"}
+        self.assertEqual(fixture_mode(selected), "read-only")
+        self.assertEqual(
+            fixture_mode(selected | {"frontend/e2e/product-version.spec.ts"}),
+            "read-only",
+        )
+        self.assertEqual(
+            fixture_mode(selected | {"frontend/e2e/unknown-execution.spec.ts"}),
+            "execution",
+        )
+
     def test_original_context_csv_check_uses_only_existing_isolated_sar_import(self):
         self.assertEqual(
             fixture_mode({"frontend/e2e/sar-source-context.spec.ts"}), "sar"

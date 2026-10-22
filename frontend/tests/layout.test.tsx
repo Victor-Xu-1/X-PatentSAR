@@ -36,7 +36,7 @@ describe('results-first layout with one safe, refreshable state', () => {
         <WorkspaceLayout
           layout={layout}
           onChange={setLayout}
-          source={<div>真实原文</div>}
+          source={() => <div>真实原文</div>}
           results={<div>真实结果</div>}
         />
       );
@@ -68,7 +68,7 @@ describe('results-first layout with one safe, refreshable state', () => {
       <WorkspaceLayout
         layout={defaultLayout}
         onChange={change}
-        source={<div />}
+        source={() => <div />}
         results={<div />}
       />,
     );
@@ -87,7 +87,7 @@ describe('results-first layout with one safe, refreshable state', () => {
       <WorkspaceLayout
         layout={defaultLayout}
         onChange={change}
-        source={<div />}
+        source={() => <div />}
         results={<div />}
       />,
     );

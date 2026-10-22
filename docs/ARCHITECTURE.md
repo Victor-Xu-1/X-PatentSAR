@@ -1,5 +1,18 @@
 # X-PatentSAR architecture
 
+## Existing-pane review navigation
+
+`WorkspaceLayout` owns source/results scroll and focus refs, not another route
+or task state. Its one source render callback exposes Back to results to the
+embedded `PdfPane`; standalone readers omit that control. Narrow View original
+opens the existing source only when needed and focuses it after that mount.
+An already open original keeps its component, page draft and resource identity.
+Returning or late page reads do not change the route or move focus again.
+Narrow fullscreen keeps both flex items at their content height inside the
+existing scrolling split, so table contents cannot overlap the PDF. Desktop
+split/collapse/resize, source jumps, route persistence, API/SQL/scientific epochs,
+original data/manual audit, model policy and dependencies are unchanged.
+
 ## Closed original header-cell boundaries
 
 `activity_header_boundary` is the existing column reader's optional geometric

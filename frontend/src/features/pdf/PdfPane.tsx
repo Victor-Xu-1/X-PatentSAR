@@ -1,6 +1,6 @@
 import { useTranslation, UiError } from '../../i18n';
 import { useCallback, useState } from 'react';
-import { FileText, MapPin } from 'lucide-react';
+import { ArrowLeft, FileText, MapPin } from 'lucide-react';
 import { api, safeAssetUrl } from '../../api';
 import type { ActivityFocusSelection, Project } from '../../api/types';
 import type { PdfTab } from '../../model/route';
@@ -28,6 +28,7 @@ export function PdfPane({
   onAttach,
   activityFocus,
   activityPageOnly = false,
+  onReturnToResults,
 }: {
   project: Project | null;
   page: number | null;
@@ -39,6 +40,7 @@ export function PdfPane({
   onAttach: () => void;
   activityFocus?: ActivityFocusSelection | undefined;
   activityPageOnly?: boolean;
+  onReturnToResults?: () => void;
 }) {
   const { t } = useTranslation();
   const [zoom, setZoom] = useState(1);
@@ -98,6 +100,18 @@ export function PdfPane({
   return (
     <section className="panel pdf-pane" aria-label={t('专利原始文档查看器')}>
       <header className="pdf-toolbar">
+        {onReturnToResults && (
+          <button
+            className="icon-button workspace-results-link"
+            type="button"
+            onClick={onReturnToResults}
+            aria-label={t('返回结果')}
+            title={t('返回结果')}
+            aria-controls="workspace-results"
+          >
+            <ArrowLeft size={16} />
+          </button>
+        )}
         <Tabs
           label={t('专利文档视图')}
           value={tab}
