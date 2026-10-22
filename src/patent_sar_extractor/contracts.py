@@ -8,7 +8,7 @@ from typing import Final
 PRODUCT_NAME: Final = "X-PatentSAR"
 DISTRIBUTION_NAME: Final = "x-patentsar"
 COMMAND_NAME: Final = "x-patentsar"
-__version__: Final = "0.2.89"
+__version__: Final = "0.2.90"
 SHARED_JSON_VERSION: Final = 1
 PHYSICAL_CAPTION_LINE_VERSION: Final = 3
 CHARACTERIZATION_ROLE_SCHEMA_VERSION: Final = 5
@@ -77,7 +77,7 @@ STRUCTURE_WORKER_VERSION: Final = "6"
 SEGMENTATION_WINDOW_SCHEMA: Final = "patentsar.segmentation-window"
 SEGMENTATION_WINDOW_SCHEMA_VERSION: Final = 2
 SEGMENTATION_INPUT_FINGERPRINT_FILE: Final = "input_fingerprint.json"
-STRUCTURE_BINDER_VERSION: Final = "63"
+STRUCTURE_BINDER_VERSION: Final = "64"
 OCSR_OBSERVATION_VERSION: Final = "2"
 OCSR_PREPARATION_VERSION: Final = 12
 STEREO_EVIDENCE_VERSION: Final = 3

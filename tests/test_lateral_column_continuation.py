@@ -25,17 +25,25 @@ class LateralColumnContinuationTests(LateralStructureControls, unittest.TestCase
         right_prefix="",
         prior_right_experiment=False,
         captioned=False,
+        continued_columns=(0, 1),
+        prior_experiment_column=1,
+        heading_identifier="B80",
     ):
         if prior_right_experiment:
+            left = (40, 360)[prior_experiment_column]
             document[0].insert_text(
-                (360, 430), "Compound B80: Preparation", fontsize=10
+                (left, 430), f"Compound {heading_identifier}: Preparation", fontsize=10
             )
-            self.add_drawing(document[0], records, 360, 510, "INDEPENDENT-B80")
+            self.add_drawing(
+                document[0], records, left, 510, f"INDEPENDENT-{heading_identifier}"
+            )
         page = document[0] if same_page else document.new_page(width=660, height=720)
         ys, centres = (
             ([460, 575, 690], [510, 625]) if same_page else ([80, 210, 330], [150, 265])
         )
         for column, left in enumerate((40, 360)):
+            if column not in continued_columns:
+                continue
             if column and right_prefix:
                 page.insert_text((left, ys[0] - 25), right_prefix, fontsize=9)
             if captioned:
@@ -157,7 +165,7 @@ class LateralColumnContinuationTests(LateralStructureControls, unittest.TestCase
     def test_independent_prior_column_experiment_does_not_stop_its_neighbour(self):
         result, payload = self.run_case(
             mutate_document=lambda d, r: self.continued_tables(
-                d, r, prior_right_experiment=True
+                d, r, prior_right_experiment=True, continued_columns=(0,)
             )
         )
         self.assertEqual(
@@ -171,6 +179,29 @@ class LateralColumnContinuationTests(LateralStructureControls, unittest.TestCase
                 "Compound 2-1",
                 "Compound B80",
             },
+        )
+        self.assertEqual(coverage_errors(payload), [])
+
+    def test_unproved_later_drawings_cannot_disappear_to_certify_the_heading(self):
+        # Original Issue209 input: the right continuation crosses a new procedure
+        # and is unproved. Keep that complete input as a refusal, not a smaller
+        # positive oracle that silently discards its two unknown drawings.
+        result, payload = self.run_case(
+            mutate_document=lambda d, r: self.continued_tables(
+                d, r, prior_right_experiment=True
+            )
+        )
+        self.assertEqual(payload["total_structures"], 9)
+        self.assertNotIn(
+            "Compound B80", {r["cpd"] for r in result["compound_catalog"]["entries"]}
+        )
+        self.assertTrue(
+            any(
+                issue.get("cpd") == "Compound B80"
+                and issue.get("reason")
+                == "original_heading_identifier_without_proved_structure"
+                for issue in payload["source_issues"]
+            )
         )
         self.assertTrue(coverage_errors(payload))
 

@@ -1,5 +1,33 @@
 # X-PatentSAR architecture
 
+## Current later-column ownership and original replay
+
+The single heading source index retains every later-page structure. A validated
+independent continuation may exclude only its complete proved identifier/diagram
+rows, using the same source role, row pairing and ancestry validators as the
+catalogue. Missing/unread cells, own-identifier overlap, unknown roles, changed
+parents and outside/unowned drawings cannot supply exclusion. A borrowed header
+is not a fresh local title or procedure boundary. `heading_column_captions`
+therefore does not project an earlier title onto a continued page.
+
+`heading_column_replay` inventories the explicit original anchor and current
+continuation sources on their own pages, with no arbitrary JSON traversal or new
+recognizer. The existing `HeadingPageReplay` rechecks actual page geometry, printed
+grid axes, native words/visibility, optical/auxiliary cells and current rows.
+Physical and captioned logical continuations share this readback; the old
+original-header-only block is removed rather than retained as another path.
+Unknown or changed original proof remains a refusal, not a fallback reader.
+
+Binder64 refreshes derived binding work and existing source/project fingerprints.
+Binding schema53, heading/declaration schemas, Activity38/extractor49/coverage20,
+raw PDF/OCR/OCSR, source assets, human audit, API/SQL/SAR, model/environment and
+numerical potency policies are unchanged. Historical producer evidence is never
+retagged. This proves ownership within the observed inventory, not arbitrary
+patent recall, chemical correctness or completion of real extraction-to-SAR.
+
+Earlier implementation notes below describe their release-time contracts;
+`contracts.py` and the current section above own current versions.
+
 ## Physical grid cells compose multi-row headers
 
 `activity_header_columns` reads each physical cell of a two/three-row header

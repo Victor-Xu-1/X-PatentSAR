@@ -28,6 +28,13 @@ def _same_title(text, box, line):
 
 def column_caption_boxes(scope, page):
     """The existing context projector owns title-to-column qualification."""
+    if scope.get("kind") in {
+        "continued_ruled_columns",
+        "continued_unruled_columns",
+    }:
+        # Borrowed headers remain in the source inventory, but cannot create a
+        # fresh local declaration boundary or borrow an earlier page's title.
+        return []
     catalog = catalog_for_scope(scope)
     if not catalog.identifier:
         return []

@@ -1,5 +1,29 @@
 # Operations and troubleshooting
 
+## A continued column crashes or pollutes a standalone heading window
+
+A registered continuation has an original ancestor, not a new `nomination` field.
+Do not fabricate that field or reuse its parent's title on the current page.
+The heading index keeps the source and its current rows; complete proved foreign
+identifier/diagram pairs can exclude those drawings from another heading without
+creating a local title boundary. Unknown rows remain candidates. The shared
+readback reopens the actual original anchor and current page, rechecks grids and
+cells and does not run OCR. A matching saved hash alone cannot grant ownership.
+
+The generated Issue209 oracle now explicitly separates two conditions. The
+original nine-image input includes two unproved right-hand drawings and stays a
+refusal with all nine observations and the missing-heading finding retained.
+A paired positive contains only independently proved neighbouring continuations:
+the original standalone-identifier assertion is retained and source coverage must
+be clean. Different identifiers and left/right placements use the same authority.
+No input from a private patent is changed to satisfy these controls.
+
+Binder64 invalidates affected derived reuse; source/raw/manual artifacts and all
+other schemas/models/activation remain unchanged. Complete acceptance still needs
+current-main installed delivery and ordinary frontend real-patent extraction/SAR.
+The absence of enough original evidence must never be repaired with nearest,
+first/rightmost drawing choices, invented captions or weaker QA.
+
 ## Multi-row ruled headers lose otherwise readable column text
 
 A union crop of several header grid rows includes internal table rules. Do not
