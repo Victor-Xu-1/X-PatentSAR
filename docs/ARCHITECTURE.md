@@ -15,6 +15,11 @@ Web currentness and the research-only adapter share this contract. A parseable
 prefix is not a completed generation. Valid incomplete observations retain raw
 SMILES and tokens with failed execution; they neither supply accepted molecules
 nor enter restricted stereo rescue. Malformed/mismatched metadata refuses.
+Only a protocol-valid, literal missing-end reply may reuse the converter's
+existing single normalized-image retry. Both raw attempts remain; missing or
+forged packets, broken start/control tokens and other engine failures cannot
+request this recovery. A second incomplete result is still failed, never fixed
+by editing a SMILES string or increasing the existing retry budget.
 Rescue proof2 retains the complete primary generation separately from the
 MolScribe candidate; the original eight-item/graph/source rules remain in force.
 

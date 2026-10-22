@@ -101,6 +101,19 @@ def completed_observation(record):
         return False
 
 
+def truncated_observation(record):
+    """Only a literal, protocol-valid missing-end observation may be retried."""
+    try:
+        packet = record.get("generation")
+        return (
+            record.get("status") == "failed"
+            and not validate_generation_observation(packet, record.get("raw_smiles"))
+            and packet["reason"] == "missing_end"
+        )
+    except (AttributeError, TypeError, ValueError):
+        return False
+
+
 def generation_record_current(record):
     """Format currentness only, never chemical quality or successful completion."""
     try:

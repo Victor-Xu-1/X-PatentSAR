@@ -8,12 +8,40 @@ from patent_sar_extractor.core.ocsr.generation import (
     complete_generation,
     completed_observation,
     observe_generation,
+    truncated_observation,
     validate_generated_raw,
     validate_generation,
 )
 
 
 class GenerationPacketTests(unittest.TestCase):
+    def test_only_literal_failed_missing_end_can_use_existing_retry(self):
+        packet = observe_generation(["<start>", "C", "C", "O"])[1]
+        row = {"status": "failed", "raw_smiles": "CCO", "generation": packet}
+        self.assertTrue(truncated_observation(row))
+        for changed in (
+            {**row, "status": "timeout"},
+            {**row, "status": "unavailable"},
+            {**row, "raw_smiles": "CCN"},
+            {**row, "generation": None},
+            {**row, "generation": {**packet, "status": "complete", "reason": None}},
+            {**row, "generation": observe_generation(["C", "C", "O", "<end>"])[1]},
+            {
+                **row,
+                "generation": observe_generation(
+                    ["<start>", "C", "<pad>", "O", "<end>"]
+                )[1],
+            },
+            {
+                **row,
+                "generation": observe_generation(["<start>", "C", "C", "O", "<end>"])[
+                    1
+                ],
+            },
+        ):
+            with self.subTest(changed=changed):
+                self.assertFalse(truncated_observation(changed))
+
     def test_encoded_atoms_stereo_charge_isotope_and_components_are_verbatim(self):
         words = [
             "<start>",

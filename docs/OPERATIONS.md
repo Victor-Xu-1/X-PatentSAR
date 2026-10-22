@@ -8,6 +8,11 @@ tokens, false completion flags and a decoded molecule that differs from the
 retained tokens cannot be accepted. Valid incomplete output remains visible as
 failed raw evidence; a healthy JSONL child is reused rather than restarted for
 each incomplete molecule. Protocol corruption still uses bounded restart limits.
+With normalization retry already enabled, a literal protocol-valid missing-end
+reply can use the same one-image retry as other recognition failures. This
+changes only presentation of the same retained source, keeps both raw outputs
+and never appends an end token or repairs a molecule. No new retry/engine chain
+is introduced; missing/forged metadata never qualifies for that retry.
 
 Current contracts are DECIMER adapter2, raw observation3 and SMILES schema5.
 An old raw-v2 cache cannot establish completion. It stays unchanged at its

@@ -18,6 +18,7 @@ from patent_sar_extractor.contracts import (
 from .candidate_inventory import validate_candidate_input
 from .engines.base_engine import BaseOCSREngine
 from .engines.decimer_engine import DECIMEREngine
+from .generation import truncated_observation
 from .image_preprocess import preprocess_structure_image
 from .label_mask import mask_visible_label as _mask_visible_label_for_ocsr
 from .recognition_source_paths import resolve_ocsr_image_path
@@ -523,7 +524,11 @@ class SmilesConverter:
                 if (
                     self.retry_normalization
                     and attempt_index == 0
-                    and status == "success"
+                    and (
+                        status == "success"
+                        or engine_name == "decimer"
+                        and truncated_observation(prediction)
+                    )
                     and raw
                     and not str(checked["quality_flag"]).startswith("stereo_source_")
                     and preprocess_dir

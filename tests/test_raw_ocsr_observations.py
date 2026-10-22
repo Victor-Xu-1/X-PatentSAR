@@ -40,19 +40,24 @@ class RawOCSRObservationTests(unittest.TestCase):
             def predict(self, image, timeout=60):
                 calls.append(image)
                 raw = outputs[min(len(calls) - 1, len(outputs) - 1)]
+                mode = (
+                    completion[min(len(calls) - 1, len(completion) - 1)]
+                    if isinstance(completion, list)
+                    else completion
+                )
                 words = [
                     "<start>",
                     *(raw or ""),
-                    *(["<end>"] if completion == "complete" else []),
+                    *(["<end>"] if mode == "complete" else []),
                 ]
                 generation = observe_generation(words)[1] if raw else None
-                if completion == "forged":
+                if mode == "forged":
                     generation = {**generation, "status": "complete", "reason": None}
                 return {
                     "status": "success",
                     "raw_smiles": raw,
                     "model_fingerprint": self.fingerprint,
-                    **({"generation": generation} if completion != "missing" else {}),
+                    **({"generation": generation} if mode != "missing" else {}),
                 }
 
         with patch.dict(converter_module.ENGINE_MAP, {"decimer": BoundaryEngine}):
@@ -90,6 +95,61 @@ class RawOCSRObservationTests(unittest.TestCase):
                 result = converter.convert_one(self.fixture(Path(temporary)))
                 self.assertEqual(result["OCSR_status"], "all_engines_failed")
                 self.assertEqual(result["raw_smiles"], "CCO")
+
+    def test_incomplete_generation_can_use_one_existing_image_retry_without_repair(
+        self,
+    ):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            item = self.fixture(root)
+            original = Path(item["image_path"]).read_bytes()
+            converter, calls = self.converter(
+                ["CC", "CCO"], retry=True, completion=["incomplete", "complete"]
+            )
+            result = converter.convert_one(item, preprocess_dir=str(root / "inputs"))
+            self.assertEqual(len(calls), 2)
+            self.assertEqual(result["OCSR_status"], "success")
+            self.assertEqual(result["raw_smiles"], "CCO")
+            self.assertEqual(result["engine_attempts"][0]["raw_smiles"], "CC")
+            self.assertEqual(result["engine_attempts"][0]["status"], "failed")
+            self.assertEqual(
+                result["engine_attempts"][0]["generation"]["reason"], "missing_end"
+            )
+            self.assertEqual(
+                result["engine_attempts"][1]["input_source"], "normalized_image"
+            )
+            self.assertEqual(Path(item["image_path"]).read_bytes(), original)
+
+    def test_incomplete_generation_retry_is_bounded_and_cannot_accept_a_second_prefix(
+        self,
+    ):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            converter, calls = self.converter(
+                ["CC"], retry=True, completion="incomplete"
+            )
+            result = converter.convert_one(
+                self.fixture(root), preprocess_dir=str(root / "inputs")
+            )
+            self.assertEqual(len(calls), 2)
+            self.assertEqual(result["OCSR_status"], "all_engines_failed")
+            self.assertTrue(
+                all(
+                    row["generation"]["reason"] == "missing_end"
+                    for row in result["engine_attempts"]
+                )
+            )
+
+    def test_missing_or_forged_completion_cannot_request_an_image_retry(self):
+        for mode in ("missing", "forged"):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                converter, calls = self.converter(["CCO"], retry=True, completion=mode)
+                result = converter.convert_one(
+                    self.fixture(root), preprocess_dir=str(root / "inputs")
+                )
+                self.assertEqual(len(calls), 1)
+                self.assertEqual(result["OCSR_status"], "all_engines_failed")
 
     def test_cached_missing_or_forged_completion_is_reinferred_not_promoted(self):
         from patent_sar_extractor.contracts import OCSR_OBSERVATION_VERSION
