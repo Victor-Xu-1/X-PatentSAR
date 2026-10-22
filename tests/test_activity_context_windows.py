@@ -10,6 +10,8 @@ from unittest.mock import Mock, patch
 import fitz
 
 from patent_sar_extractor.artifact_io import load_json
+from patent_sar_extractor.contracts import CHARACTERIZATION_ROLE_SCHEMA_VERSION
+from patent_sar_extractor.core.activity_auxiliary_replay import original_pdf_reader
 from patent_sar_extractor.core.activity_coordinates import extract_coordinate_tables
 from patent_sar_extractor.core.activity_coverage import coverage_errors, coverage_packet
 from patent_sar_extractor.core.activity_extractor import extract
@@ -163,7 +165,14 @@ class ActivityContextWindowTests(unittest.TestCase):
             with self.subTest(ink=ink):
                 self.assertEqual(
                     fragment_texts(
-                        {"role_scope": {"roles": {"columns": ["nmr"]}}}, fragment, 0
+                        {
+                            "role_scope": {
+                                "version": CHARACTERIZATION_ROLE_SCHEMA_VERSION,
+                                "roles": {"columns": ["nmr"]},
+                            }
+                        },
+                        fragment,
+                        0,
                     ),
                     None if ink else ["", ""],
                 )
@@ -390,26 +399,20 @@ class ActivityContextWindowTests(unittest.TestCase):
             )
 
     def test_later_cell_budget_refusal_keeps_the_completed_original_read(self):
-        import numpy as np
-
         from patent_sar_extractor.core.activity_grid_role_observation import (
             observe_role_cells,
         )
 
-        page = Mock()
-        page.get_text.return_value = []
         original = []
         engine = Mock()
         with (
+            fitz.open() as document,
             patch(
                 "patent_sar_extractor.core.activity_grid_role_observation.get_ocr_engine",
                 return_value=("rapidocr", engine),
             ),
-            patch(
-                "patent_sar_extractor.core.activity_grid_role_observation.cell_image",
-                return_value=np.full((30, 60, 3), 255, dtype=np.uint8),
-            ),
         ):
+            page = document.new_page(width=600, height=600)
             result = observe_role_cells(
                 page, {"xs": [0, 500], "ys": [0, 500]}, [], evidence_sink=original
             )
@@ -760,7 +763,12 @@ class ActivityContextWindowTests(unittest.TestCase):
                 self.assertEqual(len(conditions), 1)
                 self.assertEqual(conditions[0]["assay"], assay)
                 self.assertEqual(conditions[0]["cell_line"], cell_line)
-        self.assertEqual(activity_evidence_errors(payload, [0]), [])
+            self.assertEqual(
+                activity_evidence_errors(
+                    payload, [0], open_original=original_pdf_reader(root / "source.pdf")
+                ),
+                [],
+            )
         for label in ("41", "89"):
             rows = [row for row in payload["rows"] if row["cpd"] == f"Compound {label}"]
             self.assertEqual(len(rows), 3)
@@ -920,24 +928,27 @@ class ActivityContextWindowTests(unittest.TestCase):
         )
 
     def raster_artifact(self):
-        with tempfile.TemporaryDirectory() as temp:
-            root = Path(temp)
-            with fitz.open() as native, fitz.open() as raster:
-                original = unnamed_page(native)
-                pixels = original.get_pixmap(matrix=fitz.Matrix(4, 4), alpha=False)
-                page = raster.new_page(width=500, height=600)
-                page.insert_image(page.rect, stream=pixels.tobytes("png"))
-                raster.save(root / "original.pdf")
-            extract(
-                str(root / "original.pdf"),
-                {"activity_pages": [0]},
-                str(root / "output"),
-            )
-            return load_json(root / "output/activity_data.json", None)
+        root = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        with fitz.open() as native, fitz.open() as raster:
+            original = unnamed_page(native)
+            pixels = original.get_pixmap(matrix=fitz.Matrix(4, 4), alpha=False)
+            page = raster.new_page(width=500, height=600)
+            page.insert_image(page.rect, stream=pixels.tobytes("png"))
+            raster.save(root / "original.pdf")
+        extract(
+            str(root / "original.pdf"),
+            {"activity_pages": [0]},
+            str(root / "output"),
+        )
+        self.raster_original = original_pdf_reader(root / "original.pdf")
+        return load_json(root / "output/activity_data.json", None)
 
     def test_saved_anonymous_header_cannot_invent_a_context_blocker(self):
         original = self.raster_artifact()
-        self.assertEqual(activity_evidence_errors(original, [0]), [])
+        self.assertEqual(
+            activity_evidence_errors(original, [0], open_original=self.raster_original),
+            [],
+        )
         changed = copy.deepcopy(original)
         key, proof = next(iter(changed["header_observations"].items()))
         proof["original_source"]["context_geometry"]["tables"].append(
@@ -950,7 +961,7 @@ class ActivityContextWindowTests(unittest.TestCase):
                 if source.get("header_resolution", {}).get("evidence_ref") == key:
                     source["header_resolution"]["evidence_ref"] = replacement
         with self.assertRaisesRegex(ValueError, "physical grid inventory"):
-            activity_evidence_errors(changed, [0])
+            activity_evidence_errors(changed, [0], open_original=self.raster_original)
 
     def header_sources(self, *, current_native=False, weak_caption=False):
         region = {"xs": [40, 160, 300], "ys": [375, 400, 425]}

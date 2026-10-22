@@ -1,5 +1,40 @@
 # Operations and troubleshooting
 
+## Parallel activity sources execute after their original parent
+
+The coordinate producer and saved-family reader now share page/left/top source
+dependency order. Slightly higher top edges in a right-hand data panel, including
+raster rounding, cannot make it run before the left header source. The existing
+parallel/adjacent edge rules still require qualified original headers, matching
+columns, unique caption/context ownership and conserved conditions. This ordering
+does not classify an unknown header, change values or copy a conflicting assay.
+Visible source coverage remains in physical page/top order.
+
+Extractor50 refreshes affected derived activity checkpoints; Activity38/coverage20
+and the other independent scientific contracts stay unchanged. Retain historical
+raw OCR, original PDFs/coordinates/values and manual audit; never retag or fill an
+old partial result. A normal frontend producer can collect the newly covered
+sources only after reviewed-main delivery. Generated native-PDF controls prove
+the ordering/reader behavior, not private-scanned-header OCR correctness, universal
+patent coverage or scientific acceptance. Known/unknown original conflicts remain
+unresolved and still withhold header carry.
+
+## Complete native text windows, not clipped individual lines
+
+The original source can contain slightly overlapping native line boxes inside
+one text block. Declared-text source2 coalesces only adjacent overlapping lines
+when every word stays in original/physical order and within the existing512token
+source-cell budget. This changes the nominated observation window, not any word,
+coordinate or confidence. The same authority recomputes it from the actual PDF.
+Separate blocks, reversed/ambiguous order and oversized groups retain their
+original individual windows; outsiders, hidden/overpainted text, missing words
+and invalid source geometry still refuse. No overlap tolerance, paint/font-box
+shrink, source-token deletion, extra OCR/model or scientific-value repair.
+
+Old declared-text source1 and extractor49 remain historical proof. Extractor50
+requires current source packets; original PDFs, native/raw OCR caches, historical
+observations and audited revisions are never rewritten to satisfy this gate.
+
 ## Scanned and mixed-layer reaction roles
 
 Readable scanned open/filled arrows can now supply original direction under a

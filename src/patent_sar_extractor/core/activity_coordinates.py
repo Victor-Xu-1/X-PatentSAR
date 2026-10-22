@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from .activity_context_geometry import context_region, grid_axes, grid_box
+from .activity_context_geometry import (
+    context_region,
+    grid_axes,
+    grid_box,
+    table_dependency_order,
+)
 from .activity_coverage import source_record
 from .activity_grid_context import _prefix, table_matrix
 from .activity_grid_continuations import Panel, continued_panel
@@ -61,7 +66,7 @@ def extract_coordinate_tables(
         page = doc[page_index]
         regions = sorted(
             detect_ruled_table_regions(page, dpi=240),
-            key=lambda r: (r["ys"][0], r["xs"][0]),
+            key=lambda r: table_dependency_order(page_index + 1, grid_box(r)),
         )
         native = page.get_text("text") if hasattr(page, "get_text") else ""
         observed = [
