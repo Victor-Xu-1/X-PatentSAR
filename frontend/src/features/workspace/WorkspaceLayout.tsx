@@ -7,6 +7,20 @@ import type { LayoutState } from '../../model/layout';
 import { ResizeHandle } from '../../components/ResizeHandle';
 import { containTab } from '../../components/focus';
 
+type SourceRenderer = (onReturnToResults: () => void) => ReactNode;
+
+// Keep the source slot at a React render boundary. The DOM-owning callbacks
+// are event props here, never invoked by the layout's render phase.
+function WorkspaceSource({
+  render,
+  onReturnToResults,
+}: {
+  render: SourceRenderer;
+  onReturnToResults: () => void;
+}) {
+  return render(onReturnToResults);
+}
+
 export function WorkspaceLayout({
   layout: input,
   onChange,
@@ -16,7 +30,7 @@ export function WorkspaceLayout({
 }: {
   layout: LayoutState;
   onChange: (layout: LayoutState) => void;
-  source: (onReturnToResults: () => void) => ReactNode;
+  source: SourceRenderer;
   results: ReactNode;
   workflow?: ReactNode;
 }) {
@@ -24,8 +38,8 @@ export function WorkspaceLayout({
   const layout = normalizeLayout(input);
   const split = useRef<HTMLDivElement>(null);
   const root = useRef<HTMLDivElement>(null);
-  const sourcePane = useRef<HTMLDivElement>(null);
-  const resultsPane = useRef<HTMLDivElement>(null);
+  const sourcePane = useRef<HTMLElement>(null);
+  const resultsPane = useRef<HTMLElement>(null);
   const pendingSourceFocus = useRef(false);
   const fullButton = useRef<HTMLButtonElement>(null);
   const [preview, setPreview] = useState<number | null>(null);
@@ -124,16 +138,15 @@ export function WorkspaceLayout({
       >
         {layout.pdfVisible && (
           <>
-            <div
+            <section
               id="workspace-source"
               className="workspace-source"
               ref={sourcePane}
               tabIndex={-1}
-              role="region"
               aria-label={t('原文区域')}
             >
-              {source(returnToResults)}
-            </div>
+              <WorkspaceSource render={source} onReturnToResults={returnToResults} />
+            </section>
             <ResizeHandle
               className="workspace-divider"
               label={t('调整原文与结果宽度')}
@@ -156,16 +169,15 @@ export function WorkspaceLayout({
             />
           </>
         )}
-        <div
+        <section
           id="workspace-results"
           className="workspace-results"
           ref={resultsPane}
           tabIndex={-1}
-          role="region"
           aria-label={t('结果区域')}
         >
           {results}
-        </div>
+        </section>
       </div>
     </div>
   );
