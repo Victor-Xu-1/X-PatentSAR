@@ -140,7 +140,7 @@ class PhysicalPlotNominationTests(unittest.TestCase):
                     if section["role"] == "figure_label_reference"
                 ]
                 self.assertEqual(len(figures), 1)
-                self.assertEqual(figures[0]["heading_observation"]["version"], 6)
+                self.assertEqual(figures[0]["heading_observation"]["version"], 7)
 
     def test_refined_anchor_and_all_original_words_are_mandatory_in_saved_proof(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -151,7 +151,7 @@ class PhysicalPlotNominationTests(unittest.TestCase):
             for section in sections
             if section["role"] == "figure_label_reference"
         )
-        self.assertEqual(baseline["version"], 6)
+        self.assertEqual(baseline["version"], 7)
         self.assertIsNotNone(proved_heading_declaration(baseline))
         for mutation in (
             "missing_anchor",
@@ -188,7 +188,7 @@ class PhysicalPlotNominationTests(unittest.TestCase):
             changed["status"] = "confirmed"
             with self.subTest(mutation=mutation):
                 self.assertIsNone(proved_heading_declaration(changed))
-        for version in (True, 6.0, "6", [], {}):
+        for version in (True, 7.0, "7", [], {}):
             changed = {**baseline, "version": version, "status": "confirmed"}
             with self.subTest(version=version):
                 self.assertEqual(plot_reference_status(changed), ("invalid", None))

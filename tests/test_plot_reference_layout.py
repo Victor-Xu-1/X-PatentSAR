@@ -26,6 +26,9 @@ def plot_document(
     synthesis=False,
     last_tick="100",
     legend_x=347,
+    legend="Compound 062-C",
+    y_values=("90", "45", "0"),
+    middle_tick="1",
 ):
     """Synthetic source geometry only, without private patent content."""
     document = fitz.open()
@@ -33,7 +36,7 @@ def plot_document(
     if axes:
         page.draw_line((110, 80), (110, 250), width=0.8)
         page.draw_line((110, 250), (300, 250), width=0.8)
-    for x, value in zip((110, 170, 230, 290), ("0.001", "0.1", "1", last_tick)):
+    for x, value in zip((110, 170, 230, 290), ("0.001", "0.1", middle_tick, last_tick)):
         origin = fitz.Point(x, 295)
         page.insert_text(origin, value, fontsize=9, morph=(origin, fitz.Matrix(angle)))
     if extra_tick:
@@ -41,13 +44,13 @@ def plot_document(
         page.insert_text(
             origin, extra_tick, fontsize=9, morph=(origin, fitz.Matrix(angle))
         )
-    for y, value in zip((105, 165, 225), ("90", "45", "0")):
+    for y, value in zip((105, 165, 225), y_values):
         page.insert_text((78, y + 3), value, fontsize=9)
     if extra_y:
         page.insert_text((78, 198), extra_y, fontsize=9)
     page.draw_line((legend_x - 22, 116), (legend_x - 6, 116), width=1)
     page.draw_circle((legend_x - 14, 116), 2, fill=(0, 0, 0))
-    page.insert_text((legend_x, 119), "Compound 062-C", fontsize=10)
+    page.insert_text((legend_x, 119), legend, fontsize=10)
     page.insert_text((185, 365), "FIGURE 8A", fontsize=10)
     if synthesis:
         page.insert_text((54, 415), "Compound 29: Synthesis", fontsize=11)

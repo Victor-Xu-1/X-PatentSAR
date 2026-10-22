@@ -1,22 +1,18 @@
 """Literal graphic-key/heading locators from complete original line pixels.
 
-An OCR prefix nominates observation only. It is never removed from raw data or
-used to assert a molecule; text and the complete graphic key need pixel proof.
+An OCR prefix nominates observation only. Every physical row and literal source
+survives; neither text trimming nor the first matching row establishes a role.
 """
 
 import re
 
-import numpy as np
-
 from .cell_frame_proof import inside_box
-from .cell_raster import retained_pixel_origin
-from .plot_reference_geometry import legend_heading, literal_bounds
-from .plot_reference_marker import marker_extent
-from .plot_reference_pixels import observe_pixels, retained_pixels
-from .source_geometry import overlaps
+from .plot_legend_geometry import MAX_LOCATOR_PIXELS, locator_bounds, locator_rows
+from .plot_literal_cells import literal_cell_text, observe_literal_cell
+from .plot_reference_geometry import legend_heading, literal, literal_bounds
+from .plot_reference_pixels import observe_pixels
 from .source_section_roles import section_heading
 
-MAX_LOCATOR_PIXELS = 250_000
 _LABEL = re.compile(
     r"(?<!\w)(?:Compound|Cmpd|Cpd|化合物)(?=\s|[-:.：]|\d)", re.IGNORECASE
 )
@@ -35,57 +31,20 @@ def legend_candidate(text):
     return (start, end, text[start:end]) if legend_heading(text[start:end]) else None
 
 
-def _window(line, size):
-    box = line["bbox"]
-    return [
-        max(0, box[0] - 26),
-        max(0, box[1] - 2),
-        min(size[0], box[2] + 2),
-        min(size[1], box[3] + 2),
-    ]
-
-
-def _point_box(box, bounds, dpi, reading):
-    origin = retained_pixel_origin(reading, bounds, dpi)
-    return [v * 72 / dpi + origin[i % 2] for i, v in enumerate(box)]
-
-
-def _separate(mask, bounds, dpi, height, reading):
-    columns = np.flatnonzero(mask.any(axis=0))
-    if not len(columns):
+def _locator_rows(packet, size, *, chunks=None):
+    if not isinstance(packet, dict) or type(packet.get("version")) is not int:
         return None
-    groups = np.split(columns, np.flatnonzero(np.diff(columns) > 1) + 1)
-    if not 2 <= len(groups) <= 128:
-        return None
-    left, right = int(groups[0][0]), int(groups[0][-1]) + 1
-    rows = np.flatnonzero(mask[:, left:right].any(axis=1))
-    top, bottom = int(rows[0]), int(rows[-1]) + 1
-    if marker_extent(mask[top:bottom, left:right], dpi, height) is None:
-        return None
-    text_left, text_right = int(groups[1][0]), int(groups[-1][-1]) + 1
-    text_rows = np.flatnonzero(mask[:, text_left:text_right].any(axis=1))
-    text_box = [text_left, int(text_rows[0]), text_right, int(text_rows[-1]) + 1]
-    # Every non-key ink pixel belongs to the one retained complete text window.
-    # Neither a preferred word subset nor the compound number chooses the cut.
-    return {
-        "key": _point_box([left, top, right, bottom], bounds, dpi, reading),
-        "text": _point_box(text_box, bounds, dpi, reading),
-    }
-
-
-def locator_nomination(packet, size):
-    if not isinstance(packet, dict) or set(packet) != {
+    version = packet["version"]
+    if version not in {1, 2} or set(packet) != {
         "version",
         "source_line",
         "literal_range",
         "pixels",
-    }:
+    } | ({"rows"} if version == 2 else set()):
         return None
     line = packet["source_line"]
     if (
-        type(packet["version"]) is not int
-        or packet["version"] != 1
-        or not isinstance(line, dict)
+        not isinstance(line, dict)
         or set(line) != _LINE_FIELDS
         or line["source"] not in {"native", "page_ocr"}
         or line["geometry_space"] != "rendered"
@@ -101,54 +60,55 @@ def locator_nomination(packet, size):
         or packet["literal_range"] != list(candidate[:2])
     ):
         return None
-    bounds = _window(line, size)
-    pixels = packet["pixels"]
-    if (
-        not isinstance(pixels, dict)
-        or set(pixels) != {"bbox", "readings"}
-        or pixels["bbox"] != bounds
-        or not isinstance(pixels["readings"], list)
-        or len(pixels["readings"]) != 2
-    ):
+    geometry = locator_rows(packet["pixels"], line, size, multiline=version == 2)
+    if geometry is None:
         return None
-    results = []
-    for reading, dpi in zip(pixels["readings"], (400, 600)):
-        mask = retained_pixels(reading, bounds, dpi, MAX_LOCATOR_PIXELS)
-        if mask is None:
+    if version == 1:
+        return [{**geometry[0], "text": candidate[2]}]
+    rows = packet["rows"]
+    if not isinstance(rows, list) or len(rows) != len(geometry):
+        return None
+    for row, part in zip(rows, geometry):
+        if (
+            not isinstance(row, dict)
+            or set(row) != {"bbox", "key", "text", "cell"}
+            or any(row[key] != part[key] for key in ("bbox", "key"))
+            or not isinstance(row["text"], str)
+            or not 0 < len(row["text"]) <= 4096
+        ):
             return None
-        split = _separate(mask, bounds, dpi, line["bbox"][3] - line["bbox"][1], reading)
-        if split is None:
+        text = literal_cell_text(
+            row["cell"], literal_bounds(row["bbox"], size), chunks=chunks
+        )
+        if text is None or literal(text) != literal(row["text"]):
             return None
-        results.append(split)
-    if any(
-        abs(a - b) > 1.2
-        for name in ("key", "text")
-        for a, b in zip(results[0][name], results[1][name])
-    ):
+        if (
+            section_heading(text) is not None or _LABEL.search(text)
+        ) and not legend_heading(text):
+            return None  # A known preparation/assay role cannot disappear.
+    return rows
+
+
+def locator_nomination(packet, size, *, chunks=None):
+    try:
+        rows = _locator_rows(packet, size, chunks=chunks)
+    except (KeyError, TypeError, ValueError, AttributeError, IndexError):
+        return None  # Malformed retained evidence is not an observed literal.
+    if rows is None:
         return None
-    text = [
-        min(results[0]["text"][0], results[1]["text"][0]),
-        min(results[0]["text"][1], results[1]["text"][1]),
-        max(results[0]["text"][2], results[1]["text"][2]),
-        max(results[0]["text"][3], results[1]["text"][3]),
-    ]
-    if not inside_box(text, bounds) or not overlaps(text, line["bbox"]):
-        return None
-    # Ink extents are not a font-line box. The common original-cell inset defines
-    # the deterministic reading window around every retained text pixel; do not
-    # relax the existing graphic-key predicate to accommodate a different frame.
-    text = literal_bounds(text, size)
-    if not inside_box(text, bounds):
+    candidate = legend_candidate(packet["source_line"]["text"])
+    selected = [row for row in rows if literal(row["text"]) == literal(candidate[2])]
+    if len(selected) != 1:
         return None
     return {
-        "text": candidate[2],
-        "bbox": text,
-        "source": line["source"],
+        "text": selected[0]["text"],
+        "bbox": selected[0]["bbox"],
+        "source": packet["source_line"]["source"],
         "geometry_space": "rendered",
     }
 
 
-def observe_legend_locator(page, line, size):
+def observe_legend_locator(page, line, size, *, tokens=None):
     candidate = legend_candidate(line.get("text"))
     if candidate is None or not inside_box(line.get("bbox"), [0, 0, *size]):
         return None
@@ -156,9 +116,25 @@ def observe_legend_locator(page, line, size):
         return None
     original = {key: line[key] for key in _LINE_FIELDS}
     packet = {
-        "version": 1,
+        "version": 2,
         "source_line": original,
         "literal_range": list(candidate[:2]),
-        "pixels": observe_pixels(page, _window(original, size), MAX_LOCATOR_PIXELS),
+        "pixels": observe_pixels(
+            page, locator_bounds(original, size), MAX_LOCATOR_PIXELS
+        ),
+        "rows": [],
     }
+    geometry = locator_rows(packet["pixels"], original, size, multiline=True)
+    if geometry is None:
+        return None
+    if tokens is None:
+        from .table_geometry import page_tokens
+
+        tokens = page_tokens(page)
+    for part in geometry:
+        cell = observe_literal_cell(page, part, size, tokens)
+        text = literal_cell_text(cell, literal_bounds(part["bbox"], size))
+        if text is None:
+            return None
+        packet["rows"].append({**part, "text": text, "cell": cell})
     return packet if locator_nomination(packet, size) is not None else None

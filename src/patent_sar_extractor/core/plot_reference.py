@@ -6,26 +6,22 @@ role observation remains an unproved heading; ordinary headings stay unchanged.
 
 from patent_sar_extractor.contracts import PLOT_REFERENCE_VERSION
 
-from .activity_grid_role_observation import observe_role_cells
 from .plot_axis_refinement import observe_reference_axes, refinement_bounds
 from .plot_legend_locator import (
     legend_candidate,
     locator_nomination,
     observe_legend_locator,
 )
+from .plot_literal_cells import observe_literal_cell
 from .plot_reference_geometry import (
     context_bounds,
     figure_caption,
     legend_heading,
-    literal_bounds,
     source_literal,
 )
 from .plot_reference_proof import figure_parts, plot_reference_status
 from .source_geometry import SourceTokens, source_layout
-from .source_window_chunks import (
-    observe_source_window,
-    observe_window_sources,
-)
+from .source_window_chunks import observe_source_window
 from .table_geometry import page_tokens
 
 __all__ = ["observe_plot_reference", "plot_reference_status"]
@@ -66,7 +62,7 @@ def observe_plot_reference(
     )
     locator = None
     if selected is None:
-        locator = observe_legend_locator(page, line, size)
+        locator = observe_legend_locator(page, line, size, tokens=tokens)
         if locator is None:
             return None
         line = locator_nomination(locator, size)
@@ -90,20 +86,8 @@ def observe_plot_reference(
         "chunks": observe_source_window(tokens, window),
         "literal_cells": [],
     }
-    for part in figure_parts(figure, line):
-        box = literal_bounds(part["bbox"], size)
-        figure["literal_cells"].append(
-            {
-                "bbox": box,
-                "sources": observe_window_sources(tokens, box),
-                "reading": observe_role_cells(
-                    page,
-                    {"xs": [box[0], box[2]], "ys": [box[1], box[3]]},
-                    tokens,
-                    retain_frames=True,
-                ),
-            }
-        )
+    for part in figure_parts(figure, line, locator):
+        figure["literal_cells"].append(observe_literal_cell(page, part, size, tokens))
     proof = {
         "version": PLOT_REFERENCE_VERSION,
         "original_pdf_sha256": original_sha,

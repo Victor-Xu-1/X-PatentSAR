@@ -5,6 +5,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import fitz
 
@@ -15,6 +16,7 @@ from patent_sar_extractor.core.binding_source_references import (
     reference_scope,
 )
 from patent_sar_extractor.core.heading_source_proof import proved_heading_declaration
+from patent_sar_extractor.core.plot_reference import observe_plot_reference
 from patent_sar_extractor.core.source_evidence_identity import proof_id
 from patent_sar_extractor.core.table_geometry import page_tokens
 from tests.test_plot_reference_layout import plot_document
@@ -56,7 +58,20 @@ def scanned_sections(angle=45, *, hidden_label=None):
 
 class PlotRefinementProofTests(unittest.TestCase):
     def test_shared_observer_native_identifier_conflict_cannot_be_waived_by_a_key(self):
-        blocks, sections = scanned_sections(hidden_label="Compound 63")
+        with patch(
+            "patent_sar_extractor.core.binding_source_headings.observe_plot_reference",
+            wraps=observe_plot_reference,
+        ) as observer:
+            blocks, sections = scanned_sections(hidden_label="Compound 63")
+        nominations = [
+            (call.args[1]["text"], tuple(call.args[1]["bbox"]), call.args[1]["source"])
+            for call in observer.call_args_list
+        ]
+        self.assertEqual(
+            len(nominations),
+            len(set(nominations)),
+            "A refused original window cannot repeat graphic OCR",
+        )
         self.assertTrue(blocks or sections)
         self.assertTrue(
             all(section["role"] != "figure_label_reference" for section in sections)
@@ -75,7 +90,7 @@ class PlotRefinementProofTests(unittest.TestCase):
                 self.assertEqual(blocks, [])
                 self.assertEqual(len(sections), 1)
                 proof = sections[0]["heading_observation"]
-                self.assertEqual(proof["version"], 6)
+                self.assertEqual(proof["version"], 7)
                 self.assertIn("original_locator", proof)
                 if proof["original_locator"] is not None:
                     locator = proof["original_locator"]

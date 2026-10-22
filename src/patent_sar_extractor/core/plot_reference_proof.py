@@ -11,30 +11,26 @@ from patent_sar_extractor.contracts import PLOT_REFERENCE_VERSION
 from .cell_frame_proof import inside_box
 from .plot_axis_refinement import refinement_bounds, replay_axis_tokens
 from .plot_legend_locator import locator_nomination
+from .plot_literal_cells import literal_cells_match
 from .plot_reference_axes import valid_axes
 from .plot_reference_geometry import (
     context_bounds,
     figure_caption,
     legend_heading,
-    literal,
-    literal_bounds,
     marker_bounds,
     plot_axes,
 )
 from .plot_reference_marker import valid_marker
-from .source_observations import project_source_observation, source_observation_status
 from .source_section_roles import section_heading
 from .source_window_chunks import (
-    source_packet_projection,
     validate_source_window,
     window_source_tokens,
 )
-from .unruled_header_readings import original_header_readings
 
 ROLE = "figure_label_reference"
 
 
-def figure_parts(figure, nomination):
+def figure_parts(figure, nomination, locator=None):
     refinement = figure["axis_refinement"]
     refined = (
         set(refinement["word_observations"])
@@ -51,7 +47,11 @@ def figure_parts(figure, nomination):
             if axis not in refined
             for part in parts
         ),
-        nomination,
+        *(
+            []
+            if isinstance(locator, dict) and locator.get("version") == 2
+            else [nomination]
+        ),
     ]
 
 
@@ -69,7 +69,7 @@ def _confirmed(figure, hint, size, locator=None, *, version):
         return False
     caption, axes, window = figure["caption"], figure["axes"], figure["window"]
     refinement = figure["axis_refinement"]
-    if (version == PLOT_REFERENCE_VERSION) != (
+    if (version in (6, PLOT_REFERENCE_VERSION)) != (
         isinstance(refinement, dict) and "word_observations" in refinement
     ):
         return False
@@ -85,7 +85,7 @@ def _confirmed(figure, hint, size, locator=None, *, version):
         )
     ):
         return False
-    parts = figure_parts(figure, hint)
+    parts = figure_parts(figure, hint, locator)
     if any(
         set(part) != {"text", "bbox"}
         for group in axes.values()
@@ -111,6 +111,11 @@ def _confirmed(figure, hint, size, locator=None, *, version):
     ):
         return False
     validate_source_window(figure["chunks"], window)
+    if locator is not None:
+        if (version == PLOT_REFERENCE_VERSION) != (locator.get("version") == 2):
+            return False
+        if locator_nomination(locator, size, chunks=figure["chunks"]) != hint:
+            return False
     tokens = window_source_tokens(figure["chunks"], window)
     native = window_source_tokens(figure["chunks"], window, native=True)
     projected = replay_axis_tokens(figure, tokens, native, hint, size)
@@ -132,7 +137,7 @@ def _confirmed(figure, hint, size, locator=None, *, version):
     refinement = figure["axis_refinement"]
     anchor = (
         {"axes": refinement["nomination"], "pixels": refinement["axis_strokes"]}
-        if version in (5, PLOT_REFERENCE_VERSION) and refinement is not None
+        if version in (5, 6, PLOT_REFERENCE_VERSION) and refinement is not None
         else None
     )
     if not valid_axes(figure["axis_strokes"], axes, size, anchor=anchor):
@@ -145,51 +150,16 @@ def _confirmed(figure, hint, size, locator=None, *, version):
         for p in [*tokens, *window_source_tokens(figure["chunks"], window, native=True)]
     ):
         return False
-    cells = figure["literal_cells"]
-    if not isinstance(cells, list) or len(cells) != len(parts):
-        return False
-    for part, cell in zip(parts, cells):
-        if not isinstance(cell, dict) or set(cell) != {"bbox", "sources", "reading"}:
-            return False
-        box = literal_bounds(part["bbox"], size)
-        if (
-            cell["bbox"] != box
-            or not isinstance(cell["sources"], list)
-            or not 1 <= len(cell["sources"]) <= 2
-        ):
-            return False
-        for packet in cell["sources"]:
-            if source_observation_status(
-                packet, box, packet.get("text")
-            ) == "invalid" or not source_packet_projection(
-                packet, figure["chunks"], box
+    if isinstance(locator, dict) and locator.get("version") == 2:
+        for row in locator["rows"]:
+            if any(
+                p["text"].strip()
+                for p in window_source_tokens(figure["chunks"], row["key"], native=True)
             ):
                 return False
-        values = original_header_readings(
-            cell["reading"],
-            [box[0], box[2]],
-            [box[1], box[3]],
-            cell["sources"],
-            identity=literal,
-        )
-        if values is None or literal(values[0]) != literal(part["text"]):
-            return False
-        parents = [
-            chunk for chunk in figure["chunks"] if inside_box(box, chunk["bbox"])
-        ]
-        if len(parents) != 1:
-            return False
-        # The complete parent stays authoritative even if a projected carrier
-        # drops an origin. Neither native nor raster contradictions disappear.
-        for original in parents[0]["sources"]:
-            retained = project_source_observation(original, box)
-            if (
-                retained["status"] == "qualified"
-                and retained["text"].strip()
-                and literal(retained["text"]) != literal(values[0])
-            ):
-                return False
-    return True
+    return literal_cells_match(
+        parts, figure["literal_cells"], size, chunks=figure["chunks"]
+    )
 
 
 def plot_reference_status(proof):
@@ -206,7 +176,7 @@ def plot_reference_status(proof):
         }
         | (
             {"original_locator"}
-            if proof.get("version") in (4, 5, PLOT_REFERENCE_VERSION)
+            if proof.get("version") in (4, 5, 6, PLOT_REFERENCE_VERSION)
             else set()
         )
     ):
@@ -214,7 +184,7 @@ def plot_reference_status(proof):
     size, hint = proof["page_size"], proof["nomination"]
     if (
         type(proof["version"]) is not int
-        or proof["version"] not in {3, 4, 5, PLOT_REFERENCE_VERSION}
+        or proof["version"] not in {3, 4, 5, 6, PLOT_REFERENCE_VERSION}
         or not isinstance(proof["original_pdf_sha256"], str)
         or not re.fullmatch(r"[a-f0-9]{64}", proof["original_pdf_sha256"])
         or type(proof["page_no"]) is not int
@@ -237,7 +207,7 @@ def plot_reference_status(proof):
         locator = proof.get("original_locator")
         if (
             proof["version"] == 4
-            or proof["version"] in (5, PLOT_REFERENCE_VERSION)
+            or proof["version"] in (5, 6, PLOT_REFERENCE_VERSION)
             and locator is not None
         ) and locator_nomination(locator, size) != hint:
             return "unresolved", None

@@ -97,7 +97,8 @@ def observed_heading_blocks(
         for line in heading_line_windows(observed):
             observation = section_heading(line["text"])
             graphical = None
-            if observation is None and legend_candidate(line["text"]) is not None:
+            legend = legend_candidate(line["text"]) if observation is None else None
+            if legend is not None:
                 graphical = observe_plot_reference(
                     page,
                     line,
@@ -108,6 +109,12 @@ def observed_heading_blocks(
                 )
                 if graphical is not None:
                     observation = section_heading(graphical["nomination"]["text"])
+                else:
+                    # A refused graphic observation cannot erase its nominated
+                    # printed-ID occurrence. This is a candidate only: the same
+                    # original heading proof must still qualify it below, or it
+                    # remains an explicit unproved source, never a product.
+                    observation = section_heading(legend[2])
             if observation is None and heading_list_hint(line["text"]):
                 observation = {
                     "role": "unproved_heading",
@@ -152,9 +159,9 @@ def observed_heading_blocks(
                             }
                         )
                     continue
-                proof = (
-                    graphical
-                    or observe_plot_reference(
+                proof = graphical
+                if legend is None:
+                    proof = observe_plot_reference(
                         page,
                         line,
                         observed,
@@ -162,14 +169,14 @@ def observed_heading_blocks(
                         cache=plot_cache,
                         tokens_for_page=tokens_for_page,
                     )
-                    or observe_heading(
+                if proof is None:
+                    proof = observe_heading(
                         page,
                         line,
                         document_sha256,
                         layout=layout,
                         grids=grids_for_page(page) if grids_for_page else None,
                     )
-                )
                 declared = proved_heading_declaration(proof)
                 effective = declared or observation
                 section = {
