@@ -72,6 +72,8 @@ export const pdf: Readonly<Record<string, string>> = {
     'The original image remains available in Original view; the server has not provided text.',
   当前页结构标注列表: 'Structure annotations on the current page',
   未确认: 'Unconfirmed',
+  '未归属结构 {index}': 'Unassigned drawing {index}',
+  '查看未归属结构 {index}': 'View unassigned drawing {index}',
   '此页暂无结构标注；不代表文档提取完成。':
     'No structure annotations on this page; this does not mean document extraction is complete.',
   结构与活性提取结果: 'Extracted structure and activity results',

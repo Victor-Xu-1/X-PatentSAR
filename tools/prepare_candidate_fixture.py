@@ -30,14 +30,21 @@ def prepare_candidates(workspace: Path, state: Path) -> dict[str, str]:
             title="Controlled candidate observations; not extraction accuracy",
         )
         rows = service.results(project.id).items
+        sources = [
+            service.effective_compound(project.id, row["id"])
+            for row in service.result_rows(project.id)
+        ]
         if (
-            len(rows) != 2
+            rows
+            or len(sources) != 2
             or any(
                 row.smiles is not None
                 or row.activities
                 or row.identifier_label is not None
-                or row.recognition.quality_flag != "unassigned_source_identity"
-                for row in rows
+                or row.recognition.status != "not_run"
+                or row.recognition.model_fingerprint is not None
+                or row.recognition.quality_flag != "unproved_terminal_ownership"
+                for row in sources
             )
             or project.acceptance.state == "accepted"
         ):

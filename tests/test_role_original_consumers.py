@@ -72,7 +72,8 @@ class RoleOriginalConsumerTests(unittest.TestCase):
             plan = self.load(self.payload)
         self.assertEqual(len(plan.proven.role_text), 6)
         self.assertEqual(len(plan.proven.work_items), 1)
-        self.assertEqual(len(plan.work_items), 2)
+        self.assertEqual(len(plan.work_items), 1)
+        self.assertEqual(len(plan.inventory["entries"]), 2)
         self.assertTrue(all(page_no == 4 for page_no, _ in plan.proven.role_text))
 
     def test_pure_qualified_but_rewritten_native_role_is_rejected_by_actual_worker(

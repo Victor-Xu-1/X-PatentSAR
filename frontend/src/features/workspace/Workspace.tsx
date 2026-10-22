@@ -6,6 +6,7 @@ import { withoutActivityFocus } from '../../model/route';
 import { withTableQuery } from '../../model/tableQueryRoute';
 import { validActivityFocus } from '../../api/activitySourceDecoders';
 import { normalizeLayout } from '../../model/layout';
+import { isUnassignedSourceId } from '../../model/compoundLabel';
 import { PdfPane } from '../pdf/PdfPane';
 import { CropDialog } from '../results/CropDialog';
 import { CorrectionDialog } from '../results/CorrectionDialog';
@@ -84,7 +85,7 @@ export function Workspace({
       });
   }
   function selectAnnotation(compoundId: string) {
-    const locating = results.locateCompound(compoundId);
+    const locating = !isUnassignedSourceId(compoundId) && results.locateCompound(compoundId);
     navigateSource(
       {
         tab: 'annotations',

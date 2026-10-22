@@ -1,16 +1,18 @@
 """Saved detected-image scope: bounded identity/accounting, never source admission."""
 
-from patent_sar_extractor.contracts import MAX_RECOGNITION_SOURCES
+from patent_sar_extractor.contracts import (
+    MAX_RECOGNITION_SOURCES,
+    OCSR_RECOGNITION_SCOPE,
+)
 
 from ..activity_context_geometry import valid_box
 from ..structure_inventory import validate_structure_inventory
 from .candidate_inventory import (
-    PRINTED_ID_FIELDS,
-    candidate_descriptor,
     inventory_digest,
     valid_sha,
     valid_source_path,
 )
+from .recognition_selection import deferred_source_record
 
 SOURCE_ROLES = ("formal", "supplemental", "reprint")
 RESULT_FIELDS = ("records", "source_records", "reprint_records", "candidate_records")
@@ -23,6 +25,7 @@ def validate_candidate_scope(value, *, group_counts=None):
         != {
             "version",
             "kind",
+            "recognition_policy",
             "original_pdf_sha256",
             "metadata_identity",
             "producer_identity",
@@ -31,8 +34,9 @@ def validate_candidate_scope(value, *, group_counts=None):
             "identity",
         }
         or type(value["version"]) is not int
-        or value["version"] != 1
-        or value["kind"] != "detected_image_observations"
+        or value["version"] != 2
+        or value["kind"] != "detected_image_inventory"
+        or value["recognition_policy"] != OCSR_RECOGNITION_SCOPE
         or any(
             not valid_sha(value[field])
             for field in (
@@ -113,25 +117,20 @@ def validate_inventory_records(inventory, groups):
     for entry in inventory["entries"]:
         reference = entry["observation"]
         row = groups[fields[reference["role"]]][reference["index"]]
-        _validate_observed_record(entry, row)
         if reference["role"] == "candidate":
-            source = candidate_descriptor(entry, inventory["original_pdf_sha256"])
-            if (
-                row.get("cpd_id") != ""
-                or row.get("structure_id") != entry["structure_id"]
-                or row.get("candidate_source_id") != inventory_digest(source)
-                or row.get("ocsr_original_input") != entry["image_path"]
-                or any(row.get(field) not in (None, "") for field in PRINTED_ID_FIELDS)
-                or row.get("raw_smiles")
-                and row.get("OCSR_engine") != "decimer"
+            expected = deferred_source_record(entry, inventory["original_pdf_sha256"])
+            if row != expected or any(
+                type(row[key]) is not type(value) for key, value in expected.items()
             ):
                 raise ValueError(
-                    "Unassigned observation has another source or printed identifier"
+                    "Unproved source must retain exact no-execution identity, not a molecule"
                 )
-        elif row.get("candidate_source_id") is not None:
-            raise ValueError(
-                "A proved observation cannot borrow an unassigned source marker"
-            )
+        else:
+            _validate_observed_record(entry, row)
+            if row.get("candidate_source_id") is not None:
+                raise ValueError(
+                    "A proved observation cannot borrow an unassigned source marker"
+                )
 
 
 def _validate_observed_record(entry, row):

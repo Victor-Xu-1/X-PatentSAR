@@ -9,6 +9,7 @@ import { Tabs } from '../../components/Tabs';
 import { Empty, ErrorNotice, Loading } from '../../components/Feedback';
 import { PageControls } from './PageControls';
 import { PageCanvas } from './PageCanvas';
+import { sourceAnnotationLabel } from '../../model/compoundLabel';
 
 const modeLabels = {
   native: '原生 PDF 文本',
@@ -215,9 +216,10 @@ export function PdfPane({
                       onClick={() => onSelect(annotation.compound_id)}
                     >
                       <MapPin size={14} />
-                      {annotation.compound_id}
+                      {sourceAnnotationLabel(annotation.compound_id, index + 1)}
                       <span>
-                        {annotation.kind} · {annotation.verified ? t('证据已确认') : t('未确认')}
+                        {annotation.kind === 'structure' ? t('结构') : annotation.kind} ·{' '}
+                        {annotation.verified ? t('证据已确认') : t('未确认')}
                       </span>
                     </button>
                   ))

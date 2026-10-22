@@ -23,6 +23,7 @@ from patent_sar_extractor.core.formal_structure import (
 )
 from patent_sar_extractor.core.ocsr.candidate_inputs import load_source_observation_plan
 from patent_sar_extractor.core.ocsr.recognition_inputs import recognition_inputs
+from patent_sar_extractor.core.ocsr.recognition_selection import deferred_source_records
 from patent_sar_extractor.core.qa_report import build_qa_report
 from patent_sar_extractor.smiles_artifact import build_smiles_artifact
 from patent_sar_extractor.workers.final_workbook import resolve_display_image_path
@@ -97,7 +98,7 @@ def run_fixture(root, *, activities=None, invalid_second=False, classified_pages
                 records,
                 source_records=[control_record(r) for r in plan.proven.supplemental],
                 reprint_records=[control_record(r) for r in plan.proven.reprints],
-                candidate_records=[control_record(r) for r in plan.candidates],
+                candidate_records=deferred_source_records(plan.inventory),
                 candidate_inventory=plan.inventory,
             ),
             "formal_acceptance_scope": FORMAL_SCOPE,

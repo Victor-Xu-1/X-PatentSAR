@@ -19,6 +19,7 @@ from .candidate_scope import (
     validate_inventory_records,
 )
 from .recognition_inputs import RecognitionPlan
+from .recognition_selection import require_numbered_model_input
 from .recognition_source_paths import resolve_image_paths, resolve_ocsr_image_path
 
 
@@ -30,7 +31,7 @@ class CandidatePlan:
 
     @property
     def work_items(self):
-        return [*self.proven.work_items, *self.candidates]
+        return self.proven.work_items
 
 
 def _source_identity(row, original_sha, read_digest):
@@ -78,6 +79,7 @@ def build_candidate_plan(
         groups.append(resolved)
         count += len(resolved)
         for index, row in enumerate(resolved):
+            require_numbered_model_input(row)
             if row.get("source_pdf_sha256") != original_pdf_sha256:
                 raise ValueError(
                     "A proved recognition source belongs to another original document"

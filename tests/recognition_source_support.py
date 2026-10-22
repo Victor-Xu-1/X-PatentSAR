@@ -51,6 +51,9 @@ def complete_observation_artifact(
         load_source_observation_plan,
     )
     from patent_sar_extractor.core.ocsr.recognition_inputs import recognition_inputs
+    from patent_sar_extractor.core.ocsr.recognition_selection import (
+        deferred_source_records,
+    )
     from patent_sar_extractor.smiles_artifact import build_smiles_artifact
 
     plan = load_source_observation_plan(
@@ -69,6 +72,6 @@ def complete_observation_artifact(
             observation(item, source_raw) for item in plan.proven.supplemental
         ],
         reprint_records=[observation(item) for item in plan.proven.reprints],
-        candidate_records=[observation(item) for item in plan.candidates],
+        candidate_records=deferred_source_records(plan.inventory),
         candidate_inventory=plan.inventory,
     )

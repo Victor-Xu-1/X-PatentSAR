@@ -11,6 +11,7 @@ from .errors import WebError
 from .identifier_labels import identifier_label
 from .models import Compound, ExportRequest, Project
 from .prediction_models import METRIC_KEYS
+from .product_records import is_numbered_product
 from .property_values import effective_property_values, manual_property_values
 
 
@@ -58,10 +59,6 @@ def _research_prediction(row: Compound) -> bool:
         (row.admet and row.admet.status == "complete")
         or (row.descriptors and row.descriptors.status == "complete")
     )
-
-
-def _unassociated(row: Compound) -> bool:
-    return row.record_kind in {"structure_only", "activity_only"}
 
 
 ADMET_COLUMNS = [
@@ -170,15 +167,13 @@ def _admet_values(row: Compound) -> list[object]:
 
 
 def export_json(project: Project, rows: list[Compound]) -> Iterator[bytes]:
+    rows = [row for row in rows if is_numbered_product(row)]
     header = {
         "project_id": project.id,
         "patent_id": project.patent_id,
         "acceptance": project.acceptance.model_dump(),
         "review_only": project.acceptance.state != "accepted"
-        or any(
-            _manual_change(row) or _research_prediction(row) or _unassociated(row)
-            for row in rows
-        ),
+        or any(_manual_change(row) or _research_prediction(row) for row in rows),
         "manual_corrections": sum(_manual_change(row) for row in rows),
         "admet_observations": sum(_research_prediction(row) for row in rows),
         "formal_acceptance_scope": "proved_printed_identifier_structure_corpus",
@@ -196,6 +191,7 @@ def export_json(project: Project, rows: list[Compound]) -> Iterator[bytes]:
 
 
 def export_csv(project: Project, rows: list[Compound]) -> Iterator[bytes]:
+    rows = [row for row in rows if is_numbered_product(row)]
     buffer = io.StringIO(newline="")
     writer = csv.writer(buffer)
 
@@ -246,8 +242,7 @@ def export_csv(project: Project, rows: list[Compound]) -> Iterator[bytes]:
         ]
     )
     review_only = project.acceptance.state != "accepted" or any(
-        _manual_change(row) or _research_prediction(row) or _unassociated(row)
-        for row in rows
+        _manual_change(row) or _research_prediction(row) for row in rows
     )
     for row in rows:
         prefix: list[object] = [

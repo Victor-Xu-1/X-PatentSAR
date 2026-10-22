@@ -184,5 +184,6 @@ class RoleTextSourceReplayTests(unittest.TestCase):
         original = RecognitionPlan([fixture.owner], [], [], role_text=role_text)
         plan = fixture.plan(sources=original)
         self.assertEqual(plan.proven.role_text, role_text)
-        self.assertEqual(len(plan.work_items), 2)
+        self.assertEqual(len(plan.work_items), 1)
+        self.assertEqual(len(plan.inventory["entries"]), 2)
         self.assertEqual(len(plan.proven.work_items), 1)

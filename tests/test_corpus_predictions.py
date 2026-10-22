@@ -75,19 +75,22 @@ class CorpusPredictionTests(PredictionFixture, unittest.TestCase):
 
         stage, _ = read_admet_stage(row, Path(spec.output_dir))
         self.assertEqual(stage.status, "ok")
-        self.assertEqual(stage.skipped, 1)
+        self.assertEqual(stage.skipped, 0)
         self.assertEqual(stage.count, 1)
         self.assertEqual(stage.progress.total, 1)
         JobQueue(self.service, CLIProcessRunner(), 10)._confirm_predictions(
             row["id"], spec
         )
         result = self.service.results(self.project.id)
-        self.assertEqual(result.total, 2)
-        retained = next(
-            value for value in result.items if value.record_kind == "structure_only"
+        self.assertEqual(result.total, 1)
+        source_rows = self.service.result_rows(self.project.id)
+        self.assertEqual(len(source_rows), 2)
+        source = next(
+            row for row in source_rows if row["id"].startswith("source-structure:")
         )
-        self.assertEqual(retained.admet.status, "unavailable")
-        self.assertEqual(retained.admet.properties, [])
+        retained = self.service.effective_compound(self.project.id, source["id"])
+        self.assertIsNone(retained.admet)
+        self.assertNotIn(retained.id, {item.id for item in result.items})
 
     def test_all_unrecognized_sources_produce_empty_not_fake_model_success(self):
         from patent_sar_extractor.web.acceptance import ARTIFACTS
@@ -115,13 +118,14 @@ class CorpusPredictionTests(PredictionFixture, unittest.TestCase):
 
         stage, _ = read_admet_stage(row, Path(spec.output_dir))
         self.assertEqual(stage.status, "empty")
-        self.assertEqual(stage.skipped, 1)
+        self.assertEqual(stage.skipped, 0)
         self.assertEqual(stage.count, 0)
         self.assertEqual(stage.progress.total, 0)
         JobQueue(self.service, CLIProcessRunner(), 10)._confirm_predictions(
             row["id"], spec
         )
-        self.assertEqual(self.service.results(self.project.id).total, 1)
-        self.assertEqual(
-            self.service.results(self.project.id).items[0].admet.properties, []
-        )
+        self.assertEqual(self.service.results(self.project.id).total, 0)
+        sources = self.service.result_rows(self.project.id)
+        self.assertEqual(len(sources), 1)
+        retained = self.service.effective_compound(self.project.id, sources[0]["id"])
+        self.assertIsNone(retained.admet)

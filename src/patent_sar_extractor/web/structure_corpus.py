@@ -11,7 +11,6 @@ from .artifact_values import box, page_number, text
 from .errors import WebError
 from .files import MAX_RECORDS, SafeFiles
 from .models import Compound, Confidence, Recognition, Source
-from .recognition import recognition_status
 
 
 def unassociated_structures(
@@ -83,15 +82,19 @@ def unassociated_structures(
         observed = (observations or {}).get(structure_id)
         recognition = Recognition(status="not_run")
         if observed is not None:
-            projected = recognition_status(
-                observed, current=True, source_record=structure
-            )
-            if projected["status"] == "valid":
-                projected.update(
-                    status="unavailable", quality_flag="unassigned_source_identity"
+            if (
+                observed.get("recognition_selection")
+                != "deferred_unproved_terminal_ownership"
+            ):
+                raise WebError(
+                    422,
+                    "invalid_source_observation",
+                    "Unproved structure has no current deferral identity.",
                 )
-            recognition = Recognition.model_validate(projected)
-            flags.append("unassigned_source_observation")
+            recognition = Recognition(
+                status="not_run", quality_flag="unproved_terminal_ownership"
+            )
+            flags.append("recognition_deferred")
         elif observation_errors:
             recognition = Recognition(
                 status="unavailable", quality_flag="unassigned_source_unverified"

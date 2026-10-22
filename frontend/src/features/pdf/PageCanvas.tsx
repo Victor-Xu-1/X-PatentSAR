@@ -5,6 +5,7 @@ import type { ActivityFocusSelection, PageData } from '../../api/types';
 import { Empty } from '../../components/Feedback';
 import { ActivityFocusMarks, pageBoxStyle } from './ActivityFocusMarks';
 import { preferredScrollBehavior } from '../../model/motion';
+import { isUnassignedSourceId, sourceAnnotationLabel } from '../../model/compoundLabel';
 
 export function PageCanvas({
   page,
@@ -107,14 +108,18 @@ export function PageCanvas({
                 className={`annotation-box${annotation.compound_id === selectedId ? ' selected' : ''}${annotation.verified ? ' verified' : ''}`}
                 data-annotation={annotation.compound_id}
                 key={`${annotation.compound_id}-${index}`}
-                aria-label={t('定位化合物 {compound}，{evidence}', {
-                  compound: annotation.compound_id,
-                  evidence: t(annotation.verified ? '证据已确认' : '证据未确认'),
-                })}
+                aria-label={
+                  isUnassignedSourceId(annotation.compound_id)
+                    ? t('查看未归属结构 {index}', { index: index + 1 })
+                    : t('定位化合物 {compound}，{evidence}', {
+                        compound: annotation.compound_id,
+                        evidence: t(annotation.verified ? '证据已确认' : '证据未确认'),
+                      })
+                }
                 style={pageBoxStyle([x1, y1, x2, y2], width, height)}
                 onClick={() => onSelect(annotation.compound_id)}
               >
-                <span>{annotation.compound_id}</span>
+                <span>{sourceAnnotationLabel(annotation.compound_id, index + 1)}</span>
               </button>
             );
           })}

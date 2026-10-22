@@ -85,7 +85,7 @@ class CandidateProjectionTests(CandidateStageControls, unittest.TestCase):
         write_json_atomic(self.output / "pipeline_summary.json", summary)
         return ArtifactView.read(self.output)
 
-    def test_actual_snapshot_and_review_exports_keep_all_candidates_without_chemical_admission(
+    def test_snapshot_keeps_sources_but_product_exports_never_include_them(
         self,
     ):
         view = self.view()
@@ -96,7 +96,7 @@ class CandidateProjectionTests(CandidateStageControls, unittest.TestCase):
         molecules = [Compound.model_validate(row["dto"]) for row in rows]
         self.assertTrue(
             all(
-                row.recognition.quality_flag == "unassigned_source_identity"
+                row.recognition.quality_flag == "unproved_terminal_ownership"
                 for row in molecules
             )
         )
@@ -107,7 +107,7 @@ class CandidateProjectionTests(CandidateStageControls, unittest.TestCase):
         )
         exported = json.loads(b"".join(export_json(project, molecules)))
         self.assertTrue(exported["review_only"])
-        self.assertEqual(len(exported["items"]), 2)
+        self.assertEqual(exported["items"], [])
         self.assertTrue(
             all(
                 row["smiles"] is None and row["activities"] == []
@@ -121,7 +121,7 @@ class CandidateProjectionTests(CandidateStageControls, unittest.TestCase):
                 )
             )
         )
-        self.assertEqual(len(csv_rows), 2)
+        self.assertEqual(csv_rows, [])
         self.assertTrue(
             all(not row["smiles"] and not row["identifier_label"] for row in csv_rows)
         )
@@ -144,7 +144,7 @@ class CandidateProjectionTests(CandidateStageControls, unittest.TestCase):
             all(row["dto"]["recognition"]["status"] == "unavailable" for row in rows)
         )
 
-    def test_observed_candidates_are_not_misreported_as_unexecuted_or_named_products(
+    def test_deferred_candidates_are_not_reported_as_model_failures_or_named_products(
         self,
     ):
         before = {
@@ -167,11 +167,11 @@ class CandidateProjectionTests(CandidateStageControls, unittest.TestCase):
         self.assertEqual(pages, {1, 2})
         for row in rows:
             molecule = Compound.model_validate(row["dto"])
-            self.assertEqual(molecule.recognition.status, "unavailable")
+            self.assertEqual(molecule.recognition.status, "not_run")
             self.assertEqual(
-                molecule.recognition.quality_flag, "unassigned_source_identity"
+                molecule.recognition.quality_flag, "unproved_terminal_ownership"
             )
-            self.assertEqual(molecule.recognition.model_fingerprint, "a" * 64)
+            self.assertIsNone(molecule.recognition.model_fingerprint)
             self.assertIsNone(molecule.smiles)
             self.assertIsNone(molecule.identifier_label)
             self.assertEqual(molecule.activities, [])

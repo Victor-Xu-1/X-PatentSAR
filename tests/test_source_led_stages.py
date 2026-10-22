@@ -145,7 +145,7 @@ class SourceLedStageTests(unittest.TestCase):
             }
             progress.bind(str(root), log)
             state = PipelineContext(
-                args=Namespace(skip_advisory_qa=True),
+                args=Namespace(skip_advisory_qa=True, pdf=str(root / "original.pdf")),
                 progress=progress,
                 base_dir=str(root),
                 patent_id="CONTROL",

@@ -161,6 +161,7 @@ export const table: Readonly<Record<string, string>> = {
   当前页暂无结果: 'No results on this page',
   结果就绪后将自动显示: 'Results will appear automatically when ready',
   暂无提取结果: 'No extraction results yet',
+  暂无已确认的编号终产物: 'No confirmed numbered products yet',
   待编号: 'Unassigned',
   '候选 {reference}': 'Candidate {reference}',
   暂无匹配的提取结果: 'No matching extraction results',

@@ -87,7 +87,9 @@ export function ResultsPane({
       ? t('暂无匹配的提取结果')
       : awaitingResults
         ? t('结果就绪后将自动显示')
-        : t('暂无提取结果');
+        : project && project.summary.structures > 0
+          ? t('暂无已确认的编号终产物')
+          : t('暂无提取结果');
   return (
     <div className="result-data-view">
       <ResultToolbar
