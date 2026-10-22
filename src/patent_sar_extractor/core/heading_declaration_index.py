@@ -14,7 +14,7 @@ from .heading_declaration_scope import (
 from .heading_line_windows import heading_line_windows
 from .heading_page_columns import capture_column_cells, later_page_columns
 from .heading_panel_scope import observe_panel
-from .source_evidence_identity import proof_id
+from .source_evidence_identity import SourceEvidenceLimit, proof_id
 
 
 class HeadingDeclarationIndex:
@@ -174,5 +174,23 @@ class HeadingDeclarationIndex:
             "stop": stop,
             **({"panel": panel} if panel is not None else {}),
         }
-        declaration_candidates(scope, heading)
+        try:
+            declaration_candidates(scope, heading)
+        except SourceEvidenceLimit:
+            if panel is None or panel["pixels"] is None:
+                raise
+            # Refuse the WHOLE panel proof, never trim pixels into acceptance or
+            # retry it. The original PDF and complete page inventory survive.
+            scope["panel"] = {**panel, "pixels": None, "refusal": "region_budget"}
+            if panel["cell"] is not None:
+                self.panel_pixels[(first_page.number, *panel["cell"])] = (
+                    None,
+                    "region_budget",
+                )
+            scope["stop"] = {
+                "kind": "unproved_panel",
+                "page_no": heading["page_no"],
+                "y": heading["nomination"]["bbox"][3],
+            }
+            declaration_candidates(scope, heading)
         return scope

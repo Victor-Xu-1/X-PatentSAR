@@ -19,6 +19,70 @@ from patent_sar_extractor.web.compound_catalog import read_compound_catalog
 
 
 class HeadingPanelScopeTests(LateralStructureControls, unittest.TestCase):
+    def test_noisy_pixel_proof_budget_refuses_only_its_panel_and_keeps_the_page(self):
+        from io import BytesIO
+
+        import numpy as np
+        from PIL import Image
+
+        from patent_sar_extractor.core.binding_source_headings import _document_sha256
+        from patent_sar_extractor.core.heading_declaration_index import (
+            HeadingDeclarationIndex,
+        )
+        from patent_sar_extractor.core.heading_declaration_scope import (
+            declaration_candidates,
+        )
+        from patent_sar_extractor.core.heading_evidence import original_heading_lines
+        from patent_sar_extractor.core.heading_observation import observe_heading
+
+        with fitz.open() as original:
+            page = original.new_page(width=660, height=720)
+            for left, label in ((40, "48A"), (360, "72B")):
+                page.draw_rect(fitz.Rect(left - 10, 30, left + 260, 330), width=0.6)
+                page.insert_text(
+                    (left, 65), f"Compound {label}: Preparation", fontsize=10
+                )
+            noise = (
+                np.random.default_rng(4).integers(0, 2, (1500, 1500), dtype=np.uint8)
+                * 255
+            )
+            stream = BytesIO()
+            Image.fromarray(noise).save(stream, format="PNG")
+            page.insert_image(fitz.Rect(40, 80, 290, 300), stream=stream.getvalue())
+            lines = original_heading_lines(page)
+            digest = _document_sha256(original)
+            inventory = [
+                {
+                    "id": key,
+                    "page_no": 1,
+                    "x0": left + 95,
+                    "y0": 100,
+                    "x1": left + 230,
+                    "y1": 210,
+                }
+                for key, left in (("NOISY", 40), ("CLEAR", 360))
+            ]
+            index = HeadingDeclarationIndex(
+                original, inventory, lambda _: lines, digest
+            )
+            left = observe_heading(page, lines[0], digest)
+            right = observe_heading(page, lines[1], digest)
+            refused = index.observe(left)
+            self.assertEqual(declaration_candidates(refused, left), ([], False))
+            self.assertEqual(refused["panel"]["refusal"], "region_budget")
+            self.assertEqual(len(refused["pages"][0]["structures"]), 2)
+            with patch(
+                "patent_sar_extractor.core.heading_panel_scope.observe_pixels",
+                side_effect=AssertionError("Do not retry an oversized original proof"),
+            ):
+                self.assertEqual(
+                    index.observe(left)["panel"]["refusal"], "region_budget"
+                )
+            current = index.observe(right)
+            candidates, complete = declaration_candidates(current, right)
+            self.assertTrue(complete)
+            self.assertEqual([item["structure_id"] for item in candidates], ["CLEAR"])
+
     def test_only_the_exact_opaque_panel_rectangle_is_a_native_frame(self):
         with fitz.open() as original:
             page = original.new_page(width=660, height=720)
@@ -217,7 +281,15 @@ class HeadingPanelScopeTests(LateralStructureControls, unittest.TestCase):
     def test_missing_shifted_or_unproved_panel_cannot_supply_saved_acceptance(self):
         _, payload = self.panel_source()
         target = self.targets(payload)[0]
-        for mutation in ("remove", "shift", "pixels", "version", "extra"):
+        for mutation in (
+            "remove",
+            "shift",
+            "pixels",
+            "version",
+            "extra",
+            "remove_refusal",
+            "false_refusal",
+        ):
             changed = copy.deepcopy(target)
             scope = changed["original_heading_structure_evidence"]["declaration_scope"]
             if mutation == "remove":
@@ -228,6 +300,10 @@ class HeadingPanelScopeTests(LateralStructureControls, unittest.TestCase):
                 scope["panel"]["pixels"] = None
             elif mutation == "version":
                 scope["panel"]["version"] = True
+            elif mutation == "remove_refusal":
+                del scope["panel"]["refusal"]
+            elif mutation == "false_refusal":
+                scope["panel"]["refusal"] = "region_budget"
             else:
                 scope["panel"]["foreign"] = True
             changed["original_heading_evidence"]["declaration_scope"] = scope

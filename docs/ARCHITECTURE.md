@@ -18,6 +18,14 @@ or unproved/over-budget frames remain explicit refusals. Actual panel pixels are
 replayed against the original without re-OCR. Pixel memoization is immutable,
 call-local only, not another persisted source or acceptance cache.
 
+If complete panel pixels exceed the unchanged serialized region budget, the
+existing digest raises typed `SourceEvidenceLimit` (still a ValueError). The
+index refuses that entire panel proof with `refusal: region_budget`, retains
+the original PDF/full page inventory, releases its cached pixel payload and
+does not re-render it. It cannot trim evidence into a singleton; independent
+qualified panels can still be processed. Other malformed evidence is not
+downgraded, and an oversized page inventory still obeys its original hard bound.
+
 Native reaction roles use the same panel bounds. `reaction_frame` can recognize
 only the exact opaque unfilled rectangle stroke of that already proved frame,
 within one240dpi grid pixel. It never excludes an interior rectangle, its area,

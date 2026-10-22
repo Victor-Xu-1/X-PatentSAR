@@ -62,29 +62,33 @@ def observe_panel(page, heading, grids, *, pixel_cache=None):
     present, cell = _selected(inventory, heading["nomination"]["bbox"], size)
     if not present:
         return None
-    pixels = None
+    pixels, refusal = None, "ambiguous_cell"
     if cell is not None:
         key = (page.number, *cell)
         if pixel_cache is None:
             pixels = observe_pixels(page, source_window(cell, size), MAX_CELL_PIXELS)
+            refusal = None if pixels is not None else "pixel_budget"
         else:
             if key not in pixel_cache:
-                pixel_cache[key] = observe_pixels(
-                    page, source_window(cell, size), MAX_CELL_PIXELS
+                value = observe_pixels(page, source_window(cell, size), MAX_CELL_PIXELS)
+                pixel_cache[key] = (
+                    value,
+                    None if value is not None else "pixel_budget",
                 )
-            pixels = pixel_cache[key]
+            pixels, refusal = pixel_cache[key]
     return {
         "version": 1,
         "grid_inventory": inventory,
         "cell": cell,
         "pixels": pixels,
+        "refusal": refusal,
     }
 
 
 def panel_bounds(packet, heading):
     """A missing/ambiguous/over-budget frame refuses; it never widens the scope."""
     if not isinstance(packet, dict) or (
-        set(packet) != {"version", "grid_inventory", "cell", "pixels"}
+        set(packet) != {"version", "grid_inventory", "cell", "pixels", "refusal"}
         or type(packet["version"]) is not int
         or packet["version"] != 1
     ):
@@ -96,9 +100,15 @@ def panel_bounds(packet, heading):
     if not present or packet["cell"] != cell:
         raise ValueError("Original heading panel selection differs")
     if cell is None:
-        if packet["pixels"] is not None:
+        if packet["pixels"] is not None or packet["refusal"] != "ambiguous_cell":
             raise ValueError("Ambiguous original heading panel has chosen pixels")
         return None
+    if packet["pixels"] is None:
+        if packet["refusal"] not in {"pixel_budget", "region_budget"}:
+            raise ValueError("Original heading panel has an unknown refusal")
+        return None
+    if packet["refusal"] is not None:
+        raise ValueError("Refused original heading panel has pixel authority")
     # This is physical enclosure, not a text-inset/crop permission. Reuse the
     # four literal rule witnesses but retain ALL original pixels, including
     # corner interpolation and non-rule ink. No glyph is removed or recognized.

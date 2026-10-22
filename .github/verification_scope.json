@@ -17,6 +17,7 @@
     "src/patent_sar_extractor/core/heading_reaction.py",
     "src/patent_sar_extractor/core/reaction_frame.py",
     "src/patent_sar_extractor/core/reaction_vectors.py",
+    "src/patent_sar_extractor/core/source_evidence_identity.py",
     "src/patent_sar_extractor/core/structure_binder.py",
     "tests/test_heading_panel_scope.py"
   ],

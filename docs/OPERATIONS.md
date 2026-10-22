@@ -18,6 +18,12 @@ Native panel reaction arrows additionally use the same source window and full
 route validator; only a proved exact opaque boundary rectangle can be distinguished
 from interior blocking ink. This does not solve scanned reaction-role inference.
 
+A dense/noisy panel may fit the pixel budget but exceed the1MiB serialized
+source-region bound. `panel.refusal: region_budget` then keeps the entire panel
+unverified, preserving its original PDF and complete page candidate inventory.
+No retry or pixel trimming is used to obtain acceptance, and other qualified
+panels continue. Missing/refused pixels cannot be reflagged as accepted evidence.
+
 Binding55/binder66 require normal regeneration of affected derived work. Do not
 edit old artifacts, relabel historical evidence, relax QA or invoke private PDF
 processing outside the frontend. Raw/model/cache/manual history and activity/
