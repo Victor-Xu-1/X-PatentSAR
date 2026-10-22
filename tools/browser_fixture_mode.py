@@ -26,6 +26,7 @@ COMMON = {
     "expert-controls.spec.ts",
     "column-filter-viewport.spec.ts",
     "source-review-navigation.spec.ts",
+    "source-column-heading.spec.ts",
 }
 MODES = (
     (
