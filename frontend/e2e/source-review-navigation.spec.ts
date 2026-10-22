@@ -24,7 +24,6 @@ const labels = {
     expand: 'Expand original',
     collapse: 'Collapse original; results use full width',
     full: 'Fullscreen workspace',
-    exit: 'Exit fullscreen workspace',
     source: 'Original pane',
     results: 'Results pane',
     page: 'Original document page',
@@ -36,7 +35,6 @@ const labels = {
     expand: '展开原文',
     collapse: '收起原文，结果全宽',
     full: '全屏工作区',
-    exit: '退出全屏工作区',
     source: '原文区域',
     results: '结果区域',
     page: '原始文档页码',
@@ -99,7 +97,7 @@ for (const width of [390, 800, 1672]) {
         const input = page.getByRole('textbox', { name: copy.page, exact: true });
         await input.fill('2');
         const sourceUrl = page.url();
-        await page.getByRole('button', { name: copy.back, exact: true }).click();
+        await source.getByRole('button', { name: copy.back, exact: true }).click();
         await expect(results).toBeFocused();
         await inViewport(results.locator('.result-toolbar'));
         await page.getByRole('button', { name: copy.view, exact: true }).focus();
@@ -107,7 +105,7 @@ for (const width of [390, 800, 1672]) {
         await expect(source).toBeFocused();
         await expect(input).toHaveValue('2');
         expect(page.url()).toBe(sourceUrl);
-        await page.getByRole('button', { name: copy.back, exact: true }).click();
+        await source.getByRole('button', { name: copy.back, exact: true }).click();
       } else {
         await expect(page.getByRole('button', { name: copy.view, exact: true })).toHaveCount(0);
         await expect(page.getByRole('button', { name: copy.back, exact: true })).toHaveCount(0);
@@ -137,7 +135,7 @@ for (const width of [390, 800, 1672]) {
         await inViewport(source.locator('.pdf-toolbar'));
         await disjointPanes(source, results);
         await page.screenshot({ path: test.info().outputPath('source-fullscreen.png') });
-        await page.getByRole('button', { name: copy.back, exact: true }).click();
+        await source.getByRole('button', { name: copy.back, exact: true }).click();
         await expect(results).toBeFocused();
         await inViewport(results.locator('.result-toolbar'));
       } else {
