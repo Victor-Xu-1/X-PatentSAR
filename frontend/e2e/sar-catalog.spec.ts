@@ -99,9 +99,10 @@ test('pooled full-network transport conserves every region and member without ex
   test.skip(process.env.PATENTSAR_E2E_SAR_MUTATIONS !== 'synthetic-isolated-state');
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  const received = page.waitForResponse((response) => {
-    const url = new URL(response.url());
-    return url.pathname.endsWith('/study/catalog') && url.searchParams.get('compact') === 'true';
+  const reads: string[] = [];
+  page.on('request', (request) => {
+    if (request.method() === 'GET')
+      reads.push(new URL(request.url()).pathname + new URL(request.url()).search);
   });
   const csv =
     'id,smiles,IC50 (nM),t_half (h),target,assay,cell_line,duration\n' +
@@ -111,12 +112,16 @@ test('pooled full-network transport conserves every region and member without ex
         `${n + 1},${['COc1ccc(Cl)cc1', 'CCOc1ccc(Cl)cc1', 'COc1ccc(Br)cc1', 'CCCOc1ccc(Cl)cc1'][n % 4]},${n + 1},1,T,controlled,C,1h\n`,
     ).join('');
   const { job, report } = await createNetwork(page, 1672, csv, false, true);
-  const response = await received;
+  const path = `/api/v1/sar/jobs/${job}/study/catalog`;
+  expect(reads).toContain(path + '?compact=true');
+  // Navigation may release an earlier CDP response body; keep the real UI read
+  // assertion, then compare two passive reads of this exact completed job.
+  const response = await page.request.get(path + '?compact=true');
   expect(response.status()).toBe(200);
   const packed = await response.json();
   expect(packed.detail).toBe('catalog-pooled');
   expect(packed.wire_version).toBe(1);
-  const legacyResponse = await page.request.get(`/api/v1/sar/jobs/${job}/study/catalog`);
+  const legacyResponse = await page.request.get(path);
   expect(legacyResponse.status()).toBe(200);
   const legacy = await legacyResponse.json();
   const { wire_version: _version, fragment_pool, molecule_id_pool, ...body } = packed;
