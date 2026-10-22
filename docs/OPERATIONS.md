@@ -1,5 +1,24 @@
 # Operations and troubleshooting
 
+## Unknown text in a closed caption cell breaks later known identifiers
+
+Do not repair this by accepting the unknown caption, inferring an ID sequence or
+removing after-table context checks. A physical-only tail3 owner can distinguish
+bounded layout padding from real glyph spill using both original400/600dpi views.
+Its support is limited to4pt and2,000,000pixels per view, with all nonwhite outside
+pixels accounted for by the existing literal closed-rule authority. Unread text
+remains unread. Actual outside ink, unqualified body text, new roles/tables and
+budget refusal still block carry; changing saved scope/frame data cannot replace
+original pixel replay. No OCR model is loaded for this physical check/readback.
+
+Binding53/binder63 invalidate derived ownership only. Raw visible-label26 and all
+original PDF/OCR/OCSR/manual revisions remain unchanged. Known tail2 history can
+be read, never relabelled as current proof or supplied invented physical owners.
+Use the normal frontend only for real extraction/resume. Never deploy, interrupt
+or duplicate a running task merely because this code or its focused checks pass.
+Preserve failed attempts; complete scientific acceptance still requires a real
+post-deployment frontend run and all existing source/chemical gates.
+
 ## Progress flashes unknown during an otherwise healthy task poll
 
 Normal same-source background GET polling retains the last confirmed progress

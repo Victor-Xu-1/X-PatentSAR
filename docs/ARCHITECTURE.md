@@ -1,5 +1,32 @@
 # X-PatentSAR architecture
 
+## Unresolved caption text keeps a separate physical boundary proof
+
+The existing caption writer can retain a physical-only last-row owner when a
+layout word box crosses a closed rule but the original glyph pixels do not.
+`caption_cell_scope` validates this bounded proof independently of identifier
+quality. `caption_cell_pixels` reuses the ordinary original raster renderer and
+literal rule-band/joint authority: both400/600dpi views must show a closed cell,
+and every nonwhite pixel outside it must belong to observed original rules.
+Support extends at most the existing4pt caption padding and2,000,000pixels per
+view; a budget refusal leaves the source unresolved, not silently accepted.
+
+Physical owners have no label or bare-ID claim. They conserve complete original
+readings and may resolve only their exact same-origin boundary witnesses. Actual
+outside text, new tables/nonfinal roles, unknown body context, page/column gaps
+and changed source remain blockers. Caption identification, structure assignment
+and annotation interpretation retain their existing independent quality gates.
+`caption_original_replay` composes the same model-free source inventory and
+recomputes support pixels/rules, rather than trusting a saved scope hash. The
+ordinary/auxiliary observation replayers remain the sole text-source authorities.
+
+Tail3/Binding53/binder63 refresh derived ownership. Known tail2 identity owners
+remain readable as history but cannot become current continuation proof; physical
+owners are never accepted under tail2. Raw visible-label observations26, activity,
+OCR/OCSR, original assets, manual audit, dependencies and activation are unchanged.
+No second reader/model, parser, queue or scientific writer is introduced. Narrow
+generated-source checks do not establish complete real-patent scientific recall.
+
 ## Background task reads preserve presentation, not write authority
 
 The existing `useResource` retains `readConfirmed` only while an ordinary
@@ -23,14 +50,14 @@ Extractor48 refreshes derived work; source/activity schemas and admission qualit
 rules are unchanged. A correctly spelled low-score auxiliary reply still does
 not satisfy the current quality gate or become a scientific measurement.
 
-## Caption-tail witnesses retain their exact original cell owners
+## Caption-tail v2 identity owners (release history)
 
 `caption_tail_owners` composes exact original neighbour witnesses with the
 existing qualified closed-cell identity reader; `caption_tail_sources`
 inventories only those explicit owners along bounded caption-role links. The
 ordinary caption/pixel and paired auxiliary replayers remain the single
 original-read authority. Raw window status is never rewritten and no new
-inference path is added. Current derived source contracts are
+inference path is added. That release used derived source contracts
 Binding52/binder62/visible-label26; older epoch notes below remain history.
 
 ## Declared text tables share actual original-source admission

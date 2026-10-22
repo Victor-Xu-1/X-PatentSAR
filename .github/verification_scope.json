@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "base_sha": "de462d3ee1fa9a30663ada245ca647d0a876d496",
+  "base_sha": "381e9735671dc049fe79266c580695124cb352ff",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
@@ -8,36 +8,36 @@
     "docs/PROJECT_MANIFEST.md",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/e2e/task-poll-observation.spec.ts",
-    "frontend/src/App.tsx",
-    "frontend/src/features/jobs/ExtractionJobs.tsx",
-    "frontend/src/features/jobs/JobActions.tsx",
-    "frontend/src/features/jobs/useJobs.ts",
-    "frontend/src/features/workspace/Workspace.tsx",
-    "frontend/src/hooks/useResource.ts",
-    "frontend/tests/jobs-poll-observation.test.tsx",
-    "frontend/tests/jobs-read-recovery.test.tsx",
     "src/patent_sar_extractor/contracts.py",
-    "tests/test_sar_browser_fixture.py",
-    "tools/browser_fixture_mode.py"
+    "src/patent_sar_extractor/core/caption_boundary_context.py",
+    "src/patent_sar_extractor/core/caption_cell_pixels.py",
+    "src/patent_sar_extractor/core/caption_cell_scope.py",
+    "src/patent_sar_extractor/core/caption_original_replay.py",
+    "src/patent_sar_extractor/core/caption_tail_owners.py",
+    "src/patent_sar_extractor/core/caption_tail_sources.py",
+    "tests/test_caption_closed_cell_replay.py",
+    "tests/test_caption_unresolved_cell_boundary.py"
   ],
   "python_modules": [
-    "tests.test_sar_browser_fixture.SARBrowserFixtureTests.test_task_poll_observation_is_read_only_without_task_execution",
+    "tests.test_caption_unresolved_cell_boundary",
+    "tests.test_caption_closed_cell_replay",
+    "tests.test_caption_tail_sources",
+    "tests.test_caption_role_continuation",
+    "tests.test_caption_page_boundary",
+    "tests.test_caption_observation_windows",
+    "tests.test_caption_reading_semantics",
+    "tests.test_caption_word_consumers",
+    "tests.test_auxiliary_binding_consumers",
+    "tests.test_binding_artifact_consumers",
+    "tests.test_binding_cache_identity",
+    "tests.test_binding_transport_budget",
+    "tests.test_source_epoch_guards",
     "tests.test_release_policy.ReleaseNumberTests",
     "tests.test_standalone.StandalonePackagingTests.test_version_command_uses_product_version",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
-  "frontend_tests": [
-    "frontend/tests/jobs-poll-observation.test.tsx",
-    "frontend/tests/jobs-state-trust.test.tsx",
-    "frontend/tests/jobs-read-recovery.test.tsx",
-    "frontend/tests/jobs-metadata-recovery.test.tsx",
-    "frontend/tests/resources.test.tsx",
-    "frontend/tests/resource-read-recovery.test.tsx",
-    "frontend/tests/resource-recovery-cancellation.test.tsx"
-  ],
+  "frontend_tests": [],
   "browser_tests": [
-    "frontend/e2e/task-poll-observation.spec.ts",
-    "frontend/e2e/session-job-recovery.spec.ts"
+    "frontend/e2e/source-completion.spec.ts"
   ]
 }

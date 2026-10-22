@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- Closed-caption physical authority: `caption_cell_scope` validates physical-only
+  tail3 owners independently of identifier quality; `caption_cell_pixels` shares
+  the existing renderer and literal rule-band/joint implementation. Both original
+  400/600dpi views conserve all nonwhite pixels, with at most4pt support and
+  2,000,000pixels per view. Only exact original boundary witnesses resolve; unknown
+  text never gains a label/annotation/structure claim. The existing caption and
+  auxiliary inventories/replayers remain sole source authorities. Binding53/
+  binder63 refresh derived proof; known tail2 identity history stays readable but
+  cannot be current carry evidence. Raw visible-label26, activity, original/raw
+  assets, human audit, environment/dependencies/API/SQL/SAR remain unchanged.
+  Earlier entries below document release history, not current competing epochs.
+
 - Task-read presentation is owned by the existing resource/job hooks. A successful
   same-key background read may retain its display confirmation while pending,
   but the existing stricter `verified` mutation gate is unchanged. Explicit
