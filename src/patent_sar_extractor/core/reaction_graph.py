@@ -112,15 +112,3 @@ def reaction_route(
         "reactant_groups": role_inventory,
         "layout_joins": joins,
     }
-
-
-def terminal_reaction_source(
-    candidates, pages, *, source_regions=None, endpoint_uncertainty=None
-):
-    """Legacy source2/3 use the same graph, without a new role interpretation."""
-    return reaction_route(
-        candidates,
-        pages,
-        source_regions=source_regions,
-        endpoint_uncertainty=endpoint_uncertainty,
-    )["terminal_structure_id"]

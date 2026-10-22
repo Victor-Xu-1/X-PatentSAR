@@ -17,6 +17,39 @@ from patent_sar_extractor.contracts import ruleset_ref
 
 
 class BindingCacheIdentityTests(unittest.TestCase):
+    def test_previous_route_epoch_or_schema_cannot_reuse_or_retag_bindings(self):
+        from patent_sar_extractor import contracts
+        from patent_sar_extractor.web.acceptance import current
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            pdf, artifact = root / "input.pdf", root / "bindings.json"
+            pdf.write_bytes(b"fingerprint-only-no-document-parsing")
+            payload = contracts.artifact_identity(
+                contracts.BINDINGS_SCHEMA, contracts.BINDINGS_SCHEMA_VERSION - 1
+            )
+            artifact.write_text(json.dumps(payload), encoding="utf-8")
+            before = artifact.read_bytes()
+            params = {"structure_binder_version": contracts.STRUCTURE_BINDER_VERSION}
+            expected = _step_fingerprint("bind", pdf_path=str(pdf), params=params)
+            previous = _step_fingerprint(
+                "bind",
+                pdf_path=str(pdf),
+                params={
+                    "structure_binder_version": str(
+                        int(contracts.STRUCTURE_BINDER_VERSION) - 1
+                    )
+                },
+            )
+            _write_step_manifest(str(artifact), previous)
+            self.assertFalse(_fingerprint_matches(str(artifact), expected))
+            self.assertIsNone(_load_reusable_bindings(str(artifact), expected))
+            _write_step_manifest(str(artifact), expected)
+            self.assertTrue(_fingerprint_matches(str(artifact), expected))
+            self.assertIsNone(_load_reusable_bindings(str(artifact), expected))
+            self.assertFalse(current(payload, "bindings"))
+            self.assertEqual(artifact.read_bytes(), before)
+
     def test_oversized_legacy_output_is_not_reused_or_modified(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "bindings.json"

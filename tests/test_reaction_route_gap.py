@@ -41,6 +41,13 @@ class ReactionRouteGapTests(NativeReactionFixture, unittest.TestCase):
             self.assertEqual(len(self.select()[0]), 0)
         self.assert_product("target")
 
+    def test_a_paragraph_number_cannot_downgrade_an_independent_source_boundary(self):
+        self.pair()
+        self.arrow((180, 145), (250, 145))
+        self.page.insert_text((35, 300), "[0042] Alternative product", fontsize=11)
+        self.molecule("unowned-later-product", 280, 360)
+        self.assertEqual(len(self.select()[0]), 0)
+
 
 if __name__ == "__main__":
     unittest.main()

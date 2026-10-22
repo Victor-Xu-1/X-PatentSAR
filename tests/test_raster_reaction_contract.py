@@ -15,7 +15,7 @@ from patent_sar_extractor.core.raster_reaction_detail import (
     observe_pixel_page,
     page_vectors,
 )
-from patent_sar_extractor.core.reaction_graph import terminal_reaction_source
+from patent_sar_extractor.core.reaction_graph import reaction_route
 from patent_sar_extractor.core.reaction_page_source import source_page_vectors
 from patent_sar_extractor.core.reaction_raster_layout import (
     observe_raster_layout,
@@ -138,16 +138,16 @@ class RasterReactionContractTests(RasterReactionFixture, unittest.TestCase):
         with self.assertRaises(ValueError):
             source_page_vectors(vectors, self.regions)
         with self.assertRaises(ValueError):
-            terminal_reaction_source(candidates, [vectors])
+            reaction_route(candidates, [vectors])
         for malformed in ({}, {True: 1.0}, {0: float("nan")}, {i: 0 for i in errors}):
             with self.subTest(error=malformed), self.assertRaises(ValueError):
-                terminal_reaction_source(
+                reaction_route(
                     candidates, [vectors], endpoint_uncertainty={1: malformed}
                 )
         self.assertEqual(
-            terminal_reaction_source(
-                candidates, [vectors], endpoint_uncertainty={1: errors}
-            ),
+            reaction_route(candidates, [vectors], endpoint_uncertainty={1: errors})[
+                "terminal_structure_id"
+            ],
             "S2",
         )
 
@@ -183,9 +183,9 @@ class RasterReactionContractTests(RasterReactionFixture, unittest.TestCase):
                     for structure, box in zip(self.structures, regions, strict=True)
                 ]
                 self.assertEqual(
-                    terminal_reaction_source(
+                    reaction_route(
                         candidates, [vectors], endpoint_uncertainty={1: errors}
-                    ),
+                    )["terminal_structure_id"],
                     "S2",
                 )
 

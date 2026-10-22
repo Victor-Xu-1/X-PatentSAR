@@ -1,8 +1,9 @@
 """Bounded explicit addition ink links inputs of the SAME observed reaction.
 
 No new page lane, OCR, chemical identity, reaction model or nearest-ID ranking.
-Native plus primitives are retained, not erased. Glyph/raster/unsupported marks
-remain blocking source ink; a drawing beside a shaft alone proves no input role.
+Native plus primitives and qualified literal glyph cells are retained, not
+erased. Raster/unsupported marks remain blocking source ink; a drawing beside a
+shaft alone proves no input role.
 """
 
 import math

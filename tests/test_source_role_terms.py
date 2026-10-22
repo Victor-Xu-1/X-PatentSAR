@@ -22,6 +22,25 @@ INTERMEDIATE_LABELS = ("中间体", "中間体", "中間體")
 
 
 class SourceRoleTermTests(unittest.TestCase):
+    def test_paragraph_metadata_cannot_hide_a_literal_separate_scheme(self):
+        for prefix in ("[0042] ", "[ 42 ]", "［００４２］ "):
+            for title in (
+                "AlternativeProduct",
+                "Independent reaction",
+                "另一条合成路线",
+            ):
+                with self.subTest(prefix=prefix, title=title):
+                    self.assertTrue(scheme_heading_boundary(prefix + title))
+                    self.assertTrue(procedure_heading_boundary(prefix + title))
+                    self.assertIsNone(section_heading(prefix + title))
+
+    def test_malformed_or_over_bound_prefixes_are_not_repaired_into_metadata(self):
+        for prefix in ("[0042 ", "[123456789] ", "［0042] ", "42 "):
+            with self.subTest(prefix=prefix):
+                self.assertFalse(
+                    scheme_heading_boundary(prefix + "Alternative product")
+                )
+
     def test_explicitly_separate_schemes_are_literal_context_boundaries(self):
         for text in (
             "Alternative product",
